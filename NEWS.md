@@ -1,5 +1,8 @@
 # TreeSearch 0.2.0.9000 (development)
 
+## Enhancements
+ - `SplitFrequency` now supports larger trees
+
 ## Bug fixes
  - Export missing functions
 
