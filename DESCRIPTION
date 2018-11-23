@@ -37,9 +37,11 @@ Suggests:
     shiny,
     testthat,
     xlsx
+Remotes:
+  ms609/Quartet
 RdMacros: Rdpack
 LazyData: true
 ByteCompile: true
 Encoding: UTF-8
 VignetteBuilder: knitr
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1

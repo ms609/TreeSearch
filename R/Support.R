@@ -59,7 +59,20 @@ SplitFrequency <- function(reference, forest) {
   ret
 }
 
-#' @value `SplitsRepeated` returns a logical vector of length `ncol(original)`,
+#' Are Splits Repeated?
+#' 
+#' Determines whether any of the splits described in `original` are present in
+#' `matches`.
+#' 
+#' @param original,matches Logical matrix describing the bipartition splits
+#' defined by a tree (see [Quartet:Tree2Splits] for format)
+#' 
+#' 
+#' 
+#' @keywords internal
+#' @export
+#' @author Martin R. Smith
+#' @return `SplitsRepeated` returns a logical vector of length `ncol(original)`,
 #' specifying whether each split listed in `original` also appears in `matches`.
 SplitsRepeated <- function (original, matches) {
   duplicated(t(cbind(matches, original)))[-seq_len(ncol(matches))]
