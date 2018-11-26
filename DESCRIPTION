@@ -27,7 +27,6 @@ Imports:
     colorspace,
     memoise,
     phangorn (>= 2.2.1),
-    Quartet,
     R.cache,
     Rdpack,
     stats
@@ -37,11 +36,10 @@ Suggests:
     shiny,
     testthat,
     xlsx
-Remotes:
-  ms609/Quartet
 RdMacros: Rdpack
 LazyData: true
 ByteCompile: true
+LinkingTo: Rcpp
 Encoding: UTF-8
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
