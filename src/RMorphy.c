@@ -5,7 +5,6 @@
 #include <float.h>
 #include <R.h>
 #include <Rinternals.h>
-#include <Rmath.h>
 #include "mpl.h"
 #include "RMorphyUtils.h"
 #include "RMorphy.h"
