@@ -64,9 +64,8 @@ SplitFrequency <- function(reference, forest) {
 #' `matches`.
 #' 
 #' @param original,matches Logical matrix describing the bipartition splits
-#' defined by a tree (see [Quartet:Tree2Splits] for format)
-#' 
-#' 
+#' defined by a tree (see [Quartet:Tree2Splits] for format).  The first row
+#' of `original` must be `FALSE` for all splits.
 #' 
 #' @keywords internal
 #' @export
@@ -74,7 +73,9 @@ SplitFrequency <- function(reference, forest) {
 #' @return `SplitsRepeated` returns a logical vector of length `ncol(original)`,
 #' specifying whether each split listed in `original` also appears in `matches`.
 SplitsRepeated <- function (original, matches) {
-  duplicated(t(cbind(matches, original)))[-seq_len(ncol(matches))]
+  comparison <- matches[rownames(original), , drop=FALSE]
+  comparison[, comparison[1, ]] <- !comparison[, comparison[1, ]]
+  duplicated(t(cbind(comparison, original)))[-seq_len(ncol(matches))]
 }
 
 #' @describeIn SplitFrequency Assign a unique integer to each split
