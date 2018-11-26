@@ -6,14 +6,6 @@ test_that("UniqueSplits works", {
   expect_equal(c('8'=FALSE, '10'=FALSE, '11'=FALSE), UniqueSplits(splits6)['t4', ])
   expect_equal(!splits6, UniqueSplits(cbind(!splits6, splits6), TRUE))
   
-  splits9 <- Tree2Splits(ape::rtree(9, br=NULL))
-  splits9Fewer <- splits9[-4:-6 ,]
-  
-  expect_error(CompareSplits(matrix(FALSE, 2, 2), matrix(TRUE, 3, 3)))
-  expect_error(CompareSplits(splits9, splits9Fewer))
-  expect_equal(c(one=3, two=3, both=3, one_not_two=0, two_not_one=0, RF_dist=0),
-               CompareSplits(splits9Fewer, splits9))
-  
 })
 
 test_that("Large splits don't cause memory issues", {
