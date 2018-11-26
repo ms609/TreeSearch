@@ -28,7 +28,7 @@ OrderEdgesNumberNodes <- function (parent, child, nTips, nEdge = length(parent))
   as.integer(nEdge))[1:2]), ncol=2)
 }
 
-#' Renumber tree
+#' Renumber a tree
 #' Order edges and number nodes
 #' Wrapper for the C function RENUMBER_TREE
 #' @return an edge matrix for a tree in following the usual preorder convention for edge and node numbering 

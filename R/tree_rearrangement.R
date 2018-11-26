@@ -178,7 +178,7 @@ CollapseNode <- function (tree, nodes) {
   tree
 }
 
-#' @describeIn DropNode
+#' @rdname CollapseNode
 #' @export
 CollapseEdge <- function (tree, edges) {
   CollapseNode(tree, tree$edge[edges, 2])
