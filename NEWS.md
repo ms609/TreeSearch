@@ -1,5 +1,8 @@
 # TreeSearch 0.2.0.9000 (development)
 
+## New features
+ - `CollapseNodes` and `CollapseEdges` allow the creation of polytomies
+
 ## Enhancements
  - `SplitFrequency` now supports larger trees
 
