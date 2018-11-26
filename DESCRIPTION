@@ -28,6 +28,7 @@ Imports:
     memoise,
     phangorn (>= 2.2.1),
     R.cache,
+    Rcpp,
     Rdpack,
     stats
 Suggests:
