@@ -93,7 +93,7 @@ SplitNumber <- function (tips, tree, tipIndex, powersOf2) {
 
 #' @describeIn SplitFrequency Frequency of splits in a given forest of trees
 #' @export
-ForestSplits <- function (forest) {
+ForestSplits <- function (forest, powersOf2) {
   .Deprecated("SplitFrequency")
   if (class(forest) == 'phylo') forest <- structure(list(forest), class='multiPhylo')
   tipIndex <- sort(forest[[1]]$tip.label)
