@@ -1,15 +1,15 @@
-#' Calculate bipartitions using phangorn's bipCPP function
-#' 
-#' @param orig Tree edge matrix (`someTree$edge`)
-#' @param nTips number of tips
-#' 
-#' @return A list specifying, for each partition, the included taxa.
-#' 
-#' @export
-#' @keywords internal
-phangornBipCPP <- function(orig, nTips) {
-  .Call(`C__TreeSearch_phangorn_bipCPP`, orig, nTips)
-}
+#    #' Calculate bipartitions using phangorn's bipCPP function
+#    #' 
+#    #' @param orig Tree edge matrix (`someTree$edge`)
+#    #' @param nTips number of tips
+#    #' 
+#    #' @return A list specifying, for each partition, the included taxa.
+#    #' 
+#    #' @export
+#    #' @keywords internal
+#    phangornBipCPP <- function(orig, nTips) {
+#      .Call(`C__TreeSearch_phangorn_bipCPP`, orig, nTips)
+#    }
 
 #' Tree2Splits
 #' 
@@ -32,7 +32,7 @@ Tree2Splits <- function (tr) {
   tip_label <- tr$tip.label
   n_tip <- as.integer(length(tip_label))
   root <- length(tip_label) + 1L
-  bipartitions <- phangornBipCPP(tr$edge, n_tip)
+  bipartitions <- phangorn_bipCPP(tr$edge, n_tip)
   ret <- vapply(bipartitions[-seq_len(root)], 
                 function (x) seq_len(n_tip) %in% x, 
                 logical(n_tip))[seq_len(n_tip), , drop=FALSE]
