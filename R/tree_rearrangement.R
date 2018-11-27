@@ -144,6 +144,8 @@ RootTree <- function (tree, outgroupTips) {
 #' @author  Martin R. Smith
 #' @export
 CollapseNode <- function (tree, nodes) {
+  if (length(nodes) == 0) return (tree)
+  
   edge <- tree$edge
   lengths <- tree$edge.length
   hasLengths <- !is.null(lengths)

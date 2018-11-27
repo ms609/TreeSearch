@@ -151,6 +151,8 @@ test_that("CollapseNodes works", {
   set.seed(1)
   
   tree <- rtree(7)
+  expect_equal(tree, CollapseNode(tree, integer(0)))
+  
   no1213 <- CollapseNode(tree, c(12, 13))
   expect_equal(no1213$edge, matrix(c(8, 9, 9, 8, 10, 11, 11, 10, 10, 10, 
                                       9, 1, 2, 10, 11, 3:7), ncol=2))
