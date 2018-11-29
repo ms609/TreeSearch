@@ -23,7 +23,7 @@ path to conserve when creating relative path (see examples).}
 
 \item{tipLabels}{(optional) character vector specifying the names of the 
 taxa, in the sequence that they appear in the TNT file.  If not specified,
-taxon names will be loaded from the file linked in the first line of the
+taxon names will be loaded from the data file linked in the first line of the
  `.tre` file specified in `filename`.}
 
 \item{treeText}{Character string describing a tree, in the parenthetical 
