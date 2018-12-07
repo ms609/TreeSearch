@@ -47,5 +47,6 @@ LazyData: true
 ByteCompile: true
 LinkingTo: Rcpp
 Encoding: UTF-8
+Language: en-GB
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
