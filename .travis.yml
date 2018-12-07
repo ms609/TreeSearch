@@ -6,15 +6,11 @@ r:
 cache: packages
 sudo: required # required if r_binary_packages; false otherwise
 warnings_are_errors: true
-r_check_args: --as-cran
+r_check_args: --as-cran --no-manual # Workaround error compiling PDF manual
 
 git:
   depth: 1
-  
-env:
-  global:
-    - R_CHECK_ARGS = "--no-manual --as-cran" # Workaround error compiling PDF manual
-  
+
 r_binary_packages:
  - ape
  - covr
