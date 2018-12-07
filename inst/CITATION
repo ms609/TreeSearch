@@ -10,6 +10,7 @@
      citEntry(entry = "Article",
               title = "An altorithm for morphological phylogenetic analysis with inapplicable data",
               author = personList(as.person("Martin D. Brazeau"), as.person("Thomas Guillerme"), as.person("Martin R. Smith")),
+              journal = "Systematic Biology",
               year = year,
               note = vers,
      
