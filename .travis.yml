@@ -11,6 +11,10 @@ r_check_args: --as-cran
 git:
   depth: 1
   
+env:
+  global:
+    - R_CHECK_ARGS = "--no-manual --as-cran" # Workaround error compiling PDF manual
+  
 r_binary_packages:
  - ape
  - covr
