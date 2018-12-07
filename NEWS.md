@@ -1,4 +1,4 @@
-# TreeSearch 0.2.0.9000 (development)
+# TreeSearch 0.2.1
 
 ## New features
  - `CollapseNodes` and `CollapseEdges` allow the creation of polytomies
