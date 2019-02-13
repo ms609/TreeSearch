@@ -210,16 +210,13 @@ AddTileDummyPair <- function(sisOf.4, tileEdges) {
   tileEdges
 }
 
-ColoursOnTile <- function(tile, tile.number) {
-  if (tile.number <= 4) tile[1:4] <- tile[1:4] + 3
-  which(c(any(tile[c(1:4 %in% 1, boundaryOf[1, -4:-1])] > 0),
-          any(tile[c(1:4 %in% 2, boundaryOf[2, -4:-1])] > 0),
-          any(tile[c(1:4 %in% 3, boundaryOf[3, -4:-1])] > 0),
-          any(tile[c(1:4 %in% 4, boundaryOf[4, -4:-1])] > 0)
-  )
+ColoursOnTile <- function(tile, tileNumber) {
+  if (tileNumber <= 2) tile[1:2] <- tile[1:2] + 3
+  which(c(any(tile[c(1:2 %in% 1, boundaryOf[1, -2:-1])] > 0),
+          any(tile[c(1:2 %in% 2, boundaryOf[2, -2:-1])] > 0)
+          )
   )
 }
-
 
 # Edge editing functions
 EditEdges <- function (edits, editingEdges) {
@@ -465,47 +462,46 @@ BtwnToTdm <- function (tiles, sharedCol, btwnCol, tdmCols, edges) {
   ), edges)
 }
 
-LinkTwoTiles <- function (tile1, tile2, edgesList) {
+#' Link two tiles
+LinkTwoTiles <- function (edgesList) {
+  
   if (is.null(edgesList)) return (NULL)
   if (!is.list(edgesList)) edgesList <- list(edgesList)
-  oneToTwo <- integer(0)
-  if (tile1 <= 4 && tile2 <= 4) {
-    # We are joining two tiles, rather than a dummy point
-    oneToTwo <- ColNo(c(In(tile1), In(tile2), In(tile1), In(tile1), In(tile2), In(tile2), Btwn(c(tile1, tile2))))
-    twoToOne <- oneToTwo[c(2,1,5,6,3,4,7)]
-  } else if (tile2 <= ColNo(In(4))) {
-    tile.tmp <- tile1
-    tile1 <- tile2
-    tile2 <- tile.tmp
-    rm(tile.tmp)
-  }
-  if (!length(oneToTwo) && tile1 <= 4 && tile2 <= ColNo(Btwn(3:4))) {
-    btwnTiles <- as.integer(c(substr(edgeNames[tile2], 6, 6), substr(edgeNames[tile2], 7, 7)))
-    oneToTwo <- ColNo(c(In(tile1), edgeNames[tile2], In(tile1), In(tile1),
-                        TDm(btwnTiles[1], c(tile1, btwnTiles[2])),
-                        TDm(btwnTiles[2], c(tile1, btwnTiles[1])),
-                        TDm(tile1, btwnTiles)))
-    twoToOne <- oneToTwo[c(2,1,5,6,3,4,7)]
-  } else if (!length(oneToTwo)) {
-    warning("tile type not handled!")
-  }
+  # We are joining two tiles, rather than a dummy point
+  oneToTwo <- ColNo(c(In(tile1), In(tile2), In(tile1), In(tile1), In(tile2), In(tile2), Btwn(c(tile1, tile2))))
+  twoToOne <- oneToTwo[c(2,1,5,6,3,4,7)]
+  
   output <- unique(RemoveNullsFromList(unlist(lapply(edgesList, function (edges) {
     if (is.null(edges)) return(NULL)
-    tile1Colours <- ColoursOnTile(edges[tile1, ], tile1)
-    tile2Colours <- ColoursOnTile(edges[tile2, ], tile2)
+    tile1Colours <- ColoursOnTile(edges[1, ], 1L)
+    tile2Colours <- ColoursOnTile(edges[2, ], 2L)
     if (length(tile1Colours) == 0 || length(tile2Colours) == 0) return(NULL)
     sharedColour <- tile1Colours[tile1Colours %in% tile2Colours]
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    # We are here.
+    # Simplify this function to eliminate options that don't exist for 2 
+    # tiles, 2 colours
+    #
+    #
+    #
+    #
+    #
+    #
     if (length(sharedColour)) {
       # Colour in common
-      unsharedColours <- (1:4)[-sharedColour]
+      unsharedColour <- (1:2)[-sharedColour]
       newList <- c(list(InToIn(oneToTwo, sharedColour, edges)),
                    list(InToSingleton(oneToTwo, sharedColour, edges)),
-                   unlist(lapply(unsharedColours, function (unshared)
-                     list(
-                       InToBtwn(oneToTwo, sharedColour, c(unshared, sharedColour), edges),
-                       InToBtwn(twoToOne, sharedColour, c(unshared, sharedColour), edges)
-                     )
-                   ), recursive=FALSE),
+                   list(
+                     InToBtwn(oneToTwo, sharedColour, c(unsharedColour, sharedColour), edges),
+                     InToBtwn(twoToOne, sharedColour, c(unsharedColour, sharedColour), edges)
+                   ),
                    lapply(list(1:2, 2:3, c(1,3), 2:1, 3:2, c(3, 1)), function (choice)
                      BtwnToBtwn(oneToTwo, c(sharedColour, unsharedColours[choice[1]]), c(sharedColour, unsharedColours[choice[2]]), edges)
                    ), {
@@ -602,6 +598,7 @@ LinkTwoTiles <- function (tile1, tile2, edgesList) {
   }), recursive=FALSE)))
   output
 }
+
 LinkTwoByColour <- function (tile1, tile2, colour, edgesList) {
   stopifnot(tile1 <= 4) # Designed for use with Hub configurations, thus will only join one tile to another.
   stopifnot(tile2 <= 4) # Designed for use with Hub configurations, thus will only join one tile to another.
@@ -1202,145 +1199,33 @@ TreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
     return(prod(vapply(zones[zones > 0], NRooted, double(1))))
   }
   
-  zones4 <- matrix(0, 4, 4)
-  zones4[1:nrow(zones), 1:ncol(zones)] <- zones
-  zoneEdges <- 2 * zones4 - 3 # Beware the -3!
-  # zoneExists <- zones4 > 0 # No longer used - delete?
-  tipsOnTile <- rowSums(zones4)
-  edgesOnTile <- 2 * tipsOnTile - 3
-  coloursOnTile <- zones4 > 0
+  zoneEdges <- 2L * zones - 3L # Beware the -3!
+  tipsOnTile <- rowSums(zones)
+  edgesOnTile <- 2L * tipsOnTile - 3L
+  coloursOnTile <- zones > 0
   nColOnTile <- rowSums(coloursOnTile)
   nTiles <- nrow(zones)
-  startEdges   <- matrix(0, length(edgeNames), length(edgeNames), dimnames=list(edgeNames, edgeNames))
-  startEdges[1:4, 1:4] <- -3
-  startEdges[1:4, 1:4] <- zoneEdges[1:4, 1:4]
+  twoSplitEdgeNames <- c("In 1", "In 2", "Btwn 12", "DDm 1.2")
+  startEdges <- matrix(0, length(twoSplitEdgeNames), length(twoSplitEdgeNames),
+                       dimnames=list(twoSplitEdgeNames, twoSplitEdgeNames))
+  
+  startEdges[1:2, 1:2] <- zoneEdges
   
   # Local funcs
   ColourInCommon  <- function(tile1, tile2) zones[tile1, ] > 0 & zones[tile2, ] > 0
-  ColourInCommon3 <- function(tile1, tile2, tile3) zones[tile1, ] > 0 & zones[tile2, ] > 0 & zones[tile3, ] > 0
-  ColourInCommon4 <- function(tile1, tile2, tile3, tile4) zones[tile1, ] > 0 & zones[tile2, ] > 0 & zones[tile3, ] > 0 & zones[tile4, ] > 0
   ColourOnTile    <- function(colour, tile) zones[tile, colour] > 0
-  LegalToSeparate <- function(tile1, tile2, tileBetween) {
-    if (tipsOnTile[tileBetween] < 2) return (FALSE) # It take two tips to separate, rather than forming a triple junction
-    # if Tile 1 & Tile 2 have a colour in common that's absent on tileBetween
-    common12 <- ColourInCommon(tile1, tile2)
-    if (any(common12)) {
-      ColourOnTile(common12, tileBetween)
-    } else {
-      TRUE
-    }
-  }
-  LinkThreeTiles <- function (edges) {
-    linkPaths <- unlist(lapply(list(c(2, 1, 3), c(1, 2, 3), c(1, 3, 2)), function (perm) {
-      if (LegalToSeparate(perm[1], perm[3], perm[2])) {
-        LinkTwoTiles(perm[1], perm[2], LinkTwoTiles(perm[2], perm[3], edges))
-      } else {
-        if (any(colour.inCommon <- ColourInCommon(perm[1], perm[3]))) {
-          LinkTwoByColour(perm[1], perm[2], which(colour.inCommon),
-                          LinkTwoByColour(perm[2], perm[3], which(colour.inCommon), edges))
-        }
-      }
-    }), recursive=FALSE)
-    linkTri <- if (any(ColourInCommon3(1, 2, 3))) {
-      LinkByTriple(1:3, edges)
-    } else {
-      if (sum(ColourInCommon(1, 2) | ColourInCommon(1, 3) | ColourInCommon(2, 3)) > 1) {
-        NULL
-      } else {
-        LinkByTriple(1:3, edges)
-      }
-    }
-    RemoveNullsFromList(c(linkPaths, linkTri))
-  }
-  LinkFourTiles <- function(edges) {
-    legalPath <- apply(paths, 2, function(path) all(
-      LegalToSeparate(path[1], path[3], path[2]),
-      LegalToSeparate(path[1], path[4], path[2]),
-      LegalToSeparate(path[1], path[4], path[3]),
-      LegalToSeparate(path[2], path[4], path[3])
-    ))
-    legalY <- apply(Ys, 2, function(Y) {
-      if (tipsOnTile[Y[2]] < 2) return (FALSE) # as it would be a double dummy otherwise
-      if (any(ColourInCommon4(1, 2, 3, 4))) return (TRUE)
-      if (any(ColourInCommon3(Y[1], Y[2], Y[3]))) {
-        return (!any(c(ColourInCommon(Y[4], Y[1]), ColourInCommon(Y[4], Y[2]), ColourInCommon(Y[4], Y[3]))))
-      }
-      if (any(ColourInCommon3(Y[1], Y[2], Y[4]))) {
-        return (!any(c(ColourInCommon(Y[3], Y[1]), ColourInCommon(Y[3], Y[2]), ColourInCommon(Y[3], Y[4]))))
-      }
-      if (!LegalToSeparate(Y[1], Y[3], Y[2]) || !LegalToSeparate(Y[1], Y[4], Y[2])) return (FALSE)
-      if (any(ColourInCommon3(Y[2], Y[3], Y[4]))) return (TRUE)
-      if (any(ColourInCommon(Y[2], Y[3])) && any(ColourInCommon(Y[2], Y[4]))) return (FALSE)
-      return (TRUE)
-    })
-    
-    c(if (any(legalPath)) {
-      unlist(apply(paths[, legalPath, drop=FALSE], 2,
-                   function (perm) {
-                     LinkTwoTiles(perm[1], perm[2],
-                                  LinkTwoTiles(perm[2], perm[3],
-                                               LinkTwoTiles(perm[3], perm[4], edges)))
-                   }),
-             recursive=FALSE)
-    },
-    if (any(legalY)) {
-      unlist(apply(Ys[, legalY, drop=FALSE], 2,
-                   function (perm) LinkTwoTiles(perm[2], perm[1],
-                                                LinkByTriple(perm[2:4], edges))),
-             recursive=FALSE)
-    },
-    unlist(lapply(1:4, function(hub) {
-      spokes <- (1:4)[-hub]
-      colour.inCommon <- which(colSums(zones[-hub, , drop=FALSE] > 0) > 1)
-      if (LegalToSeparate(spokes[1], spokes[2], hub)
-          && LegalToSeparate(spokes[2], spokes[3], hub)
-          && LegalToSeparate(spokes[1], spokes[3], hub)) {
-        LinkTwoTiles(hub, spokes[1],
-                     LinkTwoTiles(hub, spokes[2],
-                                  LinkTwoTiles(hub, spokes[3], edges)))
-      } else if (length(colour.inCommon) == 1) {
-        tilesWithColour   <- which(zones[, colour.inCommon] > 0)
-        tileWithoutColour <- which(!(1:4 %in% c(hub, tilesWithColour)))
-        if (length(tileWithoutColour) > 0) {
-          LinkTwoByColour(hub, tilesWithColour[1], colour.inCommon,
-                          LinkTwoByColour(hub, tilesWithColour[2], colour.inCommon,
-                                          LinkTwoTiles(hub, tileWithoutColour, edges)))
-        } else {
-          LinkTwoByColour(hub, tilesWithColour[1], colour.inCommon,
-                          LinkTwoByColour(hub, tilesWithColour[2], colour.inCommon,
-                                          LinkTwoByColour(hub, tilesWithColour[3], colour.inCommon, edges)))
-        }
-      } else {
-        #illegal topology
-      }
-    }), recursive=FALSE),
-    DoubleDummyLink(edges)
-    )
-  }
-  
   
   # Count assemblies from within tiles
-  edgesAfterTileInternalsAssembled <- lapply(seq_len(nTiles), function (i) {
-    colsOnThisTile <- which(coloursOnTile[i, ])
-    # edgeOptions is a list of all possible edge configurations.  LEMMA: We can work out the number of consistent trees from edgeOptions
-    edgeOptions <- switch(nColOnTile[i],
-                          list(startEdges[i, ]), # One colour
-                          list(AddBoundaryToTile(colsOnThisTile[1:2], startEdges[i, ])), # Two colours
-                          list( # Three colours
-                            AddBoundaryToTile (colsOnThisTile[c(3,1)], AddBoundaryToTile(colsOnThisTile[c(1,2)], startEdges[i, ])),
-                            AddBoundaryToTile (colsOnThisTile[c(1,2)], AddBoundaryToTile(colsOnThisTile[c(2,3)], startEdges[i, ])),
-                            AddBoundaryToTile (colsOnThisTile[c(1,3)], AddBoundaryToTile(colsOnThisTile[c(3,2)], startEdges[i, ])),
-                            AddTripleDummyTile(colsOnThisTile, startEdges[i, ])
-                          ),
-                          unique(c( # Four colours
-                            lapply(listPaths, AddTilePaths,     startEdges[i, ]),
-                            lapply(   list.Ys, AddTileYs,        startEdges[i, ]),
-                            lapply(       1:4, AddTileStars,     startEdges[i, ]),
-                            lapply(       1:3, AddTileDummyPair, startEdges[i, ])
-                          ))
-    )
-    edgeOptions
-  }) # TODO replace with vapply?
+  edgesAfterTileInternalsAssembled <- lapply(seq_len(2L), function (i) {
+    # edgeOptions is a list of all possible edge configurations.
+    # LEMMA: We can work out the number of consistent trees from edgeOptions
+    if (nColOnTile[i] == 1) {
+      list(startEdges[i, ]) # One colour
+    } else {
+      colsOnThisTile <- which(coloursOnTile[i, ])
+      list(AddBoundaryToTile(colsOnThisTile[1:2], startEdges[i, ])) # Two colours
+    }
+  })
   validAssemblies <- lapply(edgesAfterTileInternalsAssembled,
                             function (x) which(!vapply(x, is.null, logical(1))))
   nAssemblies <- vapply(validAssemblies, length, integer(1))
@@ -1359,23 +1244,16 @@ TreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
   }))
   
   # Now for each possible assembly within each tile, connect the tiles together:
-  edgesAfterTilesConnected <- unique(RemoveNullsFromList(unlist(switch(nTiles,
-                                                                       list(assemblies),
-                                                                       lapply(assemblies, function (ass) LinkTwoTiles(1, 2, ass)),
-                                                                       lapply(assemblies, LinkThreeTiles),
-                                                                       lapply(assemblies, LinkFourTiles)
-  ), recursive=FALSE))) # unique is neccessary; see dat.27 for example case
+  edgesAfterTilesConnected <- unique(RemoveNullsFromList(
+    if (nTiles == 1) {
+      assemblies
+    } else {
+      unlist(lapply(assemblies, function (ass) LinkTwoTiles(ass)),
+             recursive = FALSE)
+    }
+  )) # unique is neccessary; see dat.27 for example case
   
   validTrees <- vapply(edgesAfterTilesConnected, NumberOfTrees, double(1))
-  
-  if (nTiles <= 2) return(round(sum(validTrees)))
-  
-  treeSummary <- lapply(edgesAfterTilesConnected, rowSums, rowSums(edgesAfterTilesConnected[[1]]))
-  mask <- switch(nTiles, 1, 1, mask3, mask4)
-  sumry <- apply(mask, 1, function (b) sum(validTrees[vapply(treeSummary, function (a) all((a == b)[5:35]), logical(1))])); sumry[sumry>0]
-  unlist(apply(mask, 1, function (b) validTrees[vapply(treeSummary, function (a) all((a == b)[5:35]), logical(1))])) # "Numbers"
-  unlist(apply(mask, 1, function (b) which(vapply(treeSummary, function (a) all((a == b)[5:35]), logical(1))))) # "Decode"
-  sum(sumry, na.rm=TRUE); sum(validTrees, na.rm=TRUE)
   
   # Return:
   round(sum(validTrees))
