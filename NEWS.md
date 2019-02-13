@@ -1,5 +1,8 @@
 # TreeSearch 0.2.2.9000 (in development)
 
+## New features
+ - Implement an information theoretic tree distance measure (Smith, in prep)
+
 ## Bug fixes
  - Correct some mistakes in the documentation
 

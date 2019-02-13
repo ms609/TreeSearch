@@ -28,6 +28,7 @@ BugReports: https://github.com/ms609/TreeSearch/issues
 Depends: R (>= 3.4.0)
 Imports: 
     ape (>= 5.0),
+    clue,
     colorspace,
     gmp,
     memoise,
