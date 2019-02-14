@@ -19,7 +19,8 @@ test_that("TreesConsistentWithTwoSplits works", {
   
   Test(8, 3, 0, 315)
   Test(8, 8, 0, NUnrooted(8))
+  Test(8, 3, 3, TreesMatchingSplit(3, 5))
   Test(10, 5, 2, 1575)
   Test(9, 5, 3, 135)
-  Test(8, 7, 3, 315) #!!!
+  Test(8, 7, 3, 315)
 })

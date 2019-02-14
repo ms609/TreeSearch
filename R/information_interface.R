@@ -7,6 +7,8 @@
 #' @concepts Split information
 #' @export
 TreesMatchingSplit <- function (A, B) {
+  if (A == 0) NUnrooted(B) else
+  if (B == 0) NUnrooted(A) else
   NRooted(A) * NRooted(B)
 }
 
