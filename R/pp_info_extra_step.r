@@ -60,8 +60,8 @@ IC1Spr <- function(n) -log2((1+N1Spr(n)) / NUnrooted(n))
 
 #' @describeIn NRooted Log number of unrooted trees
 #' @export
-LnUnrooted <- function (splits) {
-  if ((nSplits <- length(splits)) < 2) return (LnUnrooted1(splits));
+LnUnrootedSplits <- function (splits) {
+  if ((nSplits <- length(splits)) < 2) return (LnUnrooted(splits));
   if (nSplits == 2) return (LnRooted(splits[1]) + LnRooted(splits[2]));
   return (LnUnrootedMult(splits))
 }

@@ -29,17 +29,34 @@ InfoTreeDist <- function (tree1, tree2) {
 
   splits2 <- splits2[rownames(splits1), , drop=FALSE]
 
-  pairScores <- apply(splits1, 2, function (split1) {
+  OneOverlap <- function(A1, A2) {
+    if (A1 < A2) {
+      tmp <- A2
+      A2 <- A1
+      A1 <- tmp
+    }
+    
+    LnRooted(A1) + LnRooted(nTerminals - A1) + LnRooted(A2) + LnRooted(nTerminals - A2) -
+       # Consistent with both = 
+     (LnRooted(A1 - A2 + 1L) + LnRooted(nTerminals - A1) + LnRooted(A2))
+  }
+  
+  lnUnrootedN <- LnUnrooted(nTerminals)
+  
+  pairScores <- (apply(splits1, 2, function (split1) {
     apply(splits2, 2, function (split2) {
-      if (all(split1[split2]) || all(!split1[!split2])) {
-        MutualInformation(nTerminals, sum(split1), sum(split2))
+      if (all(split1 == split2) || all (split1 != split2)) {
+        A1 <- sum(split1)
+        LnRooted(A1) + LnRooted(nTerminals - A1)
+      } else if (all(split1[split2]) || all(!split1[!split2])) {
+        OneOverlap(sum(split1), sum(split2))
       } else if (all(!split1[split2]) || all(split1[!split2])) {
-        MutualInformation(nTerminals, sum(split1), sum(!split2))
+        OneOverlap(sum(split1), sum(!split2))
       } else {
-        0
+        lnUnrootedN
       }
     })
-  })
+  }) - lnUnrootedN) / -log(2)
 
   if (is.null(dim(pairScores))) {
     # Only one split in splits2, so apply returns a vector instead of an array

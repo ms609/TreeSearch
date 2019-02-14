@@ -119,7 +119,7 @@ DoubleFactorial <- function (x) {
 # Memoizing this function makes it MUCH slower...
 #' @describeIn DoubleFactorial Returns the logarithm of the double factorial.
 LogDoubleFactorial <- (function (x) {
-  x[x < 2] <- 1
+  x[x < 2] <- 1 # Much faster than pmax
   if (all(x < 50000L)) {
     # Return from cache
     logDoubleFactorial[x]
