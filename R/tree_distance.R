@@ -44,21 +44,23 @@ InfoTreeDist <- function (tree1, tree2) {
       LnRooted(A1) + LnRooted(nTerminals - A2) - LnRooted(A1 - A2 + 1L) 
     }
   }
-  
-  
-  pairScores <- (apply(splits1, 2, function (split1) {
-    apply(splits2, 2, function (split2) {
-      if (all(split1[split2]) || all(!split1[!split2])) {
-        OneOverlap(sum(split1), sum(split2))
-        
-      } else if (all(!split1[split2]) || all(split1[!split2])) {
-        OneOverlap(sum(split1), sum(!split2))
-        
-      } else {
-        lnUnrootedN
-      }
-    })
-  }) - lnUnrootedN) / -log(2)
+
+  pairScores <- (mapply(function(i, j) {
+        split1 <- splits1[, i]
+        split2 <- splits2[, j]
+        if (all(split1[split2]) || all(!split1[!split2])) {
+          OneOverlap(sum(split1), sum(split2))
+          
+        } else if (all(!split1[split2]) || all(split1[!split2])) {
+          OneOverlap(sum(split1), sum(!split2))
+          
+        } else {
+          lnUnrootedN
+        }
+      }, seq_len(ncol(splits1)), seq_len(ncol(splits2))
+  ) - lnUnrootedN) / -log(2)
+
+
 
   if (is.null(dim(pairScores))) {
     # Only one split in splits2, so apply returns a vector instead of an array
