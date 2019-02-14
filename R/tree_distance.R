@@ -3,7 +3,7 @@
 #' @param tree1,tree2 Trees of class `phylo`, with tips labelled identically.
 #'
 #' @return Returns a numeric that sums the mutual information content of the
-#' optimal matching of bipartitions between two trees.
+#' optimal matching of bipartitions between two trees, following Smith (submitted).
 #' 
 #' @references 
 #'  \insertRef{SmithDist}{TreeSearch}
@@ -13,7 +13,7 @@
 #' @importFrom clue solve_LSAP
 #' @export
 InfoTreeDist <- function (tree1, tree2) {
-  if (any(setdiff(tree1$tip.label, tree2$tip.label))) {
+  if (length(setdiff(tree1$tip.label, tree2$tip.label)) > 0) {
     stop("Tree tips must bear identical labels")
   }
 
