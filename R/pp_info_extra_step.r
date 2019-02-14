@@ -7,46 +7,9 @@
 #' @export
 NamedConstant <- function(X, name) {names(X) <- name; return(X)}
 
-#' Log double factorial
-#' 
-#' Memoised version of phangorn's \code{\link[phangorn]{ldfactorial}}
-#' @param x (integer) number to crunch.
-#' @importFrom phangorn ldfactorial
-#' @importFrom memoise memoise
-#' @export
-LDFactorial <- memoise(ldfactorial)
-
-#' Log double factorial
-#' Handles odd and even inout numbers
-#' @param x a positive integer
-#' @importFrom memoise memoise
-#' @export
-LDFact <- memoise(function (x) {
-  if (x < 2) return (0) 
-  if (x %% 2) {
-    LDFactorial(x)
-  } else {
-    lfactorial(x) - LDFactorial(x - 1L)
-  }
-})
-
-#' Double factorial
-#' @param x a positive integer
-#' @export
-DFact <- memoise(function (x) exp(LDFact(x)))
-
-#' @describeIn DFact Accepts a vector as input
-#' @param ints a vector of integers
-#' @export
-DoubleFactorial <- function (ints) {
-  ints[] <- vapply(ints, DFact, double(1))
-  ints
-}
-
 #' Number of rooted/unrooted trees
 #' These functions return the number of rooted or unrooted trees consistent with a given pattern
 #'  of splits.
-#'
 #' 
 #' Functions starting N return the number of rooted or unrooted trees, functions starting Ln
 #' provide the log of this number.  Calculations follow Carter et al. 1990, Theorem 2.
@@ -69,16 +32,17 @@ DoubleFactorial <- function (ints) {
 #'   NUnrootedMult(c(5,5,3))
 #' 
 #' @export
-NRooted     <- memoise(function (tips, extra=0)  DFact(2 * tips - 3 - extra))
+NRooted     <- function (tips)  DoubleFactorial(2 * tips - 3)
 #' @describeIn NRooted Number of unrooted trees
 #' @export
-NUnrooted1  <- memoise(function (tips, extra=0)  DFact(2 * tips - 5 - extra))
+NUnrooted1  <- function (tips)  DoubleFactorial(2 * tips - 5)
 #' @describeIn NRooted  Log Number of unrooted trees
 #' @export
-LnUnrooted1 <- memoise(function (tips, extra=0) LDFact(2 * tips - 5 - extra))
+LnUnrooted1 <- function (tips) LogDoubleFactorial(2 * tips - 5)
 #' @describeIn NRooted  Log Number of rooted trees
 #' @export
-LnRooted    <- memoise(function (tips, extra=0) LDFact(2 * tips - 3 - extra))
+LnRooted    <- function (tips) LogDoubleFactorial(2 * tips - 3)
+
 
 #' Number of trees on SPR step away
 #' Formula given by Given by Allen and Steel 2001.
@@ -105,7 +69,7 @@ LnUnrooted <- function (splits) {
 #' @export
 NUnrooted  <- function (splits) {
   if ((n.splits <- length(splits)) < 2) return (NUnrooted1(splits));
-  if (n.splits == 2) return (NRooted(splits[1]) *  NRooted(splits[2]))
+  if (n.splits == 2) return (NRooted(splits[1]) * NRooted(splits[2]))
   return ( NUnrootedMult(splits))
 }
 #' @describeIn NRooted Log unrooted mult
@@ -115,14 +79,14 @@ NUnrooted  <- function (splits) {
 LnUnrootedMult <- function (splits) {  # Carter et al. 1990, Theorem 2
   splits <- splits[splits > 0]
   total.tips <- sum(splits)
-  LDFact(2 * total.tips - 5) - LDFact(2 * (total.tips - length(splits)) - 1) + sum(vapply(2 * splits - 3, LDFact, double(1)))
+  LogDoubleFactorial(2 * total.tips - 5) - LogDoubleFactorial(2 * (total.tips - length(splits)) - 1) + sum(vapply(2 * splits - 3, LogDoubleFactorial, double(1)))
 }
 #' @describeIn NRooted Number of unrooted trees (mult)
 #' @export
 NUnrootedMult  <- function (splits) {  # Carter et al. 1990, Theorem 2
   splits <- splits[splits > 0]
   total.tips <- sum(splits)
-  round(DFact(2 * total.tips - 5) / DFact(2 * (total.tips - length(splits)) - 1) * prod(vapply(2 * splits - 3, DFact, double(1))))
+  round(DoubleFactorial(2 * total.tips - 5) / DoubleFactorial(2 * (total.tips - length(splits)) - 1) * prod(vapply(2 * splits - 3, DoubleFactorial, double(1))))
 }
 
 #' Information Content Steps
