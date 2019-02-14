@@ -45,7 +45,7 @@ PrepareDataProfile <- function (dataset, precision = 1e+06, warn = TRUE) {
   cont <- attr(dataset, "contrast")
   nTip <- length(dataset)
   
-  powers.of.2 <- 2L ^ c(0L:(nLevel - 1L))
+  powers.of.2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
   tmp <- cont %*% powers.of.2
   tmp <- as.integer(tmp)
   unlisted <- unlist(dataset, recursive=FALSE, use.names=FALSE)
@@ -77,7 +77,7 @@ PrepareDataIW <- function (dataset) {
   cont <- attr(dataset, "contrast")
   nTip <- length(dataset)
   
-  powers.of.2 <- 2L ^ c(0L:(nLevel - 1L))
+  powers.of.2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
   inappLevel <- which(at$levels == "-")
   cont[, inappLevel] <- 0
   tmp <- as.integer(cont %*% powers.of.2)
