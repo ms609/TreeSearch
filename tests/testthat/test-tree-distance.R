@@ -30,4 +30,14 @@ test_that('Tree differences are correctly calculated', {
                InfoTreeDist(treeSym8, treeTwoSplits))
   expect_equal(MutualInformation(8, 4, 3),
                InfoTreeDist(treeTwoSplits, treeAbc.Defgh))
+  
+  expect_equal(InfoTreeDist(treeSym8, list(treeSym8, treeBal8)), InfoTreeDist(list(treeSym8, treeBal8), treeSym8))
+  expect_equal(matrix(c(InfoTreeDist(treeSym8, treeSym8), InfoTreeDist(treeBal8, treeSym8),
+                      InfoTreeDist(treeSym8, treeAbc.Defgh), InfoTreeDist(treeBal8, treeAbc.Defgh),
+                      InfoTreeDist(treeSym8, treeAbcd.Efgh), InfoTreeDist(treeBal8, treeAbcd.Efgh)),
+                      3L, 2L, byrow=TRUE,
+                      dimnames=list(c('sym', 'abc', 'abcd'), c('sym', 'bal'))), 
+    InfoTreeDist(list(sym=treeSym8, bal=treeBal8), 
+               list(sym=treeSym8, abc=treeAbc.Defgh, abcd=treeAbcd.Efgh)))
+  
 })
