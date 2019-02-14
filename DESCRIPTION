@@ -31,7 +31,6 @@ Imports:
     clue,
     colorspace,
     gmp,
-    memoise,
     phangorn (>= 2.2.1),
     R.cache,
     Rdpack,

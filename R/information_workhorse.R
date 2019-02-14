@@ -80,7 +80,7 @@ UnrootedTreesMatchingSplit <- function (splits) {
 #' @export
 DoubleFactorial <- function (x) exp(LogDoubleFactorial(x))
 
-# Memoize this function at your peril...
+# Memoizing this function makes it MUCH slower...
 #' @importFrom phangorn ldfactorial
 #' @describeIn DoubleFactorial Returns the logarithm of the double factorial.
 LogDoubleFactorial <- (function (x) {

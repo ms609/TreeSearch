@@ -6,7 +6,14 @@
 \usage{
 SplitsCompatible(split1, split2)
 }
-\description{
+\arguments{
+\item{split1, split2}{Logical vectors listing terminals in same order, such that
+each terminal is identified as a member of the ingroup (`TRUE`) or outgroup 
+(`FALSE`) of a bipartition split.
+
 Splits are compatible if they are concave; i.e. they can both be true
-simultaneously.
+simultaneously.}
+}
+\description{
+Are splits compatible?
 }

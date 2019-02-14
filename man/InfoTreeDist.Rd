@@ -11,7 +11,7 @@ InfoTreeDist(tree1, tree2)
 }
 \value{
 Returns a numeric that sums the mutual information content of the
-optimal matching of bipartitions between two trees.
+optimal matching of bipartitions between two trees, following Smith (submitted).
 }
 \description{
 Information-based generalized Robinson-Fould distance between two trees

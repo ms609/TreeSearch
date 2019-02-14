@@ -13,13 +13,13 @@
 These functions return the number of rooted or unrooted trees consistent with a given pattern
  of splits.}
 \usage{
-NRooted(tips, extra = 0)
+NRooted(tips)
 
-NUnrooted1(tips, extra = 0)
+NUnrooted1(tips)
 
-LnUnrooted1(tips, extra = 0)
+LnUnrooted1(tips)
 
-LnRooted(tips, extra = 0)
+LnRooted(tips)
 
 LnUnrooted(splits)
 
@@ -32,9 +32,9 @@ NUnrootedMult(splits)
 \arguments{
 \item{tips}{The number of tips.}
 
-\item{extra}{the number of points at which another branch cannot be added.}
-
 \item{splits}{vector listing the number of taxa in each tree bipartition.}
+
+\item{extra}{the number of points at which another branch cannot be added.}
 }
 \description{
 Functions starting N return the number of rooted or unrooted trees, functions starting Ln
