@@ -2,11 +2,10 @@
 % Please edit documentation in R/pp_info_extra_step.r
 \name{NRooted}
 \alias{NRooted}
-\alias{NUnrooted1}
-\alias{LnUnrooted1}
-\alias{LnRooted}
-\alias{LnUnrooted}
 \alias{NUnrooted}
+\alias{LnUnrooted}
+\alias{LnRooted}
+\alias{NUnrootedSplits}
 \alias{LnUnrootedMult}
 \alias{NUnrootedMult}
 \title{Number of rooted/unrooted trees
@@ -15,15 +14,15 @@ These functions return the number of rooted or unrooted trees consistent with a 
 \usage{
 NRooted(tips)
 
-NUnrooted1(tips)
+NUnrooted(tips)
 
-LnUnrooted1(tips)
+LnUnrooted(splits)
 
 LnRooted(tips)
 
 LnUnrooted(splits)
 
-NUnrooted(splits)
+NUnrootedSplits(splits)
 
 LnUnrootedMult(splits)
 
@@ -42,15 +41,15 @@ provide the log of this number.  Calculations follow Carter et al. 1990, Theorem
 }
 \section{Functions}{
 \itemize{
-\item \code{NUnrooted1}: Number of unrooted trees
+\item \code{NUnrooted}: Number of unrooted trees
 
-\item \code{LnUnrooted1}: Log Number of unrooted trees
+\item \code{LnUnrooted}: Log Number of unrooted trees
 
 \item \code{LnRooted}: Log Number of rooted trees
 
 \item \code{LnUnrooted}: Log number of unrooted trees
 
-\item \code{NUnrooted}: Number of unrooted trees
+\item \code{NUnrootedSplits}: Number of unrooted trees
 
 \item \code{LnUnrootedMult}: Log unrooted mult
 

@@ -50,6 +50,7 @@ InfoTreeDist <- function (tree1, tree2) {
   }
 }
 
+
 #' Are splits compatible?
 #' 
 #' @param split1,split2 Logical vectors listing terminals in same order, such that

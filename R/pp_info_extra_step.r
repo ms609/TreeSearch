@@ -35,10 +35,10 @@ NamedConstant <- function(X, name) {names(X) <- name; return(X)}
 NRooted     <- function (tips)  DoubleFactorial(tips + tips - 3L) # addition faster than 2*
 #' @describeIn NRooted Number of unrooted trees
 #' @export
-NUnrooted1  <- function (tips)  DoubleFactorial(tips + tips - 5L)
+NUnrooted   <- function (tips)  DoubleFactorial(tips + tips - 5L)
 #' @describeIn NRooted  Log Number of unrooted trees
 #' @export
-LnUnrooted1 <- function (tips) LogDoubleFactorial(tips + tips - 5L)
+LnUnrooted  <- function (tips) LogDoubleFactorial(tips + tips - 5L)
 #' @describeIn NRooted  Log Number of rooted trees
 #' @export
 LnRooted    <- function (tips) LogDoubleFactorial(tips + tips - 3L)
@@ -61,16 +61,16 @@ IC1Spr <- function(n) -log2((1+N1Spr(n)) / NUnrooted(n))
 #' @describeIn NRooted Log number of unrooted trees
 #' @export
 LnUnrooted <- function (splits) {
-  if ((n.splits <- length(splits)) < 2) return (LnUnrooted1(splits));
-  if (n.splits == 2) return (LnRooted(splits[1]) + LnRooted(splits[2]));
+  if ((nSplits <- length(splits)) < 2) return (LnUnrooted1(splits));
+  if (nSplits == 2) return (LnRooted(splits[1]) + LnRooted(splits[2]));
   return (LnUnrootedMult(splits))
 }
 #' @describeIn NRooted Number of unrooted trees
 #' @export
-NUnrooted  <- function (splits) {
-  if ((n.splits <- length(splits)) < 2) return (NUnrooted1(splits));
-  if (n.splits == 2) return (NRooted(splits[1]) * NRooted(splits[2]))
-  return ( NUnrootedMult(splits))
+NUnrootedSplits  <- function (splits) {
+  if ((nSplits <- length(splits)) < 2) return (NUnrooted(splits));
+  if (nSplits == 2) return (NRooted(splits[1]) * NRooted(splits[2]))
+  return (NUnrootedMult(splits))
 }
 #' @describeIn NRooted Log unrooted mult
 #' @references 
@@ -206,16 +206,16 @@ ICPerStep <- function(splits, maxIter, warn=TRUE) ICS(min(splits), max(splits), 
 #' @export
 WithOneExtraStep <- function (splits) {
   # Ignore singletons, which can be added at the end...
-  splits.with.splitstables <- splits[splits > 1]
-  if (length(splits.with.splitstables) < 2) return (0)
+  splits.withSplitstables <- splits[splits > 1]
+  if (length(splits.withSplitstables) < 2) return (0)
   
   # TODO test splits: 1 1 2 4, splits: 2 2 4
   sum(vapply(seq_along(splits), function (omit) {
-    backbone.splits <- splits[-omit]
+    backboneSplits <- splits[-omit]
     omitted.tips <- splits[omit]
     if (omitted.tips < 2) return (0)
-    backbone.tips <- sum(backbone.splits)
-    backbones <- NUnrootedMult(backbone.splits)
+    backbone.tips <- sum(backboneSplits)
+    backbones <- NUnrootedMult(backboneSplits)
     backbone.edges <- max(0, 2 * backbone.tips - 3)
     backbone.attachments <- backbone.edges * (backbone.edges - 1)
     prod(sum( # Branch unambiguously splits along first group
@@ -264,12 +264,15 @@ Evaluate <- function (tree, dataset, warn=TRUE) {
   totalSteps <- Fitch(tree, dataset)
   chars <- matrix(unlist(dataset), attr(dataset, 'nr'))
   ambiguousToken <- which(attr(dataset, 'allLevels') == "?")
-  as.splits <- apply(chars, 1, function (x) {
+  asSplits <- apply(chars, 1, function (x) {
     ret <- table(x)
     ret[names(ret) != ambiguousToken] 
   })
-  if (class(as.splits) == 'matrix') as.splits <- lapply(seq_len(ncol(as.splits)), function(i) as.splits[, i])
-  ic.max <- round(vapply(as.splits, function (split) -log(NUnrootedMult(split)/NUnrooted(sum(split)))/log(2), double(1)), 12)
+  if (class(asSplits) == 'matrix') asSplits <- lapply(seq_len(ncol(asSplits)), function(i) asSplits[, i])
+  ic.max <- round(vapply(asSplits,
+                         function (split) -log(NUnrootedMult(split)/
+                                                 NUnrooted(sum(split)))/log(2),
+                         double(1)), 12)
   infoLosses <- apply(chars, 1, ICSteps, ambiguousToken=ambiguousToken, maxIter=1000, warn=warn)
   infoAmounts <- lapply(infoLosses, function(p) {
     #cat(length(p))

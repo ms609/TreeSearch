@@ -12,6 +12,14 @@ TreesMatchingSplit <- function (A, B) {
   NRooted(A) * NRooted(B)
 }
 
+#' @describeIn TreesMatchingSplit Logarithm of Trees Matching Split
+#' @export
+LogTreesMatchingSplit <- function (A, B) {
+  if (A == 0) LnUnrooted(B) else
+  if (B == 0) LnUnrooted(A) else
+  LnRooted(A) + LnRooted(B)
+}
+
 #' Mutual information of two splits
 #' 
 #' @param n Number of terminals
@@ -23,8 +31,8 @@ TreesMatchingSplit <- function (A, B) {
 #' @concept Split information
 #' @export
 MutualInformation <- function(n, A1, A2=A1) {
-  -log2(TreesMatchingSplit(A1, n - A1) * TreesMatchingSplit(A2, n - A2) /
-          (NUnrooted(n) * TreesConsistentWithTwoSplits(n, A1, A2)))
+  (LogTreesMatchingSplit(A1, n - A1) + LogTreesMatchingSplit(A2, n - A2) -
+    LnUnrooted(n) - LogTreesConsistentWithTwoSplits(n, A1, A2)) / log(2)
 }
 
 #' Information content of a split

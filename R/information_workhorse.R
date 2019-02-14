@@ -49,6 +49,19 @@ TreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
   NRooted(n - bigSplit)
 }
 
+#' @describeIn TreesConsistentWithTwoSplits Logarithm thereof
+#' @export
+LogTreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
+  smallSplit <- min(A1, A2)
+  bigSplit <- max(A1, A2)
+  
+  if (smallSplit == 0) return (LogTreesMatchingSplit(bigSplit, n - bigSplit))
+  if (bigSplit == n) return (LogTreesMatchingSplit(smallSplit, n - smallSplit))
+
+  # Return:
+  LnRooted(bigSplit - smallSplit + 1L) + LnRooted(smallSplit) + LnRooted(n - bigSplit)
+}
+
 #' Number of unrooted trees consistent with splits
 #' @template splitsParam
 #' 
