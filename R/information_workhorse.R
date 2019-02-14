@@ -4,7 +4,7 @@
 #'
 #' @inheritParams MutualInformation
 #' @author Martin R. Smith
-#' @concepts Split information
+#' @concept Split information
 #' @export
 TreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
 
