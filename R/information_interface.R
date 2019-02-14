@@ -4,7 +4,7 @@
 #' 
 #' @author Martin R. Smith
 #' 
-#' @concepts Split information
+#' @concept Split information
 #' @export
 TreesMatchingSplit <- function (A, B) {
   if (A == 0) NUnrooted(B) else
@@ -20,7 +20,7 @@ TreesMatchingSplit <- function (A, B) {
 #' @return The information that two splits have in common
 #' 
 #' @author Martin R. Smith
-#' @concepts Split information
+#' @concept Split information
 #' @export
 MutualInformation <- function(n, A1, A2=A1) {
   -log2(TreesMatchingSplit(A1, n - A1) * TreesMatchingSplit(A2, n - A2) /
@@ -33,7 +33,7 @@ MutualInformation <- function(n, A1, A2=A1) {
 #'
 #' @return Information content in bits.
 #' @author Martin R. Smith
-#' @concepts Split information
+#' @concept Split information
 #' @export
 SplitInformation <- function (A, B) {
   -log2(TreesMatchingSplit(A, B) / NUnrooted(A+B))
@@ -48,7 +48,7 @@ SplitInformation <- function (A, B) {
 #'
 #' @inheritParams MutualInformation
 #' @author Martin R. Smith
-#' @concepts Split information
+#' @concept Split information
 #' @export
 JointInformation <- function(n, A1, A2=A1) {
   -log2(TreesConsistentWithTwoSplits(n, A1, A2) / NUnrooted(n))
