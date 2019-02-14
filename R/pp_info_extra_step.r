@@ -32,16 +32,16 @@ NamedConstant <- function(X, name) {names(X) <- name; return(X)}
 #'   NUnrootedMult(c(5,5,3))
 #' 
 #' @export
-NRooted     <- function (tips)  DoubleFactorial(2 * tips - 3)
+NRooted     <- function (tips)  DoubleFactorial(tips + tips - 3L) # addition faster than 2*
 #' @describeIn NRooted Number of unrooted trees
 #' @export
-NUnrooted1  <- function (tips)  DoubleFactorial(2 * tips - 5)
+NUnrooted1  <- function (tips)  DoubleFactorial(tips + tips - 5L)
 #' @describeIn NRooted  Log Number of unrooted trees
 #' @export
-LnUnrooted1 <- function (tips) LogDoubleFactorial(2 * tips - 5)
+LnUnrooted1 <- function (tips) LogDoubleFactorial(tips + tips - 5L)
 #' @describeIn NRooted  Log Number of rooted trees
 #' @export
-LnRooted    <- function (tips) LogDoubleFactorial(2 * tips - 3)
+LnRooted    <- function (tips) LogDoubleFactorial(tips + tips - 3L)
 
 
 #' Number of trees on SPR step away
@@ -78,15 +78,23 @@ NUnrooted  <- function (splits) {
 #' @export
 LnUnrootedMult <- function (splits) {  # Carter et al. 1990, Theorem 2
   splits <- splits[splits > 0]
-  total.tips <- sum(splits)
-  LogDoubleFactorial(2 * total.tips - 5) - LogDoubleFactorial(2 * (total.tips - length(splits)) - 1) + sum(vapply(2 * splits - 3, LogDoubleFactorial, double(1)))
+  totalTips <- sum(splits)
+  
+  # Return:
+  LogDoubleFactorial(totalTips +  totalTips - 5L) -
+    LogDoubleFactorial(2L * (totalTips - length(splits)) - 1L) +
+    sum(LogDoubleFactorial(splits + splits - 3L))
 }
 #' @describeIn NRooted Number of unrooted trees (mult)
 #' @export
 NUnrootedMult  <- function (splits) {  # Carter et al. 1990, Theorem 2
   splits <- splits[splits > 0]
-  total.tips <- sum(splits)
-  round(DoubleFactorial(2 * total.tips - 5) / DoubleFactorial(2 * (total.tips - length(splits)) - 1) * prod(vapply(2 * splits - 3, DoubleFactorial, double(1))))
+  totalTips <- sum(splits)
+  
+  # Return:
+  round(DoubleFactorial(totalTips + totalTips - 5L) /
+          DoubleFactorial(2L * (totalTips - length(splits)) - 1L)
+        * prod(DoubleFactorial(splits + splits - 3L)))
 }
 
 #' Information Content Steps
@@ -152,11 +160,11 @@ ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25, maxIter = 10
     # cat(c(round(analyticIc0, 3), 'bits @ 0 extra steps;', round(analyticIc1, 3),
     #    '@ 1; attempting', nIter, 'iterations.\n'))
   }
-
+  
   morphyObj <- SingleCharMorphy(char)
   on.exit(morphyObj <- UnloadMorphy(morphyObj))
   steps <- vapply(logical(maxIter), function (xx) RandomTreeScore(charLen, morphyObj), integer(1))
-
+  
   analyticSteps <- nIter * c(nNoExtraSteps) / NUnrooted(sum(split))
   #analyticSteps <- nIter * c(nNoExtraSteps, nOneExtraStep) / NUnrooted(sum(split))
   
@@ -183,7 +191,7 @@ ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25, maxIter = 10
 #' @keywords internal
 #' @export
 ICS <- addMemoization(function(a, b, m, warn=TRUE)
-                        ICSteps(c(rep(1, a), rep(2, b)), maxIter=m, warn=warn))
+  ICSteps(c(rep(1, a), rep(2, b)), maxIter=m, warn=warn))
 
 #' Information content per step
 #' @template splitsParam
@@ -213,18 +221,18 @@ WithOneExtraStep <- function (splits) {
     prod(sum( # Branch unambiguously splits along first group
       vapply(1:(omitted.tips - 1), function (first.group) { # For each way of splitsting up the omitted tips, e.g. 1|16, 2|15, 3|14, etc
         choose(omitted.tips, first.group) * 
-        NRooted(first.group) * NRooted(omitted.tips - first.group)
+          NRooted(first.group) * NRooted(omitted.tips - first.group)
       }, double(1))
     ) / 2, backbone.attachments, backbones) + prod(
-    # Second group added adjacent to first group, thus new edge could belong to the backbone or the omitted tip group
-    sum(vapply(1:(omitted.tips - 1), function (first.group) { # For each way of splitsting up the omitted tips, e.g. 1|16, 2|15, 3|14, etc
+      # Second group added adjacent to first group, thus new edge could belong to the backbone or the omitted tip group
+      sum(vapply(1:(omitted.tips - 1), function (first.group) { # For each way of splitsting up the omitted tips, e.g. 1|16, 2|15, 3|14, etc
         choose(omitted.tips, first.group) * 
-        NRooted(first.group) * NRooted(omitted.tips - first.group) # backbone tips have already been splits - when we selected a branch
+          NRooted(first.group) * NRooted(omitted.tips - first.group) # backbone tips have already been splits - when we selected a branch
       }, double(1))) / 2,
-    backbones,
-    backbone.edges,
-    2 # left or right of group addition location
-    / 2 # Will be counted again when 'added group' becomes the 'backbone group'
+      backbones,
+      backbone.edges,
+      2 # left or right of group addition location
+      / 2 # Will be counted again when 'added group' becomes the 'backbone group'
     )
     
   }, double(1))
@@ -315,7 +323,7 @@ Evaluate <- function (tree, dataset, warn=TRUE) {
 InfoAmounts <- function (tokenTable, precision=1e+06, warn=TRUE) {
   # The below is simplified from info_extra_step.r::evaluate
   if (length(unique(as.integer(tokenTable))) > 2) stop ("Cannot calculate information amouts for",
-        "characters unless only tokens are 1 and 2. See ?InfoAmounts.")
+                                                        "characters unless only tokens are 1 and 2. See ?InfoAmounts.")
   splits <- apply(tokenTable, 1, table)
   infoLosses <- apply(splits, 2, ICPerStep, maxIter=precision, warn=warn)
   

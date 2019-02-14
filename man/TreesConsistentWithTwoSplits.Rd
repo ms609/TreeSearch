@@ -19,3 +19,4 @@ Number of trees consistent with two splits
 \author{
 Martin R. Smith
 }
+\concept{Split information}

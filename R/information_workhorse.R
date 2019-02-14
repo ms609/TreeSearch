@@ -58,16 +58,19 @@ TreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
 UnrootedTreesMatchingSplit <- function (splits) {
   splits <- splits[splits > 0L]
   totalTips <- sum(splits)
-  round(prod(DoubleFactorial(2L * totalTips - 5L),
-             DoubleFactorial(2L * splits - 3L)) /
-          DoubleFactorial(2L * (totalTips - length(splits)) - 1L))
+  tipsMinusLengthSplits <- totalTips - length(splits)
+  # use exp and log as it's just as fast, but less likely to overflow to Inf
+  exp(sum(LogDoubleFactorial(totalTips + totalTips - 5L),
+          LogDoubleFactorial(splits + splits - 3L)) -
+      LogDoubleFactorial(tipsMinusLengthSplits + tipsMinusLengthSplits - 1L))
 }
+
 
 #' Double Factorial
 #' 
 #' @param n Vector of integers.
 #' 
-#' @return Calculates the double factorial, n x (n - 2) x (n - 4) x (n - 6) x ...
+#' @return Returns the double factorial, n x (n - 2) x (n - 4) x (n - 6) x ...
 #' 
 #' @examples {
 #' DoubleFactorial (0) # Return 1 if n < 2
@@ -78,16 +81,49 @@ UnrootedTreesMatchingSplit <- function (splits) {
 #' 
 #' @author Martin R. Smith
 #' @export
-DoubleFactorial <- function (x) exp(LogDoubleFactorial(x))
+DoubleFactorial <- function (x) {
+  if (any(x > 300)) stop("301!! is too large to store as an integer. Use LogDoubleFactorial instead.")
+  
+  x[x < 2] <- 1
+  doubleFactorial[x]
+  
+  #
+  #odds <- as.logical(x %% 2)
+  #
+  #oddX <- x[odds]
+  #xPlusOneOverTwo <- (oddX + 1) / 2
+  #evenX <- x[!odds]
+  #xOverTwo <- evenX / 2
+  #
+  #ret <- integer(length(x))
+  #ret[odds] <- gamma(oddX + 1L) / (gamma(xPlusOneOverTwo) * 2^(xPlusOneOverTwo - 1L))
+  #ret[!odds] <- evenX * gamma(xOverTwo) * 2^(xOverTwo - 1L)
+  #
+  ## Return:
+  #ret
+}
 
 # Memoizing this function makes it MUCH slower...
-#' @importFrom phangorn ldfactorial
 #' @describeIn DoubleFactorial Returns the logarithm of the double factorial.
 LogDoubleFactorial <- (function (x) {
-  ifelse(x < 2, 0,
-         ifelse(x %% 2,
-                ldfactorial(x),
-                lfactorial(x) - ldfactorial(x - 1L)
-         )
-  )
+  x[x < 2] <- 1
+  if (all(x < 50000L)) {
+    # Return from cache
+    logDoubleFactorial[x]
+  } else {
+    
+    odds <- as.logical(x %% 2)
+    
+    oddX <- x[odds]
+    xPlusOneOverTwo <- (oddX + 1) / 2
+    evenX <- x[!odds]
+    xOverTwo <- evenX / 2
+    
+    ret <- integer(length(x))
+    ret[odds] <- lgamma(oddX + 1L) - (lgamma(xPlusOneOverTwo) + (xPlusOneOverTwo - 1) * log(2))
+    ret[!odds] <- log(evenX) + lgamma(xOverTwo) + (xOverTwo - 1) * log(2)
+    
+    # Return:
+    ret
+  }
 })

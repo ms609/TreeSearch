@@ -29,6 +29,9 @@ DoubleFactorial (0) # Return 1 if n < 2
 DoubleFactorial (2) # 2
 DoubleFactorial (5) # 1 x 3 x 5
 DoubleFactorial (8) # 2 x 4 x 6 x 8
+
+# But it's quicker to use:
+TreeSearch::doubleFactorial[8]
 }
 
 }
