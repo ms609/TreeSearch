@@ -26,6 +26,7 @@ InfoTreeDist <- function (tree1, tree2) {
   }
 
   nTerminals <- nrow(splits1)
+  lnUnrootedN <- LnUnrooted(nTerminals)
 
   splits2 <- splits2[rownames(splits1), , drop=FALSE]
 
@@ -36,22 +37,27 @@ InfoTreeDist <- function (tree1, tree2) {
       A1 <- tmp
     }
     
-    LnRooted(A1) + LnRooted(nTerminals - A1) + LnRooted(A2) + LnRooted(nTerminals - A2) -
-       # Consistent with both = 
-     (LnRooted(A1 - A2 + 1L) + LnRooted(nTerminals - A1) + LnRooted(A2))
+    #LnRooted(A1) + LnRooted(nTerminals - A1) + LnRooted(A2) + LnRooted(nTerminals - A2) -
+    #   # Consistent with both = 
+    # (LnRooted(A1 - A2 + 1L) + LnRooted(nTerminals - A1) + LnRooted(A2))
+    # Simplifies to:
+    
+    LnRooted(A1) + LnRooted(nTerminals - A2) - LnRooted(A1 - A2 + 1L) 
   }
   
-  lnUnrootedN <- LnUnrooted(nTerminals)
   
   pairScores <- (apply(splits1, 2, function (split1) {
     apply(splits2, 2, function (split2) {
       if (all(split1 == split2) || all (split1 != split2)) {
         A1 <- sum(split1)
         LnRooted(A1) + LnRooted(nTerminals - A1)
+        
       } else if (all(split1[split2]) || all(!split1[!split2])) {
         OneOverlap(sum(split1), sum(split2))
+        
       } else if (all(!split1[split2]) || all(split1[!split2])) {
         OneOverlap(sum(split1), sum(!split2))
+        
       } else {
         lnUnrootedN
       }
