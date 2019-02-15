@@ -33,6 +33,7 @@ Imports:
     gmp,
     phangorn (>= 2.2.1),
     R.cache,
+    rlang,
     Rdpack,
     stats
 Suggests:
