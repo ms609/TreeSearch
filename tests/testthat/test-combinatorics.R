@@ -6,4 +6,9 @@ test_that("Factorials are calculated correctly", {
   expect_equal(doubleFactorials[1:20], DoubleFactorial(1:20))
   expect_equal(LogDoubleFactorial(-1:10), log(DoubleFactorial(-1:10)))
   expect_equal(logDoubleFactorials[1:20], logDoubleFactorials[1:20])
+  expect_equal(LogDoubleFactorial(50001) - log(50001), LogDoubleFactorial.int(49999L))
+  expect_equal(LogDoubleFactorial.int(-1), 0L)
+  
+  expect_error(DoubleFactorial(301))
+  
 })

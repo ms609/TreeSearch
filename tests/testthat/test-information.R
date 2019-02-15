@@ -18,10 +18,16 @@ test_that("UnrootedTreesMatchingSplit works", {
 test_that("TreesConsistentWithTwoSplits works", {
   
   Test <- function (n, a, b, score) {
+    logScore <- log(score)
+    
     expect_equal(score, TreesConsistentWithTwoSplits(n, a, b))
     expect_equal(score, TreesConsistentWithTwoSplits(n, b, a))
     expect_equal(score, TreesConsistentWithTwoSplits(n, n - a, n - b))
     expect_equal(score, TreesConsistentWithTwoSplits(n, n - b, n - a))
+    expect_equal(logScore, LogTreesConsistentWithTwoSplits(n, a, b))
+    expect_equal(logScore, LogTreesConsistentWithTwoSplits(n, b, a))
+    expect_equal(logScore, LogTreesConsistentWithTwoSplits(n, n - a, n - b))
+    expect_equal(logScore, LogTreesConsistentWithTwoSplits(n, n - b, n - a))
   }
   
   Test(8, 3, 0, 315)
