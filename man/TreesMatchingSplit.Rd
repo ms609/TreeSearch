@@ -2,9 +2,12 @@
 % Please edit documentation in R/information_interface.R
 \name{TreesMatchingSplit}
 \alias{TreesMatchingSplit}
+\alias{LogTreesMatchingSplit}
 \title{Number of trees matching a bipartition split}
 \usage{
 TreesMatchingSplit(A, B)
+
+LogTreesMatchingSplit(A, B)
 }
 \arguments{
 \item{A, B}{Number of taxa on each side of split}
@@ -12,6 +15,11 @@ TreesMatchingSplit(A, B)
 \description{
 Number of trees matching a bipartition split
 }
+\section{Functions}{
+\itemize{
+\item \code{LogTreesMatchingSplit}: Logarithm of Trees Matching Split
+}}
+
 \author{
 Martin R. Smith
 }

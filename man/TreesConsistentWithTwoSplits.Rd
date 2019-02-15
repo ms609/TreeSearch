@@ -2,9 +2,12 @@
 % Please edit documentation in R/information_workhorse.R
 \name{TreesConsistentWithTwoSplits}
 \alias{TreesConsistentWithTwoSplits}
+\alias{LogTreesConsistentWithTwoSplits}
 \title{Number of trees consistent with two splits}
 \usage{
 TreesConsistentWithTwoSplits(n, A1, A2 = A1)
+
+LogTreesConsistentWithTwoSplits(n, A1, A2 = A1)
 }
 \arguments{
 \item{n}{Number of terminals}
@@ -16,6 +19,11 @@ TreesConsistentWithTwoSplits(n, A1, A2 = A1)
 \description{
 Number of trees consistent with two splits
 }
+\section{Functions}{
+\itemize{
+\item \code{LogTreesConsistentWithTwoSplits}: Logarithm thereof
+}}
+
 \author{
 Martin R. Smith
 }
