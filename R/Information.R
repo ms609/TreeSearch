@@ -1,4 +1,66 @@
-# Interfaces to this function are in information_interface.R
+#' Number of trees matching a bipartition split
+#' 
+#' @param A,B Number of taxa on each side of split
+#' 
+#' @author Martin R. Smith
+#' 
+#' @concept Split information
+#' @export
+TreesMatchingSplit <- function (A, B) {
+  if (A == 0) NUnrooted(B) else
+  if (B == 0) NUnrooted(A) else
+  NRooted(A) * NRooted(B)
+}
+
+#' @describeIn TreesMatchingSplit Logarithm of Trees Matching Split
+#' @export
+LogTreesMatchingSplit <- function (A, B) {
+  if (A == 0) LnUnrooted.int(B) else
+  if (B == 0) LnUnrooted.int(A) else
+  LnRooted.int(A) + LnRooted.int(B)
+}
+
+#' Mutual information of two splits
+#' 
+#' @param n Number of terminals
+#' @param A1,A2 Number of terminals on overlapping side of each split.
+#' 
+#' @return The information that two splits have in common
+#' 
+#' @author Martin R. Smith
+#' @concept Split information
+#' @export
+MutualInformation <- function(n, A1, A2=A1) {
+  (LogTreesMatchingSplit(A1, n - A1) + LogTreesMatchingSplit(A2, n - A2) -
+    LnUnrooted(n) - LogTreesConsistentWithTwoSplits(n, A1, A2)) / -log(2)
+}
+
+#' Information content of a split
+#'
+#' @inheritParams TreesMatchingSplit
+#'
+#' @return Information content in bits.
+#' @author Martin R. Smith
+#' @concept Split information
+#' @export
+SplitInformation <- function (A, B) {
+  -log2(TreesMatchingSplit(A, B) / NUnrooted(A+B))
+}
+
+#' Joint Information of two splits
+#'
+#' Because some information is common to both splits (`MutualInformation`),
+#' the joint information of two splits will be less than the sum of the
+#' information of the splits taken separately -- unless the splits are
+#' contradictory.
+#'
+#' @inheritParams MutualInformation
+#' @author Martin R. Smith
+#' @concept Split information
+#' @export
+JointInformation <- function(n, A1, A2=A1) {
+  -log2(TreesConsistentWithTwoSplits(n, A1, A2) / NUnrooted(n))
+}
 
 #' Number of trees consistent with two splits
 #'
@@ -7,7 +69,7 @@
 #' @concept Split information
 #' @export
 TreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
-
+  
   smallSplit <- min(A1, A2)
   bigSplit <- max(A1, A2)
   
@@ -45,8 +107,8 @@ TreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
   
   # Return:
   NRooted(overlap + 1L) * 
-  NRooted(smallSplit) *
-  NRooted(n - bigSplit)
+    NRooted(smallSplit) *
+    NRooted(n - bigSplit)
 }
 
 #' @describeIn TreesConsistentWithTwoSplits Logarithm thereof
@@ -57,7 +119,7 @@ LogTreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
   
   if (smallSplit == 0) return (LogTreesMatchingSplit(bigSplit, n - bigSplit))
   if (bigSplit == n) return (LogTreesMatchingSplit(smallSplit, n - smallSplit))
-
+  
   # Return:
   LnRooted(bigSplit - smallSplit + 1L) + LnRooted(smallSplit) + LnRooted(n - bigSplit)
 }
@@ -75,83 +137,5 @@ UnrootedTreesMatchingSplit <- function (splits) {
   # use exp and log as it's just as fast, but less likely to overflow to Inf
   exp(sum(LogDoubleFactorial(totalTips + totalTips - 5L),
           LogDoubleFactorial(splits + splits - 3L)) -
-      LogDoubleFactorial(tipsMinusLengthSplits + tipsMinusLengthSplits - 1L))
-}
-
-globalVariables(c('doubleFactorials', 'logDoubleFactorials'), 'TreeSearch')
-
-#' Double Factorial
-#' 
-#' @param n Vector of integers.
-#' 
-#' @return Returns the double factorial, n x (n - 2) x (n - 4) x (n - 6) x ...
-#' 
-#' @examples {
-#' DoubleFactorial (-4:0) # Return 1 if n < 2
-#' DoubleFactorial (2) # 2
-#' DoubleFactorial (5) # 1 x 3 x 5
-#' exp(LogDoubleFactorial.int (8)) # 2 x 4 x 6 x 8
-#' 
-#' }
-#' 
-#' @author Martin R. Smith
-#' @concept Double factorial
-#' @export
-DoubleFactorial <- function (n) {
-  if (any(n > 300)) stop("301!! is too large to store as an integer. Use LogDoubleFactorial instead.")
-  
-  n[n < 2] <- 1
-  doubleFactorials[n]
-  
-  #
-  #odds <- as.logical(x %% 2)
-  #
-  #oddX <- x[odds]
-  #xPlusOneOverTwo <- (oddX + 1) / 2
-  #evenX <- x[!odds]
-  #xOverTwo <- evenX / 2
-  #
-  #ret <- integer(length(x))
-  #ret[odds] <- gamma(oddX + 1L) / (gamma(xPlusOneOverTwo) * 2^(xPlusOneOverTwo - 1L))
-  #ret[!odds] <- evenX * gamma(xOverTwo) * 2^(xOverTwo - 1L)
-  #
-  ## Return:
-  #ret
-}
-
-# Memoizing this function makes it MUCH slower...
-#' @describeIn DoubleFactorial Returns the logarithm of the double factorial.
-LogDoubleFactorial <- (function (n) {
-  n[n < 2] <- 1 # Much faster than pmax
-  if (any(n > 49999L)) {
-    
-    odds <- as.logical(n %% 2)
-    
-    oddN <- n[odds]
-    nPlusOneOverTwo <- (oddN + 1) / 2
-    evenN <- n[!odds]
-    nOverTwo <- evenN / 2
-    
-    ret <- integer(length(n))
-    ret[odds] <- lgamma(oddN + 1L) - (lgamma(nPlusOneOverTwo) + (nPlusOneOverTwo - 1) * log(2))
-    ret[!odds] <- log(evenN) + lgamma(nOverTwo) + (nOverTwo - 1) * log(2)
-    
-    # Return:
-    ret
-    
-  } else {
-    # Return from cache
-    logDoubleFactorials[n]
-  }
-})
-
-#' @describeIn DoubleFactorial Slightly faster, when x is known to be length one
-#' and below 50001
-#' @export
-LogDoubleFactorial.int <- function (n) {
-  if (n < 2) {
-    0
-  } else {
-    logDoubleFactorials[n]
-  }
+        LogDoubleFactorial(tipsMinusLengthSplits + tipsMinusLengthSplits - 1L))
 }

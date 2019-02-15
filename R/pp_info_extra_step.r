@@ -1,67 +1,6 @@
-#' Named constant
-#' @param X a vector.
-#' @param name name to apply to the vector.
-#' @return the vector, named as requested
-#'
-#' @author Martin R. Smith
-#' @export
-NamedConstant <- function(X, name) {names(X) <- name; return(X)}
-
-#' Number of rooted/unrooted trees
-#' These functions return the number of rooted or unrooted trees consistent with a given pattern
-#'  of splits.
-#' 
-#' Functions starting N return the number of rooted or unrooted trees, functions starting Ln
-#' provide the log of this number.  Calculations follow Carter et al. 1990, Theorem 2.
-#'
-#' @param tips The number of tips.
-#' @param splits vector listing the number of taxa in each tree bipartition.
-#'
-#' @author Martin R. Smith
-#' 
-#' @references 
-#'  \insertRef{Carter1990}{TreeSearch}
-#'  
-#' @examples
-#'   NRooted(10)
-#'   NUnrooted(10)
-#'   LnRooted(10)
-#'   LnUnrooted(10)
-#'   # Number of trees consistent with a character whose states are 00000 11111 222
-#'   NUnrootedMult(c(5,5,3))
-#' 
-#' @export
-NRooted     <- function (tips)  DoubleFactorial(tips + tips - 3L) # addition faster than 2*
-#' @describeIn NRooted Number of unrooted trees
-#' @export
-NUnrooted   <- function (tips)  DoubleFactorial(tips + tips - 5L)
-#' @describeIn NRooted  Log Number of unrooted trees
-#' @export
-LnUnrooted  <- function (tips) LogDoubleFactorial(tips + tips - 5L)
-LnUnrooted.int <- function (tips) if (tips < 3) 0 else {
-  logDoubleFactorials[tips + tips - 5L]
-}
-#' @describeIn NRooted  Log Number of rooted trees
-#' @export
-LnRooted    <- function (tips) LogDoubleFactorial(tips + tips - 3L)
-LnRooted.int <- function (tips) {
-  if (tips < 2) 0 else logDoubleFactorials[tips + tips - 3L]
-}
-
-
-#' Number of trees on SPR step away
-#' Formula given by Given by Allen and Steel 2001.
-#'
-#' @param n Number of tips in tree.
-#' @references 
-#'  \insertRef{Allen2001}{TreeSearch}
-#' 
-#' @export
-N1Spr <- function (n) if (n > 2) 2 * (n - 3) * ((2 * n) - 7) else 0 
-
 #' @describeIn N1Spr Information content of trees 0 or 1 SPR step from tree with n tips.
 #' @export
-IC1Spr <- function(n) -log2((1+N1Spr(n)) / NUnrooted(n)) 
+IC1Spr <- function(n) -log2((1L + N1Spr(n)) / NUnrooted(n)) 
 
 #' @describeIn NRooted Log number of unrooted trees
 #' @export
@@ -146,12 +85,16 @@ ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25, maxIter = 10
   
   split <- sort(as.integer(table(char)))
   minSteps <- length(split) - 1
-  if (minSteps == 0) return (NamedConstant(1, 0))
+  if (minSteps == 0) return (c('0' = 1L))
   
   nNoExtraSteps <- NUnrootedMult(split)
   #nOneExtraStep <- WithOneExtraStep(split)
   proportionViable <- NUnrooted(charLen) / nNoExtraSteps
-  if (proportionViable == 1) return(NamedConstant(1, minSteps))
+  if (proportionViable == 1) {
+    ret <- 1L
+    names(ret) <- minSteps
+    return(ret)
+  }
   
   nIter <- min(maxIter, round(expectedMinima * proportionViable))
   if (nIter == maxIter && warn) warning ("Will truncate number of iterations at maxIter = ", maxIter)
