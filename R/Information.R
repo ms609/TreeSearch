@@ -31,9 +31,10 @@ LogTreesMatchingSplit <- function (A, B) {
 #' @concept Split information
 #' @export
 MutualInformation <- function(n, A1, A2=A1) {
-  (LogTreesMatchingSplit(A1, n - A1) + LogTreesMatchingSplit(A2, n - A2) -
-   LogTreesConsistentWithTwoSplits(n, A1, A2) -
-  LnUnrooted(n)) / -log(2)
+  (LogTreesMatchingSplit(A1, n - A1) 
+   + LogTreesMatchingSplit(A2, n - A2)
+   - LogTreesConsistentWithTwoSplits(n, A1, A2) 
+   - LnUnrooted(n)) / -log(2)
 }
 
 #' Information content of a split
