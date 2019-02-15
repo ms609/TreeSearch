@@ -78,9 +78,7 @@ UnrootedTreesMatchingSplit <- function (splits) {
       LogDoubleFactorial(tipsMinusLengthSplits + tipsMinusLengthSplits - 1L))
 }
 
-
-doubleFactorialCache <- .data$doubleFactorial
-logDoubleFactorialCache <- .data$logDoubleFactorial
+globalVariables(c('doubleFactorial', 'logDoubleFactorial'), 'TreeSearch')
 
 #' Double Factorial
 #' 
@@ -96,14 +94,12 @@ logDoubleFactorialCache <- .data$logDoubleFactorial
 #' }
 #' 
 #' @author Martin R. Smith
-# .data is used in lines above to create global cache variables
-#' @importFrom rlang .data 
 #' @export
 DoubleFactorial <- function (x) {
   if (any(x > 300)) stop("301!! is too large to store as an integer. Use LogDoubleFactorial instead.")
   
   x[x < 2] <- 1
-  doubleFactorialCache[x]
+  doubleFactorial[x]
   
   #
   #odds <- as.logical(x %% 2)
@@ -127,7 +123,7 @@ LogDoubleFactorial <- (function (x) {
   x[x < 2] <- 1 # Much faster than pmax
   if (all(x < 50000L)) {
     # Return from cache
-    logDoubleFactorialCache[x]
+    logDoubleFactorial[x]
   } else {
     
     odds <- as.logical(x %% 2)
