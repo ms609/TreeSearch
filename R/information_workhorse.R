@@ -96,12 +96,13 @@ logDoubleFactorial <- TreeSearch::logDoubleFactorial
 #' }
 #' 
 #' @author Martin R. Smith
+#' @importFrom rlang .data
 #' @export
 DoubleFactorial <- function (x) {
   if (any(x > 300)) stop("301!! is too large to store as an integer. Use LogDoubleFactorial instead.")
   
   x[x < 2] <- 1
-  doubleFactorial[x]
+  .data$doubleFactorial[x]
   
   #
   #odds <- as.logical(x %% 2)
@@ -125,7 +126,7 @@ LogDoubleFactorial <- (function (x) {
   x[x < 2] <- 1 # Much faster than pmax
   if (all(x < 50000L)) {
     # Return from cache
-    logDoubleFactorial[x]
+    .data$logDoubleFactorial[x]
   } else {
     
     odds <- as.logical(x %% 2)
