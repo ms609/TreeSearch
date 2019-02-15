@@ -3,7 +3,7 @@
 \name{N1Spr}
 \alias{N1Spr}
 \alias{IC1Spr}
-\title{Number of trees on SPR step away
+\title{Number of trees one SPR step away
 Formula given by Allen and Steel (2001).}
 \usage{
 N1Spr(n)
@@ -14,7 +14,7 @@ IC1Spr(n)
 \item{n}{Number of tips in tree.}
 }
 \description{
-Number of trees on SPR step away
+Number of trees one SPR step away
 Formula given by Allen and Steel (2001).
 }
 \section{Functions}{
