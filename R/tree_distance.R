@@ -46,22 +46,23 @@ InfoTreeDist <- function (tree1, tree2) {
 #' @param splits1,splits2 Splits [#TODO document properly]
 #' @export
 MutualSplitInformation <- function (splits1, splits2) {
-  names1 <- rownames(splits1)
-  names2 <- rownames(splits2)
-  if (all(names1 %in% names2) && length(names2) == length(names1)) {
-    stop("Split rows must bear identical labels")
-  }
   
-  if (ncol(splits1) < ncol(splits2)) {
+  if (dim(splits1)[2] < dim(splits2)[2]) {
     tmp <- splits1
     splits1 <- splits2
     splits2 <- tmp
   }
   
-  nTerminals <- nrow(splits1)
+  dimSplits1 <- dim(splits1)
+  dimSplits2 <- dim(splits2)
+  nTerminals <- dimSplits1[1]
   lnUnrootedN <- LnUnrooted(nTerminals)
   
   splits2 <- splits2[rownames(splits1), , drop=FALSE]
+  
+  if (dimSplits2[1] != nTerminals) {
+    stop("Split rows must bear identical labels")
+  }
   
   OneOverlap <- function(A1, A2) {
     if (A1 == A2) {
@@ -78,8 +79,8 @@ MutualSplitInformation <- function (splits1, splits2) {
     }
   }
   
-  nSplits1 <- ncol(splits1)
-  nSplits2 <- ncol(splits2)
+  nSplits1 <- dimSplits1[2]
+  nSplits2 <- dimSplits2[2]
   pairScores <- matrix((mapply(function(i, j) {
     split1 <- splits1[, i]
     split2 <- splits2[, j]
