@@ -39,9 +39,15 @@ NUnrooted   <- function (tips)  DoubleFactorial(tips + tips - 5L)
 #' @describeIn NRooted  Log Number of unrooted trees
 #' @export
 LnUnrooted  <- function (tips) LogDoubleFactorial(tips + tips - 5L)
+LnUnrooted.int <- function (tips) if (tips < 3) 0 else {
+  logDoubleFactorial[tips + tips - 5L]
+}
 #' @describeIn NRooted  Log Number of rooted trees
 #' @export
 LnRooted    <- function (tips) LogDoubleFactorial(tips + tips - 3L)
+LnRooted.int <- function (tips) {
+  if (tips < 2) 0 else logDoubleFactorial[tips + tips - 3L]
+}
 
 
 #' Number of trees on SPR step away

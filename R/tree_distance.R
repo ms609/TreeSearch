@@ -56,7 +56,7 @@ MutualSplitInformation <- function (splits1, splits2) {
   dimSplits1 <- dim(splits1)
   dimSplits2 <- dim(splits2)
   nTerminals <- dimSplits1[1]
-  lnUnrootedN <- LnUnrooted(nTerminals)
+  lnUnrootedN <- LnUnrooted.int(nTerminals)
   
   splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
   splits1 <- unname(splits1) # split1[split2] faster without names
@@ -69,7 +69,7 @@ MutualSplitInformation <- function (splits1, splits2) {
   OneOverlap <- function(A1, A2) {
     if (A1 == A2) {
       # Return:
-      LnRooted(A1) + LnRooted(nTerminals - A2)
+      LnRooted.int(A1) + LnRooted.int(nTerminals - A2)
     } else {
       if (A1 < A2) {
         tmp <- A2
@@ -77,7 +77,7 @@ MutualSplitInformation <- function (splits1, splits2) {
         A1 <- tmp
       }
       # Return:
-      LnRooted(A1) + LnRooted(nTerminals - A2) - LnRooted(A1 - A2 + 1L) 
+      LnRooted.int(A1) + LnRooted.int(nTerminals - A2) - LnRooted.int(A1 - A2 + 1L) 
     }
   }
   

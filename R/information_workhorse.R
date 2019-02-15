@@ -142,3 +142,14 @@ LogDoubleFactorial <- (function (x) {
     logDoubleFactorial[x]
   }
 })
+
+#' @describeIn DoubleFactorial Slightly faster, when x is known to be length one
+#' and below 50001
+#' @export
+LogDoubleFactorial.int <- function (x) {
+  if (x < 2) {
+    0
+  } else {
+    logDoubleFactorial[x]
+  }
+}
