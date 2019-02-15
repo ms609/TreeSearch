@@ -125,4 +125,4 @@ LnRooted.int <- function (tips) {
 #'  \insertRef{Allen2001}{TreeSearch}
 #' 
 #' @export
-N1Spr <- function (n) if (n > 2L) 2L * (n - 3L) * ((n + n) - 7L) else 0L
+N1Spr <- function (n) if (n > 3L) (n + n - 6L) * (n + n - 7L) else 0L
