@@ -117,7 +117,7 @@ LnRooted.int <- function (tips) {
   if (tips < 2) 0 else logDoubleFactorials[tips + tips - 3L]
 }
 
-#' Number of trees on SPR step away
+#' Number of trees one SPR step away
 #' Formula given by Allen and Steel (2001).
 #'
 #' @param n Number of tips in tree.
