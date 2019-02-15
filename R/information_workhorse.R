@@ -79,7 +79,9 @@ UnrootedTreesMatchingSplit <- function (splits) {
 }
 
 
-data("doubleFactorial")
+doubleFactorial <- TreeSearch::doubleFactorial
+logDoubleFactorial <- TreeSearch::logDoubleFactorial
+
 #' Double Factorial
 #' 
 #' @param n Vector of integers.
@@ -117,7 +119,6 @@ DoubleFactorial <- function (x) {
   #ret
 }
 
-data("logDoubleFactorial")
 # Memoizing this function makes it MUCH slower...
 #' @describeIn DoubleFactorial Returns the logarithm of the double factorial.
 LogDoubleFactorial <- (function (x) {
