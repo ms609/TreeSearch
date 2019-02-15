@@ -46,7 +46,9 @@ InfoTreeDist <- function (tree1, tree2) {
 #' @param splits1,splits2 Splits [#TODO document properly]
 #' @export
 MutualSplitInformation <- function (splits1, splits2) {
-  if (length(setdiff(rownames(splits1), rownames(splits2))) > 0) {
+  names1 <- rownames(splits1)
+  names2 <- rownames(splits2)
+  if (all(names1 %in% names2) && length(names2) == length(names1)) {
     stop("Split rows must bear identical labels")
   }
   
