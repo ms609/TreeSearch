@@ -91,7 +91,7 @@ MutualSplitInformation <- function (splits1, splits2) {
       lnUnrootedN
     }
   }, rep(seq_len(nSplits1), each=nSplits2), seq_len(nSplits2)
-  ) - lnUnrootedN) / -log(2), nSplits1, nSplits2)
+  ) - lnUnrootedN) / -log(2), nSplits2, nSplits1)
   
   if (nSplits2 == 1) {
     max(pairScores)
