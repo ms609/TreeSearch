@@ -39,7 +39,7 @@ NUnrooted   <- function (tips)  DoubleFactorial(tips + tips - 5L)
 #' @export
 LnUnrooted  <- function (tips) LogDoubleFactorial(tips + tips - 5L)
 LnUnrooted.int <- function (tips) if (tips < 3) 0 else {
-  logDoubleFactorial[tips + tips - 5L]
+  logDoubleFactorials[tips + tips - 5L]
 }
 #' @describeIn NRooted  Log Number of rooted trees
 #' @export

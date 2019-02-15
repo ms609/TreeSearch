@@ -39,5 +39,5 @@ DoubleFactorial <- function (x) {
   ret
 }
 
-doubleFactorials <- exp(logDoubleFactorial[seq_len(300)]) # Greater than 300 -> "Inf"
+doubleFactorials <- exp(logDoubleFactorials[seq_len(300)]) # Greater than 300 -> "Inf"
 usethis::use_data(logDoubleFactorials, doubleFactorials, overwrite=TRUE)
