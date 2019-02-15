@@ -58,7 +58,9 @@ MutualSplitInformation <- function (splits1, splits2) {
   nTerminals <- dimSplits1[1]
   lnUnrootedN <- LnUnrooted(nTerminals)
   
-  splits2 <- splits2[rownames(splits1), , drop=FALSE]
+  splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
+  splits1 <- unname(splits1) # split1[split2] faster without names
+  
   
   if (dimSplits2[1] != nTerminals) {
     stop("Split rows must bear identical labels")
@@ -81,14 +83,19 @@ MutualSplitInformation <- function (splits1, splits2) {
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
+  inSplit1 <- colSums(splits1)
+  inSplit2 <- colSums(splits2)
+  notInSplit2 <- nTerminals - inSplit2
+  
   pairScores <- matrix((mapply(function(i, j) {
     split1 <- splits1[, i]
     split2 <- splits2[, j]
+    
     if (all(split1[split2]) || all(!split1[!split2])) {
-      OneOverlap(sum(split1), sum(split2))
+      OneOverlap(inSplit1[i], inSplit2[j])
       
     } else if (all(!split1[split2]) || all(split1[!split2])) {
-      OneOverlap(sum(split1), sum(!split2))
+      OneOverlap(inSplit1[i], notInSplit2[j])
       
     } else {
       lnUnrootedN
@@ -100,7 +107,10 @@ MutualSplitInformation <- function (splits1, splits2) {
     max(pairScores)
   } else {
     optimalMatching <- solve_LSAP(pairScores, TRUE)
-    sum(pairScores[cbind(seq_along(optimalMatching), optimalMatching)])
+    # Previously:
+    # sum(pairScores[cbind(seq_along(optimalMatching), optimalMatching)])
+    # Now (30% faster):
+    sum(pairScores[matrix(c(seq_along(optimalMatching), optimalMatching), ncol=2L)])
   }
   
 }
