@@ -33,8 +33,6 @@ NUnrootedMult(splits)
 \item{tips}{The number of tips.}
 
 \item{splits}{vector listing the number of taxa in each tree bipartition.}
-
-\item{extra}{the number of points at which another branch cannot be added.}
 }
 \description{
 Functions starting N return the number of rooted or unrooted trees, functions starting Ln

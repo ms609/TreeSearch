@@ -3,11 +3,14 @@
 \name{DoubleFactorial}
 \alias{DoubleFactorial}
 \alias{LogDoubleFactorial}
+\alias{LogDoubleFactorial.int}
 \title{Double Factorial}
 \usage{
-DoubleFactorial(x)
+DoubleFactorial(n)
 
-LogDoubleFactorial(x)
+LogDoubleFactorial(n)
+
+LogDoubleFactorial.int(n)
 }
 \arguments{
 \item{n}{Vector of integers.}
@@ -21,17 +24,22 @@ Double Factorial
 \section{Functions}{
 \itemize{
 \item \code{LogDoubleFactorial}: Returns the logarithm of the double factorial.
+
+\item \code{LogDoubleFactorial.int}: Slightly faster, when x is known to be length one
+and below 50001
 }}
 
 \examples{
 {
-DoubleFactorial (0) # Return 1 if n < 2
+DoubleFactorial (-4:0) # Return 1 if n < 2
 DoubleFactorial (2) # 2
 DoubleFactorial (5) # 1 x 3 x 5
-DoubleFactorial (8) # 2 x 4 x 6 x 8
+exp(LogDoubleFactorial.int (8)) # 2 x 4 x 6 x 8
+
 }
 
 }
 \author{
 Martin R. Smith
 }
+\concept{Double factorial}

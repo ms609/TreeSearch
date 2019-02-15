@@ -15,7 +15,6 @@ NamedConstant <- function(X, name) {names(X) <- name; return(X)}
 #' provide the log of this number.  Calculations follow Carter et al. 1990, Theorem 2.
 #'
 #' @param tips The number of tips.
-#' @param extra the number of points at which another branch cannot be added.
 #' @param splits vector listing the number of taxa in each tree bipartition.
 #'
 #' @author Martin R. Smith
@@ -46,7 +45,7 @@ LnUnrooted.int <- function (tips) if (tips < 3) 0 else {
 #' @export
 LnRooted    <- function (tips) LogDoubleFactorial(tips + tips - 3L)
 LnRooted.int <- function (tips) {
-  if (tips < 2) 0 else logDoubleFactorial[tips + tips - 3L]
+  if (tips < 2) 0 else logDoubleFactorials[tips + tips - 3L]
 }
 
 

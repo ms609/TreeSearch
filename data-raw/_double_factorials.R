@@ -17,7 +17,7 @@ LogDoubleFactorial <- (function (x) {
   ret
 })
 
-logDoubleFactorial <- vapply(seq_len(50000), LogDoubleFactorial, double(1))
+logDoubleFactorials <- vapply(seq_len(50000), LogDoubleFactorial, double(1))
 
 DoubleFactorial <- function (x) {
   if (any(x > 300)) stop("301!! is too large to store as an integer. Use LogDoubleFactorial instead.")
@@ -39,5 +39,5 @@ DoubleFactorial <- function (x) {
   ret
 }
 
-doubleFactorial <- exp(logDoubleFactorial[seq_len(300)]) # Greater than 300 -> "Inf"
-usethis::use_data(logDoubleFactorial, doubleFactorial, overwrite=TRUE)
+doubleFactorials <- exp(logDoubleFactorial[seq_len(300)]) # Greater than 300 -> "Inf"
+usethis::use_data(logDoubleFactorials, doubleFactorials, overwrite=TRUE)
