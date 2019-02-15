@@ -121,10 +121,7 @@ DoubleFactorial <- function (x) {
 #' @describeIn DoubleFactorial Returns the logarithm of the double factorial.
 LogDoubleFactorial <- (function (x) {
   x[x < 2] <- 1 # Much faster than pmax
-  if (all(x < 50000L)) {
-    # Return from cache
-    logDoubleFactorial[x]
-  } else {
+  if (any(x > 49999L)) {
     
     odds <- as.logical(x %% 2)
     
@@ -139,5 +136,9 @@ LogDoubleFactorial <- (function (x) {
     
     # Return:
     ret
+    
+  } else {
+    # Return from cache
+    logDoubleFactorial[x]
   }
 })
