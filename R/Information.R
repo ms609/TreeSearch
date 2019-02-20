@@ -55,13 +55,29 @@ SplitInformation <- function (A, B) {
 #' the joint information of two splits will be less than the sum of the
 #' information of the splits taken separately -- unless the splits are
 #' contradictory.
+#' 
+#' Split Y1 is defined as dividing taxa into the two sets A1 and B1,
+#' and Y2=A2:B2.
 #'
-#' @inheritParams MutualInformation
+#' @param A1A2,A1B2,B1A2,B1B2 Number of taxa in splits A1 and A2 (etc.)
 #' @author Martin R. Smith
 #' @concept Split information
 #' @export
-JointInformation <- function(n, A1, A2=A1) {
-  -log2(TreesConsistentWithTwoSplits(n, A1, A2) / NUnrooted(n))
+JointInformation <- function(A1A2, A1B2, B1A2, B1B2) {
+  A1 <- A1A2 + A1B2
+  B1 <- B1A2 + B1B2
+  A2 <- A1A2 + B1A2
+  B2 <- A1B2 + B1B2
+  n  <- A1 + B1
+  
+  mutualInformation <- if(any(c(A1A2, A1B2, B1A2, B1B2) == 0)) {
+    -log2(TreesConsistentWithTwoSplits(n, A1, A2) / NUnrooted(n))
+  } else {
+    0
+  }
+  
+  # Return:
+  SplitInformation(A1, B1) + SplitInformation(A2, B2) - mutualInformation
 }
 
 #' Number of trees consistent with two splits

@@ -4,20 +4,20 @@
 \alias{JointInformation}
 \title{Joint Information of two splits}
 \usage{
-JointInformation(n, A1, A2 = A1)
+JointInformation(A1A2, A1B2, B1A2, B1B2)
 }
 \arguments{
-\item{n}{Number of terminals}
-
-\item{A1}{Number of terminals on overlapping side of each split.}
-
-\item{A2}{Number of terminals on overlapping side of each split.}
+\item{A1A2, A1B2, B1A2, B1B2}{Number of taxa in splits A1 and A2 (etc.)}
 }
 \description{
 Because some information is common to both splits (`MutualInformation`),
 the joint information of two splits will be less than the sum of the
 information of the splits taken separately -- unless the splits are
 contradictory.
+}
+\details{
+Split Y1 is defined as dividing taxa into the two sets A1 and B1,
+and Y2=A2:B2.
 }
 \author{
 Martin R. Smith
