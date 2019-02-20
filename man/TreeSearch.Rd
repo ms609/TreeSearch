@@ -16,7 +16,7 @@ EdgeListSearch(edgeList, dataset, TreeScorer = MorphyLength,
   stopAtPlateau = 0L, forestSize = 1L, cluster = NULL,
   verbosity = 1L, ...)
 
-TreeSearch(tree, dataset, InitializeData = PhyDat2Morphy,
+TreeSearch(tree, dataset = NULL, InitializeData = PhyDat2Morphy,
   CleanUpData = UnloadMorphy, TreeScorer = MorphyLength,
   EdgeSwapper = RootedTBRSwap, maxIter = 100L, maxHits = 20L,
   forestSize = 1L, stopAtPeak = FALSE, stopAtPlateau = 0L,
@@ -82,8 +82,8 @@ Its return value will be passed to TreeScorer and CleanUpData.}
 \item{CleanUpData}{Function to destroy data object on function exit.
 The function will be passed the value returned by \kbd{InitializeData}.}
 
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}}, whose names 
-correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
+whose names correspond to the labels of any accompanying tree.}
 }
 \value{
 {

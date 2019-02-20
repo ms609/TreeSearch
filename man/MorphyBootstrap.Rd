@@ -54,8 +54,8 @@ Will be overridden if a passed function has an attribute
 
 \item{\dots}{further parameters to send to \code{TreeScorer}}
 
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}}, whose names 
-correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
+whose names correspond to the labels of any accompanying tree.}
 
 \item{concavity}{A numeric value to use as the concavity constant (`k`) in implied weighting.}
 }

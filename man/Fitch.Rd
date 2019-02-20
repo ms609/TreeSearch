@@ -9,8 +9,8 @@ Fitch(tree, dataset)
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}}, whose names 
-correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
+whose names correspond to the labels of any accompanying tree.}
 }
 \value{
 This function returns the elements from a list containing:
