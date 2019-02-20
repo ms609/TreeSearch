@@ -49,6 +49,44 @@ SplitInformation <- function (A, B) {
   -log2(TreesMatchingSplit(A, B) / NUnrooted(A+B))
 }
 
+#' Probability that two random splits will be at least as similar as these two
+#' @template split1Param
+#' @template split2Param
+#' 
+#' @return The natural logarithm of the probability of observing two splits,
+#' of the sizes input, that match as well as `split1` and `split2` do.
+LnSplitMatchProbability <- function (split1, split2) {
+  
+  # Define side A as the side that contains the first taxon
+  if (!split1[1]) split1 <- !split1
+  if (!split2[1]) split2 <- !split2
+  
+  A1A2 <- sum(split1 & split2) - 1L # -1 degree of freedom because A is in both
+  A1B2 <- sum(split1 & !split2)
+  B1A2 <- sum(!split1 & split2)
+  B1B2 <- sum(!split1 & !split2)
+  
+  A1 <- A1A2 + A1B2
+  A2 <- A1A2 + B1A2
+  
+  # Return:
+  if (A2 > A1) {
+    B2 <- A1B2 + B1B2
+    log(sum(choose(A2, (A1A2:A1)) * 
+              choose(B2, A1 - (A1A2:A1)))) - lchoose(n - 1L, A1)
+  } else {
+    B1 <- B1A2 + B1B2
+    log(sum(choose(A1, (A1A2:A2)) * 
+              choose(B1, A2 - (A1A2:A2)))) - lchoose(n - 1L, A2)
+  }
+  ## Return:
+  #if (A2 > A1) {
+  #  lchoose(A2, A1) - lchoose(n, A1)
+  #} else {
+  #  lchoose(A1, A2) - lchoose(n, A2)
+  #}
+}
+
 #' Joint Information of two splits
 #'
 #' Because some information is common to both splits (`MutualInformation`),

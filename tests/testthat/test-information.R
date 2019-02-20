@@ -15,12 +15,37 @@ test_that("UnrootedTreesMatchingSplit works", {
 test_that("Joint information calculated correctly", {
   # Identical splits: ABCDE:FGH, ABCDE:FGH
   expect_equal(-log2(315/10395), JointInformation(5, 0, 0, 3))
+  expect_equal(MutualInformation(8, 5, 5), FullMutualInformation(0, 5, 3, 0))
   # Agreeable splits: ABCDE:FGHI, ABC:DEFGHI
   expect_equal(SplitInformation(5, 4) + SplitInformation(3, 6) --log2(135/135135),
                JointInformation(3, 2, 0, 4))
+  expect_equal(MutualInformation(9, 5, 3),
+               FullMutualInformation(3, 2, 0, 4))
   # Perfect contradiction: AB:CDEFG, AC:BDEFG
   expect_equal(SplitInformation(2, 5) * 2, JointInformation(1, 1, 1, 4))
+  expect_equal(0, FullMutualInformation(1, 1, 1, 4))
+  # Contradiction with common information: AB CD : EF GHI, AB EF : CD GHI
+  expect_equal(SplitInformation(2, 2) + SplitInformation(2, 3),
+               FullMutualInformation(2, 2, 2, 3))
 })
+
+test_that("LnSplitMatchProbability returns expected probabilities", {
+
+  splitAB   <- c(rep(TRUE, 2), rep(FALSE, 7))
+  splitABC  <- c(rep(TRUE, 3), rep(FALSE, 6))
+  splitABCD <- c(rep(TRUE, 4), rep(FALSE, 5))
+  splitABEF <- c(rep(TRUE, 2), rep(FALSE, 2), rep(TRUE, 2), rep(FALSE, 3))
+  splitAI <- c(TRUE, rep(FALSE, 7), TRUE)
+  
+  expect_equal(log(1/8), LnSplitMatchProbability(splitAB, splitAB))
+  expect_equal(log(1/56), LnSplitMatchProbability(splitABCD, splitABCD))
+  expect_equal(log(1/4), LnSplitMatchProbability(splitAB, splitABC))
+  expect_equal(log((15 + 1)/28), LnSplitMatchProbability(splitABC, splitABEF))
+  expect_equal(log(3/28), LnSplitMatchProbability(splitABC, splitABCD))
+  expect_equal(log(46/56), LnSplitMatchProbability(splitABCD, splitABEF))
+  expect_equal(0, LnSplitMatchProbability(splitAB, splitAI))
+})
+
 
 test_that("TreesConsistentWithTwoSplits works", {
   
