@@ -65,23 +65,23 @@ test_that("SplitMatchProbability returns expected probabilities", {
   Test(1, splitBC, splitCD)
   
   Test(1/36, splitAB, splitAB)
-  Test(.Last.value, splitBC, splitBC)
+  Test(1/36, splitBC, splitBC)
   
   Test(1/126, splitABCD, splitABCD)
-  Test(.Last.value, splitABEF, splitABEF)
-  Test(.Last.value, splitCDEF, splitCDEF)
+  Test(1/126, splitABEF, splitABEF)
+  Test(1/126, splitCDEF, splitCDEF)
   Test(1, splitABCD, splitABEF)
   
   Test(1/12, splitAB, splitABC)
-  Test(.Last.value, splitBC, splitABC)
-  Test(.Last.value, splitBC, splitBCD)
+  Test(1/12, splitBC, splitABC)
+  Test(1/12, splitBC, splitBCD)
   
   Test(1, splitAEF, splitABCD)
   Test(66 / 126, splitABC, splitABEF)
-  Test(.Last.value, splitBCD, splitCDEF)
+  Test(66 / 126, splitBCD, splitCDEF)
   
   Test(4/84, splitABC, splitABCD)
-  Test(.Last.value, splitBCD, splitABCD)
+  Test(4/84, splitBCD, splitABCD)
   
 })
 
