@@ -64,60 +64,46 @@ MultiSplitInformation <- function (partitionSizes) {
 #' @template split1Param
 #' @template split2Param
 #' 
-#' @return The natural logarithm of the probability of observing two splits,
+#' @return The probability of observing two splits,
 #' spliting the terminals into bipartitions of the sizes given,
 #'  that match as well as `split1` and `split2` do.
-LnSplitMatchProbability <- function (split1, split2) {
+#'  
+SplitMatchProbability <- function (split1, split2) {
   
   if (length(split1) != length(split2)) stop("Split lengths differ")
   
-  A1A2 <- sum(split1 & split2)
-  A1B2 <- sum(split1 & !split2)
-  B1A2 <- sum(!split1 & split2)
-  B1B2 <- sum(!split1 & !split2)
-  c(A1A2 = A1A2, A1B2 = A1B2, B1A2 = B1A2, B1B2 = B1B2)
+  partitions <- matrix(c(sum(split1 & split2),
+                         sum(split1 & !split2),
+                         sum(!split1 & split2),
+                         sum(!split1 & !split2)
+                         ), 2, 2,
+                    dimnames=list(c('A1', 'B1'), c('A2', 'B2')))
   
-  A1 <- A1A2 + A1B2
-  A2 <- A1A2 + B1A2
-  B1 <- B1A2 + B1B2
-  B2 <- A1B2 + B1B2
-  n <- A1 + B1
-  paste0(A1, ':', B1, "; ", A2, ':', B2)
+  split1Size <- rowSums(partitions)
+  split2Size <- colSums(partitions)
+  A1 <- split1Size[1]
+  n <- sum(partitions)
   
-  # Return:
-  if (A1A2 == 0 || B1B2 == 0) {
-    # Overlapping groups = A1-B2, B1-A2
-    if (A1 > B2) {
-      lchoose(A1, B2) - lchoose(n, B2)
-    } else {
-      lchoose(B2, A1) - lchoose(n, A1)
-    }
-  } else if (A1B2 == 0 || B1A2 == 0) {
-    # Overlapping groups = A1-A2, B1-B2
-    if (A1 > A2) {
-      lchoose(A1, A2) - lchoose(n, A2)
-    } else {
-      lchoose(A2, A1) - lchoose(n, A1)
-    }
-  } else {
-    Ways <- function (bigMatch, smallMatch, matchOverlap) {
-      chosenFromBigMatch <- matchOverlap:smallMatch
-      log(sum(choose(bigMatch, chosenFromBigMatch) * 
-                choose(n - bigMatch, smallMatch - chosenFromBigMatch))) -
-            lchoose(n, smallMatch)
-    }
-    
-    # Clades discordant
-    if (A1A2 > A1B2 || B1B2 > B1A2) {
-      Ways(max(A1, A2), min(A1, A2), A1A2)
-    # == Ways(max(B1, B2), min(B1, B2), B1B2)
-    } else {
-      Ways(max(A1, B2), min(A1, B2), A1B2)
-    # == Ways(max(B1, A2), min(B1, A2), B1A2)
-    }
-
-  }
+  H <- function(p) -sum(p[p>0]*log(p[p>0]))
+  
+  pairings <- c(0, seq_len(A1))
+  arrangements <- vapply(pairings, 
+                         function (i) c(A1 - i, i,
+                                        split2Size[1] - (A1 - i),
+                                        split2Size[2] - i),
+                         double(4))
+  jointEntropies <- apply(arrangements / n, 2, H)
+  choices <- apply(arrangements, 2, 
+                   function (parts) choose(sum(parts[c(1, 3)]), parts[1]) *
+                     choose(sum(parts[c(2, 4)]), parts[2]))
+  
+  sum(choices[jointEntropies < H(partitions / n) + 1e-07]) / choose(n, A1)
 }
+
+#' @describeIn SplitMatchProbability The natural logarithm of the probability
+LnSplitMatchProbability <- function(split1, split2) 
+  log(SplitMatchProbability(split1, split2))
+
 
 SplitEntropy <- function (split1, split2=split1) {
   A1A2 <- sum(split1 & split2)

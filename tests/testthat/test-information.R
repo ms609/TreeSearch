@@ -29,7 +29,7 @@ test_that("Joint information calculated correctly", {
                FullMutualInformation(2, 2, 2, 3))
 })
 
-test_that("SplitEntropy returns expected probabilities", {
+test_that("SplitMatchProbability returns expected probabilities", {
 
   splitAB   <- c(rep(TRUE, 2), rep(FALSE, 7))
   splitABC  <- c(rep(TRUE, 3), rep(FALSE, 6))
@@ -45,31 +45,22 @@ test_that("SplitEntropy returns expected probabilities", {
   
   Test <- function (score, split1, split2) {
     score <- c(i = score)
-    expect_equivalent(score, SplitEntropy(split1, split2)[4])
-    expect_equivalent(score, SplitEntropy(split2, split1)[4])
+    expect_equivalent(score, SplitMatchProbability(split1, split2)[4])
+    expect_equivalent(score, SplitMatchProbability(split2, split1)[4])
 
-    expect_equivalent(score, SplitEntropy(split1, !split2)[4])
-    expect_equivalent(score, SplitEntropy(split2, !split1)[4])
+    expect_equivalent(score, SplitMatchProbability(split1, !split2)[4])
+    expect_equivalent(score, SplitMatchProbability(split2, !split1)[4])
   
-    expect_equivalent(score, SplitEntropy(!split1, !split2)[4])
-    expect_equivalent(score, SplitEntropy(!split2, !split1)[4])
+    expect_equivalent(score, SplitMatchProbability(!split1, !split2)[4])
+    expect_equivalent(score, SplitMatchProbability(!split2, !split1)[4])
     
-    expect_equivalent(score, SplitEntropy(!split1, split2)[4])
-    expect_equivalent(score, SplitEntropy(!split2, split1)[4])
+    expect_equivalent(score, SplitMatchProbability(!split1, split2)[4])
+    expect_equivalent(score, SplitMatchProbability(!split2, split1)[4])
     
     score
   }
   
-  
-  apply(cbind(splitABCD, splitABC, splitAB, splitABCE, splitABEF), 2,
-        SplitEntropy, splitABCD)
-  
-  
-  apply(cbind(splitAB, splitABC, splitABCD, splitABCE, splitCD, splitBC), 2,
-        SplitEntropy, splitAB)
-  
-  
-  Test(SplitEntropy(splitAB, splitAI)[1], splitAB, splitAI)
+  Test(1, splitAB, splitAI)
   Test(0, splitAB, splitBC)
   Test(0, splitBC, splitCD)
   
