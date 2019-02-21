@@ -22,10 +22,12 @@ LogTreesMatchingSplit <- function (A, B) {
 
 #' Mutual information of two splits
 #' 
-#' @param n Number of terminals
-#' @param A1,A2 Number of terminals on overlapping side of each split.
+#' @param n Integer specifying the number of terminals.
+#' @param A1,A2 Integers specifying the number of taxa in A1 and A2, 
+#' once the splits have been arranged such that all taxa in A1 are also
+#' in A2, or all taxa in A2 are also in A1.
 #' 
-#' @return The information that two splits have in common
+#' @return The information that two splits have in common, in bits.
 #' 
 #' @author Martin R. Smith
 #' @concept Split information
@@ -41,7 +43,7 @@ MutualInformation <- function(n, A1, A2=A1) {
 #'
 #' @inheritParams TreesMatchingSplit
 #'
-#' @return Information content in bits.
+#' @return Information content of the split in bits.
 #' @author Martin R. Smith
 #' @concept Split information
 #' @export
@@ -49,42 +51,96 @@ SplitInformation <- function (A, B) {
   -log2(TreesMatchingSplit(A, B) / NUnrooted(A+B))
 }
 
+#' @describeIn SplitInformation Information content of a multi-partition split.
+#' @param partitionSizes Integer vector specifying the number of taxa in each 
+#' partition of a multi-partition split.
+#' @export
+MultiSplitInformation <- function (partitionSizes) {
+  -log2(NUnrootedMult(partitionSizes) / NUnrooted(sum(partitionSizes)))
+}
+
+
 #' Probability that two random splits will be at least as similar as these two
 #' @template split1Param
 #' @template split2Param
 #' 
 #' @return The natural logarithm of the probability of observing two splits,
-#' of the sizes input, that match as well as `split1` and `split2` do.
+#' spliting the terminals into bipartitions of the sizes given,
+#'  that match as well as `split1` and `split2` do.
 LnSplitMatchProbability <- function (split1, split2) {
   
-  # Define side A as the side that contains the first taxon
-  if (!split1[1]) split1 <- !split1
-  if (!split2[1]) split2 <- !split2
+  if (length(split1) != length(split2)) stop("Split lengths differ")
   
-  A1A2 <- sum(split1 & split2) - 1L # -1 degree of freedom because A is in both
+  A1A2 <- sum(split1 & split2)
   A1B2 <- sum(split1 & !split2)
   B1A2 <- sum(!split1 & split2)
   B1B2 <- sum(!split1 & !split2)
+  c(A1A2 = A1A2, A1B2 = A1B2, B1A2 = B1A2, B1B2 = B1B2)
   
   A1 <- A1A2 + A1B2
   A2 <- A1A2 + B1A2
+  B1 <- B1A2 + B1B2
+  B2 <- A1B2 + B1B2
+  n <- A1 + B1
+  paste0(A1, ':', B1, "; ", A2, ':', B2)
   
   # Return:
-  if (A2 > A1) {
-    B2 <- A1B2 + B1B2
-    log(sum(choose(A2, (A1A2:A1)) * 
-              choose(B2, A1 - (A1A2:A1)))) - lchoose(n - 1L, A1)
+  if (A1A2 == 0 || B1B2 == 0) {
+    # Overlapping groups = A1-B2, B1-A2
+    if (A1 > B2) {
+      lchoose(A1, B2) - lchoose(n, B2)
+    } else {
+      lchoose(B2, A1) - lchoose(n, A1)
+    }
+  } else if (A1B2 == 0 || B1A2 == 0) {
+    # Overlapping groups = A1-A2, B1-B2
+    if (A1 > A2) {
+      lchoose(A1, A2) - lchoose(n, A2)
+    } else {
+      lchoose(A2, A1) - lchoose(n, A1)
+    }
   } else {
-    B1 <- B1A2 + B1B2
-    log(sum(choose(A1, (A1A2:A2)) * 
-              choose(B1, A2 - (A1A2:A2)))) - lchoose(n - 1L, A2)
+    Ways <- function (bigMatch, smallMatch, matchOverlap) {
+      chosenFromBigMatch <- matchOverlap:smallMatch
+      log(sum(choose(bigMatch, chosenFromBigMatch) * 
+                choose(n - bigMatch, smallMatch - chosenFromBigMatch))) -
+            lchoose(n, smallMatch)
+    }
+    
+    # Clades discordant
+    if (A1A2 > A1B2 || B1B2 > B1A2) {
+      Ways(max(A1, A2), min(A1, A2), A1A2)
+    # == Ways(max(B1, B2), min(B1, B2), B1B2)
+    } else {
+      Ways(max(A1, B2), min(A1, B2), A1B2)
+    # == Ways(max(B1, A2), min(B1, A2), B1A2)
+    }
+
   }
-  ## Return:
-  #if (A2 > A1) {
-  #  lchoose(A2, A1) - lchoose(n, A1)
-  #} else {
-  #  lchoose(A1, A2) - lchoose(n, A2)
-  #}
+}
+
+SplitEntropy <- function (split1, split2=split1) {
+  A1A2 <- sum(split1 & split2)
+  A1B2 <- sum(split1 & !split2)
+  B1A2 <- sum(!split1 & split2)
+  B1B2 <- sum(!split1 & !split2)
+  overlaps <- c(A1A2, A1B2, B1A2, B1B2)
+  
+  
+  A1 <- A1A2 + A1B2
+  A2 <- A1A2 + B1A2
+  B1 <- B1A2 + B1B2
+  B2 <- A1B2 + B1B2
+  n <- A1 + B1
+  
+  H <- function(p) -sum(p*log(p))
+  h1 <- H(c(A1, B1) / n)
+  h2 <- H(c(A2, B2) / n)
+  jointH <- H(overlaps[overlaps > 0L] / n)
+  mutualInformation <- h1 + h2 - jointH
+  
+  # Return:
+  c(h1 = h1, h2 = h2, jointH = jointH, i = mutualInformation)  
 }
 
 #' Joint Information of two splits
@@ -116,6 +172,63 @@ JointInformation <- function(A1A2, A1B2, B1A2, B1B2) {
   
   # Return:
   SplitInformation(A1, B1) + SplitInformation(A2, B2) - mutualInformation
+}
+
+#' Restricted joint information
+#' 
+#' #TODO keep and describe, or delete.
+#' 
+#' Information based on the proportion of trees that are consistent with
+#' Y1 OR Y2, AND consistent with the information that Y1 and Y2 have in common.
+#'  
+#' @inheritParams JointInformation
+#' @author Martin R. Smith
+#' @concept Split information
+#' @export
+FullMutualInformation <- function(A1A2, A1B2, B1A2, B1B2) {
+  A1 <- A1A2 + A1B2
+  B1 <- B1A2 + B1B2
+  A2 <- A1A2 + B1A2
+  B2 <- A1B2 + B1B2
+  n  <- A1 + B1
+  
+  
+  BuildSplitFromCommonInformation <- function (A1, A1a, B1, B1a) {
+    A1b <- A1 - A1a
+    B1b <- B1 - B1a
+    
+    lnSubtreesA <- if (A1a == 0 || A1b == 0) {
+      LnUnrooted(A1) 
+    } else {
+      LnRooted(A1a) + LnRooted(A1b)
+    }
+    
+    lnSubtreesB <- if (B1a == 0 || B1b == 0) {
+      LnUnrooted(B1) 
+    } else {
+      LnRooted(B1a) + LnRooted(B1b)
+    }
+    
+    lnTrees <- lnSubtreesA + log(A1 + A1 - 3L) + 
+      lnSubtreesB + log(B1 + B1 - 3L) - 
+      LnUnrooted(A1 + B1)
+    
+    # Return: 
+    lnTrees / -log(2)
+  }
+  
+  
+  # Return:
+  if(any(c(A1A2, A1B2, B1A2, B1B2) == 0)) {
+    a1Pair <- if (A1A2 == 0 || B1B2 == 0) B2 else A2
+    # Splits are consistent
+    MutualInformation(n, A1, a1Pair)
+  } else {
+    # Splits are inconsistent
+    SplitInformation(A1A2, B1B2) +
+      SplitInformation(B1A2, A1B2)
+  }
+  
 }
 
 #' Number of trees consistent with two splits

@@ -29,21 +29,69 @@ test_that("Joint information calculated correctly", {
                FullMutualInformation(2, 2, 2, 3))
 })
 
-test_that("LnSplitMatchProbability returns expected probabilities", {
+test_that("SplitEntropy returns expected probabilities", {
 
   splitAB   <- c(rep(TRUE, 2), rep(FALSE, 7))
   splitABC  <- c(rep(TRUE, 3), rep(FALSE, 6))
+  splitBCD  <- c(FALSE, rep(TRUE, 3), rep(FALSE, 5))
   splitABCD <- c(rep(TRUE, 4), rep(FALSE, 5))
+  splitABCE <- c(rep(TRUE, 3), FALSE, TRUE, rep(FALSE, 4))
+  splitCDEF <- c(rep(FALSE, 2), rep(TRUE, 4), rep(FALSE, 3))
   splitABEF <- c(rep(TRUE, 2), rep(FALSE, 2), rep(TRUE, 2), rep(FALSE, 3))
-  splitAI <- c(TRUE, rep(FALSE, 7), TRUE)
   
-  expect_equal(log(1/8), LnSplitMatchProbability(splitAB, splitAB))
-  expect_equal(log(1/56), LnSplitMatchProbability(splitABCD, splitABCD))
-  expect_equal(log(1/4), LnSplitMatchProbability(splitAB, splitABC))
-  expect_equal(log((15 + 1)/28), LnSplitMatchProbability(splitABC, splitABEF))
-  expect_equal(log(3/28), LnSplitMatchProbability(splitABC, splitABCD))
-  expect_equal(log(46/56), LnSplitMatchProbability(splitABCD, splitABEF))
-  expect_equal(0, LnSplitMatchProbability(splitAB, splitAI))
+  splitAI <- c(TRUE, rep(FALSE, 7), TRUE)
+  splitBC <- c(FALSE, TRUE, TRUE, rep(FALSE, 6))
+  splitCD <- c(FALSE, FALSE, TRUE, TRUE, rep(FALSE, 5))
+  
+  Test <- function (score, split1, split2) {
+    score <- c(i = score)
+    expect_equivalent(score, SplitEntropy(split1, split2)[4])
+    expect_equivalent(score, SplitEntropy(split2, split1)[4])
+
+    expect_equivalent(score, SplitEntropy(split1, !split2)[4])
+    expect_equivalent(score, SplitEntropy(split2, !split1)[4])
+  
+    expect_equivalent(score, SplitEntropy(!split1, !split2)[4])
+    expect_equivalent(score, SplitEntropy(!split2, !split1)[4])
+    
+    expect_equivalent(score, SplitEntropy(!split1, split2)[4])
+    expect_equivalent(score, SplitEntropy(!split2, split1)[4])
+    
+    score
+  }
+  
+  
+  apply(cbind(splitABCD, splitABC, splitAB, splitABCE, splitABEF), 2,
+        SplitEntropy, splitABCD)
+  
+  
+  apply(cbind(splitAB, splitABC, splitABCD, splitABCE, splitCD, splitBC), 2,
+        SplitEntropy, splitAB)
+  
+  
+  Test(SplitEntropy(splitAB, splitAI)[1], splitAB, splitAI)
+  Test(0, splitAB, splitBC)
+  Test(0, splitBC, splitCD)
+  
+  Test(log(1/36), splitAB, splitAB)
+  Test(.Last.value, splitBC, splitBC)
+  
+  Test(log(1/126), splitABCD, splitABCD)
+  Test(.Last.value, splitABEF, splitABEF)
+  Test(.Last.value, splitCDEF, splitCDEF)
+  
+  Test(log(1/12), splitAB, splitABC)
+  Test(.Last.value, splitBC, splitABC)
+  Test(.Last.value, splitBC, splitBCD)
+  
+  Test(log(34 / 84), splitABC, splitABEF)
+  Test(.Last.value, splitBCD, splitCDEF)
+  
+  Test(log(4/84), splitABC, splitABCD)
+  Test(.Last.value, splitBCD, splitABCD)
+  
+  Test(log(81/126), splitABCD, splitABEF)
+  
 })
 
 
