@@ -76,27 +76,28 @@ SplitMatchProbability <- function (split1, split2) {
                          sum(split1 & !split2),
                          sum(!split1 & split2),
                          sum(!split1 & !split2)
-                         ), 2, 2,
-                    dimnames=list(c('A1', 'B1'), c('A2', 'B2')))
+                         ), 2, 2) #, dimnames=list(c('A1', 'B1'), c('A2', 'B2')))
   
   split1Size <- rowSums(partitions)
   split2Size <- colSums(partitions)
   A1 <- split1Size[1]
+  A2 <- split2Size[1]
+  B2 <- split2Size[2]
   n <- sum(partitions)
   
-  H <- function(p) -sum(p[p>0]*log(p[p>0]))
+  H <- function(p) -sum(p[p > 0] * log(p[p > 0]))
   
-  pairings <- c(0, seq_len(A1))
+  pairings <- seq(from=max(0, A1 - A2), to=min(A1, B2), by=1L)
   arrangements <- vapply(pairings, 
                          function (i) c(A1 - i, i,
-                                        split2Size[1] - (A1 - i),
-                                        split2Size[2] - i),
+                                        i + A2 - A1, B2 - i),
                          double(4))
   jointEntropies <- apply(arrangements / n, 2, H)
-  choices <- apply(arrangements, 2, 
+  choices <- apply(arrangements, 2,
                    function (parts) choose(sum(parts[c(1, 3)]), parts[1]) *
                      choose(sum(parts[c(2, 4)]), parts[2]))
   
+  # Return:
   sum(choices[jointEntropies < H(partitions / n) + 1e-07]) / choose(n, A1)
 }
 

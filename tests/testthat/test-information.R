@@ -34,6 +34,7 @@ test_that("SplitMatchProbability returns expected probabilities", {
   splitAB   <- c(rep(TRUE, 2), rep(FALSE, 7))
   splitABC  <- c(rep(TRUE, 3), rep(FALSE, 6))
   splitBCD  <- c(FALSE, rep(TRUE, 3), rep(FALSE, 5))
+  splitAEF  <- c(TRUE, rep(FALSE, 3), rep(TRUE, 2), rep(FALSE, 3))
   splitABCD <- c(rep(TRUE, 4), rep(FALSE, 5))
   splitABCE <- c(rep(TRUE, 3), FALSE, TRUE, rep(FALSE, 4))
   splitCDEF <- c(rep(FALSE, 2), rep(TRUE, 4), rep(FALSE, 3))
@@ -44,44 +45,43 @@ test_that("SplitMatchProbability returns expected probabilities", {
   splitCD <- c(FALSE, FALSE, TRUE, TRUE, rep(FALSE, 5))
   
   Test <- function (score, split1, split2) {
-    score <- c(i = score)
-    expect_equivalent(score, SplitMatchProbability(split1, split2)[4])
-    expect_equivalent(score, SplitMatchProbability(split2, split1)[4])
+    expect_equivalent(score, SplitMatchProbability(split1, split2))
+    expect_equivalent(score, SplitMatchProbability(split2, split1))
 
-    expect_equivalent(score, SplitMatchProbability(split1, !split2)[4])
-    expect_equivalent(score, SplitMatchProbability(split2, !split1)[4])
+    expect_equivalent(score, SplitMatchProbability(split1, !split2))
+    expect_equivalent(score, SplitMatchProbability(split2, !split1))
   
-    expect_equivalent(score, SplitMatchProbability(!split1, !split2)[4])
-    expect_equivalent(score, SplitMatchProbability(!split2, !split1)[4])
+    expect_equivalent(score, SplitMatchProbability(!split1, !split2))
+    expect_equivalent(score, SplitMatchProbability(!split2, !split1))
     
-    expect_equivalent(score, SplitMatchProbability(!split1, split2)[4])
-    expect_equivalent(score, SplitMatchProbability(!split2, split1)[4])
+    expect_equivalent(score, SplitMatchProbability(!split1, split2))
+    expect_equivalent(score, SplitMatchProbability(!split2, split1))
     
     score
   }
   
   Test(1, splitAB, splitAI)
-  Test(0, splitAB, splitBC)
-  Test(0, splitBC, splitCD)
+  Test(1, splitAB, splitBC)
+  Test(1, splitBC, splitCD)
   
-  Test(log(1/36), splitAB, splitAB)
+  Test(1/36, splitAB, splitAB)
   Test(.Last.value, splitBC, splitBC)
   
-  Test(log(1/126), splitABCD, splitABCD)
+  Test(1/126, splitABCD, splitABCD)
   Test(.Last.value, splitABEF, splitABEF)
   Test(.Last.value, splitCDEF, splitCDEF)
+  Test(1, splitABCD, splitABEF)
   
-  Test(log(1/12), splitAB, splitABC)
+  Test(1/12, splitAB, splitABC)
   Test(.Last.value, splitBC, splitABC)
   Test(.Last.value, splitBC, splitBCD)
   
-  Test(log(34 / 84), splitABC, splitABEF)
+  Test(1, splitAEF, splitABCD)
+  Test(66 / 126, splitABC, splitABEF)
   Test(.Last.value, splitBCD, splitCDEF)
   
-  Test(log(4/84), splitABC, splitABCD)
+  Test(4/84, splitABC, splitABCD)
   Test(.Last.value, splitBCD, splitABCD)
-  
-  Test(log(81/126), splitABCD, splitABEF)
   
 })
 
