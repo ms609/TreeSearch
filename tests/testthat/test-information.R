@@ -33,6 +33,7 @@ test_that("SplitMatchProbability returns expected probabilities", {
 
   splitAB   <- c(rep(TRUE, 2), rep(FALSE, 7))
   splitABC  <- c(rep(TRUE, 3), rep(FALSE, 6))
+  splitABI  <- c(rep(TRUE, 2), rep(FALSE, 6), TRUE)
   splitBCD  <- c(FALSE, rep(TRUE, 3), rep(FALSE, 5))
   splitAEF  <- c(TRUE, rep(FALSE, 3), rep(TRUE, 2), rep(FALSE, 3))
   splitABCD <- c(rep(TRUE, 4), rep(FALSE, 5))
@@ -43,6 +44,41 @@ test_that("SplitMatchProbability returns expected probabilities", {
   splitAI <- c(TRUE, rep(FALSE, 7), TRUE)
   splitBC <- c(FALSE, TRUE, TRUE, rep(FALSE, 6))
   splitCD <- c(FALSE, FALSE, TRUE, TRUE, rep(FALSE, 5))
+  
+  # Possible matches to ABCD:....
+  expect_true(SplitMatchProbability(splitABC, splitABCD) < 
+                SplitMatchProbability(splitAB, splitABCD))
+  
+  expect_true(SplitMatchProbability(splitABCD, splitABCD) < 
+                SplitMatchProbability(splitABC, splitABCD))
+  
+  expect_true(SplitMatchProbability(splitBCD, splitABCD) ==
+                SplitMatchProbability(splitABC, splitABCD))
+  
+  expect_true(SplitMatchProbability(splitABC, splitABCD) < 
+                SplitMatchProbability(splitAEF, splitABCD))
+  
+  expect_true(SplitMatchProbability(splitABC, splitABCD) < 
+                SplitMatchProbability(splitABI, splitABCD))
+  
+  expect_true(SplitMatchProbability(splitABI, splitABCD) < 
+                SplitMatchProbability(splitAEF, splitABCD))
+  
+  expect_true(SplitMatchProbability(splitABC, splitABCD) < 
+                SplitMatchProbability(splitABCE, splitABCD))
+  
+  expect_true(SplitMatchProbability(splitCDEF, splitABCD) ==
+                SplitMatchProbability(splitABEF, splitABCD))
+  
+  expect_true(SplitMatchProbability(splitABCE, splitABCD) < 
+                SplitMatchProbability(splitABEF, splitABCD))
+  
+  # Two splits of AB:...
+  expect_true(SplitMatchProbability(splitAB, splitAB) < 
+              SplitMatchProbability(splitCD, splitAB))
+  expect_true(SplitMatchProbability(splitCD, splitAB) < 
+              SplitMatchProbability(splitAI, splitAB))
+  
   
   Test <- function (score, split1, split2) {
     expect_equivalent(score, SplitMatchProbability(split1, split2))
@@ -63,6 +99,7 @@ test_that("SplitMatchProbability returns expected probabilities", {
   Test(1, splitAB, splitAI)
   Test(1, splitAB, splitBC)
   Test(1, splitBC, splitCD)
+  Test(1, rev(splitAB), splitAI)
   
   Test(1/36, splitAB, splitAB)
   Test(1/36, splitBC, splitBC)

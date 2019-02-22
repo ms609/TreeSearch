@@ -85,20 +85,35 @@ SplitMatchProbability <- function (split1, split2) {
   B2 <- split2Size[2]
   n <- sum(partitions)
   
-  H <- function(p) -sum(p[p > 0] * log(p[p > 0]))
-  
-  pairings <- seq(from=max(0, A1 - A2), to=min(A1, B2), by=1L)
+  minA1B2 <- max(0, A1 - A2)
+  iMax <- min(A1, B2)
+  minB1A2 <- B2 - iMax
+  pairings <- minA1A2:iMax
   arrangements <- vapply(pairings, 
                          function (i) c(A1 - i, i,
                                         i + A2 - A1, B2 - i),
                          double(4))
-  jointEntropies <- apply(arrangements / n, 2, H)
+  
+  #H <- function(p) -sum(p[p > 0] * log(p[p > 0]))
+  #jointEntropies <- apply(arrangements / n, 2, H)
+  
+  ranking <- if (minA1B2 < minB1A2) {
+    c(seq.int(1L, length(pairings), 2L),
+      rev(seq.int(2L, length(pairings), 2L)))
+  } else if (minA1B2 > minB1A2) {
+    c(seq.int(2L, length(pairings), 2L),
+      rev(seq.int(1L, length(pairings), 2L)))
+  } else {
+    c(seq.int(1L, length(pairings), 2L),
+      rev(seq.int(1L, length(pairings), 2L)))
+  }
+  
   choices <- apply(arrangements, 2,
                    function (parts) choose(sum(parts[c(1, 3)]), parts[1]) *
                      choose(sum(parts[c(2, 4)]), parts[2]))
   
   # Return:
-  sum(choices[jointEntropies < H(partitions / n) + 1e-07]) / choose(n, A1)
+  sum(choices[ranking <= ranking[partitions[1, 2] + minA1B2 - 1L]]) / choose(n, A1)
 }
 
 #' @describeIn SplitMatchProbability The natural logarithm of the probability
