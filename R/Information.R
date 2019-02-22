@@ -88,24 +88,27 @@ SplitMatchProbability <- function (split1, split2) {
   minA1B2 <- max(0, A1 - A2)
   iMax <- min(A1, B2)
   minB1A2 <- B2 - iMax
-  pairings <- minA1A2:iMax
-  arrangements <- vapply(pairings, 
-                         function (i) c(A1 - i, i,
-                                        i + A2 - A1, B2 - i),
+  
+  nArrangements <- iMax - minA1B2 + 1L
+  arrangements <- vapply(minA1B2:iMax,
+                         function (i) c(A1 - i, i, i + A2 - A1, B2 - i),
                          double(4))
   
   #H <- function(p) -sum(p[p > 0] * log(p[p > 0]))
   #jointEntropies <- apply(arrangements / n, 2, H)
   
-  ranking <- if (minA1B2 < minB1A2) {
-    c(seq.int(1L, length(pairings), 2L),
-      rev(seq.int(2L, length(pairings), 2L)))
-  } else if (minA1B2 > minB1A2) {
-    c(seq.int(2L, length(pairings), 2L),
-      rev(seq.int(1L, length(pairings), 2L)))
+  extraTipsInPerfectMatch.A1A2.B1B2 <- sum(arrangements[c(1, 4), nArrangements])
+  extraTipsInPerfectMatch.A1B2.B1A2 <- sum(arrangements[c(2, 3), 1L])
+  
+  ranking <- if (extraTipsInPerfectMatch.A1A2.B1B2 > extraTipsInPerfectMatch.A1B2.B1A2) {
+    c(seq.int(1L, nArrangements, 2L),
+      rev(seq.int(2L, nArrangements, 2L)))
+  } else if (extraTipsInPerfectMatch.A1A2.B1B2 < extraTipsInPerfectMatch.A1B2.B1A2) {
+    c(seq.int(2L, nArrangements, 2L),
+      rev(seq.int(1L, nArrangements, 2L)))
   } else {
-    c(seq.int(1L, length(pairings), 2L),
-      rev(seq.int(1L, length(pairings), 2L)))
+    c(seq.int(1L, nArrangements, 2L),
+      rev(seq.int(1L, nArrangements, 2L)))
   }
   
   choices <- apply(arrangements, 2,
@@ -113,7 +116,7 @@ SplitMatchProbability <- function (split1, split2) {
                      choose(sum(parts[c(2, 4)]), parts[2]))
   
   # Return:
-  sum(choices[ranking <= ranking[partitions[1, 2] + minA1B2 - 1L]]) / choose(n, A1)
+  sum(choices[ranking <= ranking[partitions[1, 2] + 1L - minA1B2]]) / choose(n, A1)
 }
 
 #' @describeIn SplitMatchProbability The natural logarithm of the probability
