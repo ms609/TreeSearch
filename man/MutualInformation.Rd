@@ -7,12 +7,14 @@
 MutualInformation(n, A1, A2 = A1)
 }
 \arguments{
-\item{n}{Number of terminals}
+\item{n}{Integer specifying the number of terminals.}
 
-\item{A1, A2}{Number of terminals on overlapping side of each split.}
+\item{A1, A2}{Integers specifying the number of taxa in A1 and A2, 
+once the splits have been arranged such that all taxa in A1 are also
+in A2, or all taxa in A2 are also in A1.}
 }
 \value{
-The information that two splits have in common
+The information that two splits have in common, in bits.
 }
 \description{
 Mutual information of two splits

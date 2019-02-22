@@ -61,8 +61,7 @@ MultiSplitInformation <- function (partitionSizes) {
 
 
 #' Probability that two random splits will be at least as similar as these two
-#' @template split1Param
-#' @template split2Param
+#' @template split12Params
 #' 
 #' @return The probability of observing two splits,
 #' spliting the terminals into bipartitions of the sizes given,

@@ -2,21 +2,32 @@
 % Please edit documentation in R/Information.R
 \name{SplitInformation}
 \alias{SplitInformation}
+\alias{MultiSplitInformation}
 \title{Information content of a split}
 \usage{
 SplitInformation(A, B)
+
+MultiSplitInformation(partitionSizes)
 }
 \arguments{
 \item{A}{Number of taxa on each side of split}
 
 \item{B}{Number of taxa on each side of split}
+
+\item{partitionSizes}{Integer vector specifying the number of taxa in each 
+partition of a multi-partition split.}
 }
 \value{
-Information content in bits.
+Information content of the split in bits.
 }
 \description{
 Information content of a split
 }
+\section{Functions}{
+\itemize{
+\item \code{MultiSplitInformation}: Information content of a multi-partition split.
+}}
+
 \author{
 Martin R. Smith
 }
