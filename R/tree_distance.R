@@ -13,39 +13,76 @@
 #' 
 #' @importFrom clue solve_LSAP
 #' @export
-InfoTreeDist <- function (tree1, tree2) {
+MutualArborealInfo <- function (tree1, tree2) {
   if (class(tree1) == 'phylo') {
     if (class(tree2) == 'phylo') {
       if (length(setdiff(tree1$tip.label, tree2$tip.label)) > 0) {
         stop("Tree tips must bear identical labels")
       }
       
-      MutualSplitInformation(Tree2Splits(tree1), Tree2Splits(tree2))
+      MutualArborealInfoSplits(Tree2Splits(tree1), Tree2Splits(tree2))
     } else {
       splits1 <- Tree2Splits(tree1)
       vapply(tree2, 
-             function (tr2) MutualSplitInformation(splits1, Tree2Splits(tr2)),
+             function (tr2) MutualArborealInfoSplits(splits1, Tree2Splits(tr2)),
              double(1))
     }
   } else {
     if (class(tree2) == 'phylo') {
       splits1 <- Tree2Splits(tree2)
       vapply(tree1, 
-             function (tr2) MutualSplitInformation(splits1, Tree2Splits(tr2)),
+             function (tr2) MutualArborealInfoSplits(splits1, Tree2Splits(tr2)),
              double(1))
     } else {
       splits1 <- lapply(tree1, Tree2Splits)
       splits2 <- lapply(tree2, Tree2Splits)
-      matrix(mapply(MutualSplitInformation, rep(splits1, each=length(splits2)), splits2),
+      matrix(mapply(MutualArborealInfoSplits, rep(splits1, each=length(splits2)), splits2),
              length(splits2), length(splits1), dimnames = list(names(tree2), names(tree1)))
     }
   }
 }
 
-#' @describeIn InfoTreeDist Takes splits instead of trees
+#' Tree distance based on joint information content of splits
+#' 
+#' #TODO Needs documenting and describing fully.
+#' 
+#' @inheritParams MutualArborealInfoDist
+#' @inheritSection references MutualArborealInfoDist 
+#' @author Martin R. Smith
+#' @export
+MutualPartitionInfo <- function (tree1, tree2) {
+  if (class(tree1) == 'phylo') {
+    if (class(tree2) == 'phylo') {
+      if (length(setdiff(tree1$tip.label, tree2$tip.label)) > 0) {
+        stop("Tree tips must bear identical labels")
+      }
+      
+      MutualPartitionInfoSplits(Tree2Splits(tree1), Tree2Splits(tree2))
+    } else {
+      splits1 <- Tree2Splits(tree1)
+      vapply(tree2, 
+             function (tr2) MutualPartitionInfoSplits(splits1, Tree2Splits(tr2)),
+             double(1))
+    }
+  } else {
+    if (class(tree2) == 'phylo') {
+      splits1 <- Tree2Splits(tree2)
+      vapply(tree1, 
+             function (tr2) MutualPartitionInfoSplits(splits1, Tree2Splits(tr2)),
+             double(1))
+    } else {
+      splits1 <- lapply(tree1, Tree2Splits)
+      splits2 <- lapply(tree2, Tree2Splits)
+      matrix(mapply(MutualPartitionInfoSplits, rep(splits1, each=length(splits2)), splits2),
+             length(splits2), length(splits1), dimnames = list(names(tree2), names(tree1)))
+    }
+  }
+}
+
+#' @describeIn MutualInfoTreeDist Takes splits instead of trees
 #' @param splits1,splits2 Splits [#TODO document properly]
 #' @export
-MutualSplitInformation <- function (splits1, splits2) {
+MutualArborealInfoSplits <- function (splits1, splits2) {
   
   if (dim(splits1)[2] < dim(splits2)[2]) {
     tmp <- splits1
@@ -112,7 +149,51 @@ MutualSplitInformation <- function (splits1, splits2) {
     # Now (30% faster):
     sum(pairScores[matrix(c(seq_along(optimalMatching), optimalMatching), ncol=2L)])
   }
+}
+
+#' @describeIn JointInfoTreeDist Takes splits instead of trees
+#' @inheritParams MutualArborealInfoSplits
+#' @export
+MutualPartitionInfoSplits <- function (splits1, splits2) {
   
+  if (dim(splits1)[2] < dim(splits2)[2]) {
+    tmp <- splits1
+    splits1 <- splits2
+    splits2 <- tmp
+  }
+  
+  dimSplits1 <- dim(splits1)
+  dimSplits2 <- dim(splits2)
+  nTerminals <- dimSplits1[1]
+  
+  splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
+  splits1 <- unname(splits1) # split1[split2] faster without names
+  
+  
+  if (dimSplits2[1] != nTerminals) {
+    stop("Split rows must bear identical labels")
+  }
+  
+  nSplits1 <- dimSplits1[2]
+  nSplits2 <- dimSplits2[2]
+  
+  pairScores <- -log2(matrix(mapply(function(i, j) {
+    split1 <- splits1[, i]
+    split2 <- splits2[, j]
+    
+    SplitMatchProbability(split1, split2)
+  }, rep(seq_len(nSplits1), each=nSplits2), seq_len(nSplits2))
+  , nSplits2, nSplits1))
+  
+  if (nSplits2 == 1) {
+    max(pairScores)
+  } else {
+    optimalMatching <- solve_LSAP(pairScores, TRUE)
+    # Previously:
+    # sum(pairScores[cbind(seq_along(optimalMatching), optimalMatching)])
+    # Now (30% faster):
+    sum(pairScores[matrix(c(seq_along(optimalMatching), optimalMatching), ncol=2L)])
+  }
 }
 
 #' Are splits compatible?
