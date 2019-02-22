@@ -9,11 +9,12 @@ SplitsCompatible(split1, split2)
 \arguments{
 \item{split1, split2}{Logical vectors listing terminals in same order, such that
 each terminal is identified as a member of the ingroup (`TRUE`) or outgroup 
-(`FALSE`) of a bipartition split.
-
-Splits are compatible if they are concave; i.e. they can both be true
-simultaneously.}
+(`FALSE`) of the respective bipartition split.}
 }
 \description{
-Are splits compatible?
+Splits are compatible if they are concave; i.e. they can both be true
+simultaneously.
+}
+\author{
+Martin R. Smith
 }

@@ -10,8 +10,9 @@ SplitMatchProbability(split1, split2)
 LnSplitMatchProbability(split1, split2)
 }
 \arguments{
-\item{split1, split2}{Logical vectors specifying whether each tip belongs in 
-group A (`TRUE`) or B (`FALSE`) of the relevant bipartition.}
+\item{split1, split2}{Logical vectors listing terminals in same order, such that
+each terminal is identified as a member of the ingroup (`TRUE`) or outgroup 
+(`FALSE`) of the respective bipartition split.}
 }
 \value{
 The probability of observing two splits,

@@ -46,8 +46,8 @@ MutualArborealInfo <- function (tree1, tree2) {
 #' 
 #' #TODO Needs documenting and describing fully.
 #' 
-#' @inheritParams MutualArborealInfoDist
-#' @inheritSection references MutualArborealInfoDist 
+#' @inheritParams MutualArborealInfo
+#' @inheritSection references MutualArborealInfo 
 #' @author Martin R. Smith
 #' @export
 MutualPartitionInfo <- function (tree1, tree2) {
@@ -79,7 +79,7 @@ MutualPartitionInfo <- function (tree1, tree2) {
   }
 }
 
-#' @describeIn MutualInfoTreeDist Takes splits instead of trees
+#' @describeIn MutualArborealInfo Takes splits instead of trees
 #' @param splits1,splits2 Splits [#TODO document properly]
 #' @export
 MutualArborealInfoSplits <- function (splits1, splits2) {
@@ -151,7 +151,7 @@ MutualArborealInfoSplits <- function (splits1, splits2) {
   }
 }
 
-#' @describeIn JointInfoTreeDist Takes splits instead of trees
+#' @describeIn MutualArborealInfo Takes splits instead of trees
 #' @inheritParams MutualArborealInfoSplits
 #' @export
 MutualPartitionInfoSplits <- function (splits1, splits2) {
@@ -198,12 +198,13 @@ MutualPartitionInfoSplits <- function (splits1, splits2) {
 
 #' Are splits compatible?
 #' 
-#' @param split1,split2 Logical vectors listing terminals in same order, such that
-#' each terminal is identified as a member of the ingroup (`TRUE`) or outgroup 
-#' (`FALSE`) of a bipartition split.
 #'
 #' Splits are compatible if they are concave; i.e. they can both be true
 #' simultaneously.
+#' @template split12params
+#' 
+#' @author Martin R. Smith
+#' @export
 SplitsCompatible <- function (split1, split2) {
   all (split1[split2]) ||
     all(split1[!split2]) ||

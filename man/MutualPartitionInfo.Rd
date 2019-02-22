@@ -6,6 +6,13 @@
 \usage{
 MutualPartitionInfo(tree1, tree2)
 }
+\arguments{
+\item{tree1}{Trees of class `phylo`, with tips labelled identically,
+or lists of such trees to undergo pairwise comparison.}
+
+\item{tree2}{Trees of class `phylo`, with tips labelled identically,
+or lists of such trees to undergo pairwise comparison.}
+}
 \description{
 #TODO Needs documenting and describing fully.
 }

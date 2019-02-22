@@ -2,13 +2,21 @@
 % Please edit documentation in R/tree_distance.R
 \name{MutualArborealInfo}
 \alias{MutualArborealInfo}
+\alias{MutualArborealInfoSplits}
+\alias{MutualPartitionInfoSplits}
 \title{Information-based generalized Robinson-Fould distance between two trees}
 \usage{
 MutualArborealInfo(tree1, tree2)
+
+MutualArborealInfoSplits(splits1, splits2)
+
+MutualPartitionInfoSplits(splits1, splits2)
 }
 \arguments{
 \item{tree1, tree2}{Trees of class `phylo`, with tips labelled identically,
 or lists of such trees to undergo pairwise comparison.}
+
+\item{splits1, splits2}{Splits [#TODO document properly]}
 }
 \value{
 Returns a numeric that sums the mutual information content of the
@@ -17,6 +25,13 @@ optimal matching of bipartitions between two trees, following Smith (submitted).
 \description{
 Information-based generalized Robinson-Fould distance between two trees
 }
+\section{Functions}{
+\itemize{
+\item \code{MutualArborealInfoSplits}: Takes splits instead of trees
+
+\item \code{MutualPartitionInfoSplits}: Takes splits instead of trees
+}}
+
 \references{
 \insertRef{SmithDist}{TreeSearch}
 }
