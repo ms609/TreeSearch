@@ -116,6 +116,26 @@ SplitMatchProbability <- function (split1, split2) {
   sum(choices[ranking <= ranking[partitions[1, 2] + 1L - minA1B2]]) / choose(n, A1)
 }
 
+
+#' Number of terminal arrangements matching a specified configuration of 
+#' two partitions.
+#' 
+#' @param configuration Integer vector of length four specifying the number of 
+#' terminals that occur in both 
+#'   (1) splits A1 and A2; 
+#'   (2) splits A1 and B2;
+#'   (3) splits B1 and A2;
+#'   (4) splits B1 and B2.
+#'   
+#'  @return The number of ways to distribute `sum(configuration)` taxa according
+#'  to the specified pattern.
+#'  
+#'  @author Martin R. Smith
+#'  @export
+NPartitionPairs <- function (configuration) {
+  choose(sum(configuration[c(1, 3)]), configuration[1]) *
+  choose(sum(configuration[c(2, 4)]), configuration[2])
+}
 #' @describeIn SplitMatchProbability The natural logarithm of the probability
 LnSplitMatchProbability <- function(split1, split2) 
   log(SplitMatchProbability(split1, split2))
