@@ -165,23 +165,25 @@ MutualArborealInfoSplits <- function (splits1, splits2, reportMatching = FALSE) 
 #' @export
 MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE) {
   
-  if (dim(splits1)[2] < dim(splits2)[2]) {
-    tmp <- splits1
-    splits1 <- splits2
-    splits2 <- tmp
-  }
-  
   dimSplits1 <- dim(splits1)
   dimSplits2 <- dim(splits2)
   nTerminals <- dimSplits1[1]
-  
-  splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
-  splits1 <- unname(splits1) # split1[split2] faster without names
-  
-  
   if (dimSplits2[1] != nTerminals) {
     stop("Split rows must bear identical labels")
   }
+  
+  if (dimSplits1[2] < dimSplits2[2]) {
+    tmp <- splits1
+    splits1 <- splits2
+    splits2 <- tmp
+    
+    tmp <- dimSplits1
+    dimSplits1 <- dimSplits2
+    dimSplits2 <- tmp
+  }
+  
+  splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
+  splits1 <- unname(splits1) # split1[split2] faster without names
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
