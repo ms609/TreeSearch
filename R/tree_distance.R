@@ -2,6 +2,9 @@
 #'
 #' @param tree1,tree2 Trees of class `phylo`, with tips labelled identically,
 #' or lists of such trees to undergo pairwise comparison.
+#' 
+#' @param reportMatching Logical specifying whether to return the clade
+#' matchings as an attribute of the score.
 #'
 #' @return Returns a numeric that sums the mutual information content of the
 #' optimal matching of bipartitions between two trees, following Smith (submitted).
@@ -13,14 +16,14 @@
 #' 
 #' @importFrom clue solve_LSAP
 #' @export
-MutualArborealInfo <- function (tree1, tree2) {
+MutualArborealInfo <- function (tree1, tree2, reportMatching = FALSE) {
   if (class(tree1) == 'phylo') {
     if (class(tree2) == 'phylo') {
       if (length(setdiff(tree1$tip.label, tree2$tip.label)) > 0) {
         stop("Tree tips must bear identical labels")
       }
       
-      MutualArborealInfoSplits(Tree2Splits(tree1), Tree2Splits(tree2))
+      MutualArborealInfoSplits(Tree2Splits(tree1), Tree2Splits(tree2), reportMatching)
     } else {
       splits1 <- Tree2Splits(tree1)
       vapply(tree2, 
@@ -50,25 +53,25 @@ MutualArborealInfo <- function (tree1, tree2) {
 #' @inheritSection references MutualArborealInfo 
 #' @author Martin R. Smith
 #' @export
-MutualPartitionInfo <- function (tree1, tree2) {
+MutualPartitionInfo <- function (tree1, tree2, reportMatching = FALSE) {
   if (class(tree1) == 'phylo') {
     if (class(tree2) == 'phylo') {
       if (length(setdiff(tree1$tip.label, tree2$tip.label)) > 0) {
         stop("Tree tips must bear identical labels")
       }
       
-      MutualPartitionInfoSplits(Tree2Splits(tree1), Tree2Splits(tree2))
+      MutualPartitionInfoSplits(Tree2Splits(tree1), Tree2Splits(tree2), reportMatching)
     } else {
       splits1 <- Tree2Splits(tree1)
       vapply(tree2, 
-             function (tr2) MutualPartitionInfoSplits(splits1, Tree2Splits(tr2)),
+             function (tr2) MutualPartitionInfoSplits(splits1, Tree2Splits(tr2), reportMatching),
              double(1))
     }
   } else {
     if (class(tree2) == 'phylo') {
       splits1 <- Tree2Splits(tree2)
       vapply(tree1, 
-             function (tr2) MutualPartitionInfoSplits(splits1, Tree2Splits(tr2)),
+             function (tr2) MutualPartitionInfoSplits(splits1, Tree2Splits(tr2), reportMatching),
              double(1))
     } else {
       splits1 <- lapply(tree1, Tree2Splits)
@@ -82,7 +85,7 @@ MutualPartitionInfo <- function (tree1, tree2) {
 #' @describeIn MutualArborealInfo Takes splits instead of trees
 #' @param splits1,splits2 Splits [#TODO document properly]
 #' @export
-MutualArborealInfoSplits <- function (splits1, splits2) {
+MutualArborealInfoSplits <- function (splits1, splits2, reportMatching = FALSE) {
   
   if (dim(splits1)[2] < dim(splits2)[2]) {
     tmp <- splits1
@@ -144,17 +147,23 @@ MutualArborealInfoSplits <- function (splits1, splits2) {
     max(pairScores)
   } else {
     optimalMatching <- solve_LSAP(pairScores, TRUE)
-    # Previously:
-    # sum(pairScores[cbind(seq_along(optimalMatching), optimalMatching)])
-    # Now (30% faster):
-    sum(pairScores[matrix(c(seq_along(optimalMatching), optimalMatching), ncol=2L)])
+    
+    # Return:
+    ret <- sum(pairScores[matrix(c(seq_along(optimalMatching), optimalMatching), ncol=2L)])
+    if (reportMatching) {
+      attr(ret, 'matching') <- optimalMatching
+      attr(ret, 'pairScores') <- pairScores
+      ret
+    } else {
+      ret
+    }
   }
 }
 
 #' @describeIn MutualArborealInfo Takes splits instead of trees
 #' @inheritParams MutualArborealInfoSplits
 #' @export
-MutualPartitionInfoSplits <- function (splits1, splits2) {
+MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE) {
   
   if (dim(splits1)[2] < dim(splits2)[2]) {
     tmp <- splits1
@@ -192,7 +201,15 @@ MutualPartitionInfoSplits <- function (splits1, splits2) {
     # Previously:
     # sum(pairScores[cbind(seq_along(optimalMatching), optimalMatching)])
     # Now (30% faster):
-    sum(pairScores[matrix(c(seq_along(optimalMatching), optimalMatching), ncol=2L)])
+    ret <- sum(pairScores[matrix(c(seq_along(optimalMatching), optimalMatching), ncol=2L)])
+    
+    if (reportMatching) {
+      attr(ret, 'matching') <- optimalMatching
+      attr(ret, 'pairScores') <- pairScores
+      ret
+    } else {
+      ret
+    }
   }
 }
 
