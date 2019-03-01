@@ -6,15 +6,18 @@
 \alias{MutualPartitionInfoSplits}
 \title{Information-based generalized Robinson-Fould distance between two trees}
 \usage{
-MutualArborealInfo(tree1, tree2)
+MutualArborealInfo(tree1, tree2, reportMatching = FALSE)
 
-MutualArborealInfoSplits(splits1, splits2)
+MutualArborealInfoSplits(splits1, splits2, reportMatching = FALSE)
 
-MutualPartitionInfoSplits(splits1, splits2)
+MutualPartitionInfoSplits(splits1, splits2, reportMatching = FALSE)
 }
 \arguments{
 \item{tree1, tree2}{Trees of class `phylo`, with tips labelled identically,
 or lists of such trees to undergo pairwise comparison.}
+
+\item{reportMatching}{Logical specifying whether to return the clade
+matchings as an attribute of the score.}
 
 \item{splits1, splits2}{Splits [#TODO document properly]}
 }
