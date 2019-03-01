@@ -4,7 +4,7 @@
 \alias{MutualPartitionInfo}
 \title{Tree distance based on joint information content of splits}
 \usage{
-MutualPartitionInfo(tree1, tree2)
+MutualPartitionInfo(tree1, tree2, reportMatching = FALSE)
 }
 \arguments{
 \item{tree1}{Trees of class `phylo`, with tips labelled identically,
@@ -12,6 +12,9 @@ or lists of such trees to undergo pairwise comparison.}
 
 \item{tree2}{Trees of class `phylo`, with tips labelled identically,
 or lists of such trees to undergo pairwise comparison.}
+
+\item{reportMatching}{Logical specifying whether to return the clade
+matchings as an attribute of the score.}
 }
 \description{
 #TODO Needs documenting and describing fully.

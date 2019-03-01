@@ -45,6 +45,20 @@ MutualArborealInfo <- function (tree1, tree2, reportMatching = FALSE) {
   }
 }
 
+#' Variation of information between two trees
+#' 
+#' See Melia 2007... #TODO document
+#'
+#' @inheritParams MutualArborealInfo
+#' 
+#' 
+#' 
+#' @references {
+#'   \insertRef{Meila2007}{TreeSearch}
+#' }
+#'
+#' @author Martin R. Smith
+#' @export
 #' Tree distance based on joint information content of splits
 #' 
 #' #TODO Needs documenting and describing fully.
@@ -160,6 +174,9 @@ MutualArborealInfoSplits <- function (splits1, splits2, reportMatching = FALSE) 
   }
 }
 
+#' @describeIn VariationOfInfo Takes splits instead of trees
+#' @template splits12params
+#' @export
 #' @describeIn MutualArborealInfo Takes splits instead of trees
 #' @inheritParams MutualArborealInfoSplits
 #' @export
