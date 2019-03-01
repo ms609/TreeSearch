@@ -107,12 +107,10 @@ SplitMatchProbability <- function (split1, split2) {
       rev(seq.int(1L, nArrangements, 2L)))
   } else {
     c(seq.int(1L, nArrangements, 2L),
-      rev(seq.int(1L, nArrangements, 2L)))
+      rev(seq.int(2L, nArrangements, 2L)) - 1)
   }
   
-  choices <- apply(arrangements, 2,
-                   function (parts) choose(sum(parts[c(1, 3)]), parts[1]) *
-                     choose(sum(parts[c(2, 4)]), parts[2]))
+  choices <- apply(arrangements, 2, NPartitionPairs)
   
   # Return:
   sum(choices[ranking <= ranking[partitions[1, 2] + 1L - minA1B2]]) / choose(n, A1)
