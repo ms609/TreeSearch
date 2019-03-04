@@ -36,7 +36,9 @@ Information-based generalized Robinson-Fould distance between two trees
 }}
 
 \references{
-\insertRef{SmithDist}{TreeSearch}
+{
+ \insertRef{SmithDist}{TreeSearch}
+}
 }
 \author{
 Martin R. Smith

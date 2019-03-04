@@ -10,7 +10,7 @@ JointInformation(A1A2, A1B2, B1A2, B1B2)
 \item{A1A2, A1B2, B1A2, B1B2}{Number of taxa in splits A1 and A2 (etc.)}
 }
 \description{
-Because some information is common to both splits (`MutualInformation`),
+Because some information is common to both splits (`SplitMutualInformation`),
 the joint information of two splits will be less than the sum of the
 information of the splits taken separately -- unless the splits are
 contradictory.
