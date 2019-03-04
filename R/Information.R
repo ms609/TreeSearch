@@ -35,7 +35,7 @@ LogTreesMatchingSplit <- function (A, B) {
 MutualInformation <- function(n, A1, A2=A1) {
   (LogTreesMatchingSplit(A1, n - A1) 
    + LogTreesMatchingSplit(A2, n - A2)
-   - LogTreesConsistentWithTwoSplits(n, A1, A2) 
+   - LogTreesConsistentWithTwoSplits(n, A1, A2)
    - LnUnrooted(n)) / -log(2)
 }
 
@@ -144,7 +144,26 @@ NPartitionPairs <- function (configuration) {
 LnSplitMatchProbability <- function(split1, split2) 
   log(SplitMatchProbability(split1, split2))
 
-
+#' Entropy of two splits
+#' 
+#' Reports various values pertaining to the information content of two splits,
+#' treating splits as subdivisions of _n_ terminals into two clusters.
+#' 
+#' 
+#' @template split12Params
+#' 
+#' @references 
+#' \insertRef{Meila2007}{TreeSearch}
+#' 
+#' @return A numeric vector listing, in bits,
+#'  * `h1` The entropy of split 1
+#'  * `h1` The entropy of split 2
+#'  * `jointH` The joint entropy of both splits
+#'  * `i` The mutual information of the splits
+#'  * `vI` The variation of information of the splits (see Meila 2007)
+#' 
+#' @author Martin R. Smith
+#' @export
 SplitEntropy <- function (split1, split2=split1) {
   A1A2 <- sum(split1 & split2)
   A1B2 <- sum(split1 & !split2)
@@ -152,21 +171,21 @@ SplitEntropy <- function (split1, split2=split1) {
   B1B2 <- sum(!split1 & !split2)
   overlaps <- c(A1A2, A1B2, B1A2, B1B2)
   
-  
   A1 <- A1A2 + A1B2
   A2 <- A1A2 + B1A2
   B1 <- B1A2 + B1B2
   B2 <- A1B2 + B1B2
   n <- A1 + B1
   
-  H <- function(p) -sum(p*log(p))
-  h1 <- H(c(A1, B1) / n)
-  h2 <- H(c(A2, B2) / n)
-  jointH <- H(overlaps[overlaps > 0L] / n)
+  h1 <- Entropy(c(A1, B1) / n)
+  h2 <- Entropy(c(A2, B2) / n)
+  jointH <- Entropy(overlaps[overlaps > 0L] / n)
   mutualInformation <- h1 + h2 - jointH
+  variationOfInformation <- jointH - mutualInformation
   
   # Return:
-  c(h1 = h1, h2 = h2, jointH = jointH, i = mutualInformation)  
+  c(h1 = h1, h2 = h2, jointH = jointH, i = mutualInformation,
+    vI = variationOfInformation)
 }
 
 #' Joint Information of two splits
