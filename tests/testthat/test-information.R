@@ -15,11 +15,11 @@ test_that("UnrootedTreesMatchingSplit works", {
 test_that("Joint information calculated correctly", {
   # Identical splits: ABCDE:FGH, ABCDE:FGH
   expect_equal(-log2(315/10395), JointInformation(5, 0, 0, 3))
-  expect_equal(MutualInformation(8, 5, 5), FullMutualInformation(0, 5, 3, 0))
+  expect_equal(SplitMutualInformation(8, 5, 5), FullMutualInformation(0, 5, 3, 0))
   # Agreeable splits: ABCDE:FGHI, ABC:DEFGHI
   expect_equal(SplitInformation(5, 4) + SplitInformation(3, 6) --log2(135/135135),
                JointInformation(3, 2, 0, 4))
-  expect_equal(MutualInformation(9, 5, 3),
+  expect_equal(SplitMutualInformation(9, 5, 3),
                FullMutualInformation(3, 2, 0, 4))
   # Perfect contradiction: AB:CDEFG, AC:BDEFG
   expect_equal(SplitInformation(2, 5) * 2, JointInformation(1, 1, 1, 4))
@@ -120,6 +120,15 @@ test_that("SplitMatchProbability returns expected probabilities", {
   Test(4/84, splitABC, splitABCD)
   Test(4/84, splitBCD, splitABCD)
   
+})
+
+test_that("AllSplitPairings counted correctly", {
+  expect_error(AllSplitPairings(3))
+  for (n in 4:10) {
+    totalSplits <- sum(choose(n, 2:(n-2)))
+    expect_equal(totalSplits * totalSplits, sum(exp(AllSplitPairings(n)['lnTotal', ]))
+    )
+  }
 })
 
 
