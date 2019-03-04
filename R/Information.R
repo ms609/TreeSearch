@@ -130,6 +130,48 @@ SplitMatchProbability <- function (split1, split2) {
 }
 
 
+#' All split pairings
+#' 
+#' We consider only non-trivial splits, i.e. splits dividing one or zero
+#' taxa from the rest are ignored.
+#' 
+#' @param n Integer specifying number of terminal taxa
+#' 
+#' @author Martin R. Smith
+#' @export
+AllSplitPairings <- function (n) {
+  
+  if (n < 4L) stop("No informative splits with < 4 taxa")
+  
+  # smallHalves <- 1L + seq_len(ceiling(n / 2) - 2L)
+  dataRows <- 2L
+
+  unevenPairs <- matrix(
+    # For i in 2:largestSmallSplit
+    # TODO: Don't calculate bottom triangle
+    unlist(lapply(1L + seq_len(n - 3L), function (inA) {
+      # For j in 2:(n - 2)
+      lnCa <- lchoose(n, inA)
+      outA <- n - inA
+      hA <- Entropy(c(inA, outA) / n)
+      unlist(lapply(1L + seq_len(n - 3L), function (inB) {
+        outB <- n - inB
+        hB <- Entropy(c(inB, outB) / n)
+        vapply(max(0, inA + inB - n):min(inA, inB), function (inAB) {
+          association <- c(inAB, inA - inAB, inB - inAB, n + inAB - inA - inB)
+          jointEntropies <- Entropy(association / n)
+          
+          c(#inA, inB, inAB, 
+            #npairs = NPartitionPairs(association), nis = choose(n, i),
+            lnTotal = lnCa + lchoose(inA, inAB) + lchoose(outA, inB - inAB),
+            VoI = jointEntropies + jointEntropies - hA - hB)
+        }, double(dataRows))
+      }))
+    })), dataRows, dimnames=list(c('lnTotal', 'VoI'), NULL))
+
+  unevenPairs
+}
+
 #' Number of terminal arrangements matching a specified configuration of 
 #' two partitions.
 #' 
