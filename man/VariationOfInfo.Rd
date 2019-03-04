@@ -38,3 +38,6 @@ See Melia 2007... #TODO document
   \insertRef{Meila2007}{TreeSearch}
 }
 }
+\author{
+Martin R. Smith
+}
