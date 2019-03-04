@@ -41,7 +41,7 @@ Entropy <- function (p) -sum(p[p > 0] * log2(p[p > 0]))
 #' @author Martin R. Smith
 #' @concept Split information
 #' @export
-MutualInformation <- function(n, A1, A2=A1) {
+SplitMutualInformation <- function(n, A1, A2=A1) {
   (LogTreesMatchingSplit(A1, n - A1) 
    + LogTreesMatchingSplit(A2, n - A2)
    - LogTreesConsistentWithTwoSplits(n, A1, A2)
