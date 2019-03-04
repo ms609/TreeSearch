@@ -20,6 +20,15 @@ LogTreesMatchingSplit <- function (A, B) {
   LnRooted.int(A) + LnRooted.int(B)
 }
 
+#' Entropy in bits
+#' 
+#' @param p Numeric vector specifying probabilities of outcomes.
+#' 
+#' @return Entropy of the specified probabilities, in bits
+#' @author Martin R. Smith
+#' @export
+Entropy <- function (p) -sum(p[p > 0] * log2(p[p > 0]))
+
 #' Mutual information of two splits
 #' 
 #' @param n Integer specifying the number of terminals.
