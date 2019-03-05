@@ -2,9 +2,12 @@
 % Please edit documentation in R/Information.R
 \name{SplitMutualInformation}
 \alias{SplitMutualInformation}
+\alias{SplitVariationOfInformation}
 \title{Mutual information of two splits}
 \usage{
 SplitMutualInformation(n, A1, A2 = A1)
+
+SplitVariationOfInformation(n, A1, A2 = A1)
 }
 \arguments{
 \item{n}{Integer specifying the number of terminals.}
@@ -18,6 +21,14 @@ The information that two splits have in common, in bits.
 }
 \description{
 Mutual information of two splits
+}
+\section{Functions}{
+\itemize{
+\item \code{SplitVariationOfInformation}: Variation of information, per Meila (2007).
+}}
+
+\references{
+\insertRef{Meila2007}{TreeSearch}
 }
 \author{
 Martin R. Smith

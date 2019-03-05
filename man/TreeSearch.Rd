@@ -16,7 +16,7 @@ EdgeListSearch(edgeList, dataset, TreeScorer = MorphyLength,
   stopAtPlateau = 0L, forestSize = 1L, cluster = NULL,
   verbosity = 1L, ...)
 
-TreeSearch(tree, dataset = NULL, InitializeData = PhyDat2Morphy,
+TreeSearch(tree, dataset, InitializeData = PhyDat2Morphy,
   CleanUpData = UnloadMorphy, TreeScorer = MorphyLength,
   EdgeSwapper = RootedTBRSwap, maxIter = 100L, maxHits = 20L,
   forestSize = 1L, stopAtPeak = FALSE, stopAtPlateau = 0L,

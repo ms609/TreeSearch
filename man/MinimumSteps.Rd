@@ -17,7 +17,8 @@ Tokens that are ambiguous for an inapplicable and an applicable
 state are not presently supported.}
 }
 \value{
-An integer specifying the minimum number of steps that the character must contain
+An integer specifying the minimum number of steps that the character
+ must contain.
 }
 \description{
 The smallest number of steps that a character can take on any tree.
