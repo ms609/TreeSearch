@@ -41,11 +41,21 @@ Entropy <- function (p) -sum(p[p > 0] * log2(p[p > 0]))
 #' @author Martin R. Smith
 #' @concept Split information
 #' @export
-SplitMutualInformation <- function(n, A1, A2=A1) {
+SplitMutualInformation <- function(n, A1, A2 = A1) {
   (LogTreesMatchingSplit(A1, n - A1) 
    + LogTreesMatchingSplit(A2, n - A2)
    - LogTreesConsistentWithTwoSplits(n, A1, A2)
    - LnUnrooted(n)) / -log(2)
+}
+
+#' @describeIn SplitMutualInformation Variation of information, per Meila (2007).
+#' @references \insertRef{Meila2007}{TreeSearch}
+#' @export
+SplitVariationOfInformation <- function (n, A1, A2 = A1) {
+  # TODO calculate more efficiently from first principles
+  mutual <- SplitMutualInformation(n, A1, A2)
+  SplitInformation (A1, n - A1) - mutual +
+    SplitInformation(A2, n - A2) - mutual
 }
 
 #' Information content of a split
@@ -57,7 +67,7 @@ SplitMutualInformation <- function(n, A1, A2=A1) {
 #' @concept Split information
 #' @export
 SplitInformation <- function (A, B) {
-  -log2(TreesMatchingSplit(A, B) / NUnrooted(A+B))
+  -(LogTreesMatchingSplit(A, B) - LnUnrooted.int(A + B)) / log(2)
 }
 
 #' @describeIn SplitInformation Information content of a multi-partition split.
@@ -65,7 +75,97 @@ SplitInformation <- function (A, B) {
 #' partition of a multi-partition split.
 #' @export
 MultiSplitInformation <- function (partitionSizes) {
-  -log2(NUnrootedMult(partitionSizes) / NUnrooted(sum(partitionSizes)))
+  -(LnUnrootedMult(partitionSizes) - LnUnrooted.int(sum(partitionSizes))) / log(2)
+}
+
+
+#' Use Variation of Information to compare partitions as clusterings
+#' 
+#' Compare a pair of splits solely as clusterings of taxa, disregarding their
+#' phlogenetic information, using the information based distance proposed
+#' by Meila (2007).
+#' 
+#' 
+#' @return Variation of information, measured in bits.
+#' 
+#' @references {
+#'   \insertRef{Meila2007}{TreeSearch}
+#' }
+#' 
+#' @examples 
+#'   # Maximum variation = information content of each split separately
+#'   MeilaVariationOfInformation(c(T,T,T,F,F,F), c(T,T,T,T,T,T))
+#'   Entropy(c(3, 3) / 6) + Entropy(c(0, 6) / 6)
+#'   
+#'   # Minimum variation = 0
+#'   MeilaVariationOfInformation(c(T,T,T,F,F,F), c(T,T,T,F,F,F))
+#'   
+#'   # Not always possible for two evenly-sized splits to reach maximum
+#'   variation of information
+#'   Entropy(c(3, 3) / 6) * 2  # = 2
+#'   MeilaVariationOfInformation(c(T,T,T,F,F,F), c(T,F,T,F,T,F)) # < 2
+#'   
+#'   # Phylogenetically uninformative groupings contain partitioning information
+#'   Entropy(c(1, 5) / 6)
+#'   MeilaVariationOfInformation(c(F,T,T,T,T,T), c(T,T,T,T,T,F))
+#' 
+#' 
+#' @template split12Params
+#' @author Martin R. Smith
+#' @export
+MeilaVariationOfInformation <- function (split1, split2) {
+  if (length(split1) != length(split2)) stop("Split lengths differ")
+  n <- length(split1)
+  
+  associationMatrix <- c(sum(split1 & split2), sum(split1 & !split2),
+                         sum(!split1 & split2), sum(!split1 & !split2))
+  probabilities <- associationMatrix / n
+  p1 <- probabilities[1] + probabilities[3]
+  p2 <- probabilities[1] + probabilities[2]
+  
+  jointEntropies <- Entropy(probabilities)
+  
+  # Return:
+  jointEntropies + jointEntropies - 
+    Entropy(c(p1, 1 - p1)) -
+    Entropy(c(p2, 1 - p2))
+}
+
+#' Probability of matching this well
+#' 
+#' Probability that two random splits of the sizes provided will be at least
+#' as similar as the two specified.
+#'
+#' @template split12Params
+#' 
+#' @return The proportion of permissable informative splits 
+#' splitting the terminals into bipartitions of the sizes given,
+#'  that match as well as `split1` and `split2` do.
+#'  
+AnySizeSplitMatchProbability <- function (split1, split2) {
+  
+  observedEntropy <- SplitEntropy(split1, split2)
+  
+  possibleEntropies <- AllEntropies(length(split1))
+  
+  nArrangements <- iMax - minA1B2 + 1L
+
+  arrangements <- vapply(minA1B2:iMax,
+                         function (i) c(A1 - i, i, i + A2 - A1, B2 - i),
+                         double(4))
+  
+  H <- function(p) -sum(p[p > 0] * log(p[p > 0]))
+  jointEntropies <- apply(arrangements / n, 2, H)
+  # mutualInformation <- H(c(A1,n - A1) / n) + H(c(A2, B2) / n) - jointEntropies
+  
+  # Meila 2007; less is best
+  variationOfInformation <- jointEntropies+ jointEntropies - 
+    (H(c(A1,n - A1) / n) + H(c(A2, B2) / n))
+  
+  choices <- apply(arrangements, 2, NPartitionPairs)
+  
+  # Return:
+  sum(choices[ranking <= ranking[partitions[1, 2] + 1L - minA1B2]]) / choose(n, A1)
 }
 
 
@@ -102,12 +202,15 @@ SplitMatchProbability <- function (split1, split2) {
   minB1A2 <- B2 - iMax
   
   nArrangements <- iMax - minA1B2 + 1L
+  # It turns out that this is called a confusion matrix, association matrix
+  # or contingency table; see Meila 2007
   arrangements <- vapply(minA1B2:iMax,
                          function (i) c(A1 - i, i, i + A2 - A1, B2 - i),
                          double(4))
   
   #H <- function(p) -sum(p[p > 0] * log(p[p > 0]))
   #jointEntropies <- apply(arrangements / n, 2, H)
+  #mutualInformation <- H(c(A1,n - A1) / n) + H(c(A2, B2) / n) - jointEntropies
   
   extraTipsInPerfectMatch.A1A2.B1B2 <- sum(arrangements[c(1, 4), nArrangements])
   extraTipsInPerfectMatch.A1B2.B1A2 <- sum(arrangements[c(2, 3), 1L])
@@ -137,9 +240,15 @@ SplitMatchProbability <- function (split1, split2) {
 #' 
 #' @param n Integer specifying number of terminal taxa
 #' 
+#' @return A named vector, specifying the number of split pairings producing
+#' the variation of information given (in bits) in the name.  Splits
+#' AB:CD and CD:AB are treated as distinct, so division of all values by four 
+#' is justified in cases where unique pairings only are required.
+#' 
 #' @author Martin R. Smith
+#' @importFrom memoise memoise
 #' @export
-AllSplitPairings <- function (n) {
+AllSplitPairings <- memoise(function (n) {
   
   if (n < 4L) stop("No informative splits with < 4 taxa")
   
@@ -151,7 +260,7 @@ AllSplitPairings <- function (n) {
     # TODO: Don't calculate bottom triangle
     unlist(lapply(1L + seq_len(n - 3L), function (inA) {
       # For j in 2:(n - 2)
-      lnCa <- lchoose(n, inA)
+      nCa <- choose(n, inA)
       outA <- n - inA
       hA <- Entropy(c(inA, outA) / n)
       unlist(lapply(1L + seq_len(n - 3L), function (inB) {
@@ -163,14 +272,21 @@ AllSplitPairings <- function (n) {
           
           c(#inA, inB, inAB, 
             #npairs = NPartitionPairs(association), nis = choose(n, i),
-            lnTotal = lnCa + lchoose(inA, inAB) + lchoose(outA, inB - inAB),
+            nTotal = nCa * choose(inA, inAB) * choose(outA, inB - inAB),
             VoI = jointEntropies + jointEntropies - hA - hB)
         }, double(dataRows))
       }))
-    })), dataRows, dimnames=list(c('lnTotal', 'VoI'), NULL))
+    })), dataRows, dimnames=list(c('nTotal', 'VoI'), NULL))
+  
+  tapply(unevenPairs['nTotal', ], unevenPairs['VoI', ], sum)
+})
 
-  unevenPairs
-}
+#' @describeIn AllSplitPairings Lookup table listing split pairing information
+SplitPairingInformationIndex <- memoise(function (n) {
+  info <- AllSplitPairings(n)
+  names(info) <- round(as.double(names(info)), 6L)
+  log2(sum(info)) - log2(cumsum(info))
+})
 
 #' Number of terminal arrangements matching a specified configuration of 
 #' two partitions.
@@ -192,8 +308,9 @@ NPartitionPairs <- function (configuration) {
   choose(sum(configuration[c(2, 4)]), configuration[2])
 }
 #' @describeIn SplitMatchProbability The natural logarithm of the probability
-LnSplitMatchProbability <- function(split1, split2) 
+LnSplitMatchProbability <- function(split1, split2) {
   log(SplitMatchProbability(split1, split2))
+}
 
 #' Entropy of two splits
 #' 
@@ -241,7 +358,7 @@ SplitEntropy <- function (split1, split2=split1) {
 
 #' Joint Information of two splits
 #'
-#' Because some information is common to both splits (`MutualInformation`),
+#' Because some information is common to both splits (`SplitMutualInformation`),
 #' the joint information of two splits will be less than the sum of the
 #' information of the splits taken separately -- unless the splits are
 #' contradictory.
@@ -288,7 +405,6 @@ FullMutualInformation <- function(A1A2, A1B2, B1A2, B1B2) {
   B2 <- A1B2 + B1B2
   n  <- A1 + B1
   
-  
   BuildSplitFromCommonInformation <- function (A1, A1a, B1, B1a) {
     A1b <- A1 - A1a
     B1b <- B1 - B1a
@@ -318,18 +434,17 @@ FullMutualInformation <- function(A1A2, A1B2, B1A2, B1B2) {
   if(any(c(A1A2, A1B2, B1A2, B1B2) == 0)) {
     a1Pair <- if (A1A2 == 0 || B1B2 == 0) B2 else A2
     # Splits are consistent
-    MutualInformation(n, A1, a1Pair)
+    SplitMutualInformation(n, A1, a1Pair)
   } else {
     # Splits are inconsistent
     SplitInformation(A1A2, B1B2) +
       SplitInformation(B1A2, A1B2)
   }
-  
 }
 
 #' Number of trees consistent with two splits
 #'
-#' @inheritParams MutualInformation
+#' @inheritParams SplitMutualInformation
 #' @author Martin R. Smith
 #' @concept Split information
 #' @export
