@@ -126,8 +126,7 @@ test_that("AllSplitPairings counted correctly", {
   expect_error(AllSplitPairings(3))
   for (n in 4:10) {
     totalSplits <- sum(choose(n, 2:(n-2)))
-    expect_equal(totalSplits * totalSplits, sum(exp(AllSplitPairings(n)['lnTotal', ]))
-    )
+    expect_equal(totalSplits * totalSplits, sum(AllSplitPairings(n)))
   }
 })
 
