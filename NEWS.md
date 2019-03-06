@@ -1,11 +1,11 @@
-# TreeSearch 0.2.2.9000 (in development)
+# TreeSearch 0.2.2.9001 (in development)
 
 ## New features
  - Implement an information theoretic tree distance measure (Smith, in prep)
+ - Prepare for new random number generator in R3.6.0
 
 ## Bug fixes
  - Correct some mistakes in the documentation
-
 
 # TreeSearch 0.2.2
 
