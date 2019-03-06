@@ -105,21 +105,21 @@ VariationOfArborealInfo <- function (tree1, tree2, reportMatching = FALSE) {
 #' @author Martin R. Smith
 #' @inheritParams MutualArborealInfo
 #' @export
-VariationOfPartitionInfo <- function (tree1, tree2,
-                                      reportMatching = FALSE,
-                                      bestMatchOnly = TRUE) {
+MutualClusteringInfo <- function (tree1, tree2,
+                                  reportMatching = FALSE,
+                                  bestMatchOnly = TRUE) {
   if (class(tree1) == 'phylo') {
     if (class(tree2) == 'phylo') {
       if (length(setdiff(tree1$tip.label, tree2$tip.label)) > 0) {
         stop("Tree tips must bear identical labels")
       }
       
-      VariationOfSplitPartitionInfo(Tree2Splits(tree1), Tree2Splits(tree2),
+      MutualSplitClusteringInfo(Tree2Splits(tree1), Tree2Splits(tree2),
                                     reportMatching, bestMatchOnly)
     } else {
       splits1 <- Tree2Splits(tree1)
       vapply(tree2, 
-             function (tr2) VariationOfSplitPartitionInfo(splits1, Tree2Splits(tr2),
+             function (tr2) MutualSplitClusteringInfo(splits1, Tree2Splits(tr2),
                                                           reportMatching,
                                                           bestMatchOnly),
              double(1))
@@ -128,13 +128,13 @@ VariationOfPartitionInfo <- function (tree1, tree2,
     if (class(tree2) == 'phylo') {
       splits1 <- Tree2Splits(tree2)
       vapply(tree1, 
-             function (tr2) VariationOfSplitPartitionInfo(splits1, Tree2Splits(tr2),
+             function (tr2) MutualSplitClusteringInfo(splits1, Tree2Splits(tr2),
                                                           reportMatching, bestMatchOnly),
              double(1))
     } else {
       splits1 <- lapply(tree1, Tree2Splits)
       splits2 <- lapply(tree2, Tree2Splits)
-      matrix(mapply(VariationOfSplitPartitionInfo,
+      matrix(mapply(MutualSplitClusteringInfo,
                     rep(splits1, each=length(splits2)),
                     splits2,
                     reportMatching=reportMatching,
@@ -300,7 +300,7 @@ MutualArborealInfoSplits <- function (splits1, splits2, reportMatching = FALSE) 
 #'  or how informative each split is about each other split (`FALSE`).
 #' @template splits12params
 #' @export
-VariationOfSplitPartitionInfo <- function (
+MutualSplitClusteringInfo <- function (
   # TODO RENAME this function: it's a symmetric value saying how informative 
   # the partitions in one tree are about the best-matching partition in the 
   # other.
