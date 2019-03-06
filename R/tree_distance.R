@@ -529,8 +529,11 @@ MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE)
 #' @author Martin R. Smith
 #' @export
 SplitsCompatible <- function (split1, split2) {
-  all (split1[split2]) ||
+  # Return:
+  (
+    all (split1[split2]) ||
     all(split1[!split2]) ||
     all(!split1[split2]) ||
     all(!split1[!split2])
+  )
 }
