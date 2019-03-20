@@ -14,7 +14,7 @@ Entropy of the specified probabilities, in bits
 }
 \description{
 Reports the entropy of a vector of probabilities, in bits.
-Probabilities should sum to one.  Probabilities equalling zero will be 
+Probabilities should sum to one.  Probabilities equalling zero will be
 ignored.
 }
 \examples{

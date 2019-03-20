@@ -9,9 +9,9 @@ AncestorEdge(edge, parent, child)
 \arguments{
 \item{edge}{Number of an edge}
 
-\item{parent}{parent nodes (given by phylo.object$edge[, 1])}
+\item{parent}{parent nodes (given by phylo.object$edge\link{, 1})}
 
-\item{child}{child nodes (given by phylo.object$edge[, 2])}
+\item{child}{child nodes (given by phylo.object$edge\link{, 2})}
 }
 \value{
 a logical vector identifying whether each edge is the edge that is ancestral to the given edge.

@@ -14,14 +14,14 @@ MultiSplitInformation(partitionSizes)
 
 \item{B}{Number of taxa in each partition.}
 
-\item{partitionSizes}{Integer vector specifying the number of taxa in each 
+\item{partitionSizes}{Integer vector specifying the number of taxa in each
 partition of a multi-partition split.}
 }
 \value{
 Information content of the split, in bits.
 }
 \description{
-`SplitInformation` calculates the information content of a split, based on 
+\code{SplitInformation} calculates the information content of a split, based on
 the entropy of the subset of trees consistent with the split; a split that
 is consistent with a smaller number of trees will have a higher information
 content.

@@ -13,7 +13,7 @@ A vector with pre-calculated values of double factorials up to 300!!,
 and the logarithms of double factorials up to 50 000!!.
 }
 \details{
-301!! is too large to store as an integer; use `logDoubleFactorials` instead.
+301!! is too large to store as an integer; use \code{logDoubleFactorials} instead.
 }
 \concept{Double factorial}
 \keyword{datasets}

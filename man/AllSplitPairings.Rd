@@ -13,10 +13,16 @@ SplitPairingInformationIndex(n)
 \item{n}{Integer specifying the number of terminal taxa.}
 }
 \value{
-A named vector, specifying the number of split pairings producing
+\code{AllSplitPairings} returns a named vector, specifying the number of
+split pairings producing
 the variation of information given (in bits) in the name.  Splits
-AB:CD and CD:AB are treated as distinct, so division of all values by four 
+AB:CD and CD:AB are treated as distinct, so division of all values by four
 is justified in cases where unique pairings only are required.
+
+\code{SplitPairingInformationIndex} returns a table listing the possible values
+of the variation of information for splits with \code{n} terminals, and the
+clustering information (\emph{sensu} Smith in prep.) associated with a pairing
+that has the given variation of information.
 }
 \description{
 Calculates the variation of (clustering) information (Meila 2007)
@@ -34,6 +40,7 @@ are not considered.
 
 \examples{
 AllSplitPairings(5)
+SplitPairingInformationIndex(5)
 
 }
 \references{

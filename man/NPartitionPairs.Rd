@@ -2,35 +2,50 @@
 % Please edit documentation in R/Information.R
 \name{NPartitionPairs}
 \alias{NPartitionPairs}
-\alias{NTreePairs}
-\title{Number of terminal arrangements matching a specified configuration of 
-two partitions.}
+\title{Distributions of taxa consistent with a partition pair.}
 \usage{
 NPartitionPairs(configuration)
-
-NTreePairs(configuration)
 }
 \arguments{
-\item{configuration}{Integer vector of length four specifying the number of 
-terminals that occur in both 
-  (1) splits A1 and A2; 
-  (2) splits A1 and B2;
-  (3) splits B1 and A2;
-  (4) splits B1 and B2.
-  
- @return The number of ways to distribute `sum(configuration)` taxa according
- to the specified pattern.
- 
- @author Martin R. Smith
- @export}
+\item{configuration}{Integer vector of length four specifying the number of
+terminals that occur in both
+(1) splits A1 and A2;
+(2) splits A1 and B2;
+(3) splits B1 and A2;
+(4) splits B1 and B2.}
+}
+\value{
+The number of ways to distribute \code{sum(configuration)} taxa according
+to the specified pattern.
 }
 \description{
-Number of terminal arrangements matching a specified configuration of 
+Number of terminal arrangements matching a specified configuration of
 two partitions.
 }
-\section{Functions}{
-\itemize{
-\item \code{NTreePairs}: Number of phylogenetic tree pairs matching 
-the specified configuration of partitions.
-}}
+\details{
+Consider partitions that divide eight terminals, labelled A to H.
 
+\tabular{rcll}{
+Bipartition 1:\tab ABCD:EFGH\tab A1 = ABCD\tab B1 = EFGH \cr
+Bipartition 2:\tab ABE:CDFGH\tab A2 = ABE\tab B2 = CDFGH
+}
+
+This can be represented by an association matrix:
+
+\tabular{rll}{
+\tab \emph{A2} \tab \emph{B2} \cr
+\emph{A1} \tab AB  \tab C   \cr
+\emph{B1} \tab E   \tab FGH
+}
+
+The cells in this matrix contain 2, 1, 1 and 3 terminals respectively; this
+four-element vector (\code{c(2, 1, 1, 3)}) is the \code{configuration} implied by
+this pair of bipartition splits.
+}
+\examples{
+NPartitionPairs(c(2, 1, 1, 3))
+ 
+}
+\author{
+Martin R. Smith
+}

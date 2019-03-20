@@ -11,13 +11,13 @@ LnSplitMatchProbability(split1, split2)
 }
 \arguments{
 \item{split1, split2}{Logical vectors listing terminals in same order, such that
-each terminal is identified as a member of the ingroup (`TRUE`) or outgroup 
-(`FALSE`) of the respective bipartition split.}
+each terminal is identified as a member of the ingroup (\code{TRUE}) or outgroup
+(\code{FALSE}) of the respective bipartition split.}
 }
 \value{
-The proportion of permissable informative splits 
+The proportion of permissable informative splits
 splitting the terminals into bipartitions of the sizes given,
- that match as well as `split1` and `split2` do.
+that match as well as \code{split1} and \code{split2} do.
 }
 \description{
 Calculates the probability that two random splits of the sizes provided

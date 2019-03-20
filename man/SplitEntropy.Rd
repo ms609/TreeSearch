@@ -8,20 +8,23 @@ SplitEntropy(split1, split2 = split1)
 }
 \arguments{
 \item{split1, split2}{Logical vectors listing terminals in same order, such that
-each terminal is identified as a member of the ingroup (`TRUE`) or outgroup 
-(`FALSE`) of the respective bipartition split.}
+each terminal is identified as a member of the ingroup (\code{TRUE}) or outgroup
+(\code{FALSE}) of the respective bipartition split.}
 }
 \value{
 A numeric vector listing, in bits,
- * `h1` The entropy of split 1
- * `h1` The entropy of split 2
- * `jointH` The joint entropy of both splits
- * `i` The mutual information of the splits
- * `vI` The variation of information of the splits (see Meila 2007)
+\itemize{
+\item \code{h1} The entropy of split 1
+\item \code{h1} The entropy of split 2
+\item \code{jointH} The joint entropy of both splits
+\item \code{i} The mutual information of the splits
+\item \code{vI} The variation of information of the splits (see Meila 2007)
+}
 }
 \description{
-Reports various values pertaining to the information content of two splits,
-treating splits as subdivisions of _n_ terminals into two clusters.
+Reports various values pertaining to the phylogenetic information content
+of two splits,
+treating splits as subdivisions of \emph{n} terminals into two clusters.
 }
 \references{
 \insertRef{Meila2007}{TreeSearch}
@@ -29,3 +32,4 @@ treating splits as subdivisions of _n_ terminals into two clusters.
 \author{
 Martin R. Smith
 }
+\concept{Split information}

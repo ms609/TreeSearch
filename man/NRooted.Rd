@@ -11,7 +11,7 @@
 \alias{NUnrootedMult}
 \title{Number of rooted/unrooted trees
 These functions return the number of rooted or unrooted trees consistent with a given pattern
- of splits.}
+of splits.}
 \usage{
 NRooted(tips)
 

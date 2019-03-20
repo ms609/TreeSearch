@@ -14,18 +14,18 @@ whose names correspond to the labels of any accompanying tree.}
 }
 \value{
 This function returns the elements from a list containing:
-   \itemize{
+\itemize{
 \item     The total parsimony score
-\item     The parsimony score associated with each character 
+\item     The parsimony score associated with each character
 \item     A matrix comprising character reconstructions for each node
-          after the final pass
-  }
-The elements to return are specified by the parameter \code{detail}.  
+after the final pass
+}
+The elements to return are specified by the parameter \code{detail}.
 If a single element is requested (default) then just that element will be returned
 If multiple elements are requested then these will be returned in a list.
 }
 \description{
-Uses code modified from the Morphy library to calculate a parsimony score 
+Uses code modified from the Morphy library to calculate a parsimony score
 in datasets that contain inapplicable data
 }
 \examples{

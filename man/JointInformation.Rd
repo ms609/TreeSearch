@@ -7,17 +7,20 @@
 JointInformation(A1A2, A1B2, B1A2, B1B2)
 }
 \arguments{
-\item{A1A2, A1B2, B1A2, B1B2}{Number of taxa in splits A1 and A2 (etc.)}
+\item{A1A2, A1B2, B1A2, B1B2}{Number of taxa common to splits A1 and A2 (etc.).}
+}
+\value{
+\code{JointInformation} returns the joint phylogenetic information content
+of two splits, measured in bits.
 }
 \description{
-Because some information is common to both splits (`SplitMutualInformation`),
-the joint information of two splits will be less than the sum of the
-information of the splits taken separately -- unless the splits are
-contradictory.
+Calculates the joint phylogenetic information content of two splits:
+that is, the information content of the two splits considered separately,
+minus their mutual information (which would otherwise be counted twice).
 }
-\details{
-Split Y1 is defined as dividing taxa into the two sets A1 and B1,
-and Y2=A2:B2.
+\examples{
+JointInformation(3, 1, 0, 4)
+
 }
 \author{
 Martin R. Smith

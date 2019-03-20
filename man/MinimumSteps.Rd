@@ -7,7 +7,7 @@
 MinimumSteps(states)
 }
 \arguments{
-\item{states}{Integer vector listing the tokens that may be present at each 
+\item{states}{Integer vector listing the tokens that may be present at each
 tip along a single character, with each token represented as a binary digit;
 e.g. a value of 11 means that
 the tip may have tokens 0, 1 or 3 (as 11 = 2^0 + 2^1 + 2^3).
@@ -18,7 +18,7 @@ state are not presently supported.}
 }
 \value{
 An integer specifying the minimum number of steps that the character
- must contain.
+must contain.
 }
 \description{
 The smallest number of steps that a character can take on any tree.

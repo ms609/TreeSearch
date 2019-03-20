@@ -14,7 +14,7 @@ LogTreesMatchingSplit(A, B)
 }
 \description{
 Calculates the number of unrooted bifurcated trees that are consistent with
-a bipartition split that divides taxa into groups of size `A` and `B`.
+a bipartition split that divides taxa into groups of size \code{A} and \code{B}.
 }
 \section{Functions}{
 \itemize{

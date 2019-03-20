@@ -13,11 +13,11 @@ CollapseEdge(tree, edges)
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
 \item{nodes, edges}{Integer vector specifying the nodes or edges in the tree
- to be dropped. 
-(Use [ape:nodelabels] or [ape:edgelabels] to view numbers on a plotted tree.)}
+to be dropped.
+(Use \link{ape:nodelabels} or \link{ape:edgelabels} to view numbers on a plotted tree.)}
 }
 \value{
-`tree`, with the specified nodes or edges collapsed.  
+\code{tree}, with the specified nodes or edges collapsed.
 The length of each dropped edge will (naively) be added to each descendant edge.
 }
 \description{

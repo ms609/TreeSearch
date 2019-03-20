@@ -7,13 +7,13 @@
 FullMutualInformation(A1A2, A1B2, B1A2, B1B2)
 }
 \arguments{
-\item{A1A2}{Number of taxa in splits A1 and A2 (etc.)}
+\item{A1A2}{Number of taxa common to splits A1 and A2 (etc.).}
 
-\item{A1B2}{Number of taxa in splits A1 and A2 (etc.)}
+\item{A1B2}{Number of taxa common to splits A1 and A2 (etc.).}
 
-\item{B1A2}{Number of taxa in splits A1 and A2 (etc.)}
+\item{B1A2}{Number of taxa common to splits A1 and A2 (etc.).}
 
-\item{B1B2}{Number of taxa in splits A1 and A2 (etc.)}
+\item{B1B2}{Number of taxa common to splits A1 and A2 (etc.).}
 }
 \description{
 #TODO keep and describe, or delete.

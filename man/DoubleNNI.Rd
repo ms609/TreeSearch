@@ -7,9 +7,9 @@
 DoubleNNI(parent, child, edgeToBreak)
 }
 \arguments{
-\item{parent}{tree$edge[, 1]}
+\item{parent}{tree$edge\link{, 1}}
 
-\item{child}{tree$edge[, 2]}
+\item{child}{tree$edge\link{, 2}}
 
 \item{edgeToBreak}{index of edge to break}
 }

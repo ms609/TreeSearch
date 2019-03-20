@@ -8,8 +8,8 @@ SplitsCompatible(split1, split2)
 }
 \arguments{
 \item{split1, split2}{Logical vectors listing terminals in same order, such that
-each terminal is identified as a member of the ingroup (`TRUE`) or outgroup 
-(`FALSE`) of the respective bipartition split.}
+each terminal is identified as a member of the ingroup (\code{TRUE}) or outgroup
+(\code{FALSE}) of the respective bipartition split.}
 }
 \description{
 Splits are compatible if they are concave; i.e. they can both be true
