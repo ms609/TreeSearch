@@ -522,61 +522,6 @@ JointInformation <- function(A1A2, A1B2, B1A2, B1B2) {
   SplitInformation(A1, B1) + SplitInformation(A2, B2) - mutualInformation
 }
 
-#' Restricted joint information
-#' 
-#' #TODO keep and describe, or delete.
-#' 
-#' Information based on the proportion of trees that are consistent with
-#' Y1 OR Y2, AND consistent with the information that Y1 and Y2 have in common.
-#'  
-#' @inheritParams JointInformation
-#' @author Martin R. Smith
-#' @concept Split information
-#' @export
-FullMutualInformation <- function(A1A2, A1B2, B1A2, B1B2) {
-  A1 <- A1A2 + A1B2
-  B1 <- B1A2 + B1B2
-  A2 <- A1A2 + B1A2
-  B2 <- A1B2 + B1B2
-  n  <- A1 + B1
-  
-  BuildSplitFromCommonInformation <- function (A1, A1a, B1, B1a) {
-    A1b <- A1 - A1a
-    B1b <- B1 - B1a
-    
-    lnSubtreesA <- if (A1a == 0 || A1b == 0) {
-      LnUnrooted(A1) 
-    } else {
-      LnRooted(A1a) + LnRooted(A1b)
-    }
-    
-    lnSubtreesB <- if (B1a == 0 || B1b == 0) {
-      LnUnrooted(B1) 
-    } else {
-      LnRooted(B1a) + LnRooted(B1b)
-    }
-    
-    lnTrees <- lnSubtreesA + log(A1 + A1 - 3L) + 
-      lnSubtreesB + log(B1 + B1 - 3L) - 
-      LnUnrooted(A1 + B1)
-    
-    # Return: 
-    lnTrees / -log(2)
-  }
-  
-  
-  # Return:
-  if(any(c(A1A2, A1B2, B1A2, B1B2) == 0)) {
-    a1Pair <- if (A1A2 == 0 || B1B2 == 0) B2 else A2
-    # Splits are consistent
-    SplitMutualInformation(n, A1, a1Pair)
-  } else {
-    # Splits are inconsistent
-    SplitInformation(A1A2, B1B2) +
-      SplitInformation(B1A2, A1B2)
-  }
-}
-
 #' Number of trees consistent with two splits
 #'
 #' @inheritParams SplitMutualInformation
