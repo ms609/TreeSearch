@@ -135,6 +135,33 @@ test_that("AllSplitPairings counted correctly", {
   }
 })
 
+test_that("Removing contradictions improves scores", {
+  # Imagine 200 taxa, split 
+  #   ...00000111111.....
+  #   ...00011001111.....
+  # We can delete taxa 99 and 100 to produce matching splits of
+  # 198=100:98, or we can delete taxa 99-102 to produce 196=96:96.
+  
+  Test <- function (nTaxa, nContra) {
+    l2choose <- function (a, b) lchoose(a, b) / log(2)
+    nInSplit <- nTaxa / 2L
+    split1 <- split2 <- c(rep(TRUE, nInSplit), rep(FALSE, nInSplit))
+    flips <- nInSplit + ((1-nContra):nContra)
+    nonFlips <- c(seq_len(nContra), nTaxa + 1 - seq_len(nContra))
+    split2[flips] <- !split2[flips]
+    
+    expect_true(
+      MutualPartitionInfoSplits(cbind(split1[-flips]), cbind(split2[-flips]))
+      >
+      MutualPartitionInfoSplits(cbind(split1[-nonFlips]), cbind(split2[-nonFlips]))
+    )
+  }
+  
+  Test(200, 2)
+  Test(200, 1)
+  Test(200, 10)
+})
+
 
 test_that("TreesConsistentWithTwoSplits works", {
   
