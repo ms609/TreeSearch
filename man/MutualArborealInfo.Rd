@@ -7,7 +7,6 @@
 \alias{MutualArborealInfoSplits}
 \alias{MutualClusterInfoSplits}
 \alias{VariationOfSplitArborealInfo}
-\alias{MutualPartitionInfoSplits}
 \title{Information-based generalized Robinson-Foulds distance between two trees}
 \usage{
 MutualArborealInfo(tree1, tree2, reportMatching = FALSE)
@@ -24,8 +23,6 @@ MutualClusterInfoSplits(splits1, splits2, reportMatching = FALSE,
   partitionQualityIndex = SplitPairingInformationIndex(dim(splits1)[1]))
 
 VariationOfSplitArborealInfo(splits1, splits2, reportMatching = FALSE)
-
-MutualPartitionInfoSplits(splits1, splits2, reportMatching = FALSE)
 }
 \arguments{
 \item{tree1, tree2}{Trees of class \code{phylo}, with tips labelled identically,
@@ -101,8 +98,6 @@ different in the partitions of two trees, under an optimal matching.
 \item \code{MutualClusterInfoSplits}: Takes splits instead of trees
 
 \item \code{VariationOfSplitArborealInfo}: Calculate variation of arboreal information from splits
-
-\item \code{MutualPartitionInfoSplits}: Takes splits instead of trees
 }}
 
 \examples{

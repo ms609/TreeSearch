@@ -194,42 +194,6 @@ MutualClusterInfo <- function (tree1, tree2,
   }
 }
 
-#' Tree distance based on joint information content of splits
-#' 
-#' #TODO Needs documenting and describing fully.
-#' 
-#' @inheritParams MutualArborealInfo
-#' @author Martin R. Smith
-#' @export
-MutualPartitionInfo <- function (tree1, tree2, reportMatching = FALSE) {
-  if (class(tree1) == 'phylo') {
-    if (class(tree2) == 'phylo') {
-      if (length(setdiff(tree1$tip.label, tree2$tip.label)) > 0) {
-        stop("Tree tips must bear identical labels")
-      }
-      
-      MutualPartitionInfoSplits(Tree2Splits(tree1), Tree2Splits(tree2), reportMatching)
-    } else {
-      splits1 <- Tree2Splits(tree1)
-      vapply(tree2, 
-             function (tr2) MutualPartitionInfoSplits(splits1, Tree2Splits(tr2), reportMatching),
-             double(1))
-    }
-  } else {
-    if (class(tree2) == 'phylo') {
-      splits1 <- Tree2Splits(tree2)
-      vapply(tree1, 
-             function (tr2) MutualPartitionInfoSplits(splits1, Tree2Splits(tr2), reportMatching),
-             double(1))
-    } else {
-      splits1 <- lapply(tree1, Tree2Splits)
-      splits2 <- lapply(tree2, Tree2Splits)
-      matrix(mapply(MutualPartitionInfoSplits, rep(splits1, each=length(splits2)), splits2),
-             length(splits2), length(splits1), dimnames = list(names(tree2), names(tree1)))
-    }
-  }
-}
-
 #' @describeIn MutualArborealInfo Takes splits instead of trees
 #' @export
 MutualArborealInfoSplits <- function (splits1, splits2, reportMatching = FALSE) {
@@ -252,9 +216,12 @@ MutualArborealInfoSplits <- function (splits1, splits2, reportMatching = FALSE) 
     dimSplits2 <- tmp
   }
   
-  splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
-  splits1 <- unname(splits1) # split1[split2] faster without names
+  taxonNames <- rownames(splits1) 
   
+  if (!is.null(taxonNames)) {
+    splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
+    splits1 <- unname(splits1) # split1[split2] faster without names
+  }
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
@@ -378,8 +345,12 @@ MutualClusterInfoSplits <- function (
     dimSplits2 <- tmp
   }
   
-  splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
-  splits1 <- unname(splits1) # split1[split2] faster without names
+  taxonNames <- rownames(splits1) 
+  
+  if (!is.null(taxonNames)) {
+    splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
+    splits1 <- unname(splits1) # split1[split2] faster without names
+  }
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
@@ -444,8 +415,12 @@ VariationOfSplitArborealInfo <- function (splits1, splits2, reportMatching = FAL
     dimSplits2 <- tmp
   }
   
-  splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
-  splits1 <- unname(splits1) # split1[split2] faster without names
+  taxonNames <- rownames(splits1) 
+  
+  if (!is.null(taxonNames)) {
+    splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
+    splits1 <- unname(splits1) # split1[split2] faster without names
+  }
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
@@ -501,65 +476,6 @@ VariationOfSplitArborealInfo <- function (splits1, splits2, reportMatching = FAL
     
     # Return:
     ret <- sum(pairScores[matrix(c(seq_along(optimalMatching), optimalMatching), ncol=2L)])
-    if (reportMatching) {
-      attr(ret, 'matching') <- optimalMatching
-      attr(ret, 'pairScores') <- pairScores
-      ret
-    } else {
-      ret
-    }
-  }
-}
-
-#' @describeIn MutualArborealInfo Takes splits instead of trees
-#' @inheritParams MutualArborealInfoSplits
-#' @export
-MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE) {
-  
-  dimSplits1 <- dim(splits1)
-  dimSplits2 <- dim(splits2)
-  nTerminals <- dimSplits1[1]
-  if (dimSplits2[1] != nTerminals) {
-    stop("Split rows must bear identical labels")
-  }
-  
-  if (dimSplits1[2] < dimSplits2[2]) {
-    tmp <- splits1
-    splits1 <- splits2
-    splits2 <- tmp
-    
-    tmp <- dimSplits1
-    dimSplits1 <- dimSplits2
-    dimSplits2 <- tmp
-  }
-  
-  taxonNames <- rownames(splits1) 
-  
-  if (!is.null(taxonNames)) {
-    splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
-    splits1 <- unname(splits1) # split1[split2] faster without names
-  }
-  
-  nSplits1 <- dimSplits1[2]
-  nSplits2 <- dimSplits2[2]
-  
-  pairScores <- -log2(matrix(mapply(function(i, j) {
-    split1 <- splits1[, i]
-    split2 <- splits2[, j]
-    
-    SplitMatchProbability(split1, split2)
-  }, rep(seq_len(nSplits1), each=nSplits2), seq_len(nSplits2))
-  , nSplits2, nSplits1))
-  
-  if (nSplits2 == 1) {
-    max(pairScores)
-  } else {
-    optimalMatching <- solve_LSAP(pairScores, TRUE)
-    # Previously:
-    # sum(pairScores[cbind(seq_along(optimalMatching), optimalMatching)])
-    # Now (30% faster):
-    ret <- sum(pairScores[matrix(c(seq_along(optimalMatching), optimalMatching), ncol=2L)])
-    
     if (reportMatching) {
       attr(ret, 'matching') <- optimalMatching
       attr(ret, 'pairScores') <- pairScores

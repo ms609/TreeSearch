@@ -144,9 +144,9 @@ test_that("Removing contradictions improves scores", {
     split2[flips] <- !split2[flips]
     
     expect_true(
-      MutualPartitionInfoSplits(cbind(split1[-flips]), cbind(split2[-flips]))
+      MutualArborealInfoSplits(cbind(split1[-flips]), cbind(split2[-flips]))
       >
-      MutualPartitionInfoSplits(cbind(split1[-nonFlips]), cbind(split2[-nonFlips]))
+      MutualArborealInfoSplits(cbind(split1[-nonFlips]), cbind(split2[-nonFlips]))
     )
   }
   
