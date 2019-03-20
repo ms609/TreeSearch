@@ -118,12 +118,12 @@ MutualClusterInfo <- function (tree1, tree2,
         stop("Tree tips must bear identical labels")
       }
       
-      MutualSplitClusteringInfo(Tree2Splits(tree1), Tree2Splits(tree2),
+      MutualSplitClusterInfo(Tree2Splits(tree1), Tree2Splits(tree2),
                                     reportMatching, bestMatchOnly)
     } else {
       splits1 <- Tree2Splits(tree1)
       vapply(tree2, 
-             function (tr2) MutualSplitClusteringInfo(splits1, Tree2Splits(tr2),
+             function (tr2) MutualSplitClusterInfo(splits1, Tree2Splits(tr2),
                                                       reportMatching,
                                                       bestMatchOnly),
              double(1))
@@ -132,13 +132,13 @@ MutualClusterInfo <- function (tree1, tree2,
     if (class(tree2) == 'phylo') {
       splits1 <- Tree2Splits(tree2)
       vapply(tree1, 
-             function (tr2) MutualSplitClusteringInfo(splits1, Tree2Splits(tr2),
+             function (tr2) MutualSplitClusterInfo(splits1, Tree2Splits(tr2),
                                                           reportMatching, bestMatchOnly),
              double(1))
     } else {
       splits1 <- lapply(tree1, Tree2Splits)
       splits2 <- lapply(tree2, Tree2Splits)
-      matrix(mapply(MutualSplitClusteringInfo,
+      matrix(mapply(MutualSplitClusterInfo,
                     rep(splits1, each=length(splits2)),
                     splits2,
                     reportMatching=reportMatching,
