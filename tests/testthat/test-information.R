@@ -1,5 +1,10 @@
 context("Information.R")
 
+test_that("Entropy is calculated correctly", {
+  expect_equal(1, Entropy(rep(0.5, 2)))
+  expect_equal(2, Entropy(c(1/4, 1/4, 0, 1/4, 0, 1/4)))
+})
+
 test_that("Trees matching splits calculated correctly", {
   expect_equal(NUnrooted(9), TreesMatchingSplit(0, 9))
   expect_equal(LnUnrooted(9), LogTreesMatchingSplit(0, 9))
