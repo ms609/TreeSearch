@@ -571,7 +571,7 @@ TreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
     NRooted(n - bigSplit)
 }
 
-#' @describeIn TreesConsistentWithTwoSplits Logarithm thereof
+#' @describeIn SplitMutualInformation Natural logarithm of `TreesConsistentWithTwoSplits`.
 #' @export
 LogTreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
   smallSplit <- min(A1, A2)
@@ -584,12 +584,27 @@ LogTreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
   LnRooted(bigSplit - smallSplit + 1L) + LnRooted(smallSplit) + LnRooted(n - bigSplit)
 }
 
-#' Number of unrooted trees consistent with splits
+#' Number of trees consistent with split
+#' 
+#' Calculates the number of unrooted bifurcating trees consistent with the 
+#' specified multi-partition split, using the formula of Carter _et al_. (1990).
+#' 
 #' @template splitsParam
+#' 
+#' @return `UnrootedTreesMatchingSplit` returns an integer specifying the
+#'  number of unrooted bifurcating trees consistent with the specified split.
+#' 
+#'
+#' @examples 
+#'  UnrootedTreesMatchingSplit(c(3, 5))
+#'  UnrootedTreesMatchingSplit(c(3, 2, 1, 2))
 #' 
 #' @references 
 #' \insertRef{Carter1990}{TreeSearch}, Theorem 2.
 #'
+#' @author Martin R. Smith
+#' @concept Split information
+#' @export
 UnrootedTreesMatchingSplit <- function (splits) {
   splits <- splits[splits > 0L]
   totalTips <- sum(splits)

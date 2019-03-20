@@ -3,11 +3,17 @@
 \name{SplitMutualInformation}
 \alias{SplitMutualInformation}
 \alias{SplitVariationOfInformation}
+\alias{TreesConsistentWithTwoSplits}
+\alias{LogTreesConsistentWithTwoSplits}
 \title{Mutual information of two splits}
 \usage{
 SplitMutualInformation(n, A1, A2 = A1)
 
 SplitVariationOfInformation(n, A1, A2 = A1)
+
+TreesConsistentWithTwoSplits(n, A1, A2 = A1)
+
+LogTreesConsistentWithTwoSplits(n, A1, A2 = A1)
 }
 \arguments{
 \item{n}{Integer specifying the number of terminals.}
@@ -16,6 +22,9 @@ SplitVariationOfInformation(n, A1, A2 = A1)
 once the splits have been arranged such that \emph{A1} overlaps with \emph{A2}.}
 }
 \value{
+\code{TreesConsistentWithTwoSplits} returns the number of unrooted bifurcating
+trees consistent with two splits.
+
 \code{SplitMutualInformation} returns the information that two splits
 have in common, in bits.
 
@@ -41,6 +50,10 @@ the smaller of \emph{A1} and \emph{A2} also occur in the larger.
 \section{Functions}{
 \itemize{
 \item \code{SplitVariationOfInformation}: Variation of information between two splits.
+
+\item \code{TreesConsistentWithTwoSplits}: Number of trees consistent with two splits.
+
+\item \code{LogTreesConsistentWithTwoSplits}: Natural logarithm of \code{TreesConsistentWithTwoSplits}.
 }}
 
 \examples{
@@ -50,11 +63,12 @@ the smaller of \emph{A1} and \emph{A2} also occur in the larger.
   # Let A1 = ABCD (four taxa), and A2 = ABC (three taxa).
   # A1 and A2 overlap (both contain ABC).
   
+  TreesConsistentWithTwoSplits(n=8, A1=4, A2=3)
   SplitMutualInformation(n=8, A1=4, A2=3)
   SplitVariationOfInformation(n=8, A1=4, A2=3)
 
   # If splits are identical, then their mutual information is the same
-  # as the information of either split:  
+  # as the information of either split:
   SplitMutualInformation(n=8, A1=3, A2=3)
   SplitInformation(3, 5)
   

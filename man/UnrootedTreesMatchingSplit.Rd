@@ -2,7 +2,7 @@
 % Please edit documentation in R/Information.R
 \name{UnrootedTreesMatchingSplit}
 \alias{UnrootedTreesMatchingSplit}
-\title{Number of unrooted trees consistent with splits}
+\title{Number of trees consistent with split}
 \usage{
 UnrootedTreesMatchingSplit(splits)
 }
@@ -12,9 +12,23 @@ tree splits (e.g. bipartitions).  For example, \kbd{c(3, 5)} states that
 a character divides a set of eight tips into a group of three and a group
 of five.}
 }
+\value{
+\code{UnrootedTreesMatchingSplit} returns an integer specifying the
+number of unrooted bifurcating trees consistent with the specified split.
+}
 \description{
-Number of unrooted trees consistent with splits
+Calculates the number of unrooted bifurcating trees consistent with the
+specified multi-partition split, using the formula of Carter \emph{et al}. (1990).
+}
+\examples{
+ UnrootedTreesMatchingSplit(c(3, 5))
+ UnrootedTreesMatchingSplit(c(3, 2, 1, 2))
+
 }
 \references{
 \insertRef{Carter1990}{TreeSearch}, Theorem 2.
 }
+\author{
+Martin R. Smith
+}
+\concept{Split information}
