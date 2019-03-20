@@ -363,14 +363,36 @@ AllSplitPairings <- memoise(function (n) {
 })
 
 #' @describeIn AllSplitPairings Lookup table listing split pairing information
+#' @export
 SplitPairingInformationIndex <- memoise(function (n) {
   info <- AllSplitPairings(n)
   names(info) <- round(as.double(names(info)), 6L)
   log2(sum(info)) - log2(cumsum(info))
 })
 
+#' Distributions of taxa consistent with a partition pair.
+#' 
 #' Number of terminal arrangements matching a specified configuration of 
 #' two partitions.
+#' 
+#' Consider partitions that divide eight terminals, labelled A to H.
+#' 
+#' \tabular{rcll}{
+#'   Bipartition 1:\tab ABCD:EFGH\tab A1 = ABCD\tab B1 = EFGH \cr
+#'   Bipartition 2:\tab ABE:CDFGH\tab A2 = ABE\tab B2 = CDFGH
+#' }
+#' 
+#' This can be represented by an association matrix:
+#' 
+#' \tabular{rll}{
+#'      \tab *A2* \tab *B2* \cr
+#' *A1* \tab AB  \tab C   \cr
+#' *B1* \tab E   \tab FGH
+#' }
+#' 
+#' The cells in this matrix contain 2, 1, 1 and 3 terminals respectively; this
+#' four-element vector (`c(2, 1, 1, 3)`) is the `configuration` implied by 
+#' this pair of bipartition splits.
 #' 
 #' @param configuration Integer vector of length four specifying the number of 
 #' terminals that occur in both 
@@ -379,11 +401,14 @@ SplitPairingInformationIndex <- memoise(function (n) {
 #'   (3) splits B1 and A2;
 #'   (4) splits B1 and B2.
 #'   
-#'  @return The number of ways to distribute `sum(configuration)` taxa according
+#' @return The number of ways to distribute `sum(configuration)` taxa according
 #'  to the specified pattern.
+#'
+#' @examples 
+#' NPartitionPairs(c(2, 1, 1, 3))
 #'  
-#'  @author Martin R. Smith
-#'  @export
+#' @author Martin R. Smith
+#' @export
 NPartitionPairs <- function (configuration) {
   choose(sum(configuration[c(1, 3)]), configuration[1]) *
   choose(sum(configuration[c(2, 4)]), configuration[2])
@@ -395,9 +420,9 @@ LnSplitMatchProbability <- function(split1, split2) {
 
 #' Entropy of two splits
 #' 
-#' Reports various values pertaining to the information content of two splits,
+#' Reports various values pertaining to the phylogenetic information content 
+#' of two splits,
 #' treating splits as subdivisions of _n_ terminals into two clusters.
-#' 
 #' 
 #' @template split12Params
 #' 
@@ -412,6 +437,7 @@ LnSplitMatchProbability <- function(split1, split2) {
 #'  * `vI` The variation of information of the splits (see Meila 2007)
 #' 
 #' @author Martin R. Smith
+#' @concept Split information
 #' @export
 SplitEntropy <- function (split1, split2=split1) {
   A1A2 <- sum(split1 & split2)
@@ -438,6 +464,10 @@ SplitEntropy <- function (split1, split2=split1) {
 }
 
 #' Joint Information of two splits
+#' 
+#' Calculates the joint phylogenetic information content of two splits: 
+#' that is, the information content of the two splits considered separately,
+#' minus their mutual information (which would otherwise be counted twice).
 #'
 #' Because some information is common to both splits (`SplitMutualInformation`),
 #' the joint information of two splits will be less than the sum of the
@@ -446,8 +476,32 @@ SplitEntropy <- function (split1, split2=split1) {
 #' 
 #' Split Y1 is defined as dividing taxa into the two sets A1 and B1,
 #' and Y2=A2:B2.
+#' 
+#' Consider partitions that divide eight terminals, labelled A to H.
+#' 
+#' \tabular{rcll}{
+#'   Bipartition 1:\tab ABCD:EFGH\tab A1 = ABCD\tab B1 = EFGH \cr
+#'   Bipartition 2:\tab ABC:DEFGH\tab A2 = ABC\tab B2 = DEFGH
+#' }
+#' 
+#' This can be represented by an association matrix:
+#' 
+#' \tabular{rll}{
+#'      \tab *A2* \tab *B2* \cr
+#' *A1* \tab ABC  \tab D   \cr
+#' *B1* \tab      \tab EFGH
+#' 
+#' The joint information is given by
+#' `JointInformation(3, 1, 0, 4)`.
 #'
-#' @param A1A2,A1B2,B1A2,B1B2 Number of taxa in splits A1 and A2 (etc.)
+#' @param A1A2,A1B2,B1A2,B1B2 Number of taxa common to splits A1 and A2 (etc.).
+#' 
+#' @return `JointInformation` returns the joint phylogenetic information content
+#' of two splits, measured in bits.
+#' 
+#' @examples 
+#' JointInformation(3, 1, 0, 4)
+#' 
 #' @author Martin R. Smith
 #' @concept Split information
 #' @export
