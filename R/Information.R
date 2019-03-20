@@ -230,8 +230,8 @@ MultiSplitInformation <- function (partitionSizes) {
 
 #' Probability of matching this well
 #' 
-#' Probability that two random splits of the sizes provided will be at least
-#' as similar as the two specified.
+#' Calculates the probability that two random splits of the sizes provided
+#' will be at least as similar as the two specified.
 #'
 #' @template split12Params
 #' 
@@ -239,6 +239,11 @@ MultiSplitInformation <- function (partitionSizes) {
 #' splitting the terminals into bipartitions of the sizes given,
 #'  that match as well as `split1` and `split2` do.
 #'  
+#' @examples 
+#' SplitMatchProbability(split1 = c(rep(TRUE, 4), rep(FALSE, 4)),
+#'                       split2 = c(rep(TRUE, 3), rep(FALSE, 5)))
+#'  
+#' @author Martin R. Smith
 SplitMatchProbability <- function (split1, split2) {
   
   if (length(split1) != length(split2)) stop("Split lengths differ")
@@ -294,15 +299,24 @@ SplitMatchProbability <- function (split1, split2) {
 
 #' All split pairings
 #' 
-#' We consider only non-trivial splits, i.e. splits dividing one or zero
-#' taxa from the rest are ignored.
+#' Calculates the variation of (clustering) information (Meila 2007)
+#' for each possible pairing of non-trivial splits,
+#' and tabulates the number of pairings with each similarity.
 #' 
-#' @param n Integer specifying number of terminal taxa
+#' Trivial splits -- those that divide one or zero taxa from the rest --
+#' are not considered.
+#' 
+#' @param n Integer specifying the number of terminal taxa.
 #' 
 #' @return A named vector, specifying the number of split pairings producing
 #' the variation of information given (in bits) in the name.  Splits
 #' AB:CD and CD:AB are treated as distinct, so division of all values by four 
 #' is justified in cases where unique pairings only are required.
+#' 
+#' @examples
+#' AllSplitPairings(5)
+#' 
+#' @references \insertRef{Meila2007}{TreeSearch}
 #' 
 #' @author Martin R. Smith
 #' @importFrom memoise memoise

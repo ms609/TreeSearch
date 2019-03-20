@@ -43,6 +43,22 @@ the smaller of _A1_ and _A2_ also occur in the larger.
 \item \code{SplitVariationOfInformation}: Variation of information between two splits.
 }}
 
+\examples{
+  # Eight tips, labelled A to H.
+  # Split 1: ABCD:EFGH
+  # Split 2: ABC:DEFGH
+  # Let A1 = ABCD (four taxa), and A2 = ABC (three taxa).
+  # A1 and A2 overlap (both contain ABC).
+  
+  SplitMutualInformation(n=8, A1=4, A2=3)
+  SplitVariationOfInformation(n=8, A1=4, A2=3)
+
+  # If splits are identical, then their mutual information is the same
+  # as the information of either split:  
+  SplitMutualInformation(n=8, A1=3, A2=3)
+  SplitInformation(3, 5)
+  
+}
 \references{
 \insertRef{Meila2007}{TreeSearch}
 }
