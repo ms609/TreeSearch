@@ -5,8 +5,8 @@
 \alias{VariationOfArborealInfo}
 \alias{MutualClusterInfo}
 \alias{MutualArborealInfoSplits}
+\alias{VariationOfArborealInfoSplits}
 \alias{MutualClusterInfoSplits}
-\alias{VariationOfSplitArborealInfo}
 \title{Information-based generalized Robinson-Foulds distance between two trees}
 \usage{
 MutualArborealInfo(tree1, tree2, reportMatching = FALSE)
@@ -18,11 +18,11 @@ MutualClusterInfo(tree1, tree2, reportMatching = FALSE,
 
 MutualArborealInfoSplits(splits1, splits2, reportMatching = FALSE)
 
+VariationOfArborealInfoSplits(splits1, splits2, reportMatching = FALSE)
+
 MutualClusterInfoSplits(splits1, splits2, reportMatching = FALSE,
   bestMatchOnly = TRUE,
   partitionQualityIndex = SplitPairingInformationIndex(dim(splits1)[1]))
-
-VariationOfSplitArborealInfo(splits1, splits2, reportMatching = FALSE)
 }
 \arguments{
 \item{tree1, tree2}{Trees of class \code{phylo}, with tips labelled identically,
@@ -41,7 +41,7 @@ and each column corresponds to a bipartition split, such that
 each terminal is identified as a member of the ingroup (\code{TRUE}) or outgroup
 (\code{FALSE}) of the respective bipartition split.}
 
-\item{partitionQualityIndex}{Output of \link{SplitPairingInformationIndex} for
+\item{partitionQualityIndex}{Output of \code{\link{SplitPairingInformationIndex}} for
 \code{n} taxa; calculated automatically if not specified, but passing a cached
 value may improve performance.}
 }
@@ -67,7 +67,9 @@ The former concept corresponds to the concept of phylogenetic
 information, and views the information content of a pair of partitions
 as relating to the proportion of phylogenetic trees that are consistent
 with both partitions, giving rise to the
-Mutual Arboreal Information similarity measure (\code{MutualArborealInfo``), and  the complementary Variation of Arboreal Information distance metric (}VariationOfArborealInfo`).
+Mutual Arboreal Information similarity measure (\code{MutualArborealInfo}), and
+the complementary Variation of Arboreal Information distance metric
+(\code{VariationOfArborealInfo}).
 
 The latter sees the information content of a pair of partitions as relating
 to the proportion of all possible pairings that are at least as similar
@@ -95,9 +97,9 @@ different in the partitions of two trees, under an optimal matching.
 
 \item \code{MutualArborealInfoSplits}: Takes splits instead of trees
 
-\item \code{MutualClusterInfoSplits}: Takes splits instead of trees
+\item \code{VariationOfArborealInfoSplits}: Calculate variation of arboreal information from splits
 
-\item \code{VariationOfSplitArborealInfo}: Calculate variation of arboreal information from splits
+\item \code{MutualClusterInfoSplits}: Takes splits instead of trees
 }}
 
 \examples{

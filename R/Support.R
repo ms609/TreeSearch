@@ -111,7 +111,7 @@ ForestSplits <- function (forest, powersOf2) {
 #' Use Quartet::Tree2Splits instead.
 #' @export
 TreeSplits <- function (tree) {
-  .Deprecated("Quartet::Tree2Splits")
+  .Deprecated("Tree2Splits")
 }
 
 #' Support colour
