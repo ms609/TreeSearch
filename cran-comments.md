@@ -2,7 +2,6 @@
 ### Windows 10:
 * local Windows 10 install, R 3.5.2
 * Windows 10 via check_win_devel(), R devel
-* Windows 10 via check_win_devel(), R devel # NB! in progress
 
 ### Linux:
 * ubuntu 14.04.5 LTS (on travis-ci), R 3.4.0 and release
