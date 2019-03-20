@@ -20,18 +20,11 @@ test_that("UnrootedTreesMatchingSplit works", {
 test_that("Joint information calculated correctly", {
   # Identical splits: ABCDE:FGH, ABCDE:FGH
   expect_equal(-log2(315/10395), JointInformation(5, 0, 0, 3))
-  expect_equal(SplitMutualInformation(8, 5, 5), FullMutualInformation(0, 5, 3, 0))
   # Agreeable splits: ABCDE:FGHI, ABC:DEFGHI
   expect_equal(SplitInformation(5, 4) + SplitInformation(3, 6) --log2(135/135135),
                JointInformation(3, 2, 0, 4))
-  expect_equal(SplitMutualInformation(9, 5, 3),
-               FullMutualInformation(3, 2, 0, 4))
   # Perfect contradiction: AB:CDEFG, AC:BDEFG
   expect_equal(SplitInformation(2, 5) * 2, JointInformation(1, 1, 1, 4))
-  expect_equal(0, FullMutualInformation(1, 1, 1, 4))
-  # Contradiction with common information: AB CD : EF GHI, AB EF : CD GHI
-  expect_equal(SplitInformation(2, 2) + SplitInformation(2, 3),
-               FullMutualInformation(2, 2, 2, 3))
 })
 
 test_that("SplitMatchProbability returns expected probabilities", {
