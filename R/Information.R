@@ -59,8 +59,11 @@ Entropy <- function (p) -sum(p[p > 0] * log2(p[p > 0]))
 #' @param n Integer specifying the number of terminals.
 #' @param A1,A2 Integers specifying the number of taxa in _A1_ and _A2_, 
 #' once the splits have been arranged such that _A1_ overlaps with _A2_.
+#' @return 
+#' `TreesConsistentWithTwoSplits` returns the number of unrooted bifurcating
+#' trees consistent with two splits.
 #' 
-#' @return `SplitMutualInformation` returns the information that two splits 
+#' `SplitMutualInformation` returns the information that two splits 
 #' have in common, in bits.
 #' 
 #' `SplitVariationOfInformation` returns the variation of information (Meila 2007)
@@ -73,11 +76,12 @@ Entropy <- function (p) -sum(p[p > 0] * log2(p[p > 0]))
 #'   # Let A1 = ABCD (four taxa), and A2 = ABC (three taxa).
 #'   # A1 and A2 overlap (both contain ABC).
 #'   
+#'   TreesConsistentWithTwoSplits(n=8, A1=4, A2=3)
 #'   SplitMutualInformation(n=8, A1=4, A2=3)
 #'   SplitVariationOfInformation(n=8, A1=4, A2=3)
 #'
 #'   # If splits are identical, then their mutual information is the same
-#'   # as the information of either split:  
+#'   # as the information of either split:
 #'   SplitMutualInformation(n=8, A1=3, A2=3)
 #'   SplitInformation(3, 5)
 #'   
@@ -522,11 +526,7 @@ JointInformation <- function(A1A2, A1B2, B1A2, B1B2) {
   SplitInformation(A1, B1) + SplitInformation(A2, B2) - mutualInformation
 }
 
-#' Number of trees consistent with two splits
-#'
-#' @inheritParams SplitMutualInformation
-#' @author Martin R. Smith
-#' @concept Split information
+#' @describeIn SplitMutualInformation Number of trees consistent with two splits.
 #' @export
 TreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
   
