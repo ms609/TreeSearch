@@ -21,7 +21,7 @@ is justified in cases where unique pairings only are required.
 
 \code{SplitPairingInformationIndex} returns a table listing the possible values
 of the variation of information for splits with \code{n} terminals, and the
-clustering information (\emph{sensu} Smith in prep.) associated with a pairing
+clustering information (\emph{sensu} Smith forthcoming) associated with a pairing
 that has the given variation of information.
 }
 \description{
@@ -44,7 +44,10 @@ SplitPairingInformationIndex(5)
 
 }
 \references{
-\insertRef{Meila2007}{TreeSearch}
+\itemize{
+\item \insertRef{Meila2007}{TreeSearch}
+\item \insertRef{SmithDist}{TreeSearch}
+}
 }
 \author{
 Martin R. Smith

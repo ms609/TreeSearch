@@ -321,14 +321,16 @@ SplitMatchProbability <- function (split1, split2) {
 #' 
 #' `SplitPairingInformationIndex` returns a table listing the possible values
 #' of the variation of information for splits with `n` terminals, and the
-#' clustering information (_sensu_ Smith in prep.) associated with a pairing 
+#' clustering information (_sensu_ Smith forthcoming) associated with a pairing 
 #' that has the given variation of information.
 #' 
 #' @examples
 #' AllSplitPairings(5)
 #' SplitPairingInformationIndex(5)
 #' 
-#' @references \insertRef{Meila2007}{TreeSearch}
+#' @references 
+#' * \insertRef{Meila2007}{TreeSearch}
+#' * \insertRef{SmithDist}{TreeSearch}
 #' 
 #' @author Martin R. Smith
 #' @importFrom memoise memoise

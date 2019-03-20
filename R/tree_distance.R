@@ -1,5 +1,8 @@
 #' Information-based generalized Robinson-Foulds distance between two trees
 #'
+#' Functions reporting the distances or similarities between pairs of trees,
+#' based on information-theoretic concepts.
+#' 
 #'
 #' Each partition in a tree can be viewed either as 
 #' - (a) a statement that the 'true' tree is one of those that splits the 
@@ -26,15 +29,58 @@
 #' and its pair on a second, considering all possible ways to pair partitions 
 #' between trees (including leaving a partition unpaired).
 #' 
+#' The returned tree similarity measures state the amount of information, 
+#' in bits, that the partitions in two trees hold in common 
+#' when they are optimally matched, following Smith (forthcoming).  
+#' The complementary tree distance measures state how much information is 
+#' different in the partitions of two trees, under an optimal matching.
+#' 
 #' @param tree1,tree2 Trees of class `phylo`, with tips labelled identically,
 #' or lists of such trees to undergo pairwise comparison.
 #' 
 #' @param reportMatching Logical specifying whether to return the clade
 #' matchings as an attribute of the score.
 #'
-#' @return Returns the the mutual phylogenetic information 
-#' content of the optimal matching of bipartitions between two trees, 
-#' following Smith (submitted).
+#' @return If `reportMatching = FALSE`, the functions return a numeric 
+#' vector specifying the requested similarities or differences.
+#' 
+#' If `reportMatching = TRUE`, the functions additionally return 
+#'  
+#' @examples {
+#'   tree1 <- ape::read.tree(text='((((a, b), c), d), (e, (f, (g, h))));')
+#'   tree2 <- ape::read.tree(text='(((a, b), (c, d)), ((e, f), (g, h)));')
+#'   tree3 <- ape::read.tree(text='((((h, b), c), d), (e, (f, (g, a))));')
+#'   
+#'   # Best possible score is obtained by matching a tree with itself
+#'   VariationOfArborealInfo(tree1, tree1) # 0, by definition
+#'   MutualArborealInfo(tree1, tree1)
+#'   
+#'   # Best possible score is a function of tree shape; the partitions within
+#'   # balanced trees are more independent and thus contain less information
+#'   MutualArborealInfo(tree2, tree2)
+#'   
+#'   # How similar are two trees?
+#'   MutualArborealInfo(tree1, tree2)
+#'   VariationOfArborealInfo(tree1, tree2)
+#'   VariationOfArborealInfo(tree2, tree1) # Identical, by symmetry
+#'   
+#'   
+#'   # Maximum possible score for Cluster information is independent
+#'   # of tree shape, as every possible pairing is considered
+#'   MutualClusterInfo(tree1, tree1)
+#'   MutualClusterInfo(tree2, tree2)
+#'   
+#'   # It is thus easier to interpret the value of
+#'   MutualClusterInfo(tree1, tree2)
+#'   # Although it may not be possible to find a tree pair with zero mutual
+#'   # cluster info.
+#'   
+#'   # Every partition in tree1 is contradicted by every partition in tree3
+#'   # Non-arboreal matches contain clustering, but not phylogenetic, information
+#'   MutualArborealInfo(tree1, tree3) # = 0
+#'   MutualClusterInfo(tree1, tree3) # > 0
+#'   
+#' }
 #' 
 #' @references {
 #'  * \insertRef{Meila2007}{TreeSearch}
@@ -118,12 +164,12 @@ MutualClusterInfo <- function (tree1, tree2,
         stop("Tree tips must bear identical labels")
       }
       
-      MutualSplitClusterInfo(Tree2Splits(tree1), Tree2Splits(tree2),
+      MutualClusterInfoSplits(Tree2Splits(tree1), Tree2Splits(tree2),
                                     reportMatching, bestMatchOnly)
     } else {
       splits1 <- Tree2Splits(tree1)
       vapply(tree2, 
-             function (tr2) MutualSplitClusterInfo(splits1, Tree2Splits(tr2),
+             function (tr2) MutualClusterInfoSplits(splits1, Tree2Splits(tr2),
                                                       reportMatching,
                                                       bestMatchOnly),
              double(1))
@@ -132,13 +178,13 @@ MutualClusterInfo <- function (tree1, tree2,
     if (class(tree2) == 'phylo') {
       splits1 <- Tree2Splits(tree2)
       vapply(tree1, 
-             function (tr2) MutualSplitClusterInfo(splits1, Tree2Splits(tr2),
+             function (tr2) MutualClusterInfoSplits(splits1, Tree2Splits(tr2),
                                                           reportMatching, bestMatchOnly),
              double(1))
     } else {
       splits1 <- lapply(tree1, Tree2Splits)
       splits2 <- lapply(tree2, Tree2Splits)
-      matrix(mapply(MutualSplitClusterInfo,
+      matrix(mapply(MutualClusterInfoSplits,
                     rep(splits1, each=length(splits2)),
                     splits2,
                     reportMatching=reportMatching,
@@ -305,7 +351,7 @@ MutualArborealInfoSplits <- function (splits1, splits2, reportMatching = FALSE) 
 #' @template splits12params
 #' 
 #' @export
-MutualSplitClusterInfo <- function (
+MutualClusterInfoSplits <- function (
   # TODO RENAME this function: it's a symmetric value saying how informative 
   # the partitions in one tree are about the best-matching partition in the 
   # other.
