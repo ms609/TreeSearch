@@ -66,6 +66,21 @@ Entropy <- function (p) -sum(p[p > 0] * log2(p[p > 0]))
 #' `SplitVariationOfInformation` returns the variation of information (Meila 2007)
 #'  between the two splits, a measure of their difference, in bits.
 #' 
+#' @examples 
+#'   # Eight tips, labelled A to H.
+#'   # Split 1: ABCD:EFGH
+#'   # Split 2: ABC:DEFGH
+#'   # Let A1 = ABCD (four taxa), and A2 = ABC (three taxa).
+#'   # A1 and A2 overlap (both contain ABC).
+#'   
+#'   SplitMutualInformation(n=8, A1=4, A2=3)
+#'   SplitVariationOfInformation(n=8, A1=4, A2=3)
+#'
+#'   # If splits are identical, then their mutual information is the same
+#'   # as the information of either split:  
+#'   SplitMutualInformation(n=8, A1=3, A2=3)
+#'   SplitInformation(3, 5)
+#'   
 #' @references \insertRef{Meila2007}{TreeSearch}
 #' 
 #' @author Martin R. Smith
@@ -88,10 +103,23 @@ SplitVariationOfInformation <- function (n, A1, A2 = A1) {
 }
 
 #' Information content of a split
+#' 
+#' `SplitInformation` calculates the information content of a split, based on 
+#' the entropy of the subset of trees consistent with the split; a split that
+#' is consistent with a smaller number of trees will have a higher information
+#' content.
 #'
 #' @inheritParams TreesMatchingSplit
 #'
-#' @return Information content of the split in bits.
+#' @return Information content of the split, in bits.
+#' 
+#' @examples 
+#'   # Eight tips can be split evenly:
+#'   SplitInformation (4, 4)
+#'   
+#'   # or unevenly, which is less informative:
+#'   SplitInformation (2, 6)
+#' 
 #' @author Martin R. Smith
 #' @concept Split information
 #' @export

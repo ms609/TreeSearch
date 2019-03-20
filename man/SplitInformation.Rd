@@ -18,16 +18,27 @@ MultiSplitInformation(partitionSizes)
 partition of a multi-partition split.}
 }
 \value{
-Information content of the split in bits.
+Information content of the split, in bits.
 }
 \description{
-Information content of a split
+`SplitInformation` calculates the information content of a split, based on 
+the entropy of the subset of trees consistent with the split; a split that
+is consistent with a smaller number of trees will have a higher information
+content.
 }
 \section{Functions}{
 \itemize{
 \item \code{MultiSplitInformation}: Information content of a multi-partition split.
 }}
 
+\examples{
+  # Eight tips can be split evenly:
+  SplitInformation (4, 4)
+  
+  # or unevenly, which is less informative:
+  SplitInformation (2, 6)
+
+}
 \author{
 Martin R. Smith
 }
