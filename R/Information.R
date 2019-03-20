@@ -1,6 +1,9 @@
 #' Number of trees matching a bipartition split
 #' 
-#' @param A,B Number of taxa on each side of split
+#' Calculates the number of unrooted bifurcated trees that are consistent with
+#' a bipartition split that divides taxa into groups of size `A` and `B`.
+#' 
+#' @param A,B Number of taxa in each partition.
 #' 
 #' @author Martin R. Smith
 #' 
@@ -12,7 +15,7 @@ TreesMatchingSplit <- function (A, B) {
   NRooted(A) * NRooted(B)
 }
 
-#' @describeIn TreesMatchingSplit Logarithm of Trees Matching Split
+#' @describeIn TreesMatchingSplit Logarithm of the number of trees matching a split.
 #' @export
 LogTreesMatchingSplit <- function (A, B) {
   if (A == 0) LnUnrooted.int(B) else
@@ -22,7 +25,15 @@ LogTreesMatchingSplit <- function (A, B) {
 
 #' Entropy in bits
 #' 
+#' Reports the entropy of a vector of probabilities, in bits.
+#' Probabilities should sum to one.  Probabilities equalling zero will be 
+#' ignored.
+#' 
 #' @param p Numeric vector specifying probabilities of outcomes.
+#' 
+#' @examples
+#' Entropy(rep(0.5, 2)) # = 1
+#' Entropy(c(1/4, 1/4, 0, 1/4, 1/4)) # = 2
 #' 
 #' @return Entropy of the specified probabilities, in bits
 #' @author Martin R. Smith
@@ -31,12 +42,31 @@ Entropy <- function (p) -sum(p[p > 0] * log2(p[p > 0]))
 
 #' Mutual information of two splits
 #' 
-#' @param n Integer specifying the number of terminals.
-#' @param A1,A2 Integers specifying the number of taxa in A1 and A2, 
-#' once the splits have been arranged such that all taxa in A1 are also
-#' in A2, or all taxa in A2 are also in A1.
+#' Reports the mutual phylogenetic information, or variation of phylogenetic
+#' information, of two splits.
 #' 
-#' @return The information that two splits have in common, in bits.
+#' The mutual phylogenetic information corresponds to the entropy of the subset
+#' of trees consistent with both splits; two splits that are consistent with a 
+#' smaller number of trees will have a higher mutual information content.
+#' 
+#' Split 1 divides `n` terminals into two partitions, _A1_ and _B1_.
+#' Split 2 divides the same terminals into the partitions _A2_ and _B2_.
+#' 
+#' Partitions must be named such that _A1_ overlaps with _A2_: that is to say,
+#' all taxa in _A1_ are also in _A2_, or _vice versa_.  Thus, all taxa in 
+#' the smaller of _A1_ and _A2_ also occur in the larger.
+#' 
+#' @param n Integer specifying the number of terminals.
+#' @param A1,A2 Integers specifying the number of taxa in _A1_ and _A2_, 
+#' once the splits have been arranged such that _A1_ overlaps with _A2_.
+#' 
+#' @return `SplitMutualInformation` returns the information that two splits 
+#' have in common, in bits.
+#' 
+#' `SplitVariationOfInformation` returns the variation of information (Meila 2007)
+#'  between the two splits, a measure of their difference, in bits.
+#' 
+#' @references \insertRef{Meila2007}{TreeSearch}
 #' 
 #' @author Martin R. Smith
 #' @concept Split information
@@ -48,8 +78,7 @@ SplitMutualInformation <- function(n, A1, A2 = A1) {
    - LnUnrooted(n)) / -log(2)
 }
 
-#' @describeIn SplitMutualInformation Variation of information, per Meila (2007).
-#' @references \insertRef{Meila2007}{TreeSearch}
+#' @describeIn SplitMutualInformation Variation of information between two splits.
 #' @export
 SplitVariationOfInformation <- function (n, A1, A2 = A1) {
   # TODO calculate more efficiently from first principles
@@ -94,6 +123,8 @@ MultiSplitInformation <- function (partitionSizes) {
 #' 
 #' @examples 
 #'   # Maximum variation = information content of each split separately
+#'   T <- TRUE
+#'   F <- FALSE
 #'   MeilaVariationOfInformation(c(T,T,T,F,F,F), c(T,T,T,T,T,T))
 #'   Entropy(c(3, 3) / 6) + Entropy(c(0, 6) / 6)
 #'   
@@ -101,7 +132,7 @@ MultiSplitInformation <- function (partitionSizes) {
 #'   MeilaVariationOfInformation(c(T,T,T,F,F,F), c(T,T,T,F,F,F))
 #'   
 #'   # Not always possible for two evenly-sized splits to reach maximum
-#'   variation of information
+#'   # variation of information
 #'   Entropy(c(3, 3) / 6) * 2  # = 2
 #'   MeilaVariationOfInformation(c(T,T,T,F,F,F), c(T,F,T,F,T,F)) # < 2
 #'   
