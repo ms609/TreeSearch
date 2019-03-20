@@ -6,7 +6,7 @@
 
 ### Linux:
 * ubuntu 14.04.5 LTS (on travis-ci), R 3.4.0 and release
-* Using check_rhub() # NB! in progress
+* Using check_rhub()
 
 ## R CMD check results
 There were no ERRORs, WARNINGs or NOTEs.
