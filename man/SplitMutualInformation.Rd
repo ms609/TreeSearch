@@ -12,19 +12,35 @@ SplitVariationOfInformation(n, A1, A2 = A1)
 \arguments{
 \item{n}{Integer specifying the number of terminals.}
 
-\item{A1, A2}{Integers specifying the number of taxa in A1 and A2, 
-once the splits have been arranged such that all taxa in A1 are also
-in A2, or all taxa in A2 are also in A1.}
+\item{A1, A2}{Integers specifying the number of taxa in _A1_ and _A2_, 
+once the splits have been arranged such that _A1_ overlaps with _A2_.}
 }
 \value{
-The information that two splits have in common, in bits.
+`SplitMutualInformation` returns the information that two splits 
+have in common, in bits.
+
+`SplitVariationOfInformation` returns the variation of information (Meila 2007)
+ between the two splits, a measure of their difference, in bits.
 }
 \description{
-Mutual information of two splits
+Reports the mutual phylogenetic information, or variation of phylogenetic
+information, of two splits.
+}
+\details{
+The mutual phylogenetic information corresponds to the entropy of the subset
+of trees consistent with both splits; two splits that are consistent with a 
+smaller number of trees will have a higher mutual information content.
+
+Split 1 divides `n` terminals into two partitions, _A1_ and _B1_.
+Split 2 divides the same terminals into the partitions _A2_ and _B2_.
+
+Partitions must be named such that _A1_ overlaps with _A2_: that is to say,
+all taxa in _A1_ are also in _A2_, or _vice versa_.  Thus, all taxa in 
+the smaller of _A1_ and _A2_ also occur in the larger.
 }
 \section{Functions}{
 \itemize{
-\item \code{SplitVariationOfInformation}: Variation of information, per Meila (2007).
+\item \code{SplitVariationOfInformation}: Variation of information between two splits.
 }}
 
 \references{

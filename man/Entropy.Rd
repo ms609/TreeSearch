@@ -13,7 +13,14 @@ Entropy(p)
 Entropy of the specified probabilities, in bits
 }
 \description{
-Entropy in bits
+Reports the entropy of a vector of probabilities, in bits.
+Probabilities should sum to one.  Probabilities equalling zero will be 
+ignored.
+}
+\examples{
+Entropy(rep(0.5, 2)) # = 1
+Entropy(c(1/4, 1/4, 0, 1/4, 1/4)) # = 2
+
 }
 \author{
 Martin R. Smith

@@ -12,13 +12,11 @@ LogTreesConsistentWithTwoSplits(n, A1, A2 = A1)
 \arguments{
 \item{n}{Integer specifying the number of terminals.}
 
-\item{A1}{Integers specifying the number of taxa in A1 and A2, 
-once the splits have been arranged such that all taxa in A1 are also
-in A2, or all taxa in A2 are also in A1.}
+\item{A1}{Integers specifying the number of taxa in _A1_ and _A2_, 
+once the splits have been arranged such that _A1_ overlaps with _A2_.}
 
-\item{A2}{Integers specifying the number of taxa in A1 and A2, 
-once the splits have been arranged such that all taxa in A1 are also
-in A2, or all taxa in A2 are also in A1.}
+\item{A2}{Integers specifying the number of taxa in _A1_ and _A2_, 
+once the splits have been arranged such that _A1_ overlaps with _A2_.}
 }
 \description{
 Number of trees consistent with two splits

@@ -10,9 +10,9 @@ SplitInformation(A, B)
 MultiSplitInformation(partitionSizes)
 }
 \arguments{
-\item{A}{Number of taxa on each side of split}
+\item{A}{Number of taxa in each partition.}
 
-\item{B}{Number of taxa on each side of split}
+\item{B}{Number of taxa in each partition.}
 
 \item{partitionSizes}{Integer vector specifying the number of taxa in each 
 partition of a multi-partition split.}

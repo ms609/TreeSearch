@@ -10,14 +10,15 @@ TreesMatchingSplit(A, B)
 LogTreesMatchingSplit(A, B)
 }
 \arguments{
-\item{A, B}{Number of taxa on each side of split}
+\item{A, B}{Number of taxa in each partition.}
 }
 \description{
-Number of trees matching a bipartition split
+Calculates the number of unrooted bifurcated trees that are consistent with
+a bipartition split that divides taxa into groups of size `A` and `B`.
 }
 \section{Functions}{
 \itemize{
-\item \code{LogTreesMatchingSplit}: Logarithm of Trees Matching Split
+\item \code{LogTreesMatchingSplit}: Logarithm of the number of trees matching a split.
 }}
 
 \author{
