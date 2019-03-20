@@ -185,7 +185,6 @@ MutualPartitionInfo <- function (tree1, tree2, reportMatching = FALSE) {
 }
 
 #' @describeIn MutualArborealInfo Takes splits instead of trees
-#' @param splits1,splits2 Splits [#TODO document properly]
 #' @export
 MutualArborealInfoSplits <- function (splits1, splits2, reportMatching = FALSE) {
   
@@ -378,7 +377,6 @@ MutualSplitClusterInfo <- function (
 }
 
 #' @describeIn MutualArborealInfo Calculate variation of arboreal information from splits
-#' @template splits12params
 #' @export
 VariationOfSplitArborealInfo <- function (splits1, splits2, reportMatching = FALSE) {
   

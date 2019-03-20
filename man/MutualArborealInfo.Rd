@@ -38,23 +38,15 @@ matchings as an attribute of the score.}
 each split is about its best match only (`TRUE`) 
 or how informative each split is about each other split (`FALSE`).}
 
-\item{splits1, splits2}{Splits [#TODO document properly]}
+\item{splits1, splits2}{Logical matrices where each row corresponds to a terminal,
+either listed in the same order or bearing identical names (in any sequence),
+and each column corresponds to a bipartition split, such that
+each terminal is identified as a member of the ingroup (`TRUE`) or outgroup 
+(`FALSE`) of the respective bipartition split.}
 
 \item{partitionQualityIndex}{Output of [SplitPairingInformationIndex] for
 `n` taxa; calculated automatically if not specified, but passing a cached
 value may improve performance.}
-
-\item{splits1, splits2}{Logical matrices where each row corresponds to a terminal,
-either listed in the same order or bearing identical names (in any sequence),
-and each column corresponds to a bipartition split, such that
-each terminal is identified as a member of the ingroup (`TRUE`) or outgroup 
-(`FALSE`) of the respective bipartition split.}
-
-\item{splits1, splits2}{Logical matrices where each row corresponds to a terminal,
-either listed in the same order or bearing identical names (in any sequence),
-and each column corresponds to a bipartition split, such that
-each terminal is identified as a member of the ingroup (`TRUE`) or outgroup 
-(`FALSE`) of the respective bipartition split.}
 }
 \value{
 Returns the the mutual phylogenetic information 
