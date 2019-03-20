@@ -11,6 +11,10 @@ SplitsCompatible(split1, split2)
 each terminal is identified as a member of the ingroup (\code{TRUE}) or outgroup
 (\code{FALSE}) of the respective bipartition split.}
 }
+\value{
+\code{SplitsCompatible} returns a logical specifying whether the splits
+provided are compatible with one another.
+}
 \description{
 Splits are compatible if they are concave; i.e. they can both be true
 simultaneously.
