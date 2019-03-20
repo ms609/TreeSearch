@@ -20,9 +20,11 @@ ProfileInitMorphy(dataset)
 ProfileDestroyMorphy(dataset)
 }
 \arguments{
-\item{parent}{the first column of the edge matrix of a tree of class \code{\link{phylo}}, i.e. tree$edge\link{, 1}}
+\item{parent}{the first column of the edge matrix of a tree of class
+\code{\link{phylo}}, i.e. \code{tree$edge[, 1]}}
 
-\item{child}{the second column of the edge matrix of a tree of class \code{\link{phylo}}, i.e. tree$edge\link{, 2}}
+\item{child}{the second column of the edge matrix of a tree of class
+\code{\link{phylo}}, i.e. \code{tree$edge[, 2]}}
 
 \item{dataset}{Dataset of class \code{phyDat}.  The dataset should have been
 prepared using \code{dataset <- \link{PrepareDataProfile}(dataset)};

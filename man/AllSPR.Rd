@@ -7,9 +7,11 @@
 AllSPR(parent, child, nEdge, notDuplicateRoot, edgeToBreak)
 }
 \arguments{
-\item{parent}{the first column of the edge matrix of a tree of class \code{\link{phylo}}, i.e. tree$edge\link{, 1}}
+\item{parent}{the first column of the edge matrix of a tree of class
+\code{\link{phylo}}, i.e. \code{tree$edge[, 1]}}
 
-\item{child}{the second column of the edge matrix of a tree of class \code{\link{phylo}}, i.e. tree$edge\link{, 2}}
+\item{child}{the second column of the edge matrix of a tree of class
+\code{\link{phylo}}, i.e. \code{tree$edge[, 2]}}
 
 \item{nEdge}{integer specifying the number of edges of a tree of class \code{\link{phylo}}, i.e. \code{dim(tree$edge)[1]}}
 
@@ -20,7 +22,8 @@ root edge... except insofar as it moves
 the position of the root.)}
 
 \item{edgeToBreak}{(optional) integer specifying the index of an edge to bisect/prune,
-generated randomly if not specified.  Alternatively, set to \code{-1} to return a complete list
+generated randomly if not specified.
+Alternatively, set to \code{-1} to return a complete list
 of all trees one step from the input tree.}
 }
 \value{

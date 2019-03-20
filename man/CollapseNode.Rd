@@ -14,14 +14,16 @@ CollapseEdge(tree, edges)
 
 \item{nodes, edges}{Integer vector specifying the nodes or edges in the tree
 to be dropped.
-(Use \link{ape:nodelabels} or \link{ape:edgelabels} to view numbers on a plotted tree.)}
+(Use \code{\link[ape]{nodelabels}} or \code{\link[ape]{edgelabels}}
+to view numbers on a plotted tree.)}
 }
 \value{
 \code{tree}, with the specified nodes or edges collapsed.
 The length of each dropped edge will (naively) be added to each descendant edge.
 }
 \description{
-Collapse nodes on a phylogenetic tree
+Collapses specified nodes or edges on a phylogenetic tree, resulting in
+polytomies.
 }
 \examples{
   library(ape)

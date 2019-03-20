@@ -9,9 +9,11 @@ RearrangeEdges(parent, child, dataset, TreeScorer = MorphyLength,
   iter = "?", hits = 0L, verbosity = 0L, ...)
 }
 \arguments{
-\item{parent}{the first column of the edge matrix of a tree of class \code{\link{phylo}}, i.e. tree$edge\link{, 1}}
+\item{parent}{the first column of the edge matrix of a tree of class
+\code{\link{phylo}}, i.e. \code{tree$edge[, 1]}}
 
-\item{child}{the second column of the edge matrix of a tree of class \code{\link{phylo}}, i.e. tree$edge\link{, 2}}
+\item{child}{the second column of the edge matrix of a tree of class
+\code{\link{phylo}}, i.e. \code{tree$edge[, 2]}}
 
 \item{dataset}{Third argument to pass to \code{TreeScorer}.}
 

@@ -29,7 +29,8 @@ RootedTBRSwap(parent, child, nEdge = length(parent),
 \item{tree}{A bifurcating tree of class \code{\link{phylo}}, with all nodes resolved;}
 
 \item{edgeToBreak}{(optional) integer specifying the index of an edge to bisect/prune,
-generated randomly if not specified.  Alternatively, set to \code{-1} to return a complete list
+generated randomly if not specified.
+Alternatively, set to \code{-1} to return a complete list
 of all trees one step from the input tree.}
 
 \item{mergeEdges}{(optional) vector of length 1 or 2, listing edge(s) to be joined:
@@ -38,9 +39,11 @@ In TBR, these edges will be reconnected (so must be on opposite
 sides of \code{edgeToBreak}); if only a single edge is specified,
 the second will be chosen at random}
 
-\item{parent}{the first column of the edge matrix of a tree of class \code{\link{phylo}}, i.e. tree$edge\link{, 1}}
+\item{parent}{the first column of the edge matrix of a tree of class
+\code{\link{phylo}}, i.e. \code{tree$edge[, 1]}}
 
-\item{child}{the second column of the edge matrix of a tree of class \code{\link{phylo}}, i.e. tree$edge\link{, 2}}
+\item{child}{the second column of the edge matrix of a tree of class
+\code{\link{phylo}}, i.e. \code{tree$edge[, 2]}}
 
 \item{nEdge}{(optional) Number of edges.}
 
