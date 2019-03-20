@@ -7,3 +7,8 @@ release_questions <- function() {
     "Have you updated .zenodo.json?"
   )
 }
+
+# Additional tests:
+# 
+# check_win_devel(); check_rhub()
+# revdepcheck()
