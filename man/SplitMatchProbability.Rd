@@ -20,11 +20,19 @@ splitting the terminals into bipartitions of the sizes given,
  that match as well as `split1` and `split2` do.
 }
 \description{
-Probability that two random splits of the sizes provided will be at least
-as similar as the two specified.
+Calculates the probability that two random splits of the sizes provided
+will be at least as similar as the two specified.
 }
 \section{Functions}{
 \itemize{
 \item \code{LnSplitMatchProbability}: The natural logarithm of the probability
 }}
 
+\examples{
+SplitMatchProbability(split1 = c(rep(TRUE, 4), rep(FALSE, 4)),
+                      split2 = c(rep(TRUE, 3), rep(FALSE, 5)))
+ 
+}
+\author{
+Martin R. Smith
+}

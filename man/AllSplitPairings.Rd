@@ -10,7 +10,7 @@ AllSplitPairings(n)
 SplitPairingInformationIndex(n)
 }
 \arguments{
-\item{n}{Integer specifying number of terminal taxa}
+\item{n}{Integer specifying the number of terminal taxa.}
 }
 \value{
 A named vector, specifying the number of split pairings producing
@@ -19,14 +19,26 @@ AB:CD and CD:AB are treated as distinct, so division of all values by four
 is justified in cases where unique pairings only are required.
 }
 \description{
-We consider only non-trivial splits, i.e. splits dividing one or zero
-taxa from the rest are ignored.
+Calculates the variation of (clustering) information (Meila 2007)
+for each possible pairing of non-trivial splits,
+and tabulates the number of pairings with each similarity.
+}
+\details{
+Trivial splits -- those that divide one or zero taxa from the rest --
+are not considered.
 }
 \section{Functions}{
 \itemize{
 \item \code{SplitPairingInformationIndex}: Lookup table listing split pairing information
 }}
 
+\examples{
+AllSplitPairings(5)
+
+}
+\references{
+\insertRef{Meila2007}{TreeSearch}
+}
 \author{
 Martin R. Smith
 }

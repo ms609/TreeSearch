@@ -244,6 +244,7 @@ MultiSplitInformation <- function (partitionSizes) {
 #'                       split2 = c(rep(TRUE, 3), rep(FALSE, 5)))
 #'  
 #' @author Martin R. Smith
+#' @export
 SplitMatchProbability <- function (split1, split2) {
   
   if (length(split1) != length(split2)) stop("Split lengths differ")
@@ -308,13 +309,20 @@ SplitMatchProbability <- function (split1, split2) {
 #' 
 #' @param n Integer specifying the number of terminal taxa.
 #' 
-#' @return A named vector, specifying the number of split pairings producing
+#' @return `AllSplitPairings` returns a named vector, specifying the number of 
+#' split pairings producing
 #' the variation of information given (in bits) in the name.  Splits
 #' AB:CD and CD:AB are treated as distinct, so division of all values by four 
 #' is justified in cases where unique pairings only are required.
 #' 
+#' `SplitPairingInformationIndex` returns a table listing the possible values
+#' of the variation of information for splits with `n` terminals, and the
+#' clustering information (_sensu_ Smith in prep.) associated with a pairing 
+#' that has the given variation of information.
+#' 
 #' @examples
 #' AllSplitPairings(5)
+#' SplitPairingInformationIndex(5)
 #' 
 #' @references \insertRef{Meila2007}{TreeSearch}
 #' 
@@ -330,7 +338,7 @@ AllSplitPairings <- memoise(function (n) {
 
   unevenPairs <- matrix(
     # For i in 2:largestSmallSplit
-    # TODO: Don't calculate bottom triangle
+    # TODO: Make faster by not calculating bottom triangle
     unlist(lapply(1L + seq_len(n - 3L), function (inA) {
       # For j in 2:(n - 2)
       nCa <- choose(n, inA)
