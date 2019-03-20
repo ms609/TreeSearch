@@ -10,10 +10,12 @@
 ## Bug fixes
  - Correct some mistakes in the documentation
 
+
 # TreeSearch 0.2.2
 
 ## Bug fixes 
  - Correct vignette titles
+
 
 # TreeSearch 0.2.1
 
