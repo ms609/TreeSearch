@@ -4,6 +4,9 @@
  - Implement an information theoretic tree distance measure (Smith, in prep)
  - Prepare for new random number generator in R3.6.0
 
+## Deprecations
+ - Function `TreeSplits` is deprecated; use `Quartet::Tree2Splits` instead.
+
 ## Bug fixes
  - Correct some mistakes in the documentation
 
