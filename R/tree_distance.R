@@ -487,8 +487,12 @@ MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE)
     dimSplits2 <- tmp
   }
   
-  splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
-  splits1 <- unname(splits1) # split1[split2] faster without names
+  taxonNames <- rownames(splits1) 
+  
+  if (!is.null(taxonNames)) {
+    splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
+    splits1 <- unname(splits1) # split1[split2] faster without names
+  }
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
@@ -522,10 +526,12 @@ MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE)
 
 #' Are splits compatible?
 #' 
-#'
 #' Splits are compatible if they are concave; i.e. they can both be true
 #' simultaneously.
+#' 
 #' @template split12params
+#' @return `SplitsCompatible` returns a logical specifying whether the splits
+#' provided are compatible with one another.
 #' 
 #' @author Martin R. Smith
 #' @export
