@@ -18,6 +18,33 @@ Calculates the joint phylogenetic information content of two splits:
 that is, the information content of the two splits considered separately,
 minus their mutual information (which would otherwise be counted twice).
 }
+\details{
+Because some information is common to both splits (\code{SplitMutualInformation}),
+the joint information of two splits will be less than the sum of the
+information of the splits taken separately -- unless the splits are
+contradictory.
+
+Split Y1 is defined as dividing taxa into the two sets A1 and B1,
+and Y2=A2:B2.
+
+Consider partitions that divide eight terminals, labelled A to H.
+
+\tabular{rcll}{
+Bipartition 1:\tab ABCD:EFGH\tab A1 = ABCD\tab B1 = EFGH \cr
+Bipartition 2:\tab ABC:DEFGH\tab A2 = ABC\tab B2 = DEFGH
+}
+
+This can be represented by an association matrix:
+
+\tabular{rll}{
+\tab \emph{A2} \tab \emph{B2} \cr
+\emph{A1} \tab ABC  \tab D   \cr
+\emph{B1} \tab      \tab EFGH
+}
+
+The joint information is given by
+\code{JointInformation(3, 1, 0, 4)}.
+}
 \examples{
 JointInformation(3, 1, 0, 4)
 

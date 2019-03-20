@@ -491,9 +491,10 @@ SplitEntropy <- function (split1, split2=split1) {
 #' This can be represented by an association matrix:
 #' 
 #' \tabular{rll}{
-#'      \tab *A2* \tab *B2* \cr
-#' *A1* \tab ABC  \tab D   \cr
-#' *B1* \tab      \tab EFGH
+#'       \tab *A2* \tab *B2* \cr
+#'  *A1* \tab ABC  \tab D   \cr
+#'  *B1* \tab      \tab EFGH
+#' }
 #' 
 #' The joint information is given by
 #' `JointInformation(3, 1, 0, 4)`.
