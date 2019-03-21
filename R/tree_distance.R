@@ -109,7 +109,7 @@ VariationOfArborealInfo <- function (tree1, tree2, reportMatching = FALSE) {
 MutualClusterInfo <- function (tree1, tree2,
                                   reportMatching = FALSE,
                                   bestMatchOnly = TRUE) {
-  CalculateTreeDistance(VariationOfArborealInfoSplits, tree1, tree2, 
+  CalculateTreeDistance(MutualClusterInfoSplits, tree1, tree2, 
                         reportMatching=reportMatching, bestMatchOnly=bestMatchOnly)
 }
 
