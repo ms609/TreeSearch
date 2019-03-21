@@ -27,9 +27,17 @@ test_that('Tree differences are correctly calculated', {
   expect_error(VariationOfArborealInfo(treeSym8, ape::read.tree(text='((a, b, c, D), (e, f, g, h));')))
   expect_error(MutualClusterInfo(treeSym8, ape::read.tree(text='((a, b, c, D), (e, f, g, h));')))
   expect_equal(22.53747, round(MutualArborealInfo(treeSym8, treeSym8), 5))
+  
   expect_equal(13.75284, round(MutualArborealInfo(treeSym8, treeBal8), 5))
   expect_equal(-log2(945/10395), MutualArborealInfo(treeSym8, treeAb.Cdefgh))
   expect_equal(-log2(315/10395), MutualArborealInfo(treeSym8, treeAbc.Defgh))
+  
+  # TODO: These are only superficial tests of these functions.
+  # Write tests based on calculated values.
+  expect_equal(0, VariationOfArborealInfo(treeSym8, treeSym8))
+  expect_equal(MutualClusterInfo(treeSym8, treeSym8), 
+               MutualClusterInfo(treeBal8, treeBal8))
+  
   
   # Test symmetry of small vs large splits
   expect_equal(MutualArborealInfo(treeSym8, treeAbc.Defgh),
