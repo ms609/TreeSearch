@@ -24,6 +24,8 @@ test_that('Tree differences are correctly calculated', {
 
   # Labels differ
   expect_error(MutualArborealInfo(treeSym8, ape::read.tree(text='((a, b, c, D), (e, f, g, h));')))
+  expect_error(VariationOfArborealInfo(treeSym8, ape::read.tree(text='((a, b, c, D), (e, f, g, h));')))
+  expect_error(MutualClusterInfo(treeSym8, ape::read.tree(text='((a, b, c, D), (e, f, g, h));')))
   expect_equal(22.53747, round(MutualArborealInfo(treeSym8, treeSym8), 5))
   expect_equal(13.75284, round(MutualArborealInfo(treeSym8, treeBal8), 5))
   expect_equal(-log2(945/10395), MutualArborealInfo(treeSym8, treeAb.Cdefgh))
