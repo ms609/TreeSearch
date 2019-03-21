@@ -12,3 +12,5 @@ release_questions <- function() {
 # 
 # check_win_devel(); check_rhub()
 # revdepcheck()
+# build_vignettes()
+# 
