@@ -3,7 +3,9 @@
 #' @export
 SPRWarning <- function (parent, child, error) {
   warning ("No SPR operation performed.\n  > ", error)
-  return(list(parent, child))
+  
+  # Return:
+  list(parent, child)
 }
 
 #' Subtree Pruning and Rearrangement (SPR)
@@ -50,14 +52,16 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
     nEdge <- length(parent)
     stop('Negative edgeToBreak not yet supported; on TODO list for next release')
     notDuplicateRoot <- NonDuplicateRoot(parent, child, nEdge)
-    return(unique(unlist(lapply(which(notDuplicateRoot), AllSPR,
+    # Return:
+    unique(unlist(lapply(which(notDuplicateRoot), AllSPR,
       parent=parent, child=child, nEdge=nEdge, notDuplicateRoot=notDuplicateRoot),
-      recursive=FALSE))) # TODO the fact that we need to use `unique` indicates that 
+      recursive=FALSE)) # TODO the fact that we need to use `unique` indicates that 
                          #      we're being inefficient here.
   } else {
     tree$edge <- ListToMatrix(SPRSwap(parent, edge[, 2], edgeToBreak=edgeToBreak, 
                                       mergeEdge=mergeEdge))
-    return(tree)
+    # Return:
+    tree
   }
 }
 
@@ -180,7 +184,8 @@ AllSPR <- function (parent, child, nEdge, notDuplicateRoot, edgeToBreak) {
       newChild [brokenEdgeSister] <- child[mergeEdge]
       newParent[brokenEdge | brokenEdgeSister] <- child[brokenEdgeSister]
       newChild[mergeEdge] <- child[brokenEdgeSister]
-      return(RenumberTree(newParent, newChild, nEdge))
+      # Return:
+      RenumberTree(newParent, newChild, nEdge)
     }) # lapply faster than vapply
   } else {
     newEdges <- lapply(mergeEdges, function (mergeEdge) {
@@ -188,10 +193,12 @@ AllSPR <- function (parent, child, nEdge, notDuplicateRoot, edgeToBreak) {
       newParent[brokenEdgeSister] <- parent[brokenEdgeParent]
       newParent[brokenEdgeParent] <- newParent[mergeEdge]
       newParent[mergeEdge] <- brokenEdge.parentNode
-      return(RenumberTree(newParent, child, nEdge))
+      # Return:
+      RenumberTree(newParent, child, nEdge)
     }) # lapply faster than vapply
   }
-  return(lapply(newEdges, function (newEdge) {tree$edge <- newEdge; tree}))
+  # Return:
+  lapply(newEdges, function (newEdge) {tree$edge <- newEdge; tree})
 }
 
 #' Rooted SPR 
@@ -294,5 +301,7 @@ RootedSPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge 
   
   #####Assert(identical(unique(table(parent)), 2L))
   #####Assert(identical(unique(table(child)),  1L))
-  return(RenumberEdges(parent, child, nEdge))  
+  
+  # Return:
+  RenumberEdges(parent, child, nEdge)
 }
