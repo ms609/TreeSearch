@@ -1,6 +1,4 @@
-#' NNI
-#'
-#' Nearest Neighbour Interchange
+#' Nearest Neighbour Interchange (NNI)
 #' 
 #' Performs a single iteration of the nearest-neighbour interchange algorithm.
 #' Based on the corresponding \code{phangorn} function, but re-coded to improve speed.
