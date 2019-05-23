@@ -48,8 +48,8 @@ Based on the corresponding \code{phangorn} function, but re-coded to improve spe
 \details{
 Branch lengths are not supported.
 
-All nodes in a tree must be bifurcating; \link{ape:collapse.singles} and
-\link{ape:multi2di} may help.
+All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
+\link[ape:multi2di]{ape::multi2di} may help.
 }
 \section{Functions}{
 \itemize{

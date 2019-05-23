@@ -67,8 +67,8 @@ a list of trees, in parent-child format
 \details{
 Branch lengths are not (yet) supported.
 
-All nodes in a tree must be bifurcating; \link{ape:collapse.singles} and
-\link{ape:multi2di} may help.
+All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
+\link[ape:multi2di]{ape::multi2di} may help.
 }
 \section{Functions}{
 \itemize{

@@ -51,8 +51,8 @@ RenumberEdges <- function (parent, child, nEdge = length(parent)) {
 #' Calling this C function directly is approximately twice as fast as using
 #' \code{ape::\link[ape]{cladewise}} or \code{ape::\link[ape]{postorder}}
 #' 
-#' All nodes in a tree must be bifurcating; [ape:collapse.singles] and
-#' [ape:multi2di] may help.
+#' All nodes in a tree must be bifurcating; [ape::collapse.singles] and
+#' [ape::multi2di] may help.
 #'
 #' @template treeParam
 #' @param nTaxa (optional) number of tips in the tree

@@ -53,8 +53,8 @@ then this function will occasionally return a functionally equivalent topology.
 \code{RootIrrelevantSPR} will search tree space more efficiently in these cases.
 Branch lengths are not (yet) supported.
 
-All nodes in a tree must be bifurcating; \link{ape:collapse.singles} and
-\link{ape:multi2di} may help.
+All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
+\link[ape:multi2di]{ape::multi2di} may help.
 }
 \section{Functions}{
 \itemize{

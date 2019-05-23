@@ -43,8 +43,8 @@ Calling this C function directly is approximately twice as fast as using
 \code{ape::\link[ape]{cladewise}} or \code{ape::\link[ape]{postorder}}
 }
 \details{
-All nodes in a tree must be bifurcating; \link{ape:collapse.singles} and
-\link{ape:multi2di} may help.
+All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
+\link[ape:multi2di]{ape::multi2di} may help.
 }
 \section{Functions}{
 \itemize{
