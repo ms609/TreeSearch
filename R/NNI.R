@@ -7,6 +7,9 @@
 #' 
 #' Branch lengths are not supported.
 #' 
+#' All nodes in a tree must be bifurcating; [ape:collapse.singles] and
+#' [ape:multi2di] may help.
+#' 
 #' @template treeParam
 #' @template edgeToBreakParam
 #' 
@@ -29,6 +32,7 @@ NNI <- function (tree, edgeToBreak=NULL) {
   edge <- tree$edge
   if (!is.null(edgeToBreak) && edgeToBreak == -1) {
     parent <- edge[, 1]
+    StopUnlessBifurcating(parent)
     child  <- edge[, 2]
     nTips <- (length(parent) / 2L) + 1L
     samplable <- child > nTips

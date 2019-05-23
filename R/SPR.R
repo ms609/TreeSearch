@@ -10,12 +10,15 @@ SPRWarning <- function (parent, child, error) {
 #'
 #' Perform one \acronym{SPR} rearrangement on a tree
 #' 
-#' Equivalent to phangorn's kSPR, but faster.
+#' Equivalent to phangorn's `kSPR`, but faster.
 #' Note that rearrangements that only change the position of the root WILL be returned by 
 #' \code{SPR}.  If the position of the root is irrelevant (as in Fitch parsimony, for example)
 #' then this function will occasionally return a functionally equivalent topology.  
 #' \code{RootIrrelevantSPR} will search tree space more efficiently in these cases.
 #' Branch lengths are not (yet) supported.
+#'
+#' All nodes in a tree must be bifurcating; [ape:collapse.singles] and
+#' [ape:multi2di] may help.
 #'
 #' @template treeParam
 #' @param edgeToBreak the index of an edge to bisect, generated randomly if not specified.
@@ -42,6 +45,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   edge <- tree$edge
   if (!is.null(edgeToBreak) && edgeToBreak == -1) {
     parent <- edge[, 1]
+    StopUnlessBifurcating(parent)
     child <- edge[, 2]
     nEdge <- length(parent)
     stop('Negative edgeToBreak not yet supported; on TODO list for next release')
