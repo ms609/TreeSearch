@@ -28,9 +28,9 @@
 #' @export
 NNI <- function (tree, edgeToBreak=NULL) {
   edge <- tree$edge
+  parent <- edge[, 1]
+  StopUnlessBifurcating(parent)
   if (!is.null(edgeToBreak) && edgeToBreak == -1) {
-    parent <- edge[, 1]
-    StopUnlessBifurcating(parent)
     child  <- edge[, 2]
     nTips <- (length(parent) / 2L) + 1L
     samplable <- child > nTips
@@ -39,7 +39,7 @@ NNI <- function (tree, edgeToBreak=NULL) {
     newTrees <- lapply(newEdges, function (edges) {tree$edge <- edges; tree}) # Quicker than vapply, surprisingly
     return(newTrees)
   } else {
-    tree$edge <- ListToMatrix(NNISwap(edge[, 1], edge[, 2], edgeToBreak=edgeToBreak))
+    tree$edge <- ListToMatrix(NNISwap(parent, edge[, 2], edgeToBreak=edgeToBreak))
     return (tree)
   }
 }

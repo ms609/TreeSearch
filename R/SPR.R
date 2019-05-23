@@ -43,9 +43,9 @@ SPRWarning <- function (parent, child, error) {
 SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') tree <- Preorder(tree)
   edge <- tree$edge
+  parent <- edge[, 1]
+  StopUnlessBifurcating(parent)
   if (!is.null(edgeToBreak) && edgeToBreak == -1) {
-    parent <- edge[, 1]
-    StopUnlessBifurcating(parent)
     child <- edge[, 2]
     nEdge <- length(parent)
     stop('Negative edgeToBreak not yet supported; on TODO list for next release')
@@ -55,7 +55,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
       recursive=FALSE))) # TODO the fact that we need to use `unique` indicates that 
                          #      we're being inefficient here.
   } else {
-    tree$edge <- ListToMatrix(SPRSwap(edge[, 1], edge[, 2], edgeToBreak=edgeToBreak, 
+    tree$edge <- ListToMatrix(SPRSwap(parent, edge[, 2], edgeToBreak=edgeToBreak, 
                                       mergeEdge=mergeEdge))
     return(tree)
   }
