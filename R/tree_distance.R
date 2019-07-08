@@ -144,8 +144,8 @@ VariationOfPartitionInfo <- function (tree1, tree2, normalize = FALSE,
 #' @export
 VariationOfClusteringInfo <- function (tree1, tree2, normalize = FALSE,
                                        reportMatching = FALSE) {
-  mci <- MutualClusteringInfo(tree1, tree2, normalize, reportMatching)
-  treesIndependentInfo <- ClusteringInfo(tree1) + ClusteringInfo(tree2)
+  mci <- MutualClusteringInfo(tree1, tree2, normalize = FALSE, reportMatching)
+  treesIndependentInfo <- outer(ClusteringInfo(tree1), ClusteringInfo(tree2), '+')
   ret <- treesIndependentInfo - mci - mci
   ret <- NormalizeInfo(ret, tree1, tree2, how = normalize,
                        infoInBoth = treesIndependentInfo,
@@ -567,7 +567,9 @@ MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE)
     stop("Split rows must bear identical labels")
   }
   
-  if (dimSplits1[2] < dimSplits2[2]) {
+  swapSplits <- (dimSplits1[2] > dimSplits2[2])
+  if (swapSplits) {
+    # solve_LDAP expects splits1 to be no larger than splits2
     tmp <- splits1
     splits1 <- splits2
     splits2 <- tmp
@@ -575,18 +577,21 @@ MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE)
     tmp <- dimSplits1
     dimSplits1 <- dimSplits2
     dimSplits2 <- tmp
+    
+    remove(tmp)
   }
   
-  taxonNames <- rownames(splits1) 
+  taxonNames1 <- rownames(splits1)
+  taxonNames2 <- rownames(splits2)
   
-  if (!is.null(taxonNames)) {
-    splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
-    splits1 <- unname(splits1) # split1[split2] faster without names
+  if (!is.null(taxonNames2)) {
+    splits2 <- unname(splits2[taxonNames1, , drop=FALSE])
+    splits1 <- unname(splits1) # split2[split1] faster without names
   }
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
-  if (nSplits2 == 0) return (0)
+  if (nSplits1 == 0) return (0)
   
   AgreementInfoNats <- function (splitI, agree) {
     inAgreement <- sum(agree)
@@ -603,10 +608,10 @@ MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE)
     max(AgreementInfoNats(splitI0, agree1),
         AgreementInfoNats(splitI0, !agree1))
     
-  }, rep(seq_len(nSplits1), each=nSplits2), seq_len(nSplits2)
-  )), nSplits2, nSplits1) / log(2)
+  }, seq_len(nSplits1), rep(seq_len(nSplits2), each=nSplits1)
+  )), nSplits1, nSplits2) / log(2)
   
-  if (nSplits2 == 1) {
+  if (nSplits1 == 1) {
     min(pairScores)
   } else {
     optimalMatching <- solve_LSAP(pairScores, TRUE)
@@ -629,6 +634,7 @@ MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE)
 MutualClusteringInfoSplits <- function (splits1, splits2, normalize = TRUE,
                                         reportMatching = FALSE) {
   
+  
   dimSplits1 <- dim(splits1)
   dimSplits2 <- dim(splits2)
   nTerminals <- dimSplits1[1]
@@ -636,7 +642,9 @@ MutualClusteringInfoSplits <- function (splits1, splits2, normalize = TRUE,
     stop("Split rows must bear identical labels")
   }
   
-  if (dimSplits1[2] < dimSplits2[2]) {
+  swapSplits <- (dimSplits1[2] > dimSplits2[2])
+  if (swapSplits) {
+    # solve_LDAP expects splits1 to be no larger than splits2
     tmp <- splits1
     splits1 <- splits2
     splits2 <- tmp
@@ -644,26 +652,29 @@ MutualClusteringInfoSplits <- function (splits1, splits2, normalize = TRUE,
     tmp <- dimSplits1
     dimSplits1 <- dimSplits2
     dimSplits2 <- tmp
+    
+    remove(tmp)
   }
   
-  taxonNames <- rownames(splits1) 
+  taxonNames1 <- rownames(splits1)
+  taxonNames2 <- rownames(splits2)
   
-  if (!is.null(taxonNames)) {
-    splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
-    splits1 <- unname(splits1) # split1[split2] faster without names
+  if (!is.null(taxonNames2)) {
+    splits2 <- unname(splits2[taxonNames1, , drop=FALSE])
+    splits1 <- unname(splits1) # split2[split1] faster without names
   }
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
-  if (nSplits2 == 0) return (0)
+  if (nSplits1 == 0) return (0)
   
   
   pairScores <- matrix((mapply(function(i, j) {
     MeilaMutualInformation(splits1[, i], splits2[, j])
-  }, rep(seq_len(nSplits1), each=nSplits2), seq_len(nSplits2)
-  )), nSplits2, nSplits1) / log(2)
+  }, seq_len(nSplits1), rep(seq_len(nSplits2), each=nSplits1)
+  )), nSplits1, nSplits2) / log(2)
   
-  if (nSplits2 == 1) {
+  if (nSplits1 == 1) {
     min(pairScores)
   } else {
     optimalMatching <- solve_LSAP(pairScores, TRUE)
@@ -694,7 +705,9 @@ MatchingSplitDistanceSplits <- function (splits1, splits2, normalize = TRUE,
     stop("Split rows must bear identical labels")
   }
   
-  if (dimSplits1[2] < dimSplits2[2]) {
+  swapSplits <- (dimSplits1[2] > dimSplits2[2])
+  if (swapSplits) {
+    # solve_LDAP expects splits1 to be no larger than splits2
     tmp <- splits1
     splits1 <- splits2
     splits2 <- tmp
@@ -702,18 +715,21 @@ MatchingSplitDistanceSplits <- function (splits1, splits2, normalize = TRUE,
     tmp <- dimSplits1
     dimSplits1 <- dimSplits2
     dimSplits2 <- tmp
+    
+    remove(tmp)
   }
   
-  taxonNames <- rownames(splits1) 
+  taxonNames1 <- rownames(splits1)
+  taxonNames2 <- rownames(splits2)
   
-  if (!is.null(taxonNames)) {
-    splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
-    splits1 <- unname(splits1) # split1[split2] faster without names
+  if (!is.null(taxonNames2)) {
+    splits2 <- unname(splits2[taxonNames1, , drop=FALSE])
+    splits1 <- unname(splits1) # split2[split1] faster without names
   }
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
-  if (nSplits2 == 0) return (0)
+  if (nSplits1 == 0) return (0)
   
   SymmetricDifference <- function (A, B) {
     (A & !B) | (!A & B)
@@ -732,10 +748,10 @@ MatchingSplitDistanceSplits <- function (splits1, splits2, normalize = TRUE,
       sum(SymmetricDifference(A1, B2), SymmetricDifference(B1, A2))
     ) / 2L
       
-  }, rep(seq_len(nSplits1), each=nSplits2), seq_len(nSplits2)
-  )), nSplits2, nSplits1)
+  },  seq_len(nSplits1), rep(seq_len(nSplits2), each=nSplits1)
+  )), nSplits1, nSplits2)
   
-  if (nSplits2 == 1) {
+  if (nSplits1 == 1) {
     min(pairScores)
   } else {
     optimalMatching <- solve_LSAP(pairScores, FALSE)
