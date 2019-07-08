@@ -83,7 +83,7 @@ maximum value, calculated thus:
 \itemize{
 \item \code{MutualArborealInfo}: The information content of the most informative tree.
 To scale against the information content of the least informative tree, use
-\code{normalize = pmin}.
+\code{normalize = pmax}.
 }
 }
 \section{Functions}{
