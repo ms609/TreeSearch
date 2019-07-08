@@ -30,12 +30,24 @@
 #' The complementary tree distance measures state how much information is 
 #' different in the partitions of two trees, under an optimal matching.
 #' 
+#' ## Normalization
+#' 
+#' If `normalize = TRUE`, then results will be rescaled from zero to a nominal
+#' maximum value, calculated thus:
+#' 
+#' * `MutualArborealInfo`: The information content of the most informative tree.
+#' To scale against the information content of the least informative tree, use
+#' `normalize = min(PartitionInfo(c(tree1, tree2)))`.
+#' 
+#' 
 #' @param tree1,tree2 Trees of class `phylo`, with tips labelled identically,
 #' or lists of such trees to undergo pairwise comparison.
 #' 
-#' @param normalize Logical (default = `TRUE`) specifying whether to re-scale
-#'  results onto a scale of zero to one, where one represents the total 
-#'  information content of two independent trees of the given size and topology.
+#' @param normalize If a numeric value is provided, this will be used as a 
+#' maximum value against which to rescale results.
+#' If `TRUE`, results will be rescaled against a maximum value calculated from
+#' the specified tree sizes and topology, as specified in 'details' below.
+#' If `FALSE`, results will not be rescaled.
 #' 
 #' @param reportMatching Logical specifying whether to return the clade
 #' matchings as an attribute of the score.
@@ -83,16 +95,28 @@
 #' @family Tree distance
 #' @importFrom clue solve_LSAP
 #' @export
-MutualArborealInfo <- function (tree1, tree2, normalize = TRUE,
+MutualArborealInfo <- function (tree1, tree2, normalize = FALSE,
                                 reportMatching = FALSE) {
-  CalculateTreeDistance(MutualArborealInfoSplits, tree1, tree2, 
-                        normalize = normalize,
-                        reportMatching=reportMatching)
+  unnormalized <- CalculateTreeDistance(MutualArborealInfoSplits, tree1, tree2, 
+                                        reportMatching=reportMatching)
+  
+  # Return:
+  if (normalize == FALSE) {
+    unnormalized
+  } else {
+    if (mode(normalize) == 'logical') {
+      NormalizeInfo(unnormalized, PartitionInfo(tree1), PartitionInfo(tree2), max)
+    } else if (mode(normalize) == 'function') {
+      NormalizeInfo(unnormalized, PartitionInfo(tree1), PartitionInfo(tree2))
+    } else {
+      unnormalized / normalize
+    }
+  }
 }
 
 #' @describeIn MutualArborealInfo Variation of phylogenetic information between two trees
 #' @export
-VariationOfArborealInfo <- function (tree1, tree2, normalize = TRUE,
+VariationOfArborealInfo <- function (tree1, tree2, normalize = FALSE,
                                      reportMatching = FALSE) {
   mai <- MutualArborealInfo(tree1, tree2, normalize, reportMatching)
   ret <- PartitionInfo(tree1) + PartitionInfo(tree2) - mai - mai
@@ -105,7 +129,7 @@ VariationOfArborealInfo <- function (tree1, tree2, normalize = TRUE,
 
 #' @describeIn MutualPartitionInfo Variation of partition information between two trees
 #' @export
-VariationOfPartitionInfo <- function (tree1, tree2, normalize=TRUE,
+VariationOfPartitionInfo <- function (tree1, tree2, normalize=FALSE,
                                       reportMatching = FALSE) {
   mpi <- MutualPartitionInfo(tree1, tree2, normalize, reportMatching)
   treesIndependentInfo <- PartitionInfo(tree1) + PartitionInfo(tree2)
@@ -122,54 +146,9 @@ VariationOfPartitionInfo <- function (tree1, tree2, normalize=TRUE,
   }
 }
 
-#' Clustering information content of all partitions within a tree
-#' 
-#' Sums the clustering information content (Meila 2007) across each partition within a 
-#' phylogenetic tree.  This value will be greater than the total information 
-#' content of the tree where a tree contains multiple partitions, as 
-#' these partitions will contain mutual information.
-#' 
-#' Note that Meila (2007) and Vinh _et al_. (2010) deal with entropy, which 
-#' denotes the bits necessary to denote the cluster to which each tip belongs,
-#' i.e. bits/tip (see Vinh _et al._ 2010).
-#' This function multiplies the entropy by the number of tips to produce a
-#' measure of the information content of the tree as a whole.
-#' 
-#' @param tree A tree of class `phylo`, a list of trees, or a `multiPhylo` object.
-#' 
-#' @return Information content, in bits.
-#' 
-#' @references \insertRef{Meila2007}{TreeSearch}
-#' @author Martin R. Smith
-#' @keywords internal
-#' @export
-ClusteringInfo <- function(tree) {
-  if (class(tree) == 'phylo') {
-    ClusteringInfoSplits(Tree2Splits(tree))
-  } else {
-    splits <- lapply(tree, Tree2Splits)
-    vapply(splits, ClusteringInfoSplits, double(1L))
-  }
-}
-
-#' @describeIn ClusteringInfo Takes splits instead of trees
-#' @export
-ClusteringInfoSplits <- function (splits) {
-  nTip <- nrow(splits)
-  inSplit <- colSums(splits)
-  splitP <- rbind(inSplit, nTip - inSplit) / nTip
-  
-  # Entropy measures the bits required to transmit the cluster label of each tip.
-  # The total information content is thus entropy * nTip.
-  # See Vinh (2010: p. 2840) 
-  # 
-  # Return:
-  sum(apply(splitP, 2, Entropy)) / log(2) * nTip
-}
-
 #' @describeIn MutualClusteringInfo Variation of clustering information between two trees
 #' @export
-VariationOfClusteringInfo <- function (tree1, tree2, normalize = TRUE,
+VariationOfClusteringInfo <- function (tree1, tree2, normalize = FALSE,
                                        reportMatching = FALSE) {
   mci <- MutualClusteringInfo(tree1, tree2, normalize, reportMatching)
   ret <- ClusteringInfo(tree1) + ClusteringInfo(tree2) - mci - mci
@@ -283,82 +262,6 @@ MatchingSplitDistance <- function (tree1, tree2, normalize = TRUE,
                              reportMatching = FALSE) {
   CalculateTreeDistance(MatchingSplitDistanceSplits, tree1, tree, normalize,
                         reportMatching)
-}
-
-#' Wrapper for tree distance calculations
-#' 
-#' Calls tree distance functions from trees or lists of trees
-#' 
-#' @inheritParams MutualArborealInfo
-#' @param Func Tree distance function.
-#' @param \dots Additional arguments to `Func`.
-#' 
-#' @author Martin R. Smith
-#' @keywords internal
-#' @export
-CalculateTreeDistance <- function (Func, tree1, tree2, normalize, 
-                                   reportMatching, ...) {
-  if (class(tree1) == 'phylo') {
-    if (class(tree2) == 'phylo') {
-      if (length(setdiff(tree1$tip.label, tree2$tip.label)) > 0) {
-        stop("Tree tips must bear identical labels")
-      }
-      
-      Func(Tree2Splits(tree1), Tree2Splits(tree2), normalize, reportMatching, ...)
-    } else {
-      splits1 <- Tree2Splits(tree1)
-      vapply(tree2, 
-             function (tr2) Func(splits1, Tree2Splits(tr2), normalize, ...),
-             double(1))
-    }
-  } else {
-    if (class(tree2) == 'phylo') {
-      splits1 <- Tree2Splits(tree2)
-      vapply(tree1, 
-             function (tr2) Func(splits1, Tree2Splits(tr2), normalize, ...),
-             double(1))
-    } else {
-      splits1 <- lapply(tree1, Tree2Splits)
-      splits2 <- lapply(tree2, Tree2Splits)
-      matrix(mapply(Func, rep(splits1, each=length(splits2)), splits2), 
-             length(splits2), length(splits1),
-             normalize = normalize,
-             dimnames = list(names(tree2), names(tree1)), ...)
-    }
-  }
-}
-
-#' Information content of partitions within a tree
-#' 
-#' Sums the phylogenetic information content for all partitions within a 
-#' phylogenetic tree.  This value will be greater than the total information 
-#' content of the tree where a tree contains multiple partitions, as 
-#' these partitions will contain mutual information
-#' 
-#' @param tree A tree of class `phylo`, a list of trees, or a `multiPhylo` object.
-#' 
-#' @author Martin R. Smith
-#' @keywords internal
-#' @export
-PartitionInfo <- function(tree) {
-  if (class(tree) == 'phylo') {
-    PartitionInfoSplits(Tree2Splits(tree))
-  } else {
-    splits <- lapply(tree, Tree2Splits)
-    vapply(splits, PartitionInfoSplits, double(1L))
-  }
-}
-
-#' @describeIn PartitionInfo Takes splits instead of trees
-#' @export
-PartitionInfoSplits <- function(splits) {
-  nTerminals <- nrow(splits)
-  inSplit <- colSums(splits)
-  
-  sum(vapply(inSplit, LnRooted.int, 0) + 
-      + vapply(nTerminals - inSplit,  LnRooted.int, 0)
-      - LnUnrooted.int(nTerminals)
-  ) / -log(2)
 }
 
 #' @describeIn MutualArborealInfo Takes splits instead of trees
@@ -642,8 +545,7 @@ NyeSplitSimilarity <- function (splits1, splits2, normalize = TRUE,
 #' @describeIn MutualPartitionInfo Takes splits instead of trees
 #' @inheritParams MutualArborealInfoSplits
 #' @export
-MutualPartitionInfoSplits <- function (splits1, splits2, normalize = TRUE,
-                                       reportMatching = FALSE) {
+MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE) {
   
   dimSplits1 <- dim(splits1)
   dimSplits2 <- dim(splits2)
