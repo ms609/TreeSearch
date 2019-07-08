@@ -2,7 +2,7 @@ context('tree_distance_utilities.R')
 test_that('Tree normalization works', {
   expect_equal(0.5, NormalizeInfo(5, 3, 5, how=TRUE, 
                                   InfoInTree=function(x, y) x + y, y = 1L))
-  expect_equal(0:4 / c(1, 2, 3, 3, 3), NormalizeInfo(0:4, 1:5, 3, how = I,
+  expect_equal(0:4 / c(1, 2, 3, 3, 3), NormalizeInfo(0:4, 1:5, 3, InfoInTree = I,
                                        Combine = min))
   expect_equal(3/4, NormalizeInfo(unnormalized = 3, 1, 1, how = 4L))
   expect_equal(matrix(0:24 / 10, 5, 5), 
