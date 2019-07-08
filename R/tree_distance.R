@@ -37,7 +37,7 @@
 #' 
 #' * `MutualArborealInfo`: The information content of the most informative tree.
 #' To scale against the information content of the least informative tree, use
-#' `normalize = pmin`.
+#' `normalize = pmax`.
 #' 
 #' 
 #' @param tree1,tree2 Trees of class `phylo`, with tips labelled identically,
@@ -103,7 +103,7 @@ MutualArborealInfo <- function (tree1, tree2, normalize = FALSE,
   
   # Return:
   NormalizeInfo(unnormalized, tree1, tree2, how = normalize,
-                InfoInTree = PartitionInfo, Combine = pmax)
+                InfoInTree = PartitionInfo, Combine = pmin)
 }
 
 #' @describeIn MutualArborealInfo Variation of phylogenetic information between two trees
@@ -111,7 +111,10 @@ MutualArborealInfo <- function (tree1, tree2, normalize = FALSE,
 VariationOfArborealInfo <- function (tree1, tree2, normalize = FALSE,
                                      reportMatching = FALSE) {
   mai <- MutualArborealInfo(tree1, tree2, normalize = FALSE, reportMatching)
-  ret <- PartitionInfo(tree1) + PartitionInfo(tree2) - mai - mai
+  maxi <- outer(PartitionInfo(tree1), PartitionInfo(tree2), '+')
+  ret <- maxi - mai - mai
+  ret <- NormalizeInfo(ret, tree1, tree2, infoInBoth = maxi,
+                InfoInTree = PartitionInfo, how=normalize)
   ret[ret < 1e-13] <- 0 # In case of floating point inaccuracy
   
   attributes(ret) <- attributes(mai)
@@ -127,10 +130,11 @@ VariationOfPartitionInfo <- function (tree1, tree2, normalize = FALSE,
   
   treesIndependentInfo <- outer(PartitionInfo(tree1), PartitionInfo(tree2), '+')
   ret <- treesIndependentInfo - mpi - mpi
-  NormalizeInfo(unnormalized, tree1, tree2, how = normalize,
-                InfoInTree = PartitionInfo, Combine = '+')
-  ret[ret < 1e-13] <- 0 # In case of floating point inaccuracy
+  ret <- NormalizeInfo(ret, tree1, tree2, how = normalize,
+                       infoInBoth = treesIndependentInfo,
+                       InfoInTree = PartitionInfo, Combine = '+')
   
+  ret[ret < 1e-13] <- 0 # In case of floating point inaccuracy
   attributes(ret) <- attributes(mpi)
   # Return:
   ret
@@ -141,9 +145,13 @@ VariationOfPartitionInfo <- function (tree1, tree2, normalize = FALSE,
 VariationOfClusteringInfo <- function (tree1, tree2, normalize = FALSE,
                                        reportMatching = FALSE) {
   mci <- MutualClusteringInfo(tree1, tree2, normalize, reportMatching)
-  ret <- ClusteringInfo(tree1) + ClusteringInfo(tree2) - mci - mci
-  ret[ret < 1e-13] <- 0 # In case of floating point inaccuracy
+  treesIndependentInfo <- ClusteringInfo(tree1) + ClusteringInfo(tree2)
+  ret <- treesIndependentInfo - mci - mci
+  ret <- NormalizeInfo(ret, tree1, tree2, how = normalize,
+                       infoInBoth = treesIndependentInfo,
+                       InfoInTree = ClusteringInfo, Combine = '+')
   
+  ret[ret < 1e-13] <- 0 # In case of floating point inaccuracy
   attributes(ret) <- attributes(mci)
   # Return:
   ret
@@ -221,7 +229,7 @@ MutualPartitionInfo <- function (tree1, tree2, normalize = FALSE,
   
   # Return:
   NormalizeInfo(unnormalized, tree1, tree2, how = normalize,
-                InfoInTree = PartitionInfo, Combine = pmax)
+                InfoInTree = PartitionInfo, Combine = pmin)
 }
 
 #' Mutual Clustering Information
@@ -238,10 +246,12 @@ MutualPartitionInfo <- function (tree1, tree2, normalize = FALSE,
 #' 
 #' @author Martin R. Smith
 #' @export
-MutualClusteringInfo <- function (tree1, tree2, normalize = TRUE,
+MutualClusteringInfo <- function (tree1, tree2, normalize = FALSE,
                                   reportMatching = FALSE) {
-  CalculateTreeDistance(MutualClusteringInfoSplits, tree1, tree2, normalize,
-                        reportMatching)
+  unnormalized <- CalculateTreeDistance(MutualClusteringInfoSplits, tree1, tree2,
+                                        reportMatching)
+  NormalizeInfo(unnormalized, tree1, tree2, ClusteringInfo, 
+                how = normalize, Combine = pmin)
 }
 
 #' Matching Split Distance
