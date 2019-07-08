@@ -8,23 +8,24 @@ test_that("Split combatibility is correctly established", {
   expect_false(SplitsCompatible(as.logical(c(0,0,1,1,0)), as.logical(c(1,1,0,1,0))))
 })
 
-test_that('Tree differences are correctly calculated', {
-  # Labels in different order to confound Tree2Splits
-  treeSym8 <- ape::read.tree(text='((e, (f, (g, h))), (((a, b), c), d));')
-  treeBal8 <- ape::read.tree(text='(((e, f), (g, h)), ((a, b), (c, d)));')
-  treeOpp8 <- ape::read.tree(text='(((a, f), (c, h)), ((g, b), (e, d)));')
-  treeBadLabel8 <- ape::read.tree(text='((a, b, c, D), (e, f, g, h));')
-  
-  treeCat8 <- ape::read.tree(text='((((h, g), f), e), (d, (c, (b, a))));')
-  treeTac8 <- ape::read.tree(text='((((e, c), g), a), (h, (b, (d, f))));')
-  
-  treeAb.Cdefgh <- ape::read.tree(text='((a, b), (c, d, e, f, g, h));')
-  treeAbc.Defgh <- ape::read.tree(text='((a, b, c), (d, e, f, g, h));')
-  treeAcd.Befgh <- ape::read.tree(text='((a, c, d), (b, e, f, g, h));')
-  treeAbcd.Efgh <- ape::read.tree(text='((a, b, c, d), (e, f, g, h));')
-  treeTwoSplits <- ape::read.tree(text="(((a, b), c, d), (e, f, g, h));")
 
-  # Labels differ
+
+# Labels in different order to confound Tree2Splits
+treeSym8 <- ape::read.tree(text='((e, (f, (g, h))), (((a, b), c), d));')
+treeBal8 <- ape::read.tree(text='(((e, f), (g, h)), ((a, b), (c, d)));')
+treeOpp8 <- ape::read.tree(text='(((a, f), (c, h)), ((g, b), (e, d)));')
+treeBadLabel8 <- ape::read.tree(text='((a, b, c, D), (e, f, g, h));')
+
+treeCat8 <- ape::read.tree(text='((((h, g), f), e), (d, (c, (b, a))));')
+treeTac8 <- ape::read.tree(text='((((e, c), g), a), (h, (b, (d, f))));')
+
+treeAb.Cdefgh <- ape::read.tree(text='((a, b), (c, d, e, f, g, h));')
+treeAbc.Defgh <- ape::read.tree(text='((a, b, c), (d, e, f, g, h));')
+treeAcd.Befgh <- ape::read.tree(text='((a, c, d), (b, e, f, g, h));')
+treeAbcd.Efgh <- ape::read.tree(text='((a, b, c, d), (e, f, g, h));')
+treeTwoSplits <- ape::read.tree(text="(((a, b), c, d), (e, f, g, h));")
+
+test_that('Bad labels cause error', {
   expect_error(MutualArborealInfo(treeSym8, treeBadLabel8))
   expect_error(MutualPartitionInfo(treeSym8, treeBadLabel8))
   expect_error(VariationOfArborealInfo(treeSym8, treeBadLabel8))
@@ -32,8 +33,14 @@ test_that('Tree differences are correctly calculated', {
   expect_error(MutualClusterInfo(treeSym8, treeBadLabel8))
   expect_error(NyeTreeDistance(treeSym8, treeBadLabel8))
   expect_error(MatchingSplitDistance(treeSym8, treeBadLabel8))
+})
 
+test_that('Mutual Arboreal Info is correctly calculated', {
+  expect_equal(22.53747, tolerance=1e-05,
+               MutualArborealInfo(treeSym8, treeSym8, normalize = FALSE))
   expect_equal(22.53747, MutualArborealInfo(treeSym8, treeSym8), tolerance=1e-05)
+  expect_equal(1, tolerance = 1e-05,
+               MutualArborealInfo(treeSym8, treeSym8, normalize = TRUE))
   expect_equal(13.75284, MutualArborealInfo(treeSym8, treeBal8), tolerance=1e-05)
   expect_equal(VariationOfArborealInfo(treeSym8, treeAcd.Befgh),
                VariationOfArborealInfo(treeAcd.Befgh, treeSym8), tolerance=1e-05)
@@ -49,6 +56,31 @@ test_that('Tree differences are correctly calculated', {
   expect_equal(PartitionInfo(treeSym8) - PartitionInfo(treeAcd.Befgh),
                VariationOfArborealInfo(treeSym8, treeAbc.Defgh))
   
+  
+  # Test symmetry of small vs large splits
+  expect_equal(MutualArborealInfo(treeSym8, treeAbc.Defgh),
+               MutualArborealInfo(treeAbc.Defgh, treeSym8))
+  expect_equal(-log2(225/10395), MutualArborealInfo(treeSym8, treeAbcd.Efgh))
+  expect_equal(-log2(225/10395) - log2(945/10395),
+               MutualArborealInfo(treeSym8, treeTwoSplits))
+  expect_equal(SplitMutualInformation(8, 4, 3),
+               MutualArborealInfo(treeTwoSplits, treeAbc.Defgh))
+  
+  expect_equal(MutualArborealInfo(treeSym8, list(treeSym8, treeBal8)), 
+               MutualArborealInfo(list(treeSym8, treeBal8), treeSym8))
+  expect_equal(matrix(c(MutualArborealInfo(treeSym8, treeSym8),
+                        MutualArborealInfo(treeBal8, treeSym8),
+                        MutualArborealInfo(treeSym8, treeAbc.Defgh),
+                        MutualArborealInfo(treeBal8, treeAbc.Defgh),
+                        MutualArborealInfo(treeSym8, treeAbcd.Efgh), 
+                        MutualArborealInfo(treeBal8, treeAbcd.Efgh)),
+                      3L, 2L, byrow=TRUE,
+                      dimnames=list(c('sym', 'abc', 'abcd'), c('sym', 'bal'))), 
+               MutualArborealInfo(list(sym=treeSym8, bal=treeBal8), 
+                                  list(sym=treeSym8, abc=treeAbc.Defgh, abcd=treeAbcd.Efgh)))
+})
+
+test_that('MutualPartitionInfo is correctly calculated', {
   BinaryToSplit <- function (binary) matrix(as.logical(binary))
   expect_equal(MutualPartitionInfoSplits(
     BinaryToSplit(c(1, 1, 0, 0, 0, 0, 0, 0)),
@@ -71,20 +103,20 @@ test_that('Tree differences are correctly calculated', {
   expect_true(MutualPartitionInfo(treeSym8, treeBal8) > MutualPartitionInfo(treeSym8, treeOpp8))
   expect_equal(0, VariationOfPartitionInfo(treeSym8, treeSym8))
   
-  
-  expect_equal(ClusteringInfo(treeSym8), MutualClusteringInfo(treeSym8, treeSym8), tolerance=1e-05)
+})
+
+test_that('Clustering information is correctly calculated', {
+  expect_equal(ClusteringInfo(treeSym8), MutualClusteringInfo(treeSym8, treeSym8),
+               tolerance=1e-05)
   expect_equal(ClusteringInfo(treeSym8) + ClusteringInfo(treeBal8) -
                  (2 * MutualClusteringInfo(treeBal8, treeSym8))
                , VariationOfClusteringInfo(treeSym8, treeBal8), tolerance=1e-05)
   expect_equal(MutualClusteringInfo(treeAb.Cdefgh, treeAbc.Defgh),
                MutualClusteringInfo(treeAbc.Defgh, treeAb.Cdefgh),
                tolerance=1e-05)
-  
-  expect_equal(5L, NyeTreeSimilarity(treeSym8, treeSym8))
-  expect_equal(2, 3 * NyeTreeSimilarity(treeAb.Cdefgh, treeAbc.Defgh))
-  expect_equal(3.8, NyeTreeSimilarity(treeSym8, treeBal8))
-  expect_true(NyeTreeSimilarity(treeSym8, treeBal8) > NyeTreeSimilarity(treeSym8, treeOpp8))
-  
+})
+
+test_that('Matching Split Distance is correctly calculated', {
   expect_equal(0L, MatchingSplitDistance(treeSym8, treeSym8))
   expect_equal(1L, MatchingSplitDistance(treeAb.Cdefgh, treeAbc.Defgh))
   expect_equal(2L, MatchingSplitDistance(treeAb.Cdefgh, treeAbcd.Efgh))
@@ -98,29 +130,11 @@ test_that('Tree differences are correctly calculated', {
   expect_equal(0L, MatchingSplitDistance(shuffle1, shuffle2))
   expect_equal(MatchingSplitDistance(shuffle1, sq_pectinate),
                MatchingSplitDistance(shuffle2, sq_pectinate))
-  
+})
+
+test_that('NyeTreeSimilarity is correctly calculated', {
+  expect_equal(5L, NyeTreeSimilarity(treeSym8, treeSym8))
+  expect_equal(2, 3 * NyeTreeSimilarity(treeAb.Cdefgh, treeAbc.Defgh))
+  expect_equal(3.8, NyeTreeSimilarity(treeSym8, treeBal8))
   expect_true(NyeTreeSimilarity(treeSym8, treeBal8) > NyeTreeSimilarity(treeSym8, treeOpp8))
-  
-  # Test symmetry of small vs large splits
-  expect_equal(MutualArborealInfo(treeSym8, treeAbc.Defgh),
-               MutualArborealInfo(treeAbc.Defgh, treeSym8))
-  expect_equal(-log2(225/10395), MutualArborealInfo(treeSym8, treeAbcd.Efgh))
-  expect_equal(-log2(225/10395) - log2(945/10395),
-               MutualArborealInfo(treeSym8, treeTwoSplits))
-  expect_equal(SplitMutualInformation(8, 4, 3),
-               MutualArborealInfo(treeTwoSplits, treeAbc.Defgh))
-  
-  expect_equal(MutualArborealInfo(treeSym8, list(treeSym8, treeBal8)), 
-               MutualArborealInfo(list(treeSym8, treeBal8), treeSym8))
-  expect_equal(matrix(c(MutualArborealInfo(treeSym8, treeSym8),
-                        MutualArborealInfo(treeBal8, treeSym8),
-                        MutualArborealInfo(treeSym8, treeAbc.Defgh),
-                        MutualArborealInfo(treeBal8, treeAbc.Defgh),
-                        MutualArborealInfo(treeSym8, treeAbcd.Efgh), 
-                        MutualArborealInfo(treeBal8, treeAbcd.Efgh)),
-                        3L, 2L, byrow=TRUE,
-                        dimnames=list(c('sym', 'abc', 'abcd'), c('sym', 'bal'))), 
-    MutualArborealInfo(list(sym=treeSym8, bal=treeBal8), 
-               list(sym=treeSym8, abc=treeAbc.Defgh, abcd=treeAbcd.Efgh)))
-  
 })
