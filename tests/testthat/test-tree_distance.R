@@ -9,7 +9,6 @@ test_that("Split combatibility is correctly established", {
 })
 
 
-
 # Labels in different order to confound Tree2Splits
 treeSym8 <- ape::read.tree(text='((e, (f, (g, h))), (((a, b), c), d));')
 treeBal8 <- ape::read.tree(text='(((e, f), (g, h)), ((a, b), (c, d)));')
@@ -35,10 +34,18 @@ test_that('Bad labels cause error', {
   expect_error(MatchingSplitDistance(treeSym8, treeBadLabel8))
 })
 
+test_that('Metrics handle polytomies', {
+  polytomy8 <- ape::read.tree(text='(a, b, c, d, e, f, g, h);')
+  expect_equal(0, MutualArborealInfo(treeSym8, polytomy8))
+  expect_equal(0, MutualPartitionInfo(treeSym8, polytomy8))
+  expect_equal(0, MutualClusteringInfo(treeSym8, polytomy8))
+  expect_equal(0, MatchingSplitDistance(treeSym8, polytomy8))
+  expect_equal(0, NyeTreeSimilarity(treeSym8, polytomy8))
+})
+
 test_that('Mutual Arboreal Info is correctly calculated', {
   expect_equal(22.53747, tolerance=1e-05,
                MutualArborealInfo(treeSym8, treeSym8, normalize = FALSE))
-  expect_equal(22.53747, MutualArborealInfo(treeSym8, treeSym8), tolerance=1e-05)
   expect_equal(1, tolerance = 1e-05,
                MutualArborealInfo(treeSym8, treeSym8, normalize = TRUE))
   expect_equal(13.75284, MutualArborealInfo(treeSym8, treeBal8), tolerance=1e-05)
@@ -136,5 +143,7 @@ test_that('NyeTreeSimilarity is correctly calculated', {
   expect_equal(5L, NyeTreeSimilarity(treeSym8, treeSym8))
   expect_equal(2, 3 * NyeTreeSimilarity(treeAb.Cdefgh, treeAbc.Defgh))
   expect_equal(3.8, NyeTreeSimilarity(treeSym8, treeBal8))
+  expect_equal(1, NyeTreeSimilarity(treeSym8, treeSym8, normalize = TRUE))
+  expect_equal(0.5 / 5L, NyeTreeSimilarity(treeSym8, treeAbcd.Efgh, normalize = TRUE))
   expect_true(NyeTreeSimilarity(treeSym8, treeBal8) > NyeTreeSimilarity(treeSym8, treeOpp8))
 })

@@ -101,24 +101,15 @@ MutualArborealInfo <- function (tree1, tree2, normalize = FALSE,
                                         reportMatching=reportMatching)
   
   # Return:
-  if (normalize == FALSE) {
-    unnormalized
-  } else {
-    if (mode(normalize) == 'logical') {
-      NormalizeInfo(unnormalized, PartitionInfo(tree1), PartitionInfo(tree2), max)
-    } else if (mode(normalize) == 'function') {
-      NormalizeInfo(unnormalized, PartitionInfo(tree1), PartitionInfo(tree2))
-    } else {
-      unnormalized / normalize
-    }
-  }
+  NormalizeInfo(unnormalized, tree1, tree2, how = normalize,
+                InfoInTree = PartitionInfo, Combine = max)
 }
 
 #' @describeIn MutualArborealInfo Variation of phylogenetic information between two trees
 #' @export
 VariationOfArborealInfo <- function (tree1, tree2, normalize = FALSE,
                                      reportMatching = FALSE) {
-  mai <- MutualArborealInfo(tree1, tree2, normalize, reportMatching)
+  mai <- MutualArborealInfo(tree1, tree2, normalize = FALSE, reportMatching)
   ret <- PartitionInfo(tree1) + PartitionInfo(tree2) - mai - mai
   ret[ret < 1e-13] <- 0 # In case of floating point inaccuracy
   
@@ -139,11 +130,9 @@ VariationOfPartitionInfo <- function (tree1, tree2, normalize=FALSE,
   attributes(ret) <- attributes(mpi)
   
   # Return:
-  if (normalize){
-    ret / treesIndependentInfo
-  } else {
-    ret
-  }
+  #### TODO!!!
+  NormalizeInfo(unnormalized, tree1, tree2, how = normalize,
+                InfoInTree = PartitionInfo, Combine = max)
 }
 
 #' @describeIn MutualClusteringInfo Variation of clustering information between two trees
@@ -204,9 +193,12 @@ ExpectedVariation <- function (tree1, tree2, samples = 1e+3) {
 #' 
 #' @author Martin R. Smith
 #' @export
-NyeTreeSimilarity <- function (tree1, tree2,
+NyeTreeSimilarity <- function (tree1, tree2, normalize = FALSE,
                              reportMatching = FALSE) {
-  CalculateTreeDistance(NyeSplitSimilarity, tree1, tree2, normalize, reportMatching)
+  unnormalized <- CalculateTreeDistance(NyeSplitSimilarity, tree1, tree2, normalize, reportMatching)
+  
+  NormalizeInfo(unnormalized, tree1, tree2, how = normalize,
+                InfoInTree = function (tr) tr$Nnode - 2L, Combine = max)
 }
 
 #' Mutual Partition Information
@@ -222,8 +214,12 @@ NyeTreeSimilarity <- function (tree1, tree2,
 #' @export
 MutualPartitionInfo <- function (tree1, tree2, normalize=TRUE, 
                                  reportMatching = FALSE) {
-  CalculateTreeDistance(MutualPartitionInfoSplits, tree1, tree2, normalize,
-                        reportMatching)
+  unnormalized <- CalculateTreeDistance(MutualPartitionInfoSplits, tree1, tree2,
+                                        reportMatching)
+  
+  # Return:
+  NormalizeInfo(unnormalized, tree1, tree2, how = normalize,
+                InfoInTree = PartitionInfo, Combine = max)
 }
 
 #' Mutual Clustering Information
@@ -258,10 +254,15 @@ MutualClusteringInfo <- function (tree1, tree2, normalize = TRUE,
 #' 
 #' @author Martin R. Smith
 #' @export
-MatchingSplitDistance <- function (tree1, tree2, normalize = TRUE,
+MatchingSplitDistance <- function (tree1, tree2, normalize = FALSE,
                              reportMatching = FALSE) {
-  CalculateTreeDistance(MatchingSplitDistanceSplits, tree1, tree, normalize,
+  unnormalized <- CalculateTreeDistance(MatchingSplitDistanceSplits, tree1, tree2, 
                         reportMatching)
+  
+  # Return:
+  NormalizeInfo(unnormalized, tree1, tree2, how = normalize,
+                InfoInTree = function (X) stop("Please specify a function to generate a normalizing constant"),
+                Combine = max)
 }
 
 #' @describeIn MutualArborealInfo Takes splits instead of trees
@@ -297,6 +298,7 @@ MutualArborealInfoSplits <- function (splits1, splits2, normalize = TRUE,
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
+  if (nSplits2 == 0) return (0)
   inSplit1 <- colSums(splits1)
   inSplit2 <- colSums(splits2)
   notInSplit1 <- nTerminals - inSplit1 # TODO delete, and remove where used below?
@@ -506,6 +508,7 @@ NyeSplitSimilarity <- function (splits1, splits2, normalize = TRUE,
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
+  if (nSplits2 == 0) return (0)
   
   Ars <- function (pir, pjs) {
     sum(pir[pjs]) / sum(pir | pjs)
@@ -700,6 +703,7 @@ MatchingSplitDistanceSplits <- function (splits1, splits2, normalize = TRUE,
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
+  if (nSplits2 == 0) return (0)
   
   SymmetricDifference <- function (A, B) {
     (A & !B) | (!A & B)

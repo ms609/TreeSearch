@@ -53,6 +53,7 @@ CalculateTreeDistance <- function (Func, tree1, tree2, reportMatching, ...) {
 NormalizeInfo <- function (unnormalized, tree1, tree2, InfoInTree, 
                            how = TRUE, Combine = sum, ...) {
   if (mode(how) == 'logical') {
+    if (how == FALSE) return (unnormalized)
     tree1Info <- InfoInTree(tree1, ...)
     tree2Info <- InfoInTree(tree2, ...)
   } else if (mode(how) == 'function') {
@@ -64,8 +65,6 @@ NormalizeInfo <- function (unnormalized, tree1, tree2, InfoInTree,
   if (length(tree1Info) == 1 || length(tree2Info) == 1) {
     unnormalized / mapply(Combine, tree1Info, tree2Info)
   } else {
-    unnormalized / 
-      matrix(mapply(Combine, rep(tree2Info, each=length(tree1Info)), tree1Info), 
-           length(tree1Info), length(tree2Info))
+    unnormalized / outer(tree1Info, tree2Info, Combine)
   }
 }
