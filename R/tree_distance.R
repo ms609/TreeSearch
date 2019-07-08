@@ -55,7 +55,8 @@
 #' @return If `reportMatching = FALSE`, the functions return a numeric 
 #' vector specifying the requested similarities or differences.
 #' 
-#' If `reportMatching = TRUE`, the functions additionally return 
+#' If `reportMatching = TRUE`, the functions additionally return details
+#' of which clades are matched in the optimal matching.
 #'  
 #' @examples {
 #'   tree1 <- ape::read.tree(text='((((a, b), c), d), (e, (f, (g, h))));')
