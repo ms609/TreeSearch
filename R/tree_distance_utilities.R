@@ -32,9 +32,9 @@ CalculateTreeDistance <- function (Func, tree1, tree2, reportMatching, ...) {
     } else {
       splits1 <- lapply(tree1, Tree2Splits)
       splits2 <- lapply(tree2, Tree2Splits)
-      matrix(mapply(Func, rep(splits1, each=length(splits2)), splits2), 
-             length(splits2), length(splits1),
-             dimnames = list(names(tree2), names(tree1)), ...)
+      matrix(mapply(Func, rep(splits2, each=length(splits1)), splits1), 
+             length(splits1), length(splits2),
+             dimnames = list(names(tree1), names(tree2)), ...)
     }
   }
 }
@@ -43,6 +43,8 @@ CalculateTreeDistance <- function (Func, tree1, tree2, reportMatching, ...) {
 #' @param unnormalized Numeric value to be normalized.
 #' @param tree1,tree2 Trees from which `unnormalized` was calculated
 #' @param InfoInTree Function to calculate the information content of each tree
+#' @param infoInBoth Numeric speecifying information content of both trees
+#' independently (optional)
 #' @param how Method for normalization
 #' @param Func Function that takes as inputs `tree1Info` and `tree2Info`, and
 #' returns a normalizing constant against which to divide `unnormalized`.
@@ -51,22 +53,29 @@ CalculateTreeDistance <- function (Func, tree1, tree2, reportMatching, ...) {
 #' @author Martin R. Smith
 #' @export
 NormalizeInfo <- function (unnormalized, tree1, tree2, InfoInTree, 
+                           infoInBoth = NULL,
                            how = TRUE, Combine = '+', ...) {
+  CombineInfo <- function (tree1Info, tree2Info) {
+    if (length(tree1Info) == 1 || length(tree2Info) == 1) {
+      mapply(Combine, tree1Info, tree2Info)
+    } else {
+      outer(tree1Info, tree2Info, Combine)
+    }
+  }
+  
   if (mode(how) == 'logical') {
     if (how == FALSE) return (unnormalized)
-    tree1Info <- InfoInTree(tree1, ...)
-    tree2Info <- InfoInTree(tree2, ...)
+    if (is.null(infoInBoth)) 
+      infoInBoth <- CombineInfo(InfoInTree(tree1, ...), InfoInTree(tree2, ...))
   } else if (mode(how) == 'function') {
-    tree1Info <- how(tree1, ...)
-    tree2Info <- how(tree2, ...)
+    if (is.null(infoInBoth)) 
+      infoInBoth <- CombineInfo(how(tree1, ...), how(tree2, ...))
   } else {
-    return(unnormalized / how)
+    infoInBoth <- how
   }
-  if (length(tree1Info) == 1 || length(tree2Info) == 1) {
-    unnormalized / mapply(Combine, tree1Info, tree2Info)
-  } else {
-    unnormalized / outer(tree1Info, tree2Info, Combine)
-  }
+  
+  # Return:
+  unnormalized / infoInBoth
 }
 
 ReportMatching <- function (clades1, clades2, taxonNames) {
@@ -79,5 +88,4 @@ ReportMatching <- function (clades1, clades2, taxonNames) {
   
   # Return:
   paste(clades1, '=>', clades2)
-  
 }
