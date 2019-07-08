@@ -8,16 +8,15 @@
 \alias{MutualClusteringInfoSplits}
 \title{Mutual Partition Information}
 \usage{
-VariationOfPartitionInfo(tree1, tree2, normalize = TRUE,
+VariationOfPartitionInfo(tree1, tree2, normalize = FALSE,
   reportMatching = FALSE)
 
 ExpectedVariation(tree1, tree2, samples = 1000)
 
-MutualPartitionInfo(tree1, tree2, normalize = TRUE,
+MutualPartitionInfo(tree1, tree2, normalize = FALSE,
   reportMatching = FALSE)
 
-MutualPartitionInfoSplits(splits1, splits2, normalize = TRUE,
-  reportMatching = FALSE)
+MutualPartitionInfoSplits(splits1, splits2, reportMatching = FALSE)
 
 MutualClusteringInfoSplits(splits1, splits2, normalize = TRUE,
   reportMatching = FALSE)
@@ -29,9 +28,11 @@ or lists of such trees to undergo pairwise comparison.}
 \item{tree2}{Trees of class \code{phylo}, with tips labelled identically,
 or lists of such trees to undergo pairwise comparison.}
 
-\item{normalize}{Logical (default = \code{TRUE}) specifying whether to re-scale
-results onto a scale of zero to one, where one represents the total
-information content of two independent trees of the given size and topology.}
+\item{normalize}{If a numeric value is provided, this will be used as a
+maximum value against which to rescale results.
+If \code{TRUE}, results will be rescaled against a maximum value calculated from
+the specified tree sizes and topology, as specified in 'details' below.
+If \code{FALSE}, results will not be rescaled.}
 
 \item{reportMatching}{Logical specifying whether to return the clade
 matchings as an attribute of the score.}

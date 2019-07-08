@@ -5,7 +5,8 @@
 \alias{NyeSplitSimilarity}
 \title{Nye et al. (2006) tree comparison}
 \usage{
-NyeTreeSimilarity(tree1, tree2, reportMatching = FALSE)
+NyeTreeSimilarity(tree1, tree2, normalize = FALSE,
+  reportMatching = FALSE)
 
 NyeSplitSimilarity(splits1, splits2, normalize = TRUE,
   reportMatching = FALSE)
@@ -16,6 +17,12 @@ or lists of such trees to undergo pairwise comparison.}
 
 \item{tree2}{Trees of class \code{phylo}, with tips labelled identically,
 or lists of such trees to undergo pairwise comparison.}
+
+\item{normalize}{If a numeric value is provided, this will be used as a
+maximum value against which to rescale results.
+If \code{TRUE}, results will be rescaled against a maximum value calculated from
+the specified tree sizes and topology, as specified in 'details' below.
+If \code{FALSE}, results will not be rescaled.}
 
 \item{reportMatching}{Logical specifying whether to return the clade
 matchings as an attribute of the score.}
@@ -31,10 +38,6 @@ either listed in the same order or bearing identical names (in any sequence),
 and each column corresponds to a bipartition split, such that
 each terminal is identified as a member of the ingroup (\code{TRUE}) or outgroup
 (\code{FALSE}) of the respective bipartition split.}
-
-\item{normalize}{Logical (default = \code{TRUE}) specifying whether to re-scale
-results onto a scale of zero to one, where one represents the total
-information content of two independent trees of the given size and topology.}
 }
 \description{
 Implements the tree comparison metric of Nye \emph{et al}. (2006).

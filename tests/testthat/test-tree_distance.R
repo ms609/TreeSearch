@@ -119,6 +119,7 @@ test_that('MutualPartitionInfo is correctly calculated', {
 test_that('Clustering information is correctly calculated', {
   expect_equal(ClusteringInfo(treeSym8), MutualClusteringInfo(treeSym8, treeSym8),
                tolerance=1e-05)
+  expect_equal(1, MutualClusteringInfo(treeSym8, treeSym8, normalize = TRUE))
   expect_equal(ClusteringInfo(treeSym8) + ClusteringInfo(treeBal8) -
                  (2 * MutualClusteringInfo(treeBal8, treeSym8))
                , VariationOfClusteringInfo(treeSym8, treeBal8), tolerance=1e-05)
