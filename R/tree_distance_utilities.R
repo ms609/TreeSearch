@@ -51,7 +51,7 @@ CalculateTreeDistance <- function (Func, tree1, tree2, reportMatching, ...) {
 #' @author Martin R. Smith
 #' @export
 NormalizeInfo <- function (unnormalized, tree1, tree2, InfoInTree, 
-                           how = TRUE, Combine = sum, ...) {
+                           how = TRUE, Combine = '+', ...) {
   if (mode(how) == 'logical') {
     if (how == FALSE) return (unnormalized)
     tree1Info <- InfoInTree(tree1, ...)
@@ -67,4 +67,17 @@ NormalizeInfo <- function (unnormalized, tree1, tree2, InfoInTree,
   } else {
     unnormalized / outer(tree1Info, tree2Info, Combine)
   }
+}
+
+ReportMatching <- function (clades1, clades2, taxonNames) {
+  clades1 <- apply(clades1, 2, function (x) paste0(
+    paste(taxonNames[x], collapse=' '), ':', 
+    paste(taxonNames[!x], collapse=' ')))
+  clades2 <- apply(clades2, 2, function (x) paste0(
+    paste(taxonNames[x], collapse=' '), ':', 
+    paste(taxonNames[!x], collapse=' ')))
+  
+  # Return:
+  paste(clades1, '=>', clades2)
+  
 }
