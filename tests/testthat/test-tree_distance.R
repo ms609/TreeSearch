@@ -81,8 +81,8 @@ test_that('Mutual Arboreal Info is correctly calculated', {
                         MutualArborealInfo(treeBal8, treeAbc.Defgh),
                         MutualArborealInfo(treeSym8, treeAbcd.Efgh), 
                         MutualArborealInfo(treeBal8, treeAbcd.Efgh)),
-                      3L, 2L, byrow=TRUE,
-                      dimnames=list(c('sym', 'abc', 'abcd'), c('sym', 'bal'))), 
+                      2L, 3L,
+                      dimnames=list(c('sym', 'bal'), c('sym', 'abc', 'abcd'))), 
                MutualArborealInfo(list(sym=treeSym8, bal=treeBal8), 
                                   list(sym=treeSym8, abc=treeAbc.Defgh, abcd=treeAbcd.Efgh)))
 })
