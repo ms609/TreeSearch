@@ -281,7 +281,9 @@ MutualArborealInfoSplits <- function (splits1, splits2, normalize = TRUE,
   }
   lnUnrootedN <- LnUnrooted.int(nTerminals)
   
-  if (dimSplits1[2] < dimSplits2[2]) {
+  swapSplits <- (dimSplits1[2] > dimSplits2[2])
+  if (swapSplits) {
+    # solve_LDAP expects splits1 to be no larger than splits2
     tmp <- splits1
     splits1 <- splits2
     splits2 <- tmp
@@ -289,21 +291,23 @@ MutualArborealInfoSplits <- function (splits1, splits2, normalize = TRUE,
     tmp <- dimSplits1
     dimSplits1 <- dimSplits2
     dimSplits2 <- tmp
+    
+    remove(tmp)
   }
   
-  taxonNames <- rownames(splits1) 
+  taxonNames1 <- rownames(splits1)
+  taxonNames2 <- rownames(splits2)
   
-  if (!is.null(taxonNames)) {
-    splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
-    splits1 <- unname(splits1) # split1[split2] faster without names
+  if (!is.null(taxonNames2)) {
+    splits2 <- unname(splits2[taxonNames1, , drop=FALSE])
+    splits1 <- unname(splits1) # split2[split1] faster without names
   }
   
   nSplits1 <- dimSplits1[2]
   nSplits2 <- dimSplits2[2]
-  if (nSplits2 == 0) return (0)
+  if (nSplits1 == 0) return (0)
   inSplit1 <- colSums(splits1)
   inSplit2 <- colSums(splits2)
-  notInSplit1 <- nTerminals - inSplit1 # TODO delete, and remove where used below?
   notInSplit2 <- nTerminals - inSplit2
   
   OneOverlap <- function(A1, A2) {
@@ -336,17 +340,25 @@ MutualArborealInfoSplits <- function (splits1, splits2, normalize = TRUE,
     } else {
       lnUnrootedN
     }
-  }, rep(seq_len(nSplits1), each=nSplits2), seq_len(nSplits2)
-  ) - lnUnrootedN) / -log(2), nSplits2, nSplits1)
+  }, seq_len(nSplits1), rep(seq_len(nSplits2), each=nSplits1)
+  ) - lnUnrootedN) / -log(2), nSplits1, nSplits2)
   
-  if (nSplits2 == 1) {
+  if (nSplits1 == 1) {
     max(pairScores)
   } else {
     optimalMatching <- solve_LSAP(pairScores, TRUE)
-    
+
     # Return:
     ret <- sum(pairScores[matrix(c(seq_along(optimalMatching), optimalMatching), ncol=2L)])
     if (reportMatching) {
+      if (!is.null(taxonNames2)) {
+        attr(ret, 'matchedSplits') <- 
+        if (swapSplits) {
+          ReportMatching(splits2, splits1[, optimalMatching], taxonNames1)
+        } else {
+          ReportMatching(splits1, splits2[, optimalMatching], taxonNames1)
+        }
+      }
       attr(ret, 'matching') <- optimalMatching
       attr(ret, 'pairScores') <- pairScores
       ret
@@ -370,7 +382,9 @@ VariationOfArborealInfoSplits <- function (splits1, splits2, normalize = TRUE,
   }
   lnUnrootedN <- LnUnrooted.int(nTerminals)
   
-  if (dimSplits1[2] < dimSplits2[2]) {
+  swapSplits <- (dimSplits1[2] > dimSplits2[2])
+  if (swapSplits) {
+    # solve_LDAP expects splits1 to be no larger than splits2
     tmp <- splits1
     splits1 <- splits2
     splits2 <- tmp
@@ -378,13 +392,16 @@ VariationOfArborealInfoSplits <- function (splits1, splits2, normalize = TRUE,
     tmp <- dimSplits1
     dimSplits1 <- dimSplits2
     dimSplits2 <- tmp
+    
+    remove(tmp)
   }
   
-  taxonNames <- rownames(splits1) 
+  taxonNames1 <- rownames(splits1)
+  taxonNames2 <- rownames(splits2)
   
-  if (!is.null(taxonNames)) {
-    splits2 <- unname(splits2[rownames(splits1), , drop=FALSE])
-    splits1 <- unname(splits1) # split1[split2] faster without names
+  if (!is.null(taxonNames2)) {
+    splits2 <- unname(splits2[taxonNames1, , drop=FALSE])
+    splits1 <- unname(splits1) # split2[split1] faster without names
   }
   
   nSplits1 <- dimSplits1[2]
@@ -429,12 +446,12 @@ VariationOfArborealInfoSplits <- function (splits1, splits2, normalize = TRUE,
         lnUnrootedN
       }
     logTrees1[i] + logTrees2[j] - logMutualTrees - logMutualTrees
-  }, rep(seq_len(nSplits1), each=nSplits2), seq_len(nSplits2)
-  )) / -log(2), nSplits2, nSplits1)
+  }, seq_len(nSplits1), rep(seq_len(nSplits2), each=nSplits1)
+  )) / -log(2), nSplits1, nSplits2)
   
   
   
-  if (nSplits2 == 1) {
+  if (nSplits1 == 1) {
     min(pairScores)
   } else {
     optimalMatching <- solve_LSAP(pairScores, FALSE)
@@ -442,6 +459,14 @@ VariationOfArborealInfoSplits <- function (splits1, splits2, normalize = TRUE,
     # Return:
     ret <- sum(pairScores[matrix(c(seq_along(optimalMatching), optimalMatching), ncol=2L)])
     if (reportMatching) {
+      if (!is.null(taxonNames2)) {
+        attr(ret, 'matchedSplits') <- 
+          if (swapSplits) {
+            ReportMatching(splits2, splits1[, optimalMatching], taxonNames1)
+          } else {
+            ReportMatching(splits1, splits2[, optimalMatching], taxonNames1)
+          }
+      }
       attr(ret, 'matching') <- optimalMatching
       attr(ret, 'pairScores') <- pairScores
       ret
