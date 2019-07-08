@@ -333,33 +333,6 @@ MutualArborealInfoSplits <- function (splits1, splits2, normalize = TRUE,
       OneOverlap(inSplit1[i], notInSplit2[j])
       
     } else {
-      #in1 <- inSplit1[i]
-      #out1 <- notInSplit1[i]
-      #in2 <- inSplit2[j]
-      #out2 <- notInSplit2[j]
-      #splitTwoMoreEven <- min(in1, out1) < min(in2, out2)
-      #contradictions <- c(min(sum(oneAndTwo), sum(notOneNotTwo)), 
-      #                    min(sum(notOneAndTwo), sum(oneNotTwo)))
-      #contradictionToFix <- which.min(contradictions)
-      #
-      #infoGainedBySwap <- if (contradictionToFix == 1L) {
-      #  OneOverlap(in1, out2)
-      #} else {
-      #  OneOverlap(in1, in2)
-      #}
-      #
-      #contradictionSize <- contradictions[contradictionToFix]
-      #infoLostBySwap <- if (splitTwoMoreEven) {
-      #  lchoose(in1, contradictionSize) + lchoose(out1, contradictionSize)
-      #} else {
-      #  lchoose(in2, contradictionSize) + lchoose(out2, contradictionSize)
-      #}
-      #c(SwapGain = infoGainedBySwap, SwapLoss = infoLostBySwap,
-      #  SwapNet = infoGainedBySwap - infoLostBySwap)
-      #
-      #
-      #contradictions <- c(sum(oneAndTwo), sum(notOneNotTwo), 
-      #                    sum(notOneAndTwo), sum(oneNotTwo))
       lnUnrootedN
     }
   }, rep(seq_len(nSplits1), each=nSplits2), seq_len(nSplits2)
