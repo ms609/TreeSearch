@@ -33,6 +33,10 @@
 #' @param tree1,tree2 Trees of class `phylo`, with tips labelled identically,
 #' or lists of such trees to undergo pairwise comparison.
 #' 
+#' @param normalize Logical (default = `TRUE`) specifying whether to re-scale
+#'  results onto a scale of zero to one, where one represents the total 
+#'  information content of two independent trees of the given size and topology.
+#' 
 #' @param reportMatching Logical specifying whether to return the clade
 #' matchings as an attribute of the score.
 #'
@@ -79,15 +83,18 @@
 #' @family Tree distance
 #' @importFrom clue solve_LSAP
 #' @export
-MutualArborealInfo <- function (tree1, tree2, reportMatching = FALSE) {
+MutualArborealInfo <- function (tree1, tree2, normalize = TRUE,
+                                reportMatching = FALSE) {
   CalculateTreeDistance(MutualArborealInfoSplits, tree1, tree2, 
+                        normalize = normalize,
                         reportMatching=reportMatching)
 }
 
 #' @describeIn MutualArborealInfo Variation of phylogenetic information between two trees
 #' @export
-VariationOfArborealInfo <- function (tree1, tree2, reportMatching = FALSE) {
-  mai <- MutualArborealInfo(tree1, tree2, reportMatching)
+VariationOfArborealInfo <- function (tree1, tree2, normalize = TRUE,
+                                     reportMatching = FALSE) {
+  mai <- MutualArborealInfo(tree1, tree2, normalize, reportMatching)
   ret <- PartitionInfo(tree1) + PartitionInfo(tree2) - mai - mai
   ret[ret < 1e-13] <- 0 # In case of floating point inaccuracy
   
@@ -98,14 +105,21 @@ VariationOfArborealInfo <- function (tree1, tree2, reportMatching = FALSE) {
 
 #' @describeIn MutualPartitionInfo Variation of partition information between two trees
 #' @export
-VariationOfPartitionInfo <- function (tree1, tree2, reportMatching = FALSE) {
-  mpi <- MutualPartitionInfo(tree1, tree2, reportMatching)
-  ret <- PartitionInfo(tree1) + PartitionInfo(tree2) - mpi - mpi
+VariationOfPartitionInfo <- function (tree1, tree2, normalize=TRUE,
+                                      reportMatching = FALSE) {
+  mpi <- MutualPartitionInfo(tree1, tree2, normalize, reportMatching)
+  treesIndependentInfo <- PartitionInfo(tree1) + PartitionInfo(tree2)
+  ret <- treesIndependentInfo - mpi - mpi
   ret[ret < 1e-13] <- 0 # In case of floating point inaccuracy
   
   attributes(ret) <- attributes(mpi)
+  
   # Return:
-  ret
+  if (normalize){
+    ret / treesIndependentInfo
+  } else {
+    ret
+  }
 }
 
 #' Clustering information content of all partitions within a tree
@@ -155,8 +169,9 @@ ClusteringInfoSplits <- function (splits) {
 
 #' @describeIn MutualClusteringInfo Variation of clustering information between two trees
 #' @export
-VariationOfClusteringInfo <- function (tree1, tree2, reportMatching = FALSE) {
-  mci <- MutualClusteringInfo(tree1, tree2, reportMatching)
+VariationOfClusteringInfo <- function (tree1, tree2, normalize = TRUE,
+                                       reportMatching = FALSE) {
+  mci <- MutualClusteringInfo(tree1, tree2, normalize, reportMatching)
   ret <- ClusteringInfo(tree1) + ClusteringInfo(tree2) - mci - mci
   ret[ret < 1e-13] <- 0 # In case of floating point inaccuracy
   
@@ -212,7 +227,7 @@ ExpectedVariation <- function (tree1, tree2, samples = 1e+3) {
 #' @export
 NyeTreeSimilarity <- function (tree1, tree2,
                              reportMatching = FALSE) {
-  CalculateTreeDistance(NyeSplitSimilarity, tree1, tree2, reportMatching)
+  CalculateTreeDistance(NyeSplitSimilarity, tree1, tree2, normalize, reportMatching)
 }
 
 #' Mutual Partition Information
@@ -226,8 +241,10 @@ NyeTreeSimilarity <- function (tree1, tree2,
 #' 
 #' @author Martin R. Smith
 #' @export
-MutualPartitionInfo <- function (tree1, tree2, reportMatching = FALSE) {
-  CalculateTreeDistance(MutualPartitionInfoSplits, tree1, tree2, reportMatching)
+MutualPartitionInfo <- function (tree1, tree2, normalize=TRUE, 
+                                 reportMatching = FALSE) {
+  CalculateTreeDistance(MutualPartitionInfoSplits, tree1, tree2, normalize,
+                        reportMatching)
 }
 
 #' Mutual Clustering Information
@@ -244,8 +261,10 @@ MutualPartitionInfo <- function (tree1, tree2, reportMatching = FALSE) {
 #' 
 #' @author Martin R. Smith
 #' @export
-MutualClusteringInfo <- function (tree1, tree2, reportMatching = FALSE) {
-  CalculateTreeDistance(MutualClusteringInfoSplits, tree1, tree2, reportMatching)
+MutualClusteringInfo <- function (tree1, tree2, normalize = TRUE,
+                                  reportMatching = FALSE) {
+  CalculateTreeDistance(MutualClusteringInfoSplits, tree1, tree2, normalize,
+                        reportMatching)
 }
 
 #' Matching Split Distance
@@ -260,9 +279,10 @@ MutualClusteringInfo <- function (tree1, tree2, reportMatching = FALSE) {
 #' 
 #' @author Martin R. Smith
 #' @export
-MatchingSplitDistance <- function (tree1, tree2,
+MatchingSplitDistance <- function (tree1, tree2, normalize = TRUE,
                              reportMatching = FALSE) {
-  CalculateTreeDistance(MatchingSplitDistanceSplits, tree1, tree2, reportMatching)
+  CalculateTreeDistance(MatchingSplitDistanceSplits, tree1, tree, normalize,
+                        reportMatching)
 }
 
 #' Wrapper for tree distance calculations
@@ -276,31 +296,33 @@ MatchingSplitDistance <- function (tree1, tree2,
 #' @author Martin R. Smith
 #' @keywords internal
 #' @export
-CalculateTreeDistance <- function (Func, tree1, tree2, reportMatching, ...) {
+CalculateTreeDistance <- function (Func, tree1, tree2, normalize, 
+                                   reportMatching, ...) {
   if (class(tree1) == 'phylo') {
     if (class(tree2) == 'phylo') {
       if (length(setdiff(tree1$tip.label, tree2$tip.label)) > 0) {
         stop("Tree tips must bear identical labels")
       }
       
-      Func(Tree2Splits(tree1), Tree2Splits(tree2), reportMatching, ...)
+      Func(Tree2Splits(tree1), Tree2Splits(tree2), normalize, reportMatching, ...)
     } else {
       splits1 <- Tree2Splits(tree1)
       vapply(tree2, 
-             function (tr2) Func(splits1, Tree2Splits(tr2), ...),
+             function (tr2) Func(splits1, Tree2Splits(tr2), normalize, ...),
              double(1))
     }
   } else {
     if (class(tree2) == 'phylo') {
       splits1 <- Tree2Splits(tree2)
       vapply(tree1, 
-             function (tr2) Func(splits1, Tree2Splits(tr2), ...),
+             function (tr2) Func(splits1, Tree2Splits(tr2), normalize, ...),
              double(1))
     } else {
       splits1 <- lapply(tree1, Tree2Splits)
       splits2 <- lapply(tree2, Tree2Splits)
-      matrix(mapply(Func, rep(splits1, each=length(splits2)), splits2),
+      matrix(mapply(Func, rep(splits1, each=length(splits2)), splits2), 
              length(splits2), length(splits1),
+             normalize = normalize,
              dimnames = list(names(tree2), names(tree1)), ...)
     }
   }
@@ -342,7 +364,8 @@ PartitionInfoSplits <- function(splits) {
 #' @describeIn MutualArborealInfo Takes splits instead of trees
 #' @template splits12params
 #' @export
-MutualArborealInfoSplits <- function (splits1, splits2, reportMatching = FALSE) {
+MutualArborealInfoSplits <- function (splits1, splits2, normalize = TRUE,
+                                      reportMatching = FALSE) {
   
   dimSplits1 <- dim(splits1)
   dimSplits2 <- dim(splits2)
@@ -456,7 +479,8 @@ MutualArborealInfoSplits <- function (splits1, splits2, reportMatching = FALSE) 
 
 #' @describeIn MutualArborealInfo Calculate variation of arboreal information from splits
 #' @export
-VariationOfArborealInfoSplits <- function (splits1, splits2, reportMatching = FALSE) {
+VariationOfArborealInfoSplits <- function (splits1, splits2, normalize = TRUE,
+                                           reportMatching = FALSE) {
   
   dimSplits1 <- dim(splits1)
   dimSplits2 <- dim(splits2)
@@ -550,7 +574,8 @@ VariationOfArborealInfoSplits <- function (splits1, splits2, reportMatching = FA
 #' @describeIn NyeTreeSimilarity Takes splits instead of trees
 #' @inheritParams MutualArborealInfoSplits
 #' @export
-NyeSplitSimilarity <- function (splits1, splits2, reportMatching = FALSE) {
+NyeSplitSimilarity <- function (splits1, splits2, normalize = TRUE,
+                                reportMatching = FALSE) {
   
   dimSplits1 <- dim(splits1)
   dimSplits2 <- dim(splits2)
@@ -617,7 +642,8 @@ NyeSplitSimilarity <- function (splits1, splits2, reportMatching = FALSE) {
 #' @describeIn MutualPartitionInfo Takes splits instead of trees
 #' @inheritParams MutualArborealInfoSplits
 #' @export
-MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE) {
+MutualPartitionInfoSplits <- function (splits1, splits2, normalize = TRUE,
+                                       reportMatching = FALSE) {
   
   dimSplits1 <- dim(splits1)
   dimSplits2 <- dim(splits2)
@@ -685,7 +711,8 @@ MutualPartitionInfoSplits <- function (splits1, splits2, reportMatching = FALSE)
 #' @describeIn MutualPartitionInfo Takes splits instead of trees
 #' @inheritParams MutualArborealInfoSplits
 #' @export
-MutualClusteringInfoSplits <- function (splits1, splits2, reportMatching = FALSE) {
+MutualClusteringInfoSplits <- function (splits1, splits2, normalize = TRUE,
+                                        reportMatching = FALSE) {
   
   dimSplits1 <- dim(splits1)
   dimSplits2 <- dim(splits2)
@@ -742,7 +769,8 @@ MutualClusteringInfoSplits <- function (splits1, splits2, reportMatching = FALSE
 #' @inheritParams MutualArborealInfoSplits
 #' @importFrom clue solve_LSAP
 #' @export
-MatchingSplitDistanceSplits <- function (splits1, splits2, reportMatching = FALSE) {
+MatchingSplitDistanceSplits <- function (splits1, splits2, normalize = TRUE, 
+                                         reportMatching = FALSE) {
   
   dimSplits1 <- dim(splits1)
   dimSplits2 <- dim(splits2)
@@ -846,7 +874,8 @@ SplitsCompatible <- function (split1, split2) {
 #' @importFrom colorspace qualitative_hcl
 #' @importFrom graphics par
 #' @export
-VisualizeMatching <- function(Func, tree1, tree2, setPar = TRUE, Plot = plot.phylo, ...) {
+VisualizeMatching <- function(Func, tree1, tree2, setPar = TRUE, 
+                              Plot = plot.phylo, ...) {
   
   splits1 <- Tree2Splits(tree1)
   edge1 <- tree1$edge

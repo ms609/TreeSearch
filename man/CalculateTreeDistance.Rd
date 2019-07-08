@@ -4,7 +4,7 @@
 \alias{CalculateTreeDistance}
 \title{Wrapper for tree distance calculations}
 \usage{
-CalculateTreeDistance(Func, tree1, tree2, reportMatching, ...)
+CalculateTreeDistance(Func, tree1, tree2, normalize, reportMatching, ...)
 }
 \arguments{
 \item{Func}{Tree distance function.}
@@ -14,6 +14,10 @@ or lists of such trees to undergo pairwise comparison.}
 
 \item{tree2}{Trees of class \code{phylo}, with tips labelled identically,
 or lists of such trees to undergo pairwise comparison.}
+
+\item{normalize}{Logical (default = \code{TRUE}) specifying whether to re-scale
+results onto a scale of zero to one, where one represents the total
+information content of two independent trees of the given size and topology.}
 
 \item{reportMatching}{Logical specifying whether to return the clade
 matchings as an attribute of the score.}

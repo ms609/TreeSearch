@@ -7,17 +7,25 @@
 \alias{VariationOfArborealInfoSplits}
 \title{Information-based generalized Robinson-Foulds distance between two trees}
 \usage{
-MutualArborealInfo(tree1, tree2, reportMatching = FALSE)
+MutualArborealInfo(tree1, tree2, normalize = TRUE,
+  reportMatching = FALSE)
 
-VariationOfArborealInfo(tree1, tree2, reportMatching = FALSE)
+VariationOfArborealInfo(tree1, tree2, normalize = TRUE,
+  reportMatching = FALSE)
 
-MutualArborealInfoSplits(splits1, splits2, reportMatching = FALSE)
+MutualArborealInfoSplits(splits1, splits2, normalize = TRUE,
+  reportMatching = FALSE)
 
-VariationOfArborealInfoSplits(splits1, splits2, reportMatching = FALSE)
+VariationOfArborealInfoSplits(splits1, splits2, normalize = TRUE,
+  reportMatching = FALSE)
 }
 \arguments{
 \item{tree1, tree2}{Trees of class \code{phylo}, with tips labelled identically,
 or lists of such trees to undergo pairwise comparison.}
+
+\item{normalize}{Logical (default = \code{TRUE}) specifying whether to re-scale
+results onto a scale of zero to one, where one represents the total
+information content of two independent trees of the given size and topology.}
 
 \item{reportMatching}{Logical specifying whether to return the clade
 matchings as an attribute of the score.}
