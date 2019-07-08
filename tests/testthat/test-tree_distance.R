@@ -51,6 +51,10 @@ test_that('Mutual Arboreal Info is correctly calculated', {
   expect_equal(13.75284, MutualArborealInfo(treeSym8, treeBal8), tolerance=1e-05)
   expect_equal(VariationOfArborealInfo(treeSym8, treeAcd.Befgh),
                VariationOfArborealInfo(treeAcd.Befgh, treeSym8), tolerance=1e-05)
+  expect_equal(0, VariationOfArborealInfo(treeSym8, treeSym8, normalize = TRUE))
+  infoSymBal <- PartitionInfo(treeSym8) + PartitionInfo(treeBal8)
+  expect_equal(infoSymBal - 13.75284 - 13.75284, tolerance = 1e-05,
+    VariationOfArborealInfo(treeSym8, treeBal8, normalize = TRUE) * infoSymBal)
   expect_equal(22.53747 + MutualArborealInfo(treeAcd.Befgh, treeAcd.Befgh) - 
                  (2 * MutualArborealInfo(treeSym8, treeAcd.Befgh)), 
                VariationOfArborealInfo(treeSym8, treeAcd.Befgh), tolerance=1e-05)
