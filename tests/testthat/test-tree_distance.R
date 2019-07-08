@@ -8,6 +8,17 @@ test_that("Split combatibility is correctly established", {
   expect_false(SplitsCompatible(as.logical(c(0,0,1,1,0)), as.logical(c(1,1,0,1,0))))
 })
 
+methodsToTest <- list(
+  MutualArborealInfo,
+  VariationOfArborealInfo,
+  MutualPartitionInfo,
+  VariationOfPartitionInfo,
+  MutualClusteringInfo,
+  VariationOfClusteringInfo,
+  MutualArborealInfo,
+  NyeTreeSimilarity,
+  MatchingSplitDistance
+)
 
 # Labels in different order to confound Tree2Splits
 treeSym8 <- ape::read.tree(text='((e, (f, (g, h))), (((a, b), c), d));')
@@ -25,22 +36,28 @@ treeAbcd.Efgh <- ape::read.tree(text='((a, b, c, d), (e, f, g, h));')
 treeTwoSplits <- ape::read.tree(text="(((a, b), c, d), (e, f, g, h));")
 
 test_that('Bad labels cause error', {
-  expect_error(MutualArborealInfo(treeSym8, treeBadLabel8))
-  expect_error(MutualPartitionInfo(treeSym8, treeBadLabel8))
-  expect_error(VariationOfArborealInfo(treeSym8, treeBadLabel8))
-  expect_error(VariationOfPartitionInfo(treeSym8, treeBadLabel8))
-  expect_error(MutualClusterInfo(treeSym8, treeBadLabel8))
-  expect_error(NyeTreeDistance(treeSym8, treeBadLabel8))
-  expect_error(MatchingSplitDistance(treeSym8, treeBadLabel8))
+  lapply(methodsToTest, function(Func) 
+    expect_error(Func(treeSym8, treeBadLabel8)))
 })
 
 test_that('Metrics handle polytomies', {
   polytomy8 <- ape::read.tree(text='(a, b, c, d, e, f, g, h);')
-  expect_equal(0, MutualArborealInfo(treeSym8, polytomy8))
-  expect_equal(0, MutualPartitionInfo(treeSym8, polytomy8))
-  expect_equal(0, MutualClusteringInfo(treeSym8, polytomy8))
-  expect_equal(0, MatchingSplitDistance(treeSym8, polytomy8))
-  expect_equal(0, NyeTreeSimilarity(treeSym8, polytomy8))
+  lapply(list(MutualArborealInfo, MutualPartitionInfo, MutualClusteringInfo,
+              MatchingSplitDistance, NyeTreeSimilarity),
+         function (Func) expect_equal(0, Func(treeSym8, polytomy8)))
+})
+
+test_that('Output dimensions are correct', {
+  Test <- function (Func) {
+    answer <- 
+    matrix(c(Func(treeSym8, treeSym8),      Func(treeBal8, treeSym8),
+             Func(treeSym8, treeAbc.Defgh), Func(treeBal8, treeAbc.Defgh),
+             Func(treeSym8, treeAbcd.Efgh), Func(treeBal8, treeAbcd.Efgh)),
+           2L, 3L, dimnames=list(c('sym', 'bal'), c('sym', 'abc', 'abcd')))
+    expect_equal(answer, Func(list(sym=treeSym8, bal=treeBal8), 
+                              list(sym=treeSym8, abc=treeAbc.Defgh, abcd=treeAbcd.Efgh)))
+  }
+  lapply(methodsToTest, Test)
 })
 
 test_that('Mutual Arboreal Info is correctly calculated', {
@@ -79,16 +96,6 @@ test_that('Mutual Arboreal Info is correctly calculated', {
   
   expect_equal(MutualArborealInfo(treeSym8, list(treeSym8, treeBal8)), 
                MutualArborealInfo(list(treeSym8, treeBal8), treeSym8))
-  expect_equal(matrix(c(MutualArborealInfo(treeSym8, treeSym8),
-                        MutualArborealInfo(treeBal8, treeSym8),
-                        MutualArborealInfo(treeSym8, treeAbc.Defgh),
-                        MutualArborealInfo(treeBal8, treeAbc.Defgh),
-                        MutualArborealInfo(treeSym8, treeAbcd.Efgh), 
-                        MutualArborealInfo(treeBal8, treeAbcd.Efgh)),
-                      2L, 3L,
-                      dimnames=list(c('sym', 'bal'), c('sym', 'abc', 'abcd'))), 
-               MutualArborealInfo(list(sym=treeSym8, bal=treeBal8), 
-                                  list(sym=treeSym8, abc=treeAbc.Defgh, abcd=treeAbcd.Efgh)))
 })
 
 test_that('MutualPartitionInfo is correctly calculated', {
