@@ -27,24 +27,8 @@ RandomDistances <- function (nLeaves, repls) {
   ret
 }
 
-AddLine <- function (dat, col) {
-  nLeaves <- colnames(dat)
-  points(nLeaves, dat['mean', ], pch=3, col=col)
-  lines(nLeaves, dat['mean', ] + dat['sd', ], lty=3, col=col)
-  lines(nLeaves, dat['mean', ] - dat['sd', ], lty=3, col=col)
-}
 
 
-dists <- RandomDistances(nLeaves, repls=100L)
+randomTreeDistances <- RandomDistances(nLeaves, repls=100L)
 
-plot(nLeaves, dists['vai', 'mean', ], pch='.', ylim=c(0.3, 1), col='white')
-AddLine(dists['vai', , ], col=cbPalette8[1])
-AddLine(dists['vpi', , ], col=cbPalette8[2])
-AddLine(dists['vci', , ], col=cbPalette8[3])
-AddLine(dists['qd', , ], col=cbPalette8[4])
-AddLine(dists['nts', , ], col=cbPalette8[5])
-
-legend('bottomright', bty='n', pch=3, legend=dimnames(dists)[[1]], col=cbPalette8[1:5])
-
-randomTreeDistances <- dists
 usethis::use_data(randomTreeDistances, overwrite=TRUE)
