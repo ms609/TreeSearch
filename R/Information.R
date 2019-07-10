@@ -23,6 +23,19 @@ LogTreesMatchingSplit <- function (A, B) {
   LnRooted.int(A) + LnRooted.int(B)
 }
 
+#' Character information content
+#' 
+#' Calculates the phylogenetic information content of a given character.
+#' 
+#' @param tokens Character vector specifying the tokens assigned to each taxon for 
+#' a character.  Example: `c(0, 0, 0, 1, 1, 1, '?', '-')`.
+#' 
+#' Note that ambiguous tokens such as `(01)` are not supported, and should be
+#' replaced with `?`.`
+#' 
+#' @return Phylogenetic information content of the character, in bits.
+#' 
+#' @author Martin R. Smith
 #' @export
 CharacterInformation <- function (tokens) {
   tokenCounts <- table(tokens)
