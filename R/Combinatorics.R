@@ -41,6 +41,7 @@ DoubleFactorial <- function (n) {
 
 # Memoizing this function makes it MUCH slower...
 #' @describeIn DoubleFactorial Returns the logarithm of the double factorial.
+#' @export
 LogDoubleFactorial <- (function (n) {
   n[n < 2] <- 1 # Much faster than pmax
   if (any(n > 49999L)) {
