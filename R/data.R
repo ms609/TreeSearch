@@ -124,8 +124,8 @@
 #'   [Martin Krzywinski](http://mkweb.bcgsc.ca/colorblind/)
 #' }
 #'
-#' @export
 #' @keywords datasets
+#' @export
 "brewer"
 
 #' Double factorials
@@ -136,8 +136,8 @@
 #' 301!! is too large to store as an integer; use `logDoubleFactorials` instead.
 #' 
 #' @family Double factorial
-#' @export
 #' @keywords datasets
+#' @export
 "doubleFactorials"
 
 #' Natural logarithms of double factorials
@@ -145,19 +145,6 @@
 #' A vector with pre-calculated values of double factorials up to 50 000!!.
 #' 
 #' @family Double factorial
+#' @keywords datasets
 #' @export
-#' @keywords datasets
 "logDoubleFactorials"
-
-#' Distances between random pairs of trees
-#' 
-#' A three-dimensional array listing the normalized distances between 100 random 
-#' pairs of trees drawn from the uniform distribution using
-#' `ape::rtree(nTip, br=NULL)`.
-#' 
-#' Rows are named with an abbreviation of the tree comparison metric.
-#' Columns list the mean and standard deviation of calculated tree distances.
-#' The third dimension lists the number of tips in the trees compared.
-#' 
-#' @keywords datasets
-"randomTreeDistances"
