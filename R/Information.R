@@ -89,50 +89,6 @@ MultiSplitInformation <- function (partitionSizes) {
   -(LnUnrootedMult(partitionSizes) - LnUnrooted.int(sum(partitionSizes))) / log(2)
 }
 
-#' Distributions of taxa consistent with a partition pair.
-#' 
-#' Number of terminal arrangements matching a specified configuration of 
-#' two partitions.
-#' 
-#' Consider partitions that divide eight terminals, labelled A to H.
-#' 
-#' \tabular{rcll}{
-#'   Bipartition 1:\tab ABCD:EFGH\tab A1 = ABCD\tab B1 = EFGH \cr
-#'   Bipartition 2:\tab ABE:CDFGH\tab A2 = ABE\tab B2 = CDFGH
-#' }
-#' 
-#' This can be represented by an association matrix:
-#' 
-#' \tabular{rll}{
-#'      \tab *A2* \tab *B2* \cr
-#' *A1* \tab AB  \tab C   \cr
-#' *B1* \tab E   \tab FGH
-#' }
-#' 
-#' The cells in this matrix contain 2, 1, 1 and 3 terminals respectively; this
-#' four-element vector (`c(2, 1, 1, 3)`) is the `configuration` implied by 
-#' this pair of bipartition splits.
-#' 
-#' @param configuration Integer vector of length four specifying the number of 
-#' terminals that occur in both 
-#'   (1) splits A1 and A2; 
-#'   (2) splits A1 and B2;
-#'   (3) splits B1 and A2;
-#'   (4) splits B1 and B2.
-#'   
-#' @return The number of ways to distribute `sum(configuration)` taxa according
-#'  to the specified pattern.
-#'
-#' @examples 
-#' NPartitionPairs(c(2, 1, 1, 3))
-#'  
-#' @author Martin R. Smith
-#' @export
-NPartitionPairs <- function (configuration) {
-  choose(sum(configuration[c(1, 3)]), configuration[1]) *
-  choose(sum(configuration[c(2, 4)]), configuration[2])
-}
-
 #' Number of trees consistent with split
 #' 
 #' Calculates the number of unrooted bifurcating trees consistent with the 
