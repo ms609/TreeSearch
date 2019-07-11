@@ -13,6 +13,7 @@
 #' @return This function returns a tree of class \code{phylo}
 #'   
 #' @author Martin R. Smith
+#' @family tree manipulation
 #' @export
 Renumber <- function (tree) {
   tree   <- Postorder(tree)
@@ -54,6 +55,7 @@ Renumber <- function (tree) {
 #' @return This function returns a \code{phylo} object containing a single tip with the specified label.
 #' @examples SingleTaxonTree('Homo_sapiens')
 #' @keywords  tree 
+#' @family tree manipulation
 #' @export
 SingleTaxonTree <- function (label) {
   structure(list(edge=matrix(c(2L,1L), 1, 2), tip.label=label, Nnode=1L),
@@ -83,6 +85,7 @@ SingleTaxonTree <- function (label) {
 #' }
 #' 
 #' @author Martin R. Smith
+#' @family tree manipulation
 #' @export
 Subtree <- function (tree, node) {
   if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
@@ -151,6 +154,7 @@ Subtree <- function (tree, node) {
 #'   plot(AddTip(tree, 15, 'NEW_TIP'))
 #' }
 #' @keywords tree 
+#' @family tree manipulation
 #' 
 #' @export
 AddTip <- function (tree, where, label) {
@@ -229,6 +233,7 @@ AddTip <- function (tree, where, label) {
 #' entry for the root node itself, which will be NULL.
 #'   
 #' @author Martin R. Smith
+#' @family tree navigation
 #' @export
 AllAncestors <- function (parent, child) {
   res <- vector("list", max(parent))

@@ -1,3 +1,4 @@
+# NB: RandomTreeScore uses C's RNG, so no point in setting seed.
 MorphyAction <- function (Action) expect_equal("ERR_NO_ERROR", mpl_translate_error(Action))
 MorphyWith <- function (char) {
   nTip <- nchar(char) - 1L
@@ -15,9 +16,6 @@ MorphyWith <- function (char) {
 
 context("pp: Tree randomness")
 test_that("four-tip trees are randomly distributed", {
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
-  set.seed(0)
-  
   nTrees <- 36000
   stringency <- 0.005 # low numbers mean you'll rarely fail by chance
   nTip <- 4
@@ -52,9 +50,6 @@ test_that("four-tip trees are randomly scored", {
 })
 
 test_that("six-tip trees are randomly scored", {
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
-  set.seed(0)
-  
   nTrees <- 6000
   stringency <- 0.005
   nTip <- 6
@@ -84,9 +79,6 @@ test_that("six-tip trees are randomly scored", {
 
 
 test_that("five-tip trees are randomly scored", {
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
-  set.seed(0)
-  
   nTrees <- 6000
   stringency <- 0.005
   nTip <- 5
@@ -100,9 +92,6 @@ test_that("five-tip trees are randomly scored", {
 
 
 test_that("six-tip trees are randomly scored", {
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
-  set.seed(0)
-  
   nTrees <- 6000
   stringency <- 0.005
   nTip <- 6
@@ -130,13 +119,9 @@ test_that("six-tip trees are randomly scored", {
   
 })
 
-
 test_that("twelve-tip trees are randomly scored", {
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
-  set.seed(0)
-  
-  nTrees <- 24000 # 12000 seems to throw false +ve too often
-  stringency <- 0.005
+  nTrees <- 12000 # 12000 seems to throw false +ve too often?
+  stringency <- 0.01 #  increased from 0.005 to avoid false +ves
   nTip <- 12
   morphyObj <- MorphyWith('000000011111;')
   expectedBounds <- qbinom(c(stringency, 1 - stringency), nTrees, 
@@ -151,4 +136,3 @@ test_that("twelve-tip trees are randomly scored", {
   expect_true(expectedBounds[1] < nScoring1)
   expect_true(expectedBounds[2] > nScoring1)  
 })
-

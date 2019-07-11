@@ -33,6 +33,7 @@ MatrixToList <- function (edge) list(edge[, 1], edge[, 2])
 #' @param nEdge number of edges (calculated from length(parent) if not supplied)
 #' @return `DescendantEdges` returns a logical vector stating whether each edge in turn is a descendant of the specified edge
 #'         (or the edge itself)
+#' @family tree navigation
 #' @export
 DescendantEdges <- function (edge, parent, child, nEdge = length(parent)) {
   ret <- logical(nEdge)
@@ -63,6 +64,7 @@ DescendantEdges <- function (edge, parent, child, nEdge = length(parent)) {
 #' @return `AllDescendantEdges` returns a matrix of class logical, with row N specifying whether each edge is a descendant of edge N
 #'         (or the edge itself)
 #' @describeIn DescendantEdges Quickly identifies edges that are 'descended' from each edge in a tree
+#' @family tree navigation
 #' @export
 AllDescendantEdges <- function (parent, child, nEdge = length(parent)) {
   ret <- diag(nEdge) == 1
@@ -84,6 +86,7 @@ AllDescendantEdges <- function (parent, child, nEdge = length(parent)) {
 #' @template treeChild
 #' @return a logical vector identifying whether each edge is the edge that is ancestral to the given edge.
 #' @keywords internal
+#' @family tree navigation
 #' @export
 AncestorEdge <- function (edge, parent, child) child == parent[edge]
 
@@ -100,6 +103,7 @@ AncestorEdge <- function (edge, parent, child) child == parent[edge]
 #' @return a logical vector stating whether each edge in turn is a descendant of the specified edge
 #'
 #' @author Martin R. Smith
+#' @family tree navigation
 #' @export
 EdgeAncestry <- function (edge, parent, child, stopAt = (parent==min(parent))) {
   ret <- edge <- AncestorEdge(edge, parent, child)
@@ -107,6 +111,20 @@ EdgeAncestry <- function (edge, parent, child, stopAt = (parent==min(parent))) {
     if (any(ret[stopAt])) return(ret)
     ret[edge <- AncestorEdge(edge, parent, child)] <- TRUE    
   }
+}
+
+#' Most Recent Common Ancestor
+#' @param tip1,tip2 Integer specifying index of tips whose most recent common 
+#' ancestor should be found.
+#' @param ancestors Output of [`AllAncestors`] for the tree in question
+#' 
+#' @family tree navigation
+#' @author Martin R. Smith
+#' @export
+MRCA <- function(tip1, tip2, ancestors) {
+  anc1 <- ancestors[[tip1]]
+  anc2 <- ancestors[[tip2]]
+  max(intersect(anc1, anc2))
 }
 
 #' Non-duplicate root
@@ -119,7 +137,8 @@ EdgeAncestry <- function (edge, parent, child, stopAt = (parent==min(parent))) {
 #' 
 #' @author Martin R. Smith
 #' @export
-#' 
+#' @family tree navigation
+#'  
 #' @keywords internal
 NonDuplicateRoot <- function (parent, child, nEdge = length(parent)) {
   notDuplicateRoot <- !logical(nEdge)

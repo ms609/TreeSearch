@@ -9,14 +9,23 @@ tree8  <- read.tree(text="(((a, (b, (c, d))), (e, f)), (g, h));")
 tree11 <- read.tree(text="((((a, b), (c, d)), e), ((f, (g, (h, i))), (j, k)));")
 attr(tree5a, 'order') <- attr(tree5b, 'order') <- attr(tree8, 'order') <- attr(tree11, 'order') <- 'preorder'
 
-test_that("Malformed trees throw errors", {
-  treeDoubleNode    <- read.tree(text = "((((((1,2)),3),4),5),6);")
-  treePolytomy      <- read.tree(text = "((((1,2,3),4),5),6);")
-  treeDoublyPoly    <- read.tree(text = "(((((1,2,3)),4),5),6);")
+test_that("Malformed trees don't crash anything", {
+  treeDoubleNode <- read.tree(text = "((((((1,2)),3),4),5),6);")
+  treePolytomy   <- read.tree(text = "((((1,2,3),4),5),6);")
+  treeDoublyPoly <- read.tree(text = "(((((1,2,3)),4),5),6);")
+
+  reordered <- Preorder(treeDoubleNode)$edge
+  expect_equal(10L, dim(reordered)[1])
+  expect_true(all(table(reordered[, 1]) == 2L))
   
-  expect_error(Preorder(treeDoubleNode))
-  expect_error(Preorder(treePolytomy))
-  expect_error(Preorder(treeDoublyPoly))
+  reordered <- Preorder(treePolytomy)$edge
+  expect_equal(9L, dim(reordered)[1])
+  expect_equal(c(2L, 2L, 2L, 3L), as.integer(table(reordered[, 1])))
+  
+  reordered <- Preorder(treeDoublyPoly)$edge
+  expect_equal(9L, dim(reordered)[1])
+  expect_equal(c(2L, 2L, 2L, 3L), as.integer(table(reordered[, 1])))
+  
   
   expect_error(NNI(treeDoubleNode))
   expect_error(NNI(treePolytomy))
