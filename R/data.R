@@ -124,6 +124,7 @@
 #'   [Martin Krzywinski](http://mkweb.bcgsc.ca/colorblind/)
 #' }
 #'
+#' @export
 #' @keywords datasets
 "brewer"
 
@@ -135,6 +136,7 @@
 #' 301!! is too large to store as an integer; use `logDoubleFactorials` instead.
 #' 
 #' @family Double factorial
+#' @export
 #' @keywords datasets
 "doubleFactorials"
 
@@ -143,6 +145,7 @@
 #' A vector with pre-calculated values of double factorials up to 50 000!!.
 #' 
 #' @family Double factorial
+#' @export
 #' @keywords datasets
 "logDoubleFactorials"
 
