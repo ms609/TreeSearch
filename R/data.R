@@ -125,7 +125,6 @@
 #' }
 #'
 #' @keywords datasets
-#' @export
 "brewer"
 
 #' Double factorials
@@ -137,6 +136,7 @@
 #' 
 #' @family Double factorial
 #' @keywords datasets
+#' @name doubleFactorials
 #' @export
 "doubleFactorials"
 
@@ -146,5 +146,6 @@
 #' 
 #' @family Double factorial
 #' @keywords datasets
+#' @name logDoubleFactorials
 #' @export
 "logDoubleFactorials"
