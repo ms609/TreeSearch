@@ -128,15 +128,29 @@ Pruningwise <- function (tree, nTaxa = length(tree$tip.label), edge = tree$edge)
 }
 
 #' @describeIn Cladewise Reorder tree in Preorder (special case of cladewise)
+#' @importFrom ape collapse.singles reorder.phylo
 #' @export
 Preorder <- function (tree) {
   edge <- tree$edge
   parent <- edge[, 1]
-  StopUnlessBifurcating(parent)
-  child <- edge[, 2]
-  tree$edge <- RenumberTree(parent, child)
-  attr(tree, 'order') <- 'preorder'
-  tree
+  nodeSizes <- table(parent)
+  if (!all(nodeSizes == 2L)) {
+    if (any(nodeSizes < 2L)) {
+      # Return:
+      Preorder(collapse.singles(tree))
+    } else {
+      # Return:
+      reorder.phylo(tree, 'cladewise')
+    }
+  } else {
+    
+    child <- edge[, 2]
+    tree$edge <- RenumberTree(parent, child)
+    attr(tree, 'order') <- 'preorder'
+    
+    # Return:
+    tree
+  }
 }
 
 
