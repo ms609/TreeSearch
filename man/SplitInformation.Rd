@@ -40,8 +40,7 @@ content.
 
 }
 \seealso{
-Other split information functions: \code{\link{TreesConsistentWithTwoSplits}},
-  \code{\link{TreesMatchingSplit}},
+Other split information functions: \code{\link{TreesMatchingSplit}},
   \code{\link{UnrootedTreesMatchingSplit}}
 }
 \author{

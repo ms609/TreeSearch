@@ -133,65 +133,6 @@ NPartitionPairs <- function (configuration) {
   choose(sum(configuration[c(2, 4)]), configuration[2])
 }
 
-#' @describeIn SplitMutualInformation Number of trees consistent with two splits.
-#' @family split information functions
-#' @export
-TreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
-  
-  smallSplit <- min(A1, A2)
-  bigSplit <- max(A1, A2)
-  
-  if (smallSplit == 0) return (TreesMatchingSplit(bigSplit, n - bigSplit))
-  if (bigSplit == n) return (TreesMatchingSplit(smallSplit, n - smallSplit))
-  
-  overlap <- bigSplit - smallSplit
-  
-  #  Here are two spits:
-  #  AA OOO BBBBBB
-  #  11 111 000000
-  #  11 000 000000
-  #  
-  #  There are (2O - 5)!! unrooted trees of the overlapping taxa (O)
-  #  There are (2A - 5)!! unrooted trees of A
-  #  There are (2B - 5)!! unrooted trees of B
-  #  
-  #  There are 2A - 3 places on A that A can be attached to O.
-  #  There are 2O - 3 places on O to which A can be attached.
-  #  
-  #  There are 2B - 3 places in B that B can be attached to (O+A).
-  #  There are 2O - 3 + 2 places on O + A to which B can be attached:
-  #   2O - 3 places on O, plus the two new edges created when A was joined to O.
-  #  
-  #  (2A - 3)(2A - 5)!! == (2A - 3)!!
-  #  (2B - 3)(2B - 5)!! == (2B - 3)!!
-  #  (2O - 1)(2O - 3)(2O - 5)!! == (2O - 1)!!
-  #  
-  #  We therefore want NRooted(A) * NRooted(O + 1) * NRooted(B)
-  #  
-  #  O = overlap = bigSplit - smallSplit
-  #  bigSplit - overlap = smallSplit = either A or B
-  #  n - bigSplit = either B or A
-  
-  
-  # Return:
-  NRooted(overlap + 1L) * 
-    NRooted(smallSplit) *
-    NRooted(n - bigSplit)
-}
-
-#' @describeIn SplitMutualInformation Natural logarithm of `TreesConsistentWithTwoSplits`.
-#' @export
-LogTreesConsistentWithTwoSplits <- function (n, A1, A2=A1) {
-  smallSplit <- min(A1, A2)
-  bigSplit <- max(A1, A2)
-  
-  if (smallSplit == 0) return (LogTreesMatchingSplit(bigSplit, n - bigSplit))
-  if (bigSplit == n) return (LogTreesMatchingSplit(smallSplit, n - smallSplit))
-  
-  # Return:
-  LnRooted(bigSplit - smallSplit + 1L) + LnRooted(smallSplit) + LnRooted(n - bigSplit)
-}
-
 #' Number of trees consistent with split
 #' 
 #' Calculates the number of unrooted bifurcating trees consistent with the 

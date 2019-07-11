@@ -30,7 +30,6 @@ specified multi-partition split, using the formula of Carter \emph{et al}. (1990
 }
 \seealso{
 Other split information functions: \code{\link{SplitInformation}},
-  \code{\link{TreesConsistentWithTwoSplits}},
   \code{\link{TreesMatchingSplit}}
 }
 \author{
