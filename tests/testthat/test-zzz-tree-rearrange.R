@@ -31,11 +31,11 @@ test_that("Malformed trees don't crash anything", {
   expect_error(NNI(treePolytomy))
   expect_error(NNI(treeDoublyPoly))
   
-  expect_error(SPR(treeDoubleNode))
+  expect_equal('phylo', class(SPR(treeDoubleNode))) # collapse doubles in Preorder
   expect_error(SPR(treePolytomy))
   expect_error(SPR(treeDoublyPoly))
   
-  expect_error(TBR(treeDoubleNode))
+  expect_equal('phylo', class(TBR(treeDoubleNode))) # collapse doubles in Preorder
   expect_error(TBR(treePolytomy))
   expect_error(TBR(treeDoublyPoly))
   
