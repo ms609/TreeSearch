@@ -22,6 +22,11 @@ tree <- rtree(10)
 Renumber (tree)
 
 }
+\seealso{
+Other tree manipulation: \code{\link{AddTip}},
+  \code{\link{SingleTaxonTree}}, \code{\link{Subtree}}
+}
 \author{
 Martin R. Smith
 }
+\concept{tree manipulation}

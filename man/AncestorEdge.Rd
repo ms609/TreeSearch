@@ -21,4 +21,11 @@ a logical vector identifying whether each edge is the edge that is ancestral to 
 \description{
 Ancestral edge
 }
+\seealso{
+Other tree navigation: \code{\link{AllAncestors}},
+  \code{\link{DescendantEdges}},
+  \code{\link{EdgeAncestry}}, \code{\link{MRCA}},
+  \code{\link{NonDuplicateRoot}}
+}
+\concept{tree navigation}
 \keyword{internal}

@@ -32,6 +32,11 @@ plot(Subtree(tree, 33))
 }
 
 }
+\seealso{
+Other tree manipulation: \code{\link{AddTip}},
+  \code{\link{Renumber}}, \code{\link{SingleTaxonTree}}
+}
 \author{
 Martin R. Smith
 }
+\concept{tree manipulation}

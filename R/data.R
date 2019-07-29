@@ -125,6 +125,8 @@
 #' }
 #'
 #' @keywords datasets
+#' @name brewer
+#' @export
 "brewer"
 
 #' Double factorials
