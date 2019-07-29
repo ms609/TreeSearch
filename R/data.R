@@ -149,7 +149,6 @@ brewer <- list(
 #' 301!! is too large to store as an integer; use `logDoubleFactorials` instead.
 #' 
 #' @family Double factorial
-#' @export
 #' @keywords datasets
 "doubleFactorials"
 
@@ -158,7 +157,6 @@ brewer <- list(
 #' A vector with pre-calculated values of double factorials up to 50 000!!.
 #' 
 #' @family Double factorial
-#' @export
 #' @keywords datasets
 "logDoubleFactorials"
 
