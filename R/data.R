@@ -124,7 +124,6 @@
 #'   [Martin Krzywinski](http://mkweb.bcgsc.ca/colorblind/)
 #' }
 #'
-#' @export
 #' @keywords datasets
 brewer <- list(
   c("#fc8d59"),
