@@ -89,7 +89,7 @@ Postorder <- function (tree, nTaxa = length(tree$tip.label), edge = tree$edge) {
   nb.edge <- dim(edge)[1]
   nb.node <- tree$Nnode
   if (nb.node == 1) return(tree)
-  if (nb.node >= nTaxa) stop("`tree`` apparently badly conformed")
+  if (nb.node >= nTaxa) stop("`tree` apparently badly conformed")
   neworder <- NeworderPhylo(nTaxa, edge[, 1], edge[, 2], nb.edge, 2)
   tree$edge <- edge[neworder, ]
   if (!is.null(tree$edge.length)) tree$edge.length <- tree$edge.length[neworder]
@@ -118,7 +118,7 @@ Pruningwise <- function (tree, nTaxa = length(tree$tip.label), edge = tree$edge)
   nb.edge <- dim(edge)[1]
   nb.node <- tree$Nnode
   if (nb.node == 1) return(tree)
-  if (nb.node >= nTaxa) stop("`tree`` apparently badly conformed")
+  if (nb.node >= nTaxa) stop("`tree` apparently badly conformed")
   tree <- Cladewise(tree, nTaxa, edge)
   neworder <- NeworderPruningwise(nTaxa, nb.node, tree$edge[, 1], tree$edge[, 2], nb.edge)
   tree$edge <- tree$edge[neworder, ]
