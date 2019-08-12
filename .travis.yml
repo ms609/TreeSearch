@@ -12,7 +12,6 @@ git:
   depth: 1
 
 r_github_packages:
- - r-lib/pkgload
  - r-lib/devtools
 
 r_binary_packages:
