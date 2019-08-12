@@ -21,4 +21,9 @@ Create a phylogenetic 'tree' that comprises a single taxon.
 \examples{
 SingleTaxonTree('Homo_sapiens')
 }
+\seealso{
+Other tree manipulation: \code{\link{AddTip}},
+  \code{\link{Renumber}}, \code{\link{Subtree}}
+}
+\concept{tree manipulation}
 \keyword{tree}

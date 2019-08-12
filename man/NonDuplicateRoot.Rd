@@ -19,7 +19,14 @@ class \code{\link{phylo}}, i.e. \code{dim(tree$edge)[1]}}
 \description{
 Identify, for each edge, whether it is not a duplicate of the root edge
 }
+\seealso{
+Other tree navigation: \code{\link{AllAncestors}},
+  \code{\link{AncestorEdge}},
+  \code{\link{DescendantEdges}},
+  \code{\link{EdgeAncestry}}, \code{\link{MRCA}}
+}
 \author{
 Martin R. Smith
 }
+\concept{tree navigation}
 \keyword{internal}
