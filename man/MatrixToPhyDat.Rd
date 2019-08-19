@@ -8,7 +8,9 @@ MatrixToPhyDat(tokens)
 }
 \arguments{
 \item{tokens}{matrix of tokens, probably created with \link{ReadCharacters}
-or \link{ReadTntCharacters}.}
+or \link{ReadTntCharacters}. Row names should correspond to tip
+labels; column names may optionally correspond to
+character labels.}
 }
 \value{
 an object of class \code{phyDat}
