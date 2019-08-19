@@ -384,7 +384,9 @@ ReadTntCharacters <- function (filepath, character_num=NULL, session=NULL) {
 #' Converts a matrix of tokens to a phyDat object
 #' 
 #' @param tokens matrix of tokens, probably created with [ReadCharacters] 
-#'               or [ReadTntCharacters].
+#'               or [ReadTntCharacters]. Row names should correspond to tip
+#'               labels; column names may optionally correspond to 
+#'               character labels.
 #' @return an object of class \code{phyDat}
 #' 
 #' @author Martin R. Smith
