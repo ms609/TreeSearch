@@ -61,6 +61,7 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
   }
   
   edge <- tree$edge  
+  StopUnlessBifurcating(edge[, 1])
   tree$edge <- ListToMatrix(TBRSwap(edge[, 1], edge[, 2], edgeToBreak=edgeToBreak, 
                                     mergeEdges=mergeEdges))
   tree

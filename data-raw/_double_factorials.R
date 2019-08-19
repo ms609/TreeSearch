@@ -40,4 +40,4 @@ DoubleFactorial <- function (x) {
 }
 
 doubleFactorials <- exp(logDoubleFactorials[seq_len(300)]) # Greater than 300 -> "Inf"
-usethis::use_data(logDoubleFactorials, doubleFactorials, overwrite=TRUE)
+usethis::use_data(logDoubleFactorials, doubleFactorials, internal=TRUE, overwrite=TRUE)

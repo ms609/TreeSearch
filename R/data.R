@@ -125,6 +125,7 @@
 #' }
 #'
 #' @keywords datasets
+#' @name brewer
 brewer <- list(
   c("#fc8d59"),
   c("#fc8d59", "#91bfdb"),
@@ -149,6 +150,8 @@ brewer <- list(
 #' 
 #' @family Double factorial
 #' @keywords datasets
+#' @name doubleFactorials
+#' @export
 "doubleFactorials"
 
 #' Natural logarithms of double factorials
@@ -157,17 +160,6 @@ brewer <- list(
 #' 
 #' @family Double factorial
 #' @keywords datasets
+#' @name logDoubleFactorials
+#' @export
 "logDoubleFactorials"
-
-#' Distances between random pairs of trees
-#' 
-#' A three-dimensional array listing the normalized distances between 100 random 
-#' pairs of trees drawn from the uniform distribution using
-#' `ape::rtree(nTip, br=NULL)`.
-#' 
-#' Rows are named with an abbreviation of the tree comparison metric.
-#' Columns list the mean and standard deviation of calculated tree distances.
-#' The third dimension lists the number of tips in the trees compared.
-#' 
-#' @keywords datasets
-"randomTreeDistances"

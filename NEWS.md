@@ -1,13 +1,7 @@
-# TreeSearch 0.3.2.9005 (develoment)
+# TreeSearch 0.3.2.9006 (development)
 
-## New features
- - `ClusteringInfo` Adopts Meila's (2007) clustering information as a tree distance measure (but is not yet production-ready)
- - Normalization of certain tree distance measures
- - Implement another information theoretic tree distance measure (Smith, in prep)
- 
-## Bug fixes
- - Fix miscalculation of `MatchingSplitDifference`
- - Fix miscalculation of `JointInformation`
+## Changes
+ - Move tree distance measures to separate package `TreeDist`
 
 ## Enhancements
  - `ReadTntTree` supports named taxa (with `taxname=`)

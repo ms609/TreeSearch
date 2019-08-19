@@ -33,8 +33,12 @@ This function returns a tree of class \code{phylo} with an additional tip at the
 \code{\link{bind.tree}}
 
 \code{\link{nodelabels}}
+
+Other tree manipulation: \code{\link{Renumber}},
+  \code{\link{SingleTaxonTree}}, \code{\link{Subtree}}
 }
 \author{
 Martin R. Smith
 }
+\concept{tree manipulation}
 \keyword{tree}

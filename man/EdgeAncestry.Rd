@@ -26,6 +26,13 @@ Descendant Edges
 \details{
 Quickly identifies edges that are 'ancestral' to a particular edge in a tree
 }
+\seealso{
+Other tree navigation: \code{\link{AllAncestors}},
+  \code{\link{AncestorEdge}},
+  \code{\link{DescendantEdges}}, \code{\link{MRCA}},
+  \code{\link{NonDuplicateRoot}}
+}
 \author{
 Martin R. Smith
 }
+\concept{tree navigation}

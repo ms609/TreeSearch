@@ -40,10 +40,7 @@ content.
 
 }
 \seealso{
-Other split information functions: \code{\link{JointInformation}},
-  \code{\link{SplitEntropy}},
-  \code{\link{SplitMutualInformation}},
-  \code{\link{TreesMatchingSplit}},
+Other split information functions: \code{\link{TreesMatchingSplit}},
   \code{\link{UnrootedTreesMatchingSplit}}
 }
 \author{
