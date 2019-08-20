@@ -24,3 +24,10 @@ test_that("TNT trees parsed correctly", {
   expect_equal('Flustra', namedLabels[1])
   expect_equal(74L, length(namedLabels))
 })
+
+test_that("Matrix converts to phyDat", {
+  mat <- matrix(c(1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1,2,2,2,2,2,2,2,'?'), 
+                nrow=3, byrow=TRUE)
+  rownames(mat) <- LETTERS[1:3]
+  expect_equal(mat, PhyDatToMatrix(MatrixToPhyDat(mat)))
+})

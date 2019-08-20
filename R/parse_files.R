@@ -401,13 +401,31 @@ MatrixToPhyDat <- function (tokens) {
   whichTokens <- regmatches(allTokens, matches)
   levels <- sort(unique(unlist(whichTokens)))
   whichTokens[allTokens == '?'] <- list(levels)
-  contrast <- 1 * t(vapply(whichTokens, function (x) levels %in% x, logical(length(levels))))
+  contrast <- 1 * t(vapply(whichTokens, function (x) levels %in% x,
+                           logical(length(levels))))
   rownames(contrast) <- allTokens
   colnames(contrast) <- levels
   dat <- phangorn::phyDat(tokens, type='USER', contrast=contrast)
   
   # Return:
   dat
+}
+
+#' @describeIn MatrixToPhyDat Converts a phyDat object to a matrix of tokens.
+#' @param dataset A dataset of class `phyDat`.
+## @param parentheses Character vector specifying style of parentheses 
+## with which to enclose ambiguous characters, e.g, `c('[', ']')` will render
+## `[01]`.
+## @param sep Character with which to separate ambiguous tokens, e.g. `','`
+## will render `[0,1]`.
+#' @return A matrix corresponding to the uncompressed character states within
+#' a phyDat object.
+#' @export
+PhyDatToMatrix <- function (dataset) {#}, parentheses = c('[', ']'), sep = '') {
+  at <- attributes(dataset)
+  index <- at$index
+  allLevels <- at$allLevels
+  t(vapply(dataset, function (x) allLevels[x[index]], character(length(index))))
 }
 
 #' @describeIn ReadCharacters Read nexus characters as phyDat object
@@ -428,10 +446,11 @@ ReadTntAsPhyDat <- function (filepath) {
 }
 
 
-#' @describeIn ReadCharacters A convenient wrapper for \pkg{phangorn}'s \code{phyDat},
-#' which converts a *list* of morphological characters into a phyDat object.
-#' If your morphological characters are in the form of a *matrix*, perhaps because
-#' they have been read using `read.table`, try [MatrixToPhyDat] instead.
+#' @describeIn ReadCharacters A convenient wrapper for \pkg{phangorn}'s 
+#' \code{phyDat}, which converts a *list* of morphological characters into a 
+#' `phyDat` object.
+#' If your morphological characters are in the form of a *matrix*, perhaps
+#' because they have been read using `read.table`, try [MatrixToPhyDat] instead.
 #'
 #' @param dataset list of taxa and characters, in the format produced by [read.nexus.data]:
 #'                a list of sequences each made of a single vector of mode character,
