@@ -1,3 +1,5 @@
+# TreeSearch
+
 [![Build Status](https://travis-ci.org/ms609/TreeSearch.svg?branch=master)](https://travis-ci.org/ms609/TreeSearch)
 [![codecov](https://codecov.io/gh/ms609/TreeSearch/branch/master/graph/badge.svg)](https://codecov.io/gh/ms609/TreeSearch)
 [![CRAN Status Badge](http://www.r-pkg.org/badges/version/TreeSearch)](https://cran.r-project.org/package=TreeSearch)
@@ -6,7 +8,6 @@
 -->
 [![Project Status: Active – – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
-# TreeSearch
 This package exists to allow parsimony-style tree searches in R.
 
 It extends the basic functionality available in phangorn, with a view to making tree search faster and more efficient, 
@@ -60,3 +61,7 @@ D. P. Faith, J. W. H. Trueman, Towards an inclusive philosophy for phylogenetic 
 
 Farris, J. S. (1969). A successive approximations approach to character weighting. 
   Systematic Biology, 18(4), 374–385.  doi:[10.2307/2412182](https://dx.doi.org/10.2307/2412182)
+
+Please note that the 'TreeSearch' project is released with a
+[Contributor Code of Conduct](CODE_OF_CONDUCT.md).
+By contributing to this project, you agree to abide by its terms.
