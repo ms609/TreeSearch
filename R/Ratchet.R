@@ -32,7 +32,10 @@
 #' @return This function returns a tree modified by parsimony ratchet iterations.
 #'
 #' @references 
-#'  \insertRef{Nixon1999}{TreeSearch}
+#' 
+#' - \insertRef{Nixon1999}{TreeSearch}
+#' 
+#' - \insertRef{SmithTern}{TreeSearch}
 #'
 #' @examples
 #' data('Lobo')
@@ -218,7 +221,7 @@ ProfileRatchet <- function (tree, dataset,
 #' @describeIn Ratchet Shortcut for Ratchet search using implied weights
 #' @template concavityParam
 #' @export
-IWRatchet <- function (tree, dataset, concavity=4,
+IWRatchet <- function (tree, dataset, concavity = 10,
                             swappers = list(TBRSwap, SPRSwap, NNISwap),
                             BootstrapSwapper = if (class(swappers) == 'list')
                               swappers[[length(swappers)]] else swappers,

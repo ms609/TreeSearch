@@ -192,6 +192,8 @@ IWMultiRatchet
 ```
 which operate in the same fashion as their equally-weighted counterparts,
 with the option of specifying a concavity constant (_k_) using 
-the parameter `concavity=k` (default = 4).
+the parameter `concavity=k` (default = 10).  Note that the default value of 
+10 is somewhat higher than the default of 3 in TNT; this low default probably
+gives poorer results in many settings [@SmithTern].
 
 ## References

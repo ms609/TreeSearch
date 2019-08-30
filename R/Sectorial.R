@@ -286,7 +286,7 @@
 #######' @describeIn Ratchet Shortcut for Ratchet search using implied weights
 #######' @template concavityParam
 #######' @export
-######IWSectorial <- function (tree, dataset, concavity=4,
+######IWSectorial <- function (tree, dataset, concavity = 10,
 ######                       swappers = list(TBRSwap, SPRSwap, NNISwap),
 ######                       BootstrapSwapper = swappers[[length(swappers)]],
 ######                       returnAll=FALSE, stopAtScore=NULL,

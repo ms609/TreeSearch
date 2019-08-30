@@ -130,6 +130,9 @@ EdgeListSearch <- function (edgeList, dataset,
 #' }
 #' @author Martin R. Smith
 #'
+#' @references
+#' - \insertRef{SmithTern}{TreeSearch}
+#'
 #' @seealso
 #' \itemize{
 #' \item \code{\link{Fitch}}, calculates parsimony score;

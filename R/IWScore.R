@@ -16,7 +16,9 @@
 #'         and `k` is a constant (the 'concavity constant')
 #'
 #' @references
-#'  \insertRef{Goloboff1997}{TreeSearch}
+#'  - \insertRef{Goloboff1997}{TreeSearch}
+#'  
+#'  - \insertRef{SmithTern}{TreeSearch}
 #'
 #' @examples
 #'   data(referenceTree)
@@ -27,7 +29,7 @@
 #' @author Martin R. Smith
 #' @keywords tree
 #' @export
-IWScore <- function (tree, dataset, concavity=4, ...) {
+IWScore <- function (tree, dataset, concavity = 10, ...) {
   if (class(dataset) != 'phyDat') {
     stop('Invalid dataset type; prepare dataset with PhyDat() and PrepareDataIW().')
   }
@@ -55,7 +57,7 @@ IWScore <- function (tree, dataset, concavity=4, ...) {
 #'                 using \code{\link{MinimumSteps}}.
 #'                 
 #' @export
-IWScoreMorphy <- function (parent, child, dataset, concavity=4, 
+IWScoreMorphy <- function (parent, child, dataset, concavity = 10, 
                            minSteps = attr(dataset, 'min.steps'), ...) {
   steps <- vapply(attr(dataset, 'morphyObjs'), MorphyLength, parent=parent, child=child, integer(1))
   homoplasies <- steps - minSteps
@@ -79,7 +81,8 @@ IWInitMorphy <- function (dataset) {
 #' @describeIn TreeSearch Search using profile parsimony
 #' @template concavityParam
 #' @export
-IWTreeSearch <- function (tree, dataset, concavity = 4, EdgeSwapper = RootedTBR,
+IWTreeSearch <- function (tree, dataset, concavity = 10, 
+                          EdgeSwapper = RootedTBR,
                         maxIter = 100, maxHits = 20, forestSize = 1,
                         verbosity = 1, ...) {
   if (class(dataset) != 'phyDat') stop("Unrecognized dataset class; should be phyDat, not ", class(dataset), '.')

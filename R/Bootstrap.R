@@ -10,6 +10,9 @@
 #' @template verbosityParam
 #' @param \dots further parameters to send to \code{TreeScorer}
 #'
+#' @references 
+#' - \insertRef{SmithTern}{TreeSearch}
+#'
 #' @return A tree that is optimal under a random sampling of the original characters
 #' @export
 MorphyBootstrap <- function (edgeList, morphyObj, EdgeSwapper = NNISwap, 
@@ -65,7 +68,7 @@ ProfileBootstrap <- function (edgeList, dataset, EdgeSwapper = NNISwap,
 #' @describeIn MorphyBootstrap Bootstrapper for Implied weighting
 #' @template concavityParam
 #' @export
-IWBootstrap <- function (edgeList, dataset, concavity=4L, EdgeSwapper = NNISwap, 
+IWBootstrap <- function (edgeList, dataset, concavity = 10L, EdgeSwapper = NNISwap, 
                               maxIter, maxHits, verbosity=1L, ...) {
   att <- attributes(dataset)
   startWeights <- att[['weight']]
