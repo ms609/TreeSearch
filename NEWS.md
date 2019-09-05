@@ -1,7 +1,8 @@
-# TreeSearch 0.3.2.9007 (development)
+# TreeSearch 0.3.2.9008 (development)
 
 ## New features
  - `PhyDatToMatrix`, complementing `MatrixToPhyDat`
+ - `NPartitions`, `TreeIsRooted`.
  
 ## Changes
  - Move tree distance measures to separate package `TreeDist`
