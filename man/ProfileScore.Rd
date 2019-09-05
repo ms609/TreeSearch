@@ -8,7 +8,7 @@
 \alias{ProfileDestroyMorphy}
 \title{Profile Parsimony Score}
 \usage{
-IWScoreMorphy(parent, child, dataset, concavity = 4,
+IWScoreMorphy(parent, child, dataset, concavity = 10,
   minSteps = attr(dataset, "min.steps"), ...)
 
 ProfileScore(tree, dataset)
@@ -33,7 +33,9 @@ prepared within the function.
 In subsidiary functions, the dataset will have been initialized using
 \code{ProfileInitMorphy}, must be destroyed using \code{ProfileDestroyMorphy}.}
 
-\item{concavity}{A numeric value to use as the concavity constant (\code{k}) in implied weighting.}
+\item{concavity}{A numeric value to use as the concavity constant (\code{k})
+in implied weighting. Defaults to 10; TNT sets a default of 3, but this
+is too low in some circumstances (Smith, 2019).}
 
 \item{minSteps}{Integer vector specifying the minimum number of steps
 possible for each character in \code{dataset}, perhaps calculated

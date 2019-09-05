@@ -7,7 +7,7 @@
 \alias{ProfileTreeSearch}
 \title{Search for most parsimonious trees}
 \usage{
-IWTreeSearch(tree, dataset, concavity = 4, EdgeSwapper = RootedTBR,
+IWTreeSearch(tree, dataset, concavity = 10, EdgeSwapper = RootedTBR,
   maxIter = 100, maxHits = 20, forestSize = 1, verbosity = 1, ...)
 
 EdgeListSearch(edgeList, dataset, TreeScorer = MorphyLength,
@@ -31,7 +31,9 @@ ProfileTreeSearch(tree, dataset, EdgeSwapper = RootedTBR,
 
 \item{dataset}{Data in format required by \code{InitializeData}.}
 
-\item{concavity}{A numeric value to use as the concavity constant (\code{k}) in implied weighting.}
+\item{concavity}{A numeric value to use as the concavity constant (\code{k})
+in implied weighting. Defaults to 10; TNT sets a default of 3, but this
+is too low in some circumstances (Smith, 2019).}
 
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example
@@ -113,6 +115,11 @@ TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=NNISwap)
 TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=RootedSPRSwap)
 TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=TBRSwap)}
 
+}
+\references{
+\itemize{
+\item \insertRef{SmithTern}{TreeSearch}
+}
 }
 \seealso{
 \itemize{

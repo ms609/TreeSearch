@@ -36,7 +36,7 @@ ProfileRatchet(tree, dataset, swappers = list(TBRSwap, SPRSwap, NNISwap),
   bootstrapHits = searchHits, verbosity = 1L, suboptimal = 1e-08,
   ...)
 
-IWRatchet(tree, dataset, concavity = 4, swappers = list(TBRSwap,
+IWRatchet(tree, dataset, concavity = 10, swappers = list(TBRSwap,
   SPRSwap, NNISwap), BootstrapSwapper = if (class(swappers) == "list")
   swappers[[length(swappers)]] else swappers, returnAll = FALSE,
   stopAtScore = NULL, stopAtPeak = FALSE, stopAtPlateau = 0L,
@@ -142,7 +142,9 @@ Will be overridden if a passed function has an attribute
 
 \item{suboptimal}{retain trees that are suboptimal by this score. Defaults to 1e-08 to counter rounding errors.}
 
-\item{concavity}{A numeric value to use as the concavity constant (\code{k}) in implied weighting.}
+\item{concavity}{A numeric value to use as the concavity constant (\code{k})
+in implied weighting. Defaults to 10; TNT sets a default of 3, but this
+is too low in some circumstances (Smith, 2019).}
 
 \item{nSearch}{Number of Ratchet searches to conduct (for RatchetConsensus)}
 }
@@ -189,7 +191,10 @@ quickIWResult <- IWRatchet(quickResult, Lobo.phy, concavity=2.5,
  
 }
 \references{
-\insertRef{Nixon1999}{TreeSearch}
+\itemize{
+\item \insertRef{Nixon1999}{TreeSearch}
+\item \insertRef{SmithTern}{TreeSearch}
+}
 }
 \seealso{
 \code{\link{TreeSearch}}

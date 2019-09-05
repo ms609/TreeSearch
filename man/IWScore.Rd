@@ -6,7 +6,7 @@
 \alias{IWDestroyMorphy}
 \title{Implied weights parsimony Score}
 \usage{
-IWScore(tree, dataset, concavity = 4, ...)
+IWScore(tree, dataset, concavity = 10, ...)
 
 IWInitMorphy(dataset)
 
@@ -22,7 +22,9 @@ within the function.
 In subsidiary functions, the dataset will have been initialized using
 \code{IWInitMorphy}, and must be destroyed using \code{IWDestroyMorphy}.}
 
-\item{concavity}{A numeric value to use as the concavity constant (\code{k}) in implied weighting.}
+\item{concavity}{A numeric value to use as the concavity constant (\code{k})
+in implied weighting. Defaults to 10; TNT sets a default of 3, but this
+is too low in some circumstances (Smith, 2019).}
 
 \item{\dots}{unused; allows additional parameters specified within \dots to be
 received by the function without throwing an error.}
@@ -49,7 +51,10 @@ Calculate a tree's Parsimony score with a given dataset using implied weights (G
 
 }
 \references{
-\insertRef{Goloboff1997}{TreeSearch}
+\itemize{
+\item \insertRef{Goloboff1997}{TreeSearch}
+\item \insertRef{SmithTern}{TreeSearch}
+}
 }
 \author{
 Martin R. Smith
