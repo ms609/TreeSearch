@@ -13,4 +13,6 @@ test_that('Rooting and partition counting',{
   expect_equal(5L, NPartitions(tree8))
   expect_equal(5L, NPartitions(ape::unroot(tree8)))
   
+  expect_equal(c(5L, 5L), NPartitions(list(tree8, ape::unroot(tree8))))
+  expect_error(NPartitions(5L))
 })
