@@ -11,8 +11,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-# Loading phylogenetic data into R
-
 It can be a bit fiddly to get a phylogenetic dataset into R, particularly if you are not used to working with files in the NEXUS format.
 
 First off, make sure that you are comfortable 

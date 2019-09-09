@@ -11,8 +11,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-# Filesystem navigation
-
 Before you can open a file, you need to tell R where to find it. 
 You can do this by providing the full path to the file on your system.
 Be careful to use forward slashes (`/`, not `\`, which you'll get if you
