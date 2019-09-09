@@ -15,7 +15,37 @@ The number of taxa if success, otherwise an error code.
 \description{
 Retrieves the number of taxa (rows) in the dataset.
 }
+\seealso{
+Other Morphy API functions: \code{\link{MorphyErrorCheck}},
+  \code{\link{MorphyWeights}}, \code{\link{PhyDat2Morphy}},
+  \code{\link{SetMorphyWeights}},
+  \code{\link{SingleCharMorphy}},
+  \code{\link{UnloadMorphy}},
+  \code{\link{mpl_apply_tipdata}},
+  \code{\link{mpl_attach_rawdata}},
+  \code{\link{mpl_attach_symbols}},
+  \code{\link{mpl_delete_Morphy}},
+  \code{\link{mpl_delete_rawdata}},
+  \code{\link{mpl_first_down_recon}},
+  \code{\link{mpl_first_up_recon}},
+  \code{\link{mpl_get_charac_weight}},
+  \code{\link{mpl_get_num_charac}},
+  \code{\link{mpl_get_num_internal_nodes}},
+  \code{\link{mpl_get_symbols}},
+  \code{\link{mpl_init_Morphy}},
+  \code{\link{mpl_new_Morphy}},
+  \code{\link{mpl_second_down_recon}},
+  \code{\link{mpl_second_up_recon}},
+  \code{\link{mpl_set_charac_weight}},
+  \code{\link{mpl_set_num_internal_nodes}},
+  \code{\link{mpl_set_parsim_t}},
+  \code{\link{mpl_translate_error}},
+  \code{\link{mpl_update_lower_root}},
+  \code{\link{mpl_update_tip}},
+  \code{\link{summary.morphyPtr}}
+}
 \author{
 Martin Brazeau
 }
+\concept{Morphy API functions}
 \keyword{internal}

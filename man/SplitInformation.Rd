@@ -40,7 +40,8 @@ content.
 
 }
 \seealso{
-Other split information functions: \code{\link{TreesMatchingSplit}},
+Other split information functions: \code{\link{CharacterInformation}},
+  \code{\link{TreesMatchingSplit}},
   \code{\link{UnrootedTreesMatchingSplit}}
 }
 \author{

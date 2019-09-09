@@ -28,3 +28,8 @@ Fitch score
 \references{
 \insertRef{Brazeau2018}{TreeSearch}
 }
+\seealso{
+Other tree scoring: \code{\link{Fitch}},
+  \code{\link{IWScore}}, \code{\link{MorphyTreeLength}}
+}
+\concept{tree scoring}

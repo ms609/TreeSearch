@@ -35,6 +35,7 @@ LogTreesMatchingSplit <- function (A, B) {
 #' 
 #' @return Phylogenetic information content of the character, in bits.
 #' 
+#' @family split information functions
 #' @author Martin R. Smith
 #' @export
 CharacterInformation <- function (tokens) {

@@ -27,6 +27,7 @@
 #'   IWScore(referenceTree, dataset)
 #'
 #' @author Martin R. Smith
+#' @family tree scoring
 #' @keywords tree
 #' @export
 IWScore <- function (tree, dataset, concavity = 10, ...) {
@@ -50,7 +51,7 @@ IWScore <- function (tree, dataset, concavity = 10, ...) {
   sum(fit * weight)
 }
 
-#' @describeIn ProfileScore Scorer for initialized dataset.
+#' @describeIn IWScore Scorer for initialized dataset.
 #' @template concavityParam
 #' @param minSteps Integer vector specifying the minimum number of steps
 #'                 possible for each character in `dataset`, perhaps calculated

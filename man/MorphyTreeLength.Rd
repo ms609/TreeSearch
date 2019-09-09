@@ -64,6 +64,12 @@ Calculate parsimony score with inapplicable data
 
 \seealso{
 PhyDat2Morphy
+
+Other tree scoring: \code{\link{FitchSteps}},
+  \code{\link{Fitch}}, \code{\link{IWScore}}
+
+Other tree scoring: \code{\link{FitchSteps}},
+  \code{\link{Fitch}}, \code{\link{IWScore}}
 }
 \author{
 Martin R. Smith
@@ -72,4 +78,5 @@ Martin R. Smith
 
 Martin R. Smith
 }
+\concept{tree scoring}
 \keyword{internal}

@@ -22,7 +22,8 @@ a bipartition split that divides taxa into groups of size \code{A} and \code{B}.
 }}
 
 \seealso{
-Other split information functions: \code{\link{SplitInformation}},
+Other split information functions: \code{\link{CharacterInformation}},
+  \code{\link{SplitInformation}},
   \code{\link{UnrootedTreesMatchingSplit}}
 }
 \author{

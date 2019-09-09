@@ -19,6 +19,12 @@ Phylogenetic information content of the character, in bits.
 \description{
 Calculates the phylogenetic information content of a given character.
 }
+\seealso{
+Other split information functions: \code{\link{SplitInformation}},
+  \code{\link{TreesMatchingSplit}},
+  \code{\link{UnrootedTreesMatchingSplit}}
+}
 \author{
 Martin R. Smith
 }
+\concept{split information functions}

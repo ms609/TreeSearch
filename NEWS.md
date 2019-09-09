@@ -3,6 +3,7 @@
 ## New features
  - `PhyDatToMatrix`, complementing `MatrixToPhyDat`
  - `NPartitions`, `TreeIsRooted`.
+ - Documentation with `pkgdown`.
  
 ## Changes
  - Move tree distance measures to separate package `TreeDist`

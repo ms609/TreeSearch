@@ -51,7 +51,7 @@ incorrectly parsed files.
 \itemize{
 \item \code{ReadTntCharacters}: Read characters from TNT file
 
-\item \code{ReadAsPhyDat}: Read nexus characters as phyDat object
+\item \code{ReadAsPhyDat}: Read Nexus characters as phyDat object
 
 \item \code{ReadTntAsPhyDat}: Read TNT characters as phyDat object
 

@@ -2,11 +2,15 @@
 % Please edit documentation in R/IWScore.R, R/pp_ProfileScore.R
 \name{IWScore}
 \alias{IWScore}
+\alias{IWScoreMorphy}
 \alias{IWInitMorphy}
 \alias{IWDestroyMorphy}
 \title{Implied weights parsimony Score}
 \usage{
 IWScore(tree, dataset, concavity = 10, ...)
+
+IWScoreMorphy(parent, child, dataset, concavity = 10,
+  minSteps = attr(dataset, "min.steps"), ...)
 
 IWInitMorphy(dataset)
 
@@ -28,6 +32,14 @@ is too low in some circumstances (Smith, 2019).}
 
 \item{\dots}{unused; allows additional parameters specified within \dots to be
 received by the function without throwing an error.}
+
+\item{minSteps}{Integer vector specifying the minimum number of steps
+possible for each character in \code{dataset}, perhaps calculated
+using \code{\link{MinimumSteps}}.}
+
+\item{concavity}{A numeric value to use as the concavity constant (\code{k})
+in implied weighting. Defaults to 10; TNT sets a default of 3, but this
+is too low in some circumstances (Smith, 2019).}
 }
 \value{
 The 'fit', \code{h / h + k}, where \code{h} is the amount of homoplasy ('extra steps')
@@ -38,6 +50,8 @@ Calculate a tree's Parsimony score with a given dataset using implied weights (G
 }
 \section{Functions}{
 \itemize{
+\item \code{IWScoreMorphy}: Scorer for initialized dataset.
+
 \item \code{IWInitMorphy}: Initialize dataset by adding morphyObjs and min.steps.
 
 \item \code{IWDestroyMorphy}: Free memory from morphyObjs initialized by \kbd{IWScoreMorphy}.
@@ -56,7 +70,12 @@ Calculate a tree's Parsimony score with a given dataset using implied weights (G
 \item \insertRef{SmithTern}{TreeSearch}
 }
 }
+\seealso{
+Other tree scoring: \code{\link{FitchSteps}},
+  \code{\link{Fitch}}, \code{\link{MorphyTreeLength}}
+}
 \author{
 Martin R. Smith
 }
+\concept{tree scoring}
 \keyword{tree}

@@ -23,6 +23,7 @@
 #' If multiple elements are requested then these will be returned in a list.
 #' 
 #' @seealso \code{\link{TreeSearch}}
+#' @family tree scoring
 #' 
 #' @author Martin R. Smith (using Morphy C library, by Martin Brazeau)
 #' @importFrom phangorn phyDat
@@ -50,6 +51,7 @@ Fitch <- function (tree, dataset) {
 #  tree <- NJTree(dataset)
 #' }
 #'
+#' @family tree scoring
 #' @references
 #'  \insertRef{Brazeau2018}{TreeSearch}
 #' @export
@@ -84,6 +86,7 @@ FitchSteps <- function (tree, dataset) {
 #'
 #' @seealso PhyDat2Morphy
 #'
+#' @family tree scoring
 #' @author Martin R. Smith
 #' @keywords internal
 #' @export
@@ -130,6 +133,7 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder=FALSE, nTaxa=mpl
 #' @template parentOfParam
 #' @template leftChildParam
 #' @template rightChildParam
+#' @family tree scoring
 #' @author Martin R. Smith
 #' @keywords internal
 #' @export

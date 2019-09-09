@@ -7,6 +7,7 @@
 #' @examples mpl_translate_error(-1) # "ERR_INVALID_SYMBOL"
 #'
 #' @author Martin R. Smith
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 
@@ -46,6 +47,7 @@ mpl_translate_error <- function (errorCode) {
 #' @author Martin Brazeau
 #' @useDynLib TreeSearch, .registration = TRUE
 #' @keywords internal
+#' @family Morphy API functions
 #' @export
 mpl_new_Morphy <- function() {
     .Call("_R_wrap_mpl_new_Morphy")
@@ -61,6 +63,7 @@ mpl_new_Morphy <- function() {
 #' @return A Morphy error code.
 #' 
 #' @author Martin Brazeau
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_delete_Morphy <- function(morphyobj) {
@@ -80,6 +83,7 @@ mpl_delete_Morphy <- function(morphyobj) {
 #' @return Morphy error code.
 #' 
 #' @author Martin Brazeau
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_init_Morphy <- function(numtaxa, numchars, morphyobj) {
@@ -95,6 +99,7 @@ mpl_init_Morphy <- function(numtaxa, numchars, morphyobj) {
 #' @return The number of taxa if success, otherwise an error code.
 #'
 #' @author Martin Brazeau
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_get_numtaxa <- function(morphyobj) {
@@ -112,6 +117,7 @@ mpl_get_numtaxa <- function(morphyobj) {
 #' @return An error code.
 #' 
 #' @author Martin R. Smith
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_set_charac_weight <- function (charID, weight, morphyobj) {
@@ -130,6 +136,7 @@ mpl_set_charac_weight <- function (charID, weight, morphyobj) {
 #'         approximation used by Morphy.
 #' 
 #' @author Martin R. Smith
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_get_charac_weight <- function (charID, morphyobj) {
@@ -146,6 +153,7 @@ mpl_get_charac_weight <- function (charID, morphyobj) {
 #' @return The number of internal nodes.
 #' 
 #' @author Martin Brazeau
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_get_num_charac <- function(morphyobj) {
@@ -169,6 +177,7 @@ mpl_get_num_charac <- function(morphyobj) {
 #' @return Morphy error code.
 #' 
 #' @author Martin Brazeau
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_attach_symbols <- function(symbols, morphyobj) {
@@ -188,6 +197,7 @@ mpl_attach_symbols <- function(symbols, morphyobj) {
 #' @return Morphy error code.
 #' 
 #' @author Martin Brazeau
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_attach_rawdata <- function(rawdata, morphyobj) {
@@ -206,6 +216,7 @@ mpl_attach_rawdata <- function(rawdata, morphyobj) {
 #' being used. NULL if failure.
 #' 
 #' @author Martin Brazeau
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 
@@ -227,6 +238,7 @@ mpl_get_symbols <- function(morphyobj) {
 #' @return A Morphy error code.
 #' 
 #' @author Martin Brazeau
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_set_parsim_t <- function(char_id, tname = "typename", morphyobj) {
@@ -245,6 +257,7 @@ mpl_set_parsim_t <- function(char_id, tname = "typename", morphyobj) {
 #' @return A Morphy error code.
 #' 
 #' @author Martin Brazeau
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_set_num_internal_nodes <- function(numnodes, morphyobj) {
@@ -262,6 +275,7 @@ mpl_set_num_internal_nodes <- function(numnodes, morphyobj) {
 #' @return The number of internal nodes.
 #' 
 #' @author Martin Brazeau
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 
@@ -279,6 +293,7 @@ mpl_get_num_internal_nodes <- function(morphyobj) {
 #' @param morphyobj An instance of the Morphy object.
 #' 
 #' @return A Morphy error code.
+#' @family Morphy API functions
 #' 
 #' @author Martin Brazeau
 #' @keywords internal
@@ -305,6 +320,7 @@ mpl_apply_tipdata <- function(morphyobj) {
 #' @return The integral parsimony length (right now)
 #' 
 #' @author Martin Brazeau
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_first_down_recon <- function(node_id, left_id, right_id, morphyobj) {
@@ -321,6 +337,7 @@ mpl_first_down_recon <- function(node_id, left_id, right_id, morphyobj) {
 #' @return Morphy error code.
 #' 
 #' @author Thomas Guillerme
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_delete_rawdata <- function(morphyobj) {
@@ -346,6 +363,7 @@ mpl_delete_rawdata <- function(morphyobj) {
 #' @return A null value (for now).
 #' 
 #' @author Thomas Guillerme
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_first_up_recon <- function(node_id, left_id, right_id, anc_id, morphyobj) {
@@ -373,6 +391,7 @@ mpl_first_up_recon <- function(node_id, left_id, right_id, anc_id, morphyobj) {
 #' @return The integral parsimony length (right now)
 #' 
 #' @author Thomas Guillerme
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_second_down_recon <- function(node_id, left_id, right_id, morphyobj) {
@@ -400,6 +419,7 @@ mpl_second_down_recon <- function(node_id, left_id, right_id, morphyobj) {
 #' @return The integral parsimony length (right now)
 #'  
 #' @author Thomas Guillerme
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_second_up_recon <- function(node_id, left_id, right_id, anc_id, morphyobj) {
@@ -429,6 +449,7 @@ mpl_second_up_recon <- function(node_id, left_id, right_id, anc_id, morphyobj) {
 #' @seealso A null value (for now).
 #' 
 #' @author Thomas Guillerme
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_update_tip <- function(tip_id, anc_id, morphyobj) {
@@ -452,6 +473,7 @@ mpl_update_tip <- function(tip_id, anc_id, morphyobj) {
 #' @return A Morphy error code.
 #' 
 #' @author Thomas Guillerme
+#' @family Morphy API functions
 #' @keywords internal
 #' @export
 mpl_update_lower_root <- function(l_root_id, root_id, morphyobj) {

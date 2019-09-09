@@ -6,3 +6,73 @@ authors:
     
 development:
   mode: auto
+
+reference:
+  - title: "Tree search"
+    desc: Functions to search for optimal phylogenetic trees
+    contents:
+      - TreeSearch
+      - Bootstrap
+      
+  - title: "Tree scoring"
+    desc: Functions that provide tree scores, for optimization
+    contents: 
+      has_concept("tree scoring")
+      has_suffix('Score')
+      
+  - title: "Tree manipulation"
+    desc: > 
+      Functions for editing phylogenetic trees
+    contents:
+      - matches("NNI")
+      - matches("SPR")
+      - matches("TBR")
+      
+  - title: "Phylogenetic data"
+    desc: Functions for modifying and evaluating datasets
+      - MinimumSteps
+      - starts_with("Prepare")
+      - starts_with('Tips')
+      - MatrixToPhyDat
+      - PhyDatToMatrix
+      - PhyToString
+      - StringToPhyDat
+      
+  - title: "Parsers"
+    desc: Functions to parse files
+    contents: 
+      - ApeTime
+      - ExtractTaxa
+      - ReadCharacters
+      - ReadTntTree
+      - TNTText2Tree
+      
+  - title: "Combinatorics"
+    desc: Functions to calculate factorial quantities
+    - NRooted
+    - N1Spr
+    - DoubleFactorial
+    - has_concept("split information functions")
+    
+  - title: "Morphy API"
+    desc: Functions that interface with the Morphy C library
+    contents:
+      - starts_with('mpl_')
+      - has_concept("Morphy API functions")
+      
+  - title: "Datasets"
+    desc: Data that accompanies the package
+    contents: 
+     - has_keyword('datasets')
+     
+  - title: "Utility functions"
+    desc: Functions to assist user comprehension
+    contents:
+      - AsBinary
+      - Assert
+      - ListToMatrix
+      - MatrixToList
+      - RightmostCharacter
+      - SampleOne
+      - UnloadTreeSearch
+      - VisualizeMatching

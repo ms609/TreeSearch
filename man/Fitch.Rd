@@ -36,7 +36,11 @@ result <- Fitch(tree, inapplicable.phyData[[1]])
 }
 \seealso{
 \code{\link{TreeSearch}}
+
+Other tree scoring: \code{\link{FitchSteps}},
+  \code{\link{IWScore}}, \code{\link{MorphyTreeLength}}
 }
 \author{
 Martin R. Smith (using Morphy C library, by Martin Brazeau)
 }
+\concept{tree scoring}

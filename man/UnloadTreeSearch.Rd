@@ -9,3 +9,4 @@ UnloadTreeSearch()
 \description{
 Unload this library
 }
+\keyword{internal}
