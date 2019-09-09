@@ -1,4 +1,3 @@
-
 #' Descendant Edges
 #'
 #' Quickly identifies edges that are 'descended' from a particular edge in a tree
@@ -67,8 +66,6 @@ AllDescendantEdges <- function (parent, child, nEdge = length(parent)) {
 AncestorEdge <- function (edge, parent, child) child == parent[edge]
 
 #' EdgeAncestry
-#'
-#' Descendant Edges
 #'
 #' Quickly identifies edges that are 'ancestral' to a particular edge in a tree
 #'

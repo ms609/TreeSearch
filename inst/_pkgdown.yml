@@ -9,16 +9,18 @@ development:
 
 reference:
   - title: "Tree search"
-    desc: Functions to search for optimal phylogenetic trees
+    desc: "Functions to search for optimal phylogenetic trees"
     contents:
       - TreeSearch
-      - Bootstrap
+      - matches("Bootstrap")
+      - matches('Ratchet')
       
   - title: "Tree scoring"
-    desc: Functions that provide tree scores, for optimization
+    desc: "Functions that provide tree scores, for optimization"
     contents: 
       has_concept("tree scoring")
       has_suffix('Score')
+      - RandomTreeScore
       
   - title: "Tree manipulation"
     desc: > 
@@ -27,9 +29,27 @@ reference:
       - matches("NNI")
       - matches("SPR")
       - matches("TBR")
+      - AddTip
+      - AllAncestors
+      - AncestorEdge
+      - CladeSizes
+      - CollapseNode
+      - DescendantEdges
+      - EdgeAncestry
+      - MRCA
+      - NPartitions
+      - NonDuplicateRoot
+      - RandomMorphyTree
+      - RearrangeEdges
+      - Renumber
+      - RootTree
+      - SingleTaxonTree
+      - Subtree
+      - TreeIsRooted
       
   - title: "Phylogenetic data"
-    desc: Functions for modifying and evaluating datasets
+    desc: "Functions for modifying and evaluating datasets"
+    contents:
       - MinimumSteps
       - starts_with("Prepare")
       - starts_with('Tips')
@@ -39,7 +59,7 @@ reference:
       - StringToPhyDat
       
   - title: "Parsers"
-    desc: Functions to parse files
+    desc: "Functions to parse files"
     contents: 
       - ApeTime
       - ExtractTaxa
@@ -47,32 +67,38 @@ reference:
       - ReadTntTree
       - TNTText2Tree
       
-  - title: "Combinatorics"
-    desc: Functions to calculate factorial quantities
+  - title: "Partitions"
+    desc: "Functions that manipulate bipartition splits"
+    contents:
+      - matches('Split')
+      
+  - title: "Information and combinatorics"
+    desc: "Functions to calculate factorial quantities"
+    contents:
+    - starts_with('IC')
     - NRooted
     - N1Spr
     - DoubleFactorial
     - has_concept("split information functions")
+    - WithOneExtraStep
     
   - title: "Morphy API"
-    desc: Functions that interface with the Morphy C library
+    desc: "Functions that interface with the Morphy C library"
     contents:
       - starts_with('mpl_')
       - has_concept("Morphy API functions")
       
   - title: "Datasets"
-    desc: Data that accompanies the package
+    desc: "Data that accompanies the package"
     contents: 
      - has_keyword('datasets')
      
   - title: "Utility functions"
-    desc: Functions to assist user comprehension
+    desc: "Functions to assist user comprehension"
     contents:
       - AsBinary
-      - Assert
       - ListToMatrix
       - MatrixToList
       - RightmostCharacter
       - SampleOne
       - UnloadTreeSearch
-      - VisualizeMatching

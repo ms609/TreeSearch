@@ -1,4 +1,5 @@
-#' @describeIn N1Spr Information content of trees 0 or 1 SPR step from tree with n tips.
+#' @describeIn N1Spr Information content of trees 0 or 1 SPR step from tree
+#'  with n tips.
 #' @export
 IC1Spr <- function(n) -log2((1L + N1Spr(n)) / NUnrooted(n)) 
 
