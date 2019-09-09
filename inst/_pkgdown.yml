@@ -9,7 +9,7 @@ development:
 
 reference:
   - title: "Tree search"
-    desc: "Functions to search for optimal phylogenetic trees"
+    desc: "Functions to search for optimal phylogenetic trees."
     contents:
       - TreeSearch
       - matches("Bootstrap")
@@ -19,7 +19,7 @@ reference:
       # - RunTNT
       
   - title: "Tree scoring"
-    desc: "Functions that provide tree scores, for optimization"
+    desc: "Functions that provide tree scores, for optimization."
     contents: 
       - has_concept("tree scoring")
       - ends_with('Score')
@@ -27,7 +27,7 @@ reference:
       - RandomTreeScore
     
   - title: "Node support"
-    desc: "Functions that describe support for nodes in trees"
+    desc: "Functions that describe support for nodes in trees."
     contents: 
       - SplitFrequency
       - SupportColour
@@ -35,7 +35,7 @@ reference:
       
   - title: "Tree manipulation"
     desc: > 
-      Functions for editing phylogenetic trees
+      Functions for editing phylogenetic trees.
     contents:
       - matches("NNI")
       - matches("SPR")
@@ -64,7 +64,7 @@ reference:
       - TreeIsRooted
       
   - title: "Phylogenetic data"
-    desc: "Functions for modifying and evaluating datasets"
+    desc: "Functions for modifying and evaluating datasets."
     contents:
       - MinimumSteps
       - starts_with("Prepare")
@@ -75,7 +75,7 @@ reference:
       - StringToPhyDat
       
   - title: "Parsers"
-    desc: "Functions to parse files"
+    desc: "Functions to parse files."
     contents: 
       - ApeTime
       - ExtractTaxa
@@ -85,12 +85,12 @@ reference:
       - TNTText2Tree
       
   - title: "Partitions"
-    desc: "Functions that manipulate bipartition splits"
+    desc: "Functions that manipulate bipartition splits."
     contents:
       - matches('Split')
       
   - title: "Information and combinatorics"
-    desc: "Functions to calculate factorial quantities"
+    desc: "Functions to calculate factorial quantities."
     contents:
     - starts_with('IC')
     - InfoAmounts
@@ -101,14 +101,14 @@ reference:
     - WithOneExtraStep
     
   - title: "C APIs"
-    desc: "Functions that interface with C libraries"
+    desc: "Functions that interface with C libraries."
     contents:
      # - starts_with('mpl_')
       - has_concept("Morphy API functions")
      # - has_concept("C wrappers")
       
   - title: "Datasets"
-    desc: "Data that accompanies the package"
+    desc: "Data that accompanies the package."
     contents: 
       - brewer
       - congreveLamsdellMatrices
@@ -122,7 +122,7 @@ reference:
       - referenceTree
      #- has_concept('datasets') # Not yet implemented by pkgdown
   - title: "Utility functions"
-    desc: "Functions to assist user comprehension"
+    desc: "Miscellaneous functions to simplify or expedite basic functionality."
     contents:
       - AsBinary
       - ListToMatrix
