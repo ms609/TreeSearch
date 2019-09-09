@@ -7,13 +7,10 @@ r_check_args: --as-cran --no-manual # Workaround error compiling PDF manual
 git:
   depth: 1
 
-r_github_packages:
- - r-lib/devtools
-
 r_binary_packages:
  - ape
  - covr
-#- devtools
+ - devtools
  - memoise
  - phangorn
  - R.cache
@@ -58,4 +55,3 @@ matrix:
       - brew install cairo
       - sudo tlmgr install doi titling hyperref
 #  allow_failures:
-#    r: devel # Incompatible with devtools?
