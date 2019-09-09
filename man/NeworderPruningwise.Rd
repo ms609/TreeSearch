@@ -11,4 +11,11 @@ NeworderPruningwise(nTaxa, nb.node, parent, child, nb.edge)
 neworder_pruningwise
 Wrapper for the ape function
 }
+\seealso{
+Other C wrappers: \code{\link{Cladewise}},
+  \code{\link{NeworderPhylo}},
+  \code{\link{OrderEdgesNumberNodes}},
+  \code{\link{RenumberTree}}
+}
+\concept{C wrappers}
 \keyword{internal}

@@ -16,6 +16,11 @@ an object of class \code{phylo}
 \description{
 Generates a rooted neighbour joining tree, with no edge lengths
 }
+\seealso{
+Other tree generation functions: \code{\link{RandomMorphyTree}},
+  \code{\link{RandomTree}}, \code{\link{SingleTaxonTree}}
+}
 \author{
 Martin R. Smith
 }
+\concept{tree generation functions}

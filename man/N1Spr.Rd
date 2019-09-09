@@ -19,7 +19,8 @@ Formula given by Allen and Steel (2001).
 }
 \section{Functions}{
 \itemize{
-\item \code{IC1Spr}: Information content of trees 0 or 1 SPR step from tree with n tips.
+\item \code{IC1Spr}: Information content of trees 0 or 1 SPR step from tree
+with n tips.
 }}
 
 \references{

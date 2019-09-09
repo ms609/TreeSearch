@@ -108,7 +108,7 @@ ForestSplits <- function (forest, powersOf2) {
 }
 
 #' @describeIn SplitFrequency Deprecated. Listed the splits in a given tree. 
-#' Use Quartet::Tree2Splits instead.
+#' Use Tree2Splits instead.
 #' @export
 TreeSplits <- function (tree) {
   .Deprecated("Tree2Splits")

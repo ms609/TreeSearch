@@ -18,3 +18,8 @@ A list with three elements, each a vector of integers, respectively containing:
 \description{
 Random postorder tree
 }
+\seealso{
+Other tree generation functions: \code{\link{NJTree}},
+  \code{\link{RandomTree}}, \code{\link{SingleTaxonTree}}
+}
+\concept{tree generation functions}

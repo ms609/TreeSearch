@@ -1,6 +1,6 @@
-
 #' neworder_phylo
 #' Wrapper for the ape function
+#' @family C wrappers
 #' @keywords internal
 #' @export
 NeworderPhylo <- function (nTaxa, parent, child, nb.edge, whichwise) {
@@ -10,6 +10,7 @@ NeworderPhylo <- function (nTaxa, parent, child, nb.edge, whichwise) {
 
 #' neworder_pruningwise
 #' Wrapper for the ape function
+#' @family C wrappers
 #' @keywords internal
 #' @export
 NeworderPruningwise <- function (nTaxa, nb.node, parent, child, nb.edge) {
@@ -17,10 +18,11 @@ NeworderPruningwise <- function (nTaxa, nb.node, parent, child, nb.edge) {
      as.integer(child), as.integer(nb.edge), integer(nb.edge))[[6]]
 }
 
-
 #' Order edges and number nodes
 #' Wrapper for the C function
-#' @return an edge matrix for a tree following the usual convention for edge and node numbering
+#' @return an edge matrix for a tree following the usual convention for edge
+#'  and node numbering
+#' @family C wrappers
 #' @keywords internal
 #' @export
 OrderEdgesNumberNodes <- function (parent, child, nTips, nEdge = length(parent)) {
@@ -31,14 +33,18 @@ OrderEdgesNumberNodes <- function (parent, child, nTips, nEdge = length(parent))
 #' Renumber a tree
 #' Order edges and number nodes
 #' Wrapper for the C function RENUMBER_TREE
-#' @return an edge matrix for a tree in following the usual preorder convention for edge and node numbering 
+#' @return an edge matrix for a tree in following the usual preorder convention
+#'  for edge and node numbering 
+#' @family C wrappers
 #' @keywords internal
 #' @export
 RenumberTree <- function (parent, child, nEdge = length(parent)) {
   matrix(.Call('RENUMBER_TREE', as.integer(parent), as.integer(child), as.integer(nEdge)), ncol=2)
 }
 
-#' @describeIn RenumberTree Instead returns a list containing two items corresponding to the new parent and child vectors
+#' @describeIn RenumberTree Instead returns a list containing two items
+#'  corresponding to the new parent and child vectors
+#' @family C wrappers
 #' @keywords internal
 #' @export
 RenumberEdges <- function (parent, child, nEdge = length(parent)) {
@@ -60,8 +66,10 @@ RenumberEdges <- function (parent, child, nEdge = length(parent)) {
 #' @param edge (optional) the value of tree$edge
 #'
 #' @return A tree with nodes numbered in postorder
-#' @author Modified by Martin R. Smith from \code{.reorder_ape} in \pkg{ape} (Emmanuel Paradis)
+#' @author Modified by Martin R. Smith from \code{.reorder_ape} in \pkg{ape} 
+#' (Emmanuel Paradis)
 #'
+#' @family C wrappers
 #' @keywords internal
 #' @export
 Cladewise <- function (tree, nTaxa = NULL, edge = tree$edge) {

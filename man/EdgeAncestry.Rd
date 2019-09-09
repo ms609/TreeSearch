@@ -21,9 +21,6 @@ EdgeAncestry(edge, parent, child, stopAt = (parent == min(parent)))
 a logical vector stating whether each edge in turn is a descendant of the specified edge
 }
 \description{
-Descendant Edges
-}
-\details{
 Quickly identifies edges that are 'ancestral' to a particular edge in a tree
 }
 \seealso{

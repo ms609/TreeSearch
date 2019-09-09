@@ -10,8 +10,8 @@ TipsAreNames(dataset, tips)
 TipsAreColumns(dataset, tips)
 }
 \arguments{
-\item{dataset}{a matrix or list containing symbols associated with each tip; for example,
-a dataset of class \code{phyDat}}
+\item{dataset}{a matrix or list containing symbols associated with each tip;
+for example, a dataset of class \code{phyDat}}
 
 \item{tips}{vector detailing the tips to be selected, whether as their
 names or numbers corresponding to their rows/columns}

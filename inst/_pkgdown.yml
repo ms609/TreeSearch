@@ -14,13 +14,24 @@ reference:
       - TreeSearch
       - matches("Bootstrap")
       - matches('Ratchet')
+      - SuccessiveApproximations
+      - SuccessiveWeights
+      - RunTNT
       
   - title: "Tree scoring"
     desc: "Functions that provide tree scores, for optimization"
     contents: 
-      has_concept("tree scoring")
-      has_suffix('Score')
+      - has_concept("tree scoring")
+      - ends_with('Score')
+      - Evaluate
       - RandomTreeScore
+    
+  - title: "Node support"
+    desc: "Functions that describe support for nodes in trees"
+    contents: 
+      - SplitFrequency
+      - SupportColour
+      - Suboptimality
       
   - title: "Tree manipulation"
     desc: > 
@@ -34,17 +45,22 @@ reference:
       - AncestorEdge
       - CladeSizes
       - CollapseNode
+      - ConsensusWithout
       - DescendantEdges
       - EdgeAncestry
+      - EnforceOutgroup
       - MRCA
       - NPartitions
+      - NewickTree
+      - has_concept('tree generation functions')
       - NonDuplicateRoot
-      - RandomMorphyTree
       - RearrangeEdges
       - Renumber
       - RootTree
       - SingleTaxonTree
+      - SortTree
       - Subtree
+      - RenumberTips
       - TreeIsRooted
       
   - title: "Phylogenetic data"
@@ -52,7 +68,7 @@ reference:
     contents:
       - MinimumSteps
       - starts_with("Prepare")
-      - starts_with('Tips')
+      #- starts_with('Tips')
       - MatrixToPhyDat
       - PhyDatToMatrix
       - PhyToString
@@ -63,6 +79,7 @@ reference:
     contents: 
       - ApeTime
       - ExtractTaxa
+      - NewickTree
       - ReadCharacters
       - ReadTntTree
       - TNTText2Tree
@@ -76,28 +93,40 @@ reference:
     desc: "Functions to calculate factorial quantities"
     contents:
     - starts_with('IC')
+    - InfoAmounts
     - NRooted
     - N1Spr
     - DoubleFactorial
     - has_concept("split information functions")
     - WithOneExtraStep
     
-  - title: "Morphy API"
-    desc: "Functions that interface with the Morphy C library"
+  - title: "C APIs"
+    desc: "Functions that interface with C libraries"
     contents:
-      - starts_with('mpl_')
+     # - starts_with('mpl_')
       - has_concept("Morphy API functions")
+     # - has_concept("C wrappers")
       
   - title: "Datasets"
     desc: "Data that accompanies the package"
     contents: 
-     - has_keyword('datasets')
-     
+      - brewer
+      - congreveLamsdellMatrices
+      - doubleFactorials
+      - inapplicable.citations
+      - inapplicable.datasets
+      - inapplicable.phyData
+      - Lobo.data
+      - Lobo.phy
+      - logDoubleFactorials
+      - referenceTree
+     #- has_concept('datasets') # Not yet implemented by pkgdown
   - title: "Utility functions"
     desc: "Functions to assist user comprehension"
     contents:
       - AsBinary
       - ListToMatrix
+      - LogisticPoints
       - MatrixToList
       - RightmostCharacter
       - SampleOne

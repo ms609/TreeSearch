@@ -24,6 +24,7 @@ RandomTreeScore <- function (nTip, morphyObj) {
 #'         - The left child of each node
 #'         - The right child of each node.
 #'
+#' @family tree generation functions
 #' @export
 RandomMorphyTree <- function (nTip) {  
   if (nTip < 2) {

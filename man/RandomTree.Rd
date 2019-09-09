@@ -14,6 +14,12 @@ RandomTree(dataset, root = FALSE)
 \description{
 Generate random tree topology from dataset
 }
+\seealso{
+Other tree generation functions: \code{\link{NJTree}},
+  \code{\link{RandomMorphyTree}},
+  \code{\link{SingleTaxonTree}}
+}
 \author{
 Martin R. Smith
 }
+\concept{tree generation functions}

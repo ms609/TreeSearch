@@ -11,4 +11,11 @@ NeworderPhylo(nTaxa, parent, child, nb.edge, whichwise)
 neworder_phylo
 Wrapper for the ape function
 }
+\seealso{
+Other C wrappers: \code{\link{Cladewise}},
+  \code{\link{NeworderPruningwise}},
+  \code{\link{OrderEdgesNumberNodes}},
+  \code{\link{RenumberTree}}
+}
+\concept{C wrappers}
 \keyword{internal}

@@ -12,7 +12,8 @@ RenumberTree(parent, child, nEdge = length(parent))
 RenumberEdges(parent, child, nEdge = length(parent))
 }
 \value{
-an edge matrix for a tree in following the usual preorder convention for edge and node numbering
+an edge matrix for a tree in following the usual preorder convention
+for edge and node numbering
 }
 \description{
 Renumber a tree
@@ -21,7 +22,20 @@ Wrapper for the C function RENUMBER_TREE
 }
 \section{Functions}{
 \itemize{
-\item \code{RenumberEdges}: Instead returns a list containing two items corresponding to the new parent and child vectors
+\item \code{RenumberEdges}: Instead returns a list containing two items
+corresponding to the new parent and child vectors
 }}
 
+\seealso{
+Other C wrappers: \code{\link{Cladewise}},
+  \code{\link{NeworderPhylo}},
+  \code{\link{NeworderPruningwise}},
+  \code{\link{OrderEdgesNumberNodes}}
+
+Other C wrappers: \code{\link{Cladewise}},
+  \code{\link{NeworderPhylo}},
+  \code{\link{NeworderPruningwise}},
+  \code{\link{OrderEdgesNumberNodes}}
+}
+\concept{C wrappers}
 \keyword{internal}

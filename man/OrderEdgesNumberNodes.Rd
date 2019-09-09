@@ -8,10 +8,18 @@ Wrapper for the C function}
 OrderEdgesNumberNodes(parent, child, nTips, nEdge = length(parent))
 }
 \value{
-an edge matrix for a tree following the usual convention for edge and node numbering
+an edge matrix for a tree following the usual convention for edge
+and node numbering
 }
 \description{
 Order edges and number nodes
 Wrapper for the C function
 }
+\seealso{
+Other C wrappers: \code{\link{Cladewise}},
+  \code{\link{NeworderPhylo}},
+  \code{\link{NeworderPruningwise}},
+  \code{\link{RenumberTree}}
+}
+\concept{C wrappers}
 \keyword{internal}

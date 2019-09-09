@@ -6,6 +6,7 @@
 #' @author Martin R. Smith 
 #' @importFrom ape rtree
 #' @importFrom ape root
+#' @family tree generation functions
 #' @export
 RandomTree <- function (dataset, root = FALSE) {
   tree <- rtree(length(dataset), tip.label=names(dataset), br=NULL)
@@ -23,6 +24,7 @@ RandomTree <- function (dataset, root = FALSE) {
 #' @author Martin R. Smith
 #' @importFrom ape nj root
 #' @importFrom phangorn dist.hamming
+#' @family tree generation functions
 #' @export
 NJTree <- function (dataset) {
   nj.tree <- nj(dist.hamming(dataset))

@@ -51,7 +51,7 @@ IWScore <- function (tree, dataset, concavity = 10, ...) {
   sum(fit * weight)
 }
 
-#' @describeIn IWScore Scorer for initialized dataset.
+#' @describeIn ProfileScore Scorer for Implied Weighting dataset.
 #' @template concavityParam
 #' @param minSteps Integer vector specifying the minimum number of steps
 #'                 possible for each character in `dataset`, perhaps calculated

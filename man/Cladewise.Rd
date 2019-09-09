@@ -58,7 +58,15 @@ All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collap
 \item \code{Preorder}: Reorder tree in Preorder (special case of cladewise)
 }}
 
-\author{
-Modified by Martin R. Smith from \code{.reorder_ape} in \pkg{ape} (Emmanuel Paradis)
+\seealso{
+Other C wrappers: \code{\link{NeworderPhylo}},
+  \code{\link{NeworderPruningwise}},
+  \code{\link{OrderEdgesNumberNodes}},
+  \code{\link{RenumberTree}}
 }
+\author{
+Modified by Martin R. Smith from \code{.reorder_ape} in \pkg{ape}
+(Emmanuel Paradis)
+}
+\concept{C wrappers}
 \keyword{internal}
