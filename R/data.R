@@ -124,6 +124,11 @@
 #'   [Martin Krzywinski](http://mkweb.bcgsc.ca/colorblind/)
 #' }
 #'
+#' @examples 
+#' plot(0, type='n', xlim=c(1, 12), ylim=c(1, 12), 
+#' xlab = 'Colour', ylab='Palette')
+#' for (i in seq_along(brewer)) text(seq_len(i), i, col=brewer[[i]])
+#' 
 #' @keywords datasets
 #' @name brewer
 brewer <- list(
