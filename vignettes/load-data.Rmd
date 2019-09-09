@@ -15,36 +15,12 @@ vignette: >
 
 It can be a bit fiddly to get a phylogenetic dataset into R, particularly if you are not used to working with files in the NEXUS format.
 
-## Filesystem navigation
-To open a file, you're going to have to tell R where it is. 
-You can do this by providing the full path to the file on your system.  Be careful to use forward slashes (`/`, not `\`, which 
-you'll get if you copy file paths in Windows).
+First off, make sure that you are comfortable 
+[telling R where to find a file](filesystem-navigation.html).
 
-```r
-filename <- "C:/nexus/matrix.nex"
-```
+Then you are ready to load raw data:
 
-You can save typing by giving R a working directory.  You can 
-think of R as having a file explorer window open invisibly in the
-background.  You can see the folder that's open at the moment by typing `getwd()` at the console.  `setwd()` tells R to open a different
-folder instead.  `setwd('../') tells R to go up to a parent directory.  (You can [do this using the  Graphical User Interface ](https://dss.princeton.edu/training/RStudio101.pdf) in RStudio).
-
-By setting the directory that your files are in as the working directory, you only need to specify the filename:
-
-```r 
-setwd("C:/nexus/") # You only need to do this once
-filename <- "matrix.nex"
-# Do something with this file
-#
-
-filename <- "matrix2.nex"
-# Do something with this file
-#
-```
-
-## Getting raw data:
-
-### From an Excel spreadsheet
+## From an Excel spreadsheet
 
 If your data is in an Excel spreadsheet, one way to load it into R is using the `xlsx` package.  First you'll have to install it:
 ```r
@@ -66,7 +42,7 @@ taxon_names <- read.xlsx(filename, sheetIndex=1, rowIndex=2:21, colIndex=1, as.d
 rownames(raw_data) <- taxon_names
 ```
 
-### From a Nexus file
+## From a Nexus file
 
 `TreeSearch` contains an inbuilt Nexus parser:
 
@@ -89,7 +65,7 @@ Non-standard elements of a Nexus file might be beyond the capabilities of ape's 
 The function `readNexus` in package `phylobase` uses the NCL library and 
 promises to be more powerful, but I've not been able to get it to work.
 
-### From a TNT file
+## From a TNT file
 
 A TNT format dataset downloaded from [MorphoBank](https://morphobank.org) can be parsed with `ReadTntCharacters`, which might also handle other TNT-compatible files.  If there's a file that's not being read correctly, please [let me know](https://github.com/ms609/TreeSearch/issues/new?title=Unsupported+TNT+file&body=Please%20attach%20the%20problematic%20TNT%20file%20and%20describe%20the%20issue&labels=enhancement) and I'll try to fix it.
 
@@ -99,7 +75,7 @@ raw_data <- ReadTntCharacters(filename)
 my_data <- ReadTntAsPhyDat(filename)
 ```
 
-## Processing raw data
+# Processing raw data
 
 The next stage is to get the raw data into a format that `TreeSearch` can understand.  If you've used the `ReadAsPhyDat` or `ReadTntAsPhyDat` functions, then you can skip this step -- you're already there.
 
@@ -168,11 +144,12 @@ my.phyDat <- phyDat(my.data, type='USER', contrast=contrast.matrix)
 ```
 
 
-## What next?
+# What next?
 
 You might want to:
 
+- [Load a phylogenetic tree](load-trees.html) into R.
+
 - Conduct parsimony search using Brazeau, Guillerme & Smith's [approach to inapplicable data](inapplicable.html), or using [Profile parsimony](profile.html).
 
-
-## References
+# References

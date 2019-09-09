@@ -96,6 +96,11 @@ was generated using the same \code{data} that is passed here.
 \description{
 Run standard search algorithms (\acronym{NNI}, \acronym{SPR} or \acronym{TBR})
 to search for a more parsimonious tree.
+
+For detailed documentation of the TreeSearch package, including full
+instructions for loading phylogenetic data into R and initiating and
+configuring tree search, see the
+\href{https://ms609.github.io/TreeSearch}{package documentation}.
 }
 \section{Functions}{
 \itemize{
