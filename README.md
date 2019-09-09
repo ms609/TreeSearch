@@ -28,7 +28,6 @@ if(!require(devtools)) install.packages("devtools")
 devtools::install_github('ms609/TreeSearch')
 ```
 
-
 # Optimality criteria
 
 TreeSearch allows the implementation of various optimality criteria, including
@@ -49,6 +48,9 @@ It is also possible to specify bespoke optimality criteria.
 - [Calculating concavity profiles](https://CRAN.R-project.org/package=TreeSearch/vignettes/profile-scores.html) for Profile Parsimony
 - [Tree search with profile parsimony](https://CRAN.R-project.org/package=TreeSearch/vignettes/profile.html)
 
+Please note that the 'TreeSearch' project is released with a
+[Contributor Code of Conduct](CODE_OF_CONDUCT.md).
+By contributing to this project, you agree to abide by its terms.
 
 # References
 
@@ -61,7 +63,3 @@ D. P. Faith, J. W. H. Trueman, Towards an inclusive philosophy for phylogenetic 
 
 Farris, J. S. (1969). A successive approximations approach to character weighting. 
   Systematic Biology, 18(4), 374–385.  doi:[10.2307/2412182](https://dx.doi.org/10.2307/2412182)
-
-Please note that the 'TreeSearch' project is released with a
-[Contributor Code of Conduct](CODE_OF_CONDUCT.md).
-By contributing to this project, you agree to abide by its terms.
