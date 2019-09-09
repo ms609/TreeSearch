@@ -297,10 +297,8 @@ IWMultiRatchet <- function (tree, dataset, ratchHits=10, concavity=4,
 }
 
 #' @describeIn Ratchet deprecated alias for MultiRatchet
-#' @keywords internal
 #' @export
 RatchetConsensus <- MultiRatchet
 #' @describeIn Ratchet deprecated alias for MultiRatchet
-#' @keywords internal
 #' @export
 IWRatchetConsensus <- IWMultiRatchet
