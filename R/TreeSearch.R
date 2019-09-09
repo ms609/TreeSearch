@@ -107,6 +107,11 @@ EdgeListSearch <- function (edgeList, dataset,
 #' Run standard search algorithms (\acronym{NNI}, \acronym{SPR} or \acronym{TBR}) 
 #' to search for a more parsimonious tree.
 #'  
+#' For detailed documentation of the TreeSearch package, including full 
+#' instructions for loading phylogenetic data into R and initiating and 
+#' configuring tree search, see the 
+#' [package documentation](https://ms609.github.io/TreeSearch).
+#'  
 #' @param tree a fully-resolved starting tree in \code{\link{phylo}} format, with the desired outgroup; edge lengths are not supported and will be deleted;
 #' @template datasetParam
 #' @template EdgeSwapperParam
