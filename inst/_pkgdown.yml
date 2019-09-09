@@ -16,7 +16,7 @@ reference:
       - matches('Ratchet')
       - SuccessiveApproximations
       - SuccessiveWeights
-      - RunTNT
+      # - RunTNT
       
   - title: "Tree scoring"
     desc: "Functions that provide tree scores, for optimization"

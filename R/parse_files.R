@@ -428,7 +428,7 @@ PhyDatToMatrix <- function (dataset) {#}, parentheses = c('[', ']'), sep = '') {
   t(vapply(dataset, function (x) allLevels[x[index]], character(length(index))))
 }
 
-#' @describeIn ReadCharacters Read nexus characters as phyDat object
+#' @describeIn ReadCharacters Read Nexus characters as phyDat object
 #' @author Martin R. Smith
 #' @importFrom phangorn phyDat
 #' @export
