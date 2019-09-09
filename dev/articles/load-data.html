@@ -113,9 +113,6 @@
 
     
     
-<div id="loading-phylogenetic-data-into-r" class="section level1">
-<h1 class="hasAnchor">
-<a href="#loading-phylogenetic-data-into-r" class="anchor"></a>Loading phylogenetic data into R</h1>
 <p>It can be a bit fiddly to get a phylogenetic dataset into R, particularly if you are not used to working with files in the NEXUS format.</p>
 <p>First off, make sure that you are comfortable <a href="filesystem-navigation.html">telling R where to find a file</a>.</p>
 <p>Then you are ready to load raw data:</p>
@@ -156,7 +153,6 @@
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1">raw_data &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ReadCharacters.html">ReadTntCharacters</a></span>(filename)</a>
 <a class="sourceLine" id="cb5-2" data-line-number="2"><span class="co"># Or, to go straight to PhyDat format:</span></a>
 <a class="sourceLine" id="cb5-3" data-line-number="3">my_data &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ReadCharacters.html">ReadTntAsPhyDat</a></span>(filename)</a></code></pre></div>
-</div>
 </div>
 <div id="processing-raw-data" class="section level1">
 <h1 class="hasAnchor">
@@ -227,13 +223,9 @@
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li>
-<a href="#loading-phylogenetic-data-into-r">Loading phylogenetic data into R</a><ul class="nav nav-pills nav-stacked">
 <li><a href="#from-an-excel-spreadsheet">From an Excel spreadsheet</a></li>
       <li><a href="#from-a-nexus-file">From a Nexus file</a></li>
       <li><a href="#from-a-tnt-file">From a TNT file</a></li>
-      </ul>
-</li>
       <li><a href="#processing-raw-data">Processing raw data</a></li>
       <li><a href="#what-next">What next?</a></li>
       <li><a href="#references">References</a></li>

@@ -113,12 +113,9 @@
 
     
     
-<div id="filesystem-navigation" class="section level1">
-<h1 class="hasAnchor">
-<a href="#filesystem-navigation" class="anchor"></a>Filesystem navigation</h1>
 <p>Before you can open a file, you need to tell R where to find it. You can do this by providing the full path to the file on your system. Be careful to use forward slashes (<code><a href="https://rdrr.io/r/base/Arithmetic.html">/</a></code>, not <code>\</code>, which you’ll get if you copy file paths in Windows).</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">filename &lt;-<span class="st"> "C:/nexus/matrix.nex"</span></a></code></pre></div>
-<p>You can save typing by giving R a working directory. You can think of R as having a file explorer window open invisibly in the background. You can see the folder that’s open at the moment by typing <code><a href="https://rdrr.io/r/base/getwd.html">getwd()</a></code> at the console. <code><a href="https://rdrr.io/r/base/getwd.html">setwd()</a></code> tells R to open a different folder instead. setwd(‘../’) tells R to go up to a parent directory. (You can <a href="https://dss.princeton.edu/training/RStudio101.pdf">do this using the Graphical User Interface</a> in RStudio).</p>
+<p>You can save typing by giving R a working directory. You can think of R as having a file explorer window open invisibly in the background. You can see the folder that’s open at the moment by typing <code><a href="https://rdrr.io/r/base/getwd.html">getwd()</a></code> at the console. <code><a href="https://rdrr.io/r/base/getwd.html">setwd()</a></code> tells R to open a different folder instead. <code><a href="https://rdrr.io/r/base/getwd.html">setwd('../')</a></code> tells R to go up to a parent directory. (You can <a href="https://dss.princeton.edu/training/RStudio101.pdf">do this using the Graphical User Interface</a> in RStudio).</p>
 <p>By setting the directory that your files are in as the working directory, you only need to specify the filename:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span>(<span class="st">"C:/nexus/"</span>) <span class="co"># You only need to do this once</span></a>
 <a class="sourceLine" id="cb2-2" data-line-number="2">filename &lt;-<span class="st"> "matrix.nex"</span></a>
@@ -128,6 +125,9 @@
 <a class="sourceLine" id="cb2-6" data-line-number="6">filename &lt;-<span class="st"> "tree.nex"</span></a>
 <a class="sourceLine" id="cb2-7" data-line-number="7"><span class="co"># Do something with this file</span></a>
 <a class="sourceLine" id="cb2-8" data-line-number="8"><span class="co">#</span></a></code></pre></div>
+<div id="what-next" class="section level2">
+<h2 class="hasAnchor">
+<a href="#what-next" class="anchor"></a>What next?</h2>
 <p>Now you know how to locate files, you might want to load a <a href="load-data.Rmd">dataset</a> or <a href="load-trees.Rmd">phylogenetic tree</a> into R.</p>
 </div>
   </div>
@@ -138,7 +138,7 @@
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#filesystem-navigation">Filesystem navigation</a></li>
+<li><a href="#what-next">What next?</a></li>
       </ul>
 </div>
       </div>
