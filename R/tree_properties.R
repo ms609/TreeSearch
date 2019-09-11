@@ -136,8 +136,8 @@ NonDuplicateRoot <- function (parent, child, nEdge = length(parent)) {
 #' or in a rooted tree with `n` tips.
 #' 
 #' @examples {
-#' NPartitions(11) 
-#' NPartitions(ape::rtree(11))
+#' NPartitions(8)
+#' NPartitions(ape::rtree(8))
 #' }
 #' @author Martin R. Smith
 #' @importFrom ape collapse.singles
