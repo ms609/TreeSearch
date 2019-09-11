@@ -130,16 +130,25 @@ NonDuplicateRoot <- function (parent, child, nEdge = length(parent)) {
 #' Number of partitions in a tree
 #' 
 #' @param tree A phylogenetic tree of class `phylo`, or a list of such trees
-#' (of class `list` or `multiPhylo`).
+#' (of class `list` or `multiPhylo`), or a vector of integers.
 #' 
-#' @return Integer specifying the number of partitions
+#' @return Integer specifying the number of partitions in the specified trees,
+#' or in a rooted tree with `n` tips.
+#' 
+#' @examples {
+#' NPartitions(11) 
+#' NPartitions(ape::rtree(11))
+#' }
 #' @author Martin R. Smith
+#' @importFrom ape collapse.singles
 #' @export
 NPartitions <- function (tree) {
   if (class(tree) == 'phylo') {
-    tree$Nnode - 1L - TreeIsRooted(tree)
+    collapse.singles(tree)$Nnode - 1L - TreeIsRooted(tree)
   } else if (mode(tree) == 'list') {
     vapply(tree, NPartitions, 1L)
+  } else if (mode(tree) == 'numeric') {
+    tree - 3L
   } else {
     stop("tree in unsupported format.")
   }
