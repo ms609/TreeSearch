@@ -192,8 +192,22 @@ ExtractTaxa <- function (matrixLines, character_num=NULL, session=NULL) {
   
   tokens <- sub(taxonLine.pattern, "\\5", matrixLines, perl=TRUE)
   tokens <- gsub("\t", "", gsub(" ", "", tokens, fixed=TRUE), fixed=TRUE)
-  tokens <- vapply(uniqueTaxa, function (taxon) paste0(tokens[taxa==taxon], collapse=''), character(1))
+  tokens <- vapply(uniqueTaxa, 
+                   function (taxon) paste0(tokens[taxa==taxon], collapse=''),
+                   character(1))
+  tokens <- NexusTokens(tokens, character_num=character_num, session=session)
   
+  rownames(tokens) <- uniqueTaxa
+  
+  # Return:
+  tokens
+}
+
+#' @param tokens Vector of character strings correponding to phylogenetic
+#'  tokens.
+#' @describeIn ExtractTaxa Extract tokens from a string
+#' @export
+NexusTokens <- function (tokens, character_num=NULL, session=NULL) {
   tokens.pattern <- "\\([^\\)]+\\)|\\[[^\\]]+\\]|\\{[^\\}]+\\}|."
   matches <- gregexpr(tokens.pattern, tokens, perl=TRUE)
   
@@ -219,9 +233,8 @@ ExtractTaxa <- function (matrixLines, character_num=NULL, session=NULL) {
   } else if (length(character_num) == 0) {
     stop("No characters selected")
   }
-  rownames(tokens) <- uniqueTaxa
   
-  # Return:
+  # Return: 
   tokens
 }
 

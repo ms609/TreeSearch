@@ -2,9 +2,17 @@
 % Please edit documentation in R/mpl_prepare_data.R
 \name{PhyToString}
 \alias{PhyToString}
+\alias{PhyDatToString}
+\alias{PhydatToString}
 \title{Extract character data from a phyDat object as a string}
 \usage{
 PhyToString(phy, ps = "", useIndex = TRUE, byTaxon = TRUE,
+  concatenate = TRUE)
+
+PhyDatToString(phy, ps = "", useIndex = TRUE, byTaxon = TRUE,
+  concatenate = TRUE)
+
+PhydatToString(phy, ps = "", useIndex = TRUE, byTaxon = TRUE,
   concatenate = TRUE)
 }
 \arguments{

@@ -2,9 +2,12 @@
 % Please edit documentation in R/parse_files.R
 \name{ExtractTaxa}
 \alias{ExtractTaxa}
+\alias{NexusTokens}
 \title{Extract taxa from a matrix block}
 \usage{
 ExtractTaxa(matrixLines, character_num = NULL, session = NULL)
+
+NexusTokens(string)
 }
 \arguments{
 \item{matrixLines}{lines of a file containing a phylogenetic matrix
@@ -23,4 +26,9 @@ each corresponding to the respective character specified in \code{character_num}
 \description{
 Extract taxa from a matrix block
 }
+\section{Functions}{
+\itemize{
+\item \code{NexusTokens}: Extract tokens from a string
+}}
+
 \keyword{internal}

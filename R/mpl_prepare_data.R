@@ -2,9 +2,12 @@
 #'
 #' Converts a PhyDat object to allow processing by MorphyDat
 #'
-#' @param string a string of tokens, optionally containing whitespace, with no terminating semi-colon.  Polytomies not (yet) supported; each character must correspond to a unique state, ?, or the inapplicable token (-)
-#' @param tips, a character vector corresponding to the names (in order) of each taxon in the matrix
-#' @param byTaxon = TRUE, string is one TAXON's coding at a time; FALSE: one CHARACTER's coding at a time
+#' @param string a string of tokens, optionally containing whitespace, with no
+#'   terminating semi-colon.
+#' @param tips, a character vector corresponding to the names (in order) 
+#' of each taxon in the matrix
+#' @param byTaxon = TRUE, string is one TAXON's coding at a time; FALSE: one
+#'  CHARACTER's coding at a time
 #' 
 #' @examples
 #' morphy <- StringToPhyDat("-?01231230?-", c('Lion', 'Gazelle'), byTaxon=TRUE)
@@ -19,19 +22,27 @@
 #' @aliases StringToPhydat
 #' @importFrom phangorn phyDat
 #' @export
-StringToPhyDat <- StringToPhydat <- function (string, tips, byTaxon = TRUE) {
-  string <- strsplit(gsub('\\s+', '', string), '')[[1]]
-  string <- matrix(string[string != '\n'], nrow=length(tips), byrow=byTaxon)
-  rownames(string) <- tips
-  phy <- phyDat(string, levels=c(which(as.character(0:9) %in% string) - 1, '-'), type='USER')
-  phy
+StringToPhyDat <- 
+  StringToPhydat <- function (string, tips = NULL, byTaxon = TRUE) {
+  elements <- NexusTokens(string)
+  if (byTaxon) elements <- t(elements)
+  rownames(elements) <- if (is.null(tips)) {
+    paste0('t', seq_len(ncol(elements)))
+  } else {
+    tips
+  }
+  MatrixToPhyDat(elements)
 }
 
 #' Extract character data from a phyDat object as a string
 #' 
 #' 
 #' @param phy An object of class \code{\link{phyDat}}
-#' @param ps Character specifying text, perhaps ';', to append to the end of the string
+#' @param parentheses Character specifying format of parentheses with which
+#' to surround ambiguous tokens.  Options: `{` (default), `<`, , `[`, `(`.
+#' @param collapse Character specifying text, perhaps `,`, with which to 
+#' separate multiple tokens within parentheses
+#' @param ps Character specifying text, perhaps `;`, to append to the end of the string
 #' @param useIndex (default: TRUE) Print duplicate characters multiple 
 #'        times, as they appeared in the original matrix
 #' @param byTaxon If TRUE, write one taxon followed by the next.
@@ -43,7 +54,8 @@ StringToPhyDat <- StringToPhydat <- function (string, tips, byTaxon = TRUE) {
 #' @author Martin R. Smith
 #' @importFrom phangorn phyDat
 #' @export
-PhyToString <- function (phy, ps='', useIndex=TRUE, byTaxon=TRUE, concatenate=TRUE) {
+PhyToString <- function (phy, parentheses = '{', collapse='', ps='', 
+                         useIndex=TRUE, byTaxon=TRUE, concatenate=TRUE) {
   at <- attributes(phy)
   phyLevels <- at$allLevels
   phyChars <- at$nr
@@ -68,21 +80,40 @@ PhyToString <- function (phy, ps='', useIndex=TRUE, byTaxon=TRUE, concatenate=TR
     outLevels[longLevels] <- LETTERS[seq_len(sum(longLevels))]
   }
   
-  levelTranslation <- apply(phyContrast, 1, function (x)		
-    ifelse(sum(x) == 1, as.character(outLevels[x]), paste0(c('{', outLevels[x], '}'), collapse=''))		
-  )		
-  if (any(ambigToken <- apply(phyContrast, 1, all))) levelTranslation[ambigToken] <- '?'		
-  ret <- vapply(phy, function (x) levelTranslation[x[phyIndex]], character(length(phyIndex)))		
+  switch(parentheses,
+         '(' = {openBracket <- '('; closeBracket = ')'},
+         ')' = {openBracket <- '('; closeBracket = ')'},
+         '<' = {openBracket <- '<'; closeBracket = '>'},
+         '>' = {openBracket <- '<'; closeBracket = '>'},
+         '[' = {openBracket <- '['; closeBracket = ']'},
+         ']' = {openBracket <- '['; closeBracket = ']'},
+         {openBracket <- '{'; closeBracket = '}'})
+         
+  levelTranslation <- apply(phyContrast, 1, function (x)
+    ifelse(sum(x) == 1, as.character(outLevels[x]),
+           paste0(c(openBracket, paste0(outLevels[x], collapse=collapse), 
+                    closeBracket), collapse=''))
+  )
+  if (any(ambigToken <- apply(phyContrast, 1, all))) {
+    levelTranslation[ambigToken] <- '?'
+  }
+  ret <- vapply(phy, 
+                function (x) levelTranslation[x[phyIndex]],
+                character(length(phyIndex)))
   ret <- if (concatenate || is.null(dim(ret))) { # If only one row, don't need to apply
     if (!byTaxon) ret <- t(ret)
-    paste0(c(ret, ps), collapse='')		
+    paste0(c(ret, ps), collapse='')
   } else {		
     if (byTaxon) ret <- t(ret)
-    paste0(apply(ret, 1, paste0, collapse=''), ps)		
+    paste0(apply(ret, 1, paste0, collapse=''), ps)
   }
   # Return:
   ret
 }
+#' @rdname PhyToString
+PhyDatToString <- PhyToString
+#' @rdname PhyToString
+PhydatToString <- PhyToString
 
 #' @name AsBinary
 #' @aliases AsBinary
