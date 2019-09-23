@@ -32,7 +32,7 @@
 #' @export
 IWScore <- function (tree, dataset, concavity = 10, ...) {
   if (class(dataset) != 'phyDat') {
-    stop('Invalid dataset type; prepare dataset with PhyDat() and PrepareDataIW().')
+    stop('Data not of class phyDat; see PhyDat() and PrepareDataIW().')
   }
   if (!('min.steps' %in% names(attributes(dataset)))) {
     dataset <- PrepareDataIW(dataset)
@@ -63,9 +63,10 @@ IWScore <- function (tree, dataset, concavity = 10, ...) {
 #'                 using \code{\link{MinimumLength}}.
 #'                 
 #' @export
-IWScoreMorphy <- function (parent, child, dataset, concavity = 10, 
+IWScoreMorphy <- function (parent, child, dataset, concavity = 10L, 
                            minSteps = attr(dataset, 'min.steps'), ...) {
-  steps <- vapply(attr(dataset, 'morphyObjs'), MorphyLength, parent=parent, child=child, integer(1))
+  steps <- vapply(attr(dataset, 'morphyObjs'), MorphyLength, 
+                  parent=parent, child=child, integer(1))
   homoplasies <- steps - minSteps
   fit <- homoplasies / (homoplasies + concavity)
   # Return:
