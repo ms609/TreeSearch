@@ -6,8 +6,11 @@ test_that("minimum step counts are correctly calculated", {
   expect_equal(1, MinimumLength(0:3)) # 0 representing the inapplicable token
   
   dudDat <- StringToPhyDat('----{-,1}22', letters[1:7])
-  expect_equal('----<-,1>22',PhyDatToString(dudDat, '>', ','))
+  expect_equal('----<-,1>22', PhyDatToString(dudDat, '>', ','))
   expect_equal(0, attr(PrepareDataIW(dudDat), 'min.length'))
+  
+  dudTwo <- StringToPhyDat('{-1}{-2}{-3}2233', letters[1:7])
+  expect_equal('{-1}{-2}{-3}2233', PhyDatToString(PrepareDataIW(dudTwo)))
   
   tr <- ape::read.tree(text='(((a, b), c), (d, (e, ((f, g), (h, (i, (j, k)))))));')
   expect_equal(CharacterLength(tr, StringToPhyDat('11---22--33', letters[1:11])),
