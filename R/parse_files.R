@@ -208,21 +208,21 @@ ExtractTaxa <- function (matrixLines, character_num=NULL, session=NULL) {
 #' @describeIn ExtractTaxa Extract tokens from a string
 #' @export
 NexusTokens <- function (tokens, character_num=NULL, session=NULL) {
-  tokens.pattern <- "\\([^\\)]+\\)|\\[[^\\]]+\\]|\\{[^\\}]+\\}|."
+  tokens.pattern <- "\\([^\\)]+\\)|\\[[^\\]]+\\]|\\{[^\\}]+\\}|\\S"
   matches <- gregexpr(tokens.pattern, tokens, perl=TRUE)
   
-  n_char <- length(matches[[1]])
+  nChar <- length(matches[[1]])
   
   if (!is.null(session)) {
-    shiny::updateNumericInput(session, 'character_num', max=n_char)
+    shiny::updateNumericInput(session, 'character_num', max=nChar)
   }
   
   if (!exists("character_num") || is.null(character_num)) {
-    character_num <- seq_len(n_char)
-  } else if (any(character_num > n_char) || any(character_num < 1)) {
-    return(list("Character number must be between 1 and ", n_char, "."))
+    character_num <- seq_len(nChar)
+  } else if (any(character_num > nChar) || any(character_num < 1)) {
+    return(list("Character number must be between 1 and ", nChar, "."))
     character_num[character_num < 1] <- 1
-    character_num[character_num > n_char] <- n_char
+    character_num[character_num > nChar] <- nChar
   }
   
   tokens <- t(vapply(regmatches(tokens, matches),
