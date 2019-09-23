@@ -93,15 +93,20 @@ PrepareDataIW <- function (dataset) {
 #' As the minimum steps can be found when inapplicables occur together,
 #' inapplicable tokens can be denoted as ?s or with the integer 0 (not 2^0).
 #' Tokens that are ambiguous for an inapplicable and an applicable
-#' state are not presently supported.
-#'               
+#' state are not presently supported; for an approximate value, denote such
+#' ambiguity with the integer `0`.
+#' 
 #' @return An integer specifying the minimum number of steps that the character
 #'  must contain.
 #'
 #' @examples {
 #'   data('inapplicable.datasets')
-#'   myPhyDat <- inapplicable.phyData[[4]] # or as.phyDat(read.nexus.data('filepath'))
+#'   myPhyDat <- inapplicable.phyData[[4]] 
 #'   class(myPhyDat) # phyDat object
+#'   # load your own data with
+#'   # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
+#'   # or Windows users can select a file interactively using:
+#'   # my.PhyDat <- as.phyDat(read.nexus.data(choose.files()))
 #'   
 #'   # Convert list of character codings to an array
 #'   myData <- vapply(myPhyDat, I, myPhyDat[[1]])
