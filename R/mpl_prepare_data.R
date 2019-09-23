@@ -22,13 +22,14 @@
 #' @aliases StringToPhydat
 #' @importFrom phangorn phyDat
 #' @export
-StringToPhydat <- 
 StringToPhyDat <- 
 function (string, tips, byTaxon = TRUE) {
   tokens <- matrix(NexusTokens(string), nrow = length(tips), byrow = byTaxon)
   rownames(tokens) <- tips
   MatrixToPhyDat(tokens)
 }
+#' @rdname StringToPhyDat
+StringToPhydat <- StringToPhyDat
 
 #' Extract character data from a phyDat object as a string
 #' 
