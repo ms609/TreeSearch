@@ -28,6 +28,9 @@
     <loc>https://ms609.github.io/TreeSearch/reference/CharacterInformation.html</loc>
   </url>
   <url>
+    <loc>https://ms609.github.io/TreeSearch/reference/CharacterLength.html</loc>
+  </url>
+  <url>
     <loc>https://ms609.github.io/TreeSearch/reference/CladeSizes.html</loc>
   </url>
   <url>
@@ -67,9 +70,6 @@
     <loc>https://ms609.github.io/TreeSearch/reference/Fitch.html</loc>
   </url>
   <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/FitchSteps.html</loc>
-  </url>
-  <url>
     <loc>https://ms609.github.io/TreeSearch/reference/ICPerStep.html</loc>
   </url>
   <url>
@@ -103,7 +103,7 @@
     <loc>https://ms609.github.io/TreeSearch/reference/MatrixToPhyDat.html</loc>
   </url>
   <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/MinimumSteps.html</loc>
+    <loc>https://ms609.github.io/TreeSearch/reference/MinimumLength.html</loc>
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/reference/MorphyBootstrap.html</loc>

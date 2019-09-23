@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>String to phyDat — StringToPhyDat • TreeSearch</title>
+<title>Minimum length — MinimumLength • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -41,8 +41,8 @@
 
 
 
-<meta property="og:title" content="String to phyDat — StringToPhyDat" />
-<meta property="og:description" content="Converts a PhyDat object to allow processing by MorphyDat" />
+<meta property="og:title" content="Minimum length — MinimumLength" />
+<meta property="og:description" content="The smallest length that a character can obtain on any tree." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -150,58 +150,78 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>String to phyDat</h1>
-    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/mpl_prepare_data.R'><code>R/mpl_prepare_data.R</code></a></small>
-    <div class="hidden name"><code>StringToPhyDat.Rd</code></div>
+    <h1>Minimum length</h1>
+    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/data_manipulation.R'><code>R/data_manipulation.R</code></a></small>
+    <div class="hidden name"><code>MinimumLength.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Converts a PhyDat object to allow processing by MorphyDat</p>
+    <p>The smallest length that a character can obtain on any tree.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>StringToPhyDat</span>(<span class='no'>string</span>, <span class='no'>tips</span>, <span class='kw'>byTaxon</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+    <pre class="usage"><span class='fu'>MinimumLength</span>(<span class='no'>states</span>)
 
-<span class='fu'>StringToPhydat</span>(<span class='no'>string</span>, <span class='no'>tips</span>, <span class='kw'>byTaxon</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+<span class='fu'>MinimumSteps</span>(<span class='no'>states</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>string</th>
-      <td><p>a string of tokens, optionally containing whitespace, with no
-terminating semi-colon.</p></td>
-    </tr>
-    <tr>
-      <th>tips, </th>
-      <td><p>a character vector corresponding to the names (in order)
-of each taxon in the matrix</p></td>
-    </tr>
-    <tr>
-      <th>byTaxon</th>
-      <td><p>= TRUE, string is one TAXON's coding at a time; FALSE: one
-CHARACTER's coding at a time</p></td>
+      <th>states</th>
+      <td><p>Integer vector listing the tokens that may be present at each
+tip along a single character, with each token represented as a binary digit;
+e.g. a value of 11 ( = 2^0 + 2^1 + 2^3) means that
+the tip may have tokens 0, 1 or 3.</p>
+<p>Inapplicable tokens should be denoted with the integer <code>0</code> (not 2^0).</p>
+<p>Tokens that are ambiguous for an inapplicable and an applicable
+state are not presently supported; for an approximate value, denote such
+ambiguity with the integer <code>0</code>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>This function returns a data matrix in <code><a href='https://rdrr.io/pkg/phangorn/man/phyDat.html'>phyDat</a></code> format.</p>
-    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
-
-    <div class='dont-index'><p><code>phyDat</code></p></div>
+    <p>An integer specifying the minimum number of steps that the character
+must contain.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>morphy</span> <span class='kw'>&lt;-</span> <span class='fu'>StringToPhyDat</span>(<span class='st'>"-?01231230?-"</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>'Lion'</span>, <span class='st'>'Gazelle'</span>), <span class='kw'>byTaxon</span><span class='kw'>=</span><span class='fl'>TRUE</span>)
-<span class='co'># encodes the following matrix:</span>
-<span class='co'># Lion     -?0123</span>
-<span class='co'># Gazelle  1230?-</span></div></pre>
+    <pre class="examples"><div class='input'>{
+  <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'inapplicable.datasets'</span>)
+  <span class='no'>myPhyDat</span> <span class='kw'>&lt;-</span> <span class='no'>inapplicable.phyData</span><span class='kw'>[[</span><span class='fl'>4</span>]]
+  <span class='fu'><a href='https://rdrr.io/r/base/class.html'>class</a></span>(<span class='no'>myPhyDat</span>) <span class='co'># phyDat object</span>
+  <span class='co'># load your own data with</span>
+  <span class='co'># my.PhyDat &lt;- as.phyDat(read.nexus.data('filepath'))</span>
+  <span class='co'># or Windows users can select a file interactively using:</span>
+  <span class='co'># my.PhyDat &lt;- as.phyDat(read.nexus.data(choose.files()))</span>
+
+  <span class='co'># Convert list of character codings to an array</span>
+  <span class='no'>myData</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/lapply.html'>vapply</a></span>(<span class='no'>myPhyDat</span>, <span class='no'>I</span>, <span class='no'>myPhyDat</span><span class='kw'>[[</span><span class='fl'>1</span>]])
+
+  <span class='co'># Convert phyDat's representation of states to binary</span>
+  <span class='no'>myContrast</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/attr.html'>attr</a></span>(<span class='no'>myPhyDat</span>, <span class='st'>'contrast'</span>)
+  <span class='no'>tokens</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/colnames.html'>colnames</a></span>(<span class='no'>myContrast</span>)
+  <span class='no'>binaryContrast</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/integer.html'>integer</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='no'>tokens</span>))
+  <span class='no'>tokenApplicable</span> <span class='kw'>&lt;-</span> <span class='no'>tokens</span> <span class='kw'>!=</span> <span class='st'>'-'</span>
+  <span class='no'>binaryContrast</span>[<span class='no'>tokenApplicable</span>] <span class='kw'>&lt;-</span> <span class='fl'>2</span> ^ (<span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq_len</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span>(<span class='no'>tokenApplicable</span>)) - <span class='fl'>1</span>)
+  <span class='no'>binaryValues</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/apply.html'>apply</a></span>(<span class='no'>myContrast</span>, <span class='fl'>1</span>,
+    <span class='kw'>function</span> (<span class='no'>row</span>) <span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span>(<span class='no'>binaryContrast</span>[<span class='fu'><a href='https://rdrr.io/r/base/logical.html'>as.logical</a></span>(<span class='no'>row</span>)]))
+  <span class='no'>myStates</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='no'>binaryValues</span>[<span class='no'>myData</span>], <span class='kw'>nrow</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span>(<span class='no'>myData</span>),
+                     <span class='kw'>ncol</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='no'>myData</span>), <span class='kw'>dimnames</span><span class='kw'>=</span><span class='fu'><a href='https://rdrr.io/r/base/dimnames.html'>dimnames</a></span>(<span class='no'>myData</span>))
+
+  <span class='co'># Finally, work out minimum steps </span>
+  <span class='fu'><a href='https://rdrr.io/r/base/apply.html'>apply</a></span>(<span class='no'>myStates</span>, <span class='fl'>1</span>, <span class='no'>MinimumLength</span>)
+
+}</div><div class='output co'>#&gt;   [1] 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 1 1 1 1 2 1 1 1 1 1 1 1
+#&gt;  [38] 1 1 1 1 1 2 1 1 1 1 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 2 1 1 4 3 1 1 1 1 2 1
+#&gt;  [75] 1 1 1 1 1 1 2 4 1 1 1 1 1 1 1 2 2 1 1 1 1 1 1 2 1 1 1 1 1 1 1 1 1 1 1 1 1
+#&gt; [112] 1 1 1 1 1 1 1 1 1 1 1 1 1 1</div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       <li><a href="#value">Value</a></li>
-      <li><a href="#see-also">See also</a></li>
       <li><a href="#examples">Examples</a></li>
     </ul>
 

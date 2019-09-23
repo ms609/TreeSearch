@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>String to phyDat — StringToPhyDat • TreeSearch</title>
+<title>Character length — CharacterLength • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -41,8 +41,8 @@
 
 
 
-<meta property="og:title" content="String to phyDat — StringToPhyDat" />
-<meta property="og:description" content="Converts a PhyDat object to allow processing by MorphyDat" />
+<meta property="og:title" content="Character length — CharacterLength" />
+<meta property="og:description" content="Character length" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -150,63 +150,74 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>String to phyDat</h1>
-    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/mpl_prepare_data.R'><code>R/mpl_prepare_data.R</code></a></small>
-    <div class="hidden name"><code>StringToPhyDat.Rd</code></div>
+    <h1>Character length</h1>
+    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/Fitch.R'><code>R/Fitch.R</code></a></small>
+    <div class="hidden name"><code>CharacterLength.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Converts a PhyDat object to allow processing by MorphyDat</p>
+    <p>Character length</p>
     </div>
 
-    <pre class="usage"><span class='fu'>StringToPhyDat</span>(<span class='no'>string</span>, <span class='no'>tips</span>, <span class='kw'>byTaxon</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+    <pre class="usage"><span class='fu'>CharacterLength</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>)
 
-<span class='fu'>StringToPhydat</span>(<span class='no'>string</span>, <span class='no'>tips</span>, <span class='kw'>byTaxon</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+<span class='fu'>FastCharacterLength</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>)
+
+<span class='fu'>FitchSteps</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>string</th>
-      <td><p>a string of tokens, optionally containing whitespace, with no
-terminating semi-colon.</p></td>
+      <th>tree</th>
+      <td><p>A tree of class <code>phylo</code>.</p></td>
     </tr>
     <tr>
-      <th>tips, </th>
-      <td><p>a character vector corresponding to the names (in order)
-of each taxon in the matrix</p></td>
-    </tr>
-    <tr>
-      <th>byTaxon</th>
-      <td><p>= TRUE, string is one TAXON's coding at a time; FALSE: one
-CHARACTER's coding at a time</p></td>
+      <th>dataset</th>
+      <td><p>A phylogenetic data matrix of class <code><a href='https://rdrr.io/pkg/phangorn/man/phyDat.html'>phyDat</a></code>,
+whose names correspond to the labels of any accompanying tree.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>This function returns a data matrix in <code><a href='https://rdrr.io/pkg/phangorn/man/phyDat.html'>phyDat</a></code> format.</p>
+    <p>A vector listing the contribution of each character to tree score,
+according to the algorithm of Brazeau, Guillerme and Smith (2019).</p>
+    <h2 class="hasAnchor" id="functions"><a class="anchor" href="#functions"></a>Functions</h2>
+
+    
+<ul>
+<li><p><code>FastCharacterLength</code>: Do not perform checks.  Use with care: may cause
+erroneous results or  software crash if variables are in the incorrect format.</p></li>
+</ul>
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+
+    <p>Brazeau MD, Guillerme T, Smith MR (2019).
+&#8220;An algorithm for morphological phylogenetic analysis with inapplicable data.&#8221;
+<em>Systematic Biology</em>, in press.
+doi: <a href='https://doi.org/10.1093/sysbio/syy083'>10.1093/sysbio/syy083</a>
+.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code>phyDat</code></p></div>
+    <div class='dont-index'><p>Other tree scoring: <code><a href='Fitch.html'>Fitch</a></code>,
+  <code><a href='IWScore.html'>IWScore</a></code>, <code><a href='MorphyTreeLength.html'>MorphyTreeLength</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>morphy</span> <span class='kw'>&lt;-</span> <span class='fu'>StringToPhyDat</span>(<span class='st'>"-?01231230?-"</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>'Lion'</span>, <span class='st'>'Gazelle'</span>), <span class='kw'>byTaxon</span><span class='kw'>=</span><span class='fl'>TRUE</span>)
-<span class='co'># encodes the following matrix:</span>
-<span class='co'># Lion     -?0123</span>
-<span class='co'># Gazelle  1230?-</span></div></pre>
+    <pre class="examples"><div class='input'>{
+}</div><div class='output co'>#&gt; NULL</div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       <li><a href="#value">Value</a></li>
+      <li><a href="#functions">Functions</a></li>
+      <li><a href="#references">References</a></li>
       <li><a href="#see-also">See also</a></li>
       <li><a href="#examples">Examples</a></li>
     </ul>
 
-    <h2>Author</h2>
-    <p>Martin R. Smith</p>
   </div>
 </div>
 
