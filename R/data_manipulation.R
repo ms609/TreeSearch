@@ -66,13 +66,15 @@ PrepareDataIW <- function (dataset) {
   nLevel <- length(at$level)
   nChar <- at$nr
   nTip <- length(dataset)
+  cont <- at$contrast
+  inappLevel <- at$levels == '-'
   
-  
-  # TODO this is a workaround until MinimumLength can handle {-, 1}
-  cont <- attr(dataset, "contrast")
-  cont[cont[, '-'] > 0, ] <- 0
-  ambiguousToken <- at$allLevels == '?'
-  cont[ambiguousToken, ] <- colSums(cont[!ambiguousToken, ]) > 0
+  if (any(inappLevel)) {
+    # TODO this is a workaround until MinimumLength can handle {-, 1}
+    cont[cont[, inappLevel] > 0, ] <- 0
+    ambiguousToken <- at$allLevels == '?'
+    cont[ambiguousToken, ] <- colSums(cont[!ambiguousToken, ]) > 0
+  }
   
   # Perhaps replace with previous code:
   # inappLevel <- which(at$levels == "-")

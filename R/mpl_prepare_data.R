@@ -22,20 +22,15 @@
 #' @aliases StringToPhydat
 #' @importFrom phangorn phyDat
 #' @export
+StringToPhydat <- 
 StringToPhyDat <- 
-  StringToPhydat <- function (string, tips = NULL, byTaxon = TRUE) {
-  elements <- NexusTokens(string)
-  if (byTaxon) elements <- t(elements)
-  rownames(elements) <- if (is.null(tips)) {
-    paste0('t', seq_len(ncol(elements)))
-  } else {
-    tips
-  }
-  MatrixToPhyDat(elements)
+function (string, tips, byTaxon = TRUE) {
+  tokens <- matrix(NexusTokens(string), nrow = length(tips), byrow = byTaxon)
+  rownames(tokens) <- tips
+  MatrixToPhyDat(tokens)
 }
 
 #' Extract character data from a phyDat object as a string
-#' 
 #' 
 #' @param phy An object of class \code{\link{phyDat}}
 #' @param parentheses Character specifying format of parentheses with which
@@ -54,21 +49,18 @@ StringToPhyDat <-
 #' @author Martin R. Smith
 #' @importFrom phangorn phyDat
 #' @export
-PhyToString <- function (phy, parentheses = '{', collapse='', ps='', 
-                         useIndex=TRUE, byTaxon=TRUE, concatenate=TRUE) {
+PhyToString <- function (phy, parentheses = '{', collapse = '', ps = '', 
+                         useIndex = TRUE, byTaxon = TRUE, concatenate = TRUE) {
   at <- attributes(phy)
   phyLevels <- at$allLevels
+  if (sum(phyLevels == '-') > 1) {
+    stop("More than one inapplicable level identified.  Is phy$levels malformed?")
+  }
   phyChars <- at$nr
   phyContrast <- at$contrast == 1
   phyIndex <- if (useIndex) at$index else seq_len(phyChars)
-  outLevels <- seq_len(ncol(phyContrast)) - 1
-  if (any(inappLevel <- phyLevels == '-')) {
-    inappColumn <- which(phyContrast[inappLevel])
-    if (length(inappColumn) > 1) {
-      warning("More than one inapplicable level identified.  Is phy$levels malformed?")
-    }
-    outLevels[inappColumn] <- '-'
-  }
+  outLevels <- at$levels
+  inappLevel <- outLevels == '-'
 
   levelLengths <- vapply(outLevels, nchar, integer(1))
   longLevels <- levelLengths > 1
