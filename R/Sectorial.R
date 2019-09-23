@@ -295,7 +295,7 @@
 ######                       suboptimal=1e-08, ...) {
 ######  dataset <- PrepareDataIW(dataset)
 ######  SectorialSearch(tree=tree, dataset=dataset, 
-######                  concavity=concavity, minSteps=attr(dataset, 'min.steps'), 
+######                  concavity=concavity, minLength=attr(dataset, 'min.length'), 
 ######                  InitializeData=IWInitMorphy, CleanUpData=IWDestroyMorphy,
 ######                  TreeScorer=IWScoreMorphy, Bootstrapper=IWBootstrap,
 ######                  swappers=swappers, BootstrapSwapper=BootstrapSwapper,

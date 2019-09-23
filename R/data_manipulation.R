@@ -24,7 +24,7 @@
 #'
 #' `PrepareDataIW` adds the attribute:
 #' 
-#'  - \code{min.steps}: The minimum number of steps that must be present in each
+#'  - \code{min.length}: The minimum number of steps that must be present in each
 #'    transformation series.
 #'
 #' @author Martin R. Smith; written with reference to phangorn:::prepareDataFitch
@@ -65,17 +65,26 @@ PrepareDataIW <- function (dataset) {
   at <- attributes(dataset)
   nLevel <- length(at$level)
   nChar <- at$nr
-  cont <- attr(dataset, "contrast")
   nTip <- length(dataset)
   
+  
+  # TODO this is a workaround until MinimumLength can handle {-, 1}
+  cont <- attr(dataset, "contrast")
+  cont[cont[, '-'] > 0, ] <- 0
+  ambiguousToken <- at$allLevels == '?'
+  cont[ambiguousToken, ] <- colSums(cont[!ambiguousToken, ]) > 0
+  
+  # Perhaps replace with previous code:
+  # inappLevel <- which(at$levels == "-")
+  # cont[, inappLevel] <- 0
+  
+  
   powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
-  inappLevel <- which(at$levels == "-")
-  cont[, inappLevel] <- 0
   tmp <- as.integer(cont %*% powersOf2)
   unlisted <- unlist(dataset, use.names=FALSE)
   binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow=FALSE)
   
-  attr(dataset, 'min.steps') <- apply(binaryMatrix, 1, MinimumLength)
+  attr(dataset, 'min.length') <- apply(binaryMatrix, 1, MinimumLength)
   
   # Return:
   dataset
@@ -88,10 +97,11 @@ PrepareDataIW <- function (dataset) {
 #' 
 #' @param states Integer vector listing the tokens that may be present at each 
 #' tip along a single character, with each token represented as a binary digit;
-#' e.g. a value of 11 means that
-#' the tip may have tokens 0, 1 or 3 (as 11 = 2^0 + 2^1 + 2^3).
-#' As the minimum steps can be found when inapplicables occur together,
-#' inapplicable tokens can be denoted as ?s or with the integer 0 (not 2^0).
+#' e.g. a value of 11 ( = 2^0 + 2^1 + 2^3) means that
+#' the tip may have tokens 0, 1 or 3.
+#' 
+#' Inapplicable tokens should be denoted with the integer `0` (not 2^0).
+#' 
 #' Tokens that are ambiguous for an inapplicable and an applicable
 #' state are not presently supported; for an approximate value, denote such
 #' ambiguity with the integer `0`.

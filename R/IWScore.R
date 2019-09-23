@@ -34,23 +34,22 @@ IWScore <- function (tree, dataset, concavity = 10, ...) {
   if (class(dataset) != 'phyDat') {
     stop('Data not of class phyDat; see PhyDat() and PrepareDataIW().')
   }
-  if (!('min.steps' %in% names(attributes(dataset)))) {
+  if (!('min.length' %in% names(attributes(dataset)))) {
     dataset <- PrepareDataIW(dataset)
   }
   at <- attributes(dataset)
   nChar  <- at$nr # strictly, transformation series patterns; these'll be upweighted later
   weight <- at$weight
   steps <- CharacterLength(tree, dataset)
-  minSteps <- at$min.steps
-  homoplasies <- steps - minSteps
+  minLength <- at$min.length
+  homoplasies <- steps - minLength
   
-  # This check has been triggered by three parallel runs simultaneously, 
-  # suggesting that an underlying C failure can cause disaster.
-  # Fix not attempted as next version of Morphy will do this internally.
+  # This check has been triggered - underlying C memory failure suspected
+  # but remains under investigation...
   if (any(homoplasies < 0)) stop("Minimum steps have been miscalculated.\n", 
     "       Please report this bug at:\n", 
     "       https://github.com/ms609/TreeSearch/issues/new\n\n",
-    "       Tree was: ", dput(tree))
+    "       See above for full tree: ", dput(tree))
   fit <- homoplasies / (homoplasies + concavity)
   # Return:
   sum(fit * weight)
@@ -58,22 +57,22 @@ IWScore <- function (tree, dataset, concavity = 10, ...) {
 
 #' @describeIn ProfileScore Scorer for Implied Weighting dataset.
 #' @template concavityParam
-#' @param minSteps Integer vector specifying the minimum length
-#'                 possible for each character in `dataset`, perhaps calculated
-#'                 using \code{\link{MinimumLength}}.
-#'                 
+#' @param minLength Integer vector specifying the minimum length
+#'                  possible for each character in `dataset`, perhaps calculated
+#'                  using \code{\link{MinimumLength}}.
+#'
 #' @export
 IWScoreMorphy <- function (parent, child, dataset, concavity = 10L, 
-                           minSteps = attr(dataset, 'min.steps'), ...) {
-  steps <- vapply(attr(dataset, 'morphyObjs'), MorphyLength, 
+                           minLength = attr(dataset, 'min.length'), ...) {
+  steps <- vapply(attr(dataset, 'morphyObjs'), MorphyLength,
                   parent=parent, child=child, integer(1))
-  homoplasies <- steps - minSteps
+  homoplasies <- steps - minLength
   fit <- homoplasies / (homoplasies + concavity)
   # Return:
   sum(fit * attr(dataset, 'weight'))
 }
 
-#' @describeIn IWScore Initialize dataset by adding morphyObjs and min.steps.
+#' @describeIn IWScore Initialize dataset by adding morphyObjs and min.length.
 #' @export
 IWInitMorphy <- function (dataset) {
   attr(dataset, 'morphyObjs') <- 
@@ -93,11 +92,11 @@ IWTreeSearch <- function (tree, dataset, concavity = 10,
                         maxIter = 100, maxHits = 20, forestSize = 1,
                         verbosity = 1, ...) {
   if (class(dataset) != 'phyDat') stop("Unrecognized dataset class; should be phyDat, not ", class(dataset), '.')
-  if (!('min.steps' %in% names(attributes(dataset)))) dataset <- PrepareDataIW(dataset)
+  if (!('min.length' %in% names(attributes(dataset)))) dataset <- PrepareDataIW(dataset)
   at <- attributes(dataset)
   
   TreeSearch(tree, dataset, nChar=at$nr, weight=at$weight,
-             minSteps=at$min.steps, concavity = concavity,
+             minLength=at$min.length, concavity = concavity,
              InitializeData = IWInitMorphy,
              CleanUpData = IWDestroyMorphy,
              TreeScorer = IWScoreMorphy,

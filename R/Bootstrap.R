@@ -80,12 +80,12 @@ IWBootstrap <- function (edgeList, dataset, concavity = 10L, EdgeSwapper = NNISw
   sampledAtt <- att
   sampledAtt[['weight']] <- resampling[sampled]
   sampledAtt[['index']] <- rep(seq_len(sum(sampled)), resampling[sampled])
-  sampledAtt[['min.steps']] <- minSteps <- att[['min.steps']][sampled] # Can probably delete but I'm too nervous to... MS, 2018-03-06
+  sampledAtt[['min.length']] <- minLength <- att[['min.length']][sampled] # Can probably delete but I'm too nervous to... MS, 2018-03-06
   sampledAtt[['morphyObjs']] <- att[['morphyObjs']][sampled]
   attributes(sampledData) <- sampledAtt
   
   res <- EdgeListSearch(edgeList[1:2], sampledData, TreeScorer=IWScoreMorphy,
-                        concavity=concavity, minSteps = minSteps,
+                        concavity=concavity, minLength = minLength,
                         EdgeSwapper=EdgeSwapper, maxIter=maxIter, maxHits=maxHits,
                         verbosity=verbosity-1L)
   

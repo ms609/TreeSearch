@@ -36,7 +36,7 @@ Fitch <- function (tree, dataset) {
 }
 
 
-#' Fitch score
+#' Character length
 #' 
 #' @template treeParam
 #' @template datasetParam
@@ -107,7 +107,10 @@ FitchSteps <- function (tree, dataset) {
 #' @export
 MorphyTreeLength <- function (tree, morphyObj) {
   nTaxa <- mpl_get_numtaxa(morphyObj)
-  if (nTaxa != length(tree$tip.label)) stop ("Number of taxa in morphy object (", nTaxa, ") not equal to number of tips in tree")
+  if (nTaxa != length(tree$tip.label)) {
+    stop ("Number of taxa in morphy object (", nTaxa,
+          ") not equal to number of tips in tree")
+  }
   treeOrder <- attr(tree, 'order')
   inPostorder <- (!is.null(treeOrder) && treeOrder == "postorder")
   tree.edge <- tree$edge
@@ -115,20 +118,24 @@ MorphyTreeLength <- function (tree, morphyObj) {
   MorphyLength(tree.edge[, 1], tree.edge[, 2], morphyObj, inPostorder, nTaxa)
 }
 
-#' @describeIn MorphyTreeLength Faster function that requires internal tree parameters
+#' @describeIn MorphyTreeLength Faster function that requires internal tree
+#'   parameters
 #' @template treeParent
 #' @template treeChild
 #' @author Martin R. Smith
 #' @keywords internal
 #' @export
-MorphyLength <- function (parent, child, morphyObj, inPostorder=FALSE, nTaxa=mpl_get_numtaxa(morphyObj)) {
+MorphyLength <- function (parent, child, morphyObj, inPostorder=FALSE, 
+                          nTaxa=mpl_get_numtaxa(morphyObj)) {
   if (!inPostorder) {
     edgeList <- PostorderEdges(parent, child, nTaxa=nTaxa)
     parent <- edgeList[[1]]
     child <- edgeList[[2]]
   }
   if (nTaxa < 1L) stop("Error: ", mpl_translate_error(nTaxa))
-  if (class(morphyObj) != 'morphyPtr') stop("morphyObj must be a morphy pointer. See ?LoadMorphy().")
+  if (class(morphyObj) != 'morphyPtr') {
+    stop("morphyObj must be a morphy pointer. See ?LoadMorphy().")
+  }
   
   maxNode <- nTaxa + mpl_get_num_internal_nodes(morphyObj)
   rootNode <- nTaxa + 1L
