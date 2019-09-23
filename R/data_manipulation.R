@@ -75,7 +75,7 @@ PrepareDataIW <- function (dataset) {
   unlisted <- unlist(dataset, use.names=FALSE)
   binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow=FALSE)
   
-  attr(dataset, 'min.steps') <- apply(binaryMatrix, 1, MinimumSteps)
+  attr(dataset, 'min.steps') <- apply(binaryMatrix, 1, MinimumLength)
   
   # Return:
   dataset
