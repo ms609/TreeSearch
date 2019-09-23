@@ -10,12 +10,22 @@
 #'                  
 #' @template warnParam
 #'
-#' @return An object of class phyDat with additional attributes:
-#'         \code{info.amounts}: details the information represented by each character when subject to N 
-#'         additional steps.
-#'         \code{split.sizes}: The size of the splits implied by each character
-#'         \code{bootstrap}: The character vector \code{c('info.amounts', 'split.sizes')}, indicating 
-#'                           attributes to sample when bootstrapping the dataset 9e.g. in Ratchet searches).
+#' @return An object of class phyDat, with additional attributes.
+#' `PrepareDataProfile` adds the attributes:
+#' 
+#'   - \code{info.amounts}: details the information represented by each 
+#'     character when subject to N additional steps.
+#'   
+#'   - \code{split.sizes}: The size of the splits implied by each character
+#'   
+#'   - \code{bootstrap}: The character vector 
+#'     \code{c('info.amounts', 'split.sizes')}, indicating attributes to sample
+#'      when bootstrapping the dataset (e.g. in Ratchet searches).
+#'
+#' `PrepareDataIW` adds the attribute:
+#' 
+#'  - \code{min.steps}: The minimum number of steps that must be present in each
+#'    transformation series.
 #'
 #' @author Martin R. Smith; written with reference to phangorn:::prepareDataFitch
 #' @export
