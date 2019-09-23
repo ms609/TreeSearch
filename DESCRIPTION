@@ -26,7 +26,7 @@ Description: Searches for phylogenetic trees that are optimal using a
   Brazeau, Guillerme and Smith (2019) <doi:10.1093/sysbio/syy083>.
 URL: https://ms609.github.io/TreeSearch, https://github.com/ms609/TreeSearch
 BugReports: https://github.com/ms609/TreeSearch/issues
-Depends: R (>= 3.4.0)
+Depends: R (>= 3.5.0)
 Imports: 
     ape (>= 5.0),
     colorspace,
