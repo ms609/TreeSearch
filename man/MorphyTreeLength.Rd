@@ -65,10 +65,10 @@ Calculate parsimony score with inapplicable data
 \seealso{
 PhyDat2Morphy
 
-Other tree scoring: \code{\link{FitchSteps}},
+Other tree scoring: \code{\link{CharacterLength}},
   \code{\link{Fitch}}, \code{\link{IWScore}}
 
-Other tree scoring: \code{\link{FitchSteps}},
+Other tree scoring: \code{\link{CharacterLength}},
   \code{\link{Fitch}}, \code{\link{IWScore}}
 }
 \author{

@@ -37,7 +37,7 @@ result <- Fitch(tree, inapplicable.phyData[[1]])
 \seealso{
 \code{\link{TreeSearch}}
 
-Other tree scoring: \code{\link{FitchSteps}},
+Other tree scoring: \code{\link{CharacterLength}},
   \code{\link{IWScore}}, \code{\link{MorphyTreeLength}}
 }
 \author{

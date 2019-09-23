@@ -40,7 +40,7 @@ IWScore <- function (tree, dataset, concavity = 10, ...) {
   at <- attributes(dataset)
   nChar  <- at$nr # strictly, transformation series patterns; these'll be upweighted later
   weight <- at$weight
-  steps <- FitchSteps(tree, dataset)
+  steps <- CharacterLength(tree, dataset)
   minSteps <- at$min.steps
   homoplasies <- steps - minSteps
   
@@ -58,9 +58,9 @@ IWScore <- function (tree, dataset, concavity = 10, ...) {
 
 #' @describeIn ProfileScore Scorer for Implied Weighting dataset.
 #' @template concavityParam
-#' @param minSteps Integer vector specifying the minimum number of steps
+#' @param minSteps Integer vector specifying the minimum length
 #'                 possible for each character in `dataset`, perhaps calculated
-#'                 using \code{\link{MinimumSteps}}.
+#'                 using \code{\link{MinimumLength}}.
 #'                 
 #' @export
 IWScoreMorphy <- function (parent, child, dataset, concavity = 10, 

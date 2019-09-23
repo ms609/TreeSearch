@@ -8,7 +8,7 @@
 \alias{ProfileDestroyMorphy}
 \title{Profile Parsimony Score}
 \usage{
-IWScoreMorphy(parent, child, dataset, concavity = 10,
+IWScoreMorphy(parent, child, dataset, concavity = 10L,
   minSteps = attr(dataset, "min.steps"), ...)
 
 ProfileScore(tree, dataset)
@@ -37,9 +37,9 @@ In subsidiary functions, the dataset will have been initialized using
 in implied weighting. Defaults to 10; TNT sets a default of 3, but this
 is too low in some circumstances (Smith, 2019).}
 
-\item{minSteps}{Integer vector specifying the minimum number of steps
+\item{minSteps}{Integer vector specifying the minimum length
 possible for each character in \code{dataset}, perhaps calculated
-using \code{\link{MinimumSteps}}.}
+using \code{\link{MinimumLength}}.}
 
 \item{\dots}{unused; allows additional parameters specified within \dots to be
 received by the function without throwing an error.}

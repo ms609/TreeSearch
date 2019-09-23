@@ -41,9 +41,8 @@ Fitch <- function (tree, dataset) {
 #' @template treeParam
 #' @template datasetParam
 #'
-#' @return A vector listing the number of 'parsimony steps' calculated by the 
-#'         Fitch algorithm for each character.  Inapplicable tokens are treated
-#'         as per Brazeau, Guillerme and Smith (2017)
+#' @return A vector listing the contribution of each character to tree score,
+#'         according to the algorithm of Brazeau, Guillerme and Smith (2019).
 #'
 #' @examples {
 #  data('inapplicable.datasets')
@@ -55,7 +54,7 @@ Fitch <- function (tree, dataset) {
 #' @references
 #'  \insertRef{Brazeau2018}{TreeSearch}
 #' @export
-FitchSteps <- function (tree, dataset) {
+CharacterLength <- function (tree, dataset) {
   if (class(dataset) != 'phyDat') {
     stop ("Dataset must be of class phyDat, not ", class(dataset))
   }
@@ -70,11 +69,27 @@ FitchSteps <- function (tree, dataset) {
   }
   
   tree <- RenumberTips(Renumber(tree), names(dataset))  
-  characters <- PhyToString(dataset, ps='', useIndex=FALSE, byTaxon=FALSE, concatenate=FALSE)
+  
+  # Return:
+  FastCharacterLength(tree, dataset)
+}
+
+#' @describeIn CharacterLength Do not perform checks.  Use with care: may cause
+#' erroneous results or  software crash if variables are in the incorrect format.
+FastCharacterLength <- function (tree, dataset) {
+  characters <- PhyToString(dataset, ps='', useIndex=FALSE, byTaxon=FALSE,
+                            concatenate=FALSE)
   morphyObjects <- lapply(characters, SingleCharMorphy)
   on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)))
+  
   # Return:
   vapply(morphyObjects, MorphyTreeLength, tree=tree, integer(1))
+}
+
+#' @rdname CharacterLength
+FitchSteps <- function (tree, dataset) {
+  .Deprecated(CharacterLength)
+  CharacterLength(tree, dataset)
 }
 
 #' Calculate parsimony score with inapplicable data
@@ -114,6 +129,7 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder=FALSE, nTaxa=mpl
   }
   if (nTaxa < 1L) stop("Error: ", mpl_translate_error(nTaxa))
   if (class(morphyObj) != 'morphyPtr') stop("morphyObj must be a morphy pointer. See ?LoadMorphy().")
+  
   maxNode <- nTaxa + mpl_get_num_internal_nodes(morphyObj)
   rootNode <- nTaxa + 1L
   allNodes <- rootNode:maxNode

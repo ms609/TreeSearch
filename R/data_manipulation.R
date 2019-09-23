@@ -81,9 +81,9 @@ PrepareDataIW <- function (dataset) {
   dataset
 }
 
-#' Minimum steps
+#' Minimum length
 #' 
-#' The smallest number of steps that a character can take on any tree.
+#' The smallest length that a character can obtain on any tree.
 #' 
 #' 
 #' @param states Integer vector listing the tokens that may be present at each 
@@ -118,13 +118,13 @@ PrepareDataIW <- function (dataset) {
 #'                      ncol=ncol(myData), dimnames=dimnames(myData))
 #'  
 #'   # Finally, work out minimum steps 
-#'   apply(myStates, 1, MinimumSteps)
+#'   apply(myStates, 1, MinimumLength)
 #'   
 #' }
 #'
 #' @author Martin R. Smith
 #' @export
-MinimumSteps <- function (states) {
+MinimumLength <- function (states) {
   
   uniqueStates <- unique(states[states>0])
   if (length(uniqueStates) < 2) return (0)
@@ -149,11 +149,18 @@ MinimumSteps <- function (states) {
         tokens <- tokens[, !unnecessary, drop=FALSE]
       } else {
         stop("The token configuration [", paste(states, collapse=" "), 
-             "] is not correctly handled by MinimumSteps.\n Please report this bug at ",
+             "] is not correctly handled by MinimumLength\n Please report this bug at ",
              "https://github.com/ms609/TreeSearch/issues/new")
       }
     }
     lastDim <- dim(tokens)
   }
   
+}
+
+#' @rdname MinimumLength
+MinimumSteps <- function(states) {
+  .Deprecated(MinimumLength, msg='Renamed and recoded to better support
+              inapplicable tokens')
+  MinimumLength(states)
 }

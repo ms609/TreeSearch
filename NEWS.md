@@ -7,6 +7,8 @@
  
 ## Changes
  - Move tree distance measures to separate package `TreeDist`
+ - Rename functions `MinimumSteps`→`MinimumLength` and 
+   `FitchSteps`→`CharacterLength`
 
 ## Enhancements
  - `ReadTntTree` supports named taxa (with `taxname=`)

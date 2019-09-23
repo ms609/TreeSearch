@@ -11,13 +11,20 @@ NSplits(tree)
 }
 \arguments{
 \item{tree}{A phylogenetic tree of class \code{phylo}, or a list of such trees
-(of class \code{list} or \code{multiPhylo}).}
+(of class \code{list} or \code{multiPhylo}), or a vector of integers.}
 }
 \value{
-Integer specifying the number of partitions
+Integer specifying the number of partitions in the specified trees,
+or in a rooted tree with \code{n} tips.
 }
 \description{
 Number of partitions in a tree
+}
+\examples{
+{
+NPartitions(8)
+NPartitions(ape::rtree(8))
+}
 }
 \author{
 Martin R. Smith
