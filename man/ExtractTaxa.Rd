@@ -7,7 +7,7 @@
 \usage{
 ExtractTaxa(matrixLines, character_num = NULL, session = NULL)
 
-NexusTokens(string)
+NexusTokens(tokens, character_num = NULL, session = NULL)
 }
 \arguments{
 \item{matrixLines}{lines of a file containing a phylogenetic matrix
@@ -18,6 +18,9 @@ NexusTokens(string)
 
 \item{session}{(optionally) a Shiny session with a numericInput named character_num
 whose maximum should be updated.}
+
+\item{tokens}{Vector of character strings correponding to phylogenetic
+tokens.}
 }
 \value{
 Matrix with n rows, each named for the relevant taxon, and c columns,

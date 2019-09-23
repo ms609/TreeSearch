@@ -6,6 +6,8 @@
 \title{String to phyDat}
 \usage{
 StringToPhyDat(string, tips, byTaxon = TRUE)
+
+StringToPhydat(string, tips, byTaxon = TRUE)
 }
 \arguments{
 \item{string}{a string of tokens, optionally containing whitespace, with no

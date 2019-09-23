@@ -6,19 +6,25 @@
 \alias{PhydatToString}
 \title{Extract character data from a phyDat object as a string}
 \usage{
-PhyToString(phy, ps = "", useIndex = TRUE, byTaxon = TRUE,
-  concatenate = TRUE)
+PhyToString(phy, parentheses = "{", collapse = "", ps = "",
+  useIndex = TRUE, byTaxon = TRUE, concatenate = TRUE)
 
-PhyDatToString(phy, ps = "", useIndex = TRUE, byTaxon = TRUE,
-  concatenate = TRUE)
+PhyDatToString(phy, parentheses = "{", collapse = "", ps = "",
+  useIndex = TRUE, byTaxon = TRUE, concatenate = TRUE)
 
-PhydatToString(phy, ps = "", useIndex = TRUE, byTaxon = TRUE,
-  concatenate = TRUE)
+PhydatToString(phy, parentheses = "{", collapse = "", ps = "",
+  useIndex = TRUE, byTaxon = TRUE, concatenate = TRUE)
 }
 \arguments{
 \item{phy}{An object of class \code{\link{phyDat}}}
 
-\item{ps}{Character specifying text, perhaps ';', to append to the end of the string}
+\item{parentheses}{Character specifying format of parentheses with which
+to surround ambiguous tokens.  Choose from: \code{\{} (default), \code{[}, \code{(}, \code{<}.}
+
+\item{collapse}{Character specifying text, perhaps \code{,}, with which to
+separate multiple tokens within parentheses}
+
+\item{ps}{Character specifying text, perhaps \code{;}, to append to the end of the string}
 
 \item{useIndex}{(default: TRUE) Print duplicate characters multiple
 times, as they appeared in the original matrix}

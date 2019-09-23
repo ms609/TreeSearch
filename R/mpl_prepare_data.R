@@ -35,7 +35,7 @@ StringToPhydat <- StringToPhyDat
 #' 
 #' @param phy An object of class \code{\link{phyDat}}
 #' @param parentheses Character specifying format of parentheses with which
-#' to surround ambiguous tokens.  Options: `{` (default), `<`, , `[`, `(`.
+#' to surround ambiguous tokens.  Choose from: `\{` (default), `[`, `(`, `<`.
 #' @param collapse Character specifying text, perhaps `,`, with which to 
 #' separate multiple tokens within parentheses
 #' @param ps Character specifying text, perhaps `;`, to append to the end of the string
