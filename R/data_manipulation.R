@@ -68,10 +68,10 @@ PrepareDataIW <- function (dataset) {
   cont <- attr(dataset, "contrast")
   nTip <- length(dataset)
   
-  powers.of.2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
+  powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
   inappLevel <- which(at$levels == "-")
   cont[, inappLevel] <- 0
-  tmp <- as.integer(cont %*% powers.of.2)
+  tmp <- as.integer(cont %*% powersOf2)
   unlisted <- unlist(dataset, use.names=FALSE)
   binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow=FALSE)
   
