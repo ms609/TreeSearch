@@ -63,11 +63,17 @@ test_that("Morphy generates correct lengths", {
     morphyObj <- UnloadMorphy(morphyObj)
   }
   ## Test combined matrix
-  bigPhy <- StringToPhyDat(paste0(characters, collapse='\n'), tree$tip.label, byTaxon=FALSE)
-  expect_identical(characters, PhyToString(bigPhy, byTaxon=FALSE, concatenate=FALSE))
-  expect_identical(paste0(collapse='', vapply(characters, substr, start=0, stop=1, character(1))),
-                   substr(PhyToString(bigPhy, ps=';', useIndex=TRUE, byTaxon=TRUE, concatenate=TRUE),
+  bigPhy <- StringToPhyDat(paste0(characters, collapse='\n'), tree$tip.label, 
+                           byTaxon=FALSE)
+  expect_identical(characters,
+                   PhyToString(bigPhy, byTaxon=FALSE, concatenate=FALSE))
+  expect_identical(paste0(collapse='', 
+                          vapply(characters, substr, start=0, stop=1,
+                                 character(1))),
+                   substr(PhyToString(bigPhy, ps=';', useIndex=TRUE, 
+                                      byTaxon=TRUE, concatenate=TRUE),
                     start=0, stop=length(characters)))
+  
   morphyObj <- PhyDat2Morphy(bigPhy)
   moSummary <- summary(morphyObj)
   expect_equal(c(length(bigPhy), attr(bigPhy, 'nr'), length(bigPhy) - 1),
