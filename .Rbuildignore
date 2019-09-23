@@ -3,7 +3,7 @@
 ^data-raw$
 ^CRAN-RELEASE$
 /^src\-/
-CONTRIBUTING
+CONTRIBUTING.md
 README.md
 cran-comments.md
 man-roxygen
