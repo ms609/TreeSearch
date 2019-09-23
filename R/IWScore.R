@@ -34,7 +34,9 @@ IWScore <- function (tree, dataset, concavity = 10, ...) {
   if (class(dataset) != 'phyDat') {
     stop('Invalid dataset type; prepare dataset with PhyDat() and PrepareDataIW().')
   }
-  if (!('info.amounts' %in% names(attributes(dataset)))) dataset <- PrepareDataIW(dataset)
+  if (!('min.steps' %in% names(attributes(dataset)))) {
+    dataset <- PrepareDataIW(dataset)
+  }
   at <- attributes(dataset)
   nChar  <- at$nr # strictly, transformation series patterns; these'll be upweighted later
   weight <- at$weight
