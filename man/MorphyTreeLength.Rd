@@ -55,7 +55,8 @@ Calculate parsimony score with inapplicable data
 }
 \section{Functions}{
 \itemize{
-\item \code{MorphyLength}: Faster function that requires internal tree parameters
+\item \code{MorphyLength}: Faster function that requires internal tree
+parameters
 
 \item \code{GetMorphyLength}: Fastest function that requires internal tree parameters
 

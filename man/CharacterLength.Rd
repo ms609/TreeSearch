@@ -4,7 +4,7 @@
 \alias{CharacterLength}
 \alias{FastCharacterLength}
 \alias{FitchSteps}
-\title{Fitch score}
+\title{Character length}
 \usage{
 CharacterLength(tree, dataset)
 
@@ -23,7 +23,7 @@ A vector listing the contribution of each character to tree score,
 according to the algorithm of Brazeau, Guillerme and Smith (2019).
 }
 \description{
-Fitch score
+Character length
 }
 \section{Functions}{
 \itemize{

@@ -3,7 +3,7 @@
 \name{MinimumLength}
 \alias{MinimumLength}
 \alias{MinimumSteps}
-\title{Minimum score}
+\title{Minimum length}
 \usage{
 MinimumLength(states)
 
@@ -26,7 +26,7 @@ An integer specifying the minimum number of steps that the character
 must contain.
 }
 \description{
-The smallest score that a character can be allocated on any tree.
+The smallest length that a character can obtain on any tree.
 }
 \examples{
 {

@@ -36,7 +36,7 @@ when bootstrapping the dataset (e.g. in Ratchet searches).
 
 \code{PrepareDataIW} adds the attribute:
 \itemize{
-\item \code{min.steps}: The minimum number of steps that must be present in each
+\item \code{min.length}: The minimum number of steps that must be present in each
 transformation series.
 }
 }

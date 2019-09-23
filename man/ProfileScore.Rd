@@ -9,7 +9,7 @@
 \title{Profile Parsimony Score}
 \usage{
 IWScoreMorphy(parent, child, dataset, concavity = 10L,
-  minSteps = attr(dataset, "min.steps"), ...)
+  minLength = attr(dataset, "min.length"), ...)
 
 ProfileScore(tree, dataset)
 
@@ -37,7 +37,7 @@ In subsidiary functions, the dataset will have been initialized using
 in implied weighting. Defaults to 10; TNT sets a default of 3, but this
 is too low in some circumstances (Smith, 2019).}
 
-\item{minSteps}{Integer vector specifying the minimum length
+\item{minLength}{Integer vector specifying the minimum length
 possible for each character in \code{dataset}, perhaps calculated
 using \code{\link{MinimumLength}}.}
 
