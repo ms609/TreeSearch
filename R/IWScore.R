@@ -42,10 +42,13 @@ IWScore <- function (tree, dataset, concavity = 10, ...) {
   minSteps <- at$min.steps
   homoplasies <- steps - minSteps
   
-  # TODO remove this paranoid check once 100% happy with minSteps calculation.
+  # This check has been triggered by three parallel runs simultaneously, 
+  # suggesting that an underlying C failure can cause disaster.
+  # Fix not attempted as next version of Morphy will do this internally.
   if (any(homoplasies < 0)) stop("Minimum steps have been miscalculated.\n", 
-                            "       Please report this bug at:\n", 
-                            "       https://github.com/ms609/TreeSearch/issues/new")
+    "       Please report this bug at:\n", 
+    "       https://github.com/ms609/TreeSearch/issues/new\n\n",
+    "       Tree was: ", dput(tree))
   fit <- homoplasies / (homoplasies + concavity)
   # Return:
   sum(fit * weight)
