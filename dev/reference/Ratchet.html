@@ -399,25 +399,23 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
     <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>)
 <span class='no'>njtree</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='NJTree.html'>NJTree</a></span>(<span class='no'>Lobo.phy</span>)
 <span class='co'># Increase value of ratchIter and searchHits to do a proper search</span>
-<span class='no'>quickResult</span> <span class='kw'>&lt;-</span> <span class='fu'>Ratchet</span>(<span class='no'>njtree</span>, <span class='no'>Lobo.phy</span>, <span class='kw'>ratchIter</span><span class='kw'>=</span><span class='fl'>2</span>, <span class='kw'>searchHits</span><span class='kw'>=</span><span class='fl'>3</span>)</div><div class='output co'>#&gt; 
-#&gt; * Beginning Parsimony Ratchet, with initial score 239
-#&gt; Completed parsimony ratchet after 2 iterations with score 232 </div><div class='input'><span class='fu'><a href='https://rdrr.io/r/graphics/plot.html'>plot</a></span>(<span class='no'>quickResult</span>)</div><div class='img'><img src='Ratchet-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='co'># IW search is currently much slower:</span>
+<span class='no'>quickResult</span> <span class='kw'>&lt;-</span> <span class='fu'>Ratchet</span>(<span class='no'>njtree</span>, <span class='no'>Lobo.phy</span>, <span class='kw'>ratchIter</span><span class='kw'>=</span><span class='fl'>2</span>, <span class='kw'>searchHits</span><span class='kw'>=</span><span class='fl'>3</span>)</div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>* Beginning Parsimony Ratchet, with initial score239</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>Completed parsimony ratchet after2iterations with score232</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/graphics/plot.html'>plot</a></span>(<span class='no'>quickResult</span>)</div><div class='img'><img src='Ratchet-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='co'># IW search is currently much slower:</span>
 <span class='no'>quickIWResult</span> <span class='kw'>&lt;-</span> <span class='fu'>IWRatchet</span>(<span class='no'>quickResult</span>, <span class='no'>Lobo.phy</span>, <span class='kw'>concavity</span><span class='kw'>=</span><span class='fl'>2.5</span>,
                            <span class='kw'>ratchIter</span><span class='kw'>=</span><span class='fl'>1</span>, <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>25</span>, <span class='kw'>searchHits</span><span class='kw'>=</span><span class='fl'>2</span>,
-                           <span class='kw'>swappers</span><span class='kw'>=</span><span class='no'>RootedTBRSwap</span>, <span class='kw'>verbosity</span><span class='kw'>=</span><span class='fl'>5</span>)</div><div class='output co'>#&gt; 
-#&gt; * Using implied weighting with concavity constant k = 2.5
-#&gt; * Beginning Parsimony Ratchet, with initial score 232
-#&gt; * Ratchet iteration 1 - Generating new tree by bootstrapping dataset. 
-#&gt;   - Performing tree search.  Initial score: 24.32945
-#&gt;   - Final score 24.32945 found 1 times after 25 rearrangements
-#&gt; 
-#&gt;  - Rearranging from new candidate tree:
-#&gt;   - Performing tree search.  Initial score: 22.85625
-#&gt;   - Final score 22.85625 found 0 times after 25 rearrangements
-#&gt; 
-#&gt;  - Rearranged candidate tree scored  22.85625
-#&gt; * Best score after 1 / 1 ratchet iterations: 22.85625 ( hit 1 / 10 )
-#&gt; Completed parsimony ratchet after 1 iterations with score 22.85625 </div><div class='input'> 
+                           <span class='kw'>swappers</span><span class='kw'>=</span><span class='no'>RootedTBRSwap</span>, <span class='kw'>verbosity</span><span class='kw'>=</span><span class='fl'>5</span>)</div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>* Using implied weighting with concavity constant k =2.5</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>* Beginning Parsimony Ratchet, with initial score232</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>* Ratchet iteration1- Generating new tree by bootstrapping dataset. </span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>  - Performing tree search.  Initial score:24.3294483294483</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>  - Final score24.3294483294483found1times after25rearrangements</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'> - Rearranging from new candidate tree:</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>  - Performing tree search.  Initial score:22.8562548562549</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>  - Final score22.8562548562549found0times after25rearrangements</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'> - Rearranged candidate tree scored 22.8562548562549</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>* Best score after1/1ratchet iterations:22.8562548562549( hit1/10)</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>Completed parsimony ratchet after1iterations with score22.8562548562549</span></div><div class='input'> 
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
