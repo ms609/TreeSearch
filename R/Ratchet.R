@@ -88,10 +88,10 @@ Ratchet <- function (tree, dataset,
   } else {
     attr(tree, 'score')
   }
-  if (verbosity > 0L) cat("\n* Beginning Parsimony Ratchet, with initial score", bestScore,
+  if (verbosity > 0L) message("\n* Beginning Parsimony Ratchet, with initial score", bestScore,
                           if (!is.null(stopAtScore)) "; will stop at score", stopAtScore)
   if (!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) {
-    if (verbosity > 1L) cat("\n*** Target score of", stopAtScore, "met.")
+    if (verbosity > 1L) message("\n*** Target score of", stopAtScore, "met.")
     return(tree)
   }
   if (class(swappers) == 'function') swappers <- list(swappers)
@@ -105,7 +105,7 @@ Ratchet <- function (tree, dataset,
   iterationsWithBestScore <- 0
   BREAK <- FALSE
   for (i in 1:ratchIter) {
-    if (verbosity > 1L) cat ("\n* Ratchet iteration", i, "- Generating new tree by bootstrapping dataset. ")
+    if (verbosity > 1L) message("\n* Ratchet iteration", i, "- Generating new tree by bootstrapping dataset. ")
     candidate <- Bootstrapper(edgeList, initializedData, maxIter=bootstrapIter,
                               maxHits=bootstrapHits, verbosity=verbosity-2L,
                               EdgeSwapper=BootstrapSwapper, stopAtPeak=stopAtPeak,
@@ -116,7 +116,7 @@ Ratchet <- function (tree, dataset,
     # debugTree$edge <- ListToMatrix(candidate)
     # plot(debugTree)
     
-    if (verbosity > 2L) cat ("\n - Rearranging from new candidate tree:")
+    if (verbosity > 2L) message("\n - Rearranging from new candidate tree:")
     for (EdgeSwapper in swappers) {
       at <- attributes(EdgeSwapper)
       Argument <- function (arg) if (!is.null(at[[arg]])) at[[arg]] else get(arg)
@@ -128,7 +128,7 @@ Ratchet <- function (tree, dataset,
       candScore <- candidate[[3]]
       if (!is.null(stopAtScore) && candScore < stopAtScore + epsilon) {
         BREAK <- TRUE
-        if (verbosity > 1L) cat("\n  * Target score", stopAtScore, "met; terminating tree search.")
+        if (verbosity > 1L) message("\n  * Target score", stopAtScore, "met; terminating tree search.")
         bestScore <- candScore
         break
       }
@@ -137,7 +137,7 @@ Ratchet <- function (tree, dataset,
       break
     }
     
-    if (verbosity > 2L) cat("\n - Rearranged candidate tree scored ", candScore)
+    if (verbosity > 2L) message("\n - Rearranged candidate tree scored ", candScore)
     if (returnAll && candScore < (bestScore + suboptimal)) { # Worth saving this tree in forest
       forest[[i]] <- candidate
       forestScores[i] <- candScore
@@ -151,7 +151,7 @@ Ratchet <- function (tree, dataset,
       iterationsWithBestScore <- iterationsWithBestScore + 1L
       edgeList <- candidate
     }
-    if (verbosity > 1L) cat("\n* Best score after", i, "/", ratchIter, "ratchet iterations:",
+    if (verbosity > 1L) message("\n* Best score after", i, "/", ratchIter, "ratchet iterations:",
                             bestScore, "( hit", iterationsWithBestScore, "/", ratchHits, ")")
     if ((!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) 
     || (iterationsWithBestScore >= ratchHits)) {
@@ -159,13 +159,13 @@ Ratchet <- function (tree, dataset,
     }
   } # end for
 
-  if (verbosity > 0L) cat ("\nCompleted parsimony ratchet after", i, "iterations with score", bestScore, "\n")
+  if (verbosity > 0L) message("\nCompleted parsimony ratchet after", i, "iterations with score", bestScore, "\n")
    
   if (returnAll) {
     keepers <- !is.na(forestScores) & forestScores < bestScore + suboptimal
     forestScores <- forestScores[keepers]
     forest <- forest[keepers]
-    if (verbosity > 1L) cat("\n - Keeping", sum(keepers), "trees from iterations numbered:\n   ", which(keepers))
+    if (verbosity > 1L) message("\n - Keeping", sum(keepers), "trees from iterations numbered:\n   ", which(keepers))
     if (length(forest) > 1) {
       forest <- structure(lapply(forest, function (phy) {
         x <- tree
@@ -174,7 +174,7 @@ Ratchet <- function (tree, dataset,
         # Return to lapply: 
         x}), class = 'multiPhylo')
       ret <- unique(forest)
-      if (verbosity > 1L) cat("\n - Removing duplicates leaves", length(ret), "unique trees")
+      if (verbosity > 1L) message("\n - Removing duplicates leaves", length(ret), "unique trees")
       uniqueScores <- vapply(ret, attr, double(1), 'score')
     } else if (length(forest) == 1) {
       ret <- tree
@@ -183,7 +183,7 @@ Ratchet <- function (tree, dataset,
     } else {
       stop("\nNo trees!? Is suboptimal set to a sensible (positive) value?")
     }
-    if (verbosity > 0L) cat('\nFound', sum(uniqueScores == min(uniqueScores)), 'unique MPTs and', length(ret) - sum(uniqueScores == min(uniqueScores)), 'suboptimal trees.\n')
+    if (verbosity > 0L) message('\nFound', sum(uniqueScores == min(uniqueScores)), 'unique MPTs and', length(ret) - sum(uniqueScores == min(uniqueScores)), 'suboptimal trees.\n')
     # Return:
     ret
   } else {
@@ -231,7 +231,7 @@ IWRatchet <- function (tree, dataset, concavity = 10,
                             bootstrapIter=searchIter, bootstrapHits=searchHits, verbosity=1L, 
                             suboptimal=1e-08, ...) {
   dataset <- PrepareDataIW(dataset)
-  if (verbosity > 1L) cat("\n* Using implied weighting with concavity constant k =", concavity)
+  if (verbosity > 1L) message("\n* Using implied weighting with concavity constant k =", concavity)
   
   Ratchet(tree=tree, dataset=dataset, 
           concavity=concavity, minLength=attr(dataset, 'min.length'), 
@@ -271,7 +271,7 @@ MultiRatchet <- function (tree, dataset, ratchHits=10,
                                                          stopAtScore=stopAtScore, ...))
   scores <- vapply(trees, function (x) attr(x, 'score'), double(1))
   trees <- UniqueExceptHits(trees[scores == min(scores)])
-  cat ("Found", length(trees), 'unique trees from', nSearch, 'searches.')
+  message("Found", length(trees), 'unique trees from', nSearch, 'searches.')
   return (trees)
 }
 
@@ -292,7 +292,7 @@ IWMultiRatchet <- function (tree, dataset, ratchHits=10, concavity=4,
   scores <- vapply(trees, function (x) attr(x, 'score'), double(1))
   trees <- UniqueExceptHits(trees[scores == min(scores)])
   
-  cat ("Found", length(trees), 'unique trees from', nSearch, 'searches.')
+  message("Found", length(trees), 'unique trees from', nSearch, 'searches.')
   return (trees)
 }
 

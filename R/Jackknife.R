@@ -35,12 +35,12 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
     stop("resampleFreq of ", resampleFreq, " is too high; can't keep all ",
          length(deindexedChars), " characters.")
   }
-  if (verbosity > 10L) cat("\n * Beginning search:")
+  if (verbosity > 10L) message("\n * Beginning search:")
   
   # Conduct jackIter replicates:
   jackEdges <- vapply(seq_len(jackIter), function (x) {
     if (verbosity > 0L) {
-      cat("\n * Jackknife iteration", x, "/", jackIter)
+      message("\n * Jackknife iteration", x, "/", jackIter)
     }
     resampling <- tabulate(sample(deindexedChars, charsToKeep, replace=FALSE),
                            nbins=length(startWeights))

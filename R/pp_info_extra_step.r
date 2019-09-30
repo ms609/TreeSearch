@@ -103,10 +103,10 @@ ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25, maxIter = 10
   #analyticIc1<- -log(nOneExtraStep/NUnrooted(sum(split))) / log(2)
   #analyticIc1<- -log((nNoExtraSteps + nOneExtraStep)/NUnrooted(sum(split))) / log(2)
   if (warn) {
-    cat('  Token count', split, "=", signif(analyticIc0, ceiling(log10(maxIter))),
+    message('  Token count', split, "=", signif(analyticIc0, ceiling(log10(maxIter))),
         'bits @ 0 extra steps; simulating', nIter, 
         'trees to estimate cost of further steps.\n')
-    # cat(c(round(analyticIc0, 3), 'bits @ 0 extra steps;', round(analyticIc1, 3),
+    # message(c(round(analyticIc0, 3), 'bits @ 0 extra steps;', round(analyticIc1, 3),
     #    '@ 1; attempting', nIter, 'iterations.\n'))
   }
   
@@ -225,7 +225,7 @@ Evaluate <- function (tree, dataset, warn=TRUE) {
                          double(1)), 12)
   infoLosses <- apply(chars, 1, ICSteps, ambiguousToken=ambiguousToken, maxIter=1000, warn=warn)
   infoAmounts <- lapply(infoLosses, function(p) {
-    #cat(length(p))
+    #message(length(p))
     cumP <- cumsum(p)
     nSteps <- as.integer(names(p))
     infer <- min(nSteps):max(nSteps)
@@ -253,7 +253,7 @@ Evaluate <- function (tree, dataset, warn=TRUE) {
   info.overkill <- total.info / info.needed
   info.retained <- sum(info.used[index])
   signal.noise <- info.retained / info.misleading
-  cat("\n", total.info, 'bits, of which', round(info.retained, 2), 'kept,', round(total.info - info.retained, 2), 'lost,', round(info.needed, 2), 'needed.  SNR =', signal.noise, "\n")
+  message("\n", total.info, 'bits, of which', round(info.retained, 2), 'kept,', round(total.info - info.retained, 2), 'lost,', round(info.needed, 2), 'needed.  SNR =', signal.noise, "\n")
   # Return:
   c(signal.noise, info.retained/info.needed)
 }

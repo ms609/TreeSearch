@@ -57,7 +57,7 @@ test_that("Morphy generates correct lengths", {
   for(test in seq_along(characters)) {
     morphyObj <- SingleCharMorphy(characters[test])
     tree_length <- MorphyTreeLength(tree, morphyObj)
-    #if (tree_length != expected_results[test]) cat("Test case", test - 1, characters[test], "unequal: Morphy calcluates",
+    #if (tree_length != expected_results[test]) message("Test case", test - 1, characters[test], "unequal: Morphy calcluates",
     #  tree_length, "instead of", expected_results[test],"\n")
     expect_equal(tree_length, expected_results[test])
     morphyObj <- UnloadMorphy(morphyObj)
@@ -98,7 +98,7 @@ test_that("Morphy generates correct lengths", {
     # Presently a good test to confirm that PhyDat2Morphy works with single-character phys
     morphyObj <- PhyDat2Morphy(phy)
     tree_length <- MorphyTreeLength(bigTree, morphyObj)
-    #if (tree_length != expected_results[test]) cat("Test case", test - 1, bigChars[test], "unequal: Morphy calcluates",
+    #if (tree_length != expected_results[test]) message("Test case", test - 1, bigChars[test], "unequal: Morphy calcluates",
     #  tree_length, "instead of", expected_results[test],"\n")
     expect_equal(tree_length, expected_results[test])
     UnloadMorphy(morphyObj)

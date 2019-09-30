@@ -137,7 +137,7 @@ proftools::plotProfileCallGraph(pd)
 proftable
 
 for (dataName in names(scores)) {
- cat("\n ========", format(Sys.time(), "%b %d %X"), ":", dataName, ": Target", scores[dataName], "========\n")
+ message("\n ========", format(Sys.time(), "%b %d %X"), ":", dataName, ": Target", scores[dataName], "========\n")
  timestart[dataName] <- Sys.time()
  oTree <- Ratchet(nj.tree[[dataName]], inapplicable.phyData[[dataName]],
                   swappers=list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap),
@@ -145,13 +145,13 @@ for (dataName in names(scores)) {
                   ratchHits=1000, ratchIter=10000,
                   searchIter=3200, searchHits=12, verbosity=2L)
  timeend[dataName] <- Sys.time()
- cat("\n > Time taken: ", (timeend[dataName] - timestart[dataName]) / 60, "mins\n")
+ message("\n > Time taken: ", (timeend[dataName] - timestart[dataName]) / 60, "mins\n")
 }
 
 ## TESTING
 {
 dataset <- names(scores)[4]
- cat("\n ========", format(Sys.time(), "%b %d %X"), ":", dataset, "========\n")
+ message("\n ========", format(Sys.time(), "%b %d %X"), ":", dataset, "========\n")
  timestart[dataset] <- Sys.time()
  oTree <- Ratchet(nj.tree[[dataset]], inapplicable.phyData[[dataset]],
                   swappers=list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap),
@@ -159,7 +159,7 @@ dataset <- names(scores)[4]
                   ratchHits=1000, ratchIter=10000,
                   searchIter=3200, searchHits=12, verbosity=4L)
  timeend[dataset] <- Sys.time()
- cat("\n > Time taken: ", (timeend[dataset] - timestart[dataset]) / 60, "mins\n")
+ message("\n > Time taken: ", (timeend[dataset] - timestart[dataset]) / 60, "mins\n")
 }
 
 } # End top-level IF

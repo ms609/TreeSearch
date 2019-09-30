@@ -72,7 +72,7 @@
 ######MorphySectorial <- function (parent, child, dataset, TreeScorer = MorphyLength, maxSectIter=100, 
 ######                         maxIter=500, maxImprovements=5, smallestSector=4, largestSector=1e+06, 
 ######                         Rearrangements=list(RootedNNI), verbosity=0, ...) {
-######  if (verbosity >= 0) cat(' - Sectorial search: optimizing sectors of', smallestSector, 'to', floor(largestSector), 'tips')
+######  if (verbosity >= 0) message(' - Sectorial search: optimizing sectors of', smallestSector, 'to', floor(largestSector), 'tips')
 ######  nEdge <- length(parent)
 ######  nTip <- (nEdge / 2) + 1
 ######  nonRootNodes <- (nTip + 2):(nEdge + 1)
@@ -94,26 +94,26 @@
 ######    
 ######    nodeLengths <- CladeSizes(tree, nonRootNodes)
 ######    candidateNodes <- nonRootNodes[nodeLengths >= smallestSector & nodeLengths <= largestSector]
-######    if (verbosity >= 0) cat ("\n - Iteration", i, "- attempting sectorial search on node ")
+######    if (verbosity >= 0) message("\n - Iteration", i, "- attempting sectorial search on node ")
 ######    repeat {
 ######      sector <- sample(candidateNodes, 1)
 ######      candidate <- Subtree(tree, sector)
 ######      crownTips <- candidate$tip.label
 ######      sectorSize <- length(crownTips)
-######      cat(sector, 'size', sectorSize, '...')
+######      message(sector, 'size', sectorSize, '...')
 ######      
-######      if (SectorHasData(dataset, crownTips)) break else cat('unsuitable (no dataset); trying')
+######      if (SectorHasData(dataset, crownTips)) break else message('unsuitable (no dataset); trying')
 ######      
 ######      candidateNodes <- candidateNodes[-match(sector, candidateNodes)]
 ######      if (length(candidateNodes == 0)) stop('No selectable sectors contain parsimony information! Either "largestSector" is close to "smallestSector" or your dataset is short of parsimony information.')
 ######    }
-######    if (verbosity >= 0) cat(' Sector OK.')
+######    if (verbosity >= 0) message(' Sector OK.')
 ######    
 ######    crown <- root(AddTip(crown, 0, 'SECTOR_ROOT'), length(crown$tip.label) + 1, resolve.root=TRUE)
 ######    initialScore <- TreeScorer(candidate, dataset, ...)
 ######    attr(candidate, 'score') <- initialScore
 ######    
-######    if (verbosity >= 0) cat("\n - Rearranging sector", sector)
+######    if (verbosity >= 0) message("\n - Rearranging sector", sector)
 ######    for (Rearrange in Rearrangements) {
 ######      candidate <- TreeSearch(candidate, dataset, TreeScorer, Rearrange,
 ######                                verbosity=verbosity-1, maxIter=maxIter, ...) 
@@ -138,12 +138,12 @@
 ######      tree$edge[edges, 1] <- subtree.parent + nodeAdjust
 ######      tree$edge[edges, 2] <- subtree.child
 ######      
-######      if (verbosity > 0) cat(' : improved local pscore, updated tree')
-######    } else if (verbosity > 0) cat (' : no improvement to local pscore')
+######      if (verbosity > 0) message(' : improved local pscore, updated tree')
+######    } else if (verbosity > 0) message (' : no improvement to local pscore')
 ######    if (improvements == maxImprovements) break()
 ######  } # for
 ######  if (verbosity >= 0)
-######    cat ("\nCompleted sectorial rearrangements.\n")
+######    message ("\nCompleted sectorial rearrangements.\n")
 ######  attr(tree, 'score') <- NULL
 ######  attr(tree, 'hits') <- NULL
 ######  # Return:
@@ -231,7 +231,7 @@
 ######    attr(tree, 'score')
 ######  }
 ######  
-######  if (verbosity > 0L) cat("\n* Beginning Sectorial Search, with initial score", bestScore)
+######  if (verbosity > 0L) message("\n* Beginning Sectorial Search, with initial score", bestScore)
 ######  if (!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) return(tree)
 ######  
 ######  

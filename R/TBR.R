@@ -132,7 +132,7 @@ TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mer
       nSamplable <- length(samplable)
       if (nSamplable == 0) return(TBRWarning(parent, child, "No reconnection site would modify the tree; check mergeEdge"))
       rootedReconnectionEdge <- if (nSamplable == 1) samplable else SampleOne(samplable, len=nSamplable)
-      #### cat(" - Selected rooted Reconnection Edge: ", rootedReconnectionEdge, "\n")  #### DEBUGGING AID
+      #### message(" - Selected rooted Reconnection Edge: ", rootedReconnectionEdge, "\n")  #### DEBUGGING AID
     } else {
       rootedReconnectionEdge <- mergeEdges
       if (nearBrokenEdge[mergeEdges]) {
@@ -143,7 +143,7 @@ TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mer
       nSamplable <- length(samplable)
       if (nSamplable == 0) return(TBRWarning(parent, child, "No reconnection site would modify the tree; check mergeEdge"))
       adriftReconnectionEdge <- if (nSamplable == 1) samplable else SampleOne(samplable)
-      #### cat(" - Selected adrift Reconnection Edge: ", adriftReconnectionEdge, "\n") #### DEBUGGING AID
+      #### message(" - Selected adrift Reconnection Edge: ", adriftReconnectionEdge, "\n") #### DEBUGGING AID
     }
   } else {
     whichAdrift <- edgesCutAdrift[mergeEdges]
@@ -376,7 +376,7 @@ RootedTBRSwap <- function (parent, child, nEdge=length(parent), edgeToBreak=NULL
       nSamplable <- length(samplable)
       if (nSamplable == 0) return(TBRWarning(parent, child, "No reconnection site would modify the tree; check mergeEdge"))
       rootedReconnectionEdge <- if (nSamplable == 1) samplable else SampleOne(samplable, len=nSamplable)
-      #### cat(" - Selected rooted Reconnection Edge: ", rootedReconnectionEdge, "\n")  #### DEBUGGING AID
+      #### message(" - Selected rooted Reconnection Edge: ", rootedReconnectionEdge, "\n")  #### DEBUGGING AID
     } else {
       rootedReconnectionEdge <- mergeEdges
       if (nearBrokenEdge[mergeEdges]) {
@@ -387,7 +387,7 @@ RootedTBRSwap <- function (parent, child, nEdge=length(parent), edgeToBreak=NULL
       nSamplable <- length(samplable)
       if (nSamplable == 0) return(TBRWarning(parent, child, "No reconnection site would modify the tree; check mergeEdge"))
       adriftReconnectionEdge <- if (nSamplable == 1) samplable else SampleOne(samplable, len=nSamplable)
-      #### cat(" - Selected adrift Reconnection Edge: ", adriftReconnectionEdge, "\n") #### DEBUGGING AID
+      #### message(" - Selected adrift Reconnection Edge: ", adriftReconnectionEdge, "\n") #### DEBUGGING AID
     }
   } else {
     whichAdrift <- edgesOnAdriftSegment[mergeEdges]

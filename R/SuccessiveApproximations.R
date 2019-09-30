@@ -33,7 +33,7 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3, max
   bestsConsensus <- vector('list', maxSuccIter + 1)
   best <- bests[[1]] <- bestsConsensus[[1]] <- root(tree, outgroup, resolve.root=TRUE)
   for (i in seq_len(maxSuccIter) + 1) {
-    if (verbosity > 0) cat('\nSuccessive Approximations Iteration', i - 1)
+    if (verbosity > 0) message('\nSuccessive Approximations Iteration', i - 1)
     attr(best, 'score') <- NULL
     if (suboptimal > 0) {
       suboptimalSearch <- suboptimal * sum(attr(dataset, 'sa.weights') * attr(dataset, 'weight'))
@@ -53,7 +53,7 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3, max
     w.i <- ((p.i)^-k) - 1
     attr(dataset, 'sa.weights') <- w.i
   }
-  cat('Stability not reached.')
+  message('Stability not reached.')
   
   # Return:
   bests
