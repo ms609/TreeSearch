@@ -13,6 +13,7 @@
 ## Enhancements
  - `ReadTntTree` supports named taxa (with `taxname=`)
  - Improve speed of tests (by increasing probability of false positives)
+ - Use `message` in place of `cat`, to allow use of `suppressMessages()`
 
 
 # TreeSearch 0.3.2
