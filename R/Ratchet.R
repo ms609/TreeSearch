@@ -283,12 +283,13 @@ IWMultiRatchet <- function (tree, dataset, ratchHits=10, concavity=4,
                               swappers=list(RootedNNISwap), nSearch=10, 
                               suboptimal=suboptimal,
                               stopAtScore=NULL, ...) {
-  trees <- lapply(logical(nSearch), 
-                  function (x) 
-                    IWRatchet(tree, dataset, ratchIter=1, concavity=concavity,
-                              searchIter=searchIter, searchHits=searchHits, 
-                              verbosity=verbosity, swappers=swappers, 
-                              stopAtScore=stopAtScore, ...))
+  trees <- lapply(seq_len(nSearch), function (i) {
+    if (verbosity > 1L) message("\n\nRatchet search #", i, ' / ', nSearch)
+    IWRatchet(tree, dataset, ratchIter = 1L, concavity = concavity,
+              searchIter = searchIter, searchHits = searchHits, 
+              verbosity = verbosity, swappers = swappers,
+              stopAtScore = stopAtScore, ...)
+  })
   scores <- vapply(trees, function (x) attr(x, 'score'), double(1))
   trees <- UniqueExceptHits(trees[scores == min(scores)])
   
