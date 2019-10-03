@@ -297,7 +297,7 @@ MultiRatchet <- function (tree, dataset, ratchHits=10,
                               swappers=list(RootedNNISwap), nSearch=10, 
                               stopAtScore=NULL, ...) {
   trees <- lapply(seq_len(nSearch), function (i) {
-    if (verbosity > 1L) message("\nRatchet search ", i, '/', nSearch)
+    if (verbosity > 1L) message("\nRatchet search ", i, '/', nSearch, ':')
     Ratchet(tree, dataset, ratchIter = 1, ratchHits = 0L, 
             searchIter = searchIter, searchHits = searchHits, 
             verbosity = verbosity, swappers = swappers, 
@@ -318,7 +318,7 @@ IWMultiRatchet <- function (tree, dataset, ratchHits=10, concavity=4,
                               suboptimal=suboptimal,
                               stopAtScore=NULL, ...) {
   trees <- lapply(seq_len(nSearch), function (i) {
-    if (verbosity > 1L) message("\nRatchet search ", i, '/', nSearch)
+    if (verbosity > 1L) message("\nRatchet search ", i, '/', nSearch, ':')
     IWRatchet(tree, dataset, ratchIter = 1L, ratchHits = 0L, 
               concavity = concavity, 
               searchIter = searchIter, searchHits = searchHits, 
