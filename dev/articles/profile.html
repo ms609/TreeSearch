@@ -171,7 +171,7 @@
 <pre><code>## [1] -283.8993</code></pre>
 <div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" data-line-number="1">better.tree &lt;-<span class="st"> </span><span class="kw"><a href="../reference/TreeSearch.html">ProfileTreeSearch</a></span>(tree, my.prepdata, <span class="dt">EdgeSwapper=</span>RootedTBRSwap)</a></code></pre></div>
 <pre><code>##   - Performing tree search.  Initial score: -283.899313434403</code></pre>
-<pre><code>##   - Final score -286.05428296312 found 2 times after 100 rearrangements</code></pre>
+<pre><code>##   - Final score -286.05428296312 found 2 times after 100 rearrangements.</code></pre>
 <p>The parsimony ratchet <span class="citation">(Nixon, 1999)</span> is better at finding globally optimal trees. <code>ProfileRatchet</code> is a convenient wrapper for the underlying function <code>Ratchet</code>.</p>
 <div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="co"># Longwinded approach:</span></a>
 <a class="sourceLine" id="cb22-2" data-line-number="2">better.tree &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Ratchet.html">Ratchet</a></span>(better.tree, my.prepdata, <span class="dt">searchHits=</span><span class="dv">10</span>, <span class="dt">searchIter=</span><span class="dv">100</span>, <span class="dt">ratchIter=</span><span class="dv">5</span>,</a>
