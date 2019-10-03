@@ -294,9 +294,12 @@ MultiRatchet <- function (tree, dataset, ratchHits=10,
                               searchIter=500, searchHits=20, verbosity=0L, 
                               swappers=list(RootedNNISwap), nSearch=10, 
                               stopAtScore=NULL, ...) {
-  trees <- lapply(logical(nSearch), function (x) Ratchet(tree, dataset, ratchIter=1, 
-                                                         searchIter=searchIter, searchHits=searchHits, verbosity=verbosity, swappers=swappers, 
-                                                         stopAtScore=stopAtScore, ...))
+  trees <- lapply(seq_len(nSearch), function (i) {
+    if (verbosity > 1L) message("\nRatchet search # ", i, '/', nSearch)
+    Ratchet(tree, dataset, ratchIter=1, searchIter=searchIter, 
+            searchHits=searchHits, verbosity=verbosity, swappers=swappers, 
+            stopAtScore=stopAtScore, ...)
+  })
   scores <- vapply(trees, function (x) attr(x, 'score'), double(1))
   trees <- UniqueExceptHits(trees[scores == min(scores)])
   message("Found ", length(trees), ' unique trees from ', nSearch, ' searches.')
