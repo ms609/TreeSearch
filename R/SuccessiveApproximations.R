@@ -29,11 +29,11 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3, max
   max.node <- max(tree$edge[, 1])
   n.tip <- length(tree$tip.label)
   n.node <- max.node - n.tip
-  bests <- vector('list', maxSuccIter + 1)
-  bestsConsensus <- vector('list', maxSuccIter + 1)
+  bests <- vector('list', maxSuccIter + 1L)
+  bestsConsensus <- vector('list', maxSuccIter + 1L)
   best <- bests[[1]] <- bestsConsensus[[1]] <- root(tree, outgroup, resolve.root=TRUE)
-  for (i in seq_len(maxSuccIter) + 1) {
-    if (verbosity > 0) message('\nSuccessive Approximations Iteration', i - 1)
+  for (i in seq_len(maxSuccIter) + 1L) {
+    if (verbosity > 0) message('\nSuccessive Approximations Iteration ', i - 1L)
     attr(best, 'score') <- NULL
     if (suboptimal > 0) {
       suboptimalSearch <- suboptimal * sum(attr(dataset, 'sa.weights') * attr(dataset, 'weight'))

@@ -29,9 +29,14 @@ EdgeListSearch <- function (edgeList, dataset,
       bestScore <- edgeList[[3]]
     }
   }
-  if (verbosity > 0L) message("\n  - Performing tree search.  Initial score:", bestScore)
+  if (verbosity > 0L) {
+    message("  - Performing tree search.  Initial score: ", bestScore)
+  }
   if (!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) {
-    if (verbosity > 0L) message("\n  - Aborting tree search as tree score", bestScore, "already below target of", stopAtScore)
+    if (verbosity > 0L) {
+      message("  - Aborting tree search as tree score ", bestScore, 
+              " already below target of ", stopAtScore)
+    }
     edgeList[[3]] <- bestScore
     return(edgeList)
   }
@@ -66,26 +71,34 @@ EdgeListSearch <- function (edgeList, dataset,
         edgeList  <- candidateLists
         if (!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) return(edgeList)
       } else if (stopAtPeak && scoreThisIteration > bestScore + epsilon) {
-        if (verbosity > 1L) message("\n    ! Iteration", iter, "- No TBR rearrangement improves score.",
-                                scoreThisIteration, "doesn't beat", bestScore)
+        if (verbosity > 1L) {
+          message("    ! Iteration ", iter, 
+                  " - No TBR rearrangement improves score. ",
+                  scoreThisIteration, " doesn't beat ", bestScore)
+        }
         break
       }
       unimprovedSince <- unimprovedSince + 1L
       if (stopAtPlateau > 0L) {
-        if (verbosity > 2L && unimprovedSince > 0L) message(" Last improvement", unimprovedSince, "iterations ago.")
+        if (verbosity > 2L && unimprovedSince > 0L) {
+          message(" Last improvement ", unimprovedSince, " iterations ago.")
+        }
         if (unimprovedSince >= stopAtPlateau) {
-          if (verbosity > 1L) message("\n  - Terminating search, as score has not improved over past",
-                                unimprovedSince, "searches.")
+          if (verbosity > 1L) message("  - Terminating search, as score has ",
+                                      "not improved over past ",
+                                      unimprovedSince, " searches.")
           break
         }
       }
     }
     if (hits >= maxHits) {
-      if (verbosity > 1L) message("\n  - Terminating search; hit best score", hits, "times.")
+      if (verbosity > 1L) message("  - Terminating search; hit best score ",
+                                  hits, " times.")
       break
     }
   }
-  if (verbosity > 0L) message("\n  - Final score", bestScore, "found", hits, "times after", iter, "rearrangements\n")  
+  if (verbosity > 0L) message("  - Final score ", bestScore, " found ", hits,
+                              " times after ", iter, " rearrangements\n")  
   
   if (forestSize > 1L) {
     if (hits < forestSize) forest <- forest[-((hits+1):forestSize)]
