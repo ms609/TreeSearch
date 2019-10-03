@@ -182,9 +182,9 @@
 <pre><code>##     - Iteration 24 - Best score85 hit 10 times.</code></pre>
 <pre><code>##     - Iteration 29 - Best score85 hit 11 times.</code></pre>
 <pre><code>##     - Iteration 36 - Best score85 hit 12 times.</code></pre>
-<pre><code>##     * Iteration37 - New best score 84 found on 1 trees.</code></pre>
+<pre><code>##     * Iteration 37 - New best score 84 found on 1 trees.</code></pre>
 <pre><code>##     - Iteration 39 - Best score84 hit 2 times.</code></pre>
-<pre><code>##     * Iteration41 - New best score 81 found on 1 trees.</code></pre>
+<pre><code>##     * Iteration 41 - New best score 81 found on 1 trees.</code></pre>
 <pre><code>##     - Iteration 42 - Best score81 hit 2 times.</code></pre>
 <pre><code>##     - Iteration 43 - Best score81 hit 3 times.</code></pre>
 <pre><code>##     - Iteration 49 - Best score81 hit 4 times.</code></pre>
@@ -197,7 +197,7 @@
 <pre><code>##     - Iteration 69 - Best score81 hit 11 times.</code></pre>
 <pre><code>##     - Iteration 81 - Best score81 hit 12 times.</code></pre>
 <pre><code>##     - Iteration 82 - Best score81 hit 13 times.</code></pre>
-<pre><code>##     * Iteration83 - New best score 80 found on 1 trees.</code></pre>
+<pre><code>##     * Iteration 83 - New best score 80 found on 1 trees.</code></pre>
 <pre><code>##     - Iteration 84 - Best score80 hit 2 times.</code></pre>
 <pre><code>##     - Iteration 85 - Best score80 hit 3 times.</code></pre>
 <pre><code>##     - Iteration 89 - Best score80 hit 4 times.</code></pre>
@@ -212,7 +212,7 @@
 <div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb49-1" data-line-number="1">better.tree &lt;-<span class="st"> </span><span class="kw"><a href="../reference/TreeSearch.html">TreeSearch</a></span>(better.tree, my.phyDat, <span class="dt">maxHits=</span><span class="dv">20</span>, <span class="dt">maxIter=</span><span class="dv">40000</span>, </a>
 <a class="sourceLine" id="cb49-2" data-line-number="2">                           <span class="dt">EdgeSwapper=</span>RootedTBRSwap, <span class="dt">verbosity=</span><span class="dv">2</span>)</a></code></pre></div>
 <pre><code>##   - Performing tree search.  Initial score: 80</code></pre>
-<pre><code>##     * Iteration848 - New best score 79 found on 1 trees.</code></pre>
+<pre><code>##     * Iteration 848 - New best score 79 found on 1 trees.</code></pre>
 <pre><code>##   - Terminating search; hit best score 20 times.</code></pre>
 <pre><code>##   - Final score 79 found 20 times after 2046 rearrangements.</code></pre>
 <p>That score’s looking better, but these are only quick searches, and we could be caught in a local optimum. A more comprehensive search of tree space can be accomplished using the parsimony ratchet <span class="citation">(Nixon, 1999)</span>. It might take a couple of minutes to run.</p>
