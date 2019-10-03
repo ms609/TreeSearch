@@ -110,8 +110,8 @@ Ratchet <- function (tree, dataset,
   BREAK <- FALSE
   for (i in 1:ratchIter) {
     if (verbosity > 1L) {
-      message("* Ratchet iteration ", i, 
-              " - Generating new tree by bootstrapping dataset. ")
+      message("\n* Ratchet iteration ", i, '.')
+      message(" - Generating new candidate tree by bootstrapping dataset.")
     }
     candidate <- Bootstrapper(edgeList, initializedData, maxIter=bootstrapIter,
                               maxHits=bootstrapHits, verbosity=verbosity-2L,
@@ -162,9 +162,9 @@ Ratchet <- function (tree, dataset,
       edgeList <- candidate
     }
     if (verbosity > 1L) {
-      message("\n* Best score after ", i, "/", ratchIter, 
-              " ratchet iterations: ", bestScore, " ( hit ", 
-              iterationsWithBestScore, "/", ratchHits, ")")
+      message("* Best score after ", i, "/", ratchIter, 
+              " ratchet iterations: ", bestScore, " ( hit", 
+              iterationsWithBestScore, "/", ratchHits, ")\n")
     }
     if ((!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) 
     || (iterationsWithBestScore >= ratchHits)) {

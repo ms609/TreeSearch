@@ -97,8 +97,10 @@ EdgeListSearch <- function (edgeList, dataset,
       break
     }
   }
-  if (verbosity > 0L) message("  - Final score ", bestScore, " found ", hits,
-                              " times after ", iter, " rearrangements\n")  
+  if (verbosity > 0L) {
+    message("  - Final score ", bestScore, " found ", hits, " times after ",
+            iter, " rearrangements.", if (verbosity > 1L) '\n' else '')
+  }
   
   if (forestSize > 1L) {
     if (hits < forestSize) forest <- forest[-((hits+1):forestSize)]
