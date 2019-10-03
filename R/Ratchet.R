@@ -111,7 +111,9 @@ Ratchet <- function (tree, dataset,
   for (i in 1:ratchIter) {
     if (verbosity > 1L) {
       message("\n* Ratchet iteration ", i, '.')
-      message(" - Generating new candidate tree by bootstrapping dataset.")
+      if (verbosity > 2L) {
+        message(" - Generating new candidate tree by bootstrapping dataset.")
+      }
     }
     candidate <- Bootstrapper(edgeList, initializedData, maxIter=bootstrapIter,
                               maxHits=bootstrapHits, verbosity=verbosity-2L,
@@ -163,7 +165,7 @@ Ratchet <- function (tree, dataset,
     }
     if (verbosity > 1L) {
       message("* Best score after ", i, "/", ratchIter, 
-              " ratchet iterations: ", bestScore, " ( hit", 
+              " ratchet iterations: ", bestScore, " (hit ", 
               iterationsWithBestScore, "/", ratchHits, ")\n")
     }
     if ((!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) 
@@ -295,10 +297,11 @@ MultiRatchet <- function (tree, dataset, ratchHits=10,
                               swappers=list(RootedNNISwap), nSearch=10, 
                               stopAtScore=NULL, ...) {
   trees <- lapply(seq_len(nSearch), function (i) {
-    if (verbosity > 1L) message("\nRatchet search # ", i, '/', nSearch)
-    Ratchet(tree, dataset, ratchIter=1, searchIter=searchIter, 
-            searchHits=searchHits, verbosity=verbosity, swappers=swappers, 
-            stopAtScore=stopAtScore, ...)
+    if (verbosity > 1L) message("\nRatchet search ", i, '/', nSearch)
+    Ratchet(tree, dataset, ratchIter = 1, ratchHits = 0L, 
+            searchIter = searchIter, searchHits = searchHits, 
+            verbosity = verbosity, swappers = swappers, 
+            stopAtScore = stopAtScore, ...)
   })
   scores <- vapply(trees, function (x) attr(x, 'score'), double(1))
   trees <- UniqueExceptHits(trees[scores == min(scores)])
@@ -315,8 +318,9 @@ IWMultiRatchet <- function (tree, dataset, ratchHits=10, concavity=4,
                               suboptimal=suboptimal,
                               stopAtScore=NULL, ...) {
   trees <- lapply(seq_len(nSearch), function (i) {
-    if (verbosity > 1L) message("\nRatchet search # ", i, '/', nSearch)
-    IWRatchet(tree, dataset, ratchIter = 1L, concavity = concavity,
+    if (verbosity > 1L) message("\nRatchet search ", i, '/', nSearch)
+    IWRatchet(tree, dataset, ratchIter = 1L, ratchHits = 0L, 
+              concavity = concavity, 
               searchIter = searchIter, searchHits = searchHits, 
               verbosity = verbosity, swappers = swappers,
               stopAtScore = stopAtScore, ...)
