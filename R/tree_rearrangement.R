@@ -67,17 +67,20 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
   } else {
     candidateScore <- TreeScorer(rearrangedEdges[[1]], rearrangedEdges[[2]], dataset, ...)
     if (candidateScore > (scoreToBeat + eps)) {
-      if (verbosity > 3L) message("    . Iteration ", iter,
-                                  ' - Rearranged tree score ', candidateScore, 
-                                  " > target ", scoreToBeat)
+      if (verbosity > 3L) {
+        message("    . Iteration ", iter, ' - Rearranged tree score ',
+                signif(candidateScore, 6), " > target ", signif(scoreToBeat, 6))
+      }
     } else if (candidateScore + eps > scoreToBeat) { # i.e. scores are equal
       hits <- hits + 1L
       if (verbosity > 2L) message("    - Iteration ", iter, " - Best score",
-                                  scoreToBeat, " hit ", hits, " times.")
+                                  signif(scoreToBeat, 6), " hit ",
+                                  hits, " times.")
     } else {
       hits <- 1L
-      if (verbosity > 1L) message("    * Iteration", iter, " - New best score ",
-                                  candidateScore, " found on ", hits, " trees.")
+      if (verbosity > 1L) message("    * Iteration ", iter, " - New best score ",
+                                  signif(candidateScore, 6), " found on ", hits,
+                                  " trees.")
     }
   }
   rearrangedEdges[3:4] <- c(candidateScore, hits)

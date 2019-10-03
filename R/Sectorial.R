@@ -94,7 +94,7 @@
 ######    
 ######    nodeLengths <- CladeSizes(tree, nonRootNodes)
 ######    candidateNodes <- nonRootNodes[nodeLengths >= smallestSector & nodeLengths <= largestSector]
-######    if (verbosity >= 0) message("\n - Iteration", i, "- attempting sectorial search on node ")
+######    if (verbosity >= 0) message("\n - Iteration ", i, "- attempting sectorial search on node ")
 ######    repeat {
 ######      sector <- sample(candidateNodes, 1)
 ######      candidate <- Subtree(tree, sector)
