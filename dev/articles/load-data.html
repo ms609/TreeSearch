@@ -112,7 +112,7 @@
       <h1>Loading phylogenetic data into R</h1>
                         <h4 class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2019-10-03</h4>
+            <h4 class="date">2019-10-07</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/load-data.Rmd"><code>vignettes/load-data.Rmd</code></a></small>
       <div class="hidden name"><code>load-data.Rmd</code></div>
@@ -170,7 +170,7 @@
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1">my_data &lt;-<span class="st"> </span><span class="kw"><a href="../reference/ReadCharacters.html">PhyDat</a></span>(raw_data)</a></code></pre></div>
 <p>or if that doesn’t work,</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">my_data &lt;-<span class="st"> </span><span class="kw"><a href="../reference/MatrixToPhyDat.html">MatrixToPhyDat</a></span>(raw_data)</a></code></pre></div>
-<p>These functions haven’t been exhaustively tested – if they don’t work on your dataset, please <a href="https://github.com/ms609/TreeSearch/issues/new?title=data+to+PhyDat+conversion+issue&amp;body=Please%20describe+the+problem+here:&amp;labels=bug">let me know</a>.</p>
+<p>These functions are pretty robust, but might return an error when they encounter an unexpected dataset format – if they don’t work on your dataset, please<br><a href="https://github.com/ms609/TreeSearch/issues/new?title=data+to+PhyDat+conversion+issue&amp;body=Please%20describe+the+problem+here:&amp;labels=bug">let me know</a>.</p>
 <p>Failing that, you can enlist the help of the <code>phangorn</code> package, which was installed when you installed <code>TreeSearch</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">'phangorn'</span>)</a>
 <a class="sourceLine" id="cb8-2" data-line-number="2">my_data &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/pkg/phangorn/man/phyDat.html">phyDat</a></span>(raw_data, <span class="dt">type=</span><span class="st">'USER'</span>, <span class="dt">levels=</span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="dv">0</span><span class="op">:</span><span class="dv">9</span>, <span class="st">'-'</span>))</a></code></pre></div>
