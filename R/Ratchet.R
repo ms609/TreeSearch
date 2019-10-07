@@ -306,7 +306,9 @@ MultiRatchet <- function (tree, dataset, ratchHits=10,
   scores <- vapply(trees, function (x) attr(x, 'score'), double(1))
   trees <- UniqueExceptHits(trees[scores == min(scores)])
   message("Found ", length(trees), ' unique trees from ', nSearch, ' searches.')
-  return (trees)
+  
+  # Return:
+  trees
 }
 
 #' @describeIn Ratchet returns a list of optimal trees produced by nSearch 
@@ -327,9 +329,10 @@ IWMultiRatchet <- function (tree, dataset, ratchHits=10, concavity=4,
   })
   scores <- vapply(trees, function (x) attr(x, 'score'), double(1))
   trees <- UniqueExceptHits(trees[scores == min(scores)])
-  
   message("Found ", length(trees), ' unique trees from ', nSearch, ' searches.')
-  return (trees)
+  
+  # Return:
+  trees
 }
 
 #' @describeIn Ratchet deprecated alias for MultiRatchet

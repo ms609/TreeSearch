@@ -20,7 +20,6 @@
 ##     will be discarded;
 ## @param returnSingle returns all trees if \kbd{FALSE} or a randomly selected tree if \kbd{TRUE}.
 #' @param iter iteration number of calling function, for reporting to user only.
-## @template clusterParam
 #' @template verbosityParam
 #' @template treeScorerDots
 #'

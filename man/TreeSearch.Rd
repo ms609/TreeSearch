@@ -11,10 +11,9 @@ IWTreeSearch(tree, dataset, concavity = 10, EdgeSwapper = RootedTBR,
   maxIter = 100, maxHits = 20, forestSize = 1, verbosity = 1, ...)
 
 EdgeListSearch(edgeList, dataset, TreeScorer = MorphyLength,
-  EdgeSwapper = RootedTBRSwap, maxIter = 100, maxHits = 20,
+  EdgeSwapper = RootedTBRSwap, maxIter = 100L, maxHits = 20L,
   bestScore = NULL, stopAtScore = NULL, stopAtPeak = FALSE,
-  stopAtPlateau = 0L, forestSize = 1L, cluster = NULL,
-  verbosity = 1L, ...)
+  stopAtPlateau = 0L, forestSize = 1L, verbosity = 1L, ...)
 
 TreeSearch(tree, dataset, InitializeData = PhyDat2Morphy,
   CleanUpData = UnloadMorphy, TreeScorer = MorphyLength,

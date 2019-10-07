@@ -2,11 +2,13 @@
 % Please edit documentation in R/Fitch.R
 \name{CharacterLength}
 \alias{CharacterLength}
-\alias{FastCharacterLength}
 \alias{FitchSteps}
+\alias{FastCharacterLength}
 \title{Character length}
 \usage{
 CharacterLength(tree, dataset)
+
+FitchSteps(tree, dataset)
 
 FastCharacterLength(tree, dataset)
 
