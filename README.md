@@ -55,9 +55,10 @@ By contributing to this project, you agree to abide by its terms.
 
 # References
 
-Brazeau, M. D., Guillerme, T. and Smith, M. R. in press. 
+Brazeau, M. D., Guillerme, T. and Smith, M. R. 2019.
   An algorithm for morphological phylogenetic analysis with inapplicable data. 
-  Systematic Biology. doi:[10.1093/sysbio/syy083](https://dx.doi.org/10.1093/sysbio/syy083).
+  Systematic Biology, 68(4), 619-631.
+  doi:[10.1093/sysbio/syy083](https://dx.doi.org/10.1093/sysbio/syy083).
 
 D. P. Faith, J. W. H. Trueman, Towards an inclusive philosophy for phylogenetic inference.
   Syst. Biol. 50, 331–350 (2001).   doi:[10.1080/10635150118627](https://dx.doi.org/10.1080/10635150118627)
