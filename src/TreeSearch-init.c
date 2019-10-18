@@ -6,19 +6,13 @@
 #include <stdlib.h> /* for NULL */
 #include <R_ext/Rdynload.h>
 
-#include "ape_reorder.h"
-#include "renumber_tree.h"
-
 #include "mpl.h"
 #include "RMorphyUtils.h"
 #include "RMorphy.h"
 #include "build_postorder.h"
 
 
-extern SEXP _TreeSearch_phangorn_bipCPP(SEXP, SEXP);
-
 static const R_CallMethodDef callMethods[] = {
-  {"_TreeSearch_phangorn_bipCPP",   (DL_FUNC) &_TreeSearch_phangorn_bipCPP, 2},
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
   {"_R_wrap_mpl_delete_Morphy",     (DL_FUNC) &_R_wrap_mpl_delete_Morphy, 1},
   {"_R_wrap_mpl_init_Morphy",       (DL_FUNC) &_R_wrap_mpl_init_Morphy, 3},

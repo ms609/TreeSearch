@@ -21,6 +21,7 @@
 #' @author Martin R. Smith
 #' @aliases StringToPhydat
 #' @importFrom phangorn phyDat
+#' @importFrom TreeTrunk NexusTokens MatrixToPhyDat
 #' @export
 StringToPhyDat <- 
 function (string, tips, byTaxon = TRUE) {
