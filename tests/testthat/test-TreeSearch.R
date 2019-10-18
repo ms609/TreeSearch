@@ -29,7 +29,8 @@ test_that("tree search finds shortest tree", {
   malformed_tree <- ape::read.tree(text = "((((1,2),3),4),5,6);")
   dataset <- StringToPhyDat('110000 111000 111100', 1:6, byTaxon=FALSE)
   expect_error(TreeSearch(malformed_tree, dataset))
-  start_tree <- RenumberTips(ape::read.tree(text = "(((1, 6), 3), (2, (4, 5)));"), true_tree$tip.label)
+  start_tree <- TreeTrunk::RenumberTips(ape::read.tree(
+    text = "(((1, 6), 3), (2, (4, 5)));"), true_tree$tip.label)
   expect_equal(Fitch(start_tree, dataset), 6)
   morphyObj <- PhyDat2Morphy(dataset)
   on.exit(morphyObj <- UnloadMorphy(morphyObj))

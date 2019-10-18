@@ -171,6 +171,7 @@ EdgeListSearch <- function (edgeList, dataset,
 #' 
 #' @keywords  tree 
 #' @importFrom Rdpack reprompt
+#' @importFrom TreeTrunk RenumberTips
 #' @export
 TreeSearch <- function (tree, dataset,
                         InitializeData = PhyDat2Morphy,

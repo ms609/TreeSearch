@@ -55,7 +55,8 @@
 #' @seealso Adapted from \code{\link[phangorn:parsimony]{pratchet}} in the 
 #' \pkg{phangorn} package.
 #' 
-#' @keywords  tree 
+#' @keywords tree
+#' @importFrom TreeTrunk RenumberTips
 #' @export
 Ratchet <- function (tree, dataset, 
                      InitializeData = PhyDat2Morphy,
@@ -289,7 +290,7 @@ UniqueExceptHits <- function (trees) {
 
 #' @describeIn Ratchet returns a list of optimal trees produced by nSearch 
 #'  Ratchet searches, from which a consensus tree can be generated using 
-#'  [ape::consensus] or [ConsensusWithout].
+#'  [ape::consensus] or [TreeTrunk::ConsensusWithout].
 #' @param nSearch Number of Ratchet searches to conduct (for RatchetConsensus)
 #' @export
 MultiRatchet <- function (tree, dataset, ratchHits=10, 

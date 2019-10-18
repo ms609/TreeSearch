@@ -168,7 +168,7 @@ let me know and I'll make the function more general.
 
 \item \code{MultiRatchet}: returns a list of optimal trees produced by nSearch
 Ratchet searches, from which a consensus tree can be generated using
-\link[ape:consensus]{ape::consensus} or \link{ConsensusWithout}.
+\link[ape:consensus]{ape::consensus} or \link[TreeTrunk:ConsensusWithout]{TreeTrunk::ConsensusWithout}.
 
 \item \code{IWMultiRatchet}: returns a list of optimal trees produced by nSearch
 Ratchet searches, using implied weighting

@@ -27,6 +27,7 @@
 #' 
 #' @author Martin R. Smith (using Morphy C library, by Martin Brazeau)
 #' @importFrom phangorn phyDat
+#' @importFrom TreeTrunk RenumberTips
 #' @export
 Fitch <- function (tree, dataset) {
   tree <- RenumberTips(Renumber(tree), names(dataset))
@@ -53,6 +54,7 @@ Fitch <- function (tree, dataset) {
 #' @family tree scoring
 #' @references
 #'  \insertRef{Brazeau2018}{TreeSearch}
+#' @importFrom TreeTrunk RenumberTips
 #' @export
 CharacterLength <- function (tree, dataset) {
   if (class(dataset) != 'phyDat') {

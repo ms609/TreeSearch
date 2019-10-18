@@ -1,3 +1,8 @@
+# TreeSearch 0.3.2.9009 (development)
+
+## Changes
+ - Move tree utility functions to `TreeTrunk`
+
 # TreeSearch 0.3.2.9008 (development)
 
 ## New features
