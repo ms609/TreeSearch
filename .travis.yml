@@ -14,7 +14,6 @@ r_binary_packages:
  - memoise
  - phangorn
  - R.cache
- - Rcpp
  - Rdpack
  - roxygen2
  - testthat
@@ -47,7 +46,6 @@ matrix:
         - memoise
         - phangorn
         - R.cache
-        - Rcpp
         - Rdpack
         - roxygen2
         - testthat

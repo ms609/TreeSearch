@@ -36,7 +36,6 @@ Imports:
     stats
 Suggests:
     knitr,
-    Rcpp,
     rmarkdown,
     shiny,
     testthat,
@@ -44,7 +43,6 @@ Suggests:
 RdMacros: Rdpack
 LazyData: true
 ByteCompile: true
-LinkingTo: Rcpp
 Encoding: UTF-8
 Language: en-GB
 VignetteBuilder: knitr

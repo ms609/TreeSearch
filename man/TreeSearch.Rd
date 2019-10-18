@@ -11,7 +11,7 @@ IWTreeSearch(tree, dataset, concavity = 10, EdgeSwapper = RootedTBR,
   maxIter = 100, maxHits = 20, forestSize = 1, verbosity = 1, ...)
 
 EdgeListSearch(edgeList, dataset, TreeScorer = MorphyLength,
-  EdgeSwapper = RootedTBRSwap, maxIter = 100L, maxHits = 20L,
+  EdgeSwapper = RootedTBRSwap, maxIter = 100, maxHits = 20,
   bestScore = NULL, stopAtScore = NULL, stopAtPeak = FALSE,
   stopAtPlateau = 0L, forestSize = 1L, verbosity = 1L, ...)
 
