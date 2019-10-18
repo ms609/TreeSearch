@@ -70,11 +70,15 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 
 
 ## TODO Do edges need to be pre-ordered before coming here?
-#' @describeIn TBR faster version that takes and returns parent and child parameters
+#' @describeIn TBR faster version that takes and returns parent and child
+#'  parameters
 #' @template treeParent
 #' @template treeChild
 #' @param nEdge (optional) Number of edges.
-#' @return a list containing two elements, corresponding in turn to the rearranged parent and child parameters
+#' @return a list containing two elements, corresponding in turn to the
+#'  rearranged parent and child parameters
+#'  
+#'  @importFrom TreeTrunk EdgeAncestry
 #' @export
 TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mergeEdges=NULL) {
   if (nEdge < 5) return (list(parent, child)) #TODO do we need to re-root this tree?
@@ -283,6 +287,7 @@ RootedTBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 }
 
 #' @describeIn TBR faster version that takes and returns parent and child parameters
+#' @importFrom TreeTrunk EdgeAncestry
 #' @export
 RootedTBRSwap <- function (parent, child, nEdge=length(parent), edgeToBreak=NULL, mergeEdges=NULL) {
   if (nEdge < 5) return (TBRWarning(parent, child, 'Fewer than 4 tips'))
