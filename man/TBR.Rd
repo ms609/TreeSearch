@@ -54,7 +54,10 @@ the second will be chosen at random}
 \value{
 This function returns a tree in \code{phyDat} format that has undergone one \acronym{TBR} iteration.
 
-a list containing two elements, corresponding in turn to the rearranged parent and child parameters
+a list containing two elements, corresponding in turn to the
+rearranged parent and child parameters
+
+@importFrom TreeTrunk EdgeAncestry
 
 a matrix with two columns, each row listing an edge that can be broken
 and an edge into which it can be merged
@@ -72,7 +75,8 @@ All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collap
 }
 \section{Functions}{
 \itemize{
-\item \code{TBRSwap}: faster version that takes and returns parent and child parameters
+\item \code{TBRSwap}: faster version that takes and returns parent and child
+parameters
 
 \item \code{TBRMoves}: Possible TBR moves
 
