@@ -33,6 +33,7 @@
 #'   character <- c(rep(1, 10), rep(2, 5))
 #'   ICSteps (character)
 #' }
+#' @importFrom TreeTrunk NRooted NRootedmult NUnrooted NUnrootedMult
 #' @export
 ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25, maxIter = 10000,
                      warn = TRUE) {
