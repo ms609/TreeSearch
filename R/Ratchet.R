@@ -56,7 +56,7 @@
 #' \pkg{phangorn} package.
 #' 
 #' @keywords tree
-#' @importFrom TreeTrunk RenumberTips
+#' @importFrom TreeTrunk MatrixToList RenumberTips
 #' @export
 Ratchet <- function (tree, dataset, 
                      InitializeData = PhyDat2Morphy,

@@ -1,5 +1,5 @@
 context("TreeSearch.R")
-
+library('TreeTrunk')
 comb11 <- ape::read.tree(text="(a, (b, (c, (d, (e, (f, (g, (h, (i, (j, k))))))))));")
 unrooted11 <- ape::read.tree(text="(a, b, (c, (d, (e, (f, (g, (h, (i, (j, k)))))))));")
 data11 <- cbind(upper.tri(matrix(FALSE, 11, 11))[, 3:10], lower.tri(matrix(FALSE, 11, 11))[, 2:9])
@@ -10,7 +10,7 @@ RootySwappers <- list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap)
 test_that("tree can be found", {
   suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(0)
-  random11 <- RandomTree(phy11, 'a')
+  random11 <- TreeTrunk::RandomTree(phy11, 'a')
   expect_error(TreeSearch(unrooted11, dataset=phy11))
   expect_equal(TreeSearch(random11, dataset=phy11, maxIter=250, 
                           EdgeSwapper=RootedTBRSwap, verbosity=0L), comb11)
@@ -82,7 +82,7 @@ test_that("Implied weights: Tree search", {
 test_that("Profile parsimony works in tree search", {
   sillyData <- lapply(1:22, function (i) c( rep(0, i - 1), rep(1, 22 - i), rep(1, 22 - i), rep(0, i - 1)))#, sample(2, 20, replace=TRUE)-1))
   names(sillyData) <- as.character(1:22)
-  dataset <- PhyDat(sillyData)
+  dataset <- TreeTrunk::PhyDat(sillyData)
   readyData <- PrepareDataProfile(dataset, 12000, warn=FALSE)
   
   suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0

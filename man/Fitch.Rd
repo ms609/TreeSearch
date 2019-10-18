@@ -30,7 +30,7 @@ in datasets that contain inapplicable data
 }
 \examples{
 data('inapplicable.datasets')
-tree <- RandomTree(inapplicable.phyData[[1]])
+tree <- TreeTrunk::RandomTree(inapplicable.phyData[[1]])
 result <- Fitch(tree, inapplicable.phyData[[1]])
 
 }

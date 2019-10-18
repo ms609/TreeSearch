@@ -33,7 +33,7 @@
 #'   character <- c(rep(1, 10), rep(2, 5))
 #'   ICSteps (character)
 #' }
-#' @importFrom TreeTrunk NRooted NRootedmult NUnrooted NUnrootedMult
+#' @importFrom TreeTrunk NUnrooted NUnrootedMult
 #' @export
 ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25, maxIter = 10000,
                      warn = TRUE) {
@@ -111,6 +111,7 @@ ICPerStep <- function(splits, maxIter, warn=TRUE) ICS(min(splits), max(splits), 
 
 #' Number of trees with one extra step
 #' @template splitsParam
+#' @importFrom TreeTrunk NRooted
 #' @export
 WithOneExtraStep <- function (splits) {
   # Ignore singletons, which can be added at the end...

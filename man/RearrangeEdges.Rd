@@ -57,7 +57,7 @@ current function call.
 }
 \examples{
 data('Lobo')
-random.tree <- RandomTree(Lobo.phy)
+random.tree <- TreeTrunk::RandomTree(Lobo.phy)
 edge <- random.tree$edge
 parent <- edge[, 1]
 child <- edge[, 2]

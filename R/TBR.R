@@ -49,6 +49,7 @@ TBRWarning <- function (parent, child, error) {
 #' TBR(tree)
 #' }
 #' @importFrom ape root
+#' @importFrom TreeTrunk DescendantEdges
 #' @export
 TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
   if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {

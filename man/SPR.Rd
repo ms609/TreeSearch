@@ -38,7 +38,8 @@ class \code{\link{phylo}}, i.e. \code{dim(tree$edge)[1]}}
 \value{
 This function returns a tree in \code{phyDat} format that has undergone one \acronym{SPR} iteration.
 
-a list containing two elements, corresponding in turn to the rearranged parent and child parameters
+a list containing two elements, corresponding in turn to the
+rearranged parent and child parameters
 
 a list containing two elements, corresponding in turn to the rearranged parent and child parameters
 }

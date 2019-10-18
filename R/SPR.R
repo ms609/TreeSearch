@@ -71,7 +71,9 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
 #' @template treeChild
 #' @template treeNEdgeOptional
 #' @param nNode (optional) Number of nodes.
-#' @return a list containing two elements, corresponding in turn to the rearranged parent and child parameters
+#' @return a list containing two elements, corresponding in turn to the
+#'  rearranged parent and child parameters
+#' @importFrom TreeTrunk DescendantEdges
 #' @export
 SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
                      edgeToBreak=NULL, mergeEdge=NULL) {

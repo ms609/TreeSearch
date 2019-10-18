@@ -29,7 +29,7 @@
 #' 
 #' @examples
 #' data('Lobo')
-#' random.tree <- RandomTree(Lobo.phy)
+#' random.tree <- TreeTrunk::RandomTree(Lobo.phy)
 #' edge <- random.tree$edge
 #' parent <- edge[, 1]
 #' child <- edge[, 2]
@@ -99,6 +99,7 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
 #' @author Martin R. Smith
 #' @importFrom phangorn Ancestors Descendants
 #' @importFrom ape root
+#' @importFrom TreeTrunk Renumber
 #' @export
 RootTree <- function (tree, outgroupTips) {
   tipLabels <- tree$tip.label
