@@ -56,7 +56,7 @@ It also reports the number of times that this score was hit in the
 current function call.
 }
 \examples{
-data('Lobo')
+data('Lobo', package='TreeTrunk')
 random.tree <- TreeTrunk::RandomTree(Lobo.phy)
 edge <- random.tree$edge
 parent <- edge[, 1]

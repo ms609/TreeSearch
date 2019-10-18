@@ -179,7 +179,7 @@ Ratchet searches, using implied weighting
 }}
 
 \examples{
-data('Lobo')
+data('Lobo', package='TreeTrunk')
 njtree <- NJTree(Lobo.phy)
 # Increase value of ratchIter and searchHits to do a proper search
 quickResult <- Ratchet(njtree, Lobo.phy, ratchIter=2, searchHits=3)

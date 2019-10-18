@@ -38,7 +38,7 @@
 #' - \insertRef{SmithTern}{TreeSearch}
 #'
 #' @examples
-#' data('Lobo')
+#' data('Lobo', package='TreeTrunk')
 #' njtree <- NJTree(Lobo.phy)
 #' # Increase value of ratchIter and searchHits to do a proper search
 #' quickResult <- Ratchet(njtree, Lobo.phy, ratchIter=2, searchHits=3)
@@ -56,7 +56,7 @@
 #' \pkg{phangorn} package.
 #' 
 #' @keywords tree
-#' @importFrom TreeTrunk MatrixToList RenumberTips
+#' @importFrom TreeTrunk MatrixToList RenumberEdges RenumberTips
 #' @export
 Ratchet <- function (tree, dataset, 
                      InitializeData = PhyDat2Morphy,

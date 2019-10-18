@@ -161,7 +161,7 @@ EdgeListSearch <- function (edgeList, dataset,
 #' }
 #'
 #' @examples
-#' data('Lobo')
+#' data('Lobo', package='TreeTrunk')
 #' njtree <- NJTree(Lobo.phy)
 #'
 #' \dontrun{
