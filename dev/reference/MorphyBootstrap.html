@@ -159,15 +159,38 @@
     <p>Ratchet bootstrapper</p>
     </div>
 
-    <pre class="usage"><span class='fu'>MorphyBootstrap</span>(<span class='no'>edgeList</span>, <span class='no'>morphyObj</span>, <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>NNISwap</span>, <span class='no'>maxIter</span>,
-  <span class='no'>maxHits</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
-  <span class='no'>...</span>)
+    <pre class="usage"><span class='fu'>MorphyBootstrap</span>(
+  <span class='no'>edgeList</span>,
+  <span class='no'>morphyObj</span>,
+  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>NNISwap</span>,
+  <span class='no'>maxIter</span>,
+  <span class='no'>maxHits</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
+  <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='no'>...</span>
+)
 
-<span class='fu'>ProfileBootstrap</span>(<span class='no'>edgeList</span>, <span class='no'>dataset</span>, <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>NNISwap</span>, <span class='no'>maxIter</span>,
-  <span class='no'>maxHits</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='no'>...</span>)
+<span class='fu'>ProfileBootstrap</span>(
+  <span class='no'>edgeList</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>NNISwap</span>,
+  <span class='no'>maxIter</span>,
+  <span class='no'>maxHits</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
+  <span class='no'>...</span>
+)
 
-<span class='fu'>IWBootstrap</span>(<span class='no'>edgeList</span>, <span class='no'>dataset</span>, <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>10L</span>, <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>NNISwap</span>,
-  <span class='no'>maxIter</span>, <span class='no'>maxHits</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='no'>...</span>)</pre>
+<span class='fu'>IWBootstrap</span>(
+  <span class='no'>edgeList</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>10L</span>,
+  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>NNISwap</span>,
+  <span class='no'>maxIter</span>,
+  <span class='no'>maxHits</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
+  <span class='no'>...</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

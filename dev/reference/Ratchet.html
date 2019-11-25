@@ -159,57 +159,144 @@
     <p><code>Ratchet</code> uses the parsimony ratchet (Nixon 1999) to search for a more parsimonious tree.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>Jackknife</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>, <span class='kw'>resampleFreq</span> <span class='kw'>=</span> <span class='fl'>2</span>/<span class='fl'>3</span>,
-  <span class='kw'>InitializeData</span> <span class='kw'>=</span> <span class='no'>PhyDat2Morphy</span>, <span class='kw'>CleanUpData</span> <span class='kw'>=</span> <span class='no'>UnloadMorphy</span>,
-  <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>, <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>TBRSwap</span>, <span class='kw'>jackIter</span> <span class='kw'>=</span> <span class='fl'>5000</span>,
-  <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>4000</span>, <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>42</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='no'>...</span>)
+    <pre class="usage"><span class='fu'>Jackknife</span>(
+  <span class='no'>tree</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>resampleFreq</span> <span class='kw'>=</span> <span class='fl'>2</span>/<span class='fl'>3</span>,
+  <span class='kw'>InitializeData</span> <span class='kw'>=</span> <span class='no'>PhyDat2Morphy</span>,
+  <span class='kw'>CleanUpData</span> <span class='kw'>=</span> <span class='no'>UnloadMorphy</span>,
+  <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
+  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>TBRSwap</span>,
+  <span class='kw'>jackIter</span> <span class='kw'>=</span> <span class='fl'>5000</span>,
+  <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>4000</span>,
+  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>42</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
+  <span class='no'>...</span>
+)
 
-<span class='fu'>Ratchet</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>, <span class='kw'>InitializeData</span> <span class='kw'>=</span> <span class='no'>PhyDat2Morphy</span>,
-  <span class='kw'>CleanUpData</span> <span class='kw'>=</span> <span class='no'>UnloadMorphy</span>, <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
-  <span class='kw'>Bootstrapper</span> <span class='kw'>=</span> <span class='no'>MorphyBootstrap</span>, <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>TBRSwap</span>, <span class='no'>SPRSwap</span>,
-  <span class='no'>NNISwap</span>), <span class='kw'>BootstrapSwapper</span> <span class='kw'>=</span> <span class='kw'>if</span> (<span class='fu'><a href='https://rdrr.io/r/base/class.html'>class</a></span>(<span class='no'>swappers</span>) <span class='kw'>==</span> <span class='st'>"list"</span>)
-  <span class='no'>swappers</span><span class='kw'>[[</span><span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='no'>swappers</span>)]] <span class='kw'>else</span> <span class='no'>swappers</span>, <span class='kw'>returnAll</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
-  <span class='kw'>ratchIter</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>4000</span>,
-  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>42</span>, <span class='kw'>bootstrapIter</span> <span class='kw'>=</span> <span class='no'>searchIter</span>,
-  <span class='kw'>bootstrapHits</span> <span class='kw'>=</span> <span class='no'>searchHits</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='kw'>suboptimal</span> <span class='kw'>=</span> <span class='fl'>1e-08</span>,
-  <span class='no'>...</span>)
+<span class='fu'>Ratchet</span>(
+  <span class='no'>tree</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>InitializeData</span> <span class='kw'>=</span> <span class='no'>PhyDat2Morphy</span>,
+  <span class='kw'>CleanUpData</span> <span class='kw'>=</span> <span class='no'>UnloadMorphy</span>,
+  <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
+  <span class='kw'>Bootstrapper</span> <span class='kw'>=</span> <span class='no'>MorphyBootstrap</span>,
+  <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>TBRSwap</span>, <span class='no'>SPRSwap</span>, <span class='no'>NNISwap</span>),
+  <span class='kw'>BootstrapSwapper</span> <span class='kw'>=</span> <span class='kw'>if</span> (<span class='fu'><a href='https://rdrr.io/r/base/class.html'>class</a></span>(<span class='no'>swappers</span>) <span class='kw'>==</span> <span class='st'>"list"</span>) <span class='no'>swappers</span><span class='kw'>[[</span><span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='no'>swappers</span>)]] <span class='kw'>else</span>
+    <span class='no'>swappers</span>,
+  <span class='kw'>returnAll</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='kw'>ratchIter</span> <span class='kw'>=</span> <span class='fl'>100</span>,
+  <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>4000</span>,
+  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>42</span>,
+  <span class='kw'>bootstrapIter</span> <span class='kw'>=</span> <span class='no'>searchIter</span>,
+  <span class='kw'>bootstrapHits</span> <span class='kw'>=</span> <span class='no'>searchHits</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
+  <span class='kw'>suboptimal</span> <span class='kw'>=</span> <span class='fl'>1e-08</span>,
+  <span class='no'>...</span>
+)
 
-<span class='fu'>ProfileRatchet</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>, <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>TBRSwap</span>, <span class='no'>SPRSwap</span>, <span class='no'>NNISwap</span>),
-  <span class='kw'>BootstrapSwapper</span> <span class='kw'>=</span> <span class='kw'>if</span> (<span class='fu'><a href='https://rdrr.io/r/base/class.html'>class</a></span>(<span class='no'>swappers</span>) <span class='kw'>==</span> <span class='st'>"list"</span>)
-  <span class='no'>swappers</span><span class='kw'>[[</span><span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='no'>swappers</span>)]] <span class='kw'>else</span> <span class='no'>swappers</span>, <span class='kw'>returnAll</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
-  <span class='kw'>ratchIter</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>2000</span>,
-  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>40</span>, <span class='kw'>bootstrapIter</span> <span class='kw'>=</span> <span class='no'>searchIter</span>,
-  <span class='kw'>bootstrapHits</span> <span class='kw'>=</span> <span class='no'>searchHits</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='kw'>suboptimal</span> <span class='kw'>=</span> <span class='fl'>1e-08</span>,
-  <span class='no'>...</span>)
+<span class='fu'>ProfileRatchet</span>(
+  <span class='no'>tree</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>TBRSwap</span>, <span class='no'>SPRSwap</span>, <span class='no'>NNISwap</span>),
+  <span class='kw'>BootstrapSwapper</span> <span class='kw'>=</span> <span class='kw'>if</span> (<span class='fu'><a href='https://rdrr.io/r/base/class.html'>class</a></span>(<span class='no'>swappers</span>) <span class='kw'>==</span> <span class='st'>"list"</span>) <span class='no'>swappers</span><span class='kw'>[[</span><span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='no'>swappers</span>)]] <span class='kw'>else</span>
+    <span class='no'>swappers</span>,
+  <span class='kw'>returnAll</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='kw'>ratchIter</span> <span class='kw'>=</span> <span class='fl'>100</span>,
+  <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>2000</span>,
+  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>40</span>,
+  <span class='kw'>bootstrapIter</span> <span class='kw'>=</span> <span class='no'>searchIter</span>,
+  <span class='kw'>bootstrapHits</span> <span class='kw'>=</span> <span class='no'>searchHits</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
+  <span class='kw'>suboptimal</span> <span class='kw'>=</span> <span class='fl'>1e-08</span>,
+  <span class='no'>...</span>
+)
 
-<span class='fu'>IWRatchet</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>, <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>TBRSwap</span>,
-  <span class='no'>SPRSwap</span>, <span class='no'>NNISwap</span>), <span class='kw'>BootstrapSwapper</span> <span class='kw'>=</span> <span class='kw'>if</span> (<span class='fu'><a href='https://rdrr.io/r/base/class.html'>class</a></span>(<span class='no'>swappers</span>) <span class='kw'>==</span> <span class='st'>"list"</span>)
-  <span class='no'>swappers</span><span class='kw'>[[</span><span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='no'>swappers</span>)]] <span class='kw'>else</span> <span class='no'>swappers</span>, <span class='kw'>returnAll</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
-  <span class='kw'>ratchIter</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>2000</span>,
-  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>40</span>, <span class='kw'>bootstrapIter</span> <span class='kw'>=</span> <span class='no'>searchIter</span>,
-  <span class='kw'>bootstrapHits</span> <span class='kw'>=</span> <span class='no'>searchHits</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='kw'>suboptimal</span> <span class='kw'>=</span> <span class='fl'>1e-08</span>,
-  <span class='no'>...</span>)
+<span class='fu'>IWRatchet</span>(
+  <span class='no'>tree</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>TBRSwap</span>, <span class='no'>SPRSwap</span>, <span class='no'>NNISwap</span>),
+  <span class='kw'>BootstrapSwapper</span> <span class='kw'>=</span> <span class='kw'>if</span> (<span class='fu'><a href='https://rdrr.io/r/base/class.html'>class</a></span>(<span class='no'>swappers</span>) <span class='kw'>==</span> <span class='st'>"list"</span>) <span class='no'>swappers</span><span class='kw'>[[</span><span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='no'>swappers</span>)]] <span class='kw'>else</span>
+    <span class='no'>swappers</span>,
+  <span class='kw'>returnAll</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='kw'>ratchIter</span> <span class='kw'>=</span> <span class='fl'>100</span>,
+  <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>2000</span>,
+  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>40</span>,
+  <span class='kw'>bootstrapIter</span> <span class='kw'>=</span> <span class='no'>searchIter</span>,
+  <span class='kw'>bootstrapHits</span> <span class='kw'>=</span> <span class='no'>searchHits</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
+  <span class='kw'>suboptimal</span> <span class='kw'>=</span> <span class='fl'>1e-08</span>,
+  <span class='no'>...</span>
+)
 
-<span class='fu'>MultiRatchet</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>, <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>500</span>,
-  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>20</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>, <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>RootedNNISwap</span>),
-  <span class='kw'>nSearch</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)
+<span class='fu'>MultiRatchet</span>(
+  <span class='no'>tree</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>500</span>,
+  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>20</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>RootedNNISwap</span>),
+  <span class='kw'>nSearch</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>...</span>
+)
 
-<span class='fu'>IWMultiRatchet</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>, <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>4</span>,
-  <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>500</span>, <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>20</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
-  <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>RootedNNISwap</span>), <span class='kw'>nSearch</span> <span class='kw'>=</span> <span class='fl'>10</span>,
-  <span class='kw'>suboptimal</span> <span class='kw'>=</span> <span class='no'>suboptimal</span>, <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)
+<span class='fu'>IWMultiRatchet</span>(
+  <span class='no'>tree</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>4</span>,
+  <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>500</span>,
+  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>20</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>RootedNNISwap</span>),
+  <span class='kw'>nSearch</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>suboptimal</span> <span class='kw'>=</span> <span class='no'>suboptimal</span>,
+  <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>...</span>
+)
 
-<span class='fu'>RatchetConsensus</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>, <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>500</span>,
-  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>20</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>, <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>RootedNNISwap</span>),
-  <span class='kw'>nSearch</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)
+<span class='fu'>RatchetConsensus</span>(
+  <span class='no'>tree</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>500</span>,
+  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>20</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>RootedNNISwap</span>),
+  <span class='kw'>nSearch</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>...</span>
+)
 
-<span class='fu'>IWRatchetConsensus</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>, <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>4</span>,
-  <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>500</span>, <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>20</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
-  <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>RootedNNISwap</span>), <span class='kw'>nSearch</span> <span class='kw'>=</span> <span class='fl'>10</span>,
-  <span class='kw'>suboptimal</span> <span class='kw'>=</span> <span class='no'>suboptimal</span>, <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)</pre>
+<span class='fu'>IWRatchetConsensus</span>(
+  <span class='no'>tree</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>ratchHits</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>4</span>,
+  <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>500</span>,
+  <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>20</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='no'>RootedNNISwap</span>),
+  <span class='kw'>nSearch</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>suboptimal</span> <span class='kw'>=</span> <span class='no'>suboptimal</span>,
+  <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>...</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

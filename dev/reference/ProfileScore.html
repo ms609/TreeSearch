@@ -159,8 +159,14 @@
     <p>Calculate a tree's Profile Parsimony score with a given dataset, after Faith and Trueman (2001)</p>
     </div>
 
-    <pre class="usage"><span class='fu'>IWScoreMorphy</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='no'>dataset</span>, <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>10L</span>,
-  <span class='kw'>minLength</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/attr.html'>attr</a></span>(<span class='no'>dataset</span>, <span class='st'>"min.length"</span>), <span class='no'>...</span>)
+    <pre class="usage"><span class='fu'>IWScoreMorphy</span>(
+  <span class='no'>parent</span>,
+  <span class='no'>child</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>10L</span>,
+  <span class='kw'>minLength</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/attr.html'>attr</a></span>(<span class='no'>dataset</span>, <span class='st'>"min.length"</span>),
+  <span class='no'>...</span>
+)
 
 <span class='fu'>ProfileScore</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>)
 

@@ -161,8 +161,13 @@
 
     <pre class="usage"><span class='fu'>MorphyTreeLength</span>(<span class='no'>tree</span>, <span class='no'>morphyObj</span>)
 
-<span class='fu'>MorphyLength</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='no'>morphyObj</span>, <span class='kw'>inPostorder</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>nTaxa</span> <span class='kw'>=</span> <span class='fu'><a href='mpl_get_numtaxa.html'>mpl_get_numtaxa</a></span>(<span class='no'>morphyObj</span>))
+<span class='fu'>MorphyLength</span>(
+  <span class='no'>parent</span>,
+  <span class='no'>child</span>,
+  <span class='no'>morphyObj</span>,
+  <span class='kw'>inPostorder</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>nTaxa</span> <span class='kw'>=</span> <span class='fu'><a href='mpl_get_numtaxa.html'>mpl_get_numtaxa</a></span>(<span class='no'>morphyObj</span>)
+)
 
 <span class='fu'>GetMorphyLength</span>(<span class='no'>parentOf</span>, <span class='no'>leftChild</span>, <span class='no'>rightChild</span>, <span class='no'>morphyObj</span>)
 
@@ -190,22 +195,6 @@ in the corresponding Morphy object.</p></td>
       <th>child</th>
       <td><p>the second column of the edge matrix of a tree of class
 <code>phylo</code>, i.e. <code>tree$edge[, 2]</code></p></td>
-    </tr>
-    <tr>
-      <th>parentOf</th>
-      <td><p>integer vector containing, for each tip and each node in sequential order,
-the integer index its parent node.  The root node should be its own parent.</p></td>
-    </tr>
-    <tr>
-      <th>leftChild</th>
-      <td><p>integer vector containing, for each node, starting at the root and proceeding
-in sequential order, the integer corresponding to its
-left child.  Tip numbering begins at 0; the root node is numbered <kbd>nTip</kbd>.</p></td>
-    </tr>
-    <tr>
-      <th>rightChild</th>
-      <td><p>integer vector containing, for each node, the index
-of its right child.</p></td>
     </tr>
     <tr>
       <th>parentOf</th>
@@ -238,10 +227,14 @@ parameters</p></li>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p>PhyDat2Morphy</p>
-<p>Other tree scoring: <code><a href='CharacterLength.html'>CharacterLength</a></code>,
-  <code><a href='Fitch.html'>Fitch</a></code>, <code><a href='IWScore.html'>IWScore</a></code></p>
-<p>Other tree scoring: <code><a href='CharacterLength.html'>CharacterLength</a></code>,
-  <code><a href='Fitch.html'>Fitch</a></code>, <code><a href='IWScore.html'>IWScore</a></code></p></div>
+<p>Other tree scoring: 
+<code><a href='CharacterLength.html'>CharacterLength</a>()</code>,
+<code><a href='Fitch.html'>Fitch</a>()</code>,
+<code><a href='IWScore.html'>IWScore</a>()</code></p>
+<p>Other tree scoring: 
+<code><a href='CharacterLength.html'>CharacterLength</a>()</code>,
+<code><a href='Fitch.html'>Fitch</a>()</code>,
+<code><a href='IWScore.html'>IWScore</a>()</code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

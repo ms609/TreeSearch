@@ -163,9 +163,18 @@ returning the score of the new tree.  Will generally be called from
 within a tree search function.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>RearrangeEdges</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='no'>dataset</span>, <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
-  <span class='no'>EdgeSwapper</span>, <span class='kw'>scoreToBeat</span> <span class='kw'>=</span> <span class='fu'>TreeScorer</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='no'>dataset</span>, <span class='no'>...</span>),
-  <span class='kw'>iter</span> <span class='kw'>=</span> <span class='st'>"?"</span>, <span class='kw'>hits</span> <span class='kw'>=</span> <span class='fl'>0L</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>RearrangeEdges</span>(
+  <span class='no'>parent</span>,
+  <span class='no'>child</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
+  <span class='no'>EdgeSwapper</span>,
+  <span class='kw'>scoreToBeat</span> <span class='kw'>=</span> <span class='fu'>TreeScorer</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='no'>dataset</span>, <span class='no'>...</span>),
+  <span class='kw'>iter</span> <span class='kw'>=</span> <span class='st'>"?"</span>,
+  <span class='kw'>hits</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='no'>...</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
