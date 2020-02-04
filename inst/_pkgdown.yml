@@ -137,3 +137,4 @@ template:
     docsearch:
       api_key: 8422cbc6478f9d3278ad355b48435342
       index_name: treesearch
+    ganalytics: UA-156666971-5
