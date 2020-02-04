@@ -8,9 +8,11 @@ src/*.dll
 .Rdata
 .Rprofile
 *.gcno
+*.knit.md
+*.log
 *.out
 *.Rhistory
-*.log
+*.utf8.md
 /* *.Rd */
 inst/ape
 inst/doc
