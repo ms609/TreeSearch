@@ -195,7 +195,7 @@
 #######' 
 #######' @examples
 #######' data('Lobo', package='TreeTools')
-#######' njtree <- NJTree(Lobo.phy)
+#######' njtree <- TreeTools::NJTree(Lobo.phy)
 #######'
 #######' \dontrun{
 #######' SectorialSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=NNISwap,

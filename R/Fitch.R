@@ -45,11 +45,11 @@ Fitch <- function (tree, dataset) {
 #' @return A vector listing the contribution of each character to tree score,
 #'         according to the algorithm of Brazeau, Guillerme and Smith (2019).
 #'
-#' @examples {
-#  data('inapplicable.datasets')
-#  dataset <- inapplicable.phyData[[12]]
-#  tree <- NJTree(dataset)
-#' }
+#' @examples
+#' data('inapplicable.datasets')
+#' dataset <- inapplicable.phyData[[12]]
+#' tree <- TreeTools::NJTree(dataset)
+#' CharacterLength(tree, dataset)
 #'
 #' @family tree scoring
 #' @references

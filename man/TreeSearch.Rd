@@ -112,7 +112,7 @@ configuring tree search, see the
 
 \examples{
 data('Lobo', package='TreeTools')
-njtree <- NJTree(Lobo.phy)
+njtree <- TreeTools::NJTree(Lobo.phy)
 
 \dontrun{
 TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=NNISwap)
