@@ -10,7 +10,7 @@ JackLabels(tree, jackTrees, add = FALSE, adj = 0, col = NULL,
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
-\item{jackTrees}{A list of multiPhylo object containing trees generated
+\item{jackTrees}{A list or \code{multiPhylo} object containing trees generated
 by \code{\link[=Jackknife]{Jackknife()}}.}
 
 \item{add}{Logical specifying whether to add the labels to an existing

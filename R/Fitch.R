@@ -82,7 +82,6 @@ FitchSteps <- function (tree, dataset) {
   CharacterLength(tree, dataset)
 }
 
-
 #' @describeIn CharacterLength Do not perform checks.  Use with care: may cause
 #' erroneous results or  software crash if variables are in the incorrect format.
 FastCharacterLength <- function (tree, dataset) {
@@ -93,12 +92,6 @@ FastCharacterLength <- function (tree, dataset) {
   
   # Return:
   vapply(morphyObjects, MorphyTreeLength, tree=tree, integer(1))
-}
-
-#' @rdname CharacterLength
-FitchSteps <- function (tree, dataset) {
-  .Deprecated(CharacterLength)
-  CharacterLength(tree, dataset)
 }
 
 #' Calculate parsimony score with inapplicable data

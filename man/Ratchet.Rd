@@ -66,13 +66,13 @@ IWRatchetConsensus(tree, dataset, ratchHits = 10, concavity = 4,
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
-\item{dataset}{a dataset in the format required by TreeScorer.}
+\item{dataset}{a dataset in the format required by \code{TreeScorer()}.}
 
 \item{resampleFreq}{Double between 0 and 1 stating proportion of characters to resample}
 
 \item{InitializeData}{Function that sets up data object to prepare for tree search.
 The function will be passed the \kbd{dataset} parameter.
-Its return value will be passed to TreeScorer and CleanUpData.}
+Its return value will be passed to \code{TreeScorer()} and \code{CleanUpData()}.}
 
 \item{CleanUpData}{Function to destroy data object on function exit.
 The function will be passed the value returned by \kbd{InitializeData}.}
@@ -87,21 +87,25 @@ and returns a list with modified vectors; for example
 
 \item{jackIter}{Integer specifying number of jackknife iterations to conduct}
 
-\item{searchIter}{maximum rearrangements to perform on each bootstrap or ratchet iteration.
-To override this value for a single swapper function, set e.g. \code{attr(SwapperFunction, 'searchIter') <- 99}}
+\item{searchIter}{Integer specifying maximum rearrangements to perform on each bootstrap or
+ratchet iteration.
+To override this value for a single swapper function, set e.g.
+\code{attr(SwapperFunction, 'searchIter') <- 99}}
 
-\item{searchHits}{maximum times to hit best score before terminating a tree search within a ratchet iteration.
-To override this value for a single swapper function, set e.g. \code{attr(SwapperFunction, 'searchHits') <- 99}}
+\item{searchHits}{Integer specifying maximum times to hit best score before terminating a tree
+search within a ratchet iteration.
+To override this value for a single swapper function, set e.g.
+\code{attr(SwapperFunction, 'searchHits') <- 99}}
 
 \item{verbosity}{Level of detail to display in console: larger numbers provide
 more verbose feedback to the user.}
 
-\item{\dots}{further arguments to pass to \code{TreeScorer} function
-(e.g. \code{\link{TipsAreColumns}}, \code{dataset})}
+\item{\dots}{further arguments to pass to \code{TreeScorer()}
+(e.g. \code{\link{TipsAreColumns}}, \code{dataset}).}
 
 \item{Bootstrapper}{Function to perform bootstrapped rearrangements of tree.
-First arguments will be an edgeList and a dataset, initialized using \code{InitializeData}
-Should return a rearranged edgeList.}
+First arguments will be an \code{edgeList} and a dataset, initialized using
+\code{InitializeData()}. Should return a rearranged \code{edgeList}.}
 
 \item{swappers}{A list of functions to use to conduct edge rearrangement during tree search.
 Provide functions like \code{\link{NNISwap}} to shuffle root position,
@@ -110,10 +114,11 @@ You may wish to use extreme swappers (such as \acronym{TBR}) early in the list,
 and a more subtle rearranger (such as \acronym{NNI}) later in the list to make
 incremental tinkerings once an almost-optimal tree has been found.}
 
-\item{BootstrapSwapper}{Function such as \code{\link{RootedNNISwap}} to use to rearrange trees
-within \code{Bootstrapper}.}
+\item{BootstrapSwapper}{Function such as \code{\link{RootedNNISwap}} to use
+to rearrange trees within \code{Bootstrapper()}.}
 
-\item{returnAll}{Set to \code{TRUE} to report all MPTs encountered during the search, perhaps to analyze consensus.}
+\item{returnAll}{Set to \code{TRUE} to report all MPTs encountered during the
+search, perhaps to analyse consensus.}
 
 \item{stopAtScore}{stop search as soon as this score is hit or beaten.}
 
@@ -132,13 +137,16 @@ rearrangement from the current tree, such as
 Will be overridden if a passed function has an attribute
 \code{stopAtPlateau} set by \code{attr(FunctionName, 'stopAtPlateau') <- TRUE}.}
 
-\item{ratchIter}{stop when this many ratchet iterations have been performed.}
+\item{ratchIter}{Stop when this many ratchet iterations have been performed.}
 
-\item{ratchHits}{stop when this many ratchet iterations have found the same best score.}
+\item{ratchHits}{Stop when this many ratchet iterations have found the same
+best score.}
 
-\item{bootstrapIter}{maximum rearrangements to perform on each bootstrap iteration (default: \code{searchIter}).}
+\item{bootstrapIter}{Integer specifying maximum rearrangements to perform on each bootstrap
+iteration (default: \code{searchIter}).}
 
-\item{bootstrapHits}{maximum times to hit best score on each bootstrap iteration (default: \code{searchHits}).}
+\item{bootstrapHits}{Integer specifying maximum times to hit best score on each bootstrap
+iteration (default: \code{searchHits}).}
 
 \item{suboptimal}{retain trees that are suboptimal by this score. Defaults to 1e-08 to counter rounding errors.}
 
@@ -146,7 +154,8 @@ Will be overridden if a passed function has an attribute
 in implied weighting. Defaults to 10; TNT sets a default of 3, but this
 is too low in some circumstances (Smith, 2019).}
 
-\item{nSearch}{Number of Ratchet searches to conduct (for RatchetConsensus)}
+\item{nSearch}{Number of Ratchet searches to conduct
+(for \code{RatchetConsensus()})}
 }
 \value{
 a list of trees recovered after jackknife iterations
@@ -156,7 +165,7 @@ This function returns a tree modified by parsimony ratchet iterations.
 \code{MultiRatchet()} returns a list of optimal trees
 produced by \code{nSearch}
 ratchet searches, from which a consensus tree can be generated using
-\link[ape:consensus]{ape::consensus} or \link[TreeTools:ConsensusWithout]{TreeTools::ConsensusWithout}.
+\code{\link[ape:consensus]{ape::consensus()}} or \code{\link[TreeTools:ConsensusWithout]{TreeTools::ConsensusWithout()}}.
 
 \code{IWMultiRatchet} returns a list of optimal trees produced by \code{nSearch}
 Ratchet searches, using implied weighting.
@@ -174,9 +183,9 @@ let me know and I'll make the function more general.
 
 \item \code{IWRatchet}: Shortcut for Ratchet search using implied weights
 
-\item \code{RatchetConsensus}: deprecated alias for MultiRatchet
+\item \code{RatchetConsensus}: deprecated alias for \code{MultiRatchet()}
 
-\item \code{IWRatchetConsensus}: deprecated alias for MultiRatchet
+\item \code{IWRatchetConsensus}: deprecated alias for \code{MultiRatchet()}
 }}
 
 \examples{

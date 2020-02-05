@@ -72,7 +72,8 @@ IWScoreMorphy <- function (parent, child, dataset, concavity = 10L,
   sum(fit * attr(dataset, 'weight'))
 }
 
-#' @describeIn IWScore Initialize dataset by adding morphyObjs and min.length.
+#' @describeIn IWScore Initialize dataset by adding `morphyObjs` and 
+#' `min.length` properties.
 #' @export
 IWInitMorphy <- function (dataset) {
   attr(dataset, 'morphyObjs') <- 

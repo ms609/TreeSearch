@@ -10,7 +10,8 @@
 
 This package exists to allow parsimony-style tree searches in R.
 
-It extends the basic functionality available in phangorn, with a view to making tree search faster and more efficient, 
+It extends the basic functionality available in `phangorn`, with a view to
+making tree search faster and more efficient, 
 and allowing user-defined optimality criteria to be employed.
 
 Implied weighting and heuristic searches such as the Parsimony Ratchet 

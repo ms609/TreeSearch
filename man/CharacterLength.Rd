@@ -11,8 +11,6 @@ CharacterLength(tree, dataset)
 FitchSteps(tree, dataset)
 
 FastCharacterLength(tree, dataset)
-
-FitchSteps(tree, dataset)
 }
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}

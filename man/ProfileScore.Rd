@@ -59,10 +59,10 @@ Calculate a tree's Profile Parsimony score with a given dataset, after Faith and
 
 \item \code{ProfileScoreMorphy}: Scorer for initialized dataset.
 
-\item \code{ProfileInitMorphy}: Initialize dataset by adding morphyObjs.
+\item \code{ProfileInitMorphy}: Initialize dataset by adding \code{morphyObjs} attribute.
 
-\item \code{ProfileDestroyMorphy}: Free memory from morphyObjs initialized by
-\kbd{ProfileScoreMorphy}.
+\item \code{ProfileDestroyMorphy}: Free memory from \code{morphyObjs} initialized by
+\code{ProfileScoreMorphy()}.
 }}
 
 \examples{
@@ -71,7 +71,8 @@ Calculate a tree's Profile Parsimony score with a given dataset, after Faith and
   # In actual use, the dataset should be prepared with a much higher
   # precision: try 1e+06?
   # Of course, gaining higher precision takes substantially longer.
-  dataset <- PrepareDataProfile(congreveLamsdellMatrices[[42]], precision=1e+03)
+  dataset <- PrepareDataProfile(congreveLamsdellMatrices[[42]], 
+                                precision = 1e+03)
   ProfileScore(referenceTree, dataset)
 
 }

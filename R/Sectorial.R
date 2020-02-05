@@ -166,7 +166,7 @@
 #######'
 #######''
 #######' @template treeParam 
-#######' @param dataset a dataset in the format required by TreeScorer.
+#######' @param dataset a dataset in the format required by `TreeScorer()`.
 #######' @template InitializeDataParam
 #######' @template CleanUpDataParam
 #######' @template treeScorerParam

@@ -72,7 +72,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' Label nodes with jackknife support values
 #' 
 #' @template treeParam
-#' @param jackTrees A list of multiPhylo object containing trees generated
+#' @param jackTrees A list or `multiPhylo` object containing trees generated
 #' by [`Jackknife()`].
 #' @param add Logical specifying whether to add the labels to an existing
 #' plot.

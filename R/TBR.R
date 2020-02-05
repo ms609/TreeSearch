@@ -39,7 +39,8 @@ TBRWarning <- function (parent, child, error) {
 #' 
 #' @author Martin R. Smith
 #' 
-#' @seealso RootedTBR useful when the position of the root node should be retained.
+#' @seealso [`RootedTBR()`]: useful when the position of the root node should be retained.
+#' @family tree rearrangement functions
 #' 
 #' @examples{
 #' library('ape')
@@ -77,7 +78,7 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 #' @return a list containing two elements, corresponding in turn to the
 #'  rearranged parent and child parameters
 #'  
-#'  @importFrom TreeTools EdgeAncestry
+#' @importFrom TreeTools EdgeAncestry
 #' @export
 TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mergeEdges=NULL) {
   if (nEdge < 5) return (list(parent, child)) #TODO do we need to re-root this tree?

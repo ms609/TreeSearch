@@ -57,8 +57,6 @@ This function returns a tree in \code{phyDat} format that has undergone one \acr
 a list containing two elements, corresponding in turn to the
 rearranged parent and child parameters
 
-@importFrom TreeTools EdgeAncestry
-
 a matrix with two columns, each row listing an edge that can be broken
 and an edge into which it can be merged
 
@@ -99,8 +97,12 @@ The \acronym{TBR} algorithm is summarized in
 \insertRef{Felsenstein2004}{TreeSearch}
 }
 \seealso{
-RootedTBR useful when the position of the root node should be retained.
+\code{\link[=RootedTBR]{RootedTBR()}}: useful when the position of the root node should be retained.
+
+Other tree rearrangement functions: \code{\link{NNI}},
+  \code{\link{SPR}}
 }
 \author{
 Martin R. Smith
 }
+\concept{tree rearrangement functions}

@@ -38,9 +38,11 @@ Calculate a tree's Parsimony score with a given dataset using implied weights (G
 }
 \section{Functions}{
 \itemize{
-\item \code{IWInitMorphy}: Initialize dataset by adding morphyObjs and min.length.
+\item \code{IWInitMorphy}: Initialize dataset by adding \code{morphyObjs} and
+\code{min.length} properties.
 
-\item \code{IWDestroyMorphy}: Free memory from morphyObjs initialized by \kbd{IWScoreMorphy}.
+\item \code{IWDestroyMorphy}: Free memory from \code{morphyObjs} initialized by
+\code{IWScoreMorphy()}.
 }}
 
 \examples{

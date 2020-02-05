@@ -45,7 +45,7 @@ EdgeListSearch <- function (edgeList, dataset,
   
   for (iter in 1:maxIter) {
     candidateLists <- RearrangeEdges(edgeList[[1]], edgeList[[2]], dataset=dataset, 
-                             TreeScorer=TreeScorer, EdgeSwapper=EdgeSwapper, 
+                             TreeScorer = TreeScorer, EdgeSwapper=EdgeSwapper, 
                              hits=hits, iter=iter, verbosity=verbosity, ...)
     scoreThisIteration <- candidateLists[[3]]
     hits <- candidateLists[[4]]
@@ -193,7 +193,7 @@ TreeSearch <- function (tree, dataset,
   on.exit(initializedData <- CleanUpData(initializedData))
 
   bestScore <- attr(tree, 'score')
-  edgeList <- EdgeListSearch(edgeList, initializedData, TreeScorer=TreeScorer, 
+  edgeList <- EdgeListSearch(edgeList, initializedData, TreeScorer = TreeScorer, 
                              EdgeSwapper = EdgeSwapper, maxIter = maxIter, 
                              maxHits = maxHits, forestSize = forestSize, 
                              stopAtPeak = stopAtPeak, stopAtPlateau = stopAtPlateau,

@@ -55,7 +55,8 @@
 #'  heterogeneous Markov-k model, generated from the \link{referenceTree} topology, with 
 #'  all branches sharing an equal length.
 #'
-#' @format A list with 100 entries, each comprising a phyDat object of 55 characters for 22 taxa
+#' @format A list with 100 entries, each comprising a `phyDat` object of 55
+#' characters for 22 taxa
 #'
 #' @references 
 #'  \insertRef{Congreve2016}{TreeSearch}

@@ -23,7 +23,8 @@ IWBootstrap(edgeList, dataset, concavity = 10L, EdgeSwapper = NNISwap,
 - (optionally) score of the tree
 - (optionally, if score provided) number of times this score has been hit}
 
-\item{morphyObj}{A morphy object, perhaps created with \code{\link{PhyDat2Morphy}}.}
+\item{morphyObj}{A morphy object, perhaps created with
+\code{\link{PhyDat2Morphy}}.}
 
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example

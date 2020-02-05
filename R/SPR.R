@@ -12,7 +12,7 @@ SPRWarning <- function (parent, child, error) {
 #'
 #' Perform one \acronym{SPR} rearrangement on a tree
 #' 
-#' Equivalent to phangorn's `kSPR`, but faster.
+#' Equivalent to `kSPR` in the `phangorn` package, but faster.
 #' Note that rearrangements that only change the position of the root WILL be returned by 
 #' \code{SPR}.  If the position of the root is irrelevant (as in Fitch parsimony, for example)
 #' then this function will occasionally return a functionally equivalent topology.  
@@ -32,9 +32,9 @@ SPRWarning <- function (parent, child, error) {
 #' 
 #' @author Martin R. Smith
 #' 
-#' @seealso RootedSPR useful when the position of the root node should be retained.
-#' @seealso TBR
-#' @seealso NNI
+#' @seealso 
+#' - [`RootedSPR()`]: useful when the position of the root node should be retained.
+#' @family tree rearrangement functions
 #' 
 #' @examples{
 #' tree <- ape::rtree(20, br=FALSE)
@@ -149,11 +149,10 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
 #' @template treeParent
 #' @template treeChild
 #' @template treeNEdge
-#' @param notDuplicateRoot logical vector of length nEdge, specifying for each edge whether
-#'                         it is the second edge leading to the root (in which case
-#'                         its breaking will be equivalent to breaking the other
-#'                         root edge... except insofar as it moves 
-#'                         the position of the root.)
+#' @param notDuplicateRoot logical vector of length `nEdge`, specifying for each
+#' edge whether it is the second edge leading to the root (in which case
+#' its breaking will be equivalent to breaking the other root edge... 
+#' except insofar as it moves the position of the root.)
 #' @template edgeToBreakParam
 #' 
 #' @return `AllSPR()` returns a list of edge matrices for all trees one SPR 

@@ -47,7 +47,7 @@ a list containing two elements, corresponding in turn to the rearranged parent a
 Perform one \acronym{SPR} rearrangement on a tree
 }
 \details{
-Equivalent to phangorn's \code{kSPR}, but faster.
+Equivalent to \code{kSPR} in the \code{phangorn} package, but faster.
 Note that rearrangements that only change the position of the root WILL be returned by
 \code{SPR}.  If the position of the root is irrelevant (as in Fitch parsimony, for example)
 then this function will occasionally return a functionally equivalent topology.
@@ -77,12 +77,14 @@ The \acronym{SPR} algorithm is summarized in
 \insertRef{Felsenstein2004}{TreeSearch}
 }
 \seealso{
-RootedSPR useful when the position of the root node should be retained.
+\itemize{
+\item \code{\link[=RootedSPR]{RootedSPR()}}: useful when the position of the root node should be retained.
+}
 
-TBR
-
-NNI
+Other tree rearrangement functions: \code{\link{NNI}},
+  \code{\link{TBR}}
 }
 \author{
 Martin R. Smith
 }
+\concept{tree rearrangement functions}

@@ -48,7 +48,8 @@ MorphyWeights <- function(morphyObj) {
 #' @param checkInput Whether to sanity-check input data before applying. 
 #'         Defaults to TRUE to protect the user from crashes.
 #'
-#' @return The Morphy error code generated when applying tipData
+#' @return `SetMorphyWeights()` returns the Morphy error code generated when
+#' applying `tipData`.
 #' 
 #' @family Morphy API functions
 #' @author Martin R. Smith
@@ -61,9 +62,10 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
   mpl_apply_tipdata(morphyObj)
 }
 
-#' Initialize a Morphy Object from a phyDat object
+#' Initialize a Morphy Object from a `phyDat` object
 #' 
-#' Creates a new Morphy object with the same size and characters as the phyDat object 
+#' Creates a new Morphy object with the same size and characters as the 
+#' `phyDat` object 
 #'
 #' @param phy An object of class \code{\link{phyDat}}.
 #' @return A pointer to an initialized Morphy object.
@@ -125,7 +127,7 @@ MorphyErrorCheck <- function (action) {
 #' @param char State of each character at each tip in turn, in a format that will be converted
 #'             to a character string by \code{\link{paste0}(char, ';', collapse='')}.
 #'
-#' @return A pointer to a morphyObj.
+#' @return A pointer to an object of class `morphyObj`.
 #' Don't forget to unload it when you've finished with it:
 #' \code{morphyObj <- \link{UnloadMorphy}(morphyObj)}.
 #'
@@ -150,9 +152,11 @@ SingleCharMorphy <- function (char) {
 
 #' Destroy a Morphy Object
 #'
+#' Destroys a previously-created Morphy object.
+#'
 #' Best practice is to call \code{morphyObj <- UnloadMorphy(morphyObj)}
-#' Failure to do so will cause a crash if UnloadMorphy is called on an object that 
-#' has already been destroyed
+#' Failure to do so will cause a crash if `UnloadMorphy()` is called on an
+#' object that  has already been destroyed
 #'
 #' @template morphyObjParam
 #' @return Morphy error code, decipherable using \code{\link{mpl_translate_error}}

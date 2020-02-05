@@ -70,6 +70,11 @@ NNI(tree, edgeToBreak = -1)
 The algorithm is summarized in
 \insertRef{Felsenstein2004}{TreeSearch}
 }
+\seealso{
+Other tree rearrangement functions: \code{\link{SPR}},
+  \code{\link{TBR}}
+}
 \author{
 Martin R. Smith
 }
+\concept{tree rearrangement functions}

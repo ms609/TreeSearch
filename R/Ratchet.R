@@ -3,25 +3,33 @@
 #' \code{Ratchet} uses the parsimony ratchet (Nixon 1999) to search for a more parsimonious tree.
 #'
 #' @template treeParam 
-#' @param dataset a dataset in the format required by TreeScorer.
+#' @param dataset a dataset in the format required by `TreeScorer()`.
 #' @template InitializeDataParam
 #' @template CleanUpDataParam
 #' @template treeScorerParam
-#' @param Bootstrapper Function to perform bootstrapped rearrangements of tree. 
-#'                     First arguments will be an edgeList and a dataset, initialized using \code{InitializeData}
-#'                     Should return a rearranged edgeList.
+#' @param Bootstrapper Function to perform bootstrapped rearrangements of tree.
+#' First arguments will be an `edgeList` and a dataset, initialized using 
+#' `InitializeData()`. Should return a rearranged `edgeList`.
 #' @template swappersParam
-#' @param BootstrapSwapper Function such as \code{\link{RootedNNISwap}} to use to rearrange trees
-#'                         within \code{Bootstrapper}.
-#' @param returnAll Set to \code{TRUE} to report all MPTs encountered during the search, perhaps to analyze consensus.
-#' @param ratchIter stop when this many ratchet iterations have been performed.
-#' @param ratchHits stop when this many ratchet iterations have found the same best score.
-#' @param searchIter maximum rearrangements to perform on each bootstrap or ratchet iteration.  
-#'                   To override this value for a single swapper function, set e.g. `attr(SwapperFunction, 'searchIter') <- 99`
-#' @param searchHits maximum times to hit best score before terminating a tree search within a ratchet iteration.
-#'                   To override this value for a single swapper function, set e.g. `attr(SwapperFunction, 'searchHits') <- 99`
-#' @param bootstrapIter maximum rearrangements to perform on each bootstrap iteration (default: \code{searchIter}).
-#' @param bootstrapHits maximum times to hit best score on each bootstrap iteration (default: \code{searchHits}).
+#' @param BootstrapSwapper Function such as \code{\link{RootedNNISwap}} to use 
+#' to rearrange trees within `Bootstrapper()`.
+#' @param returnAll Set to \code{TRUE} to report all MPTs encountered during the
+#'  search, perhaps to analyse consensus.
+#' @param ratchIter Stop when this many ratchet iterations have been performed.
+#' @param ratchHits Stop when this many ratchet iterations have found the same
+#' best score.
+#' @param searchIter Integer specifying maximum rearrangements to perform on each bootstrap or 
+#' ratchet iteration.  
+#' To override this value for a single swapper function, set e.g. 
+#' `attr(SwapperFunction, 'searchIter') <- 99`
+#' @param searchHits Integer specifying maximum times to hit best score before terminating a tree
+#' search within a ratchet iteration.
+#' To override this value for a single swapper function, set e.g. 
+#' `attr(SwapperFunction, 'searchHits') <- 99`
+#' @param bootstrapIter Integer specifying maximum rearrangements to perform on each bootstrap
+#'  iteration (default: `searchIter`).
+#' @param bootstrapHits Integer specifying maximum times to hit best score on each bootstrap 
+#' iteration (default: `searchHits`).
 #' @template stopAtScoreParam
 #' @template stopAtPeakParam
 #' @template stopAtPlateauParam
@@ -126,11 +134,15 @@ Ratchet <- function (tree, dataset,
     for (EdgeSwapper in swappers) {
       at <- attributes(EdgeSwapper)
       Argument <- function (arg) if (!is.null(at[[arg]])) at[[arg]] else get(arg)
-      candidate <- EdgeListSearch(candidate, dataset=initializedData, TreeScorer=TreeScorer, 
-                                  EdgeSwapper=EdgeSwapper, 
-                                  maxIter=Argument("searchIter"), stopAtScore=Argument("stopAtScore"), 
-                                  stopAtPeak=Argument("stopAtPeak"), stopAtPlateau=Argument("stopAtPlateau"),
-                                  maxHits=Argument("searchHits"), verbosity=verbosity-2L, ...)
+      candidate <- EdgeListSearch(candidate, dataset = initializedData,
+                                  TreeScorer = TreeScorer, 
+                                  EdgeSwapper = EdgeSwapper, 
+                                  maxIter = Argument("searchIter"),
+                                  stopAtScore = Argument("stopAtScore"), 
+                                  stopAtPeak = Argument("stopAtPeak"),
+                                  stopAtPlateau = Argument("stopAtPlateau"),
+                                  maxHits = Argument("searchHits"),
+                                  verbosity = verbosity - 2L, ...)
       candScore <- candidate[[3]]
       if (!is.null(stopAtScore) && candScore < stopAtScore + epsilon) {
         BREAK <- TRUE
@@ -289,8 +301,9 @@ UniqueExceptHits <- function (trees) {
 #' @return `MultiRatchet()` returns a list of optimal trees 
 #' produced by `nSearch` 
 #' ratchet searches, from which a consensus tree can be generated using 
-#'  [ape::consensus] or [TreeTools::ConsensusWithout].
-#' @param nSearch Number of Ratchet searches to conduct (for RatchetConsensus)
+#'  [`ape::consensus()`] or [`TreeTools::ConsensusWithout()`].
+#' @param nSearch Number of Ratchet searches to conduct
+#' (for `RatchetConsensus()`)
 #' @export
 MultiRatchet <- function (tree, dataset, ratchHits=10, 
                               searchIter=500, searchHits=20, verbosity=0L, 
@@ -336,9 +349,9 @@ IWMultiRatchet <- function (tree, dataset, ratchHits=10, concavity=4,
   structure(trees, class = 'multiPhylo')
 }
 
-#' @describeIn Ratchet deprecated alias for MultiRatchet
+#' @describeIn Ratchet deprecated alias for `MultiRatchet()`
 #' @export
 RatchetConsensus <- MultiRatchet
-#' @describeIn Ratchet deprecated alias for MultiRatchet
+#' @describeIn Ratchet deprecated alias for `MultiRatchet()`
 #' @export
 IWRatchetConsensus <- IWMultiRatchet

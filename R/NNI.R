@@ -19,6 +19,7 @@
 #'  \insertRef{Felsenstein2004}{TreeSearch}
 #' 
 #' @author Martin R. Smith
+#' @family tree rearrangement functions
 #' 
 #' @examples
 #' tree <- ape::rtree(20, br = NULL)
