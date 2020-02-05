@@ -330,7 +330,7 @@ IWMultiRatchet <- function (tree, dataset, ratchHits=10, concavity=4,
   message("Found ", length(trees), ' unique trees from ', nSearch, ' searches.')
   
   # Return:
-  trees
+  structure(trees, class = 'multiPhylo')
 }
 
 #' @describeIn Ratchet deprecated alias for MultiRatchet
