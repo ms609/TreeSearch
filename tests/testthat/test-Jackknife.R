@@ -3,7 +3,7 @@ context('Jackknife.R')
 test_that("Jackknife supports are correct", {
   true_tree <-  ape::read.tree(text = "((((((A,B),C),D),E),F),out);")
   start_tree <- ape::read.tree(text = "(((((A,D),B),E),(C,F)),out);")
-  dataset <- TreeTrunk::StringToPhyDat('1100000 1110000 1111000 1111100 1100000 1110000 1111000 1111100 1001000',
+  dataset <- TreeTools::StringToPhyDat('1100000 1110000 1111000 1111100 1100000 1110000 1111000 1111100 1001000',
                             1:7, byTaxon=FALSE)
   names(dataset) <- c(LETTERS[1:6], 'out')
   

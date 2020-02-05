@@ -161,7 +161,7 @@ EdgeListSearch <- function (edgeList, dataset,
 #' }
 #'
 #' @examples
-#' data('Lobo', package='TreeTrunk')
+#' data('Lobo', package='TreeTools')
 #' njtree <- NJTree(Lobo.phy)
 #'
 #' \dontrun{
@@ -171,7 +171,7 @@ EdgeListSearch <- function (edgeList, dataset,
 #' 
 #' @keywords  tree 
 #' @importFrom Rdpack reprompt
-#' @importFrom TreeTrunk MatrixToList RenumberTips
+#' @importFrom TreeTools MatrixToList RenumberTips
 #' @export
 TreeSearch <- function (tree, dataset,
                         InitializeData = PhyDat2Morphy,

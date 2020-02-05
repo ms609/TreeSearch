@@ -27,7 +27,7 @@ Imports:
     R.cache,
     Rdpack,
     stats,
-    TreeTrunk
+    TreeTools
 Suggests:
     knitr,
     rmarkdown,
@@ -35,7 +35,7 @@ Suggests:
     testthat,
     xlsx
 Remotes:
-  ms609/TreeTrunk
+  ms609/TreeTools
 RdMacros: Rdpack
 LazyData: true
 ByteCompile: true

@@ -8,7 +8,7 @@
 #' 
 #' @examples
 #' data('inapplicable.datasets')
-#' tree <- TreeTrunk::RandomTree(inapplicable.phyData[[1]])
+#' tree <- TreeTools::RandomTree(inapplicable.phyData[[1]])
 #' result <- Fitch(tree, inapplicable.phyData[[1]])
 #' 
 #' @return This function returns the elements from a list containing:
@@ -27,7 +27,7 @@
 #' 
 #' @author Martin R. Smith (using Morphy C library, by Martin Brazeau)
 #' @importFrom phangorn phyDat
-#' @importFrom TreeTrunk Renumber RenumberTips
+#' @importFrom TreeTools Renumber RenumberTips
 #' @export
 Fitch <- function (tree, dataset) {
   tree <- RenumberTips(Renumber(tree), names(dataset))
@@ -54,7 +54,7 @@ Fitch <- function (tree, dataset) {
 #' @family tree scoring
 #' @references
 #'  \insertRef{Brazeau2018}{TreeSearch}
-#' @importFrom TreeTrunk Renumber RenumberTips
+#' @importFrom TreeTools Renumber RenumberTips
 #' @export
 CharacterLength <- function (tree, dataset) {
   if (class(dataset) != 'phyDat') {
@@ -133,7 +133,7 @@ MorphyTreeLength <- function (tree, morphyObj) {
 #' @template treeChild
 #' @author Martin R. Smith
 #' @keywords internal
-#' @importFrom TreeTrunk PostorderEdges
+#' @importFrom TreeTools PostorderEdges
 #' @export
 MorphyLength <- function (parent, child, morphyObj, inPostorder=FALSE, 
                           nTaxa=mpl_get_numtaxa(morphyObj)) {

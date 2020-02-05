@@ -28,8 +28,8 @@
 #' @template returnEdgeList
 #' 
 #' @examples
-#' data('Lobo', package='TreeTrunk')
-#' random.tree <- TreeTrunk::RandomTree(Lobo.phy)
+#' data('Lobo', package='TreeTools')
+#' random.tree <- TreeTools::RandomTree(Lobo.phy)
 #' edge <- random.tree$edge
 #' parent <- edge[, 1]
 #' child <- edge[, 2]

@@ -1,5 +1,5 @@
 context("TreeSearch.R")
-library('TreeTrunk')
+library('TreeTools')
 comb11 <- ape::read.tree(text="(a, (b, (c, (d, (e, (f, (g, (h, (i, (j, k))))))))));")
 unrooted11 <- ape::read.tree(text="(a, b, (c, (d, (e, (f, (g, (h, (i, (j, k)))))))));")
 data11 <- cbind(upper.tri(matrix(FALSE, 11, 11))[, 3:10], lower.tri(matrix(FALSE, 11, 11))[, 2:9])
@@ -10,7 +10,7 @@ RootySwappers <- list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap)
 test_that("tree can be found", {
   suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(0)
-  random11 <- TreeTrunk::RandomTree(phy11, 'a')
+  random11 <- TreeTools::RandomTree(phy11, 'a')
   expect_error(TreeSearch(unrooted11, dataset=phy11))
   expect_equal(TreeSearch(random11, dataset=phy11, maxIter=250, 
                           EdgeSwapper=RootedTBRSwap, verbosity=0L), comb11)
@@ -27,9 +27,9 @@ test_that("tree can be found", {
 test_that("tree search finds shortest tree", {
   true_tree <- ape::read.tree(text = "(((((1,2),3),4),5),6);")
   malformed_tree <- ape::read.tree(text = "((((1,2),3),4),5,6);")
-  dataset <- TreeTrunk::StringToPhyDat('110000 111000 111100', 1:6, byTaxon=FALSE)
+  dataset <- TreeTools::StringToPhyDat('110000 111000 111100', 1:6, byTaxon=FALSE)
   expect_error(TreeSearch(malformed_tree, dataset))
-  start_tree <- TreeTrunk::RenumberTips(ape::read.tree(
+  start_tree <- TreeTools::RenumberTips(ape::read.tree(
     text = "(((1, 6), 3), (2, (4, 5)));"), true_tree$tip.label)
   expect_equal(Fitch(start_tree, dataset), 6)
   morphyObj <- PhyDat2Morphy(dataset)
@@ -82,7 +82,7 @@ test_that("Implied weights: Tree search", {
 test_that("Profile parsimony works in tree search", {
   sillyData <- lapply(1:22, function (i) c( rep(0, i - 1), rep(1, 22 - i), rep(1, 22 - i), rep(0, i - 1)))#, sample(2, 20, replace=TRUE)-1))
   names(sillyData) <- as.character(1:22)
-  dataset <- TreeTrunk::PhyDat(sillyData)
+  dataset <- TreeTools::PhyDat(sillyData)
   readyData <- PrepareDataProfile(dataset, 12000, warn=FALSE)
   
   suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0

@@ -49,7 +49,7 @@ TBRWarning <- function (parent, child, error) {
 #' TBR(tree)
 #' }
 #' @importFrom ape root
-#' @importFrom TreeTrunk DescendantEdges
+#' @importFrom TreeTools DescendantEdges
 #' @export
 TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
   if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
@@ -78,7 +78,7 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 #' @return a list containing two elements, corresponding in turn to the
 #'  rearranged parent and child parameters
 #'  
-#'  @importFrom TreeTrunk EdgeAncestry
+#'  @importFrom TreeTools EdgeAncestry
 #' @export
 TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mergeEdges=NULL) {
   if (nEdge < 5) return (list(parent, child)) #TODO do we need to re-root this tree?
@@ -287,7 +287,7 @@ RootedTBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 }
 
 #' @describeIn TBR faster version that takes and returns parent and child parameters
-#' @importFrom TreeTrunk EdgeAncestry
+#' @importFrom TreeTools EdgeAncestry
 #' @export
 RootedTBRSwap <- function (parent, child, nEdge=length(parent), edgeToBreak=NULL, mergeEdges=NULL) {
   if (nEdge < 5) return (TBRWarning(parent, child, 'Fewer than 4 tips'))

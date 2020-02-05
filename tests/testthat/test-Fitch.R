@@ -63,14 +63,14 @@ test_that("Morphy generates correct lengths", {
     morphyObj <- UnloadMorphy(morphyObj)
   }
   ## Test combined matrix
-  bigPhy <- TreeTrunk::StringToPhyDat(paste0(characters, collapse='\n'), tree$tip.label, 
+  bigPhy <- TreeTools::StringToPhyDat(paste0(characters, collapse='\n'), tree$tip.label, 
                            byTaxon=FALSE)
   expect_identical(characters,
-                   TreeTrunk::PhyToString(bigPhy, byTaxon=FALSE, concatenate=FALSE))
+                   TreeTools::PhyToString(bigPhy, byTaxon=FALSE, concatenate=FALSE))
   expect_identical(paste0(collapse='', 
                           vapply(characters, substr, start=0, stop=1,
                                  character(1))),
-                   substr(TreeTrunk::PhyToString(bigPhy, ps=';', useIndex=TRUE, 
+                   substr(TreeTools::PhyToString(bigPhy, ps=';', useIndex=TRUE, 
                                       byTaxon=TRUE, concatenate=TRUE),
                     start=0, stop=length(characters)))
   
@@ -95,7 +95,7 @@ test_that("Morphy generates correct lengths", {
 
   ## Run the tests
   for(test in 1:length(bigChars)) {
-    phy <- TreeTrunk::StringToPhyDat(bigChars[test], bigTree$tip.label)
+    phy <- TreeTools::StringToPhyDat(bigChars[test], bigTree$tip.label)
     # Presently a good test to confirm that PhyDat2Morphy works with single-character phys
     morphyObj <- PhyDat2Morphy(phy)
     tree_length <- MorphyTreeLength(bigTree, morphyObj)

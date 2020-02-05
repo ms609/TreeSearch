@@ -53,7 +53,7 @@ NNI <- function (tree, edgeToBreak=NULL) {
 #' @template treeChild
 #' @param nTips (optional) Number of tips.
 #' @return a list containing two elements, corresponding in turn to the rearranged parent and child parameters
-#' @importFrom TreeTrunk SampleOne
+#' @importFrom TreeTools SampleOne
 #' @export
 NNISwap <- function (parent, child, nTips = (length(parent) / 2L) + 1L, edgeToBreak=NULL) {
   rootNode  <- nTips + 1L

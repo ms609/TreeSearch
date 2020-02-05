@@ -71,7 +71,7 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 #' @author Martin R. Smith
 #' @family Morphy API functions
 #' @importFrom phangorn phyDat
-#' @importFrom TreeTrunk PhyToString
+#' @importFrom TreeTools PhyToString
 #' @export
 PhyDat2Morphy <- function (phy) {
   

@@ -38,7 +38,7 @@
 #' - \insertRef{SmithTern}{TreeSearch}
 #'
 #' @examples
-#' data('Lobo', package='TreeTrunk')
+#' data('Lobo', package='TreeTools')
 #' njtree <- NJTree(Lobo.phy)
 #' # Increase value of ratchIter and searchHits to do a proper search
 #' quickResult <- Ratchet(njtree, Lobo.phy, ratchIter=2, searchHits=3)
@@ -56,7 +56,7 @@
 #' \pkg{phangorn} package.
 #' 
 #' @keywords tree
-#' @importFrom TreeTrunk MatrixToList RenumberEdges RenumberTips
+#' @importFrom TreeTools MatrixToList RenumberEdges RenumberTips
 #' @export
 Ratchet <- function (tree, dataset, 
                      InitializeData = PhyDat2Morphy,
@@ -290,7 +290,7 @@ UniqueExceptHits <- function (trees) {
 
 #' @describeIn Ratchet returns a list of optimal trees produced by nSearch 
 #'  Ratchet searches, from which a consensus tree can be generated using 
-#'  [ape::consensus] or [TreeTrunk::ConsensusWithout].
+#'  [ape::consensus] or [TreeTools::ConsensusWithout].
 #' @param nSearch Number of Ratchet searches to conduct (for RatchetConsensus)
 #' @export
 MultiRatchet <- function (tree, dataset, ratchHits=10, 

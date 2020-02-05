@@ -6,7 +6,7 @@
 #' @param jackIter Integer specifying number of jackknife iterations to conduct
 #' @return a list of trees recovered after jackknife iterations
 #' @author Martin R. Smith
-#' @importFrom TreeTrunk MatrixToList RenumberEdges RenumberTips
+#' @importFrom TreeTools MatrixToList RenumberEdges RenumberTips
 #' @export
 Jackknife <- function (tree, dataset, resampleFreq = 2/3,
                        InitializeData = PhyDat2Morphy,

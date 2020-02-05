@@ -194,7 +194,7 @@
 #######' @seealso \code{\link{MorphyRatchet}}
 #######' 
 #######' @examples
-#######' data('Lobo', package='TreeTrunk')
+#######' data('Lobo', package='TreeTools')
 #######' njtree <- NJTree(Lobo.phy)
 #######'
 #######' \dontrun{
