@@ -57,7 +57,7 @@ set.seed(0)
 
 We can generate a random tree and calculate its parsimony score thus:
 ```{r Random-tree}
-random.tree <- RandomTree(my.phyDat)
+random.tree <- TreeTools::RandomTree(my.phyDat)
 par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
 plot(random.tree)
 Fitch(random.tree, my.phyDat)
@@ -66,7 +66,7 @@ Fitch(random.tree, my.phyDat)
 We might save some wasted time in tree search if we can start with a tree that's a little 
 closer to optimal: perhaps a neighbour-joining tree.
 ```{r Neighbour-joining}
-nj.tree <- NJTree(my.phyDat)
+nj.tree <- TreeTools::NJTree(my.phyDat)
 par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
 plot(nj.tree)
 Fitch(nj.tree, my.phyDat)
@@ -83,7 +83,7 @@ To constrain an outgroup, we first need to make the outgroup and ingroup monophy
 
 ```{r Outgroup}
 outgroup <- c('Nemertean', 'Lingula', 'Terebratulina')
-rooted.tree <- EnforceOutgroup(nj.tree, outgroup)
+rooted.tree <- TreeTools::EnforceOutgroup(nj.tree, outgroup)
 par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
 plot(rooted.tree)
 ```
@@ -153,7 +153,7 @@ If ten independent runs ended up at a number of different trees, there may be ma
 That would take a while though; for now, let's check out our consensus tree:
 
 ```{r Plot-strict-consensus}
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 strict.consensus <- ape::consensus(some.optimal.trees)
 plot(strict.consensus)
 ```
@@ -162,22 +162,22 @@ We might prefer a majority-rule consensus tree:
 
 ```{r Plot-majority-rule-consensus}
 par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
-majority.consensus <- ape::consensus(some.optimal.trees, p=0.5)
+majority.consensus <- ape::consensus(some.optimal.trees, p = 0.5)
 plot(majority.consensus)
 ```
 
 Clade support can be generated using Jackknife resampling:
 
 ```{r Jackknife-annotations}
-jack.trees <- Jackknife(best.tree, my.phyDat, EdgeSwapper=RootedTBRSwap,
-                        jackIter=25, verbosity=0)
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+jack.trees <- Jackknife(best.tree, my.phyDat, EdgeSwapper = RootedTBRSwap,
+                        jackIter = 25, verbosity = 0)
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(strict.consensus)
 
-jack.support <- SplitFrequency(strict.consensus, jack.trees) / length(jack.trees)
+jack.support <- TreeTools::SplitFrequency(strict.consensus, jack.trees) / length(jack.trees)
 ape::nodelabels(paste('\n\n', signif(jack.support, 2)), 
-           col=SupportColour(jack.support), 
-           adj=0, pos=2, frame='none')
+           col = TreeTools::SupportColour(jack.support), 
+           adj = 0, pos = 2, frame = 'none')
 ```
 
 
