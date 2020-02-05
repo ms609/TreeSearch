@@ -56,27 +56,29 @@ test_that("tree search finds shortest tree", {
 
 test_that("Implied weights: Tree search", {
   suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
-  set.seed(1)
   expect_error(IWTreeSearch(tree = unrooted11, dataset = phy11))
-  expect_equal(comb11, IWTreeSearch(RandomTree(phy11, 'a'), phy11, maxIter=700,
+
+  set.seed(1)
+  expect_equal(comb11, IWTreeSearch(RandomTree(phy11, 'a'), phy11, maxIter=150,
                                     EdgeSwapper = RootedTBRSwap, verbosity=0))
   set.seed(1)
-  expect_equal(comb11, IWTreeSearch(RandomTree(phy11, 'a'), phy11, maxIter=300,
+  expect_equal(comb11, IWTreeSearch(RandomTree(phy11, 'a'), phy11, maxIter=220,
                                     EdgeSwapper = RootedSPRSwap, verbosity=0))
   
   set.seed(1)
-  expect_equal(comb11, IWTreeSearch(TBR(TBR(TBR((comb11)))), phy11, maxIter=100, 
+  expect_equal(comb11, IWTreeSearch(TBR(TBR(TBR((comb11)))), phy11, maxIter=100,
                                     EdgeSwapper = RootedNNISwap, verbosity=0))
   
   set.seed(1)
-  expect_equal(comb11, IWRatchet(RandomTree(phy11, 'a'), phy11, searchIter=8,
-                                 searchHits = 3, swappers = RootySwappers, 
-                                 ratchHits = 3, verbosity=0))
+  expect_equal(comb11, IWRatchet(as.phylo(17905853L, 11, letters[1:11]),
+                                 phy11, searchIter=8,
+                                 searchHits = 3L, swappers = RootySwappers, 
+                                 ratchHits = 3L, verbosity=0))
   
   expect_equal('multiPhylo', class(
-    IWRatchet(tree=RandomTree(phy11, 'a'), dataset=phy11, concavity=4,
-              searchIter = 5, searchHits = 2,
-              ratchHits = 2, verbosity=0L, returnAll=TRUE)
+    IWRatchet(tree=RandomTree(phy11, 'a'), dataset = phy11, concavity = 4,
+              searchIter = 5L, searchHits = 2L,
+              ratchHits = 2L, verbosity = 0L, returnAll = TRUE)
   ))
   # expect_equal(IWSectorial(RandomTree(phy11, 'a'), phy11, verbosity=-1), comb11) # TODO: Sectorial Search not working yet!
 })
