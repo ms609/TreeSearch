@@ -1,21 +1,27 @@
 {
-  "@context": ["https://doi.org/10.5063/schema/codemeta-2.0", "http://schema.org"],
+  "@context": [
+    "https://doi.org/10.5063/schema/codemeta-2.0",
+    "http://schema.org"
+  ],
   "@type": "SoftwareSourceCode",
   "identifier": "TreeSearch",
   "description": "Searches for phylogenetic trees that are optimal using a \n  user-defined criterion. \n  Handles inapplicable data using the algorithm of \n  Brazeau, Guillerme and Smith (2019) <doi:10.1093/sysbio/syy083>.\n  Implements Profile Parsimony (Faith and Trueman, 2001) \n  <doi:10.1080/10635150118627>, and Successive Approximations (Farris, 1969) \n  <doi:10.2307/2412182>.",
   "name": "TreeSearch: Phylogenetic Tree Search Using Custom Optimality Criteria",
   "codeRepository": "https://github.com/ms609/TreeSearch",
-  "relatedLink": ["https://ms609.github.io/TreeSearch", "https://CRAN.R-project.org/package=TreeSearch"],
+  "relatedLink": [
+    "https://ms609.github.io/TreeSearch",
+    "https://CRAN.R-project.org/package=TreeSearch"
+  ],
   "issueTracker": "https://github.com/ms609/TreeSearch/issues",
   "license": "https://spdx.org/licenses/GPL-3.0",
   "version": "0.4.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
-    "version": "3.5.3",
+    "version": "3.6.1",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 3.5.3 (2019-03-11)",
+  "runtimePlatform": "R version 3.6.1 (2019-07-05)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -194,12 +200,18 @@
       "sameAs": "https://CRAN.R-project.org/package=TreeTools"
     }
   ],
-  "releaseNotes": "https://github.com/ms609/TreeSearch/blob/master/NEWS.md",
+  "releaseNotes": "https://github.com/ms609/TreeSearch.git/blob/master/NEWS.md",
   "readme": "https://github.com/ms609/TreeSearch/blob/master/README.md",
-  "fileSize": "380.088KB",
   "contIntegration": ["https://travis-ci.org/ms609/TreeSearch", "https://codecov.io/gh/ms609/TreeSearch"],
   "developmentStatus": "http://www.repostatus.org/#active",
-  "keywords": ["tree-search", "phangorn", "phylogenetics", "morphological-analysis", "research-tool", "bioinformatics"],
+  "keywords": [
+    "tree-search",
+    "phangorn",
+    "phylogenetics",
+    "morphological-analysis",
+    "research-tool",
+    "bioinformatics"
+  ],
   "citation": [
     {
       "@type": "ScholarlyArticle",
