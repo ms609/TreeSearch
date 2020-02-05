@@ -7,8 +7,8 @@
 StopUnlessBifurcating(parent)
 }
 \arguments{
-\item{parent}{the first column of the edge matrix of a tree of class
-\code{\link{phylo}}, i.e. \code{tree$edge[, 1]}}
+\item{parent}{Integer vector corresponding to the first column of the edge
+matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
 }
 \value{
 Returns \code{NULL}, but will \code{stop} with an error message if a tree

@@ -1,6 +1,7 @@
 #' Profile Parsimony Score
 #'
-#' Calculate a tree's Profile Parsimony score with a given dataset, after Faith and Trueman (2001)
+#' Calculate a tree's Profile Parsimony score with a given dataset, after
+#' Faith and Trueman (2001).
 #'
 #' @template treeParam
 #' @param dataset Dataset of class \code{phyDat}.  The dataset should have been
@@ -22,8 +23,8 @@
 #'   # In actual use, the dataset should be prepared with a much higher
 #'   # precision: try 1e+06?
 #'   # Of course, gaining higher precision takes substantially longer.
-#'   dataset <- PrepareDataProfile(congreveLamsdellMatrices[[42]], 
-#'                                 precision = 1e+03)
+#'   dataset <- suppressWarnings(
+#'     PrepareDataProfile(congreveLamsdellMatrices[[42]], precision = 1e+03))
 #'   ProfileScore(referenceTree, dataset)
 #'
 #' @author Martin R. Smith

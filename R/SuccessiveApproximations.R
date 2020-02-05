@@ -1,6 +1,7 @@
 #' Tree Search using Successive Approximations
 #'
-#' Searches for a tree that is optimal under the Successive Approximations criterion
+#' Searches for a tree that is optimal under the Successive Approximations 
+#' criterion.
 #'
 #' @template treeParam
 #' @template datasetParam
@@ -14,7 +15,8 @@
 #' @param verbosity integer (default 0) specifying how much detail to print to stdout
 #' @param suboptimal retain trees that are this proportion less optimal than the optimal tree
 #' 
-#' @return list of optimal (and slightly suboptimal, if suboptimal > 0) trees
+#' @return `SuccessiveApproximations()` returns a list of class `multiPhylo`
+#' containing optimal (and slightly suboptimal, if suboptimal > 0) trees.
 #'
 #' @importFrom ape consensus root
 #' @export
@@ -56,7 +58,7 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3, max
   message('Stability not reached.')
   
   # Return:
-  bests
+  structure(bests, class = 'multiPhylo')
 }
 
 #' Tree suboptimality
@@ -81,12 +83,14 @@ Suboptimality <- function (trees, proportional = FALSE) {
 
 #' Successive Weights
 #' 
-#' Calculate weight for tree scored by successive approximations
+#' Calculate weight for tree scored by successive approximations.
 #' 
 #' @template treeParam
 #' @template datasetParam
 #'
-#' @return Score of a tree, given the weighting instructions specified in the attributes of the dataset
+#' @return `SuccessiveWeights()` returns the score of a tree, given the
+#' weighting instructions specified in the attributes of the dataset.
+#' 
 #' @keywords internal
 #' @export
 SuccessiveWeights <- function(tree, dataset) {

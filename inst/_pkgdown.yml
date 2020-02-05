@@ -69,7 +69,6 @@ reference:
       - MinimumSteps
       - PrepareDataProfile
       - RandomMorphyTree
-      - UnloadTreeSearch
 
 template:
   params:

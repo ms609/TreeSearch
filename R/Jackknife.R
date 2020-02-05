@@ -8,7 +8,7 @@
 #' @author Martin R. Smith
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @seealso 
-#' [`JackLabels()`]: Label nodes of a tree with jackknife supports.
+#' - [`JackLabels()`]: Label nodes of a tree with jackknife supports.
 #' @export
 Jackknife <- function (tree, dataset, resampleFreq = 2/3,
                        InitializeData = PhyDat2Morphy,

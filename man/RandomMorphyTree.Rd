@@ -7,13 +7,17 @@
 RandomMorphyTree(nTip)
 }
 \arguments{
-\item{nTip}{number of tips (minimum 3)}
+\item{nTip}{Integer specifying the number of tips to include in the tree
+(minimum 2).}
 }
 \value{
-A list with three elements, each a vector of integers, respectively containing:
-- The parent of each tip and node, in order
-- The left child of each node
-- The right child of each node.
+A list with three elements, each a vector of integers, respectively
+containing:
+\itemize{
+\item The parent of each tip and node, in order
+\item The left child of each node
+\item The right child of each node.
+}
 }
 \description{
 Random postorder tree

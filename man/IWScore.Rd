@@ -34,7 +34,8 @@ The 'fit', \code{h / h + k}, where \code{h} is the amount of homoplasy ('extra s
 and \code{k} is a constant (the 'concavity constant')
 }
 \description{
-Calculate a tree's Parsimony score with a given dataset using implied weights (Goloboff 1997)
+Calculate a tree's Parsimony score with a given dataset using implied weights
+(Goloboff 1997).
 }
 \section{Functions}{
 \itemize{

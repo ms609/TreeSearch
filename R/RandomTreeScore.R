@@ -17,12 +17,17 @@ RandomTreeScore <- function (nTip, morphyObj) {
 
 #' Random postorder tree
 #' 
-#' @param nTip number of tips (minimum 3)
+#' @param nTip Integer specifying the number of tips to include in the tree
+#' (minimum 2).
 #'
-#' @return A list with three elements, each a vector of integers, respectively containing:
-#'         - The parent of each tip and node, in order
-#'         - The left child of each node
-#'         - The right child of each node.
+#' @return A list with three elements, each a vector of integers, respectively 
+#' containing:
+#' 
+#'  - The parent of each tip and node, in order
+#'         
+#'  - The left child of each node
+#'         
+#'  - The right child of each node.
 #'
 #' @family tree generation functions
 #' @export

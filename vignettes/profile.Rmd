@@ -61,7 +61,7 @@ information loss implied by each additional step in each character.
 Ideally we'd pick a high value of precision (> 1e+06): this takes a while, 
 but only needs doing once for each dataset of a given size.
 
-```{r Prepare the data for analysis, warning=FALSE}
+```{r Prepare the data for analysis, warning=FALSE, message=FALSE}
 my.prepdata <- PrepareDataProfile(my.phyDat, precision = 4e+04)
 ```
 

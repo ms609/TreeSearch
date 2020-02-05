@@ -13,9 +13,10 @@ SuccessiveWeights(tree, dataset)
 whose names correspond to the labels of any accompanying tree.}
 }
 \value{
-Score of a tree, given the weighting instructions specified in the attributes of the dataset
+\code{SuccessiveWeights()} returns the score of a tree, given the
+weighting instructions specified in the attributes of the dataset.
 }
 \description{
-Calculate weight for tree scored by successive approximations
+Calculate weight for tree scored by successive approximations.
 }
 \keyword{internal}

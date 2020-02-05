@@ -25,8 +25,8 @@ If a single element is requested (default) then just that element will be return
 If multiple elements are requested then these will be returned in a list.
 }
 \description{
-Uses code modified from the Morphy library to calculate a parsimony score
-in datasets that contain inapplicable data
+Uses code modified from the Morphy library to calculate a
+parsimony score in datasets that contain inapplicable data.
 }
 \examples{
 data('inapplicable.datasets')
@@ -35,7 +35,9 @@ result <- Fitch(tree, inapplicable.phyData[[1]])
 
 }
 \seealso{
-\code{\link{TreeSearch}}
+\itemize{
+\item \code{\link[=TreeSearch]{TreeSearch()}}
+}
 
 Other tree scoring: \code{\link{CharacterLength}},
   \code{\link{IWScore}}, \code{\link{MorphyTreeLength}}

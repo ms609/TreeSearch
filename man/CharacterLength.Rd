@@ -19,11 +19,12 @@ FastCharacterLength(tree, dataset)
 whose names correspond to the labels of any accompanying tree.}
 }
 \value{
-A vector listing the contribution of each character to tree score,
-according to the algorithm of Brazeau, Guillerme and Smith (2019).
+\code{CharacterLength()} returns a vector listing the contribution of each
+character to tree score, according to the algorithm of Brazeau, Guillerme
+and Smith (2019).
 }
 \description{
-Character length
+Homoplasy length of each character in a dataset on a specified tree.
 }
 \section{Functions}{
 \itemize{

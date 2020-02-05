@@ -34,8 +34,10 @@ whose names correspond to the labels of any accompanying tree.}
 \item{suboptimal}{retain trees that are this proportion less optimal than the optimal tree}
 }
 \value{
-list of optimal (and slightly suboptimal, if suboptimal > 0) trees
+\code{SuccessiveApproximations()} returns a list of class \code{multiPhylo}
+containing optimal (and slightly suboptimal, if suboptimal > 0) trees.
 }
 \description{
-Searches for a tree that is optimal under the Successive Approximations criterion
+Searches for a tree that is optimal under the Successive Approximations
+criterion.
 }

@@ -170,8 +170,3 @@ UnloadMorphy <- function (morphyObj) {
   }
   return (error)
 }
-
-#' Unload this library
-#' @keywords internal
-#' @export
-UnloadTreeSearch <- function () detach("package:TreeSearch", unload=TRUE)

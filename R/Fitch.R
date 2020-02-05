@@ -1,7 +1,7 @@
 #' @title Calculate parsimony score with inapplicable data
 #'
-#' @description Uses code modified from the Morphy library to calculate a parsimony score 
-#' in datasets that contain inapplicable data
+#' @description Uses code modified from the Morphy library to calculate a 
+#' parsimony score in datasets that contain inapplicable data.
 #'
 #' @template treeParam 
 #' @template datasetParam
@@ -22,7 +22,8 @@
 #' If a single element is requested (default) then just that element will be returned
 #' If multiple elements are requested then these will be returned in a list.
 #' 
-#' @seealso \code{\link{TreeSearch}}
+#' @seealso 
+#' - [`TreeSearch()`]
 #' @family tree scoring
 #' 
 #' @author Martin R. Smith (using Morphy C library, by Martin Brazeau)
@@ -39,11 +40,14 @@ Fitch <- function (tree, dataset) {
 
 #' Character length
 #' 
+#' Homoplasy length of each character in a dataset on a specified tree.
+#' 
 #' @template treeParam
 #' @template datasetParam
 #'
-#' @return A vector listing the contribution of each character to tree score,
-#'         according to the algorithm of Brazeau, Guillerme and Smith (2019).
+#' @return `CharacterLength()` returns a vector listing the contribution of each
+#' character to tree score, according to the algorithm of Brazeau, Guillerme 
+#' and Smith (2019).
 #'
 #' @examples
 #' data('inapplicable.datasets')

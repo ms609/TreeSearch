@@ -24,11 +24,11 @@ RootedSPRSwap(parent, child, nEdge = length(parent), nNode = nEdge/2L,
 
 \item{mergeEdge}{the index of an edge on which to merge the broken edge.}
 
-\item{parent}{the first column of the edge matrix of a tree of class
-\code{\link{phylo}}, i.e. \code{tree$edge[, 1]}}
+\item{parent}{Integer vector corresponding to the first column of the edge
+matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
 
-\item{child}{the second column of the edge matrix of a tree of class
-\code{\link{phylo}}, i.e. \code{tree$edge[, 2]}}
+\item{child}{Integer vector corresponding to the second column of the edge
+matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
 
 \item{nEdge}{(optional) integer specifying the number of edges of a tree of
 class \code{\link{phylo}}, i.e. \code{dim(tree$edge)[1]}}

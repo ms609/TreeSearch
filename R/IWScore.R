@@ -1,6 +1,7 @@
 #' Implied weights parsimony Score
 #'
-#' Calculate a tree's Parsimony score with a given dataset using implied weights (Goloboff 1997)
+#' Calculate a tree's Parsimony score with a given dataset using implied weights
+#' (Goloboff 1997).
 #'
 #' @template treeParam
 #' @param dataset Dataset of class \code{phyDat}.  The dataset should have been

@@ -15,7 +15,8 @@ making tree search faster and more efficient,
 and allowing user-defined optimality criteria to be employed.
 
 Implied weighting and heuristic searches such as the Parsimony Ratchet 
-(function: [`Ratchet`]()) are implemented.
+(function: [`Ratchet()`](https://ms609.github.io/TreeSearch/reference/Ratchet.html))
+are implemented.
 # Installation
 
 Install and load the library from CRAN as follows:
@@ -59,10 +60,10 @@ By contributing to this project, you agree to abide by its terms.
 Brazeau, M. D., Guillerme, T. and Smith, M. R. 2019.
   An algorithm for morphological phylogenetic analysis with inapplicable data. 
   Systematic Biology, 68(4), 619-631.
-  doi:[10.1093/sysbio/syy083](https://dx.doi.org/10.1093/sysbio/syy083).
+  doi: [10.1093/sysbio/syy083](https://dx.doi.org/10.1093/sysbio/syy083).
 
 D. P. Faith, J. W. H. Trueman, Towards an inclusive philosophy for phylogenetic inference.
-  Syst. Biol. 50, 331–350 (2001).   doi:[10.1080/10635150118627](https://dx.doi.org/10.1080/10635150118627)
+  Syst. Biol. 50, 331–350 (2001).   doi: [10.1080/10635150118627](https://dx.doi.org/10.1080/10635150118627)
 
 Farris, J. S. (1969). A successive approximations approach to character weighting. 
-  Systematic Biology, 18(4), 374–385.  doi:[10.2307/2412182](https://dx.doi.org/10.2307/2412182)
+  Systematic Biology, 18(4), 374–385.  doi: [10.2307/2412182](https://dx.doi.org/10.2307/2412182)
