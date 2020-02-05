@@ -72,7 +72,7 @@ tree <- RandomTree(my.phyDat)
 
 Or using a neighbour joining method, to start at a reasonably good tree:
 ```{r NJ Tree}
-tree <- NJTree(my.phyDat)
+tree <- TreeTools::NJTree(my.phyDat)
 par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
 plot(tree)
 ```
@@ -90,10 +90,14 @@ The parsimony ratchet [@Nixon1999] is better at finding globally optimal trees. 
 is a convenient wrapper for the underlying function `Ratchet`.
 ```{r longwinded, eval=FALSE}
 # Longwinded approach:
-better.tree <- Ratchet(better.tree, my.prepdata, searchHits=10, searchIter=100, ratchIter=5,
-                       swappers=list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap),
-                       InitializeData=ProfileInitMorphy, CleanUpData=ProfileDestroyMorphy,
-                       TreeScorer=ProfileScoreMorphy, Bootstrapper=ProfileBootstrap)
+better.tree <- Ratchet(better.tree, my.prepdata, searchHits = 10, 
+                       searchIter = 100, ratchIter = 5,
+                       swappers = list(RootedTBRSwap, RootedSPRSwap,
+                                       RootedNNISwap),
+                       InitializeData = ProfileInitMorphy,
+                       CleanUpData = ProfileDestroyMorphy,
+                       TreeScorer = ProfileScoreMorphy,
+                       Bootstrapper = ProfileBootstrap)
 ```
 
 ```{r Cached results of ratchet search, echo=FALSE}
@@ -124,7 +128,7 @@ Let's see the resultant tree, and its score
 
 ```{r Ratchet-search-results}
 attr(better.tree, 'score')
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(better.tree)
 ```
 
@@ -143,11 +147,11 @@ In a serious study, you would want to sample many more than the 25 Ratchet hits 
 
 ```{R Suboptimal sampling, eval=FALSE}
 suboptimals <- ProfileRatchet(better.tree, my.prepdata, 
-                              swappers=list(RootedTBRSwap),
-                              returnAll=TRUE, suboptimal=5, 
-                              ratchHits=25, ratchIter=500, 
-                              bootstrapHits=15, bootstrapIter=450,
-                              searchHits=10, searchIter=100)
+                              swappers = list(RootedTBRSwap),
+                              returnAll = TRUE, suboptimal = 5, 
+                              ratchHits = 25, ratchIter = 500, 
+                              bootstrapHits = 15, bootstrapIter = 450,
+                              searchHits = 10, searchIter = 100)
 ```
 
 ```{R cached-SoS, echo=FALSE}
