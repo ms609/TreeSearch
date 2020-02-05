@@ -33,12 +33,18 @@
 <script src="../pkgdown.js"></script>
 
 
+<!-- docsearch -->
+<script src="../docsearch.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous" />
+<link href="../docsearch.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+
 
 
 <meta property="og:title" content="Changelog" />
 
 
-<meta name="robots" content="noindex">
+
 
 <!-- mathjax -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script>
@@ -49,6 +55,16 @@
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-156666971-5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-156666971-5');
+</script>
 
 
   </head>
@@ -67,7 +83,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.3.2.9008</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -90,19 +106,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/filesystem-navigation.html">File system navigation in R</a>
-    </li>
-    <li>
       <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
     </li>
     <li>
       <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
-    </li>
-    <li>
-      <a href="../articles/load-data.html">Loading phylogenetic data into R</a>
-    </li>
-    <li>
-      <a href="../articles/load-trees.html">Loading phylogenetic trees into R</a>
     </li>
     <li>
       <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
@@ -125,6 +132,12 @@
 </li>
       </ul>
       
+      <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
+        <div class="form-group">
+          <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
+        </div>
+      </form>
+      
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -140,26 +153,32 @@
       <small>Source: <a href='https://github.com/ms609/TreeSearch/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="treesearch-0-3-2-9008-development" class="section level1">
+    <div id="treesearch-0-4-0" class="section level1">
 <h1 class="page-header">
-<a href="#treesearch-0-3-2-9008-development" class="anchor"></a>TreeSearch 0.3.2.9008 (development)<small> Unreleased </small>
+<a href="#treesearch-0-4-0" class="anchor"></a>TreeSearch 0.4.0<small> Unreleased </small>
 </h1>
 <div id="new-features" class="section level2">
 <h2 class="hasAnchor">
 <a href="#new-features" class="anchor"></a>New features</h2>
 <ul>
 <li>
-<code>PhyDatToMatrix</code>, complementing <code>MatrixToPhyDat</code>
+<code>PhyDatToMatrix()</code>, complementing <code>MatrixToPhyDat()</code>
+</li>
+<li>Documentation with <code>pkgdown</code>
 </li>
 <li>
-<code>NPartitions</code>, <code>TreeIsRooted</code>.</li>
+<code><a href="../reference/JackLabels.html">JackLabels()</a></code> helper function</li>
 </ul>
 </div>
 <div id="changes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#changes" class="anchor"></a>Changes</h2>
 <ul>
-<li>Move tree distance measures to separate package <code>TreeDist</code>
+<li>Move tree distance measures to new package <code>TreeDist</code>
+</li>
+<li>Move tree utility functions to new package <code>TreeTools</code>
+</li>
+<li>Rename functions <code><a href="../reference/MinimumLength.html">MinimumSteps()</a></code>→<code><a href="../reference/MinimumLength.html">MinimumLength()</a></code> and <code><a href="../reference/CharacterLength.html">FitchSteps()</a></code>→<code><a href="../reference/CharacterLength.html">CharacterLength()</a></code>
 </li>
 </ul>
 </div>
@@ -167,9 +186,9 @@
 <h2 class="hasAnchor">
 <a href="#enhancements" class="anchor"></a>Enhancements</h2>
 <ul>
-<li>
-<code>ReadTntTree</code> supports named taxa (with <code>taxname=</code>)</li>
 <li>Improve speed of tests (by increasing probability of false positives)</li>
+<li>Use <code>message</code> in place of <code>cat</code>, to allow use of <code><a href="https://rdrr.io/r/base/message.html">suppressMessages()</a></code>
+</li>
 </ul>
 </div>
 </div>
@@ -177,13 +196,9 @@
 <h1 class="page-header">
 <a href="#treesearch-0-3-2" class="anchor"></a>TreeSearch 0.3.2<small> 2019-06-03 </small>
 </h1>
-<div id="enhancements-1" class="section level2">
-<h2 class="hasAnchor">
-<a href="#enhancements-1" class="anchor"></a>Enhancements</h2>
 <ul>
 <li>Improve text, content and build speed of vignettes</li>
 </ul>
-</div>
 </div>
     <div id="treesearch-0-3-1" class="section level1">
 <h1 class="page-header">
@@ -238,13 +253,9 @@
 <h1 class="page-header">
 <a href="#treesearch-0-2-2" class="anchor"></a>TreeSearch 0.2.2<small> 2019-01-02 </small>
 </h1>
-<div id="bug-fixes-2" class="section level2">
-<h2 class="hasAnchor">
-<a href="#bug-fixes-2" class="anchor"></a>Bug fixes</h2>
 <ul>
 <li>Correct vignette titles</li>
 </ul>
-</div>
 </div>
     <div id="treesearch-0-2-1" class="section level1">
 <h1 class="page-header">
@@ -260,18 +271,18 @@
 <code>Tree2Splits</code> lists the bipartition splits implied by a tree topology</li>
 </ul>
 </div>
-<div id="enhancements-2" class="section level2">
+<div id="enhancements-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#enhancements-2" class="anchor"></a>Enhancements</h2>
+<a href="#enhancements-1" class="anchor"></a>Enhancements</h2>
 <ul>
 <li>
 <code>SplitFrequency</code> now supports larger trees</li>
 <li>Can specify tip labels directly to <code>ReadTntTree</code>, to avoid reliance on generative file</li>
 </ul>
 </div>
-<div id="bug-fixes-3" class="section level2">
+<div id="bug-fixes-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bug-fixes-3" class="anchor"></a>Bug fixes</h2>
+<a href="#bug-fixes-2" class="anchor"></a>Bug fixes</h2>
 <ul>
 <li>Export missing functions</li>
 </ul>
@@ -305,23 +316,26 @@
 <code>AsBinary</code> supports 0</li>
 </ul>
 </div>
-<div id="enhancements-3" class="section level2">
+<div id="enhancements-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#enhancements-3" class="anchor"></a>Enhancements</h2>
+<a href="#enhancements-2" class="anchor"></a>Enhancements</h2>
 <ul>
-<li>[IW]RatchetConsensus renamed to [IW]MultiRatchet, giving a better description of the function’s purpose</li>
+<li>
+<code>[IW]RatchetConsensus()</code> renamed to <code>[IW]MultiRatchet()</code>, giving a better description of the function’s purpose</li>
 <li>Don’t warn about missing EOL when reading Nexus or TNT files</li>
 <li>Add new 12-colour colourblind-friendly palette</li>
-<li>FitchSteps now supports datasets with tips not found in tree</li>
-<li>Improve portability of function <code>ReadTntTree</code>
+<li>
+<code><a href="../reference/CharacterLength.html">FitchSteps()</a></code> now supports datasets with tips not found in tree</li>
+<li>Improve portability of function <code>ReadTntTree()</code>
 </li>
 </ul>
 </div>
-<div id="bug-fixes-4" class="section level2">
+<div id="bug-fixes-3" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bug-fixes-4" class="anchor"></a>Bug fixes</h2>
+<a href="#bug-fixes-3" class="anchor"></a>Bug fixes</h2>
 <ul>
-<li>[IW]MultiRatchet now considers trees identical even if they’ve been hit a different number of times</li>
+<li>
+<code>[IW]MultiRatchet()</code> now considers trees identical even if they’ve been hit a different number of times</li>
 </ul>
 </div>
 </div>
@@ -329,16 +343,12 @@
 <h1 class="page-header">
 <a href="#treesearch-0-1-2" class="anchor"></a>TreeSearch 0.1.2<small> 2018-03-19 </small>
 </h1>
-<div id="bug-fixes-5" class="section level2">
-<h2 class="hasAnchor">
-<a href="#bug-fixes-5" class="anchor"></a>Bug fixes</h2>
 <ul>
 <li>Update MorphyLib library to fix C warnings</li>
 <li>Remove non-ASCII characters from data</li>
 <li>Disable slow-building and problematic vignette</li>
 <li>Use local copy of citation style when building vignettes</li>
 </ul>
-</div>
 </div>
     <div id="treesearch-0-1-0" class="section level1">
 <h1 class="page-header">
@@ -352,17 +362,17 @@
 <li>Brewer palette in local data to allow easier colouring</li>
 </ul>
 </div>
-<div id="enhancements-4" class="section level2">
+<div id="enhancements-3" class="section level2">
 <h2 class="hasAnchor">
-<a href="#enhancements-4" class="anchor"></a>Enhancements</h2>
+<a href="#enhancements-3" class="anchor"></a>Enhancements</h2>
 <ul>
 <li>Allow additional parameters to be passed to <code>consensus</code> via <code>ConsensusWithout</code>
 </li>
 </ul>
 </div>
-<div id="bug-fixes-6" class="section level2">
+<div id="bug-fixes-4" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bug-fixes-6" class="anchor"></a>Bug fixes</h2>
+<a href="#bug-fixes-4" class="anchor"></a>Bug fixes</h2>
 <ul>
 <li>C11 compliance</li>
 <li>
@@ -381,7 +391,7 @@
 <h2 class="hasAnchor">
 <a href="#new-features-6" class="anchor"></a>New features</h2>
 <ul>
-<li>Added NJTree function as shortcut to generate Neighbour-Joining tree from a dataset</li>
+<li>Added <code>NJTree()</code> function as shortcut to generate Neighbour-Joining tree from a dataset</li>
 <li>Add functions to allow recovery of all trees one rearrangement from that input</li>
 </ul>
 </div>
@@ -389,14 +399,15 @@
 <h2 class="hasAnchor">
 <a href="#efficiency-gains" class="anchor"></a>Efficiency gains</h2>
 <ul>
-<li>Separate out NNISwap functions to allow more efficient rearrangement of edgeLists</li>
+<li>Separate out <code><a href="../reference/NNI.html">NNISwap()</a></code> functions to allow more efficient rearrangement of <code>edgeLists</code>
+</li>
 <li>[9002] Improve efficiency by using three-pass algorithm in place of four-pass precursor</li>
 <li>[9004] Bootstrap search improvements</li>
 </ul>
 </div>
-<div id="bug-fixes-7" class="section level2">
+<div id="bug-fixes-5" class="section level2">
 <h2 class="hasAnchor">
-<a href="#bug-fixes-7" class="anchor"></a>Bug fixes</h2>
+<a href="#bug-fixes-5" class="anchor"></a>Bug fixes</h2>
 <ul>
 <li>[9003] User now able to specify value of concavity constant (was overridden to k = 4)</li>
 <li>[9003] Bootstrap replicates now scored correctly (and without warning) under implied weights</li>
@@ -439,7 +450,7 @@
     <div id="tocnav">
       <h2>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-        <li><a href="#treesearch-0-3-2-9008-development">0.3.2.9008</a></li>
+        <li><a href="#treesearch-0-4-0">0.4.0</a></li>
         <li><a href="#treesearch-0-3-2">0.3.2</a></li>
         <li><a href="#treesearch-0-3-1">0.3.1</a></li>
         <li><a href="#treesearch-0-3-0">0.3.0</a></li>
@@ -464,13 +475,30 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
 
       </footer>
    </div>
 
   
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script>
+<script>
+  docsearch({
+    
+    
+    apiKey: '8422cbc6478f9d3278ad355b48435342',
+    indexName: 'treesearch',
+    inputSelector: 'input#search-input.form-control',
+    transformData: function(hits) {
+      return hits.map(function (hit) {
+        hit.url = updateHitURL(hit);
+        return hit;
+      });
+    }
+  });
+</script>
+
 
 
   </body>

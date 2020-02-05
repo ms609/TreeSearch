@@ -33,6 +33,12 @@
 <script src="../pkgdown.js"></script>
 
 
+<!-- docsearch -->
+<script src="../docsearch.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous" />
+<link href="../docsearch.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+
 
 
 <meta property="og:title" content="Nearest Neighbour Interchange (NNI) — NNI" />
@@ -41,7 +47,7 @@ Based on the corresponding phangorn function, but re-coded to improve speed." />
 <meta name="twitter:card" content="summary" />
 
 
-<meta name="robots" content="noindex">
+
 
 <!-- mathjax -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script>
@@ -52,6 +58,16 @@ Based on the corresponding phangorn function, but re-coded to improve speed." />
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-156666971-5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-156666971-5');
+</script>
 
 
   </head>
@@ -70,7 +86,7 @@ Based on the corresponding phangorn function, but re-coded to improve speed." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.3.2.9008</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -93,19 +109,10 @@ Based on the corresponding phangorn function, but re-coded to improve speed." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/filesystem-navigation.html">File system navigation in R</a>
-    </li>
-    <li>
       <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
     </li>
     <li>
       <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
-    </li>
-    <li>
-      <a href="../articles/load-data.html">Loading phylogenetic data into R</a>
-    </li>
-    <li>
-      <a href="../articles/load-trees.html">Loading phylogenetic trees into R</a>
     </li>
     <li>
       <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
@@ -127,6 +134,12 @@ Based on the corresponding phangorn function, but re-coded to improve speed." />
   </a>
 </li>
       </ul>
+      
+      <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
+        <div class="form-group">
+          <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
+        </div>
+      </form>
       
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -151,13 +164,16 @@ Based on the corresponding <code>phangorn</code> function, but re-coded to impro
 
     <pre class="usage"><span class='fu'>NNI</span>(<span class='no'>tree</span>, <span class='kw'>edgeToBreak</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)
 
-<span class='fu'>NNISwap</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='kw'>nTips</span> <span class='kw'>=</span> (<span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='no'>parent</span>)/<span class='fl'>2L</span>) + <span class='fl'>1L</span>,
-  <span class='kw'>edgeToBreak</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)
+<span class='fu'>NNISwap</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='kw'>nTips</span> <span class='kw'>=</span> (<span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='no'>parent</span>)/<span class='fl'>2L</span>) + <span class='fl'>1L</span>, <span class='kw'>edgeToBreak</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)
 
 <span class='fu'>RootedNNI</span>(<span class='no'>tree</span>, <span class='kw'>edgeToBreak</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)
 
-<span class='fu'>RootedNNISwap</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='kw'>nTips</span> <span class='kw'>=</span> (<span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='no'>parent</span>)/<span class='fl'>2L</span>) + <span class='fl'>1L</span>,
-  <span class='kw'>edgeToBreak</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+<span class='fu'>RootedNNISwap</span>(
+  <span class='no'>parent</span>,
+  <span class='no'>child</span>,
+  <span class='kw'>nTips</span> <span class='kw'>=</span> (<span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='no'>parent</span>)/<span class='fl'>2L</span>) + <span class='fl'>1L</span>,
+  <span class='kw'>edgeToBreak</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -214,21 +230,26 @@ a set of trees, with class <code>multiPhylo</code> (if <code>returnAll = TRUE</c
 Felsenstein J (2004).
 <em>Inferring phylogenies</em>.
 Sinauer Associates, Sunderland, Massachusetts.</p>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p>Other tree rearrangement functions: 
+<code><a href='SPR.html'>SPR</a>()</code>,
+<code><a href='TBR.html'>TBR</a>()</code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>tree</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>ape</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ape/man/rtree.html'>rtree</a></span>(<span class='fl'>20</span>, <span class='kw'>br</span><span class='kw'>=</span><span class='kw'>NULL</span>)
+    <pre class="examples"><div class='input'><span class='no'>tree</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>ape</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ape/man/rtree.html'>rtree</a></span>(<span class='fl'>20</span>, <span class='kw'>br</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)
 <span class='fu'>NNI</span>(<span class='no'>tree</span>)</div><div class='output co'>#&gt; 
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.</div><div class='input'><span class='fu'>NNI</span>(<span class='no'>tree</span>, <span class='kw'>edgeToBreak</span> <span class='kw'>=</span> -<span class='fl'>1</span>)</div><div class='output co'>#&gt; [[1]]
 #&gt; 
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -237,7 +258,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -246,7 +267,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -255,7 +276,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -264,7 +285,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -273,7 +294,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -282,7 +303,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -291,7 +312,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -300,7 +321,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -309,7 +330,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -318,7 +339,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -327,7 +348,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -336,7 +357,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -345,7 +366,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -354,7 +375,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -363,7 +384,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -372,7 +393,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -381,7 +402,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -390,7 +411,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -399,7 +420,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -408,7 +429,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -417,7 +438,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -426,7 +447,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -435,7 +456,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -444,7 +465,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -453,7 +474,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -462,7 +483,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -471,7 +492,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -480,7 +501,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -489,7 +510,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -498,7 +519,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -507,7 +528,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -516,7 +537,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -525,7 +546,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -534,7 +555,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; 
@@ -543,7 +564,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt; 	t3, t19, t12, t17, t9, t18, ...
+#&gt; 	t13, t20, t3, t19, t2, t7, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.
 #&gt; </div><div class='input'>
@@ -557,6 +578,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
       <li><a href="#details">Details</a></li>
       <li><a href="#functions">Functions</a></li>
       <li><a href="#references">References</a></li>
+      <li><a href="#see-also">See also</a></li>
       <li><a href="#examples">Examples</a></li>
     </ul>
 
@@ -572,13 +594,30 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
 
       </footer>
    </div>
 
   
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script>
+<script>
+  docsearch({
+    
+    
+    apiKey: '8422cbc6478f9d3278ad355b48435342',
+    indexName: 'treesearch',
+    inputSelector: 'input#search-input.form-control',
+    transformData: function(hits) {
+      return hits.map(function (hit) {
+        hit.url = updateHitURL(hit);
+        return hit;
+      });
+    }
+  });
+</script>
+
 
 
   </body>

@@ -10,18 +10,27 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
-<script src="pkgdown.js"></script><meta property="og:title" content="Phylogenetic Tree Search Using Custom Optimality Criteria">
-<meta property="og:description" content="Searches for phylogenetic trees that are optimal using a user-defined criterion. 
-  Implements Profile Parsimony (Faith and Trueman, 2001) &lt;doi:10.1080/10635150118627&gt;, and
-  Successive Approximations (Farris, 1969) &lt;doi:10.2307/2412182&gt;.
-  Handles inapplicable data using the algorithm of Brazeau, Guillerme and Smith
-  (2019) &lt;doi:10.1093/sysbio/syy083&gt;.">
+<script src="pkgdown.js"></script><!-- docsearch --><script src="docsearch.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous">
+<link href="docsearch.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><meta property="og:title" content="Phylogenetic Tree Search Using Custom Optimality Criteria">
+<meta property="og:description" content="Searches for phylogenetic trees that are optimal using a 
+  user-defined criterion. 
+  Handles inapplicable data using the algorithm of 
+  Brazeau, Guillerme and Smith (2019) &lt;doi:10.1093/sysbio/syy083&gt;.
+  Implements Profile Parsimony (Faith and Trueman, 2001) 
+  &lt;doi:10.1080/10635150118627&gt;, and Successive Approximations (Farris, 1969) 
+  &lt;doi:10.2307/2412182&gt;.">
 <meta name="twitter:card" content="summary">
-<meta name="robots" content="noindex">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<![endif]--><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-156666971-5"></script><script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-156666971-5');
+</script>
 </head>
 <body>
     <div class="container template-home">
@@ -36,7 +45,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.3.2.9008</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -59,19 +68,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/filesystem-navigation.html">File system navigation in R</a>
-    </li>
-    <li>
       <a href="articles/getting-started.html">Installing R and TreeSearch</a>
     </li>
     <li>
       <a href="articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
-    </li>
-    <li>
-      <a href="articles/load-data.html">Loading phylogenetic data into R</a>
-    </li>
-    <li>
-      <a href="articles/load-trees.html">Loading phylogenetic trees into R</a>
     </li>
     <li>
       <a href="articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
@@ -93,7 +93,13 @@
   </a>
 </li>
       </ul>
+<form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
+        <div class="form-group">
+          <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
 </div>
+      </form>
+      
+    </div>
 <!--/.nav-collapse -->
   </div>
 <!--/.container -->
@@ -110,8 +116,8 @@
 <a href="#treesearch" class="anchor"></a>TreeSearch</h1></div>
 
 <p>This package exists to allow parsimony-style tree searches in R.</p>
-<p>It extends the basic functionality available in phangorn, with a view to making tree search faster and more efficient, and allowing user-defined optimality criteria to be employed.</p>
-<p>Implied weighting and heuristic searches such as the Parsimony Ratchet are implemented (function: <code>Ratchet</code>).</p>
+<p>It extends the basic functionality available in <code>phangorn</code>, with a view to making tree search faster and more efficient, and allowing user-defined optimality criteria to be employed.</p>
+<p>Implied weighting and heuristic searches such as the Parsimony Ratchet (function: <a href=""><code>Ratchet</code></a>) are implemented.</p>
 </div>
 <div id="installation" class="section level1">
 <h1 class="hasAnchor">
@@ -147,14 +153,14 @@ library('TreeSearch')</a></code></pre>
 <a href="https://CRAN.R-project.org/package=TreeSearch/vignettes/profile-scores.html">Calculating concavity profiles</a> for Profile Parsimony</li>
 <li><p><a href="https://CRAN.R-project.org/package=TreeSearch/vignettes/profile.html">Tree search with profile parsimony</a></p></li>
 </ul>
+<p>Please note that the ‘TreeSearch’ project is released with a <a href="CODE_OF_CONDUCT.html">Contributor Code of Conduct</a>. By contributing to this project, you agree to abide by its terms.</p>
 </div>
 <div id="references" class="section level1">
 <h1 class="hasAnchor">
 <a href="#references" class="anchor"></a>References</h1>
-<p>Brazeau, M. D., Guillerme, T. and Smith, M. R. in press. An algorithm for morphological phylogenetic analysis with inapplicable data. Systematic Biology. <a href="doi:%5B10.1093/sysbio/syy083%5D(https://dx.doi.org/10.1093/sysbio/syy083)" class="uri">doi:[10.1093/sysbio/syy083](https://dx.doi.org/10.1093/sysbio/syy083)</a>.</p>
+<p>Brazeau, M. D., Guillerme, T. and Smith, M. R. 2019. An algorithm for morphological phylogenetic analysis with inapplicable data. Systematic Biology, 68(4), 619-631. <a href="doi:%5B10.1093/sysbio/syy083%5D(https://dx.doi.org/10.1093/sysbio/syy083)" class="uri">doi:[10.1093/sysbio/syy083](https://dx.doi.org/10.1093/sysbio/syy083)</a>.</p>
 <p>D. P. Faith, J. W. H. Trueman, Towards an inclusive philosophy for phylogenetic inference. Syst. Biol. 50, 331–350 (2001). <a href="doi:%5B10.1080/10635150118627%5D(https://dx.doi.org/10.1080/10635150118627)" class="uri">doi:[10.1080/10635150118627](https://dx.doi.org/10.1080/10635150118627)</a></p>
 <p>Farris, J. S. (1969). A successive approximations approach to character weighting. Systematic Biology, 18(4), 374–385. <a href="doi:%5B10.2307/2412182%5D(https://dx.doi.org/10.2307/2412182)" class="uri">doi:[10.2307/2412182](https://dx.doi.org/10.2307/2412182)</a></p>
-<p>Please note that the ‘TreeSearch’ project is released with a <a href="CODE_OF_CONDUCT.html">Contributor Code of Conduct</a>. By contributing to this project, you agree to abide by its terms.</p>
 </div>
 
   </div>
@@ -180,6 +186,7 @@ library('TreeSearch')</a></code></pre>
 <div class="community">
 <h2>Community</h2>
 <ul class="list-unstyled">
+<li><a href="CONTRIBUTING.html">Contributing guide</a></li>
 <li><a href="CODE_OF_CONDUCT.html">Code of conduct</a></li>
 </ul>
 </div>
@@ -218,14 +225,27 @@ library('TreeSearch')</a></code></pre>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
 
       </footer>
 </div>
 
   
-
-
-  </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script><script>
+  docsearch({
+    
+    
+    apiKey: '8422cbc6478f9d3278ad355b48435342',
+    indexName: 'treesearch',
+    inputSelector: 'input#search-input.form-control',
+    transformData: function(hits) {
+      return hits.map(function (hit) {
+        hit.url = updateHitURL(hit);
+        return hit;
+      });
+    }
+  });
+</script>
+</body>
 </html>

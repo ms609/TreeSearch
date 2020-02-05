@@ -1,12 +1,9 @@
 pandoc: '2.2'
-pkgdown: 1.4.0
+pkgdown: 1.4.1
 pkgdown_sha: ~
 articles:
-  filesystem-navigation: filesystem-navigation.html
   getting-started: getting-started.html
   inapplicable: inapplicable.html
-  load-data: load-data.html
-  load-trees: load-trees.html
   profile-scores: profile-scores.html
   profile: profile.html
 urls:

@@ -33,6 +33,12 @@
 <script src="../pkgdown.js"></script>
 
 
+<!-- docsearch -->
+<script src="../docsearch.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous" />
+<link href="../docsearch.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+
 
 
 <meta property="og:title" content="Rearrange edges of a phylogenetic tree — RearrangeEdges" />
@@ -42,7 +48,7 @@ within a tree search function." />
 <meta name="twitter:card" content="summary" />
 
 
-<meta name="robots" content="noindex">
+
 
 <!-- mathjax -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script>
@@ -53,6 +59,16 @@ within a tree search function." />
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-156666971-5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-156666971-5');
+</script>
 
 
   </head>
@@ -71,7 +87,7 @@ within a tree search function." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.3.2.9008</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -94,19 +110,10 @@ within a tree search function." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/filesystem-navigation.html">File system navigation in R</a>
-    </li>
-    <li>
       <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
     </li>
     <li>
       <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
-    </li>
-    <li>
-      <a href="../articles/load-data.html">Loading phylogenetic data into R</a>
-    </li>
-    <li>
-      <a href="../articles/load-trees.html">Loading phylogenetic trees into R</a>
     </li>
     <li>
       <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
@@ -128,6 +135,12 @@ within a tree search function." />
   </a>
 </li>
       </ul>
+      
+      <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
+        <div class="form-group">
+          <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
+        </div>
+      </form>
       
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -151,9 +164,18 @@ returning the score of the new tree.  Will generally be called from
 within a tree search function.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>RearrangeEdges</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='no'>dataset</span>, <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
-  <span class='no'>EdgeSwapper</span>, <span class='kw'>scoreToBeat</span> <span class='kw'>=</span> <span class='fu'>TreeScorer</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='no'>dataset</span>, <span class='no'>...</span>),
-  <span class='kw'>iter</span> <span class='kw'>=</span> <span class='st'>"?"</span>, <span class='kw'>hits</span> <span class='kw'>=</span> <span class='fl'>0L</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>RearrangeEdges</span>(
+  <span class='no'>parent</span>,
+  <span class='no'>child</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
+  <span class='no'>EdgeSwapper</span>,
+  <span class='kw'>scoreToBeat</span> <span class='kw'>=</span> <span class='fu'>TreeScorer</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='no'>dataset</span>, <span class='no'>...</span>),
+  <span class='kw'>iter</span> <span class='kw'>=</span> <span class='st'>"?"</span>,
+  <span class='kw'>hits</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='no'>...</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -203,8 +225,8 @@ more verbose feedback to the user.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>further arguments to pass to <code>TreeScorer</code> function
-(e.g. <code><a href='TipsAreNames.html'>TipsAreColumns</a></code>, <code>dataset</code>)</p></td>
+      <td><p>further arguments to pass to <code>TreeScorer()</code>
+(e.g. <code><a href='TipsAreNames.html'>TipsAreColumns</a></code>, <code>dataset</code>).</p></td>
     </tr>
     </table>
 
@@ -223,26 +245,26 @@ It also reports the number of times that this score was hit in the
 current function call.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>)
-<span class='no'>random.tree</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='RandomTree.html'>RandomTree</a></span>(<span class='no'>Lobo.phy</span>)
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>, <span class='kw'>package</span><span class='kw'>=</span><span class='st'>'TreeTools'</span>)
+<span class='no'>random.tree</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>TreeTools</span><span class='kw ns'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/RandomTree.html'>RandomTree</a></span>(<span class='no'>Lobo.phy</span>)
 <span class='no'>edge</span> <span class='kw'>&lt;-</span> <span class='no'>random.tree</span>$<span class='no'>edge</span>
 <span class='no'>parent</span> <span class='kw'>&lt;-</span> <span class='no'>edge</span>[, <span class='fl'>1</span>]
 <span class='no'>child</span> <span class='kw'>&lt;-</span> <span class='no'>edge</span>[, <span class='fl'>2</span>]
 <span class='no'>dataset</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a></span>(<span class='no'>Lobo.phy</span>)
 <span class='fu'>RearrangeEdges</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='no'>dataset</span>, <span class='kw'>EdgeSwapper</span><span class='kw'>=</span><span class='no'>RootedNNISwap</span>)</div><div class='output co'>#&gt; [[1]]
-#&gt;  [1] 49 50 51 51 50 52 53 53 54 54 55 55 52 56 57 57 58 59 59 58 60 61 61 60 62
-#&gt; [26] 62 56 63 64 64 63 65 65 66 66 49 67 68 69 70 70 71 71 69 72 72 73 73 74 74
-#&gt; [51] 68 75 75 76 76 67 77 78 79 79 80 81 81 82 82 80 83 83 84 84 85 86 86 85 87
-#&gt; [76] 87 78 88 89 89 88 90 90 77 91 92 92 93 93 94 94 91 95 95
+#&gt;  [1] 49 50 50 51 52 53 53 54 54 52 55 56 57 58 58 57 56 59 59 60 61 62 62 61 60
+#&gt; [26] 55 63 63 51 64 65 66 67 67 66 65 68 69 70 70 71 71 69 72 72 68 73 73 74 74
+#&gt; [51] 75 75 64 76 77 77 76 49 78 79 79 80 80 81 81 78 82 83 83 84 85 85 86 86 84
+#&gt; [76] 82 87 88 89 89 90 90 91 91 88 87 92 92 93 94 94 93 95 95
 #&gt; 
 #&gt; [[2]]
-#&gt;  [1] 50 51  2  1 52 53  6 54  5 55  4  3 56 57  7 58 59  9  8 60 61 11 10 62 13
-#&gt; [26] 12 63 64 15 14 65 18 66 17 16 67 68 69 70 19 71 21 20 72 25 73 22 74 24 23
-#&gt; [51] 75 26 76 28 27 77 78 79 38 80 81 29 82 31 30 83 37 84 32 85 86 33 34 87 36
-#&gt; [76] 35 88 89 40 39 90 42 41 91 92 43 93 46 94 45 44 95 48 47
+#&gt;  [1] 50  1 51 52 53  2 54  3  4 55 56 57 58  5  6  7 59  8 60 61 62  9 10 11 12
+#&gt; [26] 63 13 14 64 65 66 67 15 16 17 68 69 70 18 71 19 20 72 21 22 73 23 74 24 75
+#&gt; [51] 25 26 76 77 27 28 29 78 79 30 80 31 81 32 33 82 83 34 84 85 35 86 36 37 38
+#&gt; [76] 87 88 89 39 90 40 91 41 42 43 92 44 93 94 45 46 95 47 48
 #&gt; 
 #&gt; [[3]]
-#&gt; [1] 355
+#&gt; [1] 366
 #&gt; 
 #&gt; [[4]]
 #&gt; [1] 1
@@ -270,13 +292,30 @@ current function call.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
 
       </footer>
    </div>
 
   
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script>
+<script>
+  docsearch({
+    
+    
+    apiKey: '8422cbc6478f9d3278ad355b48435342',
+    indexName: 'treesearch',
+    inputSelector: 'input#search-input.form-control',
+    transformData: function(hits) {
+      return hits.map(function (hit) {
+        hit.url = updateHitURL(hit);
+        return hit;
+      });
+    }
+  });
+</script>
+
 
 
   </body>

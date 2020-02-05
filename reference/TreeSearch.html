@@ -33,6 +33,12 @@
 <script src="../pkgdown.js"></script>
 
 
+<!-- docsearch -->
+<script src="../docsearch.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous" />
+<link href="../docsearch.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+
 
 
 <meta property="og:title" content="Search for most parsimonious trees — IWTreeSearch" />
@@ -45,7 +51,7 @@ package documentation." />
 <meta name="twitter:card" content="summary" />
 
 
-<meta name="robots" content="noindex">
+
 
 <!-- mathjax -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script>
@@ -56,6 +62,16 @@ package documentation." />
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-156666971-5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-156666971-5');
+</script>
 
 
   </head>
@@ -74,7 +90,7 @@ package documentation." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.3.2.9008</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -97,19 +113,10 @@ package documentation." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/filesystem-navigation.html">File system navigation in R</a>
-    </li>
-    <li>
       <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
     </li>
     <li>
       <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
-    </li>
-    <li>
-      <a href="../articles/load-data.html">Loading phylogenetic data into R</a>
-    </li>
-    <li>
-      <a href="../articles/load-trees.html">Loading phylogenetic trees into R</a>
     </li>
     <li>
       <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
@@ -131,6 +138,12 @@ package documentation." />
   </a>
 </li>
       </ul>
+      
+      <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
+        <div class="form-group">
+          <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
+        </div>
+      </form>
       
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -157,24 +170,61 @@ configuring tree search, see the
 <a href='https://ms609.github.io/TreeSearch'>package documentation</a>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>IWTreeSearch</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>, <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedTBR</span>,
-  <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>maxHits</span> <span class='kw'>=</span> <span class='fl'>20</span>, <span class='kw'>forestSize</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='no'>...</span>)
+    <pre class="usage"><span class='fu'>IWTreeSearch</span>(
+  <span class='no'>tree</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedTBR</span>,
+  <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>100</span>,
+  <span class='kw'>maxHits</span> <span class='kw'>=</span> <span class='fl'>20</span>,
+  <span class='kw'>forestSize</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='no'>...</span>
+)
 
-<span class='fu'>EdgeListSearch</span>(<span class='no'>edgeList</span>, <span class='no'>dataset</span>, <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
-  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedTBRSwap</span>, <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>maxHits</span> <span class='kw'>=</span> <span class='fl'>20</span>,
-  <span class='kw'>bestScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>, <span class='kw'>forestSize</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='kw'>cluster</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='no'>...</span>)
+<span class='fu'>EdgeListSearch</span>(
+  <span class='no'>edgeList</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
+  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedTBRSwap</span>,
+  <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>100</span>,
+  <span class='kw'>maxHits</span> <span class='kw'>=</span> <span class='fl'>20</span>,
+  <span class='kw'>bestScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='kw'>forestSize</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
+  <span class='no'>...</span>
+)
 
-<span class='fu'>TreeSearch</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>, <span class='kw'>InitializeData</span> <span class='kw'>=</span> <span class='no'>PhyDat2Morphy</span>,
-  <span class='kw'>CleanUpData</span> <span class='kw'>=</span> <span class='no'>UnloadMorphy</span>, <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
-  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedTBRSwap</span>, <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>100L</span>, <span class='kw'>maxHits</span> <span class='kw'>=</span> <span class='fl'>20L</span>,
-  <span class='kw'>forestSize</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
-  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='no'>...</span>)
+<span class='fu'>TreeSearch</span>(
+  <span class='no'>tree</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>InitializeData</span> <span class='kw'>=</span> <span class='no'>PhyDat2Morphy</span>,
+  <span class='kw'>CleanUpData</span> <span class='kw'>=</span> <span class='no'>UnloadMorphy</span>,
+  <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
+  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedTBRSwap</span>,
+  <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>100L</span>,
+  <span class='kw'>maxHits</span> <span class='kw'>=</span> <span class='fl'>20L</span>,
+  <span class='kw'>forestSize</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
+  <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
+  <span class='no'>...</span>
+)
 
-<span class='fu'>ProfileTreeSearch</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>, <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedTBR</span>,
-  <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>maxHits</span> <span class='kw'>=</span> <span class='fl'>20</span>, <span class='kw'>forestSize</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>precision</span> <span class='kw'>=</span> <span class='fl'>40000</span>, <span class='no'>...</span>)</pre>
+<span class='fu'>ProfileTreeSearch</span>(
+  <span class='no'>tree</span>,
+  <span class='no'>dataset</span>,
+  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedTBR</span>,
+  <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>100</span>,
+  <span class='kw'>maxHits</span> <span class='kw'>=</span> <span class='fl'>20</span>,
+  <span class='kw'>forestSize</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>precision</span> <span class='kw'>=</span> <span class='fl'>40000</span>,
+  <span class='no'>...</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -185,7 +235,8 @@ configuring tree search, see the
     </tr>
     <tr>
       <th>dataset</th>
-      <td><p>Data in format required by <code>InitializeData</code>.</p></td>
+      <td><p>A phylogenetic data matrix of class <code><a href='https://rdrr.io/pkg/phangorn/man/phyDat.html'>phyDat</a></code>,
+whose names correspond to the labels of any accompanying tree.</p></td>
     </tr>
     <tr>
       <th>concavity</th>
@@ -218,8 +269,8 @@ more verbose feedback to the user.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>further arguments to pass to <code>TreeScorer</code> function
-(e.g. <code><a href='TipsAreNames.html'>TipsAreColumns</a></code>, <code>dataset</code>)</p></td>
+      <td><p>further arguments to pass to <code>TreeScorer()</code>
+(e.g. <code><a href='TipsAreNames.html'>TipsAreColumns</a></code>, <code>dataset</code>).</p></td>
     </tr>
     <tr>
       <th>edgeList</th>
@@ -258,17 +309,12 @@ Will be overridden if a passed function has an attribute
       <th>InitializeData</th>
       <td><p>Function that sets up data object to prepare for tree search.
 The function will be passed the <kbd>dataset</kbd> parameter.
-Its return value will be passed to TreeScorer and CleanUpData.</p></td>
+Its return value will be passed to <code>TreeScorer()</code> and <code>CleanUpData()</code>.</p></td>
     </tr>
     <tr>
       <th>CleanUpData</th>
       <td><p>Function to destroy data object on function exit.
 The function will be passed the value returned by <kbd>InitializeData</kbd>.</p></td>
-    </tr>
-    <tr>
-      <th>dataset</th>
-      <td><p>A phylogenetic data matrix of class <code><a href='https://rdrr.io/pkg/phangorn/man/phyDat.html'>phyDat</a></code>,
-whose names correspond to the labels of any accompanying tree.</p></td>
     </tr>
     </table>
 
@@ -307,8 +353,8 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 </div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>)
-<span class='no'>njtree</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='NJTree.html'>NJTree</a></span>(<span class='no'>Lobo.phy</span>)
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>, <span class='kw'>package</span><span class='kw'>=</span><span class='st'>'TreeTools'</span>)
+<span class='no'>njtree</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>TreeTools</span><span class='kw ns'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span>(<span class='no'>Lobo.phy</span>)
 
 <span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
 <span class='fu'>TreeSearch</span>(<span class='no'>njtree</span>, <span class='no'>Lobo.phy</span>, <span class='kw'>maxIter</span><span class='kw'>=</span><span class='fl'>20</span>, <span class='kw'>EdgeSwapper</span><span class='kw'>=</span><span class='no'>NNISwap</span>)
@@ -339,13 +385,30 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
 
       </footer>
    </div>
 
   
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script>
+<script>
+  docsearch({
+    
+    
+    apiKey: '8422cbc6478f9d3278ad355b48435342',
+    indexName: 'treesearch',
+    inputSelector: 'input#search-input.form-control',
+    transformData: function(hits) {
+      return hits.map(function (hit) {
+        hit.url = updateHitURL(hit);
+        return hit;
+      });
+    }
+  });
+</script>
+
 
 
   </body>

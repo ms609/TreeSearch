@@ -33,6 +33,12 @@
 <script src="../pkgdown.js"></script>
 
 
+<!-- docsearch -->
+<script src="../docsearch.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous" />
+<link href="../docsearch.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+
 
 
 <meta property="og:title" content="Initial update of tip values following uppass reconstruction. — mpl_update_tip" />
@@ -49,7 +55,7 @@ parameters have been set before use." />
 <meta name="twitter:card" content="summary" />
 
 
-<meta name="robots" content="noindex">
+
 
 <!-- mathjax -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script>
@@ -60,6 +66,16 @@ parameters have been set before use." />
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-156666971-5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-156666971-5');
+</script>
 
 
   </head>
@@ -78,7 +94,7 @@ parameters have been set before use." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.3.2.9008</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
       </span>
     </div>
 
@@ -101,19 +117,10 @@ parameters have been set before use." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/filesystem-navigation.html">File system navigation in R</a>
-    </li>
-    <li>
       <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
     </li>
     <li>
       <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
-    </li>
-    <li>
-      <a href="../articles/load-data.html">Loading phylogenetic data into R</a>
-    </li>
-    <li>
-      <a href="../articles/load-trees.html">Loading phylogenetic trees into R</a>
     </li>
     <li>
       <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
@@ -135,6 +142,12 @@ parameters have been set before use." />
   </a>
 </li>
       </ul>
+      
+      <form class="navbar-form navbar-right hidden-xs hidden-sm" role="search">
+        <div class="form-group">
+          <input type="search" class="form-control" name="search-input" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off">
+        </div>
+      </form>
       
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -189,7 +202,36 @@ parameters have been set before use.</p>
     <p>The integral parsimony length (right now)</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p>A null value (for now).</p></div>
+    <div class='dont-index'><p>A null value (for now).</p>
+<p>Other Morphy API functions: 
+<code><a href='MorphyErrorCheck.html'>MorphyErrorCheck</a>()</code>,
+<code><a href='MorphyWeights.html'>MorphyWeights</a>()</code>,
+<code><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a>()</code>,
+<code><a href='SetMorphyWeights.html'>SetMorphyWeights</a>()</code>,
+<code><a href='SingleCharMorphy.html'>SingleCharMorphy</a>()</code>,
+<code><a href='UnloadMorphy.html'>UnloadMorphy</a>()</code>,
+<code><a href='mpl_apply_tipdata.html'>mpl_apply_tipdata</a>()</code>,
+<code><a href='mpl_attach_rawdata.html'>mpl_attach_rawdata</a>()</code>,
+<code><a href='mpl_attach_symbols.html'>mpl_attach_symbols</a>()</code>,
+<code><a href='mpl_delete_Morphy.html'>mpl_delete_Morphy</a>()</code>,
+<code><a href='mpl_delete_rawdata.html'>mpl_delete_rawdata</a>()</code>,
+<code><a href='mpl_first_down_recon.html'>mpl_first_down_recon</a>()</code>,
+<code><a href='mpl_first_up_recon.html'>mpl_first_up_recon</a>()</code>,
+<code><a href='mpl_get_charac_weight.html'>mpl_get_charac_weight</a>()</code>,
+<code><a href='mpl_get_num_charac.html'>mpl_get_num_charac</a>()</code>,
+<code><a href='mpl_get_num_internal_nodes.html'>mpl_get_num_internal_nodes</a>()</code>,
+<code><a href='mpl_get_numtaxa.html'>mpl_get_numtaxa</a>()</code>,
+<code><a href='mpl_get_symbols.html'>mpl_get_symbols</a>()</code>,
+<code><a href='mpl_init_Morphy.html'>mpl_init_Morphy</a>()</code>,
+<code><a href='mpl_new_Morphy.html'>mpl_new_Morphy</a>()</code>,
+<code><a href='mpl_second_down_recon.html'>mpl_second_down_recon</a>()</code>,
+<code><a href='mpl_second_up_recon.html'>mpl_second_up_recon</a>()</code>,
+<code><a href='mpl_set_charac_weight.html'>mpl_set_charac_weight</a>()</code>,
+<code><a href='mpl_set_num_internal_nodes.html'>mpl_set_num_internal_nodes</a>()</code>,
+<code><a href='mpl_set_parsim_t.html'>mpl_set_parsim_t</a>()</code>,
+<code><a href='mpl_translate_error.html'>mpl_translate_error</a>()</code>,
+<code><a href='mpl_update_lower_root.html'>mpl_update_lower_root</a>()</code>,
+<code><a href='summary.morphyPtr.html'>summary.morphyPtr</a>()</code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -212,13 +254,30 @@ parameters have been set before use.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
 
       </footer>
    </div>
 
   
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.js" integrity="sha256-GKvGqXDznoRYHCwKXGnuchvKSwmx9SRMrZOTh2g4Sb0=" crossorigin="anonymous"></script>
+<script>
+  docsearch({
+    
+    
+    apiKey: '8422cbc6478f9d3278ad355b48435342',
+    indexName: 'treesearch',
+    inputSelector: 'input#search-input.form-control',
+    transformData: function(hits) {
+      return hits.map(function (hit) {
+        hit.url = updateHitURL(hit);
+        return hit;
+      });
+    }
+  });
+</script>
+
 
 
   </body>
