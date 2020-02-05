@@ -56,7 +56,7 @@
 #' \pkg{phangorn} package.
 #' 
 #' @keywords tree
-#' @importFrom TreeTools MatrixToList RenumberEdges RenumberTips
+#' @importFrom TreeTools RenumberEdges RenumberTips
 #' @export
 Ratchet <- function (tree, dataset, 
                      InitializeData = PhyDat2Morphy,
@@ -78,8 +78,8 @@ Ratchet <- function (tree, dataset,
   # initialize tree and data
   if (dim(tree$edge)[1] != 2 * tree$Nnode) stop("tree must be bifurcating; try rooting with ape::root")
   tree <- RenumberTips(tree, names(dataset))
-  edgeList <- MatrixToList(tree$edge)
-  edgeList <- RenumberEdges(edgeList[[1]], edgeList[[2]])
+  edgeList <- tree$edge
+  edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 
   initializedData <- InitializeData(dataset)
   on.exit(initializedData <- CleanUpData(initializedData))

@@ -6,7 +6,7 @@
 #' @param jackIter Integer specifying number of jackknife iterations to conduct
 #' @return a list of trees recovered after jackknife iterations
 #' @author Martin R. Smith
-#' @importFrom TreeTools MatrixToList RenumberEdges RenumberTips
+#' @importFrom TreeTools RenumberEdges RenumberTips
 #' @export
 Jackknife <- function (tree, dataset, resampleFreq = 2/3,
                        InitializeData = PhyDat2Morphy,
@@ -19,8 +19,8 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
   # initialize tree and data
   if (dim(tree$edge)[1] != 2 * tree$Nnode) stop("tree must be bifurcating; try rooting with ape::root")
   tree <- RenumberTips(tree, names(dataset))
-  edgeList <- MatrixToList(tree$edge)
-  edgeList <- RenumberEdges(edgeList[[1]], edgeList[[2]])
+  edgeList <- tree$edge
+  edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
   
   morphyObj <- InitializeData(dataset)
   on.exit(morphyObj <- CleanUpData(morphyObj))
