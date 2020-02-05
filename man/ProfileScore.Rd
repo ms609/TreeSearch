@@ -62,7 +62,7 @@ Calculate a tree's Profile Parsimony score with a given dataset, after Faith and
 \item \code{ProfileInitMorphy}: Initialize dataset by adding morphyObjs.
 
 \item \code{ProfileDestroyMorphy}: Free memory from morphyObjs initialized by
-\kbd{ProfileScoreMorphy}.
+\code{ProfileScoreMorphy()}.
 }}
 
 \examples{

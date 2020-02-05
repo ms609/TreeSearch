@@ -41,13 +41,13 @@ It is also possible to specify bespoke optimality criteria.
 
 # Documentation
 
-- [Package functions](https://CRAN.R-project.org/package=TreeSearch/TreeSearch.pdf) reference manual
-- [Getting started](https://CRAN.R-project.org/package=TreeSearch/vignettes/getting-started.html)
-- [Loading phylogenetic data into R](https://CRAN.R-project.org/package=TreeSearch/vignettes/load-data.html)
-- [Parsimony search with inapplicable data](https://CRAN.R-project.org/package=TreeSearch/vignettes/inapplicable.html)
+- [Package functions](https://ms609.github.io/TreeSearch/reference) reference manual
+- [Getting started](https://ms609.github.io/TreeSearch/articles/getting-started.html)
+- [Loading phylogenetic data into R](https://ms609.github.io/TreeTools/articles/load-data.html)
+- [Parsimony search with inapplicable data](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
 
-- [Calculating concavity profiles](https://CRAN.R-project.org/package=TreeSearch/vignettes/profile-scores.html) for Profile Parsimony
-- [Tree search with profile parsimony](https://CRAN.R-project.org/package=TreeSearch/vignettes/profile.html)
+- [Calculating concavity profiles](https://ms609.github.io/TreeSearch/articles/profile-scores.html) for Profile Parsimony
+- [Tree search with profile parsimony](https://ms609.github.io/TreeSearch/articles/profile.html)
 
 Please note that the 'TreeSearch' project is released with a
 [Contributor Code of Conduct](CODE_OF_CONDUCT.md).

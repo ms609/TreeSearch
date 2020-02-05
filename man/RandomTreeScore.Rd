@@ -9,7 +9,8 @@ RandomTreeScore(nTip, morphyObj)
 \arguments{
 \item{nTip}{number of tips (minimum 3)}
 
-\item{morphyObj}{A morphy object, perhaps created with \code{\link{PhyDat2Morphy}}.}
+\item{morphyObj}{Object of class \code{morphy}, perhaps created with
+\code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}}.}
 }
 \value{
 the parsimony score of a random tree, for the given Morphy object.

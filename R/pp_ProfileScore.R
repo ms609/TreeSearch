@@ -74,13 +74,14 @@ ProfileInitMorphy <- function (dataset) {
 }
 
 #' @describeIn ProfileScore Free memory from morphyObjs initialized by
-#' \kbd{ProfileScoreMorphy}.
+#' `ProfileScoreMorphy()`.
 #' @export
 ProfileDestroyMorphy <- function (dataset) {
   vapply(attr(dataset, 'morphyObjs'), UnloadMorphy, integer(1))
 }
 
-#' @describeIn IWScore Free memory from morphyObjs initialized by \kbd{IWScoreMorphy}.
+#' @describeIn IWScore Free memory from morphyObjs initialized by
+#' `IWScoreMorphy()`.
 #' @export
 IWDestroyMorphy <- ProfileDestroyMorphy
 

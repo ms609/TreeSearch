@@ -42,7 +42,12 @@
 #' njtree <- NJTree(Lobo.phy)
 #' # Increase value of ratchIter and searchHits to do a proper search
 #' quickResult <- Ratchet(njtree, Lobo.phy, ratchIter=2, searchHits=3)
+#' 
+#' # Plot result (legibly)
+#' oldPar <- par(mar = rep(0, 4), cex = 0.75)
 #' plot(quickResult)
+#' par(oldPar)
+#' 
 #' # IW search is currently much slower:
 #' quickIWResult <- IWRatchet(quickResult, Lobo.phy, concavity=2.5,
 #'                            ratchIter=1, searchIter = 25, searchHits=2,
@@ -50,9 +55,10 @@
 #'  
 #' @author Martin R. Smith
 #' 
-#' @seealso \code{\link{TreeSearch}}
-##### @seealso \code{\link{Sectorial}}
-#' @seealso Adapted from \code{\link[phangorn:parsimony]{pratchet}} in the 
+#' @seealso
+#' - [`TreeSearch()`]
+#' 
+#' - Adapted from \code{\link[phangorn:parsimony]{pratchet}} in the 
 #' \pkg{phangorn} package.
 #' 
 #' @keywords  tree 

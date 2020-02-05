@@ -8,7 +8,7 @@
 #' @template stopAtPeakParam
 #' @template stopAtPlateauParam
 #' @template verbosityParam
-#' @param \dots further parameters to send to \code{TreeScorer}
+#' @param \dots further parameters to send to `TreeScorer()`
 #'
 #' @references 
 #' - \insertRef{SmithTern}{TreeSearch}

@@ -22,8 +22,7 @@ The function will be passed three parameters, corresponding to the
 \code{parent} and \code{child} entries of a tree's edge list, and a dataset.}
 
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
-and returns a list with modified vectors; for example
-\code{\link{SPRSwap}}.}
+and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
 
 \item{scoreToBeat}{Double giving score of input tree.}
 

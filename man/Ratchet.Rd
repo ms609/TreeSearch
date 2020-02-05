@@ -71,19 +71,18 @@ IWRatchetConsensus(tree, dataset, ratchHits = 10, concavity = 4,
 \item{resampleFreq}{Double between 0 and 1 stating proportion of characters to resample}
 
 \item{InitializeData}{Function that sets up data object to prepare for tree search.
-The function will be passed the \kbd{dataset} parameter.
-Its return value will be passed to TreeScorer and CleanUpData.}
+The function will be passed the \code{dataset} parameter.
+Its return value will be passed to \code{TreeScorer()} and \code{CleanUpData()}.}
 
 \item{CleanUpData}{Function to destroy data object on function exit.
-The function will be passed the value returned by \kbd{InitializeData}.}
+The function will be passed the value returned by \code{InitializeData()}.}
 
 \item{TreeScorer}{function to score a given tree.
 The function will be passed three parameters, corresponding to the
 \code{parent} and \code{child} entries of a tree's edge list, and a dataset.}
 
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
-and returns a list with modified vectors; for example
-\code{\link{SPRSwap}}.}
+and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
 
 \item{jackIter}{Integer specifying number of jackknife iterations to conduct}
 
@@ -120,17 +119,16 @@ within \code{Bootstrapper}.}
 \item{stopAtPeak}{Logical specifying whether to terminate search once a subsequent
 iteration recovers a sub-optimal score. Useful with methods that
 return all trees one rearrangement from the current tree, such
-as \code{\link{AllTBR}}.  Will be overridden if a passed function
+as \code{\link[=AllTBR]{AllTBR()}}.  Will be overridden if a passed function
 has an attribute \code{stopAtPeak} set by
 \code{attr(FunctionName, 'stopAtPeak') <- TRUE}.}
 
 \item{stopAtPlateau}{Integer. If > 0, tree search will terminate if the score
 has not improved after \code{stopAtPlateau} iterations.
-Useful with methods that return all trees one
-rearrangement from the current tree, such as
-\code{\link{AllTBR}}.
-Will be overridden if a passed function has an attribute
-\code{stopAtPlateau} set by \code{attr(FunctionName, 'stopAtPlateau') <- TRUE}.}
+Useful with methods that return all trees one rearrangement from the current
+tree, such as \code{\link[=AllTBR]{AllTBR()}}.
+Will be overridden if a passed function has an attribute \code{stopAtPlateau} set
+by \code{attr(FunctionName, 'stopAtPlateau') <- TRUE}.}
 
 \item{ratchIter}{stop when this many ratchet iterations have been performed.}
 
@@ -183,7 +181,12 @@ data('Lobo')
 njtree <- NJTree(Lobo.phy)
 # Increase value of ratchIter and searchHits to do a proper search
 quickResult <- Ratchet(njtree, Lobo.phy, ratchIter=2, searchHits=3)
+
+# Plot result (legibly)
+oldPar <- par(mar = rep(0, 4), cex = 0.75)
 plot(quickResult)
+par(oldPar)
+
 # IW search is currently much slower:
 quickIWResult <- IWRatchet(quickResult, Lobo.phy, concavity=2.5,
                            ratchIter=1, searchIter = 25, searchHits=2,

@@ -18,7 +18,7 @@
 #' @template EdgeSwapperParam
 ## @param  minScore trees longer than \code{minScore}, probably the score of the best previously known tree,
 ##     will be discarded;
-## @param returnSingle returns all trees if \kbd{FALSE} or a randomly selected tree if \kbd{TRUE}.
+## @param returnSingle returns all trees if `FALSE` or a randomly selected tree if `TRUE`.
 #' @param iter iteration number of calling function, for reporting to user only.
 #' @template verbosityParam
 #' @template treeScorerDots

@@ -11,7 +11,7 @@ IWTreeSearch(tree, dataset, concavity = 10, EdgeSwapper = RootedTBR,
   maxIter = 100, maxHits = 20, forestSize = 1, verbosity = 1, ...)
 
 EdgeListSearch(edgeList, dataset, TreeScorer = MorphyLength,
-  EdgeSwapper = RootedTBRSwap, maxIter = 100L, maxHits = 20L,
+  EdgeSwapper = RootedTBRSwap, maxIter = 100, maxHits = 20,
   bestScore = NULL, stopAtScore = NULL, stopAtPeak = FALSE,
   stopAtPlateau = 0L, forestSize = 1L, verbosity = 1L, ...)
 
@@ -35,8 +35,7 @@ in implied weighting. Defaults to 10; TNT sets a default of 3, but this
 is too low in some circumstances (Smith, 2019).}
 
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
-and returns a list with modified vectors; for example
-\code{\link{SPRSwap}}.}
+and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
 
 \item{maxIter}{the maximum number of iterations to perform before abandoning the search.}
 
@@ -63,24 +62,23 @@ The function will be passed three parameters, corresponding to the
 \item{stopAtPeak}{Logical specifying whether to terminate search once a subsequent
 iteration recovers a sub-optimal score. Useful with methods that
 return all trees one rearrangement from the current tree, such
-as \code{\link{AllTBR}}.  Will be overridden if a passed function
+as \code{\link[=AllTBR]{AllTBR()}}.  Will be overridden if a passed function
 has an attribute \code{stopAtPeak} set by
 \code{attr(FunctionName, 'stopAtPeak') <- TRUE}.}
 
 \item{stopAtPlateau}{Integer. If > 0, tree search will terminate if the score
 has not improved after \code{stopAtPlateau} iterations.
-Useful with methods that return all trees one
-rearrangement from the current tree, such as
-\code{\link{AllTBR}}.
-Will be overridden if a passed function has an attribute
-\code{stopAtPlateau} set by \code{attr(FunctionName, 'stopAtPlateau') <- TRUE}.}
+Useful with methods that return all trees one rearrangement from the current
+tree, such as \code{\link[=AllTBR]{AllTBR()}}.
+Will be overridden if a passed function has an attribute \code{stopAtPlateau} set
+by \code{attr(FunctionName, 'stopAtPlateau') <- TRUE}.}
 
 \item{InitializeData}{Function that sets up data object to prepare for tree search.
-The function will be passed the \kbd{dataset} parameter.
-Its return value will be passed to TreeScorer and CleanUpData.}
+The function will be passed the \code{dataset} parameter.
+Its return value will be passed to \code{TreeScorer()} and \code{CleanUpData()}.}
 
 \item{CleanUpData}{Function to destroy data object on function exit.
-The function will be passed the value returned by \kbd{InitializeData}.}
+The function will be passed the value returned by \code{InitializeData()}.}
 
 \item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
 whose names correspond to the labels of any accompanying tree.}

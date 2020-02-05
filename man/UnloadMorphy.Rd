@@ -7,7 +7,8 @@
 UnloadMorphy(morphyObj)
 }
 \arguments{
-\item{morphyObj}{A morphy object, perhaps created with \code{\link{PhyDat2Morphy}}.}
+\item{morphyObj}{Object of class \code{morphy}, perhaps created with
+\code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}}.}
 }
 \value{
 Morphy error code, decipherable using \code{\link{mpl_translate_error}}

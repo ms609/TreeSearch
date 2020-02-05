@@ -21,7 +21,8 @@ C_MorphyLength(parentOf, leftChild, rightChild, morphyObj)
 \code{\link{RenumberTips}}, i.e. corresponding to the sequence of taxa
 in the corresponding Morphy object.}
 
-\item{morphyObj}{A morphy object, perhaps created with \code{\link{PhyDat2Morphy}}.}
+\item{morphyObj}{Object of class \code{morphy}, perhaps created with
+\code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}}.}
 
 \item{parent}{the first column of the edge matrix of a tree of class
 \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}}
@@ -32,9 +33,9 @@ in the corresponding Morphy object.}
 \item{parentOf}{integer vector containing, for each tip and each node in sequential order,
 the integer index its parent node.  The root node should be its own parent.}
 
-\item{leftChild}{integer vector containing, for each node, starting at the root and proceeding
-in sequential order, the integer corresponding to its
-left child.  Tip numbering begins at 0; the root node is numbered \kbd{nTip}.}
+\item{leftChild}{integer vector containing, for each node, starting at the
+root and proceeding in sequential order, the integer corresponding to its
+left child.  Tip numbering begins at 0; the root node is numbered \code{nTip}.}
 
 \item{rightChild}{integer vector containing, for each node, the index
 of its right child.}

@@ -10,7 +10,8 @@ LogisticPoints(x, fittedModel)
 \arguments{
 \item{x}{an integer vector giving x co-ordinates.}
 
-\item{fittedModel}{a fitted model, perhaps generated using \kbd{nls(cumP ~ SSlogis(nSteps, Asym, xmid, scal))}.}
+\item{fittedModel}{a fitted model, perhaps generated using
+\code{nls(cumP ~ SSlogis(nSteps, Asym, xmid, scal))}.}
 }
 \value{
 values of y co-ordinates corresponding to the x co-ordinates provided

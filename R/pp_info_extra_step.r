@@ -194,7 +194,8 @@ WithOneExtraStep <- function (splits) {
 #' Extract points from a fitted model
 #'
 #' @param x an integer vector giving x co-ordinates.
-#' @param fittedModel a fitted model, perhaps generated using \kbd{nls(cumP ~ SSlogis(nSteps, Asym, xmid, scal))}.
+#' @param fittedModel a fitted model, perhaps generated using 
+#' `nls(cumP ~ SSlogis(nSteps, Asym, xmid, scal))`.
 #'
 #' @return values of y co-ordinates corresponding to the x co-ordinates provided
 #' @author Martin R. Smith
