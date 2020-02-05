@@ -1,14 +1,15 @@
 # TreeSearch 0.4.0
 
 ## New features
- - `PhyDatToMatrix`, complementing `MatrixToPhyDat`
+ - `PhyDatToMatrix()`, complementing `MatrixToPhyDat()`
  - Documentation with `pkgdown`
+ - `JackLabels()` helper function
  
 ## Changes
  - Move tree distance measures to new package `TreeDist`
  - Move tree utility functions to new package `TreeTools`
- - Rename functions `MinimumSteps`→`MinimumLength` and 
-   `FitchSteps`→`CharacterLength`
+ - Rename functions `MinimumSteps()`→`MinimumLength()` and 
+   `FitchSteps()`→`CharacterLength()`
 
 ## Enhancements
  - Improve speed of tests (by increasing probability of false positives)
