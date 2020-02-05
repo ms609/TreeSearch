@@ -1,4 +1,5 @@
-language: R
+language: r
+os: linux
 cache: packages
 warnings_are_errors: true
 r_check_args: --as-cran --no-manual # Workaround error compiling PDF manual
@@ -31,6 +32,7 @@ jobs:
       deploy:
         provider: script
         script: Rscript -e 'pkgdown::deploy_site_github()'
+        cleanup: false
         skip_cleanup: true
         local_dir: "docs"
         keep-history: true
