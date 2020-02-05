@@ -162,7 +162,7 @@ Ratchet <- function (tree, dataset,
     }
     if (verbosity > 1L) {
       message("* Best score after ", i, "/", ratchIter, 
-              " ratchet iterations: ", bestScore, " (hit ", 
+              " ratchet iterations: ", signif(bestScore), " (hit ", 
               iterationsWithBestScore, "/", ratchHits, ")\n")
     }
     if ((!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) 
