@@ -41,7 +41,8 @@ NNI <- function (tree, edgeToBreak=NULL) {
     # Return:
     newTrees
   } else {
-    tree$edge <- ListToMatrix(NNISwap(parent, edge[, 2], edgeToBreak=edgeToBreak))
+    newEdge <- NNISwap(parent, edge[, 2], edgeToBreak=edgeToBreak)
+    tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
     
     # Return:
     tree
@@ -138,7 +139,8 @@ RootedNNI <- function (tree, edgeToBreak=NULL) {
     # Return:
     newTrees
   } else {
-    tree$edge <- ListToMatrix(RootedNNISwap(edge[, 1], edge[, 2], edgeToBreak=edgeToBreak))
+    newEdge <- RootedNNISwap(edge[, 1], edge[, 2], edgeToBreak=edgeToBreak)
+    tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
     
     # Return:
     tree

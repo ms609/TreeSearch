@@ -63,8 +63,9 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
   
   edge <- tree$edge  
   StopUnlessBifurcating(edge[, 1])
-  tree$edge <- ListToMatrix(TBRSwap(edge[, 1], edge[, 2], edgeToBreak=edgeToBreak, 
-                                    mergeEdges=mergeEdges))
+  newEdge <- TBRSwap(edge[, 1], edge[, 2], edgeToBreak = edgeToBreak,
+                     mergeEdges = mergeEdges)
+  tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
   tree
 }
 
@@ -281,8 +282,9 @@ attr(AllTBR, 'stopAtPeak') <- TRUE
 RootedTBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
   if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') tree <- Preorder(tree)
   edge   <- tree$edge
-  tree$edge <- ListToMatrix(RootedTBRSwap(edge[, 1], edge[, 2], 
-                            edgeToBreak=edgeToBreak, mergeEdges=mergeEdges))
+  edgeList <- RootedTBRSwap(edge[, 1], edge[, 2], 
+                            edgeToBreak=edgeToBreak, mergeEdges=mergeEdges)
+  tree$edge <- cbind(edgeList[[1]], edgeList[[2]])
   tree
 }
 

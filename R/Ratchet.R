@@ -122,10 +122,6 @@ Ratchet <- function (tree, dataset,
                               stopAtPlateau=stopAtPlateau, ...)
     candScore <- 1e+08
     
-    # debugTree <- tree
-    # debugTree$edge <- ListToMatrix(candidate)
-    # plot(debugTree)
-    
     if (verbosity > 2L) message(" - Rearranging from new candidate tree:")
     for (EdgeSwapper in swappers) {
       at <- attributes(EdgeSwapper)
@@ -191,7 +187,7 @@ Ratchet <- function (tree, dataset,
     if (length(forest) > 1) {
       forest <- structure(lapply(forest, function (phy) {
         x <- tree
-        x$edge <- ListToMatrix(phy)
+        x$edge <- cbind(phy[[1]], phy[[2]])
         attr(x, 'score') <- phy[[3]]
         # Return to lapply: 
         x}), class = 'multiPhylo')
@@ -202,8 +198,9 @@ Ratchet <- function (tree, dataset,
       uniqueScores <- vapply(ret, attr, double(1), 'score')
     } else if (length(forest) == 1) {
       ret <- tree
-      ret$edge <- ListToMatrix(forest[[1]])
-      uniqueScores <- forest[[1]][[3]]
+      newEdge <- forest[[1]]
+      ret$edge <- cbind(newEdge[[1]], newEdge[[2]])
+      uniqueScores <- newEdge[[3]]
     } else {
       stop("\nNo trees!? Is suboptimal set to a sensible (positive) value?")
     }
@@ -216,7 +213,7 @@ Ratchet <- function (tree, dataset,
     # Return:
     ret
   } else {
-    tree$edge <- ListToMatrix(edgeList)
+    tree$edge <- cbind(edgeList[[1]], edgeList[[2]])
     attr(tree, 'score') <- bestScore
     # Return:
     tree  

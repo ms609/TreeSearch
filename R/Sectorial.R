@@ -248,7 +248,7 @@
 ######                             verbosity = verbosity - 1L)
 ######  
 ######  if (edgeList[[3]] <= bestScore) {
-######    sect$edge <- ListToMatrix(edgeList)
+######    sect$edge <- cbind(edgeList[[1]], edgeList[[2]])
 ######    attr(sect, 'score') <- edgeList[[3]]
 ######    attr(sect, 'hits') <- edgeList[[4]]
 ######    # Return:

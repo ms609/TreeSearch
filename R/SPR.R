@@ -58,8 +58,9 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
       recursive=FALSE)) # TODO the fact that we need to use `unique` indicates that 
                          #      we're being inefficient here.
   } else {
-    tree$edge <- ListToMatrix(SPRSwap(parent, edge[, 2], edgeToBreak=edgeToBreak, 
-                                      mergeEdge=mergeEdge))
+    newEdge <- SPRSwap(parent, edge[, 2], edgeToBreak = edgeToBreak,
+                       mergeEdge = mergeEdge)
+    tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
     # Return:
     tree
   }
@@ -209,8 +210,9 @@ AllSPR <- function (parent, child, nEdge, notDuplicateRoot, edgeToBreak) {
 RootedSPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') tree <- Preorder(tree)
   edge <- tree$edge
-  tree$edge <- ListToMatrix(RootedSPRSwap(edge[, 1], edge[, 2], edgeToBreak=edgeToBreak,
-                                          mergeEdge=mergeEdge))
+  newEdge <- RootedSPRSwap(edge[, 1], edge[, 2], edgeToBreak = edgeToBreak,
+                           mergeEdge = mergeEdge)
+  tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
   return (tree)
 }
 

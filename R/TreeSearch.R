@@ -171,7 +171,7 @@ EdgeListSearch <- function (edgeList, dataset,
 #' 
 #' @keywords  tree 
 #' @importFrom Rdpack reprompt
-#' @importFrom TreeTools ListToMatrix MatrixToList RenumberTips
+#' @importFrom TreeTools MatrixToList RenumberTips
 #' @export
 TreeSearch <- function (tree, dataset,
                         InitializeData = PhyDat2Morphy,
@@ -199,7 +199,7 @@ TreeSearch <- function (tree, dataset,
                              stopAtPeak = stopAtPeak, stopAtPlateau = stopAtPlateau,
                              verbosity = verbosity, ...)
   
-  tree$edge <- ListToMatrix(edgeList)
+  tree$edge <- cbind(edgeList[[1]], edgeList[[2]])
   attr(tree, 'score') <- edgeList[[3]]
   attr(tree, 'hits') <- edgeList[[4]]
   # Return:
