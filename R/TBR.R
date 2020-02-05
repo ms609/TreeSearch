@@ -6,10 +6,7 @@
 #'
 #' @return the tree specified in tree
 #' @examples
-#' testFunction <- function (tree) {
-#'  return(TBRWarning(parent, child, 'Message text'))
-#' }
-#' \dontrun{testFunction(0) # will trigger warning}
+#' suppressWarnings(TBRWarning(0, 0, 'Message text')) # will trigger warning
 #' 
 #'
 #' @author Martin R. Smith
@@ -17,7 +14,8 @@
 #' @export
 TBRWarning <- function (parent, child, error) {
   warning ("No TBR operation performed.\n  > ", error)
-  return(list(parent, child))
+  # Return:
+  list(parent, child)
 }
 
 #' Tree bisection and reconnection (TBR)
