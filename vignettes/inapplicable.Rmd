@@ -46,7 +46,7 @@ signal is obscure enough that it can require Ratchet searches to escape from loc
 
 ```{r Load-data}
 my.data <- TreeSearch::inapplicable.datasets[['Vinther2008']]
-my.phyDat <- phangorn::phyDat(my.data, type='USER', levels=c(0:9, '-'))
+my.phyDat <- phangorn::phyDat(my.data, type = 'USER', levels = c(0:9, '-'))
 ```
 
 ```{R RNG-version, warning=FALSE}
@@ -58,7 +58,7 @@ set.seed(0)
 We can generate a random tree and calculate its parsimony score thus:
 ```{r Random-tree}
 random.tree <- TreeTools::RandomTree(my.phyDat)
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(random.tree)
 Fitch(random.tree, my.phyDat)
 ```
@@ -67,7 +67,7 @@ We might save some wasted time in tree search if we can start with a tree that's
 closer to optimal: perhaps a neighbour-joining tree.
 ```{r Neighbour-joining}
 nj.tree <- TreeTools::NJTree(my.phyDat)
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(nj.tree)
 Fitch(nj.tree, my.phyDat)
 ```
@@ -84,7 +84,7 @@ To constrain an outgroup, we first need to make the outgroup and ingroup monophy
 ```{r Outgroup}
 outgroup <- c('Nemertean', 'Lingula', 'Terebratulina')
 rooted.tree <- TreeTools::EnforceOutgroup(nj.tree, outgroup)
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(rooted.tree)
 ```
 
@@ -97,8 +97,8 @@ single-taxon outgroup, using `RootedNNISwap` retains the position of the root, w
 comparison and interpretation easier later on.
 
 ```{r Basic-NNI-search}
-better.tree <- TreeSearch(tree=rooted.tree, dataset=my.phyDat, 
-                           EdgeSwapper=RootedNNISwap, verbosity=3)
+better.tree <- TreeSearch(tree = rooted.tree, dataset = my.phyDat, 
+                           EdgeSwapper = RootedNNISwap, verbosity = 3)
 ```
 
 This score is better than the 85 of the original neighbour-joining tree, but is this the best we can do?
@@ -108,10 +108,10 @@ rearrangements are better at escaping local optima, and find better trees
 further away in tree space.  Using more hits (`maxHits`) and more iterations (`maxIter`) also
 means we'll move closer to an optimal tree.
 ```{r SPR-and-TBR}
-better.tree <- TreeSearch(better.tree, my.phyDat, maxHits=8, maxIter=10000,
-                           EdgeSwapper=RootedSPRSwap, verbosity=2)
-better.tree <- TreeSearch(better.tree, my.phyDat, maxHits=20, maxIter=40000, 
-                           EdgeSwapper=RootedTBRSwap, verbosity=2)
+better.tree <- TreeSearch(better.tree, my.phyDat, maxHits = 8, maxIter = 10000,
+                           EdgeSwapper=RootedSPRSwap, verbosity = 2)
+better.tree <- TreeSearch(better.tree, my.phyDat, maxHits = 20, maxIter = 40000, 
+                           EdgeSwapper=RootedTBRSwap, verbosity = 2)
 ```
 
 That score's looking better, but these are only quick searches, and we could be caught in a local optimum. 
@@ -129,7 +129,7 @@ to find a tree with this score.
 
 Let's take a look at the one it's found on this occasion:
 ```{r Plot-best-tree}
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(best.tree)
 ```
 
@@ -145,7 +145,8 @@ Note that it's especially important to retain the position of the root here:
 a single topology, if rooted in different places, can lead to an unresolved consensus.
 
 ```{r Consensus}
-some.optimal.trees <- MultiRatchet(best.tree, nSearch=20, my.phyDat, swappers=
+some.optimal.trees <- MultiRatchet(best.tree, nSearch = 20, my.phyDat,
+                                   swappers = 
                                    list(RootedTBRSwap, RootedNNISwap))
 ```
 
