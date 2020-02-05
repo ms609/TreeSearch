@@ -16,6 +16,8 @@ r_binary_packages:
  - Rdpack
  - roxygen2
  - testthat
+ 
+r_packages:
  - TreeTools
 
 before_script:
