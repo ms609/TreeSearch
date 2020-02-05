@@ -53,7 +53,7 @@ we'll use a simulated dataset that comes bundled with the `TreeSearch` package.
 ```{r Load Longrich data}
 data(congreveLamsdellMatrices)
 my.data <- congreveLamsdellMatrices[[10]]
-my.phyDat <- phangorn::phyDat(my.data, type='USER', levels=c(1, 2))
+my.phyDat <- phangorn::phyDat(my.data, type = 'USER', levels = c(1, 2))
 ```
 
 We then need to prepare our dataset for Profile Parsimony by calculating the 
@@ -62,7 +62,7 @@ Ideally we'd pick a high value of precision (> 1e+06): this takes a while,
 but only needs doing once for each dataset of a given size.
 
 ```{r Prepare the data for analysis, warning=FALSE}
-my.prepdata <- PrepareDataProfile(my.phyDat, precision=4e+04)
+my.prepdata <- PrepareDataProfile(my.phyDat, precision = 4e+04)
 ```
 
 To start analysis, we need to load a starting tree.  We can do this at random:
@@ -73,7 +73,7 @@ tree <- RandomTree(my.phyDat)
 Or using a neighbour joining method, to start at a reasonably good tree:
 ```{r NJ Tree}
 tree <- TreeTools::NJTree(my.phyDat)
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(tree)
 ```
 
@@ -83,7 +83,7 @@ then search for a better tree:
 ```{R Starting score}
 ProfileScore(tree, my.prepdata)
 
-better.tree <- ProfileTreeSearch(tree, my.prepdata, EdgeSwapper=RootedTBRSwap)
+better.tree <- ProfileTreeSearch(tree, my.prepdata, EdgeSwapper = RootedTBRSwap)
 ```
 
 The parsimony ratchet [@Nixon1999] is better at finding globally optimal trees. `ProfileRatchet`
