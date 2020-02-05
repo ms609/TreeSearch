@@ -82,6 +82,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' consistent with each node in `tree`, as plotted.
 #' 
 #' @examples
+#' library('TreeTools') # for as.phylo
 #' JackLabels(as.phylo(0, 8), as.phylo(1:100, 8))
 #' 
 #' @template MRS

@@ -18,7 +18,6 @@ r_binary_packages:
  - testthat
  
 r_packages:
- - ape
  - TreeTools
 
 before_script:
