@@ -120,7 +120,7 @@ DoubleNNI <- function (parent, child, edgeToBreak) {
   nEdge <- length(parent)
   
   # Return:
-  list(RenumberTree(parent, child, nEdge), RenumberTree(parent, child2, nEdge))
+  list(RenumberTree(parent, child), RenumberTree(parent, child2))
 }
 
 #' Rooted NNI 

@@ -194,7 +194,7 @@ AllSPR <- function (parent, child, nEdge, notDuplicateRoot, edgeToBreak) {
       newParent[brokenEdge | brokenEdgeSister] <- child[brokenEdgeSister]
       newChild[mergeEdge] <- child[brokenEdgeSister]
       # Return:
-      RenumberTree(newParent, newChild, nEdge)
+      RenumberTree(newParent, newChild)
     }) # lapply faster than vapply
   } else {
     newEdges <- lapply(mergeEdges, function (mergeEdge) {
@@ -203,7 +203,7 @@ AllSPR <- function (parent, child, nEdge, notDuplicateRoot, edgeToBreak) {
       newParent[brokenEdgeParent] <- newParent[mergeEdge]
       newParent[mergeEdge] <- brokenEdge.parentNode
       # Return:
-      RenumberTree(newParent, child, nEdge)
+      RenumberTree(newParent, child)
     }) # lapply faster than vapply
   }
   # Return:
