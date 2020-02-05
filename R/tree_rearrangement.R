@@ -54,7 +54,7 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
                               " > target ", scoreToBeat)
     } else if (candidateScore + eps > scoreToBeat) { # i.e. scores are equal
       hits <- hits + nBest
-      if (verbosity > 2L) message("    - Iteration ", iter, " - Best score",
+      if (verbosity > 2L) message("    - Iteration ", iter, " - Best score ",
                                   scoreToBeat, " found again ", nBest, 
                                   " times; now found ", hits, " times.")
     } else {
@@ -72,7 +72,7 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
       }
     } else if (candidateScore + eps > scoreToBeat) { # i.e. scores are equal
       hits <- hits + 1L
-      if (verbosity > 2L) message("    - Iteration ", iter, " - Best score",
+      if (verbosity > 2L) message("    - Iteration ", iter, " - Best score ",
                                   signif(scoreToBeat, 6), " hit ",
                                   hits, " times.")
     } else {
