@@ -14,28 +14,15 @@ test_that("Malformed trees don't crash anything", {
   treePolytomy   <- read.tree(text = "((((1,2,3),4),5),6);")
   treeDoublyPoly <- read.tree(text = "(((((1,2,3)),4),5),6);")
 
-  reordered <- Preorder(treeDoubleNode)$edge
-  expect_equal(10L, dim(reordered)[1])
-  expect_true(all(table(reordered[, 1]) == 2L))
-  
-  reordered <- Preorder(treePolytomy)$edge
-  expect_equal(9L, dim(reordered)[1])
-  expect_equal(c(2L, 2L, 2L, 3L), as.integer(table(reordered[, 1])))
-  
-  reordered <- Preorder(treeDoublyPoly)$edge
-  expect_equal(9L, dim(reordered)[1])
-  expect_equal(c(2L, 2L, 2L, 3L), as.integer(table(reordered[, 1])))
-  
-  
   expect_error(NNI(treeDoubleNode))
   expect_error(NNI(treePolytomy))
   expect_error(NNI(treeDoublyPoly))
   
-  expect_equal('phylo', class(SPR(treeDoubleNode))) # collapse doubles in Preorder
+  expect_error(SPR(treeDoubleNode))
   expect_error(SPR(treePolytomy))
   expect_error(SPR(treeDoublyPoly))
   
-  expect_equal('phylo', class(TBR(treeDoubleNode))) # collapse doubles in Preorder
+  expect_error(TBR(treeDoubleNode))
   expect_error(TBR(treePolytomy))
   expect_error(TBR(treeDoublyPoly))
   
@@ -173,29 +160,6 @@ test_that("TBR move lister works", {
   expect_equal(matrix(c(2,2,4,5,7,7 ,9,10,
                         4,5,2,2,9,10,7,7 ), ncol=2), rootedMoves)
   expect_equal(length(AllTBR(parent, child, retainRoot=TRUE)), 4)
-
-})
-
-test_that("CollapseNodes works", {
-  
-  expect_error(CollapseNode(1:5, tree8))
-  expect_error(CollapseNode(tree8, 1))
-  
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
-  set.seed(1)
-  
-  tree <- rtree(7)
-  expect_equal(tree, CollapseNode(tree, integer(0)))
-  
-  no1213 <- CollapseNode(tree, c(12, 13))
-  expect_equal(no1213$edge, matrix(c(8, 9, 9, 8, 10, 11, 11, 10, 10, 10, 
-                                      9, 1, 2, 10, 11, 3:7), ncol=2))
-  el <- tree$edge.length
-  expect_equal(no1213$edge.length, c(el[1:7], el[8] + c(c(el[9] + el[10:11]), el[12])))
-  
-  no11 <- CollapseEdge(tree, 5L)
-  expect_equal(no11$edge, matrix(c(8, 9, 9, 8, 10, 10, 10, 11, 12, 12, 11,
-                                   9, 1, 2, 10, 3, 4, 11, 12, 5:7), ncol=2))
 
 })
 

@@ -53,7 +53,7 @@ we'll use a simulated dataset that comes bundled with the `TreeSearch` package.
 ```{r Load Longrich data}
 data(congreveLamsdellMatrices)
 my.data <- congreveLamsdellMatrices[[10]]
-my.phyDat <- phangorn::phyDat(my.data, type='USER', levels=c(1, 2))
+my.phyDat <- phangorn::phyDat(my.data, type = 'USER', levels = c(1, 2))
 ```
 
 We then need to prepare our dataset for Profile Parsimony by calculating the 
@@ -62,7 +62,7 @@ Ideally we'd pick a high value of precision (> 1e+06): this takes a while,
 but only needs doing once for each dataset of a given size.
 
 ```{r Prepare the data for analysis, warning=FALSE}
-my.prepdata <- PrepareDataProfile(my.phyDat, precision=4e+04)
+my.prepdata <- PrepareDataProfile(my.phyDat, precision = 4e+04)
 ```
 
 To start analysis, we need to load a starting tree.  We can do this at random:
@@ -72,8 +72,8 @@ tree <- RandomTree(my.phyDat)
 
 Or using a neighbour joining method, to start at a reasonably good tree:
 ```{r NJ Tree}
-tree <- NJTree(my.phyDat)
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+tree <- TreeTools::NJTree(my.phyDat)
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(tree)
 ```
 
@@ -83,17 +83,21 @@ then search for a better tree:
 ```{R Starting score}
 ProfileScore(tree, my.prepdata)
 
-better.tree <- ProfileTreeSearch(tree, my.prepdata, EdgeSwapper=RootedTBRSwap)
+better.tree <- ProfileTreeSearch(tree, my.prepdata, EdgeSwapper = RootedTBRSwap)
 ```
 
 The parsimony ratchet [@Nixon1999] is better at finding globally optimal trees. `ProfileRatchet`
 is a convenient wrapper for the underlying function `Ratchet`.
 ```{r longwinded, eval=FALSE}
 # Longwinded approach:
-better.tree <- Ratchet(better.tree, my.prepdata, searchHits=10, searchIter=100, ratchIter=5,
-                       swappers=list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap),
-                       InitializeData=ProfileInitMorphy, CleanUpData=ProfileDestroyMorphy,
-                       TreeScorer=ProfileScoreMorphy, Bootstrapper=ProfileBootstrap)
+better.tree <- Ratchet(better.tree, my.prepdata, searchHits = 10, 
+                       searchIter = 100, ratchIter = 5,
+                       swappers = list(RootedTBRSwap, RootedSPRSwap,
+                                       RootedNNISwap),
+                       InitializeData = ProfileInitMorphy,
+                       CleanUpData = ProfileDestroyMorphy,
+                       TreeScorer = ProfileScoreMorphy,
+                       Bootstrapper = ProfileBootstrap)
 ```
 
 ```{r Cached results of ratchet search, echo=FALSE}
@@ -124,7 +128,7 @@ Let's see the resultant tree, and its score
 
 ```{r Ratchet-search-results}
 attr(better.tree, 'score')
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(better.tree)
 ```
 
@@ -143,11 +147,11 @@ In a serious study, you would want to sample many more than the 25 Ratchet hits 
 
 ```{R Suboptimal sampling, eval=FALSE}
 suboptimals <- ProfileRatchet(better.tree, my.prepdata, 
-                              swappers=list(RootedTBRSwap),
-                              returnAll=TRUE, suboptimal=5, 
-                              ratchHits=25, ratchIter=500, 
-                              bootstrapHits=15, bootstrapIter=450,
-                              searchHits=10, searchIter=100)
+                              swappers = list(RootedTBRSwap),
+                              returnAll = TRUE, suboptimal = 5, 
+                              ratchHits = 25, ratchIter = 500, 
+                              bootstrapHits = 15, bootstrapIter = 450,
+                              searchHits = 10, searchIter = 100)
 ```
 
 ```{R cached-SoS, echo=FALSE}

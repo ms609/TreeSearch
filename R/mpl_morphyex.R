@@ -188,8 +188,8 @@ mpl_attach_symbols <- function(symbols, morphyobj) {
 #'
 #' Attaches a raw data character state matrix in the form of a C-style
 #' (i.e. NULL-terminated) string. This can be the matrix block extracted from a
-#' Nexus file or an xread table format. The matrix should contain no terminal or
-#' tip labels.
+#' Nexus file or an `xread` table format.
+#' The matrix should contain no leaf labels.
 #'
 #' @param rawmatrix C-style string corresponding to the tip data for each taxon in turn.
 #' @param morphyobj An instance of the Morphy object.

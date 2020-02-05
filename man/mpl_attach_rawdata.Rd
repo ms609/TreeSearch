@@ -17,8 +17,8 @@ Morphy error code.
 \description{
 Attaches a raw data character state matrix in the form of a C-style
 (i.e. NULL-terminated) string. This can be the matrix block extracted from a
-Nexus file or an xread table format. The matrix should contain no terminal or
-tip labels.
+Nexus file or an \code{xread} table format.
+The matrix should contain no leaf labels.
 }
 \seealso{
 Other Morphy API functions: \code{\link{MorphyErrorCheck}},

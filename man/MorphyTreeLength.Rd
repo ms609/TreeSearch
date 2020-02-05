@@ -21,7 +21,8 @@ C_MorphyLength(parentOf, leftChild, rightChild, morphyObj)
 \code{\link{RenumberTips}}, i.e. corresponding to the sequence of taxa
 in the corresponding Morphy object.}
 
-\item{morphyObj}{A morphy object, perhaps created with \code{\link{PhyDat2Morphy}}.}
+\item{morphyObj}{A morphy object, perhaps created with
+\code{\link{PhyDat2Morphy}}.}
 
 \item{parent}{the first column of the edge matrix of a tree of class
 \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}}

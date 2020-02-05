@@ -61,7 +61,7 @@ All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collap
 }}
 
 \examples{
-tree <- ape::rtree(20, br=NULL)
+tree <- ape::rtree(20, br = NULL)
 NNI(tree)
 NNI(tree, edgeToBreak = -1)
 
@@ -70,6 +70,11 @@ NNI(tree, edgeToBreak = -1)
 The algorithm is summarized in
 \insertRef{Felsenstein2004}{TreeSearch}
 }
+\seealso{
+Other tree rearrangement functions: \code{\link{SPR}},
+  \code{\link{TBR}}
+}
 \author{
 Martin R. Smith
 }
+\concept{tree rearrangement functions}

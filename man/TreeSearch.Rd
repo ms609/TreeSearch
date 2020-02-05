@@ -11,7 +11,7 @@ IWTreeSearch(tree, dataset, concavity = 10, EdgeSwapper = RootedTBR,
   maxIter = 100, maxHits = 20, forestSize = 1, verbosity = 1, ...)
 
 EdgeListSearch(edgeList, dataset, TreeScorer = MorphyLength,
-  EdgeSwapper = RootedTBRSwap, maxIter = 100L, maxHits = 20L,
+  EdgeSwapper = RootedTBRSwap, maxIter = 100, maxHits = 20,
   bestScore = NULL, stopAtScore = NULL, stopAtPeak = FALSE,
   stopAtPlateau = 0L, forestSize = 1L, verbosity = 1L, ...)
 
@@ -47,8 +47,8 @@ and returns a list with modified vectors; for example
 \item{verbosity}{Level of detail to display in console: larger numbers provide
 more verbose feedback to the user.}
 
-\item{\dots}{further arguments to pass to \code{TreeScorer} function
-(e.g. \code{\link{TipsAreColumns}}, \code{dataset})}
+\item{\dots}{further arguments to pass to \code{TreeScorer()}
+(e.g. \code{\link{TipsAreColumns}}, \code{dataset}).}
 
 \item{edgeList}{a list containing the following:
 - vector of integers corresponding to the parent of each edge in turn
@@ -77,7 +77,7 @@ Will be overridden if a passed function has an attribute
 
 \item{InitializeData}{Function that sets up data object to prepare for tree search.
 The function will be passed the \kbd{dataset} parameter.
-Its return value will be passed to TreeScorer and CleanUpData.}
+Its return value will be passed to \code{TreeScorer()} and \code{CleanUpData()}.}
 
 \item{CleanUpData}{Function to destroy data object on function exit.
 The function will be passed the value returned by \kbd{InitializeData}.}
@@ -111,8 +111,8 @@ configuring tree search, see the
 }}
 
 \examples{
-data('Lobo')
-njtree <- NJTree(Lobo.phy)
+data('Lobo', package='TreeTools')
+njtree <- TreeTools::NJTree(Lobo.phy)
 
 \dontrun{
 TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=NNISwap)

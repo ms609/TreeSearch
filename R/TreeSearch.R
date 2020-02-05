@@ -10,7 +10,7 @@ EdgeListSearch <- function (edgeList, dataset,
                           maxIter=100, maxHits=20, 
                           bestScore=NULL, stopAtScore=NULL, 
                           stopAtPeak=FALSE, stopAtPlateau=0L,
-                            forestSize = 1L, verbosity = 1L, ...) {
+                          forestSize = 1L, verbosity = 1L, ...) {
   epsilon <- 1e-07
   if (!is.null(forestSize) && length(forestSize)) {
     if (forestSize > 1L) {
@@ -45,7 +45,7 @@ EdgeListSearch <- function (edgeList, dataset,
   
   for (iter in 1:maxIter) {
     candidateLists <- RearrangeEdges(edgeList[[1]], edgeList[[2]], dataset=dataset, 
-                             TreeScorer=TreeScorer, EdgeSwapper=EdgeSwapper, 
+                             TreeScorer = TreeScorer, EdgeSwapper=EdgeSwapper, 
                              hits=hits, iter=iter, verbosity=verbosity, ...)
     scoreThisIteration <- candidateLists[[3]]
     hits <- candidateLists[[4]]
@@ -161,8 +161,8 @@ EdgeListSearch <- function (edgeList, dataset,
 #' }
 #'
 #' @examples
-#' data('Lobo')
-#' njtree <- NJTree(Lobo.phy)
+#' data('Lobo', package='TreeTools')
+#' njtree <- TreeTools::NJTree(Lobo.phy)
 #'
 #' \dontrun{
 #' TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=NNISwap)
@@ -171,6 +171,7 @@ EdgeListSearch <- function (edgeList, dataset,
 #' 
 #' @keywords  tree 
 #' @importFrom Rdpack reprompt
+#' @importFrom TreeTools RenumberTips
 #' @export
 TreeSearch <- function (tree, dataset,
                         InitializeData = PhyDat2Morphy,
@@ -185,20 +186,20 @@ TreeSearch <- function (tree, dataset,
     stop("tree must be bifurcating; try rooting with ape::root")
   }
   tree <- RenumberTips(tree, names(dataset))
-  edgeList <- MatrixToList(tree$edge)
-  edgeList <- RenumberEdges(edgeList[[1]], edgeList[[2]])
+  edgeList <- tree$edge
+  edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 
   initializedData <- InitializeData(dataset)
   on.exit(initializedData <- CleanUpData(initializedData))
 
   bestScore <- attr(tree, 'score')
-  edgeList <- EdgeListSearch(edgeList, initializedData, TreeScorer=TreeScorer, 
+  edgeList <- EdgeListSearch(edgeList, initializedData, TreeScorer = TreeScorer, 
                              EdgeSwapper = EdgeSwapper, maxIter = maxIter, 
                              maxHits = maxHits, forestSize = forestSize, 
                              stopAtPeak = stopAtPeak, stopAtPlateau = stopAtPlateau,
                              verbosity = verbosity, ...)
   
-  tree$edge <- ListToMatrix(edgeList)
+  tree$edge <- cbind(edgeList[[1]], edgeList[[2]])
   attr(tree, 'score') <- edgeList[[3]]
   attr(tree, 'hits') <- edgeList[[4]]
   # Return:

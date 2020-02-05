@@ -9,13 +9,15 @@ SetMorphyWeights(weight, morphyObj, checkInput = TRUE)
 \arguments{
 \item{weight}{A vector listing the new weights to be applied to each character}
 
-\item{morphyObj}{A morphy object, perhaps created with \code{\link{PhyDat2Morphy}}.}
+\item{morphyObj}{A morphy object, perhaps created with
+\code{\link{PhyDat2Morphy}}.}
 
 \item{checkInput}{Whether to sanity-check input data before applying.
 Defaults to TRUE to protect the user from crashes.}
 }
 \value{
-The Morphy error code generated when applying tipData
+\code{SetMorphyWeights()} returns the Morphy error code generated when
+applying \code{tipData}.
 }
 \description{
 Set the character weightings associated with a Morphy object

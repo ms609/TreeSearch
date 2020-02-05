@@ -2,7 +2,7 @@
 % Please edit documentation in R/mpl_morphy_objects.R
 \name{PhyDat2Morphy}
 \alias{PhyDat2Morphy}
-\title{Initialize a Morphy Object from a phyDat object}
+\title{Initialize a Morphy Object from a \code{phyDat} object}
 \usage{
 PhyDat2Morphy(phy)
 }
@@ -13,7 +13,8 @@ PhyDat2Morphy(phy)
 A pointer to an initialized Morphy object.
 }
 \description{
-Creates a new Morphy object with the same size and characters as the phyDat object
+Creates a new Morphy object with the same size and characters as the
+\code{phyDat} object
 }
 \seealso{
 Other Morphy API functions: \code{\link{MorphyErrorCheck}},

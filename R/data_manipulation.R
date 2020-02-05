@@ -10,7 +10,7 @@
 #'                  
 #' @template warnParam
 #'
-#' @return An object of class phyDat, with additional attributes.
+#' @return An object of class `phyDat`, with additional attributes.
 #' `PrepareDataProfile` adds the attributes:
 #' 
 #'   - \code{info.amounts}: details the information represented by each 
@@ -27,7 +27,8 @@
 #'  - \code{min.length}: The minimum number of steps that must be present in each
 #'    transformation series.
 #'
-#' @author Martin R. Smith; written with reference to phangorn:::prepareDataFitch
+#' @author Martin R. Smith; written with reference to 
+#' `phangorn:::prepareDataFitch()`
 #' @export
 PrepareDataProfile <- function (dataset, precision = 1e+06, warn = TRUE) {
   at <- attributes(dataset)

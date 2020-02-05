@@ -6,27 +6,13 @@
 #include <stdlib.h> /* for NULL */
 #include <R_ext/Rdynload.h>
 
-#include "ape_reorder.h"
-#include "renumber_tree.h"
-
 #include "mpl.h"
 #include "RMorphyUtils.h"
 #include "RMorphy.h"
 #include "build_postorder.h"
 
 
-extern SEXP _TreeSearch_phangorn_bipCPP(SEXP, SEXP);
-
-static const R_CMethodDef cMethods[] = {
-  {"order_edges_number_nodes", (DL_FUNC) &order_edges_number_nodes, 3, order_edges_number_nodes_t},
-  {"ape_neworder_phylo",       (DL_FUNC) &ape_neworder_phylo, 6, ape_neworder_phylo_t},
-  {"ape_node_depth",           (DL_FUNC) &ape_node_depth, 7, ape_node_depth_t},
-  {"ape_neworder_pruningwise", (DL_FUNC) &ape_neworder_pruningwise, 6, ape_neworder_pruningwise_t},
-  {NULL, NULL, 0, NULL}
-};
-
 static const R_CallMethodDef callMethods[] = {
-  {"_TreeSearch_phangorn_bipCPP",   (DL_FUNC) &_TreeSearch_phangorn_bipCPP, 2},
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
   {"_R_wrap_mpl_delete_Morphy",     (DL_FUNC) &_R_wrap_mpl_delete_Morphy, 1},
   {"_R_wrap_mpl_init_Morphy",       (DL_FUNC) &_R_wrap_mpl_init_Morphy, 3},
@@ -52,14 +38,11 @@ static const R_CallMethodDef callMethods[] = {
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
   {"RANDOM_TREE",                   (DL_FUNC) &RANDOM_TREE, 1},
   {"RANDOM_TREE_SCORE",             (DL_FUNC) &RANDOM_TREE_SCORE, 2},
-
-  {"RENUMBER_TREE",  (DL_FUNC) &RENUMBER_TREE,  3},
-  {"RENUMBER_EDGES", (DL_FUNC) &RENUMBER_EDGES, 3},
   {NULL, NULL, 0}
 };
 
 void R_init_TreeSearch(DllInfo *dll) {
-  R_registerRoutines(dll, cMethods, callMethods, NULL, NULL);
+  R_registerRoutines(dll, NULL, callMethods, NULL, NULL);
   R_useDynamicSymbols(dll, FALSE);
   R_forceSymbols(dll, TRUE);
 }

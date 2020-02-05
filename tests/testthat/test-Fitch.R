@@ -63,14 +63,14 @@ test_that("Morphy generates correct lengths", {
     morphyObj <- UnloadMorphy(morphyObj)
   }
   ## Test combined matrix
-  bigPhy <- StringToPhyDat(paste0(characters, collapse='\n'), tree$tip.label, 
+  bigPhy <- TreeTools::StringToPhyDat(paste0(characters, collapse='\n'), tree$tip.label, 
                            byTaxon=FALSE)
   expect_identical(characters,
-                   PhyToString(bigPhy, byTaxon=FALSE, concatenate=FALSE))
+                   TreeTools::PhyToString(bigPhy, byTaxon=FALSE, concatenate=FALSE))
   expect_identical(paste0(collapse='', 
                           vapply(characters, substr, start=0, stop=1,
                                  character(1))),
-                   substr(PhyToString(bigPhy, ps=';', useIndex=TRUE, 
+                   substr(TreeTools::PhyToString(bigPhy, ps=';', useIndex=TRUE, 
                                       byTaxon=TRUE, concatenate=TRUE),
                     start=0, stop=length(characters)))
   
@@ -87,14 +87,15 @@ test_that("Morphy generates correct lengths", {
   expect_equal(sum(expected_fit), tree_score_iw)
 
   ## Run the bigger tree tests
-  bigTree <- read.tree(text = "((1,2),((3,(4,5)),(6,(7,(8,(9,(10,((11,(12,(13,(14,15)))),(16,(17,(18,(19,20))))))))))));")
+  bigTree <- ape::read.tree(
+    text = "((1,2),((3,(4,5)),(6,(7,(8,(9,(10,((11,(12,(13,(14,15)))),(16,(17,(18,(19,20))))))))))));")
   bigChars <- c("11111---111---11---1")
   ## Results
   expected_results <- c(3)
 
   ## Run the tests
   for(test in 1:length(bigChars)) {
-    phy <- StringToPhyDat(bigChars[test], bigTree$tip.label)
+    phy <- TreeTools::StringToPhyDat(bigChars[test], bigTree$tip.label)
     # Presently a good test to confirm that PhyDat2Morphy works with single-character phys
     morphyObj <- PhyDat2Morphy(phy)
     tree_length <- MorphyTreeLength(bigTree, morphyObj)
