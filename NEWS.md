@@ -6,7 +6,7 @@
  
 ## Changes
  - Move tree distance measures to new package `TreeDist`
- - Move tree utility functions to new package `TreeTrunk`
+ - Move tree utility functions to new package `TreeTools`
  - Rename functions `MinimumSteps`→`MinimumLength` and 
    `FitchSteps`→`CharacterLength`
 
