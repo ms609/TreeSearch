@@ -6,10 +6,7 @@
 #'
 #' @return the tree specified in tree
 #' @examples
-#' testFunction <- function (tree) {
-#'  return(TBRWarning(parent, child, 'Message text'))
-#' }
-#' \dontrun{testFunction(0) # will trigger warning}
+#' suppressWarnings(TBRWarning(0, 0, 'Message text')) # will trigger warning
 #' 
 #'
 #' @author Martin R. Smith
@@ -17,7 +14,8 @@
 #' @export
 TBRWarning <- function (parent, child, error) {
   warning ("No TBR operation performed.\n  > ", error)
-  return(list(parent, child))
+  # Return:
+  list(parent, child)
 }
 
 #' Tree bisection and reconnection (TBR)
@@ -41,7 +39,8 @@ TBRWarning <- function (parent, child, error) {
 #' 
 #' @author Martin R. Smith
 #' 
-#' @seealso RootedTBR useful when the position of the root node should be retained.
+#' @seealso [`RootedTBR()`]: useful when the position of the root node should be retained.
+#' @family tree rearrangement functions
 #' 
 #' @examples{
 #' library('ape')
@@ -49,6 +48,7 @@ TBRWarning <- function (parent, child, error) {
 #' TBR(tree)
 #' }
 #' @importFrom ape root
+#' @importFrom TreeTools DescendantEdges Preorder
 #' @export
 TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
   if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
@@ -62,18 +62,23 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
   
   edge <- tree$edge  
   StopUnlessBifurcating(edge[, 1])
-  tree$edge <- ListToMatrix(TBRSwap(edge[, 1], edge[, 2], edgeToBreak=edgeToBreak, 
-                                    mergeEdges=mergeEdges))
+  newEdge <- TBRSwap(edge[, 1], edge[, 2], edgeToBreak = edgeToBreak,
+                     mergeEdges = mergeEdges)
+  tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
   tree
 }
 
 
 ## TODO Do edges need to be pre-ordered before coming here?
-#' @describeIn TBR faster version that takes and returns parent and child parameters
+#' @describeIn TBR faster version that takes and returns parent and child
+#'  parameters
 #' @template treeParent
 #' @template treeChild
 #' @param nEdge (optional) Number of edges.
-#' @return a list containing two elements, corresponding in turn to the rearranged parent and child parameters
+#' @return a list containing two elements, corresponding in turn to the
+#'  rearranged parent and child parameters
+#'  
+#' @importFrom TreeTools EdgeAncestry
 #' @export
 TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mergeEdges=NULL) {
   if (nEdge < 5) return (list(parent, child)) #TODO do we need to re-root this tree?
@@ -202,6 +207,7 @@ TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mer
 #' @param retainRoot logical specifying whether taxa may be swapped across the root
 #' @return a matrix with two columns, each row listing an edge that can be broken
 #'         and an edge into which it can be merged
+#' @importFrom TreeTools AllDescendantEdges
 #' @export
 TBRMoves <- function(parent, child, nEdge = length(parent), avoid=NULL, retainRoot=FALSE) {
   if (nEdge < 5) stop("No TBR rearrangements possible on a tree with < 5 edges")
@@ -272,16 +278,21 @@ attr(AllTBR, 'stopAtPeak') <- TRUE
 
 #' Rooted TBR 
 #' @describeIn TBR Perform \acronym{TBR} rearrangement, retaining position of root
+#' @importFrom TreeTools Preorder
 #' @export
 RootedTBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
-  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') tree <- Preorder(tree)
+  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
+    tree <- Preorder(tree)
+  }
   edge   <- tree$edge
-  tree$edge <- ListToMatrix(RootedTBRSwap(edge[, 1], edge[, 2], 
-                            edgeToBreak=edgeToBreak, mergeEdges=mergeEdges))
+  edgeList <- RootedTBRSwap(edge[, 1], edge[, 2], 
+                            edgeToBreak=edgeToBreak, mergeEdges=mergeEdges)
+  tree$edge <- cbind(edgeList[[1]], edgeList[[2]])
   tree
 }
 
 #' @describeIn TBR faster version that takes and returns parent and child parameters
+#' @importFrom TreeTools EdgeAncestry
 #' @export
 RootedTBRSwap <- function (parent, child, nEdge=length(parent), edgeToBreak=NULL, mergeEdges=NULL) {
   if (nEdge < 5) return (TBRWarning(parent, child, 'Fewer than 4 tips'))

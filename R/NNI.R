@@ -19,9 +19,10 @@
 #'  \insertRef{Felsenstein2004}{TreeSearch}
 #' 
 #' @author Martin R. Smith
+#' @family tree rearrangement functions
 #' 
 #' @examples
-#' tree <- ape::rtree(20, br=NULL)
+#' tree <- ape::rtree(20, br = NULL)
 #' NNI(tree)
 #' NNI(tree, edgeToBreak = -1)
 #'
@@ -41,7 +42,8 @@ NNI <- function (tree, edgeToBreak=NULL) {
     # Return:
     newTrees
   } else {
-    tree$edge <- ListToMatrix(NNISwap(parent, edge[, 2], edgeToBreak=edgeToBreak))
+    newEdge <- NNISwap(parent, edge[, 2], edgeToBreak=edgeToBreak)
+    tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
     
     # Return:
     tree
@@ -53,6 +55,7 @@ NNI <- function (tree, edgeToBreak=NULL) {
 #' @template treeChild
 #' @param nTips (optional) Number of tips.
 #' @return a list containing two elements, corresponding in turn to the rearranged parent and child parameters
+#' @importFrom TreeTools SampleOne
 #' @export
 NNISwap <- function (parent, child, nTips = (length(parent) / 2L) + 1L, edgeToBreak=NULL) {
   rootNode  <- nTips + 1L
@@ -92,6 +95,7 @@ NNISwap <- function (parent, child, nTips = (length(parent) / 2L) + 1L, edgeToBr
 #' @return the \code{tree$edge} parameter of the two trees consistent with the specified rearrangement
 #'
 #' @keywords internal
+#' @importFrom TreeTools RenumberTree
 #' @author Martin R. Smith
 #' 
 DoubleNNI <- function (parent, child, edgeToBreak) {
@@ -117,7 +121,7 @@ DoubleNNI <- function (parent, child, edgeToBreak) {
   nEdge <- length(parent)
   
   # Return:
-  list(RenumberTree(parent, child, nEdge), RenumberTree(parent, child2, nEdge))
+  list(RenumberTree(parent, child), RenumberTree(parent, child2))
 }
 
 #' Rooted NNI 
@@ -137,7 +141,8 @@ RootedNNI <- function (tree, edgeToBreak=NULL) {
     # Return:
     newTrees
   } else {
-    tree$edge <- ListToMatrix(RootedNNISwap(edge[, 1], edge[, 2], edgeToBreak=edgeToBreak))
+    newEdge <- RootedNNISwap(edge[, 1], edge[, 2], edgeToBreak=edgeToBreak)
+    tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
     
     # Return:
     tree

@@ -22,7 +22,8 @@
 #'   # In actual use, the dataset should be prepared with a much higher
 #'   # precision: try 1e+06?
 #'   # Of course, gaining higher precision takes substantially longer.
-#'   dataset <- PrepareDataProfile(congreveLamsdellMatrices[[42]], precision=1e+03)
+#'   dataset <- PrepareDataProfile(congreveLamsdellMatrices[[42]], 
+#'                                 precision = 1e+03)
 #'   ProfileScore(referenceTree, dataset)
 #'
 #' @author Martin R. Smith
@@ -63,24 +64,25 @@ ProfileScoreMorphy <- function (parent, child, dataset, ...) {
   }, double(1)) * attr(dataset, 'weight'))
 }
 
-#' @describeIn ProfileScore Initialize dataset by adding morphyObjs.
+#' @describeIn ProfileScore Initialize dataset by adding `morphyObjs` attribute.
 #' @export
 ProfileInitMorphy <- function (dataset) {
   attr(dataset, 'morphyObjs') <- 
-    lapply(PhyToString(dataset, byTaxon=FALSE, useIndex=FALSE, concatenate=FALSE), 
+    lapply(PhyToString(dataset, byTaxon = FALSE, useIndex = FALSE, 
+                       concatenate = FALSE), 
            SingleCharMorphy)
   # Return:
   dataset
 }
 
-#' @describeIn ProfileScore Free memory from morphyObjs initialized by
+#' @describeIn ProfileScore Free memory from `morphyObjs` initialized by
 #' `ProfileScoreMorphy()`.
 #' @export
 ProfileDestroyMorphy <- function (dataset) {
   vapply(attr(dataset, 'morphyObjs'), UnloadMorphy, integer(1))
 }
 
-#' @describeIn IWScore Free memory from morphyObjs initialized by
+#' @describeIn IWScore Free memory from `morphyObjs` initialized by
 #' `IWScoreMorphy()`.
 #' @export
 IWDestroyMorphy <- ProfileDestroyMorphy

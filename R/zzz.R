@@ -1,8 +1,11 @@
 ## Reminders when releasing for CRAN
 release_questions <- function() {
   c(
+    "Is the code free of #TODOs?",
     "Have you cleared GitHub issues for this release milestone?",
-    "Have you checked the Vignettes for sanity?"
+    "Have you checked the Vignettes for sanity?",
+    "Have you checked pkgdown::build_reference_index()?",
+    "Have you updated the version number in .zenodo.json, NEWS & DESCRIPTION?"
   )
 }
 

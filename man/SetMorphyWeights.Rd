@@ -16,7 +16,8 @@ SetMorphyWeights(weight, morphyObj, checkInput = TRUE)
 Defaults to TRUE to protect the user from crashes.}
 }
 \value{
-The Morphy error code generated when applying tipData
+\code{SetMorphyWeights()} returns the Morphy error code generated when
+applying \code{tipData}.
 }
 \description{
 Set the character weightings associated with a Morphy object

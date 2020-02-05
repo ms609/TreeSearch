@@ -12,7 +12,7 @@ SPRWarning <- function (parent, child, error) {
 #'
 #' Perform one \acronym{SPR} rearrangement on a tree
 #' 
-#' Equivalent to phangorn's `kSPR`, but faster.
+#' Equivalent to `kSPR` in the `phangorn` package, but faster.
 #' Note that rearrangements that only change the position of the root WILL be returned by 
 #' \code{SPR}.  If the position of the root is irrelevant (as in Fitch parsimony, for example)
 #' then this function will occasionally return a functionally equivalent topology.  
@@ -32,18 +32,21 @@ SPRWarning <- function (parent, child, error) {
 #' 
 #' @author Martin R. Smith
 #' 
-#' @seealso RootedSPR useful when the position of the root node should be retained.
-#' @seealso TBR
-#' @seealso NNI
+#' @seealso 
+#' - [`RootedSPR()`]: useful when the position of the root node should be retained.
+#' @family tree rearrangement functions
 #' 
 #' @examples{
 #' tree <- ape::rtree(20, br=FALSE)
 #' SPR(tree)
 #' }
 #' @importFrom ape root
+#' @importFrom TreeTools Preorder NonDuplicateRoot
 #' @export
 SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
-  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') tree <- Preorder(tree)
+  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
+    tree <- Preorder(tree)
+  }
   edge <- tree$edge
   parent <- edge[, 1]
   StopUnlessBifurcating(parent)
@@ -58,8 +61,9 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
       recursive=FALSE)) # TODO the fact that we need to use `unique` indicates that 
                          #      we're being inefficient here.
   } else {
-    tree$edge <- ListToMatrix(SPRSwap(parent, edge[, 2], edgeToBreak=edgeToBreak, 
-                                      mergeEdge=mergeEdge))
+    newEdge <- SPRSwap(parent, edge[, 2], edgeToBreak = edgeToBreak,
+                       mergeEdge = mergeEdge)
+    tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
     # Return:
     tree
   }
@@ -71,7 +75,9 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
 #' @template treeChild
 #' @template treeNEdgeOptional
 #' @param nNode (optional) Number of nodes.
-#' @return a list containing two elements, corresponding in turn to the rearranged parent and child parameters
+#' @return a list containing two elements, corresponding in turn to the
+#'  rearranged parent and child parameters
+#' @importFrom TreeTools DescendantEdges NonDuplicateRoot
 #' @export
 SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
                      edgeToBreak=NULL, mergeEdge=NULL) {
@@ -143,14 +149,14 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
 #' @template treeParent
 #' @template treeChild
 #' @template treeNEdge
-#' @param notDuplicateRoot logical vector of length nEdge, specifying for each edge whether
-#'                         it is the second edge leading to the root (in which case
-#'                         its breaking will be equivalent to breaking the other
-#'                         root edge... except insofar as it moves 
-#'                         the position of the root.)
+#' @param notDuplicateRoot logical vector of length `nEdge`, specifying for each
+#' edge whether it is the second edge leading to the root (in which case
+#' its breaking will be equivalent to breaking the other root edge... 
+#' except insofar as it moves the position of the root.)
 #' @template edgeToBreakParam
 #' 
-#' @return a list of edge matrices for all trees one SPR rearrangement from the starting tree
+#' @return `AllSPR()` returns a list of edge matrices for all trees one SPR 
+#' rearrangement from the starting tree
 #'
 #' @author Martin R. Smith
 #' 
@@ -166,14 +172,16 @@ AllSPR <- function (parent, child, nEdge, notDuplicateRoot, edgeToBreak) {
   brokenEdgeParent <- child == brokenEdge.parentNode
   brokenEdgeSister <- parent == brokenEdge.parentNode & !brokenEdge
   brokenEdgeDaughters <- parent == brokenEdge.childNode
-  nearBrokenEdge <- brokenEdge | brokenEdgeSister | brokenEdgeParent | brokenEdgeDaughters
+  nearBrokenEdge <- brokenEdge | brokenEdgeSister | brokenEdgeParent |
+    brokenEdgeDaughters
   if (breakingRootEdge <- !any(brokenEdgeParent)) { 
     # Edge to break is the Root Node.
     brokenRootDaughters <- parent == child[brokenEdgeSister]
     nearBrokenEdge <- nearBrokenEdge | brokenRootDaughters
   }
   
-  mergeEdges <- which(!nearBrokenEdge & !edgesOnAdriftSegment & notDuplicateRoot)
+  mergeEdges <- which(!nearBrokenEdge & !edgesOnAdriftSegment & 
+                        notDuplicateRoot)
   nCandidates <- length(mergeEdges)
   
   if (breakingRootEdge) {
@@ -185,7 +193,7 @@ AllSPR <- function (parent, child, nEdge, notDuplicateRoot, edgeToBreak) {
       newParent[brokenEdge | brokenEdgeSister] <- child[brokenEdgeSister]
       newChild[mergeEdge] <- child[brokenEdgeSister]
       # Return:
-      RenumberTree(newParent, newChild, nEdge)
+      RenumberTree(newParent, newChild)
     }) # lapply faster than vapply
   } else {
     newEdges <- lapply(mergeEdges, function (mergeEdge) {
@@ -194,7 +202,7 @@ AllSPR <- function (parent, child, nEdge, notDuplicateRoot, edgeToBreak) {
       newParent[brokenEdgeParent] <- newParent[mergeEdge]
       newParent[mergeEdge] <- brokenEdge.parentNode
       # Return:
-      RenumberTree(newParent, child, nEdge)
+      RenumberTree(newParent, child)
     }) # lapply faster than vapply
   }
   # Return:
@@ -203,18 +211,23 @@ AllSPR <- function (parent, child, nEdge, notDuplicateRoot, edgeToBreak) {
 
 #' Rooted SPR 
 #' @describeIn SPR Perform \acronym{SPR} rearrangement, retaining position of root
+#' @importFrom TreeTools Preorder
 #' @export
 RootedSPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
-  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') tree <- Preorder(tree)
+  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
+    tree <- Preorder(tree)
+  }
   edge <- tree$edge
-  tree$edge <- ListToMatrix(RootedSPRSwap(edge[, 1], edge[, 2], edgeToBreak=edgeToBreak,
-                                          mergeEdge=mergeEdge))
+  newEdge <- RootedSPRSwap(edge[, 1], edge[, 2], edgeToBreak = edgeToBreak,
+                           mergeEdge = mergeEdge)
+  tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
   return (tree)
 }
 
 ## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn SPR faster version that takes and returns parent and child parameters
 #' @return a list containing two elements, corresponding in turn to the rearranged parent and child parameters
+#' @importFrom TreeTools NonDuplicateRoot
 #' @export
 RootedSPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
                      edgeToBreak=NULL, mergeEdge=NULL) {

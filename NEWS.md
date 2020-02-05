@@ -1,24 +1,23 @@
-# TreeSearch 0.3.2.9008 (development)
+# TreeSearch 0.4.0
 
 ## New features
- - `PhyDatToMatrix`, complementing `MatrixToPhyDat`
- - `NPartitions`, `TreeIsRooted`
+ - `PhyDatToMatrix()`, complementing `MatrixToPhyDat()`
  - Documentation with `pkgdown`
+ - `JackLabels()` helper function
  
 ## Changes
- - Move tree distance measures to separate package `TreeDist`
- - Rename functions `MinimumSteps`→`MinimumLength` and 
-   `FitchSteps`→`CharacterLength`
+ - Move tree distance measures to new package `TreeDist`
+ - Move tree utility functions to new package `TreeTools`
+ - Rename functions `MinimumSteps()`→`MinimumLength()` and 
+   `FitchSteps()`→`CharacterLength()`
 
 ## Enhancements
- - `ReadTntTree` supports named taxa (with `taxname=`)
  - Improve speed of tests (by increasing probability of false positives)
  - Use `message` in place of `cat`, to allow use of `suppressMessages()`
 
 
 # TreeSearch 0.3.2
 
-## Enhancements
  - Improve text, content and build speed of vignettes
 
 
@@ -49,7 +48,6 @@
 
 # TreeSearch 0.2.2
 
-## Bug fixes 
  - Correct vignette titles
 
 
@@ -83,21 +81,20 @@
  - `AsBinary` supports 0
  
 ## Enhancements
- - [IW]RatchetConsensus renamed to [IW]MultiRatchet, giving a better description 
-     of the function's purpose
+ - `[IW]RatchetConsensus()` renamed to `[IW]MultiRatchet()`, giving a better
+     description of the function's purpose
  - Don't warn about missing EOL when reading Nexus or TNT files
  - Add new 12-colour colourblind-friendly palette
- - FitchSteps now supports datasets with tips not found in tree
- - Improve portability of function `ReadTntTree`
+ - `FitchSteps()` now supports datasets with tips not found in tree
+ - Improve portability of function `ReadTntTree()`
 
 ## Bug fixes
- - [IW]MultiRatchet now considers trees identical even if they've been hit 
+ - `[IW]MultiRatchet()` now considers trees identical even if they've been hit 
    a different number of times
 
 
 # TreeSearch 0.1.2
 
-## Bug fixes
 - Update MorphyLib library to fix C warnings
 - Remove non-ASCII characters from data
 - Disable slow-building and problematic vignette
@@ -122,11 +119,13 @@
 # TreeSearch 0.0.8
 
 ## New features
-- Added NJTree function as shortcut to generate Neighbour-Joining tree from a dataset
+- Added `NJTree()` function as shortcut to generate Neighbour-Joining tree from 
+    a dataset
 - Add functions to allow recovery of all trees one rearrangement from that input
 
 ## Efficiency gains
-- Separate out NNISwap functions to allow more efficient rearrangement of edgeLists
+- Separate out `NNISwap()` functions to allow more efficient rearrangement of 
+  `edgeLists`
 - [9002] Improve efficiency by using three-pass algorithm in place of four-pass precursor
 - [9004] Bootstrap search improvements
 

@@ -46,8 +46,8 @@ and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRS
 \item{verbosity}{Level of detail to display in console: larger numbers provide
 more verbose feedback to the user.}
 
-\item{\dots}{further arguments to pass to \code{TreeScorer} function
-(e.g. \code{\link{TipsAreColumns}}, \code{dataset})}
+\item{\dots}{further arguments to pass to \code{TreeScorer()}
+(e.g. \code{\link{TipsAreColumns}}, \code{dataset}).}
 
 \item{edgeList}{a list containing the following:
 - vector of integers corresponding to the parent of each edge in turn
@@ -109,8 +109,8 @@ configuring tree search, see the
 }}
 
 \examples{
-data('Lobo')
-njtree <- NJTree(Lobo.phy)
+data('Lobo', package='TreeTools')
+njtree <- TreeTools::NJTree(Lobo.phy)
 
 \dontrun{
 TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=NNISwap)

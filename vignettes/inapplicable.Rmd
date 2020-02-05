@@ -16,22 +16,16 @@ vignette: >
 morphological datasets that contain inapplicable data, following the algorithm proposed
 by Brazeau, Guillerme and Smith [-@Brazeau2018].
 
-In brief, this algorithm modifies the Fitch algorithm to count the total number of homoplasious 
-events on a tree.
+In brief, this algorithm modifies the Fitch algorithm to count the total number
+of homoplasious events on a tree.
 
 ## Getting started
 
 [A companion vignette](getting-started.html) gives details on installing the package
 and getting up and running.
 
-<!--
-# message=FALSE will suppress message when loading TreeSearch
-# Temporary fix until R.oo is updated -- remove thereafter
-# https://github.com/r-lib/rlang/issues/669
--->
-
-Once installed, load the inapplicable package into R using
-```{r Load-library, message=FALSE}
+Once installed, load the TreeSearch package into R using
+```{r Load-library}
 library('TreeSearch')
 ```
 
@@ -46,7 +40,7 @@ signal is obscure enough that it can require Ratchet searches to escape from loc
 
 ```{r Load-data}
 my.data <- TreeSearch::inapplicable.datasets[['Vinther2008']]
-my.phyDat <- phangorn::phyDat(my.data, type='USER', levels=c(0:9, '-'))
+my.phyDat <- phangorn::phyDat(my.data, type = 'USER', levels = c(0:9, '-'))
 ```
 
 ```{R RNG-version, warning=FALSE}
@@ -57,8 +51,8 @@ set.seed(0)
 
 We can generate a random tree and calculate its parsimony score thus:
 ```{r Random-tree}
-random.tree <- RandomTree(my.phyDat)
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+random.tree <- TreeTools::RandomTree(my.phyDat)
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(random.tree)
 Fitch(random.tree, my.phyDat)
 ```
@@ -66,8 +60,8 @@ Fitch(random.tree, my.phyDat)
 We might save some wasted time in tree search if we can start with a tree that's a little 
 closer to optimal: perhaps a neighbour-joining tree.
 ```{r Neighbour-joining}
-nj.tree <- NJTree(my.phyDat)
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+nj.tree <- TreeTools::NJTree(my.phyDat)
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(nj.tree)
 Fitch(nj.tree, my.phyDat)
 ```
@@ -83,22 +77,24 @@ To constrain an outgroup, we first need to make the outgroup and ingroup monophy
 
 ```{r Outgroup}
 outgroup <- c('Nemertean', 'Lingula', 'Terebratulina')
-rooted.tree <- EnforceOutgroup(nj.tree, outgroup)
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+rooted.tree <- TreeTools::EnforceOutgroup(nj.tree, outgroup)
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(rooted.tree)
 ```
 
 
-Now let's see whether a few nearest-neighbour interchanges can find us a better tree score. 
+Now let's see whether a few nearest-neighbour interchanges can find us a better
+tree score. 
 This tends to be the quickest search to run, if not the most exhaustive.
-Using `RootedNNISwap` instead of `NNISwap` stops taxa from moving from one side of the root to another,
-which we need to do if we're going to enforce our outgroup constraint.  Even if we are using a
-single-taxon outgroup, using `RootedNNISwap` retains the position of the root, which makes tree
-comparison and interpretation easier later on.
+Using `RootedNNISwap` instead of `NNISwap` stops taxa from moving from one side
+of the root to another, which we need to do if we're going to enforce our
+outgroup constraint.  Even if we are using a
+single-taxon outgroup, using `RootedNNISwap` retains the position of the root,
+which makes tree comparison and interpretation easier later on.
 
 ```{r Basic-NNI-search}
-better.tree <- TreeSearch(tree=rooted.tree, dataset=my.phyDat, 
-                           EdgeSwapper=RootedNNISwap, verbosity=3)
+better.tree <- TreeSearch(tree = rooted.tree, dataset = my.phyDat, 
+                           EdgeSwapper = RootedNNISwap, verbosity = 3)
 ```
 
 This score is better than the 85 of the original neighbour-joining tree, but is this the best we can do?
@@ -108,15 +104,19 @@ rearrangements are better at escaping local optima, and find better trees
 further away in tree space.  Using more hits (`maxHits`) and more iterations (`maxIter`) also
 means we'll move closer to an optimal tree.
 ```{r SPR-and-TBR}
-better.tree <- TreeSearch(better.tree, my.phyDat, maxHits=8, maxIter=10000,
-                           EdgeSwapper=RootedSPRSwap, verbosity=2)
-better.tree <- TreeSearch(better.tree, my.phyDat, maxHits=20, maxIter=40000, 
-                           EdgeSwapper=RootedTBRSwap, verbosity=2)
+better.tree <- TreeSearch(better.tree, my.phyDat, maxHits = 8, maxIter = 10000,
+                           EdgeSwapper=RootedSPRSwap, verbosity = 2)
+better.tree <- TreeSearch(better.tree, my.phyDat, maxHits = 20, maxIter = 40000, 
+                           EdgeSwapper=RootedTBRSwap, verbosity = 2)
 ```
 
 That score's looking better, but these are only quick searches, and we could be caught in a local optimum. 
 A more comprehensive search of tree space can be accomplished using the parsimony ratchet [@Nixon1999].
-It might take a couple of minutes to run.
+It might take a couple of minutes to run with the default parameters.  
+To be confident that you have found a globally optimum tree, it's worth
+running a ratchet with verbosity = 2 and following the search, increasing 
+`ratchIter` and other search parameters until you are confident that independent
+ratchet iterations are consistently converging on the optimum score.
 
 ```{r Ratchet-search}
 best.tree <- Ratchet(better.tree, my.phyDat, verbosity=0, ratchIter=5,
@@ -124,12 +124,13 @@ best.tree <- Ratchet(better.tree, my.phyDat, verbosity=0, ratchIter=5,
 attr(best.tree, 'score') # Each tree is labelled with its score during tree search
 ```
 
-The best tree for this dataset has a score of 79.  This relatively quick Ratchet search always seems
-to find a tree with this score.
+The best tree for this dataset has a score of 79.  This relatively quick Ratchet
+search always seems to find a tree with this score from this dataset. 
+(Larger datasets will probably need a more exhaustive search.)
 
 Let's take a look at the one it's found on this occasion:
 ```{r Plot-best-tree}
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(best.tree)
 ```
 
@@ -145,7 +146,8 @@ Note that it's especially important to retain the position of the root here:
 a single topology, if rooted in different places, can lead to an unresolved consensus.
 
 ```{r Consensus}
-some.optimal.trees <- MultiRatchet(best.tree, nSearch=20, my.phyDat, swappers=
+some.optimal.trees <- MultiRatchet(best.tree, nSearch = 20, my.phyDat,
+                                   swappers = 
                                    list(RootedTBRSwap, RootedNNISwap))
 ```
 
@@ -153,7 +155,7 @@ If ten independent runs ended up at a number of different trees, there may be ma
 That would take a while though; for now, let's check out our consensus tree:
 
 ```{r Plot-strict-consensus}
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 strict.consensus <- ape::consensus(some.optimal.trees)
 plot(strict.consensus)
 ```
@@ -162,22 +164,18 @@ We might prefer a majority-rule consensus tree:
 
 ```{r Plot-majority-rule-consensus}
 par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
-majority.consensus <- ape::consensus(some.optimal.trees, p=0.5)
+majority.consensus <- ape::consensus(some.optimal.trees, p = 0.5)
 plot(majority.consensus)
 ```
 
 Clade support can be generated using Jackknife resampling:
 
 ```{r Jackknife-annotations}
-jack.trees <- Jackknife(best.tree, my.phyDat, EdgeSwapper=RootedTBRSwap,
-                        jackIter=25, verbosity=0)
-par(mar=rep(0.25, 4), cex=0.75) # make plot easier to read
-plot(strict.consensus)
+jack.trees <- Jackknife(best.tree, my.phyDat, EdgeSwapper = RootedTBRSwap,
+                        jackIter = 20, verbosity = 0)
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 
-jack.support <- SplitFrequency(strict.consensus, jack.trees) / length(jack.trees)
-ape::nodelabels(paste('\n\n', signif(jack.support, 2)), 
-           col=SupportColour(jack.support), 
-           adj=0, pos=2, frame='none')
+JackLabels(strict.consensus, jack.trees) -> XX
 ```
 
 

@@ -8,7 +8,7 @@
 #' 
 #' @examples
 #' data('inapplicable.datasets')
-#' tree <- RandomTree(inapplicable.phyData[[1]])
+#' tree <- TreeTools::RandomTree(inapplicable.phyData[[1]])
 #' result <- Fitch(tree, inapplicable.phyData[[1]])
 #' 
 #' @return This function returns the elements from a list containing:
@@ -27,6 +27,7 @@
 #' 
 #' @author Martin R. Smith (using Morphy C library, by Martin Brazeau)
 #' @importFrom phangorn phyDat
+#' @importFrom TreeTools Renumber RenumberTips
 #' @export
 Fitch <- function (tree, dataset) {
   tree <- RenumberTips(Renumber(tree), names(dataset))
@@ -44,15 +45,16 @@ Fitch <- function (tree, dataset) {
 #' @return A vector listing the contribution of each character to tree score,
 #'         according to the algorithm of Brazeau, Guillerme and Smith (2019).
 #'
-#' @examples {
-#  data('inapplicable.datasets')
-#  dataset <- inapplicable.phyData[[12]]
-#  tree <- NJTree(dataset)
-#' }
+#' @examples
+#' data('inapplicable.datasets')
+#' dataset <- inapplicable.phyData[[12]]
+#' tree <- TreeTools::NJTree(dataset)
+#' CharacterLength(tree, dataset)
 #'
 #' @family tree scoring
 #' @references
 #'  \insertRef{Brazeau2018}{TreeSearch}
+#' @importFrom TreeTools Renumber RenumberTips
 #' @export
 CharacterLength <- function (tree, dataset) {
   if (class(dataset) != 'phyDat') {
@@ -80,7 +82,6 @@ FitchSteps <- function (tree, dataset) {
   CharacterLength(tree, dataset)
 }
 
-
 #' @describeIn CharacterLength Do not perform checks.  Use with care: may cause
 #' erroneous results or  software crash if variables are in the incorrect format.
 FastCharacterLength <- function (tree, dataset) {
@@ -91,12 +92,6 @@ FastCharacterLength <- function (tree, dataset) {
   
   # Return:
   vapply(morphyObjects, MorphyTreeLength, tree=tree, integer(1))
-}
-
-#' @rdname CharacterLength
-FitchSteps <- function (tree, dataset) {
-  .Deprecated(CharacterLength)
-  CharacterLength(tree, dataset)
 }
 
 #' Calculate parsimony score with inapplicable data
@@ -120,9 +115,10 @@ MorphyTreeLength <- function (tree, morphyObj) {
   }
   treeOrder <- attr(tree, 'order')
   inPostorder <- (!is.null(treeOrder) && treeOrder == "postorder")
-  tree.edge <- tree$edge
+  treeEdge <- tree$edge
+
   # Return:
-  MorphyLength(tree.edge[, 1], tree.edge[, 2], morphyObj, inPostorder, nTaxa)
+  MorphyLength(treeEdge[, 1], treeEdge[, 2], morphyObj, inPostorder, nTaxa)
 }
 
 #' @describeIn MorphyTreeLength Faster function that requires internal tree
@@ -131,13 +127,14 @@ MorphyTreeLength <- function (tree, morphyObj) {
 #' @template treeChild
 #' @author Martin R. Smith
 #' @keywords internal
+#' @importFrom TreeTools PostorderEdges
 #' @export
-MorphyLength <- function (parent, child, morphyObj, inPostorder=FALSE, 
-                          nTaxa=mpl_get_numtaxa(morphyObj)) {
+MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
+                          nTaxa = mpl_get_numtaxa(morphyObj)) {
   if (!inPostorder) {
-    edgeList <- PostorderEdges(parent, child, nTaxa=nTaxa)
-    parent <- edgeList[[1]]
-    child <- edgeList[[2]]
+    edgeList <- PostorderEdges(cbind(parent, child))
+    parent <- edgeList[, 1]
+    child <- edgeList[, 2]
   }
   if (nTaxa < 1L) stop("Error: ", mpl_translate_error(nTaxa))
   if (class(morphyObj) != 'morphyPtr') {

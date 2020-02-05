@@ -166,7 +166,7 @@
 #######'
 #######''
 #######' @template treeParam 
-#######' @param dataset a dataset in the format required by TreeScorer.
+#######' @param dataset a dataset in the format required by `TreeScorer()`.
 #######' @template InitializeDataParam
 #######' @template CleanUpDataParam
 #######' @template treeScorerParam
@@ -194,8 +194,8 @@
 #######' @seealso \code{\link{MorphyRatchet}}
 #######' 
 #######' @examples
-#######' data('Lobo')
-#######' njtree <- NJTree(Lobo.phy)
+#######' data('Lobo', package='TreeTools')
+#######' njtree <- TreeTools::NJTree(Lobo.phy)
 #######'
 #######' \dontrun{
 #######' SectorialSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=NNISwap,
@@ -219,8 +219,8 @@
 ######  # initialize tree and data
 ######  if (dim(tree$edge)[1] != 2 * tree$Nnode) stop("tree must be bifurcating; try rooting with ape::root")
 ######  tree <- RenumberTips(tree, names(dataset))
-######  edgeList <- MatrixToList(tree$edge)
-######  edgeList <- RenumberEdges(edgeList[[1]], edgeList[[2]])
+######  edgeList <- tree$edge
+######  edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 ######  
 ######  initializedData <- InitializeData(dataset)
 ######  on.exit(initializedData <- CleanUpData(initializedData))
@@ -248,7 +248,7 @@
 ######                             verbosity = verbosity - 1L)
 ######  
 ######  if (edgeList[[3]] <= bestScore) {
-######    sect$edge <- ListToMatrix(edgeList)
+######    sect$edge <- cbind(edgeList[[1]], edgeList[[2]])
 ######    attr(sect, 'score') <- edgeList[[3]]
 ######    attr(sect, 'hits') <- edgeList[[4]]
 ######    # Return:

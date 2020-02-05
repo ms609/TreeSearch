@@ -6,20 +6,23 @@
 #' @param jackIter Integer specifying number of jackknife iterations to conduct
 #' @return a list of trees recovered after jackknife iterations
 #' @author Martin R. Smith
+#' @importFrom TreeTools RenumberEdges RenumberTips
+#' @seealso 
+#' [`JackLabels()`]: Label nodes of a tree with jackknife supports.
 #' @export
 Jackknife <- function (tree, dataset, resampleFreq = 2/3,
                        InitializeData = PhyDat2Morphy,
                        CleanUpData    = UnloadMorphy,
                        TreeScorer     = MorphyLength,
                        EdgeSwapper    = TBRSwap,
-                       jackIter = 5000,
-                       searchIter = 4000, searchHits = 42,
+                       jackIter   = 5000L,
+                       searchIter = 4000L, searchHits = 42L,
                        verbosity = 1L, ...) {
   # initialize tree and data
   if (dim(tree$edge)[1] != 2 * tree$Nnode) stop("tree must be bifurcating; try rooting with ape::root")
   tree <- RenumberTips(tree, names(dataset))
-  edgeList <- MatrixToList(tree$edge)
-  edgeList <- RenumberEdges(edgeList[[1]], edgeList[[2]])
+  edgeList <- tree$edge
+  edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
   
   morphyObj <- InitializeData(dataset)
   on.exit(morphyObj <- CleanUpData(morphyObj))
@@ -60,7 +63,42 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
   
   jackTrees <- structure(apply(jackEdges, 2, function(edgeList) {
     ret <- tree
-    ret$edge <- ListToMatrix(edgeList)
+    ret$edge <- cbind(edgeList[[1]], edgeList[[2]])
     ret
   }), class = 'multiPhylo')
+}
+
+
+#' Label nodes with jackknife support values
+#' 
+#' @template treeParam
+#' @param jackTrees A list or `multiPhylo` object containing trees generated
+#' by [`Jackknife()`].
+#' @param add Logical specifying whether to add the labels to an existing
+#' plot.
+#' @param adj,col,frame,pos,\dots Parameters to pass to `nodelabels`.
+#' 
+#' @return A named vector specifying the proportion of jackknife trees 
+#' consistent with each node in `tree`, as plotted.
+#' 
+#' @examples
+#' library('TreeTools') # for as.phylo
+#' JackLabels(as.phylo(0, 8), as.phylo(1:100, 8))
+#' 
+#' @template MRS
+#' @importFrom ape nodelabels
+#' @importFrom TreeTools SplitFrequency SupportColour
+#' @export
+JackLabels <- function (tree, jackTrees, add = FALSE,
+                        adj = 0, col = NULL, frame = 'none', pos = 2L, ...) {
+  jackSupport <- SplitFrequency(tree, jackTrees) / length(jackTrees)
+  
+  if (!add) plot(tree)
+  if (is.null(col)) col <- SupportColour(jackSupport)
+  ape::nodelabels(paste('\n\n', signif(jackSupport, 2)), 
+                  node = as.integer(names(jackSupport)),
+                  adj = adj, col = col, pos = pos, frame = frame, ...)
+  
+  # Return:
+  jackSupport
 }

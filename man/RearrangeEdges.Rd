@@ -33,8 +33,8 @@ and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRS
 \item{verbosity}{Level of detail to display in console: larger numbers provide
 more verbose feedback to the user.}
 
-\item{\dots}{further arguments to pass to \code{TreeScorer} function
-(e.g. \code{\link{TipsAreColumns}}, \code{dataset})}
+\item{\dots}{further arguments to pass to \code{TreeScorer()}
+(e.g. \code{\link{TipsAreColumns}}, \code{dataset}).}
 }
 \value{
 This function returns a list with two to four elements, corresponding to a binary tree:
@@ -55,8 +55,8 @@ It also reports the number of times that this score was hit in the
 current function call.
 }
 \examples{
-data('Lobo')
-random.tree <- RandomTree(Lobo.phy)
+data('Lobo', package='TreeTools')
+random.tree <- TreeTools::RandomTree(Lobo.phy)
 edge <- random.tree$edge
 parent <- edge[, 1]
 child <- edge[, 2]
