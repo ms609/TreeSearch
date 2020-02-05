@@ -1,0 +1,276 @@
+{
+  "@context": ["https://doi.org/10.5063/schema/codemeta-2.0", "http://schema.org"],
+  "@type": "SoftwareSourceCode",
+  "identifier": "TreeSearch",
+  "description": "Searches for phylogenetic trees that are optimal using a \n  user-defined criterion. \n  Handles inapplicable data using the algorithm of \n  Brazeau, Guillerme and Smith (2019) <doi:10.1093/sysbio/syy083>.\n  Implements Profile Parsimony (Faith and Trueman, 2001) \n  <doi:10.1080/10635150118627>, and Successive Approximations (Farris, 1969) \n  <doi:10.2307/2412182>.",
+  "name": "TreeSearch: Phylogenetic Tree Search Using Custom Optimality Criteria",
+  "codeRepository": "https://github.com/ms609/TreeSearch",
+  "relatedLink": ["https://ms609.github.io/TreeSearch", "https://CRAN.R-project.org/package=TreeSearch"],
+  "issueTracker": "https://github.com/ms609/TreeSearch/issues",
+  "license": "https://spdx.org/licenses/GPL-3.0",
+  "version": "0.4.0",
+  "programmingLanguage": {
+    "@type": "ComputerLanguage",
+    "name": "R",
+    "version": "3.5.3",
+    "url": "https://r-project.org"
+  },
+  "runtimePlatform": "R version 3.5.3 (2019-03-11)",
+  "provider": {
+    "@id": "https://cran.r-project.org",
+    "@type": "Organization",
+    "name": "Comprehensive R Archive Network (CRAN)",
+    "url": "https://cran.r-project.org"
+  },
+  "author": [
+    {
+      "@type": "Person",
+      "givenName": "Martin R.",
+      "familyName": "Smith",
+      "email": "martin.smith@durham.ac.uk",
+      "@id": "https://orcid.org/0000-0001-5660-1727"
+    }
+  ],
+  "contributor": {},
+  "copyrightHolder": [
+    {
+      "@type": "Person",
+      "givenName": "Martin R.",
+      "familyName": "Smith",
+      "email": "martin.smith@durham.ac.uk",
+      "@id": "https://orcid.org/0000-0001-5660-1727"
+    },
+    {
+      "@type": "Person",
+      "givenName": "Martin",
+      "familyName": "Brazeau",
+      "@id": "https://orcid.org/0000-0002-0650-1282"
+    }
+  ],
+  "funder": {},
+  "maintainer": [
+    {
+      "@type": "Person",
+      "givenName": "Martin R.",
+      "familyName": "Smith",
+      "email": "martin.smith@durham.ac.uk",
+      "@id": "https://orcid.org/0000-0001-5660-1727"
+    }
+  ],
+  "softwareSuggestions": [
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "knitr",
+      "name": "knitr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=knitr"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "rmarkdown",
+      "name": "rmarkdown",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=rmarkdown"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "shiny",
+      "name": "shiny",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=shiny"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "testthat",
+      "name": "testthat",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=testthat"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "xlsx",
+      "name": "xlsx",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=xlsx"
+    }
+  ],
+  "softwareRequirements": [
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "R",
+      "name": "R",
+      "version": ">= 3.5.0"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "ape",
+      "name": "ape",
+      "version": ">= 5.0",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=ape"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "phangorn",
+      "name": "phangorn",
+      "version": ">= 2.2.1",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=phangorn"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "R.cache",
+      "name": "R.cache",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=R.cache"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "Rdpack",
+      "name": "Rdpack",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=Rdpack"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "stats",
+      "name": "stats"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "TreeTools",
+      "name": "TreeTools",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=TreeTools"
+    }
+  ],
+  "releaseNotes": "https://github.com/ms609/TreeSearch/blob/master/NEWS.md",
+  "readme": "https://github.com/ms609/TreeSearch/blob/master/README.md",
+  "fileSize": "380.088KB",
+  "contIntegration": ["https://travis-ci.org/ms609/TreeSearch", "https://codecov.io/gh/ms609/TreeSearch"],
+  "developmentStatus": "http://www.repostatus.org/#active",
+  "keywords": ["tree-search", "phangorn", "phylogenetics", "morphological-analysis", "research-tool", "bioinformatics"],
+  "citation": [
+    {
+      "@type": "ScholarlyArticle",
+      "datePublished": "2019",
+      "author": [
+        {
+          "@type": "Person",
+          "givenName": ["Martin", "D."],
+          "familyName": "Brazeau"
+        },
+        {
+          "@type": "Person",
+          "givenName": "Thomas",
+          "familyName": "Guillerme"
+        },
+        {
+          "@type": "Person",
+          "givenName": ["Martin", "R."],
+          "familyName": "Smith"
+        }
+      ],
+      "name": "An algorithm for morphological phylogenetic analysis with inapplicable data",
+      "paginiation": "619-631",
+      "isPartOf": {
+        "@type": "PublicationIssue",
+        "datePublished": "2019",
+        "isPartOf": {
+          "@type": ["PublicationVolume", "Periodical"],
+          "volumeNumber": "64",
+          "name": "Systematic Biology"
+        }
+      }
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "datePublished": "2018",
+      "author": [
+        {
+          "@type": "Person",
+          "givenName": ["Martin", "R."],
+          "familyName": "Smith"
+        }
+      ],
+      "name": "TreeSearch: phylogenetic tree search using custom optimality criteria",
+      "identifier": "10.5281/zenodo.1042590",
+      "description": "R package version ",
+      "@id": "https://doi.org/10.5281/zenodo.1042590",
+      "sameAs": "https://doi.org/10.5281/zenodo.1042590"
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "datePublished": "2017",
+      "author": [
+        {
+          "@type": "Person",
+          "givenName": ["Martin", "D."],
+          "familyName": "Brazeau"
+        },
+        {
+          "@type": "Person",
+          "givenName": ["Martin", "R."],
+          "familyName": "Smith"
+        },
+        {
+          "@type": "Person",
+          "givenName": "Thomas",
+          "familyName": "Guillerme"
+        }
+      ],
+      "name": "MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability",
+      "description": "Version 0.0.1-alpha"
+    }
+  ]
+}

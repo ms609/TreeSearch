@@ -1,29 +1,22 @@
-# TreeSearch 0.3.2.9009 (development)
-
-## Changes
- - Move tree utility functions to `TreeTrunk`
-
-# TreeSearch 0.3.2.9008 (development)
+# TreeSearch 0.4.0
 
 ## New features
  - `PhyDatToMatrix`, complementing `MatrixToPhyDat`
- - `NPartitions`, `TreeIsRooted`
  - Documentation with `pkgdown`
  
 ## Changes
- - Move tree distance measures to separate package `TreeDist`
+ - Move tree distance measures to new package `TreeDist`
+ - Move tree utility functions to new package `TreeTrunk`
  - Rename functions `MinimumSteps`→`MinimumLength` and 
    `FitchSteps`→`CharacterLength`
 
 ## Enhancements
- - `ReadTntTree` supports named taxa (with `taxname=`)
  - Improve speed of tests (by increasing probability of false positives)
  - Use `message` in place of `cat`, to allow use of `suppressMessages()`
 
 
 # TreeSearch 0.3.2
 
-## Enhancements
  - Improve text, content and build speed of vignettes
 
 
@@ -54,7 +47,6 @@
 
 # TreeSearch 0.2.2
 
-## Bug fixes 
  - Correct vignette titles
 
 
@@ -102,7 +94,6 @@
 
 # TreeSearch 0.1.2
 
-## Bug fixes
 - Update MorphyLib library to fix C warnings
 - Remove non-ASCII characters from data
 - Disable slow-building and problematic vignette
