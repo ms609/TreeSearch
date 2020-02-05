@@ -27,7 +27,8 @@ Alternatively, set to \code{-1} to return a complete list
 of all trees one step from the input tree.}
 }
 \value{
-a list of edge matrices for all trees one SPR rearrangement from the starting tree
+\code{AllSPR()} returns a list of edge matrices for all trees one SPR
+rearrangement from the starting tree
 }
 \description{
 All SPR trees

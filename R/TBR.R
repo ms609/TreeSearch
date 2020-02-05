@@ -49,7 +49,7 @@ TBRWarning <- function (parent, child, error) {
 #' TBR(tree)
 #' }
 #' @importFrom ape root
-#' @importFrom TreeTools DescendantEdges
+#' @importFrom TreeTools DescendantEdges Preorder
 #' @export
 TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
   if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
@@ -208,6 +208,7 @@ TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mer
 #' @param retainRoot logical specifying whether taxa may be swapped across the root
 #' @return a matrix with two columns, each row listing an edge that can be broken
 #'         and an edge into which it can be merged
+#' @importFrom TreeTools AllDescendantEdges
 #' @export
 TBRMoves <- function(parent, child, nEdge = length(parent), avoid=NULL, retainRoot=FALSE) {
   if (nEdge < 5) stop("No TBR rearrangements possible on a tree with < 5 edges")
@@ -278,9 +279,12 @@ attr(AllTBR, 'stopAtPeak') <- TRUE
 
 #' Rooted TBR 
 #' @describeIn TBR Perform \acronym{TBR} rearrangement, retaining position of root
+#' @importFrom TreeTools Preorder
 #' @export
 RootedTBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
-  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') tree <- Preorder(tree)
+  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
+    tree <- Preorder(tree)
+  }
   edge   <- tree$edge
   edgeList <- RootedTBRSwap(edge[, 1], edge[, 2], 
                             edgeToBreak=edgeToBreak, mergeEdges=mergeEdges)

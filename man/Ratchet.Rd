@@ -152,6 +152,14 @@ is too low in some circumstances (Smith, 2019).}
 a list of trees recovered after jackknife iterations
 
 This function returns a tree modified by parsimony ratchet iterations.
+
+\code{MultiRatchet()} returns a list of optimal trees
+produced by \code{nSearch}
+ratchet searches, from which a consensus tree can be generated using
+\link[ape:consensus]{ape::consensus} or \link[TreeTools:ConsensusWithout]{TreeTools::ConsensusWithout}.
+
+\code{IWMultiRatchet} returns a list of optimal trees produced by \code{nSearch}
+Ratchet searches, using implied weighting.
 }
 \description{
 \code{Ratchet} uses the parsimony ratchet (Nixon 1999) to search for a more parsimonious tree.
@@ -165,13 +173,6 @@ let me know and I'll make the function more general.
 \item \code{ProfileRatchet}: Shortcut for Ratchet search under Profile Parsimony
 
 \item \code{IWRatchet}: Shortcut for Ratchet search using implied weights
-
-\item \code{MultiRatchet}: returns a list of optimal trees produced by nSearch
-Ratchet searches, from which a consensus tree can be generated using
-\link[ape:consensus]{ape::consensus} or \link[TreeTools:ConsensusWithout]{TreeTools::ConsensusWithout}.
-
-\item \code{IWMultiRatchet}: returns a list of optimal trees produced by nSearch
-Ratchet searches, using implied weighting
 
 \item \code{RatchetConsensus}: deprecated alias for MultiRatchet
 

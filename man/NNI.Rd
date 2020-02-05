@@ -61,7 +61,7 @@ All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collap
 }}
 
 \examples{
-tree <- ape::rtree(20, br=NULL)
+tree <- ape::rtree(20, br = NULL)
 NNI(tree)
 NNI(tree, edgeToBreak = -1)
 
