@@ -182,13 +182,13 @@ within a tree search function.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>parent</th>
-      <td><p>the first column of the edge matrix of a tree of class
-<code>phylo</code>, i.e. <code>tree$edge[, 1]</code></p></td>
+      <td><p>Integer vector corresponding to the first column of the edge
+matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 1]</code>.</p></td>
     </tr>
     <tr>
       <th>child</th>
-      <td><p>the second column of the edge matrix of a tree of class
-<code>phylo</code>, i.e. <code>tree$edge[, 2]</code></p></td>
+      <td><p>Integer vector corresponding to the second column of the edge
+matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 2]</code>.</p></td>
     </tr>
     <tr>
       <th>dataset</th>
@@ -203,8 +203,7 @@ The function will be passed three parameters, corresponding to the
     <tr>
       <th>EdgeSwapper</th>
       <td><p>a function that rearranges a parent and child vector,
-and returns a list with modified vectors; for example
-<code><a href='SPR.html'>SPRSwap</a></code>.</p></td>
+and returns a list with modified vectors; for example <code><a href='SPR.html'>SPRSwap()</a></code>.</p></td>
     </tr>
     <tr>
       <th>scoreToBeat</th>

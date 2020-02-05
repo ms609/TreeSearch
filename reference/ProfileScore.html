@@ -42,7 +42,8 @@
 
 
 <meta property="og:title" content="Profile Parsimony Score — IWScoreMorphy" />
-<meta property="og:description" content="Calculate a tree's Profile Parsimony score with a given dataset, after Faith and Trueman (2001)" />
+<meta property="og:description" content="Calculate a tree's Profile Parsimony score with a given dataset, after
+Faith and Trueman (2001)." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -157,7 +158,8 @@
     </div>
 
     <div class="ref-description">
-    <p>Calculate a tree's Profile Parsimony score with a given dataset, after Faith and Trueman (2001)</p>
+    <p>Calculate a tree's Profile Parsimony score with a given dataset, after
+Faith and Trueman (2001).</p>
     </div>
 
     <pre class="usage"><span class='fu'>IWScoreMorphy</span>(
@@ -182,13 +184,13 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>parent</th>
-      <td><p>the first column of the edge matrix of a tree of class
-<code>phylo</code>, i.e. <code>tree$edge[, 1]</code></p></td>
+      <td><p>Integer vector corresponding to the first column of the edge
+matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 1]</code>.</p></td>
     </tr>
     <tr>
       <th>child</th>
-      <td><p>the second column of the edge matrix of a tree of class
-<code>phylo</code>, i.e. <code>tree$edge[, 2]</code></p></td>
+      <td><p>Integer vector corresponding to the second column of the edge
+matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 2]</code>.</p></td>
     </tr>
     <tr>
       <th>dataset</th>
@@ -250,8 +252,8 @@ doi: <a href='https://doi.org/10.1080/10635150118627'>10.1080/10635150118627</a>
   <span class='co'># In actual use, the dataset should be prepared with a much higher</span>
   <span class='co'># precision: try 1e+06?</span>
   <span class='co'># Of course, gaining higher precision takes substantially longer.</span>
-  <span class='no'>dataset</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='PrepareDataProfile.html'>PrepareDataProfile</a></span>(<span class='no'>congreveLamsdellMatrices</span><span class='kw'>[[</span><span class='fl'>42</span>]],
-                                <span class='kw'>precision</span> <span class='kw'>=</span> <span class='fl'>1e+03</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: Will truncate number of iterations at maxIter = 1000</span></div><div class='output co'>#&gt; <span class='message'>  Token count 418 = 11.7 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Will truncate number of iterations at maxIter = 1000</span></div><div class='output co'>#&gt; <span class='message'>  Token count 517 = 14 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Will truncate number of iterations at maxIter = 1000</span></div><div class='output co'>#&gt; <span class='message'>  Token count 1012 = 19.4 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Will truncate number of iterations at maxIter = 1000</span></div><div class='output co'>#&gt; <span class='message'>  Token count 319 = 8.91 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Will truncate number of iterations at maxIter = 1000</span></div><div class='output co'>#&gt; <span class='message'>  Token count 814 = 18.2 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Will truncate number of iterations at maxIter = 1000</span></div><div class='output co'>#&gt; <span class='message'>  Token count 913 = 18.9 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Will truncate number of iterations at maxIter = 1000</span></div><div class='output co'>#&gt; <span class='message'>  Token count 1111 = 19.5 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Will truncate number of iterations at maxIter = 1000</span></div><div class='output co'>#&gt; <span class='message'>  Token count 715 = 17.1 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Will truncate number of iterations at maxIter = 1000</span></div><div class='output co'>#&gt; <span class='message'>  Token count 616 = 15.7 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='message'>  Token count 220 = 5.29 bits @ 0 extra steps; simulating 975 trees to estimate cost of further steps.</span></div><div class='input'>  <span class='fu'>ProfileScore</span>(<span class='no'>referenceTree</span>, <span class='no'>dataset</span>)</div><div class='output co'>#&gt; [1] -206.3035</div><div class='input'>
+  <span class='no'>dataset</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/warning.html'>suppressWarnings</a></span>(
+    <span class='fu'><a href='PrepareDataProfile.html'>PrepareDataProfile</a></span>(<span class='no'>congreveLamsdellMatrices</span><span class='kw'>[[</span><span class='fl'>42</span>]], <span class='kw'>precision</span> <span class='kw'>=</span> <span class='fl'>1e+03</span>))</div><div class='output co'>#&gt; <span class='message'>  Token count 418 = 11.7 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='message'>  Token count 517 = 14 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='message'>  Token count 1012 = 19.4 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='message'>  Token count 319 = 8.91 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='message'>  Token count 814 = 18.2 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='message'>  Token count 913 = 18.9 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='message'>  Token count 1111 = 19.5 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='message'>  Token count 715 = 17.1 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='message'>  Token count 616 = 15.7 bits @ 0 extra steps; simulating 1000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt; <span class='message'>  Token count 220 = 5.29 bits @ 0 extra steps; simulating 975 trees to estimate cost of further steps.</span></div><div class='input'>  <span class='fu'>ProfileScore</span>(<span class='no'>referenceTree</span>, <span class='no'>dataset</span>)</div><div class='output co'>#&gt; [1] -206.3035</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

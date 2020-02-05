@@ -247,8 +247,7 @@ is too low in some circumstances (Smith, 2019).</p></td>
     <tr>
       <th>EdgeSwapper</th>
       <td><p>a function that rearranges a parent and child vector,
-and returns a list with modified vectors; for example
-<code><a href='SPR.html'>SPRSwap</a></code>.</p></td>
+and returns a list with modified vectors; for example <code><a href='SPR.html'>SPRSwap()</a></code>.</p></td>
     </tr>
     <tr>
       <th>maxIter</th>
@@ -291,7 +290,7 @@ The function will be passed three parameters, corresponding to the
       <td><p>Logical specifying whether to terminate search once a subsequent
 iteration recovers a sub-optimal score. Useful with methods that
 return all trees one rearrangement from the current tree, such
-as <code><a href='TBR.html'>AllTBR</a></code>.  Will be overridden if a passed function
+as <code><a href='TBR.html'>AllTBR()</a></code>.  Will be overridden if a passed function
 has an attribute <code>stopAtPeak</code> set by
 <code>attr(FunctionName, 'stopAtPeak') &lt;- TRUE</code>.</p></td>
     </tr>
@@ -299,22 +298,21 @@ has an attribute <code>stopAtPeak</code> set by
       <th>stopAtPlateau</th>
       <td><p>Integer. If &gt; 0, tree search will terminate if the score
 has not improved after <code>stopAtPlateau</code> iterations.
-Useful with methods that return all trees one
-rearrangement from the current tree, such as
-<code><a href='TBR.html'>AllTBR</a></code>.
-Will be overridden if a passed function has an attribute
-<code>stopAtPlateau</code> set by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
+Useful with methods that return all trees one rearrangement from the current
+tree, such as <code><a href='TBR.html'>AllTBR()</a></code>.
+Will be overridden if a passed function has an attribute <code>stopAtPlateau</code> set
+by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
     </tr>
     <tr>
       <th>InitializeData</th>
       <td><p>Function that sets up data object to prepare for tree search.
-The function will be passed the <kbd>dataset</kbd> parameter.
+The function will be passed the <code>dataset</code> parameter.
 Its return value will be passed to <code>TreeScorer()</code> and <code>CleanUpData()</code>.</p></td>
     </tr>
     <tr>
       <th>CleanUpData</th>
       <td><p>Function to destroy data object on function exit.
-The function will be passed the value returned by <kbd>InitializeData</kbd>.</p></td>
+The function will be passed the value returned by <code>InitializeData()</code>.</p></td>
     </tr>
     </table>
 

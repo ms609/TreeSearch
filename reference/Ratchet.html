@@ -317,13 +317,13 @@
     <tr>
       <th>InitializeData</th>
       <td><p>Function that sets up data object to prepare for tree search.
-The function will be passed the <kbd>dataset</kbd> parameter.
+The function will be passed the <code>dataset</code> parameter.
 Its return value will be passed to <code>TreeScorer()</code> and <code>CleanUpData()</code>.</p></td>
     </tr>
     <tr>
       <th>CleanUpData</th>
       <td><p>Function to destroy data object on function exit.
-The function will be passed the value returned by <kbd>InitializeData</kbd>.</p></td>
+The function will be passed the value returned by <code>InitializeData()</code>.</p></td>
     </tr>
     <tr>
       <th>TreeScorer</th>
@@ -334,8 +334,7 @@ The function will be passed three parameters, corresponding to the
     <tr>
       <th>EdgeSwapper</th>
       <td><p>a function that rearranges a parent and child vector,
-and returns a list with modified vectors; for example
-<code><a href='SPR.html'>SPRSwap</a></code>.</p></td>
+and returns a list with modified vectors; for example <code><a href='SPR.html'>SPRSwap()</a></code>.</p></td>
     </tr>
     <tr>
       <th>jackIter</th>
@@ -399,7 +398,7 @@ search, perhaps to analyse consensus.</p></td>
       <td><p>Logical specifying whether to terminate search once a subsequent
 iteration recovers a sub-optimal score. Useful with methods that
 return all trees one rearrangement from the current tree, such
-as <code><a href='TBR.html'>AllTBR</a></code>.  Will be overridden if a passed function
+as <code><a href='TBR.html'>AllTBR()</a></code>.  Will be overridden if a passed function
 has an attribute <code>stopAtPeak</code> set by
 <code>attr(FunctionName, 'stopAtPeak') &lt;- TRUE</code>.</p></td>
     </tr>
@@ -407,11 +406,10 @@ has an attribute <code>stopAtPeak</code> set by
       <th>stopAtPlateau</th>
       <td><p>Integer. If &gt; 0, tree search will terminate if the score
 has not improved after <code>stopAtPlateau</code> iterations.
-Useful with methods that return all trees one
-rearrangement from the current tree, such as
-<code><a href='TBR.html'>AllTBR</a></code>.
-Will be overridden if a passed function has an attribute
-<code>stopAtPlateau</code> set by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
+Useful with methods that return all trees one rearrangement from the current
+tree, such as <code><a href='TBR.html'>AllTBR()</a></code>.
+Will be overridden if a passed function has an attribute <code>stopAtPlateau</code> set
+by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
     </tr>
     <tr>
       <th>ratchIter</th>
@@ -489,16 +487,28 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='JackLabels.html'>JackLabels()</a></code>: Label nodes of a tree with jackknife supports.</p>
-<p><code><a href='TreeSearch.html'>TreeSearch</a></code></p>
-<p>Adapted from <code><a href='https://rdrr.io/pkg/phangorn/man/parsimony.html'>pratchet</a></code> in the
-<span class="pkg">phangorn</span> package.</p></div>
+    <div class='dont-index'>
+<ul>
+<li><p><code><a href='JackLabels.html'>JackLabels()</a></code>: Label nodes of a tree with jackknife supports.</p></li>
+</ul>
+
+<ul>
+<li><p><code><a href='TreeSearch.html'>TreeSearch()</a></code></p></li>
+<li><p>Adapted from <code><a href='https://rdrr.io/pkg/phangorn/man/parsimony.html'>pratchet</a></code> in the
+<span class="pkg">phangorn</span> package.</p></li>
+</ul>
+</div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>, <span class='kw'>package</span><span class='kw'>=</span><span class='st'>'TreeTools'</span>)
 <span class='no'>njtree</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>TreeTools</span><span class='kw ns'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span>(<span class='no'>Lobo.phy</span>)
 <span class='co'># Increase value of ratchIter and searchHits to do a proper search</span>
-<span class='no'>quickResult</span> <span class='kw'>&lt;-</span> <span class='fu'>Ratchet</span>(<span class='no'>njtree</span>, <span class='no'>Lobo.phy</span>, <span class='kw'>ratchIter</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>3</span>)</div><div class='output co'>#&gt; <span class='message'>* Beginning Parsimony Ratchet, with initial score 239</span></div><div class='output co'>#&gt; <span class='message'>Completed parsimony ratchet after 2 iterations with score 231</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/graphics/plot.html'>plot</a></span>(<span class='no'>quickResult</span>)</div><div class='img'><img src='Ratchet-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='co'># IW search is currently much slower:</span>
+<span class='no'>quickResult</span> <span class='kw'>&lt;-</span> <span class='fu'>Ratchet</span>(<span class='no'>njtree</span>, <span class='no'>Lobo.phy</span>, <span class='kw'>ratchIter</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>3</span>)</div><div class='output co'>#&gt; <span class='message'>* Beginning Parsimony Ratchet, with initial score 239</span></div><div class='output co'>#&gt; <span class='message'>Completed parsimony ratchet after 2 iterations with score 231</span></div><div class='input'>
+<span class='co'># Plot result (legibly)</span>
+<span class='no'>oldPar</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span>(<span class='kw'>mar</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>0</span>, <span class='fl'>4</span>), <span class='kw'>cex</span> <span class='kw'>=</span> <span class='fl'>0.75</span>)
+<span class='fu'><a href='https://rdrr.io/r/graphics/plot.html'>plot</a></span>(<span class='no'>quickResult</span>)</div><div class='img'><img src='Ratchet-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span>(<span class='no'>oldPar</span>)
+
+<span class='co'># IW search is currently much slower:</span>
 <span class='no'>quickIWResult</span> <span class='kw'>&lt;-</span> <span class='fu'>IWRatchet</span>(<span class='no'>quickResult</span>, <span class='no'>Lobo.phy</span>, <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>2.5</span>,
                            <span class='kw'>ratchIter</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>searchIter</span> <span class='kw'>=</span> <span class='fl'>25</span>, <span class='kw'>searchHits</span> <span class='kw'>=</span> <span class='fl'>2</span>,
                            <span class='kw'>swappers</span> <span class='kw'>=</span> <span class='no'>RootedTBRSwap</span>, <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>5</span>)</div><div class='output co'>#&gt; <span class='message'>* Using implied weighting with concavity constant k = 2.5</span></div><div class='output co'>#&gt; <span class='message'>* Beginning Parsimony Ratchet, with initial score 231</span></div><div class='output co'>#&gt; <span class='message'></span>

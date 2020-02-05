@@ -206,14 +206,13 @@
     </tr>
     <tr>
       <th>morphyObj</th>
-      <td><p>A morphy object, perhaps created with
-<code><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a></code>.</p></td>
+      <td><p>Object of class <code>morphy</code>, perhaps created with
+<code><a href='PhyDat2Morphy.html'>PhyDat2Morphy()</a></code>.</p></td>
     </tr>
     <tr>
       <th>EdgeSwapper</th>
       <td><p>a function that rearranges a parent and child vector,
-and returns a list with modified vectors; for example
-<code><a href='SPR.html'>SPRSwap</a></code>.</p></td>
+and returns a list with modified vectors; for example <code><a href='SPR.html'>SPRSwap()</a></code>.</p></td>
     </tr>
     <tr>
       <th>maxIter</th>
@@ -233,7 +232,7 @@ more verbose feedback to the user.</p></td>
       <td><p>Logical specifying whether to terminate search once a subsequent
 iteration recovers a sub-optimal score. Useful with methods that
 return all trees one rearrangement from the current tree, such
-as <code><a href='TBR.html'>AllTBR</a></code>.  Will be overridden if a passed function
+as <code><a href='TBR.html'>AllTBR()</a></code>.  Will be overridden if a passed function
 has an attribute <code>stopAtPeak</code> set by
 <code>attr(FunctionName, 'stopAtPeak') &lt;- TRUE</code>.</p></td>
     </tr>
@@ -241,15 +240,14 @@ has an attribute <code>stopAtPeak</code> set by
       <th>stopAtPlateau</th>
       <td><p>Integer. If &gt; 0, tree search will terminate if the score
 has not improved after <code>stopAtPlateau</code> iterations.
-Useful with methods that return all trees one
-rearrangement from the current tree, such as
-<code><a href='TBR.html'>AllTBR</a></code>.
-Will be overridden if a passed function has an attribute
-<code>stopAtPlateau</code> set by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
+Useful with methods that return all trees one rearrangement from the current
+tree, such as <code><a href='TBR.html'>AllTBR()</a></code>.
+Will be overridden if a passed function has an attribute <code>stopAtPlateau</code> set
+by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>further parameters to send to <code>TreeScorer</code></p></td>
+      <td><p>further parameters to send to <code>TreeScorer()</code></p></td>
     </tr>
     <tr>
       <th>dataset</th>
