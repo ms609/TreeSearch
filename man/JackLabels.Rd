@@ -26,6 +26,7 @@ consistent with each node in \code{tree}, as plotted.
 Label nodes with jackknife support values
 }
 \examples{
+library('TreeTools') # for as.phylo
 JackLabels(as.phylo(0, 8), as.phylo(1:100, 8))
 
 }
