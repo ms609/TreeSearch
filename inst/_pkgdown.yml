@@ -64,8 +64,9 @@ reference:
     desc: "Miscellaneous functions to simplify or expedite basic functionality."
     contents:
       - AsBinary
-      - MinimumSteps
+      - JackLabels
       - LogisticPoints
+      - MinimumSteps
       - PrepareDataProfile
       - RandomMorphyTree
       - UnloadTreeSearch

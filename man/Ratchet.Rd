@@ -13,8 +13,8 @@
 \usage{
 Jackknife(tree, dataset, resampleFreq = 2/3,
   InitializeData = PhyDat2Morphy, CleanUpData = UnloadMorphy,
-  TreeScorer = MorphyLength, EdgeSwapper = TBRSwap, jackIter = 5000,
-  searchIter = 4000, searchHits = 42, verbosity = 1L, ...)
+  TreeScorer = MorphyLength, EdgeSwapper = TBRSwap, jackIter = 5000L,
+  searchIter = 4000L, searchHits = 42L, verbosity = 1L, ...)
 
 Ratchet(tree, dataset, InitializeData = PhyDat2Morphy,
   CleanUpData = UnloadMorphy, TreeScorer = MorphyLength,
@@ -198,6 +198,8 @@ quickIWResult <- IWRatchet(quickResult, Lobo.phy, concavity=2.5,
 }
 }
 \seealso{
+\code{\link[=JackLabels]{JackLabels()}}: Label nodes of a tree with jackknife supports.
+
 \code{\link{TreeSearch}}
 
 Adapted from \code{\link[phangorn:parsimony]{pratchet}} in the

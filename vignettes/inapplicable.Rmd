@@ -172,15 +172,10 @@ Clade support can be generated using Jackknife resampling:
 
 ```{r Jackknife-annotations}
 jack.trees <- Jackknife(best.tree, my.phyDat, EdgeSwapper = RootedTBRSwap,
-                        jackIter = 25, verbosity = 0)
+                        jackIter = 20, verbosity = 0)
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-plot(strict.consensus)
 
-jack.support <- TreeTools::SplitFrequency(strict.consensus, jack.trees) / length(jack.trees)
-ape::nodelabels(paste('\n\n', signif(jack.support, 2)), 
-                node = as.integer(names(jack.support)),
-                col = TreeTools::SupportColour(jack.support), 
-                adj = 0, pos = 2, frame = 'none')
+JackLabels(strict.consensus, jack.trees) -> XX
 ```
 
 
