@@ -168,7 +168,7 @@ let me know and I'll make the function more general.
 
 \item \code{MultiRatchet}: returns a list of optimal trees produced by nSearch
 Ratchet searches, from which a consensus tree can be generated using
-\link[ape:consensus]{ape::consensus} or \link[TreeTrunk:ConsensusWithout]{TreeTrunk::ConsensusWithout}.
+\link[ape:consensus]{ape::consensus} or \link[TreeTools:ConsensusWithout]{TreeTools::ConsensusWithout}.
 
 \item \code{IWMultiRatchet}: returns a list of optimal trees produced by nSearch
 Ratchet searches, using implied weighting
@@ -179,7 +179,7 @@ Ratchet searches, using implied weighting
 }}
 
 \examples{
-data('Lobo', package='TreeTrunk')
+data('Lobo', package='TreeTools')
 njtree <- NJTree(Lobo.phy)
 # Increase value of ratchIter and searchHits to do a proper search
 quickResult <- Ratchet(njtree, Lobo.phy, ratchIter=2, searchHits=3)

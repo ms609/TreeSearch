@@ -111,7 +111,7 @@ configuring tree search, see the
 }}
 
 \examples{
-data('Lobo', package='TreeTrunk')
+data('Lobo', package='TreeTools')
 njtree <- NJTree(Lobo.phy)
 
 \dontrun{

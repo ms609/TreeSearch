@@ -57,7 +57,7 @@ This function returns a tree in \code{phyDat} format that has undergone one \acr
 a list containing two elements, corresponding in turn to the
 rearranged parent and child parameters
 
-@importFrom TreeTrunk EdgeAncestry
+@importFrom TreeTools EdgeAncestry
 
 a matrix with two columns, each row listing an edge that can be broken
 and an edge into which it can be merged
