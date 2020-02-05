@@ -178,8 +178,9 @@ plot(strict.consensus)
 
 jack.support <- TreeTools::SplitFrequency(strict.consensus, jack.trees) / length(jack.trees)
 ape::nodelabels(paste('\n\n', signif(jack.support, 2)), 
-           col = TreeTools::SupportColour(jack.support), 
-           adj = 0, pos = 2, frame = 'none')
+                node = as.integer(names(jack.support)),
+                col = TreeTools::SupportColour(jack.support), 
+                adj = 0, pos = 2, frame = 'none')
 ```
 
 
