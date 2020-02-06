@@ -32,8 +32,10 @@ library('TreeSearch')
 ## Scoring a tree, and conducting a tree search
 
 Here's an example of using the package to conduct tree search.
-You can [load your own dataset](load-data.html), but for now, we'll use the 
-Vinther _et al._ [-@Vinther2008] dataset that comes bundled with the package.
+You can 
+[load your own dataset](https://ms609.github.io/TreeTools/articles/load-data.html),
+but for now, we'll use the Vinther _et al._ [-@Vinther2008] dataset that comes 
+bundled with the package.
 
 This dataset is small enough that it runs reasonably quickly, but its phylogenetic
 signal is obscure enough that it can require Ratchet searches to escape from local optima.
