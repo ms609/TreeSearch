@@ -27,8 +27,15 @@ Label nodes with jackknife support values
 }
 \examples{
 library('TreeTools') # for as.phylo
-JackLabels(as.phylo(0, 8), as.phylo(1:100, 8))
 
+# jackTrees will usually be generated with Jackknife(), but for simplicity:
+jackTrees <- as.phylo(1:100, 8)
+
+JackLabels(as.phylo(0, 8), jackTrees)
+
+}
+\seealso{
+\code{\link[=Jackknife]{Jackknife()}}: Generate trees by jackknife resampling
 }
 \author{
 \href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
