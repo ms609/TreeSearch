@@ -6,6 +6,7 @@ citHeader(paste0("When using the package, please acknowledge your use of ",
 "(Brazeau et al. 2019)'."))
                      
 citEntry(entry = "Manual",
+         key = "Brazeau2017",
          title = "MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability",
          author = personList(as.person("Martin D. Brazeau"), 
                              as.person("Martin R. Smith"),
@@ -19,6 +20,7 @@ citEntry(entry = "Manual",
               "trait data with inapplicability. doi: 10.5281/zenodo.815371"))
               
 citEntry(entry = "Article",
+         key = "Brazeau2019",
          title = "An algorithm for morphological phylogenetic analysis with inapplicable data",
          author = personList(as.person("Martin D. Brazeau"),
                              as.person("Thomas Guillerme"),
@@ -36,11 +38,12 @@ citEntry(entry = "Article",
                      " doi: 10.1093/sysbio/syy083"))
               
 citEntry(entry = "Manual",
-              title = "TreeSearch: phylogenetic tree search using custom optimality criteria",
-              author = personList(as.person("Martin R. Smith")),
-              note = paste("R package version", meta$Version),
-              year = 2018,
-              doi = "10.5281/zenodo.1042590",
+         key = "Smith2018",
+         title = "TreeSearch: phylogenetic tree search using custom optimality criteria",
+         author = personList(as.person("Martin R. Smith")),
+         note = paste("R package version", meta$Version),
+         year = 2018,
+         doi = "10.5281/zenodo.1042590",
      
-              textVersion =
+         textVersion =
               paste0("Smith (2018). TreeSearch: phylogenetic tree search using custom optimality criteria. doi: 10.5281/zenodo.1042590"))
