@@ -83,11 +83,16 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' 
 #' @examples
 #' library('TreeTools') # for as.phylo
-#' JackLabels(as.phylo(0, 8), as.phylo(1:100, 8))
+#' 
+#' # jackTrees will usually be generated with Jackknife(), but for simplicity:
+#' jackTrees <- as.phylo(1:100, 8)
+#' 
+#' JackLabels(as.phylo(0, 8), jackTrees)
 #' 
 #' @template MRS
 #' @importFrom ape nodelabels
 #' @importFrom TreeTools SplitFrequency SupportColour
+#' @seealso [`Jackknife()`]: Generate trees by jackknife resampling
 #' @export
 JackLabels <- function (tree, jackTrees, add = FALSE,
                         adj = 0, col = NULL, frame = 'none', pos = 2L, ...) {
