@@ -139,7 +139,7 @@
 <div id="scoring-a-tree-and-conducting-a-tree-search" class="section level2">
 <h2 class="hasAnchor">
 <a href="#scoring-a-tree-and-conducting-a-tree-search" class="anchor"></a>Scoring a tree, and conducting a tree search</h2>
-<p>Here’s an example of using the package to conduct tree search with profile parsimony. You can <a href="load-data.html">load your own dataset</a>, but for this example, we’ll use a simulated dataset that comes bundled with the <code>TreeSearch</code> package.</p>
+<p>Here’s an example of using the package to conduct tree search with profile parsimony. You can <a href="https://ms609.github.io/TreeTools/articles/load-data.html">load your own dataset</a>, but for this example, we’ll use a simulated dataset that comes bundled with the <code>TreeSearch</code> package.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(congreveLamsdellMatrices)</a>
 <a class="sourceLine" id="cb3-2" data-line-number="2">my.data &lt;-<span class="st"> </span>congreveLamsdellMatrices[[<span class="dv">10</span>]]</a>
 <a class="sourceLine" id="cb3-3" data-line-number="3">my.phyDat &lt;-<span class="st"> </span>phangorn<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/phangorn/man/phyDat.html">phyDat</a></span>(my.data, <span class="dt">type =</span> <span class="st">'USER'</span>, <span class="dt">levels =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="dv">1</span>, <span class="dv">2</span>))</a></code></pre></div>
