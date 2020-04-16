@@ -2,12 +2,12 @@
 
 ## New features
  - `PhyDatToMatrix()`, complementing `MatrixToPhyDat()`
- - Documentation with `pkgdown`
+ - Documentation with 'pkgdown'
  - `JackLabels()` helper function
  
 ## Changes
- - Move tree distance measures to new package `TreeDist`
- - Move tree utility functions to new package `TreeTools`
+ - Move tree distance measures to new package '[TreeDist](https://ms609.github.io/TreeDist/)'
+ - Move tree utility functions to new package '[TreeTools](https://ms609.github.io/TreeTools/)'
  - Rename functions `MinimumSteps()`→`MinimumLength()` and 
    `FitchSteps()`→`CharacterLength()`
 
