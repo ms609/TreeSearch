@@ -42,6 +42,8 @@ jobs:
         only: master
       r_packages:
        - covr
+       - devtools
+       - pkgload
       after_success:
         - Rscript -e "covr::codecov()"
     - os: osx
