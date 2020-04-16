@@ -40,7 +40,7 @@ jobs:
     - r: devel
       branches:
         only: master
-      r_binary_packages:
+      r_packages:
        - covr
       after_success:
         - Rscript -e "covr::codecov()"
