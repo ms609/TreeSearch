@@ -9,7 +9,6 @@ git:
   depth: 1
   
 r_packages:
-  - pkgload
   - devtools
 
 before_script:
@@ -27,7 +26,6 @@ jobs:
        - R.cache
        - Rdpack
        - roxygen2
-       - testthat
       deploy:
         provider: script
         script: Rscript -e 'pkgdown::deploy_site_github()'
@@ -40,10 +38,6 @@ jobs:
     - r: devel
       branches:
         only: master
-      r_packages:
-       - covr
-       - devtools
-       - pkgload
       after_success:
         - Rscript -e "covr::codecov()"
     - os: osx
