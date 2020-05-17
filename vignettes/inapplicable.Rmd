@@ -45,9 +45,9 @@ my.data <- TreeSearch::inapplicable.datasets[['Vinther2008']]
 my.phyDat <- phangorn::phyDat(my.data, type = 'USER', levels = c(0:9, '-'))
 ```
 
-```{R RNG-version, warning=FALSE}
+```{R RNG-version}
 # Set a random seed so that random functions in this document are reproducible
-RNGversion("3.5.0") # Until we can require R3.6.0
+suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
 set.seed(0)
 ```
 

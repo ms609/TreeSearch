@@ -36,9 +36,9 @@ library('TreeSearch')
 
 In order to reproduce the random elements of this document, set a random seed:
 
-```{R RNG-version, warning=FALSE}
+```{R RNG-version}
 # Set a random seed so that random functions in this document are reproducible
-RNGversion("3.5.0") # Until we can require R3.6.0
+suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
 set.seed(888)
 ```
 
@@ -61,8 +61,8 @@ information loss implied by each additional step in each character.
 Ideally we'd pick a high value of precision (> 1e+06): this takes a while, 
 but only needs doing once for each dataset of a given size.
 
-```{r Prepare the data for analysis, warning=FALSE, message=FALSE}
-my.prepdata <- PrepareDataProfile(my.phyDat, precision = 4e+04)
+```{r Prepare the data for analysis, message=FALSE}
+my.prepdata <- suppressWarnings(PrepareDataProfile(my.phyDat, precision = 4e+04))
 ```
 
 To start analysis, we need to load a starting tree.  We can do this at random:

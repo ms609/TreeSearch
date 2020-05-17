@@ -14,14 +14,14 @@
   ],
   "issueTracker": "https://github.com/ms609/TreeSearch/issues",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "0.4.0",
+  "version": "0.4.0.9000",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
-    "version": "3.6.1",
+    "version": "4.0.0",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 3.6.1 (2019-07-05)",
+  "runtimePlatform": "R version 4.0.0 (2020-04-24)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -111,18 +111,6 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=testthat"
-    },
-    {
-      "@type": "SoftwareApplication",
-      "identifier": "xlsx",
-      "name": "xlsx",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=xlsx"
     }
   ],
   "softwareRequirements": [
@@ -200,9 +188,12 @@
       "sameAs": "https://CRAN.R-project.org/package=TreeTools"
     }
   ],
-  "releaseNotes": "https://github.com/ms609/TreeSearch.git/blob/master/NEWS.md",
+  "releaseNotes": "https://github.com/ms609/TreeSearch/blob/master/NEWS.md",
   "readme": "https://github.com/ms609/TreeSearch/blob/master/README.md",
-  "contIntegration": ["https://travis-ci.org/ms609/TreeSearch", "https://codecov.io/gh/ms609/TreeSearch"],
+  "contIntegration": [
+    "https://travis-ci.org/ms609/TreeSearch",
+    "https://codecov.io/gh/ms609/TreeSearch"
+  ],
   "developmentStatus": "http://www.repostatus.org/#active",
   "keywords": [
     "tree-search",
@@ -213,6 +204,29 @@
     "bioinformatics"
   ],
   "citation": [
+    {
+      "@type": "SoftwareSourceCode",
+      "datePublished": "2017",
+      "author": [
+        {
+          "@type": "Person",
+          "givenName": ["Martin", "D."],
+          "familyName": "Brazeau"
+        },
+        {
+          "@type": "Person",
+          "givenName": ["Martin", "R."],
+          "familyName": "Smith"
+        },
+        {
+          "@type": "Person",
+          "givenName": "Thomas",
+          "familyName": "Guillerme"
+        }
+      ],
+      "name": "MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability",
+      "description": "Version 0.0.1-alpha"
+    },
     {
       "@type": "ScholarlyArticle",
       "datePublished": "2019",
@@ -260,29 +274,6 @@
       "description": "R package version ",
       "@id": "https://doi.org/10.5281/zenodo.1042590",
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
-    },
-    {
-      "@type": "SoftwareSourceCode",
-      "datePublished": "2017",
-      "author": [
-        {
-          "@type": "Person",
-          "givenName": ["Martin", "D."],
-          "familyName": "Brazeau"
-        },
-        {
-          "@type": "Person",
-          "givenName": ["Martin", "R."],
-          "familyName": "Smith"
-        },
-        {
-          "@type": "Person",
-          "givenName": "Thomas",
-          "familyName": "Guillerme"
-        }
-      ],
-      "name": "MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability",
-      "description": "Version 0.0.1-alpha"
     }
   ]
 }

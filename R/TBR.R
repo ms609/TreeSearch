@@ -199,7 +199,7 @@ TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mer
   
   #########Assert(identical(unique(table(parent)), 2L))
   #########Assert(identical(unique(table(child)),  1L))
-  return (RenumberEdges(parent, child, nEdge))
+  return (RenumberEdges(parent, child))
 }
 
 #' @describeIn TBR Possible TBR moves
@@ -444,5 +444,5 @@ RootedTBRSwap <- function (parent, child, nEdge=length(parent), edgeToBreak=NULL
   
   ###Assert(identical(unique(table(parent)), 2L))
   ###Assert(identical(unique(table(child)),  1L))
-  return (RenumberEdges(parent, child, nEdge))
+  return (RenumberEdges(parent, child))
 }

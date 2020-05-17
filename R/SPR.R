@@ -140,7 +140,7 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
   
   #####Assert(identical(unique(table(parent)), 2L))
   #####Assert(identical(unique(table(child)),  1L))
-  return (RenumberEdges(parent, child, nEdge))
+  return (RenumberEdges(parent, child))
 }
 
 
@@ -316,5 +316,5 @@ RootedSPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge 
   #####Assert(identical(unique(table(child)),  1L))
   
   # Return:
-  RenumberEdges(parent, child, nEdge)
+  RenumberEdges(parent, child)
 }

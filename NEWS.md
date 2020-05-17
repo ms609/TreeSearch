@@ -1,3 +1,7 @@
+# TreeSearch 0.4.0.9000
+
+ - Compatability with 'TreeTools' v0.2.0
+
 # TreeSearch 0.4.0
 
 ## New features
