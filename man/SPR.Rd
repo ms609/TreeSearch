@@ -9,13 +9,25 @@
 \usage{
 SPR(tree, edgeToBreak = NULL, mergeEdge = NULL)
 
-SPRSwap(parent, child, nEdge = length(parent), nNode = nEdge/2L,
-  edgeToBreak = NULL, mergeEdge = NULL)
+SPRSwap(
+  parent,
+  child,
+  nEdge = length(parent),
+  nNode = nEdge/2L,
+  edgeToBreak = NULL,
+  mergeEdge = NULL
+)
 
 RootedSPR(tree, edgeToBreak = NULL, mergeEdge = NULL)
 
-RootedSPRSwap(parent, child, nEdge = length(parent), nNode = nEdge/2L,
-  edgeToBreak = NULL, mergeEdge = NULL)
+RootedSPRSwap(
+  parent,
+  child,
+  nEdge = length(parent),
+  nNode = nEdge/2L,
+  edgeToBreak = NULL,
+  mergeEdge = NULL
+)
 }
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
@@ -81,8 +93,9 @@ The \acronym{SPR} algorithm is summarized in
 \item \code{\link[=RootedSPR]{RootedSPR()}}: useful when the position of the root node should be retained.
 }
 
-Other tree rearrangement functions: \code{\link{NNI}},
-  \code{\link{TBR}}
+Other tree rearrangement functions: 
+\code{\link{NNI}()},
+\code{\link{TBR}()}
 }
 \author{
 Martin R. Smith

@@ -39,8 +39,10 @@ result <- Fitch(tree, inapplicable.phyData[[1]])
 \item \code{\link[=TreeSearch]{TreeSearch()}}
 }
 
-Other tree scoring: \code{\link{CharacterLength}},
-  \code{\link{IWScore}}, \code{\link{MorphyTreeLength}}
+Other tree scoring: 
+\code{\link{CharacterLength}()},
+\code{\link{IWScore}()},
+\code{\link{MorphyTreeLength}()}
 }
 \author{
 Martin R. Smith (using Morphy C library, by Martin Brazeau)

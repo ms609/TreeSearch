@@ -4,8 +4,10 @@
 \name{congreveLamsdellMatrices}
 \alias{congreveLamsdellMatrices}
 \title{100 simulated data matrices}
-\format{A list with 100 entries, each comprising a \code{phyDat} object of 55
-characters for 22 taxa}
+\format{
+A list with 100 entries, each comprising a \code{phyDat} object of 55
+characters for 22 taxa
+}
 \source{
 \url{https://datadryad.org/resource/doi:10.5061/dryad.7dq0j}
 }

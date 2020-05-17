@@ -60,8 +60,10 @@ Calculate a tree's Parsimony score with a given dataset using implied weights
 }
 }
 \seealso{
-Other tree scoring: \code{\link{CharacterLength}},
-  \code{\link{Fitch}}, \code{\link{MorphyTreeLength}}
+Other tree scoring: 
+\code{\link{CharacterLength}()},
+\code{\link{Fitch}()},
+\code{\link{MorphyTreeLength}()}
 }
 \author{
 Martin R. Smith

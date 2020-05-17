@@ -11,57 +11,144 @@
 \alias{IWRatchetConsensus}
 \title{Parsimony Ratchet}
 \usage{
-Jackknife(tree, dataset, resampleFreq = 2/3,
-  InitializeData = PhyDat2Morphy, CleanUpData = UnloadMorphy,
-  TreeScorer = MorphyLength, EdgeSwapper = TBRSwap, jackIter = 5000L,
-  searchIter = 4000L, searchHits = 42L, verbosity = 1L, ...)
+Jackknife(
+  tree,
+  dataset,
+  resampleFreq = 2/3,
+  InitializeData = PhyDat2Morphy,
+  CleanUpData = UnloadMorphy,
+  TreeScorer = MorphyLength,
+  EdgeSwapper = TBRSwap,
+  jackIter = 5000L,
+  searchIter = 4000L,
+  searchHits = 42L,
+  verbosity = 1L,
+  ...
+)
 
-Ratchet(tree, dataset, InitializeData = PhyDat2Morphy,
-  CleanUpData = UnloadMorphy, TreeScorer = MorphyLength,
-  Bootstrapper = MorphyBootstrap, swappers = list(TBRSwap, SPRSwap,
-  NNISwap), BootstrapSwapper = if (class(swappers) == "list")
-  swappers[[length(swappers)]] else swappers, returnAll = FALSE,
-  stopAtScore = NULL, stopAtPeak = FALSE, stopAtPlateau = 0L,
-  ratchIter = 100, ratchHits = 10, searchIter = 4000,
-  searchHits = 42, bootstrapIter = searchIter,
-  bootstrapHits = searchHits, verbosity = 1L, suboptimal = 1e-08,
-  ...)
+Ratchet(
+  tree,
+  dataset,
+  InitializeData = PhyDat2Morphy,
+  CleanUpData = UnloadMorphy,
+  TreeScorer = MorphyLength,
+  Bootstrapper = MorphyBootstrap,
+  swappers = list(TBRSwap, SPRSwap, NNISwap),
+  BootstrapSwapper = if (class(swappers) == "list") swappers[[length(swappers)]] else
+    swappers,
+  returnAll = FALSE,
+  stopAtScore = NULL,
+  stopAtPeak = FALSE,
+  stopAtPlateau = 0L,
+  ratchIter = 100,
+  ratchHits = 10,
+  searchIter = 4000,
+  searchHits = 42,
+  bootstrapIter = searchIter,
+  bootstrapHits = searchHits,
+  verbosity = 1L,
+  suboptimal = 1e-08,
+  ...
+)
 
-ProfileRatchet(tree, dataset, swappers = list(TBRSwap, SPRSwap, NNISwap),
-  BootstrapSwapper = if (class(swappers) == "list")
-  swappers[[length(swappers)]] else swappers, returnAll = FALSE,
-  stopAtScore = NULL, stopAtPeak = FALSE, stopAtPlateau = 0L,
-  ratchIter = 100, ratchHits = 10, searchIter = 2000,
-  searchHits = 40, bootstrapIter = searchIter,
-  bootstrapHits = searchHits, verbosity = 1L, suboptimal = 1e-08,
-  ...)
+ProfileRatchet(
+  tree,
+  dataset,
+  swappers = list(TBRSwap, SPRSwap, NNISwap),
+  BootstrapSwapper = if (class(swappers) == "list") swappers[[length(swappers)]] else
+    swappers,
+  returnAll = FALSE,
+  stopAtScore = NULL,
+  stopAtPeak = FALSE,
+  stopAtPlateau = 0L,
+  ratchIter = 100,
+  ratchHits = 10,
+  searchIter = 2000,
+  searchHits = 40,
+  bootstrapIter = searchIter,
+  bootstrapHits = searchHits,
+  verbosity = 1L,
+  suboptimal = 1e-08,
+  ...
+)
 
-IWRatchet(tree, dataset, concavity = 10, swappers = list(TBRSwap,
-  SPRSwap, NNISwap), BootstrapSwapper = if (class(swappers) == "list")
-  swappers[[length(swappers)]] else swappers, returnAll = FALSE,
-  stopAtScore = NULL, stopAtPeak = FALSE, stopAtPlateau = 0L,
-  ratchIter = 100, ratchHits = 10, searchIter = 2000,
-  searchHits = 40, bootstrapIter = searchIter,
-  bootstrapHits = searchHits, verbosity = 1L, suboptimal = 1e-08,
-  ...)
+IWRatchet(
+  tree,
+  dataset,
+  concavity = 10,
+  swappers = list(TBRSwap, SPRSwap, NNISwap),
+  BootstrapSwapper = if (class(swappers) == "list") swappers[[length(swappers)]] else
+    swappers,
+  returnAll = FALSE,
+  stopAtScore = NULL,
+  stopAtPeak = FALSE,
+  stopAtPlateau = 0L,
+  ratchIter = 100,
+  ratchHits = 10,
+  searchIter = 2000,
+  searchHits = 40,
+  bootstrapIter = searchIter,
+  bootstrapHits = searchHits,
+  verbosity = 1L,
+  suboptimal = 1e-08,
+  ...
+)
 
-MultiRatchet(tree, dataset, ratchHits = 10, searchIter = 500,
-  searchHits = 20, verbosity = 0L, swappers = list(RootedNNISwap),
-  nSearch = 10, stopAtScore = NULL, ...)
+MultiRatchet(
+  tree,
+  dataset,
+  ratchHits = 10,
+  searchIter = 500,
+  searchHits = 20,
+  verbosity = 0L,
+  swappers = list(RootedNNISwap),
+  nSearch = 10,
+  stopAtScore = NULL,
+  ...
+)
 
-IWMultiRatchet(tree, dataset, ratchHits = 10, concavity = 4,
-  searchIter = 500, searchHits = 20, verbosity = 0L,
-  swappers = list(RootedNNISwap), nSearch = 10,
-  suboptimal = suboptimal, stopAtScore = NULL, ...)
+IWMultiRatchet(
+  tree,
+  dataset,
+  ratchHits = 10,
+  concavity = 4,
+  searchIter = 500,
+  searchHits = 20,
+  verbosity = 0L,
+  swappers = list(RootedNNISwap),
+  nSearch = 10,
+  suboptimal = suboptimal,
+  stopAtScore = NULL,
+  ...
+)
 
-RatchetConsensus(tree, dataset, ratchHits = 10, searchIter = 500,
-  searchHits = 20, verbosity = 0L, swappers = list(RootedNNISwap),
-  nSearch = 10, stopAtScore = NULL, ...)
+RatchetConsensus(
+  tree,
+  dataset,
+  ratchHits = 10,
+  searchIter = 500,
+  searchHits = 20,
+  verbosity = 0L,
+  swappers = list(RootedNNISwap),
+  nSearch = 10,
+  stopAtScore = NULL,
+  ...
+)
 
-IWRatchetConsensus(tree, dataset, ratchHits = 10, concavity = 4,
-  searchIter = 500, searchHits = 20, verbosity = 0L,
-  swappers = list(RootedNNISwap), nSearch = 10,
-  suboptimal = suboptimal, stopAtScore = NULL, ...)
+IWRatchetConsensus(
+  tree,
+  dataset,
+  ratchHits = 10,
+  concavity = 4,
+  searchIter = 500,
+  searchHits = 20,
+  verbosity = 0L,
+  swappers = list(RootedNNISwap),
+  nSearch = 10,
+  suboptimal = suboptimal,
+  stopAtScore = NULL,
+  ...
+)
 }
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}

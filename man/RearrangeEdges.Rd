@@ -4,9 +4,18 @@
 \alias{RearrangeEdges}
 \title{Rearrange edges of a phylogenetic tree}
 \usage{
-RearrangeEdges(parent, child, dataset, TreeScorer = MorphyLength,
-  EdgeSwapper, scoreToBeat = TreeScorer(parent, child, dataset, ...),
-  iter = "?", hits = 0L, verbosity = 0L, ...)
+RearrangeEdges(
+  parent,
+  child,
+  dataset,
+  TreeScorer = MorphyLength,
+  EdgeSwapper,
+  scoreToBeat = TreeScorer(parent, child, dataset, ...),
+  iter = "?",
+  hits = 0L,
+  verbosity = 0L,
+  ...
+)
 }
 \arguments{
 \item{parent}{Integer vector corresponding to the first column of the edge

@@ -4,7 +4,9 @@
 \name{inapplicable.datasets}
 \alias{inapplicable.datasets}
 \title{Thirty Datasets with Inapplicable data}
-\format{An object of class \code{list} of length 30.}
+\format{
+An object of class \code{list} of length 30.
+}
 \source{
 {
 \describe{

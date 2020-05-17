@@ -7,28 +7,67 @@
 \alias{ProfileTreeSearch}
 \title{Search for most parsimonious trees}
 \usage{
-IWTreeSearch(tree, dataset, concavity = 10, EdgeSwapper = RootedTBR,
-  maxIter = 100, maxHits = 20, forestSize = 1, verbosity = 1, ...)
+IWTreeSearch(
+  tree,
+  dataset,
+  concavity = 10,
+  EdgeSwapper = RootedTBR,
+  maxIter = 100,
+  maxHits = 20,
+  forestSize = 1,
+  verbosity = 1,
+  ...
+)
 
-EdgeListSearch(edgeList, dataset, TreeScorer = MorphyLength,
-  EdgeSwapper = RootedTBRSwap, maxIter = 100, maxHits = 20,
-  bestScore = NULL, stopAtScore = NULL, stopAtPeak = FALSE,
-  stopAtPlateau = 0L, forestSize = 1L, verbosity = 1L, ...)
+EdgeListSearch(
+  edgeList,
+  dataset,
+  TreeScorer = MorphyLength,
+  EdgeSwapper = RootedTBRSwap,
+  maxIter = 100,
+  maxHits = 20,
+  bestScore = NULL,
+  stopAtScore = NULL,
+  stopAtPeak = FALSE,
+  stopAtPlateau = 0L,
+  forestSize = 1L,
+  verbosity = 1L,
+  ...
+)
 
-TreeSearch(tree, dataset, InitializeData = PhyDat2Morphy,
-  CleanUpData = UnloadMorphy, TreeScorer = MorphyLength,
-  EdgeSwapper = RootedTBRSwap, maxIter = 100L, maxHits = 20L,
-  forestSize = 1L, stopAtPeak = FALSE, stopAtPlateau = 0L,
-  verbosity = 1L, ...)
+TreeSearch(
+  tree,
+  dataset,
+  InitializeData = PhyDat2Morphy,
+  CleanUpData = UnloadMorphy,
+  TreeScorer = MorphyLength,
+  EdgeSwapper = RootedTBRSwap,
+  maxIter = 100L,
+  maxHits = 20L,
+  forestSize = 1L,
+  stopAtPeak = FALSE,
+  stopAtPlateau = 0L,
+  verbosity = 1L,
+  ...
+)
 
-ProfileTreeSearch(tree, dataset, EdgeSwapper = RootedTBR,
-  maxIter = 100, maxHits = 20, forestSize = 1, verbosity = 1,
-  precision = 40000, ...)
+ProfileTreeSearch(
+  tree,
+  dataset,
+  EdgeSwapper = RootedTBR,
+  maxIter = 100,
+  maxHits = 20,
+  forestSize = 1,
+  verbosity = 1,
+  precision = 40000,
+  ...
+)
 }
 \arguments{
 \item{tree}{a fully-resolved starting tree in \code{\link{phylo}} format, with the desired outgroup; edge lengths are not supported and will be deleted;}
 
-\item{dataset}{Data in format required by \code{InitializeData}.}
+\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
+whose names correspond to the labels of any accompanying tree.}
 
 \item{concavity}{A numeric value to use as the concavity constant (\code{k})
 in implied weighting. Defaults to 10; TNT sets a default of 3, but this
@@ -79,9 +118,6 @@ Its return value will be passed to \code{TreeScorer()} and \code{CleanUpData()}.
 
 \item{CleanUpData}{Function to destroy data object on function exit.
 The function will be passed the value returned by \code{InitializeData()}.}
-
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
 }
 \value{
 {

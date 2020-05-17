@@ -9,8 +9,13 @@
 \usage{
 MorphyTreeLength(tree, morphyObj)
 
-MorphyLength(parent, child, morphyObj, inPostorder = FALSE,
-  nTaxa = mpl_get_numtaxa(morphyObj))
+MorphyLength(
+  parent,
+  child,
+  morphyObj,
+  inPostorder = FALSE,
+  nTaxa = mpl_get_numtaxa(morphyObj)
+)
 
 GetMorphyLength(parentOf, leftChild, rightChild, morphyObj)
 
@@ -29,17 +34,6 @@ matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
 
 \item{child}{Integer vector corresponding to the second column of the edge
 matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
-
-\item{parentOf}{Integer vector containing, for each tip and each node in
-sequential order, the integer index its parent node.
-The root node should be its own parent.}
-
-\item{leftChild}{integer vector containing, for each node, starting at the
-root and proceeding in sequential order, the integer corresponding to its
-left child.  Tip numbering begins at 0; the root node is numbered \code{nTip}.}
-
-\item{rightChild}{integer vector containing, for each node, the index
-of its right child.}
 
 \item{parentOf}{For each node, numbered in postorder, the number of its parent node.}
 
@@ -68,11 +62,15 @@ parameters
 \seealso{
 PhyDat2Morphy
 
-Other tree scoring: \code{\link{CharacterLength}},
-  \code{\link{Fitch}}, \code{\link{IWScore}}
+Other tree scoring: 
+\code{\link{CharacterLength}()},
+\code{\link{Fitch}()},
+\code{\link{IWScore}()}
 
-Other tree scoring: \code{\link{CharacterLength}},
-  \code{\link{Fitch}}, \code{\link{IWScore}}
+Other tree scoring: 
+\code{\link{CharacterLength}()},
+\code{\link{Fitch}()},
+\code{\link{IWScore}()}
 }
 \author{
 Martin R. Smith

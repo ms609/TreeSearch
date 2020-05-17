@@ -4,8 +4,13 @@
 \alias{ICSteps}
 \title{Information Content Steps}
 \usage{
-ICSteps(char, ambiguousToken = 0, expectedMinima = 25,
-  maxIter = 10000, warn = TRUE)
+ICSteps(
+  char,
+  ambiguousToken = 0,
+  expectedMinima = 25,
+  maxIter = 10000,
+  warn = TRUE
+)
 }
 \arguments{
 \item{char}{The character in question.}

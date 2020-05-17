@@ -4,7 +4,9 @@
 \name{inapplicable.citations}
 \alias{inapplicable.citations}
 \title{Thirty Datasets with Inapplicable data}
-\format{An object of class \code{character} of length 30.}
+\format{
+An object of class \code{character} of length 30.
+}
 \source{
 {
 \describe{

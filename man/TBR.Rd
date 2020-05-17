@@ -11,19 +11,33 @@
 \usage{
 TBR(tree, edgeToBreak = NULL, mergeEdges = NULL)
 
-TBRSwap(parent, child, nEdge = length(parent), edgeToBreak = NULL,
-  mergeEdges = NULL)
+TBRSwap(
+  parent,
+  child,
+  nEdge = length(parent),
+  edgeToBreak = NULL,
+  mergeEdges = NULL
+)
 
-TBRMoves(parent, child, nEdge = length(parent), avoid = NULL,
-  retainRoot = FALSE)
+TBRMoves(
+  parent,
+  child,
+  nEdge = length(parent),
+  avoid = NULL,
+  retainRoot = FALSE
+)
 
-AllTBR(parent, child, nEdge = length(parent), avoid = NULL,
-  retainRoot = FALSE)
+AllTBR(parent, child, nEdge = length(parent), avoid = NULL, retainRoot = FALSE)
 
 RootedTBR(tree, edgeToBreak = NULL, mergeEdges = NULL)
 
-RootedTBRSwap(parent, child, nEdge = length(parent),
-  edgeToBreak = NULL, mergeEdges = NULL)
+RootedTBRSwap(
+  parent,
+  child,
+  nEdge = length(parent),
+  edgeToBreak = NULL,
+  mergeEdges = NULL
+)
 }
 \arguments{
 \item{tree}{A bifurcating tree of class \code{\link{phylo}}, with all nodes resolved;}
@@ -99,8 +113,9 @@ The \acronym{TBR} algorithm is summarized in
 \seealso{
 \code{\link[=RootedTBR]{RootedTBR()}}: useful when the position of the root node should be retained.
 
-Other tree rearrangement functions: \code{\link{NNI}},
-  \code{\link{SPR}}
+Other tree rearrangement functions: 
+\code{\link{NNI}()},
+\code{\link{SPR}()}
 }
 \author{
 Martin R. Smith

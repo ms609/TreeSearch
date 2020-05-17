@@ -9,13 +9,16 @@
 \usage{
 NNI(tree, edgeToBreak = NULL)
 
-NNISwap(parent, child, nTips = (length(parent)/2L) + 1L,
-  edgeToBreak = NULL)
+NNISwap(parent, child, nTips = (length(parent)/2L) + 1L, edgeToBreak = NULL)
 
 RootedNNI(tree, edgeToBreak = NULL)
 
-RootedNNISwap(parent, child, nTips = (length(parent)/2L) + 1L,
-  edgeToBreak = NULL)
+RootedNNISwap(
+  parent,
+  child,
+  nTips = (length(parent)/2L) + 1L,
+  edgeToBreak = NULL
+)
 }
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
@@ -71,8 +74,9 @@ The algorithm is summarized in
 \insertRef{Felsenstein2004}{TreeSearch}
 }
 \seealso{
-Other tree rearrangement functions: \code{\link{SPR}},
-  \code{\link{TBR}}
+Other tree rearrangement functions: 
+\code{\link{SPR}()},
+\code{\link{TBR}()}
 }
 \author{
 Martin R. Smith

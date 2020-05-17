@@ -8,8 +8,14 @@
 \alias{ProfileDestroyMorphy}
 \title{Profile Parsimony Score}
 \usage{
-IWScoreMorphy(parent, child, dataset, concavity = 10L,
-  minLength = attr(dataset, "min.length"), ...)
+IWScoreMorphy(
+  parent,
+  child,
+  dataset,
+  concavity = 10L,
+  minLength = attr(dataset, "min.length"),
+  ...
+)
 
 ProfileScore(tree, dataset)
 

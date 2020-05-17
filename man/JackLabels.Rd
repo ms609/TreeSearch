@@ -4,8 +4,16 @@
 \alias{JackLabels}
 \title{Label nodes with jackknife support values}
 \usage{
-JackLabels(tree, jackTrees, add = FALSE, adj = 0, col = NULL,
-  frame = "none", pos = 2L, ...)
+JackLabels(
+  tree,
+  jackTrees,
+  add = FALSE,
+  adj = 0,
+  col = NULL,
+  frame = "none",
+  pos = 2L,
+  ...
+)
 }
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
