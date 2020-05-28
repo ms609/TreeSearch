@@ -36,7 +36,8 @@ NNI <- function (tree, edgeToBreak=NULL) {
     nTips <- (length(parent) / 2L) + 1L
     samplable <- child > nTips
     # newEdges <- vapply(which(samplable), DoubleNNI, parent=parent, child=child, list(matrix(0L, nEdge, 2), matrix(0L, nEdge, 2)))
-    newEdges <- unlist(lapply(which(samplable), DoubleNNI, parent=parent, child=child), recursive=FALSE) # Quicker than vapply, surprisingly
+    newEdges <- unlist(lapply(which(samplable), DoubleNNI,
+                              parent = parent, child = child), recursive=FALSE) # Quicker than vapply, surprisingly
     newTrees <- lapply(newEdges, function (edges) {tree$edge <- edges; tree}) # Quicker than vapply, surprisingly
     
     # Return:
@@ -74,7 +75,7 @@ NNISwap <- function (parent, child, nTips = (length(parent) / 2L) + 1L, edgeToBr
   end2   <- child[edgeToBreak]
   ind1   <- which(parent == end1)
   ind1   <- ind1[ind1 != edgeToBreak][1]
-  ind2   <- which(parent == end2)[sample.int(2L, 1L, useHash=FALSE)]
+  ind2   <- which(parent == end2)[sample.int(2L, 1L, useHash = FALSE)]
 
   newInd <- c(ind2, ind1)
   oldInd <- c(ind1, ind2)
@@ -135,7 +136,9 @@ RootedNNI <- function (tree, edgeToBreak=NULL) {
     nTips <- (length(parent) / 2L) + 1L
     rootNode <- nTips + 1L
     samplable <- parent != rootNode & child > nTips
-    newEdges <- unlist(lapply(which(samplable), DoubleNNI, parent=parent, child=child), recursive=FALSE) # Quicker than vapply, surprisingly
+    newEdges <- unlist(lapply(which(samplable), DoubleNNI, 
+                              parent = parent, child = child), 
+                       recursive = FALSE) # Quicker than vapply, surprisingly
     newTrees <- lapply(newEdges, function (edges) {tree$edge <- edges; tree}) # Quicker than vapply, surprisingly
     
     # Return:
@@ -152,7 +155,8 @@ RootedNNI <- function (tree, edgeToBreak=NULL) {
 #' @describeIn NNI faster version that takes and returns parent and child parameters
 #' @return a list containing two elements, corresponding in turn to the rearranged parent and child parameters
 #' @export
-RootedNNISwap <- function (parent, child, nTips = (length(parent) / 2L) + 1L, edgeToBreak = NULL) {
+RootedNNISwap <- function (parent, child, nTips = (length(parent) / 2L) + 1L,
+                           edgeToBreak = NULL) {
   rootNode <- nTips + 1L
   
   samplable <- parent != rootNode & child > nTips
