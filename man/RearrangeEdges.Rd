@@ -53,25 +53,25 @@ This function returns a list with two to four elements, corresponding to a binar
 - 4. Number of times that score has been hit.
 }
 \description{
-Rearranges a matrix that corresponds to the edges of a phylogenetic tree,
-returning the score of the new tree.  Will generally be called from
-within a tree search function.
+\code{RearrangeEdges()} performs the specified edge rearrangement on a matrix
+that corresponds to the edges of a phylogenetic tree, returning the score of
+the new tree.
+Will generally be called from within a tree search function.
 }
 \details{
-\code{RearrangeTree} performs one tree rearrangement of a
+\code{RearrangeTree()} performs one tree rearrangement of a
 specified type, and returns the score of the tree (with the given dataset).
 It also reports the number of times that this score was hit in the
 current function call.
 }
 \examples{
 data('Lobo', package='TreeTools')
-random.tree <- TreeTools::RandomTree(Lobo.phy)
-edge <- random.tree$edge
+tree <- TreeTools::NJTree(Lobo.phy)
+edge <- tree$edge
 parent <- edge[, 1]
 child <- edge[, 2]
 dataset <- PhyDat2Morphy(Lobo.phy)
-RearrangeEdges(parent, child, dataset, EdgeSwapper=RootedNNISwap)
-
+RearrangeEdges(parent, child, dataset, EdgeSwapper = RootedNNISwap)
 }
 \author{
 Martin R. Smith

@@ -76,7 +76,7 @@ test_that("Implied weights: Tree search", {
                                  ratchHits = 3L, verbosity=0))
   
   expect_equal('multiPhylo', class(
-    IWRatchet(tree=RandomTree(phy11, 'a'), dataset = phy11, concavity = 4,
+    IWRatchet(tree = RandomTree(phy11, 'a'), dataset = phy11, concavity = 4,
               searchIter = 5L, searchHits = 2L,
               ratchHits = 2L, verbosity = 0L, returnAll = TRUE)
   ))

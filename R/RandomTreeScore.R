@@ -7,9 +7,9 @@
 #'
 #' @export
 RandomTreeScore <- function (nTip, morphyObj) {  
-  if (nTip < 3) {
+  if (nTip < 3L) {
     warning("nTip < 3 not implemented, as there's only one unrooted topology.")
-    return (0)
+    return (0L)
   }
   # Return:
   .Call('RANDOM_TREE_SCORE', as.integer(nTip), morphyObj)
