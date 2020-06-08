@@ -28,7 +28,7 @@
 #' 
 #' @author Martin R. Smith (using Morphy C library, by Martin Brazeau)
 #' @importFrom phangorn phyDat
-#' @importFrom TreeTools Renumber RenumberTips
+#' @importFrom TreeTools Renumber RenumberTips TreeIsRooted
 #' @export
 Fitch <- function (tree, dataset) {
   tree <- RenumberTips(Renumber(tree), names(dataset))

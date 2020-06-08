@@ -53,7 +53,7 @@ set.seed(0)
 
 We can generate a random tree and calculate its parsimony score thus:
 ```{r Random-tree}
-random.tree <- TreeTools::RandomTree(my.phyDat)
+random.tree <- TreeTools::RandomTree(my.phyDat, root = TRUE)
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(random.tree)
 Fitch(random.tree, my.phyDat)

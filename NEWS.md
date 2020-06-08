@@ -1,6 +1,6 @@
-# TreeSearch 0.4.0.9000
+# TreeSearch 0.4.1
 
- - Compatability with 'TreeTools' v0.2.0
+ - Compatability with 'TreeTools' v1.0.0
 
 # TreeSearch 0.4.0
 
@@ -28,9 +28,9 @@
 # TreeSearch 0.3.1
 
 ## New features
- - `NyeTreeSimilarity` function implements the tree similarity metric of
+ - `NyeTreeSimilarity()` function implements the tree similarity metric of
    Nye _et al._ (2006)
- - `MatchingSplitDistance` function implementing the Matching Split distance of 
+ - `MatchingSplitDistance()` function implementing the Matching Split distance of 
    Bogdanowicz & Giaro (2012)
 
 ## Bug fixes
@@ -44,7 +44,7 @@
  - Prepare for new random number generator in R3.6.0
 
 ## Deprecations
- - Function `TreeSplits` is deprecated; use `Tree2Splits` instead
+ - Function `TreeSplits()` is deprecated; use `as.Splits()` instead
 
 ## Bug fixes
  - Correct some mistakes in the documentation

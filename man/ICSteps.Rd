@@ -7,8 +7,8 @@
 ICSteps(
   char,
   ambiguousToken = 0,
-  expectedMinima = 25,
-  maxIter = 10000,
+  expectedMinima = 25L,
+  maxIter = 10000L,
   warn = TRUE
 )
 }
