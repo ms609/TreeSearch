@@ -1,6 +1,6 @@
 # TreeSearch 0.4.1
 
- - Compatability with 'TreeTools' v1.0.0
+ - Compatibility with 'TreeTools' v1.0.0
 
 # TreeSearch 0.4.0
 

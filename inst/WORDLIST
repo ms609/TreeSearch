@@ -133,6 +133,7 @@ TILLIER
 Tenrec
 Texacephale
 Theridiidae
+TreeDist
 TreeTools
 Trueman
 UHL
@@ -179,8 +180,10 @@ outgroup
 pachycephalosaurid
 palaeoscolecid
 patagonensis
+phangorn
 phyllostomid
 phylogenetics
+pkgdown
 polytomies
 postorder
 preorder
