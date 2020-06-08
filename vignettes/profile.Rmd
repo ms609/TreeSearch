@@ -15,7 +15,7 @@ Profile Parsimony [@Faith2001] finds the tree that is most faithful
 to the information contained within a given dataset. 
 It is the 'exact solution' that implied weights parsimony approximates.
 
-Profile Parsimony is currently implemented in TreeSearch only 
+Profile Parsimony is currently implemented in 'TreeSearch' only 
 for binary characters with no ambiguous tokens.
 
 ## Getting started
