@@ -13,7 +13,7 @@ Fitch(tree, dataset)
 whose names correspond to the labels of any accompanying tree.}
 }
 \value{
-This function returns the elements from a list containing:
+\code{Fitch()} returns the elements from a list containing:
 \itemize{
 \item     The total parsimony score
 \item     The parsimony score associated with each character
@@ -29,10 +29,9 @@ Uses code modified from the Morphy library to calculate a
 parsimony score in datasets that contain inapplicable data.
 }
 \examples{
-data('inapplicable.datasets')
-tree <- TreeTools::RandomTree(inapplicable.phyData[[1]])
-result <- Fitch(tree, inapplicable.phyData[[1]])
-
+data("inapplicable.datasets")
+tree <- TreeTools::BalancedTree(inapplicable.phyData[[1]])
+Fitch(tree, inapplicable.phyData[[1]])
 }
 \seealso{
 \itemize{

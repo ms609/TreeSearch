@@ -20,30 +20,27 @@
 #' @template warnParam
 #' 
 #' 
-#' @author{
-#' Martin R. Smith
-#' }
+#' @template MRS
 #' @references
 #'  \insertRef{Faith2001}{TreeSearch}
 #' 
 #' @keywords tree
 #' 
-#' @examples{
-#'   # A character that is present in ten taxa and absent in five
-#'   character <- c(rep(1, 10), rep(2, 5))
-#'   ICSteps (character)
-#' }
+#' @examples
+#' # A character that is present in ten taxa and absent in five
+#' character <- c(rep(1, 10), rep(2, 5))
+#' ICSteps(character)
 #' @importFrom TreeTools NUnrooted NUnrootedMult
 #' @export
-ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25, maxIter = 10000,
-                     warn = TRUE) {
-  char <- matrix(2 ^ char[char != ambiguousToken], ncol = 1)
+ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25,
+                     maxIter = 10000, warn = TRUE) {
+  char <- matrix(2L ^ char[char != ambiguousToken], ncol = 1L)
   rownames(char) <- paste0('t', seq_along(char))
   charLen <- length(char)
   
   split <- sort(as.integer(table(char)))
-  minSteps <- length(split) - 1
-  if (minSteps == 0) return (c('0' = 1L))
+  minSteps <- length(split) - 1L
+  if (minSteps == 0L) return (c('0' = 1L))
   
   nNoExtraSteps <- NUnrootedMult(split)
   #nOneExtraStep <- WithOneExtraStep(split)
