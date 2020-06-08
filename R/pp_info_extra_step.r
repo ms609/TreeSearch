@@ -32,8 +32,8 @@
 #' ICSteps(character)
 #' @importFrom TreeTools NUnrooted NUnrootedMult
 #' @export
-ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25,
-                     maxIter = 10000, warn = TRUE) {
+ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25L,
+                     maxIter = 10000L, warn = TRUE) {
   char <- matrix(2L ^ char[char != ambiguousToken], ncol = 1L)
   rownames(char) <- paste0('t', seq_along(char))
   charLen <- length(char)
