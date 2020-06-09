@@ -29,7 +29,7 @@
 #' @examples
 #' # A character that is present in ten taxa and absent in five
 #' character <- c(rep(1, 10), rep(2, 5))
-#' ICSteps(character)
+#' suppressWarnings(ICSteps(character))
 #' @importFrom TreeTools NUnrooted NUnrootedMult
 #' @export
 ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25L,
