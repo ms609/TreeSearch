@@ -42,7 +42,7 @@ results.
 \examples{
 # A character that is present in ten taxa and absent in five
 character <- c(rep(1, 10), rep(2, 5))
-ICSteps(character)
+suppressWarnings(ICSteps(character))
 }
 \references{
 \insertRef{Faith2001}{TreeSearch}
