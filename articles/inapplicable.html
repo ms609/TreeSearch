@@ -39,7 +39,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.1</span>
       </span>
     </div>
 
@@ -108,7 +108,7 @@
       <h1 data-toc-skip>Inapplicable data in morphological phylogenetics</h1>
                         <h4 class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2020-04-25</h4>
+            <h4 class="date">2020-06-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/inapplicable.Rmd"><code>vignettes/inapplicable.Rmd</code></a></small>
       <div class="hidden name"><code>inapplicable.Rmd</code></div>
@@ -134,19 +134,19 @@
 <div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">my.data</span> <span class="kw">&lt;-</span> <span class="kw pkg">TreeSearch</span><span class="kw ns">::</span><span class="no"><a href="../reference/inapplicable.datasets.html">inapplicable.datasets</a></span><span class="kw">[[</span><span class="st">'Vinther2008'</span>]]
 <span class="no">my.phyDat</span> <span class="kw">&lt;-</span> <span class="kw pkg">phangorn</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/phangorn/man/phyDat.html">phyDat</a></span>(<span class="no">my.data</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">'USER'</span>, <span class="kw">levels</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0</span>:<span class="fl">9</span>, <span class="st">'-'</span>))</pre></body></html></div>
 <div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="co"># Set a random seed so that random functions in this document are reproducible</span>
-<span class="fu"><a href="https://rdrr.io/r/base/Random.html">RNGversion</a></span>(<span class="st">"3.5.0"</span>) <span class="co"># Until we can require R3.6.0</span>
+<span class="fu"><a href="https://rdrr.io/r/base/warning.html">suppressWarnings</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/Random.html">RNGversion</a></span>(<span class="st">"3.5.0"</span>)) <span class="co"># Until we can require R3.6.0</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">0</span>)</pre></body></html></div>
 <p>We can generate a random tree and calculate its parsimony score thus:</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">random.tree</span> <span class="kw">&lt;-</span> <span class="kw pkg">TreeTools</span><span class="kw ns">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/RandomTree.html">RandomTree</a></span>(<span class="no">my.phyDat</span>)
+<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">random.tree</span> <span class="kw">&lt;-</span> <span class="kw pkg">TreeTools</span><span class="kw ns">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html">RandomTree</a></span>(<span class="no">my.phyDat</span>, <span class="kw">root</span> <span class="kw">=</span> <span class="fl">TRUE</span>)
 <span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(<span class="no">random.tree</span>)</pre></body></html></div>
+<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">random.tree</span>)</pre></body></html></div>
 <p><img src="inapplicable_files/figure-html/Random-tree-1.png" width="700"></p>
 <div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="fu"><a href="../reference/Fitch.html">Fitch</a></span>(<span class="no">random.tree</span>, <span class="no">my.phyDat</span>)</pre></body></html></div>
 <pre><code>## [1] 189</code></pre>
 <p>We might save some wasted time in tree search if we can start with a tree that’s a little closer to optimal: perhaps a neighbour-joining tree.</p>
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">nj.tree</span> <span class="kw">&lt;-</span> <span class="kw pkg">TreeTools</span><span class="kw ns">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html">NJTree</a></span>(<span class="no">my.phyDat</span>)
 <span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(<span class="no">nj.tree</span>)</pre></body></html></div>
+<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">nj.tree</span>)</pre></body></html></div>
 <p><img src="inapplicable_files/figure-html/Neighbour-joining-1.png" width="700"></p>
 <div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="fu"><a href="../reference/Fitch.html">Fitch</a></span>(<span class="no">nj.tree</span>, <span class="no">my.phyDat</span>)</pre></body></html></div>
 <pre><code>## [1] 85</code></pre>
@@ -155,7 +155,7 @@
 <div class="sourceCode" id="cb10"><html><body><pre class="r"><span class="no">outgroup</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">'Nemertean'</span>, <span class="st">'Lingula'</span>, <span class="st">'Terebratulina'</span>)
 <span class="no">rooted.tree</span> <span class="kw">&lt;-</span> <span class="kw pkg">TreeTools</span><span class="kw ns">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/EnforceOutgroup.html">EnforceOutgroup</a></span>(<span class="no">nj.tree</span>, <span class="no">outgroup</span>)
 <span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(<span class="no">rooted.tree</span>)</pre></body></html></div>
+<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">rooted.tree</span>)</pre></body></html></div>
 <p><img src="inapplicable_files/figure-html/Outgroup-1.png" width="700"></p>
 <p>Now let’s see whether a few nearest-neighbour interchanges can find us a better tree score. This tends to be the quickest search to run, if not the most exhaustive. Using <code>RootedNNISwap</code> instead of <code>NNISwap</code> stops taxa from moving from one side of the root to another, which we need to do if we’re going to enforce our outgroup constraint. Even if we are using a single-taxon outgroup, using <code>RootedNNISwap</code> retains the position of the root, which makes tree comparison and interpretation easier later on.</p>
 <div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="no">better.tree</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">TreeSearch</a></span>(<span class="kw">tree</span> <span class="kw">=</span> <span class="no">rooted.tree</span>, <span class="kw">dataset</span> <span class="kw">=</span> <span class="no">my.phyDat</span>,
@@ -211,7 +211,7 @@ To be confident that you have found a globally optimum tree, it’s worth runnin
 <p>The best tree for this dataset has a score of 79. This relatively quick Ratchet search always seems to find a tree with this score from this dataset. (Larger datasets will probably need a more exhaustive search.)</p>
 <p>Let’s take a look at the one it’s found on this occasion:</p>
 <div class="sourceCode" id="cb52"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(<span class="no">best.tree</span>)</pre></body></html></div>
+<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">best.tree</span>)</pre></body></html></div>
 <p><img src="inapplicable_files/figure-html/Plot-best-tree-1.png" width="700"></p>
 <p>This is, of course, just one most parsimonious tree; with this dataset, there are many.</p>
 <p>One way to make a strict consensus of multiple optimal trees is to collect a number of trees from independent Ratchet iterations.</p>
@@ -224,12 +224,12 @@ To be confident that you have found a globally optimum tree, it’s worth runnin
 <p>If ten independent runs ended up at a number of different trees, there may be many more optimal trees out there to be found; perhaps we could repeat <code>MultiRatchet</code> with <code>nSearch = 250</code> for a more exhaustive sampling of tree space. That would take a while though; for now, let’s check out our consensus tree:</p>
 <div class="sourceCode" id="cb55"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
 <span class="no">strict.consensus</span> <span class="kw">&lt;-</span> <span class="kw pkg">ape</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span>(<span class="no">some.optimal.trees</span>)
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(<span class="no">strict.consensus</span>)</pre></body></html></div>
+<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">strict.consensus</span>)</pre></body></html></div>
 <p><img src="inapplicable_files/figure-html/Plot-strict-consensus-1.png" width="700"></p>
 <p>We might prefer a majority-rule consensus tree:</p>
 <div class="sourceCode" id="cb56"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span><span class="kw">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span><span class="kw">=</span><span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
 <span class="no">majority.consensus</span> <span class="kw">&lt;-</span> <span class="kw pkg">ape</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span>(<span class="no">some.optimal.trees</span>, <span class="kw">p</span> <span class="kw">=</span> <span class="fl">0.5</span>)
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(<span class="no">majority.consensus</span>)</pre></body></html></div>
+<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">majority.consensus</span>)</pre></body></html></div>
 <p><img src="inapplicable_files/figure-html/Plot-majority-rule-consensus-1.png" width="700"></p>
 <p>Clade support can be generated using Jackknife resampling:</p>
 <div class="sourceCode" id="cb57"><html><body><pre class="r"><span class="no">jack.trees</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/Ratchet.html">Jackknife</a></span>(<span class="no">best.tree</span>, <span class="no">my.phyDat</span>, <span class="kw">EdgeSwapper</span> <span class="kw">=</span> <span class="no">RootedTBRSwap</span>,

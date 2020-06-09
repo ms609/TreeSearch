@@ -89,7 +89,7 @@ parsimony score in datasets that contain inapplicable data." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.1</span>
       </span>
     </div>
 
@@ -183,7 +183,7 @@ whose names correspond to the labels of any accompanying tree.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>This function returns the elements from a list containing:</p><ul>
+    <p><code>Fitch()</code> returns the elements from a list containing:</p><ul>
 <li><p>The total parsimony score</p></li>
 <li><p>The parsimony score associated with each character</p></li>
 <li><p>A matrix comprising character reconstructions for each node
@@ -204,9 +204,9 @@ If multiple elements are requested then these will be returned in a list.</p>
 <code><a href='MorphyTreeLength.html'>MorphyTreeLength</a>()</code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'inapplicable.datasets'</span>)
-<span class='no'>tree</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>TreeTools</span><span class='kw ns'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/RandomTree.html'>RandomTree</a></span>(<span class='no'>inapplicable.phyData</span><span class='kw'>[[</span><span class='fl'>1</span>]])
-<span class='no'>result</span> <span class='kw'>&lt;-</span> <span class='fu'>Fitch</span>(<span class='no'>tree</span>, <span class='no'>inapplicable.phyData</span><span class='kw'>[[</span><span class='fl'>1</span>]])</div></pre>
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>"inapplicable.datasets"</span>)
+<span class='no'>tree</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>TreeTools</span><span class='kw ns'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/GenerateTree.html'>BalancedTree</a></span>(<span class='no'>inapplicable.phyData</span><span class='kw'>[[</span><span class='fl'>1</span>]])
+<span class='fu'>Fitch</span>(<span class='no'>tree</span>, <span class='no'>inapplicable.phyData</span><span class='kw'>[[</span><span class='fl'>1</span>]])</div><div class='output co'>#&gt; [1] 1117</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

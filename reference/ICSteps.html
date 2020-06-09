@@ -89,7 +89,7 @@ are present, for all possible values of e." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.1</span>
       </span>
     </div>
 
@@ -168,8 +168,8 @@ are present, for all possible values of e.</p>
     <pre class="usage"><span class='fu'>ICSteps</span>(
   <span class='no'>char</span>,
   <span class='kw'>ambiguousToken</span> <span class='kw'>=</span> <span class='fl'>0</span>,
-  <span class='kw'>expectedMinima</span> <span class='kw'>=</span> <span class='fl'>25</span>,
-  <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>10000</span>,
+  <span class='kw'>expectedMinima</span> <span class='kw'>=</span> <span class='fl'>25L</span>,
+  <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>10000L</span>,
   <span class='kw'>warn</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
 )</pre>
 
@@ -219,11 +219,9 @@ doi: <a href='https://doi.org/10.1080/10635150118627'>10.1080/10635150118627</a>
 .</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'>{
-  <span class='co'># A character that is present in ten taxa and absent in five</span>
-  <span class='no'>character</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>1</span>, <span class='fl'>10</span>), <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>2</span>, <span class='fl'>5</span>))
-  <span class='fu'>ICSteps</span> (<span class='no'>character</span>)
-}</div><div class='output co'>#&gt; <span class='warning'>Warning: Will truncate number of iterations at maxIter = 10000</span></div><div class='output co'>#&gt; <span class='message'>  Token count 510 = 11.09 bits @ 0 extra steps; simulating 10000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt;            1            2            3            4            5 
+    <pre class="examples"><div class='input'><span class='co'># A character that is present in ten taxa and absent in five</span>
+<span class='no'>character</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>1</span>, <span class='fl'>10</span>), <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>2</span>, <span class='fl'>5</span>))
+<span class='fu'><a href='https://rdrr.io/r/base/warning.html'>suppressWarnings</a></span>(<span class='fu'>ICSteps</span>(<span class='no'>character</span>))</div><div class='output co'>#&gt; <span class='message'>  Token count 510 = 11.09 bits @ 0 extra steps; simulating 10000 trees to estimate cost of further steps.</span></div><div class='output co'>#&gt;            1            2            3            4            5 
 #&gt; 0.0004576659 0.0112970878 0.0960752334 0.3746034333 0.5175665797 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

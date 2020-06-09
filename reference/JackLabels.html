@@ -88,7 +88,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.1</span>
       </span>
     </div>
 
@@ -206,7 +206,10 @@ consistent with each node in <code>tree</code>, as plotted.</p>
     <div class='dont-index'><p><code><a href='Ratchet.html'>Jackknife()</a></code>: Generate trees by jackknife resampling</p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='st'>'TreeTools'</span>) <span class='co'># for as.phylo</span></div><div class='output co'>#&gt; <span class='message'>Loading required package: ape</span></div><div class='input'>
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='st'>'TreeTools'</span>) <span class='co'># for as.phylo</span></div><div class='output co'>#&gt; <span class='message'>Loading required package: ape</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>Attaching package: ‘TreeTools’</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:base’:</span>
+#&gt; <span class='message'></span>
+#&gt; <span class='message'>    %in%, match</span></div><div class='input'>
 <span class='co'># jackTrees will usually be generated with Jackknife(), but for simplicity:</span>
 <span class='no'>jackTrees</span> <span class='kw'>&lt;-</span> <span class='fu'>as.phylo</span>(<span class='fl'>1</span>:<span class='fl'>100</span>, <span class='fl'>8</span>)
 
