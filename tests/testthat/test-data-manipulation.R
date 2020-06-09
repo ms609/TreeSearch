@@ -13,7 +13,7 @@ test_that("minimum step counts are correctly calculated", {
   expect_equal('{-1}{-2}{-3}2233', TreeTools::PhyDatToString(PrepareDataIW(dudTwo)))
   
   tr <- ape::read.tree(text='(((a, b), c), (d, (e, ((f, g), (h, (i, (j, k)))))));')
-  expect_equal(CharacterLength(tr, 
+  expect_equal(CharacterLength(tr,
                                TreeTools::StringToPhyDat('11---22--33', letters[1:11])),
                MinimumLength(c(0, 0, 0, 0, 0, 0, 2, 2, 4, 4, 8, 8)))
 
