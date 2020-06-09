@@ -11,6 +11,7 @@ There were no ERRORs, WARNINGs or NOTEs.
 ## Downstream dependencies
 There is currently one downstream dependency for this package.
 
-Neither `revdepcheck::revdep_check()` nor 
-`devtools::revdep_check()` were able to check downstream dependencies for 
-errors.
+`revdepcheck::revdep_check()` identified no changes to worse in:
+
+v CongreveLamsdell2016 1.0.2             -- E: 0     | W: 0     | N: 0    
+OK: 1
