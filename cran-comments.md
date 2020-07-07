@@ -39,7 +39,7 @@ There was one NOTE:
 I have verified that the DOIs and URLs are correct.
 
 ## Downstream dependencies
-There is currently one downstream dependency for this package.
+There are currently two downstream dependencies for this package (and I maintain both).
 
 `revdepcheck::revdep_check()` identified no changes to worse in:
 
