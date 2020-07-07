@@ -1,10 +1,11 @@
 context("TreeSearch.R")
 library('TreeTools')
-comb11 <- ape::read.tree(text="(a, (b, (c, (d, (e, (f, (g, (h, (i, (j, k))))))))));")
-unrooted11 <- ape::read.tree(text="(a, b, (c, (d, (e, (f, (g, (h, (i, (j, k)))))))));")
-data11 <- cbind(upper.tri(matrix(FALSE, 11, 11))[, 3:10], lower.tri(matrix(FALSE, 11, 11))[, 2:9])
+comb11 <- PectinateTree(letters[1:11])
+unrooted11 <- UnrootTree(comb11)
+data11 <- cbind(upper.tri(matrix(FALSE, 11, 11))[, 3:10], 
+                lower.tri(matrix(FALSE, 11, 11))[, 2:9])
 rownames(data11) <- letters[1:11]
-phy11 <- phangorn::phyDat(data11, type='USER', levels=c(FALSE, TRUE))
+phy11 <- phangorn::phyDat(data11, type='USER', levels = c(FALSE, TRUE))
 RootySwappers <- list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap)
 
 test_that("tree can be found", {
@@ -59,11 +60,13 @@ test_that("Implied weights: Tree search", {
   expect_error(IWTreeSearch(tree = unrooted11, dataset = phy11))
 
   set.seed(1)
-  expect_equal(comb11, IWTreeSearch(RandomTree(phy11, 'a'), phy11, maxIter=150,
-                                    EdgeSwapper = RootedTBRSwap, verbosity=0))
+  expect_equal(comb11, IWTreeSearch(RandomTree(phy11, 'a'),
+                                    phy11, maxIter = 220,
+                                    EdgeSwapper = RootedTBRSwap, verbosity = 0))
   set.seed(1)
-  expect_equal(comb11, IWTreeSearch(RandomTree(phy11, 'a'), phy11, maxIter=220,
-                                    EdgeSwapper = RootedSPRSwap, verbosity=0))
+  expect_equal(comb11, IWTreeSearch(RandomTree(phy11, 'a'),
+                                    phy11, maxIter = 220,
+                                    EdgeSwapper = RootedSPRSwap, verbosity = 0))
   
   set.seed(1)
   expect_equal(comb11, IWTreeSearch(TBR(TBR(TBR((comb11)))), phy11, maxIter=100,

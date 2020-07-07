@@ -1,3 +1,7 @@
+# TreeSearch 0.4.2
+
+ - Update tests for compatibility with 'TreeTools' v1.1.0
+
 # TreeSearch 0.4.1
 
  - Compatibility with 'TreeTools' v1.0.0
