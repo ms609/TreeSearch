@@ -14,7 +14,7 @@
   ],
   "issueTracker": "https://github.com/ms609/TreeSearch/issues",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
