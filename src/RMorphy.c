@@ -13,6 +13,7 @@ SEXP _R_wrap_mpl_new_Morphy(void)
 {
     Morphy new = mpl_new_Morphy();
     SEXP result = R_MakeExternalPtr(new, R_NilValue, R_NilValue);
+    R_PreserveObject(result);
     
     return result;
 }
