@@ -11,21 +11,40 @@
 
 SEXP _R_wrap_mpl_new_Morphy(void)
 {
-    Morphy new = mpl_new_Morphy();
-    SEXP result = R_MakeExternalPtr(new, R_NilValue, R_NilValue);
+    Morphy new_Morphy = mpl_new_Morphy();
+    SEXP result = PROTECT(R_MakeExternalPtr(new_Morphy, R_NilValue, R_NilValue));
     R_PreserveObject(result);
+    R_RegisterCFinalizerEx(result, _finalize_Morphy, TRUE);
+    UNPROTECT(1);
     
     return result;
 }
 
+void _finalize_Morphy (SEXP MorphyHandl) {
+    Morphy handl = R_ExternalPtrAddr(MorphyHandl);
+    if (handl == NULL) {
+        return;
+    } else {
+        mpl_delete_Morphy(handl);
+        R_ReleaseObject(MorphyHandl);
+        R_ClearExternalPtr(MorphyHandl);
+    }
+}
+
 SEXP _R_wrap_mpl_delete_Morphy(SEXP MorphyHandl)
 {
-    int ret = 0;
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
+    
     Morphy handl = R_ExternalPtrAddr(MorphyHandl);
-    ret = mpl_delete_Morphy(handl);
-    INTEGER(Rret)[0] = ret;
+    if (handl == NULL) {
+        INTEGER(Rret)[0] = NA_INTEGER;
+    } else {
+        INTEGER(Rret)[0] = mpl_delete_Morphy(handl);
+        R_ReleaseObject(MorphyHandl);
+        R_ClearExternalPtr(MorphyHandl);
+    }
     UNPROTECT(1);
+    
     return Rret;
 }
 
