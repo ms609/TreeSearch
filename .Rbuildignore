@@ -1,14 +1,15 @@
 ^Meta$
 ^doc$
+^docs$
 ^data-raw$
+^man-roxygen$
+^pkgdown$
+^revdep$
 ^CRAN-RELEASE$
 /^src\-/
 CONTRIBUTING.md
 README.md
 cran-comments.md
-man-roxygen
-data-raw
-revdep
 vignettes/.RData
 /^\.git/
 ^.*\.o$
@@ -21,6 +22,4 @@ vignettes/.RData
 ^\.?R+prof.*$
 ^CODE_OF_CONDUCT\.md$
 ^_pkgdown\.yml$
-^docs$
-^pkgdown$
 ^codemeta\.json$
