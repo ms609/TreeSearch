@@ -1,4 +1,5 @@
 context("RMorphy.C")
+
 test_that("NULL pointers don't cause crash", {
   ptr <- mpl_new_Morphy()
   expect_equal(0, mpl_delete_Morphy(ptr))

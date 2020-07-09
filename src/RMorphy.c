@@ -22,13 +22,10 @@ SEXP _R_wrap_mpl_new_Morphy(void)
 
 void _finalize_Morphy (SEXP MorphyHandl) {
     Morphy handl = R_ExternalPtrAddr(MorphyHandl);
-    if (handl == NULL) {
-        return;
-    } else {
-        mpl_delete_Morphy(handl);
-        R_ReleaseObject(MorphyHandl);
-        R_ClearExternalPtr(MorphyHandl);
-    }
+    if (handl == NULL) return;
+    mpl_delete_Morphy(handl);
+    R_ClearExternalPtr(MorphyHandl);
+    R_ReleaseObject(MorphyHandl);
 }
 
 SEXP _R_wrap_mpl_delete_Morphy(SEXP MorphyHandl)
