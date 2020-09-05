@@ -27,7 +27,7 @@
 #' NNI(tree, edgeToBreak = -1)
 #'
 #' @export
-NNI <- function (tree, edgeToBreak=NULL) {
+NNI <- function (tree, edgeToBreak = NULL) {
   edge <- tree$edge
   parent <- edge[, 1]
   StopUnlessBifurcating(parent)
