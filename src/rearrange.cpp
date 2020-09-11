@@ -83,7 +83,7 @@ IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup) {
   if (outgroup == root_node) return edge;
   int16* edge_above = new int16[max_node + 1];
   int16 root_edges[2] = {0, 0};
-  for (int16 i = n_edge - 1; i--; ) {
+  for (int16 i = n_edge; i--; ) {
     edge_above[edge(i, 1)] = i;
     if (edge(i, 0) == root_node) {
       root_edges[root_edges[1] ? 0 : 1] = i;
