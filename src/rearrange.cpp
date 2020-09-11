@@ -129,8 +129,8 @@ IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup) {
 //  * Tree is bifurcating, in preorder; first two edges have root as parent.
 //  [[Rcpp::export]]
 IntegerMatrix spr (const IntegerMatrix edge,
-                   const IntegerMatrix randomEdge,
-                   const IntegerMatrix mergeEdge) {
+                   const IntegerVector randomEdge,
+                   const IntegerVector mergeEdge) {
   const int16
     n_edge = edge.nrow(),
     n_node = n_edge / 2,
