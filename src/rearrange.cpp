@@ -72,6 +72,7 @@ IntegerMatrix nni(const IntegerMatrix edge,
 // edge must be in preorder
 //  [[Rcpp::export]]
 IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup) {
+  
   if (edge(0, 1) == outgroup || edge(1, 1) == outgroup) return edge;
   
   const int16 n_edge = edge.nrow(),
@@ -79,15 +80,21 @@ IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup) {
     n_tip = n_node + 1,
     root_node = n_tip + 1,
     max_node = edge(n_edge - 1, 0);
+  
   if (outgroup > max_node) throw std::range_error("outgroup exceeds number of nodes");
   if (outgroup == root_node) return edge;
+  
   int16* edge_above = new int16[max_node + 1];
   int16 root_edges[2] = {0, 0};
+  
   for (int16 i = n_edge; i--; ) {
+    
     edge_above[edge(i, 1)] = i;
+    
     if (edge(i, 0) == root_node) {
       root_edges[root_edges[1] ? 0 : 1] = i;
     }
+    
   }
   
   IntegerMatrix ret = clone(edge);
@@ -96,29 +103,21 @@ IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup) {
   // We'll later add an edge from the now-unallocated root node to the outgroup.
   ret(invert_next, 0) = root_node;
   ret(invert_next, 1) = edge(invert_next, 0);
+  
   do {
-    Rcout << "\n - Inverted edge " << (invert_next + 1) << " with parent " <<
-      edge(invert_next, 0) << " which is child of " << edge_above[edge(invert_next, 0)];
     invert_next = edge_above[edge(invert_next, 0)];
     ret(invert_next, 0) = edge(invert_next, 1);
     ret(invert_next, 1) = edge(invert_next, 0);
   } while (edge(invert_next, 0) != root_node);
-  Rcout << "\n * Invert next left at: " << invert_next << "\n";
   
   delete[] edge_above;
   
-  
   // second root i.e. 16 -- 24 must be replaced with root -> outgroup.
   int16 spare_edge = (ret(root_edges[0], 0) == root_node ? 0 : 1);
-  Rcout << "Spare edge: " << (root_edges[spare_edge] + 1) << "\n";
   ret(invert_next, 1) = edge(root_edges[spare_edge], 1);
   ret(root_edges[spare_edge], 1) = outgroup;
   
-  for (int i = 0; i < n_edge; i++) {
-    Rcout << "\n["<< (i + 1)<< ",] " << ret(i, 0) << " -- " << ret(i, 1);
-  }
   return preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
-  return ret;
 }
 
 
