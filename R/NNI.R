@@ -32,7 +32,7 @@ NNI <- function (tree, edgeToBreak = NULL) {
   parent <- edge[, 1]
   StopUnlessBifurcating(parent)
   if (!is.null(edgeToBreak) && edgeToBreak == -1) {
-    child  <- edge[, 2]
+    child <- edge[, 2]
     nTips <- (length(parent) / 2L) + 1L
     samplable <- child > nTips
     # newEdges <- vapply(which(samplable), DoubleNNI, parent=parent, child=child, list(matrix(0L, nEdge, 2), matrix(0L, nEdge, 2)))
@@ -43,7 +43,7 @@ NNI <- function (tree, edgeToBreak = NULL) {
     # Return:
     newTrees
   } else {
-    newEdge <- NNISwap(parent, edge[, 2], edgeToBreak=edgeToBreak)
+    newEdge <- NNISwap(parent, edge[, 2], edgeToBreak = edgeToBreak)
     tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
     
     # Return:
@@ -55,10 +55,12 @@ NNI <- function (tree, edgeToBreak = NULL) {
 #' @template treeParent
 #' @template treeChild
 #' @param nTips (optional) Number of tips.
-#' @return a list containing two elements, corresponding in turn to the rearranged parent and child parameters
+#' @return `NNISwap()` returns a list containing two elements, corresponding in
+#' turn to the  rearranged parent and child parameters.
 #' @importFrom TreeTools SampleOne
 #' @export
-NNISwap <- function (parent, child, nTips = (length(parent) / 2L) + 1L, edgeToBreak=NULL) {
+NNISwap <- function (parent, child, nTips = (length(parent) / 2L) + 1L,
+                     edgeToBreak = NULL) {
   rootNode  <- nTips + 1L
   samplable <- child > nTips
   if (!any(samplable)) stop("Not enough edges to allow NNI rearrangement")
