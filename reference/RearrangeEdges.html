@@ -170,16 +170,16 @@ Will generally be called from within a tree search function.</p>
     </div>
 
     <pre class="usage"><span class='fu'>RearrangeEdges</span>(
-  <span class='no'>parent</span>,
-  <span class='no'>child</span>,
-  <span class='no'>dataset</span>,
-  <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
-  <span class='no'>EdgeSwapper</span>,
-  <span class='kw'>scoreToBeat</span> <span class='kw'>=</span> <span class='fu'>TreeScorer</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='no'>dataset</span>, <span class='no'>...</span>),
-  <span class='kw'>iter</span> <span class='kw'>=</span> <span class='st'>"?"</span>,
-  <span class='kw'>hits</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
-  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
-  <span class='no'>...</span>
+  <span class='kw'>parent</span>,
+  <span class='kw'>child</span>,
+  <span class='kw'>dataset</span>,
+  TreeScorer = <span class='kw'>MorphyLength</span>,
+  <span class='kw'>EdgeSwapper</span>,
+  scoreToBeat = <span class='fu'>TreeScorer</span>(<span class='kw'>parent</span>, <span class='kw'>child</span>, <span class='kw'>dataset</span>, <span class='kw'>...</span>),
+  iter = <span class='st'>"?"</span>,
+  hits = <span class='fl'>0L</span>,
+  verbosity = <span class='fl'>0L</span>,
+  <span class='kw'>...</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -247,15 +247,19 @@ more verbose feedback to the user.</p></td>
 specified type, and returns the score of the tree (with the given dataset).
 It also reports the number of times that this score was hit in the
 current function call.</p>
+    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+
+    <p>Martin R. Smith</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>, <span class='kw'>package</span><span class='kw'>=</span><span class='st'>'TreeTools'</span>)
-<span class='no'>tree</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>TreeTools</span><span class='kw ns'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span>(<span class='no'>Lobo.phy</span>)
-<span class='no'>edge</span> <span class='kw'>&lt;-</span> <span class='no'>tree</span>$<span class='no'>edge</span>
-<span class='no'>parent</span> <span class='kw'>&lt;-</span> <span class='no'>edge</span>[, <span class='fl'>1</span>]
-<span class='no'>child</span> <span class='kw'>&lt;-</span> <span class='no'>edge</span>[, <span class='fl'>2</span>]
-<span class='no'>dataset</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a></span>(<span class='no'>Lobo.phy</span>)
-<span class='fu'>RearrangeEdges</span>(<span class='no'>parent</span>, <span class='no'>child</span>, <span class='no'>dataset</span>, <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedNNISwap</span>)</div><div class='output co'>#&gt; [[1]]
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>, package=<span class='st'>'TreeTools'</span>)
+<span class='kw'>tree</span> <span class='op'>&lt;-</span> <span class='kw'>TreeTools</span>::<span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span>(<span class='kw'>Lobo.phy</span>)
+<span class='kw'>edge</span> <span class='op'>&lt;-</span> <span class='kw'>tree</span><span class='op'>$</span><span class='kw'>edge</span>
+<span class='kw'>parent</span> <span class='op'>&lt;-</span> <span class='kw'>edge</span>[, <span class='fl'>1</span>]
+<span class='kw'>child</span> <span class='op'>&lt;-</span> <span class='kw'>edge</span>[, <span class='fl'>2</span>]
+<span class='kw'>dataset</span> <span class='op'>&lt;-</span> <span class='fu'><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a></span>(<span class='kw'>Lobo.phy</span>)
+<span class='fu'>RearrangeEdges</span>(<span class='kw'>parent</span>, <span class='kw'>child</span>, <span class='kw'>dataset</span>, EdgeSwapper = <span class='kw'>RootedNNISwap</span>)
+</div><div class='output co'>#&gt; [[1]]
 #&gt;  [1] 49 50 51 52 53 54 55 56 56 57 57 55 54 53 58 59 60 60 59 61 61 58 52 62 63
 #&gt; [26] 64 65 65 64 66 66 63 67 68 69 70 71 72 73 74 74 73 72 71 70 69 75 76 77 77
 #&gt; [51] 76 78 79 79 78 80 80 75 68 81 81 67 62 82 83 84 85 86 86 85 84 87 88 89 90
@@ -288,7 +292,7 @@ current function call.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
 </div>
 
       </footer>

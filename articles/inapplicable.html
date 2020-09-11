@@ -108,7 +108,7 @@
       <h1 data-toc-skip>Inapplicable data in morphological phylogenetics</h1>
                         <h4 class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2020-09-05</h4>
+            <h4 class="date">2020-09-11</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/inapplicable.Rmd"><code>vignettes/inapplicable.Rmd</code></a></small>
       <div class="hidden name"><code>inapplicable.Rmd</code></div>
@@ -124,42 +124,60 @@
 <a href="#getting-started" class="anchor"></a>Getting started</h2>
 <p><a href="getting-started.html">A companion vignette</a> gives details on installing the package and getting up and running.</p>
 <p>Once installed, load the TreeSearch package into R using</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">'TreeSearch'</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb1"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st"><a href="https://ms609.github.io/TreeSearch">'TreeSearch'</a></span>)
+</pre></div>
 </div>
 <div id="scoring-a-tree-and-conducting-a-tree-search" class="section level2">
 <h2 class="hasAnchor">
 <a href="#scoring-a-tree-and-conducting-a-tree-search" class="anchor"></a>Scoring a tree, and conducting a tree search</h2>
 <p>Here’s an example of using the package to conduct tree search. You can <a href="https://ms609.github.io/TreeTools/articles/load-data.html">load your own dataset</a>, but for now, we’ll use the Vinther <em>et al.</em> <span class="citation">(2008)</span> dataset that comes bundled with the package.</p>
 <p>This dataset is small enough that it runs reasonably quickly, but its phylogenetic signal is obscure enough that it can require Ratchet searches to escape from local optima.</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">my.data</span> <span class="kw">&lt;-</span> <span class="kw pkg">TreeSearch</span><span class="kw ns">::</span><span class="no"><a href="../reference/inapplicable.datasets.html">inapplicable.datasets</a></span><span class="kw">[[</span><span class="st">'Vinther2008'</span>]]
-<span class="no">my.phyDat</span> <span class="kw">&lt;-</span> <span class="kw pkg">phangorn</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/phangorn/man/phyDat.html">phyDat</a></span>(<span class="no">my.data</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">'USER'</span>, <span class="kw">levels</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0</span>:<span class="fl">9</span>, <span class="st">'-'</span>))</pre></body></html></div>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="co"># Set a random seed so that random functions in this document are reproducible</span>
+<div class="sourceCode" id="cb2"><pre class="downlit">
+<span class="kw">my.data</span> <span class="op">&lt;-</span> <span class="kw">TreeSearch</span>::<span class="kw"><a href="../reference/inapplicable.datasets.html">inapplicable.datasets</a></span>[[<span class="st">'Vinther2008'</span>]]
+<span class="kw">my.phyDat</span> <span class="op">&lt;-</span> <span class="kw">phangorn</span>::<span class="fu"><a href="https://rdrr.io/pkg/phangorn/man/phyDat.html">phyDat</a></span>(<span class="kw">my.data</span>, type = <span class="st">'USER'</span>, levels = <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0</span><span class="op">:</span><span class="fl">9</span>, <span class="st">'-'</span>))
+</pre></div>
+<div class="sourceCode" id="cb3"><pre class="downlit">
+<span class="co"># Set a random seed so that random functions in this document are reproducible</span>
 <span class="fu"><a href="https://rdrr.io/r/base/warning.html">suppressWarnings</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/Random.html">RNGversion</a></span>(<span class="st">"3.5.0"</span>)) <span class="co"># Until we can require R3.6.0</span>
-<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">0</span>)</pre></body></html></div>
+<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">0</span>)
+</pre></div>
 <p>We can generate a random tree and calculate its parsimony score thus:</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">random.tree</span> <span class="kw">&lt;-</span> <span class="kw pkg">TreeTools</span><span class="kw ns">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html">RandomTree</a></span>(<span class="no">my.phyDat</span>, <span class="kw">root</span> <span class="kw">=</span> <span class="fl">TRUE</span>)
-<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
-<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">random.tree</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb4"><pre class="downlit">
+<span class="kw">random.tree</span> <span class="op">&lt;-</span> <span class="kw">TreeTools</span>::<span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html">RandomTree</a></span>(<span class="kw">my.phyDat</span>, root = <span class="fl">TRUE</span>)
+<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(mar = <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), cex = <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span>(<span class="kw">random.tree</span>)
+</pre></div>
 <p><img src="inapplicable_files/figure-html/Random-tree-1.png" width="700"></p>
-<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="fu"><a href="../reference/Fitch.html">Fitch</a></span>(<span class="no">random.tree</span>, <span class="no">my.phyDat</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb5"><pre class="downlit">
+<span class="fu"><a href="../reference/Fitch.html">Fitch</a></span>(<span class="kw">random.tree</span>, <span class="kw">my.phyDat</span>)
+</pre></div>
 <pre><code>## [1] 202</code></pre>
 <p>We might save some wasted time in tree search if we can start with a tree that’s a little closer to optimal: perhaps a neighbour-joining tree.</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">nj.tree</span> <span class="kw">&lt;-</span> <span class="kw pkg">TreeTools</span><span class="kw ns">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html">NJTree</a></span>(<span class="no">my.phyDat</span>)
-<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
-<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">nj.tree</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb7"><pre class="downlit">
+<span class="kw">nj.tree</span> <span class="op">&lt;-</span> <span class="kw">TreeTools</span>::<span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html">NJTree</a></span>(<span class="kw">my.phyDat</span>)
+<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(mar = <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), cex = <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span>(<span class="kw">nj.tree</span>)
+</pre></div>
 <p><img src="inapplicable_files/figure-html/Neighbour-joining-1.png" width="700"></p>
-<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="fu"><a href="../reference/Fitch.html">Fitch</a></span>(<span class="no">nj.tree</span>, <span class="no">my.phyDat</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb8"><pre class="downlit">
+<span class="fu"><a href="../reference/Fitch.html">Fitch</a></span>(<span class="kw">nj.tree</span>, <span class="kw">my.phyDat</span>)
+</pre></div>
 <pre><code>## [1] 85</code></pre>
 <p>With the Vinther <em>et al.</em> <span class="citation">(2008)</span> dataset, nemerteans and brachiopods form an natural outgroup to the other taxa. If we wish, we can constrain this outgroup and avoid making tree rearrangements that would mix ingroup and outgroup taxa. This will accelerate tree search, but it’s worth thinking carefully whether you can be perfectly confident that the ingroup and outgroup are mutually monophyletic.</p>
 <p>To constrain an outgroup, we first need to make the outgroup and ingroup monophyletic on our tree:</p>
-<div class="sourceCode" id="cb10"><html><body><pre class="r"><span class="no">outgroup</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">'Nemertean'</span>, <span class="st">'Lingula'</span>, <span class="st">'Terebratulina'</span>)
-<span class="no">rooted.tree</span> <span class="kw">&lt;-</span> <span class="kw pkg">TreeTools</span><span class="kw ns">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/EnforceOutgroup.html">EnforceOutgroup</a></span>(<span class="no">nj.tree</span>, <span class="no">outgroup</span>)
-<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
-<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">rooted.tree</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb10"><pre class="downlit">
+<span class="kw">outgroup</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">'Nemertean'</span>, <span class="st">'Lingula'</span>, <span class="st">'Terebratulina'</span>)
+<span class="kw">rooted.tree</span> <span class="op">&lt;-</span> <span class="kw">TreeTools</span>::<span class="fu"><a href="https://ms609.github.io/TreeTools/reference/EnforceOutgroup.html">EnforceOutgroup</a></span>(<span class="kw">nj.tree</span>, <span class="kw">outgroup</span>)
+<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(mar = <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), cex = <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span>(<span class="kw">rooted.tree</span>)
+</pre></div>
 <p><img src="inapplicable_files/figure-html/Outgroup-1.png" width="700"></p>
 <p>Now let’s see whether a few nearest-neighbour interchanges can find us a better tree score. This tends to be the quickest search to run, if not the most exhaustive. Using <code>RootedNNISwap</code> instead of <code>NNISwap</code> stops taxa from moving from one side of the root to another, which we need to do if we’re going to enforce our outgroup constraint. Even if we are using a single-taxon outgroup, using <code>RootedNNISwap</code> retains the position of the root, which makes tree comparison and interpretation easier later on.</p>
-<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="no">better.tree</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">TreeSearch</a></span>(<span class="kw">tree</span> <span class="kw">=</span> <span class="no">rooted.tree</span>, <span class="kw">dataset</span> <span class="kw">=</span> <span class="no">my.phyDat</span>,
-                           <span class="kw">EdgeSwapper</span> <span class="kw">=</span> <span class="no">RootedNNISwap</span>, <span class="kw">verbosity</span> <span class="kw">=</span> <span class="fl">3</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb11"><pre class="downlit">
+<span class="kw">better.tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/IWTreeSearch.html">TreeSearch</a></span>(tree = <span class="kw">rooted.tree</span>, dataset = <span class="kw">my.phyDat</span>, 
+                           EdgeSwapper = <span class="kw">RootedNNISwap</span>, verbosity = <span class="fl">3</span>)
+</pre></div>
 <pre><code>##   - Performing tree search.  Initial score: 85</code></pre>
 <pre><code>##     - Iteration 2 - Best score 85 hit 1 times.</code></pre>
 <pre><code>##     - Iteration 7 - Best score 85 hit 2 times.</code></pre>
@@ -181,51 +199,67 @@
 <pre><code>##   - Final score 79 found 2 times after 100 rearrangements.</code></pre>
 <p>This score is better than the 85 of the original neighbour-joining tree, but is this the best we can do?</p>
 <p>Using NNI helps to explore the region of treespace close to the local optimum, but SPR and TBR rearrangements are better at escaping local optima, and find better trees further away in tree space. Using more hits (<code>maxHits</code>) and more iterations (<code>maxIter</code>) also means we’ll move closer to an optimal tree.</p>
-<div class="sourceCode" id="cb31"><html><body><pre class="r"><span class="no">better.tree</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">TreeSearch</a></span>(<span class="no">better.tree</span>, <span class="no">my.phyDat</span>, <span class="kw">maxHits</span> <span class="kw">=</span> <span class="fl">8</span>, <span class="kw">maxIter</span> <span class="kw">=</span> <span class="fl">10000</span>,
-                           <span class="kw">EdgeSwapper</span><span class="kw">=</span><span class="no">RootedSPRSwap</span>, <span class="kw">verbosity</span> <span class="kw">=</span> <span class="fl">2</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb31"><pre class="downlit">
+<span class="kw">better.tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/IWTreeSearch.html">TreeSearch</a></span>(<span class="kw">better.tree</span>, <span class="kw">my.phyDat</span>, maxHits = <span class="fl">8</span>, maxIter = <span class="fl">10000</span>,
+                           EdgeSwapper=<span class="kw">RootedSPRSwap</span>, verbosity = <span class="fl">2</span>)
+</pre></div>
 <pre><code>##   - Performing tree search.  Initial score: 79</code></pre>
 <pre><code>##   - Terminating search; hit best score 8 times.</code></pre>
 <pre><code>##   - Final score 79 found 8 times after 619 rearrangements.</code></pre>
-<div class="sourceCode" id="cb35"><html><body><pre class="r"><span class="no">better.tree</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">TreeSearch</a></span>(<span class="no">better.tree</span>, <span class="no">my.phyDat</span>, <span class="kw">maxHits</span> <span class="kw">=</span> <span class="fl">20</span>, <span class="kw">maxIter</span> <span class="kw">=</span> <span class="fl">40000</span>,
-                           <span class="kw">EdgeSwapper</span><span class="kw">=</span><span class="no">RootedTBRSwap</span>, <span class="kw">verbosity</span> <span class="kw">=</span> <span class="fl">2</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb35"><pre class="downlit">
+<span class="kw">better.tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/IWTreeSearch.html">TreeSearch</a></span>(<span class="kw">better.tree</span>, <span class="kw">my.phyDat</span>, maxHits = <span class="fl">20</span>, maxIter = <span class="fl">40000</span>, 
+                           EdgeSwapper=<span class="kw">RootedTBRSwap</span>, verbosity = <span class="fl">2</span>)
+</pre></div>
 <pre><code>##   - Performing tree search.  Initial score: 79</code></pre>
 <pre><code>##   - Terminating search; hit best score 20 times.</code></pre>
 <pre><code>##   - Final score 79 found 20 times after 1216 rearrangements.</code></pre>
 <p>That score’s looking better, but these are only quick searches, and we could be caught in a local optimum. A more comprehensive search of tree space can be accomplished using the parsimony ratchet <span class="citation">(Nixon, 1999)</span>. It might take a couple of minutes to run with the default parameters.<br>
 To be confident that you have found a globally optimum tree, it’s worth running a ratchet with verbosity = 2 and following the search, increasing <code>ratchIter</code> and other search parameters until you are confident that independent ratchet iterations are consistently converging on the optimum score.</p>
-<div class="sourceCode" id="cb39"><html><body><pre class="r"><span class="no">best.tree</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/Ratchet.html">Ratchet</a></span>(<span class="no">better.tree</span>, <span class="no">my.phyDat</span>, <span class="kw">verbosity</span><span class="kw">=</span><span class="fl">0</span>, <span class="kw">ratchIter</span><span class="kw">=</span><span class="fl">5</span>,
-                     <span class="kw">swappers</span><span class="kw">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">RootedTBRSwap</span>, <span class="no">RootedSPRSwap</span>, <span class="no">RootedNNISwap</span>))
-<span class="fu"><a href="https://rdrr.io/r/base/attr.html">attr</a></span>(<span class="no">best.tree</span>, <span class="st">'score'</span>) <span class="co"># Each tree is labelled with its score during tree search</span></pre></body></html></div>
+<div class="sourceCode" id="cb39"><pre class="downlit">
+<span class="kw">best.tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Jackknife.html">Ratchet</a></span>(<span class="kw">better.tree</span>, <span class="kw">my.phyDat</span>, verbosity=<span class="fl">0</span>, ratchIter=<span class="fl">5</span>,
+                     swappers=<span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">RootedTBRSwap</span>, <span class="kw">RootedSPRSwap</span>, <span class="kw">RootedNNISwap</span>))
+<span class="fu"><a href="https://rdrr.io/r/base/attr.html">attr</a></span>(<span class="kw">best.tree</span>, <span class="st">'score'</span>) <span class="co"># Each tree is labelled with its score during tree search</span>
+</pre></div>
 <pre><code>## [1] 79</code></pre>
 <p>The best tree for this dataset has a score of 79. This relatively quick Ratchet search always seems to find a tree with this score from this dataset. (Larger datasets will probably need a more exhaustive search.)</p>
 <p>Let’s take a look at the one it’s found on this occasion:</p>
-<div class="sourceCode" id="cb41"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
-<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">best.tree</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb41"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(mar = <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), cex = <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span>(<span class="kw">best.tree</span>)
+</pre></div>
 <p><img src="inapplicable_files/figure-html/Plot-best-tree-1.png" width="700"></p>
 <p>This is, of course, just one most parsimonious tree; with this dataset, there are many.</p>
 <p>One way to make a strict consensus of multiple optimal trees is to collect a number of trees from independent Ratchet iterations.</p>
 <p>For each Ratchet iteration, we’ll conduct a TBR search to scan tree space, then an NNI search to hone in on the local optimum.</p>
 <p>Note that it’s especially important to retain the position of the root here: a single topology, if rooted in different places, can lead to an unresolved consensus.</p>
-<div class="sourceCode" id="cb42"><html><body><pre class="r"><span class="no">some.optimal.trees</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/Ratchet.html">MultiRatchet</a></span>(<span class="no">best.tree</span>, <span class="kw">nSearch</span> <span class="kw">=</span> <span class="fl">20</span>, <span class="no">my.phyDat</span>,
-                                   <span class="kw">swappers</span> <span class="kw">=</span>
-                                   <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">RootedTBRSwap</span>, <span class="no">RootedNNISwap</span>))</pre></body></html></div>
+<div class="sourceCode" id="cb42"><pre class="downlit">
+<span class="kw">some.optimal.trees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Jackknife.html">MultiRatchet</a></span>(<span class="kw">best.tree</span>, nSearch = <span class="fl">20</span>, <span class="kw">my.phyDat</span>,
+                                   swappers = 
+                                   <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">RootedTBRSwap</span>, <span class="kw">RootedNNISwap</span>))
+</pre></div>
 <pre><code>## Found 10 unique trees from 20 searches.</code></pre>
 <p>If ten independent runs ended up at a number of different trees, there may be many more optimal trees out there to be found; perhaps we could repeat <code>MultiRatchet</code> with <code>nSearch = 250</code> for a more exhaustive sampling of tree space. That would take a while though; for now, let’s check out our consensus tree:</p>
-<div class="sourceCode" id="cb44"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
-<span class="no">strict.consensus</span> <span class="kw">&lt;-</span> <span class="kw pkg">ape</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span>(<span class="no">some.optimal.trees</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">strict.consensus</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb44"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(mar = <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), cex = <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
+<span class="kw">strict.consensus</span> <span class="op">&lt;-</span> <span class="kw">ape</span>::<span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span>(<span class="kw">some.optimal.trees</span>)
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span>(<span class="kw">strict.consensus</span>)
+</pre></div>
 <p><img src="inapplicable_files/figure-html/Plot-strict-consensus-1.png" width="700"></p>
 <p>We might prefer a majority-rule consensus tree:</p>
-<div class="sourceCode" id="cb45"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span><span class="kw">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span><span class="kw">=</span><span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
-<span class="no">majority.consensus</span> <span class="kw">&lt;-</span> <span class="kw pkg">ape</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span>(<span class="no">some.optimal.trees</span>, <span class="kw">p</span> <span class="kw">=</span> <span class="fl">0.5</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">majority.consensus</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb45"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(mar=<span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), cex=<span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
+<span class="kw">majority.consensus</span> <span class="op">&lt;-</span> <span class="kw">ape</span>::<span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span>(<span class="kw">some.optimal.trees</span>, p = <span class="fl">0.5</span>)
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span>(<span class="kw">majority.consensus</span>)
+</pre></div>
 <p><img src="inapplicable_files/figure-html/Plot-majority-rule-consensus-1.png" width="700"></p>
 <p>Clade support can be generated using Jackknife resampling:</p>
-<div class="sourceCode" id="cb46"><html><body><pre class="r"><span class="no">jack.trees</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/Ratchet.html">Jackknife</a></span>(<span class="no">best.tree</span>, <span class="no">my.phyDat</span>, <span class="kw">EdgeSwapper</span> <span class="kw">=</span> <span class="no">RootedTBRSwap</span>,
-                        <span class="kw">jackIter</span> <span class="kw">=</span> <span class="fl">20</span>, <span class="kw">verbosity</span> <span class="kw">=</span> <span class="fl">0</span>)
-<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
+<div class="sourceCode" id="cb46"><pre class="downlit">
+<span class="kw">jack.trees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Jackknife.html">Jackknife</a></span>(<span class="kw">best.tree</span>, <span class="kw">my.phyDat</span>, EdgeSwapper = <span class="kw">RootedTBRSwap</span>,
+                        jackIter = <span class="fl">20</span>, verbosity = <span class="fl">0</span>)
+<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(mar = <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), cex = <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
 
-<span class="fu"><a href="../reference/JackLabels.html">JackLabels</a></span>(<span class="no">strict.consensus</span>, <span class="no">jack.trees</span>) <span class="kw">-&gt;</span> <span class="no">XX</span></pre></body></html></div>
+<span class="fu"><a href="../reference/JackLabels.html">JackLabels</a></span>(<span class="kw">strict.consensus</span>, <span class="kw">jack.trees</span>) <span class="op">-&gt;</span> <span class="kw">XX</span>
+</pre></div>
 <p><img src="inapplicable_files/figure-html/Jackknife-annotations-1.png" width="700"></p>
 </div>
 <div id="implied-weighting" class="section level2">
@@ -233,9 +267,11 @@ To be confident that you have found a globally optimum tree, it’s worth runnin
 <a href="#implied-weighting" class="anchor"></a>Implied weighting</h2>
 <p>Equal weights produces trees that are less accurate and less precise than implied weights <span class="citation">(Smith, 2019)</span>; equally weighted analysis should never be conducted without also considering the results of implied weights <span class="citation">(Goloboff, 1997)</span>, ideally under a range of concavity constants <span class="citation">(cf. Smith &amp; Ortega-Hernández, 2014)</span>.</p>
 <p>The simplest way to conduct an implied weights search is to use the functions</p>
-<div class="sourceCode" id="cb47"><html><body><pre class="r"><span class="no">IWTreeSearch</span>
-<span class="no">IWRatchet</span>
-<span class="no">IWMultiRatchet</span></pre></body></html></div>
+<div class="sourceCode" id="cb47"><pre class="downlit">
+<span class="kw">IWTreeSearch</span>
+<span class="kw">IWRatchet</span>
+<span class="kw">IWMultiRatchet</span>
+</pre></div>
 <p>which operate in the same fashion as their equally-weighted counterparts, with the option of specifying a concavity constant (<em>k</em>) using the parameter <code>concavity=k</code> (default = 10). Note that the default value of 10 is somewhat higher than the default of 3 in TNT; this low default probably gives poorer results in many settings <span class="citation">(Smith, 2019)</span>.</p>
 </div>
 <div id="references" class="section level2 unnumbered">
@@ -279,7 +315,7 @@ To be confident that you have found a globally optimum tree, it’s worth runnin
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
 </div>
 
       </footer>

@@ -117,7 +117,7 @@
 
 <p>This package exists to allow parsimony-style tree searches in R.</p>
 <p>It extends the basic functionality available in the ‘phangorn’ package, with a view to making tree search faster and more efficient, and allowing user-defined optimality criteria to be employed.</p>
-<p>Implied weighting and heuristic searches such as the Parsimony Ratchet (function: <a href="https://ms609.github.io/TreeSearch/reference/Ratchet.html"><code><a href="reference/Ratchet.html">Ratchet()</a></code></a>) are implemented.</p>
+<p>Implied weighting and heuristic searches such as the Parsimony Ratchet (function: <a href="https://ms609.github.io/TreeSearch/reference/Ratchet.html"><code>Ratchet()</code></a>) are implemented.</p>
 </div>
 <div id="installation" class="section level1">
 <h1 class="hasAnchor">
@@ -126,8 +126,10 @@
 <pre><code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages('TreeSearch')
 library('TreeSearch')</a></code></pre>
 <p>If you’re feeling brave, you can install the development version thus:</p>
-<div class="sourceCode" id="cb2"><pre class="r"><span class="kw">if</span>(!<span class="fu"><a href="https://rdrr.io/r/base/library.html">require</a></span>(<span class="no">devtools</span>)) <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"devtools"</span>)
-<span class="kw pkg">devtools</span><span class="kw ns">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">'ms609/TreeSearch'</span>)</pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit">
+<span class="co">if</span>(<span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/library.html">require</a></span>(<span class="kw"><a href="https://devtools.r-lib.org">devtools</a></span>)) <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"devtools"</span>)
+<span class="kw">devtools</span>::<span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">'ms609/TreeSearch'</span>)
+</pre></div>
 </div>
 <div id="optimality-criteria" class="section level1">
 <h1 class="hasAnchor">
@@ -225,7 +227,7 @@ library('TreeSearch')</a></code></pre>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
 </div>
 
       </footer>

@@ -108,7 +108,7 @@
       <h1 data-toc-skip>Installing R and TreeSearch</h1>
                         <h4 class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2020-09-05</h4>
+            <h4 class="date">2020-09-11</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/getting-started.Rmd"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="hidden name"><code>getting-started.Rmd</code></div>
@@ -126,18 +126,24 @@
 <a href="#simple-installation" class="anchor"></a>Simple installation</h3>
 <p>To use ‘TreeSearch’ you will first need to <a href="https://CRAN.R-project.org/">install R</a>. <a href="https://www.rstudio.com/">RStudio</a> (<a href="https://dss.princeton.edu/training/RStudio101.pdf">overview</a>) is a popular front-end that makes several of R’s features easier to use.</p>
 <p>The ‘TreeSearch’ package can be installed as any other package. To get the latest stable version from CRAN, type</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">'TreeSearch'</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb1"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">'TreeSearch'</span>)
+</pre></div>
 <p>into the R (or RStudio) command line.</p>
 </div>
 <div id="for-advanced-users" class="section level3">
 <h3 class="hasAnchor">
 <a href="#for-advanced-users" class="anchor"></a>For advanced users</h3>
 <p>To get the latest development version from GitHub, type</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="kw">if</span> (!<span class="fu"><a href="https://rdrr.io/r/base/library.html">require</a></span>(<span class="st">'devtools'</span>)) <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">'devtools'</span>)
-<span class="kw pkg">devtools</span><span class="kw ns">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">'ms609/TreeSearch'</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb2"><pre class="downlit">
+<span class="co">if</span> (<span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/library.html">require</a></span>(<span class="st"><a href="https://devtools.r-lib.org">'devtools'</a></span>)) <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">'devtools'</span>)
+<span class="kw">devtools</span>::<span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">'ms609/TreeSearch'</span>)
+</pre></div>
 <p>You’ll probably need to install <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools</a> before installing from the GitHub source code, which may be complicated.</p>
 <p>Once installed, load the ‘TreeSearch’ package into R using</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">'TreeSearch'</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb3"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st"><a href="https://ms609.github.io/TreeSearch">'TreeSearch'</a></span>)
+</pre></div>
 </div>
 </div>
 <div id="what-next" class="section level2">
@@ -167,7 +173,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
 </div>
 
       </footer>

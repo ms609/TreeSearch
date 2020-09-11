@@ -108,7 +108,7 @@
       <h1 data-toc-skip>Tree Search with Profile Parsimony</h1>
                         <h4 class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2020-09-05</h4>
+            <h4 class="date">2020-09-11</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/profile.Rmd"><code>vignettes/profile.Rmd</code></a></small>
       <div class="hidden name"><code>profile.Rmd</code></div>
@@ -130,71 +130,99 @@
 # https://github.com/r-lib/rlang/issues/669
 -->
 <p>Once installed, load the inapplicable package into R using</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">'TreeSearch'</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb1"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st"><a href="https://ms609.github.io/TreeSearch">'TreeSearch'</a></span>)
+</pre></div>
 <p>In order to reproduce the random elements of this document, set a random seed:</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="co"># Set a random seed so that random functions in this document are reproducible</span>
+<div class="sourceCode" id="cb2"><pre class="downlit">
+<span class="co"># Set a random seed so that random functions in this document are reproducible</span>
 <span class="fu"><a href="https://rdrr.io/r/base/warning.html">suppressWarnings</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/Random.html">RNGversion</a></span>(<span class="st">"3.5.0"</span>)) <span class="co"># Until we can require R3.6.0</span>
-<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">888</span>)</pre></body></html></div>
+<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">888</span>)
+</pre></div>
 </div>
 <div id="scoring-a-tree-and-conducting-a-tree-search" class="section level2">
 <h2 class="hasAnchor">
 <a href="#scoring-a-tree-and-conducting-a-tree-search" class="anchor"></a>Scoring a tree, and conducting a tree search</h2>
 <p>Here’s an example of using the package to conduct tree search with profile parsimony. You can <a href="https://ms609.github.io/TreeTools/articles/load-data.html">load your own dataset</a>, but for this example, we’ll use a simulated dataset that comes bundled with the <code>TreeSearch</code> package.</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(<span class="no">congreveLamsdellMatrices</span>)
-<span class="no">my.data</span> <span class="kw">&lt;-</span> <span class="no">congreveLamsdellMatrices</span><span class="kw">[[</span><span class="fl">10</span>]]
-<span class="no">my.phyDat</span> <span class="kw">&lt;-</span> <span class="kw pkg">phangorn</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/phangorn/man/phyDat.html">phyDat</a></span>(<span class="no">my.data</span>, <span class="kw">type</span> <span class="kw">=</span> <span class="st">'USER'</span>, <span class="kw">levels</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">1</span>, <span class="fl">2</span>))</pre></body></html></div>
+<div class="sourceCode" id="cb3"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(<span class="kw">congreveLamsdellMatrices</span>)
+<span class="kw">my.data</span> <span class="op">&lt;-</span> <span class="kw">congreveLamsdellMatrices</span>[[<span class="fl">10</span>]]
+<span class="kw">my.phyDat</span> <span class="op">&lt;-</span> <span class="kw">phangorn</span>::<span class="fu"><a href="https://rdrr.io/pkg/phangorn/man/phyDat.html">phyDat</a></span>(<span class="kw">my.data</span>, type = <span class="st">'USER'</span>, levels = <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">1</span>, <span class="fl">2</span>))
+</pre></div>
 <p>We then need to prepare our dataset for Profile Parsimony by calculating the information loss implied by each additional step in each character. Ideally we’d pick a high value of precision (&gt; 1e+06): this takes a while, but only needs doing once for each dataset of a given size.</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">my.prepdata</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/warning.html">suppressWarnings</a></span>(<span class="fu"><a href="../reference/PrepareDataProfile.html">PrepareDataProfile</a></span>(<span class="no">my.phyDat</span>, <span class="kw">precision</span> <span class="kw">=</span> <span class="fl">4e+04</span>))</pre></body></html></div>
+<div class="sourceCode" id="cb4"><pre class="downlit">
+<span class="kw">my.prepdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/warning.html">suppressWarnings</a></span>(<span class="fu"><a href="../reference/PrepareDataProfile.html">PrepareDataProfile</a></span>(<span class="kw">my.phyDat</span>, precision = <span class="fl">4e+04</span>))
+</pre></div>
 <p>To start analysis, we need to load a starting tree. We can do this at random:</p>
-<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="no">tree</span> <span class="kw">&lt;-</span> <span class="kw pkg">TreeTools</span><span class="kw ns">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html">RandomTree</a></span>(<span class="no">my.phyDat</span>, <span class="kw">root</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb5"><pre class="downlit">
+<span class="kw">tree</span> <span class="op">&lt;-</span> <span class="kw">TreeTools</span>::<span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html">RandomTree</a></span>(<span class="kw">my.phyDat</span>, root = <span class="fl">TRUE</span>)
+</pre></div>
 <p>Or using a neighbour joining method, to start at a reasonably good tree:</p>
-<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="no">tree</span> <span class="kw">&lt;-</span> <span class="kw pkg">TreeTools</span><span class="kw ns">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html">NJTree</a></span>(<span class="no">my.phyDat</span>)
-<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
-<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">tree</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb6"><pre class="downlit">
+<span class="kw">tree</span> <span class="op">&lt;-</span> <span class="kw">TreeTools</span>::<span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html">NJTree</a></span>(<span class="kw">my.phyDat</span>)
+<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(mar = <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), cex = <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span>(<span class="kw">tree</span>)
+</pre></div>
 <p><img src="profile_files/figure-html/NJ%20Tree-1.png" width="700"></p>
 <p>Let’s calculate this random tree’s parsimony score, then search for a better tree:</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/ProfileScore.html">ProfileScore</a></span>(<span class="no">tree</span>, <span class="no">my.prepdata</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb7"><pre class="downlit">
+<span class="fu"><a href="../reference/IWScoreMorphy.html">ProfileScore</a></span>(<span class="kw">tree</span>, <span class="kw">my.prepdata</span>)
+</pre></div>
 <pre><code>## [1] -283.8993</code></pre>
-<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="no">better.tree</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">ProfileTreeSearch</a></span>(<span class="no">tree</span>, <span class="no">my.prepdata</span>, <span class="kw">EdgeSwapper</span> <span class="kw">=</span> <span class="no">RootedTBRSwap</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb9"><pre class="downlit">
+<span class="kw">better.tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/IWTreeSearch.html">ProfileTreeSearch</a></span>(<span class="kw">tree</span>, <span class="kw">my.prepdata</span>, EdgeSwapper = <span class="kw">RootedTBRSwap</span>)
+</pre></div>
 <pre><code>##   - Performing tree search.  Initial score: -283.899313434403</code></pre>
 <pre><code>##   - Final score -283.899313434403 found 0 times after 100 rearrangements.</code></pre>
 <p>The parsimony ratchet <span class="citation">(Nixon, 1999)</span> is better at finding globally optimal trees. <code>ProfileRatchet</code> is a convenient wrapper for the underlying function <code>Ratchet</code>.</p>
-<div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="co"># Longwinded approach:</span>
-<span class="no">better.tree</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/Ratchet.html">Ratchet</a></span>(<span class="no">better.tree</span>, <span class="no">my.prepdata</span>, <span class="kw">searchHits</span> <span class="kw">=</span> <span class="fl">10</span>,
-                       <span class="kw">searchIter</span> <span class="kw">=</span> <span class="fl">100</span>, <span class="kw">ratchIter</span> <span class="kw">=</span> <span class="fl">5</span>,
-                       <span class="kw">swappers</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">RootedTBRSwap</span>, <span class="no">RootedSPRSwap</span>,
-                                       <span class="no">RootedNNISwap</span>),
-                       <span class="kw">InitializeData</span> <span class="kw">=</span> <span class="no">ProfileInitMorphy</span>,
-                       <span class="kw">CleanUpData</span> <span class="kw">=</span> <span class="no">ProfileDestroyMorphy</span>,
-                       <span class="kw">TreeScorer</span> <span class="kw">=</span> <span class="no">ProfileScoreMorphy</span>,
-                       <span class="kw">Bootstrapper</span> <span class="kw">=</span> <span class="no">ProfileBootstrap</span>)</pre></body></html></div>
-<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="co"># Equivalent, but less typing!</span>
-<span class="no">RootedSwappers</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">RootedTBRSwap</span>, <span class="no">RootedSPRSwap</span>, <span class="no">RootedNNISwap</span>)
-<span class="no">better.tree</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/Ratchet.html">ProfileRatchet</a></span>(<span class="no">better.tree</span>, <span class="no">my.prepdata</span>,
-                              <span class="kw">swappers</span><span class="kw">=</span><span class="no">RootedSwappers</span>,
-                              <span class="kw">searchHits</span><span class="kw">=</span><span class="fl">10</span>, <span class="kw">searchIter</span><span class="kw">=</span><span class="fl">100</span>, <span class="kw">ratchIter</span><span class="kw">=</span><span class="fl">5</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb12"><pre class="downlit">
+<span class="co"># Longwinded approach:</span>
+<span class="kw">better.tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Jackknife.html">Ratchet</a></span>(<span class="kw">better.tree</span>, <span class="kw">my.prepdata</span>, searchHits = <span class="fl">10</span>, 
+                       searchIter = <span class="fl">100</span>, ratchIter = <span class="fl">5</span>,
+                       swappers = <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">RootedTBRSwap</span>, <span class="kw">RootedSPRSwap</span>,
+                                       <span class="kw">RootedNNISwap</span>),
+                       InitializeData = <span class="kw">ProfileInitMorphy</span>,
+                       CleanUpData = <span class="kw">ProfileDestroyMorphy</span>,
+                       TreeScorer = <span class="kw">ProfileScoreMorphy</span>,
+                       Bootstrapper = <span class="kw">ProfileBootstrap</span>)
+</pre></div>
+<div class="sourceCode" id="cb13"><pre class="downlit">
+<span class="co"># Equivalent, but less typing!</span>
+<span class="kw">RootedSwappers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">RootedTBRSwap</span>, <span class="kw">RootedSPRSwap</span>, <span class="kw">RootedNNISwap</span>)
+<span class="kw">better.tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Jackknife.html">ProfileRatchet</a></span>(<span class="kw">better.tree</span>, <span class="kw">my.prepdata</span>,
+                              swappers=<span class="kw">RootedSwappers</span>,
+                              searchHits=<span class="fl">10</span>, searchIter=<span class="fl">100</span>, ratchIter=<span class="fl">5</span>)
+</pre></div>
 <p>Let’s see the resultant tree, and its score</p>
-<div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/attr.html">attr</a></span>(<span class="no">better.tree</span>, <span class="st">'score'</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb14"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/base/attr.html">attr</a></span>(<span class="kw">better.tree</span>, <span class="st">'score'</span>)
+</pre></div>
 <pre><code>## [1] -309.1615</code></pre>
-<div class="sourceCode" id="cb16"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span> <span class="kw">=</span> <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
-<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">better.tree</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb16"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(mar = <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), cex = <span class="fl">0.75</span>) <span class="co"># make plot easier to read</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span>(<span class="kw">better.tree</span>)
+</pre></div>
 <p><img src="profile_files/figure-html/Ratchet-search-results-1.png" width="700"></p>
-<p>The default parameters may not be enough to find the optimal tree; type <code><a href="../reference/Ratchet.html">?Ratchet</a></code> to view all search parameters.</p>
+<p>The default parameters may not be enough to find the optimal tree; type <code><a href="../reference/Jackknife.html">?Ratchet</a></code> to view all search parameters.</p>
 </div>
 <div id="view-the-results" class="section level2">
 <h2 class="hasAnchor">
 <a href="#view-the-results" class="anchor"></a>View the results</h2>
 <p>In parsimony search, it is good practice to consider trees that are slightly suboptimal <span class="citation">(Smith, 2019)</span>.</p>
 <p>Here, we’ll take a consensus that includes all trees that are suboptimal by up to 1.5 bits. To sample this region of tree space well, the trick is to use large values of <code>ratchHits</code> and <code>ratchIter</code>, and small values of <code>searchHits</code> and <code>searchiter</code>, so that many runs don’t quite hit the optimal tree. In a serious study, you would want to sample many more than the 25 Ratchet hits (<code>ratchHits</code>) we’ll settle for here, probably using many more Ratchet iterations.</p>
-<div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="no">suboptimals</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/Ratchet.html">ProfileRatchet</a></span>(<span class="no">better.tree</span>, <span class="no">my.prepdata</span>,
-                              <span class="kw">swappers</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="no">RootedTBRSwap</span>),
-                              <span class="kw">returnAll</span> <span class="kw">=</span> <span class="fl">TRUE</span>, <span class="kw">suboptimal</span> <span class="kw">=</span> <span class="fl">5</span>,
-                              <span class="kw">ratchHits</span> <span class="kw">=</span> <span class="fl">25</span>, <span class="kw">ratchIter</span> <span class="kw">=</span> <span class="fl">500</span>,
-                              <span class="kw">bootstrapHits</span> <span class="kw">=</span> <span class="fl">15</span>, <span class="kw">bootstrapIter</span> <span class="kw">=</span> <span class="fl">450</span>,
-                              <span class="kw">searchHits</span> <span class="kw">=</span> <span class="fl">10</span>, <span class="kw">searchIter</span> <span class="kw">=</span> <span class="fl">100</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb17"><pre class="downlit">
+<span class="kw">suboptimals</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Jackknife.html">ProfileRatchet</a></span>(<span class="kw">better.tree</span>, <span class="kw">my.prepdata</span>, 
+                              swappers = <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="kw">RootedTBRSwap</span>),
+                              returnAll = <span class="fl">TRUE</span>, suboptimal = <span class="fl">5</span>, 
+                              ratchHits = <span class="fl">25</span>, ratchIter = <span class="fl">500</span>, 
+                              bootstrapHits = <span class="fl">15</span>, bootstrapIter = <span class="fl">450</span>,
+                              searchHits = <span class="fl">10</span>, searchIter = <span class="fl">100</span>)
+</pre></div>
 <p>The consensus of these slightly suboptimal trees provides a less resolved, but typically more reliable, summary of the signal with the phylogenetic dataset <span class="citation">(Smith, 2019)</span>:</p>
-<div class="sourceCode" id="cb18"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(<span class="kw">mar</span><span class="kw">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), <span class="kw">cex</span><span class="kw">=</span><span class="fl">0.75</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">my.consensus</span> <span class="kw">&lt;-</span> <span class="kw pkg">ape</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span>(<span class="no">suboptimals</span>))</pre></body></html></div>
+<div class="sourceCode" id="cb18"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span>(mar=<span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span>(<span class="fl">0.25</span>, <span class="fl">4</span>), cex=<span class="fl">0.75</span>)
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span>(<span class="kw">my.consensus</span> <span class="op">&lt;-</span> <span class="kw">ape</span>::<span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span>(<span class="kw">suboptimals</span>))
+</pre></div>
 <p><img src="profile_files/figure-html/Plot%20suboptimal%20consensus-1.png" width="700"></p>
 </div>
 <div id="references" class="section level2 unnumbered">
@@ -229,7 +257,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
 </div>
 
       </footer>

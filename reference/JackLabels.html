@@ -164,14 +164,14 @@
     </div>
 
     <pre class="usage"><span class='fu'>JackLabels</span>(
-  <span class='no'>tree</span>,
-  <span class='no'>jackTrees</span>,
-  <span class='kw'>add</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>adj</span> <span class='kw'>=</span> <span class='fl'>0</span>,
-  <span class='kw'>col</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>frame</span> <span class='kw'>=</span> <span class='st'>"none"</span>,
-  <span class='kw'>pos</span> <span class='kw'>=</span> <span class='fl'>2L</span>,
-  <span class='no'>...</span>
+  <span class='kw'>tree</span>,
+  <span class='kw'>jackTrees</span>,
+  add = <span class='fl'>FALSE</span>,
+  adj = <span class='fl'>0</span>,
+  col = <span class='kw'>NULL</span>,
+  frame = <span class='st'>"none"</span>,
+  pos = <span class='fl'>2L</span>,
+  <span class='kw'>...</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -184,7 +184,7 @@
     <tr>
       <th>jackTrees</th>
       <td><p>A list or <code>multiPhylo</code> object containing trees generated
-by <code><a href='Ratchet.html'>Jackknife()</a></code>.</p></td>
+by <code><a href='Jackknife.html'>Jackknife()</a></code>.</p></td>
     </tr>
     <tr>
       <th>add</th>
@@ -203,17 +203,23 @@ plot.</p></td>
 consistent with each node in <code>tree</code>, as plotted.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='Ratchet.html'>Jackknife()</a></code>: Generate trees by jackknife resampling</p></div>
+    <div class='dont-index'><p><code><a href='Jackknife.html'>Jackknife()</a></code>: Generate trees by jackknife resampling</p></div>
+    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+
+    <p><a href='https://orcid.org/0000-0001-5660-1727'>Martin R. Smith</a>
+(<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='st'>'TreeTools'</span>) <span class='co'># for as.phylo</span></div><div class='output co'>#&gt; <span class='message'>Loading required package: ape</span></div><div class='output co'>#&gt; <span class='message'></span>
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='st'><a href='https://ms609.github.io/TreeTools'>'TreeTools'</a></span>) <span class='co'># for as.phylo</span>
+</div><div class='output co'>#&gt; <span class='message'>Loading required package: ape</span></div><div class='output co'>#&gt; <span class='message'></span>
 #&gt; <span class='message'>Attaching package: ‘TreeTools’</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:base’:</span>
 #&gt; <span class='message'></span>
 #&gt; <span class='message'>    %in%, match</span></div><div class='input'>
 <span class='co'># jackTrees will usually be generated with Jackknife(), but for simplicity:</span>
-<span class='no'>jackTrees</span> <span class='kw'>&lt;-</span> <span class='fu'>as.phylo</span>(<span class='fl'>1</span>:<span class='fl'>100</span>, <span class='fl'>8</span>)
+<span class='kw'>jackTrees</span> <span class='op'>&lt;-</span> <span class='fu'>as.phylo</span>(<span class='fl'>1</span><span class='op'>:</span><span class='fl'>100</span>, <span class='fl'>8</span>)
 
-<span class='fu'>JackLabels</span>(<span class='fu'>as.phylo</span>(<span class='fl'>0</span>, <span class='fl'>8</span>), <span class='no'>jackTrees</span>)</div><div class='img'><img src='JackLabels-1.png' alt='' width='700' height='433' /></div><div class='output co'>#&gt;   11   12   13   14   15 
+<span class='fu'>JackLabels</span>(<span class='fu'>as.phylo</span>(<span class='fl'>0</span>, <span class='fl'>8</span>), <span class='kw'>jackTrees</span>)
+</div><div class='img'><img src='JackLabels-1.png' alt='' width='700' height='433' /></div><div class='output co'>#&gt;   11   12   13   14   15 
 #&gt; 0.13 0.08 0.14 1.00 1.00 </div><div class='input'>
 </div></pre>
   </div>
@@ -231,7 +237,7 @@ consistent with each node in <code>tree</code>, as plotted.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
 </div>
 
       </footer>

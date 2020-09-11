@@ -165,7 +165,7 @@ parsimony score in datasets that contain inapplicable data." />
 parsimony score in datasets that contain inapplicable data.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>Fitch</span>(<span class='no'>tree</span>, <span class='no'>dataset</span>)</pre>
+    <pre class="usage"><span class='fu'>Fitch</span>(<span class='kw'>tree</span>, <span class='kw'>dataset</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -195,18 +195,22 @@ If multiple elements are requested then these will be returned in a list.</p>
 
     <div class='dont-index'>
 <ul>
-<li><p><code><a href='TreeSearch.html'>TreeSearch()</a></code></p></li>
+<li><p><code><a href='IWTreeSearch.html'>TreeSearch()</a></code></p></li>
 </ul>
 
 <p>Other tree scoring: 
 <code><a href='CharacterLength.html'>CharacterLength</a>()</code>,
 <code><a href='IWScore.html'>IWScore</a>()</code>,
 <code><a href='MorphyTreeLength.html'>MorphyTreeLength</a>()</code></p></div>
+    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+
+    <p>Martin R. Smith (using Morphy C library, by Martin Brazeau)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>"inapplicable.datasets"</span>)
-<span class='no'>tree</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>TreeTools</span><span class='kw ns'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/GenerateTree.html'>BalancedTree</a></span>(<span class='no'>inapplicable.phyData</span><span class='kw'>[[</span><span class='fl'>1</span>]])
-<span class='fu'>Fitch</span>(<span class='no'>tree</span>, <span class='no'>inapplicable.phyData</span><span class='kw'>[[</span><span class='fl'>1</span>]])</div><div class='output co'>#&gt; [1] 1117</div></pre>
+<span class='kw'>tree</span> <span class='op'>&lt;-</span> <span class='kw'>TreeTools</span>::<span class='fu'><a href='https://ms609.github.io/TreeTools/reference/GenerateTree.html'>BalancedTree</a></span>(<span class='kw'>inapplicable.phyData</span>[[<span class='fl'>1</span>]])
+<span class='fu'>Fitch</span>(<span class='kw'>tree</span>, <span class='kw'>inapplicable.phyData</span>[[<span class='fl'>1</span>]])
+</div><div class='output co'>#&gt; [1] 1117</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -222,7 +226,7 @@ If multiple elements are requested then these will be returned in a list.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
 </div>
 
       </footer>

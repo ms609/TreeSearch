@@ -174,59 +174,59 @@ configuring tree search, see the
     </div>
 
     <pre class="usage"><span class='fu'>IWTreeSearch</span>(
-  <span class='no'>tree</span>,
-  <span class='no'>dataset</span>,
-  <span class='kw'>concavity</span> <span class='kw'>=</span> <span class='fl'>10</span>,
-  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedTBR</span>,
-  <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-  <span class='kw'>maxHits</span> <span class='kw'>=</span> <span class='fl'>20</span>,
-  <span class='kw'>forestSize</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='no'>...</span>
+  <span class='kw'>tree</span>,
+  <span class='kw'>dataset</span>,
+  concavity = <span class='fl'>10</span>,
+  EdgeSwapper = <span class='kw'>RootedTBR</span>,
+  maxIter = <span class='fl'>100</span>,
+  maxHits = <span class='fl'>20</span>,
+  forestSize = <span class='fl'>1</span>,
+  verbosity = <span class='fl'>1</span>,
+  <span class='kw'>...</span>
 )
 
 <span class='fu'>EdgeListSearch</span>(
-  <span class='no'>edgeList</span>,
-  <span class='no'>dataset</span>,
-  <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
-  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedTBRSwap</span>,
-  <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-  <span class='kw'>maxHits</span> <span class='kw'>=</span> <span class='fl'>20</span>,
-  <span class='kw'>bestScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>stopAtScore</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
-  <span class='kw'>forestSize</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
-  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
-  <span class='no'>...</span>
+  <span class='kw'>edgeList</span>,
+  <span class='kw'>dataset</span>,
+  TreeScorer = <span class='kw'>MorphyLength</span>,
+  EdgeSwapper = <span class='kw'>RootedTBRSwap</span>,
+  maxIter = <span class='fl'>100</span>,
+  maxHits = <span class='fl'>20</span>,
+  bestScore = <span class='kw'>NULL</span>,
+  stopAtScore = <span class='kw'>NULL</span>,
+  stopAtPeak = <span class='fl'>FALSE</span>,
+  stopAtPlateau = <span class='fl'>0L</span>,
+  forestSize = <span class='fl'>1L</span>,
+  verbosity = <span class='fl'>1L</span>,
+  <span class='kw'>...</span>
 )
 
 <span class='fu'>TreeSearch</span>(
-  <span class='no'>tree</span>,
-  <span class='no'>dataset</span>,
-  <span class='kw'>InitializeData</span> <span class='kw'>=</span> <span class='no'>PhyDat2Morphy</span>,
-  <span class='kw'>CleanUpData</span> <span class='kw'>=</span> <span class='no'>UnloadMorphy</span>,
-  <span class='kw'>TreeScorer</span> <span class='kw'>=</span> <span class='no'>MorphyLength</span>,
-  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedTBRSwap</span>,
-  <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>100L</span>,
-  <span class='kw'>maxHits</span> <span class='kw'>=</span> <span class='fl'>20L</span>,
-  <span class='kw'>forestSize</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
-  <span class='kw'>stopAtPeak</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>stopAtPlateau</span> <span class='kw'>=</span> <span class='fl'>0L</span>,
-  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1L</span>,
-  <span class='no'>...</span>
+  <span class='kw'>tree</span>,
+  <span class='kw'>dataset</span>,
+  InitializeData = <span class='kw'>PhyDat2Morphy</span>,
+  CleanUpData = <span class='kw'>UnloadMorphy</span>,
+  TreeScorer = <span class='kw'>MorphyLength</span>,
+  EdgeSwapper = <span class='kw'>RootedTBRSwap</span>,
+  maxIter = <span class='fl'>100L</span>,
+  maxHits = <span class='fl'>20L</span>,
+  forestSize = <span class='fl'>1L</span>,
+  stopAtPeak = <span class='fl'>FALSE</span>,
+  stopAtPlateau = <span class='fl'>0L</span>,
+  verbosity = <span class='fl'>1L</span>,
+  <span class='kw'>...</span>
 )
 
 <span class='fu'>ProfileTreeSearch</span>(
-  <span class='no'>tree</span>,
-  <span class='no'>dataset</span>,
-  <span class='kw'>EdgeSwapper</span> <span class='kw'>=</span> <span class='no'>RootedTBR</span>,
-  <span class='kw'>maxIter</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-  <span class='kw'>maxHits</span> <span class='kw'>=</span> <span class='fl'>20</span>,
-  <span class='kw'>forestSize</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>verbosity</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>precision</span> <span class='kw'>=</span> <span class='fl'>40000</span>,
-  <span class='no'>...</span>
+  <span class='kw'>tree</span>,
+  <span class='kw'>dataset</span>,
+  EdgeSwapper = <span class='kw'>RootedTBR</span>,
+  maxIter = <span class='fl'>100</span>,
+  maxHits = <span class='fl'>20</span>,
+  forestSize = <span class='fl'>1</span>,
+  verbosity = <span class='fl'>1</span>,
+  precision = <span class='fl'>40000</span>,
+  <span class='kw'>...</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -234,7 +234,7 @@ configuring tree search, see the
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>tree</th>
-      <td><p>a fully-resolved starting tree in <code>phylo</code> format, with the desired outgroup; edge lengths are not supported and will be deleted;</p></td>
+      <td><p>a fully-resolved starting tree in <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code> format, with the desired outgroup; edge lengths are not supported and will be deleted;</p></td>
     </tr>
     <tr>
       <th>dataset</th>
@@ -262,7 +262,7 @@ and returns a list with modified vectors; for example <code><a href='SPR.html'>S
     </tr>
     <tr>
       <th>forestSize</th>
-      <td><p>the maximum number of trees to return - useful in concert with <code>consensus</code>.</p></td>
+      <td><p>the maximum number of trees to return - useful in concert with <code><a href='https://rdrr.io/pkg/ape/man/consensus.html'>consensus</a></code>.</p></td>
     </tr>
     <tr>
       <th>verbosity</th>
@@ -349,18 +349,24 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 <ul>
 <li><p><code><a href='Fitch.html'>Fitch</a></code>, calculates parsimony score;</p></li>
 <li><p><code><a href='NNI.html'>RootedNNI</a></code>, conducts tree rearrangements;</p></li>
-<li><p><code><a href='Ratchet.html'>Ratchet</a></code>, alternative heuristic, useful to escape local optima.</p></li>
+<li><p><code><a href='Jackknife.html'>Ratchet</a></code>, alternative heuristic, useful to escape local optima.</p></li>
 </ul>
 </div>
+    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+
+    <p>Martin R. Smith</p>
+<p>Martin R. Smith</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>, <span class='kw'>package</span><span class='kw'>=</span><span class='st'>'TreeTools'</span>)
-<span class='no'>njtree</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>TreeTools</span><span class='kw ns'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span>(<span class='no'>Lobo.phy</span>)
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>, package=<span class='st'>'TreeTools'</span>)
+<span class='kw'>njtree</span> <span class='op'>&lt;-</span> <span class='kw'>TreeTools</span>::<span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span>(<span class='kw'>Lobo.phy</span>)
 
-<span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'>TreeSearch</span>(<span class='no'>njtree</span>, <span class='no'>Lobo.phy</span>, <span class='kw'>maxIter</span><span class='kw'>=</span><span class='fl'>20</span>, <span class='kw'>EdgeSwapper</span><span class='kw'>=</span><span class='no'>NNISwap</span>)
-<span class='fu'>TreeSearch</span>(<span class='no'>njtree</span>, <span class='no'>Lobo.phy</span>, <span class='kw'>maxIter</span><span class='kw'>=</span><span class='fl'>20</span>, <span class='kw'>EdgeSwapper</span><span class='kw'>=</span><span class='no'>RootedSPRSwap</span>)
-<span class='fu'>TreeSearch</span>(<span class='no'>njtree</span>, <span class='no'>Lobo.phy</span>, <span class='kw'>maxIter</span><span class='kw'>=</span><span class='fl'>20</span>, <span class='kw'>EdgeSwapper</span><span class='kw'>=</span><span class='no'>TBRSwap</span>)}</div></pre>
+<span class='co'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='fu'>TreeSearch</span>(<span class='kw'>njtree</span>, <span class='kw'>Lobo.phy</span>, maxIter=<span class='fl'>20</span>, EdgeSwapper=<span class='kw'>NNISwap</span>)
+<span class='fu'>TreeSearch</span>(<span class='kw'>njtree</span>, <span class='kw'>Lobo.phy</span>, maxIter=<span class='fl'>20</span>, EdgeSwapper=<span class='kw'>RootedSPRSwap</span>)
+<span class='fu'>TreeSearch</span>(<span class='kw'>njtree</span>, <span class='kw'>Lobo.phy</span>, maxIter=<span class='fl'>20</span>, EdgeSwapper=<span class='kw'>TBRSwap</span>)}
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -376,7 +382,7 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
 </div>
 
       </footer>
