@@ -188,7 +188,6 @@ IntegerMatrix spr (const IntegerMatrix edge,
     ret(edge_beside_broken, 0) = edge(edge_above_broken, 0);
     ret(edge_above_broken, 0) = edge(merge_edge, 0);
     ret(merge_edge, 0) = broken_edge_parent;
-    return preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
   } else { // We are breaking the root edge
     
     
@@ -222,7 +221,7 @@ IntegerMatrix spr (const IntegerMatrix edge,
     ret(1, 0) = spare_node;
     // child[mergeEdge] <- spareNode
     ret(merge_edge, 1) = spare_node;
-    ret = preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
-    return root_on_node(ret, 1);
   }
+  ret = preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
+  return root_on_node(ret, 1);
 }
