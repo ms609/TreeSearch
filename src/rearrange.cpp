@@ -155,6 +155,8 @@ IntegerMatrix spr (const IntegerMatrix edge,
     int16* merge_options = new int16[n_edge];
     int16 n_merge_options = 0, i = 0;
     bool adrift = false;
+    
+    if (edge(1, 1) == broken_edge_parent) edge_above_broken = 1;
     for (i = 2; i != n_edge; i++) {
       if (edge(i, 1) == broken_edge_parent) {
         edge_above_broken = i;
