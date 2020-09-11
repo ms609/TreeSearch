@@ -44,13 +44,23 @@ test_that("Rooting works", {
     expect_equal(SortTree(root(tree, node = i, resolve.root = TRUE)),
                  SortTree(tr.test))
   }
-  expect_error(TipTest(30))
+  expect_error(root_on_node(edge, 0))
   for (i in 1:15) TipTest(i)
   StaticTest(16)
   StaticTest(17)
   for (i in 18:23) NodeTest(i)
   StaticTest(24)
   for (i in 24:29) NodeTest(i)
+  expect_error(root_on_node(edge, 30))
+
+  tree <- Preorder(root(BalancedTree(15), 't1', resolve.root = TRUE))
+  edge <- tree$edge
+  expect_error(root_on_node(edge, 0))
+  for (i in 1:15) TipTest(i)
+  StaticTest(16)
+  StaticTest(17)
+  for (i in 18:29) NodeTest(i)
+  expect_error(root_on_node(edge, 30))
 })
 
 test_that("NNI works", {
