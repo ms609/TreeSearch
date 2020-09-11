@@ -198,7 +198,7 @@ IntegerMatrix spr (const IntegerMatrix edge,
     ;
     
     for (int16 i = 3; 
-         merge_options_considered < chosen_merge_option && root_daughter_2;
+         merge_edge == -1 || !root_daughter_2;
          i++) {
       if (edge(i, 0) == second_root_child) {
         root_daughter_2 = i;
