@@ -81,7 +81,8 @@ IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup) {
     root_node = n_tip + 1,
     max_node = n_node + n_tip;
   
-  if (outgroup > max_node) throw std::range_error("outgroup exceeds number of nodes");
+  if (outgroup < 1) throw std::range_error("`outgroup` must be a positive integer");
+  if (outgroup > max_node) throw std::range_error("`outgroup` exceeds number of nodes");
   if (outgroup == root_node) return edge;
   
   int16* edge_above = new int16[max_node + 1];
