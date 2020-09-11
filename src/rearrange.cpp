@@ -73,13 +73,13 @@ IntegerMatrix nni(const IntegerMatrix edge,
 //  [[Rcpp::export]]
 IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup) {
   
-  if (edge(0, 1) == outgroup || edge(1, 1) == outgroup) return edge;
+  if (edge(0, 1) == outgroup) return edge;
   
   const int16 n_edge = edge.nrow(),
     n_node = n_edge / 2,
     n_tip = n_node + 1,
     root_node = n_tip + 1,
-    max_node = edge(n_edge - 1, 0);
+    max_node = n_node + n_tip;
   
   if (outgroup > max_node) throw std::range_error("outgroup exceeds number of nodes");
   if (outgroup == root_node) return edge;
@@ -92,6 +92,10 @@ IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup) {
     edge_above[edge(i, 1)] = i;
     
     if (edge(i, 0) == root_node) {
+      if (edge(i, 1) == outgroup) {
+        delete[] edge_above;
+        return edge;
+      }
       root_edges[root_edges[1] ? 0 : 1] = i;
     }
     
