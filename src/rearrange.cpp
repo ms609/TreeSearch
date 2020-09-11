@@ -216,10 +216,11 @@ IntegerMatrix spr (const IntegerMatrix edge,
     //child [brokenEdgeSister] <- child[mergeEdge]
     ret(1, 1) = edge(merge_edge, 1);
     //parent[brokenEdge | brokenEdgeSister] <- spareNode
-    ret(0, 0) = 2;
-    ret(1, 0) = 2;
+    const int spare_node = edge(1, 1);
+    ret(0, 0) = spare_node;
+    ret(1, 0) = spare_node;
     // child[mergeEdge] <- spareNode
-    ret(merge_edge, 1) = 2;
+    ret(merge_edge, 1) = spare_node;
     ret = preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
     return root_on_node(ret, 1);
   }
