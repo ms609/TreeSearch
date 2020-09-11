@@ -1,4 +1,4 @@
-library("ape")
+library("TreeTools")
 
 context("Tree rearrangements")
 tree5a <- read.tree(text='(a, (b, (c, (d, e))));')
@@ -73,7 +73,6 @@ test_that("NNI works", {
   
   suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(0)
-  expect_null(nni(trComb))
   nniComb <- NNI(trComb)
   expect_equal(nniComb$tip.label, trComb$tip.label)
   expect_equal(nniComb$Nnode, trComb$Nnode)
