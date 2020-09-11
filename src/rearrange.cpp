@@ -141,8 +141,8 @@ IntegerMatrix spr (const IntegerMatrix edge,
     chosen_regraft = mergeEdge[0]
   ;
   if (n_edge < 5) return edge;
-  if (edge(0, 0) != root_node) throw std::invalid_argument("First edge of tree must connect root to leaf. Try Preorder(root(tree)).");
-  if (edge(1, 0) != root_node) throw std::invalid_argument("Second edge of tree must connect root to leaf. Try Preorder(root(tree)).");
+  if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
   const int16 broken_edge_parent = edge(broken_edge, 0);
   
