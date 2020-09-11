@@ -40,20 +40,19 @@ matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
 Returns a tree with class \code{phylo} (if \code{returnAll = FALSE}) or
 a set of trees, with class \code{multiPhylo} (if \code{returnAll = TRUE}).
 
-\code{NNISwap()} returns a list containing two elements, corresponding in
-turn to the  rearranged parent and child parameters.
+a list containing two elements, corresponding in turn to the rearranged parent and child parameters
 
 a list containing two elements, corresponding in turn to the rearranged parent and child parameters
 }
 \description{
 Performs a single iteration of the nearest-neighbour interchange algorithm.
-Based on the corresponding \code{phangorn} function, but re-coded to improve speed.
+Based on the corresponding '\pkg{phangorn}' function, but re-coded to improve speed.
 }
 \details{
 Branch lengths are not supported.
 
-All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
-\link[ape:multi2di]{ape::multi2di} may help.
+All nodes in a tree must be bifurcating; \code{\link[ape:collapse.singles]{ape::collapse.singles()}} and
+\code{\link[ape:multi2di]{ape::multi2di()}} may help.
 }
 \section{Functions}{
 \itemize{

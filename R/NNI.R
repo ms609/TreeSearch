@@ -51,13 +51,22 @@ NNI <- function (tree, edgeToBreak = NULL) {
   }
 }
 
-#' @importFrom TreeTools NTip
 #' `cNNI()` expects a tree rooted on a single tip. 
 #' @param edgeToBreak Integer from zero to nEdge(tree) - nTip(tree) - 1, 
 #' specifying which internal edge to break.
 #' @param whichSwitch Integer from zero to one, specifying which way to re-build
 #' the broken internal edge.
-#' 
+#' @examples 
+#' tree <- BalancedTree(8)
+#' # A random rearrangement
+#' cNNI(tree)
+#' # Manual random sampling
+#' cNNI(tree, sample.int(14 - 8 - 1, 1), sample.int(2, 1))
+#' # A specified rearrangement
+#' cNNI(tree, 0, 0)
+#' @template MRS
+#' @importFrom TreeTools NTip
+#' @export
 cNNI <- function (tree, edgeToBreak = NULL, whichSwitch = NULL) {
   edge <- tree$edge
   if (is.null(edgeToBreak)) edgeToBreak <- sample.int(dim(edge)[1] - NTip(tree) - 1L, 1L)
