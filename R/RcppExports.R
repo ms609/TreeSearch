@@ -5,3 +5,11 @@ nni <- function(edge, randomEdge, whichSwitch) {
     .Call(`_TreeSearch_nni`, edge, randomEdge, whichSwitch)
 }
 
+root_on_node <- function(edge, outgroup) {
+    .Call(`_TreeSearch_root_on_node`, edge, outgroup)
+}
+
+spr <- function(edge, randomEdge, mergeEdge) {
+    .Call(`_TreeSearch_spr`, edge, randomEdge, mergeEdge)
+}
+

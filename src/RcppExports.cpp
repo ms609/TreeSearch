@@ -6,15 +6,40 @@
 using namespace Rcpp;
 
 // nni
-IntegerMatrix nni(IntegerMatrix edge, IntegerVector randomEdge, IntegerVector whichSwitch);
+IntegerMatrix nni(const IntegerMatrix edge, const IntegerVector randomEdge, const IntegerVector whichSwitch);
 RcppExport SEXP _TreeSearch_nni(SEXP edgeSEXP, SEXP randomEdgeSEXP, SEXP whichSwitchSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type randomEdge(randomEdgeSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type whichSwitch(whichSwitchSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector >::type randomEdge(randomEdgeSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector >::type whichSwitch(whichSwitchSEXP);
     rcpp_result_gen = Rcpp::wrap(nni(edge, randomEdge, whichSwitch));
+    return rcpp_result_gen;
+END_RCPP
+}
+// root_on_node
+IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup);
+RcppExport SEXP _TreeSearch_root_on_node(SEXP edgeSEXP, SEXP outgroupSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< int >::type outgroup(outgroupSEXP);
+    rcpp_result_gen = Rcpp::wrap(root_on_node(edge, outgroup));
+    return rcpp_result_gen;
+END_RCPP
+}
+// spr
+IntegerMatrix spr(const IntegerMatrix edge, const IntegerMatrix randomEdge, const IntegerMatrix mergeEdge);
+RcppExport SEXP _TreeSearch_spr(SEXP edgeSEXP, SEXP randomEdgeSEXP, SEXP mergeEdgeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type randomEdge(randomEdgeSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type mergeEdge(mergeEdgeSEXP);
+    rcpp_result_gen = Rcpp::wrap(spr(edge, randomEdge, mergeEdge));
     return rcpp_result_gen;
 END_RCPP
 }

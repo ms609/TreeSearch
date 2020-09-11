@@ -11,7 +11,9 @@
 #include "RMorphy.h"
 #include "build_postorder.h"
 
-extern SEXP _TreeSearch_nni(SEXP);
+extern SEXP _TreeSearch_nni(SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_root_on_node(SEXP, SEXP);
+extern SEXP _TreeSearch_spr(SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
@@ -36,7 +38,9 @@ static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_second_up_recon",   (DL_FUNC) &_R_wrap_mpl_second_up_recon, 5},
   {"_R_wrap_mpl_update_tip",        (DL_FUNC) &_R_wrap_mpl_update_tip, 3},
   {"_R_wrap_mpl_update_lower_root", (DL_FUNC) &_R_wrap_mpl_update_lower_root, 3},
-  {"_TreeSearch_nni", (DL_FUNC) &_TreeSearch_nni, 3},
+  {"_TreeSearch_nni",               (DL_FUNC) &_TreeSearch_nni, 3},
+  {"_TreeSearch_root_on_node",      (DL_FUNC) &_TreeSearch_root_on_node, 2},
+  {"_TreeSearch_spr",               (DL_FUNC) &_TreeSearch_spr, 3},
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
   {"RANDOM_TREE",                   (DL_FUNC) &RANDOM_TREE, 1},
   {"RANDOM_TREE_SCORE",             (DL_FUNC) &RANDOM_TREE_SCORE, 2},
