@@ -1,12 +1,12 @@
 #' Nearest Neighbour Interchange (NNI)
 #' 
 #' Performs a single iteration of the nearest-neighbour interchange algorithm.
-#' Based on the corresponding \code{phangorn} function, but re-coded to improve speed.
+#' Based on the corresponding '\pkg{phangorn}' function, but re-coded to improve speed.
 #' 
 #' Branch lengths are not supported.
 #' 
-#' All nodes in a tree must be bifurcating; [ape::collapse.singles] and
-#' [ape::multi2di] may help.
+#' All nodes in a tree must be bifurcating; [ape::collapse.singles()] and
+#' [ape::multi2di()] may help.
 #' 
 #' @template treeParam
 #' @template edgeToBreakParam
@@ -27,7 +27,7 @@
 #' NNI(tree, edgeToBreak = -1)
 #'
 #' @export
-NNI <- function (tree, edgeToBreak=NULL) {
+NNI <- function (tree, edgeToBreak = NULL) {
   edge <- tree$edge
   parent <- edge[, 1]
   StopUnlessBifurcating(parent)
@@ -51,6 +51,23 @@ NNI <- function (tree, edgeToBreak=NULL) {
   }
 }
 
+#' @importFrom TreeTools NTip
+#' `cNNI()` expects a tree rooted on a single tip. 
+#' @param edgeToBreak Integer from zero to nEdge(tree) - nTip(tree) - 1, 
+#' specifying which internal edge to break.
+#' @param whichSwitch Integer from zero to one, specifying which way to re-build
+#' the broken internal edge.
+#' 
+cNNI <- function (tree, edgeToBreak = NULL, whichSwitch = NULL) {
+  edge <- tree$edge
+  if (is.null(edgeToBreak)) edgeToBreak <- sample.int(dim(edge)[1] - NTip(tree) - 1L, 1L)
+  if (is.null(whichSwitch)) whichSwitch <- sample.int(2L, 1L)
+  tree$edge <- nni(edge, edgeToBreak, whichSwitch)
+  
+  # Return:
+  tree
+}
+  
 #' @describeIn NNI faster version that takes and returns parent and child parameters
 #' @template treeParent
 #' @template treeChild

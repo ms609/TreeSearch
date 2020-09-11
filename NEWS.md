@@ -1,3 +1,7 @@
+# TreeSearch 0.4.3.9000 (development)
+
+ - C implementations of rearrangement functions
+
 # TreeSearch 0.4.3
 
  - Update tests for compatibility with 'TreeTools' v1.1.0

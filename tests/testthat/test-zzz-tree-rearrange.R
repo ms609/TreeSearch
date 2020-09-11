@@ -1,4 +1,4 @@
-library(ape)
+library("ape")
 
 context("Tree rearrangements")
 tree5a <- read.tree(text='(a, (b, (c, (d, e))));')
@@ -29,9 +29,26 @@ test_that("Malformed trees don't crash anything", {
 })
 
 test_that("NNI works", {
-  trComb    <- read.tree(text = "(((((1,2),3),4),5),6);")
+  trComb <- read.tree(text = "(((((1,2),3),4),5),6);")
+  edge <- trComb$edge
+  Test <- function (e, r, e1, e2) {
+    edge1 <- edge
+    edge1[c(e1, e2), 2] <- edge1[c(e2, e1), 2]
+    edge1 <- do.call(cbind, RenumberEdges(edge1[, 1], edge1[, 2]))
+    expect_equal(edge1, nni(trComb$edge, e, r))
+  }
+  Test(0, 0, 5, 7)
+  Test(0, 2, 5, 7)
+  Test(3, 0, 5, 7) # Option 0 == option 3.
+  Test(0, 1, 6, 7)
+  Test(1, 0, 4, 8)
+  Test(1, 1, 7, 8)
+  Test(2, 0, 3, 9)
+  Test(2, 1, 8, 9)
+  
   suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(0)
+  expect_null(nni(trComb))
   nniComb <- NNI(trComb)
   expect_equal(nniComb$tip.label, trComb$tip.label)
   expect_equal(nniComb$Nnode, trComb$Nnode)
