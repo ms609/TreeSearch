@@ -178,8 +178,9 @@ IntegerMatrix spr (const IntegerMatrix edge,
     }
     if (!edge_beside_broken) {
       edge_beside_broken = i;
+      edge_beside_broken = i++;
     }
-    while (i != n_edge) {
+    if (i != n_edge + 1) while (i != n_edge) {
       merge_options[n_merge_options++] = i++;
     }
     const int16 merge_edge = merge_options[chosen_regraft % n_merge_options];
