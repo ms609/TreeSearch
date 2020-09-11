@@ -89,6 +89,26 @@ test_that("NNI works", {
   expect_equal(nniComb, read.tree(text = "(((((3,2),1),4),5),6);"))  
 })
 
+test_that("SPR works", {
+  testTree <- Preorder(root(BalancedTree(7), 1, resolve.root = TRUE))
+  edge <- testTree$edge
+  Test <- function (p, r, p1, r1) {
+    test.tr <- testTree
+    test.tr$edge <- spr(edge, p, r)
+    oldWay <- SortTree(root(SPR(testTree, p1, r1), 't1', resolve.root = TRUE))
+    expect_equal(oldWay, SortTree(test.tr))
+  }
+  Test(0, 0, 1, 5)
+  Test(0, 1, 1, 6)
+  Test(0, 2, 1, 7)
+  Test(0, 3, 1, 8)
+  Test(0, 4, 1, 9)
+  Test(0, 5, 1, 10)
+  Test(0, 6, 1, 11)
+  Test(0, 7, 1, 12)
+  
+})
+
 test_that("TBR can swap over root", {
   expect_equal(TBR(tree5a, 1, c(7, 1)), read.tree(text='(a, (d, (e, (c, b))));'))
   expect_equal(TBR(tree5a, 2, c(5, 1)), read.tree(text='(a, (c, (b, (d, e))));'))
