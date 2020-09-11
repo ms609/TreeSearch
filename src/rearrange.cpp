@@ -80,6 +80,7 @@ IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup) {
     root_node = n_tip + 1,
     max_node = edge(n_edge - 1, 0);
   if (outgroup > max_node) throw std::range_error("outgroup exceeds number of nodes");
+  if (outgroup == root_node) return edge;
   int16* edge_above = new int16[max_node + 1];
   int16 root_edges[2] = {0, 0};
   for (int16 i = n_edge - 1; i--; ) {
