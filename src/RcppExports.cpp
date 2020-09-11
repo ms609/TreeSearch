@@ -31,14 +31,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // spr
-IntegerMatrix spr(const IntegerMatrix edge, const IntegerMatrix randomEdge, const IntegerMatrix mergeEdge);
+IntegerMatrix spr(const IntegerMatrix edge, const IntegerVector randomEdge, const IntegerVector mergeEdge);
 RcppExport SEXP _TreeSearch_spr(SEXP edgeSEXP, SEXP randomEdgeSEXP, SEXP mergeEdgeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< const IntegerMatrix >::type randomEdge(randomEdgeSEXP);
-    Rcpp::traits::input_parameter< const IntegerMatrix >::type mergeEdge(mergeEdgeSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector >::type randomEdge(randomEdgeSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector >::type mergeEdge(mergeEdgeSEXP);
     rcpp_result_gen = Rcpp::wrap(spr(edge, randomEdge, mergeEdge));
     return rcpp_result_gen;
 END_RCPP
