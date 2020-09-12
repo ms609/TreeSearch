@@ -125,6 +125,104 @@ IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup) {
   return preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
 }
 
+// edge must be in preorder
+//  [[Rcpp::export]]
+IntegerMatrix spr_moves(const IntegerMatrix edge) {
+  const int16
+    n_edge = edge.nrow(),
+    n_node = n_edge / 2,
+    n_tip = n_node + 1,
+    root_node = n_tip + 1
+  ;
+  if (n_edge < 5) return IntegerMatrix(0, 0);
+  if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+  
+  int16* 
+    prune = new int16[n_edge * (n_edge + 1) / 2],
+    graft = new int16[n_edge * (n_edge + 1) / 2],
+    above = new int16[n_edge * (n_edge + 1) / 2],
+    bside = new int16[n_edge * (n_edge + 1) / 2]
+  ;
+  int16 n_moves = 0;
+  const int16
+    second_root_child = root_node + 1
+  ;
+  // Root edge first
+  for (int16 i = 3; i != n_edge; i++) {
+    if (edge(i, 0) == second_root_child) {
+      Rcout << "Root daughter edges are 3 and " << (1+i) << "\n";
+    } else {
+      Rcout << "\n _ Logging graft option, 1 -> "  << (i + 1) << "\n";
+      prune[n_moves] = 0;
+      graft[n_moves] = i;
+      ++n_moves;
+    }
+  }
+  
+  for (int16 prune_candidate = 4; prune_candidate != n_edge; prune_candidate++) {
+    const int16 prune_parent = edge(prune_candidate, 0);
+    int16 edge_above = 0, edge_beside = 0, i = 0;
+    bool adrift = false;
+    
+    if (edge(1, 1) == prune_parent) edge_above = 1;
+    for (i = 2; i != n_edge; i++) {
+      if (edge(i, 1) == prune_parent) {
+        //Rcout << "\n - Edge above broken is " << (1 + i);
+        edge_above = i;
+        continue;
+      }
+      if (i == prune_candidate) {
+        //Rcout << "\n - We're adrift! " << (1 + i);
+        adrift = true;
+        continue;
+      }
+      if (adrift) {
+        if (edge(i, 0) == prune_parent) {
+          //Rcout << "\n ...   Back to shore! " << (1 + i);
+          break; // Now we know that all remaining edges will be potential merge sites
+        }
+        //Rcout << "\n ...   Still adrift! " << (1 + i);
+      } else {
+        if (edge(i, 0) == prune_parent) {
+          //Rcout << "\n - Edge beside broken = " << (1 + i);
+          edge_beside = i;
+        } else {
+          prune[n_moves] = prune_candidate;
+          graft[n_moves] = i;
+          ++n_moves;
+        }
+      }
+    }
+    if (!edge_beside) {
+      //Rcout << "\n - Oo Err. Edge beside broken = " << (1 + i);
+      edge_beside = i++;
+    }
+    if (i != n_edge + 1) while (i != n_edge) {
+      prune[n_moves] = prune_candidate;
+      graft[n_moves] = i;
+      above[n_moves] = edge_above;
+      bside[n_moves] = edge_beside;
+      ++n_moves;
+      ++i;
+    }
+  }
+  
+  
+  IntegerMatrix ret (n_moves, 4);
+  for (int16 i = n_moves; i--; ) {
+    ret(i, 0) = prune[i];
+    ret(i, 1) = graft[i];
+    ret(i, 2) = above[i];
+    ret(i, 3) = bside[i];
+  }
+  delete[] prune;
+  delete[] graft;
+  delete[] above;
+  delete[] bside;
+  return (ret);
+}
+
 
 // Assumptions: 
 //  * Tree is bifurcating, in preorder; first two edges have root as parent.

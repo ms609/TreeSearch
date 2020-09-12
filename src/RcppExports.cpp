@@ -30,16 +30,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// spr
-IntegerMatrix spr(const IntegerMatrix edge, const IntegerVector randomEdge, const IntegerVector mergeEdge);
-RcppExport SEXP _TreeSearch_spr(SEXP edgeSEXP, SEXP randomEdgeSEXP, SEXP mergeEdgeSEXP) {
+// spr_moves
+IntegerMatrix spr_moves(const IntegerMatrix edge);
+RcppExport SEXP _TreeSearch_spr_moves(SEXP edgeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< const IntegerVector >::type randomEdge(randomEdgeSEXP);
-    Rcpp::traits::input_parameter< const IntegerVector >::type mergeEdge(mergeEdgeSEXP);
-    rcpp_result_gen = Rcpp::wrap(spr(edge, randomEdge, mergeEdge));
+    rcpp_result_gen = Rcpp::wrap(spr_moves(edge));
+    return rcpp_result_gen;
+END_RCPP
+}
+// spr
+IntegerMatrix spr(const IntegerMatrix edge, const IntegerVector move_id);
+RcppExport SEXP _TreeSearch_spr(SEXP edgeSEXP, SEXP move_idSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector >::type move_id(move_idSEXP);
+    rcpp_result_gen = Rcpp::wrap(spr(edge, move_id));
     return rcpp_result_gen;
 END_RCPP
 }
