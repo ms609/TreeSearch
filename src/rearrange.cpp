@@ -138,13 +138,11 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
   if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
   if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
-  int16* 
-    prune = new int16[n_edge * (n_edge + 1) / 2],
-    graft = new int16[n_edge * (n_edge + 1) / 2],
-    above = new int16[n_edge * (n_edge + 1) / 2],
-    bside = new int16[n_edge * (n_edge + 1) / 2]
-  ;
-  int16 n_moves = 0;
+  int16* prune = new int16[n_edge * (n_edge + 1) / 2];
+  int16* graft = new int16[n_edge * (n_edge + 1) / 2];
+  int16* above = new int16[n_edge * (n_edge + 1) / 2];
+  int16* bside = new int16[n_edge * (n_edge + 1) / 2];
+  int16 n_moves = 0, root_daughter_2 = 0;
   const int16
     second_root_child = root_node + 1
   ;
@@ -152,6 +150,7 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
   for (int16 i = 3; i != n_edge; i++) {
     if (edge(i, 0) == second_root_child) {
       Rcout << "Root daughter edges are 3 and " << (1+i) << "\n";
+      root_daughter_2 = i;
     } else {
       Rcout << "\n _ Logging graft option, 1 -> "  << (i + 1) << "\n";
       prune[n_moves] = 0;
@@ -160,8 +159,16 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
     }
   }
   
+  for (int16 i = 0; i != n_moves; i++) {
+    above[i] = -1;
+    bside[i] = root_daughter_2;
+  }
+  
   for (int16 prune_candidate = 4; prune_candidate != n_edge; prune_candidate++) {
-    const int16 prune_parent = edge(prune_candidate, 0);
+    const int16
+      prune_parent = edge(prune_candidate, 0),
+      first_prune_move = n_moves;
+    ;
     int16 edge_above = 0, edge_beside = 0, i = 0;
     bool adrift = false;
     
@@ -201,10 +208,12 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
     if (i != n_edge + 1) while (i != n_edge) {
       prune[n_moves] = prune_candidate;
       graft[n_moves] = i;
-      above[n_moves] = edge_above;
-      bside[n_moves] = edge_beside;
       ++n_moves;
       ++i;
+    }
+    for (int16 j = first_prune_move; j != n_moves; j++) {
+      above[j] = edge_above;
+      bside[j] = edge_beside;
     }
   }
   
