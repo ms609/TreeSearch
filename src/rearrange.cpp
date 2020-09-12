@@ -138,10 +138,10 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
   if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
   if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
-  int16* prune = new int16[n_edge * (n_edge + 1) / 2];
-  int16* graft = new int16[n_edge * (n_edge + 1) / 2];
-  int16* above = new int16[n_edge * (n_edge + 1) / 2];
-  int16* bside = new int16[n_edge * (n_edge + 1) / 2];
+  int16* prune = new int16[(n_edge - 1) * (n_edge - 3)];
+  int16* graft = new int16[(n_edge - 1) * (n_edge - 3)];
+  int16* above = new int16[(n_edge - 1) * (n_edge - 3)];
+  int16* bside = new int16[(n_edge - 1) * (n_edge - 3)];
   int16 n_moves = 0, root_daughter_2 = 0;
   const int16
     second_root_child = root_node + 1
