@@ -237,91 +237,44 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
 //  * Tree is bifurcating, in preorder; first two edges have root as parent.
 //  [[Rcpp::export]]
 IntegerMatrix spr (const IntegerMatrix edge,
-                   const IntegerVector randomEdge,
-                   const IntegerVector mergeEdge) {
+                   const IntegerVector move) {
+  const IntegerMatrix move_list = spr_moves(edge);
   const int16
     n_edge = edge.nrow(),
     n_node = n_edge / 2,
     n_tip = n_node + 1,
     root_node = n_tip + 1,
-    broken_option = randomEdge[0] % (n_edge - 1), // Don't break root sister
-    broken_edge = broken_option == 0 ? 0 : broken_option + 1,
-    chosen_regraft = mergeEdge[0]
+    move_id = move[0] % move_list.nrow(),
+    prune_edge = move_list(move_id, 0),
+    graft_edge = move_list(move_id, 1)
   ;
+  
   if (n_edge < 5) return edge;
   if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
   if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
-  const int16 broken_edge_parent = edge(broken_edge, 0);
+  const int16
+    broken_edge_parent = edge(prune_edge, 0),
+    merge_edge = move_list(move_id, 1)
+  ;
   
   IntegerMatrix ret = clone(edge);
   
-  if (broken_edge) { // We are breaking a non-root edge
-    int16 edge_above_broken = 0, edge_beside_broken = 0;
-    
-    int16* merge_options = new int16[n_edge];
-    int16 n_merge_options = 0, i = 0;
-    bool adrift = false;
-    
-    if (edge(1, 1) == broken_edge_parent) edge_above_broken = 1;
-    for (i = 2; i != n_edge; i++) {
-      if (edge(i, 1) == broken_edge_parent) {
-        edge_above_broken = i;
-        continue;
-      }
-      if (i == broken_edge) {
-        adrift = true;
-        continue;
-      }
-      if (adrift) {
-        if (edge(i, 0) == broken_edge_parent) {
-          break; // Now we know that all remaining edges will be potential merge sites
-        }
-      } else {
-        if (edge(i, 0) == broken_edge_parent) {
-          edge_beside_broken = i;
-        } else {
-          merge_options[n_merge_options++] = i;
-        }
-      }
-    }
-    if (!edge_beside_broken) {
-      edge_beside_broken = i;
-      edge_beside_broken = i++;
-    }
-    if (i != n_edge + 1) while (i != n_edge) {
-      merge_options[n_merge_options++] = i++;
-    }
-    const int16 merge_edge = merge_options[chosen_regraft % n_merge_options];
-    delete[] merge_options;
-    
-    ret(edge_beside_broken, 0) = edge(edge_above_broken, 0);
-    ret(edge_above_broken, 0) = edge(merge_edge, 0);
-    ret(merge_edge, 0) = broken_edge_parent;
-  } else { // We are breaking the root edge
-    
-    
-    int16 root_daughter_2 = 0, merge_options_considered = 0, merge_edge = -1;
+  Rcout << "\n\nWelcome to SPR. You asked for SPR move " << move_id 
+        << " which moves edge " << (1 + prune_edge) << " to edge " << graft_edge
+        << ".\n";
+  if (prune_edge) { // We are breaking a non-root edge
     const int16
-      second_root_child = root_node + 1,
-      chosen_merge_option = chosen_regraft % (n_edge - 4)
+      edge_above = move_list(move_id, 2),
+      edge_beside = move_list(move_id, 3)
     ;
     
-    for (int16 i = 3; 
-         merge_edge == -1 || !root_daughter_2;
-         i++) {
-      if (edge(i, 0) == second_root_child) {
-        root_daughter_2 = i;
-      } else {
-        if (chosen_merge_option == merge_options_considered++) {
-          merge_edge = i;
-        }
-      }
-    }
-    if (merge_edge == -1) throw std::invalid_argument("Merge location not found. Sack the programmer.");
-    
+    ret(edge_beside, 0) = edge(edge_above, 0);
+    ret(edge_above, 0) = edge(merge_edge, 0);
+    ret(merge_edge, 0) = broken_edge_parent;
+  } else { // We are breaking the root edge
     ret(2, 0) = broken_edge_parent;
-    ret(root_daughter_2, 0) = broken_edge_parent;
+    ret(move_list(move_id, 3), 0) = broken_edge_parent;
     
     //child [brokenEdgeSister] <- child[mergeEdge]
     ret(1, 1) = edge(merge_edge, 1);
