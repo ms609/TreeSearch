@@ -250,23 +250,16 @@ IntegerMatrix spr (const IntegerMatrix edge,
     root_node = n_tip + 1,
     move_id = move[0] % move_list.nrow(),
     prune_edge = move_list(move_id, 0),
-    graft_edge = move_list(move_id, 1)
+    graft_edge = move_list(move_id, 1),
+    broken_edge_parent = edge(prune_edge, 0)
   ;
   
   if (n_edge < 5) return edge;
   if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
   if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
-  const int16
-    broken_edge_parent = edge(prune_edge, 0),
-    merge_edge = move_list(move_id, 1)
-  ;
-  
   IntegerMatrix ret = clone(edge);
   
-  Rcout << "\n\nWelcome to SPR. You asked for SPR move " << move_id 
-        << " which moves edge " << (1 + prune_edge) << " to edge " << graft_edge
-        << ".\n";
   if (prune_edge) { // We are breaking a non-root edge
     const int16
       edge_above = move_list(move_id, 2),
@@ -274,20 +267,20 @@ IntegerMatrix spr (const IntegerMatrix edge,
     ;
     
     ret(edge_beside, 0) = edge(edge_above, 0);
-    ret(edge_above, 0) = edge(merge_edge, 0);
-    ret(merge_edge, 0) = broken_edge_parent;
+    ret(edge_above, 0) = edge(graft_edge, 0);
+    ret(graft_edge, 0) = broken_edge_parent;
   } else { // We are breaking the root edge
     ret(2, 0) = broken_edge_parent;
     ret(move_list(move_id, 3), 0) = broken_edge_parent;
     
     //child [brokenEdgeSister] <- child[mergeEdge]
-    ret(1, 1) = edge(merge_edge, 1);
+    ret(1, 1) = edge(graft_edge, 1);
     //parent[brokenEdge | brokenEdgeSister] <- spareNode
     const int spare_node = edge(1, 1);
     ret(0, 0) = spare_node;
     ret(1, 0) = spare_node;
     // child[mergeEdge] <- spareNode
-    ret(merge_edge, 1) = spare_node;
+    ret(graft_edge, 1) = spare_node;
   }
   ret = preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
   return root_on_node(ret, 1);
