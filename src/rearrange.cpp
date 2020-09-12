@@ -164,7 +164,7 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
     bside[i] = root_daughter_2;
   }
   
-  for (int16 prune_candidate = 4; prune_candidate != n_edge; prune_candidate++) {
+  for (int16 prune_candidate = 2; prune_candidate != n_edge; prune_candidate++) {
     const int16
       prune_parent = edge(prune_candidate, 0),
       first_prune_move = n_moves;
@@ -218,7 +218,7 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
   }
   
   
-  IntegerMatrix ret (n_moves, 4);
+  IntegerMatrix ret(n_moves, 4);
   for (int16 i = n_moves; i--; ) {
     ret(i, 0) = prune[i];
     ret(i, 1) = graft[i];
