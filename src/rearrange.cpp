@@ -285,3 +285,14 @@ IntegerMatrix spr (const IntegerMatrix edge,
   ret = preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
   return root_on_node(ret, 1);
 }
+
+//  [[Rcpp::export]]
+IntegerMatrix tbr_moves(const IntegerMatrix edge) {
+  return IntegerMatrix(0, 0);
+}
+
+//  [[Rcpp::export]]
+IntegerMatrix tbr (const IntegerMatrix edge,
+                   const IntegerVector move) {
+  return IntegerMatrix(0, 0);
+}

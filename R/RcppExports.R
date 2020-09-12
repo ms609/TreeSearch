@@ -17,3 +17,11 @@ spr <- function(edge, move) {
     .Call(`_TreeSearch_spr`, edge, move)
 }
 
+tbr_moves <- function(edge) {
+    .Call(`_TreeSearch_tbr_moves`, edge)
+}
+
+tbr <- function(edge, move) {
+    .Call(`_TreeSearch_tbr`, edge, move)
+}
+
