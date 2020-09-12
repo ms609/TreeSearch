@@ -42,7 +42,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_nni",               (DL_FUNC) &_TreeSearch_nni, 3},
   {"_TreeSearch_root_on_node",      (DL_FUNC) &_TreeSearch_root_on_node, 2},
   {"_TreeSearch_spr",               (DL_FUNC) &_TreeSearch_spr, 2},
-  {"_TreeSearch_spr_moves",         (DL_FUNC) &_TreeSearch_spr, 1},
+  {"_TreeSearch_spr_moves",         (DL_FUNC) &_TreeSearch_spr_moves, 1},
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
   {"RANDOM_TREE",                   (DL_FUNC) &RANDOM_TREE, 1},
   {"RANDOM_TREE_SCORE",             (DL_FUNC) &RANDOM_TREE_SCORE, 2},

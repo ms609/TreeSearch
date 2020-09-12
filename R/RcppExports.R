@@ -13,7 +13,7 @@ spr_moves <- function(edge) {
     .Call(`_TreeSearch_spr_moves`, edge)
 }
 
-spr <- function(edge, move_id) {
-    .Call(`_TreeSearch_spr`, edge, move_id)
+spr <- function(edge, move) {
+    .Call(`_TreeSearch_spr`, edge, move)
 }
 

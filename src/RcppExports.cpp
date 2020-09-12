@@ -42,14 +42,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // spr
-IntegerMatrix spr(const IntegerMatrix edge, const IntegerVector move_id);
-RcppExport SEXP _TreeSearch_spr(SEXP edgeSEXP, SEXP move_idSEXP) {
+IntegerMatrix spr(const IntegerMatrix edge, const IntegerVector move);
+RcppExport SEXP _TreeSearch_spr(SEXP edgeSEXP, SEXP moveSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< const IntegerVector >::type move_id(move_idSEXP);
-    rcpp_result_gen = Rcpp::wrap(spr(edge, move_id));
+    Rcpp::traits::input_parameter< const IntegerVector >::type move(moveSEXP);
+    rcpp_result_gen = Rcpp::wrap(spr(edge, move));
     return rcpp_result_gen;
 END_RCPP
 }
