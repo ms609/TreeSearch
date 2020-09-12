@@ -144,6 +144,29 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
 }
 
 
+#' `cSPR()` expects a tree rooted on a single tip. 
+#' @param edgeToBreak Integer from zero to nEdge(tree) - nTip(tree) - 1, 
+#' specifying which internal edge to break.
+#' @param whichMove Integer specifying which SPR move index to perform.
+#' @examples 
+#' tree <- BalancedTree(8)
+#' # A random rearrangement
+#' cSPR(tree)
+#' # A specified rearrangement
+#' cSPR(tree, 9)
+#' @template MRS
+#' @importFrom TreeTools NTip
+#' @export
+cSPR <- function (tree, whichMove = NULL) {
+  edge <- tree$edge
+  if (is.null(whichMove)) whichMove <- sample.int(2147483647L, 1L)
+  tree$edge <- spr(edge, whichMove)
+  
+  # Return:
+  tree
+}
+
+
 #' All SPR trees
 #'
 #' @template treeParent

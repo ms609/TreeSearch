@@ -102,6 +102,7 @@ test_that("SPR works", {
     expect_equal(oldWay, SortTree(test.tr))
   }
   Test(0, 1, 5)
+  Test(64, 1, 5) # Modulo 64!
   Test(1, 1, 6)
   Test(2, 1, 7)
   Test(3, 1, 8)
