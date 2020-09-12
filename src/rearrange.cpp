@@ -149,10 +149,10 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
   // Root edge first
   for (int16 i = 3; i != n_edge; i++) {
     if (edge(i, 0) == second_root_child) {
-      Rcout << "Root daughter edges are 3 and " << (1+i) << "\n";
+      //Rcout << "Root daughter edges are 3 and " << (1+i) << "\n";
       root_daughter_2 = i;
     } else {
-      Rcout << "\n _ Logging graft option, 1 -> "  << (i + 1) << "\n";
+      //Rcout << "\n _ Logging graft option, 1 -> "  << (i + 1) << "\n";
       prune[n_moves] = 0;
       graft[n_moves] = i;
       ++n_moves;
@@ -180,6 +180,10 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
         continue;
       }
       if (i == prune_candidate) {
+        if (edge(i, 1) <= n_tip) {
+          ++i;
+          break;
+        }
         //Rcout << "\n - We're adrift! " << (1 + i);
         adrift = true;
         continue;

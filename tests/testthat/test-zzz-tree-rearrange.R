@@ -124,6 +124,14 @@ test_that("SPR works", {
   Test(18, 5, 10)
   Test(19, 5, 11)
   Test(20, 5, 12)
+  
+  Test(28, 7, 3)
+  Test(29, 7, 4)
+  Test(30, 7, 8)
+  Test(31, 7, 9)
+  Test(32, 7, 10)
+  Test(33, 7, 11)
+  Test(34, 7, 12)
 })
 
 test_that("TBR can swap over root", {
