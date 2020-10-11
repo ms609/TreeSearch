@@ -360,9 +360,9 @@ List all_tbr (const IntegerMatrix edge,
   for (int16 i = break_seq.length(); i--; ) {
     IntegerMatrix two_bits = clone(edge);
     const int16
-      break_edge = break_seq[i],
-      break_parent = edge(0, break_edge) - 1,
-      break_child = edge(1, break_edge) - 1,
+      break_edge = break_seq[i] - 1,
+      break_parent = edge(break_edge, 0) - 1,
+      break_child = edge(break_edge, 1) - 1,
       spare_node = break_parent,
       fragment_leaves = n_children[break_child],
       fragment_edges = fragment_leaves + fragment_leaves - 1,
