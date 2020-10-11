@@ -361,7 +361,7 @@ List all_tbr (const IntegerMatrix edge,
       set_child(right_node, parent, child, n_tip);
       set_child(right_edge, parent, i, n_tip);
     } else {
-      set_child(left_edge, parent, child, n_tip);
+      set_child(left_node, parent, child, n_tip);
       set_child(left_edge, parent, i, n_tip);
     }
   }
@@ -385,6 +385,12 @@ List all_tbr (const IntegerMatrix edge,
       base_edges = n_edge - fragment_edges - 1 // -1 for the broken edge
     ;
     const bool broken_on_left = get_child(left_edge, break_parent, n_tip) == break_edge;
+    const int16
+      spare_edge = broken_on_left ?
+        get_child(right_edge, break_parent, n_tip) :
+        get_child(left_edge, break_parent, n_tip)
+    ;
+    
     two_bits(edge_above(parent_edge, break_parent), 1) = broken_on_left ?
       get_child(right_node, break_parent, n_tip) :
       get_child(left_node, break_parent, n_tip);
@@ -402,9 +408,7 @@ List all_tbr (const IntegerMatrix edge,
           continue;
         }
         IntegerMatrix new_tree = clone(two_bits);
-        const int16 spare_edge = broken_on_left ?
-          get_child(right_edge, break_parent, n_tip) :
-          get_child(left_edge, break_parent, n_tip);
+        
         new_tree(spare_edge, 1) = two_bits(graft_edge, 1);
         new_tree(graft_edge, 1) = spare_node;
         new_tree(break_edge, 0) = spare_node;
