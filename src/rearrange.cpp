@@ -293,13 +293,26 @@ IntegerMatrix tbr (const IntegerMatrix edge,
   return IntegerMatrix(0, 0);
 }
 
-void set_child(unique_ptr<int16[]> &side, const int16 parent, 
+inline void set_child(unique_ptr<int16[]> &side, const int16 parent, 
                const int16 value, const int16 n_tip) {
-  side[parent - n_tip] = value;
+  side[parent - 1 - n_tip] = value;
 }
 
-int16 get_child(unique_ptr<int16[]> &side, const int16 parent, const int16 n_tip) {
-  return side[parent - n_tip];
+inline int16 get_child(unique_ptr<int16[]> &side, const int16 parent, const int16 n_tip) {
+  return side[parent - 1 - n_tip];
+}
+
+inline int16 count_children(unique_ptr<int16[]> &n_children, const int16 vert) {
+  return n_children[vert - 1];
+}
+
+inline void add_children(unique_ptr<int16[]> &n_children,
+                         const int16 parent, const int16 child) {
+  n_children[parent - 1] += n_children[child - 1];
+}
+
+inline int16 edge_above(unique_ptr<int16[]> &parent_edge, const int16 vert) {
+  return parent_edge[vert - 1];
 }
 
 // Assumptions: 
@@ -341,10 +354,9 @@ List all_tbr (const IntegerMatrix edge,
   }
   
   for (int16 i = n_edge; i--; ) {
-    const int parent = edge(i, 0) - 1;
-    const int child = edge(i, 1) - 1;
-    n_children[parent] += n_children[child];
-    parent_edge[child] = i;
+    const int parent = edge(i, 0);
+    const int child = edge(i, 1);
+    parent_edge[child - 1] = i;
     if (get_child(left_node, parent, n_tip)) {
       set_child(right_node, parent, child, n_tip);
       set_child(right_edge, parent, i, n_tip);
@@ -354,6 +366,7 @@ List all_tbr (const IntegerMatrix edge,
     }
   }
   
+  
   List ret = List::create();
   
   // Let's go.
@@ -361,10 +374,10 @@ List all_tbr (const IntegerMatrix edge,
     IntegerMatrix two_bits = clone(edge);
     const int16
       break_edge = break_seq[i] - 1,
-      break_parent = edge(break_edge, 0) - 1,
-      break_child = edge(break_edge, 1) - 1,
+      break_parent = edge(break_edge, 0),
+      break_child = edge(break_edge, 1),
       spare_node = break_parent,
-      fragment_leaves = n_children[break_child],
+      fragment_leaves = count_children(n_children, break_child),
       fragment_edges = fragment_leaves + fragment_leaves - 1,
       fragment_min_edge = break_edge,
       fragment_max_edge = break_edge + fragment_edges - 1,
@@ -372,7 +385,7 @@ List all_tbr (const IntegerMatrix edge,
       base_edges = n_edge - fragment_edges - 1 // -1 for the broken edge
     ;
     const bool broken_on_left = get_child(left_edge, break_parent, n_tip) == break_edge;
-    two_bits(parent_edge[break_edge], 1) = broken_on_left ?
+    two_bits(edge_above(parent_edge, break_parent), 1) = broken_on_left ?
       get_child(right_node, break_parent, n_tip) :
       get_child(left_node, break_parent, n_tip);
     if (fragment_leaves == 1) {
