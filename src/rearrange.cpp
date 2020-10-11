@@ -353,8 +353,12 @@ ListOf<IntegerMatrix> all_tbr (const IntegerMatrix edge,
     }
   }
   
+  int16 ret_pos = 0;
+  ListOf<IntegerMatrix> ret(n_edge * n_edge / 2);
+  
+  // Let's go.
   for (int16 i = break_seq.length(); i--; ) {
-    IntegerVector two_bits = clone(edge);
+    IntegerMatrix two_bits = clone(edge);
     const int16
       break_edge = break_seq[i],
       break_parent = edge(0, break_edge) - 1,
@@ -362,6 +366,8 @@ ListOf<IntegerMatrix> all_tbr (const IntegerMatrix edge,
       spare_node = break_parent,
       fragment_leaves = n_children[break_child],
       fragment_edges = fragment_leaves + fragment_leaves - 1,
+      fragment_min_edge = break_edge,
+      fragment_max_edge = break_edge + fragment_edges - 1,
       base_leaves = n_tip - fragment_leaves,
       base_edges = n_edge - fragment_edges - 1 // -1 for the broken edge
     ;
@@ -370,8 +376,27 @@ ListOf<IntegerMatrix> all_tbr (const IntegerMatrix edge,
       get_child(right_node, break_parent, n_tip) :
       get_child(left_node, break_parent, n_tip);
     if (fragment_leaves == 1) {
-      for (int16 graft_location = base_edges; graft_location--; ) {
-        
+      for (int16 graft_edge = n_edge; graft_edge--; ) {
+        if (graft_edge == fragment_max_edge) {
+          // Remember: graft_location will be decremented after continue
+          graft_edge = fragment_min_edge;
+          continue; 
+        } else if (broken_on_left && graft_edge == get_child(right_node, break_parent, n_tip)) {
+          // Remember: graft_location will be decremented after continue
+          graft_edge = parent_edge[break_parent];
+          continue;
+        } else if (graft_edge == parent_edge[break_parent]) {
+          continue;
+        }
+        IntegerMatrix new_tree = clone(two_bits);
+        const int16 spare_edge = broken_on_left ?
+          get_child(right_edge, break_parent, n_tip) :
+          get_child(left_edge, break_parent, n_tip);
+        new_tree(spare_edge, 1) = two_bits(graft_edge, 1);
+        new_tree(graft_edge, 1) = spare_node;
+        new_tree(break_edge, 0) = spare_node;
+        new_tree = TreeTools::postorder_edges(new_tree);
+        ret[ret_pos++] = new_tree;
       }
     } else {
       for (int16 loose_root = fragment_edges; loose_root--; ) {
@@ -383,5 +408,6 @@ ListOf<IntegerMatrix> all_tbr (const IntegerMatrix edge,
     
     
   }
-  
+  Rcout << ret[n_edge];
+  return ret[0];
 }

@@ -18,18 +18,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// root_on_node
-IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup);
-RcppExport SEXP _TreeSearch_root_on_node(SEXP edgeSEXP, SEXP outgroupSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< int >::type outgroup(outgroupSEXP);
-    rcpp_result_gen = Rcpp::wrap(root_on_node(edge, outgroup));
-    return rcpp_result_gen;
-END_RCPP
-}
 // spr_moves
 IntegerMatrix spr_moves(const IntegerMatrix edge);
 RcppExport SEXP _TreeSearch_spr_moves(SEXP edgeSEXP) {
@@ -73,6 +61,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
     Rcpp::traits::input_parameter< const IntegerVector >::type move(moveSEXP);
     rcpp_result_gen = Rcpp::wrap(tbr(edge, move));
+    return rcpp_result_gen;
+END_RCPP
+}
+// all_tbr
+ListOf<IntegerMatrix> all_tbr(const IntegerMatrix edge, const IntegerVector break_order);
+RcppExport SEXP _TreeSearch_all_tbr(SEXP edgeSEXP, SEXP break_orderSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector >::type break_order(break_orderSEXP);
+    rcpp_result_gen = Rcpp::wrap(all_tbr(edge, break_order));
     return rcpp_result_gen;
 END_RCPP
 }

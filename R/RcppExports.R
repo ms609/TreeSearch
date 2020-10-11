@@ -5,10 +5,6 @@ nni <- function(edge, randomEdge, whichSwitch) {
     .Call(`_TreeSearch_nni`, edge, randomEdge, whichSwitch)
 }
 
-root_on_node <- function(edge, outgroup) {
-    .Call(`_TreeSearch_root_on_node`, edge, outgroup)
-}
-
 spr_moves <- function(edge) {
     .Call(`_TreeSearch_spr_moves`, edge)
 }
@@ -23,5 +19,9 @@ tbr_moves <- function(edge) {
 
 tbr <- function(edge, move) {
     .Call(`_TreeSearch_tbr`, edge, move)
+}
+
+all_tbr <- function(edge, break_order) {
+    .Call(`_TreeSearch_all_tbr`, edge, break_order)
 }
 
