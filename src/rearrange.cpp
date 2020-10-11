@@ -1,16 +1,12 @@
 #include <Rcpp.h>
-/// [ [Rcpp::depends(TreeTools)]]
-#include "TreeTools.h"
+// [ [Rcpp::depends(TreeTools)]]
+#include <TreeTools.h>
+#include <memory> /* for unique_ptr */
+using namespace std;
 using namespace Rcpp;
-/// [ [Rcpp::interfaces(r, cpp)]]
 
 typedef int_fast16_t int16;
 const int16 UNDEFINED = -1;
-
-int16 sample_one(int16 len) {
-  // TODO use more sophisticated RNG
-  return 0;
-}
 
 // Assumptions: 
 //  * Tree is bifurcating and rooted on a tip.
@@ -65,64 +61,7 @@ IntegerMatrix nni(const IntegerMatrix edge,
   ret(ind1, 1) = edge(ind2, 1);
   ret(ind2, 1) = edge(ind1, 1);
   
-  return preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
-}
-
-// #TODO move to TreeTools and import
-// edge must be in preorder
-//  [[Rcpp::export]]
-IntegerMatrix root_on_node(const IntegerMatrix edge, int outgroup) {
-  
-  if (edge(0, 1) == outgroup) return edge;
-  
-  const int16 n_edge = edge.nrow(),
-    n_node = n_edge / 2,
-    n_tip = n_node + 1,
-    root_node = n_tip + 1,
-    max_node = n_node + n_tip;
-  
-  if (outgroup < 1) throw std::range_error("`outgroup` must be a positive integer");
-  if (outgroup > max_node) throw std::range_error("`outgroup` exceeds number of nodes");
-  if (outgroup == root_node) return edge;
-  
-  int16* edge_above = new int16[max_node + 1];
-  int16 root_edges[2] = {0, 0};
-  
-  for (int16 i = n_edge; i--; ) {
-    
-    edge_above[edge(i, 1)] = i;
-    
-    if (edge(i, 0) == root_node) {
-      if (edge(i, 1) == outgroup) {
-        delete[] edge_above;
-        return edge;
-      }
-      root_edges[root_edges[1] ? 0 : 1] = i;
-    }
-    
-  }
-  
-  IntegerMatrix ret = clone(edge);
-  int16 invert_next = edge_above[outgroup];
-  
-  // We'll later add an edge from the now-unallocated root node to the outgroup.
-  ret(invert_next, 0) = root_node;
-  ret(invert_next, 1) = edge(invert_next, 0);
-  
-  do {
-    invert_next = edge_above[edge(invert_next, 0)];
-    ret(invert_next, 0) = edge(invert_next, 1);
-    ret(invert_next, 1) = edge(invert_next, 0);
-  } while (edge(invert_next, 0) != root_node);
-  
-  delete[] edge_above;
-  
-  // second root i.e. 16 -- 24 must be replaced with root -> outgroup.
-  int16 spare_edge = (ret(root_edges[0], 0) == root_node ? 0 : 1);
-  ret(invert_next, 1) = edge(root_edges[spare_edge], 1);
-  ret(root_edges[spare_edge], 1) = outgroup;
-  
-  return preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
+  return TreeTools::preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
 }
 
 // edge must be in preorder
@@ -132,7 +71,8 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
     n_edge = edge.nrow(),
     n_node = n_edge / 2,
     n_tip = n_node + 1,
-    root_node = n_tip + 1
+    root_node = n_tip + 1,
+    second_root_child = root_node + 1
   ;
   if (n_edge < 5) return IntegerMatrix(0, 0);
   if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
@@ -143,9 +83,7 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
   int16* above = new int16[(n_edge - 1) * (n_edge - 3)];
   int16* bside = new int16[(n_edge - 1) * (n_edge - 3)];
   int16 n_moves = 0, root_daughter_2 = 0;
-  const int16
-    second_root_child = root_node + 1
-  ;
+  
   // Root edge first
   for (int16 i = 3; i != n_edge; i++) {
     if (edge(i, 0) == second_root_child) {
@@ -254,7 +192,7 @@ IntegerMatrix spr (const IntegerMatrix edge,
     broken_edge_parent = edge(prune_edge, 0)
   ;
   
-  if (n_edge < 5) return edge;
+  if (n_edge < 5) throw std::invalid_argument("No SPR rearrangements possible on a tree with < 5 edges");
   if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
   if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
@@ -282,17 +220,140 @@ IntegerMatrix spr (const IntegerMatrix edge,
     // child[mergeEdge] <- spareNode
     ret(graft_edge, 1) = spare_node;
   }
-  ret = preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
-  return root_on_node(ret, 1);
+  ret = TreeTools::preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
+  return TreeTools::root_binary(ret, 1);
 }
 
+// Assumptions: 
+//  * Tree is bifurcating, in preorder; first two edges have root as parent.
 //  [[Rcpp::export]]
 IntegerMatrix tbr_moves(const IntegerMatrix edge) {
-  return IntegerMatrix(0, 0);
+  const int16
+    n_edge = edge.nrow(),
+    n_node = n_edge / 2,
+    n_tip = n_node + 1,
+    root_node = n_tip + 1,
+    second_root_child = root_node + 1
+  ;
+  if (n_edge < 5) throw std::invalid_argument("No TBR rearrangements possible on a tree with < 5 edges");
+  if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+  
+  std::unique_ptr<int16[]> n_edges_above = std::make_unique<int16[]>(n_edge);
+  std::unique_ptr<int16[]> probibited_parent = std::make_unique<int16[]>(n_edge);
+  std::unique_ptr<int16[]> probibited_sibling = std::make_unique<int16[]>(n_edge);
+  
+  int16* prune = new int16[(n_edge - 1) * (n_edge - 3)];
+  int16* graft = new int16[(n_edge - 1) * (n_edge - 3)];
+  int16* above = new int16[(n_edge - 1) * (n_edge - 3)];
+  int16* bside = new int16[(n_edge - 1) * (n_edge - 3)];
+  int16 n_moves = 0, root_daughter_2 = 0;
+  
+  // Root edge first
+  for (int16 i = 3; i != n_edge; i++) {
+    if (edge(i, 0) == second_root_child) {
+      //Rcout << "Root daughter edges are 3 and " << (1+i) << "\n";
+      root_daughter_2 = i;
+    } else {
+      //Rcout << "\n _ Logging graft option, 1 -> "  << (i + 1) << "\n";
+      prune[n_moves] = 0;
+      graft[n_moves] = i;
+      ++n_moves;
+    }
+  }
+  
+  for (int16 i = 0; i != n_moves; i++) {
+    above[i] = -1;
+    bside[i] = root_daughter_2;
+  }
+  
+  for (int16 bisect = 1; bisect != n_edge; bisect++) {
+    
+  }
+  
+  IntegerMatrix ret(n_moves, 4);
+  for (int16 i = n_moves; i--; ) {
+    ret(i, 0) = prune[i];
+    ret(i, 1) = graft[i];
+    ret(i, 2) = above[i];
+    ret(i, 3) = bside[i];
+  }
+  delete[] prune;
+  delete[] graft;
+  delete[] above;
+  delete[] bside;
+  return (ret);
 }
 
 //  [[Rcpp::export]]
 IntegerMatrix tbr (const IntegerMatrix edge,
                    const IntegerVector move) {
+  const IntegerMatrix move_list = tbr_moves(edge);
+  // Actually do TBR move
   return IntegerMatrix(0, 0);
+}
+
+void set_child(unique_ptr<int16[]> &side, const int16 parent, 
+               const int16 value, const int16 n_tip) {
+  side[parent - n_tip] = value;
+}
+
+int16 get_child(unique_ptr<int16[]> &side, const int16 parent, const int16 n_tip) {
+  return side[parent - n_tip];
+}
+
+// Assumptions: 
+//  * Tree is bifurcating, in preorder; first two edges have root as parent.
+//  [[Rcpp::export]]
+ListOf<IntegerMatrix> all_tbr (const IntegerMatrix edge,
+                               const IntegerVector break_order) {
+  const int16
+    n_edge = edge.nrow(),
+    n_internal = n_edge / 2,
+    n_tip = n_internal + 1,
+    n_vert = n_internal + n_tip,
+    root_node = n_tip + 1,
+    second_root_child = root_node + 1
+  ;
+  if (n_edge < 5) throw std::invalid_argument("No TBR rearrangements possible on a tree with < 5 edges");
+  if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+  
+  IntegerVector break_seq;
+  if (break_order.length()) {
+    IntegerVector break_seq = clone(break_order);
+  } else {
+    IntegerVector break_seq(n_edge - 2);
+    for (int16 i = n_edge - 2; i--; ) {
+      break_seq[i] = i + 3;
+    }
+  }
+
+  unique_ptr<int16[]> n_children = make_unique<int16[]>(n_vert);
+  unique_ptr<int16[]> left_node = make_unique<int16[]>(n_internal);
+  unique_ptr<int16[]> right_node = make_unique<int16[]>(n_internal);
+  unique_ptr<int16[]> left_edge = make_unique<int16[]>(n_internal);
+  unique_ptr<int16[]> right_edge = make_unique<int16[]>(n_internal);
+  for (int16 i = n_tip; i--; ) {
+    n_children[i] = 1;
+  }
+  
+  for (int16 i = n_edge; i--; ) {
+    const int parent = edge(i, 0) - 1;
+    const int child = edge(i, 1) - 1;
+    n_children[parent] += n_children[child];
+    if (get_child(left_node, parent, n_tip)) {
+      set_child(right_node, parent, child, n_tip);
+      set_child(right_edge, parent, i, n_tip);
+    } else {
+      set_child(left_edge, parent, child, n_tip);
+      set_child(left_edge, parent, i, n_tip);
+    }
+  }
+  
+  for (int16 i = break_seq.length(); i--; ) {
+    IntegerVector new_base = clone(edge);
+    
+  }
+  
 }
