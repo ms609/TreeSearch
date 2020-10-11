@@ -65,7 +65,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // all_tbr
-ListOf<IntegerMatrix> all_tbr(const IntegerMatrix edge, const IntegerVector break_order);
+List all_tbr(const IntegerMatrix edge, const IntegerVector break_order);
 RcppExport SEXP _TreeSearch_all_tbr(SEXP edgeSEXP, SEXP break_orderSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

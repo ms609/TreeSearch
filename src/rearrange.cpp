@@ -305,8 +305,8 @@ int16 get_child(unique_ptr<int16[]> &side, const int16 parent, const int16 n_tip
 // Assumptions: 
 //  * Tree is bifurcating, in preorder; first two edges have root as parent.
 //  [[Rcpp::export]]
-ListOf<IntegerMatrix> all_tbr (const IntegerMatrix edge,
-                               const IntegerVector break_order) {
+List all_tbr (const IntegerMatrix edge,
+              const IntegerVector break_order) {
   const int16
     n_edge = edge.nrow(),
     n_internal = n_edge / 2,
@@ -353,8 +353,7 @@ ListOf<IntegerMatrix> all_tbr (const IntegerMatrix edge,
     }
   }
   
-  int16 ret_pos = 0;
-  ListOf<IntegerMatrix> ret(n_edge * n_edge / 2);
+  List ret = List::create();
   
   // Let's go.
   for (int16 i = break_seq.length(); i--; ) {
@@ -396,7 +395,7 @@ ListOf<IntegerMatrix> all_tbr (const IntegerMatrix edge,
         new_tree(graft_edge, 1) = spare_node;
         new_tree(break_edge, 0) = spare_node;
         new_tree = TreeTools::postorder_edges(new_tree);
-        ret[ret_pos++] = new_tree;
+        ret.push_back(new_tree);
       }
     } else {
       for (int16 loose_root = fragment_edges; loose_root--; ) {
@@ -408,6 +407,5 @@ ListOf<IntegerMatrix> all_tbr (const IntegerMatrix edge,
     
     
   }
-  Rcout << ret[n_edge];
-  return ret[0];
+  return ret;
 }
