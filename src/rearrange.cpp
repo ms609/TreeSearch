@@ -334,6 +334,7 @@ ListOf<IntegerMatrix> all_tbr (const IntegerMatrix edge,
   unique_ptr<int16[]> right_node = make_unique<int16[]>(n_internal);
   unique_ptr<int16[]> left_edge = make_unique<int16[]>(n_internal);
   unique_ptr<int16[]> right_edge = make_unique<int16[]>(n_internal);
+  unique_ptr<int16[]> parent_edge = make_unique<int16[]>(n_vert);
   for (int16 i = n_tip; i--; ) {
     n_children[i] = 1;
   }
@@ -342,6 +343,7 @@ ListOf<IntegerMatrix> all_tbr (const IntegerMatrix edge,
     const int parent = edge(i, 0) - 1;
     const int child = edge(i, 1) - 1;
     n_children[parent] += n_children[child];
+    parent_edge[child] = i;
     if (get_child(left_node, parent, n_tip)) {
       set_child(right_node, parent, child, n_tip);
       set_child(right_edge, parent, i, n_tip);
@@ -352,7 +354,33 @@ ListOf<IntegerMatrix> all_tbr (const IntegerMatrix edge,
   }
   
   for (int16 i = break_seq.length(); i--; ) {
-    IntegerVector new_base = clone(edge);
+    IntegerVector two_bits = clone(edge);
+    const int16
+      break_edge = break_seq[i],
+      break_parent = edge(0, break_edge) - 1,
+      break_child = edge(1, break_edge) - 1,
+      spare_node = break_parent,
+      fragment_leaves = n_children[break_child],
+      fragment_edges = fragment_leaves + fragment_leaves - 1,
+      base_leaves = n_tip - fragment_leaves,
+      base_edges = n_edge - fragment_edges - 1 // -1 for the broken edge
+    ;
+    const bool broken_on_left = get_child(left_edge, break_parent, n_tip) == break_edge;
+    two_bits(parent_edge[break_edge], 1) = broken_on_left ?
+      get_child(right_node, break_parent, n_tip) :
+      get_child(left_node, break_parent, n_tip);
+    if (fragment_leaves == 1) {
+      for (int16 graft_location = base_edges; graft_location--; ) {
+        
+      }
+    } else {
+      for (int16 loose_root = fragment_edges; loose_root--; ) {
+        for (int16 graft_location = base_edges; graft_location--; ) {
+          
+        }
+      }
+    }
+    
     
   }
   
