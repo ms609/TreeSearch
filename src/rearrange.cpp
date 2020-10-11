@@ -321,9 +321,10 @@ List all_tbr (const IntegerMatrix edge,
   
   IntegerVector break_seq;
   if (break_order.length()) {
-    IntegerVector break_seq = clone(break_order);
+    break_seq = clone(break_order);
   } else {
-    IntegerVector break_seq(n_edge - 2);
+    IntegerVector tmp (n_edge - 2);
+    break_seq = tmp;
     for (int16 i = n_edge - 2; i--; ) {
       break_seq[i] = i + 3;
     }
