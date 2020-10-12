@@ -380,10 +380,19 @@ List all_tbr (const IntegerMatrix edge,
   
   
   List ret = List::create();
+  Function warning("warning");
   
   // Let's go.
   for (int16 i = break_seq.length(); i--; ) {
     IntegerMatrix two_bits = clone(edge);
+    if (break_seq[i] > n_edge) {
+      warning("Ignoring TBR break locations that exceed number of edges in tree.\n");
+      continue;
+    }
+    if (break_seq[i] < 1) {
+      warning("Ignoring non-positive break locations");
+      continue;
+    }
     const int16
       break_edge = break_seq[i] - 1,
       break_parent = edge(break_edge, 0),
