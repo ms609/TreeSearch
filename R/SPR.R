@@ -69,6 +69,19 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   }
 }
 
+#' @rdname SPR
+#' @return `TBRMoves()` returns a list of all trees one SPR move away from
+#'  `tree`, with edges and nodes in preorder, rooted on the first-labelled tip.
+#' @export
+SPRMoves <- function (tree, edgeToBreak = integer(0)) {
+  tree <- Preorder(RootTree(tree, tree$tip.label[1]))
+  edges <- unique(all_spr(tree$edge, edgeToBreak))
+  structure(lapply(edges, function (edg) {
+    tree$edge <- edg
+    tree
+  }), class = 'multiPhylo', tip.label = tree$tip.label)
+}
+
 ## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn SPR faster version that takes and returns parent and child parameters
 #' @template treeParent

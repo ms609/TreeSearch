@@ -2,8 +2,8 @@
 % Please edit documentation in R/TBR.R
 \name{TBR}
 \alias{TBR}
-\alias{TBRSwap}
 \alias{TBRMoves}
+\alias{TBRSwap}
 \alias{AllTBR}
 \alias{RootedTBR}
 \alias{RootedTBRSwap}
@@ -11,20 +11,14 @@
 \usage{
 TBR(tree, edgeToBreak = NULL, mergeEdges = NULL)
 
+TBRMoves(tree, edgeToBreak = integer(0))
+
 TBRSwap(
   parent,
   child,
   nEdge = length(parent),
   edgeToBreak = NULL,
   mergeEdges = NULL
-)
-
-TBRMoves(
-  parent,
-  child,
-  nEdge = length(parent),
-  avoid = NULL,
-  retainRoot = FALSE
 )
 
 AllTBR(parent, child, nEdge = length(parent), avoid = NULL, retainRoot = FALSE)
@@ -60,19 +54,15 @@ matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
 matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
 
 \item{nEdge}{(optional) Number of edges.}
-
-\item{avoid}{Integer vector specifying which edges should not be broken}
-
-\item{retainRoot}{logical specifying whether taxa may be swapped across the root}
 }
 \value{
 This function returns a tree in \code{phyDat} format that has undergone one \acronym{TBR} iteration.
 
+\code{TBRMoves()} returns a list of all trees one TBR move away from
+\code{tree}, with edges and nodes in preorder, rooted on the first-labelled tip.
+
 a list containing two elements, corresponding in turn to the
 rearranged parent and child parameters
-
-a matrix with two columns, each row listing an edge that can be broken
-and an edge into which it can be merged
 
 a list of trees, in parent-child format
 }
@@ -89,8 +79,6 @@ All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collap
 \itemize{
 \item \code{TBRSwap}: faster version that takes and returns parent and child
 parameters
-
-\item \code{TBRMoves}: Possible TBR moves
 
 \item \code{AllTBR}: All unique trees one TBR move away
 

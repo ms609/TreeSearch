@@ -40,7 +40,8 @@ matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
 Returns a tree with class \code{phylo} (if \code{returnAll = FALSE}) or
 a set of trees, with class \code{multiPhylo} (if \code{returnAll = TRUE}).
 
-a list containing two elements, corresponding in turn to the rearranged parent and child parameters
+\code{NNISwap()} returns a list containing two elements, corresponding in
+turn to the  rearranged parent and child parameters.
 
 a list containing two elements, corresponding in turn to the rearranged parent and child parameters
 }

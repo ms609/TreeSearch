@@ -28,6 +28,7 @@ test_that("TBR working", {
   # Move cherry
   expect_equal(6, length(x <- all_tbr(tr$edge, 9)))
   expect_equal(6, length(x <- all_tbr(tr$edge, 5)))
+  expect_equal(6, length(TBRMoves(tr, 5)))
   
   # Move more
   expect_equal(6, length(unique(x <- all_tbr(tr$edge, 4))))
@@ -36,7 +37,7 @@ test_that("TBR working", {
   # All moves
   expect_equal(6*8 + 12+ 6 + 14, length(x <- all_tbr(tr$edge, integer(0))))
   expect_equal(58, length(unique(x <- all_tbr(tr$edge, integer(0))))) # 58 not formally calculated
-  
+  expect_equal(58, length(TBRMoves(tr)))
   
   tr <- Preorder(root(TreeTools::BalancedTree(14), 't1', resolve.root = TRUE))
   desc <- TreeTools::CladeSizes(tr)
@@ -79,6 +80,7 @@ test_that("SPR working", {
   # All moves
   expect_equal(6*8 + 2*6 + 4, length(x <- all_spr(tr$edge, integer(0))))
   expect_equal(48, length(unique(x <- all_spr(tr$edge, integer(0))))) # 48 not formally calculated
+  expect_equal(48, length(SPRMoves(tr)))
   
   tr <- Preorder(root(TreeTools::BalancedTree(14), 't1', resolve.root = TRUE))
   par(mar = rep(0, 4)); plot(tr); nodelabels(); edgelabels()
