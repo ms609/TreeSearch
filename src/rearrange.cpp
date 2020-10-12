@@ -315,6 +315,18 @@ inline int16 edge_above(const int16 vert, unique_ptr<int16[]> &parent_edge) {
   return parent_edge[vert - 1];
 }
 
+inline void fuse_and_add (const IntegerMatrix& tree_bits, List& ret, 
+                          const int16* graft_edge, const int16* break_edge, 
+                          const int16* spare_edge, const int16* spare_node) {
+  IntegerMatrix new_tree = clone(tree_bits);
+  
+  new_tree(*spare_edge, 1) = tree_bits(*graft_edge, 1);
+  new_tree(*graft_edge, 1) = *spare_node;
+  new_tree(*break_edge, 0) = *spare_node;
+  new_tree = TreeTools::preorder_edges_and_nodes(new_tree(_, 0), new_tree(_, 1));
+  ret.push_back(new_tree);
+}
+
 // Assumptions: 
 //  * Tree is bifurcating, in preorder; first two edges have root as parent.
 //  [[Rcpp::export]]
@@ -409,13 +421,8 @@ List all_tbr (const IntegerMatrix edge,
         } else if (graft_edge == edge_above(break_parent, parent_edge)) {
           continue;
         }
-        IntegerMatrix new_tree = clone(two_bits);
-        
-        new_tree(spare_edge, 1) = two_bits(graft_edge, 1);
-        new_tree(graft_edge, 1) = spare_node;
-        new_tree(break_edge, 0) = spare_node;
-        new_tree = TreeTools::preorder_edges_and_nodes(new_tree(_, 0), new_tree(_, 1));
-        ret.push_back(new_tree);
+        fuse_and_add(two_bits, ret, &graft_edge, &break_edge, &spare_edge,
+                     &spare_node);
       }
     } else {
       List rooty_bits = List::create();
@@ -427,7 +434,6 @@ List all_tbr (const IntegerMatrix edge,
       for (int16 new_fragment_root = fragment_min_edge + 2;
            new_fragment_root != fragment_max_edge + 1; new_fragment_root++) {
         if (new_fragment_root == fragment_base_left) {
-          rooty_bits.push_back(two_bits);
           continue;
         }
         
@@ -453,26 +459,19 @@ List all_tbr (const IntegerMatrix edge,
       }
       for (int16 graft_edge = n_edge - 1; graft_edge; graft_edge--) {
         if (graft_edge == fragment_max_edge) {
-          // Remember: graft_location will be decremented after continue
           graft_edge = fragment_min_edge;
           continue; 
-        } else if (broken_on_left && graft_edge == get_child(right_edge, break_parent, n_tip)) {
-          // Remember: graft_location will be incremented after continue
-          graft_edge = edge_above(break_parent, parent_edge);
-          continue;
         } else if (graft_edge == spare_edge) {
-          continue;
-        } else if (graft_edge == edge_above(break_parent, parent_edge)) {
           continue;
         }
         for (List::iterator j = rooty_bits.begin(); j != rooty_bits.end(); j++) {
           IntegerMatrix rooty_bit = *j;
-          IntegerMatrix new_tree = clone(rooty_bit);
-          
-          new_tree(spare_edge, 1) = two_bits(graft_edge, 1);
-          new_tree(graft_edge, 1) = spare_node;
-          // Rcout << "Leading to :\n";
-          // print_edges(new_tree);
+          fuse_and_add(rooty_bit, ret, &graft_edge, &break_edge, &spare_edge,
+                       &spare_node);
+        }
+        if (graft_edge != edge_above(break_parent, parent_edge)) {
+          fuse_and_add(two_bits, ret, &graft_edge, &break_edge, &spare_edge,
+                       &spare_node);
         }
       }
     }
