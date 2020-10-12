@@ -21,6 +21,10 @@ tbr <- function(edge, move) {
     .Call(`_TreeSearch_tbr`, edge, move)
 }
 
+all_spr <- function(edge, break_order) {
+    .Call(`_TreeSearch_all_spr`, edge, break_order)
+}
+
 all_tbr <- function(edge, break_order) {
     .Call(`_TreeSearch_all_tbr`, edge, break_order)
 }

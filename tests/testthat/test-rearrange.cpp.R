@@ -3,7 +3,15 @@ library("TreeTools")
 test_that("TBR errors", {
   tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
   expect_equal(0, length(expect_warning(all_tbr(tr$edge, -1))))
+  expect_equal(0, length(expect_warning(all_tbr(tr$edge, 1))))
   expect_equal(0, length(expect_warning(all_tbr(tr$edge, 111))))
+})
+
+test_that("SPR errors", {
+  tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
+  expect_equal(0, length(expect_warning(all_spr(tr$edge, -1))))
+  expect_equal(0, length(expect_warning(all_spr(tr$edge, 1))))
+  expect_equal(0, length(expect_warning(all_spr(tr$edge, 111))))
 })
 
 test_that("TBR working", {
@@ -31,8 +39,6 @@ test_that("TBR working", {
   
   
   tr <- Preorder(root(TreeTools::BalancedTree(14), 't1', resolve.root = TRUE))
-  par(mar = rep(0, 4)); plot(tr); nodelabels(); edgelabels()
-  tr$edge
   desc <- TreeTools::CladeSizes(tr)
   
   external <- c(3, 6, 7, 11, 12, 13, 17, 18, 20, 21, 24:26)
@@ -45,6 +51,50 @@ test_that("TBR working", {
     nDesc <- desc[tr$edge[edge, 2]]
     expected <- (2 * nDesc - 3) * (22 - (2 * nDesc - 3)) - 1
     expect_equal(expected, length(all_tbr(tr$edge, edge)))
+  }
+  for (internal in which(!1:26 %in% external)[-(1:2)]) {
+    Test(internal)
+  }
+})
+
+test_that("SPR working", {
+  tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
+
+  # Move single tip
+  expect_equal(8, length(x <- all_spr(tr$edge, 12)))
+  expect_equal(8, length(x <- all_spr(tr$edge, 11)))
+  expect_equal(8, length(x <- all_spr(tr$edge, 10)))
+  expect_equal(8, length(x <- all_spr(tr$edge, 7)))
+  expect_equal(8, length(x <- all_spr(tr$edge, 6)))
+  expect_equal(8, length(x <- all_spr(tr$edge, 3)))
+  
+  # Move cherry
+  expect_equal(6, length(x <- all_spr(tr$edge, 9)))
+  expect_equal(6, length(x <- all_spr(tr$edge, 5)))
+  
+  # Move more
+  expect_equal(0, length(unique(x <- all_spr(tr$edge, 4))))
+  expect_equal(4, length(unique(x <- all_spr(tr$edge, 8))))
+  
+  # All moves
+  expect_equal(6*8 + 2*6 + 4, length(x <- all_spr(tr$edge, integer(0))))
+  expect_equal(48, length(unique(x <- all_spr(tr$edge, integer(0))))) # 48 not formally calculated
+  
+  tr <- Preorder(root(TreeTools::BalancedTree(14), 't1', resolve.root = TRUE))
+  par(mar = rep(0, 4)); plot(tr); nodelabels(); edgelabels()
+  tr$edge
+  desc <- TreeTools::CladeSizes(tr)
+  
+  external <- c(3, 6, 7, 11, 12, 13, 17, 18, 20, 21, 24:26)
+  # Move single
+  for (leaf in external) {
+    expect_equal(22, length(x <- all_spr(tr$edge, leaf)))
+  }
+  
+  Test <- function (edge) {
+    nDesc <- desc[tr$edge[edge, 2]]
+    expected <- (22 - (2 * nDesc - 3)) - 1
+    expect_equal(expected, length(all_spr(tr$edge, edge)))
   }
   for (internal in which(!1:26 %in% external)[-(1:2)]) {
     Test(internal)

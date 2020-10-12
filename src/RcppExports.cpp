@@ -64,6 +64,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// all_spr
+List all_spr(const IntegerMatrix edge, const IntegerVector break_order);
+RcppExport SEXP _TreeSearch_all_spr(SEXP edgeSEXP, SEXP break_orderSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector >::type break_order(break_orderSEXP);
+    rcpp_result_gen = Rcpp::wrap(all_spr(edge, break_order));
+    return rcpp_result_gen;
+END_RCPP
+}
 // all_tbr
 List all_tbr(const IntegerMatrix edge, const IntegerVector break_order);
 RcppExport SEXP _TreeSearch_all_tbr(SEXP edgeSEXP, SEXP break_orderSEXP) {
