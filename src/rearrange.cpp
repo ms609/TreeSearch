@@ -311,7 +311,7 @@ inline void add_children(unique_ptr<int16[]> &n_children,
   n_children[parent - 1] += n_children[child - 1];
 }
 
-inline int16 edge_above(unique_ptr<int16[]> &parent_edge, const int16 vert) {
+inline int16 edge_above(const int16 vert, unique_ptr<int16[]> &parent_edge) {
   return parent_edge[vert - 1];
 }
 
@@ -356,6 +356,7 @@ List all_tbr (const IntegerMatrix edge,
   for (int16 i = n_edge; i--; ) {
     const int parent = edge(i, 0);
     const int child = edge(i, 1);
+    add_children(n_children, parent, child);
     parent_edge[child - 1] = i;
     if (get_child(left_node, parent, n_tip)) {
       set_child(right_node, parent, child, n_tip);
@@ -377,6 +378,7 @@ List all_tbr (const IntegerMatrix edge,
       break_parent = edge(break_edge, 0),
       break_child = edge(break_edge, 1),
       spare_node = break_parent,
+      
       fragment_leaves = count_children(n_children, break_child),
       fragment_edges = fragment_leaves + fragment_leaves - 1,
       fragment_min_edge = break_edge,
@@ -391,20 +393,20 @@ List all_tbr (const IntegerMatrix edge,
         get_child(left_edge, break_parent, n_tip)
     ;
     
-    two_bits(edge_above(parent_edge, break_parent), 1) = broken_on_left ?
+    two_bits(edge_above(break_parent, parent_edge), 1) = broken_on_left ?
       get_child(right_node, break_parent, n_tip) :
       get_child(left_node, break_parent, n_tip);
     if (fragment_leaves == 1) {
-      for (int16 graft_edge = n_edge; graft_edge--; ) {
+      for (int16 graft_edge = n_edge - 1; graft_edge; graft_edge--) {
         if (graft_edge == fragment_max_edge) {
           // Remember: graft_location will be decremented after continue
           graft_edge = fragment_min_edge;
           continue; 
-        } else if (broken_on_left && graft_edge == get_child(right_node, break_parent, n_tip)) {
-          // Remember: graft_location will be decremented after continue
-          graft_edge = parent_edge[break_parent];
+        } else if (broken_on_left && graft_edge == get_child(right_edge, break_parent, n_tip)) {
+          // Remember: graft_location will be incremented after continue
+          graft_edge = edge_above(break_parent, parent_edge);
           continue;
-        } else if (graft_edge == parent_edge[break_parent]) {
+        } else if (graft_edge == edge_above(break_parent, parent_edge)) {
           continue;
         }
         IntegerMatrix new_tree = clone(two_bits);
@@ -412,7 +414,7 @@ List all_tbr (const IntegerMatrix edge,
         new_tree(spare_edge, 1) = two_bits(graft_edge, 1);
         new_tree(graft_edge, 1) = spare_node;
         new_tree(break_edge, 0) = spare_node;
-        new_tree = TreeTools::postorder_edges(new_tree);
+        new_tree = TreeTools::preorder_edges_and_nodes(new_tree(_, 0), new_tree(_, 1));
         ret.push_back(new_tree);
       }
     } else {
