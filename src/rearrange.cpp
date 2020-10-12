@@ -396,7 +396,7 @@ List all_tbr (const IntegerMatrix edge,
     two_bits(edge_above(break_parent, parent_edge), 1) = broken_on_left ?
       get_child(right_node, break_parent, n_tip) :
       get_child(left_node, break_parent, n_tip);
-    if (fragment_leaves == 1) {
+    if (fragment_leaves < 3) {
       for (int16 graft_edge = n_edge - 1; graft_edge; graft_edge--) {
         if (graft_edge == fragment_max_edge) {
           // Remember: graft_location will be decremented after continue
@@ -405,6 +405,8 @@ List all_tbr (const IntegerMatrix edge,
         } else if (broken_on_left && graft_edge == get_child(right_edge, break_parent, n_tip)) {
           // Remember: graft_location will be incremented after continue
           graft_edge = edge_above(break_parent, parent_edge);
+          continue;
+        } else if (graft_edge == spare_edge) {
           continue;
         } else if (graft_edge == edge_above(break_parent, parent_edge)) {
           continue;
