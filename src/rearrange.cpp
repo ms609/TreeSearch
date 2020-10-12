@@ -475,6 +475,7 @@ List all_spr (const IntegerMatrix edge,
   }
   return ret;
 }
+
 // Assumptions: 
 //  * Tree is bifurcating, in preorder; first two edges have root as parent.
 //  [[Rcpp::export]]
