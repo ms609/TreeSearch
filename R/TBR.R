@@ -72,13 +72,29 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 #' @return `TBRMoves()` returns a list of all trees one TBR move away from
 #'  `tree`, with edges and nodes in preorder, rooted on the first-labelled tip.
 #' @export
-TBRMoves <- function (tree, edgeToBreak = integer(0)) {
+TBRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('TBRMoves')
+
+#' @rdname TBR 
+#' @export
+TBRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   tree <- Preorder(RootTree(tree, 1))
-  edges <- unique(all_tbr(tree$edge, edgeToBreak))
+  edges <- unique(all_tbr(tree, edgeToBreak))
   structure(lapply(edges, function (edg) {
     tree$edge <- edg
     tree
   }), class = 'multiPhylo', tip.label = tree$tip.label)
+}
+
+#' @rdname TBR
+#TODO
+#' @details NOTE: `tree` must be rooted on edge 1 in `TBRMoves.matrix()`.
+#' This will be resolved when `TreeTools::RootNode()` supports edge matrices.
+#' @export
+TBRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
+  #tree <- Preorder(RootTree(tree, 1))  # TODO
+  tree <- Preorder(tree)
+  allMoves <- all_tbr(tree, edgeToBreak)
+  unique(allMoves)
 }
 
 ## TODO Do edges need to be pre-ordered before coming here?

@@ -5,6 +5,18 @@
 
 using namespace Rcpp;
 
+// preorder_morphy
+int preorder_morphy(IntegerMatrix edge, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_preorder_morphy(SEXP edgeSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(preorder_morphy(edge, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
 // nni
 IntegerMatrix nni(const IntegerMatrix edge, const IntegerVector randomEdge, const IntegerVector whichSwitch);
 RcppExport SEXP _TreeSearch_nni(SEXP edgeSEXP, SEXP randomEdgeSEXP, SEXP whichSwitchSEXP) {

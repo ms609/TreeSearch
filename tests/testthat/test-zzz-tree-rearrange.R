@@ -93,6 +93,7 @@ test_that("NNI works", {
 test_that("SPR works", {
   testTree <- Preorder(root(BalancedTree(7), 1, resolve.root = TRUE))
   edge <- testTree$edge
+  expect_equal(spr(edge, 66), cSPR(testTree, 66)$edge)
   
   Test <- function (m, p1, r1) {
     test.tr <- testTree
@@ -101,7 +102,6 @@ test_that("SPR works", {
     oldWay <- SortTree(root(SPR(testTree, p1, r1), 't1', resolve.root = TRUE))
     expect_equal(oldWay, SortTree(test.tr))
   }
-  expect_equal(spr(edge, 66), cSPR(testTree, 66)$edge)
   Test(0, 1, 5)
   Test(64, 1, 5) # Modulo 64!
   Test(1, 1, 6)

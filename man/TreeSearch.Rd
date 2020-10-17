@@ -120,11 +120,11 @@ Its return value will be passed to \code{TreeScorer()} and \code{CleanUpData()}.
 The function will be passed the value returned by \code{InitializeData()}.}
 }
 \value{
-{
-This function returns a tree, with an attribute \code{pscore} conveying its parsimony score.
-Note that the parsimony score will be inherited from the tree's attributes, which is only valid if it
-was generated using the same \code{data} that is passed here.
-}
+\code{TreeSearch()} returns a tree, with an attribute \code{pscore} conveying its
+parsimony score.
+#' Note that the parsimony score will be inherited from the tree's
+attributes, which is only valid if it was generated using the same
+\code{data} that is passed here.
 }
 \description{
 Run standard search algorithms (\acronym{NNI}, \acronym{SPR} or \acronym{TBR})
@@ -152,7 +152,6 @@ njtree <- TreeTools::NJTree(Lobo.phy)
 TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=NNISwap)
 TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=RootedSPRSwap)
 TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=TBRSwap)}
-
 }
 \references{
 \itemize{
@@ -169,7 +168,7 @@ TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=TBRSwap)}
 \author{
 Martin R. Smith
 
-Martin R. Smith
+\href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \keyword{internal}
-\keyword{tree}

@@ -142,12 +142,13 @@ EdgeListSearch <- function (edgeList, dataset,
 #' @template verbosityParam
 #' @template treeScorerDots
 #' 
-#' @return {
-#' This function returns a tree, with an attribute \code{pscore} conveying its parsimony score.
-#' Note that the parsimony score will be inherited from the tree's attributes, which is only valid if it 
-#' was generated using the same \code{data} that is passed here.
-#' }
-#' @author Martin R. Smith
+#' @return
+#' `TreeSearch()` returns a tree, with an attribute `pscore` conveying its
+#' parsimony score.
+#' #' Note that the parsimony score will be inherited from the tree's
+#' attributes, which is only valid if it was generated using the same
+#' `data` that is passed here.
+#' 
 #'
 #' @references
 #' - \insertRef{SmithTern}{TreeSearch}
@@ -168,8 +169,7 @@ EdgeListSearch <- function (edgeList, dataset,
 #' TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=NNISwap)
 #' TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=RootedSPRSwap)
 #' TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=TBRSwap)}
-#' 
-#' @keywords  tree 
+#' @template MRS
 #' @importFrom Rdpack reprompt
 #' @importFrom TreeTools RenumberTips
 #' @export
@@ -205,3 +205,103 @@ TreeSearch <- function (tree, dataset,
   # Return:
   tree 
 }
+
+#' Find most parsimonious trees
+#' 
+#' Work in progress...
+#' 
+#' @examples 
+#' library(TreeTools)
+#' load_all()
+#' data('Lobo', package='TreeTools')
+#' njtree <- TreeTools::NJTree(Lobo.phy)
+#'
+#' tree = njtree
+#' dataset = Lobo.phy
+#' 
+#' verbosity = 5L
+#' tbrIter = 10
+#' 
+#' MaximizeParsimony(tree, dataset, verbosity = 6, maxHits = 100)
+#' 
+#' @template MRS
+#' @export
+MaximizeParsimony <- function (tree, dataset, maxIter = 10, maxHits = 100L,
+                               tbrIter = 100,
+                               verbosity = 1L, session = NULL) {
+  .Message <- function (level, ...) {
+    if (level < verbosity) {
+      message(rep(' ', level), '- ', ...)
+    }
+  }
+  # initialize tree and data
+  if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+    stop("`tree` must be bifurcating; try rooting with RootTree(tree, root = 1)")
+  }
+  
+  epsilon <- sqrt(.Machine$double.eps)
+  tree <- Preorder(RenumberTips(tree, names(dataset)))
+  nTip <- NTip(tree)
+  morphyObj <- PhyDat2Morphy(dataset)
+  on.exit(initializedData <- UnloadMorphy(morphyObj))
+  
+  bestScore <- attr(tree, 'score')
+  emptyHold <- array(NA, dim = c(dim(edge), nHits))
+  hold <- emptyHold
+  edge <- tree$edge
+  
+  if (is.null(bestScore)) {
+    bestScore <- preorder_morphy(edge, morphyObj)
+  }
+  .Message(0L, "Performing tree search.  Initial score: ", bestScore)
+  
+  iter <- 0L
+  nHits <- 1L
+  optTbr <- sample(3:(NTip(tree) * 2 - 2))
+  while (iter < tbrIter) {
+    iter <- iter + 1L
+    .Message(2L, "TBR iteration ", iter)
+    
+    for (brk in optTbr) {
+      .Message(6L, "Break ", brk)
+      moves <- TBRMoves(edge, brk)
+      improvedScore <- FALSE
+      for (move in moves[sample(seq_along(moves))]) {
+        moveScore <- preorder_morphy(move, morphyObj)
+        if (moveScore < bestScore + epsilon) {
+          edge <- move
+          if (moveScore < bestScore) {
+            improvedScore <- TRUE
+            iter <- 0L
+            bestScore <- moveScore
+            nHits <- 1L
+            hold <- emptyHold
+            hold[, , 1] <- edge
+            .Message(1L, "New best score ", bestScore, "; resetting TBR iterations.")
+            break
+          } else {
+            .Message(2L, "Best score ", bestScore, " hit again (", nHits, ")")
+            nHits <- nHits + 1L
+            hold[, , nHits] <- edge
+            break
+          }
+        }
+      }
+      if (nHits >= maxHits) break
+    }
+  }
+  .Message(0L, "Final score ", bestScore, " found ", nHits, " times after ",
+           iter, " rearrangements.")
+  
+  hold <- unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
+  ret <- structure(lapply(seq_len(dim(hold)[3]), function (i) {
+    tr <- tree
+    tr$edge <- hold[, , i]
+    tr
+  }), score = bestScore, class = 'multiPhylo')
+  
+  # Return:
+  ret
+}
+
+

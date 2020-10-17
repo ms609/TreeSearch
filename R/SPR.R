@@ -73,13 +73,28 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
 #' @return `TBRMoves()` returns a list of all trees one SPR move away from
 #'  `tree`, with edges and nodes in preorder, rooted on the first-labelled tip.
 #' @export
-SPRMoves <- function (tree, edgeToBreak = integer(0)) {
+SPRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('SPRMoves')
+
+#' @rdname SPR
+#' @export
+SPRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   tree <- Preorder(RootTree(tree, tree$tip.label[1]))
   edges <- unique(all_spr(tree$edge, edgeToBreak))
   structure(lapply(edges, function (edg) {
     tree$edge <- edg
     tree
   }), class = 'multiPhylo', tip.label = tree$tip.label)
+}
+
+#' @rdname SPR
+#TODO
+#' @details NOTE: `tree` must be rooted on edge 1 in `SPRMoves.matrix()`.
+#' This will be resolved when `TreeTools::RootNode()` supports edge matrices.
+#' @export
+SPRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
+  tree <- Preorder(tree)
+  #tree <- Preorder(RootTree(tree, 1)) #TODO
+  unique(all_spr(tree, edgeToBreak))
 }
 
 ## TODO Do edges need to be pre-ordered before coming here?
@@ -93,7 +108,7 @@ SPRMoves <- function (tree, edgeToBreak = integer(0)) {
 #' @importFrom TreeTools DescendantEdges NonDuplicateRoot
 #' @export
 SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
-                     edgeToBreak=NULL, mergeEdge=NULL) {
+                     edgeToBreak = NULL, mergeEdge = NULL) {
   
   if (nEdge < 5) return (list(parent, child)) #TODO we need to re-root this tree...
   

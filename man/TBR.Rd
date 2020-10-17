@@ -3,6 +3,8 @@
 \name{TBR}
 \alias{TBR}
 \alias{TBRMoves}
+\alias{TBRMoves.phylo}
+\alias{TBRMoves.matrix}
 \alias{TBRSwap}
 \alias{AllTBR}
 \alias{RootedTBR}
@@ -12,6 +14,10 @@
 TBR(tree, edgeToBreak = NULL, mergeEdges = NULL)
 
 TBRMoves(tree, edgeToBreak = integer(0))
+
+\method{TBRMoves}{phylo}(tree, edgeToBreak = integer(0))
+
+\method{TBRMoves}{matrix}(tree, edgeToBreak = integer(0))
 
 TBRSwap(
   parent,
@@ -74,6 +80,9 @@ Branch lengths are not (yet) supported.
 
 All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
 \link[ape:multi2di]{ape::multi2di} may help.
+
+NOTE: \code{tree} must be rooted on edge 1 in \code{TBRMoves.matrix()}.
+This will be resolved when \code{TreeTools::RootNode()} supports edge matrices.
 }
 \section{Functions}{
 \itemize{

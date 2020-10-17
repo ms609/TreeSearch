@@ -151,7 +151,6 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
   allNodes <- rootNode:maxNode
   
   parentOf <- parent[match(1:maxNode, child)]
-  # parentOf[rootNode] <- maxNode + 1 # Root node's parent is a dummy node
   parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
   leftChild <- child[length(parent) + 1L - match(allNodes, rev(parent))]
   rightChild <- child[match(allNodes, parent)]

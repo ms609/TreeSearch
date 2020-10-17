@@ -3,6 +3,8 @@
 \name{SPR}
 \alias{SPR}
 \alias{SPRMoves}
+\alias{SPRMoves.phylo}
+\alias{SPRMoves.matrix}
 \alias{SPRSwap}
 \alias{RootedSPR}
 \alias{RootedSPRSwap}
@@ -11,6 +13,10 @@
 SPR(tree, edgeToBreak = NULL, mergeEdge = NULL)
 
 SPRMoves(tree, edgeToBreak = integer(0))
+
+\method{SPRMoves}{phylo}(tree, edgeToBreak = integer(0))
+
+\method{SPRMoves}{matrix}(tree, edgeToBreak = integer(0))
 
 SPRSwap(
   parent,
@@ -74,6 +80,9 @@ Branch lengths are not (yet) supported.
 
 All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
 \link[ape:multi2di]{ape::multi2di} may help.
+
+NOTE: \code{tree} must be rooted on edge 1 in \code{SPRMoves.matrix()}.
+This will be resolved when \code{TreeTools::RootNode()} supports edge matrices.
 }
 \section{Functions}{
 \itemize{
