@@ -210,6 +210,9 @@ TreeSearch <- function (tree, dataset,
 #' 
 #' Work in progress...
 #' 
+#' @param ratchHurry Numeric specifying how many times fewer TBR iterations and
+#' hits to employ in ratchet searches.
+#' 
 #' @examples 
 #' library(TreeTools)
 #' load_all()
@@ -226,82 +229,139 @@ TreeSearch <- function (tree, dataset,
 #' 
 #' @template MRS
 #' @export
-MaximizeParsimony <- function (tree, dataset, maxIter = 10, maxHits = 100L,
-                               tbrIter = 100,
+MaximizeParsimony <- function (tree, dataset,
+                               ratchIter = 1L, tbrIter = 10L,
+                               maxHits = 100L,
+                               ratchHurry = 2L,
                                verbosity = 1L, session = NULL) {
+  # Definitions
   .Message <- function (level, ...) {
     if (level < verbosity) {
       message(rep(' ', level), '- ', ...)
     }
   }
-  # initialize tree and data
+  
+  .TBRSearch <- function (edge, nTip, morphyObj, tbrIter, maxHits) {
+    
+    iter <- 0L
+    nHits <- 1L
+    hold <- array(NA, dim = c(dim(edge), maxHits * 1.1))
+    message(dim(hold))
+    message(dim(edge))
+    hold[, , 1] <- edge
+    bestScore <- preorder_morphy(edge, morphyObj)
+    
+    while (iter < tbrIter) {
+      iter <- iter + 1L
+      optTbr <- sample(3:(nTip * 2 - 2))
+      .Message(2L, "TBR iteration ", iter)
+      
+      for (brk in optTbr) {
+        .Message(6L, "Break ", brk)
+        moves <- TBRMoves(edge, brk)
+        improvedScore <- FALSE
+        for (move in moves[sample(seq_along(moves))]) {
+          moveScore <- preorder_morphy(move, morphyObj)
+          if (moveScore < bestScore + epsilon) {
+            edge <- move
+            if (moveScore < bestScore) {
+              improvedScore <- TRUE
+              iter <- 0L
+              bestScore <- moveScore
+              nHits <- 1L
+              hold[, , 1] <- edge
+              .Message(1L, "New best score ", bestScore, "; resetting TBR iterations.")
+              break
+            } else {
+              .Message(2L, "Best score ", bestScore, " hit again (", nHits, 
+                       "/", maxHits, ")")
+              nHits <- nHits + 1L
+              hold[, , nHits] <- edge
+              break
+            }
+          }
+        }
+        if (nHits >= maxHits) break
+      }
+    }
+    .Message(0L, "Final score ", bestScore, " found ", nHits, " times after ",
+             iter, " rearrangements.")
+    
+    
+    # Return:
+    unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
+  }
+  
+  epsilon <- sqrt(.Machine$double.eps)
+  
+  # Initialize tree
+  if (inherits(tree, 'multiPhylo')) {
+    .Message(1L, "Starting search from `tree[[1]]`.")
+    tree <- tree[[1]]
+  }
   if (dim(tree$edge)[1] != 2 * tree$Nnode) {
     stop("`tree` must be bifurcating; try rooting with RootTree(tree, root = 1)")
   }
   
-  epsilon <- sqrt(.Machine$double.eps)
   tree <- Preorder(RenumberTips(tree, names(dataset)))
   nTip <- NTip(tree)
+  edge <- tree$edge
+  
+  # Initialize data
   morphyObj <- PhyDat2Morphy(dataset)
   on.exit(initializedData <- UnloadMorphy(morphyObj))
   
-  bestScore <- attr(tree, 'score')
-  emptyHold <- array(NA, dim = c(dim(edge), nHits))
-  hold <- emptyHold
-  edge <- tree$edge
-  
-  if (is.null(bestScore)) {
-    bestScore <- preorder_morphy(edge, morphyObj)
-  }
-  .Message(0L, "Performing tree search.  Initial score: ", bestScore)
-  
+  # Prepare search
   iter <- 0L
   nHits <- 1L
-  optTbr <- sample(3:(NTip(tree) * 2 - 2))
-  while (iter < tbrIter) {
-    iter <- iter + 1L
-    .Message(2L, "TBR iteration ", iter)
-    
-    for (brk in optTbr) {
-      .Message(6L, "Break ", brk)
-      moves <- TBRMoves(edge, brk)
-      improvedScore <- FALSE
-      for (move in moves[sample(seq_along(moves))]) {
-        moveScore <- preorder_morphy(move, morphyObj)
-        if (moveScore < bestScore + epsilon) {
-          edge <- move
-          if (moveScore < bestScore) {
-            improvedScore <- TRUE
-            iter <- 0L
-            bestScore <- moveScore
-            nHits <- 1L
-            hold <- emptyHold
-            hold[, , 1] <- edge
-            .Message(1L, "New best score ", bestScore, "; resetting TBR iterations.")
-            break
-          } else {
-            .Message(2L, "Best score ", bestScore, " hit again (", nHits, ")")
-            nHits <- nHits + 1L
-            hold[, , nHits] <- edge
-            break
-          }
-        }
+  if (ratchIter > 0L) {
+    .Message(0L, "Performing parsimony ratchet.")
+    verbosity <- verbosity - 1L
+    while (iter < ratchIter) {
+      iter <- iter + 1L
+      .Message(1L, "Ratchet iteration ", iter)
+      startWeights <- MorphyWeights(morphyObj)[1, ]
+      eachChar <- seq_along(startWeights)
+      deindexedChars <- rep(eachChar, startWeights)
+      resampling <- tabulate(sample(deindexedChars, replace = TRUE),
+                             length(startWeights))
+      errors <- vapply(eachChar, function (i) 
+        mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
+      if (any(errors)) {
+        stop ("Error resampling morphy object: ",
+              mpl_translate_error(unique(errors[errors < 0L])))
       }
-      if (nHits >= maxHits) break
+      if (mpl_apply_tipdata(morphyObj) -> error) {
+        stop("Error applying tip data: ", mpl_translate_error(error))
+      }
+      
+      ratchetTrees <- .TBRSearch(edge, NTip(tree), morphyObj, 
+                                 tbrIter / ratchHurry, maxHits / ratchHurry)
+      errors <- vapply(eachChar, function (i) 
+        mpl_set_charac_weight(i, startWeights[i], morphyObj), integer(1))
+      if (any(errors)) stop ("Error resampling morphy object: ",
+                             mpl_translate_error(unique(errors[errors < 0L])))
+      if (mpl_apply_tipdata(morphyObj) -> error) {
+        stop("Error applying tip data: ", mpl_translate_error(error))
+      }
+      
     }
+    verbosity <- verbosity + 1L
+    edge <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
   }
-  .Message(0L, "Final score ", bestScore, " found ", nHits, " times after ",
-           iter, " rearrangements.")
   
-  hold <- unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
-  ret <- structure(lapply(seq_len(dim(hold)[3]), function (i) {
+  # Branch breaking
+  bestScore <- preorder_morphy(edge, morphyObj)
+  
+  .Message(0L, "Performing TBR search.  Initial score: ", bestScore)
+  bestEdges <- .TBRSearch(edge, NTip(tree), morphyObj, tbrIter, maxHits)
+  
+  ret <- structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
     tr <- tree
-    tr$edge <- hold[, , i]
+    tr$edge <- bestEdges[, , i]
     tr
   }), score = bestScore, class = 'multiPhylo')
   
   # Return:
   ret
 }
-
-
