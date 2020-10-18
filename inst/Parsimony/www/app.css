@@ -1,0 +1,25 @@
+body {
+  font-family: "Gill Sans", "Gill Sans MT", "Gill Sans MS", "Verdana", "Sans-Serif";
+}
+
+.shiny-input-container {
+  margin-bottom: 0;
+}
+
+.message {
+  color: #ffc646;
+}
+
+#references {
+  position: relative;
+}
+
+h2 {
+  font-size: 14pt;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 12pt;
+  font-weight: 700;
+}

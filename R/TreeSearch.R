@@ -236,19 +236,28 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                ratchHurry = 2L,
                                verbosity = 1L, session = NULL) {
   # Definitions
-  .Message <- function (level, ...) {
+  .Message <- if (is.null(session)) function (level, ...) {
     if (level < verbosity) {
       message(rep(' ', level), '- ', ...)
     }
+  } else function (level, ...) {
+    if (level < verbosity) {
+      setProgress(detail = paste0(...))
+    }
+  }
+  
+  .NewOperation <- function(...) if (!is.null(session)) {
+    setProgress(0, message = paste0(...))
+  }
+  .Progress <- function(x, ...) if (!is.null(session)) {
+    incProgress(x, message = paste0(...))
   }
   
   .TBRSearch <- function (edge, nTip, morphyObj, tbrIter, maxHits) {
     
     iter <- 0L
     nHits <- 1L
-    hold <- array(NA, dim = c(dim(edge), maxHits * 1.1))
-    message(dim(hold))
-    message(dim(edge))
+    hold <- array(NA, dim = c(dim(edge), max(maxHits * 1.1, maxHits + 10L)))
     hold[, , 1] <- edge
     bestScore <- preorder_morphy(edge, morphyObj)
     
@@ -314,12 +323,16 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   on.exit(initializedData <- UnloadMorphy(morphyObj))
   
   # Prepare search
+  .Message(0L, "Parsimony search with ", ratchIter, " ratchet iterations; ", 
+           tbrIter, " TBR rounds; ", maxHits, " hits.")
+  
   iter <- 0L
   nHits <- 1L
   if (ratchIter > 0L) {
     .Message(0L, "Performing parsimony ratchet.")
     verbosity <- verbosity - 1L
     while (iter < ratchIter) {
+      .Progress(iter / ratchIter, "Ratchet iteration ", (iter + 1L))
       iter <- iter + 1L
       .Message(1L, "Ratchet iteration ", iter)
       startWeights <- MorphyWeights(morphyObj)[1, ]
@@ -356,6 +369,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   bestScore <- preorder_morphy(edge, morphyObj)
   
   .Message(0L, "Performing TBR search.  Initial score: ", bestScore)
+  .Progress(0, "TBR search")
   bestEdges <- .TBRSearch(edge, NTip(tree), morphyObj, tbrIter, maxHits)
   
   ret <- structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
