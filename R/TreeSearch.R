@@ -225,11 +225,12 @@ TreeSearch <- function (tree, dataset,
 #' verbosity = 5L
 #' tbrIter = 10
 #' 
-#' MaximizeParsimony(tree, dataset, verbosity = 6, maxHits = 100)
+#' MaximizeParsimony(dataset, verbosity = 4, maxHits = 100)
 #' 
+#' @importFrom TreeTools NJTree
 #' @template MRS
 #' @export
-MaximizeParsimony <- function (tree, dataset,
+MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                ratchIter = 1L, tbrIter = 10L,
                                maxHits = 100L,
                                ratchHurry = 2L,
@@ -273,7 +274,7 @@ MaximizeParsimony <- function (tree, dataset,
               .Message(1L, "New best score ", bestScore, "; resetting TBR iterations.")
               break
             } else {
-              .Message(2L, "Best score ", bestScore, " hit again (", nHits, 
+              .Message(3L, "Best score ", bestScore, " hit again (", nHits, 
                        "/", maxHits, ")")
               nHits <- nHits + 1L
               hold[, , nHits] <- edge
@@ -283,6 +284,7 @@ MaximizeParsimony <- function (tree, dataset,
         }
         if (nHits >= maxHits) break
       }
+      if (nHits >= maxHits) break
     }
     .Message(0L, "Final score ", bestScore, " found ", nHits, " times after ",
              iter, " rearrangements.")
