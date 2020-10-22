@@ -68,21 +68,24 @@ ui <- fluidPage(theme = 'app.css',
   useShinyjs(),
   column(3,
     fluidRow(
+      tags$h1("TreeSearch beta UI"),
       fileInput("datafile", "Load data", placeholder = "No data file selected"),
       radioButtons("dataFormat", "Data format", 
                    list("Nexus" = 'nex', "TNT" = 'tnt'),
                    'nex', TRUE),
-      sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 5L),
+      sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 5L, step = 1L),
       sliderInput('tbrIter', "TBR iterations", min = 1L, max = 500L, value = 100L, step = 1L),
       sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 2L, pre = '10^'),
-      sliderInput('ratchHurry', "Ratchet accelleration", min = 1L, max = 10L, value = 2L),
+      sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 2L),
       sliderInput('verbosity', "Notification level", min = 0L, max = 3L, value = 1L, step = 1L),
-      actionButton("go", "Begin search"),
-      radioButtons('plotFormat', "Display:",
+      actionButton("go", "Search"),
+      textOutput("results"),
+      hidden(radioButtons('plotFormat', "Display:",
                    list("Consensus tree" = 'cons',
                         "Individual tree" = 'ind',
-                        "Tree space" = 'space'), 'cons'),
-      sliderInput('whichTree', min = 1L, max = 1L, value = 1L, step = 1L),
+                        "Tree space" = 'space'), 'cons')),
+      hidden(sliderInput('whichTree', 'Tree to plot', min = 1L, max = 1L,
+                         value = 1L, step = 1L))
       ),
   ),
   column(9,
@@ -98,7 +101,7 @@ ui <- fluidPage(theme = 'app.css',
       downloadButton('saveCons', 'Cluster consensus trees'),
     ),
     fluidRow(
-      plotOutput(outputId = "treePlot", height = "0px"),
+      plotOutput(outputId = "treePlot", height = "600px"),
       hidden(plotOutput('clustCons', height = "200px")),
       htmlOutput('references'),
     ),
@@ -122,6 +125,12 @@ server <- function(input, output, session) {
     } else {
       ret <- ReadTntAsPhyDat(tmpFile)
     }
+    if (!is.null(r$trees) && 
+        length(intersect(names(ret), r$trees[[1]]$tip.label)) != 
+        length(ret)) {
+      r$trees <- NULL
+      updateActionButton(session, "go", "New search")
+    }
     ret
   })
   
@@ -129,14 +138,25 @@ server <- function(input, output, session) {
     if (!inherits(dataset(), 'phyDat')) {
       showNotification("No data loaded", type = 'error')
     } else {
-      r$trees <- withProgress(MaximizeParsimony(dataset(), 
+      r$trees <- withProgress(c(MaximizeParsimony(dataset(),
+                                   tree = if(is.null(r$trees)) 
+                                     TreeTools::NJTree(dataset())
+                                   else
+                                     r$trees[[1]],
                                    ratchIter = input$ratchIter,
                                    tbrIter = input$tbrIter,
                                    maxHits = ceiling(10 ^ input$maxHits),
-                                   ratchHurry = input$ratchHurry,
+                                   finalIter = input$finalIter,
                                    verbosity = input$verbosity,
-                                   session = session),
-                              message = "Searching trees...")
+                                   session = session)),
+                              message = "Searching...")
+      updateSliderInput(session, 'whichTree', min = 1L,
+                        max = length(r$trees), value = 1L)
+      output$results <- renderText(paste0(
+        "Found ", length(r$trees), " trees with score ", 
+        Fitch(r$trees[[1]], dataset())))
+      updateActionButton(session, "go", "Continue search")
+      show('plotFormat')
       PlotConsensus()
     }
   })
@@ -144,22 +164,21 @@ server <- function(input, output, session) {
   observeEvent(input$plotFormat, PlotConsensus())
   
   PlotConsensus <- function () (
+    if (!is.null(r$trees) && inherits(r$trees, 'multiPhylo'))
     switch(input$plotFormat,
            'cons' = {
              hide('whichTree')
              output$treePlot = renderPlot({
                par(mar = rep(0, 4), cex = 0.9)
                plot(consensus(r$trees))
-             })
+             }, width = input$plotSize, height = input$plotSize)
            },
            'ind' = {
              output$treePlot = renderPlot({
                par(mar = rep(0, 4), cex = 0.9)
-               updateSliderInput('whichTree', min = 1L,
-                                 max = length(c(r$trees)), value = 1L)
                show('whichTree')
-               plot(c(r$trees)[[input$whichTree]])
-             })
+               plot(r$trees[[input$whichTree]])
+             }, width = input$plotSize, height = input$plotSize)
            },
            'space' = {
              hide('whichTree')
