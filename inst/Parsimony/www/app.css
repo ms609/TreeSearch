@@ -14,6 +14,11 @@ body {
   position: relative;
 }
 
+h1 {
+  font-size: 16pt;
+  font-weight: 700;
+}
+
 h2 {
   font-size: 14pt;
   font-weight: 700;
