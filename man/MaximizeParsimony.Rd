@@ -5,14 +5,19 @@
 \title{Find most parsimonious trees}
 \usage{
 MaximizeParsimony(
-  tree,
   dataset,
-  maxIter = 10,
+  tree = NJTree(dataset),
+  ratchIter = 1L,
+  tbrIter = 10L,
   maxHits = 100L,
-  tbrIter = 100,
+  finalIter = 2L,
   verbosity = 1L,
   session = NULL
 )
+}
+\arguments{
+\item{ratchHurry}{Numeric specifying how many times fewer TBR iterations and
+hits to employ in ratchet searches.}
 }
 \description{
 Work in progress...
@@ -29,7 +34,7 @@ dataset = Lobo.phy
 verbosity = 5L
 tbrIter = 10
 
-MaximizeParsimony(tree, dataset, verbosity = 6, maxHits = 100)
+MaximizeParsimony(dataset, verbosity = 4, maxHits = 100)
 
 }
 \author{
