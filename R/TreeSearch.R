@@ -231,7 +231,7 @@ TreeSearch <- function (tree, dataset,
 #' concavity = 10L
 #' session = NULL
 #' 
-#' MaximizeParsimony(dataset, verbosity = 4, maxHits = 100)
+#' MaximizeParsimony(dataset, verbosity = 4, concavity = 10, maxHits = 100)
 #' 
 #' @importFrom TreeTools NJTree
 #' @references \insertRef{Smith2019}{TreeTools}
@@ -295,7 +295,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
             edge <- move
             if (moveScore < bestScore) {
               improvedScore <- TRUE
-              iter <- 0L
+              iter <- 1L
               bestScore <- moveScore
               nHits <- 1L
               hold[, , 1] <- edge
@@ -467,9 +467,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                              length(startWeights))
       if (iw) {
         sampled <- resampling > 0L
-        ratchetObjs <- morphyObjs[sampled]
-        .IWTBRSearch(edge, NTip(tree), ratchetObjs, resampling[sampled],
-                     minLength, concavity, tbrIter, maxHits / finalIter)
+        ratchetObjs <- morphyObjects[sampled]
+        ratchetTrees <- .IWTBRSearch(edge, NTip(tree), ratchetObjs,
+                                     resampling[sampled], minLength, concavity,
+                                     tbrIter, maxHits / finalIter)
       } else {
         errors <- vapply(eachChar, function (i) 
           mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
