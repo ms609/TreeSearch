@@ -5,6 +5,10 @@ preorder_morphy <- function(edge, MorphyHandl) {
     .Call(`_TreeSearch_preorder_morphy`, edge, MorphyHandl)
 }
 
+preorder_morphy_by_char <- function(edge, MorphyHandls) {
+    .Call(`_TreeSearch_preorder_morphy_by_char`, edge, MorphyHandls)
+}
+
 nni <- function(edge, randomEdge, whichSwitch) {
     .Call(`_TreeSearch_nni`, edge, randomEdge, whichSwitch)
 }
