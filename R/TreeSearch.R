@@ -217,7 +217,7 @@ TreeSearch <- function (tree, dataset,
 #' Smith 2019).
 #' 
 #'  
-#' @examples 
+#' @examples
 #' library(TreeTools)
 #' load_all()
 #' data('Lobo', package='TreeTools')
@@ -228,6 +228,8 @@ TreeSearch <- function (tree, dataset,
 #' 
 #' verbosity = 5L
 #' tbrIter = 10
+#' concavity = 10L
+#' session = NULL
 #' 
 #' MaximizeParsimony(dataset, verbosity = 4, maxHits = 100)
 #' 
@@ -248,7 +250,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     }
   } else function (level, ...) {
     if (level < verbosity) {
-      setProgress(message = detail = paste0(...))
+      setProgress(message = 'TODO WRITE MESSAGE', detail = paste0(...))
     }
   }
   
@@ -320,26 +322,26 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
   }
   
-  .IWTBRSearch <- function (edge, nTip, morphyObj, concavity, minLength,
-                            tbrIter, maxHits) {
+  .IWTBRSearch <- function (edge, nTip, morphyObjects, weight, minLength,
+                            concavity, tbrIter, maxHits) {
     if (is.null(session)) {
-      .DoIWTBRSearch(edge, nTip, morphyObj, concavity, minLength,
+      .DoIWTBRSearch(edge, nTip, morphyObjects, weight, minLength, concavity,
                      tbrIter, maxHits)
     } else {
       withProgress(message = 'TBR search',
-                   .DoIWTBRSearch(edge, nTip, morphyObj, concavity, minLength,
-                                  tbrIter, maxHits)
+                   .DoIWTBRSearch(edge, nTip, morphyObjects, weight, minLength,
+                                  concavity, tbrIter, maxHits)
       )
     }
   }
   
-  .DoIWTBRSearch <- function (edge, nTip, morphyObj, tbrIter, maxHits) {
-    
+  .DoIWTBRSearch <- function (edge, nTip, morphyObjects, weight, minLength,
+                              concavity, tbrIter, maxHits) {
     iter <- 0L
     nHits <- 1L
     hold <- array(NA, dim = c(dim(edge), max(maxHits * 1.1, maxHits + 10L)))
     hold[, , 1] <- edge
-    bestScore <- preorder_morphy(edge, morphyObj)
+    bestScore <- .IWScore(edge, morphyObjects, weight, minLength, concavity)
     
     while (iter < tbrIter) {
       .Progress(iter / tbrIter, detail = paste0('TBR iteration ', iter + 1))
@@ -352,7 +354,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
         for (move in moves[sample(seq_along(moves))]) {
-          moveScore <- preorder_morphy(move, morphyObj)
+          moveScore <- .IWScore(move, morphyObjects, weight, minLength, concavity)
           if (moveScore < bestScore + epsilon) {
             edge <- move
             if (moveScore < bestScore) {
@@ -361,11 +363,12 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               bestScore <- moveScore
               nHits <- 1L
               hold[, , 1] <- edge
-              .Message(1L, "New best score ", bestScore, "; resetting TBR iterations.")
+              .Message(1L, "New best score ", signif(bestScore, 4), 
+                       "; resetting TBR iterations.")
               break
             } else {
-              .Message(3L, "Best score ", bestScore, " hit again (", nHits, 
-                       "/", maxHits, ")")
+              .Message(3L, "Best score ", signif(bestScore, 4),
+                       " hit again (", nHits, "/", maxHits, ")")
               nHits <- nHits + 1L
               hold[, , nHits] <- edge
               break
@@ -376,12 +379,19 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       }
       if (nHits >= maxHits) break
     }
-    .Message(0L, "Final score ", bestScore, " found ", nHits, " times after ",
-             iter, " rearrangements.")
+    .Message(0L, "Final score ", signif(bestScore, 4), " found ", 
+             nHits, " times after ", iter, " rearrangements.")
     
     
     # Return:
     unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
+  }
+  
+  .IWScore <- function (edge, morphyObjs, weight, minLength, concavity) {
+    steps <- preorder_morphy_by_char(edge, morphyObjs)
+    homoplasies <- steps - minLength
+    fit <- homoplasies / (homoplasies + concavity)
+    sum(fit * weight)
   }
   
   epsilon <- sqrt(.Machine$double.eps)
@@ -440,7 +450,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   
   # Prepare search
   .Message(0L, "Parsimony search with ", ratchIter, " ratchet iterations; ", 
-           tbrIter, " TBR rounds; ", maxHits, " hits.")
+           tbrIter, " TBR rounds; ", maxHits, " hits; k = ", concavity, ".")
   
   iter <- 0L
   nHits <- 1L
@@ -459,7 +469,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         sampled <- resampling > 0L
         ratchetObjs <- morphyObjs[sampled]
         .IWTBRSearch(edge, NTip(tree), ratchetObjs, resampling[sampled],
-                     concavity, minLength, tbrIter, maxHits / finalIter)
+                     minLength, concavity, tbrIter, maxHits / finalIter)
       } else {
         errors <- vapply(eachChar, function (i) 
           mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
@@ -485,8 +495,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     verbosity <- verbosity + 1L
     edge <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
     bestEdges <- if (iw) {
-      .IWTBRSearch(edge, NTip(tree), morphyObjects, startWeights, concavity,
-                   minLength, tbrIter, maxHits / finalIter)
+      .IWTBRSearch(edge, NTip(tree), morphyObjects, startWeights, minLength,
+                   concavity, tbrIter, maxHits / finalIter)
     } else {
       .TBRSearch(edge, NTip(tree), morphyObj, tbrIter, maxHits / finalIter)
     }
@@ -497,10 +507,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   
   .Message(0L, "Final TBR search.")
   bestEdges <- if (iw) {
-    .IWTBRSearch(edge, NTip(tree), morphyObjects, startWeights, concavity, 
-                 minLength, tbrIter * finalIter, maxHits)
+    .IWTBRSearch(edge, nTip, morphyObjects, startWeights, minLength,
+                 concavity, tbrIter * finalIter, maxHits)
   } else {
-    .TBRSearch(edge, NTip(tree), morphyObj, tbrIter * finalIter, maxHits)
+    .TBRSearch(edge, nTip, morphyObj, tbrIter * finalIter, maxHits)
   }
   
   ret <- structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
