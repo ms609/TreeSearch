@@ -1,5 +1,5 @@
-library("shiny")
-library("shinyjs")
+library("shiny", exclude = 'runExample')
+library("shinyjs", exclude = c('runExample'))
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 library("TreeSearch")
 
@@ -73,11 +73,16 @@ ui <- fluidPage(theme = 'app.css',
       radioButtons("dataFormat", "Data format", 
                    list("Nexus" = 'nex', "TNT" = 'tnt'),
                    'nex', TRUE),
+      selectInput('character.weight', "Character weighting", list("Equal" = "equal"), "equal"),
+      selectInput('implied.weights', "Step weighting", 
+                  list("Implied" = "on", "Equal" = "off"), "on"),
+      sliderInput("concavity", "Step weight concavity constant", min = 0L,
+                  max = 3L, pre = '10^', value = 1L),
       sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 5L, step = 1L),
-      sliderInput('tbrIter', "TBR iterations", min = 1L, max = 500L, value = 100L, step = 1L),
+      sliderInput('tbrIter', "TBR iterations", min = 1L, max = 50L, value = 5L, step = 1L),
       sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 2L, pre = '10^'),
       sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 2L),
-      sliderInput('verbosity', "Notification level", min = 0L, max = 3L, value = 1L, step = 1L),
+      sliderInput('verbosity', "Notification level", min = 0L, max = 3L, value = 3L, step = 1L),
       actionButton("go", "Search"),
       textOutput("results"),
       hidden(radioButtons('plotFormat', "Display:",
@@ -134,6 +139,12 @@ server <- function(input, output, session) {
     ret
   })
   
+  concavity <- reactive({
+    if (input$implied.weights == 'on') {
+      10 ^ input$concavity
+    } else Inf
+  })
+  
   observeEvent(input$go, {
     if (!inherits(dataset(), 'phyDat')) {
       showNotification("No data loaded", type = 'error')
@@ -143,6 +154,7 @@ server <- function(input, output, session) {
                                      TreeTools::NJTree(dataset())
                                    else
                                      r$trees[[1]],
+                                   concavity = concavity(),
                                    ratchIter = input$ratchIter,
                                    tbrIter = input$tbrIter,
                                    maxHits = ceiling(10 ^ input$maxHits),
