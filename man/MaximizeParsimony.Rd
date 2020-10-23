@@ -7,15 +7,20 @@
 MaximizeParsimony(
   dataset,
   tree = NJTree(dataset),
-  ratchIter = 1L,
-  tbrIter = 10L,
+  ratchIter = 5L,
+  tbrIter = 5L,
   maxHits = 100L,
   finalIter = 2L,
+  concavity = Inf,
   verbosity = 1L,
   session = NULL
 )
 }
 \arguments{
+\item{concavity}{Numeric specifying concavity constant for implied step
+weighting; set as \code{Inf} for equal step weights (which is a bad idea; see
+Smith 2019).}
+
 \item{ratchHurry}{Numeric specifying how many times fewer TBR iterations and
 hits to employ in ratchet searches.}
 }
@@ -33,9 +38,14 @@ dataset = Lobo.phy
 
 verbosity = 5L
 tbrIter = 10
+concavity = 10L
+session = NULL
 
-MaximizeParsimony(dataset, verbosity = 4, maxHits = 100)
+MaximizeParsimony(dataset, verbosity = 4, concavity = 10, maxHits = 100)
 
+}
+\references{
+\insertRef{Smith2019}{TreeTools}
 }
 \author{
 \href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
