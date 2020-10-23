@@ -236,6 +236,9 @@ TreeSearch <- function (tree, dataset,
 #' maxHits = 10
 #' finalIter = 1
 #' 
+#' profvis::profvis(MaximizeParsimony(dataset[1:14], concavity = Inf, maxHits = 10, 
+#' ratchIter = 3L, tbrIter = 6L, finalIter = 3L))
+#' 
 #' MaximizeParsimony(dataset, verbosity = 3, concavity = 10, maxHits = 10)
 #' 
 #' @importFrom TreeTools NJTree
@@ -243,9 +246,9 @@ TreeSearch <- function (tree, dataset,
 #' @template MRS
 #' @export
 MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
-                               ratchIter = 5L, tbrIter = 5L,
+                               ratchIter = 6L, tbrIter = 6L,
                                maxHits = 100L,
-                               finalIter = 2L,
+                               finalIter = 3L,
                                concavity = Inf,
                                verbosity = 1L, session = NULL) {
   # Definitions
