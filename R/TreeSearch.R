@@ -236,7 +236,7 @@ TreeSearch <- function (tree, dataset,
 #' maxHits = 10
 #' finalIter = 1
 #' 
-#' MaximizeParsimony(dataset, verbosity = 4, concavity = 10, maxHits = 100)
+#' MaximizeParsimony(dataset, verbosity = 3, concavity = 10, maxHits = 10)
 #' 
 #' @importFrom TreeTools NJTree
 #' @references \insertRef{Smith2019}{TreeTools}
@@ -304,7 +304,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               bestScore <- moveScore
               nHits <- 1L
               hold[, , 1] <- edge
-              .Message(1L, "New best score ", bestScore, "; resetting TBR iterations.")
+              .Message(1L, "New best score ", bestScore)
               break
             } else {
               .Message(3L, "Best score ", bestScore, " hit again (", nHits, 
@@ -368,11 +368,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               bestScore <- moveScore
               nHits <- 1L
               hold[, , 1] <- edge
-              .Message(1L, "New best score ", signif(bestScore, 4), 
-                       "; resetting TBR iterations.")
+              .Message(1L, "New best score ", signif(bestScore, 5))
               break
             } else {
-              .Message(3L, "Best score ", signif(bestScore, 4),
+              .Message(3L, "Best score ", signif(bestScore, 5),
                        " hit again (", nHits, "/", maxHits, ")")
               nHits <- nHits + 1L
               hold[, , nHits] <- edge
@@ -384,7 +383,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       }
       if (nHits >= maxHits) break
     }
-    .Message(0L, "Final score ", signif(bestScore, 4), " found ", 
+    .Message(0L, "Final score ", signif(bestScore, 5), " found ", 
              nHits, " times after ", iter, " rearrangements.")
     
     
