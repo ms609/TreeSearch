@@ -223,13 +223,18 @@ TreeSearch <- function (tree, dataset,
 #' data('Lobo', package='TreeTools')
 #' njtree <- TreeTools::NJTree(Lobo.phy)
 #'
-#' tree = njtree
 #' dataset = Lobo.phy
+#' 
+#' dataset <- ReadAsPhyDat('c:/research/r/hyoliths/mbank_X24932_6-19-2018_744.nex')
+#' tree = NJTree(dataset)
 #' 
 #' verbosity = 5L
 #' tbrIter = 10
 #' concavity = 10L
 #' session = NULL
+#' ratchIter <- tbrIter <- 1L
+#' maxHits = 10
+#' finalIter = 1
 #' 
 #' MaximizeParsimony(dataset, verbosity = 4, concavity = 10, maxHits = 100)
 #' 
@@ -238,7 +243,7 @@ TreeSearch <- function (tree, dataset,
 #' @template MRS
 #' @export
 MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
-                               ratchIter = 1L, tbrIter = 10L,
+                               ratchIter = 5L, tbrIter = 5L,
                                maxHits = 100L,
                                finalIter = 2L,
                                concavity = Inf,
@@ -250,7 +255,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     }
   } else function (level, ...) {
     if (level < verbosity) {
-      setProgress(message = 'TODO WRITE MESSAGE', detail = paste0(...))
+      setProgress(message = paste0(...))
     }
   }
   
@@ -469,8 +474,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         sampled <- resampling > 0L
         ratchetObjs <- morphyObjects[sampled]
         ratchetTrees <- .IWTBRSearch(edge, NTip(tree), ratchetObjs,
-                                     resampling[sampled], minLength, concavity,
-                                     tbrIter, maxHits / finalIter)
+                                     resampling[sampled], minLength[sampled],
+                                     concavity, tbrIter, maxHits / finalIter)
       } else {
         errors <- vapply(eachChar, function (i) 
           mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
