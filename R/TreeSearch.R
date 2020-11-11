@@ -251,7 +251,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                finalIter = 3L,
                                concavity = Inf,
                                verbosity = 1L, session = NULL) {
-  # Definitions
+  # Define functions
   .Message <- if (is.null(session)) function (level, ...) {
     if (level < verbosity) {
       message(rep(' ', level), '- ', ...)
@@ -291,7 +291,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       .Progress(iter / tbrIter, detail = paste0('TBR iteration ', iter + 1))
       iter <- iter + 1L
       optTbr <- sample(3:(nTip * 2 - 2))
-      .Message(2L, "TBR iteration ", iter)
+      .Message(3L, "TBR iteration ", iter)
       
       for (brk in optTbr) {
         .Message(6L, "Break ", brk)
@@ -307,10 +307,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               bestScore <- moveScore
               nHits <- 1L
               hold[, , 1] <- edge
-              .Message(1L, "New best score ", bestScore)
+              .Message(4L, "New best score ", bestScore)
               break
             } else {
-              .Message(3L, "Best score ", bestScore, " hit again (", nHits, 
+              .Message(5L, "Best score ", bestScore, " hit again (", nHits, 
                        "/", maxHits, ")")
               nHits <- nHits + 1L
               hold[, , nHits] <- edge
@@ -322,8 +322,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       }
       if (nHits >= maxHits) break
     }
-    .Message(0L, "Final score ", bestScore, " found ", nHits, " times after ",
-             iter, " rearrangements.")
+    .Message(2L, iter + 1, " TBR rearrangements found score ", bestScore, " ",
+             nHits, " times.")
     
     
     # Return:
@@ -348,6 +348,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     iter <- 0L
     nHits <- 1L
     hold <- array(NA, dim = c(dim(edge), max(maxHits * 1.1, maxHits + 10L)))
+    maxHits <- ceiling(maxHits)
     hold[, , 1] <- edge
     bestScore <- .IWScore(edge, morphyObjects, weight, minLength, concavity)
     
@@ -355,7 +356,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       .Progress(iter / tbrIter, detail = paste0('TBR iteration ', iter + 1))
       iter <- iter + 1L
       optTbr <- sample(3:(nTip * 2 - 2))
-      .Message(2L, "TBR iteration ", iter)
+      .Message(3L, "TBR iteration ", iter)
       
       for (brk in optTbr) {
         .Message(6L, "Break ", brk)
@@ -371,10 +372,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               bestScore <- moveScore
               nHits <- 1L
               hold[, , 1] <- edge
-              .Message(1L, "New best score ", signif(bestScore, 5))
+              .Message(4L, "New best score ", signif(bestScore, 5))
               break
             } else {
-              .Message(3L, "Best score ", signif(bestScore, 5),
+              .Message(5L, "Best score ", signif(bestScore, 5),
                        " hit again (", nHits, "/", maxHits, ")")
               nHits <- nHits + 1L
               hold[, , nHits] <- edge
@@ -386,9 +387,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       }
       if (nHits >= maxHits) break
     }
-    .Message(0L, "Final score ", signif(bestScore, 5), " found ", 
-             nHits, " times after ", iter, " rearrangements.")
-    
+    .Message(2L, iter + 1, " TBR rearrangements found score ", bestScore, " ",
+             nHits, " times.")
     
     # Return:
     unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
@@ -401,6 +401,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     sum(fit * weight)
   }
   
+  # Define constants
   epsilon <- sqrt(.Machine$double.eps)
   iw <- is.finite(concavity)
   
@@ -410,7 +411,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     tree <- tree[[1]]
   }
   if (dim(tree$edge)[1] != 2 * tree$Nnode) {
-    stop("`tree` must be bifurcating; try rooting with RootTree(tree, root = 1)")
+    stop("`tree` must be bifurcating; try rooting with RootTree(tree, 1)")
   }
   
   tree <- Preorder(RenumberTips(tree, names(dataset)))
@@ -455,12 +456,18 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     startWeights <- MorphyWeights(morphyObj)[1, ]
   }
   
-  # Prepare search
-  .Message(0L, "Parsimony search with ", ratchIter, " ratchet iterations; ", 
-           tbrIter, " TBR rounds; ", maxHits, " hits; k = ", concavity, ".")
+  # Initialize variables and prepare search
   
   iter <- 0L
   nHits <- 1L
+  bestScore <- if (iw) {
+    .IWScore(edge, morphyObjects, startWeights, minLength, concavity)
+  } else {
+    preorder_morphy(edge, morphyObj)
+  }
+  .Message(0L, "Parsimony search with ", ratchIter, " ratchet iterations; ", 
+           tbrIter, " TBR rounds; ", maxHits, " hits; k = ", concavity, ".\n",
+           "Initial score: ", signif(bestScore, 5))
   if (ratchIter > 0L) {
     .Message(0L, "Performing parsimony ratchet.")
     verbosity <- verbosity - 1L
