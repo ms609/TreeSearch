@@ -35,13 +35,12 @@ int preorder_morphy(IntegerMatrix edge, SEXP MorphyHandl) {
   }
   parent_of[0] = root_node;
   
-  const int 
+  const int
     /* INTEGER gives pointer to first element of an R vector */
     *ancestor = parent_of.begin(),
     *left = left_child.begin(),
     *right = right_child.begin()
   ; 
-  
   
   /* Initialize return variables */
   int score = 0;
