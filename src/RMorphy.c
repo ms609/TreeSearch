@@ -299,7 +299,8 @@ SEXP _R_wrap_mpl_update_lower_root(SEXP lower_id, SEXP upper_id, SEXP MorphyHand
     return Rret;
 }
 
-void morphy_length (const int *ancestor, const int *left, const int *right, Morphy handl, int *score) {
+void morphy_length (const int *ancestor, const int *left, const int *right, 
+                    Morphy handl, int *score) {
   int i;
   const int n_taxa = mpl_get_numtaxa(handl); 
   const int n_internal = mpl_get_num_internal_nodes(handl);
@@ -327,9 +328,14 @@ void morphy_length (const int *ancestor, const int *left, const int *right, Morp
 
 SEXP MORPHYLENGTH(SEXP R_ancestors, SEXP R_left, SEXP R_right, SEXP MorphyHandl) {
   Morphy handl = R_ExternalPtrAddr(MorphyHandl);
-  /* R_descendants and R_ancestors have already had one subtracted to convert them to an index */
-  const int *ancestor=INTEGER(R_ancestors), *left=INTEGER(R_left), 
-            *right=INTEGER(R_right); /* INTEGER gives pointer to first element of an R vector*/
+  /* R_descendants and R_ancestors have already had one subtracted to convert 
+   * them to an index */
+  const int
+    /* INTEGER gives pointer to first element of an R vector*/
+    *ancestor = INTEGER(R_ancestors),
+    *left = INTEGER(R_left),
+    *right = INTEGER(R_right)
+  ;
             
   /* Declare and protect result, to return to R */
   SEXP Rres = PROTECT(allocVector(INTSXP, 1));
