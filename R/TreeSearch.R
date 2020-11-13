@@ -246,11 +246,11 @@ TreeSearch <- function (tree, dataset,
 #' @template MRS
 #' @export
 MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
-                               ratchIter = 6L, tbrIter = 6L,
-                               maxHits = 100L,
+                               ratchIter = 12L, tbrIter = 6L,
+                               maxHits = 20L,
                                finalIter = 3L,
                                concavity = Inf,
-                               verbosity = 1L, session = NULL) {
+                               verbosity = 2L, session = NULL) {
   # Define functions
   .Message <- if (is.null(session)) function (level, ...) {
     if (level < verbosity) {
@@ -472,7 +472,6 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
            "\n")
   if (ratchIter > 0L) {
     .Message(0L, "Performing parsimony ratchet.")
-    verbosity <- verbosity - 1L
     while (iter < ratchIter) {
       .Progress(iter / ratchIter, "Ratchet iteration ", (iter + 1L))
       iter <- iter + 1L
@@ -511,15 +510,37 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         }
       }
       verbosity <- verbosity + 1L
+      ratchetStart <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
+      .Message(1L, "Ratchet iteration ", iter, ": Search using original data")
+      ratchetImproved <- if (iw) {
+        .IWTBRSearch(ratchetStart, NTip(tree), morphyObjects, startWeights, minLength,
+                     concavity, tbrIter, maxHits / finalIter)
+      } else {
+        .TBRSearch(ratchetStart, NTip(tree), morphyObj, tbrIter, maxHits / finalIter)
+      }
+      ratchetScore <- if (iw) {
+        .IWScore(ratchetImproved[, , 1], morphyObjects, startWeights, minLength,
+                 concavity)
+      } else {
+        preorder_morphy(ratchetImproved[, , 1], morphyObj)
+      }
+      if (ratchetScore < bestScore + epsilon) {
+        if (ratchetScore + epsilon < bestScore) {
+          .Message(1L, "*Ratchet iteration ", iter, " found new best score: ",
+                   signif(ratchetScore, 4), "*")
+          bestScore <- ratchetScore
+          edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
+        } else {
+          .Message(1L, "Ratchet iteration ", iter, " hit best score ",
+                   signif(bestScore, 4), ' again')
+          #TODO add ratchet best trees to edge library
+          edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
+        }
+      } else {
+        .Message(1L, "Ratchet iteration ", iter, " did not hit best score ",
+                 signif(bestScore, 4), ".")
+      }
     }
-    edge <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
-    bestEdges <- if (iw) {
-      .IWTBRSearch(edge, NTip(tree), morphyObjects, startWeights, minLength,
-                   concavity, tbrIter, maxHits / finalIter)
-    } else {
-      .TBRSearch(edge, NTip(tree), morphyObj, tbrIter, maxHits / finalIter)
-    }
-    edge <- bestEdges[, , sample.int(dim(bestEdges)[3], 1)]
   }
   
   # Branch breaking
