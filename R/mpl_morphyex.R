@@ -140,7 +140,7 @@ mpl_set_charac_weight <- function (charID, weight, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_get_charac_weight <- function (charID, morphyobj) {
-  return (.Call('_R_wrap_mpl_get_charac_weight', as.integer(charID - 1L), 
+  return (.Call('_R_wrap_mpl_get_charac_weight', as.integer(charID) - 1L, 
                 morphyobj))
 }
 

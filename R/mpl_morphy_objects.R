@@ -28,17 +28,27 @@ summary.morphyPtr <- function (object, ...) {
 #' Report the character weightings associated with a Morphy object
 #'
 #' @template morphyObjParam
-#' @return a matrix of dimensions (2, number of characters); row 1 lists the
-#'         exact rates specified by the user; row 2 the approximate (integral)
-#'         weights used by MorphyLib
+#' @return `MorphyWeights()` returns a matrix with two rows and 
+#' one column per character pattern:
+#' row 1 lists the exact rates specified by the user; 
+#' row 2 the approximate (integral) weights used by MorphyLib.
+#' 
+#' @examples
+#' tokens <- matrix(c(
+#'   0, 0, 0, 1, 1, 2,
+#'   0, 0, 0, 0, 0, 0), byrow = TRUE, nrow = 2L,
+#'   dimnames = list(letters[1:2], NULL))
+#' pd <- TreeTools::MatrixToPhyDat(tokens)
+#' morphyObj <- PhyDat2Morphy(pd)
+#' MorphyWeights(morphyObj)
+#' UnloadMorphy(morphyObj)
 #'
 #' @family Morphy API functions
 #' @author Martin R. Smith
 #' @export
-MorphyWeights <- function(morphyObj) {
- charWeights <- vapply(seq_len(mpl_get_num_charac(morphyObj)), mpl_get_charac_weight, list(0, 0), morphyobj=morphyObj)
- dimnames(charWeights) <- list(c("exact", "approx"), NULL)
- charWeights
+MorphyWeights <- function (morphyObj) {
+ vapply(seq_len(mpl_get_num_charac(morphyObj)), mpl_get_charac_weight, 
+        list('exact' = 0, 'approx' = 0), morphyobj = morphyObj)
 }
 
 #' Set the character weightings associated with a Morphy object
@@ -55,10 +65,14 @@ MorphyWeights <- function(morphyObj) {
 #' @author Martin R. Smith
 #' @export
 SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
-  if (checkInput) if (length(weight) != mpl_get_num_charac(morphyObj)) stop("Number of weights not equal to number of character entries")
-  errors <- vapply(seq_along(weight), function (i)
-    mpl_set_charac_weight(i, weight[i], morphyObj), integer(1))
-  if(any(errors != 0)) warning("Morphy Error encountered: ", mpl_translate_error(errors[errors<0]))
+  if (checkInput) if (length(weight) != mpl_get_num_charac(morphyObj)) {
+    stop("Number of weights not equal to number of character entries.")
+  }
+  errors <- vapply(seq_along(weight), 
+                   function (i) mpl_set_charac_weight(i, weight[i], morphyObj),
+                   integer(1))
+  if(any(errors != 0)) warning("Morphy Error encountered: ", 
+                               mpl_translate_error(errors[errors < 0]))
   mpl_apply_tipdata(morphyObj)
 }
 

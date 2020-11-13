@@ -11,12 +11,24 @@ MorphyWeights(morphyObj)
 \code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}}.}
 }
 \value{
-a matrix of dimensions (2, number of characters); row 1 lists the
-exact rates specified by the user; row 2 the approximate (integral)
-weights used by MorphyLib
+\code{MorphyWeights()} returns a matrix with two rows and
+one column per character pattern:
+row 1 lists the exact rates specified by the user;
+row 2 the approximate (integral) weights used by MorphyLib.
 }
 \description{
 Report the character weightings associated with a Morphy object
+}
+\examples{
+tokens <- matrix(c(
+  0, 0, 0, 1, 1, 2,
+  0, 0, 0, 0, 0, 0), byrow = TRUE, nrow = 2L,
+  dimnames = list(letters[1:2], NULL))
+pd <- TreeTools::MatrixToPhyDat(tokens)
+morphyObj <- PhyDat2Morphy(pd)
+MorphyWeights(morphyObj)
+UnloadMorphy(morphyObj)
+
 }
 \seealso{
 Other Morphy API functions: 
