@@ -453,7 +453,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   } else {
     morphyObj <- PhyDat2Morphy(dataset)
     on.exit(morphyObj <- UnloadMorphy(morphyObj))
-    startWeights <- MorphyWeights(morphyObj)[1, ]
+    startWeights <- unlist(MorphyWeights(morphyObj)[1, ]) # exact == approx
   }
   
   # Initialize variables and prepare search

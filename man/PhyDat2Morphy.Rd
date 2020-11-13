@@ -20,7 +20,6 @@ Creates a new Morphy object with the same size and characters as the
 Other Morphy API functions: 
 \code{\link{MorphyErrorCheck}()},
 \code{\link{MorphyWeights}()},
-\code{\link{SetMorphyWeights}()},
 \code{\link{SingleCharMorphy}()},
 \code{\link{UnloadMorphy}()},
 \code{\link{mpl_apply_tipdata}()},

@@ -34,7 +34,6 @@ Other Morphy API functions:
 \code{\link{MorphyErrorCheck}()},
 \code{\link{MorphyWeights}()},
 \code{\link{PhyDat2Morphy}()},
-\code{\link{SetMorphyWeights}()},
 \code{\link{SingleCharMorphy}()},
 \code{\link{UnloadMorphy}()},
 \code{\link{mpl_apply_tipdata}()},

@@ -27,7 +27,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
   morphyObj <- InitializeData(dataset)
   on.exit(morphyObj <- CleanUpData(morphyObj))
   
-  startWeights <- MorphyWeights(morphyObj)[1, ]
+  startWeights <- MorphyWeights(morphyObj)['exact', ]
   eachChar <- seq_along(startWeights)
   deindexedChars <- rep(eachChar, startWeights)
   charsToKeep <- ceiling(resampleFreq * length(deindexedChars))
@@ -45,8 +45,8 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
     if (verbosity > 0L) {
       message(" * Jackknife iteration ", x, "/", jackIter)
     }
-    resampling <- tabulate(sample(deindexedChars, charsToKeep, replace=FALSE),
-                           nbins=length(startWeights))
+    resampling <- tabulate(sample(deindexedChars, charsToKeep, replace = FALSE),
+                           nbins = length(startWeights))
     errors <- vapply(eachChar, function (i) 
       mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
     if (any(errors)) {
@@ -57,7 +57,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
     }
     res <- EdgeListSearch(edgeList[1:2], morphyObj, EdgeSwapper=EdgeSwapper,
                           maxIter=searchIter, maxHits=searchHits,
-                          verbosity=verbosity-1L, ...)
+                          verbosity = verbosity - 1L, ...)
     res[1:2]
   }, edgeList)
   

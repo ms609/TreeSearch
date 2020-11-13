@@ -25,13 +25,18 @@ summary.morphyPtr <- function (object, ...) {
   ans
 }
 
-#' Report the character weightings associated with a Morphy object
+#' Set and get the character weightings associated with a Morphy object.
+#'
+#' `MorphyWeights()` details the approximate and exact weights associated with
+#' characters in a `Morphy` object; `SetMorphyWeights()` edits them.
 #'
 #' @template morphyObjParam
-#' @return `MorphyWeights()` returns a matrix with two rows and 
+#' @return `MorphyWeights()` returns a data frame with two named rows and 
 #' one column per character pattern:
-#' row 1 lists the exact rates specified by the user; 
-#' row 2 the approximate (integral) weights used by MorphyLib.
+#' row 1, `approx`, is a list of integers specifying the approximate (integral)
+#' weights used by MorphyLib;
+#' row 2, `exact`, is a list of numerics specifying the exact weights specified
+#' by the user.
 #' 
 #' @examples
 #' tokens <- matrix(c(
@@ -41,28 +46,24 @@ summary.morphyPtr <- function (object, ...) {
 #' pd <- TreeTools::MatrixToPhyDat(tokens)
 #' morphyObj <- PhyDat2Morphy(pd)
 #' MorphyWeights(morphyObj)
+#' if (SetMorphyWeights(c(1, 1.5, 2/3), morphyObj) != 0L) message("Errored")
+#' MorphyWeights(morphyObj)
 #' UnloadMorphy(morphyObj)
-#'
+#' @template MRS
 #' @family Morphy API functions
-#' @author Martin R. Smith
 #' @export
 MorphyWeights <- function (morphyObj) {
  vapply(seq_len(mpl_get_num_charac(morphyObj)), mpl_get_charac_weight, 
-        list('exact' = 0, 'approx' = 0), morphyobj = morphyObj)
+        list('approx' = 0L, 'exact' = 0), morphyobj = morphyObj)
 }
 
-#' Set the character weightings associated with a Morphy object
-#'
+#' @rdname MorphyWeights
 #' @param weight A vector listing the new weights to be applied to each character
-#' @template morphyObjParam
 #' @param checkInput Whether to sanity-check input data before applying. 
-#'         Defaults to TRUE to protect the user from crashes.
+#'         Defaults to `TRUE` to protect the user from crashes.
 #'
 #' @return `SetMorphyWeights()` returns the Morphy error code generated when
-#' applying `tipData`.
-#' 
-#' @family Morphy API functions
-#' @author Martin R. Smith
+#' applying `weight`.
 #' @export
 SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
   if (checkInput) if (length(weight) != mpl_get_num_charac(morphyObj)) {
