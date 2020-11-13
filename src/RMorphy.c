@@ -9,8 +9,7 @@
 #include "RMorphyUtils.h"
 #include "RMorphy.h"
 
-SEXP _R_wrap_mpl_new_Morphy(void)
-{
+SEXP _R_wrap_mpl_new_Morphy(void) {
     Morphy new_Morphy = mpl_new_Morphy();
     SEXP result = PROTECT(R_MakeExternalPtr(new_Morphy, R_NilValue, R_NilValue));
     R_PreserveObject(result);
@@ -28,8 +27,7 @@ void _finalize_Morphy (SEXP MorphyHandl) {
     R_ReleaseObject(MorphyHandl);
 }
 
-SEXP _R_wrap_mpl_delete_Morphy(SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_delete_Morphy(SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
     
     Morphy handl = R_ExternalPtrAddr(MorphyHandl);
@@ -45,8 +43,7 @@ SEXP _R_wrap_mpl_delete_Morphy(SEXP MorphyHandl)
     return Rret;
 }
 
-SEXP _R_wrap_mpl_init_Morphy(SEXP Rntax, SEXP Rnchar, SEXP MorphHandl)
-{
+SEXP _R_wrap_mpl_init_Morphy(SEXP Rntax, SEXP Rnchar, SEXP MorphHandl) {
     int ret = 0;
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
@@ -61,8 +58,7 @@ SEXP _R_wrap_mpl_init_Morphy(SEXP Rntax, SEXP Rnchar, SEXP MorphHandl)
     return Rret;
 }
     
-SEXP _R_wrap_mpl_get_numtaxa(SEXP MorphHandl)
-{
+SEXP _R_wrap_mpl_get_numtaxa(SEXP MorphHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
     INTEGER(Rret)[0] = mpl_get_numtaxa(R_ExternalPtrAddr(MorphHandl));
@@ -71,8 +67,7 @@ SEXP _R_wrap_mpl_get_numtaxa(SEXP MorphHandl)
     return Rret;
 }
 
-SEXP _R_wrap_mpl_get_num_charac(SEXP MorphHandl)
-{
+SEXP _R_wrap_mpl_get_num_charac(SEXP MorphHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
     
     INTEGER(Rret)[0] = mpl_get_num_charac(R_ExternalPtrAddr(MorphHandl));
@@ -81,8 +76,7 @@ SEXP _R_wrap_mpl_get_num_charac(SEXP MorphHandl)
     return Rret;
 }
 
-SEXP _R_wrap_mpl_attach_symbols(SEXP Rsymbols, SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_attach_symbols(SEXP Rsymbols, SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
     int Mret = 0;
@@ -95,8 +89,7 @@ SEXP _R_wrap_mpl_attach_symbols(SEXP Rsymbols, SEXP MorphyHandl)
     return Rret;
 }
 
-SEXP _R_wrap_mpl_get_symbols(SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_get_symbols(SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(STRSXP, 1));
 
     char* symbols = mpl_get_symbols(R_ExternalPtrAddr(MorphyHandl));
@@ -107,8 +100,7 @@ SEXP _R_wrap_mpl_get_symbols(SEXP MorphyHandl)
     return Rret;
 }
 
-SEXP _R_wrap_mpl_attach_rawdata(SEXP Rmatrix, SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_attach_rawdata(SEXP Rmatrix, SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
     int Mret = 0;
@@ -122,8 +114,7 @@ SEXP _R_wrap_mpl_attach_rawdata(SEXP Rmatrix, SEXP MorphyHandl)
     return Rret;
 }
 
-SEXP _R_wrap_mpl_delete_rawdata(SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_delete_rawdata(SEXP MorphyHandl) {
 	SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 	Morphy handl = R_ExternalPtrAddr(MorphyHandl);
     int ret = 0;
@@ -136,8 +127,7 @@ SEXP _R_wrap_mpl_delete_rawdata(SEXP MorphyHandl)
     return Rret;
 }
 
-SEXP _R_wrap_mpl_set_parsim_t(SEXP RcharID, SEXP Rchtype, SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_set_parsim_t(SEXP RcharID, SEXP Rchtype, SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
     MPLchtype chtype;
     int Mret = 0;
@@ -154,8 +144,7 @@ SEXP _R_wrap_mpl_set_parsim_t(SEXP RcharID, SEXP Rchtype, SEXP MorphyHandl)
     return Rret;
 }
 
-SEXP _R_wrap_mpl_set_gaphandl(SEXP Rgaptype, SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_set_gaphandl(SEXP Rgaptype, SEXP MorphyHandl) {
 	SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 	MPLgap_t gaptype;
 	int Mret = 0;
@@ -171,8 +160,7 @@ SEXP _R_wrap_mpl_set_gaphandl(SEXP Rgaptype, SEXP MorphyHandl)
 	return Rret;
 }
 
-SEXP _R_wrap_mpl_set_num_internal_nodes(SEXP Rnnodes, SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_set_num_internal_nodes(SEXP Rnnodes, SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
     INTEGER(Rret)[0] = mpl_set_num_internal_nodes
@@ -183,8 +171,7 @@ SEXP _R_wrap_mpl_set_num_internal_nodes(SEXP Rnnodes, SEXP MorphyHandl)
     return Rret;
 }
 
-SEXP _R_wrap_mpl_get_num_internal_nodes(SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_get_num_internal_nodes(SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
     INTEGER(Rret)[0] = mpl_get_num_internal_nodes
@@ -194,8 +181,7 @@ SEXP _R_wrap_mpl_get_num_internal_nodes(SEXP MorphyHandl)
     return Rret;
 }
 
-SEXP _R_wrap_mpl_apply_tipdata(SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_apply_tipdata(SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
     INTEGER(Rret)[0] = mpl_apply_tipdata(R_ExternalPtrAddr(MorphyHandl));
@@ -205,8 +191,8 @@ SEXP _R_wrap_mpl_apply_tipdata(SEXP MorphyHandl)
 }
 
 
-SEXP _R_wrap_mpl_set_charac_weight(SEXP RcharID, SEXP Rweight, SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_set_charac_weight(SEXP RcharID, SEXP Rweight, 
+                                   SEXP MorphyHandl) {
   SEXP Rret = PROTECT(allocVector(INTSXP, 1));
   INTEGER(Rret)[0] = mpl_set_charac_weight(INTEGER(RcharID)[0], REAL(Rweight)[0],
                                            R_ExternalPtrAddr(MorphyHandl));
@@ -214,8 +200,7 @@ SEXP _R_wrap_mpl_set_charac_weight(SEXP RcharID, SEXP Rweight, SEXP MorphyHandl)
   return Rret;
 }
 
-SEXP _R_wrap_mpl_get_charac_weight(SEXP RcharID, SEXP MorphyHandl) 
-{
+SEXP _R_wrap_mpl_get_charac_weight(SEXP RcharID, SEXP MorphyHandl) {
   SEXP Rret, Wapprox, Wexact;
   PROTECT(Rret = allocVector(VECSXP, 2));
   PROTECT(Wapprox = allocVector(INTSXP, 1));
@@ -229,8 +214,8 @@ SEXP _R_wrap_mpl_get_charac_weight(SEXP RcharID, SEXP MorphyHandl)
   return Rret;
 }
 
-SEXP _R_wrap_mpl_first_down_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id, SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_first_down_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id,
+                                  SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
     INTEGER(Rret)[0] = 
@@ -241,8 +226,8 @@ SEXP _R_wrap_mpl_first_down_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id, 
     return Rret;
 }
 
-SEXP _R_wrap_mpl_first_up_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id, SEXP Ranc_id, SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_first_up_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id,
+                                SEXP Ranc_id, SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
     INTEGER(Rret)[0] = 
@@ -253,8 +238,8 @@ SEXP _R_wrap_mpl_first_up_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id, SE
     return Rret;
 }
 
-SEXP _R_wrap_mpl_second_down_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id, SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_second_down_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id,
+                                   SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
     INTEGER(Rret)[0] = 
@@ -265,8 +250,8 @@ SEXP _R_wrap_mpl_second_down_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id,
     return Rret;
 }
 
-SEXP _R_wrap_mpl_second_up_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id, SEXP Ranc_id, SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_second_up_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id,
+                                 SEXP Ranc_id, SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
     INTEGER(Rret)[0] = 
@@ -277,8 +262,7 @@ SEXP _R_wrap_mpl_second_up_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id, S
     return Rret;
 }
 
-SEXP _R_wrap_mpl_update_tip(SEXP tip_id, SEXP anc_id, SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_update_tip(SEXP tip_id, SEXP anc_id, SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
     INTEGER(Rret)[0] = 
@@ -288,8 +272,8 @@ SEXP _R_wrap_mpl_update_tip(SEXP tip_id, SEXP anc_id, SEXP MorphyHandl)
     return Rret;
 }
 
-SEXP _R_wrap_mpl_update_lower_root(SEXP lower_id, SEXP upper_id, SEXP MorphyHandl)
-{
+SEXP _R_wrap_mpl_update_lower_root(SEXP lower_id, SEXP upper_id,
+                                   SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 
     INTEGER(Rret)[0] = 
@@ -308,20 +292,24 @@ void morphy_length (const int *ancestor, const int *left, const int *right,
   const int max_node = n_taxa + n_internal;
   
   for (i = max_node - 1; i >= n_taxa; i--) { /* First Downpass */
-    *score += mpl_first_down_recon(i,  left[i - n_taxa], right[i - n_taxa], handl);
+    *score += mpl_first_down_recon(i,  left[i - n_taxa], right[i - n_taxa],
+                                   handl);
   }
-  mpl_update_lower_root(root_node, root_node, handl); /* We could use a spare internal node with index = max_node as a dummy root node.
-                                                        Or we can just pass the root node as its own ancestor. */
+ /* We could use a spare internal node with index = max_node as a dummy root node.
+  * Instead: just pass the root node as its own ancestor. */
+  mpl_update_lower_root(root_node, root_node, handl); 
  
-  for (i = root_node; i < max_node; i++) { /* First uppass: internal nodes */
-    *score += mpl_first_up_recon(i, left[i - n_taxa], right[i - n_taxa], ancestor[i], handl);
+  for (i = root_node; i != max_node; i++) { /* First uppass: internal nodes */
+    *score += mpl_first_up_recon(i, left[i - n_taxa], right[i - n_taxa],
+                                 ancestor[i], handl);
   }
-  for (i = 0; i < n_taxa; i++) { /* First uppass: update tips */
+  for (i = 0; i != n_taxa; i++) { /* First uppass: update tips */
     mpl_update_tip(i, ancestor[i], handl);
   }
   
   for (i = max_node - 1; i >= n_taxa; i--) { /* Second Downpass */
-    *score += mpl_second_down_recon(i, left[i - n_taxa], right[i - n_taxa], handl);
+    *score += mpl_second_down_recon(i, left[i - n_taxa], right[i - n_taxa],
+                                    handl);
   }
  
 }
