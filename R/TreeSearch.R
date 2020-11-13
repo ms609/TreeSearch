@@ -288,10 +288,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     bestScore <- preorder_morphy(edge, morphyObj)
     
     while (iter < tbrIter) {
-      .Progress(iter / tbrIter, detail = paste0('TBR iteration ', iter + 1))
+      .Progress(iter / tbrIter, detail = paste0('TBR iteration (depth ', iter + 1, ')'))
       iter <- iter + 1L
       optTbr <- sample(3:(nTip * 2 - 2))
-      .Message(3L, "TBR iteration ", iter)
+      .Message(3L, "New TBR iteration (depth ", iter, ')')
       
       for (brk in optTbr) {
         .Message(6L, "Break ", brk)
@@ -322,8 +322,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       }
       if (nHits >= maxHits) break
     }
-    .Message(2L, iter + 1, " TBR rearrangements found score ", bestScore, " ",
-             nHits, " times.")
+    .Message(2L, iter + 1, " TBR rearrangements found score ",
+             signif(bestScore), " ", nHits, " times.")
     
     
     # Return:
@@ -353,10 +353,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     bestScore <- .IWScore(edge, morphyObjects, weight, minLength, concavity)
     
     while (iter < tbrIter) {
-      .Progress(iter / tbrIter, detail = paste0('TBR iteration ', iter + 1))
+      .Progress(iter / tbrIter, detail = paste0('TBR iteration (depth ', iter + 1, ')'))
       iter <- iter + 1L
       optTbr <- sample(3:(nTip * 2 - 2))
-      .Message(3L, "TBR iteration ", iter)
+      .Message(3L, "New TBR iteration (depth ", iter, ')')
       
       for (brk in optTbr) {
         .Message(6L, "Break ", brk)
@@ -387,8 +387,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       }
       if (nHits >= maxHits) break
     }
-    .Message(2L, iter + 1, " TBR rearrangements found score ", bestScore, " ",
-             nHits, " times.")
+    .Message(2L, iter + 1, " TBR rearrangements found score ", 
+             signif(bestScore), " ", nHits, " times.")
     
     # Return:
     unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
@@ -466,15 +466,19 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     preorder_morphy(edge, morphyObj)
   }
   .Message(0L, "Parsimony search with ", ratchIter, " ratchet iterations; ", 
-           tbrIter, " TBR rounds; ", maxHits, " hits; k = ", concavity, ".\n",
-           "Initial score: ", signif(bestScore, 5))
+           "TBR depth ", tbrIter, "; ", maxHits, " hits; k = ", concavity, ".",
+           "\n  ", Sys.time(),
+           "\n  Initial score: ", signif(bestScore, 5),
+           "\n")
   if (ratchIter > 0L) {
     .Message(0L, "Performing parsimony ratchet.")
     verbosity <- verbosity - 1L
     while (iter < ratchIter) {
       .Progress(iter / ratchIter, "Ratchet iteration ", (iter + 1L))
       iter <- iter + 1L
-      .Message(1L, "Ratchet iteration ", iter)
+      .Message(1L, "Ratchet iteration ", iter, 
+               ": Search from bootstrapped dataset.")
+      verbosity <- verbosity - 1L
       eachChar <- seq_along(startWeights)
       deindexedChars <- rep(eachChar, startWeights)
       resampling <- tabulate(sample(deindexedChars, replace = TRUE),
@@ -506,8 +510,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
           stop("Error applying tip data: ", mpl_translate_error(error))
         }
       }
+      verbosity <- verbosity + 1L
     }
-    verbosity <- verbosity + 1L
     edge <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
     bestEdges <- if (iw) {
       .IWTBRSearch(edge, NTip(tree), morphyObjects, startWeights, minLength,
@@ -528,6 +532,15 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     .TBRSearch(edge, nTip, morphyObj, tbrIter * finalIter, maxHits)
   }
   
+  finalScore <- if (iw) {
+    .IWScore(bestEdges[, , 1], morphyObjects, startWeights, minLength,
+             concavity)
+  } else {
+    preorder_morphy(bestEdges[, , 1], morphyObj)
+  }
+  .Message(0L, "Final score: ", finalScore, "\n\n")
+
+    
   ret <- structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
     tr <- tree
     tr$edge <- bestEdges[, , i]
