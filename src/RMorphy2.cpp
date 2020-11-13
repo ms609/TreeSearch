@@ -33,7 +33,7 @@ int preorder_morphy(IntegerMatrix edge, SEXP MorphyHandl) {
       right_child[parent - n_tip] = child;
     }
   }
-  parent_of[0] = root_node;
+  parent_of[root_node] = root_node;
   
   const int
     /* INTEGER gives pointer to first element of an R vector */
