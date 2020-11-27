@@ -331,26 +331,28 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   }
   
   .IWTBRSearch <- function (edge, nTip, morphyObjects, weight, minLength,
-                            concavity, tbrIter, maxHits) {
+                            charSeq, concavity, tbrIter, maxHits) {
     if (is.null(session)) {
-      .DoIWTBRSearch(edge, nTip, morphyObjects, weight, minLength, concavity,
-                     tbrIter, maxHits)
+      .DoIWTBRSearch(edge, nTip, morphyObjects, weight, minLength, charSeq,
+                     concavity, tbrIter, maxHits)
     } else {
       withProgress(message = 'TBR search',
                    .DoIWTBRSearch(edge, nTip, morphyObjects, weight, minLength,
-                                  concavity, tbrIter, maxHits)
+                                  charSeq, concavity, tbrIter, maxHits)
       )
     }
   }
   
   .DoIWTBRSearch <- function (edge, nTip, morphyObjects, weight, minLength,
-                              concavity, tbrIter, maxHits) {
+                              charSeq, concavity, tbrIter, maxHits) {
     iter <- 0L
     nHits <- 1L
     hold <- array(NA, dim = c(dim(edge), max(maxHits * 1.1, maxHits + 10L)))
     maxHits <- ceiling(maxHits)
     hold[, , 1] <- edge
-    bestScore <- .IWScore(edge, morphyObjects, weight, minLength, concavity)
+    bestScore <- .IWScore(edge, morphyObjects, weight, minLength, charSeq,
+                           concavity)
+    bestPlusEps <- bestScore + epsilon
     
     while (iter < tbrIter) {
       .Progress(iter / tbrIter, detail = paste0('TBR iteration (depth ', iter + 1, ')'))
@@ -363,13 +365,15 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
         for (move in moves[sample(seq_along(moves))]) {
-          moveScore <- .IWScore(move, morphyObjects, weight, minLength, concavity)
-          if (moveScore < bestScore + epsilon) {
+          moveScore <- .IWScore(move, morphyObjects, weight, minLength, charSeq,
+                                concavity, bestPlusEps)
+          if (moveScore < bestPlusEps) {
             edge <- move
             if (moveScore < bestScore) {
               improvedScore <- TRUE
               iter <- 0L
               bestScore <- moveScore
+              bestPlusEps <- bestScore + epsilon
               nHits <- 1L
               hold[, , 1] <- edge
               .Message(4L, "New best score ", signif(bestScore, 5))
@@ -394,10 +398,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
   }
   
-  .IWScore <- function (edge, morphyObjs, weight, minLength, concavity,
-                        target = Inf) {
-    morphy_iw(edge, concavity, weight,
-              morphyObjs, charSeq, minLength, target + epsilon)
+  .IWScore <- function (edge, morphyObjs, weight, minLength, charSeq,
+                        concavity, target = Inf) {
+    morphy_iw(edge, morphyObjs, weight, minLength, charSeq,
+              concavity, target + epsilon)
   }
   
   # Define constants
@@ -456,7 +460,9 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     charInfo <- apply(tokenMatrix, 1, CharacterInformation)
     needsInapp <- rowSums(tokenMatrix == '-') > 2
     inappSlowdown <- 3L # A guess
-    priority <- charInfo / ifelse(needsInapp, inappSlowdown, 1) # Crude estimate
+    # Crude estimate of score added per unit processing time
+    rawPriority <- charInfo / ifelse(needsInapp, inappSlowdown, 1)
+    priority <- startWeights * rawPriority
     informative <- needsInapp | charInfo > 0
     # Will work from end of sequence to start.
     charSeq <- seq_along(charInfo)[informative][order(priority[informative])] - 1L
@@ -471,10 +477,12 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   iter <- 0L
   nHits <- 1L
   bestScore <- if (iw) {
-    .IWScore(edge, morphyObjects, startWeights, minLength, concavity)
+    .IWScore(edge, morphyObjects, startWeights, minLength, charSeq, concavity)
   } else {
     preorder_morphy(edge, morphyObj)
   }
+  bestPlusEps <- bestScore + epsilon
+  
   .Message(0L, "Parsimony search with ", ratchIter, " ratchet iterations; ", 
            "TBR depth ", tbrIter, "; ", maxHits, " hits; k = ", concavity, ".",
            "\n  ", Sys.time(),
@@ -493,10 +501,11 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       resampling <- tabulate(sample(deindexedChars, replace = TRUE),
                              length(startWeights))
       if (iw) {
-        sampled <- resampling > 0L
-        ratchetObjs <- morphyObjects[sampled]
-        ratchetTrees <- .IWTBRSearch(edge, NTip(tree), ratchetObjs,
-                                     resampling[sampled], minLength[sampled],
+        priority <- resampling * rawPriority
+        sampled <- informative & resampling > 0
+        ratchSeq <- seq_along(charInfo)[sampled][order(priority[sampled])] - 1L
+        ratchetTrees <- .IWTBRSearch(edge, NTip(tree), morphyObjects,
+                                     resampling, minLength, ratchSeq,
                                      concavity, tbrIter, maxHits / finalIter)
       } else {
         errors <- vapply(eachChar, function (i) 
@@ -523,22 +532,24 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       ratchetStart <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
       .Message(1L, "Ratchet iteration ", iter, ": Search using original data")
       ratchetImproved <- if (iw) {
-        .IWTBRSearch(ratchetStart, NTip(tree), morphyObjects, startWeights, minLength,
+        .IWTBRSearch(ratchetStart, NTip(tree), morphyObjects, startWeights,
+                     minLength, charSeq,
                      concavity, tbrIter, maxHits / finalIter)
       } else {
         .TBRSearch(ratchetStart, NTip(tree), morphyObj, tbrIter, maxHits / finalIter)
       }
       ratchetScore <- if (iw) {
         .IWScore(ratchetImproved[, , 1], morphyObjects, startWeights, minLength,
-                 concavity)
+                 charSeq, concavity, bestPlusEps)
       } else {
         preorder_morphy(ratchetImproved[, , 1], morphyObj)
       }
-      if (ratchetScore < bestScore + epsilon) {
+      if (ratchetScore < bestPlusEps) {
         if (ratchetScore + epsilon < bestScore) {
           .Message(1L, "*Ratchet iteration ", iter, " found new best score: ",
                    signif(ratchetScore, 5), "*")
           bestScore <- ratchetScore
+          bestPlusEps <- bestScore + epsilon
           edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
         } else {
           .Message(1L, "Ratchet iteration ", iter, " hit best score ",
@@ -557,14 +568,14 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   
   .Message(0L, "Final TBR search.")
   bestEdges <- if (iw) {
-    .IWTBRSearch(edge, nTip, morphyObjects, startWeights, minLength,
+    .IWTBRSearch(edge, nTip, morphyObjects, startWeights, minLength, charSeq,
                  concavity, tbrIter * finalIter, maxHits)
   } else {
     .TBRSearch(edge, nTip, morphyObj, tbrIter * finalIter, maxHits)
   }
   
   finalScore <- if (iw) {
-    .IWScore(bestEdges[, , 1], morphyObjects, startWeights, minLength,
+    .IWScore(bestEdges[, , 1], morphyObjects, startWeights, minLength, charSeq,
              concavity)
   } else {
     preorder_morphy(bestEdges[, , 1], morphyObj)

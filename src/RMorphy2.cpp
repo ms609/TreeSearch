@@ -97,11 +97,11 @@ IntegerVector preorder_morphy_by_char(IntegerMatrix edge, List MorphyHandls) {
 
 // [[Rcpp::export]]
 double morphy_iw(IntegerMatrix edge,
-                        NumericVector concavity,
-                        NumericVector weight,
                         List MorphyHandls,
-                        IntegerVector sequence,
+                        NumericVector weight,
                         IntegerVector minScore,
+                        IntegerVector sequence,
+                        NumericVector concavity,
                         NumericVector target) {
   Morphy handl = R_ExternalPtrAddr(MorphyHandls[0]);
   const int

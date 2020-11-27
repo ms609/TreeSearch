@@ -59,7 +59,8 @@ test_that("IW Scoring", {
   charInfo <- apply(tokenMatrix, 1, CharacterInformation)
   needsInapp <- rowSums(tokenMatrix == '-') > 2
   inappSlowdown <- 3L # A guess
-  priority <- charInfo / ifelse(needsInapp, inappSlowdown, 1) # Crude estimate
+  rawPriority <- charInfo / ifelse(needsInapp, inappSlowdown, 1)
+  priority <- startWeights * rawPriority
   informative <- needsInapp | charInfo > 0
   # Will work from end of sequence to start.
   charSeq <- seq_along(charInfo)[informative][order(priority[informative])] - 1L
