@@ -140,14 +140,20 @@ double morphy_iw(IntegerMatrix edge,
     *right = right_child.begin()
   ; 
   
+  
   double ret = 0;
   for (int index = sequence.length(); index--; ) {
-    const int i = sequence[index];
-    Morphy handl = R_ExternalPtrAddr(MorphyHandls[i]);
-    int e = -minScore[i];
-    morphy_length(ancestor, left, right, handl, &e); /* Updates e */
-    ret += weight[i] * e / (k + e);
-    if (ret > target_score) return R_PosInf;
+    const int
+      i = sequence[index],
+      weight_i = weight[i]
+    ;
+    if (weight_i) {
+      Morphy handl = R_ExternalPtrAddr(MorphyHandls[i]);
+      int e = -minScore[i];
+      morphy_length(ancestor, left, right, handl, &e); /* Updates e */
+      ret += weight_i * e / (k + e);
+      if (ret > target_score) return R_PosInf;
+    }
   }
   return ret;
 }
