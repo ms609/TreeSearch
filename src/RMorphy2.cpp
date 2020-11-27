@@ -94,3 +94,60 @@ IntegerVector preorder_morphy_by_char(IntegerMatrix edge, List MorphyHandls) {
   }
   return ret;
 }
+
+// [[Rcpp::export]]
+double morphy_iw(IntegerMatrix edge,
+                        NumericVector concavity,
+                        NumericVector weight,
+                        List MorphyHandls,
+                        IntegerVector sequence,
+                        IntegerVector minScore,
+                        NumericVector target) {
+  Morphy handl = R_ExternalPtrAddr(MorphyHandls[0]);
+  const int
+    n_tip = mpl_get_numtaxa(handl),
+    n_internal = mpl_get_num_internal_nodes(handl),
+    n_vertex = n_tip + n_internal,
+    root_node = n_tip
+  ;
+  const double
+    k = concavity[0],
+    target_score = target[0]
+  ;
+  
+  IntegerVector parent_of(n_vertex);
+  IntegerVector left_child(n_internal);
+  IntegerVector right_child(n_internal);
+  
+  for (int i = edge.nrow(); i--; ) {
+    const int
+      parent = edge(i, 0) - 1,
+      child = edge(i, 1) - 1
+    ;
+    parent_of[child] = parent;
+    if (right_child[parent - n_tip]) {
+      left_child[parent - n_tip] = child;
+    } else {
+      right_child[parent - n_tip] = child;
+    }
+  }
+  parent_of[0] = root_node;
+  
+  const int 
+    /* INTEGER gives pointer to first element of an R vector */
+    *ancestor = parent_of.begin(),
+    *left = left_child.begin(),
+    *right = right_child.begin()
+  ; 
+  
+  double ret = 0;
+  for (int index = sequence.length(); index--; ) {
+    const int i = sequence[index];
+    Morphy handl = R_ExternalPtrAddr(MorphyHandls[i]);
+    int e = -minScore[i];
+    morphy_length(ancestor, left, right, handl, &e); /* Updates e */
+    ret += weight[i] * e / (k + e);
+    if (ret > target_score) return R_PosInf;
+  }
+  return ret;
+}

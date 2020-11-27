@@ -29,6 +29,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// morphy_iw
+double morphy_iw(IntegerMatrix edge, NumericVector concavity, NumericVector weight, List MorphyHandls, IntegerVector sequence, IntegerVector minScore, NumericVector target);
+RcppExport SEXP _TreeSearch_morphy_iw(SEXP edgeSEXP, SEXP concavitySEXP, SEXP weightSEXP, SEXP MorphyHandlsSEXP, SEXP sequenceSEXP, SEXP minScoreSEXP, SEXP targetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type concavity(concavitySEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< List >::type MorphyHandls(MorphyHandlsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type sequence(sequenceSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type minScore(minScoreSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type target(targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(morphy_iw(edge, concavity, weight, MorphyHandls, sequence, minScore, target));
+    return rcpp_result_gen;
+END_RCPP
+}
 // nni
 IntegerMatrix nni(const IntegerMatrix edge, const IntegerVector randomEdge, const IntegerVector whichSwitch);
 RcppExport SEXP _TreeSearch_nni(SEXP edgeSEXP, SEXP randomEdgeSEXP, SEXP whichSwitchSEXP) {

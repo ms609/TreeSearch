@@ -9,6 +9,10 @@ preorder_morphy_by_char <- function(edge, MorphyHandls) {
     .Call(`_TreeSearch_preorder_morphy_by_char`, edge, MorphyHandls)
 }
 
+morphy_iw <- function(edge, concavity, weight, MorphyHandls, sequence, minScore, target) {
+    .Call(`_TreeSearch_morphy_iw`, edge, concavity, weight, MorphyHandls, sequence, minScore, target)
+}
+
 nni <- function(edge, randomEdge, whichSwitch) {
     .Call(`_TreeSearch_nni`, edge, randomEdge, whichSwitch)
 }

@@ -233,7 +233,7 @@ TreeSearch <- function (tree, dataset,
 #' concavity = 10L
 #' session = NULL
 #' ratchIter <- tbrIter <- 1L
-#' maxHits = 10
+#' maxHits = 2
 #' finalIter = 1
 #' 
 #' profvis::profvis(MaximizeParsimony(dataset[1:14], concavity = Inf, maxHits = 10, 
@@ -241,7 +241,7 @@ TreeSearch <- function (tree, dataset,
 #' 
 #' MaximizeParsimony(dataset, verbosity = 3, concavity = 10, maxHits = 10)
 #' 
-#' @importFrom TreeTools NJTree
+#' @importFrom TreeTools NJTree CharacterInformation
 #' @references \insertRef{Smith2019}{TreeTools}
 #' @template MRS
 #' @export
@@ -394,11 +394,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
   }
   
-  .IWScore <- function (edge, morphyObjs, weight, minLength, concavity) {
-    steps <- preorder_morphy_by_char(edge, morphyObjs)
-    homoplasies <- steps - minLength
-    fit <- homoplasies / (homoplasies + concavity)
-    sum(fit * weight)
+  .IWScore <- function (edge, morphyObjs, weight, minLength, concavity,
+                        target = Inf) {
+    morphy_iw(edge, concavity, weight,
+              morphyObjs, charSeq, minLength, target + epsilon)
   }
   
   # Define constants
@@ -431,6 +430,9 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     nChar <- at$nr
     nTip <- length(dataset)
     cont <- at$contrast
+    simpleCont <- ifelse(rowSums(cont) == 1,
+                         apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
+                         '?')
     inappLevel <- at$levels == '-'
     
     if (any(inappLevel)) {
@@ -448,8 +450,16 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     tmp <- as.integer(cont %*% powersOf2)
     unlisted <- unlist(dataset, use.names = FALSE)
     binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
-    
     minLength <- apply(binaryMatrix, 1, MinimumLength)
+    
+    tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip, byrow = FALSE)
+    charInfo <- apply(tokenMatrix, 1, CharacterInformation)
+    needsInapp <- rowSums(tokenMatrix == '-') > 2
+    inappSlowdown <- 3L # A guess
+    priority <- charInfo / ifelse(needsInapp, inappSlowdown, 1) # Crude estimate
+    informative <- needsInapp | charInfo > 0
+    # Will work from end of sequence to start.
+    charSeq <- seq_along(charInfo)[informative][order(priority[informative])] - 1L
   } else {
     morphyObj <- PhyDat2Morphy(dataset)
     on.exit(morphyObj <- UnloadMorphy(morphyObj))
@@ -527,18 +537,18 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       if (ratchetScore < bestScore + epsilon) {
         if (ratchetScore + epsilon < bestScore) {
           .Message(1L, "*Ratchet iteration ", iter, " found new best score: ",
-                   signif(ratchetScore, 4), "*")
+                   signif(ratchetScore, 5), "*")
           bestScore <- ratchetScore
           edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
         } else {
           .Message(1L, "Ratchet iteration ", iter, " hit best score ",
-                   signif(bestScore, 4), ' again')
+                   signif(bestScore, 5), ' again')
           #TODO add ratchet best trees to edge library
           edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
         }
       } else {
         .Message(1L, "Ratchet iteration ", iter, " did not hit best score ",
-                 signif(bestScore, 4), ".")
+                 signif(bestScore, 5), ".")
       }
     }
   }
