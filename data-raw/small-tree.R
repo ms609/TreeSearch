@@ -1,34 +1,45 @@
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
-library("TreeSearch")
+devtools::load_all("c:/research/r/TreeSearch")
+#library("TreeSearch")
 library("TreeDist")
 library("Quartet", exclude = 'RobinsonFoulds')
 cols <- paste0(Ternary::cbPalette8, '44')
 
-CompareMethods <- function (repl, nTip = 8L) {
+nTree <- NUnrooted(nTip)
+message(Sys.time(), ": Generating all ", nTip, "-leaf trees...")
+trees <- lapply(seq_len(nTree) - 1L, as.phylo, nTip = nTip)
+
+CompareMethods <- function (repl, nTip,
+                            nTree = NUnrooted(nTip),
+                            trees = lapply(seq_len(nTree) - 1L, as.phylo, 
+                                           nTip = nTip)) {
   cacheFile <- paste0('gen-', nTip, 'tip/', repl, '.csv')
   if (file.exists(cacheFile)) {
     tab <- read.table(cacheFile, sep = ',')
     performance <- matrix(unlist(tab), nrow = nrow(tab), ncol = ncol(tab),
                           dimnames = dimnames(tab))
   } else {
-    message(Sys.time(), ": Simulating data from ", nTip, "-tip tree ", repl)
+    message(Sys.time(), ": Simulating data from ", nTip, "-leaf tree ", repl)
     generative <- RandomTree(nTip, TRUE)
-    generative$edge.length <- rgamma(dim(generative$edge)[1], shape = 1) * 3L
-    dir.create(paste0('gen-', nTip, 'tip'))
-    write.tree(generative, paste0('gen-', nTip, 'tip/', repl, '.tre'))
+    nEdge <- dim(generative$edge)[1] - 1L # Root edge counted twice
+    # Desire mean 1 change per character.
+    edgeLengths <- rgamma(nEdge, shape = 1) / nEdge
+    generative$edge.length <- c(0, edgeLengths)
+    dirName <- paste0('gen-', nTip, 'tip')
+    if (!dir.exists(dirName)) dir.create(dirName)
+    write.tree(generative, paste0(dirName, '/', repl, '.tre'))
     
-    dataBits <- lapply(phangorn::discrete.gamma(1, 4), function (rate)
-      phangorn::simSeq(generative, l = 100, rate = rate))
-    dataset <- c(dataBits[[1]], dataBits[[2]], dataBits[[3]], dataBits[[4]]) # I can't remember how to do this right
-    write.nexus.data(dataset, file = paste0('gen-', nTip, 'tip/', repl, '.nex'))
+    
+    nChar <- 250L
+    #shape = 2.5 from Iotuba IQTree ML analysis
+    dataBits <- lapply(phangorn::discrete.gamma(2.5, 4), function (rate)
+      phangorn::simSeq(generative, l = nChar, rate = rate,
+                       type = 'USER', levels = 0:1, rootseq = rep(0, nChar)))
+    dataset <- do.call(c, dataBits)
+    write.nexus.data(dataset, file = paste0(dirName, '/', repl, '.nex'))
     
     morphyObj <- PhyDat2Morphy(dataset)
     on.exit(morphyObj <- UnloadMorphy(morphyObj))
-    
-    nTree <- NUnrooted(nTip)
-    message(Sys.time(), ": Generating all ", nTip, "-tip trees")
-    trees <- lapply(seq_len(nTree) - 1L, as.phylo, nTip = nTip)
-    
     
     at <- attributes(dataset)
     characters <- PhyToString(dataset, ps = '', useIndex = FALSE,
@@ -39,10 +50,9 @@ CompareMethods <- function (repl, nTip = 8L) {
       
     nLevel <- length(at$level)
     nChar <- at$nr
-    nTip <- length(dataset)
     cont <- at$contrast
     simpleCont <- ifelse(rowSums(cont) == 1,
-                         apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
+                         apply(cont != 0, 1, function (x) at$levels[x][1]),
                          '?')
     inappLevel <- at$levels == '-'
     
@@ -64,18 +74,36 @@ CompareMethods <- function (repl, nTip = 8L) {
       TreeSearch:::morphy_iw(edge, morphyObjects, weight, minLength, charSeq, concavity, Inf)
     }
     
+    PP <- function (edge) {
+      TreeSearch:::morphy_pp(edge, morphyObjects, weight, profileCost, charSeq, Inf)
+    }
+    
+    tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip, byrow = FALSE)
+    profileTables <- apply(tokenMatrix, 1, table)
+    data('profiles', package = 'TreeSearch')
+    profileCost <- lapply(profileTables, function (x) {
+      x <- sort(x[x > 1])
+      n <- length(x)
+      prof <- switch(n,
+        0,
+        profiles[[sum(x)]][[n]][[x[1] - 1L]]
+      )
+      prof <- prof - prof[1]
+    })
+    
     # Initialize variables and prepare search
     
-    message(Sys.time(), ": Scoring each tree")
+    message(Sys.time(), ": Scoring each ", nTip, "-leaf tree")
     scores <- vapply(trees, function (tr) {
       edge <- tr$edge
-      c(i1 = IW(edge, 1),
+      c(pp = PP(edge),
+        i1 = IW(edge, 1),
         i3 = IW(edge, 3),
         i10.5 = IW(edge, 10.5),
         i36 = IW(edge, 36),
         ew = TreeSearch:::preorder_morphy(edge, morphyObj)
       )
-    }, c(i1 = 0, i3 = 0, i10.5 = 0, i36 = 0, ew = 0))
+    }, c(pp = 0, i1 = 0, i3 = 0, i10.5 = 0, i36 = 0, ew = 0))
     
     
     message(Sys.time(), ": Calculating distances: CID")
@@ -131,4 +159,4 @@ CompareMethods <- function (repl, nTip = 8L) {
   }
   performance
 }
-
+compare.VAL <- matrix(0, 5, 6)
