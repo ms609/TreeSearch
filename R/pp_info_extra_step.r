@@ -1,24 +1,24 @@
 #' Information Content Steps
 #'
-#'   This function estimates the information content of a character \code{char} when e extra steps
-#'   are present, for all possible values of e.
+#' `ICSteps()` estimates the phylogenetic information content of a character 
+#' `char` when _e_ extra steps are present, for all possible values of _e_.
 #' 
-#' Calculates the number of trees consistent with the character having \emph{e} extra steps, where
-#' \emph{e} ranges from its minimum possible value (i.e. number of different tokens minus one) to its
-#' maximum.  The number of trees with no extra steps can be calculated exactly; the number of trees
-#' with more additional steps must be approximated.
-#' The function samples \code{n.iter} trees, or enough trees that the trees with the minimum number 
-#' of steps will be recovered at least \code{expected.minima} times, in order to obtain precise 
-#' results.
+#' Calculates the number of trees consistent with the character having 
+#' _e_ extra steps, where _e_ ranges from its minimum possible value
+#' (i.e. number of different tokens minus one) to its maximum.
+#' The number of trees with no extra steps can be calculated exactly; the 
+#' number of trees with more additional steps must be approximated.
+#' The function samples `maxIter` trees, or enough trees that the trees with 
+#' the minimum number of steps will be recovered at least `expectedMinima`
+#' times, in order to obtain precise results.
 #'
 #' @param char The character in question.
 #' @param ambiguousToken Which token, if any, corresponds to the ambiguous token
 #' (?) (not yet fully implemented).
-#' @param expectedMinima sample enough trees that the rarest step counts is expected to be seen
-#'                          at least this many times.
+#' @param expectedMinima sample enough trees that the rarest step counts is
+#' expected to be seen at least this many times.
 #' @param maxIter Maximum iterations to conduct.
 #' @template warnParam
-#' 
 #' 
 #' @template MRS
 #' @references
@@ -27,55 +27,58 @@
 #' @keywords tree
 #' 
 #' @examples
-#' # A character that is present in ten taxa and absent in five
-#' character <- c(rep(1, 10), rep(2, 5))
+#' character <- rep(c(0:3, '?'), c(8, 5, 1, 1, 2))
 #' suppressWarnings(ICSteps(character))
-#' @importFrom TreeTools NUnrooted NUnrootedMult
+#' 
+#' # MS Temp Example testing
+#' char <- character
+#' ambiguousToken = '?'
+#' expectedMinima = 25
+#' maxIter = 100
+#' warn = TRUE
+#' 
+#' @importFrom TreeTools NUnrooted Log2Unrooted Log2UnrootedMult NUnrootedMult
 #' @export
-ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25L,
+ICSteps <- function (char, ambiguousToken = '?', expectedMinima = 25L,
                      maxIter = 10000L, warn = TRUE) {
-  char <- matrix(2L ^ char[char != ambiguousToken], ncol = 1L)
-  rownames(char) <- paste0('t', seq_along(char))
-  charLen <- length(char)
+  #char <- matrix(2L ^ char[char != ambiguousToken], ncol = 1L)
+  char <- char[char != ambiguousToken]
+  names(char) <- paste0('t', seq_along(char))
   
   split <- sort(as.integer(table(char)))
+  singletons <- split == 1L
+  nSingletons <- sum(singletons)
+  nInformative <- sum(split) - nSingletons
   minSteps <- length(split) - 1L
   if (minSteps == 0L) return (c('0' = 1L))
   
-  nNoExtraSteps <- NUnrootedMult(split)
-  #nOneExtraStep <- WithOneExtraStep(split)
-  proportionViable <- NUnrooted(charLen) / nNoExtraSteps
-  if (proportionViable == 1) {
-    ret <- 1L
-    names(ret) <- minSteps
-    return(ret)
-  }
+  split <- split[!singletons]
+  if (length(split) < 2L) return (1L)
   
-  nIter <- min(maxIter, round(expectedMinima * proportionViable))
+  nNoExtraSteps <- NUnrootedMult(split)
+  log2ExtraSteps <- LnUnrootedMult(split)
+  #nOneExtraStep <- WithOneExtraStep(split)
+  
+  nIter <- min(maxIter, round(expectedMinima * NUnrooted(nInformative) / nNoExtraSteps))
   if (nIter == maxIter && warn) warning ("Will truncate number of iterations at maxIter = ", maxIter)
-  analyticIc0 <- -log(nNoExtraSteps/NUnrooted(sum(split))) / log(2)
+  analyticIc0 <- Log2Unrooted(sum(split)) - Log2UnrootedMult(split)
   #analyticIc1<- -log(nOneExtraStep/NUnrooted(sum(split))) / log(2)
   #analyticIc1<- -log((nNoExtraSteps + nOneExtraStep)/NUnrooted(sum(split))) / log(2)
   if (warn) {
     message('  Token count ', split, " = ",
             signif(analyticIc0, ceiling(log10(maxIter))),
-            ' bits @ 0 extra steps; simulating ', nIter, 
+            ' bits @ 0 extra steps. \n  Simulating ', nIter, 
             ' trees to estimate cost of further steps.')
     # message(c(round(analyticIc0, 3), 'bits @ 0 extra steps;', round(analyticIc1, 3),
     #    '@ 1; attempting', nIter, 'iterations.\n'))
   }
   
-  morphyObj <- SingleCharMorphy(char)
+  morphyObj <- SingleCharMorphy(rep(seq_along(split) - 1L, split))
   on.exit(morphyObj <- UnloadMorphy(morphyObj))
-  steps <- vapply(logical(maxIter), function (xx) RandomTreeScore(charLen, morphyObj), integer(1))
+  steps <- vapply(rep(nInformative, maxIter), RandomTreeScore,
+                  integer(1), morphyObj)
   
-  analyticSteps <- nIter * c(nNoExtraSteps) / NUnrooted(sum(split))
-  #analyticSteps <- nIter * c(nNoExtraSteps, nOneExtraStep) / NUnrooted(sum(split))
-  
-  names(analyticSteps) <- minSteps
-  #names(analyticSteps) <- minSteps + 0:1
-  
-  tabSteps <- table(steps[steps > (minSteps + 0)]) # Quicker than table(steps)[-0]
+  tabSteps <- table(steps[steps > (minSteps - nSingletons + 0)]) # Quicker than table(steps)[-1]
   #tabSteps <- table(steps[steps > (minSteps + 1)])
   
   tabSteps <- c(analyticSteps, tabSteps * (nIter - sum(analyticSteps)) / sum(tabSteps))
@@ -95,15 +98,18 @@ ICSteps <- function (char, ambiguousToken = 0, expectedMinima = 25L,
 #' @importFrom R.cache addMemoization
 #' @keywords internal
 #' @export
-ICS <- addMemoization(function(a, b, m, warn=TRUE)
-  ICSteps(c(rep(1, a), rep(2, b)), maxIter=m, warn=warn))
+ICS <- addMemoization(function(a, b, m, warn = TRUE) {
+  ICSteps(c(rep(1, a), rep(2, b)), maxIter = m, warn = warn)
+})
 
 #' Information content per step
 #' @template splitsParam
 #' @param maxIter number of iterations to use when estimating concavity constant
 #' @template warnParam
 #' @export
-ICPerStep <- function(splits, maxIter, warn=TRUE) ICS(min(splits), max(splits), maxIter, warn)
+ICPerStep <- function(splits, maxIter, warn = TRUE) {
+  ICS(min(splits), max(splits), maxIter, warn)
+}
 
 
 #' Number of trees with one extra step
@@ -219,12 +225,14 @@ Evaluate <- function (tree, dataset, warn=TRUE) {
 
 #' Amount of information in each character
 #'
-#' As presently implemented, this function requires that there be no ambiguous tokens 
-#' and two applicable tokens, '1' and '2'.
+#' As presently implemented, this function requires that there be no ambiguous
+#' tokens and two applicable tokens, '1' and '2'.
 #'
-#' @param tokenTable A matrix, where each row corresponds to a character, each column to 
-#'                   a tip, and each entry to the value (1 or 2) of the character at that tip.
-#' @param precision number of random trees to generate when calculating Profile curves
+#' @param tokenTable A matrix, where each row corresponds to a character, each
+#' column to a leaf, and each entry to the value (1 or 2) of the character at 
+#' that leaf.
+#' @param precision Integer specifyign how many random trees to generate when 
+#' calculating profile curves.
 #' @template warnParam
 #'
 #' @return information content of each extra step, in bits
@@ -232,12 +240,14 @@ Evaluate <- function (tree, dataset, warn=TRUE) {
 #' @author Martin R. Smith
 #'
 #' @export
-InfoAmounts <- function (tokenTable, precision=1e+06, warn=TRUE) {
+InfoAmounts <- function (tokenTable, precision = 1e+06, warn = TRUE) {
   # The below is simplified from info_extra_step.r::evaluate
-  if (length(unique(as.integer(tokenTable))) > 2) stop ("Cannot calculate information amouts for",
-                                                        "characters unless only tokens are 1 and 2. See ?InfoAmounts.")
+  if (length(unique(as.integer(tokenTable))) > 2) {
+    stop ("Cannot calculate information amouts for",
+          "characters unless only tokens are 1 and 2. See ?InfoAmounts.")
+  }
   splits <- apply(tokenTable, 1, table)
-  infoLosses <- apply(splits, 2, ICPerStep, maxIter=precision, warn=warn)
+  infoLosses <- apply(splits, 2, ICPerStep, maxIter = precision, warn = warn)
   
   blankReturn <- double(max(colSums(splits)))
   ret <- vapply(infoLosses, function(p) {
