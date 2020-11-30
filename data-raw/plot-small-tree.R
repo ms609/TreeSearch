@@ -2,7 +2,7 @@ message("\n\n\n #### ", Sys.time(), ": RUN COMPLETE ####\n")
 
 pdf(file = paste0('results-', nTip, '-', nRep, '.pdf'),
     title = paste0("Results: ", nTip, " leaves, ", nRep, " replicates"),
-    width = 8, height = 5)
+    width = 9, height = 4.5)
 par(mfrow = c(1, 2), mgp = c(1.9, 0.7, 0), mar = rep(3, 4))
 # par(mfrow = c(2, 3), mgp = c(1.9, 0.7, 0), mar = rep(3, 4))
 #boxplot(t(log(results['betterThanGen', , ])),

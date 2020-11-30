@@ -3,7 +3,8 @@ devtools::load_all("c:/research/r/TreeSearch")
 #library("TreeSearch")
 library("TreeDist")
 library("Quartet", exclude = 'RobinsonFoulds')
-cols <- paste0(Ternary::cbPalette8, '44')
+cols <- paste0(Ternary::cbPalette8, '44')[rep(1:8,
+                                              c(2, 4, 3, rep(1, 5)))]
 
 nTree <- NUnrooted(nTip)
 message(Sys.time(), ": Generating all ", nTip, "-leaf trees...")
@@ -30,7 +31,7 @@ CompareMethods <- function (repl, nTip,
     write.tree(generative, paste0(dirName, '/', repl, '.tre'))
     
     
-    nChar <- 250L
+    nChar <- 2 * nEdge
     #shape = 2.5 from Iotuba IQTree ML analysis
     dataBits <- lapply(phangorn::discrete.gamma(2.5, 4), function (rate)
       phangorn::simSeq(generative, l = nChar, rate = rate,
@@ -74,10 +75,6 @@ CompareMethods <- function (repl, nTip,
       TreeSearch:::morphy_iw(edge, morphyObjects, weight, minLength, charSeq, concavity, Inf)
     }
     
-    PP <- function (edge) {
-      TreeSearch:::morphy_pp(edge, morphyObjects, weight, profileCost, charSeq, Inf)
-    }
-    
     tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip, byrow = FALSE)
     profileTables <- apply(tokenMatrix, 1, table)
     data('profiles', package = 'TreeSearch')
@@ -91,19 +88,43 @@ CompareMethods <- function (repl, nTip,
       prof <- prof - prof[1]
     })
     
+    
+    PP <- function (edge) {
+      TreeSearch:::morphy_pp(edge, morphyObjects, weight, profileCost, charSeq, Inf)
+    }
+    
+    profileMax <- lapply(profileCost, function (x) {
+      if (length(x) == 1L) x else x / max(x)
+    })
+    PPx <- function (edge) {
+      TreeSearch:::morphy_pp(edge, morphyObjects, weight, profileMax, charSeq, Inf)
+    }
+    
+    ewMax <- lapply(profileTables, function (x) {
+      switch(length(x),
+             0,
+             seq_len(min(x)) / min(x))
+    })
+    EWMax <- function (edge) {
+      TreeSearch:::morphy_pp(edge, morphyObjects, weight, ewMax, charSeq, Inf)
+    }
+    
+    
     # Initialize variables and prepare search
     
     message(Sys.time(), ": Scoring each ", nTip, "-leaf tree")
     scores <- vapply(trees, function (tr) {
       edge <- tr$edge
-      c(pp = PP(edge),
+      c(px = PPx(edge),
+        pp = PP(edge),
         i1 = IW(edge, 1),
         i3 = IW(edge, 3),
         i10.5 = IW(edge, 10.5),
         i36 = IW(edge, 36),
-        ew = TreeSearch:::preorder_morphy(edge, morphyObj)
+        ew = TreeSearch:::preorder_morphy(edge, morphyObj),
+        ex = EWMax(edge)
       )
-    }, c(pp = 0, i1 = 0, i3 = 0, i10.5 = 0, i36 = 0, ew = 0))
+    }, c(px = 0, pp = 0, i1 = 0, i3 = 0, i10.5 = 0, i36 = 0, ew = 0, ex = 0))
     
     
     message(Sys.time(), ": Calculating distances: CID")
@@ -159,4 +180,4 @@ CompareMethods <- function (repl, nTip,
   }
   performance
 }
-compare.VAL <- matrix(0, 5, 6)
+compare.VAL <- matrix(0, 5, 8)
