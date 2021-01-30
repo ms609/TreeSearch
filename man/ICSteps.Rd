@@ -48,7 +48,7 @@ suppressWarnings(ICSteps(character))
 char <- character
 ambiguousToken = '?'
 expectedMinima = 25
-maxIter = 10000
+maxIter = 100
 warn = TRUE
 
 }
