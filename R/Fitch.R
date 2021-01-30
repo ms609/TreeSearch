@@ -58,7 +58,7 @@ Fitch <- function (tree, dataset) {
 #'
 #' @family tree scoring
 #' @references
-#'  \insertRef{Brazeau2018}{TreeSearch}
+#'  \insertRef{Brazeau2019}{TreeSearch}
 #' @importFrom TreeTools Renumber RenumberTips
 #' @export
 CharacterLength <- function (tree, dataset) {

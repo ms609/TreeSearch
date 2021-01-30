@@ -1,7 +1,8 @@
 #' Implied weights parsimony Score
 #'
-#' Calculate a tree's Parsimony score with a given dataset using implied weights
-#' (Goloboff 1997).
+#' Calculate a tree's parsimony score with a given dataset using implied weights
+#' (Goloboff 1997), treating inapplicable data using the algorithm of 
+#' Brazeau, Guillerme & Smith (2019).
 #'
 #' @template treeParam
 #' @param dataset Dataset of class \code{phyDat}.  The dataset should have been
@@ -19,15 +20,17 @@
 #' @references
 #'  - \insertRef{Goloboff1997}{TreeSearch}
 #'  
-#'  - \insertRef{SmithTern}{TreeSearch}
+#'  - \insertRef{Smith2019}{TreeSearch}
 #'
 #' @examples
 #'   data(referenceTree)
 #'   data(congreveLamsdellMatrices)
 #'   dataset <- PrepareDataIW(congreveLamsdellMatrices[[42]])
 #'   IWScore(referenceTree, dataset)
+#' @template MRS
 #'
-#' @author Martin R. Smith
+#' @references
+#' \insertRef{Brazeau2019}{TreeSearch} 
 #' @family tree scoring
 #' @keywords tree
 #' @export

@@ -137,7 +137,7 @@ The default parameters may not be enough to find the optimal tree; type
 
 ## View the results
 
-In parsimony search, it is good practice to consider trees that are slightly suboptimal [@SmithTern].
+In parsimony search, it is good practice to consider trees that are slightly suboptimal [@Smith2019].
 
 Here, we'll take a consensus that includes all trees that are suboptimal by up to 1.5 bits.
 To sample this region of tree space well, the trick is to use large values of 
@@ -271,7 +271,7 @@ structure(list(structure(list(edge = structure(c(23L, 23L, 24L,
 
 The consensus of these slightly suboptimal trees provides a less resolved, but
 typically more reliable, summary of the signal with the phylogenetic dataset
-[@SmithTern]:
+[@Smith2019]:
 
 ```{r Plot suboptimal consensus}
 par(mar=rep(0.25, 4), cex=0.75)

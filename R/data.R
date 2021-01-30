@@ -11,7 +11,7 @@
 #' @template inapplicableSources
 #'
 #' @references
-#'  \insertRef{Brazeau2018}{TreeSearch}
+#'  \insertRef{Brazeau2019}{TreeSearch}
 #' 
 #' @keywords datasets
 "inapplicable.datasets"
@@ -29,7 +29,7 @@
 #' @template inapplicableSources
 #'
 #' @references
-#'  \insertRef{Brazeau2018}{TreeSearch}
+#'  \insertRef{Brazeau2019}{TreeSearch}
 #'
 #' @keywords datasets
 "inapplicable.phyData"
@@ -44,7 +44,7 @@
 #' @template inapplicableSources
 #'
 #' @references
-#'  \insertRef{Brazeau2018}{TreeSearch}
+#'  \insertRef{Brazeau2019}{TreeSearch}
 #'
 #' @keywords datasets
 "inapplicable.citations"
