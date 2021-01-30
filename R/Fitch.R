@@ -201,6 +201,7 @@ C_MorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
 #' @export
 TipsAreNames <- function(dataset, tips) as.integer(unlist(dataset[tips]))
 
+#TODO Github issue #2
 ###   #' @describeIn TipsAreNames use if each row in a matrix corresponds to a tip
 ###   #' @keywords internal
 ###   #' @export

@@ -1,5 +1,5 @@
 ---
-title: "Inapplicable data in morphological phylogenetics"
+title: "Tree search with inapplicable data"
 author: "Martin R. Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
