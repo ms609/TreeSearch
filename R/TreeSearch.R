@@ -44,9 +44,12 @@ EdgeListSearch <- function (edgeList, dataset,
   unimprovedSince <- 0L
   
   for (iter in 1:maxIter) {
-    candidateLists <- RearrangeEdges(edgeList[[1]], edgeList[[2]], dataset=dataset, 
-                             TreeScorer = TreeScorer, EdgeSwapper=EdgeSwapper, 
-                             hits=hits, iter=iter, verbosity=verbosity, ...)
+    candidateLists <- RearrangeEdges(edgeList[[1]], edgeList[[2]], 
+                                     dataset = dataset, 
+                                     TreeScorer = TreeScorer,
+                                     EdgeSwapper = EdgeSwapper,
+                                     hits=hits, iter=iter, verbosity=verbosity,
+                                     ...)
     scoreThisIteration <- candidateLists[[3]]
     hits <- candidateLists[[4]]
     if (forestSize > 1L) {
@@ -208,13 +211,56 @@ TreeSearch <- function (tree, dataset,
 
 #' Find most parsimonious trees
 #' 
-#' Work in progress...
+#' Search for most parsimonious trees using the parsimony ratchet and 
+#' \acronym{TBR} rearrangements, treating inapplicable data as such using the
+#' algorithm of Brazeau, Guillerme & Smith (2019).
+#'  
+#' Tree search will be conducted from a specified or automatically-generated
+#' starting tree in order to find a tree with an optimal parsimony score,
+#' under implied or equal weights, treating inapplicable characters as such
+#' in order to avoid the artefacts of the standard Fitch algorithm
+#' (see Maddison 1993; Brazeau et al. 2019).
 #' 
-#' @param ratchHurry Numeric specifying how many times fewer TBR iterations and
-#' hits to employ in ratchet searches.
+#' Tree search commences with `ratchIter` iterations of the parsimony ratchet
+#' (Nixon 1999), which bootstraps the input dataset in order to escape local
+#' optima.  A final round of tree bisection and reconnection (\acronym{TBR})
+#' is conducted to broaden the sampling of trees.
+#' 
+#' This function can be called using the R command line / terminal, or through
+#' the 'shiny' graphical user interface app (type `EasyTrees()` to launch).
+#' 
+#'  
+#' For detailed documentation of the TreeSearch package, including full 
+#' instructions for loading phylogenetic data into R and initiating and 
+#' configuring tree search, see the 
+#' [package documentation](https://ms609.github.io/TreeSearch).
+#'  
+#' 
+#' @template datasetParam
+#' @param tree (optional) A bifurcating tree of class \code{\link{phylo}},
+#' containing only the tips listed in `dataset`, from which the search
+#' should begin.
+#' If unspecified, a neighbour-joining tree will be generated from `dataset`.
+#' Edge lengths are not supported and will be deleted.
+#' @param ratchIter Numeric specifying number of iterations of the 
+#' parsimony ratchet (Nixon 1999) to conduct.
+#' @param tbrIter Numeric specifying the maximum number of \acronym{TBR}
+#' break points to evaluate before concluding each search.
+#' The counter is reset to zero each time tree score improves.
+#' One 'iteration' comprises breaking a single branch and evaluating all 
+#' possible reconnections.
+#' @param finalIter Numeric: the final round of tree search will evalauate
+#' `finalIter` &times; `tbrIter` \acronym{TBR} break points.
+#' @param maxHits Numeric specifying the maximum times that an optimal
+#' parsimony score may be hit before concluding a ratchet iteration or final 
+#' search concluded.
 #' @param concavity Numeric specifying concavity constant for implied step 
 #' weighting; set as `Inf` for equal step weights (which is a bad idea; see 
 #' Smith 2019).
+#' @param verbosity Integer specifying level of messaging; higher values give
+#' more detailed commentary on search progress. Set to `0` to run silently.
+#' @param session 'shiny' session identifier to allow [`setProgress()`] calls
+#' to be sent when `MaximizeParsimony()` is called from within a shiny app..
 #' 
 #'  
 #' @examples
@@ -242,13 +288,19 @@ TreeSearch <- function (tree, dataset,
 #' MaximizeParsimony(dataset, verbosity = 3, concavity = 10, maxHits = 10)
 #' 
 #' @importFrom TreeTools NJTree CharacterInformation
-#' @references \insertRef{Smith2019}{TreeTools}
+#' @references
+#' \insertRef{Brazeau2019}{TreeSearch}
+#' 
+#' \insertRef{Maddison1993}{TreeSearch}
+#' 
+#' \insertRef{Nixon1999}{TreeSearch}
+#' 
+#' \insertRef{Smith2019}{TreeSearch}
 #' @template MRS
 #' @export
 MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
-                               ratchIter = 12L, tbrIter = 6L,
+                               ratchIter = 12L, tbrIter = 6L, finalIter = 3L,
                                maxHits = 20L,
-                               finalIter = 3L,
                                concavity = Inf,
                                verbosity = 2L, session = NULL) {
   # Define functions
@@ -592,3 +644,17 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   # Return:
   ret
 }
+
+#' Launch tree search graphical user interface
+#' 
+#' @rdname MaximizeParsimony
+#' @importFrom shiny runApp
+#' @importFrom shinyjs useShinyjs
+#' @importFrom TreeDist ClusteringInfoDistance
+#' @export
+EasyTrees <- function () 
+  shiny::runApp(system.file('Parsimony', package = 'TreeSearch'))
+
+#' @rdname MaximizeParsimony
+#' @export
+EasyTreesy <- EasyTrees

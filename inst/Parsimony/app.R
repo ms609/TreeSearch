@@ -2,6 +2,7 @@ library("shiny", exclude = 'runExample')
 library("shinyjs", exclude = c('runExample'))
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 library("TreeSearch")
+library("TreeDist")
 
 if (!requireNamespace('TreeDist', quietly = TRUE)) {
   install.packages('TreeDist')
@@ -61,9 +62,9 @@ Reference <- function (authors, year, title, journal = '',
 
 Smith2020 <- Reference('Smith, M.R.', 2020,
                        'Information theoretic Generalized Robinson-Foulds metrics for comparing phylogenetic trees',
-                       'Bioinformatics', pages = 'In production', doi = "10.1093/bioinformatics/btaa614")
+                       'Bioinformatics', volume = 36, pages = '5007--5013',
+                       doi = "10.1093/bioinformatics/btaa614")
 
-# Define UI for app that draws a histogram ----
 ui <- fluidPage(theme = 'app.css',
   useShinyjs(),
   column(3,
@@ -79,14 +80,19 @@ ui <- fluidPage(theme = 'app.css',
       sliderInput("concavity", "Step weight concavity constant", min = 0L,
                   max = 3L, pre = '10^', value = 1L),
       sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 6L, step = 1L),
+      # sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 0L, step = 1L),
       sliderInput('tbrIter', "TBR iterations", min = 1L, max = 50L, value = 6L, step = 1L),
+      # sliderInput('tbrIter', "TBR iterations", min = 1L, max = 50L, value = 1L, step = 1L),
       sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 2L, pre = '10^'),
+      # sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 0.6, pre = '10^'),
       sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 3L),
+      # sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
       sliderInput('verbosity', "Notification level", min = 0L, max = 3L, value = 3L, step = 1L),
       actionButton("go", "Search"),
       textOutput("results"),
       hidden(radioButtons('plotFormat', "Display:",
                    list("Consensus tree" = 'cons',
+                        "Cluster consensus trees" = 'clus',
                         "Individual tree" = 'ind',
                         "Tree space" = 'space'), 'cons')),
       hidden(sliderInput('whichTree', 'Tree to plot', min = 1L, max = 1L,
@@ -103,7 +109,8 @@ ui <- fluidPage(theme = 'app.css',
       tags$span("Save as: "),
       downloadButton('savePdf', 'PDF'),
       downloadButton('savePng', 'PNG'),
-      downloadButton('saveCons', 'Cluster consensus trees'),
+      downloadButton('saveNwk', 'Newick'),
+      downloadButton('saveNex', 'Nexus'),
     ),
     fluidRow(
       plotOutput(outputId = "treePlot", height = "600px"),
@@ -166,7 +173,11 @@ server <- function(input, output, session) {
                         max = length(r$trees), value = 1L)
       output$results <- renderText(paste0(
         "Found ", length(r$trees), " trees with score ", 
-        Fitch(r$trees[[1]], dataset())))
+        if(input$implied.weights == 'on') {
+          signif(IWScore(r$trees[[1]], dataset(), concavity = concavity()))
+        } else {
+          Fitch(r$trees[[1]], dataset())
+        }))
       updateActionButton(session, "go", "Continue search")
       show('plotFormat')
       PlotConsensus()
@@ -185,15 +196,20 @@ server <- function(input, output, session) {
                plot(consensus(r$trees))
              }, width = input$plotSize, height = input$plotSize)
            },
+           'clus' = {
+             hide('whichTree')
+             output$treePlot = renderPlot(PlotClusterCons())
+           },
            'ind' = {
+             show('whichTree')
              output$treePlot = renderPlot({
                par(mar = rep(0, 4), cex = 0.9)
-               show('whichTree')
                plot(r$trees[[input$whichTree]])
              }, width = input$plotSize, height = input$plotSize)
            },
            'space' = {
              hide('whichTree')
+             output$treePlot = renderPlot(treespacePlot())
            }
     )
   )
@@ -254,7 +270,7 @@ server <- function(input, output, session) {
   ##############################################################################
   # Clusterings
   ##############################################################################
-  maxClust <- reactive(min(input$maxClusters, length(r$allTrees) - 1L))
+  maxClust <- reactive(min(input$maxClusters, length(r$trees) - 1L))
   clusterings <- reactive({
     maxCluster <- input$maxClusters
     if (!is.null(r$clust_max) && maxCluster != r$clust_max) ClearClusters()
@@ -561,13 +577,13 @@ server <- function(input, output, session) {
       par(mfrow = c(consRows(), ceiling(cl$n / consRows())))
       for (i in seq_len(cl$n)) {
         col <- palettes[[min(length(palettes), cl$n)]][i]
-        tr <- ape::consensus(r$allTrees[cl$cluster == i])
+        tr <- ape::consensus(r$trees[cl$cluster == i])
         tr$edge.length <- rep(1, dim(tr$edge)[1])
         plot(tr, edge.width = 2, font = 1, cex = 1,
              edge.color = col, tip.color = col)
       }
     } else {
-      tr <- ape::consensus(r$allTrees)
+      tr <- ape::consensus(r$trees)
       tr$edge.length <- rep(1, dim(tr$edge)[1])
       plot(tr,edge.width = 2, font = 1, cex = 1,
            edge.color = palettes[[1]],
@@ -620,96 +636,80 @@ server <- function(input, output, session) {
     })
     scale[cut(dat, 256)]
   }
-  
-  observeEvent(input$pt.col, {
-    if (input$pt.col == 'dist') show('which.tree') else hide('which.tree')
-  })
-  
+
   pointCols <- reactive({
-    switch(input$pt.col,
-           'clust' = {
-             hide('pt.col.scale')
-             cl <- clusterings()
-             if (cl$sil > 0.25) {
-               palettes[[min(length(palettes), cl$n)]][cl$cluster]
-             } else palettes[[1]]
-           },
-           'entry' = {
-             hide('pt.col.scale')
-             n <- r$entryOrder
-             palettes[[max(n)]][n]
-           },
-           'seq' = {
-             ContinuousPtCol(seq_along(r$allTrees))
-           },
-           'dist' = {
-             dat <- as.matrix(distances())[input$which.tree, ]
-             message(paste0(round(dat, 2)[1:10], collapse = ', '))
-             message(cut(dat, 256)[1:10])
-             ContinuousPtCol(as.matrix(distances())[input$which.tree, ],
-                             bigDark = TRUE)
-           },
-           'discrete' = {
-             dat <- pointData()
-             categories <- unique(dat)
-             nCol <- length(categories)
-             if (nCol <= length(palettes)) {
-               PointDataStatus("")
-               show('pt.col.scale')
-               output$pt.col.scale <- renderPlot({
-                 par(mar = c(1, 0, 0, 0))
-                 plot(seq_len(nCol), rep(0, nCol), pch = 15, ylim = c(-1, 0),
-                      col = palettes[[nCol]], ann = FALSE, axes = FALSE)
-                 axis(1, at = seq_len(nCol), labels = categories,
-                      tick = FALSE, line = -1)
-               })
-               palettes[[nCol]][match(dat, categories)]
-             } else {
-               hide('pt.col.scale')
-               PointDataStatus(nCol, " categories is too many to display;",
-                               "did you mean continuous?")
-               c(palettes[[length(palettes)]], '#000000')[
-                 pmin(match(dat, categories), length(palettes[[length(palettes)]]) + 1L)]
-             }
-           },
-           'continuous' = {
-             dat <- pointData()
-             if (is.numeric(dat)) {
-               ContinuousPtCol(dat)
-             } else {
-               hide('pt.col.scale')
-               PointDataStatus("Point data are not numeric.",
-                               'Try selecting "Custom categorical".')
-               '#000000'
-             }
-           }
-    )
+    cl <- clusterings()
+    if (cl$sil > 0.25) {
+      palettes[[min(length(palettes), cl$n)]][cl$cluster]
+    } else palettes[[1]]
   })
   
   pchs <- reactive({
-    switch(input$pt.pch,
-           '1' = 1,
-           '16' = 16,
-           'clust' = {
-             cl <- clusterings()
-             if (cl$sil > 0.25) {
-               cl$cluster - 1
-             } else 16
-           },
-           'entry' = {
-             r$entryOrder - 1
-           }
-    )
+    cl <- clusterings()
+    if (cl$sil > 0.25) {
+      cl$cluster - 1
+    } else 16
+  })
+  
+  maxProjDim <- reactive({
+    min(6L, length(r$trees) - 1L)
+  })
+  
+  nProjDim <- reactive({
+    dim(projection())[2]
+  })
+  
+  dims <- debounce(reactive({
+    if (mode3D()) 3L else {
+      min(6, maxProjDim())
+    }
+  }), 400)
+  
+  distances <- reactive({
+    if (length(r$trees) > 1L) {
+      withProgress(
+        message = 'Calculating distances', value = 0.99,
+        TreeDist::ClusteringInfoDistance(r$trees)
+      )
+    } else {
+      matrix(0, 0, 0)
+    }
+    
+  })
+  
+  projection <- reactive({
+    if (maxProjDim() > 1L) {
+      withProgress(
+        message = 'Projecting distances',
+        value = 0.99,
+        proj <- cmdscale(distances(), k = maxProjDim())
+      )
+      # Return:
+      proj
+      
+    } else {
+      matrix(0, 0, 0)
+    }
+  })
+  
+  mstEnds <- reactive({
+    dist <- as.matrix(distances())
+    nRows <- dim(dist)[1]
+    withProgress(message = 'Calculating MST', {
+      edges <- MSTEdges(dist)
+    })
+    edges
   })
   
   ##############################################################################
-  # Render plot
+  # Plot tree space
   ##############################################################################
   treespacePlot <- function() {
     cl <- clusterings()
     proj <- projection()
     
     nDim <- min(dims(), nProjDim())
+    message("Dims = ", nDim, ".", dims(), "..", nProjDim())
     plotSeq <- matrix(0, nDim, nDim)
     nPanels <- nDim * (nDim - 1L) / 2L
     plotSeq[upper.tri(plotSeq)] <- seq_len(nPanels)
@@ -719,21 +719,20 @@ server <- function(input, output, session) {
       for (i in 2:nDim) for (j in seq_len(i - 1)) {
         incProgress(1 / nPanels)
         # Set up blank plot
-        plot(proj[, j], proj[, i], ann = FALSE, axes = FALSE, frame.plot = TRUE,
+        plot(proj[, j], proj[, i], ann = FALSE, axes = FALSE,
+             frame.plot = nDim < 3L,
              type = 'n', asp = 1, xlim = range(proj), ylim = range(proj))
         
         # Plot MST
-        if (mstSize() > 0) {
-          apply(mstEnds(), 1, function (segment)
-            lines(proj[segment, j], proj[segment, i], col = "#bbbbbb", lty = 1))
-        }
+        apply(mstEnds(), 1, function (segment)
+          lines(proj[segment, j], proj[segment, i], col = "#bbbbbb", lty = 1))
         
         # Add points
         points(proj[, j], proj[, i], pch = pchs(),
-               col = paste0(pointCols(), as.hexmode(input$pt.opacity)),
+               col = paste0(pointCols(), as.hexmode(200)),
                cex = input$pt.cex)
         
-        if ("hulls" %in% input$display && cl$sil > 0.25) {
+        if (cl$sil > 0.25) {
           # Mark clusters
           for (clI in seq_len(cl$n)) {
             inCluster <- cl$cluster == clI
@@ -795,38 +794,85 @@ server <- function(input, output, session) {
     }
   })
   
+  
+  consRows <- reactive({
+    cl <- clusterings()
+    if (cl$sil > 0.25) ceiling(cl$n / 3) else 1L
+  })
+  
+  consSize <- reactive({
+    nLeaves() * 12 * consRows()
+  })
+  
+  PlotClusterCons <- function () {
+    cl <- clusterings()
+    par(mar = c(0.2, 0, 0.2, 0), xpd = NA)
+    par(cex = 0.9)
+    if (cl$sil > 0.25) {
+      par(mfrow = c(consRows(), ceiling(cl$n / consRows())))
+      for (i in seq_len(cl$n)) {
+        col <- palettes[[min(length(palettes), cl$n)]][i]
+        tr <- ape::consensus(r$trees[cl$cluster == i])
+        tr$edge.length <- rep(1, dim(tr$edge)[1])
+        plot(tr, edge.width = 2, font = 1, cex = 1,
+             edge.color = col, tip.color = col)
+      }
+    } else {
+      tr <- ape::consensus(r$trees)
+      tr$edge.length <- rep(1, dim(tr$edge)[1])
+      plot(tr,edge.width = 2, font = 1, cex = 1,
+           edge.color = palettes[[1]],
+           tip.color = palettes[[1]])
+    }
+  }
+  
+  plotContent <- reactive({
+    switch(input$plotFormat,
+           'cons' = {
+             par(mar = rep(0, 4), cex = 0.9)
+             plot(consensus(r$trees))
+           },
+           'clus' = {
+             PlotClusterCons()
+           },
+           'ind' = {
+             par(mar = rep(0, 4), cex = 0.9)
+             plot(r$trees[[input$whichTree]])
+           },
+           'space' = {
+             treespacePlot()
+           })
+  })
+  
   output$savePng <- downloadHandler(
-    filename = 'TreeSpace.png',
+    filename = 'TreeSearch.png',
     content = function (file) {
       png(file, width = input$plotSize, height = input$plotSize)
-      treespacePlot()
+      plotContent()
       dev.off()
     })
   
   output$savePdf <- downloadHandler(
-    filename = 'TreeSpace.pdf',
+    filename = 'TreeSearch.pdf',
     content = function (file) {
       pdf(file, title = paste0('Tree space projection'))
-      treespacePlot()
+      plotContent()
       dev.off()
     })
   
-  output$saveCons <- downloadHandler(
-    filename = 'ClusterConsensusTrees.pdf',
-    content = function (file) {
-      cl <- clusterings()
-      pdf(file, title = if (cl$sil > 0.25) {
-        paste0("Consensus trees for ", cl$n, " clusters found with ", cl$method,
-               " using ", chosenDistance())
-      } else {
-        paste0("Consensus of all trees (no meaningful clusters found using ",
-               chosenDistance(), ")")
-      },
-      width = 8, height = consSize() / 100, pointsize = 10)
-      PlotClusterCons()
-      dev.off()
-    })
+  output$saveNwk <- downloadHandler(
+    filename = 'TreeSearch.nwk',
+    content = function(file) {
+      write.tree(r$trees, file = file)
+    }
+  )
   
+  output$saveNex <- downloadHandler(
+    filename = 'TreeSearch.nex',
+    content = function(file) {
+      write.nexus(r$trees, file = file)
+    }
+  )
   
   
   ##############################################################################
