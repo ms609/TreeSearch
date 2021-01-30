@@ -28,6 +28,8 @@ Imports:
     R.cache,
     Rcpp,
     Rdpack,
+    shiny,
+    shinyjs,
     stats,
     TreeDist,
     TreeTools (>= 1.0.0)
