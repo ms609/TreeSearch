@@ -10,9 +10,6 @@
 
 This package exists to allow parsimony-style tree searches in R.
 
-It extends the basic functionality available in the 'phangorn' package, with a view to
-making tree search faster and more efficient, and allowing user-defined optimality criteria to be employed.
-
 Implied weighting and heuristic searches such as the Parsimony Ratchet 
 (function: [`Ratchet()`](https://ms609.github.io/TreeSearch/reference/Ratchet.html))
 are implemented.
@@ -25,18 +22,28 @@ install.packages('TreeSearch')
 library('TreeSearch')
 ```
 
-If you're feeling brave, you can install the development version thus:
+A fundamental reworking of search strategies is currently underway. 
+
+Install the development version with:
 ```r
 if(!require(devtools)) install.packages("devtools")
 devtools::install_github('ms609/TreeSearch')
 ```
 
+# Quick start
+
+Launch a graphical user interface (beta, development version only)
+by typing `TreeSearch::EasyTrees()` in the R console.
+
+For more control over search settings, see [`?MaximizeParsimony()`](https://ms609.github.io/TreeTools/reference/MaximizeParsimony.html).
+
 # Optimality criteria
 
 'TreeSearch' allows the implementation of various optimality criteria, including
+
+- Fitch parsimony with inapplicable data (Brazeau, Guillerme and Smith, 2019).
 - The Profile Parsimony approach introduced by Faith and Trueman (2001).
 - Successive Approximations weighting (Farris 1969).
-- Fitch parsimony with inapplicable data (Brazeau, Guillerme and Smith, 2019).
 
 It is also possible to specify bespoke optimality criteria.
 
