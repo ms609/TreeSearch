@@ -15,6 +15,7 @@ boxplot(log10(t(results['betterThanGen', , ] + results['equalToGen', , ])),
         frame = FALSE, col = cols)
 boxplot(t(results['cidFromGen', , ]), notch = TRUE,
         ylab = 'Mean CID, best to generative',
+        main = Sys.time(),
         frame = FALSE, col = cols)
 # boxplot(t(results['qdFromGen', , ]),
 #         ylab = 'QD from generative',
