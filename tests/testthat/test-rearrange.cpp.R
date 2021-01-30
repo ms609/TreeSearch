@@ -83,7 +83,6 @@ test_that("SPR working", {
   expect_equal(48, length(SPRMoves(tr)))
   
   tr <- Preorder(root(TreeTools::BalancedTree(14), 't1', resolve.root = TRUE))
-  par(mar = rep(0, 4)); plot(tr); nodelabels(); edgelabels()
   tr$edge
   desc <- TreeTools::CladeSizes(tr)
   
