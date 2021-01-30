@@ -166,7 +166,11 @@ server <- function(input, output, session) {
                         max = length(r$trees), value = 1L)
       output$results <- renderText(paste0(
         "Found ", length(r$trees), " trees with score ", 
-        Fitch(r$trees[[1]], dataset())))
+        if(input$implied.weights == 'on') {
+          signif(IWScore(r$trees[[1]], dataset(), concavity = concavity()))
+        } else {
+          Fitch(r$trees[[1]], dataset())
+        }))
       updateActionButton(session, "go", "Continue search")
       show('plotFormat')
       PlotConsensus()
