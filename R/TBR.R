@@ -232,23 +232,6 @@ TBRSwap <- function(parent, child, nEdge = length(parent),
   return (RenumberEdges(parent, child))
 }
 
-#' @describeIn TBR All unique trees one TBR move away
-#' @return a list of trees, in parent-child format
-#' @export
-AllTBR <- function (parent, child, nEdge = length(parent),
-                    avoid = NULL,
-                    retainRoot = FALSE) {
-  moves <- TBRMoves(parent, child, nEdge = nEdge, avoid = avoid, 
-                    retainRoot = retainRoot)
-  newTrees <- apply(moves, 1, function (edges) {
-    TBRSwap(parent, child, nEdge, edges[1], edges[2])
-  })
-  unique(newTrees)
-}
-# Set sensible defaults for search parameters
-attr(AllTBR, 'stopAtPlateau') <- 10L
-attr(AllTBR, 'stopAtPeak') <- TRUE
-
 #' Rooted TBR 
 #' @describeIn TBR Perform \acronym{TBR} rearrangement, retaining position of root
 #' @importFrom TreeTools Preorder

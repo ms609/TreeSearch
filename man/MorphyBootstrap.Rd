@@ -59,17 +59,13 @@ and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRS
 \item{verbosity}{Level of detail to display in console: larger numbers provide
 more verbose feedback to the user.}
 
-\item{stopAtPeak}{Logical specifying whether to terminate search once a subsequent
-iteration recovers a sub-optimal score. Useful with methods that
-return all trees one rearrangement from the current tree, such
-as \code{\link[=AllTBR]{AllTBR()}}.  Will be overridden if a passed function
-has an attribute \code{stopAtPeak} set by
+\item{stopAtPeak}{Logical specifying whether to terminate search once a
+subsequent iteration recovers a sub-optimal score.
+Will be overridden if a passed function has an attribute \code{stopAtPeak} set by
 \code{attr(FunctionName, 'stopAtPeak') <- TRUE}.}
 
 \item{stopAtPlateau}{Integer. If > 0, tree search will terminate if the score
 has not improved after \code{stopAtPlateau} iterations.
-Useful with methods that return all trees one rearrangement from the current
-tree, such as \code{\link[=AllTBR]{AllTBR()}}.
 Will be overridden if a passed function has an attribute \code{stopAtPlateau} set
 by \code{attr(FunctionName, 'stopAtPlateau') <- TRUE}.}
 

@@ -6,7 +6,6 @@
 \alias{TBRMoves.phylo}
 \alias{TBRMoves.matrix}
 \alias{TBRSwap}
-\alias{AllTBR}
 \alias{RootedTBR}
 \alias{RootedTBRSwap}
 \title{Tree bisection and reconnection (TBR)}
@@ -26,8 +25,6 @@ TBRSwap(
   edgeToBreak = NULL,
   mergeEdges = NULL
 )
-
-AllTBR(parent, child, nEdge = length(parent), avoid = NULL, retainRoot = FALSE)
 
 RootedTBR(tree, edgeToBreak = NULL, mergeEdges = NULL)
 
@@ -69,8 +66,6 @@ This function returns a tree in \code{phyDat} format that has undergone one \acr
 
 a list containing two elements, corresponding in turn to the
 rearranged parent and child parameters
-
-a list of trees, in parent-child format
 }
 \description{
 \code{TBR} performs a single random \acronym{TBR} iteration.
@@ -88,8 +83,6 @@ This will be resolved when \code{TreeTools::RootNode()} supports edge matrices.
 \itemize{
 \item \code{TBRSwap}: faster version that takes and returns parent and child
 parameters
-
-\item \code{AllTBR}: All unique trees one TBR move away
 
 \item \code{RootedTBR}: Perform \acronym{TBR} rearrangement, retaining position of root
 
