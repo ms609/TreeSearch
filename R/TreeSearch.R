@@ -486,6 +486,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     nChar <- at$nr
     nTip <- length(dataset)
     cont <- at$contrast
+    if (is.null(colnames(cont))) colnames(cont) <- as.character(at$levels)
     simpleCont <- ifelse(rowSums(cont) == 1,
                          apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
                          '?')
