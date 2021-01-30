@@ -251,10 +251,6 @@ TreeSearch <- function (tree, dataset,
 #' @param maxHits Numeric specifying the maximum times that an optimal
 #' parsimony score may be hit before concluding a ratchet iteration or final 
 #' search concluded.
-#'
-#' @template verbosityParam
-#' @template treeScorerDots
-#' 
 #' @param concavity Numeric specifying concavity constant for implied step 
 #' weighting; set as `Inf` for equal step weights (which is a bad idea; see 
 #' Smith 2019).

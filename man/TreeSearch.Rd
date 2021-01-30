@@ -82,8 +82,8 @@ and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRS
 
 \item{forestSize}{the maximum number of trees to return - useful in concert with \code{\link{consensus}}.}
 
-\item{verbosity}{Level of detail to display in console: larger numbers provide
-more verbose feedback to the user.}
+\item{verbosity}{Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.}
 
 \item{\dots}{further arguments to pass to \code{TreeScorer()}
 (e.g. \code{\link{TipsAreColumns}}, \code{dataset}).}
@@ -155,7 +155,7 @@ TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=TBRSwap)}
 }
 \references{
 \itemize{
-\item \insertRef{SmithTern}{TreeSearch}
+\item \insertRef{Smith2019}{TreeSearch}
 }
 }
 \seealso{

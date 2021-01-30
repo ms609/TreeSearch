@@ -34,8 +34,9 @@ The 'fit', \code{h / h + k}, where \code{h} is the amount of homoplasy ('extra s
 and \code{k} is a constant (the 'concavity constant')
 }
 \description{
-Calculate a tree's Parsimony score with a given dataset using implied weights
-(Goloboff 1997).
+Calculate a tree's parsimony score with a given dataset using implied weights
+(Goloboff 1997), treating inapplicable data using the algorithm of
+Brazeau, Guillerme & Smith (2019).
 }
 \section{Functions}{
 \itemize{
@@ -51,13 +52,14 @@ Calculate a tree's Parsimony score with a given dataset using implied weights
   data(congreveLamsdellMatrices)
   dataset <- PrepareDataIW(congreveLamsdellMatrices[[42]])
   IWScore(referenceTree, dataset)
-
 }
 \references{
 \itemize{
 \item \insertRef{Goloboff1997}{TreeSearch}
-\item \insertRef{SmithTern}{TreeSearch}
+\item \insertRef{Smith2019}{TreeSearch}
 }
+
+\insertRef{Brazeau2019}{TreeSearch}
 }
 \seealso{
 Other tree scoring: 
@@ -66,7 +68,8 @@ Other tree scoring:
 \code{\link{MorphyTreeLength}()}
 }
 \author{
-Martin R. Smith
+\href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{tree scoring}
 \keyword{tree}

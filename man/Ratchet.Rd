@@ -183,8 +183,8 @@ search within a ratchet iteration.
 To override this value for a single swapper function, set e.g.
 \code{attr(SwapperFunction, 'searchHits') <- 99}}
 
-\item{verbosity}{Level of detail to display in console: larger numbers provide
-more verbose feedback to the user.}
+\item{verbosity}{Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.}
 
 \item{\dots}{further arguments to pass to \code{TreeScorer()}
 (e.g. \code{\link{TipsAreColumns}}, \code{dataset}).}
@@ -293,7 +293,7 @@ quickIWResult <- IWRatchet(quickResult, Lobo.phy, concavity = 2.5,
 \references{
 \itemize{
 \item \insertRef{Nixon1999}{TreeSearch}
-\item \insertRef{SmithTern}{TreeSearch}
+\item \insertRef{Smith2019}{TreeSearch}
 }
 }
 \seealso{

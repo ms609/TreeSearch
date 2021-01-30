@@ -56,8 +56,8 @@ and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRS
 
 \item{maxHits}{maximum number of hits to accomplish in tree search}
 
-\item{verbosity}{Level of detail to display in console: larger numbers provide
-more verbose feedback to the user.}
+\item{verbosity}{Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.}
 
 \item{stopAtPeak}{Logical specifying whether to terminate search once a subsequent
 iteration recovers a sub-optimal score. Useful with methods that
@@ -97,6 +97,6 @@ Ratchet bootstrapper
 
 \references{
 \itemize{
-\item \insertRef{SmithTern}{TreeSearch}
+\item \insertRef{Smith2019}{TreeSearch}
 }
 }

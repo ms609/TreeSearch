@@ -52,6 +52,7 @@ NNI <- function (tree, edgeToBreak = NULL) {
 }
 
 #' `cNNI()` expects a tree rooted on a single tip. 
+#' @template treeParam
 #' @param edgeToBreak Integer from zero to nEdge(tree) - nTip(tree) - 1, 
 #' specifying which internal edge to break.
 #' @param whichSwitch Integer from zero to one, specifying which way to re-build

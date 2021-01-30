@@ -39,8 +39,8 @@ and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRS
 
 \item{hits}{Integer giving number of times the input tree has already been hit.}
 
-\item{verbosity}{Level of detail to display in console: larger numbers provide
-more verbose feedback to the user.}
+\item{verbosity}{Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.}
 
 \item{\dots}{further arguments to pass to \code{TreeScorer()}
 (e.g. \code{\link{TipsAreColumns}}, \code{dataset}).}

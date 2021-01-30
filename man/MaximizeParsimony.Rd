@@ -2,30 +2,86 @@
 % Please edit documentation in R/TreeSearch.R
 \name{MaximizeParsimony}
 \alias{MaximizeParsimony}
+\alias{EasyTrees}
+\alias{EasyTreesy}
 \title{Find most parsimonious trees}
 \usage{
 MaximizeParsimony(
   dataset,
   tree = NJTree(dataset),
-  ratchIter = 5L,
-  tbrIter = 5L,
-  maxHits = 100L,
-  finalIter = 2L,
+  ratchIter = 12L,
+  tbrIter = 6L,
+  finalIter = 3L,
+  maxHits = 20L,
   concavity = Inf,
-  verbosity = 1L,
+  verbosity = 2L,
   session = NULL
 )
+
+EasyTrees()
+
+EasyTreesy()
 }
 \arguments{
+\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
+whose names correspond to the labels of any accompanying tree.}
+
+\item{tree}{(optional) A bifurcating tree of class \code{\link{phylo}},
+containing only the tips listed in \code{dataset}, from which the search
+should begin.
+If unspecified, a neighbour-joining tree will be generated from \code{dataset}.
+Edge lengths are not supported and will be deleted.}
+
+\item{ratchIter}{Numeric specifying number of iterations of the
+parsimony ratchet (Nixon 1999) to conduct.}
+
+\item{tbrIter}{Numeric specifying the maximum number of \acronym{TBR}
+break points to evaluate before concluding each search.
+The counter is reset to zero each time tree score improves.
+One 'iteration' comprises breaking a single branch and evaluating all
+possible reconnections.}
+
+\item{finalIter}{Numeric: the final round of tree search will evalauate
+\code{finalIter} × \code{tbrIter} \acronym{TBR} break points.}
+
+\item{maxHits}{Numeric specifying the maximum times that an optimal
+parsimony score may be hit before concluding a ratchet iteration or final
+search concluded.}
+
 \item{concavity}{Numeric specifying concavity constant for implied step
 weighting; set as \code{Inf} for equal step weights (which is a bad idea; see
 Smith 2019).}
 
-\item{ratchHurry}{Numeric specifying how many times fewer TBR iterations and
-hits to employ in ratchet searches.}
+\item{verbosity}{Integer specifying level of messaging; higher values give
+more detailed commentary on search progress. Set to \code{0} to run silently.}
+
+\item{session}{'shiny' session identifier to allow \code{\link[=setProgress]{setProgress()}} calls
+to be sent when \code{MaximizeParsimony()} is called from within a shiny app..}
 }
 \description{
-Work in progress...
+Search for most parsimonious trees using the parsimony ratchet and
+\acronym{TBR} rearrangements, treating inapplicable data as such using the
+algorithm of Brazeau, Guillerme & Smith (2019).
+
+Tree search will be conducted from a specified or automatically-generated
+starting tree in order to find a tree with an optimal parsimony score,
+under implied or equal weights, treating inapplicable characters as such
+in order to avoid the artefacts of the standard Fitch algorithm
+(see Maddison 1993; Brazeau et al. 2019).
+}
+\details{
+Tree search commences with \code{ratchIter} iterations of the parsimony ratchet
+(Nixon 1999), which bootstraps the input dataset in order to escape local
+optima.  A final round of tree bisection and reconnection (\acronym{TBR})
+is conducted to broaden the sampling of trees.
+
+This function can be called using the R command line / terminal, or through
+the 'shiny' graphical user interface app (type \code{EasyTrees()} to launch).
+
+For detailed documentation of the TreeSearch package, including full
+instructions for loading phylogenetic data into R and initiating and
+configuring tree search, see the
+\href{https://ms609.github.io/TreeSearch}{package documentation}.
 }
 \examples{
 library(TreeTools)
@@ -33,18 +89,32 @@ load_all()
 data('Lobo', package='TreeTools')
 njtree <- TreeTools::NJTree(Lobo.phy)
 
-tree = njtree
 dataset = Lobo.phy
+
+dataset <- ReadAsPhyDat('c:/research/r/hyoliths/mbank_X24932_6-19-2018_744.nex')
+tree = NJTree(dataset)
 
 verbosity = 5L
 tbrIter = 10
 concavity = 10L
 session = NULL
+ratchIter <- tbrIter <- 1L
+maxHits = 2
+finalIter = 1
 
-MaximizeParsimony(dataset, verbosity = 4, concavity = 10, maxHits = 100)
+profvis::profvis(MaximizeParsimony(dataset[1:14], concavity = Inf, maxHits = 10, 
+ratchIter = 3L, tbrIter = 6L, finalIter = 3L))
+
+MaximizeParsimony(dataset, verbosity = 3, concavity = 10, maxHits = 10)
 
 }
 \references{
+\insertRef{Brazeau2019}{TreeSearch}
+
+\insertRef{Maddison1993}{TreeSearch}
+
+\insertRef{Nixon1999}{TreeSearch}
+
 \insertRef{Smith2019}{TreeTools}
 }
 \author{
