@@ -29,6 +29,7 @@ Imports:
     Rcpp,
     Rdpack,
     stats,
+    TreeDist,
     TreeTools (>= 1.0.0)
 Suggests:
     knitr,
