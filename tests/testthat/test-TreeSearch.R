@@ -13,11 +13,12 @@ test_that("tree can be found", {
   set.seed(1)
   random11 <- as.phylo(17905853L, 11, letters[1:11])
   expect_error(TreeSearch(unrooted11, dataset = phy11))
-  expect_equal(comb11, TreeSearch(random11, dataset = phy11, maxIter = 300,
+  expect_equal(comb11, TreeSearch(random11, dataset = phy11, maxIter = 200,
                                   EdgeSwapper = RootedTBRSwap, verbosity = 0L))
   expect_equal(comb11, TreeSearch(random11, phy11, maxIter = 400,
                                   EdgeSwapper = RootedSPRSwap, verbosity = 0L))
-  expect_equal(comb11, TreeSearch(RandomTree(phy11, 'a'), phy11, maxIter = 250,
+  someOtherTree <- as.phylo(29235922L, 11, letters[1:11])
+  expect_equal(comb11, TreeSearch(someOtherTree, phy11, maxIter = 200,
                                   EdgeSwapper = RootedNNISwap, verbosity = 0))
   expect_equal(comb11, Ratchet(random11, phy11, searchIter = 10, searchHits = 5,
                                swappers = RootySwappers, ratchHits = 3,
