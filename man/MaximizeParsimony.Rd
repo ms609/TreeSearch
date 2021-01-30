@@ -115,7 +115,7 @@ MaximizeParsimony(dataset, verbosity = 3, concavity = 10, maxHits = 10)
 
 \insertRef{Nixon1999}{TreeSearch}
 
-\insertRef{Smith2019}{TreeTools}
+\insertRef{Smith2019}{TreeSearch}
 }
 \author{
 \href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
