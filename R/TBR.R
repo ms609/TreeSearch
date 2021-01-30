@@ -78,7 +78,7 @@ TBRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('TBRMoves')
 #' @export
 TBRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   tree <- Preorder(RootTree(tree, 1))
-  edges <- unique(all_tbr(tree, edgeToBreak))
+  edges <- unique(all_tbr(tree$edge, edgeToBreak))
   structure(lapply(edges, function (edg) {
     tree$edge <- edg
     tree
