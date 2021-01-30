@@ -91,8 +91,3 @@ Ratchet bootstrapper
 \item \code{IWBootstrap}: Bootstrapper for Implied weighting
 }}
 
-\references{
-\itemize{
-\item \insertRef{Smith2019}{TreeTools}
-}
-}
