@@ -92,6 +92,7 @@ ui <- fluidPage(theme = 'app.css',
       textOutput("results"),
       hidden(radioButtons('plotFormat', "Display:",
                    list("Consensus tree" = 'cons',
+                        "Cluster consensus trees" = 'clus',
                         "Individual tree" = 'ind',
                         "Tree space" = 'space'), 'cons')),
       hidden(sliderInput('whichTree', 'Tree to plot', min = 1L, max = 1L,
@@ -108,7 +109,8 @@ ui <- fluidPage(theme = 'app.css',
       tags$span("Save as: "),
       downloadButton('savePdf', 'PDF'),
       downloadButton('savePng', 'PNG'),
-      downloadButton('saveCons', 'Cluster consensus trees'),
+      downloadButton('saveNwk', 'Newick'),
+      downloadButton('saveNex', 'Nexus'),
     ),
     fluidRow(
       plotOutput(outputId = "treePlot", height = "600px"),
@@ -193,6 +195,10 @@ server <- function(input, output, session) {
                par(mar = rep(0, 4), cex = 0.9)
                plot(consensus(r$trees))
              }, width = input$plotSize, height = input$plotSize)
+           },
+           'clus' = {
+             hide('whichTree')
+             output$treePlot = renderPlot(PlotClusterCons())
            },
            'ind' = {
              show('whichTree')
@@ -711,7 +717,6 @@ server <- function(input, output, session) {
     par(mar = rep(0.2, 4))
     withProgress(message = 'Drawing plot', {
       for (i in 2:nDim) for (j in seq_len(i - 1)) {
-        message("Plotting panel ", i, "-", j)
         incProgress(1 / nPanels)
         # Set up blank plot
         plot(proj[, j], proj[, i], ann = FALSE, axes = FALSE,
@@ -789,38 +794,85 @@ server <- function(input, output, session) {
     }
   })
   
+  
+  consRows <- reactive({
+    cl <- clusterings()
+    if (cl$sil > 0.25) ceiling(cl$n / 3) else 1L
+  })
+  
+  consSize <- reactive({
+    nLeaves() * 12 * consRows()
+  })
+  
+  PlotClusterCons <- function () {
+    cl <- clusterings()
+    par(mar = c(0.2, 0, 0.2, 0), xpd = NA)
+    par(cex = 0.9)
+    if (cl$sil > 0.25) {
+      par(mfrow = c(consRows(), ceiling(cl$n / consRows())))
+      for (i in seq_len(cl$n)) {
+        col <- palettes[[min(length(palettes), cl$n)]][i]
+        tr <- ape::consensus(r$trees[cl$cluster == i])
+        tr$edge.length <- rep(1, dim(tr$edge)[1])
+        plot(tr, edge.width = 2, font = 1, cex = 1,
+             edge.color = col, tip.color = col)
+      }
+    } else {
+      tr <- ape::consensus(r$trees)
+      tr$edge.length <- rep(1, dim(tr$edge)[1])
+      plot(tr,edge.width = 2, font = 1, cex = 1,
+           edge.color = palettes[[1]],
+           tip.color = palettes[[1]])
+    }
+  }
+  
+  plotContent <- reactive({
+    switch(input$plotFormat,
+           'cons' = {
+             par(mar = rep(0, 4), cex = 0.9)
+             plot(consensus(r$trees))
+           },
+           'clus' = {
+             PlotClusterCons()
+           },
+           'ind' = {
+             par(mar = rep(0, 4), cex = 0.9)
+             plot(r$trees[[input$whichTree]])
+           },
+           'space' = {
+             treespacePlot()
+           })
+  })
+  
   output$savePng <- downloadHandler(
-    filename = 'TreeSpace.png',
+    filename = 'TreeSearch.png',
     content = function (file) {
       png(file, width = input$plotSize, height = input$plotSize)
-      treespacePlot()
+      plotContent()
       dev.off()
     })
   
   output$savePdf <- downloadHandler(
-    filename = 'TreeSpace.pdf',
+    filename = 'TreeSearch.pdf',
     content = function (file) {
       pdf(file, title = paste0('Tree space projection'))
-      treespacePlot()
+      plotContent()
       dev.off()
     })
   
-  output$saveCons <- downloadHandler(
-    filename = 'ClusterConsensusTrees.pdf',
-    content = function (file) {
-      cl <- clusterings()
-      pdf(file, title = if (cl$sil > 0.25) {
-        paste0("Consensus trees for ", cl$n, " clusters found with ", cl$method,
-               " using ", chosenDistance())
-      } else {
-        paste0("Consensus of all trees (no meaningful clusters found using ",
-               chosenDistance(), ")")
-      },
-      width = 8, height = consSize() / 100, pointsize = 10)
-      PlotClusterCons()
-      dev.off()
-    })
+  output$saveNwk <- downloadHandler(
+    filename = 'TreeSearch.nwk',
+    content = function(file) {
+      write.tree(r$trees, file = file)
+    }
+  )
   
+  output$saveNex <- downloadHandler(
+    filename = 'TreeSearch.nex',
+    content = function(file) {
+      write.nexus(r$trees, file = file)
+    }
+  )
   
   
   ##############################################################################
