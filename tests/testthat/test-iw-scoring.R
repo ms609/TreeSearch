@@ -3,7 +3,7 @@ test_that("IW Scoring", {
   data('Lobo', package = 'TreeTools')
   dataset <- Lobo.phy
   
-  dataset <- ReadAsPhyDat('c:/research/r/hyoliths/mbank_X24932_6-19-2018_744.nex')
+  #dataset <- ReadAsPhyDat('c:/research/r/hyoliths/mbank_X24932_6-19-2018_744.nex')
   tree <- NJTree(dataset)
   
   
