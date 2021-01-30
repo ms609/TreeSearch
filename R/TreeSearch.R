@@ -264,28 +264,15 @@ TreeSearch <- function (tree, dataset,
 #' 
 #'  
 #' @examples
-#' library(TreeTools)
-#' load_all()
-#' data('Lobo', package='TreeTools')
-#' njtree <- TreeTools::NJTree(Lobo.phy)
-#'
-#' dataset = Lobo.phy
-#' 
-#' dataset <- ReadAsPhyDat('c:/research/r/hyoliths/mbank_X24932_6-19-2018_744.nex')
-#' tree = NJTree(dataset)
-#' 
-#' verbosity = 5L
-#' tbrIter = 10
-#' concavity = 10L
-#' session = NULL
-#' ratchIter <- tbrIter <- 1L
-#' maxHits = 2
-#' finalIter = 1
-#' 
-#' profvis::profvis(MaximizeParsimony(dataset[1:14], concavity = Inf, maxHits = 10, 
-#' ratchIter = 3L, tbrIter = 6L, finalIter = 3L))
+#' library('TreeTools')
+#' data('Lobo', package = 'TreeTools')
+#' dataset <- Lobo.phy
 #' 
 #' MaximizeParsimony(dataset, verbosity = 3, concavity = 10, maxHits = 10)
+#' 
+#' \dontrun{ # launches 'shiny' point-and-click interface
+#'   EasyTrees() 
+#' }
 #' 
 #' @importFrom TreeTools NJTree CharacterInformation
 #' @references
