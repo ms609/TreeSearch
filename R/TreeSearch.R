@@ -264,29 +264,23 @@ TreeSearch <- function (tree, dataset,
 #' 
 #'  
 #' @examples
-#' library(TreeTools)
-#' load_all()
-#' data('Lobo', package='TreeTools')
-#' njtree <- TreeTools::NJTree(Lobo.phy)
-#'
-#' dataset = Lobo.phy
+#' library('TreeTools')
+#' data('Lobo', package = 'TreeTools')
+#' dataset <- Lobo.phy
 #' 
-#' dataset <- ReadAsPhyDat('c:/research/r/hyoliths/mbank_X24932_6-19-2018_744.nex')
-#' tree = NJTree(dataset)
+#' # A very quick run for demonstration purposes
+#' MaximizeParsimony(dataset, ratchIter = 0, tbrIter = 1, concavity = 10,
+#'                   maxHits = 5, verbosity = 4)
 #' 
-#' verbosity = 5L
-#' tbrIter = 10
-#' concavity = 10L
-#' session = NULL
-#' ratchIter <- tbrIter <- 1L
-#' maxHits = 2
-#' finalIter = 1
+#' # Be sure to check that the score has converged on a global optimum,
+#' # conducting additional iterations and runs as necessary.
 #' 
-#' profvis::profvis(MaximizeParsimony(dataset[1:14], concavity = Inf, maxHits = 10, 
-#' ratchIter = 3L, tbrIter = 6L, finalIter = 3L))
+#' \dontrun{ # launches 'shiny' point-and-click interface
+#'   EasyTrees() 
+#' }
+#' @template MRS
 #' 
-#' MaximizeParsimony(dataset, verbosity = 3, concavity = 10, maxHits = 10)
-#' 
+#' @importFrom shiny setProgress withProgress
 #' @importFrom TreeTools NJTree CharacterInformation
 #' @references
 #' \insertRef{Brazeau2019}{TreeSearch}
@@ -296,7 +290,6 @@ TreeSearch <- function (tree, dataset,
 #' \insertRef{Nixon1999}{TreeSearch}
 #' 
 #' \insertRef{Smith2019}{TreeSearch}
-#' @template MRS
 #' @export
 MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                ratchIter = 12L, tbrIter = 6L, finalIter = 3L,

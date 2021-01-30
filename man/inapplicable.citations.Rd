@@ -125,6 +125,6 @@ in Brazeau, Guillerme and Smith (2018).
 The name of each item corresponds to the datasets listed below.  The value gives its citation.
 }
 \references{
-\insertRef{Brazeau2019}{TreeSearch}
+\insertRef{Brazeau2018}{TreeTools}
 }
 \keyword{datasets}

@@ -76,6 +76,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
 SPRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('SPRMoves')
 
 #' @rdname SPR
+#' @importFrom TreeTools Preorder RootTree
 #' @export
 SPRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   tree <- Preorder(RootTree(tree, tree$tip.label[1]))
@@ -176,10 +177,15 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
 #' @template treeParam
 #' @param whichMove Integer specifying which SPR move index to perform.
 #' @examples 
-#' tree <- BalancedTree(8)
-#' # A random rearrangement
+#' tree <- TreeTools::BalancedTree(8)
+#' 
+#' # Tree must be rooted on leaf
+#' tree <- TreeTools::RootTree(tree, 1)
+#'
+#' # Random rearrangement
 #' cSPR(tree)
-#' # A specified rearrangement
+#'
+#' # Specific rearrangement
 #' cSPR(tree, 9)
 #' @template MRS
 #' @importFrom TreeTools NTip

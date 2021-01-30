@@ -84,29 +84,20 @@ configuring tree search, see the
 \href{https://ms609.github.io/TreeSearch}{package documentation}.
 }
 \examples{
-library(TreeTools)
-load_all()
-data('Lobo', package='TreeTools')
-njtree <- TreeTools::NJTree(Lobo.phy)
+library('TreeTools')
+data('Lobo', package = 'TreeTools')
+dataset <- Lobo.phy
 
-dataset = Lobo.phy
+# A very quick run for demonstration purposes
+MaximizeParsimony(dataset, ratchIter = 0, tbrIter = 1, concavity = 10,
+                  maxHits = 5, verbosity = 4)
 
-dataset <- ReadAsPhyDat('c:/research/r/hyoliths/mbank_X24932_6-19-2018_744.nex')
-tree = NJTree(dataset)
+# Be sure to check that the score has converged on a global optimum,
+# conducting additional iterations and runs as necessary.
 
-verbosity = 5L
-tbrIter = 10
-concavity = 10L
-session = NULL
-ratchIter <- tbrIter <- 1L
-maxHits = 2
-finalIter = 1
-
-profvis::profvis(MaximizeParsimony(dataset[1:14], concavity = Inf, maxHits = 10, 
-ratchIter = 3L, tbrIter = 6L, finalIter = 3L))
-
-MaximizeParsimony(dataset, verbosity = 3, concavity = 10, maxHits = 10)
-
+\dontrun{ # launches 'shiny' point-and-click interface
+  EasyTrees() 
+}
 }
 \references{
 \insertRef{Brazeau2019}{TreeSearch}

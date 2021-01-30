@@ -13,11 +13,12 @@ test_that("tree can be found", {
   set.seed(1)
   random11 <- as.phylo(17905853L, 11, letters[1:11])
   expect_error(TreeSearch(unrooted11, dataset = phy11))
-  expect_equal(comb11, TreeSearch(random11, dataset = phy11, maxIter = 300,
+  expect_equal(comb11, TreeSearch(random11, dataset = phy11, maxIter = 200,
                                   EdgeSwapper = RootedTBRSwap, verbosity = 0L))
   expect_equal(comb11, TreeSearch(random11, phy11, maxIter = 400,
                                   EdgeSwapper = RootedSPRSwap, verbosity = 0L))
-  expect_equal(comb11, TreeSearch(RandomTree(phy11, 'a'), phy11, maxIter = 200,
+  someOtherTree <- as.phylo(29235922L, 11, letters[1:11])
+  expect_equal(comb11, TreeSearch(someOtherTree, phy11, maxIter = 200,
                                   EdgeSwapper = RootedNNISwap, verbosity = 0))
   expect_equal(comb11, Ratchet(random11, phy11, searchIter = 10, searchHits = 5,
                                swappers = RootySwappers, ratchHits = 3,
@@ -27,8 +28,11 @@ test_that("tree can be found", {
   expect_equal(comb11, MaximizeParsimony(phy11, tree = random11, verbosity = 0L)[[1]])
   expect_equal(comb11, MaximizeParsimony(phy11, random11, ratchIter = 0,
                                          verbosity = 0L)[[1]])
-  expect_equal(comb11, MaximizeParsimony(phy11, random11, ratchIter = 0,
-                                         concavity = 10, verbosity = 0L)[[1]])
+  # Interestingly, a good example of a case with multiple optima that require
+  # ratchet to move between
+  iw <- MaximizeParsimony(phy11, random11, ratchIter = 1, tbrIter = 5,
+                         concavity = 10, verbosity = 0L)[[1]]
+  expect_equal(comb11, iw)
 #  expect_equal(SectorialSearch(RandomTree(phy11, 'a'), phy11, verbosity = -1), comb11) # TODO: Sectorial Search not working yet!
 })
 

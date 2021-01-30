@@ -36,7 +36,6 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
-    shiny,
     testthat
 RdMacros: Rdpack
 LinkingTo:

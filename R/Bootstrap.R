@@ -10,9 +10,6 @@
 #' @template verbosityParam
 #' @param \dots further parameters to send to `TreeScorer()`
 #'
-#' @references 
-#' - \insertRef{Smith2019}{TreeSearch}
-#'
 #' @return A tree that is optimal under a random sampling of the original characters
 #' @export
 MorphyBootstrap <- function (edgeList, morphyObj, EdgeSwapper = NNISwap, 
