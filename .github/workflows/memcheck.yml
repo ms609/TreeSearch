@@ -42,7 +42,6 @@ jobs:
       - name: Query dependencies
         run: |
           install.packages('remotes')
-          install.packages('devtools')
           saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
@@ -67,6 +66,7 @@ jobs:
           remotes::install_github("ms609/TreeTools") # Use latest TreeTools, whilst testing 2021-01
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
+          remotes::install_cran('devtools')
         shell: Rscript {0}
         
       - name: Install TreeSearch
