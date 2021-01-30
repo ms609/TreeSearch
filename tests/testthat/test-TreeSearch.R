@@ -17,7 +17,7 @@ test_that("tree can be found", {
                                   EdgeSwapper = RootedTBRSwap, verbosity = 0L))
   expect_equal(comb11, TreeSearch(random11, phy11, maxIter = 400,
                                   EdgeSwapper = RootedSPRSwap, verbosity = 0L))
-  expect_equal(comb11, TreeSearch(RandomTree(phy11, 'a'), phy11, maxIter = 200,
+  expect_equal(comb11, TreeSearch(RandomTree(phy11, 'a'), phy11, maxIter = 250,
                                   EdgeSwapper = RootedNNISwap, verbosity = 0))
   expect_equal(comb11, Ratchet(random11, phy11, searchIter = 10, searchHits = 5,
                                swappers = RootySwappers, ratchHits = 3,
