@@ -268,7 +268,12 @@ TreeSearch <- function (tree, dataset,
 #' data('Lobo', package = 'TreeTools')
 #' dataset <- Lobo.phy
 #' 
-#' MaximizeParsimony(dataset, verbosity = 3, concavity = 10, maxHits = 10)
+#' # A very quick run for demonstration purposes
+#' MaximizeParsimony(dataset, ratchIter = 0, tbrIter = 1, concavity = 10,
+#'                   maxHits = 5, verbosity = 4)
+#' 
+#' # Be sure to check that the score has converged on a global optimum,
+#' # conducting additional iterations and runs as necessary.
 #' 
 #' \dontrun{ # launches 'shiny' point-and-click interface
 #'   EasyTrees() 
