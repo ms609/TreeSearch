@@ -3,6 +3,7 @@
 ^docs$
 ^data-raw$
 ^man-roxygen$
+^memcheck$
 ^pkgdown$
 ^revdep$
 ^CRAN-RELEASE$
@@ -12,6 +13,7 @@ README.md
 cran-comments.md
 vignettes/.RData
 /^\.git/
+/^\.github/
 ^.*\.o$
 ^.*\.dll$
 ^.*\.yml$

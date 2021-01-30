@@ -108,7 +108,9 @@ TBRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
 #'  
 #' @importFrom TreeTools EdgeAncestry
 #' @export
-TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mergeEdges=NULL) {
+TBRSwap <- function(parent, child, nEdge = length(parent), 
+                    edgeToBreak = NULL,
+                    mergeEdges = NULL) {
   if (nEdge < 5) return (list(parent, child)) #TODO do we need to re-root this tree?
   
   # Pick an edge at random
@@ -233,8 +235,11 @@ TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mer
 #' @describeIn TBR All unique trees one TBR move away
 #' @return a list of trees, in parent-child format
 #' @export
-AllTBR <- function (parent, child, nEdge = length(parent), avoid=NULL, retainRoot=FALSE) {
-  moves <- TBRMoves(parent, child, nEdge=nEdge, avoid=avoid, retainRoot=retainRoot)
+AllTBR <- function (parent, child, nEdge = length(parent),
+                    avoid = NULL,
+                    retainRoot = FALSE) {
+  moves <- TBRMoves(parent, child, nEdge = nEdge, avoid = avoid, 
+                    retainRoot = retainRoot)
   newTrees <- apply(moves, 1, function (edges) {
     TBRSwap(parent, child, nEdge, edges[1], edges[2])
   })

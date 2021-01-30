@@ -221,9 +221,6 @@ test_that("RootedSPR fails", {
 })
 
 test_that("SPR is special case of TBR", {
-  #library(devtools); library(testthat); library(ape); load_all()
-  Plot <- function (x) {plot(x); nodelabels(cex=0.8); edgelabels()}
-  
   expect_equal(SPR(tree11, 3, 9), TBR(tree11, 3, c(3, 9)))
   expect_equal(SPR(tree11, 12, 9), TBR(tree11, 12, c(12, 9)))
   expect_equal(root(SPR(tree11, 1, 14), letters[1:5], resolve.root=TRUE), TBR(tree11, 1, c(1, 14)))

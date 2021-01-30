@@ -15,9 +15,6 @@ test_that("tree can be found", {
   expect_error(TreeSearch(unrooted11, dataset = phy11))
   expect_equal(comb11, TreeSearch(random11, dataset = phy11, maxIter = 300,
                                   EdgeSwapper = RootedTBRSwap, verbosity = 0L))
-  expect_equal(comb11, TreeSearch(random11, dataset = phy11, maxIter = 250,
-                                  EdgeSwapper = AllTBR,  stopAtPeak = TRUE,
-                                  stopAtPlateau = 10L, verbosity = 0L))
   expect_equal(comb11, TreeSearch(random11, phy11, maxIter = 400,
                                   EdgeSwapper = RootedSPRSwap, verbosity = 0L))
   expect_equal(comb11, TreeSearch(RandomTree(phy11, 'a'), phy11, maxIter = 200,
@@ -25,6 +22,13 @@ test_that("tree can be found", {
   expect_equal(comb11, Ratchet(random11, phy11, searchIter = 10, searchHits = 5,
                                swappers = RootySwappers, ratchHits = 3,
                                verbosity = 0))
+  
+  expect_error(MaximizeParsimony(phy11, tree = CollapseNode(random11, 13)))
+  expect_equal(comb11, MaximizeParsimony(phy11, tree = random11, verbosity = 0L)[[1]])
+  expect_equal(comb11, MaximizeParsimony(phy11, random11, ratchIter = 0,
+                                         verbosity = 0L)[[1]])
+  expect_equal(comb11, MaximizeParsimony(phy11, random11, ratchIter = 0,
+                                         concavity = 10, verbosity = 0L)[[1]])
 #  expect_equal(SectorialSearch(RandomTree(phy11, 'a'), phy11, verbosity = -1), comb11) # TODO: Sectorial Search not working yet!
 })
 
