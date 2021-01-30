@@ -2,6 +2,7 @@ library("shiny", exclude = 'runExample')
 library("shinyjs", exclude = c('runExample'))
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 library("TreeSearch")
+library("TreeDist")
 
 if (!requireNamespace('TreeDist', quietly = TRUE)) {
   install.packages('TreeDist')
