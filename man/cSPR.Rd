@@ -15,7 +15,7 @@ cSPR(tree, whichMove = NULL)
 \code{cSPR()} expects a tree rooted on a single tip.
 }
 \examples{
-tree <- BalancedTree(8)
+tree <- TreeTools::BalancedTree(8)
 # A random rearrangement
 cSPR(tree)
 # A specified rearrangement

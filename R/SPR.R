@@ -177,7 +177,7 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
 #' @template treeParam
 #' @param whichMove Integer specifying which SPR move index to perform.
 #' @examples 
-#' tree <- BalancedTree(8)
+#' tree <- TreeTools::BalancedTree(8)
 #' # A random rearrangement
 #' cSPR(tree)
 #' # A specified rearrangement
