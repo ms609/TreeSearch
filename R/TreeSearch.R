@@ -44,9 +44,12 @@ EdgeListSearch <- function (edgeList, dataset,
   unimprovedSince <- 0L
   
   for (iter in 1:maxIter) {
-    candidateLists <- RearrangeEdges(edgeList[[1]], edgeList[[2]], dataset=dataset, 
-                             TreeScorer = TreeScorer, EdgeSwapper=EdgeSwapper, 
-                             hits=hits, iter=iter, verbosity=verbosity, ...)
+    candidateLists <- RearrangeEdges(edgeList[[1]], edgeList[[2]], 
+                                     dataset = dataset, 
+                                     TreeScorer = TreeScorer,
+                                     EdgeSwapper = EdgeSwapper,
+                                     hits=hits, iter=iter, verbosity=verbosity,
+                                     ...)
     scoreThisIteration <- candidateLists[[3]]
     hits <- candidateLists[[4]]
     if (forestSize > 1L) {
@@ -292,7 +295,7 @@ TreeSearch <- function (tree, dataset,
 #' 
 #' \insertRef{Nixon1999}{TreeSearch}
 #' 
-#' \insertRef{Smith2019}{TreeTools}
+#' \insertRef{Smith2019}{TreeSearch}
 #' @template MRS
 #' @export
 MaximizeParsimony <- function (dataset, tree = NJTree(dataset),

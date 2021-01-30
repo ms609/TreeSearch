@@ -69,10 +69,10 @@ test_that("IW Scoring", {
   weight <- startWeights
   
   expect_equal(.IWScore(edge, morphyObjects, weight, minLength, concavity),
-               morphy_iw(edge, concavity, weight, 
-                         morphyObjects, charSeq, minLength, Inf))
+               morphy_iw(edge, morphyObjects, weight, minLength, charSeq, 
+                         concavity, Inf))
   
-  expect_equal(Inf, morphy_iw(edge, concavity, weight, 
-                              morphyObjects, charSeq, minLength, 0))
+  expect_equal(Inf, morphy_iw(edge, morphyObjects, weight, minLength, charSeq,
+                              concavity, 0))
   
 })

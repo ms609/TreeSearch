@@ -262,7 +262,8 @@ RootedTBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 #' @describeIn TBR faster version that takes and returns parent and child parameters
 #' @importFrom TreeTools EdgeAncestry
 #' @export
-RootedTBRSwap <- function (parent, child, nEdge=length(parent), edgeToBreak=NULL, mergeEdges=NULL) {
+RootedTBRSwap <- function (parent, child, nEdge=length(parent), 
+                           edgeToBreak = NULL, mergeEdges = NULL) {
   if (nEdge < 5) return (TBRWarning(parent, child, 'Fewer than 4 tips'))
   nTips <- (nEdge / 2L) + 1L
   rootNode <- parent[1]
