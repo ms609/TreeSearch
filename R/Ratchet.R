@@ -43,7 +43,7 @@
 #' 
 #' - \insertRef{Nixon1999}{TreeSearch}
 #' 
-#' - \insertRef{SmithTern}{TreeSearch}
+#' - \insertRef{Smith2019}{TreeSearch}
 #'
 #' @examples
 #' data('Lobo', package='TreeTools')

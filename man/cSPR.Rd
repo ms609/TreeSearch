@@ -7,10 +7,9 @@
 cSPR(tree, whichMove = NULL)
 }
 \arguments{
-\item{whichMove}{Integer specifying which SPR move index to perform.}
+\item{tree}{A tree of class \code{\link{phylo}}.}
 
-\item{edgeToBreak}{Integer from zero to nEdge(tree) - nTip(tree) - 1,
-specifying which internal edge to break.}
+\item{whichMove}{Integer specifying which SPR move index to perform.}
 }
 \description{
 \code{cSPR()} expects a tree rooted on a single tip.

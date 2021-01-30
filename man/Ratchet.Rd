@@ -289,7 +289,7 @@ quickIWResult <- IWRatchet(quickResult, Lobo.phy, concavity = 2.5,
 \references{
 \itemize{
 \item \insertRef{Nixon1999}{TreeSearch}
-\item \insertRef{SmithTern}{TreeSearch}
+\item \insertRef{Smith2019}{TreeSearch}
 }
 }
 \seealso{

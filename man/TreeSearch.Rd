@@ -151,7 +151,7 @@ TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=TBRSwap)}
 }
 \references{
 \itemize{
-\item \insertRef{SmithTern}{TreeSearch}
+\item \insertRef{Smith2019}{TreeSearch}
 }
 }
 \seealso{

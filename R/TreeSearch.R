@@ -154,7 +154,7 @@ EdgeListSearch <- function (edgeList, dataset,
 #' 
 #'
 #' @references
-#' - \insertRef{SmithTern}{TreeSearch}
+#' - \insertRef{Smith2019}{TreeSearch}
 #'
 #' @seealso
 #' \itemize{

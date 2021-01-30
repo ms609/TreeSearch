@@ -56,7 +56,7 @@ Calculate a tree's Parsimony score with a given dataset using implied weights
 \references{
 \itemize{
 \item \insertRef{Goloboff1997}{TreeSearch}
-\item \insertRef{SmithTern}{TreeSearch}
+\item \insertRef{Smith2019}{TreeSearch}
 }
 }
 \seealso{

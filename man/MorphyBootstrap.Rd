@@ -93,6 +93,6 @@ Ratchet bootstrapper
 
 \references{
 \itemize{
-\item \insertRef{SmithTern}{TreeSearch}
+\item \insertRef{Smith2019}{TreeTools}
 }
 }

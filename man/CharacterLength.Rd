@@ -40,7 +40,7 @@ CharacterLength(tree, dataset)
 
 }
 \references{
-\insertRef{Brazeau2018}{TreeSearch}
+\insertRef{Brazeau2018}{TreeTools}
 }
 \seealso{
 Other tree scoring: 

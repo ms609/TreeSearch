@@ -7,6 +7,8 @@
 cNNI(tree, edgeToBreak = NULL, whichSwitch = NULL)
 }
 \arguments{
+\item{tree}{A tree of class \code{\link{phylo}}.}
+
 \item{edgeToBreak}{Integer from zero to nEdge(tree) - nTip(tree) - 1,
 specifying which internal edge to break.}
 

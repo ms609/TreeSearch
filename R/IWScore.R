@@ -19,7 +19,7 @@
 #' @references
 #'  - \insertRef{Goloboff1997}{TreeSearch}
 #'  
-#'  - \insertRef{SmithTern}{TreeSearch}
+#'  - \insertRef{Smith2019}{TreeSearch}
 #'
 #' @examples
 #'   data(referenceTree)
