@@ -1,6 +1,7 @@
-# TreeSearch 0.4.3.9000 (development)
+# TreeSearch 0.4.3.9001 (development)
 
- - C implementations of rearrangement functions
+ - 'shiny' graphical user interface for tree search.
+ - C implementations of rearrangement functions.
 
 # TreeSearch 0.4.3
 
