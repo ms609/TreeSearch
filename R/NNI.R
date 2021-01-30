@@ -58,7 +58,7 @@ NNI <- function (tree, edgeToBreak = NULL) {
 #' @param whichSwitch Integer from zero to one, specifying which way to re-build
 #' the broken internal edge.
 #' @examples 
-#' tree <- BalancedTree(8)
+#' tree <- TreeTools::BalancedTree(8)
 #' # A random rearrangement
 #' cNNI(tree)
 #' # Manual random sampling

@@ -19,7 +19,7 @@ the broken internal edge.}
 \code{cNNI()} expects a tree rooted on a single tip.
 }
 \examples{
-tree <- BalancedTree(8)
+tree <- TreeTools::BalancedTree(8)
 # A random rearrangement
 cNNI(tree)
 # Manual random sampling
