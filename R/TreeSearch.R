@@ -273,7 +273,9 @@ TreeSearch <- function (tree, dataset,
 #' \dontrun{ # launches 'shiny' point-and-click interface
 #'   EasyTrees() 
 #' }
+#' @template MRS
 #' 
+#' @importFrom shiny setProgress withProgress
 #' @importFrom TreeTools NJTree CharacterInformation
 #' @references
 #' \insertRef{Brazeau2019}{TreeSearch}
@@ -283,7 +285,6 @@ TreeSearch <- function (tree, dataset,
 #' \insertRef{Nixon1999}{TreeSearch}
 #' 
 #' \insertRef{Smith2019}{TreeSearch}
-#' @template MRS
 #' @export
 MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                ratchIter = 12L, tbrIter = 6L, finalIter = 3L,

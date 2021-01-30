@@ -93,7 +93,6 @@ MaximizeParsimony(dataset, verbosity = 3, concavity = 10, maxHits = 10)
 \dontrun{ # launches 'shiny' point-and-click interface
   EasyTrees() 
 }
-
 }
 \references{
 \insertRef{Brazeau2019}{TreeSearch}

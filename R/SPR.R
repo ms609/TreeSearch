@@ -76,6 +76,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
 SPRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('SPRMoves')
 
 #' @rdname SPR
+#' @importFrom TreeTools Preorder RootTree
 #' @export
 SPRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   tree <- Preorder(RootTree(tree, tree$tip.label[1]))

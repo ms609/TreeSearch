@@ -75,6 +75,7 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 TBRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('TBRMoves')
 
 #' @rdname TBR 
+#' @importFrom TreeTools Preorder RootTree
 #' @export
 TBRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   tree <- Preorder(RootTree(tree, 1))
