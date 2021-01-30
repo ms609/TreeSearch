@@ -35,7 +35,7 @@ devtools::install_github('ms609/TreeSearch')
 Launch a graphical user interface (beta, development version only)
 by typing `TreeSearch::EasyTrees()` in the R console.
 
-For more control over search settings, see [`?MaximizeParsimony()`](https://ms609.github.io/TreeTools/reference/MaximizeParsimony.html).
+For more control over search settings, see [`?MaximizeParsimony()`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
 
 # Optimality criteria
 
