@@ -4,12 +4,12 @@
 #' (Goloboff 1997).
 #'
 #' @template treeParam
-#' @param dataset Dataset of class \code{phyDat}.  The dataset should have been
+#' @param dataset Dataset of class `phyDat`.  The dataset should have been
 #' prepared using \code{dataset <- \link{PrepareDataIW}(dataset)}; if this step
 #' has not been completed, the dataset will be (time-consumingly) prepared
 #' within the function.
 #' In subsidiary functions, the dataset will have been initialized using 
-#' \code{IWInitMorphy}, and must be destroyed using \code{IWDestroyMorphy}.
+#' [`IWInitMorphy()`], and must be destroyed using [`IWDestroyMorphy()`].
 #' @template concavityParam
 #' @template pointlessDots
 #'
