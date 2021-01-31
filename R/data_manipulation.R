@@ -112,62 +112,65 @@ PrepareDataIW <- function (dataset) {
 #' @return An integer specifying the minimum number of steps that the character
 #'  must contain.
 #'
-#' @examples {
-#'   data('inapplicable.datasets')
-#'   myPhyDat <- inapplicable.phyData[[4]] 
-#'   class(myPhyDat) # phyDat object
-#'   # load your own data with
-#'   # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
-#'   # or Windows users can select a file interactively using:
-#'   # my.PhyDat <- as.phyDat(read.nexus.data(choose.files()))
+#' @examples
+#' data('inapplicable.datasets')
+#' myPhyDat <- inapplicable.phyData[[4]] 
+#' class(myPhyDat) # phyDat object
+#' # load your own data with
+#' # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
+#' # or Windows users can select a file interactively using:
+#' # my.PhyDat <- as.phyDat(read.nexus.data(choose.files()))
+#' 
+#' # Convert list of character codings to an array
+#' myData <- vapply(myPhyDat, I, myPhyDat[[1]])
+#' 
+#' # Convert phyDat's representation of states to binary
+#' myContrast <- attr(myPhyDat, 'contrast')
+#' tokens <- colnames(myContrast)
+#' binaryContrast <- integer(length(tokens))
+#' tokenApplicable <- tokens != '-'
+#' binaryContrast[tokenApplicable] <- 2 ^ (seq_len(sum(tokenApplicable)) - 1)
+#' binaryValues <- apply(myContrast, 1, 
+#'   function (row) sum(binaryContrast[as.logical(row)]))
+#' myStates <- matrix(binaryValues[myData], nrow = nrow(myData),
+#'                    ncol = ncol(myData), dimnames = dimnames(myData))
+#'
+#' # Finally, work out minimum steps 
+#' apply(myStates, 1, MinimumLength)
 #'   
-#'   # Convert list of character codings to an array
-#'   myData <- vapply(myPhyDat, I, myPhyDat[[1]])
-#'   
-#'   # Convert phyDat's representation of states to binary
-#'   myContrast <- attr(myPhyDat, 'contrast')
-#'   tokens <- colnames(myContrast)
-#'   binaryContrast <- integer(length(tokens))
-#'   tokenApplicable <- tokens != '-'
-#'   binaryContrast[tokenApplicable] <- 2 ^ (seq_len(sum(tokenApplicable)) - 1)
-#'   binaryValues <- apply(myContrast, 1, 
-#'     function (row) sum(binaryContrast[as.logical(row)]))
-#'   myStates <- matrix(binaryValues[myData], nrow=nrow(myData),
-#'                      ncol=ncol(myData), dimnames=dimnames(myData))
-#'  
-#'   # Finally, work out minimum steps 
-#'   apply(myStates, 1, MinimumLength)
-#'   
-#' }
 #'
 #' @author Martin R. Smith
 #' @export
 MinimumLength <- function (states) {
   
-  uniqueStates <- unique(states[states>0])
+  uniqueStates <- unique(states[states > 0])
   if (length(uniqueStates) < 2) return (0)
-  tokens <- AsBinary(uniqueStates) > 0
+  tokens <- vapply(uniqueStates, intToBits, raw(32)) != 00
+  tokens <- tokens[apply(tokens, 1, any), ]
+  
   lastDim <- dim(tokens)
   tokensUsed <- 0
   
   repeat {
-    tokens <- tokens[, !duplicated(t(tokens)), drop=FALSE]
-    unambiguous <- rowSums(tokens) == 1
-    tokenNecessary <- apply(tokens[unambiguous, , drop=FALSE], 2, any)
+    tokens <- tokens[!duplicated(tokens), , drop = FALSE]
+    unambiguous <- colSums(tokens) == 1
+    tokenNecessary <- apply(tokens[, unambiguous, drop = FALSE], 1, any)
     statesRemaining <- !unambiguous
-    statesRemaining[statesRemaining] <- rowSums(tokens[statesRemaining, tokenNecessary, drop=FALSE]) == 0
+    statesRemaining[statesRemaining] <- colSums(
+      tokens[tokenNecessary, statesRemaining, drop = FALSE]) == 0
     tokensUsed <- tokensUsed + sum(tokenNecessary)
     
     if (!any(statesRemaining)) return (tokensUsed - 1L)
     
-    tokens <- tokens[statesRemaining, !tokenNecessary, drop=FALSE]
+    tokens <- tokens[!tokenNecessary, statesRemaining, drop = FALSE]
     if (identical(dim(tokens), lastDim)) {
-      unnecessary <- colSums(tokens) == 1
+      unnecessary <- rowSums(tokens) == 1
       if (any(unnecessary)) {
-        tokens <- tokens[, !unnecessary, drop=FALSE]
+        tokens <- tokens[!unnecessary, , drop = FALSE]
       } else {
         stop("The token configuration [", paste(states, collapse=" "), 
-             "] is not correctly handled by MinimumLength\n Please report this bug at ",
+             "] is not correctly handled by MinimumLength()\n",
+             "Please report this bug at ",
              "https://github.com/ms609/TreeSearch/issues/new")
       }
     }
