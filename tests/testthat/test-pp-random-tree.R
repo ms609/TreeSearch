@@ -87,8 +87,10 @@ test_that("six-tip trees are randomly scored", {
   expect_true(expectedBounds[1] < sum(scores==1) && expectedBounds[2] > sum(scores==1))  
   
   morphyObj <- MorphyWith('001122;')
-  expectedBounds <- qbinom(c(stringency, 1-stringency), nTrees, 7 / NUnrooted(nTip))
-  scores <- vapply(logical(nTrees), function (XX) RandomTreeScore(nTip, morphyObj), integer(1))
+  expectedBounds <- qbinom(c(stringency, 1 - stringency), nTrees, 7 / NUnrooted(nTip))
+  scores <- vapply(logical(nTrees), 
+                   function (XX) RandomTreeScore(nTip, morphyObj),
+                   integer(1))
   morphyObj <- UnloadMorphy(morphyObj)
   
   expect_true(all(scores %in% 2:4))
