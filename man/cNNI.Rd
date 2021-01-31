@@ -2,7 +2,7 @@
 % Please edit documentation in R/NNI.R
 \name{cNNI}
 \alias{cNNI}
-\title{\code{cNNI()} expects a tree rooted on a single tip.}
+\title{Nearest-neighbour interchange}
 \usage{
 cNNI(tree, edgeToBreak = NULL, whichSwitch = NULL)
 }
@@ -15,7 +15,15 @@ specifying which internal edge to break.}
 \item{whichSwitch}{Integer from zero to one, specifying which way to re-build
 the broken internal edge.}
 }
+\value{
+A tree of class \code{phylo} on which the specified rearrangement has
+been conducted.
+}
 \description{
+\code{cNNI()} performs a nearest neighbour interchange using C; it is faster than
+\code{NNI()}.
+}
+\details{
 \code{cNNI()} expects a tree rooted on a single tip.
 }
 \examples{
@@ -26,6 +34,10 @@ cNNI(tree)
 cNNI(tree, sample.int(14 - 8 - 1, 1), sample.int(2, 1))
 # A specified rearrangement
 cNNI(tree, 0, 0)
+}
+\references{
+The algorithm is summarized in
+\insertRef{Felsenstein2004}{TreeSearch}
 }
 \author{
 \href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}

@@ -51,12 +51,24 @@ NNI <- function (tree, edgeToBreak = NULL) {
   }
 }
 
+#' Nearest-neighbour interchange 
+#' 
+#' `cNNI()` performs a nearest neighbour interchange using C; it is faster than
+#' `NNI()`.
+#' 
 #' `cNNI()` expects a tree rooted on a single tip. 
 #' @template treeParam
 #' @param edgeToBreak Integer from zero to nEdge(tree) - nTip(tree) - 1, 
 #' specifying which internal edge to break.
 #' @param whichSwitch Integer from zero to one, specifying which way to re-build
 #' the broken internal edge.
+#' 
+#' @return A tree of class `phylo` on which the specified rearrangement has 
+#' been conducted.
+#' 
+#' @references
+#' The algorithm is summarized in
+#'  \insertRef{Felsenstein2004}{TreeSearch}
 #' @examples 
 #' tree <- TreeTools::BalancedTree(8)
 #' # A random rearrangement
