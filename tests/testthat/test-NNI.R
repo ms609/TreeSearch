@@ -1,5 +1,5 @@
 test_that("Errors fail gracefully", {
-  expect_error(nni(BalancedTree(2)$edge, 0, 0))
+  expect_error(nni(TreeTools::BalancedTree(2)$edge, 0, 0))
 })
 
 test_that("cNNI()", {
