@@ -158,7 +158,7 @@ MinimumLength <- function (states) {
     statesRemaining[statesRemaining] <- rowSums(tokens[statesRemaining, tokenNecessary, drop=FALSE]) == 0
     tokensUsed <- tokensUsed + sum(tokenNecessary)
     
-    if (!any(statesRemaining)) return (tokensUsed - 1)
+    if (!any(statesRemaining)) return (tokensUsed - 1L)
     
     tokens <- tokens[statesRemaining, !tokenNecessary, drop=FALSE]
     if (identical(dim(tokens), lastDim)) {
