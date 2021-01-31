@@ -85,12 +85,13 @@ test_that("Morphy generates correct lengths", {
   moSummary <- summary(morphyObj)
   expect_equal(c(length(bigPhy), attr(bigPhy, 'nr'), length(bigPhy) - 1),
                c(moSummary$nTax, moSummary$nChar, moSummary$nInternal))
-  expect_equal('0123', moSummary$allStates)
   tree_length <- MorphyTreeLength(tree, morphyObj)
   UnloadMorphy(morphyObj)
+  
+  expect_equal('0123', moSummary$allStates)
   expect_equal(tree_length, sum(expected_results))
   
-  tree_score_iw <- IWScore(tree, bigPhy, concavity=6)
+  tree_score_iw <- IWScore(tree, bigPhy, concavity = 6)
   expected_fit <- expected_homoplasies / (expected_homoplasies + 6)
   expect_equal(sum(expected_fit), tree_score_iw)
 
@@ -106,10 +107,9 @@ test_that("Morphy generates correct lengths", {
     phy <- TreeTools::StringToPhyDat(bigChars[test], bigTree$tip.label)
     # Presently a good test to confirm that PhyDat2Morphy works with single-character phys
     morphyObj <- PhyDat2Morphy(phy)
+    on.exit(UnloadMorphy(morphyObj))
     tree_length <- MorphyTreeLength(bigTree, morphyObj)
-    UnloadMorphy(morphyObj)
-    #if (tree_length != expected_results[test]) message("Test case", test - 1, bigChars[test], "unequal: Morphy calcluates",
-    #  tree_length, "instead of", expected_results[test],"\n")
+    
     expect_equal(tree_length, expected_results[test])
   }
 })
