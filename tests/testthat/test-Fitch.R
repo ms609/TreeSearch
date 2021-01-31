@@ -64,10 +64,10 @@ test_that("Morphy generates correct lengths", {
   for(test in seq_along(characters)) {
     morphyObj <- SingleCharMorphy(characters[test])
     tree_length <- MorphyTreeLength(tree, morphyObj)
+    morphyObj <- UnloadMorphy(morphyObj)
     #if (tree_length != expected_results[test]) message("Test case", test - 1, characters[test], "unequal: Morphy calcluates",
     #  tree_length, "instead of", expected_results[test],"\n")
     expect_equal(tree_length, expected_results[test])
-    morphyObj <- UnloadMorphy(morphyObj)
   }
   ## Test combined matrix
   bigPhy <- TreeTools::StringToPhyDat(paste0(characters, collapse='\n'), tree$tip.label, 
