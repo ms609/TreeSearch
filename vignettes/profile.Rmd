@@ -52,8 +52,7 @@ we'll use a simulated dataset that comes bundled with the `TreeSearch` package.
 
 ```{r Load Longrich data}
 data(congreveLamsdellMatrices)
-my.data <- congreveLamsdellMatrices[[10]]
-my.phyDat <- phangorn::phyDat(my.data, type = 'USER', levels = c(1, 2))
+my.phyDat <- congreveLamsdellMatrices[[10]]
 ```
 
 We then need to prepare our dataset for Profile Parsimony by calculating the 
