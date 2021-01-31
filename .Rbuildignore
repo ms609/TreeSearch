@@ -1,3 +1,4 @@
+.covrignore
 .github
 ^Meta$
 ^doc$
