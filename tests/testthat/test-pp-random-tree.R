@@ -113,7 +113,7 @@ test_that("twelve-tip trees are randomly scored", {
   stringency <- 0.01 #  increased from 0.005 to avoid false +ves
   nTip <- 12
   morphyObj <- MorphyWith('000000011111;')
-  on.exit(UnloadMorphy(morphyObj))
+  on.exit(morphyObj <- UnloadMorphy(morphyObj))
   expectedBounds <- qbinom(c(stringency, 1 - stringency), nTrees, 
                            NUnrooted(7) * (2 * 7 - 3) *
                            NUnrooted(5) * (2 * 5 - 3) / NUnrooted(nTip))

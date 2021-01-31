@@ -48,7 +48,7 @@ summary.morphyPtr <- function (object, ...) {
 #' MorphyWeights(morphyObj)
 #' if (SetMorphyWeights(c(1, 1.5, 2/3), morphyObj) != 0L) message("Errored")
 #' MorphyWeights(morphyObj)
-#' UnloadMorphy(morphyObj)
+#' morphyObj <- UnloadMorphy(morphyObj)
 #' @template MRS
 #' @family Morphy API functions
 #' @export
@@ -92,13 +92,13 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 #' data('Lobo', package='TreeTools')
 #' morphyObj <- PhyDat2Morphy(Lobo.phy)
 #' # Set object to be destroyed at end of session or closure of function
-#' on.exit(UnloadMorphy(morphyObj))
+#' # on.exit(morphyObj <- UnloadMorphy(morphyObj))
 #' 
 #' # Do something with pointer
 #' # ....
 #' 
-#' # Manually destroy morphy object and free memory
-#' UnloadMorphy(morphyObj)
+#' # Or, instead of on.exit, manually destroy morphy object and free memory:
+#' # morphyObj <- UnloadMorphy(morphyObj)
 #' @template MRS
 #' @family Morphy API functions
 #' @importFrom phangorn phyDat
@@ -185,7 +185,7 @@ SingleCharMorphy <- function (char) {
 #'
 #' Destroys a previously-created Morphy object.
 #'
-#' Best practice is to call \code{morphyObj <- UnloadMorphy(morphyObj)}
+#' Best practice is to call `morphyObj <- UnloadMorphy(morphyObj)`
 #' Failure to do so will cause a crash if `UnloadMorphy()` is called on an
 #' object that  has already been destroyed
 #'

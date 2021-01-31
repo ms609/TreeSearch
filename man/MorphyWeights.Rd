@@ -43,7 +43,7 @@ morphyObj <- PhyDat2Morphy(pd)
 MorphyWeights(morphyObj)
 if (SetMorphyWeights(c(1, 1.5, 2/3), morphyObj) != 0L) message("Errored")
 MorphyWeights(morphyObj)
-UnloadMorphy(morphyObj)
+morphyObj <- UnloadMorphy(morphyObj)
 }
 \seealso{
 Other Morphy API functions: 

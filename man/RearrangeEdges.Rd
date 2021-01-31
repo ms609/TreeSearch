@@ -73,7 +73,7 @@ child <- edge[, 2]
 dataset <- PhyDat2Morphy(Lobo.phy)
 RearrangeEdges(parent, child, dataset, EdgeSwapper = RootedNNISwap)
 # Remember to free memory:
-UnloadMorphy(dataset)
+dataset <- UnloadMorphy(dataset)
 }
 \author{
 Martin R. Smith

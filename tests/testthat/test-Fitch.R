@@ -86,7 +86,7 @@ test_that("Morphy generates correct lengths", {
   expect_equal(c(length(bigPhy), attr(bigPhy, 'nr'), length(bigPhy) - 1),
                c(moSummary$nTax, moSummary$nChar, moSummary$nInternal))
   tree_length <- MorphyTreeLength(tree, morphyObj)
-  UnloadMorphy(morphyObj)
+  morphyObj <- UnloadMorphy(morphyObj)
   
   expect_equal('0123', moSummary$allStates)
   expect_equal(tree_length, sum(expected_results))
@@ -107,7 +107,7 @@ test_that("Morphy generates correct lengths", {
     phy <- TreeTools::StringToPhyDat(bigChars[test], bigTree$tip.label)
     # Presently a good test to confirm that PhyDat2Morphy works with single-character phys
     morphyObj <- PhyDat2Morphy(phy)
-    on.exit(UnloadMorphy(morphyObj))
+    on.exit(morphyObj <- UnloadMorphy(morphyObj))
     tree_length <- MorphyTreeLength(bigTree, morphyObj)
     
     expect_equal(tree_length, expected_results[test])

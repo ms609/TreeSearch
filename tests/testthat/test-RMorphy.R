@@ -19,7 +19,7 @@ test_that("preorder_morphy()", {
                                  0, 0, 0, 1, 1, 1), byrow = FALSE, 6,
                                dimnames = list(TipLabels(6), NULL)))
   morphyObj <- PhyDat2Morphy(dat)
-  on.exit(UnloadMorphy(morphyObj))
+  on.exit(morphyObj <- UnloadMorphy(morphyObj))
   tree$edge - 1
   expect_equal(4L, preorder_morphy(tree$edge, morphyObj))
 })
