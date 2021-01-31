@@ -98,7 +98,7 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 #' # ....
 #' 
 #' # Manually destroy morphy object and free memory
-#' UnloadMorphy(dataset)
+#' UnloadMorphy(morphyObj)
 #' @template MRS
 #' @family Morphy API functions
 #' @importFrom phangorn phyDat

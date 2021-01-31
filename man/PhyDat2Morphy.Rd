@@ -28,7 +28,7 @@ on.exit(UnloadMorphy(morphyObj))
 # ....
 
 # Manually destroy morphy object and free memory
-UnloadMorphy(dataset)
+UnloadMorphy(morphyObj)
 }
 \seealso{
 Other Morphy API functions: 
