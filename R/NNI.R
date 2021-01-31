@@ -18,14 +18,14 @@
 #' The algorithm is summarized in
 #'  \insertRef{Felsenstein2004}{TreeSearch}
 #' 
-#' @author Martin R. Smith
-#' @family tree rearrangement functions
 #' 
 #' @examples
 #' tree <- ape::rtree(20, br = NULL)
 #' NNI(tree)
-#' NNI(tree, edgeToBreak = -1)
+#' structure(NNI(tree, edgeToBreak = -1), class = 'multiPhylo')
+#' @template MRS
 #'
+#' @family tree rearrangement functions
 #' @export
 NNI <- function (tree, edgeToBreak = NULL) {
   edge <- tree$edge

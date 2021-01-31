@@ -67,8 +67,7 @@ All nodes in a tree must be bifurcating; \code{\link[ape:collapse.singles]{ape::
 \examples{
 tree <- ape::rtree(20, br = NULL)
 NNI(tree)
-NNI(tree, edgeToBreak = -1)
-
+structure(NNI(tree, edgeToBreak = -1), class = 'multiPhylo')
 }
 \references{
 The algorithm is summarized in
@@ -80,6 +79,7 @@ Other tree rearrangement functions:
 \code{\link{TBR}()}
 }
 \author{
-Martin R. Smith
+\href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{tree rearrangement functions}
