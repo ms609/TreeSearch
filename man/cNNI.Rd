@@ -9,22 +9,23 @@ cNNI(tree, edgeToBreak = NULL, whichSwitch = NULL)
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
-\item{edgeToBreak}{Integer from zero to nEdge(tree) - nTip(tree) - 1,
+\item{edgeToBreak}{Integer from zero to nEdge(tree) - nTip(tree) - 2,
 specifying which internal edge to break.}
 
 \item{whichSwitch}{Integer from zero to one, specifying which way to re-build
 the broken internal edge.}
 }
 \value{
-A tree of class \code{phylo} on which the specified rearrangement has
-been conducted.
+A tree of class \code{phylo}, rooted on the same leaf,
+on which the specified rearrangement has been conducted.
 }
 \description{
 \code{cNNI()} performs a nearest neighbour interchange using C; it is faster than
 \code{NNI()}.
 }
 \details{
-\code{cNNI()} expects a tree rooted on a single tip.
+\code{cNNI()} expects a binary tree rooted on a single leaf, whose root node
+is the lowest numbered internal node.
 }
 \examples{
 tree <- TreeTools::BalancedTree(8)
@@ -34,6 +35,15 @@ cNNI(tree)
 cNNI(tree, sample.int(14 - 8 - 1, 1), sample.int(2, 1))
 # A specified rearrangement
 cNNI(tree, 0, 0)
+
+If a tree may not be binary, collapse nodes with
+tree <- TreeTools::MakeTreeBinary(tree)
+
+If a tree may be improperly rooted, use
+tree <- TreeTools::RootTree(tree, 1)
+
+If a tree may exhibit unusual node ordering, this can be addressed with
+tree <- TreeTools::Preorder(tree)
 }
 \references{
 The algorithm is summarized in

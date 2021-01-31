@@ -9,7 +9,7 @@ typedef int_fast16_t int16;
 const int16 UNDEFINED = -1;
 
 // Assumptions: 
-//  * Tree is bifurcating and rooted on a tip.
+//  * Tree is bifurcating and rooted on a tip; root node is labelled with n_tip + 1
 //  [[Rcpp::export]]
 IntegerMatrix nni(const IntegerMatrix edge,
                   const IntegerVector randomEdge,
@@ -22,7 +22,7 @@ IntegerMatrix nni(const IntegerMatrix edge,
   int16 n_samplable = 0;
   int16 *samplable = new int16[n_edge];
   for (int16 i = n_edge; --i; ) {
-    if (edge(i, 1) > n_tip) {
+    if (edge(i, 1) > n_tip && edge(i, 0) != n_tip + 1) {
       samplable[n_samplable++] = i;
     }
   }
