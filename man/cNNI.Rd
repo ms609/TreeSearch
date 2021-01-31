@@ -36,13 +36,13 @@ cNNI(tree, sample.int(14 - 8 - 1, 1), sample.int(2, 1))
 # A specified rearrangement
 cNNI(tree, 0, 0)
 
-If a tree may not be binary, collapse nodes with
+# If a tree may not be binary, collapse nodes with
 tree <- TreeTools::MakeTreeBinary(tree)
 
-If a tree may be improperly rooted, use
+# If a tree may be improperly rooted, use
 tree <- TreeTools::RootTree(tree, 1)
 
-If a tree may exhibit unusual node ordering, this can be addressed with
+# If a tree may exhibit unusual node ordering, this can be addressed with
 tree <- TreeTools::Preorder(tree)
 }
 \references{
