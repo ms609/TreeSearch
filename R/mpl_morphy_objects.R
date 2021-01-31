@@ -92,13 +92,13 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 #' data('Lobo', package='TreeTools')
 #' morphyObj <- PhyDat2Morphy(Lobo.phy)
 #' # Set object to be destroyed at end of session or closure of function
-#' # on.exit(morphyObj <- UnloadMorphy(morphyObj))
+#' # on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
 #' 
 #' # Do something with pointer
 #' # ....
 #' 
 #' # Or, instead of on.exit, manually destroy morphy object and free memory:
-#' # morphyObj <- UnloadMorphy(morphyObj)
+#' morphyObj <- UnloadMorphy(morphyObj)
 #' @template MRS
 #' @family Morphy API functions
 #' @importFrom phangorn phyDat
