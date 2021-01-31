@@ -1,3 +1,7 @@
+test_that("Errors fail gracefully", {
+  expect_error(nni(BalancedTree(2)$edge, 0, 0))
+})
+
 test_that("cNNI()", {
   tr <- Preorder(root(TreeTools::BalancedTree(letters[1:7]), 'a', resolve.root = TRUE))
   expect_equal(ape::read.tree(text="(a,(b,((c,d),((e,g),f))));"),
