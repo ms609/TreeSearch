@@ -80,12 +80,26 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 #' Initialize a Morphy Object from a `phyDat` object
 #' 
 #' Creates a new Morphy object with the same size and characters as the 
-#' `phyDat` object 
+#' `phyDat` object. 
+#' Once finished with the object, it should be destroyed using
+#' [`UnloadMorphy()`] to free the allocated memory.
+#' 
 #'
 #' @param phy An object of class \code{\link{phyDat}}.
-#' @return A pointer to an initialized Morphy object.
+#' @return `PhyDat2Morphy()` returns a pointer to an initialized Morphy object.
 #' 
-#' @author Martin R. Smith
+#' @examples
+#' data('Lobo', package='TreeTools')
+#' morphyObj <- PhyDat2Morphy(Lobo.phy)
+#' # Set object to be destroyed at end of session or closure of function
+#' on.exit(UnloadMorphy(morphyObj))
+#' 
+#' # Do something with pointer
+#' # ....
+#' 
+#' # Manually destroy morphy object and free memory
+#' UnloadMorphy(dataset)
+#' @template MRS
 #' @family Morphy API functions
 #' @importFrom phangorn phyDat
 #' @importFrom TreeTools PhyToString
