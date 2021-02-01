@@ -17,7 +17,7 @@ are implemented.
 # Installation
 
 Install and load the library from CRAN as follows:
-```
+```r
 install.packages('TreeSearch')
 library('TreeSearch')
 ```
