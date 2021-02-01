@@ -132,7 +132,7 @@ constant, _k_:
 ```{r iw-search}
 iwTrees <- MaximizeParsimony(vinther, concavity = 10)
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-plot(consensus(iwTrees))
+plot(ape::consensus(iwTrees))
 ```
 
 Note that we recommend a default value of 10, somewhat higher than the default 
