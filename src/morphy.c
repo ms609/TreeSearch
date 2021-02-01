@@ -688,6 +688,7 @@ int mpl_setup_partitions(Morphyp handl)
     int numparts        = 0;
     
     if (handl->partitions) {
+        mpl_delete_all_update_buffers(handl); /* MS addition 2021-02-01 */
         mpl_delete_all_partitions(handl);
     }
     
