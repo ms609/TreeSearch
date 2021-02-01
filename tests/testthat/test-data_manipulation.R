@@ -1,5 +1,5 @@
 context("data_manipulation.R")
-test_that("minimum step counts are correctly calculated", {
+test_that("Minimum step counts are correctly calculated", {
   expect_equal(1, MinimumLength(1:3))
   expect_equal(1, MinimumLength(c(1:3, 5)))
   expect_equal(0, MinimumLength(c(6, 7, 14)))

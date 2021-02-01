@@ -48,7 +48,7 @@ summary.morphyPtr <- function (object, ...) {
 #' MorphyWeights(morphyObj)
 #' if (SetMorphyWeights(c(1, 1.5, 2/3), morphyObj) != 0L) message("Errored")
 #' MorphyWeights(morphyObj)
-#' UnloadMorphy(morphyObj)
+#' morphyObj <- UnloadMorphy(morphyObj)
 #' @template MRS
 #' @family Morphy API functions
 #' @export
@@ -80,12 +80,26 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 #' Initialize a Morphy Object from a `phyDat` object
 #' 
 #' Creates a new Morphy object with the same size and characters as the 
-#' `phyDat` object 
+#' `phyDat` object. 
+#' Once finished with the object, it should be destroyed using
+#' [`UnloadMorphy()`] to free the allocated memory.
+#' 
 #'
 #' @param phy An object of class \code{\link{phyDat}}.
-#' @return A pointer to an initialized Morphy object.
+#' @return `PhyDat2Morphy()` returns a pointer to an initialized Morphy object.
 #' 
-#' @author Martin R. Smith
+#' @examples
+#' data('Lobo', package='TreeTools')
+#' morphyObj <- PhyDat2Morphy(Lobo.phy)
+#' # Set object to be destroyed at end of session or closure of function
+#' # on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
+#' 
+#' # Do something with pointer
+#' # ....
+#' 
+#' # Or, instead of on.exit, manually destroy morphy object and free memory:
+#' morphyObj <- UnloadMorphy(morphyObj)
+#' @template MRS
 #' @family Morphy API functions
 #' @importFrom phangorn phyDat
 #' @importFrom TreeTools PhyToString
@@ -134,7 +148,9 @@ PhyDat2Morphy <- function (phy) {
 #' @keywords internal
 #' @export
 MorphyErrorCheck <- function (action) {
-  if (action -> error) stop("Morphy object encountered error ", mpl_translate_error(error), "\n")
+  if (action -> error) {
+    stop("Morphy object encountered error ", mpl_translate_error(error), "\n")
+  }
 }
 
 #' Morphy object from single character
@@ -151,7 +167,7 @@ MorphyErrorCheck <- function (action) {
 #' @family Morphy API functions
 #' @export
 SingleCharMorphy <- function (char) {
-  char <- paste0(c(char, ';'), collapse='')
+  char <- paste0(c(char, ';'), collapse = '')
   entries <- gregexpr("\\{[^\\{]+\\}|\\([^\\()]+\\)|[^;]", char)
   nTip <- length(entries[[1]])
   morphyObj <- mpl_new_Morphy()
@@ -169,7 +185,7 @@ SingleCharMorphy <- function (char) {
 #'
 #' Destroys a previously-created Morphy object.
 #'
-#' Best practice is to call \code{morphyObj <- UnloadMorphy(morphyObj)}
+#' Best practice is to call `morphyObj <- UnloadMorphy(morphyObj)`
 #' Failure to do so will cause a crash if `UnloadMorphy()` is called on an
 #' object that  has already been destroyed
 #'

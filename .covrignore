@@ -1,0 +1,6 @@
+src/RMorphyUtils.c
+src/fitch.c
+src/morphy.c
+src/mpl.c
+src/statedata.c
+src/wagner.c

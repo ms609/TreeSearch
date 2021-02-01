@@ -18,14 +18,14 @@
 #' The algorithm is summarized in
 #'  \insertRef{Felsenstein2004}{TreeSearch}
 #' 
-#' @author Martin R. Smith
-#' @family tree rearrangement functions
 #' 
 #' @examples
 #' tree <- ape::rtree(20, br = NULL)
 #' NNI(tree)
-#' NNI(tree, edgeToBreak = -1)
+#' structure(NNI(tree, edgeToBreak = -1), class = 'multiPhylo')
+#' @template MRS
 #'
+#' @family tree rearrangement functions
 #' @export
 NNI <- function (tree, edgeToBreak = NULL) {
   edge <- tree$edge
@@ -51,12 +51,25 @@ NNI <- function (tree, edgeToBreak = NULL) {
   }
 }
 
-#' `cNNI()` expects a tree rooted on a single tip. 
+#' Nearest-neighbour interchange 
+#' 
+#' `cNNI()` performs a nearest neighbour interchange using C; it is faster than
+#' `NNI()`.
+#' 
+#' `cNNI()` expects a binary tree rooted on a single leaf, whose root node
+#' is the lowest numbered internal node.
 #' @template treeParam
-#' @param edgeToBreak Integer from zero to nEdge(tree) - nTip(tree) - 1, 
+#' @param edgeToBreak Integer from zero to nEdge(tree) - nTip(tree) - 2, 
 #' specifying which internal edge to break.
 #' @param whichSwitch Integer from zero to one, specifying which way to re-build
 #' the broken internal edge.
+#' 
+#' @return A tree of class `phylo`, rooted on the same leaf,
+#' on which the specified rearrangement has been conducted.
+#' 
+#' @references
+#' The algorithm is summarized in
+#'  \insertRef{Felsenstein2004}{TreeSearch}
 #' @examples 
 #' tree <- TreeTools::BalancedTree(8)
 #' # A random rearrangement
@@ -65,6 +78,15 @@ NNI <- function (tree, edgeToBreak = NULL) {
 #' cNNI(tree, sample.int(14 - 8 - 1, 1), sample.int(2, 1))
 #' # A specified rearrangement
 #' cNNI(tree, 0, 0)
+#' 
+#' # If a tree may not be binary, collapse nodes with
+#' tree <- TreeTools::MakeTreeBinary(tree)
+#' 
+#' # If a tree may be improperly rooted, use
+#' tree <- TreeTools::RootTree(tree, 1)
+#' 
+#' # If a tree may exhibit unusual node ordering, this can be addressed with
+#' tree <- TreeTools::Preorder(tree)
 #' @template MRS
 #' @importFrom TreeTools NTip
 #' @export

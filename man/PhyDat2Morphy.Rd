@@ -10,11 +10,25 @@ PhyDat2Morphy(phy)
 \item{phy}{An object of class \code{\link{phyDat}}.}
 }
 \value{
-A pointer to an initialized Morphy object.
+\code{PhyDat2Morphy()} returns a pointer to an initialized Morphy object.
 }
 \description{
 Creates a new Morphy object with the same size and characters as the
-\code{phyDat} object
+\code{phyDat} object.
+Once finished with the object, it should be destroyed using
+\code{\link[=UnloadMorphy]{UnloadMorphy()}} to free the allocated memory.
+}
+\examples{
+data('Lobo', package='TreeTools')
+morphyObj <- PhyDat2Morphy(Lobo.phy)
+# Set object to be destroyed at end of session or closure of function
+# on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
+
+# Do something with pointer
+# ....
+
+# Or, instead of on.exit, manually destroy morphy object and free memory:
+morphyObj <- UnloadMorphy(morphyObj)
 }
 \seealso{
 Other Morphy API functions: 
@@ -47,6 +61,7 @@ Other Morphy API functions:
 \code{\link{summary.morphyPtr}()}
 }
 \author{
-Martin R. Smith
+\href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{Morphy API functions}

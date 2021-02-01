@@ -75,14 +75,14 @@ jobs:
           R CMD build --no-manual --no-resave-data TreeSearch
           R CMD INSTALL TreeSearch*.tar.gz
           cd TreeSearch
-
-      - name: valgrind - memcheck tests
-        run: |
-          R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < memcheck/tests.R
       
       - name: valgrind - memcheck examples
         run: |
           R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < memcheck/examples.R
+
+      - name: valgrind - memcheck tests
+        run: |
+          R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < memcheck/tests.R
       
       - name: valgrind - memcheck vignettes
         run: |
