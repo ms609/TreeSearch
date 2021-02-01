@@ -1,5 +1,6 @@
-library("shiny", exclude = 'runExample')
-library("shinyjs", exclude = c('runExample'))
+library("methods", exclude = c('show', 'removeClass'))
+library("shiny", exclude = c('runExample'))
+suppressPackageStartupMessages(library("shinyjs", exclude = c('runExample')))
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 library("TreeSearch")
 library("TreeDist")
