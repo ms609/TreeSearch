@@ -127,10 +127,12 @@ conducted without also considering the results of implied weights [@Goloboff1997
 ideally under a range of concavity constants [cf. @Smith2014].
 
 Implied weights can be activated by simply specifying a value of the concavity 
-constant, `k`:
+constant, _k_:
 
-```
-MaximizeParsimony(vinther, k = 10)
+```{r iw-search}
+iwTrees <- MaximizeParsimony(vinther, concavity = 10)
+par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
+plot(consensus(iwTrees))
 ```
 
 Note that we recommend a default value of 10, somewhat higher than the default 
