@@ -10,23 +10,27 @@
 
 
 <!-- jquery -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
+
+<!-- bootstrap-toc -->
+<link rel="stylesheet" href="../bootstrap-toc.css">
+<script src="../bootstrap-toc.js"></script>
 
 <!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous" />
 
 <!-- clipboard.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script>
 
 <!-- headroom.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -35,7 +39,7 @@
 
 <!-- docsearch -->
 <script src="../docsearch.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.1/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.3/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous" />
 <link href="../docsearch.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
 
@@ -69,7 +73,7 @@
 
   </head>
 
-  <body>
+  <body data-spy="scroll" data-target="#toc">
     <div class="container template-reference-index">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -83,7 +87,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.3.2.9008</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9001</span>
       </span>
     </div>
 
@@ -91,7 +95,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -106,22 +110,13 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/filesystem-navigation.html">File system navigation in R</a>
+      <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
+      <a href="../articles/inapplicable.html">Tree search with inapplicable data</a>
     </li>
     <li>
-      <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
-    </li>
-    <li>
-      <a href="../articles/load-data.html">Loading phylogenetic data into R</a>
-    </li>
-    <li>
-      <a href="../articles/load-trees.html">Loading phylogenetic trees into R</a>
-    </li>
-    <li>
-      <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
+      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -134,8 +129,8 @@
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/ms609/TreeSearch">
-    <span class="fab fa fab fa-github fa-lg"></span>
+  <a href="https://github.com/ms609/TreeSearch/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -176,6 +171,11 @@
           <p class="section-desc"><p>Functions to search for optimal phylogenetic trees.</p></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
@@ -214,10 +214,15 @@
           <p class="section-desc"><p>Functions that provide tree scores, for optimization.</p></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
-          <p><code><a href="CharacterLength.html">CharacterLength()</a></code> <code><a href="CharacterLength.html">FitchSteps()</a></code> <code><a href="CharacterLength.html">FastCharacterLength()</a></code> <code><a href="CharacterLength.html">FitchSteps()</a></code> </p>
+          <p><code><a href="CharacterLength.html">CharacterLength()</a></code> <code><a href="CharacterLength.html">FitchSteps()</a></code> <code><a href="CharacterLength.html">FastCharacterLength()</a></code> </p>
         </td>
         <td><p>Character length</p></td>
       </tr><tr>
@@ -254,36 +259,15 @@
     </tbody><tbody>
       <tr>
         <th colspan="2">
-          <h2 id="section-node-support" class="hasAnchor"><a href="#section-node-support" class="anchor"></a>Node support</h2>
-          <p class="section-desc"><p>Functions that describe support for nodes in trees.</p></p>
+          <h2 id="section-tree-rearrangement" class="hasAnchor"><a href="#section-tree-rearrangement" class="anchor"></a>Tree rearrangement</h2>
+          <p class="section-desc"><p>Tree rearrangement functions</p></p>
         </th>
       </tr>
-      <tr>
-        
-        <td>
-          <p><code><a href="SplitFrequency.html">SplitFrequency()</a></code> <code><a href="SplitFrequency.html">SplitNumber()</a></code> <code><a href="SplitFrequency.html">ForestSplits()</a></code> <code><a href="SplitFrequency.html">TreeSplits()</a></code> </p>
-        </td>
-        <td><p>Frequency of splits</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="SupportColour.html">SupportColour()</a></code> <code><a href="SupportColour.html">SupportColor()</a></code> </p>
-        </td>
-        <td><p>Support colour</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="Suboptimality.html">Suboptimality()</a></code> </p>
-        </td>
-        <td><p>Tree suboptimality</p></td>
-      </tr>
+      
+      
     </tbody><tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-tree-manipulation" class="hasAnchor"><a href="#section-tree-manipulation" class="anchor"></a>Tree manipulation</h2>
-          <p class="section-desc"><p>Functions for editing phylogenetic trees.</p></p>
-        </th>
-      </tr>
+      
+      
       <tr>
         
         <td>
@@ -293,307 +277,52 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="cNNI.html">cNNI()</a></code> </p>
+        </td>
+        <td><p>Nearest-neighbour interchange</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="AllSPR.html">AllSPR()</a></code> </p>
         </td>
         <td><p>All SPR trees</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="SPR.html">SPR()</a></code> <code><a href="SPR.html">SPRSwap()</a></code> <code><a href="SPR.html">RootedSPR()</a></code> <code><a href="SPR.html">RootedSPRSwap()</a></code> </p>
+          <p><code><a href="SPR.html">SPR()</a></code> <code><a href="SPR.html">SPRMoves()</a></code> <code><a href="SPR.html">SPRSwap()</a></code> <code><a href="SPR.html">RootedSPR()</a></code> <code><a href="SPR.html">RootedSPRSwap()</a></code> </p>
         </td>
         <td><p>Subtree Pruning and Rearrangement (SPR)</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="TBR.html">TBR()</a></code> <code><a href="TBR.html">TBRSwap()</a></code> <code><a href="TBR.html">TBRMoves()</a></code> <code><a href="TBR.html">AllTBR()</a></code> <code><a href="TBR.html">RootedTBR()</a></code> <code><a href="TBR.html">RootedTBRSwap()</a></code> </p>
+          <p><code><a href="cSPR.html">cSPR()</a></code> </p>
+        </td>
+        <td><p><code>cSPR()</code> expects a tree rooted on a single tip.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="TBR.html">TBR()</a></code> <code><a href="TBR.html">TBRMoves()</a></code> <code><a href="TBR.html">TBRSwap()</a></code> <code><a href="TBR.html">RootedTBR()</a></code> <code><a href="TBR.html">RootedTBRSwap()</a></code> </p>
         </td>
         <td><p>Tree bisection and reconnection (TBR)</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="AddTip.html">AddTip()</a></code> </p>
-        </td>
-        <td><p>Add a tip to a phylogenetic tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="AllAncestors.html">AllAncestors()</a></code> </p>
-        </td>
-        <td><p>List all ancestral nodes</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="AncestorEdge.html">AncestorEdge()</a></code> </p>
-        </td>
-        <td><p>Ancestral edge</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="CladeSizes.html">CladeSizes()</a></code> </p>
-        </td>
-        <td><p>Clade sizes</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="CollapseNode.html">CollapseNode()</a></code> <code><a href="CollapseNode.html">CollapseEdge()</a></code> </p>
-        </td>
-        <td><p>Collapse nodes on a phylogenetic tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="ConsensusWithout.html">ConsensusWithout()</a></code> <code><a href="ConsensusWithout.html">MarkMissing()</a></code> </p>
-        </td>
-        <td><p>Consensus without taxa</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="DescendantEdges.html">DescendantEdges()</a></code> <code><a href="DescendantEdges.html">AllDescendantEdges()</a></code> </p>
-        </td>
-        <td><p>Descendant Edges</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="EdgeAncestry.html">EdgeAncestry()</a></code> </p>
-        </td>
-        <td><p>EdgeAncestry</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="EnforceOutgroup.html">EnforceOutgroup()</a></code> </p>
-        </td>
-        <td><p>Force taxa to form an outgroup</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="MRCA.html">MRCA()</a></code> </p>
-        </td>
-        <td><p>Most Recent Common Ancestor</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="NPartitions.html">NPartitions()</a></code> <code><a href="NPartitions.html">NSplits()</a></code> </p>
-        </td>
-        <td><p>Number of partitions in a tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="NewickTree.html">NewickTree()</a></code> </p>
-        </td>
-        <td><p>Newick Tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="NJTree.html">NJTree()</a></code> </p>
-        </td>
-        <td><p>Neighbour Joining Tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RandomMorphyTree.html">RandomMorphyTree()</a></code> </p>
-        </td>
-        <td><p>Random postorder tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RandomTree.html">RandomTree()</a></code> </p>
-        </td>
-        <td><p>Generate random tree topology from dataset</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="SingleTaxonTree.html">SingleTaxonTree()</a></code> </p>
-        </td>
-        <td><p>SingleTaxonTree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="NonDuplicateRoot.html">NonDuplicateRoot()</a></code> </p>
-        </td>
-        <td><p>Non-duplicate root</p></td>
       </tr><tr>
         
         <td>
           <p><code><a href="RearrangeEdges.html">RearrangeEdges()</a></code> </p>
         </td>
         <td><p>Rearrange edges of a phylogenetic tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="Renumber.html">Renumber()</a></code> </p>
-        </td>
-        <td><p>Renumber a tree's nodes and tips</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RootTree.html">RootTree()</a></code> </p>
-        </td>
-        <td><p>Root Tree on specified tips</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="SortTree.html">SortTree()</a></code> </p>
-        </td>
-        <td><p>Sort tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="Subtree.html">Subtree()</a></code> </p>
-        </td>
-        <td><p>Extract subtree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RenumberTips.html">RenumberTips()</a></code> </p>
-        </td>
-        <td><p>Reorder tips</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="TreeIsRooted.html">TreeIsRooted()</a></code> </p>
-        </td>
-        <td><p>Is tree rooted?</p></td>
       </tr>
     </tbody><tbody>
       <tr>
         <th colspan="2">
-          <h2 id="section-phylogenetic-data" class="hasAnchor"><a href="#section-phylogenetic-data" class="anchor"></a>Phylogenetic data</h2>
-          <p class="section-desc"><p>Functions for modifying and evaluating datasets.</p></p>
+          <h2 id="section-profile-parsimony" class="hasAnchor"><a href="#section-profile-parsimony" class="anchor"></a>Profile parsimony</h2>
+          <p class="section-desc"><p>Functions to help calculate profile parsimony scores.</p></p>
         </th>
       </tr>
-      <tr>
-        
-        <td>
-          <p><code><a href="MinimumLength.html">MinimumLength()</a></code> <code><a href="MinimumLength.html">MinimumSteps()</a></code> </p>
-        </td>
-        <td><p>Minimum length</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="PrepareDataProfile.html">PrepareDataProfile()</a></code> <code><a href="PrepareDataProfile.html">PrepareDataIW()</a></code> </p>
-        </td>
-        <td><p>Prepare data for Profile Parsimony</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="MatrixToPhyDat.html">MatrixToPhyDat()</a></code> <code><a href="MatrixToPhyDat.html">PhyDatToMatrix()</a></code> </p>
-        </td>
-        <td><p>Matrix to phydat</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="PhyToString.html">PhyToString()</a></code> <code><a href="PhyToString.html">PhyDatToString()</a></code> <code><a href="PhyToString.html">PhydatToString()</a></code> </p>
-        </td>
-        <td><p>Extract character data from a phyDat object as a string</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="StringToPhyDat.html">StringToPhyDat()</a></code> <code><a href="StringToPhyDat.html">StringToPhydat()</a></code> </p>
-        </td>
-        <td><p>String to phyDat</p></td>
-      </tr>
+      
+      
     </tbody><tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-parsers" class="hasAnchor"><a href="#section-parsers" class="anchor"></a>Parsers</h2>
-          <p class="section-desc"><p>Functions to parse files.</p></p>
-        </th>
-      </tr>
-      <tr>
-        
-        <td>
-          <p><code><a href="ApeTime.html">ApeTime()</a></code> </p>
-        </td>
-        <td><p>Ape Time</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="ExtractTaxa.html">ExtractTaxa()</a></code> <code><a href="ExtractTaxa.html">NexusTokens()</a></code> </p>
-        </td>
-        <td><p>Extract taxa from a matrix block</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="NewickTree.html">NewickTree()</a></code> </p>
-        </td>
-        <td><p>Newick Tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="ReadCharacters.html">ReadCharacters()</a></code> <code><a href="ReadCharacters.html">ReadTntCharacters()</a></code> <code><a href="ReadCharacters.html">ReadAsPhyDat()</a></code> <code><a href="ReadCharacters.html">ReadTntAsPhyDat()</a></code> <code><a href="ReadCharacters.html">PhyDat()</a></code> </p>
-        </td>
-        <td><p>Read characters from Nexus file</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="ReadTntTree.html">ReadTntTree()</a></code> <code><a href="ReadTntTree.html">TNTText2Tree()</a></code> </p>
-        </td>
-        <td><p>Parse TNT Tree</p></td>
-      </tr>
-    </tbody><tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-partitions" class="hasAnchor"><a href="#section-partitions" class="anchor"></a>Partitions</h2>
-          <p class="section-desc"><p>Functions that manipulate bipartition splits.</p></p>
-        </th>
-      </tr>
-      <tr>
-        
-        <td>
-          <p><code><a href="DropSingleSplits.html">DropSingleSplits()</a></code> </p>
-        </td>
-        <td><p>Drop Single Splits</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="NPartitions.html">NPartitions()</a></code> <code><a href="NPartitions.html">NSplits()</a></code> </p>
-        </td>
-        <td><p>Number of partitions in a tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="NRooted.html">NRooted()</a></code> <code><a href="NRooted.html">NUnrooted()</a></code> <code><a href="NRooted.html">LnUnrooted()</a></code> <code><a href="NRooted.html">LnUnrooted.int()</a></code> <code><a href="NRooted.html">LnRooted()</a></code> <code><a href="NRooted.html">LnRooted.int()</a></code> <code><a href="NRooted.html">LnUnrootedSplits()</a></code> <code><a href="NRooted.html">NUnrootedSplits()</a></code> <code><a href="NRooted.html">LnUnrootedMult()</a></code> <code><a href="NRooted.html">NUnrootedMult()</a></code> </p>
-        </td>
-        <td><p>Number of rooted/unrooted trees
-These functions return the number of rooted or unrooted trees consistent with a given pattern
-of splits.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="SplitFrequency.html">SplitFrequency()</a></code> <code><a href="SplitFrequency.html">SplitNumber()</a></code> <code><a href="SplitFrequency.html">ForestSplits()</a></code> <code><a href="SplitFrequency.html">TreeSplits()</a></code> </p>
-        </td>
-        <td><p>Frequency of splits</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="SplitInformation.html">SplitInformation()</a></code> <code><a href="SplitInformation.html">MultiSplitInformation()</a></code> </p>
-        </td>
-        <td><p>Information content of a split</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="TreesMatchingSplit.html">TreesMatchingSplit()</a></code> <code><a href="TreesMatchingSplit.html">LogTreesMatchingSplit()</a></code> </p>
-        </td>
-        <td><p>Number of trees matching a bipartition split</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="UniqueSplits.html">UniqueSplits()</a></code> </p>
-        </td>
-        <td><p>Unique Splits</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="UnrootedTreesMatchingSplit.html">UnrootedTreesMatchingSplit()</a></code> </p>
-        </td>
-        <td><p>Number of trees consistent with split</p></td>
-      </tr>
-    </tbody><tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-information-and-combinatorics" class="hasAnchor"><a href="#section-information-and-combinatorics" class="anchor"></a>Information and combinatorics</h2>
-          <p class="section-desc"><p>Functions to calculate factorial quantities.</p></p>
-        </th>
-      </tr>
+      
+      
       <tr>
         
         <td>
@@ -603,54 +332,9 @@ of splits.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="N1Spr.html">N1Spr()</a></code> <code><a href="N1Spr.html">IC1Spr()</a></code> </p>
-        </td>
-        <td><p>Number of trees one SPR step away
-Formula given by Allen and Steel (2001).</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="InfoAmounts.html">InfoAmounts()</a></code> </p>
         </td>
         <td><p>Amount of information in each character</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="NRooted.html">NRooted()</a></code> <code><a href="NRooted.html">NUnrooted()</a></code> <code><a href="NRooted.html">LnUnrooted()</a></code> <code><a href="NRooted.html">LnUnrooted.int()</a></code> <code><a href="NRooted.html">LnRooted()</a></code> <code><a href="NRooted.html">LnRooted.int()</a></code> <code><a href="NRooted.html">LnUnrootedSplits()</a></code> <code><a href="NRooted.html">NUnrootedSplits()</a></code> <code><a href="NRooted.html">LnUnrootedMult()</a></code> <code><a href="NRooted.html">NUnrootedMult()</a></code> </p>
-        </td>
-        <td><p>Number of rooted/unrooted trees
-These functions return the number of rooted or unrooted trees consistent with a given pattern
-of splits.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="DoubleFactorial.html">DoubleFactorial()</a></code> <code><a href="DoubleFactorial.html">LogDoubleFactorial()</a></code> <code><a href="DoubleFactorial.html">LogDoubleFactorial.int()</a></code> </p>
-        </td>
-        <td><p>Double Factorial</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="CharacterInformation.html">CharacterInformation()</a></code> </p>
-        </td>
-        <td><p>Character information content</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="SplitInformation.html">SplitInformation()</a></code> <code><a href="SplitInformation.html">MultiSplitInformation()</a></code> </p>
-        </td>
-        <td><p>Information content of a split</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="TreesMatchingSplit.html">TreesMatchingSplit()</a></code> <code><a href="TreesMatchingSplit.html">LogTreesMatchingSplit()</a></code> </p>
-        </td>
-        <td><p>Number of trees matching a bipartition split</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="UnrootedTreesMatchingSplit.html">UnrootedTreesMatchingSplit()</a></code> </p>
-        </td>
-        <td><p>Number of trees consistent with split</p></td>
       </tr><tr>
         
         <td>
@@ -665,24 +349,23 @@ of splits.</p></td>
           <p class="section-desc"><p>Functions that interface with C libraries.</p></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
-          <p><code><a href="MorphyWeights.html">MorphyWeights()</a></code> </p>
+          <p><code><a href="MorphyWeights.html">MorphyWeights()</a></code> <code><a href="MorphyWeights.html">SetMorphyWeights()</a></code> </p>
         </td>
-        <td><p>Report the character weightings associated with a Morphy object</p></td>
+        <td><p>Set and get the character weightings associated with a Morphy object.</p></td>
       </tr><tr>
         
         <td>
           <p><code><a href="PhyDat2Morphy.html">PhyDat2Morphy()</a></code> </p>
         </td>
-        <td><p>Initialize a Morphy Object from a phyDat object</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="SetMorphyWeights.html">SetMorphyWeights()</a></code> </p>
-        </td>
-        <td><p>Set the character weightings associated with a Morphy object</p></td>
+        <td><p>Initialize a Morphy Object from a <code>phyDat</code> object</p></td>
       </tr><tr>
         
         <td>
@@ -709,24 +392,17 @@ of splits.</p></td>
           <p class="section-desc"><p>Data that accompanies the package.</p></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
-        
-        <td>
-          <p><code><a href="brewer.html">brewer</a></code> </p>
-        </td>
-        <td><p>Brewer palettes</p></td>
-      </tr><tr>
         
         <td>
           <p><code><a href="congreveLamsdellMatrices.html">congreveLamsdellMatrices</a></code> </p>
         </td>
         <td><p>100 simulated data matrices</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="doubleFactorials.html">doubleFactorials</a></code> </p>
-        </td>
-        <td><p>Double factorials</p></td>
       </tr><tr>
         
         <td>
@@ -748,24 +424,6 @@ of splits.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="Lobo.data.html">Lobo.data</a></code> </p>
-        </td>
-        <td><p>Raw data from Zhang et al. 2016</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="Lobo.phy.html">Lobo.phy</a></code> </p>
-        </td>
-        <td><p>Data from Zhang et al. 2016 in phyDat format</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="logDoubleFactorials.html">logDoubleFactorials</a></code> </p>
-        </td>
-        <td><p>Natural logarithms of double factorials</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="referenceTree.html">referenceTree</a></code> </p>
         </td>
         <td><p>Tree topology for matrix simulation</p></td>
@@ -777,18 +435,59 @@ of splits.</p></td>
           <p class="section-desc"><p>Miscellaneous functions to simplify or expedite basic functionality.</p></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
-          <p><code><a href="AsBinary.html">AsBinary()</a></code> </p>
+          <p><code><a href="AllSPR.html">AllSPR()</a></code> </p>
         </td>
-        <td><p>Convert a number to binary</p></td>
+        <td><p>All SPR trees</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="ListToMatrix.html">ListToMatrix()</a></code> </p>
+          <p><code><a href="CharacterLength.html">CharacterLength()</a></code> <code><a href="CharacterLength.html">FitchSteps()</a></code> <code><a href="CharacterLength.html">FastCharacterLength()</a></code> </p>
         </td>
-        <td><p>Edge list to edge matrix</p></td>
+        <td><p>Character length</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="Evaluate.html">Evaluate()</a></code> </p>
+        </td>
+        <td><p>Evaluate tree</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="Fitch.html">Fitch()</a></code> </p>
+        </td>
+        <td><p>Calculate parsimony score with inapplicable data</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ICSteps.html">ICSteps()</a></code> </p>
+        </td>
+        <td><p>Information Content Steps</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="IWScore.html">IWScore()</a></code> <code><a href="IWScore.html">IWInitMorphy()</a></code> <code><a href="IWScore.html">IWDestroyMorphy()</a></code> </p>
+        </td>
+        <td><p>Implied weights parsimony Score</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="InfoAmounts.html">InfoAmounts()</a></code> </p>
+        </td>
+        <td><p>Amount of information in each character</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="JackLabels.html">JackLabels()</a></code> </p>
+        </td>
+        <td><p>Label nodes with jackknife support values</p></td>
       </tr><tr>
         
         <td>
@@ -799,47 +498,168 @@ Extract points from a fitted model</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="MatrixToList.html">MatrixToList()</a></code> </p>
+          <p><code><a href="MaximizeParsimony.html">MaximizeParsimony()</a></code> <code><a href="MaximizeParsimony.html">EasyTrees()</a></code> <code><a href="MaximizeParsimony.html">EasyTreesy()</a></code> </p>
         </td>
-        <td><p>Edge matrix to edge list</p></td>
+        <td><p>Find most parsimonious trees</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="RightmostCharacter.html">RightmostCharacter()</a></code> </p>
+          <p><code><a href="MinimumLength.html">MinimumLength()</a></code> <code><a href="MinimumLength.html">MinimumSteps()</a></code> </p>
         </td>
-        <td><p>Rightmost character of string</p></td>
+        <td><p>Minimum length</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="SampleOne.html">SampleOne()</a></code> </p>
+          <p><code><a href="MorphyBootstrap.html">MorphyBootstrap()</a></code> <code><a href="MorphyBootstrap.html">ProfileBootstrap()</a></code> <code><a href="MorphyBootstrap.html">IWBootstrap()</a></code> </p>
         </td>
-        <td><p>Quick sample</p></td>
+        <td><p>Ratchet bootstrapper</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="UnloadTreeSearch.html">UnloadTreeSearch()</a></code> </p>
+          <p><code><a href="MorphyWeights.html">MorphyWeights()</a></code> <code><a href="MorphyWeights.html">SetMorphyWeights()</a></code> </p>
         </td>
-        <td><p>Unload this library</p></td>
+        <td><p>Set and get the character weightings associated with a Morphy object.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="NNI.html">NNI()</a></code> <code><a href="NNI.html">NNISwap()</a></code> <code><a href="NNI.html">RootedNNI()</a></code> <code><a href="NNI.html">RootedNNISwap()</a></code> </p>
+        </td>
+        <td><p>Nearest Neighbour Interchange (NNI)</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="PhyDat2Morphy.html">PhyDat2Morphy()</a></code> </p>
+        </td>
+        <td><p>Initialize a Morphy Object from a <code>phyDat</code> object</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="PrepareDataProfile.html">PrepareDataProfile()</a></code> <code><a href="PrepareDataProfile.html">PrepareDataIW()</a></code> </p>
+        </td>
+        <td><p>Prepare data for Profile Parsimony</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ProfileScore.html">IWScoreMorphy()</a></code> <code><a href="ProfileScore.html">ProfileScore()</a></code> <code><a href="ProfileScore.html">ProfileScoreMorphy()</a></code> <code><a href="ProfileScore.html">ProfileInitMorphy()</a></code> <code><a href="ProfileScore.html">ProfileDestroyMorphy()</a></code> </p>
+        </td>
+        <td><p>Profile Parsimony Score</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="RandomMorphyTree.html">RandomMorphyTree()</a></code> </p>
+        </td>
+        <td><p>Random postorder tree</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="RandomTreeScore.html">RandomTreeScore()</a></code> </p>
+        </td>
+        <td><p>Parsimony score of random postorder tree</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="Ratchet.html">Jackknife()</a></code> <code><a href="Ratchet.html">Ratchet()</a></code> <code><a href="Ratchet.html">ProfileRatchet()</a></code> <code><a href="Ratchet.html">IWRatchet()</a></code> <code><a href="Ratchet.html">MultiRatchet()</a></code> <code><a href="Ratchet.html">IWMultiRatchet()</a></code> <code><a href="Ratchet.html">RatchetConsensus()</a></code> <code><a href="Ratchet.html">IWRatchetConsensus()</a></code> </p>
+        </td>
+        <td><p>Parsimony Ratchet</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="RearrangeEdges.html">RearrangeEdges()</a></code> </p>
+        </td>
+        <td><p>Rearrange edges of a phylogenetic tree</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="SPR.html">SPR()</a></code> <code><a href="SPR.html">SPRMoves()</a></code> <code><a href="SPR.html">SPRSwap()</a></code> <code><a href="SPR.html">RootedSPR()</a></code> <code><a href="SPR.html">RootedSPRSwap()</a></code> </p>
+        </td>
+        <td><p>Subtree Pruning and Rearrangement (SPR)</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="SingleCharMorphy.html">SingleCharMorphy()</a></code> </p>
+        </td>
+        <td><p>Morphy object from single character</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="SuccessiveApproximations.html">SuccessiveApproximations()</a></code> </p>
+        </td>
+        <td><p>Tree Search using Successive Approximations</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="TBR.html">TBR()</a></code> <code><a href="TBR.html">TBRMoves()</a></code> <code><a href="TBR.html">TBRSwap()</a></code> <code><a href="TBR.html">RootedTBR()</a></code> <code><a href="TBR.html">RootedTBRSwap()</a></code> </p>
+        </td>
+        <td><p>Tree bisection and reconnection (TBR)</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="UnloadMorphy.html">UnloadMorphy()</a></code> </p>
+        </td>
+        <td><p>Destroy a Morphy Object</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="WithOneExtraStep.html">WithOneExtraStep()</a></code> </p>
+        </td>
+        <td><p>Number of trees with one extra step</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="cNNI.html">cNNI()</a></code> </p>
+        </td>
+        <td><p>Nearest-neighbour interchange</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="cSPR.html">cSPR()</a></code> </p>
+        </td>
+        <td><p><code>cSPR()</code> expects a tree rooted on a single tip.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="congreveLamsdellMatrices.html">congreveLamsdellMatrices</a></code> </p>
+        </td>
+        <td><p>100 simulated data matrices</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="inapplicable.citations.html">inapplicable.citations</a></code> </p>
+        </td>
+        <td><p>Thirty Datasets with Inapplicable data</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="inapplicable.datasets.html">inapplicable.datasets</a></code> </p>
+        </td>
+        <td><p>Thirty Datasets with Inapplicable data</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="inapplicable.phyData.html">inapplicable.phyData</a></code> </p>
+        </td>
+        <td><p>Thirty Datasets with Inapplicable data</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="referenceTree.html">referenceTree</a></code> </p>
+        </td>
+        <td><p>Tree topology for matrix simulation</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="summary.morphyPtr.html">summary(<i>&lt;morphyPtr&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Details the attributes of a morphy object</p></td>
       </tr>
     </tbody>
     </table>
   </div>
 
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <h2>Contents</h2>
-    <ul class="nav nav-pills nav-stacked">
-      <li><a href="#section-tree-search">Tree search</a></li>
-      <li><a href="#section-tree-scoring">Tree scoring</a></li>
-      <li><a href="#section-node-support">Node support</a></li>
-      <li><a href="#section-tree-manipulation">Tree manipulation</a></li>
-      <li><a href="#section-phylogenetic-data">Phylogenetic data</a></li>
-      <li><a href="#section-parsers">Parsers</a></li>
-      <li><a href="#section-partitions">Partitions</a></li>
-      <li><a href="#section-information-and-combinatorics">Information and combinatorics</a></li>
-      <li><a href="#section-c-apis">C APIs</a></li>
-      <li><a href="#section-datasets">Datasets</a></li>
-      <li><a href="#section-utility-functions">Utility functions</a></li>
-    </ul>
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+    <nav id="toc" data-toggle="toc" class="sticky-top">
+      <h2 data-toc-skip>Contents</h2>
+    </nav>
   </div>
 </div>
 
@@ -850,7 +670,7 @@ Extract points from a fitted model</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
