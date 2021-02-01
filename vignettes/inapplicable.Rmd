@@ -24,7 +24,25 @@ of homoplasious events on a tree.
 [A companion vignette](getting-started.html) gives details on installing the package
 and getting up and running.
 
-Once installed, load the TreeSearch package into R using
+
+## Tree search with the graphical user interface
+
+You can launch an interactive 'app' in your browser by typing 
+`TreeSearch::EasyTrees()` at the R command line.
+
+
+[![TreeSearch easy-tree interface](Easy_Tree.png)]
+
+This will allow you to load data from a file, modify search settings, and
+explore the distribution of most parsimonious trees in tree space.
+
+Trees can be saved as images, or in Nexus/Newick for further analysis.
+
+
+## Command line tree search
+
+You can also run tree searches using the R command line.
+Once installed, load the 'TreeSearch' package into R using
 ```{r Load-library}
 library('TreeSearch')
 ```
