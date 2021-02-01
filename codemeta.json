@@ -14,11 +14,10 @@
   ],
   "issueTracker": "https://github.com/ms609/TreeSearch/issues",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "0.4.3",
+  "version": "0.4.3.9000",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
-    "version": "4.0.2",
     "url": "https://r-project.org"
   },
   "runtimePlatform": "R version 4.0.2 (2020-06-22)",
@@ -191,10 +190,7 @@
   ],
   "releaseNotes": "https://github.com/ms609/TreeSearch/blob/master/NEWS.md",
   "readme": "https://github.com/ms609/TreeSearch/blob/master/README.md",
-  "contIntegration": [
-    "https://travis-ci.org/ms609/TreeSearch",
-    "https://codecov.io/gh/ms609/TreeSearch"
-  ],
+  "contIntegration": ["https://travis-ci.org/ms609/TreeSearch", "https://codecov.io/gh/ms609/TreeSearch"],
   "developmentStatus": "http://www.repostatus.org/#active",
   "keywords": [
     "tree-search",
@@ -249,7 +245,7 @@
         }
       ],
       "name": "An algorithm for morphological phylogenetic analysis with inapplicable data",
-      "paginiation": "619-631",
+      "pagination": "619-631",
       "isPartOf": {
         "@type": "PublicationIssue",
         "datePublished": "2019",
@@ -276,5 +272,6 @@
       "@id": "https://doi.org/10.5281/zenodo.1042590",
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
     }
-  ]
+  ],
+  "fileSize": "1166.65KB"
 }

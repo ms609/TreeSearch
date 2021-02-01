@@ -16,7 +16,6 @@ Check for error whilst modifying Morphy object
 Other Morphy API functions: 
 \code{\link{MorphyWeights}()},
 \code{\link{PhyDat2Morphy}()},
-\code{\link{SetMorphyWeights}()},
 \code{\link{SingleCharMorphy}()},
 \code{\link{UnloadMorphy}()},
 \code{\link{mpl_apply_tipdata}()},

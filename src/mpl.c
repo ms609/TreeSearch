@@ -35,6 +35,7 @@ int mpl_delete_Morphy(Morphy m)
     mpl_delete_mpl_matrix(&m1->inmatrix);
     mpl_destroy_symbolset(m1);
     mpl_delete_charac_info(m1);
+    mpl_delete_all_update_buffers(m1); /* MS addition, 2021-01-30 */
     mpl_delete_all_partitions(m1);
     mpl_destroy_statesets(m1);
     free(m1);

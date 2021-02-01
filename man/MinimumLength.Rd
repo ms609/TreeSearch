@@ -29,33 +29,31 @@ must contain.
 The smallest length that a character can obtain on any tree.
 }
 \examples{
-{
-  data('inapplicable.datasets')
-  myPhyDat <- inapplicable.phyData[[4]] 
-  class(myPhyDat) # phyDat object
-  # load your own data with
-  # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
-  # or Windows users can select a file interactively using:
-  # my.PhyDat <- as.phyDat(read.nexus.data(choose.files()))
+data('inapplicable.datasets')
+myPhyDat <- inapplicable.phyData[[4]] 
+class(myPhyDat) # phyDat object
+# load your own data with
+# my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
+# or Windows users can select a file interactively using:
+# my.PhyDat <- as.phyDat(read.nexus.data(choose.files()))
+
+# Convert list of character codings to an array
+myData <- vapply(myPhyDat, I, myPhyDat[[1]])
+
+# Convert phyDat's representation of states to binary
+myContrast <- attr(myPhyDat, 'contrast')
+tokens <- colnames(myContrast)
+binaryContrast <- integer(length(tokens))
+tokenApplicable <- tokens != '-'
+binaryContrast[tokenApplicable] <- 2 ^ (seq_len(sum(tokenApplicable)) - 1)
+binaryValues <- apply(myContrast, 1, 
+  function (row) sum(binaryContrast[as.logical(row)]))
+myStates <- matrix(binaryValues[myData], nrow = nrow(myData),
+                   ncol = ncol(myData), dimnames = dimnames(myData))
+
+# Finally, work out minimum steps 
+apply(myStates, 1, MinimumLength)
   
-  # Convert list of character codings to an array
-  myData <- vapply(myPhyDat, I, myPhyDat[[1]])
-  
-  # Convert phyDat's representation of states to binary
-  myContrast <- attr(myPhyDat, 'contrast')
-  tokens <- colnames(myContrast)
-  binaryContrast <- integer(length(tokens))
-  tokenApplicable <- tokens != '-'
-  binaryContrast[tokenApplicable] <- 2 ^ (seq_len(sum(tokenApplicable)) - 1)
-  binaryValues <- apply(myContrast, 1, 
-    function (row) sum(binaryContrast[as.logical(row)]))
-  myStates <- matrix(binaryValues[myData], nrow=nrow(myData),
-                     ncol=ncol(myData), dimnames=dimnames(myData))
- 
-  # Finally, work out minimum steps 
-  apply(myStates, 1, MinimumLength)
-  
-}
 
 }
 \author{

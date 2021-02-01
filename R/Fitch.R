@@ -58,7 +58,7 @@ Fitch <- function (tree, dataset) {
 #'
 #' @family tree scoring
 #' @references
-#'  \insertRef{Brazeau2018}{TreeSearch}
+#'  \insertRef{Brazeau2018}{TreeTools}
 #' @importFrom TreeTools Renumber RenumberTips
 #' @export
 CharacterLength <- function (tree, dataset) {
@@ -90,13 +90,13 @@ FitchSteps <- function (tree, dataset) {
 #' @describeIn CharacterLength Do not perform checks.  Use with care: may cause
 #' erroneous results or  software crash if variables are in the incorrect format.
 FastCharacterLength <- function (tree, dataset) {
-  characters <- PhyToString(dataset, ps='', useIndex=FALSE, byTaxon=FALSE,
-                            concatenate=FALSE)
+  characters <- PhyToString(dataset, ps = '', useIndex = FALSE, byTaxon = FALSE,
+                            concatenate = FALSE)
   morphyObjects <- lapply(characters, SingleCharMorphy)
   on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)))
   
   # Return:
-  vapply(morphyObjects, MorphyTreeLength, tree=tree, integer(1))
+  vapply(morphyObjects, MorphyTreeLength, tree = tree, integer(1))
 }
 
 #' Calculate parsimony score with inapplicable data
@@ -151,7 +151,6 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
   allNodes <- rootNode:maxNode
   
   parentOf <- parent[match(1:maxNode, child)]
-  # parentOf[rootNode] <- maxNode + 1 # Root node's parent is a dummy node
   parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
   leftChild <- child[length(parent) + 1L - match(allNodes, rev(parent))]
   rightChild <- child[match(allNodes, parent)]
@@ -202,6 +201,7 @@ C_MorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
 #' @export
 TipsAreNames <- function(dataset, tips) as.integer(unlist(dataset[tips]))
 
+#TODO Github issue #2
 ###   #' @describeIn TipsAreNames use if each row in a matrix corresponds to a tip
 ###   #' @keywords internal
 ###   #' @export

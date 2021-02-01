@@ -1,5 +1,5 @@
 ---
-title: "Concavity profiles with Profile Parsimony"
+title: "Calculating concavity profiles for profile parsimony"
 author: "Martin R. Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette

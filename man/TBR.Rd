@@ -2,14 +2,21 @@
 % Please edit documentation in R/TBR.R
 \name{TBR}
 \alias{TBR}
-\alias{TBRSwap}
 \alias{TBRMoves}
-\alias{AllTBR}
+\alias{TBRMoves.phylo}
+\alias{TBRMoves.matrix}
+\alias{TBRSwap}
 \alias{RootedTBR}
 \alias{RootedTBRSwap}
 \title{Tree bisection and reconnection (TBR)}
 \usage{
 TBR(tree, edgeToBreak = NULL, mergeEdges = NULL)
+
+TBRMoves(tree, edgeToBreak = integer(0))
+
+\method{TBRMoves}{phylo}(tree, edgeToBreak = integer(0))
+
+\method{TBRMoves}{matrix}(tree, edgeToBreak = integer(0))
 
 TBRSwap(
   parent,
@@ -18,16 +25,6 @@ TBRSwap(
   edgeToBreak = NULL,
   mergeEdges = NULL
 )
-
-TBRMoves(
-  parent,
-  child,
-  nEdge = length(parent),
-  avoid = NULL,
-  retainRoot = FALSE
-)
-
-AllTBR(parent, child, nEdge = length(parent), avoid = NULL, retainRoot = FALSE)
 
 RootedTBR(tree, edgeToBreak = NULL, mergeEdges = NULL)
 
@@ -60,21 +57,15 @@ matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
 matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
 
 \item{nEdge}{(optional) Number of edges.}
-
-\item{avoid}{Integer vector specifying which edges should not be broken}
-
-\item{retainRoot}{logical specifying whether taxa may be swapped across the root}
 }
 \value{
 This function returns a tree in \code{phyDat} format that has undergone one \acronym{TBR} iteration.
 
+\code{TBRMoves()} returns a list of all trees one TBR move away from
+\code{tree}, with edges and nodes in preorder, rooted on the first-labelled tip.
+
 a list containing two elements, corresponding in turn to the
 rearranged parent and child parameters
-
-a matrix with two columns, each row listing an edge that can be broken
-and an edge into which it can be merged
-
-a list of trees, in parent-child format
 }
 \description{
 \code{TBR} performs a single random \acronym{TBR} iteration.
@@ -84,15 +75,14 @@ Branch lengths are not (yet) supported.
 
 All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
 \link[ape:multi2di]{ape::multi2di} may help.
+
+NOTE: \code{tree} must be rooted on edge 1 in \code{TBRMoves.matrix()}.
+This will be resolved when \code{TreeTools::RootNode()} supports edge matrices.
 }
 \section{Functions}{
 \itemize{
 \item \code{TBRSwap}: faster version that takes and returns parent and child
 parameters
-
-\item \code{TBRMoves}: Possible TBR moves
-
-\item \code{AllTBR}: All unique trees one TBR move away
 
 \item \code{RootedTBR}: Perform \acronym{TBR} rearrangement, retaining position of root
 

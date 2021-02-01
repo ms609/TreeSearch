@@ -2,12 +2,21 @@
 % Please edit documentation in R/SPR.R
 \name{SPR}
 \alias{SPR}
+\alias{SPRMoves}
+\alias{SPRMoves.phylo}
+\alias{SPRMoves.matrix}
 \alias{SPRSwap}
 \alias{RootedSPR}
 \alias{RootedSPRSwap}
 \title{Subtree Pruning and Rearrangement (SPR)}
 \usage{
 SPR(tree, edgeToBreak = NULL, mergeEdge = NULL)
+
+SPRMoves(tree, edgeToBreak = integer(0))
+
+\method{SPRMoves}{phylo}(tree, edgeToBreak = integer(0))
+
+\method{SPRMoves}{matrix}(tree, edgeToBreak = integer(0))
 
 SPRSwap(
   parent,
@@ -50,6 +59,9 @@ class \code{\link{phylo}}, i.e. \code{dim(tree$edge)[1]}}
 \value{
 This function returns a tree in \code{phyDat} format that has undergone one \acronym{SPR} iteration.
 
+\code{TBRMoves()} returns a list of all trees one SPR move away from
+\code{tree}, with edges and nodes in preorder, rooted on the first-labelled tip.
+
 a list containing two elements, corresponding in turn to the
 rearranged parent and child parameters
 
@@ -68,6 +80,9 @@ Branch lengths are not (yet) supported.
 
 All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
 \link[ape:multi2di]{ape::multi2di} may help.
+
+NOTE: \code{tree} must be rooted on edge 1 in \code{SPRMoves.matrix()}.
+This will be resolved when \code{TreeTools::RootNode()} supports edge matrices.
 }
 \section{Functions}{
 \itemize{

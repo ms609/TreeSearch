@@ -20,7 +20,7 @@ prepared using \code{dataset <- \link{PrepareDataIW}(dataset)}; if this step
 has not been completed, the dataset will be (time-consumingly) prepared
 within the function.
 In subsidiary functions, the dataset will have been initialized using
-\code{IWInitMorphy}, and must be destroyed using \code{IWDestroyMorphy}.}
+\code{\link[=IWInitMorphy]{IWInitMorphy()}}, and must be destroyed using \code{\link[=IWDestroyMorphy]{IWDestroyMorphy()}}.}
 
 \item{concavity}{A numeric value to use as the concavity constant (\code{k})
 in implied weighting. Defaults to 10; TNT sets a default of 3, but this
@@ -56,7 +56,7 @@ Calculate a tree's Parsimony score with a given dataset using implied weights
 \references{
 \itemize{
 \item \insertRef{Goloboff1997}{TreeSearch}
-\item \insertRef{SmithTern}{TreeSearch}
+\item \insertRef{Smith2019}{TreeSearch}
 }
 }
 \seealso{

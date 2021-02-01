@@ -190,8 +190,8 @@ typedef struct Morphy_t {
   int             numparts; 
   MPLpartition*   partstack;  
   MPLpartition**  partitions; 
-  MPLsymbols      symbols;    
-  MPLgap_t           gaphandl;
+  MPLsymbols      symbols;
+  MPLgap_t        gaphandl;
   union {
     int         asint;
     Mflt        asfloat;

@@ -1,8 +1,12 @@
 ## Test environments
 
-* local Windows 10 install, R 4.0.2
-* Ubuntu 16.04.6 LTS, R release and devel, via [Travis CI](https://travis-ci.org/ms609/TreeSearch)
-* Mac OS X 10.13.6, R release, via Travis
+* local Windows 10 install, R 4.0.3
+
+* [Github Actions](https://github.com/ms609/TreeSearch/actions):
+  - Ubuntu 20.04 LTS, R 3.6.3, release and devel
+  - Mac OS X 10.15.7, R release
+  - Microsoft Windows Server 2019 10.0.17763, R release
+  
 * R-hub, with `rhub::check((platform = platforms()$name)`
 
 

@@ -1,5 +1,5 @@
 ---
-title: "Inapplicable data in morphological phylogenetics"
+title: "Tree search with inapplicable data"
 author: "Martin R. Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -14,7 +14,7 @@ vignette: >
 
 `TreeSearch` is an R package that allows, among other things, parsimony search on
 morphological datasets that contain inapplicable data, following the algorithm proposed
-by Brazeau, Guillerme and Smith [-@Brazeau2018].
+by Brazeau, Guillerme and Smith [-@Brazeau2019].
 
 In brief, this algorithm modifies the Fitch algorithm to count the total number
 of homoplasious events on a tree.
@@ -182,7 +182,7 @@ JackLabels(strict.consensus, jack.trees) -> XX
 
 
 ## Implied weighting
-Equal weights produces trees that are less accurate and less precise than implied weights [@SmithTern]; equally weighted analysis should never be conducted without also considering the results of implied weights [@Goloboff1997], ideally under a range of concavity constants [cf. @Smith2014].
+Equal weights produces trees that are less accurate and less precise than implied weights [@Smith2019]; equally weighted analysis should never be conducted without also considering the results of implied weights [@Goloboff1997], ideally under a range of concavity constants [cf. @Smith2014].
 
 The simplest way to conduct an implied weights search is to use the functions
 ```R 
@@ -194,6 +194,6 @@ which operate in the same fashion as their equally-weighted counterparts,
 with the option of specifying a concavity constant (_k_) using 
 the parameter `concavity=k` (default = 10).  Note that the default value of 
 10 is somewhat higher than the default of 3 in TNT; this low default probably
-gives poorer results in many settings [@SmithTern].
+gives poorer results in many settings [@Smith2019].
 
 ## References

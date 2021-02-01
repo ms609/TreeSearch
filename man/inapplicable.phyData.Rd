@@ -128,6 +128,6 @@ the first subset comprise simpler datasets with faster processing times.
 The value is the dataset in \code{phyDat} format.
 }
 \references{
-\insertRef{Brazeau2018}{TreeSearch}
+\insertRef{Brazeau2018}{TreeTools}
 }
 \keyword{datasets}

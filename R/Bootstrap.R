@@ -10,17 +10,15 @@
 #' @template verbosityParam
 #' @param \dots further parameters to send to `TreeScorer()`
 #'
-#' @references 
-#' - \insertRef{SmithTern}{TreeSearch}
-#'
 #' @return A tree that is optimal under a random sampling of the original characters
 #' @export
 MorphyBootstrap <- function (edgeList, morphyObj, EdgeSwapper = NNISwap, 
-                             maxIter, maxHits, verbosity=1L, stopAtPeak=FALSE, stopAtPlateau=0L, ...) {
-  startWeights <- MorphyWeights(morphyObj)[1, ]
+                             maxIter, maxHits, verbosity=1L, stopAtPeak=FALSE,
+                             stopAtPlateau=0L, ...) {
+  startWeights <- MorphyWeights(morphyObj)['exact', ]
   eachChar <- seq_along(startWeights)
   deindexedChars <- rep(eachChar, startWeights)
-  resampling <- tabulate(sample(deindexedChars, replace=TRUE), length(startWeights))
+  resampling <- tabulate(sample(deindexedChars, replace = TRUE), length(startWeights))
   errors <- vapply(eachChar, function (i) 
             mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
   if (any(errors)) {
@@ -43,12 +41,12 @@ MorphyBootstrap <- function (edgeList, morphyObj, EdgeSwapper = NNISwap,
 #' @template datasetParam
 #' @export
 ProfileBootstrap <- function (edgeList, dataset, EdgeSwapper = NNISwap, 
-                              maxIter, maxHits, verbosity=1L, ...) {
+                              maxIter, maxHits, verbosity = 1L, ...) {
   att <- attributes(dataset)
   startWeights <- att[['weight']]
   eachChar <- seq_along(startWeights)
   deindexedChars <- rep(eachChar, startWeights)
-  resampling <- tabulate(sample(deindexedChars, replace=TRUE), length(startWeights))
+  resampling <- tabulate(sample(deindexedChars, replace = TRUE), length(startWeights))
   sampled <- resampling != 0
   sampledData <- lapply(dataset, function (x) x[sampled])
   sampledAtt <- att

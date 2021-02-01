@@ -1,8 +1,11 @@
+.covrignore
+.github
 ^Meta$
 ^doc$
 ^docs$
 ^data-raw$
 ^man-roxygen$
+^memcheck$
 ^pkgdown$
 ^revdep$
 ^CRAN-RELEASE$

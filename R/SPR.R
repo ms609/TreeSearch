@@ -69,6 +69,35 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   }
 }
 
+#' @rdname SPR
+#' @return `TBRMoves()` returns a list of all trees one SPR move away from
+#'  `tree`, with edges and nodes in preorder, rooted on the first-labelled tip.
+#' @export
+SPRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('SPRMoves')
+
+#' @rdname SPR
+#' @importFrom TreeTools Preorder RootTree
+#' @export
+SPRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
+  tree <- Preorder(RootTree(tree, tree$tip.label[1]))
+  edges <- unique(all_spr(tree$edge, edgeToBreak))
+  structure(lapply(edges, function (edg) {
+    tree$edge <- edg
+    tree
+  }), class = 'multiPhylo', tip.label = tree$tip.label)
+}
+
+#' @rdname SPR
+#TODO
+#' @details NOTE: `tree` must be rooted on edge 1 in `SPRMoves.matrix()`.
+#' This will be resolved when `TreeTools::RootNode()` supports edge matrices.
+#' @export
+SPRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
+  tree <- Preorder(tree)
+  #tree <- Preorder(RootTree(tree, 1)) #TODO
+  unique(all_spr(tree, edgeToBreak))
+}
+
 ## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn SPR faster version that takes and returns parent and child parameters
 #' @template treeParent
@@ -80,7 +109,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
 #' @importFrom TreeTools DescendantEdges NonDuplicateRoot
 #' @export
 SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
-                     edgeToBreak=NULL, mergeEdge=NULL) {
+                     edgeToBreak = NULL, mergeEdge = NULL) {
   
   if (nEdge < 5) return (list(parent, child)) #TODO we need to re-root this tree...
   
@@ -141,6 +170,33 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
   #####Assert(identical(unique(table(parent)), 2L))
   #####Assert(identical(unique(table(child)),  1L))
   return (RenumberEdges(parent, child))
+}
+
+
+#' `cSPR()` expects a tree rooted on a single tip. 
+#' @template treeParam
+#' @param whichMove Integer specifying which SPR move index to perform.
+#' @examples 
+#' tree <- TreeTools::BalancedTree(8)
+#' 
+#' # Tree must be rooted on leaf
+#' tree <- TreeTools::RootTree(tree, 1)
+#'
+#' # Random rearrangement
+#' cSPR(tree)
+#'
+#' # Specific rearrangement
+#' cSPR(tree, 9)
+#' @template MRS
+#' @importFrom TreeTools NTip
+#' @export
+cSPR <- function (tree, whichMove = NULL) {
+  edge <- tree$edge
+  if (is.null(whichMove)) whichMove <- sample.int(2147483647L, 1L)
+  tree$edge <- spr(edge, whichMove)
+  
+  # Return:
+  tree
 }
 
 

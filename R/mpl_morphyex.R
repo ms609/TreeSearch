@@ -87,7 +87,8 @@ mpl_delete_Morphy <- function(morphyobj) {
 #' @keywords internal
 #' @export
 mpl_init_Morphy <- function(numtaxa, numchars, morphyobj) {
-    .Call("_R_wrap_mpl_init_Morphy", as.integer(numtaxa), as.integer(numchars), morphyobj)
+    .Call("_R_wrap_mpl_init_Morphy", as.integer(numtaxa), as.integer(numchars),
+          morphyobj)
 }
 
 #' Retrieve the number of taxa (rows) in the dataset.
@@ -121,8 +122,8 @@ mpl_get_numtaxa <- function(morphyobj) {
 #' @keywords internal
 #' @export
 mpl_set_charac_weight <- function (charID, weight, morphyobj) {
-  return (.Call('_R_wrap_mpl_set_charac_weight', as.integer(charID - 1L), as.numeric(weight),
-                morphyobj))
+  .Call('_R_wrap_mpl_set_charac_weight', as.integer(charID - 1L),
+        as.numeric(weight), morphyobj)
 }
 
 #' Retrieve the weight of a character in the dataset
@@ -140,8 +141,7 @@ mpl_set_charac_weight <- function (charID, weight, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_get_charac_weight <- function (charID, morphyobj) {
-  return (.Call('_R_wrap_mpl_get_charac_weight', as.integer(charID - 1L), 
-                morphyobj))
+  .Call('_R_wrap_mpl_get_charac_weight', as.integer(charID) - 1L, morphyobj)
 }
 
 #' Retrieve the number of character (columns) in the dataset.
@@ -157,7 +157,7 @@ mpl_get_charac_weight <- function (charID, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_get_num_charac <- function(morphyobj) {
-    .Call("_R_wrap_mpl_get_num_charac", morphyobj)
+  .Call("_R_wrap_mpl_get_num_charac", morphyobj)
 }
 
 #' Attach a caller-specified list of symbols.

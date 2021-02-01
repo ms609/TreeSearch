@@ -11,6 +11,16 @@
 #include "RMorphy.h"
 #include "build_postorder.h"
 
+extern SEXP _TreeSearch_nni(SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_spr(SEXP, SEXP);
+extern SEXP _TreeSearch_spr_moves(SEXP);
+extern SEXP _TreeSearch_tbr(SEXP, SEXP);
+extern SEXP _TreeSearch_tbr_moves(SEXP);
+extern SEXP _TreeSearch_all_spr(SEXP, SEXP);
+extern SEXP _TreeSearch_all_tbr(SEXP, SEXP);
+extern SEXP _TreeSearch_preorder_morphy(SEXP, SEXP);
+extern SEXP _TreeSearch_preorder_morphy_by_char(SEXP, SEXP);
+extern SEXP _TreeSearch_morphy_iw(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
@@ -35,6 +45,16 @@ static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_second_up_recon",   (DL_FUNC) &_R_wrap_mpl_second_up_recon, 5},
   {"_R_wrap_mpl_update_tip",        (DL_FUNC) &_R_wrap_mpl_update_tip, 3},
   {"_R_wrap_mpl_update_lower_root", (DL_FUNC) &_R_wrap_mpl_update_lower_root, 3},
+  {"_TreeSearch_nni",               (DL_FUNC) &_TreeSearch_nni, 3},
+  {"_TreeSearch_spr",               (DL_FUNC) &_TreeSearch_spr, 2},
+  {"_TreeSearch_all_spr",           (DL_FUNC) &_TreeSearch_all_spr, 2},
+  {"_TreeSearch_spr_moves",         (DL_FUNC) &_TreeSearch_spr_moves, 1},
+  {"_TreeSearch_tbr",               (DL_FUNC) &_TreeSearch_tbr, 2},
+  {"_TreeSearch_all_tbr",           (DL_FUNC) &_TreeSearch_all_tbr, 2},
+  {"_TreeSearch_tbr_moves",         (DL_FUNC) &_TreeSearch_tbr_moves, 1},
+  {"_TreeSearch_preorder_morphy",   (DL_FUNC) &_TreeSearch_preorder_morphy, 2},
+  {"_TreeSearch_preorder_morphy_by_char",   (DL_FUNC) &_TreeSearch_preorder_morphy_by_char, 2},
+  {"_TreeSearch_morphy_iw",         (DL_FUNC) &_TreeSearch_morphy_iw, 7},
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
   {"RANDOM_TREE",                   (DL_FUNC) &RANDOM_TREE, 1},
   {"RANDOM_TREE_SCORE",             (DL_FUNC) &RANDOM_TREE_SCORE, 2},

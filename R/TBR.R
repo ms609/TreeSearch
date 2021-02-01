@@ -68,6 +68,35 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
   tree
 }
 
+#' @rdname TBR 
+#' @return `TBRMoves()` returns a list of all trees one TBR move away from
+#'  `tree`, with edges and nodes in preorder, rooted on the first-labelled tip.
+#' @export
+TBRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('TBRMoves')
+
+#' @rdname TBR 
+#' @importFrom TreeTools Preorder RootTree
+#' @export
+TBRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
+  tree <- Preorder(RootTree(tree, 1))
+  edges <- unique(all_tbr(tree$edge, edgeToBreak))
+  structure(lapply(edges, function (edg) {
+    tree$edge <- edg
+    tree
+  }), class = 'multiPhylo', tip.label = tree$tip.label)
+}
+
+#' @rdname TBR
+#TODO
+#' @details NOTE: `tree` must be rooted on edge 1 in `TBRMoves.matrix()`.
+#' This will be resolved when `TreeTools::RootNode()` supports edge matrices.
+#' @export
+TBRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
+  #tree <- Preorder(RootTree(tree, 1))  # TODO
+  tree <- Preorder(tree)
+  allMoves <- all_tbr(tree, edgeToBreak)
+  unique(allMoves)
+}
 
 ## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn TBR faster version that takes and returns parent and child
@@ -80,7 +109,9 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 #'  
 #' @importFrom TreeTools EdgeAncestry
 #' @export
-TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mergeEdges=NULL) {
+TBRSwap <- function(parent, child, nEdge = length(parent), 
+                    edgeToBreak = NULL,
+                    mergeEdges = NULL) {
   if (nEdge < 5) return (list(parent, child)) #TODO do we need to re-root this tree?
   
   # Pick an edge at random
@@ -201,80 +232,6 @@ TBRSwap <- function(parent, child, nEdge = length(parent), edgeToBreak=NULL, mer
   #########Assert(identical(unique(table(child)),  1L))
   return (RenumberEdges(parent, child))
 }
-
-#' @describeIn TBR Possible TBR moves
-#' @param avoid Integer vector specifying which edges should not be broken
-#' @param retainRoot logical specifying whether taxa may be swapped across the root
-#' @return a matrix with two columns, each row listing an edge that can be broken
-#'         and an edge into which it can be merged
-#' @importFrom TreeTools AllDescendantEdges
-#' @export
-TBRMoves <- function(parent, child, nEdge = length(parent), avoid=NULL, retainRoot=FALSE) {
-  if (nEdge < 5) stop("No TBR rearrangements possible on a tree with < 5 edges")
-  
-  # Pick an edge at random
-  allEdges <- seq_len(nEdge - 1L) + 1L # Only include one root edge
-  logicals <- diag(nEdge) == 1
-  isBreakable <- !logicals[1, ]
-  descendants <- AllDescendantEdges(parent, child, nEdge)
-  # not1 <- isBreakable
-  
-  if (length(avoid) > 0 && any(avoid > nEdge || avoid < 1)) {
-    warning("Invalid edges in `avoid` parameter: edges are numbered from 1 to ", nEdge)
-  }
-  
-  if (retainRoot) {
-    leftRootEdge <- match(TRUE, parent[-1] == parent[1])+ 1L
-    avoid <- c(avoid, leftRootEdge)
-    rightEdges <- descendants[1, ]
-    leftEdges <- !rightEdges
-    if (sum(rightEdges) < 4) avoid <- c(avoid, which(rightEdges))
-    if (sum(leftEdges) < 4) avoid <- c(avoid, which(leftEdges))
-  }
-
-  isBreakable[avoid] <- FALSE
-  if (!any(isBreakable)) return (NULL) # no rearrangements possible
-  breakable <- which(isBreakable)
-  
-  mergeable <- lapply(breakable, function (edgeToBreak) {
-    brokenEdge <- logicals[edgeToBreak, ]
-    brokenEdge.parentNode <- parent[edgeToBreak]
-    brokenEdge.childNode  <-  child[edgeToBreak]
-  
-    edgesCutAdrift <- descendants[edgeToBreak, ]
-    edgesRemaining <- !edgesCutAdrift & !brokenEdge
-    
-    brokenEdgeParent <- child == brokenEdge.parentNode
-    brokenEdgeSister <- parent == brokenEdge.parentNode & !brokenEdge
-    brokenEdgeDaughters <- parent == brokenEdge.childNode
-    nearBrokenEdge <- brokenEdge | brokenEdgeSister | brokenEdgeParent | brokenEdgeDaughters
-    if (breakingRootEdge <- !any(brokenEdgeParent)) { 
-      # Edge to break is the Root Node.
-      brokenRootDaughters <- parent == child[brokenEdgeSister]
-      nearBrokenEdge <- nearBrokenEdge | brokenRootDaughters
-    }
-    candidates <- !nearBrokenEdge & isBreakable
-    if (retainRoot) {
-      candidates <- candidates & if (rightEdges[edgeToBreak]) rightEdges else leftEdges
-    }
-    which(candidates)
-  })
-  matrix(c(rep(breakable, vapply(mergeable, length, 1L)), unlist(mergeable)), ncol=2)
-}
-
-#' @describeIn TBR All unique trees one TBR move away
-#' @return a list of trees, in parent-child format
-#' @export
-AllTBR <- function (parent, child, nEdge = length(parent), avoid=NULL, retainRoot=FALSE) {
-  moves <- TBRMoves(parent, child, nEdge=nEdge, avoid=avoid, retainRoot=retainRoot)
-  newTrees <- apply(moves, 1, function (edges) {
-    TBRSwap(parent, child, nEdge, edges[1], edges[2])
-  })
-  unique(newTrees)
-}
-# Set sensible defaults for search parameters
-attr(AllTBR, 'stopAtPlateau') <- 10L
-attr(AllTBR, 'stopAtPeak') <- TRUE
 
 #' Rooted TBR 
 #' @describeIn TBR Perform \acronym{TBR} rearrangement, retaining position of root

@@ -440,10 +440,12 @@ int mpl_delete_partition(MPLpartition* part)
 int mpl_delete_all_partitions(Morphyp handl)
 {
     assert(handl);
+  
     int i = 0;
     
     if (handl->numparts) {
-        
+      
+        mpl_delete_all_update_buffers(handl); /* MS addition, 2021-02-01 */
         MPLpartition* p = handl->partstack;
         MPLpartition* q = NULL;
         while (p) {

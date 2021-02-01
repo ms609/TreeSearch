@@ -5,12 +5,12 @@
 /* Random number generator from http://www.cse.yorku.ca/~oz/marsaglia-rng.html
 / 1+random_int%10 generates an integer from 1 to 10 [MWC renamed to random_int]
 */
-#define znew (z=36969*(z&65535)+(z>>16))
-#define wnew (w=18000*(w&65535)+(w>>16))
-#define random_int ((znew<<16)+wnew)
+#define znew (z = 36969 * (z & 65535) + (z >> 16))
+#define wnew (w = 18000 * (w & 65535) + (w >> 16))
+#define random_int ((znew << 16) + wnew)
 
 /* Global static variables: */
-static unsigned long z=362436069, w=521288629;
+static unsigned long z = 362436069, w = 521288629;
 /* Use random seeds to reset z and w*/
 
 void insert_tip_below (const int *new_tip,

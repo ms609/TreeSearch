@@ -6,7 +6,7 @@ output: rmarkdown::html_vignette
 bibliography: ../inst/REFERENCES.bib
 csl: ../inst/apa-old-doi-prefix.csl
 vignette: >
-  %\VignetteIndexEntry{Tree search with profile parsimony}
+  %\VignetteIndexEntry{Tree Search with Profile Parsimony}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -52,8 +52,7 @@ we'll use a simulated dataset that comes bundled with the `TreeSearch` package.
 
 ```{r Load Longrich data}
 data(congreveLamsdellMatrices)
-my.data <- congreveLamsdellMatrices[[10]]
-my.phyDat <- phangorn::phyDat(my.data, type = 'USER', levels = c(1, 2))
+my.phyDat <- congreveLamsdellMatrices[[10]]
 ```
 
 We then need to prepare our dataset for Profile Parsimony by calculating the 
@@ -137,7 +136,7 @@ The default parameters may not be enough to find the optimal tree; type
 
 ## View the results
 
-In parsimony search, it is good practice to consider trees that are slightly suboptimal [@SmithTern].
+In parsimony search, it is good practice to consider trees that are slightly suboptimal [@Smith2019].
 
 Here, we'll take a consensus that includes all trees that are suboptimal by up to 1.5 bits.
 To sample this region of tree space well, the trick is to use large values of 
@@ -271,7 +270,7 @@ structure(list(structure(list(edge = structure(c(23L, 23L, 24L,
 
 The consensus of these slightly suboptimal trees provides a less resolved, but
 typically more reliable, summary of the signal with the phylogenetic dataset
-[@SmithTern]:
+[@Smith2019]:
 
 ```{r Plot suboptimal consensus}
 par(mar=rep(0.25, 4), cex=0.75)

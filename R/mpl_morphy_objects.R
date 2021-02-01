@@ -25,52 +25,81 @@ summary.morphyPtr <- function (object, ...) {
   ans
 }
 
-#' Report the character weightings associated with a Morphy object
+#' Set and get the character weightings associated with a Morphy object.
+#'
+#' `MorphyWeights()` details the approximate and exact weights associated with
+#' characters in a `Morphy` object; `SetMorphyWeights()` edits them.
 #'
 #' @template morphyObjParam
-#' @return a matrix of dimensions (2, number of characters); row 1 lists the
-#'         exact rates specified by the user; row 2 the approximate (integral)
-#'         weights used by MorphyLib
-#'
+#' @return `MorphyWeights()` returns a data frame with two named rows and 
+#' one column per character pattern:
+#' row 1, `approx`, is a list of integers specifying the approximate (integral)
+#' weights used by MorphyLib;
+#' row 2, `exact`, is a list of numerics specifying the exact weights specified
+#' by the user.
+#' 
+#' @examples
+#' tokens <- matrix(c(
+#'   0, 0, 0, 1, 1, 2,
+#'   0, 0, 0, 0, 0, 0), byrow = TRUE, nrow = 2L,
+#'   dimnames = list(letters[1:2], NULL))
+#' pd <- TreeTools::MatrixToPhyDat(tokens)
+#' morphyObj <- PhyDat2Morphy(pd)
+#' MorphyWeights(morphyObj)
+#' if (SetMorphyWeights(c(1, 1.5, 2/3), morphyObj) != 0L) message("Errored")
+#' MorphyWeights(morphyObj)
+#' morphyObj <- UnloadMorphy(morphyObj)
+#' @template MRS
 #' @family Morphy API functions
-#' @author Martin R. Smith
 #' @export
-MorphyWeights <- function(morphyObj) {
- charWeights <- vapply(seq_len(mpl_get_num_charac(morphyObj)), mpl_get_charac_weight, list(0, 0), morphyobj=morphyObj)
- dimnames(charWeights) <- list(c("exact", "approx"), NULL)
- charWeights
+MorphyWeights <- function (morphyObj) {
+ vapply(seq_len(mpl_get_num_charac(morphyObj)), mpl_get_charac_weight, 
+        list('approx' = 0L, 'exact' = 0), morphyobj = morphyObj)
 }
 
-#' Set the character weightings associated with a Morphy object
-#'
+#' @rdname MorphyWeights
 #' @param weight A vector listing the new weights to be applied to each character
-#' @template morphyObjParam
 #' @param checkInput Whether to sanity-check input data before applying. 
-#'         Defaults to TRUE to protect the user from crashes.
+#'         Defaults to `TRUE` to protect the user from crashes.
 #'
 #' @return `SetMorphyWeights()` returns the Morphy error code generated when
-#' applying `tipData`.
-#' 
-#' @family Morphy API functions
-#' @author Martin R. Smith
+#' applying `weight`.
 #' @export
 SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
-  if (checkInput) if (length(weight) != mpl_get_num_charac(morphyObj)) stop("Number of weights not equal to number of character entries")
-  errors <- vapply(seq_along(weight), function (i)
-    mpl_set_charac_weight(i, weight[i], morphyObj), integer(1))
-  if(any(errors != 0)) warning("Morphy Error encountered: ", mpl_translate_error(errors[errors<0]))
+  if (checkInput) if (length(weight) != mpl_get_num_charac(morphyObj)) {
+    stop("Number of weights not equal to number of character entries.")
+  }
+  errors <- vapply(seq_along(weight), 
+                   function (i) mpl_set_charac_weight(i, weight[i], morphyObj),
+                   integer(1))
+  if(any(errors != 0)) warning("Morphy Error encountered: ", 
+                               mpl_translate_error(errors[errors < 0]))
   mpl_apply_tipdata(morphyObj)
 }
 
 #' Initialize a Morphy Object from a `phyDat` object
 #' 
 #' Creates a new Morphy object with the same size and characters as the 
-#' `phyDat` object 
+#' `phyDat` object. 
+#' Once finished with the object, it should be destroyed using
+#' [`UnloadMorphy()`] to free the allocated memory.
+#' 
 #'
 #' @param phy An object of class \code{\link{phyDat}}.
-#' @return A pointer to an initialized Morphy object.
+#' @return `PhyDat2Morphy()` returns a pointer to an initialized Morphy object.
 #' 
-#' @author Martin R. Smith
+#' @examples
+#' data('Lobo', package='TreeTools')
+#' morphyObj <- PhyDat2Morphy(Lobo.phy)
+#' # Set object to be destroyed at end of session or closure of function
+#' # on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
+#' 
+#' # Do something with pointer
+#' # ....
+#' 
+#' # Or, instead of on.exit, manually destroy morphy object and free memory:
+#' morphyObj <- UnloadMorphy(morphyObj)
+#' @template MRS
 #' @family Morphy API functions
 #' @importFrom phangorn phyDat
 #' @importFrom TreeTools PhyToString
@@ -119,7 +148,9 @@ PhyDat2Morphy <- function (phy) {
 #' @keywords internal
 #' @export
 MorphyErrorCheck <- function (action) {
-  if (action -> error) stop("Morphy object encountered error ", mpl_translate_error(error), "\n")
+  if (action -> error) {
+    stop("Morphy object encountered error ", mpl_translate_error(error), "\n")
+  }
 }
 
 #' Morphy object from single character
@@ -136,7 +167,7 @@ MorphyErrorCheck <- function (action) {
 #' @family Morphy API functions
 #' @export
 SingleCharMorphy <- function (char) {
-  char <- paste0(c(char, ';'), collapse='')
+  char <- paste0(c(char, ';'), collapse = '')
   entries <- gregexpr("\\{[^\\{]+\\}|\\([^\\()]+\\)|[^;]", char)
   nTip <- length(entries[[1]])
   morphyObj <- mpl_new_Morphy()
@@ -154,7 +185,7 @@ SingleCharMorphy <- function (char) {
 #'
 #' Destroys a previously-created Morphy object.
 #'
-#' Best practice is to call \code{morphyObj <- UnloadMorphy(morphyObj)}
+#' Best practice is to call `morphyObj <- UnloadMorphy(morphyObj)`
 #' Failure to do so will cause a crash if `UnloadMorphy()` is called on an
 #' object that  has already been destroyed
 #'

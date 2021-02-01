@@ -1,6 +1,7 @@
 Meta
 doc
 docs
+gen-*
 src-*
 src/*.o
 src/*.so
@@ -16,6 +17,7 @@ src/*.dll
 /* *.Rd */
 inst/ape
 inst/doc
+results-*
 revdep/
 vignettes/*.html
 vignettes/*.pdf
