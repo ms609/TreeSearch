@@ -20,7 +20,7 @@ IntegerMatrix nni(const IntegerMatrix edge,
     n_tip = (n_edge / 2) + 1;
     
   int16 n_samplable = 0;
-  int16 *samplable = new int16[n_edge];
+  std::unique_ptr<int16[]> samplable = std::make_unique<int16[]>(n_edge);
   for (int16 i = n_edge; --i; ) {
     if (edge(i, 1) > n_tip && edge(i, 0) != n_tip + 1) {
       samplable[n_samplable++] = i;
@@ -34,7 +34,6 @@ IntegerMatrix nni(const IntegerMatrix edge,
     edge_to_break = samplable[chosen_edge % n_samplable],
     end1 = edge(edge_to_break, 0),
     end2 = edge(edge_to_break, 1);
-  delete[] samplable;
   int16
     ind1 = UNDEFINED,
     ind2 = UNDEFINED;
