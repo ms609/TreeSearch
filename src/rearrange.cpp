@@ -78,10 +78,12 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
   if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
   
-  std::unique_ptr<int16[]> prune = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
-  std::unique_ptr<int16[]> graft = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
-  std::unique_ptr<int16[]> above = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
-  std::unique_ptr<int16[]> bside = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
+  std::unique_ptr<int16[]> 
+    prune = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3)),
+    graft = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3)),
+    above = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3)),
+    bside = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3))
+  ;
   int16 n_moves = 0, root_daughter_2 = 0;
   
   // Root edge first
@@ -234,14 +236,15 @@ IntegerMatrix tbr_moves(const IntegerMatrix edge) {
   if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
   if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
-  std::unique_ptr<int16[]> n_edges_above = std::make_unique<int16[]>(n_edge);
-  std::unique_ptr<int16[]> probibited_parent = std::make_unique<int16[]>(n_edge);
-  std::unique_ptr<int16[]> probibited_sibling = std::make_unique<int16[]>(n_edge);
-  
-  std::unique_ptr<int16[]> prune = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
-  std::unique_ptr<int16[]> graft = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
-  std::unique_ptr<int16[]> above = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
-  std::unique_ptr<int16[]> bside = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
+  std::unique_ptr<int16[]>
+    n_edges_above = std::make_unique<int16[]>(n_edge),
+    probibited_parent = std::make_unique<int16[]>(n_edge),
+    probibited_sibling = std::make_unique<int16[]>(n_edge),
+    prune = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3)),
+    graft = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3)),
+    above = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3)),
+    bside = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3))
+  ;
   int16 n_moves = 0, root_daughter_2 = 0;
   
   // Root edge first
