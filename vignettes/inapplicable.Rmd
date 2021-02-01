@@ -102,7 +102,7 @@ cons <- ape::consensus(bestTree, p = 0.5)
 splitFreqs <- TreeTools::SplitFrequency(cons, bestTree) / length(bestTree)
 plot(cons)
 TreeTools::LabelSplits(cons, round(splitFreqs * 100), unit = '%',
-                       col = SupportColor(splitFreqs),
+                       col = TreeTools::SupportColor(splitFreqs),
                        frame = 'none', pos = 3L)
 ```
 
