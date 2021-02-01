@@ -31,7 +31,7 @@ You can launch an interactive 'app' in your browser by typing
 `TreeSearch::EasyTrees()` at the R command line.
 
 
-[![TreeSearch easy-tree interface](Easy_Tree.png)]
+![TreeSearch easy-tree interface](Easy_Tree.png)
 
 This will allow you to load data from a file, modify search settings, and
 explore the distribution of most parsimonious trees in tree space.
@@ -138,6 +138,7 @@ plot(ape::consensus(iwTrees))
 Note that we recommend a default value of 10, somewhat higher than the default 
 of 3 in TNT; this low default probably gives poorer results in many settings
 [@Smith2019].  Better still is to use multiple values and compare the results,
-perhaps in [Tree space](https://ms609.github.io/TreeDist/articles/treespace.html).
+perhaps in 
+[Tree space](https://ms609.github.io/TreeDist/articles/treespace.html).
 
 ## References
