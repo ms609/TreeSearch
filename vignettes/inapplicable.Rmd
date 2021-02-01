@@ -137,6 +137,7 @@ plot(ape::consensus(iwTrees))
 
 Note that we recommend a default value of 10, somewhat higher than the default 
 of 3 in TNT; this low default probably gives poorer results in many settings
-[@Smith2019].
+[@Smith2019].  Better still is to use multiple values and compare the results,
+perhaps in [Tree space](https://ms609.github.io/TreeDist/articles/treespace.html).
 
 ## References
