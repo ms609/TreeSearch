@@ -77,10 +77,11 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
   if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
   if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
-  int16* prune = new int16[(n_edge - 1) * (n_edge - 3)];
-  int16* graft = new int16[(n_edge - 1) * (n_edge - 3)];
-  int16* above = new int16[(n_edge - 1) * (n_edge - 3)];
-  int16* bside = new int16[(n_edge - 1) * (n_edge - 3)];
+  
+  std::unique_ptr<int16[]> prune = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
+  std::unique_ptr<int16[]> graft = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
+  std::unique_ptr<int16[]> above = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
+  std::unique_ptr<int16[]> bside = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
   int16 n_moves = 0, root_daughter_2 = 0;
   
   // Root edge first
@@ -158,7 +159,6 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
     }
   }
   
-  
   IntegerMatrix ret(n_moves, 4);
   for (int16 i = n_moves; i--; ) {
     ret(i, 0) = prune[i];
@@ -166,10 +166,6 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
     ret(i, 2) = above[i];
     ret(i, 3) = bside[i];
   }
-  delete[] prune;
-  delete[] graft;
-  delete[] above;
-  delete[] bside;
   return (ret);
 }
 
@@ -242,10 +238,10 @@ IntegerMatrix tbr_moves(const IntegerMatrix edge) {
   std::unique_ptr<int16[]> probibited_parent = std::make_unique<int16[]>(n_edge);
   std::unique_ptr<int16[]> probibited_sibling = std::make_unique<int16[]>(n_edge);
   
-  int16* prune = new int16[(n_edge - 1) * (n_edge - 3)];
-  int16* graft = new int16[(n_edge - 1) * (n_edge - 3)];
-  int16* above = new int16[(n_edge - 1) * (n_edge - 3)];
-  int16* bside = new int16[(n_edge - 1) * (n_edge - 3)];
+  std::unique_ptr<int16[]> prune = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
+  std::unique_ptr<int16[]> graft = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
+  std::unique_ptr<int16[]> above = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
+  std::unique_ptr<int16[]> bside = std::make_unique<int16[]>((n_edge - 1) * (n_edge - 3));
   int16 n_moves = 0, root_daughter_2 = 0;
   
   // Root edge first
@@ -277,10 +273,6 @@ IntegerMatrix tbr_moves(const IntegerMatrix edge) {
     ret(i, 2) = above[i];
     ret(i, 3) = bside[i];
   }
-  delete[] prune;
-  delete[] graft;
-  delete[] above;
-  delete[] bside;
   return (ret);
 }
 
