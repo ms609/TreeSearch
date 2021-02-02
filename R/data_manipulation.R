@@ -208,7 +208,7 @@ MinimumLength.numeric <- function (x) {
       if (any(unnecessary)) {
         tokens <- tokens[!unnecessary, , drop = FALSE]
       } else {
-        stop("The token configuration [", paste(states, collapse=" "), 
+        stop("The token configuration [", paste(x, collapse=" "), 
              "] is not correctly handled by MinimumLength()\n",
              "Please report this bug at ",
              "https://github.com/ms609/TreeSearch/issues/new")
@@ -220,8 +220,8 @@ MinimumLength.numeric <- function (x) {
 }
 
 #' @rdname MinimumLength
-MinimumSteps <- function(states) {
+MinimumSteps <- function(x) {
   .Deprecated(MinimumLength, msg='Renamed and recoded to better support
               inapplicable tokens')
-  MinimumLength(states)
+  MinimumLength(x)
 }
