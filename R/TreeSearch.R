@@ -462,10 +462,12 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   
   if (constrained) {
     # Calculate constraint minimum score
+    constraintLength <- MinimumLength(constraint)
     
     # Check that starting tree is consistent with constraints 
   }
   
+
   # Initialize tree
   if (inherits(tree, 'multiPhylo')) {
     .Message(1L, "Starting search from `tree[[1]]`.")
