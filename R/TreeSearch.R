@@ -249,7 +249,7 @@ TreeSearch <- function (tree, dataset,
 #' The counter is reset to zero each time tree score improves.
 #' One 'iteration' comprises breaking a single branch and evaluating all 
 #' possible reconnections.
-#' @param finalIter Numeric: the final round of tree search will evalauate
+#' @param finalIter Numeric: the final round of tree search will evaluate
 #' `finalIter` &times; `tbrIter` \acronym{TBR} break points.
 #' @param maxHits Numeric specifying the maximum times that an optimal
 #' parsimony score may be hit before concluding a ratchet iteration or final 
@@ -257,6 +257,11 @@ TreeSearch <- function (tree, dataset,
 #' @param concavity Numeric specifying concavity constant for implied step 
 #' weighting; set as `Inf` for equal step weights (which is a bad idea; see 
 #' Smith 2019).
+#' @param constraint Either `NULL` or an object of class `phyDat`. Trees that
+#' are not perfectly compatible with each character in `constraint` will not
+#' be considered during search.
+#' See [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
+#' for examples.
 #' @param verbosity Integer specifying level of messaging; higher values give
 #' more detailed commentary on search progress. Set to `0` to run silently.
 #' @param session 'shiny' session identifier to allow [`setProgress()`] calls
@@ -295,6 +300,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                ratchIter = 12L, tbrIter = 6L, finalIter = 3L,
                                maxHits = 20L,
                                concavity = Inf,
+                               constraint = NULL,
                                verbosity = 2L, session = NULL) {
   # Define functions
   .Message <- if (is.null(session)) function (level, ...) {
@@ -452,6 +458,13 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   # Define constants
   epsilon <- sqrt(.Machine$double.eps)
   iw <- is.finite(concavity)
+  constrained <- !is.null(constraint)
+  
+  if (constrained) {
+    # Calculate constraint minimum score
+    
+    # Check that starting tree is consistent with constraints 
+  }
   
   # Initialize tree
   if (inherits(tree, 'multiPhylo')) {
