@@ -171,8 +171,9 @@ MinimumLength.phyDat <- function (x) {
   tmp <- as.integer(cont %*% powersOf2)
   unlisted <- unlist(x, use.names = FALSE)
   binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
-  minLength <- apply(binaryMatrix, 1, MinimumLength)
   
+  # Return:
+  apply(binaryMatrix, 1, MinimumLength)
 }
 
 #' @rdname MinimumLength
@@ -196,7 +197,10 @@ MinimumLength.numeric <- function (x) {
       tokens[tokenNecessary, statesRemaining, drop = FALSE]) == 0
     tokensUsed <- tokensUsed + sum(tokenNecessary)
     
-    if (!any(statesRemaining)) return (tokensUsed - 1L)
+    if (!any(statesRemaining)) {
+      # Return:
+      return (tokensUsed - 1L)
+    }
     
     tokens <- tokens[!tokenNecessary, statesRemaining, drop = FALSE]
     if (identical(dim(tokens), lastDim)) {
