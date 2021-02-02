@@ -2,15 +2,22 @@
 % Please edit documentation in R/data_manipulation.R
 \name{MinimumLength}
 \alias{MinimumLength}
+\alias{MinimumLength.phyDat}
+\alias{MinimumLength.numeric}
 \alias{MinimumSteps}
 \title{Minimum length}
 \usage{
-MinimumLength(states)
+MinimumLength(x)
+
+\method{MinimumLength}{phyDat}(x)
+
+\method{MinimumLength}{numeric}(x)
 
 MinimumSteps(states)
 }
 \arguments{
-\item{states}{Integer vector listing the tokens that may be present at each
+\item{x}{An object of class \code{phyDat},
+or an integer vector listing the tokens that may be present at each
 tip along a single character, with each token represented as a binary digit;
 e.g. a value of 11 ( = 2^0 + 2^1 + 2^3) means that
 the tip may have tokens 0, 1 or 3.
@@ -22,8 +29,8 @@ state are not presently supported; for an approximate value, denote such
 ambiguity with the integer \code{0}.}
 }
 \value{
-An integer specifying the minimum number of steps that the character
-must contain.
+A vector of integers specifying the minimum number of steps that
+each character must contain.
 }
 \description{
 The smallest length that a character can obtain on any tree.
@@ -31,6 +38,7 @@ The smallest length that a character can obtain on any tree.
 \examples{
 data('inapplicable.datasets')
 myPhyDat <- inapplicable.phyData[[4]] 
+MinimumLength(myPhyDat)
 class(myPhyDat) # phyDat object
 # load your own data with
 # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
