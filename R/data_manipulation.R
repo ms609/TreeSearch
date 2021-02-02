@@ -220,8 +220,8 @@ MinimumLength.numeric <- function (x) {
 }
 
 #' @rdname MinimumLength
-MinimumSteps <- function(states) {
+MinimumSteps <- function(x) {
   .Deprecated(MinimumLength, msg='Renamed and recoded to better support
               inapplicable tokens')
-  MinimumLength(states)
+  MinimumLength(x)
 }

@@ -13,7 +13,7 @@ MinimumLength(x)
 
 \method{MinimumLength}{numeric}(x)
 
-MinimumSteps(states)
+MinimumSteps(x)
 }
 \arguments{
 \item{x}{An object of class \code{phyDat},
