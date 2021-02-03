@@ -61,10 +61,66 @@ Reference <- function (authors, year, title, journal = '',
          "</p>")
 }
 
+
+Bien2011 <- Reference(
+  c("Bien, J.", "Tibshirani, R."),
+  title = "Hierarchical clustering with prototypes via minimax linkage",
+  year = 2011,
+  volume = 106,
+  doi = "10.1198/jasa.2011.tm10183",
+  pages = c(1075, 1084),
+  journal = "Journal of the American Statistical Association")
+Gower1966 <- Reference(  title = "Some distance properties of latent root and vector methods used in multivariate analysis",
+                         author = "Gower, J.C.",
+                         year = 1966,
+                         volume = 53,
+                         pages = c(325, 338),
+                         doi = "10.2307/2333639",
+                         journal = "Biometrika")
+Gower1969 <- Reference(
+  title = "Minimum spanning trees and single linkage cluster analysis",
+  author = c("Gower, J.C.", "Ross, G.J.S."),
+  year = 1969, volume = 18, pages = c(54, 64), doi = "10.2307/2346439",
+  journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)")
+Kaski2003 <- Reference(
+  title = "Trustworthiness and metrics in visualizing similarity of gene expression",
+  author = c("Kaski, S.", "Nikkil&auml;, J.", "Oja, M.", "Venna, J.",
+             "T&ouml;r&ouml;nen, P.", "Castr&eacute;n, E."),
+  year = 2003, volume = 4, pages = 48, doi = "10.1186/1471-2105-4-48",
+  journal = "BMC Bioinformatics")
+Maechler2019 <- Reference(
+  title = "cluster: cluster analysis basics and extensions", year = 2019,
+  author = c("Maechler, M.", "Rousseeuw, P.", "Struyf, A.", "Hubert, M.", "Hornik, K."),
+  journal = "Comprehensive R Archive Network")
+Murtagh1983 <- Reference(
+  title = "A survey of recent advances in hierarchical clustering algorithms",
+  author = "Murtagh, F.", year = 1983, volume = 26, pages = c(354, 359),
+  doi = "10.1093/comjnl/26.4.354", journal = "The Computer Journal")
+
+RCoreTeam <- Reference(
+  author = "R Core Team", year = 2020,
+  title = "R: A language and environment for statistical computing",
+  publisher = "R Foundation for Statistical Computing, Vienna, Austria")
+SmithDist <- Reference('Smith, M.R.', 2020,
+                       'TreeDist: distances between phylogenetic trees',
+                       doi = '10.5281/zenodo.3528123', 'Comprehensive R Archive Network')
+SmithQuartet <- Reference('Smith, M.R.', 2019,
+                          'Quartet: comparison of phylogenetic trees using quartet and split measures',
+                          'Comprehensive R Archive Network', doi = "10.5281/zenodo.2536318")
 Smith2020 <- Reference('Smith, M.R.', 2020,
                        'Information theoretic Generalized Robinson-Foulds metrics for comparing phylogenetic trees',
                        'Bioinformatics', volume = 36, pages = '5007--5013',
                        doi = "10.1093/bioinformatics/btaa614")
+Smith2021 <- Reference('Smith, M.R.', 2021,
+                       'The importance of methodology when analyzing landscapes of phylogenetic trees',
+                       'Submitted MS')
+Venna2001 <- Reference(
+  title = "Neighborhood preservation in nonlinear projection methods: an experimental study",
+  author = c("Venna, J.", "Kaski, S."), year = 2001, pages = c(485, 491),
+  journal = "Lecture Notes in Computer Science: Artificial Neural Networks&mdash;ICANN 2001",
+  editors = c("Dorffner, G.", "Bischof, H.", "Hornik, K."),
+  publisher = "Springer, Berlin",
+  doi = "10.1007/3-540-44668-0_68")
 
 ui <- fluidPage(theme = 'app.css',
   useShinyjs(),
@@ -183,30 +239,34 @@ server <- function(input, output, session) {
   
   observeEvent(input$plotFormat, PlotConsensus())
   
+  RenderMainPlot <- function (x) {
+    renderPlot(x, width = PlotSize(), height = PlotSize())
+  }
+  
   PlotConsensus <- function () (
     if (!is.null(r$trees) && inherits(r$trees, 'multiPhylo'))
     switch(input$plotFormat,
            'cons' = {
              hide('whichTree')
-             output$treePlot = renderPlot({
+             output$treePlot = RenderMainPlot({
                par(mar = rep(0, 4), cex = 0.9)
                plot(consensus(r$trees))
-             }, width = input$plotSize, height = input$plotSize)
+             })
            },
            'clus' = {
              hide('whichTree')
-             output$treePlot = renderPlot(PlotClusterCons())
+             output$treePlot = RenderMainPlot(PlotClusterCons())
            },
            'ind' = {
              show('whichTree')
-             output$treePlot = renderPlot({
+             output$treePlot = RenderMainPlot({
                par(mar = rep(0, 4), cex = 0.9)
                plot(r$trees[[input$whichTree]])
-             }, width = input$plotSize, height = input$plotSize)
+             })
            },
            'space' = {
              hide('whichTree')
-             output$treePlot = renderPlot(treespacePlot())
+             output$treePlot = RenderMainPlot(treespacePlot())
            }
     )
   )
@@ -267,295 +327,53 @@ server <- function(input, output, session) {
   ##############################################################################
   # Clusterings
   ##############################################################################
-  maxClust <- reactive(min(input$maxClusters, length(r$trees) - 1L))
   clusterings <- reactive({
-    maxCluster <- input$maxClusters
-    if (!is.null(r$clust_max) && maxCluster != r$clust_max) ClearClusters()
-    clust_id <- paste0('clust_', input$distance)
-    
-    if (is.null(r[[clust_id]])) {
-      if (maxClust() > 1) {
-        possibleClusters <- 2:maxClust()
-        
-        hSil <- pamSil <- havSil <- kSil <- specSil <-
-          hsiSil <- hcoSil <- hmdSil <- hctSil <- hwdSil <- -99
-        dists <- distances()
-        
-        nMethodsChecked <- length(input$clustering)
-        methInc <- 1 / nMethodsChecked
-        nK <- length(possibleClusters)
-        kInc <- 1 / (nMethodsChecked * nK)
-        
-        withProgress(message = "Clustering", {
-          if ('pam' %in% input$clustering) {
-            pamClusters <- lapply(possibleClusters, function (k) {
-              incProgress(kInc, detail = 'PAM clustering')
-              cluster::pam(dists, k = k)
-            })
-            pamSils <- vapply(pamClusters, function (pamCluster) {
-              incProgress(kInc, detail = 'PAM silhouettes')
-              mean(cluster::silhouette(pamCluster)[, 3])
-            }, double(1))
-            
-            bestPam <- which.max(pamSils)
-            pamSil <- pamSils[bestPam]
-            pamCluster <- pamClusters[[bestPam]]$cluster
-          }
-          
-          if ('hmm' %in% input$clustering) {
-            incProgress(methInc / 2, detail = 'minimax clustering')
-            hTree <- protoclust::protoclust(dists)
-            hClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
-            hSils <- vapply(hClusters, function (hCluster) {
-              incProgress(kInc / 2, detail = 'minimax silhouettes')
-              mean(cluster::silhouette(hCluster, dists)[, 3])
-            }, double(1))
-            bestH <- which.max(hSils)
-            hSil <- hSils[bestH]
-            hCluster <- hClusters[[bestH]]
-          }
-          
-          if ('hwd' %in% input$clustering) {
-            incProgress(methInc / 2, detail = 'Ward D\ub2 clustering')
-            hTree <- stats::hclust(dists, method = 'ward.D2')
-            hwdClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
-            hwdSils <- vapply(hwdClusters, function (hCluster) {
-              incProgress(kInc / 2, detail = 'Ward D\ub2 silhouettes')
-              mean(cluster::silhouette(hCluster, dists)[, 3])
-            }, double(1))
-            bestHwd <- which.max(hwdSils)
-            hwdSil <- hwdSils[bestHwd]
-            hwdCluster <- hwdClusters[[bestHwd]]
-          }
-          
-          if ('hsi' %in% input$clustering) {
-            incProgress(methInc / 2, detail = 'single clustering')
-            hTree <- stats::hclust(dists, method = 'single')
-            hsiClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
-            hsiSils <- vapply(hsiClusters, function (hCluster) {
-              incProgress(kInc / 2, detail = 'single silhouettes')
-              mean(cluster::silhouette(hCluster, dists)[, 3])
-            }, double(1))
-            bestHsi <- which.max(hsiSils)
-            hsiSil <- hsiSils[bestHsi]
-            hsiCluster <- hsiClusters[[bestHsi]]
-          }
-          
-          if ('hco' %in% input$clustering) {
-            incProgress(methInc / 2, detail = 'complete clustering')
-            hTree <- stats::hclust(dists, method = 'complete')
-            hcoClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
-            hcoSils <- vapply(hcoClusters, function (hCluster) {
-              incProgress(kInc / 2, detail = 'complete silhouettes')
-              mean(cluster::silhouette(hCluster, dists)[, 3])
-            }, double(1))
-            bestHco <- which.max(hcoSils)
-            hcoSil <- hcoSils[bestHco]
-            hcoCluster <- hcoClusters[[bestHco]]
-          }
-          
-          
-          if ('hav' %in% input$clustering) {
-            incProgress(methInc / 2, detail = 'average clustering')
-            hTree <- stats::hclust(dists, method = 'average')
-            havClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
-            havSils <- vapply(havClusters, function (hCluster) {
-              incProgress(kInc / 2, detail = 'average silhouettes')
-              mean(cluster::silhouette(hCluster, dists)[, 3])
-            }, double(1))
-            bestHav <- which.max(havSils)
-            havSil <- havSils[bestHav]
-            havCluster <- havClusters[[bestHav]]
-          }
-          
-          
-          if ('hmd' %in% input$clustering) {
-            incProgress(methInc / 2, detail = 'median clustering')
-            hTree <- stats::hclust(dists, method = 'median')
-            hmdClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
-            hmdSils <- vapply(hmdClusters, function (hCluster) {
-              incProgress(kInc / 2, detail = 'median silhouettes')
-              mean(cluster::silhouette(hCluster, dists)[, 3])
-            }, double(1))
-            bestHmd <- which.max(hmdSils)
-            hmdSil <- hmdSils[bestHmd]
-            hmdCluster <- hmdClusters[[bestHmd]]
-          }
-          
-          
-          if ('hct' %in% input$clustering) {
-            incProgress(methInc / 2, detail = 'centroid clustering')
-            hTree <- stats::hclust(dists ^ 2, method = 'centroid')
-            hctClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
-            hctSils <- vapply(hctClusters, function (hCluster) {
-              incProgress(kInc / 2, detail = 'centroid silhouettes')
-              mean(cluster::silhouette(hCluster, dists)[, 3])
-            }, double(1))
-            bestHct <- which.max(hctSils)
-            hctSil <- hctSils[bestHct]
-            hctCluster <- hctClusters[[bestHct]]
-          }
-          
-          if ('kmn' %in% input$clustering) {
-            incProgress(methInc / 2, detail = 'K-means clustering')
-            kClusters <- lapply(possibleClusters, function (k) kmeans(dists, k))
-            kSils <- vapply(kClusters, function (kCluster) {
-              incProgress(kInc / 2, detail = 'K-means silhouettes')
-              mean(cluster::silhouette(kCluster$cluster, dists)[, 3])
-            }, double(1))
-            
-            bestK <- which.max(kSils)
-            kSil <- kSils[bestK]
-            kCluster <- kClusters[[bestK]]$cluster
-          }
-          
-          if ('spec' %in% input$clustering) {
-            spectralEigens <- SpectralClustering(dists,
-                                                 nn = min(ncol(as.matrix(dists)) - 1L, 10),
-                                                 nEig = 3L)
-            specClusters <- lapply(possibleClusters, function (k) {
-              incProgress(kInc / 2, detail = 'spectral clustering')
-              cluster::pam(spectralEigens, k = k)
-            })
-            specSils <- vapply(specClusters, function (cluster) {
-              incProgress(kInc / 2, detail = 'spectral silhouettes')
-              mean(cluster::silhouette(cluster$cluster, dists)[, 3])
-            }, double(1))
-            
-            bestSpec <- which.max(specSils)
-            specSil <- specSils[bestSpec]
-            specCluster <- specClusters[[bestSpec]]$cluster
-          }
-          bestCluster <- c('none', 'pam', 'hmm', 'hsi', 'hco', 'hav', 'hmd', 'hct',
-                           'hwd', 'kmn', 'spec')[
-                             which.max(c(0, pamSil, hSil, hsiSil, hcoSil, havSil, hmdSil, hctSil,
-                                         hwdSil, kSil, specSil))]
-          
-        })
-      } else {
-        bestCluster <- 'none'
-      }
+    maxCluster <- 15
+    if (min(maxCluster, length(r$trees) - 1L) > 1) {
+      possibleClusters <- 2:maxCluster
       
-      r[[clust_id]] <- list(method = switch(bestCluster,
-                                            pam = 'part. around medoids',
-                                            hmm = 'minimax linkage',
-                                            hsi = "single linkage",
-                                            hco = "complete linkage",
-                                            hav = "average linkage",
-                                            hmd = "median linkage",
-                                            hct = "centroid linkage",
-                                            hwd = 'Ward d\ub2 linkage',
-                                            kmn = 'K-means',
-                                            spec = 'spectral',
-                                            'no attempt to find any'),
-                            n = 1 + switch(bestCluster,
-                                           pam = bestPam,
-                                           hmm = bestH,
-                                           hsi = bestHsi,
-                                           hco = bestHco,
-                                           hav = bestHav,
-                                           hmd = bestHmd,
-                                           hct = bestHct,
-                                           hwd = bestHwd,
-                                           har = bestHav, kmn = bestK,
-                                           spec = bestSpec,
-                                           0),
-                            sil = switch(bestCluster,
-                                         pam = pamSil,
-                                         hmm = hSil,
-                                         hsi = hsiSil,
-                                         hco = hcoSil,
-                                         hav = havSil,
-                                         hmd = hmdSil,
-                                         hct = hctSil,
-                                         hwd = hwdSil,
-                                         kmn = kSil, spec = specSil, 
-                                         0), 
-                            cluster = switch(bestCluster,
-                                             pam = pamCluster,
-                                             hmm = hCluster,
-                                             hsi = hsiCluster,
-                                             hco = hcoCluster,
-                                             hav = havCluster,
-                                             hmd = hmdCluster,
-                                             hct = hctCluster,
-                                             hwd = hwdCluster,
-                                             kmn = kCluster,
-                                             spec = specCluster,
-                                             1)
-      )
-      r$clust_max <- maxCluster
-    }
-    r[[clust_id]]
-  })
-  
-  observeEvent(input$calcClusters, {ClearClusters()})
-  
-  mstSize <- debounce(reactive(input$mst), 100)
-  
-  mstEnds <- reactive({
+      hSil <- pamSil <- -99
+      dists <- distances()
+      
+      nMethodsChecked <- 2
+      methInc <- 1 / nMethodsChecked
+      nK <- length(possibleClusters)
+      kInc <- 1 / (nMethodsChecked * nK)
     
-    if (!is.null(r$mst_size) && mstSize() != r$mst_size) ClearMST()
-    mst_id <- paste0('mst_', input$distance)
-    if (is.null(r[[mst_id]])) {
-      dist <- as.matrix(distances())
-      nRows <- dim(dist)[1]
-      withProgress(message = 'Calculating MST', {
-        selection <- unique(round(seq.int(1, nRows, length.out = max(2L, mstSize()))))
-        edges <- MSTEdges(dist[selection, selection])
-        edges[, 1] <- selection[edges[, 1]]
-        edges[, 2] <- selection[edges[, 2]]
-        r[[mst_id]] <- edges
+      pamClusters <- lapply(possibleClusters, function (k) {
+        cluster::pam(dists, k = k)
       })
-    }
+      pamSils <- vapply(pamClusters, function (pamCluster) {
+        mean(cluster::silhouette(pamCluster)[, 3])
+      }, double(1))
+      bestPam <- which.max(pamSils)
+      pamSil <- pamSils[bestPam]
+      pamCluster <- pamClusters[[bestPam]]$cluster
+      
+      hTree <- protoclust::protoclust(dists)
+      hClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
+      hSils <- vapply(hClusters, function (hCluster) {
+        mean(cluster::silhouette(hCluster, dists)[, 3])
+      }, double(1))
+      bestH <- which.max(hSils)
+      hSil <- hSils[bestH]
+      hCluster <- hClusters[[bestH]]
     
-    r$mst_size <- mstSize()
-    r[[mst_id]]
-  })
-  
-  output$clustQuality <- renderPlot({
-    par(mar = c(2, 0.5, 0, 0.5), xpd = NA, mgp = c(2, 1, 0))
-    cl <- clusterings()
-    clust_id <- paste0('clust_', input$distance)
-    sil <- r[[clust_id]]$sil
-    if (length(sil) == 0) sil <- -0.5
-    nStop <- 400
-    range <- c(0.5, 1)
-    negScale <- viridisLite::plasma(nStop)[seq(range[1] * nStop, 1,
-                                               length.out = nStop * range[1])]
-    posScale <- viridisLite::viridis(nStop)
-    
-    plot(seq(-range[1], range[2], length.out = nStop * sum(range)),
-         rep(0, nStop * sum(range)),
-         pch = 15, col = c(negScale, posScale),
-         ylim = c(-2, 2),
-         ann = FALSE, axes = FALSE)
-    lines(c(sil, sil), c(-1, 1), lty = 3)
-    
-    ticks <- c(-0.5, 0, 0.25, 0.5, 0.7, 1)
-    axis(1, at = ticks, line = -1)
-    axis(1, tick = FALSE, at = ticks[-1] - ((ticks[-1] - ticks[-6]) / 2),
-         labels = c("Structure:", "none", "weak", "ok", "strong"),
-         line = -2)
-    
-    axis(1, tick = FALSE, line = 0, at = 0.25,
-         labels = paste0("Silhouette coefficient (", round(sil, 3), ")"))
-    
-    
-    axis(3, tick = FALSE, line = -2, at = 0.25,
-         labels = if (sil > 0.25) 
-           paste0(cl$n, " clusters found with ", cl$method) else 
-             paste0("No meaningful clusters found"))
-    
-  })
-  
-  observeEvent(input$display, {
-    if ('cons' %in% input$display) {
-      show('clustCons')
+      bestCluster <- c('none', 'pam', 'hmm')[which.max(c(0, pamSil, hSil))]
     } else {
-      hide('clustCons')
+      bestCluster <- 'none'
     }
-  }, ignoreInit = TRUE, ignoreNULL = FALSE)
+      
+    # Return:
+    list(method = switch(bestCluster, pam = 'part. around medoids',
+                                      hmm = 'minimax linkage',
+                                      none = 'no significant clustering'),
+         n = 1 + switch(bestCluster, pam = bestPam, hmm = bestH, 0),
+         sil = switch(bestCluster, pam = pamSil, hmm = hSil, 0), 
+         cluster = switch(bestCluster, pam = pamCluster, hmm = hCluster, 1)
+    )
+
+  })
   
   consRows <- reactive({
     cl <- clusterings()
@@ -587,12 +405,6 @@ server <- function(input, output, session) {
            tip.color = palettes[[1]])
     }
   }
-  
-  output$clustCons <- renderPlot({
-    if ('cons' %in% input$display) {
-      PlotClusterCons()
-    }
-  }, height = consSize)
   
   ##############################################################################
   # Plot settings: point style
@@ -749,7 +561,7 @@ server <- function(input, output, session) {
   
   mode3D <- reactive("show3d" %in% input$display)
   PlotSize <- function () debounce(reactive(input$plotSize), 100)
-  output$distPlot <- renderPlot({
+  output$distPlot <- RenderMainPlot({
     if (!mode3D()) {
       if (inherits(distances(), 'dist')) {
         treespacePlot()
@@ -758,7 +570,7 @@ server <- function(input, output, session) {
         output$projectionStatus <- renderText("No distances available.")
       }
     }
-  }, width = PlotSize(), height = PlotSize())
+  })
   
   output$threeDPlot <- rgl::renderRglwidget({
     if (mode3D() && inherits(distances(), 'dist')) {
@@ -789,38 +601,6 @@ server <- function(input, output, session) {
       rgl::rglwidget()
     }
   })
-  
-  
-  consRows <- reactive({
-    cl <- clusterings()
-    if (cl$sil > 0.25) ceiling(cl$n / 3) else 1L
-  })
-  
-  consSize <- reactive({
-    nLeaves() * 12 * consRows()
-  })
-  
-  PlotClusterCons <- function () {
-    cl <- clusterings()
-    par(mar = c(0.2, 0, 0.2, 0), xpd = NA)
-    par(cex = 0.9)
-    if (cl$sil > 0.25) {
-      par(mfrow = c(consRows(), ceiling(cl$n / consRows())))
-      for (i in seq_len(cl$n)) {
-        col <- palettes[[min(length(palettes), cl$n)]][i]
-        tr <- ape::consensus(r$trees[cl$cluster == i])
-        tr$edge.length <- rep(1, dim(tr$edge)[1])
-        plot(tr, edge.width = 2, font = 1, cex = 1,
-             edge.color = col, tip.color = col)
-      }
-    } else {
-      tr <- ape::consensus(r$trees)
-      tr$edge.length <- rep(1, dim(tr$edge)[1])
-      plot(tr,edge.width = 2, font = 1, cex = 1,
-           edge.color = palettes[[1]],
-           tip.color = palettes[[1]])
-    }
-  }
   
   plotContent <- reactive({
     switch(input$plotFormat,
@@ -874,48 +654,25 @@ server <- function(input, output, session) {
   ##############################################################################
   # References
   ##############################################################################
-  #output$references <- renderUI({
-  #  tags$div(style = paste0('position: relative; top: ', 
-  #                          (input$plotSize - 600)
+  output$references <- renderUI({
+    tags$div(style = paste0('position: relative; top: ', 
+                            (input$plotSize - 600)
   #                          + if ('cons' %in% input$display) consSize() - 200 else 0
-  #                          , 'px'),
-  #           tagList(
-  #             tags$h2('References for methods used'),
-  #             #HTML(paste0("<h2>References", input$plotSize, "</h2>")),
-  #             tags$h3('Tree space construction'),
-  #             HTML(paste0(Smith2021,
-  #                         Kaski2003, Venna2001, RCoreTeam)),
-  #             HTML(if (mstSize() > 0) paste0(Gower1969, Paradis2019)),
-  #             HTML(if(input$distance == 'qd') SmithDist),
-  #             tags$h3('Tree distance'),
-  #             HTML(switch(input$distance,
-  #                         'cid' = paste0(Smith2020, SmithDist),
-  #                         'pid' = paste0(Smith2020, SmithDist),
-  #                         'qd' = paste0(Estabrook1985, Sand2014, SmithQuartet),
-  #                         'path' = paste0(Farris1973, SmithDist),
-  #                         'rf' = paste0(Robinson1981, Day1985, SmithDist))
-  #             ),
-  #             tags$h3('Projection'),
-  #             HTML(switch(input$projection,
-  #                         'pca' = Gower1966,
-  #                         'k' = paste0(Kruskal1964, Venables2002),
-  #                         'nls' = paste0(Sammon1969, Venables2002)
-  #             )
-  #             ),
-  #             tags$h3('Clustering'),
-  #             HTML(paste(c(pam = paste0('Partitioning around medoids:', Maechler2019),
-  #                          hmm = paste0("Hierarchical, minimax linkage:", Bien2011, Murtagh1983),
-  #                          hsi = '',#paste0("Hierarchical, single linkage:"),
-  #                          hco = '',#paste0("Hierarchical, complete linkage:"),
-  #                          hav = '',#paste0("Hierarchical, average linkage:"),
-  #                          hmd = '',#paste0("Hierarchical, median linkage:"),
-  #                          hct = '',#paste0("Hierarchical, centroid linkage:"),
-  #                          hwd = paste0("Hierarchical, Ward d\ub2 linkage:", Ward1963),
-  #                          kmn = '',#paste0("K-means:"),
-  #                          spec = ''#paste0("Spectral:")
-  #             )[input$clustering]))
-  #           ))
-  #})
+                            , 'px'),
+             tagList(
+               tags$h2('References for methods used'),
+               tags$h3('Tree search'),
+               HTML('#TODO'),
+               tags$h3('Tree space projection'),
+               HTML(paste0(Smith2021, Gower1966, Gower1969, Smith2020,
+                           Kaski2003, Venna2001, SmithDist, RCoreTeam)),
+               ),
+               tags$h3('Clustering'),
+               HTML(paste0('Partitioning around medoids:', Maechler2019,
+                           "Hierarchical, minimax linkage:", Bien2011,
+                           Murtagh1983))
+             )
+  })
 }
 
 shinyApp(ui = ui, server = server)
