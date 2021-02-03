@@ -409,42 +409,6 @@ server <- function(input, output, session) {
   ##############################################################################
   # Plot settings: point style
   ##############################################################################
-  PointDataStatus <- function (...) {
-    msg <- paste0(...)
-    output$pt.data.status <- renderText(msg)
-    output$pt.col.status <- renderText(msg)
-  }
-  
-  pointData <- reactive({
-    fp <- input$pt.data$datapath
-    PointDataStatus("")
-    extension <- if(is.null(fp)) '' else substr(fp, nchar(fp) - 3, nchar(fp))
-    ret <- switch(extension,
-                  '.csv' = read.csv(fp),
-                  '.txt' = read.table(fp),
-                  '.xls' = readxl::read_excel(fp),
-                  'xlsx' = readxl::read_excel(fp),
-                  {
-                    PointDataStatus("Unrecognized file extension.")
-                    matrix(0)
-                  }
-    )
-    
-    if (input$pt.data.subsample) ret[thinnedTrees(), 1] else ret[, 1]
-  })
-  
-  ContinuousPtCol <- function (dat, bigDark = FALSE) {
-    show('pt.col.scale')
-    scale <- substr(viridisLite::plasma(256), 1, 7)
-    if (bigDark) scale <- rev(scale)
-    output$pt.col.scale <- renderPlot({
-      par(mar = c(1, 1, 0, 1))
-      plot(1:256, rep(0, 256), pch = 15, col = scale,
-           ylim = c(-1, 0), ann = FALSE, axes = FALSE)
-      axis(1, at = c(1, 256), labels = signif(range(dat), 4), line = -1)
-    })
-    scale[cut(dat, 256)]
-  }
 
   pointCols <- reactive({
     cl <- clusterings()
@@ -664,8 +628,9 @@ server <- function(input, output, session) {
                tags$h3('Tree search'),
                HTML('#TODO'),
                tags$h3('Tree space projection'),
-               HTML(paste0(Smith2021, Gower1966, Gower1969, Smith2020,
-                           Kaski2003, Venna2001, SmithDist, RCoreTeam)),
+               HTML(paste0(Gower1966, Gower1969, Kaski2003, RCoreTeam,
+                           SmithDist, Smith2020, Smith2021, 
+                           Venna2001)),
                ),
                tags$h3('Clustering'),
                HTML(paste0('Partitioning around medoids:', Maechler2019,
