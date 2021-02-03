@@ -328,8 +328,8 @@ server <- function(input, output, session) {
   # Clusterings
   ##############################################################################
   clusterings <- reactive({
-    maxCluster <- 15
-    if (min(maxCluster, length(r$trees) - 1L) > 1) {
+    maxCluster <- min(15L, length(r$trees) - 1L)
+    if (maxCluster > 1L) {
       possibleClusters <- 2:maxCluster
       
       hSil <- pamSil <- -99
