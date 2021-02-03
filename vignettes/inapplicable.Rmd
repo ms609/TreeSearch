@@ -161,6 +161,7 @@ constraints, but if it cannot, it may be necessary to specify one manually
 Here's a simple example on six taxa that enforces the bipartition ab | cdef:
 
 ```{r simple-constraints}
+library("TreeTools", quietly = TRUE)
 constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
 characters <- MatrixToPhyDat(matrix(
   c(0, 1, 1, 1, 0, 0,
