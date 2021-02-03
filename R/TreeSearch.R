@@ -349,6 +349,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
         for (move in moves[sample(seq_along(moves))]) {
+          if (.Forbidden(move)) {
+            .Message(10L, "Skipping prohibited topology")
+            next
+          }
           moveScore <- preorder_morphy(move, morphyObj)
           if (moveScore < bestScore + epsilon) {
             edge <- move
@@ -416,6 +420,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
         for (move in moves[sample(seq_along(moves))]) {
+          if (.Forbidden(move)) {
+            .Message(10L, "Skipping prohibited topology")
+            next
+          }
           moveScore <- .IWScore(move, morphyObjects, weight, minLength, charSeq,
                                 concavity, bestPlusEps)
           if (moveScore < bestPlusEps) {

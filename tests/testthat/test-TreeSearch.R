@@ -1,5 +1,5 @@
 context("TreeSearch.R")
-library('TreeTools')
+library("TreeTools", quietly = TRUE)
 comb11 <- PectinateTree(letters[1:11])
 unrooted11 <- UnrootTree(comb11)
 data11 <- cbind(upper.tri(matrix(FALSE, 11, 11))[, 3:10], 
@@ -34,6 +34,35 @@ test_that("tree can be found", {
                          concavity = 10, verbosity = 0L)[[1]]
   expect_equal(comb11, iw)
 #  expect_equal(SectorialSearch(RandomTree(phy11, 'a'), phy11, verbosity = -1), comb11) # TODO: Sectorial Search not working yet!
+})
+
+test_that("constraints work", {
+  constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
+  characters <- MatrixToPhyDat(matrix(
+    c(0, 1, 1, 1, 0, 0,
+      1, 1, 1, 0, 0, 0), ncol = 2,
+    dimnames = list(letters[1:6], NULL)))
+  expect_equal(PectinateTree(letters[1:6]),
+               MaximizeParsimony(characters,
+                                 PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
+                                 ratchIter = 0, constraint = constraint)[[1]])
+  # Start tree not consistent with constraint
+  expect_equal(PectinateTree(letters[1:6]),
+               MaximizeParsimony(characters, 
+                                 PectinateTree(c('a', 'c', 'f', 'd', 'e', 'b')),
+                                 ratchIter = 0, constraint = constraint)[[1]])
+  
+})
+
+test_that("inconsistent constraints fail", {
+  constraint <- MatrixToPhyDat(matrix(
+    c(0, 1, 1, 1, 0, 0,
+      1, 1, 1, 0, 0, 0), ncol = 2,
+    dimnames = list(letters[1:6], NULL)))
+  expect_error(
+    MaximizeParsimony(constraint, PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
+                    ratchIter = 0, constraint = constraint)
+  )
 })
 
 test_that("tree search finds shortest tree", {
