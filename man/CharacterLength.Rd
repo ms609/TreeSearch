@@ -44,8 +44,7 @@ CharacterLength(tree, dataset)
 }
 \seealso{
 Other tree scoring: 
-\code{\link{Fitch}()},
-\code{\link{IWScore}()},
-\code{\link{MorphyTreeLength}()}
+\code{\link{MorphyTreeLength}()},
+\code{\link{TreeLength}()}
 }
 \concept{tree scoring}
