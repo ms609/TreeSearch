@@ -1,59 +1,9 @@
-#' Implied weights parsimony Score
-#'
-#' Calculate a tree's Parsimony score with a given dataset using implied weights
-#' (Goloboff 1997).
-#'
-#' @template treeParam
-#' @param dataset Dataset of class `phyDat`.  The dataset should have been
-#' prepared using \code{dataset <- \link{PrepareDataIW}(dataset)}; if this step
-#' has not been completed, the dataset will be (time-consumingly) prepared
-#' within the function.
-#' In subsidiary functions, the dataset will have been initialized using 
-#' [`IWInitMorphy()`], and must be destroyed using [`IWDestroyMorphy()`].
-#' @template concavityParam
 #' @template pointlessDots
-#'
-#' @return The 'fit', `h / h + k`, where `h` is the amount of homoplasy ('extra steps') 
-#'         and `k` is a constant (the 'concavity constant')
-#'
-#' @references
-#'  - \insertRef{Goloboff1997}{TreeSearch}
-#'  
-#'  - \insertRef{Smith2019}{TreeSearch}
-#'
-#' @examples
-#'   data(referenceTree)
-#'   data(congreveLamsdellMatrices)
-#'   dataset <- PrepareDataIW(congreveLamsdellMatrices[[42]])
-#'   IWScore(referenceTree, dataset)
-#'
-#' @author Martin R. Smith
-#' @family tree scoring
-#' @keywords tree
+#' @rdname TreeLength
 #' @export
 IWScore <- function (tree, dataset, concavity = 10, ...) {
-  if (class(dataset) != 'phyDat') {
-    stop('Data not of class phyDat; see PhyDat() and PrepareDataIW().')
-  }
-  if (!('min.length' %in% names(attributes(dataset)))) {
-    dataset <- PrepareDataIW(dataset)
-  }
-  at <- attributes(dataset)
-  nChar  <- at$nr # strictly, transformation series patterns; these'll be upweighted later
-  weight <- at$weight
-  steps <- CharacterLength(tree, dataset)
-  minLength <- at$min.length
-  homoplasies <- steps - minLength
-  
-  # This check has been triggered - underlying C memory failure suspected
-  # but remains under investigation...
-  if (any(homoplasies < 0)) stop("Minimum steps have been miscalculated.\n", 
-    "       Please report this bug at:\n", 
-    "       https://github.com/ms609/TreeSearch/issues/new\n\n",
-    "       See above for full tree: ", dput(tree))
-  fit <- homoplasies / (homoplasies + concavity)
-  # Return:
-  sum(fit * weight)
+  .Deprecated('TreeLength')
+  TreeLength(tree, dataset, concavity)
 }
 
 #' @describeIn ProfileScore Scorer for Implied Weighting dataset.
@@ -73,8 +23,7 @@ IWScoreMorphy <- function (parent, child, dataset, concavity = 10L,
   sum(fit * attr(dataset, 'weight'))
 }
 
-#' @describeIn IWScore Initialize dataset by adding `morphyObjs` and 
-#' `min.length` properties.
+#' @rdname ProfileScore
 #' @export
 IWInitMorphy <- function (dataset) {
   attr(dataset, 'morphyObjs') <- 

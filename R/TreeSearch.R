@@ -468,7 +468,6 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   nTip <- NTip(tree)
   edge <- tree$edge
   
-  
   # Define constants
   epsilon <- sqrt(.Machine$double.eps)
   iw <- is.finite(concavity)
@@ -500,7 +499,6 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     .Forbidden <- function (edges) FALSE
   }
 
-  
   # Initialize data
   if (iw) {
     at <- attributes(dataset)

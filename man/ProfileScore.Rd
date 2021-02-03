@@ -2,10 +2,12 @@
 % Please edit documentation in R/IWScore.R, R/pp_ProfileScore.R
 \name{IWScoreMorphy}
 \alias{IWScoreMorphy}
+\alias{IWInitMorphy}
 \alias{ProfileScore}
 \alias{ProfileScoreMorphy}
 \alias{ProfileInitMorphy}
 \alias{ProfileDestroyMorphy}
+\alias{IWDestroyMorphy}
 \title{Profile Parsimony Score}
 \usage{
 IWScoreMorphy(
@@ -17,6 +19,8 @@ IWScoreMorphy(
   ...
 )
 
+IWInitMorphy(dataset)
+
 ProfileScore(tree, dataset)
 
 ProfileScoreMorphy(parent, child, dataset, ...)
@@ -24,6 +28,8 @@ ProfileScoreMorphy(parent, child, dataset, ...)
 ProfileInitMorphy(dataset)
 
 ProfileDestroyMorphy(dataset)
+
+IWDestroyMorphy(dataset)
 }
 \arguments{
 \item{parent}{Integer vector corresponding to the first column of the edge
@@ -70,6 +76,9 @@ Faith and Trueman (2001).
 
 \item \code{ProfileDestroyMorphy}: Free memory from \code{morphyObjs} initialized by
 \code{ProfileScoreMorphy()}.
+
+\item \code{IWDestroyMorphy}: Free memory from \code{morphyObjs} initialized by
+\code{IWScoreMorphy()}.
 }}
 
 \examples{

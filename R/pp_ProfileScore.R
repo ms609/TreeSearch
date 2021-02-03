@@ -83,7 +83,7 @@ ProfileDestroyMorphy <- function (dataset) {
   vapply(attr(dataset, 'morphyObjs'), UnloadMorphy, integer(1))
 }
 
-#' @describeIn IWScore Free memory from `morphyObjs` initialized by
+#' @describeIn ProfileScore Free memory from `morphyObjs` initialized by
 #' `IWScoreMorphy()`.
 #' @export
 IWDestroyMorphy <- ProfileDestroyMorphy
