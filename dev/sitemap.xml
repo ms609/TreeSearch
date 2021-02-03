@@ -16,16 +16,10 @@
     <loc>https://ms609.github.io/TreeSearch/reference/Evaluate.html</loc>
   </url>
   <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/Fitch.html</loc>
-  </url>
-  <url>
     <loc>https://ms609.github.io/TreeSearch/reference/ICPerStep.html</loc>
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/reference/ICSteps.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/IWScore.html</loc>
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/reference/InfoAmounts.html</loc>
@@ -104,6 +98,9 @@
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/reference/TipsAreNames.html</loc>
+  </url>
+  <url>
+    <loc>https://ms609.github.io/TreeSearch/reference/TreeLength.html</loc>
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/reference/TreeSearch.html</loc>

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Nearest Neighbour Interchange (NNI) — NNI • TreeSearch</title>
+<title>Calculate parsimony score with inapplicable data — TreeLength • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -45,9 +45,11 @@
 
 
 
-<meta property="og:title" content="Nearest Neighbour Interchange (NNI) — NNI" />
-<meta property="og:description" content="Performs a single iteration of the nearest-neighbour interchange algorithm.
-Based on the corresponding 'phangorn' function, but re-coded to improve speed." />
+<meta property="og:title" content="Calculate parsimony score with inapplicable data — TreeLength" />
+<meta property="og:description" content="Uses code modified from the Morphy library to calculate a
+parsimony score in datasets that contain inapplicable data.
+If concavity is non-infinite, using implied weights
+(Goloboff 1997)." />
 
 
 <meta name="robots" content="noindex">
@@ -155,106 +157,102 @@ Based on the corresponding 'phangorn' function, but re-coded to improve speed." 
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Nearest Neighbour Interchange (NNI)</h1>
-    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/NNI.R'><code>R/NNI.R</code></a></small>
-    <div class="hidden name"><code>NNI.Rd</code></div>
+    <h1>Calculate parsimony score with inapplicable data</h1>
+    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/Fitch.R'><code>R/Fitch.R</code></a>, <a href='https://github.com/ms609/TreeSearch/blob/master/R/IWScore.R'><code>R/IWScore.R</code></a></small>
+    <div class="hidden name"><code>TreeLength.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Performs a single iteration of the nearest-neighbour interchange algorithm.
-Based on the corresponding '<span class="pkg">phangorn</span>' function, but re-coded to improve speed.</p>
+    <p>Uses code modified from the Morphy library to calculate a
+parsimony score in datasets that contain inapplicable data.</p>
+<p>If <code>concavity</code> is non-infinite, using implied weights
+(Goloboff 1997).</p>
     </div>
 
-    <pre class="usage"><span class='fu'>NNI</span><span class='op'>(</span><span class='va'>tree</span>, edgeToBreak <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='cn'>Inf</span><span class='op'>)</span>
 
-<span class='fu'>NNISwap</span><span class='op'>(</span><span class='va'>parent</span>, <span class='va'>child</span>, nTips <span class='op'>=</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span><span class='op'>(</span><span class='va'>parent</span><span class='op'>)</span><span class='op'>/</span><span class='fl'>2L</span><span class='op'>)</span> <span class='op'>+</span> <span class='fl'>1L</span>, edgeToBreak <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span>
+<span class='co'># S3 method for phylo</span>
+<span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='cn'>Inf</span><span class='op'>)</span>
 
-<span class='fu'>RootedNNI</span><span class='op'>(</span><span class='va'>tree</span>, edgeToBreak <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span>
+<span class='fu'>Fitch</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span>
 
-<span class='fu'>RootedNNISwap</span><span class='op'>(</span>
-  <span class='va'>parent</span>,
-  <span class='va'>child</span>,
-  nTips <span class='op'>=</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span><span class='op'>(</span><span class='va'>parent</span><span class='op'>)</span><span class='op'>/</span><span class='fl'>2L</span><span class='op'>)</span> <span class='op'>+</span> <span class='fl'>1L</span>,
-  edgeToBreak <span class='op'>=</span> <span class='cn'>NULL</span>
-<span class='op'>)</span></pre>
+<span class='fu'>IWScore</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='fl'>10</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>tree</th>
-      <td><p>A tree of class <code>phylo</code>.</p></td>
+      <td><p>A tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>.</p></td>
     </tr>
     <tr>
-      <th>edgeToBreak</th>
-      <td><p>(optional) integer specifying the index of an edge to bisect/prune,
-generated randomly if not specified.
-Alternatively, set to <code>-1</code> to return a complete list
-of all trees one step from the input tree.</p></td>
+      <th>dataset</th>
+      <td><p>A phylogenetic data matrix of class <code><a href='https://rdrr.io/pkg/phangorn/man/phyDat.html'>phyDat</a></code>,
+whose names correspond to the labels of any accompanying tree.</p></td>
     </tr>
     <tr>
-      <th>parent</th>
-      <td><p>Integer vector corresponding to the first column of the edge
-matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 1]</code>.</p></td>
+      <th>concavity</th>
+      <td><p>A numeric value to use as the concavity constant (<code>k</code>)
+in implied weighting. Defaults to 10; TNT sets a default of 3, but this
+is too low in some circumstances (Smith, 2019).</p></td>
     </tr>
     <tr>
-      <th>child</th>
-      <td><p>Integer vector corresponding to the second column of the edge
-matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 2]</code>.</p></td>
-    </tr>
-    <tr>
-      <th>nTips</th>
-      <td><p>(optional) Number of tips.</p></td>
+      <th>...</th>
+      <td><p>unused; allows additional parameters specified within ... to be
+received by the function without throwing an error.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Returns a tree with class <code>phylo</code> (if <code>returnAll = FALSE</code>) or
-a set of trees, with class <code>multiPhylo</code> (if <code>returnAll = TRUE</code>).</p>
-<p><code>NNISwap()</code> returns a list containing two elements, corresponding in
-turn to the  rearranged parent and child parameters.</p>
-<p>a list containing two elements, corresponding in turn to the rearranged parent and child parameters</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <p><code>TreeLength()</code> returns the elements from a list containing:</p><ul>
+<li><p>The total parsimony score</p></li>
+<li><p>The parsimony score associated with each character</p></li>
+<li><p>A matrix comprising character reconstructions for each node
+after the final pass</p></li>
+</ul>
 
-    <p>Branch lengths are not supported.</p>
-<p>All nodes in a tree must be bifurcating; <code><a href='https://rdrr.io/pkg/ape/man/collapse.singles.html'>ape::collapse.singles()</a></code> and
-<code><a href='https://rdrr.io/pkg/ape/man/multi2di.html'>ape::multi2di()</a></code> may help.</p>
-    <h2 class="hasAnchor" id="functions"><a class="anchor" href="#functions"></a>Functions</h2>
+<p>The elements to return are specified by the parameter <code>detail</code>.
+If a single element is requested (default) then just that element will be returned
+If multiple elements are requested then these will be returned in a list.</p>
+<p>#TODO if concavity, then The 'fit', <code>h / h + k</code>, where <code>h</code> is the amount of homoplasy ('extra steps')
+and <code>k</code> is a constant (the 'concavity constant')</p>
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     
 <ul>
-<li><p><code>NNISwap</code>: faster version that takes and returns parent and child parameters</p></li>
-<li><p><code>RootedNNI</code>: Perform <acronym>NNI</acronym> rearrangement, retaining position of root</p></li>
-<li><p><code>RootedNNISwap</code>: faster version that takes and returns parent and child parameters</p></li>
+<li><p>Goloboff PA (1997).
+&#8220;Self-weighted optimization: tree searches and character state reconstructions under implied transformation costs.&#8221;
+<em>Cladistics</em>, <b>13</b>(3), 225--245.
+doi: <a href='https://doi.org/10.1111/j.1096-0031.1997.tb00317.x'>10.1111/j.1096-0031.1997.tb00317.x</a>
+, <a href='https://doi.org/10.1111/j.1096-0031.1997.tb00317.x'>https://doi.org/10.1111/j.1096-0031.1997.tb00317.x</a>.</p></li>
+<li><p>Smith MR (2019).
+&#8220;Bayesian and parsimony approaches reconstruct informative trees from simulated morphological datasets.&#8221;
+<em>Biology Letters</em>, <b>15</b>(2), 20180632.
+doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
+, <a href='https://doi.org/10.1098/rsbl.2018.0632'>https://doi.org/10.1098/rsbl.2018.0632</a>.</p></li>
 </ul>
-    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
-    <p>The algorithm is summarized in
-Felsenstein J (2004).
-<em>Inferring phylogenies</em>.
-Sinauer Associates, Sunderland, Massachusetts.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p>Other tree rearrangement functions: 
-<code><a href='SPR.html'>SPR</a>()</code>,
-<code><a href='TBR.html'>TBR</a>()</code></p></div>
+    <div class='dont-index'>
+<ul>
+<li><p><code><a href='IWTreeSearch.html'>TreeSearch()</a></code></p></li>
+</ul>
+
+<p>Other tree scoring: 
+<code><a href='CharacterLength.html'>CharacterLength</a>()</code>,
+<code><a href='MorphyTreeLength.html'>MorphyTreeLength</a>()</code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
-    <p><a href='https://orcid.org/0000-0001-5660-1727'>Martin R. Smith</a>
-(<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
+    <p>Martin R. Smith (using Morphy C library, by Martin Brazeau)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>ape</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ape/man/rtree.html'>rtree</a></span><span class='op'>(</span><span class='fl'>20</span>, br <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span>
-<span class='fu'>NNI</span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 
-#&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
-#&gt; 
-#&gt; Tip labels:
-#&gt;   t12, t3, t16, t2, t4, t6, ...
-#&gt; 
-#&gt; Rooted; no branch lengths.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/structure.html'>structure</a></span><span class='op'>(</span><span class='fu'>NNI</span><span class='op'>(</span><span class='va'>tree</span>, edgeToBreak <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span><span class='op'>)</span>, class <span class='op'>=</span> <span class='st'>'multiPhylo'</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 36 phylogenetic trees</div></pre>
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"inapplicable.datasets"</span><span class='op'>)</span>
+<span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/GenerateTree.html'>BalancedTree</a></span><span class='op'>(</span><span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
+<span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 1117</div><div class='input'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>, <span class='fl'>10</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 52.75785</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

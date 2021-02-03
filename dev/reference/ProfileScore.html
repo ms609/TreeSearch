@@ -174,13 +174,17 @@ Faith and Trueman (2001).</p>
   <span class='va'>...</span>
 <span class='op'>)</span>
 
+<span class='fu'>IWInitMorphy</span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span>
+
 <span class='fu'>ProfileScore</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span>
 
 <span class='fu'>ProfileScoreMorphy</span><span class='op'>(</span><span class='va'>parent</span>, <span class='va'>child</span>, <span class='va'>dataset</span>, <span class='va'>...</span><span class='op'>)</span>
 
 <span class='fu'>ProfileInitMorphy</span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span>
 
-<span class='fu'>ProfileDestroyMorphy</span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span></pre>
+<span class='fu'>ProfileDestroyMorphy</span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span>
+
+<span class='fu'>IWDestroyMorphy</span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -240,6 +244,8 @@ treats smaller numbers as better)</p>
 <li><p><code>ProfileInitMorphy</code>: Initialize dataset by adding <code>morphyObjs</code> attribute.</p></li>
 <li><p><code>ProfileDestroyMorphy</code>: Free memory from <code>morphyObjs</code> initialized by
 <code>ProfileScoreMorphy()</code>.</p></li>
+<li><p><code>IWDestroyMorphy</code>: Free memory from <code>morphyObjs</code> initialized by
+<code>IWScoreMorphy()</code>.</p></li>
 </ul>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
