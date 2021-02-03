@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Destroy a Morphy Object — UnloadMorphy • TreeSearch</title>
+<title>Consistency / retention 'indices' — Consistency • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -45,8 +45,14 @@
 
 
 
-<meta property="og:title" content="Destroy a Morphy Object — UnloadMorphy" />
-<meta property="og:description" content="Destroys a previously-created Morphy object." />
+<meta property="og:title" content="Consistency / retention 'indices' — Consistency" />
+<meta property="og:description" content="Consistency() calculates the so-called consistency and retention 'indices'
+for each character in a dataset, given a bifurcating tree.
+Although there is not a straightforward interpretation of these indices,
+they are sometimes taken as an indicator of the fit of a character to a
+tree.  Values correlate with the number of species sampled and the
+distribution of taxa between character states, so are not strictly comparable
+between characters in which these factors differ." />
 
 
 <meta name="robots" content="noindex">
@@ -154,69 +160,68 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Destroy a Morphy Object</h1>
-    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/mpl_morphy_objects.R'><code>R/mpl_morphy_objects.R</code></a></small>
-    <div class="hidden name"><code>UnloadMorphy.Rd</code></div>
+    <h1>Consistency / retention 'indices'</h1>
+    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/ci-ri.R'><code>R/ci-ri.R</code></a></small>
+    <div class="hidden name"><code>Consistency.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Destroys a previously-created Morphy object.</p>
+    <p><code>Consistency()</code> calculates the so-called consistency and retention 'indices'
+for each character in a dataset, given a bifurcating tree.
+Although there is not a straightforward interpretation of these indices,
+they are sometimes taken as an indicator of the fit of a character to a
+tree.  Values correlate with the number of species sampled and the
+distribution of taxa between character states, so are not strictly comparable
+between characters in which these factors differ.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>UnloadMorphy</span><span class='op'>(</span><span class='va'>morphyObj</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>Consistency</span><span class='op'>(</span><span class='va'>dataset</span>, <span class='va'>tree</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>morphyObj</th>
-      <td><p>Object of class <code>morphy</code>, perhaps created with
-<code><a href='PhyDat2Morphy.html'>PhyDat2Morphy()</a></code>.</p></td>
+      <th>dataset</th>
+      <td><p>A phylogenetic data matrix of class <code><a href='https://rdrr.io/pkg/phangorn/man/phyDat.html'>phyDat</a></code>,
+whose names correspond to the labels of any accompanying tree.</p></td>
+    </tr>
+    <tr>
+      <th>tree</th>
+      <td><p>A tree of class <code>phylo</code>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Morphy error code, decipherable using <code><a href='mpl_translate_error.html'>mpl_translate_error</a></code></p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>Best practice is to call <code>morphyObj &lt;- UnloadMorphy(morphyObj)</code>
-Failure to do so will cause a crash if <code>UnloadMorphy()</code> is called on an
-object that  has already been destroyed</p>
-    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
-
-    <div class='dont-index'><p>Other Morphy API functions: 
-<code><a href='MorphyErrorCheck.html'>MorphyErrorCheck</a>()</code>,
-<code><a href='MorphyWeights.html'>MorphyWeights</a>()</code>,
-<code><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a>()</code>,
-<code><a href='SingleCharMorphy.html'>SingleCharMorphy</a>()</code>,
-<code><a href='mpl_apply_tipdata.html'>mpl_apply_tipdata</a>()</code>,
-<code><a href='mpl_attach_rawdata.html'>mpl_attach_rawdata</a>()</code>,
-<code><a href='mpl_attach_symbols.html'>mpl_attach_symbols</a>()</code>,
-<code><a href='mpl_delete_Morphy.html'>mpl_delete_Morphy</a>()</code>,
-<code><a href='mpl_delete_rawdata.html'>mpl_delete_rawdata</a>()</code>,
-<code><a href='mpl_first_down_recon.html'>mpl_first_down_recon</a>()</code>,
-<code><a href='mpl_first_up_recon.html'>mpl_first_up_recon</a>()</code>,
-<code><a href='mpl_get_charac_weight.html'>mpl_get_charac_weight</a>()</code>,
-<code><a href='mpl_get_num_charac.html'>mpl_get_num_charac</a>()</code>,
-<code><a href='mpl_get_num_internal_nodes.html'>mpl_get_num_internal_nodes</a>()</code>,
-<code><a href='mpl_get_numtaxa.html'>mpl_get_numtaxa</a>()</code>,
-<code><a href='mpl_get_symbols.html'>mpl_get_symbols</a>()</code>,
-<code><a href='mpl_init_Morphy.html'>mpl_init_Morphy</a>()</code>,
-<code><a href='mpl_new_Morphy.html'>mpl_new_Morphy</a>()</code>,
-<code><a href='mpl_second_down_recon.html'>mpl_second_down_recon</a>()</code>,
-<code><a href='mpl_second_up_recon.html'>mpl_second_up_recon</a>()</code>,
-<code><a href='mpl_set_charac_weight.html'>mpl_set_charac_weight</a>()</code>,
-<code><a href='mpl_set_num_internal_nodes.html'>mpl_set_num_internal_nodes</a>()</code>,
-<code><a href='mpl_set_parsim_t.html'>mpl_set_parsim_t</a>()</code>,
-<code><a href='mpl_translate_error.html'>mpl_translate_error</a>()</code>,
-<code><a href='mpl_update_lower_root.html'>mpl_update_lower_root</a>()</code>,
-<code><a href='mpl_update_tip.html'>mpl_update_tip</a>()</code>,
-<code><a href='summary.morphyPtr.html'>summary.morphyPtr</a>()</code></p></div>
+    <p><code>Consistency()</code> returns a named vector specifying the consistency index (ci),
+retention index (ri), and rescalced consistency index (rc).</p>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
-    <p>Martin R. Smith</p>
+    <p><a href='https://orcid.org/0000-0001-5660-1727'>Martin R. Smith</a>
+(<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>inapplicable.datasets</span><span class='op'>)</span>
+<span class='va'>dataset</span> <span class='op'>&lt;-</span> <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>4</span><span class='op'>]</span><span class='op'>]</span>
+<span class='fu'>Consistency</span><span class='op'>(</span><span class='va'>dataset</span>, <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;   [1] 0.2500000 0.3333333 0.3333333 0.2500000 0.3333333 0.2500000 0.5000000
+#&gt;   [8] 0.2500000 0.3333333       NaN 0.2500000 1.0000000 0.3333333 0.3333333
+#&gt;  [15] 1.0000000 0.3333333 0.5000000 0.2000000 1.0000000 1.0000000 0.5000000
+#&gt;  [22] 0.2500000 0.3333333 0.2500000 0.5000000 0.5000000 0.5000000 1.0000000
+#&gt;  [29] 0.5000000 0.6666667 0.2500000 0.2500000 0.5000000 0.3333333 1.0000000
+#&gt;  [36] 0.2500000 1.0000000 0.1666667 0.5000000 0.5000000 0.5000000 1.0000000
+#&gt;  [43] 0.4000000 0.5000000 0.5000000 0.5000000 0.3333333 0.3333333 0.3333333
+#&gt;  [50] 1.0000000 0.3333333 0.6666667 1.0000000 1.0000000 0.3333333 0.5000000
+#&gt;  [57] 1.0000000 0.2857143 0.5000000 0.2000000 0.6666667 0.5000000 0.1428571
+#&gt;  [64] 0.6666667 0.5000000 0.2000000 0.5714286 0.7500000 0.2500000 0.2000000
+#&gt;  [71] 0.5000000 1.0000000 0.6666667 0.2500000 0.3333333 0.2000000 0.1666667
+#&gt;  [78] 0.2500000 1.0000000 0.3333333 0.2500000 0.6666667 0.3333333 0.2500000
+#&gt;  [85] 0.3333333 1.0000000 0.2500000 1.0000000 0.5000000 0.2857143 0.3333333
+#&gt;  [92] 0.2000000 1.0000000 0.3333333 1.0000000 0.2500000 0.5000000 1.0000000
+#&gt;  [99] 0.3333333 0.5000000 1.0000000 0.5000000 0.5000000 0.5000000 0.5000000
+#&gt; [106] 1.0000000 0.2500000 0.5000000 1.0000000 0.3333333 1.0000000 0.2000000
+#&gt; [113] 0.5000000 1.0000000 0.2000000 0.5000000 0.3333333 0.5000000 0.3333333
+#&gt; [120] 0.3333333 0.3333333 0.2500000 1.0000000 1.0000000 0.3333333</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
