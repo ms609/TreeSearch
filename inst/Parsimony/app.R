@@ -706,7 +706,6 @@ server <- function(input, output, session) {
     proj <- projection()
     
     nDim <- min(dims(), nProjDim())
-    message("Dims = ", nDim, ".", dims(), "..", nProjDim())
     plotSeq <- matrix(0, nDim, nDim)
     nPanels <- nDim * (nDim - 1L) / 2L
     plotSeq[upper.tri(plotSeq)] <- seq_len(nPanels)
@@ -717,7 +716,7 @@ server <- function(input, output, session) {
         incProgress(1 / nPanels)
         # Set up blank plot
         plot(proj[, j], proj[, i], ann = FALSE, axes = FALSE,
-             frame.plot = nDim < 3L,
+             frame.plot = nDim > 2L,
              type = 'n', asp = 1, xlim = range(proj), ylim = range(proj))
         
         # Plot MST
