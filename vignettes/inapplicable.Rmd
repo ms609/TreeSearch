@@ -85,12 +85,13 @@ bestTree <- MaximizeParsimony(vinther, tree = bestTree,
 As it happens, the best tree for this dataset has a score of 79 under
 equal weights parsimony.
 
-We can plot the best tree(s) that we've found, and check its parsimony score:
+We can plot the best tree(s) that we've found, and check its parsimony score
+(length):
 
 ```{r plot-tree}
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(ape::consensus(bestTree))
-Fitch(bestTree[[1]], vinther)
+TreeLength(bestTree[[1]], vinther)
 ```
 
 We might be interested in labelling clades with their frequency among the 
