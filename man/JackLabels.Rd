@@ -7,6 +7,7 @@
 JackLabels(
   tree,
   jackTrees,
+  plot = TRUE,
   add = FALSE,
   adj = 0,
   col = NULL,
@@ -24,7 +25,10 @@ by \code{\link[=Jackknife]{Jackknife()}}.}
 \item{add}{Logical specifying whether to add the labels to an existing
 plot.}
 
-\item{adj, col, frame, pos, \dots}{Parameters to pass to \code{nodelabels}.}
+\item{adj, col, frame, pos, \dots}{Parameters to pass to \code{nodelabels()}.}
+
+\item{allNodes}{Logical specifing whether to return empty labels for
+nodes near the root that do not correspond to a unique split.}
 }
 \value{
 A named vector specifying the proportion of jackknife trees
@@ -39,8 +43,10 @@ library('TreeTools') # for as.phylo
 # jackTrees will usually be generated with Jackknife(), but for simplicity:
 jackTrees <- as.phylo(1:100, 8)
 
-JackLabels(as.phylo(0, 8), jackTrees)
+tree <- as.phylo(0, 8)
+JackLabels(tree, jackTrees)
 
+tree$node.labels <- JackLabels(tree, jackTrees, plot = FALSE)
 }
 \seealso{
 \code{\link[=Jackknife]{Jackknife()}}: Generate trees by jackknife resampling

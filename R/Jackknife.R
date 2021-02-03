@@ -76,7 +76,9 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' by [`Jackknife()`].
 #' @param add Logical specifying whether to add the labels to an existing
 #' plot.
-#' @param adj,col,frame,pos,\dots Parameters to pass to `nodelabels`.
+#' @param adj,col,frame,pos,\dots Parameters to pass to `nodelabels()`.
+#' @param allNodes Logical specifing whether to return empty labels for
+#' nodes near the root that do not correspond to a unique split.
 #' 
 #' @return A named vector specifying the proportion of jackknife trees 
 #' consistent with each node in `tree`, as plotted.
@@ -87,23 +89,36 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' # jackTrees will usually be generated with Jackknife(), but for simplicity:
 #' jackTrees <- as.phylo(1:100, 8)
 #' 
-#' JackLabels(as.phylo(0, 8), jackTrees)
+#' tree <- as.phylo(0, 8)
+#' JackLabels(tree, jackTrees)
 #' 
+#' tree$node.labels <- JackLabels(tree, jackTrees, plot = FALSE)
 #' @template MRS
 #' @importFrom ape nodelabels
 #' @importFrom TreeTools SplitFrequency SupportColour
 #' @seealso [`Jackknife()`]: Generate trees by jackknife resampling
 #' @export
-JackLabels <- function (tree, jackTrees, add = FALSE,
-                        adj = 0, col = NULL, frame = 'none', pos = 2L, ...) {
+JackLabels <- function (tree, jackTrees,
+                        plot = TRUE,
+                        add = FALSE,
+                        adj = 0, col = NULL, frame = 'none', pos = 2L,
+                        ...) {
   jackSupport <- SplitFrequency(tree, jackTrees) / length(jackTrees)
   
-  if (!add) plot(tree)
-  if (is.null(col)) col <- SupportColour(jackSupport)
-  ape::nodelabels(paste('\n\n', signif(jackSupport, 2)), 
-                  node = as.integer(names(jackSupport)),
-                  adj = adj, col = col, pos = pos, frame = frame, ...)
-  
-  # Return:
-  jackSupport
+  if (plot) {
+    if (!add) plot(tree)
+    if (is.null(col)) col <- SupportColour(jackSupport)
+    ape::nodelabels(paste('\n\n', signif(jackSupport, 2)), 
+                    node = as.integer(names(jackSupport)),
+                    adj = adj, col = col, pos = pos, frame = frame, ...)
+    
+    # Return:
+    jackSupport
+  } else {
+    ret <- rep('', tree$Nnode)
+    ret[as.integer(names(jackSupport)) - NTip(tree)] <- jackSupport
+    
+    # Return:
+    ret
+  }
 }

@@ -18,3 +18,18 @@ test_that("Jackknife supports are correct", {
   # Note: one cause of failure could be a change in characters sampled, due to randomness
   expect_true(length(unique(jackTrees)) > 2L)
 })
+
+test_that("Jackknife ouputs good for node.labels", {
+  library('TreeTools') # for as.phylo
+  
+  # jackTrees will usually be generated with Jackknife(), but for simplicity:
+  jackTrees <- as.phylo(1:100, 8)
+  
+  tree <- as.phylo(0, 8)
+  expect_equal(unname(c('', '', JackLabels(tree, jackTrees, plot = TRUE))),
+               JackLabels(tree, jackTrees, plot = FALSE))
+  
+  tree <- RootTree(as.phylo(0, 8), c('t1', 't4'))
+  expect_equal(as.character(JackLabels(tree, jackTrees, plot = TRUE)),
+               JackLabels(tree, jackTrees, plot = FALSE)[c(2, 3, 5:7)])
+})
