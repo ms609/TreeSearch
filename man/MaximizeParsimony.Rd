@@ -14,6 +14,7 @@ MaximizeParsimony(
   finalIter = 3L,
   maxHits = 20L,
   concavity = Inf,
+  constraint = NULL,
   verbosity = 2L,
   session = NULL
 )
@@ -41,7 +42,7 @@ The counter is reset to zero each time tree score improves.
 One 'iteration' comprises breaking a single branch and evaluating all
 possible reconnections.}
 
-\item{finalIter}{Numeric: the final round of tree search will evalauate
+\item{finalIter}{Numeric: the final round of tree search will evaluate
 \code{finalIter} × \code{tbrIter} \acronym{TBR} break points.}
 
 \item{maxHits}{Numeric specifying the maximum times that an optimal
@@ -51,6 +52,12 @@ search concluded.}
 \item{concavity}{Numeric specifying concavity constant for implied step
 weighting; set as \code{Inf} for equal step weights (which is a bad idea; see
 Smith 2019).}
+
+\item{constraint}{Either \code{NULL} or an object of class \code{phyDat}. Trees that
+are not perfectly compatible with each character in \code{constraint} will not
+be considered during search.
+See \href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
+for further examples.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
 more detailed commentary on search progress. Set to \code{0} to run silently.}
@@ -98,6 +105,15 @@ MaximizeParsimony(dataset, ratchIter = 0, tbrIter = 1, concavity = 10,
 \dontrun{ # launches 'shiny' point-and-click interface
   EasyTrees() 
 }
+
+# Tree search with a constraint
+constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
+characters <- MatrixToPhyDat(matrix(
+  c(0, 1, 1, 1, 0, 0,
+    1, 1, 1, 0, 0, 0), ncol = 2,
+  dimnames = list(letters[1:6], NULL)))
+MaximizeParsimony(characters, constraint = constraint)
+
 }
 \references{
 \insertRef{Brazeau2019}{TreeSearch}

@@ -2,42 +2,93 @@
 #'
 #' @description Uses code modified from the Morphy library to calculate a 
 #' parsimony score in datasets that contain inapplicable data.
+#' 
+#' 
+#' 
+#' If `concavity` is non-infinite, using implied weights
+#' (Goloboff 1997).
 #'
 #' @template treeParam 
 #' @template datasetParam
+#' @template concavityParam
 #' 
-#' @return `Fitch()` returns the elements from a list containing:
+#' @return `TreeLength()` returns the elements from a list containing:
 #'    \itemize{
 #' \item     The total parsimony score
 #' \item     The parsimony score associated with each character 
 #' \item     A matrix comprising character reconstructions for each node
 #'           after the final pass
 #'   }
+#'   
 #' The elements to return are specified by the parameter `detail`.  
 #' If a single element is requested (default) then just that element will be returned
 #' If multiple elements are requested then these will be returned in a list.
 #' 
 #' 
+#' @return #TODO if concavity, then The 'fit', `h / h + k`, where `h` is the amount of homoplasy ('extra steps') 
+#'         and `k` is a constant (the 'concavity constant')
+#' 
+#' 
 #' @examples
 #' data("inapplicable.datasets")
 #' tree <- TreeTools::BalancedTree(inapplicable.phyData[[1]])
-#' Fitch(tree, inapplicable.phyData[[1]])
+#' TreeLength(tree, inapplicable.phyData[[1]])
+#' TreeLength(tree, inapplicable.phyData[[1]], 10)
 #' @seealso 
 #' - [`TreeSearch()`]
 #' @family tree scoring
 #' 
+#' 
+#' @references
+#'  - \insertRef{Goloboff1997}{TreeSearch}
+#'  
+#'  - \insertRef{Smith2019}{TreeSearch}
+#'
 #' @author Martin R. Smith (using Morphy C library, by Martin Brazeau)
 #' @importFrom phangorn phyDat
 #' @importFrom TreeTools Renumber RenumberTips TreeIsRooted
 #' @export
-Fitch <- function (tree, dataset) {
-  tree <- RenumberTips(Renumber(tree), names(dataset))
-  if (!TreeIsRooted(tree)) stop("`tree` must be rooted; try RootTree(tree)")
-  morphyObj <- PhyDat2Morphy(dataset)
-  on.exit(morphyObj <- UnloadMorphy(morphyObj))
-  MorphyTreeLength(tree, morphyObj)
+TreeLength <- function (tree, dataset, concavity = Inf) UseMethod('TreeLength')
+
+#' @rdname TreeLength
+#' @export
+TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
+  if (is.finite(concavity)) {
+    if (!('min.length' %in% names(attributes(dataset)))) {
+      dataset <- PrepareDataIW(dataset)
+    }
+    at <- attributes(dataset)
+    nChar  <- at$nr # strictly, transformation series patterns; these'll be upweighted later
+    weight <- at$weight
+    steps <- CharacterLength(tree, dataset)
+    minLength <- at$min.length
+    homoplasies <- steps - minLength
+    
+    # This check was once triggered - possibly fixed but remains
+    # under investigation...
+    if (any(homoplasies < 0)) stop("Minimum steps have been miscalculated.\n", 
+                                   "       Please report this bug at:\n", 
+                                   "       https://github.com/ms609/TreeSearch/issues/new\n\n",
+                                   "       See above for full tree: ", dput(tree))
+    fit <- homoplasies / (homoplasies + concavity)
+    # Return:
+    sum(fit * weight)
+    
+  } else {
+    tree <- RenumberTips(Renumber(tree), names(dataset))
+    if (!TreeIsRooted(tree)) stop("`tree` must be rooted; try RootTree(tree)")
+    morphyObj <- PhyDat2Morphy(dataset)
+    on.exit(morphyObj <- UnloadMorphy(morphyObj))
+    MorphyTreeLength(tree, morphyObj)
+  }
 }
 
+#' @rdname TreeLength
+#' @export
+Fitch <- function (tree, dataset) {
+  .Deprecated('TreeLength')
+  TreeLength(tree, dataset, Inf)
+}
 
 #' Character length
 #' 

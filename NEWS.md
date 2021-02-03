@@ -1,11 +1,12 @@
-# TreeSearch 0.4.3.9001 (development)
+# TreeSearch 0.4.3.9002 (development)
 
  - 'shiny' graphical user interface for tree search.
- - `Consistency()` calculates consistency and retention 'indices'.
+  - `Consistency()` calculates consistency and retention 'indices'
  - `MinimumLength()` and `MaximumLength()` calculate range of possible lengths
-   of characters in a dataset on any tree.
- - Remove redundant function `AsBinary()`.
- - C implementations of rearrangement functions.
+   of characters in a dataset on any tree
+ - Support for topological constraints during tree search
+ - Remove redundant function `AsBinary()`
+ - Merge `Fitch()` / `IWScore()` to combined function `TreeLength()`
 
 # TreeSearch 0.4.3
 
