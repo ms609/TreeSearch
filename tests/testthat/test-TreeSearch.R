@@ -59,10 +59,9 @@ test_that("inconsistent constraints fail", {
     c(0, 1, 1, 1, 0, 0,
       1, 1, 1, 0, 0, 0), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
-  expect_error(
-    MaximizeParsimony(constraint, PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
-                      ratchIter = 0, constraint = constraint)
-  )
+  expect_error(MaximizeParsimony(constraint,
+                                 PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
+                                 ratchIter = 0, constraint = constraint))
 })
 
 test_that("tree search finds shortest tree", {
