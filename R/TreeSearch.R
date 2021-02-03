@@ -261,7 +261,7 @@ TreeSearch <- function (tree, dataset,
 #' are not perfectly compatible with each character in `constraint` will not
 #' be considered during search.
 #' See [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
-#' for examples.
+#' for further examples.
 #' @param verbosity Integer specifying level of messaging; higher values give
 #' more detailed commentary on search progress. Set to `0` to run silently.
 #' @param session 'shiny' session identifier to allow [`setProgress()`] calls
@@ -283,6 +283,15 @@ TreeSearch <- function (tree, dataset,
 #' \dontrun{ # launches 'shiny' point-and-click interface
 #'   EasyTrees() 
 #' }
+#' 
+#' # Tree search with a constraint
+#' constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
+#' characters <- MatrixToPhyDat(matrix(
+#'   c(0, 1, 1, 1, 0, 0,
+#'     1, 1, 1, 0, 0, 0), ncol = 2,
+#'   dimnames = list(letters[1:6], NULL)))
+#' MaximizeParsimony(characters, constraint = constraint)
+#' 
 #' @template MRS
 #' 
 #' @importFrom shiny setProgress withProgress
