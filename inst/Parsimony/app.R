@@ -62,6 +62,12 @@ Reference <- function (authors, year, title, journal = '',
 }
 
 
+Brazeau2019 <- Reference(c('Brazeau, M.D.', 'Guillerme, T.', 'Smith, M.R.'),
+                           title = "An algorithm for morphological phylogenetic analysis with inapplicable data",
+                           journal = "Systematic Biology",
+                           volume = 64,
+                           pages = "619-631",
+                         doi = "10.1093/sysbio/syy083")
 Bien2011 <- Reference(
   c("Bien, J.", "Tibshirani, R."),
   title = "Hierarchical clustering with prototypes via minimax linkage",
@@ -92,11 +98,18 @@ Maechler2019 <- Reference(
   title = "cluster: cluster analysis basics and extensions", year = 2019,
   author = c("Maechler, M.", "Rousseeuw, P.", "Struyf, A.", "Hubert, M.", "Hornik, K."),
   journal = "Comprehensive R Archive Network")
+Morphy <- Reference('Brazeau, M.D., Smith, M.R. & Guillerme, T.', 2017,
+                    'MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability.',
+                    doi = '10.5281/zenodo.815371')
 Murtagh1983 <- Reference(
   title = "A survey of recent advances in hierarchical clustering algorithms",
   author = "Murtagh, F.", year = 1983, volume = 26, pages = c(354, 359),
   doi = "10.1093/comjnl/26.4.354", journal = "The Computer Journal")
-
+Nixon1999 <- Reference(
+  "Nixon, K.C.", 1999,
+  journal = "Cladistics", volume = 15, pages = "407-414",
+  title = "The Parsimony Ratchet, a New Method for Rapid Parsimony Analysis",
+  doi = "10.1111/j.1096-0031.1999.tb00277.x")
 RCoreTeam <- Reference(
   author = "R Core Team", year = 2020,
   title = "R: A language and environment for statistical computing",
@@ -107,6 +120,9 @@ SmithDist <- Reference('Smith, M.R.', 2020,
 SmithQuartet <- Reference('Smith, M.R.', 2019,
                           'Quartet: comparison of phylogenetic trees using quartet and split measures',
                           'Comprehensive R Archive Network', doi = "10.5281/zenodo.2536318")
+SmithSearch <- Reference('Smith, M.R.', 2018,
+                         'TreeSearch: phylogenetic tree search using custom optimality criteria',
+                         'Comprehensive R Archive Network', doi = "10.5281/zenodo.1042590")
 Smith2020 <- Reference('Smith, M.R.', 2020,
                        'Information theoretic Generalized Robinson-Foulds metrics for comparing phylogenetic trees',
                        'Bioinformatics', volume = 36, pages = '5007--5013',
@@ -387,7 +403,7 @@ server <- function(input, output, session) {
   PlotClusterCons <- function () {
     cl <- clusterings()
     par(mar = c(0.2, 0, 0.2, 0), xpd = NA)
-    par(cex = 0.9)
+    par(cex = 0.7)
     if (cl$sil > 0.25) {
       par(mfrow = c(consRows(), ceiling(cl$n / consRows())))
       for (i in seq_len(cl$n)) {
@@ -595,7 +611,9 @@ server <- function(input, output, session) {
   output$savePdf <- downloadHandler(
     filename = 'TreeSearch.pdf',
     content = function (file) {
-      pdf(file, title = paste0('Tree space projection'))
+      pdf(file, title = paste0('Tree space projection'),
+          width = 10,
+          height = 20)
       plotContent()
       dev.off()
     })
@@ -626,7 +644,7 @@ server <- function(input, output, session) {
              tagList(
                tags$h2('References for methods used'),
                tags$h3('Tree search'),
-               HTML('#TODO'),
+               HTML(Brazeau2019, Morphy, Nixon1999, SmithSearch),
                tags$h3('Tree space projection'),
                HTML(paste0(Gower1966, Gower1969, Kaski2003, RCoreTeam,
                            SmithDist, Smith2020, Smith2021, 
