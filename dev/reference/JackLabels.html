@@ -166,6 +166,7 @@
     <pre class="usage"><span class='fu'>JackLabels</span><span class='op'>(</span>
   <span class='va'>tree</span>,
   <span class='va'>jackTrees</span>,
+  plot <span class='op'>=</span> <span class='cn'>TRUE</span>,
   add <span class='op'>=</span> <span class='cn'>FALSE</span>,
   adj <span class='op'>=</span> <span class='fl'>0</span>,
   col <span class='op'>=</span> <span class='cn'>NULL</span>,
@@ -187,20 +188,29 @@
 by <code><a href='Jackknife.html'>Jackknife()</a></code>.</p></td>
     </tr>
     <tr>
+      <th>plot</th>
+      <td><p>Logical specifing whether to plot results; if <code>FALSE</code>,
+returns blank labels for nodes near the root that do not correspond to a
+unique split.</p></td>
+    </tr>
+    <tr>
       <th>add</th>
       <td><p>Logical specifying whether to add the labels to an existing
 plot.</p></td>
     </tr>
     <tr>
       <th>adj, col, frame, pos, ...</th>
-      <td><p>Parameters to pass to <code>nodelabels</code>.</p></td>
+      <td><p>Parameters to pass to <code>nodelabels()</code>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>A named vector specifying the proportion of jackknife trees
-consistent with each node in <code>tree</code>, as plotted.</p>
+consistent with each node in <code>tree</code>, as plotted.
+If <code>plot = FALSE</code>, blank entries are included corresponding to nodes
+that do not require labelling; the return value is in the value required
+by <code>phylo$node.label</code>.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p><code><a href='Jackknife.html'>Jackknife()</a></code>: Generate trees by jackknife resampling</p></div>
@@ -218,9 +228,11 @@ consistent with each node in <code>tree</code>, as plotted.</p>
 <span class='co'># jackTrees will usually be generated with Jackknife(), but for simplicity:</span>
 <span class='va'>jackTrees</span> <span class='op'>&lt;-</span> <span class='fu'>as.phylo</span><span class='op'>(</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>100</span>, <span class='fl'>8</span><span class='op'>)</span>
 
-<span class='fu'>JackLabels</span><span class='op'>(</span><span class='fu'>as.phylo</span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>8</span><span class='op'>)</span>, <span class='va'>jackTrees</span><span class='op'>)</span>
+<span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>as.phylo</span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>8</span><span class='op'>)</span>
+<span class='fu'>JackLabels</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>jackTrees</span><span class='op'>)</span>
 </div><div class='img'><img src='JackLabels-1.png' alt='' width='700' height='433' /></div><div class='output co'>#&gt;   11   12   13   14   15 
 #&gt; 0.13 0.08 0.14 1.00 1.00 </div><div class='input'>
+<span class='va'>tree</span><span class='op'>$</span><span class='va'>node.label</span> <span class='op'>&lt;-</span> <span class='fu'>JackLabels</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>jackTrees</span>, plot <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
