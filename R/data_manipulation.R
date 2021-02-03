@@ -98,7 +98,8 @@ PrepareDataIW <- function (dataset) {
 #' The smallest length that a character can obtain on any tree.
 #' 
 #' 
-#' @param states Integer vector listing the tokens that may be present at each 
+#' @param x An object of class `phyDat`,
+#' or an integer vector listing the tokens that may be present at each 
 #' tip along a single character, with each token represented as a binary digit;
 #' e.g. a value of 11 ( = 2^0 + 2^1 + 2^3) means that
 #' the tip may have tokens 0, 1 or 3.
@@ -109,12 +110,13 @@ PrepareDataIW <- function (dataset) {
 #' state are not presently supported; for an approximate value, denote such
 #' ambiguity with the integer `0`.
 #' 
-#' @return An integer specifying the minimum number of steps that the character
-#'  must contain.
+#' @return A vector of integers specifying the minimum number of steps that 
+#' each character must contain.
 #'
 #' @examples
 #' data('inapplicable.datasets')
 #' myPhyDat <- inapplicable.phyData[[4]] 
+#' MinimumLength(myPhyDat)
 #' class(myPhyDat) # phyDat object
 #' # load your own data with
 #' # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
@@ -141,9 +143,44 @@ PrepareDataIW <- function (dataset) {
 #'
 #' @author Martin R. Smith
 #' @export
-MinimumLength <- function (states) {
+MinimumLength <- function (x) UseMethod('MinimumLength')
+
+#' @rdname MinimumLength
+#' @export
+MinimumLength.phyDat <- function (x) {
   
-  uniqueStates <- unique(states[states > 0])
+  at <- attributes(x)
+  nLevel <- length(at$level)
+  nChar <- at$nr
+  nTip <- length(x)
+  cont <- at$contrast
+  if (is.null(colnames(cont))) colnames(cont) <- as.character(at$levels)
+  simpleCont <- ifelse(rowSums(cont) == 1,
+                       apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
+                       '?')
+  inappLevel <- at$levels == '-'
+  
+  if (any(inappLevel)) {
+    # TODO this is a workaround until MinimumLength.numeric can handle {-, 1}
+    cont[cont[, inappLevel] > 0, ] <- 0
+    ambiguousToken <- at$allLevels == '?'
+    cont[ambiguousToken, ] <- colSums(cont[!ambiguousToken, ]) > 0
+  }
+  
+  powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
+  tmp <- as.integer(cont %*% powersOf2)
+  unlisted <- unlist(x, use.names = FALSE)
+  binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
+  
+  # Return:
+  apply(binaryMatrix, 1, MinimumLength)
+}
+
+#' @rdname MinimumLength
+#' @export
+MinimumLength.numeric <- function (x) {
+  
+  uniqueStates <- unique(x[x > 0])
   if (length(uniqueStates) < 2) return (0)
   tokens <- vapply(uniqueStates, intToBits, raw(32)) != 00
   tokens <- tokens[apply(tokens, 1, any), ]
@@ -160,7 +197,10 @@ MinimumLength <- function (states) {
       tokens[tokenNecessary, statesRemaining, drop = FALSE]) == 0
     tokensUsed <- tokensUsed + sum(tokenNecessary)
     
-    if (!any(statesRemaining)) return (tokensUsed - 1L)
+    if (!any(statesRemaining)) {
+      # Return:
+      return (tokensUsed - 1L)
+    }
     
     tokens <- tokens[!tokenNecessary, statesRemaining, drop = FALSE]
     if (identical(dim(tokens), lastDim)) {
@@ -168,7 +208,7 @@ MinimumLength <- function (states) {
       if (any(unnecessary)) {
         tokens <- tokens[!unnecessary, , drop = FALSE]
       } else {
-        stop("The token configuration [", paste(states, collapse=" "), 
+        stop("The token configuration [", paste(x, collapse=" "), 
              "] is not correctly handled by MinimumLength()\n",
              "Please report this bug at ",
              "https://github.com/ms609/TreeSearch/issues/new")
@@ -180,8 +220,8 @@ MinimumLength <- function (states) {
 }
 
 #' @rdname MinimumLength
-MinimumSteps <- function(states) {
+MinimumSteps <- function(x) {
   .Deprecated(MinimumLength, msg='Renamed and recoded to better support
               inapplicable tokens')
-  MinimumLength(states)
+  MinimumLength(x)
 }
