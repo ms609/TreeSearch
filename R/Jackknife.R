@@ -77,11 +77,15 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' @param add Logical specifying whether to add the labels to an existing
 #' plot.
 #' @param adj,col,frame,pos,\dots Parameters to pass to `nodelabels()`.
-#' @param allNodes Logical specifing whether to return empty labels for
-#' nodes near the root that do not correspond to a unique split.
+#' @param plot Logical specifing whether to plot results; if `FALSE`,
+#' returns blank labels for nodes near the root that do not correspond to a
+#' unique split.
 #' 
 #' @return A named vector specifying the proportion of jackknife trees 
 #' consistent with each node in `tree`, as plotted.
+#' If `plot = FALSE`, blank entries are included corresponding to nodes
+#' that do not require labelling; the return value is in the value required
+#' by `phylo$node.label`.
 #' 
 #' @examples
 #' library('TreeTools') # for as.phylo

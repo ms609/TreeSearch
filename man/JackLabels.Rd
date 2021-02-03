@@ -22,17 +22,21 @@ JackLabels(
 \item{jackTrees}{A list or \code{multiPhylo} object containing trees generated
 by \code{\link[=Jackknife]{Jackknife()}}.}
 
+\item{plot}{Logical specifing whether to plot results; if \code{FALSE},
+returns blank labels for nodes near the root that do not correspond to a
+unique split.}
+
 \item{add}{Logical specifying whether to add the labels to an existing
 plot.}
 
 \item{adj, col, frame, pos, \dots}{Parameters to pass to \code{nodelabels()}.}
-
-\item{allNodes}{Logical specifing whether to return empty labels for
-nodes near the root that do not correspond to a unique split.}
 }
 \value{
 A named vector specifying the proportion of jackknife trees
 consistent with each node in \code{tree}, as plotted.
+If \code{plot = FALSE}, blank entries are included corresponding to nodes
+that do not require labelling; the return value is in the value required
+by \code{phylo$node.label}.
 }
 \description{
 Label nodes with jackknife support values
