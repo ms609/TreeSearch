@@ -46,7 +46,7 @@ jackTrees <- as.phylo(1:100, 8)
 tree <- as.phylo(0, 8)
 JackLabels(tree, jackTrees)
 
-tree$node.labels <- JackLabels(tree, jackTrees, plot = FALSE)
+tree$node.label <- JackLabels(tree, jackTrees, plot = FALSE)
 }
 \seealso{
 \code{\link[=Jackknife]{Jackknife()}}: Generate trees by jackknife resampling

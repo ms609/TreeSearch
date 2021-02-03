@@ -92,7 +92,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' tree <- as.phylo(0, 8)
 #' JackLabels(tree, jackTrees)
 #' 
-#' tree$node.labels <- JackLabels(tree, jackTrees, plot = FALSE)
+#' tree$node.label <- JackLabels(tree, jackTrees, plot = FALSE)
 #' @template MRS
 #' @importFrom ape nodelabels
 #' @importFrom TreeTools SplitFrequency SupportColour
