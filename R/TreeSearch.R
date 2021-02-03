@@ -454,19 +454,6 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     morphy_iw(edge, morphyObjs, weight, minLength, charSeq,
               concavity, target + epsilon)
   }
-  
-  # Define constants
-  epsilon <- sqrt(.Machine$double.eps)
-  iw <- is.finite(concavity)
-  constrained <- !is.null(constraint)
-  
-  if (constrained) {
-    # Calculate constraint minimum score
-    constraintLength <- MinimumLength(constraint)
-    
-    # Check that starting tree is consistent with constraints 
-  }
-  
 
   # Initialize tree
   if (inherits(tree, 'multiPhylo')) {
@@ -481,6 +468,39 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   nTip <- NTip(tree)
   edge <- tree$edge
   
+  
+  # Define constants
+  epsilon <- sqrt(.Machine$double.eps)
+  iw <- is.finite(concavity)
+  constrained <- !is.null(constraint)
+  
+  # Initialize constraints
+  if (constrained) {
+    morphyConstr <- PhyDat2Morphy(constraint)
+    on.exit(morphyConstr <- UnloadMorphy(morphyConstr), add = TRUE)
+    # Calculate constraint minimum score
+    constraintLength <- MinimumLength(constraint)
+    
+    .Forbidden <- function (edges) {
+      preorder_morphy(edges, morphyConstr) != constraintLength
+    }
+    
+    # Check that starting tree is consistent with constraints 
+    if (.Forbidden(edge)) {
+      .oldMsg <- .Message
+      #.Message <- function (...) {}
+      edge <- .DoTBRSearch(edge, nTip, morphyConstr, 10, 10) 
+      .Message <- .oldMsg
+      if (.Forbidden(edge)) {
+        stop("Specify a starting tree that is consistent with `constraint`.")
+      }
+    }
+    
+  } else {
+    .Forbidden <- function (edges) FALSE
+  }
+
+  
   # Initialize data
   if (iw) {
     at <- attributes(dataset)
@@ -488,7 +508,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                               byTaxon = FALSE, concatenate = FALSE)
     startWeights <- at$weight
     morphyObjects <- lapply(characters, SingleCharMorphy)
-    on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)))
+    on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
+            add = TRUE)
     
     nLevel <- length(at$level)
     nChar <- at$nr
@@ -529,7 +550,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     charSeq <- seq_along(charInfo)[informative][order(priority[informative])] - 1L
   } else {
     morphyObj <- PhyDat2Morphy(dataset)
-    on.exit(morphyObj <- UnloadMorphy(morphyObj))
+    on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
     startWeights <- unlist(MorphyWeights(morphyObj)[1, ]) # exact == approx
   }
   
