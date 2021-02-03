@@ -6,7 +6,7 @@
    of characters in a dataset on any tree
  - Support for topological constraints during tree search
  - Remove redundant function `AsBinary()`
- - Merge `Fitch()` / `IWScore()` to combined function `TreeLength()`
+ - C implementations of rearrangement functions
 
 # TreeSearch 0.4.3
 
