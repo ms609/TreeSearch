@@ -7,9 +7,9 @@
 EdgeListSearch <- function (edgeList, dataset,
                           TreeScorer = MorphyLength,
                           EdgeSwapper = RootedTBRSwap,
-                          maxIter=100, maxHits=20, 
-                          bestScore=NULL, stopAtScore=NULL, 
-                          stopAtPeak=FALSE, stopAtPlateau=0L,
+                          maxIter = 100, maxHits = 20, 
+                          bestScore = NULL, stopAtScore = NULL, 
+                          stopAtPeak = FALSE, stopAtPlateau = 0L,
                           forestSize = 1L, verbosity = 1L, ...) {
   epsilon <- 1e-07
   if (!is.null(forestSize) && length(forestSize)) {

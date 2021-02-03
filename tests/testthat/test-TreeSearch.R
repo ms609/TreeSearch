@@ -61,7 +61,7 @@ test_that("inconsistent constraints fail", {
     dimnames = list(letters[1:6], NULL)))
   expect_error(
     MaximizeParsimony(constraint, PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
-                    ratchIter = 0, constraint = constraint)
+                      ratchIter = 0, constraint = constraint)
   )
 })
 
