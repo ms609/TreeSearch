@@ -31,7 +31,7 @@ You can launch an interactive 'app' in your browser by typing
 `TreeSearch::EasyTrees()` at the R command line.
 
 
-![TreeSearch easy-tree interface](Easy_Tree.png)
+![TreeSearch easy-tree interface](easy_tree.png)
 
 This will allow you to load data from a file, modify search settings, and
 explore the distribution of most parsimonious trees in tree space.
