@@ -50,6 +50,8 @@
 #' @export
 TreeLength <- function (tree, dataset, concavity = Inf) UseMethod('TreeLength')
 
+#' @rdname TreeLength
+#' @export
 TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
   if (is.finite(concavity)) {
     if (!('min.length' %in% names(attributes(dataset)))) {

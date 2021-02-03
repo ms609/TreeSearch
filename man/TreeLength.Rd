@@ -2,11 +2,14 @@
 % Please edit documentation in R/Fitch.R, R/IWScore.R
 \name{TreeLength}
 \alias{TreeLength}
+\alias{TreeLength.phylo}
 \alias{Fitch}
 \alias{IWScore}
 \title{Calculate parsimony score with inapplicable data}
 \usage{
 TreeLength(tree, dataset, concavity = Inf)
+
+\method{TreeLength}{phylo}(tree, dataset, concavity = Inf)
 
 Fitch(tree, dataset)
 
