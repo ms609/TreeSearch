@@ -26,10 +26,10 @@ test_that("Jackknife ouputs good for node.labels", {
   jackTrees <- as.phylo(1:100, 8)
   
   tree <- as.phylo(0, 8)
-  expect_equal(unname(c('', '', JackLabels(tree, jackTrees, plot = TRUE))),
+  expect_equal(c('', '', '0.13', '0.08', '0.14', '1', '1'),
                JackLabels(tree, jackTrees, plot = FALSE))
   
   tree <- RootTree(as.phylo(0, 8), c('t1', 't4'))
-  expect_equal(as.character(JackLabels(tree, jackTrees, plot = TRUE)),
-               JackLabels(tree, jackTrees, plot = FALSE)[c(2, 3, 5:7)])
-})
+  expect_equal(c('', '0.08', '0.13', '', '0.14', '1', '1'),
+               JackLabels(tree, jackTrees, plot = FALSE))
+  })
