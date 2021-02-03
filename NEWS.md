@@ -1,7 +1,7 @@
 # TreeSearch 0.4.3.9001 (development)
 
  - 'shiny' graphical user interface for tree search
- - Support for constraints
+ - Support for topological constraints during tree search
  - Remove redundant function `AsBinary()`
  - Merge `Fitch()` / `IWScore()` to combined function `TreeLength()`.
  - C implementations of rearrangement functions
