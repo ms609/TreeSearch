@@ -696,6 +696,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 #' @importFrom shiny runApp
 #' @importFrom shinyjs useShinyjs
 #' @importFrom TreeDist ClusteringInfoDistance
+#' @importFrom protoclust protoclust
+#' @importFrom cluster pam silhouette
 #' @export
 EasyTrees <- function () 
   shiny::runApp(system.file('Parsimony', package = 'TreeSearch'))
