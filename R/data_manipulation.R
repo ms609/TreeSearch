@@ -204,19 +204,18 @@ MinimumLength.numeric <- function (x) {
     
     tokens <- tokens[!tokenNecessary, statesRemaining, drop = FALSE]
     if (identical(dim(tokens), lastDim)) {
-      unnecessary <- rowSums(tokens) == 1
+      occurrences <- rowSums(tokens)
+      unnecessary <- occurrences == 1
       if (any(unnecessary)) {
         tokens <- tokens[!unnecessary, , drop = FALSE]
       } else {
-        stop("The token configuration [", paste(x, collapse=" "), 
-             "] is not correctly handled by MinimumLength()\n",
-             "Please report this bug at ",
-             "https://github.com/ms609/TreeSearch/issues/new")
+        squish <- which.max(occurrences)
+        tokensUsed <- tokensUsed + 1L
+        tokens <- tokens[, tokens[!squish], drop = FALSE]
       }
     }
     lastDim <- dim(tokens)
   }
-  
 }
 
 #' @rdname MinimumLength

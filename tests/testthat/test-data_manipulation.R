@@ -5,6 +5,15 @@ test_that("Minimum step counts are correctly calculated", {
   expect_equal(0, MinimumLength(c(6, 7, 14)))
   expect_equal(1, MinimumLength(0:3)) # 0 representing the inapplicable token
   
+  # ++++, .++., ..++
+  expect_equal(0, MinimumLength(c(2046, 384, 1152)))
+  
+  # ++++, +..., .++., ..++
+  expect_equal(1, MinimumLength(c(15, 8, 6, 3)))
+  
+  # ++++++, +....., .++..., .+.+.., ...++.
+  expect_equal(2, MinimumLength(c(63, 32, 24, 20, 6)))
+  
   dudDat <- TreeTools::StringToPhyDat('----{-,1}22', letters[1:7])
   expect_equal('----<-,1>22', TreeTools::PhyDatToString(dudDat, '>', ','))
   expect_equal(0, attr(PrepareDataIW(dudDat), 'min.length'))
