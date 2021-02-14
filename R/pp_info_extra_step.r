@@ -57,13 +57,18 @@ ICSteps <- function (char, ambiguousToken = '?', expectedMinima = 25L,
   
   nNoExtraSteps <- NUnrootedMult(split)
   log2ExtraSteps <- LnUnrootedMult(split)
-  #nOneExtraStep <- WithOneExtraStep(split)
+  nOneExtraStep <- WithOneExtraStep(split)
   
   nIter <- min(maxIter, round(expectedMinima * NUnrooted(nInformative) / nNoExtraSteps))
-  if (nIter == maxIter && warn) warning ("Will truncate number of iterations at maxIter = ", maxIter)
-  analyticIc0 <- Log2Unrooted(sum(split)) - Log2UnrootedMult(split)
-  #analyticIc1<- -log(nOneExtraStep/NUnrooted(sum(split))) / log(2)
-  #analyticIc1<- -log((nNoExtraSteps + nOneExtraStep)/NUnrooted(sum(split))) / log(2)
+  if (nIter == maxIter && warn) {
+    warning ("Will truncate number of iterations at maxIter = ", maxIter)
+  }
+  n01ExtraSteps <- nOneExtraStep + nNoExtraSteps
+  analyticIC <- Log2Unrooted(sum(split)) -  setNames(c(
+    Log2UnrootedMult(split), log2(n01ExtraSteps)),
+    minSteps + 0:1)
+  analyticP <- 2 ^ -analyticIC[2]
+  
   if (warn) {
     message('  Token count ', split, " = ",
             signif(analyticIc0, ceiling(log10(maxIter))),
@@ -78,14 +83,15 @@ ICSteps <- function (char, ambiguousToken = '?', expectedMinima = 25L,
   steps <- vapply(rep(nInformative, maxIter), RandomTreeScore,
                   integer(1), morphyObj)
   
-  tabSteps <- table(steps[steps > (minSteps - nSingletons + 0)]) # Quicker than table(steps)[-1]
-  #tabSteps <- table(steps[steps > (minSteps + 1)])
+  tabSteps <- table(steps[steps > (minSteps - nSingletons + 1)]) # Quicker than table(steps)[-1]
   
-  tabSteps <- c(analyticSteps, tabSteps * (nIter - sum(analyticSteps)) / sum(tabSteps))
-  pSteps <- tabSteps / sum(tabSteps)
+  approxP <- tabSteps / sum(tabSteps) * (1 - analyticP)
+  approxIC <- -log2(cumsum(c(analyticP, approxP))[-1])
+  ret <- c(analyticIC, approxIC)
+  ret[length(ret)] <- 0 # Floating point error inevitable
   
   # Return:
-  pSteps
+  ret
 }
 
 #' @describeIn ICPerStep Memoized calculating function
@@ -151,7 +157,7 @@ WithOneExtraStep <- function (...) {
     )
     
   } else {
-      
+    
     stop("Not implemented.")
     # TODO test splits <- 2 2 4
     sum(vapply(seq_along(splits), function (omit) {
@@ -275,9 +281,9 @@ Evaluate <- function (tree, dataset, warn=TRUE) {
 #' @export
 InfoAmounts <- function (tokenTable, precision = 1e+06, warn = TRUE) {
   # The below is simplified from info_extra_step.r::evaluate
-  if (length(unique(as.integer(tokenTable))) > 2) {
+  if (length(unique(as.integer(tokenTable))) > 2L) {
     stop ("Cannot calculate information amouts for",
-          "characters unless only tokens are 1 and 2. See ?InfoAmounts.")
+          "characters unless only tokens are 1 and 2. See ?InfoAmounts().")
   }
   splits <- apply(tokenTable, 1, table)
   infoLosses <- apply(splits, 2, ICPerStep, maxIter = precision, warn = warn)
