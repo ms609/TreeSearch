@@ -86,7 +86,13 @@ ICSteps <- function (char, ambiguousToken = '?', expectedMinima = 25L,
   tabSteps <- table(steps[steps > (minSteps - nSingletons + 1)]) # Quicker than table(steps)[-1]
   
   approxP <- tabSteps / sum(tabSteps) * (1 - analyticP)
-  approxIC <- -log2(cumsum(c(analyticP, approxP))[-1])
+  approxSE <- sqrt(approxP * (1 - approxP) / nIter)
+  cumP <- cumsum(c(analyticP, approxP))[-1]
+                 
+  approxIC <- -log2(cumP)
+  icLB <- -log2(cumP - approxSE)
+  icError <- icLB - approxIC
+  message("Approx. std. error < ", signif(max(icError) * 1.01, 2))
   ret <- c(analyticIC, approxIC)
   ret[length(ret)] <- 0 # Floating point error inevitable
   
