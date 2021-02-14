@@ -113,8 +113,11 @@ ICPerStep <- function(splits, maxIter, warn = TRUE) {
 
 
 #' Number of trees with one extra step
-#' @template splitsParam
+#' @param \dots Vector or series of integers specifying the number of leaves
+#' bearing each distinct non-ambiguous token.
 #' @importFrom TreeTools NRooted NUnrooted
+#' @examples
+#' WithOneExtraStep(1, 2, 3)
 #' @export
 WithOneExtraStep <- function (...) {
   splits <- c(...)
@@ -124,7 +127,9 @@ WithOneExtraStep <- function (...) {
   nSplits <- length(splits)
   if (nSplits < 2) return (0)
   if (nSplits == 2) {
-    NRooted(splits[1]) * # Zone 0; Zone 1 will be added at Root
+    prod(
+      # Zone 0; Zone 1 will be added at Root
+      NRooted(splits[1]),
       sum(
         vapply(seq_len(splits[2] - 1L), function (beforeStep) {
           NRooted(beforeStep) * # Zone 1 will sit at root of Zone 0
@@ -140,8 +145,10 @@ WithOneExtraStep <- function (...) {
             )
         }, double(1))
         
-      ) * DoubleFactorial(sum(splits, singletonSplits)) / 
-      DoubleFactorial(sum(splits))
+      ),
+      # Add singleton splits
+      (2 * (sum(splits) + seq_len(sum(singletonSplits))) - 5)
+    )
     
   } else {
       
