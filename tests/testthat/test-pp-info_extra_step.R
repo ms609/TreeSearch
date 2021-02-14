@@ -45,5 +45,7 @@ test_that("WithOneExtraStep()", {
   
   expect_equal(NUnrooted(6) / NUnrooted(5) * WithOneExtraStep(2:3),
                WithOneExtraStep(1:3))
+  expect_equal(NUnrooted(10) / NUnrooted(5) * WithOneExtraStep(2:3),
+               WithOneExtraStep(2:3, rep(1, 5)))
 })
   
