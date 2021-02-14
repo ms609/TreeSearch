@@ -64,13 +64,11 @@ PhyDat2Morphy
 
 Other tree scoring: 
 \code{\link{CharacterLength}()},
-\code{\link{Fitch}()},
-\code{\link{IWScore}()}
+\code{\link{TreeLength}()}
 
 Other tree scoring: 
 \code{\link{CharacterLength}()},
-\code{\link{Fitch}()},
-\code{\link{IWScore}()}
+\code{\link{TreeLength}()}
 }
 \author{
 Martin R. Smith

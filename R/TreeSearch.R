@@ -7,9 +7,9 @@
 EdgeListSearch <- function (edgeList, dataset,
                           TreeScorer = MorphyLength,
                           EdgeSwapper = RootedTBRSwap,
-                          maxIter=100, maxHits=20, 
-                          bestScore=NULL, stopAtScore=NULL, 
-                          stopAtPeak=FALSE, stopAtPlateau=0L,
+                          maxIter = 100, maxHits = 20, 
+                          bestScore = NULL, stopAtScore = NULL, 
+                          stopAtPeak = FALSE, stopAtPlateau = 0L,
                           forestSize = 1L, verbosity = 1L, ...) {
   epsilon <- 1e-07
   if (!is.null(forestSize) && length(forestSize)) {
@@ -249,7 +249,7 @@ TreeSearch <- function (tree, dataset,
 #' The counter is reset to zero each time tree score improves.
 #' One 'iteration' comprises breaking a single branch and evaluating all 
 #' possible reconnections.
-#' @param finalIter Numeric: the final round of tree search will evalauate
+#' @param finalIter Numeric: the final round of tree search will evaluate
 #' `finalIter` &times; `tbrIter` \acronym{TBR} break points.
 #' @param maxHits Numeric specifying the maximum times that an optimal
 #' parsimony score may be hit before concluding a ratchet iteration or final 
@@ -257,6 +257,11 @@ TreeSearch <- function (tree, dataset,
 #' @param concavity Numeric specifying concavity constant for implied step 
 #' weighting; set as `Inf` for equal step weights (which is a bad idea; see 
 #' Smith 2019).
+#' @param constraint Either `NULL` or an object of class `phyDat`. Trees that
+#' are not perfectly compatible with each character in `constraint` will not
+#' be considered during search.
+#' See [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
+#' for further examples.
 #' @param verbosity Integer specifying level of messaging; higher values give
 #' more detailed commentary on search progress. Set to `0` to run silently.
 #' @param session 'shiny' session identifier to allow [`setProgress()`] calls
@@ -278,6 +283,15 @@ TreeSearch <- function (tree, dataset,
 #' \dontrun{ # launches 'shiny' point-and-click interface
 #'   EasyTrees() 
 #' }
+#' 
+#' # Tree search with a constraint
+#' constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
+#' characters <- MatrixToPhyDat(matrix(
+#'   c(0, 1, 1, 1, 0, 0,
+#'     1, 1, 1, 0, 0, 0), ncol = 2,
+#'   dimnames = list(letters[1:6], NULL)))
+#' MaximizeParsimony(characters, constraint = constraint)
+#' 
 #' @template MRS
 #' 
 #' @importFrom shiny setProgress withProgress
@@ -295,6 +309,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                ratchIter = 12L, tbrIter = 6L, finalIter = 3L,
                                maxHits = 20L,
                                concavity = Inf,
+                               constraint = NULL,
                                verbosity = 2L, session = NULL) {
   # Define functions
   .Message <- if (is.null(session)) function (level, ...) {
@@ -343,6 +358,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
         for (move in moves[sample(seq_along(moves))]) {
+          if (.Forbidden(move)) {
+            .Message(10L, "Skipping prohibited topology")
+            next
+          }
           moveScore <- preorder_morphy(move, morphyObj)
           if (moveScore < bestScore + epsilon) {
             edge <- move
@@ -410,6 +429,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
         for (move in moves[sample(seq_along(moves))]) {
+          if (.Forbidden(move)) {
+            .Message(10L, "Skipping prohibited topology")
+            next
+          }
           moveScore <- .IWScore(move, morphyObjects, weight, minLength, charSeq,
                                 concavity, bestPlusEps)
           if (moveScore < bestPlusEps) {
@@ -448,11 +471,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     morphy_iw(edge, morphyObjs, weight, minLength, charSeq,
               concavity, target + epsilon)
   }
-  
-  # Define constants
-  epsilon <- sqrt(.Machine$double.eps)
-  iw <- is.finite(concavity)
-  
+
   # Initialize tree
   if (inherits(tree, 'multiPhylo')) {
     .Message(1L, "Starting search from `tree[[1]]`.")
@@ -466,6 +485,37 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   nTip <- NTip(tree)
   edge <- tree$edge
   
+  # Define constants
+  epsilon <- sqrt(.Machine$double.eps)
+  iw <- is.finite(concavity)
+  constrained <- !is.null(constraint)
+  
+  # Initialize constraints
+  if (constrained) {
+    morphyConstr <- PhyDat2Morphy(constraint)
+    on.exit(morphyConstr <- UnloadMorphy(morphyConstr), add = TRUE)
+    # Calculate constraint minimum score
+    constraintLength <- sum(MinimumLength(constraint))
+    
+    .Forbidden <- function (edges) {
+      preorder_morphy(edges, morphyConstr) != constraintLength
+    }
+    
+    # Check that starting tree is consistent with constraints 
+    if (.Forbidden(edge)) {
+      .oldMsg <- .Message
+      .Message <- function (...) {}
+      edge <- .DoTBRSearch(edge, nTip, morphyConstr, 10, 10)[, , 1]
+      .Message <- .oldMsg
+      if (.Forbidden(edge)) {
+        stop("Specify a starting tree that is consistent with `constraint`.")
+      }
+    }
+    
+  } else {
+    .Forbidden <- function (edges) FALSE
+  }
+
   # Initialize data
   if (iw) {
     at <- attributes(dataset)
@@ -473,7 +523,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                               byTaxon = FALSE, concatenate = FALSE)
     startWeights <- at$weight
     morphyObjects <- lapply(characters, SingleCharMorphy)
-    on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)))
+    on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
+            add = TRUE)
     
     nLevel <- length(at$level)
     nChar <- at$nr
@@ -514,7 +565,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     charSeq <- seq_along(charInfo)[informative][order(priority[informative])] - 1L
   } else {
     morphyObj <- PhyDat2Morphy(dataset)
-    on.exit(morphyObj <- UnloadMorphy(morphyObj))
+    on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
     startWeights <- unlist(MorphyWeights(morphyObj)[1, ]) # exact == approx
   }
   
@@ -644,7 +695,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 #' @rdname MaximizeParsimony
 #' @importFrom shiny runApp
 #' @importFrom shinyjs useShinyjs
+#' @importFrom rgl plot3d
 #' @importFrom TreeDist ClusteringInfoDistance
+#' @importFrom protoclust protoclust
+#' @importFrom cluster pam silhouette
 #' @export
 EasyTrees <- function () 
   shiny::runApp(system.file('Parsimony', package = 'TreeSearch'))

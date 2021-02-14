@@ -4,7 +4,7 @@ context("Fitch.R")
 test_that("Failures are graceful", {
   data('inapplicable.datasets')
   tree <- TreeTools::RandomTree(inapplicable.phyData[[1]], root = FALSE)
-  expect_error(Fitch(tree, inapplicable.phyData[[1]]))
+  expect_error(TreeLength(tree, inapplicable.phyData[[1]]))
 })
 
 test_that("Morphy generates correct lengths", {
@@ -91,7 +91,7 @@ test_that("Morphy generates correct lengths", {
   expect_equal('0123', moSummary$allStates)
   expect_equal(tree_length, sum(expected_results))
   
-  tree_score_iw <- IWScore(tree, bigPhy, concavity = 6)
+  tree_score_iw <- TreeLength(tree, bigPhy, concavity = 6)
   expected_fit <- expected_homoplasies / (expected_homoplasies + 6)
   expect_equal(sum(expected_fit), tree_score_iw)
 

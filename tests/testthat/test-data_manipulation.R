@@ -5,6 +5,15 @@ test_that("Minimum step counts are correctly calculated", {
   expect_equal(0, MinimumLength(c(6, 7, 14)))
   expect_equal(1, MinimumLength(0:3)) # 0 representing the inapplicable token
   
+  # ++++, .++., ..++
+  expect_equal(0, MinimumLength(c(2046, 384, 1152)))
+  
+  # ++++, +..., .++., ..++
+  expect_equal(1, MinimumLength(c(15, 8, 6, 3)))
+  
+  # ++++++, +....., .++..., .+.+.., ...++.
+  expect_equal(2, MinimumLength(c(63, 32, 24, 20, 6)))
+  
   dudDat <- TreeTools::StringToPhyDat('----{-,1}22', letters[1:7])
   expect_equal('----<-,1>22', TreeTools::PhyDatToString(dudDat, '>', ','))
   expect_equal(0, attr(PrepareDataIW(dudDat), 'min.length'))
@@ -32,5 +41,14 @@ test_that("Minimum step counts are correctly calculated", {
     2^3 + 2^8,
     2^9 + 2^10
   )))
+  
+  data('inapplicable.datasets')
+  expect_equal(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+                 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+                 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 
+                 1, 2, 1, 1, 4, 3, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 4, 1, 
+                 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 
+                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+               MinimumLength(inapplicable.phyData[[4]]))
   
 })

@@ -1,5 +1,5 @@
 context("TreeSearch.R")
-library('TreeTools')
+library("TreeTools", quietly = TRUE)
 comb11 <- PectinateTree(letters[1:11])
 unrooted11 <- UnrootTree(comb11)
 data11 <- cbind(upper.tri(matrix(FALSE, 11, 11))[, 3:10], 
@@ -36,6 +36,34 @@ test_that("tree can be found", {
 #  expect_equal(SectorialSearch(RandomTree(phy11, 'a'), phy11, verbosity = -1), comb11) # TODO: Sectorial Search not working yet!
 })
 
+test_that("constraints work", {
+  constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
+  characters <- MatrixToPhyDat(matrix(
+    c(0, 1, 1, 1, 0, 0,
+      1, 1, 1, 0, 0, 0), ncol = 2,
+    dimnames = list(letters[1:6], NULL)))
+  expect_equal(PectinateTree(letters[1:6]),
+               MaximizeParsimony(characters,
+                                 PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
+                                 ratchIter = 0, constraint = constraint)[[1]])
+  # Start tree not consistent with constraint
+  expect_equal(PectinateTree(letters[1:6]),
+               MaximizeParsimony(characters, 
+                                 PectinateTree(c('a', 'c', 'f', 'd', 'e', 'b')),
+                                 ratchIter = 0, constraint = constraint)[[1]])
+  
+})
+
+test_that("inconsistent constraints fail", {
+  constraint <- MatrixToPhyDat(matrix(
+    c(0, 1, 1, 1, 0, 0,
+      1, 1, 1, 0, 0, 0), ncol = 2,
+    dimnames = list(letters[1:6], NULL)))
+  expect_error(MaximizeParsimony(constraint,
+                                 PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
+                                 ratchIter = 0, constraint = constraint))
+})
+
 test_that("tree search finds shortest tree", {
   true_tree <- ape::read.tree(text = "(((((1,2),3),4),5),6);")
   malformed_tree <- ape::read.tree(text = "((((1,2),3),4),5,6);")
@@ -43,35 +71,35 @@ test_that("tree search finds shortest tree", {
   expect_error(TreeSearch(malformed_tree, dataset))
   start_tree <- TreeTools::RenumberTips(ape::read.tree(
     text = "(((1, 6), 3), (2, (4, 5)));"), true_tree$tip.label)
-  expect_equal(Fitch(start_tree, dataset), 6)
+  expect_equal(TreeLength(start_tree, dataset), 6)
   morphyObj <- PhyDat2Morphy(dataset)
   on.exit(morphyObj <- UnloadMorphy(morphyObj))
   
   expect_equal(3, attr(TreeSearch(start_tree, dataset, EdgeSwapper = NNISwap, 
                                   verbosity = 0), 'score'),
-               Fitch(true_tree, dataset))
+               TreeLength(true_tree, dataset))
   expect_equal(3, attr(TreeSearch(start_tree, dataset, EdgeSwapper = SPRSwap,
                                   verbosity = -1), 'score'),
-               Fitch(true_tree, dataset))
+               TreeLength(true_tree, dataset))
   expect_equal(3, attr(TreeSearch(start_tree, dataset, EdgeSwapper = TBRSwap,
                                   verbosity = -1), 'score'),
-               Fitch(true_tree, dataset))
+               TreeLength(true_tree, dataset))
   expect_equal(3, attr(TreeSearch(start_tree, dataset, 
                                   EdgeSwapper = RootedNNISwap, verbosity = -1),
                        'score'),
-               Fitch(true_tree, dataset))
+               TreeLength(true_tree, dataset))
   expect_equal(3, attr(TreeSearch(start_tree, dataset,
                                   EdgeSwapper = RootedSPRSwap, verbosity = -1),
                        'score'),
-               Fitch(true_tree, dataset))
+               TreeLength(true_tree, dataset))
   expect_equal(3, attr(TreeSearch(start_tree, dataset,
                                   EdgeSwapper = RootedTBRSwap, verbosity = -1),
                        'score'),
-               Fitch(true_tree, dataset))
+               TreeLength(true_tree, dataset))
   ratchetScore <- attr(Ratchet(start_tree, dataset, 
                   swappers = list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap),
                   ratchIter = 3, searchHits = 5, verbosity = 0), 'score')
-  expect_equal(3, Fitch(true_tree, dataset), ratchetScore)
+  expect_equal(3, TreeLength(true_tree, dataset), ratchetScore)
 })
 
 test_that("Implied weights: Tree search", {
@@ -117,8 +145,8 @@ test_that("Profile parsimony works in tree search", {
   set.seed(0)
   
   rTree <- randomTree <- RandomTree(dataset, '1')
-  expect_equal(Fitch(rTree, readyData), Fitch(rTree, dataset))
-  expect_equal(90, Fitch(referenceTree, dataset), Fitch(referenceTree, readyData))
+  expect_equal(TreeLength(rTree, readyData), TreeLength(rTree, dataset))
+  expect_equal(90, TreeLength(referenceTree, dataset), TreeLength(referenceTree, readyData))
   expect_true(ProfileScore(rTree, readyData) > ProfileScore(referenceTree, readyData))
   
   quickTS <- TreeSearch(rTree, dataset, TreeScorer = MorphyLength, EdgeSwapper = RootedNNISwap, 
