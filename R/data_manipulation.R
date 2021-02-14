@@ -40,11 +40,12 @@ PrepareDataProfile <- function (dataset, precision = 1e+06, warn = TRUE) {
   powers.of.2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
   tmp <- cont %*% powers.of.2
   tmp <- as.integer(tmp)
-  unlisted <- unlist(dataset, recursive=FALSE, use.names=FALSE)
+  unlisted <- unlist(dataset, recursive = FALSE, use.names = FALSE)
   binaryMatrix <- tmp[unlisted]
   attr(binaryMatrix, 'dim') <- c(nChar, nTip)
   
-  attr(dataset, 'info.amounts') <- InfoAmounts(binaryMatrix, precision, warn=warn)
+  attr(dataset, 'info.amounts') <- InfoAmounts(binaryMatrix, precision, 
+                                               warn = warn)
   if (!any(attr(dataset, 'bootstrap') == 'info.amounts')) {
     attr(dataset, 'bootstrap') <- c(attr(dataset, 'bootstrap'), 'info.amounts')
   }
