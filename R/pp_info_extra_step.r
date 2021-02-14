@@ -39,7 +39,7 @@
 #' 
 #' @importFrom TreeTools NUnrooted Log2Unrooted Log2UnrootedMult NUnrootedMult
 #' @export
-ICSteps <- function (char, ambiguousToken = '?', expectedMinima = 25L,
+ICSteps <- function (char, ambiguousToken = '?', tolerance = 0.05,
                      maxIter = 10000L, warn = TRUE) {
   #char <- matrix(2L ^ char[char != ambiguousToken], ncol = 1L)
   char <- char[char != ambiguousToken]
@@ -55,11 +55,18 @@ ICSteps <- function (char, ambiguousToken = '?', expectedMinima = 25L,
   split <- split[!singletons]
   if (length(split) < 2L) return (1L)
   
+  
   nNoExtraSteps <- NUnrootedMult(split)
   log2ExtraSteps <- LnUnrootedMult(split)
   nOneExtraStep <- WithOneExtraStep(split)
   
-  nIter <- min(maxIter, round(expectedMinima * NUnrooted(nInformative) / nNoExtraSteps))
+  p1 <- nOneExtraStep / NUnrooted(sum(split))
+  ic1 <- -log2(nOneExtraStep / NUnrooted(sum(split)))
+  icTol <- tolerance - ic1
+  pTol <- (2 ^ icTol) - p1
+  iter <- p1 * (1 - p1) / (pTol ^ 2)
+  
+  nIter <- min(maxIter, round(expectedMinima * nOneExtraStep))
   if (nIter == maxIter && warn) {
     warning ("Will truncate number of iterations at maxIter = ", maxIter)
   }
@@ -92,7 +99,9 @@ ICSteps <- function (char, ambiguousToken = '?', expectedMinima = 25L,
   approxIC <- -log2(cumP)
   icLB <- -log2(cumP - approxSE)
   icError <- icLB - approxIC
-  message("Approx. std. error < ", signif(max(icError) * 1.01, 2))
+  if (warn || max(icError) > tolerance) {
+    message("  Approx. std. error < ", signif(max(icError) * 1.01, 2))
+  }
   ret <- c(analyticIC, approxIC)
   ret[length(ret)] <- 0 # Floating point error inevitable
   
