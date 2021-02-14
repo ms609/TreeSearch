@@ -114,41 +114,67 @@ ICPerStep <- function(splits, maxIter, warn = TRUE) {
 
 #' Number of trees with one extra step
 #' @template splitsParam
-#' @importFrom TreeTools NRooted
+#' @importFrom TreeTools NRooted NUnrooted
 #' @export
-WithOneExtraStep <- function (splits) {
+WithOneExtraStep <- function (...) {
+  splits <- c(...)
   # Ignore singletons, which can be added at the end...
-  splits.withSplitstables <- splits[splits > 1]
-  if (length(splits.withSplitstables) < 2) return (0)
-  
-  # TODO test splits: 1 1 2 4, splits: 2 2 4
-  sum(vapply(seq_along(splits), function (omit) {
-    backboneSplits <- splits[-omit]
-    omitted.tips <- splits[omit]
-    if (omitted.tips < 2) return (0)
-    backbone.tips <- sum(backboneSplits)
-    backbones <- NUnrootedMult(backboneSplits)
-    backbone.edges <- max(0, 2 * backbone.tips - 3)
-    backbone.attachments <- backbone.edges * (backbone.edges - 1)
-    prod(sum( # Branch unambiguously splits along first group
-      vapply(1:(omitted.tips - 1), function (first.group) { # For each way of splitsting up the omitted tips, e.g. 1|16, 2|15, 3|14, etc
-        choose(omitted.tips, first.group) * 
-          NRooted(first.group) * NRooted(omitted.tips - first.group)
-      }, double(1))
-    ) / 2, backbone.attachments, backbones) + prod(
-      # Second group added adjacent to first group, thus new edge could belong to the backbone or the omitted tip group
-      sum(vapply(1:(omitted.tips - 1), function (first.group) { # For each way of splitsting up the omitted tips, e.g. 1|16, 2|15, 3|14, etc
-        choose(omitted.tips, first.group) * 
-          NRooted(first.group) * NRooted(omitted.tips - first.group) # backbone tips have already been splits - when we selected a branch
-      }, double(1))) / 2,
-      backbones,
-      backbone.edges,
-      2 # left or right of group addition location
-      / 2 # Will be counted again when 'added group' becomes the 'backbone group'
-    )
+  singletonSplits <- splits == 1
+  splits <- sort(splits[!singletonSplits], decreasing = TRUE)
+  nSplits <- length(splits)
+  if (nSplits < 2) return (0)
+  if (nSplits == 2) {
+    NRooted(splits[1]) * # Zone 0; Zone 1 will be added at Root
+      sum(
+        vapply(seq_len(splits[2] - 1L), function (beforeStep) {
+          NRooted(beforeStep) * # Zone 1 will sit at root of Zone 0
+            sum(
+             # Case 1: Zone 1 & 2 not adjacent
+             (splits[1] + splits[1] - 4L) * # Edges not touching Zone 1
+               DoubleFactorial(splits[2] + splits[2] - 4L) /
+               DoubleFactorial(beforeStep + beforeStep - 2L),
+             # Case 2: Zone 1 & Zone 2 adjacent
+             2 * # Two edges adjacent to Zone 1
+               DoubleFactorial(splits[2] + splits[2] - 1L) /
+               DoubleFactorial(beforeStep + beforeStep + 1L)
+            )
+        }, double(1))
+        
+      ) * DoubleFactorial(sum(splits, singletonSplits)) / 
+      DoubleFactorial(sum(splits))
     
-  }, double(1))
-  )
+  } else {
+      
+    stop("Not implemented.")
+    # TODO test splits <- 2 2 4
+    sum(vapply(seq_along(splits), function (omit) {
+      backboneSplits <- splits[-omit]
+      omitted.tips <- splits[omit]
+      backbone.tips <- sum(backboneSplits)
+      backbones <- NUnrootedMult(backboneSplits)
+      backbone.edges <- max(0L, 2L * backbone.tips - 3L)
+      attachTwoRegions <- backbone.edges * (backbone.edges - 1L)
+      
+      
+      prod( # omitted tips form two separate regions
+        backbones,
+        attachTwoClades,
+        sum(
+        # TODO would be quicker to calculate just first half; special case: omitted.tips %% 2
+        vapply(seq_len(omitted.tips - 1), function (first.group) { 
+          # For each way of splitsting up the omitted tips, e.g. 1|16, 2|15, 3|14, etc
+          choose(omitted.tips, first.group) * 
+            NRooted(first.group) * NRooted(omitted.tips - first.group)
+        }, double(1))
+      ) / 2) +
+        prod(
+          # paraphyletic.  Worry: This is equivalent to splitting gp. 0
+          # Double count: (0, 0, (0, (1, (0, 1))
+        )
+  
+    }, double(1))
+    )
+  }
 }
 
 #' Logistic Points
