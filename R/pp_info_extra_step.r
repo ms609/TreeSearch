@@ -12,12 +12,14 @@
 #' the minimum number of steps will be recovered at least `expectedMinima`
 #' times, in order to obtain precise results.
 #'
-#' @param char The character in question.
+#' @param char Vector of tokens listing states for the character in question.
 #' @param ambiguousToken Which token, if any, corresponds to the ambiguous token
 #' (?) (not yet fully implemented).
-#' @param expectedMinima sample enough trees that the rarest step counts is
-#' expected to be seen at least this many times.
-#' @param maxIter Maximum iterations to conduct.
+#' @param tolerance Numeric specifying an anticipated upper bound on the
+#' standard error of approximate profile scores.
+#' @param maxIter Integer specifying maximum number of trees to score when
+#' approximating profile scores.  Small values may result in errors
+#' exceeding `tolerance`.
 #' @template warnParam
 #' 
 #' @template MRS
@@ -28,19 +30,12 @@
 #' 
 #' @examples
 #' character <- rep(c(0:3, '?'), c(8, 5, 1, 1, 2))
-#' suppressWarnings(ICSteps(character))
-#' 
-#' # MS Temp Example testing
-#' char <- character
-#' ambiguousToken = '?'
-#' expectedMinima = 25
-#' maxIter = 100
-#' warn = TRUE
+#' ICSteps(character, warn = FALSE)
 #' 
 #' @importFrom TreeTools NUnrooted Log2Unrooted Log2UnrootedMult NUnrootedMult
 #' @export
 ICSteps <- function (char, ambiguousToken = '?', tolerance = 0.05,
-                     maxIter = 10000L, warn = TRUE) {
+                     maxIter = 40000L, warn = TRUE) {
   #char <- matrix(2L ^ char[char != ambiguousToken], ncol = 1L)
   char <- char[char != ambiguousToken]
   names(char) <- paste0('t', seq_along(char))
@@ -66,7 +61,7 @@ ICSteps <- function (char, ambiguousToken = '?', tolerance = 0.05,
   pTol <- (2 ^ icTol) - p1
   iter <- p1 * (1 - p1) / (pTol ^ 2)
   
-  nIter <- min(maxIter, round(expectedMinima * nOneExtraStep))
+  nIter <- min(maxIter, round(iter))
   if (nIter == maxIter && warn) {
     warning ("Will truncate number of iterations at maxIter = ", maxIter)
   }
