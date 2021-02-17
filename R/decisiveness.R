@@ -8,6 +8,7 @@
 #' A dataset with a high decisiveness provives a good basis for preferring
 #' certain trees over others.
 #' 
+#TODO: BUT SEE: De Laet & Smets 1999, Data decisiveness, missing entries, and the DD index
 #TODO add to pkgdown index
 #' @param 
 #' 
