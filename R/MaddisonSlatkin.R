@@ -17,7 +17,7 @@ Remember <- addMemoization
        NRooted(m),
        NRooted(n - m)
   ) / NRooted(n)
-}) #TODO UNTESTED: Is it quicker to use LogNRooted?
+})
 
 # B{b}: The probability that state _b_ is reconstructed at the base of a clade
 # with _n_ leaves and _i_ leaves with state 1.
@@ -160,6 +160,9 @@ Remember <- addMemoization
   }
 })
 
+#' Caluclate number of trees with a given score using Maddison & Slatkin's
+#' recursive approach 
+#' 
 #' @param n Number of leaves in tree
 #' @param x Vector specifying number of leaves with state 1, 2, ...
 #' @param b State reconstructed at base of tree
@@ -171,6 +174,7 @@ Remember <- addMemoization
 #' @references
 #' \insertRef{Maddison1991}{TreeSearch}
 #' @examples
+#' MaddisonSlatkin(2, 4)
 #' @template MRS
 #' @importFrom R.cache addMemoization
 #' @importFrom TreeTools NRooted
@@ -181,8 +185,9 @@ MaddisonSlatkin <- function (a, b) {
   
   
   # Return:
-  sum(
-    .P0(s, n, i) * .B0(n, i),
-    .P1(s, n, i) * .B1(n, i),
-    .P01(s, n, i) * .B01(n, i))
+  vapply(seq_len(i), function (s)
+    sum(
+      .P0(s, n, i) * .B0(n, i),
+      .P1(s, n, i) * .B1(n, i),
+      .P01(s, n, i) * .B01(n, i)), double(1))
 }
