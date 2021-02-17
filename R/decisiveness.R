@@ -19,7 +19,7 @@
 #' \insertRef{Goloboff1991}{TreeSearch}
 #' @export
 Decisiveness <- function (dataset, bestScore) {
-  # sBar = mean number of steps for a character on a tree
+  # sBar = mean number of steps for a character on a tree. See Archie & Felsenstein 1993 for (01) formula.
   
   s <- bestScore
   m <- sum(MinimumSteps(dataset))
