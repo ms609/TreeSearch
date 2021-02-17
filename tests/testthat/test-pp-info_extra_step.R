@@ -49,3 +49,33 @@ test_that("WithOneExtraStep()", {
                WithOneExtraStep(2:3, rep(1, 5)))
 })
   
+test_that("ExtraStep()", {
+  data("profiles", package = "TreeSearch")
+  
+  expect_equal(c(5, 2, 0, 0, 0),
+               .ExtraSteps(2, 1, 3, 1, 0, 1))
+  
+  expect_equal(c(7, 0, 0, 0, 0),
+               .ExtraSteps(2, 1, 3, 0, 1, 2))
+  
+  expect_equal(c(15, 20, 0, 0, 0),
+               .ExtraSteps(2, 2, 2, 1, 0, 1))
+  
+  expect_equal(c(15, 90, 0, 0, 0),
+               .ExtraSteps(2, 3, 1, 1, 0, 1))
+  
+  expect_equal(c(1, 6, 0, 0, 0),
+               .ExtraSteps(4, 1, 1, 1, 0, 1))
+  
+  expect_equal(c(0, 5, 30, 0, 0),
+               .ExtraSteps(4, 2, 0, 0, 0, 0))
+  
+  Test <- function (a, b) {
+    Profile <- function (a, b) {
+      n <- sum(a, b)
+      2 ^ (profiles[[n]][[2]][[n - max(a, b) - 1]] + Log2Unrooted(n))
+    }
+    expect_equivalent(Profile(a, b),
+                      cumsum(ExtraSteps(a, b)))
+  }
+})
