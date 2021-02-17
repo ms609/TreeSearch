@@ -23,6 +23,40 @@ test_that("Information content of steps calculated correctly", {
                tolerance = 5e-03)
 })
 
+test_that("Carter1() matches profile counts", {
+  data("profiles", package = "TreeSearch")
+  Test <- function (a, b) {
+    n <- sum(a, b)
+    counted <- 2 ^ profiles[[n]][[2]][[n - max(a, b) - 1]] * NUnrooted(n)
+    m <- as.integer(names(counted))
+    for (mi in m) {
+      expect_equal(log2(Carter1(mi, a, b)), Log2Carter1(mi, b, a))
+    }
+    expect_equivalent(counted,
+                      cumsum(vapply(m, Carter1, a = a, b = b, double(1))))
+  }
+  
+  Test(2, 4)
+  Test(2, 5)
+  Test(2, 6)
+  Test(2, 7)
+  Test(2, 8)
+  
+  Test(3, 4)
+  Test(3, 5)
+  Test(3, 6)
+  Test(3, 7)
+  
+  Test(4, 4)
+  Test(4, 5)
+  Test(4, 6)
+  
+  Test(5, 4)
+  Test(5, 5)
+  
+})
+
+
 test_that("WithOneExtraStep() input format", {
   expect_equal(WithOneExtraStep(7, 5), WithOneExtraStep(c(5, 7)))
 })
@@ -49,33 +83,3 @@ test_that("WithOneExtraStep()", {
                WithOneExtraStep(2:3, rep(1, 5)))
 })
   
-test_that("ExtraStep()", {
-  data("profiles", package = "TreeSearch")
-  
-  expect_equal(c(5, 2, 0, 0, 0),
-               .ExtraSteps(2, 1, 3, 1, 0, 1))
-  
-  expect_equal(c(7, 0, 0, 0, 0),
-               .ExtraSteps(2, 1, 3, 0, 1, 2))
-  
-  expect_equal(c(15, 20, 0, 0, 0),
-               .ExtraSteps(2, 2, 2, 1, 0, 1))
-  
-  expect_equal(c(15, 90, 0, 0, 0),
-               .ExtraSteps(2, 3, 1, 1, 0, 1))
-  
-  expect_equal(c(1, 6, 0, 0, 0),
-               .ExtraSteps(4, 1, 1, 1, 0, 1))
-  
-  expect_equal(c(0, 5, 30, 0, 0),
-               .ExtraSteps(4, 2, 0, 0, 0, 0))
-  
-  Test <- function (a, b) {
-    Profile <- function (a, b) {
-      n <- sum(a, b)
-      2 ^ (profiles[[n]][[2]][[n - max(a, b) - 1]] + Log2Unrooted(n))
-    }
-    expect_equivalent(Profile(a, b),
-                      cumsum(ExtraSteps(a, b)))
-  }
-})

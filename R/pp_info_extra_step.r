@@ -127,6 +127,66 @@ ICPerStep <- function(splits, maxIter, warn = TRUE) {
   ICS(min(splits), max(splits), maxIter, warn)
 }
 
+#' Number of trees with _m_ additional steps
+#' 
+#' Calculate the number of trees with _m_ extra steps under Fitch parsimony
+#' where _a_ leaves are labelled with one state, and _b_ leaves labelled with
+#' a second state.
+#' 
+#' Implementation of theorem 1 from Carter _et al._ (1990)
+#' 
+#' @param m Number of steps
+#' @param a,b Number of leaves labelled `0` and `1`.
+#' 
+#' @references 
+#' \insertRef{Carter1990}{TreeTools}
+#' @importFrom TreeTools DoubleFactorial
+#' @export
+Carter1 <- function (m, a, b) {
+  n <- a + b
+  twoN <- n + n
+  twoM <- m + m
+  N <- function (n, m) {
+    if (n < m) 0 else {
+      nMinusM <- n - m
+      factorial(n + nMinusM - 1L) / prod(
+        factorial(nMinusM),
+        factorial(m - 1L),
+        2 ^ (nMinusM))
+    }
+  }
+  prod(
+    factorial(m - 1L),
+    (twoN - twoM - m),
+    DoubleFactorial(twoN - 5L),
+    N(a, m),
+    N(b, m)
+  ) / DoubleFactorial(twoN - twoM - 1L)
+}
+
+#' @rdname Carter1
+#' @export
+Log2Carter1 <- function (m, a, b) {
+  n <- a + b
+  twoN <- n + n
+  twoM <- m + m
+  Log2N <- function (n, m) {
+    if (n < m) 0 else {
+      nMinusM <- n - m
+      (lfactorial(n + nMinusM - 1L) - 
+       lfactorial(nMinusM) -
+       lfactorial(m - 1L)) / log(2) - nMinusM
+    }
+  }
+  sum(
+    log2(twoN - twoM - m),
+    (lfactorial(m - 1L) / log(2)),
+    Log2DoubleFactorial(twoN - 5L),
+    Log2N(a, m),
+    Log2N(b, m)
+  ) - Log2DoubleFactorial(twoN - twoM - 1L)
+}
+
 
 #' Number of trees with one extra step
 #' @param \dots Vector or series of integers specifying the number of leaves
