@@ -140,6 +140,11 @@ ICPerStep <- function(splits, maxIter, warn = TRUE) {
 #' 
 #' @references 
 #' \insertRef{Carter1990}{TreeTools}
+#' See also:
+#' 
+#' \insertRef{Steel1993}{TreeSearch}
+#' 
+#' \insertRef{Steel1995}{TreeSearch}
 #' @importFrom TreeTools DoubleFactorial
 #' @export
 Carter1 <- function (m, a, b) {
