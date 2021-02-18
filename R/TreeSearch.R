@@ -466,6 +466,78 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
   }
   
+  .ProfileTBRSearch <- function (edge, nTip, morphyObjects, weight, charSeq,
+                                 profiles, tbrIter, maxHits) {
+    if (is.null(session)) {
+      .DoProfileTBRSearch(edge, nTip, morphyObjects, weight, charSeq, profiles,
+                          tbrIter, maxHits)
+    } else {
+      withProgress(message = 'TBR search',
+                   .DoProfileTBRSearch(edge, nTip, morphyObjects, weight, 
+                                       charSeq, profiles, tbrIter, maxHits)
+      )
+    }
+  }
+  
+  .DoProfileTBRSearch <- function (edge, nTip, morphyObjects, weight, charSeq,
+                                   profiles, tbrIter, maxHits) {
+    iter <- 0L
+    nHits <- 1L
+    hold <- array(NA, dim = c(dim(edge), max(maxHits * 1.1, maxHits + 10L)))
+    maxHits <- ceiling(maxHits)
+    hold[, , 1] <- edge
+    bestScore <- .ProfileScore(edge, morphyObjects, weight, charSeq, profiles)
+    bestPlusEps <- bestScore + epsilon
+    
+    while (iter < tbrIter) {
+      .Progress(iter / tbrIter, detail = paste0('TBR iteration (depth ',
+                                                iter + 1, ')'))
+      iter <- iter + 1L
+      optTbr <- sample(3:(nTip * 2 - 2))
+      .Message(3L, "New TBR iteration (depth ", iter, ')')
+      
+      for (brk in optTbr) {
+        .Message(6L, "Break ", brk)
+        moves <- TBRMoves(edge, brk)
+        improvedScore <- FALSE
+        for (move in moves[sample(seq_along(moves))]) {
+          if (.Forbidden(move)) {
+            .Message(10L, "Skipping prohibited topology")
+            next
+          }
+          moveScore <- .ProfileScore(move, morphyObjects, weight, charSeq,
+                                     profiles, bestPlusEps)
+          if (moveScore < bestPlusEps) {
+            edge <- move
+            if (moveScore < bestScore) {
+              improvedScore <- TRUE
+              iter <- 0L
+              bestScore <- moveScore
+              bestPlusEps <- bestScore + epsilon
+              nHits <- 1L
+              hold[, , 1] <- edge
+              .Message(4L, "New best score ", signif(bestScore, 5))
+              break
+            } else {
+              .Message(5L, "Best score ", signif(bestScore, 5),
+                       " hit again (", nHits, "/", maxHits, ")")
+              nHits <- nHits + 1L
+              hold[, , nHits] <- edge
+              break
+            }
+          }
+        }
+        if (nHits >= maxHits) break
+      }
+      if (nHits >= maxHits) break
+    }
+    .Message(2L, iter + 1, " TBR rearrangements found score ", 
+             signif(bestScore), " ", nHits, " times.")
+    
+    # Return:
+    unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
+  }
+  
   .IWScore <- function (edge, morphyObjs, weight, minLength, charSeq,
                         concavity, target = Inf) {
     morphy_iw(edge, morphyObjs, weight, minLength, charSeq,
@@ -625,10 +697,16 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       deindexedChars <- rep(eachChar, startWeights)
       resampling <- tabulate(sample(deindexedChars, replace = TRUE),
                              length(startWeights))
-      if (iw) {
+      if (profile || iw) {
         priority <- resampling * rawPriority
         sampled <- informative & resampling > 0
         ratchSeq <- seq_along(charInfo)[sampled][order(priority[sampled])] - 1L
+      }
+      if (profile) {
+        ratchetTrees <- .ProfileTBRSearch(edge, NTip(tree), morphyObjects,
+                                          resampling, ratchSeq, profiles,
+                                          tbrIter, maxHits / finalIter)
+      } else if (iw) {
         ratchetTrees <- .IWTBRSearch(edge, NTip(tree), morphyObjects,
                                      resampling, minLength, ratchSeq,
                                      concavity, tbrIter, maxHits / finalIter)
@@ -656,14 +734,21 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       verbosity <- verbosity + 1L
       ratchetStart <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
       .Message(1L, "Ratchet iteration ", iter, ": Search using original data")
-      ratchetImproved <- if (iw) {
+      ratchetImproved <- if (profile) {
+        .ProfileTBRSearch(ratchetStart, NTip(tree), morphyObjects, startWeights,
+                          charSeq, profiles, tbrIter, maxHits / finalIter)
+      } else if (iw) {
         .IWTBRSearch(ratchetStart, NTip(tree), morphyObjects, startWeights,
                      minLength, charSeq,
                      concavity, tbrIter, maxHits / finalIter)
       } else {
         .TBRSearch(ratchetStart, NTip(tree), morphyObj, tbrIter, maxHits / finalIter)
       }
-      ratchetScore <- if (iw) {
+      ratchetScore <- if (profile) {
+        .ProfileScore(ratchetImproved[, , 1], morphyObjects, startWeights,
+                      charSeq, profiles, bestPlusEps)
+        
+      } else if (iw) {
         .IWScore(ratchetImproved[, , 1], morphyObjects, startWeights, minLength,
                  charSeq, concavity, bestPlusEps)
       } else {
@@ -692,14 +777,20 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   # Branch breaking
   
   .Message(0L, "Final TBR search.")
-  bestEdges <- if (iw) {
+  bestEdges <- if (profile) {
+    .ProfileTBRSearch(edge, nTip, morphyObjects, startWeights, charSeq, 
+                      profiles, tbrIter * finalIter, maxHits)
+  } else if (iw) {
     .IWTBRSearch(edge, nTip, morphyObjects, startWeights, minLength, charSeq,
                  concavity, tbrIter * finalIter, maxHits)
   } else {
     .TBRSearch(edge, nTip, morphyObj, tbrIter * finalIter, maxHits)
   }
   
-  finalScore <- if (iw) {
+  finalScore <- if (profile) {
+    .ProfileScore(bestEdges[, , 1], morphyObjects, startWeights, charSeq,
+                  profiles)
+  } else if (iw) {
     .IWScore(bestEdges[, , 1], morphyObjects, startWeights, minLength, charSeq,
              concavity)
   } else {

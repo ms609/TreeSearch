@@ -16,8 +16,6 @@ test_that("Profile scoring (TEMPORARY)", {
           add = TRUE)
     
   expect_equal(ProfileScore(tree, dataset),
-               morphy_profile(edge, morphyObjects, startWeights, 
-                              charSeq, profiles, Inf))
-  
-  MaximizeParsimony(dataset, tree, concavity = 'profile')
+               morphy_profile(edge, morphyObjects, startWeights, charSeq, 
+                              profiles, Inf))
 })
