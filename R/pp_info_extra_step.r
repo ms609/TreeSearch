@@ -299,12 +299,15 @@ Evaluate <- function (tree, dataset, warn=TRUE) {
     ret <- table(x)
     ret[names(ret) != ambiguousToken] 
   })
-  if (class(asSplits) == 'matrix') asSplits <- lapply(seq_len(ncol(asSplits)), function(i) asSplits[, i])
+  if (is.matrix(asSplits)) {
+    asSplits <- lapply(seq_len(ncol(asSplits)), function(i) asSplits[, i])
+  }
   ic.max <- round(vapply(asSplits,
                          function (split) -log(NUnrootedMult(split)/
                                                  NUnrooted(sum(split)))/log(2),
                          double(1)), 12)
-  infoLosses <- apply(chars, 1, ICSteps, ambiguousToken=ambiguousToken, maxIter=1000, warn=warn)
+  infoLosses <- apply(chars, 1, StepInformation, 
+                      ambiguousToken = ambiguousToken)
   infoAmounts <- lapply(infoLosses, function(p) {
     #message(length(p))
     cumP <- cumsum(p)

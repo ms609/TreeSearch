@@ -18,14 +18,10 @@
 #'  \insertRef{Faith2001}{TreeSearch}
 #'
 #' @examples
-#'   data(referenceTree)
-#'   data(congreveLamsdellMatrices)
-#'   # In actual use, the dataset should be prepared with a much higher
-#'   # precision: try 1e+06?
-#'   # Of course, gaining higher precision takes substantially longer.
-#'   dataset <- suppressWarnings(
-#'     PrepareDataProfile(congreveLamsdellMatrices[[42]], precision = 1e+03))
-#'   ProfileScore(referenceTree, dataset)
+#' data(referenceTree)
+#' data(congreveLamsdellMatrices)
+#' dataset <- PrepareDataProfile(congreveLamsdellMatrices[[42]])
+#' ProfileScore(referenceTree, dataset)
 #'
 #' @author Martin R. Smith
 #' @keywords tree
@@ -34,19 +30,14 @@ ProfileScore <- function (tree, dataset) {
   if (class(dataset) != 'phyDat') {
     stop('Invalid dataset type; prepare dataset with PhyDat() and PrepareDataProfile().')
   }
-  if (!('info.amounts' %in% names(attributes(dataset)))) dataset <- PrepareDataProfile(dataset)
-  at <- attributes(dataset)
-  nChar  <- at$nr # strictly, transformation series patterns; these'll be upweighted later
-  weight <- at$weight
+  if (!('info.amounts' %in% names(attributes(dataset)))) {
+    dataset <- PrepareDataProfile(dataset)
+  }
   steps <- CharacterLength(tree, dataset)
-  info <- at$info.amounts
-  nRowInfo <- nrow(info)
-  infoPerChar <- vapply(seq_len(nChar), function (i) {
-      stepRow <- max(0L, steps[i] - 1L) + 1L
-      return(if (stepRow > nRowInfo) 0 else info[stepRow, i])
-    }, double(1))
+  info <- attr(dataset, 'info.amounts')
   # Return:
-  -sum(infoPerChar * weight)
+  sum(vapply(seq_along(steps), function (i) info[steps[i], i], double(1)) *
+        attr(dataset, 'weight'))
 }
 
 #' @describeIn ProfileScore Scorer for initialized dataset.
@@ -60,10 +51,8 @@ ProfileScoreMorphy <- function (parent, child, dataset, ...) {
   info <- attr(dataset, 'info.amounts')
   nRowInfo <- nrow(info)
   # Return:
-  -sum(vapply(seq_along(steps), function (i) {
-    stepRow <- max(0L, steps[i] - 1L) + 1L
-    return(if (stepRow > nRowInfo) 0 else info[stepRow, i])
-  }, double(1)) * attr(dataset, 'weight'))
+  sum(vapply(seq_along(steps), function (i) info[steps[i], i], double(1))
+       * attr(dataset, 'weight'))
 }
 
 #' @describeIn ProfileScore Initialize dataset by adding `morphyObjs` attribute.

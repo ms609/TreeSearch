@@ -46,6 +46,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// morphy_profile
+double morphy_profile(IntegerMatrix edge, List MorphyHandls, NumericVector weight, IntegerVector sequence, NumericMatrix profiles, NumericVector target);
+RcppExport SEXP _TreeSearch_morphy_profile(SEXP edgeSEXP, SEXP MorphyHandlsSEXP, SEXP weightSEXP, SEXP sequenceSEXP, SEXP profilesSEXP, SEXP targetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< List >::type MorphyHandls(MorphyHandlsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type sequence(sequenceSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type profiles(profilesSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type target(targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(morphy_profile(edge, MorphyHandls, weight, sequence, profiles, target));
+    return rcpp_result_gen;
+END_RCPP
+}
 // nni
 IntegerMatrix nni(const IntegerMatrix edge, const IntegerVector randomEdge, const IntegerVector whichSwitch);
 RcppExport SEXP _TreeSearch_nni(SEXP edgeSEXP, SEXP randomEdgeSEXP, SEXP whichSwitchSEXP) {

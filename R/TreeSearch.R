@@ -470,6 +470,12 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                         concavity, target = Inf) {
     morphy_iw(edge, morphyObjs, weight, minLength, charSeq,
               concavity, target + epsilon)
+  } 
+  
+  .ProfileScore <- function (edge, morphyObjs, weight, charSeq, profiles, 
+                             target = Inf) {
+    morphy_profile(edge, morphyObjs, weight, charSeq, profiles,
+                   target + epsilon)
   }
 
   # Initialize tree
@@ -487,6 +493,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   
   # Define constants
   epsilon <- sqrt(.Machine$double.eps)
+  profile <- tolower(concavity) == "profile"
   iw <- is.finite(concavity)
   constrained <- !is.null(constraint)
   
@@ -517,7 +524,22 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   }
 
   # Initialize data
-  if (iw) {
+  if (profile) {
+    dataset <- PrepareDataProfile(dataset)
+    originalLevels <- attr(dataset, 'levels')
+    if ('-' %in% originalLevels) {
+      #TODO Fixing this will require updating the counts table cleverly
+      # Or we could use approximate info amounts, e.g. by treating '-' as 
+      # an extra token
+      message("Inapplicable tokens '-' treated as ambiguous '?' for profile parsimony")
+      cont <- attr(dataset, 'contrast')
+      cont[cont[, '-'] != 0, ] <- 1
+      attr(dataset, 'contrast') <- cont[, colnames(cont) != '-']
+      attr(dataset, 'levels') <- originalLevels[originalLevels != '-']
+    }
+    profiles <- attr(dataset, 'info.amounts')
+  }
+  if (iw || profile) {
     at <- attributes(dataset)
     characters <- PhyToString(dataset, ps = '', useIndex = FALSE,
                               byTaxon = FALSE, concatenate = FALSE)
@@ -534,6 +556,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     simpleCont <- ifelse(rowSums(cont) == 1,
                          apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
                          '?')
+  }
+  if (iw) {
     inappLevel <- at$levels == '-'
     
     if (any(inappLevel)) {
@@ -546,7 +570,9 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     # Perhaps replace with previous code:
     # inappLevel <- which(at$levels == "-")
     # cont[, inappLevel] <- 0
-    
+  }
+  
+  if (iw || profile) {
     powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
     tmp <- as.integer(cont %*% powersOf2)
     unlisted <- unlist(dataset, use.names = FALSE)
@@ -573,7 +599,9 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   
   iter <- 0L
   nHits <- 1L
-  bestScore <- if (iw) {
+  bestScore <- if (profile) {
+    .ProfileScore(edge, morphyObjects, startWeights, charSeq, profiles)
+  } else if (iw) {
     .IWScore(edge, morphyObjects, startWeights, minLength, charSeq, concavity)
   } else {
     preorder_morphy(edge, morphyObj)

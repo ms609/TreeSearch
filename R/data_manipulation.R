@@ -26,7 +26,10 @@
 #' 
 #'  - \code{min.length}: The minimum number of steps that must be present in each
 #'    transformation series.
-#'
+#' @examples 
+#' data('congreveLamsdellMatrices')
+#' dataset <- congreveLamsdellMatrices[[42]]
+#' PrepareDataProfile(dataset)
 #' @author Martin R. Smith; written with reference to 
 #' `phangorn:::prepareDataFitch()`
 #' @export
@@ -64,16 +67,16 @@ PrepareDataProfile <- function (dataset) {
                 ambiguousTokens = c(qmLevel, inappLevel))
   
   maxSteps <- max(vapply(info, length, integer(1)))
-  infoAdded <- vapply(info,
-                      function (x) {
-                        ret <- double(maxSteps)
-                        ret[seq_along(x)] <- max(x) - x
-                        ret
-                      }, double(maxSteps))
-  if (is.null(dim(infoAdded))) {
-    dim(infoAdded) <- c(1L, length(infoAdded))
+  info <- vapply(info,
+                 function (x) {
+                    ret <- double(maxSteps)
+                    ret[seq_along(x)] <- max(x) - x
+                    ret
+                  }, double(maxSteps))
+  if (is.null(dim(info))) {
+    dim(info) <- c(1L, length(info))
   }
-  attr(dataset, 'info.amounts') <- infoAdded
+  attr(dataset, 'info.amounts') <- info
   
   if (!any(attr(dataset, 'bootstrap') == 'info.amounts')) {
     attr(dataset, 'bootstrap') <- c(attr(dataset, 'bootstrap'), 'info.amounts')

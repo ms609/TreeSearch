@@ -21,6 +21,7 @@ extern SEXP _TreeSearch_all_tbr(SEXP, SEXP);
 extern SEXP _TreeSearch_preorder_morphy(SEXP, SEXP);
 extern SEXP _TreeSearch_preorder_morphy_by_char(SEXP, SEXP);
 extern SEXP _TreeSearch_morphy_iw(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_morphy_profile(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
@@ -55,6 +56,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_preorder_morphy",   (DL_FUNC) &_TreeSearch_preorder_morphy, 2},
   {"_TreeSearch_preorder_morphy_by_char",   (DL_FUNC) &_TreeSearch_preorder_morphy_by_char, 2},
   {"_TreeSearch_morphy_iw",         (DL_FUNC) &_TreeSearch_morphy_iw, 7},
+  {"_TreeSearch_morphy_profile",    (DL_FUNC) &_TreeSearch_morphy_profile, 6},
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
   {"RANDOM_TREE",                   (DL_FUNC) &RANDOM_TREE, 1},
   {"RANDOM_TREE_SCORE",             (DL_FUNC) &RANDOM_TREE_SCORE, 2},
