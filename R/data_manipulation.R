@@ -30,32 +30,54 @@
 #' @author Martin R. Smith; written with reference to 
 #' `phangorn:::prepareDataFitch()`
 #' @export
-PrepareDataProfile <- function (dataset, precision = 1e+06, warn = TRUE) {
+PrepareDataProfile <- function (dataset) {
   at <- attributes(dataset)
   nLevel <- length(at$level)
   nChar <- at$nr
   cont <- attr(dataset, "contrast")
   nTip <- length(dataset)
+  index <- at$index
+  allLevels <- as.character(at$allLevels)
   
-  powers.of.2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
-  tmp <- cont %*% powers.of.2
-  tmp <- as.integer(tmp)
-  unlisted <- unlist(dataset, recursive = FALSE, use.names = FALSE)
-  binaryMatrix <- tmp[unlisted]
-  attr(binaryMatrix, 'dim') <- c(nChar, nTip)
+  contSums <- rowSums(cont)
+  qmLevel <- which(contSums == ncol(cont))
+  ambigs <- which(contSums > 1L & contSums < ncol(cont))
+  inappLevel <- which(colnames(cont) == '-')
+  if (length(inappLevel)) {
+    inappLevel <- which(apply(unname(cont), 1, identical,
+                              as.double(colnames(cont) == '-')))
+  }
   
-  attr(dataset, 'info.amounts') <- InfoAmounts(binaryMatrix, precision, 
-                                               warn = warn)
+  if (length(ambigs) > 0L) {
+    message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ', '),
+            " converted to '?'")
+    dataset <- lapply(dataset, function (i) {
+        i[i %in% ambigs] <- qmLevel
+        i
+      })
+    attributes(dataset) <- at
+  }
+  
+  mataset <- matrix(unlist(dataset, recursive = FALSE, use.names = FALSE),
+                    max(index))
+  info <- apply(mataset, 1, StepInformation, 
+                ambiguousTokens = c(qmLevel, inappLevel))
+  
+  maxSteps <- max(vapply(info, length, integer(1)))
+  infoAdded <- vapply(info,
+                      function (x) {
+                        ret <- double(maxSteps)
+                        ret[seq_along(x)] <- max(x) - x
+                        ret
+                      }, double(maxSteps))
+  if (is.null(dim(infoAdded))) {
+    dim(infoAdded) <- c(1L, length(infoAdded))
+  }
+  attr(dataset, 'info.amounts') <- infoAdded
+  
   if (!any(attr(dataset, 'bootstrap') == 'info.amounts')) {
     attr(dataset, 'bootstrap') <- c(attr(dataset, 'bootstrap'), 'info.amounts')
   }
-  
-  ####  inappLevel <- which(at$levels == "-")
-  ####  applicableTokens <- setdiff(powers.of.2, 2 ^ (inappLevel - 1))
-  ####  
-  ####  attr(dataset, 'split.sizes') <- apply(binaryMatrix, 1, function(x) {
-  ####      vapply(applicableTokens, function (y) sum(x == y), integer(1))
-  ####    })
   
   dataset
 }
