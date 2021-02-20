@@ -27,6 +27,7 @@
 #' @keywords tree
 #' @export
 ProfileScore <- function (tree, dataset) {
+  .Deprecate("TreeLength")
   if (class(dataset) != 'phyDat') {
     stop('Invalid dataset type; prepare dataset with PhyDat() and PrepareDataProfile().')
   }
