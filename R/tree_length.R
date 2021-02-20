@@ -74,6 +74,15 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     # Return:
     sum(fit * weight)
     
+  } else if (tolower(concavity) == 'profile') {
+    if (!('info.amounts' %in% names(attributes(dataset)))) {
+      dataset <- PrepareDataProfile(dataset)
+    }
+    steps <- CharacterLength(tree, dataset)
+    info <- attr(dataset, 'info.amounts')
+    # Return:
+    sum(vapply(seq_along(steps), function (i) info[steps[i], i], double(1)) *
+          attr(dataset, 'weight'))
   } else {
     tree <- RenumberTips(Renumber(tree), names(dataset))
     if (!TreeIsRooted(tree)) stop("`tree` must be rooted; try RootTree(tree)")
@@ -89,6 +98,8 @@ Fitch <- function (tree, dataset) {
   .Deprecated('TreeLength')
   TreeLength(tree, dataset, Inf)
 }
+
+
 
 #' Character length
 #' 
