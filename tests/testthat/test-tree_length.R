@@ -113,3 +113,13 @@ test_that("Morphy generates correct lengths", {
     expect_equal(tree_length, expected_results[test])
   }
 })
+
+test_that("(random) lists of trees are scored", {
+  data("congreveLamsdellMatrices", package = 'TreeSearch')
+  mat <- congreveLamsdellMatrices[[42]]
+  
+  # Expected values calculated from 100k samples
+  expect_gt(t.test(TreeLength(100, mat), mu = 318.5877)$p.val, 0.001)
+  expect_gt(t.test(TreeLength(100, mat, 10L), mu = 17.16911)$p.val, 0.001)
+  expect_gt(t.test(TreeLength(100, mat, 'profile'), mu = 830.0585)$p.val, 0.001)
+})
