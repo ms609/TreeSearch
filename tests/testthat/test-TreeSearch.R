@@ -66,7 +66,7 @@ test_that("inconsistent constraints fail", {
 
 test_that("Root retained if not 1", {
   tr <- RootTree(BalancedTree(8), 't5')
-  dataset <- TreeTools::StringToPhyDat('11000000 11100000 11110000',
+  dataset <- TreeTools::StringToPhyDat('11000000 11100000 11110000 11111000',
                                        paste0('t', 1:8), byTaxon = FALSE)
   
   expect_equal(5, MaximizeParsimony(dataset, tr)[[1]]$edge[14, 2])
