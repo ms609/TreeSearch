@@ -503,6 +503,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     
     # Check that starting tree is consistent with constraints 
     if (.Forbidden(edge)) {
+      .Message(1L, "Looking for a tree that is consistent with `constraint`...")
       .oldMsg <- .Message
       .Message <- function (...) {}
       edge <- .DoTBRSearch(edge, nTip, morphyConstr, 10, 10)[, , 1]
