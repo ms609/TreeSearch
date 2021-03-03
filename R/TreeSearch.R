@@ -294,6 +294,7 @@ TreeSearch <- function (tree, dataset,
 #' 
 #' @template MRS
 #' 
+#' @importFrom phangorn Descendants
 #' @importFrom shiny setProgress withProgress
 #' @importFrom TreeTools NJTree CharacterInformation
 #' @references
@@ -484,6 +485,17 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   tree <- Preorder(RenumberTips(tree, names(dataset)))
   nTip <- NTip(tree)
   edge <- tree$edge
+  
+  if (edge[1, 2] > nTip) {
+    outgroup <- Descendants(tr, edge[1, 2], type = 'tips')[[1]]
+    if (length(outgroup) > nTip / 2L) {
+      outgroup <- seq_len(nTip)[-outgroup]
+    }
+    tree <- RootTree(tree, 1)
+    edge <- tree$edge
+  } else {
+    outgroup <- NA
+  }
   
   # Define constants
   epsilon <- sqrt(.Machine$double.eps)
@@ -684,7 +696,11 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   ret <- structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
     tr <- tree
     tr$edge <- bestEdges[, , i]
-    tr
+    if (is.na(outgroup)) {
+      tr
+    } else {
+      RootTree(tr, outgroup)
+    }
   }), class = 'multiPhylo')
   
   # Return:
