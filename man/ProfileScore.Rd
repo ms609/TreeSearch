@@ -47,7 +47,8 @@ In subsidiary functions, the dataset will have been initialized using
 
 \item{concavity}{A numeric value to use as the concavity constant (\code{k})
 in implied weighting. Defaults to 10; TNT sets a default of 3, but this
-is too low in some circumstances (Smith, 2019).}
+is too low in some circumstances (Smith, 2019). If \code{Inf}, applies equal
+weights; if \code{'profile'}, then profile parsimony is used.}
 
 \item{minLength}{Integer vector specifying the minimum length
 possible for each character in \code{dataset}, perhaps calculated
@@ -82,14 +83,10 @@ Faith and Trueman (2001).
 }}
 
 \examples{
-  data(referenceTree)
-  data(congreveLamsdellMatrices)
-  # In actual use, the dataset should be prepared with a much higher
-  # precision: try 1e+06?
-  # Of course, gaining higher precision takes substantially longer.
-  dataset <- suppressWarnings(
-    PrepareDataProfile(congreveLamsdellMatrices[[42]], precision = 1e+03))
-  ProfileScore(referenceTree, dataset)
+data(referenceTree)
+data(congreveLamsdellMatrices)
+dataset <- PrepareDataProfile(congreveLamsdellMatrices[[42]])
+ProfileScore(referenceTree, dataset)
 
 }
 \references{

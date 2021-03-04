@@ -134,15 +134,15 @@ Old_IC_Approx <- function() {
   
   morphyObj <- SingleCharMorphy(rep(seq_along(split) - 1L, split))
   on.exit(morphyObj <- UnloadMorphy(morphyObj))
-  steps <- vapply(rep(nInformative, maxIter), RandomTreeScore,
-                  integer(1), morphyObj)
+  steps <- vapply(rep(nInformative, nIter), RandomTreeScore,
+                  integer(1), morphyObj) + nSingletons
   
   tabSteps <- table(steps[steps > (minSteps - nSingletons + 1)]) # Quicker than table(steps)[-1]
   
   approxP <- tabSteps / sum(tabSteps) * (1 - analyticP)
   approxSE <- sqrt(approxP * (1 - approxP) / nIter)
   cumP <- cumsum(c(analyticP, approxP))[-1]
-  
+
   approxIC <- -log2(cumP)
   icLB <- -log2(cumP - approxSE)
   icError <- icLB - approxIC
@@ -342,5 +342,5 @@ Evaluate <- function (tree, dataset, warn=TRUE) {
           round(total.info - info.retained, 2), ' lost,',
           round(info.needed, 2), ' needed.  SNR = ', signal.noise, "\n")
   # Return:
-  c(signal.noise, info.retained/info.needed)
+  c(signal.noise, info.retained / info.needed)
 }

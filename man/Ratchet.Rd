@@ -233,7 +233,8 @@ iteration (default: \code{searchHits}).}
 
 \item{concavity}{A numeric value to use as the concavity constant (\code{k})
 in implied weighting. Defaults to 10; TNT sets a default of 3, but this
-is too low in some circumstances (Smith, 2019).}
+is too low in some circumstances (Smith, 2019). If \code{Inf}, applies equal
+weights; if \code{'profile'}, then profile parsimony is used.}
 
 \item{nSearch}{Number of Ratchet searches to conduct
 (for \code{RatchetConsensus()})}

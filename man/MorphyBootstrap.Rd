@@ -76,7 +76,8 @@ whose names correspond to the labels of any accompanying tree.}
 
 \item{concavity}{A numeric value to use as the concavity constant (\code{k})
 in implied weighting. Defaults to 10; TNT sets a default of 3, but this
-is too low in some circumstances (Smith, 2019).}
+is too low in some circumstances (Smith, 2019). If \code{Inf}, applies equal
+weights; if \code{'profile'}, then profile parsimony is used.}
 }
 \value{
 A tree that is optimal under a random sampling of the original characters

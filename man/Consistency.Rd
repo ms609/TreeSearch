@@ -25,6 +25,9 @@ tree.  Values correlate with the number of species sampled and the
 distribution of taxa between character states, so are not strictly comparable
 between characters in which these factors differ.
 }
+\details{
+#TODO: Retention index not yet implemented.
+}
 \examples{
 data(inapplicable.datasets)
 dataset <- inapplicable.phyData[[4]]

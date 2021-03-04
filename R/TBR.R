@@ -69,8 +69,9 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 }
 
 #' @rdname TBR 
-#' @return `TBRMoves()` returns a list of all trees one TBR move away from
-#'  `tree`, with edges and nodes in preorder, rooted on the first-labelled tip.
+#' @return `TBRMoves()` returns a `multiPhylo` object listing all trees one
+#'  \acronym{TBR} move away from `tree`, with edges and nodes in preorder,
+#'  rooted on the first-labelled tip.
 #' @export
 TBRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('TBRMoves')
 

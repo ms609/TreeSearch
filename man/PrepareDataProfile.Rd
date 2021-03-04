@@ -5,7 +5,7 @@
 \alias{PrepareDataIW}
 \title{Prepare data for Profile Parsimony}
 \usage{
-PrepareDataProfile(dataset, precision = 1e+06, warn = TRUE)
+PrepareDataProfile(dataset)
 
 PrepareDataIW(dataset)
 }
@@ -48,6 +48,11 @@ Prepare data for Profile Parsimony
 \item \code{PrepareDataIW}: Prepare data for implied weighting
 }}
 
+\examples{
+data('congreveLamsdellMatrices')
+dataset <- congreveLamsdellMatrices[[42]]
+PrepareDataProfile(dataset)
+}
 \author{
 Martin R. Smith; written with reference to
 \code{phangorn:::prepareDataFitch()}
