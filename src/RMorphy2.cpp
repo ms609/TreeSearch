@@ -159,6 +159,7 @@ double morphy_iw(IntegerMatrix edge,
 }
 
 
+// NOTE: All characters must be informative.
 // [[Rcpp::export]]
 double morphy_profile(IntegerMatrix edge,
                       List MorphyHandls,
@@ -213,6 +214,8 @@ double morphy_profile(IntegerMatrix edge,
       Morphy handl = R_ExternalPtrAddr(MorphyHandls[i]);
       int e = -1;
       morphy_length(ancestor, left, right, handl, &e); /* Updates e */
+      // if (e < 0) std::length_error("e is less than zero");
+      // if (e >= profiles.nrow()) std::length_error("e is too high");
       ret += weight_i * profiles(e, i);
       if (ret > target_score) return R_PosInf;
     }
