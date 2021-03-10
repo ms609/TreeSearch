@@ -60,6 +60,8 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
 #' \insertRef{Steel1993}{TreeSearch}
 #' 
 #' \insertRef{Steel1995}{TreeSearch}
+#' 
+#' (\insertRef{Steel1996}{TreeSearch})
 #' @importFrom TreeTools DoubleFactorial
 #' @export
 Carter1 <- function (m, a, b) {
