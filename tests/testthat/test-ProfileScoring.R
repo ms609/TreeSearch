@@ -15,7 +15,7 @@ test_that("Profile scoring (TEMPORARY)", {
   on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
           add = TRUE)
     
-  expect_equal(ProfileScore(tree, dataset),
+  expect_equal(TreeLength(tree, dataset, 'profile'),
                morphy_profile(edge, morphyObjects, startWeights, charSeq, 
                               profiles, Inf))
 })

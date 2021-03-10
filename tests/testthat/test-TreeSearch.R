@@ -33,7 +33,8 @@ test_that("tree can be found", {
   iw <- MaximizeParsimony(phy11, random11, ratchIter = 1, tbrIter = 5,
                          concavity = 10, verbosity = 0L)[[1]]
   expect_equal(comb11, iw)
-#  expect_equal(SectorialSearch(RandomTree(phy11, 'a'), phy11, verbosity = -1), comb11) # TODO: Sectorial Search not working yet!
+#  TODO: Sectorial Search not working yet!
+#  expect_equal(SectorialSearch(RandomTree(phy11, 'a'), phy11, verbosity = -1), comb11) 
 })
 
 test_that("constraints work", {
