@@ -41,6 +41,7 @@ Remember <- addMemoization
     }, double(1)))
   }
 })
+
 .B1 <- Remember(function (n, i) {
   if (n == 2L && i == 1L) {
     0
@@ -60,6 +61,7 @@ Remember <- addMemoization
     }, double(1)))
   }
 })
+
 .B01 <- Remember(function (n, i) {
   if (n == 2L && i == 1L) {
     1
@@ -79,6 +81,7 @@ Remember <- addMemoization
     }, double(1)))
   }
 })
+
 .PRow <- function (PSmall, BSmall, PLarge, BLarge, i, j, m, n, s) {
   sum(vapply(0:s, function (r) prod(
       PSmall(r, m, j),
@@ -115,6 +118,7 @@ Remember <- addMemoization
     }
   }
 })
+
 .P1 <- Remember(function (s, n, i) {
   if (n == 2L && i == 1L) {
     if (s == 1L) 1 else 0
@@ -137,6 +141,7 @@ Remember <- addMemoization
     }
   }
 })
+
 .P01 <- Remember(function (s, n, i) {
   if (n == 2L && i == 1L) {
     if (s == 1L) 1 else 0
