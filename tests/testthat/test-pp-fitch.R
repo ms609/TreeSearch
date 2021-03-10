@@ -73,8 +73,6 @@ test_that("Profile score correct for small trees", {
   expect_equal(TreeLength(tree, dataset), PP(costs = extraSteps))
   expect_equal(3 + 2 + 2 + 1 + 1,
                TreeLength(tree, dataset))
-
-  morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1))
 })
 
 
