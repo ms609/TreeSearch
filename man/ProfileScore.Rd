@@ -3,7 +3,6 @@
 \name{IWScoreMorphy}
 \alias{IWScoreMorphy}
 \alias{IWInitMorphy}
-\alias{IWTreeSearch}
 \alias{ProfileScore}
 \alias{ProfileScoreMorphy}
 \alias{ProfileInitMorphy}
@@ -21,18 +20,6 @@ IWScoreMorphy(
 )
 
 IWInitMorphy(dataset)
-
-IWTreeSearch(
-  tree,
-  dataset,
-  concavity = 10,
-  EdgeSwapper = RootedTBR,
-  maxIter = 100,
-  maxHits = 20,
-  forestSize = 1,
-  verbosity = 1,
-  ...
-)
 
 ProfileScore(tree, dataset)
 
@@ -83,8 +70,6 @@ Faith and Trueman (2001).
 \section{Functions}{
 \itemize{
 \item \code{IWScoreMorphy}: Scorer for Implied Weighting dataset.
-
-\item \code{IWTreeSearch}: Search using profile parsimony
 
 \item \code{ProfileScoreMorphy}: Scorer for initialized dataset.
 
