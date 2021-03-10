@@ -85,7 +85,7 @@ Nevertheless, let's see the resultant tree, and its score:
 ```{r Ratchet-search-results}
 TreeLength(betterTrees[[1]], myMatrix, 'profile')
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-plot(consensus(betterTrees))
+plot(ape::consensus(betterTrees))
 ```
 
 The default parameters may not be enough to find the optimal tree; type 
