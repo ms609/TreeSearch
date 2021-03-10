@@ -39,6 +39,7 @@ test_that("WithOneExtraStep() input format", {
 })
 
 test_that("WithOneExtraStep()", {
+  library("TreeTools", quietly = TRUE)
   data("profiles", package = "TreeSearch")
   Test <- function (a, b) {
     n <- sum(a, b)
