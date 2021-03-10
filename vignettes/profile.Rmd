@@ -103,7 +103,7 @@ To sample this region of tree space well, the trick is to use large values of
 `searchiter`, so that many runs don't quite hit the optimal tree.
 In a serious study, you would want to sample many more than the 3 Ratchet hits (`ratchHits`) we'll settle for here, probably using many more Ratchet iterations.
 
-```{R Suboptimal sampling, eval=FALSE}
+```{R Suboptimal sampling}
 suboptimals <- MaximizeParsimony(myMatrix, betterTrees, tolerance = 3,
                                  ratchIter = 2, tbrIter = 3,
                                  maxHits = 25,
