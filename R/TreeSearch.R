@@ -565,7 +565,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   edge <- tree$edge
   
   if (edge[1, 2] > nTip) {
-    outgroup <- Descendants(tr, edge[1, 2], type = 'tips')[[1]]
+    outgroup <- Descendants(tree, edge[1, 2], type = 'tips')[[1]]
     if (length(outgroup) > nTip / 2L) {
       outgroup <- seq_len(nTip)[-outgroup]
     }
