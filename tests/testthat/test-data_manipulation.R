@@ -54,10 +54,10 @@ test_that("Minimum step counts are correctly calculated", {
 })
 
 test_that("PrepareDataProfile()", {
-  dat <- MatrixToPhyDat(matrix(c(rep(0, 3), '[01]', 1, 2, '?', 
-                                 rep(0, 3), 1, '[02]', 2, '1'), 2,
-                               byrow = TRUE,
-                               dimnames = list(c('a', 'b'), NULL)))
+  dat <- TreeTools::MatrixToPhyDat(matrix(c(rep(0, 3), '[01]', 1, 2, '?', 
+                                            rep(0, 3), 1, '[02]', 2, '1'), 2,
+                                          byrow = TRUE,
+                                          dimnames = list(c('a', 'b'), NULL)))
   at <- attributes(dat)
   prepDat <- PrepareDataProfile(dat)
   expect_equal(c(1, 6, 3, 5, 6), prepDat[[1]])
