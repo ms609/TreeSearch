@@ -2,6 +2,8 @@
 % Please edit documentation in R/IWScore.R, R/tree_length.R
 \name{IWScore}
 \alias{IWScore}
+\alias{IWScoreMorphy}
+\alias{IWInitMorphy}
 \alias{TreeLength}
 \alias{TreeLength.phylo}
 \alias{TreeLength.numeric}
@@ -11,6 +13,17 @@
 \title{Calculate parsimony score with inapplicable data}
 \usage{
 IWScore(tree, dataset, concavity = 10, ...)
+
+IWScoreMorphy(
+  parent,
+  child,
+  dataset,
+  concavity = 10L,
+  minLength = attr(dataset, "min.length"),
+  ...
+)
+
+IWInitMorphy(dataset)
 
 TreeLength(tree, dataset, concavity = Inf)
 
@@ -39,6 +52,10 @@ weights; if \code{'profile'}, then profile parsimony is used.}
 
 \item{\dots}{unused; allows additional parameters specified within \dots to be
 received by the function without throwing an error.}
+
+\item{minLength}{Integer vector specifying the minimum length
+possible for each character in \code{dataset}, perhaps calculated
+using \code{\link{MinimumLength}}.}
 }
 \value{
 \code{TreeLength()} returns the elements from a list containing:
@@ -63,6 +80,11 @@ parsimony score in datasets that contain inapplicable data.
 If \code{concavity} is non-infinite, using implied weights
 (Goloboff 1997).
 }
+\section{Functions}{
+\itemize{
+\item \code{IWScoreMorphy}: Scorer for Implied Weighting dataset.
+}}
+
 \examples{
 data("inapplicable.datasets")
 tree <- TreeTools::BalancedTree(inapplicable.phyData[[1]])

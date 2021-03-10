@@ -34,8 +34,7 @@ Ratchet(
   TreeScorer = MorphyLength,
   Bootstrapper = MorphyBootstrap,
   swappers = list(TBRSwap, SPRSwap, NNISwap),
-  BootstrapSwapper = if (class(swappers) == "list") swappers[[length(swappers)]] else
-    swappers,
+  BootstrapSwapper = if (is.list(swappers)) swappers[[length(swappers)]] else swappers,
   returnAll = FALSE,
   stopAtScore = NULL,
   stopAtPeak = FALSE,
@@ -55,8 +54,7 @@ ProfileRatchet(
   tree,
   dataset,
   swappers = list(TBRSwap, SPRSwap, NNISwap),
-  BootstrapSwapper = if (class(swappers) == "list") swappers[[length(swappers)]] else
-    swappers,
+  BootstrapSwapper = if (is.list(swappers)) swappers[[length(swappers)]] else swappers,
   returnAll = FALSE,
   stopAtScore = NULL,
   stopAtPeak = FALSE,
@@ -77,8 +75,7 @@ IWRatchet(
   dataset,
   concavity = 10,
   swappers = list(TBRSwap, SPRSwap, NNISwap),
-  BootstrapSwapper = if (class(swappers) == "list") swappers[[length(swappers)]] else
-    swappers,
+  BootstrapSwapper = if (is.list(swappers)) swappers[[length(swappers)]] else swappers,
   returnAll = FALSE,
   stopAtScore = NULL,
   stopAtPeak = FALSE,

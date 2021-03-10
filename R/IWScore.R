@@ -16,7 +16,7 @@ IWScore <- function (tree, dataset, concavity = 10, ...) {
 IWScoreMorphy <- function (parent, child, dataset, concavity = 10L, 
                            minLength = attr(dataset, 'min.length'), ...) {
   steps <- vapply(attr(dataset, 'morphyObjs'), MorphyLength,
-                  parent=parent, child=child, integer(1))
+                  parent = parent, child = child, integer(1))
   homoplasies <- steps - minLength
   fit <- homoplasies / (homoplasies + concavity)
   # Return:

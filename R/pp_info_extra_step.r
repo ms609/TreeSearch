@@ -115,7 +115,7 @@ Log2Carter1 <- function (m, a, b) {
 # or use the results of Carter et al. 1990; Steel 1993 to estimate +0 & +1 steps,
 # and approximate the rest.
 
-#' @importFrom TreeTools Log2UnrootedMult
+## @importFrom TreeTools Log2UnrootedMult
 # Old_IC_Approx <- function() {
 #   
 #   nIter <- min(maxIter, round(iter))
@@ -155,6 +155,7 @@ Log2Carter1 <- function (m, a, b) {
 #     message("  Approx. std. error < ", signif(max(icError) * 1.01, 2))
 #   }
 # }
+
 
 #' Number of trees with one extra step
 #' @param \dots Vector or series of integers specifying the number of leaves

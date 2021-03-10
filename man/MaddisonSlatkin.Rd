@@ -15,7 +15,7 @@ Caluclate number of trees with a given score using Maddison & Slatkin's
 recursive approach
 }
 \examples{
-MaddisonSlatkin(2, 4)
+\dontrun{MaddisonSlatkin(2, 4)}
 }
 \references{
 \insertRef{Maddison1991}{TreeSearch}
