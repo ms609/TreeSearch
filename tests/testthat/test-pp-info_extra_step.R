@@ -1,4 +1,5 @@
 context("pp_info_extra_step.R")
+library("TreeSearch", quietly = TRUE)
 
 test_that("Carter1() matches profile counts", {
   data("profiles", package = "TreeSearch")
@@ -32,7 +33,6 @@ test_that("Carter1() matches profile counts", {
   Test(5, 5)
   
 })
-
 
 test_that("WithOneExtraStep() input format", {
   expect_equal(WithOneExtraStep(7, 5), WithOneExtraStep(c(5, 7)))
