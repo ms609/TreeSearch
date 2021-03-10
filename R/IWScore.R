@@ -6,7 +6,7 @@ IWScore <- function (tree, dataset, concavity = 10, ...) {
   TreeLength(tree, dataset, concavity)
 }
 
-#' @describeIn ProfileScore Scorer for Implied Weighting dataset.
+#' @describeIn TreeLength Scorer for Implied Weighting dataset.
 #' @template concavityParam
 #' @param minLength Integer vector specifying the minimum length
 #'                  possible for each character in `dataset`, perhaps calculated
@@ -23,7 +23,7 @@ IWScoreMorphy <- function (parent, child, dataset, concavity = 10L,
   sum(fit * attr(dataset, 'weight'))
 }
 
-#' @rdname ProfileScore
+#' @rdname TreeLength
 #' @export
 IWInitMorphy <- function (dataset) {
   attr(dataset, 'morphyObjs') <- 

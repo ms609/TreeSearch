@@ -168,7 +168,7 @@ Remember <- addMemoization
 #' @references
 #' \insertRef{Maddison1991}{TreeSearch}
 #' @examples
-#' MaddisonSlatkin(2, 4)
+#' \dontrun{MaddisonSlatkin(2, 4)}
 #' @template MRS
 #' @importFrom R.cache addMemoization
 #' @importFrom TreeTools NRooted

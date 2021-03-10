@@ -63,10 +63,9 @@
 #'  \insertRef{Congreve2016dd}{TreeSearch}
 #' 
 #' @examples 
-#'   data('referenceTree')
-#'   data('congreveLamsdellMatrices')
-#'   \dontrun{ProfileScore(referenceTree,
-#'    PrepareDataProfile(congreveLamsdellMatrices[[17]]))}
+#' data('referenceTree')
+#' data('congreveLamsdellMatrices')
+#' TreeLength(referenceTree, congreveLamsdellMatrices[[17]], 'profile')
 #'
 #' @source \url{https://datadryad.org/resource/doi:10.5061/dryad.7dq0j}
 #' 
