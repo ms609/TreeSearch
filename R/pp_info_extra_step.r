@@ -299,7 +299,7 @@ LogisticPoints <- function (x, fittedModel) {
 #' @examples
 #' data(congreveLamsdellMatrices)
 #' myMatrix <- congreveLamsdellMatrices[[10]]
-#' Evaluate(NJTree(myMatrix), myMatrix)
+#' Evaluate(TreeTools::NJTree(myMatrix), myMatrix)
 #' @importFrom stats nls
 #' @export
 Evaluate <- function (tree, dataset) {
