@@ -222,7 +222,7 @@ Fitch <- function (tree, dataset) {
 #' @importFrom TreeTools Renumber RenumberTips
 #' @export
 CharacterLength <- function (tree, dataset) {
-  if (class(dataset) != 'phyDat') {
+  if (!inherits(dataset, 'phyDat')) {
     stop ("Dataset must be of class phyDat, not ", class(dataset))
   }
   if (length(tree$tip.label) < length(dataset)) {
@@ -302,7 +302,7 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
     child <- edgeList[, 2]
   }
   if (nTaxa < 1L) stop("Error: ", mpl_translate_error(nTaxa))
-  if (class(morphyObj) != 'morphyPtr') {
+  if (!inherits(morphyObj, 'morphyPtr')) {
     stop("morphyObj must be a morphy pointer. See ?LoadMorphy().")
   }
   

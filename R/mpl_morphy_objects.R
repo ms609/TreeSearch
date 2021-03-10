@@ -106,7 +106,7 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 #' @export
 PhyDat2Morphy <- function (phy) {
   
-  if (class(phy) != 'phyDat') {
+  if (!inherits(phy, 'phyDat')) {
     stop('Invalid data type ', class(phy), '; should be phyDat.')
   }
   
@@ -195,7 +195,7 @@ SingleCharMorphy <- function (char) {
 #' @family Morphy API functions
 #' @export
 UnloadMorphy <- function (morphyObj) {
-  if (class(morphyObj) != 'morphyPtr') stop ("Object is not a valid pointer; cannot destroy.")
+  if (!inherits(morphyObj, 'morphyPtr')) stop ("Object is not a valid pointer; cannot destroy.")
   if (mpl_delete_Morphy(morphyObj) -> error) {
     stop("Error ", mpl_translate_error(error), "in mpl_delete_Morphy")
   }

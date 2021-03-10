@@ -95,8 +95,8 @@ Suboptimality <- function (trees, proportional = FALSE) {
 #' @export
 SuccessiveWeights <- function(tree, dataset) {
   # Data
-  if (class(dataset) == 'phyDat') dataset <- PrepareDataSA(dataset)
-  if (class(dataset) != 'saDat') {
+  if (inherits(dataset, 'phyDat')) dataset <- PrepareDataSA(dataset)
+  if (!inherits(dataset, 'saDat')) {
     stop('Invalid data type; prepare data with PhyDat() or PrepareDataSA().')
   }
   at <- attributes(dataset)

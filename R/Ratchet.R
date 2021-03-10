@@ -78,15 +78,15 @@ Ratchet <- function (tree, dataset,
                      TreeScorer     = MorphyLength,
                      Bootstrapper   = MorphyBootstrap,
                      swappers = list(TBRSwap, SPRSwap, NNISwap),
-                     BootstrapSwapper = if (class(swappers) == 'list')
+                     BootstrapSwapper = if (is.list(swappers))
                       swappers[[length(swappers)]] else swappers,
-                     returnAll=FALSE, stopAtScore=NULL,
-                     stopAtPeak=FALSE, stopAtPlateau=0L, 
-                     ratchIter=100, ratchHits=10,
-                     searchIter=4000, searchHits=42,
-                     bootstrapIter=searchIter, bootstrapHits=searchHits,
-                     verbosity=1L, 
-                     suboptimal=1e-08, ...) {
+                     returnAll = FALSE, stopAtScore = NULL,
+                     stopAtPeak = FALSE, stopAtPlateau = 0L, 
+                     ratchIter = 100, ratchHits = 10,
+                     searchIter = 4000, searchHits = 42,
+                     bootstrapIter = searchIter, bootstrapHits = searchHits,
+                     verbosity = 1L, 
+                     suboptimal = 1e-08, ...) {
   epsilon <- 1e-08
   hits <- 0L
   # initialize tree and data
@@ -242,7 +242,7 @@ Ratchet <- function (tree, dataset,
 #' @export
 ProfileRatchet <- function (tree, dataset,
                             swappers = list(TBRSwap, SPRSwap, NNISwap),
-                            BootstrapSwapper = if (class(swappers) == 'list')
+                            BootstrapSwapper = if (is.list(swappers))
                               swappers[[length(swappers)]] else swappers,
                             returnAll=FALSE, stopAtScore=NULL,
                             stopAtPeak=FALSE, stopAtPlateau=0L, 
@@ -267,7 +267,7 @@ ProfileRatchet <- function (tree, dataset,
 #' @export
 IWRatchet <- function (tree, dataset, concavity = 10,
                             swappers = list(TBRSwap, SPRSwap, NNISwap),
-                            BootstrapSwapper = if (class(swappers) == 'list')
+                            BootstrapSwapper = if (is.list(swappers))
                               swappers[[length(swappers)]] else swappers,
                             returnAll=FALSE, stopAtScore=NULL,
                             stopAtPeak=FALSE, stopAtPlateau=0L, 

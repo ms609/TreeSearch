@@ -28,7 +28,7 @@
 #' @export
 ProfileScore <- function (tree, dataset) {
   .Deprecated("TreeLength")
-  if (class(dataset) != 'phyDat') {
+  if (!inherits(dataset, 'phyDat')) {
     stop('Invalid dataset type; prepare dataset with PhyDat() and PrepareDataProfile().')
   }
   if (!('info.amounts' %in% names(attributes(dataset)))) {
