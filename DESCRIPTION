@@ -30,7 +30,6 @@ Imports:
     R.cache,
     Rcpp,
     Rdpack,
-    rgl,
     shiny,
     shinyjs,
     stats,

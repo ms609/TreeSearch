@@ -838,7 +838,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 #' @rdname MaximizeParsimony
 #' @importFrom shiny runApp
 #' @importFrom shinyjs useShinyjs
-#' @importFrom rgl plot3d
+## @importFrom rgl plot3d
 #' @importFrom TreeDist ClusteringInfoDistance
 #' @importFrom protoclust protoclust
 #' @importFrom cluster pam silhouette
