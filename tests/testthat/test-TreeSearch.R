@@ -148,7 +148,7 @@ test_that("Profile parsimony works in tree search", {
   sillyData <- lapply(1:22, function (i) c( rep(0, i - 1), rep(1, 22 - i), rep(1, 22 - i), rep(0, i - 1)))#, sample(2, 20, replace = TRUE)-1))
   names(sillyData) <- as.character(1:22)
   dataset <- TreeTools::PhyDat(sillyData)
-  readyData <- PrepareDataProfile(dataset, 12000, warn = FALSE)
+  readyData <- PrepareDataProfile(dataset)
   
   suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(0)
@@ -156,7 +156,8 @@ test_that("Profile parsimony works in tree search", {
   rTree <- randomTree <- RandomTree(dataset, '1')
   expect_equal(TreeLength(rTree, readyData), TreeLength(rTree, dataset))
   expect_equal(90, TreeLength(referenceTree, dataset), TreeLength(referenceTree, readyData))
-  expect_true(ProfileScore(rTree, readyData) > ProfileScore(referenceTree, readyData))
+  expect_gt(TreeLength(rTree, readyData, 'profile'),
+            TreeLength(referenceTree, readyData, 'profile'))
   
   quickTS <- TreeSearch(rTree, dataset, TreeScorer = MorphyLength, EdgeSwapper = RootedNNISwap, 
                         maxIter = 1600, maxHits = 40, verbosity = 0)
