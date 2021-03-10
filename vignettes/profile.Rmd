@@ -109,6 +109,8 @@ To sample this region of tree space well, the trick is to use large values of
 In a serious study, you would want to sample many more than the 25 Ratchet hits (`ratchHits`) we'll settle for here, probably using many more Ratchet iterations.
 
 ```{R Suboptimal sampling, eval=FALSE}
+suboptimals <- MaximizeParsimony(my.prepdata, better.trees, tolerance = 1.5)
+
 suboptimals <- ProfileRatchet(better.tree, my.prepdata, 
                               swappers = list(RootedTBRSwap),
                               returnAll = TRUE, suboptimal = 5, 

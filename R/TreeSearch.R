@@ -257,6 +257,12 @@ TreeSearch <- function (tree, dataset,
 #' @param concavity Numeric specifying concavity constant for implied step 
 #' weighting; set as `Inf` for equal step weights (which is a bad idea; see 
 #' Smith 2019).
+#' @param tolerance Numeric specifying degree of suboptimality to tolerate
+#' before rejecting a tree.  The default, `sqrt(.Machine$double.eps)`, retains
+#' trees that may be equally parsimonious but for rounding errors.  
+#' Setting to larger values will include trees suboptimal by up to `tolerance`
+#' in search results, which may improve the accuracy of the consensus tree
+#' (at the expense of resolution) [@Smith2019].
 #' @param constraint Either `NULL` or an object of class `phyDat`. Trees that
 #' are not perfectly compatible with each character in `constraint` will not
 #' be considered during search.
@@ -310,6 +316,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                ratchIter = 12L, tbrIter = 6L, finalIter = 3L,
                                maxHits = 20L,
                                concavity = Inf,
+                               tolerance = sqrt(.Machine$double.eps),
                                constraint = NULL,
                                verbosity = 2L, session = NULL) {
   # Define functions
@@ -576,7 +583,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   }
   
   # Define constants
-  epsilon <- sqrt(.Machine$double.eps)
+  epsilon <- tolerance #sqrt(.Machine$double.eps)
   profile <- tolower(concavity) == "profile"
   iw <- is.finite(concavity)
   constrained <- !is.null(constraint)
