@@ -32,3 +32,10 @@ See also:
 
 (\insertRef{Steel1996}{TreeSearch})
 }
+\seealso{
+Other profile parsimony functions: 
+\code{\link{MaddisonSlatkin}()},
+\code{\link{StepInformation}()},
+\code{\link{profiles}}
+}
+\concept{profile parsimony functions}

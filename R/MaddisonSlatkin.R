@@ -172,6 +172,7 @@ Remember <- addMemoization
 #' @template MRS
 #' @importFrom R.cache addMemoization
 #' @importFrom TreeTools NRooted
+#' @family profile parsimony functions
 #' @export
 MaddisonSlatkin <- function (a, b) {
   n <- sum(a, b)

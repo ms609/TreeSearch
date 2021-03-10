@@ -110,4 +110,5 @@
 #' 
 #' # Number of trees with _s_ or fewer steps on that character
 #' TreeTools::NUnrooted(8) * 2 ^ profile3.5
+#' @family profile parsimony functions
 "profiles"

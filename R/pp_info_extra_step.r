@@ -21,6 +21,7 @@
 #' @template MRS
 #' @importFrom stats setNames
 #' @importFrom TreeTools Log2Unrooted
+#' @family profile parsimony functions
 #' @export
 StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
   char <- char[!char %in% ambiguousTokens]
@@ -64,6 +65,7 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
 #' 
 #' (\insertRef{Steel1996}{TreeSearch})
 #' @importFrom TreeTools DoubleFactorial
+#' @family profile parsimony functions
 #' @export
 Carter1 <- function (m, a, b) {
   n <- a + b
@@ -230,12 +232,6 @@ WithOneExtraStep <- function (...) {
   }
 }
 
-# TODO DELETE [?]
-#' @importFrom TreeTools NUnrooted
-#' @export
-ExtraSteps <- function (a, b) {
-  NRooted(a) * .ExtraSteps(a, b - 1L, 1L, 1L, 0L, 1L)
-}
 
 .ExtraSteps <- function (on1, off2, on2 = 0L,
                          clades2 = 0L, grades2 = 0L,

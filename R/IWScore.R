@@ -6,7 +6,7 @@ IWScore <- function (tree, dataset, concavity = 10, ...) {
   TreeLength(tree, dataset, concavity)
 }
 
-#' @describeIn TreeLength Scorer for Implied Weighting dataset.
+#' @describeIn ProfileScore Scorer for Implied Weighting dataset.
 #' @template concavityParam
 #' @param minLength Integer vector specifying the minimum length
 #'                  possible for each character in `dataset`, perhaps calculated
@@ -27,7 +27,8 @@ IWScoreMorphy <- function (parent, child, dataset, concavity = 10L,
 #' @export
 IWInitMorphy <- function (dataset) {
   attr(dataset, 'morphyObjs') <- 
-    lapply(PhyToString(dataset, byTaxon=FALSE, useIndex=FALSE, concatenate=FALSE), 
+    lapply(PhyToString(dataset, byTaxon = FALSE, useIndex = FALSE, 
+                       concatenate = FALSE), 
            SingleCharMorphy)
   
   # Return:
@@ -35,13 +36,13 @@ IWInitMorphy <- function (dataset) {
 }
 
 
-#' @describeIn TreeSearch Search using profile parsimony
+#' @describeIn ProfileScore Search using profile parsimony
 #' @template concavityParam
 #' @export
 IWTreeSearch <- function (tree, dataset, concavity = 10, 
                           EdgeSwapper = RootedTBR,
-                        maxIter = 100, maxHits = 20, forestSize = 1,
-                        verbosity = 1, ...) {
+                          maxIter = 100, maxHits = 20, forestSize = 1,
+                          verbosity = 1, ...) {
   if (!inherits(dataset, 'phyDat')) {
     stop("Unrecognized dataset class; should be phyDat, not ",
          class(dataset), '.')
