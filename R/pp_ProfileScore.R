@@ -83,13 +83,13 @@ IWDestroyMorphy <- ProfileDestroyMorphy
 #' @export
 ProfileTreeSearch <- function (tree, dataset, EdgeSwapper = RootedTBR,
                         maxIter = 100, maxHits = 20, forestSize = 1,
-                        verbosity = 1, precision=40000, ...) {
+                        verbosity = 1, ...) {
   if (!inherits(dataset, 'phyDat')) {
     stop("Unrecognized dataset class; should be phyDat, not ",
          class(dataset), '.')
   }
   if (!('info.amounts' %in% names(attributes(dataset)))) {
-    dataset <- PrepareDataProfile(dataset, precision)
+    dataset <- PrepareDataProfile(dataset)
   }
   at <- attributes(dataset)
   
