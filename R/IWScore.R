@@ -36,7 +36,7 @@ IWInitMorphy <- function (dataset) {
 }
 
 
-#' @describeIn ProfileScore Search using profile parsimony
+#' @describeIn TreeSearch Search using profile parsimony
 #' @template concavityParam
 #' @export
 IWTreeSearch <- function (tree, dataset, concavity = 10, 

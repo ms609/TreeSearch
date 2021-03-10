@@ -2,6 +2,7 @@
 % Please edit documentation in R/IWScore.R, R/pp_ProfileScore.R
 \name{IWScoreMorphy}
 \alias{IWScoreMorphy}
+\alias{IWInitMorphy}
 \alias{IWTreeSearch}
 \alias{ProfileScore}
 \alias{ProfileScoreMorphy}
@@ -18,6 +19,8 @@ IWScoreMorphy(
   minLength = attr(dataset, "min.length"),
   ...
 )
+
+IWInitMorphy(dataset)
 
 IWTreeSearch(
   tree,
@@ -94,13 +97,6 @@ Faith and Trueman (2001).
 \code{IWScoreMorphy()}.
 }}
 
-\examples{
-data(referenceTree)
-data(congreveLamsdellMatrices)
-dataset <- PrepareDataProfile(congreveLamsdellMatrices[[42]])
-ProfileScore(referenceTree, dataset)
-
-}
 \references{
 \insertRef{Faith2001}{TreeSearch}
 }

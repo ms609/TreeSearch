@@ -2,7 +2,6 @@
 % Please edit documentation in R/IWScore.R, R/tree_length.R
 \name{IWScore}
 \alias{IWScore}
-\alias{IWInitMorphy}
 \alias{TreeLength}
 \alias{TreeLength.phylo}
 \alias{TreeLength.numeric}
@@ -12,8 +11,6 @@
 \title{Calculate parsimony score with inapplicable data}
 \usage{
 IWScore(tree, dataset, concavity = 10, ...)
-
-IWInitMorphy(dataset)
 
 TreeLength(tree, dataset, concavity = Inf)
 
