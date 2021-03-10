@@ -17,12 +17,6 @@
 #' @references
 #'  \insertRef{Faith2001}{TreeSearch}
 #'
-#' @examples
-#' data(referenceTree)
-#' data(congreveLamsdellMatrices)
-#' dataset <- PrepareDataProfile(congreveLamsdellMatrices[[42]])
-#' ProfileScore(referenceTree, dataset)
-#'
 #' @author Martin R. Smith
 #' @keywords tree
 #' @export

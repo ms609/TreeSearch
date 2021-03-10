@@ -23,7 +23,7 @@ IWScoreMorphy <- function (parent, child, dataset, concavity = 10L,
   sum(fit * attr(dataset, 'weight'))
 }
 
-#' @rdname TreeLength
+#' @rdname ProfileScore
 #' @export
 IWInitMorphy <- function (dataset) {
   attr(dataset, 'morphyObjs') <- 
