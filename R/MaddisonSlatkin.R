@@ -163,13 +163,7 @@ Remember <- addMemoization
 #' Caluclate number of trees with a given score using Maddison & Slatkin's
 #' recursive approach 
 #' 
-#' @param n Number of leaves in tree
-#' @param x Vector specifying number of leaves with state 1, 2, ...
-#' @param b State reconstructed at base of tree
-#' States are converted to binary, so 
-#' `1` denotes 'state 1',
-#' `2` denotes 'state 2', and
-#' `3` denotes 'state 1 OR state 2'.
+#' @param a,b Number of leaves in tree with state 1 / 2
 #' 
 #' @references
 #' \insertRef{Maddison1991}{TreeSearch}

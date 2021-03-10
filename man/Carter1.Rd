@@ -29,4 +29,6 @@ See also:
 \insertRef{Steel1993}{TreeSearch}
 
 \insertRef{Steel1995}{TreeSearch}
+
+(\insertRef{Steel1996}{TreeSearch})
 }

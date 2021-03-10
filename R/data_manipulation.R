@@ -1,14 +1,6 @@
 #' Prepare data for Profile Parsimony
 #' 
 #' @param dataset dataset of class \code{phyDat}
-#' @param precision number of random trees to generate when calculating Profile curves. 
-#'                  With 22 tokens (taxa):
-#'                  - Increasing precision from 4e+05 to 4e+06 reduces error by a mean of 
-#'                  0.005 bits for each step after the first (max = 0.11 bits, sd=0.017 bits)
-#'                  - Increasing precision from 1e+06 to 4e+06 reduces error by a mean of 
-#'                  0.0003 bits for each step after the first (max = 0.046 bits, sd=0.01 bits)
-#'                  
-#' @template warnParam
 #'
 #' @return An object of class `phyDat`, with additional attributes.
 #' `PrepareDataProfile` adds the attributes:

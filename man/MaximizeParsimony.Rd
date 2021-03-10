@@ -59,7 +59,7 @@ before rejecting a tree.  The default, \code{sqrt(.Machine$double.eps)}, retains
 trees that may be equally parsimonious but for rounding errors.
 Setting to larger values will include trees suboptimal by up to \code{tolerance}
 in search results, which may improve the accuracy of the consensus tree
-(at the expense of resolution) \link{@Smith2019}.}
+(at the expense of resolution) (Smith 2019).}
 
 \item{constraint}{Either \code{NULL} or an object of class \code{phyDat}. Trees that
 are not perfectly compatible with each character in \code{constraint} will not

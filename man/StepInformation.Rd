@@ -9,7 +9,7 @@ StepInformation(char, ambiguousTokens = c("-", "?"))
 \arguments{
 \item{char}{Vector of tokens listing states for the character in question.}
 
-\item{ambiguousToken}{Which tokens, if any, correspond to the ambiguous token
+\item{ambiguousTokens}{Which tokens, if any, correspond to the ambiguous token
 (?).}
 }
 \description{

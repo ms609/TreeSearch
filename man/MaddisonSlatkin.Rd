@@ -8,15 +8,7 @@ recursive approach}
 MaddisonSlatkin(a, b)
 }
 \arguments{
-\item{b}{State reconstructed at base of tree
-States are converted to binary, so
-\code{1} denotes 'state 1',
-\code{2} denotes 'state 2', and
-\code{3} denotes 'state 1 OR state 2'.}
-
-\item{n}{Number of leaves in tree}
-
-\item{x}{Vector specifying number of leaves with state 1, 2, ...}
+\item{a, b}{Number of leaves in tree with state 1 / 2}
 }
 \description{
 Caluclate number of trees with a given score using Maddison & Slatkin's

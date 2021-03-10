@@ -9,7 +9,7 @@
 #' (i.e. number of different tokens minus one) to its maximum.
 #'
 #' @param char Vector of tokens listing states for the character in question.
-#' @param ambiguousToken Which tokens, if any, correspond to the ambiguous token
+#' @param ambiguousTokens Which tokens, if any, correspond to the ambiguous token
 #' (?).
 #' 
 #' @references
@@ -225,6 +225,7 @@ WithOneExtraStep <- function (...) {
   }
 }
 
+# TODO DELETE [?]
 #' @importFrom TreeTools NUnrooted
 #' @export
 ExtraSteps <- function (a, b) {
@@ -290,11 +291,13 @@ LogisticPoints <- function (x, fittedModel) {
 #' Evaluate tree
 #' @template treeParam
 #' @template datasetParam
-#' @template warnParam
 #' @examples
+#' data(congreveLamsdellMatrices)
+#' myMatrix <- congreveLamsdellMatrices[[10]]
+#' Evaluate(NJTree(myMatrix), myMatrix)
 #' @importFrom stats nls
 #' @export
-Evaluate <- function (tree, dataset, warn=TRUE) {
+Evaluate <- function (tree, dataset) {
   totalSteps <- TreeLength(tree, dataset)
   chars <- matrix(unlist(dataset), attr(dataset, 'nr'))
   ambiguousToken <- which(attr(dataset, 'allLevels') == "?")

@@ -85,10 +85,30 @@
 #'  \insertRef{Congreve2016dd}{TreeSearch}
 #' 
 #' @examples 
-#'   data(referenceTree)
-#'   plot(referenceTree)
+#' data(referenceTree)
+#' plot(referenceTree)
 #' 
 #' @source \url{https://dx.doi.org/10.1111/pala.12236}
 #' 
 #' @keywords datasets
 "referenceTree"
+
+#' Empirically Counted Profiles for small trees
+#' 
+#' The base 2 logarithm of the number of trees containing _s_ steps, calculated
+#' by scoring a character on each _n_-leaf tree.
+#' 
+#' @format A list with the structure 
+#' `profiles[[number of leaves]][[number of tokens]][[tokens in smallest split]]`
+#' The list entry returns a named numeric vector; each entry lists 
+#' log2(proportion of _n_-leaf trees with _s_ or fewer steps for this character).
+#' 
+#' @examples 
+#' data(profiles)
+#' 
+#' # Load profile for a character of the structure 0 0 0 1 1 1 1 1
+#' profile3.5 <- profiles[[8]][[2]][[3]]
+#' 
+#' # Number of trees with _s_ or fewer steps on that character
+#' TreeTools::NUnrooted(8) * 2 ^ profile3.5
+"profiles"

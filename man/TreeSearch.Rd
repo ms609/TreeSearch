@@ -59,7 +59,6 @@ ProfileTreeSearch(
   maxHits = 20,
   forestSize = 1,
   verbosity = 1,
-  precision = 40000,
   ...
 )
 }

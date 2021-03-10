@@ -262,7 +262,7 @@ TreeSearch <- function (tree, dataset,
 #' trees that may be equally parsimonious but for rounding errors.  
 #' Setting to larger values will include trees suboptimal by up to `tolerance`
 #' in search results, which may improve the accuracy of the consensus tree
-#' (at the expense of resolution) [@Smith2019].
+#' (at the expense of resolution) (Smith 2019).
 #' @param constraint Either `NULL` or an object of class `phyDat`. Trees that
 #' are not perfectly compatible with each character in `constraint` will not
 #' be considered during search.
