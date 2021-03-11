@@ -1,4 +1,9 @@
 context("data_manipulation.R")
+
+test_that("Deprecation", {
+  expect_equal(MinimumLength(1:3), expect_warning(MinimumSteps(1:3)))
+})
+
 test_that("Minimum step counts are correctly calculated", {
   expect_equal(1, MinimumLength(1:3))
   expect_equal(1, MinimumLength(c(1:3, 5)))

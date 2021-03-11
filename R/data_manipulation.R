@@ -172,7 +172,9 @@ MinimumLength.phyDat <- function (x) {
   nChar <- at$nr
   nTip <- length(x)
   cont <- at$contrast
-  if (is.null(colnames(cont))) colnames(cont) <- as.character(at$levels)
+  if (is.null(colnames(cont))) {
+    colnames(cont) <- as.character(at$levels)
+  }
   simpleCont <- ifelse(rowSums(cont) == 1,
                        apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
                        '?')
@@ -238,7 +240,7 @@ MinimumLength.numeric <- function (x) {
 
 #' @rdname MinimumLength
 MinimumSteps <- function(x) {
-  .Deprecated(MinimumLength, msg='Renamed and recoded to better support
-              inapplicable tokens')
+  .Deprecated("MinimumLength",
+  msg = 'Renamed to `MinimumLength()` and recoded to better support inapplicable tokens')
   MinimumLength(x)
 }
