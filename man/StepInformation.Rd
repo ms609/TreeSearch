@@ -32,7 +32,6 @@ StepInformation(character)
 \seealso{
 Other profile parsimony functions: 
 \code{\link{Carter1}()},
-\code{\link{MaddisonSlatkin}()},
 \code{\link{profiles}}
 }
 \author{

@@ -27,7 +27,6 @@ Imports:
     cluster,
     phangorn (>= 2.2.1),
     protoclust,
-    R.cache,
     Rcpp,
     Rdpack,
     shiny,
