@@ -810,9 +810,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 #' @importFrom protoclust protoclust
 #' @importFrom cluster pam silhouette
 #' @export
-EasyTrees <- function () 
+EasyTrees <- function () # nocov start
   shiny::runApp(system.file('Parsimony', package = 'TreeSearch'))
 
 #' @rdname MaximizeParsimony
 #' @export
 EasyTreesy <- EasyTrees
+# nocov end
