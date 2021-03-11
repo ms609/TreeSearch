@@ -166,7 +166,12 @@ ratchet searches, from which a consensus tree can be generated using
 \code{\link[ape:consensus]{ape::consensus()}} or \code{\link[TreeTools:ConsensusWithout]{TreeTools::ConsensusWithout()}}.
 }
 \description{
-\code{Ratchet} uses the parsimony ratchet (Nixon 1999) to search for a more parsimonious tree.
+\code{Ratchet} uses the parsimony ratchet (Nixon 1999) to search for a more
+parsimonious tree.
+}
+\details{
+For usage pointers, see the
+\href{https://ms609.github.io/TreeSearch/articles/custom.html}{vignette}.
 }
 \section{Functions}{
 \itemize{
@@ -188,11 +193,6 @@ oldPar <- par(mar = rep(0, 4), cex = 0.75)
 plot(quickResult)
 par(oldPar)
 
-# IW search is currently much slower:
-quickIWResult <- IWRatchet(quickResult, Lobo.phy, concavity = 2.5,
-                           ratchIter = 1, searchIter = 25, searchHits = 2,
-                           swappers = RootedTBRSwap, verbosity = 5)
- 
 }
 \references{
 \itemize{

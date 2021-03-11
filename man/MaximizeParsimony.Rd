@@ -120,7 +120,7 @@ characters <- MatrixToPhyDat(matrix(
   c(0, 1, 1, 1, 0, 0,
     1, 1, 1, 0, 0, 0), ncol = 2,
   dimnames = list(letters[1:6], NULL)))
-MaximizeParsimony(characters, constraint = constraint)
+MaximizeParsimony(characters, constraint = constraint, verbosity = 0)
 
 }
 \references{
