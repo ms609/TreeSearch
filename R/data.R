@@ -1,4 +1,4 @@
-#' Thirty Datasets with Inapplicable data
+#' Thirty datasets with inapplicable data
 #' 
 #' These are the datasets used to evaluate the behaviour of the inapplicable algorithm 
 #' in Brazeau, Guillerme and Smith (2017).
@@ -16,7 +16,7 @@
 #' @keywords datasets
 "inapplicable.datasets"
 
-#' Thirty Datasets with Inapplicable data
+#' Thirty datasets with inapplicable data
 #' 
 #' These are the datasets used to evaluate the behaviour of the inapplicable algorithm 
 #' in Brazeau, Guillerme and Smith (2017).
@@ -34,7 +34,7 @@
 #' @keywords datasets
 "inapplicable.phyData"
 
-#' Thirty Datasets with Inapplicable data
+#' Thirty datasets with inapplicable data
 #' 
 #' These are the datasets used to evaluate the behaviour of the inapplicable algorithm 
 #' in Brazeau, Guillerme and Smith (2018).
