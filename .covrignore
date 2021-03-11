@@ -4,3 +4,4 @@ src/morphy.c
 src/mpl.c
 src/statedata.c
 src/wagner.c
+R/zzz.R
