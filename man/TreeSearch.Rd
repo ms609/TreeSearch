@@ -3,6 +3,7 @@
 \name{IWScoreMorphy}
 \alias{IWScoreMorphy}
 \alias{IWInitMorphy}
+\alias{IWDestroyMorphy}
 \alias{IWTreeSearch}
 \alias{EdgeListSearch}
 \alias{TreeSearch}
@@ -18,6 +19,8 @@ IWScoreMorphy(
 )
 
 IWInitMorphy(dataset)
+
+IWDestroyMorphy(dataset)
 
 IWTreeSearch(
   tree,
@@ -139,6 +142,9 @@ configuring tree search, see the
 \section{Functions}{
 \itemize{
 \item \code{IWScoreMorphy}: Scorer for Implied Weighting dataset.
+
+\item \code{IWDestroyMorphy}: Free memory from \code{morphyObjs} initialized by
+\code{IWInitMorphy()}.
 
 \item \code{IWTreeSearch}: Search using implied weights.
 
