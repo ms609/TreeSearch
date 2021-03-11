@@ -85,8 +85,7 @@ and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRS
 \item{verbosity}{Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.}
 
-\item{\dots}{further arguments to pass to \code{TreeScorer()}
-(e.g. \code{\link{TipsAreColumns}}, \code{dataset}).}
+\item{\dots}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
 
 \item{edgeList}{a list containing the following:
 - vector of integers corresponding to the parent of each edge in turn

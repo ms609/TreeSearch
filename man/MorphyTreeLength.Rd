@@ -52,7 +52,7 @@ Calculate parsimony score with inapplicable data
 \section{Functions}{
 \itemize{
 \item \code{MorphyLength}: Faster function that requires internal tree
-parameters
+parameters. Node numbering must increase monotonically away from root.
 
 \item \code{GetMorphyLength}: Fastest function that requires internal tree parameters
 

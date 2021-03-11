@@ -183,8 +183,7 @@ To override this value for a single swapper function, set e.g.
 \item{verbosity}{Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.}
 
-\item{\dots}{further arguments to pass to \code{TreeScorer()}
-(e.g. \code{\link{TipsAreColumns}}, \code{dataset}).}
+\item{\dots}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
 
 \item{Bootstrapper}{Function to perform bootstrapped rearrangements of tree.
 First arguments will be an \code{edgeList} and a dataset, initialized using

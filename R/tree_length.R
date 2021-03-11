@@ -353,28 +353,3 @@ C_MorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
   .Call('MORPHYLENGTH', as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
                as.integer(rightChild - 1L), morphyObj)
 }
-
-#' Extract character data from dataset
-#'
-#' Specifies how characters are stored in a dataset object
-#' 
-#' @param dataset a matrix or list containing symbols associated with each tip;
-#'  for example, a dataset of class \code{phyDat}
-#' @param tips vector detailing the tips to be selected, whether as their
-#'        names or numbers corresponding to their rows/columns
-#' @return an integer vector, listing the tokens associated with each character for each tip in turn
-#'         - ready to send to FITCH or equivalent C routine
-#' @keywords internal
-#' @export
-TipsAreNames <- function(dataset, tips) as.integer(unlist(dataset[tips]))
-
-#TODO Github issue #2
-###   #' @describeIn TipsAreNames use if each row in a matrix corresponds to a tip
-###   #' @keywords internal
-###   #' @export
-###   TipsAreRows <- function(dataset, tips) as.integer(dataset[tips, ])
-
-#' @describeIn TipsAreNames use if each column in a matrix corresponds to a tip
-#' @keywords internal
-#' @export
-TipsAreColumns <- function(dataset, tips) as.integer(dataset[, tips])
