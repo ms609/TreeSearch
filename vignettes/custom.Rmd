@@ -11,7 +11,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-## Using Custom Optimality Criteria
+## Using custom optimality criteria
 
 'TreeSearch' can be used to search for trees that are optimal under 
 user-specified criteria [e.g. @Hopkins2021].
@@ -24,6 +24,13 @@ First we'll load the necessary R libraries:
 ```{r init, message = FALSE}
 library("TreeTools")
 library("TreeSearch", quietly = TRUE, warn.conflict = FALSE)
+
+# Plot trees nicely
+PlotTree <- function(tree, ...) {
+  oPar <- par(mar = rep(0, 4), cex = 0.9)
+  plot(tree)
+  par(oPar)
+}
 ```
 
 ## Maximizing tree balance
@@ -40,7 +47,7 @@ with the rearranged `parent` and `child` vectors:
 
 ```{r tci-setup}
 tree <- PectinateTree(8)
-plot(tree)
+PlotTree(tree)
 
 TCIScore <- function(parent, child, dataset) {
   tree$edge <- cbind(parent, child)
@@ -64,18 +71,17 @@ result <- TreeSearch(tree, dataset = EmptyPhyDat(tree),
                      maxIter = 50L, maxHits = 10L, 
                      verbosity = 1L)
 
-plot(result)
+PlotTree(result)
 ```
 ## Maximizing tree distance
 
 Let's make things slightly more complex, and try to find the tree that is 
 most different from a starting tree.  Notice that `TreeSearch` aims to 
 _minimize_ the output of `TreeScorer()`, so we negate the tree _distance_ 
-(which we aim to maximize) before returning it
+(which we aim to maximize) before returning it.
 
 ```{r cid}
 startTree <- BalancedTree(8)
-plot(startTree)
 
 DistanceScore <- function(parent, child, dataset) {
   tmpTree <- startTree
@@ -91,7 +97,10 @@ result <- TreeSearch(RandomTree(8, root = TRUE), dataset = EmptyPhyDat(tree),
                      maxIter = 50L, maxHits = 10L, 
                      verbosity = 1L)
 
-plot(result)
+par(mfrow = c(1, 2))
+PlotTree(startTree)
+PlotTree(result)
+
 ```
 
 
@@ -169,12 +178,13 @@ Besides increasing the number of hits and rearrangements,
 the parsimony ratchet [@Nixon1999] can help to escape local optima.
 This introduces an additional complication: we need to bootstrap the characters
 within `dataset`, and their accompanying Morphy objects.
+
 A `Bootstraper` function expects an `edgeList` (a list of the parent and child
 of each edge in a tree, in turn) and a `dataset` argument, and conducts
 a tree search, starting at `edgeList`, on a bootstrapped version of the dataset.
 It is also sent the arguments `maxIter = bootstrapIter` and 
 `maxHits = bootstrapHits`, allowing ratchet search intensity to be controlled
-from parameters sent to the `Ratchet` function.
+from parameters sent to the `Ratchet()` function.
 
 ```{r iw-bootstrap}
 IWBootstrap <- function (edgeList, dataset, concavity = 10L, EdgeSwapper = NNISwap, 
@@ -202,7 +212,7 @@ IWBootstrap <- function (edgeList, dataset, concavity = 10L, EdgeSwapper = NNISw
                         concavity = concavity, minLength = minLength,
                         EdgeSwapper = EdgeSwapper, 
                         maxIter = maxIter, maxHits = maxHits,
-                        verbosity = verbosity-1L)
+                        verbosity = verbosity - 1L)
   
   res[1:2]
 }
@@ -221,7 +231,7 @@ ratchetTree <- Ratchet(tree = iwTree, dataset = dataset,
                        Bootstrapper = IWBootstrap,
                        ratchIter = 2, ratchHits = 2,
                        searchIter = 20, searchHits = 10,
-                       verbosity = 1)
+                       verbosity = 2)
 
 ```
 
