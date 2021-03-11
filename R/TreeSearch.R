@@ -127,7 +127,6 @@ EdgeListSearch <- function (edgeList, dataset,
 #' \itemize{
 #' \item \code{\link{Fitch}}, calculates parsimony score;
 #' \item \code{\link{RootedNNI}}, conducts tree rearrangements;
-#### \item \code{\link{Sectorial}}, alternative heuristic, useful for larger trees;
 #' \item \code{\link{Ratchet}}, alternative heuristic, useful to escape local optima.
 #' }
 #'
@@ -172,6 +171,7 @@ TreeSearch <- function (tree, dataset,
   tree$edge <- cbind(edgeList[[1]], edgeList[[2]])
   attr(tree, 'score') <- edgeList[[3]]
   attr(tree, 'hits') <- edgeList[[4]]
+  
   # Return:
   tree 
 }
