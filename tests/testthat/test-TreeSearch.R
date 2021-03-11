@@ -112,48 +112,6 @@ test_that("tree search finds shortest tree", {
   expect_equal(3, TreeLength(true_tree, dataset), ratchetScore)
 })
 
-test_that("Implied weights: Tree search", {
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
-  expect_error(expect_warning(IWTreeSearch(tree = unrooted11, dataset = phy11)))
-  random11 <- as.phylo(17905853L, 11, letters[1:11]) # Rooted on 'a'
-
-  # Use more iterations than necessary locally, as RNG may differ on other 
-  # platforms.
-  set.seed(1)
-  expect_warning(
-  expect_equal(comb11, IWTreeSearch(random11, phy11, maxIter = 555,
-                                    EdgeSwapper = RootedTBRSwap, verbosity = 0))
-  )
-  set.seed(1)
-  expect_warning(
-  expect_equal(comb11, IWTreeSearch(random11, phy11, maxIter = 555,
-                                    EdgeSwapper = RootedSPRSwap, verbosity = 0))
-  )
-  
-  set.seed(1)
-  expect_warning(
-  expect_equal(comb11, IWTreeSearch(TBR(TBR(TBR((comb11)))), phy11, 
-                                    maxIter = 111,
-                                    EdgeSwapper = RootedNNISwap, verbosity = 0))
-  )
-  
-  set.seed(1)
-  expect_warning(
-  expect_equal(comb11, IWRatchet(random11, phy11, searchIter = 11,
-                                 searchHits = 3L, swappers = RootySwappers, 
-                                 ratchHits = 3L, verbosity = 0))
-  )
-  
-  expect_warning(
-  expect_equal('multiPhylo', class(
-    IWRatchet(tree = random11, dataset = phy11, concavity = 4,
-              searchIter = 5L, searchHits = 2L,
-              ratchHits = 2L, verbosity = 0L, returnAll = TRUE)
-  ))
-  )
-})
-
-
 test_that("Profile parsimony works in tree search", {
   random11 <- as.phylo(17905853L, 11, letters[1:11]) # Rooted on 'a'
   
