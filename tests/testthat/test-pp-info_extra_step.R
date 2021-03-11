@@ -1,6 +1,11 @@
 context("pp_info_extra_step.R")
 library("TreeSearch", quietly = TRUE)
 
+test_that("Bad input safely handled", {
+  expect_equal(0, WithOneExtraStep(1))
+  expect_error(WithOneExtraStep(2, 2, 2))
+})
+
 test_that("Carter1() matches profile counts", {
   data("profiles", package = "TreeSearch")
   Test <- function (a, b) {
