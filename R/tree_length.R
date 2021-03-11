@@ -244,8 +244,9 @@ CharacterLength <- function (tree, dataset) {
 }
 
 #' @rdname CharacterLength
+#' @export
 FitchSteps <- function (tree, dataset) {
-  .Deprecated(CharacterLength)
+  .Deprecated("CharacterLength")
   CharacterLength(tree, dataset)
 }
 

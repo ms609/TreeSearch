@@ -3,8 +3,23 @@ context("Fitch.R")
 
 test_that("Failures are graceful", {
   data('inapplicable.datasets')
-  tree <- TreeTools::RandomTree(inapplicable.phyData[[1]], root = FALSE)
-  expect_error(TreeLength(tree, inapplicable.phyData[[1]]))
+  dat <- inapplicable.phyData[[1]]
+  tree <- TreeTools::RandomTree(dat, root = FALSE)
+  expect_error(TreeLength(tree, dat))
+  
+  
+  
+})
+
+test_that("Deprecations throw warning", {
+  data('inapplicable.datasets')
+  dat <- inapplicable.phyData[[1]]
+  tree <- TreeTools::RandomTree(dat, root = TRUE)
+  expect_equal(TreeLength(tree, dat),
+               expect_warning(Fitch(tree, dat)))
+  expect_equal(CharacterLength(tree, dat),
+               expect_warning(FitchSteps(tree, dat)))
+  
 })
 
 test_that("Morphy generates correct lengths", {
