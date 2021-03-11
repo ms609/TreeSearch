@@ -232,47 +232,6 @@ WithOneExtraStep <- function (...) {
   }
 }
 
-
-.ExtraSteps <- function (on1, off2, on2 = 0L,
-                         clades2 = 0L, grades2 = 0L,
-                         steps = 0L) {
-  if (off2 == 0L) {
-    return (c(1L, 0L, 0L, 0L, 0L))
-  }
-  counts <- integer(5L)
-  # Don't change shape
-  if (on2) {
-    counts <- counts + (
-                  (on2 + on2 + grades2 - clades2) *
-                    .ExtraSteps(on1, off2 - 1L, on2 + 1L, clades2, grades2,
-                                steps)
-                  )
-  }
-  
-  if (steps < 4L) {
-    newCladePoints <- on1 + on1 - 3L - clades2 - grades2
-    if (newCladePoints > 0L) {
-      # Add a new clade
-      counts[-1] <- counts[-1] + (
-        newCladePoints *
-        .ExtraSteps(on1, off2 - 1L, on2 + 1L, clades2 + 1L, grades2,
-                    steps + 1L)[-5]
-      )
-    }
-    # Convert clade to grade
-    if (clades2 != 0) {
-      counts[-1] <- counts[-1] + (
-      (clades2 + clades2) *
-      .ExtraSteps(on1, off2 - 1L, on2 + 1L, clades2 - 1L, grades2 + 1L,
-                  steps + 1L)[-5]
-      )
-    }
-  }
-  
-  # Return:
-  counts
-}
-
 #' Logistic Points
 #' Extract points from a fitted model
 #'
