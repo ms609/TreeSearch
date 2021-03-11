@@ -146,6 +146,16 @@ test_that("Implied weights: Tree search", {
 
 
 test_that("Profile parsimony works in tree search", {
+  random11 <- as.phylo(17905853L, 11, letters[1:11]) # Rooted on 'a'
+  
+  # Use more iterations than necessary locally, as RNG may differ on other 
+  # platforms.
+  expect_equal(comb11, 
+               MaximizeParsimony(phy11, c(random11, random11), # multiPhylo
+                                 ratchIter = 1, tbrIter = 2, maxHits = 10,
+                                 concavity = 'profile', verbosity = 0)[[1]])
+  
+  
   sillyData <- lapply(1:22, function (i) c( rep(0, i - 1), rep(1, 22 - i), rep(1, 22 - i), rep(0, i - 1)))#, sample(2, 20, replace = TRUE)-1))
   names(sillyData) <- as.character(1:22)
   dataset <- TreeTools::PhyDat(sillyData)
