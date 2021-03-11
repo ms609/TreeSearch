@@ -68,10 +68,12 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     
     # This check was once triggered - possibly fixed but remains
     # under investigation...
-    if (any(homoplasies < 0)) stop("Minimum steps have been miscalculated.\n", 
-                                   "       Please report this bug at:\n", 
-                                   "       https://github.com/ms609/TreeSearch/issues/new\n\n",
-                                   "       See above for full tree: ", dput(tree))
+    if (any(homoplasies < 0)) { #nocov start
+      stop("Minimum steps have been miscalculated.\n", 
+           "       Please report this bug at:\n", 
+           "       https://github.com/ms609/TreeSearch/issues/new\n\n",
+           "       See above for full tree: ", dput(tree))
+    } #nocov end
     fit <- homoplasies / (homoplasies + concavity)
     # Return:
     sum(fit * weight)

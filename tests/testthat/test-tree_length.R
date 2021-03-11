@@ -123,3 +123,27 @@ test_that("(random) lists of trees are scored", {
   expect_gt(t.test(TreeLength(100, mat, 10L), mu = 17.16911)$p.val, 0.001)
   expect_gt(t.test(TreeLength(100, mat, 'profile'), mu = 830.0585)$p.val, 0.001)
 })
+
+test_that("Profile scoring is reported correctly", {
+  data('congreveLamsdellMatrices')
+  dataset <- congreveLamsdellMatrices[[42]]
+  prepDataset <- PrepareDataProfile(dataset)
+  tree <- NJTree(prepDataset)
+  edge <- Preorder(tree)$edge
+  at <- attributes(prepDataset)
+  profiles <- attr(prepDataset, 'info.amounts')
+  charSeq <- seq_along(prepDataset[[1]]) - 1L
+  
+  characters <- PhyToString(prepDataset, ps = '', useIndex = FALSE,
+                            byTaxon = FALSE, concatenate = FALSE)
+  startWeights <- at$weight
+  morphyObjects <- lapply(characters, SingleCharMorphy)
+  on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
+          add = TRUE)
+  
+  expect_equal(TreeLength(tree, dataset, 'profile'),
+               TreeLength(tree, prepDataset, 'profile'))
+  expect_equal(TreeLength(tree, dataset, 'profile'),
+               morphy_profile(edge, morphyObjects, startWeights, charSeq, 
+                              profiles, Inf))
+})
