@@ -135,9 +135,10 @@ EdgeListSearch <- function (edgeList, dataset,
 #' njtree <- TreeTools::NJTree(Lobo.phy)
 #'
 #' \dontrun{
-#' TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=NNISwap)
-#' TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=RootedSPRSwap)
-#' TreeSearch(njtree, Lobo.phy, maxIter=20, EdgeSwapper=TBRSwap)}
+#' TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = NNISwap)
+#' TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = RootedSPRSwap)
+#' TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
+#' }
 #' @template MRS
 #' @importFrom Rdpack reprompt
 #' @importFrom TreeTools RenumberTips

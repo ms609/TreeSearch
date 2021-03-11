@@ -10,7 +10,7 @@
 \alias{Fitch}
 \title{Calculate parsimony score with inapplicable data}
 \usage{
-IWScore(tree, dataset, concavity = 10, ...)
+IWScore(tree, dataset, concavity = 10L, ...)
 
 TreeLength(tree, dataset, concavity = Inf)
 

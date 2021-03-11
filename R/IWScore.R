@@ -1,16 +1,19 @@
 #' @template pointlessDots
 #' @rdname TreeLength
 #' @export
-IWScore <- function (tree, dataset, concavity = 10, ...) {
+IWScore <- function (tree, dataset, concavity = 10L, ...) {
   .Deprecated('TreeLength')
   TreeLength(tree, dataset, concavity)
 }
 
-#' @describeIn ProfileScore Scorer for Implied Weighting dataset.
+#' @describeIn TreeSearch Scorer for Implied Weighting dataset.
+#' @template treeParent
+#' @template treeChild
+#' @param dataset A dataset prepared using `IWInitMorphy()`.
 #' @template concavityParam
 #' @param minLength Integer vector specifying the minimum length
 #'                  possible for each character in `dataset`, perhaps calculated
-#'                  using \code{\link{MinimumLength}}.
+#'                  using \code{\link{MinimumLength()}}.
 #'
 #' @export
 IWScoreMorphy <- function (parent, child, dataset, concavity = 10L, 
@@ -23,7 +26,7 @@ IWScoreMorphy <- function (parent, child, dataset, concavity = 10L,
   sum(fit * attr(dataset, 'weight'))
 }
 
-#' @rdname ProfileScore
+#' @rdname TreeSearch
 #' @export
 IWInitMorphy <- function (dataset) {
   attr(dataset, 'morphyObjs') <- 
@@ -36,13 +39,15 @@ IWInitMorphy <- function (dataset) {
 }
 
 
-#' @describeIn TreeSearch Search using profile parsimony
+#' @describeIn TreeSearch Search using implied weights.
 #' @template concavityParam
 #' @export
-IWTreeSearch <- function (tree, dataset, concavity = 10, 
+IWTreeSearch <- function (tree, dataset, concavity = 10L, 
                           EdgeSwapper = RootedTBR,
-                          maxIter = 100, maxHits = 20,
-                          verbosity = 1, ...) {
+                          maxIter = 100L, maxHits = 20L,
+                          verbosity = 1L, ...) {
+  .Deprecated("MaximizeParsimony") # Retained as template, for now.
+  #TODO move all these functions to a vignette.
   if (!inherits(dataset, 'phyDat')) {
     stop("Unrecognized dataset class; should be phyDat, not ",
          class(dataset), '.')
