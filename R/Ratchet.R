@@ -1,6 +1,10 @@
 #' Parsimony Ratchet
 #'
-#' \code{Ratchet} uses the parsimony ratchet (Nixon 1999) to search for a more parsimonious tree.
+#' \code{Ratchet} uses the parsimony ratchet (Nixon 1999) to search for a more 
+#' parsimonious tree.
+#' 
+#' For usage pointers, see the 
+#' [vignette](https://ms609.github.io/TreeSearch/articles/custom.html).
 #'
 #' @template treeParam 
 #' @param dataset a dataset in the format required by `TreeScorer()`.
@@ -56,11 +60,6 @@
 #' plot(quickResult)
 #' par(oldPar)
 #' 
-#' # IW search is currently much slower:
-#' quickIWResult <- IWRatchet(quickResult, Lobo.phy, concavity = 2.5,
-#'                            ratchIter = 1, searchIter = 25, searchHits = 2,
-#'                            swappers = RootedTBRSwap, verbosity = 5)
-#'  
 #' @author Martin R. Smith
 #' 
 #' @seealso
