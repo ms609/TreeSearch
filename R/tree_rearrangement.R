@@ -47,7 +47,9 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
   rearrangedEdges <- EdgeSwapper(parent, child)
   if (is.list(rearrangedEdges[[1]])) {
     # Then we've been sent a list of possible trees
-    candidateScores <- vapply(rearrangedEdges, function (edges) TreeScorer(edges[[1]], edges[[2]], dataset, ...), double(1))
+    candidateScores <- vapply(rearrangedEdges, function (edges) {
+      TreeScorer(edges[[1]], edges[[2]], dataset, ...)
+    } , double(1))
     candidateScore <- min(candidateScores)
     best <- candidateScores == candidateScore
     nBest <- sum(best)
