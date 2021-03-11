@@ -238,35 +238,11 @@ Ratchet <- function (tree, dataset,
   }
 }
 
-#' @describeIn Ratchet Shortcut for Ratchet search under Profile Parsimony
-#' @export
-ProfileRatchet <- function (tree, dataset,
-                            swappers = list(TBRSwap, SPRSwap, NNISwap),
-                            BootstrapSwapper = if (is.list(swappers))
-                              swappers[[length(swappers)]] else swappers,
-                            returnAll=FALSE, stopAtScore=NULL,
-                            stopAtPeak=FALSE, stopAtPlateau=0L, 
-                            ratchIter=100, ratchHits=10, 
-                            searchIter=2000, searchHits=40,
-                            bootstrapIter=searchIter, bootstrapHits=searchHits, verbosity=1L, 
-                            suboptimal=1e-08, ...) {
-  Ratchet(tree=tree, dataset=dataset,
-          InitializeData=ProfileInitMorphy, CleanUpData=ProfileDestroyMorphy,
-          TreeScorer=ProfileScoreMorphy, Bootstrapper=ProfileBootstrap,
-          swappers=swappers, BootstrapSwapper=BootstrapSwapper,
-          returnAll=returnAll, suboptimal=suboptimal, stopAtScore=stopAtScore,
-          ratchIter=ratchIter, ratchHits=ratchHits,
-          searchIter=searchIter, searchHits=searchHits,
-          stopAtPeak=stopAtPeak, stopAtPlateau=stopAtPlateau, 
-          bootstrapIter=searchIter, bootstrapHits=bootstrapHits, 
-          verbosity=verbosity,  ...)
-}
-
 #' Unique trees (ignoring 'hits' attribute)
 #' @author Martin R. Smith
 #' @keywords internal
 #' @export
-UniqueExceptHits <- function (trees) {
+.UniqueExceptHits <- function (trees) {
   unique(lapply(trees, function(tree) {
     attr(tree, 'hits') <- NULL
     tree
@@ -293,7 +269,7 @@ MultiRatchet <- function (tree, dataset, ratchHits=10,
             stopAtScore = stopAtScore, ...)
   })
   scores <- vapply(trees, function (x) attr(x, 'score'), double(1))
-  trees <- UniqueExceptHits(trees[scores == min(scores)])
+  trees <- .UniqueExceptHits(trees[scores == min(scores)])
   message("Found ", length(trees), ' unique trees from ', nSearch, ' searches.')
   
   # Return:
