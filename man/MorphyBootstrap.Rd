@@ -2,8 +2,6 @@
 % Please edit documentation in R/Bootstrap.R
 \name{MorphyBootstrap}
 \alias{MorphyBootstrap}
-\alias{ProfileBootstrap}
-\alias{IWBootstrap}
 \title{Ratchet bootstrapper}
 \usage{
 MorphyBootstrap(
@@ -15,27 +13,6 @@ MorphyBootstrap(
   verbosity = 1L,
   stopAtPeak = FALSE,
   stopAtPlateau = 0L,
-  ...
-)
-
-ProfileBootstrap(
-  edgeList,
-  dataset,
-  EdgeSwapper = NNISwap,
-  maxIter,
-  maxHits,
-  verbosity = 1L,
-  ...
-)
-
-IWBootstrap(
-  edgeList,
-  dataset,
-  concavity = 10L,
-  EdgeSwapper = NNISwap,
-  maxIter,
-  maxHits,
-  verbosity = 1L,
   ...
 )
 }
@@ -70,14 +47,6 @@ Will be overridden if a passed function has an attribute \code{stopAtPlateau} se
 by \code{attr(FunctionName, 'stopAtPlateau') <- TRUE}.}
 
 \item{\dots}{further parameters to send to \code{TreeScorer()}}
-
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
-
-\item{concavity}{A numeric value to use as the concavity constant (\code{k})
-in implied weighting. Defaults to 10; TNT sets a default of 3, but this
-is too low in some circumstances (Smith, 2019). If \code{Inf}, applies equal
-weights; if \code{'profile'}, then profile parsimony is used.}
 }
 \value{
 A tree that is optimal under a random sampling of the original characters
@@ -85,10 +54,3 @@ A tree that is optimal under a random sampling of the original characters
 \description{
 Ratchet bootstrapper
 }
-\section{Functions}{
-\itemize{
-\item \code{ProfileBootstrap}: Bootstrapper for Profile Parsimony
-
-\item \code{IWBootstrap}: Bootstrapper for Implied weighting
-}}
-

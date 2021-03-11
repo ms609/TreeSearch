@@ -73,7 +73,7 @@ most different from a starting tree.  Notice that `TreeSearch` aims to
 _minimize_ the output of `TreeScorer()`, so we negate the tree _distance_ 
 (which we aim to maximize) before returning it
 
-```{r tci-setup}
+```{r cid}
 startTree <- BalancedTree(8)
 plot(startTree)
 
@@ -100,11 +100,149 @@ plot(result)
 
 Now we consider a more complex case in which a scorer
 must undergo a time-consuming initialization before tree search can begin,
-and must be safely destroyed once tree search has completed. 
+and must be safely destroyed once tree search has completed.
+
+We start by defining an initialization function, which will create a new
+Morphy object [@Brazeau2017] for each character in a phylogenetic dataset:
+
+```{r iw-setup}
+IWInitMorphy <- function (dataset) {
+  attr(dataset, 'morphyObjs') <- 
+    lapply(PhyToString(dataset, byTaxon = FALSE, useIndex = FALSE, 
+                       concatenate = FALSE), 
+           SingleCharMorphy)
+  
+  # Return:
+  dataset
+}
+```
+
+To release memory back to the operating system, we must destroy each Morphy
+object once we're finished with it:
+
+```{r iw-destroy}
+IWDestroyMorphy <- function (dataset) {
+  vapply(attr(dataset, 'morphyObjs'), UnloadMorphy, integer(1))
+}
+```
+
+Now we can write our tree scoring function, which will return the 'fit'
+under implied weigths [@Goloboff1993].
+
+Note that we need to specify some extra parameters: `concavity` is the _k_ 
+value required by the implied weights formula (fit = _e / e + k_),
+and `minLength` is the minimum number of steps required by each character --
+which we need in order to conver the total number of steps (returned by
+`MorphyLength()` to a number of excess steps (_e_ in the implied weights formula)
+
+```{r iw-score}
+IWScoreMorphy <- function (parent, child, dataset, concavity = 10L, 
+                           minLength = attr(dataset, 'min.length'), ...) {
+  steps <- vapply(attr(dataset, 'morphyObjs'), MorphyLength,
+                  parent = parent, child = child, integer(1))
+  homoplasies <- steps - minLength
+  fit <- homoplasies / (homoplasies + concavity)
+  # Return:
+  sum(fit * attr(dataset, 'weight'))
+}
+```
+
+Now we are ready to search:
+
+```{r iw-search}
+data("inapplicable.datasets")
+dataset <- congreveLamsdellMatrices[[42]]
+
+# Populate `min.length` attribute
+dataset <- PrepareDataIW(dataset)
+iwTree <- TreeSearch(NJTree(dataset), dataset,
+                     InitializeData = IWInitMorphy,
+                     CleanUpData = IWDestroyMorphy,
+                     TreeScorer = IWScoreMorphy,
+                     concavity = 10, # Will be sent to TreeScorer
+                     verbosity = 1)
+
+```
+
+This quick search probably hasn't found the globally optimal tree.
+Besides increasing the number of hits and rearrangements,
+the parsimony ratchet [@Nixon1999] can help to escape local optima.
+This introduces an additional complication: we need to bootstrap the characters
+within `dataset`, and their accompanying Morphy objects.
+A `Bootstraper` function expects an `edgeList` (a list of the parent and child
+of each edge in a tree, in turn) and a `dataset` argument, and conducts
+a tree search, starting at `edgeList`, on a bootstrapped version of the dataset.
+It is also sent the arguments `maxIter = bootstrapIter` and 
+`maxHits = bootstrapHits`, allowing ratchet search intensity to be controlled
+from parameters sent to the `Ratchet` function.
+
+```{r iw-bootstrap}
+IWBootstrap <- function (edgeList, dataset, concavity = 10L, EdgeSwapper = NNISwap, 
+                         maxIter, maxHits, verbosity = 1L, ...) {
+  att <- attributes(dataset)
+  startWeights <- att[['weight']]
+  
+  # Decompress phyDat object so each character is listed once
+  eachChar <- seq_along(startWeights)
+  deindexedChars <- rep(eachChar, startWeights)
+  
+  # Resample characters
+  resampling <- tabulate(sample(deindexedChars, replace = TRUE), length(startWeights))
+  sampled <- resampling != 0
+  sampledData <- lapply(dataset, function (x) x[sampled])
+  sampledAtt <- att
+  sampledAtt[['weight']] <- resampling[sampled]
+  sampledAtt[['index']] <- rep(seq_len(sum(sampled)), resampling[sampled])
+  sampledAtt[['min.length']] <- minLength <- att[['min.length']][sampled]
+  sampledAtt[['morphyObjs']] <- att[['morphyObjs']][sampled]
+  attributes(sampledData) <- sampledAtt
+  
+  # Search using resampled dataset
+  res <- EdgeListSearch(edgeList[1:2], sampledData, TreeScorer = IWScoreMorphy,
+                        concavity = concavity, minLength = minLength,
+                        EdgeSwapper = EdgeSwapper, 
+                        maxIter = maxIter, maxHits = maxHits,
+                        verbosity = verbosity-1L)
+  
+  res[1:2]
+}
+
+```
+
+Having defined the `Bootstrapper()` function we can now complete a Ratchet 
+search with:
+
+```{r iw-ratchet}
+ratchetTree <- Ratchet(tree = iwTree, dataset = dataset,
+                       concavity = 10,
+                       InitializeData = IWInitMorphy, 
+                       CleanUpData = IWDestroyMorphy,
+                       TreeScorer = IWScoreMorphy,
+                       Bootstrapper = IWBootstrap,
+                       ratchIter = 2, ratchHits = 2,
+                       searchIter = 20, searchHits = 10,
+                       verbosity = 1)
+
+```
 
 
+It would be sensible to use much larger values of `ratchIter`, `ratchHits`,
+`searchIter` and `searchHits` to be confident of locating an optimal tree.
+And note that in this specific case, 
+implied weights tree search with the parsimony ratchet is implemented
+much more efficiently with `MaximizeParsimony(concavity = k)`.
 
-(Note that implied weights tree search can be conducted much more efficiently
-using `MaximizeParsimony(concavity = k)`).
+Hopefully these examples give a template from which you are able to construct
+your own optimality criteria.  The maintainer is happy to answer questions via
+e-mail, or you can file queries by opening a
+[GitHub issue](https://github.com/ms609/TreeDist/issues/new/).
+
+## What next?
+
+You might want to:
+
+- [Load data](https://ms609.github.io/TreeTools/articles/load-data.html) from a Nexus file or spreadsheet
+- Conduct parsimony search using Brazeau, Guillerme & Smith's [approach to inapplicable data](inapplicable.html), or using [Profile parsimony](profile.html).
+
 
 ## References

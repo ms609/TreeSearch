@@ -6,45 +6,6 @@ IWScore <- function (tree, dataset, concavity = 10L, ...) {
   TreeLength(tree, dataset, concavity)
 }
 
-#' @describeIn TreeSearch Scorer for Implied Weighting dataset.
-#' @template treeParent
-#' @template treeChild
-#' @param dataset A dataset prepared using `IWInitMorphy()`.
-#' @template concavityParam
-#' @param minLength Integer vector specifying the minimum length
-#'                  possible for each character in `dataset`, perhaps calculated
-#'                  using \code{\link{MinimumLength()}}.
-#'
-#' @export
-IWScoreMorphy <- function (parent, child, dataset, concavity = 10L, 
-                           minLength = attr(dataset, 'min.length'), ...) {
-  steps <- vapply(attr(dataset, 'morphyObjs'), MorphyLength,
-                  parent = parent, child = child, integer(1))
-  homoplasies <- steps - minLength
-  fit <- homoplasies / (homoplasies + concavity)
-  # Return:
-  sum(fit * attr(dataset, 'weight'))
-}
-
-#' @rdname TreeSearch
-#' @export
-IWInitMorphy <- function (dataset) {
-  attr(dataset, 'morphyObjs') <- 
-    lapply(PhyToString(dataset, byTaxon = FALSE, useIndex = FALSE, 
-                       concatenate = FALSE), 
-           SingleCharMorphy)
-  
-  # Return:
-  dataset
-}
-
-#' @describeIn TreeSearch Free memory from `morphyObjs` initialized by
-#' `IWInitMorphy()`.
-#' @export
-IWDestroyMorphy <- function (dataset) {
-  vapply(attr(dataset, 'morphyObjs'), UnloadMorphy, integer(1))
-}
-
 #' @describeIn TreeSearch Search using implied weights.
 #' @template concavityParam
 #' @export
