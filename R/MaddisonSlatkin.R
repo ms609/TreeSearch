@@ -41,6 +41,7 @@ Remember <- addMemoization
     }, double(1)))
   }
 })
+
 .B1 <- Remember(function (n, i) {
   if (n == 2L && i == 1L) {
     0
@@ -60,6 +61,7 @@ Remember <- addMemoization
     }, double(1)))
   }
 })
+
 .B01 <- Remember(function (n, i) {
   if (n == 2L && i == 1L) {
     1
@@ -79,12 +81,13 @@ Remember <- addMemoization
     }, double(1)))
   }
 })
+
 .PRow <- function (PSmall, BSmall, PLarge, BLarge, i, j, m, n, s) {
   sum(vapply(0:s, function (r) prod(
-      PSmall(r, m, j),
-      BSmall(m, j),
-      PLarge(s - r, n - m, i - j),
-      BLarge(n - m, i - j)),
+    PSmall(r, m, j),
+    BSmall(m, j),
+    PLarge(s - r, n - m, i - j),
+    BLarge(n - m, i - j)),
     double(1)))
 }
 
@@ -115,6 +118,7 @@ Remember <- addMemoization
     }
   }
 })
+
 .P1 <- Remember(function (s, n, i) {
   if (n == 2L && i == 1L) {
     if (s == 1L) 1 else 0
@@ -137,6 +141,7 @@ Remember <- addMemoization
     }
   }
 })
+
 .P01 <- Remember(function (s, n, i) {
   if (n == 2L && i == 1L) {
     if (s == 1L) 1 else 0
@@ -163,21 +168,16 @@ Remember <- addMemoization
 #' Caluclate number of trees with a given score using Maddison & Slatkin's
 #' recursive approach 
 #' 
-#' @param n Number of leaves in tree
-#' @param x Vector specifying number of leaves with state 1, 2, ...
-#' @param b State reconstructed at base of tree
-#' States are converted to binary, so 
-#' `1` denotes 'state 1',
-#' `2` denotes 'state 2', and
-#' `3` denotes 'state 1 OR state 2'.
+#' @param a,b Number of leaves in tree with state 1 / 2
 #' 
 #' @references
 #' \insertRef{Maddison1991}{TreeSearch}
 #' @examples
-#' MaddisonSlatkin(2, 4)
+#' \dontrun{MaddisonSlatkin(2, 4)}
 #' @template MRS
 #' @importFrom R.cache addMemoization
 #' @importFrom TreeTools NRooted
+#' @family profile parsimony functions
 #' @export
 MaddisonSlatkin <- function (a, b) {
   n <- sum(a, b)
