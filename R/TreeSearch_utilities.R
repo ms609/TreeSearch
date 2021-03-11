@@ -1,7 +1,7 @@
 #' @rdname TreeSearch
 #' @return `EmptyPhyDat()` returns a `phyDat` object comprising a single
 #' null character, coded with state zero for every leaf in `tree`.
-#' @importFrom TreeTools NTip TipLabels
+#' @importFrom TreeTools MatrixToPhyDat NTip TipLabels
 #' @export
 EmptyPhyDat <- function (tree) {
   mat <- matrix(0, NTip(tree), 1, dimnames = list(TipLabels(tree), NULL))

@@ -9,16 +9,7 @@
 \alias{DoNothing}
 \title{Search for most parsimonious trees}
 \usage{
-IWTreeSearch(
-  tree,
-  dataset,
-  concavity = 10L,
-  EdgeSwapper = RootedTBR,
-  maxIter = 100L,
-  maxHits = 20L,
-  verbosity = 1L,
-  ...
-)
+IWTreeSearch(...)
 
 EdgeListSearch(
   edgeList,
@@ -55,26 +46,6 @@ EmptyPhyDat(tree)
 DoNothing(...)
 }
 \arguments{
-\item{tree}{a fully-resolved starting tree in \code{\link{phylo}} format, with the desired outgroup; edge lengths are not supported and will be deleted;}
-
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
-
-\item{concavity}{A numeric value to use as the concavity constant (\code{k})
-in implied weighting. Defaults to 10; TNT sets a default of 3, but this
-is too low in some circumstances (Smith, 2019). If \code{Inf}, applies equal
-weights; if \code{'profile'}, then profile parsimony is used.}
-
-\item{EdgeSwapper}{a function that rearranges a parent and child vector,
-and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
-
-\item{maxIter}{the maximum number of iterations to perform before abandoning the search.}
-
-\item{maxHits}{the maximum times to hit the best pscore before abandoning the search.}
-
-\item{verbosity}{Numeric specifying level of detail to display in console:
-larger numbers provide more verbose feedback to the user.}
-
 \item{\dots}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
 
 \item{edgeList}{a list containing the following:
@@ -83,9 +54,19 @@ larger numbers provide more verbose feedback to the user.}
 - (optionally) score of the tree
 - (optionally, if score provided) number of times this score has been hit}
 
+\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
+whose names correspond to the labels of any accompanying tree.}
+
 \item{TreeScorer}{function to score a given tree.
 The function will be passed three parameters, corresponding to the
 \code{parent} and \code{child} entries of a tree's edge list, and a dataset.}
+
+\item{EdgeSwapper}{a function that rearranges a parent and child vector,
+and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
+
+\item{maxIter}{the maximum number of iterations to perform before abandoning the search.}
+
+\item{maxHits}{the maximum times to hit the best pscore before abandoning the search.}
 
 \item{stopAtPeak}{Logical specifying whether to terminate search once a
 subsequent iteration recovers a sub-optimal score.
@@ -96,6 +77,11 @@ Will be overridden if a passed function has an attribute \code{stopAtPeak} set b
 has not improved after \code{stopAtPlateau} iterations.
 Will be overridden if a passed function has an attribute \code{stopAtPlateau} set
 by \code{attr(FunctionName, 'stopAtPlateau') <- TRUE}.}
+
+\item{verbosity}{Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.}
+
+\item{tree}{a fully-resolved starting tree in \code{\link{phylo}} format, with the desired outgroup; edge lengths are not supported and will be deleted;}
 
 \item{InitializeData}{Function that sets up data object to prepare for tree search.
 The function will be passed the \code{dataset} parameter.
@@ -125,8 +111,6 @@ configuring tree search, see the
 }
 \section{Functions}{
 \itemize{
-\item \code{IWTreeSearch}: Search using implied weights.
-
 \item \code{EdgeListSearch}: Tree Search from Edge lists
 }}
 
