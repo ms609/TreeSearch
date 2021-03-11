@@ -2,13 +2,20 @@
 context("Fitch.R")
 
 test_that("Failures are graceful", {
+  library("TreeTools", quietly = TRUE)
   data('inapplicable.datasets')
   dat <- inapplicable.phyData[[1]]
-  tree <- TreeTools::RandomTree(dat, root = FALSE)
-  expect_error(TreeLength(tree, dat))
+  unrooted <- RandomTree(dat, root = FALSE)
+  expect_error(TreeLength(unrooted, dat))
   
+  mo <- PhyDat2Morphy(dat)
+  on.exit(mo <- UnloadMorphy(mo))
   
+  sparse <- DropTip(RandomTree(dat, root = FALSE), 10)
+  expect_error(MorphyTreeLength(sparse, mo))
   
+  expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], mo, nTaxa = 0))
+  expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], dat))
 })
 
 test_that("Deprecations throw warning", {
@@ -161,4 +168,33 @@ test_that("Profile scoring is reported correctly", {
   expect_equal(TreeLength(tree, dataset, 'profile'),
                morphy_profile(edge, morphyObjects, startWeights, charSeq, 
                               profiles, Inf))
+})
+
+test_that("X_MorphyLength", {
+  dataset <- congreveLamsdellMatrices[[42]]
+  morphyObj <- PhyDat2Morphy(dataset)
+  on.exit(UnloadMorphy(morphyObj))
+  nTaxa <- mpl_get_numtaxa(morphyObj)
+  
+  tree <- NJTree(dataset)
+  edgeList <- Postorder(Preorder(tree$edge))
+  parent <- edgeList[, 1]
+  child <- edgeList[, 2]
+
+  maxNode <- nTaxa + mpl_get_num_internal_nodes(morphyObj)
+  rootNode <- nTaxa + 1L
+  allNodes <- rootNode:maxNode
+  
+  parentOf <- parent[match(seq_len(maxNode), child)]
+  parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
+  leftChild <- child[length(parent) + 1L - match(allNodes, rev(parent))]
+  rightChild <- child[match(allNodes, parent)]
+
+  expected <- MorphyLength(parent, child, morphyObj)
+  
+  expect_equal(expected,
+               C_MorphyLength(parentOf, leftChild, rightChild, morphyObj))
+  expect_equal(expected,
+               GetMorphyLength(parentOf - 1, leftChild - 1, rightChild - 1,
+                              morphyObj))
 })

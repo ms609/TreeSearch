@@ -290,37 +290,41 @@ MorphyTreeLength <- function (tree, morphyObj) {
 }
 
 #' @describeIn MorphyTreeLength Faster function that requires internal tree
-#'   parameters
+#'   parameters. Node numbering must increase monotonically away from root.
 #' @template treeParent
 #' @template treeChild
 #' @author Martin R. Smith
 #' @keywords internal
-#' @importFrom TreeTools Postorder
+#' @importFrom TreeTools Postorder Preorder
 #' @export
 MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
                           nTaxa = mpl_get_numtaxa(morphyObj)) {
   if (!inPostorder) {
-    edgeList <- Postorder(cbind(parent, child))
+    edgeList <- Postorder(Preorder(cbind(parent, child)))
     parent <- edgeList[, 1]
     child <- edgeList[, 2]
   }
-  if (nTaxa < 1L) stop("Error: ", mpl_translate_error(nTaxa))
   if (!inherits(morphyObj, 'morphyPtr')) {
     stop("morphyObj must be a morphy pointer. See ?LoadMorphy().")
+  }
+  if (nTaxa < 1L) {
+    # Run this test after we're sure that morphyObj is a morphyPtr, or lazy
+    # evaluation of nTaxa will cause a crash.
+    stop("Error: ", mpl_translate_error(nTaxa))
   }
   
   maxNode <- nTaxa + mpl_get_num_internal_nodes(morphyObj)
   rootNode <- nTaxa + 1L
   allNodes <- rootNode:maxNode
   
-  parentOf <- parent[match(1:maxNode, child)]
+  parentOf <- parent[match(seq_len(maxNode), child)]
   parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
   leftChild <- child[length(parent) + 1L - match(allNodes, rev(parent))]
   rightChild <- child[match(allNodes, parent)]
   
   # Return:
-  .Call('MORPHYLENGTH', as.integer(parentOf -1L), as.integer(leftChild -1L), 
-               as.integer(rightChild -1L), morphyObj)
+  .Call('MORPHYLENGTH', as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
+               as.integer(rightChild - 1L), morphyObj)
 }
 
 #' @describeIn MorphyTreeLength Fastest function that requires internal tree parameters
@@ -346,8 +350,8 @@ GetMorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
 #' @keywords internal
 #' @export
 C_MorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
-  .Call('MORPHYLENGTH', as.integer(parentOf -1L), as.integer(leftChild -1L), 
-               as.integer(rightChild -1L), morphyObj)
+  .Call('MORPHYLENGTH', as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
+               as.integer(rightChild - 1L), morphyObj)
 }
 
 #' Extract character data from dataset
