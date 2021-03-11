@@ -76,7 +76,7 @@ IWDestroyMorphy <- ProfileDestroyMorphy
 #' @describeIn TreeSearch Search using profile parsimony
 #' @export
 ProfileTreeSearch <- function (tree, dataset, EdgeSwapper = RootedTBR,
-                        maxIter = 100, maxHits = 20, forestSize = 1,
+                        maxIter = 100, maxHits = 20,
                         verbosity = 1, ...) {
   if (!inherits(dataset, 'phyDat')) {
     stop("Unrecognized dataset class; should be phyDat, not ",
@@ -93,6 +93,5 @@ ProfileTreeSearch <- function (tree, dataset, EdgeSwapper = RootedTBR,
              CleanUpData = ProfileDestroyMorphy,
              TreeScorer = ProfileScoreMorphy,
              EdgeSwapper = EdgeSwapper, 
-             maxIter = maxIter, maxHits = maxHits, forestSize = forestSize,
-             verbosity = verbosity, ...)
+             maxIter = maxIter, maxHits = maxHits, verbosity = verbosity, ...)
 }

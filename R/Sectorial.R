@@ -244,8 +244,7 @@
 ######  # Now use sectorially rearranged tree as starting point for conventional search
 ######  edgeList <- EdgeListSearch(edgeList, initializedData, TreeScorer=TreeScorer,
 ######                             EdgeSwapper=swappers, maxIter = maxIter, 
-######                             maxHits = maxHits, forestSize = forestSize, 
-######                             verbosity = verbosity - 1L)
+######                             maxHits = maxHits, verbosity = verbosity - 1L)
 ######  
 ######  if (edgeList[[3]] <= bestScore) {
 ######    sect$edge <- cbind(edgeList[[1]], edgeList[[2]])
