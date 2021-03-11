@@ -4,6 +4,9 @@ library("TreeSearch", quietly = TRUE)
 test_that("Bad input safely handled", {
   expect_equal(0, WithOneExtraStep(1))
   expect_error(WithOneExtraStep(2, 2, 2))
+  
+  expect_equal(0, Carter1(5, 6, 4))
+  expect_equal(-Inf, Log2Carter1(5, 6, 4))
 })
 
 test_that("Carter1() matches profile counts", {

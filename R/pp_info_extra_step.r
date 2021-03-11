@@ -97,7 +97,7 @@ Log2Carter1 <- function (m, a, b) {
   twoN <- n + n
   twoM <- m + m
   Log2N <- function (n, m) {
-    if (n < m) 0 else {
+    if (n < m) -Inf else {
       nMinusM <- n - m
       (lfactorial(n + nMinusM - 1L) - 
        lfactorial(nMinusM) -
