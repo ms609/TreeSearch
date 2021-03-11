@@ -48,13 +48,15 @@ EdgeListSearch <- function (edgeList, dataset,
       if (scoreThisIteration + epsilon < bestScore) unimprovedSince <- -1L
       bestScore <- scoreThisIteration
       edgeList  <- candidateLists
-      if (!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) return(edgeList)
+      if (!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) {
+        return(edgeList)
+      }
     } else if (stopAtPeak && scoreThisIteration > bestScore + epsilon) {
-      if (verbosity > 1L) {
+      if (verbosity > 1L) { # nocov start
         message("    ! Iteration ", iter, 
                 " - No TBR rearrangement improves score. ",
                 scoreThisIteration, " doesn't beat ", bestScore)
-      }
+      } # nocov end
       break
     }
     unimprovedSince <- unimprovedSince + 1L
@@ -71,8 +73,9 @@ EdgeListSearch <- function (edgeList, dataset,
     }
     
     if (hits >= maxHits) {
-      if (verbosity > 1L) message("  - Terminating search; hit best score ",
-                                  hits, " times.")
+      if (verbosity > 1L) { # nocov start
+        message("  - Terminating search; hit best score ", hits, " times.")
+      } # nocov end
       break
     }
   }
@@ -298,12 +301,12 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     }
   } # nocov end
   
-  .NewOperation <- function(...) if (!is.null(session)) {
+  .NewOperation <- function(...) if (!is.null(session)) { # nocov start
     setProgress(0, message = paste0(...))
   }
   .Progress <- function(x, ...) if (!is.null(session)) {
     setProgress(x, message = paste0(...))
-  }
+  } # nocov end
   
   .TBRSearch <- function (edge, nTip, morphyObj, tbrIter, maxHits) {
     if (is.null(session)) {
