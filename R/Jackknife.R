@@ -1,10 +1,12 @@
-#' @describeIn Ratchet Jackknife resampling. Note that at present this assumes that 
-#' `InitializeData` will return a morphy object; if this doesn't hold for you, please
-#' let me know and I'll make the function more general.
+#' @describeIn Ratchet Jackknife resampling. Note that at present this assumes
+#' that `InitializeData()` will return a morphy object; if this doesn't hold 
+#' for you, please let me know and I'll make the function more general.
 #' @template EdgeSwapperParam
-#' @param resampleFreq Double between 0 and 1 stating proportion of characters to resample
-#' @param jackIter Integer specifying number of jackknife iterations to conduct
-#' @return a list of trees recovered after jackknife iterations
+#' @param resampleFreq Double between 0 and 1 stating proportion of characters 
+#' to resample.
+#' @param jackIter Integer specifying number of jackknife iterations to conduct.
+#' @return `Jackknife()` returns a list of trees recovered after jackknife
+#' iterations.
 #' @author Martin R. Smith
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @seealso 
@@ -19,7 +21,9 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
                        searchIter = 4000L, searchHits = 42L,
                        verbosity = 1L, ...) {
   # initialize tree and data
-  if (dim(tree$edge)[1] != 2 * tree$Nnode) stop("tree must be bifurcating; try rooting with ape::root")
+  if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+    stop("tree must be bifurcating; try rooting with ape::root")
+  }
   tree <- RenumberTips(tree, names(dataset))
   edgeList <- tree$edge
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
@@ -58,8 +62,8 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
     if (mpl_apply_tipdata(morphyObj) -> error) {
       stop("Error applying tip data: ", mpl_translate_error(error))
     } # nocov end
-    res <- EdgeListSearch(edgeList[1:2], morphyObj, EdgeSwapper=EdgeSwapper,
-                          maxIter=searchIter, maxHits=searchHits,
+    res <- EdgeListSearch(edgeList[1:2], morphyObj, EdgeSwapper = EdgeSwapper,
+                          maxIter = searchIter, maxHits = searchHits,
                           verbosity = verbosity - 1L, ...)
     res[1:2]
   }, edgeList)

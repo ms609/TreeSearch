@@ -77,7 +77,8 @@ RatchetConsensus(
 
 \item{dataset}{a dataset in the format required by \code{TreeScorer()}.}
 
-\item{resampleFreq}{Double between 0 and 1 stating proportion of characters to resample}
+\item{resampleFreq}{Double between 0 and 1 stating proportion of characters
+to resample.}
 
 \item{InitializeData}{Function that sets up data object to prepare for tree search.
 The function will be passed the \code{dataset} parameter.
@@ -93,7 +94,7 @@ The function will be passed three parameters, corresponding to the
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
 
-\item{jackIter}{Integer specifying number of jackknife iterations to conduct}
+\item{jackIter}{Integer specifying number of jackknife iterations to conduct.}
 
 \item{searchIter}{Integer specifying maximum rearrangements to perform on each bootstrap or
 ratchet iteration.
@@ -156,7 +157,8 @@ iteration (default: \code{searchHits}).}
 (for \code{RatchetConsensus()})}
 }
 \value{
-a list of trees recovered after jackknife iterations
+\code{Jackknife()} returns a list of trees recovered after jackknife
+iterations.
 
 This function returns a tree modified by parsimony ratchet iterations.
 
@@ -175,9 +177,9 @@ For usage pointers, see the
 }
 \section{Functions}{
 \itemize{
-\item \code{Jackknife}: Jackknife resampling. Note that at present this assumes that
-\code{InitializeData} will return a morphy object; if this doesn't hold for you, please
-let me know and I'll make the function more general.
+\item \code{Jackknife}: Jackknife resampling. Note that at present this assumes
+that \code{InitializeData()} will return a morphy object; if this doesn't hold
+for you, please let me know and I'll make the function more general.
 
 \item \code{RatchetConsensus}: deprecated alias for \code{MultiRatchet()}
 }}
