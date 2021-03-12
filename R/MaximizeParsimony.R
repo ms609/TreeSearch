@@ -62,22 +62,46 @@
 #' @param session 'shiny' session identifier to allow [`setProgress()`] calls
 #' to be sent when `MaximizeParsimony()` is called from within a shiny app..
 #' 
-#'  
+#'
 #' @examples
-#' library('TreeTools')
-#' data('Lobo', package = 'TreeTools')
-#' dataset <- Lobo.phy
-#' 
-#' # A very quick run for demonstration purposes
-#' MaximizeParsimony(dataset, ratchIter = 0, tbrIter = 1, concavity = 10,
-#'                   maxHits = 5, verbosity = 4)
-#' 
-#' # Be sure to check that the score has converged on a global optimum,
-#' # conducting additional iterations and runs as necessary.
-#' 
-#' \dontrun{ # launches 'shiny' point-and-click interface
+#' \dontrun{ # launch 'shiny' point-and-click interface
 #'   EasyTrees() 
 #' }
+#' 
+#' # Load data for analysis in R
+#' library('TreeTools')
+#' data('congreveLamsdellMatrices', package = 'TreeSearch')
+#' dataset <- congreveLamsdellMatrices[[42]]
+#' 
+#' # A very quick run for demonstration purposes
+#' trees <- MaximizeParsimony(dataset, ratchIter = 0, tbrIter = 1, 
+#'                           concavity = 10, maxHits = 5, verbosity = 4)
+#'                   
+#' # Be sure to check that the score has converged on a global optimum,
+#' # conducting additional iterations and runs as necessary.
+#'                   
+#' # Jackknife resampling
+#' nReplicates <- 5
+#' jackTrees <- lapply(logical(nReplicates), function (x) 
+#'   Resample(dataset, trees, ratchIter = 0, tbrIter = 1, maxHits = 4,
+#'            concavity = 10, verbosity = 0)
+#'  )
+#' 
+#' # In a serious analysis, more replicates would be conducted, and each
+#' # search would undergo more iterations.
+#' 
+#' # Now we must decide what to do with the multiple optimal trees from
+#' # each replicate.
+#' 
+#' # Treat each tree equally
+#' JackLabels(ape::consensus(trees), unlist(jackTrees, recursive = FALSE))
+#' 
+#' # Take the strict consensus of all trees for each replicate
+#' JackLabels(ape::consensus(trees), lapply(jackTrees, ape::consensus))
+#' 
+#' # Take a single tree from each replicate (the first; order's irrelevant)
+#' JackLabels(ape::consensus(trees), lapply(jackTrees, `[[`, 1))
+#' 
 #' 
 #' # Tree search with a constraint
 #' constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
@@ -624,13 +648,78 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 
 
 #' @rdname MaximizeParsimony
+#' @param method Unambiguous abbreviation of `jackknife` or `bootstrap` 
+#' specifying how to resample characters.  Note that jackknife is considered
+#' to give more meaningful results.
+#' 
+#' Note that bootstrap support is a measure of the amount of data supporting
+#' a split, rather than the amount of confidence that should be afforded the
+#' grouping.
+#' "Bootstrap support of 100% is not enough, the tree must also be correct" 
+#' (Phillips et al. 2004).
+#' See discussion in Egan 2006; W&auml;gele _et al_. (2009), Kumar _et al._ 2011.
+#' 
+#' For a discussion of suitable search parameters in resampling estimates, see
+#' M&uuml;ller (2005).  The user should decide whether to start each resampling
+#' from the optimal tree (which may be quicker, but result in overestimated 
+#' support values as searches get stuck in local optima close to the 
+#' optimal tree) or a random tree (which may take longer as more rearrangements
+#' are necessary to find an optimal tree on each iteration).
+#' 
+#' @return `Resample()`
+#' @references 
+#' \insertRef{Egan2006}{TreeSearch}
+#' 
+#' \insertRef{Kumar2012}{TreeSearch}
+#' 
+#' \insertRef{Muller2005}{TreeSearch}
+#' 
+#' \insertRef{Phillips2004}{TreeSearch}
+#' 
+#' \insertRef{Simmons2011}{TreeSearch}
+#' 
+#' \insertRef{Wagele2009}{TreeSearch}
+#' 
+#' @export
 Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
+                      proportion = 2/3,
                       ratchIter = 1L, tbrIter = 6L, finalIter = 3L,
                       maxHits = 10L, concavity = Inf,
                       tolerance = sqrt(.Machine$double.eps),
                       constraint = NULL,
                       verbosity = 2L, session = NULL) {
+  if (!inherits(dataset, 'phyDat')) {
+    stop("`dataset` must be of class `phyDat`.")
+  }
+  index <- attr(dataset, 'index')
+  kept <- switch(pmatch(tolower(method), c('jackknife', 'bootstrap')),
+         {
+           nKept <- ceiling(proportion * length(index))
+           if (nKept < 1L) {
+             stop("No characters retained. `proportion` must be positive.")
+           }
+           if (nKept == length(index)) {
+             stop("`proportion` too high; no characters deleted.")
+           }
+           sample(index, nKept)
+         }, {
+           sample(index, length(index), replace = TRUE)
+         })
+  if (is.null(kept)) {
+    stop("`method` must be either 'jackknife' or 'bootstrap'.")
+  }
   
+  attr(dataset, 'index') <- kept
+  attr(dataset, 'weight') <- vapply(seq_len(attr(dataset, 'nr')),
+                                    function (x) sum(kept == x),
+                                    integer(1))
+  
+  MaximizeParsimony(dataset, tree = tree,
+                    ratchIter = ratchIter, tbrIter = tbrIter,
+                    finalIter = finalIter, maxHits = maxHits, 
+                    concavity = concavity,
+                    tolerance = tolerance, constraint = constraint,
+                    verbosity = verbosity, session = session) 
 }
 
 #' Launch tree search graphical user interface
