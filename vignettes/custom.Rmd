@@ -136,12 +136,12 @@ IWDestroyMorphy <- function (dataset) {
 ```
 
 Now we can write our tree scoring function, which will return the 'fit'
-under implied weigths [@Goloboff1993].
+under implied weights [@Goloboff1993].
 
 Note that we need to specify some extra parameters: `concavity` is the _k_ 
 value required by the implied weights formula (fit = _e / e + k_),
 and `minLength` is the minimum number of steps required by each character --
-which we need in order to conver the total number of steps (returned by
+which we need in order to convert the total number of steps (returned by
 `MorphyLength()` to a number of excess steps (_e_ in the implied weights formula)
 
 ```{r iw-score}

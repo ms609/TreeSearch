@@ -22,7 +22,7 @@ JackLabels(
 \item{jackTrees}{A list or \code{multiPhylo} object containing trees generated
 by \code{\link[=Jackknife]{Jackknife()}}.}
 
-\item{plot}{Logical specifing whether to plot results; if \code{FALSE},
+\item{plot}{Logical specifying whether to plot results; if \code{FALSE},
 returns blank labels for nodes near the root that do not correspond to a
 unique split.}
 

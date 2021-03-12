@@ -170,8 +170,8 @@ characters <- MatrixToPhyDat(matrix(
 plot(MaximizeParsimony(characters, constraint = constraint,
                        verbosity = -1)[[1]])
 ```
-Here's a more complex example that imposes the splits ab | ef and abc|ef,
-whilst allowing d to plot anywhere on the tree:
+Here's a more complex example that imposes the splits `ab | ef` and `abc | ef`,
+whilst allowing `d` to plot anywhere on the tree:
 
 ```{r complex-constraints}
 constraint <- characters <- MatrixToPhyDat(matrix(

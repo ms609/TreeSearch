@@ -26,7 +26,7 @@ SharedPhylogeneticConcordance(tree, dataset)
 whose names correspond to the labels of any accompanying tree.}
 }
 \description{
-The site concordance factor (Binh, Hahn & Lanfear 2020) is a measure of the
+The site concordance factor (Minh, Hahn & Lanfear 2020) is a measure of the
 strength of support that the dataset presents for a given split in a tree.
 }
 \details{
@@ -39,7 +39,7 @@ with any tree that groups the first two leaves together to the exclusion
 of the second.
 }
 \examples{
-data('Lobo')
+data('Lobo', package = 'TreeTools')
 dataset <- Lobo.phy
 tree <- NJTree(dataset)
 qc <- QuartetConcordance(tree, dataset)
@@ -58,7 +58,7 @@ par(oPar)
 pairs(cbind(qc, cc, pc, spc, mcc))
 }
 \references{
-\insertRef{Binh2020}{TreeSearch}
+\insertRef{Minh2020}{TreeSearch}
 
 \insertRef{Smith2020}{TreeSearch}
 

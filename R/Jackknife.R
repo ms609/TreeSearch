@@ -85,7 +85,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' @param add Logical specifying whether to add the labels to an existing
 #' plot.
 #' @param adj,col,frame,pos,\dots Parameters to pass to `nodelabels()`.
-#' @param plot Logical specifing whether to plot results; if `FALSE`,
+#' @param plot Logical specifying whether to plot results; if `FALSE`,
 #' returns blank labels for nodes near the root that do not correspond to a
 #' unique split.
 #' 

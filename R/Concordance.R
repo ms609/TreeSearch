@@ -1,6 +1,6 @@
 #' Calculate site concordance factor
 #' 
-#' The site concordance factor (Binh, Hahn & Lanfear 2020) is a measure of the
+#' The site concordance factor (Minh, Hahn & Lanfear 2020) is a measure of the
 #' strength of support that the dataset presents for a given split in a tree.
 #' 
 #' `QuartetConcordance()` is the proportion of quartets (sets of four leaves) that 
@@ -28,13 +28,13 @@
 #' 
 #' @references 
 #' 
-#' \insertRef{Binh2020}{TreeSearch}
+#' \insertRef{Minh2020}{TreeSearch}
 #' 
 #' \insertRef{Smith2020}{TreeSearch}
 #' 
 #' \insertRef{Vinh2010}{TreeDist}
 #' @examples 
-#' data('Lobo')
+#' data('Lobo', package = 'TreeTools')
 #' dataset <- Lobo.phy
 #' tree <- NJTree(dataset)
 #' qc <- QuartetConcordance(tree, dataset)

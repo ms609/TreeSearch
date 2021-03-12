@@ -92,7 +92,10 @@ to be sent when \code{MaximizeParsimony()} is called from within a shiny app..}
 
 \item{method}{Unambiguous abbreviation of \code{jackknife} or \code{bootstrap}
 specifying how to resample characters.  Note that jackknife is considered
-to give more meaningful results.
+to give more meaningful results.}
+
+\item{proportion}{Numeric between 0 and 1 specifying what proportion of
+characters to retain under jackknife resampling.
 
 Note that bootstrap support is a measure of the amount of data supporting
 a split, rather than the amount of confidence that should be afforded the

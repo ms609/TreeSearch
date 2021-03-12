@@ -14,7 +14,7 @@ whose names correspond to the labels of any accompanying tree.}
 }
 \value{
 \code{Consistency()} returns a named vector specifying the consistency index (ci),
-retention index (ri), and rescalced consistency index (rc).
+retention index (ri), and rescaled consistency index (rc).
 }
 \description{
 \code{Consistency()} calculates the so-called consistency and retention 'indices'
