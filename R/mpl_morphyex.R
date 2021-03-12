@@ -70,6 +70,29 @@ mpl_delete_Morphy <- function(morphyobj) {
     .Call("_R_wrap_mpl_delete_Morphy", morphyobj)
 }
 
+
+#' Get / set gap handler from a Morphy object.
+#' 
+#' 0 = inapplicable; 1 = missing; 2 = extra
+#' 
+#' @return `mpl_get_gaphandl()` returns an integer corresponding to the gap
+#'  handling approach.
+#' 
+#' 
+#' @family Morphy API functions
+#' @keywords internal
+#' @export
+mpl_get_gaphandl <- function (morphyobj) {
+  .Call("_R_wrap_mpl_get_gaphandl", morphyobj)
+}
+#' @rdname mpl_get_gaphandl
+#' @keywords internal
+#' @return `mpl_set_gaphandl()` returns a Morphy error code.
+#' @export
+mpl_set_gaphandl <- function (handl, morphyobj) {
+  .Call("_R_wrap_mpl_set_gaphandl", handl, morphyobj)
+}
+
 #' Sets up the dimensions of the dataset.
 #'
 #' Provides initial dimensions for the dataset, which will

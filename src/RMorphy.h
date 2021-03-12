@@ -19,6 +19,7 @@ SEXP _R_wrap_mpl_get_symbols(SEXP MorphyHandl);
 SEXP _R_wrap_mpl_attach_rawdata(SEXP Rmatrix, SEXP MorphyHandl);
 SEXP _R_wrap_mpl_delete_rawdata(SEXP MorphyHandl);
 SEXP _R_wrap_mpl_set_parsim_t(SEXP RcharID, SEXP Rchtype, SEXP MorphyHandl);
+SEXP _R_wrap_mpl_get_gaphandl(SEXP MorphyHandl);
 SEXP _R_wrap_mpl_set_gaphandl(SEXP Rgaptype, SEXP MorphyHandl);
 SEXP _R_wrap_mpl_set_num_internal_nodes(SEXP Rnnodes, SEXP MorphyHandl);
 SEXP _R_wrap_mpl_get_num_internal_nodes(SEXP MorphyHandl);

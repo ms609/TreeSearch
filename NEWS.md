@@ -1,9 +1,10 @@
-# TreeSearch 0.4.3.9002 (development)
+# TreeSearch 0.4.3.9003 (development)
 
  - 'shiny' graphical user interface for tree search.
   - `Consistency()` calculates consistency and retention 'indices'
  - `MinimumLength()` and `MaximumLength()` calculate range of possible lengths
    of characters in a dataset on any tree
+ - Set handling of 'gap' token (-) when creating Morphy object with `gap = `
  - Label nodes with split frequencies using `JackLabels(plot = FALSE)`
  - Support for topological constraints during tree search
  - Remove redundant function `AsBinary()`

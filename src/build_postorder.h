@@ -156,8 +156,8 @@ extern SEXP RANDOM_TREE_SCORE(SEXP ntip, SEXP MorphyHandl) {
   SEXP RESULT = PROTECT(allocVector(INTSXP, 1));
   int *score,
     *parent_of = calloc(n_tip + n_tip - 1 , sizeof(int)),
-    *left = calloc(n_tip - 1         , sizeof(int)),
-    *right = calloc(n_tip - 1         , sizeof(int));
+    *left = calloc(n_tip - 1              , sizeof(int)),
+    *right = calloc(n_tip - 1             , sizeof(int));
     
   score = INTEGER(RESULT);
   *score = 0;
