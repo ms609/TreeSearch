@@ -7,6 +7,7 @@
  - Label nodes with split frequencies using `JackLabels(plot = FALSE)`
  - Support for topological constraints during tree search
  - Remove redundant function `AsBinary()`
+ - Drop `nTip` parameter in `RandomTreeScore()` (infer from `morphyObj`)
  - C implementations of rearrangement functions
 
 # TreeSearch 0.4.3

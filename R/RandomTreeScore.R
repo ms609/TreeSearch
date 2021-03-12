@@ -1,16 +1,24 @@
 #' Parsimony score of random postorder tree
 #' 
-#' @param nTip number of tips (minimum 3)
 #' @template morphyObjParam
 #'
-#' @return the parsimony score of a random tree, for the given Morphy object.
+#' @return `RandomTreeScore()` returns the parsimony score of a random tree
+#'  for the given Morphy object.
+#' @examples 
+#' tokens <- matrix(c(
+#'   0, '-', '-', 1, 1, 2,
+#'   0, 1, 0, 1, 2, 2,
+#'   0, '-', '-', 0, 0, 0), byrow = TRUE, nrow = 3L,
+#'   dimnames = list(letters[1:3], NULL))
+#' pd <- TreeTools::MatrixToPhyDat(tokens)
+#' morphyObj <- PhyDat2Morphy(pd)
 #'
+#' RandomTreeScore(morphyObj)
+#' 
+#' morphyObj <- UnloadMorphy(morphyObj)
 #' @export
-RandomTreeScore <- function (nTip, morphyObj) {  
-  if (nTip < 3L) {
-    warning("nTip < 3 not implemented, as there's only one unrooted topology.")
-    return (0L)
-  }
+RandomTreeScore <- function (morphyObj) {
+  nTip <- mpl_get_numtaxa(morphyObj)
   # Return:
   .Call('RANDOM_TREE_SCORE', as.integer(nTip), morphyObj)
 }
