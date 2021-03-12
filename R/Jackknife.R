@@ -38,23 +38,26 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
     stop("resampleFreq of ", resampleFreq, " is too high; can't keep all ",
          length(deindexedChars), " characters.")
   }
-  if (verbosity > 10L) message(" * Beginning search:")
+  if (verbosity > 10L) { # nocov start
+    message(" * Beginning search:")
+  } # nocov end
   
   # Conduct jackIter replicates:
   jackEdges <- vapply(seq_len(jackIter), function (x) {
-    if (verbosity > 0L) {
+    if (verbosity > 0L) { # nocov start
       message(" * Jackknife iteration ", x, "/", jackIter)
-    }
+    } # nocov end
     resampling <- tabulate(sample(deindexedChars, charsToKeep, replace = FALSE),
                            nbins = length(startWeights))
     errors <- vapply(eachChar, function (i) 
       mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
-    if (any(errors)) {
-      stop ("Error resampling morphy object: ", mpl_translate_error(unique(errors[errors < 0L])))
+    if (any(errors)) { # nocov start
+      stop ("Error resampling morphy object: ", 
+            mpl_translate_error(unique(errors[errors < 0L])))
     }
     if (mpl_apply_tipdata(morphyObj) -> error) {
       stop("Error applying tip data: ", mpl_translate_error(error))
-    }
+    } # nocov end
     res <- EdgeListSearch(edgeList[1:2], morphyObj, EdgeSwapper=EdgeSwapper,
                           maxIter=searchIter, maxHits=searchHits,
                           verbosity = verbosity - 1L, ...)
