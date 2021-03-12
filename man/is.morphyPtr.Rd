@@ -6,8 +6,13 @@
 \usage{
 is.morphyPtr(morphyObj)
 }
+\arguments{
+\item{morphyObj}{Object of class \code{morphy}, perhaps created with
+\code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}}.}
+}
 \value{
-\code{is.morphyPtr()} returns a logical of length 1.
+\code{is.morphyPtr()} returns \code{TRUE} if \code{morphyObj} is a valid morphy
+pointer, \code{FALSE} otherwise.
 }
 \description{
 Is an object a valid Morphy object?

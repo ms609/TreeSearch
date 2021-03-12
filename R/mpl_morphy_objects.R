@@ -238,8 +238,9 @@ SingleCharMorphy <- function (char, gap = 'inapp') {
 }
 
 #' Is an object a valid Morphy object?
-#' 
-#' @return `is.morphyPtr()` returns a logical of length 1.
+#' @template morphyObjParam
+#' @return `is.morphyPtr()` returns `TRUE` if `morphyObj` is a valid morphy 
+#' pointer, `FALSE` otherwise.
 #' @template MRS
 #' @export
 is.morphyPtr <- function (morphyObj) {
