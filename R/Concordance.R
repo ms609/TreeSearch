@@ -11,11 +11,11 @@
 #' with any tree that groups the first two leaves together to the exclusion
 #' of the second.
 #' 
-#' `ClusteringConcordance()` and `PhylogeneticConcordance()` respectively report
-#' the proportion of clustering information and phylogenetic information 
-#' (as defined in Smith 2020) within a dataset that is reflected in each split.
-#' These give smaller values because a split may be compatible with a character
-#' without being identical to it.
+# `ClusteringConcordance()` and `PhylogeneticConcordance()` respectively report
+# the proportion of clustering information and phylogenetic information 
+# (as defined in Vinh 2010, Smith 2020) within a dataset that is reflected in each split.
+# These give smaller values because a split may be compatible with a character
+# without being identical to it.
 #TODO More thought / explanation needed.
 #' 
 #TODO Finally, `ProfileConcordance()` (to follow)
@@ -27,9 +27,12 @@
 #' 
 #' 
 #' @references 
+#' 
 #' \insertRef{Binh2020}{TreeSearch}
 #' 
 #' \insertRef{Smith2020}{TreeSearch}
+#' 
+#' \insertRef{Vinh2010}{TreeDist}
 #' @examples 
 #' data('Lobo')
 #' dataset <- Lobo.phy
@@ -37,6 +40,8 @@
 #' qc <- QuartetConcordance(tree, dataset)
 #' cc <- ClusteringConcordance(tree, dataset)
 #' pc <- PhylogeneticConcordance(tree, dataset)
+#' spc <- SharedPhylogeneticConcordance(tree, dataset)
+#' mcc <- MutualClusteringConcordance(tree, dataset)
 #' 
 #' oPar <- par(mar = rep(0, 4), cex = 0.8)
 #' plot(tree)
@@ -45,7 +50,7 @@
 #' LabelSplits(tree, signif(pc, 3))
 #' par(oPar)
 #' 
-#' pairs(cbind(qc, cc, pc))
+#' pairs(cbind(qc, cc, pc, spc, mcc))
 #' @template MRS
 #' @importFrom ape keep.tip
 #' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
@@ -68,10 +73,84 @@ QuartetConcordance <- function (tree, dataset) {
   status[, 1] / status[, 2]
 }
 
+#' @importFrom TreeDist Entropy
+.Entropy <- function (...) {
+  Entropy (c(...) / sum(...))
+}
+
+#' @rdname SiteConcordance
+#' @importFrom TreeTools Subsplit
+#' @export
+ClusteringConcordance <- function (tree, dataset) {
+  splits <- as.logical(as.Splits(tree))
+  
+  at <- attributes(dataset)
+  cont <- at$contrast
+  if ('-' %in% colnames(cont)) cont[cont[, '-'] > 0, ] <- 1
+  ambiguous <- rowSums(cont) != 1
+  
+  mat <- matrix(unlist(dataset), length(dataset), byrow = TRUE)
+  mat[mat %in% which(ambiguous)] <- NA
+  mat <- apply(mat, 2, function (x) {
+    uniques <- table(x) == 1
+    x[x %in% names(uniques[uniques])] <- NA
+    x
+  })
+  
+  h <- apply(mat, 2, function (char) {
+    aChar <- !is.na(char)
+    ch <- char[aChar]
+    hChar <- .Entropy(table(ch))
+    h <- apply(splits[, aChar], 1, function (spl) {
+      c(hSpl = .Entropy(table(spl)), hJoint =  .Entropy(table(ch, spl)))
+    })
+    
+    cbind(hSum = hChar + h['hSpl', ], joint = h['hJoint', ])
+  })
+  
+  splitI <- seq_len(dim(splits)[1])
+  both <- rowSums(h[splitI, at$index])
+  joint <- rowSums(h[-splitI, at$index])
+  mi <- both - joint
+  
+  # Return:
+  mi / joint
+}
+
+#' @rdname SiteConcordance
+#' @importFrom TreeTools as.multiPhylo CladisticInfo
+#' @export
+PhylogeneticConcordance <- function (tree, dataset) {
+  splits <- as.Splits(tree)
+  characters <- as.multiPhylo(dataset)
+  
+  blankRet <- matrix(0, length(splits), 2,
+                     dimnames = list(names(splits),
+                                     c('concordant', 'possible')))
+  
+  support <- rowSums(vapply(characters, function (char) {
+    ret <- blankRet
+    if (NTip(char) > 3L) {
+      thinned <- Subsplit(splits, TipLabels(char))
+      compatible <- CompatibleSplits(thinned, char)
+      if (length(compatible)) {
+        ci <- CladisticInfo(thinned)
+        ret[names(thinned), 'concordant'] <- ci * apply(compatible, 1, all)
+        ret[names(thinned), 'possible'] <- ci
+      }
+    }
+    # Return:
+    ret
+  }, blankRet), dims = 2)
+  
+  # Return:
+  support[, 1] / support[, 2]
+}
+
 #' @rdname SiteConcordance
 #' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
 #' @export
-ClusteringConcordance <- function (tree, dataset) {
+MutualClusteringConcordance <- function (tree, dataset) {
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
   
@@ -86,9 +165,10 @@ ClusteringConcordance <- function (tree, dataset) {
 }
 
 #' @rdname SiteConcordance
+#' @importFrom TreeTools as.multiPhylo
 #' @importFrom TreeDist ClusteringInfo SharedPhylogeneticInfo
 #' @export
-PhylogeneticConcordance <- function (tree, dataset) {
+SharedPhylogeneticConcordance <- function (tree, dataset) {
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
   

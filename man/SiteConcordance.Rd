@@ -5,6 +5,8 @@
 \alias{QuartetConcordance}
 \alias{ClusteringConcordance}
 \alias{PhylogeneticConcordance}
+\alias{MutualClusteringConcordance}
+\alias{SharedPhylogeneticConcordance}
 \title{Calculate site concordance factor}
 \usage{
 QuartetConcordance(tree, dataset)
@@ -12,6 +14,10 @@ QuartetConcordance(tree, dataset)
 ClusteringConcordance(tree, dataset)
 
 PhylogeneticConcordance(tree, dataset)
+
+MutualClusteringConcordance(tree, dataset)
+
+SharedPhylogeneticConcordance(tree, dataset)
 }
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
@@ -31,12 +37,6 @@ all relationships between those leaves are equally parsimonious.
 But a quartet with characters \verb{0 0 1 1} is decisive, and is concordant
 with any tree that groups the first two leaves together to the exclusion
 of the second.
-
-\code{ClusteringConcordance()} and \code{PhylogeneticConcordance()} respectively report
-the proportion of clustering information and phylogenetic information
-(as defined in Smith 2020) within a dataset that is reflected in each split.
-These give smaller values because a split may be compatible with a character
-without being identical to it.
 }
 \examples{
 data('Lobo')
@@ -45,6 +45,8 @@ tree <- NJTree(dataset)
 qc <- QuartetConcordance(tree, dataset)
 cc <- ClusteringConcordance(tree, dataset)
 pc <- PhylogeneticConcordance(tree, dataset)
+spc <- SharedPhylogeneticConcordance(tree, dataset)
+mcc <- MutualClusteringConcordance(tree, dataset)
 
 oPar <- par(mar = rep(0, 4), cex = 0.8)
 plot(tree)
@@ -53,12 +55,14 @@ LabelSplits(tree, signif(cc, 3))
 LabelSplits(tree, signif(pc, 3))
 par(oPar)
 
-pairs(cbind(qc, cc, pc))
+pairs(cbind(qc, cc, pc, spc, mcc))
 }
 \references{
 \insertRef{Binh2020}{TreeSearch}
 
 \insertRef{Smith2020}{TreeSearch}
+
+\insertRef{Vinh2010}{TreeDist}
 }
 \seealso{
 Other split support functions: 
