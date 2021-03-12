@@ -34,7 +34,7 @@ Imports:
     shinyjs,
     stats,
     TreeDist,
-    TreeTools (>= 1.0.0)
+    TreeTools (>= 1.4.2.9003)
 Suggests:
     knitr,
     rmarkdown,
@@ -45,6 +45,7 @@ LinkingTo:
     Rcpp,
     TreeTools
 SystemRequirements: C++14
+Remotes: ms609/TreeTools
 LazyData: true
 ByteCompile: true
 Encoding: UTF-8
