@@ -680,6 +680,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 #' 
 #' \insertRef{Wagele2009}{TreeSearch}
 #' 
+#' @family split support functions
 #' @export
 Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
                       proportion = 2/3,

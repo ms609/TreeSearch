@@ -26,6 +26,11 @@ reference:
       - Evaluate
       - RandomTreeScore
       
+  - title: "Split support"
+    desc: "Functions that calculate node support."
+    contents: 
+      - has_concept("split support functions")
+      
   - title: "Tree rearrangement"
     desc: > 
       Tree rearrangement functions

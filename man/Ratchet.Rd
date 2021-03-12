@@ -212,10 +212,16 @@ par(oldPar)
 \item Adapted from \code{\link[phangorn:parsimony]{pratchet}} in the
 \pkg{phangorn} package.
 }
+
+Other split support functions: 
+\code{\link{JackLabels}()},
+\code{\link{MaximizeParsimony}()},
+\code{\link{SiteConcordance}}
 }
 \author{
 Martin R. Smith
 
 Martin R. Smith
 }
+\concept{split support functions}
 \keyword{tree}

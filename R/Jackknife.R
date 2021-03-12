@@ -11,6 +11,7 @@
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @seealso 
 #' - [`JackLabels()`]: Label nodes of a tree with jackknife supports.
+#' @family split support functions
 #' @export
 Jackknife <- function (tree, dataset, resampleFreq = 2/3,
                        InitializeData = PhyDat2Morphy,
@@ -108,6 +109,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' @importFrom ape nodelabels
 #' @importFrom TreeTools SplitFrequency SupportColour
 #' @seealso [`Jackknife()`]: Generate trees by jackknife resampling
+#' @family split support functions
 #' @export
 JackLabels <- function (tree, jackTrees,
                         plot = TRUE,
