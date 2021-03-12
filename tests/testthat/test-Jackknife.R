@@ -35,6 +35,7 @@ test_that("Jackknife ouputs good for node.labels", {
   
   skip_if_not_installed('vdiffr')
   vdiffr::expect_doppelganger('plot-jackknife', {
-    JackLabels(tree, jackTrees)
-    })
+    expect_equal(as.double(JackLabels(tree, jackTrees, plot = FALSE)[-c(1, 4)]),
+                 unname(JackLabels(tree, jackTrees)))
+  })
 })
