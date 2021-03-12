@@ -27,6 +27,7 @@ Imports:
     cluster,
     phangorn (>= 2.2.1),
     protoclust,
+    Quartet,
     Rcpp,
     Rdpack,
     shiny,
