@@ -88,7 +88,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' by `phylo$node.label`.
 #' 
 #' @examples
-#' library('TreeTools') # for as.phylo
+#' library('TreeTools', quietly = TRUE) # for as.phylo
 #' 
 #' # jackTrees will usually be generated with Jackknife(), but for simplicity:
 #' jackTrees <- as.phylo(1:100, 8)

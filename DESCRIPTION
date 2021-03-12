@@ -37,7 +37,8 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
-    testthat
+    testthat,
+    vdiffr
 RdMacros: Rdpack
 LinkingTo:
     Rcpp,

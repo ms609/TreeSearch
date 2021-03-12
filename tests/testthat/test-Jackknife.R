@@ -20,7 +20,7 @@ test_that("Jackknife supports are correct", {
 })
 
 test_that("Jackknife ouputs good for node.labels", {
-  library('TreeTools') # for as.phylo
+  library('TreeTools', quietly = TRUE) # for as.phylo
   
   # jackTrees will usually be generated with Jackknife(), but for simplicity:
   jackTrees <- as.phylo(1:100, 8)
@@ -32,4 +32,9 @@ test_that("Jackknife ouputs good for node.labels", {
   tree <- RootTree(as.phylo(0, 8), c('t1', 't4'))
   expect_equal(c('', '0.08', '0.13', '', '0.14', '1', '1'),
                JackLabels(tree, jackTrees, plot = FALSE))
-  })
+  
+  skip_if_not_installed('vdiffr')
+  vdiffr::expect_doppelganger('plot-jackknife', {
+    JackLabels(tree, jackTrees)
+    })
+})
