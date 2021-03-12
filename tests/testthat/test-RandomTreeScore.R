@@ -6,4 +6,9 @@ test_that("Errors are handled", {
   expect_error(RandomMorphyTree(-1))
   expect_error(RandomMorphyTree(0))
   expect_error(RandomMorphyTree(1))
+  
+})
+
+test_that("Two tip 'random' tree", {
+  expect_equal(list(c(2, 2, 2), 0, 1), RandomMorphyTree(2))
 })
