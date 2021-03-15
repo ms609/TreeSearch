@@ -80,6 +80,7 @@ QuartetConcordance <- function (tree, dataset) {
 
 #' @rdname SiteConcordance
 #' @importFrom TreeTools Subsplit
+#' @importFrom stats setNames
 #' @export
 ClusteringConcordance <- function (tree, dataset) {
   splits <- as.logical(as.Splits(tree))
@@ -114,7 +115,7 @@ ClusteringConcordance <- function (tree, dataset) {
   mi <- both - joint
   
   # Return:
-  mi / joint
+  setNames(mi / joint, rownames(splits))
 }
 
 #' @rdname SiteConcordance

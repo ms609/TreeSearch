@@ -77,10 +77,10 @@ continuing the search for a little longer, fine-tuning the search parameters:
 
 ```{r second-pass}
 bestTrees <- MaximizeParsimony(vinther, tree = bestTrees,
-                               ratchIter = 8L,
+                               ratchIter = 6L,
                                tbrIter = 4L, 
                                finalIter = 1L,
-                               maxHits = 40L)
+                               maxHits = 50L)
 ```
 
 As it happens, the best tree for this dataset has a score of 79 under
@@ -118,11 +118,13 @@ support; the code here gives a quick-to-run jackknife framework that can be
 adapted to the requirements of a particular dataset.
 
 ```{r Jackknife-annotations}
-nReplicates <- 5
+nReplicates <- 10
 jackTrees <- lapply(logical(nReplicates), function (x)
   Resample(vinther, bestTrees, ratchIter = 0, tbrIter = 1, maxHits = 4,
           concavity = 10, verbosity = 0)
 )
+
+par(mar = rep(0, 4), cex = 0.8)
 # Take the strict consensus of all trees for each replicate
 JackLabels(cons, lapply(jackTrees, ape::consensus)) -> XX
 ```
@@ -140,12 +142,14 @@ whether a dataset is unanimous or divided in support of a grouping.
 concordance <- ClusteringConcordance(cons, vinther)
 
 # Alternative measures:
-# qc <- QuartetConcordance(cons, vinther)
-# pc <- PhylogeneticConcordance(cons, vinther)
+# concordance <- QuartetConcordance(cons, vinther)
+# concordance <- PhylogeneticConcordance(cons, vinther)
 
 par(mar = rep(0, 4), cex = 0.8)
 plot(cons)
-TreeTools::LabelSplits(tree, signif(concordance, 3))
+TreeTools::LabelSplits(cons, signif(concordance, 3),
+                       col = TreeTools::SupportColor(concordance / max(concordance)),
+                       frame = 'none', pos = 3L)
 ```
 
 
