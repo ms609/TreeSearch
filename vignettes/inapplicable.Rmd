@@ -69,18 +69,18 @@ set.seed(0)
 
 We can conduct a basic parsimony search with:
 ```{r first-pass}
-bestTree <- MaximizeParsimony(vinther)
+bestTrees <- MaximizeParsimony(vinther)
 ```
 
 Noting that a number of iterations failed to hit the best score, we might consider
 continuing the search for a little longer, fine-tuning the search parameters:
 
 ```{r second-pass}
-bestTree <- MaximizeParsimony(vinther, tree = bestTree,
-                              ratchIter = 8L,
-                              tbrIter = 4L, 
-                              finalIter = 1L,
-                              maxHits = 40L)
+bestTrees <- MaximizeParsimony(vinther, tree = bestTrees,
+                               ratchIter = 8L,
+                               tbrIter = 4L, 
+                               finalIter = 1L,
+                               maxHits = 40L)
 ```
 
 As it happens, the best tree for this dataset has a score of 79 under
@@ -91,8 +91,8 @@ We can plot the best tree(s) that we've found, and check its parsimony score
 
 ```{r plot-tree}
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-plot(ape::consensus(bestTree))
-TreeLength(bestTree[[1]], vinther)
+plot(ape::consensus(bestTrees))
+TreeLength(bestTrees[[1]], vinther)
 ```
 
 ### Evaluating clade support
@@ -102,8 +102,8 @@ sampled most-parsimonious trees:
 
 ```{r plot-label-nodes}
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-cons <- ape::consensus(bestTree, p = 0.5)
-splitFreqs <- TreeTools::SplitFrequency(cons, bestTree) / length(bestTree)
+cons <- ape::consensus(bestTrees, p = 0.5)
+splitFreqs <- TreeTools::SplitFrequency(cons, bestTrees) / length(bestTrees)
 plot(cons)
 TreeTools::LabelSplits(cons, round(splitFreqs * 100), unit = '%',
                        col = TreeTools::SupportColor(splitFreqs),
@@ -119,12 +119,12 @@ adapted to the requirements of a particular dataset.
 
 ```{r Jackknife-annotations}
 nReplicates <- 5
-jackTrees <- lapply(logical(nReplicates), function (x) 
- Resample(dataset, trees, ratchIter = 0, tbrIter = 1, maxHits = 4,
+jackTrees <- lapply(logical(nReplicates), function (x)
+  Resample(vinther, bestTrees, ratchIter = 0, tbrIter = 1, maxHits = 4,
           concavity = 10, verbosity = 0)
 )
 # Take the strict consensus of all trees for each replicate
-JackLabels(ape::consensus(trees), lapply(jackTrees, ape::consensus)) -> XX
+JackLabels(cons, lapply(jackTrees, ape::consensus)) -> XX
 ```
 
 Jackknife and bootstrap support values give an indication of the volume of data
@@ -137,7 +137,7 @@ smaller number of characters contradicting it.
 whether a dataset is unanimous or divided in support of a grouping.
 
 ```{r concordance}
-
+qc <- QuartetConcordance(cons, vinther)
 ```
 
 

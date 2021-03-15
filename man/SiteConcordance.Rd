@@ -41,7 +41,7 @@ of the second.
 \examples{
 data('Lobo', package = 'TreeTools')
 dataset <- Lobo.phy
-tree <- NJTree(dataset)
+tree <- TreeTools::NJTree(dataset)
 qc <- QuartetConcordance(tree, dataset)
 cc <- ClusteringConcordance(tree, dataset)
 pc <- PhylogeneticConcordance(tree, dataset)
@@ -60,7 +60,7 @@ pairs(cbind(qc, cc, pc, spc, mcc))
 \references{
 \insertRef{Minh2020}{TreeSearch}
 
-\insertRef{Smith2020}{TreeSearch}
+\insertRef{SmithDist}{TreeDist}
 
 \insertRef{Vinh2010}{TreeDist}
 }
