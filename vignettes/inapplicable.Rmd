@@ -136,7 +136,8 @@ indicate a large number of characters supporting a clade, and an only slightly
 smaller number of characters contradicting it.
 
 'TreeSearch' implements a number of concordance measures that aim to indicate
-whether a dataset is unanimous or divided in support of a grouping.
+whether a dataset is unanimous or divided in support of a grouping, 
+independently of the method of tree reconstruction.
 
 ```{r concordance}
 concordance <- ClusteringConcordance(cons, vinther)
