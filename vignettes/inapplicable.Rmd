@@ -95,6 +95,8 @@ plot(ape::consensus(bestTree))
 TreeLength(bestTree[[1]], vinther)
 ```
 
+### Evaluating clade support
+
 We might be interested in labelling clades with their frequency among the 
 sampled most-parsimonious trees:
 
@@ -109,16 +111,36 @@ TreeTools::LabelSplits(cons, round(splitFreqs * 100), unit = '%',
 ```
 
 A more instructive measure of clade support can be generated using
-Jackknife resampling:
+Jackknife resampling.
+The [`Resample()`] manual page has suggestions for appropriate numbers of 
+replicates and search intensity, and instructions for calcuating bootstrap
+support; the code here gives a quick-to-run jackknife framework that can be
+adapted to the requirements of a particular dataset.
 
-```{r Jackknife-annotations, eval = FALSE}
-#TODO
-jack.trees <- Jackknife(bestTree[[1]], vinther, EdgeSwapper = RootedTBRSwap,
-                        jackIter = 20, verbosity = 0)
-par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-
-JackLabels(strict.consensus, jack.trees) -> XX
+```{r Jackknife-annotations}
+nReplicates <- 5
+jackTrees <- lapply(logical(nReplicates), function (x) 
+ Resample(dataset, trees, ratchIter = 0, tbrIter = 1, maxHits = 4,
+          concavity = 10, verbosity = 0)
+)
+# Take the strict consensus of all trees for each replicate
+JackLabels(ape::consensus(trees), lapply(jackTrees, ape::consensus)) -> XX
 ```
+
+Jackknife and bootstrap support values give an indication of the volume of data
+that supports each node, but doesn't necessarily indicate whether the data
+are unanimous on the existence of a clade: a high bootstrap support value could
+indicate a large number of characters supporting a clade, and an only slightly
+smaller number of characters contradicting it.
+
+'TreeSearch' implements a number of concordance measures that aim to indicate
+whether a dataset is unanimous or divided in support of a grouping.
+
+```{r concordance}
+
+```
+
+
 
 
 ## Implied weighting
