@@ -45,9 +45,9 @@
 #' 
 #' oPar <- par(mar = rep(0, 4), cex = 0.8)
 #' plot(tree)
-#' LabelSplits(tree, signif(qc, 3))
-#' LabelSplits(tree, signif(cc, 3))
-#' LabelSplits(tree, signif(pc, 3))
+#' TreeTools::LabelSplits(tree, signif(qc, 3))
+#' TreeTools::LabelSplits(tree, signif(cc, 3))
+#' TreeTools::LabelSplits(tree, signif(pc, 3))
 #' par(oPar)
 #' 
 #' pairs(cbind(qc, cc, pc, spc, mcc))

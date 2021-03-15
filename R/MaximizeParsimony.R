@@ -125,7 +125,7 @@
 #' 
 #' \insertRef{Smith2019}{TreeSearch}
 #' @export
-MaximizeParsimony <- function (dataset, tree = TreeTools::NJTree(dataset),
+MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                ratchIter = 12L, tbrIter = 6L, finalIter = 3L,
                                maxHits = 20L,
                                concavity = Inf,
