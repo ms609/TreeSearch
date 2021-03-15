@@ -118,7 +118,7 @@ ClusteringConcordance <- function (tree, dataset) {
 }
 
 #' @rdname SiteConcordance
-#' @importFrom TreeTools as.multiPhylo CladisticInfo
+#' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
 #' @export
 PhylogeneticConcordance <- function (tree, dataset) {
   splits <- as.Splits(tree)

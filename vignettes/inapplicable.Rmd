@@ -137,7 +137,15 @@ smaller number of characters contradicting it.
 whether a dataset is unanimous or divided in support of a grouping.
 
 ```{r concordance}
-qc <- QuartetConcordance(cons, vinther)
+concordance <- ClusteringConcordance(cons, vinther)
+
+# Alternative measures:
+# qc <- QuartetConcordance(cons, vinther)
+# pc <- PhylogeneticConcordance(cons, vinther)
+
+par(mar = rep(0, 4), cex = 0.8)
+plot(cons)
+TreeTools::LabelSplits(tree, signif(concordance, 3))
 ```
 
 

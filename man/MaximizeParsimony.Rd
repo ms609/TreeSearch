@@ -9,7 +9,7 @@
 \usage{
 MaximizeParsimony(
   dataset,
-  tree = NJTree(dataset),
+  tree = TreeTools::NJTree(dataset),
   ratchIter = 12L,
   tbrIter = 6L,
   finalIter = 3L,
