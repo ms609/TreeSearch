@@ -62,7 +62,8 @@
 #' @param session 'shiny' session identifier to allow [`setProgress()`] calls
 #' to be sent when `MaximizeParsimony()` is called from within a shiny app..
 #' 
-#'
+#' @return `MaximizeParsimony()` returns...
+#' #TODO
 #' @examples
 #' \dontrun{ # launch 'shiny' point-and-click interface
 #'   EasyTrees() 
@@ -668,7 +669,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 #' optimal tree) or a random tree (which may take longer as more rearrangements
 #' are necessary to find an optimal tree on each iteration).
 #' 
-#' @return `Resample()`
+#' @return `Resample()` returns ...
+#' #TODO complete
 #' @references 
 #' \insertRef{Egan2006}{TreeSearch}
 #' 

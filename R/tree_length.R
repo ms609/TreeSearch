@@ -27,8 +27,9 @@
 #' If multiple elements are requested then these will be returned in a list.
 #' 
 #' 
-#' @return #TODO if concavity, then The 'fit', `h / h + k`, where `h` is the amount of homoplasy ('extra steps') 
-#'         and `k` is a constant (the 'concavity constant')
+#' @return #TODO if concavity, then The 'fit', `h / h + k`,
+#'  where `h` is the amount of homoplasy ('extra steps') 
+#'  and `k` is a constant (the 'concavity constant')
 #' 
 #' 
 #' @examples

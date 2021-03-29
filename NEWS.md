@@ -1,9 +1,9 @@
 # TreeSearch 0.4.3.9004 (development)
 
- - `EasyTree()` 'shiny' graphical user interface for tree search.
+ - `EasyTree()` 'shiny' graphical user interface for tree search
  - `SiteConcordance()` calculates exact site concordance
- - `Resample()` conducts bootstrap and jackknife resampling.
- - `Consistency()` calculates consistency and retention 'indices'.
+ - `Resample()` conducts bootstrap and jackknife resampling
+ - `Consistency()` calculates consistency and retention 'indices'
  - `MinimumLength()` and `MaximumLength()` calculate range of possible lengths
    of characters in a dataset on any tree
  - Set handling of 'gap' token (-) when creating Morphy object with `gap = `
@@ -16,7 +16,7 @@
 # TreeSearch 0.4.3
 
  - Update tests for compatibility with 'TreeTools' v1.1.0
- - Improve memory and pointer handling.
+ - Improve memory and pointer handling
  
 # TreeSearch 0.4.2
 
