@@ -112,7 +112,11 @@ optimal tree) or a random tree (which may take longer as more rearrangements
 are necessary to find an optimal tree on each iteration).}
 }
 \value{
-\code{Resample()}
+\code{MaximizeParsimony()} returns...
+#TODO
+
+\code{Resample()} returns ...
+#TODO complete
 }
 \description{
 Search for most parsimonious trees using the parsimony ratchet and

@@ -53,7 +53,8 @@ The elements to return are specified by the parameter \code{detail}.
 If a single element is requested (default) then just that element will be returned
 If multiple elements are requested then these will be returned in a list.
 
-#TODO if concavity, then The 'fit', \code{h / h + k}, where \code{h} is the amount of homoplasy ('extra steps')
+#TODO if concavity, then The 'fit', \code{h / h + k},
+where \code{h} is the amount of homoplasy ('extra steps')
 and \code{k} is a constant (the 'concavity constant')
 }
 \description{
