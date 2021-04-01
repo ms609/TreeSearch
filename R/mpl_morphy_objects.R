@@ -142,36 +142,38 @@ PhyDat2Morphy <- function (phy, gap = 'inapplicable') {
     stop('Invalid data type ', class(phy), '; should be phyDat.')
   }
   
-  morphyObj <- mpl_new_Morphy()
+  morphyObj <- structure(mpl_new_Morphy(), class = 'morphyPtr')
   nTax <- length(phy)
   weight <- attr(phy, 'weight')
   nChar <- attr(phy, 'nr')
   
   if (mpl_init_Morphy(nTax, nChar, morphyObj) -> error) {
-    stop("Error ", mpl_translate_error(error), " in mpl_init_Morphy")
+    stop("Error ", mpl_translate_error(error), " in mpl_init_Morphy")           #nocov
   }
   if (mpl_set_gaphandl(.GapHandler(gap), morphyObj) -> error) {
-    stop("Error ", mpl_translate_error(error), " in mpl_set_gaphandl")
+    stop("Error ", mpl_translate_error(error), " in mpl_set_gaphandl")          #nocov
   }
-  if (mpl_attach_rawdata(PhyToString(phy, ps=';', useIndex=FALSE, byTaxon=TRUE, concatenate=TRUE),
+  if (mpl_attach_rawdata(PhyToString(phy, ps=';', useIndex = FALSE,
+                                     byTaxon = TRUE, concatenate = TRUE),
                           morphyObj) -> error) {
-    stop("Error ", mpl_translate_error(error), " in mpl_attach_rawdata")
+    stop("Error ", mpl_translate_error(error), " in mpl_attach_rawdata")        #nocov
   }
   if (mpl_set_num_internal_nodes(nTax - 1L, morphyObj) -> error) { # One is the 'dummy root'
     stop("Error ", mpl_translate_error(error), " in mpl_set_num_internal_nodes")
   }
-  if (any(vapply(seq_len(nChar), function (i) mpl_set_parsim_t(i, 'FITCH', morphyObj), integer(1)) 
-      -> error)) {
-      stop("Error ", mpl_translate_error(min(error)), "in mpl_set_parsim_t")
+  if (any(vapply(seq_len(nChar), 
+                 function (i) mpl_set_parsim_t(i, 'FITCH', morphyObj),
+                 NA_integer_) -> error)) {
+      stop("Error ", mpl_translate_error(min(error)), "in mpl_set_parsim_t")    #nocov
   }
-  if (any(vapply(seq_len(nChar), function (i) mpl_set_charac_weight(i, weight[i], morphyObj),
-      integer(1)) -> error)) {
-    stop("Error ", mpl_translate_error(min(error)), "in mpl_set_charac_weight")
+  if (any(vapply(seq_len(nChar),
+                 function (i) mpl_set_charac_weight(i, weight[i], morphyObj),
+                 NA_integer_) -> error)) {
+    stop("Error ", mpl_translate_error(min(error)), "in mpl_set_charac_weight") #nocov
   }
   if (mpl_apply_tipdata(morphyObj) -> error) {
-    stop("Error ", mpl_translate_error(error), "in mpl_apply_tipdata")
+    stop("Error ", mpl_translate_error(error), "in mpl_apply_tipdata")          #nocov
   }
-  class(morphyObj) <- 'morphyPtr'
   # Return:
   morphyObj
 }

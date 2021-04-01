@@ -1,3 +1,7 @@
+test_that("PhyDat2Morphy() errors", {
+  expect_error(PhyDat2Morphy(NA))
+})
+
 test_that("GapHandler()", {
   expect_error(GapHandler(0))
   tokens <- matrix(c('-', '-', 0, 0), byrow = TRUE, nrow = 4L,
@@ -27,4 +31,3 @@ test_that("GapHandler()", {
   expect_error(SingleCharMorphy('-0-0', 'ERROR'))
   expect_error(GapHandler(morphyObj))
 })
-  
