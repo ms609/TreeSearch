@@ -61,13 +61,13 @@ test_that("Resample() fails and works", {
   expect_equal(c(1/2, 1, 0), jackSupport / nRep,
                tolerance = 0.2)
   
-  bootTrees <- replicate(nRep,Resample(dataset, method = 'bootstrap',
-                                       verbosity = 0))
+  bootTrees <- replicate(nRep, Resample(dataset, method = 'bootstrap',
+                                        verbosity = 0))
   bootSupport <- rowSums(vapply(bootTrees,
                                 function (tr) {ref %in% as.Splits(tr[[1]])},
                                 logical(3)))
   # This test could be replaced with a more statistically robust alternative!
-  expect_equal(c(1/2, 1, 0), bootSupport / length(bootTrees),
+  expect_equal(c(1/2, 1, 0), bootSupport / nRep,
                tolerance = 0.2)
     
 })
