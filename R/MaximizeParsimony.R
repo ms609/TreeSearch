@@ -76,14 +76,14 @@
 #' 
 #' # A very quick run for demonstration purposes
 #' trees <- MaximizeParsimony(dataset, ratchIter = 0, tbrIter = 1, 
-#'                           concavity = 10, maxHits = 5, verbosity = 4)
+#'                           concavity = 10, maxHits = 3, verbosity = 4)
 #'                   
-#' # Be sure to check that the score has converged on a global optimum,
-#' # conducting additional iterations and runs as necessary.
+#' # In actual use, be sure to check that the score has converged on a global
+#' # optimum, conducting additional iterations and runs as necessary.
 #'                   
 #' # Jackknife resampling
 #' nReplicates <- 5
-#' jackTrees <- lapply(logical(nReplicates), function (x) 
+#' jackTrees <- replicate(nReplicates,
 #'   Resample(dataset, trees, ratchIter = 0, tbrIter = 1, maxHits = 4,
 #'            concavity = 10, verbosity = 0)
 #'  )
