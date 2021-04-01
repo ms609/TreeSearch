@@ -669,8 +669,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 #' optimal tree) or a random tree (which may take longer as more rearrangements
 #' are necessary to find an optimal tree on each iteration).
 #' 
-#' @return `Resample()` returns ...
-#' #TODO complete
+#' @return `Resample()` returns a `multiPhylo` object containing a list of
+#' trees obtained by tree search using a resampled version of `dataset`.
 #' @references 
 #' \insertRef{Egan2006}{TreeSearch}
 #' 
@@ -688,8 +688,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 #' @export
 Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
                       proportion = 2/3,
-                      ratchIter = 1L, tbrIter = 6L, finalIter = 3L,
-                      maxHits = 10L, concavity = Inf,
+                      ratchIter = 1L, tbrIter = 8L, finalIter = 3L,
+                      maxHits = 12L, concavity = Inf,
                       tolerance = sqrt(.Machine$double.eps),
                       constraint = NULL,
                       verbosity = 2L, session = NULL) {
