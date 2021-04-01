@@ -21,13 +21,13 @@ EdgeListSearch <- function (edgeList, dataset,
     }
   }
   if (verbosity > 0L) {
-    message("  - Performing tree search.  Initial score: ", bestScore) # nocov
+    message("  - Performing tree search.  Initial score: ", bestScore) #nocov
   }
   if (!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) {
-    if (verbosity > 0L) {  # nocov start
+    if (verbosity > 0L) {  #nocov start
       message("  - Aborting tree search as tree score ", bestScore, 
               " already below target of ", stopAtScore)
-    } # nocov end
+    } #nocov end
     edgeList[[3]] <- bestScore
     return(edgeList)
   }
@@ -52,11 +52,11 @@ EdgeListSearch <- function (edgeList, dataset,
         return(edgeList)
       }
     } else if (stopAtPeak && scoreThisIteration > bestScore + epsilon) {
-      if (verbosity > 1L) { # nocov start
+      if (verbosity > 1L) { #nocov start
         message("    ! Iteration ", iter, 
                 " - No TBR rearrangement improves score. ",
                 scoreThisIteration, " doesn't beat ", bestScore)
-      } # nocov end
+      } #nocov end
       break
     }
     unimprovedSince <- unimprovedSince + 1L
@@ -73,16 +73,16 @@ EdgeListSearch <- function (edgeList, dataset,
     }
     
     if (hits >= maxHits) {
-      if (verbosity > 1L) { # nocov start
+      if (verbosity > 1L) { #nocov start
         message("  - Terminating search; hit best score ", hits, " times.")
-      } # nocov end
+      } #nocov end
       break
     }
   }
-  if (verbosity > 0L) { # nocov start
+  if (verbosity > 0L) { #nocov start
     message("  - Final score ", bestScore, " found ", hits, " times after ",
             iter, " rearrangements.", if (verbosity > 1L) '\n' else '')
-  } # nocov end
+  } #nocov end
   
   edgeList[3:4] <- c(bestScore, hits)
   

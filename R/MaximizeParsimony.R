@@ -138,27 +138,27 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     if (level < verbosity) {
       message(rep(' ', level), '- ', ...)
     }
-  } else function (level, ...) { # nocov start
+  } else function (level, ...) { #nocov start
     if (level < verbosity) {
       setProgress(message = paste0(...))
     }
-  } # nocov end
+  } #nocov end
   
-  .NewOperation <- function(...) if (!is.null(session)) { # nocov start
+  .NewOperation <- function(...) if (!is.null(session)) { #nocov start
     setProgress(0, message = paste0(...))
   }
   .Progress <- function(x, ...) if (!is.null(session)) {
     setProgress(x, message = paste0(...))
-  } # nocov end
+  } #nocov end
   
   .TBRSearch <- function (edge, nTip, morphyObj, tbrIter, maxHits) {
     if (is.null(session)) {
       .DoTBRSearch(edge, nTip, morphyObj, tbrIter, maxHits)
-    } else { # nocov start
+    } else { #nocov start
       withProgress(message = 'TBR search',
                    .DoTBRSearch(edge, nTip, morphyObj, tbrIter, maxHits)
       )
-    } # nocov end
+    } #nocov end
   }
   
   .DoTBRSearch <- function (edge, nTip, morphyObj, tbrIter, maxHits) {
@@ -221,12 +221,12 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     if (is.null(session)) {
       .DoIWTBRSearch(edge, nTip, morphyObjects, weight, minLength, charSeq,
                      concavity, tbrIter, maxHits)
-    } else { # nocov start
+    } else { #nocov start
       withProgress(message = 'TBR search',
                    .DoIWTBRSearch(edge, nTip, morphyObjects, weight, minLength,
                                   charSeq, concavity, tbrIter, maxHits)
       )
-    } # nocov end
+    } #nocov end
   }
   
   .DoIWTBRSearch <- function (edge, nTip, morphyObjects, weight, minLength,
@@ -293,12 +293,12 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     if (is.null(session)) {
       .DoProfileTBRSearch(edge, nTip, morphyObjects, weight, charSeq, profiles,
                           tbrIter, maxHits)
-    } else { # nocov start
+    } else { #nocov start
       withProgress(message = 'TBR search',
                    .DoProfileTBRSearch(edge, nTip, morphyObjects, weight, 
                                        charSeq, profiles, tbrIter, maxHits)
       )
-    } # nocov end
+    } #nocov end
   }
   
   .DoProfileTBRSearch <- function (edge, nTip, morphyObjects, weight, charSeq,
@@ -737,10 +737,10 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
 #' @importFrom protoclust protoclust
 #' @importFrom cluster pam silhouette
 #' @export
-EasyTrees <- function () # nocov start
+EasyTrees <- function () #nocov start
   shiny::runApp(system.file('Parsimony', package = 'TreeSearch'))
 
 #' @rdname MaximizeParsimony
 #' @export
 EasyTreesy <- EasyTrees
-# nocov end
+#nocov end
