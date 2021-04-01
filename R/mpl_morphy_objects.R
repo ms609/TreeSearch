@@ -267,7 +267,7 @@ UnloadMorphy <- function (morphyObj) {
     stop ("Object is not a valid pointer; cannot destroy.")
   }
   if (mpl_delete_Morphy(morphyObj) -> error) {
-    stop("Error ", mpl_translate_error(error), "in mpl_delete_Morphy")
+    stop("Error ", mpl_translate_error(error), "in mpl_delete_Morphy")          #nocov
   }
   return (error)
 }
