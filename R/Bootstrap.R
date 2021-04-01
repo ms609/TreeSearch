@@ -23,13 +23,13 @@ MorphyBootstrap <- function (edgeList, morphyObj, EdgeSwapper = NNISwap,
   errors <- vapply(eachChar, function (i) 
             mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
   
-  if (any(errors)) { # nocov begin
+  if (any(errors)) { #nocov begin
     stop ("Error resampling morphy object: ",
           mpl_translate_error(unique(errors[errors < 0L])))
   }
   if (mpl_apply_tipdata(morphyObj) -> error) {
     stop("Error applying tip data: ", mpl_translate_error(error))
-  } # nocov end
+  } #nocov end
   
   res <- EdgeListSearch(edgeList[1:2], morphyObj, EdgeSwapper = EdgeSwapper,
                         maxIter = maxIter, maxHits = maxHits,
@@ -37,13 +37,13 @@ MorphyBootstrap <- function (edgeList, morphyObj, EdgeSwapper = NNISwap,
                         verbosity = verbosity - 1L, ...)
   errors <- vapply(eachChar, function (i) 
          mpl_set_charac_weight(i, startWeights[i], morphyObj), integer(1))
-  if (any(errors)) { # nocov begin
+  if (any(errors)) { #nocov begin
     stop ("Error resampling morphy object: ",
           mpl_translate_error(unique(errors[errors < 0L])))
   }
   if (mpl_apply_tipdata(morphyObj) -> error) {
     stop("Error applying tip data: ", mpl_translate_error(error))
-  } # nocov end
+  } #nocov end
   
   # Return:
   res[1:2]
