@@ -27,9 +27,9 @@ Resample(
   method = "jack",
   proportion = 2/3,
   ratchIter = 1L,
-  tbrIter = 6L,
+  tbrIter = 8L,
   finalIter = 3L,
-  maxHits = 10L,
+  maxHits = 12L,
   concavity = Inf,
   tolerance = sqrt(.Machine$double.eps),
   constraint = NULL,
@@ -115,8 +115,8 @@ are necessary to find an optimal tree on each iteration).}
 \code{MaximizeParsimony()} returns...
 #TODO
 
-\code{Resample()} returns ...
-#TODO complete
+\code{Resample()} returns a \code{multiPhylo} object containing a list of
+trees obtained by tree search using a resampled version of \code{dataset}.
 }
 \description{
 Search for most parsimonious trees using the parsimony ratchet and
