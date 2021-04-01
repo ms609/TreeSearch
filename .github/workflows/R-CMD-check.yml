@@ -77,6 +77,12 @@ jobs:
         run: |
           remotes::install_github("KlausVigo/phangorn")
         shell: Rscript {0}
+        
+      - name: Install callr (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          remotes::install_cran("callr")
+        shell: Rscript {0}
 
       - name: Install dependencies
         run: |
