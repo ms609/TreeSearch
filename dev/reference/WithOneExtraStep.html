@@ -88,7 +88,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9002</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9004</span>
       </span>
     </div>
 
@@ -110,6 +110,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/custom.html">Tree Search with Custom Optimality Criteria</a>
+    </li>
     <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
@@ -163,21 +166,22 @@
     <p>Number of trees with one extra step</p>
     </div>
 
-    <pre class="usage"><span class='fu'>WithOneExtraStep</span><span class='op'>(</span><span class='va'>splits</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>WithOneExtraStep</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>splits</th>
-      <td><p>A vector of integers listing the number of tips in each of a number of
-tree splits (e.g. bipartitions).  For example, <code><a href='https://rdrr.io/r/base/c.html'>c(3, 5)</a></code> states that
-a character divides a set of eight tips into a group of three and a group
-of five.</p></td>
+      <th>...</th>
+      <td><p>Vector or series of integers specifying the number of leaves
+bearing each distinct non-ambiguous token.</p></td>
     </tr>
     </table>
 
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='fu'>WithOneExtraStep</span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 84</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -189,7 +193,7 @@ of five.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">

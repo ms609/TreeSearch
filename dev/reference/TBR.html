@@ -88,7 +88,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9002</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9004</span>
       </span>
     </div>
 
@@ -110,6 +110,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/custom.html">Tree Search with Custom Optimality Criteria</a>
+    </li>
     <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
@@ -232,8 +235,9 @@ matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 2]</code>.<
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>This function returns a tree in <code>phyDat</code> format that has undergone one <acronym>TBR</acronym> iteration.</p>
-<p><code>TBRMoves()</code> returns a list of all trees one TBR move away from
-<code>tree</code>, with edges and nodes in preorder, rooted on the first-labelled tip.</p>
+<p><code>TBRMoves()</code> returns a <code>multiPhylo</code> object listing all trees one
+<acronym>TBR</acronym> move away from <code>tree</code>, with edges and nodes in preorder,
+rooted on the first-labelled tip.</p>
 <p>a list containing two elements, corresponding in turn to the
 rearranged parent and child parameters</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
@@ -278,7 +282,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
 #&gt; 
 #&gt; Tip labels:
-#&gt;   t19, t9, t1, t18, t5, t20, ...
+#&gt;   t10, t18, t2, t7, t14, t17, ...
 #&gt; 
 #&gt; Rooted; no branch lengths.</div></pre>
   </div>
@@ -292,7 +296,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">

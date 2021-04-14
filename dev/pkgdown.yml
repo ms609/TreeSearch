@@ -2,11 +2,12 @@ pandoc: 2.7.3
 pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
+  custom: custom.html
   getting-started: getting-started.html
   inapplicable: inapplicable.html
   profile-scores: profile-scores.html
   profile: profile.html
-last_built: 2021-03-03T19:58Z
+last_built: 2021-04-14T12:50Z
 urls:
   reference: https://ms609.github.io/TreeSearch/reference
   article: https://ms609.github.io/TreeSearch/articles

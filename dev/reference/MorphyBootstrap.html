@@ -88,7 +88,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9002</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9004</span>
       </span>
     </div>
 
@@ -110,6 +110,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/custom.html">Tree Search with Custom Optimality Criteria</a>
+    </li>
     <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
@@ -173,27 +176,6 @@
   stopAtPeak <span class='op'>=</span> <span class='cn'>FALSE</span>,
   stopAtPlateau <span class='op'>=</span> <span class='fl'>0L</span>,
   <span class='va'>...</span>
-<span class='op'>)</span>
-
-<span class='fu'>ProfileBootstrap</span><span class='op'>(</span>
-  <span class='va'>edgeList</span>,
-  <span class='va'>dataset</span>,
-  EdgeSwapper <span class='op'>=</span> <span class='va'>NNISwap</span>,
-  <span class='va'>maxIter</span>,
-  <span class='va'>maxHits</span>,
-  verbosity <span class='op'>=</span> <span class='fl'>1L</span>,
-  <span class='va'>...</span>
-<span class='op'>)</span>
-
-<span class='fu'>IWBootstrap</span><span class='op'>(</span>
-  <span class='va'>edgeList</span>,
-  <span class='va'>dataset</span>,
-  concavity <span class='op'>=</span> <span class='fl'>10L</span>,
-  EdgeSwapper <span class='op'>=</span> <span class='va'>NNISwap</span>,
-  <span class='va'>maxIter</span>,
-  <span class='va'>maxHits</span>,
-  verbosity <span class='op'>=</span> <span class='fl'>1L</span>,
-  <span class='va'>...</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -227,8 +209,8 @@ and returns a list with modified vectors; for example <code><a href='SPR.html'>S
     </tr>
     <tr>
       <th>verbosity</th>
-      <td><p>Level of detail to display in console: larger numbers provide
-more verbose feedback to the user.</p></td>
+      <td><p>Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.</p></td>
     </tr>
     <tr>
       <th>stopAtPeak</th>
@@ -248,29 +230,11 @@ by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
       <th>...</th>
       <td><p>further parameters to send to <code>TreeScorer()</code></p></td>
     </tr>
-    <tr>
-      <th>dataset</th>
-      <td><p>A phylogenetic data matrix of class <code><a href='https://rdrr.io/pkg/phangorn/man/phyDat.html'>phyDat</a></code>,
-whose names correspond to the labels of any accompanying tree.</p></td>
-    </tr>
-    <tr>
-      <th>concavity</th>
-      <td><p>A numeric value to use as the concavity constant (<code>k</code>)
-in implied weighting. Defaults to 10; TNT sets a default of 3, but this
-is too low in some circumstances (Smith, 2019).</p></td>
-    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>A tree that is optimal under a random sampling of the original characters</p>
-    <h2 class="hasAnchor" id="functions"><a class="anchor" href="#functions"></a>Functions</h2>
-
-    
-<ul>
-<li><p><code>ProfileBootstrap</code>: Bootstrapper for Profile Parsimony</p></li>
-<li><p><code>IWBootstrap</code>: Bootstrapper for Implied weighting</p></li>
-</ul>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -283,7 +247,7 @@ is too low in some circumstances (Smith, 2019).</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">

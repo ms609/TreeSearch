@@ -87,7 +87,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9002</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9004</span>
       </span>
     </div>
 
@@ -109,6 +109,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/custom.html">Tree Search with Custom Optimality Criteria</a>
+    </li>
     <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
@@ -157,21 +160,31 @@
       <small>Source: <a href='https://github.com/ms609/TreeSearch/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="treesearch-0439002-development" class="section level1">
-<h1 class="page-header" data-toc-text="0.4.3.9002">
-<a href="#treesearch-0439002-development" class="anchor"></a>TreeSearch 0.4.3.9002 (development)<small> Unreleased </small>
+    <div id="treesearch-0439004-development" class="section level1">
+<h1 class="page-header" data-toc-text="0.4.3.9004">
+<a href="#treesearch-0439004-development" class="anchor"></a>TreeSearch 0.4.3.9004 (development)<small> Unreleased </small>
 </h1>
 <ul>
-<li>‘shiny’ graphical user interface for tree search.</li>
+<li>
+<code>EasyTree()</code> ‘shiny’ graphical user interface for tree search</li>
+<li>
+<code><a href="../reference/SiteConcordance.html">SiteConcordance()</a></code> calculates exact site concordance</li>
+<li>
+<code><a href="../reference/ConcordantInformation.html">ConcordantInformation()</a></code> evaluates signal:noise of dataset implied by a given tree.</li>
+<li>
+<code><a href="../reference/MaximizeParsimony.html">Resample()</a></code> conducts bootstrap and jackknife resampling</li>
 <li>
 <code><a href="../reference/Consistency.html">Consistency()</a></code> calculates consistency and retention ‘indices’</li>
 <li>
 <code><a href="../reference/MinimumLength.html">MinimumLength()</a></code> and <code>MaximumLength()</code> calculate range of possible lengths of characters in a dataset on any tree</li>
+<li>Set handling of ‘gap’ token (-) when creating Morphy object with <code>gap =</code>
+</li>
 <li>Label nodes with split frequencies using <code><a href="../reference/JackLabels.html">JackLabels(plot = FALSE)</a></code>
 </li>
 <li>Support for topological constraints during tree search</li>
 <li>Remove redundant function <code>AsBinary()</code>
 </li>
+<li>Drop <code>nTip</code> parameter in <code><a href="../reference/RandomTreeScore.html">RandomTreeScore()</a></code> (infer from <code>morphyObj</code>)</li>
 <li>C implementations of rearrangement functions</li>
 </ul>
 </div>
@@ -181,7 +194,7 @@
 </h1>
 <ul>
 <li>Update tests for compatibility with ‘TreeTools’ v1.1.0</li>
-<li>Improve memory and pointer handling.</li>
+<li>Improve memory and pointer handling</li>
 </ul>
 </div>
     <div id="treesearch-042" class="section level1">
@@ -501,7 +514,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">

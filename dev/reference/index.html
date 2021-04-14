@@ -87,7 +87,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9002</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9004</span>
       </span>
     </div>
 
@@ -109,6 +109,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/custom.html">Tree Search with Custom Optimality Criteria</a>
+    </li>
     <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
@@ -179,19 +182,19 @@
       <tr>
         
         <td>
-          <p><code><a href="TreeSearch.html">IWTreeSearch()</a></code> <code><a href="TreeSearch.html">EdgeListSearch()</a></code> <code><a href="TreeSearch.html">TreeSearch()</a></code> <code><a href="TreeSearch.html">ProfileTreeSearch()</a></code> </p>
+          <p><code><a href="TreeSearch.html">EdgeListSearch()</a></code> <code><a href="TreeSearch.html">TreeSearch()</a></code> <code><a href="TreeSearch.html">IWTreeSearch()</a></code> <code><a href="TreeSearch.html">EmptyPhyDat()</a></code> <code><a href="TreeSearch.html">DoNothing()</a></code> </p>
         </td>
         <td><p>Search for most parsimonious trees</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="MorphyBootstrap.html">MorphyBootstrap()</a></code> <code><a href="MorphyBootstrap.html">ProfileBootstrap()</a></code> <code><a href="MorphyBootstrap.html">IWBootstrap()</a></code> </p>
+          <p><code><a href="MorphyBootstrap.html">MorphyBootstrap()</a></code> </p>
         </td>
         <td><p>Ratchet bootstrapper</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="Ratchet.html">Jackknife()</a></code> <code><a href="Ratchet.html">Ratchet()</a></code> <code><a href="Ratchet.html">ProfileRatchet()</a></code> <code><a href="Ratchet.html">IWRatchet()</a></code> <code><a href="Ratchet.html">MultiRatchet()</a></code> <code><a href="Ratchet.html">IWMultiRatchet()</a></code> <code><a href="Ratchet.html">RatchetConsensus()</a></code> <code><a href="Ratchet.html">IWRatchetConsensus()</a></code> </p>
+          <p><code><a href="Ratchet.html">Jackknife()</a></code> <code><a href="Ratchet.html">Ratchet()</a></code> <code><a href="Ratchet.html">MultiRatchet()</a></code> <code><a href="Ratchet.html">RatchetConsensus()</a></code> </p>
         </td>
         <td><p>Parsimony Ratchet</p></td>
       </tr><tr>
@@ -228,27 +231,64 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="TreeLength.html">TreeLength()</a></code> <code><a href="TreeLength.html">Fitch()</a></code> <code><a href="TreeLength.html">IWScore()</a></code> </p>
+          <p><code><a href="TreeLength.html">IWScore()</a></code> <code><a href="TreeLength.html">TreeLength()</a></code> <code><a href="TreeLength.html">Fitch()</a></code> </p>
         </td>
-        <td><p>Calculate parsimony score with inapplicable data</p></td>
+        <td><p>Calculate the parsimony score of a tree given a dataset</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="ProfileScore.html">IWScoreMorphy()</a></code> <code><a href="ProfileScore.html">IWInitMorphy()</a></code> <code><a href="ProfileScore.html">ProfileScore()</a></code> <code><a href="ProfileScore.html">ProfileScoreMorphy()</a></code> <code><a href="ProfileScore.html">ProfileInitMorphy()</a></code> <code><a href="ProfileScore.html">ProfileDestroyMorphy()</a></code> <code><a href="ProfileScore.html">IWDestroyMorphy()</a></code> </p>
+          <p><code><a href="Consistency.html">Consistency()</a></code> </p>
         </td>
-        <td><p>Profile Parsimony Score</p></td>
+        <td><p>Consistency / retention 'indices'</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ConcordantInformation.html">ConcordantInformation()</a></code> <code><a href="ConcordantInformation.html">Evaluate()</a></code> <code><a href="ConcordantInformation.html">ConcordantInfo()</a></code> </p>
+        </td>
+        <td><p>Evaluate the concordance of information between a tree and a dataset</p></td>
       </tr><tr>
         
         <td>
           <p><code><a href="RandomTreeScore.html">RandomTreeScore()</a></code> </p>
         </td>
         <td><p>Parsimony score of random postorder tree</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-split-support" class="hasAnchor"><a href="#section-split-support" class="anchor"></a>Split support</h2>
+          <p class="section-desc"><p>Functions that calculate node support.</p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="JackLabels.html">JackLabels()</a></code> </p>
+        </td>
+        <td><p>Label nodes with jackknife support values</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="Evaluate.html">Evaluate()</a></code> </p>
+          <p><code><a href="MaximizeParsimony.html">MaximizeParsimony()</a></code> <code><a href="MaximizeParsimony.html">Resample()</a></code> <code><a href="MaximizeParsimony.html">EasyTrees()</a></code> <code><a href="MaximizeParsimony.html">EasyTreesy()</a></code> </p>
         </td>
-        <td><p>Evaluate tree</p></td>
+        <td><p>Find most parsimonious trees</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="Ratchet.html">Jackknife()</a></code> <code><a href="Ratchet.html">Ratchet()</a></code> <code><a href="Ratchet.html">MultiRatchet()</a></code> <code><a href="Ratchet.html">RatchetConsensus()</a></code> </p>
+        </td>
+        <td><p>Parsimony Ratchet</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="SiteConcordance.html">QuartetConcordance()</a></code> <code><a href="SiteConcordance.html">ClusteringConcordance()</a></code> <code><a href="SiteConcordance.html">PhylogeneticConcordance()</a></code> <code><a href="SiteConcordance.html">MutualClusteringConcordance()</a></code> <code><a href="SiteConcordance.html">SharedPhylogeneticConcordance()</a></code> </p>
+        </td>
+        <td><p>Calculate site concordance factor</p></td>
       </tr>
     </tbody><tbody>
       <tr>
@@ -320,15 +360,21 @@
       <tr>
         
         <td>
-          <p><code><a href="ICSteps.html">ICSteps()</a></code> </p>
+          <p><code><a href="Carter1.html">Carter1()</a></code> <code><a href="Carter1.html">Log2Carter1()</a></code> </p>
         </td>
-        <td><p>Information Content Steps</p></td>
+        <td><p>Number of trees with <em>m</em> additional steps</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="InfoAmounts.html">InfoAmounts()</a></code> </p>
+          <p><code><a href="StepInformation.html">StepInformation()</a></code> </p>
         </td>
-        <td><p>Amount of information in each character</p></td>
+        <td><p>Information content of a character known to contain <em>e</em> steps</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="profiles.html">profiles</a></code> </p>
+        </td>
+        <td><p>Empirically Counted Profiles for small trees</p></td>
       </tr><tr>
         
         <td>
@@ -402,19 +448,19 @@
         <td>
           <p><code><a href="inapplicable.citations.html">inapplicable.citations</a></code> </p>
         </td>
-        <td><p>Thirty Datasets with Inapplicable data</p></td>
+        <td><p>Thirty datasets with inapplicable data</p></td>
       </tr><tr>
         
         <td>
           <p><code><a href="inapplicable.datasets.html">inapplicable.datasets</a></code> </p>
         </td>
-        <td><p>Thirty Datasets with Inapplicable data</p></td>
+        <td><p>Thirty datasets with inapplicable data</p></td>
       </tr><tr>
         
         <td>
           <p><code><a href="inapplicable.phyData.html">inapplicable.phyData</a></code> </p>
         </td>
-        <td><p>Thirty Datasets with Inapplicable data</p></td>
+        <td><p>Thirty datasets with inapplicable data</p></td>
       </tr><tr>
         
         <td>
@@ -437,42 +483,6 @@
       <tr>
         
         <td>
-          <p><code><a href="AllSPR.html">AllSPR()</a></code> </p>
-        </td>
-        <td><p>All SPR trees</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="CharacterLength.html">CharacterLength()</a></code> <code><a href="CharacterLength.html">FitchSteps()</a></code> <code><a href="CharacterLength.html">FastCharacterLength()</a></code> </p>
-        </td>
-        <td><p>Character length</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="Consistency.html">Consistency()</a></code> </p>
-        </td>
-        <td><p>Consistency / retention 'indices'</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="Evaluate.html">Evaluate()</a></code> </p>
-        </td>
-        <td><p>Evaluate tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="ICSteps.html">ICSteps()</a></code> </p>
-        </td>
-        <td><p>Information Content Steps</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="InfoAmounts.html">InfoAmounts()</a></code> </p>
-        </td>
-        <td><p>Amount of information in each character</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="JackLabels.html">JackLabels()</a></code> </p>
         </td>
         <td><p>Label nodes with jackknife support values</p></td>
@@ -486,39 +496,9 @@ Extract points from a fitted model</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="MaximizeParsimony.html">MaximizeParsimony()</a></code> <code><a href="MaximizeParsimony.html">EasyTrees()</a></code> <code><a href="MaximizeParsimony.html">EasyTreesy()</a></code> </p>
-        </td>
-        <td><p>Find most parsimonious trees</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="MinimumLength.html">MinimumLength()</a></code> <code><a href="MinimumLength.html">MinimumSteps()</a></code> </p>
         </td>
         <td><p>Minimum length</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="MorphyBootstrap.html">MorphyBootstrap()</a></code> <code><a href="MorphyBootstrap.html">ProfileBootstrap()</a></code> <code><a href="MorphyBootstrap.html">IWBootstrap()</a></code> </p>
-        </td>
-        <td><p>Ratchet bootstrapper</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="MorphyWeights.html">MorphyWeights()</a></code> <code><a href="MorphyWeights.html">SetMorphyWeights()</a></code> </p>
-        </td>
-        <td><p>Set and get the character weightings associated with a Morphy object.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="NNI.html">NNI()</a></code> <code><a href="NNI.html">NNISwap()</a></code> <code><a href="NNI.html">RootedNNI()</a></code> <code><a href="NNI.html">RootedNNISwap()</a></code> </p>
-        </td>
-        <td><p>Nearest Neighbour Interchange (NNI)</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="PhyDat2Morphy.html">PhyDat2Morphy()</a></code> </p>
-        </td>
-        <td><p>Initialize a Morphy Object from a <code>phyDat</code> object</p></td>
       </tr><tr>
         
         <td>
@@ -528,123 +508,9 @@ Extract points from a fitted model</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="ProfileScore.html">IWScoreMorphy()</a></code> <code><a href="ProfileScore.html">IWInitMorphy()</a></code> <code><a href="ProfileScore.html">ProfileScore()</a></code> <code><a href="ProfileScore.html">ProfileScoreMorphy()</a></code> <code><a href="ProfileScore.html">ProfileInitMorphy()</a></code> <code><a href="ProfileScore.html">ProfileDestroyMorphy()</a></code> <code><a href="ProfileScore.html">IWDestroyMorphy()</a></code> </p>
-        </td>
-        <td><p>Profile Parsimony Score</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="RandomMorphyTree.html">RandomMorphyTree()</a></code> </p>
         </td>
         <td><p>Random postorder tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RandomTreeScore.html">RandomTreeScore()</a></code> </p>
-        </td>
-        <td><p>Parsimony score of random postorder tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="Ratchet.html">Jackknife()</a></code> <code><a href="Ratchet.html">Ratchet()</a></code> <code><a href="Ratchet.html">ProfileRatchet()</a></code> <code><a href="Ratchet.html">IWRatchet()</a></code> <code><a href="Ratchet.html">MultiRatchet()</a></code> <code><a href="Ratchet.html">IWMultiRatchet()</a></code> <code><a href="Ratchet.html">RatchetConsensus()</a></code> <code><a href="Ratchet.html">IWRatchetConsensus()</a></code> </p>
-        </td>
-        <td><p>Parsimony Ratchet</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RearrangeEdges.html">RearrangeEdges()</a></code> </p>
-        </td>
-        <td><p>Rearrange edges of a phylogenetic tree</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="SPR.html">SPR()</a></code> <code><a href="SPR.html">SPRMoves()</a></code> <code><a href="SPR.html">SPRSwap()</a></code> <code><a href="SPR.html">RootedSPR()</a></code> <code><a href="SPR.html">RootedSPRSwap()</a></code> </p>
-        </td>
-        <td><p>Subtree Pruning and Rearrangement (SPR)</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="SingleCharMorphy.html">SingleCharMorphy()</a></code> </p>
-        </td>
-        <td><p>Morphy object from single character</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="SuccessiveApproximations.html">SuccessiveApproximations()</a></code> </p>
-        </td>
-        <td><p>Tree Search using Successive Approximations</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="TBR.html">TBR()</a></code> <code><a href="TBR.html">TBRMoves()</a></code> <code><a href="TBR.html">TBRSwap()</a></code> <code><a href="TBR.html">RootedTBR()</a></code> <code><a href="TBR.html">RootedTBRSwap()</a></code> </p>
-        </td>
-        <td><p>Tree bisection and reconnection (TBR)</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="TreeLength.html">TreeLength()</a></code> <code><a href="TreeLength.html">Fitch()</a></code> <code><a href="TreeLength.html">IWScore()</a></code> </p>
-        </td>
-        <td><p>Calculate parsimony score with inapplicable data</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="UnloadMorphy.html">UnloadMorphy()</a></code> </p>
-        </td>
-        <td><p>Destroy a Morphy Object</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="WithOneExtraStep.html">WithOneExtraStep()</a></code> </p>
-        </td>
-        <td><p>Number of trees with one extra step</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="cNNI.html">cNNI()</a></code> </p>
-        </td>
-        <td><p>Nearest-neighbour interchange</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="cSPR.html">cSPR()</a></code> </p>
-        </td>
-        <td><p><code>cSPR()</code> expects a tree rooted on a single tip.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="congreveLamsdellMatrices.html">congreveLamsdellMatrices</a></code> </p>
-        </td>
-        <td><p>100 simulated data matrices</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="inapplicable.citations.html">inapplicable.citations</a></code> </p>
-        </td>
-        <td><p>Thirty Datasets with Inapplicable data</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="inapplicable.datasets.html">inapplicable.datasets</a></code> </p>
-        </td>
-        <td><p>Thirty Datasets with Inapplicable data</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="inapplicable.phyData.html">inapplicable.phyData</a></code> </p>
-        </td>
-        <td><p>Thirty Datasets with Inapplicable data</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="referenceTree.html">referenceTree</a></code> </p>
-        </td>
-        <td><p>Tree topology for matrix simulation</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="summary.morphyPtr.html">summary(<i>&lt;morphyPtr&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Details the attributes of a morphy object</p></td>
       </tr>
     </tbody>
     </table>
@@ -660,7 +526,7 @@ Extract points from a fitted model</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">

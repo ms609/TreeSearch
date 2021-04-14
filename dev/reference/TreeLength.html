@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Calculate parsimony score with inapplicable data — TreeLength • TreeSearch</title>
+<title>Calculate the parsimony score of a tree given a dataset — IWScore • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -45,11 +45,11 @@
 
 
 
-<meta property="og:title" content="Calculate parsimony score with inapplicable data — TreeLength" />
-<meta property="og:description" content="Uses code modified from the Morphy library to calculate a
-parsimony score in datasets that contain inapplicable data.
-If concavity is non-infinite, using implied weights
-(Goloboff 1997)." />
+<meta property="og:title" content="Calculate the parsimony score of a tree given a dataset — IWScore" />
+<meta property="og:description" content="TreeLength() uses the Morphy library (Brazeau 2017) to calculate a
+parsimony score for a tree, handling inapplicable data according to the
+algorithm of Brazeau et al. (2019).  Tree scoring can employ implied
+weights (Goloboff 1993) or profile parsimony (Faith &amp;amp; Trueman 2001)." />
 
 
 <meta name="robots" content="noindex">
@@ -91,7 +91,7 @@ If concavity is non-infinite, using implied weights
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9002</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9004</span>
       </span>
     </div>
 
@@ -113,6 +113,9 @@ If concavity is non-infinite, using implied weights
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/custom.html">Tree Search with Custom Optimality Criteria</a>
+    </li>
     <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
@@ -157,33 +160,44 @@ If concavity is non-infinite, using implied weights
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Calculate parsimony score with inapplicable data</h1>
-    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/Fitch.R'><code>R/Fitch.R</code></a>, <a href='https://github.com/ms609/TreeSearch/blob/master/R/IWScore.R'><code>R/IWScore.R</code></a></small>
+    <h1>Calculate the parsimony score of a tree given a dataset</h1>
+    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/IWScore.R'><code>R/IWScore.R</code></a>, <a href='https://github.com/ms609/TreeSearch/blob/master/R/tree_length.R'><code>R/tree_length.R</code></a></small>
     <div class="hidden name"><code>TreeLength.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Uses code modified from the Morphy library to calculate a
-parsimony score in datasets that contain inapplicable data.</p>
-<p>If <code>concavity</code> is non-infinite, using implied weights
-(Goloboff 1997).</p>
+    <p><code>TreeLength()</code> uses the Morphy library (Brazeau 2017) to calculate a
+parsimony score for a tree, handling inapplicable data according to the
+algorithm of Brazeau et al. (2019).  Tree scoring can employ implied
+weights (Goloboff 1993) or profile parsimony (Faith &amp; Trueman 2001).</p>
     </div>
 
-    <pre class="usage"><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='cn'>Inf</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>IWScore</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='fl'>10L</span>, <span class='va'>...</span><span class='op'>)</span>
+
+<span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='cn'>Inf</span><span class='op'>)</span>
 
 <span class='co'># S3 method for phylo</span>
 <span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='cn'>Inf</span><span class='op'>)</span>
 
-<span class='fu'>Fitch</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span>
+<span class='co'># S3 method for numeric</span>
+<span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='cn'>Inf</span><span class='op'>)</span>
 
-<span class='fu'>IWScore</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='fl'>10</span>, <span class='va'>...</span><span class='op'>)</span></pre>
+<span class='co'># S3 method for list</span>
+<span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='cn'>Inf</span><span class='op'>)</span>
+
+<span class='co'># S3 method for multiPhylo</span>
+<span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='cn'>Inf</span><span class='op'>)</span>
+
+<span class='fu'>Fitch</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>tree</th>
-      <td><p>A tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>.</p></td>
+      <td><p>A tree of class <code>phylo</code>, a list thereof (optionally of class
+<code>multiPhylo</code>), or an integer -- in which case <code>tree</code> random trees will be
+uniformly sampled.</p></td>
     </tr>
     <tr>
       <th>dataset</th>
@@ -192,9 +206,16 @@ whose names correspond to the labels of any accompanying tree.</p></td>
     </tr>
     <tr>
       <th>concavity</th>
-      <td><p>A numeric value to use as the concavity constant (<code>k</code>)
-in implied weighting. Defaults to 10; TNT sets a default of 3, but this
-is too low in some circumstances (Smith, 2019).</p></td>
+      <td><p>Determines the degree to which extra steps beyond the first
+are penalized.  Specify a numeric value to use implied weighting
+(Goloboff 1993, where <code>concavity</code> specifies <em>k</em> in <em>k</em> / <em>e</em> + <em>k</em>).
+in implied weighting. A value of 10 is recommended;
+TNT sets a default of 3, but this is too low in some circumstances
+(Goloboff <em>et al</em>. 2018, Smith, 2019).
+Better still explore the sensitivity of results under a range of
+concavity values, e.g. <code>k = 2 ^ (1:7)</code>.
+Specify <code>Inf</code> to weight each additional step equally.
+Specify <code>'profile'</code> to employ profile parsimony (Faith &amp; Trueman 2001).</p></td>
     </tr>
     <tr>
       <th>...</th>
@@ -205,27 +226,36 @@ received by the function without throwing an error.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>TreeLength()</code> returns the elements from a list containing:</p><ul>
-<li><p>The total parsimony score</p></li>
-<li><p>The parsimony score associated with each character</p></li>
-<li><p>A matrix comprising character reconstructions for each node
-after the final pass</p></li>
-</ul>
-
-<p>The elements to return are specified by the parameter <code>detail</code>.
-If a single element is requested (default) then just that element will be returned
-If multiple elements are requested then these will be returned in a list.</p>
-<p>#TODO if concavity, then The 'fit', <code>h / h + k</code>, where <code>h</code> is the amount of homoplasy ('extra steps')
-and <code>k</code> is a constant (the 'concavity constant')</p>
+    <p><code>TreeLength()</code> returns a numeric vector containing the score for
+each tree.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     
 <ul>
-<li><p>Goloboff PA (1997).
-&#8220;Self-weighted optimization: tree searches and character state reconstructions under implied transformation costs.&#8221;
-<em>Cladistics</em>, <b>13</b>(3), 225--245.
-doi: <a href='https://doi.org/10.1111/j.1096-0031.1997.tb00317.x'>10.1111/j.1096-0031.1997.tb00317.x</a>
-, <a href='https://doi.org/10.1111/j.1096-0031.1997.tb00317.x'>https://doi.org/10.1111/j.1096-0031.1997.tb00317.x</a>.</p></li>
+<li><p>Brazeau MD, Smith MR, Guillerme T (2017).
+&#8220;MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability.&#8221;
+doi: <a href='https://doi.org/10.5281/zenodo.815372'>10.5281/zenodo.815372</a>
+, <a href='https://doi.org/10.5281/zenodo.815372'>https://doi.org/10.5281/zenodo.815372</a>.</p></li>
+<li><p>Brazeau MD, Guillerme T, Smith MR (2019).
+&#8220;An algorithm for morphological phylogenetic analysis with inapplicable data.&#8221;
+<em>Systematic Biology</em>, <b>68</b>(4), 619--631.
+doi: <a href='https://doi.org/10.1093/sysbio/syy083'>10.1093/sysbio/syy083</a>
+, <a href='https://doi.org/10.1093/sysbio/syy083'>https://doi.org/10.1093/sysbio/syy083</a>.</p></li>
+<li><p>Faith DP, Trueman JWH (2001).
+&#8220;Towards an inclusive philosophy for phylogenetic inference.&#8221;
+<em>Systematic Biology</em>, <b>50</b>(3), 331--350.
+doi: <a href='https://doi.org/10.1080/10635150118627'>10.1080/10635150118627</a>
+, <a href='https://doi.org/10.1080/10635150118627'>https://doi.org/10.1080/10635150118627</a>.</p></li>
+<li><p>Goloboff PA (1993).
+&#8220;Estimating character weights during tree search.&#8221;
+<em>Cladistics</em>, <b>9</b>(1), 83--91.
+doi: <a href='https://doi.org/10.1111/j.1096-0031.1993.tb00209.x'>10.1111/j.1096-0031.1993.tb00209.x</a>
+, <a href='https://doi.org/10.1111/j.1096-0031.1993.tb00209.x'>https://doi.org/10.1111/j.1096-0031.1993.tb00209.x</a>.</p></li>
+<li><p>Goloboff PA, Torres A, Arias JS (2018).
+&#8220;Weighted parsimony outperforms other methods of phylogenetic inference under models appropriate for morphology.&#8221;
+<em>Cladistics</em>, <b>34</b>(4), 407--437.
+doi: <a href='https://doi.org/10.1111/cla.12205'>10.1111/cla.12205</a>
+, <a href='https://doi.org/10.1111/cla.12205'>https://doi.org/10.1111/cla.12205</a>.</p></li>
 <li><p>Smith MR (2019).
 &#8220;Bayesian and parsimony approaches reconstruct informative trees from simulated morphological datasets.&#8221;
 <em>Biology Letters</em>, <b>15</b>(2), 20180632.
@@ -237,7 +267,10 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 
     <div class='dont-index'>
 <ul>
-<li><p><code><a href='IWTreeSearch.html'>TreeSearch()</a></code></p></li>
+<li><p>Conduct tree search using <code><a href='MaximizeParsimony.html'>MaximizeParsimony()</a></code> (command line),
+<code><a href='MaximizeParsimony.html'>EasyTrees()</a></code> (graphical user interface), or <code><a href='EdgeListSearch.html'>TreeSearch()</a></code>
+(custom optimality criteria).</p></li>
+<li><p>See score for each character: <code><a href='CharacterLength.html'>CharacterLength()</a></code>.</p></li>
 </ul>
 
 <p>Other tree scoring: 
@@ -251,8 +284,10 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
     <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"inapplicable.datasets"</span><span class='op'>)</span>
 <span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/GenerateTree.html'>BalancedTree</a></span><span class='op'>(</span><span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
 <span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] 1117</div><div class='input'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>, <span class='fl'>10</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] 52.75785</div></pre>
+</div><div class='output co'>#&gt; [1] 1117</div><div class='input'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>, concavity <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 52.75785</div><div class='input'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>, concavity <span class='op'>=</span> <span class='st'>'profile'</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 3767.826</div><div class='input'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='fl'>5</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 1938 1917 1927 1906 1883</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -264,7 +299,7 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">
