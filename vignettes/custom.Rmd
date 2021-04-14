@@ -73,6 +73,7 @@ result <- TreeSearch(tree, dataset = EmptyPhyDat(tree),
 
 PlotTree(result)
 ```
+
 ## Maximizing tree distance
 
 Let's make things slightly more complex, and try to find the tree that is 
@@ -158,7 +159,7 @@ IWScoreMorphy <- function (parent, child, dataset, concavity = 10L,
 
 Now we are ready to search:
 
-```{r iw-search}
+```{r iw-search, message = FALSE}
 data("inapplicable.datasets")
 dataset <- congreveLamsdellMatrices[[42]]
 
@@ -222,7 +223,7 @@ IWBootstrap <- function (edgeList, dataset, concavity = 10L, EdgeSwapper = NNISw
 Having defined the `Bootstrapper()` function we can now complete a Ratchet 
 search with:
 
-```{r iw-ratchet}
+```{r iw-ratchet, message = FALSE}
 ratchetTree <- Ratchet(tree = iwTree, dataset = dataset,
                        concavity = 10,
                        InitializeData = IWInitMorphy, 
