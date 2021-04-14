@@ -224,7 +224,7 @@ IntegerMatrix spr (const IntegerMatrix edge,
 
 // Assumptions: 
 //  * Tree is bifurcating, in preorder; first two edges have root as parent.
-//  [[Rcpp::export]]
+//  #TODO once working: [[Rcpp::export]] // Also add to TreeSearch-init.c
 IntegerMatrix tbr_moves(const IntegerMatrix edge) {
   const int16
     n_edge = edge.nrow(),

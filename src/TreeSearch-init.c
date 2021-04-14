@@ -15,7 +15,7 @@ extern SEXP _TreeSearch_nni(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_spr(SEXP, SEXP);
 extern SEXP _TreeSearch_spr_moves(SEXP);
 extern SEXP _TreeSearch_tbr(SEXP, SEXP);
-extern SEXP _TreeSearch_tbr_moves(SEXP);
+// extern SEXP _TreeSearch_tbr_moves(SEXP);
 extern SEXP _TreeSearch_all_spr(SEXP, SEXP);
 extern SEXP _TreeSearch_all_tbr(SEXP, SEXP);
 extern SEXP _TreeSearch_preorder_morphy(SEXP, SEXP);
@@ -53,7 +53,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_spr_moves",         (DL_FUNC) &_TreeSearch_spr_moves, 1},
   {"_TreeSearch_tbr",               (DL_FUNC) &_TreeSearch_tbr, 2},
   {"_TreeSearch_all_tbr",           (DL_FUNC) &_TreeSearch_all_tbr, 2},
-  {"_TreeSearch_tbr_moves",         (DL_FUNC) &_TreeSearch_tbr_moves, 1},
+//  {"_TreeSearch_tbr_moves",         (DL_FUNC) &_TreeSearch_tbr_moves, 1},
   {"_TreeSearch_preorder_morphy",   (DL_FUNC) &_TreeSearch_preorder_morphy, 2},
   {"_TreeSearch_preorder_morphy_by_char",   (DL_FUNC) &_TreeSearch_preorder_morphy_by_char, 2},
   {"_TreeSearch_morphy_iw",         (DL_FUNC) &_TreeSearch_morphy_iw, 7},

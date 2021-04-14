@@ -98,17 +98,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// tbr_moves
-IntegerMatrix tbr_moves(const IntegerMatrix edge);
-RcppExport SEXP _TreeSearch_tbr_moves(SEXP edgeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
-    rcpp_result_gen = Rcpp::wrap(tbr_moves(edge));
-    return rcpp_result_gen;
-END_RCPP
-}
 // tbr
 IntegerMatrix tbr(const IntegerMatrix edge, const IntegerVector move);
 RcppExport SEXP _TreeSearch_tbr(SEXP edgeSEXP, SEXP moveSEXP) {
