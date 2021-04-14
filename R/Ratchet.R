@@ -97,18 +97,15 @@ Ratchet <- function (tree, dataset,
   initializedData <- InitializeData(dataset)
   on.exit(initializedData <- CleanUpData(initializedData))
   
-  bestScore <- if (is.null(attr(tree, 'score'))) {
-    TreeScorer(edgeList[[1]], edgeList[[2]], initializedData, ...)
-  } else {
-    attr(tree, 'score')
-  }
+  bestScore <- TreeScorer(edgeList[[1]], edgeList[[2]], initializedData, ...)
+  
   if (verbosity > 0L) {
-    message("* Beginning Parsimony Ratchet, with initial score ", bestScore,
-            if (!is.null(stopAtScore)) "; will stop at score ", stopAtScore)
+    message("* Beginning Parsimony Ratchet, with initial score ", bestScore,    # nocov
+            if (!is.null(stopAtScore)) "; will stop at score ", stopAtScore)    # nocov
   }
   if (!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) {
     if (verbosity > 1L) {
-      message("*** Target score of ", stopAtScore, " met.")
+      message("*** Target score of ", stopAtScore, " met.")                     # nocov
     }
     return(tree)
   }
@@ -123,16 +120,18 @@ Ratchet <- function (tree, dataset,
   iterationsWithBestScore <- 0
   BREAK <- FALSE
   for (i in 1:ratchIter) {
-    if (verbosity > 1L) {
+    if (verbosity > 1L) {                                                       # nocov start
       message("\n* Ratchet iteration ", i, '.')
       if (verbosity > 2L) {
-        message(" - Generating new candidate tree by bootstrapping dataset.")
+        message(" - Generating new candidate tree by bootstrapping dataset.")   
       }
-    }
-    candidate <- Bootstrapper(edgeList, initializedData, maxIter=bootstrapIter,
-                              maxHits=bootstrapHits, verbosity=verbosity-2L,
-                              EdgeSwapper=BootstrapSwapper, stopAtPeak=stopAtPeak,
-                              stopAtPlateau=stopAtPlateau, ...)
+    }                                                                           # nocov end
+    candidate <- Bootstrapper(edgeList, initializedData,
+                              maxIter = bootstrapIter, maxHits = bootstrapHits,
+                              verbosity = verbosity - 2L,
+                              EdgeSwapper = BootstrapSwapper,
+                              stopAtPeak = stopAtPeak,
+                              stopAtPlateau = stopAtPlateau, ...)
     candScore <- 1e+08
     
     if (verbosity > 2L) message(" - Rearranging from new candidate tree:")
@@ -151,10 +150,10 @@ Ratchet <- function (tree, dataset,
       candScore <- candidate[[3]]
       if (!is.null(stopAtScore) && candScore < stopAtScore + epsilon) {
         BREAK <- TRUE
-        if (verbosity > 1L) {
+        if (verbosity > 1L) {                                                   # nocov start
           message("  * Target score ", stopAtScore, 
                   " met; terminating tree search.")
-        }
+        }                                                                       # nocov end
         bestScore <- candScore
         break
       }
@@ -163,7 +162,9 @@ Ratchet <- function (tree, dataset,
       break
     }
     
-    if (verbosity > 2L) message(" - Rearranged candidate tree scored ", candScore)
+    if (verbosity > 2L) {
+      message(" - Rearranged candidate tree scored ", candScore)                # nocov
+    }
     if (returnAll && candScore < (bestScore + suboptimal)) { # Worth saving this tree in forest
       forest[[i]] <- candidate
       forestScores[i] <- candScore
@@ -177,11 +178,11 @@ Ratchet <- function (tree, dataset,
       iterationsWithBestScore <- iterationsWithBestScore + 1L
       edgeList <- candidate
     }
-    if (verbosity > 1L) {
+    if (verbosity > 1L) {                                                       # nocov start
       message("* Best score after ", i, "/", ratchIter, 
               " ratchet iterations: ", signif(bestScore), " (hit ", 
               iterationsWithBestScore, "/", ratchHits, ")\n")
-    }
+    }                                                                           # nocov end
     if ((!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) 
     || (iterationsWithBestScore >= ratchHits)) {
       break
@@ -221,12 +222,12 @@ Ratchet <- function (tree, dataset,
     } else {
       stop("\nNo trees!? Is suboptimal set to a sensible (positive) value?")
     }
-    if (verbosity > 0L) {
+    if (verbosity > 0L) {                                                       # nocov start
       message('\nFound ', sum(uniqueScores == min(uniqueScores)),
               ' unique MPTs and ',
               length(ret) - sum(uniqueScores == min(uniqueScores)), 
               ' suboptimal trees.\n')
-    }
+    }                                                                           # nocov end
     # Return:
     ret
   } else {

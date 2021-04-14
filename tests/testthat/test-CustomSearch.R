@@ -116,4 +116,9 @@ test_that("Profile parsimony works in tree search", {
                         verbosity = 0L)
   expect_equal(42, attr(quickFitch, 'score'))
   
+  
+})
+
+test_that("Ratchet fails gracefully", {
+  expect_error(Ratchet(unrooted11, data11))
 })
