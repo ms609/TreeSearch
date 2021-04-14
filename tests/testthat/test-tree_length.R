@@ -170,6 +170,17 @@ test_that("Profile scoring is reported correctly", {
                               profiles, Inf))
 })
 
+test_that("CharacterLength() fails gracefully", {
+  expect_error(CharacterLength(as.phylo(1, 8), 1))
+  
+  data('inapplicable.datasets')
+  dataset <- inapplicable.phyData[[12]]
+  expect_error(CharacterLength(as.phylo(1, 4), dataset))
+  
+  expect_equal(c(53, 59, 6),
+               as.numeric(table(CharacterLength(NJTree(dataset[1:4, ]), dataset))))
+})
+
 test_that("X_MorphyLength", {
   dataset <- congreveLamsdellMatrices[[42]]
   morphyObj <- PhyDat2Morphy(dataset)

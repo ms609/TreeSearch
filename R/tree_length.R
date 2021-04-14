@@ -232,9 +232,10 @@ CharacterLength <- function (tree, dataset) {
     if (all(tree$tip.label %in% names(dataset))) {
       dataset[!(names(dataset)%in% tree$tip.label)] <- NULL
     } else {
-      stop ("Tree tips", 
-            paste(tree$tip.label[!(tree$tip.label %in% names(dataset))], sep = ', '), 
-            "not found in dataset.")
+      stop ("Tree tips ", 
+            paste(tree$tip.label[!(tree$tip.label %in% names(dataset))],
+                  collapse = ', '), 
+            " not found in dataset.")
     }
   }
   
