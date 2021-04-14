@@ -27,14 +27,16 @@ into the R (or RStudio) command line.
 
 ### For advanced users
 
-To get the latest development version from GitHub, type
+To get the latest development version from
+[GitHub](https://github.com/ms609/TreeSearch/), type
 ```r
 if (!require('devtools')) install.packages('devtools')
 devtools::install_github('ms609/TreeSearch')
 ```
 
-You'll probably need to install [Rtools](https://cran.r-project.org/bin/windows/Rtools/) before 
-installing from the GitHub source code, which may be complicated.  
+Windows users may need to install 
+[Rtools](https://cran.r-project.org/bin/windows/Rtools/) before
+installing from the GitHub source.
 
 Once installed, load the 'TreeSearch' package into R using
 ```r
