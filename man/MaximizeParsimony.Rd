@@ -149,7 +149,7 @@ configuring tree search, see the
 \dontrun{ # launch 'shiny' point-and-click interface
   # Here too, use the "continue search" function to ensure that tree score
   # has stabilized and a global optimum has been found
-  EasyTrees() 
+  EasyTrees()
 }
 
 

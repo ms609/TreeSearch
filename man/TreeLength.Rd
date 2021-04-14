@@ -35,8 +35,11 @@ whose names correspond to the labels of any accompanying tree.}
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
 (Goloboff 1993, where \code{concavity} specifies \emph{k} in \emph{k} / \emph{e} + \emph{k}).
-in implied weighting. Defaults to 10; TNT sets a default of 3, but this
-is too low in some circumstances (Goloboff \emph{et al}. 2017, Smith, 2019).
+in implied weighting. A value of 10 is recommended;
+TNT sets a default of 3, but this is too low in some circumstances
+(Goloboff \emph{et al}. 2017, Smith, 2019).
+Better still explore the sensitivity of results under a range of
+concavity values, e.g. \code{k = 2 ^ (1:7)}.
 Specify \code{Inf} to weight each additional step equally.
 Specify \code{'profile'} to employ profile parsimony (Faith & Trueman 2001).}
 
