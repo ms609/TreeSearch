@@ -1,49 +1,44 @@
-#' @title Calculate parsimony score with inapplicable data
+#' Calculate the parsimony score of a tree given a dataset
 #'
-#' @description Uses code modified from the Morphy library to calculate a 
-#' parsimony score in datasets that contain inapplicable data.
-#' 
-#' 
-#' 
-#' If `concavity` is non-infinite, using implied weights
-#' (Goloboff 1997).
+#' `TreeLength()` uses the Morphy library (Brazeau 2017) to calculate a
+#' parsimony score for a tree, handling inapplicable data according to the
+#' algorithm of Brazeau et al. (2019).  Tree scoring can employ implied
+#' weights (Goloboff 1993) or profile parsimony (Faith & Trueman 2001).
 #'
 #' @param tree A tree of class `phylo`, a list thereof (optionally of class
-#' `multiPhylo`, or an integer -- in which case `tree` random trees will be 
+#' `multiPhylo`), or an integer -- in which case `tree` random trees will be 
 #' uniformly sampled.
 #' @template datasetParam
 #' @template concavityParam
 #' 
-#' @return `TreeLength()` returns the elements from a list containing:
-#'    \itemize{
-#' \item     The total parsimony score
-#' \item     The parsimony score associated with each character 
-#' \item     A matrix comprising character reconstructions for each node
-#'           after the final pass
-#'   }
-#'   
-#' The elements to return are specified by the parameter `detail`.  
-#' If a single element is requested (default) then just that element will be returned
-#' If multiple elements are requested then these will be returned in a list.
-#' 
-#' 
-#' @return #TODO if concavity, then The 'fit', `h / h + k`,
-#'  where `h` is the amount of homoplasy ('extra steps') 
-#'  and `k` is a constant (the 'concavity constant')
-#' 
+#' @return `TreeLength()` returns a numeric vector containing the score for
+#' each tree.
 #' 
 #' @examples
 #' data("inapplicable.datasets")
 #' tree <- TreeTools::BalancedTree(inapplicable.phyData[[1]])
 #' TreeLength(tree, inapplicable.phyData[[1]])
-#' TreeLength(tree, inapplicable.phyData[[1]], 10)
+#' TreeLength(tree, inapplicable.phyData[[1]], concavity = 10)
+#' TreeLength(tree, inapplicable.phyData[[1]], concavity = 'profile')
+#' TreeLength(5, inapplicable.phyData[[1]])
 #' @seealso 
-#' - [`TreeSearch()`]
-#' @family tree scoring
+#' - Conduct tree search using [`MaximizeParsimony()`] (command line), 
+#' [`EasyTrees()`] (graphical user interface), or [`TreeSearch()`]
+#' (custom optimality criteria).
 #' 
+#' - See score for each character: [`CharacterLength()`].
+#' @family tree scoring 
 #' 
 #' @references
-#'  - \insertRef{Goloboff1997}{TreeSearch}
+#'  - \insertRef{Brazeau2017}{TreeSearch}
+#'  
+#'  - \insertRef{Brazeau2019}{TreeSearch}
+#'  
+#'  - \insertRef{Faith2001}{TreeSearch}
+#'  
+#'  - \insertRef{Goloboff1993}{TreeSearch}
+#'  
+#'  - \insertRef{Goloboff2018}{TreeSearch}
 #'  
 #'  - \insertRef{Smith2019}{TreeSearch}
 #'

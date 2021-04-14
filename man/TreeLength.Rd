@@ -8,7 +8,7 @@
 \alias{TreeLength.list}
 \alias{TreeLength.multiPhylo}
 \alias{Fitch}
-\title{Calculate parsimony score with inapplicable data}
+\title{Calculate the parsimony score of a tree given a dataset}
 \usage{
 IWScore(tree, dataset, concavity = 10L, ...)
 
@@ -26,7 +26,7 @@ Fitch(tree, dataset)
 }
 \arguments{
 \item{tree}{A tree of class \code{phylo}, a list thereof (optionally of class
-\code{multiPhylo}, or an integer -- in which case \code{tree} random trees will be
+\code{multiPhylo}), or an integer -- in which case \code{tree} random trees will be
 uniformly sampled.}
 
 \item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
@@ -37,7 +37,7 @@ are penalized.  Specify a numeric value to use implied weighting
 (Goloboff 1993, where \code{concavity} specifies \emph{k} in \emph{k} / \emph{e} + \emph{k}).
 in implied weighting. A value of 10 is recommended;
 TNT sets a default of 3, but this is too low in some circumstances
-(Goloboff \emph{et al}. 2017, Smith, 2019).
+(Goloboff \emph{et al}. 2018, Smith, 2019).
 Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
 Specify \code{Inf} to weight each additional step equally.
@@ -47,44 +47,39 @@ Specify \code{'profile'} to employ profile parsimony (Faith & Trueman 2001).}
 received by the function without throwing an error.}
 }
 \value{
-\code{TreeLength()} returns the elements from a list containing:
-\itemize{
-\item     The total parsimony score
-\item     The parsimony score associated with each character
-\item     A matrix comprising character reconstructions for each node
-after the final pass
-}
-
-The elements to return are specified by the parameter \code{detail}.
-If a single element is requested (default) then just that element will be returned
-If multiple elements are requested then these will be returned in a list.
-
-#TODO if concavity, then The 'fit', \code{h / h + k},
-where \code{h} is the amount of homoplasy ('extra steps')
-and \code{k} is a constant (the 'concavity constant')
+\code{TreeLength()} returns a numeric vector containing the score for
+each tree.
 }
 \description{
-Uses code modified from the Morphy library to calculate a
-parsimony score in datasets that contain inapplicable data.
-
-If \code{concavity} is non-infinite, using implied weights
-(Goloboff 1997).
+\code{TreeLength()} uses the Morphy library (Brazeau 2017) to calculate a
+parsimony score for a tree, handling inapplicable data according to the
+algorithm of Brazeau et al. (2019).  Tree scoring can employ implied
+weights (Goloboff 1993) or profile parsimony (Faith & Trueman 2001).
 }
 \examples{
 data("inapplicable.datasets")
 tree <- TreeTools::BalancedTree(inapplicable.phyData[[1]])
 TreeLength(tree, inapplicable.phyData[[1]])
-TreeLength(tree, inapplicable.phyData[[1]], 10)
+TreeLength(tree, inapplicable.phyData[[1]], concavity = 10)
+TreeLength(tree, inapplicable.phyData[[1]], concavity = 'profile')
+TreeLength(5, inapplicable.phyData[[1]])
 }
 \references{
 \itemize{
-\item \insertRef{Goloboff1997}{TreeSearch}
+\item \insertRef{Brazeau2017}{TreeSearch}
+\item \insertRef{Brazeau2019}{TreeSearch}
+\item \insertRef{Faith2001}{TreeSearch}
+\item \insertRef{Goloboff1993}{TreeSearch}
+\item \insertRef{Goloboff2018}{TreeSearch}
 \item \insertRef{Smith2019}{TreeSearch}
 }
 }
 \seealso{
 \itemize{
-\item \code{\link[=TreeSearch]{TreeSearch()}}
+\item Conduct tree search using \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} (command line),
+\code{\link[=EasyTrees]{EasyTrees()}} (graphical user interface), or \code{\link[=TreeSearch]{TreeSearch()}}
+(custom optimality criteria).
+\item See score for each character: \code{\link[=CharacterLength]{CharacterLength()}}.
 }
 
 Other tree scoring: 

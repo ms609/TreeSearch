@@ -160,7 +160,8 @@ TreeTools::LabelSplits(cons, signif(concordance, 3),
 
 Equal weights produces trees that are less accurate and less precise than
 implied weights [@Smith2019]; equally weighted analysis should never be
-conducted without also considering the results of implied weights [@Goloboff1997],
+conducted without also considering the results of implied weights 
+[@Goloboff1993;@Goloboff1997],
 ideally under a range of concavity constants [cf. @Smith2014].
 
 Implied weights can be activated by simply specifying a value of the concavity 
