@@ -87,8 +87,7 @@ test_that("SPR working", {
   uniqueMoves <- length(unique(all_spr(tr$edge, integer(0))))
   expect_equal(54, # Not formally calculated
                uniqueMoves)
-  expect_equal(uniqueMoves,
-               length(SPRMoves(tr)))
+  expect_equal(uniqueMoves, length(SPRMoves(tr)))
   
   tr <- Preorder(root(TreeTools::BalancedTree(14), 't1', resolve.root = TRUE))
   tr$edge
