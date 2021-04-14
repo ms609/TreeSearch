@@ -164,10 +164,14 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
                      verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
 <pre><code>##   - Performing tree search.  Initial score: 56</code></pre>
-<pre><code>##   - Final score 33 found 4 times after 50 rearrangements.</code></pre>
+<pre><code>##   - Final score 33 found 2 times after 50 rearrangements.</code></pre>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></code></pre></div>
-<p><img src="custom_files/figure-html/tci-search-1.png" width="700"> ## Maximizing tree distance</p>
+<p><img src="custom_files/figure-html/tci-search-1.png" width="700"></p>
+</div>
+<div id="maximizing-tree-distance" class="section level2">
+<h2 class="hasAnchor">
+<a href="#maximizing-tree-distance" class="anchor"></a>Maximizing tree distance</h2>
 <p>Let’s make things slightly more complex, and try to find the tree that is most different from a starting tree. Notice that <code>TreeSearch</code> aims to <em>minimize</em> the output of <code>TreeScorer()</code>, so we negate the tree <em>distance</em> (which we aim to maximize) before returning it.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">startTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html">BalancedTree</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span>
@@ -185,8 +189,8 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      TreeScorer <span class="op">=</span> <span class="va">DistanceScore</span>,
                      maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
                      verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
-<pre><code>##   - Performing tree search.  Initial score: -7.18872187554087</code></pre>
-<pre><code>##   - Final score -7.87744375108174 found 2 times after 50 rearrangements.</code></pre>
+<pre><code>##   - Performing tree search.  Initial score: -6.34601949631354</code></pre>
+<pre><code>##   - Final score -7.46857574523181 found 2 times after 50 rearrangements.</code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
 <span class="fu">PlotTree</span><span class="op">(</span><span class="va">startTree</span><span class="op">)</span>
@@ -238,11 +242,9 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      TreeScorer <span class="op">=</span> <span class="va">IWScoreMorphy</span>,
                      concavity <span class="op">=</span> <span class="fl">10</span>, <span class="co"># Will be sent to TreeScorer</span>
                      verbosity <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></code></pre></div>
-<pre><code>##   - Performing tree search.  Initial score: 12.5064616755793</code></pre>
-<pre><code>##   - Final score 12.3842089283266 found 1 times after 100 rearrangements.</code></pre>
 <p>This quick search probably hasn’t found the globally optimal tree. Besides increasing the number of hits and rearrangements, the parsimony ratchet <span class="citation">(Nixon, 1999)</span> can help to escape local optima. This introduces an additional complication: we need to bootstrap the characters within <code>dataset</code>, and their accompanying Morphy objects.</p>
-<p>A <code>Bootstraper</code> function expects an <code>edgeList</code> (a list of the parent and child of each edge in a tree, in turn) and a <code>dataset</code> argument, and conducts a tree search, starting at <code>edgeList</code>, on a bootstrapped version of the dataset. It is also sent the arguments <code>maxIter = bootstrapIter</code> and <code>maxHits = bootstrapHits</code>, allowing ratchet search intensity to be controlled from parameters sent to the <code><a href="../reference/Jackknife.html">Ratchet()</a></code> function.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<p>A <code>Bootstraper</code> function expects an <code>edgeList</code> (a list of the parent and child of each edge in a tree, in turn) and a <code>dataset</code> argument, and conducts a tree search, starting at <code>edgeList</code>, on a bootstrapped version of the dataset. It is also sent the arguments <code>maxIter = bootstrapIter</code> and <code>maxHits = bootstrapHits</code>, allowing ratchet search intensity to be controlled from parameters sent to the <code><a href="../reference/MorphyBootstrap.html">Ratchet()</a></code> function.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">IWBootstrap</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">edgeList</span>, <span class="va">dataset</span>, <span class="va">concavity</span> <span class="op">=</span> <span class="fl">10L</span>, <span class="va">EdgeSwapper</span> <span class="op">=</span> <span class="va">NNISwap</span>, 
                          <span class="va">maxIter</span>, <span class="va">maxHits</span>, <span class="va">verbosity</span> <span class="op">=</span> <span class="fl">1L</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">att</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attributes.html">attributes</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span>
@@ -273,8 +275,8 @@ Here, we can use a copy of our starting tree as a template, to be populated with
   <span class="va">res</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>
 <span class="op">}</span></code></pre></div>
 <p>Having defined the <code>Bootstrapper()</code> function we can now complete a Ratchet search with:</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">ratchetTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Jackknife.html">Ratchet</a></span><span class="op">(</span>tree <span class="op">=</span> <span class="va">iwTree</span>, dataset <span class="op">=</span> <span class="va">dataset</span>,
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ratchetTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MorphyBootstrap.html">Ratchet</a></span><span class="op">(</span>tree <span class="op">=</span> <span class="va">iwTree</span>, dataset <span class="op">=</span> <span class="va">dataset</span>,
                        concavity <span class="op">=</span> <span class="fl">10</span>,
                        InitializeData <span class="op">=</span> <span class="va">IWInitMorphy</span>, 
                        CleanUpData <span class="op">=</span> <span class="va">IWDestroyMorphy</span>,
@@ -283,14 +285,6 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                        ratchIter <span class="op">=</span> <span class="fl">2</span>, ratchHits <span class="op">=</span> <span class="fl">2</span>,
                        searchIter <span class="op">=</span> <span class="fl">20</span>, searchHits <span class="op">=</span> <span class="fl">10</span>,
                        verbosity <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
-<pre><code>## * Beginning Parsimony Ratchet, with initial score 12.3842089283266</code></pre>
-<pre><code>## 
-## * Ratchet iteration 1.</code></pre>
-<pre><code>## * Best score after 1/2 ratchet iterations: 12.2051 (hit 1/2)</code></pre>
-<pre><code>## 
-## * Ratchet iteration 2.</code></pre>
-<pre><code>## * Best score after 2/2 ratchet iterations: 12.1994 (hit 1/2)</code></pre>
-<pre><code>## Completed parsimony ratchet after 2 iterations with score 12.1994035376388</code></pre>
 <p>It would be sensible to use much larger values of <code>ratchIter</code>, <code>ratchHits</code>, <code>searchIter</code> and <code>searchHits</code> to be confident of locating an optimal tree. And note that in this specific case, implied weights tree search with the parsimony ratchet is implemented much more efficiently with <code><a href="../reference/MaximizeParsimony.html">MaximizeParsimony(concavity = k)</a></code>.</p>
 <p>Hopefully these examples give a template from which you are able to construct your own optimality criteria. The maintainer is happy to answer questions via e-mail, or you can file queries by opening a <a href="https://github.com/ms609/TreeDist/issues/new/">GitHub issue</a>.</p>
 </div>

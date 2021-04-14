@@ -48,7 +48,7 @@
 <meta property="og:title" content="Search for most parsimonious trees — EdgeListSearch" />
 <meta property="og:description" content="Run standard search algorithms (NNI, SPR or TBR)
 to search for a more parsimonious tree.
-For detailed documentation of the TreeSearch package, including full
+For detailed documentation of the 'TreeSearch' package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
 package documentation." />
@@ -170,10 +170,10 @@ package documentation." />
     <div class="ref-description">
     <p>Run standard search algorithms (<acronym>NNI</acronym>, <acronym>SPR</acronym> or <acronym>TBR</acronym>)
 to search for a more parsimonious tree.</p>
-<p>For detailed documentation of the TreeSearch package, including full
+<p>For detailed documentation of the 'TreeSearch' package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
-<a href='https://ms609.github.io/TreeSearch'>package documentation</a>.</p>
+<a href='https://ms609.github.io/TreeSearch/'>package documentation</a>.</p>
     </div>
 
     <pre class="usage"><span class='fu'>EdgeListSearch</span><span class='op'>(</span>
@@ -241,11 +241,13 @@ and returns a list with modified vectors; for example <code><a href='SPR.html'>S
     </tr>
     <tr>
       <th>maxIter</th>
-      <td><p>the maximum number of iterations to perform before abandoning the search.</p></td>
+      <td><p>Numeric specifying maximum number of iterations to perform
+before abandoning the search.</p></td>
     </tr>
     <tr>
       <th>maxHits</th>
-      <td><p>the maximum times to hit the best pscore before abandoning the search.</p></td>
+      <td><p>Numeric specifying maximum times to hit the best pscore
+before abandoning the search.</p></td>
     </tr>
     <tr>
       <th>stopAtPeak</th>
@@ -272,7 +274,8 @@ larger numbers provide more verbose feedback to the user.</p></td>
     </tr>
     <tr>
       <th>tree</th>
-      <td><p>a fully-resolved starting tree in <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code> format, with the desired outgroup; edge lengths are not supported and will be deleted;</p></td>
+      <td><p>aA fully-resolved starting tree in <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code> format,
+with the desired outgroup; edge lengths are not supported and will be deleted;</p></td>
     </tr>
     <tr>
       <th>InitializeData</th>
@@ -300,7 +303,7 @@ null character, coded with state zero for every leaf in <code>tree</code>.</p>
 
     
 <ul>
-<li><p><code>EdgeListSearch</code>: Tree Search from Edge lists</p></li>
+<li><p><code>EdgeListSearch</code>: Tree search from edge lists</p></li>
 </ul>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
@@ -319,13 +322,13 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 <ul>
 <li><p><code><a href='IWScore.html'>Fitch</a></code>, calculates parsimony score;</p></li>
 <li><p><code><a href='NNI.html'>RootedNNI</a></code>, conducts tree rearrangements;</p></li>
-<li><p><code><a href='Jackknife.html'>Ratchet</a></code>, alternative heuristic, useful to escape local optima.</p></li>
+<li><p><code><a href='MorphyBootstrap.html'>Ratchet</a></code>, alternative heuristic, useful to escape local
+optima.</p></li>
 </ul>
 </div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
-    <p>Martin R. Smith</p>
-<p><a href='https://orcid.org/0000-0001-5660-1727'>Martin R. Smith</a>
+    <p><a href='https://orcid.org/0000-0001-5660-1727'>Martin R. Smith</a>
 (<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>

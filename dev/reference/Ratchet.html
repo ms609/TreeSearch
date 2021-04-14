@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Parsimony Ratchet — Jackknife • TreeSearch</title>
+<title>Parsimony Ratchet — MorphyBootstrap • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -45,7 +45,7 @@
 
 
 
-<meta property="og:title" content="Parsimony Ratchet — Jackknife" />
+<meta property="og:title" content="Parsimony Ratchet — MorphyBootstrap" />
 <meta property="og:description" content="Ratchet uses the parsimony ratchet (Nixon 1999) to search for a more
 parsimonious tree." />
 
@@ -159,7 +159,7 @@ parsimonious tree." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Parsimony Ratchet</h1>
-    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/Jackknife.R'><code>R/Jackknife.R</code></a>, <a href='https://github.com/ms609/TreeSearch/blob/master/R/Ratchet.R'><code>R/Ratchet.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/Bootstrap.R'><code>R/Bootstrap.R</code></a>, <a href='https://github.com/ms609/TreeSearch/blob/master/R/Jackknife.R'><code>R/Jackknife.R</code></a>, <a href='https://github.com/ms609/TreeSearch/blob/master/R/Ratchet.R'><code>R/Ratchet.R</code></a></small>
     <div class="hidden name"><code>Ratchet.Rd</code></div>
     </div>
 
@@ -168,7 +168,19 @@ parsimonious tree." />
 parsimonious tree.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>Jackknife</span><span class='op'>(</span>
+    <pre class="usage"><span class='fu'>MorphyBootstrap</span><span class='op'>(</span>
+  <span class='va'>edgeList</span>,
+  <span class='va'>morphyObj</span>,
+  EdgeSwapper <span class='op'>=</span> <span class='va'>NNISwap</span>,
+  <span class='va'>maxIter</span>,
+  <span class='va'>maxHits</span>,
+  verbosity <span class='op'>=</span> <span class='fl'>1L</span>,
+  stopAtPeak <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  stopAtPlateau <span class='op'>=</span> <span class='fl'>0L</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
+
+<span class='fu'>Jackknife</span><span class='op'>(</span>
   <span class='va'>tree</span>,
   <span class='va'>dataset</span>,
   resampleFreq <span class='op'>=</span> <span class='fl'>2</span><span class='op'>/</span><span class='fl'>3</span>,
@@ -237,6 +249,57 @@ parsimonious tree.</p>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
+      <th>edgeList</th>
+      <td><p>a list containing the following:
+- vector of integers corresponding to the parent of each edge in turn
+- vector of integers corresponding to the child of each edge in turn
+- (optionally) score of the tree
+- (optionally, if score provided) number of times this score has been hit</p></td>
+    </tr>
+    <tr>
+      <th>morphyObj</th>
+      <td><p>Object of class <code>morphy</code>, perhaps created with
+<code><a href='PhyDat2Morphy.html'>PhyDat2Morphy()</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>EdgeSwapper</th>
+      <td><p>a function that rearranges a parent and child vector,
+and returns a list with modified vectors; for example <code><a href='SPR.html'>SPRSwap()</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>maxIter</th>
+      <td><p>Numeric specifying maximum number of iterations to perform in
+tree search.</p></td>
+    </tr>
+    <tr>
+      <th>maxHits</th>
+      <td><p>Numeric specifying maximum number of hits to accomplish in
+tree search.</p></td>
+    </tr>
+    <tr>
+      <th>verbosity</th>
+      <td><p>Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.</p></td>
+    </tr>
+    <tr>
+      <th>stopAtPeak</th>
+      <td><p>Logical specifying whether to terminate search once a
+subsequent iteration recovers a sub-optimal score.
+Will be overridden if a passed function has an attribute <code>stopAtPeak</code> set by
+<code>attr(FunctionName, 'stopAtPeak') &lt;- TRUE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>stopAtPlateau</th>
+      <td><p>Integer. If &gt; 0, tree search will terminate if the score
+has not improved after <code>stopAtPlateau</code> iterations.
+Will be overridden if a passed function has an attribute <code>stopAtPlateau</code> set
+by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>further arguments to pass to <code>TreeScorer()</code>, e.g. <code>dataset = </code>.</p></td>
+    </tr>
+    <tr>
       <th>tree</th>
       <td><p>A tree of class <code>phylo</code>.</p></td>
     </tr>
@@ -267,11 +330,6 @@ The function will be passed three parameters, corresponding to the
 <code>parent</code> and <code>child</code> entries of a tree's edge list, and a dataset.</p></td>
     </tr>
     <tr>
-      <th>EdgeSwapper</th>
-      <td><p>a function that rearranges a parent and child vector,
-and returns a list with modified vectors; for example <code><a href='SPR.html'>SPRSwap()</a></code>.</p></td>
-    </tr>
-    <tr>
       <th>jackIter</th>
       <td><p>Integer specifying number of jackknife iterations to conduct.</p></td>
     </tr>
@@ -288,15 +346,6 @@ To override this value for a single swapper function, set e.g.
 search within a ratchet iteration.
 To override this value for a single swapper function, set e.g.
 <code>attr(SwapperFunction, 'searchHits') &lt;- 99</code></p></td>
-    </tr>
-    <tr>
-      <th>verbosity</th>
-      <td><p>Numeric specifying level of detail to display in console:
-larger numbers provide more verbose feedback to the user.</p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>further arguments to pass to <code>TreeScorer()</code>, e.g. <code>dataset = </code>.</p></td>
     </tr>
     <tr>
       <th>Bootstrapper</th>
@@ -326,20 +375,6 @@ search, perhaps to analyse consensus.</p></td>
     <tr>
       <th>stopAtScore</th>
       <td><p>stop search as soon as this score is hit or beaten.</p></td>
-    </tr>
-    <tr>
-      <th>stopAtPeak</th>
-      <td><p>Logical specifying whether to terminate search once a
-subsequent iteration recovers a sub-optimal score.
-Will be overridden if a passed function has an attribute <code>stopAtPeak</code> set by
-<code>attr(FunctionName, 'stopAtPeak') &lt;- TRUE</code>.</p></td>
-    </tr>
-    <tr>
-      <th>stopAtPlateau</th>
-      <td><p>Integer. If &gt; 0, tree search will terminate if the score
-has not improved after <code>stopAtPlateau</code> iterations.
-Will be overridden if a passed function has an attribute <code>stopAtPlateau</code> set
-by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
     </tr>
     <tr>
       <th>ratchIter</th>
@@ -373,9 +408,11 @@ iteration (default: <code>searchHits</code>).</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>Jackknife()</code> returns a list of trees recovered after jackknife
+    <p><code>MorphyBootstrap()</code> returns a tree that is optimal under a random
+sampling of the original characters.</p>
+<p><code>Jackknife()</code> returns a list of trees recovered after jackknife
 iterations.</p>
-<p>This function returns a tree modified by parsimony ratchet iterations.</p>
+<p><code>Ratchet()</code> returns a tree modified by parsimony ratchet iterations.</p>
 <p><code>MultiRatchet()</code> returns a list of optimal trees
 produced by <code>nSearch</code>
 ratchet searches, from which a consensus tree can be generated using
