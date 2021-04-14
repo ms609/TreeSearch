@@ -8,7 +8,7 @@ rownames(data11) <- letters[1:11]
 phy11 <- phangorn::phyDat(data11, type = 'USER', levels = c(FALSE, TRUE))
 RootySwappers <- list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap)
 
-test_that("tree can be found", {
+test_that("Tree can be found", {
   suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(1)
   random11 <- as.phylo(17905853L, 11, letters[1:11])
@@ -24,10 +24,15 @@ test_that("tree can be found", {
                                swappers = RootySwappers, ratchHits = 3,
                                verbosity = 0))
   
+  expect_false(all.equal(comb11, TreeSearch(random11, dataset = phy11,
+                                            maxIter = 1000,
+                                            stopAtPlateau = 1, verbosity = 0)))
+  
   expect_error(MaximizeParsimony(phy11, tree = CollapseNode(random11, 13)))
   expect_equal(comb11, MaximizeParsimony(phy11, tree = random11, verbosity = 0L)[[1]])
   expect_equal(comb11, MaximizeParsimony(phy11, random11, ratchIter = 0,
                                          verbosity = 0L)[[1]])
+  
   # Interestingly, a good example of a case with multiple optima that require
   # ratchet to move between
   iw <- MaximizeParsimony(phy11, random11, ratchIter = 1, tbrIter = 5,
@@ -37,7 +42,7 @@ test_that("tree can be found", {
 #  expect_equal(SectorialSearch(RandomTree(phy11, 'a'), phy11, verbosity = -1), comb11) 
 })
 
-test_that("tree search finds shortest tree", {
+test_that("Tree search finds shortest tree", {
   true_tree <- ape::read.tree(text = "(((((1,2),3),4),5),6);")
   malformed_tree <- ape::read.tree(text = "((((1,2),3),4),5,6);")
   dataset <- TreeTools::StringToPhyDat('110000 111000 111100', 1:6, byTaxon = FALSE)
@@ -74,6 +79,7 @@ test_that("tree search finds shortest tree", {
                   ratchIter = 3, searchHits = 5, verbosity = 0), 'score')
   expect_equal(3, TreeLength(true_tree, dataset), ratchetScore)
 })
+
 
 test_that("Profile parsimony works in tree search", {
   random11 <- as.phylo(17905853L, 11, letters[1:11]) # Rooted on 'a'
