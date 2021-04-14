@@ -79,7 +79,7 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     # Return:
     sum(fit * weight)
     
-  } else if (tolower(concavity) == 'profile') {
+  } else if (.UseProfile(concavity)) {
     if (!('info.amounts' %in% names(attributes(dataset)))) {
       dataset <- PrepareDataProfile(dataset)
     }
@@ -112,7 +112,7 @@ TreeLength.numeric <- function (tree, dataset, concavity = Inf) {
 TreeLength.list <- function (tree, dataset, concavity = Inf) {
   # Define constants
   iw <- is.finite(concavity)
-  profile <- tolower(concavity) == 'profile'
+  profile <- .UseProfile(concavity)
   
   edges <- vapply(tree, `[[`, tree[[1]]$edge, 'edge')
   

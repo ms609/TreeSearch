@@ -398,7 +398,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   
   # Define constants
   epsilon <- tolerance #sqrt(.Machine$double.eps)
-  profile <- tolower(concavity) == "profile"
+  profile <- .UseProfile(concavity)
   iw <- is.finite(concavity)
   constrained <- !is.null(constraint)
   
@@ -744,3 +744,7 @@ EasyTrees <- function () #nocov start
 #' @export
 EasyTreesy <- EasyTrees
 #nocov end
+
+.UseProfile <- function (concavity) {
+  pmatch(tolower(concavity), "profile", -1L) == 1L
+}
