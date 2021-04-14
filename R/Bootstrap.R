@@ -1,16 +1,18 @@
-#' Ratchet bootstrapper
-#' 
 #' @template edgeListParam
 #' @template morphyObjParam
 #' @template EdgeSwapperParam
-#' @param maxIter maximum number of iterations to perform in tree search
-#' @param maxHits maximum number of hits to accomplish in tree search
+#' @param maxIter Numeric specifying maximum number of iterations to perform in
+#' tree search.
+#' @param maxHits Numeric specifying maximum number of hits to accomplish in
+#' tree search.
 #' @template stopAtPeakParam
 #' @template stopAtPlateauParam
 #' @template verbosityParam
 #' @param \dots further parameters to send to `TreeScorer()`
 #'
-#' @return A tree that is optimal under a random sampling of the original characters
+#' @return `MorphyBootstrap()` returns a tree that is optimal under a random
+#' sampling of the original characters.
+#' @rdname Ratchet
 #' @export
 MorphyBootstrap <- function (edgeList, morphyObj, EdgeSwapper = NNISwap, 
                              maxIter, maxHits, verbosity = 1L, 

@@ -62,9 +62,11 @@ The function will be passed three parameters, corresponding to the
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
 
-\item{maxIter}{the maximum number of iterations to perform before abandoning the search.}
+\item{maxIter}{Numeric specifying maximum number of iterations to perform
+before abandoning the search.}
 
-\item{maxHits}{the maximum times to hit the best pscore before abandoning the search.}
+\item{maxHits}{Numeric specifying maximum times to hit the best pscore
+before abandoning the search.}
 
 \item{stopAtPeak}{Logical specifying whether to terminate search once a
 subsequent iteration recovers a sub-optimal score.
@@ -81,7 +83,8 @@ larger numbers provide more verbose feedback to the user.}
 
 \item{\dots}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
 
-\item{tree}{a fully-resolved starting tree in \code{\link{phylo}} format, with the desired outgroup; edge lengths are not supported and will be deleted;}
+\item{tree}{aA fully-resolved starting tree in \code{\link{phylo}} format,
+with the desired outgroup; edge lengths are not supported and will be deleted;}
 
 \item{InitializeData}{Function that sets up data object to prepare for tree search.
 The function will be passed the \code{dataset} parameter.
@@ -104,14 +107,14 @@ null character, coded with state zero for every leaf in \code{tree}.
 Run standard search algorithms (\acronym{NNI}, \acronym{SPR} or \acronym{TBR})
 to search for a more parsimonious tree.
 
-For detailed documentation of the TreeSearch package, including full
+For detailed documentation of the 'TreeSearch' package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
-\href{https://ms609.github.io/TreeSearch}{package documentation}.
+\href{https://ms609.github.io/TreeSearch/}{package documentation}.
 }
 \section{Functions}{
 \itemize{
-\item \code{EdgeListSearch}: Tree Search from Edge lists
+\item \code{EdgeListSearch}: Tree search from edge lists
 }}
 
 \examples{
@@ -133,12 +136,11 @@ TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
 \itemize{
 \item \code{\link{Fitch}}, calculates parsimony score;
 \item \code{\link{RootedNNI}}, conducts tree rearrangements;
-\item \code{\link{Ratchet}}, alternative heuristic, useful to escape local optima.
+\item \code{\link{Ratchet}}, alternative heuristic, useful to escape local
+optima.
 }
 }
 \author{
-Martin R. Smith
-
 \href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }

@@ -1,7 +1,6 @@
-#' @describeIn TreeSearch Tree Search from Edge lists
+#' @describeIn TreeSearch Tree search from edge lists
 #' @template edgeListParam
 #' @template dataForFunction
-#' @author Martin R. Smith
 #' @keywords internal
 #' @export
 EdgeListSearch <- function (edgeList, dataset,
@@ -92,19 +91,22 @@ EdgeListSearch <- function (edgeList, dataset,
 
 #' Search for most parsimonious trees
 #'
-#' Run standard search algorithms (\acronym{NNI}, \acronym{SPR} or \acronym{TBR}) 
+#' Run standard search algorithms (\acronym{NNI}, \acronym{SPR} or \acronym{TBR})
 #' to search for a more parsimonious tree.
 #'  
-#' For detailed documentation of the TreeSearch package, including full 
-#' instructions for loading phylogenetic data into R and initiating and 
-#' configuring tree search, see the 
-#' [package documentation](https://ms609.github.io/TreeSearch).
+#' For detailed documentation of the 'TreeSearch' package, including full
+#' instructions for loading phylogenetic data into R and initiating and
+#' configuring tree search, see the
+#' [package documentation](https://ms609.github.io/TreeSearch/).
 #'  
-#' @param tree a fully-resolved starting tree in \code{\link{phylo}} format, with the desired outgroup; edge lengths are not supported and will be deleted;
+#' @param tree aA fully-resolved starting tree in \code{\link{phylo}} format, 
+#' with the desired outgroup; edge lengths are not supported and will be deleted;
 #' @template datasetParam
 #' @template EdgeSwapperParam
-#' @param maxIter the maximum number of iterations to perform before abandoning the search.
-#' @param maxHits the maximum times to hit the best pscore before abandoning the search.
+#' @param maxIter Numeric specifying maximum number of iterations to perform
+#' before abandoning the search.
+#' @param maxHits Numeric specifying maximum times to hit the best pscore
+#' before abandoning the search.
 #' @template stopAtPeakParam
 #' @template stopAtPlateauParam
 #'
@@ -130,7 +132,8 @@ EdgeListSearch <- function (edgeList, dataset,
 #' \itemize{
 #' \item \code{\link{Fitch}}, calculates parsimony score;
 #' \item \code{\link{RootedNNI}}, conducts tree rearrangements;
-#' \item \code{\link{Ratchet}}, alternative heuristic, useful to escape local optima.
+#' \item \code{\link{Ratchet}}, alternative heuristic, useful to escape local
+#'   optima.
 #' }
 #'
 #' @examples

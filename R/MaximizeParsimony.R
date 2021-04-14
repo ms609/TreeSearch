@@ -200,7 +200,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               nHits <- 1L
               hold[, , 1] <- edge
               .Message(4L, "New best score ", bestScore,
-                       " at break ", match(brk, optTBR), "/", length(optTbr))
+                       " at break ", match(brk, optTbr), "/", length(optTbr))
               break
             } else {
               .Message(5L, "Best score ", bestScore, " hit again (", nHits, 
@@ -275,7 +275,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               nHits <- 1L
               hold[, , 1] <- edge
               .Message(4L, "New best score ", signif(bestScore, 5),
-                       " at break ", match(brk, optTBR), "/", length(optTbr))
+                       " at break ", match(brk, optTbr), "/", length(optTbr))
               break
             } else {
               .Message(5L, "Best score ", signif(bestScore, 5),
@@ -349,7 +349,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               nHits <- 1L
               hold[, , 1] <- edge
               .Message(4L, "New best score ", signif(bestScore, 5),
-                       " at break ", match(brk, optTBR), "/", length(optTbr))
+                       " at break ", match(brk, optTbr), "/", length(optTbr))
               break
             } else {
               .Message(5L, "Best score ", signif(bestScore, 5),
@@ -535,7 +535,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     while (iter < ratchIter) {
       .Progress(iter / ratchIter, "Ratchet iteration ", (iter + 1L))
       iter <- iter + 1L
-      .Message(1L, "Ratchet iteration ", iter, 
+      .Message(1L, Sys.time(), ": Ratchet iteration ", iter, 
                ": Search from bootstrapped dataset.")
       verbosity <- verbosity - 1L
       eachChar <- seq_along(startWeights)
@@ -578,7 +578,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       }
       verbosity <- verbosity + 1L
       ratchetStart <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
-      .Message(1L, "Ratchet iteration ", iter, ": Search using original data")
+      .Message(1L, Sys.time(), ": Ratchet iteration ", iter, 
+               ": Search using original data")
       ratchetImproved <- if (profile) {
         .ProfileTBRSearch(ratchetStart, NTip(tree), morphyObjects, startWeights,
                           charSeq, profiles, tbrIter, maxHits / finalIter)
@@ -587,7 +588,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                      minLength, charSeq,
                      concavity, tbrIter, maxHits / finalIter)
       } else {
-        .TBRSearch(ratchetStart, NTip(tree), morphyObj, tbrIter, maxHits / finalIter)
+        .TBRSearch(ratchetStart, NTip(tree), morphyObj, tbrIter,
+                   maxHits / finalIter)
       }
       ratchetScore <- if (profile) {
         .ProfileScore(ratchetImproved[, , 1], morphyObjects, startWeights,
@@ -621,7 +623,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   
   # Branch breaking
   
-  .Message(0L, "Final TBR search.")
+  .Message(0L, Sys.time(), ": Final TBR search.")
   bestEdges <- if (profile) {
     .ProfileTBRSearch(edge, nTip, morphyObjects, startWeights, charSeq, 
                       profiles, tbrIter * finalIter, maxHits)

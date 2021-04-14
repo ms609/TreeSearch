@@ -41,7 +41,7 @@
 #' @param suboptimal retain trees that are suboptimal by this score. Defaults to 1e-08 to counter rounding errors.
 #' @template treeScorerDots
 #' 
-#' @return This function returns a tree modified by parsimony ratchet iterations.
+#' @return `Ratchet()` returns a tree modified by parsimony ratchet iterations.
 #'
 #' @references 
 #' 
