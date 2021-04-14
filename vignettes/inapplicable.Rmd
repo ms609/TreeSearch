@@ -31,11 +31,10 @@ You can launch an interactive 'app' in your browser by typing
 `TreeSearch::EasyTrees()` at the R command line.
 
 
-![TreeSearch easy-tree interface](easy_tree.png)
+![TreeSearch graphical user interface](easy_tree.png)
 
 This will allow you to load data from a file, modify search settings, and
 explore the distribution of most parsimonious trees in tree space.
-
 Trees can be saved as images, or in Nexus/Newick for further analysis.
 
 
@@ -167,15 +166,15 @@ ideally under a range of concavity constants [cf. @Smith2014].
 Implied weights can be activated by simply specifying a value of the concavity 
 constant, _k_:
 
-```{r iw-search}
+```{r iw-search, message = FALSE}
 iwTrees <- MaximizeParsimony(vinther, concavity = 10)
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(ape::consensus(iwTrees))
 ```
 
 Note that we recommend a default value of 10, somewhat higher than the default 
-of 3 in TNT; this low default probably gives poorer results in many settings
-[@Smith2019].  Better still is to use multiple values and compare the results,
+of 3 in TNT; this low default gives poorer results in many settings
+[@Goloboff2018;@Smith2019].  Better still is to use multiple values and compare the results,
 perhaps in 
 [Tree space](https://ms609.github.io/TreeDist/articles/treespace.html).
 
@@ -197,7 +196,7 @@ constraints, but if it cannot, it may be necessary to specify one manually
 Here's a simple example on six taxa that enforces the bipartition ab | cdef:
 
 ```{r simple-constraints}
-library("TreeTools", quietly = TRUE)
+library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
 characters <- MatrixToPhyDat(matrix(
   c(0, 1, 1, 1, 0, 0,

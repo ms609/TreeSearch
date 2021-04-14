@@ -179,7 +179,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       .Progress(iter / tbrIter, detail = paste0('TBR iteration (depth ', iter + 1, ')'))
       iter <- iter + 1L
       optTbr <- sample(3:(nTip * 2 - 2))
-      .Message(3L, "New TBR iteration (depth ", iter, ')')
+      .Message(3L, "New TBR iteration (depth ", iter, ', score ', bestScore, ')')
       
       for (brk in optTbr) {
         .Message(6L, "Break ", brk)
@@ -199,7 +199,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               bestScore <- moveScore
               nHits <- 1L
               hold[, , 1] <- edge
-              .Message(4L, "New best score ", bestScore)
+              .Message(4L, "New best score ", bestScore,
+                       " at break ", match(brk, optTBR), "/", length(optTbr))
               break
             } else {
               .Message(5L, "Best score ", bestScore, " hit again (", nHits, 
@@ -250,7 +251,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       .Progress(iter / tbrIter, detail = paste0('TBR iteration (depth ', iter + 1, ')'))
       iter <- iter + 1L
       optTbr <- sample(3:(nTip * 2 - 2))
-      .Message(3L, "New TBR iteration (depth ", iter, ')')
+      .Message(3L, "New TBR iteration (depth ", iter, 
+               ", score ", signif(bestScore, 5), ")")
       
       for (brk in optTbr) {
         .Message(6L, "Break ", brk)
@@ -272,7 +274,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               bestPlusEps <- bestScore + epsilon
               nHits <- 1L
               hold[, , 1] <- edge
-              .Message(4L, "New best score ", signif(bestScore, 5))
+              .Message(4L, "New best score ", signif(bestScore, 5),
+                       " at break ", match(brk, optTBR), "/", length(optTbr))
               break
             } else {
               .Message(5L, "Best score ", signif(bestScore, 5),
@@ -322,7 +325,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                                 iter + 1, ')'))
       iter <- iter + 1L
       optTbr <- sample(3:(nTip * 2 - 2))
-      .Message(3L, "New TBR iteration (depth ", iter, ')')
+      .Message(3L, "New TBR iteration (depth ", iter, ", score ",
+               signif(bestScore, 5), ")")
       
       for (brk in optTbr) {
         .Message(6L, "Break ", brk)
@@ -344,7 +348,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               bestPlusEps <- bestScore + epsilon
               nHits <- 1L
               hold[, , 1] <- edge
-              .Message(4L, "New best score ", signif(bestScore, 5))
+              .Message(4L, "New best score ", signif(bestScore, 5),
+                       " at break ", match(brk, optTBR), "/", length(optTbr))
               break
             } else {
               .Message(5L, "Best score ", signif(bestScore, 5),
