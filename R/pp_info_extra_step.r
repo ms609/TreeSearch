@@ -1,4 +1,4 @@
-#' Information Content of a character known to contain _e_ steps
+#' Information content of a character known to contain _e_ steps
 #'
 #' `StepInformation()` calculates the phylogenetic information content of a
 #' character `char` when _e_ extra steps are present, for all possible 
@@ -255,57 +255,59 @@ LogisticPoints <- function (x, fittedModel) {
 #' data(congreveLamsdellMatrices)
 #' myMatrix <- congreveLamsdellMatrices[[10]]
 #' Evaluate(TreeTools::NJTree(myMatrix), myMatrix)
-#' @importFrom stats nls
 #' @export
 Evaluate <- function (tree, dataset) {
-  totalSteps <- TreeLength(tree, dataset)
+  totalSteps <- CharacterLength(tree, dataset)
   chars <- matrix(unlist(dataset), attr(dataset, 'nr'))
   ambiguousToken <- which(attr(dataset, 'allLevels') == "?")
   asSplits <- apply(chars, 1, function (x) {
     ret <- table(x)
-    ret[names(ret) != ambiguousToken] 
+    if (length(ambiguousToken) != 0) {
+      ret[names(ret) != ambiguousToken]
+    } else {
+      ret
+    }
   })
   if (is.matrix(asSplits)) {
     asSplits <- lapply(seq_len(ncol(asSplits)), function(i) asSplits[, i])
   }
-  ic.max <- round(vapply(asSplits,
-                         function (split) -log(NUnrootedMult(split)/
-                                                 NUnrooted(sum(split)))/log(2),
-                         double(1)), 12)
+  ic <- vapply(asSplits, function (split) 
+    Log2Unrooted(sum(split)) - Log2UnrootedMult(split),
+    double(1))
   infoLosses <- apply(chars, 1, StepInformation, 
                       ambiguousToken = ambiguousToken)
-  infoAmounts <- lapply(infoLosses, function(p) {
-    #message(length(p))
-    cumP <- cumsum(p)
-    nSteps <- as.integer(names(p))
-    infer <- min(nSteps):max(nSteps)
-    infer <- infer[!(infer %in% nSteps)]
-    calculatedP <- double(max(nSteps))
-    calculatedP[nSteps] <- cumP
-    if (length(infer)) {
-      fitL <- nls(cumP ~ SSlogis(nSteps, Asym, xmid, scal))
-      calculatedP[infer] <- LogisticPoints(infer, fitL)
-    }
-    calcIC <- -log(calculatedP) / log(2)
-    calcIC
-  })
   
-  info.used <- double(length(totalSteps))
-  for (i in seq_along(totalSteps)) {
-    if (totalSteps[i] > 0) info.used[i] <- infoAmounts[[i]][totalSteps[i]]
-  }
-  info.lost <- round(ic.max - info.used, 13)
+  signal <- vapply(seq_along(totalSteps), function (i) {
+    if (totalSteps[i] > 0) {
+      infoLosses[[i]][totalSteps[i]]
+    } else {
+      0
+    }
+  }, double(1))
+  noise <- ic - signal
+  noise[noise < sqrt(.Machine$double.eps)] <- 0
+  
   index <- attr(dataset, 'index')
-  total.info <- sum(ic.max[index])
-  info.misleading <- sum(info.lost[index])
-  proportion.lost <- info.misleading / total.info
-  info.needed <- -log(1 / NUnrooted(length(dataset))) / log(2)
-  info.overkill <- total.info / info.needed
-  info.retained <- sum(info.used[index])
-  signal.noise <- info.retained / info.misleading
-  message(total.info, ' bits, of which ', round(info.retained, 2), ' kept, ',
-          round(total.info - info.retained, 2), ' lost,',
-          round(info.needed, 2), ' needed.  SNR = ', signal.noise, "\n")
+  totalInfo <- sum(ic[index])
+  totalNoise <- sum(noise[index])
+  totalSignal <- sum(signal[index])
+  signalNoise <- totalSignal / totalNoise
+  
+  infoNeeded <- Log2Unrooted(length(dataset))
+  infoOverkill <- totalInfo / infoNeeded
+  
+  message(signif(totalInfo), ' bits, of which ', 
+          signif(totalSignal), ' signal, ',
+          signif(totalNoise), ' noise, ',
+          signif(infoNeeded), ' needed.  ',
+          'S:N = ', signif(signalNoise), "\n")
+  
   # Return:
-  c(signal.noise, info.retained / info.needed)
+  c(informationContent = totalInfo,
+    signal = totalSignal,
+    noise = totalNoise,
+    signalToNoise = signalNoise, 
+    
+    treeInformation = infoNeeded,
+    signalToTree = infoOverkill)
 }
