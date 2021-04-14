@@ -207,7 +207,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' @examples
 #' data(congreveLamsdellMatrices)
 #' myMatrix <- congreveLamsdellMatrices[[10]]
-#' Evaluate(TreeTools::NJTree(myMatrix), myMatrix)
+#' ConcordantInformation(TreeTools::NJTree(myMatrix), myMatrix)
 #' @template MRS
 #' @importFrom TreeTools Log2UnrootedMult Log2Unrooted
 #' @export
@@ -270,9 +270,9 @@ ConcordantInformation <- function (tree, dataset) {
 
 #' @rdname ConcordantInformation
 #' @export
-Evaluate <- function (...) {
+Evaluate <- function (tree, dataset) {
   .Deprecated('ConcordantInformation()')
-  ConcordantInformation(...)
+  ConcordantInformation(tree, dataset)
 }
 
 #' @rdname ConcordantInformation
