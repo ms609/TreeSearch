@@ -119,26 +119,29 @@
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#treesearch" class="anchor"></a>TreeSearch</h1></div>
 
-<p>This package exists to allow parsimony-style tree searches in R.</p>
-<p>Implied weighting and heuristic searches such as the Parsimony Ratchet (function: <a href="https://ms609.github.io/TreeSearch/reference/Ratchet.html"><code>Ratchet()</code></a>) are implemented.</p>
+<p>This package implements maximum parsimony tree search in R, using the Brazeau, Guillerme &amp; Smith (2019) approach to inapplicable data, as implemented in the Morphy C library (Brazeau <em>et al</em>. 2017). Implied weighting, profile parsimony and heuristic searches are implemented; a graphical user interface is available.</p>
 </div>
 <div id="installation" class="section level1">
 <h1 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h1>
-<p>Install and load the library from CRAN as follows:</p>
+<!--Install and load the stable version from CRAN, and launch the GUI, as follows:-->
+<p>Install and load the stable version from CRAN as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">'TreeSearch'</span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">'TreeSearch'</a></span><span class="op">)</span></code></pre></div>
+<!--EasyTrees()-->
 <p>The development release incorporates a major reworking of the search interface, allowing faster and more intuitive tree search.</p>
-<p>Install the development version with:</p>
+<p>Install the development version and launch the GUI with:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html">require</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/">devtools</a></span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span>
-<span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span><span class="op">(</span><span class="st">'ms609/TreeSearch'</span><span class="op">)</span></code></pre></div>
+<span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span><span class="op">(</span><span class="st">'ms609/TreeSearch'</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span>
+<span class="fu"><a href="reference/MaximizeParsimony.html">EasyTrees</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="quick-start" class="section level1">
 <h1 class="hasAnchor">
 <a href="#quick-start" class="anchor"></a>Quick start</h1>
-<p>Launch a graphical user interface (beta, development version only) by typing <code><a href="reference/MaximizeParsimony.html">TreeSearch::EasyTrees()</a></code> in the R console.</p>
+<p>Launch a graphical user interface (development version only) by typing <code><a href="reference/MaximizeParsimony.html">TreeSearch::EasyTrees()</a></code> in the R console.</p>
 <p>For more control over search settings, see <a href="https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html"><code>?MaximizeParsimony()</code></a>.</p>
 </div>
 <div id="optimality-criteria" class="section level1">
@@ -147,6 +150,7 @@
 <p>‘TreeSearch’ allows the implementation of various optimality criteria, including</p>
 <ul>
 <li>Fitch parsimony with inapplicable data (Brazeau, Guillerme and Smith, 2019).</li>
+<li>Implied weighting (Goloboff 1993)</li>
 <li>The Profile Parsimony approach introduced by Faith and Trueman (2001).</li>
 <li>Successive Approximations weighting (Farris 1969).</li>
 </ul>
@@ -168,9 +172,12 @@
 <div id="references" class="section level1">
 <h1 class="hasAnchor">
 <a href="#references" class="anchor"></a>References</h1>
+<p>Brazeau MD, Smith MR, Guillerme T (2017). MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability. doi: <a href="https://doi.org/10.5281/zenodo.815372">10.5281/zenodo.815372</a>.</p>
 <p>Brazeau, M. D., Guillerme, T. and Smith, M. R. 2019. An algorithm for morphological phylogenetic analysis with inapplicable data. Systematic Biology, 68(4), 619-631. doi: <a href="https://dx.doi.org/10.1093/sysbio/syy083">10.1093/sysbio/syy083</a>.</p>
-<p>D. P. Faith, J. W. H. Trueman, Towards an inclusive philosophy for phylogenetic inference. Syst. Biol. 50, 331–350 (2001). doi: <a href="https://dx.doi.org/10.1080/10635150118627">10.1080/10635150118627</a></p>
+<p>Faith DP, Trueman JWH (2001). Towards an inclusive philosophy for phylogenetic inference. Systematic Biology, 50(3), 331–350. doi: <a href="https://doi.org/10.1080/10635150118627">10.1080/10635150118627</a>.</p>
 <p>Farris, J. S. (1969). A successive approximations approach to character weighting. Systematic Biology, 18(4), 374–385. doi: <a href="https://dx.doi.org/10.2307/2412182">10.2307/2412182</a></p>
+<p>Goloboff PA (1993). Estimating character weights during tree search. Cladistics, 9(1), 83–91. doi: <a href="https://doi.org/10.1111/j.1096-0031.1993.tb00209.x">10.1111/j.1096-0031.1993.tb00209.x</a>.</p>
+<p>Goloboff PA, Torres A, Arias JS (2018). Weighted parsimony outperforms other methods of phylogenetic inference under models appropriate for morphology. Cladistics, 34(4), 407–437. doi: <a href="https://doi.org/10.1111/cla.12205">10.1111/cla.12205</a>.</p>
 </div>
 
   </div>
