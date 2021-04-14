@@ -72,6 +72,7 @@ test_that("SPR working", {
   # Move cherry
   expect_equal(6, length(all_spr(tr$edge, 9)))
   expect_equal(6, length(all_spr(tr$edge, 5)))
+  expect_equal(12, length(all_spr(tr$edge, c(9, 5))))
   
   # Move more
   expect_equal(0, length(unique(all_spr(tr$edge, 4))))
