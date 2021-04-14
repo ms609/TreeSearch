@@ -58,7 +58,11 @@ test_that("TBR working", {
   }
 })
 
-test_that("SPR working", {
+test_that("SPR fails gracefully", {
+  expect_error(all_spr(as.phylo(1, 3)$edge, integer(0)))
+})
+
+test_that("SPR works", {
   t2 <- as.phylo(518, 7) # (t1, ((t2, t3), ((t4, t5), (t6, t7))))
   expect_equal(8, length(all_spr(t2$edge, 2)))
   
