@@ -2,7 +2,7 @@
 % Please edit documentation in R/pp_info_extra_step.r
 \name{StepInformation}
 \alias{StepInformation}
-\title{Information Content of a character known to contain \emph{e} steps}
+\title{Information content of a character known to contain \emph{e} steps}
 \usage{
 StepInformation(char, ambiguousTokens = c("-", "?"))
 }

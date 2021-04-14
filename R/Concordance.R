@@ -182,3 +182,99 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
   # Return:
   support[, 1] / support[, 2]
 }
+
+#' Evaluate the concordance of information between a tree and a dataset
+#' 
+#' Details the amount of information in a phylogenetic dataset that is
+#' consistent with a specified phylogenetic tree, and the signal:noise
+#' ratio of the character matrix implied if the tree is true.
+#' 
+#' @return `ConcordantInformation()` returns a named vector with elements:
+#' 
+#' - `informationContent`: cladistic information content of `dataset`
+#' - `signal`, `noise`: amount of cladistic information that represents 
+#' phylogenetic signal and noise, according to `tree`
+#' - `signalToNoise`: the implied signal:noise ratio of `dataset`
+#' - `treeInformation`: the cladistic information content of a bifurcating tree
+#' on `dataset`; this is the minimum amount of information necessary to resolve
+#' a bifurcating tree, assuming no duplicate information or noise
+#' - `matrixToTree`: the ratio of the cladistic information content of the
+#' matrix to the cladistic information content of the tree, a measure of the
+#' redundancy of the matrix
+#' 
+#' @template treeParam
+#' @template datasetParam
+#' @examples
+#' data(congreveLamsdellMatrices)
+#' myMatrix <- congreveLamsdellMatrices[[10]]
+#' Evaluate(TreeTools::NJTree(myMatrix), myMatrix)
+#' @template MRS
+#' @importFrom TreeTools Log2UnrootedMult Log2Unrooted
+#' @export
+ConcordantInformation <- function (tree, dataset) {
+  totalSteps <- CharacterLength(tree, dataset)
+  chars <- matrix(unlist(dataset), attr(dataset, 'nr'))
+  ambiguousToken <- which(attr(dataset, 'allLevels') == "?")
+  asSplits <- apply(chars, 1, function (x) {
+    ret <- table(x)
+    if (length(ambiguousToken) != 0) {
+      ret[names(ret) != ambiguousToken]
+    } else {
+      ret
+    }
+  })
+  if (is.matrix(asSplits)) {
+    asSplits <- lapply(seq_len(ncol(asSplits)), function(i) asSplits[, i])
+  }
+  ic <- vapply(asSplits, function (split) 
+    Log2Unrooted(sum(split)) - Log2UnrootedMult(split),
+    double(1))
+  infoLosses <- apply(chars, 1, StepInformation, 
+                      ambiguousToken = ambiguousToken)
+  
+  signal <- vapply(seq_along(totalSteps), function (i) {
+    if (totalSteps[i] > 0) {
+      infoLosses[[i]][totalSteps[i]]
+    } else {
+      0
+    }
+  }, double(1))
+  noise <- ic - signal
+  noise[noise < sqrt(.Machine$double.eps)] <- 0
+  
+  index <- attr(dataset, 'index')
+  totalInfo <- sum(ic[index])
+  totalNoise <- sum(noise[index])
+  totalSignal <- sum(signal[index])
+  signalNoise <- totalSignal / totalNoise
+  
+  infoNeeded <- Log2Unrooted(length(dataset))
+  infoOverkill <- totalInfo / infoNeeded
+  
+  message('dataset contains ',
+          signif(totalInfo), ' bits, of which ', 
+          signif(totalSignal), ' signal, ',
+          signif(totalNoise), ' noise, ',
+          signif(infoNeeded), ' needed.  ',
+          'S:N = ', signif(signalNoise), "\n")
+  
+  # Return:
+  c(informationContent = totalInfo,
+    signal = totalSignal,
+    noise = totalNoise,
+    signalToNoise = signalNoise, 
+    
+    treeInformation = infoNeeded,
+    matrixToTree = infoOverkill)
+}
+
+#' @rdname ConcordantInformation
+#' @export
+Evaluate <- function (...) {
+  .Deprecated('ConcordantInformation()')
+  ConcordantInformation(...)
+}
+
+#' @rdname ConcordantInformation
+#' @export
+ConcordantInfo <- ConcordantInformation

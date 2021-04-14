@@ -2,6 +2,8 @@
 
  - `EasyTree()` 'shiny' graphical user interface for tree search
  - `SiteConcordance()` calculates exact site concordance
+ - `ConcordantInformation()` evaluates signal:noise of dataset implied by a
+   given tree.
  - `Resample()` conducts bootstrap and jackknife resampling
  - `Consistency()` calculates consistency and retention 'indices'
  - `MinimumLength()` and `MaximumLength()` calculate range of possible lengths
