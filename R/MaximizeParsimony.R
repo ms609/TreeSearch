@@ -9,6 +9,7 @@
 #' under implied or equal weights, treating inapplicable characters as such
 #' in order to avoid the artefacts of the standard Fitch algorithm
 #' (see Maddison 1993; Brazeau et al. 2019).
+#' The tree scoring implementation uses the MorphyLib C library (Brazeau 2017).
 #' 
 #' Tree search commences with `ratchIter` iterations of the parsimony ratchet
 #' (Nixon 1999), which bootstraps the input dataset in order to escape local
@@ -19,7 +20,7 @@
 #' the 'shiny' graphical user interface app (type `EasyTrees()` to launch).
 #' 
 #'  
-#' For detailed documentation of the TreeSearch package, including full 
+#' For detailed documentation of the 'TreeSearch' package, including full 
 #' instructions for loading phylogenetic data into R and initiating and 
 #' configuring tree search, see the 
 #' [package documentation](https://ms609.github.io/TreeSearch).
@@ -124,6 +125,8 @@
 #' @importFrom shiny setProgress withProgress
 #' @importFrom TreeTools NJTree CharacterInformation
 #' @references
+#' \insertRef{Brazeau2017}{TreeSearch}
+#' 
 #' \insertRef{Brazeau2019}{TreeSearch}
 #' 
 #' \insertRef{Maddison1993}{TreeSearch}
@@ -131,6 +134,7 @@
 #' \insertRef{Nixon1999}{TreeSearch}
 #' 
 #' \insertRef{Smith2019}{TreeSearch}
+#' @encoding UTF-8
 #' @export
 MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                ratchIter = 12L, tbrIter = 6L, finalIter = 3L,

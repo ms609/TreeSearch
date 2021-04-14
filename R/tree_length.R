@@ -41,7 +41,6 @@
 #'  - \insertRef{Goloboff2018}{TreeSearch}
 #'  
 #'  - \insertRef{Smith2019}{TreeSearch}
-#'
 #' @author Martin R. Smith (using Morphy C library, by Martin Brazeau)
 #' @importFrom phangorn phyDat
 #' @importFrom TreeTools Renumber RenumberTips TreeIsRooted
