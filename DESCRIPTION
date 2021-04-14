@@ -45,7 +45,6 @@ LinkingTo:
     Rcpp,
     TreeTools
 SystemRequirements: C++14
-Remotes: ms609/TreeTools
 LazyData: true
 ByteCompile: true
 Encoding: UTF-8
