@@ -1,5 +1,7 @@
-#' @param concavity A numeric value to use as the concavity constant (`k`)
+#' @param concavity Determines the degree to which extra steps beyond the first
+#' are penalized.  Specify a numeric value to use implied weighting
+#' (Goloboff 1993, where `concavity` specifies _k_ in _k_ / _e_ + _k_).
 #'  in implied weighting. Defaults to 10; TNT sets a default of 3, but this 
-#'  is too low in some circumstances (Smith, 2019). If `Inf`, applies equal
-#'  weights; if `'profile'`, then profile parsimony is used.
-#TODO rewrite
+#'  is too low in some circumstances (Goloboff _et al_. 2017, Smith, 2019).
+#' Specify `Inf` to weight each additional step equally.
+#' Specify `'profile'` to employ profile parsimony (Faith & Trueman 2001).

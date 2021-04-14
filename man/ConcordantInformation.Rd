@@ -8,7 +8,7 @@
 \usage{
 ConcordantInformation(tree, dataset)
 
-Evaluate(...)
+Evaluate(tree, dataset)
 
 ConcordantInfo(tree, dataset)
 }
@@ -38,10 +38,14 @@ Details the amount of information in a phylogenetic dataset that is
 consistent with a specified phylogenetic tree, and the signal:noise
 ratio of the character matrix implied if the tree is true.
 }
+\details{
+Presenly restricted to datasets whose characters contain a maximum of
+two parsimony-informative states.
+}
 \examples{
 data(congreveLamsdellMatrices)
 myMatrix <- congreveLamsdellMatrices[[10]]
-Evaluate(TreeTools::NJTree(myMatrix), myMatrix)
+ConcordantInformation(TreeTools::NJTree(myMatrix), myMatrix)
 }
 \author{
 \href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}

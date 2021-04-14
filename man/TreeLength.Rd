@@ -32,10 +32,13 @@ uniformly sampled.}
 \item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
 whose names correspond to the labels of any accompanying tree.}
 
-\item{concavity}{A numeric value to use as the concavity constant (\code{k})
+\item{concavity}{Determines the degree to which extra steps beyond the first
+are penalized.  Specify a numeric value to use implied weighting
+(Goloboff 1993, where \code{concavity} specifies \emph{k} in \emph{k} / \emph{e} + \emph{k}).
 in implied weighting. Defaults to 10; TNT sets a default of 3, but this
-is too low in some circumstances (Smith, 2019). If \code{Inf}, applies equal
-weights; if \code{'profile'}, then profile parsimony is used.}
+is too low in some circumstances (Goloboff \emph{et al}. 2017, Smith, 2019).
+Specify \code{Inf} to weight each additional step equally.
+Specify \code{'profile'} to employ profile parsimony (Faith & Trueman 2001).}
 
 \item{\dots}{unused; allows additional parameters specified within \dots to be
 received by the function without throwing an error.}

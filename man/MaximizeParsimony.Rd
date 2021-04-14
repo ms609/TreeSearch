@@ -112,8 +112,10 @@ optimal tree) or a random tree (which may take longer as more rearrangements
 are necessary to find an optimal tree on each iteration).}
 }
 \value{
-\code{MaximizeParsimony()} returns...
-#TODO
+\code{MaximizeParsimony()} returns a list of trees with class \code{multiPhylo}.
+Note that these default parameters may need to be increased in order for
+these trees to be the globally optimal trees; examine the output to see
+whether the optimal score has stabilized.
 
 \code{Resample()} returns a \code{multiPhylo} object containing a list of
 trees obtained by tree search using a resampled version of \code{dataset}.
@@ -145,8 +147,11 @@ configuring tree search, see the
 }
 \examples{
 \dontrun{ # launch 'shiny' point-and-click interface
+  # Here too, use the "continue search" function to ensure that tree score
+  # has stabilized and a global optimum has been found
   EasyTrees() 
 }
+
 
 # Load data for analysis in R
 library('TreeTools')

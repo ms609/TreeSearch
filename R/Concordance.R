@@ -189,6 +189,9 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' consistent with a specified phylogenetic tree, and the signal:noise
 #' ratio of the character matrix implied if the tree is true.
 #' 
+#' Presenly restricted to datasets whose characters contain a maximum of
+#' two parsimony-informative states.
+#' 
 #' @return `ConcordantInformation()` returns a named vector with elements:
 #' 
 #' - `informationContent`: cladistic information content of `dataset`
