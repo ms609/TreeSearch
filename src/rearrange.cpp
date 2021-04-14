@@ -1,7 +1,6 @@
 #include <Rcpp.h>
 // [ [Rcpp::depends(TreeTools)]]
 #include <TreeTools.h>
-#include <cassert> /* for assert */
 #include <memory> /* for unique_ptr */
 using namespace std;
 using namespace Rcpp;
