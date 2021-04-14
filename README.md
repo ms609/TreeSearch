@@ -22,7 +22,8 @@ install.packages('TreeSearch')
 library('TreeSearch')
 ```
 
-A fundamental reworking of search strategies is currently underway. 
+The development release incorporates a major reworking of the search interface,
+allowing faster and more intuitive tree search.
 
 Install the development version with:
 ```r

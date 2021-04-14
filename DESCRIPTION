@@ -44,7 +44,6 @@ RdMacros: Rdpack
 LinkingTo:
     Rcpp,
     TreeTools
-Remotes: ms609/TreeTools
 SystemRequirements: C++14
 LazyData: true
 ByteCompile: true

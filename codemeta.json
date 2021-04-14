@@ -7,20 +7,21 @@
   "identifier": "TreeSearch",
   "description": "Searches for phylogenetic trees that are optimal using a \n  user-defined criterion. \n  Handles inapplicable data using the algorithm of \n  Brazeau, Guillerme and Smith (2019) <doi:10.1093/sysbio/syy083>.\n  Implements Profile Parsimony (Faith and Trueman, 2001) \n  <doi:10.1080/10635150118627>, and Successive Approximations (Farris, 1969) \n  <doi:10.2307/2412182>.",
   "name": "TreeSearch: Phylogenetic Tree Search Using Custom Optimality Criteria",
-  "codeRepository": "https://github.com/ms609/TreeSearch",
+  "codeRepository": "https://github.com/ms609/TreeSearch/",
   "relatedLink": [
     "https://ms609.github.io/TreeSearch",
-    "https://CRAN.R-project.org/package=TreeSearch"
+    "https://CRAN.R-project.org/package=TreeSearch",
+    "https://ms609.github.io/TreeSearch/"
   ],
-  "issueTracker": "https://github.com/ms609/TreeSearch/issues",
+  "issueTracker": "https://github.com/ms609/TreeSearch/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "0.4.3.9000",
+  "version": "0.4.3.9004",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.0.2 (2020-06-22)",
+  "runtimePlatform": "R version 4.0.4 (2021-02-15)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -89,18 +90,6 @@
     },
     {
       "@type": "SoftwareApplication",
-      "identifier": "shiny",
-      "name": "shiny",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=shiny"
-    },
-    {
-      "@type": "SoftwareApplication",
       "identifier": "testthat",
       "name": "testthat",
       "provider": {
@@ -110,6 +99,18 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=testthat"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "vdiffr",
+      "name": "vdiffr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=vdiffr"
     }
   ],
   "softwareRequirements": [
@@ -134,6 +135,18 @@
     },
     {
       "@type": "SoftwareApplication",
+      "identifier": "cluster",
+      "name": "cluster",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=cluster"
+    },
+    {
+      "@type": "SoftwareApplication",
       "identifier": "phangorn",
       "name": "phangorn",
       "version": ">= 2.2.1",
@@ -147,15 +160,39 @@
     },
     {
       "@type": "SoftwareApplication",
-      "identifier": "R.cache",
-      "name": "R.cache",
+      "identifier": "protoclust",
+      "name": "protoclust",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
         "name": "Comprehensive R Archive Network (CRAN)",
         "url": "https://cran.r-project.org"
       },
-      "sameAs": "https://CRAN.R-project.org/package=R.cache"
+      "sameAs": "https://CRAN.R-project.org/package=protoclust"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "Quartet",
+      "name": "Quartet",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=Quartet"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "Rcpp",
+      "name": "Rcpp",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=Rcpp"
     },
     {
       "@type": "SoftwareApplication",
@@ -171,14 +208,50 @@
     },
     {
       "@type": "SoftwareApplication",
+      "identifier": "shiny",
+      "name": "shiny",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=shiny"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "shinyjs",
+      "name": "shinyjs",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=shinyjs"
+    },
+    {
+      "@type": "SoftwareApplication",
       "identifier": "stats",
       "name": "stats"
     },
     {
       "@type": "SoftwareApplication",
+      "identifier": "TreeDist",
+      "name": "TreeDist",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=TreeDist"
+    },
+    {
+      "@type": "SoftwareApplication",
       "identifier": "TreeTools",
       "name": "TreeTools",
-      "version": ">= 1.0.0",
+      "version": ">= 1.4.2.9003",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -273,5 +346,5 @@
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
     }
   ],
-  "fileSize": "1166.65KB"
+  "fileSize": "3949.467KB"
 }
