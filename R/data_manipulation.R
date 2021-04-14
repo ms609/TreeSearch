@@ -38,12 +38,12 @@ PrepareDataProfile <- function (dataset) {
   qmLevel <- which(contSums == ncol(cont))
   ambigs <- which(contSums > 1L & contSums < ncol(cont))
   inappLevel <- which(colnames(cont) == '-')
-  if (length(inappLevel)) {
+  if (length(inappLevel) != 0L) {
     inappLevel <- which(apply(unname(cont), 1, identical,
                               as.double(colnames(cont) == '-')))
   }
   
-  if (length(ambigs) > 0L) {
+  if (length(ambigs) != 0L) {
     message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ', '),
             " converted to '?'")
     dataset <- lapply(dataset, function (i) {
@@ -55,8 +55,13 @@ PrepareDataProfile <- function (dataset) {
   
   mataset <- matrix(unlist(dataset, recursive = FALSE, use.names = FALSE),
                     max(index))
-  info <- apply(mataset, 1, StepInformation, 
-                ambiguousTokens = c(qmLevel, inappLevel))
+  #TODO when require R4.1: replace with
+  # info <- apply(mataset, 1, StepInformation, 
+  #               ambiguousTokens = c(qmLevel, inappLevel),
+  #               simplify = FALSE)
+  info <- lapply(seq_along(mataset[, 1]), function (i) 
+    StepInformation(mataset[i, ], ambiguousTokens = c(qmLevel, inappLevel)))
+  
   
   maxSteps <- max(vapply(info, length, integer(1)))
   info <- vapply(info,
