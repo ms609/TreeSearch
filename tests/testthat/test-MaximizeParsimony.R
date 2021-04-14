@@ -38,9 +38,6 @@ test_that("Root retained if not 1", {
 })
 
 test_that("Resample() fails and works", {
-  # Not sure why this is necessary:
-  library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
-  
   expect_error(Resample(0))
   dataset <- MatrixToPhyDat(rbind(
     a = c(0, 0, 0, 0, 0, 0),
@@ -56,9 +53,10 @@ test_that("Resample() fails and works", {
 
   nRep <- 42L # Arbitrary number to balance runtime vs false +ves & -ves
   bal <- as.Splits(BalancedTree(dataset))
+  
   jackTrees <- replicate(nRep, Resample(dataset, NJTree(dataset), verbosity = 0L))
   jackSplits <- as.Splits(unlist(jackTrees, recursive = FALSE))
-  jackSupport <- rowSums(vapply(jackSplits, function (sp) bal %in% sp,
+  jackSupport <- rowSums(vapply(jackSplits, function (sp) in.Splits(bal, sp),
                                 logical(3)))
   # This test could be replaced with a more statistically robust alternative!
   expect_equal(c(1/2, 1, 0) * sum(vapply(jackTrees, length, 1L)), jackSupport,
@@ -68,7 +66,7 @@ test_that("Resample() fails and works", {
                                         verbosity = 0))
   #bootSupport <- rowSums(vapply(lapply(bootTrees, `[[`, 1),
   bootSupport <- rowSums(vapply(unlist(bootTrees, recursive = FALSE),
-                                function (tr) {bal %in% as.Splits(tr)},
+                                function (tr) in.Splits(bal, as.Splits(tr)),
                                 logical(3)))
   # This test could be replaced with a more statistically robust alternative!
   expect_equal(c(1/2, 1, 0) * sum(vapply(bootTrees, length, 1L)), bootSupport,
