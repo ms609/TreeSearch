@@ -403,12 +403,12 @@ List all_spr (const IntegerMatrix edge,
     const bool broken_on_left = get_child(left_edge, break_parent, n_tip) == break_edge;
     const int16
       spare_edge = broken_on_left ?
-    get_child(right_edge, break_parent, n_tip) :
-      get_child(left_edge, break_parent, n_tip)
+        get_child(right_edge, break_parent, n_tip) :
+        get_child(left_edge, break_parent, n_tip)
       ;
     
     two_bits(edge_above(break_parent, parent_edge), 1) = broken_on_left ?
-    get_child(right_node, break_parent, n_tip) :
+      get_child(right_node, break_parent, n_tip) :
       get_child(left_node, break_parent, n_tip);
     if (break_edge == 1) {
       List rooty_bits = List::create();
