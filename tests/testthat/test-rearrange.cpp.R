@@ -62,23 +62,23 @@ test_that("SPR working", {
   tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
 
   # Move single tip
-  expect_equal(8, length(x <- all_spr(tr$edge, 12)))
-  expect_equal(8, length(x <- all_spr(tr$edge, 11)))
-  expect_equal(8, length(x <- all_spr(tr$edge, 10)))
-  expect_equal(8, length(x <- all_spr(tr$edge, 7)))
-  expect_equal(8, length(x <- all_spr(tr$edge, 6)))
-  expect_equal(8, length(x <- all_spr(tr$edge, 3)))
+  expect_equal(8, length(all_spr(tr$edge, 12)))
+  expect_equal(8, length(all_spr(tr$edge, 11)))
+  expect_equal(8, length(all_spr(tr$edge, 10)))
+  expect_equal(8, length(all_spr(tr$edge, 7)))
+  expect_equal(8, length(all_spr(tr$edge, 6)))
+  expect_equal(8, length(all_spr(tr$edge, 3)))
   
   # Move cherry
-  expect_equal(6, length(x <- all_spr(tr$edge, 9)))
-  expect_equal(6, length(x <- all_spr(tr$edge, 5)))
+  expect_equal(6, length(all_spr(tr$edge, 9)))
+  expect_equal(6, length(all_spr(tr$edge, 5)))
   
   # Move more
-  expect_equal(0, length(unique(x <- all_spr(tr$edge, 4))))
-  expect_equal(4, length(unique(x <- all_spr(tr$edge, 8))))
+  expect_equal(0, length(unique(all_spr(tr$edge, 4))))
+  expect_equal(4, length(unique(all_spr(tr$edge, 8))))
   
   # All moves
-  expect_equal(6*8 + 2*6 + 4, length(x <- all_spr(tr$edge, integer(0))))
+  expect_equal(6*8 + 2*6 + 4, length(all_spr(tr$edge, integer(0))))
   expect_equal(48, length(unique(x <- all_spr(tr$edge, integer(0))))) # 48 not formally calculated
   expect_equal(48, length(SPRMoves(tr)))
   
