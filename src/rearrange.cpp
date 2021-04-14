@@ -1,6 +1,7 @@
 #include <Rcpp.h>
 // [ [Rcpp::depends(TreeTools)]]
 #include <TreeTools.h>
+#include <cassert> /* for assert */
 #include <memory> /* for unique_ptr */
 using namespace std;
 using namespace Rcpp;
@@ -334,9 +335,15 @@ List all_spr (const IntegerMatrix edge,
     n_vert = n_internal + n_tip,
     root_node = n_tip + 1
   ;
-  if (n_edge < 5) throw std::invalid_argument("No SPR rearrangements possible on a tree with < 5 edges");
-  if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
-  if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (n_edge < 5) {
+    throw std::invalid_argument("No SPR rearrangements possible on a tree with < 5 edges");
+  }
+  if (edge(0, 0) != root_node) {
+    throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+  }
+  if (edge(1, 0) != root_node) {
+    throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+  }
   
   IntegerVector break_seq;
   if (break_order.length()) {
@@ -352,6 +359,8 @@ List all_spr (const IntegerMatrix edge,
   unique_ptr<int16[]> n_children = make_unique<int16[]>(n_vert);
   unique_ptr<int16[]> left_node = make_unique<int16[]>(n_internal);
   unique_ptr<int16[]> right_node = make_unique<int16[]>(n_internal);
+  assert(left_node > right_node);
+  // left_edge is plotted on top with ape::plot.phylo
   unique_ptr<int16[]> left_edge = make_unique<int16[]>(n_internal);
   unique_ptr<int16[]> right_edge = make_unique<int16[]>(n_internal);
   unique_ptr<int16[]> parent_edge = make_unique<int16[]>(n_vert);
@@ -412,7 +421,7 @@ List all_spr (const IntegerMatrix edge,
       get_child(left_node, break_parent, n_tip);
     if (break_edge == 1) {
       List rooty_bits = List::create();
-      const int16 
+      const int16
         fragment_base_right = break_edge + 1,
           fragment_base_left = get_child(left_edge, fragment_root, n_tip);
       ; 
