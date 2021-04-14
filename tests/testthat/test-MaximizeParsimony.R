@@ -1,6 +1,6 @@
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 
-test_that("constraints work", {
+test_that("Constraints work", {
   constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
   characters <- MatrixToPhyDat(matrix(
     c(0, 1, 1, 1, 0, 0,
@@ -8,6 +8,14 @@ test_that("constraints work", {
     dimnames = list(letters[1:6], NULL)))
   expect_equal(PectinateTree(letters[1:6]),
                MaximizeParsimony(characters,
+                                 PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
+                                 ratchIter = 0, constraint = constraint)[[1]])
+  expect_equal(PectinateTree(letters[1:6]),
+               MaximizeParsimony(characters, concavity = 'p',
+                                 PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
+                                 ratchIter = 0, constraint = constraint)[[1]])
+  expect_equal(PectinateTree(letters[1:6]),
+               MaximizeParsimony(characters, concavity = 10,
                                  PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
                                  ratchIter = 0, constraint = constraint)[[1]])
   # Start tree not consistent with constraint
@@ -18,7 +26,7 @@ test_that("constraints work", {
   
 })
 
-test_that("inconsistent constraints fail", {
+test_that("Inconsistent constraints fail", {
   constraint <- MatrixToPhyDat(matrix(
     c(0, 1, 1, 1, 0, 0,
       1, 1, 1, 0, 0, 0), ncol = 2,
