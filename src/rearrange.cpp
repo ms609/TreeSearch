@@ -349,10 +349,10 @@ List all_spr (const IntegerMatrix edge,
   if (break_order.length()) {
     break_seq = clone(break_order);
   } else {
-    IntegerVector tmp (n_edge - 2);
+    IntegerVector tmp (n_edge - 1);
     break_seq = tmp;
-    for (int16 i = n_edge - 2; i--; ) {
-      break_seq[i] = i + 3;
+    for (int16 i = n_edge - 1; i--; ) {
+      break_seq[i] = i + 2;
     }
   }
   
