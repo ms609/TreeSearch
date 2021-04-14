@@ -329,7 +329,7 @@ inline void fuse_and_add (const IntegerMatrix& tree_bits, List& ret,
 List all_spr (const IntegerMatrix edge,
               const IntegerVector break_order) {
   const int16
-  n_edge = edge.nrow(),
+    n_edge = edge.nrow(),
     n_internal = n_edge / 2,
     n_tip = n_internal + 1,
     n_vert = n_internal + n_tip,
@@ -357,9 +357,9 @@ List all_spr (const IntegerMatrix edge,
   }
   
   unique_ptr<int16[]> n_children = make_unique<int16[]>(n_vert);
+  // if both internal, left_node < right_node
   unique_ptr<int16[]> left_node = make_unique<int16[]>(n_internal);
   unique_ptr<int16[]> right_node = make_unique<int16[]>(n_internal);
-  assert(left_node > right_node);
   // left_edge is plotted on top with ape::plot.phylo
   unique_ptr<int16[]> left_edge = make_unique<int16[]>(n_internal);
   unique_ptr<int16[]> right_edge = make_unique<int16[]>(n_internal);
@@ -420,19 +420,18 @@ List all_spr (const IntegerMatrix edge,
       get_child(right_node, break_parent, n_tip) :
       get_child(left_node, break_parent, n_tip);
     if (break_edge == 1) {
-      List rooty_bits = List::create();
       const int16
-        fragment_base_right = break_edge + 1,
-          fragment_base_left = get_child(left_edge, fragment_root, n_tip);
-      ; 
+        fragment_base_right = 2,
+        fragment_base_left = get_child(left_edge, fragment_root, n_tip);
+      ;
       
-      for (int16 new_fragment_root = fragment_min_edge + 2;
-           new_fragment_root != fragment_max_edge + 1; new_fragment_root++) {
-        if (new_fragment_root == fragment_base_left) {
+      for (int16 insertion_point = fragment_min_edge + 2;
+           insertion_point != fragment_max_edge + 1; insertion_point++) {
+        if (insertion_point == fragment_base_left) {
           continue;
         }
         
-        int16 invert_next = new_fragment_root;
+        int16 invert_next = insertion_point;
         IntegerMatrix rerooted = clone(two_bits);
         
         rerooted(invert_next, 0) = break_child; // Borrow fragment-root node id
@@ -446,16 +445,12 @@ List all_spr (const IntegerMatrix edge,
         
         const bool new_root_on_right = invert_next == fragment_base_right;
         const int16 repurposed_edge = new_root_on_right ?
-        fragment_base_left : fragment_base_right;
+          fragment_base_left : 
+          fragment_base_right;
         rerooted(invert_next, 1) = two_bits(repurposed_edge, 1);
-        rerooted(repurposed_edge, 1) = two_bits(new_fragment_root, 1);
-        rooty_bits.push_back(rerooted);
-      }
-      const int16 graft_edge = 2;
-      for (List::iterator j = rooty_bits.begin(); j != rooty_bits.end(); j++) {
-        IntegerMatrix rooty_bit = *j;
-        fuse_and_add(rooty_bit, ret, &graft_edge, &break_edge, &spare_edge,
-                     &spare_node);
+        rerooted(repurposed_edge, 1) = two_bits(insertion_point, 1);
+        rerooted = TreeTools::preorder_edges_and_nodes(rerooted(_, 0), rerooted(_, 1));
+        ret.push_back(rerooted);
       }
     } else {
       for (int16 graft_edge = n_edge - 1; graft_edge; graft_edge--) {

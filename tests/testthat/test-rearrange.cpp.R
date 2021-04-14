@@ -60,6 +60,7 @@ test_that("TBR working", {
 
 test_that("SPR working", {
   tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
+  t2 <- as.phylo(518, 7) # (t1, ((t2, t3), ((t4, t5), (t6, t7))))
 
   # Move single tip
   expect_equal(8, length(all_spr(tr$edge, 12)))
@@ -68,6 +69,8 @@ test_that("SPR working", {
   expect_equal(8, length(all_spr(tr$edge, 7)))
   expect_equal(8, length(all_spr(tr$edge, 6)))
   expect_equal(8, length(all_spr(tr$edge, 3)))
+  expect_equal(8, length(all_spr(tr$edge, 2)))
+  expect_equal(8, length(all_spr(t2$edge, 2)))
   
   # Move cherry
   expect_equal(6, length(all_spr(tr$edge, 9)))
