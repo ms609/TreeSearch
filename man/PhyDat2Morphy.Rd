@@ -4,10 +4,13 @@
 \alias{PhyDat2Morphy}
 \title{Initialize a Morphy Object from a \code{phyDat} object}
 \usage{
-PhyDat2Morphy(phy)
+PhyDat2Morphy(phy, gap = "inapplicable")
 }
 \arguments{
 \item{phy}{An object of class \code{\link{phyDat}}.}
+
+\item{gap}{An unambiguous abbreviation of \code{inapplicable}, \code{ambiguous}
+(= \code{missing}), or \verb{extra state}, specifying how gaps will be handled.}
 }
 \value{
 \code{PhyDat2Morphy()} returns a pointer to an initialized Morphy object.
@@ -44,6 +47,7 @@ Other Morphy API functions:
 \code{\link{mpl_first_down_recon}()},
 \code{\link{mpl_first_up_recon}()},
 \code{\link{mpl_get_charac_weight}()},
+\code{\link{mpl_get_gaphandl}()},
 \code{\link{mpl_get_num_charac}()},
 \code{\link{mpl_get_num_internal_nodes}()},
 \code{\link{mpl_get_numtaxa}()},

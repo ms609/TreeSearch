@@ -1,6 +1,10 @@
 #' Parsimony Ratchet
 #'
-#' \code{Ratchet} uses the parsimony ratchet (Nixon 1999) to search for a more parsimonious tree.
+#' \code{Ratchet} uses the parsimony ratchet (Nixon 1999) to search for a more 
+#' parsimonious tree.
+#' 
+#' For usage pointers, see the 
+#' [vignette](https://ms609.github.io/TreeSearch/articles/custom.html).
 #'
 #' @template treeParam 
 #' @param dataset a dataset in the format required by `TreeScorer()`.
@@ -56,11 +60,6 @@
 #' plot(quickResult)
 #' par(oldPar)
 #' 
-#' # IW search is currently much slower:
-#' quickIWResult <- IWRatchet(quickResult, Lobo.phy, concavity = 2.5,
-#'                            ratchIter = 1, searchIter = 25, searchHits = 2,
-#'                            swappers = RootedTBRSwap, verbosity = 5)
-#'  
 #' @author Martin R. Smith
 #' 
 #' @seealso
@@ -78,15 +77,15 @@ Ratchet <- function (tree, dataset,
                      TreeScorer     = MorphyLength,
                      Bootstrapper   = MorphyBootstrap,
                      swappers = list(TBRSwap, SPRSwap, NNISwap),
-                     BootstrapSwapper = if (class(swappers) == 'list')
+                     BootstrapSwapper = if (is.list(swappers))
                       swappers[[length(swappers)]] else swappers,
-                     returnAll=FALSE, stopAtScore=NULL,
-                     stopAtPeak=FALSE, stopAtPlateau=0L, 
-                     ratchIter=100, ratchHits=10,
-                     searchIter=4000, searchHits=42,
-                     bootstrapIter=searchIter, bootstrapHits=searchHits,
-                     verbosity=1L, 
-                     suboptimal=1e-08, ...) {
+                     returnAll = FALSE, stopAtScore = NULL,
+                     stopAtPeak = FALSE, stopAtPlateau = 0L, 
+                     ratchIter = 100, ratchHits = 10,
+                     searchIter = 4000, searchHits = 42,
+                     bootstrapIter = searchIter, bootstrapHits = searchHits,
+                     verbosity = 1L, 
+                     suboptimal = 1e-08, ...) {
   epsilon <- 1e-08
   hits <- 0L
   # initialize tree and data
@@ -98,18 +97,15 @@ Ratchet <- function (tree, dataset,
   initializedData <- InitializeData(dataset)
   on.exit(initializedData <- CleanUpData(initializedData))
   
-  bestScore <- if (is.null(attr(tree, 'score'))) {
-    TreeScorer(edgeList[[1]], edgeList[[2]], initializedData, ...)
-  } else {
-    attr(tree, 'score')
-  }
+  bestScore <- TreeScorer(edgeList[[1]], edgeList[[2]], initializedData, ...)
+  
   if (verbosity > 0L) {
-    message("* Beginning Parsimony Ratchet, with initial score ", bestScore,
-            if (!is.null(stopAtScore)) "; will stop at score ", stopAtScore)
+    message("* Beginning Parsimony Ratchet, with initial score ", bestScore,    # nocov
+            if (!is.null(stopAtScore)) "; will stop at score ", stopAtScore)    # nocov
   }
   if (!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) {
     if (verbosity > 1L) {
-      message("*** Target score of ", stopAtScore, " met.")
+      message("*** Target score of ", stopAtScore, " met.")                     # nocov
     }
     return(tree)
   }
@@ -124,16 +120,18 @@ Ratchet <- function (tree, dataset,
   iterationsWithBestScore <- 0
   BREAK <- FALSE
   for (i in 1:ratchIter) {
-    if (verbosity > 1L) {
+    if (verbosity > 1L) {                                                       # nocov start
       message("\n* Ratchet iteration ", i, '.')
       if (verbosity > 2L) {
-        message(" - Generating new candidate tree by bootstrapping dataset.")
+        message(" - Generating new candidate tree by bootstrapping dataset.")   
       }
-    }
-    candidate <- Bootstrapper(edgeList, initializedData, maxIter=bootstrapIter,
-                              maxHits=bootstrapHits, verbosity=verbosity-2L,
-                              EdgeSwapper=BootstrapSwapper, stopAtPeak=stopAtPeak,
-                              stopAtPlateau=stopAtPlateau, ...)
+    }                                                                           # nocov end
+    candidate <- Bootstrapper(edgeList, initializedData,
+                              maxIter = bootstrapIter, maxHits = bootstrapHits,
+                              verbosity = verbosity - 2L,
+                              EdgeSwapper = BootstrapSwapper,
+                              stopAtPeak = stopAtPeak,
+                              stopAtPlateau = stopAtPlateau, ...)
     candScore <- 1e+08
     
     if (verbosity > 2L) message(" - Rearranging from new candidate tree:")
@@ -152,10 +150,10 @@ Ratchet <- function (tree, dataset,
       candScore <- candidate[[3]]
       if (!is.null(stopAtScore) && candScore < stopAtScore + epsilon) {
         BREAK <- TRUE
-        if (verbosity > 1L) {
+        if (verbosity > 1L) {                                                   # nocov start
           message("  * Target score ", stopAtScore, 
                   " met; terminating tree search.")
-        }
+        }                                                                       # nocov end
         bestScore <- candScore
         break
       }
@@ -164,7 +162,9 @@ Ratchet <- function (tree, dataset,
       break
     }
     
-    if (verbosity > 2L) message(" - Rearranged candidate tree scored ", candScore)
+    if (verbosity > 2L) {
+      message(" - Rearranged candidate tree scored ", candScore)                # nocov
+    }
     if (returnAll && candScore < (bestScore + suboptimal)) { # Worth saving this tree in forest
       forest[[i]] <- candidate
       forestScores[i] <- candScore
@@ -178,11 +178,11 @@ Ratchet <- function (tree, dataset,
       iterationsWithBestScore <- iterationsWithBestScore + 1L
       edgeList <- candidate
     }
-    if (verbosity > 1L) {
+    if (verbosity > 1L) {                                                       # nocov start
       message("* Best score after ", i, "/", ratchIter, 
               " ratchet iterations: ", signif(bestScore), " (hit ", 
               iterationsWithBestScore, "/", ratchHits, ")\n")
-    }
+    }                                                                           # nocov end
     if ((!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) 
     || (iterationsWithBestScore >= ratchHits)) {
       break
@@ -203,12 +203,12 @@ Ratchet <- function (tree, dataset,
               " trees from iterations numbered:\n   ", which(keepers))
     }
     if (length(forest) > 1) {
-      forest <- structure(lapply(forest, function (phy) {
+      forest[] <- lapply(forest, function (phy) {
         x <- tree
         x$edge <- cbind(phy[[1]], phy[[2]])
         attr(x, 'score') <- phy[[3]]
         # Return to lapply: 
-        x}), class = 'multiPhylo')
+        x})
       ret <- unique(forest)
       if (verbosity > 1L) {
         message(" - Removing duplicates leaves ", length(ret), " unique trees")
@@ -222,12 +222,12 @@ Ratchet <- function (tree, dataset,
     } else {
       stop("\nNo trees!? Is suboptimal set to a sensible (positive) value?")
     }
-    if (verbosity > 0L) {
+    if (verbosity > 0L) {                                                       # nocov start
       message('\nFound ', sum(uniqueScores == min(uniqueScores)),
               ' unique MPTs and ',
               length(ret) - sum(uniqueScores == min(uniqueScores)), 
               ' suboptimal trees.\n')
-    }
+    }                                                                           # nocov end
     # Return:
     ret
   } else {
@@ -238,65 +238,11 @@ Ratchet <- function (tree, dataset,
   }
 }
 
-#' @describeIn Ratchet Shortcut for Ratchet search under Profile Parsimony
-#' @export
-ProfileRatchet <- function (tree, dataset,
-                            swappers = list(TBRSwap, SPRSwap, NNISwap),
-                            BootstrapSwapper = if (class(swappers) == 'list')
-                              swappers[[length(swappers)]] else swappers,
-                            returnAll=FALSE, stopAtScore=NULL,
-                            stopAtPeak=FALSE, stopAtPlateau=0L, 
-                            ratchIter=100, ratchHits=10, 
-                            searchIter=2000, searchHits=40,
-                            bootstrapIter=searchIter, bootstrapHits=searchHits, verbosity=1L, 
-                            suboptimal=1e-08, ...) {
-  Ratchet(tree=tree, dataset=dataset,
-          InitializeData=ProfileInitMorphy, CleanUpData=ProfileDestroyMorphy,
-          TreeScorer=ProfileScoreMorphy, Bootstrapper=ProfileBootstrap,
-          swappers=swappers, BootstrapSwapper=BootstrapSwapper,
-          returnAll=returnAll, suboptimal=suboptimal, stopAtScore=stopAtScore,
-          ratchIter=ratchIter, ratchHits=ratchHits,
-          searchIter=searchIter, searchHits=searchHits,
-          stopAtPeak=stopAtPeak, stopAtPlateau=stopAtPlateau, 
-          bootstrapIter=searchIter, bootstrapHits=bootstrapHits, 
-          verbosity=verbosity,  ...)
-}
-
-#' @describeIn Ratchet Shortcut for Ratchet search using implied weights
-#' @template concavityParam
-#' @export
-IWRatchet <- function (tree, dataset, concavity = 10,
-                            swappers = list(TBRSwap, SPRSwap, NNISwap),
-                            BootstrapSwapper = if (class(swappers) == 'list')
-                              swappers[[length(swappers)]] else swappers,
-                            returnAll=FALSE, stopAtScore=NULL,
-                            stopAtPeak=FALSE, stopAtPlateau=0L, 
-                            ratchIter=100, ratchHits=10, searchIter=2000, searchHits=40,
-                            bootstrapIter=searchIter, bootstrapHits=searchHits, verbosity=1L, 
-                            suboptimal=1e-08, ...) {
-  dataset <- PrepareDataIW(dataset)
-  if (verbosity > 1L) {
-    message("* Using implied weighting with concavity constant k = ", concavity)
-  }
-  
-  Ratchet(tree=tree, dataset=dataset, 
-          concavity=concavity, minLength=attr(dataset, 'min.length'), 
-          InitializeData=IWInitMorphy, CleanUpData=IWDestroyMorphy,
-          TreeScorer=IWScoreMorphy, Bootstrapper=IWBootstrap,
-          swappers=swappers, BootstrapSwapper=BootstrapSwapper,
-          returnAll=returnAll, suboptimal=suboptimal, stopAtScore=stopAtScore,
-          ratchIter=ratchIter, ratchHits=ratchHits,
-          stopAtPeak=stopAtPeak, stopAtPlateau=stopAtPlateau, 
-          searchIter=searchIter, searchHits=searchHits,
-          bootstrapIter=searchIter, bootstrapHits=bootstrapHits, 
-          verbosity=verbosity, ...)
-}
-
 #' Unique trees (ignoring 'hits' attribute)
 #' @author Martin R. Smith
 #' @keywords internal
 #' @export
-UniqueExceptHits <- function (trees) {
+.UniqueExceptHits <- function (trees) {
   unique(lapply(trees, function(tree) {
     attr(tree, 'hits') <- NULL
     tree
@@ -323,32 +269,7 @@ MultiRatchet <- function (tree, dataset, ratchHits=10,
             stopAtScore = stopAtScore, ...)
   })
   scores <- vapply(trees, function (x) attr(x, 'score'), double(1))
-  trees <- UniqueExceptHits(trees[scores == min(scores)])
-  message("Found ", length(trees), ' unique trees from ', nSearch, ' searches.')
-  
-  # Return:
-  structure(trees, class = 'multiPhylo')
-}
-
-#' @rdname Ratchet 
-#' @return `IWMultiRatchet` returns a list of optimal trees produced by `nSearch` 
-#'                     Ratchet searches, using implied weighting.
-#' @export
-IWMultiRatchet <- function (tree, dataset, ratchHits=10, concavity=4,
-                              searchIter=500, searchHits=20, verbosity=0L, 
-                              swappers=list(RootedNNISwap), nSearch=10, 
-                              suboptimal=suboptimal,
-                              stopAtScore=NULL, ...) {
-  trees <- lapply(seq_len(nSearch), function (i) {
-    if (verbosity > 1L) message("\nRatchet search ", i, '/', nSearch, ':')
-    IWRatchet(tree, dataset, ratchIter = 1L, ratchHits = 0L, 
-              concavity = concavity, 
-              searchIter = searchIter, searchHits = searchHits, 
-              verbosity = verbosity, swappers = swappers,
-              stopAtScore = stopAtScore, ...)
-  })
-  scores <- vapply(trees, function (x) attr(x, 'score'), double(1))
-  trees <- UniqueExceptHits(trees[scores == min(scores)])
+  trees <- .UniqueExceptHits(trees[scores == min(scores)])
   message("Found ", length(trees), ' unique trees from ', nSearch, ' searches.')
   
   # Return:
@@ -358,6 +279,3 @@ IWMultiRatchet <- function (tree, dataset, ratchHits=10, concavity=4,
 #' @describeIn Ratchet deprecated alias for `MultiRatchet()`
 #' @export
 RatchetConsensus <- MultiRatchet
-#' @describeIn Ratchet deprecated alias for `MultiRatchet()`
-#' @export
-IWRatchetConsensus <- IWMultiRatchet

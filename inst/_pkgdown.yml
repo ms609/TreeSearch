@@ -2,7 +2,7 @@ url: https://ms609.github.io/TreeSearch
 
 authors:
   Martin R. Smith: 
-    href: https://community.dur.ac.uk/martin.smith/
+    href: https://smithlabdurham.github.io/
     
 development:
   mode: auto
@@ -22,9 +22,14 @@ reference:
     desc: "Functions that provide tree scores, for optimization."
     contents: 
       - has_concept("tree scoring")
-      - ends_with('Score')
+      - Consistency
       - Evaluate
       - RandomTreeScore
+      
+  - title: "Split support"
+    desc: "Functions that calculate node support."
+    contents: 
+      - has_concept("split support functions")
       
   - title: "Tree rearrangement"
     desc: > 
@@ -39,8 +44,7 @@ reference:
     desc: >
       Functions to help calculate profile parsimony scores.
     contents:
-    - starts_with('IC')
-    - InfoAmounts
+    - has_concept("profile parsimony functions")
     - WithOneExtraStep
       
   - title: "C APIs"
@@ -63,7 +67,6 @@ reference:
   - title: "Utility functions"
     desc: "Miscellaneous functions to simplify or expedite basic functionality."
     contents:
-      - AsBinary
       - JackLabels
       - LogisticPoints
       - MinimumSteps

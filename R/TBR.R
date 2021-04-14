@@ -69,8 +69,9 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 }
 
 #' @rdname TBR 
-#' @return `TBRMoves()` returns a list of all trees one TBR move away from
-#'  `tree`, with edges and nodes in preorder, rooted on the first-labelled tip.
+#' @return `TBRMoves()` returns a `multiPhylo` object listing all trees one
+#'  \acronym{TBR} move away from `tree`, with edges and nodes in preorder,
+#'  rooted on the first-labelled tip.
 #' @export
 TBRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('TBRMoves')
 
@@ -251,7 +252,8 @@ RootedTBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 #' @describeIn TBR faster version that takes and returns parent and child parameters
 #' @importFrom TreeTools EdgeAncestry
 #' @export
-RootedTBRSwap <- function (parent, child, nEdge=length(parent), edgeToBreak=NULL, mergeEdges=NULL) {
+RootedTBRSwap <- function (parent, child, nEdge=length(parent), 
+                           edgeToBreak = NULL, mergeEdges = NULL) {
   if (nEdge < 5) return (TBRWarning(parent, child, 'Fewer than 4 tips'))
   nTips <- (nEdge / 2L) + 1L
   rootNode <- parent[1]

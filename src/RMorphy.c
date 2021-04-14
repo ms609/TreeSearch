@@ -160,6 +160,18 @@ SEXP _R_wrap_mpl_set_gaphandl(SEXP Rgaptype, SEXP MorphyHandl) {
 	return Rret;
 }
 
+SEXP _R_wrap_mpl_get_gaphandl(SEXP MorphyHandl) {
+	SEXP Rret = PROTECT(allocVector(INTSXP, 1));
+	int Mret = 0;
+
+	Mret = mpl_query_gaphandl(R_ExternalPtrAddr(MorphyHandl));
+
+	INTEGER(Rret)[0] = Mret;
+
+	UNPROTECT(1);
+	return Rret;
+}
+
 SEXP _R_wrap_mpl_set_num_internal_nodes(SEXP Rnnodes, SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
 

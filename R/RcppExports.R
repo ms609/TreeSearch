@@ -13,6 +13,10 @@ morphy_iw <- function(edge, MorphyHandls, weight, minScore, sequence, concavity,
     .Call(`_TreeSearch_morphy_iw`, edge, MorphyHandls, weight, minScore, sequence, concavity, target)
 }
 
+morphy_profile <- function(edge, MorphyHandls, weight, sequence, profiles, target) {
+    .Call(`_TreeSearch_morphy_profile`, edge, MorphyHandls, weight, sequence, profiles, target)
+}
+
 nni <- function(edge, randomEdge, whichSwitch) {
     .Call(`_TreeSearch_nni`, edge, randomEdge, whichSwitch)
 }
@@ -23,10 +27,6 @@ spr_moves <- function(edge) {
 
 spr <- function(edge, move) {
     .Call(`_TreeSearch_spr`, edge, move)
-}
-
-tbr_moves <- function(edge) {
-    .Call(`_TreeSearch_tbr_moves`, edge)
 }
 
 tbr <- function(edge, move) {

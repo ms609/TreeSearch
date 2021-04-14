@@ -26,3 +26,5 @@ vignettes/*_cache*
 *.Rproj*
 .Rproj.user
 *.site
+gen-*tip/*
+results-*

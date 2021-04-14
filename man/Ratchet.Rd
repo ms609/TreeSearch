@@ -3,12 +3,8 @@
 \name{Jackknife}
 \alias{Jackknife}
 \alias{Ratchet}
-\alias{ProfileRatchet}
-\alias{IWRatchet}
 \alias{MultiRatchet}
-\alias{IWMultiRatchet}
 \alias{RatchetConsensus}
-\alias{IWRatchetConsensus}
 \title{Parsimony Ratchet}
 \usage{
 Jackknife(
@@ -34,8 +30,7 @@ Ratchet(
   TreeScorer = MorphyLength,
   Bootstrapper = MorphyBootstrap,
   swappers = list(TBRSwap, SPRSwap, NNISwap),
-  BootstrapSwapper = if (class(swappers) == "list") swappers[[length(swappers)]] else
-    swappers,
+  BootstrapSwapper = if (is.list(swappers)) swappers[[length(swappers)]] else swappers,
   returnAll = FALSE,
   stopAtScore = NULL,
   stopAtPeak = FALSE,
@@ -44,49 +39,6 @@ Ratchet(
   ratchHits = 10,
   searchIter = 4000,
   searchHits = 42,
-  bootstrapIter = searchIter,
-  bootstrapHits = searchHits,
-  verbosity = 1L,
-  suboptimal = 1e-08,
-  ...
-)
-
-ProfileRatchet(
-  tree,
-  dataset,
-  swappers = list(TBRSwap, SPRSwap, NNISwap),
-  BootstrapSwapper = if (class(swappers) == "list") swappers[[length(swappers)]] else
-    swappers,
-  returnAll = FALSE,
-  stopAtScore = NULL,
-  stopAtPeak = FALSE,
-  stopAtPlateau = 0L,
-  ratchIter = 100,
-  ratchHits = 10,
-  searchIter = 2000,
-  searchHits = 40,
-  bootstrapIter = searchIter,
-  bootstrapHits = searchHits,
-  verbosity = 1L,
-  suboptimal = 1e-08,
-  ...
-)
-
-IWRatchet(
-  tree,
-  dataset,
-  concavity = 10,
-  swappers = list(TBRSwap, SPRSwap, NNISwap),
-  BootstrapSwapper = if (class(swappers) == "list") swappers[[length(swappers)]] else
-    swappers,
-  returnAll = FALSE,
-  stopAtScore = NULL,
-  stopAtPeak = FALSE,
-  stopAtPlateau = 0L,
-  ratchIter = 100,
-  ratchHits = 10,
-  searchIter = 2000,
-  searchHits = 40,
   bootstrapIter = searchIter,
   bootstrapHits = searchHits,
   verbosity = 1L,
@@ -107,21 +59,6 @@ MultiRatchet(
   ...
 )
 
-IWMultiRatchet(
-  tree,
-  dataset,
-  ratchHits = 10,
-  concavity = 4,
-  searchIter = 500,
-  searchHits = 20,
-  verbosity = 0L,
-  swappers = list(RootedNNISwap),
-  nSearch = 10,
-  suboptimal = suboptimal,
-  stopAtScore = NULL,
-  ...
-)
-
 RatchetConsensus(
   tree,
   dataset,
@@ -134,28 +71,14 @@ RatchetConsensus(
   stopAtScore = NULL,
   ...
 )
-
-IWRatchetConsensus(
-  tree,
-  dataset,
-  ratchHits = 10,
-  concavity = 4,
-  searchIter = 500,
-  searchHits = 20,
-  verbosity = 0L,
-  swappers = list(RootedNNISwap),
-  nSearch = 10,
-  suboptimal = suboptimal,
-  stopAtScore = NULL,
-  ...
-)
 }
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
 \item{dataset}{a dataset in the format required by \code{TreeScorer()}.}
 
-\item{resampleFreq}{Double between 0 and 1 stating proportion of characters to resample}
+\item{resampleFreq}{Double between 0 and 1 stating proportion of characters
+to resample.}
 
 \item{InitializeData}{Function that sets up data object to prepare for tree search.
 The function will be passed the \code{dataset} parameter.
@@ -171,7 +94,7 @@ The function will be passed three parameters, corresponding to the
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
 
-\item{jackIter}{Integer specifying number of jackknife iterations to conduct}
+\item{jackIter}{Integer specifying number of jackknife iterations to conduct.}
 
 \item{searchIter}{Integer specifying maximum rearrangements to perform on each bootstrap or
 ratchet iteration.
@@ -183,11 +106,10 @@ search within a ratchet iteration.
 To override this value for a single swapper function, set e.g.
 \code{attr(SwapperFunction, 'searchHits') <- 99}}
 
-\item{verbosity}{Level of detail to display in console: larger numbers provide
-more verbose feedback to the user.}
+\item{verbosity}{Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.}
 
-\item{\dots}{further arguments to pass to \code{TreeScorer()}
-(e.g. \code{\link{TipsAreColumns}}, \code{dataset}).}
+\item{\dots}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
 
 \item{Bootstrapper}{Function to perform bootstrapped rearrangements of tree.
 First arguments will be an \code{edgeList} and a dataset, initialized using
@@ -231,15 +153,12 @@ iteration (default: \code{searchHits}).}
 
 \item{suboptimal}{retain trees that are suboptimal by this score. Defaults to 1e-08 to counter rounding errors.}
 
-\item{concavity}{A numeric value to use as the concavity constant (\code{k})
-in implied weighting. Defaults to 10; TNT sets a default of 3, but this
-is too low in some circumstances (Smith, 2019).}
-
 \item{nSearch}{Number of Ratchet searches to conduct
 (for \code{RatchetConsensus()})}
 }
 \value{
-a list of trees recovered after jackknife iterations
+\code{Jackknife()} returns a list of trees recovered after jackknife
+iterations.
 
 This function returns a tree modified by parsimony ratchet iterations.
 
@@ -247,26 +166,22 @@ This function returns a tree modified by parsimony ratchet iterations.
 produced by \code{nSearch}
 ratchet searches, from which a consensus tree can be generated using
 \code{\link[ape:consensus]{ape::consensus()}} or \code{\link[TreeTools:ConsensusWithout]{TreeTools::ConsensusWithout()}}.
-
-\code{IWMultiRatchet} returns a list of optimal trees produced by \code{nSearch}
-Ratchet searches, using implied weighting.
 }
 \description{
-\code{Ratchet} uses the parsimony ratchet (Nixon 1999) to search for a more parsimonious tree.
+\code{Ratchet} uses the parsimony ratchet (Nixon 1999) to search for a more
+parsimonious tree.
+}
+\details{
+For usage pointers, see the
+\href{https://ms609.github.io/TreeSearch/articles/custom.html}{vignette}.
 }
 \section{Functions}{
 \itemize{
-\item \code{Jackknife}: Jackknife resampling. Note that at present this assumes that
-\code{InitializeData} will return a morphy object; if this doesn't hold for you, please
-let me know and I'll make the function more general.
-
-\item \code{ProfileRatchet}: Shortcut for Ratchet search under Profile Parsimony
-
-\item \code{IWRatchet}: Shortcut for Ratchet search using implied weights
+\item \code{Jackknife}: Jackknife resampling. Note that at present this assumes
+that \code{InitializeData()} will return a morphy object; if this doesn't hold
+for you, please let me know and I'll make the function more general.
 
 \item \code{RatchetConsensus}: deprecated alias for \code{MultiRatchet()}
-
-\item \code{IWRatchetConsensus}: deprecated alias for \code{MultiRatchet()}
 }}
 
 \examples{
@@ -280,11 +195,6 @@ oldPar <- par(mar = rep(0, 4), cex = 0.75)
 plot(quickResult)
 par(oldPar)
 
-# IW search is currently much slower:
-quickIWResult <- IWRatchet(quickResult, Lobo.phy, concavity = 2.5,
-                           ratchIter = 1, searchIter = 25, searchHits = 2,
-                           swappers = RootedTBRSwap, verbosity = 5)
- 
 }
 \references{
 \itemize{
@@ -302,10 +212,16 @@ quickIWResult <- IWRatchet(quickResult, Lobo.phy, concavity = 2.5,
 \item Adapted from \code{\link[phangorn:parsimony]{pratchet}} in the
 \pkg{phangorn} package.
 }
+
+Other split support functions: 
+\code{\link{JackLabels}()},
+\code{\link{MaximizeParsimony}()},
+\code{\link{SiteConcordance}}
 }
 \author{
 Martin R. Smith
 
 Martin R. Smith
 }
+\concept{split support functions}
 \keyword{tree}

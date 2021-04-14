@@ -4,14 +4,15 @@
 \alias{WithOneExtraStep}
 \title{Number of trees with one extra step}
 \usage{
-WithOneExtraStep(splits)
+WithOneExtraStep(...)
 }
 \arguments{
-\item{splits}{A vector of integers listing the number of tips in each of a number of
-tree splits (e.g. bipartitions).  For example, \code{c(3, 5)} states that
-a character divides a set of eight tips into a group of three and a group
-of five.}
+\item{\dots}{Vector or series of integers specifying the number of leaves
+bearing each distinct non-ambiguous token.}
 }
 \description{
 Number of trees with one extra step
+}
+\examples{
+WithOneExtraStep(1, 2, 3)
 }

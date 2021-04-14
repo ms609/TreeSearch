@@ -2,9 +2,31 @@
 context("Fitch.R")
 
 test_that("Failures are graceful", {
+  library("TreeTools", quietly = TRUE)
   data('inapplicable.datasets')
-  tree <- TreeTools::RandomTree(inapplicable.phyData[[1]], root = FALSE)
-  expect_error(TreeLength(tree, inapplicable.phyData[[1]]))
+  dat <- inapplicable.phyData[[1]]
+  unrooted <- RandomTree(dat, root = FALSE)
+  expect_error(TreeLength(unrooted, dat))
+  
+  mo <- PhyDat2Morphy(dat)
+  on.exit(mo <- UnloadMorphy(mo))
+  
+  sparse <- DropTip(RandomTree(dat, root = FALSE), 10)
+  expect_error(MorphyTreeLength(sparse, mo))
+  
+  expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], mo, nTaxa = 0))
+  expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], dat))
+})
+
+test_that("Deprecations throw warning", {
+  data('inapplicable.datasets')
+  dat <- inapplicable.phyData[[1]]
+  tree <- TreeTools::RandomTree(dat, root = TRUE)
+  expect_equal(TreeLength(tree, dat),
+               expect_warning(Fitch(tree, dat)))
+  expect_equal(CharacterLength(tree, dat),
+               expect_warning(FitchSteps(tree, dat)))
+  
 })
 
 test_that("Morphy generates correct lengths", {
@@ -112,4 +134,78 @@ test_that("Morphy generates correct lengths", {
     
     expect_equal(tree_length, expected_results[test])
   }
+})
+
+test_that("(random) lists of trees are scored", {
+  data("congreveLamsdellMatrices", package = 'TreeSearch')
+  mat <- congreveLamsdellMatrices[[42]]
+  
+  # Expected values calculated from 100k samples
+  expect_gt(t.test(TreeLength(100, mat), mu = 318.5877)$p.val, 0.001)
+  expect_gt(t.test(TreeLength(100, mat, 10L), mu = 17.16911)$p.val, 0.001)
+  expect_gt(t.test(TreeLength(100, mat, 'profile'), mu = 830.0585)$p.val, 0.001)
+})
+
+test_that("Profile scoring is reported correctly", {
+  data('congreveLamsdellMatrices')
+  dataset <- congreveLamsdellMatrices[[42]]
+  prepDataset <- PrepareDataProfile(dataset)
+  tree <- NJTree(prepDataset)
+  edge <- Preorder(tree)$edge
+  at <- attributes(prepDataset)
+  profiles <- attr(prepDataset, 'info.amounts')
+  charSeq <- seq_along(prepDataset[[1]]) - 1L
+  
+  characters <- PhyToString(prepDataset, ps = '', useIndex = FALSE,
+                            byTaxon = FALSE, concatenate = FALSE)
+  startWeights <- at$weight
+  morphyObjects <- lapply(characters, SingleCharMorphy)
+  on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
+          add = TRUE)
+  
+  expect_equal(TreeLength(tree, dataset, 'profile'),
+               TreeLength(tree, prepDataset, 'profile'))
+  expect_equal(TreeLength(tree, dataset, 'profile'),
+               morphy_profile(edge, morphyObjects, startWeights, charSeq, 
+                              profiles, Inf))
+})
+
+test_that("CharacterLength() fails gracefully", {
+  expect_error(CharacterLength(as.phylo(1, 8), 1))
+  
+  data('inapplicable.datasets')
+  dataset <- inapplicable.phyData[[12]]
+  expect_error(CharacterLength(as.phylo(1, 4), dataset))
+  
+  expect_equal(c(53, 59, 6),
+               as.numeric(table(CharacterLength(NJTree(dataset[1:4, ]), dataset))))
+})
+
+test_that("X_MorphyLength", {
+  dataset <- congreveLamsdellMatrices[[42]]
+  morphyObj <- PhyDat2Morphy(dataset)
+  on.exit(UnloadMorphy(morphyObj))
+  nTaxa <- mpl_get_numtaxa(morphyObj)
+  
+  tree <- NJTree(dataset)
+  edgeList <- Postorder(Preorder(tree$edge))
+  parent <- edgeList[, 1]
+  child <- edgeList[, 2]
+
+  maxNode <- nTaxa + mpl_get_num_internal_nodes(morphyObj)
+  rootNode <- nTaxa + 1L
+  allNodes <- rootNode:maxNode
+  
+  parentOf <- parent[match(seq_len(maxNode), child)]
+  parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
+  leftChild <- child[length(parent) + 1L - match(allNodes, rev(parent))]
+  rightChild <- child[match(allNodes, parent)]
+
+  expected <- MorphyLength(parent, child, morphyObj)
+  
+  expect_equal(expected,
+               C_MorphyLength(parentOf, leftChild, rightChild, morphyObj))
+  expect_equal(expected,
+               GetMorphyLength(parentOf - 1, leftChild - 1, rightChild - 1,
+                              morphyObj))
 })

@@ -14,7 +14,7 @@ whose names correspond to the labels of any accompanying tree.}
 }
 \value{
 \code{Consistency()} returns a named vector specifying the consistency index (ci),
-retention index (ri), and rescalced consistency index (rc).
+retention index (ri), and rescaled consistency index (rc).
 }
 \description{
 \code{Consistency()} calculates the so-called consistency and retention 'indices'
@@ -24,6 +24,9 @@ they are sometimes taken as an indicator of the fit of a character to a
 tree.  Values correlate with the number of species sampled and the
 distribution of taxa between character states, so are not strictly comparable
 between characters in which these factors differ.
+}
+\details{
+#TODO: Retention index not yet implemented.
 }
 \examples{
 data(inapplicable.datasets)

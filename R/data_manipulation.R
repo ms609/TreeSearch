@@ -1,14 +1,6 @@
 #' Prepare data for Profile Parsimony
 #' 
 #' @param dataset dataset of class \code{phyDat}
-#' @param precision number of random trees to generate when calculating Profile curves. 
-#'                  With 22 tokens (taxa):
-#'                  - Increasing precision from 4e+05 to 4e+06 reduces error by a mean of 
-#'                  0.005 bits for each step after the first (max = 0.11 bits, sd=0.017 bits)
-#'                  - Increasing precision from 1e+06 to 4e+06 reduces error by a mean of 
-#'                  0.0003 bits for each step after the first (max = 0.046 bits, sd=0.01 bits)
-#'                  
-#' @template warnParam
 #'
 #' @return An object of class `phyDat`, with additional attributes.
 #' `PrepareDataProfile` adds the attributes:
@@ -26,35 +18,66 @@
 #' 
 #'  - \code{min.length}: The minimum number of steps that must be present in each
 #'    transformation series.
-#'
+#' @examples 
+#' data('congreveLamsdellMatrices')
+#' dataset <- congreveLamsdellMatrices[[42]]
+#' PrepareDataProfile(dataset)
 #' @author Martin R. Smith; written with reference to 
 #' `phangorn:::prepareDataFitch()`
 #' @export
-PrepareDataProfile <- function (dataset, precision = 1e+06, warn = TRUE) {
+PrepareDataProfile <- function (dataset) {
   at <- attributes(dataset)
   nLevel <- length(at$level)
   nChar <- at$nr
   cont <- attr(dataset, "contrast")
   nTip <- length(dataset)
+  index <- at$index
+  allLevels <- as.character(at$allLevels)
   
-  powers.of.2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
-  tmp <- cont %*% powers.of.2
-  tmp <- as.integer(tmp)
-  unlisted <- unlist(dataset, recursive=FALSE, use.names=FALSE)
-  binaryMatrix <- tmp[unlisted]
-  attr(binaryMatrix, 'dim') <- c(nChar, nTip)
+  contSums <- rowSums(cont)
+  qmLevel <- which(contSums == ncol(cont))
+  ambigs <- which(contSums > 1L & contSums < ncol(cont))
+  inappLevel <- which(colnames(cont) == '-')
+  if (length(inappLevel) != 0L) {
+    inappLevel <- which(apply(unname(cont), 1, identical,
+                              as.double(colnames(cont) == '-')))
+  }
   
-  attr(dataset, 'info.amounts') <- InfoAmounts(binaryMatrix, precision, warn=warn)
+  if (length(ambigs) != 0L) {
+    message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ', '),
+            " converted to '?'")
+    dataset <- lapply(dataset, function (i) {
+        i[i %in% ambigs] <- qmLevel
+        i
+      })
+    attributes(dataset) <- at
+  }
+  
+  mataset <- matrix(unlist(dataset, recursive = FALSE, use.names = FALSE),
+                    max(index))
+  #TODO when require R4.1: replace with
+  # info <- apply(mataset, 1, StepInformation, 
+  #               ambiguousTokens = c(qmLevel, inappLevel),
+  #               simplify = FALSE)
+  info <- lapply(seq_along(mataset[, 1]), function (i) 
+    StepInformation(mataset[i, ], ambiguousTokens = c(qmLevel, inappLevel)))
+  
+  
+  maxSteps <- max(vapply(info, length, integer(1)))
+  info <- vapply(info,
+                 function (x) {
+                    ret <- double(maxSteps)
+                    ret[seq_along(x)] <- max(x) - x
+                    ret
+                  }, double(maxSteps))
+  if (is.null(dim(info))) {
+    dim(info) <- c(1L, length(info))
+  }
+  attr(dataset, 'info.amounts') <- info
+  
   if (!any(attr(dataset, 'bootstrap') == 'info.amounts')) {
     attr(dataset, 'bootstrap') <- c(attr(dataset, 'bootstrap'), 'info.amounts')
   }
-  
-  ####  inappLevel <- which(at$levels == "-")
-  ####  applicableTokens <- setdiff(powers.of.2, 2 ^ (inappLevel - 1))
-  ####  
-  ####  attr(dataset, 'split.sizes') <- apply(binaryMatrix, 1, function(x) {
-  ####      vapply(applicableTokens, function (y) sum(x == y), integer(1))
-  ####    })
   
   dataset
 }
@@ -154,7 +177,9 @@ MinimumLength.phyDat <- function (x) {
   nChar <- at$nr
   nTip <- length(x)
   cont <- at$contrast
-  if (is.null(colnames(cont))) colnames(cont) <- as.character(at$levels)
+  if (is.null(colnames(cont))) {
+    colnames(cont) <- as.character(at$levels)
+  }
   simpleCont <- ifelse(rowSums(cont) == 1,
                        apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
                        '?')
@@ -220,7 +245,7 @@ MinimumLength.numeric <- function (x) {
 
 #' @rdname MinimumLength
 MinimumSteps <- function(x) {
-  .Deprecated(MinimumLength, msg='Renamed and recoded to better support
-              inapplicable tokens')
+  .Deprecated("MinimumLength",
+  msg = 'Renamed to `MinimumLength()` and recoded to better support inapplicable tokens')
   MinimumLength(x)
 }

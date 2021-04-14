@@ -18,8 +18,8 @@ The tree topology used to generate the matrices in \code{\link{congreveLamsdellM
 Congreve & Lamsdell (2016)
 }
 \examples{
-  data(referenceTree)
-  plot(referenceTree)
+data(referenceTree)
+plot(referenceTree)
 
 }
 \references{

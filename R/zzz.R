@@ -1,3 +1,7 @@
+.onUnload <- function (libpath) {
+  library.dynam.unload("TreeSearch", libpath)
+}
+
 ## Reminders when releasing for CRAN
 release_questions <- function() {
   c(

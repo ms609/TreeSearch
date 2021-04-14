@@ -552,36 +552,6 @@ server <- function(input, output, session) {
     }
   })
   
-  output$threeDPlot <- rgl::renderRglwidget({
-    if (mode3D() && inherits(distances(), 'dist')) {
-      cl <- clusterings()
-      proj <- projection()
-      withProgress(message = 'Drawing 3D plot', {
-        rgl::rgl.open(useNULL = TRUE)
-        incProgress(0.1)
-        rgl::rgl.bg(color = 'white')
-        rgl::plot3d(proj[, 1], proj[, 2], proj[, 3],
-                    aspect = 1, # Preserve aspect ratio - do not distort distances
-                    axes = FALSE, # Dimensions are meaningless
-                    col = pointCols(),
-                    alpha = input$pt.opacity / 255,
-                    cex = input$pt.cex,
-                    xlab = '', ylab = '', zlab = ''
-        )
-        incProgress(0.6)
-        if ('labelTrees' %in% input$display) {
-          rgl::text3d(proj[, 1], proj[, 2], proj[, 3], thinnedTrees())
-        }
-        if (mstSize() > 0) {
-          apply(mstEnds(), 1, function (segment)
-            rgl::lines3d(proj[segment, 1], proj[segment, 2], proj[segment, 3],
-                         col = "#bbbbbb", lty = 1))
-        }
-      })
-      rgl::rglwidget()
-    }
-  })
-  
   plotContent <- reactive({
     switch(input$plotFormat,
            'cons' = {

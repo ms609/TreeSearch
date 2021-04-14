@@ -1,2 +1,1 @@
-#' @param \dots further arguments to pass to `TreeScorer()`
-#' (e.g. \code{\link{TipsAreColumns}}, \code{dataset}).
+#' @param \dots further arguments to pass to `TreeScorer()`, e.g. `dataset = `.

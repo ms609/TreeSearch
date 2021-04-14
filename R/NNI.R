@@ -59,7 +59,7 @@ NNI <- function (tree, edgeToBreak = NULL) {
 #' `cNNI()` expects a binary tree rooted on a single leaf, whose root node
 #' is the lowest numbered internal node.
 #' @template treeParam
-#' @param edgeToBreak Integer from zero to nEdge(tree) - nTip(tree) - 2, 
+#' @param edgeToBreak Integer from zero to `nEdge(tree) - nTip(tree) - 2`,
 #' specifying which internal edge to break.
 #' @param whichSwitch Integer from zero to one, specifying which way to re-build
 #' the broken internal edge.

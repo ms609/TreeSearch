@@ -1,18 +1,24 @@
-# TreeSearch 0.4.3.9002 (development)
+# TreeSearch 0.4.3.9004 (development)
 
- - 'shiny' graphical user interface for tree search.
-  - `Consistency()` calculates consistency and retention 'indices'
+ - `EasyTree()` 'shiny' graphical user interface for tree search
+ - `SiteConcordance()` calculates exact site concordance
+ - `ConcordantInformation()` evaluates signal:noise of dataset implied by a
+   given tree.
+ - `Resample()` conducts bootstrap and jackknife resampling
+ - `Consistency()` calculates consistency and retention 'indices'
  - `MinimumLength()` and `MaximumLength()` calculate range of possible lengths
    of characters in a dataset on any tree
+ - Set handling of 'gap' token (-) when creating Morphy object with `gap = `
  - Label nodes with split frequencies using `JackLabels(plot = FALSE)`
  - Support for topological constraints during tree search
  - Remove redundant function `AsBinary()`
+ - Drop `nTip` parameter in `RandomTreeScore()` (infer from `morphyObj`)
  - C implementations of rearrangement functions
 
 # TreeSearch 0.4.3
 
  - Update tests for compatibility with 'TreeTools' v1.1.0
- - Improve memory and pointer handling.
+ - Improve memory and pointer handling
  
 # TreeSearch 0.4.2
 

@@ -1,4 +1,9 @@
 context("data_manipulation.R")
+
+test_that("Deprecation", {
+  expect_equal(MinimumLength(1:3), expect_warning(MinimumSteps(1:3)))
+})
+
 test_that("Minimum step counts are correctly calculated", {
   expect_equal(1, MinimumLength(1:3))
   expect_equal(1, MinimumLength(c(1:3, 5)))
@@ -51,4 +56,21 @@ test_that("Minimum step counts are correctly calculated", {
                  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
                MinimumLength(inapplicable.phyData[[4]]))
   
+})
+
+test_that("PrepareDataProfile()", {
+  dat <- TreeTools::MatrixToPhyDat(matrix(c(rep(0, 3), '[01]', 1, 2, '?', 
+                                            rep(0, 3), 1, '[02]', 2, '1'), 2,
+                                          byrow = TRUE,
+                                          dimnames = list(c('a', 'b'), NULL)))
+  at <- attributes(dat)
+  prepDat <- PrepareDataProfile(dat)
+  expect_equal(c(1, 6, 3, 5, 6), prepDat[[1]])
+  expect_equal(c(1, 3, 6, 5, 3), prepDat[[2]])
+  expect_equal(matrix(0, ncol = 5, nrow = 1), attr(prepDat, 'info.amounts'))
+  
+  data('Lobo', package = "TreeTools")
+  prep <- PrepareDataProfile(Lobo.phy)
+  expect_equal(c(17, attr(prep, 'nr')),
+               dim(attr(prep, 'info.amounts')))
 })

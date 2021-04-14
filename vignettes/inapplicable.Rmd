@@ -69,18 +69,18 @@ set.seed(0)
 
 We can conduct a basic parsimony search with:
 ```{r first-pass}
-bestTree <- MaximizeParsimony(vinther)
+bestTrees <- MaximizeParsimony(vinther)
 ```
 
 Noting that a number of iterations failed to hit the best score, we might consider
 continuing the search for a little longer, fine-tuning the search parameters:
 
 ```{r second-pass}
-bestTree <- MaximizeParsimony(vinther, tree = bestTree,
-                              ratchIter = 8L,
-                              tbrIter = 4L, 
-                              finalIter = 1L,
-                              maxHits = 40L)
+bestTrees <- MaximizeParsimony(vinther, tree = bestTrees,
+                               ratchIter = 6L,
+                               tbrIter = 4L, 
+                               finalIter = 1L,
+                               maxHits = 50L)
 ```
 
 As it happens, the best tree for this dataset has a score of 79 under
@@ -91,17 +91,19 @@ We can plot the best tree(s) that we've found, and check its parsimony score
 
 ```{r plot-tree}
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-plot(ape::consensus(bestTree))
-TreeLength(bestTree[[1]], vinther)
+plot(ape::consensus(bestTrees))
+TreeLength(bestTrees[[1]], vinther)
 ```
+
+### Evaluating clade support
 
 We might be interested in labelling clades with their frequency among the 
 sampled most-parsimonious trees:
 
 ```{r plot-label-nodes}
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-cons <- ape::consensus(bestTree, p = 0.5)
-splitFreqs <- TreeTools::SplitFrequency(cons, bestTree) / length(bestTree)
+cons <- ape::consensus(bestTrees, p = 0.5)
+splitFreqs <- TreeTools::SplitFrequency(cons, bestTrees) / length(bestTrees)
 plot(cons)
 TreeTools::LabelSplits(cons, round(splitFreqs * 100), unit = '%',
                        col = TreeTools::SupportColor(splitFreqs),
@@ -109,23 +111,57 @@ TreeTools::LabelSplits(cons, round(splitFreqs * 100), unit = '%',
 ```
 
 A more instructive measure of clade support can be generated using
-Jackknife resampling:
+Jackknife resampling.
+The [`Resample()`] manual page has suggestions for appropriate numbers of 
+replicates and search intensity, and instructions for calcuating bootstrap
+support; the code here gives a quick-to-run jackknife framework that can be
+adapted to the requirements of a particular dataset.
 
-```{r Jackknife-annotations, eval = FALSE}
-#TODO
-jack.trees <- Jackknife(bestTree[[1]], vinther, EdgeSwapper = RootedTBRSwap,
-                        jackIter = 20, verbosity = 0)
-par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
+```{r Jackknife-annotations}
+nReplicates <- 10
+jackTrees <- lapply(logical(nReplicates), function (x)
+  Resample(vinther, bestTrees, ratchIter = 0, tbrIter = 1, maxHits = 4,
+          concavity = 10, verbosity = 0)
+)
 
-JackLabels(strict.consensus, jack.trees) -> XX
+par(mar = rep(0, 4), cex = 0.8)
+# Take the strict consensus of all trees for each replicate
+JackLabels(cons, lapply(jackTrees, ape::consensus)) -> XX
 ```
+
+Jackknife and bootstrap support values give an indication of the volume of data
+that supports each node, but doesn't necessarily indicate whether the data
+are unanimous on the existence of a clade: a high bootstrap support value could
+indicate a large number of characters supporting a clade, and an only slightly
+smaller number of characters contradicting it.
+
+'TreeSearch' implements a number of concordance measures that aim to indicate
+whether a dataset is unanimous or divided in support of a grouping, 
+independently of the method of tree reconstruction.
+
+```{r concordance}
+concordance <- ClusteringConcordance(cons, vinther)
+
+# Alternative measures:
+# concordance <- QuartetConcordance(cons, vinther)
+# concordance <- PhylogeneticConcordance(cons, vinther)
+
+par(mar = rep(0, 4), cex = 0.8)
+plot(cons)
+TreeTools::LabelSplits(cons, signif(concordance, 3),
+                       col = TreeTools::SupportColor(concordance / max(concordance)),
+                       frame = 'none', pos = 3L)
+```
+
+
 
 
 ## Implied weighting
 
 Equal weights produces trees that are less accurate and less precise than
 implied weights [@Smith2019]; equally weighted analysis should never be
-conducted without also considering the results of implied weights [@Goloboff1997],
+conducted without also considering the results of implied weights 
+[@Goloboff1993;@Goloboff1997],
 ideally under a range of concavity constants [cf. @Smith2014].
 
 Implied weights can be activated by simply specifying a value of the concavity 
@@ -170,8 +206,8 @@ characters <- MatrixToPhyDat(matrix(
 plot(MaximizeParsimony(characters, constraint = constraint,
                        verbosity = -1)[[1]])
 ```
-Here's a more complex example that imposes the splits ab | ef and abc|ef,
-whilst allowing d to plot anywhere on the tree:
+Here's a more complex example that imposes the splits `ab | ef` and `abc | ef`,
+whilst allowing `d` to plot anywhere on the tree:
 
 ```{r complex-constraints}
 constraint <- characters <- MatrixToPhyDat(matrix(

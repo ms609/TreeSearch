@@ -319,7 +319,7 @@ unsigned long mpl_get_valid_matrix_length(const char* rawmatrix)
         }
         else if (*matptr == '[') {
             matptr = mpl_skip_closure(matptr, '[', ']');
-            assert(!(matptr < 0));
+            assert(matptr != NULL);
         }
         ++matptr;
     } while (*matptr);
@@ -340,7 +340,7 @@ void mpl_copy_valid_matrix_data(char *copy, const char* rawmatrix)
         }
         else if (*matptr == '[') {
             matptr = mpl_skip_closure(matptr, '[', ']');
-            assert(!(matptr < 0));
+            assert(matptr != NULL);
         }
         ++matptr;
     } while (*matptr);
@@ -404,7 +404,7 @@ int mpl_check_nexus_matrix_dimensions
             }
             
             current = err;
-            assert(!(current < 0));
+            assert(current != NULL);
             ++matrix_size;
         }
 

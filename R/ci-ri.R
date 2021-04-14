@@ -14,7 +14,7 @@
 #' @template treeParam
 #' 
 #' @return `Consistency()` returns a named vector specifying the consistency index (ci),
-#' retention index (ri), and rescalced consistency index (rc).
+#' retention index (ri), and rescaled consistency index (rc).
 #' 
 #' @examples 
 #' data(inapplicable.datasets)
