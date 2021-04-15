@@ -38,7 +38,8 @@
 #' @template stopAtPeakParam
 #' @template stopAtPlateauParam
 #' @template verbosityParam
-#' @param suboptimal retain trees that are suboptimal by this score. Defaults to 1e-08 to counter rounding errors.
+#' @param suboptimal retain trees that are suboptimal by this score.
+#'  Defaults to a small value that will counter rounding errors.
 #' @template treeScorerDots
 #' 
 #' @return `Ratchet()` returns a tree modified by parsimony ratchet iterations.
@@ -83,7 +84,7 @@ Ratchet <- function (tree, dataset,
                      searchIter = 4000, searchHits = 42,
                      bootstrapIter = searchIter, bootstrapHits = searchHits,
                      verbosity = 1L, 
-                     suboptimal = 1e-08, ...) {
+                     suboptimal = sqrt(.Machine$double.eps), ...) {
   epsilon <- 1e-08
   hits <- 0L
   # initialize tree and data

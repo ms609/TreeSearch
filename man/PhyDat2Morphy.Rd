@@ -2,7 +2,7 @@
 % Please edit documentation in R/mpl_morphy_objects.R
 \name{PhyDat2Morphy}
 \alias{PhyDat2Morphy}
-\title{Initialize a Morphy Object from a \code{phyDat} object}
+\title{Initialize a Morphy object from a \code{phyDat} object}
 \usage{
 PhyDat2Morphy(phy, gap = "inapplicable")
 }

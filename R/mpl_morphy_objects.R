@@ -109,7 +109,7 @@ GapHandler <- function (morphyObj) {
   ret[1L + handler]
 }
 
-#' Initialize a Morphy Object from a `phyDat` object
+#' Initialize a Morphy object from a `phyDat` object
 #' 
 #' Creates a new Morphy object with the same size and characters as the 
 #' `phyDat` object. 
@@ -251,7 +251,7 @@ is.morphyPtr <- function (morphyObj) {
   inherits(morphyObj, 'morphyPtr')
 }
 
-#' Destroy a Morphy Object
+#' Destroy a Morphy object
 #'
 #' Destroys a previously-created Morphy object.
 #'

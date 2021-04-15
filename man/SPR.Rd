@@ -8,7 +8,7 @@
 \alias{SPRSwap}
 \alias{RootedSPR}
 \alias{RootedSPRSwap}
-\title{Subtree Pruning and Rearrangement (SPR)}
+\title{Subtree pruning and rearrangement (SPR)}
 \usage{
 SPR(tree, edgeToBreak = NULL, mergeEdge = NULL)
 

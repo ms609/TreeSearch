@@ -92,7 +92,7 @@
 #' @keywords datasets
 "referenceTree"
 
-#' Empirically Counted Profiles for small trees
+#' Empirically counted profiles for small trees
 #' 
 #' The base 2 logarithm of the number of trees containing _s_ steps, calculated
 #' by scoring a character on each _n_-leaf tree.

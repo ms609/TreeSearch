@@ -8,7 +8,7 @@ SPRWarning <- function (parent, child, error) {
   list(parent, child)
 }
 
-#' Subtree Pruning and Rearrangement (SPR)
+#' Subtree pruning and rearrangement (SPR)
 #'
 #' Perform one \acronym{SPR} rearrangement on a tree
 #' 

@@ -1,4 +1,4 @@
-#' Nearest Neighbour Interchange (NNI)
+#' Nearest neighbour interchange (NNI)
 #' 
 #' Performs a single iteration of the nearest-neighbour interchange algorithm.
 #' Based on the corresponding '\pkg{phangorn}' function, but re-coded to improve speed.
@@ -58,13 +58,12 @@ NNI <- function (tree, edgeToBreak = NULL) {
 #' 
 #' `cNNI()` expects a binary tree rooted on a single leaf, whose root node
 #' is the lowest numbered internal node.
-#' @template treeParam
-#' @param edgeToBreak Integer from zero to `nEdge(tree) - nTip(tree) - 2`,
+#' @param edgeToBreak In `cNNI()`, an integer from zero to `nEdge(tree) - nTip(tree) - 2`,
 #' specifying which internal edge to break.
 #' @param whichSwitch Integer from zero to one, specifying which way to re-build
 #' the broken internal edge.
 #' 
-#' @return A tree of class `phylo`, rooted on the same leaf,
+#' @return `cNNI()` returns a tree of class `phylo`, rooted on the same leaf,
 #' on which the specified rearrangement has been conducted.
 #' 
 #' @references

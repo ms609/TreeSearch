@@ -3,7 +3,7 @@
 \docType{data}
 \name{profiles}
 \alias{profiles}
-\title{Empirically Counted Profiles for small trees}
+\title{Empirically counted profiles for small trees}
 \format{
 A list with the structure
 \verb{profiles[[number of leaves]][[number of tokens]][[tokens in smallest split]]}

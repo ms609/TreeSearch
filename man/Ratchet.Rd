@@ -39,7 +39,7 @@ Ratchet(
   bootstrapIter = searchIter,
   bootstrapHits = searchHits,
   verbosity = 1L,
-  suboptimal = 1e-08,
+  suboptimal = sqrt(.Machine$double.eps),
   ...
 )
 
@@ -158,7 +158,8 @@ iteration (default: \code{searchIter}).}
 \item{bootstrapHits}{Integer specifying maximum times to hit best score on each bootstrap
 iteration (default: \code{searchHits}).}
 
-\item{suboptimal}{retain trees that are suboptimal by this score. Defaults to 1e-08 to counter rounding errors.}
+\item{suboptimal}{retain trees that are suboptimal by this score.
+Defaults to a small value that will counter rounding errors.}
 
 \item{nSearch}{Number of Ratchet searches to conduct
 (for \code{RatchetConsensus()})}

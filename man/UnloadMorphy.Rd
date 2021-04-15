@@ -2,7 +2,7 @@
 % Please edit documentation in R/mpl_morphy_objects.R
 \name{UnloadMorphy}
 \alias{UnloadMorphy}
-\title{Destroy a Morphy Object}
+\title{Destroy a Morphy object}
 \usage{
 UnloadMorphy(morphyObj)
 }
