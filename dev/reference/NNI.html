@@ -46,10 +46,10 @@
 
 
 <meta property="og:title" content="Nearest neighbour interchange (NNI) — NNI" />
-<meta property="og:description" content="Performs a single iteration of the nearest-neighbour interchange algorithm.
-Based on the corresponding 'phangorn' function, but re-coded to improve speed.
-cNNI() expects a binary tree rooted on a single leaf, whose root node
-is the lowest numbered internal node." />
+<meta property="og:description" content="NNI()performs a single iteration of the nearest-neighbour interchange
+algorithm; RootedNNI() retains the position of the root.
+These functions are based on equivalents in the 'phangorn' package.
+cNNI() is an equivalent function coded in C, that runs much faster." />
 
 
 <meta name="robots" content="noindex">
@@ -166,10 +166,10 @@ is the lowest numbered internal node." />
     </div>
 
     <div class="ref-description">
-    <p>Performs a single iteration of the nearest-neighbour interchange algorithm.
-Based on the corresponding '<span class="pkg">phangorn</span>' function, but re-coded to improve speed.</p>
-<p><code>cNNI()</code> expects a binary tree rooted on a single leaf, whose root node
-is the lowest numbered internal node.</p>
+    <p><code>NNI()</code>performs a single iteration of the nearest-neighbour interchange
+algorithm; <code>RootedNNI()</code> retains the position of the root.
+These functions are based on equivalents in the '<span class="pkg">phangorn</span>' package.
+<code>cNNI()</code> is an equivalent function coded in C, that runs much faster.</p>
     </div>
 
     <pre class="usage"><span class='fu'>NNI</span><span class='op'>(</span><span class='va'>tree</span>, edgeToBreak <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span>
@@ -196,7 +196,11 @@ is the lowest numbered internal node.</p>
     </tr>
     <tr>
       <th>edgeToBreak</th>
-      <td><p>In <code>cNNI()</code>, an integer from zero to <code>nEdge(tree) - nTip(tree) - 2</code>,
+      <td><p>In (<code>Rooted</code>)<code>NNI()</code>, an optional integer specifying the
+index of an edge to bisect/prune, generated randomly if not specified.
+If <code>-1</code>, a complete list of all trees one step from the input tree
+will be returned.
+In <code>cNNI()</code>, an integer from zero to <code>nEdge(tree) - nTip(tree) - 2</code>,
 specifying which internal edge to break.</p></td>
     </tr>
     <tr>
@@ -248,10 +252,6 @@ turn to the  rearranged parent and child parameters.</p>
 Felsenstein J (2004).
 <em>Inferring phylogenies</em>.
 Sinauer Associates, Sunderland, Massachusetts.</p>
-<p>The algorithm is summarized in
-Felsenstein J (2004).
-<em>Inferring phylogenies</em>.
-Sinauer Associates, Sunderland, Massachusetts.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p>Other tree rearrangement functions: 
@@ -263,25 +263,27 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 (<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>ape</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ape/man/rtree.html'>rtree</a></span><span class='op'>(</span><span class='fl'>20</span>, br <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span>
-<span class='fu'>NNI</span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 
-#&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
-#&gt; 
-#&gt; Tip labels:
-#&gt;   t9, t16, t1, t12, t14, t17, ...
-#&gt; 
-#&gt; Rooted; no branch lengths.</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/structure.html'>structure</a></span><span class='op'>(</span><span class='fu'>NNI</span><span class='op'>(</span><span class='va'>tree</span>, edgeToBreak <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span><span class='op'>)</span>, class <span class='op'>=</span> <span class='st'>'multiPhylo'</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 36 phylogenetic trees</div><div class='input'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/GenerateTree.html'>BalancedTree</a></span><span class='op'>(</span><span class='fl'>8</span><span class='op'>)</span>
+    <pre class="examples"><div class='input'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/GenerateTree.html'>BalancedTree</a></span><span class='op'>(</span><span class='fl'>8</span><span class='op'>)</span>
 <span class='co'># A random rearrangement</span>
-<span class='fu'>cNNI</span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
+<span class='fu'>NNI</span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 
 #&gt; Phylogenetic tree with 8 tips and 7 internal nodes.
 #&gt; 
 #&gt; Tip labels:
 #&gt;   t1, t2, t3, t4, t5, t6, ...
 #&gt; 
-#&gt; Rooted; no branch lengths.</div><div class='input'><span class='co'># Manual random sampling</span>
+#&gt; Rooted; no branch lengths.</div><div class='input'><span class='fu'>cNNI</span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; 
+#&gt; Phylogenetic tree with 8 tips and 7 internal nodes.
+#&gt; 
+#&gt; Tip labels:
+#&gt;   t1, t2, t3, t4, t5, t6, ...
+#&gt; 
+#&gt; Rooted; no branch lengths.</div><div class='input'>
+<span class='co'># All trees one NNI rearrangement away</span>
+<span class='fu'>NNI</span><span class='op'>(</span><span class='va'>tree</span>, edgeToBreak <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; 12 phylogenetic trees</div><div class='input'>
+<span class='co'># Manual random sampling</span>
 <span class='fu'>cNNI</span><span class='op'>(</span><span class='va'>tree</span>, <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample.int</a></span><span class='op'>(</span><span class='fl'>14</span> <span class='op'>-</span> <span class='fl'>8</span> <span class='op'>-</span> <span class='fl'>1</span>, <span class='fl'>1</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample.int</a></span><span class='op'>(</span><span class='fl'>2</span>, <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 
 #&gt; Phylogenetic tree with 8 tips and 7 internal nodes.
@@ -289,7 +291,8 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 #&gt; Tip labels:
 #&gt;   t1, t2, t3, t4, t5, t6, ...
 #&gt; 
-#&gt; Rooted; no branch lengths.</div><div class='input'><span class='co'># A specified rearrangement</span>
+#&gt; Rooted; no branch lengths.</div><div class='input'>
+<span class='co'># A specified rearrangement</span>
 <span class='fu'>cNNI</span><span class='op'>(</span><span class='va'>tree</span>, <span class='fl'>0</span>, <span class='fl'>0</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 
 #&gt; Phylogenetic tree with 8 tips and 7 internal nodes.
