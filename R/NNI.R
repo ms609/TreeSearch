@@ -51,8 +51,6 @@ NNI <- function (tree, edgeToBreak = NULL) {
   }
 }
 
-#' Nearest-neighbour interchange 
-#' 
 #' `cNNI()` performs a nearest neighbour interchange using C; it is faster than
 #' `NNI()`.
 #' 
@@ -86,7 +84,7 @@ NNI <- function (tree, edgeToBreak = NULL) {
 #' 
 #' # If a tree may exhibit unusual node ordering, this can be addressed with
 #' tree <- TreeTools::Preorder(tree)
-#' @template MRS
+#' @rdname NNI
 #' @importFrom TreeTools NTip
 #' @export
 cNNI <- function (tree, edgeToBreak = NULL, whichSwitch = NULL) {

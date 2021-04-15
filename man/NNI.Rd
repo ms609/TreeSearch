@@ -2,12 +2,15 @@
 % Please edit documentation in R/NNI.R
 \name{NNI}
 \alias{NNI}
+\alias{cNNI}
 \alias{NNISwap}
 \alias{RootedNNI}
 \alias{RootedNNISwap}
-\title{Nearest Neighbour Interchange (NNI)}
+\title{Nearest neighbour interchange (NNI)}
 \usage{
 NNI(tree, edgeToBreak = NULL)
+
+cNNI(tree, edgeToBreak = NULL, whichSwitch = NULL)
 
 NNISwap(parent, child, nTips = (length(parent)/2L) + 1L, edgeToBreak = NULL)
 
@@ -23,10 +26,11 @@ RootedNNISwap(
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
-\item{edgeToBreak}{(optional) integer specifying the index of an edge to bisect/prune,
-generated randomly if not specified.
-Alternatively, set to \code{-1} to return a complete list
-of all trees one step from the input tree.}
+\item{edgeToBreak}{In \code{cNNI()}, an integer from zero to \code{nEdge(tree) - nTip(tree) - 2},
+specifying which internal edge to break.}
+
+\item{whichSwitch}{Integer from zero to one, specifying which way to re-build
+the broken internal edge.}
 
 \item{parent}{Integer vector corresponding to the first column of the edge
 matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
@@ -40,6 +44,9 @@ matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
 Returns a tree with class \code{phylo} (if \code{returnAll = FALSE}) or
 a set of trees, with class \code{multiPhylo} (if \code{returnAll = TRUE}).
 
+\code{cNNI()} returns a tree of class \code{phylo}, rooted on the same leaf,
+on which the specified rearrangement has been conducted.
+
 \code{NNISwap()} returns a list containing two elements, corresponding in
 turn to the  rearranged parent and child parameters.
 
@@ -48,6 +55,9 @@ a list containing two elements, corresponding in turn to the rearranged parent a
 \description{
 Performs a single iteration of the nearest-neighbour interchange algorithm.
 Based on the corresponding '\pkg{phangorn}' function, but re-coded to improve speed.
+
+\code{cNNI()} expects a binary tree rooted on a single leaf, whose root node
+is the lowest numbered internal node.
 }
 \details{
 Branch lengths are not supported.
@@ -68,8 +78,27 @@ All nodes in a tree must be bifurcating; \code{\link[ape:collapse.singles]{ape::
 tree <- ape::rtree(20, br = NULL)
 NNI(tree)
 structure(NNI(tree, edgeToBreak = -1), class = 'multiPhylo')
+tree <- TreeTools::BalancedTree(8)
+# A random rearrangement
+cNNI(tree)
+# Manual random sampling
+cNNI(tree, sample.int(14 - 8 - 1, 1), sample.int(2, 1))
+# A specified rearrangement
+cNNI(tree, 0, 0)
+
+# If a tree may not be binary, collapse nodes with
+tree <- TreeTools::MakeTreeBinary(tree)
+
+# If a tree may be improperly rooted, use
+tree <- TreeTools::RootTree(tree, 1)
+
+# If a tree may exhibit unusual node ordering, this can be addressed with
+tree <- TreeTools::Preorder(tree)
 }
 \references{
+The algorithm is summarized in
+\insertRef{Felsenstein2004}{TreeSearch}
+
 The algorithm is summarized in
 \insertRef{Felsenstein2004}{TreeSearch}
 }
