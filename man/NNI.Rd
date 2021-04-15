@@ -26,7 +26,11 @@ RootedNNISwap(
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
-\item{edgeToBreak}{In \code{cNNI()}, an integer from zero to \code{nEdge(tree) - nTip(tree) - 2},
+\item{edgeToBreak}{In (\code{Rooted})\code{NNI()}, an optional integer specifying the
+index of an edge to bisect/prune, generated randomly if not specified.
+If \code{-1}, a complete list of all trees one step from the input tree
+will be returned.
+In \code{cNNI()}, an integer from zero to \code{nEdge(tree) - nTip(tree) - 2},
 specifying which internal edge to break.}
 
 \item{whichSwitch}{Integer from zero to one, specifying which way to re-build
@@ -53,11 +57,10 @@ turn to the  rearranged parent and child parameters.
 a list containing two elements, corresponding in turn to the rearranged parent and child parameters
 }
 \description{
-Performs a single iteration of the nearest-neighbour interchange algorithm.
-Based on the corresponding '\pkg{phangorn}' function, but re-coded to improve speed.
-
-\code{cNNI()} expects a binary tree rooted on a single leaf, whose root node
-is the lowest numbered internal node.
+\code{NNI()}performs a single iteration of the nearest-neighbour interchange
+algorithm; \code{RootedNNI()} retains the position of the root.
+These functions are based on equivalents in the '\pkg{phangorn}' package.
+\code{cNNI()} is an equivalent function coded in C, that runs much faster.
 }
 \details{
 Branch lengths are not supported.
@@ -75,14 +78,17 @@ All nodes in a tree must be bifurcating; \code{\link[ape:collapse.singles]{ape::
 }}
 
 \examples{
-tree <- ape::rtree(20, br = NULL)
-NNI(tree)
-structure(NNI(tree, edgeToBreak = -1), class = 'multiPhylo')
 tree <- TreeTools::BalancedTree(8)
 # A random rearrangement
+NNI(tree)
 cNNI(tree)
+
+# All trees one NNI rearrangement away
+NNI(tree, edgeToBreak = -1)
+
 # Manual random sampling
 cNNI(tree, sample.int(14 - 8 - 1, 1), sample.int(2, 1))
+
 # A specified rearrangement
 cNNI(tree, 0, 0)
 
@@ -96,9 +102,6 @@ tree <- TreeTools::RootTree(tree, 1)
 tree <- TreeTools::Preorder(tree)
 }
 \references{
-The algorithm is summarized in
-\insertRef{Felsenstein2004}{TreeSearch}
-
 The algorithm is summarized in
 \insertRef{Felsenstein2004}{TreeSearch}
 }
