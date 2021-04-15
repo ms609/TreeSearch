@@ -146,6 +146,7 @@ EdgeListSearch <- function (edgeList, dataset,
 #' TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
 #' }
 #' @template MRS
+#' @family custom search functions
 #' @importFrom Rdpack reprompt
 #' @importFrom TreeTools RenumberTips
 #' @export

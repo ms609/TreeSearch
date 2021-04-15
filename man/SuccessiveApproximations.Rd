@@ -2,6 +2,7 @@
 % Please edit documentation in R/SuccessiveApproximations.R
 \name{SuccessiveApproximations}
 \alias{SuccessiveApproximations}
+\alias{SuccessiveWeights}
 \title{Tree Search using Successive Approximations}
 \usage{
 SuccessiveApproximations(
@@ -17,6 +18,8 @@ SuccessiveApproximations(
   verbosity = 0,
   suboptimal = 0.1
 )
+
+SuccessiveWeights(tree, dataset)
 }
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
@@ -45,8 +48,22 @@ whose names correspond to the labels of any accompanying tree.}
 \value{
 \code{SuccessiveApproximations()} returns a list of class \code{multiPhylo}
 containing optimal (and slightly suboptimal, if suboptimal > 0) trees.
+
+\code{SuccessiveWeights()} returns the score of a tree, given the
+weighting instructions specified in the attributes of the dataset.
 }
 \description{
 Searches for a tree that is optimal under the Successive Approximations
-criterion.
+criterion (Fitch 1969).
 }
+\references{
+\insertRef{Fitch1969}{TreeSearch}
+}
+\seealso{
+Other custom search functions: 
+\code{\link{EdgeListSearch}()},
+\code{\link{Jackknife}()},
+\code{\link{MorphyBootstrap}()}
+}
+\concept{custom search functions}
+\keyword{internal}

@@ -1,7 +1,7 @@
 #' Parsimony Ratchet
 #'
-#' \code{Ratchet} uses the parsimony ratchet (Nixon 1999) to search for a more 
-#' parsimonious tree.
+#' `Ratchet()` uses the parsimony ratchet (Nixon 1999) to search for a more 
+#' parsimonious tree using custom optimality criteria.
 #' 
 #' For usage pointers, see the 
 #' [vignette](https://ms609.github.io/TreeSearch/articles/custom.html).
@@ -63,12 +63,10 @@
 #' @author Martin R. Smith
 #' 
 #' @seealso
-#' - [`TreeSearch()`]
-#' 
-#' - Adapted from \code{\link[phangorn:parsimony]{pratchet}} in the 
+#' - Adapted from \code{\link[phangorn:parsimony]{pratchet()}} in the 
 #' \pkg{phangorn} package.
 #' 
-#' @keywords tree
+#' @family custom search functions
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @export
 Ratchet <- function (tree, dataset, 

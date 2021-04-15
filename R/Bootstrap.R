@@ -12,6 +12,7 @@
 #'
 #' @return `MorphyBootstrap()` returns a tree that is optimal under a random
 #' sampling of the original characters.
+#' 
 #' @rdname Ratchet
 #' @export
 MorphyBootstrap <- function (edgeList, morphyObj, EdgeSwapper = NNISwap, 

@@ -8,15 +8,10 @@ development:
   mode: auto
 
 reference:
-  - title: "Tree search"
+  - title: "Custom search"
     desc: "Functions to search for optimal phylogenetic trees."
     contents:
-      - TreeSearch
-      - matches("Bootstrap")
-      - matches('Ratchet')
-      - SuccessiveApproximations
-      - SuccessiveWeights
-      # - RunTNT
+      - has_concept("custom search functions")
       
   - title: "Tree scoring"
     desc: "Functions that provide tree scores, for optimization."
@@ -47,12 +42,10 @@ reference:
     - has_concept("profile parsimony functions")
     - WithOneExtraStep
       
-  - title: "C APIs"
-    desc: "Functions that interface with C libraries."
+  - title: "Morphy APIs"
+    desc: "Functions that interface with the Morphy C library."
     contents:
-     # - starts_with('mpl_')
       - has_concept("Morphy API functions")
-     # - has_concept("C wrappers")
       
   - title: "Datasets"
     desc: "Data that accompanies the package."

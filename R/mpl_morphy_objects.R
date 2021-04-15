@@ -92,6 +92,7 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 #' morphyObj <- SingleCharMorphy('-0-0', 'Extra')
 #' GapHandler(morphyObj)
 #' morphyObj <- UnloadMorphy(morphyObj)
+#' @family Morphy API functions
 #' @template MRS
 #' @export
 GapHandler <- function (morphyObj) {
@@ -244,6 +245,7 @@ SingleCharMorphy <- function (char, gap = 'inapp') {
 #' @return `is.morphyPtr()` returns `TRUE` if `morphyObj` is a valid morphy 
 #' pointer, `FALSE` otherwise.
 #' @template MRS
+#' @family Morphy API functions
 #' @export
 is.morphyPtr <- function (morphyObj) {
   inherits(morphyObj, 'morphyPtr')

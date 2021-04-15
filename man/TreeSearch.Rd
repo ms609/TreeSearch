@@ -139,9 +139,15 @@ TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
 \item \code{\link{Ratchet}}, alternative heuristic, useful to escape local
 optima.
 }
+
+Other custom search functions: 
+\code{\link{Jackknife}()},
+\code{\link{MorphyBootstrap}()},
+\code{\link{SuccessiveApproximations}()}
 }
 \author{
 \href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
+\concept{custom search functions}
 \keyword{internal}

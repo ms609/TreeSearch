@@ -67,8 +67,8 @@ pairs(cbind(qc, cc, pc, spc, mcc))
 \seealso{
 Other split support functions: 
 \code{\link{JackLabels}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MorphyBootstrap}()}
+\code{\link{Jackknife}()},
+\code{\link{MaximizeParsimony}()}
 }
 \author{
 \href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}

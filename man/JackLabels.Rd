@@ -56,8 +56,8 @@ tree$node.label <- JackLabels(tree, jackTrees, plot = FALSE)
 \code{\link[=Jackknife]{Jackknife()}}: Generate trees by jackknife resampling
 
 Other split support functions: 
+\code{\link{Jackknife}()},
 \code{\link{MaximizeParsimony}()},
-\code{\link{MorphyBootstrap}()},
 \code{\link{SiteConcordance}}
 }
 \author{

@@ -1,7 +1,7 @@
 #' Tree Search using Successive Approximations
 #'
 #' Searches for a tree that is optimal under the Successive Approximations 
-#' criterion.
+#' criterion (Fitch 1969).
 #'
 #' @template treeParam
 #' @template datasetParam
@@ -18,7 +18,11 @@
 #' @return `SuccessiveApproximations()` returns a list of class `multiPhylo`
 #' containing optimal (and slightly suboptimal, if suboptimal > 0) trees.
 #'
+#' @references 
+#' \insertRef{Fitch1969}{TreeSearch}
+#'
 #' @importFrom ape consensus root
+#' @family custom search functions
 #' @export
 SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3, maxSuccIter = 20,
                                       ratchetHits = 100, searchHits = 50, searchIter = 500,
@@ -81,13 +85,7 @@ Suboptimality <- function (trees, proportional = FALSE) {
   }
 }
 
-#' Successive Weights
-#' 
-#' Calculate weight for tree scored by successive approximations.
-#' 
-#' @template treeParam
-#' @template datasetParam
-#'
+#' @rdname SuccessiveApproximations
 #' @return `SuccessiveWeights()` returns the score of a tree, given the
 #' weighting instructions specified in the attributes of the dataset.
 #' 

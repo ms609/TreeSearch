@@ -1,6 +1,14 @@
-#' @describeIn Ratchet Jackknife resampling. Note that at present this assumes
+#' Jackknife resampling
+#' 
+#' Resample trees using Jackknife resampling, i.e. removing a subset of
+#' characters.
+#' 
+#' The function assumes 
 #' that `InitializeData()` will return a morphy object; if this doesn't hold 
-#' for you, please let me know and I'll make the function more general.
+#' for you, post a [GitHub issue](http://github.com/ms609/TreeSearch/issues/new/)
+#' or e-mail the maintainer.
+#' 
+#' @inheritParams Ratchet
 #' @template EdgeSwapperParam
 #' @param resampleFreq Double between 0 and 1 stating proportion of characters 
 #' to resample.
@@ -12,6 +20,7 @@
 #' @seealso 
 #' - [`JackLabels()`]: Label nodes of a tree with jackknife supports.
 #' @family split support functions
+#' @family custom search functions
 #' @export
 Jackknife <- function (tree, dataset, resampleFreq = 2/3,
                        InitializeData = PhyDat2Morphy,

@@ -17,11 +17,13 @@ Retrieves the number of character (columns) in the dataset.
 }
 \seealso{
 Other Morphy API functions: 
+\code{\link{GapHandler}()},
 \code{\link{MorphyErrorCheck}()},
 \code{\link{MorphyWeights}()},
 \code{\link{PhyDat2Morphy}()},
 \code{\link{SingleCharMorphy}()},
 \code{\link{UnloadMorphy}()},
+\code{\link{is.morphyPtr}()},
 \code{\link{mpl_apply_tipdata}()},
 \code{\link{mpl_attach_rawdata}()},
 \code{\link{mpl_attach_symbols}()},

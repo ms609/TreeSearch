@@ -225,7 +225,7 @@ MaximizeParsimony(characters, constraint = constraint, verbosity = 0)
 \seealso{
 Other split support functions: 
 \code{\link{JackLabels}()},
-\code{\link{MorphyBootstrap}()},
+\code{\link{Jackknife}()},
 \code{\link{SiteConcordance}}
 }
 \author{
