@@ -28,6 +28,9 @@
     <loc>https://ms609.github.io/TreeSearch/reference/JackLabels.html</loc>
   </url>
   <url>
+    <loc>https://ms609.github.io/TreeSearch/reference/Jackknife.html</loc>
+  </url>
+  <url>
     <loc>https://ms609.github.io/TreeSearch/reference/LogisticPoints.html</loc>
   </url>
   <url>
@@ -88,9 +91,6 @@
     <loc>https://ms609.github.io/TreeSearch/reference/SuccessiveApproximations.html</loc>
   </url>
   <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/SuccessiveWeights.html</loc>
-  </url>
-  <url>
     <loc>https://ms609.github.io/TreeSearch/reference/TBR.html</loc>
   </url>
   <url>
@@ -107,9 +107,6 @@
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/reference/WithOneExtraStep.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/cNNI.html</loc>
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/reference/cSPR.html</loc>

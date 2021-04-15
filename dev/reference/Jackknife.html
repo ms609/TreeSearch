@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Creates a new instance of a Morphy object — mpl_new_Morphy • TreeSearch</title>
+<title>Jackknife resampling — Jackknife • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -45,9 +45,9 @@
 
 
 
-<meta property="og:title" content="Creates a new instance of a Morphy object — mpl_new_Morphy" />
-<meta property="og:description" content="Creates a new empty Morphy object. All fields are unpopulated
-and uninitialised." />
+<meta property="og:title" content="Jackknife resampling — Jackknife" />
+<meta property="og:description" content="Resample trees using Jackknife resampling, i.e. removing a subset of
+characters." />
 
 
 <meta name="robots" content="noindex">
@@ -158,65 +158,127 @@ and uninitialised." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Creates a new instance of a Morphy object</h1>
-    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/mpl_morphyex.R'><code>R/mpl_morphyex.R</code></a></small>
-    <div class="hidden name"><code>mpl_new_Morphy.Rd</code></div>
+    <h1>Jackknife resampling</h1>
+    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/Jackknife.R'><code>R/Jackknife.R</code></a></small>
+    <div class="hidden name"><code>Jackknife.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Creates a new empty Morphy object. All fields are unpopulated
-and uninitialised.</p>
+    <p>Resample trees using Jackknife resampling, i.e. removing a subset of
+characters.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>mpl_new_Morphy</span><span class='op'>(</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>Jackknife</span><span class='op'>(</span>
+  <span class='va'>tree</span>,
+  <span class='va'>dataset</span>,
+  resampleFreq <span class='op'>=</span> <span class='fl'>2</span><span class='op'>/</span><span class='fl'>3</span>,
+  InitializeData <span class='op'>=</span> <span class='va'>PhyDat2Morphy</span>,
+  CleanUpData <span class='op'>=</span> <span class='va'>UnloadMorphy</span>,
+  TreeScorer <span class='op'>=</span> <span class='va'>MorphyLength</span>,
+  EdgeSwapper <span class='op'>=</span> <span class='va'>TBRSwap</span>,
+  jackIter <span class='op'>=</span> <span class='fl'>5000L</span>,
+  searchIter <span class='op'>=</span> <span class='fl'>4000L</span>,
+  searchHits <span class='op'>=</span> <span class='fl'>42L</span>,
+  verbosity <span class='op'>=</span> <span class='fl'>1L</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span></pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>tree</th>
+      <td><p>A tree of class <code>phylo</code>.</p></td>
+    </tr>
+    <tr>
+      <th>dataset</th>
+      <td><p>a dataset in the format required by <code>TreeScorer()</code>.</p></td>
+    </tr>
+    <tr>
+      <th>resampleFreq</th>
+      <td><p>Double between 0 and 1 stating proportion of characters
+to resample.</p></td>
+    </tr>
+    <tr>
+      <th>InitializeData</th>
+      <td><p>Function that sets up data object to prepare for tree search.
+The function will be passed the <code>dataset</code> parameter.
+Its return value will be passed to <code>TreeScorer()</code> and <code>CleanUpData()</code>.</p></td>
+    </tr>
+    <tr>
+      <th>CleanUpData</th>
+      <td><p>Function to destroy data object on function exit.
+The function will be passed the value returned by <code>InitializeData()</code>.</p></td>
+    </tr>
+    <tr>
+      <th>TreeScorer</th>
+      <td><p>function to score a given tree.
+The function will be passed three parameters, corresponding to the
+<code>parent</code> and <code>child</code> entries of a tree's edge list, and a dataset.</p></td>
+    </tr>
+    <tr>
+      <th>EdgeSwapper</th>
+      <td><p>a function that rearranges a parent and child vector,
+and returns a list with modified vectors; for example <code><a href='SPR.html'>SPRSwap()</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>jackIter</th>
+      <td><p>Integer specifying number of jackknife iterations to conduct.</p></td>
+    </tr>
+    <tr>
+      <th>searchIter</th>
+      <td><p>Integer specifying maximum rearrangements to perform on each bootstrap or
+ratchet iteration.
+To override this value for a single swapper function, set e.g.
+<code>attr(SwapperFunction, 'searchIter') &lt;- 99</code></p></td>
+    </tr>
+    <tr>
+      <th>searchHits</th>
+      <td><p>Integer specifying maximum times to hit best score before terminating a tree
+search within a ratchet iteration.
+To override this value for a single swapper function, set e.g.
+<code>attr(SwapperFunction, 'searchHits') &lt;- 99</code></p></td>
+    </tr>
+    <tr>
+      <th>verbosity</th>
+      <td><p>Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>further arguments to pass to <code>TreeScorer()</code>, e.g. <code>dataset = </code>.</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A void pointer to the Morphy instance. NULL if unsuccessful.</p>
+    <p><code>Jackknife()</code> returns a list of trees recovered after jackknife
+iterations.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>The function assumes
+that <code>InitializeData()</code> will return a morphy object; if this doesn't hold
+for you, post a <a href='http://github.com/ms609/TreeSearch/issues/new/'>GitHub issue</a>
+or e-mail the maintainer.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p>Other Morphy API functions: 
-<code><a href='GapHandler.html'>GapHandler</a>()</code>,
-<code><a href='MorphyErrorCheck.html'>MorphyErrorCheck</a>()</code>,
-<code><a href='MorphyWeights.html'>MorphyWeights</a>()</code>,
-<code><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a>()</code>,
-<code><a href='SingleCharMorphy.html'>SingleCharMorphy</a>()</code>,
-<code><a href='UnloadMorphy.html'>UnloadMorphy</a>()</code>,
-<code><a href='is.morphyPtr.html'>is.morphyPtr</a>()</code>,
-<code><a href='mpl_apply_tipdata.html'>mpl_apply_tipdata</a>()</code>,
-<code><a href='mpl_attach_rawdata.html'>mpl_attach_rawdata</a>()</code>,
-<code><a href='mpl_attach_symbols.html'>mpl_attach_symbols</a>()</code>,
-<code><a href='mpl_delete_Morphy.html'>mpl_delete_Morphy</a>()</code>,
-<code><a href='mpl_delete_rawdata.html'>mpl_delete_rawdata</a>()</code>,
-<code><a href='mpl_first_down_recon.html'>mpl_first_down_recon</a>()</code>,
-<code><a href='mpl_first_up_recon.html'>mpl_first_up_recon</a>()</code>,
-<code><a href='mpl_get_charac_weight.html'>mpl_get_charac_weight</a>()</code>,
-<code><a href='mpl_get_gaphandl.html'>mpl_get_gaphandl</a>()</code>,
-<code><a href='mpl_get_num_charac.html'>mpl_get_num_charac</a>()</code>,
-<code><a href='mpl_get_num_internal_nodes.html'>mpl_get_num_internal_nodes</a>()</code>,
-<code><a href='mpl_get_numtaxa.html'>mpl_get_numtaxa</a>()</code>,
-<code><a href='mpl_get_symbols.html'>mpl_get_symbols</a>()</code>,
-<code><a href='mpl_init_Morphy.html'>mpl_init_Morphy</a>()</code>,
-<code><a href='mpl_second_down_recon.html'>mpl_second_down_recon</a>()</code>,
-<code><a href='mpl_second_up_recon.html'>mpl_second_up_recon</a>()</code>,
-<code><a href='mpl_set_charac_weight.html'>mpl_set_charac_weight</a>()</code>,
-<code><a href='mpl_set_num_internal_nodes.html'>mpl_set_num_internal_nodes</a>()</code>,
-<code><a href='mpl_set_parsim_t.html'>mpl_set_parsim_t</a>()</code>,
-<code><a href='mpl_translate_error.html'>mpl_translate_error</a>()</code>,
-<code><a href='mpl_update_lower_root.html'>mpl_update_lower_root</a>()</code>,
-<code><a href='mpl_update_tip.html'>mpl_update_tip</a>()</code>,
-<code><a href='summary.morphyPtr.html'>summary.morphyPtr</a>()</code></p></div>
+    <div class='dont-index'>
+<ul>
+<li><p><code><a href='JackLabels.html'>JackLabels()</a></code>: Label nodes of a tree with jackknife supports.</p></li>
+</ul>
+
+<p>Other split support functions: 
+<code><a href='JackLabels.html'>JackLabels</a>()</code>,
+<code><a href='MaximizeParsimony.html'>MaximizeParsimony</a>()</code>,
+<code><a href='SiteConcordance.html'>SiteConcordance</a></code></p>
+<p>Other custom search functions: 
+<code><a href='EdgeListSearch.html'>EdgeListSearch</a>()</code>,
+<code><a href='MorphyBootstrap.html'>MorphyBootstrap</a>()</code>,
+<code><a href='SuccessiveApproximations.html'>SuccessiveApproximations</a>()</code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
-    <p>Martin Brazeau</p>
+    <p>Martin R. Smith</p>
 
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='va'>morphyObj</span> <span class='op'>&lt;-</span> <span class='fu'>mpl_new_Morphy</span><span class='op'>(</span><span class='op'>)</span> <span class='co'># Create new object</span>
-<span class='co'>## Do some stuff ... ##</span>
-<span class='fu'><a href='mpl_delete_Morphy.html'>mpl_delete_Morphy</a></span><span class='op'>(</span><span class='va'>morphyObj</span><span class='op'>)</span> <span class='co'># Delete when done</span>
-</div><div class='output co'>#&gt; [1] 0</div><div class='input'>
-</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
