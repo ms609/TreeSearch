@@ -33,7 +33,7 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
   if (minSteps == 0L) return (c('0' = 1L))
   
   split <- split[!singletons]
-  if (length(split) < 2L) return (1L)
+  if (length(split) < 2L) return (setNames(1L, minSteps))
   
   profile <- vapply(seq_len(split[2]), Carter1, double(1), split[1], split[2])
   ret <- setNames(Log2Unrooted(sum(split[1:2])) - log2(cumsum(profile)),

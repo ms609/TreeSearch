@@ -18,7 +18,8 @@ An object of class \code{phyDat}, with additional attributes.
 \itemize{
 \item \code{info.amounts}: details the information represented by each
 character when subject to N additional steps.
-\item \code{split.sizes}: The size of the splits implied by each character
+\item \code{informative}: logical specifying which characters contain any
+phylogenetic information.
 \item \code{bootstrap}: The character vector
 \code{c('info.amounts', 'split.sizes')}, indicating attributes to sample
 when bootstrapping the dataset (e.g. in Ratchet searches).

@@ -5,12 +5,13 @@
 #' @return An object of class `phyDat`, with additional attributes.
 #' `PrepareDataProfile` adds the attributes:
 #' 
-#'   - \code{info.amounts}: details the information represented by each 
+#'   - `info.amounts`: details the information represented by each 
 #'     character when subject to N additional steps.
 #'   
-#'   - \code{split.sizes}: The size of the splits implied by each character
+#'   - `informative`: logical specifying which characters contain any
+#'     phylogenetic information.
 #'   
-#'   - \code{bootstrap}: The character vector 
+#'   - `bootstrap`: The character vector 
 #'     \code{c('info.amounts', 'split.sizes')}, indicating attributes to sample
 #'      when bootstrapping the dataset (e.g. in Ratchet searches).
 #'
@@ -39,19 +40,25 @@ PrepareDataProfile <- function (dataset) {
   ambigs <- which(contSums > 1L & contSums < ncol(cont))
   inappLevel <- which(colnames(cont) == '-')
   if (length(inappLevel) != 0L) {
+    message("Inapplicable tokens treated as ambiguous for profile parsimony")
     inappLevel <- which(apply(unname(cont), 1, identical,
                               as.double(colnames(cont) == '-')))
+    dataset[] <- lapply(dataset, function (i) {
+      i[i %in% inappLevel] <- qmLevel
+      i
+    })
   }
   
   if (length(ambigs) != 0L) {
     message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ', '),
             " converted to '?'")
-    dataset <- lapply(dataset, function (i) {
+    dataset[] <- lapply(dataset, function (i) {
         i[i %in% ambigs] <- qmLevel
         i
       })
-    attributes(dataset) <- at
   }
+  # TODO could improve efficiency by re-compressing, as some characters may
+  # now be identical that previously differed in their ambiguous tokens
   
   mataset <- matrix(unlist(dataset, recursive = FALSE, use.names = FALSE),
                     max(index))
@@ -63,17 +70,21 @@ PrepareDataProfile <- function (dataset) {
     StepInformation(mataset[i, ], ambiguousTokens = c(qmLevel, inappLevel)))
   
   
-  maxSteps <- max(vapply(info, length, integer(1)))
+  maxSteps <- max(vapply(info, function (i) max(as.integer(names(i))), integer(1)))
   info <- vapply(info,
                  function (x) {
-                    ret <- double(maxSteps)
-                    ret[seq_along(x)] <- max(x) - x
+                    ret <- setNames(double(maxSteps), seq_len(maxSteps))
+                    x <- x[setdiff(names(x), '0')]
+                    if (length(x)) {
+                      ret[names(x)] <- max(x) - x
+                    }
                     ret
                   }, double(maxSteps))
   if (is.null(dim(info))) {
     dim(info) <- c(1L, length(info))
   }
   attr(dataset, 'info.amounts') <- info
+  attr(dataset, 'informative') <- colSums(info) > 0
   
   if (!any(attr(dataset, 'bootstrap') == 'info.amounts')) {
     attr(dataset, 'bootstrap') <- c(attr(dataset, 'bootstrap'), 'info.amounts')

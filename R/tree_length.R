@@ -79,9 +79,10 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     }
     steps <- CharacterLength(tree, dataset)
     info <- attr(dataset, 'info.amounts')
+    
     # Return:
-    sum(vapply(seq_along(steps), function (i) info[steps[i], i], double(1)) *
-          attr(dataset, 'weight'))
+    sum(vapply(which(steps > 0), function (i) info[steps[i], i],
+               double(1)) * attr(dataset, 'weight')[steps > 0])
   } else {
     tree <- RenumberTips(Renumber(tree), names(dataset))
     if (!TreeIsRooted(tree)) stop("`tree` must be rooted; try RootTree(tree)")
@@ -132,7 +133,11 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
     characters <- PhyToString(dataset, ps = '', useIndex = FALSE,
                               byTaxon = FALSE, concatenate = FALSE)
     weight <- at$weight
+    informative <- at$informative
     charSeq <- seq_along(characters) - 1L
+    
+    # Save time by dropping uninformative characters
+    if (!is.null(informative)) charSeq <- charSeq[informative]
     morphyObjects <- lapply(characters, SingleCharMorphy)
     on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
             add = TRUE)
@@ -142,36 +147,12 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
     weight <- unlist(MorphyWeights(morphyObj)[1, ]) # exact == approx
   }
   
-  
-  if (iw) {
-    nLevel <- length(at$level)
-    nChar <- at$nr
-    nTip <- length(dataset)
-    cont <- at$contrast
-    if (is.null(colnames(cont))) colnames(cont) <- as.character(at$levels)
-    
-    inappLevel <- at$levels == '-'
-    
-    if (any(inappLevel)) {
-      # TODO this is a workaround until MinimumLength can handle {-, 1}
-      cont[cont[, inappLevel] > 0, ] <- 0
-      ambiguousToken <- at$allLevels == '?'
-      cont[ambiguousToken, ] <- colSums(cont[!ambiguousToken, ]) > 0
-    }
-    
-    # Perhaps replace with previous code:
-    # inappLevel <- which(at$levels == "-")
-    # cont[, inappLevel] <- 0
-    
-    powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
-    tmp <- as.integer(cont %*% powersOf2)
-    unlisted <- unlist(dataset, use.names = FALSE)
-    binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
-    minLength <- apply(binaryMatrix, 1, MinimumLength)
-  }
-  
   # Return:
   if (iw) {
+    minLength <- at$min.length
+    if (is.null(minLength)) {
+      minLength <- attr(PrepareDataIW(dataset), 'min.length')
+    }
     apply(edges, 3, morphy_iw, morphyObjects, weight, minLength, charSeq,
           concavity, Inf)
   } else if (profile) {
@@ -259,12 +240,16 @@ FastCharacterLength <- function (tree, dataset) {
   vapply(morphyObjects, MorphyTreeLength, tree = tree, integer(1))
 }
 
-#' Calculate parsimony score with inapplicable data
+#' Calculate parsimony score from Morphy object
+#' 
+#' This function must be passed a valid Morphy object, or R may crash.
+#' For most users, the function [`TreeLength()`] will be more appropriate.
 #' 
 #' @template labelledTreeParam
 #' @template morphyObjParam
 #'
-#' @return The length of the tree (after weighting)
+#' @return `MorphyTreeLength()` returns the length of the tree,
+#' after applying weighting.
 #'
 #' @seealso PhyDat2Morphy
 #'
@@ -273,6 +258,9 @@ FastCharacterLength <- function (tree, dataset) {
 #' @keywords internal
 #' @export
 MorphyTreeLength <- function (tree, morphyObj) {
+  if (!is.morphyPtr(morphyObj)) {
+    stop("`morphyObj` must be a valid morphy pointer")
+  }
   nTaxa <- mpl_get_numtaxa(morphyObj)
   if (nTaxa != length(tree$tip.label)) {
     stop ("Number of taxa in morphy object (", nTaxa,

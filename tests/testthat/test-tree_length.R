@@ -1,5 +1,4 @@
 ## Test cases designed by Thomas Guillerme
-context("Fitch.R")
 
 test_that("Failures are graceful", {
   library("TreeTools", quietly = TRUE)
@@ -13,6 +12,7 @@ test_that("Failures are graceful", {
   
   sparse <- DropTip(RandomTree(dat, root = FALSE), 10)
   expect_error(MorphyTreeLength(sparse, mo))
+  expect_error(MorphyTreeLength(sparse, NA))
   
   expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], mo, nTaxa = 0))
   expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], dat))
@@ -98,6 +98,10 @@ test_that("Morphy generates correct lengths", {
   bigPhy <- TreeTools::StringToPhyDat(paste0(characters, collapse = '\n'),
                                       tree$tip.label, 
                                       byTaxon = FALSE)
+  profPhy <- TreeTools::StringToPhyDat(paste0(characters[-c(15, 29, 34)],
+                                              collapse = '\n'),
+                                       tree$tip.label, 
+                                       byTaxon = FALSE)
   expect_identical(characters,
                    TreeTools::PhyToString(bigPhy, byTaxon = FALSE,
                                           concatenate = FALSE))
@@ -123,10 +127,16 @@ test_that("Morphy generates correct lengths", {
   expect_equal(tree_length, TreeLength(relabel, bigPhy))
   expect_equal(rep(tree_length, 2), TreeLength(trees, bigPhy))
   
-  tree_score_iw <- TreeLength(tree, bigPhy, concavity = 6)
   expected_fit <- expected_homoplasies / (expected_homoplasies + 6)
+  tree_score_iw <- TreeLength(tree, bigPhy, concavity = 6)
   expect_equal(sum(expected_fit), tree_score_iw)
   expect_equal(tree_score_iw, TreeLength(relabel, bigPhy, concavity = 6))
+  expect_equal(vapply(trees, TreeLength, double(1), bigPhy, concavity = 6),
+               TreeLength(trees, bigPhy, concavity = 6))
+  
+  expect_equal(vapply(trees, TreeLength, double(1), profPhy, concavity = 'p'),
+               TreeLength(trees, profPhy, concavity = 'profile'))
+  
 
   ## Run the bigger tree tests
   bigTree <- ape::read.tree(

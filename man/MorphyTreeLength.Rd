@@ -5,7 +5,7 @@
 \alias{MorphyLength}
 \alias{GetMorphyLength}
 \alias{C_MorphyLength}
-\title{Calculate parsimony score with inapplicable data}
+\title{Calculate parsimony score from Morphy object}
 \usage{
 MorphyTreeLength(tree, morphyObj)
 
@@ -44,10 +44,12 @@ child node or tip.}
 child node or tip.}
 }
 \value{
-The length of the tree (after weighting)
+\code{MorphyTreeLength()} returns the length of the tree,
+after applying weighting.
 }
 \description{
-Calculate parsimony score with inapplicable data
+This function must be passed a valid Morphy object, or R may crash.
+For most users, the function \code{\link[=TreeLength]{TreeLength()}} will be more appropriate.
 }
 \section{Functions}{
 \itemize{

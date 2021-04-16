@@ -1,4 +1,6 @@
-# TreeSearch 0.4.3.9004 (development)
+# TreeSearch 0.4.3.9005 (development)
+
+ * v0.4.3.9005 fixes some bugs that may affect tree scoring under IW & PP.
 
  - `EasyTree()` 'shiny' graphical user interface for tree search
  - `SiteConcordance()` calculates exact site concordance
@@ -8,6 +10,7 @@
  - `Consistency()` calculates consistency and retention 'indices'
  - `MinimumLength()` and `MaximumLength()` calculate range of possible lengths
    of characters in a dataset on any tree
+ - `TreeLength()` supports lists of trees.
  - Set handling of 'gap' token (-) when creating Morphy object with `gap = `
  - Label nodes with split frequencies using `JackLabels(plot = FALSE)`
  - Support for topological constraints during tree search
