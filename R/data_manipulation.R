@@ -72,8 +72,11 @@ PrepareDataProfile <- function (dataset) {
   maxSteps <- max(vapply(info, function (i) max(as.integer(names(i))), integer(1)))
   info <- vapply(info,
                  function (x) {
-                    ret <- double(maxSteps)
-                    ret[seq_along(x)] <- max(x) - x
+                    ret <- setNames(double(maxSteps), seq_len(maxSteps))
+                    x <- x[setdiff(names(x), '0')]
+                    if (length(x)) {
+                      ret[names(x)] <- max(x) - x
+                    }
                     ret
                   }, double(maxSteps))
   if (is.null(dim(info))) {

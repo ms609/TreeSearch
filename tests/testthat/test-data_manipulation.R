@@ -67,7 +67,8 @@ test_that("PrepareDataProfile()", {
   prepDat <- PrepareDataProfile(dat)
   expect_equal(c(1, 6, 3, 5, 6), prepDat[[1]])
   expect_equal(c(1, 3, 6, 5, 3), prepDat[[2]])
-  expect_equal(matrix(0, ncol = 5, nrow = 1), attr(prepDat, 'info.amounts'))
+  expect_equivalent(matrix(0, ncol = 5, nrow = 0),
+                    attr(prepDat, 'info.amounts'))
   
   data('Lobo', package = "TreeTools")
   prep <- PrepareDataProfile(Lobo.phy)
