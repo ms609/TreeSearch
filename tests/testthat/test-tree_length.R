@@ -98,7 +98,7 @@ test_that("Morphy generates correct lengths", {
   bigPhy <- TreeTools::StringToPhyDat(paste0(characters, collapse = '\n'),
                                       tree$tip.label, 
                                       byTaxon = FALSE)
-  profPhy <- TreeTools::StringToPhyDat(paste0(characters[-c(14, 28, 33)],
+  profPhy <- TreeTools::StringToPhyDat(paste0(characters[-c(15, 29, 34)],
                                               collapse = '\n'),
                                        tree$tip.label, 
                                        byTaxon = FALSE)
