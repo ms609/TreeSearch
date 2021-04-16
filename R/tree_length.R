@@ -108,6 +108,7 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
   iw <- is.finite(concavity)
   profile <- .UseProfile(concavity)
   
+  tree[] <- RenumberTips(tree, dataset)
   edges <- vapply(tree, `[[`, tree[[1]]$edge, 'edge')
   
   # Initialize data

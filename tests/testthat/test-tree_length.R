@@ -32,6 +32,8 @@ test_that("Deprecations throw warning", {
 test_that("Morphy generates correct lengths", {
   ## Tree
   tree <- ape::read.tree(text = "((((((1,2),3),4),5),6),(7,(8,(9,(10,(11,12))))));")
+  relabel <- ape::read.tree(text = "((6,(5,(4,(3,(2,1))))),(7,(8,(9,(10,(11,12))))));")
+  trees <- list(tree, relabel)
   characters <- c("23--1??--032", # 0,  expect score = 5 
                   "1---1111---1", # 1,  expect score = 2
                   "1100----1100", # 2,  expect score = 3
@@ -91,17 +93,22 @@ test_that("Morphy generates correct lengths", {
     #  tree_length, "instead of", expected_results[test],"\n")
     expect_equal(tree_length, expected_results[test])
   }
+  
   ## Test combined matrix
-  bigPhy <- TreeTools::StringToPhyDat(paste0(characters, collapse='\n'), tree$tip.label, 
-                           byTaxon=FALSE)
+  bigPhy <- TreeTools::StringToPhyDat(paste0(characters, collapse = '\n'),
+                                      tree$tip.label, 
+                                      byTaxon = FALSE)
   expect_identical(characters,
-                   TreeTools::PhyToString(bigPhy, byTaxon=FALSE, concatenate=FALSE))
-  expect_identical(paste0(collapse='', 
-                          vapply(characters, substr, start=0, stop=1,
+                   TreeTools::PhyToString(bigPhy, byTaxon = FALSE,
+                                          concatenate = FALSE))
+  expect_identical(paste0(collapse = '', 
+                          vapply(characters, substr, start = 0, stop = 1,
                                  character(1))),
-                   substr(TreeTools::PhyToString(bigPhy, ps=';', useIndex=TRUE, 
-                                      byTaxon=TRUE, concatenate=TRUE),
-                    start=0, stop=length(characters)))
+                   substr(TreeTools::PhyToString(bigPhy, ps = ';',
+                                                 useIndex = TRUE,
+                                                 byTaxon = TRUE,
+                                                 concatenate = TRUE),
+                    start = 0, stop = length(characters)))
   
   morphyObj <- PhyDat2Morphy(bigPhy)
   moSummary <- summary(morphyObj)
@@ -112,10 +119,14 @@ test_that("Morphy generates correct lengths", {
   
   expect_equal('0123', moSummary$allStates)
   expect_equal(tree_length, sum(expected_results))
+  expect_equal(tree_length, TreeLength(tree, bigPhy))
+  expect_equal(tree_length, TreeLength(relabel, bigPhy))
+  expect_equal(rep(tree_length, 2), TreeLength(trees, bigPhy))
   
   tree_score_iw <- TreeLength(tree, bigPhy, concavity = 6)
   expected_fit <- expected_homoplasies / (expected_homoplasies + 6)
   expect_equal(sum(expected_fit), tree_score_iw)
+  expect_equal(tree_score_iw, TreeLength(relabel, bigPhy, concavity = 6))
 
   ## Run the bigger tree tests
   bigTree <- ape::read.tree(
