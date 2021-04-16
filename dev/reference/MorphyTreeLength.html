@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Calculate parsimony score with inapplicable data — MorphyTreeLength • TreeSearch</title>
+<title>Calculate parsimony score from Morphy object — MorphyTreeLength • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -45,8 +45,9 @@
 
 
 
-<meta property="og:title" content="Calculate parsimony score with inapplicable data — MorphyTreeLength" />
-<meta property="og:description" content="Calculate parsimony score with inapplicable data" />
+<meta property="og:title" content="Calculate parsimony score from Morphy object — MorphyTreeLength" />
+<meta property="og:description" content="This function must be passed a valid Morphy object, or R may crash.
+For most users, the function TreeLength() will be more appropriate." />
 
 
 <meta name="robots" content="noindex">
@@ -88,7 +89,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9004</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9005</span>
       </span>
     </div>
 
@@ -157,13 +158,14 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Calculate parsimony score with inapplicable data</h1>
+    <h1>Calculate parsimony score from Morphy object</h1>
     <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/tree_length.R'><code>R/tree_length.R</code></a></small>
     <div class="hidden name"><code>MorphyTreeLength.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Calculate parsimony score with inapplicable data</p>
+    <p>This function must be passed a valid Morphy object, or R may crash.
+For most users, the function <code><a href='IWScore.html'>TreeLength()</a></code> will be more appropriate.</p>
     </div>
 
     <pre class="usage"><span class='fu'>MorphyTreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>morphyObj</span><span class='op'>)</span>
@@ -222,7 +224,8 @@ child node or tip.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The length of the tree (after weighting)</p>
+    <p><code>MorphyTreeLength()</code> returns the length of the tree,
+after applying weighting.</p>
     <h2 class="hasAnchor" id="functions"><a class="anchor" href="#functions"></a>Functions</h2>
 
     
