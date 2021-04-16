@@ -39,8 +39,13 @@ PrepareDataProfile <- function (dataset) {
   ambigs <- which(contSums > 1L & contSums < ncol(cont))
   inappLevel <- which(colnames(cont) == '-')
   if (length(inappLevel) != 0L) {
+    message("Inapplicable tokens treated as ambiguous for profile parsimony")
     inappLevel <- which(apply(unname(cont), 1, identical,
                               as.double(colnames(cont) == '-')))
+    dataset[] <- lapply(dataset, function (i) {
+      i[i %in% inappLevel] <- qmLevel
+      i
+    })
   }
   
   if (length(ambigs) != 0L) {
