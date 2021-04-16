@@ -1,5 +1,7 @@
 # TreeSearch 0.4.3.9005 (development)
 
+ * v0.4.3.9005 fixes some bugs that may affect tree scoring under IW & PP.
+
  - `EasyTree()` 'shiny' graphical user interface for tree search
  - `SiteConcordance()` calculates exact site concordance
  - `ConcordantInformation()` evaluates signal:noise of dataset implied by a
