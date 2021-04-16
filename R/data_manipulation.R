@@ -5,12 +5,13 @@
 #' @return An object of class `phyDat`, with additional attributes.
 #' `PrepareDataProfile` adds the attributes:
 #' 
-#'   - \code{info.amounts}: details the information represented by each 
+#'   - `info.amounts`: details the information represented by each 
 #'     character when subject to N additional steps.
 #'   
-#'   - \code{split.sizes}: The size of the splits implied by each character
+#'   - `informative`: logical specifying which characters contain any
+#'     phylogenetic information.
 #'   
-#'   - \code{bootstrap}: The character vector 
+#'   - `bootstrap`: The character vector 
 #'     \code{c('info.amounts', 'split.sizes')}, indicating attributes to sample
 #'      when bootstrapping the dataset (e.g. in Ratchet searches).
 #'
@@ -83,6 +84,7 @@ PrepareDataProfile <- function (dataset) {
     dim(info) <- c(1L, length(info))
   }
   attr(dataset, 'info.amounts') <- info
+  attr(dataset, 'informative') <- colSums(info) > 0
   
   if (!any(attr(dataset, 'bootstrap') == 'info.amounts')) {
     attr(dataset, 'bootstrap') <- c(attr(dataset, 'bootstrap'), 'info.amounts')

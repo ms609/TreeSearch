@@ -215,9 +215,10 @@ double morphy_profile(IntegerMatrix edge,
       Morphy handl = R_ExternalPtrAddr(MorphyHandls[i]);
       int e = -1;
       morphy_length(ancestor, left, right, handl, &e); /* Updates e */
-      assert(e >= 0);
-      assert(e < profiles.nrow());
-      ret += weight_i * profiles(e, i);
+      if (e > -1) { // In case invariant sites have not been zero-weighted
+        assert(e < profiles.nrow());
+        ret += weight_i * profiles(e, i);
+      }
       if (ret > target_score) return R_PosInf;
     }
   }
