@@ -81,7 +81,7 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     info <- attr(dataset, 'info.amounts')
     # Return:
     sum(vapply(which(steps > 0), function (i) info[steps[i], i],
-               double(1)) * attr(dataset, 'weight'))
+               double(1)) * attr(dataset, 'weight')[steps > 0])
   } else {
     tree <- RenumberTips(Renumber(tree), names(dataset))
     if (!TreeIsRooted(tree)) stop("`tree` must be rooted; try RootTree(tree)")
