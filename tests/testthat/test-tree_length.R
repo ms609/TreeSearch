@@ -1,5 +1,4 @@
 ## Test cases designed by Thomas Guillerme
-context("Fitch.R")
 
 test_that("Failures are graceful", {
   library("TreeTools", quietly = TRUE)
