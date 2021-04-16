@@ -56,6 +56,8 @@ PrepareDataProfile <- function (dataset) {
         i
       })
   }
+  # TODO could improve efficiency by re-compressing, as some characters may
+  # now be identical that previously differed in their ambiguous tokens
   
   mataset <- matrix(unlist(dataset, recursive = FALSE, use.names = FALSE),
                     max(index))
