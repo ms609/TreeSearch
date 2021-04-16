@@ -75,7 +75,7 @@ IntegerVector preorder_morphy_by_char(IntegerMatrix edge, List MorphyHandls) {
       right_child[parent - n_tip] = child;
     }
   }
-  parent_of[0] = root_node;
+  parent_of[root_node] = root_node;
   
   const int 
     /* INTEGER gives pointer to first element of an R vector */
@@ -104,16 +104,16 @@ double morphy_iw(IntegerMatrix edge,
                         IntegerVector sequence,
                         NumericVector concavity,
                         NumericVector target) {
+  const double
+    k = concavity[0],
+    target_score = target[0]
+  ;
   Morphy handl = R_ExternalPtrAddr(MorphyHandls[0]);
   const int
     n_tip = mpl_get_numtaxa(handl),
     n_internal = mpl_get_num_internal_nodes(handl),
     n_vertex = n_tip + n_internal,
     root_node = n_tip
-  ;
-  const double
-    k = concavity[0],
-    target_score = target[0]
   ;
   
   IntegerVector parent_of(n_vertex);
@@ -132,7 +132,7 @@ double morphy_iw(IntegerMatrix edge,
       right_child[parent - n_tip] = child;
     }
   }
-  parent_of[0] = root_node;
+  parent_of[root_node] = root_node;
   
   const int 
     /* INTEGER gives pointer to first element of an R vector */
@@ -195,7 +195,7 @@ double morphy_profile(IntegerMatrix edge,
       right_child[parent - n_tip] = child;
     }
   }
-  parent_of[0] = root_node;
+  parent_of[root_node] = root_node;
   
   const int 
     /* INTEGER gives pointer to first element of an R vector */
