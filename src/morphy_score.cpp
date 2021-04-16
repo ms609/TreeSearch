@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include <cassert> // for assert
 
 extern "C" {
 #include "mpl.h"
@@ -214,8 +215,8 @@ double morphy_profile(IntegerMatrix edge,
       Morphy handl = R_ExternalPtrAddr(MorphyHandls[i]);
       int e = -1;
       morphy_length(ancestor, left, right, handl, &e); /* Updates e */
-      // if (e < 0) std::length_error("e is less than zero");
-      // if (e >= profiles.nrow()) std::length_error("e is too high");
+      assert(e >= 0);
+      assert(e < profiles.nrow());
       ret += weight_i * profiles(e, i);
       if (ret > target_score) return R_PosInf;
     }
