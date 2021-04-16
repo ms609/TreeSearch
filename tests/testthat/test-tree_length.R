@@ -12,6 +12,7 @@ test_that("Failures are graceful", {
   
   sparse <- DropTip(RandomTree(dat, root = FALSE), 10)
   expect_error(MorphyTreeLength(sparse, mo))
+  expect_error(MorphyTreeLength(sparse, NA))
   
   expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], mo, nTaxa = 0))
   expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], dat))
