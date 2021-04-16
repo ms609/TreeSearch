@@ -79,6 +79,7 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     }
     steps <- CharacterLength(tree, dataset)
     info <- attr(dataset, 'info.amounts')
+    
     # Return:
     sum(vapply(which(steps > 0), function (i) info[steps[i], i],
                double(1)) * attr(dataset, 'weight')[steps > 0])
