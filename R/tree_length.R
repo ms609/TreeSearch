@@ -134,6 +134,10 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
     weight <- at$weight
     charSeq <- seq_along(characters) - 1L
     morphyObjects <- lapply(characters, SingleCharMorphy)
+    for (i in seq_along(weight)) {
+      SetMorphyWeights(weight[i], morphyObjects[[i]], 
+                       checkInput = FALSE)
+    }
     on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
             add = TRUE)
   } else {
