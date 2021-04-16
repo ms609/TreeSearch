@@ -273,6 +273,9 @@ FastCharacterLength <- function (tree, dataset) {
 #' @keywords internal
 #' @export
 MorphyTreeLength <- function (tree, morphyObj) {
+  if (!is.morphyObj(morphyObj)) {
+    stop("`morphyObj` must be a valid morphy pointer")
+  }
   nTaxa <- mpl_get_numtaxa(morphyObj)
   if (nTaxa != length(tree$tip.label)) {
     stop ("Number of taxa in morphy object (", nTaxa,
