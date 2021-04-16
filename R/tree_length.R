@@ -259,12 +259,16 @@ FastCharacterLength <- function (tree, dataset) {
   vapply(morphyObjects, MorphyTreeLength, tree = tree, integer(1))
 }
 
-#' Calculate parsimony score with inapplicable data
+#' Calculate parsimony score from Morphy object
+#' 
+#' This function must be passed a valid Morphy object, or R may crash.
+#' For most users, the function [`TreeLength()`] will be more appropriate.
 #' 
 #' @template labelledTreeParam
 #' @template morphyObjParam
 #'
-#' @return The length of the tree (after weighting)
+#' @return `MorphyTreeLength()` returns the length of the tree,
+#' after applying weighting.
 #'
 #' @seealso PhyDat2Morphy
 #'
