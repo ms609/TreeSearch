@@ -132,7 +132,11 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
     characters <- PhyToString(dataset, ps = '', useIndex = FALSE,
                               byTaxon = FALSE, concatenate = FALSE)
     weight <- at$weight
+    informative <- at$informative
     charSeq <- seq_along(characters) - 1L
+    
+    # Save time by dropping uninformative characters
+    if (!is.null(informative)) charSeq <- charSeq[informative]
     morphyObjects <- lapply(characters, SingleCharMorphy)
     on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
             add = TRUE)
