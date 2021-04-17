@@ -1,17 +1,106 @@
 ---
-title: "Calculating concavity profiles for profile parsimony"
+title: "Profile parsimony"
 author: "Martin R. Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: ../inst/REFERENCES.bib
 csl: ../inst/apa-old-doi-prefix.csl
 vignette: >
-  %\VignetteIndexEntry{Calculating concavity profiles for profile parsimony}
+  %\VignetteIndexEntry{Profile parsimony}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-# Profile parsimony: Concavity profiles
+This document aims to give a flavour of the justification for using parsimony
+in general, and profile parsimony in particular, to reconstruct evolutionary
+history; and to summarize the mathematical/information theoretic underpinning
+of the profile parsimony approach.
+
+
+# Profile parsimony: philosophy
+
+There are some a number of complementary perspectives on the philosophical
+justificaion for a parsimony, which this brief overview will not do justice to;
+but hopefully my unqualified and unreferenced perspective captures some of the
+nature of the principal arguments.
+Better versed readers are invited to suggest improvements or modifications
+by e-mail or by opening a [GitHub issue](https://github.com/ms609/TreeSearch/issues/new/).
+
+Parsimony has been defended by reference to Occam's Razor: the principle that
+science should prefer the simplest explanation that satisfactorily accounts
+for observations.  In the context of morphological phylogenetics, "observations"
+are codified as scorings of observed character states in a matrix.
+Ideally, a phylogenetic tree would explain the distribution of character states
+between taxa by reconstructing each character state as representing a 
+homologous feature, with a single evolutionary origin on the tree.
+A scenario in which a certain trait evolved once is simpler than one in which
+that trait evolved twice.
+Each additional step on a tree represents an additional "assumption",
+and on a simple or "pure" view, the tree that makes the fewest assumptions
+should be preferred.
+
+However, this perspective -- which supports the practice of *equal-weights*
+parsimony -- treats all assumptions as equivalent; the simplest hypothesis
+is the one that makes the fewest assumptions, in this case, assumptions 
+of homoplasy.
+A more nuanced interpretation of Occam's Razor suggests that the simplest
+hypothesis is the one that is least surprising.  A hypothesis predicated
+on the existence of a flying spaghetti monster requires only a single
+assumption, but we may nevertheless prefer a hypothesis that requires a greater
+number of assumptions that are better aligned with what experience has 
+previously shown to be true.
+
+This interpretion has two applications for phylogenetics.
+The first is that we may wish to prefer trees (which are depictions of 
+phylogenetic hypotheses) that concentrate homoplasy in characters that we
+believe to be prone to convergent evolution.
+This view calls for *character weighting*, that is, assigning less weight
+to changes in characters that are believed to be less phylogenetically reliable.
+Such characters may be identified by successive approximations [@Farris1969],
+by comparing the pattern of their tokens with that of other characters,
+by expert judgement, or by other means.
+
+The second application argues that each additional case of homoplasy beyond
+the first is successively less surprising: the first homoplasy taught us that
+the character was not so reliable, making a second homoplasy less unexpected;
+the second observed homoplasy, in turn, makes us less hesitant to accept the
+third.  This approach calls for a *step weighting* approach, in which each
+additional step in a character receives less penalty than the last.
+(Mathematically, this can be expressed in as if it were a character weighting
+strategy; but I feel that it has a subtly different motivation and warrants
+separate treatment.)
+
+This raises the question of how each steps beyond the first ought to be
+penalized.  Ultimately, any concave function (in which each step is penalized
+by a positive amount that is smaller than the penalty applied to the previous
+step) is consistent with this philosophy [@Arias2004].
+The most familiar step weighting approach is Goloboff's [-@Goloboff1993]
+implied weighting, where the total cost associated with a character is expressed
+as _e_ / (_e_ + _k_), where _e_ is the number of homoplasies within a character,
+and _k_ is an arbitrary constant.  As _e_ tends to infinity, this approach tends
+to equal weights; as _k_ tends to zero, it tends to clique analysis (in which
+a character is either homologous or ignored).
+The most appropriate value for _k_ may depend on the number of taxa, the number
+and distribution of observed states, and other factors 
+(a more detailed treatment -- with references -- will be provided in a revision
+of this document).  Moreover, some adjustment must be made for 'missing' data,
+i.e. ambiguous tokens, which reduce the opportunity to observe homoplasy
+[@Goloboff2014].
+Implied weighting is described as an approximation [@Goloboff1993], and I am not
+aware of a straightforward interpretation of the 'fit' score, or a principled
+definition of the nature of the quantity that is being approximated.
+
+My feeling is that 
+
+
+
+
+
+
+
+
+
+
 
 This vignette (presently incomplete) will address the interpretation of 
 profile scores.
@@ -37,52 +126,3 @@ dataset <- congreveLamsdellMatrices[[1]]
 suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
 set.seed(0)
 ```
-
-One thing that`s interesting to know is how much extra precision is gained by running
-larger samples of trees when generating concavity curves.
-
-```{r Precision testing, cache=TRUE, warning=FALSE, eval=FALSE}
-preci1 <- PrepareDataProfile(dataset, precision=2e+05) # Quick, imprecise
-preci2 <- PrepareDataProfile(dataset, precision=4e+05)
-preci3 <- PrepareDataProfile(dataset, precision=8e+05)
-info1 <- attr(preci1, 'info.amounts')
-info2 <- attr(preci2, 'info.amounts')
-info3 <- attr(preci3, 'info.amounts')
-diff32 <- as.double(info3 - info2)
-hist (diff32, breaks=seq(min(diff32) - 0.002, max(diff32) + 0.005, by=0.002))
-
-if (all_the_time_in_the_world <- FALSE) {
-preci4 <- PrepareDataProfile(dataset, precision=1.6e+06)
-preci5 <- PrepareDataProfile(dataset, precision=3.2e+06) # Slow, more precise
-
-info4 <- attr(preci4, 'info.amounts')
-info5 <- attr(preci5, 'info.amounts')
-
-diff42 <- as.double(info4 - info2)
-diff43 <- as.double(info4 - info3)
-diff54 <- as.double(info5 - info4)
-nonzero <- info4 > 0.00001
-
-hist (diff43)
-hist (thisDiff <- diff54); quantile(thisDiff, probs=c(0, 5, 10, 50, 90, 95, 100)/100)
-hist (diff42)
-hist(100*(diff32 / info4)[nonzero])
-hist(100*(diff42 / info4)[nonzero])
-hist(100*(diff43 / info4)[nonzero])
-}
-```
-
-```{r More histograms, eval=FALSE}
-diff12 <- info1[1:10, ] - info2
-
-hist(diff12, breaks=seq(min(diff12)-0.01, max(diff12)+0.01, by=0.01))
-
-hist(info3 - info2)
-hist(info3 - info1[1:10, ])
-if (all_the_time_in_the_world) {
-hist(info4 - info2)
-}
-```
-
-# References
--->
