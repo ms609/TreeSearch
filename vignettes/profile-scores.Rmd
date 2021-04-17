@@ -11,13 +11,32 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+## Scope of this doucment
+
 This document aims to give a flavour of the justification for using parsimony
 in general, and profile parsimony in particular, to reconstruct evolutionary
 history; and to summarize the mathematical/information theoretic underpinning
 of the profile parsimony approach.
 
+I'll open by acknowledging that a philosophical approach is not everyone's
+cup of tea -- it's certainly not my home turf.
+I tend to prefer models that can be shown to work well, without worrying too
+much about their abstract philosophy -- though admittedly, identifying a
+'best' method is not always straightforward [e.g. @Smith2019].
 
-# Profile parsimony: philosophy
+I should also acknowledge that practical considerations can influence the 
+choice of reconstruction method: -- a tip-dated phylogeny cannot be accomplished
+in a parsimony framework, for example; and where a principled model of
+evolutionary change is available, as with certain subsets of molecular data,
+some see a compelling case for employing models for infering phylogeny.
+
+My goal here is not to argue that any method is superior, but to develop a case
+that profile parsimony rests on a principled underpinning -- and, if it does
+prove to outperform other methods in certain circumstances, to give a sense
+of why this might be the case.
+
+
+## A philosophy of parsimony
 
 There are some a number of complementary perspectives on the philosophical
 justificaion for a parsimony, which this brief overview will not do justice to;
@@ -89,8 +108,6 @@ i.e. ambiguous tokens, which reduce the opportunity to observe homoplasy
 Implied weighting is described as an approximation [@Goloboff1993], and I am not
 aware of a straightforward interpretation of the 'fit' score, or a principled
 definition of the nature of the quantity that is being approximated.
-
-My feeling is that 
 
 
 
