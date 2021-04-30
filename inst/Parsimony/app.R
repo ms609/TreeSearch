@@ -1,6 +1,8 @@
 library("methods", exclude = c('show', 'removeClass'))
-library("shiny", exclude = c('runExample'))
-suppressPackageStartupMessages(library("shinyjs", exclude = c('runExample')))
+suppressPackageStartupMessages({
+  library("shiny", exclude = c('runExample'))
+  library("shinyjs", exclude = c('runExample'))
+})
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 library("TreeSearch")
 library("TreeDist")
@@ -130,6 +132,12 @@ Smith2020 <- Reference('Smith, M.R.', 2020,
 Smith2021 <- Reference('Smith, M.R.', 2021,
                        'The importance of methodology when analyzing landscapes of phylogenetic trees',
                        'Submitted MS')
+Stockham2002 <- Reference(
+  author = c('Stockham, C.', 'Wang, L.-S.', 'Warnow, T.'), 2002,
+  "Statistically based postprocessing of phylogenetic analysis by clustering",
+  "Bioinformatics", 18, c('S285', 'S293'),
+  doi = "10.1093/bioinformatics/18.suppl_1.S285")
+
 Venna2001 <- Reference(
   title = "Neighborhood preservation in nonlinear projection methods: an experimental study",
   author = c("Venna, J.", "Kaski, S."), year = 2001, pages = c(485, 491),
@@ -621,6 +629,7 @@ server <- function(input, output, session) {
                            Venna2001)),
                ),
                tags$h3('Clustering'),
+               HTML(paste("Cluster consensus trees:", Stockham2002)),
                HTML(paste0('Partitioning around medoids:', Maechler2019,
                            "Hierarchical, minimax linkage:", Bien2011,
                            Murtagh1983))
