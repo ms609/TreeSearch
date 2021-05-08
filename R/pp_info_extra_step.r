@@ -9,8 +9,15 @@
 #' (i.e. number of different tokens minus one) to its maximum.
 #'
 #' @param char Vector of tokens listing states for the character in question.
-#' @param ambiguousTokens Which tokens, if any, correspond to the ambiguous token
-#' (?).
+#' @param ambiguousTokens Which tokens, if any, correspond to the ambiguous
+#' token (`?`).
+#' 
+#' @return `StepInformation()` returns a numeric vector detailing the amount
+#' of phylogenetic information (in bits) associated with the character when
+#' 0, 1, 2&hellip; extra steps are present.  The vector is named with the
+#' total number of steps associated with each entry in the vector: for example,
+#' a character with three observed tokens must exhibit two steps, so the first
+#' entry (zero extra steps) is named `2` (two steps observed).
 #' 
 #' @references
 #'  \insertRef{Faith2001}{TreeSearch}
@@ -30,10 +37,14 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
   nSingletons <- sum(singletons)
   nInformative <- sum(split) - nSingletons
   minSteps <- length(split) - 1L
-  if (minSteps == 0L) return (c('0' = 1L))
+  if (minSteps == 0L) {
+    return (c('0' = 0))
+  }
   
   split <- split[!singletons]
-  if (length(split) < 2L) return (setNames(1L, minSteps))
+  if (length(split) < 2L) {
+    return (setNames(0, minSteps))
+  }
   
   profile <- vapply(seq_len(split[2]), Carter1, double(1), split[1], split[2])
   ret <- setNames(Log2Unrooted(sum(split[1:2])) - log2(cumsum(profile)),

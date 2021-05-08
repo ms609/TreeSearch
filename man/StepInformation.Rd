@@ -9,8 +9,16 @@ StepInformation(char, ambiguousTokens = c("-", "?"))
 \arguments{
 \item{char}{Vector of tokens listing states for the character in question.}
 
-\item{ambiguousTokens}{Which tokens, if any, correspond to the ambiguous token
-(?).}
+\item{ambiguousTokens}{Which tokens, if any, correspond to the ambiguous
+token (\verb{?}).}
+}
+\value{
+\code{StepInformation()} returns a numeric vector detailing the amount
+of phylogenetic information (in bits) associated with the character when
+0, 1, 2… extra steps are present.  The vector is named with the
+total number of steps associated with each entry in the vector: for example,
+a character with three observed tokens must exhibit two steps, so the first
+entry (zero extra steps) is named \code{2} (two steps observed).
 }
 \description{
 \code{StepInformation()} calculates the phylogenetic information content of a
