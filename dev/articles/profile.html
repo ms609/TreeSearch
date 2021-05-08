@@ -166,19 +166,19 @@
 <code class="sourceCode R"><span class="va">betterTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">myMatrix</span>, <span class="va">tree</span>, concavity <span class="op">=</span> <span class="st">'profile'</span>,
                                   ratchIter <span class="op">=</span> <span class="fl">3</span>, tbrIter <span class="op">=</span> <span class="fl">3</span>, maxHits <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></code></pre></div>
 <pre><code>## - Parsimony search with 3 ratchet iterations; TBR depth 3; 8 hits; k = profile.
-##   2021-05-08 17:03:34
+##   2021-05-08 17:30:05
 ##   Initial score: 540.23</code></pre>
 <pre><code>## - Performing parsimony ratchet.</code></pre>
-<pre><code>##  - 2021-05-08 17:03:34: Ratchet iteration 1: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-08 17:03:34: Ratchet iteration 1: Search using original data</code></pre>
+<pre><code>##  - 2021-05-08 17:30:05: Ratchet iteration 1: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-08 17:30:05: Ratchet iteration 1: Search using original data</code></pre>
 <pre><code>##  - *Ratchet iteration 1 found new best score: 513.97*</code></pre>
-<pre><code>##  - 2021-05-08 17:03:35: Ratchet iteration 2: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-08 17:03:35: Ratchet iteration 2: Search using original data</code></pre>
+<pre><code>##  - 2021-05-08 17:30:05: Ratchet iteration 2: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-08 17:30:06: Ratchet iteration 2: Search using original data</code></pre>
 <pre><code>##  - *Ratchet iteration 2 found new best score: 512.12*</code></pre>
-<pre><code>##  - 2021-05-08 17:03:37: Ratchet iteration 3: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-08 17:03:37: Ratchet iteration 3: Search using original data</code></pre>
+<pre><code>##  - 2021-05-08 17:30:07: Ratchet iteration 3: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-08 17:30:07: Ratchet iteration 3: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 3 hit best score 512.12 again</code></pre>
-<pre><code>## - 2021-05-08 17:03:39: Final TBR search.</code></pre>
+<pre><code>## - 2021-05-08 17:30:09: Final TBR search.</code></pre>
 <pre><code>## - Final score: 512.118094276785</code></pre>
 <p>We’ve used very low values of <code>ratchIter</code>, <code>tbrIter</code> and <code>maxHits</code> for a rapid run, so this is not necessarily a thorough enough search to find a globally optimal tree. Nevertheless, let’s see the resultant tree, and its score:</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
@@ -202,16 +202,16 @@
                                  concavity <span class="op">=</span> <span class="st">'profile'</span><span class="op">)</span></code></pre></div>
 <pre><code>##  - Starting search from `tree[[1]]`.</code></pre>
 <pre><code>## - Parsimony search with 2 ratchet iterations; TBR depth 3; 25 hits; k = profile.
-##   2021-05-08 17:03:44
+##   2021-05-08 17:30:12
 ##   Initial score: 512.12</code></pre>
 <pre><code>## - Performing parsimony ratchet.</code></pre>
-<pre><code>##  - 2021-05-08 17:03:44: Ratchet iteration 1: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-08 17:03:44: Ratchet iteration 1: Search using original data</code></pre>
+<pre><code>##  - 2021-05-08 17:30:12: Ratchet iteration 1: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-08 17:30:12: Ratchet iteration 1: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 1 hit best score 512.12 again</code></pre>
-<pre><code>##  - 2021-05-08 17:03:46: Ratchet iteration 2: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-08 17:03:46: Ratchet iteration 2: Search using original data</code></pre>
+<pre><code>##  - 2021-05-08 17:30:13: Ratchet iteration 2: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-08 17:30:13: Ratchet iteration 2: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 2 did not hit best score 512.12.</code></pre>
-<pre><code>## - 2021-05-08 17:03:47: Final TBR search.</code></pre>
+<pre><code>## - 2021-05-08 17:30:14: Final TBR search.</code></pre>
 <pre><code>## - Final score: 512.118094276785</code></pre>
 <p>The consensus of these slightly suboptimal trees provides a less resolved, but typically more reliable, summary of the signal with the phylogenetic dataset <span class="citation">(Smith, 2019)</span>:</p>
 <div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">

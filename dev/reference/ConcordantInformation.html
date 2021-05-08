@@ -203,6 +203,9 @@ a bifurcating tree, assuming no duplicate information or noise</p></li>
 <li><p><code>matrixToTree</code>: the ratio of the cladistic information content of the
 matrix to the cladistic information content of the tree, a measure of the
 redundancy of the matrix</p></li>
+<li><p><code>ignored</code>: information content of characters whose signal and noise could
+not be calculated (too many states) and so are not included in the totals
+above.</p></li>
 </ul>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
@@ -220,8 +223,8 @@ two parsimony-informative states.</p>
 <span class='fu'>ConcordantInformation</span><span class='op'>(</span><span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span><span class='op'>(</span><span class='va'>myMatrix</span><span class='op'>)</span>, <span class='va'>myMatrix</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='message'>dataset contains 821.038 bits, of which 280.813 signal, 540.226 noise, 78.0817 needed.  S:N = 0.519806</span></div><div class='output co'>#&gt; informationContent             signal              noise      signalToNoise 
 #&gt;        821.0383923        280.8125010        540.2258914          0.5198057 
-#&gt;    treeInformation       matrixToTree 
-#&gt;         78.0816559         10.5151253 </div></pre>
+#&gt;    treeInformation       matrixToTree            ignored 
+#&gt;         78.0816559         10.5151253          0.0000000 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
