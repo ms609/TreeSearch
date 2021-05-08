@@ -31,25 +31,29 @@
 #' @family profile parsimony functions
 #' @export
 StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
+  NIL <- c('0' = 0)
   char <- char[!char %in% ambiguousTokens]
+  if (length(char) == 0) {
+    return(NIL)
+  }
   split <- sort(as.integer(table(char)), decreasing = TRUE)
   singletons <- split == 1L
   nSingletons <- sum(singletons)
   nInformative <- sum(split) - nSingletons
   minSteps <- length(split) - 1L
   if (minSteps == 0L) {
-    return (c('0' = 0))
+    return(NIL)
   }
   
   split <- split[!singletons]
   if (length(split) < 2L) {
-    return (setNames(0, minSteps))
+    return(setNames(0, minSteps))
   }
   
   if (length(split) > 2L) {
     warning("Information content of characters with more than two informative ",
             "tokens cannot yet be calculated.")
-    return (setNames(rep.int(NA, minSteps + 1L), as.character(0:minSteps)))
+    return(setNames(rep.int(NA, minSteps + 1L), as.character(0:minSteps)))
   }
   
   profile <- vapply(seq_len(split[2]), Carter1, double(1), split[1], split[2])

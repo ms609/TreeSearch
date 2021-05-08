@@ -9,6 +9,11 @@ test_that("Bad input safely handled", {
   expect_equal(-Inf, Log2Carter1(5, 6, 4))
 })
 
+test_that("StepInformation() works", {
+  expect_equal(c(`0` = 0), StepInformation(rep(3L, 10), ambiguousTokens = 3))
+  expect_equal(c(`0` = 0), StepInformation(c(4L, rep(3L, 10)), 3))
+})
+
 test_that("Carter1() matches profile counts", {
   data("profiles", package = "TreeSearch")
   Test <- function (a, b) {
