@@ -55,8 +55,9 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
             "tokens cannot yet be calculated.")
     return(setNames(rep.int(NA, minSteps + 1L), as.character(0:minSteps)))
   }
-  
-  profile <- vapply(seq_len(split[2]), Carter1, double(1), split[1], split[2])
+   # 2 ^ log2 avoids problems with large numbers, and is slightly faster too.
+  profile <- 2 ^ vapply(seq_len(split[2]), Log2Carter1, double(1),
+                        split[1], split[2])
   ret <- setNames(Log2Unrooted(sum(split[1:2])) - log2(cumsum(profile)),
                   seq_len(split[2]) + sum(singletons))
   ret[length(ret)] <- 0 # Floating point error inevitable
@@ -85,7 +86,7 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
 #' \insertRef{Steel1995}{TreeSearch}
 #' 
 #' (\insertRef{Steel1996}{TreeSearch})
-#' @importFrom TreeTools DoubleFactorial
+#' @importFrom TreeTools LogDoubleFactorial
 #' @family profile parsimony functions
 #' @export
 Carter1 <- function (m, a, b) {
@@ -102,12 +103,13 @@ Carter1 <- function (m, a, b) {
     }
   }
   prod(
-    factorial(m - 1L),
     (twoN - twoM - m),
-    DoubleFactorial(twoN - 5L),
     N(a, m),
-    N(b, m)
-  ) / DoubleFactorial(twoN - twoM - 1L)
+    N(b, m),
+    exp(lfactorial(m - 1L) + 
+          LogDoubleFactorial(twoN - 5L) -
+          LogDoubleFactorial(twoN - twoM - 1L))
+    )
 }
 
 #' @rdname Carter1
