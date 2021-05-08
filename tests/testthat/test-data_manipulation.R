@@ -71,7 +71,7 @@ test_that("PrepareDataProfile()", {
                     attr(prepDat, 'info.amounts'))
   
   data('Lobo', package = "TreeTools")
-  prep <- PrepareDataProfile(Lobo.phy)
+  expect_warning(prep <- PrepareDataProfile(Lobo.phy))
   expect_equal(c(17, attr(prep, 'nr')),
                dim(attr(prep, 'info.amounts')))
   
@@ -82,5 +82,13 @@ test_that("PrepareDataProfile()", {
   prep <- PrepareDataProfile(dat)
   expect_equal(c(`0` = 1, '1' = 1, '2' = 1),
                attr(prep, "contrast")[5, ])
+  
+  
+  mtx <- cbind(c(0,0,1,1,2,2,3,3))
+  rownames(mtx) <- letters[seq_len(nrow(mtx))]
+  dataset <- TreeTools::MatrixToPhyDat(mtx)
+  expect_equal(setNames(rep(NA_real_, 3), 1:3),
+               attr(expect_warning(PrepareDataProfile(dataset)),
+                    'info.amounts')[, 1])
   
 })
