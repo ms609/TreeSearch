@@ -215,7 +215,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' @importFrom TreeTools Log2UnrootedMult Log2Unrooted
 #' @export
 ConcordantInformation <- function (tree, dataset) {
-  totalSteps <- CharacterLength(tree, dataset)
+  extraSteps <- CharacterLength(tree, dataset) - MinimumLength(dataset)
   chars <- matrix(unlist(dataset), attr(dataset, 'nr'))
   ambiguousToken <- which(attr(dataset, 'allLevels') == "?")
   asSplits <- apply(chars, 1, function (x) {
@@ -235,12 +235,8 @@ ConcordantInformation <- function (tree, dataset) {
   infoLosses <- apply(chars, 1, StepInformation, 
                       ambiguousToken = ambiguousToken)
   
-  signal <- vapply(seq_along(totalSteps), function (i) {
-    if (totalSteps[i] > 0) {
-      infoLosses[[i]][totalSteps[i]]
-    } else {
-      0
-    }
+  signal <- vapply(seq_along(extraSteps), function (i) {
+    infoLosses[[i]][extraSteps[i] + 1L]
   }, double(1))
   noise <- ic - signal
   noise[noise < sqrt(.Machine$double.eps)] <- 0
