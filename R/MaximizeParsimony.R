@@ -447,6 +447,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   # Initialize data
   if (profile) {
     dataset <- PrepareDataProfile(dataset)
+    if (any(is.na(attr(dataset, 'info.amounts')))) {
+      stop("Cannot yet conduct profile parsimony when some characters have ",
+           "multiple informative states.")
+    }
     originalLevels <- attr(dataset, 'levels')
     if ('-' %in% originalLevels) {
       #TODO Fixing this will require updating the counts table cleverly

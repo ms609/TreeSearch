@@ -1,5 +1,11 @@
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 
+test_that("Profile fails gracefully", {
+  dataset <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 3, f = 3))
+  expect_warning(PrepareDataProfile(dataset))
+  expect_error(expect_warning(MaximizeParsimony(dataset, concavity = 'pr')))
+})
+
 test_that("Constraints work", {
   constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
   characters <- MatrixToPhyDat(matrix(

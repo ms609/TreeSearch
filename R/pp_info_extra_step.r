@@ -46,6 +46,12 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
     return (setNames(0, minSteps))
   }
   
+  if (length(split) > 2L) {
+    warning("Information content of characters with more than two informative ",
+            "tokens cannot yet be calculated.")
+    return (setNames(rep.int(NA, minSteps + 1L), as.character(0:minSteps)))
+  }
+  
   profile <- vapply(seq_len(split[2]), Carter1, double(1), split[1], split[2])
   ret <- setNames(Log2Unrooted(sum(split[1:2])) - log2(cumsum(profile)),
                   seq_len(split[2]) + sum(singletons))
