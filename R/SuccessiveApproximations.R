@@ -29,7 +29,7 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3, max
                                       ratchetIter = 5000, verbosity = 0, suboptimal = 0.1) {
   
   if (k < 1) stop ('k should be at least 1, see Farris 1969 p.379')
-  attr(dataset, 'sa.weights') <- rep(1, length(attr(dataset, 'weight')))
+  attr(dataset, 'sa.weights') <- rep.int(1, length(attr(dataset, 'weight')))
   collectSuboptimal <- suboptimal > 0
   
   max.node <- max(tree$edge[, 1])
@@ -100,7 +100,7 @@ SuccessiveWeights <- function(tree, dataset) {
   at <- attributes(dataset)
   weight <- at$weight
   sa.weights <- at$sa.weights
-  if (is.null(sa.weights)) sa.weights <- rep(1, length(weight))
+  if (is.null(sa.weights)) sa.weights <- rep.int(1, length(weight))
   steps <- CharacterLength(tree, dataset)
   
   # Return:

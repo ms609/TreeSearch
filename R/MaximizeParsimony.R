@@ -543,7 +543,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                ": Search from bootstrapped dataset.")
       verbosity <- verbosity - 1L
       eachChar <- seq_along(startWeights)
-      deindexedChars <- rep(eachChar, startWeights)
+      deindexedChars <- rep.int(eachChar, startWeights)
       resampling <- tabulate(sample(deindexedChars, replace = TRUE),
                              length(startWeights))
       if (profile || iw) {

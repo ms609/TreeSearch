@@ -195,7 +195,7 @@ IWBootstrap <- function (edgeList, dataset, concavity = 10L, EdgeSwapper = NNISw
   
   # Decompress phyDat object so each character is listed once
   eachChar <- seq_along(startWeights)
-  deindexedChars <- rep(eachChar, startWeights)
+  deindexedChars <- rep.int(eachChar, startWeights)
   
   # Resample characters
   resampling <- tabulate(sample(deindexedChars, replace = TRUE), length(startWeights))
@@ -203,7 +203,7 @@ IWBootstrap <- function (edgeList, dataset, concavity = 10L, EdgeSwapper = NNISw
   sampledData <- lapply(dataset, function (x) x[sampled])
   sampledAtt <- att
   sampledAtt[['weight']] <- resampling[sampled]
-  sampledAtt[['index']] <- rep(seq_len(sum(sampled)), resampling[sampled])
+  sampledAtt[['index']] <- rep.int(seq_len(sum(sampled)), resampling[sampled])
   sampledAtt[['min.length']] <- minLength <- att[['min.length']][sampled]
   sampledAtt[['morphyObjs']] <- att[['morphyObjs']][sampled]
   attributes(sampledData) <- sampledAtt
