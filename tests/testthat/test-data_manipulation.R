@@ -74,4 +74,10 @@ test_that("PrepareDataProfile()", {
   prep <- PrepareDataProfile(Lobo.phy)
   expect_equal(c(17, attr(prep, 'nr')),
                dim(attr(prep, 'info.amounts')))
+  
+  dat <- TreeTools::MatrixToPhyDat(matrix(c('0', '{01}', '1', '2'), 4,
+                                          dimnames = list(letters[1:4], NULL)))
+  expect_equal(c(`0` = 1, '1' = 1, '2' = 1),
+               attr(PrepareDataProfile(dat), "contrast")[5, ])
+  
 })
