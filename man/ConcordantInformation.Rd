@@ -31,6 +31,9 @@ a bifurcating tree, assuming no duplicate information or noise
 \item \code{matrixToTree}: the ratio of the cladistic information content of the
 matrix to the cladistic information content of the tree, a measure of the
 redundancy of the matrix
+\item \code{ignored}: information content of characters whose signal and noise could
+not be calculated (too many states) and so are not included in the totals
+above.
 }
 }
 \description{

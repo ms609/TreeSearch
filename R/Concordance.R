@@ -204,6 +204,9 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' - `matrixToTree`: the ratio of the cladistic information content of the
 #' matrix to the cladistic information content of the tree, a measure of the
 #' redundancy of the matrix
+#' - `ignored`: information content of characters whose signal and noise could
+#' not be calculated (too many states) and so are not included in the totals
+#' above.
 #' 
 #' @template treeParam
 #' @template datasetParam
@@ -241,21 +244,50 @@ ConcordantInformation <- function (tree, dataset) {
   noise <- ic - signal
   noise[noise < sqrt(.Machine$double.eps)] <- 0
   
+  
   index <- attr(dataset, 'index')
-  totalInfo <- sum(ic[index])
-  totalNoise <- sum(noise[index])
-  totalSignal <- sum(signal[index])
-  signalNoise <- totalSignal / totalNoise
-  
-  infoNeeded <- Log2Unrooted(length(dataset))
-  infoOverkill <- totalInfo / infoNeeded
-  
-  message('dataset contains ',
-          signif(totalInfo), ' bits, of which ', 
-          signif(totalSignal), ' signal, ',
-          signif(totalNoise), ' noise, ',
-          signif(infoNeeded), ' needed.  ',
-          'S:N = ', signif(signalNoise), "\n")
+  if (any(is.na(signal))) {
+    na <- is.na(signal)
+    icA <- ic
+    icA[na] <- 0
+    totalInfo <- sum(ic[index])
+    kept <- sum(icA[index])
+    discarded <- totalInfo - kept
+    warning("Could not calculate signal for characters ",
+            paste0(match(which(na), index), collapse = ', '),
+            '; discarded ', signif(discarded), " bits from totals.")
+    totalNoise <- sum(noise[index], na.rm = TRUE)
+    totalSignal <- sum(signal[index], na.rm = TRUE)
+    signalNoise <- totalSignal / totalNoise
+    
+    infoNeeded <- Log2Unrooted(length(dataset))
+    infoOverkill <- totalInfo / infoNeeded
+    
+    message('`dataset` contains ',
+            signif(totalInfo), ' bits (after discarding ',
+            signif(discarded), '), of which ',
+            signif(totalSignal), ' signal, ',
+            signif(totalNoise), ' noise, ',
+            signif(infoNeeded), ' needed.  ',
+            'S:N = ', signif(signalNoise), "\n")
+    
+  } else {
+    totalInfo <- sum(ic[index])
+    totalNoise <- sum(noise[index])
+    totalSignal <- sum(signal[index])
+    signalNoise <- totalSignal / totalNoise
+    discarded = 0
+    
+    infoNeeded <- Log2Unrooted(length(dataset))
+    infoOverkill <- totalInfo / infoNeeded
+    
+    message('dataset contains ',
+            signif(totalInfo), ' bits, of which ', 
+            signif(totalSignal), ' signal, ',
+            signif(totalNoise), ' noise, ',
+            signif(infoNeeded), ' needed.  ',
+            'S:N = ', signif(signalNoise), "\n")
+  }
   
   # Return:
   c(informationContent = totalInfo,
@@ -264,7 +296,9 @@ ConcordantInformation <- function (tree, dataset) {
     signalToNoise = signalNoise, 
     
     treeInformation = infoNeeded,
-    matrixToTree = infoOverkill)
+    matrixToTree = infoOverkill,
+    ignored = discarded
+    )
 }
 
 #' @rdname ConcordantInformation
