@@ -55,8 +55,8 @@ PrepareDataProfile <- function (dataset) {
     if (length(qmLevel) == 0) {
       attr(dataset, "contrast") <- rbind(attr(dataset, "contrast"), 1)
       attr(dataset, "allLevels") <- c(attr(dataset, "allLevels"), '{?}')
+      qmLevel <- length(allLevels) + 1L
     }
-    qmLevel <- length(allLevels) + 1L
     dataset[] <- lapply(dataset, function (i) {
         i[i %in% ambigs] <- qmLevel
         i
