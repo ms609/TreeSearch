@@ -74,9 +74,7 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     sum(fit * weight)
     
   } else if (.UseProfile(concavity)) {
-    if (!('info.amounts' %in% names(attributes(dataset)))) {
-      dataset <- PrepareDataProfile(dataset)
-    }
+    dataset <- PrepareDataProfile(dataset)
     steps <- CharacterLength(tree, dataset)
     info <- attr(dataset, 'info.amounts')
     
@@ -115,17 +113,6 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
   # Initialize data
   if (profile) {
     dataset <- PrepareDataProfile(dataset)
-    originalLevels <- attr(dataset, 'levels')
-    if ('-' %in% originalLevels) {
-      #TODO Fixing this will require updating the counts table cleverly
-      # Or we could use approximate info amounts, e.g. by treating '-' as 
-      # an extra token
-      message("Inapplicable tokens '-' treated as ambiguous '?' for profile parsimony")
-      cont <- attr(dataset, 'contrast')
-      cont[cont[, '-'] != 0, ] <- 1
-      attr(dataset, 'contrast') <- cont[, colnames(cont) != '-']
-      attr(dataset, 'levels') <- originalLevels[originalLevels != '-']
-    }
     profiles <- attr(dataset, 'info.amounts')
   }
   if (iw || profile) {

@@ -39,6 +39,10 @@
 #' `phangorn:::prepareDataFitch()`
 #' @export
 PrepareDataProfile <- function (dataset) {
+  if ('info.amounts' %in% names(attributes(dataset))) {
+    # Already prepared
+    return(dataset)
+  }
   at <- attributes(dataset)
   nLevel <- length(at$level)
   cont <- attr(dataset, "contrast")
