@@ -127,6 +127,9 @@ PrepareDataProfile <- function (dataset) {
     cipher[char]
   }
   mataset <- apply(mataset, 2, .Recompress, qmLevel)
+  if (length(mataset) == 0) {
+    stop("No informative characters in `dataset`.")
+  }
   dupCols <- duplicated(t(mataset))
   copies <- lapply(which(!dupCols), function (i) {
     i + which(apply(mataset[, -seq_len(i), drop = FALSE], 2, identical, mataset[, i]))

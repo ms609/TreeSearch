@@ -58,6 +58,12 @@ test_that("Minimum step counts are correctly calculated", {
   
 })
 
+test_that("PrepareDataProfile() handles empty matrices", {
+  dat <- TreeTools::MatrixToPhyDat(matrix(c(0, 1, rep('?', 5)),
+                                          dimnames = list(letters[1:7], NULL)))
+  expect_error(PrepareDataProfile(dat))
+})
+
 test_that("PrepareDataProfile()", {
   dat <- TreeTools::MatrixToPhyDat(matrix(c(rep(0, 3), '[01]', 1, 2, '?', 
                                             rep(0, 3), 1, '[02]', 2, '1'), 2,
@@ -88,7 +94,8 @@ test_that("PrepareDataProfile()", {
                c('?', '?', 1,1,1, '?', '?', 0,0,0,0),
                c(0,0,1,1,1,2,2,3,3,3,3),# again
                c(rep('?', 5), '2', '2', 0,0,0,0),
-               c('?', '?', 1,1,1, 1,1, 0,0,0,0)
+               c('?', '?', 1,1,1, 1,1, 0,0,0,0),
+               c('0', '1', rep('?', 9))
                )
   rownames(mtx) <- letters[seq_len(nrow(mtx))]
   dataset <- TreeTools::MatrixToPhyDat(mtx)
