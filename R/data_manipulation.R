@@ -68,8 +68,9 @@ PrepareDataProfile <- function (dataset) {
   }
   
   if (length(ambigs) != 0L) {
-    message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ', '),
-            " converted to '?'")
+    # Message unnecessary until multiple informative states are supported
+    # message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ', '),
+    #         " converted to '?'")
     dataset[] <- lapply(dataset, function (i) {
         i[i %in% ambigs] <- qmLevel
         i
@@ -172,7 +173,9 @@ PrepareDataProfile <- function (dataset) {
     dim(info) <- c(1L, length(info))
   }
   attr(dataset, 'index') <- index
-  attr(dataset, 'weight') <- as.integer(table(index))
+  weight <- as.integer(table(index))
+  attr(dataset, 'weight') <- weight
+  attr(dataset, 'nr') <- length(weight)
   attr(dataset, 'info.amounts') <- info
   attr(dataset, 'informative') <- colSums(info) > 0
   lvls <- c('0', '1')
@@ -180,6 +183,7 @@ PrepareDataProfile <- function (dataset) {
   attr(dataset, 'allLevels') <- c(lvls, '?')
   attr(dataset, 'contrast') <- matrix(c(1,0,1,0,1,1), length(lvls) + 1L, length(lvls), 
                                       dimnames = list(NULL, lvls))
+  attr(dataset, 'nc') <- length(lvls)
   
   if (!any(attr(dataset, 'bootstrap') == 'info.amounts')) {
     attr(dataset, 'bootstrap') <- c(attr(dataset, 'bootstrap'), 'info.amounts')
