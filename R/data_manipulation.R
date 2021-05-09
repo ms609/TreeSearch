@@ -148,8 +148,7 @@ PrepareDataProfile <- function (dataset) {
   index <- cipher[firstOccurrence][index]
   
   mataset <- mataset[, !dupCols, drop = FALSE]
-  dataset[] <- lapply(seq_len(length(dataset)),
-                      function (i) mataset[i, , drop = FALSE])
+  dataset[] <- lapply(seq_len(length(dataset)), function (i) mataset[i, ])
   
   
   #TODO when require R4.1: replace with
