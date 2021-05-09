@@ -92,7 +92,8 @@ test_that("Profile parsimony works in tree search", {
                                  concavity = 'profile', verbosity = 0)[[1]])
   
   
-  sillyData <- lapply(1:22, function (i) c( rep(0, i - 1), rep(1, 22 - i), rep(1, 22 - i), rep(0, i - 1)))#, sample(2, 20, replace = TRUE)-1))
+  sillyData <- lapply(1:22, function (i) c(rep(0, i - 1), rep(1, 22 - i),
+                                           rep(1, 22 - i), rep(0, i - 1)))#, sample(2, 20, replace = TRUE)-1))
   names(sillyData) <- as.character(1:22)
   dataset <- TreeTools::PhyDat(sillyData)
   readyData <- PrepareDataProfile(dataset)
@@ -101,7 +102,7 @@ test_that("Profile parsimony works in tree search", {
   set.seed(0)
   
   rTree <- randomTree <- RandomTree(dataset, '1')
-  expect_equal(TreeLength(rTree, readyData), TreeLength(rTree, dataset))
+  expect_lte(TreeLength(rTree, readyData), TreeLength(rTree, dataset))
   expect_equal(90, TreeLength(referenceTree, dataset), TreeLength(referenceTree, readyData))
   expect_gt(TreeLength(rTree, readyData, 'profile'),
             TreeLength(referenceTree, readyData, 'profile'))
