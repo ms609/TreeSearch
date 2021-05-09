@@ -75,8 +75,6 @@ PrepareDataProfile <- function (dataset) {
         i
       })
   }
-  # TODO could improve efficiency by re-compressing, as some characters may
-  # now be identical that previously differed in their ambiguous tokens
   
   mataset <- matrix(unlist(dataset, recursive = FALSE, use.names = FALSE),
                     max(index))
@@ -96,10 +94,10 @@ PrepareDataProfile <- function (dataset) {
       stop("No ambiguous token available for replacement")
     }
     tokens <- names(split)
-    most <- tokens[ranking[1]]
+    most <- tokens[which.min(ranking)]
     vapply(setdiff(names(split)[split > 1], most), function (kept) {
            simplified <- char
-           simplified[simplified %in% c(most, kept)] <- ambiguousTokens[1]
+           simplified[!simplified %in% c(most, kept)] <- ambiguousTokens[1]
            simplified
     }, char)
   }
@@ -111,11 +109,41 @@ PrepareDataProfile <- function (dataset) {
   attr(dataset, 'weight') <- rep.int(at$weight, nChar)
   newIndex <- seq_len(sum(nChar))
   oldIndex <- rep.int(seq_along(nChar), nChar)
-  attr(dataset, 'index') <- unlist(lapply(at$index, function (i) {
+  index <- unlist(lapply(index, function (i) {
     newIndex[oldIndex == i]
   }))
   
-  mataset <- do.call(cbind, decomposed)
+  mataset <- unname(do.call(cbind, decomposed))
+  
+  .Recompress <- function (char, ambiguousTokens) {
+    tokens <- unique(char)
+    nonAmbig <- setdiff(tokens, ambiguousTokens)
+    available <- setdiff(seq_along(c(nonAmbig, ambiguousTokens)), ambiguousTokens)
+    
+    cipher <- seq_len(max(tokens))
+    cipher[nonAmbig] <- available[seq_along(nonAmbig)]
+    
+    # Return:
+    cipher[char]
+  }
+  mataset <- apply(mataset, 2, .Recompress, qmLevel)
+  dupCols <- duplicated(t(mataset))
+  copies <- lapply(which(!dupCols), function (i) {
+    i + which(apply(mataset[, -seq_len(i), drop = FALSE], 2, identical, mataset[, i]))
+  })
+  firstOccurrence <- seq_len(dim(mataset)[2])
+  # This could be faster:
+  for (i in seq_along(copies)) {
+    firstOccurrence[copies[[i]]] <- i
+  }
+  kept <- unique(firstOccurrence)
+  cipher <- seq_len(max(kept))
+  cipher[kept] <- order(kept)
+  index <- cipher[firstOccurrence][index]
+  
+  mataset <- mataset[, !dupCols]
+  dataset[] <- lapply(seq_len(length(dataset)), function (i) mataset[i, ])
+  
   
   #TODO when require R4.1: replace with
   # info <- apply(mataset, 1, StepInformation, 
@@ -138,9 +166,9 @@ PrepareDataProfile <- function (dataset) {
   if (is.null(dim(info))) {
     dim(info) <- c(1L, length(info))
   }
+  attr(dataset, 'index') <- index
   attr(dataset, 'info.amounts') <- info
   attr(dataset, 'informative') <- colSums(info) > 0
-  dataset[] <- lapply(seq_len(length(dataset)), function (i) mataset[i, ])
   
   if (!any(attr(dataset, 'bootstrap') == 'info.amounts')) {
     attr(dataset, 'bootstrap') <- c(attr(dataset, 'bootstrap'), 'info.amounts')
