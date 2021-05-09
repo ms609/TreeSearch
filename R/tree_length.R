@@ -189,8 +189,12 @@ Fitch <- function (tree, dataset) {
 #' @export
 CharacterLength <- function (tree, dataset) {
   if (!inherits(dataset, 'phyDat')) {
-    stop ("Dataset must be of class phyDat, not ", class(dataset))
+    stop("Dataset must be of class phyDat, not ", class(dataset), '.')
   }
+  if (!inherits(tree, 'phylo')) {
+    stop("Tree must be of class phylo, not ", class(tree), '.')
+  }
+  if (is.null(tree$tip.label))
   if (length(tree$tip.label) < length(dataset)) {
     if (all(tree$tip.label %in% names(dataset))) {
       dataset[!(names(dataset)%in% tree$tip.label)] <- NULL

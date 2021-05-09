@@ -197,9 +197,20 @@ test_that("CharacterLength() fails gracefully", {
   data('inapplicable.datasets')
   dataset <- inapplicable.phyData[[12]]
   expect_error(CharacterLength(as.phylo(1, 4), dataset))
+  expect_error(CharacterLength(as.phylo(1, 42, tipLabels = names(dataset)[-1]),
+                               dataset))
+  expect_error(CharacterLength(as.phylo(1, 43), dataset))
+  expect_error(CharacterLength(as.phylo(1, 44, 
+                                        tipLabels = c('error', names(dataset))),
+                               dataset))
+  expect_error(CharacterLength(as.phylo(1:2, 43, tipLabels = names(dataset)),
+                               dataset))
+  # no error:
+  CharacterLength(as.phylo(1, 43, tipLabels = names(dataset)), dataset)
   
   expect_equal(c(53, 59, 6),
-               as.numeric(table(CharacterLength(NJTree(dataset[1:4, ]), dataset))))
+               as.numeric(table(CharacterLength(NJTree(dataset[1:4, ]),
+                                                dataset[1:4]))))
 })
 
 test_that("X_MorphyLength", {
