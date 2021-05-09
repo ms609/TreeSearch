@@ -141,7 +141,7 @@ PrepareDataProfile <- function (dataset) {
   cipher[kept] <- order(kept)
   index <- cipher[firstOccurrence][index]
   
-  mataset <- mataset[, !dupCols]
+  mataset <- mataset[, !dupCols, drop = FALSE]
   dataset[] <- lapply(seq_len(length(dataset)), function (i) mataset[i, ])
   
   
@@ -149,8 +149,8 @@ PrepareDataProfile <- function (dataset) {
   # info <- apply(mataset, 1, StepInformation, 
   #               ambiguousTokens = c(qmLevel, inappLevel),
   #               simplify = FALSE)
-  info <- lapply(seq_along(mataset[, 1]), function (i) 
-    StepInformation(mataset[i, ], ambiguousTokens = qmLevel))
+  info <- lapply(seq_along(mataset[1, ]), function (i) 
+    StepInformation(mataset[, i], ambiguousTokens = qmLevel))
   
   
   maxSteps <- max(vapply(info, function (i) max(as.integer(names(i))), integer(1)))
@@ -167,6 +167,7 @@ PrepareDataProfile <- function (dataset) {
     dim(info) <- c(1L, length(info))
   }
   attr(dataset, 'index') <- index
+  attr(dataset, 'weight') <- as.integer(table(index))
   attr(dataset, 'info.amounts') <- info
   attr(dataset, 'informative') <- colSums(info) > 0
   
