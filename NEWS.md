@@ -1,4 +1,4 @@
-# TreeSearch 0.4.3.9005 (development)
+# TreeSearch 0.4.3.9006 (development)
 
  * v0.4.3.9005 fixes some bugs that may affect tree scoring under IW & PP.
 
@@ -6,6 +6,8 @@
  - `SiteConcordance()` calculates exact site concordance
  - `ConcordantInformation()` evaluates signal:noise of dataset implied by a
    given tree.
+ - `PrepareDataProfile()` simplifies dataset to allow partial search when
+   multiple applicable tokens are present
  - `Resample()` conducts bootstrap and jackknife resampling
  - `Consistency()` calculates consistency and retention 'indices'
  - `MinimumLength()` and `MaximumLength()` calculate range of possible lengths

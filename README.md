@@ -86,7 +86,7 @@ Faith DP, Trueman JWH (2001).
 
 Farris, J. S. (1969). A successive approximations approach to character weighting. 
   Systematic Biology, 18(4), 374–385.
-  doi: [10.2307/2412182](https://dx.doi.org/10.2307/2412182)
+  doi: [10.2307/2412182](https://dx.doi.org/10.2307/2412182).
 
 Goloboff PA (1993). 
   Estimating character weights during tree search.
