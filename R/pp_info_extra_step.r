@@ -51,9 +51,10 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
   }
   
   if (length(split) > 2L) {
-    warning("Information content of characters with more than two informative ",
-            "tokens cannot yet be calculated.")
-    return(setNames(rep.int(NA, minSteps + 1L), as.character(0:minSteps)))
+    warning("Ignored least informative tokens where more than two informative ",
+            "tokens present.")
+    ranked <- order(order(split, decreasing = TRUE))
+    split <- split[ranked < 3]
   }
    # 2 ^ log2 avoids problems with large numbers, and is slightly faster too.
   profile <- 2 ^ vapply(seq_len(split[2]), Log2Carter1, double(1),
