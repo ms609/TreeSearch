@@ -218,6 +218,9 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' @importFrom TreeTools Log2UnrootedMult Log2Unrooted
 #' @export
 ConcordantInformation <- function (tree, dataset) {
+  originalInfo <- sum(apply(PhyDatToMatrix(dataset), 2, CharacterInformation))
+  dataset <- PrepareDataProfile(dataset)
+  
   extraSteps <- CharacterLength(tree, dataset) - MinimumLength(dataset)
   chars <- matrix(unlist(dataset), attr(dataset, 'nr'))
   ambiguousToken <- which(attr(dataset, 'allLevels') == "?")
@@ -230,13 +233,18 @@ ConcordantInformation <- function (tree, dataset) {
     }
   })
   if (is.matrix(asSplits)) {
-    asSplits <- lapply(seq_len(ncol(asSplits)), function(i) asSplits[, i])
+    asSplits <- lapply(seq_len(dim(asSplits)[2]), function(i) asSplits[, i])
   }
   ic <- vapply(asSplits, function (split) 
     Log2Unrooted(sum(split)) - Log2UnrootedMult(split),
     double(1))
+  
   infoLosses <- apply(chars, 1, StepInformation, 
-                      ambiguousToken = ambiguousToken)
+                      ambiguousToken = ambiguousToken) # , drop = FALSE
+  if (is.matrix(infoLosses)) {
+    infoLosses <- lapply(seq_len(dim(infoLosses)[2]),
+                         function (i) infoLosses[, i])
+  }
   
   signal <- vapply(seq_along(extraSteps), function (i) {
     infoLosses[[i]][extraSteps[i] + 1L]
@@ -280,9 +288,15 @@ ConcordantInformation <- function (tree, dataset) {
     
     infoNeeded <- Log2Unrooted(length(dataset))
     infoOverkill <- totalInfo / infoNeeded
+    discarded <- originalInfo - totalInfo
+    if (discarded < sqrt(.Machine$double.eps)) discarded <- 0
     
     message('dataset contains ',
-            signif(totalInfo), ' bits, of which ', 
+            signif(totalInfo), ' bits',
+            if (totalInfo != originalInfo) {
+              paste0(' (after discarding ', signif(originalInfo - totalInfo),
+                     ' bits)')
+            }, ', of which ', 
             signif(totalSignal), ' signal, ',
             signif(totalNoise), ' noise, ',
             signif(infoNeeded), ' needed.  ',
