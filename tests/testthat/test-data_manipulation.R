@@ -84,11 +84,16 @@ test_that("PrepareDataProfile()", {
                attr(prep, "contrast")[5, ])
   
   
-  mtx <- cbind(c(0,0,1,1,2,2,3,3))
+  mtx <- cbind(c('0', '0', 1,1,1, '2', '2', 3,3,3,3),
+               c('?', '?', 1,1,1, '?', '?', 0,0,0,0),
+               c(0,0,1,1,1,2,2,3,3,3,3)# again
+               )
   rownames(mtx) <- letters[seq_len(nrow(mtx))]
   dataset <- TreeTools::MatrixToPhyDat(mtx)
-  expect_equal(setNames(rep(NA_real_, 3), 1:3),
-               attr(expect_warning(PrepareDataProfile(dataset)),
-                    'info.amounts')[, 1])
+  dataset2 <- TreeTools::MatrixToPhyDat(mtx[!mtx[, 1] %in% c(0, 2), ])
+  expect_equal(attr(PrepareDataProfile(dataset2), 'info.amounts'),
+               attr(expect_warning(PrepareDataProfile(dataset)), 'info.amounts'))
+  
+  
   
 })

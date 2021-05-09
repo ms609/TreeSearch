@@ -1,5 +1,17 @@
 #' Prepare data for Profile Parsimony
 #' 
+#' Calculates profiles for each character in a dataset.  Will also simplify
+#' characters, with a warning, where they are too complex for the present
+#' implementation of profile parsimony: 
+#' - inapplicable tokens will be replaced with the ambiguous token
+#'    (i.e. `-` &rarr; `?`);
+#' - Ambiguous tokens will be treated as fully ambiguous
+#'   (i.e. `{02}` &rarr; `?`)
+#' - Where more than two states are informative (i.e. unambiguously present in
+#'   more than two taxa), states beyond the two most informative will be
+#'   ignored.
+#TODO can do something more complex like first two to one TS, second two to another   
+#' 
 #' @param dataset dataset of class \code{phyDat}
 #'
 #' @return An object of class `phyDat`, with additional attributes.
@@ -29,7 +41,6 @@
 PrepareDataProfile <- function (dataset) {
   at <- attributes(dataset)
   nLevel <- length(at$level)
-  nChar <- at$nr
   cont <- attr(dataset, "contrast")
   nTip <- length(dataset)
   index <- at$index
@@ -37,6 +48,13 @@ PrepareDataProfile <- function (dataset) {
   
   contSums <- rowSums(cont)
   qmLevel <- which(contSums == ncol(cont))
+  
+  if (length(qmLevel) == 0) {
+    attr(dataset, "contrast") <- rbind(attr(dataset, "contrast"), 1)
+    attr(dataset, "allLevels") <- c(attr(dataset, "allLevels"), '{?}')
+    qmLevel <- length(allLevels) + 1L
+  }
+  
   ambigs <- which(contSums > 1L & contSums < ncol(cont))
   inappLevel <- which(colnames(cont) == '-')
   if (length(inappLevel) != 0L) {
@@ -52,11 +70,6 @@ PrepareDataProfile <- function (dataset) {
   if (length(ambigs) != 0L) {
     message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ', '),
             " converted to '?'")
-    if (length(qmLevel) == 0) {
-      attr(dataset, "contrast") <- rbind(attr(dataset, "contrast"), 1)
-      attr(dataset, "allLevels") <- c(attr(dataset, "allLevels"), '{?}')
-      qmLevel <- length(allLevels) + 1L
-    }
     dataset[] <- lapply(dataset, function (i) {
         i[i %in% ambigs] <- qmLevel
         i
@@ -67,12 +80,49 @@ PrepareDataProfile <- function (dataset) {
   
   mataset <- matrix(unlist(dataset, recursive = FALSE, use.names = FALSE),
                     max(index))
+  
+  .RemoveExtraTokens <- function (char, ambiguousTokens) {
+    unambig <- char[!char %in% ambiguousTokens]
+    if (length(unambig) == 0) {
+      return(char)
+    }
+    split <- table(unambig)
+    ranking <- order(order(split, decreasing = TRUE))
+    ignored <- ranking > 2L
+    if (any(split[ignored] > 1L)) {
+      warning("Can handle max. 2 informative tokens. Dropping others.")
+    }
+    if (length(ambiguousTokens) == 0) {
+      stop("No ambiguous token available for replacement")
+    }
+    tokens <- names(split)
+    most <- tokens[ranking[1]]
+    vapply(setdiff(names(split)[split > 1], most), function (kept) {
+           simplified <- char
+           simplified[simplified %in% c(most, kept)] <- ambiguousTokens[1]
+           simplified
+    }, char)
+  }
+  
+  decomposed <- lapply(seq_along(mataset[, 1]), function (i) 
+    .RemoveExtraTokens(mataset[i, ], ambiguousTokens = qmLevel))
+  nChar <- vapply(decomposed, dim, c(0, 0))[2, ]
+  attr(dataset, 'nr') <- sum(nChar)
+  attr(dataset, 'weight') <- rep.int(at$weight, nChar)
+  newIndex <- seq_len(sum(nChar))
+  oldIndex <- rep.int(seq_along(nChar), nChar)
+  attr(dataset, 'index') <- unlist(lapply(at$index, function (i) {
+    newIndex[oldIndex == i]
+  }))
+  
+  mataset <- do.call(cbind, decomposed)
+  
   #TODO when require R4.1: replace with
   # info <- apply(mataset, 1, StepInformation, 
   #               ambiguousTokens = c(qmLevel, inappLevel),
   #               simplify = FALSE)
   info <- lapply(seq_along(mataset[, 1]), function (i) 
-    StepInformation(mataset[i, ], ambiguousTokens = c(qmLevel, inappLevel)))
+    StepInformation(mataset[i, ], ambiguousTokens = qmLevel))
   
   
   maxSteps <- max(vapply(info, function (i) max(as.integer(names(i))), integer(1)))
@@ -90,6 +140,7 @@ PrepareDataProfile <- function (dataset) {
   }
   attr(dataset, 'info.amounts') <- info
   attr(dataset, 'informative') <- colSums(info) > 0
+  dataset[] <- lapply(seq_len(length(dataset)), function (i) mataset[i, ])
   
   if (!any(attr(dataset, 'bootstrap') == 'info.amounts')) {
     attr(dataset, 'bootstrap') <- c(attr(dataset, 'bootstrap'), 'info.amounts')
