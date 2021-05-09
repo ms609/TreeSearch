@@ -65,29 +65,25 @@ test_that("PrepareDataProfile() handles empty matrices", {
 })
 
 test_that("PrepareDataProfile()", {
-  dat <- TreeTools::MatrixToPhyDat(matrix(c(rep(0, 3), '[01]', 1, 2, '?', 
-                                            rep(0, 3), 1, '[02]', 2, '1'), 2,
-                                          byrow = TRUE,
-                                          dimnames = list(c('a', 'b'), NULL)))
-  at <- attributes(dat)
-  prepDat <- PrepareDataProfile(dat)
-  expect_equal(c(1, 6, 3, 5, 6), prepDat[[1]])
-  expect_equal(c(1, 3, 6, 5, 3), prepDat[[2]])
-  expect_equivalent(matrix(0, ncol = 5, nrow = 0),
-                    attr(prepDat, 'info.amounts'))
   
-  data('Lobo', package = "TreeTools")
-  expect_warning(prep <- PrepareDataProfile(Lobo.phy))
-  expect_equal(c(17, attr(prep, 'nr')),
-               dim(attr(prep, 'info.amounts')))
+  # Easy one
+  mtx <- cbind(c('0', '0', 1,1,1,1),
+               c(0,0,1,1,1,1),# again
+               c(0,0,0,1,1,'?'))
+  rownames(mtx) <- letters[seq_len(nrow(mtx))]
+  phy1 <- TreeTools::MatrixToPhyDat(mtx)
+  expect_equivalent(phy1, PrepareDataProfile(phy1))
+  expect_equal(attributes(phy1), attributes(PrepareDataProfile(phy1))[1:10])
   
-  mtx <- cbind(c(0, 1, 1, 0),
-               c('0', '{01}', '1', '2'))
-  rownames(mtx) <- letters[1:4]
-  dat <- TreeTools::MatrixToPhyDat(mtx)
-  prep <- PrepareDataProfile(dat)
-  expect_equal(c(`0` = 1, '1' = 1, '2' = 1),
-               attr(prep, "contrast")[5, ])
+  # Easy one
+  mtx <- cbind(c('0', '0', 1,1,1,1),
+               c(1,1,0,0,0,0),# flipped
+               c(0,0,0,1,1,'{012}'))
+  rownames(mtx) <- letters[seq_len(nrow(mtx))]
+  phy2 <- TreeTools::MatrixToPhyDat(mtx)
+  expect_equivalent(phy1, PrepareDataProfile(phy2))
+  expect_equal(attributes(PrepareDataProfile(phy1)),
+               attributes(PrepareDataProfile(phy2)))
   
   
   mtx <- cbind(c('0', '0', 1,1,1, '2', '2', 3,3,3,3),
@@ -124,5 +120,12 @@ test_that("PrepareDataProfile()", {
   dataset2 <- TreeTools::MatrixToPhyDat(mtx[!mtx[, 1] %in% c(0, 2), ])
   expect_equal(attr(PrepareDataProfile(dataset2), 'info.amounts'),
                attr(pd, 'info.amounts')[1:3, 2, drop = FALSE])
+  
+  
+  data('Lobo', package = "TreeTools")
+  expect_warning(prep <- PrepareDataProfile(Lobo.phy))
+  expect_equal(c(17, attr(prep, 'nr')),
+               dim(attr(prep, 'info.amounts')))
+  
   
 })
