@@ -86,7 +86,9 @@ test_that("PrepareDataProfile()", {
   
   mtx <- cbind(c('0', '0', 1,1,1, '2', '2', 3,3,3,3),
                c('?', '?', 1,1,1, '?', '?', 0,0,0,0),
-               c(0,0,1,1,1,2,2,3,3,3,3)# again
+               c(0,0,1,1,1,2,2,3,3,3,3),# again
+               c(rep('?', 5), '2', '2', 0,0,0,0),
+               c('?', '?', 1,1,1, 1,1, 0,0,0,0)
                )
   rownames(mtx) <- letters[seq_len(nrow(mtx))]
   dataset <- TreeTools::MatrixToPhyDat(mtx)
