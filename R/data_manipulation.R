@@ -83,7 +83,7 @@ PrepareDataProfile <- function (dataset) {
   .RemoveExtraTokens <- function (char, ambiguousTokens) {
     unambig <- char[!char %in% ambiguousTokens]
     if (length(unambig) == 0) {
-      return(char)
+      return(matrix(nrow = length(char), ncol = 0))
     }
     split <- table(unambig)
     ranking <- order(order(split, decreasing = TRUE))
@@ -106,8 +106,6 @@ PrepareDataProfile <- function (dataset) {
   decomposed <- lapply(seq_along(mataset[, 1]), function (i) 
     .RemoveExtraTokens(mataset[i, ], ambiguousTokens = qmLevel))
   nChar <- vapply(decomposed, dim, c(0, 0))[2, ]
-  attr(dataset, 'nr') <- sum(nChar)
-  attr(dataset, 'weight') <- rep.int(at$weight, nChar)
   newIndex <- seq_len(sum(nChar))
   oldIndex <- rep.int(seq_along(nChar), nChar)
   index <- unlist(lapply(index, function (i) {
@@ -116,6 +114,8 @@ PrepareDataProfile <- function (dataset) {
   
   mataset <- unname(do.call(cbind, decomposed))
   
+  NON_AMBIG <- 1:2
+  AMBIG <- max(NON_AMBIG) + 1L
   .Recompress <- function (char, ambiguousTokens) {
     tokens <- unique(char)
     nonAmbig <- setdiff(tokens, ambiguousTokens)
@@ -123,8 +123,8 @@ PrepareDataProfile <- function (dataset) {
     #available <- setdiff(seq_along(c(nonAmbig, ambiguousTokens)), ambiguousTokens)
     
     cipher <- seq_len(max(tokens))
-    cipher[nonAmbig] <- 1:2 # available[seq_along(nonAmbig)]
-    cipher[ambiguousTokens] <- 3
+    cipher[nonAmbig] <- NON_AMBIG # available[seq_along(nonAmbig)]
+    cipher[ambiguousTokens] <- AMBIG
     
     # Return:
     cipher[char]
@@ -148,7 +148,8 @@ PrepareDataProfile <- function (dataset) {
   index <- cipher[firstOccurrence][index]
   
   mataset <- mataset[, !dupCols, drop = FALSE]
-  dataset[] <- lapply(seq_len(length(dataset)), function (i) mataset[i, ])
+  dataset[] <- lapply(seq_len(length(dataset)),
+                      function (i) mataset[i, , drop = FALSE])
   
   
   #TODO when require R4.1: replace with
@@ -156,10 +157,12 @@ PrepareDataProfile <- function (dataset) {
   #               ambiguousTokens = c(qmLevel, inappLevel),
   #               simplify = FALSE)
   info <- lapply(seq_along(mataset[1, ]), function (i) 
-    StepInformation(mataset[, i], ambiguousTokens = qmLevel))
+    StepInformation(mataset[, i], ambiguousTokens = AMBIG))
   
   
-  maxSteps <- max(vapply(info, function (i) max(as.integer(names(i))), integer(1)))
+  maxSteps <- max(vapply(info,
+                         function (i) max(as.integer(names(i))),
+                         integer(1)))
   info <- vapply(info,
                  function (x) {
                     ret <- setNames(double(maxSteps), seq_len(maxSteps))
