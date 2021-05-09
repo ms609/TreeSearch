@@ -110,6 +110,9 @@ PrepareDataProfile <- function (dataset) {
   decomposed <- lapply(seq_along(mataset[, 1]), function (i) 
     .RemoveExtraTokens(mataset[i, ], ambiguousTokens = qmLevel))
   nChar <- vapply(decomposed, dim, c(0, 0))[2, ]
+  if (sum(nChar) == 0) {
+    warning("No informative characters in `dataset`.")
+  }
   newIndex <- seq_len(sum(nChar))
   oldIndex <- rep.int(seq_along(nChar), nChar)
   index <- unlist(lapply(index, function (i) {
