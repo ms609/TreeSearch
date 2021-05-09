@@ -138,15 +138,15 @@ PrepareDataProfile <- function (dataset) {
     stop("No informative characters in `dataset`.")
   }
   dupCols <- duplicated(t(mataset))
-  copies <- lapply(which(!dupCols), function (i) {
+  kept <- which(!dupCols)
+  copies <- lapply(kept, function (i) {
     i + which(apply(mataset[, -seq_len(i), drop = FALSE], 2, identical, mataset[, i]))
   })
   firstOccurrence <- seq_len(dim(mataset)[2])
-  # This could be faster:
   for (i in seq_along(copies)) {
-    firstOccurrence[copies[[i]]] <- i
+    firstOccurrence[copies[[i]]] <- kept[i]
   }
-  kept <- unique(firstOccurrence)
+  
   cipher <- seq_len(max(kept))
   cipher[kept] <- order(kept)
   index <- cipher[firstOccurrence][index]
