@@ -144,9 +144,10 @@
 #' @export
 MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                ratchIter = 12L,
-                               tbrIter = ceiling(NTip(dataset) / 4),
+                               tbrIter = ceiling(NTip(dataset) / 3),
                                startIter = 3L, finalIter = 1L,
-                               maxHits = 20L, ratchHits = 1/4,
+                               maxHits = NTip(dataset) * 4L,
+                               ratchHits = 1/4,
                                concavity = Inf,
                                tolerance = sqrt(.Machine$double.eps),
                                constraint = NULL,
@@ -548,7 +549,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     .Message(0L, "Find local optimum: TBR depth ",
              searchIter, "; keeping ", searchHits, "trees; k = ", concavity, ".",
              "\n  ", Sys.time(),
-             "\n  Initial score: ", signif(bestScore, 5),
+             "\n  Initial score: ", signif(bestScore, 5L),
              "\n")
     bestEdges <- if (profile) {
       .ProfileTBRSearch(edge, nTip, morphyObjects, startWeights, charSeq, 
