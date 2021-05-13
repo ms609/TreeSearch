@@ -69,10 +69,13 @@
 #' @param session 'shiny' session identifier to allow [`setProgress()`] calls
 #' to be sent when `MaximizeParsimony()` is called from within a shiny app..
 #' 
-#' @return `MaximizeParsimony()` returns a list of trees with class `multiPhylo`.
-#' Note that these default parameters may need to be increased in order for
-#' these trees to be the globally optimal trees; examine the output to see
-#' whether the optimal score has stabilized.
+#' @return `MaximizeParsimony()` returns a list of trees with class
+#' `multiPhylo`. This lists all trees found during each search step that
+#' are within `tolerance` of the optimal score; it may contain more than
+#' `maxHits` elements.
+#' Note that the default search parameters may need to be increased in order for
+#' these trees to be the globally optimal trees; examine the messages printed
+#' duriung tree search to evaluate whether the optimal score has stabilized.
 #' 
 #' @examples
 #' \dontrun{ # launch 'shiny' point-and-click interface
