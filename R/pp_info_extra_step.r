@@ -56,15 +56,29 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
     ranked <- order(order(split, decreasing = TRUE))
     split <- split[ranked < 3]
   }
-   # 2 ^ log2 avoids problems with large numbers, and is slightly faster too.
-  profile <- 2 ^ vapply(seq_len(split[2]), Log2Carter1, double(1),
-                        split[1], split[2])
-  ret <- setNames(Log2Unrooted(sum(split[1:2])) - log2(cumsum(profile)),
+  
+  logProfile <- vapply(seq_len(split[2]), LogCarter1, double(1),
+                       split[1], split[2])
+  ret <- setNames(Log2Unrooted(sum(split[1:2]))
+                  - (.LogCumSumExp(logProfile) / log(2)),
                   seq_len(split[2]) + sum(singletons))
-  ret[length(ret)] <- 0 # Floating point error inevitable
+  ret[ret < sqrt(.Machine$double.eps)] <- 0 # Floating point error inevitable
   
   # Return:
   ret
+}
+
+# Adapted from https://rpubs.com/FJRubio/LSE
+.LogCumSumExp <- function (x) { 
+  n <- length(x)
+  Lk <- c(x[1], double(n - 1L))
+  for (k in 1L + seq_len(n - 1L)) {
+    Lk[k] <- Lk[k - 1]
+    Lk[k] <- max(x[k], Lk[k]) + log1p(exp(-abs(x[k] - Lk[k])))
+  }
+  
+  # Return:
+  Lk
 }
 
 #' Number of trees with _m_ additional steps
@@ -135,6 +149,30 @@ Log2Carter1 <- function (m, a, b) {
     Log2N(a, m),
     Log2N(b, m)
   ) - Log2DoubleFactorial(twoN - twoM - 1L)
+}
+
+#' @rdname Carter1
+#' @export
+#' @importFrom TreeTools LogDoubleFactorial
+LogCarter1 <- function (m, a, b) {
+  n <- a + b
+  twoN <- n + n
+  twoM <- m + m
+  LogN <- function (n, m) {
+    if (n < m) -Inf else {
+      nMinusM <- n - m
+      (lfactorial(n + nMinusM - 1L) - 
+       lfactorial(nMinusM) -
+       lfactorial(m - 1L)) - (nMinusM * log(2))
+    }
+  }
+  sum(
+    log(twoN - twoM - m),
+    lfactorial(m - 1L),
+    LogDoubleFactorial(twoN - 5L),
+    LogN(a, m),
+    LogN(b, m)
+  ) - LogDoubleFactorial(twoN - twoM - 1L)
 }
 
 # TODO: Replace the below with an advanced version of Maddison & Slakey 1991, 
