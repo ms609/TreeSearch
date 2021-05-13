@@ -16,7 +16,7 @@ MaximizeParsimony(
   startIter = 3L,
   finalIter = 1L,
   maxHits = NTip(dataset) * 4L,
-  ratchHits = 1/4,
+  quickHits = 1/3,
   concavity = Inf,
   tolerance = sqrt(.Machine$double.eps),
   constraint = NULL,
@@ -75,8 +75,8 @@ sample the final optimal neighbourhood more intensely.}
 parsimony score may be hit before concluding a ratchet iteration or final
 search concluded.}
 
-\item{ratchHits}{Numeric: iterations on subsampled datasets
-will retain \code{ratchHits} × \code{maxHits} trees with the best score.}
+\item{quickHits}{Numeric: iterations on subsampled datasets
+will retain \code{quickHits} × \code{maxHits} trees with the best score.}
 
 \item{concavity}{Numeric specifying concavity constant for implied step
 weighting; set as \code{Inf} for equal step weights (which is a bad idea; see

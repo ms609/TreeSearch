@@ -48,8 +48,8 @@
 #' @param maxHits Numeric specifying the maximum times that an optimal
 #' parsimony score may be hit before concluding a ratchet iteration or final 
 #' search concluded.
-#' @param ratchHits Numeric: iterations on subsampled datasets
-#'  will retain `ratchHits` &times; `maxHits` trees with the best score.
+#' @param quickHits Numeric: iterations on subsampled datasets
+#'  will retain `quickHits` &times; `maxHits` trees with the best score.
 #' @param concavity Numeric specifying concavity constant for implied step 
 #' weighting; set as `Inf` for equal step weights (which is a bad idea; see 
 #' Smith 2019).
@@ -147,7 +147,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                tbrIter = ceiling(NTip(dataset) / 3),
                                startIter = 3L, finalIter = 1L,
                                maxHits = NTip(dataset) * 4L,
-                               ratchHits = 1/4,
+                               quickHits = 1/3,
                                concavity = Inf,
                                tolerance = sqrt(.Machine$double.eps),
                                constraint = NULL,
@@ -563,7 +563,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   }
   
   searchIter <- tbrIter
-  searchHits <- maxHits * ratchHits
+  searchHits <- maxHits * quickHits
   bestScore <- if (profile) {
     .ProfileScore(edge, morphyObjects, startWeights, charSeq, profiles)
   } else if (iw) {
