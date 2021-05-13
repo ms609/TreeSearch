@@ -166,26 +166,26 @@
 <code class="sourceCode R"><span class="va">betterTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">myMatrix</span>, <span class="va">tree</span>, concavity <span class="op">=</span> <span class="st">'profile'</span>,
                                   ratchIter <span class="op">=</span> <span class="fl">3</span>, tbrIter <span class="op">=</span> <span class="fl">3</span>, maxHits <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></code></pre></div>
 <pre><code>## - Find local optimum: TBR depth 9; keeping 8 trees; k = profile.
-##   2021-05-13 11:59:54
+##   2021-05-13 13:30:40
 ##   Initial score: 540.23</code></pre>
 <pre><code>## - 
 ## 
 ## Escape local optimum: 3 ratchet iterations; TBR depth 3; 8 hits; k = profile.
-##   2021-05-13 11:59:57
+##   2021-05-13 13:30:42
 ##   Initial score: 512.12</code></pre>
-<pre><code>##  - 2021-05-13 11:59:57: Ratchet iteration 1: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-13 11:59:57: Ratchet iteration 1: Search using original data</code></pre>
+<pre><code>##  - 2021-05-13 13:30:42: Ratchet iteration 1: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 13:30:43: Ratchet iteration 1: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 1 hit best score 512.12 again</code></pre>
-<pre><code>##  - 2021-05-13 11:59:58: Ratchet iteration 2: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-13 11:59:58: Ratchet iteration 2: Search using original data</code></pre>
+<pre><code>##  - 2021-05-13 13:30:44: Ratchet iteration 2: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 13:30:44: Ratchet iteration 2: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 2 hit best score 512.12 again</code></pre>
-<pre><code>##  - 2021-05-13 11:59:59: Ratchet iteration 3: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-13 11:59:59: Ratchet iteration 3: Search using original data</code></pre>
+<pre><code>##  - 2021-05-13 13:30:45: Ratchet iteration 3: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 13:30:45: Ratchet iteration 3: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 3 hit best score 512.12 again</code></pre>
 <pre><code>## - Sample local optimum: TBR depth 3; keeping 8 trees; k = profile.
-##   2021-05-13 12:00:00
+##   2021-05-13 13:30:46
 ##   Initial score: 512.12</code></pre>
-<pre><code>## - 2021-05-13 12:00:01: Final score: 512.118094276785</code></pre>
+<pre><code>## - 2021-05-13 13:30:47: Final score: 512.118094276785</code></pre>
 <p>We’ve used very low values of <code>ratchIter</code>, <code>tbrIter</code> and <code>maxHits</code> for a rapid run, so this is not necessarily a thorough enough search to find a globally optimal tree. Nevertheless, let’s see the resultant tree, and its score:</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/IWScore.html">TreeLength</a></span><span class="op">(</span><span class="va">betterTrees</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span></code></pre></div>
@@ -208,31 +208,31 @@
                                  concavity <span class="op">=</span> <span class="st">'profile'</span><span class="op">)</span></code></pre></div>
 <pre><code>##  - Starting search from `tree[[1]]`.</code></pre>
 <pre><code>## - Find local optimum: TBR depth 9; keeping 25 trees; k = profile.
-##   2021-05-13 12:00:01
+##   2021-05-13 13:30:47
 ##   Initial score: 512.12</code></pre>
 <pre><code>## - 
 ## 
 ## Escape local optimum: 2 ratchet iterations; TBR depth 3; 25 hits; k = profile.
-##   2021-05-13 12:00:02
+##   2021-05-13 13:30:49
 ##   Initial score: 512.12</code></pre>
-<pre><code>##  - 2021-05-13 12:00:02: Ratchet iteration 1: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-13 12:00:03: Ratchet iteration 1: Search using original data</code></pre>
+<pre><code>##  - 2021-05-13 13:30:49: Ratchet iteration 1: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 13:30:49: Ratchet iteration 1: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 1 hit best score 512.12 again</code></pre>
-<pre><code>##  - 2021-05-13 12:00:04: Ratchet iteration 2: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-13 12:00:05: Ratchet iteration 2: Search using original data</code></pre>
+<pre><code>##  - 2021-05-13 13:30:51: Ratchet iteration 2: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 13:30:51: Ratchet iteration 2: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 2 hit best score 512.12 again</code></pre>
 <pre><code>## - Sample local optimum: TBR depth 3; keeping 25 trees; k = profile.
-##   2021-05-13 12:00:06
+##   2021-05-13 13:30:52
 ##   Initial score: 512.12</code></pre>
-<pre><code>## - 2021-05-13 12:00:07: Final score: 512.118094276785</code></pre>
+<pre><code>## - 2021-05-13 13:30:53: Final score: 512.118094276785</code></pre>
 <p>The consensus of these slightly suboptimal trees provides a less resolved, but typically more reliable, summary of the signal with the phylogenetic dataset <span class="citation">(Smith, 2019)</span>:</p>
 <div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/table.html">table</a></span><span class="op">(</span><span class="fu"><a href="../reference/IWScore.html">TreeLength</a></span><span class="op">(</span><span class="va">suboptimals</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## 
-## 512.118094276785 513.228703293813 513.896916938224 513.965548683426 
+## 512.118094276785 513.228703293813 513.896916938225 513.965548683427 
 ##                1                1                1                3 
-## 514.739207971376 514.848929950504 
+## 514.739207971376 514.848929950505 
 ##                1                1</code></pre>
 <div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span><span class="op">(</span><span class="va">suboptimals</span><span class="op">)</span><span class="op">)</span></code></pre></div>
