@@ -46,7 +46,18 @@
 
 
 <meta property="og:title" content="Prepare data for Profile Parsimony — PrepareDataProfile" />
-<meta property="og:description" content="Prepare data for Profile Parsimony" />
+<meta property="og:description" content="Calculates profiles for each character in a dataset.  Will also simplify
+characters, with a warning, where they are too complex for the present
+implementation of profile parsimony:
+inapplicable tokens will be replaced with the ambiguous token
+(i.e. - → ?);
+Ambiguous tokens will be treated as fully ambiguous
+(i.e. {02} → ?)
+Where more than two states are informative (i.e. unambiguously present in
+more than two taxa), states beyond the two most informative will be
+ignored.
+
+" />
 
 
 <meta name="robots" content="noindex">
@@ -88,7 +99,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9006</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9007</span>
       </span>
     </div>
 
@@ -163,7 +174,18 @@
     </div>
 
     <div class="ref-description">
-    <p>Prepare data for Profile Parsimony</p>
+    <p>Calculates profiles for each character in a dataset.  Will also simplify
+characters, with a warning, where they are too complex for the present
+implementation of profile parsimony:</p><ul>
+<li><p>inapplicable tokens will be replaced with the ambiguous token
+(i.e. <code><a href='https://rdrr.io/r/base/Arithmetic.html'>-</a></code> → <code>?</code>);</p></li>
+<li><p>Ambiguous tokens will be treated as fully ambiguous
+(i.e. <code>{02}</code> → <code>?</code>)</p></li>
+<li><p>Where more than two states are informative (i.e. unambiguously present in
+more than two taxa), states beyond the two most informative will be
+ignored.</p></li>
+</ul>
+
     </div>
 
     <pre class="usage"><span class='fu'>PrepareDataProfile</span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span>

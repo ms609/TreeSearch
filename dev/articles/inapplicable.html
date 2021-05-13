@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9006</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9007</span>
       </span>
     </div>
 
@@ -112,7 +112,7 @@
       <h1 data-toc-skip>Tree search with inapplicable data</h1>
                         <h4 class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2021-05-10</h4>
+            <h4 class="date">2021-05-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/inapplicable.Rmd"><code>vignettes/inapplicable.Rmd</code></a></small>
       <div class="hidden name"><code>inapplicable.Rmd</code></div>
@@ -155,48 +155,54 @@
 <p>We can conduct a basic parsimony search with:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">bestTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">vinther</span><span class="op">)</span></code></pre></div>
-<pre><code>## - Parsimony search with 12 ratchet iterations; TBR depth 6; 20 hits; k = Inf.
-##   2021-05-10 05:52:26
+<pre><code>## - Find local optimum: TBR depth 24; keeping 92 trees; k = Inf.
+##   2021-05-13 10:31:38
 ##   Initial score: 85</code></pre>
-<pre><code>## - Performing parsimony ratchet.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 1: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 1: Search using original data</code></pre>
-<pre><code>##  - *Ratchet iteration 1 found new best score: 81*</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 2: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 2: Search using original data</code></pre>
-<pre><code>##  - Ratchet iteration 2 did not hit best score 81.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 3: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 3: Search using original data</code></pre>
-<pre><code>##  - Ratchet iteration 3 did not hit best score 81.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 4: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 4: Search using original data</code></pre>
-<pre><code>##  - *Ratchet iteration 4 found new best score: 80*</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 5: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 5: Search using original data</code></pre>
-<pre><code>##  - Ratchet iteration 5 did not hit best score 80.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 6: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 6: Search using original data</code></pre>
-<pre><code>##  - Ratchet iteration 6 did not hit best score 80.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 7: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 7: Search using original data</code></pre>
-<pre><code>##  - Ratchet iteration 7 did not hit best score 80.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 8: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:26: Ratchet iteration 8: Search using original data</code></pre>
-<pre><code>##  - Ratchet iteration 8 did not hit best score 80.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:27: Ratchet iteration 9: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:27: Ratchet iteration 9: Search using original data</code></pre>
-<pre><code>##  - Ratchet iteration 9 did not hit best score 80.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:27: Ratchet iteration 10: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:27: Ratchet iteration 10: Search using original data</code></pre>
-<pre><code>##  - Ratchet iteration 10 hit best score 80 again</code></pre>
-<pre><code>##  - 2021-05-10 05:52:27: Ratchet iteration 11: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:27: Ratchet iteration 11: Search using original data</code></pre>
-<pre><code>##  - Ratchet iteration 11 hit best score 80 again</code></pre>
-<pre><code>##  - 2021-05-10 05:52:27: Ratchet iteration 12: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:27: Ratchet iteration 12: Search using original data</code></pre>
-<pre><code>##  - Ratchet iteration 12 did not hit best score 80.</code></pre>
-<pre><code>## - 2021-05-10 05:52:27: Final TBR search.</code></pre>
-<pre><code>## - Final score: 80</code></pre>
+<pre><code>## - 
+## 
+## Escape local optimum: 12 ratchet iterations; TBR depth 8; 92 hits; k = Inf.
+##   2021-05-13 10:31:38
+##   Initial score: 79</code></pre>
+<pre><code>##  - 2021-05-13 10:31:38: Ratchet iteration 1: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:38: Ratchet iteration 1: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 1 hit best score 79 again</code></pre>
+<pre><code>##  - 2021-05-13 10:31:39: Ratchet iteration 2: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:39: Ratchet iteration 2: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 2 hit best score 79 again</code></pre>
+<pre><code>##  - 2021-05-13 10:31:40: Ratchet iteration 3: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:40: Ratchet iteration 3: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 3 hit best score 79 again</code></pre>
+<pre><code>##  - 2021-05-13 10:31:41: Ratchet iteration 4: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:41: Ratchet iteration 4: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 4 hit best score 79 again</code></pre>
+<pre><code>##  - 2021-05-13 10:31:42: Ratchet iteration 5: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:42: Ratchet iteration 5: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 5 hit best score 79 again</code></pre>
+<pre><code>##  - 2021-05-13 10:31:42: Ratchet iteration 6: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:43: Ratchet iteration 6: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 6 did not hit best score 79.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:43: Ratchet iteration 7: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:43: Ratchet iteration 7: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 7 hit best score 79 again</code></pre>
+<pre><code>##  - 2021-05-13 10:31:44: Ratchet iteration 8: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:44: Ratchet iteration 8: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 8 hit best score 79 again</code></pre>
+<pre><code>##  - 2021-05-13 10:31:45: Ratchet iteration 9: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:45: Ratchet iteration 9: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 9 hit best score 79 again</code></pre>
+<pre><code>##  - 2021-05-13 10:31:46: Ratchet iteration 10: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:46: Ratchet iteration 10: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 10 hit best score 79 again</code></pre>
+<pre><code>##  - 2021-05-13 10:31:46: Ratchet iteration 11: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:47: Ratchet iteration 11: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 11 hit best score 79 again</code></pre>
+<pre><code>##  - 2021-05-13 10:31:47: Ratchet iteration 12: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:48: Ratchet iteration 12: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 12 hit best score 79 again</code></pre>
+<pre><code>## - Sample local optimum: TBR depth 8; keeping 92 trees; k = Inf.
+##   2021-05-13 10:31:48
+##   Initial score: 79</code></pre>
+<pre><code>## - 2021-05-13 10:31:49: Final score: 79</code></pre>
 <p>Noting that a number of iterations failed to hit the best score, we might consider continuing the search for a little longer, fine-tuning the search parameters:</p>
 <div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">bestTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">vinther</span>, tree <span class="op">=</span> <span class="va">bestTrees</span>,
@@ -205,30 +211,36 @@
                                finalIter <span class="op">=</span> <span class="fl">1L</span>,
                                maxHits <span class="op">=</span> <span class="fl">50L</span><span class="op">)</span></code></pre></div>
 <pre><code>##  - Starting search from `tree[[1]]`.</code></pre>
-<pre><code>## - Parsimony search with 6 ratchet iterations; TBR depth 4; 50 hits; k = Inf.
-##   2021-05-10 05:52:27
-##   Initial score: 80</code></pre>
-<pre><code>## - Performing parsimony ratchet.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:27: Ratchet iteration 1: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:28: Ratchet iteration 1: Search using original data</code></pre>
-<pre><code>##  - *Ratchet iteration 1 found new best score: 79*</code></pre>
-<pre><code>##  - 2021-05-10 05:52:28: Ratchet iteration 2: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:28: Ratchet iteration 2: Search using original data</code></pre>
+<pre><code>## - Find local optimum: TBR depth 12; keeping 50 trees; k = Inf.
+##   2021-05-13 10:31:49
+##   Initial score: 79</code></pre>
+<pre><code>## - 
+## 
+## Escape local optimum: 6 ratchet iterations; TBR depth 4; 50 hits; k = Inf.
+##   2021-05-13 10:31:49
+##   Initial score: 79</code></pre>
+<pre><code>##  - 2021-05-13 10:31:49: Ratchet iteration 1: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:49: Ratchet iteration 1: Search using original data</code></pre>
+<pre><code>##  - Ratchet iteration 1 hit best score 79 again</code></pre>
+<pre><code>##  - 2021-05-13 10:31:50: Ratchet iteration 2: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:50: Ratchet iteration 2: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 2 hit best score 79 again</code></pre>
-<pre><code>##  - 2021-05-10 05:52:29: Ratchet iteration 3: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:29: Ratchet iteration 3: Search using original data</code></pre>
+<pre><code>##  - 2021-05-13 10:31:50: Ratchet iteration 3: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:50: Ratchet iteration 3: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 3 hit best score 79 again</code></pre>
-<pre><code>##  - 2021-05-10 05:52:30: Ratchet iteration 4: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:30: Ratchet iteration 4: Search using original data</code></pre>
+<pre><code>##  - 2021-05-13 10:31:51: Ratchet iteration 4: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:51: Ratchet iteration 4: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 4 hit best score 79 again</code></pre>
-<pre><code>##  - 2021-05-10 05:52:31: Ratchet iteration 5: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:31: Ratchet iteration 5: Search using original data</code></pre>
+<pre><code>##  - 2021-05-13 10:31:51: Ratchet iteration 5: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:51: Ratchet iteration 5: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 5 hit best score 79 again</code></pre>
-<pre><code>##  - 2021-05-10 05:52:32: Ratchet iteration 6: Search from bootstrapped dataset.</code></pre>
-<pre><code>##  - 2021-05-10 05:52:32: Ratchet iteration 6: Search using original data</code></pre>
+<pre><code>##  - 2021-05-13 10:31:51: Ratchet iteration 6: Search from bootstrapped dataset.</code></pre>
+<pre><code>##  - 2021-05-13 10:31:51: Ratchet iteration 6: Search using original data</code></pre>
 <pre><code>##  - Ratchet iteration 6 hit best score 79 again</code></pre>
-<pre><code>## - 2021-05-10 05:52:32: Final TBR search.</code></pre>
-<pre><code>## - Final score: 79</code></pre>
+<pre><code>## - Sample local optimum: TBR depth 4; keeping 50 trees; k = Inf.
+##   2021-05-13 10:31:52
+##   Initial score: 79</code></pre>
+<pre><code>## - 2021-05-13 10:31:52: Final score: 79</code></pre>
 <p>As it happens, the best tree for this dataset has a score of 79 under equal weights parsimony.</p>
 <p>We can plot the best tree(s) that we’ve found, and check its parsimony score (length):</p>
 <div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">

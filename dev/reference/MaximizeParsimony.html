@@ -96,7 +96,7 @@ The tree scoring implementation uses the MorphyLib C library (Brazeau 2017)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9006</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9007</span>
       </span>
     </div>
 
@@ -186,9 +186,11 @@ The tree scoring implementation uses the MorphyLib C library (Brazeau 2017).</p>
   <span class='va'>dataset</span>,
   tree <span class='op'>=</span> <span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span>,
   ratchIter <span class='op'>=</span> <span class='fl'>12L</span>,
-  tbrIter <span class='op'>=</span> <span class='fl'>6L</span>,
-  finalIter <span class='op'>=</span> <span class='fl'>3L</span>,
-  maxHits <span class='op'>=</span> <span class='fl'>20L</span>,
+  tbrIter <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>ceiling</a></span><span class='op'>(</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NTip.html'>NTip</a></span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span><span class='op'>/</span><span class='fl'>3</span><span class='op'>)</span>,
+  startIter <span class='op'>=</span> <span class='fl'>3L</span>,
+  finalIter <span class='op'>=</span> <span class='fl'>1L</span>,
+  maxHits <span class='op'>=</span> <span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NTip.html'>NTip</a></span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span> <span class='op'>*</span> <span class='fl'>4L</span>,
+  ratchHits <span class='op'>=</span> <span class='fl'>1</span><span class='op'>/</span><span class='fl'>4</span>,
   concavity <span class='op'>=</span> <span class='cn'>Inf</span>,
   tolerance <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span><span class='op'>(</span><span class='va'>.Machine</span><span class='op'>$</span><span class='va'>double.eps</span><span class='op'>)</span>,
   constraint <span class='op'>=</span> <span class='cn'>NULL</span>,
@@ -246,15 +248,27 @@ One 'iteration' comprises breaking a single branch and evaluating all
 possible reconnections.</p></td>
     </tr>
     <tr>
+      <th>startIter</th>
+      <td><p>Numeric: an initial round of tree search with
+<code>startIter</code> &amp;teims; <code>tbrIter</code> <acronym>TBR</acronym> break points is conducted in
+order to locate a local optimum before beginning ratchet searches.</p></td>
+    </tr>
+    <tr>
       <th>finalIter</th>
-      <td><p>Numeric: the final round of tree search will evaluate
-<code>finalIter</code> × <code>tbrIter</code> <acronym>TBR</acronym> break points.</p></td>
+      <td><p>Numeric: a final round of tree search will evaluate
+<code>finalIter</code> × <code>tbrIter</code> <acronym>TBR</acronym> break points, in order to
+sample the final optimal neighbourhood more intensely.</p></td>
     </tr>
     <tr>
       <th>maxHits</th>
       <td><p>Numeric specifying the maximum times that an optimal
 parsimony score may be hit before concluding a ratchet iteration or final
 search concluded.</p></td>
+    </tr>
+    <tr>
+      <th>ratchHits</th>
+      <td><p>Numeric: iterations on subsampled datasets
+will retain <code>ratchHits</code> × <code>maxHits</code> trees with the best score.</p></td>
     </tr>
     <tr>
       <th>concavity</th>
@@ -417,9 +431,11 @@ doi: <a href='https://doi.org/10.1186/1742-9994-6-12'>10.1186/1742-9994-6-12</a>
 <span class='co'># A very quick run for demonstration purposes</span>
 <span class='va'>trees</span> <span class='op'>&lt;-</span> <span class='fu'>MaximizeParsimony</span><span class='op'>(</span><span class='va'>dataset</span>, ratchIter <span class='op'>=</span> <span class='fl'>0</span>, tbrIter <span class='op'>=</span> <span class='fl'>1</span>, 
                           concavity <span class='op'>=</span> <span class='fl'>10</span>, maxHits <span class='op'>=</span> <span class='fl'>3</span>, verbosity <span class='op'>=</span> <span class='fl'>4</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='message'>- Parsimony search with 0 ratchet iterations; TBR depth 1; 3 hits; k = 10.</span>
-#&gt; <span class='message'>  2021-05-10 05:51:40</span>
-#&gt; <span class='message'>  Initial score: 12.506</span></div><div class='output co'>#&gt; <span class='message'>- 2021-05-10 05:51:40: Final TBR search.</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 12.506)</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 2, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 3, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>  - 4 TBR rearrangements found score 11.9697 1 times.</span></div><div class='output co'>#&gt; <span class='message'>- Final score: 11.9697067638244</span>
+</div><div class='output co'>#&gt; <span class='message'>- Find local optimum: TBR depth 3; keeping 3 trees; k = 10.</span>
+#&gt; <span class='message'>  2021-05-13 10:31:04</span>
+#&gt; <span class='message'>  Initial score: 12.506</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 12.506)</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 2, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 3, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>  - 4 TBR rearrangements found score 11.9697 1 times.</span></div><div class='output co'>#&gt; <span class='message'>- Sample local optimum: TBR depth 1; keeping 3 trees; k = 10.</span>
+#&gt; <span class='message'>  2021-05-13 10:31:05</span>
+#&gt; <span class='message'>  Initial score: 11.97</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>  - 2 TBR rearrangements found score 11.9697 1 times.</span></div><div class='output co'>#&gt; <span class='message'>- 2021-05-13 10:31:06: Final score: 11.9697067638244</span>
 #&gt; <span class='message'></span></div><div class='input'>                  
 <span class='co'># In actual use, be sure to check that the score has converged on a global</span>
 <span class='co'># optimum, conducting additional iterations and runs as necessary.</span>
@@ -439,16 +455,20 @@ doi: <a href='https://doi.org/10.1186/1742-9994-6-12'>10.1186/1742-9994-6-12</a>
 
 <span class='co'># Treat each tree equally</span>
 <span class='fu'><a href='JackLabels.html'>JackLabels</a></span><span class='op'>(</span><span class='fu'>ape</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ape/man/consensus.html'>consensus</a></span><span class='op'>(</span><span class='va'>trees</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/unlist.html'>unlist</a></span><span class='op'>(</span><span class='va'>jackTrees</span>, recursive <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='img'><img src='MaximizeParsimony-1.png' alt='' width='700' height='433' /></div><div class='output co'>#&gt;  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43 
-#&gt; 0.4 0.1 0.2 0.2 0.3 0.9 0.4 0.2 0.5 0.7 1.0 1.0 0.3 0.0 0.0 0.4 0.5 1.0 0.9 </div><div class='input'>
+</div><div class='img'><img src='MaximizeParsimony-1.png' alt='' width='700' height='433' /></div><div class='output co'>#&gt;         25         26         27         28         29         30         31 
+#&gt; 0.53571429 0.53571429 0.25000000 0.25000000 0.03571429 0.64285714 0.89285714 
+#&gt;         32         33         34         35         36         37         38 
+#&gt; 0.50000000 0.85714286 0.60714286 0.71428571 0.78571429 0.17857143 0.53571429 
+#&gt;         39         40         41         42         43 
+#&gt; 0.82142857 0.46428571 1.00000000 1.00000000 1.00000000 </div><div class='input'>
 <span class='co'># Take the strict consensus of all trees for each replicate</span>
 <span class='fu'><a href='JackLabels.html'>JackLabels</a></span><span class='op'>(</span><span class='fu'>ape</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ape/man/consensus.html'>consensus</a></span><span class='op'>(</span><span class='va'>trees</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/lapply.html'>lapply</a></span><span class='op'>(</span><span class='va'>jackTrees</span>, <span class='fu'>ape</span><span class='fu'>::</span><span class='va'><a href='https://rdrr.io/pkg/ape/man/consensus.html'>consensus</a></span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='img'><img src='MaximizeParsimony-2.png' alt='' width='700' height='433' /></div><div class='output co'>#&gt;  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43 
-#&gt; 0.6 0.2 0.4 0.4 0.4 0.8 0.6 0.4 0.4 0.6 1.0 1.0 0.4 0.0 0.0 0.2 0.6 1.0 0.8 </div><div class='input'>
+#&gt; 0.4 0.4 0.2 0.2 0.0 0.4 0.8 0.6 0.8 0.6 0.8 0.6 0.0 0.4 0.6 0.2 1.0 1.0 1.0 </div><div class='input'>
 <span class='co'># Take a single tree from each replicate (the first; order's irrelevant)</span>
 <span class='fu'><a href='JackLabels.html'>JackLabels</a></span><span class='op'>(</span><span class='fu'>ape</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ape/man/consensus.html'>consensus</a></span><span class='op'>(</span><span class='va'>trees</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/lapply.html'>lapply</a></span><span class='op'>(</span><span class='va'>jackTrees</span>, <span class='va'>`[[`</span>, <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43 
-#&gt; 0.6 0.2 0.4 0.4 0.4 0.8 0.6 0.4 0.4 0.6 1.0 1.0 0.4 0.0 0.0 0.2 0.6 1.0 0.8 </div><div class='input'>
+</div><div class='img'><img src='MaximizeParsimony-3.png' alt='' width='700' height='433' /></div><div class='output co'>#&gt;  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43 
+#&gt; 0.8 0.8 0.4 0.4 0.0 0.6 0.8 0.6 1.0 0.6 0.8 1.0 0.4 0.6 0.8 0.6 1.0 1.0 1.0 </div><div class='input'>
 
 <span class='co'># Tree search with a constraint</span>
 <span class='va'>constraint</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html'>MatrixToPhyDat</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>a <span class='op'>=</span> <span class='fl'>1</span>, b <span class='op'>=</span> <span class='fl'>1</span>, c <span class='op'>=</span> <span class='fl'>0</span>, d <span class='op'>=</span> <span class='fl'>0</span>, e <span class='op'>=</span> <span class='fl'>0</span>, f <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span><span class='op'>)</span>
