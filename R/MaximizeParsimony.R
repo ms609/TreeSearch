@@ -531,7 +531,6 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   
   # Initialize variables and prepare search
   
-  iter <- 0L
   nHits <- 1L
   
   # Find a local optimum
@@ -547,7 +546,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     searchIter <- tbrIter * startIter
     searchHits <- maxHits
     .Message(0L, "Find local optimum: TBR depth ",
-             searchIter, "; keeping ", searchHits, "trees; k = ", concavity, ".",
+             searchIter, "; keeping ", searchHits, " trees; k = ", concavity, ".",
              "\n  ", Sys.time(),
              "\n  Initial score: ", signif(bestScore, 5L),
              "\n")
@@ -560,6 +559,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     } else {
       .TBRSearch(edge, nTip, morphyObj, searchIter, searchHits)
     }
+    edge <- bestEdges[, , 1L]
   }
   
   searchIter <- tbrIter
@@ -573,13 +573,13 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   }
   bestPlusEps <- bestScore + epsilon
   
-  .Message(0L, "Escape local optimum: ", ratchIter, " ratchet iterations; ", 
-           "TBR depth ", tbrIter, "; ", maxHits, " hits; k = ", concavity, ".",
-           "\n  ", Sys.time(),
-           "\n  Initial score: ", signif(bestScore, 5),
-           "\n")
   if (ratchIter > 0L) {
-    .Message(0L, "Performing parsimony ratchet.")
+    .Message(0L, "\n\nEscape local optimum: ", ratchIter, " ratchet iterations; ", 
+             "TBR depth ", tbrIter, "; ", maxHits, " hits; k = ", concavity, ".",
+             "\n  ", Sys.time(),
+             "\n  Initial score: ", signif(bestScore, 5),
+             "\n")
+    iter <- 0L
     while (iter < ratchIter) {
       .Progress(iter / ratchIter, "Ratchet iteration ", (iter + 1L))
       iter <- iter + 1L
@@ -598,11 +598,11 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
       if (profile) {
         ratchetTrees <- .ProfileTBRSearch(edge, NTip(tree), morphyObjects,
                                           resampling, ratchSeq, profiles,
-                                          tbrIter, maxHits / finalIter)
+                                          searchIter, searchHits)
       } else if (iw) {
         ratchetTrees <- .IWTBRSearch(edge, NTip(tree), morphyObjects,
                                      resampling, minLength, ratchSeq,
-                                     concavity, tbrIter, maxHits / finalIter)
+                                     concavity, searchIter, searchHits)
       } else {
         errors <- vapply(eachChar, function (i) 
           mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
@@ -614,8 +614,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
           stop("Error applying tip data: ", mpl_translate_error(error))
         }
         
-        ratchetTrees <- .TBRSearch(edge, NTip(tree), morphyObj, tbrIter,
-                                   maxHits / finalIter)
+        ratchetTrees <- .TBRSearch(edge, NTip(tree), morphyObj,
+                                   searchIter, searchHits)
         errors <- vapply(eachChar, function (i) 
           mpl_set_charac_weight(i, startWeights[i], morphyObj), integer(1))
         if (any(errors)) stop ("Error resampling morphy object: ",
@@ -624,20 +624,21 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
           stop("Error applying tip data: ", mpl_translate_error(error))
         }
       }
+      
       verbosity <- verbosity + 1L
       ratchetStart <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
       .Message(1L, Sys.time(), ": Ratchet iteration ", iter, 
                ": Search using original data")
+      
       ratchetImproved <- if (profile) {
         .ProfileTBRSearch(ratchetStart, NTip(tree), morphyObjects, startWeights,
-                          charSeq, profiles, tbrIter, maxHits / finalIter)
+                          charSeq, profiles, searchIter, maxHits)
       } else if (iw) {
         .IWTBRSearch(ratchetStart, NTip(tree), morphyObjects, startWeights,
                      minLength, charSeq,
-                     concavity, tbrIter, maxHits / finalIter)
+                     concavity, searchIter, maxHits)
       } else {
-        .TBRSearch(ratchetStart, NTip(tree), morphyObj, tbrIter,
-                   maxHits / finalIter)
+        .TBRSearch(ratchetStart, NTip(tree), morphyObj, searchIter, maxHits)
       }
       ratchetScore <- if (profile) {
         .ProfileScore(ratchetImproved[, , 1], morphyObjects, startWeights,
@@ -655,12 +656,14 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                    signif(ratchetScore, 5), "*")
           bestScore <- ratchetScore
           bestPlusEps <- bestScore + epsilon
+          bestEdges <- ratchetImproved
           edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
         } else {
           .Message(1L, "Ratchet iteration ", iter, " hit best score ",
                    signif(bestScore, 5), ' again')
-          #TODO add ratchet best trees to edge library
+          
           edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
+          bestEdges <- .CombineResults(bestEdges, ratchetImproved)
         }
       } else {
         .Message(1L, "Ratchet iteration ", iter, " did not hit best score ",
@@ -674,11 +677,11 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     searchIter <- tbrIter * finalIter
     searchHits <- maxHits
     .Message(0L, "Sample local optimum: TBR depth ",
-             searchIter, "; keeping ", searchHits, "trees; k = ", concavity, ".",
+             searchIter, "; keeping ", searchHits, " trees; k = ", concavity, ".",
              "\n  ", Sys.time(),
              "\n  Initial score: ", signif(bestScore, 5),
              "\n")
-    bestEdges <- if (profile) {
+    finalEdges <- if (profile) {
       .ProfileTBRSearch(edge, nTip, morphyObjects, startWeights, charSeq, 
                         profiles, searchIter, searchHits)
     } else if (iw) {
@@ -687,6 +690,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     } else {
       .TBRSearch(edge, nTip, morphyObj, searchIter, searchHits)
     }
+    bestEdges <- .CombineResults(bestEdges, finalEdges)
   }
   
   finalScore <- if (profile) {
@@ -698,7 +702,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   } else {
     preorder_morphy(bestEdges[, , 1], morphyObj)
   }
-  .Message(0L, "Final score: ", finalScore, "\n\n")
+  .Message(0L, Sys.time(), ": Final score: ", finalScore, "\n\n")
   
   
   ret <- structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
@@ -715,6 +719,14 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   ret
 }
 
+#' Combine two edge matrices
+#' @param x,y 3D arrays, each slice containing an edge matrix from a tree
+#' of class `phylo`.
+#' @return A single 3D array contianing each unique edge matrix from `x` and `y`.
+#' @keywords internal
+.CombineResults <- function (x, y) {
+  unique(array(c(x, y), dim = dim(x) + c(0, 0, dim(y)[3])), MARGIN = 3L)
+}
 
 #' @rdname MaximizeParsimony
 #' @param method Unambiguous abbreviation of `jackknife` or `bootstrap` 
