@@ -330,10 +330,13 @@ are necessary to find an optimal tree on each iteration).</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>MaximizeParsimony()</code> returns a list of trees with class <code>multiPhylo</code>.
-Note that these default parameters may need to be increased in order for
-these trees to be the globally optimal trees; examine the output to see
-whether the optimal score has stabilized.</p>
+    <p><code>MaximizeParsimony()</code> returns a list of trees with class
+<code>multiPhylo</code>. This lists all trees found during each search step that
+are within <code>tolerance</code> of the optimal score; it may contain more than
+<code>maxHits</code> elements.
+Note that the default search parameters may need to be increased in order for
+these trees to be the globally optimal trees; examine the messages printed
+duriung tree search to evaluate whether the optimal score has stabilized.</p>
 <p><code>Resample()</code> returns a <code>multiPhylo</code> object containing a list of
 trees obtained by tree search using a resampled version of <code>dataset</code>.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
@@ -432,10 +435,10 @@ doi: <a href='https://doi.org/10.1186/1742-9994-6-12'>10.1186/1742-9994-6-12</a>
 <span class='va'>trees</span> <span class='op'>&lt;-</span> <span class='fu'>MaximizeParsimony</span><span class='op'>(</span><span class='va'>dataset</span>, ratchIter <span class='op'>=</span> <span class='fl'>0</span>, tbrIter <span class='op'>=</span> <span class='fl'>1</span>, 
                           concavity <span class='op'>=</span> <span class='fl'>10</span>, maxHits <span class='op'>=</span> <span class='fl'>3</span>, verbosity <span class='op'>=</span> <span class='fl'>4</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='message'>- Find local optimum: TBR depth 3; keeping 3 trees; k = 10.</span>
-#&gt; <span class='message'>  2021-05-13 11:44:02</span>
+#&gt; <span class='message'>  2021-05-13 11:58:29</span>
 #&gt; <span class='message'>  Initial score: 12.506</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 12.506)</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 2, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 3, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>  - 4 TBR rearrangements found score 11.9697 1 times.</span></div><div class='output co'>#&gt; <span class='message'>- Sample local optimum: TBR depth 1; keeping 3 trees; k = 10.</span>
-#&gt; <span class='message'>  2021-05-13 11:44:04</span>
-#&gt; <span class='message'>  Initial score: 11.97</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>  - 2 TBR rearrangements found score 11.9697 1 times.</span></div><div class='output co'>#&gt; <span class='message'>- 2021-05-13 11:44:04: Final score: 11.9697067638244</span>
+#&gt; <span class='message'>  2021-05-13 11:58:30</span>
+#&gt; <span class='message'>  Initial score: 11.97</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>  - 2 TBR rearrangements found score 11.9697 1 times.</span></div><div class='output co'>#&gt; <span class='message'>- 2021-05-13 11:58:30: Final score: 11.9697067638244</span>
 #&gt; <span class='message'></span></div><div class='input'>                  
 <span class='co'># In actual use, be sure to check that the score has converged on a global</span>
 <span class='co'># optimum, conducting additional iterations and runs as necessary.</span>
