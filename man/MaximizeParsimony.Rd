@@ -12,9 +12,11 @@ MaximizeParsimony(
   dataset,
   tree = NJTree(dataset),
   ratchIter = 12L,
-  tbrIter = 6L,
-  finalIter = 3L,
+  tbrIter = ceiling(NTip(dataset)/4),
+  startIter = 3L,
+  finalIter = 1L,
   maxHits = 20L,
+  ratchHits = 1/4,
   concavity = Inf,
   tolerance = sqrt(.Machine$double.eps),
   constraint = NULL,
@@ -61,12 +63,20 @@ The counter is reset to zero each time tree score improves.
 One 'iteration' comprises breaking a single branch and evaluating all
 possible reconnections.}
 
-\item{finalIter}{Numeric: the final round of tree search will evaluate
-\code{finalIter} × \code{tbrIter} \acronym{TBR} break points.}
+\item{startIter}{Numeric: an initial round of tree search with
+\code{startIter} &teims; \code{tbrIter} \acronym{TBR} break points is conducted in
+order to locate a local optimum before beginning ratchet searches.}
+
+\item{finalIter}{Numeric: a final round of tree search will evaluate
+\code{finalIter} × \code{tbrIter} \acronym{TBR} break points, in order to
+sample the final optimal neighbourhood more intensely.}
 
 \item{maxHits}{Numeric specifying the maximum times that an optimal
 parsimony score may be hit before concluding a ratchet iteration or final
 search concluded.}
+
+\item{ratchHits}{Numeric: iterations on subsampled datasets
+will retain \code{ratchHits} × \code{maxHits} trees with the best score.}
 
 \item{concavity}{Numeric specifying concavity constant for implied step
 weighting; set as \code{Inf} for equal step weights (which is a bad idea; see

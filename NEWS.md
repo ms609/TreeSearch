@@ -1,5 +1,6 @@
 # TreeSearch 0.4.3.9006 (development)
 
+ * v......9007 introduces a pre-ratchet TBR search and adjusts default settings.
  * v0.4.3.9005 fixes some bugs that may affect tree scoring under IW & PP.
 
  - `EasyTree()` 'shiny' graphical user interface for tree search

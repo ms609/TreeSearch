@@ -39,11 +39,17 @@
 #' The counter is reset to zero each time tree score improves.
 #' One 'iteration' comprises breaking a single branch and evaluating all 
 #' possible reconnections.
-#' @param finalIter Numeric: the final round of tree search will evaluate
-#' `finalIter` &times; `tbrIter` \acronym{TBR} break points.
+#' @param startIter Numeric: an initial round of tree search with
+#' `startIter` &teims; `tbrIter` \acronym{TBR} break points is conducted in
+#' order to locate a local optimum before beginning ratchet searches. 
+#' @param finalIter Numeric: a final round of tree search will evaluate
+#' `finalIter` &times; `tbrIter` \acronym{TBR} break points, in order to
+#' sample the final optimal neighbourhood more intensely.
 #' @param maxHits Numeric specifying the maximum times that an optimal
 #' parsimony score may be hit before concluding a ratchet iteration or final 
 #' search concluded.
+#' @param ratchHits Numeric: iterations on subsampled datasets
+#'  will retain `ratchHits` &times; `maxHits` trees with the best score.
 #' @param concavity Numeric specifying concavity constant for implied step 
 #' weighting; set as `Inf` for equal step weights (which is a bad idea; see 
 #' Smith 2019).
@@ -123,7 +129,7 @@
 #' 
 #' @importFrom phangorn Descendants
 #' @importFrom shiny setProgress withProgress
-#' @importFrom TreeTools NJTree CharacterInformation
+#' @importFrom TreeTools NJTree CharacterInformation NTip
 #' @references
 #' \insertRef{Brazeau2017}{TreeSearch}
 #' 
@@ -137,8 +143,10 @@
 #' @encoding UTF-8
 #' @export
 MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
-                               ratchIter = 12L, tbrIter = 6L, finalIter = 3L,
-                               maxHits = 20L,
+                               ratchIter = 12L,
+                               tbrIter = ceiling(NTip(dataset) / 4),
+                               startIter = 3L, finalIter = 1L,
+                               maxHits = 20L, ratchHits = 1/4,
                                concavity = Inf,
                                tolerance = sqrt(.Machine$double.eps),
                                constraint = NULL,
@@ -524,6 +532,37 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   
   iter <- 0L
   nHits <- 1L
+  
+  # Find a local optimum
+  
+  if (startIter > 0) {
+    bestScore <- if (profile) {
+      .ProfileScore(edge, morphyObjects, startWeights, charSeq, profiles)
+    } else if (iw) {
+      .IWScore(edge, morphyObjects, startWeights, minLength, charSeq, concavity)
+    } else {
+      preorder_morphy(edge, morphyObj)
+    }
+    searchIter <- tbrIter * startIter
+    searchHits <- maxHits
+    .Message(0L, "Find local optimum: TBR depth ",
+             searchIter, "; keeping ", searchHits, "trees; k = ", concavity, ".",
+             "\n  ", Sys.time(),
+             "\n  Initial score: ", signif(bestScore, 5),
+             "\n")
+    bestEdges <- if (profile) {
+      .ProfileTBRSearch(edge, nTip, morphyObjects, startWeights, charSeq, 
+                        profiles, searchIter, searchHits)
+    } else if (iw) {
+      .IWTBRSearch(edge, nTip, morphyObjects, startWeights, minLength, charSeq,
+                   concavity, searchIter, searchHits)
+    } else {
+      .TBRSearch(edge, nTip, morphyObj, searchIter, searchHits)
+    }
+  }
+  
+  searchIter <- tbrIter
+  searchHits <- maxHits * ratchHits
   bestScore <- if (profile) {
     .ProfileScore(edge, morphyObjects, startWeights, charSeq, profiles)
   } else if (iw) {
@@ -533,7 +572,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   }
   bestPlusEps <- bestScore + epsilon
   
-  .Message(0L, "Parsimony search with ", ratchIter, " ratchet iterations; ", 
+  .Message(0L, "Escape local optimum: ", ratchIter, " ratchet iterations; ", 
            "TBR depth ", tbrIter, "; ", maxHits, " hits; k = ", concavity, ".",
            "\n  ", Sys.time(),
            "\n  Initial score: ", signif(bestScore, 5),
@@ -630,16 +669,23 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   }
   
   # Branch breaking
-  
-  .Message(0L, Sys.time(), ": Final TBR search.")
-  bestEdges <- if (profile) {
-    .ProfileTBRSearch(edge, nTip, morphyObjects, startWeights, charSeq, 
-                      profiles, tbrIter * finalIter, maxHits)
-  } else if (iw) {
-    .IWTBRSearch(edge, nTip, morphyObjects, startWeights, minLength, charSeq,
-                 concavity, tbrIter * finalIter, maxHits)
-  } else {
-    .TBRSearch(edge, nTip, morphyObj, tbrIter * finalIter, maxHits)
+  if (finalIter > 0) {
+    searchIter <- tbrIter * finalIter
+    searchHits <- maxHits
+    .Message(0L, "Sample local optimum: TBR depth ",
+             searchIter, "; keeping ", searchHits, "trees; k = ", concavity, ".",
+             "\n  ", Sys.time(),
+             "\n  Initial score: ", signif(bestScore, 5),
+             "\n")
+    bestEdges <- if (profile) {
+      .ProfileTBRSearch(edge, nTip, morphyObjects, startWeights, charSeq, 
+                        profiles, searchIter, searchHits)
+    } else if (iw) {
+      .IWTBRSearch(edge, nTip, morphyObjects, startWeights, minLength, charSeq,
+                   concavity, searchIter, searchHits)
+    } else {
+      .TBRSearch(edge, nTip, morphyObj, searchIter, searchHits)
+    }
   }
   
   finalScore <- if (profile) {
