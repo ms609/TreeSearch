@@ -227,7 +227,7 @@ LogCarter1 <- function (m, a, b) {
 #' @importFrom TreeTools NRooted NUnrooted
 #' @examples
 #' WithOneExtraStep(1, 2, 3)
-#' @importFrom TreeTools NUnrootedMult
+#' @importFrom TreeTools NUnrootedMult DoubleFactorial
 #' @export
 WithOneExtraStep <- function (...) {
   splits <- c(...)
