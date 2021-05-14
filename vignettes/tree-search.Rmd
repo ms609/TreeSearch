@@ -89,13 +89,14 @@ of tree space:
 ```{r map-search, fig.asp = 1}
 distances <- TreeDist::ClusteringInfoDistance(bestTrees)
 searchStages <- length(firstHit)
-map <- cmdscale(distances, k = 2)
+map <- cmdscale(distances, k = 3)
 cols <- viridisLite::viridis(searchStages, alpha = 0.8)
 par(mar = rep(0, 4))
-plot(map,
-     col = cols[rep(seq_along(firstHit), firstHit)],
-     pch = 16, cex = 2,
-     axes = FALSE, xlab = '', ylab = '', frame.plot = FALSE, asp = 1)
+TreeDist::Plot3(map,
+                col = cols[rep(seq_along(firstHit), firstHit)],
+                pch = 16, cex = 2,
+                axes = FALSE, xlab = '', ylab = '', asp = 1)
+MSTEdges(distances, plot = TRUE, map[, 1], map[, 2], col = '#00000030', lty = 2)
 legend('topright', names(firstHit), col = cols, pch = 16, bty = 'n')
 ```
 
@@ -154,7 +155,7 @@ adapted to the requirements of a particular dataset.
 nReplicates <- 10
 jackTrees <- lapply(logical(nReplicates), function (x)
   Resample(vinther, bestTrees, ratchIter = 0, tbrIter = 1, maxHits = 4,
-          concavity = 10, verbosity = 0)
+          verbosity = 0)
 )
 
 par(mar = rep(0, 4), cex = 0.8)
@@ -208,9 +209,11 @@ plot(ape::consensus(iwTrees))
 
 Note that we recommend a default value of 10, somewhat higher than the default 
 of 3 in TNT; this low default gives poorer results in many settings
-[@Goloboff2018;@Smith2019].  Better still is to use multiple values and compare the results,
+[@Goloboff2018;@Smith2019].
+Better still is to use multiple values and compare the results,
 perhaps in 
 [Tree space](https://ms609.github.io/TreeDist/articles/treespace.html).
+Even better (?) is to use [profile parsimony]((https://ms609.github.io/TreeSearch/dev/articles/profile.html)).
 
 ## Constraining a search
 
