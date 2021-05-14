@@ -4,16 +4,21 @@
 \alias{.CombineResults}
 \title{Combine two edge matrices}
 \usage{
-.CombineResults(x, y)
+.CombineResults(x, y, stage)
 }
 \arguments{
 \item{x, y}{3D arrays, each slice containing an edge matrix from a tree
 of class \code{phylo}.}
 }
 \value{
-A single 3D array contianing each unique edge matrix from \code{x} and \code{y}.
+A single 3D array contianing each unique edge matrix from (\code{x} and)
+\code{y}, with a \code{firstHit} attribute as documented in \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}.
 }
 \description{
 Combine two edge matrices
+}
+\author{
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \keyword{internal}

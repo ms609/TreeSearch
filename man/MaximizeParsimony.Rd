@@ -15,7 +15,7 @@ MaximizeParsimony(
   tbrIter = ceiling(NTip(dataset)/3),
   startIter = 3L,
   finalIter = 1L,
-  maxHits = NTip(dataset) * 4L,
+  maxHits = NTip(dataset) * 1.5,
   quickHits = 1/3,
   concavity = Inf,
   tolerance = sqrt(.Machine$double.eps),
@@ -125,11 +125,15 @@ are necessary to find an optimal tree on each iteration).}
 \value{
 \code{MaximizeParsimony()} returns a list of trees with class
 \code{multiPhylo}. This lists all trees found during each search step that
-are within \code{tolerance} of the optimal score; it may contain more than
-\code{maxHits} elements.
+are within \code{tolerance} of the optimal score, listed in the sequence that
+they were first visited; it may contain more than \code{maxHits} elements.
 Note that the default search parameters may need to be increased in order for
 these trees to be the globally optimal trees; examine the messages printed
 duriung tree search to evaluate whether the optimal score has stabilized.
+
+The return value has the attribute \code{newTrees}, a named integer vector listing
+the number of optimal trees visited for the first time in each stage of
+the tree search.
 
 \code{Resample()} returns a \code{multiPhylo} object containing a list of
 trees obtained by tree search using a resampled version of \code{dataset}.

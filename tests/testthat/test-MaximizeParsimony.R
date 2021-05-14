@@ -12,10 +12,13 @@ test_that("Constraints work", {
     c(0, 1, 1, 1, 0, 0,
       1, 1, 1, 0, 0, 0), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
-  expect_equal(PectinateTree(letters[1:6]),
-               MaximizeParsimony(characters,
+  set.seed(0)
+  ewResults <- MaximizeParsimony(characters,
                                  PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
-                                 ratchIter = 0, constraint = constraint)[[1]])
+                                 ratchIter = 0, constraint = constraint)
+  expect_equal(PectinateTree(letters[1:6]), ewResults[[1]])
+  expect_equal(c(seed = 0, start = 1, final = 0),
+               attr(ewResults, 'firstHit'))
   expect_equal(PectinateTree(letters[1:6]),
                MaximizeParsimony(characters, concavity = 'p',
                                  PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
@@ -63,7 +66,7 @@ test_that("Resample() fails and works", {
   
   expect_error(Resample(dataset, method = 'ERROR'))
   expect_error(Resample(dataset, proportion = 0))
-  expect_error(Resample(dataset, proportion = 6/7))
+  expect_error(Resample(dataset, proportion = 6 / 7))
 
   nRep <- 42L # Arbitrary number to balance runtime vs false +ves & -ves
   bal <- as.Splits(BalancedTree(dataset))
