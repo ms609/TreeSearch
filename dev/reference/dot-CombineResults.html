@@ -117,13 +117,13 @@
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/inapplicable.html">Tree search with inapplicable data</a>
-    </li>
-    <li>
       <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+    </li>
+    <li>
+      <a href="../articles/tree-search.html">Tree search with inapplicable data</a>
     </li>
   </ul>
 </li>
@@ -166,7 +166,9 @@
     <p>Combine two edge matrices</p>
     </div>
 
-    <pre class="usage"><span class='fu'>.CombineResults</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>y</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>.CombineResults</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>y</span>, <span class='va'>stage</span><span class='op'>)</span>
+
+<span class='fu'>.ReplaceResults</span><span class='op'>(</span><span class='va'>old</span>, <span class='va'>new</span>, <span class='va'>stage</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -176,11 +178,29 @@
       <td><p>3D arrays, each slice containing an edge matrix from a tree
 of class <code>phylo</code>.</p></td>
     </tr>
+    <tr>
+      <th>stage</th>
+      <td><p>Integer specifying element of <code>firstHit</code> in which new hits
+should be recorded.</p></td>
+    </tr>
+    <tr>
+      <th>old</th>
+      <td><p>old array of edge matrices with <code>firstHit</code> attribute.</p></td>
+    </tr>
+    <tr>
+      <th>new</th>
+      <td><p>new array of edge matrices.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A single 3D array contianing each unique edge matrix from <code>x</code> and <code>y</code>.</p>
+    <p>A single 3D array contianing each unique edge matrix from (<code>x</code> and)
+<code>y</code>, with a <code>firstHit</code> attribute as documented in <code><a href='MaximizeParsimony.html'>MaximizeParsimony()</a></code>.</p>
+    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+
+    <p><a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>
+(<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -69,13 +69,13 @@
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/inapplicable.html">Tree search with inapplicable data</a>
-    </li>
-    <li>
       <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+    </li>
+    <li>
+      <a href="../articles/tree-search.html">Tree search with inapplicable data</a>
     </li>
   </ul>
 </li>
@@ -112,7 +112,7 @@
       <h1 data-toc-skip>Tree Search with Custom Optimality Criteria</h1>
                         <h4 class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2021-05-13</h4>
+            <h4 class="date">2021-05-14</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/custom.Rmd"><code>vignettes/custom.Rmd</code></a></small>
       <div class="hidden name"><code>custom.Rmd</code></div>
@@ -164,7 +164,7 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
                      verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
 <pre><code>##   - Performing tree search.  Initial score: 56</code></pre>
-<pre><code>##   - Final score 33 found 1 times after 50 rearrangements.</code></pre>
+<pre><code>##   - Final score 33 found 5 times after 50 rearrangements.</code></pre>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></code></pre></div>
 <p><img src="custom_files/figure-html/tci-search-1.png" width="700"></p>
@@ -189,8 +189,8 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      TreeScorer <span class="op">=</span> <span class="va">DistanceScore</span>,
                      maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
                      verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
-<pre><code>##   - Performing tree search.  Initial score: -7.09113199415007</code></pre>
-<pre><code>##   - Final score -7.77985386969094 found 1 times after 50 rearrangements.</code></pre>
+<pre><code>##   - Performing tree search.  Initial score: -5.87744375108174</code></pre>
+<pre><code>##   - Final score -7.87744375108174 found 2 times after 50 rearrangements.</code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
 <span class="fu">PlotTree</span><span class="op">(</span><span class="va">startTree</span><span class="op">)</span>
