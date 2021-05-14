@@ -12,7 +12,7 @@ MaximizeParsimony(
   dataset,
   tree = NJTree(dataset),
   ratchIter = 6L,
-  tbrIter = ceiling(NTip(dataset)/3),
+  tbrIter = 2,
   startIter = 3L,
   finalIter = 1L,
   maxHits = NTip(dataset) * 1.5,
