@@ -2,13 +2,23 @@
 % Please edit documentation in R/MaximizeParsimony.R
 \name{.CombineResults}
 \alias{.CombineResults}
+\alias{.ReplaceResults}
 \title{Combine two edge matrices}
 \usage{
 .CombineResults(x, y, stage)
+
+.ReplaceResults(old, new, stage)
 }
 \arguments{
 \item{x, y}{3D arrays, each slice containing an edge matrix from a tree
 of class \code{phylo}.}
+
+\item{stage}{Integer specifying element of \code{firstHit} in which new hits
+should be recorded.}
+
+\item{old}{old array of edge matrices with \code{firstHit} attribute.}
+
+\item{new}{new array of edge matrices.}
 }
 \value{
 A single 3D array contianing each unique edge matrix from (\code{x} and)

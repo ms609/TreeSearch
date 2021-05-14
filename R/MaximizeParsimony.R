@@ -748,6 +748,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 }
 
 #' Combine two edge matrices
+#' 
 #' @param x,y 3D arrays, each slice containing an edge matrix from a tree
 #' of class `phylo`.
 #' @return A single 3D array contianing each unique edge matrix from (`x` and)
@@ -769,7 +770,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   res
 }
 
-#' @rdname .CombineResults
+#' @rdname dot-CombineResults
 #' @param old old array of edge matrices with `firstHit` attribute.
 #' @param new new array of edge matrices.
 #' @param stage Integer specifying element of `firstHit` in which new hits

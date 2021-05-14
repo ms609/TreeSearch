@@ -11,7 +11,7 @@
 MaximizeParsimony(
   dataset,
   tree = NJTree(dataset),
-  ratchIter = 12L,
+  ratchIter = 6L,
   tbrIter = ceiling(NTip(dataset)/3),
   startIter = 3L,
   finalIter = 1L,
@@ -178,9 +178,10 @@ data('congreveLamsdellMatrices', package = 'TreeSearch')
 dataset <- congreveLamsdellMatrices[[42]]
 
 # A very quick run for demonstration purposes
-trees <- MaximizeParsimony(dataset, ratchIter = 0, tbrIter = 1, 
-                          concavity = 10, maxHits = 3, verbosity = 4)
-                  
+trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
+                           tbrIter = 1, maxHits = 4,
+                           concavity = 10, verbosity = 4)
+
 # In actual use, be sure to check that the score has converged on a global
 # optimum, conducting additional iterations and runs as necessary.
                   

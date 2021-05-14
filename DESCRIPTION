@@ -39,7 +39,8 @@ Suggests:
     knitr,
     rmarkdown,
     testthat,
-    vdiffr
+    vdiffr,
+    viridisLite
 RdMacros: Rdpack
 LinkingTo:
     Rcpp,
