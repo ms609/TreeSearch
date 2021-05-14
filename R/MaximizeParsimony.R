@@ -153,7 +153,7 @@
 MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                ratchIter = 6L,
                                tbrIter = 2,
-                               startIter = 3L, finalIter = 1L,
+                               startIter = 2L, finalIter = 1L,
                                maxHits = NTip(dataset) * 1.5,
                                quickHits = 1 / 3,
                                concavity = Inf,
@@ -586,7 +586,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     searchIter <- tbrIter * startIter
     searchHits <- maxHits
     .Message(0L, "Find local optimum: TBR depth ",
-             searchIter, "; keeping ", searchHits, " trees; k = ", concavity, ".",
+             as.integer(searchIter), "; keeping ", as.integer(searchHits),
+             " trees; k = ", concavity, ".",
              "\n  ", Sys.time(),
              "\n  Initial score: ", signif(bestScore, 5L),
              "\n")
