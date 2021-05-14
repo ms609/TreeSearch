@@ -186,7 +186,7 @@ The tree scoring implementation uses the MorphyLib C library (Brazeau 2017).</p>
   <span class='va'>dataset</span>,
   tree <span class='op'>=</span> <span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span>,
   ratchIter <span class='op'>=</span> <span class='fl'>6L</span>,
-  tbrIter <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>ceiling</a></span><span class='op'>(</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NTip.html'>NTip</a></span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span><span class='op'>/</span><span class='fl'>3</span><span class='op'>)</span>,
+  tbrIter <span class='op'>=</span> <span class='fl'>2</span>,
   startIter <span class='op'>=</span> <span class='fl'>3L</span>,
   finalIter <span class='op'>=</span> <span class='fl'>1L</span>,
   maxHits <span class='op'>=</span> <span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NTip.html'>NTip</a></span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span> <span class='op'>*</span> <span class='fl'>1.5</span>,
@@ -439,8 +439,8 @@ doi: <a href='https://doi.org/10.1186/1742-9994-6-12'>10.1186/1742-9994-6-12</a>
                            tbrIter <span class='op'>=</span> <span class='fl'>1</span>, maxHits <span class='op'>=</span> <span class='fl'>4</span>,
                            concavity <span class='op'>=</span> <span class='fl'>10</span>, verbosity <span class='op'>=</span> <span class='fl'>4</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='message'>- Sample local optimum: TBR depth 1; keeping 4 trees; k = 10.</span>
-#&gt; <span class='message'>  2021-05-14 10:01:54</span>
-#&gt; <span class='message'>  Initial score: 12.506</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 12.506)</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>  - 2 TBR rearrangements found score 11.9697 1 times.</span></div><div class='output co'>#&gt; <span class='message'>- 2021-05-14 10:01:54: Final score: 11.9697067638244</span>
+#&gt; <span class='message'>  2021-05-14 10:16:24</span>
+#&gt; <span class='message'>  Initial score: 12.506</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 12.506)</span></div><div class='output co'>#&gt; <span class='message'>   - New TBR iteration (depth 1, score 11.97)</span></div><div class='output co'>#&gt; <span class='message'>  - 2 TBR rearrangements found score 11.9697 1 times.</span></div><div class='output co'>#&gt; <span class='message'>- 2021-05-14 10:16:25: Final score: 11.9697067638244</span>
 #&gt; <span class='message'></span></div><div class='input'>
 <span class='co'># In actual use, be sure to check that the score has converged on a global</span>
 <span class='co'># optimum, conducting additional iterations and runs as necessary.</span>
