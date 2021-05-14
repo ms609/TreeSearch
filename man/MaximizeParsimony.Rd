@@ -11,11 +11,11 @@
 MaximizeParsimony(
   dataset,
   tree = NJTree(dataset),
-  ratchIter = 12L,
+  ratchIter = 6L,
   tbrIter = ceiling(NTip(dataset)/3),
   startIter = 3L,
   finalIter = 1L,
-  maxHits = NTip(dataset) * 4L,
+  maxHits = NTip(dataset) * 1.5,
   quickHits = 1/3,
   concavity = Inf,
   tolerance = sqrt(.Machine$double.eps),
@@ -125,11 +125,15 @@ are necessary to find an optimal tree on each iteration).}
 \value{
 \code{MaximizeParsimony()} returns a list of trees with class
 \code{multiPhylo}. This lists all trees found during each search step that
-are within \code{tolerance} of the optimal score; it may contain more than
-\code{maxHits} elements.
+are within \code{tolerance} of the optimal score, listed in the sequence that
+they were first visited; it may contain more than \code{maxHits} elements.
 Note that the default search parameters may need to be increased in order for
 these trees to be the globally optimal trees; examine the messages printed
 duriung tree search to evaluate whether the optimal score has stabilized.
+
+The return value has the attribute \code{newTrees}, a named integer vector listing
+the number of optimal trees visited for the first time in each stage of
+the tree search.
 
 \code{Resample()} returns a \code{multiPhylo} object containing a list of
 trees obtained by tree search using a resampled version of \code{dataset}.
@@ -174,9 +178,10 @@ data('congreveLamsdellMatrices', package = 'TreeSearch')
 dataset <- congreveLamsdellMatrices[[42]]
 
 # A very quick run for demonstration purposes
-trees <- MaximizeParsimony(dataset, ratchIter = 0, tbrIter = 1, 
-                          concavity = 10, maxHits = 3, verbosity = 4)
-                  
+trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
+                           tbrIter = 1, maxHits = 4,
+                           concavity = 10, verbosity = 4)
+
 # In actual use, be sure to check that the score has converged on a global
 # optimum, conducting additional iterations and runs as necessary.
                   

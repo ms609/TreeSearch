@@ -71,15 +71,49 @@ We can conduct a basic parsimony search with:
 bestTrees <- MaximizeParsimony(vinther)
 ```
 
-Noting that a number of iterations failed to hit the best score, we might consider
-continuing the search for a little longer, fine-tuning the search parameters:
+It can be instructive to inspect the progress of tree search.
+
+```{r inspect-progress}
+firstHit <- attr(bestTrees, 'firstHit')
+firstHit
+```
+
+Here, we can see that many of the earliest ratchet iterations were finding
+optimal trees that had not previously been visited.
+Later iterations found progressively fewer new trees, suggesting that the
+search is likely to have been effective.
+
+Advanced users might wish to visualize the progress of tree search in mappings
+of tree space:
+
+```{r map-search, fig.asp = 1}
+distances <- TreeDist::ClusteringInfoDistance(bestTrees)
+searchStages <- length(firstHit)
+map <- cmdscale(distances, k = 2)
+cols <- viridisLite::viridis(searchStages, alpha = 0.8)
+par(mar = rep(0, 4))
+plot(map,
+     col = cols[rep(seq_along(firstHit), firstHit)],
+     pch = 16, cex = 2,
+     axes = FALSE, xlab = '', ylab = '', frame.plot = FALSE, asp = 1)
+legend('topright', names(firstHit), col = cols, pch = 16, bty = 'n')
+```
+
+A quick glance suggests that early ratchet iterations captured a large part of
+the diversity of optimal trees, and that iterations aren't getting stuck in 
+local optima -- though consciencous users will ensure that the mapping of tree 
+space is meaningful and adequate to detect structure before making
+any firm conclusions [@SmithSpace].
+
+To be thorough, we might consider continuing the search for a little longer,
+fine-tuning the search parameters:
 
 ```{r second-pass}
 bestTrees <- MaximizeParsimony(vinther, tree = bestTrees,
                                ratchIter = 6L,
                                tbrIter = 4L, 
-                               finalIter = 1L,
-                               maxHits = 50L)
+                               finalIter = 3L,
+                               maxHits = 80L)
 ```
 
 As it happens, the best tree for this dataset has a score of 79 under
