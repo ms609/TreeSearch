@@ -13,9 +13,10 @@ MaximizeParsimony(
   tree = NJTree(dataset),
   ratchIter = 6L,
   tbrIter = 2,
-  startIter = 3L,
+  startIter = 2L,
   finalIter = 1L,
   maxHits = NTip(dataset) * 1.5,
+  maxTime = 60,
   quickHits = 1/3,
   concavity = Inf,
   tolerance = sqrt(.Machine$double.eps),
@@ -74,6 +75,9 @@ sample the final optimal neighbourhood more intensely.}
 \item{maxHits}{Numeric specifying the maximum times that an optimal
 parsimony score may be hit before concluding a ratchet iteration or final
 search concluded.}
+
+\item{maxTime}{Numeric: after \code{maxTime} minutes, stop tree search at the
+next opportunity.}
 
 \item{quickHits}{Numeric: iterations on subsampled datasets
 will retain \code{quickHits} × \code{maxHits} trees with the best score.}

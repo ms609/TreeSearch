@@ -48,6 +48,8 @@
 #' @param maxHits Numeric specifying the maximum times that an optimal
 #' parsimony score may be hit before concluding a ratchet iteration or final 
 #' search concluded.
+#' @param maxTime Numeric: after `maxTime` minutes, stop tree search at the
+#' next opportunity.
 #' @param quickHits Numeric: iterations on subsampled datasets
 #'  will retain `quickHits` &times; `maxHits` trees with the best score.
 #' @param concavity Numeric specifying concavity constant for implied step 
@@ -155,6 +157,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                tbrIter = 2,
                                startIter = 2L, finalIter = 1L,
                                maxHits = NTip(dataset) * 1.5,
+                               maxTime = 60,
                                quickHits = 1 / 3,
                                concavity = Inf,
                                tolerance = sqrt(.Machine$double.eps),
@@ -429,6 +432,32 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     }
   }
   
+  .Timeout <- function () {
+    if (Sys.time() > stopTime) {
+      .Message(0L, "Stopping search at ", Sys.time(), ": ", maxTime,
+               " minutes have elapsed.",
+               "  Best score was ", signif(.Score(bestEdges[, , 1])), '.',
+               if (maxTime == 60) "\nIncrease `maxTime` for longer runs.")
+      return (TRUE)
+    }
+    
+    FALSE
+  }
+  
+  .ReturnValue <- function (bestEdges) {
+    structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
+      tr <- tree
+      tr$edge <- bestEdges[, , i]
+      if (is.na(outgroup)) {
+        tr
+      } else {
+        RootTree(tr, outgroup)
+      }
+    }),
+    firstHit = attr(bestEdges, 'firstHit'),
+    class = 'multiPhylo')
+  }
+  
   # Initialize tree
   if (inherits(tree, 'multiPhylo')) {
     .Message(1L, "Starting search from `tree[[1]]`.")
@@ -458,6 +487,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   profile <- .UseProfile(concavity)
   iw <- is.finite(concavity)
   constrained <- !is.null(constraint)
+  startTime <- Sys.time()
+  stopTime <- startTime + as.difftime(maxTime, units = 'mins')
   
   # Initialize constraints
   if (constrained) {
@@ -600,6 +631,9 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     } else {
       .CombineResults(bestEdges, newEdges, 2)
     }
+    if (.Timeout()) {
+      return(.ReturnValue(bestEdges))
+    }
     edge <- bestEdges[, , 1L]
   }
   
@@ -659,6 +693,9 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
           stop("Error applying tip data: ", mpl_translate_error(error))
         }
       }
+      if (.Timeout()) {
+        return(.ReturnValue(bestEdges))
+      }
       
       verbosity <- verbosity + 1L
       ratchetStart <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
@@ -697,6 +734,9 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         .Message(1L, "Ratchet iteration ", iter, " did not hit best score ",
                  signif(bestScore, 5), ".")
       }
+      if (.Timeout()) {
+        return(.ReturnValue(bestEdges))
+      }
     }
   }
   
@@ -731,21 +771,8 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
   finalScore <- .Score(bestEdges[, , 1])
   .Message(0L, Sys.time(), ": Final score: ", finalScore, "\n\n")
   
-  
-  ret <- structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
-    tr <- tree
-    tr$edge <- bestEdges[, , i]
-    if (is.na(outgroup)) {
-      tr
-    } else {
-      RootTree(tr, outgroup)
-    }
-  }),
-  firstHit = attr(bestEdges, 'firstHit'),
-  class = 'multiPhylo')
-  
   # Return:
-  ret
+  .ReturnValue(bestEdges)
 }
 
 #' Combine two edge matrices

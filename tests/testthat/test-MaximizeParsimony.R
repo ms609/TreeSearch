@@ -45,6 +45,15 @@ test_that("Inconsistent constraints fail", {
                                  ratchIter = 0, constraint = constraint))
 })
 
+test_that("MaximizeParsimony() times out", {
+  data('congreveLamsdellMatrices', package = 'TreeSearch')
+  dataset <- congreveLamsdellMatrices[[42]]
+  startTime <- Sys.time()
+  MaximizeParsimony(dataset, ratchIter = 10000, tbrIter = 1, maxHits = 1,
+                    maxTime = 0)
+  expect_gt(as.difftime(5, units = 'secs'), Sys.time() - startTime)
+})
+
 test_that("Root retained if not 1", {
   tr <- RootTree(BalancedTree(8), 't5')
   dataset <- StringToPhyDat('11000000 11100000 11110000 11111000',
@@ -90,4 +99,3 @@ test_that("Resample() fails and works", {
                tolerance = 0.2)
     
 })
-  
