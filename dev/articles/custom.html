@@ -112,7 +112,7 @@
       <h1 data-toc-skip>Tree Search with Custom Optimality Criteria</h1>
                         <h4 class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2021-05-14</h4>
+            <h4 class="date">2021-05-22</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/custom.Rmd"><code>vignettes/custom.Rmd</code></a></small>
       <div class="hidden name"><code>custom.Rmd</code></div>
@@ -128,8 +128,8 @@
 <p>All that is needed is to provide a function that will return a score for a given tree (and dataset).</p>
 <p>First we’ll load the necessary R libraries:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/">"TreeTools"</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span>, warn.conflict <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/">"TreeTools"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span>, warn.conflict <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span>
 
 <span class="co"># Plot trees nicely</span>
 <span class="va">PlotTree</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">tree</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span>
@@ -164,7 +164,7 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
                      verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
 <pre><code>##   - Performing tree search.  Initial score: 56</code></pre>
-<pre><code>##   - Final score 33 found 3 times after 50 rearrangements.</code></pre>
+<pre><code>##   - Final score 33 found 2 times after 50 rearrangements.</code></pre>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></code></pre></div>
 <p><img src="custom_files/figure-html/tci-search-1.png" width="700"></p>
@@ -189,7 +189,7 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      TreeScorer <span class="op">=</span> <span class="va">DistanceScore</span>,
                      maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
                      verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
-<pre><code>##   - Performing tree search.  Initial score: -5.87744375108174</code></pre>
+<pre><code>##   - Performing tree search.  Initial score: -6.34601949631354</code></pre>
 <pre><code>##   - Final score -7.87744375108174 found 3 times after 50 rearrangements.</code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
