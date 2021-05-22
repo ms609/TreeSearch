@@ -22,8 +22,8 @@ given tree (and dataset).
 First we'll load the necessary R libraries:
 
 ```{r init, message = FALSE}
-library("TreeTools")
-library("TreeSearch", quietly = TRUE, warn.conflict = FALSE)
+library("TreeTools", quietly = TRUE, warn.conflict = FALSE)
+library("TreeSearch")
 
 # Plot trees nicely
 PlotTree <- function(tree, ...) {
