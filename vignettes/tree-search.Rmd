@@ -20,15 +20,11 @@ and implemented in the 'MorphyLib' C library [@Brazeau2017]
 
 ## Getting started
 
-[A companion vignette](getting-started.html) gives details on installing the package
-and getting up and running.
+[A companion vignette](getting-started.html) gives details on installing the
+package and getting up and running.
 
-
-## Tree search with the graphical user interface
-
-You can launch an interactive 'app' in your browser by typing 
-`TreeSearch::EasyTrees()` at the R command line.
-
+Launch an interactive 'app' in your browser by typing `TreeSearch::EasyTrees()`
+at the R / RStudio command line.
 
 ![TreeSearch graphical user interface](easy_tree.png)
 
