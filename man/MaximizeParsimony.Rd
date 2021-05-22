@@ -38,7 +38,8 @@ Resample(
   tolerance = sqrt(.Machine$double.eps),
   constraint = NULL,
   verbosity = 2L,
-  session = NULL
+  session = NULL,
+  ...
 )
 
 EasyTrees()
@@ -65,7 +66,7 @@ One 'iteration' comprises breaking a single branch and evaluating all
 possible reconnections.}
 
 \item{startIter}{Numeric: an initial round of tree search with
-\code{startIter} &teims; \code{tbrIter} \acronym{TBR} break points is conducted in
+\code{startIter} × \code{tbrIter} \acronym{TBR} break points is conducted in
 order to locate a local optimum before beginning ratchet searches.}
 
 \item{finalIter}{Numeric: a final round of tree search will evaluate
@@ -103,7 +104,7 @@ for further examples.}
 more detailed commentary on search progress. Set to \code{0} to run silently.}
 
 \item{session}{'shiny' session identifier to allow \code{\link[=setProgress]{setProgress()}} calls
-to be sent when \code{MaximizeParsimony()} is called from within a shiny app..}
+to be sent when \code{MaximizeParsimony()} is called from within a shiny app.}
 
 \item{method}{Unambiguous abbreviation of \code{jackknife} or \code{bootstrap}
 specifying how to resample characters.  Note that jackknife is considered
@@ -125,6 +126,8 @@ from the optimal tree (which may be quicker, but result in overestimated
 support values as searches get stuck in local optima close to the
 optimal tree) or a random tree (which may take longer as more rearrangements
 are necessary to find an optimal tree on each iteration).}
+
+\item{\dots}{Additional parameters to \code{MaximizeParsimony()}.}
 }
 \value{
 \code{MaximizeParsimony()} returns a list of trees with class
@@ -183,16 +186,17 @@ dataset <- congreveLamsdellMatrices[[42]]
 
 # A very quick run for demonstration purposes
 trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
-                           tbrIter = 1, maxHits = 4,
+                           tbrIter = 1, maxHits = 4, maxTime = 1/100,
                            concavity = 10, verbosity = 4)
 
 # In actual use, be sure to check that the score has converged on a global
 # optimum, conducting additional iterations and runs as necessary.
                   
 # Jackknife resampling
-nReplicates <- 5
+nReplicates <- 3
 jackTrees <- replicate(nReplicates,
-  Resample(dataset, trees, ratchIter = 0, tbrIter = 1, maxHits = 4,
+  Resample(dataset, trees, ratchIter = 0, tbrIter = 1, startIter = 1,
+           maxHits = 3, maxTime = 1 / 100,
            concavity = 10, verbosity = 0)
  )
 

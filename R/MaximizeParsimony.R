@@ -40,7 +40,7 @@
 #' One 'iteration' comprises breaking a single branch and evaluating all 
 #' possible reconnections.
 #' @param startIter Numeric: an initial round of tree search with
-#' `startIter` &teims; `tbrIter` \acronym{TBR} break points is conducted in
+#' `startIter` &times; `tbrIter` \acronym{TBR} break points is conducted in
 #' order to locate a local optimum before beginning ratchet searches. 
 #' @param finalIter Numeric: a final round of tree search will evaluate
 #' `finalIter` &times; `tbrIter` \acronym{TBR} break points, in order to
@@ -69,7 +69,8 @@
 #' @param verbosity Integer specifying level of messaging; higher values give
 #' more detailed commentary on search progress. Set to `0` to run silently.
 #' @param session 'shiny' session identifier to allow [`setProgress()`] calls
-#' to be sent when `MaximizeParsimony()` is called from within a shiny app..
+#' to be sent when `MaximizeParsimony()` is called from within a shiny app.
+#' @param \dots Additional parameters to `MaximizeParsimony()`.
 #' 
 #' @return `MaximizeParsimony()` returns a list of trees with class
 #' `multiPhylo`. This lists all trees found during each search step that
@@ -98,16 +99,17 @@
 #' 
 #' # A very quick run for demonstration purposes
 #' trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
-#'                            tbrIter = 1, maxHits = 4,
+#'                            tbrIter = 1, maxHits = 4, maxTime = 1/100,
 #'                            concavity = 10, verbosity = 4)
 #'
 #' # In actual use, be sure to check that the score has converged on a global
 #' # optimum, conducting additional iterations and runs as necessary.
 #'                   
 #' # Jackknife resampling
-#' nReplicates <- 5
+#' nReplicates <- 3
 #' jackTrees <- replicate(nReplicates,
-#'   Resample(dataset, trees, ratchIter = 0, tbrIter = 1, maxHits = 4,
+#'   Resample(dataset, trees, ratchIter = 0, tbrIter = 1, startIter = 1,
+#'            maxHits = 3, maxTime = 1 / 100,
 #'            concavity = 10, verbosity = 0)
 #'  )
 #' 
@@ -855,7 +857,8 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
                       maxHits = 12L, concavity = Inf,
                       tolerance = sqrt(.Machine$double.eps),
                       constraint = NULL,
-                      verbosity = 2L, session = NULL) {
+                      verbosity = 2L, session = NULL,
+                      ...) {
   if (!inherits(dataset, 'phyDat')) {
     stop("`dataset` must be of class `phyDat`.")
   }
@@ -884,10 +887,11 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
   
   MaximizeParsimony(dataset, tree = tree,
                     ratchIter = ratchIter, tbrIter = tbrIter,
-                    finalIter = finalIter, maxHits = maxHits, 
+                    finalIter = finalIter,
+                    maxHits = maxHits,
                     concavity = concavity,
                     tolerance = tolerance, constraint = constraint,
-                    verbosity = verbosity, session = session) 
+                    verbosity = verbosity, session = session, ...) 
 }
 
 #' Launch tree search graphical user interface
