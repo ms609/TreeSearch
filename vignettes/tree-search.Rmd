@@ -1,23 +1,22 @@
 ---
-title: "Tree search with inapplicable data"
+title: "Getting started: Simple tree searches"
 author: "Martin R. Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: ../inst/REFERENCES.bib
 csl: ../inst/apa-old-doi-prefix.csl
 vignette: >
-  %\VignetteIndexEntry{Tree search with inapplicable data}
+  %\VignetteIndexEntry{Getting started: Simple tree searches}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 
-`TreeSearch` is an R package that allows, among other things, parsimony search on
-morphological datasets that contain inapplicable data, following the algorithm proposed
-by Brazeau, Guillerme and Smith [-@Brazeau2019].
-
-In brief, this algorithm modifies the Fitch algorithm to count the total number
-of homoplasious events on a tree.
+`TreeSearch` is an R package that allows, among other things, 
+parsimony search on morphological datasets that contain inapplicable data,
+using the algorithm proposed by Brazeau, Guillerme and Smith [-@Brazeau2019]
+and implemented in the 'MorphyLib' C library [@Brazeau2017]
+([details](https://cdn.rawgit.com/TGuillerme/Inapp/c4d502fa4ae3702eb207b2da3a692e469ba3b6ab/inst/gitbook/_book/index.html)).
 
 ## Getting started
 
@@ -83,8 +82,8 @@ optimal trees that had not previously been visited.
 Later iterations found progressively fewer new trees, suggesting that the
 search is likely to have been effective.
 
-Advanced users might wish to visualize the progress of tree search in mappings
-of tree space:
+Advanced users might wish to visualize the progress of tree search by mapping
+tree space:
 
 ```{r map-search, fig.asp = 1}
 distances <- TreeDist::ClusteringInfoDistance(bestTrees)
@@ -147,7 +146,7 @@ TreeTools::LabelSplits(cons, round(splitFreqs * 100), unit = '%',
 
 A more instructive measure of clade support can be generated using
 Jackknife resampling.
-The [`Resample()`] manual page has suggestions for appropriate numbers of 
+The `Resample()` manual page has suggestions for appropriate numbers of 
 replicates and search intensity, and instructions for calcuating bootstrap
 support; the code here gives a quick-to-run jackknife framework that can be
 adapted to the requirements of a particular dataset.
@@ -165,7 +164,7 @@ JackLabels(cons, lapply(jackTrees, ape::consensus)) -> XX
 ```
 
 Jackknife and bootstrap support values give an indication of the volume of data
-that supports each node, but doesn't necessarily indicate whether the data
+that supports each node, but don't necessarily indicate whether the data
 are unanimous on the existence of a clade: a high bootstrap support value could
 indicate a large number of characters supporting a clade, and an only slightly
 smaller number of characters contradicting it.

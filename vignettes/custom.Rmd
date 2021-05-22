@@ -1,12 +1,12 @@
 ---
-title: "Tree Search with Custom Optimality Criteria"
+title: "Tree search with custom optimality criteria"
 author: "Martin R. Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: ../inst/REFERENCES.bib
 csl: ../inst/apa-old-doi-prefix.csl
 vignette: >
-  %\VignetteIndexEntry{Tree Search with Custom Optimality Criteria}
+  %\VignetteIndexEntry{Tree search with custom optimality criteria}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
