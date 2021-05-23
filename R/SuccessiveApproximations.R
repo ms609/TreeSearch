@@ -1,4 +1,4 @@
-#' Tree Search using Successive Approximations
+#' Tree search using successive approximations
 #'
 #' Searches for a tree that is optimal under the Successive Approximations 
 #' criterion (Farris 1969).
@@ -12,7 +12,7 @@
 #' @param searchHits maximum hits in tree search
 #' @param searchIter maximum iterations in tree search
 #' @param ratchetIter maximum iterations of parsimony ratchet
-#' @param verbosity integer (default 0) specifying how much detail to print to stdout
+#' @template verbosityParam
 #' @param suboptimal retain trees that are this proportion less optimal than the optimal tree
 #' 
 #' @return `SuccessiveApproximations()` returns a list of class `multiPhylo`
@@ -24,9 +24,11 @@
 #' @importFrom ape consensus root
 #' @family custom search functions
 #' @export
-SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3, maxSuccIter = 20,
-                                      ratchetHits = 100, searchHits = 50, searchIter = 500,
-                                      ratchetIter = 5000, verbosity = 0, suboptimal = 0.1) {
+SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
+                                      maxSuccIter = 20, ratchetHits = 100,
+                                      searchHits = 50, searchIter = 500,
+                                      ratchetIter = 5000, verbosity = 0,
+                                      suboptimal = 0.1) {
   
   if (k < 1) stop ('k should be at least 1, see Farris 1969 p.379')
   attr(dataset, 'sa.weights') <- rep.int(1, length(attr(dataset, 'weight')))
@@ -42,17 +44,23 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3, max
     if (verbosity > 0) message('\nSuccessive Approximations Iteration ', i - 1L)
     attr(best, 'score') <- NULL
     if (suboptimal > 0) {
-      suboptimalSearch <- suboptimal * sum(attr(dataset, 'sa.weights') * attr(dataset, 'weight'))
+      suboptimalSearch <- suboptimal * sum(attr(dataset, 'sa.weights') *
+                                             attr(dataset, 'weight'))
     }
-    trees <- Ratchet(best, dataset, TreeScorer = SuccessiveWeights, all = collectSuboptimal, 
-                           suboptimal=suboptimalSearch,    rearrangements='NNI',
-                           ratchetHits=ratchetHits, searchHits=searchHits, searchIter=searchIter, 
-                           ratchetIter=ratchetIter, outgroup = outgroup, verbosity=verbosity - 1)
+    trees <- Ratchet(best, dataset, TreeScorer = SuccessiveWeights,
+                     all = collectSuboptimal, 
+                     suboptimal = suboptimalSearch,
+                     rearrangements = 'NNI',
+                     ratchetHits=ratchetHits, searchHits = searchHits,
+                     searchIter = searchIter, ratchetIter = ratchetIter,
+                     outgroup = outgroup, verbosity = verbosity - 1)
     trees <- unique(trees)
     bests[[i]] <- trees
     suboptimality <- Suboptimality(trees)
     bestsConsensus[[i]] <- consensus(trees[suboptimality == 0])
-    if (all.equal(bestsConsensus[[i]], bestsConsensus[[i - 1]])) return(bests[2:i])
+    if (all.equal(bestsConsensus[[i]], bestsConsensus[[i - 1]])) {
+      return(bests[2:i])
+    }
     best <- trees[suboptimality == 0][[1]]
     l.i <- CharacterLength(best, dataset)
     p.i <- l.i / (n.node - 1)

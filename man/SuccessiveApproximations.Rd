@@ -3,7 +3,7 @@
 \name{SuccessiveApproximations}
 \alias{SuccessiveApproximations}
 \alias{SuccessiveWeights}
-\title{Tree Search using Successive Approximations}
+\title{Tree search using successive approximations}
 \usage{
 SuccessiveApproximations(
   tree,
@@ -41,7 +41,8 @@ whose names correspond to the labels of any accompanying tree.}
 
 \item{ratchetIter}{maximum iterations of parsimony ratchet}
 
-\item{verbosity}{integer (default 0) specifying how much detail to print to stdout}
+\item{verbosity}{Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.}
 
 \item{suboptimal}{retain trees that are this proportion less optimal than the optimal tree}
 }
