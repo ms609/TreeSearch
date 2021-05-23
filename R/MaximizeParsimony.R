@@ -899,7 +899,6 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
 #' @rdname MaximizeParsimony
 #' @importFrom shiny runApp
 #' @importFrom shinyjs useShinyjs
-## @importFrom rgl plot3d
 #' @importFrom TreeDist ClusteringInfoDistance
 #' @importFrom protoclust protoclust
 #' @importFrom cluster pam silhouette

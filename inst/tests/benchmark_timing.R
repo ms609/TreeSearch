@@ -102,10 +102,10 @@ allRes <- array(c(results1, results2, results3.10, results3.20, results3.30, res
              c(7*length(candidates), 3)) 
 
 arr <- allRes
-rgl::plot3d(arr[, 2], arr[, 3], arr[, 1], zlab='Time', xlab='SearchHits', ylab='BootHits')
+TreeDist::Plot3(arr[, 2], arr[, 3], arr[, 1], zlab='Time', xlab='SearchHits', ylab='BootHits')
 manyBootHits <- allRes[allRes[, 3] > 30, ]
 arr <- manyBootHits
-rgl::plot3d(arr[, 2], arr[, 3], arr[, 1], zlab='Time', xlab='SearchHits', ylab='BootHits')
+TreeDist::Plot3(arr[, 2], arr[, 3], arr[, 1], zlab='Time', xlab='SearchHits', ylab='BootHits')
 
 library('profvis')
 RRprofStart()
