@@ -136,7 +136,7 @@ are within \code{tolerance} of the optimal score, listed in the sequence that
 they were first visited; it may contain more than \code{maxHits} elements.
 Note that the default search parameters may need to be increased in order for
 these trees to be the globally optimal trees; examine the messages printed
-duriung tree search to evaluate whether the optimal score has stabilized.
+during tree search to evaluate whether the optimal score has stabilized.
 
 The return value has the attribute \code{newTrees}, a named integer vector listing
 the number of optimal trees visited for the first time in each stage of

@@ -21,7 +21,7 @@ should be recorded.}
 \item{new}{new array of edge matrices.}
 }
 \value{
-A single 3D array contianing each unique edge matrix from (\code{x} and)
+A single 3D array containing each unique edge matrix from (\code{x} and)
 \code{y}, with a \code{firstHit} attribute as documented in \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}.
 }
 \description{

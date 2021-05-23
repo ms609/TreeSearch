@@ -78,7 +78,7 @@
 #' they were first visited; it may contain more than `maxHits` elements.
 #' Note that the default search parameters may need to be increased in order for
 #' these trees to be the globally optimal trees; examine the messages printed
-#' duriung tree search to evaluate whether the optimal score has stabilized.
+#' during tree search to evaluate whether the optimal score has stabilized.
 #' 
 #' The return value has the attribute `newTrees`, a named integer vector listing
 #' the number of optimal trees visited for the first time in each stage of
@@ -781,7 +781,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 #' 
 #' @param x,y 3D arrays, each slice containing an edge matrix from a tree
 #' of class `phylo`.
-#' @return A single 3D array contianing each unique edge matrix from (`x` and)
+#' @return A single 3D array containing each unique edge matrix from (`x` and)
 #' `y`, with a `firstHit` attribute as documented in [`MaximizeParsimony()`].
 #' @template MRS
 #' @keywords internal

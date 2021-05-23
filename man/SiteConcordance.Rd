@@ -39,9 +39,9 @@ with any tree that groups the first two leaves together to the exclusion
 of the second.
 }
 \examples{
-data('Lobo', package = 'TreeTools')
-dataset <- Lobo.phy
-tree <- TreeTools::NJTree(dataset)
+data('congreveLamsdellMatrices', package = 'TreeSearch')
+dataset <- congreveLamsdellMatrices[[1]][, 1:20]
+tree <- referenceTree
 qc <- QuartetConcordance(tree, dataset)
 cc <- ClusteringConcordance(tree, dataset)
 pc <- PhylogeneticConcordance(tree, dataset)

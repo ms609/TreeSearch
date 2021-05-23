@@ -98,7 +98,7 @@ legend('topright', names(firstHit), col = cols, pch = 16, bty = 'n')
 
 A quick glance suggests that early ratchet iterations captured a large part of
 the diversity of optimal trees, and that iterations aren't getting stuck in 
-local optima -- though consciencous users will ensure that the mapping of tree 
+local optima -- though conscientious users will ensure that the mapping of tree 
 space is meaningful and adequate to detect structure before making
 any firm conclusions [@SmithSpace].
 
@@ -143,7 +143,7 @@ TreeTools::LabelSplits(cons, round(splitFreqs * 100), unit = '%',
 A more instructive measure of clade support can be generated using
 Jackknife resampling.
 The `Resample()` manual page has suggestions for appropriate numbers of 
-replicates and search intensity, and instructions for calcuating bootstrap
+replicates and search intensity, and instructions for calculating bootstrap
 support; the code here gives a quick-to-run jackknife framework that can be
 adapted to the requirements of a particular dataset.
 

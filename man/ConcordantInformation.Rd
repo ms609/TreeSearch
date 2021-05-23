@@ -42,7 +42,7 @@ consistent with a specified phylogenetic tree, and the signal:noise
 ratio of the character matrix implied if the tree is true.
 }
 \details{
-Presenly restricted to datasets whose characters contain a maximum of
+Presently restricted to datasets whose characters contain a maximum of
 two parsimony-informative states.
 }
 \examples{

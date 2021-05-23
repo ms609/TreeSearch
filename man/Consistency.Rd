@@ -13,8 +13,9 @@ whose names correspond to the labels of any accompanying tree.}
 \item{tree}{A tree of class \code{\link{phylo}}.}
 }
 \value{
-\code{Consistency()} returns a named vector specifying the consistency index (ci),
-retention index (ri), and rescaled consistency index (rc).
+\code{Consistency()} returns a named vector specifying the
+consistency index (\code{ci}),
+retention index (\code{ri}), and rescaled consistency index (\code{rc}).
 }
 \description{
 \code{Consistency()} calculates the so-called consistency and retention 'indices'
