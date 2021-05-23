@@ -88,13 +88,9 @@ SPRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
 }
 
 #' @rdname SPR
-#TODO
-#' @details NOTE: `tree` must be rooted on edge 1 in `SPRMoves.matrix()`.
-#' This will be resolved when `TreeTools::RootNode()` supports edge matrices.
 #' @export
 SPRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
-  tree <- Preorder(tree)
-  #tree <- Preorder(RootTree(tree, 1)) #TODO
+  tree <- Preorder(RootTree(tree, 1))
   unique(all_spr(tree, edgeToBreak))
 }
 

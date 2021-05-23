@@ -34,7 +34,7 @@ Imports:
     shinyjs,
     stats,
     TreeDist (>= 2.0.3.9003),
-    TreeTools (>= 1.4.4.9000)
+    TreeTools (>= 1.4.4.9001)
 Suggests:
     knitr,
     rmarkdown,
