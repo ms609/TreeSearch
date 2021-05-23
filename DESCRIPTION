@@ -33,12 +33,13 @@ Imports:
     shiny,
     shinyjs,
     stats,
-    TreeDist (>= 2.0.3.9003),
+    TreeDist,
     TreeTools (>= 1.4.4.9001)
 Suggests:
     knitr,
     rmarkdown,
     testthat,
+    TreeDist (>= 2.0.3.9003),
     vdiffr,
     viridisLite
 RdMacros: Rdpack
