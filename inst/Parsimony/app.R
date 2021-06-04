@@ -299,7 +299,7 @@ server <- function(input, output, session) {
     par(mar = c(2, 0, 0, 0))
     nStop <- length(badToGood)
     
-    plot(seq(0, 1, length.out = nStop), rep(0, nStop),
+    plot(seq.int(from = 0, to = 1, length.out = nStop), numeric(nStop),
          pch = 15, col = badToGood,
          ylim = c(-1.5, 2.5),
          ann = FALSE, axes = FALSE)
@@ -333,7 +333,7 @@ server <- function(input, output, session) {
     axis(2)
     tickPos <- c(0, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0)
     mids <- c(0.6, 0.75, 0.85, 0.925)
-    text(rep(15, 4), mids, pos = 2, cex = 0.8,
+    text(rep.int(15, 4), mids, pos = 2, cex = 0.8,
          col = badToGood[nStop * LogScore(mids)],
          c('Essentially random', 'Dangerous', "Usable", "Good"))
     text(1, 0.975, pos = 4, "Excellent", cex = 0.8, 
@@ -417,13 +417,13 @@ server <- function(input, output, session) {
       for (i in seq_len(cl$n)) {
         col <- palettes[[min(length(palettes), cl$n)]][i]
         tr <- ape::consensus(r$trees[cl$cluster == i])
-        tr$edge.length <- rep(1, dim(tr$edge)[1])
+        tr$edge.length <- rep.int(1, dim(tr$edge)[1])
         plot(tr, edge.width = 2, font = 1, cex = 1,
              edge.color = col, tip.color = col)
       }
     } else {
       tr <- ape::consensus(r$trees)
-      tr$edge.length <- rep(1, dim(tr$edge)[1])
+      tr$edge.length <- rep.int(1, dim(tr$edge)[1])
       plot(tr,edge.width = 2, font = 1, cex = 1,
            edge.color = palettes[[1]],
            tip.color = palettes[[1]])

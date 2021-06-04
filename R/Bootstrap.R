@@ -20,7 +20,7 @@ MorphyBootstrap <- function (edgeList, morphyObj, EdgeSwapper = NNISwap,
                              stopAtPeak = FALSE, stopAtPlateau=0L, ...) {
   startWeights <- MorphyWeights(morphyObj)['exact', ]
   eachChar <- seq_along(startWeights)
-  deindexedChars <- rep(eachChar, startWeights)
+  deindexedChars <- rep.int(eachChar, startWeights)
   resampling <- tabulate(sample(deindexedChars, replace = TRUE),
                          length(startWeights))
   errors <- vapply(eachChar, function (i) 

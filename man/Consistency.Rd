@@ -13,8 +13,9 @@ whose names correspond to the labels of any accompanying tree.}
 \item{tree}{A tree of class \code{\link{phylo}}.}
 }
 \value{
-\code{Consistency()} returns a named vector specifying the consistency index (ci),
-retention index (ri), and rescaled consistency index (rc).
+\code{Consistency()} returns a named vector specifying the
+consistency index (\code{ci}),
+retention index (\code{ri}), and rescaled consistency index (\code{rc}).
 }
 \description{
 \code{Consistency()} calculates the so-called consistency and retention 'indices'
@@ -34,6 +35,6 @@ dataset <- inapplicable.phyData[[4]]
 Consistency(dataset, TreeTools::NJTree(dataset))
 }
 \author{
-\href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }

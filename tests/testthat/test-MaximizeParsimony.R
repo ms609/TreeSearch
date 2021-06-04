@@ -1,15 +1,24 @@
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 
+test_that("Profile fails gracefully", {
+  dataset <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 3, f = 3))
+  expect_warning(PrepareDataProfile(dataset))
+  expect_warning(MaximizeParsimony(dataset, concavity = 'pr'))
+})
+
 test_that("Constraints work", {
   constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
   characters <- MatrixToPhyDat(matrix(
     c(0, 1, 1, 1, 0, 0,
       1, 1, 1, 0, 0, 0), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
-  expect_equal(PectinateTree(letters[1:6]),
-               MaximizeParsimony(characters,
+  set.seed(0)
+  ewResults <- MaximizeParsimony(characters,
                                  PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
-                                 ratchIter = 0, constraint = constraint)[[1]])
+                                 ratchIter = 0, constraint = constraint)
+  expect_equal(PectinateTree(letters[1:6]), ewResults[[1]])
+  expect_equal(c(seed = 0, start = 1, final = 0),
+               attr(ewResults, 'firstHit'))
   expect_equal(PectinateTree(letters[1:6]),
                MaximizeParsimony(characters, concavity = 'p',
                                  PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
@@ -36,6 +45,15 @@ test_that("Inconsistent constraints fail", {
                                  ratchIter = 0, constraint = constraint))
 })
 
+test_that("MaximizeParsimony() times out", {
+  data('congreveLamsdellMatrices', package = 'TreeSearch')
+  dataset <- congreveLamsdellMatrices[[42]]
+  startTime <- Sys.time()
+  MaximizeParsimony(dataset, ratchIter = 10000, tbrIter = 1, maxHits = 1,
+                    maxTime = 0)
+  expect_gt(as.difftime(5, units = 'secs'), Sys.time() - startTime)
+})
+
 test_that("Root retained if not 1", {
   tr <- RootTree(BalancedTree(8), 't5')
   dataset <- StringToPhyDat('11000000 11100000 11110000 11111000',
@@ -57,7 +75,7 @@ test_that("Resample() fails and works", {
   
   expect_error(Resample(dataset, method = 'ERROR'))
   expect_error(Resample(dataset, proportion = 0))
-  expect_error(Resample(dataset, proportion = 6/7))
+  expect_error(Resample(dataset, proportion = 6 / 7))
 
   nRep <- 42L # Arbitrary number to balance runtime vs false +ves & -ves
   bal <- as.Splits(BalancedTree(dataset))
@@ -81,4 +99,3 @@ test_that("Resample() fails and works", {
                tolerance = 0.2)
     
 })
-  

@@ -70,30 +70,30 @@ By contributing to this project, you agree to abide by its terms.
 
 # References
 
-Brazeau MD, Smith MR, Guillerme T (2017). 
+Brazeau M. D., Smith M. R., Guillerme T. (2017). 
   MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability.
   doi: [10.5281/zenodo.815372](https://doi.org/10.5281/zenodo.815372).
 
-Brazeau, M. D., Guillerme, T. and Smith, M. R. 2019.
+Brazeau, M. D., Guillerme, T. and Smith, M. R. (2019).
   An algorithm for morphological phylogenetic analysis with inapplicable data. 
   Systematic Biology, 68(4), 619-631.
   doi: [10.1093/sysbio/syy083](https://dx.doi.org/10.1093/sysbio/syy083).
 
-Faith DP, Trueman JWH (2001). 
+Faith D. P., Trueman J. W. H. (2001). 
   Towards an inclusive philosophy for phylogenetic inference.
   Systematic Biology, 50(3), 331–350. 
   doi: [10.1080/10635150118627](https://doi.org/10.1080/10635150118627).
 
 Farris, J. S. (1969). A successive approximations approach to character weighting. 
   Systematic Biology, 18(4), 374–385.
-  doi: [10.2307/2412182](https://dx.doi.org/10.2307/2412182)
+  doi: [10.2307/2412182](https://dx.doi.org/10.2307/2412182).
 
-Goloboff PA (1993). 
+Goloboff, P. A. (1993). 
   Estimating character weights during tree search.
   Cladistics, 9(1), 83–91.
   doi: [10.1111/j.1096-0031.1993.tb00209.x](https://doi.org/10.1111/j.1096-0031.1993.tb00209.x).
 
-Goloboff PA, Torres A, Arias JS (2018). 
+Goloboff, P. A., Torres, A., Arias, J. S. (2018). 
   Weighted parsimony outperforms other methods of phylogenetic inference under 
   models appropriate for morphology.
   Cladistics, 34(4), 407–437. doi: [10.1111/cla.12205](https://doi.org/10.1111/cla.12205).

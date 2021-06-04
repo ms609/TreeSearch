@@ -88,13 +88,9 @@ TBRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
 }
 
 #' @rdname TBR
-#TODO
-#' @details NOTE: `tree` must be rooted on edge 1 in `TBRMoves.matrix()`.
-#' This will be resolved when `TreeTools::RootNode()` supports edge matrices.
 #' @export
 TBRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
-  #tree <- Preorder(RootTree(tree, 1))  # TODO
-  tree <- Preorder(tree)
+  tree <- Preorder(RootTree(tree, 1))
   allMoves <- all_tbr(tree, edgeToBreak)
   unique(allMoves)
 }

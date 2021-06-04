@@ -113,7 +113,7 @@ Ratchet <- function (tree, dataset,
   if (returnAll) {
     nullForest <- vector('list', ratchIter)
     forest <- nullForest
-    forestScores <- rep(NA, ratchIter)
+    forestScores <- rep.int(NA, ratchIter)
   }
 
   iterationsWithBestScore <- 0

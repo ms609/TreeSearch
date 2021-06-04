@@ -99,8 +99,9 @@ EdgeListSearch <- function (edgeList, dataset,
 #' configuring tree search, see the
 #' [package documentation](https://ms609.github.io/TreeSearch/).
 #'  
-#' @param tree aA fully-resolved starting tree in \code{\link{phylo}} format, 
-#' with the desired outgroup; edge lengths are not supported and will be deleted;
+#' @param tree A fully-resolved starting tree in \code{\link{phylo}} format, 
+#' with the desired outgroup.
+#' Edge lengths are not supported and will be removed.
 #' @template datasetParam
 #' @template EdgeSwapperParam
 #' @param maxIter Numeric specifying maximum number of iterations to perform

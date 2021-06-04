@@ -161,6 +161,7 @@ bootstrapper
 bristleworm
 cdef
 cf
+cla
 codecov
 colourblind
 dd
@@ -209,9 +210,11 @@ supermatrix
 supertree
 sysbio
 syy
+tb
 tinkerings
 treespace
 uk
 updaters
 uppass
 wianamattensis
+zenodo

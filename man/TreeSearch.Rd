@@ -83,8 +83,9 @@ larger numbers provide more verbose feedback to the user.}
 
 \item{\dots}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
 
-\item{tree}{aA fully-resolved starting tree in \code{\link{phylo}} format,
-with the desired outgroup; edge lengths are not supported and will be deleted;}
+\item{tree}{A fully-resolved starting tree in \code{\link{phylo}} format,
+with the desired outgroup.
+Edge lengths are not supported and will be removed.}
 
 \item{InitializeData}{Function that sets up data object to prepare for tree search.
 The function will be passed the \code{dataset} parameter.
@@ -146,7 +147,7 @@ Other custom search functions:
 \code{\link{SuccessiveApproximations}()}
 }
 \author{
-\href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{custom search functions}

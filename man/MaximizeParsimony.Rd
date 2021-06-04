@@ -11,10 +11,13 @@
 MaximizeParsimony(
   dataset,
   tree = NJTree(dataset),
-  ratchIter = 12L,
-  tbrIter = 6L,
-  finalIter = 3L,
-  maxHits = 20L,
+  ratchIter = 6L,
+  tbrIter = 2,
+  startIter = 2L,
+  finalIter = 1L,
+  maxHits = NTip(dataset) * 1.5,
+  maxTime = 60,
+  quickHits = 1/3,
   concavity = Inf,
   tolerance = sqrt(.Machine$double.eps),
   constraint = NULL,
@@ -35,7 +38,8 @@ Resample(
   tolerance = sqrt(.Machine$double.eps),
   constraint = NULL,
   verbosity = 2L,
-  session = NULL
+  session = NULL,
+  ...
 )
 
 EasyTrees()
@@ -61,12 +65,23 @@ The counter is reset to zero each time tree score improves.
 One 'iteration' comprises breaking a single branch and evaluating all
 possible reconnections.}
 
-\item{finalIter}{Numeric: the final round of tree search will evaluate
-\code{finalIter} × \code{tbrIter} \acronym{TBR} break points.}
+\item{startIter}{Numeric: an initial round of tree search with
+\code{startIter} × \code{tbrIter} \acronym{TBR} break points is conducted in
+order to locate a local optimum before beginning ratchet searches.}
+
+\item{finalIter}{Numeric: a final round of tree search will evaluate
+\code{finalIter} × \code{tbrIter} \acronym{TBR} break points, in order to
+sample the final optimal neighbourhood more intensely.}
 
 \item{maxHits}{Numeric specifying the maximum times that an optimal
 parsimony score may be hit before concluding a ratchet iteration or final
 search concluded.}
+
+\item{maxTime}{Numeric: after \code{maxTime} minutes, stop tree search at the
+next opportunity.}
+
+\item{quickHits}{Numeric: iterations on subsampled datasets
+will retain \code{quickHits} × \code{maxHits} trees with the best score.}
 
 \item{concavity}{Numeric specifying concavity constant for implied step
 weighting; set as \code{Inf} for equal step weights (which is a bad idea; see
@@ -89,7 +104,7 @@ for further examples.}
 more detailed commentary on search progress. Set to \code{0} to run silently.}
 
 \item{session}{'shiny' session identifier to allow \code{\link[=setProgress]{setProgress()}} calls
-to be sent when \code{MaximizeParsimony()} is called from within a shiny app..}
+to be sent when \code{MaximizeParsimony()} is called from within a shiny app.}
 
 \item{method}{Unambiguous abbreviation of \code{jackknife} or \code{bootstrap}
 specifying how to resample characters.  Note that jackknife is considered
@@ -111,12 +126,21 @@ from the optimal tree (which may be quicker, but result in overestimated
 support values as searches get stuck in local optima close to the
 optimal tree) or a random tree (which may take longer as more rearrangements
 are necessary to find an optimal tree on each iteration).}
+
+\item{\dots}{Additional parameters to \code{MaximizeParsimony()}.}
 }
 \value{
-\code{MaximizeParsimony()} returns a list of trees with class \code{multiPhylo}.
-Note that these default parameters may need to be increased in order for
-these trees to be the globally optimal trees; examine the output to see
-whether the optimal score has stabilized.
+\code{MaximizeParsimony()} returns a list of trees with class
+\code{multiPhylo}. This lists all trees found during each search step that
+are within \code{tolerance} of the optimal score, listed in the sequence that
+they were first visited; it may contain more than \code{maxHits} elements.
+Note that the default search parameters may need to be increased in order for
+these trees to be the globally optimal trees; examine the messages printed
+during tree search to evaluate whether the optimal score has stabilized.
+
+The return value has the attribute \code{newTrees}, a named integer vector listing
+the number of optimal trees visited for the first time in each stage of
+the tree search.
 
 \code{Resample()} returns a \code{multiPhylo} object containing a list of
 trees obtained by tree search using a resampled version of \code{dataset}.
@@ -161,16 +185,18 @@ data('congreveLamsdellMatrices', package = 'TreeSearch')
 dataset <- congreveLamsdellMatrices[[42]]
 
 # A very quick run for demonstration purposes
-trees <- MaximizeParsimony(dataset, ratchIter = 0, tbrIter = 1, 
-                          concavity = 10, maxHits = 3, verbosity = 4)
-                  
+trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
+                           tbrIter = 1, maxHits = 4, maxTime = 1/100,
+                           concavity = 10, verbosity = 4)
+
 # In actual use, be sure to check that the score has converged on a global
 # optimum, conducting additional iterations and runs as necessary.
                   
 # Jackknife resampling
-nReplicates <- 5
+nReplicates <- 3
 jackTrees <- replicate(nReplicates,
-  Resample(dataset, trees, ratchIter = 0, tbrIter = 1, maxHits = 4,
+  Resample(dataset, trees, ratchIter = 0, tbrIter = 1, startIter = 1,
+           maxHits = 3, maxTime = 1 / 100,
            concavity = 10, verbosity = 0)
  )
 
@@ -229,7 +255,7 @@ Other split support functions:
 \code{\link{SiteConcordance}}
 }
 \author{
-\href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{split support functions}

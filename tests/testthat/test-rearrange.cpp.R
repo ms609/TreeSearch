@@ -113,6 +113,11 @@ test_that("SPR works", {
   for (internal in which(!1:26 %in% external)[-(1:2)]) {
     Test(internal)
   }
+  
+  expect_equal(SPRMoves(tr)[[428]]$edge, SPRMoves(tr$edge)[[428]])
+  
+  tr <- BalancedTree(7)
+  expect_equal(SPRMoves(tr)[[54]]$edge, SPRMoves(tr$edge)[[54]])
 })
 
 if (FALSE) test_that("SPR works", {

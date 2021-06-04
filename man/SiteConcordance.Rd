@@ -39,9 +39,9 @@ with any tree that groups the first two leaves together to the exclusion
 of the second.
 }
 \examples{
-data('Lobo', package = 'TreeTools')
-dataset <- Lobo.phy
-tree <- TreeTools::NJTree(dataset)
+data('congreveLamsdellMatrices', package = 'TreeSearch')
+dataset <- congreveLamsdellMatrices[[1]][, 1:20]
+tree <- referenceTree
 qc <- QuartetConcordance(tree, dataset)
 cc <- ClusteringConcordance(tree, dataset)
 pc <- PhylogeneticConcordance(tree, dataset)
@@ -71,7 +71,7 @@ Other split support functions:
 \code{\link{MaximizeParsimony}()}
 }
 \author{
-\href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{split support functions}

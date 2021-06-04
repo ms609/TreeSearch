@@ -9,8 +9,15 @@
 #' (i.e. number of different tokens minus one) to its maximum.
 #'
 #' @param char Vector of tokens listing states for the character in question.
-#' @param ambiguousTokens Which tokens, if any, correspond to the ambiguous token
-#' (?).
+#' @param ambiguousTokens Which tokens, if any, correspond to the ambiguous
+#' token (`?`).
+#' 
+#' @return `StepInformation()` returns a numeric vector detailing the amount
+#' of phylogenetic information (in bits) associated with the character when
+#' 0, 1, 2&hellip; extra steps are present.  The vector is named with the
+#' total number of steps associated with each entry in the vector: for example,
+#' a character with three observed tokens must exhibit two steps, so the first
+#' entry (zero extra steps) is named `2` (two steps observed).
 #' 
 #' @references
 #'  \insertRef{Faith2001}{TreeSearch}
@@ -24,24 +31,54 @@
 #' @family profile parsimony functions
 #' @export
 StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
+  NIL <- c('0' = 0)
   char <- char[!char %in% ambiguousTokens]
+  if (length(char) == 0) {
+    return(NIL)
+  }
   split <- sort(as.integer(table(char)), decreasing = TRUE)
   singletons <- split == 1L
   nSingletons <- sum(singletons)
   nInformative <- sum(split) - nSingletons
   minSteps <- length(split) - 1L
-  if (minSteps == 0L) return (c('0' = 1L))
+  if (minSteps == 0L) {
+    return(NIL)
+  }
   
   split <- split[!singletons]
-  if (length(split) < 2L) return (setNames(1L, minSteps))
+  if (length(split) < 2L) {
+    return(setNames(0, minSteps))
+  }
   
-  profile <- vapply(seq_len(split[2]), Carter1, double(1), split[1], split[2])
-  ret <- setNames(Log2Unrooted(sum(split[1:2])) - log2(cumsum(profile)),
+  if (length(split) > 2L) {
+    warning("Ignored least informative tokens where more than two informative ",
+            "tokens present.")
+    ranked <- order(order(split, decreasing = TRUE))
+    split <- split[ranked < 3]
+  }
+  
+  logProfile <- vapply(seq_len(split[2]), LogCarter1, double(1),
+                       split[1], split[2])
+  ret <- setNames(Log2Unrooted(sum(split[1:2]))
+                  - (.LogCumSumExp(logProfile) / log(2)),
                   seq_len(split[2]) + sum(singletons))
-  ret[length(ret)] <- 0 # Floating point error inevitable
+  ret[ret < sqrt(.Machine$double.eps)] <- 0 # Floating point error inevitable
   
   # Return:
   ret
+}
+
+# Adapted from https://rpubs.com/FJRubio/LSE
+.LogCumSumExp <- function (x) { 
+  n <- length(x)
+  Lk <- c(x[1], double(n - 1L))
+  for (k in 1L + seq_len(n - 1L)) {
+    Lk[k] <- Lk[k - 1]
+    Lk[k] <- max(x[k], Lk[k]) + log1p(exp(-abs(x[k] - Lk[k])))
+  }
+  
+  # Return:
+  Lk
 }
 
 #' Number of trees with _m_ additional steps
@@ -64,7 +101,7 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
 #' \insertRef{Steel1995}{TreeSearch}
 #' 
 #' (\insertRef{Steel1996}{TreeSearch})
-#' @importFrom TreeTools DoubleFactorial
+#' @importFrom TreeTools LogDoubleFactorial
 #' @family profile parsimony functions
 #' @export
 Carter1 <- function (m, a, b) {
@@ -81,12 +118,13 @@ Carter1 <- function (m, a, b) {
     }
   }
   prod(
-    factorial(m - 1L),
     (twoN - twoM - m),
-    DoubleFactorial(twoN - 5L),
     N(a, m),
-    N(b, m)
-  ) / DoubleFactorial(twoN - twoM - 1L)
+    N(b, m),
+    exp(lfactorial(m - 1L) + 
+          LogDoubleFactorial(twoN - 5L) -
+          LogDoubleFactorial(twoN - twoM - 1L))
+    )
 }
 
 #' @rdname Carter1
@@ -111,6 +149,30 @@ Log2Carter1 <- function (m, a, b) {
     Log2N(a, m),
     Log2N(b, m)
   ) - Log2DoubleFactorial(twoN - twoM - 1L)
+}
+
+#' @rdname Carter1
+#' @export
+#' @importFrom TreeTools LogDoubleFactorial
+LogCarter1 <- function (m, a, b) {
+  n <- a + b
+  twoN <- n + n
+  twoM <- m + m
+  LogN <- function (n, m) {
+    if (n < m) -Inf else {
+      nMinusM <- n - m
+      (lfactorial(n + nMinusM - 1L) - 
+       lfactorial(nMinusM) -
+       lfactorial(m - 1L)) - (nMinusM * log(2))
+    }
+  }
+  sum(
+    log(twoN - twoM - m),
+    lfactorial(m - 1L),
+    LogDoubleFactorial(twoN - 5L),
+    LogN(a, m),
+    LogN(b, m)
+  ) - LogDoubleFactorial(twoN - twoM - 1L)
 }
 
 # TODO: Replace the below with an advanced version of Maddison & Slakey 1991, 
@@ -165,7 +227,7 @@ Log2Carter1 <- function (m, a, b) {
 #' @importFrom TreeTools NRooted NUnrooted
 #' @examples
 #' WithOneExtraStep(1, 2, 3)
-#' @importFrom TreeTools NUnrootedMult
+#' @importFrom TreeTools NUnrootedMult DoubleFactorial
 #' @export
 WithOneExtraStep <- function (...) {
   splits <- c(...)

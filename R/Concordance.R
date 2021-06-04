@@ -34,9 +34,9 @@
 #' 
 #' \insertRef{Vinh2010}{TreeDist}
 #' @examples 
-#' data('Lobo', package = 'TreeTools')
-#' dataset <- Lobo.phy
-#' tree <- TreeTools::NJTree(dataset)
+#' data('congreveLamsdellMatrices', package = 'TreeSearch')
+#' dataset <- congreveLamsdellMatrices[[1]][, 1:20]
+#' tree <- referenceTree
 #' qc <- QuartetConcordance(tree, dataset)
 #' cc <- ClusteringConcordance(tree, dataset)
 #' pc <- PhylogeneticConcordance(tree, dataset)
@@ -189,7 +189,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' consistent with a specified phylogenetic tree, and the signal:noise
 #' ratio of the character matrix implied if the tree is true.
 #' 
-#' Presenly restricted to datasets whose characters contain a maximum of
+#' Presently restricted to datasets whose characters contain a maximum of
 #' two parsimony-informative states.
 #' 
 #' @return `ConcordantInformation()` returns a named vector with elements:
@@ -204,6 +204,9 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' - `matrixToTree`: the ratio of the cladistic information content of the
 #' matrix to the cladistic information content of the tree, a measure of the
 #' redundancy of the matrix
+#' - `ignored`: information content of characters whose signal and noise could
+#' not be calculated (too many states) and so are not included in the totals
+#' above.
 #' 
 #' @template treeParam
 #' @template datasetParam
@@ -215,7 +218,10 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' @importFrom TreeTools Log2UnrootedMult Log2Unrooted
 #' @export
 ConcordantInformation <- function (tree, dataset) {
-  totalSteps <- CharacterLength(tree, dataset)
+  originalInfo <- sum(apply(PhyDatToMatrix(dataset), 2, CharacterInformation))
+  dataset <- PrepareDataProfile(dataset)
+  
+  extraSteps <- CharacterLength(tree, dataset) - MinimumLength(dataset)
   chars <- matrix(unlist(dataset), attr(dataset, 'nr'))
   ambiguousToken <- which(attr(dataset, 'allLevels') == "?")
   asSplits <- apply(chars, 1, function (x) {
@@ -227,39 +233,75 @@ ConcordantInformation <- function (tree, dataset) {
     }
   })
   if (is.matrix(asSplits)) {
-    asSplits <- lapply(seq_len(ncol(asSplits)), function(i) asSplits[, i])
+    asSplits <- lapply(seq_len(dim(asSplits)[2]), function(i) asSplits[, i])
   }
   ic <- vapply(asSplits, function (split) 
     Log2Unrooted(sum(split)) - Log2UnrootedMult(split),
     double(1))
-  infoLosses <- apply(chars, 1, StepInformation, 
-                      ambiguousToken = ambiguousToken)
   
-  signal <- vapply(seq_along(totalSteps), function (i) {
-    if (totalSteps[i] > 0) {
-      infoLosses[[i]][totalSteps[i]]
-    } else {
-      0
-    }
+  infoLosses <- apply(chars, 1, StepInformation, 
+                      ambiguousToken = ambiguousToken) # , drop = FALSE
+  if (is.matrix(infoLosses)) {
+    infoLosses <- lapply(seq_len(dim(infoLosses)[2]),
+                         function (i) infoLosses[, i])
+  }
+  
+  signal <- vapply(seq_along(extraSteps), function (i) {
+    infoLosses[[i]][extraSteps[i] + 1L]
   }, double(1))
   noise <- ic - signal
   noise[noise < sqrt(.Machine$double.eps)] <- 0
   
+  
   index <- attr(dataset, 'index')
-  totalInfo <- sum(ic[index])
-  totalNoise <- sum(noise[index])
-  totalSignal <- sum(signal[index])
-  signalNoise <- totalSignal / totalNoise
-  
-  infoNeeded <- Log2Unrooted(length(dataset))
-  infoOverkill <- totalInfo / infoNeeded
-  
-  message('dataset contains ',
-          signif(totalInfo), ' bits, of which ', 
-          signif(totalSignal), ' signal, ',
-          signif(totalNoise), ' noise, ',
-          signif(infoNeeded), ' needed.  ',
-          'S:N = ', signif(signalNoise), "\n")
+  if (any(is.na(signal))) {
+    na <- is.na(signal)
+    icA <- ic
+    icA[na] <- 0
+    totalInfo <- sum(ic[index])
+    kept <- sum(icA[index])
+    discarded <- totalInfo - kept
+    warning("Could not calculate signal for characters ",
+            paste0(match(which(na), index), collapse = ', '),
+            '; discarded ', signif(discarded), " bits from totals.")
+    totalNoise <- sum(noise[index], na.rm = TRUE)
+    totalSignal <- sum(signal[index], na.rm = TRUE)
+    signalNoise <- totalSignal / totalNoise
+    
+    infoNeeded <- Log2Unrooted(length(dataset))
+    infoOverkill <- totalInfo / infoNeeded
+    
+    message('`dataset` contains ',
+            signif(totalInfo), ' bits (after discarding ',
+            signif(discarded), '), of which ',
+            signif(totalSignal), ' signal, ',
+            signif(totalNoise), ' noise, ',
+            signif(infoNeeded), ' needed.  ',
+            'S:N = ', signif(signalNoise), "\n")
+    
+  } else {
+    totalInfo <- sum(ic[index])
+    totalNoise <- sum(noise[index])
+    totalSignal <- sum(signal[index])
+    signalNoise <- totalSignal / totalNoise
+    discarded = 0
+    
+    infoNeeded <- Log2Unrooted(length(dataset))
+    infoOverkill <- totalInfo / infoNeeded
+    discarded <- originalInfo - totalInfo
+    if (discarded < sqrt(.Machine$double.eps)) discarded <- 0
+    
+    message('dataset contains ',
+            signif(totalInfo), ' bits',
+            if (totalInfo != originalInfo) {
+              paste0(' (after discarding ', signif(originalInfo - totalInfo),
+                     ' bits)')
+            }, ', of which ', 
+            signif(totalSignal), ' signal, ',
+            signif(totalNoise), ' noise, ',
+            signif(infoNeeded), ' needed.  ',
+            'S:N = ', signif(signalNoise), "\n")
+  }
   
   # Return:
   c(informationContent = totalInfo,
@@ -268,7 +310,9 @@ ConcordantInformation <- function (tree, dataset) {
     signalToNoise = signalNoise, 
     
     treeInformation = infoNeeded,
-    matrixToTree = infoOverkill)
+    matrixToTree = infoOverkill,
+    ignored = discarded
+    )
 }
 
 #' @rdname ConcordantInformation

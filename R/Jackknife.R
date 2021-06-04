@@ -43,7 +43,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
   
   startWeights <- MorphyWeights(morphyObj)['exact', ]
   eachChar <- seq_along(startWeights)
-  deindexedChars <- rep(eachChar, startWeights)
+  deindexedChars <- rep.int(eachChar, startWeights)
   charsToKeep <- ceiling(resampleFreq * length(deindexedChars))
   if (charsToKeep < 1L) {
     stop("resampleFreq of ", resampleFreq, " is too low; can't keep 0 of ",
@@ -137,7 +137,7 @@ JackLabels <- function (tree, jackTrees,
     # Return:
     jackSupport
   } else {
-    ret <- rep('', tree$Nnode)
+    ret <- character(tree$Nnode)
     ret[as.integer(names(jackSupport)) - NTip(tree)] <- jackSupport
     
     # Return:
