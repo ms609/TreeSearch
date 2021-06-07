@@ -5,17 +5,22 @@
 #' 
 #' @template treeParam
 #' @template datasetParam
-#' @char Index of character to plot.
+#' @param char Index of character to plot.
 #' @param \dots Further arguments to pass to `plot.phylo()`.
+#' @return `PlotCharacter()` returns a matrix in which each row corresponds
+#' to a numbered tip or node of `tree`, and each column corresponds to a 
+#' token; the tokens that might parsimoniously be present at each point
+#' on a tree are denoted with `TRUE`.
+#' 
 #' @references 
 #' - \insertRef{Brazeau2019}{TreeSearch}
 #' @examples
 #' tree <- TreeTools::BalancedTree(12)
-#' tree <- ape::read.tree(text = "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
+#' tree <- ape::read.tree(text = 
+#'   "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
 #' ## A character with inapplicable data
 #' dataset <- StringToPhyDat("23--1??--032", tips = tree)
 #' PlotCharacter(tree, dataset)
-#' 
 #' 
 #' 
 #' data("Lobo", package = "TreeTools")
@@ -24,6 +29,7 @@
 #' oPar <- par(mar = rep(0, 4))
 #' PlotCharacter(tree, dataset, 1)
 #' par(oPar)
+#' @template MRS
 #' @export
 PlotCharacter <- function (tree, dataset, char = 1L, ...) {
   
@@ -136,6 +142,7 @@ PlotCharacter <- function (tree, dataset, char = 1L, ...) {
           state[n, ] <- lState | rState
         }
       }
+      message ("DP1: Set node ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
     }
     
     # First uppass
@@ -178,6 +185,7 @@ PlotCharacter <- function (tree, dataset, char = 1L, ...) {
           }
         }
       }
+      message ("UP1: Set node ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
     }
     for (n in tips) {
       nState <- state[n, ]
@@ -193,6 +201,7 @@ PlotCharacter <- function (tree, dataset, char = 1L, ...) {
           state[n, ] <- nState & appLevels
         }
       }
+      message ("UP1: Set tip  ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
     }
     
     # Second downpass
@@ -220,6 +229,7 @@ PlotCharacter <- function (tree, dataset, char = 1L, ...) {
           state[n, ] <- (lState | rState) & appLevels 
         }
       }
+      message ("DP2: Set node ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
     }
     
     # Second uppass
@@ -262,6 +272,7 @@ PlotCharacter <- function (tree, dataset, char = 1L, ...) {
           }
         }
       }
+      message ("UP2: Set node ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
     }
     
     for (n in tips) {
@@ -270,6 +281,7 @@ PlotCharacter <- function (tree, dataset, char = 1L, ...) {
       common <- aState & nState
       if (any(common)) {
         state[n, ] <- common
+        message ("UP2: Set tip ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
       }
     }
   }
@@ -279,4 +291,7 @@ PlotCharacter <- function (tree, dataset, char = 1L, ...) {
   nodelabels(apply(state, 1, function (n) paste0(levels[n], collapse = '')),
              seq_len(nTip + nNode))
   nodelabels(adj = 3, bg = 'yellow')
-  }
+  
+  # Return:
+  state
+}
