@@ -188,6 +188,75 @@ PlotCharacter <- function (tree, dataset, char = 1L, ...) {
         }
       }
     }
+    
+    # Second downpass
+    for (n in postOrderNodes) {
+      nState <- state[n, ]
+      lState <- state[left[n], ]
+      rState <- state[right[n], ]
+      # If the node had an applicable token in the first uppass
+      if (any(nState[appLevels])) {
+        # 3. If there is any token in common between both descendants
+        common <- lState & rState
+        if (any(common)) {
+          # 4. If the tokens in common are applicable
+          if (any(common[appLevels])) {
+            # set the node’s state to be the tokens held in common,
+            #  without the inapplicable token
+            state[n, ] <- common & appLevels
+          } else {
+            # set the node’s state to be the inapplicable token
+            state[n, ] <- inappLevel
+          }
+        } else {
+          # 5. Set the node’s state to be the union of the states of both
+          # descendants (if present) without the inapplicable token
+          state[n, ] <- lState & rState & appLevels 
+        }
+      }
+    }
+    
+    # Second uppass
+    for (n in preOrderNodes) {
+      nState <- state[n, ]
+      aState <- state[parentOf[n], ]
+      lState <- state[left[n], ]
+      rState <- state[right[n], ]
+      # 1. If the node has any applicable token 
+      if (any(nState[appLevels])) {
+        # 2. If the node’s ancestor has any applicable token
+        if (any(aState[appLevels])) {
+          # 3. If the node’s state is NOT the same as its ancestor’s
+          if (any(nState != aState)) {
+            # 4. If there is any token in common between the node’s descendants
+            common <- lState & rState
+            if (any(common)) {
+              # 5. Add to the current node’s state any token in common between
+              #  its ancestor and its descendants
+              state[n, ] <- nState | (aState & common)
+            } else {
+              # 6. If the states of the node’s descendants both contain the
+              #  inapplicable token
+              if (any(lState[inappLevel]) && any(rState[inappLevel])) {
+                # 7. If there is any token in common between either of the 
+                # node’s descendants and its ancestor
+                if (any(lState & aState) || any(rState & aState)) {
+                  # set the node’s state to be its ancestor’s state
+                  state[n, ] <- aState
+                } else { 
+                  # set the current node’s state to be all applicable tokens 
+                  # common to both its descendants and ancestor
+                  state[n, ] <- appLevels & common & aState
+                }
+              } else {
+                # 8. Add to the node’s state the tokens of its ancestor
+                state[n, ] <- nState | aState
+              }
+            }
+          }
+        }
+      }
+    }
   }
     
   plot(tree)
