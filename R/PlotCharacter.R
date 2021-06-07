@@ -11,6 +11,7 @@
 #' - \insertRef{Brazeau2019}{TreeSearch}
 #' @examples
 #' tree <- TreeTools::BalancedTree(12)
+#' tree <- ape::read.tree(text = "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
 #' ## A character with inapplicable data
 #' dataset <- StringToPhyDat("23--1??--032", tips = tree)
 #' PlotCharacter(tree, dataset)
@@ -53,7 +54,7 @@ PlotCharacter <- function (tree, dataset, char = 1L, ...) {
   tips <- seq_len(nTip)
   
   # Read states
-  if (!is.phylo(dataset)) {
+  if (!inherits(dataset, 'phylo')) {
     dataset <- MatrixToPhyDat(dataset)
   }
   character <- dataset[, char]
@@ -140,7 +141,12 @@ PlotCharacter <- function (tree, dataset, char = 1L, ...) {
     # First uppass
     for (n in preOrderNodes) {
       nState <- state[n, ]
-      aState <- state[parentOf[n], ]
+      aState <- if (n == rootNode && !all(state[n, ] == inappLevel)) {
+        state[n, ] & appLevels
+      } else {
+        state[parentOf[n], ]
+      }
+      
       lState <- state[left[n], ]
       rState <- state[right[n], ]
       # 1. If the node has the inapplicable token
@@ -211,7 +217,7 @@ PlotCharacter <- function (tree, dataset, char = 1L, ...) {
         } else {
           # 5. Set the node’s state to be the union of the states of both
           # descendants (if present) without the inapplicable token
-          state[n, ] <- lState & rState & appLevels 
+          state[n, ] <- (lState | rState) & appLevels 
         }
       }
     }
@@ -257,11 +263,20 @@ PlotCharacter <- function (tree, dataset, char = 1L, ...) {
         }
       }
     }
+    
+    for (n in tips) {
+      nState <- state[n, ]
+      aState <- state[parentOf[n], ]
+      common <- aState & nState
+      if (any(common)) {
+        state[n, ] <- common
+      }
+    }
   }
     
   plot(tree)
   
-  nodelabels(apply(state, 1, function (n) {
-    paste0(levels[n], collapse = '')
-  }), seq_len(nTip + nNode))
+  nodelabels(apply(state, 1, function (n) paste0(levels[n], collapse = '')),
+             seq_len(nTip + nNode))
+  nodelabels(adj = 3, bg = 'yellow')
   }
