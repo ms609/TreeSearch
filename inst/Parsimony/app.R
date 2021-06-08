@@ -152,6 +152,7 @@ ui <- fluidPage(theme = 'app.css',
     fluidRow(
       tags$h1("TreeSearch beta UI"),
       fileInput("datafile", "Load data", placeholder = "No data file selected"),
+      actionButton("loadTrees", "Load trees"),
       radioButtons("dataFormat", "Data format", 
                    list("Nexus" = 'nex', "TNT" = 'tnt'),
                    'nex', TRUE),
@@ -162,11 +163,12 @@ ui <- fluidPage(theme = 'app.css',
                   max = 3L, pre = '10^', value = 1L),
       sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 6L, step = 1L),
       # sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 0L, step = 1L),
-      sliderInput('tbrIter', "TBR iterations", min = 1L, max = 50L, value = 6L, step = 1L),
+      sliderInput('tbrIter', "TBR depth", min = 1L, max = 20L, value = 1L, step = 1L),
       # sliderInput('tbrIter', "TBR iterations", min = 1L, max = 50L, value = 1L, step = 1L),
       sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 2L, pre = '10^'),
       # sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 0.6, pre = '10^'),
-      sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 3L),
+      sliderInput('startIter', "First iteration extra depth", min = 1L, max = 10L, value = 3L),
+      sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
       # sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
       sliderInput('verbosity', "Notification level", min = 0L, max = 3L, value = 3L, step = 1L),
       actionButton("go", "Search"),
@@ -177,7 +179,9 @@ ui <- fluidPage(theme = 'app.css',
                         "Individual tree" = 'ind',
                         "Tree space" = 'space'), 'cons')),
       hidden(sliderInput('whichTree', 'Tree to plot', min = 1L, max = 1L,
-                         value = 1L, step = 1L))
+                         value = 1L, step = 1L)),
+      hidden(sliderInput('whichChar', 'Character to plot', min = 0L, max = 1L,
+                         value = 0L, step = 1L))
       ),
   ),
   column(9,
@@ -213,8 +217,10 @@ server <- function(input, output, session) {
     if (is.null(input)) return("No data file selected.")
     tmpFile <- fileInput$datapath
     if (is.null(tmpFile)) return ("No data file found.")
+    r$chars <- NULL
     if (input$dataFormat == 'nex') {
       ret <- ReadAsPhyDat(tmpFile)
+      r$chars <- ReadCharacters(tmpFile)
     } else {
       ret <- ReadTntAsPhyDat(tmpFile)
     }
@@ -224,7 +230,53 @@ server <- function(input, output, session) {
       r$trees <- NULL
       updateActionButton(session, "go", "New search")
     }
+    updateSliderInput(session, 'whichChar', min = 0L,
+                      max = attr(ret, 'nr'), value = 1L)
+    
     ret
+  })
+  
+  observeEvent(input$loadTrees, {
+    showModal(modalDialog(
+      tagList(fileInput("treeFile", label = '')),
+      title = 'Load trees from file',
+      footer = tagList(actionButton("replaceTrees", "Replace existing trees"),
+                       modalButton("Cancel"))))
+  })
+    
+  observeEvent(input$replaceTrees, {
+    tmpFile <- input$treeFile$datapath
+    trees <- tryCatch(read.tree(tmpFile),
+                      error = function (x) tryCatch(read.nexus(tmpFile),
+                                                    error = function (x) NULL))
+    if (is.null(trees)) {
+      showNotification("Trees not in a recognized format", type = 'error')
+    } else {
+      r$trees <- c(trees)
+      removeModal()
+      showNotification(paste("Loaded", length(r$trees), "trees"), type = "message")
+      scores <- tryCatch(signif(TreeLength(r$trees, dataset(), concavity = concavity())),
+                         error = function (x) {
+                           showNotification(type = "error",
+                                            "Could not score all trees with dataset")
+                           NULL
+                           })
+      
+      score <- if (is.null(scores)) {
+        "; could not be scored from dataset"
+      } else if (length(unique(scores)) == 1) {
+        paste0(", each with score ", unique(scores))
+      } else {
+        paste0(" with scores ", min(scores), " to ", max(scores))
+      }
+                         
+                         
+      output$results <- renderText(paste0(
+        "Loaded ", length(r$trees), " trees", score))
+      updateActionButton(session, "go", "Continue search")
+      show('plotFormat')
+    }
+    
   })
   
   concavity <- reactive({
@@ -246,6 +298,7 @@ server <- function(input, output, session) {
                                    ratchIter = input$ratchIter,
                                    tbrIter = input$tbrIter,
                                    maxHits = ceiling(10 ^ input$maxHits),
+                                   startIter = input$startIter,
                                    finalIter = input$finalIter,
                                    verbosity = input$verbosity,
                                    session = session)),
@@ -261,6 +314,7 @@ server <- function(input, output, session) {
     }
   })
   
+  
   observeEvent(input$plotFormat, PlotConsensus())
   
   RenderMainPlot <- function (x) {
@@ -272,6 +326,7 @@ server <- function(input, output, session) {
     switch(input$plotFormat,
            'cons' = {
              hide('whichTree')
+             hide('whichChar')
              output$treePlot = RenderMainPlot({
                par(mar = rep(0, 4), cex = 0.9)
                plot(consensus(r$trees))
@@ -279,17 +334,25 @@ server <- function(input, output, session) {
            },
            'clus' = {
              hide('whichTree')
+             hide('whichChar')
              output$treePlot = RenderMainPlot(PlotClusterCons())
            },
            'ind' = {
              show('whichTree')
+             show('whichChar')
+             
              output$treePlot = RenderMainPlot({
                par(mar = rep(0, 4), cex = 0.9)
-               plot(r$trees[[input$whichTree]])
+               if (input$whichChar > 0) {
+                 PlotCharacter(r$trees, dataset(), input$whichChar)
+               } else {
+                 plot(r$trees[[input$whichTree]])
+               }
              })
            },
            'space' = {
              hide('whichTree')
+             hide('whichChar')
              output$treePlot = RenderMainPlot(treespacePlot())
            }
     )
@@ -383,7 +446,7 @@ server <- function(input, output, session) {
       hSil <- hSils[bestH]
       hCluster <- hClusters[[bestH]]
     
-      bestCluster <- c('none', 'pam', 'hmm')[which.max(c(0, pamSil, hSil))]
+      bestCluster <- c('none', 'pam', 'hmm')[which.max(c(0.4, pamSil, hSil))]
     } else {
       bestCluster <- 'none'
     }
@@ -449,7 +512,7 @@ server <- function(input, output, session) {
   })
   
   maxProjDim <- reactive({
-    min(6L, length(r$trees) - 1L)
+    min(5L, length(r$trees) - 1L)
   })
   
   nProjDim <- reactive({
@@ -458,7 +521,7 @@ server <- function(input, output, session) {
   
   dims <- debounce(reactive({
     if (mode3D()) 3L else {
-      min(6, maxProjDim())
+      min(5L, maxProjDim())
     }
   }), 400)
   
