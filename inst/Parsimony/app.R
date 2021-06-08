@@ -153,9 +153,6 @@ ui <- fluidPage(theme = 'app.css',
       tags$h1("TreeSearch beta UI"),
       fileInput("datafile", "Load data", placeholder = "No data file selected"),
       actionButton("loadTrees", "Load trees"),
-      radioButtons("dataFormat", "Data format", 
-                   list("Nexus" = 'nex', "TNT" = 'tnt'),
-                   'nex', TRUE),
       selectInput('character.weight', "Character weighting", list("Equal" = "equal"), "equal"),
       selectInput('implied.weights', "Step weighting", 
                   list("Implied" = "on", "Equal" = "off"), "on"),
@@ -179,9 +176,7 @@ ui <- fluidPage(theme = 'app.css',
                         "Individual tree" = 'ind',
                         "Tree space" = 'space'), 'cons')),
       hidden(sliderInput('whichTree', 'Tree to plot', min = 1L, max = 1L,
-                         value = 1L, step = 1L)),
-      hidden(sliderInput('whichChar', 'Character to plot', min = 0L, max = 1L,
-                         value = 0L, step = 1L))
+                         value = 1L, step = 1L))
       ),
   ),
   column(9,
@@ -200,6 +195,13 @@ ui <- fluidPage(theme = 'app.css',
     fluidRow(
       plotOutput(outputId = "treePlot", height = "600px"),
       hidden(plotOutput('clustCons', height = "200px")),
+      hidden(tags$div(id = 'charChooser',
+        numericInput('whichChar', 'Character to map:', value = 1L,
+                     min = 0L, 
+                     max = 1L,
+                     step = 1L),
+        htmlOutput('charMapLegend')
+      )),
       htmlOutput('references'),
     ),
   )
@@ -212,28 +214,49 @@ server <- function(input, output, session) {
   ##############################################################################
   # Load data
   ##############################################################################
-  dataset <- reactive({
+  
+  observeEvent(input$datafile, {
     fileInput <- input$datafile
-    if (is.null(input)) return("No data file selected.")
-    tmpFile <- fileInput$datapath
-    if (is.null(tmpFile)) return ("No data file found.")
+    r$dataset <- NULL
     r$chars <- NULL
-    if (input$dataFormat == 'nex') {
-      ret <- ReadAsPhyDat(tmpFile)
-      r$chars <- ReadCharacters(tmpFile)
-    } else {
-      ret <- ReadTntAsPhyDat(tmpFile)
+    if (is.null(input)) {
+      showNotification(type = "error", "No data file selected")
+      return("No data file selected.")
     }
+    tmpFile <- fileInput$datapath
+    if (is.null(tmpFile)) {
+     showNotification(type = "error", "No data file found.")
+     return ("No data file found.")
+    }
+    r$dataset <- tryCatch(ReadTntAsPhyDat(tmpFile),
+                          error = function (e) tryCatch({
+                            r$chars <- ReadCharacters(tmpFile)
+                            ReadAsPhyDat(tmpFile)
+                            }, error = function (e) NULL))
+    
+    if (is.null(r$dataset)) {
+     showNotification(type = "error", "Could not read data from file")
+      
+      updateSliderInput(session, 'whichChar', min = 0L,
+                        max = 0L, value = 0L)
+     return ("Could not read data from file")
+    } else {
+      showNotification(type = "message", 
+                       paste("Loaded", attr(r$dataset, 'nr'), "characters and",
+                             length(r$dataset), "taxa"))
+      
+      updateSliderInput(session, 'whichChar', min = 0L,
+                        max = as.integer(attr(r$dataset, 'nr')), value = 1L)
+    }
+    
+    
     if (!is.null(r$trees) && 
-        length(intersect(names(ret), r$trees[[1]]$tip.label)) != 
-        length(ret)) {
+        length(intersect(names(r$dataset), r$trees[[1]]$tip.label)) != 
+        length(r$dataset)) {
       r$trees <- NULL
       updateActionButton(session, "go", "New search")
     }
-    updateSliderInput(session, 'whichChar', min = 0L,
-                      max = attr(ret, 'nr'), value = 1L)
     
-    ret
   })
   
   observeEvent(input$loadTrees, {
@@ -255,7 +278,12 @@ server <- function(input, output, session) {
       r$trees <- c(trees)
       removeModal()
       showNotification(paste("Loaded", length(r$trees), "trees"), type = "message")
-      scores <- tryCatch(signif(TreeLength(r$trees, dataset(), concavity = concavity())),
+      updateSliderInput(session, 'whichTree', min = 1L,
+                        max = length(r$trees), value = 1L)
+      updateActionButton(session, "go", "Continue search")
+      show('plotFormat')
+      
+      scores <- tryCatch(signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
                          error = function (x) {
                            showNotification(type = "error",
                                             "Could not score all trees with dataset")
@@ -270,11 +298,9 @@ server <- function(input, output, session) {
         paste0(" with scores ", min(scores), " to ", max(scores))
       }
                          
-                         
+      
       output$results <- renderText(paste0(
         "Loaded ", length(r$trees), " trees", score))
-      updateActionButton(session, "go", "Continue search")
-      show('plotFormat')
     }
     
   })
@@ -286,12 +312,12 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$go, {
-    if (!inherits(dataset(), 'phyDat')) {
+    if (!inherits(r$dataset, 'phyDat')) {
       showNotification("No data loaded", type = 'error')
     } else {
-      r$trees <- withProgress(c(MaximizeParsimony(dataset(),
+      r$trees <- withProgress(c(MaximizeParsimony(r$dataset,
                                    tree = if(is.null(r$trees)) 
-                                     TreeTools::NJTree(dataset())
+                                     TreeTools::NJTree(r$dataset)
                                    else
                                      r$trees[[1]],
                                    concavity = concavity(),
@@ -303,11 +329,12 @@ server <- function(input, output, session) {
                                    verbosity = input$verbosity,
                                    session = session)),
                               message = "Searching...")
+      
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
       output$results <- renderText(paste0(
         "Found ", length(r$trees), " trees with score ", 
-        signif(TreeLength(r$trees[[1]], dataset(), concavity = concavity()))))
+        signif(TreeLength(r$trees[[1]], r$dataset, concavity = concavity()))))
       updateActionButton(session, "go", "Continue search")
       show('plotFormat')
       PlotConsensus()
@@ -316,17 +343,19 @@ server <- function(input, output, session) {
   
   
   observeEvent(input$plotFormat, PlotConsensus())
+  observeEvent(input$whichTree, PlotConsensus())
+  observeEvent(input$whichChar, PlotConsensus())
   
   RenderMainPlot <- function (x) {
     renderPlot(x, width = PlotSize(), height = PlotSize())
   }
   
-  PlotConsensus <- function () (
-    if (!is.null(r$trees) && inherits(r$trees, 'multiPhylo'))
+  PlotConsensus <- function () {
+    if (!is.null(r$trees)) {
     switch(input$plotFormat,
            'cons' = {
              hide('whichTree')
-             hide('whichChar')
+             hide('charChooser')
              output$treePlot = RenderMainPlot({
                par(mar = rep(0, 4), cex = 0.9)
                plot(consensus(r$trees))
@@ -334,29 +363,76 @@ server <- function(input, output, session) {
            },
            'clus' = {
              hide('whichTree')
-             hide('whichChar')
+             hide('charChooser')
              output$treePlot = RenderMainPlot(PlotClusterCons())
            },
            'ind' = {
              show('whichTree')
-             show('whichChar')
+             show('charChooser')
              
              output$treePlot = RenderMainPlot({
                par(mar = rep(0, 4), cex = 0.9)
-               if (input$whichChar > 0) {
-                 PlotCharacter(r$trees, dataset(), input$whichChar)
+               n <- as.integer(input$whichChar)
+               if (length(n) && n > 0L) {
+                 pc <- PlotCharacter(r$trees[[input$whichTree]],
+                                     r$dataset, input$whichChar)
+                 
+                 output$charMapLegend <- renderUI({
+                   pal <- c("#00bfc6", "#ffd46f", "#ffbcc5", "#c8a500",
+                            "#ffcaf5", "#d5fb8d", "#e082b4", "#25ffd3",
+                            "#a6aaff", "#e6f3cc", "#67c4ff", "#9ba75c",
+                            "#60b17f")
+                   
+                   if (!is.null(r$chars)) {
+                     UCFirst <- function (str) {
+                       paste0(toupper(substr(str, 1, 1)),
+                              substr(str, 2, nchar(str)))
+                     }
+                     states <- attr(chars, 'state.labels')[[n]]
+                     tokens <- colnames(pc)
+                     appTokens <- setdiff(tokens, '-')
+                     .State <- function (glyph, text = 'Error?', col = 'red') {
+                       if (is.numeric(glyph)) {
+                         if (glyph > length(appTokens)) return (NULL)
+                         text <- states[states != ''][glyph]
+                         col <- pal[glyph]
+                         glyph <- appTokens[glyph]
+                       }
+                       tags$li(style = 'margin-bottom: 2px;',
+                         tags$span(glyph,
+                                   style = paste("display: inline-block;",
+                                                 "border: 1px solid;",
+                                                 "width: 1em;",
+                                                 "text-align: center;",
+                                                 "line-height: 1em;",
+                                                 "margin-right: 0.5em;",
+                                                 "background-color:", col, ";")),
+                         tags$span(UCFirst(text)))
+                     }
+                     tagList(
+                       tags$h3(colnames(r$chars)[n]),
+                       tags$ul(style = "list-style: none;",
+                         .State(1),
+                         .State(2),
+                         if ('-' %in% tokens) .State("-", "Inapplicable", 'lightgrey'),
+                         .State("?", "Ambiguous", 'grey')
+                       )
+                     )
+                  }
+                 })
                } else {
+                 output$charMapLegend <- renderUI({})
                  plot(r$trees[[input$whichTree]])
                }
              })
            },
            'space' = {
              hide('whichTree')
-             hide('whichChar')
+             hide('charChooser')
              output$treePlot = RenderMainPlot(treespacePlot())
            }
-    )
-  )
+    )}
+  }
   
   output$pcQuality <- renderPlot({
     par(mar = c(2, 0, 0, 0))
@@ -672,7 +748,6 @@ server <- function(input, output, session) {
       write.nexus(r$trees, file = file)
     }
   )
-  
   
   ##############################################################################
   # References
