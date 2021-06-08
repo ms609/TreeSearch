@@ -4,7 +4,18 @@
 \alias{PlotCharacter}
 \title{Plot the distribution of a character on a tree}
 \usage{
-PlotCharacter(tree, dataset, char = 1L, ...)
+PlotCharacter(
+  tree,
+  dataset,
+  char = 1L,
+  tokenCol = NULL,
+  ambigCol = "grey",
+  inappCol = "lightgrey",
+  ambigLty = "dotted",
+  inappLty = "dashed",
+  plainLty = par("lty"),
+  ...
+)
 }
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
@@ -13,6 +24,13 @@ PlotCharacter(tree, dataset, char = 1L, ...)
 whose names correspond to the labels of any accompanying tree.}
 
 \item{char}{Index of character to plot.}
+
+\item{tokenCol}{Palette specifying colours to associate with each token in
+turn, in the sequence listed in \code{attr(dataset, 'levels')}.}
+
+\item{ambigCol, ambigLty, inappCol, inappLty, plainLty}{Colours and line types
+to apply to ambiguous, inapplicable and applicable tokens.  See the \code{lty}
+\link{graphical parameter} for details of line stylings.  Overrides \code{tokenCol}.}
 
 \item{\dots}{Further arguments to pass to \code{plot.phylo()}.}
 }
@@ -28,11 +46,11 @@ modified Fitch algorithm presented in Brazeau \emph{et al.} (2019).
 }
 \examples{
 tree <- TreeTools::BalancedTree(12)
-tree <- ape::read.tree(text = "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
+tree <- ape::read.tree(text = 
+  "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
 ## A character with inapplicable data
-dataset <- StringToPhyDat("23--1??--032", tips = tree)
+dataset <- TreeTools::StringToPhyDat("23--1??--032", tips = tree)
 PlotCharacter(tree, dataset)
-
 
 
 data("Lobo", package = "TreeTools")
