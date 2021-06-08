@@ -305,7 +305,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     }
   }
   
-  anywhere <- as.logical(colSums(state))
+  anywhere <- as.logical(colSums(state[as.logical(rowSums(!state[, colnames(state) != '-'])), ]))
   slimState <- state[, anywhere]
   tokens <- colnames(slimState)
   if (is.null(tokenCol)) {
@@ -339,11 +339,11 @@ PlotCharacter <- function (tree, dataset, char = 1L,
              ...)
   
   NodeText <- function (n) {
-    if (all(n[anywhere])) '?' else paste0(levels[n], collapse = '')
+    if (all(n[anywhere & names(n) != '-'])) '?' else paste0(levels[n], collapse = '')
   }
   nodelabels(apply(state, 1, NodeText),
              seq_len(nTip + nNode), bg = nodeStyle['col', ], ...)
   
   # Return:
-  state
+  slimState
 }
