@@ -305,8 +305,9 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     }
   }
   
-  state <- state[, as.logical(colSums(state))]
-  tokens <- colnames(state)
+  anywhere <- as.logical(colSums(state))
+  slimState <- state[, anywhere]
+  tokens <- colnames(slimState)
   if (is.null(tokenCol)) {
     tokenCol <- tokens
     tokenCol[tokens != '-'] <- c("#00bfc6",
@@ -324,7 +325,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
                                  "#60b17f")[seq_along(setdiff(tokens, '-'))]
     tokenCol[tokens == '-'] <- inappCol
   }
-  nodeStyle <- apply(state, 1, function (tkn) {
+  nodeStyle <- apply(slimState, 1, function (tkn) {
     if (sum(tkn) > 1L) {
       c(col = ambigCol, lty = ambigLty)
     } else {
@@ -337,7 +338,10 @@ PlotCharacter <- function (tree, dataset, char = 1L,
              node.lty = nodeStyle['lty', ],
              ...)
   
-  nodelabels(apply(state, 1, function (n) paste0(levels[n], collapse = '')),
+  NodeText <- function (n) {
+    if (all(n[anywhere])) '?' else paste0(levels[n], collapse = '')
+  }
+  nodelabels(apply(state, 1, NodeText),
              seq_len(nTip + nNode), bg = nodeStyle['col', ], ...)
   
   # Return:
