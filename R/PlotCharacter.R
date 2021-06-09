@@ -342,7 +342,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     if (all(n[anywhere & names(n) != '-'])) '?' else paste0(levels[n], collapse = '')
   }
   nodelabels(apply(state, 1, NodeText),
-             seq_len(nTip + nNode), bg = nodeStyle['col', ], ...)
+             seq_len(nTip + nNode), bg = nodeStyle['col', ])
   
   # Return:
   slimState
