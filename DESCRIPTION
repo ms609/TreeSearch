@@ -42,8 +42,9 @@ Suggests:
     TreeDist (>= 2.0.3.9003),
     vdiffr,
     viridisLite
-Config/Needs/website: pkgdown
 Config/Needs/coverage: covr
+Config/Needs/metadata: codemetar
+Config/Needs/website: pkgdown
 RdMacros: Rdpack
 LinkingTo:
     Rcpp,
