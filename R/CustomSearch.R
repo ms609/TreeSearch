@@ -141,10 +141,11 @@ EdgeListSearch <- function (edgeList, dataset,
 #' data('Lobo', package='TreeTools')
 #' njtree <- TreeTools::NJTree(Lobo.phy)
 #'
-#' \dontrun{
-#' TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = NNISwap)
-#' TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = RootedSPRSwap)
-#' TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
+#' ## Only run examples in interactive R sessions
+#' if (interactive()) {
+#'   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = NNISwap)
+#'   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = RootedSPRSwap)
+#'   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
 #' }
 #' @template MRS
 #' @family custom search functions
