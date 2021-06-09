@@ -196,13 +196,12 @@ ui <- fluidPage(theme = 'app.css',
       plotOutput(outputId = "treePlot", height = "600px"),
       hidden(plotOutput('clustCons', height = "200px")),
       hidden(tags$div(id = 'charChooser',
-        numericInput('whichChar', 'Character to map:', value = 1L,
-                     min = 0L, 
-                     max = 1L,
-                     step = 1L),
+        tags$div(numericInput('whichChar', 'Character to map:', value = 1L,
+                              min = 0L, max = 1L, step = 1L, width = 200),
+                 style = "float: right; width: 200px; margin-left: 2em;"),
         htmlOutput('charMapLegend')
       )),
-      htmlOutput('references'),
+      htmlOutput('references', style = "clear: both;"),
     ),
   )
 )
@@ -250,11 +249,14 @@ server <- function(input, output, session) {
     }
     
     
-    if (!is.null(r$trees) && 
-        length(intersect(names(r$dataset), r$trees[[1]]$tip.label)) != 
-        length(r$dataset)) {
-      r$trees <- NULL
-      updateActionButton(session, "go", "New search")
+    if (!is.null(r$trees)) {
+      if (length(intersect(names(r$dataset), r$trees[[1]]$tip.label)) != 
+          length(r$dataset)) {
+        r$trees <- NULL
+        updateActionButton(session, "go", "New search")
+      } else {
+        show('plotFormat')
+      }
     }
     
   })
@@ -337,46 +339,42 @@ server <- function(input, output, session) {
         signif(TreeLength(r$trees[[1]], r$dataset, concavity = concavity()))))
       updateActionButton(session, "go", "Continue search")
       show('plotFormat')
-      PlotConsensus()
     }
   })
   
-  
-  observeEvent(input$plotFormat, PlotConsensus())
-  observeEvent(input$whichTree, PlotConsensus())
-  observeEvent(input$whichChar, PlotConsensus())
+  PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 50)
+  PlottedTree <- debounce(reactive(Postorder(r$trees[[input$whichTree]])), 100)
   
   RenderMainPlot <- function (x) {
     renderPlot(x, width = PlotSize(), height = PlotSize())
   }
   
-  PlotConsensus <- function () {
+  MainPlot <- reactive({
     if (!is.null(r$trees)) {
     switch(input$plotFormat,
            'cons' = {
              hide('whichTree')
              hide('charChooser')
-             output$treePlot = RenderMainPlot({
+             {
                par(mar = rep(0, 4), cex = 0.9)
                plot(consensus(r$trees))
-             })
+             }
            },
            'clus' = {
              hide('whichTree')
              hide('charChooser')
-             output$treePlot = RenderMainPlot(PlotClusterCons())
+             PlotClusterCons()
            },
            'ind' = {
              show('whichTree')
              show('charChooser')
              
-             output$treePlot = RenderMainPlot({
+             {
                par(mar = rep(0, 4), cex = 0.9)
-               n <- as.integer(input$whichChar)
+               n <- PlottedChar()
                if (length(n) && n > 0L) {
-                 pc <- PlotCharacter(r$trees[[input$whichTree]],
-                                     r$dataset, input$whichChar,
-                                     edge.width = 2)
+                 pc <- PlotCharacter(PlottedTree(), r$dataset, n,
+                                     edge.width = 2.5)
                  
                  output$charMapLegend <- renderUI({
                    pal <- c("#00bfc6", "#ffd46f", "#ffbcc5", "#c8a500",
@@ -426,17 +424,23 @@ server <- function(input, output, session) {
                  })
                } else {
                  output$charMapLegend <- renderUI({})
-                 plot(r$trees[[input$whichTree]])
+                 plot(PlottedTree())
                }
-             })
+             }
            },
            'space' = {
              hide('whichTree')
              hide('charChooser')
-             output$treePlot = RenderMainPlot(treespacePlot())
+             treespacePlot()
            }
     )}
-  }
+  })
+  
+  PlotSize <- function () debounce(reactive(input$plotSize), 100)
+  
+  output$treePlot <- renderPlot(MainPlot(),
+                                width = PlotSize(),
+                                height = PlotSize())
   
   output$pcQuality <- renderPlot({
     par(mar = c(2, 0, 0, 0))
@@ -691,17 +695,6 @@ server <- function(input, output, session) {
   }
   
   mode3D <- reactive("show3d" %in% input$display)
-  PlotSize <- function () debounce(reactive(input$plotSize), 100)
-  output$distPlot <- RenderMainPlot({
-    if (!mode3D()) {
-      if (inherits(distances(), 'dist')) {
-        treespacePlot()
-        output$projectionStatus <- renderText('')
-      } else {
-        output$projectionStatus <- renderText("No distances available.")
-      }
-    }
-  })
   
   plotContent <- reactive({
     switch(input$plotFormat,
