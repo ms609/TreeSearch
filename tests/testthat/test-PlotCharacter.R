@@ -43,6 +43,7 @@ test_that("PlotCharacter()", {
   Test("????????????")
   Test("-------?????")
   Test("------------")
+  Test("1234(45)AACGTTT")
   
   # From TGuillerme testing suite:
   Test("11-------100")
