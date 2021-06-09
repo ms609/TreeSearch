@@ -14,6 +14,7 @@
 #' @param ambigCol,ambigLty,inappCol,inappLty,plainLty Colours and line types
 #' to apply to ambiguous, inapplicable and applicable tokens.  See the `lty` 
 #' [graphical parameter] for details of line stylings.  Overrides `tokenCol`.
+#' @param tipOffset Numeric: how much to offset tips from their labels.
 #' @param \dots Further arguments to pass to `plot.phylo()`.
 #' 
 #' @return `PlotCharacter()` returns a matrix in which each row corresponds
@@ -57,6 +58,8 @@ PlotCharacter <- function (tree, dataset, char = 1L,
                            ambigLty = 'dotted',
                            inappLty = 'dashed',
                            plainLty = par('lty'),
+                           
+                           tipOffset = 1,
                            ...) {
   
   # Read tree
@@ -354,6 +357,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     plot.phylo(tree,
                node.color = nodeStyle['col', , drop = FALSE],
                node.lty = nodeStyle['lty', , drop = FALSE],
+               label.offset = tipOffset,
                ...)
     
     NodeText <- function (n) {
