@@ -45,19 +45,20 @@ Reconstructs the distribution of a character on a tree topology using the
 modified Fitch algorithm presented in Brazeau \emph{et al.} (2019).
 }
 \examples{
-tree <- TreeTools::BalancedTree(12)
+# Set up plotting area
+oPar <- par(mar = rep(0, 4))
+
 tree <- ape::read.tree(text = 
   "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
 ## A character with inapplicable data
 dataset <- TreeTools::StringToPhyDat("23--1??--032", tips = tree)
 PlotCharacter(tree, dataset)
 
-
+# Character from a real dataset 
 data("Lobo", package = "TreeTools")
 dataset <- Lobo.phy
 tree <- TreeTools::NJTree(dataset)
-oPar <- par(mar = rep(0, 4))
-PlotCharacter(tree, dataset, 1)
+PlotCharacter(tree, dataset, 14)
 par(oPar)
 }
 \references{
