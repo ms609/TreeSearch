@@ -73,7 +73,7 @@ jobs:
           brew install libgit2
           
       - name: Install vdiffr for checks (macOS)
-        if: runner.os == 'Windows'
+        if: runner.os == 'macOS'
         run: |
           remotes::install_cran("vdiffr")
         shell: Rscript {0}
