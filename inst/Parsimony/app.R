@@ -213,7 +213,6 @@ ui <- fluidPage(theme = 'app.css',
 server <- function(input, output, session) {
   
   r <- reactiveValues()
-  r$trees <- read.nexus(system.file('tmp.nex', package = 'TreeSearch'))[1:3]
   
   ##############################################################################
   # Load data
