@@ -12,6 +12,7 @@
 #' @param ambigCol,ambigLty,inappCol,inappLty,plainLty Colours and line types
 #' to apply to ambiguous, inapplicable and applicable tokens.  See the `lty` 
 #' [graphical parameter] for details of line stylings.  Overrides `tokenCol`.
+#' @param plot Logical specifying whether to plot the output.
 #' 
 #' @return `PlotCharacter()` returns a matrix in which each row corresponds
 #' to a numbered tip or node of `tree`, and each column corresponds to a 

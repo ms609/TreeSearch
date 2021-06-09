@@ -14,6 +14,7 @@ PlotCharacter(
   ambigLty = "dotted",
   inappLty = "dashed",
   plainLty = par("lty"),
+  plot = TRUE,
   ...
 )
 }
@@ -31,6 +32,8 @@ turn, in the sequence listed in \code{attr(dataset, 'levels')}.}
 \item{ambigCol, ambigLty, inappCol, inappLty, plainLty}{Colours and line types
 to apply to ambiguous, inapplicable and applicable tokens.  See the \code{lty}
 \link{graphical parameter} for details of line stylings.  Overrides \code{tokenCol}.}
+
+\item{plot}{Logical specifying whether to plot the output.}
 
 \item{\dots}{Further arguments to pass to \code{plot.phylo()}.}
 }
