@@ -87,9 +87,8 @@ jobs:
       - name: Install vdiffr for checks (macOS)
         if: runner.os == 'macOS'
         run: |
-          remotes::install_cran("freetypeharfbuzz")
-          remotes::install_cran("gdtools")
-          remotes::install_cran("purrr")
+          install.packages("https://cran.r-project.org/src/contrib/Archive/freetypeharfbuzz/freetypeharfbuzz_0.2.6.tar.gz", repos = NULL, type = "source")
+          install.packages('vdiffr')
           remotes::install_cran("vdiffr")
           library('vdiffr')
         shell: Rscript {0}
