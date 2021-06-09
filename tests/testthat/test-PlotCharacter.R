@@ -5,7 +5,7 @@ test_that("PlotCharacter()", {
      "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
     dataset <- TreeTools::StringToPhyDat(str, tips = tree)
     PlotCharacter(tree, dataset,
-                  edge.width = 2, plot = plot)
+                  edge.width = 3, plot = plot)
   }
   
   expect_equal(structure(c(FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, 
@@ -23,4 +23,17 @@ test_that("PlotCharacter()", {
                            TRUE, FALSE, FALSE, FALSE, TRUE, TRUE), .Dim = c(23L, 5L), .Dimnames = list(
                              NULL, c("-", "0", "1", "2", "3"))),
                Character("23--1??--032"))
+  
+  skip_if_not_installed('vdiffr')
+  Test <- function (str) {
+    vdiffr::expect_doppelganger(
+      paste0('PlotChar_', gsub('?', 'Q', gsub('-', 'I', str,
+                                              fixed = TRUE), fixed = TRUE)),
+      function() Character(str, plot = TRUE))
+  }
+  Test("23--1??--032")
+  Test("11--????--11")
+  Test("????????????")
+  Test("-------?????")
+  Test("------------")
 })
