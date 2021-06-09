@@ -87,6 +87,7 @@ jobs:
       - name: Install vdiffr for checks (macOS)
         if: runner.os == 'macOS'
         run: |
+          remotes::install_cran("gdtools")
           remotes::install_cran("vdiffr")
           library('vdiffr')
         shell: Rscript {0}
