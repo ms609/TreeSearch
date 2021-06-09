@@ -8,7 +8,7 @@
 A single phylogenetic tree saved as an object of class \code{phylo}
 }
 \source{
-\url{https://dx.doi.org/10.1111/pala.12236}
+\doi{10.1111/pala.12236}
 }
 \usage{
 referenceTree

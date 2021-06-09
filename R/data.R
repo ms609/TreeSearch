@@ -87,7 +87,7 @@
 #' data(referenceTree)
 #' plot(referenceTree)
 #' 
-#' @source \url{https://dx.doi.org/10.1111/pala.12236}
+#' @source \doi{10.1111/pala.12236}
 #' 
 #' @keywords datasets
 "referenceTree"
