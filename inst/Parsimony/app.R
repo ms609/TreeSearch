@@ -375,7 +375,8 @@ server <- function(input, output, session) {
                n <- as.integer(input$whichChar)
                if (length(n) && n > 0L) {
                  pc <- PlotCharacter(r$trees[[input$whichTree]],
-                                     r$dataset, input$whichChar)
+                                     r$dataset, input$whichChar,
+                                     edge.width = 2)
                  
                  output$charMapLegend <- renderUI({
                    pal <- c("#00bfc6", "#ffd46f", "#ffbcc5", "#c8a500",
@@ -388,13 +389,14 @@ server <- function(input, output, session) {
                        paste0(toupper(substr(str, 1, 1)),
                               substr(str, 2, nchar(str)))
                      }
-                     states <- attr(chars, 'state.labels')[[n]]
+                     states <- attr(r$chars, 'state.labels')[[n]]
                      tokens <- colnames(pc)
                      appTokens <- setdiff(tokens, '-')
                      .State <- function (glyph, text = 'Error?', col = 'red') {
                        if (is.numeric(glyph)) {
                          if (glyph > length(appTokens)) return (NULL)
-                         text <- states[states != ''][glyph]
+                         nonBlank <- states != ''
+                         text <- states[nonBlank][glyph]
                          col <- pal[glyph]
                          glyph <- appTokens[glyph]
                        }
@@ -412,9 +414,11 @@ server <- function(input, output, session) {
                      tagList(
                        tags$h3(colnames(r$chars)[n]),
                        tags$ul(style = "list-style: none;",
-                         .State(1),
-                         .State(2),
-                         if ('-' %in% tokens) .State("-", "Inapplicable", 'lightgrey'),
+                         .State(1), .State(2), .State(3), .State(4), .State(5),
+                         .State(6), .State(7), .State(8), .State(9),
+                         .State(10), .State(11), .State(12), .State(13),
+                         if ('-' %in% tokens) 
+                           .State("-", "Inapplicable", 'lightgrey'),
                          .State("?", "Ambiguous", 'grey')
                        )
                      )
