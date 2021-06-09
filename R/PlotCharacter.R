@@ -51,6 +51,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
                            ambigLty = 'dotted',
                            inappLty = 'dashed',
                            plainLty = par('lty'),
+                           plot = TRUE,
                            ...) {
   
   # Read tree
@@ -112,8 +113,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
       if (all(inherited == aState)) {
         state[n, ] <- inherited
       } else if (any(lState & rState)) {
-        #state[n, ] <- nState | (aState & (lState | rState))
-        state[n, ] <- aState & lState & rState
+        state[n, ] <- nState | (aState & (lState | rState))
       } else {
         state[n, ] <- aState | nState
       }
@@ -306,56 +306,58 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     }
   }
   
-  ambig <- if (length(setdiff(colnames(state), '-')) > 1L) {
+  hasToken <- if (length(setdiff(colnames(state), '-')) > 1L) {
     as.logical(rowSums(!state[, colnames(state) != '-', drop = FALSE]))
   } else {
     !logical(nrow(state))
   }
-  anywhere <- as.logical(colSums(state[ambig, , drop = FALSE]))
+  anywhere <- as.logical(colSums(state[hasToken, , drop = FALSE]))
   slimState <- state[, anywhere, drop = FALSE]
-  tokens <- colnames(slimState)
-  if (is.null(tokenCol)) {
-    tokenCol <- tokens
-    tokenCol[tokens != '-'] <- c("#00bfc6",
-                                 "#ffd46f",
-                                 "#ffbcc5",
-                                 "#c8a500",
-                                 "#ffcaf5",
-                                 "#d5fb8d",
-                                 "#e082b4",
-                                 "#25ffd3",
-                                 "#a6aaff",
-                                 "#e6f3cc",
-                                 "#67c4ff",
-                                 "#9ba75c",
-                                 "#60b17f")[seq_along(setdiff(tokens, '-'))]
-    tokenCol[tokens == '-'] <- inappCol
-  }
-  nodeStyle <- apply(slimState, 1, function (tkn) {
-    if (length(tkn) == 0) {
-      c(col = ambigCol, lty = ambigLty)
-    } else if (sum(tkn) > 1L) {
-      c(col = ambigCol, lty = ambigLty)
-    } else {
-      c(col = tokenCol[tkn],
-        lty = ifelse(tokens[tkn] == '-', inappLty, plainLty))
+  if (plot) {
+    tokens <- colnames(slimState)
+    if (is.null(tokenCol)) {
+      tokenCol <- tokens
+      tokenCol[tokens != '-'] <- c("#00bfc6",
+                                   "#ffd46f",
+                                   "#ffbcc5",
+                                   "#c8a500",
+                                   "#ffcaf5",
+                                   "#d5fb8d",
+                                   "#e082b4",
+                                   "#25ffd3",
+                                   "#a6aaff",
+                                   "#e6f3cc",
+                                   "#67c4ff",
+                                   "#9ba75c",
+                                   "#60b17f")[seq_along(setdiff(tokens, '-'))]
+      tokenCol[tokens == '-'] <- inappCol
     }
-  })
-  plot.phylo(tree,
-             node.color = nodeStyle['col', , drop = FALSE],
-             node.lty = nodeStyle['lty', , drop = FALSE],
-             ...)
-  
-  NodeText <- function (n) {
-    if (length(n) == 0 || (
-      sum(n) > 1L && all(n[anywhere & names(n) != '-']))) {
-      '?'
-    } else {
-      paste0(levels[n], collapse = '')
+    nodeStyle <- apply(slimState, 1, function (tkn) {
+      if (length(tkn) == 0) {
+        c(col = ambigCol, lty = ambigLty)
+      } else if (sum(tkn) > 1L) {
+        c(col = ambigCol, lty = ambigLty)
+      } else {
+        c(col = tokenCol[tkn],
+          lty = ifelse(tokens[tkn] == '-', inappLty, plainLty))
+      }
+    })
+    plot.phylo(tree,
+               node.color = nodeStyle['col', , drop = FALSE],
+               node.lty = nodeStyle['lty', , drop = FALSE],
+               ...)
+    
+    NodeText <- function (n) {
+      if (length(n) == 0 || (
+        sum(n) > 1L && all(n[anywhere & names(n) != '-']))) {
+        '?'
+      } else {
+        paste0(levels[n], collapse = '')
+      }
     }
+    nodelabels(apply(state, 1, NodeText),
+               seq_len(nTip + nNode), bg = nodeStyle['col', , drop = FALSE])
   }
-  nodelabels(apply(state, 1, NodeText),
-             seq_len(nTip + nNode), bg = nodeStyle['col', , drop = FALSE])
   
   # Return:
   slimState
