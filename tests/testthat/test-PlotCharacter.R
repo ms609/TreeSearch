@@ -1,9 +1,10 @@
 test_that("PlotCharacter()", {
   
-  tree <- ape::read.tree(text = 
-   "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
   Character <- function (str, plot = FALSE) {
-    PlotCharacter(tree, TreeTools::StringToPhyDat(str, tips = tree),
+    tree <- ape::read.tree(text = 
+     "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
+    dataset <- TreeTools::StringToPhyDat(str, tips = tree)
+    PlotCharacter(tree, dataset,
                   edge.width = 2, plot = plot)
   }
   
