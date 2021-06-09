@@ -1,3 +1,7 @@
+#' @importFrom graphics par plot.default segments strheight strwidth text
+#' @importFrom grDevices dev.cur dev.new dev.set devAskNewPage deviceIsInteractive
+#' @importFrom stats reorder
+#' @import ape
 ## plot.phylo.R (2019-07-30)
 
 ##   Plot Phylogenies
