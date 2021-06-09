@@ -171,9 +171,9 @@ ui <- fluidPage(theme = 'app.css',
       actionButton("go", "Search"),
       textOutput("results"),
       hidden(radioButtons('plotFormat', "Display:",
-                   list("Consensus tree" = 'cons',
+                   list("Characters on trees" = 'ind',
+                        "Consensus tree" = 'cons',
                         "Cluster consensus trees" = 'clus',
-                        "Individual tree" = 'ind',
                         "Tree space" = 'space'), 'cons')),
       hidden(sliderInput('whichTree', 'Tree to plot', min = 1L, max = 1L,
                          value = 1L, step = 1L))
@@ -198,6 +198,10 @@ ui <- fluidPage(theme = 'app.css',
       hidden(tags$div(id = 'charChooser',
         tags$div(numericInput('whichChar', 'Character to map:', value = 1L,
                               min = 0L, max = 1L, step = 1L, width = 200),
+                 checkboxGroupInput('mapDisplay', '', list(
+                   "Align tips" = "tipsRight",
+                   "Reconstruct tips" = "updateTips"
+                   )),
                  style = "float: right; width: 200px; margin-left: 2em;"),
         htmlOutput('charMapLegend')
       )),
@@ -209,6 +213,7 @@ ui <- fluidPage(theme = 'app.css',
 server <- function(input, output, session) {
   
   r <- reactiveValues()
+  r$trees <- read.nexus(system.file('tmp.nex', package = 'TreeSearch'))[1:3]
   
   ##############################################################################
   # Load data
@@ -373,8 +378,20 @@ server <- function(input, output, session) {
                par(mar = rep(0, 4), cex = 0.9)
                n <- PlottedChar()
                if (length(n) && n > 0L) {
-                 pc <- PlotCharacter(PlottedTree(), r$dataset, n,
-                                     edge.width = 2.5)
+                 UnitEdge <- function (tr) {
+                   tr$edge.length <- rep_len(1, dim(tr$edge)[1])
+                   tr
+                 }
+                 
+                 
+                 treeToPlot <- if('tipsRight' %in% input$mapDisplay) {
+                   PlottedTree()
+                 } else {
+                   UnitEdge(PlottedTree())
+                 }
+                 pc <- PlotCharacter(treeToPlot, r$dataset, n,
+                                     edge.width = 2.5, 
+                                     updateTips = 'updateTips' %in% input$mapDisplay)
                  
                  output$charMapLegend <- renderUI({
                    pal <- c("#00bfc6", "#ffd46f", "#ffbcc5", "#c8a500",
