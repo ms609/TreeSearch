@@ -25,15 +25,20 @@ test_that("PlotCharacter()", {
                Character("23--1??--032", updateTips = TRUE))
   
   skip_if_not_installed('vdiffr')
-  Test <- function (str) {
-    vdiffr::expect_doppelganger(
-      paste0('PlotChar_',
-             gsub('?', 'Q',
-             gsub('(', 'd',
-             gsub(')', 'b',
-             gsub('-', 'I', str,
-                  fixed = TRUE), fixed = TRUE), fixed = TRUE), fixed = TRUE)),
-      function() Character(str, plot = TRUE))
+  
+  Test <- if (interactive()) {
+    function(str) invisible(Character(str, plot = TRUE))
+  } else {
+    function (str) {
+      vdiffr::expect_doppelganger(
+        paste0('PlotChar_',
+               gsub('?', 'Q',
+                    gsub('(', 'd',
+                         gsub(')', 'b',
+                              gsub('-', 'I', str,
+                                   fixed = TRUE), fixed = TRUE), fixed = TRUE), fixed = TRUE)),
+        function() Character(str, plot = TRUE))
+    }
   }
   Test("23--1??--032")
   Test("23--1??(-0)-(01)32")
