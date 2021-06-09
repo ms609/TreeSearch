@@ -86,7 +86,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   character <- dataset[, char]
   contrast <- attr(character, 'contrast') == 1
   levels <- colnames(contrast)
-  state <- rbind(contrast[as.integer(character), ],
+  state <- rbind(contrast[as.integer(character), , drop = FALSE],
                  matrix(NA, nNode, dim(contrast)[2]))
   
   if (is.na(match('-', levels))) {
@@ -306,7 +306,12 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     }
   }
   
-  anywhere <- as.logical(colSums(state[as.logical(rowSums(!state[, colnames(state) != '-'])), ]))
+  ambig <- if (length(setdiff(colnames(state), '-')) > 1L) {
+    as.logical(rowSums(!state[, colnames(state) != '-', drop = FALSE]))
+  } else {
+    !logical(nrow(state))
+  }
+  anywhere <- as.logical(colSums(state[ambig, , drop = FALSE]))
   slimState <- state[, anywhere, drop = FALSE]
   tokens <- colnames(slimState)
   if (is.null(tokenCol)) {
@@ -327,7 +332,9 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     tokenCol[tokens == '-'] <- inappCol
   }
   nodeStyle <- apply(slimState, 1, function (tkn) {
-    if (sum(tkn) > 1L) {
+    if (length(tkn) == 0) {
+      c(col = ambigCol, lty = ambigLty)
+    } else if (sum(tkn) > 1L) {
       c(col = ambigCol, lty = ambigLty)
     } else {
       c(col = tokenCol[tkn],
@@ -335,19 +342,20 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     }
   })
   plot.phylo(tree,
-             node.color = nodeStyle['col', ],
-             node.lty = nodeStyle['lty', ],
+             node.color = nodeStyle['col', , drop = FALSE],
+             node.lty = nodeStyle['lty', , drop = FALSE],
              ...)
   
   NodeText <- function (n) {
-    if (sum(n) > 1L && all(n[anywhere & names(n) != '-'])) {
+    if (length(n) == 0 || (
+      sum(n) > 1L && all(n[anywhere & names(n) != '-']))) {
       '?'
     } else {
       paste0(levels[n], collapse = '')
     }
   }
   nodelabels(apply(state, 1, NodeText),
-             seq_len(nTip + nNode), bg = nodeStyle['col', ])
+             seq_len(nTip + nNode), bg = nodeStyle['col', , drop = FALSE])
   
   # Return:
   slimState
