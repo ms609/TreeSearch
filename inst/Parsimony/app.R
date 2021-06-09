@@ -129,8 +129,8 @@ Smith2020 <- Reference('Smith, M.R.', 2020,
                        'Information theoretic Generalized Robinson-Foulds metrics for comparing phylogenetic trees',
                        'Bioinformatics', volume = 36, pages = '5007--5013',
                        doi = "10.1093/bioinformatics/btaa614")
-Smith2021 <- Reference('Smith, M.R.', 2021,
-                       'The importance of methodology when analyzing landscapes of phylogenetic trees',
+Smith2021 <- Reference('Smith, M.R.', 2022,
+                       'Robust analysis of phylogenetic tree space',
                        'Submitted MS')
 Stockham2002 <- Reference(
   author = c('Stockham, C.', 'Wang, L.-S.', 'Warnow, T.'), 2002,
@@ -194,6 +194,7 @@ ui <- fluidPage(theme = 'app.css',
     ),
     fluidRow(
       plotOutput(outputId = "treePlot", height = "600px"),
+      htmlOutput(outputId = "plotSpacer", height = "0px"),
       hidden(plotOutput('clustCons', height = "200px")),
       hidden(tags$div(id = 'charChooser',
         tags$div(numericInput('whichChar', 'Character to map:', value = 1L,
@@ -765,27 +766,30 @@ server <- function(input, output, session) {
   ##############################################################################
   # References
   ##############################################################################
-  output$references <- renderUI({
-    tags$div(style = paste0('position: relative; top: ', 
+  output$plotSpacer <- renderUI({
+    tags$div(style = paste0('margin-bottom: ', 
                             (input$plotSize - 600)
-  #                          + if ('cons' %in% input$display) consSize() - 200 else 0
                             , 'px'),
-             tagList(
-               tags$h2('References for methods used'),
-               tags$h3('Tree search'),
-               HTML(Brazeau2019, Morphy, Nixon1999, SmithSearch),
-               tags$h3('Tree space projection'),
-               HTML(paste0(Gower1966, Gower1969, Kaski2003, RCoreTeam,
-                           SmithDist, Smith2020, Smith2021, 
-                           Venna2001)),
-               ),
-               tags$h3('Clustering'),
-               HTML(paste("Cluster consensus trees:", Stockham2002)),
-               HTML(paste0('Partitioning around medoids:', Maechler2019,
-                           "Hierarchical, minimax linkage:", Bien2011,
-                           Murtagh1983))
-             )
+             " ... ")
   })
+  
+  output$references <- renderUI({
+    tagList(
+     tags$h2('References for methods used'),
+     tags$h3('Tree search'),
+     HTML(Brazeau2019, Morphy, Nixon1999, SmithSearch),
+     tags$h3('Tree space projection'),
+     HTML(paste0(Gower1966, Gower1969, Kaski2003, RCoreTeam,
+                 SmithDist, Smith2020, Smith2021, 
+                 Venna2001)),
+     tags$h3('Clustering'),
+     HTML(paste("Cluster consensus trees:", Stockham2002)),
+     HTML(paste0('Partitioning around medoids:', Maechler2019,
+                 "Hierarchical, minimax linkage:", Bien2011,
+                 Murtagh1983))
+    )
+  })
+
 }
 
 shinyApp(ui = ui, server = server)
