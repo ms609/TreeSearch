@@ -51,6 +51,13 @@ jobs:
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
 
+      - name: Install vdiffr for checks (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          remotes::install_cran("vdiffr")
+        shell: Rscript {0}
+          
+
       - name: Cache R packages
         if: runner.os != 'Windows'
         uses: actions/cache@v2
@@ -71,12 +78,6 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install libgit2
-          
-      - name: Install vdiffr for checks (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          remotes::install_cran("vdiffr")
-        shell: Rscript {0}
           
       - name: Install callr (Windows)
         if: runner.os == 'Windows'

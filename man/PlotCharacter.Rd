@@ -8,13 +8,14 @@ PlotCharacter(
   tree,
   dataset,
   char = 1L,
+  updateTips = FALSE,
+  plot = TRUE,
   tokenCol = NULL,
   ambigCol = "grey",
   inappCol = "lightgrey",
   ambigLty = "dotted",
   inappLty = "dashed",
   plainLty = par("lty"),
-  plot = TRUE,
   ...
 )
 }
@@ -26,14 +27,17 @@ whose names correspond to the labels of any accompanying tree.}
 
 \item{char}{Index of character to plot.}
 
+\item{updateTips}{Logical; if \code{FALSE}, tips will be labelled with their
+original state in \code{dataset}.}
+
+\item{plot}{Logical specifying whether to plot the output.}
+
 \item{tokenCol}{Palette specifying colours to associate with each token in
 turn, in the sequence listed in \code{attr(dataset, 'levels')}.}
 
 \item{ambigCol, ambigLty, inappCol, inappLty, plainLty}{Colours and line types
 to apply to ambiguous, inapplicable and applicable tokens.  See the \code{lty}
 \link{graphical parameter} for details of line stylings.  Overrides \code{tokenCol}.}
-
-\item{plot}{Logical specifying whether to plot the output.}
 
 \item{\dots}{Further arguments to pass to \code{plot.phylo()}.}
 }

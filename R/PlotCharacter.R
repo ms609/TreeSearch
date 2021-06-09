@@ -6,13 +6,15 @@
 #' @template treeParam
 #' @template datasetParam
 #' @param char Index of character to plot.
-#' @param \dots Further arguments to pass to `plot.phylo()`.
+#' @param updateTips Logical; if `FALSE`, tips will be labelled with their
+#' original state in `dataset`.
+#' @param plot Logical specifying whether to plot the output.
 #' @param tokenCol Palette specifying colours to associate with each token in
 #' turn, in the sequence listed in `attr(dataset, 'levels')`.
 #' @param ambigCol,ambigLty,inappCol,inappLty,plainLty Colours and line types
 #' to apply to ambiguous, inapplicable and applicable tokens.  See the `lty` 
 #' [graphical parameter] for details of line stylings.  Overrides `tokenCol`.
-#' @param plot Logical specifying whether to plot the output.
+#' @param \dots Further arguments to pass to `plot.phylo()`.
 #' 
 #' @return `PlotCharacter()` returns a matrix in which each row corresponds
 #' to a numbered tip or node of `tree`, and each column corresponds to a 
@@ -45,6 +47,9 @@
 #' @importFrom TreeTools Postorder
 #' @export
 PlotCharacter <- function (tree, dataset, char = 1L, 
+                           updateTips = FALSE,
+                           plot = TRUE,
+                           
                            tokenCol = NULL,
                            ambigCol = 'grey',
                            inappCol = 'lightgrey',
@@ -52,7 +57,6 @@ PlotCharacter <- function (tree, dataset, char = 1L,
                            ambigLty = 'dotted',
                            inappLty = 'dashed',
                            plainLty = par('lty'),
-                           plot = TRUE,
                            ...) {
   
   # Read tree
@@ -88,8 +92,8 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   character <- dataset[, char]
   contrast <- attr(character, 'contrast') == 1
   levels <- colnames(contrast)
-  state <- rbind(contrast[as.integer(character), , drop = FALSE],
-                 matrix(NA, nNode, dim(contrast)[2]))
+  inputState <- contrast[as.integer(character), , drop = FALSE]
+  state <- rbind(inputState, matrix(NA, nNode, dim(contrast)[2]))
   
   if (is.na(match('-', levels))) {
     # Standard Fitch
@@ -305,6 +309,10 @@ PlotCharacter <- function (tree, dataset, char = 1L,
         # message ("UP2: Set tip ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
       }
     }
+  }
+  
+  if (!updateTips) {
+    state[seq_len(nTip), ] <- inputState
   }
   
   hasToken <- if (length(setdiff(colnames(state), '-')) > 1L) {
