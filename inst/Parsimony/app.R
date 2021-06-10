@@ -379,7 +379,7 @@ server <- function(input, output, session) {
                n <- PlottedChar()
                if (length(n) && n > 0L) {
                  UnitEdge <- function (tr) {
-                   tr$edge.length <- rep_len(1, dim(tr$edge)[1])
+                   tr$edge.length <- rep_len(2, dim(tr$edge)[1])
                    tr
                  }
                  
