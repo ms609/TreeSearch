@@ -85,10 +85,13 @@
 #' the tree search.
 #' 
 #' @examples
-#' \dontrun{ # launch 'shiny' point-and-click interface
+#' ## Only run examples in interactive R sessions
+#' if (interactive()) {
+#'   # launch 'shiny' point-and-click interface
+#'   EasyTrees()
+#'   
 #'   # Here too, use the "continue search" function to ensure that tree score
 #'   # has stabilized and a global optimum has been found
-#'   EasyTrees()
 #' }
 #' 
 #' 

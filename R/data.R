@@ -74,8 +74,8 @@
 
 #' Tree topology for matrix simulation
 #'
-#' The tree topology used to generate the matrices in \code{\link{congreveLamsdellMatrices}} 
-#' Congreve & Lamsdell (2016)
+#' The tree topology used to generate the matrices in 
+#' \code{\link{congreveLamsdellMatrices}} 
 #'
 #' @format A single phylogenetic tree saved as an object of class \code{phylo}
 #'
@@ -87,7 +87,7 @@
 #' data(referenceTree)
 #' plot(referenceTree)
 #' 
-#' @source \url{https://dx.doi.org/10.1111/pala.12236}
+#' @source Congreve & Lamsdell (2016); \doi{10.1111/pala.12236}
 #' 
 #' @keywords datasets
 "referenceTree"
