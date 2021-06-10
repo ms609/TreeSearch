@@ -85,7 +85,7 @@ tree space:
 distances <- TreeDist::ClusteringInfoDistance(bestTrees)
 searchStages <- length(firstHit)
 map <- cmdscale(distances, k = 3)
-cols <- viridisLite::viridis(searchStages, alpha = 0.8)
+cols <- hcl.colors(searchStages, alpha = 0.8)
 par(mar = rep(0, 4))
 TreeDist::Plot3(map,
                 col = cols[rep(seq_along(firstHit), firstHit)],
