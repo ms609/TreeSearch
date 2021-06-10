@@ -36,7 +36,7 @@ TipInstability <- function (trees) {
 }
 
 #' @importFrom grDevices hcl
-.TipCols <- function (trees) {
+.TipCols <- function (trees, luminence = 50) {
   dists <- .TipDistances(trees)
   
   means <- rowMeans(dists, dims = 2)
@@ -48,7 +48,8 @@ TipInstability <- function (trees) {
   pc <- pc - min(pc)
   pc <- pc * 340 / max(pc)
   
-  setNames(hcl(h =  pc, c = 100 * (1 - rowMeans(relDevs, na.rm = TRUE))), l = 70,
+  setNames(hcl(h =  pc, c = 100 * (1 - rowMeans(relDevs, na.rm = TRUE)),
+               l = luminence),
            TipLabels(trees[[1]]))
   
 }

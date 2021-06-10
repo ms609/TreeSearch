@@ -320,6 +320,7 @@ server <- function(input, output, session) {
   
   observeEvent(r$trees, {
     nTip <- NTip(r$trees[[1]])
+    r$trees[-1] <- RenumberTips(r$trees[-1], r$trees[[1]])
     updateSliderInput(inputId = 'keepTips', max = nTip, value = nTip)
   })
   
@@ -476,7 +477,7 @@ server <- function(input, output, session) {
                })
              } else {
                output$charMapLegend <- renderUI({})
-               plot(PlottedTree())
+               plot(PlottedTree(), tip.color = tipCols())
              }
            },
            'space' = {
