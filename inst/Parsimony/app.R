@@ -206,6 +206,12 @@ ui <- fluidPage(theme = 'app.css',
                  style = "float: right; width: 200px; margin-left: 2em;"),
         htmlOutput('charMapLegend')
       )),
+      hidden(tags$div(id = 'consConfig',
+        tags$div(sliderInput('keepTips', 'Tips to show:', value = 1L,
+                              min = 1L, max = 1L, step = 1L, width = 200),
+                 style = "float: right; width: 200px; margin-left: 2em;"),
+        htmlOutput('droppedTips')
+      )),
       htmlOutput('references', style = "clear: both;"),
     ),
   )
@@ -312,6 +318,11 @@ server <- function(input, output, session) {
     
   })
   
+  observeEvent(r$trees, {
+    nTip <- NTip(r$trees[[1]])
+    updateSliderInput(inputId = 'keepTips', max = nTip, value = nTip)
+  })
+  
   concavity <- reactive({
     if (input$implied.weights == 'on') {
       10 ^ input$concavity
@@ -354,100 +365,121 @@ server <- function(input, output, session) {
     renderPlot(x, width = PlotSize(), height = PlotSize())
   }
   
+  Instab <- reactive({
+    TipInstability(r$trees)
+  })
+  
+  tipCols <- reactive(.TipCols(r$trees))
+  
+  ConsensusPlot <- reactive({
+    par(mar = rep(0, 4), cex = 0.9)
+    instab <- Instab()
+    dropped <- names(instab[order(instab) > input$keepTips])
+    kept <- setdiff(TipLabels(r$trees[[1]]), dropped)
+    if (length(dropped)) {
+      output$droppedTips <- renderUI({tagList(
+        tags$h3("Tips excluded:"),
+        tags$ul(lapply(dropped, function (i) {
+          tags$li(paste0(i, ' (', signif(instab[i]), ')'))
+        }))
+        )})
+    } else {
+      output$droppedTips <- renderUI({})
+    }
+    plot(ConsensusWithout(r$trees, dropped), tip.color = tipCols()[kept])
+  })
+  
+  ShowConfigs <- function (visible = character(0)) {
+    allConfigs <- c('whichTree', 'charChooser', 'consConfig')
+    lapply(visible, show)
+    lapply(setdiff(allConfigs, visible), hide)
+  }
+  
   MainPlot <- reactive({
     if (!is.null(r$trees)) {
+      
+    ShowConfigs(switch(input$plotFormat,
+                       'cons' = 'consConfig',
+                       'ind' = c('whichTree', 'charChooser'),
+                       ''))
     switch(input$plotFormat,
            'cons' = {
-             hide('whichTree')
-             hide('charChooser')
-             {
-               par(mar = rep(0, 4), cex = 0.9)
-               plot(consensus(r$trees))
-             }
+             ConsensusPlot()
            },
            'clus' = {
-             hide('whichTree')
-             hide('charChooser')
              PlotClusterCons()
            },
            'ind' = {
-             show('whichTree')
-             show('charChooser')
-             
-             {
-               par(mar = rep(0, 4), cex = 0.9)
-               n <- PlottedChar()
-               if (length(n) && n > 0L) {
-                 UnitEdge <- function (tr) {
-                   tr$edge.length <- rep_len(2, dim(tr$edge)[1])
-                   tr
-                 }
-                 
-                 
-                 treeToPlot <- if('tipsRight' %in% input$mapDisplay) {
-                   PlottedTree()
-                 } else {
-                   UnitEdge(PlottedTree())
-                 }
-                 pc <- PlotCharacter(treeToPlot, r$dataset, n,
-                                     edge.width = 2.5, 
-                                     updateTips = 'updateTips' %in% input$mapDisplay)
-                 
-                 output$charMapLegend <- renderUI({
-                   pal <- c("#00bfc6", "#ffd46f", "#ffbcc5", "#c8a500",
-                            "#ffcaf5", "#d5fb8d", "#e082b4", "#25ffd3",
-                            "#a6aaff", "#e6f3cc", "#67c4ff", "#9ba75c",
-                            "#60b17f")
-                   
-                   if (!is.null(r$chars)) {
-                     UCFirst <- function (str) {
-                       paste0(toupper(substr(str, 1, 1)),
-                              substr(str, 2, nchar(str)))
-                     }
-                     states <- attr(r$chars, 'state.labels')[[n]]
-                     tokens <- colnames(pc)
-                     appTokens <- setdiff(tokens, '-')
-                     .State <- function (glyph, text = 'Error?', col = 'red') {
-                       if (is.numeric(glyph)) {
-                         if (glyph > length(appTokens)) return (NULL)
-                         nonBlank <- states != ''
-                         text <- states[nonBlank][glyph]
-                         col <- pal[glyph]
-                         glyph <- appTokens[glyph]
-                       }
-                       tags$li(style = 'margin-bottom: 2px;',
-                         tags$span(glyph,
-                                   style = paste("display: inline-block;",
-                                                 "border: 1px solid;",
-                                                 "width: 1em;",
-                                                 "text-align: center;",
-                                                 "line-height: 1em;",
-                                                 "margin-right: 0.5em;",
-                                                 "background-color:", col, ";")),
-                         tags$span(UCFirst(text)))
-                     }
-                     tagList(
-                       tags$h3(colnames(r$chars)[n]),
-                       tags$ul(style = "list-style: none;",
-                         .State(1), .State(2), .State(3), .State(4), .State(5),
-                         .State(6), .State(7), .State(8), .State(9),
-                         .State(10), .State(11), .State(12), .State(13),
-                         if ('-' %in% tokens) 
-                           .State("-", "Inapplicable", 'lightgrey'),
-                         .State("?", "Ambiguous", 'grey')
-                       )
-                     )
-                  }
-                 })
-               } else {
-                 output$charMapLegend <- renderUI({})
-                 plot(PlottedTree())
+             par(mar = rep(0, 4), cex = 0.9)
+             n <- PlottedChar()
+             if (length(n) && n > 0L) {
+               UnitEdge <- function (tr) {
+                 tr$edge.length <- rep_len(2, dim(tr$edge)[1])
+                 tr
                }
+               
+               
+               treeToPlot <- if('tipsRight' %in% input$mapDisplay) {
+                 PlottedTree()
+               } else {
+                 UnitEdge(PlottedTree())
+               }
+               pc <- PlotCharacter(treeToPlot, r$dataset, n,
+                                   edge.width = 2.5, 
+                                   updateTips = 'updateTips' %in% input$mapDisplay)
+               
+               output$charMapLegend <- renderUI({
+                 pal <- c("#00bfc6", "#ffd46f", "#ffbcc5", "#c8a500",
+                          "#ffcaf5", "#d5fb8d", "#e082b4", "#25ffd3",
+                          "#a6aaff", "#e6f3cc", "#67c4ff", "#9ba75c",
+                          "#60b17f")
+                 
+                 if (!is.null(r$chars)) {
+                   UCFirst <- function (str) {
+                     paste0(toupper(substr(str, 1, 1)),
+                            substr(str, 2, nchar(str)))
+                   }
+                   states <- attr(r$chars, 'state.labels')[[n]]
+                   tokens <- colnames(pc)
+                   appTokens <- setdiff(tokens, '-')
+                   .State <- function (glyph, text = 'Error?', col = 'red') {
+                     if (is.numeric(glyph)) {
+                       if (glyph > length(appTokens)) return (NULL)
+                       nonBlank <- states != ''
+                       text <- states[nonBlank][glyph]
+                       col <- pal[glyph]
+                       glyph <- appTokens[glyph]
+                     }
+                     tags$li(style = 'margin-bottom: 2px;',
+                       tags$span(glyph,
+                                 style = paste("display: inline-block;",
+                                               "border: 1px solid;",
+                                               "width: 1em;",
+                                               "text-align: center;",
+                                               "line-height: 1em;",
+                                               "margin-right: 0.5em;",
+                                               "background-color:", col, ";")),
+                       tags$span(UCFirst(text)))
+                   }
+                   tagList(
+                     tags$h3(colnames(r$chars)[n]),
+                     tags$ul(style = "list-style: none;",
+                       .State(1), .State(2), .State(3), .State(4), .State(5),
+                       .State(6), .State(7), .State(8), .State(9),
+                       .State(10), .State(11), .State(12), .State(13),
+                       if ('-' %in% tokens) 
+                         .State("-", "Inapplicable", 'lightgrey'),
+                       .State("?", "Ambiguous", 'grey')
+                     )
+                   )
+                }
+               })
+             } else {
+               output$charMapLegend <- renderUI({})
+               plot(PlottedTree())
              }
            },
            'space' = {
-             hide('whichTree')
-             hide('charChooser')
              treespacePlot()
            }
     )}
