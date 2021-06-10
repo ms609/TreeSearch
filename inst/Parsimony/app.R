@@ -207,8 +207,11 @@ ui <- fluidPage(theme = 'app.css',
         htmlOutput('charMapLegend')
       )),
       hidden(tags$div(id = 'consConfig',
-        tags$div(sliderInput('keepTips', 'Tips to show:', value = 1L,
-                              min = 1L, max = 1L, step = 1L, width = 200),
+        tags$div(
+          sliderInput('consP', 'Majority:', value = 1,
+                      min = 0.5, max = 1, width = 200),
+          sliderInput('keepTips', 'Tips to show:', value = 1L,
+                      min = 1L, max = 1L, step = 1L, width = 200),
                  style = "float: right; width: 200px; margin-left: 2em;"),
         htmlOutput('droppedTips')
       )),
@@ -371,6 +374,7 @@ server <- function(input, output, session) {
   })
   
   tipCols <- reactive(.TipCols(r$trees))
+  consP <- debounce(reactive(input$consP), 50)
   
   ConsensusPlot <- reactive({
     par(mar = rep(0, 4), cex = 0.9)
@@ -387,7 +391,8 @@ server <- function(input, output, session) {
     } else {
       output$droppedTips <- renderUI({})
     }
-    plot(ConsensusWithout(r$trees, dropped), tip.color = tipCols()[kept])
+    plot(ConsensusWithout(r$trees, dropped, p = consP()),
+         tip.color = tipCols()[kept])
   })
   
   ShowConfigs <- function (visible = character(0)) {
