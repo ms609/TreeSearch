@@ -91,7 +91,7 @@ TipInformation <- function (trees) {
   dim(combWeights) <- dim(splitCombs)
   combWeights <- apply(combWeights, 2, prod)
   
-  viLoss <- apply(splitCombs, 2, function (i) {
+  fromDiff <- apply(splitCombs, 2, function (i) {
     split1 <- splits[i[1], ]
     split2 <- splits[i[2], ]
     rbind(split1, split2)
@@ -161,19 +161,19 @@ TipInformation <- function (trees) {
   fromSame <- apply(splits[sameSplits, , drop = FALSE], 1, function (split) {
     m <- sum(split)
     n <- nTip - m
-    hStart <- Entropy(c(m, n) / nTip)
+    h0 <- Entropy(c(m, n) / nTip)
     hT <- Entropy(c(m - 1L, n) / nMinus1)
     hF <- Entropy(c(m, n - 1L) / nMinus1)
     
     hWithout <- ifelse(split, hT, hF)
-    miGained <- hStart - hWithout
+    miGained <- h0 - hWithout
     
     # Return:
-    miGained
+    miGained + 0
   })
   
   colSums(t(fromSame) * as.integer(weights[sameSplits] - 1L)) +
-    colSums(t(viLoss) * combWeights)
+    colSums(t(fromDiff) * combWeights)
   
   # TODO This overwrites... 
   siGain <- apply(splitCombs, 2, function (i) {
