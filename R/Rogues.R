@@ -69,6 +69,7 @@ TipInstability <- function (trees) {
 TipInformation <- function (trees) {
   t1 <- trees[[1]]
   nTip <- NTip(t1)
+  nMinus1 <- nTip - 1L
   halfTip <- nTip / 2L
   
   rawSplits <- do.call(rbind,
@@ -85,7 +86,6 @@ TipInformation <- function (trees) {
   splitH <- apply(splits, 1, SplitEntropy)['H1', ]
   
   nSplits <- length(splitH)
-  nMinus1 <- nSplits - 1L
   
   splitCombs <- combn(nSplits, 2)
   combWeights <- weights[splitCombs]
@@ -110,9 +110,9 @@ TipInformation <- function (trees) {
     F1 <- F1T2 + F1F2
     F2 <- T1F2 + F1F2
     
-    jointHStart <- Entropy(overlaps / nSplits)
-    h1Start <- Entropy(c(T1, F1) / nSplits)
-    h2Start <- Entropy(c(T2, F2) / nSplits)
+    jointHStart <- Entropy(overlaps / nTip)
+    h1Start <- Entropy(c(T1, F1) / nTip)
+    h2Start <- Entropy(c(T2, F2) / nTip)
     miStart <- h1Start + h2Start - jointHStart
     viStart <- jointHStart - miStart
     
@@ -162,7 +162,7 @@ TipInformation <- function (trees) {
   fromSame <- apply(splits[sameSplits, , drop = FALSE], 1, function (split) {
     m <- sum(split)
     n <- nTip - m
-    hStart <- Entropy(c(m, n) / nSplits)
+    hStart <- Entropy(c(m, n) / nTip)
     hT <- Entropy(c(m - 1L, n) / nMinus1)
     hF <- Entropy(c(m, n - 1L) / nMinus1)
     
@@ -172,7 +172,97 @@ TipInformation <- function (trees) {
     # Return:
     miGained
   })
+  
   colSums(t(fromSame) * as.integer(weights[sameSplits] - 1L)) +
-  colSums(t(viLoss) * combWeights)
+    colSums(t(viLoss) * combWeights)
+  
+  # TODO This overwrites... 
+  siGain <- apply(splitCombs, 2, function (i) {
+    split1 <- splits[i[1], ]
+    split2 <- splits[i[2], ]
+    ifelse(split1, ifelse(split2, "TT", "TF"), ifelse(split2, "FT", "FF"))
+    
+    T1T2 <- sum(split1 & split2)
+    T1F2 <- sum(split1 & !split2)
+    F1T2 <- sum(!split1 & split2)
+    F1F2 <- sum(!split1 & !split2)
+    overlaps <- c(T1T2, T1F2, F1T2, F1F2)
+    names(overlaps) <- c('TT', 'TF', 'FT', 'FF') #TODO delete
+    T1 <- T1T2 + T1F2
+    F1 <- F1T2 + F1F2
+    T2 <- T1T2 + F1T2
+    F2 <- T1F2 + F1F2
+    i0 <- SplitInformation(T1, F1) + SplitInformation(T2, F2)
+    noOverlap <- !as.logical(overlaps)
+    
+    iWithout <- 
+    if (any(noOverlap)) {
+      stopifnot(sum(noOverlap) == 1L) # as splits are non-identical
+      overT1 <- c(F2, T2, T2, F2)[noOverlap]
+      si0 <- SplitSharedInformation(nTip, T1, overT1)
+      
+      overT1TT <- c(F2, T2 - 1L, T2 - 1L, F2)[noOverlap]
+      overT1TF <- c(F2 - 1L, T2, T2, F2 - 1L)[noOverlap]
+      overT1FT <- c(F2, T2 - 1L, T2 - 1L, F2)[noOverlap]
+      overT1FF <- c(F2 - 1L, T2, T2, F2 - 1L)[noOverlap]
+      
+      siTT <- SplitSharedInformation(nMinus1, T1 - 1L, overT1TT)
+      siTF <- SplitSharedInformation(nMinus1, T1 - 1L, overT1TF)
+      siFT <- SplitSharedInformation(nMinus1, T1, overT1FT)
+      siFF <- SplitSharedInformation(nMinus1, T1, overT1FF)
+      
+      siWithout <- ifelse(split1, ifelse(split2, siTT, siTF),
+                          ifelse(split2, siFT, siFF))
+    } else {
+      si0 <- 0
+      si <- double(4)
+      for (j in which(overlaps == 1)) {
+        si[j] <- switch(j,
+                        SplitSharedInformation(nMinus1, T1 - 1L, F2),
+                        SplitSharedInformation(nMinus1, T1 - 1L, T2),
+                        SplitSharedInformation(nMinus1, T1, T2 - 1L),
+                        SplitSharedInformation(nMinus1, T1, F2 - 1L))
+      }
+      si
+      siWithout <- si[ifelse(split1, ifelse(split2, 1, 2),
+                             ifelse(split2, 3, 4))]
+      
+    }
+    siGain <- siWithout - si0
+    di0 <- i0 - si0 - si0
+    di <- c(SplitInformation(T1 - 1L, F1) + SplitInformation(T2 - 1L, F2),
+            SplitInformation(T1 - 1L, F1) + SplitInformation(T2, F2 - 1L),
+            SplitInformation(T1, F1 - 1L) + SplitInformation(T2 - 1L, F2),
+            SplitInformation(T1, F1 - 1L) + SplitInformation(T2, F2 - 1L))
+    diWithout <- di[ifelse(split1, ifelse(split2, 1, 2),
+                           ifelse(split2, 3, 4))]
+    diGain <- diWithout - di0
+    
+    # Return:
+    siGain - diGain
+  })
+  
+  sameSplits <- weights > 1L
+  fromSame <- apply(splits[sameSplits, , drop = FALSE], 1, function (split) {
+    m <- sum(split)
+    n <- nTip - m
+    si0 <- SplitInformation(m, n)
+    siT <- SplitInformation(m - 1L, n)
+    siF <- SplitInformation(m, n - 1L)
+    
+    siWithout <- ifelse(split, siT, siF)
+    i0 <- si0
+    iWithout <- siWithout
+    di0 <- 0
+    diWithout <- 0
+    
+    siGain <- siWithout - si0
+    diGain <- diWithout - di0
+    
+    # Return:
+    siGain - diGain
+  })
+  colSums(t(fromSame) * as.integer(weights[sameSplits] - 1L)) +
+  colSums(t(siGain) * combWeights)
   
 }
