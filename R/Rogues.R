@@ -62,9 +62,9 @@ TipInstability <- function (trees) {
 #' library("TreeTools", quietly = TRUE)
 #' trees <- AddTipEverywhere(BalancedTree(8), 'Rogue')
 #' trees[] <- lapply(trees, AddTip, 'Rogue', 'Rogue2')
-#' SplitBuster(trees)
-#' @importFrom TreeTools SplitInformation
-#' @importFrom TreeDist Entropy
+#' 
+#' TipInformation(trees)
+#' @importFrom TreeDist SplitEntropy Entropy
 #' @export
 TipInformation <- function (trees) {
   t1 <- trees[[1]]
@@ -79,7 +79,7 @@ TipInformation <- function (trees) {
   uniqueSplits <- structure(class = "Splits", nTip = nTip,
                             tip.label = TipLabels(t1),
                             rawSplits[!duplicated(hash), , drop = FALSE])
-  weights <- table(hash)
+  weights <- table(hash, dnn = NULL)[unique(hash)]
   # TODO improve efficiency by remaining in "raw" mode
   splits <- as.logical(uniqueSplits)
   splitH <- apply(splits, 1, SplitEntropy)['H1', ]
@@ -92,58 +92,87 @@ TipInformation <- function (trees) {
   dim(combWeights) <- dim(splitCombs)
   combWeights <- apply(combWeights, 2, prod)
   
-  miLosses <- apply(splitCombs, 2, function (i) {
+  viLoss <- apply(splitCombs, 2, function (i) {
     split1 <- splits[i[1], ]
     split2 <- splits[i[2], ]
+    rbind(split1, split2)
+    ifelse(split1, ifelse(split2, "TT", "TF"), ifelse(split2, "FT", "FF"))
     
-    A1A2 <- sum(split1 & split2)
-    A1B2 <- sum(split1 & !split2)
-    B1A2 <- sum(!split1 & split2)
-    B1B2 <- sum(!split1 & !split2)
-    overlaps <- c(A1A2, A1B2, B1A2, B1B2)
+    T1T2 <- sum(split1 & split2)
+    T1F2 <- sum(split1 & !split2)
+    F1T2 <- sum(!split1 & split2)
+    F1F2 <- sum(!split1 & !split2)
+    overlaps <- c(T1T2, T1F2, F1T2, F1F2)
+    names(overlaps) <- c('TT', 'TF', 'FT', 'FF') #TODO delete
     
-    A1 <- A1A2 + A1B2
-    A2 <- A1A2 + B1A2
-    B1 <- B1A2 + B1B2
-    B2 <- A1B2 + B1B2
+    T1 <- T1T2 + T1F2
+    T2 <- T1T2 + F1T2
+    F1 <- F1T2 + F1F2
+    F2 <- T1F2 + F1F2
     
     jointHStart <- Entropy(overlaps / nSplits)
-    h1Start <- Entropy(c(A1, B1) / nSplits)
-    h2Start <- Entropy(c(A2, B2) / nSplits)
+    h1Start <- Entropy(c(T1, F1) / nSplits)
+    h2Start <- Entropy(c(T2, F2) / nSplits)
     miStart <- h1Start + h2Start - jointHStart
+    viStart <- jointHStart - miStart
     
-    jointHAA <- Entropy((overlaps - c(1, 0, 0, 0)) / nMinus1)
-    jointHAB <- Entropy((overlaps - c(0, 1, 0, 0)) / nMinus1)
-    jointHBA <- Entropy((overlaps - c(0, 0, 1, 0)) / nMinus1)
-    jointHBB <- Entropy((overlaps - c(0, 0, 0, 1)) / nMinus1)
     
-    h1AA <- Entropy(c(A1 - 1L, B1) / nMinus1)
-    h1AB <- Entropy(c(A1 - 1L, B1) / nMinus1)
-    h1BA <- Entropy(c(A1, B1 - 1L) / nMinus1)
-    h1BB <- Entropy(c(A1, B1 - 1L) / nMinus1)
+    jointHTT <- Entropy((overlaps - c(1, 0, 0, 0)) / nMinus1)
+    jointHTF <- Entropy((overlaps - c(0, 1, 0, 0)) / nMinus1)
+    jointHFT <- Entropy((overlaps - c(0, 0, 1, 0)) / nMinus1)
+    jointHFF <- Entropy((overlaps - c(0, 0, 0, 1)) / nMinus1)
+    ifelse(split1, ifelse(split2, jointHTT, jointHTF),
+           ifelse(split2, jointHFT, jointHFF))
     
-    h2AA <- Entropy(c(A2 - 1L, B2) / nMinus1)
-    h2AB <- Entropy(c(A2 - 1L, B2) / nMinus1)
-    h2BA <- Entropy(c(A2, B2 - 1L) / nMinus1)
-    h2BB <- Entropy(c(A2, B2 - 1L) / nMinus1)
+    h1TT <- Entropy(c(T1 - 1L, F1) / nMinus1)
+    h1TF <- h1TT
+    h1FT <- Entropy(c(T1, F1 - 1L) / nMinus1)
+    h1FF <- h1FT
+    h2TT <- Entropy(c(T2 - 1L, F2) / nMinus1)
+    h2FT <- h2TT
+    h2TF <- Entropy(c(T2, F2 - 1L) / nMinus1)
+    h2FF <- h2TF
+    rbind(h1 = ifelse(split1, ifelse(split2, h1TT, h1TF), ifelse(split2, h1FT, h1FF)),
+          h2 = ifelse(split1, ifelse(split2, h2TT, h2TF), ifelse(split2, h2FT, h2FF)))
     
-    miAA <- h1AA + h2AA - jointHAA
-    miAB <- h1AB + h2AB - jointHAB
-    miBA <- h1BA + h2BA - jointHBA
-    miBB <- h1BB + h2BB - jointHBB
     
-    viAA <- jointHAA - miAA
-    viAB <- jointHAB - miAB
-    viBA <- jointHBA - miBA
-    viBB <- jointHBB - miBB
     
-    miWithout <- ifelse(split1, ifelse(split2, miAA, miAB),
-                        ifelse(split2, miBA, miBB))
-    miLost <- miStart - miWithout
+    miTT <- h1TT + h2TT - jointHTT
+    miTF <- h1TF + h2TF - jointHTF
+    miFT <- h1FT + h2FT - jointHFT
+    miFF <- h1FF + h2FF - jointHFF
+    
+    viTT <- jointHTT - miTT
+    viTF <- jointHTF - miTF
+    viFT <- jointHFT - miFT
+    viFF <- jointHFF - miFF
+    
+    miWithout <- ifelse(split1, ifelse(split2, miTT, miTF),
+                        ifelse(split2, miFT, miFF))
+    viWithout <- ifelse(split1, ifelse(split2, viTT, viTF),
+                        ifelse(split2, viFT, viFF))
+    miGained <- miWithout - miStart
+    viLost <- viStart - viWithout
     
     # Return:
-    miLost
+    miGained + viLost
   })
-  colSums(t(miLosses) * combWeights)
+  
+  sameSplits <- weights > 1L
+  fromSame <- apply(splits[sameSplits, , drop = FALSE], 1, function (split) {
+    m <- sum(split)
+    n <- nTip - m
+    hStart <- Entropy(c(m, n) / nSplits)
+    hT <- Entropy(c(m - 1L, n) / nMinus1)
+    hF <- Entropy(c(m, n - 1L) / nMinus1)
+    
+    hWithout <- ifelse(split, hT, hF)
+    miGained <- hStart - hWithout
+    
+    # Return:
+    miGained
+  })
+  colSums(t(fromSame) * as.integer(weights[sameSplits] - 1L)) +
+  colSums(t(viLoss) * combWeights)
   
 }
