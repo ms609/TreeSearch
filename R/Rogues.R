@@ -70,7 +70,6 @@ TipInformation <- function (trees) {
   t1 <- trees[[1]]
   nTip <- NTip(t1)
   nMinus1 <- nTip - 1L
-  halfTip <- nTip / 2L
   
   rawSplits <- do.call(rbind,
                        lapply(trees, function (tr) as.Splits(tr, t1)))
