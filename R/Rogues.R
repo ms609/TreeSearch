@@ -265,3 +265,31 @@ TipInformation <- function (trees) {
   colSums(t(siGain) * combWeights)
   
 }
+
+#' @importFrom TreeDist ClusteringInfoDistance ClusteringInfo
+#' @export
+CITipRemover <- function (trees) {
+  tips <- trees[[1]]$tip.label
+  startInfo <- mean(ClusteringInfo(trees))
+  info <- vapply(tips, function (drop) {
+    tr <- lapply(trees, drop.tip, drop)
+    c(meanInfo = mean(ClusteringInfo(tr)),
+      meanDist = mean(ClusteringInfoDistance(tr)))
+  }, double(2))
+  (mean(ClusteringInfoDistance(trees)) - info['meanDist', ]) /
+  (startInfo / info['meanInfo', ])
+}
+
+#' @importFrom TreeDist PhylogeneticInfoDistance CladisticInfo
+#' @export
+TipRemover <- function (trees) {
+  tips <- trees[[1]]$tip.label
+  startInfo <- mean(CladisticInfo(trees))
+  info <- vapply(tips, function (drop) {
+    tr <- lapply(trees, drop.tip, drop)
+    c(meanInfo = mean(CladisticInfo(tr)),
+      meanDist = mean(PhylogeneticInfoDistance(tr)))
+  }, double(2))
+  (mean(PhylogeneticInfoDistance(trees)) - info['meanDist', ]) /
+  (startInfo / info['meanInfo', ])
+}
