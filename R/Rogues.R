@@ -1,4 +1,4 @@
-#' @importFrom ape cophenetic
+#' @importFrom stats cophenetic
 Cophenetic <- function (x) {
   if (is.null(x$edge.length)) {
     x$edge.length <- rep_len(1, dim(x$edge)[1])
@@ -8,13 +8,13 @@ Cophenetic <- function (x) {
   ret
 }
 
-#' @examples 
-#' library("TreeTools", quietly = TRUE)
-#' trees <- AddTipEverywhere(BalancedTree(8), 'Rogue')
-#' plot(consensus(trees))
-#' instab <- TipInstability(trees)
-#' plot(ConsensusWithout(trees, names(instab[instab > 0.2])))
-#' @template MRS
+# @examples 
+# library("TreeTools", quietly = TRUE)
+# trees <- AddTipEverywhere(BalancedTree(8), 'Rogue')
+# plot(consensus(trees))
+# instab <- TipInstability(trees)
+# plot(ConsensusWithout(trees, names(instab[instab > 0.2])))
+# @template MRS
 TipInstability <- function (trees) {
   dists <- .TipDistances(trees)
   
@@ -68,7 +68,8 @@ TipInstability <- function (trees) {
 #' col <- hcl.colors(ceiling(max(sb) *1.13), 'inferno')[ceiling(sb)]
 #' plot(consensus(trees), tip.color = col)
 #' plot(ConsensusWithout(trees, names(sb[sb == max(sb)])))
-#' @importFrom TreeDist PhylogeneticInfoDistance CladisticInfo
+#' @importFrom TreeDist PhylogeneticInfoDistance 
+#' @importFrom TreeTools CladisticInfo
 #' @export
 TipRemover <- function (trees) {
   tips <- trees[[1]]$tip.label
@@ -90,7 +91,8 @@ TipRemover <- function (trees) {
 #' 
 #' @template MRS
 #' @importFrom ape consensus
-#' @importFrom TreeDist SplitwiseInfo SplitFrequency
+#' @importFrom TreeDist SplitwiseInfo 
+#' @importFrom TreeTools SplitFrequency
 #' @export
 BestConsensus <- function (trees) {
   if (!inherits(trees, 'multiPhylo')) {
