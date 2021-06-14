@@ -55,6 +55,12 @@ TipInstability <- function (trees) {
 }
 
 #' Detect rogue taxa using phylogenetic information distance
+#' 
+#' Calculate the volatility of each tip: namely, the impact on the mean
+#' phylogenetic information distance between trees when that tip is removed.
+#' 
+#' @return `TipVolatility()` returns a named vector listing the volatility
+#' index calculated for each leaf.
 #' @references 
 #' \insertRef{Aberer2013}{TreeSearch}
 #' \insertRef{Wilkinson2017}{TreeSearch}
@@ -71,16 +77,15 @@ TipInstability <- function (trees) {
 #' @importFrom TreeDist PhylogeneticInfoDistance 
 #' @importFrom TreeTools CladisticInfo
 #' @export
-TipRemover <- function (trees) {
+TipVolatility <- function (trees) {
   tips <- trees[[1]]$tip.label
   startInfo <- mean(CladisticInfo(trees))
   info <- vapply(tips, function (drop) {
     tr <- lapply(trees, drop.tip, drop)
     c(meanInfo = mean(CladisticInfo(tr)),
-      meanDist = mean(PhylogeneticInfoDistance(tr)))
+      meanDist = mean(PhylogeneticInfoDistance(tr, normalize = TRUE)))
   }, double(2))
-  (mean(PhylogeneticInfoDistance(trees)) - info['meanDist', ]) /
-  (startInfo / info['meanInfo', ])
+  mean(PhylogeneticInfoDistance(trees, normalize = TRUE)) - info['meanDist', ]
 }
 
 #' Calculate the most informative consensus tree
@@ -113,7 +118,7 @@ BestConsensus <- function (trees) {
   cons[[1]] <- consensus(trees, p = 0.50)
   info[1] <- SplitwiseInfo(cons[[1]], SplitFrequency(cons[[1]], trees) / nTree)
   for (i in 1 + seq_len(nTip - 3L)) {
-    tipScores <- TipRemover(trees)
+    tipScores <- TipVolatility(trees)
     candidate <- which.max(tipScores)
     trees <- lapply(trees, drop.tip, candidate)
     cons[[i]] <- tr <- consensus(trees, p  = 0.50)
