@@ -12,6 +12,7 @@ test_that("Rogues found with TipInstability()", {
   expect_equal(mean(dists) - 0, max(ci))
                
   expect_equal(8L, NTip(BestConsensus(trees)))
+  expect_equal(8L, NTip(Roguehalla(trees, 1)))
   
   
   trees[] <- lapply(trees, AddTip, 'Rogue', 'Rogue2')
@@ -26,6 +27,8 @@ test_that("Rogues found with TipInstability()", {
   bc <- BestConsensus(trees[-11])
   expect_equal(8L, NTip(bc))
   expect_equal(7L, bc$Nnode)
+  expect_equal(10L, NTip(Roguehalla(trees[-11], 1)))
+  expect_equal(8L, NTip(Roguehalla(trees[-11], 2)))
 })
 
 test_that("Wilkinson & Crotti's examples are satisfied", {
@@ -50,7 +53,7 @@ test_that("Wilkinson & Crotti's examples are satisfied", {
   tr3b <- TipVolatility(fig3b)
   expect_equal(c('X', 'Y'), names(tr3b[tr3b == max(tr3b)]))
   
-  fig3c <- lapply(fig3b, drop.tip, names(ti3b[ti3b == max(ti3b)])) 
+  fig3c <- lapply(fig3b, drop.tip, names(tr3b[tr3b == max(tr3b)])) 
   expect_true(all(TipVolatility(fig3c) == 0))
   
   Tree <- function (txt) ape::read.tree(text = txt)

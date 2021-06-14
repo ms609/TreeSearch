@@ -111,6 +111,7 @@ BestConsensus <- function (trees) {
   }
   trees <- lapply(trees, RenumberTips, trees[[1]])
   trees <- lapply(trees, Preorder)
+  nTip <- NTip(trees[[1]])
   nTree <- length(trees)
   
   cons <- vector('list', nTip - 2L)
@@ -126,4 +127,63 @@ BestConsensus <- function (trees) {
   }
   cons[[which.max(info)]]
 }
+
+#' Calculate the most informative consensus tree
+#' 
+#' Uses the splitwise information content as a shortcut, which involves double
+#' counting of some information (which may or may not be desirable) but is
+#' calculable in polynomial ratehr than exponential time.
+#' 
+#' @template MRS
+#' @importFrom ape consensus drop.tip
+#' @importFrom TreeDist SplitwiseInfo 
+#' @importFrom TreeTools SplitFrequency
+#' @export
+Roguehalla <- function (trees, dropset = 1) {
+  if (!inherits(trees, 'multiPhylo')) {
+    if (inherits(trees, 'phylo')) {
+      return (trees)
+    }
+    if (!is.list(trees)) {
+      stop("`trees` must be a list of `phylo` objects")
+    }
+    trees <- structure(trees, class = 'multiPhylo')
+  }
+  trees <- lapply(trees, RenumberTips, trees[[1]])
+  trees <- lapply(trees, Preorder)
+  majority <- 0.5 + sqrt(.Machine$double.eps)
   
+  cons <- consensus(trees, p = majority)
+  best <- SplitwiseInfo(cons, SplitFrequency(cons, trees) / nTree)
+  
+  .Drop <- function (n) {
+    drops <- combn(NTip(trees[[1]]), n)
+    candidates <- apply(drops, 2, function (drop) {
+      tr <- lapply(trees, drop.tip, drop)
+      cons <- consensus(tr, p = majority)
+      SplitwiseInfo(cons, SplitFrequency(cons, tr) / nTree)
+    })
+    if (max(candidates) > best) {
+      list(info = max(candidates), drop = drops[, which.max(candidates)])
+    } else {
+      NULL
+    }
+  }
+  
+  repeat {
+    improved <- FALSE
+    for (i in seq_len(dropset)) {
+      dropped <- .Drop(i)
+      if (!is.null(dropped)) {
+        improved <- TRUE
+        best <- dropped$info
+        trees <- lapply(trees, drop.tip, dropped$drop)
+        break
+      }
+    }
+    if (!improved) break
+  }
+  
+  # Return:
+  consensus(trees, p = majority)
+}
