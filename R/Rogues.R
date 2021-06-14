@@ -151,6 +151,7 @@ Roguehalla <- function (trees, dropset = 1) {
   }
   trees <- lapply(trees, RenumberTips, trees[[1]])
   trees <- lapply(trees, Preorder)
+  nTree <- length(trees)
   majority <- 0.5 + sqrt(.Machine$double.eps)
   
   cons <- consensus(trees, p = majority)

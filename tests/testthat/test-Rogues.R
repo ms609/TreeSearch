@@ -1,4 +1,4 @@
-test_that("Rogues found with TipInstability()", {
+test_that("Rogues found", {
   
   library("TreeTools", quietly = TRUE)
   trees <- AddTipEverywhere(BalancedTree(8), 'Rogue')
