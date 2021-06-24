@@ -66,8 +66,8 @@ test_that("MaximizeParsimony() times out", {
 })
 
 test_that("Mismatched tree/dataset handled with warnings", {
-  treeAf <- ape::read.tree(text = "(a, (b, (c, (d, (e, f)))));")
-  treeBg <- ape::read.tree(text = "(g, (b, (c, (d, (e, f)))));")
+  treeAf <- read.tree(text = "(a, (b, (c, (d, (e, f)))));")
+  treeBg <- read.tree(text = "(g, (b, (c, (d, (e, f)))));")
   datAf <- StringToPhyDat('110000 110000 111100 111000',
                               letters[1:6], byTaxon = FALSE)
   datAe <- StringToPhyDat('11000 11000 11110 11100',

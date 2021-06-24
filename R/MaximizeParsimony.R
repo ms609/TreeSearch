@@ -541,7 +541,8 @@ MaximizeParsimony <- function (dataset, tree,
     morphyConstr <- PhyDat2Morphy(constraint)
     on.exit(morphyConstr <- UnloadMorphy(morphyConstr), add = TRUE)
     # Calculate constraint minimum score
-    constraintLength <- sum(MinimumLength(constraint))
+    constraintLength <- sum(MinimumLength(constraint, compress = TRUE) *
+                              attr(constraint, 'weight'))
     
     .Forbidden <- function (edges) {
       preorder_morphy(edges, morphyConstr) != constraintLength

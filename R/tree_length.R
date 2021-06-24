@@ -57,7 +57,7 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     at <- attributes(dataset)
     nChar  <- at$nr # strictly, transformation series patterns; these'll be upweighted later
     weight <- at$weight
-    steps <- CharacterLength(tree, dataset)
+    steps <- CharacterLength(tree, dataset, compress = TRUE)
     minLength <- at$min.length
     homoplasies <- steps - minLength
     
@@ -75,7 +75,7 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     
   } else if (.UseProfile(concavity)) {
     dataset <- PrepareDataProfile(dataset)
-    steps <- CharacterLength(tree, dataset)
+    steps <- CharacterLength(tree, dataset, compress = TRUE)
     info <- attr(dataset, 'info.amounts')
     
     # Return:
@@ -171,6 +171,7 @@ Fitch <- function (tree, dataset) {
 #' 
 #' @template treeParam
 #' @template datasetParam
+#' @template compressParam
 #'
 #' @return `CharacterLength()` returns a vector listing the contribution of each
 #' character to tree score, according to the algorithm of Brazeau, Guillerme 
@@ -181,13 +182,14 @@ Fitch <- function (tree, dataset) {
 #' dataset <- inapplicable.phyData[[12]]
 #' tree <- TreeTools::NJTree(dataset)
 #' CharacterLength(tree, dataset)
-#'
+#' CharacterLength(tree, dataset, compress = TRUE)
+#' @template MRS
 #' @family tree scoring
 #' @references
 #'  \insertRef{Brazeau2018}{TreeTools}
 #' @importFrom TreeTools Renumber RenumberTips
 #' @export
-CharacterLength <- function (tree, dataset) {
+CharacterLength <- function (tree, dataset, compress = FALSE) {
   if (!inherits(dataset, 'phyDat')) {
     stop("Dataset must be of class phyDat, not ", class(dataset), '.')
   }
@@ -208,15 +210,21 @@ CharacterLength <- function (tree, dataset) {
   
   tree <- RenumberTips(Renumber(tree), names(dataset))  
   
+  ret <- FastCharacterLength(tree, dataset)
   # Return:
-  FastCharacterLength(tree, dataset)
+  if (compress) {
+    ret
+  } else {
+    ret[attr(dataset, 'index')]
+  }
+  
 }
 
 #' @rdname CharacterLength
 #' @export
 FitchSteps <- function (tree, dataset) {
   .Deprecated("CharacterLength")
-  CharacterLength(tree, dataset)
+  CharacterLength(tree, dataset, compress = TRUE)
 }
 
 #' @describeIn CharacterLength Do not perform checks.  Use with care: may cause

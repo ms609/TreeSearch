@@ -229,7 +229,8 @@ PrepareDataIW <- function (dataset) {
   unlisted <- unlist(dataset, use.names = FALSE)
   binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
   
-  attr(dataset, 'min.length') <- apply(binaryMatrix, 1, MinimumLength)
+  attr(dataset, 'min.length') <- apply(binaryMatrix, 1, MinimumLength,
+                                       compress = TRUE)
   
   # Return:
   dataset
@@ -251,14 +252,18 @@ PrepareDataIW <- function (dataset) {
 #' Tokens that are ambiguous for an inapplicable and an applicable
 #' state are not presently supported; for an approximate value, denote such
 #' ambiguity with the integer `0`.
+#' @template compressParam
 #' 
-#' @return A vector of integers specifying the minimum number of steps that 
-#' each character must contain.
+#' @return `MinimumLength()` returns a vector of integers specifying the 
+#' minimum number of steps that each character must contain.
 #'
 #' @examples
 #' data('inapplicable.datasets')
 #' myPhyDat <- inapplicable.phyData[[4]] 
 #' MinimumLength(myPhyDat)
+#' MinimumLength(myPhyDat, compress = TRUE)
+#' 
+#' 
 #' class(myPhyDat) # phyDat object
 #' # load your own data with
 #' # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
@@ -281,15 +286,13 @@ PrepareDataIW <- function (dataset) {
 #'
 #' # Finally, work out minimum steps 
 #' apply(myStates, 1, MinimumLength)
-#'   
-#'
-#' @author Martin R. Smith
+#' @template MRS
 #' @export
-MinimumLength <- function (x) UseMethod('MinimumLength')
+MinimumLength <- function (x, compress = FALSE) UseMethod('MinimumLength')
 
 #' @rdname MinimumLength
 #' @export
-MinimumLength.phyDat <- function (x) {
+MinimumLength.phyDat <- function (x, compress = FALSE) {
   
   at <- attributes(x)
   nLevel <- length(at$level)
@@ -316,13 +319,19 @@ MinimumLength.phyDat <- function (x) {
   unlisted <- unlist(x, use.names = FALSE)
   binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
   
+  ret <- apply(binaryMatrix, 1, MinimumLength)
+  
   # Return:
-  apply(binaryMatrix, 1, MinimumLength)
+  if (compress) {
+    ret
+  } else {
+    ret[attr(x, 'index')]
+  }
 }
 
 #' @rdname MinimumLength
 #' @export
-MinimumLength.numeric <- function (x) {
+MinimumLength.numeric <- function (x, compress = NA) {
   
   uniqueStates <- unique(x[x > 0])
   if (length(uniqueStates) < 2) return (0)
@@ -366,5 +375,5 @@ MinimumLength.numeric <- function (x) {
 MinimumSteps <- function(x) {
   .Deprecated("MinimumLength",
   msg = 'Renamed to `MinimumLength()` and recoded to better support inapplicable tokens')
-  MinimumLength(x)
+  MinimumLength(x, compress = TRUE)
 }
