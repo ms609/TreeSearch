@@ -52,7 +52,8 @@ on a tree are denoted with \code{TRUE}.
 }
 \description{
 Reconstructs the distribution of a character on a tree topology using the
-modified Fitch algorithm presented in Brazeau \emph{et al.} (2019).
+modified Fitch algorithm presented in
+\insertCite{Brazeau2019;textual}{TreeSearch}.
 }
 \examples{
 # Set up plotting area
@@ -72,9 +73,7 @@ PlotCharacter(tree, dataset, 14)
 par(oPar)
 }
 \references{
-\itemize{
-\item \insertRef{Brazeau2019}{TreeSearch}
-}
+\insertAllCited{}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

@@ -176,8 +176,8 @@ ratchet searches, from which a consensus tree can be generated using
 \code{\link[ape:consensus]{ape::consensus()}} or \code{\link[TreeTools:ConsensusWithout]{TreeTools::ConsensusWithout()}}.
 }
 \description{
-\code{Ratchet()} uses the parsimony ratchet (Nixon 1999) to search for a more
-parsimonious tree using custom optimality criteria.
+\code{Ratchet()} uses the parsimony ratchet \insertCite{Nixon1999}{TreeSearch}
+to search for a more parsimonious tree using custom optimality criteria.
 }
 \details{
 For usage pointers, see the
@@ -189,7 +189,7 @@ For usage pointers, see the
 }}
 
 \examples{
-data('Lobo', package='TreeTools')
+data('Lobo', package = 'TreeTools')
 njtree <- TreeTools::NJTree(Lobo.phy)
 # Increase value of ratchIter and searchHits to do a proper search
 quickResult <- Ratchet(njtree, Lobo.phy, ratchIter = 2, searchHits = 3)
@@ -198,13 +198,9 @@ quickResult <- Ratchet(njtree, Lobo.phy, ratchIter = 2, searchHits = 3)
 oldPar <- par(mar = rep(0, 4), cex = 0.75)
 plot(quickResult)
 par(oldPar)
-
 }
 \references{
-\itemize{
-\item \insertRef{Nixon1999}{TreeSearch}
-\item \insertRef{Smith2019}{TreeSearch}
-}
+\insertAllCited{}
 }
 \seealso{
 \itemize{
@@ -218,6 +214,7 @@ Other custom search functions:
 \code{\link{SuccessiveApproximations}()}
 }
 \author{
-Martin R. Smith
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{custom search functions}

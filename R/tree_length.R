@@ -1,9 +1,10 @@
 #' Calculate the parsimony score of a tree given a dataset
 #'
-#' `TreeLength()` uses the Morphy library (Brazeau 2017) to calculate a
-#' parsimony score for a tree, handling inapplicable data according to the
-#' algorithm of Brazeau et al. (2019).  Tree scoring can employ implied
-#' weights (Goloboff 1993) or profile parsimony (Faith & Trueman 2001).
+#' `TreeLength()` uses the Morphy library \insertCite{Brazeau2017}{TreeSearch}
+#' to calculate a parsimony score for a tree, handling inapplicable data 
+#' according to the algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
+#' Tree scoring can employ implied weights \insertCite{Goloboff1993}{TreeSearch}
+#' or profile parsimony \insertCite{Faith2001}{TreeSearch}.
 #'
 #' @param tree A tree of class `phylo`, a list thereof (optionally of class
 #' `multiPhylo`), or an integer -- in which case `tree` random trees will be 
@@ -30,17 +31,7 @@
 #' @family tree scoring 
 #' 
 #' @references
-#'  - \insertRef{Brazeau2017}{TreeSearch}
-#'  
-#'  - \insertRef{Brazeau2019}{TreeSearch}
-#'  
-#'  - \insertRef{Faith2001}{TreeSearch}
-#'  
-#'  - \insertRef{Goloboff1993}{TreeSearch}
-#'  
-#'  - \insertRef{Goloboff2018}{TreeSearch}
-#'  
-#'  - \insertRef{Smith2019}{TreeSearch}
+#' \insertAllCited{}
 #' @author Martin R. Smith (using Morphy C library, by Martin Brazeau)
 #' @importFrom phangorn phyDat
 #' @importFrom TreeTools Renumber RenumberTips TreeIsRooted
@@ -174,8 +165,8 @@ Fitch <- function (tree, dataset) {
 #' @template compressParam
 #'
 #' @return `CharacterLength()` returns a vector listing the contribution of each
-#' character to tree score, according to the algorithm of Brazeau, Guillerme 
-#' and Smith (2019).
+#' character to tree score, according to the algorithm of
+#' \insertCite{Brazeau2018;textual}{TreeTools}.
 #'
 #' @examples
 #' data('inapplicable.datasets')
@@ -186,7 +177,7 @@ Fitch <- function (tree, dataset) {
 #' @template MRS
 #' @family tree scoring
 #' @references
-#'  \insertRef{Brazeau2018}{TreeTools}
+#' \insertAllCited{}
 #' @importFrom TreeTools Renumber RenumberTips
 #' @export
 CharacterLength <- function (tree, dataset, compress = FALSE) {

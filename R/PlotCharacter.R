@@ -1,7 +1,8 @@
 #' Plot the distribution of a character on a tree
 #' 
 #' Reconstructs the distribution of a character on a tree topology using the
-#' modified Fitch algorithm presented in Brazeau _et al._ (2019).
+#' modified Fitch algorithm presented in 
+#' \insertCite{Brazeau2019;textual}{TreeSearch}.
 #' 
 #' @template treeParam
 #' @template datasetParam
@@ -23,7 +24,7 @@
 #' on a tree are denoted with `TRUE`.
 #' 
 #' @references 
-#' - \insertRef{Brazeau2019}{TreeSearch}
+#' \insertAllCited{}
 #' @examples
 #' # Set up plotting area
 #' oPar <- par(mar = rep(0, 4))
