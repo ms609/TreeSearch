@@ -26,8 +26,9 @@ SharedPhylogeneticConcordance(tree, dataset)
 whose names correspond to the labels of any accompanying tree.}
 }
 \description{
-The site concordance factor (Minh, Hahn & Lanfear 2020) is a measure of the
-strength of support that the dataset presents for a given split in a tree.
+The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure
+of the strength of support that the dataset presents for a given split in a
+tree.
 }
 \details{
 \code{QuartetConcordance()} is the proportion of quartets (sets of four leaves) that
@@ -58,11 +59,7 @@ par(oPar)
 pairs(cbind(qc, cc, pc, spc, mcc))
 }
 \references{
-\insertRef{Minh2020}{TreeSearch}
-
-\insertRef{SmithDist}{TreeDist}
-
-\insertRef{Vinh2010}{TreeDist}
+\insertAllCited{}
 }
 \seealso{
 Other split support functions: 

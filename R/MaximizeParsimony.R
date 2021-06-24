@@ -2,18 +2,20 @@
 #' 
 #' Search for most parsimonious trees using the parsimony ratchet and 
 #' \acronym{TBR} rearrangements, treating inapplicable data as such using the
-#' algorithm of Brazeau, Guillerme & Smith (2019).
+#' algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
 #'  
 #' Tree search will be conducted from a specified or automatically-generated
 #' starting tree in order to find a tree with an optimal parsimony score,
 #' under implied or equal weights, treating inapplicable characters as such
 #' in order to avoid the artefacts of the standard Fitch algorithm
-#' (see Maddison 1993; Brazeau et al. 2019).
-#' The tree scoring implementation uses the MorphyLib C library (Brazeau 2017).
+#' \insertCite{@see @Maddison1993; @Brazeau2019}{TreeSearch}.
+#' The tree scoring implementation uses the MorphyLib C library
+#' \insertCite{Brazeau2017}{TreeSearch}.
 #' 
 #' Tree search commences with `ratchIter` iterations of the parsimony ratchet
-#' (Nixon 1999), which bootstraps the input dataset in order to escape local
-#' optima.  A final round of tree bisection and reconnection (\acronym{TBR})
+#' \insertCite{Nixon1999}{TreeSearch}, which bootstraps the input dataset 
+#' in order to escape local optima.
+#' A final round of tree bisection and reconnection (\acronym{TBR})
 #' is conducted to broaden the sampling of trees.
 #' 
 #' This function can be called using the R command line / terminal, or through
@@ -26,6 +28,7 @@
 #' [package documentation](https://ms609.github.io/TreeSearch).
 #'  
 #' 
+#' 
 #' @template datasetParam
 #' @param tree (optional) A bifurcating tree of class \code{\link{phylo}},
 #' containing only the tips listed in `dataset`, from which the search
@@ -34,7 +37,7 @@
 #' respecting any supplied `constraint`.
 #' Edge lengths are not supported and will be deleted.
 #' @param ratchIter Numeric specifying number of iterations of the 
-#' parsimony ratchet (Nixon 1999) to conduct.
+#' parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.
 #' @param tbrIter Numeric specifying the maximum number of \acronym{TBR}
 #' break points to evaluate before concluding each search.
 #' The counter is reset to zero each time tree score improves.
@@ -55,13 +58,13 @@
 #'  will retain `quickHits` &times; `maxHits` trees with the best score.
 #' @param concavity Numeric specifying concavity constant for implied step 
 #' weighting; set as `Inf` for equal step weights (which is a bad idea; see 
-#' Smith 2019).
+#' \insertCite{Smith2019;textual}{TreeSearch}).
 #' @param tolerance Numeric specifying degree of suboptimality to tolerate
 #' before rejecting a tree.  The default, `sqrt(.Machine$double.eps)`, retains
 #' trees that may be equally parsimonious but for rounding errors.  
 #' Setting to larger values will include trees suboptimal by up to `tolerance`
 #' in search results, which may improve the accuracy of the consensus tree
-#' (at the expense of resolution) (Smith 2019).
+#' (at the expense of resolution) \insertCite{Smith2019}{TreeSearch}.
 #' @param constraint An object of class `phyDat`; returned trees will be
 #' perfectly compatible with each character in `constraint`.
 #' See [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
@@ -146,15 +149,7 @@
 #' @importFrom shiny setProgress withProgress
 #' @importFrom TreeTools NJTree CharacterInformation NTip
 #' @references
-#' \insertRef{Brazeau2017}{TreeSearch}
-#' 
-#' \insertRef{Brazeau2019}{TreeSearch}
-#' 
-#' \insertRef{Maddison1993}{TreeSearch}
-#' 
-#' \insertRef{Nixon1999}{TreeSearch}
-#' 
-#' \insertRef{Smith2019}{TreeSearch}
+#' \insertAllCited{}
 #' @encoding UTF-8
 #' @export
 MaximizeParsimony <- function (dataset, tree,
@@ -869,11 +864,15 @@ MaximizeParsimony <- function (dataset, tree,
 #' a split, rather than the amount of confidence that should be afforded the
 #' grouping.
 #' "Bootstrap support of 100% is not enough, the tree must also be correct" 
-#' (Phillips et al. 2004).
-#' See discussion in Egan 2006; W&auml;gele _et al_. (2009), Kumar _et al._ 2011.
+#' \insertCite{Phillips2004}{TreeSearch}.
+#' See discussion in \insertCite{Egan2006;textual}{TreeSearch};
+#' \insertCite{Wagele2009;textual}{TreeSearch};
+#' \insertCite{Simmons2011}{TreeSearch};
+#' \insertCite{Kumar2012;textual}{TreeSearch}.
 #' 
 #' For a discussion of suitable search parameters in resampling estimates, see
-#' M&uuml;ller (2005).  The user should decide whether to start each resampling
+#' \insertCite{Muller2005;textual}{TreeSearch}.
+#' The user should decide whether to start each resampling
 #' from the optimal tree (which may be quicker, but result in overestimated 
 #' support values as searches get stuck in local optima close to the 
 #' optimal tree) or a random tree (which may take longer as more rearrangements
@@ -881,20 +880,8 @@ MaximizeParsimony <- function (dataset, tree,
 #' 
 #' @return `Resample()` returns a `multiPhylo` object containing a list of
 #' trees obtained by tree search using a resampled version of `dataset`.
-#' @references 
-#' \insertRef{Egan2006}{TreeSearch}
-#' 
-#' \insertRef{Kumar2012}{TreeSearch}
-#' 
-#' \insertRef{Muller2005}{TreeSearch}
-#' 
-#' \insertRef{Phillips2004}{TreeSearch}
-#' 
-#' \insertRef{Simmons2011}{TreeSearch}
-#' 
-#' \insertRef{Wagele2009}{TreeSearch}
-#' 
 #' @family split support functions
+#' @encoding UTF-8
 #' @export
 Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
                       proportion = 2/3,

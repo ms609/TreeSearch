@@ -68,9 +68,8 @@ myStates <- matrix(binaryValues[myData], nrow = nrow(myData),
 
 # Finally, work out minimum steps 
 apply(myStates, 1, MinimumLength)
-  
-
 }
 \author{
-Martin R. Smith
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
