@@ -35,6 +35,17 @@ test_that("Constraints work", {
   
 })
 
+test_that("Constrained NJ trees work", {
+  dataset <- MatrixToPhyDat(matrix(
+   c(0, 1, 1, 1, 0, 1,
+     0, 1, 1, 0, 0, 1), ncol = 2,
+   dimnames = list(letters[1:6], NULL)))
+  constraint <- MatrixToPhyDat(c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
+  expect_equal(ape::read.tree(text = "(a, (d, ((c, b), (e, f))));"),
+               ConstrainedNJ(dataset, constraint))
+  expect_equal(NJTree(dataset), ConstrainedNJ(dataset, dataset))
+})
+
 test_that("Inconsistent constraints fail", {
   constraint <- MatrixToPhyDat(matrix(
     c(0, 1, 1, 1, 0, 0,
