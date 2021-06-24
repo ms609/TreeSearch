@@ -916,12 +916,13 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
 #' @return `ConstrainedNJ()` returns a tree of class `phylo`.
 #' @importFrom TreeTools NJTree
 #' @inheritParams MaximizeParsimony
-#' @examples 
-#' dataset <- MatrixToPhyDat(matrix(
+#' @examples
+#' dataset <- TreeTools::MatrixToPhyDat(matrix(
 #'   c(0, 1, 1, 1, 0, 1,
 #'     0, 1, 1, 0, 0, 1), ncol = 2,
 #'   dimnames = list(letters[1:6], NULL)))
-#' constraint <- MatrixToPhyDat(c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
+#' constraint <- TreeTools::MatrixToPhyDat(
+#'   c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
 #' plot(ConstrainedNJ(dataset, constraint))
 #' @template MRS
 #' @export

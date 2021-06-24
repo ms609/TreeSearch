@@ -26,11 +26,12 @@ Constructs a neighbour-joining tree such that the tree is consistent with a
 constraint.
 }
 \examples{
-dataset <- MatrixToPhyDat(matrix(
+dataset <- TreeTools::MatrixToPhyDat(matrix(
   c(0, 1, 1, 1, 0, 1,
     0, 1, 1, 0, 0, 1), ncol = 2,
   dimnames = list(letters[1:6], NULL)))
-constraint <- MatrixToPhyDat(c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
+constraint <- TreeTools::MatrixToPhyDat(
+  c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
 plot(ConstrainedNJ(dataset, constraint))
 }
 \author{
