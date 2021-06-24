@@ -24,8 +24,8 @@ decompressed using the dataset's \code{index} attribute.}
 }
 \value{
 \code{CharacterLength()} returns a vector listing the contribution of each
-character to tree score, according to the algorithm of Brazeau, Guillerme
-and Smith (2019).
+character to tree score, according to the algorithm of
+\insertCite{Brazeau2018;textual}{TreeTools}.
 }
 \description{
 Homoplasy length of each character in a dataset on a specified tree.
@@ -44,7 +44,7 @@ CharacterLength(tree, dataset)
 CharacterLength(tree, dataset, compress = TRUE)
 }
 \references{
-\insertRef{Brazeau2018}{TreeTools}
+\insertAllCited{}
 }
 \seealso{
 Other tree scoring: 

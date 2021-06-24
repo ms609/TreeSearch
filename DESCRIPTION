@@ -29,7 +29,7 @@ Imports:
     protoclust,
     Quartet,
     Rcpp,
-    Rdpack,
+    Rdpack (>= 0.7),
     shiny,
     shinyjs,
     stats,

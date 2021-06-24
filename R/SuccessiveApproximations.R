@@ -1,7 +1,7 @@
 #' Tree search using successive approximations
 #'
 #' Searches for a tree that is optimal under the Successive Approximations 
-#' criterion (Farris 1969).
+#' criterion \insertCite{Farris1969}{TreeSearch}.
 #'
 #' @template treeParam
 #' @template datasetParam
@@ -19,7 +19,7 @@
 #' containing optimal (and slightly suboptimal, if suboptimal > 0) trees.
 #'
 #' @references 
-#' \insertRef{Farris1969}{TreeSearch}
+#' \insertAllCited{}
 #'
 #' @importFrom ape consensus root
 #' @family custom search functions

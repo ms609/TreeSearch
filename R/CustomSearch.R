@@ -126,9 +126,6 @@ EdgeListSearch <- function (edgeList, dataset,
 #' `data` that is passed here.
 #' 
 #'
-#' @references
-#' - \insertRef{Smith2019}{TreeSearch}
-#'
 #' @seealso
 #' \itemize{
 #' \item \code{\link{Fitch}}, calculates parsimony score;

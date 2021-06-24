@@ -129,11 +129,6 @@ if (interactive()) {
   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
 }
 }
-\references{
-\itemize{
-\item \insertRef{Smith2019}{TreeSearch}
-}
-}
 \seealso{
 \itemize{
 \item \code{\link{Fitch}}, calculates parsimony score;

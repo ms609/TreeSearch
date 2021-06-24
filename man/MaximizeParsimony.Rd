@@ -58,7 +58,7 @@ respecting any supplied \code{constraint}.
 Edge lengths are not supported and will be deleted.}
 
 \item{ratchIter}{Numeric specifying number of iterations of the
-parsimony ratchet (Nixon 1999) to conduct.}
+parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.}
 
 \item{tbrIter}{Numeric specifying the maximum number of \acronym{TBR}
 break points to evaluate before concluding each search.
@@ -86,14 +86,14 @@ will retain \code{quickHits} × \code{maxHits} trees with the best score.}
 
 \item{concavity}{Numeric specifying concavity constant for implied step
 weighting; set as \code{Inf} for equal step weights (which is a bad idea; see
-Smith 2019).}
+\insertCite{Smith2019;textual}{TreeSearch}).}
 
 \item{tolerance}{Numeric specifying degree of suboptimality to tolerate
 before rejecting a tree.  The default, \code{sqrt(.Machine$double.eps)}, retains
 trees that may be equally parsimonious but for rounding errors.
 Setting to larger values will include trees suboptimal by up to \code{tolerance}
 in search results, which may improve the accuracy of the consensus tree
-(at the expense of resolution) (Smith 2019).}
+(at the expense of resolution) \insertCite{Smith2019}{TreeSearch}.}
 
 \item{constraint}{An object of class \code{phyDat}; returned trees will be
 perfectly compatible with each character in \code{constraint}.
@@ -117,11 +117,15 @@ Note that bootstrap support is a measure of the amount of data supporting
 a split, rather than the amount of confidence that should be afforded the
 grouping.
 "Bootstrap support of 100\% is not enough, the tree must also be correct"
-(Phillips et al. 2004).
-See discussion in Egan 2006; Wägele \emph{et al}. (2009), Kumar \emph{et al.} 2011.
+\insertCite{Phillips2004}{TreeSearch}.
+See discussion in \insertCite{Egan2006;textual}{TreeSearch};
+\insertCite{Wagele2009;textual}{TreeSearch};
+\insertCite{Simmons2011}{TreeSearch};
+\insertCite{Kumar2012;textual}{TreeSearch}.
 
 For a discussion of suitable search parameters in resampling estimates, see
-Müller (2005).  The user should decide whether to start each resampling
+\insertCite{Muller2005;textual}{TreeSearch}.
+The user should decide whether to start each resampling
 from the optimal tree (which may be quicker, but result in overestimated
 support values as searches get stuck in local optima close to the
 optimal tree) or a random tree (which may take longer as more rearrangements
@@ -148,19 +152,21 @@ trees obtained by tree search using a resampled version of \code{dataset}.
 \description{
 Search for most parsimonious trees using the parsimony ratchet and
 \acronym{TBR} rearrangements, treating inapplicable data as such using the
-algorithm of Brazeau, Guillerme & Smith (2019).
+algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
 
 Tree search will be conducted from a specified or automatically-generated
 starting tree in order to find a tree with an optimal parsimony score,
 under implied or equal weights, treating inapplicable characters as such
 in order to avoid the artefacts of the standard Fitch algorithm
-(see Maddison 1993; Brazeau et al. 2019).
-The tree scoring implementation uses the MorphyLib C library (Brazeau 2017).
+\insertCite{@see @Maddison1993; @Brazeau2019}{TreeSearch}.
+The tree scoring implementation uses the MorphyLib C library
+\insertCite{Brazeau2017}{TreeSearch}.
 }
 \details{
 Tree search commences with \code{ratchIter} iterations of the parsimony ratchet
-(Nixon 1999), which bootstraps the input dataset in order to escape local
-optima.  A final round of tree bisection and reconnection (\acronym{TBR})
+\insertCite{Nixon1999}{TreeSearch}, which bootstraps the input dataset
+in order to escape local optima.
+A final round of tree bisection and reconnection (\acronym{TBR})
 is conducted to broaden the sampling of trees.
 
 This function can be called using the R command line / terminal, or through
@@ -229,27 +235,7 @@ MaximizeParsimony(characters, constraint = constraint, verbosity = 0)
 
 }
 \references{
-\insertRef{Brazeau2017}{TreeSearch}
-
-\insertRef{Brazeau2019}{TreeSearch}
-
-\insertRef{Maddison1993}{TreeSearch}
-
-\insertRef{Nixon1999}{TreeSearch}
-
-\insertRef{Smith2019}{TreeSearch}
-
-\insertRef{Egan2006}{TreeSearch}
-
-\insertRef{Kumar2012}{TreeSearch}
-
-\insertRef{Muller2005}{TreeSearch}
-
-\insertRef{Phillips2004}{TreeSearch}
-
-\insertRef{Simmons2011}{TreeSearch}
-
-\insertRef{Wagele2009}{TreeSearch}
+\insertAllCited{}
 }
 \seealso{
 Other split support functions: 
