@@ -87,7 +87,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9008</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9009</span>
       </span>
     </div>
 
@@ -160,29 +160,59 @@
       <small>Source: <a href='https://github.com/ms609/TreeSearch/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="treesearch-0439008-development" class="section level1">
-<h1 class="page-header" data-toc-text="0.4.3.9008">
-<a href="#treesearch-0439008-development" class="anchor"></a>TreeSearch 0.4.3.9008 (development)<small> Unreleased </small>
+    <div id="treesearch-0439009-development" class="section level1">
+<h1 class="page-header" data-toc-text="0.4.3.9009">
+<a href="#treesearch-0439009-development" class="anchor"></a>TreeSearch 0.4.3.9009 (development)<small> Unreleased </small>
 </h1>
+<div id="changes-in-functionality" class="section level2">
+<h2 class="hasAnchor">
+<a href="#changes-in-functionality" class="anchor"></a>Changes in functionality</h2>
 <ul>
-<li><p>v……9007 introduces a pre-ratchet TBR search and adjusts default settings.</p></li>
-<li><p>v0.4.3.9005 fixes some bugs that may affect tree scoring under IW &amp; PP.</p></li>
-<li><p><code><a href="../reference/MaximizeParsimony.html">EasyTrees()</a></code> ‘shiny’ graphical user interface for tree search</p></li>
-<li><p><code><a href="../reference/PlotCharacter.html">PlotCharacter()</a></code> reconstructs character distributions on trees.</p></li>
-<li><p><code><a href="../reference/SiteConcordance.html">SiteConcordance()</a></code> calculates exact site concordance</p></li>
-<li><p><code><a href="../reference/ConcordantInformation.html">ConcordantInformation()</a></code> evaluates signal:noise of dataset implied by a given tree.</p></li>
-<li><p><code><a href="../reference/PrepareDataProfile.html">PrepareDataProfile()</a></code> simplifies dataset to allow partial search when multiple applicable tokens are present</p></li>
-<li><p><code><a href="../reference/MaximizeParsimony.html">Resample()</a></code> conducts bootstrap and jackknife resampling</p></li>
-<li><p><code><a href="../reference/Consistency.html">Consistency()</a></code> calculates consistency and retention ‘indices’</p></li>
-<li><p><code><a href="../reference/MinimumLength.html">MinimumLength()</a></code> and <code>MaximumLength()</code> calculate range of possible lengths of characters in a dataset on any tree</p></li>
-<li><p><code><a href="../reference/IWScore.html">TreeLength()</a></code> supports lists of trees.</p></li>
-<li><p>Set handling of ‘gap’ token (-) when creating Morphy object with <code>gap =</code></p></li>
-<li><p>Label nodes with split frequencies using <code><a href="../reference/JackLabels.html">JackLabels(plot = FALSE)</a></code></p></li>
-<li><p>Support for topological constraints during tree search</p></li>
-<li><p>Remove redundant function <code>AsBinary()</code></p></li>
-<li><p>Drop <code>nTip</code> parameter in <code><a href="../reference/RandomTreeScore.html">RandomTreeScore()</a></code> (infer from <code>morphyObj</code>)</p></li>
-<li><p>C implementations of rearrangement functions</p></li>
+<li>v……9007 introduces a pre-ratchet TBR search and adjusts default settings.</li>
+<li>v0.4.3.9005 fixes some bugs that may affect tree scoring under IW &amp; PP.</li>
 </ul>
+</div>
+<div id="new-functions" class="section level2">
+<h2 class="hasAnchor">
+<a href="#new-functions" class="anchor"></a>New functions</h2>
+<ul>
+<li>
+<code><a href="../reference/MaximizeParsimony.html">EasyTrees()</a></code> ‘shiny’ graphical user interface for tree search</li>
+<li>
+<code><a href="../reference/PlotCharacter.html">PlotCharacter()</a></code> reconstructs character distributions on trees</li>
+<li>
+<code><a href="../reference/ConstrainedNJ.html">ConstrainedNJ()</a></code> constructs starting trees that respect a constraint</li>
+<li>
+<code><a href="../reference/SiteConcordance.html">SiteConcordance()</a></code> calculates exact site concordance</li>
+<li>
+<code><a href="../reference/ConcordantInformation.html">ConcordantInformation()</a></code> evaluates signal:noise of dataset implied by a given tree.</li>
+<li>
+<code><a href="../reference/PrepareDataProfile.html">PrepareDataProfile()</a></code> simplifies dataset to allow partial search when multiple applicable tokens are present</li>
+<li>
+<code><a href="../reference/MaximizeParsimony.html">Resample()</a></code> conducts bootstrap and jackknife resampling</li>
+<li>
+<code><a href="../reference/Consistency.html">Consistency()</a></code> calculates consistency and retention ‘indices’</li>
+<li>
+<code><a href="../reference/MinimumLength.html">MinimumLength()</a></code> and <code>MaximumLength()</code> calculate range of possible lengths of characters in a dataset on any tree</li>
+</ul>
+</div>
+<div id="improvements" class="section level2">
+<h2 class="hasAnchor">
+<a href="#improvements" class="anchor"></a>Improvements</h2>
+<ul>
+<li>
+<code><a href="../reference/IWScore.html">TreeLength()</a></code> supports lists of trees</li>
+<li>Set handling of ‘gap’ token (-) when creating Morphy object with <code>gap =</code>
+</li>
+<li>Label nodes with split frequencies using <code><a href="../reference/JackLabels.html">JackLabels(plot = FALSE)</a></code>
+</li>
+<li>Support for topological constraints during tree search</li>
+<li>Remove redundant function <code>AsBinary()</code>
+</li>
+<li>Drop <code>nTip</code> parameter in <code><a href="../reference/RandomTreeScore.html">RandomTreeScore()</a></code> (infer from <code>morphyObj</code>)</li>
+<li>C implementations of rearrangement functions</li>
+</ul>
+</div>
 </div>
     <div id="treesearch-043" class="section level1">
 <h1 class="page-header" data-toc-text="0.4.3">
