@@ -62,9 +62,8 @@
 #' Setting to larger values will include trees suboptimal by up to `tolerance`
 #' in search results, which may improve the accuracy of the consensus tree
 #' (at the expense of resolution) (Smith 2019).
-#' @param constraint An object of class `phyDat`.
-#' Trees that are not perfectly compatible with each character in `constraint`
-#' will not be considered during search.
+#' @param constraint An object of class `phyDat`; returned trees will be
+#' perfectly compatible with each character in `constraint`.
 #' See [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
 #' for further examples.
 #' @param verbosity Integer specifying level of messaging; higher values give

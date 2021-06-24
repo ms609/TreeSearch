@@ -10,9 +10,8 @@ ConstrainedNJ(dataset, constraint, weight = 12345)
 \item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
 whose names correspond to the labels of any accompanying tree.}
 
-\item{constraint}{An object of class \code{phyDat}.
-Trees that are not perfectly compatible with each character in \code{constraint}
-will not be considered during search.
+\item{constraint}{An object of class \code{phyDat}; returned trees will be
+perfectly compatible with each character in \code{constraint}.
 See \href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
 for further examples.}
 

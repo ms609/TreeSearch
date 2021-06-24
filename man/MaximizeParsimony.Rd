@@ -95,9 +95,8 @@ Setting to larger values will include trees suboptimal by up to \code{tolerance}
 in search results, which may improve the accuracy of the consensus tree
 (at the expense of resolution) (Smith 2019).}
 
-\item{constraint}{An object of class \code{phyDat}.
-Trees that are not perfectly compatible with each character in \code{constraint}
-will not be considered during search.
+\item{constraint}{An object of class \code{phyDat}; returned trees will be
+perfectly compatible with each character in \code{constraint}.
 See \href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
 for further examples.}
 
