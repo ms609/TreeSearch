@@ -53,7 +53,8 @@ whose names correspond to the labels of any accompanying tree.}
 \item{tree}{(optional) A bifurcating tree of class \code{\link{phylo}},
 containing only the tips listed in \code{dataset}, from which the search
 should begin.
-If unspecified, a neighbour-joining tree will be generated from \code{dataset}.
+If unspecified, a neighbour-joining tree will be generated from \code{dataset},
+respecting any supplied \code{constraint}.
 Edge lengths are not supported and will be deleted.}
 
 \item{ratchIter}{Numeric specifying number of iterations of the
@@ -95,8 +96,8 @@ in search results, which may improve the accuracy of the consensus tree
 (at the expense of resolution) (Smith 2019).}
 
 \item{constraint}{An object of class \code{phyDat}.
-Trees that #' are not perfectly compatible with each character in
-\code{constraint} will not be considered during search.
+Trees that are not perfectly compatible with each character in \code{constraint}
+will not be considered during search.
 See \href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
 for further examples.}
 

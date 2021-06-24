@@ -30,7 +30,8 @@
 #' @param tree (optional) A bifurcating tree of class \code{\link{phylo}},
 #' containing only the tips listed in `dataset`, from which the search
 #' should begin.
-#' If unspecified, a neighbour-joining tree will be generated from `dataset`.
+#' If unspecified, a neighbour-joining tree will be generated from `dataset`,
+#' respecting any supplied `constraint`.
 #' Edge lengths are not supported and will be deleted.
 #' @param ratchIter Numeric specifying number of iterations of the 
 #' parsimony ratchet (Nixon 1999) to conduct.
@@ -62,8 +63,8 @@
 #' in search results, which may improve the accuracy of the consensus tree
 #' (at the expense of resolution) (Smith 2019).
 #' @param constraint An object of class `phyDat`.
-#' Trees that #' are not perfectly compatible with each character in
-#'  `constraint` will not be considered during search.
+#' Trees that are not perfectly compatible with each character in `constraint`
+#' will not be considered during search.
 #' See [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
 #' for further examples.
 #' @param verbosity Integer specifying level of messaging; higher values give

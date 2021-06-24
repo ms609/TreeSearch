@@ -11,8 +11,8 @@ ConstrainedNJ(dataset, constraint, weight = 12345)
 whose names correspond to the labels of any accompanying tree.}
 
 \item{constraint}{An object of class \code{phyDat}.
-Trees that #' are not perfectly compatible with each character in
-\code{constraint} will not be considered during search.
+Trees that are not perfectly compatible with each character in \code{constraint}
+will not be considered during search.
 See \href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
 for further examples.}
 
