@@ -61,9 +61,9 @@
 #' Setting to larger values will include trees suboptimal by up to `tolerance`
 #' in search results, which may improve the accuracy of the consensus tree
 #' (at the expense of resolution) (Smith 2019).
-#' @param constraint Either `NULL` or an object of class `phyDat`. Trees that
-#' are not perfectly compatible with each character in `constraint` will not
-#' be considered during search.
+#' @param constraint An object of class `phyDat`.
+#' Trees that #' are not perfectly compatible with each character in
+#'  `constraint` will not be considered during search.
 #' See [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
 #' for further examples.
 #' @param verbosity Integer specifying level of messaging; higher values give
@@ -157,7 +157,7 @@
 #' \insertRef{Smith2019}{TreeSearch}
 #' @encoding UTF-8
 #' @export
-MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
+MaximizeParsimony <- function (dataset, tree,
                                ratchIter = 6L,
                                tbrIter = 2,
                                startIter = 2L, finalIter = 1L,
@@ -166,7 +166,7 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
                                quickHits = 1 / 3,
                                concavity = Inf,
                                tolerance = sqrt(.Machine$double.eps),
-                               constraint = NULL,
+                               constraint,
                                verbosity = 2L, session = NULL) {
   # Define functions
   .Message <- if (is.null(session)) function (level, ...) {
@@ -463,8 +463,23 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     class = 'multiPhylo')
   }
   
+  
+  # Define constants
+  epsilon <- tolerance #sqrt(.Machine$double.eps)
+  profile <- .UseProfile(concavity)
+  iw <- is.finite(concavity)
+  constrained <- !missing(constraint)
+  startTime <- Sys.time()
+  stopTime <- startTime + as.difftime(maxTime, units = 'mins')
+  
   # Initialize tree
-  if (inherits(tree, 'multiPhylo')) {
+  if (missing(tree)) {
+    if (constrained) {
+      tree <- ConstrainedNJ(dataset, constraint)
+    } else {
+      tree <- NJTree(dataset)
+    }
+  } else if (inherits(tree, 'multiPhylo')) {
     .Message(1L, "Starting search from `tree[[1]]`.")
     tree <- tree[[1]]
   }
@@ -487,13 +502,6 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     outgroup <- NA
   }
   
-  # Define constants
-  epsilon <- tolerance #sqrt(.Machine$double.eps)
-  profile <- .UseProfile(concavity)
-  iw <- is.finite(concavity)
-  constrained <- !is.null(constraint)
-  startTime <- Sys.time()
-  stopTime <- startTime + as.difftime(maxTime, units = 'mins')
   
   # Initialize constraints
   if (constrained) {
@@ -859,7 +867,7 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
                       ratchIter = 1L, tbrIter = 8L, finalIter = 3L,
                       maxHits = 12L, concavity = Inf,
                       tolerance = sqrt(.Machine$double.eps),
-                      constraint = NULL,
+                      constraint,
                       verbosity = 2L, session = NULL,
                       ...) {
   if (!inherits(dataset, 'phyDat')) {
@@ -895,6 +903,32 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
                     concavity = concavity,
                     tolerance = tolerance, constraint = constraint,
                     verbosity = verbosity, session = session, ...) 
+}
+
+#' Constrained neighbour-joining tree
+#' 
+#' Constructs a neighbour-joining tree such that the tree is consistent with a
+#' constraint.
+#' 
+#' @param weight Numeric specifying degree to upweight characters in
+#' `constraint`.
+#' 
+#' @return `ConstrainedNJ()` returns a tree of class `phylo`.
+#' @importFrom TreeTools NJTree
+#' @inheritParams MaximizeParsimony
+#' @examples 
+#' dataset <- MatrixToPhyDat(matrix(
+#'   c(0, 1, 1, 1, 0, 1,
+#'     0, 1, 1, 0, 0, 1), ncol = 2,
+#'   dimnames = list(letters[1:6], NULL)))
+#' constraint <- MatrixToPhyDat(c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
+#' plot(ConstrainedNJ(dataset, constraint))
+#' @template MRS
+#' @export
+ConstrainedNJ <- function (dataset, constraint, weight = 12345) {
+  conData <- c(constraint, dataset)
+  attr(conData, 'weight')[seq_len(attr(constraint, 'nr'))] <- weight
+  NJTree(conData)
 }
 
 #' Launch tree search graphical user interface

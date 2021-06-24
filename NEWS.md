@@ -1,10 +1,14 @@
-# TreeSearch 0.4.3.9008 (development)
+# TreeSearch 0.4.3.9009 (development)
+
+## Changes in functionality
 
  * v......9007 introduces a pre-ratchet TBR search and adjusts default settings.
  * v0.4.3.9005 fixes some bugs that may affect tree scoring under IW & PP.
 
+## New functions
  - `EasyTrees()` 'shiny' graphical user interface for tree search
- - `PlotCharacter()` reconstructs character distributions on trees.
+ - `PlotCharacter()` reconstructs character distributions on trees
+ - `ConstrainedNJ()` constructs starting trees that respect a constraint
  - `SiteConcordance()` calculates exact site concordance
  - `ConcordantInformation()` evaluates signal:noise of dataset implied by a
    given tree.
@@ -14,7 +18,9 @@
  - `Consistency()` calculates consistency and retention 'indices'
  - `MinimumLength()` and `MaximumLength()` calculate range of possible lengths
    of characters in a dataset on any tree
- - `TreeLength()` supports lists of trees.
+
+## Improvements
+ - `TreeLength()` supports lists of trees
  - Set handling of 'gap' token (-) when creating Morphy object with `gap = `
  - Label nodes with split frequencies using `JackLabels(plot = FALSE)`
  - Support for topological constraints during tree search
