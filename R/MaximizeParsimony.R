@@ -472,6 +472,23 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     stop("`tree` must be bifurcating; try rooting with RootTree(tree, 1)")
   }
   
+  # Check tree labels matches dataset
+  leaves <- tree$tip.label
+  taxa <- names(dataset)
+  treeOnly <- setdiff(leaves, taxa) 
+  datOnly <- setdiff(taxa, leaves) 
+  if (length(treeOnly)) {
+    warning("Ignoring taxa on tree missing in dataset:\n   ", 
+            paste0(treeOnly, collapse = ', '))
+    tree <- drop.tip(tree, treeOnly)
+  }
+  if (length(datOnly)) {
+    warning("Ignoring taxa in dataset missing on tree:\n   ", 
+            paste0(datOnly, collapse = ', '))
+    dataset <- dataset[-match(datOnly, taxa)]
+  }
+  
+  
   tree <- Preorder(RenumberTips(tree, names(dataset)))
   nTip <- NTip(tree)
   edge <- tree$edge

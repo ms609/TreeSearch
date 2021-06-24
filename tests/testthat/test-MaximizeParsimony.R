@@ -54,6 +54,20 @@ test_that("MaximizeParsimony() times out", {
   expect_gt(as.difftime(5, units = 'secs'), Sys.time() - startTime)
 })
 
+test_that("Mismatched tree/dataset handled with warnings", {
+  treeAf <- ape::read.tree(text = "(a, (b, (c, (d, (e, f)))));")
+  treeBg <- ape::read.tree(text = "(g, (b, (c, (d, (e, f)))));")
+  datAf <- StringToPhyDat('110000 110000 111100 111000',
+                              letters[1:6], byTaxon = FALSE)
+  datAe <- StringToPhyDat('11000 11000 11110 11100',
+                              letters[1:5], byTaxon = FALSE)
+  datAg <- StringToPhyDat('1100000 1100000 1111000 1110000',
+                              letters[1:7], byTaxon = FALSE)
+  expect_warning(MaximizeParsimony(treeBg, datAf))
+  expect_warning(MaximizeParsimony(treeAf, datAe))
+  expect_warning(MaximizeParsimony(treeAf, datAg))
+})
+
 test_that("Root retained if not 1", {
   tr <- RootTree(BalancedTree(8), 't5')
   dataset <- StringToPhyDat('11000000 11100000 11110000 11111000',
