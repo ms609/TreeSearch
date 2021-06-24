@@ -109,6 +109,7 @@ BestConsensus <- function (trees) {
     }
     trees <- structure(trees, class = 'multiPhylo')
   }
+  lastMessage <- Sys.time()
   trees <- lapply(trees, RenumberTips, trees[[1]])
   trees <- lapply(trees, Preorder)
   nTip <- NTip(trees[[1]])
@@ -119,6 +120,10 @@ BestConsensus <- function (trees) {
   cons[[1]] <- consensus(trees, p = 0.50)
   info[1] <- SplitwiseInfo(cons[[1]], SplitFrequency(cons[[1]], trees) / nTree)
   for (i in 1 + seq_len(nTip - 3L)) {
+    if (difftime(Sys.time(), lastMessage) > 2) {
+      lastMessage <- Sys.time()
+      message(lastMessage, ": Removing tip ", i)
+    }
     tipScores <- TipVolatility(trees)
     candidate <- which.max(tipScores)
     trees <- lapply(trees, drop.tip, candidate)
@@ -137,7 +142,7 @@ BestConsensus <- function (trees) {
 #' @template MRS
 #' @importFrom ape consensus drop.tip
 #' @importFrom TreeDist SplitwiseInfo 
-#' @importFrom TreeTools SplitFrequency
+#' @importFrom TreeTools SplitFrequency Preorder RenumberTips
 #' @export
 Roguehalla <- function (trees, dropset = 1) {
   if (!inherits(trees, 'multiPhylo')) {
@@ -171,9 +176,20 @@ Roguehalla <- function (trees, dropset = 1) {
     }
   }
   
+  lastMessage <- Sys.time()
+  .Message <- function (...) {
+    if (difftime(Sys.time(), lastMessage) > 2) {
+      message(paste0(Sys.time(), ': ', ...))
+      lastMessage <- Sys.time()
+    }
+    lastMessage
+  }
   repeat {
     improved <- FALSE
     for (i in seq_len(dropset)) {
+      lastMessage <- .Message("Dropped ", NTip(cons) - NTip(trees[[1]]),
+                              " leaves to render ", signif(best),
+                              " bits; dropping ", i, " more.")
       dropped <- .Drop(i)
       if (!is.null(dropped)) {
         improved <- TRUE
