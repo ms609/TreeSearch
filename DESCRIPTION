@@ -34,7 +34,7 @@ Imports:
     shinyjs,
     stats,
     TreeDist,
-    TreeTools (>= 1.4.4.9003)
+    TreeTools (>= 1.4.5)
 Suggests:
     knitr,
     rmarkdown,
@@ -49,8 +49,7 @@ LinkingTo:
     Rcpp,
     TreeTools
 Remotes:
-    ms609/TreeDist,
-    ms609/TreeTools
+    ms609/TreeDist
 SystemRequirements: C++14
 LazyData: true
 ByteCompile: true

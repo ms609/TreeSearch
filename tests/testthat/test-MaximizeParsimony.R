@@ -65,6 +65,27 @@ test_that("MaximizeParsimony() times out", {
   expect_gt(as.difftime(5, units = 'secs'), Sys.time() - startTime)
 })
 
+test_that("Mismatched tree/dataset handled with warnings", {
+  treeAf <- read.tree(text = "(a, (b, (c, (d, (e, f)))));")
+  treeBg <- read.tree(text = "(g, (b, (c, (d, (e, f)))));")
+  datAf <- StringToPhyDat('110000 110000 111100 111000',
+                              letters[1:6], byTaxon = FALSE)
+  datAe <- StringToPhyDat('11000 11000 11110 11100',
+                              letters[1:5], byTaxon = FALSE)
+  datAg <- StringToPhyDat('1100000 1100000 1111000 1110000',
+                              letters[1:7], byTaxon = FALSE)
+  
+  QP <- function (...) MaximizeParsimony(..., ratchIter = 0, maxHits = 1,
+                                         verbosity = 0)
+  
+  expect_equal(5, NTip(expect_warning(QP(datAf, treeBg))))
+  expect_equal(5, NTip(expect_warning(QP(datAe, treeAf))))
+  expect_equal(6, NTip(expect_warning(QP(datAg, treeAf))))
+  expect_equal(4, NTip(expect_warning(QP(datAf, treeBg, constraint = datAe))))
+  expect_equal(5, NTip(expect_warning(QP(datAf, treeAf, constraint = datAe))))
+  expect_equal(6, NTip(expect_warning(QP(datAf, treeAf, constraint = datAg))))
+})
+
 test_that("Root retained if not 1", {
   tr <- RootTree(BalancedTree(8), 't5')
   dataset <- StringToPhyDat('11000000 11100000 11110000 11111000',

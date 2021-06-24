@@ -487,6 +487,39 @@ MaximizeParsimony <- function (dataset, tree,
     stop("`tree` must be bifurcating; try rooting with RootTree(tree, 1)")
   }
   
+  # Check tree labels matches dataset
+  leaves <- tree$tip.label
+  taxa <- names(dataset)
+  treeOnly <- setdiff(leaves, taxa) 
+  datOnly <- setdiff(taxa, leaves) 
+  if (length(treeOnly)) {
+    warning("Ignoring taxa on tree missing in dataset:\n   ", 
+            paste0(treeOnly, collapse = ', '))
+    tree <- drop.tip(tree, treeOnly)
+  }
+  if (length(datOnly)) {
+    warning("Ignoring taxa in dataset missing on tree:\n   ", 
+            paste0(datOnly, collapse = ', '))
+    dataset <- dataset[-match(datOnly, taxa)]
+  }
+  if (constrained) {
+    consTaxa <- names(constraint)
+    treeOnly <- setdiff(tree$tip.label, consTaxa)
+    if (length(treeOnly)) {
+      warning("Ignoring taxa on tree missing in constraint:\n   ", 
+              paste0(treeOnly, collapse = ', '))
+      tree <- drop.tip(tree, treeOnly)
+      dataset <- dataset[-match(treeOnly, names(dataset))]
+    }
+    consOnly <- setdiff(consTaxa, tree$tip.label)
+    if (length(consOnly)) {
+      warning("Ignoring taxa in constraint missing on tree:\n   ", 
+              paste0(consOnly, collapse = ', '))
+      constraint <- constraint[-match(consOnly, consTaxa)]
+    }
+  }
+  
+  
   tree <- Preorder(RenumberTips(tree, names(dataset)))
   nTip <- NTip(tree)
   edge <- tree$edge
@@ -508,7 +541,8 @@ MaximizeParsimony <- function (dataset, tree,
     morphyConstr <- PhyDat2Morphy(constraint)
     on.exit(morphyConstr <- UnloadMorphy(morphyConstr), add = TRUE)
     # Calculate constraint minimum score
-    constraintLength <- sum(MinimumLength(constraint))
+    constraintLength <- sum(MinimumLength(constraint, compress = TRUE) *
+                              attr(constraint, 'weight'))
     
     .Forbidden <- function (edges) {
       preorder_morphy(edges, morphyConstr) != constraintLength

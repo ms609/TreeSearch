@@ -221,7 +221,8 @@ ConcordantInformation <- function (tree, dataset) {
   originalInfo <- sum(apply(PhyDatToMatrix(dataset), 2, CharacterInformation))
   dataset <- PrepareDataProfile(dataset)
   
-  extraSteps <- CharacterLength(tree, dataset) - MinimumLength(dataset)
+  extraSteps <- CharacterLength(tree, dataset, compress = TRUE) -
+    MinimumLength(dataset, compress = TRUE)
   chars <- matrix(unlist(dataset), attr(dataset, 'nr'))
   ambiguousToken <- which(attr(dataset, 'allLevels') == "?")
   asSplits <- apply(chars, 1, function (x) {

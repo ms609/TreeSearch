@@ -82,7 +82,8 @@ test_that("Profile score can be calculated from real data", {
   tree <- referenceTree
   dataset <- PrepareDataProfile(congreveLamsdellMatrices[[1]])
   expect_equal(TreeLength(tree, dataset), 
-               sum(CharacterLength(tree, dataset) * attr(dataset, 'weight')))
+               sum(CharacterLength(tree, dataset, compress = TRUE) *
+                     attr(dataset, 'weight')))
   score <- TreeLength(tree, dataset, 'profile')
 
   # Check score hasn't materially changed:
