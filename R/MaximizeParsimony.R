@@ -502,6 +502,22 @@ MaximizeParsimony <- function (dataset, tree,
             paste0(datOnly, collapse = ', '))
     dataset <- dataset[-match(datOnly, taxa)]
   }
+  if (constrained) {
+    consTaxa <- names(constraint)
+    treeOnly <- setdiff(tree$tip.label, consTaxa)
+    if (length(treeOnly)) {
+      warning("Ignoring taxa on tree missing in constraint:\n   ", 
+              paste0(treeOnly, collapse = ', '))
+      tree <- drop.tip(tree, treeOnly)
+      dataset <- dataset[-match(treeOnly, names(dataset))]
+    }
+    consOnly <- setdiff(consTaxa, tree$tip.label)
+    if (length(consOnly)) {
+      warning("Ignoring taxa in constraint missing on tree:\n   ", 
+              paste0(consOnly, collapse = ', '))
+      constraint <- constraint[-match(consOnly, consTaxa)]
+    }
+  }
   
   
   tree <- Preorder(RenumberTips(tree, names(dataset)))

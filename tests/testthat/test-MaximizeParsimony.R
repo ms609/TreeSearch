@@ -74,9 +74,16 @@ test_that("Mismatched tree/dataset handled with warnings", {
                               letters[1:5], byTaxon = FALSE)
   datAg <- StringToPhyDat('1100000 1100000 1111000 1110000',
                               letters[1:7], byTaxon = FALSE)
-  expect_warning(MaximizeParsimony(treeBg, datAf))
-  expect_warning(MaximizeParsimony(treeAf, datAe))
-  expect_warning(MaximizeParsimony(treeAf, datAg))
+  
+  QP <- function (...) MaximizeParsimony(..., ratchIter = 0, maxHits = 1,
+                                         verbosity = 0)
+  
+  expect_equal(5, NTip(expect_warning(QP(datAf, treeBg))))
+  expect_equal(5, NTip(expect_warning(QP(datAe, treeAf))))
+  expect_equal(6, NTip(expect_warning(QP(datAg, treeAf))))
+  expect_equal(4, NTip(expect_warning(QP(datAf, treeBg, constraint = datAe))))
+  expect_equal(5, NTip(expect_warning(QP(datAf, treeAf, constraint = datAe))))
+  expect_equal(6, NTip(expect_warning(QP(datAf, treeAf, constraint = datAg))))
 })
 
 test_that("Root retained if not 1", {
