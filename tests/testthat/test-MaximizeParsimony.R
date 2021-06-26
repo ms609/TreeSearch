@@ -28,6 +28,8 @@ test_that("Constraints work", {
                                  PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
                                  ratchIter = 0, constraint = constraint)[[1]])
   # Start tree not consistent with constraint
+  dataset <- characters
+  tree <- PectinateTree(c('a', 'c', 'f', 'd', 'e', 'b'))
   expect_equal(PectinateTree(letters[1:6]),
                MaximizeParsimony(characters, 
                                  PectinateTree(c('a', 'c', 'f', 'd', 'e', 'b')),
@@ -51,6 +53,7 @@ test_that("Inconsistent constraints fail", {
     c(0, 1, 1, 1, 0, 0,
       1, 1, 1, 0, 0, 0), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
+  #skip_if(T)
   expect_error(MaximizeParsimony(constraint,
                                  PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
                                  ratchIter = 0, constraint = constraint))
@@ -81,8 +84,8 @@ test_that("Mismatched tree/dataset handled with warnings", {
   expect_equal(5, NTip(expect_warning(QP(datAf, treeBg))))
   expect_equal(5, NTip(expect_warning(QP(datAe, treeAf))))
   expect_equal(6, NTip(expect_warning(QP(datAg, treeAf))))
-  expect_equal(4, NTip(expect_warning(QP(datAf, treeBg, constraint = datAe))))
-  expect_equal(5, NTip(expect_warning(QP(datAf, treeAf, constraint = datAe))))
+  expect_equal(5, NTip(expect_warning(QP(datAf, treeBg, constraint = datAe))))
+  expect_equal(6, NTip(QP(datAf, treeAf, constraint = datAe)))
   expect_equal(6, NTip(expect_warning(QP(datAf, treeAf, constraint = datAg))))
 })
 

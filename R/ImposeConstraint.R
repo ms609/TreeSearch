@@ -39,6 +39,9 @@ ImposeConstraint <- function (tree, constraint) {
     collapse <- ifelse(sum(zeros) > sum(ones), '1', '0')
     collapsers <- switch(collapse, '0' = zeros, '1' = ones)
     collapseNames <- names(collapsers[collapsers])
+    if (length(collapseNames) < 2L) {
+      stop("Could not apply constraint ", i, ". Check it is compatible.")
+    }
     collapsing <- apply(const[collapsers, , drop = FALSE], 2,
                         function (x) setdiff(x, '?')[1])
     

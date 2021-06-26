@@ -498,10 +498,7 @@ MaximizeParsimony <- function (dataset, tree,
     consTaxa <- names(constraint)
     treeOnly <- setdiff(tree$tip.label, consTaxa)
     if (length(treeOnly)) {
-      warning("Ignoring taxa on tree missing in constraint:\n   ", 
-              paste0(treeOnly, collapse = ', '))
-      tree <- drop.tip(tree, treeOnly)
-      dataset <- dataset[-match(treeOnly, names(dataset))]
+      constraint <- .AddUnconstrained(constraint, treeOnly)
     }
     consOnly <- setdiff(consTaxa, tree$tip.label)
     if (length(consOnly)) {
@@ -509,6 +506,7 @@ MaximizeParsimony <- function (dataset, tree,
               paste0(consOnly, collapse = ', '))
       constraint <- constraint[-match(consOnly, consTaxa)]
     }
+    constraint <- constraint[names(dataset)]
   }
   
   
@@ -542,11 +540,13 @@ MaximizeParsimony <- function (dataset, tree,
     
     # Check that starting tree is consistent with constraints 
     if (.Forbidden(edge)) {
-      .Message(1L, "Looking for a tree that is consistent with `constraint`...")
-      .oldMsg <- .Message
-      .Message <- function (...) {}
-      edge <- .DoTBRSearch(edge, nTip, morphyConstr, 10, 10)[, , 1]
-      .Message <- .oldMsg
+      .Message(1L, "Modifying `tree` to match `constraint`...")
+        tree <- Preorder( # Should be preorder after RootTree anywaY?
+          RootTree(ImposeConstraint(tree, constraint), names(dataset)[1])
+        )
+        tree$tip.label
+        names(dataset)
+        edge <- tree$edge
       if (.Forbidden(edge)) {
         stop("Specify a starting tree that is consistent with `constraint`.")
       }
@@ -954,10 +954,11 @@ ConstrainedNJ <- function (dataset, constraint, weight = 12345) {
   constraint <- constraint[names(dataset)]
   tree <- nj((dist.hamming(constraint) * weight) + dist.hamming(dataset))
   tree$edge.length <- NULL
+  tree <- ImposeConstraint(tree, constraint)
   tree <- RootTree(tree, names(dataset)[1])
   
   # Return:
-  ImposeConstraint(tree)
+  tree
 }
 
 .AddUnconstrained <- function (constraint, toAdd) {
