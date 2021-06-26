@@ -10,9 +10,10 @@
  - `EasyTrees()` 'shiny' graphical user interface for tree search
  - `PlotCharacter()` reconstructs character distributions on trees
  - `ConstrainedNJ()` constructs starting trees that respect a constraint
+ - `ImposeConstraint()` reconciles a tree with a constraint
  - `SiteConcordance()` calculates exact site concordance
  - `ConcordantInformation()` evaluates signal:noise of dataset implied by a
-   given tree.
+   given tree
  - `PrepareDataProfile()` simplifies dataset to allow partial search when
    multiple applicable tokens are present
  - `Resample()` conducts bootstrap and jackknife resampling
