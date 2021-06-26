@@ -111,7 +111,7 @@
 #' # Jackknife resampling
 #' nReplicates <- 3
 #' jackTrees <- replicate(nReplicates,
-#'   Resample(dataset, trees, ratchIter = 0, tbrIter = 1, startIter = 1,
+#'   Resample(dataset, trees, ratchIter = 0, tbrIter = 2, startIter = 1,
 #'            maxHits = 3, maxTime = 1 / 100,
 #'            concavity = 10, verbosity = 0)
 #'  )
@@ -122,14 +122,14 @@
 #' # Now we must decide what to do with the multiple optimal trees from
 #' # each replicate.
 #' 
-#' # Treat each tree equally
-#' JackLabels(ape::consensus(trees), unlist(jackTrees, recursive = FALSE))
-#' 
 #' # Take the strict consensus of all trees for each replicate
 #' JackLabels(ape::consensus(trees), lapply(jackTrees, ape::consensus))
 #' 
 #' # Take a single tree from each replicate (the first; order's irrelevant)
 #' JackLabels(ape::consensus(trees), lapply(jackTrees, `[[`, 1))
+#' 
+#' # Treat each tree equally
+#' JackLabels(ape::consensus(trees), unlist(jackTrees, recursive = FALSE))
 #' 
 #' 
 #' # Tree search with a constraint
@@ -234,6 +234,7 @@ MaximizeParsimony <- function (dataset, tree,
           }
         }
         if (nHits >= maxHits) break
+        pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 1
         if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
@@ -462,7 +463,7 @@ MaximizeParsimony <- function (dataset, tree,
   
   # Define constants
   epsilon <- tolerance
-  pNextTbr <- 0.1
+  pNextTbr <- 0.33
   profile <- .UseProfile(concavity)
   iw <- is.finite(concavity)
   constrained <- !missing(constraint)
