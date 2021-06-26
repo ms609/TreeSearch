@@ -6,6 +6,10 @@ test_that("ImposeConstraint() works", {
   expect_equal(read.tree(text = '((a, (b, c)), (d, (e, (f, (i, (g, h))))));'),
                ImposeConstraint(tree, constraint))
   
+  constraint <- StringToPhyDat('00001111 00011111 0000?110', tips[-5], FALSE)
+  expect_equal(read.tree(text = '((a, (b, c)), (d, (e, (f, (i, (g, h))))));'),
+               ImposeConstraint(tree, constraint))
+  
   # Need to collapse splits intelligently to avoid error.  From Joe Moysiuk.
   constraint <- MatrixToPhyDat(
     structure(c(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 
