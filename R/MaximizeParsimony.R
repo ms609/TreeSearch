@@ -963,11 +963,21 @@ ConstrainedNJ <- function (dataset, constraint, weight = 12345) {
   tree
 }
 
-.AddUnconstrained <- function (constraint, toAdd) {
-  tmp <- PhyDatToMatrix(constraint)
-  MatrixToPhyDat(rbind(tmp, 
-                       matrix('?', length(toAdd), dim(tmp)[2],
-                              dimnames = list(toAdd, NULL))))
+.AddUnconstrained <- function (constraint, toAdd, asPhyDat = TRUE) {
+  ret <- if (inherits(constraint, 'phyDat')) {
+    PhyDatToMatrix(constraint)
+  } else {
+    constraint
+  }
+  ret <- rbind(ret, matrix('?', length(toAdd), dim(ret)[2],
+                           dimnames = list(toAdd, NULL)))
+  
+  # Return:
+  if (asPhyDat) {
+    MatrixToPhyDat(ret)
+  } else {
+    ret
+  }
 }
 
 #' Launch tree search graphical user interface

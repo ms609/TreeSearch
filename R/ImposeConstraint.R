@@ -26,7 +26,10 @@ ImposeConstraint <- function (tree, constraint) {
   # This function is as efficient as it is elegant: i.e. not.
   # But it just about does the job.
   tree <- Preorder(tree)
-  const <- PhyDatToMatrix(constraint)
+  const <- .AddUnconstrained(constraint,
+                             setdiff(tree$tip.label, names(constraint)),
+                             asPhyDat = FALSE)
+                             
   info <- apply(const, 2,
                 function (x) SplitInformation(sum(x == '0'), sum(x == '1')))
   smallest <- ifelse(apply(const, 2, function (x) sum(x == '0') < sum(x == '1')),
