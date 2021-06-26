@@ -1,7 +1,8 @@
-# TreeSearch 0.4.3.9009 (development)
+# TreeSearch 0.4.3.9010 (development)
 
 ## Changes in functionality
 
+ * v......9010 improves constraint handling.
  * v......9007 introduces a pre-ratchet TBR search and adjusts default settings.
  * v0.4.3.9005 fixes some bugs that may affect tree scoring under IW & PP.
 
