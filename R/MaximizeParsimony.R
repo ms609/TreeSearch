@@ -216,7 +216,7 @@ MaximizeParsimony <- function (dataset, tree,
             edge <- move
             if (moveScore < bestScore) {
               improvedScore <- TRUE
-              iter <- 1L
+              iter <- 0L
               bestScore <- moveScore
               nHits <- 1L
               hold[, , 1] <- edge
@@ -233,6 +233,7 @@ MaximizeParsimony <- function (dataset, tree,
           }
         }
         if (nHits >= maxHits) break
+        if (improvedScore) break
       }
       if (nHits >= maxHits) break
     }
