@@ -200,13 +200,14 @@ trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
 
 # In actual use, be sure to check that the score has converged on a global
 # optimum, conducting additional iterations and runs as necessary.
-                  
+ 
+if (interactive()) {
 # Jackknife resampling
-nReplicates <- 3
+nReplicates <- 10
 jackTrees <- replicate(nReplicates,
   #c() ensures that each replicate returns a list of trees
   c(Resample(dataset, trees, ratchIter = 0, tbrIter = 2, startIter = 1,
-             maxHits = 3, maxTime = 1 / 10,
+             maxHits = 5, maxTime = 1 / 10,
              concavity = 10, verbosity = 0))
  )
 
@@ -224,7 +225,7 @@ JackLabels(ape::consensus(trees), lapply(jackTrees, ape::consensus))
 
 # Take a single tree from each replicate (the first; order's irrelevant)
 JackLabels(ape::consensus(trees), lapply(jackTrees, `[[`, 1))
-
+}
 
 # Tree search with a constraint
 constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
