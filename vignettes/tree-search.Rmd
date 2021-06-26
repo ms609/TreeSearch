@@ -221,6 +221,7 @@ can this speed up tree search.
 separate Nexus file, or by creating a `phyDat` object in R.
 Constraints are effectively phylogenetic characters; only trees on which each
 such character fits perfectly will be considered.
+The position of taxa not listed in a constraint will not be constrained.
 
 `MaximizeParsimony()` will attempt to find a starting tree that satisfies the
 constraints, but if it cannot, it may be necessary to specify one manually
