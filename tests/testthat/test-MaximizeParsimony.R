@@ -28,6 +28,8 @@ test_that("Constraints work", {
                                  PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
                                  ratchIter = 0, constraint = constraint)[[1]])
   # Start tree not consistent with constraint
+  dataset <- characters
+  tree <- PectinateTree(c('a', 'c', 'f', 'd', 'e', 'b'))
   expect_equal(PectinateTree(letters[1:6]),
                MaximizeParsimony(characters, 
                                  PectinateTree(c('a', 'c', 'f', 'd', 'e', 'b')),
@@ -43,7 +45,9 @@ test_that("Constrained NJ trees work", {
   constraint <- MatrixToPhyDat(c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
   expect_equal(ape::read.tree(text = "(a, (d, ((c, b), (e, f))));"),
                ConstrainedNJ(dataset, constraint))
-  expect_equal(NJTree(dataset), ConstrainedNJ(dataset, dataset))
+  # b == c == f, so these three could be resolved in one of three ways. Drop B.
+  expect_equal(drop.tip(NJTree(dataset), 'b'), 
+               drop.tip(ConstrainedNJ(dataset, dataset), 'b'))
 })
 
 test_that("Inconsistent constraints fail", {
@@ -81,8 +85,8 @@ test_that("Mismatched tree/dataset handled with warnings", {
   expect_equal(5, NTip(expect_warning(QP(datAf, treeBg))))
   expect_equal(5, NTip(expect_warning(QP(datAe, treeAf))))
   expect_equal(6, NTip(expect_warning(QP(datAg, treeAf))))
-  expect_equal(4, NTip(expect_warning(QP(datAf, treeBg, constraint = datAe))))
-  expect_equal(5, NTip(expect_warning(QP(datAf, treeAf, constraint = datAe))))
+  expect_equal(5, NTip(expect_warning(QP(datAf, treeBg, constraint = datAe))))
+  expect_equal(6, NTip(QP(datAf, treeAf, constraint = datAe)))
   expect_equal(6, NTip(expect_warning(QP(datAf, treeAf, constraint = datAg))))
 })
 

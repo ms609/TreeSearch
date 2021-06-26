@@ -65,10 +65,7 @@
 #' Setting to larger values will include trees suboptimal by up to `tolerance`
 #' in search results, which may improve the accuracy of the consensus tree
 #' (at the expense of resolution) \insertCite{Smith2019}{TreeSearch}.
-#' @param constraint An object of class `phyDat`; returned trees will be
-#' perfectly compatible with each character in `constraint`.
-#' See [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
-#' for further examples.
+#' @template constraintParam
 #' @param verbosity Integer specifying level of messaging; higher values give
 #' more detailed commentary on search progress. Set to `0` to run silently.
 #' @param session 'shiny' session identifier to allow [`setProgress()`] calls
@@ -110,13 +107,15 @@
 #'
 #' # In actual use, be sure to check that the score has converged on a global
 #' # optimum, conducting additional iterations and runs as necessary.
-#'                   
+#'  
+#' if (interactive()) {
 #' # Jackknife resampling
-#' nReplicates <- 3
+#' nReplicates <- 10
 #' jackTrees <- replicate(nReplicates,
-#'   Resample(dataset, trees, ratchIter = 0, tbrIter = 1, startIter = 1,
-#'            maxHits = 3, maxTime = 1 / 100,
-#'            concavity = 10, verbosity = 0)
+#'   #c() ensures that each replicate returns a list of trees
+#'   c(Resample(dataset, trees, ratchIter = 0, tbrIter = 2, startIter = 1,
+#'              maxHits = 5, maxTime = 1 / 10,
+#'              concavity = 10, verbosity = 0))
 #'  )
 #' 
 #' # In a serious analysis, more replicates would be conducted, and each
@@ -133,7 +132,7 @@
 #' 
 #' # Take a single tree from each replicate (the first; order's irrelevant)
 #' JackLabels(ape::consensus(trees), lapply(jackTrees, `[[`, 1))
-#' 
+#' }
 #' 
 #' # Tree search with a constraint
 #' constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
@@ -147,6 +146,7 @@
 #' 
 #' @importFrom phangorn Descendants
 #' @importFrom shiny setProgress withProgress
+#' @importFrom stats runif
 #' @importFrom TreeTools NJTree CharacterInformation NTip
 #' @references
 #' \insertAllCited{}
@@ -219,7 +219,7 @@ MaximizeParsimony <- function (dataset, tree,
             edge <- move
             if (moveScore < bestScore) {
               improvedScore <- TRUE
-              iter <- 1L
+              iter <- 0L
               bestScore <- moveScore
               nHits <- 1L
               hold[, , 1] <- edge
@@ -236,6 +236,8 @@ MaximizeParsimony <- function (dataset, tree,
           }
         }
         if (nHits >= maxHits) break
+        pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 2
+        if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
     }
@@ -311,6 +313,8 @@ MaximizeParsimony <- function (dataset, tree,
           }
         }
         if (nHits >= maxHits) break
+        pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 2
+        if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
     }
@@ -385,6 +389,8 @@ MaximizeParsimony <- function (dataset, tree,
           }
         }
         if (nHits >= maxHits) break
+        pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 2
+        if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
     }
@@ -460,7 +466,8 @@ MaximizeParsimony <- function (dataset, tree,
   
   
   # Define constants
-  epsilon <- tolerance #sqrt(.Machine$double.eps)
+  epsilon <- tolerance
+  pNextTbr <- 0.33
   profile <- .UseProfile(concavity)
   iw <- is.finite(concavity)
   constrained <- !missing(constraint)
@@ -501,10 +508,7 @@ MaximizeParsimony <- function (dataset, tree,
     consTaxa <- names(constraint)
     treeOnly <- setdiff(tree$tip.label, consTaxa)
     if (length(treeOnly)) {
-      warning("Ignoring taxa on tree missing in constraint:\n   ", 
-              paste0(treeOnly, collapse = ', '))
-      tree <- drop.tip(tree, treeOnly)
-      dataset <- dataset[-match(treeOnly, names(dataset))]
+      constraint <- .AddUnconstrained(constraint, treeOnly)
     }
     consOnly <- setdiff(consTaxa, tree$tip.label)
     if (length(consOnly)) {
@@ -512,6 +516,7 @@ MaximizeParsimony <- function (dataset, tree,
               paste0(consOnly, collapse = ', '))
       constraint <- constraint[-match(consOnly, consTaxa)]
     }
+    constraint <- constraint[names(dataset)]
   }
   
   
@@ -545,13 +550,16 @@ MaximizeParsimony <- function (dataset, tree,
     
     # Check that starting tree is consistent with constraints 
     if (.Forbidden(edge)) {
-      .Message(1L, "Looking for a tree that is consistent with `constraint`...")
-      .oldMsg <- .Message
-      .Message <- function (...) {}
-      edge <- .DoTBRSearch(edge, nTip, morphyConstr, 10, 10)[, , 1]
-      .Message <- .oldMsg
+      .Message(1L, "Modifying `tree` to match `constraint`...")
+        tree <- Preorder( # Should be preorder after RootTree anywaY?
+          RootTree(ImposeConstraint(tree, constraint), names(dataset)[1])
+        )
+        tree$tip.label
+        names(dataset)
+        edge <- tree$edge
       if (.Forbidden(edge)) {
-        stop("Specify a starting tree that is consistent with `constraint`.")
+        stop("Could not reconcile starting tree with `constraint`. ",
+             "Are all constraints compatible?")
       }
     }
     
@@ -928,14 +936,14 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
 
 #' Constrained neighbour-joining tree
 #' 
-#' Constructs a neighbour-joining tree such that the tree is consistent with a
-#' constraint.
+#' Constructs an approximation to a neighbour-joining tree, modified in order
+#' to be consistent with a constraint.  Zero-length branches are collapsed
+#' at random.
 #' 
 #' @param weight Numeric specifying degree to upweight characters in
 #' `constraint`.
 #' 
 #' @return `ConstrainedNJ()` returns a tree of class `phylo`.
-#' @importFrom TreeTools NJTree
 #' @inheritParams MaximizeParsimony
 #' @examples
 #' dataset <- TreeTools::MatrixToPhyDat(matrix(
@@ -946,11 +954,41 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
 #'   c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
 #' plot(ConstrainedNJ(dataset, constraint))
 #' @template MRS
+#' @importFrom ape nj
+#' @importFrom phangorn dist.hamming
+#' @importFrom TreeTools RootTree
 #' @export
 ConstrainedNJ <- function (dataset, constraint, weight = 12345) {
-  conData <- c(constraint, dataset)
-  attr(conData, 'weight')[seq_len(attr(constraint, 'nr'))] <- weight
-  NJTree(conData)
+  missing <- setdiff(names(dataset), names(constraint))
+  if (length(missing)) {
+    constraint <- .AddUnconstrained(constraint, missing)
+  }
+  constraint <- constraint[names(dataset)]
+  tree <- multi2di(nj((dist.hamming(constraint) * weight) + 
+                        dist.hamming(dataset)))
+  tree$edge.length <- NULL
+  tree <- ImposeConstraint(tree, constraint)
+  tree <- RootTree(tree, names(dataset)[1])
+  
+  # Return:
+  tree
+}
+
+.AddUnconstrained <- function (constraint, toAdd, asPhyDat = TRUE) {
+  ret <- if (inherits(constraint, 'phyDat')) {
+    PhyDatToMatrix(constraint)
+  } else {
+    constraint
+  }
+  ret <- rbind(ret, matrix('?', length(toAdd), dim(ret)[2],
+                           dimnames = list(toAdd, NULL)))
+  
+  # Return:
+  if (asPhyDat) {
+    MatrixToPhyDat(ret)
+  } else {
+    ret
+  }
 }
 
 #' Launch tree search graphical user interface
