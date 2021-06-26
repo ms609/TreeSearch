@@ -65,10 +65,7 @@
 #' Setting to larger values will include trees suboptimal by up to `tolerance`
 #' in search results, which may improve the accuracy of the consensus tree
 #' (at the expense of resolution) \insertCite{Smith2019}{TreeSearch}.
-#' @param constraint An object of class `phyDat`; returned trees will be
-#' perfectly compatible with each character in `constraint`.
-#' See [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
-#' for further examples.
+#' @template constraintParam
 #' @param verbosity Integer specifying level of messaging; higher values give
 #' more detailed commentary on search progress. Set to `0` to run silently.
 #' @param session 'shiny' session identifier to allow [`setProgress()`] calls
