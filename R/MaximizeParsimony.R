@@ -925,8 +925,9 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
 
 #' Constrained neighbour-joining tree
 #' 
-#' Constructs a neighbour-joining tree such that the tree is consistent with a
-#' constraint.
+#' Constructs an approximation to a neighbour-joining tree, modified in order
+#' to be consistent with a constraint.  Zero-length branches are collapsed
+#' at random.
 #' 
 #' @param weight Numeric specifying degree to upweight characters in
 #' `constraint`.
@@ -952,7 +953,8 @@ ConstrainedNJ <- function (dataset, constraint, weight = 12345) {
     constraint <- .AddUnconstrained(constraint, missing)
   }
   constraint <- constraint[names(dataset)]
-  tree <- nj((dist.hamming(constraint) * weight) + dist.hamming(dataset))
+  tree <- multi2di(nj((dist.hamming(constraint) * weight) + 
+                        dist.hamming(dataset)))
   tree$edge.length <- NULL
   tree <- ImposeConstraint(tree, constraint)
   tree <- RootTree(tree, names(dataset)[1])
