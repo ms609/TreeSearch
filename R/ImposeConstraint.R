@@ -42,7 +42,9 @@ ImposeConstraint <- function (tree, constraint) {
     collapsers <- constI == smallest[i]
     collapseNames <- names(collapsers[collapsers])
     if (length(collapseNames) < 2L) {
-      stop("Could not apply constraint ", i, ". Check it is compatible.")
+      warning("Could not apply constraint ", i,
+              ". Is it incompatible or redundant?")
+      next
     }
     collapsing <- apply(const[collapsers, , drop = FALSE], 2,
                         function (x) setdiff(x, '?')[1])

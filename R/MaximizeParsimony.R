@@ -548,7 +548,8 @@ MaximizeParsimony <- function (dataset, tree,
         names(dataset)
         edge <- tree$edge
       if (.Forbidden(edge)) {
-        stop("Specify a starting tree that is consistent with `constraint`.")
+        stop("Could not reconcile starting tree with `constraint`. ",
+             "Are all constraints compatible?")
       }
     }
     

@@ -10,6 +10,13 @@ test_that("ImposeConstraint() works", {
   expect_equal(read.tree(text = '((a, (b, c)), (d, (e, (f, (i, (g, h))))));'),
                ImposeConstraint(tree, constraint))
   
+  constraint <- MatrixToPhyDat(matrix(
+    c(0, 0, '?', '?', 1, 1,
+      1, 1,   1, '?', 0, 0), ncol = 2,
+    dimnames = list(letters[1:6], NULL)))
+  expect_true(inherits(expect_warning(
+    ImposeConstraint(NJTree(constraint), constraint)), 'phylo'))
+  
   # Need to collapse splits intelligently to avoid error.  From Joe Moysiuk.
   constraint <- MatrixToPhyDat(
     structure(c(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 
