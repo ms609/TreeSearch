@@ -235,7 +235,7 @@ MaximizeParsimony <- function (dataset, tree,
           }
         }
         if (nHits >= maxHits) break
-        pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 1
+        pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 2
         if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
