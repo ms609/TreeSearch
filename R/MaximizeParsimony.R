@@ -457,7 +457,7 @@ MaximizeParsimony <- function (dataset, tree,
   
   
   # Define constants
-  epsilon <- tolerance #sqrt(.Machine$double.eps)
+  epsilon <- tolerance
   profile <- .UseProfile(concavity)
   iw <- is.finite(concavity)
   constrained <- !missing(constraint)
