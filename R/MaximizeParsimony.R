@@ -232,8 +232,7 @@ MaximizeParsimony <- function (dataset, tree,
             }
           }
         }
-        if (nHits >= maxHits) break
-        if (improvedScore) break
+        if (improvedScore || nHits >= maxHits) break
       }
       if (nHits >= maxHits) break
     }
@@ -308,7 +307,7 @@ MaximizeParsimony <- function (dataset, tree,
             }
           }
         }
-        if (nHits >= maxHits) break
+        if (improvedScore || nHits >= maxHits) break
       }
       if (nHits >= maxHits) break
     }
@@ -382,7 +381,7 @@ MaximizeParsimony <- function (dataset, tree,
             }
           }
         }
-        if (nHits >= maxHits) break
+        if (improvedScore || nHits >= maxHits) break
       }
       if (nHits >= maxHits) break
     }
