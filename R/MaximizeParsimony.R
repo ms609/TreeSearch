@@ -144,6 +144,7 @@
 #' 
 #' @importFrom phangorn Descendants
 #' @importFrom shiny setProgress withProgress
+#' @importFrom stats runif
 #' @importFrom TreeTools NJTree CharacterInformation NTip
 #' @references
 #' \insertAllCited{}
