@@ -204,9 +204,10 @@ trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
 # Jackknife resampling
 nReplicates <- 3
 jackTrees <- replicate(nReplicates,
-  Resample(dataset, trees, ratchIter = 0, tbrIter = 2, startIter = 1,
-           maxHits = 3, maxTime = 1 / 100,
-           concavity = 10, verbosity = 0)
+  #c() ensures that each replicate returns a list of trees
+  c(Resample(dataset, trees, ratchIter = 0, tbrIter = 2, startIter = 1,
+             maxHits = 3, maxTime = 1 / 10,
+             concavity = 10, verbosity = 0))
  )
 
 # In a serious analysis, more replicates would be conducted, and each
@@ -215,14 +216,14 @@ jackTrees <- replicate(nReplicates,
 # Now we must decide what to do with the multiple optimal trees from
 # each replicate.
 
+# Treat each tree equally
+JackLabels(ape::consensus(trees), unlist(jackTrees, recursive = FALSE))
+
 # Take the strict consensus of all trees for each replicate
 JackLabels(ape::consensus(trees), lapply(jackTrees, ape::consensus))
 
 # Take a single tree from each replicate (the first; order's irrelevant)
 JackLabels(ape::consensus(trees), lapply(jackTrees, `[[`, 1))
-
-# Treat each tree equally
-JackLabels(ape::consensus(trees), unlist(jackTrees, recursive = FALSE))
 
 
 # Tree search with a constraint
