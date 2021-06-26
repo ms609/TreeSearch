@@ -21,6 +21,8 @@
 #' constraint <- StringToPhyDat('0000?1111 000111111 0000??110', tips, FALSE)
 #' plot(ImposeConstraint(tree, constraint))
 #' @template MRS
+#' @importFrom ape keep.tip read.tree
+#' @importFrom TreeTools Preorder RenumberTips RenumberTree SplitInformation
 #' @export
 ImposeConstraint <- function (tree, constraint) {
   # This function is as efficient as it is elegant: i.e. not.
@@ -56,7 +58,7 @@ ImposeConstraint <- function (tree, constraint) {
     
   }
   
-  backbone <- Preorder(RenumberTips(ape::read.tree(
+  backbone <- Preorder(RenumberTips(read.tree(
     text = paste0('(', paste0(rownames(const), collapse = ','), ');')),
     tips))
   

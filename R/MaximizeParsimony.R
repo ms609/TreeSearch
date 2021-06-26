@@ -232,7 +232,8 @@ MaximizeParsimony <- function (dataset, tree,
             }
           }
         }
-        if (improvedScore || nHits >= maxHits) break
+        if (nHits >= maxHits) break
+        if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
     }
@@ -307,7 +308,8 @@ MaximizeParsimony <- function (dataset, tree,
             }
           }
         }
-        if (improvedScore || nHits >= maxHits) break
+        if (nHits >= maxHits) break
+        if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
     }
@@ -381,7 +383,8 @@ MaximizeParsimony <- function (dataset, tree,
             }
           }
         }
-        if (improvedScore || nHits >= maxHits) break
+        if (nHits >= maxHits) break
+        if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
     }
@@ -458,6 +461,7 @@ MaximizeParsimony <- function (dataset, tree,
   
   # Define constants
   epsilon <- tolerance
+  pNextTbr <- 0.1
   profile <- .UseProfile(concavity)
   iw <- is.finite(concavity)
   constrained <- !missing(constraint)

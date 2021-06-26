@@ -22,8 +22,9 @@ for further examples.}
 \code{ConstrainedNJ()} returns a tree of class \code{phylo}.
 }
 \description{
-Constructs a neighbour-joining tree such that the tree is consistent with a
-constraint.
+Constructs an approximation to a neighbour-joining tree, modified in order
+to be consistent with a constraint.  Zero-length branches are collapsed
+at random.
 }
 \examples{
 dataset <- TreeTools::MatrixToPhyDat(matrix(
