@@ -942,6 +942,9 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
 #'   c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
 #' plot(ConstrainedNJ(dataset, constraint))
 #' @template MRS
+#' @importFrom ape nj
+#' @importFrom phangorn dist.hamming
+#' @importFrom TreeTools RootTree
 #' @export
 ConstrainedNJ <- function (dataset, constraint, weight = 12345) {
   missing <- setdiff(names(dataset), names(constraint))

@@ -2,6 +2,9 @@
 #' Force a tree to match a constraint
 #' 
 #' Modify a tree such that it matches a specified constraint.
+#' This is at present a somewhat crude implementation that attempts to retain
+#' much of the strucure of `tree` whilst guaranteeing compatibility with
+#' each entry in `constraint`.
 #' 
 #' @template treeParam
 #' @template constraintParam
@@ -14,8 +17,8 @@
 #' tips <- letters[1:9]
 #' tree <- as.phylo(1, 9, tips)
 #' plot(tree)
+#' 
 #' constraint <- StringToPhyDat('0000?1111 000111111 0000??110', tips, FALSE)
-#' ImposeConstraint(tree, constraint)
 #' plot(ImposeConstraint(tree, constraint))
 #' @template MRS
 #' @export
