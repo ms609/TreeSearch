@@ -53,7 +53,6 @@ test_that("Inconsistent constraints fail", {
     c(0, 1, 1, 1, 0, 0,
       1, 1, 1, 0, 0, 0), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
-  #skip_if(T)
   expect_error(MaximizeParsimony(constraint,
                                  PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
                                  ratchIter = 0, constraint = constraint))

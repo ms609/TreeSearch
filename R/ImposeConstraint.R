@@ -29,15 +29,14 @@ ImposeConstraint <- function (tree, constraint) {
   const <- PhyDatToMatrix(constraint)
   info <- apply(const, 2,
                 function (x) SplitInformation(sum(x == '0'), sum(x == '1')))
+  smallest <- ifelse(apply(const, 2, function (x) sum(x == '0') < sum(x == '1')),
+                     '0', '1')
   
   tips <- tree$tip.label
   nTip <- length(tips)
   for (i in order(info)) {
     constI <- const[, i]
-    zeros <- constI == 0
-    ones <- constI == 1
-    collapse <- ifelse(sum(zeros) > sum(ones), '1', '0')
-    collapsers <- switch(collapse, '0' = zeros, '1' = ones)
+    collapsers <- constI == smallest[i]
     collapseNames <- names(collapsers[collapsers])
     if (length(collapseNames) < 2L) {
       stop("Could not apply constraint ", i, ". Check it is compatible.")
