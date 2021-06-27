@@ -55,7 +55,7 @@ jobs:
       - name: Install dependencies
         run: |
           remotes::install_deps(dependencies = TRUE)
-          remotes::install_cran(c("pkgdown", "igraph"))
+          remotes::install_cran(c("pkgdown", "igraph", "curl"))
         shell: Rscript {0}
 
       - name: Install package
