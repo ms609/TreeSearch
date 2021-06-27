@@ -4,7 +4,7 @@
 \alias{ConstrainedNJ}
 \title{Constrained neighbour-joining tree}
 \usage{
-ConstrainedNJ(dataset, constraint, weight = 12345)
+ConstrainedNJ(dataset, constraint, weight = 1L)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},

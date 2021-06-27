@@ -527,18 +527,6 @@ MaximizeParsimony <- function (dataset, tree,
   nTip <- NTip(tree)
   edge <- tree$edge
   
-  if (edge[1, 2] > nTip) {
-    outgroup <- Descendants(tree, edge[1, 2], type = 'tips')[[1]]
-    if (length(outgroup) > nTip / 2L) {
-      outgroup <- seq_len(nTip)[-outgroup]
-    }
-    tree <- RootTree(tree, 1)
-    edge <- tree$edge
-  } else {
-    outgroup <- NA
-  }
-  
-  
   # Initialize constraints
   if (constrained) {
     morphyConstr <- PhyDat2Morphy(constraint)
@@ -554,7 +542,8 @@ MaximizeParsimony <- function (dataset, tree,
     # Check that starting tree is consistent with constraints 
     if (.Forbidden(edge)) {
       .Message(1L, "Modifying `tree` to match `constraint`...")
-      tree <- RootTree(ImposeConstraint(tree, constraint), names(dataset)[1])
+      outgroup <- Descendants(tree, edge[1, 2], type = 'tips')[[1]]
+      tree <- RootTree(ImposeConstraint(tree, constraint), outgroup)
       # RootTree leaves `tree` in preorder
       edge <- tree$edge
       if (.Forbidden(edge)) {
@@ -566,6 +555,19 @@ MaximizeParsimony <- function (dataset, tree,
   } else {
     .Forbidden <- function (edges) FALSE
   }
+  
+  
+  if (edge[1, 2] > nTip) {
+    outgroup <- Descendants(tree, edge[1, 2], type = 'tips')[[1]]
+    if (length(outgroup) > nTip / 2L) {
+      outgroup <- seq_len(nTip)[-outgroup]
+    }
+    tree <- RootTree(tree, 1)
+    edge <- tree$edge
+  } else {
+    outgroup <- NA
+  }
+  
   
   # Initialize data
   if (profile) {
