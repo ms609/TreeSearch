@@ -46,6 +46,7 @@ Config/Needs/github-actions:
     callr,
     pkgbuild,
     rcmdcheck
+Config/Needs/memcheck: devtools
 Config/Needs/metadata: codemetar
 Config/Needs/website: 
     curl,
