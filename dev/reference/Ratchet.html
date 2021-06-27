@@ -46,8 +46,9 @@
 
 
 <meta property="og:title" content="Parsimony Ratchet — MorphyBootstrap" />
-<meta property="og:description" content="Ratchet() uses the parsimony ratchet (Nixon 1999) to search for a more
-parsimonious tree using custom optimality criteria." />
+<meta property="og:description" content="Ratchet() uses the parsimony ratchet (Nixon 1999)
+
+to search for a more parsimonious tree using custom optimality criteria." />
 
 
 <meta name="robots" content="noindex">
@@ -89,7 +90,7 @@ parsimonious tree using custom optimality criteria." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9009</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9010</span>
       </span>
     </div>
 
@@ -164,8 +165,9 @@ parsimonious tree using custom optimality criteria." />
     </div>
 
     <div class="ref-description">
-    <p><code>Ratchet()</code> uses the parsimony ratchet (Nixon 1999) to search for a more
-parsimonious tree using custom optimality criteria.</p>
+    <p><code>Ratchet()</code> uses the parsimony ratchet (Nixon 1999)
+
+to search for a more parsimonious tree using custom optimality criteria.</p>
     </div>
 
     <pre class="usage"><span class='fu'>MorphyBootstrap</span><span class='op'>(</span>
@@ -404,20 +406,11 @@ ratchet searches, from which a consensus tree can be generated using
 </ul>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
-    
-<ul>
-<li><p>Nixon KC (1999).
+    <p>Nixon KC (1999).
 &#8220;The Parsimony Ratchet, a new method for rapid parsimony analysis.&#8221;
 <em>Cladistics</em>, <b>15</b>(4), 407--414.
 ISSN 0748-3007, doi: <a href='https://doi.org/10.1111/j.1096-0031.1999.tb00277.x'>10.1111/j.1096-0031.1999.tb00277.x</a>
-.</p></li>
-<li><p>Smith MR (2019).
-&#8220;Bayesian and parsimony approaches reconstruct informative trees from simulated morphological datasets.&#8221;
-<em>Biology Letters</em>, <b>15</b>(2), 20180632.
-doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
-.</p></li>
-</ul>
-
+.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'>
@@ -432,19 +425,19 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 <code><a href='SuccessiveApproximations.html'>SuccessiveApproximations</a>()</code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
-    <p>Martin R. Smith</p>
+    <p><a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>
+(<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'Lobo'</span>, package<span class='op'>=</span><span class='st'>'TreeTools'</span><span class='op'>)</span>
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'Lobo'</span>, package <span class='op'>=</span> <span class='st'>'TreeTools'</span><span class='op'>)</span>
 <span class='va'>njtree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span><span class='op'>(</span><span class='va'>Lobo.phy</span><span class='op'>)</span>
 <span class='co'># Increase value of ratchIter and searchHits to do a proper search</span>
 <span class='va'>quickResult</span> <span class='op'>&lt;-</span> <span class='fu'>Ratchet</span><span class='op'>(</span><span class='va'>njtree</span>, <span class='va'>Lobo.phy</span>, ratchIter <span class='op'>=</span> <span class='fl'>2</span>, searchHits <span class='op'>=</span> <span class='fl'>3</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='message'>* Beginning Parsimony Ratchet, with initial score 239</span></div><div class='output co'>#&gt; <span class='message'>Completed parsimony ratchet after 2 iterations with score 230</span></div><div class='input'>
+</div><div class='output co'>#&gt; <span class='message'>* Beginning Parsimony Ratchet, with initial score 239</span></div><div class='output co'>#&gt; <span class='message'>Completed parsimony ratchet after 2 iterations with score 232</span></div><div class='input'>
 <span class='co'># Plot result (legibly)</span>
 <span class='va'>oldPar</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span><span class='op'>(</span>mar <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>4</span><span class='op'>)</span>, cex <span class='op'>=</span> <span class='fl'>0.75</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>quickResult</span><span class='op'>)</span>
 </div><div class='img'><img src='Ratchet-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span><span class='op'>(</span><span class='va'>oldPar</span><span class='op'>)</span>
-
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

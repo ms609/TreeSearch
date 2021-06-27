@@ -46,10 +46,15 @@
 
 
 <meta property="og:title" content="Calculate the parsimony score of a tree given a dataset — IWScore" />
-<meta property="og:description" content="TreeLength() uses the Morphy library (Brazeau 2017) to calculate a
-parsimony score for a tree, handling inapplicable data according to the
-algorithm of Brazeau et al. (2019).  Tree scoring can employ implied
-weights (Goloboff 1993) or profile parsimony (Faith &amp;amp; Trueman 2001)." />
+<meta property="og:description" content="TreeLength() uses the Morphy library (Brazeau et al. 2017)
+
+to calculate a parsimony score for a tree, handling inapplicable data
+according to the algorithm of Brazeau et al. (2019)
+.
+Tree scoring can employ implied weights (Goloboff 1993)
+
+or profile parsimony (Faith and Trueman 2001)
+." />
 
 
 <meta name="robots" content="noindex">
@@ -91,7 +96,7 @@ weights (Goloboff 1993) or profile parsimony (Faith &amp;amp; Trueman 2001)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9009</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9010</span>
       </span>
     </div>
 
@@ -166,10 +171,15 @@ weights (Goloboff 1993) or profile parsimony (Faith &amp;amp; Trueman 2001)." />
     </div>
 
     <div class="ref-description">
-    <p><code>TreeLength()</code> uses the Morphy library (Brazeau 2017) to calculate a
-parsimony score for a tree, handling inapplicable data according to the
-algorithm of Brazeau et al. (2019).  Tree scoring can employ implied
-weights (Goloboff 1993) or profile parsimony (Faith &amp; Trueman 2001).</p>
+    <p><code>TreeLength()</code> uses the Morphy library (Brazeau et al. 2017)
+
+to calculate a parsimony score for a tree, handling inapplicable data
+according to the algorithm of Brazeau et al. (2019)
+.
+Tree scoring can employ implied weights (Goloboff 1993)
+
+or profile parsimony (Faith and Trueman 2001)
+.</p>
     </div>
 
     <pre class="usage"><span class='fu'>IWScore</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='fl'>10L</span>, <span class='va'>...</span><span class='op'>)</span>
@@ -208,14 +218,17 @@ whose names correspond to the labels of any accompanying tree.</p></td>
       <th>concavity</th>
       <td><p>Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
-(Goloboff 1993, where <code>concavity</code> specifies <em>k</em> in <em>k</em> / <em>e</em> + <em>k</em>).
-in implied weighting. A value of 10 is recommended;
+(Goloboff 1993)
+; <code>concavity</code> specifies <em>k</em> in
+<em>k</em> / <em>e</em> + <em>k</em>. A value of 10 is recommended;
 TNT sets a default of 3, but this is too low in some circumstances
-(Goloboff <em>et al</em>. 2018, Smith, 2019).
+(Goloboff et al. 2018; Smith 2019)
+.
 Better still explore the sensitivity of results under a range of
 concavity values, e.g. <code>k = 2 ^ (1:7)</code>.
 Specify <code>Inf</code> to weight each additional step equally.
-Specify <code>'profile'</code> to employ profile parsimony (Faith &amp; Trueman 2001).</p></td>
+Specify <code>'profile'</code> to employ profile parsimony (Faith and Trueman 2001)
+.</p></td>
     </tr>
     <tr>
       <th>...</th>
@@ -230,39 +243,30 @@ received by the function without throwing an error.</p></td>
 each tree.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
-    
-<ul>
-<li><p>Brazeau MD, Smith MR, Guillerme T (2017).
-&#8220;MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability.&#8221;
-doi: <a href='https://doi.org/10.5281/zenodo.815372'>10.5281/zenodo.815372</a>
-.</p></li>
-<li><p>Brazeau MD, Guillerme T, Smith MR (2019).
+    <p>Brazeau MD, Guillerme T, Smith MR (2019).
 &#8220;An algorithm for morphological phylogenetic analysis with inapplicable data.&#8221;
 <em>Systematic Biology</em>, <b>68</b>(4), 619--631.
 doi: <a href='https://doi.org/10.1093/sysbio/syy083'>10.1093/sysbio/syy083</a>
-.</p></li>
-<li><p>Faith DP, Trueman JWH (2001).
+.<br /><br /> Brazeau MD, Smith MR, Guillerme T (2017).
+&#8220;MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability.&#8221;
+doi: <a href='https://doi.org/10.5281/zenodo.815372'>10.5281/zenodo.815372</a>
+.<br /><br /> Faith DP, Trueman JWH (2001).
 &#8220;Towards an inclusive philosophy for phylogenetic inference.&#8221;
 <em>Systematic Biology</em>, <b>50</b>(3), 331--350.
 doi: <a href='https://doi.org/10.1080/10635150118627'>10.1080/10635150118627</a>
-, <a href='http://www.ncbi.nlm.nih.gov/pubmed/12116579'>http://www.ncbi.nlm.nih.gov/pubmed/12116579</a>.</p></li>
-<li><p>Goloboff PA (1993).
+, <a href='http://www.ncbi.nlm.nih.gov/pubmed/12116579'>http://www.ncbi.nlm.nih.gov/pubmed/12116579</a>.<br /><br /> Goloboff PA (1993).
 &#8220;Estimating character weights during tree search.&#8221;
 <em>Cladistics</em>, <b>9</b>(1), 83--91.
 doi: <a href='https://doi.org/10.1111/j.1096-0031.1993.tb00209.x'>10.1111/j.1096-0031.1993.tb00209.x</a>
-.</p></li>
-<li><p>Goloboff PA, Torres A, Arias JS (2018).
+.<br /><br /> Goloboff PA, Torres A, Arias JS (2018).
 &#8220;Weighted parsimony outperforms other methods of phylogenetic inference under models appropriate for morphology.&#8221;
 <em>Cladistics</em>, <b>34</b>(4), 407--437.
 doi: <a href='https://doi.org/10.1111/cla.12205'>10.1111/cla.12205</a>
-.</p></li>
-<li><p>Smith MR (2019).
+.<br /><br /> Smith MR (2019).
 &#8220;Bayesian and parsimony approaches reconstruct informative trees from simulated morphological datasets.&#8221;
 <em>Biology Letters</em>, <b>15</b>(2), 20180632.
 doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
-.</p></li>
-</ul>
-
+.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'>
@@ -287,7 +291,7 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 </div><div class='output co'>#&gt; [1] 1117</div><div class='input'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>, concavity <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; [1] 52.75785</div><div class='input'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>, concavity <span class='op'>=</span> <span class='st'>'profile'</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='message'>Inapplicable tokens treated as ambiguous for profile parsimony</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; [1] 3941.387</div><div class='input'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='fl'>5</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] 1964 1921 1915 1923 1962</div></pre>
+</div><div class='output co'>#&gt; [1] 1951 1967 1924 1974 1987</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

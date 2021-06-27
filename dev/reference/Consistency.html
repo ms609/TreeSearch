@@ -94,7 +94,7 @@ between characters in which these factors differ." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9009</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9010</span>
       </span>
     </div>
 
@@ -178,7 +178,7 @@ distribution of taxa between character states, so are not strictly comparable
 between characters in which these factors differ.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>Consistency</span><span class='op'>(</span><span class='va'>dataset</span>, <span class='va'>tree</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>Consistency</span><span class='op'>(</span><span class='va'>dataset</span>, <span class='va'>tree</span>, compress <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -191,6 +191,12 @@ whose names correspond to the labels of any accompanying tree.</p></td>
     <tr>
       <th>tree</th>
       <td><p>A tree of class <code>phylo</code>.</p></td>
+    </tr>
+    <tr>
+      <th>compress</th>
+      <td><p>Logical specifying whether to retain the compression of a
+phylo object or to return a vector specifying to each individual character,
+decompressed using the dataset's <code>index</code> attribute.</p></td>
     </tr>
     </table>
 
@@ -227,8 +233,8 @@ retention index (<code>ri</code>), and rescaled consistency index (<code>rc</cod
 #&gt;  [92] 0.2000000 1.0000000 0.3333333 1.0000000 0.2500000 0.5000000 1.0000000
 #&gt;  [99] 0.3333333 0.5000000 1.0000000 0.5000000 0.5000000 0.5000000 0.5000000
 #&gt; [106] 1.0000000 0.2500000 0.5000000 1.0000000 0.3333333 1.0000000 0.2000000
-#&gt; [113] 0.5000000 1.0000000 0.2000000 0.5000000 0.3333333 0.5000000 0.3333333
-#&gt; [120] 0.3333333 0.3333333 0.2500000 1.0000000 1.0000000 0.3333333</div></pre>
+#&gt; [113] 1.0000000 0.5000000 1.0000000 0.2000000 0.5000000 0.3333333 0.5000000
+#&gt; [120] 0.3333333 0.3333333 0.3333333 0.2500000 1.0000000 1.0000000 0.3333333</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

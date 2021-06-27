@@ -6,8 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Gets the number of internal nodal reconstruction sets being used by
-MorphyLib. — mpl_get_num_internal_nodes • TreeSearch</title>
+<title>Force a tree to match a constraint — ImposeConstraint • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -46,10 +45,11 @@ MorphyLib. — mpl_get_num_internal_nodes • TreeSearch</title>
 
 
 
-<meta property="og:title" content="Gets the number of internal nodal reconstruction sets being used by
-MorphyLib. — mpl_get_num_internal_nodes" />
-<meta property="og:description" content="Gets the number of internal nodal reconstruction sets being used
-by MorphyLib." />
+<meta property="og:title" content="Force a tree to match a constraint — ImposeConstraint" />
+<meta property="og:description" content="Modify a tree such that it matches a specified constraint.
+This is at present a somewhat crude implementation that attempts to retain
+much of the strucure of tree whilst guaranteeing compatibility with
+each entry in constraint." />
 
 
 <meta name="robots" content="noindex">
@@ -160,68 +160,57 @@ by MorphyLib." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Gets the number of internal nodal reconstruction sets being used by
-MorphyLib.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/mpl_morphyex.R'><code>R/mpl_morphyex.R</code></a></small>
-    <div class="hidden name"><code>mpl_get_num_internal_nodes.Rd</code></div>
+    <h1>Force a tree to match a constraint</h1>
+    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/ImposeConstraint.R'><code>R/ImposeConstraint.R</code></a></small>
+    <div class="hidden name"><code>ImposeConstraint.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Gets the number of internal nodal reconstruction sets being used
-by MorphyLib.</p>
+    <p>Modify a tree such that it matches a specified constraint.
+This is at present a somewhat crude implementation that attempts to retain
+much of the strucure of <code>tree</code> whilst guaranteeing compatibility with
+each entry in <code>constraint</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>mpl_get_num_internal_nodes</span><span class='op'>(</span><span class='va'>morphyobj</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>ImposeConstraint</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>constraint</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>morphyobj</th>
-      <td><p>An instance of the Morphy object.</p></td>
+      <th>tree</th>
+      <td><p>A tree of class <code>phylo</code>.</p></td>
+    </tr>
+    <tr>
+      <th>constraint</th>
+      <td><p>An object of class <code>phyDat</code>; returned trees will be
+perfectly compatible with each character in <code>constraint</code>.
+See <a href='https://ms609.github.io/TreeSearch/articles/inapplicable.html'>vignette</a>
+for further examples.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The number of internal nodes.</p>
-    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
-
-    <div class='dont-index'><p>Other Morphy API functions: 
-<code><a href='GapHandler.html'>GapHandler</a>()</code>,
-<code><a href='MorphyErrorCheck.html'>MorphyErrorCheck</a>()</code>,
-<code><a href='MorphyWeights.html'>MorphyWeights</a>()</code>,
-<code><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a>()</code>,
-<code><a href='SingleCharMorphy.html'>SingleCharMorphy</a>()</code>,
-<code><a href='UnloadMorphy.html'>UnloadMorphy</a>()</code>,
-<code><a href='is.morphyPtr.html'>is.morphyPtr</a>()</code>,
-<code><a href='mpl_apply_tipdata.html'>mpl_apply_tipdata</a>()</code>,
-<code><a href='mpl_attach_rawdata.html'>mpl_attach_rawdata</a>()</code>,
-<code><a href='mpl_attach_symbols.html'>mpl_attach_symbols</a>()</code>,
-<code><a href='mpl_delete_Morphy.html'>mpl_delete_Morphy</a>()</code>,
-<code><a href='mpl_delete_rawdata.html'>mpl_delete_rawdata</a>()</code>,
-<code><a href='mpl_first_down_recon.html'>mpl_first_down_recon</a>()</code>,
-<code><a href='mpl_first_up_recon.html'>mpl_first_up_recon</a>()</code>,
-<code><a href='mpl_get_charac_weight.html'>mpl_get_charac_weight</a>()</code>,
-<code><a href='mpl_get_gaphandl.html'>mpl_get_gaphandl</a>()</code>,
-<code><a href='mpl_get_num_charac.html'>mpl_get_num_charac</a>()</code>,
-<code><a href='mpl_get_numtaxa.html'>mpl_get_numtaxa</a>()</code>,
-<code><a href='mpl_get_symbols.html'>mpl_get_symbols</a>()</code>,
-<code><a href='mpl_init_Morphy.html'>mpl_init_Morphy</a>()</code>,
-<code><a href='mpl_new_Morphy.html'>mpl_new_Morphy</a>()</code>,
-<code><a href='mpl_second_down_recon.html'>mpl_second_down_recon</a>()</code>,
-<code><a href='mpl_second_up_recon.html'>mpl_second_up_recon</a>()</code>,
-<code><a href='mpl_set_charac_weight.html'>mpl_set_charac_weight</a>()</code>,
-<code><a href='mpl_set_num_internal_nodes.html'>mpl_set_num_internal_nodes</a>()</code>,
-<code><a href='mpl_set_parsim_t.html'>mpl_set_parsim_t</a>()</code>,
-<code><a href='mpl_translate_error.html'>mpl_translate_error</a>()</code>,
-<code><a href='mpl_update_lower_root.html'>mpl_update_lower_root</a>()</code>,
-<code><a href='mpl_update_tip.html'>mpl_update_tip</a>()</code>,
-<code><a href='summary.morphyPtr.html'>summary.morphyPtr</a>()</code></p></div>
+    <p><code>ImposeConstraint()</code> returns a tree of class <code>phylo</code>, consistent
+with <code>constraint</code>.</p>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
-    <p>Martin Brazeau</p>
+    <p><a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>
+(<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='st'><a href='https://ms609.github.io/TreeTools/'>'TreeTools'</a></span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>Loading required package: ape</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>Attaching package: ‘TreeTools’</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:base’:</span>
+#&gt; <span class='message'></span>
+#&gt; <span class='message'>    %in%, match</span></div><div class='input'><span class='va'>tips</span> <span class='op'>&lt;-</span> <span class='va'>letters</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>9</span><span class='op'>]</span>
+<span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>as.phylo</span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>9</span>, <span class='va'>tips</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
+</div><div class='img'><img src='ImposeConstraint-1.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='va'>constraint</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://ms609.github.io/TreeTools/reference/PhyToString.html'>StringToPhyDat</a></span><span class='op'>(</span><span class='st'>'0000?1111 000111111 0000??110'</span>, <span class='va'>tips</span>, <span class='cn'>FALSE</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='fu'>ImposeConstraint</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>constraint</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='img'><img src='ImposeConstraint-2.png' alt='' width='700' height='433' /></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -46,8 +46,9 @@
 
 
 <meta property="og:title" content="Constrained neighbour-joining tree — ConstrainedNJ" />
-<meta property="og:description" content="Constructs a neighbour-joining tree such that the tree is consistent with a
-constraint." />
+<meta property="og:description" content="Constructs an approximation to a neighbour-joining tree, modified in order
+to be consistent with a constraint.  Zero-length branches are collapsed
+at random." />
 
 
 <meta name="robots" content="noindex">
@@ -89,7 +90,7 @@ constraint." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9009</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9010</span>
       </span>
     </div>
 
@@ -164,8 +165,9 @@ constraint." />
     </div>
 
     <div class="ref-description">
-    <p>Constructs a neighbour-joining tree such that the tree is consistent with a
-constraint.</p>
+    <p>Constructs an approximation to a neighbour-joining tree, modified in order
+to be consistent with a constraint.  Zero-length branches are collapsed
+at random.</p>
     </div>
 
     <pre class="usage"><span class='fu'>ConstrainedNJ</span><span class='op'>(</span><span class='va'>dataset</span>, <span class='va'>constraint</span>, weight <span class='op'>=</span> <span class='fl'>12345</span><span class='op'>)</span></pre>
