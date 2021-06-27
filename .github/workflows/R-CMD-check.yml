@@ -47,7 +47,10 @@ jobs:
       - name: Query dependencies
         run: |
           install.packages('remotes')
-          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
+          saveRDS(c(
+            remotes::dev_package_deps(dependencies = TRUE),
+            remotes::dev_package_deps(dependencies = 'Config/Needs/github-actions')
+          ), ".github/depends.Rds", version = 2)
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
 
@@ -70,17 +73,11 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install libgit2
-          
-      - name: Install callr (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          remotes::install_cran("callr")
-        shell: Rscript {0}
 
       - name: Install dependencies
         run: |
           remotes::install_deps(dependencies = TRUE)
-          remotes::install_cran("rcmdcheck")
+          remotes::install_deps(dependencies = 'Config/Needs/github-actions')
         shell: Rscript {0}
         
       - name: Install coverage dependencies
