@@ -43,7 +43,10 @@ Suggests:
     vdiffr (>= 1.0.0),
 Config/Needs/coverage: covr
 Config/Needs/metadata: codemetar
-Config/Needs/website: pkgdown
+Config/Needs/website: 
+    curl,
+    igraph,
+    pkgdown
 RdMacros: Rdpack
 LinkingTo:
     Rcpp,
