@@ -554,12 +554,9 @@ MaximizeParsimony <- function (dataset, tree,
     # Check that starting tree is consistent with constraints 
     if (.Forbidden(edge)) {
       .Message(1L, "Modifying `tree` to match `constraint`...")
-        tree <- Preorder( # Should be preorder after RootTree anywaY?
-          RootTree(ImposeConstraint(tree, constraint), names(dataset)[1])
-        )
-        tree$tip.label
-        names(dataset)
-        edge <- tree$edge
+      tree <- RootTree(ImposeConstraint(tree, constraint), names(dataset)[1])
+      # RootTree leaves `tree` in preorder
+      edge <- tree$edge
       if (.Forbidden(edge)) {
         stop("Could not reconcile starting tree with `constraint`. ",
              "Are all constraints compatible?")
@@ -961,7 +958,7 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
 #' @importFrom phangorn dist.hamming
 #' @importFrom TreeTools RootTree
 #' @export
-ConstrainedNJ <- function (dataset, constraint, weight = 12345) {
+ConstrainedNJ <- function (dataset, constraint, weight = 1L) {
   missing <- setdiff(names(dataset), names(constraint))
   if (length(missing)) {
     constraint <- .AddUnconstrained(constraint, missing)
