@@ -212,7 +212,7 @@ MaximizeParsimony <- function (dataset, tree,
         nMoves <- length(moves)
         moveList <- sample.int(nMoves)
         for (i in seq_along(moveList)) {
-          move <- moves[moveList[i]]
+          move <- moves[[moveList[i]]]
           if (.Forbidden(move)) {
             .Message(10L, "Skipping prohibited topology")
             next
