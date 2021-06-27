@@ -209,7 +209,10 @@ MaximizeParsimony <- function (dataset, tree,
         .Message(6L, "Break ", brk)
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
-        for (move in moves[sample(seq_along(moves))]) {
+        nMoves <- length(moves)
+        moveList <- sample.int(nMoves)
+        for (i in seq_along(moveList)) {
+          move <- moves[moveList[i]]
           if (.Forbidden(move)) {
             .Message(10L, "Skipping prohibited topology")
             next
@@ -225,15 +228,14 @@ MaximizeParsimony <- function (dataset, tree,
               hold[, , 1] <- edge
               .Message(4L, "New best score ", bestScore,
                        " at break ", match(brk, optTbr), "/", length(optTbr))
-              break
             } else {
               .Message(5L, "Best score ", bestScore, " hit again (", nHits, 
                        "/", maxHits, ")")
               nHits <- nHits + 1L
               hold[, , nHits] <- edge
-              break
             }
           }
+          if (improvedScore && runif(1) < (i / nMoves) ^ 2) break
         }
         if (nHits >= maxHits) break
         pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 2
