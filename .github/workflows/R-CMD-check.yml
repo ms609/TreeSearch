@@ -84,11 +84,10 @@ jobs:
           remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
         
-      - name: Install covr, vdiffr for checks (macOS)
+      - name: Install coverage dependencies
         if: runner.os == 'macOS'
         run: |
-          remotes::install_cran(c("covr", "vdiffr"))
-          library('vdiffr')
+          remotes::install_deps(dependencies = 'Config/Needs/coverage')
         shell: Rscript {0}
 
       - name: Check
