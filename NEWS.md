@@ -1,7 +1,8 @@
-# TreeSearch 0.4.3.9009 (development)
+# TreeSearch 0.4.3.9010 (development)
 
 ## Changes in functionality
 
+ * v......9010 improves constraint handling.
  * v......9007 introduces a pre-ratchet TBR search and adjusts default settings.
  * v0.4.3.9005 fixes some bugs that may affect tree scoring under IW & PP.
 
@@ -9,9 +10,10 @@
  - `EasyTrees()` 'shiny' graphical user interface for tree search
  - `PlotCharacter()` reconstructs character distributions on trees
  - `ConstrainedNJ()` constructs starting trees that respect a constraint
+ - `ImposeConstraint()` reconciles a tree with a constraint
  - `SiteConcordance()` calculates exact site concordance
  - `ConcordantInformation()` evaluates signal:noise of dataset implied by a
-   given tree.
+   given tree
  - `PrepareDataProfile()` simplifies dataset to allow partial search when
    multiple applicable tokens are present
  - `Resample()` conducts bootstrap and jackknife resampling
