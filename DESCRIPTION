@@ -44,6 +44,7 @@ Suggests:
 Config/Needs/coverage: covr
 Config/Needs/github-actions:
     callr,
+    pkgbuild,
     rcmdcheck
 Config/Needs/metadata: codemetar
 Config/Needs/website: 
