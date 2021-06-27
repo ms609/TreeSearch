@@ -154,7 +154,7 @@
 #' @export
 MaximizeParsimony <- function (dataset, tree,
                                ratchIter = 6L,
-                               tbrIter = 2,
+                               tbrIter = 2L,
                                startIter = 2L, finalIter = 1L,
                                maxHits = NTip(dataset) * 1.5,
                                maxTime = 60,
@@ -230,9 +230,10 @@ MaximizeParsimony <- function (dataset, tree,
                        " at break ", match(brk, optTbr), "/", length(optTbr))
             } else {
               .Message(5L, "Best score ", bestScore, " hit again (", nHits, 
-                       "/", maxHits, ")")
+                       "/", ceiling(maxHits), ")")
               nHits <- nHits + 1L
               hold[, , nHits] <- edge
+              if (nHits >= maxHits) break
             }
           }
           if (improvedScore && runif(1) < (i / nMoves) ^ 2) break
