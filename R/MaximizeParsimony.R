@@ -508,13 +508,13 @@ MaximizeParsimony <- function (dataset, tree,
   if (length(treeOnly)) {
     warning(immediate. = TRUE,
             "Ignoring taxa on tree missing in dataset:\n   ", 
-            paste0(treeOnly, collapse = ', '))
+            paste0(treeOnly, collapse = ', '), "\n")
     tree <- drop.tip(tree, treeOnly)
   }
   if (length(datOnly)) {
     warning(immediate. = TRUE,
             "Ignoring taxa in dataset missing on tree:\n   ", 
-            paste0(datOnly, collapse = ', '))
+            paste0(datOnly, collapse = ', '), "\n")
     dataset <- dataset[-match(datOnly, taxa)]
   }
   if (constrained) {
@@ -527,7 +527,7 @@ MaximizeParsimony <- function (dataset, tree,
     if (length(consOnly)) {
       warning(immediate. = TRUE,
               "Ignoring taxa in constraint missing on tree:\n   ", 
-              paste0(consOnly, collapse = ', '))
+              paste0(consOnly, collapse = ', '), "\n")
       constraint <- constraint[-match(consOnly, consTaxa)]
     }
     constraint <- constraint[names(dataset)]
