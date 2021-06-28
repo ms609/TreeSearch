@@ -1,6 +1,6 @@
-# TreeSearch 0.4.3.9006 (development)
+# TreeSearch 0.4.3.9008 (development)
 
- * v......9007 introduces a pre-ratchet TBR search and adjusts default settings.
+  * v......9007 introduces a pre-ratchet TBR search and adjusts default settings.
  * v0.4.3.9005 fixes some bugs that may affect tree scoring under IW & PP.
 
  - `EasyTree()` 'shiny' graphical user interface for tree search
@@ -14,6 +14,7 @@
  - `MinimumLength()` and `MaximumLength()` calculate range of possible lengths
    of characters in a dataset on any tree
  - `TreeLength()` supports lists of trees.
+ - `PlotRogue()` displays possible positions of rogue taxa.
  - Set handling of 'gap' token (-) when creating Morphy object with `gap = `
  - Label nodes with split frequencies using `JackLabels(plot = FALSE)`
  - Support for topological constraints during tree search
