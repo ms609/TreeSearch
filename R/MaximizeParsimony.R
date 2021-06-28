@@ -506,12 +506,14 @@ MaximizeParsimony <- function (dataset, tree,
   treeOnly <- setdiff(leaves, taxa) 
   datOnly <- setdiff(taxa, leaves) 
   if (length(treeOnly)) {
-    warning("Ignoring taxa on tree missing in dataset:\n   ", 
+    warning(immediate. = TRUE,
+            "Ignoring taxa on tree missing in dataset:\n   ", 
             paste0(treeOnly, collapse = ', '))
     tree <- drop.tip(tree, treeOnly)
   }
   if (length(datOnly)) {
-    warning("Ignoring taxa in dataset missing on tree:\n   ", 
+    warning(immediate. = TRUE,
+            "Ignoring taxa in dataset missing on tree:\n   ", 
             paste0(datOnly, collapse = ', '))
     dataset <- dataset[-match(datOnly, taxa)]
   }
@@ -523,7 +525,8 @@ MaximizeParsimony <- function (dataset, tree,
     }
     consOnly <- setdiff(consTaxa, tree$tip.label)
     if (length(consOnly)) {
-      warning("Ignoring taxa in constraint missing on tree:\n   ", 
+      warning(immediate. = TRUE,
+              "Ignoring taxa in constraint missing on tree:\n   ", 
               paste0(consOnly, collapse = ', '))
       constraint <- constraint[-match(consOnly, consTaxa)]
     }
