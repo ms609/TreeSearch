@@ -28,3 +28,4 @@ vignettes/*_cache*
 *.site
 gen-*tip/*
 results-*
+inst/DELETE*

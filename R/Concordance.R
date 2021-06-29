@@ -1,7 +1,8 @@
 #' Calculate site concordance factor
 #' 
-#' The site concordance factor (Minh, Hahn & Lanfear 2020) is a measure of the
-#' strength of support that the dataset presents for a given split in a tree.
+#' The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure 
+#' of the strength of support that the dataset presents for a given split in a
+#' tree.
 #' 
 #' `QuartetConcordance()` is the proportion of quartets (sets of four leaves) that 
 #' are decisive for a split which are also concordant with it.
@@ -13,7 +14,8 @@
 #' 
 # `ClusteringConcordance()` and `PhylogeneticConcordance()` respectively report
 # the proportion of clustering information and phylogenetic information 
-# (as defined in Vinh 2010, Smith 2020) within a dataset that is reflected in each split.
+# \insertCite{@as defined in @Vinh2010, @SmithDist}{TreeDist} within a dataset
+# that is reflected in each split.
 # These give smaller values because a split may be compatible with a character
 # without being identical to it.
 #TODO More thought / explanation needed.
@@ -27,12 +29,8 @@
 #' 
 #' 
 #' @references 
+#' \insertAllCited{}
 #' 
-#' \insertRef{Minh2020}{TreeSearch}
-#' 
-#' \insertRef{SmithDist}{TreeDist}
-#' 
-#' \insertRef{Vinh2010}{TreeDist}
 #' @examples 
 #' data('congreveLamsdellMatrices', package = 'TreeSearch')
 #' dataset <- congreveLamsdellMatrices[[1]][, 1:20]
@@ -221,7 +219,8 @@ ConcordantInformation <- function (tree, dataset) {
   originalInfo <- sum(apply(PhyDatToMatrix(dataset), 2, CharacterInformation))
   dataset <- PrepareDataProfile(dataset)
   
-  extraSteps <- CharacterLength(tree, dataset) - MinimumLength(dataset)
+  extraSteps <- CharacterLength(tree, dataset, compress = TRUE) -
+    MinimumLength(dataset, compress = TRUE)
   chars <- matrix(unlist(dataset), attr(dataset, 'nr'))
   ambiguousToken <- which(attr(dataset, 'allLevels') == "?")
   asSplits <- apply(chars, 1, function (x) {
