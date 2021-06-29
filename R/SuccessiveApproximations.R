@@ -1,7 +1,7 @@
 #' Tree search using successive approximations
 #'
 #' Searches for a tree that is optimal under the Successive Approximations 
-#' criterion (Farris 1969).
+#' criterion \insertCite{Farris1969}{TreeSearch}.
 #'
 #' @template treeParam
 #' @template datasetParam
@@ -19,7 +19,7 @@
 #' containing optimal (and slightly suboptimal, if suboptimal > 0) trees.
 #'
 #' @references 
-#' \insertRef{Farris1969}{TreeSearch}
+#' \insertAllCited{}
 #'
 #' @importFrom ape consensus root
 #' @family custom search functions
@@ -62,7 +62,7 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
       return(bests[2:i])
     }
     best <- trees[suboptimality == 0][[1]]
-    l.i <- CharacterLength(best, dataset)
+    l.i <- CharacterLength(best, dataset, compress = TRUE)
     p.i <- l.i / (n.node - 1)
     w.i <- ((p.i)^-k) - 1
     attr(dataset, 'sa.weights') <- w.i
@@ -109,7 +109,7 @@ SuccessiveWeights <- function(tree, dataset) {
   weight <- at$weight
   sa.weights <- at$sa.weights
   if (is.null(sa.weights)) sa.weights <- rep.int(1, length(weight))
-  steps <- CharacterLength(tree, dataset)
+  steps <- CharacterLength(tree, dataset, compress = TRUE)
   
   # Return:
   sum(steps * sa.weights * weight)

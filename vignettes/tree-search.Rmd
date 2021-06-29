@@ -221,6 +221,7 @@ can this speed up tree search.
 separate Nexus file, or by creating a `phyDat` object in R.
 Constraints are effectively phylogenetic characters; only trees on which each
 such character fits perfectly will be considered.
+The position of taxa not listed in a constraint will not be constrained.
 
 `MaximizeParsimony()` will attempt to find a starting tree that satisfies the
 constraints, but if it cannot, it may be necessary to specify one manually
@@ -238,13 +239,17 @@ characters <- MatrixToPhyDat(matrix(
 plot(MaximizeParsimony(characters, constraint = constraint,
                        verbosity = -1)[[1]])
 ```
-Here's a more complex example that imposes the splits `ab | ef` and `abc | ef`,
-whilst allowing `d` to plot anywhere on the tree:
+Here's a more complex example that imposes the splits `ab | cef` and `abcd | ef`,
+whilst allowing `g` to plot anywhere on the tree:
 
 ```{r complex-constraints}
-constraint <- characters <- MatrixToPhyDat(matrix(
-  c(0, 0, '?', '?', 1, 1,
-    1, 1,   1, '?', 0, 0), ncol = 2,
+characters <- MatrixToPhyDat(matrix(
+  c(0, 0, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 0, 0, 0), ncol = 2,
+  dimnames = list(letters[1:7], NULL)))
+constraint <- MatrixToPhyDat(matrix(
+  c(0, 0, 1, '?', 1, 1,
+    1, 1, 1,   1, 0, 0), ncol = 2,
   dimnames = list(letters[1:6], NULL)))
 plot(MaximizeParsimony(characters, constraint = constraint,
                        verbosity = -1)[[1]])

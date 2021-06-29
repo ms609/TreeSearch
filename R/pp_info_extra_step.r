@@ -9,8 +9,8 @@
 #' (i.e. number of different tokens minus one) to its maximum.
 #'
 #' @param char Vector of tokens listing states for the character in question.
-#' @param ambiguousTokens Which tokens, if any, correspond to the ambiguous
-#' token (`?`).
+#' @param ambiguousTokens Vector specifying which tokens, if any, correspond to
+#' the ambiguous token (`?`).
 #' 
 #' @return `StepInformation()` returns a numeric vector detailing the amount
 #' of phylogenetic information (in bits) associated with the character when
@@ -18,9 +18,6 @@
 #' total number of steps associated with each entry in the vector: for example,
 #' a character with three observed tokens must exhibit two steps, so the first
 #' entry (zero extra steps) is named `2` (two steps observed).
-#' 
-#' @references
-#'  \insertRef{Faith2001}{TreeSearch}
 #' 
 #' @examples
 #' character <- rep(c(0:3, '?', '-'), c(8, 5, 1, 1, 2, 2))
@@ -87,13 +84,14 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
 #' where _a_ leaves are labelled with one state, and _b_ leaves labelled with
 #' a second state.
 #' 
-#' Implementation of theorem 1 from Carter _et al._ (1990).
+#' Implementation of theorem 1 from \insertCite{Carter1990;textual}{TreeTools}
 #' 
 #' @param m Number of steps
 #' @param a,b Number of leaves labelled `0` and `1`.
 #' 
 #' @references 
-#' \insertRef{Carter1990}{TreeTools}
+#' \insertAllCited{}
+#' 
 #' See also:
 #' 
 #' \insertRef{Steel1993}{TreeSearch}

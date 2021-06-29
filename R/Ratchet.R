@@ -1,7 +1,7 @@
 #' Parsimony Ratchet
 #'
-#' `Ratchet()` uses the parsimony ratchet (Nixon 1999) to search for a more 
-#' parsimonious tree using custom optimality criteria.
+#' `Ratchet()` uses the parsimony ratchet \insertCite{Nixon1999}{TreeSearch} 
+#' to search for a more parsimonious tree using custom optimality criteria.
 #' 
 #' For usage pointers, see the 
 #' [vignette](https://ms609.github.io/TreeSearch/articles/custom.html).
@@ -45,13 +45,10 @@
 #' @return `Ratchet()` returns a tree modified by parsimony ratchet iterations.
 #'
 #' @references 
-#' 
-#' - \insertRef{Nixon1999}{TreeSearch}
-#' 
-#' - \insertRef{Smith2019}{TreeSearch}
+#' \insertAllCited{}
 #'
 #' @examples
-#' data('Lobo', package='TreeTools')
+#' data('Lobo', package = 'TreeTools')
 #' njtree <- TreeTools::NJTree(Lobo.phy)
 #' # Increase value of ratchIter and searchHits to do a proper search
 #' quickResult <- Ratchet(njtree, Lobo.phy, ratchIter = 2, searchHits = 3)
@@ -60,8 +57,7 @@
 #' oldPar <- par(mar = rep(0, 4), cex = 0.75)
 #' plot(quickResult)
 #' par(oldPar)
-#' 
-#' @author Martin R. Smith
+#' @template MRS
 #' 
 #' @seealso
 #' - Adapted from \code{\link[phangorn:parsimony]{pratchet()}} in the 

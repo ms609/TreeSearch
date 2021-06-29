@@ -28,11 +28,40 @@ test_that("Constraints work", {
                                  PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
                                  ratchIter = 0, constraint = constraint)[[1]])
   # Start tree not consistent with constraint
+  dataset <- characters
+  tree <- PectinateTree(c('a', 'c', 'f', 'd', 'e', 'b'))
   expect_equal(PectinateTree(letters[1:6]),
                MaximizeParsimony(characters, 
                                  PectinateTree(c('a', 'c', 'f', 'd', 'e', 'b')),
                                  ratchIter = 0, constraint = constraint)[[1]])
   
+  
+  dataset <- MatrixToPhyDat(matrix(c(0, 0, 1, 1, 1, 1, 1,
+                                     1, 1, 1, 1, 0, 0, 0), ncol = 2,
+                                   dimnames = list(letters[1:7], NULL)))
+  constraint <- MatrixToPhyDat(matrix(c(0, 0, 1, '?', 1, 1,
+                                        1, 1, 1,   1, 0, 0), ncol = 2,
+                                      dimnames = list(letters[1:6], NULL)))
+  cons <- consensus(MaximizeParsimony(dataset, constraint = constraint))
+  expect_true(as.Splits(as.logical(c(0, 0, 1, 1, 1)), letters[c(1:3, 5:6)]) %in% 
+                as.Splits(drop.tip(cons, c('d', 'g'))))
+  
+  expect_true(as.Splits(as.logical(c(0, 0, 0, 0, 1, 1)), letters[1:6]) %in% 
+                as.Splits(drop.tip(cons, 'g')))
+  
+})
+
+test_that("Constrained NJ trees work", {
+  dataset <- MatrixToPhyDat(matrix(
+   c(0, 1, 1, 1, 0, 1,
+     0, 1, 1, 0, 0, 1), ncol = 2,
+   dimnames = list(letters[1:6], NULL)))
+  constraint <- MatrixToPhyDat(c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
+  expect_equal(ape::read.tree(text = "(a, (d, ((c, b), (e, f))));"),
+               ConstrainedNJ(dataset, constraint))
+  # b == c == f, so these three could be resolved in one of three ways. Drop B.
+  expect_equal(drop.tip(NJTree(dataset), 'b'), 
+               drop.tip(ConstrainedNJ(dataset, dataset), 'b'))
 })
 
 test_that("Inconsistent constraints fail", {
@@ -52,6 +81,27 @@ test_that("MaximizeParsimony() times out", {
   MaximizeParsimony(dataset, ratchIter = 10000, tbrIter = 1, maxHits = 1,
                     maxTime = 0)
   expect_gt(as.difftime(5, units = 'secs'), Sys.time() - startTime)
+})
+
+test_that("Mismatched tree/dataset handled with warnings", {
+  treeAf <- read.tree(text = "(a, (b, (c, (d, (e, f)))));")
+  treeBg <- read.tree(text = "(g, (b, (c, (d, (e, f)))));")
+  datAf <- StringToPhyDat('110000 110000 111100 111000',
+                              letters[1:6], byTaxon = FALSE)
+  datAe <- StringToPhyDat('11000 11000 11110 11100',
+                              letters[1:5], byTaxon = FALSE)
+  datAg <- StringToPhyDat('1100000 1100000 1111000 1110000',
+                              letters[1:7], byTaxon = FALSE)
+  
+  QP <- function (...) MaximizeParsimony(..., ratchIter = 0, maxHits = 1,
+                                         verbosity = 0)
+  
+  expect_equal(5, NTip(expect_warning(QP(datAf, treeBg))))
+  expect_equal(5, NTip(expect_warning(QP(datAe, treeAf))))
+  expect_equal(6, NTip(expect_warning(QP(datAg, treeAf))))
+  expect_equal(5, NTip(expect_warning(QP(datAf, treeBg, constraint = datAe))))
+  expect_equal(6, NTip(QP(datAf, treeAf, constraint = datAe)))
+  expect_equal(6, NTip(expect_warning(QP(datAf, treeAf, constraint = datAg))))
 })
 
 test_that("Root retained if not 1", {

@@ -2,18 +2,20 @@
 #' 
 #' Search for most parsimonious trees using the parsimony ratchet and 
 #' \acronym{TBR} rearrangements, treating inapplicable data as such using the
-#' algorithm of Brazeau, Guillerme & Smith (2019).
+#' algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
 #'  
 #' Tree search will be conducted from a specified or automatically-generated
 #' starting tree in order to find a tree with an optimal parsimony score,
 #' under implied or equal weights, treating inapplicable characters as such
 #' in order to avoid the artefacts of the standard Fitch algorithm
-#' (see Maddison 1993; Brazeau et al. 2019).
-#' The tree scoring implementation uses the MorphyLib C library (Brazeau 2017).
+#' \insertCite{@see @Maddison1993; @Brazeau2019}{TreeSearch}.
+#' The tree scoring implementation uses the MorphyLib C library
+#' \insertCite{Brazeau2017}{TreeSearch}.
 #' 
 #' Tree search commences with `ratchIter` iterations of the parsimony ratchet
-#' (Nixon 1999), which bootstraps the input dataset in order to escape local
-#' optima.  A final round of tree bisection and reconnection (\acronym{TBR})
+#' \insertCite{Nixon1999}{TreeSearch}, which bootstraps the input dataset 
+#' in order to escape local optima.
+#' A final round of tree bisection and reconnection (\acronym{TBR})
 #' is conducted to broaden the sampling of trees.
 #' 
 #' This function can be called using the R command line / terminal, or through
@@ -26,14 +28,16 @@
 #' [package documentation](https://ms609.github.io/TreeSearch).
 #'  
 #' 
+#' 
 #' @template datasetParam
 #' @param tree (optional) A bifurcating tree of class \code{\link{phylo}},
 #' containing only the tips listed in `dataset`, from which the search
 #' should begin.
-#' If unspecified, a neighbour-joining tree will be generated from `dataset`.
+#' If unspecified, a neighbour-joining tree will be generated from `dataset`,
+#' respecting any supplied `constraint`.
 #' Edge lengths are not supported and will be deleted.
 #' @param ratchIter Numeric specifying number of iterations of the 
-#' parsimony ratchet (Nixon 1999) to conduct.
+#' parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.
 #' @param tbrIter Numeric specifying the maximum number of \acronym{TBR}
 #' break points to evaluate before concluding each search.
 #' The counter is reset to zero each time tree score improves.
@@ -54,18 +58,14 @@
 #'  will retain `quickHits` &times; `maxHits` trees with the best score.
 #' @param concavity Numeric specifying concavity constant for implied step 
 #' weighting; set as `Inf` for equal step weights (which is a bad idea; see 
-#' Smith 2019).
+#' \insertCite{Smith2019;textual}{TreeSearch}).
 #' @param tolerance Numeric specifying degree of suboptimality to tolerate
 #' before rejecting a tree.  The default, `sqrt(.Machine$double.eps)`, retains
 #' trees that may be equally parsimonious but for rounding errors.  
 #' Setting to larger values will include trees suboptimal by up to `tolerance`
 #' in search results, which may improve the accuracy of the consensus tree
-#' (at the expense of resolution) (Smith 2019).
-#' @param constraint Either `NULL` or an object of class `phyDat`. Trees that
-#' are not perfectly compatible with each character in `constraint` will not
-#' be considered during search.
-#' See [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
-#' for further examples.
+#' (at the expense of resolution) \insertCite{Smith2019}{TreeSearch}.
+#' @template constraintParam
 #' @param verbosity Integer specifying level of messaging; higher values give
 #' more detailed commentary on search progress. Set to `0` to run silently.
 #' @param session 'shiny' session identifier to allow [`setProgress()`] calls
@@ -107,13 +107,15 @@
 #'
 #' # In actual use, be sure to check that the score has converged on a global
 #' # optimum, conducting additional iterations and runs as necessary.
-#'                   
+#'  
+#' if (interactive()) {
 #' # Jackknife resampling
-#' nReplicates <- 3
+#' nReplicates <- 10
 #' jackTrees <- replicate(nReplicates,
-#'   Resample(dataset, trees, ratchIter = 0, tbrIter = 1, startIter = 1,
-#'            maxHits = 3, maxTime = 1 / 100,
-#'            concavity = 10, verbosity = 0)
+#'   #c() ensures that each replicate returns a list of trees
+#'   c(Resample(dataset, trees, ratchIter = 0, tbrIter = 2, startIter = 1,
+#'              maxHits = 5, maxTime = 1 / 10,
+#'              concavity = 10, verbosity = 0))
 #'  )
 #' 
 #' # In a serious analysis, more replicates would be conducted, and each
@@ -130,7 +132,7 @@
 #' 
 #' # Take a single tree from each replicate (the first; order's irrelevant)
 #' JackLabels(ape::consensus(trees), lapply(jackTrees, `[[`, 1))
-#' 
+#' }
 #' 
 #' # Tree search with a constraint
 #' constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
@@ -144,29 +146,22 @@
 #' 
 #' @importFrom phangorn Descendants
 #' @importFrom shiny setProgress withProgress
+#' @importFrom stats runif
 #' @importFrom TreeTools NJTree CharacterInformation NTip
 #' @references
-#' \insertRef{Brazeau2017}{TreeSearch}
-#' 
-#' \insertRef{Brazeau2019}{TreeSearch}
-#' 
-#' \insertRef{Maddison1993}{TreeSearch}
-#' 
-#' \insertRef{Nixon1999}{TreeSearch}
-#' 
-#' \insertRef{Smith2019}{TreeSearch}
+#' \insertAllCited{}
 #' @encoding UTF-8
 #' @export
-MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
+MaximizeParsimony <- function (dataset, tree,
                                ratchIter = 6L,
-                               tbrIter = 2,
+                               tbrIter = 2L,
                                startIter = 2L, finalIter = 1L,
                                maxHits = NTip(dataset) * 1.5,
                                maxTime = 60,
                                quickHits = 1 / 3,
                                concavity = Inf,
                                tolerance = sqrt(.Machine$double.eps),
-                               constraint = NULL,
+                               constraint,
                                verbosity = 2L, session = NULL) {
   # Define functions
   .Message <- if (is.null(session)) function (level, ...) {
@@ -214,7 +209,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         .Message(6L, "Break ", brk)
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
-        for (move in moves[sample(seq_along(moves))]) {
+        nMoves <- length(moves)
+        moveList <- sample.int(nMoves)
+        for (i in seq_along(moveList)) {
+          move <- moves[[moveList[i]]]
           if (.Forbidden(move)) {
             .Message(10L, "Skipping prohibited topology")
             next
@@ -224,23 +222,25 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
             edge <- move
             if (moveScore < bestScore) {
               improvedScore <- TRUE
-              iter <- 1L
+              iter <- 0L
               bestScore <- moveScore
               nHits <- 1L
               hold[, , 1] <- edge
               .Message(4L, "New best score ", bestScore,
                        " at break ", match(brk, optTbr), "/", length(optTbr))
-              break
             } else {
               .Message(5L, "Best score ", bestScore, " hit again (", nHits, 
-                       "/", maxHits, ")")
+                       "/", ceiling(maxHits), ")")
               nHits <- nHits + 1L
               hold[, , nHits] <- edge
-              break
+              if (nHits >= maxHits) break
             }
           }
+          if (improvedScore && runif(1) < (i / nMoves) ^ 2) break
         }
         if (nHits >= maxHits) break
+        pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 2
+        if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
     }
@@ -287,7 +287,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         .Message(6L, "Break ", brk)
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
-        for (move in moves[sample(seq_along(moves))]) {
+        nMoves <- length(moves)
+        moveList <- sample.int(nMoves)
+        for (i in seq_along(moveList)) {
+          move <- moves[[moveList[i]]]
           if (.Forbidden(move)) {
             .Message(10L, "Skipping prohibited topology")
             next
@@ -308,14 +311,17 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               break
             } else {
               .Message(5L, "Best score ", signif(bestScore, 5),
-                       " hit again (", nHits, "/", maxHits, ")")
+                       " hit again (", nHits, "/", ceiling(maxHits), ")")
               nHits <- nHits + 1L
               hold[, , nHits] <- edge
-              break
+              if (nHits >= maxHits) break
             }
           }
+          if (improvedScore && runif(1) < (i / nMoves) ^ 2) break
         }
         if (nHits >= maxHits) break
+        pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 2
+        if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
     }
@@ -361,7 +367,10 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
         .Message(6L, "Break ", brk)
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
-        for (move in moves[sample(seq_along(moves))]) {
+        nMoves <- length(moves)
+        moveList <- sample.int(nMoves)
+        for (i in seq_along(moveList)) {
+          move <- moves[[moveList[i]]]
           if (.Forbidden(move)) {
             .Message(10L, "Skipping prohibited topology")
             next
@@ -382,14 +391,17 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
               break
             } else {
               .Message(5L, "Best score ", signif(bestScore, 5),
-                       " hit again (", nHits, "/", maxHits, ")")
+                       " hit again (", nHits, "/", ceiling(maxHits), ")")
               nHits <- nHits + 1L
               hold[, , nHits] <- edge
-              break
+              if (nHits >= maxHits) break
             }
           }
+          if (improvedScore && runif(1) < (i / nMoves) ^ 2) break
         }
         if (nHits >= maxHits) break
+        pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 2
+        if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
     }
@@ -463,8 +475,24 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     class = 'multiPhylo')
   }
   
+  
+  # Define constants
+  epsilon <- tolerance
+  pNextTbr <- 0.33
+  profile <- .UseProfile(concavity)
+  iw <- is.finite(concavity)
+  constrained <- !missing(constraint)
+  startTime <- Sys.time()
+  stopTime <- startTime + as.difftime(maxTime, units = 'mins')
+  
   # Initialize tree
-  if (inherits(tree, 'multiPhylo')) {
+  if (missing(tree)) {
+    if (constrained) {
+      tree <- ConstrainedNJ(dataset, constraint)
+    } else {
+      tree <- NJTree(dataset)
+    }
+  } else if (inherits(tree, 'multiPhylo')) {
     .Message(1L, "Starting search from `tree[[1]]`.")
     tree <- tree[[1]]
   }
@@ -472,9 +500,73 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     stop("`tree` must be bifurcating; try rooting with RootTree(tree, 1)")
   }
   
+  # Check tree labels matches dataset
+  leaves <- tree$tip.label
+  taxa <- names(dataset)
+  treeOnly <- setdiff(leaves, taxa) 
+  datOnly <- setdiff(taxa, leaves) 
+  if (length(treeOnly)) {
+    warning(immediate. = TRUE,
+            "Ignoring taxa on tree missing in dataset:\n   ", 
+            paste0(treeOnly, collapse = ', '), "\n")
+    tree <- drop.tip(tree, treeOnly)
+  }
+  if (length(datOnly)) {
+    warning(immediate. = TRUE,
+            "Ignoring taxa in dataset missing on tree:\n   ", 
+            paste0(datOnly, collapse = ', '), "\n")
+    dataset <- dataset[-match(datOnly, taxa)]
+  }
+  if (constrained) {
+    consTaxa <- names(constraint)
+    treeOnly <- setdiff(tree$tip.label, consTaxa)
+    if (length(treeOnly)) {
+      constraint <- .AddUnconstrained(constraint, treeOnly)
+    }
+    consOnly <- setdiff(consTaxa, tree$tip.label)
+    if (length(consOnly)) {
+      warning(immediate. = TRUE,
+              "Ignoring taxa in constraint missing on tree:\n   ", 
+              paste0(consOnly, collapse = ', '), "\n")
+      constraint <- constraint[-match(consOnly, consTaxa)]
+    }
+    constraint <- constraint[names(dataset)]
+  }
+  
+  
   tree <- Preorder(RenumberTips(tree, names(dataset)))
   nTip <- NTip(tree)
   edge <- tree$edge
+  
+  # Initialize constraints
+  if (constrained) {
+    morphyConstr <- PhyDat2Morphy(constraint)
+    on.exit(morphyConstr <- UnloadMorphy(morphyConstr), add = TRUE)
+    # Calculate constraint minimum score
+    constraintLength <- sum(MinimumLength(constraint, compress = TRUE) *
+                              attr(constraint, 'weight'))
+    
+    .Forbidden <- function (edges) {
+      preorder_morphy(edges, morphyConstr) != constraintLength
+    }
+    
+    # Check that starting tree is consistent with constraints 
+    if (.Forbidden(edge)) {
+      .Message(1L, "Modifying `tree` to match `constraint`...")
+      outgroup <- Descendants(tree, edge[1, 2], type = 'tips')[[1]]
+      tree <- RootTree(ImposeConstraint(tree, constraint), outgroup)
+      # RootTree leaves `tree` in preorder
+      edge <- tree$edge
+      if (.Forbidden(edge)) {
+        stop("Could not reconcile starting tree with `constraint`. ",
+             "Are all constraints compatible?")
+      }
+    }
+    
+  } else {
+    .Forbidden <- function (edges) FALSE
+  }
+  
   
   if (edge[1, 2] > nTip) {
     outgroup <- Descendants(tree, edge[1, 2], type = 'tips')[[1]]
@@ -487,40 +579,6 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
     outgroup <- NA
   }
   
-  # Define constants
-  epsilon <- tolerance #sqrt(.Machine$double.eps)
-  profile <- .UseProfile(concavity)
-  iw <- is.finite(concavity)
-  constrained <- !is.null(constraint)
-  startTime <- Sys.time()
-  stopTime <- startTime + as.difftime(maxTime, units = 'mins')
-  
-  # Initialize constraints
-  if (constrained) {
-    morphyConstr <- PhyDat2Morphy(constraint)
-    on.exit(morphyConstr <- UnloadMorphy(morphyConstr), add = TRUE)
-    # Calculate constraint minimum score
-    constraintLength <- sum(MinimumLength(constraint))
-    
-    .Forbidden <- function (edges) {
-      preorder_morphy(edges, morphyConstr) != constraintLength
-    }
-    
-    # Check that starting tree is consistent with constraints 
-    if (.Forbidden(edge)) {
-      .Message(1L, "Looking for a tree that is consistent with `constraint`...")
-      .oldMsg <- .Message
-      .Message <- function (...) {}
-      edge <- .DoTBRSearch(edge, nTip, morphyConstr, 10, 10)[, , 1]
-      .Message <- .oldMsg
-      if (.Forbidden(edge)) {
-        stop("Specify a starting tree that is consistent with `constraint`.")
-      }
-    }
-    
-  } else {
-    .Forbidden <- function (edges) FALSE
-  }
   
   # Initialize data
   if (profile) {
@@ -827,11 +885,15 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 #' a split, rather than the amount of confidence that should be afforded the
 #' grouping.
 #' "Bootstrap support of 100% is not enough, the tree must also be correct" 
-#' (Phillips et al. 2004).
-#' See discussion in Egan 2006; W&auml;gele _et al_. (2009), Kumar _et al._ 2011.
+#' \insertCite{Phillips2004}{TreeSearch}.
+#' See discussion in \insertCite{Egan2006;textual}{TreeSearch};
+#' \insertCite{Wagele2009;textual}{TreeSearch};
+#' \insertCite{Simmons2011}{TreeSearch};
+#' \insertCite{Kumar2012;textual}{TreeSearch}.
 #' 
 #' For a discussion of suitable search parameters in resampling estimates, see
-#' M&uuml;ller (2005).  The user should decide whether to start each resampling
+#' \insertCite{Muller2005;textual}{TreeSearch}.
+#' The user should decide whether to start each resampling
 #' from the optimal tree (which may be quicker, but result in overestimated 
 #' support values as searches get stuck in local optima close to the 
 #' optimal tree) or a random tree (which may take longer as more rearrangements
@@ -839,27 +901,15 @@ MaximizeParsimony <- function (dataset, tree = NJTree(dataset),
 #' 
 #' @return `Resample()` returns a `multiPhylo` object containing a list of
 #' trees obtained by tree search using a resampled version of `dataset`.
-#' @references 
-#' \insertRef{Egan2006}{TreeSearch}
-#' 
-#' \insertRef{Kumar2012}{TreeSearch}
-#' 
-#' \insertRef{Muller2005}{TreeSearch}
-#' 
-#' \insertRef{Phillips2004}{TreeSearch}
-#' 
-#' \insertRef{Simmons2011}{TreeSearch}
-#' 
-#' \insertRef{Wagele2009}{TreeSearch}
-#' 
 #' @family split support functions
+#' @encoding UTF-8
 #' @export
 Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
                       proportion = 2/3,
                       ratchIter = 1L, tbrIter = 8L, finalIter = 3L,
                       maxHits = 12L, concavity = Inf,
                       tolerance = sqrt(.Machine$double.eps),
-                      constraint = NULL,
+                      constraint,
                       verbosity = 2L, session = NULL,
                       ...) {
   if (!inherits(dataset, 'phyDat')) {
@@ -895,6 +945,63 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
                     concavity = concavity,
                     tolerance = tolerance, constraint = constraint,
                     verbosity = verbosity, session = session, ...) 
+}
+
+#' Constrained neighbour-joining tree
+#' 
+#' Constructs an approximation to a neighbour-joining tree, modified in order
+#' to be consistent with a constraint.  Zero-length branches are collapsed
+#' at random.
+#' 
+#' @param weight Numeric specifying degree to upweight characters in
+#' `constraint`.
+#' 
+#' @return `ConstrainedNJ()` returns a tree of class `phylo`.
+#' @inheritParams MaximizeParsimony
+#' @examples
+#' dataset <- TreeTools::MatrixToPhyDat(matrix(
+#'   c(0, 1, 1, 1, 0, 1,
+#'     0, 1, 1, 0, 0, 1), ncol = 2,
+#'   dimnames = list(letters[1:6], NULL)))
+#' constraint <- TreeTools::MatrixToPhyDat(
+#'   c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
+#' plot(ConstrainedNJ(dataset, constraint))
+#' @template MRS
+#' @importFrom ape nj
+#' @importFrom phangorn dist.hamming
+#' @importFrom TreeTools RootTree
+#' @export
+ConstrainedNJ <- function (dataset, constraint, weight = 1L) {
+  missing <- setdiff(names(dataset), names(constraint))
+  if (length(missing)) {
+    constraint <- .AddUnconstrained(constraint, missing)
+  }
+  constraint <- constraint[names(dataset)]
+  tree <- multi2di(nj((dist.hamming(constraint) * weight) + 
+                        dist.hamming(dataset)))
+  tree$edge.length <- NULL
+  tree <- ImposeConstraint(tree, constraint)
+  tree <- RootTree(tree, names(dataset)[1])
+  
+  # Return:
+  tree
+}
+
+.AddUnconstrained <- function (constraint, toAdd, asPhyDat = TRUE) {
+  ret <- if (inherits(constraint, 'phyDat')) {
+    PhyDatToMatrix(constraint)
+  } else {
+    constraint
+  }
+  ret <- rbind(ret, matrix('?', length(toAdd), dim(ret)[2],
+                           dimnames = list(toAdd, NULL)))
+  
+  # Return:
+  if (asPhyDat) {
+    MatrixToPhyDat(ret)
+  } else {
+    ret
+  }
 }
 
 #' Launch tree search graphical user interface

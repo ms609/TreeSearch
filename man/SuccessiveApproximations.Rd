@@ -55,10 +55,10 @@ weighting instructions specified in the attributes of the dataset.
 }
 \description{
 Searches for a tree that is optimal under the Successive Approximations
-criterion (Farris 1969).
+criterion \insertCite{Farris1969}{TreeSearch}.
 }
 \references{
-\insertRef{Farris1969}{TreeSearch}
+\insertAllCited{}
 }
 \seealso{
 Other custom search functions: 

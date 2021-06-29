@@ -24,7 +24,7 @@ test_that("Deprecations throw warning", {
   tree <- TreeTools::RandomTree(dat, root = TRUE)
   expect_equal(TreeLength(tree, dat),
                expect_warning(Fitch(tree, dat)))
-  expect_equal(CharacterLength(tree, dat),
+  expect_equal(CharacterLength(tree, dat, compress = TRUE),
                expect_warning(FitchSteps(tree, dat)))
   
 })
@@ -210,7 +210,19 @@ test_that("CharacterLength() fails gracefully", {
   
   expect_equal(c(53, 59, 6),
                as.numeric(table(CharacterLength(NJTree(dataset[1:4, ]),
-                                                dataset[1:4]))))
+                                                dataset[1:4], compress = TRUE))))
+})
+
+test_that("Character compression works", {
+  data('inapplicable.datasets')
+  dataset <- inapplicable.phyData[[12]]
+  tree <- TreeTools::NJTree(dataset)
+  expect_equal(137, length(CharacterLength(tree, dataset)))
+  expect_equal(137, length(MinimumLength(dataset)))
+  expect_equal(137, length(Consistency(dataset, tree)))
+  expect_equal(118, length(CharacterLength(tree, dataset, compress = TRUE)))
+  expect_equal(118, length(MinimumLength(dataset, compress = TRUE)))
+  expect_equal(118, length(Consistency(dataset, tree, compress = TRUE)))
 })
 
 test_that("X_MorphyLength", {

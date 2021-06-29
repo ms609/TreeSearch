@@ -1,9 +1,10 @@
 #' Calculate the parsimony score of a tree given a dataset
 #'
-#' `TreeLength()` uses the Morphy library (Brazeau 2017) to calculate a
-#' parsimony score for a tree, handling inapplicable data according to the
-#' algorithm of Brazeau et al. (2019).  Tree scoring can employ implied
-#' weights (Goloboff 1993) or profile parsimony (Faith & Trueman 2001).
+#' `TreeLength()` uses the Morphy library \insertCite{Brazeau2017}{TreeSearch}
+#' to calculate a parsimony score for a tree, handling inapplicable data 
+#' according to the algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
+#' Tree scoring can employ implied weights \insertCite{Goloboff1993}{TreeSearch}
+#' or profile parsimony \insertCite{Faith2001}{TreeSearch}.
 #'
 #' @param tree A tree of class `phylo`, a list thereof (optionally of class
 #' `multiPhylo`), or an integer -- in which case `tree` random trees will be 
@@ -30,17 +31,7 @@
 #' @family tree scoring 
 #' 
 #' @references
-#'  - \insertRef{Brazeau2017}{TreeSearch}
-#'  
-#'  - \insertRef{Brazeau2019}{TreeSearch}
-#'  
-#'  - \insertRef{Faith2001}{TreeSearch}
-#'  
-#'  - \insertRef{Goloboff1993}{TreeSearch}
-#'  
-#'  - \insertRef{Goloboff2018}{TreeSearch}
-#'  
-#'  - \insertRef{Smith2019}{TreeSearch}
+#' \insertAllCited{}
 #' @author Martin R. Smith (using Morphy C library, by Martin Brazeau)
 #' @importFrom phangorn phyDat
 #' @importFrom TreeTools Renumber RenumberTips TreeIsRooted
@@ -57,7 +48,7 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     at <- attributes(dataset)
     nChar  <- at$nr # strictly, transformation series patterns; these'll be upweighted later
     weight <- at$weight
-    steps <- CharacterLength(tree, dataset)
+    steps <- CharacterLength(tree, dataset, compress = TRUE)
     minLength <- at$min.length
     homoplasies <- steps - minLength
     
@@ -75,7 +66,7 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     
   } else if (.UseProfile(concavity)) {
     dataset <- PrepareDataProfile(dataset)
-    steps <- CharacterLength(tree, dataset)
+    steps <- CharacterLength(tree, dataset, compress = TRUE)
     info <- attr(dataset, 'info.amounts')
     
     # Return:
@@ -171,23 +162,25 @@ Fitch <- function (tree, dataset) {
 #' 
 #' @template treeParam
 #' @template datasetParam
+#' @template compressParam
 #'
 #' @return `CharacterLength()` returns a vector listing the contribution of each
-#' character to tree score, according to the algorithm of Brazeau, Guillerme 
-#' and Smith (2019).
+#' character to tree score, according to the algorithm of
+#' \insertCite{Brazeau2018;textual}{TreeTools}.
 #'
 #' @examples
 #' data('inapplicable.datasets')
 #' dataset <- inapplicable.phyData[[12]]
 #' tree <- TreeTools::NJTree(dataset)
 #' CharacterLength(tree, dataset)
-#'
+#' CharacterLength(tree, dataset, compress = TRUE)
+#' @template MRS
 #' @family tree scoring
 #' @references
-#'  \insertRef{Brazeau2018}{TreeTools}
+#' \insertAllCited{}
 #' @importFrom TreeTools Renumber RenumberTips
 #' @export
-CharacterLength <- function (tree, dataset) {
+CharacterLength <- function (tree, dataset, compress = FALSE) {
   if (!inherits(dataset, 'phyDat')) {
     stop("Dataset must be of class phyDat, not ", class(dataset), '.')
   }
@@ -208,15 +201,21 @@ CharacterLength <- function (tree, dataset) {
   
   tree <- RenumberTips(Renumber(tree), names(dataset))  
   
+  ret <- FastCharacterLength(tree, dataset)
   # Return:
-  FastCharacterLength(tree, dataset)
+  if (compress) {
+    ret
+  } else {
+    ret[attr(dataset, 'index')]
+  }
+  
 }
 
 #' @rdname CharacterLength
 #' @export
 FitchSteps <- function (tree, dataset) {
   .Deprecated("CharacterLength")
-  CharacterLength(tree, dataset)
+  CharacterLength(tree, dataset, compress = TRUE)
 }
 
 #' @describeIn CharacterLength Do not perform checks.  Use with care: may cause
