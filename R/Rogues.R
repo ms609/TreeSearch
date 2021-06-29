@@ -115,36 +115,54 @@ BestConsensus <- function (trees) {
   nTip <- NTip(trees[[1]])
   nTree <- length(trees)
   
-  cons <- vector('list', nTip - 2L)
+  tr <- trees
+  candidates <- character(nTip - 2L)
   info <- double(nTip - 2)
-  cons[[1]] <- consensus(trees, p = 0.50)
-  info[1] <- SplitwiseInfo(cons[[1]], SplitFrequency(cons[[1]], trees) / nTree)
+  info[1] <- ConsensusInfo(trees)
   for (i in 1 + seq_len(nTip - 3L)) {
     if (difftime(Sys.time(), lastMessage) > 2) {
       lastMessage <- Sys.time()
       message(lastMessage, ": Removing tip ", i)
     }
-    tipScores <- TipVolatility(trees)
+    tipScores <- TipVolatility(tr)
     candidate <- which.max(tipScores)
-    trees <- lapply(trees, drop.tip, candidate)
-    cons[[i]] <- tr <- consensus(trees, p  = 0.50)
-    info[i] <- SplitwiseInfo(tr, SplitFrequency(tr, trees) / nTree)
+    if (length(candidate)) {
+      candidates[i] <- names(candidate)
+    }
+    tr <- lapply(tr, drop.tip, candidate)
+    info[i] <- ConsensusInfo(tr)
   }
-  cons[[which.max(info)]]
+  droppers <- candidates[seq_len(which.max(info))[-1]]
+  consensus(lapply(trees, drop.tip, droppers), p = 0.5)
 }
 
 #' Calculate the most informative consensus tree
 #' 
 #' Uses the splitwise information content as a shortcut, which involves double
 #' counting of some information (which may or may not be desirable) but is
-#' calculable in polynomial ratehr than exponential time.
+#' calculable in polynomial rather than exponential time.
 #' 
+#' @examples 
+#' library("TreeTools", warn.conflicts = FALSE)
+#' trees <- list(
+#'      read.tree(text = '((a, y), (b, (c, (z, ((d, e), (f, (g, x)))))));'),
+#'      read.tree(text = '(a, (b, (c, (z, (((d, y), e), (f, (g, x)))))));'),
+#'      read.tree(text = '(a, (b, ((c, z), ((d, (e, y)), ((f, x), g)))));'),
+#'      read.tree(text = '(a, (b, ((c, z), ((d, (e, x)), (f, (g, y))))));'),
+#'      read.tree(text = '(a, ((b, x), ((c, z), ((d, e), (f, (g, y))))));')
+#'      )
+#' cons <- consensus(trees, p = 0.5)
+#' plot(cons)
+#' LabelSplits(cons, SplitFrequency(cons, trees) / length(trees))
+#' reduced <- Roguehalla(trees, info = 'phylogenetic')
+#' plot(reduced)
+#' LabelSplits(reduced, SplitFrequency(reduced, trees) / length(trees))
 #' @template MRS
 #' @importFrom ape consensus drop.tip
-#' @importFrom TreeDist SplitwiseInfo 
+#' @importFrom TreeDist ConsensusInfo
 #' @importFrom TreeTools SplitFrequency Preorder RenumberTips
 #' @export
-Roguehalla <- function (trees, dropset = 1) {
+Roguehalla <- function (trees, dropset = 1, info = 'clustering') {
   if (!inherits(trees, 'multiPhylo')) {
     if (inherits(trees, 'phylo')) {
       return (trees)
@@ -159,15 +177,15 @@ Roguehalla <- function (trees, dropset = 1) {
   nTree <- length(trees)
   majority <- 0.5 + sqrt(.Machine$double.eps)
   
-  cons <- consensus(trees, p = majority)
-  best <- SplitwiseInfo(cons, SplitFrequency(cons, trees) / nTree)
+  startTip <- NTip(trees[[1]])
+  best <- ConsensusInfo(trees, info = info)
+  # cons <- consensus(trees, p = 0.5)
+  # stopifnot(SplitwiseInfo(cons, SplitFrequency(cons, trees) / nTree) == best)
   
   .Drop <- function (n) {
     drops <- combn(NTip(trees[[1]]), n)
     candidates <- apply(drops, 2, function (drop) {
-      tr <- lapply(trees, drop.tip, drop)
-      cons <- consensus(tr, p = majority)
-      SplitwiseInfo(cons, SplitFrequency(cons, tr) / nTree)
+      ConsensusInfo(lapply(trees, drop.tip, drop), info = info)
     })
     if (max(candidates) > best) {
       list(info = max(candidates), drop = drops[, which.max(candidates)])
@@ -187,7 +205,7 @@ Roguehalla <- function (trees, dropset = 1) {
   repeat {
     improved <- FALSE
     for (i in seq_len(dropset)) {
-      lastMessage <- .Message("Dropped ", NTip(cons) - NTip(trees[[1]]),
+      lastMessage <- .Message("Dropped ", startTip - NTip(trees[[1]]),
                               " leaves to render ", signif(best),
                               " bits; dropping ", i, " more.")
       dropped <- .Drop(i)
