@@ -18,7 +18,7 @@ Profiles <- function (nTip) {
     matrix(0L, nTip + nTip - 2L, 2))
   
   MakeChar <- function (x) {
-    SingleCharMorphy(rep(seq_along(x) - 1L, x))
+    SingleCharMorphy(rep.int(seq_along(x) - 1L, x))
   }
   Subtract <- function (x) x - log2(nTrees)
   

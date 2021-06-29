@@ -3,7 +3,7 @@
 \docType{data}
 \name{inapplicable.datasets}
 \alias{inapplicable.datasets}
-\title{Thirty Datasets with Inapplicable data}
+\title{Thirty datasets with inapplicable data}
 \format{
 An object of class \code{list} of length 30.
 }

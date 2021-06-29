@@ -29,11 +29,13 @@ parameters have been set before use.
 }
 \seealso{
 Other Morphy API functions: 
+\code{\link{GapHandler}()},
 \code{\link{MorphyErrorCheck}()},
 \code{\link{MorphyWeights}()},
 \code{\link{PhyDat2Morphy}()},
 \code{\link{SingleCharMorphy}()},
 \code{\link{UnloadMorphy}()},
+\code{\link{is.morphyPtr}()},
 \code{\link{mpl_apply_tipdata}()},
 \code{\link{mpl_attach_rawdata}()},
 \code{\link{mpl_attach_symbols}()},
@@ -41,6 +43,7 @@ Other Morphy API functions:
 \code{\link{mpl_delete_rawdata}()},
 \code{\link{mpl_first_up_recon}()},
 \code{\link{mpl_get_charac_weight}()},
+\code{\link{mpl_get_gaphandl}()},
 \code{\link{mpl_get_num_charac}()},
 \code{\link{mpl_get_num_internal_nodes}()},
 \code{\link{mpl_get_numtaxa}()},

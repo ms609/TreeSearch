@@ -61,8 +61,9 @@ matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
 \value{
 This function returns a tree in \code{phyDat} format that has undergone one \acronym{TBR} iteration.
 
-\code{TBRMoves()} returns a list of all trees one TBR move away from
-\code{tree}, with edges and nodes in preorder, rooted on the first-labelled tip.
+\code{TBRMoves()} returns a \code{multiPhylo} object listing all trees one
+\acronym{TBR} move away from \code{tree}, with edges and nodes in preorder,
+rooted on the first-labelled tip.
 
 a list containing two elements, corresponding in turn to the
 rearranged parent and child parameters
@@ -75,9 +76,6 @@ Branch lengths are not (yet) supported.
 
 All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
 \link[ape:multi2di]{ape::multi2di} may help.
-
-NOTE: \code{tree} must be rooted on edge 1 in \code{TBRMoves.matrix()}.
-This will be resolved when \code{TreeTools::RootNode()} supports edge matrices.
 }
 \section{Functions}{
 \itemize{

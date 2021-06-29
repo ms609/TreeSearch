@@ -1,15 +1,27 @@
-#' Nearest Neighbour Interchange (NNI)
+#' Nearest neighbour interchange (NNI)
 #' 
-#' Performs a single iteration of the nearest-neighbour interchange algorithm.
-#' Based on the corresponding '\pkg{phangorn}' function, but re-coded to improve speed.
+#' `NNI()`performs a single iteration of the nearest-neighbour interchange
+#' algorithm; `RootedNNI()` retains the position of the root.
+#' These functions are based on equivalents in the '\pkg{phangorn}' package.
+#' `cNNI()` is an equivalent function coded in C, that runs much faster.
 #' 
 #' Branch lengths are not supported.
+#' 
+#' 
 #' 
 #' All nodes in a tree must be bifurcating; [ape::collapse.singles()] and
 #' [ape::multi2di()] may help.
 #' 
+#' @param tree A tree of class `phylo`. 
+#' For `cNNI()`, this must be a binary tree rooted on a single leaf, whose root
+#' node is the lowest numbered internal node.
 #' @template treeParam
-#' @template edgeToBreakParam
+#' @param edgeToBreak In (`Rooted`)`NNI()`, an optional integer specifying the
+#' index of an edge to bisect/prune, generated randomly if not specified.
+#' If \code{-1}, a complete list of all trees one step from the input tree
+#' will be returned.
+#' In `cNNI()`, an integer from zero to `nEdge(tree) - nTip(tree) - 2`,
+#' specifying which internal edge to break.
 #' 
 #' @return Returns a tree with class \code{phylo} (if \code{returnAll = FALSE}) or 
 #'         a set of trees, with class \code{multiPhylo} (if \code{returnAll = TRUE}).
@@ -20,9 +32,28 @@
 #' 
 #' 
 #' @examples
-#' tree <- ape::rtree(20, br = NULL)
+#' tree <- TreeTools::BalancedTree(8)
+#' # A random rearrangement
 #' NNI(tree)
-#' structure(NNI(tree, edgeToBreak = -1), class = 'multiPhylo')
+#' cNNI(tree)
+#' 
+#' # All trees one NNI rearrangement away
+#' NNI(tree, edgeToBreak = -1)
+#' 
+#' # Manual random sampling
+#' cNNI(tree, sample.int(14 - 8 - 1, 1), sample.int(2, 1))
+#' 
+#' # A specified rearrangement
+#' cNNI(tree, 0, 0)
+#' 
+#' # If a tree may not be binary, collapse nodes with
+#' tree <- TreeTools::MakeTreeBinary(tree)
+#' 
+#' # If a tree may be improperly rooted, use
+#' tree <- TreeTools::RootTree(tree, 1)
+#' 
+#' # If a tree may exhibit unusual node ordering, this can be addressed with
+#' tree <- TreeTools::Preorder(tree)
 #' @template MRS
 #'
 #' @family tree rearrangement functions
@@ -37,9 +68,9 @@ NNI <- function (tree, edgeToBreak = NULL) {
     samplable <- child > nTips
     # newEdges <- vapply(which(samplable), DoubleNNI, parent=parent, child=child, list(matrix(0L, nEdge, 2), matrix(0L, nEdge, 2)))
     newEdges <- unlist(lapply(which(samplable), DoubleNNI,
-                              parent = parent, child = child), recursive=FALSE) # Quicker than vapply, surprisingly
-    newTrees <- lapply(newEdges, function (edges) {tree$edge <- edges; tree}) # Quicker than vapply, surprisingly
-    
+                              parent = parent, child = child), recursive = FALSE) # Quicker than vapply, surprisingly
+    newTrees <- structure(lapply(newEdges, function (edges) {tree$edge <- edges; tree}), # Quicker than vapply, surprisingly
+                          class = 'multiPhylo')
     # Return:
     newTrees
   } else {
@@ -51,43 +82,13 @@ NNI <- function (tree, edgeToBreak = NULL) {
   }
 }
 
-#' Nearest-neighbour interchange 
-#' 
-#' `cNNI()` performs a nearest neighbour interchange using C; it is faster than
-#' `NNI()`.
-#' 
-#' `cNNI()` expects a binary tree rooted on a single leaf, whose root node
-#' is the lowest numbered internal node.
-#' @template treeParam
-#' @param edgeToBreak Integer from zero to nEdge(tree) - nTip(tree) - 2, 
-#' specifying which internal edge to break.
+
 #' @param whichSwitch Integer from zero to one, specifying which way to re-build
 #' the broken internal edge.
 #' 
-#' @return A tree of class `phylo`, rooted on the same leaf,
+#' @return `cNNI()` returns a tree of class `phylo`, rooted on the same leaf,
 #' on which the specified rearrangement has been conducted.
-#' 
-#' @references
-#' The algorithm is summarized in
-#'  \insertRef{Felsenstein2004}{TreeSearch}
-#' @examples 
-#' tree <- TreeTools::BalancedTree(8)
-#' # A random rearrangement
-#' cNNI(tree)
-#' # Manual random sampling
-#' cNNI(tree, sample.int(14 - 8 - 1, 1), sample.int(2, 1))
-#' # A specified rearrangement
-#' cNNI(tree, 0, 0)
-#' 
-#' # If a tree may not be binary, collapse nodes with
-#' tree <- TreeTools::MakeTreeBinary(tree)
-#' 
-#' # If a tree may be improperly rooted, use
-#' tree <- TreeTools::RootTree(tree, 1)
-#' 
-#' # If a tree may exhibit unusual node ordering, this can be addressed with
-#' tree <- TreeTools::Preorder(tree)
-#' @template MRS
+#' @rdname NNI
 #' @importFrom TreeTools NTip
 #' @export
 cNNI <- function (tree, edgeToBreak = NULL, whichSwitch = NULL) {

@@ -1,24 +1,29 @@
 #' Prepare data for Profile Parsimony
 #' 
+#' Calculates profiles for each character in a dataset.  Will also simplify
+#' characters, with a warning, where they are too complex for the present
+#' implementation of profile parsimony: 
+#' - inapplicable tokens will be replaced with the ambiguous token
+#'    (i.e. `-` &rarr; `?`);
+#' - Ambiguous tokens will be treated as fully ambiguous
+#'   (i.e. `{02}` &rarr; `?`)
+#' - Where more than two states are informative (i.e. unambiguously present in
+#'   more than two taxa), states beyond the two most informative will be
+#'   ignored.
+#TODO can do something more complex like first two to one TS, second two to another   
+#' 
 #' @param dataset dataset of class \code{phyDat}
-#' @param precision number of random trees to generate when calculating Profile curves. 
-#'                  With 22 tokens (taxa):
-#'                  - Increasing precision from 4e+05 to 4e+06 reduces error by a mean of 
-#'                  0.005 bits for each step after the first (max = 0.11 bits, sd=0.017 bits)
-#'                  - Increasing precision from 1e+06 to 4e+06 reduces error by a mean of 
-#'                  0.0003 bits for each step after the first (max = 0.046 bits, sd=0.01 bits)
-#'                  
-#' @template warnParam
 #'
 #' @return An object of class `phyDat`, with additional attributes.
 #' `PrepareDataProfile` adds the attributes:
 #' 
-#'   - \code{info.amounts}: details the information represented by each 
+#'   - `info.amounts`: details the information represented by each 
 #'     character when subject to N additional steps.
 #'   
-#'   - \code{split.sizes}: The size of the splits implied by each character
+#'   - `informative`: logical specifying which characters contain any
+#'     phylogenetic information.
 #'   
-#'   - \code{bootstrap}: The character vector 
+#'   - `bootstrap`: The character vector 
 #'     \code{c('info.amounts', 'split.sizes')}, indicating attributes to sample
 #'      when bootstrapping the dataset (e.g. in Ratchet searches).
 #'
@@ -26,36 +31,172 @@
 #' 
 #'  - \code{min.length}: The minimum number of steps that must be present in each
 #'    transformation series.
-#'
+#' @examples 
+#' data('congreveLamsdellMatrices')
+#' dataset <- congreveLamsdellMatrices[[42]]
+#' PrepareDataProfile(dataset)
 #' @author Martin R. Smith; written with reference to 
 #' `phangorn:::prepareDataFitch()`
 #' @export
-PrepareDataProfile <- function (dataset, precision = 1e+06, warn = TRUE) {
+PrepareDataProfile <- function (dataset) {
+  if ('info.amounts' %in% names(attributes(dataset))) {
+    # Already prepared
+    return(dataset)
+  }
   at <- attributes(dataset)
   nLevel <- length(at$level)
-  nChar <- at$nr
   cont <- attr(dataset, "contrast")
   nTip <- length(dataset)
+  index <- at$index
+  allLevels <- as.character(at$allLevels)
   
-  powers.of.2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
-  tmp <- cont %*% powers.of.2
-  tmp <- as.integer(tmp)
-  unlisted <- unlist(dataset, recursive = FALSE, use.names = FALSE)
-  binaryMatrix <- tmp[unlisted]
-  attr(binaryMatrix, 'dim') <- c(nChar, nTip)
+  contSums <- rowSums(cont)
+  qmLevel <- which(contSums == ncol(cont))
   
-  attr(dataset, 'info.amounts') <- InfoAmounts(binaryMatrix, precision, 
-                                               warn = warn)
+  if (length(qmLevel) == 0) {
+    attr(dataset, "contrast") <- rbind(attr(dataset, "contrast"), 1)
+    attr(dataset, "allLevels") <- c(attr(dataset, "allLevels"), '{?}')
+    qmLevel <- length(allLevels) + 1L
+  }
+  
+  ambigs <- which(contSums > 1L & contSums < ncol(cont))
+  inappLevel <- which(colnames(cont) == '-')
+  if (length(inappLevel) != 0L) {
+    message("Inapplicable tokens treated as ambiguous for profile parsimony")
+    inappLevel <- which(apply(unname(cont), 1, identical,
+                              as.double(colnames(cont) == '-')))
+    dataset[] <- lapply(dataset, function (i) {
+      i[i %in% inappLevel] <- qmLevel
+      i
+    })
+  }
+  
+  if (length(ambigs) != 0L) {
+    # Message unnecessary until multiple informative states are supported
+    # message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ', '),
+    #         " converted to '?'")
+    dataset[] <- lapply(dataset, function (i) {
+        i[i %in% ambigs] <- qmLevel
+        i
+      })
+  }
+  
+  mataset <- matrix(unlist(dataset, recursive = FALSE, use.names = FALSE),
+                    max(index))
+  
+  .RemoveExtraTokens <- function (char, ambiguousTokens) {
+    unambig <- char[!char %in% ambiguousTokens]
+    if (length(unambig) == 0) {
+      return(matrix(nrow = length(char), ncol = 0))
+    }
+    split <- table(unambig)
+    ranking <- order(order(split, decreasing = TRUE))
+    ignored <- ranking > 2L
+    if (any(split[ignored] > 1L)) {
+      warning("Can handle max. 2 informative tokens. Dropping others.")
+    }
+    if (length(ambiguousTokens) == 0) {
+      stop("No ambiguous token available for replacement")
+    }
+    tokens <- names(split)
+    most <- tokens[which.min(ranking)]
+    vapply(setdiff(names(split)[split > 1], most), function (kept) {
+           simplified <- char
+           simplified[!simplified %in% c(most, kept)] <- ambiguousTokens[1]
+           simplified
+    }, char)
+  }
+  
+  decomposed <- lapply(seq_along(mataset[, 1]), function (i) 
+    .RemoveExtraTokens(mataset[i, ], ambiguousTokens = qmLevel))
+  nChar <- vapply(decomposed, dim, c(0, 0))[2, ]
+  if (sum(nChar) == 0) {
+    warning("No informative characters in `dataset`.")
+  }
+  newIndex <- seq_len(sum(nChar))
+  oldIndex <- rep.int(seq_along(nChar), nChar)
+  index <- unlist(lapply(index, function (i) {
+    newIndex[oldIndex == i]
+  }))
+  
+  mataset <- unname(do.call(cbind, decomposed))
+  
+  NON_AMBIG <- 1:2
+  AMBIG <- max(NON_AMBIG) + 1L
+  .Recompress <- function (char, ambiguousTokens) {
+    tokens <- unique(char)
+    nonAmbig <- setdiff(tokens, ambiguousTokens)
+    stopifnot(length(nonAmbig) == 2L)
+    #available <- setdiff(seq_along(c(nonAmbig, ambiguousTokens)), ambiguousTokens)
+    
+    cipher <- seq_len(max(tokens))
+    cipher[nonAmbig] <- NON_AMBIG # available[seq_along(nonAmbig)]
+    cipher[ambiguousTokens] <- AMBIG
+    
+    # Return:
+    cipher[char]
+  }
+  mataset <- apply(mataset, 2, .Recompress, qmLevel)
+  if (length(mataset) == 0) {
+    stop("No informative characters in `dataset`.")
+  }
+  dupCols <- duplicated(t(mataset))
+  kept <- which(!dupCols)
+  copies <- lapply(kept, function (i) {
+    i + which(apply(mataset[, -seq_len(i), drop = FALSE], 2, identical, mataset[, i]))
+  })
+  firstOccurrence <- seq_len(dim(mataset)[2])
+  for (i in seq_along(copies)) {
+    firstOccurrence[copies[[i]]] <- kept[i]
+  }
+  
+  cipher <- seq_len(max(kept))
+  cipher[kept] <- order(kept)
+  index <- cipher[firstOccurrence][index]
+  
+  mataset <- mataset[, !dupCols, drop = FALSE]
+  dataset[] <- lapply(seq_len(length(dataset)), function (i) mataset[i, ])
+  
+  
+  #TODO when require R4.1: replace with
+  # info <- apply(mataset, 1, StepInformation, 
+  #               ambiguousTokens = c(qmLevel, inappLevel),
+  #               simplify = FALSE)
+  info <- lapply(seq_along(mataset[1, ]), function (i) 
+    StepInformation(mataset[, i], ambiguousTokens = AMBIG))
+  
+  
+  maxSteps <- max(vapply(info,
+                         function (i) max(as.integer(names(i))),
+                         integer(1)))
+  info <- vapply(info,
+                 function (x) {
+                    ret <- setNames(double(maxSteps), seq_len(maxSteps))
+                    x <- x[setdiff(names(x), '0')]
+                    if (length(x)) {
+                      ret[names(x)] <- max(x) - x
+                    }
+                    ret
+                  }, double(maxSteps))
+  if (is.null(dim(info))) {
+    dim(info) <- c(1L, length(info))
+  }
+  attr(dataset, 'index') <- index
+  weight <- as.integer(table(index))
+  attr(dataset, 'weight') <- weight
+  attr(dataset, 'nr') <- length(weight)
+  attr(dataset, 'info.amounts') <- info
+  attr(dataset, 'informative') <- colSums(info) > 0
+  lvls <- c('0', '1')
+  attr(dataset, 'levels') <- lvls
+  attr(dataset, 'allLevels') <- c(lvls, '?')
+  attr(dataset, 'contrast') <- matrix(c(1,0,1,0,1,1), length(lvls) + 1L, length(lvls), 
+                                      dimnames = list(NULL, lvls))
+  attr(dataset, 'nc') <- length(lvls)
+  
   if (!any(attr(dataset, 'bootstrap') == 'info.amounts')) {
     attr(dataset, 'bootstrap') <- c(attr(dataset, 'bootstrap'), 'info.amounts')
   }
-  
-  ####  inappLevel <- which(at$levels == "-")
-  ####  applicableTokens <- setdiff(powers.of.2, 2 ^ (inappLevel - 1))
-  ####  
-  ####  attr(dataset, 'split.sizes') <- apply(binaryMatrix, 1, function(x) {
-  ####      vapply(applicableTokens, function (y) sum(x == y), integer(1))
-  ####    })
   
   dataset
 }
@@ -88,7 +229,8 @@ PrepareDataIW <- function (dataset) {
   unlisted <- unlist(dataset, use.names = FALSE)
   binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
   
-  attr(dataset, 'min.length') <- apply(binaryMatrix, 1, MinimumLength)
+  attr(dataset, 'min.length') <- apply(binaryMatrix, 1, MinimumLength,
+                                       compress = TRUE)
   
   # Return:
   dataset
@@ -110,14 +252,18 @@ PrepareDataIW <- function (dataset) {
 #' Tokens that are ambiguous for an inapplicable and an applicable
 #' state are not presently supported; for an approximate value, denote such
 #' ambiguity with the integer `0`.
+#' @template compressParam
 #' 
-#' @return A vector of integers specifying the minimum number of steps that 
-#' each character must contain.
+#' @return `MinimumLength()` returns a vector of integers specifying the 
+#' minimum number of steps that each character must contain.
 #'
 #' @examples
 #' data('inapplicable.datasets')
 #' myPhyDat <- inapplicable.phyData[[4]] 
 #' MinimumLength(myPhyDat)
+#' MinimumLength(myPhyDat, compress = TRUE)
+#' 
+#' 
 #' class(myPhyDat) # phyDat object
 #' # load your own data with
 #' # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
@@ -140,22 +286,22 @@ PrepareDataIW <- function (dataset) {
 #'
 #' # Finally, work out minimum steps 
 #' apply(myStates, 1, MinimumLength)
-#'   
-#'
-#' @author Martin R. Smith
+#' @template MRS
 #' @export
-MinimumLength <- function (x) UseMethod('MinimumLength')
+MinimumLength <- function (x, compress = FALSE) UseMethod('MinimumLength')
 
 #' @rdname MinimumLength
 #' @export
-MinimumLength.phyDat <- function (x) {
+MinimumLength.phyDat <- function (x, compress = FALSE) {
   
   at <- attributes(x)
   nLevel <- length(at$level)
   nChar <- at$nr
   nTip <- length(x)
   cont <- at$contrast
-  if (is.null(colnames(cont))) colnames(cont) <- as.character(at$levels)
+  if (is.null(colnames(cont))) {
+    colnames(cont) <- as.character(at$levels)
+  }
   simpleCont <- ifelse(rowSums(cont) == 1,
                        apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
                        '?')
@@ -173,13 +319,19 @@ MinimumLength.phyDat <- function (x) {
   unlisted <- unlist(x, use.names = FALSE)
   binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
   
+  ret <- apply(binaryMatrix, 1, MinimumLength)
+  
   # Return:
-  apply(binaryMatrix, 1, MinimumLength)
+  if (compress) {
+    ret
+  } else {
+    ret[attr(x, 'index')]
+  }
 }
 
 #' @rdname MinimumLength
 #' @export
-MinimumLength.numeric <- function (x) {
+MinimumLength.numeric <- function (x, compress = NA) {
   
   uniqueStates <- unique(x[x > 0])
   if (length(uniqueStates) < 2) return (0)
@@ -221,7 +373,7 @@ MinimumLength.numeric <- function (x) {
 
 #' @rdname MinimumLength
 MinimumSteps <- function(x) {
-  .Deprecated(MinimumLength, msg='Renamed and recoded to better support
-              inapplicable tokens')
-  MinimumLength(x)
+  .Deprecated("MinimumLength",
+  msg = 'Renamed to `MinimumLength()` and recoded to better support inapplicable tokens')
+  MinimumLength(x, compress = TRUE)
 }

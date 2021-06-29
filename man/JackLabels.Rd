@@ -22,7 +22,7 @@ JackLabels(
 \item{jackTrees}{A list or \code{multiPhylo} object containing trees generated
 by \code{\link[=Jackknife]{Jackknife()}}.}
 
-\item{plot}{Logical specifing whether to plot results; if \code{FALSE},
+\item{plot}{Logical specifying whether to plot results; if \code{FALSE},
 returns blank labels for nodes near the root that do not correspond to a
 unique split.}
 
@@ -42,7 +42,7 @@ by \code{phylo$node.label}.
 Label nodes with jackknife support values
 }
 \examples{
-library('TreeTools') # for as.phylo
+library('TreeTools', quietly = TRUE) # for as.phylo
 
 # jackTrees will usually be generated with Jackknife(), but for simplicity:
 jackTrees <- as.phylo(1:100, 8)
@@ -54,8 +54,14 @@ tree$node.label <- JackLabels(tree, jackTrees, plot = FALSE)
 }
 \seealso{
 \code{\link[=Jackknife]{Jackknife()}}: Generate trees by jackknife resampling
+
+Other split support functions: 
+\code{\link{Jackknife}()},
+\code{\link{MaximizeParsimony}()},
+\code{\link{SiteConcordance}}
 }
 \author{
-\href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
+\concept{split support functions}

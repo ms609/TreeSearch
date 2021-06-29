@@ -1,130 +1,81 @@
-#' Information Content Steps
+#' Information content of a character known to contain _e_ steps
 #'
-#' `ICSteps()` estimates the phylogenetic information content of a character 
-#' `char` when _e_ extra steps are present, for all possible values of _e_.
+#' `StepInformation()` calculates the phylogenetic information content of a
+#' character `char` when _e_ extra steps are present, for all possible 
+#' values of _e_.
 #' 
 #' Calculates the number of trees consistent with the character having 
 #' _e_ extra steps, where _e_ ranges from its minimum possible value
 #' (i.e. number of different tokens minus one) to its maximum.
-#' The number of trees with no extra steps can be calculated exactly; the 
-#' number of trees with more additional steps must be approximated.
-#' The function samples `maxIter` trees, or enough trees that the trees with 
-#' the minimum number of steps will be recovered at least `expectedMinima`
-#' times, in order to obtain precise results.
 #'
 #' @param char Vector of tokens listing states for the character in question.
-#' @param ambiguousToken Which token, if any, corresponds to the ambiguous token
-#' (?) (not yet fully implemented).
-#' @param tolerance Numeric specifying an anticipated upper bound on the
-#' standard error of approximate profile scores.
-#' @param maxIter Integer specifying maximum number of trees to score when
-#' approximating profile scores.  Small values may result in errors
-#' exceeding `tolerance`.
-#' @template warnParam
+#' @param ambiguousTokens Vector specifying which tokens, if any, correspond to
+#' the ambiguous token (`?`).
 #' 
-#' @template MRS
-#' @references
-#'  \insertRef{Faith2001}{TreeSearch}
-#' 
-#' @keywords tree
+#' @return `StepInformation()` returns a numeric vector detailing the amount
+#' of phylogenetic information (in bits) associated with the character when
+#' 0, 1, 2&hellip; extra steps are present.  The vector is named with the
+#' total number of steps associated with each entry in the vector: for example,
+#' a character with three observed tokens must exhibit two steps, so the first
+#' entry (zero extra steps) is named `2` (two steps observed).
 #' 
 #' @examples
-#' character <- rep(c(0:3, '?'), c(8, 5, 1, 1, 2))
-#' ICSteps(character, warn = FALSE)
-#' 
-#' @importFrom TreeTools NUnrooted Log2Unrooted Log2UnrootedMult NUnrootedMult
+#' character <- rep(c(0:3, '?', '-'), c(8, 5, 1, 1, 2, 2))
+#' StepInformation(character)
+#' @template MRS
+#' @importFrom stats setNames
+#' @importFrom TreeTools Log2Unrooted
+#' @family profile parsimony functions
 #' @export
-ICSteps <- function (char, ambiguousToken = '?', tolerance = 0.05,
-                     maxIter = 40000L, warn = TRUE) {
-  #char <- matrix(2L ^ char[char != ambiguousToken], ncol = 1L)
-  char <- char[char != ambiguousToken]
-  names(char) <- paste0('t', seq_along(char))
-  
-  split <- sort(as.integer(table(char)))
+StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
+  NIL <- c('0' = 0)
+  char <- char[!char %in% ambiguousTokens]
+  if (length(char) == 0) {
+    return(NIL)
+  }
+  split <- sort(as.integer(table(char)), decreasing = TRUE)
   singletons <- split == 1L
   nSingletons <- sum(singletons)
   nInformative <- sum(split) - nSingletons
   minSteps <- length(split) - 1L
-  if (minSteps == 0L) return (c('0' = 1L))
+  if (minSteps == 0L) {
+    return(NIL)
+  }
   
   split <- split[!singletons]
-  if (length(split) < 2L) return (1L)
-  
-  
-  nNoExtraSteps <- NUnrootedMult(split)
-  log2ExtraSteps <- LnUnrootedMult(split)
-  nOneExtraStep <- WithOneExtraStep(split)
-  
-  p1 <- nOneExtraStep / NUnrooted(sum(split))
-  ic1 <- -log2(nOneExtraStep / NUnrooted(sum(split)))
-  icTol <- tolerance - ic1
-  pTol <- (2 ^ icTol) - p1
-  iter <- p1 * (1 - p1) / (pTol ^ 2)
-  
-  nIter <- min(maxIter, round(iter))
-  if (nIter == maxIter && warn) {
-    warning ("Will truncate number of iterations at maxIter = ", maxIter)
-  }
-  n01ExtraSteps <- nOneExtraStep + nNoExtraSteps
-  analyticIC <- Log2Unrooted(sum(split)) -  setNames(c(
-    Log2UnrootedMult(split), log2(n01ExtraSteps)),
-    minSteps + 0:1)
-  analyticP <- 2 ^ -analyticIC[2]
-  
-  if (warn) {
-    message('  Token count ', split, " = ",
-            signif(analyticIc0, ceiling(log10(maxIter))),
-            ' bits @ 0 extra steps. \n  Simulating ', nIter, 
-            ' trees to estimate cost of further steps.')
-    # message(c(round(analyticIc0, 3), 'bits @ 0 extra steps;', round(analyticIc1, 3),
-    #    '@ 1; attempting', nIter, 'iterations.\n'))
+  if (length(split) < 2L) {
+    return(setNames(0, minSteps))
   }
   
-  morphyObj <- SingleCharMorphy(rep(seq_along(split) - 1L, split))
-  on.exit(morphyObj <- UnloadMorphy(morphyObj))
-  steps <- vapply(rep(nInformative, maxIter), RandomTreeScore,
-                  integer(1), morphyObj)
-  
-  tabSteps <- table(steps[steps > (minSteps - nSingletons + 1)]) # Quicker than table(steps)[-1]
-  
-  approxP <- tabSteps / sum(tabSteps) * (1 - analyticP)
-  approxSE <- sqrt(approxP * (1 - approxP) / nIter)
-  cumP <- cumsum(c(analyticP, approxP))[-1]
-                 
-  approxIC <- -log2(cumP)
-  icLB <- -log2(cumP - approxSE)
-  icError <- icLB - approxIC
-  if (warn || max(icError) > tolerance) {
-    message("  Approx. std. error < ", signif(max(icError) * 1.01, 2))
+  if (length(split) > 2L) {
+    warning("Ignored least informative tokens where more than two informative ",
+            "tokens present.")
+    ranked <- order(order(split, decreasing = TRUE))
+    split <- split[ranked < 3]
   }
-  ret <- c(analyticIC, approxIC)
-  ret[length(ret)] <- 0 # Floating point error inevitable
+  
+  logProfile <- vapply(seq_len(split[2]), LogCarter1, double(1),
+                       split[1], split[2])
+  ret <- setNames(Log2Unrooted(sum(split[1:2]))
+                  - (.LogCumSumExp(logProfile) / log(2)),
+                  seq_len(split[2]) + sum(singletons))
+  ret[ret < sqrt(.Machine$double.eps)] <- 0 # Floating point error inevitable
   
   # Return:
   ret
 }
 
-#' @describeIn ICPerStep Memoized calculating function
-#'
-#' @param a \code{min(splits)}.
-#' @param b \code{max(splits)}.
-#' @param m \code{maxIter}.
-#' @template warnParam
-#'
-#' @importFrom R.cache addMemoization
-#' @keywords internal
-#' @export
-ICS <- addMemoization(function(a, b, m, warn = TRUE) {
-  ICSteps(c(rep(1, a), rep(2, b)), maxIter = m, warn = warn)
-})
-
-#' Information content per step
-#' @template splitsParam
-#' @param maxIter number of iterations to use when estimating concavity constant
-#' @template warnParam
-#' @export
-ICPerStep <- function(splits, maxIter, warn = TRUE) {
-  ICS(min(splits), max(splits), maxIter, warn)
+# Adapted from https://rpubs.com/FJRubio/LSE
+.LogCumSumExp <- function (x) { 
+  n <- length(x)
+  Lk <- c(x[1], double(n - 1L))
+  for (k in 1L + seq_len(n - 1L)) {
+    Lk[k] <- Lk[k - 1]
+    Lk[k] <- max(x[k], Lk[k]) + log1p(exp(-abs(x[k] - Lk[k])))
+  }
+  
+  # Return:
+  Lk
 }
 
 #' Number of trees with _m_ additional steps
@@ -133,14 +84,23 @@ ICPerStep <- function(splits, maxIter, warn = TRUE) {
 #' where _a_ leaves are labelled with one state, and _b_ leaves labelled with
 #' a second state.
 #' 
-#' Implementation of theorem 1 from Carter _et al._ (1990)
+#' Implementation of theorem 1 from \insertCite{Carter1990;textual}{TreeTools}
 #' 
 #' @param m Number of steps
 #' @param a,b Number of leaves labelled `0` and `1`.
 #' 
 #' @references 
-#' \insertRef{Carter1990}{TreeTools}
-#' @importFrom TreeTools DoubleFactorial
+#' \insertAllCited{}
+#' 
+#' See also:
+#' 
+#' \insertRef{Steel1993}{TreeSearch}
+#' 
+#' \insertRef{Steel1995}{TreeSearch}
+#' 
+#' (\insertRef{Steel1996}{TreeSearch})
+#' @importFrom TreeTools LogDoubleFactorial
+#' @family profile parsimony functions
 #' @export
 Carter1 <- function (m, a, b) {
   n <- a + b
@@ -156,22 +116,24 @@ Carter1 <- function (m, a, b) {
     }
   }
   prod(
-    factorial(m - 1L),
     (twoN - twoM - m),
-    DoubleFactorial(twoN - 5L),
     N(a, m),
-    N(b, m)
-  ) / DoubleFactorial(twoN - twoM - 1L)
+    N(b, m),
+    exp(lfactorial(m - 1L) + 
+          LogDoubleFactorial(twoN - 5L) -
+          LogDoubleFactorial(twoN - twoM - 1L))
+    )
 }
 
 #' @rdname Carter1
 #' @export
+#' @importFrom TreeTools Log2DoubleFactorial
 Log2Carter1 <- function (m, a, b) {
   n <- a + b
   twoN <- n + n
   twoM <- m + m
   Log2N <- function (n, m) {
-    if (n < m) 0 else {
+    if (n < m) -Inf else {
       nMinusM <- n - m
       (lfactorial(n + nMinusM - 1L) - 
        lfactorial(nMinusM) -
@@ -187,6 +149,75 @@ Log2Carter1 <- function (m, a, b) {
   ) - Log2DoubleFactorial(twoN - twoM - 1L)
 }
 
+#' @rdname Carter1
+#' @export
+#' @importFrom TreeTools LogDoubleFactorial
+LogCarter1 <- function (m, a, b) {
+  n <- a + b
+  twoN <- n + n
+  twoM <- m + m
+  LogN <- function (n, m) {
+    if (n < m) -Inf else {
+      nMinusM <- n - m
+      (lfactorial(n + nMinusM - 1L) - 
+       lfactorial(nMinusM) -
+       lfactorial(m - 1L)) - (nMinusM * log(2))
+    }
+  }
+  sum(
+    log(twoN - twoM - m),
+    lfactorial(m - 1L),
+    LogDoubleFactorial(twoN - 5L),
+    LogN(a, m),
+    LogN(b, m)
+  ) - LogDoubleFactorial(twoN - twoM - 1L)
+}
+
+# TODO: Replace the below with an advanced version of Maddison & Slakey 1991, 
+# or use the results of Carter et al. 1990; Steel 1993 to estimate +0 & +1 steps,
+# and approximate the rest.
+
+## @importFrom TreeTools Log2UnrootedMult
+# Old_IC_Approx <- function() {
+#   
+#   nIter <- min(maxIter, round(iter))
+#   if (nIter == maxIter) {
+#     warning ("Will truncate number of iterations at maxIter = ", maxIter)
+#   }
+#   n01ExtraSteps <- nOneExtraStep + nNoExtraSteps
+#   analyticIC <- Log2Unrooted(sum(split)) -  setNames(c(
+#     Log2UnrootedMult(split), log2(n01ExtraSteps)),
+#     minSteps + 0:1)
+#   analyticP <- 2 ^ -analyticIC[2]
+#   
+#   if (warn) {
+#     message('  Token count ', split, " = ",
+#             signif(analyticIc0, ceiling(log10(maxIter))),
+#             ' bits @ 0 extra steps. \n  Simulating ', nIter, 
+#             ' trees to estimate cost of further steps.')
+#     # message(c(round(analyticIc0, 3), 'bits @ 0 extra steps;', round(analyticIc1, 3),
+#     #    '@ 1; attempting', nIter, 'iterations.\n'))
+#   }
+#   
+#   morphyObj <- SingleCharMorphy(rep(seq_along(split) - 1L, split))
+#   on.exit(morphyObj <- UnloadMorphy(morphyObj))
+#   steps <- vapply(rep(nInformative, nIter), RandomTreeScore,
+#                   integer(1), morphyObj) + nSingletons
+#   
+#   tabSteps <- table(steps[steps > (minSteps - nSingletons + 1)]) # Quicker than table(steps)[-1]
+#   
+#   approxP <- tabSteps / sum(tabSteps) * (1 - analyticP)
+#   approxSE <- sqrt(approxP * (1 - approxP) / nIter)
+#   cumP <- cumsum(c(analyticP, approxP))[-1]
+# 
+#   approxIC <- -log2(cumP)
+#   icLB <- -log2(cumP - approxSE)
+#   icError <- icLB - approxIC
+#   if (warn || max(icError) > tolerance) {
+#     message("  Approx. std. error < ", signif(max(icError) * 1.01, 2))
+#   }
+# }
+
 
 #' Number of trees with one extra step
 #' @param \dots Vector or series of integers specifying the number of leaves
@@ -194,6 +225,7 @@ Log2Carter1 <- function (m, a, b) {
 #' @importFrom TreeTools NRooted NUnrooted
 #' @examples
 #' WithOneExtraStep(1, 2, 3)
+#' @importFrom TreeTools NUnrootedMult DoubleFactorial
 #' @export
 WithOneExtraStep <- function (...) {
   splits <- c(...)
@@ -241,7 +273,7 @@ WithOneExtraStep <- function (...) {
       
       prod( # omitted tips form two separate regions
         backbones,
-        attachTwoClades,
+        attachTwoRegions,
         sum(
         # TODO would be quicker to calculate just first half; special case: omitted.tips %% 2
         vapply(seq_len(omitted.tips - 1), function (first.group) { 
@@ -260,52 +292,6 @@ WithOneExtraStep <- function (...) {
   }
 }
 
-#' @importFrom TreeTools NUnrooted
-#' @export
-ExtraSteps <- function (a, b) {
-  NRooted(a) * .ExtraSteps(a, b - 1L, 1L, 1L, 0L, 1L)
-}
-
-.ExtraSteps <- function (on1, off2, on2 = 0L,
-                         clades2 = 0L, grades2 = 0L,
-                         steps = 0L) {
-  if (off2 == 0L) {
-    return (c(1L, 0L, 0L, 0L, 0L))
-  }
-  counts <- integer(5L)
-  # Don't change shape
-  if (on2) {
-    counts <- counts + (
-                  (on2 + on2 + grades2 - clades2) *
-                    .ExtraSteps(on1, off2 - 1L, on2 + 1L, clades2, grades2,
-                                steps)
-                  )
-  }
-  
-  if (steps < 4L) {
-    newCladePoints <- on1 + on1 - 3L - clades2 - grades2
-    if (newCladePoints > 0L) {
-      # Add a new clade
-      counts[-1] <- counts[-1] + (
-        newCladePoints *
-        .ExtraSteps(on1, off2 - 1L, on2 + 1L, clades2 + 1L, grades2,
-                    steps + 1L)[-5]
-      )
-    }
-    # Convert clade to grade
-    if (clades2 != 0) {
-      counts[-1] <- counts[-1] + (
-      (clades2 + clades2) *
-      .ExtraSteps(on1, off2 - 1L, on2 + 1L, clades2 - 1L, grades2 + 1L,
-                  steps + 1L)[-5]
-      )
-    }
-  }
-  
-  # Return:
-  counts
-}
-
 #' Logistic Points
 #' Extract points from a fitted model
 #'
@@ -320,111 +306,4 @@ LogisticPoints <- function (x, fittedModel) {
   coefL <- summary(fittedModel)$coef[, 1]
   # Return:
   coefL[1] / (1 + exp((coefL[2] - x) / coefL[3]))
-}
-
-#' Evaluate tree
-#' @template treeParam
-#' @template datasetParam
-#' @template warnParam
-#' @importFrom stats nls
-#' @export
-Evaluate <- function (tree, dataset, warn=TRUE) {
-  totalSteps <- TreeLength(tree, dataset)
-  chars <- matrix(unlist(dataset), attr(dataset, 'nr'))
-  ambiguousToken <- which(attr(dataset, 'allLevels') == "?")
-  asSplits <- apply(chars, 1, function (x) {
-    ret <- table(x)
-    ret[names(ret) != ambiguousToken] 
-  })
-  if (class(asSplits) == 'matrix') asSplits <- lapply(seq_len(ncol(asSplits)), function(i) asSplits[, i])
-  ic.max <- round(vapply(asSplits,
-                         function (split) -log(NUnrootedMult(split)/
-                                                 NUnrooted(sum(split)))/log(2),
-                         double(1)), 12)
-  infoLosses <- apply(chars, 1, ICSteps, ambiguousToken=ambiguousToken, maxIter=1000, warn=warn)
-  infoAmounts <- lapply(infoLosses, function(p) {
-    #message(length(p))
-    cumP <- cumsum(p)
-    nSteps <- as.integer(names(p))
-    infer <- min(nSteps):max(nSteps)
-    infer <- infer[!(infer %in% nSteps)]
-    calculatedP <- double(max(nSteps))
-    calculatedP[nSteps] <- cumP
-    if (length(infer)) {
-      fitL <- nls(cumP ~ SSlogis(nSteps, Asym, xmid, scal))
-      calculatedP[infer] <- LogisticPoints(infer, fitL)
-    }
-    calcIC <- -log(calculatedP) / log(2)
-    calcIC
-  })
-  
-  info.used <- double(length(totalSteps))
-  for (i in seq_along(totalSteps)) {
-    if (totalSteps[i] > 0) info.used[i] <- infoAmounts[[i]][totalSteps[i]]
-  }
-  info.lost <- round(ic.max - info.used, 13)
-  index <- attr(dataset, 'index')
-  total.info <- sum(ic.max[index])
-  info.misleading <- sum(info.lost[index])
-  proportion.lost <- info.misleading / total.info
-  info.needed <- -log(1 / NUnrooted(length(dataset))) / log(2)
-  info.overkill <- total.info / info.needed
-  info.retained <- sum(info.used[index])
-  signal.noise <- info.retained / info.misleading
-  message(total.info, ' bits, of which ', round(info.retained, 2), ' kept, ',
-          round(total.info - info.retained, 2), ' lost,',
-          round(info.needed, 2), ' needed.  SNR = ', signal.noise, "\n")
-  # Return:
-  c(signal.noise, info.retained/info.needed)
-}
-
-#' Amount of information in each character
-#'
-#' As presently implemented, this function requires that there be no ambiguous
-#' tokens and two applicable tokens, '1' and '2'.
-#'
-#' @param tokenTable A matrix, where each row corresponds to a character, each
-#' column to a leaf, and each entry to the value (1 or 2) of the character at 
-#' that leaf.
-#' @param precision Integer specifyign how many random trees to generate when 
-#' calculating profile curves.
-#' @template warnParam
-#'
-#' @return information content of each extra step, in bits
-#' 
-#' @author Martin R. Smith
-#'
-#' @export
-InfoAmounts <- function (tokenTable, precision = 1e+06, warn = TRUE) {
-  # The below is simplified from info_extra_step.r::evaluate
-  if (length(unique(as.integer(tokenTable))) > 2L) {
-    stop ("Cannot calculate information amouts for",
-          "characters unless only tokens are 1 and 2. See ?InfoAmounts().")
-  }
-  splits <- apply(tokenTable, 1, table)
-  infoLosses <- apply(splits, 2, ICPerStep, maxIter = precision, warn = warn)
-  
-  blankReturn <- double(max(colSums(splits)))
-  ret <- vapply(infoLosses, function(p) {
-    calcIC <- blankReturn
-    cumP <- cumsum(p)
-    nSteps <- as.integer(names(p))
-    infer <- min(nSteps):max(nSteps)
-    infer <- infer[!(infer %in% nSteps)]
-    calculatedP <- double(max(nSteps))
-    calculatedP[nSteps] <- cumP
-    if (length(infer)) {
-      if (cumP[infer[1] - 1L] > 0.999998) {
-        # We can cope with rounding at the sixth decimal place, I think
-        calculatedP[infer] <- 1
-      } else {
-        fitL <- nls(cumP ~ SSlogis(nSteps, Asym, xmid, scal))
-        calculatedP[infer] <- LogisticPoints(infer, fitL)
-        ##if (warn) warning('Concavity function generated by approximation')
-      }
-    }
-    calcIC[seq_along(calculatedP)] <- -log(calculatedP) / log(2)
-    calcIC
-  }, blankReturn)
-  ret[rowSums(ret) > 0, ]
 }

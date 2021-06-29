@@ -8,31 +8,36 @@
 -->
 [![Project Status: Active – – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
-This package exists to allow parsimony-style tree searches in R.
-
-Implied weighting and heuristic searches such as the Parsimony Ratchet 
-(function: [`Ratchet()`](https://ms609.github.io/TreeSearch/reference/Ratchet.html))
-are implemented.
+This package implements maximum parsimony tree search in R, 
+using the Brazeau, Guillerme & Smith (2019) approach to inapplicable data,
+as implemented in the Morphy C library (Brazeau _et al_. 2017).
+Implied weighting, profile parsimony and heuristic searches are implemented;
+a graphical user interface is available.
 
 # Installation
 
-Install and load the library from CRAN as follows:
+<!--Install and load the stable version from CRAN, and launch the GUI, as follows:-->
+Install and load the stable version from CRAN as follows:
 ```r
 install.packages('TreeSearch')
 library('TreeSearch')
 ```
+<!--EasyTrees()-->
 
-A fundamental reworking of search strategies is currently underway. 
+The development release incorporates a major reworking of the search interface,
+allowing faster and more intuitive tree search.
 
-Install the development version with:
+Install the development version and launch the GUI with:
 ```r
 if(!require(devtools)) install.packages("devtools")
 devtools::install_github('ms609/TreeSearch')
+library("TreeSearch")
+EasyTrees()
 ```
 
 # Quick start
 
-Launch a graphical user interface (beta, development version only)
+Launch a graphical user interface (development version only)
 by typing `TreeSearch::EasyTrees()` in the R console.
 
 For more control over search settings, see [`?MaximizeParsimony()`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
@@ -42,6 +47,7 @@ For more control over search settings, see [`?MaximizeParsimony()`](https://ms60
 'TreeSearch' allows the implementation of various optimality criteria, including
 
 - Fitch parsimony with inapplicable data (Brazeau, Guillerme and Smith, 2019).
+- Implied weighting (Goloboff 1993)
 - The Profile Parsimony approach introduced by Faith and Trueman (2001).
 - Successive Approximations weighting (Farris 1969).
 
@@ -64,13 +70,30 @@ By contributing to this project, you agree to abide by its terms.
 
 # References
 
-Brazeau, M. D., Guillerme, T. and Smith, M. R. 2019.
+Brazeau M. D., Smith M. R., Guillerme T. (2017). 
+  MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability.
+  doi: [10.5281/zenodo.815372](https://doi.org/10.5281/zenodo.815372).
+
+Brazeau, M. D., Guillerme, T. and Smith, M. R. (2019).
   An algorithm for morphological phylogenetic analysis with inapplicable data. 
   Systematic Biology, 68(4), 619-631.
   doi: [10.1093/sysbio/syy083](https://dx.doi.org/10.1093/sysbio/syy083).
 
-D. P. Faith, J. W. H. Trueman, Towards an inclusive philosophy for phylogenetic inference.
-  Syst. Biol. 50, 331–350 (2001).   doi: [10.1080/10635150118627](https://dx.doi.org/10.1080/10635150118627)
+Faith D. P., Trueman J. W. H. (2001). 
+  Towards an inclusive philosophy for phylogenetic inference.
+  Systematic Biology, 50(3), 331–350. 
+  doi: [10.1080/10635150118627](https://doi.org/10.1080/10635150118627).
 
 Farris, J. S. (1969). A successive approximations approach to character weighting. 
-  Systematic Biology, 18(4), 374–385.  doi: [10.2307/2412182](https://dx.doi.org/10.2307/2412182)
+  Systematic Biology, 18(4), 374–385.
+  doi: [10.2307/2412182](https://dx.doi.org/10.2307/2412182).
+
+Goloboff, P. A. (1993). 
+  Estimating character weights during tree search.
+  Cladistics, 9(1), 83–91.
+  doi: [10.1111/j.1096-0031.1993.tb00209.x](https://doi.org/10.1111/j.1096-0031.1993.tb00209.x).
+
+Goloboff, P. A., Torres, A., Arias, J. S. (2018). 
+  Weighted parsimony outperforms other methods of phylogenetic inference under 
+  models appropriate for morphology.
+  Cladistics, 34(4), 407–437. doi: [10.1111/cla.12205](https://doi.org/10.1111/cla.12205).

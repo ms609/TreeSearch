@@ -4,3 +4,5 @@ src/morphy.c
 src/mpl.c
 src/statedata.c
 src/wagner.c
+R/ape.plot.phylo.R
+R/zzz.R

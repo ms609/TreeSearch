@@ -2,29 +2,29 @@ url: https://ms609.github.io/TreeSearch
 
 authors:
   Martin R. Smith: 
-    href: https://community.dur.ac.uk/martin.smith/
+    href: https://smithlabdurham.github.io/
     
 development:
   mode: auto
 
 reference:
-  - title: "Tree search"
+  - title: "Custom search"
     desc: "Functions to search for optimal phylogenetic trees."
     contents:
-      - TreeSearch
-      - matches("Bootstrap")
-      - matches('Ratchet')
-      - SuccessiveApproximations
-      - SuccessiveWeights
-      # - RunTNT
+      - has_concept("custom search functions")
       
   - title: "Tree scoring"
     desc: "Functions that provide tree scores, for optimization."
     contents: 
       - has_concept("tree scoring")
-      - ends_with('Score')
+      - Consistency
       - Evaluate
       - RandomTreeScore
+      
+  - title: "Split support"
+    desc: "Functions that calculate node support."
+    contents: 
+      - has_concept("split support functions")
       
   - title: "Tree rearrangement"
     desc: > 
@@ -39,16 +39,13 @@ reference:
     desc: >
       Functions to help calculate profile parsimony scores.
     contents:
-    - starts_with('IC')
-    - InfoAmounts
+    - has_concept("profile parsimony functions")
     - WithOneExtraStep
       
-  - title: "C APIs"
-    desc: "Functions that interface with C libraries."
+  - title: "Morphy APIs"
+    desc: "Functions that interface with the Morphy C library."
     contents:
-     # - starts_with('mpl_')
       - has_concept("Morphy API functions")
-     # - has_concept("C wrappers")
       
   - title: "Datasets"
     desc: "Data that accompanies the package."
@@ -63,7 +60,6 @@ reference:
   - title: "Utility functions"
     desc: "Miscellaneous functions to simplify or expedite basic functionality."
     contents:
-      - AsBinary
       - JackLabels
       - LogisticPoints
       - MinimumSteps

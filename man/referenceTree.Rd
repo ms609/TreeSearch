@@ -8,18 +8,18 @@
 A single phylogenetic tree saved as an object of class \code{phylo}
 }
 \source{
-\url{https://dx.doi.org/10.1111/pala.12236}
+Congreve & Lamsdell (2016); \doi{10.1111/pala.12236}
 }
 \usage{
 referenceTree
 }
 \description{
-The tree topology used to generate the matrices in \code{\link{congreveLamsdellMatrices}}
-Congreve & Lamsdell (2016)
+The tree topology used to generate the matrices in
+\code{\link{congreveLamsdellMatrices}}
 }
 \examples{
-  data(referenceTree)
-  plot(referenceTree)
+data(referenceTree)
+plot(referenceTree)
 
 }
 \references{

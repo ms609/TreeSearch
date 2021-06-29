@@ -1,14 +1,26 @@
-#' @describeIn Ratchet Jackknife resampling. Note that at present this assumes that 
-#' `InitializeData` will return a morphy object; if this doesn't hold for you, please
-#' let me know and I'll make the function more general.
+#' Jackknife resampling
+#' 
+#' Resample trees using Jackknife resampling, i.e. removing a subset of
+#' characters.
+#' 
+#' The function assumes 
+#' that `InitializeData()` will return a morphy object; if this doesn't hold 
+#' for you, post a [GitHub issue](http://github.com/ms609/TreeSearch/issues/new/)
+#' or e-mail the maintainer.
+#' 
+#' @inheritParams Ratchet
 #' @template EdgeSwapperParam
-#' @param resampleFreq Double between 0 and 1 stating proportion of characters to resample
-#' @param jackIter Integer specifying number of jackknife iterations to conduct
-#' @return a list of trees recovered after jackknife iterations
+#' @param resampleFreq Double between 0 and 1 stating proportion of characters 
+#' to resample.
+#' @param jackIter Integer specifying number of jackknife iterations to conduct.
+#' @return `Jackknife()` returns a list of trees recovered after jackknife
+#' iterations.
 #' @author Martin R. Smith
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @seealso 
 #' - [`JackLabels()`]: Label nodes of a tree with jackknife supports.
+#' @family split support functions
+#' @family custom search functions
 #' @export
 Jackknife <- function (tree, dataset, resampleFreq = 2/3,
                        InitializeData = PhyDat2Morphy,
@@ -19,7 +31,9 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
                        searchIter = 4000L, searchHits = 42L,
                        verbosity = 1L, ...) {
   # initialize tree and data
-  if (dim(tree$edge)[1] != 2 * tree$Nnode) stop("tree must be bifurcating; try rooting with ape::root")
+  if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+    stop("tree must be bifurcating; try rooting with ape::root")
+  }
   tree <- RenumberTips(tree, names(dataset))
   edgeList <- tree$edge
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
@@ -29,7 +43,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
   
   startWeights <- MorphyWeights(morphyObj)['exact', ]
   eachChar <- seq_along(startWeights)
-  deindexedChars <- rep(eachChar, startWeights)
+  deindexedChars <- rep.int(eachChar, startWeights)
   charsToKeep <- ceiling(resampleFreq * length(deindexedChars))
   if (charsToKeep < 1L) {
     stop("resampleFreq of ", resampleFreq, " is too low; can't keep 0 of ",
@@ -38,25 +52,28 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
     stop("resampleFreq of ", resampleFreq, " is too high; can't keep all ",
          length(deindexedChars), " characters.")
   }
-  if (verbosity > 10L) message(" * Beginning search:")
+  if (verbosity > 10L) { #nocov start
+    message(" * Beginning search:")
+  } #nocov end
   
   # Conduct jackIter replicates:
   jackEdges <- vapply(seq_len(jackIter), function (x) {
-    if (verbosity > 0L) {
+    if (verbosity > 0L) { #nocov start
       message(" * Jackknife iteration ", x, "/", jackIter)
-    }
+    } #nocov end
     resampling <- tabulate(sample(deindexedChars, charsToKeep, replace = FALSE),
                            nbins = length(startWeights))
     errors <- vapply(eachChar, function (i) 
       mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
-    if (any(errors)) {
-      stop ("Error resampling morphy object: ", mpl_translate_error(unique(errors[errors < 0L])))
+    if (any(errors)) { #nocov start
+      stop ("Error resampling morphy object: ", 
+            mpl_translate_error(unique(errors[errors < 0L])))
     }
     if (mpl_apply_tipdata(morphyObj) -> error) {
       stop("Error applying tip data: ", mpl_translate_error(error))
-    }
-    res <- EdgeListSearch(edgeList[1:2], morphyObj, EdgeSwapper=EdgeSwapper,
-                          maxIter=searchIter, maxHits=searchHits,
+    } #nocov end
+    res <- EdgeListSearch(edgeList[1:2], morphyObj, EdgeSwapper = EdgeSwapper,
+                          maxIter = searchIter, maxHits = searchHits,
                           verbosity = verbosity - 1L, ...)
     res[1:2]
   }, edgeList)
@@ -77,7 +94,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' @param add Logical specifying whether to add the labels to an existing
 #' plot.
 #' @param adj,col,frame,pos,\dots Parameters to pass to `nodelabels()`.
-#' @param plot Logical specifing whether to plot results; if `FALSE`,
+#' @param plot Logical specifying whether to plot results; if `FALSE`,
 #' returns blank labels for nodes near the root that do not correspond to a
 #' unique split.
 #' 
@@ -88,7 +105,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' by `phylo$node.label`.
 #' 
 #' @examples
-#' library('TreeTools') # for as.phylo
+#' library('TreeTools', quietly = TRUE) # for as.phylo
 #' 
 #' # jackTrees will usually be generated with Jackknife(), but for simplicity:
 #' jackTrees <- as.phylo(1:100, 8)
@@ -101,6 +118,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' @importFrom ape nodelabels
 #' @importFrom TreeTools SplitFrequency SupportColour
 #' @seealso [`Jackknife()`]: Generate trees by jackknife resampling
+#' @family split support functions
 #' @export
 JackLabels <- function (tree, jackTrees,
                         plot = TRUE,
@@ -119,7 +137,7 @@ JackLabels <- function (tree, jackTrees,
     # Return:
     jackSupport
   } else {
-    ret <- rep('', tree$Nnode)
+    ret <- character(tree$Nnode)
     ret[as.integer(names(jackSupport)) - NTip(tree)] <- jackSupport
     
     # Return:

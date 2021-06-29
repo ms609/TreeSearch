@@ -4,26 +4,35 @@
 \alias{SingleCharMorphy}
 \title{Morphy object from single character}
 \usage{
-SingleCharMorphy(char)
+SingleCharMorphy(char, gap = "inapp")
 }
 \arguments{
 \item{char}{State of each character at each tip in turn, in a format that will be converted
 to a character string by \code{\link{paste0}(char, ';', collapse='')}.}
+
+\item{gap}{An unambiguous abbreviation of \code{inapplicable}, \code{ambiguous}
+(= \code{missing}), or \verb{extra state}, specifying how gaps will be handled.}
 }
 \value{
 A pointer to an object of class \code{morphyObj}.
-Don't forget to unload it when you've finished with it:
-\code{morphyObj <- \link{UnloadMorphy}(morphyObj)}.
+Don't forget to unload it when you've finished with it.
 }
 \description{
 Morphy object from single character
 }
+\examples{
+morphyObj <- SingleCharMorphy('-0-0', gap = 'Extra')
+RandomTreeScore(morphyObj)
+morphyObj <- UnloadMorphy(morphyObj)
+}
 \seealso{
 Other Morphy API functions: 
+\code{\link{GapHandler}()},
 \code{\link{MorphyErrorCheck}()},
 \code{\link{MorphyWeights}()},
 \code{\link{PhyDat2Morphy}()},
 \code{\link{UnloadMorphy}()},
+\code{\link{is.morphyPtr}()},
 \code{\link{mpl_apply_tipdata}()},
 \code{\link{mpl_attach_rawdata}()},
 \code{\link{mpl_attach_symbols}()},
@@ -32,6 +41,7 @@ Other Morphy API functions:
 \code{\link{mpl_first_down_recon}()},
 \code{\link{mpl_first_up_recon}()},
 \code{\link{mpl_get_charac_weight}()},
+\code{\link{mpl_get_gaphandl}()},
 \code{\link{mpl_get_num_charac}()},
 \code{\link{mpl_get_num_internal_nodes}()},
 \code{\link{mpl_get_numtaxa}()},
@@ -49,6 +59,7 @@ Other Morphy API functions:
 \code{\link{summary.morphyPtr}()}
 }
 \author{
-Martin R. Smith
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{Morphy API functions}

@@ -1,4 +1,4 @@
-#' Thirty Datasets with Inapplicable data
+#' Thirty datasets with inapplicable data
 #' 
 #' These are the datasets used to evaluate the behaviour of the inapplicable algorithm 
 #' in Brazeau, Guillerme and Smith (2017).
@@ -16,7 +16,7 @@
 #' @keywords datasets
 "inapplicable.datasets"
 
-#' Thirty Datasets with Inapplicable data
+#' Thirty datasets with inapplicable data
 #' 
 #' These are the datasets used to evaluate the behaviour of the inapplicable algorithm 
 #' in Brazeau, Guillerme and Smith (2017).
@@ -34,7 +34,7 @@
 #' @keywords datasets
 "inapplicable.phyData"
 
-#' Thirty Datasets with Inapplicable data
+#' Thirty datasets with inapplicable data
 #' 
 #' These are the datasets used to evaluate the behaviour of the inapplicable algorithm 
 #' in Brazeau, Guillerme and Smith (2018).
@@ -63,10 +63,9 @@
 #'  \insertRef{Congreve2016dd}{TreeSearch}
 #' 
 #' @examples 
-#'   data('referenceTree')
-#'   data('congreveLamsdellMatrices')
-#'   \dontrun{ProfileScore(referenceTree,
-#'    PrepareDataProfile(congreveLamsdellMatrices[[17]]))}
+#' data('referenceTree')
+#' data('congreveLamsdellMatrices')
+#' TreeLength(referenceTree, congreveLamsdellMatrices[[17]], 'profile')
 #'
 #' @source \url{https://datadryad.org/resource/doi:10.5061/dryad.7dq0j}
 #' 
@@ -75,8 +74,8 @@
 
 #' Tree topology for matrix simulation
 #'
-#' The tree topology used to generate the matrices in \code{\link{congreveLamsdellMatrices}} 
-#' Congreve & Lamsdell (2016)
+#' The tree topology used to generate the matrices in 
+#' \code{\link{congreveLamsdellMatrices}} 
 #'
 #' @format A single phylogenetic tree saved as an object of class \code{phylo}
 #'
@@ -85,10 +84,31 @@
 #'  \insertRef{Congreve2016dd}{TreeSearch}
 #' 
 #' @examples 
-#'   data(referenceTree)
-#'   plot(referenceTree)
+#' data(referenceTree)
+#' plot(referenceTree)
 #' 
-#' @source \url{https://dx.doi.org/10.1111/pala.12236}
+#' @source Congreve & Lamsdell (2016); \doi{10.1111/pala.12236}
 #' 
 #' @keywords datasets
 "referenceTree"
+
+#' Empirically counted profiles for small trees
+#' 
+#' The base 2 logarithm of the number of trees containing _s_ steps, calculated
+#' by scoring a character on each _n_-leaf tree.
+#' 
+#' @format A list with the structure 
+#' `profiles[[number of leaves]][[number of tokens]][[tokens in smallest split]]`
+#' The list entry returns a named numeric vector; each entry lists 
+#' log2(proportion of _n_-leaf trees with _s_ or fewer steps for this character).
+#' 
+#' @examples 
+#' data(profiles)
+#' 
+#' # Load profile for a character of the structure 0 0 0 1 1 1 1 1
+#' profile3.5 <- profiles[[8]][[2]][[3]]
+#' 
+#' # Number of trees with _s_ or fewer steps on that character
+#' TreeTools::NUnrooted(8) * 2 ^ profile3.5
+#' @family profile parsimony functions
+"profiles"

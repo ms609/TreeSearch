@@ -2,12 +2,15 @@
 % Please edit documentation in R/mpl_morphy_objects.R
 \name{PhyDat2Morphy}
 \alias{PhyDat2Morphy}
-\title{Initialize a Morphy Object from a \code{phyDat} object}
+\title{Initialize a Morphy object from a \code{phyDat} object}
 \usage{
-PhyDat2Morphy(phy)
+PhyDat2Morphy(phy, gap = "inapplicable")
 }
 \arguments{
 \item{phy}{An object of class \code{\link{phyDat}}.}
+
+\item{gap}{An unambiguous abbreviation of \code{inapplicable}, \code{ambiguous}
+(= \code{missing}), or \verb{extra state}, specifying how gaps will be handled.}
 }
 \value{
 \code{PhyDat2Morphy()} returns a pointer to an initialized Morphy object.
@@ -32,10 +35,12 @@ morphyObj <- UnloadMorphy(morphyObj)
 }
 \seealso{
 Other Morphy API functions: 
+\code{\link{GapHandler}()},
 \code{\link{MorphyErrorCheck}()},
 \code{\link{MorphyWeights}()},
 \code{\link{SingleCharMorphy}()},
 \code{\link{UnloadMorphy}()},
+\code{\link{is.morphyPtr}()},
 \code{\link{mpl_apply_tipdata}()},
 \code{\link{mpl_attach_rawdata}()},
 \code{\link{mpl_attach_symbols}()},
@@ -44,6 +49,7 @@ Other Morphy API functions:
 \code{\link{mpl_first_down_recon}()},
 \code{\link{mpl_first_up_recon}()},
 \code{\link{mpl_get_charac_weight}()},
+\code{\link{mpl_get_gaphandl}()},
 \code{\link{mpl_get_num_charac}()},
 \code{\link{mpl_get_num_internal_nodes}()},
 \code{\link{mpl_get_numtaxa}()},
@@ -61,7 +67,7 @@ Other Morphy API functions:
 \code{\link{summary.morphyPtr}()}
 }
 \author{
-\href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{Morphy API functions}

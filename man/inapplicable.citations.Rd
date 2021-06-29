@@ -3,7 +3,7 @@
 \docType{data}
 \name{inapplicable.citations}
 \alias{inapplicable.citations}
-\title{Thirty Datasets with Inapplicable data}
+\title{Thirty datasets with inapplicable data}
 \format{
 An object of class \code{character} of length 30.
 }

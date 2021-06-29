@@ -69,8 +69,9 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 }
 
 #' @rdname TBR 
-#' @return `TBRMoves()` returns a list of all trees one TBR move away from
-#'  `tree`, with edges and nodes in preorder, rooted on the first-labelled tip.
+#' @return `TBRMoves()` returns a `multiPhylo` object listing all trees one
+#'  \acronym{TBR} move away from `tree`, with edges and nodes in preorder,
+#'  rooted on the first-labelled tip.
 #' @export
 TBRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('TBRMoves')
 
@@ -87,13 +88,9 @@ TBRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
 }
 
 #' @rdname TBR
-#TODO
-#' @details NOTE: `tree` must be rooted on edge 1 in `TBRMoves.matrix()`.
-#' This will be resolved when `TreeTools::RootNode()` supports edge matrices.
 #' @export
 TBRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
-  #tree <- Preorder(RootTree(tree, 1))  # TODO
-  tree <- Preorder(tree)
+  tree <- Preorder(RootTree(tree, 1))
   allMoves <- all_tbr(tree, edgeToBreak)
   unique(allMoves)
 }

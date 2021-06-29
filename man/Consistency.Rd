@@ -4,17 +4,22 @@
 \alias{Consistency}
 \title{Consistency / retention 'indices'}
 \usage{
-Consistency(dataset, tree)
+Consistency(dataset, tree, compress = FALSE)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
 whose names correspond to the labels of any accompanying tree.}
 
 \item{tree}{A tree of class \code{\link{phylo}}.}
+
+\item{compress}{Logical specifying whether to retain the compression of a
+phylo object or to return a vector specifying to each individual character,
+decompressed using the dataset's \code{index} attribute.}
 }
 \value{
-\code{Consistency()} returns a named vector specifying the consistency index (ci),
-retention index (ri), and rescalced consistency index (rc).
+\code{Consistency()} returns a named vector specifying the
+consistency index (\code{ci}),
+retention index (\code{ri}), and rescaled consistency index (\code{rc}).
 }
 \description{
 \code{Consistency()} calculates the so-called consistency and retention 'indices'
@@ -25,12 +30,15 @@ tree.  Values correlate with the number of species sampled and the
 distribution of taxa between character states, so are not strictly comparable
 between characters in which these factors differ.
 }
+\details{
+#TODO: Retention index not yet implemented.
+}
 \examples{
 data(inapplicable.datasets)
 dataset <- inapplicable.phyData[[4]]
 Consistency(dataset, TreeTools::NJTree(dataset))
 }
 \author{
-\href{https://orcid.org/0000-0001-5660-1727}{Martin R. Smith}
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }

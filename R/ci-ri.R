@@ -12,9 +12,11 @@
 #' 
 #' @template datasetParam
 #' @template treeParam
+#' @template compressParam
 #' 
-#' @return `Consistency()` returns a named vector specifying the consistency index (ci),
-#' retention index (ri), and rescalced consistency index (rc).
+#' @return `Consistency()` returns a named vector specifying the 
+#' consistency index (`ci`),
+#' retention index (`ri`), and rescaled consistency index (`rc`).
 #' 
 #' @examples 
 #' data(inapplicable.datasets)
@@ -22,8 +24,14 @@
 #' Consistency(dataset, TreeTools::NJTree(dataset))
 #' @template MRS
 #' @export
-Consistency <- function (dataset, tree) {
-  ci <- MinimumLength(dataset) / CharacterLength(tree, dataset)
+Consistency <- function (dataset, tree, compress = FALSE) {
+  ci <- MinimumLength(dataset, compress = TRUE) / 
+    CharacterLength(tree, dataset, compress = TRUE)
+  
   # Return:
-  ci
+  if (compress) {
+    ci
+  } else {
+    ci[attr(dataset, 'index')]
+  }
 }
