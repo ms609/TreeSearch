@@ -96,10 +96,10 @@ TipVolatility <- function (trees) {
 #' 
 #' @template MRS
 #' @importFrom ape consensus
-#' @importFrom TreeDist SplitwiseInfo 
+#' @importFrom TreeDist ConsensusInfo 
 #' @importFrom TreeTools SplitFrequency
 #' @export
-BestConsensus <- function (trees) {
+BestConsensus <- function (trees, info = 'clustering') {
   if (!inherits(trees, 'multiPhylo')) {
     if (inherits(trees, 'phylo')) {
       return (trees)
@@ -117,8 +117,8 @@ BestConsensus <- function (trees) {
   
   tr <- trees
   candidates <- character(nTip - 2L)
-  info <- double(nTip - 2)
-  info[1] <- ConsensusInfo(trees)
+  score <- double(nTip - 2)
+  score[1] <- ConsensusInfo(trees, info = info)
   for (i in 1 + seq_len(nTip - 3L)) {
     if (difftime(Sys.time(), lastMessage) > 2) {
       lastMessage <- Sys.time()
@@ -130,9 +130,9 @@ BestConsensus <- function (trees) {
       candidates[i] <- names(candidate)
     }
     tr <- lapply(tr, drop.tip, candidate)
-    info[i] <- ConsensusInfo(tr)
+    score[i] <- ConsensusInfo(tr, info = info)
   }
-  droppers <- candidates[seq_len(which.max(info))[-1]]
+  droppers <- candidates[seq_len(which.max(score))[-1]]
   consensus(lapply(trees, drop.tip, droppers), p = 0.5)
 }
 

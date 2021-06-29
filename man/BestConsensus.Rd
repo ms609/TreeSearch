@@ -4,7 +4,7 @@
 \alias{BestConsensus}
 \title{Calculate the most informative consensus tree}
 \usage{
-BestConsensus(trees)
+BestConsensus(trees, info = "clustering")
 }
 \description{
 Uses the splitwise information content as a shortcut, which involves double

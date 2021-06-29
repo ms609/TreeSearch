@@ -27,8 +27,11 @@ test_that("Rogues found", {
   bc <- BestConsensus(trees[-11])
   expect_equal(8L, NTip(bc))
   expect_equal(7L, bc$Nnode)
-  expect_equal(10L, NTip(Roguehalla(trees[-11], 1)))
-  expect_equal(8L, NTip(Roguehalla(trees[-11], 2)))
+  
+  expect_equal(10L, NTip(Roguehalla(trees[-11], 1, 'ph')))
+  expect_equal(10L, NTip(Roguehalla(trees[-11], 1, 'cl')))
+  expect_equal(10L, NTip(Roguehalla(trees[-11], 2, 'ph')))
+  expect_equal(8L, NTip(Roguehalla(trees[-11], 2, 'clust')))
 })
 
 test_that("Wilkinson & Crotti's examples are satisfied", {
