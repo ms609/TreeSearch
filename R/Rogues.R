@@ -81,7 +81,7 @@ TipVolatility <- function (trees) {
   tips <- trees[[1]]$tip.label
   startInfo <- mean(CladisticInfo(trees))
   info <- vapply(tips, function (drop) {
-    tr <- lapply(trees, drop.tip, drop)
+    tr <- lapply(trees, DropTip, drop)
     c(meanInfo = mean(CladisticInfo(tr)),
       meanDist = mean(PhylogeneticInfoDistance(tr, normalize = TRUE)))
   }, double(2))
@@ -129,11 +129,11 @@ BestConsensus <- function (trees, info = 'clustering') {
     if (length(candidate)) {
       candidates[i] <- names(candidate)
     }
-    tr <- lapply(tr, drop.tip, candidate)
+    tr <- lapply(tr, DropTip, candidate)
     score[i] <- ConsensusInfo(tr, info = info)
   }
   droppers <- candidates[seq_len(which.max(score))[-1]]
-  consensus(lapply(trees, drop.tip, droppers), p = 0.5)
+  consensus(lapply(trees, DropTip, droppers), p = 0.5)
 }
 
 #' Calculate the most informative consensus tree
@@ -158,9 +158,8 @@ BestConsensus <- function (trees, info = 'clustering') {
 #' plot(reduced)
 #' LabelSplits(reduced, SplitFrequency(reduced, trees) / length(trees))
 #' @template MRS
-#' @importFrom ape consensus drop.tip
 #' @importFrom TreeDist ConsensusInfo
-#' @importFrom TreeTools SplitFrequency Preorder RenumberTips
+#' @importFrom TreeTools DropTip SplitFrequency Preorder RenumberTips
 #' @export
 Roguehalla <- function (trees, dropset = 1, info = 'clustering') {
   if (!inherits(trees, 'multiPhylo')) {
@@ -185,7 +184,7 @@ Roguehalla <- function (trees, dropset = 1, info = 'clustering') {
   .Drop <- function (n) {
     drops <- combn(NTip(trees[[1]]), n)
     candidates <- apply(drops, 2, function (drop) {
-      ConsensusInfo(lapply(trees, drop.tip, drop), info = info)
+      ConsensusInfo(lapply(trees, DropTip, drop), info = info)
     })
     if (max(candidates) > best) {
       list(info = max(candidates), drop = drops[, which.max(candidates)])
@@ -212,7 +211,7 @@ Roguehalla <- function (trees, dropset = 1, info = 'clustering') {
       if (!is.null(dropped)) {
         improved <- TRUE
         best <- dropped$info
-        trees <- lapply(trees, drop.tip, dropped$drop)
+        trees <- lapply(trees, DropTip, dropped$drop)
         break
       }
     }
