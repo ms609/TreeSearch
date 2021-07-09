@@ -373,19 +373,23 @@ server <- function(input, output, session) {
     TipInstability(r$trees)
   })
   
+  dropSeq <- reactive(DropSeq(r$trees))
+  
   tipCols <- reactive(.TipCols(r$trees))
   consP <- debounce(reactive(input$consP), 50)
   
   ConsensusPlot <- reactive({
     par(mar = rep(0, 4), cex = 0.9)
-    instab <- Instab()
-    dropped <- names(instab[order(instab) > input$keepTips])
-    kept <- setdiff(TipLabels(r$trees[[1]]), dropped)
+    #instab <- Instab()
+    #dropped <- names(instab[order(instab) > input$keepTips])
+    kept <- rev(dropSeq())[seq_len(input$keepTips)]
+    dropped <- setdiff(TipLabels(r$trees[[1]]), kept)
     if (length(dropped)) {
       output$droppedTips <- renderUI({tagList(
         tags$h3("Tips excluded:"),
         tags$ul(lapply(dropped, function (i) {
-          tags$li(paste0(i, ' (', signif(instab[i]), ')'))
+          tags$li(i)
+          #tags$li(paste0(i, ' (', signif(instab[i]), ')'))
         }))
         )})
     } else {
