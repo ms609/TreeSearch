@@ -265,28 +265,28 @@ MaximizeParsimony <- function (dataset, tree,
     unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
   }
   
-  .IWTBRSearch <- function (edge, nTip, morphyObjects, weight, minLength,
+  .IWTBRSearch <- function (Score, edge, nTip, morphyObjects, weight, minLength,
                             charSeq, concavity, tbrIter, maxHits) {
     if (is.null(session)) {
-      .DoIWTBRSearch(edge, nTip, morphyObjects, weight, minLength, charSeq,
+      .DoIWTBRSearch(Score, edge, nTip, morphyObjects, weight, minLength, charSeq,
                      concavity, tbrIter, maxHits)
     } else { #nocov start
       withProgress(message = 'TBR search',
-                   .DoIWTBRSearch(edge, nTip, morphyObjects, weight, minLength,
+                   .DoIWTBRSearch(Score, edge, nTip, morphyObjects, weight, minLength,
                                   charSeq, concavity, tbrIter, maxHits)
       )
     } #nocov end
   }
   
-  .DoIWTBRSearch <- function (edge, nTip, morphyObjects, weight, minLength,
-                              charSeq, concavity, tbrIter, maxHits) {
+  .DoIWTBRSearch <- function (Score, edge, nTip, morphyObjects, weight,
+                              minLength, charSeq, concavity, tbrIter, maxHits) {
     iter <- 0L
     nHits <- 1L
     hold <- array(NA, dim = c(dim(edge), max(maxHits * 1.1, maxHits + 10L)))
     maxHits <- ceiling(maxHits)
     hold[, , 1] <- edge
-    bestScore <- .IWScore(edge, morphyObjects, weight, minLength, charSeq,
-                          concavity)
+    bestScore <- Score(edge, morphyObjects, weight, minLength, charSeq,
+                       concavity)
     bestPlusEps <- bestScore + epsilon
     
     while (iter < tbrIter) {
@@ -308,8 +308,8 @@ MaximizeParsimony <- function (dataset, tree,
             .Message(10L, "Skipping prohibited topology")
             next
           }
-          moveScore <- .IWScore(move, morphyObjects, weight, minLength, charSeq,
-                                concavity, bestPlusEps)
+          moveScore <- Score(move, morphyObjects, weight, minLength, charSeq,
+                             concavity, bestPlusEps)
           if (moveScore < bestPlusEps) {
             edge <- move
             if (moveScore < bestScore) {
@@ -345,93 +345,14 @@ MaximizeParsimony <- function (dataset, tree,
     unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
   }
   
-  .ProfileTBRSearch <- function (edge, nTip, morphyObjects, weight, charSeq,
-                                 profiles, tbrIter, maxHits) {
-    if (is.null(session)) {
-      .DoProfileTBRSearch(edge, nTip, morphyObjects, weight, charSeq, profiles,
-                          tbrIter, maxHits)
-    } else { #nocov start
-      withProgress(message = 'TBR search',
-                   .DoProfileTBRSearch(edge, nTip, morphyObjects, weight, 
-                                       charSeq, profiles, tbrIter, maxHits)
-      )
-    } #nocov end
-  }
-  
-  .DoProfileTBRSearch <- function (edge, nTip, morphyObjects, weight, charSeq,
-                                   profiles, tbrIter, maxHits) {
-    iter <- 0L
-    nHits <- 1L
-    hold <- array(NA, dim = c(dim(edge), max(maxHits * 1.1, maxHits + 10L)))
-    maxHits <- ceiling(maxHits)
-    hold[, , 1] <- edge
-    bestScore <- .ProfileScore(edge, morphyObjects, weight, charSeq, profiles)
-    bestPlusEps <- bestScore + epsilon
-    
-    while (iter < tbrIter) {
-      .Progress(iter / tbrIter, detail = paste0('TBR iteration (depth ',
-                                                iter + 1, ')'))
-      iter <- iter + 1L
-      optTbr <- sample(3:(nTip * 2 - 2))
-      .Message(3L, "New TBR iteration (depth ", iter, ", score ",
-               signif(bestScore, 5), ")")
-      
-      for (brk in optTbr) {
-        .Message(6L, "Break ", brk)
-        moves <- TBRMoves(edge, brk)
-        improvedScore <- FALSE
-        nMoves <- length(moves)
-        moveList <- sample.int(nMoves)
-        for (i in seq_along(moveList)) {
-          move <- moves[[moveList[i]]]
-          if (.Forbidden(move)) {
-            .Message(10L, "Skipping prohibited topology")
-            next
-          }
-          moveScore <- .ProfileScore(move, morphyObjects, weight, charSeq,
-                                     profiles, bestPlusEps)
-          if (moveScore < bestPlusEps) {
-            edge <- move
-            if (moveScore < bestScore) {
-              improvedScore <- TRUE
-              iter <- 0L
-              bestScore <- moveScore
-              bestPlusEps <- bestScore + epsilon
-              nHits <- 1L
-              hold[, , 1] <- edge
-              .Message(4L, "New best score ", signif(bestScore, 5),
-                       " at break ", match(brk, optTbr), "/", length(optTbr))
-              break
-            } else {
-              .Message(5L, "Best score ", signif(bestScore, 5),
-                       " hit again (", nHits, "/", ceiling(maxHits), ")")
-              nHits <- nHits + 1L
-              hold[, , nHits] <- edge
-              if (nHits >= maxHits) break
-            }
-          }
-          if (improvedScore && runif(1) < (i / nMoves) ^ 2) break
-        }
-        if (nHits >= maxHits) break
-        pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 2
-        if (improvedScore && runif(1) < pNextTbr) break
-      }
-      if (nHits >= maxHits) break
-    }
-    .Message(2L, iter + 1, " TBR rearrangements found score ", 
-             signif(bestScore), " ", nHits, " times.")
-    
-    # Return:
-    unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
-  }
   
   .Search <- function () {
     if (profile) {
-      .ProfileTBRSearch(edge, nTip, morphyObjects, startWeights, charSeq, 
-                        profiles, searchIter, searchHits)
+      .IWTBRSearch(.ProfileScore, edge, nTip, morphyObjects, startWeights,
+                   charSeq, profiles, searchIter, searchHits)
     } else if (iw) {
-      .IWTBRSearch(edge, nTip, morphyObjects, startWeights, minLength, charSeq,
-                   concavity, searchIter, searchHits)
+      .IWTBRSearch(.IWScore, edge, nTip, morphyObjects, startWeights, minLength,
+                   charSeq, concavity, searchIter, searchHits)
     } else {
       .TBRSearch(edge, nTip, morphyObj, searchIter, searchHits)
     }
@@ -745,11 +666,11 @@ MaximizeParsimony <- function (dataset, tree,
         ratchSeq <- seq_along(charInfo)[sampled][order(priority[sampled])] - 1L
       }
       if (profile) {
-        ratchetTrees <- .ProfileTBRSearch(edge, NTip(tree), morphyObjects,
-                                          resampling, ratchSeq, profiles,
-                                          searchIter, searchHits)
+        ratchetTrees <- .IWTBRSearch(.ProfileScore, edge, NTip(tree), morphyObjects,
+                                          resampling, minLength, ratchSeq,
+                                          profiles, searchIter, searchHits)
       } else if (iw) {
-        ratchetTrees <- .IWTBRSearch(edge, NTip(tree), morphyObjects,
+        ratchetTrees <- .IWTBRSearch(.IWScore, edge, NTip(tree), morphyObjects,
                                      resampling, minLength, ratchSeq,
                                      concavity, searchIter, searchHits)
       } else {
