@@ -44,10 +44,10 @@ test_that("Constraints work", {
                                       dimnames = list(letters[1:6], NULL)))
   cons <- consensus(MaximizeParsimony(dataset, constraint = constraint))
   expect_true(as.Splits(as.logical(c(0, 0, 1, 1, 1)), letters[c(1:3, 5:6)]) %in% 
-                as.Splits(drop.tip(cons, c('d', 'g'))))
+                as.Splits(DropTip(cons, c('d', 'g'))))
   
   expect_true(as.Splits(as.logical(c(0, 0, 0, 0, 1, 1)), letters[1:6]) %in% 
-                as.Splits(drop.tip(cons, 'g')))
+                as.Splits(DropTip(cons, 'g')))
   
 })
 
@@ -60,8 +60,8 @@ test_that("Constrained NJ trees work", {
   expect_equal(ape::read.tree(text = "(a, (d, ((c, b), (e, f))));"),
                ConstrainedNJ(dataset, constraint))
   # b == c == f, so these three could be resolved in one of three ways. Drop B.
-  expect_equal(drop.tip(NJTree(dataset), 'b'), 
-               drop.tip(ConstrainedNJ(dataset, dataset), 'b'))
+  expect_equal(DropTip(NJTree(dataset), 'b'), 
+               DropTip(ConstrainedNJ(dataset, dataset), 'b'))
 })
 
 test_that("Inconsistent constraints fail", {
