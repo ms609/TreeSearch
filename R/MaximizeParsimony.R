@@ -509,7 +509,7 @@ MaximizeParsimony <- function (dataset, tree,
     warning(immediate. = TRUE,
             "Ignoring taxa on tree missing in dataset:\n   ", 
             paste0(treeOnly, collapse = ', '), "\n")
-    tree <- drop.tip(tree, treeOnly)
+    tree <- DropTip(tree, treeOnly)
   }
   if (length(datOnly)) {
     warning(immediate. = TRUE,
