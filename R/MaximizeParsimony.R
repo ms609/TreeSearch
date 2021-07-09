@@ -144,10 +144,14 @@
 #' 
 #' @template MRS
 #' 
+#' @import cli
+#' @importFrom cli cli_alert_info cli_progress_bar cli_progress_done
+#' cli_progress_message
+#' cli_progress_step cli_progress_update
 #' @importFrom phangorn Descendants
 #' @importFrom shiny setProgress withProgress
 #' @importFrom stats runif
-#' @importFrom TreeTools NJTree CharacterInformation NTip
+#' @importFrom TreeTools DropTip NJTree CharacterInformation NTip
 #' @references
 #' \insertAllCited{}
 #' @encoding UTF-8
@@ -166,7 +170,16 @@ MaximizeParsimony <- function (dataset, tree,
   # Define functions
   .Message <- if (is.null(session)) function (level, ...) {
     if (level < verbosity) {
-      message(rep(' ', level), '- ', ...)
+      cli_progress_message(paste0(rep(' ', level), '- ', ...))
+    }
+  } else function (level, ...) { #nocov start
+    if (level < verbosity) {
+      setProgress(message = paste0(...))
+    }
+  } #nocov end
+  .Info <- if (is.null(session)) function (level, ...) {
+    if (level < verbosity) {
+      cli_alert_info(paste0(rep(' ', level), '- ', ...))
     }
   } else function (level, ...) { #nocov start
     if (level < verbosity) {
@@ -493,7 +506,7 @@ MaximizeParsimony <- function (dataset, tree,
       tree <- NJTree(dataset)
     }
   } else if (inherits(tree, 'multiPhylo')) {
-    .Message(1L, "Starting search from `tree[[1]]`.")
+    .Info(1L, "Starting search from `tree[[1]]`.")
     tree <- tree[[1]]
   }
   if (dim(tree$edge)[1] != 2 * tree$Nnode) {
@@ -506,15 +519,17 @@ MaximizeParsimony <- function (dataset, tree,
   treeOnly <- setdiff(leaves, taxa) 
   datOnly <- setdiff(taxa, leaves) 
   if (length(treeOnly)) {
-    warning(immediate. = TRUE,
-            "Ignoring taxa on tree missing in dataset:\n   ", 
-            paste0(treeOnly, collapse = ', '), "\n")
+    cli_alert_warning("Ignoring taxa on tree missing in dataset:\n   ",
+                      paste0(treeOnly, collapse = ', '), "\n")
+    warning("Ignored taxa on tree missing in dataset:\n   ",
+             paste0(treeOnly, collapse = ', '))
     tree <- drop.tip(tree, treeOnly)
   }
   if (length(datOnly)) {
-    warning(immediate. = TRUE,
-            "Ignoring taxa in dataset missing on tree:\n   ", 
-            paste0(datOnly, collapse = ', '), "\n")
+    cli_alert_warning("Ignoring taxa in dataset missing on tree:\n   ",
+                      paste0(datOnly, collapse = ', '), "\n")
+    warning("Ignored taxa in dataset missing on tree:\n   ",
+            paste0(datOnly, collapse = ', '))
     dataset <- dataset[-match(datOnly, taxa)]
   }
   if (constrained) {
@@ -525,9 +540,10 @@ MaximizeParsimony <- function (dataset, tree,
     }
     consOnly <- setdiff(consTaxa, tree$tip.label)
     if (length(consOnly)) {
-      warning(immediate. = TRUE,
-              "Ignoring taxa in constraint missing on tree:\n   ", 
+      cli_alert_warning("Ignoring taxa in constraint missing on tree:\n   ", 
               paste0(consOnly, collapse = ', '), "\n")
+      warning("Ignored taxa in constraint missing on tree:\n   ", 
+              paste0(consOnly, collapse = ', '))
       constraint <- constraint[-match(consOnly, consTaxa)]
     }
     constraint <- constraint[names(dataset)]
@@ -552,7 +568,7 @@ MaximizeParsimony <- function (dataset, tree,
     
     # Check that starting tree is consistent with constraints 
     if (.Forbidden(edge)) {
-      .Message(1L, "Modifying `tree` to match `constraint`...")
+      cli_alert_warning("Modifying `tree` to match `constraint`...")
       outgroup <- Descendants(tree, edge[1, 2], type = 'tips')[[1]]
       tree <- RootTree(ImposeConstraint(tree, constraint), outgroup)
       # RootTree leaves `tree` in preorder
@@ -579,7 +595,7 @@ MaximizeParsimony <- function (dataset, tree,
     outgroup <- NA
   }
   
-  
+  cli_progress_message("Initializing data.")
   # Initialize data
   if (profile) {
     dataset <- PrepareDataProfile(dataset)
@@ -679,12 +695,13 @@ MaximizeParsimony <- function (dataset, tree,
     bestScore <- .Score(edge)
     searchIter <- tbrIter * startIter
     searchHits <- maxHits
-    .Message(0L, "Find local optimum: TBR depth ",
-             as.integer(searchIter), "; keeping ", as.integer(searchHits),
-             " trees; k = ", concavity, ".",
-             "\n  ", Sys.time(),
-             "\n  Initial score: ", signif(bestScore, 5L),
-             "\n")
+    
+    .Info(0L, "Find local optimum: TBR depth ",
+          as.integer(searchIter), "; keeping ", as.integer(searchHits),
+          " trees; k = ", concavity, ".",
+          "\n  ", Sys.time(),
+          "\n  Initial score: ", signif(bestScore, 5L),
+          "\n")
     newEdges <- .Search()
     
     newBestScore <- .Score(newEdges)
