@@ -670,7 +670,7 @@ MaximizeParsimony <- function (dataset, tree,
                    signif(bestScore, 5), ' again')
           
           edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
-          bestEdges <- .CombineResult(bestEdges, ratchetImproved,
+          bestEdges <- .CombineResults(bestEdges, ratchetImproved,
                                        1 + tbrStart + iter)
         }
       } else {
