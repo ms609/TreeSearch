@@ -69,8 +69,6 @@
 #' @template constraintParam
 #' @param verbosity Integer specifying level of messaging; higher values give
 #' more detailed commentary on search progress. Set to `0` to run silently.
-#' @param session 'shiny' session identifier to allow [`setProgress()`] calls
-#' to be sent when `MaximizeParsimony()` is called from within a shiny app.
 #' @param \dots Additional parameters to `MaximizeParsimony()`.
 #' 
 #' @return `MaximizeParsimony()` returns a list of trees with class
@@ -145,13 +143,10 @@
 #' 
 #' @template MRS
 #' 
-#' @import cli
 #' @importFrom cli cli_alert_info cli_progress_bar cli_progress_done
-#' cli_progress_message
-#' cli_progress_step cli_progress_update
+#' cli_progress_message cli_progress_step cli_progress_update
 #' @importFrom glue glue
 #' @importFrom phangorn Descendants
-#' @importFrom shiny setProgress withProgress
 #' @importFrom stats runif
 #' @importFrom TreeTools DropTip NJTree CharacterInformation NTip
 #' @references
@@ -168,56 +163,30 @@ MaximizeParsimony <- function (dataset, tree,
                                concavity = Inf,
                                tolerance = sqrt(.Machine$double.eps),
                                constraint,
-                               verbosity = 2L, session = NULL) {
+                               verbosity = 2L) {
   
   ### User messaging functions ###
-  shiny <- !is.null(session)
-  .PrintMessage <- if (shiny) setProgress else cli_alert
-  .Message <- function (level, ...) { #nocov start
+  .Message <- function (level, ...) {
     if (level < verbosity) {
-      .PrintMessage(glue(...))
+      cli_alert(glue(...))
     }
   }
-  .Heading <- function (text, ...) { #nocov start
+  .Heading <- function (text, ...) {
     if (0 < verbosity) {
       cli_h1(text)
       cli_alert(glue(...))
-      if (shiny) setProgress(glue(text, ...))
     }
   }
   .Info <- function (level, ...) {
     if (level < verbosity) {
       cli_alert_info(paste0(...))
-      if (shiny) setProgress(glue(...))
     }
   }
   .Success <- function (level, ...) {
     if (level < verbosity) {
       cli_alert_success(paste0(...))
-      if (shiny) setProgress(glue('*', ..., '*'))
     }
   }
-  
-  .WithProgress <- function (expr, name, ...) {
-    if (shiny) {
-      withProgress(expr, message = name, ...)
-    } else {
-      expr
-    }
-  }
-  
-  .NewOperation <- function (...) {
-    if (shiny) {
-      setProgress(0, message = paste0(...))
-    }
-  }
-  
-  .Progress <- function(inc, total, ...) {
-    if (shiny) {
-      setProgress(inc / total, message = paste0(...))
-    }
-  } #nocov end
-  
   
   ### Tree score functions ###
   .EWScore <- function (edge, morphyObj, ...) {
@@ -269,7 +238,6 @@ MaximizeParsimony <- function (dataset, tree,
                      format_done = "  - TBR rearrangement found score {bestScore} {nHits} time{?s}.")
     
     while (iter < tbrIter) {
-      .Progress(nHits, maxHits, 'TBR depth ', iter + 1)
       iter <- iter + 1L
       optTbr <- sample(3:(nTip * 2 - 2))
       .Message(3L, "New TBR iteration (depth ", iter, 
@@ -335,23 +303,21 @@ MaximizeParsimony <- function (dataset, tree,
     if (length(dim(.edge)) == 3L) {
       .edge <- .edge[, , 1]
     }
-    .WithProgress(name = name, total = maxHits, expr = 
-      if (profile) {
-        .TBRSearch(.ProfileScore, name, edge = .edge, morphyObjects, 
-                   tbrIter = searchIter, maxHits = searchHits,
-                   weight = .weight, minLength = minLength, charSeq = charSeq,
-                   concavity = profiles)
-    
-      } else if (iw) {
-        .TBRSearch(.IWScore, name, edge = .edge, morphyObjects, 
-                   tbrIter = searchIter, maxHits = searchHits,
-                   weight = .weight, minLength = minLength, charSeq = charSeq,
-                   concavity = concavity)
-      } else {
-        .TBRSearch(.EWScore, name, edge = .edge, morphyObj, 
-                   tbrIter = searchIter, maxHits = searchHits)
-      }
-    )
+    if (profile) {
+      .TBRSearch(.ProfileScore, name, edge = .edge, morphyObjects, 
+                 tbrIter = searchIter, maxHits = searchHits,
+                 weight = .weight, minLength = minLength, charSeq = charSeq,
+                 concavity = profiles)
+  
+    } else if (iw) {
+      .TBRSearch(.IWScore, name, edge = .edge, morphyObjects, 
+                 tbrIter = searchIter, maxHits = searchHits,
+                 weight = .weight, minLength = minLength, charSeq = charSeq,
+                 concavity = concavity)
+    } else {
+      .TBRSearch(.EWScore, name, edge = .edge, morphyObj, 
+                 tbrIter = searchIter, maxHits = searchHits)
+    }
   }
   
   .Timeout <- function () {
@@ -633,7 +599,6 @@ MaximizeParsimony <- function (dataset, tree,
     
     iter <- 0L
     while (iter < ratchIter) {
-      .Progress(iter, ratchIter, "Ratchet iteration ", (iter + 1L))
       iter <- iter + 1L
       .Info(1L, "Ratchet iteration ", iter, " @ ", 
             format(Sys.time(), "%H:%M:%S"), "; score to beat: ",
@@ -800,7 +765,7 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
                       maxHits = 12L, concavity = Inf,
                       tolerance = sqrt(.Machine$double.eps),
                       constraint,
-                      verbosity = 2L, session = NULL,
+                      verbosity = 2L,
                       ...) {
   if (!inherits(dataset, 'phyDat')) {
     stop("`dataset` must be of class `phyDat`.")
@@ -834,7 +799,7 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
                     maxHits = maxHits,
                     concavity = concavity,
                     tolerance = tolerance, constraint = constraint,
-                    verbosity = verbosity, session = session, ...) 
+                    verbosity = verbosity, ...) 
 }
 
 #' Constrained neighbour-joining tree
