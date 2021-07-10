@@ -236,7 +236,7 @@ MaximizeParsimony <- function (dataset, tree,
     cli_progress_bar(name, total = maxHits, 
                      auto_terminate = FALSE,
                      clear = verbosity < 2,
-                     format_done = "  - TBR rearrangement found score {signif(bestScore)} {nHits} time{?s}.")
+                     format_done = "  - TBR rearrangement found score {signif(bestScore)} {nHits} time{?s} at depth {iter + 1}.")
     
     while (iter < tbrIter) {
       iter <- iter + 1L
@@ -290,8 +290,6 @@ MaximizeParsimony <- function (dataset, tree,
       }
       if (nHits >= maxHits) break
     }
-    .Message(2L, iter + 1, " TBR rearrangements found score ", 
-             signif(bestScore), " ", nHits, " times.")
     cli_progress_done()
     
     # Return:
@@ -335,7 +333,7 @@ MaximizeParsimony <- function (dataset, tree,
   
   .ReturnValue <- function (bestEdges) {
     cli_alert_success(paste0(Sys.time(), 
-                             ": Tree search terminated with score {.val signif(finalScore)}"))
+                             ": Tree search terminated with score {.strong {signif(finalScore)}}"))
     structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
       tr <- tree
       tr$edge <- bestEdges[, , i]
@@ -647,7 +645,7 @@ MaximizeParsimony <- function (dataset, tree,
       
       if (ratchetScore < bestPlusEps) {
         if (ratchetScore + epsilon < bestScore) {
-          .Success(1L, "New best score: {.strong {signif(ratchetScore)}}")
+          .Success(1L, "{.strong New best score}: {signif(ratchetScore)}")
           bestScore <- ratchetScore
           bestPlusEps <- bestScore + epsilon
           bestEdges <- .ReplaceResults(bestEdges, ratchetImproved,
