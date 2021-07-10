@@ -597,7 +597,7 @@ MaximizeParsimony <- function (dataset, tree,
     .Heading("Escape local optimum", "{ratchIter} ratchet iterations; ", 
              "TBR depth {ceiling(searchIter)}; ",
              "max. {ceiling(searchHits)} hits; ",
-             "k = {signif(concavity)}.")
+             "k = {concavity}.")
     cli_alert("{Sys.time()}: Score to beat: {.strong {signif(bestScore)}}")
     
     iter <- 0L
