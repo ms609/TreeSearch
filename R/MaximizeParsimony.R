@@ -483,7 +483,8 @@ MaximizeParsimony <- function (dataset, tree,
       #TODO Fixing this will require updating the counts table cleverly
       # Or we could use approximate info amounts, e.g. by treating '-' as 
       # an extra token
-      message("Inapplicable tokens '-' treated as ambiguous '?' for profile parsimony")
+      cli_alert_info(paste0("Inapplicable tokens '-' treated as ambiguous '?' ",
+                            "for profile parsimony"))
       cont <- attr(dataset, 'contrast')
       cont[cont[, '-'] != 0, ] <- 1
       attr(dataset, 'contrast') <- cont[, colnames(cont) != '-']
@@ -554,7 +555,7 @@ MaximizeParsimony <- function (dataset, tree,
   tbrEnd <- finalIter > 0
   bestEdges <- edge
   bestScore <- .Score(edge)
-  .Info(Sys.time(), ": Initial score: ", signif(bestScore, 5L))
+  .Info(0, Sys.time(), ": Initial score: ", signif(bestScore, 5L))
   dim(bestEdges) <- c(dim(bestEdges), 1)
   nStages <- sum(tbrStart, ratchIter, tbrEnd)
   cli_progress_bar("Tree search", total = nStages + 1)
