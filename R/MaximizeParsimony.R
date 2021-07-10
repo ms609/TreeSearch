@@ -143,7 +143,7 @@
 #' 
 #' @template MRS
 #' 
-#' @importFrom cli cli_alert cli_alert_info cli_alert_success cli_alert_warning
+#' @importFrom cli cli_alert cli_alert_danger cli_alert_info cli_alert_success cli_alert_warning
 #' cli_h1 
 #' cli_progress_bar cli_progress_done cli_progress_update
 #' @importFrom glue glue
@@ -236,7 +236,9 @@ MaximizeParsimony <- function (dataset, tree,
     cli_progress_bar(name, total = maxHits, 
                      auto_terminate = FALSE,
                      clear = verbosity < 2,
-                     format_done = "  - TBR rearrangement found score {signif(bestScore)} {nHits} time{?s} at depth {iter + 1}.")
+                     format_done = paste0("  - TBR rearrangement at depth {iter}",
+                                          " found score {signif(bestScore)}",
+                                          " {nHits} time{?s}."))
     
     while (iter < tbrIter) {
       iter <- iter + 1L
@@ -591,17 +593,18 @@ MaximizeParsimony <- function (dataset, tree,
   
   if (ratchIter > 0L) {
     
-    .Heading("Escape local optimum", ratchIter, " ratchet iterations; ", 
-             "TBR depth ", tbrIter, "; max. ", as.integer(maxHits),
-             " hits; k = ", concavity, ".")
+    .Heading("Escape local optimum", "{ratchIter} ratchet iterations; ", 
+             "TBR depth {ceiling(searchIter)}; ",
+             "max. {ceiling(searchHits)} hits; ",
+             "k = {signif(concavity)}.")
     cli_alert("{Sys.time()}: Score to beat: {.strong {signif(bestScore)}}")
     
     iter <- 0L
     while (iter < ratchIter) {
       iter <- iter + 1L
-      .Info(1L, "Ratchet iteration {iter} @ ",
-            format(Sys.time(), "%H:%M:%S"),
-            "; score to beat: {.strong {signif(bestScore)}}")
+      .Message(1L, "Ratchet iteration {iter} @ ",
+               format(Sys.time(), "%H:%M:%S"),
+               "; score to beat: {.strong {signif(bestScore)}}")
       verbosity <- verbosity - 1L
       eachChar <- seq_along(startWeights)
       deindexedChars <- rep.int(eachChar, startWeights)
@@ -652,14 +655,16 @@ MaximizeParsimony <- function (dataset, tree,
                                        1 + tbrStart + iter)
           edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
         } else {
-          .Info(2L, "Hit best score {.strong {signif(bestScore)} again")
+          .Info(2L, "Hit best score {.strong {signif(bestScore)}} again")
           
           edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
           bestEdges <- .CombineResults(bestEdges, ratchetImproved,
                                        1 + tbrStart + iter)
         }
       } else {
-        .Info(3L, "Did not hit best score {signif(bestScore)}")
+        if (2L < verbosity) {
+          cli_alert_danger("Did not hit best score {signif(bestScore)}")
+        }
       }
       if (.Timeout()) {
         return(.ReturnValue(bestEdges))
