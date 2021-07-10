@@ -704,7 +704,7 @@ MaximizeParsimony <- function (dataset, tree,
   }
   
   finalScore <- .Score(bestEdges[, , 1])
-  cli_alert_infocli_alert(paste0(Sys.time(), ": Final score: ", finalScore, "\n\n"))
+  cli_alert_info(paste0(Sys.time(), ": Final score: ", finalScore, "\n\n"))
   .Message(0L, Sys.time(), ": Final score: ", finalScore, "\n\n")
   
   # Return:
