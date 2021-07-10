@@ -21,8 +21,7 @@ MaximizeParsimony(
   concavity = Inf,
   tolerance = sqrt(.Machine$double.eps),
   constraint,
-  verbosity = 2L,
-  session = NULL
+  verbosity = 2L
 )
 
 Resample(
@@ -38,7 +37,6 @@ Resample(
   tolerance = sqrt(.Machine$double.eps),
   constraint,
   verbosity = 2L,
-  session = NULL,
   ...
 )
 
@@ -62,6 +60,7 @@ parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.}
 
 \item{tbrIter}{Numeric specifying the maximum number of \acronym{TBR}
 break points to evaluate before concluding each search.
+The counter is reset to zero each time tree score improves.
 The counter is reset to zero each time tree score improves.
 One 'iteration' comprises breaking a single branch and evaluating all
 possible reconnections.}
@@ -102,9 +101,6 @@ for further examples.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
 more detailed commentary on search progress. Set to \code{0} to run silently.}
-
-\item{session}{'shiny' session identifier to allow \code{\link[=setProgress]{setProgress()}} calls
-to be sent when \code{MaximizeParsimony()} is called from within a shiny app.}
 
 \item{method}{Unambiguous abbreviation of \code{jackknife} or \code{bootstrap}
 specifying how to resample characters.  Note that jackknife is considered

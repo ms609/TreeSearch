@@ -322,20 +322,19 @@ server <- function(input, output, session) {
     if (!inherits(r$dataset, 'phyDat')) {
       showNotification("No data loaded", type = 'error')
     } else {
-      r$trees <- withProgress(c(MaximizeParsimony(r$dataset,
-                                   tree = if(is.null(r$trees)) 
-                                     TreeTools::NJTree(r$dataset)
-                                   else
-                                     r$trees[[1]],
-                                   concavity = concavity(),
-                                   ratchIter = input$ratchIter,
-                                   tbrIter = input$tbrIter,
-                                   maxHits = ceiling(10 ^ input$maxHits),
-                                   startIter = input$startIter,
-                                   finalIter = input$finalIter,
-                                   verbosity = input$verbosity,
-                                   session = session)),
-                              message = "Searching...")
+      r$trees <- c(MaximizeParsimony(r$dataset,
+                                     tree = if(is.null(r$trees)) 
+                                       TreeTools::NJTree(r$dataset)
+                                     else
+                                       r$trees[[1]],
+                                     
+                                     concavity = concavity(),
+                                     ratchIter = input$ratchIter,
+                                     tbrIter = input$tbrIter,
+                                     maxHits = ceiling(10 ^ input$maxHits),
+                                     startIter = input$startIter,
+                                     finalIter = input$finalIter,
+                                     verbosity = input$verbosity))
       
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)

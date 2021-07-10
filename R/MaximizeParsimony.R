@@ -143,8 +143,9 @@
 #' 
 #' @template MRS
 #' 
-#' @importFrom cli cli_alert_info cli_progress_bar cli_progress_done
-#' cli_progress_message cli_progress_step cli_progress_update
+#' @importFrom cli cli_alert cli_alert_info cli_alert_success cli_alert_warning
+#' cli_h1 
+#' cli_progress_bar cli_progress_done cli_progress_update
 #' @importFrom glue glue
 #' @importFrom phangorn Descendants
 #' @importFrom stats runif
@@ -235,7 +236,7 @@ MaximizeParsimony <- function (dataset, tree,
     cli_progress_bar(name, total = maxHits, 
                      auto_terminate = FALSE,
                      clear = verbosity < 2,
-                     format_done = "  - TBR rearrangement found score {bestScore} {nHits} time{?s}.")
+                     format_done = "  - TBR rearrangement found score {signif(bestScore)} {nHits} time{?s}.")
     
     while (iter < tbrIter) {
       iter <- iter + 1L
@@ -334,7 +335,7 @@ MaximizeParsimony <- function (dataset, tree,
   
   .ReturnValue <- function (bestEdges) {
     cli_alert_success(paste0(Sys.time(), 
-                             ": Tree search terminated with score {finalScore}"))
+                             ": Tree search terminated with score {.val signif(finalScore)}"))
     structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
       tr <- tree
       tr$edge <- bestEdges[, , i]
@@ -366,7 +367,7 @@ MaximizeParsimony <- function (dataset, tree,
       tree <- NJTree(dataset)
     }
   } else if (inherits(tree, 'multiPhylo')) {
-    .Info(1L, "Starting search from `tree[[1]]`.")
+    .Info(1L, "Starting search from {.var tree[[1]]}.")
     tree <- tree[[1]]
   }
   if (dim(tree$edge)[1] != 2 * tree$Nnode) {
@@ -595,14 +596,14 @@ MaximizeParsimony <- function (dataset, tree,
     .Heading("Escape local optimum", ratchIter, " ratchet iterations; ", 
              "TBR depth ", tbrIter, "; max. ", as.integer(maxHits),
              " hits; k = ", concavity, ".")
-    cli_alert(paste0(Sys.time(), ": Score to beat: ", signif(bestScore)))
+    cli_alert("{Sys.time()}: Score to beat: {.strong {signif(bestScore)}}")
     
     iter <- 0L
     while (iter < ratchIter) {
       iter <- iter + 1L
-      .Info(1L, "Ratchet iteration ", iter, " @ ", 
-            format(Sys.time(), "%H:%M:%S"), "; score to beat: ",
-            signif(bestScore))
+      .Info(1L, "Ratchet iteration {iter} @ ",
+            format(Sys.time(), "%H:%M:%S"),
+            "; score to beat: {.strong {signif(bestScore)}}")
       verbosity <- verbosity - 1L
       eachChar <- seq_along(startWeights)
       deindexedChars <- rep.int(eachChar, startWeights)
@@ -646,21 +647,21 @@ MaximizeParsimony <- function (dataset, tree,
       
       if (ratchetScore < bestPlusEps) {
         if (ratchetScore + epsilon < bestScore) {
-          .Success(1L, "New best score: ", signif(ratchetScore, 5))
+          .Success(1L, "New best score: {.strong {signif(ratchetScore)}}")
           bestScore <- ratchetScore
           bestPlusEps <- bestScore + epsilon
           bestEdges <- .ReplaceResults(bestEdges, ratchetImproved,
                                        1 + tbrStart + iter)
           edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
         } else {
-          .Info(2L, "Hit best score ", signif(bestScore, 5), ' again')
+          .Info(2L, "Hit best score {.strong {signif(bestScore)} again")
           
           edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
           bestEdges <- .CombineResults(bestEdges, ratchetImproved,
                                        1 + tbrStart + iter)
         }
       } else {
-        .Info(3L, "Did not hit best score ", signif(bestScore, 5), ".")
+        .Info(3L, "Did not hit best score {signif(bestScore)}")
       }
       if (.Timeout()) {
         return(.ReturnValue(bestEdges))
@@ -674,8 +675,8 @@ MaximizeParsimony <- function (dataset, tree,
     searchHits <- maxHits
     
     .Heading("Sample local optimum",
-             "TBR depth ", searchIter, 
-             "; keeping ", searchHits, " trees; k = ", concavity)
+             "TBR depth {searchIter}; keeping {searchHits}",
+             " trees; k = {concavity}")
     .Info(0, Sys.time(), ": Score: ", signif(bestScore))
     finalEdges <- .Search('Final search')
     newBestScore <- .Score(finalEdges[, , 1])
