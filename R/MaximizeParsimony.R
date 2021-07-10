@@ -169,13 +169,13 @@ MaximizeParsimony <- function (dataset, tree,
   ### User messaging functions ###
   .Message <- function (level, ...) {
     if (level < verbosity) {
-      cli_alert(glue(...))
+      cli_alert(paste0(...))
     }
   }
   .Heading <- function (text, ...) {
     if (0 < verbosity) {
       cli_h1(text)
-      cli_alert(glue(...))
+      cli_alert(paste0(...))
     }
   }
   .Info <- function (level, ...) {
@@ -367,7 +367,7 @@ MaximizeParsimony <- function (dataset, tree,
       tree <- NJTree(dataset)
     }
   } else if (inherits(tree, 'multiPhylo')) {
-    .Info(1L, "Starting search from {.var tree[[1]]}.")
+    .Info(1L, "Starting search from {.var tree[[1]]}")
     tree <- tree[[1]]
   }
   if (dim(tree$edge)[1] != 2 * tree$Nnode) {
@@ -603,8 +603,8 @@ MaximizeParsimony <- function (dataset, tree,
     while (iter < ratchIter) {
       iter <- iter + 1L
       .Message(1L, "Ratchet iteration {iter} @ ",
-               format(Sys.time(), "%H:%M:%S"),
-               "; score to beat: {.strong {signif(bestScore)}}")
+               "{format(Sys.time(), '%H:%M:%S')}",
+               "; score to beat: {.strong {signif(bestScore)} }")
       verbosity <- verbosity - 1L
       eachChar <- seq_along(startWeights)
       deindexedChars <- rep.int(eachChar, startWeights)
