@@ -26,6 +26,7 @@ Imports:
     ape (>= 5.0),
     cli (>= 3.0),
     cluster,
+    glue,
     phangorn (>= 2.2.1),
     protoclust,
     Quartet,
