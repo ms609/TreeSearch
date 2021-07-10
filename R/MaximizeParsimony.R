@@ -181,6 +181,12 @@ MaximizeParsimony <- function (dataset, tree,
       .Message(...)
     }
   }
+  .Success <- function (level, ...) {
+    if (level < verbosity) {
+      cli_alert_success(paste0(...))
+      .Message(paste0('*', ..., '*'))
+    }
+  }
   
   .WithProgress <- function (expr, name, ...) {
     if (shiny) {
@@ -246,18 +252,23 @@ MaximizeParsimony <- function (dataset, tree,
     hold[, , 1] <- edge
     bestScore <- Score(edge, morphyObjs, weight, charSeq, concavity, minLength)
     bestPlusEps <- bestScore + epsilon
-    cli_progress_bar("TBR search", total = maxHits, auto_terminate = FALSE)
+    cli_progress_bar("TBR search", total = maxHits, 
+                     auto_terminate = FALSE,
+                     clear = verbosity > 1,
+                     format_done = "  - TBR rearrangements hit score {bestScore} {nHits} times.")
     
     while (iter < tbrIter) {
       .Progress(nHits, maxHits, 'TBR depth ', iter + 1)
       iter <- iter + 1L
-      cli_progress_update(set = nHits, status = paste0('TBR depth ', iter),
-                          total = max(nHits, maxHits))
       optTbr <- sample(3:(nTip * 2 - 2))
+      cli_progress_update(set = 0, total = length(optTbr),
+                          status = paste0('Depth ', iter, ", score ",
+                                          signif(bestScore, 5), '.'))
       .Message(3L, "New TBR iteration (depth ", iter, 
                ", score ", signif(bestScore, 5), ")")
       
       for (brk in optTbr) {
+        cli_progress_update(1)
         .Message(6L, "Break ", brk)
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
@@ -301,6 +312,7 @@ MaximizeParsimony <- function (dataset, tree,
     }
     .Message(2L, iter + 1, " TBR rearrangements found score ", 
              signif(bestScore), " ", nHits, " times.")
+    cli_progress_done()
     
     # Return:
     unique(hold[, , seq_len(nHits), drop = FALSE], MARGIN = 3L)
@@ -659,8 +671,8 @@ MaximizeParsimony <- function (dataset, tree,
       
       if (ratchetScore < bestPlusEps) {
         if (ratchetScore + epsilon < bestScore) {
-          .Info(1L, "*Ratchet iteration ", iter, " found new best score: ",
-                   signif(ratchetScore, 5), "*")
+          .Success(1L, "Ratchet iteration ", iter, " found new best score: ",
+                   signif(ratchetScore, 5))
           bestScore <- ratchetScore
           bestPlusEps <- bestScore + epsilon
           bestEdges <- .ReplaceResults(bestEdges, ratchetImproved,
