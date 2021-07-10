@@ -272,14 +272,14 @@ MaximizeParsimony <- function (dataset, tree,
       .Progress(nHits, maxHits, 'TBR depth ', iter + 1)
       iter <- iter + 1L
       optTbr <- sample(3:(nTip * 2 - 2))
-      cli_progress_update(set = 0, total = length(optTbr),
-                          status = paste0('Depth ', iter, ", score ",
-                                          signif(bestScore, 5), '.'))
       .Message(3L, "New TBR iteration (depth ", iter, 
                ", score ", signif(bestScore, 5), ")")
+      cli_progress_update(set = 0, total = length(optTbr))
       
       for (brk in optTbr) {
-        cli_progress_update(1)
+        cli_progress_update(1, status = paste0('Depth ', iter, ", score ",
+                                               signif(bestScore, 5), ", ",
+                                               nHits, " hits."))
         .Message(6L, "Break ", brk)
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
@@ -600,7 +600,7 @@ MaximizeParsimony <- function (dataset, tree,
     
     .Heading("Find local optimum",
              " TBR depth ", as.integer(searchIter),
-             "; keeping ", as.integer(searchHits),
+             "; keeping max ", as.integer(searchHits),
              " trees; k = ", concavity, ".")
     .Info(0, Sys.time(), ": Score to beat: ", signif(bestScore))
           
@@ -627,8 +627,9 @@ MaximizeParsimony <- function (dataset, tree,
   if (ratchIter > 0L) {
     
     .Heading("Escape local optimum", ratchIter, " ratchet iterations; ", 
-             "TBR depth ", tbrIter, "; ", maxHits, " hits; k = ", concavity, ".")
-    cli_alert(Sys.time(), ": Score to beat: ", signif(bestScore))
+             "TBR depth ", tbrIter, "; max. ", as.integer(maxHits),
+             " hits; k = ", concavity, ".")
+    cli_alert(paste0(Sys.time(), ": Score to beat: ", signif(bestScore)))
     
     iter <- 0L
     while (iter < ratchIter) {
@@ -902,8 +903,9 @@ ConstrainedNJ <- function (dataset, constraint, weight = 1L) {
 #' @importFrom protoclust protoclust
 #' @importFrom cluster pam silhouette
 #' @export
-EasyTrees <- function () #nocov start
+EasyTrees <- function () {#nocov start
   shiny::runApp(system.file('Parsimony', package = 'TreeSearch'))
+}
 
 #' @rdname MaximizeParsimony
 #' @export
