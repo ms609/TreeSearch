@@ -336,7 +336,8 @@ MaximizeParsimony <- function (dataset, tree,
   
   .ReturnValue <- function (bestEdges) {
     cli_alert_success(paste0(Sys.time(), 
-                             ": Tree search terminated with score {.strong {signif(finalScore)}}"))
+                             ": Tree search terminated with score {.strong ",
+                             "{signif(.Score(bestEdges[, , 1]))}}"))
     structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
       tr <- tree
       tr$edge <- bestEdges[, , i]
@@ -692,8 +693,6 @@ MaximizeParsimony <- function (dataset, tree,
       .CombineResults(bestEdges, finalEdges, 1 + tbrStart + ratchIter + 1)
     }
   }
-  
-  finalScore <- .Score(bestEdges[, , 1])
   
   # Return:
   .ReturnValue(bestEdges)

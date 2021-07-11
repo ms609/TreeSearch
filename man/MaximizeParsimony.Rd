@@ -15,7 +15,7 @@ MaximizeParsimony(
   tbrIter = 2L,
   startIter = 2L,
   finalIter = 1L,
-  maxHits = NTip(dataset) * 1.5,
+  maxHits = NTip(dataset) * 1.8,
   maxTime = 60,
   quickHits = 1/3,
   concavity = Inf,
