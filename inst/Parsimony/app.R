@@ -147,28 +147,19 @@ Venna2001 <- Reference(
   doi = "10.1007/3-540-44668-0_68")
 
 ui <- fluidPage(theme = 'app.css',
+                title = 'Title',
   useShinyjs(),
   column(3,
     fluidRow(
       tags$h1("TreeSearch beta UI"),
-      fileInput("datafile", "Load data", placeholder = "No data file selected"),
-      actionButton("loadTrees", "Load trees"),
-      selectInput('character.weight', "Character weighting", list("Equal" = "equal"), "equal"),
-      selectInput('implied.weights', "Step weighting", 
-                  list("Implied" = "on", "Profile" = "prof", "Equal" = "off"), "on"),
-      sliderInput("concavity", "Step weight concavity constant", min = 0L,
-                  max = 3L, pre = '10^', value = 1L),
-      sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 6L, step = 1L),
-      # sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 0L, step = 1L),
-      sliderInput('tbrIter', "TBR depth", min = 1L, max = 20L, value = 1L, step = 1L),
-      # sliderInput('tbrIter', "TBR iterations", min = 1L, max = 50L, value = 1L, step = 1L),
-      sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 2L, pre = '10^'),
-      # sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 0.6, pre = '10^'),
-      sliderInput('startIter', "First iteration extra depth", min = 1L, max = 10L, value = 3L),
-      sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
-      # sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
-      sliderInput('verbosity', "Notification level", min = 0L, max = 3L, value = 3L, step = 1L),
-      actionButton("go", "Search"),
+      fileInput("datafile", "Load data",
+                placeholder = "No data file selected"),
+      tags$label("Search", class = "control-label", 
+                 style = 'display: block; margin-top: -15px;'),
+      actionButton("searchConfig", "Configure", icon = icon('cogs')),
+      hidden(actionButton("go", "Search", icon = icon('search'))),
+      fileInput("treeFile", label = "Load trees",
+                placeholder = "No tree file selected"),
       textOutput("results"),
       hidden(radioButtons('plotFormat', "Display:",
                    list("Characters on trees" = 'ind',
@@ -266,14 +257,43 @@ server <- function(input, output, session) {
     
   })
   
-  observeEvent(input$loadTrees, {
+  observeEvent(input$searchConfig, {
+    updateSelectInput(session, 'character.weight', selected = input$character.weight)
+    updateSelectInput(session, 'implied.weights', selected = input$implied.weights)
+    updateSliderInput(session, 'concavity', value = input$concavity)
+    updateSliderInput(session, 'ratchIter', value = input$ratchIter)
+    updateSliderInput(session, 'tbrIter', value = input$tbrIter)
+    updateSliderInput(session, 'maxHits', value = input$maxHits)
+    updateSliderInput(session, 'startIter', value = input$startIter)
+    updateSliderInput(session, 'finalIter', value = input$finalIter)
+    updateSliderInput(session, 'verbosity', value = input$verbosity)
     showModal(modalDialog(
-      tagList(fileInput("treeFile", label = '')),
-      title = 'Load trees from file',
-      footer = tagList(actionButton("replaceTrees", "Replace existing trees"),
-                       modalButton("Cancel"))))
+      easyClose = TRUE,
+      size = 'l',
+      fluidPage(column(6,
+      tagList(selectInput('character.weight', "Character weighting", list("Equal" = "equal"), "equal"),
+              selectInput('implied.weights', "Step weighting", 
+                         list("Implied" = "on", "Profile" = "prof", "Equal" = "off"), "on"),
+              sliderInput("concavity", "Step weight concavity constant", min = 0L,
+                         max = 3L, pre = '10^', value = 1L),
+              sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 6L, step = 1L),
+              sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 2L, pre = '10^'),
+      )), column(6, 
+             tagList(
+              sliderInput('tbrIter', "TBR depth", min = 1L, max = 20L, value = 1L, step = 1L),
+              sliderInput('startIter', "First iteration extra depth", min = 1L, max = 10L, value = 3L),
+              sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
+              sliderInput('verbosity', "Notification level", min = 0L, max = 3L, value = 3L, step = 1L),
+             ))
+      ),
+      title = "Tree search settings",
+      footer = tagList(modalButton('Close', icon = icon('window-close')),
+                       actionButton("modalGo", icon = icon('search'), 
+                                    if(length(r$trees)) "Continue search" else "Start search"))
+    ))
+    show('go')
   })
-    
+  
   observeEvent(input$replaceTrees, {
     tmpFile <- input$treeFile$datapath
     trees <- tryCatch(read.tree(tmpFile),
@@ -287,7 +307,8 @@ server <- function(input, output, session) {
       showNotification(paste("Loaded", length(r$trees), "trees"), type = "message")
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
-      updateActionButton(session, "go", "Continue search")
+      updateActionButton(session, "modalGo", "Continue search")
+      updateActionButton(session, "go", "Continue")
       show('plotFormat')
       
       scores <- tryCatch(signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
@@ -326,7 +347,7 @@ server <- function(input, output, session) {
            'prof' = 'Profile')
   })
   
-  observeEvent(input$go, {
+  StartSearch <- function () {
     if (!inherits(r$dataset, 'phyDat')) {
       showNotification("No data loaded", type = 'error')
     } else {
@@ -349,10 +370,14 @@ server <- function(input, output, session) {
       output$results <- renderText(paste0(
         "Found ", length(r$trees), " trees with score ", 
         signif(TreeLength(r$trees[[1]], r$dataset, concavity = concavity()))))
-      updateActionButton(session, "go", "Continue search")
+      updateActionButton(session, "go", "Continue")
+      updateActionButton(session, "modalGo", "Continue search")
       show('plotFormat')
     }
-  })
+  }
+  
+  observeEvent(input$go, StartSearch())
+  observeEvent(input$modalGo, StartSearch())
   
   PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 50)
   PlottedTree <- debounce(reactive(Postorder(r$trees[[input$whichTree]])), 100)
