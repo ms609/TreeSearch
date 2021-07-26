@@ -27,7 +27,7 @@ MaximizeParsimony(
 
 Resample(
   dataset,
-  tree = NJTree(dataset),
+  tree,
   method = "jack",
   proportion = 2/3,
   ratchIter = 1L,
@@ -53,8 +53,8 @@ whose names correspond to the labels of any accompanying tree.}
 \item{tree}{(optional) A bifurcating tree of class \code{\link{phylo}},
 containing only the tips listed in \code{dataset}, from which the search
 should begin.
-If unspecified, a neighbour-joining tree will be generated from \code{dataset},
-respecting any supplied \code{constraint}.
+If unspecified, an \link[=AdditionTree]{addition tree} will be generated from
+\code{dataset}, respecting any supplied \code{constraint}.
 Edge lengths are not supported and will be deleted.}
 
 \item{ratchIter}{Numeric specifying number of iterations of the

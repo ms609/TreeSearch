@@ -33,8 +33,8 @@
 #' @param tree (optional) A bifurcating tree of class \code{\link{phylo}},
 #' containing only the tips listed in `dataset`, from which the search
 #' should begin.
-#' If unspecified, a neighbour-joining tree will be generated from `dataset`,
-#' respecting any supplied `constraint`.
+#' If unspecified, an [addition tree][AdditionTree()] will be generated from
+#'  `dataset`, respecting any supplied `constraint`.
 #' Edge lengths are not supported and will be deleted.
 #' @param ratchIter Numeric specifying number of iterations of the 
 #' parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.
@@ -156,7 +156,7 @@
 #' CharacterInformation
 #' ConstrainedNJ 
 #' ImposeConstraint 
-#' NJTree NTip
+#' NTip
 #' @references
 #' \insertAllCited{}
 #' @encoding UTF-8
@@ -496,11 +496,8 @@ MaximizeParsimony <- function (dataset, tree,
   
   # Initialize tree
   if (missing(tree)) {
-    if (constrained) {
-      tree <- ConstrainedNJ(dataset, constraint)
-    } else {
-      tree <- NJTree(dataset)
-    }
+    tree <- AdditionTree(dataset, constraint = constraint,
+                         concavity = concavity)
   } else if (inherits(tree, 'multiPhylo')) {
     .Message(1L, "Starting search from `tree[[1]]`.")
     tree <- tree[[1]]
@@ -913,7 +910,7 @@ MaximizeParsimony <- function (dataset, tree,
 #' @family split support functions
 #' @encoding UTF-8
 #' @export
-Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
+Resample <- function (dataset, tree, method = 'jack',
                       proportion = 2/3,
                       ratchIter = 1L, tbrIter = 8L, finalIter = 3L,
                       maxHits = 12L, concavity = Inf,

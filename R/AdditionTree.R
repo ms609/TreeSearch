@@ -13,10 +13,11 @@
 #' @template MRS
 #' @return `AdditionTree()` returns a tree of class `phylo`, rooted on
 #' `sequence[1]`.
-#' @importFrom TreeTools AddTipEverywhere PectinateTree
-#' @importFrom cli cli_progress_bar cli_progress_update cli_progress_done
+#' @importFrom TreeTools AddUnconstrained AddTipEverywhere PectinateTree
+#' @importFrom cli cli_progress_bar cli_progress_update
 #' @export
-AdditionTree <- function (dataset, sequence, concavity = Inf) {
+AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
+  # Initialize missing parameters
   taxa <- names(dataset)
   if (missing(sequence)) {
     sequence <- taxa[1]
@@ -29,22 +30,53 @@ AdditionTree <- function (dataset, sequence, concavity = Inf) {
   if (length(unlisted) > 0) {
     sequence <- c(sequence, sample(unlisted))
   }
+  if (!missing(constraint)) {
+    constraint <- AddUnconstrained(constraint, taxa)
+  }
   
+  # Starting tree, rooted on first element in sequence
   tree <- PectinateTree(sequence[1:3])
-  cli_progress_bar('Addition tree', total = sum(2 * (4:nTaxa) - 5),
-                   auto_terminate = FALSE)
+  
+  cli_progress_bar('Addition tree', total = sum(2 * (4:nTaxa) - 5))
   for (addition in sequence[4:nTaxa]) {
     candidates <- AddTipEverywhere(tree, addition)
-    cli_progress_update(length(candidates))
-    scores <- TreeLength(candidates, dataset[candidates[[1]]$tip.label], concavity)
+    nCands <- length(candidates)
+    
+    theseTaxa <- candidates[[1]]$tip.label
+    theseData <- dataset[theseTaxa]
+    if (is.finite(concavity)) {
+      theseData <- PrepareDataIW(theseData)
+    } else if (is.character(concavity)) {
+      theseData <- PrepareDataProfile(theseData)
+    }
+    
+    if (!missing(constraint)) {
+      thisConstr <- constraint[theseTaxa]
+      morphyConstr <- PhyDat2Morphy(thisConstr)
+      # Calculate constraint minimum score
+      constraintLength <- sum(MinimumLength(thisConstr, compress = TRUE) *
+                              attr(thisConstr, 'weight'))
+      
+      .Forbidden <- function (edges) {
+        preorder_morphy(edges, morphyConstr) != constraintLength
+      }
+      
+    
+      candidates <- candidates[!vapply(lapply(candidates, `[[`, 'edge'),
+                                       .Forbidden, logical(1))]
+      UnloadMorphy(morphyConstr)
+    }
+    
+    # Score remaining candidates
+    scores <- TreeLength(candidates, theseData, concavity)
     minScore <- which.min(scores)
     nMin <- length(minScore)
     if (nMin > 1) {
       minScore <- minScore[sample.int(nMin, 1)]
     }
     tree <- candidates[[minScore]]
+    cli_progress_update(nCands)
   }
-  cli_progress_done()
   
   tree
 }
