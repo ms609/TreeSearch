@@ -312,6 +312,13 @@ server <- function(input, output, session) {
     
   })
   
+  observeEvent(input$implied.weights, {
+    switch(input$implied.weights,
+           'on' = show('concavity'),
+           hide('concavity')
+    )
+  })
+  
   concavity <- reactive({
     switch(input$implied.weights,
            'on' = 10 ^ input$concavity,
