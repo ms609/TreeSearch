@@ -41,6 +41,7 @@ TreeLength <- function (tree, dataset, concavity = Inf) UseMethod('TreeLength')
 #' @rdname TreeLength
 #' @export
 TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
+  dataset <- dataset[tree$tip.label]
   if (is.finite(concavity)) {
     if (!('min.length' %in% names(attributes(dataset)))) {
       dataset <- PrepareDataIW(dataset)
@@ -146,6 +147,9 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
 #' @rdname TreeLength
 #' @export
 TreeLength.multiPhylo <- TreeLength.list
+
+#' @export
+TreeLength.NULL <- function (tree, dataset, concavity = Inf) NULL
 
 #' @rdname TreeLength
 #' @export
