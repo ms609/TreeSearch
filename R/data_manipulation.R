@@ -37,6 +37,7 @@
 #' PrepareDataProfile(dataset)
 #' @author Martin R. Smith; written with reference to 
 #' `phangorn:::prepareDataFitch()`
+#' @importFrom cli cli_alert
 #' @export
 PrepareDataProfile <- function (dataset) {
   if ('info.amounts' %in% names(attributes(dataset))) {
@@ -62,7 +63,7 @@ PrepareDataProfile <- function (dataset) {
   ambigs <- which(contSums > 1L & contSums < ncol(cont))
   inappLevel <- which(colnames(cont) == '-')
   if (length(inappLevel) != 0L) {
-    message("Inapplicable tokens treated as ambiguous for profile parsimony")
+    cli_alert("Inapplicable tokens treated as ambiguous for profile parsimony")
     inappLevel <- which(apply(unname(cont), 1, identical,
                               as.double(colnames(cont) == '-')))
     dataset[] <- lapply(dataset, function (i) {
@@ -111,7 +112,9 @@ PrepareDataProfile <- function (dataset) {
     .RemoveExtraTokens(mataset[i, ], ambiguousTokens = qmLevel))
   nChar <- vapply(decomposed, dim, c(0, 0))[2, ]
   if (sum(nChar) == 0) {
-    warning("No informative characters in `dataset`.")
+    cli_alert("No informative characters in `dataset`.")
+    attr(dataset, 'info.amounts') <- double(0)
+    return(dataset[0])
   }
   newIndex <- seq_len(sum(nChar))
   oldIndex <- rep.int(seq_along(nChar), nChar)
@@ -136,10 +139,12 @@ PrepareDataProfile <- function (dataset) {
     # Return:
     cipher[char]
   }
-  mataset <- apply(mataset, 2, .Recompress, qmLevel)
   if (length(mataset) == 0) {
-    stop("No informative characters in `dataset`.")
+    cli_alert("No informative characters in `dataset`.")
+    attr(dataset, 'info.amounts') <- double(0)
+    return(dataset[0])
   }
+  mataset <- apply(mataset, 2, .Recompress, qmLevel)
   dupCols <- duplicated(t(mataset))
   kept <- which(!dupCols)
   copies <- lapply(kept, function (i) {

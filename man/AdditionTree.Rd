@@ -4,14 +4,11 @@
 \alias{AdditionTree}
 \title{Addition tree}
 \usage{
-AdditionTree(dataset, sequence, concavity = Inf)
+AdditionTree(dataset, concavity = Inf, constraint, sequence)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
 whose names correspond to the labels of any accompanying tree.}
-
-\item{sequence}{Character vector listing sequence in which to add taxa.
-Randomized if not provided.}
 
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
@@ -23,6 +20,9 @@ Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
 Specify \code{Inf} to weight each additional step equally.
 Specify \code{'profile'} to employ profile parsimony \insertCite{Faith2001}{TreeSearch}.}
+
+\item{sequence}{Character vector listing sequence in which to add taxa.
+Randomized if not provided.}
 }
 \value{
 \code{AdditionTree()} returns a tree of class \code{phylo}, rooted on

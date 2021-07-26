@@ -2,21 +2,18 @@ test_that("Addition tree is more parsimonious", {
   data('Lobo', package = 'TreeTools')
   L10 <- Lobo.phy[1:10]
   seq10 <- names(L10)
-  Score10 <- function (tr) TreeLength(tr, Lobo.phy, concavity = 10)
+  Score <- function (tr, k) TreeLength(tr, Lobo.phy, concavity = k)
   
   set.seed(1) # ensure consistent addition sequence
   eq <- AdditionTree(Lobo.phy)
   kx <- AdditionTree(L10, sequence = seq10, concavity = 10)
-  #pr <- AdditionTree(Lobo.phy, concavity = 'pr')
+  pr <- AdditionTree(L10, sequence = 1:10, concavity = 'pr')
   nj <- TreeTools::NJTree(Lobo.phy)
+  nj10 <- TreeTools::KeepTip(nj, 1:10)
   
   expect_lt(TreeLength(eq, Lobo.phy), TreeLength(nj, Lobo.phy))
-  expect_lt(TreeLength(kx, L10, concavity = 10),
-            TreeLength(TreeTools::KeepTip(nj, 1:10), L10, conc = 10))
-  
-  # expect_lt(TreeLength(pr, Lobo.phy, concavity = 'pr'),
-  #           TreeLength(nj, Lobo.phy, concavity = 'pr'))
-  
+  expect_lt(Score(kx, 10), Score(nj10, 10))
+  expect_lt(Score(pr, 'pr'), Score(nj10, 'pr'))
 })
 
 test_that("Addition tree obeys constraints", {
