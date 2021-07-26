@@ -209,7 +209,7 @@ of 3 in TNT; this low default gives poorer results in many settings
 Better still is to use multiple values and compare the results,
 perhaps in 
 [Tree space](https://ms609.github.io/TreeDist/articles/treespace.html).
-Even better (?) is to use [profile parsimony]((https://ms609.github.io/TreeSearch/dev/articles/profile.html)).
+Even better (?) is to use [profile parsimony](https://ms609.github.io/TreeSearch/articles/profile.html).
 
 ## Constraining a search
 
