@@ -155,7 +155,7 @@ ui <- fluidPage(theme = 'app.css',
       actionButton("loadTrees", "Load trees"),
       selectInput('character.weight', "Character weighting", list("Equal" = "equal"), "equal"),
       selectInput('implied.weights', "Step weighting", 
-                  list("Implied" = "on", "Equal" = "off"), "on"),
+                  list("Implied" = "on", "Profile" = "prof", "Equal" = "off"), "on"),
       sliderInput("concavity", "Step weight concavity constant", min = 0L,
                   max = 3L, pre = '10^', value = 1L),
       sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 6L, step = 1L),
@@ -201,7 +201,7 @@ ui <- fluidPage(theme = 'app.css',
                               min = 0L, max = 1L, step = 1L, width = 200),
                  checkboxGroupInput('mapDisplay', '', list(
                    "Align tips" = "tipsRight",
-                   "Reconstruct tips" = "updateTips"
+                   "Infer tips" = "updateTips"
                    )),
                  style = "float: right; width: 200px; margin-left: 2em;"),
         htmlOutput('charMapLegend')
@@ -313,9 +313,10 @@ server <- function(input, output, session) {
   })
   
   concavity <- reactive({
-    if (input$implied.weights == 'on') {
-      10 ^ input$concavity
-    } else Inf
+    switch(input$implied.weights,
+           'on' = 10 ^ input$concavity,
+           'off' = Inf,
+           'prof' = 'Profile')
   })
   
   observeEvent(input$go, {
