@@ -59,7 +59,8 @@ LinkingTo:
     Rcpp,
     TreeTools
 Remotes:
-    ms609/TreeDist
+    ms609/TreeDist,
+    ms609/TreeTools,
 SystemRequirements: C++14
 LazyData: true
 ByteCompile: true
