@@ -11,7 +11,7 @@ test_that("Addition tree is more parsimonious", {
   
   expect_lt(TreeLength(eq, Lobo.phy), TreeLength(nj, Lobo.phy))
   expect_lt(TreeLength(kx, L10, concavity = 10),
-            TreeLength(KeepTip(nj, 1:10), L10, concavity = 10))
+            TreeLength(TreeTools::KeepTip(nj, 1:10), L10, concavity = 10))
   
   # expect_lt(TreeLength(pr, Lobo.phy, concavity = 'pr'),
   #           TreeLength(nj, Lobo.phy, concavity = 'pr'))
