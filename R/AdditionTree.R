@@ -3,9 +3,7 @@
 #' Generates a starting tree by adding each taxon in turn to the most
 #' parsimonious location.
 #' 
-#' @template datasetParam
-#' @template constraintParam
-#' @template concavityParam
+#' @inheritParams MaximizeParsimony
 #' @param sequence Character or numeric vector listing sequence in which to add
 #' taxa. Randomized if not provided.
 #' @examples 
