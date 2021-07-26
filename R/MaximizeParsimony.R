@@ -351,7 +351,7 @@ MaximizeParsimony <- function (dataset, tree,
     structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
       tr <- tree
       tr$edge <- bestEdges[, , i]
-      if (is.na(outgroup)) {
+      if (any(is.na(outgroup))) {
         tr
       } else {
         RootTree(tr, outgroup)
