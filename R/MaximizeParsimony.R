@@ -33,8 +33,8 @@
 #' @param tree (optional) A bifurcating tree of class \code{\link{phylo}},
 #' containing only the tips listed in `dataset`, from which the search
 #' should begin.
-#' If unspecified, a neighbour-joining tree will be generated from `dataset`,
-#' respecting any supplied `constraint`.
+#' If unspecified, an [addition tree][AdditionTree()] will be generated from
+#'  `dataset`, respecting any supplied `constraint`.
 #' Edge lengths are not supported and will be deleted.
 #' @param ratchIter Numeric specifying number of iterations of the 
 #' parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.
@@ -65,7 +65,11 @@
 #' Setting to larger values will include trees suboptimal by up to `tolerance`
 #' in search results, which may improve the accuracy of the consensus tree
 #' (at the expense of resolution) \insertCite{Smith2019}{TreeSearch}.
-#' @template constraintParam
+#' @param constraint An object of class `phyDat`; returned trees will be
+#' perfectly compatible with each character in `constraint`.
+#' See [`ImposeConstraint()`] and 
+#' [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
+#' for further examples.
 #' @param verbosity Integer specifying level of messaging; higher values give
 #' more detailed commentary on search progress. Set to `0` to run silently.
 #' @param session 'shiny' session identifier to allow [`setProgress()`] calls
@@ -147,7 +151,12 @@
 #' @importFrom phangorn Descendants
 #' @importFrom shiny setProgress withProgress
 #' @importFrom stats runif
-#' @importFrom TreeTools NJTree CharacterInformation NTip
+#' @importFrom TreeTools
+#' AddUnconstrained 
+#' CharacterInformation
+#' ConstrainedNJ 
+#' ImposeConstraint 
+#' NTip
 #' @references
 #' \insertAllCited{}
 #' @encoding UTF-8
@@ -465,7 +474,7 @@ MaximizeParsimony <- function (dataset, tree,
     structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
       tr <- tree
       tr$edge <- bestEdges[, , i]
-      if (is.na(outgroup)) {
+      if (any(is.na(outgroup))) {
         tr
       } else {
         RootTree(tr, outgroup)
@@ -487,11 +496,8 @@ MaximizeParsimony <- function (dataset, tree,
   
   # Initialize tree
   if (missing(tree)) {
-    if (constrained) {
-      tree <- ConstrainedNJ(dataset, constraint)
-    } else {
-      tree <- NJTree(dataset)
-    }
+    tree <- AdditionTree(dataset, constraint = constraint,
+                         concavity = concavity)
   } else if (inherits(tree, 'multiPhylo')) {
     .Message(1L, "Starting search from `tree[[1]]`.")
     tree <- tree[[1]]
@@ -521,7 +527,7 @@ MaximizeParsimony <- function (dataset, tree,
     consTaxa <- names(constraint)
     treeOnly <- setdiff(tree$tip.label, consTaxa)
     if (length(treeOnly)) {
-      constraint <- .AddUnconstrained(constraint, treeOnly)
+      constraint <- AddUnconstrained(constraint, treeOnly)
     }
     consOnly <- setdiff(consTaxa, tree$tip.label)
     if (length(consOnly)) {
@@ -904,7 +910,7 @@ MaximizeParsimony <- function (dataset, tree,
 #' @family split support functions
 #' @encoding UTF-8
 #' @export
-Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
+Resample <- function (dataset, tree, method = 'jack',
                       proportion = 2/3,
                       ratchIter = 1L, tbrIter = 8L, finalIter = 3L,
                       maxHits = 12L, concavity = Inf,
@@ -945,63 +951,6 @@ Resample <- function (dataset, tree = NJTree(dataset), method = 'jack',
                     concavity = concavity,
                     tolerance = tolerance, constraint = constraint,
                     verbosity = verbosity, session = session, ...) 
-}
-
-#' Constrained neighbour-joining tree
-#' 
-#' Constructs an approximation to a neighbour-joining tree, modified in order
-#' to be consistent with a constraint.  Zero-length branches are collapsed
-#' at random.
-#' 
-#' @param weight Numeric specifying degree to upweight characters in
-#' `constraint`.
-#' 
-#' @return `ConstrainedNJ()` returns a tree of class `phylo`.
-#' @inheritParams MaximizeParsimony
-#' @examples
-#' dataset <- TreeTools::MatrixToPhyDat(matrix(
-#'   c(0, 1, 1, 1, 0, 1,
-#'     0, 1, 1, 0, 0, 1), ncol = 2,
-#'   dimnames = list(letters[1:6], NULL)))
-#' constraint <- TreeTools::MatrixToPhyDat(
-#'   c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
-#' plot(ConstrainedNJ(dataset, constraint))
-#' @template MRS
-#' @importFrom ape nj
-#' @importFrom phangorn dist.hamming
-#' @importFrom TreeTools RootTree
-#' @export
-ConstrainedNJ <- function (dataset, constraint, weight = 1L) {
-  missing <- setdiff(names(dataset), names(constraint))
-  if (length(missing)) {
-    constraint <- .AddUnconstrained(constraint, missing)
-  }
-  constraint <- constraint[names(dataset)]
-  tree <- multi2di(nj((dist.hamming(constraint) * weight) + 
-                        dist.hamming(dataset)))
-  tree$edge.length <- NULL
-  tree <- ImposeConstraint(tree, constraint)
-  tree <- RootTree(tree, names(dataset)[1])
-  
-  # Return:
-  tree
-}
-
-.AddUnconstrained <- function (constraint, toAdd, asPhyDat = TRUE) {
-  ret <- if (inherits(constraint, 'phyDat')) {
-    PhyDatToMatrix(constraint)
-  } else {
-    constraint
-  }
-  ret <- rbind(ret, matrix('?', length(toAdd), dim(ret)[2],
-                           dimnames = list(toAdd, NULL)))
-  
-  # Return:
-  if (asPhyDat) {
-    MatrixToPhyDat(ret)
-  } else {
-    ret
-  }
 }
 
 #' Launch tree search graphical user interface

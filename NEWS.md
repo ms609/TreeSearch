@@ -8,6 +8,9 @@
 
 ## New functions
  - `EasyTrees()` 'shiny' graphical user interface for tree search
+ - `AdditionTree()` adds each taxon in sequence to the most parsimonious place
+   on the tree, generating a more parsimonious starting tree than
+   neighbour-joining.
  - `PlotCharacter()` reconstructs character distributions on trees
  - `TipInstability()` identifies possible rogue taxa
  - `ConstrainedNJ()` constructs starting trees that respect a constraint
