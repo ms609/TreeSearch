@@ -75,13 +75,17 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
     }
     
     # Score remaining candidates
-    scores <- TreeLength(candidates, theseData, concavity)
-    minScore <- which.min(scores)
-    nMin <- length(minScore)
-    if (nMin > 1) {
-      minScore <- minScore[sample.int(nMin, 1)]
+    if (length(theseData)) {
+      scores <- TreeLength(candidates, theseData, concavity)
+      minScore <- which.min(scores)
+      nMin <- length(minScore)
+      if (nMin > 1) {
+        minScore <- minScore[sample.int(nMin, 1)]
+      }
+      tree <- candidates[[minScore]]
+    } else {
+      tree <- sample(candidates, 1)[[1]]
     }
-    tree <- candidates[[minScore]]
     cli_progress_update(nCands)
   }
   
