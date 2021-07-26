@@ -61,7 +61,9 @@ test_that("Minimum step counts are correctly calculated", {
 test_that("PrepareDataProfile() handles empty matrices", {
   dat <- TreeTools::MatrixToPhyDat(matrix(c(0, 1, rep('?', 5)),
                                           dimnames = list(letters[1:7], NULL)))
-  expect_warning(expect_error(PrepareDataProfile(dat)))
+  expectation <- dat[0]
+  attr(expectation, 'info.amounts') <- numeric(0)
+  expect_equal(expectation, PrepareDataProfile(dat))
 })
 
 test_that("PrepareDataProfile()", {
