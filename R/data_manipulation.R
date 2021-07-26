@@ -94,7 +94,12 @@ PrepareDataProfile <- function (dataset) {
     ranking <- order(order(split, decreasing = TRUE))
     ignored <- ranking > 2L
     if (any(split[ignored] > 1L)) {
-      cli_alert_warning("Can handle max. 2 informative tokens. Dropping others.")
+      warningMsg <- "Can handle max. 2 informative tokens. Dropping others."
+      if (interactive()) {
+        cli_alert_warning(warningMsg)
+      } else {
+        warning(warningMsg)
+      }
     }
     if (length(ambiguousTokens) == 0) {
       stop("No ambiguous token available for replacement")
