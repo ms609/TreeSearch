@@ -258,9 +258,9 @@ MaximizeParsimony <- function (dataset, tree,
       cli_progress_update(set = 0, total = length(optTbr))
       
       for (brk in optTbr) {
-        cli_progress_update(1, status = paste0('Depth ', iter, ", score ",
-                                               signif(bestScore), ", ",
-                                               nHits, " hits."))
+        cli_progress_update(1, status = paste0('D', iter, ", score ",
+                                               signif(bestScore), ", hit ",
+                                               nHits, "."))
         .Message(7L, "Break ", brk)
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
