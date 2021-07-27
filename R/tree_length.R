@@ -41,7 +41,9 @@ TreeLength <- function (tree, dataset, concavity = Inf) UseMethod('TreeLength')
 #' @rdname TreeLength
 #' @export
 TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
-  dataset <- dataset[tree$tip.label]
+  if (length(tree$tip.label) < length(dataset)) {
+    dataset <- .Recompress(dataset[tree$tip.label])
+  }
   if (is.finite(concavity)) {
     if (!('min.length' %in% names(attributes(dataset)))) {
       dataset <- PrepareDataIW(dataset)
@@ -99,6 +101,15 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
   iw <- is.finite(concavity)
   profile <- .UseProfile(concavity)
   
+  nTip <- NTip(tree)
+  if (length(unique(nTip)) > 1L) {
+    stop("All trees must bear the same leaves.")
+  }
+  nTip <- nTip[1]
+  if (nTip < length(dataset)) {
+    dataset <- .Recompress(dataset[TipLabels(tree[[1]])])
+  }
+  
   tree[] <- RenumberTips(tree, dataset)
   edges <- vapply(tree, `[[`, tree[[1]]$edge, 'edge')
   
@@ -140,7 +151,7 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
   } else {
     apply(edges, 3, preorder_morphy, morphyObj)
   }
-  
+  ;
 }
 
 

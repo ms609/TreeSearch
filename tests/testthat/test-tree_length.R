@@ -169,6 +169,13 @@ test_that("(random) lists of trees are scored", {
   expect_gt(t.test(TreeLength(100, mat, 'profile'), mu = 830.0585)$p.val, 0.001)
 })
 
+test_that("TreeLength() handles subsetted trees", {
+  data('inapplicable.datasets')
+  dat <- inapplicable.phyData[[1]] 
+  t8 <- as.phylo(1:4, 8, tipLabels = names(dat)[1:8])
+  expect_equal(4, length(TreeLength(t8, dat)))
+})
+
 test_that("Profile scoring is reported correctly", {
   data('congreveLamsdellMatrices')
   dataset <- congreveLamsdellMatrices[[42]]
