@@ -167,7 +167,6 @@ ui <- fluidPage(theme = 'app.css',
       sliderInput('startIter', "First iteration extra depth", min = 1L, max = 10L, value = 3L),
       sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
       # sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
-      sliderInput('verbosity', "Notification level", min = 0L, max = 3L, value = 3L, step = 1L),
       actionButton("go", "Search"),
       textOutput("results"),
       hidden(radioButtons('plotFormat', "Display:",
@@ -342,7 +341,7 @@ server <- function(input, output, session) {
                                      maxHits = ceiling(10 ^ input$maxHits),
                                      startIter = input$startIter,
                                      finalIter = input$finalIter,
-                                     verbosity = input$verbosity))
+                                     verbosity = 4L))
       
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
