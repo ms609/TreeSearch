@@ -151,7 +151,6 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
   } else {
     apply(edges, 3, preorder_morphy, morphyObj)
   }
-  ;
 }
 
 
