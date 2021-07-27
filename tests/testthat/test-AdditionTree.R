@@ -33,3 +33,16 @@ test_that("Addition tree obeys constraints", {
   expect_equal(read.tree(text = '(c, d, (e, f));'),
                TreeTools::UnrootTree(subtree))
 })
+
+test_that("AdditionTree() handles edge cases", {
+  library('TreeTools')
+  dataset <- MatrixToPhyDat(matrix(
+    c(0, 1, 1, 1, 0, 1,
+      0, 1, 1, 0, 0, 1), ncol = 2,
+    dimnames = list(letters[1:6], NULL)))
+  expect_equal(PectinateTree(letters[1:3]), AdditionTree(dataset[1:3]))
+  expect_equal(UnrootTree(PectinateTree(c('a', 'd', 'b', 'c'))), 
+               UnrootTree(AdditionTree(dataset[1:4], conc = 'pr')))
+  # All trees have equal score
+  expect_equal(5, NTip(AdditionTree(dataset[-4])))
+})

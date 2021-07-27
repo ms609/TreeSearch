@@ -182,6 +182,7 @@ Fitch <- function (tree, dataset) {
 #' @family tree scoring
 #' @references
 #' \insertAllCited{}
+#' @importFrom cli cli_alert
 #' @importFrom TreeTools Renumber RenumberTips
 #' @export
 CharacterLength <- function (tree, dataset, compress = FALSE) {
@@ -191,18 +192,30 @@ CharacterLength <- function (tree, dataset, compress = FALSE) {
   if (!inherits(tree, 'phylo')) {
     stop("Tree must be of class phylo, not ", class(tree), '.')
   }
-  if (is.null(tree$tip.label))
+  if (is.null(tree$tip.label)) {
+    stop("Tree has no labels")
+  }
+
   if (length(tree$tip.label) < length(dataset)) {
     if (all(tree$tip.label %in% names(dataset))) {
-      dataset[!(names(dataset)%in% tree$tip.label)] <- NULL
+      cli_alert(paste0(
+        paste0(names(dataset)[!names(dataset) %in% tree$tip.label],
+               collapse = ', '), " not in tree"))
+      dataset <- dataset[names(dataset) %in% tree$tip.label]
     } else {
-      stop ("Tree tips ", 
-            paste(tree$tip.label[!(tree$tip.label %in% names(dataset))],
+      stop("Tree tips ", 
+           paste(tree$tip.label[!(tree$tip.label %in% names(dataset))],
                   collapse = ', '), 
-            " not found in dataset.")
+           " not found in dataset.")
     }
   }
-  
+  if (length(tree$tip.label) > length(dataset)) {
+    cli_alert(paste0(
+      paste0(tree$tip.label[!tree$tip.label %in% names(dataset)],
+             collapse = ', '), " not in `dataset`"))
+    
+    tree <- KeepTip(tree, names(dataset))
+  }
   tree <- RenumberTips(Renumber(tree), names(dataset))  
   
   ret <- FastCharacterLength(tree, dataset)

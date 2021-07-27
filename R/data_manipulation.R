@@ -96,7 +96,7 @@ PrepareDataProfile <- function (dataset) {
     if (any(split[ignored] > 1L)) {
       warningMsg <- "Can handle max. 2 informative tokens. Dropping others."
       if (interactive()) {
-        cli_alert_warning(warningMsg)
+        cli_alert_warning(warningMsg)                                           # nocov
       } else {
         warning(warningMsg)
       }
