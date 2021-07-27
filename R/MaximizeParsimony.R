@@ -475,10 +475,6 @@ MaximizeParsimony <- function (dataset, tree,
   # Initialize data
   if (profile) {
     dataset <- PrepareDataProfile(dataset)
-    if (any(is.na(attr(dataset, 'info.amounts')))) {
-      stop("Cannot yet conduct profile parsimony when some characters have ",
-           "multiple informative states.")
-    }
     originalLevels <- attr(dataset, 'levels')
     if ('-' %in% originalLevels) {
       #TODO Fixing this will require updating the counts table cleverly
@@ -590,7 +586,7 @@ MaximizeParsimony <- function (dataset, tree,
       .CombineResults(bestEdges, newEdges, 2)
     }
     if (.Timeout()) {
-      return(.ReturnValue(bestEdges))
+      return(.ReturnValue(bestEdges))                                           # nocov
     }
     edge <- bestEdges[, , 1L]
   }
@@ -627,13 +623,13 @@ MaximizeParsimony <- function (dataset, tree,
       } else {
         errors <- vapply(eachChar, function (i) 
           mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
-        if (any(errors)) {
+        if (any(errors)) {                                                      # nocov start
           stop ("Error resampling morphy object: ",
                 mpl_translate_error(unique(errors[errors < 0L])))
         }
         if (mpl_apply_tipdata(morphyObj) -> error) {
           stop("Error applying tip data: ", mpl_translate_error(error))
-        }
+        }                                                                       # nocov end
         
         ratchetTrees <- .Search('Bootstrapped search')
         
@@ -646,7 +642,7 @@ MaximizeParsimony <- function (dataset, tree,
         }
       }
       if (.Timeout()) {
-        return(.ReturnValue(bestEdges))
+        return(.ReturnValue(bestEdges))                                         # nocov
       }
       
       verbosity <- verbosity + 1L
@@ -677,7 +673,7 @@ MaximizeParsimony <- function (dataset, tree,
         }
       }
       if (.Timeout()) {
-        return(.ReturnValue(bestEdges))
+        return(.ReturnValue(bestEdges))                                         # nocov
       }
     }
   }
