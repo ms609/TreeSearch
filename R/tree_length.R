@@ -183,7 +183,7 @@ Fitch <- function (tree, dataset) {
 #' @references
 #' \insertAllCited{}
 #' @importFrom cli cli_alert
-#' @importFrom TreeTools Renumber RenumberTips
+#' @importFrom TreeTools KeepTip Renumber RenumberTips
 #' @export
 CharacterLength <- function (tree, dataset, compress = FALSE) {
   if (!inherits(dataset, 'phyDat')) {
