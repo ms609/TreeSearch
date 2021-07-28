@@ -86,3 +86,14 @@ test_that("PlotCharacter()", {
   Test("10----11---1")
   Test("320--??3--21")
 })
+
+
+test_that("Out-of-sequence works", {
+  skip_if_not_installed('vdiffr')
+  vdiffr::expect_doppelganger('PlotChar_out-of-sequence',
+                              function () {
+  PlotCharacter(ape::read.tree(text = '(a, (b, (c, d)));'),
+                TreeTools::StringToPhyDat('1342', tips = c('a', 'c', 'd', 'b'))
+                )
+                              })
+})
