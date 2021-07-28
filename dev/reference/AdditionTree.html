@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Label nodes with jackknife support values — JackLabels • TreeSearch</title>
+<title>Addition tree — AdditionTree • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -45,8 +45,9 @@
 
 
 
-<meta property="og:title" content="Label nodes with jackknife support values — JackLabels" />
-<meta property="og:description" content="Label nodes with jackknife support values" />
+<meta property="og:title" content="Addition tree — AdditionTree" />
+<meta property="og:description" content="Generates a starting tree by adding each taxon in turn to the most
+parsimonious location." />
 
 
 <meta name="robots" content="noindex">
@@ -157,90 +158,67 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Label nodes with jackknife support values</h1>
-    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/Jackknife.R'><code>R/Jackknife.R</code></a></small>
-    <div class="hidden name"><code>JackLabels.Rd</code></div>
+    <h1>Addition tree</h1>
+    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/AdditionTree.R'><code>R/AdditionTree.R</code></a></small>
+    <div class="hidden name"><code>AdditionTree.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Label nodes with jackknife support values</p>
+    <p>Generates a starting tree by adding each taxon in turn to the most
+parsimonious location.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>JackLabels</span><span class='op'>(</span>
-  <span class='va'>tree</span>,
-  <span class='va'>jackTrees</span>,
-  plot <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  add <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  adj <span class='op'>=</span> <span class='fl'>0</span>,
-  col <span class='op'>=</span> <span class='cn'>NULL</span>,
-  frame <span class='op'>=</span> <span class='st'>"none"</span>,
-  pos <span class='op'>=</span> <span class='fl'>2L</span>,
-  <span class='va'>...</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>AdditionTree</span><span class='op'>(</span><span class='va'>dataset</span>, concavity <span class='op'>=</span> <span class='cn'>Inf</span>, <span class='va'>constraint</span>, <span class='va'>sequence</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>tree</th>
-      <td><p>A tree of class <code>phylo</code>.</p></td>
+      <th>dataset</th>
+      <td><p>A phylogenetic data matrix of class <code><a href='https://rdrr.io/pkg/phangorn/man/phyDat.html'>phyDat</a></code>,
+whose names correspond to the labels of any accompanying tree.</p></td>
     </tr>
     <tr>
-      <th>jackTrees</th>
-      <td><p>A list or <code>multiPhylo</code> object containing trees generated
-by <code><a href='Jackknife.html'>Jackknife()</a></code>.</p></td>
+      <th>concavity</th>
+      <td><p>Numeric specifying concavity constant for implied step
+weighting; set as <code>Inf</code> for equal step weights (which is a bad idea; see
+Smith (2019)
+).</p></td>
     </tr>
     <tr>
-      <th>plot</th>
-      <td><p>Logical specifying whether to plot results; if <code>FALSE</code>,
-returns blank labels for nodes near the root that do not correspond to a
-unique split.</p></td>
+      <th>constraint</th>
+      <td><p>An object of class <code>phyDat</code>; returned trees will be
+perfectly compatible with each character in <code>constraint</code>.
+See <code>ImposeConstraint()</code> and
+<a href='https://ms609.github.io/TreeSearch/articles/inapplicable.html'>vignette</a>
+for further examples.</p></td>
     </tr>
     <tr>
-      <th>add</th>
-      <td><p>Logical specifying whether to add the labels to an existing
-plot.</p></td>
-    </tr>
-    <tr>
-      <th>adj, col, frame, pos, ...</th>
-      <td><p>Parameters to pass to <code>nodelabels()</code>.</p></td>
+      <th>sequence</th>
+      <td><p>Character or numeric vector listing sequence in which to add
+taxa. Randomized if not provided.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A named vector specifying the proportion of jackknife trees
-consistent with each node in <code>tree</code>, as plotted.
-If <code>plot = FALSE</code>, blank entries are included corresponding to nodes
-that do not require labelling; the return value is in the value required
-by <code>phylo$node.label</code>.</p>
-    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
-
-    <div class='dont-index'><p><code><a href='Jackknife.html'>Jackknife()</a></code>: Generate trees by jackknife resampling</p>
-<p>Other split support functions: 
-<code><a href='Jackknife.html'>Jackknife</a>()</code>,
-<code><a href='MaximizeParsimony.html'>MaximizeParsimony</a>()</code>,
-<code><a href='SiteConcordance.html'>SiteConcordance</a></code></p></div>
+    <p><code>AdditionTree()</code> returns a tree of class <code>phylo</code>, rooted on
+<code>sequence[1]</code>.</p>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p><a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>
 (<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='st'><a href='https://ms609.github.io/TreeTools/'>'TreeTools'</a></span>, quietly <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span> <span class='co'># for as.phylo</span>
-</div><div class='output co'>#&gt; <span class='message'></span>
-#&gt; <span class='message'>Attaching package: ‘TreeTools’</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:base’:</span>
-#&gt; <span class='message'></span>
-#&gt; <span class='message'>    %in%, match</span></div><div class='input'>
-<span class='co'># jackTrees will usually be generated with Jackknife(), but for simplicity:</span>
-<span class='va'>jackTrees</span> <span class='op'>&lt;-</span> <span class='fu'>as.phylo</span><span class='op'>(</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>100</span>, <span class='fl'>8</span><span class='op'>)</span>
-
-<span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>as.phylo</span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>8</span><span class='op'>)</span>
-<span class='fu'>JackLabels</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>jackTrees</span><span class='op'>)</span>
-</div><div class='img'><img src='JackLabels-1.png' alt='' width='700' height='433' /></div><div class='output co'>#&gt;   11   12   13   14   15 
-#&gt; 0.13 0.08 0.14 1.00 1.00 </div><div class='input'>
-<span class='va'>tree</span><span class='op'>$</span><span class='va'>node.label</span> <span class='op'>&lt;-</span> <span class='fu'>JackLabels</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>jackTrees</span>, plot <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
-</div></pre>
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'Lobo'</span>, package <span class='op'>=</span> <span class='st'>'TreeTools'</span><span class='op'>)</span>
+<span class='fu'>AdditionTree</span><span class='op'>(</span><span class='va'>Lobo.phy</span>, concavity <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>Addition tree <span style='color: #00BB00;'>■■■■■■■■■■■■■■■■■■■             </span>  61% | ETA:  1s</span></div><div class='output co'>#&gt; <span class='message'>Addition tree <span style='color: #00BB00;'>■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s</span></div><div class='output co'>#&gt; 
+#&gt; Phylogenetic tree with 48 tips and 47 internal nodes.
+#&gt; 
+#&gt; Tip labels:
+#&gt;   Tubiluchus_Priapulida, Alalcomenaeus, Helenodora, Hallucigenia_fortis, Peytoia_nathorsti, Hurdia_victoria, ...
+#&gt; 
+#&gt; Rooted; no branch lengths.</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

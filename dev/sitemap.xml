@@ -4,6 +4,9 @@
     <loc>https://ms609.github.io/TreeSearch/index.html</loc>
   </url>
   <url>
+    <loc>https://ms609.github.io/TreeSearch/reference/AdditionTree.html</loc>
+  </url>
+  <url>
     <loc>https://ms609.github.io/TreeSearch/reference/AllSPR.html</loc>
   </url>
   <url>
@@ -19,16 +22,10 @@
     <loc>https://ms609.github.io/TreeSearch/reference/Consistency.html</loc>
   </url>
   <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/ConstrainedNJ.html</loc>
-  </url>
-  <url>
     <loc>https://ms609.github.io/TreeSearch/reference/DoubleNNI.html</loc>
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/reference/GapHandler.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/ImposeConstraint.html</loc>
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/reference/JackLabels.html</loc>
