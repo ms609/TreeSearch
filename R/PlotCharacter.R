@@ -63,6 +63,15 @@ PlotCharacter <- function (tree, dataset, char = 1L,
                            tipOffset = 1,
                            ...) {
   
+  # Reconcile labels
+  datasetTaxa <- names(dataset)
+  treeTaxa <- tree$tip.label
+  if(!all(treeTaxa %in% datasetTaxa)) {
+    stop("Taxa in tree missing from dataset:\n  ",
+         paste0(treeTaxa[!treeTaxa %in% datasetTaxa], collapse = ', '))
+  }
+  dataset <- dataset[treeTaxa]
+  
   # Read tree
   tree <- Postorder(tree)
   nNode <- tree$Nnode
