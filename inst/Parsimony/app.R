@@ -335,9 +335,8 @@ server <- function(input, output, session) {
     scores <- tryCatch(signif(TreeLength(r$trees, r$dataset,
                                          concavity = concavity())),
                        error = function (x) {
-                         cli::cli_alert_danger(x[[1]])
                          cli::cli_alert(x[[2]])
-                         cli::cli_alert(concavity())
+                         cli::cli_alert_danger(x[[1]])
                          if (length(r$dataset) > 0) {
                            showNotification(type = "error",
                                             "Could not score all trees with dataset")
@@ -371,7 +370,7 @@ server <- function(input, output, session) {
   })
   
   concavity <- reactive({
-    k <- if (length(input$concavity)) input$concavity else 1L
+    k <- if (length(input$concavity)) input$concavity else 1
     switch(weighting(),
            'on' = 10 ^ k,
            'off' = Inf,
