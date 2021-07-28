@@ -6,6 +6,15 @@ body {
   margin-bottom: 0;
 }
 
+/* Sneaky way of keeping progress bars open */
+.shiny-notification-close {
+  display: none;
+}
+
+#shiny-notification-panel {
+  top: 0;
+}
+
 .message {
   color: #ffc646;
 }

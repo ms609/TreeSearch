@@ -1,4 +1,5 @@
 library("methods", exclude = c('show', 'removeClass'))
+library("cli")
 suppressPackageStartupMessages({
   library("shiny", exclude = c('runExample'))
   library("shinyjs", exclude = c('runExample'))
@@ -147,7 +148,7 @@ Venna2001 <- Reference(
   doi = "10.1007/3-540-44668-0_68")
 
 ui <- fluidPage(theme = 'app.css',
-                title = 'Title',
+                title = 'TreeSearch',
   useShinyjs(),
   column(3,
     fluidRow(
@@ -253,6 +254,8 @@ server <- function(input, output, session) {
       } else {
         show('plotFormat')
       }
+      
+      output$results <- TreeSummary()
     }
     
   })
@@ -268,7 +271,6 @@ server <- function(input, output, session) {
     updateSliderInput(session, 'finalIter', value = input$finalIter)
     showModal(modalDialog(
       easyClose = TRUE,
-      size = 'l',
       fluidPage(column(6,
       tagList(selectInput('character.weight', "Character weighting", list("Equal" = "equal"), "equal"),
               selectInput('implied.weights', "Step weighting", 
@@ -292,7 +294,7 @@ server <- function(input, output, session) {
     show('go')
   })
   
-  observeEvent(input$replaceTrees, {
+  observeEvent(input$treeFile, {
     tmpFile <- input$treeFile$datapath
     trees <- tryCatch(read.tree(tmpFile),
                       error = function (x) tryCatch(read.nexus(tmpFile),
@@ -309,24 +311,7 @@ server <- function(input, output, session) {
       updateActionButton(session, "go", "Continue")
       show('plotFormat')
       
-      scores <- tryCatch(signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
-                         error = function (x) {
-                           showNotification(type = "error",
-                                            "Could not score all trees with dataset")
-                           NULL
-                           })
-      
-      score <- if (is.null(scores)) {
-        "; could not be scored from dataset"
-      } else if (length(unique(scores)) == 1) {
-        paste0(", each with score ", unique(scores))
-      } else {
-        paste0(" with scores ", min(scores), " to ", max(scores))
-      }
-                         
-      
-      output$results <- renderText(paste0(
-        "Loaded ", length(r$trees), " trees", score))
+      output$results <- TreeSummary()
     }
     
   })
@@ -338,9 +323,57 @@ server <- function(input, output, session) {
     )
   })
   
+  weighting <- reactive(
+    if (length(input$implied.weights) > 0) {
+      input$implied.weights
+    } else {
+      'on'
+    }
+  )
+  
+  TreeSummary <- debounce(reactive({
+    scores <- tryCatch(signif(TreeLength(r$trees, r$dataset,
+                                         concavity = concavity())),
+                       error = function (x) {
+                         cli::cli_alert_danger(x[[1]])
+                         cli::cli_alert(x[[2]])
+                         cli::cli_alert(concavity())
+                         if (length(r$dataset) > 0) {
+                           showNotification(type = "error",
+                                            "Could not score all trees with dataset")
+                         }
+                         NULL
+                       })
+    
+    wtType <- switch(weighting(),
+                     'on' = paste0('k = ', signif(concavity(), 3)),
+                     'off' = 'EW',
+                     'prof' = 'PP')
+    score <- if (is.null(scores)) {
+      "; could not be scored from dataset"
+    } else if (length(unique(scores)) == 1) {
+      paste0(", each with score ", scores[1], " (", wtType, ")")
+    } else {
+      paste0(" with scores ", min(scores), " to ", max(scores),
+             " (", wtType, ")")
+    }
+    
+    
+    renderText(paste0(length(r$trees), " trees in memory", score))
+  }), 50)
+  
+  observeEvent(input$implied.weights, {
+    output$results <- TreeSummary()
+  })
+  
+  observeEvent(input$concavity, {
+    output$results <- TreeSummary()
+  })
+  
   concavity <- reactive({
-    switch(input$implied.weights,
-           'on' = 10 ^ input$concavity,
+    k <- if (length(input$concavity)) input$concavity else 1L
+    switch(weighting(),
+           'on' = 10 ^ k,
            'off' = Inf,
            'prof' = 'Profile')
   })
@@ -419,9 +452,21 @@ server <- function(input, output, session) {
                  } else {
                    UnitEdge(PlottedTree())
                  }
-                 pc <- PlotCharacter(treeToPlot, r$dataset, n,
-                                     edge.width = 2.5, 
-                                     updateTips = 'updateTips' %in% input$mapDisplay)
+                 
+                 tryCatch({
+                   pc <- PlotCharacter(treeToPlot, r$dataset, n,
+                                       edge.width = 2.5,
+                                       updateTips = 'updateTips' %in% input$mapDisplay)
+                 }, error = function (cond) {
+                   cli::cli_alert_danger(cond)
+                   showNotification(type = 'error',
+                                    "Could not match dataset to taxa in trees")
+                   plot(0, 0, type = 'n', axes = FALSE, ann = FALSE)
+                   text(0, 0, 'Load dataset with\ncharacter codings\nfor taxa on tree',
+                        col = '#dd6611', font = 2)
+                   return()
+                 })
+                   
                  
                  output$charMapLegend <- renderUI({
                    pal <- c("#00bfc6", "#ffd46f", "#ffbcc5", "#c8a500",
