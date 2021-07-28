@@ -292,8 +292,8 @@ PlotCharacter <- function (tree, dataset, char = 1L,
             common <- lState & rState
             if (any(common)) {
               # 5. Add to the current node’s state any token in common between
-              #  its ancestor and its descendants
-              state[n, ] <- nState | (aState & common)
+              #  its ancestor and *either of* its descendants
+              state[n, ] <- nState | (aState & (lState | rState))
             } else {
               # 6. If the states of the node’s descendants both contain the
               #  inapplicable token
