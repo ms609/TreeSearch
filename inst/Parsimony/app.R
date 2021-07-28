@@ -196,7 +196,8 @@ ui <- fluidPage(theme = 'app.css',
                    "Infer tips" = "updateTips"
                    )),
                  style = "float: right; width: 200px; margin-left: 2em;"),
-        htmlOutput('charMapLegend')
+        htmlOutput('charMapLegend'),
+        htmlOutput('charNotes'),
       )),
       htmlOutput('references', style = "clear: both;"),
     ),
@@ -227,6 +228,7 @@ server <- function(input, output, session) {
     r$dataset <- tryCatch(ReadTntAsPhyDat(tmpFile),
                           error = function (e) tryCatch({
                             r$chars <- ReadCharacters(tmpFile)
+                            r$charNotes <- ReadNotes(tmpFile)
                             ReadAsPhyDat(tmpFile)
                             }, error = function (e) NULL))
     
@@ -335,9 +337,10 @@ server <- function(input, output, session) {
     scores <- tryCatch(signif(TreeLength(r$trees, r$dataset,
                                          concavity = concavity())),
                        error = function (x) {
-                         cli::cli_alert(x[[2]])
-                         cli::cli_alert_danger(x[[1]])
-                         if (length(r$dataset) > 0) {
+                         if (length(r$dataset) > 0 && 
+                             length(r$trees) > 0) {
+                           cli::cli_alert(x[[2]])
+                           cli::cli_alert_danger(x[[1]])
                            showNotification(type = "error",
                                             "Could not score all trees with dataset")
                          }
@@ -417,114 +420,163 @@ server <- function(input, output, session) {
   }
   
   MainPlot <- reactive({
-    if (!is.null(r$trees)) {
-    switch(input$plotFormat,
-           'cons' = {
-             hide('whichTree')
-             hide('charChooser')
-             {
-               par(mar = rep(0, 4), cex = 0.9)
-               plot(consensus(r$trees))
-             }
-           },
-           'clus' = {
-             hide('whichTree')
-             hide('charChooser')
-             PlotClusterCons()
-           },
-           'ind' = {
-             show('whichTree')
-             show('charChooser')
-             
-             {
-               par(mar = rep(0, 4), cex = 0.9)
-               n <- PlottedChar()
-               if (length(n) && n > 0L) {
-                 UnitEdge <- function (tr) {
-                   tr$edge.length <- rep_len(2, dim(tr$edge)[1])
-                   tr
-                 }
-                 
-                 
-                 treeToPlot <- if('tipsRight' %in% input$mapDisplay) {
-                   PlottedTree()
-                 } else {
-                   UnitEdge(PlottedTree())
-                 }
-                 
-                 tryCatch({
-                   pc <- PlotCharacter(treeToPlot, r$dataset, n,
-                                       edge.width = 2.5,
-                                       updateTips = 'updateTips' %in% input$mapDisplay)
-                 }, error = function (cond) {
-                   cli::cli_alert_danger(cond)
-                   showNotification(type = 'error',
-                                    "Could not match dataset to taxa in trees")
-                   plot(0, 0, type = 'n', axes = FALSE, ann = FALSE)
-                   text(0, 0, 'Load dataset with\ncharacter codings\nfor taxa on tree',
-                        col = '#dd6611', font = 2)
-                   return()
+   if (!is.null(r$trees)) {
+   switch(input$plotFormat,
+          'cons' = {
+            hide('whichTree')
+            hide('charChooser')
+            {
+              par(mar = rep(0, 4), cex = 0.9)
+              plot(consensus(r$trees))
+            }
+          },
+          'clus' = {
+            hide('whichTree')
+            hide('charChooser')
+            PlotClusterCons()
+          },
+          'ind' = {
+            show('whichTree')
+            show('charChooser')
+            
+            {
+              par(mar = rep(0, 4), cex = 0.9)
+              n <- PlottedChar()
+              if (length(n) && n > 0L) {
+                UnitEdge <- function (tr) {
+                  tr$edge.length <- rep_len(2, dim(tr$edge)[1])
+                  tr
+                }
+                
+                
+                treeToPlot <- if('tipsRight' %in% input$mapDisplay) {
+                  PlottedTree()
+                } else {
+                  UnitEdge(PlottedTree())
+                }
+                
+                tryCatch({
+                  pc <- PlotCharacter(treeToPlot, r$dataset, n,
+                                      edge.width = 2.5,
+                                      updateTips = 'updateTips' %in% input$mapDisplay)
+                }, error = function (cond) {
+                  cli::cli_alert_danger(cond)
+                  showNotification(type = 'error',
+                                   "Could not match dataset to taxa in trees")
+                  plot(0, 0, type = 'n', axes = FALSE, ann = FALSE)
+                  text(0, 0, 'Load dataset with\ncharacter codings\nfor taxa on tree',
+                       col = '#dd6611', font = 2)
+                  return()
+                })
+                  
+                
+                if (!is.null(r$chars)) {
+                  output$charMapLegend <- renderUI({
+                    pal <- c("#00bfc6", "#ffd46f", "#ffbcc5", "#c8a500",
+                             "#ffcaf5", "#d5fb8d", "#e082b4", "#25ffd3",
+                             "#a6aaff", "#e6f3cc", "#67c4ff", "#9ba75c",
+                             "#60b17f")
+                    
+                      UCFirst <- function (str) {
+                        paste0(toupper(substr(str, 1, 1)),
+                               substr(str, 2, nchar(str)))
+                      }
+                      states <- attr(r$chars, 'state.labels')[[n]]
+                      tokens <- colnames(pc)
+                      appTokens <- setdiff(tokens, '-')
+                      .State <- function (glyph, text = 'Error?', col = 'red') {
+                        if (is.numeric(glyph)) {
+                          if (glyph > length(appTokens)) return (NULL)
+                          nonBlank <- states != ''
+                          text <- states[nonBlank][glyph]
+                          col <- pal[glyph]
+                          glyph <- appTokens[glyph]
+                        }
+                        tags$li(style = 'margin-bottom: 2px;',
+                          tags$span(glyph,
+                                    style = paste("display: inline-block;",
+                                                  "border: 1px solid;",
+                                                  "width: 1em;",
+                                                  "text-align: center;",
+                                                  "line-height: 1em;",
+                                                  "margin-right: 0.5em;",
+                                                  "background-color:", col, ";")),
+                          tags$span(UCFirst(text)))
+                      }
+                      tagList(
+                        tags$h3(colnames(r$chars)[n]),
+                        tags$ul(style = "list-style: none;",
+                          .State(1), .State(2), .State(3), .State(4), .State(5),
+                          .State(6), .State(7), .State(8), .State(9),
+                          .State(10), .State(11), .State(12), .State(13),
+                          if ('-' %in% tokens) 
+                            .State("-", "Inapplicable", 'lightgrey'),
+                          .State("?", "Ambiguous", 'grey')
+                        )
+                      )
+                  })
+                }
+                if (!is.null(r$charNotes)) {
+                  
+                  output$charNotes <- renderUI({
+                    charNotes <- r$charNotes[[n]]
+                    description <- charNotes[[1]]
+                    notes <- charNotes[[2]]
+                    states <- attr(r$chars, 'state.labels')[[n]]
+                    tokens <- colnames(pc)
+                    
+                    tagList(
+                      if (length(description) > 0) {
+                        tags$div(id = 'char-description',
+                                 lapply(strsplit(description, '\n')[[1]], tags$p))
+                      },
+                      tags$ul(class = 'state-notes', {
+                        PrintNote <- function(note) {
+                          taxa <- names(note)[note]
+                          tags$li(class = 'state-note',
+                                  tags$span(class = 'state-note-label',
+                                            paste(gsub('_', ' ', fixed = TRUE,
+                                                       taxa), collapse = ', ')),
+                                  tags$span(class = 'state-note-detail',
+                                            notes[taxa[1]]))
+                        }
+                        
+                        DuplicateOf <- function(x) {
+                          duplicates <- duplicated(x)
+                          masters <- x[!duplicates]
+                          vapply(masters, function(d) x == d, logical(length(x)))
+                        }
+                        if (length(notes) == 1) {
+                          onlyOne <- TRUE
+                          names(onlyOne) <- names(notes)
+                          PrintNote(onlyOne)
+                        }
+                        else {
+                          notes <- notes[order(names(notes))]
+                          duplicates <- DuplicateOf(toupper(notes))
+                          apply(duplicates, 2, PrintNote)
+                        }
+                      }),
+                      if (!states[[1]] %in% c("", "''")
+                          && any(tokens == '-')) {
+                        tags$p("Brazeau _et al._ (2019) advise that neomorphic characters should not contain inapplicable tokens (-).")
+                      }
+                    )
                  })
-                   
-                 
-                 output$charMapLegend <- renderUI({
-                   pal <- c("#00bfc6", "#ffd46f", "#ffbcc5", "#c8a500",
-                            "#ffcaf5", "#d5fb8d", "#e082b4", "#25ffd3",
-                            "#a6aaff", "#e6f3cc", "#67c4ff", "#9ba75c",
-                            "#60b17f")
-                   
-                   if (!is.null(r$chars)) {
-                     UCFirst <- function (str) {
-                       paste0(toupper(substr(str, 1, 1)),
-                              substr(str, 2, nchar(str)))
-                     }
-                     states <- attr(r$chars, 'state.labels')[[n]]
-                     tokens <- colnames(pc)
-                     appTokens <- setdiff(tokens, '-')
-                     .State <- function (glyph, text = 'Error?', col = 'red') {
-                       if (is.numeric(glyph)) {
-                         if (glyph > length(appTokens)) return (NULL)
-                         nonBlank <- states != ''
-                         text <- states[nonBlank][glyph]
-                         col <- pal[glyph]
-                         glyph <- appTokens[glyph]
-                       }
-                       tags$li(style = 'margin-bottom: 2px;',
-                         tags$span(glyph,
-                                   style = paste("display: inline-block;",
-                                                 "border: 1px solid;",
-                                                 "width: 1em;",
-                                                 "text-align: center;",
-                                                 "line-height: 1em;",
-                                                 "margin-right: 0.5em;",
-                                                 "background-color:", col, ";")),
-                         tags$span(UCFirst(text)))
-                     }
-                     tagList(
-                       tags$h3(colnames(r$chars)[n]),
-                       tags$ul(style = "list-style: none;",
-                         .State(1), .State(2), .State(3), .State(4), .State(5),
-                         .State(6), .State(7), .State(8), .State(9),
-                         .State(10), .State(11), .State(12), .State(13),
-                         if ('-' %in% tokens) 
-                           .State("-", "Inapplicable", 'lightgrey'),
-                         .State("?", "Ambiguous", 'grey')
-                       )
-                     )
-                  }
-                 })
-               } else {
-                 output$charMapLegend <- renderUI({})
-                 plot(PlottedTree())
-               }
-             }
-           },
-           'space' = {
-             hide('whichTree')
-             hide('charChooser')
-             treespacePlot()
-           }
-    )}
+                }
+              } else {
+                output$charMapLegend <- renderUI({})
+                output$charNotes <- renderUI({})
+                plot(PlottedTree())
+              }
+            }
+          },
+          'space' = {
+            hide('whichTree')
+            hide('charChooser')
+            treespacePlot()
+          }
+   )}
   })
   
   PlotSize <- function () debounce(reactive(input$plotSize), 100)
