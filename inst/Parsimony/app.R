@@ -1,4 +1,5 @@
 library("methods", exclude = c('show', 'removeClass'))
+library("cli")
 suppressPackageStartupMessages({
   library("shiny", exclude = c('runExample'))
   library("shinyjs", exclude = c('runExample'))
@@ -147,27 +148,19 @@ Venna2001 <- Reference(
   doi = "10.1007/3-540-44668-0_68")
 
 ui <- fluidPage(theme = 'app.css',
+                title = 'TreeSearch',
   useShinyjs(),
   column(3,
     fluidRow(
       tags$h1("TreeSearch beta UI"),
-      fileInput("datafile", "Load data", placeholder = "No data file selected"),
-      actionButton("loadTrees", "Load trees"),
-      selectInput('character.weight', "Character weighting", list("Equal" = "equal"), "equal"),
-      selectInput('implied.weights', "Step weighting", 
-                  list("Implied" = "on", "Profile" = "prof", "Equal" = "off"), "on"),
-      sliderInput("concavity", "Step weight concavity constant", min = 0L,
-                  max = 3L, pre = '10^', value = 1L),
-      sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 6L, step = 1L),
-      # sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 0L, step = 1L),
-      sliderInput('tbrIter', "TBR depth", min = 1L, max = 20L, value = 1L, step = 1L),
-      # sliderInput('tbrIter', "TBR iterations", min = 1L, max = 50L, value = 1L, step = 1L),
-      sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 2L, pre = '10^'),
-      # sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 0.6, pre = '10^'),
-      sliderInput('startIter', "First iteration extra depth", min = 1L, max = 10L, value = 3L),
-      sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
-      # sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
-      actionButton("go", "Search"),
+      fileInput("datafile", "Load data",
+                placeholder = "No data file selected"),
+      tags$label("Search", class = "control-label", 
+                 style = 'display: block; margin-top: -15px;'),
+      actionButton("searchConfig", "Configure", icon = icon('cogs')),
+      hidden(actionButton("go", "Search", icon = icon('search'))),
+      fileInput("treeFile", label = "Load trees",
+                placeholder = "No tree file selected"),
       textOutput("results"),
       hidden(radioButtons('plotFormat', "Display:",
                    list("Characters on trees" = 'ind',
@@ -203,7 +196,8 @@ ui <- fluidPage(theme = 'app.css',
                    "Infer tips" = "updateTips"
                    )),
                  style = "float: right; width: 200px; margin-left: 2em;"),
-        htmlOutput('charMapLegend')
+        htmlOutput('charMapLegend'),
+        htmlOutput('charNotes'),
       )),
       htmlOutput('references', style = "clear: both;"),
     ),
@@ -234,6 +228,7 @@ server <- function(input, output, session) {
     r$dataset <- tryCatch(ReadTntAsPhyDat(tmpFile),
                           error = function (e) tryCatch({
                             r$chars <- ReadCharacters(tmpFile)
+                            r$charNotes <- ReadNotes(tmpFile)
                             ReadAsPhyDat(tmpFile)
                             }, error = function (e) NULL))
     
@@ -261,19 +256,47 @@ server <- function(input, output, session) {
       } else {
         show('plotFormat')
       }
+      
+      output$results <- TreeSummary()
     }
     
   })
   
-  observeEvent(input$loadTrees, {
+  observeEvent(input$searchConfig, {
+    updateSelectInput(session, 'character.weight', selected = input$character.weight)
+    updateSelectInput(session, 'implied.weights', selected = input$implied.weights)
+    updateSliderInput(session, 'concavity', value = input$concavity)
+    updateSliderInput(session, 'ratchIter', value = input$ratchIter)
+    updateSliderInput(session, 'tbrIter', value = input$tbrIter)
+    updateSliderInput(session, 'maxHits', value = input$maxHits)
+    updateSliderInput(session, 'startIter', value = input$startIter)
+    updateSliderInput(session, 'finalIter', value = input$finalIter)
     showModal(modalDialog(
-      tagList(fileInput("treeFile", label = '')),
-      title = 'Load trees from file',
-      footer = tagList(actionButton("replaceTrees", "Replace existing trees"),
-                       modalButton("Cancel"))))
+      easyClose = TRUE,
+      fluidPage(column(6,
+      tagList(selectInput('character.weight', "Character weighting", list("Equal" = "equal"), "equal"),
+              selectInput('implied.weights', "Step weighting", 
+                         list("Implied" = "on", "Profile" = "prof", "Equal" = "off"), "on"),
+              sliderInput("concavity", "Step weight concavity constant", min = 0L,
+                         max = 3L, pre = '10^', value = 1L),
+              sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 6L, step = 1L),
+              sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 2L, pre = '10^'),
+      )), column(6, 
+             tagList(
+              sliderInput('tbrIter', "TBR depth", min = 1L, max = 20L, value = 1L, step = 1L),
+              sliderInput('startIter', "First iteration extra depth", min = 1L, max = 10L, value = 3L),
+              sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
+             ))
+      ),
+      title = "Tree search settings",
+      footer = tagList(modalButton('Close', icon = icon('window-close')),
+                       actionButton("modalGo", icon = icon('search'), 
+                                    if(length(r$trees)) "Continue search" else "Start search"))
+    ))
+    show('go')
   })
-    
-  observeEvent(input$replaceTrees, {
+  
+  observeEvent(input$treeFile, {
     tmpFile <- input$treeFile$datapath
     trees <- tryCatch(read.tree(tmpFile),
                       error = function (x) tryCatch(read.nexus(tmpFile),
@@ -286,27 +309,11 @@ server <- function(input, output, session) {
       showNotification(paste("Loaded", length(r$trees), "trees"), type = "message")
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
-      updateActionButton(session, "go", "Continue search")
+      updateActionButton(session, "modalGo", "Continue search")
+      updateActionButton(session, "go", "Continue")
       show('plotFormat')
       
-      scores <- tryCatch(signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
-                         error = function (x) {
-                           showNotification(type = "error",
-                                            "Could not score all trees with dataset")
-                           NULL
-                           })
-      
-      score <- if (is.null(scores)) {
-        "; could not be scored from dataset"
-      } else if (length(unique(scores)) == 1) {
-        paste0(", each with score ", unique(scores))
-      } else {
-        paste0(" with scores ", min(scores), " to ", max(scores))
-      }
-                         
-      
-      output$results <- renderText(paste0(
-        "Loaded ", length(r$trees), " trees", score))
+      output$results <- TreeSummary()
     }
     
   })
@@ -318,14 +325,62 @@ server <- function(input, output, session) {
     )
   })
   
+  weighting <- reactive(
+    if (length(input$implied.weights) > 0) {
+      input$implied.weights
+    } else {
+      'on'
+    }
+  )
+  
+  TreeSummary <- debounce(reactive({
+    scores <- tryCatch(signif(TreeLength(r$trees, r$dataset,
+                                         concavity = concavity())),
+                       error = function (x) {
+                         if (length(r$dataset) > 0 && 
+                             length(r$trees) > 0) {
+                           cli::cli_alert(x[[2]])
+                           cli::cli_alert_danger(x[[1]])
+                           showNotification(type = "error",
+                                            "Could not score all trees with dataset")
+                         }
+                         NULL
+                       })
+    
+    wtType <- switch(weighting(),
+                     'on' = paste0('k = ', signif(concavity(), 3)),
+                     'off' = 'EW',
+                     'prof' = 'PP')
+    score <- if (is.null(scores)) {
+      "; could not be scored from dataset"
+    } else if (length(unique(scores)) == 1) {
+      paste0(", each with score ", scores[1], " (", wtType, ")")
+    } else {
+      paste0(" with scores ", min(scores), " to ", max(scores),
+             " (", wtType, ")")
+    }
+    
+    
+    renderText(paste0(length(r$trees), " trees in memory", score))
+  }), 50)
+  
+  observeEvent(input$implied.weights, {
+    output$results <- TreeSummary()
+  })
+  
+  observeEvent(input$concavity, {
+    output$results <- TreeSummary()
+  })
+  
   concavity <- reactive({
-    switch(input$implied.weights,
-           'on' = 10 ^ input$concavity,
+    k <- if (length(input$concavity)) input$concavity else 1
+    switch(weighting(),
+           'on' = 10 ^ k,
            'off' = Inf,
            'prof' = 'Profile')
   })
   
-  observeEvent(input$go, {
+  StartSearch <- function () {
     if (!inherits(r$dataset, 'phyDat')) {
       showNotification("No data loaded", type = 'error')
     } else {
@@ -342,16 +397,20 @@ server <- function(input, output, session) {
                                      startIter = input$startIter,
                                      finalIter = input$finalIter,
                                      verbosity = 4L))
-      
+
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
       output$results <- renderText(paste0(
         "Found ", length(r$trees), " trees with score ", 
         signif(TreeLength(r$trees[[1]], r$dataset, concavity = concavity()))))
-      updateActionButton(session, "go", "Continue search")
+      updateActionButton(session, "go", "Continue")
+      updateActionButton(session, "modalGo", "Continue search")
       show('plotFormat')
     }
-  })
+  }
+  
+  observeEvent(input$go, StartSearch())
+  observeEvent(input$modalGo, StartSearch())
   
   PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 50)
   PlottedTree <- debounce(reactive(Postorder(r$trees[[input$whichTree]])), 100)
@@ -361,102 +420,163 @@ server <- function(input, output, session) {
   }
   
   MainPlot <- reactive({
-    if (!is.null(r$trees)) {
-    switch(input$plotFormat,
-           'cons' = {
-             hide('whichTree')
-             hide('charChooser')
-             {
-               par(mar = rep(0, 4), cex = 0.9)
-               plot(consensus(r$trees))
-             }
-           },
-           'clus' = {
-             hide('whichTree')
-             hide('charChooser')
-             PlotClusterCons()
-           },
-           'ind' = {
-             show('whichTree')
-             show('charChooser')
-             
-             {
-               par(mar = rep(0, 4), cex = 0.9)
-               n <- PlottedChar()
-               if (length(n) && n > 0L) {
-                 UnitEdge <- function (tr) {
-                   tr$edge.length <- rep_len(2, dim(tr$edge)[1])
-                   tr
-                 }
-                 
-                 
-                 treeToPlot <- if('tipsRight' %in% input$mapDisplay) {
-                   PlottedTree()
-                 } else {
-                   UnitEdge(PlottedTree())
-                 }
-                 pc <- PlotCharacter(treeToPlot, r$dataset, n,
-                                     edge.width = 2.5, 
-                                     updateTips = 'updateTips' %in% input$mapDisplay)
-                 
-                 output$charMapLegend <- renderUI({
-                   pal <- c("#00bfc6", "#ffd46f", "#ffbcc5", "#c8a500",
-                            "#ffcaf5", "#d5fb8d", "#e082b4", "#25ffd3",
-                            "#a6aaff", "#e6f3cc", "#67c4ff", "#9ba75c",
-                            "#60b17f")
-                   
-                   if (!is.null(r$chars)) {
-                     UCFirst <- function (str) {
-                       paste0(toupper(substr(str, 1, 1)),
-                              substr(str, 2, nchar(str)))
-                     }
-                     states <- attr(r$chars, 'state.labels')[[n]]
-                     tokens <- colnames(pc)
-                     appTokens <- setdiff(tokens, '-')
-                     .State <- function (glyph, text = 'Error?', col = 'red') {
-                       if (is.numeric(glyph)) {
-                         if (glyph > length(appTokens)) return (NULL)
-                         nonBlank <- states != ''
-                         text <- states[nonBlank][glyph]
-                         col <- pal[glyph]
-                         glyph <- appTokens[glyph]
-                       }
-                       tags$li(style = 'margin-bottom: 2px;',
-                         tags$span(glyph,
-                                   style = paste("display: inline-block;",
-                                                 "border: 1px solid;",
-                                                 "width: 1em;",
-                                                 "text-align: center;",
-                                                 "line-height: 1em;",
-                                                 "margin-right: 0.5em;",
-                                                 "background-color:", col, ";")),
-                         tags$span(UCFirst(text)))
-                     }
-                     tagList(
-                       tags$h3(colnames(r$chars)[n]),
-                       tags$ul(style = "list-style: none;",
-                         .State(1), .State(2), .State(3), .State(4), .State(5),
-                         .State(6), .State(7), .State(8), .State(9),
-                         .State(10), .State(11), .State(12), .State(13),
-                         if ('-' %in% tokens) 
-                           .State("-", "Inapplicable", 'lightgrey'),
-                         .State("?", "Ambiguous", 'grey')
-                       )
-                     )
-                  }
+   if (!is.null(r$trees)) {
+   switch(input$plotFormat,
+          'cons' = {
+            hide('whichTree')
+            hide('charChooser')
+            {
+              par(mar = rep(0, 4), cex = 0.9)
+              plot(consensus(r$trees))
+            }
+          },
+          'clus' = {
+            hide('whichTree')
+            hide('charChooser')
+            PlotClusterCons()
+          },
+          'ind' = {
+            show('whichTree')
+            show('charChooser')
+            
+            {
+              par(mar = rep(0, 4), cex = 0.9)
+              n <- PlottedChar()
+              if (length(n) && n > 0L) {
+                UnitEdge <- function (tr) {
+                  tr$edge.length <- rep_len(2, dim(tr$edge)[1])
+                  tr
+                }
+                
+                
+                treeToPlot <- if('tipsRight' %in% input$mapDisplay) {
+                  PlottedTree()
+                } else {
+                  UnitEdge(PlottedTree())
+                }
+                
+                tryCatch({
+                  pc <- PlotCharacter(treeToPlot, r$dataset, n,
+                                      edge.width = 2.5,
+                                      updateTips = 'updateTips' %in% input$mapDisplay)
+                }, error = function (cond) {
+                  cli::cli_alert_danger(cond)
+                  showNotification(type = 'error',
+                                   "Could not match dataset to taxa in trees")
+                  plot(0, 0, type = 'n', axes = FALSE, ann = FALSE)
+                  text(0, 0, 'Load dataset with\ncharacter codings\nfor taxa on tree',
+                       col = '#dd6611', font = 2)
+                  return()
+                })
+                  
+                
+                if (!is.null(r$chars)) {
+                  output$charMapLegend <- renderUI({
+                    pal <- c("#00bfc6", "#ffd46f", "#ffbcc5", "#c8a500",
+                             "#ffcaf5", "#d5fb8d", "#e082b4", "#25ffd3",
+                             "#a6aaff", "#e6f3cc", "#67c4ff", "#9ba75c",
+                             "#60b17f")
+                    
+                      UCFirst <- function (str) {
+                        paste0(toupper(substr(str, 1, 1)),
+                               substr(str, 2, nchar(str)))
+                      }
+                      states <- attr(r$chars, 'state.labels')[[n]]
+                      tokens <- colnames(pc)
+                      appTokens <- setdiff(tokens, '-')
+                      .State <- function (glyph, text = 'Error?', col = 'red') {
+                        if (is.numeric(glyph)) {
+                          if (glyph > length(appTokens)) return (NULL)
+                          nonBlank <- states != ''
+                          text <- states[nonBlank][glyph]
+                          col <- pal[glyph]
+                          glyph <- appTokens[glyph]
+                        }
+                        tags$li(style = 'margin-bottom: 2px;',
+                          tags$span(glyph,
+                                    style = paste("display: inline-block;",
+                                                  "border: 1px solid;",
+                                                  "width: 1em;",
+                                                  "text-align: center;",
+                                                  "line-height: 1em;",
+                                                  "margin-right: 0.5em;",
+                                                  "background-color:", col, ";")),
+                          tags$span(UCFirst(text)))
+                      }
+                      tagList(
+                        tags$h3(colnames(r$chars)[n]),
+                        tags$ul(style = "list-style: none;",
+                          .State(1), .State(2), .State(3), .State(4), .State(5),
+                          .State(6), .State(7), .State(8), .State(9),
+                          .State(10), .State(11), .State(12), .State(13),
+                          if ('-' %in% tokens) 
+                            .State("-", "Inapplicable", 'lightgrey'),
+                          .State("?", "Ambiguous", 'grey')
+                        )
+                      )
+                  })
+                }
+                if (!is.null(r$charNotes)) {
+                  
+                  output$charNotes <- renderUI({
+                    charNotes <- r$charNotes[[n]]
+                    description <- charNotes[[1]]
+                    notes <- charNotes[[2]]
+                    states <- attr(r$chars, 'state.labels')[[n]]
+                    tokens <- colnames(pc)
+                    
+                    tagList(
+                      if (length(description) > 0) {
+                        tags$div(id = 'char-description',
+                                 lapply(strsplit(description, '\n')[[1]], tags$p))
+                      },
+                      tags$ul(class = 'state-notes', {
+                        PrintNote <- function(note) {
+                          taxa <- names(note)[note]
+                          tags$li(class = 'state-note',
+                                  tags$span(class = 'state-note-label',
+                                            paste(gsub('_', ' ', fixed = TRUE,
+                                                       taxa), collapse = ', ')),
+                                  tags$span(class = 'state-note-detail',
+                                            notes[taxa[1]]))
+                        }
+                        
+                        DuplicateOf <- function(x) {
+                          duplicates <- duplicated(x)
+                          masters <- x[!duplicates]
+                          vapply(masters, function(d) x == d, logical(length(x)))
+                        }
+                        if (length(notes) == 1) {
+                          onlyOne <- TRUE
+                          names(onlyOne) <- names(notes)
+                          PrintNote(onlyOne)
+                        }
+                        else {
+                          notes <- notes[order(names(notes))]
+                          duplicates <- DuplicateOf(toupper(notes))
+                          apply(duplicates, 2, PrintNote)
+                        }
+                      }),
+                      if (!states[[1]] %in% c("", "''")
+                          && any(tokens == '-')) {
+                        tags$p("Brazeau _et al._ (2019) advise that neomorphic characters should not contain inapplicable tokens (-).")
+                      }
+                    )
                  })
-               } else {
-                 output$charMapLegend <- renderUI({})
-                 plot(PlottedTree())
-               }
-             }
-           },
-           'space' = {
-             hide('whichTree')
-             hide('charChooser')
-             treespacePlot()
-           }
-    )}
+                }
+              } else {
+                output$charMapLegend <- renderUI({})
+                output$charNotes <- renderUI({})
+                plot(PlottedTree())
+              }
+            }
+          },
+          'space' = {
+            hide('whichTree')
+            hide('charChooser')
+            treespacePlot()
+          }
+   )}
   })
   
   PlotSize <- function () debounce(reactive(input$plotSize), 100)

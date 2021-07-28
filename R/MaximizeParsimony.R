@@ -175,7 +175,7 @@ MaximizeParsimony <- function (dataset, tree,
                                tolerance = sqrt(.Machine$double.eps),
                                constraint,
                                verbosity = 3L) {
-  
+
   ### User messaging functions ###
   .Message <- function (level, ...) {
     if (level < verbosity) {
@@ -577,7 +577,7 @@ MaximizeParsimony <- function (dataset, tree,
              "; keeping max ", as.integer(searchHits),
              " trees; k = ", concavity, ".")
     .Info(1L, Sys.time(), ": Score to beat: ", signif(bestScore))
-          
+
     newEdges <- .Search('TBR search 1')
     
     newBestScore <- .Score(newEdges)
@@ -664,7 +664,7 @@ MaximizeParsimony <- function (dataset, tree,
           edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
         } else {
           .Info(3L, "Hit best score {.strong {signif(bestScore)}} again")
-          
+
           edge <- ratchetImproved[, , sample.int(dim(ratchetImproved)[3], 1)]
           bestEdges <- .CombineResults(bestEdges, ratchetImproved,
                                        1 + tbrStart + iter)
