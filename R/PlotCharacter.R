@@ -280,14 +280,20 @@ PlotCharacter <- function (tree, dataset, char = 1L,
       if (any(nState[appLevels])) {
         # 2. If the node’s ancestor has any applicable token
         if (any(aState[appLevels])) {
+          #2A [ADDED IN ERRATUM?]
+          common <- aState & nState
+          if (any(common) && all(common == aState)) {
+            state[n, ] <- aState
+          } else 
           # 3. If the node’s state is NOT the same as its ancestor’s
-          if (any(nState != aState)) {
+          # if (any(nState != aState))
+            {
             # 4. If there is any token in common between the node’s descendants
             common <- lState & rState
             if (any(common)) {
               # 5. Add to the current node’s state any token in common between
-              #  its ancestor and its descendants
-              state[n, ] <- nState | (aState & common)
+              #  its ancestor and *either of* its descendants
+              state[n, ] <- nState | (aState & (lState | rState))
             } else {
               # 6. If the states of the node’s descendants both contain the
               #  inapplicable token

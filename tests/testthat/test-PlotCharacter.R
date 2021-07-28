@@ -87,6 +87,27 @@ test_that("PlotCharacter()", {
   Test("320--??3--21")
 })
 
+test_that("Edge cases work", {
+  tree <- ape::read.tree(text = '(a, (b, ((c, d), (e, f))));')
+  dataset <- TreeTools::StringToPhyDat('-01100', tips = tree)
+  if (interactive()) {
+    PlotCharacter(tree, dataset)
+  } else {
+    expect_equal(c('-' = FALSE, '0' = TRUE, '1' = FALSE),
+                 PlotCharacter(tree, dataset, plot = FALSE)[9, ])
+  }
+  
+  tree <- ape::read.tree(text = '(a, (b, (c, (d, (e, f)))));')
+  dataset <- TreeTools::StringToPhyDat('--0101', tips = tree)
+  if (interactive()) {
+    PlotCharacter(tree, dataset)
+  } else {
+    expect_equal(cbind('-' = c(1, 1, 0, 0, 0),
+                       '0' = c(0, 0, 1, 1, 1),
+                       '1' = c(0, 0, 1, 1, 1)),
+                 1 * PlotCharacter(tree, dataset, plot = FALSE)[7:11, ])
+  }
+})
 
 test_that("Out-of-sequence works", {
   skip_if_not_installed('vdiffr')
