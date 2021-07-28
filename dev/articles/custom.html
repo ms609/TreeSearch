@@ -164,7 +164,7 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
                      verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
 <pre><code>##   - Performing tree search.  Initial score: 56</code></pre>
-<pre><code>##   - Final score 33 found 7 times after 50 rearrangements.</code></pre>
+<pre><code>##   - Final score 33 found 4 times after 50 rearrangements.</code></pre>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></code></pre></div>
 <p><img src="custom_files/figure-html/tci-search-1.png" width="700"></p>
@@ -189,8 +189,8 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      TreeScorer <span class="op">=</span> <span class="va">DistanceScore</span>,
                      maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
                      verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
-<pre><code>##   - Performing tree search.  Initial score: -5.6323312532452</code></pre>
-<pre><code>##   - Final score -7.87744375108174 found 1 times after 50 rearrangements.</code></pre>
+<pre><code>##   - Performing tree search.  Initial score: -7.46857574523181</code></pre>
+<pre><code>##   - Final score -7.46857574523181 found 6 times after 50 rearrangements.</code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
 <span class="fu">PlotTree</span><span class="op">(</span><span class="va">startTree</span><span class="op">)</span>
