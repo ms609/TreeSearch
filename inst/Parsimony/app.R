@@ -266,7 +266,6 @@ server <- function(input, output, session) {
     updateSliderInput(session, 'maxHits', value = input$maxHits)
     updateSliderInput(session, 'startIter', value = input$startIter)
     updateSliderInput(session, 'finalIter', value = input$finalIter)
-    updateSliderInput(session, 'verbosity', value = input$verbosity)
     showModal(modalDialog(
       easyClose = TRUE,
       size = 'l',
@@ -283,7 +282,6 @@ server <- function(input, output, session) {
               sliderInput('tbrIter', "TBR depth", min = 1L, max = 20L, value = 1L, step = 1L),
               sliderInput('startIter', "First iteration extra depth", min = 1L, max = 10L, value = 3L),
               sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
-              sliderInput('verbosity', "Notification level", min = 0L, max = 3L, value = 3L, step = 1L),
              ))
       ),
       title = "Tree search settings",
@@ -363,8 +361,8 @@ server <- function(input, output, session) {
                                      maxHits = ceiling(10 ^ input$maxHits),
                                      startIter = input$startIter,
                                      finalIter = input$finalIter,
-                                     verbosity = input$verbosity))
-      
+                                     verbosity = 4L))
+
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
       output$results <- renderText(paste0(

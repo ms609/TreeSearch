@@ -16,6 +16,8 @@ test_that("Failures are graceful", {
   
   expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], mo, nTaxa = 0))
   expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], dat))
+  
+  expect_null(TreeLength(NULL))
 })
 
 test_that("Deprecations throw warning", {
@@ -167,6 +169,13 @@ test_that("(random) lists of trees are scored", {
   expect_gt(t.test(TreeLength(100, mat, 'profile'), mu = 830.0585)$p.val, 0.001)
 })
 
+test_that("TreeLength() handles subsetted trees", {
+  data('inapplicable.datasets')
+  dat <- inapplicable.phyData[[1]] 
+  t8 <- as.phylo(1:4, 8, tipLabels = names(dat)[1:8])
+  expect_equal(4, length(TreeLength(t8, dat)))
+})
+
 test_that("Profile scoring is reported correctly", {
   data('congreveLamsdellMatrices')
   dataset <- congreveLamsdellMatrices[[42]]
@@ -196,13 +205,18 @@ test_that("CharacterLength() fails gracefully", {
   
   data('inapplicable.datasets')
   dataset <- inapplicable.phyData[[12]]
+  # Unlabelled leaves
+  expect_error(CharacterLength(structure(list(), class = 'phylo'), dataset))
+  
+  # Missing leaves
   expect_error(CharacterLength(as.phylo(1, 4), dataset))
-  expect_error(CharacterLength(as.phylo(1, 42, tipLabels = names(dataset)[-1]),
-                               dataset))
+  tMinus1 <- as.phylo(1, 42, tipLabels = names(dataset)[-1])
+  expect_equal(CharacterLength(tMinus1, dataset[-1]),
+               CharacterLength(tMinus1, dataset))
   expect_error(CharacterLength(as.phylo(1, 43), dataset))
-  expect_error(CharacterLength(as.phylo(1, 44, 
-                                        tipLabels = c('error', names(dataset))),
-                               dataset))
+  tPlus1 <- as.phylo(1, 44, tipLabels = c('extra', names(dataset)))
+  expect_equal(CharacterLength(DropTip(tPlus1, 'extra'), dataset),
+               CharacterLength(tPlus1, dataset))
   expect_error(CharacterLength(as.phylo(1:2, 43, tipLabels = names(dataset)),
                                dataset))
   # no error:
@@ -211,6 +225,7 @@ test_that("CharacterLength() fails gracefully", {
   expect_equal(c(53, 59, 6),
                as.numeric(table(CharacterLength(NJTree(dataset[1:4, ]),
                                                 dataset[1:4], compress = TRUE))))
+  
 })
 
 test_that("Character compression works", {
