@@ -27,7 +27,7 @@ test_that("PlotCharacter()", {
   skip_if_not_installed('vdiffr')
   
   Test <- if (interactive()) {
-    function(str) invisible(Character(str, plot = TRUE))
+    function (str) invisible(Character(str, plot = TRUE))
   } else {
     function (str) {
       vdiffr::expect_doppelganger(
@@ -69,6 +69,7 @@ test_that("PlotCharacter()", {
   Test("23--1----032")
   Test("1----1----1-")
   Test("-1-1-1--1-1-")
+  
   Test("--------0101")
   Test("10101-----01")
   Test("011--?--0011")
