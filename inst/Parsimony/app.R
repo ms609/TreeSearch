@@ -155,7 +155,7 @@ ui <- fluidPage(theme = 'app.css',
       actionButton("loadTrees", "Load trees"),
       selectInput('character.weight', "Character weighting", list("Equal" = "equal"), "equal"),
       selectInput('implied.weights', "Step weighting", 
-                  list("Implied" = "on", "Equal" = "off"), "on"),
+                  list("Implied" = "on", "Profile" = "prof", "Equal" = "off"), "on"),
       sliderInput("concavity", "Step weight concavity constant", min = 0L,
                   max = 3L, pre = '10^', value = 1L),
       sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 6L, step = 1L),
@@ -167,7 +167,6 @@ ui <- fluidPage(theme = 'app.css',
       sliderInput('startIter', "First iteration extra depth", min = 1L, max = 10L, value = 3L),
       sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
       # sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
-      sliderInput('verbosity', "Notification level", min = 0L, max = 3L, value = 3L, step = 1L),
       actionButton("go", "Search"),
       textOutput("results"),
       hidden(radioButtons('plotFormat', "Display:",
@@ -201,7 +200,7 @@ ui <- fluidPage(theme = 'app.css',
                               min = 0L, max = 1L, step = 1L, width = 200),
                  checkboxGroupInput('mapDisplay', '', list(
                    "Align tips" = "tipsRight",
-                   "Reconstruct tips" = "updateTips"
+                   "Infer tips" = "updateTips"
                    )),
                  style = "float: right; width: 200px; margin-left: 2em;"),
         htmlOutput('charMapLegend')
@@ -312,30 +311,37 @@ server <- function(input, output, session) {
     
   })
   
+  observeEvent(input$implied.weights, {
+    switch(input$implied.weights,
+           'on' = show('concavity'),
+           hide('concavity')
+    )
+  })
+  
   concavity <- reactive({
-    if (input$implied.weights == 'on') {
-      10 ^ input$concavity
-    } else Inf
+    switch(input$implied.weights,
+           'on' = 10 ^ input$concavity,
+           'off' = Inf,
+           'prof' = 'Profile')
   })
   
   observeEvent(input$go, {
     if (!inherits(r$dataset, 'phyDat')) {
       showNotification("No data loaded", type = 'error')
     } else {
-      r$trees <- withProgress(c(MaximizeParsimony(r$dataset,
-                                   tree = if(is.null(r$trees)) 
-                                     TreeTools::NJTree(r$dataset)
-                                   else
-                                     r$trees[[1]],
-                                   concavity = concavity(),
-                                   ratchIter = input$ratchIter,
-                                   tbrIter = input$tbrIter,
-                                   maxHits = ceiling(10 ^ input$maxHits),
-                                   startIter = input$startIter,
-                                   finalIter = input$finalIter,
-                                   verbosity = input$verbosity,
-                                   session = session)),
-                              message = "Searching...")
+      r$trees <- c(MaximizeParsimony(r$dataset,
+                                     tree = if(is.null(r$trees)) 
+                                       TreeTools::NJTree(r$dataset)
+                                     else
+                                       r$trees[[1]],
+                                     
+                                     concavity = concavity(),
+                                     ratchIter = input$ratchIter,
+                                     tbrIter = input$tbrIter,
+                                     maxHits = ceiling(10 ^ input$maxHits),
+                                     startIter = input$startIter,
+                                     finalIter = input$finalIter,
+                                     verbosity = 4L))
       
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)

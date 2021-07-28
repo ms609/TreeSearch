@@ -32,6 +32,7 @@
  - Remove redundant function `AsBinary()`
  - Drop `nTip` parameter in `RandomTreeScore()` (infer from `morphyObj`)
  - C implementations of rearrangement functions
+ - Improved command line interface for search progress messaging
 
 # TreeSearch 0.4.3
 

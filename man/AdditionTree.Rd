@@ -10,19 +10,18 @@ AdditionTree(dataset, concavity = Inf, constraint, sequence)
 \item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
 whose names correspond to the labels of any accompanying tree.}
 
-\item{concavity}{Determines the degree to which extra steps beyond the first
-are penalized.  Specify a numeric value to use implied weighting
-\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
-\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
-TNT sets a default of 3, but this is too low in some circumstances
-\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
-Better still explore the sensitivity of results under a range of
-concavity values, e.g. \code{k = 2 ^ (1:7)}.
-Specify \code{Inf} to weight each additional step equally.
-Specify \code{'profile'} to employ profile parsimony \insertCite{Faith2001}{TreeSearch}.}
+\item{concavity}{Numeric specifying concavity constant for implied step
+weighting; set as \code{Inf} for equal step weights (which is a bad idea; see
+\insertCite{Smith2019;textual}{TreeSearch}).}
 
-\item{sequence}{Character vector listing sequence in which to add taxa.
-Randomized if not provided.}
+\item{constraint}{An object of class \code{phyDat}; returned trees will be
+perfectly compatible with each character in \code{constraint}.
+See \code{\link[=ImposeConstraint]{ImposeConstraint()}} and
+\href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
+for further examples.}
+
+\item{sequence}{Character or numeric vector listing sequence in which to add
+taxa. Randomized if not provided.}
 }
 \value{
 \code{AdditionTree()} returns a tree of class \code{phylo}, rooted on

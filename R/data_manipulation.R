@@ -37,7 +37,7 @@
 #' PrepareDataProfile(dataset)
 #' @author Martin R. Smith; written with reference to 
 #' `phangorn:::prepareDataFitch()`
-#' @importFrom cli cli_alert
+#' @importFrom cli cli_alert cli_alert_warning
 #' @export
 PrepareDataProfile <- function (dataset) {
   if ('info.amounts' %in% names(attributes(dataset))) {
@@ -94,7 +94,12 @@ PrepareDataProfile <- function (dataset) {
     ranking <- order(order(split, decreasing = TRUE))
     ignored <- ranking > 2L
     if (any(split[ignored] > 1L)) {
-      warning("Can handle max. 2 informative tokens. Dropping others.")
+      warningMsg <- "Can handle max. 2 informative tokens. Dropping others."
+      if (interactive()) {
+        cli_alert_warning(warningMsg)                                           # nocov
+      } else {
+        warning(warningMsg)
+      }
     }
     if (length(ambiguousTokens) == 0) {
       stop("No ambiguous token available for replacement")
