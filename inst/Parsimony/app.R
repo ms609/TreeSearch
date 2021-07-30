@@ -203,12 +203,14 @@ ui <- fluidPage(theme = 'app.css',
         htmlOutput('charNotes'),
       )),
       hidden(tags$div(id = 'consConfig',
-        tags$div(
+        tags$div(style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput('consP', 'Majority:', value = 1,
                       min = 0.5, max = 1, width = 200),
           sliderInput('keepTips', 'Tips to show:', value = 1L,
                       min = 1L, max = 1L, step = 1L, width = 200),
-                 style = "float: right; width: 200px; margin-left: 2em;"),
+          selectizeInput('neverDrop', 'Never drop:', multiple = TRUE,
+                         choices = list("NA" = "No trees loaded"))
+                 ),
         htmlOutput('droppedTips')
       )),
       htmlOutput('references', style = "clear: both;"),
@@ -275,8 +277,10 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$searchConfig, {
-    updateSelectInput(session, 'character.weight', selected = input$character.weight)
-    updateSelectInput(session, 'implied.weights', selected = input$implied.weights)
+    updateSelectInput(session, 'character.weight',
+                      selected = input$character.weight)
+    updateSelectInput(session, 'implied.weights',
+                      selected = input$implied.weights)
     updateSliderInput(session, 'concavity', value = input$concavity)
     updateSliderInput(session, 'ratchIter', value = input$ratchIter)
     updateSliderInput(session, 'tbrIter', value = input$tbrIter)
@@ -286,18 +290,25 @@ server <- function(input, output, session) {
     showModal(modalDialog(
       easyClose = TRUE,
       fluidPage(column(6,
-      tagList(selectInput('character.weight', "Character weighting", list("Equal" = "equal"), "equal"),
+      tagList(selectInput('character.weight', "Character weighting",
+                          list("Equal" = "equal"), "equal"),
               selectInput('implied.weights', "Step weighting", 
-                         list("Implied" = "on", "Profile" = "prof", "Equal" = "off"), "on"),
+                         list("Implied" = "on", "Profile" = "prof",
+                              "Equal" = "off"), "on"),
               sliderInput("concavity", "Step weight concavity constant", min = 0L,
                          max = 3L, pre = '10^', value = 1L),
-              sliderInput('ratchIter', "Ratchet iterations", min = 0L, max = 50L, value = 6L, step = 1L),
-              sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L, value = 2L, pre = '10^'),
+              sliderInput('ratchIter', "Ratchet iterations", min = 0L,
+                          max = 50L, value = 6L, step = 1L),
+              sliderInput('maxHits', "Maximum hits", min = 0L, max = 5L,
+                          value = 2L, pre = '10^'),
       )), column(6, 
              tagList(
-              sliderInput('tbrIter', "TBR depth", min = 1L, max = 20L, value = 1L, step = 1L),
-              sliderInput('startIter', "First iteration extra depth", min = 1L, max = 10L, value = 3L),
-              sliderInput('finalIter', "Final iteration extra depth", min = 1L, max = 10L, value = 1L),
+              sliderInput('tbrIter', "TBR depth", min = 1L, max = 20L,
+                          value = 1L, step = 1L),
+              sliderInput('startIter', "First iteration extra depth", min = 1L,
+                          max = 10L, value = 3L),
+              sliderInput('finalIter', "Final iteration extra depth", min = 1L,
+                          max = 10L, value = 1L),
              ))
       ),
       title = "Tree search settings",
@@ -385,9 +396,11 @@ server <- function(input, output, session) {
   })
   
   observeEvent(r$trees, {
-    nTip <- NTip(r$trees[[1]])
-    r$trees[-1] <- RenumberTips(r$trees[-1], r$trees[[1]])
+    tipLabels <- r$trees[[1]]$tip.label
+    nTip <- length(tipLabels)
+    r$trees[-1] <- RenumberTips(r$trees[-1], tipLabels)
     updateSliderInput(inputId = 'keepTips', max = nTip, value = nTip)
+    updateSelectizeInput(inputId = 'neverDrop', choices = tipLabels)
   })
 
   observeEvent(input$implied.weights, {
@@ -448,7 +461,13 @@ server <- function(input, output, session) {
     TipInstability(r$trees)
   })
   
-  dropSeq <- reactive(DropSeq(r$trees))
+  dropSeq <- reactive(
+    withProgress(
+      message = 'Identifying rogues', value = 0.99,
+      Rogue::QuickRogue(r$trees, neverDrop = input$neverDrop,
+                        fullSeq = TRUE)$taxon[-1]
+    )
+  )
   
   tipCols <- reactive(.TipCols(r$trees))
   consP <- debounce(reactive(input$consP), 50)
