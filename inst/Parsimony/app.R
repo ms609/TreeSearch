@@ -132,6 +132,9 @@ Smith2020 <- Reference('Smith, M.R.', 2020,
 Smith2021 <- Reference('Smith, M.R.', 2022,
                        'Robust analysis of phylogenetic tree space',
                        'Submitted MS')
+Smith2022 <- Reference("Smith, M.R.", 2022, 
+                       "Improving consensus trees by detecting rogue taxa",
+                       "Submitted MS")
 Stockham2002 <- Reference(
   author = c('Stockham, C.', 'Wang, L.-S.', 'Warnow, T.'), 2002,
   "Statistically based postprocessing of phylogenetic analysis by clustering",
@@ -860,7 +863,9 @@ server <- function(input, output, session) {
      HTML(paste("Cluster consensus trees:", Stockham2002)),
      HTML(paste0('Partitioning around medoids:', Maechler2019,
                  "Hierarchical, minimax linkage:", Bien2011,
-                 Murtagh1983))
+                 Murtagh1983)),
+     tags$h3("Rogue taxa"),
+     HTML(paste0(Smith2022))
     )
   })
 

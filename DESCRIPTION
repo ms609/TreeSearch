@@ -32,6 +32,7 @@ Imports:
     Quartet,
     Rcpp,
     Rdpack (>= 0.7),
+    Rogue (>= 1.0.0.9000),
     shiny,
     shinyjs,
     stats,
