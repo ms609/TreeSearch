@@ -465,18 +465,27 @@ server <- function(input, output, session) {
     TipInstability(r$trees)
   })
   
-  dropSeq <- reactive(
+  dropSeq <- reactive(rogues()$taxon[-1])
+  
+  stableCol <- reactive({
+    ColByStability(r$trees)
+  })
+  
+  
+  
+  rogues <- reactive(
     withProgress(
       message = 'Identifying rogues', value = 0.99,
       Rogue::QuickRogue(r$trees, neverDrop = input$neverDrop,
-                        fullSeq = TRUE)$taxon[-1]
+                        fullSeq = TRUE)
     )
   )
   
-  tipCols <- reactive(.TipCols(r$trees))
+  tipCols <- reactive(stableCol()) # TODO allow user to choose how to colour
+  
   consP <- debounce(reactive(input$consP), 50)
   
-  ConsensusPlot <- reactive({
+  ConsensusPlot <- function() {
     par(mar = rep(0, 4), cex = 0.9)
     #instab <- Instab()
     #dropped <- names(instab[order(instab) > input$keepTips])
@@ -495,7 +504,7 @@ server <- function(input, output, session) {
     }
     plot(ConsensusWithout(r$trees, dropped, p = consP()),
          tip.color = tipCols()[kept])
-  })
+  }
   
   ShowConfigs <- function (visible = character(0)) {
     allConfigs <- c('whichTree', 'charChooser', 'consConfig')
@@ -919,7 +928,7 @@ server <- function(input, output, session) {
     switch(input$plotFormat,
            'cons' = {
              par(mar = rep(0, 4), cex = 0.9)
-             plot(consensus(r$trees))
+             ConsensusPlot()
            },
            'clus' = {
              PlotClusterCons()
@@ -972,7 +981,7 @@ server <- function(input, output, session) {
     tags$div(style = paste0('margin-bottom: ', 
                             (input$plotSize - 600)
                             , 'px'),
-             " ... ")
+             " ")
   })
   
   output$references <- renderUI({
