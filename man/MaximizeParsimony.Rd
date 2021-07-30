@@ -21,7 +21,7 @@ MaximizeParsimony(
   concavity = Inf,
   tolerance = sqrt(.Machine$double.eps),
   constraint,
-  verbosity = 2L
+  verbosity = 3L
 )
 
 Resample(

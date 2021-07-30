@@ -151,7 +151,6 @@ Venna2001 <- Reference(
   doi = "10.1007/3-540-44668-0_68")
 
 ui <- fluidPage(theme = 'app.css',
-                title = 'Title',
                 title = 'TreeSearch',
   useShinyjs(),
   column(3,
