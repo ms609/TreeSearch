@@ -226,6 +226,11 @@ server <- function(input, output, session) {
   # Load data
   ##############################################################################
   
+  datasetMatchesTrees <- reactive({
+    length(intersect(names(r$dataset), r$trees[[1]]$tip.label)) == 
+      length(r$dataset)
+  })
+  
   observeEvent(input$datafile, {
     fileInput <- input$datafile
     r$dataset <- NULL
@@ -263,8 +268,7 @@ server <- function(input, output, session) {
     
     
     if (!is.null(r$trees)) {
-      if (length(intersect(names(r$dataset), r$trees[[1]]$tip.label)) != 
-          length(r$dataset)) {
+      if (!datasetMatchesTrees()) {
         r$trees <- NULL
         updateActionButton(session, "go", "New search")
       } else {
