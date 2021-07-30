@@ -36,14 +36,15 @@ Imports:
     shiny,
     shinyjs,
     stats,
-    TreeDist,
-    TreeTools (>= 1.4.5.9001)
+    TreeDist (> 2.0.3),
+    TreeTools (>= 1.4.5.9002)
 Suggests:
     knitr,
     rmarkdown,
     testthat,
     TreeDist (>= 2.0.3.9003),
     vdiffr (>= 1.0.0)
+    vdiffr (>= 1.0.0),
 Config/Needs/coverage: covr
 Config/Needs/github-actions:
     callr,
@@ -60,7 +61,8 @@ LinkingTo:
     Rcpp,
     TreeTools
 Remotes:
-    ms609/TreeDist
+    ms609/TreeDist,
+    ms609/TreeTools,
 SystemRequirements: C++14
 LazyData: true
 ByteCompile: true

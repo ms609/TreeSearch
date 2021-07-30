@@ -48,7 +48,7 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
     nCands <- length(candidates)
     
     theseTaxa <- candidates[[1]]$tip.label
-    theseData <- dataset[theseTaxa]
+    theseData <- .Recompress(dataset[theseTaxa])
     if (is.finite(concavity)) {
       theseData <- PrepareDataIW(theseData)
     } else if (is.character(concavity)) {
@@ -86,6 +86,9 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
     }
     cli_progress_update(nCands)
   }
-  
   tree
+}
+
+.Recompress <- function (dataset) {
+  MatrixToPhyDat(PhyDatToMatrix(dataset))
 }
