@@ -395,7 +395,7 @@ MaximizeParsimony <- function (dataset, tree,
                       paste0(treeOnly, collapse = ', '), "\n")
     warning("Ignored taxa on tree missing in dataset:\n   ",
              paste0(treeOnly, collapse = ', '))
-    tree <- drop.tip(tree, treeOnly)
+    tree <- DropTip(tree, treeOnly)
   }
   if (length(datOnly)) {
     cli_alert_warning("Ignoring taxa in dataset missing on tree:\n   ",
