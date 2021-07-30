@@ -468,9 +468,8 @@ server <- function(input, output, session) {
   dropSeq <- reactive(rogues()$taxon[-1])
   
   stableCol <- reactive({
-    ColByStability(r$trees)
+    Rogue::ColByStability(r$trees)
   })
-  
   
   
   rogues <- reactive(
@@ -494,7 +493,7 @@ server <- function(input, output, session) {
     if (length(dropped)) {
       output$droppedTips <- renderUI({tagList(
         tags$h3("Tips excluded:"),
-        tags$ul(lapply(dropped, function (i) {
+        tags$ul(lapply(dropSeq()[seq_along(dropped)], function (i) {
           tags$li(i)
           #tags$li(paste0(i, ' (', signif(instab[i]), ')'))
         }))
@@ -502,8 +501,8 @@ server <- function(input, output, session) {
     } else {
       output$droppedTips <- renderUI({})
     }
-    plot(ConsensusWithout(r$trees, dropped, p = consP()),
-         tip.color = tipCols()[kept])
+    cons <- ConsensusWithout(r$trees, dropped, p = consP())
+    plot(cons, tip.color = tipCols()[intersect(cons$tip.label, kept)])
   }
   
   ShowConfigs <- function (visible = character(0)) {
