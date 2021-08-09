@@ -226,7 +226,7 @@ CharacterLength <- function (tree, dataset, compress = FALSE) {
     
     tree <- KeepTip(tree, names(dataset))
   }
-  tree <- RenumberTips(Renumber(tree), names(dataset))  
+  tree <- RenumberTips(Renumber(tree), names(dataset))
   
   ret <- FastCharacterLength(tree, dataset)
   # Return:
