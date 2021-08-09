@@ -506,7 +506,6 @@ server <- function(input, output, session) {
     } else {
       hide('droppedTips')
     }
-    dput(input$excludedTip)
     if (length(dropped) && 
         length(input$excludedTip) &&
         nchar(input$excludedTip)) {
