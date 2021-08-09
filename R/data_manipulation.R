@@ -40,7 +40,7 @@
 #' @importFrom cli cli_alert cli_alert_warning
 #' @export
 PrepareDataProfile <- function (dataset) {
-  if ('info.amounts' %in% names(attributes(dataset))) {
+  if ('info.amounts' %fin% names(attributes(dataset))) {
     # Already prepared
     return(dataset)
   }
@@ -67,7 +67,7 @@ PrepareDataProfile <- function (dataset) {
     inappLevel <- which(apply(unname(cont), 1, identical,
                               as.double(colnames(cont) == '-')))
     dataset[] <- lapply(dataset, function (i) {
-      i[i %in% inappLevel] <- qmLevel
+      i[i %fin% inappLevel] <- qmLevel
       i
     })
   }
@@ -77,7 +77,7 @@ PrepareDataProfile <- function (dataset) {
     # message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ', '),
     #         " converted to '?'")
     dataset[] <- lapply(dataset, function (i) {
-        i[i %in% ambigs] <- qmLevel
+        i[i %fin% ambigs] <- qmLevel
         i
       })
   }
@@ -86,7 +86,7 @@ PrepareDataProfile <- function (dataset) {
                     max(index))
   
   .RemoveExtraTokens <- function (char, ambiguousTokens) {
-    unambig <- char[!char %in% ambiguousTokens]
+    unambig <- setdiff(char, ambiguousTokens)
     if (length(unambig) == 0) {
       return(matrix(nrow = length(char), ncol = 0))
     }
@@ -108,7 +108,7 @@ PrepareDataProfile <- function (dataset) {
     most <- tokens[which.min(ranking)]
     vapply(setdiff(names(split)[split > 1], most), function (kept) {
            simplified <- char
-           simplified[!simplified %in% c(most, kept)] <- ambiguousTokens[1]
+           simplified[!simplified %fin% c(most, kept)] <- ambiguousTokens[1]
            simplified
     }, char)
   }

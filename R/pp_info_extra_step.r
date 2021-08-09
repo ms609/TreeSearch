@@ -29,7 +29,7 @@
 #' @export
 StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
   NIL <- c('0' = 0)
-  char <- char[!char %in% ambiguousTokens]
+  char <- setdiff(char, ambiguousTokens)
   if (length(char) == 0) {
     return(NIL)
   }

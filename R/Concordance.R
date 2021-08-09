@@ -85,14 +85,14 @@ ClusteringConcordance <- function (tree, dataset) {
   
   at <- attributes(dataset)
   cont <- at$contrast
-  if ('-' %in% colnames(cont)) cont[cont[, '-'] > 0, ] <- 1
+  if ('-' %fin% colnames(cont)) cont[cont[, '-'] > 0, ] <- 1
   ambiguous <- rowSums(cont) != 1
   
   mat <- matrix(unlist(dataset), length(dataset), byrow = TRUE)
-  mat[mat %in% which(ambiguous)] <- NA
+  mat[mat %fin% which(ambiguous)] <- NA
   mat <- apply(mat, 2, function (x) {
     uniques <- table(x) == 1
-    x[x %in% names(uniques[uniques])] <- NA
+    x[x %fin% names(uniques[uniques])] <- NA
     x
   })
   
