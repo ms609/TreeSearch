@@ -23,10 +23,10 @@ URL: https://ms609.github.io/TreeSearch/, https://github.com/ms609/TreeSearch/
 BugReports: https://github.com/ms609/TreeSearch/issues/
 Depends: R (>= 3.5.0)
 Imports: 
-    ape (>= 5.0),
+    ape (>= 5.1.2),
     cli (>= 3.0),
     cluster,
-    glue,
+    fastmatch,
     phangorn (>= 2.2.1),
     protoclust,
     Quartet,
@@ -37,13 +37,18 @@ Imports:
     shinyjs,
     stats,
     TreeDist (> 2.0.3),
-    TreeTools (>= 1.4.5.9002)
+    TreeTools (>= 1.4.5.9106)
 Suggests:
     knitr,
     rmarkdown,
     testthat,
     TreeDist (>= 2.0.3.9003),
     vdiffr (>= 1.0.0),
+Remotes:
+    emmanuelparadis/ape,
+    ms609/Rogue,
+    ms609/TreeDist,
+    ms609/TreeTools@rogue,
 Config/Needs/coverage: covr
 Config/Needs/github-actions:
     callr,
@@ -59,9 +64,6 @@ RdMacros: Rdpack
 LinkingTo:
     Rcpp,
     TreeTools
-Remotes:
-    ms609/TreeDist,
-    ms609/TreeTools,
 SystemRequirements: C++14
 LazyData: true
 ByteCompile: true
