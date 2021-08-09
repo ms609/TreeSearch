@@ -48,7 +48,7 @@
 # and delete R/ape.plot.phylo.R
 #' @importFrom TreeTools Postorder
 #' @export
-PlotCharacter <- function (tree, dataset, char = 1L, 
+PlotCharacter <- function (tree, dataset, char = 1L,
                            updateTips = FALSE,
                            plot = TRUE,
                            
