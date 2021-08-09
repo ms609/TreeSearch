@@ -122,7 +122,7 @@ test_that("Resample() fails and works", {
   jackSupport <- rowSums(vapply(jackSplits, function (sp) in.Splits(bal, sp),
                                 logical(3)))
   # This test could be replaced with a more statistically robust alternative!
-  expect_equal(c(1/2, 1, 0) * sum(vapply(jackTrees, length, 1L)), jackSupport,
+  expect_equal(c(1, 1/2, 0) * sum(vapply(jackTrees, length, 1L)), jackSupport,
                tolerance = 0.2)
   
   bootTrees <- replicate(nRep, Resample(dataset, method = 'bootstrap',
@@ -132,7 +132,7 @@ test_that("Resample() fails and works", {
                                 function (tr) in.Splits(bal, as.Splits(tr)),
                                 logical(3)))
   # This test could be replaced with a more statistically robust alternative!
-  expect_equal(c(1/2, 1, 0) * sum(vapply(bootTrees, length, 1L)), bootSupport,
+  expect_equal(c(1, 1/2, 0) * sum(vapply(bootTrees, length, 1L)), bootSupport,
                tolerance = 0.2)
     
 })
