@@ -86,7 +86,7 @@ PrepareDataProfile <- function (dataset) {
                     max(index))
   
   .RemoveExtraTokens <- function (char, ambiguousTokens) {
-    unambig <- setdiff(char, ambiguousTokens)
+    unambig <- char[!char %fin% ambiguousTokens]
     if (length(unambig) == 0) {
       return(matrix(nrow = length(char), ncol = 0))
     }
