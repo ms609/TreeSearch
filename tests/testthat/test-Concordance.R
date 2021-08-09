@@ -20,7 +20,7 @@ test_that("ConcordantInformation() works", {
   
   dataset <- MatrixToPhyDat(cbind(setNames(c(rep(1, 11), 2:5), paste0('t', 1:15))))
   tree <- TreeTools::PectinateTree(length(dataset))
-  ci <- expect_warning(expect_error(ConcordantInformation(tree, dataset)))
+  expect_error(ConcordantInformation(tree, dataset))
   # expect_equal(0, unname(ci['signal']))
   # expect_equal(0, unname(ci['noise']))
   

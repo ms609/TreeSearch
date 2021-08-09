@@ -8,6 +8,9 @@
 
 ## New functions
  - `EasyTrees()` 'shiny' graphical user interface for tree search
+ - `AdditionTree()` adds each taxon in sequence to the most parsimonious place
+   on the tree, generating a more parsimonious starting tree than
+   neighbour-joining.
  - `PlotCharacter()` reconstructs character distributions on trees
  - `ConstrainedNJ()` constructs starting trees that respect a constraint
  - `ImposeConstraint()` reconciles a tree with a constraint
@@ -29,6 +32,7 @@
  - Remove redundant function `AsBinary()`
  - Drop `nTip` parameter in `RandomTreeScore()` (infer from `morphyObj`)
  - C implementations of rearrangement functions
+ - Improved command line interface for search progress messaging
 
 # TreeSearch 0.4.3
 

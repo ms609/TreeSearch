@@ -33,17 +33,17 @@ plot.phylo <-
     
     .nodeHeight <- function(edge, Nedge, yy)
       .C(node_height, as.integer(edge[, 1]), as.integer(edge[, 2]),
-         as.integer(Nedge), as.double(yy))[[4]]
+         as.integer(Nedge), as.double(yy), PACKAGE = 'ape')[[4]]
     
     .nodeDepth <- function(Ntip, Nnode, edge, Nedge, node.depth)
       .C(node_depth, as.integer(Ntip),
          as.integer(edge[, 1]), as.integer(edge[, 2]),
-         as.integer(Nedge), double(Ntip + Nnode), as.integer(node.depth))[[5]]
+         as.integer(Nedge), double(Ntip + Nnode), as.integer(node.depth), PACKAGE = 'ape')[[5]]
     
     .nodeDepthEdgelength <- function(Ntip, Nnode, edge, Nedge, edge.length)
       .C(node_depth_edgelength, as.integer(edge[, 1]),
          as.integer(edge[, 2]), as.integer(Nedge),
-         as.double(edge.length), double(Ntip + Nnode))[[5]]
+         as.double(edge.length), double(Ntip + Nnode), PACKAGE = 'ape')[[5]]
     
     Nedge <- dim(x$edge)[1]
     Nnode <- x$Nnode

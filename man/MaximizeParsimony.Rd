@@ -15,19 +15,18 @@ MaximizeParsimony(
   tbrIter = 2L,
   startIter = 2L,
   finalIter = 1L,
-  maxHits = NTip(dataset) * 1.5,
+  maxHits = NTip(dataset) * 1.8,
   maxTime = 60,
   quickHits = 1/3,
   concavity = Inf,
   tolerance = sqrt(.Machine$double.eps),
   constraint,
-  verbosity = 2L,
-  session = NULL
+  verbosity = 3L
 )
 
 Resample(
   dataset,
-  tree = NJTree(dataset),
+  tree,
   method = "jack",
   proportion = 2/3,
   ratchIter = 1L,
@@ -38,7 +37,6 @@ Resample(
   tolerance = sqrt(.Machine$double.eps),
   constraint,
   verbosity = 2L,
-  session = NULL,
   ...
 )
 
@@ -53,8 +51,8 @@ whose names correspond to the labels of any accompanying tree.}
 \item{tree}{(optional) A bifurcating tree of class \code{\link{phylo}},
 containing only the tips listed in \code{dataset}, from which the search
 should begin.
-If unspecified, a neighbour-joining tree will be generated from \code{dataset},
-respecting any supplied \code{constraint}.
+If unspecified, an \link[=AdditionTree]{addition tree} will be generated from
+\code{dataset}, respecting any supplied \code{constraint}.
 Edge lengths are not supported and will be deleted.}
 
 \item{ratchIter}{Numeric specifying number of iterations of the
@@ -62,6 +60,7 @@ parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.}
 
 \item{tbrIter}{Numeric specifying the maximum number of \acronym{TBR}
 break points to evaluate before concluding each search.
+The counter is reset to zero each time tree score improves.
 The counter is reset to zero each time tree score improves.
 One 'iteration' comprises breaking a single branch and evaluating all
 possible reconnections.}
@@ -97,14 +96,12 @@ in search results, which may improve the accuracy of the consensus tree
 
 \item{constraint}{An object of class \code{phyDat}; returned trees will be
 perfectly compatible with each character in \code{constraint}.
-See \href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
+See \code{\link[=ImposeConstraint]{ImposeConstraint()}} and
+\href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
 for further examples.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
 more detailed commentary on search progress. Set to \code{0} to run silently.}
-
-\item{session}{'shiny' session identifier to allow \code{\link[=setProgress]{setProgress()}} calls
-to be sent when \code{MaximizeParsimony()} is called from within a shiny app.}
 
 \item{method}{Unambiguous abbreviation of \code{jackknife} or \code{bootstrap}
 specifying how to resample characters.  Note that jackknife is considered

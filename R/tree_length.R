@@ -41,6 +41,9 @@ TreeLength <- function (tree, dataset, concavity = Inf) UseMethod('TreeLength')
 #' @rdname TreeLength
 #' @export
 TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
+  if (length(tree$tip.label) < length(dataset)) {
+    dataset <- .Recompress(dataset[tree$tip.label])
+  }
   if (is.finite(concavity)) {
     if (!('min.length' %in% names(attributes(dataset)))) {
       dataset <- PrepareDataIW(dataset)
@@ -98,6 +101,15 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
   iw <- is.finite(concavity)
   profile <- .UseProfile(concavity)
   
+  nTip <- NTip(tree)
+  if (length(unique(nTip)) > 1L) {
+    stop("All trees must bear the same leaves.")
+  }
+  nTip <- nTip[1]
+  if (nTip < length(dataset)) {
+    dataset <- .Recompress(dataset[TipLabels(tree[[1]])])
+  }
+  
   tree[] <- RenumberTips(tree, dataset)
   edges <- vapply(tree, `[[`, tree[[1]]$edge, 'edge')
   
@@ -139,13 +151,15 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
   } else {
     apply(edges, 3, preorder_morphy, morphyObj)
   }
-  
 }
 
 
 #' @rdname TreeLength
 #' @export
 TreeLength.multiPhylo <- TreeLength.list
+
+#' @export
+TreeLength.NULL <- function (tree, dataset, concavity = Inf) NULL
 
 #' @rdname TreeLength
 #' @export
@@ -178,7 +192,8 @@ Fitch <- function (tree, dataset) {
 #' @family tree scoring
 #' @references
 #' \insertAllCited{}
-#' @importFrom TreeTools Renumber RenumberTips
+#' @importFrom cli cli_alert
+#' @importFrom TreeTools KeepTip Renumber RenumberTips
 #' @export
 CharacterLength <- function (tree, dataset, compress = FALSE) {
   if (!inherits(dataset, 'phyDat')) {
@@ -187,18 +202,30 @@ CharacterLength <- function (tree, dataset, compress = FALSE) {
   if (!inherits(tree, 'phylo')) {
     stop("Tree must be of class phylo, not ", class(tree), '.')
   }
-  if (is.null(tree$tip.label))
+  if (is.null(tree$tip.label)) {
+    stop("Tree has no labels")
+  }
+
   if (length(tree$tip.label) < length(dataset)) {
     if (all(tree$tip.label %in% names(dataset))) {
-      dataset[!(names(dataset)%in% tree$tip.label)] <- NULL
+      cli_alert(paste0(
+        paste0(names(dataset)[!names(dataset) %in% tree$tip.label],
+               collapse = ', '), " not in tree"))
+      dataset <- dataset[names(dataset) %in% tree$tip.label]
     } else {
-      stop ("Tree tips ", 
-            paste(tree$tip.label[!(tree$tip.label %in% names(dataset))],
+      stop("Tree tips ", 
+           paste(tree$tip.label[!(tree$tip.label %in% names(dataset))],
                   collapse = ', '), 
-            " not found in dataset.")
+           " not found in dataset.")
     }
   }
-  
+  if (length(tree$tip.label) > length(dataset)) {
+    cli_alert(paste0(
+      paste0(tree$tip.label[!tree$tip.label %in% names(dataset)],
+             collapse = ', '), " not in `dataset`"))
+    
+    tree <- KeepTip(tree, names(dataset))
+  }
   tree <- RenumberTips(Renumber(tree), names(dataset))  
   
   ret <- FastCharacterLength(tree, dataset)

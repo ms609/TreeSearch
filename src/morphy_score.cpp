@@ -98,12 +98,12 @@ IntegerVector preorder_morphy_by_char(IntegerMatrix edge, List MorphyHandls) {
 
 // [[Rcpp::export]]
 double morphy_iw(IntegerMatrix edge,
-                        List MorphyHandls,
-                        NumericVector weight,
-                        IntegerVector minScore,
-                        IntegerVector sequence,
-                        NumericVector concavity,
-                        NumericVector target) {
+                 List MorphyHandls,
+                 NumericVector weight,
+                 IntegerVector minScore,
+                 IntegerVector sequence,
+                 NumericVector concavity,
+                 NumericVector target) {
   const double
     k = concavity[0],
     target_score = target[0]

@@ -6,6 +6,15 @@ body {
   margin-bottom: 0;
 }
 
+/* Sneaky way of keeping progress bars open */
+.shiny-notification-close {
+  display: none;
+}
+
+#shiny-notification-panel {
+  top: 0;
+}
+
 .message {
   color: #ffc646;
 }
@@ -27,4 +36,26 @@ h2 {
 h3 {
   font-size: 12pt;
   font-weight: 700;
+}
+
+
+div#char-description {
+  max-width: 580px;
+}
+
+.state-notes {
+  column-count: 2;
+}
+
+li.state-note {
+  break-inside: avoid-column;
+  page-break-inside: avoid;
+}
+
+.state-note-label::after {
+  content: ": ";
+}
+
+.state-note-label {
+  font-weight: bold;
 }
