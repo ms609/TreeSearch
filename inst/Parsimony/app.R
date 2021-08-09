@@ -97,6 +97,12 @@ Kaski2003 <- Reference(
              "T&ouml;r&ouml;nen, P.", "Castr&eacute;n, E."),
   year = 2003, volume = 4, pages = 48, doi = "10.1186/1471-2105-4-48",
   journal = "BMC Bioinformatics")
+Klopfstein2019 <- Reference(
+  title = "Illustrating phylogenetic placement of fossils using RoguePlots: An example from ichneumonid parasitoid wasps (Hymenoptera, Ichneumonidae) and an extensive morphological matrix.",
+  author = c("Klopfstein, S.", "Spasojevic, T."), year = 2019, 
+  journal = "PLoS ONE", volume = 14, pages = "e0212942",
+  doi = "10.1371/journal.pone.0212942"
+)
 Maechler2019 <- Reference(
   title = "cluster: cluster analysis basics and extensions", year = 2019,
   author = c("Maechler, M.", "Rousseeuw, P.", "Struyf, A.", "Hubert, M.", "Hornik, K."),
@@ -211,8 +217,11 @@ ui <- fluidPage(theme = 'app.css',
           selectizeInput('neverDrop', 'Never drop:', multiple = TRUE,
                          choices = list("NA" = "No trees loaded"))
                  ),
+        tags$div(id = 'consLegend',
+                 htmlOutput('instabLegend', inline = TRUE),
+                 htmlOutput('branchLegend', inline = TRUE)),
         tags$div(id = 'droppedTips',
-                 selectInput('excludedTip', 'Show excluded tip', choices = list())
+          selectInput('excludedTip', 'Show excluded tip', choices = list()),
         )
       )),
       htmlOutput('references', style = "clear: both;"),
@@ -506,16 +515,33 @@ server <- function(input, output, session) {
     } else {
       hide('droppedTips')
     }
+    
+    output$instabLegend <- renderUI({
+      tagList(
+        tags$span(class = 'legendLeft', "Stable"),
+        tags$span(class = 'infernoScale legendBar', "\ua0"),
+        tags$span(class = 'legendRight', "Unstable"),
+      )
+    })
     if (length(dropped) && 
         length(input$excludedTip) &&
         nchar(input$excludedTip)) {
       consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
-      RoguePlot(consTrees, input$excludedTip, p = consP(),
-                tip.color = tipCols()[intersect(consTrees[[1]]$tip.label, kept)])
+      plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
+                           tip.color = tipCols()[intersect(consTrees[[1]]$tip.label, kept)])
+      output$branchLegend <- renderUI({
+        tagList(
+          tags$span(class = 'legendLeft', "1 tree"),
+          tags$span(id = 'blackToGreen', class = 'legendBar', "\ua0"),
+          tags$span(class = 'legendRight', 
+                    paste(max(c(plotted$onEdge, plotted$atNode)), "trees")),
+        )
+      })
     } else {
       cons <- ConsensusWithout(r$trees, dropped, p = consP())
       plot(cons, tip.color = tipCols()[intersect(cons$tip.label, kept)])
     }
+    
   }
   
   ShowConfigs <- function (visible = character(0)) {
@@ -1011,7 +1037,8 @@ server <- function(input, output, session) {
                  "Hierarchical, minimax linkage:", Bien2011,
                  Murtagh1983)),
      tags$h3("Rogue taxa"),
-     HTML(paste0(Smith2022))
+     HTML(paste("Plotting:", Klopfstein2019)),
+     HTML(paste("Detection:", Smith2022)),
     )
   })
 
