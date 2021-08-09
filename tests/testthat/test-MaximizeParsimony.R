@@ -117,6 +117,7 @@ test_that("Resample() fails and works", {
   nRep <- 42L # Arbitrary number to balance runtime vs false +ves & -ves
   bal <- as.Splits(BalancedTree(dataset))
   
+  skip_if_not_installed("TreeTools", "1.4.5.9003") # postorder / as.Splits order
   jackTrees <- replicate(nRep, Resample(dataset, NJTree(dataset), verbosity = 0L))
   jackSplits <- as.Splits(unlist(jackTrees, recursive = FALSE))
   jackSupport <- rowSums(vapply(jackSplits, function (sp) in.Splits(bal, sp),
