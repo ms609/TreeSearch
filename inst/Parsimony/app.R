@@ -206,12 +206,14 @@ ui <- fluidPage(theme = 'app.css',
         tags$div(style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput('consP', 'Majority:', value = 1,
                       min = 0.5, max = 1, width = 200),
-          sliderInput('keepTips', 'Tips to show:', value = 1L,
-                      min = 1L, max = 1L, step = 1L, width = 200),
+          numericInput('keepTips', 'Tips to show:', value = 1L,
+                       min = 1L, max = 1L, step = 1L, width = 200),
           selectizeInput('neverDrop', 'Never drop:', multiple = TRUE,
                          choices = list("NA" = "No trees loaded"))
                  ),
-        htmlOutput('droppedTips')
+        tags$div(id = 'droppedTips',
+                 selectInput('excludedTip', 'Show excluded tip', choices = list())
+        )
       )),
       htmlOutput('references', style = "clear: both;"),
     ),
@@ -403,7 +405,8 @@ server <- function(input, output, session) {
     tipLabels <- r$trees[[1]]$tip.label
     nTip <- length(tipLabels)
     r$trees[-1] <- RenumberTips(r$trees[-1], tipLabels)
-    updateSliderInput(inputId = 'keepTips', max = nTip, value = nTip)
+    updateNumericInput(inputId = 'keepTips', max = nTip,
+                       value = nNonRogues())
     updateSelectizeInput(inputId = 'neverDrop', choices = tipLabels)
   })
 
@@ -472,13 +475,17 @@ server <- function(input, output, session) {
   })
   
   
-  rogues <- reactive(
+  rogues <- reactive({
     withProgress(
       message = 'Identifying rogues', value = 0.99,
       Rogue::QuickRogue(r$trees, neverDrop = input$neverDrop,
                         fullSeq = TRUE)
     )
-  )
+  })
+  
+  nNonRogues <- reactive({
+    nrow(rogues()) - which.max(rogues()$IC)
+  })
   
   tipCols <- reactive(stableCol()) # TODO allow user to choose how to colour
   
@@ -491,18 +498,25 @@ server <- function(input, output, session) {
     kept <- rev(dropSeq())[seq_len(input$keepTips)]
     dropped <- setdiff(TipLabels(r$trees[[1]]), kept)
     if (length(dropped)) {
-      output$droppedTips <- renderUI({tagList(
-        tags$h3("Tips excluded:"),
-        tags$ul(lapply(dropSeq()[seq_along(dropped)], function (i) {
-          tags$li(i)
-          #tags$li(paste0(i, ' (', signif(instab[i]), ')'))
-        }))
-        )})
+      updateSelectInput(inputId = 'excludedTip',
+                        choices = dropSeq()[seq_along(dropped)],
+                        selected = if(input$excludedTip %in% dropped)
+                          input$excludedTip else dropSeq()[1])
+      show('droppedTips')
     } else {
-      output$droppedTips <- renderUI({})
+      hide('droppedTips')
     }
-    cons <- ConsensusWithout(r$trees, dropped, p = consP())
-    plot(cons, tip.color = tipCols()[intersect(cons$tip.label, kept)])
+    dput(input$excludedTip)
+    if (length(dropped) && 
+        length(input$excludedTip) &&
+        nchar(input$excludedTip)) {
+      consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
+      RoguePlot(consTrees, input$excludedTip, p = consP(),
+                tip.color = tipCols()[intersect(consTrees[[1]]$tip.label, kept)])
+    } else {
+      cons <- ConsensusWithout(r$trees, dropped, p = consP())
+      plot(cons, tip.color = tipCols()[intersect(cons$tip.label, kept)])
+    }
   }
   
   ShowConfigs <- function (visible = character(0)) {
