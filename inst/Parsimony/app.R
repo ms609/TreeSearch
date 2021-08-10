@@ -117,7 +117,7 @@ Murtagh1983 <- Reference(
 Nixon1999 <- Reference(
   "Nixon, K.C.", 1999,
   journal = "Cladistics", volume = 15, pages = "407-414",
-  title = "The Parsimony Ratchet, a New Method for Rapid Parsimony Analysis",
+  title = "The Parsimony Ratchet, a new method for rapid parsimony analysis",
   doi = "10.1111/j.1096-0031.1999.tb00277.x")
 RCoreTeam <- Reference(
   author = "R Core Team", year = 2020,
