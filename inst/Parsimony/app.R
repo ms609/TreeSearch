@@ -492,6 +492,10 @@ server <- function(input, output, session) {
     )
   })
   
+  unitEdge <- reactive({
+    TRUE
+  })
+  
   nNonRogues <- reactive({
     nrow(rogues()) - which.max(rogues()$IC)
   })
@@ -528,6 +532,7 @@ server <- function(input, output, session) {
         nchar(input$excludedTip)) {
       consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
       plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
+                           edgeLength = 1,
                            tip.color = tipCols()[intersect(consTrees[[1]]$tip.label, kept)])
       output$branchLegend <- renderUI({
         tagList(
@@ -539,6 +544,9 @@ server <- function(input, output, session) {
       })
     } else {
       cons <- ConsensusWithout(r$trees, dropped, p = consP())
+      if (unitEdge()) {
+        cons$edge.length <- rep_len(1L, dim(cons$edge)[1])
+      }
       plot(cons, tip.color = tipCols()[intersect(cons$tip.label, kept)])
     }
     
