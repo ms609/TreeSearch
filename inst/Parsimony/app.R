@@ -1037,8 +1037,8 @@ server <- function(input, output, session) {
                  "Hierarchical, minimax linkage:", Bien2011,
                  Murtagh1983)),
      tags$h3("Rogue taxa"),
-     HTML(paste("Plotting:", Klopfstein2019)),
      HTML(paste("Detection:", Smith2022)),
+     HTML(paste("Plotting:", Klopfstein2019)),
     )
   })
 
