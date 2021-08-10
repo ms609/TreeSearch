@@ -59,3 +59,25 @@ li.state-note {
 .state-note-label {
   font-weight: bold;
 }
+
+.legendLeft {
+  margin-left: 2em;
+  align: right;
+}
+
+.legendRight {
+  align: left;
+}
+
+ .legendBar {
+  display: inline-block;
+  min-width: 3em;
+ }
+
+.infernoScale {
+  background: linear-gradient(90deg, #000004, #160b39, #420a68, #6a176e, #932667, #ba3655, #dd513a, #f3761b, #fca50a, #f6d746, #f6d746);
+}
+
+#blackToGreen {
+  background: linear-gradient(90deg, rgba(0,0,0,1) 0%, rgb(0,158,115,1) 100%);
+}

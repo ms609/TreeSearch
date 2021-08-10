@@ -23,13 +23,14 @@
 #' character <- rep(c(0:3, '?', '-'), c(8, 5, 1, 1, 2, 2))
 #' StepInformation(character)
 #' @template MRS
+#' @importFrom fastmatch %fin%
 #' @importFrom stats setNames
 #' @importFrom TreeTools Log2Unrooted
 #' @family profile parsimony functions
 #' @export
 StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
   NIL <- c('0' = 0)
-  char <- char[!char %in% ambiguousTokens]
+  char <- char[!char %fin% ambiguousTokens]
   if (length(char) == 0) {
     return(NIL)
   }

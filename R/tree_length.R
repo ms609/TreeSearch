@@ -33,6 +33,7 @@
 #' @references
 #' \insertAllCited{}
 #' @author Martin R. Smith (using Morphy C library, by Martin Brazeau)
+#' @importFrom fastmatch %fin%
 #' @importFrom phangorn phyDat
 #' @importFrom TreeTools Renumber RenumberTips TreeIsRooted
 #' @export
@@ -45,7 +46,7 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     dataset <- .Recompress(dataset[tree$tip.label])
   }
   if (is.finite(concavity)) {
-    if (!('min.length' %in% names(attributes(dataset)))) {
+    if (!('min.length' %fin% names(attributes(dataset)))) {
       dataset <- PrepareDataIW(dataset)
     }
     at <- attributes(dataset)
@@ -209,24 +210,23 @@ CharacterLength <- function (tree, dataset, compress = FALSE) {
   if (length(tree$tip.label) < length(dataset)) {
     if (all(tree$tip.label %in% names(dataset))) {
       cli_alert(paste0(
-        paste0(names(dataset)[!names(dataset) %in% tree$tip.label],
-               collapse = ', '), " not in tree"))
-      dataset <- dataset[names(dataset) %in% tree$tip.label]
+        paste0(setdiff(names(dataset), tree$tip.label), collapse = ', '),
+        " not in tree"))
+      dataset <- dataset[intersect(names(dataset), tree$tip.label)]
     } else {
       stop("Tree tips ", 
-           paste(tree$tip.label[!(tree$tip.label %in% names(dataset))],
-                  collapse = ', '), 
+           paste(setdiff(tree$tip.label, names(dataset)), collapse = ', '),
            " not found in dataset.")
     }
   }
   if (length(tree$tip.label) > length(dataset)) {
     cli_alert(paste0(
-      paste0(tree$tip.label[!tree$tip.label %in% names(dataset)],
-             collapse = ', '), " not in `dataset`"))
+      paste0(setdiff(tree$tip.label, names(dataset)), collapse = ', '),
+      " not in `dataset`"))
     
     tree <- KeepTip(tree, names(dataset))
   }
-  tree <- RenumberTips(Renumber(tree), names(dataset))  
+  tree <- RenumberTips(Renumber(tree), names(dataset))
   
   ret <- FastCharacterLength(tree, dataset)
   # Return:
@@ -298,6 +298,7 @@ MorphyTreeLength <- function (tree, morphyObj) {
 #' @author Martin R. Smith
 #' @keywords internal
 #' @importFrom TreeTools Postorder Preorder
+#' @importFrom fastmatch fmatch
 #' @export
 MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
                           nTaxa = mpl_get_numtaxa(morphyObj)) {
@@ -319,10 +320,10 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
   rootNode <- nTaxa + 1L
   allNodes <- rootNode:maxNode
   
-  parentOf <- parent[match(seq_len(maxNode), child)]
+  parentOf <- parent[fmatch(seq_len(maxNode), child)]
   parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
-  leftChild <- child[length(parent) + 1L - match(allNodes, rev(parent))]
-  rightChild <- child[match(allNodes, parent)]
+  leftChild <- child[length(parent) + 1L - fmatch(allNodes, rev(parent))]
+  rightChild <- child[fmatch(allNodes, parent)]
   
   # Return:
   .Call('MORPHYLENGTH', as.integer(parentOf - 1L), as.integer(leftChild - 1L), 

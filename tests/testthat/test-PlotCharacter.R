@@ -1,5 +1,6 @@
 test_that("PlotCharacter()", {
   
+  skip_if_not_installed("TreeTools", "1.4.5.9005") # Changes plotting order
   Character <- function (str, plot = FALSE, ...) {
     tree <- ape::read.tree(text = 
      "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")

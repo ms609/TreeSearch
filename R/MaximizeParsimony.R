@@ -150,7 +150,7 @@
 #' @importFrom cli cli_alert cli_alert_danger cli_alert_info cli_alert_success cli_alert_warning
 #' cli_h1 
 #' cli_progress_bar cli_progress_done cli_progress_update
-#' @importFrom glue glue
+#' @importFrom fastmatch fmatch
 #' @importFrom phangorn Descendants
 #' @importFrom stats runif
 #' @importFrom TreeTools
@@ -284,7 +284,7 @@ MaximizeParsimony <- function (dataset, tree,
               nHits <- 1L
               hold[, , 1] <- edge
               .Message(5L, "New best score ", signif(bestScore),
-                       " at break ", match(brk, optTbr), "/", length(optTbr))
+                       " at break ", fmatch(brk, optTbr), "/", length(optTbr))
               break
             } else {
               .Message(6L, "Best score ", signif(bestScore),
@@ -297,7 +297,7 @@ MaximizeParsimony <- function (dataset, tree,
           if (improvedScore && runif(1) < (i / nMoves) ^ 2) break
         }
         if (nHits >= maxHits) break
-        pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 2
+        pNextTbr <- (fmatch(brk, optTbr) / length(optTbr)) ^ 2
         if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
@@ -395,14 +395,14 @@ MaximizeParsimony <- function (dataset, tree,
                       paste0(treeOnly, collapse = ', '), "\n")
     warning("Ignored taxa on tree missing in dataset:\n   ",
              paste0(treeOnly, collapse = ', '))
-    tree <- drop.tip(tree, treeOnly)
+    tree <- DropTip(tree, treeOnly)
   }
   if (length(datOnly)) {
     cli_alert_warning("Ignoring taxa in dataset missing on tree:\n   ",
                       paste0(datOnly, collapse = ', '), "\n")
     warning("Ignored taxa in dataset missing on tree:\n   ",
             paste0(datOnly, collapse = ', '))
-    dataset <- dataset[-match(datOnly, taxa)]
+    dataset <- dataset[-fmatch(datOnly, taxa)]
   }
   if (constrained) {
     consTaxa <- names(constraint)
@@ -416,7 +416,7 @@ MaximizeParsimony <- function (dataset, tree,
               paste0(consOnly, collapse = ', '), "\n")
       warning("Ignored taxa in constraint missing on tree:\n   ", 
               paste0(consOnly, collapse = ', '))
-      constraint <- constraint[-match(consOnly, consTaxa)]
+      constraint <- constraint[-fmatch(consOnly, consTaxa)]
     }
     constraint <- constraint[names(dataset)]
   }
@@ -478,7 +478,7 @@ MaximizeParsimony <- function (dataset, tree,
   if (profile) {
     dataset <- PrepareDataProfile(dataset)
     originalLevels <- attr(dataset, 'levels')
-    if ('-' %in% originalLevels) {
+    if ('-' %fin% originalLevels) {
       #TODO Fixing this will require updating the counts table cleverly
       # Or we could use approximate info amounts, e.g. by treating '-' as 
       # an extra token

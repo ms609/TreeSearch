@@ -1,4 +1,4 @@
-# TreeSearch 0.4.3.9010 (development)
+# TreeSearch 0.4.3.9011 (development)
 
 ## Changes in functionality
 
@@ -12,6 +12,7 @@
    on the tree, generating a more parsimonious starting tree than
    neighbour-joining.
  - `PlotCharacter()` reconstructs character distributions on trees
+ - `TipInstability()` identifies possible rogue taxa
  - `ConstrainedNJ()` constructs starting trees that respect a constraint
  - `ImposeConstraint()` reconciles a tree with a constraint
  - `SiteConcordance()` calculates exact site concordance

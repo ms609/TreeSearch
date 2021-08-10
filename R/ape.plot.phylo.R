@@ -93,7 +93,7 @@ plot.phylo <-
         x <- reorder(x) # fix from Klaus Schliep (2007-06-16)
         if (!identical(x$edge, xe)) {
           ## modified from Li-San Wang's fix (2007-01-23):
-          ereorder <- match(x$edge[, 2], xe[, 2])
+          ereorder <- fmatch(x$edge[, 2], xe[, 2])
           if (length(edge.color) > 1) {
             edge.color <- rep(edge.color, length.out = Nedge)
             edge.color <- edge.color[ereorder]
@@ -356,7 +356,7 @@ plot.phylo <-
         }
         
         if (type == "fan") {
-          ereorder <- match(z$edge[, 2], x$edge[, 2])
+          ereorder <- fmatch(z$edge[, 2], x$edge[, 2])
           if (length(edge.color) > 1) {
             edge.color <- rep_len(edge.color, Nedge)
             edge.color <- edge.color[ereorder]
