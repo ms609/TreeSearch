@@ -224,7 +224,7 @@ ui <- fluidPage(theme = 'app.css',
           selectInput('excludedTip', 'Show excluded tip', choices = list()),
         )
       )),
-      hidden(tags$div(id = 'spaceConfig',
+      hidden(tags$div(id = 'clusConfig',
         tags$div(style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput('clThresh', 'Cluster threshold:', value = 0.5,
                       min = 0, max = 1, width = 200),
@@ -236,8 +236,18 @@ ui <- fluidPage(theme = 'app.css',
                                      'Quartet (slower)' = 'qd'),
                       width = 200)
                  ),
-        tags$div(id = 'spaceLegend',
+        tags$div(id = 'clusLegend',
                  htmlOutput('instabLegend2', inline = TRUE)),
+      )),
+      hidden(tags$div(id = 'spaceConfig',
+        tags$div(style = "float: right; width: 200px; margin-left: 2em;",
+          sliderInput('spaceDim', 'Dimensions:', value = 5,
+                      min = 2, max = 12, step = 1, width = 200),
+                 ),
+        tags$div(id = 'spaceLegend',
+                 plotOutput(outputId = 'pcQuality',
+                            height = "72px", width = "240px"),
+                 htmlOutput('stressLegend', inline = TRUE)),
       )),
       htmlOutput('references', style = "clear: both;"),
     ),
@@ -431,6 +441,7 @@ server <- function(input, output, session) {
     r$trees[-1] <- RenumberTips(r$trees[-1], tipLabels)
     updateNumericInput(inputId = 'keepTips', max = nTip,
                        value = nNonRogues())
+    updateSliderInput(inputId = 'spaceDim', max = max(2L, maxProjDim()))
     updateSelectizeInput(inputId = 'neverDrop', choices = tipLabels)
   })
 
@@ -572,7 +583,8 @@ server <- function(input, output, session) {
   }
   
   ShowConfigs <- function (visible = character(0)) {
-    allConfigs <- c('whichTree', 'charChooser', 'consConfig', 'spaceConfig')
+    allConfigs <- c('whichTree', 'charChooser', 'consConfig', 'clusConfig',
+                    'spaceConfig')
     lapply(visible, show)
     lapply(setdiff(allConfigs, visible), hide)
   }
@@ -582,8 +594,8 @@ server <- function(input, output, session) {
       
     ShowConfigs(switch(input$plotFormat,
                        'cons' = 'consConfig',
-                       'clus' = 'spaceConfig',
-                       'space' = 'spaceConfig',
+                       'clus' = 'clusConfig',
+                       'space' = c('clusConfig', 'spaceConfig'),
                        'ind' = c('whichTree', 'charChooser'),
                        ''))
     switch(input$plotFormat,
@@ -737,14 +749,27 @@ server <- function(input, output, session) {
                                 width = PlotSize(),
                                 height = PlotSize())
   
+  LogScore <- function (x) {
+    (-(log10(1 - x + 1e-2))) / 2
+  }
+  
+  projQual <- reactive({
+    withProgress(message = "Estimating mapping quality", {
+      vapply(seq_len(nProjDim()), function (k) {
+        incProgress(1 / nProjDim())
+        TreeDist::MappingQuality(distances(), dist(mapping()[, seq_len(k)]), 10)
+      }, numeric(4))
+    })
+  })
+  
   output$pcQuality <- renderPlot({
     par(mar = c(2, 0, 0, 0))
-    nStop <- length(badToGood)
+    nStop <- length(badToGood) + 1L
     
-    plot(seq.int(from = 0, to = 1, length.out = nStop), numeric(nStop),
-         pch = 15, col = badToGood,
-         ylim = c(-1.5, 2.5),
+    plot(NULL, xlim = c(0, 1), ylim = c(-1.5, 2.5),
          ann = FALSE, axes = FALSE)
+    x <- seq.int(from = 0, to = 1, length.out = nStop)
+    segments(x[-nStop], numeric(nStop), x[-1], lwd = 5, col = badToGood)
     
     logScore <- LogScore(projQual()['TxC', dims()])
     lines(rep(logScore, 2), c(-1, 1), lty = 3)
@@ -758,7 +783,7 @@ server <- function(input, output, session) {
          at = ticks[-1] - ((ticks[-1] - ticks[-length(ticks)]) / 2),
          labels = c('', 'dire', '', "ok", "gd", "excellent"))
     axis(3, at = 0.5, tick = FALSE, line = -2, 
-         paste0(dims(), 'D projection quality (trustw. \ud7 contin.):'))
+         paste0(dims(), 'D mapping quality (trustw. \ud7 contin.):'))
   })
   
   
@@ -790,7 +815,16 @@ server <- function(input, output, session) {
            cex = 1.6)
   })
   
-  silThreshold <- debounce(reactive(input$clThresh), 50)
+  observeEvent(input$clThresh, {
+    classes <- c("meaningless", "weak", "good", "strong")
+    liveClass <- classes[as.integer(cut(input$clThresh, c(0, 0.25, 0.5, 0.7, 1),
+                                        include.lowest = TRUE, right = FALSE))]
+    addClass('clThresh-label', liveClass)
+    removeClass('clThresh-label', setdiff(classes, liveClass))
+  })
+  silThreshold <- debounce(reactive({
+    input$clThresh
+  }), 50)
   
   ##############################################################################
   # Clusterings
@@ -880,29 +914,29 @@ server <- function(input, output, session) {
 
   pointCols <- reactive({
     cl <- clusterings()
-    if (cl$sil > 0.25) {
+    if (cl$sil > silThreshold()) {
       palettes[[min(length(palettes), cl$n)]][cl$cluster]
     } else palettes[[1]]
   })
   
   pchs <- reactive({
     cl <- clusterings()
-    if (cl$sil > 0.25) {
+    if (cl$sil > silThreshold()) {
       cl$cluster - 1
     } else 16
   })
   
   maxProjDim <- reactive({
-    min(5L, length(r$trees) - 1L)
+    min(12, length(r$trees) - 1L)
   })
   
   nProjDim <- reactive({
-    dim(projection())[2]
+    dim(mapping())[2]
   })
   
   dims <- debounce(reactive({
     if (mode3D()) 3L else {
-      min(5L, maxProjDim())
+      min(input$spaceDim, maxProjDim())
     }
   }), 400)
   
@@ -926,16 +960,18 @@ server <- function(input, output, session) {
     
   })
   
-  projection <- reactive({
+  mapping <- reactive({
     if (maxProjDim() > 1L) {
       withProgress(
-        message = 'Projecting distances',
+        message = 'Mapping trees',
         value = 0.99,
-        proj <- cmdscale(distances(), k = maxProjDim())
+        tryCatch(return(cmdscale(distances(), k = maxProjDim())),
+                 warning = function (e) {
+                   nDim <- as.integer(substr(e$message, 6, 7))
+                   updateSliderInput(inputId = 'spaceDim', value = nDim, max = nDim)
+                   return(cmdscale(distances(), k = nDim))
+                 })
       )
-      # Return:
-      proj
-      
     } else {
       matrix(0, 0, 0)
     }
@@ -955,7 +991,7 @@ server <- function(input, output, session) {
   ##############################################################################
   treespacePlot <- function() {
     cl <- clusterings()
-    proj <- projection()
+    proj <- mapping()
     
     nDim <- min(dims(), nProjDim())
     plotSeq <- matrix(0, nDim, nDim)
@@ -980,7 +1016,7 @@ server <- function(input, output, session) {
                col = paste0(pointCols(), as.hexmode(200)),
                cex = input$pt.cex)
         
-        if (cl$sil > 0.25) {
+        if (cl$sil > silThreshold()) {
           # Mark clusters
           for (clI in seq_len(cl$n)) {
             inCluster <- cl$cluster == clI
@@ -1030,7 +1066,7 @@ server <- function(input, output, session) {
   output$savePdf <- downloadHandler(
     filename = 'TreeSearch.pdf',
     content = function (file) {
-      pdf(file, title = paste0('Tree space projection'),
+      pdf(file, title = paste0('Tree space mapping'),
           width = 10,
           height = 20)
       plotContent()
@@ -1066,7 +1102,7 @@ server <- function(input, output, session) {
      tags$h2('References for methods used'),
      tags$h3('Tree search'),
      HTML(Brazeau2019, Morphy, Nixon1999, SmithSearch),
-     tags$h3('Tree space projection'),
+     tags$h3('Tree space mapping'),
      HTML(paste0(Gower1966, Gower1969, Kaski2003, RCoreTeam,
                  SmithDist, Smith2020, Smith2021, 
                  Venna2001)),

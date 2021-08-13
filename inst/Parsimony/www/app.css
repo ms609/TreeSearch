@@ -81,3 +81,25 @@ li.state-note {
 #blackToGreen {
   background: linear-gradient(90deg, rgba(0,0,0,1) 0%, rgb(0,158,115,1) 100%);
 }
+
+#clThresh-label.meaningless::after {content: " dud";}
+#clThresh-label.weak::after {content: " weak";}
+#clThresh-label.good::after {content: " good";}
+#clThresh-label.strong::after {content: " strong";}
+
+#clThresh-label.meaningless + span>span.irs-bar.irs-bar--single {
+  background: #0D0887;
+  border-color: #0D0887;
+}
+#clThresh-label.weak + span>span.irs-bar.irs-bar--single {
+  background: #9C179E;
+  border-color: #9C179E;
+}
+#clThresh-label.good + span>span.irs-bar.irs-bar--single {
+  background: #ED7953;
+  border-color: #ED7953;
+}
+#clThresh-label.strong + span>span.irs-bar.irs-bar--single {
+  background: #F0F921;
+  border-color: #F0F921;
+}
