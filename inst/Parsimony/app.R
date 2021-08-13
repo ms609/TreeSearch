@@ -35,7 +35,7 @@ palettes <- list("#7a6c36",
                  c("#7a6c36", "#864885", "#427743", "#4c5c86", "#cb4745", "#73383b", "#dcb983", "#77bff0", "#f0ab92", "#90ddff", "#f1d3a9", "#b5c2fe", "#c1e1b7", "#7596ba", "#bce1c4", "#a88c96", "#5a9daf", "#b18b80", "#d4d6f3", "#949577"),
                  c("#7a6c36", "#864885", "#427743", "#4c5c86", "#cb4745", "#73383b", "#e03795", "#438f2e", "#5e2195", "#758029", "#4042b9", "#a37926", "#8364df", "#c3671f", "#444491", "#dc4c1f", "#367076", "#e2383c", "#4786b4", "#e13964", "#4c8c73", "#a53396", "#2c4422", "#b553cb", "#50381b", "#4f75d8", "#a12c1b", "#8576b8", "#bd6541", "#3a1959", "#83491f", "#2d2644", "#c45b94", "#451523", "#966883", "#782224", "#b96563", "#762254", "#95765c", "#ad355a")
 )
-silThreshold <- 0.4
+
 badToGood <- rev(c("#1AB958", "#23B956", "#2BB954", "#31B952", "#37B850", "#3CB84E", "#41B84C", "#45B74A", "#49B749", "#4DB747", "#51B645", "#54B643", "#58B641", "#5BB53F", "#5FB53D", "#62B53C", "#65B43A", "#68B438", "#6BB336", "#6DB335", "#70B333", "#73B231", "#76B230", "#78B12E", "#7BB12C", "#7DB02B", "#80B029", "#82AF28", "#85AF26", "#87AE25", "#8AAE23", "#8CAD22", "#8EAD21", "#91AC1F", "#93AC1E", "#95AB1D", "#97AB1C", "#9AAA1B", "#9CAA1A", "#9EA919", "#A0A918", "#A2A818", "#A4A717", "#A6A716", "#A8A616", "#AAA616", "#ACA515", "#AEA415", "#B0A415", "#B2A315", "#B4A315", "#B6A216", "#B8A116", "#B9A117", "#BBA017", "#BD9F18", "#BF9F18", "#C19E19", "#C29D1A", "#C49D1B", "#C69C1C", "#C79B1D", "#C99A1E", "#CB9A1F", "#CC9920", "#CE9822", "#CF9823", "#D19724", "#D29625", "#D49626", "#D59528", "#D79429", "#D8932A", "#D9932C", "#DB922D", "#DC912E", "#DD9130", "#DF9031", "#E08F33", "#E18F34", "#E28E35", "#E38D37", "#E58C38", "#E68C3A", "#E78B3B", "#E88A3D", "#E98A3E", "#EA8940", "#EB8841", "#EC8843", "#ED8744", "#EE8746", "#EE8647", "#EF8549", "#F0854A", "#F1844C", "#F2844D", "#F2834F", "#F38350", "#F48252", "#F48253", "#F58155", "#F58157", "#F68058", "#F6805A", "#F77F5B", "#F77F5D", "#F87E5E"))
 
 Reference <- function (authors, year, title, journal = '',
@@ -79,13 +79,13 @@ Bien2011 <- Reference(
   doi = "10.1198/jasa.2011.tm10183",
   pages = c(1075, 1084),
   journal = "Journal of the American Statistical Association")
-Gower1966 <- Reference(  title = "Some distance properties of latent root and vector methods used in multivariate analysis",
-                         author = "Gower, J.C.",
-                         year = 1966,
-                         volume = 53,
-                         pages = c(325, 338),
-                         doi = "10.2307/2333639",
-                         journal = "Biometrika")
+Gower1966 <- Reference(title = "Some distance properties of latent root and vector methods used in multivariate analysis",
+                       author = "Gower, J.C.",
+                       year = 1966,
+                       volume = 53,
+                       pages = c(325, 338),
+                       doi = "10.2307/2333639",
+                       journal = "Biometrika")
 Gower1969 <- Reference(
   title = "Minimum spanning trees and single linkage cluster analysis",
   author = c("Gower, J.C.", "Ross, G.J.S."),
@@ -223,6 +223,21 @@ ui <- fluidPage(theme = 'app.css',
         tags$div(id = 'droppedTips',
           selectInput('excludedTip', 'Show excluded tip', choices = list()),
         )
+      )),
+      hidden(tags$div(id = 'spaceConfig',
+        tags$div(style = "float: right; width: 200px; margin-left: 2em;",
+          sliderInput('clThresh', 'Cluster threshold:', value = 0.5,
+                      min = 0, max = 1, width = 200),
+          selectInput('distMeth', 'Distance method:', selected = 'cid',
+                      choices = list('Clustering Information' = 'cid',
+                                     "Phylogenetic information" = 'pid',
+                                     'Matching split info' = 'msid',
+                                     'Robinson-Foulds (fast, iffy)' = 'rf',
+                                     'Quartet (slower)' = 'qd'),
+                      width = 200)
+                 ),
+        tags$div(id = 'spaceLegend',
+                 htmlOutput('instabLegend2', inline = TRUE)),
       )),
       htmlOutput('references', style = "clear: both;"),
     ),
@@ -509,7 +524,11 @@ server <- function(input, output, session) {
     #instab <- Instab()
     #dropped <- names(instab[order(instab) > input$keepTips])
     kept <- rev(dropSeq())[seq_len(input$keepTips)]
-    dropped <- setdiff(TipLabels(r$trees[[1]]), kept)
+    dropped <- if (length(kept) > 1) {
+      setdiff(TipLabels(r$trees[[1]]), kept)
+    } else {
+      character(0)
+    }
     if (length(dropped)) {
       updateSelectInput(inputId = 'excludedTip',
                         choices = dropSeq()[seq_along(dropped)],
@@ -553,7 +572,7 @@ server <- function(input, output, session) {
   }
   
   ShowConfigs <- function (visible = character(0)) {
-    allConfigs <- c('whichTree', 'charChooser', 'consConfig')
+    allConfigs <- c('whichTree', 'charChooser', 'consConfig', 'spaceConfig')
     lapply(visible, show)
     lapply(setdiff(allConfigs, visible), hide)
   }
@@ -563,6 +582,8 @@ server <- function(input, output, session) {
       
     ShowConfigs(switch(input$plotFormat,
                        'cons' = 'consConfig',
+                       'clus' = 'spaceConfig',
+                       'space' = 'spaceConfig',
                        'ind' = c('whichTree', 'charChooser'),
                        ''))
     switch(input$plotFormat,
@@ -769,6 +790,8 @@ server <- function(input, output, session) {
            cex = 1.6)
   })
   
+  silThreshold <- debounce(reactive(input$clThresh), 50)
+  
   ##############################################################################
   # Clusterings
   ##############################################################################
@@ -804,7 +827,7 @@ server <- function(input, output, session) {
       hSil <- hSils[bestH]
       hCluster <- hClusters[[bestH]]
     
-      bestCluster <- c('none', 'pam', 'hmm')[which.max(c(silThreshold, pamSil, hSil))]
+      bestCluster <- c('none', 'pam', 'hmm')[which.max(c(silThreshold(), pamSil, hSil))]
     } else {
       bestCluster <- 'none'
     }
@@ -833,21 +856,21 @@ server <- function(input, output, session) {
     cl <- clusterings()
     par(mar = c(0.2, 0, 0.2, 0), xpd = NA)
     par(cex = 0.75)
-    if (cl$sil > silThreshold) {
+    if (cl$sil > silThreshold()) {
       par(mfrow = c(consRows(), ceiling(cl$n / consRows())))
       for (i in seq_len(cl$n)) {
         col <- palettes[[min(length(palettes), cl$n)]][i]
-        tr <- ape::consensus(r$trees[cl$cluster == i])
+        tr <- Consensus(r$trees[cl$cluster == i])
         tr$edge.length <- rep.int(1, dim(tr$edge)[1])
         plot(tr, edge.width = 2, font = 1, cex = 1,
-             edge.color = col, tip.color = col)
+             edge.color = col, tip.color = tipCols())
       }
     } else {
-      tr <- ape::consensus(r$trees)
+      tr <- Consensus(r$trees)
       tr$edge.length <- rep.int(1, dim(tr$edge)[1])
       plot(tr,edge.width = 2, font = 1, cex = 1,
            edge.color = palettes[[1]],
-           tip.color = palettes[[1]])
+           tip.color = tipCols())
     }
   }
   
@@ -885,9 +908,17 @@ server <- function(input, output, session) {
   
   distances <- reactive({
     if (length(r$trees) > 1L) {
+      Dist = switch(input$distMeth,
+                    'cid' = TreeDist::ClusteringInfoDistance,
+                    'pid' = TreeDist::PhylogeneticInfoDistance,
+                    'msid' = TreeDist::MatchingSplitInfoDistance,
+                    'rf' = TreeDist::RobinsonFoulds,
+                    'qd' = function(...) as.dist(Quartet::QuartetDivergence(
+                      Quartet::ManyToManyQuartetAgreement(...), similarity = FALSE))
+      )
       withProgress(
         message = 'Calculating distances', value = 0.99,
-        TreeDist::ClusteringInfoDistance(r$trees)
+        Dist(r$trees)
       )
     } else {
       matrix(0, 0, 0)
