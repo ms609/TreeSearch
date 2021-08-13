@@ -16,6 +16,9 @@ library('future')
 library('promises')
 plan(multisession)
 
+startOpt <- options("cli.progress_show_after" = 0.1)
+on.exit(options(startOpt), add = TRUE)
+
 palettes <- list("#7a6c36",
                  c("#7a6c36", "#864885"),
                  c("#7a6c36", "#864885", "#427743"),
@@ -398,6 +401,10 @@ server <- function(input, output, session) {
       'on'
     }
   )
+  wtType <- reactive(switch(weighting(),
+                            'on' = paste0('k = ', signif(concavity(), 3)),
+                            'off' = 'EW',
+                            'prof' = 'PP'))
   
   TreeSummary <- debounce(reactive({
     scores <- tryCatch(signif(TreeLength(r$trees, r$dataset,
@@ -413,14 +420,10 @@ server <- function(input, output, session) {
                          NULL
                        })
     
-    wtType <- switch(weighting(),
-                     'on' = paste0('k = ', signif(concavity(), 3)),
-                     'off' = 'EW',
-                     'prof' = 'PP')
     score <- if (is.null(scores)) {
       "; could not be scored from dataset"
     } else if (length(unique(scores)) == 1) {
-      paste0(", each with score ", scores[1], " (", wtType, ")")
+      paste0(", each with score ", scores[1], " (", wtType(), ")")
     } else {
       paste0(" with scores ", min(scores), " to ", max(scores),
              " (", wtType, ")")
@@ -467,7 +470,7 @@ server <- function(input, output, session) {
     if (!inherits(r$dataset, 'phyDat')) {
       showNotification("No data loaded", type = 'error')
     } else {
-      r$trees <- c(MaximizeParsimony(r$dataset,
+      r$trees <- withProgress(c(MaximizeParsimony(r$dataset,
                                      tree = if(is.null(r$trees)) 
                                        TreeTools::NJTree(r$dataset)
                                      else
@@ -479,7 +482,11 @@ server <- function(input, output, session) {
                                      maxHits = ceiling(10 ^ input$maxHits),
                                      startIter = input$startIter,
                                      finalIter = input$finalIter,
-                                     verbosity = 4L))
+                                     verbosity = 4L)),
+                              value = 0.85,
+                              message = 'Finding MPT',
+                              detail = paste0(ceiling(10^input$maxHits),
+                                              ' hits; ', wtType()))
       
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
@@ -493,7 +500,10 @@ server <- function(input, output, session) {
   }
   
   observeEvent(input$go, StartSearch())
-  observeEvent(input$modalGo, StartSearch())
+  observeEvent(input$modalGo, {
+    removeModal()
+    StartSearch()
+  })
   
   PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 50)
   PlottedTree <- debounce(reactive(Postorder(r$trees[[input$whichTree]])), 100)
@@ -877,34 +887,24 @@ server <- function(input, output, session) {
 
   })
   
-  consRows <- reactive({
-    cl <- clusterings()
-    if (cl$sil > 0.25) ceiling(cl$n / 3) else 1L
-  })
-  
-  consSize <- reactive({
-    nLeaves() * 12 * consRows()
-  })
-  
   PlotClusterCons <- function () {
     cl <- clusterings()
     par(mar = c(0.2, 0, 0.2, 0), xpd = NA)
-    par(cex = 0.75)
     if (cl$sil > silThreshold()) {
-      par(mfrow = c(consRows(), ceiling(cl$n / consRows())))
+      nRow <- ceiling(cl$n / 3)
+      par(mfrow = c(nRow, ceiling(cl$n / nRow)))
       for (i in seq_len(cl$n)) {
         col <- palettes[[min(length(palettes), cl$n)]][i]
         tr <- Consensus(r$trees[cl$cluster == i])
         tr$edge.length <- rep.int(1, dim(tr$edge)[1])
-        plot(tr, edge.width = 2, font = 1, cex = 1,
+        plot(tr, edge.width = 2, font = 1, cex = 0.83,
              edge.color = col, tip.color = tipCols())
       }
     } else {
       tr <- Consensus(r$trees)
       tr$edge.length <- rep.int(1, dim(tr$edge)[1])
-      plot(tr,edge.width = 2, font = 1, cex = 1,
-           edge.color = palettes[[1]],
-           tip.color = tipCols())
+      plot(tr,edge.width = 2, font = 1, cex = 0.83,
+           edge.color = palettes[[1]], tip.color = tipCols())
     }
   }
   
