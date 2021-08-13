@@ -6,12 +6,15 @@ suppressPackageStartupMessages({
 })
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 library("TreeSearch")
-library("TreeDist")
 
 if (!requireNamespace('TreeDist', quietly = TRUE)) {
   install.packages('TreeDist')
-  library('TreeDist')
 }
+library('TreeDist')
+
+library('future')
+library('promises')
+plan(multisession)
 
 palettes <- list("#7a6c36",
                  c("#7a6c36", "#864885"),
@@ -753,16 +756,7 @@ server <- function(input, output, session) {
     (-(log10(1 - x + 1e-2))) / 2
   }
   
-  projQual <- reactive({
-    withProgress(message = "Estimating mapping quality", {
-      vapply(seq_len(nProjDim()), function (k) {
-        incProgress(1 / nProjDim())
-        TreeDist::MappingQuality(distances(), dist(mapping()[, seq_len(k)]), 10)
-      }, numeric(4))
-    })
-  })
-  
-  output$pcQuality <- renderPlot({
+  QualityPlot <- function (quality) {
     par(mar = c(2, 0, 0, 0))
     nStop <- length(badToGood) + 1L
     
@@ -771,8 +765,7 @@ server <- function(input, output, session) {
     x <- seq.int(from = 0, to = 1, length.out = nStop)
     segments(x[-nStop], numeric(nStop), x[-1], lwd = 5, col = badToGood)
     
-    logScore <- LogScore(projQual()['TxC', dims()])
-    lines(rep(logScore, 2), c(-1, 1), lty = 3)
+    segments(LogScore(quality), -1, y1 = 1, lty = 3)
     
     tickPos <- c(0, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0)
     ticks <- LogScore(tickPos)
@@ -784,6 +777,13 @@ server <- function(input, output, session) {
          labels = c('', 'dire', '', "ok", "gd", "excellent"))
     axis(3, at = 0.5, tick = FALSE, line = -2, 
          paste0(dims(), 'D mapping quality (trustw. \ud7 contin.):'))
+  }
+  
+  output$pcQuality <- renderPlot({
+    dstnc <- distances()
+    mppng <- mapping()[, seq_len(dims())]
+    future_promise(TreeDist::MappingQuality(dstnc, dist(mppng))['TxC'],
+                   seed = NULL) %...>% QualityPlot
   })
   
   

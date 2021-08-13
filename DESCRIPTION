@@ -27,7 +27,9 @@ Imports:
     cli (>= 3.0),
     cluster,
     fastmatch,
+    future,
     phangorn (>= 2.2.1),
+    promises,
     protoclust,
     Quartet,
     Rcpp,
@@ -44,6 +46,7 @@ Suggests:
     testthat,
     TreeDist (>= 2.0.3.9003),
     vdiffr (>= 1.0.0),
+Additional_repositories: https://ms609.github.io/packages/
 Remotes:
     emmanuelparadis/ape,
     ms609/Rogue,
