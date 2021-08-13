@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9010</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
       </span>
     </div>
 
@@ -112,7 +112,7 @@
       <h1 data-toc-skip>Getting started: Simple tree searches</h1>
                         <h4 class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2021-07-28</h4>
+            <h4 class="date">2021-08-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/tree-search.Rmd"><code>vignettes/tree-search.Rmd</code></a></small>
       <div class="hidden name"><code>tree-search.Rmd</code></div>
@@ -153,22 +153,22 @@
 <pre><code>## </code></pre>
 <pre><code>## ── Find local optimum ──────────────────────────────────────────────────────────</code></pre>
 <pre><code>## →  TBR depth 4; keeping max 41 trees; k = Inf.</code></pre>
-<pre><code>## ℹ 2021-07-28 15:24:52: Score to beat: 83</code></pre>
+<pre><code>## ℹ 2021-08-13 09:43:12: Score to beat: 83</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## ── Escape local optimum ────────────────────────────────────────────────────────</code></pre>
 <pre><code>## → 6 ratchet iterations; TBR depth 2; max. 14 hits; k = Inf.</code></pre>
-<pre><code>## → 2021-07-28 15:24:52: Score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 1 @ 15:24:52; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 2 @ 15:24:52; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 3 @ 15:24:52; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 4 @ 15:24:52; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 5 @ 15:24:53; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 6 @ 15:24:53; score to beat: 79</code></pre>
+<pre><code>## → 2021-08-13 09:43:12: Score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 1 @ 09:43:12; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 2 @ 09:43:12; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 3 @ 09:43:13; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 4 @ 09:43:13; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 5 @ 09:43:13; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 6 @ 09:43:13; score to beat: 79</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## ── Sample local optimum ────────────────────────────────────────────────────────</code></pre>
 <pre><code>## → TBR depth 2; keeping 41.4 trees; k = Inf</code></pre>
-<pre><code>## ℹ 2021-07-28 15:24:53: Score: 79</code></pre>
-<pre><code>## ✔ 2021-07-28 15:24:53: Tree search terminated with score 79</code></pre>
+<pre><code>## ℹ 2021-08-13 09:43:13: Score: 79</code></pre>
+<pre><code>## ✔ 2021-08-13 09:43:14: Tree search terminated with score 79</code></pre>
 <p>It can be instructive to inspect the progress of tree search.</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">firstHit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html">attr</a></span><span class="op">(</span><span class="va">bestTrees</span>, <span class="st">'firstHit'</span><span class="op">)</span>
@@ -191,7 +191,7 @@
                     col <span class="op">=</span> <span class="st">'#00000030'</span>, lty <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/legend.html">legend</a></span><span class="op">(</span><span class="st">'topright'</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">firstHit</span><span class="op">)</span>, col <span class="op">=</span> <span class="va">cols</span>, pch <span class="op">=</span> <span class="fl">16</span>, bty <span class="op">=</span> <span class="st">'n'</span><span class="op">)</span></code></pre></div>
 <p><img src="tree-search_files/figure-html/map-search-1.png" width="700"></p>
-<p>A quick glance suggests that early ratchet iterations captured a large part of the diversity of optimal trees, and that iterations aren’t getting stuck in local optima – though conscientious users will ensure that the mapping of tree space is meaningful and adequate to detect structure before making any firm conclusions <span class="citation">(Smith, 2021)</span>.</p>
+<p>A quick glance suggests that early ratchet iterations captured a large part of the diversity of optimal trees, and that iterations aren’t getting stuck in local optima – though conscientious users will ensure that the mapping of tree space is meaningful and adequate to detect structure before making any firm conclusions <span class="citation">(Smith, 2022)</span>.</p>
 <p>To be thorough, we might consider continuing the search for a little longer, fine-tuning the search parameters:</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">bestTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">vinther</span>, tree <span class="op">=</span> <span class="va">bestTrees</span>,
@@ -203,22 +203,22 @@
 <pre><code>## </code></pre>
 <pre><code>## ── Find local optimum ──────────────────────────────────────────────────────────</code></pre>
 <pre><code>## →  TBR depth 8; keeping max 80 trees; k = Inf.</code></pre>
-<pre><code>## ℹ 2021-07-28 15:24:54: Score to beat: 79</code></pre>
+<pre><code>## ℹ 2021-08-13 09:43:14: Score to beat: 79</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## ── Escape local optimum ────────────────────────────────────────────────────────</code></pre>
 <pre><code>## → 6 ratchet iterations; TBR depth 4; max. 27 hits; k = Inf.</code></pre>
-<pre><code>## → 2021-07-28 15:24:54: Score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 1 @ 15:24:54; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 2 @ 15:24:54; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 3 @ 15:24:55; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 4 @ 15:24:55; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 5 @ 15:24:56; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 6 @ 15:24:56; score to beat: 79</code></pre>
+<pre><code>## → 2021-08-13 09:43:15: Score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 1 @ 09:43:15; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 2 @ 09:43:15; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 3 @ 09:43:15; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 4 @ 09:43:16; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 5 @ 09:43:16; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 6 @ 09:43:17; score to beat: 79</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## ── Sample local optimum ────────────────────────────────────────────────────────</code></pre>
 <pre><code>## → TBR depth 12; keeping 80 trees; k = Inf</code></pre>
-<pre><code>## ℹ 2021-07-28 15:24:56: Score: 79</code></pre>
-<pre><code>## ✔ 2021-07-28 15:24:56: Tree search terminated with score 79</code></pre>
+<pre><code>## ℹ 2021-08-13 09:43:17: Score: 79</code></pre>
+<pre><code>## ✔ 2021-08-13 09:43:17: Tree search terminated with score 79</code></pre>
 <p>As it happens, the best tree for this dataset has a score of 79 under equal weights parsimony.</p>
 <p>We can plot the best tree(s) that we’ve found, and check its parsimony score (length):</p>
 <div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
@@ -299,7 +299,7 @@
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>,
                        verbosity <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></code></pre></div>
 <pre><code>## ✔ Initialized 1 distinct constraints.</code></pre>
-<pre><code>## → 2021-07-28 15:25:03: Score to beat: 3</code></pre>
+<pre><code>## → 2021-08-13 09:43:24: Score to beat: 3</code></pre>
 <p><img src="tree-search_files/figure-html/simple-constraints-1.png" width="700"> Here’s a more complex example that imposes the splits <code>ab | cef</code> and <code>abcd | ef</code>, whilst allowing <code>g</code> to plot anywhere on the tree:</p>
 <div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">characters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html">MatrixToPhyDat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span>
@@ -313,7 +313,7 @@
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>,
                        verbosity <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></code></pre></div>
 <pre><code>## ✔ Initialized 2 distinct constraints.</code></pre>
-<pre><code>## → 2021-07-28 15:25:03: Score to beat: 2</code></pre>
+<pre><code>## → 2021-08-13 09:43:25: Score to beat: 2</code></pre>
 <p><img src="tree-search_files/figure-html/complex-constraints-1.png" width="700"></p>
 <p>Constraints can also be loaded from a Nexus file with <code>constraint &lt;- TreeTools::ReadAsPhyDat('constraint_file.nex')</code>.</p>
 </div>
@@ -340,7 +340,7 @@
 <p>Smith, M. R. (2019). Bayesian and parsimony approaches reconstruct informative trees from simulated morphological datasets. <em>Biology Letters</em>, <em>15</em>(2), 20180632. doi:<a href="https://doi.org/10.1098/rsbl.2018.0632">10.1098/rsbl.2018.0632</a></p>
 </div>
 <div id="ref-SmithSpace">
-<p>Smith, M. R. (2021). The importance of methodology when analysing landscapes of phylogenetic trees. <em>Forthcoming</em>.</p>
+<p>Smith, M. R. (2022). The importance of methodology when analysing landscapes of phylogenetic trees. <em>Forthcoming</em>.</p>
 </div>
 <div id="ref-Smith2014">
 <p>Smith, M. R., &amp; Ortega-Hernández, J. (2014). <em>Hallucigenia</em>’s onychophoran-like claws and the case for Tactopoda. <em>Nature</em>, <em>514</em>(7522), 363–366. doi:<a href="https://doi.org/10.1038/nature13576">10.1038/nature13576</a></p>
