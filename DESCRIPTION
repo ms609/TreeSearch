@@ -49,7 +49,7 @@ Suggests:
 Additional_repositories: https://ms609.github.io/packages/
 Remotes:
     emmanuelparadis/ape,
-    ms609/Rogue,
+    ms609/Rogue#14,
     ms609/TreeDist,
     ms609/TreeTools@rogue,
 Config/Needs/coverage: covr
