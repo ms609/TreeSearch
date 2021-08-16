@@ -1,3 +1,17 @@
+logging <- isTRUE(getOption("TreeSearch.logging"))
+
+if (logging) {
+  logFile <- file('log.lg', open = 'w+')
+  Log <- function (...) {
+    writeLines(as.character(Sys.time()), con = logFile)
+    writeLines(paste0('  ', ...), con = logFile)
+  }
+  PutTree <- function (...) dput(..., file = 'tree.lg')
+  PutData <- function (...) dput(..., file = 'dataset.lg')
+} else {
+  PutData <- PutTree <- Log <- function (...) {}
+}
+
 library("methods", exclude = c('show', 'removeClass'))
 library("cli")
 suppressPackageStartupMessages({
@@ -183,14 +197,20 @@ ui <- fluidPage(theme = 'app.css',
       fileInput("treeFile", label = "Load trees",
                 placeholder = "No tree file selected"),
       textOutput("results"),
-      hidden(radioButtons('plotFormat', "Display:",
+      hidden(
+        tags$div(id = 'treeDisplayConfig',
+                 radioButtons('plotFormat', "Display:",
                    list("Characters on trees" = 'ind',
                         "Consensus tree" = 'cons',
                         "Cluster consensus trees" = 'clus',
-                        "Tree space" = 'space'), 'cons')),
-      hidden(sliderInput('whichTree', 'Tree to plot', min = 1L, max = 1L,
-                         value = 1L, step = 1L))
+                        "Tree space" = 'space'), 'cons'),
+                 hidden(sliderInput('whichTree', 'Tree to plot', value = 1L,
+                                    min = 1L, max = 1L, step = 1L)),
+                 selectizeInput('outgroup', 'Root on:', multiple = TRUE,
+                                choices = list())
+        )
       ),
+    ),
   ),
   column(9,
     fluidRow(id = 'plotConfig',
@@ -268,6 +288,7 @@ ui <- fluidPage(theme = 'app.css',
 
 server <- function(input, output, session) {
   
+  Log("Started server")
   r <- reactiveValues()
   
   ##############################################################################
@@ -320,7 +341,7 @@ server <- function(input, output, session) {
         r$trees <- NULL
         updateActionButton(session, "go", "New search")
       } else {
-        show('plotFormat')
+        show('treeDisplayConfig')
       }
       
       output$results <- TreeSummary()
@@ -386,7 +407,7 @@ server <- function(input, output, session) {
                         max = length(r$trees), value = 1L)
       updateActionButton(session, "modalGo", "Continue search")
       updateActionButton(session, "go", "Continue")
-      show('plotFormat')
+      show('treeDisplayConfig')
       
       output$results <- TreeSummary()
     }
@@ -455,6 +476,7 @@ server <- function(input, output, session) {
                        value = nNonRogues())
     updateSliderInput(inputId = 'spaceDim', max = max(2L, maxProjDim()))
     updateSelectizeInput(inputId = 'neverDrop', choices = tipLabels)
+    updateSelectizeInput(inputId = 'outgroup', choices = tipLabels)
   })
 
   observeEvent(input$implied.weights, {
@@ -476,12 +498,15 @@ server <- function(input, output, session) {
     if (!inherits(r$dataset, 'phyDat')) {
       showNotification("No data loaded", type = 'error')
     } else {
+      startTree <- if (is.null(r$trees)) {
+        AdditionTree(r$dataset, concavity = concavity())
+      } else {
+        r$trees[[1]]
+      }
+      PutData(r$dataset)
+      PutTree(startTree)
       r$trees <- withProgress(c(MaximizeParsimony(r$dataset,
-                                     tree = if(is.null(r$trees)) 
-                                       TreeTools::NJTree(r$dataset)
-                                     else
-                                       r$trees[[1]],
-                                     
+                                     tree = startTree,
                                      concavity = concavity(),
                                      ratchIter = input$ratchIter,
                                      tbrIter = input$tbrIter,
@@ -501,7 +526,7 @@ server <- function(input, output, session) {
         signif(TreeLength(r$trees[[1]], r$dataset, concavity = concavity()))))
       updateActionButton(session, "go", "Continue")
       updateActionButton(session, "modalGo", "Continue search")
-      show('plotFormat')
+      show('treeDisplayConfig')
     }
   }
   
@@ -512,7 +537,7 @@ server <- function(input, output, session) {
   })
   
   PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 50)
-  PlottedTree <- debounce(reactive(Postorder(r$trees[[input$whichTree]])), 100)
+  PlottedTree <- debounce(reactive(UserRoot(Postorder(r$trees[[input$whichTree]]))), 100)
   
   RenderMainPlot <- function (x) {
     renderPlot(x, width = PlotSize(), height = PlotSize())
@@ -521,6 +546,14 @@ server <- function(input, output, session) {
   Instab <- reactive({
     TipInstability(r$trees)
   })
+  
+  UserRoot <- function (tree) {
+    if (length(input$outgroup)) {
+      RootTree(tree, input$outgroup)
+    } else {
+      tree
+    }
+  }
   
   dropSeq <- reactive(rogues()$taxon[-1])
   
@@ -582,6 +615,7 @@ server <- function(input, output, session) {
       consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
       plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
                            edgeLength = 1,
+                           outgroupTips = input$outgroup,
                            tip.color = tipCols()[intersect(consTrees[[1]]$tip.label, kept)])
       output$branchLegend <- renderUI({
         tagList(
@@ -592,11 +626,13 @@ server <- function(input, output, session) {
         )
       })
     } else {
+      Log("ConsensusWithout 613")
+      PutTree(r$trees)
       cons <- ConsensusWithout(r$trees, dropped, p = consP())
       if (unitEdge()) {
         cons$edge.length <- rep_len(1L, dim(cons$edge)[1])
       }
-      plot(cons, tip.color = tipCols()[intersect(cons$tip.label, kept)])
+      plot(UserRoot(cons), tip.color = tipCols()[intersect(cons$tip.label, kept)])
     }
     
   }
@@ -641,8 +677,8 @@ server <- function(input, output, session) {
                  UnitEdge(PlottedTree())
                }
                
-               tryCatch({
-                 pc <- PlotCharacter(treeToPlot, r$dataset, n,
+               pc <- tryCatch({
+                 PlotCharacter(treeToPlot, r$dataset, n,
                                      edge.width = 2.5,
                                      updateTips = 'updateTips' %in% input$mapDisplay)
                }, error = function (cond) {
@@ -751,6 +787,7 @@ server <- function(input, output, session) {
              } else {
                output$charMapLegend <- renderUI({})
                output$charNotes <- renderUI({})
+               Log("Plotting PLottedTree() 777")
                plot(PlottedTree(), tip.color = tipCols())
              }
            },
@@ -774,6 +811,7 @@ server <- function(input, output, session) {
     par(mar = c(2, 0, 0, 0))
     nStop <- length(badToGood) + 1L
     
+    Log("QualityPlot 800")
     plot(NULL, xlim = c(0, 1), ylim = c(-1.5, 2.5),
          ann = FALSE, axes = FALSE)
     x <- seq.int(from = 0, to = 1, length.out = nStop)
@@ -902,13 +940,17 @@ server <- function(input, output, session) {
       par(mfrow = c(nRow, ceiling(cl$n / nRow)))
       for (i in seq_len(cl$n)) {
         col <- palettes[[min(length(palettes), cl$n)]][i]
-        tr <- Consensus(r$trees[cl$cluster == i])
+        Log("ClusterCons 926")
+        PutTree(r$trees)
+        tr <- UserRoot(Consensus(r$trees[cl$cluster == i]))
         tr$edge.length <- rep.int(1, dim(tr$edge)[1])
         plot(tr, edge.width = 2, font = 1, cex = 0.83,
              edge.color = col, tip.color = tipCols())
       }
     } else {
-      tr <- Consensus(r$trees)
+      Log("ClusterCons 934")
+      PutTree(r$trees)
+      tr <- UserRoot(Consensus(r$trees))
       tr$edge.length <- rep.int(1, dim(tr$edge)[1])
       plot(tr,edge.width = 2, font = 1, cex = 0.83,
            edge.color = palettes[[1]], tip.color = tipCols())
