@@ -42,6 +42,12 @@ palettes <- list("#7a6c36",
                  c("#7a6c36", "#864885", "#427743", "#4c5c86", "#cb4745", "#73383b", "#e03795", "#438f2e", "#5e2195", "#758029", "#4042b9", "#a37926", "#8364df", "#c3671f", "#444491", "#dc4c1f", "#367076", "#e2383c", "#4786b4", "#e13964", "#4c8c73", "#a53396", "#2c4422", "#b553cb", "#50381b", "#4f75d8", "#a12c1b", "#8576b8", "#bd6541", "#3a1959", "#83491f", "#2d2644", "#c45b94", "#451523", "#966883", "#782224", "#b96563", "#762254", "#95765c", "#ad355a")
 )
 
+ErrorPlot <- function (...) {
+  plot(0, 0, type = 'n', axes = FALSE, ann = FALSE)
+  text(0, 0, paste0(..., collapse = "\n"),
+       col = '#dd6611', font = 2)
+}
+
 badToGood <- rev(c("#1AB958", "#23B956", "#2BB954", "#31B952", "#37B850", "#3CB84E", "#41B84C", "#45B74A", "#49B749", "#4DB747", "#51B645", "#54B643", "#58B641", "#5BB53F", "#5FB53D", "#62B53C", "#65B43A", "#68B438", "#6BB336", "#6DB335", "#70B333", "#73B231", "#76B230", "#78B12E", "#7BB12C", "#7DB02B", "#80B029", "#82AF28", "#85AF26", "#87AE25", "#8AAE23", "#8CAD22", "#8EAD21", "#91AC1F", "#93AC1E", "#95AB1D", "#97AB1C", "#9AAA1B", "#9CAA1A", "#9EA919", "#A0A918", "#A2A818", "#A4A717", "#A6A716", "#A8A616", "#AAA616", "#ACA515", "#AEA415", "#B0A415", "#B2A315", "#B4A315", "#B6A216", "#B8A116", "#B9A117", "#BBA017", "#BD9F18", "#BF9F18", "#C19E19", "#C29D1A", "#C49D1B", "#C69C1C", "#C79B1D", "#C99A1E", "#CB9A1F", "#CC9920", "#CE9822", "#CF9823", "#D19724", "#D29625", "#D49626", "#D59528", "#D79429", "#D8932A", "#D9932C", "#DB922D", "#DC912E", "#DD9130", "#DF9031", "#E08F33", "#E18F34", "#E28E35", "#E38D37", "#E58C38", "#E68C3A", "#E78B3B", "#E88A3D", "#E98A3E", "#EA8940", "#EB8841", "#EC8843", "#ED8744", "#EE8746", "#EE8647", "#EF8549", "#F0854A", "#F1844C", "#F2844D", "#F2834F", "#F38350", "#F48252", "#F48253", "#F58155", "#F58157", "#F68058", "#F6805A", "#F77F5B", "#F77F5D", "#F87E5E"))
 
 Reference <- function (authors, year, title, journal = '',
@@ -643,9 +649,7 @@ server <- function(input, output, session) {
                  cli::cli_alert_danger(cond)
                  showNotification(type = 'error',
                                   "Could not match dataset to taxa in trees")
-                 plot(0, 0, type = 'n', axes = FALSE, ann = FALSE)
-                 text(0, 0, 'Load dataset with\ncharacter codings\nfor taxa on tree',
-                      col = '#dd6611', font = 2)
+                 ErrorPlot('Load dataset with\ncharacter codings\nfor taxa on tree')
                  return()
                })
                  
@@ -790,6 +794,9 @@ server <- function(input, output, session) {
   }
   
   output$pcQuality <- renderPlot({
+    if (length(r$trees) < 3) {
+      return()
+    }
     dstnc <- distances()
     mppng <- mapping()[, seq_len(dims())]
     future_promise(TreeDist::MappingQuality(dstnc, dist(mppng))['TxC'],
@@ -990,6 +997,10 @@ server <- function(input, output, session) {
   # Plot tree space
   ##############################################################################
   treespacePlot <- function() {
+    if (length(r$trees) < 3) {
+      return(ErrorPlot("Need at least\nthree trees to\nmap tree space"))
+    }
+    
     cl <- clusterings()
     proj <- mapping()
     
