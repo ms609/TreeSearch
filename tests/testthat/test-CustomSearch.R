@@ -28,7 +28,7 @@ test_that("Tree can be found", {
                                             maxIter = 1000,
                                             stopAtPlateau = 1, verbosity = 0)))
   
-  expect_error(MaximizeParsimony(phy11, tree = CollapseNode(random11, 13)))
+  expect_equal(comb11, MaximizeParsimony(phy11, tree = CollapseNode(random11, 13)))
   expect_equal(comb11, MaximizeParsimony(phy11, tree = random11, verbosity = 0L)[[1]])
   expect_equal(comb11, MaximizeParsimony(phy11, random11, ratchIter = 0,
                                          verbosity = 0L)[[1]])

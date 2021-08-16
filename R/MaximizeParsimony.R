@@ -158,7 +158,8 @@
 #' CharacterInformation
 #' ConstrainedNJ 
 #' DropTip
-#' ImposeConstraint 
+#' ImposeConstraint
+#' MakeTreeBinary
 #' NTip
 #' @references
 #' \insertAllCited{}
@@ -382,7 +383,15 @@ MaximizeParsimony <- function (dataset, tree,
     tree <- tree[[1]]
   }
   if (dim(tree$edge)[1] != 2 * tree$Nnode) {
-    stop("`tree` must be bifurcating; try rooting with RootTree(tree, 1)")
+    cli_alert_warning("`tree` is not bifurcating; collapsing polytomies at random")
+    tree <- MakeTreeBinary(tree)
+    if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+      cli_alert_warning("Rooting `tree` on first leaf")
+      tree <- RootTree(tree, 1)
+    }
+    if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+      stop("Could not make `tree` binary.")
+    }
   }
   
   # Check tree labels matches dataset
