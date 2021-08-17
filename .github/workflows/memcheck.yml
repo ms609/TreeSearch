@@ -15,6 +15,7 @@ on:
       - main
       - master
     paths:
+      - '.github/workflows/memcheck.yml'
       - 'src/**'
       - 'inst/include/**'
       - 'tests/testthat/**'
