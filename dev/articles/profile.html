@@ -112,7 +112,7 @@
       <h1 data-toc-skip>Tree Search with Profile Parsimony</h1>
                         <h4 class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2021-08-16</h4>
+            <h4 class="date">2021-08-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/profile.Rmd"><code>vignettes/profile.Rmd</code></a></small>
       <div class="hidden name"><code>profile.Rmd</code></div>
@@ -168,22 +168,22 @@
 <pre><code>## </code></pre>
 <pre><code>## ── Find local optimum ──────────────────────────────────────────────────────────</code></pre>
 <pre><code>## →  TBR depth 6; keeping max 8 trees; k = profile.</code></pre>
-<pre><code>## ℹ 2021-08-16 16:16:18: Score to beat: 540.226</code></pre>
-<pre><code>## TBR search 1 ■■■■■■■■■■■                       32% | D6, score 512.118, hit 1. …</code></pre>
-<pre><code>## TBR search 1 ■■■■■■■■■■■■■■■■■■■■■■■■■■■       88% | D6, score 512.118, hit 1. …</code></pre>
+<pre><code>## ℹ 2021-08-17 09:31:27: Score to beat: 540.226</code></pre>
+<pre><code>## TBR search 1 ■■■■■■■■■                         28% | D6, score 512.118, hit 1. …</code></pre>
+<pre><code>## TBR search 1 ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | D6, score 512.118, hit 1. …</code></pre>
 <pre><code>##   - TBR rearrangement at depth 6 found score 512.118 1 time.</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## ── Escape local optimum ────────────────────────────────────────────────────────</code></pre>
 <pre><code>## → 3 ratchet iterations; TBR depth 3; max. 3 hits; k = profile.</code></pre>
-<pre><code>## → 2021-08-16 16:16:20: Score to beat: 512.118</code></pre>
-<pre><code>## → Ratchet iteration 1 @ 16:16:20; score to beat: 512.118</code></pre>
-<pre><code>## → Ratchet iteration 2 @ 16:16:22; score to beat: 512.118</code></pre>
-<pre><code>## → Ratchet iteration 3 @ 16:16:23; score to beat: 512.118</code></pre>
+<pre><code>## → 2021-08-17 09:31:29: Score to beat: 512.118</code></pre>
+<pre><code>## → Ratchet iteration 1 @ 09:31:29; score to beat: 512.118</code></pre>
+<pre><code>## → Ratchet iteration 2 @ 09:31:30; score to beat: 512.118</code></pre>
+<pre><code>## → Ratchet iteration 3 @ 09:31:32; score to beat: 512.118</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## ── Sample local optimum ────────────────────────────────────────────────────────</code></pre>
 <pre><code>## → TBR depth 3; keeping 8 trees; k = profile</code></pre>
-<pre><code>## ℹ 2021-08-16 16:16:24: Score: 512.118</code></pre>
-<pre><code>## ✔ 2021-08-16 16:16:25: Tree search terminated with score 512.118</code></pre>
+<pre><code>## ℹ 2021-08-17 09:31:33: Score: 512.118</code></pre>
+<pre><code>## ✔ 2021-08-17 09:31:34: Tree search terminated with score 512.118</code></pre>
 <p>We’ve used very low values of <code>ratchIter</code>, <code>tbrIter</code> and <code>maxHits</code> for a rapid run, so this is not necessarily a thorough enough search to find a globally optimal tree. Nevertheless, let’s see the resultant tree, and its score:</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/IWScore.html">TreeLength</a></span><span class="op">(</span><span class="va">betterTrees</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span></code></pre></div>
@@ -208,18 +208,18 @@
 <pre><code>## </code></pre>
 <pre><code>## ── Find local optimum ──────────────────────────────────────────────────────────</code></pre>
 <pre><code>## →  TBR depth 6; keeping max 25 trees; k = profile.</code></pre>
-<pre><code>## ℹ 2021-08-16 16:16:26: Score to beat: 512.118</code></pre>
+<pre><code>## ℹ 2021-08-17 09:31:34: Score to beat: 512.118</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## ── Escape local optimum ────────────────────────────────────────────────────────</code></pre>
 <pre><code>## → 2 ratchet iterations; TBR depth 3; max. 9 hits; k = profile.</code></pre>
-<pre><code>## → 2021-08-16 16:16:26: Score to beat: 512.118</code></pre>
-<pre><code>## → Ratchet iteration 1 @ 16:16:26; score to beat: 512.118</code></pre>
-<pre><code>## → Ratchet iteration 2 @ 16:16:27; score to beat: 512.118</code></pre>
+<pre><code>## → 2021-08-17 09:31:35: Score to beat: 512.118</code></pre>
+<pre><code>## → Ratchet iteration 1 @ 09:31:35; score to beat: 512.118</code></pre>
+<pre><code>## → Ratchet iteration 2 @ 09:31:36; score to beat: 512.118</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## ── Sample local optimum ────────────────────────────────────────────────────────</code></pre>
 <pre><code>## → TBR depth 3; keeping 25 trees; k = profile</code></pre>
-<pre><code>## ℹ 2021-08-16 16:16:28: Score: 512.118</code></pre>
-<pre><code>## ✔ 2021-08-16 16:16:29: Tree search terminated with score 512.118</code></pre>
+<pre><code>## ℹ 2021-08-17 09:31:37: Score: 512.118</code></pre>
+<pre><code>## ✔ 2021-08-17 09:31:38: Tree search terminated with score 512.118</code></pre>
 <p>The consensus of these slightly suboptimal trees provides a less resolved, but typically more reliable, summary of the signal with the phylogenetic dataset <span class="citation">(Smith, 2019)</span>:</p>
 <div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span>
