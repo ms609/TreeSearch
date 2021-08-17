@@ -1,4 +1,6 @@
 logging <- isTRUE(getOption("TreeSearch.logging"))
+options(shiny.maxRequestSize = 1024^3) # Allow max 1 GB files
+
 
 if (logging) {
   logFile <- file('log.lg', open = 'w+')
@@ -275,6 +277,9 @@ ui <- fluidPage(theme = 'app.css',
         tags$div(style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput('spaceDim', 'Dimensions:', value = 5,
                       min = 2, max = 12, step = 1, width = 200),
+          selectInput('spaceCol', "Colour trees by:",
+                      list('Cluster membership' = 'clust',
+                           'Parsimony score' = 'score')),
                  ),
         tags$div(id = 'spaceLegend',
                  plotOutput(outputId = 'pcQuality',
@@ -433,27 +438,28 @@ server <- function(input, output, session) {
                             'off' = 'EW',
                             'prof' = 'PP'))
   
+  scores <- reactive(tryCatch(
+    signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
+    error = function (x) {
+      if (length(r$dataset) > 0 && 
+          length(r$trees) > 0) {
+        cli::cli_alert(x[[2]])
+        cli::cli_alert_danger(x[[1]])
+        showNotification(type = "error",
+                         "Could not score all trees with dataset")
+      }
+      NULL
+   }))
+  
   TreeSummary <- debounce(reactive({
-    scores <- tryCatch(signif(TreeLength(r$trees, r$dataset,
-                                         concavity = concavity())),
-                       error = function (x) {
-                         if (length(r$dataset) > 0 && 
-                             length(r$trees) > 0) {
-                           cli::cli_alert(x[[2]])
-                           cli::cli_alert_danger(x[[1]])
-                           showNotification(type = "error",
-                                            "Could not score all trees with dataset")
-                         }
-                         NULL
-                       })
-    
-    score <- if (is.null(scores)) {
+    treeScores <- scores()
+    score <- if (is.null(treeScores)) {
       "; could not be scored from dataset"
-    } else if (length(unique(scores)) == 1) {
-      paste0(", each with score ", scores[1], " (", wtType(), ")")
+    } else if (length(unique(treeScores)) == 1) {
+      paste0(", each with score ", treeScores[1], " (", wtType(), ")")
     } else {
-      paste0(" with scores ", min(scores), " to ", max(scores),
-             " (", wtType, ")")
+      paste0(" with scores ", min(treeScores), " to ", max(treeScores),
+             " (", wtType(), ")")
     }
     
     
@@ -548,8 +554,9 @@ server <- function(input, output, session) {
   })
   
   UserRoot <- function (tree) {
-    if (length(input$outgroup)) {
-      RootTree(tree, input$outgroup)
+    outgroupTips <- intersect(input$outgroup, tree$tip.label)
+    if (length(outgroupTips)) {
+      RootTree(tree, outgroupTips)
     } else {
       tree
     }
@@ -961,11 +968,27 @@ server <- function(input, output, session) {
   # Plot settings: point style
   ##############################################################################
 
-  pointCols <- reactive({
-    cl <- clusterings()
-    if (cl$sil > silThreshold()) {
-      palettes[[min(length(palettes), cl$n)]][cl$cluster]
-    } else palettes[[1]]
+  treeCols <- reactive({
+    switch(
+      input$spaceCol,
+      'clust' = {
+        cl <- clusterings()
+        if (cl$sil > silThreshold()) {
+          palettes[[min(length(palettes), cl$n)]][cl$cluster]
+        } else {
+          palettes[[1]]
+        }
+      }, 'score' = {
+        if (is.null(scores()) || length(unique(scores())) == 1L) {
+          palettes[[1]]
+        } else {
+          norm <- scores() - min(scores())
+          norm <- (length(badToGood) - 1L) * norm / max(norm)
+          badToGood[1 + norm]
+        }
+      },
+      'black'
+    )
   })
   
   pchs <- reactive({
@@ -1066,7 +1089,7 @@ server <- function(input, output, session) {
         
         # Add points
         points(proj[, j], proj[, i], pch = pchs(),
-               col = paste0(pointCols(), as.hexmode(200)),
+               col = paste0(treeCols(), as.hexmode(200)),
                cex = input$pt.cex)
         
         if (cl$sil > silThreshold()) {
