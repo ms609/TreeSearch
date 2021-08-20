@@ -17,6 +17,7 @@ PlotCharacter(
   inappLty = "dashed",
   plainLty = par("lty"),
   tipOffset = 1,
+  unitEdge = FALSE,
   ...
 )
 }
@@ -41,6 +42,8 @@ to apply to ambiguous, inapplicable and applicable tokens.  See the \code{lty}
 \link{graphical parameter} for details of line stylings.  Overrides \code{tokenCol}.}
 
 \item{tipOffset}{Numeric: how much to offset tips from their labels.}
+
+\item{unitEdge}{Logical: Should all edges be plotted with a unit length?}
 
 \item{\dots}{Further arguments to pass to \code{plot.phylo()}.}
 }

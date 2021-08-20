@@ -16,6 +16,7 @@
 #' to apply to ambiguous, inapplicable and applicable tokens.  See the `lty` 
 #' [graphical parameter] for details of line stylings.  Overrides `tokenCol`.
 #' @param tipOffset Numeric: how much to offset tips from their labels.
+#' @param unitEdge Logical: Should all edges be plotted with a unit length?
 #' @param \dots Further arguments to pass to `plot.phylo()`.
 #' 
 #' @return `PlotCharacter()` returns a matrix in which each row corresponds
@@ -61,6 +62,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
                            plainLty = par('lty'),
                            
                            tipOffset = 1,
+                           unitEdge = FALSE,
                            ...) {
   
   # Reconcile labels
@@ -370,6 +372,9 @@ PlotCharacter <- function (tree, dataset, char = 1L,
           lty = ifelse(tokens[tkn] == '-', inappLty, plainLty))
       }
     })
+    if (unitEdge) {
+      tree$edge.length <- rep_len(1, dim(tree$edge)[1])
+    }
     plot.phylo(tree,
                node.color = nodeStyle['col', , drop = FALSE],
                node.lty = nodeStyle['lty', , drop = FALSE],
