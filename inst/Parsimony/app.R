@@ -169,7 +169,7 @@ Smith2021 <- Reference('Smith, M.R.', 2022,
                        'Submitted MS')
 Smith2022 <- Reference("Smith, M.R.", 2022, 
                        "Improving consensus trees by detecting rogue taxa",
-                       "Submitted MS")
+                       "In revision")
 Stockham2002 <- Reference(
   author = c('Stockham, C.', 'Wang, L.-S.', 'Warnow, T.'), 2002,
   "Statistically based postprocessing of phylogenetic analysis by clustering",
@@ -280,6 +280,12 @@ ui <- fluidPage(theme = 'app.css',
           selectInput('spaceCol', "Colour trees by:",
                       list('Cluster membership' = 'clust',
                            'Parsimony score' = 'score')),
+          selectInput('spacePch', "Plotting symbol:",
+                      selected = 'relat',
+                      list('Cluster membership' = 'clust',
+                           'Relationships' = 'relat')),
+          selectizeInput('relators', "Show relationship between:",
+                         choices = list(), multiple = TRUE),
                  ),
         tags$div(id = 'spaceLegend',
                  plotOutput(outputId = 'pcQuality',
@@ -300,8 +306,10 @@ server <- function(input, output, session) {
   # Load data
   ##############################################################################
   
+  tipLabels <- reactive({r$trees[[1]]$tip.label})
+  
   datasetMatchesTrees <- reactive({
-    length(intersect(names(r$dataset), r$trees[[1]]$tip.label)) == 
+    length(intersect(names(r$dataset), tipLabels())) == 
       length(r$dataset)
   })
   
@@ -483,6 +491,7 @@ server <- function(input, output, session) {
     updateSliderInput(inputId = 'spaceDim', max = max(2L, maxProjDim()))
     updateSelectizeInput(inputId = 'neverDrop', choices = tipLabels)
     updateSelectizeInput(inputId = 'outgroup', choices = tipLabels)
+    updateSelectizeInput(inputId = 'relators', choices = tipLabels)
   })
 
   observeEvent(input$implied.weights, {
@@ -983,6 +992,7 @@ server <- function(input, output, session) {
           palettes[[1]]
         } else {
           norm <- scores() - min(scores())
+          norm <- scores() - min(scores())
           norm <- (length(badToGood) - 1L) * norm / max(norm)
           badToGood[1 + norm]
         }
@@ -991,11 +1001,27 @@ server <- function(input, output, session) {
     )
   })
   
-  pchs <- reactive({
-    cl <- clusterings()
-    if (cl$sil > silThreshold()) {
-      cl$cluster - 1
-    } else 16
+  treePch <- reactive({
+    switch(
+      input$spacePch,
+      'clust' = {
+        cl <- clusterings()
+        if (cl$sil > silThreshold()) {
+          cl$cluster - 1
+        } else 16
+      }, 'relat' = {
+        quartet <- input$relators
+        if (length(quartet) == 4) {
+          fours <- as.integer(vapply(
+            lapply(as.Splits(lapply(r$trees, KeepTip, input$relators)),
+                   PolarizeSplits),
+            as.raw, raw(1)))
+          log2(fours - 1L)
+        } else {
+          showNotification("Select four taxa")
+          0
+        }
+      }, 0)
   })
   
   maxProjDim <- reactive({
@@ -1073,6 +1099,9 @@ server <- function(input, output, session) {
     plotSeq <- matrix(0, nDim, nDim)
     nPanels <- nDim * (nDim - 1L) / 2L
     plotSeq[upper.tri(plotSeq)] <- seq_len(nPanels)
+    if (nDim > 2) {
+      plotSeq[nDim - 1, 2] <- max(plotSeq) + 1L
+    }
     layout(t(plotSeq[-nDim, -1]))
     par(mar = rep(0.2, 4))
     withProgress(message = 'Drawing plot', {
@@ -1088,7 +1117,7 @@ server <- function(input, output, session) {
           lines(proj[segment, j], proj[segment, i], col = "#bbbbbb", lty = 1))
         
         # Add points
-        points(proj[, j], proj[, i], pch = pchs(),
+        points(proj[, j], proj[, i], pch = treePch(),
                col = paste0(treeCols(), as.hexmode(200)),
                cex = input$pt.cex)
         
@@ -1107,6 +1136,12 @@ server <- function(input, output, session) {
         if ('labelTrees' %in% input$display) {
           text(proj[, j], proj[, i], thinnedTrees())
         }
+      }
+      if (input$spacePch == 'relat' && length(input$relators) == 4L) {
+        if (nDim > 2) plot.new()
+        legend(bty = 'n', 'topright', pch = 1:3, xpd = NA,
+               gsub("_", " ", fixed = TRUE,
+                    paste(input$relators[2:4], "&", input$relators[[1]])))
       }
     })
   }
