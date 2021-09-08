@@ -1139,7 +1139,7 @@ server <- function(input, output, session) {
       }
       if (input$spacePch == 'relat' && length(input$relators) == 4L) {
         if (nDim > 2) plot.new()
-        legend(bty = 'n', 'topright', pch = 1:3,
+        legend(bty = 'n', 'topright', pch = 1:3, xpd = NA,
                gsub("_", " ", fixed = TRUE,
                     paste(input$relators[2:4], "&", input$relators[[1]])))
       }
