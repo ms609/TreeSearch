@@ -112,7 +112,7 @@
       <h1 data-toc-skip>Getting started: Simple tree searches</h1>
                         <h4 class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2021-08-17</h4>
+            <h4 class="date">2021-09-08</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/tree-search.Rmd"><code>vignettes/tree-search.Rmd</code></a></small>
       <div class="hidden name"><code>tree-search.Rmd</code></div>
@@ -153,22 +153,22 @@
 <pre><code>## </code></pre>
 <pre><code>## ── Find local optimum ──────────────────────────────────────────────────────────</code></pre>
 <pre><code>## →  TBR depth 4; keeping max 41 trees; k = Inf.</code></pre>
-<pre><code>## ℹ 2021-08-17 09:31:42: Score to beat: 83</code></pre>
+<pre><code>## ℹ 2021-09-08 05:58:27: Score to beat: 83</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## ── Escape local optimum ────────────────────────────────────────────────────────</code></pre>
 <pre><code>## → 6 ratchet iterations; TBR depth 2; max. 14 hits; k = Inf.</code></pre>
-<pre><code>## → 2021-08-17 09:31:42: Score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 1 @ 09:31:42; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 2 @ 09:31:42; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 3 @ 09:31:42; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 4 @ 09:31:43; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 5 @ 09:31:43; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 6 @ 09:31:43; score to beat: 79</code></pre>
+<pre><code>## → 2021-09-08 05:58:27: Score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 1 @ 05:58:27; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 2 @ 05:58:27; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 3 @ 05:58:28; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 4 @ 05:58:28; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 5 @ 05:58:28; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 6 @ 05:58:28; score to beat: 79</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## ── Sample local optimum ────────────────────────────────────────────────────────</code></pre>
 <pre><code>## → TBR depth 2; keeping 41.4 trees; k = Inf</code></pre>
-<pre><code>## ℹ 2021-08-17 09:31:43: Score: 79</code></pre>
-<pre><code>## ✔ 2021-08-17 09:31:43: Tree search terminated with score 79</code></pre>
+<pre><code>## ℹ 2021-09-08 05:58:29: Score: 79</code></pre>
+<pre><code>## ✔ 2021-09-08 05:58:29: Tree search terminated with score 79</code></pre>
 <p>It can be instructive to inspect the progress of tree search.</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">firstHit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html">attr</a></span><span class="op">(</span><span class="va">bestTrees</span>, <span class="st">'firstHit'</span><span class="op">)</span>
@@ -203,22 +203,22 @@
 <pre><code>## </code></pre>
 <pre><code>## ── Find local optimum ──────────────────────────────────────────────────────────</code></pre>
 <pre><code>## →  TBR depth 8; keeping max 80 trees; k = Inf.</code></pre>
-<pre><code>## ℹ 2021-08-17 09:31:44: Score to beat: 79</code></pre>
+<pre><code>## ℹ 2021-09-08 05:58:30: Score to beat: 79</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## ── Escape local optimum ────────────────────────────────────────────────────────</code></pre>
 <pre><code>## → 6 ratchet iterations; TBR depth 4; max. 27 hits; k = Inf.</code></pre>
-<pre><code>## → 2021-08-17 09:31:44: Score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 1 @ 09:31:44; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 2 @ 09:31:45; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 3 @ 09:31:45; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 4 @ 09:31:46; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 5 @ 09:31:46; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 6 @ 09:31:46; score to beat: 79</code></pre>
+<pre><code>## → 2021-09-08 05:58:30: Score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 1 @ 05:58:30; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 2 @ 05:58:31; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 3 @ 05:58:31; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 4 @ 05:58:32; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 5 @ 05:58:32; score to beat: 79</code></pre>
+<pre><code>## → Ratchet iteration 6 @ 05:58:33; score to beat: 79</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## ── Sample local optimum ────────────────────────────────────────────────────────</code></pre>
 <pre><code>## → TBR depth 12; keeping 80 trees; k = Inf</code></pre>
-<pre><code>## ℹ 2021-08-17 09:31:47: Score: 79</code></pre>
-<pre><code>## ✔ 2021-08-17 09:31:47: Tree search terminated with score 79</code></pre>
+<pre><code>## ℹ 2021-09-08 05:58:33: Score: 79</code></pre>
+<pre><code>## ✔ 2021-09-08 05:58:34: Tree search terminated with score 79</code></pre>
 <p>As it happens, the best tree for this dataset has a score of 79 under equal weights parsimony.</p>
 <p>We can plot the best tree(s) that we’ve found, and check its parsimony score (length):</p>
 <div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
@@ -299,7 +299,7 @@
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>,
                        verbosity <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></code></pre></div>
 <pre><code>## ✔ Initialized 1 distinct constraints.</code></pre>
-<pre><code>## → 2021-08-17 09:31:55: Score to beat: 3</code></pre>
+<pre><code>## → 2021-09-08 05:58:47: Score to beat: 3</code></pre>
 <p><img src="tree-search_files/figure-html/simple-constraints-1.png" width="700"> Here’s a more complex example that imposes the splits <code>ab | cef</code> and <code>abcd | ef</code>, whilst allowing <code>g</code> to plot anywhere on the tree:</p>
 <div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">characters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html">MatrixToPhyDat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span>
@@ -313,7 +313,7 @@
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>,
                        verbosity <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></code></pre></div>
 <pre><code>## ✔ Initialized 2 distinct constraints.</code></pre>
-<pre><code>## → 2021-08-17 09:31:55: Score to beat: 2</code></pre>
+<pre><code>## → 2021-09-08 05:58:47: Score to beat: 2</code></pre>
 <p><img src="tree-search_files/figure-html/complex-constraints-1.png" width="700"></p>
 <p>Constraints can also be loaded from a Nexus file with <code>constraint &lt;- TreeTools::ReadAsPhyDat('constraint_file.nex')</code>.</p>
 </div>
