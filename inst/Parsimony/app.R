@@ -1016,8 +1016,7 @@ server <- function(input, output, session) {
             lapply(as.Splits(lapply(r$trees, KeepTip, input$relators)),
                    PolarizeSplits),
             as.raw, raw(1)))
-          ifelse(fours == 9, 1,
-                 ifelse(fours == 3, 2, 3))
+          log2(fours - 1L)
         } else {
           showNotification("Select four taxa")
           0
@@ -1100,6 +1099,9 @@ server <- function(input, output, session) {
     plotSeq <- matrix(0, nDim, nDim)
     nPanels <- nDim * (nDim - 1L) / 2L
     plotSeq[upper.tri(plotSeq)] <- seq_len(nPanels)
+    if (nDim > 2) {
+      plotSeq[nDim - 1, 2] <- max(plotSeq) + 1L
+    }
     layout(t(plotSeq[-nDim, -1]))
     par(mar = rep(0.2, 4))
     withProgress(message = 'Drawing plot', {
@@ -1134,6 +1136,12 @@ server <- function(input, output, session) {
         if ('labelTrees' %in% input$display) {
           text(proj[, j], proj[, i], thinnedTrees())
         }
+      }
+      if (input$spacePch == 'relat' && length(input$relators) == 4L) {
+        if (nDim > 2) plot.new()
+        legend(bty = 'n', 'topright', pch = 1:3,
+               gsub("_", " ", fixed = TRUE,
+                    paste(input$relators[2:4], "&", input$relators[[1]])))
       }
     })
   }
