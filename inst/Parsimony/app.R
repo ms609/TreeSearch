@@ -298,6 +298,14 @@ ui <- fluidPage(theme = 'app.css',
 )
 
 server <- function(input, output, session) {
+  if (packageVersion('ape') < '5.5.2') {
+    showNotification("Some plots require latest \"ape\" version. Install with devtools::install_github( 'emmanuelparadis/ape')",
+                     type = 'error', duration = 25)
+  }
+  if (packageVersion('TreeTools') <= '1.5.0') {
+    showNotification("Some plots require \"TreeTools\" development version. Install with devtools::install_github( 'ms609/TreeTools@rogue')",
+                     type = 'error', duration = 30)
+  }
   
   Log("Started server")
   r <- reactiveValues()
