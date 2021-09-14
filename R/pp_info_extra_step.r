@@ -262,6 +262,7 @@ WithOneExtraStep <- function (...) {
   } else {
     
     stop("Not implemented.")
+                                                                                # nocov start
     # TODO test splits <- 2 2 4
     sum(vapply(seq_along(splits), function (omit) {
       backboneSplits <- splits[-omit]
@@ -276,7 +277,8 @@ WithOneExtraStep <- function (...) {
         backbones,
         attachTwoRegions,
         sum(
-        # TODO would be quicker to calculate just first half; special case: omitted.tips %% 2
+        # TODO would be quicker to calculate just first half; special case:
+        #  omitted.tips %% 2
         vapply(seq_len(omitted.tips - 1), function (first.group) { 
           # For each way of splitsting up the omitted tips, e.g. 1|16, 2|15, 3|14, etc
           choose(omitted.tips, first.group) * 
@@ -290,5 +292,6 @@ WithOneExtraStep <- function (...) {
   
     }, double(1))
     )
+                                                                                # nocov end
   }
 }
