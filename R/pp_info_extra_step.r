@@ -292,19 +292,3 @@ WithOneExtraStep <- function (...) {
     )
   }
 }
-
-#' Logistic Points
-#' Extract points from a fitted model
-#'
-#' @param x an integer vector giving x co-ordinates.
-#' @param fittedModel a fitted model, perhaps generated using 
-#' `nls(cumP ~ SSlogis(nSteps, Asym, xmid, scal))`.
-#'
-#' @return values of y co-ordinates corresponding to the x co-ordinates provided
-#' @author Martin R. Smith
-#' @export
-LogisticPoints <- function (x, fittedModel) {
-  coefL <- summary(fittedModel)$coef[, 1]
-  # Return:
-  coefL[1] / (1 + exp((coefL[2] - x) / coefL[3]))
-}
