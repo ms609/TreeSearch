@@ -14,7 +14,7 @@
 #' turn, in the sequence listed in `attr(dataset, 'levels')`.
 #' @param ambigCol,ambigLty,inappCol,inappLty,plainLty Colours and line types
 #' to apply to ambiguous, inapplicable and applicable tokens.  See the `lty` 
-#' [graphical parameter] for details of line stylings.  Overrides `tokenCol`.
+#' [graphical parameter] for details of line styles.  Overrides `tokenCol`.
 #' @param tipOffset Numeric: how much to offset tips from their labels.
 #' @param unitEdge Logical: Should all edges be plotted with a unit length?
 #' @param \dots Further arguments to pass to `plot.phylo()`.

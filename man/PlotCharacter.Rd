@@ -39,7 +39,7 @@ turn, in the sequence listed in \code{attr(dataset, 'levels')}.}
 
 \item{ambigCol, ambigLty, inappCol, inappLty, plainLty}{Colours and line types
 to apply to ambiguous, inapplicable and applicable tokens.  See the \code{lty}
-\link{graphical parameter} for details of line stylings.  Overrides \code{tokenCol}.}
+\link{graphical parameter} for details of line styles.  Overrides \code{tokenCol}.}
 
 \item{tipOffset}{Numeric: how much to offset tips from their labels.}
 
