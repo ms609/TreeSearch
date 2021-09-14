@@ -15,13 +15,13 @@
   ],
   "issueTracker": "https://github.com/ms609/TreeSearch/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "0.4.3.9006",
+  "version": "0.99.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.0.5 (2021-03-31)",
+  "runtimePlatform": "R version 4.1.1 (2021-08-10)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -104,6 +104,7 @@
       "@type": "SoftwareApplication",
       "identifier": "vdiffr",
       "name": "vdiffr",
+      "version": ">= 1.0.0",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -124,7 +125,7 @@
       "@type": "SoftwareApplication",
       "identifier": "ape",
       "name": "ape",
-      "version": ">= 5.0",
+      "version": ">= 5.1.2",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -132,6 +133,19 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=ape"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "cli",
+      "name": "cli",
+      "version": ">= 3.0",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=cli"
     },
     {
       "@type": "SoftwareApplication",
@@ -147,6 +161,30 @@
     },
     {
       "@type": "SoftwareApplication",
+      "identifier": "fastmatch",
+      "name": "fastmatch",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=fastmatch"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "future",
+      "name": "future",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=future"
+    },
+    {
+      "@type": "SoftwareApplication",
       "identifier": "phangorn",
       "name": "phangorn",
       "version": ">= 2.2.1",
@@ -157,6 +195,18 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=phangorn"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "promises",
+      "name": "promises",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=promises"
     },
     {
       "@type": "SoftwareApplication",
@@ -198,6 +248,7 @@
       "@type": "SoftwareApplication",
       "identifier": "Rdpack",
       "name": "Rdpack",
+      "version": ">= 0.7",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -205,6 +256,19 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=Rdpack"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "Rogue",
+      "name": "Rogue",
+      "version": "> 1.0.0",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=Rogue"
     },
     {
       "@type": "SoftwareApplication",
@@ -239,6 +303,7 @@
       "@type": "SoftwareApplication",
       "identifier": "TreeDist",
       "name": "TreeDist",
+      "version": "> 2.0.3",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -251,7 +316,7 @@
       "@type": "SoftwareApplication",
       "identifier": "TreeTools",
       "name": "TreeTools",
-      "version": ">= 1.4.4.9000",
+      "version": ">= 1.5.0",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -271,7 +336,8 @@
     "phylogenetics",
     "morphological-analysis",
     "research-tool",
-    "bioinformatics"
+    "bioinformatics",
+    "r-package"
   ],
   "citation": [
     {
@@ -346,5 +412,5 @@
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
     }
   ],
-  "fileSize": "3969.371KB"
+  "fileSize": "4005.337KB"
 }

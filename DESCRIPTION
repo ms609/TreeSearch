@@ -1,6 +1,6 @@
 Package: TreeSearch
 Title: Phylogenetic Tree Search Using Custom Optimality Criteria
-Version: 0.4.3.9011
+Version: 0.99.0
 Authors@R: c(person("Martin R.", 'Smith',
                   email="martin.smith@durham.ac.uk", 
                   role=c("aut", "cre", "cph"), 
@@ -39,17 +39,13 @@ Imports:
     shinyjs,
     stats,
     TreeDist (> 2.0.3),
-    TreeTools (>= 1.4.5.9106),
+    TreeTools (>= 1.5.0),
 Suggests:
     knitr,
     rmarkdown,
     testthat,
     vdiffr (>= 1.0.0),
 Additional_repositories: https://ms609.github.io/packages/
-Remotes:
-    emmanuelparadis/ape,
-    ms609/Rogue,
-    ms609/TreeTools@rogue,
 Config/Needs/coverage: covr
 Config/Needs/github-actions:
     callr,
@@ -57,6 +53,7 @@ Config/Needs/github-actions:
     rcmdcheck
 Config/Needs/memcheck: devtools
 Config/Needs/metadata: codemetar
+Config/Needs/revdeps: revdepcheck
 Config/Needs/website: 
     curl,
     igraph,
