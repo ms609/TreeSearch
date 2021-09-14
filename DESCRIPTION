@@ -26,7 +26,7 @@ Imports:
     ape (>= 5.1.2),
     cli (>= 3.0),
     cluster,
-    fastmatch,
+    fastmatch (>= 1.1.3),
     future,
     phangorn (>= 2.2.1),
     promises,
