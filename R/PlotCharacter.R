@@ -49,6 +49,7 @@
 #' par(oPar)
 #' @template MRS
 #' @importFrom ape plot.phylo nodelabels 
+#' @importFrom graphics par
 #' @importFrom TreeTools Postorder
 #' @export
 PlotCharacter <- function (tree, dataset, char = 1L,
