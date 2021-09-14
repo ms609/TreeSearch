@@ -71,7 +71,7 @@ jobs:
       - name: Install system dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install libgit2 xquartz
+          brew install libgit2 xquartz ghostscript
 
       - name: Install dependencies
         run: |
