@@ -38,6 +38,7 @@ See also:
 }
 \seealso{
 Other profile parsimony functions: 
+\code{\link{PrepareDataProfile}()},
 \code{\link{StepInformation}()},
 \code{\link{profiles}}
 }

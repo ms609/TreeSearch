@@ -55,7 +55,14 @@ data('congreveLamsdellMatrices')
 dataset <- congreveLamsdellMatrices[[42]]
 PrepareDataProfile(dataset)
 }
+\seealso{
+Other profile parsimony functions: 
+\code{\link{Carter1}()},
+\code{\link{StepInformation}()},
+\code{\link{profiles}}
+}
 \author{
 Martin R. Smith; written with reference to
 \code{phangorn:::prepareDataFitch()}
 }
+\concept{profile parsimony functions}
