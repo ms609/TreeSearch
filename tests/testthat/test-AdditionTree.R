@@ -30,7 +30,7 @@ test_that("Addition tree obeys constraints", {
   subtree <- TreeTools::KeepTip(
     AdditionTree(dataset, constraint = constraint[3:6], seq = letters[1:6]), 
     cdef)
-  expect_equal(read.tree(text = '(c, d, (e, f));'),
+  expect_equal(ape::read.tree(text = '(c, d, (e, f));'),
                TreeTools::UnrootTree(subtree))
 })
 
