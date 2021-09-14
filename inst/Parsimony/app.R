@@ -299,11 +299,11 @@ ui <- fluidPage(theme = 'app.css',
 
 server <- function(input, output, session) {
   if (packageVersion('ape') < '5.5.2') {
-    showNotification("Some plots require latest \"ape\" version. Install with devtools::install_github( 'emmanuelparadis/ape')",
+    showNotification("Character plots require latest \"ape\" version. Install with devtools::install_github( 'emmanuelparadis/ape')",
                      type = 'error', duration = 25)
   }
   if (packageVersion('TreeTools') <= '1.5.0') {
-    showNotification("Some plots require \"TreeTools\" development version. Install with devtools::install_github( 'ms609/TreeTools@rogue')",
+    showNotification("Rogue plots require \"TreeTools\" development version. Install with devtools::install_github( 'ms609/TreeTools@rogue')",
                      type = 'error', duration = 30)
   }
   
@@ -633,9 +633,10 @@ server <- function(input, output, session) {
         tags$span(class = 'legendRight', "Unstable"),
       )
     })
-    if (length(dropped) && 
+    if (length(dropped) &&
+        packageVersion('TreeTools') > "1.5.0" && # TODO REMOVE once required.
         length(input$excludedTip) &&
-        nchar(input$excludedTip)) {
+        nchar(input$excludedTip) ) {
       consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
       plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
                            edgeLength = 1,
