@@ -19,6 +19,7 @@ inst/ape
 inst/doc
 results-*
 revdep/
+tests/testthat/_snaps/*.new.*
 vignettes/*.html
 vignettes/*.pdf
 vignettes/*_files

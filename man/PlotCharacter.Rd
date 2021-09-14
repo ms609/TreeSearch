@@ -58,6 +58,11 @@ Reconstructs the distribution of a character on a tree topology using the
 modified Fitch algorithm presented in
 \insertCite{Brazeau2019;textual}{TreeSearch}.
 }
+\details{
+Correct colouration of internal nodes requires "ape" version 5.5.2.
+Until this is available on CRAN (expected in winter 2021), download it
+using \code{devtools::install_github('emmanuelparadis/ape')}.
+}
 \examples{
 # Set up plotting area
 oPar <- par(mar = rep(0, 4))
