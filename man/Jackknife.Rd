@@ -69,7 +69,7 @@ characters.
 \details{
 The function assumes
 that \code{InitializeData()} will return a morphy object; if this doesn't hold
-for you, post a \href{http://github.com/ms609/TreeSearch/issues/new/}{GitHub issue}
+for you, post a \href{https://github.com/ms609/TreeSearch/issues/new/}{GitHub issue}
 or e-mail the maintainer.
 }
 \seealso{

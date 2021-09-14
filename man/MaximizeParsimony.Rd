@@ -172,7 +172,7 @@ the 'shiny' graphical user interface app (type \code{EasyTrees()} to launch).
 For detailed documentation of the 'TreeSearch' package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
-\href{https://ms609.github.io/TreeSearch}{package documentation}.
+\href{https://ms609.github.io/TreeSearch/}{package documentation}.
 }
 \examples{
 ## Only run examples in interactive R sessions

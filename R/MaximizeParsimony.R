@@ -25,7 +25,7 @@
 #' For detailed documentation of the 'TreeSearch' package, including full 
 #' instructions for loading phylogenetic data into R and initiating and 
 #' configuring tree search, see the 
-#' [package documentation](https://ms609.github.io/TreeSearch).
+#' [package documentation](https://ms609.github.io/TreeSearch/).
 #'  
 #' 
 #' 
