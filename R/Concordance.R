@@ -4,8 +4,8 @@
 #' of the strength of support that the dataset presents for a given split in a
 #' tree.
 #' 
-#' `QuartetConcordance()` is the proportion of quartets (sets of four leaves) that 
-#' are decisive for a split which are also concordant with it.
+#' `QuartetConcordance()` is the proportion of quartets (sets of four leaves)
+#' that are decisive for a split which are also concordant with it.
 #' For example, a quartet with the characters `0 0 0 1` is not decisive, as 
 #' all relationships between those leaves are equally parsimonious.
 #' But a quartet with characters `0 0 1 1` is decisive, and is concordant
@@ -22,6 +22,9 @@
 #' 
 #TODO Finally, `ProfileConcordance()` (to follow)
 #' 
+#' These functions are presently under development and should be considered
+#' untested and subject to change.  Complete documentation and discussion
+#' will follow soon.
 #' 
 #' @template treeParam
 #' @template datasetParam
@@ -52,23 +55,33 @@
 #' @template MRS
 #' @importFrom ape keep.tip
 #' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
-#' @importFrom Quartet SingleTreeQuartetAgreement
 #' @name SiteConcordance
 #' @family split support functions
 #' @export
 QuartetConcordance <- function (tree, dataset) {
-  splits <- as.multiPhylo(as.Splits(tree))
-  characters <- as.multiPhylo(dataset)
+  splits <- as.Splits(tree, dataset)
+  logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
+                       logical(NTip(dataset)))
+  characters <- PhyDatToMatrix(dataset)
   
-  status <- rowSums(vapply(characters, function (char) {
-    trimmed <- lapply(splits, keep.tip, TipLabels(char))
-    status <- SingleTreeQuartetAgreement(trimmed, char)
-    s <- status[, 's']
-    cbind(concordant = s, decisive = s + status[, 'd'])
-  }, matrix(NA_real_, length(splits), 2)), dims = 2)
-  
-  # Return:
-  status[, 1] / status[, 2]
+  setNames(apply(logiSplits, 2, function (split) {
+    quarts <- rowSums(apply(characters, 2, function (char) {
+      tab <- table(split, char)
+      nCol <- dim(tab)[2]
+      concordant <- sum(vapply(seq_len(nCol), function (i) {
+        inBinI <- tab[1, i]
+        iChoices <- choose(inBinI, 2)
+        sum(vapply(seq_len(nCol)[-i], function (j) {
+          inBinJ <- tab[2, j]
+          iChoices * choose(inBinJ, 2)
+          }, 1))
+      }, 1))
+      discordant <- sum(apply(combn(nCol, 2), 2, function (ij) prod(tab[, ij])))
+      decisive <- concordant + discordant
+      c(concordant, decisive)
+    }))
+    quarts[1] / quarts[2]
+  }), names(splits))
 }
 
 #' @importFrom TreeDist Entropy

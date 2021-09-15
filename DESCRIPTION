@@ -31,7 +31,6 @@ Imports:
     phangorn (>= 2.2.1),
     promises,
     protoclust,
-    Quartet,
     Rcpp,
     Rdpack (>= 0.7),
     Rogue (> 1.0.0),
@@ -43,6 +42,7 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
+    Quartet,
     testthat,
     vdiffr (>= 1.0.0),
 Additional_repositories: https://ms609.github.io/packages/

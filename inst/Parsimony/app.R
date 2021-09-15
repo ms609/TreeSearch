@@ -1047,16 +1047,24 @@ server <- function(input, output, session) {
     }
   }), 400)
   
+  Quartet <- function (...) {
+    if (!requireNamespace('Quartet', quietly = TRUE)) {
+      showNotification("Installing required package 'Quartet'",
+                       type = 'warning', duration = 20)
+      install.packages('Quartet')
+    }
+    as.dist(Quartet::QuartetDivergence(
+      Quartet::ManyToManyQuartetAgreement(...), similarity = FALSE))
+  }
+  
   distances <- reactive({
     if (length(r$trees) > 1L) {
-      Dist = switch(input$distMeth,
-                    'cid' = TreeDist::ClusteringInfoDistance,
-                    'pid' = TreeDist::PhylogeneticInfoDistance,
-                    'msid' = TreeDist::MatchingSplitInfoDistance,
-                    'rf' = TreeDist::RobinsonFoulds,
-                    'qd' = function(...) as.dist(Quartet::QuartetDivergence(
-                      Quartet::ManyToManyQuartetAgreement(...), similarity = FALSE))
-      )
+      Dist <- switch(input$distMeth,
+                     'cid' = TreeDist::ClusteringInfoDistance,
+                     'pid' = TreeDist::PhylogeneticInfoDistance,
+                     'msid' = TreeDist::MatchingSplitInfoDistance,
+                     'rf' = TreeDist::RobinsonFoulds,
+                     'qd' = Quartet)
       withProgress(
         message = 'Calculating distances', value = 0.99,
         Dist(r$trees)
