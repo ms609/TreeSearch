@@ -54,6 +54,7 @@
 #' pairs(cbind(qc, cc, pc, spc, mcc))
 #' @template MRS
 #' @importFrom ape keep.tip
+#' @importFrom utils combn
 #' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
 #' @name SiteConcordance
 #' @family split support functions
