@@ -59,6 +59,7 @@
 #' @family split support functions
 #' @export
 QuartetConcordance <- function (tree, dataset) {
+  dataset <- dataset[tree$tip.label]
   splits <- as.Splits(tree, dataset)
   logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
                        logical(NTip(dataset)))

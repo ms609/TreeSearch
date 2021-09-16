@@ -2,13 +2,13 @@ test_that("QuartetConcordance() works", {
   library("TreeTools", quietly = TRUE)
   tree <- BalancedTree(8)
   splits <- as.Splits(tree)
-  mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1,
-                      0, 1, 0, 1, 0, 1, 0, 1,
-                      0, 0, 0, 1, 0, 1, 1, 1,
-                      0, 0, 0, 0, 1, 1, 2, 2,
-                      0, 0, 1, 1, 2, 2, 3, 3,
-                      0, 1, 2, 3, 0, 1, 2, 3), 8,
-                    dimnames = list(paste0('t', 1:8), NULL))
+  mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1, 9,
+                      0, 1, 0, 1, 0, 1, 0, 1, 9,
+                      0, 0, 0, 1, 0, 1, 1, 1, 9,
+                      0, 0, 0, 0, 1, 1, 2, 2, 9,
+                      0, 0, 1, 1, 2, 2, 3, 3, 9,
+                      0, 1, 2, 3, 0, 1, 2, 3, 9), 9,
+                    dimnames = list(paste0('t', 1:9), NULL))
   dat <- MatrixToPhyDat(mataset)
   expect_equal(unname(QuartetConcordance(tree, dat[, 1])), rep(1, 5))
   # plot(tree); nodelabels();
