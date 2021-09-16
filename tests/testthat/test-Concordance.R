@@ -44,6 +44,14 @@ test_that("QuartetConcordance() works", {
                    unname(qc[as.character(names(split))]))
     }
   }
+  
+  expect_equal(QuartetConcordance(tree, dat[, c(1:4, 6)]),
+               c('11' = ( 6 + 0 + 6 +  2) / ( 6 +  9 +  6 +  2 + 1),
+                 '12' = ( 6 + 0 + 0 +  2) / ( 6 +  9 +  9 +  2 + 1),
+                 '13' = (36 + 2 + 9 + 12) / (36 + 18 + 18 + 12 + 6),
+                 '14' = ( 6 + 0 + 0 +  7) / ( 6 +  9 +  9 +  7 + 1),
+                 '15' = ( 6 + 0 + 6 +  7) / ( 6 +  9 +  6 +  7 + 1))
+  )
 })
 
 dataset <- congreveLamsdellMatrices[[10]][, 1]
