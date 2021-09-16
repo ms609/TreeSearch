@@ -1,3 +1,50 @@
+test_that("QuartetConcordance() works", {
+  library("TreeTools", quietly = TRUE)
+  tree <- BalancedTree(8)
+  splits <- as.Splits(tree)
+  mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1,
+                      0, 1, 0, 1, 0, 1, 0, 1,
+                      0, 0, 0, 1, 0, 1, 1, 1,
+                      0, 0, 0, 0, 1, 1, 2, 2,
+                      0, 0, 1, 1, 2, 2, 3, 3,
+                      0, 1, 2, 3, 0, 1, 2, 3), 8,
+                    dimnames = list(paste0('t', 1:8), NULL))
+  dat <- MatrixToPhyDat(mataset)
+  expect_equal(unname(QuartetConcordance(tree, dat[, 1])), rep(1, 5))
+  # plot(tree); nodelabels();
+  expect_equal(QuartetConcordance(tree, dat[, 2]),
+               c('11' = 0, '12' = 0, '13' = 1/9, '14' = 0, '15' = 0))
+  
+  allQuartets <- combn(8, 4)
+  for (charI in seq_len(ncol(mataset))) {
+    qc <- QuartetConcordance(tree, dat[, charI])
+    for (splitI in seq_along(splits)) {
+      split <- splits[[splitI]]
+      logiSplit <- as.logical(split)
+      case <- apply(allQuartets, 2, function (q) {
+        qSplit <- logiSplit[q]
+        qChar <- mataset[q, charI]
+        if (identical(unique(table(qSplit)), 2L) &&
+            identical(unique(table(qChar)), 2L)) {
+          tbl <- table(qSplit, qChar)
+          tab <- paste0(sort(tbl[tbl > 0]), collapse = '')
+          switch(tab,
+                 '1111' = FALSE,
+                 '112' = NA,
+                 '13' = NA,
+                 '22' = TRUE,
+                 "4" = NA,
+                 stop(q, ": ", tab)
+          )
+        } else {
+          NA
+        }
+      })
+      expect_equal(sum(case, na.rm = TRUE) / sum(!is.na(case)),
+                   unname(qc[as.character(names(split))]))
+    }
+  }
+})
 
 dataset <- congreveLamsdellMatrices[[10]][, 1]
 tree <- TreeTools::NJTree(dataset)

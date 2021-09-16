@@ -31,13 +31,17 @@ of the strength of support that the dataset presents for a given split in a
 tree.
 }
 \details{
-\code{QuartetConcordance()} is the proportion of quartets (sets of four leaves) that
-are decisive for a split which are also concordant with it.
+\code{QuartetConcordance()} is the proportion of quartets (sets of four leaves)
+that are decisive for a split which are also concordant with it.
 For example, a quartet with the characters \verb{0 0 0 1} is not decisive, as
 all relationships between those leaves are equally parsimonious.
 But a quartet with characters \verb{0 0 1 1} is decisive, and is concordant
 with any tree that groups the first two leaves together to the exclusion
 of the second.
+
+NOTE: These functions are under development, and may be incompletely tested
+or change without notice.
+Complete documentation and discussion will follow soon.
 }
 \examples{
 data('congreveLamsdellMatrices', package = 'TreeSearch')

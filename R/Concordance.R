@@ -22,9 +22,9 @@
 #' 
 #TODO Finally, `ProfileConcordance()` (to follow)
 #' 
-#' These functions are presently under development and should be considered
-#' untested and subject to change.  Complete documentation and discussion
-#' will follow soon.
+#' NOTE: These functions are under development, and may be incompletely tested
+#' or change without notice.
+#' Complete documentation and discussion will follow soon.
 #' 
 #' @template treeParam
 #' @template datasetParam
