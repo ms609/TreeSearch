@@ -90,7 +90,7 @@ QuartetConcordance <- function (tree, dataset) {
         c(0L, 0L)
       }
     }))
-    quarts[1] / quarts[2]
+    ifelse(is.nan(quarts[2]), NA_real_, quarts[1] / quarts[2])
   }), names(splits))
 }
 

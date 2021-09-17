@@ -74,6 +74,17 @@ test_that("QuartetConcordance() handles ambiguity", {
                unname(QuartetConcordance(DropTip(tree, paste0('t', 3 * 1:4)), dat)))
 })
 
+test_that("QuartetConcordance() handles incomplete data", {
+  tree <- BalancedTree(8)
+  splits <- as.Splits(tree)
+  mataset <- matrix(c(0, 0, 0, 0, 0, 0, 0, 1,
+                      rep('?', 8)), 8,
+                    dimnames = list(paste0('t', 1:8), NULL))
+  dat <- MatrixToPhyDat(mataset)
+  
+  expect_equal(unname(QuartetConcordance(tree, dat)), rep(NA_real_, 5))
+})
+
 dataset <- congreveLamsdellMatrices[[10]][, 1]
 tree <- TreeTools::NJTree(dataset)
 
