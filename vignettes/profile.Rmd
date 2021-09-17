@@ -57,26 +57,31 @@ data(congreveLamsdellMatrices)
 myMatrix <- congreveLamsdellMatrices[[10]]
 ```
 
-To start analysis, we need to load a starting tree.  We can do this at random:
-```{r Random tree, eval=FALSE}
-tree <- TreeTools::RandomTree(myMatrix, root = TRUE)
-```
+Unless a starting tree is provided, tree search will from a random addition
+tree:
 
-Or using a neighbour joining method, to start at a reasonably good tree:
-```{r NJ Tree}
-tree <- TreeTools::NJTree(myMatrix)
+```{r Addition tree}
+additionTree <- AdditionTree(myMatrix, concavity = 'profile')
+TreeLength(additionTree, myMatrix, 'profile')
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-plot(tree)
+plot(additionTree)
 ```
 
-Let's calculate this random tree's parsimony score,
-then search for better trees using the parsimony ratchet [@Nixon1999]:
+We could alternatively use a random or neighbour-joining tree:
+
+```{r Random tree}
+randomTree <- TreeTools::RandomTree(myMatrix, root = TRUE)
+TreeLength(randomTree, myMatrix, 'profile')
+njTree <- TreeTools::NJTree(myMatrix)
+TreeLength(njTree, myMatrix, 'profile')
+```
+
+We search for trees with a better score using TBR rearrangements and the 
+parsimony ratchet [@Nixon1999]:
 
 ```{R Starting score, message = FALSE}
-TreeLength(tree, myMatrix, 'profile')
-
-betterTrees <- MaximizeParsimony(myMatrix, tree, concavity = 'profile',
-                                  ratchIter = 3, tbrIter = 3, maxHits = 8)
+betterTrees <- MaximizeParsimony(myMatrix, additionTree, concavity = 'profile',
+                                 ratchIter = 3, tbrIter = 3, maxHits = 8)
 ```
 
 We've used very low values of `ratchIter`, `tbrIter` and `maxHits` for a rapid
