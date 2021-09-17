@@ -39,6 +39,7 @@
 #' `phangorn:::prepareDataFitch()`
 #' @importFrom cli cli_alert cli_alert_warning
 #' @family profile parsimony functions
+#' @encoding UTF-8
 #' @export
 PrepareDataProfile <- function (dataset) {
   if ('info.amounts' %fin% names(attributes(dataset))) {
