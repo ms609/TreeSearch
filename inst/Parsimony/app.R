@@ -209,7 +209,13 @@ ui <- fluidPage(theme = 'app.css',
                  hidden(sliderInput('whichTree', 'Tree to plot', value = 1L,
                                     min = 1L, max = 1L, step = 1L)),
                  selectizeInput('outgroup', 'Root on:', multiple = TRUE,
-                                choices = list())
+                                choices = list()),
+                 selectizeInput('concordance', 'Split support:',
+                                choices = list('None' = 'none',
+                                               'Quartet concordance' = 'qc',
+                                               'Clustering concordance' = 'clc',
+                                               'Phylogenetic concordance' = 'phc'
+                                               ))
         )
       ),
     ),
@@ -302,7 +308,7 @@ server <- function(input, output, session) {
     showNotification("Character plots require latest \"ape\" version. Install with devtools::install_github( 'emmanuelparadis/ape')",
                      type = 'error', duration = 25)
   }
-  if (packageVersion('TreeTools') <= '1.5.0') {
+  if (packageVersion('TreeTools') <= '1.5.0.9100') {
     showNotification("Rogue plots require \"TreeTools\" development version. Install with devtools::install_github( 'ms609/TreeTools@rogue')",
                      type = 'error', duration = 30)
   }
@@ -606,6 +612,19 @@ server <- function(input, output, session) {
   
   consP <- debounce(reactive(input$consP), 50)
   
+  LabelConcordance <- function (tree) {
+    if (input$concordance != 'none') {
+      Concordance <- switch(input$concordance,
+                            'qc' = QuartetConcordance,
+                            'clc' = ClusteringConcordance,
+                            'phc' = PhylogeneticConcordance
+      )
+      conc <- Concordance(tree, r$dataset)
+      LabelSplits(tree, signif(conc, 3), col = SupportColor(conc),
+                  frame = 'none', pos = 3L)
+    }
+  }
+  
   ConsensusPlot <- function() {
     par(mar = rep(0, 4), cex = 0.9)
     #instab <- Instab()
@@ -642,6 +661,7 @@ server <- function(input, output, session) {
                            edgeLength = 1,
                            outgroupTips = input$outgroup,
                            tip.color = tipCols()[intersect(consTrees[[1]]$tip.label, kept)])
+      LabelConcordance(plotted$cons)
       output$branchLegend <- renderUI({
         tagList(
           tags$span(class = 'legendLeft', "1 tree"),
@@ -658,6 +678,7 @@ server <- function(input, output, session) {
         cons$edge.length <- rep_len(1L, dim(cons$edge)[1])
       }
       plot(UserRoot(cons), tip.color = tipCols()[intersect(cons$tip.label, kept)])
+      LabelConcordance(cons)
     }
     
   }
