@@ -54,6 +54,7 @@
 #' pairs(cbind(qc, cc, pc, spc, mcc))
 #' @template MRS
 #' @importFrom ape keep.tip
+#' @importFrom cli cli_progress_bar cli_progress_update
 #' @importFrom utils combn
 #' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
 #' @name SiteConcordance
@@ -66,7 +67,9 @@ QuartetConcordance <- function (tree, dataset) {
                        logical(NTip(dataset)))
   characters <- PhyDatToMatrix(dataset)
   
+  cli_progress_bar(name = 'Quartet concordance', total = dim(logiSplits)[2])
   setNames(apply(logiSplits, 2, function (split) {
+    cli_progress_update(1, .envir = parent.frame(2))
     quarts <- rowSums(apply(characters, 2, function (char) {
       tab <- table(split, char)
       nCol <- dim(tab)[2]
@@ -96,12 +99,12 @@ QuartetConcordance <- function (tree, dataset) {
 #' @importFrom stats setNames
 #' @export
 ClusteringConcordance <- function (tree, dataset) {
+  dataset <- dataset[tree$tip.label]
   splits <- as.logical(as.Splits(tree))
   
   at <- attributes(dataset)
   cont <- at$contrast
   if ('-' %in% colnames(cont)) {
-    # NB %fin% requires too much memory
     cont[cont[, '-'] > 0, ] <- 1
   }
   ambiguous <- rowSums(cont) != 1
@@ -138,6 +141,7 @@ ClusteringConcordance <- function (tree, dataset) {
 #' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
 #' @export
 PhylogeneticConcordance <- function (tree, dataset) {
+  dataset <- dataset[tree$tip.label]
   splits <- as.Splits(tree)
   characters <- as.multiPhylo(dataset)
   
@@ -168,6 +172,7 @@ PhylogeneticConcordance <- function (tree, dataset) {
 #' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
 #' @export
 MutualClusteringConcordance <- function (tree, dataset) {
+  dataset <- dataset[tree$tip.label]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
   
@@ -186,6 +191,7 @@ MutualClusteringConcordance <- function (tree, dataset) {
 #' @importFrom TreeDist ClusteringInfo SharedPhylogeneticInfo
 #' @export
 SharedPhylogeneticConcordance <- function (tree, dataset) {
+  dataset <- dataset[tree$tip.label]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
   
@@ -234,6 +240,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' @importFrom TreeTools Log2UnrootedMult Log2Unrooted
 #' @export
 ConcordantInformation <- function (tree, dataset) {
+  dataset <- dataset[tree$tip.label]
   originalInfo <- sum(apply(PhyDatToMatrix(dataset), 2, CharacterInformation))
   dataset <- PrepareDataProfile(dataset)
   
