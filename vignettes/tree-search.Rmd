@@ -26,10 +26,26 @@ package and getting up and running.
 Launch an interactive 'app' in your browser by typing `TreeSearch::EasyTrees()`
 at the R / RStudio command line.
 
-![TreeSearch graphical user interface](easy_tree.png)
-
 This will allow you to load data from a file, modify search settings, and
 explore the distribution of most parsimonious trees in tree space.
+
+![Starting parsimony search](gui_start.png)
+
+View a consensus tree and explore the position of rogue taxa:
+
+![Viewing search result consensus with rogue taxa](gui_rogue.png)
+
+Explore the distribution of trees (whether found by search or loaded from file)
+in tree space:
+
+![Tree space analysis](gui_space.png)
+
+Map characters on a chosen tree, using character and taxon notes imported from
+a Nexus file, if present.  (This is designed to be interopable with
+[MorphoBank](https://morphobank.org) matrices.)
+
+![Mapping character reconstructions](gui_char.png)
+
 Trees can be saved as images, or in Nexus/Newick for further analysis.
 
 
