@@ -12,7 +12,7 @@ vignette: >
 ---
 
 
-`TreeSearch` is an R package that allows, among other things, 
+"TreeSearch" is an R package that allows, among other things, 
 parsimony search on morphological datasets that contain inapplicable data,
 using the algorithm proposed by Brazeau, Guillerme and Smith [-@Brazeau2019]
 and implemented in the 'MorphyLib' C library [@Brazeau2017]
