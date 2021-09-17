@@ -44,12 +44,12 @@ For more control over search settings, see [`?MaximizeParsimony()`](https://ms60
 
 # Optimality criteria
 
-'TreeSearch' allows the implementation of various optimality criteria, including
+"TreeSearch" allows the implementation of various optimality criteria, including
 
-- Fitch parsimony with inapplicable data (Brazeau, Guillerme and Smith, 2019).
+- Fitch parsimony with inapplicable data (Brazeau, Guillerme and Smith, 2019)
 - Implied weighting (Goloboff 1993)
-- The Profile Parsimony approach introduced by Faith and Trueman (2001).
-- Successive Approximations weighting (Farris 1969).
+- The Profile Parsimony approach introduced by Faith and Trueman (2001)
+- Successive Approximations weighting (Farris 1969)
 
 It is also possible to specify bespoke optimality criteria.
 
