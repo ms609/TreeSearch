@@ -421,9 +421,27 @@ server <- function(input, output, session) {
   
   observeEvent(input$treeFile, {
     tmpFile <- input$treeFile$datapath
-    trees <- tryCatch(read.tree(tmpFile),
-                      error = function (x) tryCatch(read.nexus(tmpFile),
-                                                    error = function (x) NULL))
+    trees <- tryCatch(
+      read.tree(tmpFile),
+      error = function (x) tryCatch(
+        read.nexus(tmpFile),
+        error = function (x) tryCatch(
+          ReadTntTree(tmpFile), warning = function (x) tryCatch({
+            showNotification(as.character(x), type = 'warning')
+            tryLabels <- TipLabels(r$dataset)
+            if (length(tryLabels) > 2) {
+              message("X = ", x)
+              showNotification("Inferring tip labels from dataset",
+                               type = 'warning')
+              ReadTntTree(tmpFile, tipLabels = tryLabels)
+            } else {
+              NULL
+            }
+          }, error = NULL
+          )
+        )
+      )
+    )
     if (is.null(trees)) {
       showNotification("Trees not in a recognized format", type = 'error')
     } else {
