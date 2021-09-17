@@ -200,7 +200,7 @@ ui <- fluidPage(theme = 'app.css',
                 placeholder = "No tree file selected"),
       textOutput("results"),
       hidden(
-        tags$div(id = 'treeDisplayConfig',
+        tags$div(id = 'displayConfig',
                  radioButtons('plotFormat', "Display:",
                    list("Characters on trees" = 'ind',
                         "Consensus tree" = 'cons',
@@ -208,14 +208,16 @@ ui <- fluidPage(theme = 'app.css',
                         "Tree space" = 'space'), 'cons'),
                  hidden(sliderInput('whichTree', 'Tree to plot', value = 1L,
                                     min = 1L, max = 1L, step = 1L)),
-                 selectizeInput('outgroup', 'Root on:', multiple = TRUE,
-                                choices = list()),
-                 selectizeInput('concordance', 'Split support:',
-                                choices = list('None' = 'none',
-                                               'Quartet concordance' = 'qc',
-                                               'Clustering concordance' = 'clc',
-                                               'Phylogenetic concordance' = 'phc'
-                                               ))
+                 tags$div(id = 'treePlotConfig',
+                   selectizeInput('outgroup', 'Root on:', multiple = TRUE,
+                                  choices = list()),
+                   selectizeInput('concordance', 'Split support:',
+                                  choices = list('None' = 'none',
+                                                 'Quartet concordance' = 'qc',
+                                                 'Clustering concordance' = 'clc',
+                                                 'Phylogenetic concordance' = 'phc'
+                                                 ))
+                 )
         )
       ),
     ),
@@ -368,7 +370,7 @@ server <- function(input, output, session) {
         r$trees <- NULL
         updateActionButton(session, "go", "New search")
       } else {
-        show('treeDisplayConfig')
+        show('displayConfig')
       }
       
       output$results <- TreeSummary()
@@ -430,7 +432,6 @@ server <- function(input, output, session) {
             showNotification(as.character(x), type = 'warning')
             tryLabels <- TipLabels(r$dataset)
             if (length(tryLabels) > 2) {
-              message("X = ", x)
               showNotification("Inferring tip labels from dataset",
                                type = 'warning')
               ReadTntTree(tmpFile, tipLabels = tryLabels)
@@ -452,7 +453,7 @@ server <- function(input, output, session) {
                         max = length(r$trees), value = 1L)
       updateActionButton(session, "modalGo", "Continue search")
       updateActionButton(session, "go", "Continue")
-      show('treeDisplayConfig')
+      show('displayConfig')
       
       output$results <- TreeSummary()
     }
@@ -573,7 +574,7 @@ server <- function(input, output, session) {
         signif(TreeLength(r$trees[[1]], r$dataset, concavity = concavity()))))
       updateActionButton(session, "go", "Continue")
       updateActionButton(session, "modalGo", "Continue search")
-      show('treeDisplayConfig')
+      show('displayConfig')
     }
   }
   
@@ -581,17 +582,6 @@ server <- function(input, output, session) {
   observeEvent(input$modalGo, {
     removeModal()
     StartSearch()
-  })
-  
-  PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 50)
-  PlottedTree <- debounce(reactive(UserRoot(Postorder(r$trees[[input$whichTree]]))), 100)
-  
-  RenderMainPlot <- function (x) {
-    renderPlot(x, width = PlotSize(), height = PlotSize())
-  }
-  
-  Instab <- reactive({
-    TipInstability(r$trees)
   })
   
   UserRoot <- function (tree) {
@@ -602,6 +592,25 @@ server <- function(input, output, session) {
       tree
     }
   }
+  
+  PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 50)
+  PlottedTree <- debounce(reactive({
+    if (length(r$trees) > 0L) {
+      tr <- UserRoot(Postorder(r$trees[[input$whichTree]]))
+      if (!('tipsRight' %in% input$mapDisplay)) {
+        tr$edge.length <- rep_len(2, dim(tr$edge)[1])
+      }
+      tr
+    }
+  }), 100)
+  
+  RenderMainPlot <- function (x) {
+    renderPlot(x, width = PlotSize(), height = PlotSize())
+  }
+  
+  Instab <- reactive({
+    TipInstability(r$trees)
+  })
   
   dropSeq <- reactive(rogues()$taxon[-1])
   
@@ -718,7 +727,7 @@ server <- function(input, output, session) {
   
   ShowConfigs <- function (visible = character(0)) {
     allConfigs <- c('whichTree', 'charChooser', 'consConfig', 'clusConfig',
-                    'spaceConfig')
+                    'spaceConfig', 'treePlotConfig')
     lapply(visible, show)
     lapply(setdiff(allConfigs, visible), hide)
   }
@@ -727,10 +736,10 @@ server <- function(input, output, session) {
     if (!is.null(r$trees)) {
       
     ShowConfigs(switch(input$plotFormat,
-                       'cons' = 'consConfig',
-                       'clus' = 'clusConfig',
+                       'ind' = c('whichTree', 'charChooser', 'treePlotConfig'),
+                       'cons' = c('consConfig', 'treePlotConfig'),
+                       'clus' = c('clusConfig', 'treePlotConfig'),
                        'space' = c('clusConfig', 'spaceConfig'),
-                       'ind' = c('whichTree', 'charChooser'),
                        ''))
     switch(input$plotFormat,
            'cons' = {
@@ -744,22 +753,11 @@ server <- function(input, output, session) {
              par(mar = rep(0, 4), cex = 0.9)
              n <- PlottedChar()
              if (length(n) && n > 0L) {
-               UnitEdge <- function (tr) {
-                 tr$edge.length <- rep_len(2, dim(tr$edge)[1])
-                 tr
-               }
-               
-               
-               r$plottedTree <- if('tipsRight' %in% input$mapDisplay) {
-                 PlottedTree()
-               } else {
-                 UnitEdge(PlottedTree())
-               }
-               
+               r$plottedTree <- PlottedTree()
                pc <- tryCatch({
                  PlotCharacter(r$plottedTree, r$dataset, n,
-                                     edge.width = 2.5,
-                                     updateTips = 'updateTips' %in% input$mapDisplay)
+                               edge.width = 2.5,
+                               updateTips = 'updateTips' %in% input$mapDisplay)
                }, error = function (cond) {
                  cli::cli_alert_danger(cond)
                  showNotification(type = 'error',
@@ -867,7 +865,8 @@ server <- function(input, output, session) {
                output$charMapLegend <- renderUI({})
                output$charNotes <- renderUI({})
                Log("Plotting PLottedTree() 777")
-               plot(PlottedTree(), tip.color = tipCols())
+               r$plottedTree <- PlottedTree()
+               plot(r$plottedTree, tip.color = tipCols())
              }
            },
            'space' = {
@@ -1190,7 +1189,7 @@ server <- function(input, output, session) {
         # Add points
         points(proj[, j], proj[, i], pch = treePch(),
                col = paste0(treeCols(), as.hexmode(200)),
-               cex = input$pt.cex)
+               cex = 1.5)#input$pt.cex)
         
         if (cl$sil > silThreshold()) {
           # Mark clusters
