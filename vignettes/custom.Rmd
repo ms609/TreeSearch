@@ -13,7 +13,7 @@ vignette: >
 
 ## Using custom optimality criteria
 
-'TreeSearch' can be used to search for trees that are optimal under 
+"TreeSearch" can be used to search for trees that are optimal under 
 user-specified criteria [e.g. @Hopkins2021].
 
 All that is needed is to provide a function that will return a score for a

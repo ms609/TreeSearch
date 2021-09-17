@@ -12,7 +12,7 @@ vignette: >
 ---
 
 
-`TreeSearch` is an R package that allows, among other things, 
+"TreeSearch" is an R package that allows, among other things, 
 parsimony search on morphological datasets that contain inapplicable data,
 using the algorithm proposed by Brazeau, Guillerme and Smith [-@Brazeau2019]
 and implemented in the 'MorphyLib' C library [@Brazeau2017]
@@ -26,25 +26,41 @@ package and getting up and running.
 Launch an interactive 'app' in your browser by typing `TreeSearch::EasyTrees()`
 at the R / RStudio command line.
 
-![TreeSearch graphical user interface](easy_tree.png)
-
 This will allow you to load data from a file, modify search settings, and
 explore the distribution of most parsimonious trees in tree space.
+
+![Starting parsimony search](gui_start.png)
+
+View a consensus tree and explore the position of rogue taxa:
+
+![Viewing search result consensus with rogue taxa](gui_rogue.png)
+
+Explore the distribution of trees (whether found by search or loaded from file)
+in tree space:
+
+![Tree space analysis](gui_space.png)
+
+Map characters on a chosen tree, using character and taxon notes imported from
+a Nexus file, if present.  (This is designed to be interopable with
+[MorphoBank](https://morphobank.org) matrices.)
+
+![Mapping character reconstructions](gui_char.png)
+
 Trees can be saved as images, or in Nexus/Newick for further analysis.
 
 
 ## Command line tree search
 
 You can also run tree searches using the R command line.
-Once installed, load the 'TreeSearch' package into R using
+Once installed, load the "TreeSearch" package into R using
 ```{r Load-library}
-library('TreeSearch')
+library("TreeSearch")
 ```
 
 You can 
 [load your own dataset](https://ms609.github.io/TreeTools/articles/load-data.html),
 but for now, we'll use the Vinther _et al._ [-@Vinther2008] dataset that comes 
-bundled with the 'TreeSearch'.
+bundled with the "TreeSearch".
 
 This dataset is small enough that it runs reasonably quickly, but its 
 phylogenetic signal is obscure enough that it can require Ratchet searches to
@@ -62,7 +78,7 @@ set.seed(0)
 ```
 
 We can conduct a basic parsimony search with:
-```{r first-pass}
+```{r first-pass, message = FALSE}
 bestTrees <- MaximizeParsimony(vinther)
 ```
 
@@ -105,7 +121,7 @@ any firm conclusions [@SmithSpace].
 To be thorough, we might consider continuing the search for a little longer,
 fine-tuning the search parameters:
 
-```{r second-pass}
+```{r second-pass, message = FALSE}
 bestTrees <- MaximizeParsimony(vinther, tree = bestTrees,
                                ratchIter = 6L,
                                tbrIter = 4L, 
@@ -165,15 +181,15 @@ are unanimous on the existence of a clade: a high bootstrap support value could
 indicate a large number of characters supporting a clade, and an only slightly
 smaller number of characters contradicting it.
 
-'TreeSearch' implements a number of concordance measures that aim to indicate
+"TreeSearch" implements a number of concordance measures that aim to indicate
 whether a dataset is unanimous or divided in support of a grouping, 
 independently of the method of tree reconstruction.
 
 ```{r concordance}
-concordance <- ClusteringConcordance(cons, vinther)
+concordance <- QuartetConcordance(cons, vinther)
 
 # Alternative measures:
-# concordance <- QuartetConcordance(cons, vinther)
+# concordance <- ClusteringConcordance(cons, vinther)
 # concordance <- PhylogeneticConcordance(cons, vinther)
 
 par(mar = rep(0, 4), cex = 0.8)
@@ -217,7 +233,7 @@ It is sometimes legitimate to insist that trees must contain a certain clade.
 Doing so reduces the number of tree rearrangements that are considered, and 
 can this speed up tree search.
 
-'TreeSearch' supports soft constraints, which can be specified using a 
+"TreeSearch" supports soft constraints, which can be specified using a 
 separate Nexus file, or by creating a `phyDat` object in R.
 Constraints are effectively phylogenetic characters; only trees on which each
 such character fits perfectly will be considered.
@@ -229,7 +245,7 @@ constraints, but if it cannot, it may be necessary to specify one manually
 
 Here's a simple example on six taxa that enforces the bipartition ab | cdef:
 
-```{r simple-constraints}
+```{r simple-constraints, message = FALSE}
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
 characters <- MatrixToPhyDat(matrix(
@@ -239,10 +255,11 @@ characters <- MatrixToPhyDat(matrix(
 plot(MaximizeParsimony(characters, constraint = constraint,
                        verbosity = -1)[[1]])
 ```
+
 Here's a more complex example that imposes the splits `ab | cef` and `abcd | ef`,
 whilst allowing `g` to plot anywhere on the tree:
 
-```{r complex-constraints}
+```{r complex-constraints, message = FALSE}
 characters <- MatrixToPhyDat(matrix(
   c(0, 0, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 0, 0, 0), ncol = 2,
