@@ -1,5 +1,6 @@
+library("TreeTools", quietly = TRUE)
+
 test_that("QuartetConcordance() works", {
-  library("TreeTools", quietly = TRUE)
   tree <- BalancedTree(8)
   splits <- as.Splits(tree)
   mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1,  0,
@@ -52,6 +53,24 @@ test_that("QuartetConcordance() works", {
                  '14' = ( 6 + 0 + 0 +  7) / ( 6 +  9 +  9 +  7 + 1),
                  '15' = ( 6 + 0 + 6 +  7) / ( 6 +  9 +  6 +  7 + 1))
   )
+})
+
+test_that("QuartetConcordance() handles ambiguity", {
+  tree <- BalancedTree(12)
+  splits <- as.Splits(tree)
+  mataset <- matrix(c(0, 0, '{01}', 0, 0, '{01}', 1, 1, '-', 1, 1, '-',
+                      0, 1, '?', 0, 1, '?', 0, 1, '(01)', 0, 1, '(01)',
+                      0, 0, '?', 0, 1, '(12)', 0, 1, '(12)', 1, 1, '(12)',
+                      0, 0, '?', 0, 0, '?', 1, 1, '?', 2, 2, '?',
+                      0, 0, '?', 1, 1, '?', 2, 2, '-', 3, 3, '-',
+                      0, 1, '?', 2, 3, '?', 0, 1, '-', 2, 3, '-'), 12,
+                    dimnames = list(paste0('t', 1:12), NULL))
+  dat <- MatrixToPhyDat(mataset)
+  
+  expect_equal(unname(QuartetConcordance(tree, dat)[c('16', '18', '19', '21', '23')]),
+               unname(QuartetConcordance(DropTip(tree, paste0('t', 3 * 1:4)), dat)))
+  expect_equal(unname(QuartetConcordance(tree, dat)[c('15', '17', '19', '20', '22')]),
+               unname(QuartetConcordance(DropTip(tree, paste0('t', 3 * 1:4)), dat)))
 })
 
 dataset <- congreveLamsdellMatrices[[10]][, 1]
