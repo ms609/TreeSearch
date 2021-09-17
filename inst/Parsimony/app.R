@@ -612,15 +612,28 @@ server <- function(input, output, session) {
   
   consP <- debounce(reactive(input$consP), 50)
   
-  LabelConcordance <- function (tree) {
+  concordance <- reactive({
     if (input$concordance != 'none') {
       Concordance <- switch(input$concordance,
                             'qc' = QuartetConcordance,
                             'clc' = ClusteringConcordance,
                             'phc' = PhylogeneticConcordance
       )
-      conc <- Concordance(tree, r$dataset)
-      LabelSplits(tree, signif(conc, 3), col = SupportColor(conc),
+      Concordance(r$plottedTree, r$dataset)
+    }
+  })
+  
+  LabelConcordance <- function () {
+    if (input$concordance != 'none' &&
+        !is.null(r$plottedTree) &&
+        !is.null(r$dataset)) {
+      Concordance <- switch(input$concordance,
+                            'qc' = QuartetConcordance,
+                            'clc' = ClusteringConcordance,
+                            'phc' = PhylogeneticConcordance
+      )
+      LabelSplits(r$plottedTree, signif(concordance(), 3),
+                  col = SupportColor(concordance()),
                   frame = 'none', pos = 3L)
     }
   }
@@ -653,7 +666,7 @@ server <- function(input, output, session) {
       )
     })
     if (length(dropped) &&
-        packageVersion('TreeTools') > "1.5.0" && # TODO REMOVE once required.
+        packageVersion('TreeTools') >= "1.5.0.9100" && # TODO REMOVE once required.
         length(input$excludedTip) &&
         nchar(input$excludedTip) ) {
       consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
@@ -661,7 +674,8 @@ server <- function(input, output, session) {
                            edgeLength = 1,
                            outgroupTips = input$outgroup,
                            tip.color = tipCols()[intersect(consTrees[[1]]$tip.label, kept)])
-      LabelConcordance(plotted$cons)
+      r$plottedTree <- plotted$cons
+      LabelConcordance()
       output$branchLegend <- renderUI({
         tagList(
           tags$span(class = 'legendLeft', "1 tree"),
@@ -677,8 +691,9 @@ server <- function(input, output, session) {
       if (unitEdge()) {
         cons$edge.length <- rep_len(1L, dim(cons$edge)[1])
       }
+      r$plottedTree <- cons
       plot(UserRoot(cons), tip.color = tipCols()[intersect(cons$tip.label, kept)])
-      LabelConcordance(cons)
+      LabelConcordance()
     }
     
   }
@@ -717,14 +732,14 @@ server <- function(input, output, session) {
                }
                
                
-               treeToPlot <- if('tipsRight' %in% input$mapDisplay) {
+               r$plottedTree <- if('tipsRight' %in% input$mapDisplay) {
                  PlottedTree()
                } else {
                  UnitEdge(PlottedTree())
                }
                
                pc <- tryCatch({
-                 PlotCharacter(treeToPlot, r$dataset, n,
+                 PlotCharacter(r$plottedTree, r$dataset, n,
                                      edge.width = 2.5,
                                      updateTips = 'updateTips' %in% input$mapDisplay)
                }, error = function (cond) {
@@ -734,7 +749,7 @@ server <- function(input, output, session) {
                  ErrorPlot('Load dataset with\ncharacter codings\nfor taxa on tree')
                  return()
                })
-                 
+               LabelConcordance()
                
                if (!is.null(r$chars)) {
                  output$charMapLegend <- renderUI({
