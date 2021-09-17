@@ -70,7 +70,7 @@ plot(tree)
 Let's calculate this random tree's parsimony score,
 then search for better trees using the parsimony ratchet [@Nixon1999]:
 
-```{R Starting score}
+```{R Starting score, message = FALSE}
 TreeLength(tree, myMatrix, 'profile')
 
 betterTrees <- MaximizeParsimony(myMatrix, tree, concavity = 'profile',
@@ -103,7 +103,7 @@ To sample this region of tree space well, the trick is to use large values of
 `searchiter`, so that many runs don't quite hit the optimal tree.
 In a serious study, you would want to sample many more than the 3 Ratchet hits (`ratchHits`) we'll settle for here, probably using many more Ratchet iterations.
 
-```{R Suboptimal sampling}
+```{R Suboptimal sampling, message = FALSE}
 suboptimals <- MaximizeParsimony(myMatrix, betterTrees, tolerance = 3,
                                  ratchIter = 2, tbrIter = 3,
                                  maxHits = 25,
@@ -116,7 +116,7 @@ typically more reliable, summary of the signal with the phylogenetic dataset
 
 ```{r Plot suboptimal consensus}
 par(mar = rep(0.25, 4), cex = 0.75)
-table(TreeLength(suboptimals, myMatrix, 'profile'))
+table(signif(TreeLength(suboptimals, myMatrix, 'profile')))
 plot(ape::consensus(suboptimals))
 ```
 
