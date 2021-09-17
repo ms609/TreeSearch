@@ -146,7 +146,6 @@ EdgeListSearch <- function (edgeList, dataset,
 #' }
 #' @template MRS
 #' @family custom search functions
-#' @importFrom Rdpack reprompt
 #' @importFrom TreeTools RenumberTips
 #' @export
 TreeSearch <- function (tree, dataset,

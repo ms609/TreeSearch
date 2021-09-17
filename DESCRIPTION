@@ -12,10 +12,13 @@ License: GPL (>= 3)
 Copyright: Incorporates C/C++ code from
    Morphy Phylogenetic Library by Martin Brazeau 
    <https://github.com/mbrazeau/MorphyLib> (GPL3)
-Description: Searches for phylogenetic trees that are optimal using a 
-  user-defined criterion. 
-  Handles inapplicable data using the algorithm of 
-  Brazeau, Guillerme and Smith (2019) <doi:10.1093/sysbio/syy083>.
+Description: Search for phylogenetic trees that are optimal using a
+  user-defined criterion.
+  Contains a "shiny" user interface for interactive tree search and exploration
+  of results, including character visualization, rogue taxon detection,
+  tree space mapping, and cluster consensus trees.
+  Handles inapplicable data using the algorithm of Brazeau, Guillerme and
+  Smith (2019) <doi:10.1093/sysbio/syy083> using the "Morphy" library.
   Implements Profile Parsimony (Faith and Trueman, 2001) 
   <doi:10.1080/10635150118627>, and Successive Approximations (Farris, 1969) 
   <doi:10.2307/2412182>.

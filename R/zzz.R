@@ -1,3 +1,5 @@
+# Suppress "NOTE: Nothing imported from Rdpack":
+#' @importFrom Rdpack reprompt
 .onUnload <- function (libpath) {
   library.dynam.unload("TreeSearch", libpath)
 }
