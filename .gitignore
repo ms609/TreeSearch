@@ -1,6 +1,6 @@
-Meta
-doc
-docs
+/doc/
+/Meta/
+/docs/
 gen-*
 src-*
 src/*.o
