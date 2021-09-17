@@ -262,6 +262,7 @@ WithOneExtraStep <- function (...) {
   } else {
     
     stop("Not implemented.")
+                                                                                # nocov start
     # TODO test splits <- 2 2 4
     sum(vapply(seq_along(splits), function (omit) {
       backboneSplits <- splits[-omit]
@@ -276,7 +277,8 @@ WithOneExtraStep <- function (...) {
         backbones,
         attachTwoRegions,
         sum(
-        # TODO would be quicker to calculate just first half; special case: omitted.tips %% 2
+        # TODO would be quicker to calculate just first half; special case:
+        #  omitted.tips %% 2
         vapply(seq_len(omitted.tips - 1), function (first.group) { 
           # For each way of splitsting up the omitted tips, e.g. 1|16, 2|15, 3|14, etc
           choose(omitted.tips, first.group) * 
@@ -290,21 +292,6 @@ WithOneExtraStep <- function (...) {
   
     }, double(1))
     )
+                                                                                # nocov end
   }
-}
-
-#' Logistic Points
-#' Extract points from a fitted model
-#'
-#' @param x an integer vector giving x co-ordinates.
-#' @param fittedModel a fitted model, perhaps generated using 
-#' `nls(cumP ~ SSlogis(nSteps, Asym, xmid, scal))`.
-#'
-#' @return values of y co-ordinates corresponding to the x co-ordinates provided
-#' @author Martin R. Smith
-#' @export
-LogisticPoints <- function (x, fittedModel) {
-  coefL <- summary(fittedModel)$coef[, 1]
-  # Return:
-  coefL[1] / (1 + exp((coefL[2] - x) / coefL[3]))
 }

@@ -67,7 +67,7 @@
 #' data('congreveLamsdellMatrices')
 #' TreeLength(referenceTree, congreveLamsdellMatrices[[17]], 'profile')
 #'
-#' @source \url{https://datadryad.org/resource/doi:10.5061/dryad.7dq0j}
+#' @source \doi{10.5061/dryad.7dq0j}
 #' 
 #' @keywords datasets
 "congreveLamsdellMatrices"

@@ -79,7 +79,7 @@ Brazeau, M. D., Guillerme, T. and Smith, M. R. (2019).
   Systematic Biology, 68(4), 619-631.
   doi: [10.1093/sysbio/syy083](https://dx.doi.org/10.1093/sysbio/syy083).
 
-Faith D. P., Trueman J. W. H. (2001). 
+Faith D. P., Trueman J. W. H. (2001).
   Towards an inclusive philosophy for phylogenetic inference.
   Systematic Biology, 50(3), 331–350. 
   doi: [10.1080/10635150118627](https://doi.org/10.1080/10635150118627).
@@ -88,12 +88,12 @@ Farris, J. S. (1969). A successive approximations approach to character weightin
   Systematic Biology, 18(4), 374–385.
   doi: [10.2307/2412182](https://dx.doi.org/10.2307/2412182).
 
-Goloboff, P. A. (1993). 
+Goloboff, P. A. (1993).
   Estimating character weights during tree search.
   Cladistics, 9(1), 83–91.
   doi: [10.1111/j.1096-0031.1993.tb00209.x](https://doi.org/10.1111/j.1096-0031.1993.tb00209.x).
 
-Goloboff, P. A., Torres, A., Arias, J. S. (2018). 
+Goloboff, P. A., Torres, A., Arias, J. S. (2018).
   Weighted parsimony outperforms other methods of phylogenetic inference under 
   models appropriate for morphology.
   Cladistics, 34(4), 407–437. doi: [10.1111/cla.12205](https://doi.org/10.1111/cla.12205).

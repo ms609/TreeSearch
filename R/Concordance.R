@@ -4,8 +4,8 @@
 #' of the strength of support that the dataset presents for a given split in a
 #' tree.
 #' 
-#' `QuartetConcordance()` is the proportion of quartets (sets of four leaves) that 
-#' are decisive for a split which are also concordant with it.
+#' `QuartetConcordance()` is the proportion of quartets (sets of four leaves)
+#' that are decisive for a split which are also concordant with it.
 #' For example, a quartet with the characters `0 0 0 1` is not decisive, as 
 #' all relationships between those leaves are equally parsimonious.
 #' But a quartet with characters `0 0 1 1` is decisive, and is concordant
@@ -22,6 +22,9 @@
 #' 
 #TODO Finally, `ProfileConcordance()` (to follow)
 #' 
+#' NOTE: These functions are under development, and may be incompletely tested
+#' or change without notice.
+#' Complete documentation and discussion will follow soon.
 #' 
 #' @template treeParam
 #' @template datasetParam
@@ -51,24 +54,59 @@
 #' pairs(cbind(qc, cc, pc, spc, mcc))
 #' @template MRS
 #' @importFrom ape keep.tip
+#' @importFrom cli cli_progress_bar cli_progress_update
+#' @importFrom utils combn
 #' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
-#' @importFrom Quartet SingleTreeQuartetAgreement
 #' @name SiteConcordance
 #' @family split support functions
 #' @export
 QuartetConcordance <- function (tree, dataset) {
-  splits <- as.multiPhylo(as.Splits(tree))
-  characters <- as.multiPhylo(dataset)
+  dataset <- dataset[tree$tip.label]
+  splits <- as.Splits(tree, dataset)
+  logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
+                       logical(NTip(dataset)))
   
-  status <- rowSums(vapply(characters, function (char) {
-    trimmed <- lapply(splits, keep.tip, TipLabels(char))
-    status <- SingleTreeQuartetAgreement(trimmed, char)
-    s <- status[, 's']
-    cbind(concordant = s, decisive = s + status[, 'd'])
-  }, matrix(NA_real_, length(splits), 2)), dims = 2)
+  characters <- .TMP_PhyDatToMatrix(dataset, ambigNA = TRUE)
   
-  # Return:
-  status[, 1] / status[, 2]
+  cli_progress_bar(name = 'Quartet concordance', total = dim(logiSplits)[2])
+  setNames(apply(logiSplits, 2, function (split) {
+    cli_progress_update(1, .envir = parent.frame(2))
+    quarts <- rowSums(apply(characters, 2, function (char) {
+      tab <- table(split, char)
+      nCol <- dim(tab)[2]
+      if (nCol > 1L) {
+        concordant <- sum(vapply(seq_len(nCol), function (i) {
+          inBinI <- tab[1, i]
+          iChoices <- choose(inBinI, 2)
+          sum(vapply(seq_len(nCol)[-i], function (j) {
+            inBinJ <- tab[2, j]
+            iChoices * choose(inBinJ, 2)
+            }, 1))
+        }, 1))
+        discordant <- sum(apply(combn(nCol, 2), 2, function (ij) prod(tab[, ij])))
+        decisive <- concordant + discordant
+        c(concordant, decisive)
+      } else {
+        c(0L, 0L)
+      }
+    }))
+    ifelse(is.nan(quarts[2]), NA_real_, quarts[1] / quarts[2])
+  }), names(splits))
+}
+
+#TODO duplicates TreeTools v1.5.1+ PhyDatToMatrix; replace when can require
+.TMP_PhyDatToMatrix <- function (dataset, ambigNA = TRUE, inappNA = TRUE) {
+  at <- attributes(dataset)
+  allLevels <- as.character(at$allLevels)
+  if (inappNA) {
+    allLevels[allLevels == '-'] <- NA_character_
+  }
+  if (ambigNA) {
+    allLevels[rowSums(at$contrast) != 1L] <- NA_character_
+  }
+  matrix(allLevels[unlist(dataset, recursive = FALSE, use.names = FALSE)],
+         ncol = at$nr, byrow = TRUE, dimnames = list(at$names, NULL)
+  )[, at$index, drop = FALSE]
 }
 
 #' @importFrom TreeDist Entropy
@@ -81,18 +119,21 @@ QuartetConcordance <- function (tree, dataset) {
 #' @importFrom stats setNames
 #' @export
 ClusteringConcordance <- function (tree, dataset) {
+  dataset <- dataset[tree$tip.label]
   splits <- as.logical(as.Splits(tree))
   
   at <- attributes(dataset)
   cont <- at$contrast
-  if ('-' %fin% colnames(cont)) cont[cont[, '-'] > 0, ] <- 1
+  if ('-' %in% colnames(cont)) {
+    cont[cont[, '-'] > 0, ] <- 1
+  }
   ambiguous <- rowSums(cont) != 1
   
   mat <- matrix(unlist(dataset), length(dataset), byrow = TRUE)
-  mat[mat %fin% which(ambiguous)] <- NA
+  mat[mat %in% which(ambiguous)] <- NA
   mat <- apply(mat, 2, function (x) {
     uniques <- table(x) == 1
-    x[x %fin% names(uniques[uniques])] <- NA
+    x[x %in% names(uniques[uniques])] <- NA
     x
   })
   
@@ -120,6 +161,7 @@ ClusteringConcordance <- function (tree, dataset) {
 #' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
 #' @export
 PhylogeneticConcordance <- function (tree, dataset) {
+  dataset <- dataset[tree$tip.label]
   splits <- as.Splits(tree)
   characters <- as.multiPhylo(dataset)
   
@@ -150,6 +192,7 @@ PhylogeneticConcordance <- function (tree, dataset) {
 #' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
 #' @export
 MutualClusteringConcordance <- function (tree, dataset) {
+  dataset <- dataset[tree$tip.label]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
   
@@ -168,6 +211,7 @@ MutualClusteringConcordance <- function (tree, dataset) {
 #' @importFrom TreeDist ClusteringInfo SharedPhylogeneticInfo
 #' @export
 SharedPhylogeneticConcordance <- function (tree, dataset) {
+  dataset <- dataset[tree$tip.label]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
   
@@ -216,6 +260,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' @importFrom TreeTools Log2UnrootedMult Log2Unrooted
 #' @export
 ConcordantInformation <- function (tree, dataset) {
+  dataset <- dataset[tree$tip.label]
   originalInfo <- sum(apply(PhyDatToMatrix(dataset), 2, CharacterInformation))
   dataset <- PrepareDataProfile(dataset)
   

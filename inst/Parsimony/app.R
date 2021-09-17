@@ -209,7 +209,13 @@ ui <- fluidPage(theme = 'app.css',
                  hidden(sliderInput('whichTree', 'Tree to plot', value = 1L,
                                     min = 1L, max = 1L, step = 1L)),
                  selectizeInput('outgroup', 'Root on:', multiple = TRUE,
-                                choices = list())
+                                choices = list()),
+                 selectizeInput('concordance', 'Split support:',
+                                choices = list('None' = 'none',
+                                               'Quartet concordance' = 'qc',
+                                               'Clustering concordance' = 'clc',
+                                               'Phylogenetic concordance' = 'phc'
+                                               ))
         )
       ),
     ),
@@ -299,11 +305,11 @@ ui <- fluidPage(theme = 'app.css',
 
 server <- function(input, output, session) {
   if (packageVersion('ape') < '5.5.2') {
-    showNotification("Some plots require latest \"ape\" version. Install with devtools::install_github( 'emmanuelparadis/ape')",
+    showNotification("Character plots require latest \"ape\" version. Install with devtools::install_github( 'emmanuelparadis/ape')",
                      type = 'error', duration = 25)
   }
-  if (packageVersion('TreeTools') <= '1.5.0') {
-    showNotification("Some plots require \"TreeTools\" development version. Install with devtools::install_github( 'ms609/TreeTools@rogue')",
+  if (packageVersion('TreeTools') <= '1.5.0.9100') {
+    showNotification("Rogue plots require \"TreeTools\" development version. Install with devtools::install_github( 'ms609/TreeTools@rogue')",
                      type = 'error', duration = 30)
   }
   
@@ -606,6 +612,32 @@ server <- function(input, output, session) {
   
   consP <- debounce(reactive(input$consP), 50)
   
+  concordance <- reactive({
+    if (input$concordance != 'none') {
+      Concordance <- switch(input$concordance,
+                            'qc' = QuartetConcordance,
+                            'clc' = ClusteringConcordance,
+                            'phc' = PhylogeneticConcordance
+      )
+      Concordance(r$plottedTree, r$dataset)
+    }
+  })
+  
+  LabelConcordance <- function () {
+    if (input$concordance != 'none' &&
+        !is.null(r$plottedTree) &&
+        !is.null(r$dataset)) {
+      Concordance <- switch(input$concordance,
+                            'qc' = QuartetConcordance,
+                            'clc' = ClusteringConcordance,
+                            'phc' = PhylogeneticConcordance
+      )
+      LabelSplits(r$plottedTree, signif(concordance(), 3),
+                  col = SupportColor(concordance()),
+                  frame = 'none', pos = 3L)
+    }
+  }
+  
   ConsensusPlot <- function() {
     par(mar = rep(0, 4), cex = 0.9)
     #instab <- Instab()
@@ -633,14 +665,17 @@ server <- function(input, output, session) {
         tags$span(class = 'legendRight', "Unstable"),
       )
     })
-    if (length(dropped) && 
+    if (length(dropped) &&
+        packageVersion('TreeTools') >= "1.5.0.9100" && # TODO REMOVE once required.
         length(input$excludedTip) &&
-        nchar(input$excludedTip)) {
+        nchar(input$excludedTip) ) {
       consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
       plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
                            edgeLength = 1,
                            outgroupTips = input$outgroup,
                            tip.color = tipCols()[intersect(consTrees[[1]]$tip.label, kept)])
+      r$plottedTree <- plotted$cons
+      LabelConcordance()
       output$branchLegend <- renderUI({
         tagList(
           tags$span(class = 'legendLeft', "1 tree"),
@@ -656,7 +691,9 @@ server <- function(input, output, session) {
       if (unitEdge()) {
         cons$edge.length <- rep_len(1L, dim(cons$edge)[1])
       }
+      r$plottedTree <- cons
       plot(UserRoot(cons), tip.color = tipCols()[intersect(cons$tip.label, kept)])
+      LabelConcordance()
     }
     
   }
@@ -695,14 +732,14 @@ server <- function(input, output, session) {
                }
                
                
-               treeToPlot <- if('tipsRight' %in% input$mapDisplay) {
+               r$plottedTree <- if('tipsRight' %in% input$mapDisplay) {
                  PlottedTree()
                } else {
                  UnitEdge(PlottedTree())
                }
                
                pc <- tryCatch({
-                 PlotCharacter(treeToPlot, r$dataset, n,
+                 PlotCharacter(r$plottedTree, r$dataset, n,
                                      edge.width = 2.5,
                                      updateTips = 'updateTips' %in% input$mapDisplay)
                }, error = function (cond) {
@@ -712,7 +749,7 @@ server <- function(input, output, session) {
                  ErrorPlot('Load dataset with\ncharacter codings\nfor taxa on tree')
                  return()
                })
-                 
+               LabelConcordance()
                
                if (!is.null(r$chars)) {
                  output$charMapLegend <- renderUI({
@@ -1046,16 +1083,24 @@ server <- function(input, output, session) {
     }
   }), 400)
   
+  Quartet <- function (...) {
+    if (!requireNamespace('Quartet', quietly = TRUE)) {
+      showNotification("Installing required package 'Quartet'",
+                       type = 'warning', duration = 20)
+      install.packages('Quartet')
+    }
+    as.dist(Quartet::QuartetDivergence(
+      Quartet::ManyToManyQuartetAgreement(...), similarity = FALSE))
+  }
+  
   distances <- reactive({
     if (length(r$trees) > 1L) {
-      Dist = switch(input$distMeth,
-                    'cid' = TreeDist::ClusteringInfoDistance,
-                    'pid' = TreeDist::PhylogeneticInfoDistance,
-                    'msid' = TreeDist::MatchingSplitInfoDistance,
-                    'rf' = TreeDist::RobinsonFoulds,
-                    'qd' = function(...) as.dist(Quartet::QuartetDivergence(
-                      Quartet::ManyToManyQuartetAgreement(...), similarity = FALSE))
-      )
+      Dist <- switch(input$distMeth,
+                     'cid' = TreeDist::ClusteringInfoDistance,
+                     'pid' = TreeDist::PhylogeneticInfoDistance,
+                     'msid' = TreeDist::MatchingSplitInfoDistance,
+                     'rf' = TreeDist::RobinsonFoulds,
+                     'qd' = Quartet)
       withProgress(
         message = 'Calculating distances', value = 0.99,
         Dist(r$trees)

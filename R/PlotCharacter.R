@@ -4,6 +4,11 @@
 #' modified Fitch algorithm presented in 
 #' \insertCite{Brazeau2019;textual}{TreeSearch}.
 #' 
+#TODO November 2021: REMOVE next para
+#' Correct colouration of internal nodes requires "ape" version 5.5.2.
+#' Until this is available on CRAN (expected in winter 2021), download it
+#' using `devtools::install_github('emmanuelparadis/ape')`.
+#' 
 #' @template treeParam
 #' @template datasetParam
 #' @param char Index of character to plot.
@@ -43,10 +48,8 @@
 #' PlotCharacter(tree, dataset, 14)
 #' par(oPar)
 #' @template MRS
-#' @importFrom ape nodelabels 
-# TODO once ape updated with modified plot.phylo:
-# @importFrom ape plot.phylo nodelabels 
-# and delete R/ape.plot.phylo.R
+#' @importFrom ape plot.phylo nodelabels 
+#' @importFrom graphics par
 #' @importFrom TreeTools Postorder
 #' @export
 PlotCharacter <- function (tree, dataset, char = 1L,

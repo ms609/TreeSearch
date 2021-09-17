@@ -4,9 +4,9 @@
 #' characters, with a warning, where they are too complex for the present
 #' implementation of profile parsimony: 
 #' - inapplicable tokens will be replaced with the ambiguous token
-#'    (i.e. `-` &rarr; `?`);
+#'    (i.e. `-` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`);
 #' - Ambiguous tokens will be treated as fully ambiguous
-#'   (i.e. `{02}` &rarr; `?`)
+#'   (i.e. `{02}` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`)
 #' - Where more than two states are informative (i.e. unambiguously present in
 #'   more than two taxa), states beyond the two most informative will be
 #'   ignored.
@@ -38,6 +38,8 @@
 #' @author Martin R. Smith; written with reference to 
 #' `phangorn:::prepareDataFitch()`
 #' @importFrom cli cli_alert cli_alert_warning
+#' @family profile parsimony functions
+#' @encoding UTF-8
 #' @export
 PrepareDataProfile <- function (dataset) {
   if ('info.amounts' %fin% names(attributes(dataset))) {
@@ -297,6 +299,7 @@ PrepareDataIW <- function (dataset) {
 #' # Finally, work out minimum steps 
 #' apply(myStates, 1, MinimumLength)
 #' @template MRS
+#' @family tree scoring
 #' @export
 MinimumLength <- function (x, compress = FALSE) UseMethod('MinimumLength')
 

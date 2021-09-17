@@ -4,6 +4,7 @@
 ^doc$
 ^docs$
 ^data-raw$
+^gen.*$
 ^man-roxygen$
 ^memcheck$
 ^pkgdown$

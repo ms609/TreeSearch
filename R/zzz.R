@@ -1,3 +1,5 @@
+# Suppress "NOTE: Nothing imported from Rdpack":
+#' @importFrom Rdpack reprompt
 .onUnload <- function (libpath) {
   library.dynam.unload("TreeSearch", libpath)
 }
@@ -12,12 +14,6 @@ release_questions <- function() {
     "Have you updated the version number in NEWS & DESCRIPTION?"
   )
 }
-
-
-
-# Additional steps:
-#
-# Propogate changes in README.md to R/TreeTools-package.R
 
 
 # Additional tests:

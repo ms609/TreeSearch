@@ -35,7 +35,12 @@ parsimonious location.
 data('Lobo', package = 'TreeTools')
 AdditionTree(Lobo.phy, concavity = 10)
 }
+\seealso{
+Other tree generation functions: 
+\code{\link{RandomMorphyTree}()}
+}
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
+\concept{tree generation functions}

@@ -1,16 +1,10 @@
-# TreeSearch 0.4.3.9011 (development)
-
-## Changes in functionality
-
- * v......9010 improves constraint handling.
- * v......9007 introduces a pre-ratchet TBR search and adjusts default settings.
- * v0.4.3.9005 fixes some bugs that may affect tree scoring under IW & PP.
+# TreeSearch 0.99.0
 
 ## New functions
  - `EasyTrees()` 'shiny' graphical user interface for tree search
  - `AdditionTree()` adds each taxon in sequence to the most parsimonious place
    on the tree, generating a more parsimonious starting tree than
-   neighbour-joining.
+   neighbour-joining
  - `PlotCharacter()` reconstructs character distributions on trees
  - `TipInstability()` identifies possible rogue taxa
  - `ConstrainedNJ()` constructs starting trees that respect a constraint
@@ -34,6 +28,10 @@
  - Drop `nTip` parameter in `RandomTreeScore()` (infer from `morphyObj`)
  - C implementations of rearrangement functions
  - Improved command line interface for search progress messaging
+ 
+## Deprecations
+
+ - Remove redundant internal function `LogisticPoints()`.
 
 # TreeSearch 0.4.3
 
