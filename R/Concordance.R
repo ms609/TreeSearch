@@ -74,17 +74,21 @@ QuartetConcordance <- function (tree, dataset) {
     quarts <- rowSums(apply(characters, 2, function (char) {
       tab <- table(split, char)
       nCol <- dim(tab)[2]
-      concordant <- sum(vapply(seq_len(nCol), function (i) {
-        inBinI <- tab[1, i]
-        iChoices <- choose(inBinI, 2)
-        sum(vapply(seq_len(nCol)[-i], function (j) {
-          inBinJ <- tab[2, j]
-          iChoices * choose(inBinJ, 2)
-          }, 1))
-      }, 1))
-      discordant <- sum(apply(combn(nCol, 2), 2, function (ij) prod(tab[, ij])))
-      decisive <- concordant + discordant
-      c(concordant, decisive)
+      if (nCol > 1L) {
+        concordant <- sum(vapply(seq_len(nCol), function (i) {
+          inBinI <- tab[1, i]
+          iChoices <- choose(inBinI, 2)
+          sum(vapply(seq_len(nCol)[-i], function (j) {
+            inBinJ <- tab[2, j]
+            iChoices * choose(inBinJ, 2)
+            }, 1))
+        }, 1))
+        discordant <- sum(apply(combn(nCol, 2), 2, function (ij) prod(tab[, ij])))
+        decisive <- concordant + discordant
+        c(concordant, decisive)
+      } else {
+        c(0L, 0L)
+      }
     }))
     quarts[1] / quarts[2]
   }), names(splits))
