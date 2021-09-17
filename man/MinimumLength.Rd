@@ -29,8 +29,8 @@ state are not presently supported; for an approximate value, denote such
 ambiguity with the integer \code{0}.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
-phylo object or to return a vector specifying to each individual character,
-decompressed using the dataset's \code{index} attribute.}
+\code{phyDat} object or to return a vector specifying to each individual
+character, decompressed using the dataset's \code{index} attribute.}
 }
 \value{
 \code{MinimumLength()} returns a vector of integers specifying the
