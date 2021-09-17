@@ -91,7 +91,7 @@ Will generally be called from within a tree search function." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.0</span>
       </span>
     </div>
 
@@ -99,7 +99,7 @@ Will generally be called from within a tree search function." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -114,16 +114,19 @@ Will generally be called from within a tree search function." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
+      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
     </li>
     <li>
-      <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
+      <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
+      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+    </li>
+    <li>
+      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
     </li>
   </ul>
 </li>
@@ -134,7 +137,7 @@ Will generally be called from within a tree search function." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/ms609/TreeSearch/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -169,18 +172,18 @@ the new tree.
 Will generally be called from within a tree search function.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>RearrangeEdges</span>(
-  <span class='kw'>parent</span>,
-  <span class='kw'>child</span>,
-  <span class='kw'>dataset</span>,
-  TreeScorer = <span class='kw'>MorphyLength</span>,
-  <span class='kw'>EdgeSwapper</span>,
-  scoreToBeat = <span class='fu'>TreeScorer</span>(<span class='kw'>parent</span>, <span class='kw'>child</span>, <span class='kw'>dataset</span>, <span class='kw'>...</span>),
-  iter = <span class='st'>"?"</span>,
-  hits = <span class='fl'>0L</span>,
-  verbosity = <span class='fl'>0L</span>,
-  <span class='kw'>...</span>
-)</pre>
+    <pre class="usage"><span class='fu'>RearrangeEdges</span><span class='op'>(</span>
+  <span class='va'>parent</span>,
+  <span class='va'>child</span>,
+  <span class='va'>dataset</span>,
+  TreeScorer <span class='op'>=</span> <span class='va'>MorphyLength</span>,
+  <span class='va'>EdgeSwapper</span>,
+  scoreToBeat <span class='op'>=</span> <span class='fu'>TreeScorer</span><span class='op'>(</span><span class='va'>parent</span>, <span class='va'>child</span>, <span class='va'>dataset</span>, <span class='va'>...</span><span class='op'>)</span>,
+  iter <span class='op'>=</span> <span class='st'>"?"</span>,
+  hits <span class='op'>=</span> <span class='fl'>0L</span>,
+  verbosity <span class='op'>=</span> <span class='fl'>0L</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -188,12 +191,12 @@ Will generally be called from within a tree search function.</p>
     <tr>
       <th>parent</th>
       <td><p>Integer vector corresponding to the first column of the edge
-matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 1]</code>.</p></td>
+matrix of a tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>, i.e. <code>tree$edge[, 1]</code>.</p></td>
     </tr>
     <tr>
       <th>child</th>
       <td><p>Integer vector corresponding to the second column of the edge
-matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 2]</code>.</p></td>
+matrix of a tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>, i.e. <code>tree$edge[, 2]</code>.</p></td>
     </tr>
     <tr>
       <th>dataset</th>
@@ -224,13 +227,12 @@ and returns a list with modified vectors; for example <code><a href='SPR.html'>S
     </tr>
     <tr>
       <th>verbosity</th>
-      <td><p>Level of detail to display in console: larger numbers provide
-more verbose feedback to the user.</p></td>
+      <td><p>Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>further arguments to pass to <code>TreeScorer()</code>
-(e.g. <code><a href='TipsAreNames.html'>TipsAreColumns</a></code>, <code>dataset</code>).</p></td>
+      <td><p>further arguments to pass to <code>TreeScorer()</code>, e.g. <code>dataset = </code>.</p></td>
     </tr>
     </table>
 
@@ -252,31 +254,34 @@ current function call.</p>
     <p>Martin R. Smith</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>, package=<span class='st'>'TreeTools'</span>)
-<span class='kw'>tree</span> <span class='op'>&lt;-</span> <span class='kw'>TreeTools</span>::<span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span>(<span class='kw'>Lobo.phy</span>)
-<span class='kw'>edge</span> <span class='op'>&lt;-</span> <span class='kw'>tree</span><span class='op'>$</span><span class='kw'>edge</span>
-<span class='kw'>parent</span> <span class='op'>&lt;-</span> <span class='kw'>edge</span>[, <span class='fl'>1</span>]
-<span class='kw'>child</span> <span class='op'>&lt;-</span> <span class='kw'>edge</span>[, <span class='fl'>2</span>]
-<span class='kw'>dataset</span> <span class='op'>&lt;-</span> <span class='fu'><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a></span>(<span class='kw'>Lobo.phy</span>)
-<span class='fu'>RearrangeEdges</span>(<span class='kw'>parent</span>, <span class='kw'>child</span>, <span class='kw'>dataset</span>, EdgeSwapper = <span class='kw'>RootedNNISwap</span>)
-</div><div class='output co'>#&gt; [[1]]
-#&gt;  [1] 49 49 50 50 51 52 53 54 55 56 56 55 57 57 54 53 58 58 59 59 60 61 61 60 52
-#&gt; [26] 62 63 64 65 66 66 65 67 68 68 67 69 69 64 70 71 72 72 71 70 73 74 75 76 76
-#&gt; [51] 75 74 73 63 62 77 78 79 79 78 80 80 77 81 81 82 83 83 82 84 85 85 86 87 88
-#&gt; [76] 89 89 88 87 86 84 90 90 91 92 92 91 93 94 94 93 95 95 51
-#&gt; 
-#&gt; [[2]]
-#&gt;  [1]  1 50  2 51 52 53 54 55 56  3  4 57 31 32  9 58 23 59 24 60 61 25 27 26 62
-#&gt; [26] 63 64 65 66  5  6 67 68  7  8 69 10 11 70 71 72 12 13 14 73 74 75 76 15 16
-#&gt; [51] 18 19 17 20 77 78 79 22 28 80 29 30 81 33 82 83 34 35 84 85 36 86 87 88 89
-#&gt; [76] 37 41 39 38 40 90 42 91 92 43 44 93 94 45 46 95 47 48 21
-#&gt; 
-#&gt; [[3]]
-#&gt; [1] 239
-#&gt; 
-#&gt; [[4]]
-#&gt; [1] 1
-#&gt; </div></pre>
+    <pre class="examples"><span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'Lobo'</span>, package<span class='op'>=</span><span class='st'>'TreeTools'</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span><span class='op'>(</span><span class='va'>Lobo.phy</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>edge</span> <span class='op'>&lt;-</span> <span class='va'>tree</span><span class='op'>$</span><span class='va'>edge</span></span>
+<span class='r-in'><span class='va'>parent</span> <span class='op'>&lt;-</span> <span class='va'>edge</span><span class='op'>[</span>, <span class='fl'>1</span><span class='op'>]</span></span>
+<span class='r-in'><span class='va'>child</span> <span class='op'>&lt;-</span> <span class='va'>edge</span><span class='op'>[</span>, <span class='fl'>2</span><span class='op'>]</span></span>
+<span class='r-in'><span class='va'>dataset</span> <span class='op'>&lt;-</span> <span class='fu'><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a></span><span class='op'>(</span><span class='va'>Lobo.phy</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>RearrangeEdges</span><span class='op'>(</span><span class='va'>parent</span>, <span class='va'>child</span>, <span class='va'>dataset</span>, EdgeSwapper <span class='op'>=</span> <span class='va'>RootedNNISwap</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [[1]]</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [1] 49 49 50 50 51 52 53 54 55 56 57 57 56 58 58 55 54 53 59 59 60 60 61 61 52</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [26] 62 63 64 65 66 66 65 67 68 68 67 69 69 64 70 71 72 72 71 70 73 74 75 76 76</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [51] 75 74 73 63 62 77 78 79 79 78 80 80 77 81 81 82 83 83 82 84 85 85 86 87 88</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [76] 89 89 88 87 86 84 90 90 91 92 92 91 93 94 94 93 95 95 51</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [[2]]</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [1]  1 50  2 51 52 53 54 55 56 57  3  4 58 31 32  9 23 59 24 60 25 61 26 27 62</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [26] 63 64 65 66  5  6 67 68  7  8 69 10 11 70 71 72 12 13 14 73 74 75 76 15 16</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [51] 18 19 17 20 77 78 79 22 28 80 29 30 81 33 82 83 34 35 84 85 36 86 87 88 89</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [76] 37 41 39 38 40 90 42 91 92 43 44 93 94 45 46 95 47 48 21</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [[3]]</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] 240</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [[4]]</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] 0</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-in'><span class='co'># Remember to free memory:</span></span>
+<span class='r-in'><span class='va'>dataset</span> <span class='op'>&lt;-</span> <span class='fu'><a href='UnloadMorphy.html'>UnloadMorphy</a></span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -288,7 +293,7 @@ current function call.</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">

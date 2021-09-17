@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Search for most parsimonious trees — IWTreeSearch • TreeSearch</title>
+<title>Search for most parsimonious trees — EdgeListSearch • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -45,10 +45,10 @@
 
 
 
-<meta property="og:title" content="Search for most parsimonious trees — IWTreeSearch" />
+<meta property="og:title" content="Search for most parsimonious trees — EdgeListSearch" />
 <meta property="og:description" content="Run standard search algorithms (NNI, SPR or TBR)
 to search for a more parsimonious tree.
-For detailed documentation of the TreeSearch package, including full
+For detailed documentation of the 'TreeSearch' package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
 package documentation." />
@@ -93,7 +93,7 @@ package documentation." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.0</span>
       </span>
     </div>
 
@@ -101,7 +101,7 @@ package documentation." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -116,16 +116,19 @@ package documentation." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
+      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
     </li>
     <li>
-      <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
+      <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
+      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+    </li>
+    <li>
+      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
     </li>
   </ul>
 </li>
@@ -136,7 +139,7 @@ package documentation." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/ms609/TreeSearch/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -160,120 +163,58 @@ package documentation." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Search for most parsimonious trees</h1>
-    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/IWScore.R'><code>R/IWScore.R</code></a>, <a href='https://github.com/ms609/TreeSearch/blob/master/R/TreeSearch.R'><code>R/TreeSearch.R</code></a>, <a href='https://github.com/ms609/TreeSearch/blob/master/R/pp_ProfileScore.R'><code>R/pp_ProfileScore.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/CustomSearch.R'><code>R/CustomSearch.R</code></a>, <a href='https://github.com/ms609/TreeSearch/blob/master/R/IWScore.R'><code>R/IWScore.R</code></a>, <a href='https://github.com/ms609/TreeSearch/blob/master/R/TreeSearch_utilities.R'><code>R/TreeSearch_utilities.R</code></a></small>
     <div class="hidden name"><code>TreeSearch.Rd</code></div>
     </div>
 
     <div class="ref-description">
     <p>Run standard search algorithms (<acronym>NNI</acronym>, <acronym>SPR</acronym> or <acronym>TBR</acronym>)
 to search for a more parsimonious tree.</p>
-<p>For detailed documentation of the TreeSearch package, including full
+<p>For detailed documentation of the 'TreeSearch' package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
-<a href='https://ms609.github.io/TreeSearch'>package documentation</a>.</p>
+<a href='https://ms609.github.io/TreeSearch/'>package documentation</a>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>IWTreeSearch</span>(
-  <span class='kw'>tree</span>,
-  <span class='kw'>dataset</span>,
-  concavity = <span class='fl'>10</span>,
-  EdgeSwapper = <span class='kw'>RootedTBR</span>,
-  maxIter = <span class='fl'>100</span>,
-  maxHits = <span class='fl'>20</span>,
-  forestSize = <span class='fl'>1</span>,
-  verbosity = <span class='fl'>1</span>,
-  <span class='kw'>...</span>
-)
+    <pre class="usage"><span class='fu'>EdgeListSearch</span><span class='op'>(</span>
+  <span class='va'>edgeList</span>,
+  <span class='va'>dataset</span>,
+  TreeScorer <span class='op'>=</span> <span class='va'>MorphyLength</span>,
+  EdgeSwapper <span class='op'>=</span> <span class='va'>RootedTBRSwap</span>,
+  maxIter <span class='op'>=</span> <span class='fl'>100</span>,
+  maxHits <span class='op'>=</span> <span class='fl'>20</span>,
+  bestScore <span class='op'>=</span> <span class='cn'>NULL</span>,
+  stopAtScore <span class='op'>=</span> <span class='cn'>NULL</span>,
+  stopAtPeak <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  stopAtPlateau <span class='op'>=</span> <span class='fl'>0L</span>,
+  verbosity <span class='op'>=</span> <span class='fl'>1L</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
 
-<span class='fu'>EdgeListSearch</span>(
-  <span class='kw'>edgeList</span>,
-  <span class='kw'>dataset</span>,
-  TreeScorer = <span class='kw'>MorphyLength</span>,
-  EdgeSwapper = <span class='kw'>RootedTBRSwap</span>,
-  maxIter = <span class='fl'>100</span>,
-  maxHits = <span class='fl'>20</span>,
-  bestScore = <span class='kw'>NULL</span>,
-  stopAtScore = <span class='kw'>NULL</span>,
-  stopAtPeak = <span class='fl'>FALSE</span>,
-  stopAtPlateau = <span class='fl'>0L</span>,
-  forestSize = <span class='fl'>1L</span>,
-  verbosity = <span class='fl'>1L</span>,
-  <span class='kw'>...</span>
-)
+<span class='fu'>TreeSearch</span><span class='op'>(</span>
+  <span class='va'>tree</span>,
+  <span class='va'>dataset</span>,
+  InitializeData <span class='op'>=</span> <span class='va'>PhyDat2Morphy</span>,
+  CleanUpData <span class='op'>=</span> <span class='va'>UnloadMorphy</span>,
+  TreeScorer <span class='op'>=</span> <span class='va'>MorphyLength</span>,
+  EdgeSwapper <span class='op'>=</span> <span class='va'>RootedTBRSwap</span>,
+  maxIter <span class='op'>=</span> <span class='fl'>100L</span>,
+  maxHits <span class='op'>=</span> <span class='fl'>20L</span>,
+  stopAtPeak <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  stopAtPlateau <span class='op'>=</span> <span class='fl'>0L</span>,
+  verbosity <span class='op'>=</span> <span class='fl'>1L</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
 
-<span class='fu'>TreeSearch</span>(
-  <span class='kw'>tree</span>,
-  <span class='kw'>dataset</span>,
-  InitializeData = <span class='kw'>PhyDat2Morphy</span>,
-  CleanUpData = <span class='kw'>UnloadMorphy</span>,
-  TreeScorer = <span class='kw'>MorphyLength</span>,
-  EdgeSwapper = <span class='kw'>RootedTBRSwap</span>,
-  maxIter = <span class='fl'>100L</span>,
-  maxHits = <span class='fl'>20L</span>,
-  forestSize = <span class='fl'>1L</span>,
-  stopAtPeak = <span class='fl'>FALSE</span>,
-  stopAtPlateau = <span class='fl'>0L</span>,
-  verbosity = <span class='fl'>1L</span>,
-  <span class='kw'>...</span>
-)
+<span class='fu'>IWTreeSearch</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span>
 
-<span class='fu'>ProfileTreeSearch</span>(
-  <span class='kw'>tree</span>,
-  <span class='kw'>dataset</span>,
-  EdgeSwapper = <span class='kw'>RootedTBR</span>,
-  maxIter = <span class='fl'>100</span>,
-  maxHits = <span class='fl'>20</span>,
-  forestSize = <span class='fl'>1</span>,
-  verbosity = <span class='fl'>1</span>,
-  precision = <span class='fl'>40000</span>,
-  <span class='kw'>...</span>
-)</pre>
+<span class='fu'>EmptyPhyDat</span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
+
+<span class='fu'>DoNothing</span><span class='op'>(</span><span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>tree</th>
-      <td><p>a fully-resolved starting tree in <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code> format, with the desired outgroup; edge lengths are not supported and will be deleted;</p></td>
-    </tr>
-    <tr>
-      <th>dataset</th>
-      <td><p>A phylogenetic data matrix of class <code><a href='https://rdrr.io/pkg/phangorn/man/phyDat.html'>phyDat</a></code>,
-whose names correspond to the labels of any accompanying tree.</p></td>
-    </tr>
-    <tr>
-      <th>concavity</th>
-      <td><p>A numeric value to use as the concavity constant (<code>k</code>)
-in implied weighting. Defaults to 10; TNT sets a default of 3, but this
-is too low in some circumstances (Smith, 2019).</p></td>
-    </tr>
-    <tr>
-      <th>EdgeSwapper</th>
-      <td><p>a function that rearranges a parent and child vector,
-and returns a list with modified vectors; for example <code><a href='SPR.html'>SPRSwap()</a></code>.</p></td>
-    </tr>
-    <tr>
-      <th>maxIter</th>
-      <td><p>the maximum number of iterations to perform before abandoning the search.</p></td>
-    </tr>
-    <tr>
-      <th>maxHits</th>
-      <td><p>the maximum times to hit the best pscore before abandoning the search.</p></td>
-    </tr>
-    <tr>
-      <th>forestSize</th>
-      <td><p>the maximum number of trees to return - useful in concert with <code><a href='https://rdrr.io/pkg/ape/man/consensus.html'>consensus</a></code>.</p></td>
-    </tr>
-    <tr>
-      <th>verbosity</th>
-      <td><p>Level of detail to display in console: larger numbers provide
-more verbose feedback to the user.</p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>further arguments to pass to <code>TreeScorer()</code>
-(e.g. <code><a href='TipsAreNames.html'>TipsAreColumns</a></code>, <code>dataset</code>).</p></td>
-    </tr>
     <tr>
       <th>edgeList</th>
       <td><p>a list containing the following:
@@ -283,28 +224,59 @@ more verbose feedback to the user.</p></td>
 - (optionally, if score provided) number of times this score has been hit</p></td>
     </tr>
     <tr>
+      <th>dataset</th>
+      <td><p>A phylogenetic data matrix of class <code><a href='https://rdrr.io/pkg/phangorn/man/phyDat.html'>phyDat</a></code>,
+whose names correspond to the labels of any accompanying tree.</p></td>
+    </tr>
+    <tr>
       <th>TreeScorer</th>
       <td><p>function to score a given tree.
 The function will be passed three parameters, corresponding to the
 <code>parent</code> and <code>child</code> entries of a tree's edge list, and a dataset.</p></td>
     </tr>
     <tr>
+      <th>EdgeSwapper</th>
+      <td><p>a function that rearranges a parent and child vector,
+and returns a list with modified vectors; for example <code><a href='SPR.html'>SPRSwap()</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>maxIter</th>
+      <td><p>Numeric specifying maximum number of iterations to perform
+before abandoning the search.</p></td>
+    </tr>
+    <tr>
+      <th>maxHits</th>
+      <td><p>Numeric specifying maximum times to hit the best pscore
+before abandoning the search.</p></td>
+    </tr>
+    <tr>
       <th>stopAtPeak</th>
-      <td><p>Logical specifying whether to terminate search once a subsequent
-iteration recovers a sub-optimal score. Useful with methods that
-return all trees one rearrangement from the current tree, such
-as <code><a href='TBR.html'>AllTBR()</a></code>.  Will be overridden if a passed function
-has an attribute <code>stopAtPeak</code> set by
+      <td><p>Logical specifying whether to terminate search once a
+subsequent iteration recovers a sub-optimal score.
+Will be overridden if a passed function has an attribute <code>stopAtPeak</code> set by
 <code>attr(FunctionName, 'stopAtPeak') &lt;- TRUE</code>.</p></td>
     </tr>
     <tr>
       <th>stopAtPlateau</th>
       <td><p>Integer. If &gt; 0, tree search will terminate if the score
 has not improved after <code>stopAtPlateau</code> iterations.
-Useful with methods that return all trees one rearrangement from the current
-tree, such as <code><a href='TBR.html'>AllTBR()</a></code>.
 Will be overridden if a passed function has an attribute <code>stopAtPlateau</code> set
 by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>verbosity</th>
+      <td><p>Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>further arguments to pass to <code>TreeScorer()</code>, e.g. <code>dataset = </code>.</p></td>
+    </tr>
+    <tr>
+      <th>tree</th>
+      <td><p>A fully-resolved starting tree in <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code> format,
+with the desired outgroup.
+Edge lengths are not supported and will be removed.</p></td>
     </tr>
     <tr>
       <th>InitializeData</th>
@@ -321,52 +293,49 @@ The function will be passed the value returned by <code>InitializeData()</code>.
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>This function returns a tree, with an attribute <code>pscore</code> conveying its parsimony score.
-Note that the parsimony score will be inherited from the tree's attributes, which is only valid if it
-was generated using the same <code>data</code> that is passed here.</p>
+    <p><code>TreeSearch()</code> returns a tree, with an attribute <code>pscore</code> conveying its
+parsimony score.
+#' Note that the parsimony score will be inherited from the tree's
+attributes, which is only valid if it was generated using the same
+<code>data</code> that is passed here.</p>
+<p><code>EmptyPhyDat()</code> returns a <code>phyDat</code> object comprising a single
+null character, coded with state zero for every leaf in <code>tree</code>.</p>
     <h2 class="hasAnchor" id="functions"><a class="anchor" href="#functions"></a>Functions</h2>
 
     
 <ul>
-<li><p><code>IWTreeSearch</code>: Search using profile parsimony</p></li>
-<li><p><code>EdgeListSearch</code>: Tree Search from Edge lists</p></li>
-<li><p><code>ProfileTreeSearch</code>: Search using profile parsimony</p></li>
+<li><p><code>EdgeListSearch</code>: Tree search from edge lists</p></li>
 </ul>
-    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
-
-    
-<ul>
-<li><p>Smith MR (2019).
-&#8220;Bayesian and parsimony approaches reconstruct informative trees from simulated morphological datasets.&#8221;
-<em>Biology Letters</em>, <b>15</b>, 20180632.
-doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
-.</p></li>
-</ul>
-
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'>
 <ul>
-<li><p><code><a href='Fitch.html'>Fitch</a></code>, calculates parsimony score;</p></li>
+<li><p><code><a href='IWScore.html'>Fitch</a></code>, calculates parsimony score;</p></li>
 <li><p><code><a href='NNI.html'>RootedNNI</a></code>, conducts tree rearrangements;</p></li>
-<li><p><code><a href='Jackknife.html'>Ratchet</a></code>, alternative heuristic, useful to escape local optima.</p></li>
+<li><p><code><a href='MorphyBootstrap.html'>Ratchet</a></code>, alternative heuristic, useful to escape local
+optima.</p></li>
 </ul>
-</div>
+
+<p>Other custom search functions: 
+<code><a href='Jackknife.html'>Jackknife</a>()</code>,
+<code><a href='MorphyBootstrap.html'>MorphyBootstrap</a>()</code>,
+<code><a href='SuccessiveApproximations.html'>SuccessiveApproximations</a>()</code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
-    <p>Martin R. Smith</p>
-<p>Martin R. Smith</p>
+    <p><a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>
+(<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>, package=<span class='st'>'TreeTools'</span>)
-<span class='kw'>njtree</span> <span class='op'>&lt;-</span> <span class='kw'>TreeTools</span>::<span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span>(<span class='kw'>Lobo.phy</span>)
-
-<span class='co'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'>TreeSearch</span>(<span class='kw'>njtree</span>, <span class='kw'>Lobo.phy</span>, maxIter=<span class='fl'>20</span>, EdgeSwapper=<span class='kw'>NNISwap</span>)
-<span class='fu'>TreeSearch</span>(<span class='kw'>njtree</span>, <span class='kw'>Lobo.phy</span>, maxIter=<span class='fl'>20</span>, EdgeSwapper=<span class='kw'>RootedSPRSwap</span>)
-<span class='fu'>TreeSearch</span>(<span class='kw'>njtree</span>, <span class='kw'>Lobo.phy</span>, maxIter=<span class='fl'>20</span>, EdgeSwapper=<span class='kw'>TBRSwap</span>)}
-
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'Lobo'</span>, package<span class='op'>=</span><span class='st'>'TreeTools'</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>njtree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span><span class='op'>(</span><span class='va'>Lobo.phy</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'>## Only run examples in interactive R sessions</span></span>
+<span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/interactive.html'>interactive</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>{</span></span>
+<span class='r-in'>  <span class='fu'>TreeSearch</span><span class='op'>(</span><span class='va'>njtree</span>, <span class='va'>Lobo.phy</span>, maxIter <span class='op'>=</span> <span class='fl'>20</span>, EdgeSwapper <span class='op'>=</span> <span class='va'>NNISwap</span><span class='op'>)</span></span>
+<span class='r-in'>  <span class='fu'>TreeSearch</span><span class='op'>(</span><span class='va'>njtree</span>, <span class='va'>Lobo.phy</span>, maxIter <span class='op'>=</span> <span class='fl'>20</span>, EdgeSwapper <span class='op'>=</span> <span class='va'>RootedSPRSwap</span><span class='op'>)</span></span>
+<span class='r-in'>  <span class='fu'>TreeSearch</span><span class='op'>(</span><span class='va'>njtree</span>, <span class='va'>Lobo.phy</span>, maxIter <span class='op'>=</span> <span class='fl'>20</span>, EdgeSwapper <span class='op'>=</span> <span class='va'>TBRSwap</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -378,7 +347,7 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">

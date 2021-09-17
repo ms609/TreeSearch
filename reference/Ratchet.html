@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Parsimony Ratchet — Jackknife • TreeSearch</title>
+<title>Parsimony Ratchet — MorphyBootstrap • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -45,8 +45,10 @@
 
 
 
-<meta property="og:title" content="Parsimony Ratchet — Jackknife" />
-<meta property="og:description" content="Ratchet uses the parsimony ratchet (Nixon 1999) to search for a more parsimonious tree." />
+<meta property="og:title" content="Parsimony Ratchet — MorphyBootstrap" />
+<meta property="og:description" content="Ratchet() uses the parsimony ratchet (Nixon 1999)
+
+to search for a more parsimonious tree using custom optimality criteria." />
 
 
 
@@ -88,7 +90,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.0</span>
       </span>
     </div>
 
@@ -96,7 +98,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -111,16 +113,19 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
+      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
     </li>
     <li>
-      <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
+      <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
+      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+    </li>
+    <li>
+      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
     </li>
   </ul>
 </li>
@@ -131,7 +136,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/ms609/TreeSearch/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -155,167 +160,139 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Parsimony Ratchet</h1>
-    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/Jackknife.R'><code>R/Jackknife.R</code></a>, <a href='https://github.com/ms609/TreeSearch/blob/master/R/Ratchet.R'><code>R/Ratchet.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/Bootstrap.R'><code>R/Bootstrap.R</code></a>, <a href='https://github.com/ms609/TreeSearch/blob/master/R/Ratchet.R'><code>R/Ratchet.R</code></a></small>
     <div class="hidden name"><code>Ratchet.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p><code>Ratchet</code> uses the parsimony ratchet (Nixon 1999) to search for a more parsimonious tree.</p>
+    <p><code>Ratchet()</code> uses the parsimony ratchet (Nixon 1999)
+
+to search for a more parsimonious tree using custom optimality criteria.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>Jackknife</span>(
-  <span class='kw'>tree</span>,
-  <span class='kw'>dataset</span>,
-  resampleFreq = <span class='fl'>2</span><span class='op'>/</span><span class='fl'>3</span>,
-  InitializeData = <span class='kw'>PhyDat2Morphy</span>,
-  CleanUpData = <span class='kw'>UnloadMorphy</span>,
-  TreeScorer = <span class='kw'>MorphyLength</span>,
-  EdgeSwapper = <span class='kw'>TBRSwap</span>,
-  jackIter = <span class='fl'>5000L</span>,
-  searchIter = <span class='fl'>4000L</span>,
-  searchHits = <span class='fl'>42L</span>,
-  verbosity = <span class='fl'>1L</span>,
-  <span class='kw'>...</span>
-)
+    <pre class="usage"><span class='fu'>MorphyBootstrap</span><span class='op'>(</span>
+  <span class='va'>edgeList</span>,
+  <span class='va'>morphyObj</span>,
+  EdgeSwapper <span class='op'>=</span> <span class='va'>NNISwap</span>,
+  <span class='va'>maxIter</span>,
+  <span class='va'>maxHits</span>,
+  verbosity <span class='op'>=</span> <span class='fl'>1L</span>,
+  stopAtPeak <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  stopAtPlateau <span class='op'>=</span> <span class='fl'>0L</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
 
-<span class='fu'>Ratchet</span>(
-  <span class='kw'>tree</span>,
-  <span class='kw'>dataset</span>,
-  InitializeData = <span class='kw'>PhyDat2Morphy</span>,
-  CleanUpData = <span class='kw'>UnloadMorphy</span>,
-  TreeScorer = <span class='kw'>MorphyLength</span>,
-  Bootstrapper = <span class='kw'>MorphyBootstrap</span>,
-  swappers = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>TBRSwap</span>, <span class='kw'>SPRSwap</span>, <span class='kw'>NNISwap</span>),
-  BootstrapSwapper = <span class='co'>if</span> (<span class='fu'><a href='https://rdrr.io/r/base/class.html'>class</a></span>(<span class='kw'>swappers</span>) <span class='op'>==</span> <span class='st'>"list"</span>) <span class='kw'>swappers</span>[[<span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='kw'>swappers</span>)]] <span class='co'>else</span>
-    <span class='kw'>swappers</span>,
-  returnAll = <span class='fl'>FALSE</span>,
-  stopAtScore = <span class='kw'>NULL</span>,
-  stopAtPeak = <span class='fl'>FALSE</span>,
-  stopAtPlateau = <span class='fl'>0L</span>,
-  ratchIter = <span class='fl'>100</span>,
-  ratchHits = <span class='fl'>10</span>,
-  searchIter = <span class='fl'>4000</span>,
-  searchHits = <span class='fl'>42</span>,
-  bootstrapIter = <span class='kw'>searchIter</span>,
-  bootstrapHits = <span class='kw'>searchHits</span>,
-  verbosity = <span class='fl'>1L</span>,
-  suboptimal = <span class='fl'>1e-08</span>,
-  <span class='kw'>...</span>
-)
+<span class='fu'>Ratchet</span><span class='op'>(</span>
+  <span class='va'>tree</span>,
+  <span class='va'>dataset</span>,
+  InitializeData <span class='op'>=</span> <span class='va'>PhyDat2Morphy</span>,
+  CleanUpData <span class='op'>=</span> <span class='va'>UnloadMorphy</span>,
+  TreeScorer <span class='op'>=</span> <span class='va'>MorphyLength</span>,
+  Bootstrapper <span class='op'>=</span> <span class='va'>MorphyBootstrap</span>,
+  swappers <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>TBRSwap</span>, <span class='va'>SPRSwap</span>, <span class='va'>NNISwap</span><span class='op'>)</span>,
+  BootstrapSwapper <span class='op'>=</span> <span class='kw'>if</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>is.list</a></span><span class='op'>(</span><span class='va'>swappers</span><span class='op'>)</span><span class='op'>)</span> <span class='va'>swappers</span><span class='op'>[[</span><span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span><span class='op'>(</span><span class='va'>swappers</span><span class='op'>)</span><span class='op'>]</span><span class='op'>]</span> <span class='kw'>else</span> <span class='va'>swappers</span>,
+  returnAll <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  stopAtScore <span class='op'>=</span> <span class='cn'>NULL</span>,
+  stopAtPeak <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  stopAtPlateau <span class='op'>=</span> <span class='fl'>0L</span>,
+  ratchIter <span class='op'>=</span> <span class='fl'>100</span>,
+  ratchHits <span class='op'>=</span> <span class='fl'>10</span>,
+  searchIter <span class='op'>=</span> <span class='fl'>4000</span>,
+  searchHits <span class='op'>=</span> <span class='fl'>42</span>,
+  bootstrapIter <span class='op'>=</span> <span class='va'>searchIter</span>,
+  bootstrapHits <span class='op'>=</span> <span class='va'>searchHits</span>,
+  verbosity <span class='op'>=</span> <span class='fl'>1L</span>,
+  suboptimal <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span><span class='op'>(</span><span class='va'>.Machine</span><span class='op'>$</span><span class='va'>double.eps</span><span class='op'>)</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
 
-<span class='fu'>ProfileRatchet</span>(
-  <span class='kw'>tree</span>,
-  <span class='kw'>dataset</span>,
-  swappers = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>TBRSwap</span>, <span class='kw'>SPRSwap</span>, <span class='kw'>NNISwap</span>),
-  BootstrapSwapper = <span class='co'>if</span> (<span class='fu'><a href='https://rdrr.io/r/base/class.html'>class</a></span>(<span class='kw'>swappers</span>) <span class='op'>==</span> <span class='st'>"list"</span>) <span class='kw'>swappers</span>[[<span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='kw'>swappers</span>)]] <span class='co'>else</span>
-    <span class='kw'>swappers</span>,
-  returnAll = <span class='fl'>FALSE</span>,
-  stopAtScore = <span class='kw'>NULL</span>,
-  stopAtPeak = <span class='fl'>FALSE</span>,
-  stopAtPlateau = <span class='fl'>0L</span>,
-  ratchIter = <span class='fl'>100</span>,
-  ratchHits = <span class='fl'>10</span>,
-  searchIter = <span class='fl'>2000</span>,
-  searchHits = <span class='fl'>40</span>,
-  bootstrapIter = <span class='kw'>searchIter</span>,
-  bootstrapHits = <span class='kw'>searchHits</span>,
-  verbosity = <span class='fl'>1L</span>,
-  suboptimal = <span class='fl'>1e-08</span>,
-  <span class='kw'>...</span>
-)
+<span class='fu'>MultiRatchet</span><span class='op'>(</span>
+  <span class='va'>tree</span>,
+  <span class='va'>dataset</span>,
+  ratchHits <span class='op'>=</span> <span class='fl'>10</span>,
+  searchIter <span class='op'>=</span> <span class='fl'>500</span>,
+  searchHits <span class='op'>=</span> <span class='fl'>20</span>,
+  verbosity <span class='op'>=</span> <span class='fl'>0L</span>,
+  swappers <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>RootedNNISwap</span><span class='op'>)</span>,
+  nSearch <span class='op'>=</span> <span class='fl'>10</span>,
+  stopAtScore <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
 
-<span class='fu'>IWRatchet</span>(
-  <span class='kw'>tree</span>,
-  <span class='kw'>dataset</span>,
-  concavity = <span class='fl'>10</span>,
-  swappers = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>TBRSwap</span>, <span class='kw'>SPRSwap</span>, <span class='kw'>NNISwap</span>),
-  BootstrapSwapper = <span class='co'>if</span> (<span class='fu'><a href='https://rdrr.io/r/base/class.html'>class</a></span>(<span class='kw'>swappers</span>) <span class='op'>==</span> <span class='st'>"list"</span>) <span class='kw'>swappers</span>[[<span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='kw'>swappers</span>)]] <span class='co'>else</span>
-    <span class='kw'>swappers</span>,
-  returnAll = <span class='fl'>FALSE</span>,
-  stopAtScore = <span class='kw'>NULL</span>,
-  stopAtPeak = <span class='fl'>FALSE</span>,
-  stopAtPlateau = <span class='fl'>0L</span>,
-  ratchIter = <span class='fl'>100</span>,
-  ratchHits = <span class='fl'>10</span>,
-  searchIter = <span class='fl'>2000</span>,
-  searchHits = <span class='fl'>40</span>,
-  bootstrapIter = <span class='kw'>searchIter</span>,
-  bootstrapHits = <span class='kw'>searchHits</span>,
-  verbosity = <span class='fl'>1L</span>,
-  suboptimal = <span class='fl'>1e-08</span>,
-  <span class='kw'>...</span>
-)
-
-<span class='fu'>MultiRatchet</span>(
-  <span class='kw'>tree</span>,
-  <span class='kw'>dataset</span>,
-  ratchHits = <span class='fl'>10</span>,
-  searchIter = <span class='fl'>500</span>,
-  searchHits = <span class='fl'>20</span>,
-  verbosity = <span class='fl'>0L</span>,
-  swappers = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>RootedNNISwap</span>),
-  nSearch = <span class='fl'>10</span>,
-  stopAtScore = <span class='kw'>NULL</span>,
-  <span class='kw'>...</span>
-)
-
-<span class='fu'>IWMultiRatchet</span>(
-  <span class='kw'>tree</span>,
-  <span class='kw'>dataset</span>,
-  ratchHits = <span class='fl'>10</span>,
-  concavity = <span class='fl'>4</span>,
-  searchIter = <span class='fl'>500</span>,
-  searchHits = <span class='fl'>20</span>,
-  verbosity = <span class='fl'>0L</span>,
-  swappers = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>RootedNNISwap</span>),
-  nSearch = <span class='fl'>10</span>,
-  suboptimal = <span class='kw'>suboptimal</span>,
-  stopAtScore = <span class='kw'>NULL</span>,
-  <span class='kw'>...</span>
-)
-
-<span class='fu'>RatchetConsensus</span>(
-  <span class='kw'>tree</span>,
-  <span class='kw'>dataset</span>,
-  ratchHits = <span class='fl'>10</span>,
-  searchIter = <span class='fl'>500</span>,
-  searchHits = <span class='fl'>20</span>,
-  verbosity = <span class='fl'>0L</span>,
-  swappers = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>RootedNNISwap</span>),
-  nSearch = <span class='fl'>10</span>,
-  stopAtScore = <span class='kw'>NULL</span>,
-  <span class='kw'>...</span>
-)
-
-<span class='fu'>IWRatchetConsensus</span>(
-  <span class='kw'>tree</span>,
-  <span class='kw'>dataset</span>,
-  ratchHits = <span class='fl'>10</span>,
-  concavity = <span class='fl'>4</span>,
-  searchIter = <span class='fl'>500</span>,
-  searchHits = <span class='fl'>20</span>,
-  verbosity = <span class='fl'>0L</span>,
-  swappers = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>RootedNNISwap</span>),
-  nSearch = <span class='fl'>10</span>,
-  suboptimal = <span class='kw'>suboptimal</span>,
-  stopAtScore = <span class='kw'>NULL</span>,
-  <span class='kw'>...</span>
-)</pre>
+<span class='fu'>RatchetConsensus</span><span class='op'>(</span>
+  <span class='va'>tree</span>,
+  <span class='va'>dataset</span>,
+  ratchHits <span class='op'>=</span> <span class='fl'>10</span>,
+  searchIter <span class='op'>=</span> <span class='fl'>500</span>,
+  searchHits <span class='op'>=</span> <span class='fl'>20</span>,
+  verbosity <span class='op'>=</span> <span class='fl'>0L</span>,
+  swappers <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>RootedNNISwap</span><span class='op'>)</span>,
+  nSearch <span class='op'>=</span> <span class='fl'>10</span>,
+  stopAtScore <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
+      <th>edgeList</th>
+      <td><p>a list containing the following:
+- vector of integers corresponding to the parent of each edge in turn
+- vector of integers corresponding to the child of each edge in turn
+- (optionally) score of the tree
+- (optionally, if score provided) number of times this score has been hit</p></td>
+    </tr>
+    <tr>
+      <th>morphyObj</th>
+      <td><p>Object of class <code>morphy</code>, perhaps created with
+<code><a href='PhyDat2Morphy.html'>PhyDat2Morphy()</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>EdgeSwapper</th>
+      <td><p>a function that rearranges a parent and child vector,
+and returns a list with modified vectors; for example <code><a href='SPR.html'>SPRSwap()</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>maxIter</th>
+      <td><p>Numeric specifying maximum number of iterations to perform in
+tree search.</p></td>
+    </tr>
+    <tr>
+      <th>maxHits</th>
+      <td><p>Numeric specifying maximum number of hits to accomplish in
+tree search.</p></td>
+    </tr>
+    <tr>
+      <th>verbosity</th>
+      <td><p>Numeric specifying level of detail to display in console:
+larger numbers provide more verbose feedback to the user.</p></td>
+    </tr>
+    <tr>
+      <th>stopAtPeak</th>
+      <td><p>Logical specifying whether to terminate search once a
+subsequent iteration recovers a sub-optimal score.
+Will be overridden if a passed function has an attribute <code>stopAtPeak</code> set by
+<code>attr(FunctionName, 'stopAtPeak') &lt;- TRUE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>stopAtPlateau</th>
+      <td><p>Integer. If &gt; 0, tree search will terminate if the score
+has not improved after <code>stopAtPlateau</code> iterations.
+Will be overridden if a passed function has an attribute <code>stopAtPlateau</code> set
+by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>further arguments to pass to <code>TreeScorer()</code>, e.g. <code>dataset = </code>.</p></td>
+    </tr>
+    <tr>
       <th>tree</th>
-      <td><p>A tree of class <code>phylo</code>.</p></td>
+      <td><p>A tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>.</p></td>
     </tr>
     <tr>
       <th>dataset</th>
       <td><p>a dataset in the format required by <code>TreeScorer()</code>.</p></td>
-    </tr>
-    <tr>
-      <th>resampleFreq</th>
-      <td><p>Double between 0 and 1 stating proportion of characters to resample</p></td>
     </tr>
     <tr>
       <th>InitializeData</th>
@@ -333,39 +310,6 @@ The function will be passed the value returned by <code>InitializeData()</code>.
       <td><p>function to score a given tree.
 The function will be passed three parameters, corresponding to the
 <code>parent</code> and <code>child</code> entries of a tree's edge list, and a dataset.</p></td>
-    </tr>
-    <tr>
-      <th>EdgeSwapper</th>
-      <td><p>a function that rearranges a parent and child vector,
-and returns a list with modified vectors; for example <code><a href='SPR.html'>SPRSwap()</a></code>.</p></td>
-    </tr>
-    <tr>
-      <th>jackIter</th>
-      <td><p>Integer specifying number of jackknife iterations to conduct</p></td>
-    </tr>
-    <tr>
-      <th>searchIter</th>
-      <td><p>Integer specifying maximum rearrangements to perform on each bootstrap or
-ratchet iteration.
-To override this value for a single swapper function, set e.g.
-<code>attr(SwapperFunction, 'searchIter') &lt;- 99</code></p></td>
-    </tr>
-    <tr>
-      <th>searchHits</th>
-      <td><p>Integer specifying maximum times to hit best score before terminating a tree
-search within a ratchet iteration.
-To override this value for a single swapper function, set e.g.
-<code>attr(SwapperFunction, 'searchHits') &lt;- 99</code></p></td>
-    </tr>
-    <tr>
-      <th>verbosity</th>
-      <td><p>Level of detail to display in console: larger numbers provide
-more verbose feedback to the user.</p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>further arguments to pass to <code>TreeScorer()</code>
-(e.g. <code><a href='TipsAreNames.html'>TipsAreColumns</a></code>, <code>dataset</code>).</p></td>
     </tr>
     <tr>
       <th>Bootstrapper</th>
@@ -397,24 +341,6 @@ search, perhaps to analyse consensus.</p></td>
       <td><p>stop search as soon as this score is hit or beaten.</p></td>
     </tr>
     <tr>
-      <th>stopAtPeak</th>
-      <td><p>Logical specifying whether to terminate search once a subsequent
-iteration recovers a sub-optimal score. Useful with methods that
-return all trees one rearrangement from the current tree, such
-as <code><a href='TBR.html'>AllTBR()</a></code>.  Will be overridden if a passed function
-has an attribute <code>stopAtPeak</code> set by
-<code>attr(FunctionName, 'stopAtPeak') &lt;- TRUE</code>.</p></td>
-    </tr>
-    <tr>
-      <th>stopAtPlateau</th>
-      <td><p>Integer. If &gt; 0, tree search will terminate if the score
-has not improved after <code>stopAtPlateau</code> iterations.
-Useful with methods that return all trees one rearrangement from the current
-tree, such as <code><a href='TBR.html'>AllTBR()</a></code>.
-Will be overridden if a passed function has an attribute <code>stopAtPlateau</code> set
-by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
-    </tr>
-    <tr>
       <th>ratchIter</th>
       <td><p>Stop when this many ratchet iterations have been performed.</p></td>
     </tr>
@@ -422,6 +348,20 @@ by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></td>
       <th>ratchHits</th>
       <td><p>Stop when this many ratchet iterations have found the same
 best score.</p></td>
+    </tr>
+    <tr>
+      <th>searchIter</th>
+      <td><p>Integer specifying maximum rearrangements to perform on each bootstrap or
+ratchet iteration.
+To override this value for a single swapper function, set e.g.
+<code>attr(SwapperFunction, 'searchIter') &lt;- 99</code></p></td>
+    </tr>
+    <tr>
+      <th>searchHits</th>
+      <td><p>Integer specifying maximum times to hit best score before terminating a tree
+search within a ratchet iteration.
+To override this value for a single swapper function, set e.g.
+<code>attr(SwapperFunction, 'searchHits') &lt;- 99</code></p></td>
     </tr>
     <tr>
       <th>bootstrapIter</th>
@@ -435,13 +375,8 @@ iteration (default: <code>searchHits</code>).</p></td>
     </tr>
     <tr>
       <th>suboptimal</th>
-      <td><p>retain trees that are suboptimal by this score. Defaults to 1e-08 to counter rounding errors.</p></td>
-    </tr>
-    <tr>
-      <th>concavity</th>
-      <td><p>A numeric value to use as the concavity constant (<code>k</code>)
-in implied weighting. Defaults to 10; TNT sets a default of 3, but this
-is too low in some circumstances (Smith, 2019).</p></td>
+      <td><p>retain trees that are suboptimal by this score.
+Defaults to a small value that will counter rounding errors.</p></td>
     </tr>
     <tr>
       <th>nSearch</th>
@@ -452,78 +387,61 @@ is too low in some circumstances (Smith, 2019).</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a list of trees recovered after jackknife iterations</p>
-<p>This function returns a tree modified by parsimony ratchet iterations.</p>
+    <p><code>MorphyBootstrap()</code> returns a tree that is optimal under a random
+sampling of the original characters.</p>
+<p><code>Ratchet()</code> returns a tree modified by parsimony ratchet iterations.</p>
 <p><code>MultiRatchet()</code> returns a list of optimal trees
 produced by <code>nSearch</code>
 ratchet searches, from which a consensus tree can be generated using
 <code><a href='https://rdrr.io/pkg/ape/man/consensus.html'>ape::consensus()</a></code> or <code><a href='https://ms609.github.io/TreeTools/reference/ConsensusWithout.html'>TreeTools::ConsensusWithout()</a></code>.</p>
-<p><code>IWMultiRatchet</code> returns a list of optimal trees produced by <code>nSearch</code>
-Ratchet searches, using implied weighting.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>For usage pointers, see the
+<a href='https://ms609.github.io/TreeSearch/articles/custom.html'>vignette</a>.</p>
     <h2 class="hasAnchor" id="functions"><a class="anchor" href="#functions"></a>Functions</h2>
 
     
 <ul>
-<li><p><code>Jackknife</code>: Jackknife resampling. Note that at present this assumes that
-<code>InitializeData</code> will return a morphy object; if this doesn't hold for you, please
-let me know and I'll make the function more general.</p></li>
-<li><p><code>ProfileRatchet</code>: Shortcut for Ratchet search under Profile Parsimony</p></li>
-<li><p><code>IWRatchet</code>: Shortcut for Ratchet search using implied weights</p></li>
 <li><p><code>RatchetConsensus</code>: deprecated alias for <code>MultiRatchet()</code></p></li>
-<li><p><code>IWRatchetConsensus</code>: deprecated alias for <code>MultiRatchet()</code></p></li>
 </ul>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
-    
-<ul>
-<li><p>Nixon KC (1999).
+    <p>Nixon KC (1999).
 &#8220;The Parsimony Ratchet, a new method for rapid parsimony analysis.&#8221;
 <em>Cladistics</em>, <b>15</b>(4), 407--414.
 ISSN 0748-3007, doi: <a href='https://doi.org/10.1111/j.1096-0031.1999.tb00277.x'>10.1111/j.1096-0031.1999.tb00277.x</a>
-.</p></li>
-<li><p>Smith MR (2019).
-&#8220;Bayesian and parsimony approaches reconstruct informative trees from simulated morphological datasets.&#8221;
-<em>Biology Letters</em>, <b>15</b>, 20180632.
-doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
-.</p></li>
-</ul>
-
+.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'>
 <ul>
-<li><p><code><a href='JackLabels.html'>JackLabels()</a></code>: Label nodes of a tree with jackknife supports.</p></li>
-</ul>
-
-<ul>
-<li><p><code><a href='IWTreeSearch.html'>TreeSearch()</a></code></p></li>
-<li><p>Adapted from <code><a href='https://rdrr.io/pkg/phangorn/man/parsimony.html'>pratchet</a></code> in the
+<li><p>Adapted from <code><a href='https://rdrr.io/pkg/phangorn/man/parsimony.html'>pratchet()</a></code> in the
 <span class="pkg">phangorn</span> package.</p></li>
 </ul>
-</div>
+
+<p>Other custom search functions: 
+<code><a href='EdgeListSearch.html'>EdgeListSearch</a>()</code>,
+<code><a href='Jackknife.html'>Jackknife</a>()</code>,
+<code><a href='SuccessiveApproximations.html'>SuccessiveApproximations</a>()</code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
-    <p>Martin R. Smith</p>
-<p>Martin R. Smith</p>
+    <p><a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>
+(<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>'Lobo'</span>, package=<span class='st'>'TreeTools'</span>)
-<span class='kw'>njtree</span> <span class='op'>&lt;-</span> <span class='kw'>TreeTools</span>::<span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span>(<span class='kw'>Lobo.phy</span>)
-<span class='co'># Increase value of ratchIter and searchHits to do a proper search</span>
-<span class='kw'>quickResult</span> <span class='op'>&lt;-</span> <span class='fu'>Ratchet</span>(<span class='kw'>njtree</span>, <span class='kw'>Lobo.phy</span>, ratchIter = <span class='fl'>2</span>, searchHits = <span class='fl'>3</span>)
-</div><div class='output co'>#&gt; <span class='message'>* Beginning Parsimony Ratchet, with initial score 239</span></div><div class='output co'>#&gt; <span class='message'>Completed parsimony ratchet after 2 iterations with score 221</span></div><div class='input'>
-<span class='co'># Plot result (legibly)</span>
-<span class='kw'>oldPar</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span>(mar = <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>0</span>, <span class='fl'>4</span>), cex = <span class='fl'>0.75</span>)
-<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span>(<span class='kw'>quickResult</span>)
-</div><div class='img'><img src='Ratchet-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span>(<span class='kw'>oldPar</span>)
-
-<span class='co'># IW search is currently much slower:</span>
-<span class='kw'>quickIWResult</span> <span class='op'>&lt;-</span> <span class='fu'>IWRatchet</span>(<span class='kw'>quickResult</span>, <span class='kw'>Lobo.phy</span>, concavity = <span class='fl'>2.5</span>,
-                           ratchIter = <span class='fl'>1</span>, searchIter = <span class='fl'>25</span>, searchHits = <span class='fl'>2</span>,
-                           swappers = <span class='kw'>RootedTBRSwap</span>, verbosity = <span class='fl'>5</span>)
-</div><div class='output co'>#&gt; <span class='message'>* Using implied weighting with concavity constant k = 2.5</span></div><div class='output co'>#&gt; <span class='message'>* Beginning Parsimony Ratchet, with initial score 221</span></div><div class='output co'>#&gt; <span class='message'></span>
-#&gt; <span class='message'>* Ratchet iteration 1.</span></div><div class='output co'>#&gt; <span class='message'> - Generating new candidate tree by bootstrapping dataset.</span></div><div class='output co'>#&gt; <span class='message'>  - Performing tree search.  Initial score: 19.6570096570097</span></div><div class='output co'>#&gt; <span class='message'>  - Final score 19.6570096570097 found 0 times after 25 rearrangements.</span></div><div class='output co'>#&gt; <span class='message'> - Rearranging from new candidate tree:</span></div><div class='output co'>#&gt; <span class='message'>  - Performing tree search.  Initial score: 20.7818847818848</span></div><div class='output co'>#&gt; <span class='message'>  - Final score 20.7818847818848 found 0 times after 25 rearrangements.</span></div><div class='output co'>#&gt; <span class='message'> - Rearranged candidate tree scored 20.7818847818848</span></div><div class='output co'>#&gt; <span class='message'>* Best score after 1/1 ratchet iterations: 20.7819 (hit 1/10)</span></div><div class='output co'>#&gt; <span class='message'>Completed parsimony ratchet after 1 iterations with score 20.7818847818848</span></div><div class='input'> 
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'Lobo'</span>, package <span class='op'>=</span> <span class='st'>'TreeTools'</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>njtree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span><span class='op'>(</span><span class='va'>Lobo.phy</span><span class='op'>)</span></span>
+<span class='r-in'><span class='co'># Increase value of ratchIter and searchHits to do a proper search</span></span>
+<span class='r-in'><span class='va'>quickResult</span> <span class='op'>&lt;-</span> <span class='fu'>Ratchet</span><span class='op'>(</span><span class='va'>njtree</span>, <span class='va'>Lobo.phy</span>, ratchIter <span class='op'>=</span> <span class='fl'>2</span>, searchHits <span class='op'>=</span> <span class='fl'>3</span><span class='op'>)</span></span>
+<span class='r-msg co'><span class='r-pr'>#&gt;</span> * Beginning Parsimony Ratchet, with initial score 239</span>
+<span class='r-msg co'><span class='r-pr'>#&gt;</span> Completed parsimony ratchet after 2 iterations with score 234</span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Plot result (legibly)</span></span>
+<span class='r-in'><span class='va'>oldPar</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span><span class='op'>(</span>mar <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>4</span><span class='op'>)</span>, cex <span class='op'>=</span> <span class='fl'>0.75</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>quickResult</span><span class='op'>)</span></span>
+<span class='r-plt'><img src='Ratchet-1.png' alt='' width='700' height='433' /></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span><span class='op'>(</span><span class='va'>oldPar</span><span class='op'>)</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -535,7 +453,7 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Initialize a Morphy Object from a phyDat object — PhyDat2Morphy • TreeSearch</title>
+<title>Initialize a Morphy object from a phyDat object — PhyDat2Morphy • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -45,9 +45,11 @@
 
 
 
-<meta property="og:title" content="Initialize a Morphy Object from a phyDat object — PhyDat2Morphy" />
+<meta property="og:title" content="Initialize a Morphy object from a phyDat object — PhyDat2Morphy" />
 <meta property="og:description" content="Creates a new Morphy object with the same size and characters as the
-phyDat object" />
+phyDat object.
+Once finished with the object, it should be destroyed using
+UnloadMorphy() to free the allocated memory." />
 
 
 
@@ -89,7 +91,7 @@ phyDat object" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.0</span>
       </span>
     </div>
 
@@ -97,7 +99,7 @@ phyDat object" />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -112,16 +114,19 @@ phyDat object" />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
+      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
     </li>
     <li>
-      <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
+      <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
+      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+    </li>
+    <li>
+      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
     </li>
   </ul>
 </li>
@@ -132,7 +137,7 @@ phyDat object" />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/ms609/TreeSearch/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -155,17 +160,19 @@ phyDat object" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Initialize a Morphy Object from a <code>phyDat</code> object</h1>
+    <h1>Initialize a Morphy object from a <code>phyDat</code> object</h1>
     <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/mpl_morphy_objects.R'><code>R/mpl_morphy_objects.R</code></a></small>
     <div class="hidden name"><code>PhyDat2Morphy.Rd</code></div>
     </div>
 
     <div class="ref-description">
     <p>Creates a new Morphy object with the same size and characters as the
-<code>phyDat</code> object</p>
+<code>phyDat</code> object.
+Once finished with the object, it should be destroyed using
+<code><a href='UnloadMorphy.html'>UnloadMorphy()</a></code> to free the allocated memory.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>PhyDat2Morphy</span>(<span class='kw'>phy</span>)</pre>
+    <pre class="usage"><span class='fu'>PhyDat2Morphy</span><span class='op'>(</span><span class='va'>phy</span>, gap <span class='op'>=</span> <span class='st'>"inapplicable"</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -174,19 +181,25 @@ phyDat object" />
       <th>phy</th>
       <td><p>An object of class <code>phyDat</code>.</p></td>
     </tr>
+    <tr>
+      <th>gap</th>
+      <td><p>An unambiguous abbreviation of <code>inapplicable</code>, <code>ambiguous</code>
+(= <code>missing</code>), or <code>extra state</code>, specifying how gaps will be handled.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A pointer to an initialized Morphy object.</p>
+    <p><code>PhyDat2Morphy()</code> returns a pointer to an initialized Morphy object.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p>Other Morphy API functions: 
+<code><a href='GapHandler.html'>GapHandler</a>()</code>,
 <code><a href='MorphyErrorCheck.html'>MorphyErrorCheck</a>()</code>,
 <code><a href='MorphyWeights.html'>MorphyWeights</a>()</code>,
-<code><a href='SetMorphyWeights.html'>SetMorphyWeights</a>()</code>,
 <code><a href='SingleCharMorphy.html'>SingleCharMorphy</a>()</code>,
 <code><a href='UnloadMorphy.html'>UnloadMorphy</a>()</code>,
+<code><a href='is.morphyPtr.html'>is.morphyPtr</a>()</code>,
 <code><a href='mpl_apply_tipdata.html'>mpl_apply_tipdata</a>()</code>,
 <code><a href='mpl_attach_rawdata.html'>mpl_attach_rawdata</a>()</code>,
 <code><a href='mpl_attach_symbols.html'>mpl_attach_symbols</a>()</code>,
@@ -195,6 +208,7 @@ phyDat object" />
 <code><a href='mpl_first_down_recon.html'>mpl_first_down_recon</a>()</code>,
 <code><a href='mpl_first_up_recon.html'>mpl_first_up_recon</a>()</code>,
 <code><a href='mpl_get_charac_weight.html'>mpl_get_charac_weight</a>()</code>,
+<code><a href='mpl_get_gaphandl.html'>mpl_get_gaphandl</a>()</code>,
 <code><a href='mpl_get_num_charac.html'>mpl_get_num_charac</a>()</code>,
 <code><a href='mpl_get_num_internal_nodes.html'>mpl_get_num_internal_nodes</a>()</code>,
 <code><a href='mpl_get_numtaxa.html'>mpl_get_numtaxa</a>()</code>,
@@ -212,8 +226,21 @@ phyDat object" />
 <code><a href='summary.morphyPtr.html'>summary.morphyPtr</a>()</code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
-    <p>Martin R. Smith</p>
+    <p><a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>
+(<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'Lobo'</span>, package<span class='op'>=</span><span class='st'>'TreeTools'</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>morphyObj</span> <span class='op'>&lt;-</span> <span class='fu'>PhyDat2Morphy</span><span class='op'>(</span><span class='va'>Lobo.phy</span><span class='op'>)</span></span>
+<span class='r-in'><span class='co'># Set object to be destroyed at end of session or closure of function</span></span>
+<span class='r-in'><span class='co'># on.exit(morphyObj &lt;- UnloadMorphy(morphyObj), add = TRUE)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Do something with pointer</span></span>
+<span class='r-in'><span class='co'># ....</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Or, instead of on.exit, manually destroy morphy object and free memory:</span></span>
+<span class='r-in'><span class='va'>morphyObj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='UnloadMorphy.html'>UnloadMorphy</a></span><span class='op'>(</span><span class='va'>morphyObj</span><span class='op'>)</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -225,7 +252,7 @@ phyDat object" />
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">

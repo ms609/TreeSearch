@@ -89,7 +89,7 @@ and uninitialised." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.0</span>
       </span>
     </div>
 
@@ -97,7 +97,7 @@ and uninitialised." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -112,16 +112,19 @@ and uninitialised." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
+      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
     </li>
     <li>
-      <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
+      <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
+      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+    </li>
+    <li>
+      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
     </li>
   </ul>
 </li>
@@ -132,7 +135,7 @@ and uninitialised." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/ms609/TreeSearch/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -165,7 +168,7 @@ and uninitialised." />
 and uninitialised.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>mpl_new_Morphy</span>()</pre>
+    <pre class="usage"><span class='fu'>mpl_new_Morphy</span><span class='op'>(</span><span class='op'>)</span></pre>
 
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -174,12 +177,13 @@ and uninitialised.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p>Other Morphy API functions: 
+<code><a href='GapHandler.html'>GapHandler</a>()</code>,
 <code><a href='MorphyErrorCheck.html'>MorphyErrorCheck</a>()</code>,
 <code><a href='MorphyWeights.html'>MorphyWeights</a>()</code>,
 <code><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a>()</code>,
-<code><a href='SetMorphyWeights.html'>SetMorphyWeights</a>()</code>,
 <code><a href='SingleCharMorphy.html'>SingleCharMorphy</a>()</code>,
 <code><a href='UnloadMorphy.html'>UnloadMorphy</a>()</code>,
+<code><a href='is.morphyPtr.html'>is.morphyPtr</a>()</code>,
 <code><a href='mpl_apply_tipdata.html'>mpl_apply_tipdata</a>()</code>,
 <code><a href='mpl_attach_rawdata.html'>mpl_attach_rawdata</a>()</code>,
 <code><a href='mpl_attach_symbols.html'>mpl_attach_symbols</a>()</code>,
@@ -188,6 +192,7 @@ and uninitialised.</p>
 <code><a href='mpl_first_down_recon.html'>mpl_first_down_recon</a>()</code>,
 <code><a href='mpl_first_up_recon.html'>mpl_first_up_recon</a>()</code>,
 <code><a href='mpl_get_charac_weight.html'>mpl_get_charac_weight</a>()</code>,
+<code><a href='mpl_get_gaphandl.html'>mpl_get_gaphandl</a>()</code>,
 <code><a href='mpl_get_num_charac.html'>mpl_get_num_charac</a>()</code>,
 <code><a href='mpl_get_num_internal_nodes.html'>mpl_get_num_internal_nodes</a>()</code>,
 <code><a href='mpl_get_numtaxa.html'>mpl_get_numtaxa</a>()</code>,
@@ -207,11 +212,12 @@ and uninitialised.</p>
     <p>Martin Brazeau</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>morphyObj</span> <span class='op'>&lt;-</span> <span class='fu'>mpl_new_Morphy</span>() <span class='co'># Create new object</span>
-<span class='co'>## Do some stuff ... ##</span>
-<span class='fu'><a href='mpl_delete_Morphy.html'>mpl_delete_Morphy</a></span>(<span class='kw'>morphyObj</span>) <span class='co'># Delete when done</span>
-</div><div class='output co'>#&gt; [1] 0</div><div class='input'>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='va'>morphyObj</span> <span class='op'>&lt;-</span> <span class='fu'>mpl_new_Morphy</span><span class='op'>(</span><span class='op'>)</span> <span class='co'># Create new object</span></span>
+<span class='r-in'><span class='co'>## Do some stuff ... ##</span></span>
+<span class='r-in'><span class='fu'><a href='mpl_delete_Morphy.html'>mpl_delete_Morphy</a></span><span class='op'>(</span><span class='va'>morphyObj</span><span class='op'>)</span> <span class='co'># Delete when done</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] 0</span>
+<span class='r-in'></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -223,7 +229,7 @@ and uninitialised.</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">

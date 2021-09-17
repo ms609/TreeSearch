@@ -87,7 +87,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.0</span>
       </span>
     </div>
 
@@ -95,7 +95,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -110,16 +110,19 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
+      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
     </li>
     <li>
-      <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
+      <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
+      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+    </li>
+    <li>
+      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
     </li>
   </ul>
 </li>
@@ -130,7 +133,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/ms609/TreeSearch/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -157,34 +160,94 @@
       <small>Source: <a href='https://github.com/ms609/TreeSearch/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="treesearch-0-4-3" class="section level1">
+    <div id="treesearch-0990" class="section level1">
+<h1 class="page-header" data-toc-text="0.99.0">
+<a href="#treesearch-0990" class="anchor"></a>TreeSearch 0.99.0<small> Unreleased </small>
+</h1>
+<div id="new-functions" class="section level2">
+<h2 class="hasAnchor">
+<a href="#new-functions" class="anchor"></a>New functions</h2>
+<ul>
+<li>
+<code><a href="../reference/MaximizeParsimony.html">EasyTrees()</a></code> ‘shiny’ graphical user interface for tree search</li>
+<li>
+<code><a href="../reference/AdditionTree.html">AdditionTree()</a></code> adds each taxon in sequence to the most parsimonious place on the tree, generating a more parsimonious starting tree than neighbour-joining</li>
+<li>
+<code><a href="../reference/PlotCharacter.html">PlotCharacter()</a></code> reconstructs character distributions on trees</li>
+<li>
+<code>TipInstability()</code> identifies possible rogue taxa</li>
+<li>
+<code><a href="https://ms609.github.io/TreeTools/reference/ConstrainedNJ.html">ConstrainedNJ()</a></code> constructs starting trees that respect a constraint</li>
+<li>
+<code><a href="https://ms609.github.io/TreeTools/reference/ImposeConstraint.html">ImposeConstraint()</a></code> reconciles a tree with a constraint</li>
+<li>
+<code><a href="../reference/SiteConcordance.html">SiteConcordance()</a></code> calculates exact site concordance</li>
+<li>
+<code><a href="../reference/ConcordantInformation.html">ConcordantInformation()</a></code> evaluates signal:noise of dataset implied by a given tree</li>
+<li>
+<code><a href="../reference/PrepareDataProfile.html">PrepareDataProfile()</a></code> simplifies dataset to allow partial search when multiple applicable tokens are present</li>
+<li>
+<code><a href="../reference/MaximizeParsimony.html">Resample()</a></code> conducts bootstrap and jackknife resampling</li>
+<li>
+<code><a href="../reference/Consistency.html">Consistency()</a></code> calculates consistency and retention ‘indices’</li>
+<li>
+<code><a href="../reference/MinimumLength.html">MinimumLength()</a></code> and <code>MaximumLength()</code> calculate range of possible lengths of characters in a dataset on any tree</li>
+</ul>
+</div>
+<div id="improvements" class="section level2">
+<h2 class="hasAnchor">
+<a href="#improvements" class="anchor"></a>Improvements</h2>
+<ul>
+<li>
+<code><a href="../reference/IWScore.html">TreeLength()</a></code> supports lists of trees</li>
+<li>Set handling of ‘gap’ token (-) when creating Morphy object with <code>gap =</code>
+</li>
+<li>Label nodes with split frequencies using <code>JackLabels(plot = FALSE)</code>
+</li>
+<li>Support for topological constraints during tree search</li>
+<li>Remove redundant function <code>AsBinary()</code>
+</li>
+<li>Drop <code>nTip</code> parameter in <code><a href="../reference/RandomTreeScore.html">RandomTreeScore()</a></code> (infer from <code>morphyObj</code>)</li>
+<li>C implementations of rearrangement functions</li>
+<li>Improved command line interface for search progress messaging</li>
+</ul>
+</div>
+<div id="deprecations" class="section level2">
+<h2 class="hasAnchor">
+<a href="#deprecations" class="anchor"></a>Deprecations</h2>
+<ul>
+<li>Remove redundant internal function <code>LogisticPoints()</code>.</li>
+</ul>
+</div>
+</div>
+    <div id="treesearch-043" class="section level1">
 <h1 class="page-header" data-toc-text="0.4.3">
-<a href="#treesearch-0-4-3" class="anchor"></a>TreeSearch 0.4.3<small> 2020-07-09 </small>
+<a href="#treesearch-043" class="anchor"></a>TreeSearch 0.4.3<small> 2020-07-09 </small>
 </h1>
 <ul>
 <li>Update tests for compatibility with ‘TreeTools’ v1.1.0</li>
-<li>Improve memory and pointer handling.</li>
+<li>Improve memory and pointer handling</li>
 </ul>
 </div>
-    <div id="treesearch-0-4-2" class="section level1">
+    <div id="treesearch-042" class="section level1">
 <h1 class="page-header" data-toc-text="0.4.2">
-<a href="#treesearch-0-4-2" class="anchor"></a>TreeSearch 0.4.2<small> 2020-07-07 </small>
+<a href="#treesearch-042" class="anchor"></a>TreeSearch 0.4.2<small> 2020-07-07 </small>
 </h1>
 <ul>
 <li>Update tests for compatibility with ‘TreeTools’ v1.1.0</li>
 </ul>
 </div>
-    <div id="treesearch-0-4-1" class="section level1">
+    <div id="treesearch-041" class="section level1">
 <h1 class="page-header" data-toc-text="0.4.1">
-<a href="#treesearch-0-4-1" class="anchor"></a>TreeSearch 0.4.1<small> 2020-06-09 </small>
+<a href="#treesearch-041" class="anchor"></a>TreeSearch 0.4.1<small> 2020-06-09 </small>
 </h1>
 <ul>
 <li>Compatibility with ‘TreeTools’ v1.0.0</li>
 </ul>
 </div>
-    <div id="treesearch-0-4-0" class="section level1">
+    <div id="treesearch-040" class="section level1">
 <h1 class="page-header" data-toc-text="0.4.0">
-<a href="#treesearch-0-4-0" class="anchor"></a>TreeSearch 0.4.0<small> 2020-02-06 </small>
+<a href="#treesearch-040" class="anchor"></a>TreeSearch 0.4.0<small> 2020-02-06 </small>
 </h1>
 <div id="new-features" class="section level2">
 <h2 class="hasAnchor">
@@ -218,17 +281,17 @@
 </ul>
 </div>
 </div>
-    <div id="treesearch-0-3-2" class="section level1">
+    <div id="treesearch-032" class="section level1">
 <h1 class="page-header" data-toc-text="0.3.2">
-<a href="#treesearch-0-3-2" class="anchor"></a>TreeSearch 0.3.2<small> 2019-06-03 </small>
+<a href="#treesearch-032" class="anchor"></a>TreeSearch 0.3.2<small> 2019-06-03 </small>
 </h1>
 <ul>
 <li>Improve text, content and build speed of vignettes</li>
 </ul>
 </div>
-    <div id="treesearch-0-3-1" class="section level1">
+    <div id="treesearch-031" class="section level1">
 <h1 class="page-header" data-toc-text="0.3.1">
-<a href="#treesearch-0-3-1" class="anchor"></a>TreeSearch 0.3.1<small> Unreleased </small>
+<a href="#treesearch-031" class="anchor"></a>TreeSearch 0.3.1<small> Unreleased </small>
 </h1>
 <div id="new-features-1" class="section level2">
 <h2 class="hasAnchor">
@@ -248,9 +311,9 @@
 </ul>
 </div>
 </div>
-    <div id="treesearch-0-3-0" class="section level1">
+    <div id="treesearch-030" class="section level1">
 <h1 class="page-header" data-toc-text="0.3.0">
-<a href="#treesearch-0-3-0" class="anchor"></a>TreeSearch 0.3.0<small> 2019-03-21 </small>
+<a href="#treesearch-030" class="anchor"></a>TreeSearch 0.3.0<small> 2019-03-21 </small>
 </h1>
 <div id="new-features-2" class="section level2">
 <h2 class="hasAnchor">
@@ -260,11 +323,11 @@
 <li>Prepare for new random number generator in R3.6.0</li>
 </ul>
 </div>
-<div id="deprecations" class="section level2">
+<div id="deprecations-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#deprecations" class="anchor"></a>Deprecations</h2>
+<a href="#deprecations-1" class="anchor"></a>Deprecations</h2>
 <ul>
-<li>Function <code><a href="https://ms609.github.io/TreeTools/reference/SplitFrequency.html">TreeSplits()</a></code> is deprecated; use <code><a href="https://ms609.github.io/TreeTools/reference/as.Splits.html">as.Splits()</a></code> instead</li>
+<li>Function <code><a href="https://ms609.github.io/TreeTools/reference/SplitFrequency.html">TreeSplits()</a></code> is deprecated; use <code><a href="https://ms609.github.io/TreeTools/reference/Splits.html">as.Splits()</a></code> instead</li>
 </ul>
 </div>
 <div id="bug-fixes-1" class="section level2">
@@ -275,17 +338,17 @@
 </ul>
 </div>
 </div>
-    <div id="treesearch-0-2-2" class="section level1">
+    <div id="treesearch-022" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.2">
-<a href="#treesearch-0-2-2" class="anchor"></a>TreeSearch 0.2.2<small> 2019-01-02 </small>
+<a href="#treesearch-022" class="anchor"></a>TreeSearch 0.2.2<small> 2019-01-02 </small>
 </h1>
 <ul>
 <li>Correct vignette titles</li>
 </ul>
 </div>
-    <div id="treesearch-0-2-1" class="section level1">
+    <div id="treesearch-021" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.1">
-<a href="#treesearch-0-2-1" class="anchor"></a>TreeSearch 0.2.1<small> 2018-12-07 </small>
+<a href="#treesearch-021" class="anchor"></a>TreeSearch 0.2.1<small> 2018-12-07 </small>
 </h1>
 <div id="new-features-3" class="section level2">
 <h2 class="hasAnchor">
@@ -314,9 +377,9 @@
 </ul>
 </div>
 </div>
-    <div id="treesearch-0-2-0" class="section level1">
+    <div id="treesearch-020" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.0">
-<a href="#treesearch-0-2-0" class="anchor"></a>TreeSearch 0.2.0<small> 2018-09-11 </small>
+<a href="#treesearch-020" class="anchor"></a>TreeSearch 0.2.0<small> 2018-09-11 </small>
 </h1>
 <div id="new-features-4" class="section level2">
 <h2 class="hasAnchor">
@@ -365,9 +428,9 @@
 </ul>
 </div>
 </div>
-    <div id="treesearch-0-1-2" class="section level1">
+    <div id="treesearch-012" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.2">
-<a href="#treesearch-0-1-2" class="anchor"></a>TreeSearch 0.1.2<small> 2018-03-19 </small>
+<a href="#treesearch-012" class="anchor"></a>TreeSearch 0.1.2<small> 2018-03-19 </small>
 </h1>
 <ul>
 <li>Update MorphyLib library to fix C warnings</li>
@@ -376,9 +439,9 @@
 <li>Use local copy of citation style when building vignettes</li>
 </ul>
 </div>
-    <div id="treesearch-0-1-0" class="section level1">
+    <div id="treesearch-010" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.0">
-<a href="#treesearch-0-1-0" class="anchor"></a>TreeSearch 0.1.0<small> 2018-03-14 </small>
+<a href="#treesearch-010" class="anchor"></a>TreeSearch 0.1.0<small> 2018-03-14 </small>
 </h1>
 <div id="new-features-5" class="section level2">
 <h2 class="hasAnchor">
@@ -409,9 +472,9 @@
 </ul>
 </div>
 </div>
-    <div id="treesearch-0-0-8" class="section level1">
+    <div id="treesearch-008" class="section level1">
 <h1 class="page-header" data-toc-text="0.0.8">
-<a href="#treesearch-0-0-8" class="anchor"></a>TreeSearch 0.0.8<small> 2018-03-08 </small>
+<a href="#treesearch-008" class="anchor"></a>TreeSearch 0.0.8<small> 2018-03-08 </small>
 </h1>
 <div id="new-features-6" class="section level2">
 <h2 class="hasAnchor">
@@ -440,9 +503,9 @@
 </ul>
 </div>
 </div>
-    <div id="treesearch-0-0-7" class="section level1">
+    <div id="treesearch-007" class="section level1">
 <h1 class="page-header" data-toc-text="0.0.7">
-<a href="#treesearch-0-0-7" class="anchor"></a>TreeSearch 0.0.7<small> Unreleased </small>
+<a href="#treesearch-007" class="anchor"></a>TreeSearch 0.0.7<small> Unreleased </small>
 </h1>
 <div id="inapplicables" class="section level2">
 <h2 class="hasAnchor">
@@ -462,9 +525,9 @@
 </ul>
 </div>
 </div>
-    <div id="treesearch-0-0-6" class="section level1">
+    <div id="treesearch-006" class="section level1">
 <h1 class="page-header" data-toc-text="0.0.6">
-<a href="#treesearch-0-0-6" class="anchor"></a>TreeSearch 0.0.6<small> 2017-11-07 </small>
+<a href="#treesearch-006" class="anchor"></a>TreeSearch 0.0.6<small> 2017-11-07 </small>
 </h1>
 <ul>
 <li>First CRAN submission</li>
@@ -483,7 +546,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Report the character weightings associated with a Morphy object — MorphyWeights • TreeSearch</title>
+<title>Set and get the character weightings associated with a Morphy object. — MorphyWeights • TreeSearch</title>
 
 
 <!-- jquery -->
@@ -45,8 +45,9 @@
 
 
 
-<meta property="og:title" content="Report the character weightings associated with a Morphy object — MorphyWeights" />
-<meta property="og:description" content="Report the character weightings associated with a Morphy object" />
+<meta property="og:title" content="Set and get the character weightings associated with a Morphy object. — MorphyWeights" />
+<meta property="og:description" content="MorphyWeights() details the approximate and exact weights associated with
+characters in a Morphy object; SetMorphyWeights() edits them." />
 
 
 
@@ -88,7 +89,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.0</span>
       </span>
     </div>
 
@@ -96,7 +97,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -111,16 +112,19 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/getting-started.html">Installing R and TreeSearch</a>
+      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
     </li>
     <li>
-      <a href="../articles/inapplicable.html">Inapplicable data in morphological phylogenetics</a>
+      <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Concavity profiles with Profile Parsimony</a>
+      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+    </li>
+    <li>
+      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
     </li>
   </ul>
 </li>
@@ -131,7 +135,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/ms609/TreeSearch/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -154,16 +158,19 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Report the character weightings associated with a Morphy object</h1>
+    <h1>Set and get the character weightings associated with a Morphy object.</h1>
     <small class="dont-index">Source: <a href='https://github.com/ms609/TreeSearch/blob/master/R/mpl_morphy_objects.R'><code>R/mpl_morphy_objects.R</code></a></small>
     <div class="hidden name"><code>MorphyWeights.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Report the character weightings associated with a Morphy object</p>
+    <p><code>MorphyWeights()</code> details the approximate and exact weights associated with
+characters in a <code>Morphy</code> object; <code>SetMorphyWeights()</code> edits them.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>MorphyWeights</span>(<span class='kw'>morphyObj</span>)</pre>
+    <pre class="usage"><span class='fu'>MorphyWeights</span><span class='op'>(</span><span class='va'>morphyObj</span><span class='op'>)</span>
+
+<span class='fu'>SetMorphyWeights</span><span class='op'>(</span><span class='va'>weight</span>, <span class='va'>morphyObj</span>, checkInput <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -173,21 +180,36 @@
       <td><p>Object of class <code>morphy</code>, perhaps created with
 <code><a href='PhyDat2Morphy.html'>PhyDat2Morphy()</a></code>.</p></td>
     </tr>
+    <tr>
+      <th>weight</th>
+      <td><p>A vector listing the new weights to be applied to each character</p></td>
+    </tr>
+    <tr>
+      <th>checkInput</th>
+      <td><p>Whether to sanity-check input data before applying.
+Defaults to <code>TRUE</code> to protect the user from crashes.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a matrix of dimensions (2, number of characters); row 1 lists the
-exact rates specified by the user; row 2 the approximate (integral)
-weights used by MorphyLib</p>
+    <p><code>MorphyWeights()</code> returns a data frame with two named rows and
+one column per character pattern:
+row 1, <code>approx</code>, is a list of integers specifying the approximate (integral)
+weights used by MorphyLib;
+row 2, <code>exact</code>, is a list of numerics specifying the exact weights specified
+by the user.</p>
+<p><code>SetMorphyWeights()</code> returns the Morphy error code generated when
+applying <code>weight</code>.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
     <div class='dont-index'><p>Other Morphy API functions: 
+<code><a href='GapHandler.html'>GapHandler</a>()</code>,
 <code><a href='MorphyErrorCheck.html'>MorphyErrorCheck</a>()</code>,
 <code><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a>()</code>,
-<code><a href='SetMorphyWeights.html'>SetMorphyWeights</a>()</code>,
 <code><a href='SingleCharMorphy.html'>SingleCharMorphy</a>()</code>,
 <code><a href='UnloadMorphy.html'>UnloadMorphy</a>()</code>,
+<code><a href='is.morphyPtr.html'>is.morphyPtr</a>()</code>,
 <code><a href='mpl_apply_tipdata.html'>mpl_apply_tipdata</a>()</code>,
 <code><a href='mpl_attach_rawdata.html'>mpl_attach_rawdata</a>()</code>,
 <code><a href='mpl_attach_symbols.html'>mpl_attach_symbols</a>()</code>,
@@ -196,6 +218,7 @@ weights used by MorphyLib</p>
 <code><a href='mpl_first_down_recon.html'>mpl_first_down_recon</a>()</code>,
 <code><a href='mpl_first_up_recon.html'>mpl_first_up_recon</a>()</code>,
 <code><a href='mpl_get_charac_weight.html'>mpl_get_charac_weight</a>()</code>,
+<code><a href='mpl_get_gaphandl.html'>mpl_get_gaphandl</a>()</code>,
 <code><a href='mpl_get_num_charac.html'>mpl_get_num_charac</a>()</code>,
 <code><a href='mpl_get_num_internal_nodes.html'>mpl_get_num_internal_nodes</a>()</code>,
 <code><a href='mpl_get_numtaxa.html'>mpl_get_numtaxa</a>()</code>,
@@ -213,8 +236,27 @@ weights used by MorphyLib</p>
 <code><a href='summary.morphyPtr.html'>summary.morphyPtr</a>()</code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
-    <p>Martin R. Smith</p>
+    <p><a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>
+(<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><span class='r-in'><span class='va'>tokens</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span></span>
+<span class='r-in'>  <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>2</span>,</span>
+<span class='r-in'>  <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span><span class='op'>)</span>, byrow <span class='op'>=</span> <span class='cn'>TRUE</span>, nrow <span class='op'>=</span> <span class='fl'>2L</span>,</span>
+<span class='r-in'>  dimnames <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>letters</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>2</span><span class='op'>]</span>, <span class='cn'>NULL</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>pd</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html'>MatrixToPhyDat</a></span><span class='op'>(</span><span class='va'>tokens</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>morphyObj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a></span><span class='op'>(</span><span class='va'>pd</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>MorphyWeights</span><span class='op'>(</span><span class='va'>morphyObj</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>        [,1] [,2] [,3]</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> approx 3    2    1   </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> exact  3    2    1   </span>
+<span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='fu'>SetMorphyWeights</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>1.5</span>, <span class='fl'>2</span><span class='op'>/</span><span class='fl'>3</span><span class='op'>)</span>, <span class='va'>morphyObj</span><span class='op'>)</span> <span class='op'>!=</span> <span class='fl'>0L</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/message.html'>message</a></span><span class='op'>(</span><span class='st'>"Errored"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>MorphyWeights</span><span class='op'>(</span><span class='va'>morphyObj</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>        [,1] [,2] [,3]     </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> approx 6    9    4        </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> exact  1    1.5  0.6666667</span>
+<span class='r-in'><span class='va'>morphyObj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='UnloadMorphy.html'>UnloadMorphy</a></span><span class='op'>(</span><span class='va'>morphyObj</span><span class='op'>)</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -226,7 +268,7 @@ weights used by MorphyLib</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by <a href='https://community.dur.ac.uk/martin.smith/'>Martin R. Smith</a>.</p>
+  <p>Developed by <a href='https://smithlabdurham.github.io/'>Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">
