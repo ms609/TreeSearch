@@ -120,24 +120,37 @@
 
     
     
-<p><code>TreeSearch</code> is an R package that allows, among other things, parsimony search on morphological datasets that contain inapplicable data, using the algorithm proposed by Brazeau, Guillerme and Smith <span class="citation">(2019)</span> and implemented in the ‘MorphyLib’ C library <span class="citation">(Brazeau, Smith, &amp; Guillerme, 2017)</span> (<a href="https://cdn.jsdelivr.net/gh/TGuillerme/Inapp@c4d502fa4ae3702eb207b2da3a692e469ba3b6ab/inst/gitbook/_book/index.html">details</a>).</p>
+<p>“TreeSearch” is an R package that allows, among other things, parsimony search on morphological datasets that contain inapplicable data, using the algorithm proposed by Brazeau, Guillerme and Smith <span class="citation">(2019)</span> and implemented in the ‘MorphyLib’ C library <span class="citation">(Brazeau, Smith, &amp; Guillerme, 2017)</span> (<a href="https://cdn.jsdelivr.net/gh/TGuillerme/Inapp@c4d502fa4ae3702eb207b2da3a692e469ba3b6ab/inst/gitbook/_book/index.html">details</a>).</p>
 <div id="getting-started" class="section level2">
 <h2 class="hasAnchor">
 <a href="#getting-started" class="anchor"></a>Getting started</h2>
 <p><a href="getting-started.html">A companion vignette</a> gives details on installing the package and getting up and running.</p>
 <p>Launch an interactive ‘app’ in your browser by typing <code><a href="../reference/MaximizeParsimony.html">TreeSearch::EasyTrees()</a></code> at the R / RStudio command line.</p>
+<p>This will allow you to load data from a file, modify search settings, and explore the distribution of most parsimonious trees in tree space.</p>
 <div class="figure">
-<img src="easy_tree.png" alt=""><p class="caption">TreeSearch graphical user interface</p>
+<img src="gui_start.png" alt=""><p class="caption">Starting parsimony search</p>
 </div>
-<p>This will allow you to load data from a file, modify search settings, and explore the distribution of most parsimonious trees in tree space. Trees can be saved as images, or in Nexus/Newick for further analysis.</p>
+<p>View a consensus tree and explore the position of rogue taxa:</p>
+<div class="figure">
+<img src="gui_rogue.png" alt=""><p class="caption">Viewing search result consensus with rogue taxa</p>
+</div>
+<p>Explore the distribution of trees (whether found by search or loaded from file) in tree space:</p>
+<div class="figure">
+<img src="gui_space.png" alt=""><p class="caption">Tree space analysis</p>
+</div>
+<p>Map characters on a chosen tree, using character and taxon notes imported from a Nexus file, if present. (This is designed to be interopable with <a href="https://morphobank.org">MorphoBank</a> matrices.)</p>
+<div class="figure">
+<img src="gui_char.png" alt=""><p class="caption">Mapping character reconstructions</p>
+</div>
+<p>Trees can be saved as images, or in Nexus/Newick for further analysis.</p>
 </div>
 <div id="command-line-tree-search" class="section level2">
 <h2 class="hasAnchor">
 <a href="#command-line-tree-search" class="anchor"></a>Command line tree search</h2>
-<p>You can also run tree searches using the R command line. Once installed, load the ‘TreeSearch’ package into R using</p>
+<p>You can also run tree searches using the R command line. Once installed, load the “TreeSearch” package into R using</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">'TreeSearch'</a></span><span class="op">)</span></code></pre></div>
-<p>You can <a href="https://ms609.github.io/TreeTools/articles/load-data.html">load your own dataset</a>, but for now, we’ll use the Vinther <em>et al.</em> <span class="citation">(2008)</span> dataset that comes bundled with the ‘TreeSearch’.</p>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span></code></pre></div>
+<p>You can <a href="https://ms609.github.io/TreeTools/articles/load-data.html">load your own dataset</a>, but for now, we’ll use the Vinther <em>et al.</em> <span class="citation">(2008)</span> dataset that comes bundled with the “TreeSearch”.</p>
 <p>This dataset is small enough that it runs reasonably quickly, but its phylogenetic signal is obscure enough that it can require Ratchet searches to escape from local optima.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rawData</span> <span class="op">&lt;-</span> <span class="fu">TreeSearch</span><span class="fu">::</span><span class="va"><a href="../reference/inapplicable.datasets.html">inapplicable.datasets</a></span><span class="op">[[</span><span class="st">'Vinther2008'</span><span class="op">]</span><span class="op">]</span>
@@ -149,34 +162,15 @@
 <p>We can conduct a basic parsimony search with:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">bestTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">vinther</span><span class="op">)</span></code></pre></div>
-<pre><code>## </code></pre>
-<pre><code>## ── Find local optimum ──────────────────────────────────────────────────────────</code></pre>
-<pre><code>## →  TBR depth 4; keeping max 41 trees; k = Inf.</code></pre>
-<pre><code>## ℹ 2021-09-17 16:19:45: Score to beat: 83</code></pre>
-<pre><code>## </code></pre>
-<pre><code>## ── Escape local optimum ────────────────────────────────────────────────────────</code></pre>
-<pre><code>## → 6 ratchet iterations; TBR depth 2; max. 14 hits; k = Inf.</code></pre>
-<pre><code>## → 2021-09-17 16:19:45: Score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 1 @ 16:19:45; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 2 @ 16:19:45; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 3 @ 16:19:45; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 4 @ 16:19:45; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 5 @ 16:19:46; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 6 @ 16:19:46; score to beat: 79</code></pre>
-<pre><code>## </code></pre>
-<pre><code>## ── Sample local optimum ────────────────────────────────────────────────────────</code></pre>
-<pre><code>## → TBR depth 2; keeping 41.4 trees; k = Inf</code></pre>
-<pre><code>## ℹ 2021-09-17 16:19:46: Score: 79</code></pre>
-<pre><code>## ✔ 2021-09-17 16:19:46: Tree search terminated with score 79</code></pre>
 <p>It can be instructive to inspect the progress of tree search.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">firstHit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html">attr</a></span><span class="op">(</span><span class="va">bestTrees</span>, <span class="st">'firstHit'</span><span class="op">)</span>
 <span class="va">firstHit</span></code></pre></div>
 <pre><code>##   seed  start ratch1 ratch2 ratch3 ratch4 ratch5 ratch6  final 
 ##      0     27      0      0     15      2      6      0      2</code></pre>
 <p>Here, we can see that many of the earliest ratchet iterations were finding optimal trees that had not previously been visited. Later iterations found progressively fewer new trees, suggesting that the search is likely to have been effective.</p>
 <p>Advanced users might wish to visualize the progress of tree search by mapping tree space:</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">distances</span> <span class="op">&lt;-</span> <span class="fu">TreeDist</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeDist/reference/TreeDistance.html">ClusteringInfoDistance</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">)</span>
 <span class="va">searchStages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">firstHit</span><span class="op">)</span>
 <span class="va">map</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cmdscale.html">cmdscale</a></span><span class="op">(</span><span class="va">distances</span>, k <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>
@@ -192,46 +186,26 @@
 <p><img src="tree-search_files/figure-html/map-search-1.png" width="700"></p>
 <p>A quick glance suggests that early ratchet iterations captured a large part of the diversity of optimal trees, and that iterations aren’t getting stuck in local optima – though conscientious users will ensure that the mapping of tree space is meaningful and adequate to detect structure before making any firm conclusions <span class="citation">(Smith, 2022)</span>.</p>
 <p>To be thorough, we might consider continuing the search for a little longer, fine-tuning the search parameters:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">bestTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">vinther</span>, tree <span class="op">=</span> <span class="va">bestTrees</span>,
                                ratchIter <span class="op">=</span> <span class="fl">6L</span>,
                                tbrIter <span class="op">=</span> <span class="fl">4L</span>, 
                                finalIter <span class="op">=</span> <span class="fl">3L</span>,
                                maxHits <span class="op">=</span> <span class="fl">80L</span><span class="op">)</span></code></pre></div>
-<pre><code>## ℹ Starting search from `tree[[1]]`</code></pre>
-<pre><code>## </code></pre>
-<pre><code>## ── Find local optimum ──────────────────────────────────────────────────────────</code></pre>
-<pre><code>## →  TBR depth 8; keeping max 80 trees; k = Inf.</code></pre>
-<pre><code>## ℹ 2021-09-17 16:19:47: Score to beat: 79</code></pre>
-<pre><code>## </code></pre>
-<pre><code>## ── Escape local optimum ────────────────────────────────────────────────────────</code></pre>
-<pre><code>## → 6 ratchet iterations; TBR depth 4; max. 27 hits; k = Inf.</code></pre>
-<pre><code>## → 2021-09-17 16:19:47: Score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 1 @ 16:19:47; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 2 @ 16:19:48; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 3 @ 16:19:48; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 4 @ 16:19:49; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 5 @ 16:19:49; score to beat: 79</code></pre>
-<pre><code>## → Ratchet iteration 6 @ 16:19:50; score to beat: 79</code></pre>
-<pre><code>## </code></pre>
-<pre><code>## ── Sample local optimum ────────────────────────────────────────────────────────</code></pre>
-<pre><code>## → TBR depth 12; keeping 80 trees; k = Inf</code></pre>
-<pre><code>## ℹ 2021-09-17 16:19:50: Score: 79</code></pre>
-<pre><code>## ✔ 2021-09-17 16:19:50: Tree search terminated with score 79</code></pre>
 <p>As it happens, the best tree for this dataset has a score of 79 under equal weights parsimony.</p>
 <p>We can plot the best tree(s) that we’ve found, and check its parsimony score (length):</p>
-<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="tree-search_files/figure-html/plot-tree-1.png" width="700"></p>
-<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/IWScore.html">TreeLength</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">vinther</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 79</code></pre>
 <div id="evaluating-clade-support" class="section level3">
 <h3 class="hasAnchor">
 <a href="#evaluating-clade-support" class="anchor"></a>Evaluating clade support</h3>
 <p>We might be interested in labelling clades with their frequency among the sampled most-parsimonious trees:</p>
-<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span>
 <span class="va">cons</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span><span class="op">(</span><span class="va">bestTrees</span>, p <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>
 <span class="va">splitFreqs</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/SplitFrequency.html">SplitFrequency</a></span><span class="op">(</span><span class="va">cons</span>, <span class="va">bestTrees</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">)</span>
@@ -241,7 +215,7 @@
                        frame <span class="op">=</span> <span class="st">'none'</span>, pos <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span></code></pre></div>
 <p><img src="tree-search_files/figure-html/plot-label-nodes-1.png" width="700"></p>
 <p>A more instructive measure of clade support can be generated using Jackknife resampling. The <code><a href="../reference/MaximizeParsimony.html">Resample()</a></code> manual page has suggestions for appropriate numbers of replicates and search intensity, and instructions for calculating bootstrap support; the code here gives a quick-to-run jackknife framework that can be adapted to the requirements of a particular dataset.</p>
-<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">nReplicates</span> <span class="op">&lt;-</span> <span class="fl">10</span>
 <span class="va">jackTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/logical.html">logical</a></span><span class="op">(</span><span class="va">nReplicates</span><span class="op">)</span>, <span class="kw">function</span> <span class="op">(</span><span class="va">x</span><span class="op">)</span>
   <span class="fu"><a href="../reference/MaximizeParsimony.html">Resample</a></span><span class="op">(</span><span class="va">vinther</span>, <span class="va">bestTrees</span>, ratchIter <span class="op">=</span> <span class="fl">0</span>, tbrIter <span class="op">=</span> <span class="fl">1</span>, maxHits <span class="op">=</span> <span class="fl">4</span>,
@@ -253,12 +227,12 @@
 <span class="fu"><a href="../reference/JackLabels.html">JackLabels</a></span><span class="op">(</span><span class="va">cons</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="va">jackTrees</span>, <span class="fu">ape</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span><span class="op">)</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="va">XX</span></code></pre></div>
 <p><img src="tree-search_files/figure-html/Jackknife-annotations-1.png" width="700"></p>
 <p>Jackknife and bootstrap support values give an indication of the volume of data that supports each node, but don’t necessarily indicate whether the data are unanimous on the existence of a clade: a high bootstrap support value could indicate a large number of characters supporting a clade, and an only slightly smaller number of characters contradicting it.</p>
-<p>‘TreeSearch’ implements a number of concordance measures that aim to indicate whether a dataset is unanimous or divided in support of a grouping, independently of the method of tree reconstruction.</p>
-<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">concordance</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SiteConcordance.html">ClusteringConcordance</a></span><span class="op">(</span><span class="va">cons</span>, <span class="va">vinther</span><span class="op">)</span>
+<p>“TreeSearch” implements a number of concordance measures that aim to indicate whether a dataset is unanimous or divided in support of a grouping, independently of the method of tree reconstruction.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">concordance</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SiteConcordance.html">QuartetConcordance</a></span><span class="op">(</span><span class="va">cons</span>, <span class="va">vinther</span><span class="op">)</span>
 
 <span class="co"># Alternative measures:</span>
-<span class="co"># concordance &lt;- QuartetConcordance(cons, vinther)</span>
+<span class="co"># concordance &lt;- ClusteringConcordance(cons, vinther)</span>
 <span class="co"># concordance &lt;- PhylogeneticConcordance(cons, vinther)</span>
 
 <span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span>
@@ -274,7 +248,7 @@
 <a href="#implied-weighting" class="anchor"></a>Implied weighting</h2>
 <p>Equal weights produces trees that are less accurate and less precise than implied weights <span class="citation">(Smith, 2019)</span>; equally weighted analysis should never be conducted without also considering the results of implied weights <span class="citation">(Goloboff, 1993, 1997)</span>, ideally under a range of concavity constants <span class="citation">(cf. Smith &amp; Ortega-Hernández, 2014)</span>.</p>
 <p>Implied weights can be activated by simply specifying a value of the concavity constant, <em>k</em>:</p>
-<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">iwTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">vinther</span>, concavity <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span><span class="op">(</span><span class="va">iwTrees</span><span class="op">)</span><span class="op">)</span></code></pre></div>
@@ -285,10 +259,10 @@
 <h2 class="hasAnchor">
 <a href="#constraining-a-search" class="anchor"></a>Constraining a search</h2>
 <p>It is sometimes legitimate to insist that trees must contain a certain clade. Doing so reduces the number of tree rearrangements that are considered, and can this speed up tree search.</p>
-<p>‘TreeSearch’ supports soft constraints, which can be specified using a separate Nexus file, or by creating a <code>phyDat</code> object in R. Constraints are effectively phylogenetic characters; only trees on which each such character fits perfectly will be considered. The position of taxa not listed in a constraint will not be constrained.</p>
+<p>“TreeSearch” supports soft constraints, which can be specified using a separate Nexus file, or by creating a <code>phyDat</code> object in R. Constraints are effectively phylogenetic characters; only trees on which each such character fits perfectly will be considered. The position of taxa not listed in a constraint will not be constrained.</p>
 <p><code><a href="../reference/MaximizeParsimony.html">MaximizeParsimony()</a></code> will attempt to find a starting tree that satisfies the constraints, but if it cannot, it may be necessary to specify one manually – perhaps after checking that no constraints are contradictory.</p>
 <p>Here’s a simple example on six taxa that enforces the bipartition ab | cdef:</p>
-<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/">"TreeTools"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span>, warn.conflicts <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
 <span class="va">constraint</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html">MatrixToPhyDat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">1</span>, b <span class="op">=</span> <span class="fl">1</span>, c <span class="op">=</span> <span class="fl">0</span>, d <span class="op">=</span> <span class="fl">0</span>, e <span class="op">=</span> <span class="fl">0</span>, f <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span>
 <span class="va">characters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html">MatrixToPhyDat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span>
@@ -297,10 +271,9 @@
   dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>,
                        verbosity <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></code></pre></div>
-<pre><code>## ✔ Initialized 1 distinct constraints.</code></pre>
-<pre><code>## → 2021-09-17 16:19:58: Score to beat: 3</code></pre>
-<p><img src="tree-search_files/figure-html/simple-constraints-1.png" width="700"> Here’s a more complex example that imposes the splits <code>ab | cef</code> and <code>abcd | ef</code>, whilst allowing <code>g</code> to plot anywhere on the tree:</p>
-<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
+<p><img src="tree-search_files/figure-html/simple-constraints-1.png" width="700"></p>
+<p>Here’s a more complex example that imposes the splits <code>ab | cef</code> and <code>abcd | ef</code>, whilst allowing <code>g</code> to plot anywhere on the tree:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">characters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html">MatrixToPhyDat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span>
   <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>,
     <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">2</span>,
@@ -311,8 +284,6 @@
   dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>,
                        verbosity <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></code></pre></div>
-<pre><code>## ✔ Initialized 2 distinct constraints.</code></pre>
-<pre><code>## → 2021-09-17 16:19:58: Score to beat: 2</code></pre>
 <p><img src="tree-search_files/figure-html/complex-constraints-1.png" width="700"></p>
 <p>Constraints can also be loaded from a Nexus file with <code>constraint &lt;- TreeTools::ReadAsPhyDat('constraint_file.nex')</code>.</p>
 </div>

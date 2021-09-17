@@ -121,7 +121,7 @@
     
     
 <p>Profile Parsimony <span class="citation">(Faith &amp; Trueman, 2001)</span> finds the tree that is most faithful to the information contained within a given dataset. It is the ‘exact solution’ that implied weights parsimony approximates.</p>
-<p>Profile Parsimony is currently implemented in ‘TreeSearch’ for characters with no more than two parsimony-informative states.</p>
+<p>Profile Parsimony is currently implemented in ‘TreeSearch’ for characters with up to two parsimony-informative states. (Further states are treated as ambiguous, whilst retaining as much information as possible.)</p>
 <div id="getting-started" class="section level2">
 <h2 class="hasAnchor">
 <a href="#getting-started" class="anchor"></a>Getting started</h2>
@@ -148,45 +148,33 @@
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">congreveLamsdellMatrices</span><span class="op">)</span>
 <span class="va">myMatrix</span> <span class="op">&lt;-</span> <span class="va">congreveLamsdellMatrices</span><span class="op">[[</span><span class="fl">10</span><span class="op">]</span><span class="op">]</span></code></pre></div>
-<p>To start analysis, we need to load a starting tree. We can do this at random:</p>
+<p>Unless a starting tree is provided, tree search will from a random addition tree:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html">RandomTree</a></span><span class="op">(</span><span class="va">myMatrix</span>, root <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
-<p>Or using a neighbour joining method, to start at a reasonably good tree:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html">NJTree</a></span><span class="op">(</span><span class="va">myMatrix</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span></code></pre></div>
-<p><img src="profile_files/figure-html/NJ%20Tree-1.png" width="700"></p>
-<p>Let’s calculate this random tree’s parsimony score, then search for better trees using the parsimony ratchet <span class="citation">(Nixon, 1999)</span>:</p>
+<code class="sourceCode R"><span class="va">additionTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/AdditionTree.html">AdditionTree</a></span><span class="op">(</span><span class="va">myMatrix</span>, concavity <span class="op">=</span> <span class="st">'profile'</span><span class="op">)</span>
+<span class="fu"><a href="../reference/IWScore.html">TreeLength</a></span><span class="op">(</span><span class="va">additionTree</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] 552.6187</code></pre>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/IWScore.html">TreeLength</a></span><span class="op">(</span><span class="va">tree</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">additionTree</span><span class="op">)</span></code></pre></div>
+<p><img src="profile_files/figure-html/Addition%20tree-1.png" width="700"></p>
+<p>We could alternatively use a random or neighbour-joining tree:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">randomTree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html">RandomTree</a></span><span class="op">(</span><span class="va">myMatrix</span>, root <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="fu"><a href="../reference/IWScore.html">TreeLength</a></span><span class="op">(</span><span class="va">randomTree</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span></code></pre></div>
+<pre><code>## [1] 774.8324</code></pre>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">njTree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html">NJTree</a></span><span class="op">(</span><span class="va">myMatrix</span><span class="op">)</span>
+<span class="fu"><a href="../reference/IWScore.html">TreeLength</a></span><span class="op">(</span><span class="va">njTree</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 540.2259</code></pre>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">betterTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">myMatrix</span>, <span class="va">tree</span>, concavity <span class="op">=</span> <span class="st">'profile'</span>,
-                                  ratchIter <span class="op">=</span> <span class="fl">3</span>, tbrIter <span class="op">=</span> <span class="fl">3</span>, maxHits <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></code></pre></div>
-<pre><code>## </code></pre>
-<pre><code>## ── Find local optimum ──────────────────────────────────────────────────────────</code></pre>
-<pre><code>## →  TBR depth 6; keeping max 8 trees; k = profile.</code></pre>
-<pre><code>## ℹ 2021-09-17 16:19:28: Score to beat: 540.226</code></pre>
-<pre><code>## TBR search 1 ■■■■■■■■■■                        30% | D5, score 512.118, hit 1. …</code></pre>
-<pre><code>##   - TBR rearrangement at depth 6 found score 512.118 1 time.</code></pre>
-<pre><code>## </code></pre>
-<pre><code>## ── Escape local optimum ────────────────────────────────────────────────────────</code></pre>
-<pre><code>## → 3 ratchet iterations; TBR depth 3; max. 3 hits; k = profile.</code></pre>
-<pre><code>## → 2021-09-17 16:19:31: Score to beat: 512.118</code></pre>
-<pre><code>## → Ratchet iteration 1 @ 16:19:31; score to beat: 512.118</code></pre>
-<pre><code>## → Ratchet iteration 2 @ 16:19:32; score to beat: 512.118</code></pre>
-<pre><code>## → Ratchet iteration 3 @ 16:19:34; score to beat: 512.118</code></pre>
-<pre><code>## </code></pre>
-<pre><code>## ── Sample local optimum ────────────────────────────────────────────────────────</code></pre>
-<pre><code>## → TBR depth 3; keeping 8 trees; k = profile</code></pre>
-<pre><code>## ℹ 2021-09-17 16:19:35: Score: 512.118</code></pre>
-<pre><code>## ✔ 2021-09-17 16:19:36: Tree search terminated with score 512.118</code></pre>
+<p>We search for trees with a better score using TBR rearrangements and the parsimony ratchet <span class="citation">(Nixon, 1999)</span>:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">betterTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">myMatrix</span>, <span class="va">additionTree</span>, concavity <span class="op">=</span> <span class="st">'profile'</span>,
+                                 ratchIter <span class="op">=</span> <span class="fl">3</span>, tbrIter <span class="op">=</span> <span class="fl">3</span>, maxHits <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></code></pre></div>
 <p>We’ve used very low values of <code>ratchIter</code>, <code>tbrIter</code> and <code>maxHits</code> for a rapid run, so this is not necessarily a thorough enough search to find a globally optimal tree. Nevertheless, let’s see the resultant tree, and its score:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/IWScore.html">TreeLength</a></span><span class="op">(</span><span class="va">betterTrees</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span></code></pre></div>
 <pre><code>## [1] 512.1181</code></pre>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span><span class="op">(</span><span class="va">betterTrees</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="profile_files/figure-html/Ratchet-search-results-1.png" width="700"></p>
@@ -197,39 +185,19 @@
 <a href="#view-the-results" class="anchor"></a>View the results</h2>
 <p>In parsimony search, it is good practice to consider trees that are slightly suboptimal <span class="citation">(Smith, 2019)</span>.</p>
 <p>Here, we’ll take a consensus that includes all trees that are suboptimal by up to 3 bits. To sample this region of tree space well, the trick is to use large values of <code>ratchHits</code> and <code>ratchIter</code>, and small values of <code>searchHits</code> and <code>searchiter</code>, so that many runs don’t quite hit the optimal tree. In a serious study, you would want to sample many more than the 3 Ratchet hits (<code>ratchHits</code>) we’ll settle for here, probably using many more Ratchet iterations.</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">suboptimals</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">myMatrix</span>, <span class="va">betterTrees</span>, tolerance <span class="op">=</span> <span class="fl">3</span>,
                                  ratchIter <span class="op">=</span> <span class="fl">2</span>, tbrIter <span class="op">=</span> <span class="fl">3</span>,
                                  maxHits <span class="op">=</span> <span class="fl">25</span>,
                                  concavity <span class="op">=</span> <span class="st">'profile'</span><span class="op">)</span></code></pre></div>
-<pre><code>## ℹ Starting search from `tree[[1]]`</code></pre>
-<pre><code>## </code></pre>
-<pre><code>## ── Find local optimum ──────────────────────────────────────────────────────────</code></pre>
-<pre><code>## →  TBR depth 6; keeping max 25 trees; k = profile.</code></pre>
-<pre><code>## ℹ 2021-09-17 16:19:37: Score to beat: 512.118</code></pre>
-<pre><code>## </code></pre>
-<pre><code>## ── Escape local optimum ────────────────────────────────────────────────────────</code></pre>
-<pre><code>## → 2 ratchet iterations; TBR depth 3; max. 9 hits; k = profile.</code></pre>
-<pre><code>## → 2021-09-17 16:19:37: Score to beat: 512.118</code></pre>
-<pre><code>## → Ratchet iteration 1 @ 16:19:37; score to beat: 512.118</code></pre>
-<pre><code>## → Ratchet iteration 2 @ 16:19:39; score to beat: 512.118</code></pre>
-<pre><code>## </code></pre>
-<pre><code>## ── Sample local optimum ────────────────────────────────────────────────────────</code></pre>
-<pre><code>## → TBR depth 3; keeping 25 trees; k = profile</code></pre>
-<pre><code>## ℹ 2021-09-17 16:19:40: Score: 512.118</code></pre>
-<pre><code>## ✔ 2021-09-17 16:19:41: Tree search terminated with score 512.118</code></pre>
 <p>The consensus of these slightly suboptimal trees provides a less resolved, but typically more reliable, summary of the signal with the phylogenetic dataset <span class="citation">(Smith, 2019)</span>:</p>
-<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/table.html">table</a></span><span class="op">(</span><span class="fu"><a href="../reference/IWScore.html">TreeLength</a></span><span class="op">(</span><span class="va">suboptimals</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/base/table.html">table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html">signif</a></span><span class="op">(</span><span class="fu"><a href="../reference/IWScore.html">TreeLength</a></span><span class="op">(</span><span class="va">suboptimals</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <pre><code>## 
-## 512.118094276785 513.228703293813 513.896916938225 513.965548683427 
-##                1                1                1                3 
-## 514.739207971376 514.848929950505 515.249394268718 515.679838675981 
-##                1                1                3                1 
-## 515.959538967533 
-##                1</code></pre>
-<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+## 512.118 513.229 513.897 513.966 514.739 514.849 
+##       1       1       1       3       1       1</code></pre>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html">consensus</a></span><span class="op">(</span><span class="va">suboptimals</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="profile_files/figure-html/Plot%20suboptimal%20consensus-1.png" width="700"></p>
 </div>
