@@ -63,6 +63,7 @@ test_that("QuartetConcordance() handles ambiguity", {
                       0, 0, '?', 0, 1, '(12)', 0, 1, '(12)', 1, 1, '(12)',
                       0, 0, '?', 0, 0, '?', 1, 1, '?', 2, 2, '?',
                       0, 0, '?', 0, 0, '?', 0, 0, '-', 0, 0, '-',
+                      rep('?', 12),
                       0, 1, '?', 2, 3, '?', 0, 1, '-', 2, 3, '-'), 12,
                     dimnames = list(paste0('t', 1:12), NULL))
   dat <- MatrixToPhyDat(mataset)
