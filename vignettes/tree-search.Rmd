@@ -41,7 +41,7 @@ in tree space:
 ![Evaluating search progress using tree space](gui_space.png)
 
 Map characters on a chosen tree, using character and taxon notes imported from
-a Nexus file, if present.  (This is designed to be interopable with
+a Nexus file, if present.  (This is designed to be interoperable with
 [MorphoBank](https://morphobank.org) matrices.)
 
 ![Mapping character reconstructions](gui_char.png)
