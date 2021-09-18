@@ -325,29 +325,7 @@ to give more meaningful results.</p></td>
     <tr>
       <th>proportion</th>
       <td><p>Numeric between 0 and 1 specifying what proportion of
-characters to retain under jackknife resampling.</p>
-<p>Note that bootstrap support is a measure of the amount of data supporting
-a split, rather than the amount of confidence that should be afforded the
-grouping.
-"Bootstrap support of 100% is not enough, the tree must also be correct"
-(Phillips et al. 2004)
-.
-See discussion in Egan (2006)
-;
-Wagele et al. (2009)
-;
-(Simmons and Freudenstein 2011)
-;
-Kumar et al. (2012)
-.</p>
-<p>For a discussion of suitable search parameters in resampling estimates, see
-Muller (2005)
-.
-The user should decide whether to start each resampling
-from the optimal tree (which may be quicker, but result in overestimated
-support values as searches get stuck in local optima close to the
-optimal tree) or a random tree (which may take longer as more rearrangements
-are necessary to find an optimal tree on each iteration).</p></td>
+characters to retain under jackknife resampling.</p></td>
     </tr>
     <tr>
       <th>...</th>
@@ -383,6 +361,33 @@ the 'shiny' graphical user interface app (type <code>EasyTrees()</code> to launc
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
 <a href='https://ms609.github.io/TreeSearch/'>package documentation</a>.</p>
+    <h2 class="hasAnchor" id="resampling"><a class="anchor" href="#resampling"></a>Resampling</h2>
+
+    
+
+<p>Note that bootstrap support is a measure of the amount of data supporting
+a split, rather than the amount of confidence that should be afforded the
+grouping.
+"Bootstrap support of 100% is not enough, the tree must also be correct"
+(Phillips et al. 2004)
+.
+See discussion in Egan (2006)
+;
+Wagele et al. (2009)
+;
+(Simmons and Freudenstein 2011)
+;
+Kumar et al. (2012)
+.</p>
+<p>For a discussion of suitable search parameters in resampling estimates, see
+Muller (2005)
+.
+The user should decide whether to start each resampling
+from the optimal tree (which may be quicker, but result in overestimated
+support values as searches get stuck in local optima close to the
+optimal tree) or a random tree (which may take longer as more rearrangements
+are necessary to find an optimal tree on each iteration).</p>
+<p>For other ways to estimate clade concordance, see <code><a href='SiteConcordance.html'>SiteConcordance()</a></code>.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>Brazeau MD, Guillerme T, Smith MR (2019).
@@ -463,8 +468,8 @@ doi: <a href='https://doi.org/10.1186/1742-9994-6-12'>10.1186/1742-9994-6-12</a>
 <span class='r-msg co'><span class='r-pr'>#&gt;</span> </span>
 <span class='r-msg co'><span class='r-pr'>#&gt;</span> <span style='color: #00BBBB;'>──</span> <span style='font-weight: bold;'>Sample local optimum</span> <span style='color: #00BBBB;'>────────────────────────────────────────────────────────</span></span>
 <span class='r-msg co'><span class='r-pr'>#&gt;</span> → TBR depth 1; keeping 4 trees; k = 10</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> <span style='color: #00BBBB;'>ℹ</span> 2021-09-17 16:33:28: Score: 12.2407</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> <span style='color: #00BB00;'>✔</span> 2021-09-17 16:33:29: Tree search terminated with score <span style='font-weight: bold;'>12.0027</span></span>
+<span class='r-msg co'><span class='r-pr'>#&gt;</span> <span style='color: #00BBBB;'>ℹ</span> 2021-09-18 08:57:46: Score: 12.2407</span>
+<span class='r-msg co'><span class='r-pr'>#&gt;</span> <span style='color: #00BB00;'>✔</span> 2021-09-18 08:57:46: Tree search terminated with score <span style='font-weight: bold;'>12.0027</span></span>
 <span class='r-in'></span>
 <span class='r-in'><span class='co'># In actual use, be sure to check that the score has converged on a global</span></span>
 <span class='r-in'><span class='co'># optimum, conducting additional iterations and runs as necessary.</span></span>
@@ -503,7 +508,7 @@ doi: <a href='https://doi.org/10.1186/1742-9994-6-12'>10.1186/1742-9994-6-12</a>
 <span class='r-in'>  dimnames <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>letters</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>6</span><span class='op'>]</span>, <span class='cn'>NULL</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span></span>
 <span class='r-in'><span class='fu'>MaximizeParsimony</span><span class='op'>(</span><span class='va'>characters</span>, constraint <span class='op'>=</span> <span class='va'>constraint</span>, verbosity <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span></span>
 <span class='r-msg co'><span class='r-pr'>#&gt;</span> <span style='color: #00BB00;'>✔</span> Initialized 1 distinct constraints.</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> → 2021-09-17 16:33:29: Score to beat: <span style='font-weight: bold;'>3</span></span>
+<span class='r-msg co'><span class='r-pr'>#&gt;</span> → 2021-09-18 08:57:47: Score to beat: <span style='font-weight: bold;'>3</span></span>
 <span class='r-out co'><span class='r-pr'>#&gt;</span> 1 phylogenetic tree</span>
 <span class='r-in'></span>
 </pre>
