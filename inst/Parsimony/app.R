@@ -287,7 +287,8 @@ ui <- fluidPage(theme = 'app.css',
                       min = 2, max = 12, step = 1, width = 200),
           selectInput('spaceCol', "Colour trees by:",
                       list('Cluster membership' = 'clust',
-                           'Parsimony score' = 'score')),
+                           'Parsimony score' = 'score',
+                           'When first found' = 'firstHit')),
           selectInput('spacePch', "Plotting symbol:",
                       selected = 'relat',
                       list('Cluster membership' = 'clust',
@@ -553,7 +554,7 @@ server <- function(input, output, session) {
       }
       PutData(r$dataset)
       PutTree(startTree)
-      r$trees <- withProgress(c(MaximizeParsimony(r$dataset,
+      results <- withProgress(MaximizeParsimony(r$dataset,
                                      tree = startTree,
                                      concavity = concavity(),
                                      ratchIter = input$ratchIter,
@@ -561,12 +562,19 @@ server <- function(input, output, session) {
                                      maxHits = ceiling(10 ^ input$maxHits),
                                      startIter = input$startIter,
                                      finalIter = input$finalIter,
-                                     verbosity = 4L)),
+                                     verbosity = 4L),
                               value = 0.85,
                               message = 'Finding MPT',
                               detail = paste0(ceiling(10^input$maxHits),
                                               ' hits; ', wtType()))
-      
+      if (inherits(results, 'phylo')) {
+        r$trees <- list(results)
+        attr(r$trees, 'firstHit') <- attr(results, 'firstHit')
+        attr(r$trees[[1]], 'firstHit') <- NULL
+      } else {
+        r$trees <- results
+      }
+      dput(attributes(r$trees))
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
       output$results <- renderText(paste0(
@@ -914,7 +922,8 @@ server <- function(input, output, session) {
       return()
     }
     dstnc <- distances()
-    mppng <- mapping()[, seq_len(dims())]
+    mppng <- mapping()
+    mppng <- mapping()[, seq_len(min(dim(mppng)[2], dims()))]
     future_promise(TreeDist::MappingQuality(dstnc, dist(mppng))['TxC'],
                    seed = NULL) %...>% QualityPlot
   })
@@ -1039,6 +1048,16 @@ server <- function(input, output, session) {
   # Plot settings: point style
   ##############################################################################
 
+  firstHit <- reactive({attr(r$trees, 'firstHit')})
+  
+  firstHitCols <- reactive({
+    if (is.null(firstHit())) {
+      palettes[[1]]
+    } else {
+      hcl.colors(length(firstHit()), 'viridis')
+    }
+  })
+  
   treeCols <- reactive({
     switch(
       input$spaceCol,
@@ -1057,6 +1076,14 @@ server <- function(input, output, session) {
           norm <- scores() - min(scores())
           norm <- (length(badToGood) - 1L) * norm / max(norm)
           badToGood[1 + norm]
+        }
+      }, 'firstHit' = {
+        if (is.null(firstHit())) {
+          showNotification("Data not available; were trees loaded from file?",
+                           type = "warning")
+          palettes[[1]]
+        } else {
+          rep(firstHitCols(), firstHit())
         }
       },
       'black'
@@ -1207,11 +1234,15 @@ server <- function(input, output, session) {
           text(proj[, j], proj[, i], thinnedTrees())
         }
       }
+      if (nDim > 2) plot.new()
       if (input$spacePch == 'relat' && length(input$relators) == 4L) {
-        if (nDim > 2) plot.new()
         legend(bty = 'n', 'topright', pch = 1:3, xpd = NA,
                gsub("_", " ", fixed = TRUE,
                     paste(input$relators[2:4], "&", input$relators[[1]])))
+      }
+      if (input$spaceCol == 'firstHit' && length(firstHit())) {
+        legend(bty = 'n', 'topleft', pch = 16, col = firstHitCols(),
+               names(firstHit()), title = 'Iteration first hit')
       }
     })
   }
