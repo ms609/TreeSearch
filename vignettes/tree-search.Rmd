@@ -33,12 +33,12 @@ explore the distribution of most parsimonious trees in tree space.
 
 View a consensus tree and explore the position of rogue taxa:
 
-![Viewing search result consensus with rogue taxa](gui_rogue.png)
+![Visualizing position of rogue taxon on search result consensus tree](gui_rogue.png)
 
 Explore the distribution of trees (whether found by search or loaded from file)
 in tree space:
 
-![Tree space analysis](gui_space.png)
+![Evaluating search progress using tree space](gui_space.png)
 
 Map characters on a chosen tree, using character and taxon notes imported from
 a Nexus file, if present.  (This is designed to be interopable with
