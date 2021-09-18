@@ -749,12 +749,15 @@ MaximizeParsimony <- function (dataset, tree,
 }
 
 #' @rdname MaximizeParsimony
+#' 
 #' @param method Unambiguous abbreviation of `jackknife` or `bootstrap` 
 #' specifying how to resample characters.  Note that jackknife is considered
 #' to give more meaningful results.
+#' 
 #' @param proportion Numeric between 0 and 1 specifying what proportion of 
 #' characters to retain under jackknife resampling.
 #' 
+#' @section Resampling:
 #' Note that bootstrap support is a measure of the amount of data supporting
 #' a split, rather than the amount of confidence that should be afforded the
 #' grouping.
@@ -772,6 +775,8 @@ MaximizeParsimony <- function (dataset, tree,
 #' support values as searches get stuck in local optima close to the 
 #' optimal tree) or a random tree (which may take longer as more rearrangements
 #' are necessary to find an optimal tree on each iteration).
+#' 
+#' For other ways to estimate clade concordance, see [`SiteConcordance()`].
 #' 
 #' @return `Resample()` returns a `multiPhylo` object containing a list of
 #' trees obtained by tree search using a resampled version of `dataset`.
