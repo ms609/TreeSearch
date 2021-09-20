@@ -14,9 +14,18 @@
 
 
 ## R CMD check results
-There were no ERRORs, WARNINGs or NOTEs.
+There were no ERRORs or WARNINGs.
 
+There was one NOTE:
 
+> Found the following (possibly) invalid URLs:
+>   URL: http://www.ncbi.nlm.nih.gov/pubmed/12116579 (moved to  https://pubmed.ncbi.nlm.nih.gov/12116579/)
+>     From: man/TreeLength.Rd
+>     Status: 200
+>     Message: OK
+
+This URL is generated from the pmid field of a bibtex entry (by Rdpack?) so
+cannot be edited manually.
 
 ## Downstream dependencies
 
