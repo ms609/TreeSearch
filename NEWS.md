@@ -1,12 +1,13 @@
 # TreeSearch 0.99.0
 
+Preview release of v1.0.0.
+
 ## New functions
  - `EasyTrees()` 'shiny' graphical user interface for tree search
  - `AdditionTree()` adds each taxon in sequence to the most parsimonious place
    on the tree, generating a more parsimonious starting tree than
    neighbour-joining
  - `PlotCharacter()` reconstructs character distributions on trees
- - `TipInstability()` identifies possible rogue taxa
  - `ConstrainedNJ()` constructs starting trees that respect a constraint
  - `ImposeConstraint()` reconciles a tree with a constraint
  - `SiteConcordance()` calculates exact site concordance
@@ -16,8 +17,8 @@
    multiple applicable tokens are present
  - `Resample()` conducts bootstrap and jackknife resampling
  - `Consistency()` calculates consistency and retention 'indices'
- - `MinimumLength()` and `MaximumLength()` calculate range of possible lengths
-   of characters in a dataset on any tree
+ - `MinimumLength()` calculates minimum length of character in a dataset on any
+   tree.
 
 ## Improvements
  - `TreeLength()` supports lists of trees

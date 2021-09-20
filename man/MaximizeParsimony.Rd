@@ -242,6 +242,8 @@ MaximizeParsimony(characters, constraint = constraint, verbosity = 0)
 \insertAllCited{}
 }
 \seealso{
+Tree search \emph{via} graphical user interface: \code{\link[=EasyTrees]{EasyTrees()}}
+
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},

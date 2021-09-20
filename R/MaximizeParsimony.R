@@ -163,6 +163,9 @@
 #' NTip
 #' @references
 #' \insertAllCited{}
+#' @seealso
+#' Tree search _via_ graphical user interface: [`EasyTrees()`]
+#' 
 #' @encoding UTF-8
 #' @export
 MaximizeParsimony <- function (dataset, tree,
