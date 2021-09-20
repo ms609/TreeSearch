@@ -30,7 +30,7 @@ cannot be edited manually.
 ## Downstream dependencies
 
 Reverse dependencies have been checked using "revdepcheck" on
-[GitHub Actions](https://github.com/ms609/TreeTools/actions/workflows/revdep.yml).
+[GitHub Actions](https://github.com/ms609/TreeSearch/actions/workflows/revdep.yml).
 
 There are currently two downstream dependencies for this package
 (and I maintain both).

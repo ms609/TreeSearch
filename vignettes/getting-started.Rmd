@@ -22,14 +22,14 @@ To use "TreeSearch" you will first need to [install R](https://CRAN.R-project.or
 ([overview](https://dss.princeton.edu/training/RStudio101.pdf)) is a popular
 front-end that makes several of R's features easier to use.
 
-The 'TreeSearch' package can be installed as any other package. 
+The "TreeSearch" package can be installed as any other package. 
 To get the latest stable version from CRAN, type
 ```r
 install.packages('TreeSearch')
 ```
 into the R (or RStudio) command line.
 
-Once installed, load the 'TreeSearch' package into R using
+Once installed, load the "TreeSearch" package into R using
 ```r
 library('TreeSearch')
 ```

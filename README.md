@@ -22,28 +22,37 @@ Smith (2019) using the "Morphy" C library (Brazeau _et al_. 2017), and
 implements implied weighting (Goloboff, 1993),
 Profile Parsimony (Faith and Trueman, 2001)
 and Successive Approximations (Farris, 1969).
-Custom optimality criteria and search approaches can be defined.
+[Custom optimality criteria](https://ms609.github.io/TreeSearch/articles/custom.html)
+and search approaches can be defined.
 
 
 # Installation
 
-<!--Install and load the stable version from CRAN, and launch the GUI, as follows:-->
+Full installation instructions, including notes on installing R, are available
+in a [vignette](https://ms609.github.io/TreeSearch/articles/getting-started.html).
+
 Install and load the stable version from CRAN as follows:
+
 ```r
 install.packages('TreeSearch')
 library('TreeSearch')
 ```
-<!--EasyTrees()-->
 
-The development release incorporates a major reworking of the search interface,
-allowing faster and more intuitive tree search.
-
-Install the development version and launch the GUI with:
+Some features available through the GUI require versions of packages scheduled
+for release to CRAN in late 2021.  Until then, you can install them using:
 ```r
-if(!require(devtools)) install.packages("devtools")
-devtools::install_github('ms609/TreeSearch')
+if(!require("remotes")) install.packages("remotes")
+if (packageVersion("ape" < "5.5.2")) 
+  remotes::install_github("emmanuelparadis/ape")
+if (packageVersion("TreeTools") < "1.5.0.9100")
+  remotes::install_github("ms609/TreeTools")
+```
+
+Install the development version of "TreeSearch" with:
+
+```r
+remotes::install_github('ms609/TreeSearch')
 library("TreeSearch")
-EasyTrees()
 ```
 
 # Quick start
