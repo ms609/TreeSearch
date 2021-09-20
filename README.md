@@ -8,11 +8,22 @@
 -->
 [![Project Status: Active – – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
-This package implements maximum parsimony tree search in R, 
-using the Brazeau, Guillerme & Smith (2019) approach to inapplicable data,
-as implemented in the Morphy C library (Brazeau _et al_. 2017).
-Implied weighting, profile parsimony and heuristic searches are implemented;
-a graphical user interface is available.
+Search for phylogenetic trees that are optimal using a user-defined criterion.
+
+"TreeSearch" is an R package that contains a "shiny" user interface for 
+interactive tree search and exploration of results, including character
+visualization,
+[rogue taxon detection](https://ms609.github.io/Rogue),
+[tree space mapping](https://ms609.github.io/TreeDist),
+and cluster consensus trees.
+
+It handles inapplicable data using the algorithm of Brazeau, Guillerme and
+Smith (2019) using the "Morphy" C library (Brazeau _et al_. 2017), and
+implements implied weighting (Goloboff, 1993),
+Profile Parsimony (Faith and Trueman, 2001)
+and Successive Approximations (Farris, 1969).
+Custom optimality criteria and search approaches can be defined.
+
 
 # Installation
 
@@ -41,17 +52,6 @@ Launch a graphical user interface (development version only)
 by typing `TreeSearch::EasyTrees()` in the R console.
 
 For more control over search settings, see [`?MaximizeParsimony()`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
-
-# Optimality criteria
-
-"TreeSearch" allows the implementation of various optimality criteria, including
-
-- Fitch parsimony with inapplicable data (Brazeau, Guillerme and Smith, 2019)
-- Implied weighting (Goloboff 1993)
-- The Profile Parsimony approach introduced by Faith and Trueman (2001)
-- Successive Approximations weighting (Farris 1969)
-
-It is also possible to specify bespoke optimality criteria.
 
 
 # Documentation
