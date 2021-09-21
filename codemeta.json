@@ -15,7 +15,7 @@
   ],
   "issueTracker": "https://github.com/ms609/TreeSearch/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "0.99.0",
+  "version": "1.0.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -413,5 +413,5 @@
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
     }
   ],
-  "fileSize": "2141.92KB"
+  "fileSize": "2141.39KB"
 }

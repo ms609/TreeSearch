@@ -1,6 +1,4 @@
-# TreeSearch 0.99.0
-
-Preview release of v1.0.0.
+# TreeSearch 1.0.0
 
 ## New functions
  - `EasyTrees()` 'shiny' graphical user interface for tree search
@@ -32,7 +30,7 @@ Preview release of v1.0.0.
  
 ## Deprecations
 
- - Remove redundant internal function `LogisticPoints()`.
+ - Remove redundant internal function `LogisticPoints()`
 
 # TreeSearch 0.4.3
 
