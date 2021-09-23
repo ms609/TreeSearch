@@ -335,13 +335,13 @@ List all_spr (const IntegerMatrix edge,
     root_node = n_tip + 1
   ;
   if (n_edge < 5) {
-    throw std::invalid_argument("No SPR rearrangements possible on a tree with < 5 edges");
+    Rf_error("No SPR rearrangements possible on a tree with < 5 edges");
   }
   if (edge(0, 0) != root_node) {
-    throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+    Rf_error("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
   }
   if (edge(1, 0) != root_node) {
-    throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+    Rf_error("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   }
   
   IntegerVector break_seq;
@@ -383,17 +383,16 @@ List all_spr (const IntegerMatrix edge,
   
   
   List ret = List::create();
-  Function warning("warning");
   
   // Let's go.
   for (int16 i = break_seq.length(); i--; ) {
     IntegerMatrix two_bits = clone(edge);
     if (break_seq[i] > n_edge) {
-      warning("Ignoring SPR break locations that exceed number of edges in tree.\n");
+      Rf_warning("Ignoring SPR break locations that exceed number of edges in tree.\n");
       continue;
     }
     if (break_seq[i] < 2) {
-      warning("Ignoring break locations < 2");
+      Rf_warning("Ignoring break locations < 2");
       continue;
     }
     const int16
@@ -526,17 +525,16 @@ List all_tbr (const IntegerMatrix edge,
   
   
   List ret = List::create();
-  Function warning("warning");
   
   // Let's go.
   for (int16 i = break_seq.length(); i--; ) {
     IntegerMatrix two_bits = clone(edge);
     if (break_seq[i] > n_edge) {
-      warning("Ignoring TBR break locations that exceed number of edges in tree.\n");
+      Rf_warning("Ignoring TBR break locations that exceed number of edges in tree.\n");
       continue;
     }
     if (break_seq[i] < 2) {
-      warning("Ignoring break locations < 2");
+      Rf_warning("Ignoring break locations < 2");
       continue;
     }
     const int16
