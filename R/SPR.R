@@ -100,7 +100,7 @@ SPRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   if (edge[1] != rootNode) {
     stop("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
   }
-  if (edge[2] != root_node) {
+  if (edge[2] != rootNode) {
     stop("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   }
   # Return:
