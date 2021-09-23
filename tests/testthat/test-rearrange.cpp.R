@@ -66,11 +66,13 @@ test_that("SPR fails gracefully", {
 })
 
 test_that("SPR works", {
+  dput(" - SPR1 ")
   t2 <- as.phylo(518, 7) # (t1, ((t2, t3), ((t4, t5), (t6, t7))))
   expect_equal(8, length(all_spr(t2$edge, 2)))
   
   tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
 
+  dput(" - SPR Single tip ")
   # Move single tip
   expect_equal(8, length(all_spr(tr$edge, 12)))
   expect_equal(8, length(all_spr(tr$edge, 11)))
@@ -80,15 +82,18 @@ test_that("SPR works", {
   expect_equal(8, length(all_spr(tr$edge, 3)))
   expect_equal(8, length(all_spr(tr$edge, 2)))
   
+  dput(" - SPR Cherry ")
   # Move cherry
   expect_equal(6, length(all_spr(tr$edge, 9)))
   expect_equal(6, length(all_spr(tr$edge, 5)))
   expect_equal(12, length(all_spr(tr$edge, c(9, 5))))
   
+  dput(" - SPR Bush ")
   # Move more
   expect_equal(0, length(unique(all_spr(tr$edge, 4))))
   expect_equal(4, length(unique(all_spr(tr$edge, 8))))
   
+  dput(" - SPR All ")
   # All moves
   expect_equal(7*8 + 2*6 + 4, length(all_spr(tr$edge, integer(0))))
   uniqueMoves <- length(unique(all_spr(tr$edge, integer(0))))
@@ -96,6 +101,7 @@ test_that("SPR works", {
                uniqueMoves)
   expect_equal(uniqueMoves, length(SPRMoves(tr)))
   
+  dput(" - SPR Clear ")
   tr <- Preorder(root(TreeTools::BalancedTree(14), 't1', resolve.root = TRUE))
   tr$edge
   desc <- TreeTools::CladeSizes(tr)
@@ -121,6 +127,7 @@ test_that("SPR works", {
   expect_equal(SPRMoves(tr)[[54]]$edge, SPRMoves(tr$edge)[[54]])
 })
 
+# TODO Restore or delete
 if (FALSE) test_that("SPR works", {
   testTree <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
   plot(testTree); nodelabels(); edgelabels()
