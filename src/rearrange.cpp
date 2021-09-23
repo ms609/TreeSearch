@@ -308,14 +308,14 @@ inline int16 edge_above(const int16 vert, unique_ptr<int16[]> &parent_edge) {
   return parent_edge[vert - 1];
 }
 
-inline void fuse_and_add (const IntegerMatrix& tree_bits, List& ret, 
+inline IntegerMatrix fuse(const IntegerMatrix& tree_bits,
                           const int16* graft_edge, const int16* break_edge, 
                           const int16* spare_edge, const int16* spare_node) {
   IntegerMatrix new_tree = clone(tree_bits);
   new_tree(*spare_edge, 1) = tree_bits(*graft_edge, 1);
   new_tree(*graft_edge, 1) = *spare_node;
   new_tree(*break_edge, 0) = *spare_node;
-  ret.push_back(clone(TreeTools::preorder_edges_and_nodes(new_tree(_, 0), new_tree(_, 1))));
+  return TreeTools::preorder_edges_and_nodes(new_tree(_, 0), new_tree(_, 1));
 }
 
 
@@ -461,8 +461,8 @@ List all_spr (const IntegerMatrix edge,
         } else if (graft_edge == edge_above(break_parent, parent_edge)) {
           continue;
         }
-        fuse_and_add(two_bits, ret, &graft_edge, &break_edge, &spare_edge,
-                     &spare_node);
+        ret.push_back(fuse(two_bits, &graft_edge, &break_edge, &spare_edge,
+                           &spare_node));
         if (graft_edge < 0) break; // TODO REMOVE
       }
     }
@@ -570,8 +570,8 @@ List all_tbr (const IntegerMatrix edge,
         } else if (graft_edge == edge_above(break_parent, parent_edge)) {
           continue;
         }
-        fuse_and_add(two_bits, ret, &graft_edge, &break_edge, &spare_edge,
-                     &spare_node);
+        ret.push_back(fuse(two_bits, &graft_edge, &break_edge, &spare_edge,
+                           &spare_node));
       }
     } else {
       List rooty_bits = List::create();
@@ -614,12 +614,12 @@ List all_tbr (const IntegerMatrix edge,
         }
         for (List::iterator j = rooty_bits.begin(); j != rooty_bits.end(); j++) {
           IntegerMatrix rooty_bit = *j;
-          fuse_and_add(rooty_bit, ret, &graft_edge, &break_edge, &spare_edge,
-                       &spare_node);
+          ret.push_back(fuse(rooty_bit, &graft_edge, &break_edge, &spare_edge,
+                             &spare_node));
         }
         if (graft_edge != edge_above(break_parent, parent_edge)) {
-          fuse_and_add(two_bits, ret, &graft_edge, &break_edge, &spare_edge,
-                       &spare_node);
+          ret.push_back(fuse(two_bits, &graft_edge, &break_edge, &spare_edge,
+                             &spare_node));
         }
       }
     }
