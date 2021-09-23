@@ -333,13 +333,13 @@ List all_spr (const IntegerMatrix edge,
     root_node = n_tip + 1
   ;
   if (n_edge < 5) {
-    Rf_error("No SPR rearrangements possible on a tree with < 5 edges");
+    throw std::length_error("No SPR rearrangements possible on a tree with < 5 edges");
   }
   if (edge(0, 0) != root_node) {
-    Rf_error("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+    throw std::length_error("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
   }
   if (edge(1, 0) != root_node) {
-    Rf_error("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+    throw std::length_error("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   }
   
   IntegerVector break_seq;
