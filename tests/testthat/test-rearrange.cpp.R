@@ -19,6 +19,7 @@ test_that("SPR errors", {
 })
 
 test_that("TBR working", {
+  skip_if(TRUE)
   tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
 
   # Move single tip
@@ -63,9 +64,13 @@ test_that("TBR working", {
 })
 
 test_that("SPR fails gracefully", {
+  dput("SPR Grace 1")
   expect_error(all_spr(as.phylo(1, 3)$edge, integer(0)))
+  dput("SPR Grace 2")
   expect_error(all_spr(Postorder(as.phylo(1, 6))$edge, integer(0)))
+  dput("SPR Grace 3")
   expect_error(all_spr(SortTree(as.phylo(1, 6))$edge, integer(0)))
+  dput("SPR Grace Completed.")
 })
 
 test_that("SPR works", {
