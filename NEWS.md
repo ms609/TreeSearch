@@ -1,3 +1,8 @@
+# TreeSearch 1.0.1
+
+- Memory management in RANDOMTREESCORE
+- Corrections to metadata
+
 # TreeSearch 1.0.0
 
 ## New functions
@@ -29,21 +34,24 @@
  - Improved command line interface for search progress messaging
  
 ## Deprecations
-
  - Remove redundant internal function `LogisticPoints()`
+
 
 # TreeSearch 0.4.3
 
  - Update tests for compatibility with 'TreeTools' v1.1.0
  - Improve memory and pointer handling
  
+ 
 # TreeSearch 0.4.2
 
  - Update tests for compatibility with 'TreeTools' v1.1.0
 
+
 # TreeSearch 0.4.1
 
  - Compatibility with 'TreeTools' v1.0.0
+
 
 # TreeSearch 0.4.0
 
@@ -79,6 +87,7 @@
 ## Bug fixes
  - Check whether input tree is bifurcating before attempting rearrangements,
    to avoid crashes on unsupported input
+
 
 # TreeSearch 0.3.0
 
