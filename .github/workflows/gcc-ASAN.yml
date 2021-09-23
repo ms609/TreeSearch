@@ -5,11 +5,12 @@ on:
       - main
       - master
     paths:
+      - '.github/workflows/gcc-ASAN.yml'
       - 'src/**'
       - 'inst/include/**'
       - 'memcheck/**'
-      - 'tests/testthat/**'
-      - 'vignettes/**'
+      - 'tests/testthat/**.R'
+      - 'vignettes/**.Rmd'
   pull_request:
     branches:
       - main
@@ -19,8 +20,8 @@ on:
       - 'src/**'
       - 'inst/include/**'
       - 'memcheck/**'
-      - 'tests/testthat/**'
-      - 'vignettes/**'
+      - 'tests/testthat/**.R'
+      - 'vignettes/**.Rmd'
 
 name: gcc-ASAN
 
@@ -78,16 +79,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          if (FALSE) remotes::install_github('emmanuelparadis/ape')
-          if (FALSE && "${{ matrix.config.test }}" == 'tests') {
-            remotes::install_github('r-lib/brio#20') # brio mem leak
-          }
           remotes::install_deps(dependencies = c('soft', 'Config/Needs/memcheck'))
         shell: Rscript {0}
 
       - name: Create Makevars
         run: |
-          echo "PKG_CXXFLAGS = -fsanitize=address -shared-libasan -g" > src/Makevars
+          echo "PKG_CXXFLAGS = -fsanitize=address -g" > src/Makevars
           echo "LDFLAGS = -fsanitize=address" >> src/Makevars
           echo "LD_PRELOAD=libclang_rt.asan.so" >> src/Makevars
 
