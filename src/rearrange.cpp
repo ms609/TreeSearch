@@ -309,9 +309,9 @@ inline int16 edge_above(const int16 vert, unique_ptr<int16[]> &parent_edge) {
   return parent_edge[vert - 1];
 }
 
-inline IntegerMatrix fuse (const IntegerMatrix& tree_bits,
-                           const int16* graft_edge, const int16* break_edge, 
-                           const int16* spare_edge, const int16* spare_node) {
+inline IntegerMatrix fuse(const IntegerMatrix& tree_bits,
+                          const int16* graft_edge, const int16* break_edge, 
+                          const int16* spare_edge, const int16* spare_node) {
   IntegerMatrix new_tree = clone(tree_bits);
   new_tree(*spare_edge, 1) = tree_bits(*graft_edge, 1);
   new_tree(*graft_edge, 1) = *spare_node;
@@ -461,7 +461,7 @@ List all_spr (const IntegerMatrix edge,
         } else if (graft_edge == edge_above(break_parent, parent_edge)) {
           continue;
         }
-        ret.push_back(fuse(two_bits, graft_edge, &break_edge, &spare_edge,
+        ret.push_back(fuse(two_bits, &graft_edge, &break_edge, &spare_edge,
                            &spare_node));
         if (graft_edge < 0) break; // TODO REMOVE
       }
