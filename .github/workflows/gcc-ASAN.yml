@@ -72,7 +72,6 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt-get install libasan6
           while read -r cmd
           do
             eval sudo $cmd
