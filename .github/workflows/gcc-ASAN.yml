@@ -63,6 +63,9 @@ jobs:
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
 
+      - name: GCC version
+        run: gcc –version
+
       - name: Cache R packages
         uses: actions/cache@v2
         with:
@@ -72,6 +75,7 @@ jobs:
 
       - name: Install system dependencies
         run: |
+          
           while read -r cmd
           do
             eval sudo $cmd
