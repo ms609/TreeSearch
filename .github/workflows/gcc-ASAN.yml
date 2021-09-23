@@ -75,7 +75,7 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt-get libasan5
+          sudo apt-get install libasan5
           while read -r cmd
           do
             eval sudo $cmd
