@@ -6,11 +6,12 @@ on:
       - main
       - master
     paths:
+      - '.github/workflows/memcheck.yml'
       - 'src/**'
       - 'inst/include/**'
       - 'memcheck/**'
-      - 'tests/testthat/**'
-      - 'vignettes/**'
+      - 'tests/testthat/**.R'
+      - 'vignettes/**.Rmd'
   pull_request:
     branches:
       - main
@@ -20,8 +21,8 @@ on:
       - 'src/**'
       - 'inst/include/**'
       - 'memcheck/**'
-      - 'tests/testthat/**'
-      - 'vignettes/**'
+      - 'tests/testthat/**.R'
+      - 'vignettes/**.Rmd'
 
 name: mem-check
 
@@ -51,6 +52,10 @@ jobs:
       - uses: r-lib/actions/setup-r@v1
         with:
           r-version: release # CRAN uses devel, but takes ages to load deps.
+
+      - name: Setup pandoc
+        if: ${{ matrix.config.test }} == 'vignettes'
+        uses: r-lib/actions/setup-pandoc@master
 
       - name: Query dependencies
         run: |
@@ -86,7 +91,7 @@ jobs:
       - name: Install package
         run: |
           cd ..
-          R CMD build --no-manual --no-resave-data TreeSearch
+          R CMD build --no-manual --no-build-vignettes --no-resave-data TreeSearch
           R CMD INSTALL TreeSearch*.tar.gz
           cd TreeSearch
 
