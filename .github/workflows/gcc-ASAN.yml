@@ -63,9 +63,6 @@ jobs:
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
 
-      - name: GCC version
-        run: gcc --version
-
       - name: Cache R packages
         uses: actions/cache@v2
         with:
@@ -96,6 +93,8 @@ jobs:
           echo "LDFLAGS = -fsanitize=address" >> src/Makevars
           echo "MAIN_LDFLAGS = -fsanitize=address" >> src/Makevars
           echo "SHLIB_LDFLAGS = -fsanitize=address" >> src/Makevars
+          echo "SHLIB_LD = -fsanitize=address" >> src/Makevars
+          echo "SHLIB_LINK = -fsanitize=address" >> src/Makevars
           echo "SHLIB_CFLAGS = -fsanitize=address" >> src/Makevars
           echo "LD_PRELOAD=libclang_rt.asan.so" >> src/Makevars
 
