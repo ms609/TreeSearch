@@ -9,7 +9,6 @@ typedef int_fast16_t int16;
 const int16 UNDEFINED = -1;
 
 // Assumptions: 
-//  * Tree is bifurcating and rooted on a tip; root node is labelled with n_tip + 1
 //  [[Rcpp::export]]
 IntegerMatrix nni(const IntegerMatrix edge,
                   const IntegerVector randomEdge,
@@ -327,6 +326,7 @@ inline void fuse_and_add (const IntegerMatrix& tree_bits, List& ret,
 //  [[Rcpp::export]]
 List all_spr (const IntegerMatrix edge,
               const IntegerVector break_order) {
+  Rcout << "\n\n Running all_spr()";
   const int16
     n_edge = edge.nrow(),
     n_internal = n_edge / 2,
