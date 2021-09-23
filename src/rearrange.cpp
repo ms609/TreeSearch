@@ -332,6 +332,9 @@ List all_spr (const IntegerMatrix edge,
     n_vert = n_internal + n_tip,
     root_node = n_tip + 1
   ;
+  // ASAN reports stack-use-after-scope (false positive?) if we fail here.
+  // So we test for these exceptions in R.
+  // # nocov begin
   if (n_edge < 5) {
     Rf_error("No SPR rearrangements possible on a tree with < 5 edges");
   }
@@ -341,6 +344,7 @@ List all_spr (const IntegerMatrix edge,
   if (edge(1, 0) != root_node) {
     Rf_error("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   }
+  // # nocov end
   
   IntegerVector break_seq;
   if (break_order.length()) {
