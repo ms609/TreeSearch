@@ -87,7 +87,7 @@ jobs:
 
       - name: Create Makevars
         run: |
-          echo "PKG_CXXFLAGS = -fsanitize=address -static-libasan -g" > src/Makevars
+          echo "PKG_CXXFLAGS = -fsanitize=address -shared-libasan -g" > src/Makevars
           echo "LDFLAGS = -fsanitize=address" >> src/Makevars
           echo "LD_PRELOAD=libclang_rt.asan.so" >> src/Makevars
 
