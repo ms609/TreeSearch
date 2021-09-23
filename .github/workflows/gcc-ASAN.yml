@@ -88,10 +88,14 @@ jobs:
 
       - name: Create Makevars
         run: |
-          echo "PKG_CFLAGS = -fsanitize=address -g" > src/Makevars
-          echo "PKG_CXXFLAGS = -fsanitize=address -g" >> src/Makevars
+          echo "CC = gcc -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > src/Makevars
+          echo "PKG_CFLAGS = -fsanitize=address" >> src/Makevars
+          echo "PKG_CXXFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
           echo "PKG_LDFLAGS = -fsanitize=address" >> src/Makevars
           echo "LDFLAGS = -fsanitize=address" >> src/Makevars
+          echo "MAIN_LDFLAGS = -fsanitize=address" >> src/Makevars
+          echo "SHLIB_LDFLAGS = -fsanitize=address" >> src/Makevars
+          echo "SHLIB_CFLAGS = -fsanitize=address" >> src/Makevars
           echo "LD_PRELOAD=libclang_rt.asan.so" >> src/Makevars
 
       - name: Install package
