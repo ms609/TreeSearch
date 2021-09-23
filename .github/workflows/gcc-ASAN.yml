@@ -51,7 +51,7 @@ jobs:
         with:
           r-version: release # CRAN uses devel, but takes ages to load deps.
 
-      - name: pandoc
+      - name: Setup pandoc
         if: ${{ matrix.config.test }} == 'vignettes'
         uses: r-lib/actions/setup-pandoc@master
 
@@ -85,11 +85,16 @@ jobs:
           remotes::install_deps(dependencies = c('soft', 'Config/Needs/memcheck'))
         shell: Rscript {0}
 
+      - name: Create Makevars
+        run: |
+          mkdir ~/.R
+          echo "CC = -lasan -fsanitize=address -static-libasan -g" > ~/.R/Makevars
+
       - name: Install package
         run: |
           cd ..
-          R CMD build --no-build-vignettes --no-manual --no-resave-data --configure-args="-fsanitize=address -static-libasan -g" TreeSearch
-          R CMD INSTALL --configure-args="-lasan -fsanitize=address -static-libasan -g" TreeSearch*.tar.gz
+          R CMD build --no-build-vignettes --no-manual --no-resave-data TreeSearch
+          R CMD INSTALL TreeSearch*.tar.gz
           cd TreeSearch
 
       - name: ASAN - memcheck ${{ matrix.config.test }}
