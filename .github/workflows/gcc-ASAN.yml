@@ -44,16 +44,24 @@ jobs:
       _R_CHECK_FORCE_SUGGESTS_: false
       RSPM: https://packagemanager.rstudio.com/cran/__linux__/focal/latest
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      ASAN_OPTIONS: verify_asan_link_order=0
 
     steps:
       - uses: actions/checkout@v2
 
+      - name: ASan preload
+        run: |
+          gcc -print-file-name=libasan.so
+          GCC_ASAN_PRELOAD=$(gcc -print-file-name=libasan.so)
+          LD_PRELOAD=$(gcc -print-file-name=libasan.so)
+          
+          
       - name: Create Makevars
         run: |
+          
           echo "PKG_CFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
           echo "PKG_CXXFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
           
-          export ASAN_OPTIONS=verify_asan_link_order=0
           
           mkdir ~/.R
           echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
