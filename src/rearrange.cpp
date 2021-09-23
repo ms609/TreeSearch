@@ -341,6 +341,7 @@ List all_spr (const IntegerMatrix edge,
   if (edge(1, 0) != root_node) {
     Rf_error("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   }
+  Rcout << "\n\nall_spr Continuing;\n\n";
   
   IntegerVector break_seq;
   if (break_order.length()) {

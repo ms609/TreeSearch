@@ -8,12 +8,9 @@ test_that("TBR errors", {
 })
 
 test_that("SPR errors", {
-  dput("SPR ERRorS")
   tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
   expect_equal(0, length(expect_warning(all_spr(tr$edge, -1))))
-  dput("SPR ERRor 1")
   expect_equal(0, length(expect_warning(all_spr(tr$edge, 1))))
-  dput("SPR ERRor 2")
   expect_equal(0, length(expect_warning(all_spr(tr$edge, 111))))
   dput("SPR ERRor 3 - Completed.")
 })
@@ -64,6 +61,7 @@ test_that("TBR working", {
 })
 
 test_that("SPR fails gracefully", {
+  #skip_if(TRUE)
   dput("SPR Grace 1")
   expect_error(all_spr(as.phylo(1, 3)$edge, integer(0)))
   dput("SPR Grace 2")
