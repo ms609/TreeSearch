@@ -47,7 +47,7 @@ jobs:
 
       - name: ASan preload
         run: |
-          export GCC_ASAN_PRELOAD=$(gcc -print-file-name=libasan.so)
+          export LD_PRELOAD=$(gcc -print-file-name=libasan.so)
           
       - name: Create Makevars
         run: |
