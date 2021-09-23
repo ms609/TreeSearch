@@ -48,6 +48,19 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Create Makevars
+        run: |
+          echo "PKG_CFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
+          echo "PKG_CXXFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
+          
+          export ASAN_OPTIONS=verify_asan_link_order=0
+          
+          mkdir ~/.R
+          echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
+          echo "CXX = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
+          echo "CXX14 = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
+          echo "LDFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> ~/.R/Makevars
+
       - uses: r-lib/actions/setup-r@v1
         with:
           r-version: release # CRAN uses devel, but takes ages to load deps.
@@ -76,21 +89,6 @@ jobs:
           do
             eval sudo $cmd
           done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
-
-      - name: Create Makevars
-        run: |
-          echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > src/Makevars
-          echo "CXX = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > src/Makevars
-          echo "PKG_CFLAGS = -fsanitize=address  -fno-omit-frame-pointer" >> src/Makevars
-          echo "PKG_CXXFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
-          
-          export ASAN_OPTIONS=verify_asan_link_order=0
-          
-          mkdir ~/.R
-          echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
-          echo "CXX = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
-          echo "CXX14 = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
-          echo "LDFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> ~/.R/Makevars
 
       - name: Install dependencies
         run: |
