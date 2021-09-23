@@ -61,7 +61,7 @@ test_that("TBR working", {
 })
 
 test_that("SPR fails gracefully", {
-  #skip_if(TRUE)
+  skip_if(TRUE)
   dput("SPR Grace 1")
   expect_error(all_spr(as.phylo(1, 3)$edge, integer(0)))
   dput("SPR Grace 2")
