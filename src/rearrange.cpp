@@ -309,16 +309,14 @@ inline int16 edge_above(const int16 vert, unique_ptr<int16[]> &parent_edge) {
   return parent_edge[vert - 1];
 }
 
-inline void fuse_and_add (const IntegerMatrix& tree_bits, List& ret, 
+inline IntegerMatrix fuse(const IntegerMatrix& tree_bits,
                           const int16* graft_edge, const int16* break_edge, 
                           const int16* spare_edge, const int16* spare_node) {
   IntegerMatrix new_tree = clone(tree_bits);
-  
   new_tree(*spare_edge, 1) = tree_bits(*graft_edge, 1);
   new_tree(*graft_edge, 1) = *spare_node;
   new_tree(*break_edge, 0) = *spare_node;
-  new_tree = TreeTools::preorder_edges_and_nodes(new_tree(_, 0), new_tree(_, 1));
-  ret.push_back(new_tree);
+  return TreeTools::preorder_edges_and_nodes(new_tree(_, 0), new_tree(_, 1));
 }
 
 
@@ -334,15 +332,19 @@ List all_spr (const IntegerMatrix edge,
     n_vert = n_internal + n_tip,
     root_node = n_tip + 1
   ;
+  // ASAN reports stack-use-after-scope (false positive?) if we fail here.
+  // So we test for these exceptions in R.
+  // # nocov begin
   if (n_edge < 5) {
-    throw std::invalid_argument("No SPR rearrangements possible on a tree with < 5 edges");
+    Rf_error("No SPR rearrangements possible on a tree with < 5 edges");
   }
   if (edge(0, 0) != root_node) {
-    throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+    Rf_error("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
   }
   if (edge(1, 0) != root_node) {
-    throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+    Rf_error("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   }
+  // # nocov end
   
   IntegerVector break_seq;
   if (break_order.length()) {
@@ -383,17 +385,16 @@ List all_spr (const IntegerMatrix edge,
   
   
   List ret = List::create();
-  Function warning("warning");
   
   // Let's go.
   for (int16 i = break_seq.length(); i--; ) {
     IntegerMatrix two_bits = clone(edge);
     if (break_seq[i] > n_edge) {
-      warning("Ignoring SPR break locations that exceed number of edges in tree.\n");
+      Rf_warning("Ignoring SPR break locations that exceed number of edges in tree.\n");
       continue;
     }
     if (break_seq[i] < 2) {
-      warning("Ignoring break locations < 2");
+      Rf_warning("Ignoring break locations < 2");
       continue;
     }
     const int16
@@ -464,8 +465,8 @@ List all_spr (const IntegerMatrix edge,
         } else if (graft_edge == edge_above(break_parent, parent_edge)) {
           continue;
         }
-        fuse_and_add(two_bits, ret, &graft_edge, &break_edge, &spare_edge,
-                     &spare_node);
+        ret.push_back(fuse(two_bits, &graft_edge, &break_edge, &spare_edge,
+                           &spare_node));
         if (graft_edge < 0) break; // TODO REMOVE
       }
     }
@@ -526,17 +527,16 @@ List all_tbr (const IntegerMatrix edge,
   
   
   List ret = List::create();
-  Function warning("warning");
   
   // Let's go.
   for (int16 i = break_seq.length(); i--; ) {
     IntegerMatrix two_bits = clone(edge);
     if (break_seq[i] > n_edge) {
-      warning("Ignoring TBR break locations that exceed number of edges in tree.\n");
+      Rf_warning("Ignoring TBR break locations that exceed number of edges in tree.\n");
       continue;
     }
     if (break_seq[i] < 2) {
-      warning("Ignoring break locations < 2");
+      Rf_warning("Ignoring break locations < 2");
       continue;
     }
     const int16
@@ -574,8 +574,8 @@ List all_tbr (const IntegerMatrix edge,
         } else if (graft_edge == edge_above(break_parent, parent_edge)) {
           continue;
         }
-        fuse_and_add(two_bits, ret, &graft_edge, &break_edge, &spare_edge,
-                     &spare_node);
+        ret.push_back(fuse(two_bits, &graft_edge, &break_edge, &spare_edge,
+                           &spare_node));
       }
     } else {
       List rooty_bits = List::create();
@@ -618,12 +618,12 @@ List all_tbr (const IntegerMatrix edge,
         }
         for (List::iterator j = rooty_bits.begin(); j != rooty_bits.end(); j++) {
           IntegerMatrix rooty_bit = *j;
-          fuse_and_add(rooty_bit, ret, &graft_edge, &break_edge, &spare_edge,
-                       &spare_node);
+          ret.push_back(fuse(rooty_bit, &graft_edge, &break_edge, &spare_edge,
+                             &spare_node));
         }
         if (graft_edge != edge_above(break_parent, parent_edge)) {
-          fuse_and_add(two_bits, ret, &graft_edge, &break_edge, &spare_edge,
-                       &spare_node);
+          ret.push_back(fuse(two_bits, &graft_edge, &break_edge, &spare_edge,
+                             &spare_node));
         }
       }
     }

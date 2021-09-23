@@ -832,13 +832,14 @@ Resample <- function (dataset, tree, method = 'jack',
 #' Launch tree search graphical user interface
 #' 
 #' @rdname MaximizeParsimony
-#' @importFrom shiny runApp
-#' @importFrom shinyjs useShinyjs
-#' @importFrom TreeDist ClusteringInfoDistance
-#' @importFrom protoclust protoclust
 #' @importFrom cluster pam silhouette
 #' @importFrom future future
 #' @importFrom promises future_promise
+#' @importFrom protoclust protoclust
+#' @importFrom Rogue ColByStability
+#' @importFrom shiny runApp
+#' @importFrom shinyjs useShinyjs
+#' @importFrom TreeDist ClusteringInfoDistance
 #' @export
 EasyTrees <- function () {#nocov start
   shiny::runApp(system.file('Parsimony', package = 'TreeSearch'))

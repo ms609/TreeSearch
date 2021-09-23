@@ -8,6 +8,7 @@
 #' @author Martin R. Smith
 #' @method summary morphyPtr
 #' @family Morphy API functions
+#' @importFrom Rcpp compileAttributes
 #' @export
 summary.morphyPtr <- function (object, ...) {
   ans <- list()
