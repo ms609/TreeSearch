@@ -86,7 +86,7 @@ jobs:
       - name: Install package
         run: |
           cd ..
-          R CMD build --no-manual --no-resave-data TreeSearch
+          R CMD build --no-manual --no-build-vignettes --no-resave-data TreeSearch
           R CMD INSTALL TreeSearch*.tar.gz
           cd TreeSearch
 
