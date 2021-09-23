@@ -51,8 +51,7 @@ jobs:
         with:
           r-version: release # CRAN uses devel, but takes ages to load deps.
 
-      - name: Setup pandoc
-        if: {{ matrix.config.test }} == 'vignettes'
+      - name: pandoc
         uses: r-lib/actions/setup-pandoc@master
 
       - name: Query dependencies
@@ -89,7 +88,7 @@ jobs:
         run: |
           cd ..
           R CMD build --no-build-vignettes --no-manual --no-resave-data --configure-args="-fsanitize=address -static-libasan -g" TreeSearch
-          R CMD INSTALL --configure-args="-fsanitize=address -static-libasan -g" TreeSearch*.tar.gz
+          R CMD INSTALL --configure-args="-lasan -fsanitize=address -static-libasan -g" TreeSearch*.tar.gz
           cd TreeSearch
 
       - name: ASAN - memcheck ${{ matrix.config.test }}
