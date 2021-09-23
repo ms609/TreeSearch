@@ -54,10 +54,7 @@ jobs:
           echo "PKG_CFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
           echo "PKG_CXXFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
           
-          
           mkdir ~/.R
-          echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
-          echo "CXX = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
           echo "LDFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> ~/.R/Makevars
 
       - uses: r-lib/actions/setup-r@v1
