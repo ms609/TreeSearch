@@ -55,9 +55,8 @@ jobs:
           
       - name: Create Makevars
         run: |
-          echo "PKG_CFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
+          echo "PKG_CFLAGS = -fsanitize=address -fno-omit-frame-pointer" > src/Makevars
           echo "PKG_CXXFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
-          
           
           mkdir ~/.R
           echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
