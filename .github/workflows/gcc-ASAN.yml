@@ -88,7 +88,7 @@ jobs:
       - name: Create Makevars
         run: |
           mkdir ~/.R
-          echo "CC = -lasan -fsanitize=address -static-libasan -g" > ~/.R/Makevars
+          echo "CXXFLAGS = -lasan -fsanitize=address -static-libasan -g" > ~/.R/Makevars
 
       - name: Install package
         run: |
