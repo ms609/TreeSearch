@@ -99,6 +99,8 @@ jobs:
           echo "LD_PRELOAD=libclang_rt.asan.so" >> src/Makevars
           
           echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
+          echo "CXX = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
+          echo "SHLIB_LINK = g++ -std=gnu++14 -fsanitize=address" >> ~/.R/Makevars
 
       - name: Install package
         run: |
