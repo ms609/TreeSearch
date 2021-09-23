@@ -52,6 +52,7 @@ jobs:
           r-version: release # CRAN uses devel, but takes ages to load deps.
 
       - name: pandoc
+        if: {{ matrix.config.test }} == 'vignettes'
         uses: r-lib/actions/setup-pandoc@master
 
       - name: Query dependencies
