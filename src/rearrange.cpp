@@ -313,12 +313,10 @@ inline void fuse_and_add (const IntegerMatrix& tree_bits, List& ret,
                           const int16* graft_edge, const int16* break_edge, 
                           const int16* spare_edge, const int16* spare_node) {
   IntegerMatrix new_tree = clone(tree_bits);
-  
   new_tree(*spare_edge, 1) = tree_bits(*graft_edge, 1);
   new_tree(*graft_edge, 1) = *spare_node;
   new_tree(*break_edge, 0) = *spare_node;
-  new_tree = TreeTools::preorder_edges_and_nodes(new_tree(_, 0), new_tree(_, 1));
-  ret.push_back(new_tree);
+  ret.push_back(clone(TreeTools::preorder_edges_and_nodes(new_tree(_, 0), new_tree(_, 1))));
 }
 
 
