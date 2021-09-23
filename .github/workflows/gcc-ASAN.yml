@@ -53,6 +53,7 @@ jobs:
         run: |
           gcc -print-file-name=libasan.so
           export GCC_ASAN_PRELOAD=$(gcc -print-file-name=libasan.so)
+          export LD_PRELOAD=$(gcc -print-file-name=libasan.so)
           
       - name: Create Makevars
         run: |
@@ -63,7 +64,6 @@ jobs:
           mkdir ~/.R
           echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
           echo "CXX = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
-          echo "CXX14 = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
           echo "LDFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> ~/.R/Makevars
 
       - uses: r-lib/actions/setup-r@v1
