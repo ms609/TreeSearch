@@ -78,11 +78,6 @@ jobs:
             eval sudo $cmd
           done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
 
-      - name: Install dependencies
-        run: |
-          remotes::install_deps(dependencies = c('soft', 'Config/Needs/memcheck'))
-        shell: Rscript {0}
-
       - name: Create Makevars
         run: |
           echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > src/Makevars
@@ -98,10 +93,16 @@ jobs:
           echo "SHLIB_CFLAGS = -fsanitize=address" >> src/Makevars
           echo "LD_PRELOAD=libclang_rt.asan.so" >> src/Makevars
           
+          mkdir ~/.R
           echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
           echo "CXX = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
           echo "CXX14 = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
           echo "SHLIB_LINK = g++ -std=gnu++14 -fsanitize=address" >> ~/.R/Makevars
+
+      - name: Install dependencies
+        run: |
+          remotes::install_deps(dependencies = c('soft', 'Config/Needs/memcheck'))
+        shell: Rscript {0}
 
       - name: Install package
         run: |
