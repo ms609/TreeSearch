@@ -59,9 +59,9 @@ test_that("TBR working", {
 })
 
 test_that("SPR fails gracefully", {
-  expect_error(all_spr(as.phylo(1, 3)$edge, integer(0)))
-  expect_error(all_spr(Postorder(as.phylo(1, 6))$edge, integer(0)))
-  expect_error(all_spr(SortTree(as.phylo(1, 6))$edge, integer(0)))
+  expect_error(.all_spr(as.phylo(1, 3)$edge, integer(0)))
+  expect_error(.all_spr(Postorder(as.phylo(1, 6))$edge, integer(0)))
+  expect_error(.all_spr(SortTree(as.phylo(1, 6))$edge, integer(0)))
 })
 
 test_that("SPR works", {
