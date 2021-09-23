@@ -12,9 +12,6 @@ on:
       - 'tests/testthat/**.R'
       - 'vignettes/**.Rmd'
   pull_request:
-    branches:
-      - main
-      - master
     paths:
       - '.github/workflows/gcc-ASAN.yml'
       - 'src/**'
@@ -51,7 +48,7 @@ jobs:
 
       - name: ASan preload
         run: |
-          export GCC_ASAN_PRELOAD=$(gcc -print-file-name=libasan.so)
+          export LD_PRELOAD=$(gcc -print-file-name=libasan.so)
           
       - name: Create Makevars
         run: |
@@ -59,8 +56,6 @@ jobs:
           echo "PKG_CXXFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
           
           mkdir ~/.R
-          echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
-          echo "CXX = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
           echo "LDFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> ~/.R/Makevars
 
       - uses: r-lib/actions/setup-r@v1
