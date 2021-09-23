@@ -84,20 +84,13 @@ jobs:
           echo "CXX = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > src/Makevars
           echo "PKG_CFLAGS = -fsanitize=address  -fno-omit-frame-pointer" >> src/Makevars
           echo "PKG_CXXFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
-          echo "PKG_LDFLAGS = -fsanitize=address" >> src/Makevars
-          echo "LDFLAGS = -fsanitize=address" >> src/Makevars
-          echo "MAIN_LDFLAGS = -fsanitize=address" >> src/Makevars
-          echo "SHLIB_LDFLAGS = -fsanitize=address" >> src/Makevars
-          echo "SHLIB_LD = -fsanitize=address" >> src/Makevars
-          echo "SHLIB_LINK = g++ -std=gnu++14 -fsanitize=address" >> src/Makevars
-          echo "SHLIB_CFLAGS = -fsanitize=address" >> src/Makevars
-          echo "LD_PRELOAD=libclang_rt.asan.so" >> src/Makevars
+          
           
           mkdir ~/.R
           echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
           echo "CXX = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
           echo "CXX14 = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
-          echo "SHLIB_LINK = g++ -std=gnu++14 -fsanitize=address" >> ~/.R/Makevars
+          echo "SHLIB_LINK = g++ -shared -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" >> ~/.R/Makevars
 
       - name: Install dependencies
         run: |
