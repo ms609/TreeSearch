@@ -88,7 +88,8 @@ jobs:
 
       - name: Create Makevars
         run: |
-          echo "CC = gcc -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > src/Makevars
+          echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > src/Makevars
+          echo "CXX = g++ -std=gnu++14 -fsanitize=address -fno-omit-frame-pointer" > src/Makevars
           echo "PKG_CFLAGS = -fsanitize=address" >> src/Makevars
           echo "PKG_CXXFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
           echo "PKG_LDFLAGS = -fsanitize=address" >> src/Makevars
