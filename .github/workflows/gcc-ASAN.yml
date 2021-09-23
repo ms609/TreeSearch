@@ -84,6 +84,7 @@ jobs:
           echo "PKG_CFLAGS = -fsanitize=address  -fno-omit-frame-pointer" >> src/Makevars
           echo "PKG_CXXFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
           
+          export ASAN_OPTIONS=verify_asan_link_order=0
           
           mkdir ~/.R
           echo "CC = gcc -fsanitize=address -fno-omit-frame-pointer" > ~/.R/Makevars
