@@ -1,3 +1,4 @@
 test_that("SPR errors", {
-  expect_error(asan_error(matrix(9, 1, 1)))
+  library("TreeTools")
+  expect_error(asan_error(as.phylo(1, 3)$edge))
 })
