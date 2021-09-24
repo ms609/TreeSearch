@@ -1,3 +1,3 @@
 test_that("SPR errors", {
-  asan_error(matrix(9, 1, 1))
+  expect_error(asan_error(matrix(9, 1, 1)))
 })
