@@ -11,19 +11,20 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // asan_error
-List asan_error(const IntegerMatrix edge);
-RcppExport SEXP _TreeSearch_asan_error(SEXP edgeSEXP) {
+List asan_error(const IntegerMatrix edge, const IntegerVector break_order);
+RcppExport SEXP _TreeSearch_asan_error(SEXP edgeSEXP, SEXP break_orderSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
-    rcpp_result_gen = Rcpp::wrap(asan_error(edge));
+    Rcpp::traits::input_parameter< const IntegerVector >::type break_order(break_orderSEXP);
+    rcpp_result_gen = Rcpp::wrap(asan_error(edge, break_order));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_TreeSearch_asan_error", (DL_FUNC) &_TreeSearch_asan_error, 1},
+    {"_TreeSearch_asan_error", (DL_FUNC) &_TreeSearch_asan_error, 2},
     {NULL, NULL, 0}
 };
 
