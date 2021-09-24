@@ -323,6 +323,7 @@ inline IntegerMatrix fuse(const IntegerMatrix& tree_bits,
 //  [[Rcpp::export]]
 List asan_error (const IntegerMatrix x) {
   Rf_error("Oh dear.");
+  return List::create();
 }
 
 // Assumptions: 
