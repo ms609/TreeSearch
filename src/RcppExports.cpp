@@ -11,13 +11,13 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // asan_error
-List asan_error(const IntegerMatrix x);
-RcppExport SEXP _TreeSearch_asan_error(SEXP xSEXP) {
+List asan_error(const IntegerMatrix edge);
+RcppExport SEXP _TreeSearch_asan_error(SEXP edgeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const IntegerMatrix >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(asan_error(x));
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
+    rcpp_result_gen = Rcpp::wrap(asan_error(edge));
     return rcpp_result_gen;
 END_RCPP
 }
