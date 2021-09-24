@@ -33,6 +33,10 @@ tbr <- function(edge, move) {
     .Call(`_TreeSearch_tbr`, edge, move)
 }
 
+asan_error <- function(x) {
+    .Call(`_TreeSearch_asan_error`, x)
+}
+
 all_spr <- function(edge, break_order) {
     .Call(`_TreeSearch_all_spr`, edge, break_order)
 }

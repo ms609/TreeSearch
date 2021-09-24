@@ -319,6 +319,12 @@ inline IntegerMatrix fuse(const IntegerMatrix& tree_bits,
 }
 
 
+
+//  [[Rcpp::export]]
+List asan_error (const IntegerMatrix x) {
+  Rf_error("Oh dear.");
+}
+
 // Assumptions: 
 //  * Tree is bifurcating, in preorder; first two edges have root as parent.
 //  [[Rcpp::export]]

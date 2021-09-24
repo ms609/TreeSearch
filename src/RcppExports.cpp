@@ -115,6 +115,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// asan_error
+List asan_error(const IntegerMatrix x);
+RcppExport SEXP _TreeSearch_asan_error(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(asan_error(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // all_spr
 List all_spr(const IntegerMatrix edge, const IntegerVector break_order);
 RcppExport SEXP _TreeSearch_all_spr(SEXP edgeSEXP, SEXP break_orderSEXP) {
