@@ -1,6 +1,6 @@
 # TreeSearch 1.0.1
 
-- Memory management with invalid input
+- Memory management in RANDOMTREESCORE
 - Corrections to metadata
 
 # TreeSearch 1.0.0
