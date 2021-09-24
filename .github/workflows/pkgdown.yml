@@ -3,6 +3,14 @@ on:
     branches:
       - main
       - master
+    paths:
+      - 'DESCRIPTION'
+      - '**pkgdown.yml'
+      - '*.md'
+      - 'inst/CITATION'
+      - 'inst/*.bib'
+      - 'man/**'
+      - 'vignettes/**'
 
 name: pkgdown
 
@@ -19,15 +27,6 @@ jobs:
       - uses: r-lib/actions/setup-r@master
 
       - uses: r-lib/actions/setup-pandoc@master
-
-      # - name: Locate fortran v8
-      #   run: |
-      #     brew remove gcc
-      #     brew link gcc@8
-      #   
-      # - name: Install X11 dependencies on MacOS
-      #   run: |
-      #     brew install cairo
 
       - name: Install system dependencies
         if: runner.os == 'Linux'
