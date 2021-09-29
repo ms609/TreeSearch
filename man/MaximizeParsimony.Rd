@@ -84,8 +84,8 @@ next opportunity.}
 will retain \code{quickHits} × \code{maxHits} trees with the best score.}
 
 \item{concavity}{Numeric specifying concavity constant for implied step
-weighting; set as \code{Inf} for equal step weights (which is a bad idea; see
-\insertCite{Smith2019;textual}{TreeSearch}).}
+weighting; set as \code{Inf} for equal step weights, which underperforms step
+weighting approaches \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.}
 
 \item{tolerance}{Numeric specifying degree of suboptimality to tolerate
 before rejecting a tree.  The default, \code{sqrt(.Machine$double.eps)}, retains
@@ -138,7 +138,7 @@ starting tree in order to find a tree with an optimal parsimony score,
 under implied or equal weights, treating inapplicable characters as such
 in order to avoid the artefacts of the standard Fitch algorithm
 \insertCite{@see @Maddison1993; @Brazeau2019}{TreeSearch}.
-The tree scoring implementation uses the MorphyLib C library
+Tree length is calculated using the MorphyLib C library
 \insertCite{Brazeau2017}{TreeSearch}.
 }
 \details{
