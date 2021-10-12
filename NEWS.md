@@ -1,7 +1,13 @@
+# TreeSearch 1.0.1.9000 (development)
+
+- Minor improvements to 'shiny' GUI.
+
+
 # TreeSearch 1.0.1
 
 - Memory management with invalid input
 - Corrections to metadata
+
 
 # TreeSearch 1.0.0
 

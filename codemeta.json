@@ -8,7 +8,7 @@
   "relatedLink": "https://ms609.github.io/TreeSearch/",
   "issueTracker": "https://github.com/ms609/TreeSearch/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.0.1",
+  "version": "1.0.1.9000",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -319,7 +319,7 @@
     },
     "SystemRequirements": "C++14"
   },
-  "fileSize": "2056.242KB",
+  "fileSize": "2056.247KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -388,7 +388,7 @@
       ],
       "name": "TreeSearch: phylogenetic tree search using custom optimality criteria",
       "identifier": "10.5281/zenodo.1042590",
-      "description": "R package version 1.0.1",
+      "description": "R package version 1.0.1.9000",
       "@id": "https://doi.org/10.5281/zenodo.1042590",
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
     }
