@@ -4,6 +4,11 @@
 #' modified Fitch algorithm presented in 
 #' \insertCite{Brazeau2019;textual}{TreeSearch}.
 #' 
+#TODO November 2021: REMOVE next para
+#' Correct colouration of internal nodes requires "ape" version 5.5.2.
+#' Until this is available on CRAN (expected in winter 2021), download it
+#' using `devtools::install_github('emmanuelparadis/ape')`.
+#' 
 #' @template treeParam
 #' @template datasetParam
 #' @param char Index of character to plot.
@@ -14,8 +19,9 @@
 #' turn, in the sequence listed in `attr(dataset, 'levels')`.
 #' @param ambigCol,ambigLty,inappCol,inappLty,plainLty Colours and line types
 #' to apply to ambiguous, inapplicable and applicable tokens.  See the `lty` 
-#' [graphical parameter] for details of line stylings.  Overrides `tokenCol`.
+#' [graphical parameter] for details of line styles.  Overrides `tokenCol`.
 #' @param tipOffset Numeric: how much to offset tips from their labels.
+#' @param unitEdge Logical: Should all edges be plotted with a unit length?
 #' @param \dots Further arguments to pass to `plot.phylo()`.
 #' 
 #' @return `PlotCharacter()` returns a matrix in which each row corresponds
@@ -42,13 +48,11 @@
 #' PlotCharacter(tree, dataset, 14)
 #' par(oPar)
 #' @template MRS
-#' @importFrom ape nodelabels 
-# TODO once ape updated with modified plot.phylo:
-# @importFrom ape plot.phylo nodelabels 
-# and delete R/ape.plot.phylo.R
+#' @importFrom ape plot.phylo nodelabels 
+#' @importFrom graphics par
 #' @importFrom TreeTools Postorder
 #' @export
-PlotCharacter <- function (tree, dataset, char = 1L, 
+PlotCharacter <- function (tree, dataset, char = 1L,
                            updateTips = FALSE,
                            plot = TRUE,
                            
@@ -61,14 +65,15 @@ PlotCharacter <- function (tree, dataset, char = 1L,
                            plainLty = par('lty'),
                            
                            tipOffset = 1,
+                           unitEdge = FALSE,
                            ...) {
   
   # Reconcile labels
   datasetTaxa <- names(dataset)
   treeTaxa <- tree$tip.label
-  if(!all(treeTaxa %in% datasetTaxa)) {
+  if(!all(treeTaxa %fin% datasetTaxa)) {
     stop("Taxa in tree missing from dataset:\n  ",
-         paste0(treeTaxa[!treeTaxa %in% datasetTaxa], collapse = ', '))
+         paste0(setdiff(treeTaxa, datasetTaxa), collapse = ', '))
   }
   dataset <- dataset[treeTaxa]
   
@@ -370,6 +375,9 @@ PlotCharacter <- function (tree, dataset, char = 1L,
           lty = ifelse(tokens[tkn] == '-', inappLty, plainLty))
       }
     })
+    if (unitEdge) {
+      tree$edge.length <- rep_len(1, dim(tree$edge)[1])
+    }
     plot.phylo(tree,
                node.color = nodeStyle['col', , drop = FALSE],
                node.lty = nodeStyle['lty', , drop = FALSE],

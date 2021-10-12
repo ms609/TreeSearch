@@ -11,8 +11,14 @@ AdditionTree(dataset, concavity = Inf, constraint, sequence)
 whose names correspond to the labels of any accompanying tree.}
 
 \item{concavity}{Numeric specifying concavity constant for implied step
-weighting; set as \code{Inf} for equal step weights (which is a bad idea; see
-\insertCite{Smith2019;textual}{TreeSearch}).}
+weighting.
+The most appropriate value will depend on the dataset, but values around
+10--15 often perform well \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+The character string "profile" employs an approximation of profile parsimony
+\insertCite{Faith2001}{TreeSearch}.
+Set as \code{Inf} for equal step weights, which underperforms step weighting
+approaches
+\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.}
 
 \item{constraint}{An object of class \code{phyDat}; returned trees will be
 perfectly compatible with each character in \code{constraint}.
@@ -35,7 +41,12 @@ parsimonious location.
 data('Lobo', package = 'TreeTools')
 AdditionTree(Lobo.phy, concavity = 10)
 }
+\seealso{
+Other tree generation functions: 
+\code{\link{RandomMorphyTree}()}
+}
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
+\concept{tree generation functions}

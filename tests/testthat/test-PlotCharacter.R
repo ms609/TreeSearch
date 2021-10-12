@@ -1,5 +1,6 @@
 test_that("PlotCharacter()", {
   
+  skip_if_not_installed("TreeTools", "1.5.0") # Changes plotting order
   Character <- function (str, plot = FALSE, ...) {
     tree <- ape::read.tree(text = 
      "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
@@ -25,6 +26,7 @@ test_that("PlotCharacter()", {
                Character("23--1??--032", updateTips = TRUE))
   
   skip_if_not_installed('vdiffr')
+  skip_if_not_installed("ape", "5.5.2") # Node colours
   
   Test <- if (interactive()) {
     function (str) invisible(Character(str, plot = TRUE))
@@ -40,6 +42,7 @@ test_that("PlotCharacter()", {
         function() Character(str, plot = TRUE))
     }
   }
+  
   Test("23--1??--032")
   Test("23--1??(-0)-(01)32")
   Test("23??1????032")
@@ -112,6 +115,7 @@ test_that("Edge cases work", {
 
 test_that("Out-of-sequence works", {
   skip_if_not_installed('vdiffr')
+  skip_if_not_installed("ape", "5.5.2") # Node colours
   vdiffr::expect_doppelganger('PlotChar_out-of-sequence',
                               function () {
   PlotCharacter(ape::read.tree(text = '(a, (b, (c, d)));'),

@@ -22,4 +22,8 @@ containing:
 \description{
 Random postorder tree
 }
+\seealso{
+Other tree generation functions: 
+\code{\link{AdditionTree}()}
+}
 \concept{tree generation functions}

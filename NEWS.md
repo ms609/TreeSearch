@@ -1,16 +1,21 @@
-# TreeSearch 0.4.3.9010 (development)
+# TreeSearch 1.0.1.9000 (development)
 
-## Changes in functionality
+- Minor improvements to 'shiny' GUI.
 
- * v......9010 improves constraint handling.
- * v......9007 introduces a pre-ratchet TBR search and adjusts default settings.
- * v0.4.3.9005 fixes some bugs that may affect tree scoring under IW & PP.
+
+# TreeSearch 1.0.1
+
+- Memory management with invalid input
+- Corrections to metadata
+
+
+# TreeSearch 1.0.0
 
 ## New functions
  - `EasyTrees()` 'shiny' graphical user interface for tree search
  - `AdditionTree()` adds each taxon in sequence to the most parsimonious place
    on the tree, generating a more parsimonious starting tree than
-   neighbour-joining.
+   neighbour-joining
  - `PlotCharacter()` reconstructs character distributions on trees
  - `ConstrainedNJ()` constructs starting trees that respect a constraint
  - `ImposeConstraint()` reconciles a tree with a constraint
@@ -21,8 +26,8 @@
    multiple applicable tokens are present
  - `Resample()` conducts bootstrap and jackknife resampling
  - `Consistency()` calculates consistency and retention 'indices'
- - `MinimumLength()` and `MaximumLength()` calculate range of possible lengths
-   of characters in a dataset on any tree
+ - `MinimumLength()` calculates minimum length of character in a dataset on any
+   tree.
 
 ## Improvements
  - `TreeLength()` supports lists of trees
@@ -33,19 +38,26 @@
  - Drop `nTip` parameter in `RandomTreeScore()` (infer from `morphyObj`)
  - C implementations of rearrangement functions
  - Improved command line interface for search progress messaging
+ 
+## Deprecations
+ - Remove redundant internal function `LogisticPoints()`
+
 
 # TreeSearch 0.4.3
 
  - Update tests for compatibility with 'TreeTools' v1.1.0
  - Improve memory and pointer handling
  
+ 
 # TreeSearch 0.4.2
 
  - Update tests for compatibility with 'TreeTools' v1.1.0
 
+
 # TreeSearch 0.4.1
 
  - Compatibility with 'TreeTools' v1.0.0
+
 
 # TreeSearch 0.4.0
 
@@ -81,6 +93,7 @@
 ## Bug fixes
  - Check whether input tree is bifurcating before attempting rearrangements,
    to avoid crashes on unsupported input
+
 
 # TreeSearch 0.3.0
 

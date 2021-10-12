@@ -1,36 +1,32 @@
-# For help debugging build failures open an issue on the RStudio community with the 'github-actions' tag.
-# https://community.rstudio.com/new-topic?category=Package%20development&tags=github-actions
+# Address Sanitizer: Replicate CRAN's gcc-ASAN 'Additional Test'
 on:
   push:
     branches:
       - main
       - master
     paths:
-      - '.github/workflows/memcheck.yml'
+      - '.github/workflows/gcc-ASAN.yml'
       - 'src/**'
       - 'inst/include/**'
       - 'memcheck/**'
       - 'tests/testthat/**.R'
       - 'vignettes/**.Rmd'
   pull_request:
-    branches:
-      - main
-      - master
     paths:
-      - '.github/workflows/memcheck.yml'
+      - '.github/workflows/gcc-ASAN.yml'
       - 'src/**'
       - 'inst/include/**'
       - 'memcheck/**'
       - 'tests/testthat/**.R'
       - 'vignettes/**.Rmd'
 
-name: mem-check
+name: gcc-ASAN
 
 jobs:
   mem-check:
     runs-on: ubuntu-20.04
 
-    name: valgrind ${{ matrix.config.test }}
+    name: AddressSanitizer ${{ matrix.config.test }}
 
     strategy:
       fail-fast: false
@@ -45,9 +41,22 @@ jobs:
       _R_CHECK_FORCE_SUGGESTS_: false
       RSPM: https://packagemanager.rstudio.com/cran/__linux__/focal/latest
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      ASAN_OPTIONS: verify_asan_link_order=0
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: ASan preload
+        run: |
+          export LD_PRELOAD=$(gcc -print-file-name=libasan.so)
+          
+      - name: Create Makevars
+        run: |
+          echo "PKG_CFLAGS = -fsanitize=address -fno-omit-frame-pointer" > src/Makevars
+          echo "PKG_CXXFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
+          
+          mkdir ~/.R
+          echo "LDFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> ~/.R/Makevars
 
       - uses: r-lib/actions/setup-r@v1
         with:
@@ -73,7 +82,6 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt-get install valgrind texlive-latex-base
           while read -r cmd
           do
             eval sudo $cmd
@@ -81,24 +89,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          remotes::install_github('emmanuelparadis/ape')
-          if ("${{ matrix.config.test }}" == 'tests') {
-            remotes::install_github('r-lib/brio#20') # brio mem leak
-          }
           remotes::install_deps(dependencies = c('soft', 'Config/Needs/memcheck'))
         shell: Rscript {0}
 
       - name: Install package
         run: |
           cd ..
-          R CMD build --no-manual --no-build-vignettes --no-resave-data TreeSearch
+          R CMD build --no-build-vignettes --no-manual --no-resave-data TreeSearch
           R CMD INSTALL TreeSearch*.tar.gz
           cd TreeSearch
 
-      - name: valgrind - memcheck ${{ matrix.config.test }}
+      - name: ASAN - memcheck ${{ matrix.config.test }}
         run: |
-          R -d "valgrind --tool=memcheck \
-          --leak-check=full \
-          --errors-for-leak-kinds=definite \
-          --error-exitcode=1" \
-          --vanilla < memcheck/${{ matrix.config.test }}.R
+          Rscript memcheck/${{ matrix.config.test }}.R

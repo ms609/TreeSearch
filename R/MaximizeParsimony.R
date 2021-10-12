@@ -9,7 +9,7 @@
 #' under implied or equal weights, treating inapplicable characters as such
 #' in order to avoid the artefacts of the standard Fitch algorithm
 #' \insertCite{@see @Maddison1993; @Brazeau2019}{TreeSearch}.
-#' The tree scoring implementation uses the MorphyLib C library
+#' Tree length is calculated using the MorphyLib C library
 #' \insertCite{Brazeau2017}{TreeSearch}.
 #' 
 #' Tree search commences with `ratchIter` iterations of the parsimony ratchet
@@ -25,7 +25,7 @@
 #' For detailed documentation of the 'TreeSearch' package, including full 
 #' instructions for loading phylogenetic data into R and initiating and 
 #' configuring tree search, see the 
-#' [package documentation](https://ms609.github.io/TreeSearch).
+#' [package documentation](https://ms609.github.io/TreeSearch/).
 #'  
 #' 
 #' 
@@ -58,8 +58,14 @@
 #' @param quickHits Numeric: iterations on subsampled datasets
 #'  will retain `quickHits` &times; `maxHits` trees with the best score.
 #' @param concavity Numeric specifying concavity constant for implied step 
-#' weighting; set as `Inf` for equal step weights (which is a bad idea; see 
-#' \insertCite{Smith2019;textual}{TreeSearch}).
+#' weighting.
+#' The most appropriate value will depend on the dataset, but values around
+#' 10--15 often perform well \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+#' The character string "profile" employs an approximation of profile parsimony
+#' \insertCite{Faith2001}{TreeSearch}.
+#' Set as `Inf` for equal step weights, which underperforms step weighting
+#' approaches
+#' \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.
 #' @param tolerance Numeric specifying degree of suboptimality to tolerate
 #' before rejecting a tree.  The default, `sqrt(.Machine$double.eps)`, retains
 #' trees that may be equally parsimonious but for rounding errors.  
@@ -150,7 +156,7 @@
 #' @importFrom cli cli_alert cli_alert_danger cli_alert_info cli_alert_success cli_alert_warning
 #' cli_h1 
 #' cli_progress_bar cli_progress_done cli_progress_update
-#' @importFrom glue glue
+#' @importFrom fastmatch fmatch
 #' @importFrom phangorn Descendants
 #' @importFrom stats runif
 #' @importFrom TreeTools
@@ -158,10 +164,14 @@
 #' CharacterInformation
 #' ConstrainedNJ 
 #' DropTip
-#' ImposeConstraint 
+#' ImposeConstraint
+#' MakeTreeBinary
 #' NTip
 #' @references
 #' \insertAllCited{}
+#' @seealso
+#' Tree search _via_ graphical user interface: [`EasyTrees()`]
+#' 
 #' @encoding UTF-8
 #' @export
 MaximizeParsimony <- function (dataset, tree,
@@ -284,7 +294,7 @@ MaximizeParsimony <- function (dataset, tree,
               nHits <- 1L
               hold[, , 1] <- edge
               .Message(5L, "New best score ", signif(bestScore),
-                       " at break ", match(brk, optTbr), "/", length(optTbr))
+                       " at break ", fmatch(brk, optTbr), "/", length(optTbr))
               break
             } else {
               .Message(6L, "Best score ", signif(bestScore),
@@ -297,7 +307,7 @@ MaximizeParsimony <- function (dataset, tree,
           if (improvedScore && runif(1) < (i / nMoves) ^ 2) break
         }
         if (nHits >= maxHits) break
-        pNextTbr <- (match(brk, optTbr) / length(optTbr)) ^ 2
+        pNextTbr <- (fmatch(brk, optTbr) / length(optTbr)) ^ 2
         if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
@@ -382,7 +392,15 @@ MaximizeParsimony <- function (dataset, tree,
     tree <- tree[[1]]
   }
   if (dim(tree$edge)[1] != 2 * tree$Nnode) {
-    stop("`tree` must be bifurcating; try rooting with RootTree(tree, 1)")
+    cli_alert_warning("`tree` is not bifurcating; collapsing polytomies at random")
+    tree <- MakeTreeBinary(tree)
+    if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+      cli_alert_warning("Rooting `tree` on first leaf")
+      tree <- RootTree(tree, 1)
+    }
+    if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+      stop("Could not make `tree` binary.")
+    }
   }
   
   # Check tree labels matches dataset
@@ -395,14 +413,14 @@ MaximizeParsimony <- function (dataset, tree,
                       paste0(treeOnly, collapse = ', '), "\n")
     warning("Ignored taxa on tree missing in dataset:\n   ",
              paste0(treeOnly, collapse = ', '))
-    tree <- drop.tip(tree, treeOnly)
+    tree <- DropTip(tree, treeOnly)
   }
   if (length(datOnly)) {
     cli_alert_warning("Ignoring taxa in dataset missing on tree:\n   ",
                       paste0(datOnly, collapse = ', '), "\n")
     warning("Ignored taxa in dataset missing on tree:\n   ",
             paste0(datOnly, collapse = ', '))
-    dataset <- dataset[-match(datOnly, taxa)]
+    dataset <- dataset[-fmatch(datOnly, taxa)]
   }
   if (constrained) {
     consTaxa <- names(constraint)
@@ -416,7 +434,7 @@ MaximizeParsimony <- function (dataset, tree,
               paste0(consOnly, collapse = ', '), "\n")
       warning("Ignored taxa in constraint missing on tree:\n   ", 
               paste0(consOnly, collapse = ', '))
-      constraint <- constraint[-match(consOnly, consTaxa)]
+      constraint <- constraint[-fmatch(consOnly, consTaxa)]
     }
     constraint <- constraint[names(dataset)]
   }
@@ -478,7 +496,7 @@ MaximizeParsimony <- function (dataset, tree,
   if (profile) {
     dataset <- PrepareDataProfile(dataset)
     originalLevels <- attr(dataset, 'levels')
-    if ('-' %in% originalLevels) {
+    if ('-' %fin% originalLevels) {
       #TODO Fixing this will require updating the counts table cleverly
       # Or we could use approximate info amounts, e.g. by treating '-' as 
       # an extra token
@@ -740,12 +758,15 @@ MaximizeParsimony <- function (dataset, tree,
 }
 
 #' @rdname MaximizeParsimony
+#' 
 #' @param method Unambiguous abbreviation of `jackknife` or `bootstrap` 
 #' specifying how to resample characters.  Note that jackknife is considered
 #' to give more meaningful results.
+#' 
 #' @param proportion Numeric between 0 and 1 specifying what proportion of 
 #' characters to retain under jackknife resampling.
 #' 
+#' @section Resampling:
 #' Note that bootstrap support is a measure of the amount of data supporting
 #' a split, rather than the amount of confidence that should be afforded the
 #' grouping.
@@ -763,6 +784,8 @@ MaximizeParsimony <- function (dataset, tree,
 #' support values as searches get stuck in local optima close to the 
 #' optimal tree) or a random tree (which may take longer as more rearrangements
 #' are necessary to find an optimal tree on each iteration).
+#' 
+#' For other ways to estimate clade concordance, see [`SiteConcordance()`].
 #' 
 #' @return `Resample()` returns a `multiPhylo` object containing a list of
 #' trees obtained by tree search using a resampled version of `dataset`.
@@ -815,11 +838,14 @@ Resample <- function (dataset, tree, method = 'jack',
 #' Launch tree search graphical user interface
 #' 
 #' @rdname MaximizeParsimony
+#' @importFrom cluster pam silhouette
+#' @importFrom future future
+#' @importFrom promises future_promise
+#' @importFrom protoclust protoclust
+#' @importFrom Rogue ColByStability
 #' @importFrom shiny runApp
 #' @importFrom shinyjs useShinyjs
 #' @importFrom TreeDist ClusteringInfoDistance
-#' @importFrom protoclust protoclust
-#' @importFrom cluster pam silhouette
 #' @export
 EasyTrees <- function () {#nocov start
   shiny::runApp(system.file('Parsimony', package = 'TreeSearch'))

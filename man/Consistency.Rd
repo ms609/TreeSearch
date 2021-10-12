@@ -13,8 +13,8 @@ whose names correspond to the labels of any accompanying tree.}
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
-phylo object or to return a vector specifying to each individual character,
-decompressed using the dataset's \code{index} attribute.}
+\code{phyDat} object or to return a vector specifying to each individual
+character, decompressed using the dataset's \code{index} attribute.}
 }
 \value{
 \code{Consistency()} returns a named vector specifying the

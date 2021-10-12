@@ -15,8 +15,10 @@ Profile Parsimony [@Faith2001] finds the tree that is most faithful
 to the information contained within a given dataset. 
 It is the 'exact solution' that implied weights parsimony approximates.
 
-Profile Parsimony is currently implemented in 'TreeSearch' 
-for characters with no more than two parsimony-informative states.
+Profile Parsimony is currently implemented in "TreeSearch" for characters with
+up to two parsimony-informative states.
+(Further states are treated as ambiguous, whilst retaining as much information
+as possible.)
 
 ## Getting started
 <!--Duplicated from inapplicable.Rmd-->
@@ -38,7 +40,7 @@ In order to reproduce the random elements of this document, set a random seed:
 
 ```{R RNG-version}
 # Set a random seed so that random functions in this document are reproducible
-suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
+suppressWarnings(RNGversion('3.5.0')) # Until we can require R3.6.0
 set.seed(888)
 ```
 
@@ -55,26 +57,31 @@ data(congreveLamsdellMatrices)
 myMatrix <- congreveLamsdellMatrices[[10]]
 ```
 
-To start analysis, we need to load a starting tree.  We can do this at random:
-```{r Random tree, eval=FALSE}
-tree <- TreeTools::RandomTree(myMatrix, root = TRUE)
-```
+Unless a starting tree is provided, tree search will from a random addition
+tree:
 
-Or using a neighbour joining method, to start at a reasonably good tree:
-```{r NJ Tree}
-tree <- TreeTools::NJTree(myMatrix)
+```{r Addition tree}
+additionTree <- AdditionTree(myMatrix, concavity = 'profile')
+TreeLength(additionTree, myMatrix, 'profile')
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-plot(tree)
+plot(additionTree)
 ```
 
-Let's calculate this random tree's parsimony score,
-then search for better trees using the parsimony ratchet [@Nixon1999]:
+We could alternatively use a random or neighbour-joining tree:
 
-```{R Starting score}
-TreeLength(tree, myMatrix, 'profile')
+```{r Random tree}
+randomTree <- TreeTools::RandomTree(myMatrix, root = TRUE)
+TreeLength(randomTree, myMatrix, 'profile')
+njTree <- TreeTools::NJTree(myMatrix)
+TreeLength(njTree, myMatrix, 'profile')
+```
 
-betterTrees <- MaximizeParsimony(myMatrix, tree, concavity = 'profile',
-                                  ratchIter = 3, tbrIter = 3, maxHits = 8)
+We search for trees with a better score using TBR rearrangements and the 
+parsimony ratchet [@Nixon1999]:
+
+```{R Starting score, message = FALSE}
+betterTrees <- MaximizeParsimony(myMatrix, additionTree, concavity = 'profile',
+                                 ratchIter = 3, tbrIter = 3, maxHits = 8)
 ```
 
 We've used very low values of `ratchIter`, `tbrIter` and `maxHits` for a rapid
@@ -103,7 +110,7 @@ To sample this region of tree space well, the trick is to use large values of
 `searchiter`, so that many runs don't quite hit the optimal tree.
 In a serious study, you would want to sample many more than the 3 Ratchet hits (`ratchHits`) we'll settle for here, probably using many more Ratchet iterations.
 
-```{R Suboptimal sampling}
+```{R Suboptimal sampling, message = FALSE}
 suboptimals <- MaximizeParsimony(myMatrix, betterTrees, tolerance = 3,
                                  ratchIter = 2, tbrIter = 3,
                                  maxHits = 25,
@@ -116,7 +123,7 @@ typically more reliable, summary of the signal with the phylogenetic dataset
 
 ```{r Plot suboptimal consensus}
 par(mar = rep(0.25, 4), cex = 0.75)
-table(TreeLength(suboptimals, myMatrix, 'profile'))
+table(signif(TreeLength(suboptimals, myMatrix, 'profile')))
 plot(ape::consensus(suboptimals))
 ```
 

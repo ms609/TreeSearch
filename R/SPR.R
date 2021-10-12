@@ -80,18 +80,38 @@ SPRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('SPRMoves')
 #' @export
 SPRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   tree <- Preorder(RootTree(tree, tree$tip.label[1]))
-  edges <- unique(all_spr(tree$edge, edgeToBreak))
+  edges <- unique(.all_spr(tree$edge, edgeToBreak))
   structure(lapply(edges, function (edg) {
     tree$edge <- edg
     tree
   }), class = 'multiPhylo', tip.label = tree$tip.label)
 }
 
+#' error checking for all_spr
+.all_spr <- function (edge, break_order) {
+  nEdge <- dim(edge)[1]
+  if (nEdge < 5) {
+    stop("No SPR rearrangements possible on a tree with < 5 edges");
+  }
+  nInternal <- floor(nEdge / 2)
+  nTip <- nInternal + 1L
+  rootNode <- nTip + 1L
+  
+  if (edge[1] != rootNode) {
+    stop("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+  }
+  if (edge[2] != rootNode) {
+    stop("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+  }
+  # Return:
+  all_spr(edge, break_order)
+}
+
 #' @rdname SPR
 #' @export
 SPRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
   tree <- Preorder(RootTree(tree, 1))
-  unique(all_spr(tree, edgeToBreak))
+  unique(.all_spr(tree, edgeToBreak))
 }
 
 ## TODO Do edges need to be pre-ordered before coming here?

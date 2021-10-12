@@ -29,6 +29,7 @@ TreeTools::NUnrooted(8) * 2 ^ profile3.5
 \seealso{
 Other profile parsimony functions: 
 \code{\link{Carter1}()},
+\code{\link{PrepareDataProfile}()},
 \code{\link{StepInformation}()}
 }
 \concept{profile parsimony functions}

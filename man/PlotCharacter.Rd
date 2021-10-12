@@ -17,6 +17,7 @@ PlotCharacter(
   inappLty = "dashed",
   plainLty = par("lty"),
   tipOffset = 1,
+  unitEdge = FALSE,
   ...
 )
 }
@@ -38,9 +39,11 @@ turn, in the sequence listed in \code{attr(dataset, 'levels')}.}
 
 \item{ambigCol, ambigLty, inappCol, inappLty, plainLty}{Colours and line types
 to apply to ambiguous, inapplicable and applicable tokens.  See the \code{lty}
-\link{graphical parameter} for details of line stylings.  Overrides \code{tokenCol}.}
+\link{graphical parameter} for details of line styles.  Overrides \code{tokenCol}.}
 
 \item{tipOffset}{Numeric: how much to offset tips from their labels.}
+
+\item{unitEdge}{Logical: Should all edges be plotted with a unit length?}
 
 \item{\dots}{Further arguments to pass to \code{plot.phylo()}.}
 }
@@ -54,6 +57,11 @@ on a tree are denoted with \code{TRUE}.
 Reconstructs the distribution of a character on a tree topology using the
 modified Fitch algorithm presented in
 \insertCite{Brazeau2019;textual}{TreeSearch}.
+}
+\details{
+Correct colouration of internal nodes requires "ape" version 5.5.2.
+Until this is available on CRAN (expected in winter 2021), download it
+using \code{devtools::install_github('emmanuelparadis/ape')}.
 }
 \examples{
 # Set up plotting area

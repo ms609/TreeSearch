@@ -84,8 +84,14 @@ next opportunity.}
 will retain \code{quickHits} × \code{maxHits} trees with the best score.}
 
 \item{concavity}{Numeric specifying concavity constant for implied step
-weighting; set as \code{Inf} for equal step weights (which is a bad idea; see
-\insertCite{Smith2019;textual}{TreeSearch}).}
+weighting.
+The most appropriate value will depend on the dataset, but values around
+10--15 often perform well \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+The character string "profile" employs an approximation of profile parsimony
+\insertCite{Faith2001}{TreeSearch}.
+Set as \code{Inf} for equal step weights, which underperforms step weighting
+approaches
+\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.}
 
 \item{tolerance}{Numeric specifying degree of suboptimality to tolerate
 before rejecting a tree.  The default, \code{sqrt(.Machine$double.eps)}, retains
@@ -108,25 +114,7 @@ specifying how to resample characters.  Note that jackknife is considered
 to give more meaningful results.}
 
 \item{proportion}{Numeric between 0 and 1 specifying what proportion of
-characters to retain under jackknife resampling.
-
-Note that bootstrap support is a measure of the amount of data supporting
-a split, rather than the amount of confidence that should be afforded the
-grouping.
-"Bootstrap support of 100\% is not enough, the tree must also be correct"
-\insertCite{Phillips2004}{TreeSearch}.
-See discussion in \insertCite{Egan2006;textual}{TreeSearch};
-\insertCite{Wagele2009;textual}{TreeSearch};
-\insertCite{Simmons2011}{TreeSearch};
-\insertCite{Kumar2012;textual}{TreeSearch}.
-
-For a discussion of suitable search parameters in resampling estimates, see
-\insertCite{Muller2005;textual}{TreeSearch}.
-The user should decide whether to start each resampling
-from the optimal tree (which may be quicker, but result in overestimated
-support values as searches get stuck in local optima close to the
-optimal tree) or a random tree (which may take longer as more rearrangements
-are necessary to find an optimal tree on each iteration).}
+characters to retain under jackknife resampling.}
 
 \item{\dots}{Additional parameters to \code{MaximizeParsimony()}.}
 }
@@ -156,7 +144,7 @@ starting tree in order to find a tree with an optimal parsimony score,
 under implied or equal weights, treating inapplicable characters as such
 in order to avoid the artefacts of the standard Fitch algorithm
 \insertCite{@see @Maddison1993; @Brazeau2019}{TreeSearch}.
-The tree scoring implementation uses the MorphyLib C library
+Tree length is calculated using the MorphyLib C library
 \insertCite{Brazeau2017}{TreeSearch}.
 }
 \details{
@@ -172,8 +160,31 @@ the 'shiny' graphical user interface app (type \code{EasyTrees()} to launch).
 For detailed documentation of the 'TreeSearch' package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
-\href{https://ms609.github.io/TreeSearch}{package documentation}.
+\href{https://ms609.github.io/TreeSearch/}{package documentation}.
 }
+\section{Resampling}{
+
+Note that bootstrap support is a measure of the amount of data supporting
+a split, rather than the amount of confidence that should be afforded the
+grouping.
+"Bootstrap support of 100\% is not enough, the tree must also be correct"
+\insertCite{Phillips2004}{TreeSearch}.
+See discussion in \insertCite{Egan2006;textual}{TreeSearch};
+\insertCite{Wagele2009;textual}{TreeSearch};
+\insertCite{Simmons2011}{TreeSearch};
+\insertCite{Kumar2012;textual}{TreeSearch}.
+
+For a discussion of suitable search parameters in resampling estimates, see
+\insertCite{Muller2005;textual}{TreeSearch}.
+The user should decide whether to start each resampling
+from the optimal tree (which may be quicker, but result in overestimated
+support values as searches get stuck in local optima close to the
+optimal tree) or a random tree (which may take longer as more rearrangements
+are necessary to find an optimal tree on each iteration).
+
+For other ways to estimate clade concordance, see \code{\link[=SiteConcordance]{SiteConcordance()}}.
+}
+
 \examples{
 ## Only run examples in interactive R sessions
 if (interactive()) {
@@ -237,6 +248,8 @@ MaximizeParsimony(characters, constraint = constraint, verbosity = 0)
 \insertAllCited{}
 }
 \seealso{
+Tree search \emph{via} graphical user interface: \code{\link[=EasyTrees]{EasyTrees()}}
+
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},

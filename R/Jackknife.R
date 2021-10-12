@@ -5,7 +5,7 @@
 #' 
 #' The function assumes 
 #' that `InitializeData()` will return a morphy object; if this doesn't hold 
-#' for you, post a [GitHub issue](http://github.com/ms609/TreeSearch/issues/new/)
+#' for you, post a [GitHub issue](https://github.com/ms609/TreeSearch/issues/new/)
 #' or e-mail the maintainer.
 #' 
 #' @inheritParams Ratchet

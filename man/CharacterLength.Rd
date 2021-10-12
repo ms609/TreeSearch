@@ -19,8 +19,8 @@ FastCharacterLength(tree, dataset)
 whose names correspond to the labels of any accompanying tree.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
-phylo object or to return a vector specifying to each individual character,
-decompressed using the dataset's \code{index} attribute.}
+\code{phyDat} object or to return a vector specifying to each individual
+character, decompressed using the dataset's \code{index} attribute.}
 }
 \value{
 \code{CharacterLength()} returns a vector listing the contribution of each
@@ -49,6 +49,7 @@ CharacterLength(tree, dataset, compress = TRUE)
 \seealso{
 Other tree scoring: 
 \code{\link{IWScore}()},
+\code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()}
 }
 \author{

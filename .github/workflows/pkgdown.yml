@@ -3,6 +3,14 @@ on:
     branches:
       - main
       - master
+    paths:
+      - 'DESCRIPTION'
+      - '**pkgdown.yml'
+      - '*.md'
+      - 'inst/CITATION'
+      - 'inst/*.bib'
+      - 'man/**'
+      - 'vignettes/**'
 
 name: pkgdown
 
@@ -19,15 +27,6 @@ jobs:
       - uses: r-lib/actions/setup-r@master
 
       - uses: r-lib/actions/setup-pandoc@master
-
-      # - name: Locate fortran v8
-      #   run: |
-      #     brew remove gcc
-      #     brew link gcc@8
-      #   
-      # - name: Install X11 dependencies on MacOS
-      #   run: |
-      #     brew install cairo
 
       - name: Install system dependencies
         if: runner.os == 'Linux'
@@ -57,6 +56,8 @@ jobs:
 
       - name: Install dependencies
         run: |
+          remotes::install_github("r-lib/pkgdown")
+          remotes::install_github("ms609/TreeTools@rogue")
           remotes::install_deps(
             dependencies = c("soft", "Config/Needs/website")
           )
@@ -65,8 +66,8 @@ jobs:
       - name: Install package
         run: R CMD INSTALL .
 
-      - name: Deploy package
+      - name: Build and deploy documentation
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
-          Rscript -e 'pkgdown::deploy_to_branch(new_process = FALSE)'
+          Rscript -e 'pkgdown::deploy_to_branch(new_process = FALSE); if (length(warnings()) > 0) stop("Fail on warning")'

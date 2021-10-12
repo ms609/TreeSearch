@@ -14,6 +14,7 @@
 #' `sequence[1]`.
 #' @importFrom TreeTools AddUnconstrained AddTipEverywhere PectinateTree
 #' @importFrom cli cli_progress_bar cli_progress_update
+#' @family tree generation functions
 #' @export
 AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
   # Initialize missing parameters

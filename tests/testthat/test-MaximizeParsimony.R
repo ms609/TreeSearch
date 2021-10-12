@@ -44,10 +44,10 @@ test_that("Constraints work", {
                                       dimnames = list(letters[1:6], NULL)))
   cons <- consensus(MaximizeParsimony(dataset, constraint = constraint))
   expect_true(as.Splits(as.logical(c(0, 0, 1, 1, 1)), letters[c(1:3, 5:6)]) %in% 
-                as.Splits(drop.tip(cons, c('d', 'g'))))
+                as.Splits(DropTip(cons, c('d', 'g'))))
   
   expect_true(as.Splits(as.logical(c(0, 0, 0, 0, 1, 1)), letters[1:6]) %in% 
-                as.Splits(drop.tip(cons, 'g')))
+                as.Splits(DropTip(cons, 'g')))
   
 })
 
@@ -117,12 +117,13 @@ test_that("Resample() fails and works", {
   nRep <- 42L # Arbitrary number to balance runtime vs false +ves & -ves
   bal <- as.Splits(BalancedTree(dataset))
   
+  skip_if_not_installed("TreeTools", "1.4.5.9003") # postorder / as.Splits order
   jackTrees <- replicate(nRep, Resample(dataset, NJTree(dataset), verbosity = 0L))
   jackSplits <- as.Splits(unlist(jackTrees, recursive = FALSE))
   jackSupport <- rowSums(vapply(jackSplits, function (sp) in.Splits(bal, sp),
                                 logical(3)))
   # This test could be replaced with a more statistically robust alternative!
-  expect_equal(c(1/2, 1, 0) * sum(vapply(jackTrees, length, 1L)), jackSupport,
+  expect_equal(c(1, 1/2, 0) * sum(vapply(jackTrees, length, 1L)), jackSupport,
                tolerance = 0.2)
   
   bootTrees <- replicate(nRep, Resample(dataset, method = 'bootstrap',
@@ -132,7 +133,7 @@ test_that("Resample() fails and works", {
                                 function (tr) in.Splits(bal, as.Splits(tr)),
                                 logical(3)))
   # This test could be replaced with a more statistically robust alternative!
-  expect_equal(c(1/2, 1, 0) * sum(vapply(bootTrees, length, 1L)), bootSupport,
+  expect_equal(c(1, 1/2, 0) * sum(vapply(bootTrees, length, 1L)), bootSupport,
                tolerance = 0.2)
     
 })

@@ -4,7 +4,7 @@ citHeader(paste0("When using the package, please acknowledge your use of ",
 "using the R package TreeSearch v", meta$Version, " (Smith 2018), which ",
 "uses MorphyLib (Brazeau et al. 2017) to handle inapplicable data ",
 "(Brazeau et al. 2019)'."))
-                     
+
 citEntry(entry = "Manual",
          key = "Brazeau2017",
          title = "MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability",
