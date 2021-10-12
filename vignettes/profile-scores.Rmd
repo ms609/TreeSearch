@@ -25,46 +25,48 @@ much about their abstract philosophy -- though admittedly, identifying a
 'best' method is not always straightforward [e.g. @Smith2019].
 
 I should also acknowledge that practical considerations can influence the 
-choice of reconstruction method: -- a tip-dated phylogeny cannot be accomplished
+choice of reconstruction method: a tip-dated phylogeny cannot be accomplished
 in a parsimony framework, for example; and where a principled model of
 evolutionary change is available, as with certain subsets of molecular data,
-some see a compelling case for employing models for infering phylogeny.
+some see a compelling case for using such models to infer phylogeny.
 
 My goal here is not to argue that any method is superior, but to develop a case
 that profile parsimony rests on a principled underpinning -- and, if it does
 prove to outperform other methods in certain circumstances, to give a sense
-of why this might be the case.
+of why this might be.
 
 
 ## A philosophy of parsimony
 
-There are some a number of complementary perspectives on the philosophical
-justificaion for a parsimony, which this brief overview will not do justice to;
+There are a number of complementary perspectives on the philosophical
+justificaion for a parsimony approach, which this brief overview will not do justice to;
 but hopefully my unqualified and unreferenced perspective captures some of the
 nature of the principal arguments.
 Better versed readers are invited to suggest improvements or modifications
 by e-mail or by opening a [GitHub issue](https://github.com/ms609/TreeSearch/issues/new/).
 
 Parsimony has been defended by reference to Occam's Razor: the principle that
-science should prefer the simplest explanation that satisfactorily accounts
-for observations.  In the context of morphological phylogenetics, "observations"
+scientists should prefer the simplest explanation that can provide an 
+adequate account for observed data.
+In the context of morphological phylogenetics, "observed data"
 are codified as scorings of observed character states in a matrix.
 Ideally, a phylogenetic tree would explain the distribution of character states
 between taxa by reconstructing each character state as representing a 
 homologous feature, with a single evolutionary origin on the tree.
-A scenario in which a certain trait evolved once is simpler than one in which
-that trait evolved twice.
+An explanation in which a certain trait evolved once is simpler than one in
+which that trait evolved twice.
 Each additional step on a tree represents an additional "assumption",
 and on a simple or "pure" view, the tree that makes the fewest assumptions
 should be preferred.
 
-However, this perspective -- which supports the practice of *equal-weights*
-parsimony -- treats all assumptions as equivalent; the simplest hypothesis
-is the one that makes the fewest assumptions, in this case, assumptions 
-of homoplasy.
+However, this perspective -- which implicitly underpins the practice of
+*equal-weights* parsimony -- treats all assumptions as equivalent;
+the simplest hypothesis is the one that makes the fewest assumptions,
+in this case, assumptions of homoplasy.
+
 A more nuanced interpretation of Occam's Razor suggests that the simplest
 hypothesis is the one that is least surprising.  A hypothesis predicated
-on the existence of a flying spaghetti monster requires only a single
+on the existence of a flying spaghetti monster may require only a single (barmy)
 assumption, but we may nevertheless prefer a hypothesis that requires a greater
 number of assumptions that are better aligned with what experience has 
 previously shown to be true.
@@ -79,37 +81,40 @@ This view calls for *character weighting*, that is, assigning less weight
 to changes in characters that are believed to be less phylogenetically reliable.
 Such characters may be identified by successive approximations [@Farris1969],
 by comparing the pattern of their tokens with that of other characters,
-by expert judgement, or by other means.
+by expert judgement, or by other _a priori_ means.
 
 The second application argues that each additional case of homoplasy beyond
-the first is successively less surprising: the first homoplasy taught us that
-the character was not so reliable, making a second homoplasy less unexpected;
-the second observed homoplasy, in turn, makes us less hesitant to accept the
-third.  This approach calls for a *step weighting* approach, in which each
-additional step in a character receives less penalty than the last.
+the first is successively less surprising: the first observation of homoplasy
+(rather than some prior intuition) taught us that the character was not entirely
+reliable, making a second homoplasy less unexpected;
+the second observed homoplasy, in turn, makes us less surprised by the third.
+This approach calls for a *step weighting* approach, in which each
+additional step in a given character receives less penalty than the last.
 (Mathematically, this can be expressed in as if it were a character weighting
-strategy; but I feel that it has a subtly different motivation and warrants
-separate treatment.)
+strategy; but I feel that its _a posteriori_ nature conveys a subtly different 
+motivation and justifies a separate treatment.)
 
-This raises the question of how each steps beyond the first ought to be
+This raises the question of how each step beyond the first ought to be
 penalized.  Ultimately, any concave function (in which each step is penalized
 by a positive amount that is smaller than the penalty applied to the previous
 step) is consistent with this philosophy [@Arias2004].
-The most familiar step weighting approach is Goloboff's [-@Goloboff1993]
+The most widely used step weighting approach is Goloboff's [-@Goloboff1993]
 implied weighting, where the total cost associated with a character is expressed
 as _e_ / (_e_ + _k_), where _e_ is the number of homoplasies within a character,
 and _k_ is an arbitrary constant.  As _e_ tends to infinity, this approach tends
 to equal weights; as _k_ tends to zero, it tends to clique analysis (in which
-a character is either homologous or ignored).
+a character is either homologous or ignored) [@Farris1983].
 The most appropriate value for _k_ may depend on the number of taxa, the number
-and distribution of observed states, and other factors 
-(a more detailed treatment -- with references -- will be provided in a revision
-of this document).  Moreover, some adjustment must be made for 'missing' data,
+and distribution of observed states, and other factors
+[@Goloboff2008;@Goloboff2018]
+(a more detailed treatment  will be provided in a revision of this document).
+Moreover, some adjustment must be made for 'missing' data,
 i.e. ambiguous tokens, which reduce the opportunity to observe homoplasy
 [@Goloboff2014].
 Implied weighting is described as an approximation [@Goloboff1993], and I am not
 aware of a straightforward interpretation of the 'fit' score, or a principled
 definition of the nature of the quantity that is being approximated.
+
 
 ### An information theoretic basis
 
@@ -138,6 +143,16 @@ is less surprising, and thus contains less information:
 $-\log_2{\frac{6}{36}} \approx 2.58\textrm{ bits}$.
 An additional 2.58 bits of information would be required to establish which of
 the six possible rolls produced the seven.
+
+Now consider two competing explanations for an event: one, that three
+consecutive rolls of two dice each produced a seven; two, that two consecutive
+rolls of two dice each produced a twelve.  The former event corresponds to 
+$3 \times 2.58 = 7.75\textrm{ bits}$ of information; it is more probable --
+and thus on this view more parsimonious -- than the latter, which represents
+$2 \times 5.16 = 10.34\textrm{ bits}$,
+even though the third roll of the dice could be construed as an additional
+assumption.
+
 
 
 
