@@ -574,7 +574,6 @@ server <- function(input, output, session) {
       } else {
         r$trees <- results
       }
-      dput(attributes(r$trees))
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
       output$results <- renderText(paste0(
@@ -821,9 +820,8 @@ server <- function(input, output, session) {
                      )
                  })
                }
-               if (!is.null(r$charNotes)) {
-                 
-                 output$charNotes <- renderUI({
+               if (is.list(r$charNotes) && is.list(r$charNotes[[1]])) {
+                   output$charNotes <- renderUI({
                    charNotes <- r$charNotes[[n]]
                    description <- charNotes[[1]]
                    notes <- charNotes[[2]]
@@ -835,7 +833,7 @@ server <- function(input, output, session) {
                        tags$div(id = 'char-description',
                                 lapply(strsplit(description, '\n')[[1]], tags$p))
                      },
-                     tags$ul(class = 'state-notes', {
+                     if (!is.null(notes)) tags$ul(class = 'state-notes', {
                        PrintNote <- function(note) {
                          taxa <- names(note)[note]
                          tags$li(class = 'state-note',
@@ -855,8 +853,7 @@ server <- function(input, output, session) {
                          onlyOne <- TRUE
                          names(onlyOne) <- names(notes)
                          PrintNote(onlyOne)
-                       }
-                       else {
+                       } else {
                          notes <- notes[order(names(notes))]
                          duplicates <- DuplicateOf(toupper(notes))
                          apply(duplicates, 2, PrintNote)
