@@ -1,3 +1,8 @@
+# Branch pp-vignettes
+
+- New vignette describing profile parsimony.
+
+
 # TreeSearch 1.0.1.9000 (development)
 
 - Minor improvements to 'shiny' GUI.
