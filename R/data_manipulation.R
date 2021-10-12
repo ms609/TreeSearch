@@ -4,9 +4,9 @@
 #' characters, with a warning, where they are too complex for the present
 #' implementation of profile parsimony: 
 #' - inapplicable tokens will be replaced with the ambiguous token
-#'    (i.e. `-` &rarr; `?`);
+#'    (i.e. `-` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`);
 #' - Ambiguous tokens will be treated as fully ambiguous
-#'   (i.e. `{02}` &rarr; `?`)
+#'   (i.e. `{02}` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`)
 #' - Where more than two states are informative (i.e. unambiguously present in
 #'   more than two taxa), states beyond the two most informative will be
 #'   ignored.
@@ -37,9 +37,12 @@
 #' PrepareDataProfile(dataset)
 #' @author Martin R. Smith; written with reference to 
 #' `phangorn:::prepareDataFitch()`
+#' @importFrom cli cli_alert cli_alert_warning
+#' @family profile parsimony functions
+#' @encoding UTF-8
 #' @export
 PrepareDataProfile <- function (dataset) {
-  if ('info.amounts' %in% names(attributes(dataset))) {
+  if ('info.amounts' %fin% names(attributes(dataset))) {
     # Already prepared
     return(dataset)
   }
@@ -62,11 +65,11 @@ PrepareDataProfile <- function (dataset) {
   ambigs <- which(contSums > 1L & contSums < ncol(cont))
   inappLevel <- which(colnames(cont) == '-')
   if (length(inappLevel) != 0L) {
-    message("Inapplicable tokens treated as ambiguous for profile parsimony")
+    cli_alert("Inapplicable tokens treated as ambiguous for profile parsimony")
     inappLevel <- which(apply(unname(cont), 1, identical,
                               as.double(colnames(cont) == '-')))
     dataset[] <- lapply(dataset, function (i) {
-      i[i %in% inappLevel] <- qmLevel
+      i[i %fin% inappLevel] <- qmLevel
       i
     })
   }
@@ -76,7 +79,7 @@ PrepareDataProfile <- function (dataset) {
     # message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ', '),
     #         " converted to '?'")
     dataset[] <- lapply(dataset, function (i) {
-        i[i %in% ambigs] <- qmLevel
+        i[i %fin% ambigs] <- qmLevel
         i
       })
   }
@@ -85,7 +88,7 @@ PrepareDataProfile <- function (dataset) {
                     max(index))
   
   .RemoveExtraTokens <- function (char, ambiguousTokens) {
-    unambig <- char[!char %in% ambiguousTokens]
+    unambig <- char[!char %fin% ambiguousTokens]
     if (length(unambig) == 0) {
       return(matrix(nrow = length(char), ncol = 0))
     }
@@ -93,7 +96,12 @@ PrepareDataProfile <- function (dataset) {
     ranking <- order(order(split, decreasing = TRUE))
     ignored <- ranking > 2L
     if (any(split[ignored] > 1L)) {
-      warning("Can handle max. 2 informative tokens. Dropping others.")
+      warningMsg <- "Can handle max. 2 informative tokens. Dropping others."
+      if (interactive()) {
+        cli_alert_warning(warningMsg)                                           # nocov
+      } else {
+        warning(warningMsg)
+      }
     }
     if (length(ambiguousTokens) == 0) {
       stop("No ambiguous token available for replacement")
@@ -102,7 +110,7 @@ PrepareDataProfile <- function (dataset) {
     most <- tokens[which.min(ranking)]
     vapply(setdiff(names(split)[split > 1], most), function (kept) {
            simplified <- char
-           simplified[!simplified %in% c(most, kept)] <- ambiguousTokens[1]
+           simplified[!simplified %fin% c(most, kept)] <- ambiguousTokens[1]
            simplified
     }, char)
   }
@@ -111,7 +119,9 @@ PrepareDataProfile <- function (dataset) {
     .RemoveExtraTokens(mataset[i, ], ambiguousTokens = qmLevel))
   nChar <- vapply(decomposed, dim, c(0, 0))[2, ]
   if (sum(nChar) == 0) {
-    warning("No informative characters in `dataset`.")
+    cli_alert("No informative characters in `dataset`.")
+    attr(dataset, 'info.amounts') <- double(0)
+    return(dataset[0])
   }
   newIndex <- seq_len(sum(nChar))
   oldIndex <- rep.int(seq_along(nChar), nChar)
@@ -136,10 +146,12 @@ PrepareDataProfile <- function (dataset) {
     # Return:
     cipher[char]
   }
-  mataset <- apply(mataset, 2, .Recompress, qmLevel)
   if (length(mataset) == 0) {
-    stop("No informative characters in `dataset`.")
+    cli_alert("No informative characters in `dataset`.")
+    attr(dataset, 'info.amounts') <- double(0)
+    return(dataset[0])
   }
+  mataset <- apply(mataset, 2, .Recompress, qmLevel)
   dupCols <- duplicated(t(mataset))
   kept <- which(!dupCols)
   copies <- lapply(kept, function (i) {
@@ -229,7 +241,8 @@ PrepareDataIW <- function (dataset) {
   unlisted <- unlist(dataset, use.names = FALSE)
   binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
   
-  attr(dataset, 'min.length') <- apply(binaryMatrix, 1, MinimumLength)
+  attr(dataset, 'min.length') <- apply(binaryMatrix, 1, MinimumLength,
+                                       compress = TRUE)
   
   # Return:
   dataset
@@ -251,14 +264,18 @@ PrepareDataIW <- function (dataset) {
 #' Tokens that are ambiguous for an inapplicable and an applicable
 #' state are not presently supported; for an approximate value, denote such
 #' ambiguity with the integer `0`.
+#' @template compressParam
 #' 
-#' @return A vector of integers specifying the minimum number of steps that 
-#' each character must contain.
+#' @return `MinimumLength()` returns a vector of integers specifying the 
+#' minimum number of steps that each character must contain.
 #'
 #' @examples
 #' data('inapplicable.datasets')
 #' myPhyDat <- inapplicable.phyData[[4]] 
 #' MinimumLength(myPhyDat)
+#' MinimumLength(myPhyDat, compress = TRUE)
+#' 
+#' 
 #' class(myPhyDat) # phyDat object
 #' # load your own data with
 #' # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
@@ -281,15 +298,14 @@ PrepareDataIW <- function (dataset) {
 #'
 #' # Finally, work out minimum steps 
 #' apply(myStates, 1, MinimumLength)
-#'   
-#'
-#' @author Martin R. Smith
+#' @template MRS
+#' @family tree scoring
 #' @export
-MinimumLength <- function (x) UseMethod('MinimumLength')
+MinimumLength <- function (x, compress = FALSE) UseMethod('MinimumLength')
 
 #' @rdname MinimumLength
 #' @export
-MinimumLength.phyDat <- function (x) {
+MinimumLength.phyDat <- function (x, compress = FALSE) {
   
   at <- attributes(x)
   nLevel <- length(at$level)
@@ -316,13 +332,19 @@ MinimumLength.phyDat <- function (x) {
   unlisted <- unlist(x, use.names = FALSE)
   binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
   
+  ret <- apply(binaryMatrix, 1, MinimumLength)
+  
   # Return:
-  apply(binaryMatrix, 1, MinimumLength)
+  if (compress) {
+    ret
+  } else {
+    ret[attr(x, 'index')]
+  }
 }
 
 #' @rdname MinimumLength
 #' @export
-MinimumLength.numeric <- function (x) {
+MinimumLength.numeric <- function (x, compress = NA) {
   
   uniqueStates <- unique(x[x > 0])
   if (length(uniqueStates) < 2) return (0)
@@ -366,5 +388,5 @@ MinimumLength.numeric <- function (x) {
 MinimumSteps <- function(x) {
   .Deprecated("MinimumLength",
   msg = 'Renamed to `MinimumLength()` and recoded to better support inapplicable tokens')
-  MinimumLength(x)
+  MinimumLength(x, compress = TRUE)
 }

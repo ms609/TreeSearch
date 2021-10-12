@@ -9,8 +9,8 @@ StepInformation(char, ambiguousTokens = c("-", "?"))
 \arguments{
 \item{char}{Vector of tokens listing states for the character in question.}
 
-\item{ambiguousTokens}{Which tokens, if any, correspond to the ambiguous
-token (\verb{?}).}
+\item{ambiguousTokens}{Vector specifying which tokens, if any, correspond to
+the ambiguous token (\verb{?}).}
 }
 \value{
 \code{StepInformation()} returns a numeric vector detailing the amount
@@ -34,12 +34,10 @@ Calculates the number of trees consistent with the character having
 character <- rep(c(0:3, '?', '-'), c(8, 5, 1, 1, 2, 2))
 StepInformation(character)
 }
-\references{
-\insertRef{Faith2001}{TreeSearch}
-}
 \seealso{
 Other profile parsimony functions: 
 \code{\link{Carter1}()},
+\code{\link{PrepareDataProfile}()},
 \code{\link{profiles}}
 }
 \author{

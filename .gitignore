@@ -1,12 +1,13 @@
-Meta
-doc
-docs
+/doc/
+/Meta/
+/docs/
 gen-*
 src-*
 src/*.o
 src/*.so
 src/*.dll
 .Rdata
+.Rd2pdf**
 .Rprofile
 *.gcno
 *.knit.md
@@ -19,6 +20,7 @@ inst/ape
 inst/doc
 results-*
 revdep/
+tests/testthat/_snaps/*.new.*
 vignettes/*.html
 vignettes/*.pdf
 vignettes/*_files
@@ -28,3 +30,4 @@ vignettes/*_cache*
 *.site
 gen-*tip/*
 results-*
+inst/DELETE*

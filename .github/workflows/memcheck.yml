@@ -5,10 +5,24 @@ on:
     branches:
       - main
       - master
+    paths:
+      - '.github/workflows/memcheck.yml'
+      - 'src/**'
+      - 'inst/include/**'
+      - 'memcheck/**'
+      - 'tests/testthat/**.R'
+      - 'vignettes/**.Rmd'
   pull_request:
     branches:
       - main
       - master
+    paths:
+      - '.github/workflows/memcheck.yml'
+      - 'src/**'
+      - 'inst/include/**'
+      - 'memcheck/**'
+      - 'tests/testthat/**.R'
+      - 'vignettes/**.Rmd'
 
 name: mem-check
 
@@ -16,10 +30,15 @@ jobs:
   mem-check:
     runs-on: ubuntu-20.04
 
-    name: valgrind, ubuntu-20.04, R release
+    name: valgrind ${{ matrix.config.test }}
 
     strategy:
       fail-fast: false
+      matrix:
+        config:
+          - {test: 'tests'}
+          - {test: 'examples'}
+          - {test: 'vignettes'}
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -32,17 +51,16 @@ jobs:
 
       - uses: r-lib/actions/setup-r@v1
         with:
-          r-version: release
+          r-version: release # CRAN uses devel, but takes ages to load deps.
 
-      - uses: r-lib/actions/setup-pandoc@master
-
-      - name: Install valgrind
-        run: sudo apt-get install valgrind texlive-latex-base
+      - name: Setup pandoc
+        if: ${{ matrix.config.test }} == 'vignettes'
+        uses: r-lib/actions/setup-pandoc@master
 
       - name: Query dependencies
         run: |
           install.packages('remotes')
-          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
+          saveRDS(remotes::dev_package_deps(dependencies = c('soft', 'Config/Needs/memcheck')), ".github/depends.Rds", version = 2)
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
 
@@ -55,42 +73,32 @@ jobs:
 
       - name: Install system dependencies
         run: |
+          sudo apt-get install valgrind texlive-latex-base
           while read -r cmd
           do
             eval sudo $cmd
           done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
-          
+
       - name: Install dependencies
         run: |
-          remotes::install_github("KlausVigo/phangorn")
-          remotes::install_github("ms609/TreeTools") # Use latest TreeTools, whilst testing 2021-01
-          remotes::install_deps(dependencies = TRUE)
-          remotes::install_cran("rcmdcheck")
-          remotes::install_cran('devtools')
+          remotes::install_github('emmanuelparadis/ape')
+          if ("${{ matrix.config.test }}" == 'tests') {
+            remotes::install_github('r-lib/brio#20') # brio mem leak
+          }
+          remotes::install_deps(dependencies = c('soft', 'Config/Needs/memcheck'))
         shell: Rscript {0}
-        
-      - name: Install TreeSearch
+
+      - name: Install package
         run: |
           cd ..
-          R CMD build --no-manual --no-resave-data TreeSearch
+          R CMD build --no-manual --no-build-vignettes --no-resave-data TreeSearch
           R CMD INSTALL TreeSearch*.tar.gz
           cd TreeSearch
-      
-      - name: valgrind - memcheck examples
-        run: |
-          R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < memcheck/examples.R
 
-      - name: valgrind - memcheck tests
+      - name: valgrind - memcheck ${{ matrix.config.test }}
         run: |
-          R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < memcheck/tests.R
-      
-      - name: valgrind - memcheck vignettes
-        run: |
-          R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < memcheck/vignettes.R
-        
-      - name: Upload check results
-        if: failure()
-        uses: actions/upload-artifact@main
-        with:
-          name: ${{ runner.os }}-rrelease-valgrind-results
-          path: check
+          R -d "valgrind --tool=memcheck \
+          --leak-check=full \
+          --errors-for-leak-kinds=definite \
+          --error-exitcode=1" \
+          --vanilla < memcheck/${{ matrix.config.test }}.R

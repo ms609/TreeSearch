@@ -4,4 +4,12 @@ src/morphy.c
 src/mpl.c
 src/statedata.c
 src/wagner.c
+R/ape.plot.phylo.R
 R/zzz.R
+
+////Legacy code////
+R/Ratchet.R
+R/tree_rearrangement.R
+
+////Deprecations////
+R/IWScore.R

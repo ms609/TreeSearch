@@ -118,8 +118,8 @@ marginal jaw bones. Nature, 502, 188--193.}
 inapplicable.phyData
 }
 \description{
-These are the datasets used to evaluate the behaviour of the inapplicable algorithm
-in Brazeau, Guillerme and Smith (2017).
+These are the datasets used to evaluate the behaviour of the inapplicable
+algorithm in \insertCite{Brazeau2018}{TreeTools}.
 }
 \details{
 The name of each item corresponds to the datasets listed below.
@@ -128,6 +128,6 @@ the first subset comprise simpler datasets with faster processing times.
 The value is the dataset in \code{phyDat} format.
 }
 \references{
-\insertRef{Brazeau2018}{TreeTools}
+\insertAllCited{}
 }
 \keyword{datasets}

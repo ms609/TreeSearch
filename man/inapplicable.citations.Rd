@@ -119,12 +119,12 @@ inapplicable.citations
 }
 \description{
 These are the datasets used to evaluate the behaviour of the inapplicable algorithm
-in Brazeau, Guillerme and Smith (2018).
+in \insertCite{Brazeau2018}{TreeTools}.
 }
 \details{
 The name of each item corresponds to the datasets listed below.  The value gives its citation.
 }
 \references{
-\insertRef{Brazeau2018}{TreeTools}
+\insertAllCited{}
 }
 \keyword{datasets}

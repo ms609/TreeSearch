@@ -10,24 +10,23 @@
 \usage{
 MaximizeParsimony(
   dataset,
-  tree = NJTree(dataset),
+  tree,
   ratchIter = 6L,
-  tbrIter = 2,
+  tbrIter = 2L,
   startIter = 2L,
   finalIter = 1L,
-  maxHits = NTip(dataset) * 1.5,
+  maxHits = NTip(dataset) * 1.8,
   maxTime = 60,
   quickHits = 1/3,
   concavity = Inf,
   tolerance = sqrt(.Machine$double.eps),
-  constraint = NULL,
-  verbosity = 2L,
-  session = NULL
+  constraint,
+  verbosity = 3L
 )
 
 Resample(
   dataset,
-  tree = NJTree(dataset),
+  tree,
   method = "jack",
   proportion = 2/3,
   ratchIter = 1L,
@@ -36,9 +35,8 @@ Resample(
   maxHits = 12L,
   concavity = Inf,
   tolerance = sqrt(.Machine$double.eps),
-  constraint = NULL,
+  constraint,
   verbosity = 2L,
-  session = NULL,
   ...
 )
 
@@ -53,14 +51,16 @@ whose names correspond to the labels of any accompanying tree.}
 \item{tree}{(optional) A bifurcating tree of class \code{\link{phylo}},
 containing only the tips listed in \code{dataset}, from which the search
 should begin.
-If unspecified, a neighbour-joining tree will be generated from \code{dataset}.
+If unspecified, an \link[=AdditionTree]{addition tree} will be generated from
+\code{dataset}, respecting any supplied \code{constraint}.
 Edge lengths are not supported and will be deleted.}
 
 \item{ratchIter}{Numeric specifying number of iterations of the
-parsimony ratchet (Nixon 1999) to conduct.}
+parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.}
 
 \item{tbrIter}{Numeric specifying the maximum number of \acronym{TBR}
 break points to evaluate before concluding each search.
+The counter is reset to zero each time tree score improves.
 The counter is reset to zero each time tree score improves.
 One 'iteration' comprises breaking a single branch and evaluating all
 possible reconnections.}
@@ -84,48 +84,37 @@ next opportunity.}
 will retain \code{quickHits} × \code{maxHits} trees with the best score.}
 
 \item{concavity}{Numeric specifying concavity constant for implied step
-weighting; set as \code{Inf} for equal step weights (which is a bad idea; see
-Smith 2019).}
+weighting.
+The most appropriate value will depend on the dataset, but values around
+10--15 often perform well \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+The character string "profile" employs an approximation of profile parsimony
+\insertCite{Faith2001}{TreeSearch}.
+Set as \code{Inf} for equal step weights, which underperforms step weighting
+approaches
+\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.}
 
 \item{tolerance}{Numeric specifying degree of suboptimality to tolerate
 before rejecting a tree.  The default, \code{sqrt(.Machine$double.eps)}, retains
 trees that may be equally parsimonious but for rounding errors.
 Setting to larger values will include trees suboptimal by up to \code{tolerance}
 in search results, which may improve the accuracy of the consensus tree
-(at the expense of resolution) (Smith 2019).}
+(at the expense of resolution) \insertCite{Smith2019}{TreeSearch}.}
 
-\item{constraint}{Either \code{NULL} or an object of class \code{phyDat}. Trees that
-are not perfectly compatible with each character in \code{constraint} will not
-be considered during search.
-See \href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
+\item{constraint}{An object of class \code{phyDat}; returned trees will be
+perfectly compatible with each character in \code{constraint}.
+See \code{\link[=ImposeConstraint]{ImposeConstraint()}} and
+\href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
 for further examples.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
 more detailed commentary on search progress. Set to \code{0} to run silently.}
-
-\item{session}{'shiny' session identifier to allow \code{\link[=setProgress]{setProgress()}} calls
-to be sent when \code{MaximizeParsimony()} is called from within a shiny app.}
 
 \item{method}{Unambiguous abbreviation of \code{jackknife} or \code{bootstrap}
 specifying how to resample characters.  Note that jackknife is considered
 to give more meaningful results.}
 
 \item{proportion}{Numeric between 0 and 1 specifying what proportion of
-characters to retain under jackknife resampling.
-
-Note that bootstrap support is a measure of the amount of data supporting
-a split, rather than the amount of confidence that should be afforded the
-grouping.
-"Bootstrap support of 100\% is not enough, the tree must also be correct"
-(Phillips et al. 2004).
-See discussion in Egan 2006; Wägele \emph{et al}. (2009), Kumar \emph{et al.} 2011.
-
-For a discussion of suitable search parameters in resampling estimates, see
-Müller (2005).  The user should decide whether to start each resampling
-from the optimal tree (which may be quicker, but result in overestimated
-support values as searches get stuck in local optima close to the
-optimal tree) or a random tree (which may take longer as more rearrangements
-are necessary to find an optimal tree on each iteration).}
+characters to retain under jackknife resampling.}
 
 \item{\dots}{Additional parameters to \code{MaximizeParsimony()}.}
 }
@@ -148,19 +137,21 @@ trees obtained by tree search using a resampled version of \code{dataset}.
 \description{
 Search for most parsimonious trees using the parsimony ratchet and
 \acronym{TBR} rearrangements, treating inapplicable data as such using the
-algorithm of Brazeau, Guillerme & Smith (2019).
+algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
 
 Tree search will be conducted from a specified or automatically-generated
 starting tree in order to find a tree with an optimal parsimony score,
 under implied or equal weights, treating inapplicable characters as such
 in order to avoid the artefacts of the standard Fitch algorithm
-(see Maddison 1993; Brazeau et al. 2019).
-The tree scoring implementation uses the MorphyLib C library (Brazeau 2017).
+\insertCite{@see @Maddison1993; @Brazeau2019}{TreeSearch}.
+Tree length is calculated using the MorphyLib C library
+\insertCite{Brazeau2017}{TreeSearch}.
 }
 \details{
 Tree search commences with \code{ratchIter} iterations of the parsimony ratchet
-(Nixon 1999), which bootstraps the input dataset in order to escape local
-optima.  A final round of tree bisection and reconnection (\acronym{TBR})
+\insertCite{Nixon1999}{TreeSearch}, which bootstraps the input dataset
+in order to escape local optima.
+A final round of tree bisection and reconnection (\acronym{TBR})
 is conducted to broaden the sampling of trees.
 
 This function can be called using the R command line / terminal, or through
@@ -169,13 +160,39 @@ the 'shiny' graphical user interface app (type \code{EasyTrees()} to launch).
 For detailed documentation of the 'TreeSearch' package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
-\href{https://ms609.github.io/TreeSearch}{package documentation}.
+\href{https://ms609.github.io/TreeSearch/}{package documentation}.
 }
+\section{Resampling}{
+
+Note that bootstrap support is a measure of the amount of data supporting
+a split, rather than the amount of confidence that should be afforded the
+grouping.
+"Bootstrap support of 100\% is not enough, the tree must also be correct"
+\insertCite{Phillips2004}{TreeSearch}.
+See discussion in \insertCite{Egan2006;textual}{TreeSearch};
+\insertCite{Wagele2009;textual}{TreeSearch};
+\insertCite{Simmons2011}{TreeSearch};
+\insertCite{Kumar2012;textual}{TreeSearch}.
+
+For a discussion of suitable search parameters in resampling estimates, see
+\insertCite{Muller2005;textual}{TreeSearch}.
+The user should decide whether to start each resampling
+from the optimal tree (which may be quicker, but result in overestimated
+support values as searches get stuck in local optima close to the
+optimal tree) or a random tree (which may take longer as more rearrangements
+are necessary to find an optimal tree on each iteration).
+
+For other ways to estimate clade concordance, see \code{\link[=SiteConcordance]{SiteConcordance()}}.
+}
+
 \examples{
-\dontrun{ # launch 'shiny' point-and-click interface
+## Only run examples in interactive R sessions
+if (interactive()) {
+  # launch 'shiny' point-and-click interface
+  EasyTrees()
+  
   # Here too, use the "continue search" function to ensure that tree score
   # has stabilized and a global optimum has been found
-  EasyTrees()
 }
 
 
@@ -191,13 +208,15 @@ trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
 
 # In actual use, be sure to check that the score has converged on a global
 # optimum, conducting additional iterations and runs as necessary.
-                  
+ 
+if (interactive()) {
 # Jackknife resampling
-nReplicates <- 3
+nReplicates <- 10
 jackTrees <- replicate(nReplicates,
-  Resample(dataset, trees, ratchIter = 0, tbrIter = 1, startIter = 1,
-           maxHits = 3, maxTime = 1 / 100,
-           concavity = 10, verbosity = 0)
+  #c() ensures that each replicate returns a list of trees
+  c(Resample(dataset, trees, ratchIter = 0, tbrIter = 2, startIter = 1,
+             maxHits = 5, maxTime = 1 / 10,
+             concavity = 10, verbosity = 0))
  )
 
 # In a serious analysis, more replicates would be conducted, and each
@@ -214,7 +233,7 @@ JackLabels(ape::consensus(trees), lapply(jackTrees, ape::consensus))
 
 # Take a single tree from each replicate (the first; order's irrelevant)
 JackLabels(ape::consensus(trees), lapply(jackTrees, `[[`, 1))
-
+}
 
 # Tree search with a constraint
 constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
@@ -226,29 +245,11 @@ MaximizeParsimony(characters, constraint = constraint, verbosity = 0)
 
 }
 \references{
-\insertRef{Brazeau2017}{TreeSearch}
-
-\insertRef{Brazeau2019}{TreeSearch}
-
-\insertRef{Maddison1993}{TreeSearch}
-
-\insertRef{Nixon1999}{TreeSearch}
-
-\insertRef{Smith2019}{TreeSearch}
-
-\insertRef{Egan2006}{TreeSearch}
-
-\insertRef{Kumar2012}{TreeSearch}
-
-\insertRef{Muller2005}{TreeSearch}
-
-\insertRef{Phillips2004}{TreeSearch}
-
-\insertRef{Simmons2011}{TreeSearch}
-
-\insertRef{Wagele2009}{TreeSearch}
+\insertAllCited{}
 }
 \seealso{
+Tree search \emph{via} graphical user interface: \code{\link[=EasyTrees]{EasyTrees()}}
+
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},

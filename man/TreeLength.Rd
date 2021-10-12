@@ -34,14 +34,14 @@ whose names correspond to the labels of any accompanying tree.}
 
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
-(Goloboff 1993, where \code{concavity} specifies \emph{k} in \emph{k} / \emph{e} + \emph{k}).
-in implied weighting. A value of 10 is recommended;
+\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
+\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
 TNT sets a default of 3, but this is too low in some circumstances
-(Goloboff \emph{et al}. 2018, Smith, 2019).
+\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
 Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
 Specify \code{Inf} to weight each additional step equally.
-Specify \code{'profile'} to employ profile parsimony (Faith & Trueman 2001).}
+Specify \code{'profile'} to employ profile parsimony \insertCite{Faith2001}{TreeSearch}.}
 
 \item{\dots}{unused; allows additional parameters specified within \dots to be
 received by the function without throwing an error.}
@@ -51,10 +51,11 @@ received by the function without throwing an error.}
 each tree.
 }
 \description{
-\code{TreeLength()} uses the Morphy library (Brazeau 2017) to calculate a
-parsimony score for a tree, handling inapplicable data according to the
-algorithm of Brazeau et al. (2019).  Tree scoring can employ implied
-weights (Goloboff 1993) or profile parsimony (Faith & Trueman 2001).
+\code{TreeLength()} uses the Morphy library \insertCite{Brazeau2017}{TreeSearch}
+to calculate a parsimony score for a tree, handling inapplicable data
+according to the algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
+Tree scoring can employ implied weights \insertCite{Goloboff1993}{TreeSearch}
+or profile parsimony \insertCite{Faith2001}{TreeSearch}.
 }
 \examples{
 data("inapplicable.datasets")
@@ -65,14 +66,7 @@ TreeLength(tree, inapplicable.phyData[[1]], concavity = 'profile')
 TreeLength(5, inapplicable.phyData[[1]])
 }
 \references{
-\itemize{
-\item \insertRef{Brazeau2017}{TreeSearch}
-\item \insertRef{Brazeau2019}{TreeSearch}
-\item \insertRef{Faith2001}{TreeSearch}
-\item \insertRef{Goloboff1993}{TreeSearch}
-\item \insertRef{Goloboff2018}{TreeSearch}
-\item \insertRef{Smith2019}{TreeSearch}
-}
+\insertAllCited{}
 }
 \seealso{
 \itemize{
@@ -84,6 +78,7 @@ TreeLength(5, inapplicable.phyData[[1]])
 
 Other tree scoring: 
 \code{\link{CharacterLength}()},
+\code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()}
 }
 \author{

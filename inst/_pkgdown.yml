@@ -17,8 +17,9 @@ reference:
     desc: "Functions that provide tree scores, for optimization."
     contents: 
       - has_concept("tree scoring")
+      - ConcordantInformation
       - Consistency
-      - Evaluate
+      - PlotCharacter
       - RandomTreeScore
       
   - title: "Split support"
@@ -26,10 +27,11 @@ reference:
     contents: 
       - has_concept("split support functions")
       
-  - title: "Tree rearrangement"
+  - title: "Tree (re)construction"
     desc: > 
-      Tree rearrangement functions
+      Tree generation and rearrangement functions.
     contents:
+      - has_concept("tree generation functions")
       - matches("NNI")
       - matches("SPR")
       - matches("TBR")
@@ -49,22 +51,8 @@ reference:
       
   - title: "Datasets"
     desc: "Data that accompanies the package."
-    contents: 
-      - congreveLamsdellMatrices
-      - inapplicable.citations
-      - inapplicable.datasets
-      - inapplicable.phyData
-      - referenceTree
-     #- has_concept('datasets') # Not yet implemented by pkgdown
-     
-  - title: "Utility functions"
-    desc: "Miscellaneous functions to simplify or expedite basic functionality."
     contents:
-      - JackLabels
-      - LogisticPoints
-      - MinimumSteps
-      - PrepareDataProfile
-      - RandomMorphyTree
+      - has_keyword('datasets')
 
 template:
   params:

@@ -27,7 +27,7 @@ test_that("Minimum step counts are correctly calculated", {
   expect_equal('{-1}{-2}{-3}2233', TreeTools::PhyDatToString(PrepareDataIW(dudTwo)))
   
   tr <- ape::read.tree(text='(((a, b), c), (d, (e, ((f, g), (h, (i, (j, k)))))));')
-  expect_equal(CharacterLength(tr,
+  expect_equal(CharacterLength(tr, compress = TRUE,
                                TreeTools::StringToPhyDat('11---22--33', letters[1:11])),
                MinimumLength(c(0, 0, 0, 0, 0, 0, 2, 2, 4, 4, 8, 8)))
 
@@ -54,14 +54,16 @@ test_that("Minimum step counts are correctly calculated", {
                  1, 2, 1, 1, 4, 3, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 4, 1, 
                  1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 
                  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
-               MinimumLength(inapplicable.phyData[[4]]))
+               MinimumLength(inapplicable.phyData[[4]], compress = TRUE))
   
 })
 
 test_that("PrepareDataProfile() handles empty matrices", {
   dat <- TreeTools::MatrixToPhyDat(matrix(c(0, 1, rep('?', 5)),
                                           dimnames = list(letters[1:7], NULL)))
-  expect_warning(expect_error(PrepareDataProfile(dat)))
+  expectation <- dat[0]
+  attr(expectation, 'info.amounts') <- numeric(0)
+  expect_equal(expectation, PrepareDataProfile(dat))
 })
 
 test_that("PrepareDataProfile()", {

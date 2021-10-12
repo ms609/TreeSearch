@@ -19,8 +19,13 @@
 #' @export
 RandomTreeScore <- function (morphyObj) {
   nTip <- mpl_get_numtaxa(morphyObj)
-  # Return:
-  .Call('RANDOM_TREE_SCORE', as.integer(nTip), morphyObj)
+  if (nTip < 2) {
+    # Return:
+    0L
+  } else {
+    # Return:
+    .Call('RANDOM_TREE_SCORE', as.integer(nTip), morphyObj)
+  }
 }
 
 #' Random postorder tree

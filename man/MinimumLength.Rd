@@ -7,11 +7,11 @@
 \alias{MinimumSteps}
 \title{Minimum length}
 \usage{
-MinimumLength(x)
+MinimumLength(x, compress = FALSE)
 
-\method{MinimumLength}{phyDat}(x)
+\method{MinimumLength}{phyDat}(x, compress = FALSE)
 
-\method{MinimumLength}{numeric}(x)
+\method{MinimumLength}{numeric}(x, compress = NA)
 
 MinimumSteps(x)
 }
@@ -27,10 +27,14 @@ Inapplicable tokens should be denoted with the integer \code{0} (not 2^0).
 Tokens that are ambiguous for an inapplicable and an applicable
 state are not presently supported; for an approximate value, denote such
 ambiguity with the integer \code{0}.}
+
+\item{compress}{Logical specifying whether to retain the compression of a
+\code{phyDat} object or to return a vector specifying to each individual
+character, decompressed using the dataset's \code{index} attribute.}
 }
 \value{
-A vector of integers specifying the minimum number of steps that
-each character must contain.
+\code{MinimumLength()} returns a vector of integers specifying the
+minimum number of steps that each character must contain.
 }
 \description{
 The smallest length that a character can obtain on any tree.
@@ -39,6 +43,9 @@ The smallest length that a character can obtain on any tree.
 data('inapplicable.datasets')
 myPhyDat <- inapplicable.phyData[[4]] 
 MinimumLength(myPhyDat)
+MinimumLength(myPhyDat, compress = TRUE)
+
+
 class(myPhyDat) # phyDat object
 # load your own data with
 # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
@@ -61,9 +68,15 @@ myStates <- matrix(binaryValues[myData], nrow = nrow(myData),
 
 # Finally, work out minimum steps 
 apply(myStates, 1, MinimumLength)
-  
-
+}
+\seealso{
+Other tree scoring: 
+\code{\link{CharacterLength}()},
+\code{\link{IWScore}()},
+\code{\link{MorphyTreeLength}()}
 }
 \author{
-Martin R. Smith
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
+\concept{tree scoring}

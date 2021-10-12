@@ -26,17 +26,22 @@ SharedPhylogeneticConcordance(tree, dataset)
 whose names correspond to the labels of any accompanying tree.}
 }
 \description{
-The site concordance factor (Minh, Hahn & Lanfear 2020) is a measure of the
-strength of support that the dataset presents for a given split in a tree.
+The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure
+of the strength of support that the dataset presents for a given split in a
+tree.
 }
 \details{
-\code{QuartetConcordance()} is the proportion of quartets (sets of four leaves) that
-are decisive for a split which are also concordant with it.
+\code{QuartetConcordance()} is the proportion of quartets (sets of four leaves)
+that are decisive for a split which are also concordant with it.
 For example, a quartet with the characters \verb{0 0 0 1} is not decisive, as
 all relationships between those leaves are equally parsimonious.
 But a quartet with characters \verb{0 0 1 1} is decisive, and is concordant
 with any tree that groups the first two leaves together to the exclusion
 of the second.
+
+NOTE: These functions are under development, and may be incompletely tested
+or change without notice.
+Complete documentation and discussion will follow soon.
 }
 \examples{
 data('congreveLamsdellMatrices', package = 'TreeSearch')
@@ -58,11 +63,7 @@ par(oPar)
 pairs(cbind(qc, cc, pc, spc, mcc))
 }
 \references{
-\insertRef{Minh2020}{TreeSearch}
-
-\insertRef{SmithDist}{TreeDist}
-
-\insertRef{Vinh2010}{TreeDist}
+\insertAllCited{}
 }
 \seealso{
 Other split support functions: 

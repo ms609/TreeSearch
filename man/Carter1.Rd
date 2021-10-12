@@ -23,10 +23,11 @@ where \emph{a} leaves are labelled with one state, and \emph{b} leaves labelled 
 a second state.
 }
 \details{
-Implementation of theorem 1 from Carter \emph{et al.} (1990).
+Implementation of theorem 1 from \insertCite{Carter1990;textual}{TreeTools}
 }
 \references{
-\insertRef{Carter1990}{TreeTools}
+\insertAllCited{}
+
 See also:
 
 \insertRef{Steel1993}{TreeSearch}
@@ -37,6 +38,7 @@ See also:
 }
 \seealso{
 Other profile parsimony functions: 
+\code{\link{PrepareDataProfile}()},
 \code{\link{StepInformation}()},
 \code{\link{profiles}}
 }

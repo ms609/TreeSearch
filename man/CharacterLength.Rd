@@ -6,7 +6,7 @@
 \alias{FastCharacterLength}
 \title{Character length}
 \usage{
-CharacterLength(tree, dataset)
+CharacterLength(tree, dataset, compress = FALSE)
 
 FitchSteps(tree, dataset)
 
@@ -17,11 +17,15 @@ FastCharacterLength(tree, dataset)
 
 \item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
 whose names correspond to the labels of any accompanying tree.}
+
+\item{compress}{Logical specifying whether to retain the compression of a
+\code{phyDat} object or to return a vector specifying to each individual
+character, decompressed using the dataset's \code{index} attribute.}
 }
 \value{
 \code{CharacterLength()} returns a vector listing the contribution of each
-character to tree score, according to the algorithm of Brazeau, Guillerme
-and Smith (2019).
+character to tree score, according to the algorithm of
+\insertCite{Brazeau2018;textual}{TreeTools}.
 }
 \description{
 Homoplasy length of each character in a dataset on a specified tree.
@@ -37,14 +41,19 @@ data('inapplicable.datasets')
 dataset <- inapplicable.phyData[[12]]
 tree <- TreeTools::NJTree(dataset)
 CharacterLength(tree, dataset)
-
+CharacterLength(tree, dataset, compress = TRUE)
 }
 \references{
-\insertRef{Brazeau2018}{TreeTools}
+\insertAllCited{}
 }
 \seealso{
 Other tree scoring: 
 \code{\link{IWScore}()},
+\code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()}
+}
+\author{
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{tree scoring}

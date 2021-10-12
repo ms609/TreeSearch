@@ -6,6 +6,15 @@ body {
   margin-bottom: 0;
 }
 
+/* Sneaky way of keeping progress bars open */
+.shiny-notification-close {
+  display: none;
+}
+
+#shiny-notification-panel {
+  top: 0;
+}
+
 .message {
   color: #ffc646;
 }
@@ -27,4 +36,70 @@ h2 {
 h3 {
   font-size: 12pt;
   font-weight: 700;
+}
+
+
+div#char-description {
+  max-width: 580px;
+}
+
+.state-notes {
+  column-count: 2;
+}
+
+li.state-note {
+  break-inside: avoid-column;
+  page-break-inside: avoid;
+}
+
+.state-note-label::after {
+  content: ": ";
+}
+
+.state-note-label {
+  font-weight: bold;
+}
+
+.legendLeft {
+  margin-left: 2em;
+  align: right;
+}
+
+.legendRight {
+  align: left;
+}
+
+ .legendBar {
+  display: inline-block;
+  min-width: 3em;
+ }
+
+.infernoScale {
+  background: linear-gradient(90deg, #000004, #160b39, #420a68, #6a176e, #932667, #ba3655, #dd513a, #f3761b, #fca50a, #f6d746, #f6d746);
+}
+
+#blackToGreen {
+  background: linear-gradient(90deg, rgba(0,0,0,1) 0%, rgb(0,158,115,1) 100%);
+}
+
+#clThresh-label.meaningless::after {content: " dud";}
+#clThresh-label.weak::after {content: " weak";}
+#clThresh-label.good::after {content: " good";}
+#clThresh-label.strong::after {content: " strong";}
+
+#clThresh-label.meaningless + span>span.irs-bar.irs-bar--single {
+  background: #0D0887;
+  border-color: #0D0887;
+}
+#clThresh-label.weak + span>span.irs-bar.irs-bar--single {
+  background: #9C179E;
+  border-color: #9C179E;
+}
+#clThresh-label.good + span>span.irs-bar.irs-bar--single {
+  background: #ED7953;
+  border-color: #ED7953;
+}
+#clThresh-label.strong + span>span.irs-bar.irs-bar--single {
+  background: #F0F921;
+  border-color: #F0F921;
 }

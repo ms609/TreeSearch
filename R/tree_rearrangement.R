@@ -54,37 +54,44 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
     best <- candidateScores == candidateScore
     nBest <- sum(best)
     if (candidateScore > (scoreToBeat + eps)) {
-      if (verbosity > 3L) message("    . Iteration ", iter, 
+      if (verbosity > 3L) {                                                     # nocov start
+        message("    . Iteration ", iter, 
                                   ' - Rearranged tree score ', candidateScore, 
                               " > target ", scoreToBeat)
+      }                                                                         # nocov end
     } else if (candidateScore + eps > scoreToBeat) { # i.e. scores are equal
       hits <- hits + nBest
-      if (verbosity > 2L) message("    - Iteration ", iter, " - Best score ",
-                                  scoreToBeat, " found again ", nBest, 
-                                  " times; now found ", hits, " times.")
+      if (verbosity > 2L) {                                                     # nocov start
+        message("    - Iteration ", iter, " - Best score ", scoreToBeat, 
+                " found again ", nBest, " times; now found ", hits, " times.")
+      }                                                                         # nocov end
     } else {
       hits <- nBest
-      if (verbosity > 1L) message("    * Iteration ", iter, " - New best score ",
-                                  candidateScore, " found on ", hits, " trees.")
+      if (verbosity > 1L) {                                                     # nocov start
+        message("    * Iteration ", iter, " - New best score ", candidateScore,
+                " found on ", hits, " trees.")
+      }                                                                         # nocov end
     }
     rearrangedEdges <- rearrangedEdges[[SampleOne(which(best), nBest)]]
   } else {
     candidateScore <- TreeScorer(rearrangedEdges[[1]], rearrangedEdges[[2]], dataset, ...)
     if (candidateScore > (scoreToBeat + eps)) {
-      if (verbosity > 3L) {
+      if (verbosity > 3L) {                                                     # nocov start
         message("    . Iteration ", iter, ' - Rearranged tree score ',
                 signif(candidateScore, 6), " > target ", signif(scoreToBeat, 6))
-      }
+      }                                                                         # nocov end
     } else if (candidateScore + eps > scoreToBeat) { # i.e. scores are equal
       hits <- hits + 1L
-      if (verbosity > 2L) message("    - Iteration ", iter, " - Best score ",
-                                  signif(scoreToBeat, 6), " hit ",
-                                  hits, " times.")
+      if (verbosity > 2L) {                                                     # nocov start
+        message("    - Iteration ", iter, " - Best score ", 
+                signif(scoreToBeat, 6), " hit ", hits, " times.")
+      }                                                                         # nocov end
     } else {
       hits <- 1L
-      if (verbosity > 1L) message("    * Iteration ", iter, " - New best score ",
-                                  signif(candidateScore, 6), " found on ", hits,
-                                  " trees.")
+      if (verbosity > 1L) {                                                     # nocov start
+        message("    * Iteration ", iter, " - New best score ",
+                signif(candidateScore, 6), " found on ", hits, " trees.")
+      }                                                                         # nocov end
     }
   }
   rearrangedEdges[3:4] <- c(candidateScore, hits)

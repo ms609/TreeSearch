@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include "RMorphy.h"
 
 /* Random number generator from http://www.cse.yorku.ca/~oz/marsaglia-rng.html
@@ -132,6 +131,9 @@ void random_tree(int *parent_of, int *left, int *right, const int *n_tip) {
 
 extern SEXP RANDOM_TREE(SEXP ntip) {
   const int n_tip = INTEGER(ntip)[0];
+  if (n_tip < 2) {
+    Rf_error("n_tip must be at least two");
+  }
   SEXP RESULT = PROTECT(allocVector(VECSXP, 3)),
     PARENT_OF = PROTECT(allocVector(INTSXP, n_tip + n_tip - 1)),
          LEFT = PROTECT(allocVector(INTSXP, n_tip - 1)),
@@ -152,6 +154,9 @@ extern SEXP RANDOM_TREE(SEXP ntip) {
 
 extern SEXP RANDOM_TREE_SCORE(SEXP ntip, SEXP MorphyHandl) {
   const int n_tip = INTEGER(ntip)[0];
+  if (n_tip < 2) {
+    Rf_error("n_tip must be at least two");
+  }
   Morphy handl = R_ExternalPtrAddr(MorphyHandl);
   SEXP RESULT = PROTECT(allocVector(INTSXP, 1));
   int *score,

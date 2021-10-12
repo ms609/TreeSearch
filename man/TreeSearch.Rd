@@ -122,15 +122,11 @@ configuring tree search, see the
 data('Lobo', package='TreeTools')
 njtree <- TreeTools::NJTree(Lobo.phy)
 
-\dontrun{
-TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = NNISwap)
-TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = RootedSPRSwap)
-TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
-}
-}
-\references{
-\itemize{
-\item \insertRef{Smith2019}{TreeSearch}
+## Only run examples in interactive R sessions
+if (interactive()) {
+  TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = NNISwap)
+  TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = RootedSPRSwap)
+  TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
 }
 }
 \seealso{

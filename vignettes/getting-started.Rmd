@@ -10,37 +10,54 @@ vignette: >
 ---
 
 
-'TreeSearch' is an R package that allows parsimony search on morphological datasets.
+"TreeSearch" is an R package that allows parsimony search on morphological
+datasets.
 
 ## Installation
 
 ### Simple installation
 
-To use 'TreeSearch' you will first need to [install R](https://CRAN.R-project.org/).  [RStudio](https://www.rstudio.com/) ([overview](https://dss.princeton.edu/training/RStudio101.pdf)) is a popular front-end that makes several of R's features easier to use.
+To use "TreeSearch" you will first need to [install R](https://CRAN.R-project.org/). 
+[RStudio](https://www.rstudio.com/)
+([overview](https://dss.princeton.edu/training/RStudio101.pdf)) is a popular
+front-end that makes several of R's features easier to use.
 
-The 'TreeSearch' package can be installed as any other package. 
+The "TreeSearch" package can be installed as any other package. 
 To get the latest stable version from CRAN, type
 ```r
 install.packages('TreeSearch')
 ```
 into the R (or RStudio) command line.
 
-### For advanced users
-
-To get the latest development version from
-[GitHub](https://github.com/ms609/TreeSearch/), type
+Once installed, load the "TreeSearch" package into R using
 ```r
-if (!require('devtools')) install.packages('devtools')
-devtools::install_github('ms609/TreeSearch')
+library('TreeSearch')
+```
+
+Activate the graphical user interface by typing `EasyTrees()`.
+
+Some features of the graphical user interface require up-to-date versions of
+the "ape" and "TreeTools" packages, due on CRAN in late 2021.
+Until then, install the latest versions using
+
+```r
+if (!require('remotes')) install.packages('remotes')
+remotes::install_github('emmanuelparadis/ape')
+packageVersion('ape') # Should be at least 5.5.2
+remotes::install_github('ms609/TreeTools@Rogue')
+packageVersion('TreeTools') # Should be > 1.5.0 or end in .91XX
 ```
 
 Windows users may need to install 
 [Rtools](https://cran.r-project.org/bin/windows/Rtools/) before
 installing from the GitHub source.
 
-Once installed, load the 'TreeSearch' package into R using
+### For advanced users
+
+To get the latest development version from
+[GitHub](https://github.com/ms609/TreeSearch/), type
 ```r
-library('TreeSearch')
+remotes::install_github('ms609/TreeSearch')
 ```
 
 ## What next?
@@ -48,5 +65,5 @@ library('TreeSearch')
 You might want to:
 
 - [Load data](https://ms609.github.io/TreeTools/articles/load-data.html) from a Nexus file or spreadsheet
-- Conduct parsimony search using Brazeau, Guillerme & Smith's [approach to inapplicable data](inapplicable.html), or using [Profile parsimony](profile.html).
+- Conduct parsimony search using Brazeau, Guillerme & Smith's [approach to inapplicable data](tree-search.html), or using [Profile parsimony](profile.html).
 - Conduct parsimony search using [custom optimality criteria](custom.html).
