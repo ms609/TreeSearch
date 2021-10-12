@@ -522,10 +522,14 @@ server <- function(input, output, session) {
     r$trees[-1] <- RenumberTips(r$trees[-1], tipLabels)
     updateNumericInput(inputId = 'keepTips', max = nTip,
                        value = nNonRogues())
-    updateSliderInput(inputId = 'spaceDim', max = max(2L, maxProjDim()))
-    updateSelectizeInput(inputId = 'neverDrop', choices = tipLabels)
-    updateSelectizeInput(inputId = 'outgroup', choices = tipLabels)
-    updateSelectizeInput(inputId = 'relators', choices = tipLabels)
+    updateSliderInput(inputId = 'spaceDim', max = max(2L, maxProjDim()),
+                      value = min(maxProjDim(), input$spaceDim))
+    updateSelectizeInput(inputId = 'neverDrop', choices = tipLabels,
+                         selected = input$neverDrop)
+    updateSelectizeInput(inputId = 'outgroup', choices = tipLabels,
+                         selected = input$outgroup)
+    updateSelectizeInput(inputId = 'relators', choices = tipLabels,
+                         selected = input$relators)
   })
 
   observeEvent(input$implied.weights, {
