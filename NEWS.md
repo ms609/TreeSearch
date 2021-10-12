@@ -1,3 +1,8 @@
+# Branch 'decisiveness':
+
+- `Decisiveness()` calculates the "Information Decisiveness" statistic of Goloboff (1991)
+
+
 # TreeSearch 1.0.1.9000 (development)
 
 - Minor improvements to 'shiny' GUI.
