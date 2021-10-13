@@ -141,32 +141,46 @@ six-sided dice is $-\log_2{\frac{1}{36}} \approx 5.16\textrm{ bits}$, whereas a 
 which could be produced by six of the 36 possible rolls (`1 & 6`, `2 & 5`, ...),
 is less surprising, and thus contains less information: 
 $-\log_2{\frac{6}{36}} \approx 2.58\textrm{ bits}$.
-An additional 2.58 bits of information would be required to establish which of
-the six possible rolls produced the seven.
+An additional 2.58 bits of information would be required to establish whether
+which of the rolls `1 & 6`, `2 & 5`, ... occurred.
 
-Now consider two competing explanations for an event: one, that three
-consecutive rolls of two dice each produced a seven; two, that two consecutive
-rolls of two dice each produced a twelve.  The former event corresponds to 
-$3 \times 2.58 = 7.75\textrm{ bits}$ of information, so is less surprising
-than the latter, which represents $2 \times 5.16 = 10.34\textrm{ bits}$,
+Now consider two competing explanations for an event: (i), three
+consecutive rolls of two dice each produced a seven; (ii), two consecutive
+rolls of two dice each produced a twelve.
+The former event corresponds to  $3 \times 2.58 = 7.75\textrm{ bits}$ of
+information, so is less surprising than the latter, which represents
+$2 \times 5.16 = 10.34\textrm{ bits}$,
 despite involving an additional roll of the dice.
 
 How do we measure the "surprise" associated with additional steps in a character
 on a phylogenetic tree?
 Consider a character with the states `0 0 0 1 1 1`.
-If we learn that the character contains exactly one step on the true tree,
-then we learn that the true tree is one of the fifteen six-leaf trees on which
-a single step can be reconstructed.  There are 105 labelled six-leaf trees,
-so we have gained $-log_2{15 / 105} = 2.81\textrm{ bits}$ of information.
-If we learn that the character contains exactly two steps, this
+In the most parsimonious situation in which the character contains a single
+step on a tree, it is compatible with nine of the 105 labelled six-leaf trees
+(`Carter1(1, 3, 3)`), and thus represents
+$-log_2\frac{9}{105} = 3.54\textrm{ bits}$ of phylogenetic information.
+If we are told that the character contains exactly two steps, it can occur on
+63 trees, so yields $-log_2\frac{63}{105} = 0.74\textrm{ bits}$.
+If we are told that the character contains three or more steps, then it can
+occur on any six-leaf tree, and contains no phylogenetic information.
+We are less surprised by this third step, which lost us 0.74 bits of information,
+than by the second, which lost 3.54 &minus; 0.74 = 2.81&nbsp;bits from a 
+character we otherwise thought to be reliable.
 
-Nine of the 105 labelled six-leaf trees are consistent with this character
-exhibiting a single step (`Carter1(1, 3, 3)`), so learning that the character
-contains exactly one step yields $-log_2\frac{9}{105} = 3.54\textrm{ bits}$.
-A second step is consistent with 63 trees, so learning that the character
-contains exactly two steps yields $-log_2\frac{63}{105} = 0.74\textrm{ bits}$.
-More than two steps are consistent with all 105 six-leaf trees, so provide
-no information.
+## Profile parsimony
+
+Although this is not how the approach was initially justified [@Faith2001],
+profile parsimony aims to ascribe as much of the information in each character 
+as possible to common ancestry; in the example above, it assigns the first
+extra step a penalty of 2.81, and the second extra step a penalty of 0.74,
+corresponding to the amount of information that could no longer be assigned
+to common ancestry after learning of the existence of the $n$th step.
+
+Whereas the value of a parsimony score obtained under implied weights does not
+have any inherent meaning,
+the profile parismony score of a given tree represents the amount of information
+within a character matrix that can be attributed to common ancestry under
+that tree.
 
 
 ## References
