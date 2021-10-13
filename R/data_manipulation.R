@@ -8,7 +8,7 @@
 #' - Ambiguous tokens will be treated as fully ambiguous
 #'   (i.e. `{02}` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`)
 #' - Where more than two states are informative (i.e. unambiguously present in
-#'   more than two taxa), states beyond the two most informative will be
+#'   more than one taxon), states beyond the two most informative will be
 #'   ignored.
 #TODO can do something more complex like first two to one TS, second two to another   
 #' 
