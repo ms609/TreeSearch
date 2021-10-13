@@ -193,9 +193,27 @@ the profile parismony score of a given tree represents the amount of information
 within a character matrix that can be attributed to common ancestry under
 that tree.
 
+
+## Implementation
+
+The present implementation of profile parsimony in "TreeSearch" is restricted:
+inapplicable tokens are treated as ambiguous; partial ambiguity (e.g. `{02}`)
+is treated as complete (`?`), and informative states (i.e. states present in 
+more than one taxon) beyond the first two are ignored (treated as ambiguous).
+This reflects the complicated mathematics of calculating the number of trees
+with a given number of steps.
+
+Tree length can be calculated with 
+[`TreeLength(concavity = 'profile')`](https://ms609.github.io/TreeSearch/reference/TreeLength.html),
+and tree search performed with 
+[`MaximizeParsimony(concavity = 'profile')`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
+Data can be prepared for profile parsimony using [`PrepareDataProfile()`](https://ms609.github.io/TreeSearch/reference/PrepareDataProfile.html), and the profile of a character calculated using 
+[`StepInformation()`](https://ms609.github.io/TreeSearch/reference/StepInformation.html).
+
+
 ## Where next
 
-- Conduct [tree search using profile parsimony](profile.html)
+- Conduct [tree search](profile.html) using profile parsimony
 
 
 ## References
