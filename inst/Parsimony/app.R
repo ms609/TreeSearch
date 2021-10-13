@@ -824,7 +824,8 @@ server <- function(input, output, session) {
                      )
                  })
                }
-               if (is.list(r$charNotes) && is.list(r$charNotes[[1]])) {
+               if (is.list(r$charNotes) && is.list(r$charNotes[[1]])
+                   && length(r$charNotes) >= n) {
                    output$charNotes <- renderUI({
                    charNotes <- r$charNotes[[n]]
                    description <- charNotes[[1]]
