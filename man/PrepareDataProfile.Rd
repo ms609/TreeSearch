@@ -60,6 +60,7 @@ PrepareDataProfile(dataset)
 Other profile parsimony functions: 
 \code{\link{Carter1}()},
 \code{\link{StepInformation}()},
+\code{\link{WithOneExtraStep}()},
 \code{\link{profiles}}
 }
 \author{

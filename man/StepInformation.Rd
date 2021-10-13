@@ -38,6 +38,7 @@ StepInformation(character)
 Other profile parsimony functions: 
 \code{\link{Carter1}()},
 \code{\link{PrepareDataProfile}()},
+\code{\link{WithOneExtraStep}()},
 \code{\link{profiles}}
 }
 \author{
