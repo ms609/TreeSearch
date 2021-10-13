@@ -189,7 +189,7 @@ ui <- fluidPage(theme = 'app.css',
   useShinyjs(),
   column(3,
     fluidRow(
-      tags$h1("TreeSearch beta UI"),
+      tags$h1("TreeSearch"),
       fileInput("datafile", "Load data",
                 placeholder = "No data file selected"),
       tags$label("Search", class = "control-label", 
