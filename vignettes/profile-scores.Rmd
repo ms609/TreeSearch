@@ -147,12 +147,12 @@ the six possible rolls produced the seven.
 Now consider two competing explanations for an event: one, that three
 consecutive rolls of two dice each produced a seven; two, that two consecutive
 rolls of two dice each produced a twelve.  The former event corresponds to 
-$3 \times 2.58 = 7.75\textrm{ bits}$ of information; it is more probable --
-and thus on this view more parsimonious -- than the latter, which represents
-$2 \times 5.16 = 10.34\textrm{ bits}$,
-even though the third roll of the dice could be construed as an additional
-assumption.
+$3 \times 2.58 = 7.75\textrm{ bits}$ of information, so is less surprising
+than the latter, which represents $2 \times 5.16 = 10.34\textrm{ bits}$,
+despite involving an additional roll of the dice.
 
+How do we measure the "surprise" associated with additional steps in a character
+on a phylogenetic tree?
 
 
 
