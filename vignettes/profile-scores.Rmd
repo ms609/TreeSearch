@@ -159,11 +159,13 @@ How do we measure the "surprise" associated with additional steps in a character
 on a phylogenetic tree?
 Consider a character with the states `0 0 0 1 1 1`.
 In the most parsimonious situation in which the character contains a single
-step on a tree, it is compatible with nine of the 105 labelled six-leaf trees
-(`Carter1(1, 3, 3)`), and thus represents
+step on a tree, it is compatible with nine of the 105 labelled six-leaf trees,
+and thus represents
 $-log_2\frac{9}{105} = 3.54\textrm{ bits}$ of phylogenetic information.
 If we are told that the character contains exactly two steps, it can occur on
 63 trees, so yields $-log_2\frac{63}{105} = 0.74\textrm{ bits}$.
+(The number of trees with _m_ extra steps can be calculated using theorem 1
+of @Carter1990, implemented in the function [`Carter1()`](https://ms609.github.io/TreeSearch/reference/Carter1.html).)
 Learning that a second step occurred meant that 3.54 &minus; 0.74 = 
 2.81&nbsp;bits of information we had previously attributed to common ancestry
 instead represent a signature of homoplasy; this quantity measures our degree
@@ -190,6 +192,10 @@ have any inherent meaning,
 the profile parismony score of a given tree represents the amount of information
 within a character matrix that can be attributed to common ancestry under
 that tree.
+
+## Where next
+
+- Conduct [tree search using profile parsimony](profile.html)
 
 
 ## References
