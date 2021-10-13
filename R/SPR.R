@@ -87,7 +87,7 @@ SPRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   }), class = 'multiPhylo', tip.label = tree$tip.label)
 }
 
-#' error checking for all_spr
+# error checking for all_spr
 .all_spr <- function (edge, break_order) {
   nEdge <- dim(edge)[1]
   if (nEdge < 5) {
