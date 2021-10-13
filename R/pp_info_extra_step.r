@@ -111,7 +111,6 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
 #' cumsum(sapply(1:3, Carter1, 3, 3))
 #' 
 #' # Three steps allow the character to map onto any of the 105 six-leaf trees.
-#' NUnrooted(6)
 #' 
 #' @template MRS
 #' @family profile parsimony functions
