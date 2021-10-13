@@ -39,10 +39,11 @@ of why this might be.
 ## A philosophy of parsimony
 
 There are a number of complementary perspectives on the philosophical
-justificaion for a parsimony approach, which this brief overview will not do justice to;
-but hopefully my unqualified and unreferenced perspective captures some of the
-nature of the principal arguments.
-Better versed readers are invited to suggest improvements or modifications
+justificaion for a parsimony approach [e.g. @Farris1983], which this brief
+overview will not do justice to;
+but hopefully my unqualified and largely unreferenced perspective captures some
+of the nature of the principal arguments.
+Better-versed readers are invited to suggest improvements or modifications
 by e-mail or by opening a [GitHub issue](https://github.com/ms609/TreeSearch/issues/new/).
 
 Parsimony has been defended by reference to Occam's Razor: the principle that
@@ -54,22 +55,24 @@ Ideally, a phylogenetic tree would explain the distribution of character states
 between taxa by reconstructing each character state as representing a 
 homologous feature, with a single evolutionary origin on the tree.
 An explanation in which a certain trait evolved once is simpler than one in
-which that trait evolved twice.
-Each additional step on a tree represents an additional "assumption",
+which that trait evolved twice; it is less faithful to the information inherent
+in the character coding, and attributes less of this information to common
+ancestry.
+Each additional step on a tree can be viewed as an additional "assumption",
 and on a simple or "pure" view, the tree that makes the fewest assumptions
 should be preferred.
 
 However, this perspective -- which implicitly underpins the practice of
 *equal-weights* parsimony -- treats all assumptions as equivalent;
-the simplest hypothesis is the one that makes the fewest assumptions,
-in this case, assumptions of homoplasy.
+the simplest hypothesis is the one that makes the fewest assumptions
+(here, assumptions of homoplasy).
 
 A more nuanced interpretation of Occam's Razor suggests that the simplest
 hypothesis is the one that is least surprising.  A hypothesis predicated
 on the existence of a flying spaghetti monster may require only a single (barmy)
-assumption, but we may nevertheless prefer a hypothesis that requires a greater
-number of assumptions that are better aligned with what experience has 
-previously shown to be true.
+assumption, but we might nevertheless tend to prefer a hypothesis that requires
+a greater number of assumptions that are better aligned with previous
+experience.
 
 ### Application of Occam's Razor
 
@@ -161,11 +164,17 @@ step on a tree, it is compatible with nine of the 105 labelled six-leaf trees
 $-log_2\frac{9}{105} = 3.54\textrm{ bits}$ of phylogenetic information.
 If we are told that the character contains exactly two steps, it can occur on
 63 trees, so yields $-log_2\frac{63}{105} = 0.74\textrm{ bits}$.
-If we are told that the character contains three or more steps, then it can
+Learning that a second step occurred meant that 3.54 &minus; 0.74 = 
+2.81&nbsp;bits of information we had previously attributed to common ancestry
+instead represent a signature of homoplasy; this quantity measures our degree
+of 'surprise'.
+
+If we subsequently learn that the character contains three steps, then it can
 occur on any six-leaf tree, and contains no phylogenetic information.
-We are less surprised by this third step, which lost us 0.74 bits of information,
-than by the second, which lost 3.54 &minus; 0.74 = 2.81&nbsp;bits from a 
-character we otherwise thought to be reliable.
+We are less surprised by this third step, which attributes the remaining 
+0.74 bits of information to factors other than common ancestry, because the
+second step had already reduced the amount of phylogenetic information we
+expected the character to hold.
 
 ## Profile parsimony
 
