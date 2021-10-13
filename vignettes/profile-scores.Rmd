@@ -193,8 +193,6 @@ the profile parismony score of a given tree represents the amount of information
 within a character matrix that can be attributed to common ancestry under
 that tree.
 
-## Comparison
-
 Profile parsimony produces a concavity profile that reflects the opportunity
 to observe additional steps in each character, unlike implied weighting,
 where a single concavity value is applied to all characters, regardless of the
