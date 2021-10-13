@@ -193,6 +193,59 @@ the profile parismony score of a given tree represents the amount of information
 within a character matrix that can be attributed to common ancestry under
 that tree.
 
+## Comparison
+
+Profile parsimony produces a concavity profile that reflects the opportunity
+to observe additional steps in each character, unlike implied weighting,
+where a single concavity value is applied to all characters, regardless of the
+opportunity for additional steps to be observed.
+
+```{r plot-concavities, fig.align="center", fig.width = 7, fig.height = 5, echo = FALSE}
+e <- 0:15
+
+IWTotal <- function (k) e / (e + k)
+IW <- function (k) {
+  iwTotal <- IWTotal(k)
+  iwStep <- iwTotal[-1] - iwTotal[-length(e)]
+  iwStep / max(iwStep)
+}
+IWPoints <- function (k, n) {
+  points(IW(k) ~ e[-1], type = 'b', col = n, pch = 2)
+}
+
+plot(e[-1], e[-1], type = 'n', frame.plot = FALSE,
+     xlab = 'Extra step',
+     ylab = "Relative cost of this extra step",
+     ylim = c(0, 1))
+k <- c(3, 10, 30)
+for (i in seq_along(k)) IWPoints(k[i], i)
+
+PP <- function (a, col, n = 40) {
+  char <- rep(0:1, c(a, n - a))
+  si <- TreeSearch::StepInformation(char)
+  points(I(si / max(si)) ~ I(seq_along(si)), type = 'b', col = col, pch = 1)
+}
+p <- c(3, 8, 20)
+for (i in seq_along(p)) PP(p[i], i + 3)
+legend('topright', col = 1:6, lty = 1, pch = c(rep(2, 3), rep(1, 3)),
+       bty = 'n', cex = 0.9,
+       c(paste0('IW, k = ', k),
+         paste0('PP, ', p, ' | ', 40 - p)))
+
+
+```
+
+The graph shows the profiles under implied weighting (with different concavity
+constants) and profile parsimony (under different distributions of the tokens
+`0` and `1` in a character coded for forty leaves).
+One prominent difference between the character of concavity profiles is that
+implied weighting continues to assign relatively large penalties to additional
+steps even when the distribution of a character is almost random on a tree.
+Another is that profile parsimony treats a second (and each subsequent) step 
+as less surprising if there are fewer opportunities to observe a second step by
+chance, on account of there being a smaller number of tokens with the rarer
+step; implied weighting is blind to the distribution of tokens within a
+character.
 
 ## Implementation
 
