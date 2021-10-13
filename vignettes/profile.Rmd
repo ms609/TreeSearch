@@ -12,8 +12,10 @@ vignette: >
 ---
 
 Profile Parsimony [@Faith2001] finds the tree that is most faithful 
-to the information contained within a given dataset. 
+to the information contained within a given dataset.
 It is the 'exact solution' that implied weights parsimony approximates.
+For more information on the philosophy and mathematics of profile parsimony,
+see the [companion vignette](profile-scores.html).
 
 Profile Parsimony is currently implemented in "TreeSearch" for characters with
 up to two parsimony-informative states.
@@ -49,7 +51,8 @@ set.seed(888)
 
 Here's an example of using the package to conduct tree search with profile 
 parsimony.
-You can [load your own dataset](https://ms609.github.io/TreeTools/articles/load-data.html), but for this example,
+You can [load your own dataset](https://ms609.github.io/TreeTools/articles/load-data.html),
+but for this example,
 we'll use a simulated dataset that comes bundled with the `TreeSearch` package.
 
 ```{r Load Longrich data}
