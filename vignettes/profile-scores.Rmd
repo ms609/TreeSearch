@@ -191,7 +191,9 @@ Whereas the value of a parsimony score obtained under implied weights does not
 have any inherent meaning,
 the profile parismony score of a given tree represents the amount of information
 within a character matrix that can be attributed to common ancestry under
-that tree.
+that tree, which, if expressed as a proportion of the total cladistic
+information content of the characters in the matrix [@Cotton2008], gives an 
+indication of the degree of homoplasy in the underlying character matrix.
 
 Profile parsimony produces a concavity profile that reflects the opportunity
 to observe additional steps in each character, unlike implied weighting,
