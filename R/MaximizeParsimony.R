@@ -304,6 +304,9 @@ MaximizeParsimony <- function (dataset, tree,
               if (nHits >= maxHits) break
             }
           }
+          # If an early iteration improves the score, a later iteration will
+          # probably improve it even more; we may as well keep working through
+          # the list instead of calculating a new one (which takes time)
           if (improvedScore && runif(1) < (i / nMoves) ^ 2) break
         }
         if (nHits >= maxHits) break
