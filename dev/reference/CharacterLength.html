@@ -88,7 +88,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9000</span>
       </span>
     </div>
 
@@ -117,7 +117,7 @@
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
+      <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -187,8 +187,8 @@ whose names correspond to the labels of any accompanying tree.</p></td>
     <tr>
       <th>compress</th>
       <td><p>Logical specifying whether to retain the compression of a
-phylo object or to return a vector specifying to each individual character,
-decompressed using the dataset's <code>index</code> attribute.</p></td>
+<code>phyDat</code> object or to return a vector specifying to each individual
+character, decompressed using the dataset's <code>index</code> attribute.</p></td>
     </tr>
     </table>
 
@@ -216,6 +216,7 @@ doi: <a href='https://doi.org/10.1093/sysbio/syy083'>10.1093/sysbio/syy083</a>
 
     <div class='dont-index'><p>Other tree scoring: 
 <code><a href='IWScore.html'>IWScore</a>()</code>,
+<code><a href='MinimumLength.html'>MinimumLength</a>()</code>,
 <code><a href='MorphyTreeLength.html'>MorphyTreeLength</a>()</code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
@@ -223,21 +224,23 @@ doi: <a href='https://doi.org/10.1093/sysbio/syy083'>10.1093/sysbio/syy083</a>
 (<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'inapplicable.datasets'</span><span class='op'>)</span>
-<span class='va'>dataset</span> <span class='op'>&lt;-</span> <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>12</span><span class='op'>]</span><span class='op'>]</span>
-<span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span>
-<span class='fu'>CharacterLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;   [1]  1  1  3  1  4  5  3  5  1  6  1  2  2  1  2  4  2  5  2  4  1  1  2  2  1
-#&gt;  [26]  1  2  2  4  1  1  1  2  1  4  2  6  7  5  1  2  1  2  1  1  1  1  1  1  1
-#&gt;  [51]  2  1  1  8  3  7  4  3  2  5  2  1  2  2  3 10 12  5  5  2  4  3  6  1  1
-#&gt;  [76]  5  3  3  5  5  2  3  2  8  2  1  8  4  7  6  2  6  1  5  2  3  9  1  2  2
-#&gt; [101]  2  1  3  2  3  4 11  6  7  7  7  8  8  1  1  2  2  1  1  4  6  2  3  6  7
-#&gt; [126]  2  1  1  2  3  2  2  2  3  2  2  7</div><div class='input'><span class='fu'>CharacterLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, compress <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;   [1]  1  1  3  1  4  5  3  5  1  6  1  2  2  1  2  4  2  5  2  4  1  2  2  1  1
-#&gt;  [26]  2  2  4  1  1  1  2  4  2  6  7  5  1  2  2  2  1  8  3  7  4  3  2  5  2
-#&gt;  [51]  1  2  3 10 12  5  5  2  4  3  6  1  1  5  3  3  5  5  2  3  2  8  2  1  8
-#&gt;  [76]  4  7  6  2  6  1  5  2  3  9  1  2  2  2  3  2  3  4 11  6  7  7  7  8  8
-#&gt; [101]  1  2  2  1  4  6  2  3  6  7  2  1  1  2  3  2  3  7</div></pre>
+    <pre class="examples"><span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'inapplicable.datasets'</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>dataset</span> <span class='op'>&lt;-</span> <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>12</span><span class='op'>]</span><span class='op'>]</span></span>
+<span class='r-in'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>CharacterLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   [1]  1  1  3  1  4  5  3  5  1  6  1  2  2  1  2  4  2  5  2  4  1  1  2  2  1</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [26]  1  2  2  4  1  1  1  2  1  4  2  6  7  5  1  2  1  2  1  1  1  1  1  1  1</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [51]  2  1  1  8  3  7  4  3  2  5  2  1  2  2  3 10 12  5  5  2  4  3  6  1  1</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [76]  5  3  3  5  5  2  3  2  8  2  1  8  4  7  6  2  6  1  5  2  3  9  1  2  2</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [101]  2  1  3  2  3  4 11  6  7  7  7  8  8  1  1  2  2  1  1  4  6  2  3  6  7</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [126]  2  1  1  2  3  2  2  2  3  2  2  7</span>
+<span class='r-in'><span class='fu'>CharacterLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span>, compress <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   [1]  1  1  3  1  4  5  3  5  1  6  1  2  2  1  2  4  2  5  2  4  1  2  2  1  1</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [26]  2  2  4  1  1  1  2  4  2  6  7  5  1  2  2  2  1  8  3  7  4  3  2  5  2</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [51]  1  2  3 10 12  5  5  2  4  3  6  1  1  5  3  3  5  5  2  3  2  8  2  1  8</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [76]  4  7  6  2  6  1  5  2  3  9  1  2  2  2  3  2  3  4 11  6  7  7  7  8  8</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [101]  1  2  2  1  4  6  2  3  6  7  2  1  1  2  3  2  3  7</span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

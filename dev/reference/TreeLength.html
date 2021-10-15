@@ -96,7 +96,7 @@ or profile parsimony (Faith and Trueman 2001)
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9000</span>
       </span>
     </div>
 
@@ -125,7 +125,7 @@ or profile parsimony (Faith and Trueman 2001)
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
+      <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -254,7 +254,7 @@ doi: <a href='https://doi.org/10.5281/zenodo.815372'>10.5281/zenodo.815372</a>
 &#8220;Towards an inclusive philosophy for phylogenetic inference.&#8221;
 <em>Systematic Biology</em>, <b>50</b>(3), 331--350.
 doi: <a href='https://doi.org/10.1080/10635150118627'>10.1080/10635150118627</a>
-, <a href='http://www.ncbi.nlm.nih.gov/pubmed/12116579'>http://www.ncbi.nlm.nih.gov/pubmed/12116579</a>.<br /><br /> Goloboff PA (1993).
+.<br /><br /> Goloboff PA (1993).
 &#8220;Estimating character weights during tree search.&#8221;
 <em>Cladistics</em>, <b>9</b>(1), 83--91.
 doi: <a href='https://doi.org/10.1111/j.1096-0031.1993.tb00209.x'>10.1111/j.1096-0031.1993.tb00209.x</a>
@@ -279,19 +279,45 @@ doi: <a href='https://doi.org/10.1098/rsbl.2018.0632'>10.1098/rsbl.2018.0632</a>
 
 <p>Other tree scoring: 
 <code><a href='CharacterLength.html'>CharacterLength</a>()</code>,
+<code><a href='MinimumLength.html'>MinimumLength</a>()</code>,
 <code><a href='MorphyTreeLength.html'>MorphyTreeLength</a>()</code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Martin R. Smith (using Morphy C library, by Martin Brazeau)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"inapplicable.datasets"</span><span class='op'>)</span>
-<span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/GenerateTree.html'>BalancedTree</a></span><span class='op'>(</span><span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
-<span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] 1117</div><div class='input'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>, concavity <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] 52.75785</div><div class='input'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>, concavity <span class='op'>=</span> <span class='st'>'profile'</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='message'>→ Inapplicable tokens treated as ambiguous for profile parsimony</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Can handle max. 2 informative tokens. Dropping others.</span></div><div class='output co'>#&gt; [1] 3941.387</div><div class='input'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='fl'>5</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] 1958 1925 1991 1912 1978</div></pre>
+    <pre class="examples"><span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"inapplicable.datasets"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/GenerateTree.html'>BalancedTree</a></span><span class='op'>(</span><span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] 1117</span>
+<span class='r-in'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>, concavity <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] 52.75785</span>
+<span class='r-in'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span>, concavity <span class='op'>=</span> <span class='st'>'profile'</span><span class='op'>)</span></span>
+<span class='r-msg co'><span class='r-pr'>#&gt;</span> → Inapplicable tokens treated as ambiguous for profile parsimony</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] 3941.387</span>
+<span class='r-in'><span class='fu'>TreeLength</span><span class='op'>(</span><span class='fl'>5</span>, <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] 1958 1925 1991 1912 1978</span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -89,7 +89,7 @@ For most users, the function TreeLength() will be more appropriate." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9000</span>
       </span>
     </div>
 
@@ -118,7 +118,7 @@ For most users, the function TreeLength() will be more appropriate." />
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
+      <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -199,12 +199,12 @@ in the corresponding Morphy object.</p></td>
     <tr>
       <th>parent</th>
       <td><p>Integer vector corresponding to the first column of the edge
-matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 1]</code>.</p></td>
+matrix of a tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>, i.e. <code>tree$edge[, 1]</code>.</p></td>
     </tr>
     <tr>
       <th>child</th>
       <td><p>Integer vector corresponding to the second column of the edge
-matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 2]</code>.</p></td>
+matrix of a tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>, i.e. <code>tree$edge[, 2]</code>.</p></td>
     </tr>
     <tr>
       <th>parentOf</th>
@@ -240,10 +240,12 @@ parameters. Node numbering must increase monotonically away from root.</p></li>
     <div class='dont-index'><p>PhyDat2Morphy</p>
 <p>Other tree scoring: 
 <code><a href='CharacterLength.html'>CharacterLength</a>()</code>,
-<code><a href='IWScore.html'>IWScore</a>()</code></p>
+<code><a href='IWScore.html'>IWScore</a>()</code>,
+<code><a href='MinimumLength.html'>MinimumLength</a>()</code></p>
 <p>Other tree scoring: 
 <code><a href='CharacterLength.html'>CharacterLength</a>()</code>,
-<code><a href='IWScore.html'>IWScore</a>()</code></p></div>
+<code><a href='IWScore.html'>IWScore</a>()</code>,
+<code><a href='MinimumLength.html'>MinimumLength</a>()</code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Martin R. Smith</p>

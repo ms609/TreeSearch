@@ -88,7 +88,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9000</span>
       </span>
     </div>
 
@@ -117,7 +117,7 @@
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
+      <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -201,7 +201,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>tree</th>
-      <td><p>A tree of class <code>phylo</code>.</p></td>
+      <td><p>A tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>.</p></td>
     </tr>
     <tr>
       <th>edgeToBreak</th>
@@ -214,17 +214,17 @@
     <tr>
       <th>parent</th>
       <td><p>Integer vector corresponding to the first column of the edge
-matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 1]</code>.</p></td>
+matrix of a tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>, i.e. <code>tree$edge[, 1]</code>.</p></td>
     </tr>
     <tr>
       <th>child</th>
       <td><p>Integer vector corresponding to the second column of the edge
-matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 2]</code>.</p></td>
+matrix of a tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>, i.e. <code>tree$edge[, 2]</code>.</p></td>
     </tr>
     <tr>
       <th>nEdge</th>
       <td><p>(optional) integer specifying the number of edges of a tree of
-class <code>phylo</code>, i.e. <code>dim(tree$edge)[1]</code></p></td>
+class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>, i.e. <code>dim(tree$edge)[1]</code></p></td>
     </tr>
     <tr>
       <th>nNode</th>
@@ -279,17 +279,18 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
     <p>Martin R. Smith</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='op'>{</span>
-<span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>ape</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ape/man/rtree.html'>rtree</a></span><span class='op'>(</span><span class='fl'>20</span>, br<span class='op'>=</span><span class='cn'>FALSE</span><span class='op'>)</span>
-<span class='fu'>SPR</span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
-<span class='op'>}</span>
-</div><div class='output co'>#&gt; 
-#&gt; Phylogenetic tree with 20 tips and 19 internal nodes.
-#&gt; 
-#&gt; Tip labels:
-#&gt;   t20, t4, t2, t14, t9, t17, ...
-#&gt; 
-#&gt; Rooted; includes branch lengths.</div></pre>
+    <pre class="examples"><span class='r-in'><span class='op'>{</span></span>
+<span class='r-in'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>ape</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ape/man/rtree.html'>rtree</a></span><span class='op'>(</span><span class='fl'>20</span>, br<span class='op'>=</span><span class='cn'>FALSE</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>SPR</span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>}</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Phylogenetic tree with 20 tips and 19 internal nodes.</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Tip labels:</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   t20, t4, t2, t14, t9, t17, ...</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Rooted; includes branch lengths.</span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9000</span>
       </span>
     </div>
 
@@ -69,7 +69,7 @@
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
+      <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -112,7 +112,7 @@
       <h1 data-toc-skip>Tree search with custom optimality criteria</h1>
                         <h4 class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2021-09-14</h4>
+            <h4 class="date">2021-10-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/custom.Rmd"><code>vignettes/custom.Rmd</code></a></small>
       <div class="hidden name"><code>custom.Rmd</code></div>
@@ -124,7 +124,7 @@
 <div id="using-custom-optimality-criteria" class="section level2">
 <h2 class="hasAnchor">
 <a href="#using-custom-optimality-criteria" class="anchor"></a>Using custom optimality criteria</h2>
-<p>‘TreeSearch’ can be used to search for trees that are optimal under user-specified criteria <span class="citation">(e.g. Hopkins &amp; St. John, 2021)</span>.</p>
+<p>“TreeSearch” can be used to search for trees that are optimal under user-specified criteria <span class="citation">(e.g. Hopkins &amp; St. John, 2021)</span>.</p>
 <p>All that is needed is to provide a function that will return a score for a given tree (and dataset).</p>
 <p>First we’ll load the necessary R libraries:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -164,7 +164,7 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
                      verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
 <pre><code>##   - Performing tree search.  Initial score: 56</code></pre>
-<pre><code>##   - Final score 35 found 10 times after 17 rearrangements.</code></pre>
+<pre><code>##   - Final score 33 found 4 times after 50 rearrangements.</code></pre>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></code></pre></div>
 <p><img src="custom_files/figure-html/tci-search-1.png" width="700"></p>
@@ -189,8 +189,8 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      TreeScorer <span class="op">=</span> <span class="va">DistanceScore</span>,
                      maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
                      verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
-<pre><code>##   - Performing tree search.  Initial score: -6.15729762077267</code></pre>
-<pre><code>##   - Final score -7.87744375108174 found 2 times after 50 rearrangements.</code></pre>
+<pre><code>##   - Performing tree search.  Initial score: -5.18872187554087</code></pre>
+<pre><code>##   - Final score -7.87744375108174 found 1 times after 50 rearrangements.</code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
 <span class="fu">PlotTree</span><span class="op">(</span><span class="va">startTree</span><span class="op">)</span>
@@ -285,7 +285,7 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                        ratchIter <span class="op">=</span> <span class="fl">2</span>, ratchHits <span class="op">=</span> <span class="fl">2</span>,
                        searchIter <span class="op">=</span> <span class="fl">20</span>, searchHits <span class="op">=</span> <span class="fl">10</span>,
                        verbosity <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
-<p>It would be sensible to use much larger values of <code>ratchIter</code>, <code>ratchHits</code>, <code>searchIter</code> and <code>searchHits</code> to be confident of locating an optimal tree. And note that in this specific case, implied weights tree search with the parsimony ratchet is implemented much more efficiently with <code><a href="../reference/MaximizeParsimony.html">MaximizeParsimony(concavity = k)</a></code>.</p>
+<p>It would be sensible to use much larger values of <code>ratchIter</code>, <code>ratchHits</code>, <code>searchIter</code> and <code>searchHits</code> to be confident of locating an optimal tree. And note that in this specific case, implied weights tree search with the parsimony ratchet is implemented much more efficiently with <code>MaximizeParsimony(concavity = k)</code>.</p>
 <p>Hopefully these examples give a template from which you are able to construct your own optimality criteria. The maintainer is happy to answer questions via e-mail, or you can file queries by opening a <a href="https://github.com/ms609/TreeDist/issues/new/">GitHub issue</a>.</p>
 </div>
 <div id="what-next" class="section level2">
@@ -295,7 +295,7 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 <ul>
 <li>
 <a href="https://ms609.github.io/TreeTools/articles/load-data.html">Load data</a> from a Nexus file or spreadsheet</li>
-<li>Conduct parsimony search using Brazeau, Guillerme &amp; Smith’s <a href="inapplicable.html">approach to inapplicable data</a>, or using <a href="profile.html">Profile parsimony</a>.</li>
+<li>Conduct parsimony search using Brazeau, Guillerme &amp; Smith’s <a href="tree-search.html">approach to inapplicable data</a>, or using <a href="profile.html">Profile parsimony</a>.</li>
 </ul>
 </div>
 <div id="references" class="section level2 unnumbered">

@@ -91,7 +91,7 @@ tree." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9000</span>
       </span>
     </div>
 
@@ -120,7 +120,7 @@ tree." />
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
+      <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -187,7 +187,7 @@ tree.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>tree</th>
-      <td><p>A tree of class <code>phylo</code>.</p></td>
+      <td><p>A tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>.</p></td>
     </tr>
     <tr>
       <th>dataset</th>
@@ -198,13 +198,16 @@ whose names correspond to the labels of any accompanying tree.</p></td>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p><code>QuartetConcordance()</code> is the proportion of quartets (sets of four leaves) that
-are decisive for a split which are also concordant with it.
+    <p><code>QuartetConcordance()</code> is the proportion of quartets (sets of four leaves)
+that are decisive for a split which are also concordant with it.
 For example, a quartet with the characters <code>0 0 0 1</code> is not decisive, as
 all relationships between those leaves are equally parsimonious.
 But a quartet with characters <code>0 0 1 1</code> is decisive, and is concordant
 with any tree that groups the first two leaves together to the exclusion
 of the second.</p>
+<p>NOTE: These functions are under development, and may be incompletely tested
+or change without notice.
+Complete documentation and discussion will follow soon.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>Minh BQ, Hahn MW, Lanfear R (2020).
@@ -224,24 +227,26 @@ doi: <a href='https://doi.org/10.1093/molbev/msaa106'>10.1093/molbev/msaa106</a>
 (<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'congreveLamsdellMatrices'</span>, package <span class='op'>=</span> <span class='st'>'TreeSearch'</span><span class='op'>)</span>
-<span class='va'>dataset</span> <span class='op'>&lt;-</span> <span class='va'>congreveLamsdellMatrices</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>[</span>, <span class='fl'>1</span><span class='op'>:</span><span class='fl'>20</span><span class='op'>]</span>
-<span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='va'>referenceTree</span>
-<span class='va'>qc</span> <span class='op'>&lt;-</span> <span class='fu'>QuartetConcordance</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span>
-<span class='va'>cc</span> <span class='op'>&lt;-</span> <span class='fu'>ClusteringConcordance</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span>
-<span class='va'>pc</span> <span class='op'>&lt;-</span> <span class='fu'>PhylogeneticConcordance</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span>
-<span class='va'>spc</span> <span class='op'>&lt;-</span> <span class='fu'>SharedPhylogeneticConcordance</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span>
-<span class='va'>mcc</span> <span class='op'>&lt;-</span> <span class='fu'>MutualClusteringConcordance</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span>
-
-<span class='va'>oPar</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span><span class='op'>(</span>mar <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>4</span><span class='op'>)</span>, cex <span class='op'>=</span> <span class='fl'>0.8</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
-</div><div class='input'><span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/LabelSplits.html'>LabelSplits</a></span><span class='op'>(</span><span class='va'>tree</span>, <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>signif</a></span><span class='op'>(</span><span class='va'>qc</span>, <span class='fl'>3</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='input'><span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/LabelSplits.html'>LabelSplits</a></span><span class='op'>(</span><span class='va'>tree</span>, <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>signif</a></span><span class='op'>(</span><span class='va'>cc</span>, <span class='fl'>3</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='input'><span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/LabelSplits.html'>LabelSplits</a></span><span class='op'>(</span><span class='va'>tree</span>, <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>signif</a></span><span class='op'>(</span><span class='va'>pc</span>, <span class='fl'>3</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='img'><img src='SiteConcordance-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span><span class='op'>(</span><span class='va'>oPar</span><span class='op'>)</span>
-
-<span class='fu'><a href='https://rdrr.io/r/graphics/pairs.html'>pairs</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span><span class='op'>(</span><span class='va'>qc</span>, <span class='va'>cc</span>, <span class='va'>pc</span>, <span class='va'>spc</span>, <span class='va'>mcc</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='img'><img src='SiteConcordance-2.png' alt='' width='700' height='433' /></div></pre>
+    <pre class="examples"><span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'congreveLamsdellMatrices'</span>, package <span class='op'>=</span> <span class='st'>'TreeSearch'</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>dataset</span> <span class='op'>&lt;-</span> <span class='va'>congreveLamsdellMatrices</span><span class='op'>[[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>]</span><span class='op'>[</span>, <span class='fl'>1</span><span class='op'>:</span><span class='fl'>20</span><span class='op'>]</span></span>
+<span class='r-in'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='va'>referenceTree</span></span>
+<span class='r-in'><span class='va'>qc</span> <span class='op'>&lt;-</span> <span class='fu'>QuartetConcordance</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>cc</span> <span class='op'>&lt;-</span> <span class='fu'>ClusteringConcordance</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>pc</span> <span class='op'>&lt;-</span> <span class='fu'>PhylogeneticConcordance</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>spc</span> <span class='op'>&lt;-</span> <span class='fu'>SharedPhylogeneticConcordance</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>mcc</span> <span class='op'>&lt;-</span> <span class='fu'>MutualClusteringConcordance</span><span class='op'>(</span><span class='va'>tree</span>, <span class='va'>dataset</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>oPar</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span><span class='op'>(</span>mar <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>4</span><span class='op'>)</span>, cex <span class='op'>=</span> <span class='fl'>0.8</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/LabelSplits.html'>LabelSplits</a></span><span class='op'>(</span><span class='va'>tree</span>, <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>signif</a></span><span class='op'>(</span><span class='va'>qc</span>, <span class='fl'>3</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/LabelSplits.html'>LabelSplits</a></span><span class='op'>(</span><span class='va'>tree</span>, <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>signif</a></span><span class='op'>(</span><span class='va'>cc</span>, <span class='fl'>3</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/LabelSplits.html'>LabelSplits</a></span><span class='op'>(</span><span class='va'>tree</span>, <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>signif</a></span><span class='op'>(</span><span class='va'>pc</span>, <span class='fl'>3</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-plt'><img src='SiteConcordance-1.png' alt='' width='700' height='433' /></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/par.html'>par</a></span><span class='op'>(</span><span class='va'>oPar</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/graphics/pairs.html'>pairs</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/cbind.html'>cbind</a></span><span class='op'>(</span><span class='va'>qc</span>, <span class='va'>cc</span>, <span class='va'>pc</span>, <span class='va'>spc</span>, <span class='va'>mcc</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-plt'><img src='SiteConcordance-2.png' alt='' width='700' height='433' /></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

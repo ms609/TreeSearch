@@ -91,7 +91,7 @@ cNNI() is an equivalent function coded in C, that runs much faster." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9000</span>
       </span>
     </div>
 
@@ -120,7 +120,7 @@ cNNI() is an equivalent function coded in C, that runs much faster." />
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
+      <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -192,7 +192,7 @@ These functions are based on equivalents in the '<span class="pkg">phangorn</spa
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>tree</th>
-      <td><p>A tree of class <code>phylo</code>.</p></td>
+      <td><p>A tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>.</p></td>
     </tr>
     <tr>
       <th>edgeToBreak</th>
@@ -211,12 +211,12 @@ the broken internal edge.</p></td>
     <tr>
       <th>parent</th>
       <td><p>Integer vector corresponding to the first column of the edge
-matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 1]</code>.</p></td>
+matrix of a tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>, i.e. <code>tree$edge[, 1]</code>.</p></td>
     </tr>
     <tr>
       <th>child</th>
       <td><p>Integer vector corresponding to the second column of the edge
-matrix of a tree of class <code>phylo</code>, i.e. <code>tree$edge[, 2]</code>.</p></td>
+matrix of a tree of class <code><a href='https://rdrr.io/pkg/ape/man/read.tree.html'>phylo</a></code>, i.e. <code>tree$edge[, 2]</code>.</p></td>
     </tr>
     <tr>
       <th>nTips</th>
@@ -263,53 +263,58 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 (<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/GenerateTree.html'>BalancedTree</a></span><span class='op'>(</span><span class='fl'>8</span><span class='op'>)</span>
-<span class='co'># A random rearrangement</span>
-<span class='fu'>NNI</span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 
-#&gt; Phylogenetic tree with 8 tips and 7 internal nodes.
-#&gt; 
-#&gt; Tip labels:
-#&gt;   t1, t2, t3, t4, t5, t6, ...
-#&gt; 
-#&gt; Rooted; no branch lengths.</div><div class='input'><span class='fu'>cNNI</span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 
-#&gt; Phylogenetic tree with 8 tips and 7 internal nodes.
-#&gt; 
-#&gt; Tip labels:
-#&gt;   t1, t2, t3, t4, t5, t6, ...
-#&gt; 
-#&gt; Rooted; no branch lengths.</div><div class='input'>
-<span class='co'># All trees one NNI rearrangement away</span>
-<span class='fu'>NNI</span><span class='op'>(</span><span class='va'>tree</span>, edgeToBreak <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 12 phylogenetic trees</div><div class='input'>
-<span class='co'># Manual random sampling</span>
-<span class='fu'>cNNI</span><span class='op'>(</span><span class='va'>tree</span>, <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample.int</a></span><span class='op'>(</span><span class='fl'>14</span> <span class='op'>-</span> <span class='fl'>8</span> <span class='op'>-</span> <span class='fl'>1</span>, <span class='fl'>1</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample.int</a></span><span class='op'>(</span><span class='fl'>2</span>, <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 
-#&gt; Phylogenetic tree with 8 tips and 7 internal nodes.
-#&gt; 
-#&gt; Tip labels:
-#&gt;   t1, t2, t3, t4, t5, t6, ...
-#&gt; 
-#&gt; Rooted; no branch lengths.</div><div class='input'>
-<span class='co'># A specified rearrangement</span>
-<span class='fu'>cNNI</span><span class='op'>(</span><span class='va'>tree</span>, <span class='fl'>0</span>, <span class='fl'>0</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 
-#&gt; Phylogenetic tree with 8 tips and 7 internal nodes.
-#&gt; 
-#&gt; Tip labels:
-#&gt;   t1, t2, t3, t4, t5, t6, ...
-#&gt; 
-#&gt; Rooted; no branch lengths.</div><div class='input'>
-<span class='co'># If a tree may not be binary, collapse nodes with</span>
-<span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/MakeTreeBinary.html'>MakeTreeBinary</a></span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
-
-<span class='co'># If a tree may be improperly rooted, use</span>
-<span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/RootTree.html'>RootTree</a></span><span class='op'>(</span><span class='va'>tree</span>, <span class='fl'>1</span><span class='op'>)</span>
-
-<span class='co'># If a tree may exhibit unusual node ordering, this can be addressed with</span>
-<span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/Reorder.html'>Preorder</a></span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/GenerateTree.html'>BalancedTree</a></span><span class='op'>(</span><span class='fl'>8</span><span class='op'>)</span></span>
+<span class='r-in'><span class='co'># A random rearrangement</span></span>
+<span class='r-in'><span class='fu'>NNI</span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Phylogenetic tree with 8 tips and 7 internal nodes.</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Tip labels:</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   t1, t2, t3, t4, t5, t6, ...</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Rooted; no branch lengths.</span>
+<span class='r-in'><span class='fu'>cNNI</span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Phylogenetic tree with 8 tips and 7 internal nodes.</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Tip labels:</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   t1, t2, t3, t4, t5, t6, ...</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Rooted; no branch lengths.</span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># All trees one NNI rearrangement away</span></span>
+<span class='r-in'><span class='fu'>NNI</span><span class='op'>(</span><span class='va'>tree</span>, edgeToBreak <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 12 phylogenetic trees</span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Manual random sampling</span></span>
+<span class='r-in'><span class='fu'>cNNI</span><span class='op'>(</span><span class='va'>tree</span>, <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample.int</a></span><span class='op'>(</span><span class='fl'>14</span> <span class='op'>-</span> <span class='fl'>8</span> <span class='op'>-</span> <span class='fl'>1</span>, <span class='fl'>1</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample.int</a></span><span class='op'>(</span><span class='fl'>2</span>, <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Phylogenetic tree with 8 tips and 7 internal nodes.</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Tip labels:</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   t1, t2, t3, t4, t5, t6, ...</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Rooted; no branch lengths.</span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># A specified rearrangement</span></span>
+<span class='r-in'><span class='fu'>cNNI</span><span class='op'>(</span><span class='va'>tree</span>, <span class='fl'>0</span>, <span class='fl'>0</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Phylogenetic tree with 8 tips and 7 internal nodes.</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Tip labels:</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   t1, t2, t3, t4, t5, t6, ...</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Rooted; no branch lengths.</span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># If a tree may not be binary, collapse nodes with</span></span>
+<span class='r-in'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/MakeTreeBinary.html'>MakeTreeBinary</a></span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># If a tree may be improperly rooted, use</span></span>
+<span class='r-in'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/RootTree.html'>RootTree</a></span><span class='op'>(</span><span class='va'>tree</span>, <span class='fl'>1</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># If a tree may exhibit unusual node ordering, this can be addressed with</span></span>
+<span class='r-in'><span class='va'>tree</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/Reorder.html'>Preorder</a></span><span class='op'>(</span><span class='va'>tree</span><span class='op'>)</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -50,11 +50,11 @@
 characters, with a warning, where they are too complex for the present
 implementation of profile parsimony:
 inapplicable tokens will be replaced with the ambiguous token
-(i.e. - → ?);
+(i.e. - &amp;rarr; ?);
 Ambiguous tokens will be treated as fully ambiguous
-(i.e. {02} → ?)
+(i.e. {02} &amp;rarr; ?)
 Where more than two states are informative (i.e. unambiguously present in
-more than two taxa), states beyond the two most informative will be
+more than one taxon), states beyond the two most informative will be
 ignored.
 
 " />
@@ -99,7 +99,7 @@ ignored.
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9000</span>
       </span>
     </div>
 
@@ -128,7 +128,7 @@ ignored.
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
+      <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -178,11 +178,11 @@ ignored.
 characters, with a warning, where they are too complex for the present
 implementation of profile parsimony:</p><ul>
 <li><p>inapplicable tokens will be replaced with the ambiguous token
-(i.e. <code><a href='https://rdrr.io/r/base/Arithmetic.html'>-</a></code> → <code>?</code>);</p></li>
+(i.e. <code>-</code> &rarr; <code>?</code>);</p></li>
 <li><p>Ambiguous tokens will be treated as fully ambiguous
-(i.e. <code>{02}</code> → <code>?</code>)</p></li>
+(i.e. <code>{02}</code> &rarr; <code>?</code>)</p></li>
 <li><p>Where more than two states are informative (i.e. unambiguously present in
-more than two taxa), states beyond the two most informative will be
+more than one taxon), states beyond the two most informative will be
 ignored.</p></li>
 </ul>
 
@@ -210,7 +210,7 @@ character when subject to N additional steps.</p></li>
 <li><p><code>informative</code>: logical specifying which characters contain any
 phylogenetic information.</p></li>
 <li><p><code>bootstrap</code>: The character vector
-<code><a href='https://rdrr.io/r/base/c.html'>c('info.amounts', 'split.sizes')</a></code>, indicating attributes to sample
+<code>c('info.amounts', 'split.sizes')</code>, indicating attributes to sample
 when bootstrapping the dataset (e.g. in Ratchet searches).</p></li>
 </ul>
 
@@ -225,17 +225,25 @@ transformation series.</p></li>
 <ul>
 <li><p><code>PrepareDataIW</code>: Prepare data for implied weighting</p></li>
 </ul>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p>Other profile parsimony functions: 
+<code><a href='Carter1.html'>Carter1</a>()</code>,
+<code><a href='StepInformation.html'>StepInformation</a>()</code>,
+<code><a href='WithOneExtraStep.html'>WithOneExtraStep</a>()</code>,
+<code><a href='profiles.html'>profiles</a></code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Martin R. Smith; written with reference to
 <code>phangorn:::prepareDataFitch()</code></p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'congreveLamsdellMatrices'</span><span class='op'>)</span>
-<span class='va'>dataset</span> <span class='op'>&lt;-</span> <span class='va'>congreveLamsdellMatrices</span><span class='op'>[[</span><span class='fl'>42</span><span class='op'>]</span><span class='op'>]</span>
-<span class='fu'>PrepareDataProfile</span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 22 sequences with 55 character and 55 different site patterns.
-#&gt; The states are 0 1 </div></pre>
+    <pre class="examples"><span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>'congreveLamsdellMatrices'</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>dataset</span> <span class='op'>&lt;-</span> <span class='va'>congreveLamsdellMatrices</span><span class='op'>[[</span><span class='fl'>42</span><span class='op'>]</span><span class='op'>]</span></span>
+<span class='r-in'><span class='fu'>PrepareDataProfile</span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 22 sequences with 55 character and 55 different site patterns.</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> The states are 0 1 </span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

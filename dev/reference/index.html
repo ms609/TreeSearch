@@ -87,7 +87,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9000</span>
       </span>
     </div>
 
@@ -116,7 +116,7 @@
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
+      <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -213,9 +213,21 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="MinimumLength.html">MinimumLength()</a></code> <code><a href="MinimumLength.html">MinimumSteps()</a></code> </p>
+        </td>
+        <td><p>Minimum length</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="TreeLength.html">IWScore()</a></code> <code><a href="TreeLength.html">TreeLength()</a></code> <code><a href="TreeLength.html">Fitch()</a></code> </p>
         </td>
         <td><p>Calculate the parsimony score of a tree given a dataset</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="ConcordantInformation.html">ConcordantInformation()</a></code> <code><a href="ConcordantInformation.html">Evaluate()</a></code> <code><a href="ConcordantInformation.html">ConcordantInfo()</a></code> </p>
+        </td>
+        <td><p>Evaluate the concordance of information between a tree and a dataset</p></td>
       </tr><tr>
         
         <td>
@@ -225,9 +237,9 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="ConcordantInformation.html">ConcordantInformation()</a></code> <code><a href="ConcordantInformation.html">Evaluate()</a></code> <code><a href="ConcordantInformation.html">ConcordantInfo()</a></code> </p>
+          <p><code><a href="PlotCharacter.html">PlotCharacter()</a></code> </p>
         </td>
-        <td><p>Evaluate the concordance of information between a tree and a dataset</p></td>
+        <td><p>Plot the distribution of a character on a tree</p></td>
       </tr><tr>
         
         <td>
@@ -275,8 +287,8 @@
     </tbody><tbody>
       <tr>
         <th colspan="2">
-          <h2 id="section-tree-rearrangement" class="hasAnchor"><a href="#section-tree-rearrangement" class="anchor"></a>Tree rearrangement</h2>
-          <p class="section-desc"><p>Tree rearrangement functions</p></p>
+          <h2 id="section-tree-re-construction" class="hasAnchor"><a href="#section-tree-re-construction" class="anchor"></a>Tree (re)construction</h2>
+          <p class="section-desc"><p>Tree generation and rearrangement functions.</p></p>
         </th>
       </tr>
       
@@ -285,6 +297,18 @@
       
       
       <tr>
+        
+        <td>
+          <p><code><a href="AdditionTree.html">AdditionTree()</a></code> </p>
+        </td>
+        <td><p>Addition tree</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="RandomMorphyTree.html">RandomMorphyTree()</a></code> </p>
+        </td>
+        <td><p>Random postorder tree</p></td>
+      </tr><tr>
         
         <td>
           <p><code><a href="NNI.html">NNI()</a></code> <code><a href="NNI.html">cNNI()</a></code> <code><a href="NNI.html">NNISwap()</a></code> <code><a href="NNI.html">RootedNNI()</a></code> <code><a href="NNI.html">RootedNNISwap()</a></code> </p>
@@ -338,7 +362,13 @@
         <td>
           <p><code><a href="Carter1.html">Carter1()</a></code> <code><a href="Carter1.html">Log2Carter1()</a></code> <code><a href="Carter1.html">LogCarter1()</a></code> </p>
         </td>
-        <td><p>Number of trees with <em>m</em> additional steps</p></td>
+        <td><p>Number of trees with <em>m</em> steps</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="PrepareDataProfile.html">PrepareDataProfile()</a></code> <code><a href="PrepareDataProfile.html">PrepareDataIW()</a></code> </p>
+        </td>
+        <td><p>Prepare data for Profile Parsimony</p></td>
       </tr><tr>
         
         <td>
@@ -348,15 +378,15 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="profiles.html">profiles</a></code> </p>
-        </td>
-        <td><p>Empirically counted profiles for small trees</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="WithOneExtraStep.html">WithOneExtraStep()</a></code> </p>
         </td>
         <td><p>Number of trees with one extra step</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="profiles.html">profiles</a></code> </p>
+        </td>
+        <td><p>Empirically counted profiles for small trees</p></td>
       </tr>
     </tbody><tbody>
       <tr>
@@ -452,53 +482,15 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="profiles.html">profiles</a></code> </p>
+        </td>
+        <td><p>Empirically counted profiles for small trees</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="referenceTree.html">referenceTree</a></code> </p>
         </td>
         <td><p>Tree topology for matrix simulation</p></td>
-      </tr>
-    </tbody><tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-utility-functions" class="hasAnchor"><a href="#section-utility-functions" class="anchor"></a>Utility functions</h2>
-          <p class="section-desc"><p>Miscellaneous functions to simplify or expedite basic functionality.</p></p>
-        </th>
-      </tr>
-      
-      
-    </tbody><tbody>
-      
-      
-      <tr>
-        
-        <td>
-          <p><code><a href="JackLabels.html">JackLabels()</a></code> </p>
-        </td>
-        <td><p>Label nodes with jackknife support values</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="LogisticPoints.html">LogisticPoints()</a></code> </p>
-        </td>
-        <td><p>Logistic Points
-Extract points from a fitted model</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="MinimumLength.html">MinimumLength()</a></code> <code><a href="MinimumLength.html">MinimumSteps()</a></code> </p>
-        </td>
-        <td><p>Minimum length</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="PrepareDataProfile.html">PrepareDataProfile()</a></code> <code><a href="PrepareDataProfile.html">PrepareDataIW()</a></code> </p>
-        </td>
-        <td><p>Prepare data for Profile Parsimony</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="RandomMorphyTree.html">RandomMorphyTree()</a></code> </p>
-        </td>
-        <td><p>Random postorder tree</p></td>
       </tr>
     </tbody>
     </table>

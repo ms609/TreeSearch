@@ -88,7 +88,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9000</span>
       </span>
     </div>
 
@@ -117,7 +117,7 @@
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
+      <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -184,18 +184,19 @@
 for the given Morphy object.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='va'>tokens</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span>
-  <span class='fl'>0</span>, <span class='st'>'-'</span>, <span class='st'>'-'</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>2</span>,
-  <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>2</span>,
-  <span class='fl'>0</span>, <span class='st'>'-'</span>, <span class='st'>'-'</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span><span class='op'>)</span>, byrow <span class='op'>=</span> <span class='cn'>TRUE</span>, nrow <span class='op'>=</span> <span class='fl'>3L</span>,
-  dimnames <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>letters</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span><span class='op'>]</span>, <span class='cn'>NULL</span><span class='op'>)</span><span class='op'>)</span>
-<span class='va'>pd</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html'>MatrixToPhyDat</a></span><span class='op'>(</span><span class='va'>tokens</span><span class='op'>)</span>
-<span class='va'>morphyObj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a></span><span class='op'>(</span><span class='va'>pd</span><span class='op'>)</span>
-
-<span class='fu'>RandomTreeScore</span><span class='op'>(</span><span class='va'>morphyObj</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] 4</div><div class='input'>
-<span class='va'>morphyObj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='UnloadMorphy.html'>UnloadMorphy</a></span><span class='op'>(</span><span class='va'>morphyObj</span><span class='op'>)</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='va'>tokens</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span></span>
+<span class='r-in'>  <span class='fl'>0</span>, <span class='st'>'-'</span>, <span class='st'>'-'</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>2</span>,</span>
+<span class='r-in'>  <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>2</span>,</span>
+<span class='r-in'>  <span class='fl'>0</span>, <span class='st'>'-'</span>, <span class='st'>'-'</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span><span class='op'>)</span>, byrow <span class='op'>=</span> <span class='cn'>TRUE</span>, nrow <span class='op'>=</span> <span class='fl'>3L</span>,</span>
+<span class='r-in'>  dimnames <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>letters</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span><span class='op'>]</span>, <span class='cn'>NULL</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>pd</span> <span class='op'>&lt;-</span> <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html'>MatrixToPhyDat</a></span><span class='op'>(</span><span class='va'>tokens</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>morphyObj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='PhyDat2Morphy.html'>PhyDat2Morphy</a></span><span class='op'>(</span><span class='va'>pd</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='fu'>RandomTreeScore</span><span class='op'>(</span><span class='va'>morphyObj</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] 4</span>
+<span class='r-in'></span>
+<span class='r-in'><span class='va'>morphyObj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='UnloadMorphy.html'>UnloadMorphy</a></span><span class='op'>(</span><span class='va'>morphyObj</span><span class='op'>)</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

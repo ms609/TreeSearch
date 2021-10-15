@@ -89,7 +89,7 @@ by scoring a character on each n-leaf tree." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9000</span>
       </span>
     </div>
 
@@ -118,7 +118,7 @@ by scoring a character on each n-leaf tree." />
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
+      <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -181,18 +181,21 @@ log2(proportion of <em>n</em>-leaf trees with <em>s</em> or fewer steps for this
 
     <div class='dont-index'><p>Other profile parsimony functions: 
 <code><a href='Carter1.html'>Carter1</a>()</code>,
-<code><a href='StepInformation.html'>StepInformation</a>()</code></p></div>
+<code><a href='PrepareDataProfile.html'>PrepareDataProfile</a>()</code>,
+<code><a href='StepInformation.html'>StepInformation</a>()</code>,
+<code><a href='WithOneExtraStep.html'>WithOneExtraStep</a>()</code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>profiles</span><span class='op'>)</span>
-
-<span class='co'># Load profile for a character of the structure 0 0 0 1 1 1 1 1</span>
-<span class='va'>profile3.5</span> <span class='op'>&lt;-</span> <span class='va'>profiles</span><span class='op'>[[</span><span class='fl'>8</span><span class='op'>]</span><span class='op'>]</span><span class='op'>[[</span><span class='fl'>2</span><span class='op'>]</span><span class='op'>]</span><span class='op'>[[</span><span class='fl'>3</span><span class='op'>]</span><span class='op'>]</span>
-
-<span class='co'># Number of trees with _s_ or fewer steps on that character</span>
-<span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NRooted.html'>NUnrooted</a></span><span class='op'>(</span><span class='fl'>8</span><span class='op'>)</span> <span class='op'>*</span> <span class='fl'>2</span> <span class='op'>^</span> <span class='va'>profile3.5</span>
-</div><div class='output co'>#&gt;     1     2     3     4 
-#&gt;   225  2475  8019 10395 </div></pre>
+    <pre class="examples"><span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>profiles</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Load profile for a character of the structure 0 0 0 1 1 1 1 1</span></span>
+<span class='r-in'><span class='va'>profile3.5</span> <span class='op'>&lt;-</span> <span class='va'>profiles</span><span class='op'>[[</span><span class='fl'>8</span><span class='op'>]</span><span class='op'>]</span><span class='op'>[[</span><span class='fl'>2</span><span class='op'>]</span><span class='op'>]</span><span class='op'>[[</span><span class='fl'>3</span><span class='op'>]</span><span class='op'>]</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Number of trees with _s_ or fewer steps on that character</span></span>
+<span class='r-in'><span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NRooted.html'>NUnrooted</a></span><span class='op'>(</span><span class='fl'>8</span><span class='op'>)</span> <span class='op'>*</span> <span class='fl'>2</span> <span class='op'>^</span> <span class='va'>profile3.5</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>     1     2     3     4 </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   225  2475  8019 10395 </span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

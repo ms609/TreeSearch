@@ -94,7 +94,7 @@ between characters in which these factors differ." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">0.4.3.9011</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9000</span>
       </span>
     </div>
 
@@ -123,7 +123,7 @@ between characters in which these factors differ." />
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
-      <a href="../articles/profile-scores.html">Calculating concavity profiles for profile parsimony</a>
+      <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
@@ -195,8 +195,8 @@ whose names correspond to the labels of any accompanying tree.</p></td>
     <tr>
       <th>compress</th>
       <td><p>Logical specifying whether to retain the compression of a
-phylo object or to return a vector specifying to each individual character,
-decompressed using the dataset's <code>index</code> attribute.</p></td>
+<code>phyDat</code> object or to return a vector specifying to each individual
+character, decompressed using the dataset's <code>index</code> attribute.</p></td>
     </tr>
     </table>
 
@@ -214,27 +214,28 @@ retention index (<code>ri</code>), and rescaled consistency index (<code>rc</cod
 (<a href='mailto:martin.smith@durham.ac.uk'>martin.smith@durham.ac.uk</a>)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>inapplicable.datasets</span><span class='op'>)</span>
-<span class='va'>dataset</span> <span class='op'>&lt;-</span> <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>4</span><span class='op'>]</span><span class='op'>]</span>
-<span class='fu'>Consistency</span><span class='op'>(</span><span class='va'>dataset</span>, <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;   [1] 0.2500000 0.3333333 0.3333333 0.2500000 0.3333333 0.2500000 0.5000000
-#&gt;   [8] 0.2500000 0.3333333       NaN 0.2500000 1.0000000 0.3333333 0.3333333
-#&gt;  [15] 1.0000000 0.3333333 0.5000000 0.2000000 1.0000000 1.0000000 0.5000000
-#&gt;  [22] 0.2500000 0.3333333 0.2500000 0.5000000 0.5000000 0.5000000 1.0000000
-#&gt;  [29] 0.5000000 0.6666667 0.2500000 0.2500000 0.5000000 0.3333333 1.0000000
-#&gt;  [36] 0.2500000 1.0000000 0.1666667 0.5000000 0.5000000 0.5000000 1.0000000
-#&gt;  [43] 0.4000000 0.5000000 0.5000000 0.5000000 0.3333333 0.3333333 0.3333333
-#&gt;  [50] 1.0000000 0.3333333 0.6666667 1.0000000 1.0000000 0.3333333 0.5000000
-#&gt;  [57] 1.0000000 0.2857143 0.5000000 0.2000000 0.6666667 0.5000000 0.1428571
-#&gt;  [64] 0.6666667 0.5000000 0.2000000 0.5714286 0.7500000 0.2500000 0.2000000
-#&gt;  [71] 0.5000000 1.0000000 0.6666667 0.2500000 0.3333333 0.2000000 0.1666667
-#&gt;  [78] 0.2500000 1.0000000 0.3333333 0.2500000 0.6666667 0.3333333 0.2500000
-#&gt;  [85] 0.3333333 1.0000000 0.2500000 1.0000000 0.5000000 0.2857143 0.3333333
-#&gt;  [92] 0.2000000 1.0000000 0.3333333 1.0000000 0.2500000 0.5000000 1.0000000
-#&gt;  [99] 0.3333333 0.5000000 1.0000000 0.5000000 0.5000000 0.5000000 0.5000000
-#&gt; [106] 1.0000000 0.2500000 0.5000000 1.0000000 0.3333333 1.0000000 0.2000000
-#&gt; [113] 1.0000000 0.5000000 1.0000000 0.2000000 0.5000000 0.3333333 0.5000000
-#&gt; [120] 0.3333333 0.3333333 0.3333333 0.2500000 1.0000000 1.0000000 0.3333333</div></pre>
+    <pre class="examples"><span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>inapplicable.datasets</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>dataset</span> <span class='op'>&lt;-</span> <span class='va'>inapplicable.phyData</span><span class='op'>[[</span><span class='fl'>4</span><span class='op'>]</span><span class='op'>]</span></span>
+<span class='r-in'><span class='fu'>Consistency</span><span class='op'>(</span><span class='va'>dataset</span>, <span class='fu'>TreeTools</span><span class='fu'>::</span><span class='fu'><a href='https://ms609.github.io/TreeTools/reference/NJTree.html'>NJTree</a></span><span class='op'>(</span><span class='va'>dataset</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   [1] 0.2500000 0.3333333 0.3333333 0.2500000 0.3333333 0.2500000 0.5000000</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>   [8] 0.2500000 0.3333333       NaN 0.2500000 1.0000000 0.3333333 0.3333333</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [15] 1.0000000 0.3333333 0.5000000 0.2000000 1.0000000 1.0000000 0.5000000</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [22] 0.2500000 0.3333333 0.2500000 0.5000000 0.5000000 0.5000000 1.0000000</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [29] 0.5000000 0.6666667 0.2500000 0.2500000 0.5000000 0.3333333 1.0000000</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [36] 0.2500000 1.0000000 0.1666667 0.5000000 0.5000000 0.5000000 1.0000000</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [43] 0.4000000 0.5000000 0.5000000 0.5000000 0.3333333 0.3333333 0.3333333</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [50] 1.0000000 0.3333333 0.6666667 1.0000000 1.0000000 0.3333333 0.5000000</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [57] 1.0000000 0.2857143 0.5000000 0.2000000 0.6666667 0.5000000 0.1428571</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [64] 0.6666667 0.5000000 0.2000000 0.5714286 0.7500000 0.2500000 0.2000000</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [71] 0.5000000 1.0000000 0.6666667 0.2500000 0.3333333 0.2000000 0.1666667</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [78] 0.2500000 1.0000000 0.3333333 0.2500000 0.6666667 0.3333333 0.2500000</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [85] 0.3333333 1.0000000 0.2500000 1.0000000 0.5000000 0.2857143 0.3333333</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [92] 0.2000000 1.0000000 0.3333333 1.0000000 0.2500000 0.5000000 1.0000000</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [99] 0.3333333 0.5000000 1.0000000 0.5000000 0.5000000 0.5000000 0.5000000</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [106] 1.0000000 0.2500000 0.5000000 1.0000000 0.3333333 1.0000000 0.2000000</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [113] 1.0000000 0.5000000 1.0000000 0.2000000 0.5000000 0.3333333 0.5000000</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [120] 0.3333333 0.3333333 0.3333333 0.2500000 1.0000000 1.0000000 0.3333333</span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
