@@ -223,6 +223,9 @@ MorphyErrorCheck <- function (action) {
 #' RandomTreeScore(morphyObj)
 #' morphyObj <- UnloadMorphy(morphyObj)
 #' @template MRS
+#' @seealso 
+#' Score a tree: [`MorphyTreeLength()`]
+#' 
 #' @family Morphy API functions
 #' @export
 SingleCharMorphy <- function (char, gap = 'inapp') {
