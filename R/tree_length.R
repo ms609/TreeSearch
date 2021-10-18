@@ -3,8 +3,9 @@
 #' `TreeLength()` uses the Morphy library \insertCite{Brazeau2017}{TreeSearch}
 #' to calculate a parsimony score for a tree, handling inapplicable data 
 #' according to the algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
-#' Tree scoring can employ implied weights \insertCite{Goloboff1993}{TreeSearch}
-#' or profile parsimony \insertCite{Faith2001}{TreeSearch}.
+#' Trees may be scored using equal weights, implied weights
+#' \insertCite{Goloboff1993}{TreeSearch}, or profile parsimony
+#' \insertCite{Faith2001}{TreeSearch}.
 #'
 #' @param tree A tree of class `phylo`, a list thereof (optionally of class
 #' `multiPhylo`), or an integer -- in which case `tree` random trees will be 
@@ -13,7 +14,7 @@
 #' @template concavityParam
 #' 
 #' @return `TreeLength()` returns a numeric vector containing the score for
-#' each tree.
+#' each tree in `tree`.
 #' 
 #' @examples
 #' data("inapplicable.datasets")
