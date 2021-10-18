@@ -517,6 +517,7 @@ MaximizeParsimony <- function (dataset, tree,
     characters <- PhyToString(dataset, ps = '', useIndex = FALSE,
                               byTaxon = FALSE, concatenate = FALSE)
     startWeights <- at$weight
+    minLength <- MinimumLength(dataset, compress = TRUE)
     morphyObjects <- lapply(characters, SingleCharMorphy)
     on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
             add = TRUE)
@@ -529,24 +530,7 @@ MaximizeParsimony <- function (dataset, tree,
     simpleCont <- ifelse(rowSums(cont) == 1,
                          apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
                          '?')
-  }
-  if (iw) {
-    inappLevel <- at$levels == '-'
-    
-    if (any(inappLevel)) {
-      # TODO this is a workaround until MinimumLength can handle {-, 1}
-      cont[cont[, inappLevel] > 0, ] <- 0
-      ambiguousToken <- at$allLevels == '?'
-      cont[ambiguousToken, ] <- colSums(cont[!ambiguousToken, ]) > 0
-    }
-    
-    # Perhaps replace with previous code:
-    # inappLevel <- which(at$levels == "-")
-    # cont[, inappLevel] <- 0
-  }
   
-  if (iw || profile) {
-    minLength <- MinimumLength(dataset, compress = TRUE)
     
     unlisted <- unlist(dataset, use.names = FALSE)
     tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip)
