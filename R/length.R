@@ -3,7 +3,9 @@
 #' The smallest length that a character can obtain on any tree.
 #' 
 #' 
-#' @param x An object of class `phyDat`,
+#' @param x An object of class `phyDat`;
+#' or a string to be coerced to a `phyDat` object via 
+#' [`TreeTools::StringToPhyDat()`];
 #' or an integer vector listing the tokens that may be present at each 
 #' tip along a single character, with each token represented as a binary digit;
 #' e.g. a value of 11 ( = 2^0 + 2^1 + 2^3) means that
@@ -11,9 +13,6 @@
 #' 
 #' Inapplicable tokens should be denoted with the integer `0` (not 2^0).
 #' 
-#' Tokens that are ambiguous for an inapplicable and an applicable
-#' state are not presently supported; for an approximate value, denote such
-#' ambiguity with the integer `0`.
 #' @template compressParam
 #' 
 #' @return `MinimumLength()` returns a vector of integers specifying the 
@@ -21,35 +20,26 @@
 #'
 #' @examples
 #' data('inapplicable.datasets')
-#' myPhyDat <- inapplicable.phyData[[4]] 
-#' MinimumLength(myPhyDat)
-#' MinimumLength(myPhyDat, compress = TRUE)
+#' myPhyDat <- inapplicable.phyData[[4]]
 #' 
-#' 
-#' class(myPhyDat) # phyDat object
 #' # load your own data with
 #' # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
 #' # or Windows users can select a file interactively using:
 #' # my.PhyDat <- as.phyDat(read.nexus.data(choose.files()))
 #' 
-#' # Convert list of character codings to an array
-#' myData <- vapply(myPhyDat, I, myPhyDat[[1]])
+#' class(myPhyDat) # phyDat object
 #' 
-#' # Convert phyDat's representation of states to binary
-#' myContrast <- attr(myPhyDat, 'contrast')
-#' tokens <- colnames(myContrast)
-#' binaryContrast <- integer(length(tokens))
-#' tokenApplicable <- tokens != '-'
-#' binaryContrast[tokenApplicable] <- 2 ^ (seq_len(sum(tokenApplicable)) - 1)
-#' binaryValues <- apply(myContrast, 1, 
-#'   function (row) sum(binaryContrast[as.logical(row)]))
-#' myStates <- matrix(binaryValues[myData], nrow = nrow(myData),
-#'                    ncol = ncol(myData), dimnames = dimnames(myData))
-#'
-#' # Finally, work out minimum steps 
-#' apply(myStates, 1, MinimumLength)
+#' # Minimum length of each character in turn
+#' MinimumLength(myPhyDat)
+#' 
+#' # Collapse duplicate characters, per phyDat compression
+#' MinimumLength(myPhyDat, compress = TRUE)
+#' 
+#' # Calculate length of a single character from its textual representation
+#' MinimumLength('-{-1}{-2}{-3}2233')
 #' @template MRS
 #' @family tree scoring
+#' @importFrom fastmatch %fin%
 #' @export
 MinimumLength <- function (x, compress = FALSE) UseMethod('MinimumLength')
 
@@ -65,21 +55,22 @@ MinimumLength.phyDat <- function (x, compress = FALSE) {
   if (is.null(colnames(cont))) {
     colnames(cont) <- as.character(at$levels)
   }
+  levelHasInapp <- if ('-' %fin% at$levels) {
+    cont[, '-'] == 1L
+  } else {
+    logical(dim(cont)[1])
+  }
+  unlisted <- unlist(x, use.names = FALSE)
+  inappCount <- colSums(matrix(levelHasInapp[unlisted], nTip, nChar))
+  
+  
   simpleCont <- ifelse(rowSums(cont) == 1,
                        apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
                        '?')
   inappLevel <- at$levels == '-'
   
-  if (any(inappLevel)) {
-    # TODO this is a workaround until MinimumLength.numeric can handle {-, 1}
-    cont[cont[, inappLevel] > 0, ] <- 0
-    ambiguousToken <- at$allLevels == '?'
-    cont[ambiguousToken, ] <- colSums(cont[!ambiguousToken, ]) > 0
-  }
-  
   powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
   tmp <- as.integer(cont %*% powersOf2)
-  unlisted <- unlist(x, use.names = FALSE)
   binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
   
   ret <- apply(binaryMatrix, 1, MinimumLength)
@@ -133,6 +124,16 @@ MinimumLength.numeric <- function (x, compress = NA) {
     lastDim <- dim(tokens)
   }
 }
+
+#' @rdname MinimumLength
+#' @importFrom TreeTools NexusTokens StringToPhyDat
+#' @export
+MinimumLength.character <- function (x, compress = TRUE) {
+  nTip <- length(NexusTokens(x[1]))
+  vapply(x, function (x) MinimumLength(StringToPhyDat(x, nTip)),
+         1, USE.NAMES = FALSE)
+}
+
 
 #' @rdname MinimumLength
 MinimumSteps <- function(x) {

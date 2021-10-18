@@ -4,6 +4,7 @@
 \alias{MinimumLength}
 \alias{MinimumLength.phyDat}
 \alias{MinimumLength.numeric}
+\alias{MinimumLength.character}
 \alias{MinimumSteps}
 \title{Minimum length}
 \usage{
@@ -13,20 +14,20 @@ MinimumLength(x, compress = FALSE)
 
 \method{MinimumLength}{numeric}(x, compress = NA)
 
+\method{MinimumLength}{character}(x, compress = TRUE)
+
 MinimumSteps(x)
 }
 \arguments{
-\item{x}{An object of class \code{phyDat},
+\item{x}{An object of class \code{phyDat};
+or a string to be coerced to a \code{phyDat} object via
+\code{\link[TreeTools:PhyToString]{TreeTools::StringToPhyDat()}};
 or an integer vector listing the tokens that may be present at each
 tip along a single character, with each token represented as a binary digit;
 e.g. a value of 11 ( = 2^0 + 2^1 + 2^3) means that
 the tip may have tokens 0, 1 or 3.
 
-Inapplicable tokens should be denoted with the integer \code{0} (not 2^0).
-
-Tokens that are ambiguous for an inapplicable and an applicable
-state are not presently supported; for an approximate value, denote such
-ambiguity with the integer \code{0}.}
+Inapplicable tokens should be denoted with the integer \code{0} (not 2^0).}
 
 \item{compress}{Logical specifying whether to retain the compression of a
 \code{phyDat} object or to return a vector specifying to each individual
@@ -41,33 +42,23 @@ The smallest length that a character can obtain on any tree.
 }
 \examples{
 data('inapplicable.datasets')
-myPhyDat <- inapplicable.phyData[[4]] 
-MinimumLength(myPhyDat)
-MinimumLength(myPhyDat, compress = TRUE)
+myPhyDat <- inapplicable.phyData[[4]]
 
-
-class(myPhyDat) # phyDat object
 # load your own data with
 # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
 # or Windows users can select a file interactively using:
 # my.PhyDat <- as.phyDat(read.nexus.data(choose.files()))
 
-# Convert list of character codings to an array
-myData <- vapply(myPhyDat, I, myPhyDat[[1]])
+class(myPhyDat) # phyDat object
 
-# Convert phyDat's representation of states to binary
-myContrast <- attr(myPhyDat, 'contrast')
-tokens <- colnames(myContrast)
-binaryContrast <- integer(length(tokens))
-tokenApplicable <- tokens != '-'
-binaryContrast[tokenApplicable] <- 2 ^ (seq_len(sum(tokenApplicable)) - 1)
-binaryValues <- apply(myContrast, 1, 
-  function (row) sum(binaryContrast[as.logical(row)]))
-myStates <- matrix(binaryValues[myData], nrow = nrow(myData),
-                   ncol = ncol(myData), dimnames = dimnames(myData))
+# Minimum length of each character in turn
+MinimumLength(myPhyDat)
 
-# Finally, work out minimum steps 
-apply(myStates, 1, MinimumLength)
+# Collapse duplicate characters, per phyDat compression
+MinimumLength(myPhyDat, compress = TRUE)
+
+# Calculate length of a single character from its textual representation
+MinimumLength('-{-1}{-2}{-3}2233')
 }
 \seealso{
 Other tree scoring: 

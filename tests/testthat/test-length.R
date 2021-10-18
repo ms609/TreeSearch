@@ -3,6 +3,7 @@ test_that("Deprecation", {
 })
 
 test_that("Minimum step counts are correctly calculated", {
+  library("TreeTools")
   expect_equal(1, MinimumLength(1:3))
   expect_equal(1, MinimumLength(c(1:3, 5)))
   expect_equal(0, MinimumLength(c(6, 7, 14)))
@@ -23,6 +24,34 @@ test_that("Minimum step counts are correctly calculated", {
   
   dudTwo <- TreeTools::StringToPhyDat('{-1}{-2}{-3}2233', letters[1:7])
   expect_equal('{-1}{-2}{-3}2233', TreeTools::PhyDatToString(PrepareDataIW(dudTwo)))
+  
+  morphyObj <- SingleCharMorphy('{-1}{-2}{-3}2233')
+  expect_equal(MorphyTreeLength(TreeTools::PectinateTree(7), morphyObj), 1)
+  morphyObj <- UnloadMorphy(morphyObj)
+  
+  owch2 <- '{-1}{-2}22{-3}33'
+  tr2 <- ape::read.tree(text=("(a, ((b, (c, d)), (e, (f, g))));"))
+  PlotCharacter(tr2, StringToPhyDat(owch2, letters[1:7]))
+  
+  
+  morphyObj <- SingleCharMorphy(owch2)
+  expect_equal(MorphyTreeLength(TreeTools::PectinateTree(7), morphyObj), 1)
+  expect_equal(MorphyTreeLength(tr2, morphyObj), 2)
+  morphyObj <- UnloadMorphy(morphyObj)
+  
+  owch3 <- '-1-222-333'
+  tr3 <- ape::read.tree(text=("((a1, a2), (((b1, b2), (c, d)), ((e1, e2), (f, g))));"))
+  PlotCharacter(tr3, StringToPhyDat(owch3, TipLabels(tr3)))
+  
+  morphyObj <- SingleCharMorphy(owch3)
+  expect_equal(MorphyTreeLength(TreeTools::PectinateTree(10), morphyObj), 2)
+  expect_equal(MorphyTreeLength(tr3, morphyObj), 2)
+  morphyObj <- UnloadMorphy(morphyObj)
+  
+  expect_equal(2, MinimumLength('-{-1}{-2}{-3}2233'))
+  expect_equal(1, MinimumLength('--{-1}{-2}{-3}2233'))
+  
+  expect_equal(1, attr(PrepareDataIW(dudDat), 'min.length'))
   
   tr <- ape::read.tree(text='(((a, b), c), (d, (e, ((f, g), (h, (i, (j, k)))))));')
   expect_equal(CharacterLength(tr, compress = TRUE,
