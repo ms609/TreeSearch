@@ -1,10 +1,7 @@
-# Branch pp-vignettes
+# TreeSearch 1.0.1.9001 (development)
 
 - New vignette describing profile parsimony.
-
-
-# TreeSearch 1.0.1.9000 (development)
-
+- `MinimumLength()` fully supports ambiguous applicability.
 - Minor improvements to 'shiny' GUI.
 
 
