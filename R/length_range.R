@@ -54,20 +54,22 @@ MinimumLength.phyDat <- function (x, compress = FALSE) {
   if (is.null(colnames(cont))) {
     colnames(cont) <- as.character(at$levels)
   }
-  unlisted <- unlist(x, use.names = FALSE)
-  powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
-  
-  # Treat {-, 1} as {1}
-  tmp <- as.integer(cont %*% powersOf2)
-  ambigIsApp <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
   
   inappLevel <- at$levels == '-'
+  powersOf2 <- 2L ^ (seq_len(nLevel - sum(inappLevel)) - 1L)
+  
+  # Treat {-, 1} as {1}
+  unlisted <- unlist(x, use.names = FALSE)
+  tmp <- as.integer(cont[, colnames(cont) != '-'] %*% powersOf2)
+  ambigIsApp <- matrix(tmp[unlisted], nChar, nTip)
+  
   if (any(inappLevel)) {
     # Treat {-, 1} as {-}
     tmp[cont[, '-'] == 1] <- 0
-    ambigIsInapp <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
+    ambigIsInapp <- matrix(tmp[unlisted], nChar, nTip)
     
-    inappCount <- colSums(matrix(unlisted %in% which(inappLevel), nTip, nChar))
+    inappCount <- rowSums(matrix(unlisted %in% which(at$allLevels == '-'),
+                                 nChar, nTip))
     binaryMatrix <- ambigIsApp
     binaryMatrix[inappCount > 1, ] <- ambigIsInapp[inappCount > 1, ]
   } else {

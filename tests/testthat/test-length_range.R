@@ -31,7 +31,7 @@ test_that("Minimum step counts are correctly calculated", {
   
   owch2 <- '{-1}{-2}22{-3}33'
   tr2 <- ape::read.tree(text=("(a, ((b, (c, d)), (e, (f, g))));"))
-  PlotCharacter(tr2, StringToPhyDat(owch2, letters[1:7]))
+  # PlotCharacter(tr2, StringToPhyDat(owch2, letters[1:7]))
   
   
   morphyObj <- SingleCharMorphy(owch2)
@@ -41,7 +41,7 @@ test_that("Minimum step counts are correctly calculated", {
   
   owch3 <- '-1-222-333'
   tr3 <- ape::read.tree(text=("((a1, a2), (((b1, b2), (c, d)), ((e1, e2), (f, g))));"))
-  PlotCharacter(tr3, StringToPhyDat(owch3, TipLabels(tr3)))
+  # PlotCharacter(tr3, StringToPhyDat(owch3, TipLabels(tr3)))
   
   morphyObj <- SingleCharMorphy(owch3)
   expect_equal(MorphyTreeLength(TreeTools::PectinateTree(10), morphyObj), 2)
