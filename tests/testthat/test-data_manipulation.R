@@ -6,6 +6,16 @@ test_that("PrepareDataProfile() handles empty matrices", {
   expect_equal(expectation, PrepareDataProfile(dat))
 })
 
+Dehash <- function (x) {
+  lapply(x, function (xi) {
+    attr(xi, ".match.hash") <- NULL
+    if (!is.null(dimnames(xi))) {
+      dimnames(xi) <- Dehash(dimnames(xi))
+    }
+    xi
+  })
+}
+
 test_that("PrepareDataProfile()", {
   
   # Easy one
@@ -15,7 +25,8 @@ test_that("PrepareDataProfile()", {
   rownames(mtx) <- letters[seq_len(nrow(mtx))]
   phy1 <- TreeTools::MatrixToPhyDat(mtx)
   expect_equivalent(phy1, PrepareDataProfile(phy1))
-  expect_equal(attributes(phy1), attributes(PrepareDataProfile(phy1))[1:10])
+  expect_equal(Dehash(attributes(PrepareDataProfile(phy1))[1:10]),
+               Dehash(attributes(phy1)))
   
   # Easy one
   mtx <- cbind(c('0', '0', 1,1,1,1),

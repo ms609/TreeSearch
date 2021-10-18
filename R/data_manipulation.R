@@ -239,10 +239,8 @@ PrepareDataIW <- function (dataset) {
   powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
   tmp <- as.integer(cont %*% powersOf2)
   unlisted <- unlist(dataset, use.names = FALSE)
-  binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
   
-  attr(dataset, 'min.length') <- apply(binaryMatrix, 1, MinimumLength,
-                                       compress = TRUE)
+  attr(dataset, 'min.length') <- MinimumLength(dataset, compress = TRUE)
   
   # Return:
   dataset
