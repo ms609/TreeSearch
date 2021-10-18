@@ -55,20 +55,8 @@ CompareMethods <- function (repl, nTip,
     simpleCont <- ifelse(rowSums(cont) == 1,
                          apply(cont != 0, 1, function (x) at$levels[x][1]),
                          '?')
-    inappLevel <- at$levels == '-'
     
-    if (any(inappLevel)) {
-      # TODO this is a workaround until MinimumLength can handle {-, 1}
-      cont[cont[, inappLevel] > 0, ] <- 0
-      ambiguousToken <- at$allLevels == '?'
-      cont[ambiguousToken, ] <- colSums(cont[!ambiguousToken, ]) > 0
-    }
-    
-    powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
-    tmp <- as.integer(cont %*% powersOf2)
-    unlisted <- unlist(dataset, use.names = FALSE)
-    binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
-    minLength <- apply(binaryMatrix, 1, MinimumLength)
+    minLength <- MinimumLength(dataset, compress = TRUE)
     charSeq <- seq_len(nChar) - 1L
     
     IW <- function (edge, concavity) {

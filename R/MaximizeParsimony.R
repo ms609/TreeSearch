@@ -550,7 +550,7 @@ MaximizeParsimony <- function (dataset, tree,
     tmp <- as.integer(cont %*% powersOf2)
     unlisted <- unlist(dataset, use.names = FALSE)
     binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
-    minLength <- apply(binaryMatrix, 1, MinimumLength)
+    minLength <- MinimumLength(dataset, compress = TRUE)
     
     tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip, byrow = FALSE)
     charInfo <- apply(tokenMatrix, 1, CharacterInformation)
