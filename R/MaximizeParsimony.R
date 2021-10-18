@@ -546,13 +546,10 @@ MaximizeParsimony <- function (dataset, tree,
   }
   
   if (iw || profile) {
-    powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
-    tmp <- as.integer(cont %*% powersOf2)
-    unlisted <- unlist(dataset, use.names = FALSE)
-    binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
     minLength <- MinimumLength(dataset, compress = TRUE)
     
-    tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip, byrow = FALSE)
+    unlisted <- unlist(dataset, use.names = FALSE)
+    tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip)
     charInfo <- apply(tokenMatrix, 1, CharacterInformation)
     needsInapp <- rowSums(tokenMatrix == '-') > 2
     inappSlowdown <- 3L # A guess

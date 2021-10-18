@@ -2,8 +2,6 @@ test_that("IW Scoring", {
   library('TreeTools', quietly = TRUE, warn.conflicts = FALSE)
   data('Lobo', package = 'TreeTools')
   dataset <- Lobo.phy
-  
-  #dataset <- ReadAsPhyDat('c:/research/r/hyoliths/mbank_X24932_6-19-2018_744.nex')
   tree <- NJTree(dataset)
   
   
@@ -36,26 +34,9 @@ test_that("IW Scoring", {
   simpleCont <- ifelse(rowSums(cont) == 1,
                        apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
                        '?')
-  inappLevel <- at$levels == '-'
   
-  if (any(inappLevel)) {
-    # TODO this is a workaround until MinimumLength can handle {-, 1}
-    cont[cont[, inappLevel] > 0, ] <- 0
-    ambiguousToken <- at$allLevels == '?'
-    cont[ambiguousToken, ] <- colSums(cont[!ambiguousToken, ]) > 0
-  }
-  
-  # Perhaps replace with previous code:
-  # inappLevel <- which(at$levels == "-")
-  # cont[, inappLevel] <- 0
-  
-  powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
-  tmp <- as.integer(cont %*% powersOf2)
   unlisted <- unlist(dataset, use.names = FALSE)
-  binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
-  minLength <- apply(binaryMatrix, 1, MinimumLength)
-  
-  tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip, byrow = FALSE)
+  tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip)
   charInfo <- apply(tokenMatrix, 1, CharacterInformation)
   needsInapp <- rowSums(tokenMatrix == '-') > 2
   inappSlowdown <- 3L # A guess
@@ -67,6 +48,7 @@ test_that("IW Scoring", {
 
   
   weight <- startWeights
+  minLength <- MinimumLength(dataset, compress = TRUE)
   
   expect_equal(.IWScore(edge, morphyObjects, weight, minLength, concavity),
                morphy_iw(edge, morphyObjects, weight, minLength, charSeq, 
