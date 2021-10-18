@@ -26,6 +26,8 @@ RandomTreeScore(morphyObj)
 morphyObj <- UnloadMorphy(morphyObj)
 }
 \seealso{
+Score a tree: \code{\link[=MorphyTreeLength]{MorphyTreeLength()}}
+
 Other Morphy API functions: 
 \code{\link{GapHandler}()},
 \code{\link{MorphyErrorCheck}()},
