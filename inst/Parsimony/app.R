@@ -284,7 +284,7 @@ ui <- fluidPage(theme = 'app.css',
       hidden(tags$div(id = 'spaceConfig',
         tags$div(style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput('spaceDim', 'Dimensions:', value = 5,
-                      min = 2, max = 12, step = 1, width = 200),
+                      min = 1, max = 12, step = 1, width = 200),
           selectInput('spaceCol', "Colour trees by:",
                       list('Cluster membership' = 'clust',
                            'Parsimony score' = 'score',
@@ -447,7 +447,14 @@ server <- function(input, output, session) {
     if (is.null(trees)) {
       showNotification("Trees not in a recognized format", type = 'error')
     } else {
+      treeNames <- names(trees)
       r$trees <- c(trees)
+      pattern <- '(start|ratch\\d+|final)_\\d+'
+      if (length(grep(pattern, treeNames, perl = TRUE)) ==
+          length(r$trees)) {
+        whenHit <- gsub(pattern, "\\1", treeNames, perl = TRUE)
+        attr(r$trees, 'firstHit') <- table(whenHit)[unique(whenHit)]
+      }
       removeModal()
       showNotification(paste("Loaded", length(r$trees), "trees"), type = "message")
       updateSliderInput(session, 'whichTree', min = 1L,
@@ -522,7 +529,7 @@ server <- function(input, output, session) {
     r$trees[-1] <- RenumberTips(r$trees[-1], tipLabels)
     updateNumericInput(inputId = 'keepTips', max = nTip,
                        value = nNonRogues())
-    updateSliderInput(inputId = 'spaceDim', max = max(2L, maxProjDim()),
+    updateSliderInput(inputId = 'spaceDim', max = max(1L, maxProjDim()),
                       value = min(maxProjDim(), input$spaceDim))
     updateSelectizeInput(inputId = 'neverDrop', choices = tipLabels,
                          selected = input$neverDrop)
@@ -1166,6 +1173,7 @@ server <- function(input, output, session) {
                  warning = function (e) {
                    nDim <- as.integer(substr(e$message, 6, 7))
                    updateSliderInput(inputId = 'spaceDim', value = nDim, max = nDim)
+                   message("Can't map into more than ", nDim, " dimensions.")
                    return(cmdscale(distances(), k = nDim))
                  })
       )
@@ -1195,13 +1203,23 @@ server <- function(input, output, session) {
     proj <- mapping()
     
     nDim <- min(dims(), nProjDim())
-    plotSeq <- matrix(0, nDim, nDim)
-    nPanels <- nDim * (nDim - 1L) / 2L
-    plotSeq[upper.tri(plotSeq)] <- seq_len(nPanels)
-    if (nDim > 2) {
-      plotSeq[nDim - 1, 2] <- max(plotSeq) + 1L
+    if (nDim < 2) {
+      if (dim(proj)[2] == 1L) {
+        proj <- cbind(proj, 0)
+      } else {
+        proj[, 2] <- 0
+      }
+      nDim <- 2L
+      nPanels <- 1L
+    } else {
+      plotSeq <- matrix(0, nDim, nDim)
+      nPanels <- nDim * (nDim - 1L) / 2L
+      plotSeq[upper.tri(plotSeq)] <- seq_len(nPanels)
+      if (nDim > 2) {
+        plotSeq[nDim - 1, 2] <- max(plotSeq) + 1L
+      }
+      layout(t(plotSeq[-nDim, -1]))
     }
-    layout(t(plotSeq[-nDim, -1]))
     par(mar = rep(0.2, 4))
     withProgress(message = 'Drawing plot', {
       for (i in 2:nDim) for (j in seq_len(i - 1)) {
@@ -1290,7 +1308,7 @@ server <- function(input, output, session) {
   output$saveNwk <- downloadHandler(
     filename = 'TreeSearch.nwk',
     content = function(file) {
-      write.tree(r$trees, file = file)
+      write.tree(r$trees, file = file, tree.names = TRUE)
     }
   )
   

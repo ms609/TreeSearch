@@ -19,6 +19,7 @@ test_that("Constraints work", {
   expect_equal(PectinateTree(letters[1:6]), ewResults[[1]])
   expect_equal(c(seed = 0, start = 1, final = 0),
                attr(ewResults, 'firstHit'))
+  expect_equal(names(ewResults), 'start_1')
   expect_equal(PectinateTree(letters[1:6]),
                MaximizeParsimony(characters, concavity = 'p',
                                  PectinateTree(c('a', 'b', 'f', 'd', 'e', 'c')),
