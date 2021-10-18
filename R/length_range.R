@@ -39,7 +39,6 @@
 #' MinimumLength('-{-1}{-2}{-3}2233')
 #' @template MRS
 #' @family tree scoring
-#' @importFrom fastmatch %fin%
 #' @export
 MinimumLength <- function (x, compress = FALSE) UseMethod('MinimumLength')
 
@@ -55,23 +54,25 @@ MinimumLength.phyDat <- function (x, compress = FALSE) {
   if (is.null(colnames(cont))) {
     colnames(cont) <- as.character(at$levels)
   }
-  levelHasInapp <- if ('-' %fin% at$levels) {
-    cont[, '-'] == 1L
-  } else {
-    logical(dim(cont)[1])
-  }
   unlisted <- unlist(x, use.names = FALSE)
-  inappCount <- colSums(matrix(levelHasInapp[unlisted], nTip, nChar))
-  
-  
-  simpleCont <- ifelse(rowSums(cont) == 1,
-                       apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
-                       '?')
-  inappLevel <- at$levels == '-'
-  
   powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
+  
+  # Treat {-, 1} as {1}
   tmp <- as.integer(cont %*% powersOf2)
-  binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
+  ambigIsApp <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
+  
+  inappLevel <- at$levels == '-'
+  if (any(inappLevel)) {
+    # Treat {-, 1} as {-}
+    tmp[cont[, '-'] == 1] <- 0
+    ambigIsInapp <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
+    
+    inappCount <- colSums(matrix(unlisted %in% which(inappLevel), nTip, nChar))
+    binaryMatrix <- ambigIsApp
+    binaryMatrix[inappCount > 1, ] <- ambigIsInapp[inappCount > 1, ]
+  } else {
+    binaryMatrix <- ambigIsApp
+  }
   
   ret <- apply(binaryMatrix, 1, MinimumLength)
   

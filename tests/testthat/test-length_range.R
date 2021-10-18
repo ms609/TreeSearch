@@ -51,7 +51,7 @@ test_that("Minimum step counts are correctly calculated", {
   expect_equal(2, MinimumLength('-{-1}{-2}{-3}2233'))
   expect_equal(1, MinimumLength('--{-1}{-2}{-3}2233'))
   
-  expect_equal(1, attr(PrepareDataIW(dudDat), 'min.length'))
+  expect_equal(0, attr(PrepareDataIW(dudDat), 'min.length'))
   
   tr <- ape::read.tree(text='(((a, b), c), (d, (e, ((f, g), (h, (i, (j, k)))))));')
   expect_equal(CharacterLength(tr, compress = TRUE,
