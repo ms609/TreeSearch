@@ -93,8 +93,9 @@
 #' The return value has the attribute `firstHit`, a named integer vector listing
 #' the number of optimal trees visited for the first time in each stage of
 #' the tree search. Stages are named:
+#' - `seed`: starting trees;
 #' - `start`: Initial TBR search;
-#' - `ratch#`: Ratchet iteration `#`;
+#' - `ratchN`: Ratchet iteration `N`;
 #' - `final`: Final TBR search.
 #' The first tree hit for the first time in ratchet iteration three is named
 #' `ratch3_1`.

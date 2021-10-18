@@ -449,7 +449,7 @@ server <- function(input, output, session) {
     } else {
       treeNames <- names(trees)
       r$trees <- c(trees)
-      pattern <- '(start|ratch\\d+|final)_\\d+'
+      pattern <- '(seed|start|ratch\\d+|final)_\\d+'
       if (length(grep(pattern, treeNames, perl = TRUE)) ==
           length(r$trees)) {
         whenHit <- gsub(pattern, "\\1", treeNames, perl = TRUE)

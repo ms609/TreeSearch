@@ -122,14 +122,23 @@ characters to retain under jackknife resampling.}
 \code{MaximizeParsimony()} returns a list of trees with class
 \code{multiPhylo}. This lists all trees found during each search step that
 are within \code{tolerance} of the optimal score, listed in the sequence that
-they were first visited; it may contain more than \code{maxHits} elements.
+they were first visited, and named according to the step in which they were
+first found; it may contain more than \code{maxHits} elements.
 Note that the default search parameters may need to be increased in order for
 these trees to be the globally optimal trees; examine the messages printed
 during tree search to evaluate whether the optimal score has stabilized.
 
-The return value has the attribute \code{newTrees}, a named integer vector listing
+The return value has the attribute \code{firstHit}, a named integer vector listing
 the number of optimal trees visited for the first time in each stage of
-the tree search.
+the tree search. Stages are named:
+\itemize{
+\item \code{seed}: starting trees;
+\item \code{start}: Initial TBR search;
+\item \code{ratchN}: Ratchet iteration \code{N};
+\item \code{final}: Final TBR search.
+The first tree hit for the first time in ratchet iteration three is named
+\code{ratch3_1}.
+}
 
 \code{Resample()} returns a \code{multiPhylo} object containing a list of
 trees obtained by tree search using a resampled version of \code{dataset}.
@@ -205,6 +214,7 @@ dataset <- congreveLamsdellMatrices[[42]]
 trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
                            tbrIter = 1, maxHits = 4, maxTime = 1/100,
                            concavity = 10, verbosity = 4)
+names(trees)
 
 # In actual use, be sure to check that the score has converged on a global
 # optimum, conducting additional iterations and runs as necessary.
