@@ -217,29 +217,6 @@ PrepareDataProfile <- function (dataset) {
 #' @describeIn PrepareDataProfile Prepare data for implied weighting
 #' @export
 PrepareDataIW <- function (dataset) {
-  at <- attributes(dataset)
-  nLevel <- length(at$level)
-  nChar <- at$nr
-  nTip <- length(dataset)
-  cont <- at$contrast
-  inappLevel <- at$levels == '-'
-  
-  if (any(inappLevel)) {
-    # TODO this is a workaround until MinimumLength can handle {-, 1}
-    cont[cont[, inappLevel] > 0, ] <- 0
-    ambiguousToken <- at$allLevels == '?'
-    cont[ambiguousToken, ] <- colSums(cont[!ambiguousToken, ]) > 0
-  }
-  
-  # Perhaps replace with previous code:
-  # inappLevel <- which(at$levels == "-")
-  # cont[, inappLevel] <- 0
-  
-  
-  powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
-  tmp <- as.integer(cont %*% powersOf2)
-  unlisted <- unlist(dataset, use.names = FALSE)
-  
   attr(dataset, 'min.length') <- MinimumLength(dataset, compress = TRUE)
   
   # Return:
