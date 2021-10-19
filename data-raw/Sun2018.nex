@@ -3151,10 +3151,6 @@ BEGIN NOTES;
 	TEXT TAXON=7 CHARACTER=75 TEXT='Polygonal [@Zhang2018Ahyolithid]';
 	TEXT TAXON=6 CHARACTER=76 TEXT='Initially diverging, becoming subparallel [@MartiMus2005]';
 ENDBLOCK;
-BEGIN ASSUMPTIONS;
-TYPESET * BGS_EW = unord: 1 - 225;
-ENDBLOCK;
-
 
 BEGIN TREES;
 	TRANSLATE
