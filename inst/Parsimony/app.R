@@ -5,6 +5,7 @@ options(shiny.maxRequestSize = 1024^3) # Allow max 1 GB files
 if (logging) {
   logFile <- file('log.lg', open = 'w+')
   Log <- function (...) {
+    message(Sys.time(), ": ", ...)
     writeLines(as.character(Sys.time()), con = logFile)
     writeLines(paste0('  ', ...), con = logFile)
   }
