@@ -624,8 +624,7 @@ server <- function(input, output, session) {
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
       output$results <- renderText(paste0(
-        "Found ", length(r$trees), " trees with score ", 
-        signif(TreeLength(r$trees[[1]], r$dataset, concavity = concavity()))))
+        "Found ", length(r$trees), " trees with score ", scores()))
       updateActionButton(session, "go", "Continue")
       updateActionButton(session, "modalGo", "Continue search")
       show('displayConfig')
