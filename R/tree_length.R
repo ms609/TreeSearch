@@ -120,9 +120,16 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
   
   nEdge <- unique(vapply(tree, function (tr) dim(tr$edge)[1], integer(1)))
   if (length(nEdge) > 1L) {
-    stop("Trees have different numbers of edges (",
-         paste0(nEdge, collapse = ', '), 
-         "); try rooting, or collapsing polytomies?)")
+    tree <- lapply(tree, RootTree, 1)
+    nEdge <- unique(vapply(tree, function (tr) dim(tr$edge)[1], integer(1)))
+    
+    if (length(nEdge) > 1L) {
+      stop("Trees have different numbers of edges (",
+           paste0(nEdge, collapse = ', '), 
+           "); try collapsing polytomies?)")
+    } else {
+      warning("Mixture of rooted and unrooted trees; all re-rooted on tip 1.")
+    }
   }
   
   edges <- vapply(tree, `[[`, tree[[1]]$edge, 'edge')
