@@ -67,3 +67,1279 @@ begin data;
     Achaearanea_wau           00010000-00001111120001000001-111--0-011100000000-001001000000001010001-----0--00------00000010011000000100111-000000000010000010000011001010100-111111100010000111110101101-1-02011101?10000000111001100001010000000111?10103103010100??00000010?
   ;                                                                     
 end;
+
+
+BEGIN CHARACTERS;
+  CHARLABELS
+    [001] 'Female genitalia: Epigynal ventral margin'
+    [002] 'Female genitalia: Epigynal dorsal plate'
+    [003] 'Female genitalia: Epigynal plate surface'
+    [004] 'Female genitalia: Copulatory pore position'
+    [005] 'Female genitalia: Copulatory pore shape'
+    [006] 'Female genitalia: Copul. bursa ant. margin'
+    [007] 'Female genitalia: Cop. duct to spermath'
+    [008] 'Female genitalia: Copulatory duct'
+    [009] 'Female genitalia: Copul. duct rel. to spermath.'
+    [010] 'Female genitalia: Spermathecal number'
+    [011] 'Female genitalia: Spermathecal shape'
+    [012] 'Female genitalia: Spermathecal accessory lobes'
+    [013] 'Female genitalia: Fertilization duct sclerot.'
+    [014] 'Male genitalia: Tibial distal end'
+    [015] 'Male genitalia: Tibial rim'
+    [016] 'Male genitalia: Tibial rim setae'
+    [017] 'Male genitalia: Tibial rim protrution'
+    [018] 'Male genitalia: Tibial retrol. trichob.'
+    [019] 'Male genitalia: Tibial prol.trichob.'
+    [020] 'Male genitalia: Patellal spur'
+    [021] 'Male genitalia: Cymbium'
+    [022] 'Male genitalia: Cymbial retromargin'
+    [023] 'Male genitalia: Cymb. dorsob. margin'
+    [024] 'Male genitalia: Cymbial dist. prom.'
+    [025] 'Male genitalia: Cymbial mesal margin'
+    [026] 'Male genitalia: Cymbial tip sclerotization'
+    [027] 'Male genitalia: Cymbial tip setae'
+    [028] 'Male genitalia: Cymbial sheath'
+    [029] 'Male genitalia: Paracymbium (PC)'
+    [030] 'Male genitalia: PC'
+    [031] 'Male genitalia: Bulb-cymbium lock mechan.'
+    [032] 'Male genitalia: Lock placement'
+    [033] 'Male genitalia: Lock mechanism'
+    [034] 'Male genitalia: Cymbial hook orient.'
+    [035] 'Male genitalia: Cymbial hook'
+    [036] 'Male genitalia: Cymbial hook inferior groove'
+    [037] 'Male genitalia: Cymbial hook tip'
+    [038] 'Male genitalia: Cymbial hood size'
+    [039] 'Male genitalia: Cymbial hood region'
+    [040] 'Male genitalia: Bulbal sclerite of lock mechanism'
+    [041] 'Male genitalia: Alveolus placement'
+    [042] 'Male genitalia: Alveolar cavity'
+    [043] 'Male genitalia: Alveolus shape'
+    [044] 'Male genitalia: Subtegular retrolateral margin'
+    [045] 'Male genitalia: Tegulum size'
+    [046] 'Male genitalia: Tegulum ectal margin'
+    [047] 'Male genitalia: Tegular groove'
+    [048] 'Male genitalia: Tegular arch'
+    [049] 'Male genitalia: Tegular pit'
+    [050] 'Male genitalia: Tegular pit, E interaction'
+    [051] 'Male genitalia: SDT Switchbacks I & II'
+    [052] 'Male genitalia: SDT SB I'
+    [053] 'Male genitalia: SDT SB II'
+    [054] 'Male genitalia: SDT post-SB II turn'
+    [055] 'Male genitalia: SDT SB I & II segm. alignment'
+    [056] 'Male genitalia: SDT SB I & II orient.'
+    [057] 'Male genitalia: SDT RSB I & II'
+    [058] 'Male genitalia: SDT SB III'
+    [059] 'Male genitalia: SDT SB IV'
+    [060] 'Male genitalia: SDT entering E'
+    [061] 'Male genitalia: SDT constriction'
+    [062] 'Male genitalia: Conductor'
+    [063] 'Male genitalia: C tip width'
+    [064] 'Male genitalia: C with a groove for embolus; entire;
+    [065] 'Male genitalia: C surface'
+    [066] 'Male genitalia: C folding'
+    [067] 'Male genitalia: C tip sclerotization'
+    [068] 'Male genitalia: C base'
+    [069] 'Male genitalia: C origin'
+    [070] 'Male genitalia: Subconductor'
+    [071] 'Male genitalia: Median apophysis'
+    [072] 'Male genitalia: MA and sperm duct'
+    [073] 'Male genitalia: MA-tegulum attachment'
+    [074] 'Male genitalia: MA-tegular connection'
+    [075] 'Male genitalia: MA form'
+    [076] 'Male genitalia: MA central region'
+    [077] 'Male genitalia: MA apophysis II'
+    [078] 'Male genitalia: MA distal tip'
+    [079] 'Male genitalia: MA hood form'
+    [080] 'Male genitalia: Theridioid tegular apophysis'
+    [081] 'Male genitalia: TTA branches'
+    [082] 'Male genitalia: TTA apex'
+    [083] 'Male genitalia: TTA form'
+    [084] 'Male genitalia: TTA basal portion'
+    [085] 'Male genitalia: TTA distal tip'
+    [086] 'Male genitalia: TTA surface'
+    [087] 'Male genitalia: E and TTA'
+    [088] 'Male genitalia: E tip'
+    [089] 'Male genitalia: E origin'
+    [090] 'Male genitalia: E surface'
+    [091] 'Male genitalia: E shape'
+    [092] 'Male genitalia: E spiral'
+    [093] 'Male genitalia: E spiral'
+    [094] 'Male genitalia: E form'
+    [095] 'Male genitalia: E distal rim'
+    [096] 'Male genitalia: E terminus'
+    [097] 'Male genitalia: E-tegulum junction'
+    [098] 'Male genitalia: E base'
+    [099] 'Male genitalia: Embolic division b'
+    [100] 'Male genitalia: E spiral insertive piece'
+    [101] 'Male genitalia: Extra tegular sclerite'
+    [102] 'Somatic morphology: Lateral eyes (male)'
+    [103] 'Somatic morphology: ME (M)'
+    [104] 'Somatic morphology: AME size vs. ALE (M)'
+    [105] 'Somatic morphology: AME-ALE separ. (F)'
+    [106] 'Somatic morphology: Chel. promargin'
+    [107] 'Somatic morphology: Chel. anterior tooth shape'
+    [108] 'Somatic morphology: Chel. ant. tooth no.'
+    [109] 'Somatic morphology: Chel. prox. tooth size'
+    [110] 'Somatic morphology: Chel. posterior margin'
+    [111] 'Somatic morphology: Chel. post. tooth no.'
+    [112] 'Somatic morphology: Chel. furrow'
+    [113] 'Somatic morphology: Chel. sexual dimorph.'
+    [114] 'Somatic morphology: Chel. ectal surface (M)'
+    [115] 'Somatic morphology: Chel. ant.base'
+    [116] 'Somatic morphology: Chel. apophysis (M)'
+    [117] 'Somatic morphology: Chel. paturon length'
+    [118] 'Somatic morphology: Chel. paturon width'
+    [119] 'Somatic morphology: Chel. fang length (M)'
+    [120] 'Somatic morphology: Chel. fang shape'
+    [121] 'Somatic morphology: Chel. hairs'
+    [122] 'Somatic morphology: Chel. boss'
+    [123] 'Somatic morphology: Carap.'
+    [124] 'Somatic morphology: Carap. height (M)'
+    [125] 'Somatic morphology: Carap. color.'
+    [126] 'Somatic morphology: Carapace shape'
+    [127] 'Somatic morphology: Carapace hairiness'
+    [128] 'Somatic morphology: Carap. pars stridens'
+    [129] 'Somatic morphology: Regular pars stridens'
+    [130] 'Somatic morphology: Interocular area'
+    [131] 'Somatic morphology: Clypeus'
+    [132] 'Somatic morphology: Ocular area setae (M)'
+    [133] 'Somatic morphology: Clypeal setae (M)'
+    [134] 'Somatic morphology: Labium distal margin'
+    [135] 'Somatic morphology: Labium-sternum connection'
+    [136] 'Somatic morphology: Labium shape'
+    [137] 'Somatic morphology: Sternum'
+    [138] 'Somatic morphology: Sternocoxal tubercles'
+    [139] 'Somatic morphology: Sternum setal bases'
+    [140] 'Somatic morphology: Pedicel location'
+    [141] 'Somatic morphology: Pedicel lyriform organs'
+    [142] 'Somatic morphology: Abdomen'
+    [143] 'Somatic morphology: Abd. color pattern'
+    [144] 'Somatic morphology: Abd. folium'
+    [145] 'Somatic morphology: Dorsal band'
+    [146] 'Somatic morphology: Abd. dot pigment'
+    [147] 'Somatic morphology: Abd. pedicel area (M)'
+    [148] 'Somatic morphology: Abd. pedicel area sclerot.'
+    [149] 'Somatic morphology: Abd. supra-pedicellate nubbins'
+    [150] 'Somatic morphology: Stridulatory pick row (SPR)'
+    [151] 'Somatic morphology: SPR form'
+    [152] 'Somatic morphology: SPR pick number'
+    [153] 'Somatic morphology: SPR ectally-oriented picks'
+    [154] 'Somatic morphology: SPR insertion'
+    [155] 'Somatic morphology: SPR region'
+    [156] 'Somatic morphology: SPR mesal pointing picks'
+    [157] 'Somatic morphology: SPR mp-picks angle'
+    [158] 'Somatic morphology: SPR setal bases'
+    [159] 'Somatic morphology: SPR'
+    [160] 'Somatic morphology: SPR dorsal pick spacing'
+    [161] 'Somatic morphology: SPR relative to pedicel'
+    [162] 'Somatic morphology: Additional stridulatory picks'
+    [163] 'Somatic morphology: Suprapedicillate dorsal proprio.'
+    [164] 'Somatic morphology: Suprapedicillate ventrolat. proprio.'
+    [165] 'Somatic morphology: Abd. suprapedicellate apod.'
+    [166] 'Somatic morphology: Abd. surface'
+    [167] 'Somatic morphology: Sigilla'
+    [168] 'Somatic morphology: Epiandrous fusules'
+    [169] 'Somatic morphology: Epiandrous fusule'
+    [170] 'Somatic morphology: Epiandrous fusule pair number'
+    [171] 'Somatic morphology: Male seminal vesicula'
+    [172] 'Somatic morphology: Colulus'
+    [173] 'Somatic morphology: Colulus size'
+    [174] 'Somatic morphology: Colular setae'
+    [175] 'Somatic morphology: Colular setae number (F)'
+    [176] 'Somatic morphology: Palpal claw (female)'
+    [177] 'Somatic morphology: Palpal claw'
+    [178] 'Somatic morphology: Palpal claw dentition (female)'
+    [179] 'Somatic morphology: Palpal tibial trichob. (F)'
+    [180] 'Somatic morphology: Palpal tarsal setae (F)'
+    [181] 'Somatic morphology: Palpal tarsus dorsal setae (F)'
+    [182] 'Somatic morphology: Femur I relative to II'
+    [183] 'Somatic morphology: Femoral macrosetae'
+    [184] 'Somatic morphology: Leg IV rel. length (M)'
+    [185] 'Somatic morphology: Leg IV rel. length (F)'
+    [186] 'Somatic morphology: Femur vs. metat.'
+    [187] 'Somatic morphology: Metat. vs. tibia'
+    [188] 'Somatic morphology: Metatarsal ventral macrosetae'
+    [189] 'Somatic morphology: Metat. I trichob. pos.'
+    [190] 'Somatic morphology: Metatarsus III trichobothrium'
+    [191] 'Somatic morphology: Metatarsus IV trichobothrium'
+    [192] 'Somatic morphology: Patella-tibia autospasy'
+    [193] 'Somatic morphology: Tarsus IV setae'
+    [194] 'Somatic morphology: Tarsus IV comb'
+    [195] 'Somatic morphology: Tarsus IV comb'
+    [196] 'Somatic morphology: Tarsus IV comb dors. margin'
+    [197] 'Somatic morphology: Tarsus I ventral setae'
+    [198] 'Somatic morphology: Tarsal organ size'
+    [199] 'Somatic morphology: Tarsus IV central claw vs. lat. (M)'
+    [200] 'Somatic morphology: Tarsus IV central claw (F)'
+    [201] 'Spinnarets: Spinneret insert.'
+    [202] 'Spinnarets: Spinneret sclerotized ring'
+    [203] 'Spinnarets: ALS median surface'
+    [204] 'Spinnarets: ALS PI spigot bases'
+    [205] 'Spinnarets: ALS piriform field size'
+    [206] 'Spinnarets: PLS FL spigot'
+    [207] 'Spinnarets: PLS post CY base'
+    [208] 'Spinnarets: CY spigot bases'
+    [209] 'Spinnarets: CY shaft surface'
+    [210] 'Spinnarets: PLS CY spigot number'
+    [211] 'Spinnarets: PLS AC spigot number'
+    [212] 'Spinnarets: PLS FL spigot'
+    [213] 'Spinnarets: PLS AG spigot number (F)'
+    [214] 'Spinnarets: PLS AG spigot size'
+    [215] 'Spinnarets: PLS anterior AG spigot shape'
+    [216] 'Spinnarets: PLS posterior AG spigot shape'
+    [217] 'Spinnarets: PLS aggregate gland form'
+    [218] 'Spinnarets: PLS theridiid AG position'
+    [219] 'Spinnarets: PLS AG and FL (M)'
+    [220] 'Spinnarets: PMS mAP nubbins'
+    [221] 'Spinnarets: PMS CY spigot base'
+    [222] 'Spinnarets: PMS AC spigot no.'
+    [223] 'Spinnarets: PMS mAP spigot shaft'
+    [224] 'Web building: Prey-catching web'
+    [225] 'Web building: Web'
+    [226] 'Web building: Sticky silk in web'
+    [227] 'Web building: Sticky silk placement'
+    [228] 'Web building: Wrap-bite attack'
+    [229] 'Web building: Sticky silk wrap attack'
+    [230] 'Web building: Egg sac'
+    [231] 'Web building: Egg case'
+    [232] 'Web building: Egg sac outermost fibers'
+    [233] 'Web building: Egg sac fiber ultrastructure'
+    [234] 'Web building: Web construction'
+    [235] 'Behaviour: Sex ratio'
+    [236] 'Behaviour: Male palp amputation'
+    [237] 'Behaviour: First palpal insert.'
+    [238] 'Behaviour: Palpal insertions'
+    [239] 'Behaviour: Sperm induction'
+    [240] 'Behaviour: Mating thread'
+    [241] 'Behaviour: Bulbal movements'
+    [242] 'Behaviour: Male during sperm depos.'
+  ;
+
+  STATELABELS
+    1
+    'entire'
+    'with scape'
+    ,
+    2
+    'absent'
+    'present'
+    ,
+    3
+    'smooth'
+    'ridged'
+    ,
+    4
+    'caudal'
+    'ventral'
+    ,
+    5
+    'wide'
+    'narrow slits'
+    ,
+    6
+    'entire'
+    'medially acute'
+    ,
+    7
+    'posterior'
+    'lat./anterior'
+    ,
+    8
+    'simple loop'
+    '2 or more loops'
+    ,
+    9
+    'apart'
+    'encircling'
+    ,
+    10
+    'two'
+    'four'
+    ,
+    11
+    'ovoid'
+    'elongate'
+    'dumbbell'
+    ,
+    12
+    'absent'
+    'present'
+    ,
+    13
+    'light'
+    'heavy'
+    ,
+    14
+    'subequal to base'
+    'broadened'
+    ,
+    15
+    'slightly asymmetric'
+    'scoop-shaped'
+    ,
+    16
+    'irregular'
+    'regular, strong setae'
+    ,
+    17
+    'dorsal to cymb.'
+    'faces bulb'
+    ,
+    18
+    '=>three'
+    'two'
+    'one or none'
+    ,
+    19
+    '=>two'
+    'one'
+    'none'
+    ,
+    20
+    'absent'
+    'present'
+    ,
+    21
+    'entire'
+    'expanded retrolaterally'
+    ,
+    22
+    'entire'
+    'w/apoph.'
+    'groove'
+    ,
+    23
+    'entire'
+    'incised'
+    'ridged'
+    ,
+    24
+    'entire'
+    'w/apoph.'
+    'Latrod.'
+    ,
+    25
+    'entire'
+    'incised'
+    ,
+    26
+    'normal'
+    'light'
+    ,
+    27
+    'normal'
+    'thick and curved'
+    ,
+    28
+    'absent'
+    'present'
+    ,
+    29
+    'present'
+    'absent'
+    ,
+    30
+    'Argio.'
+    'Tetrag.'
+    'Pimoa'
+    'Liny.'
+    'cup'
+    'Nestic.'
+    ,
+    31
+    'absent'
+    'present'
+    ,
+    32
+    'basal'
+    'distal'
+    'central'
+    ,
+    33
+    'hook'
+    'hood'
+    'Theridula'
+    ,
+    34
+    'downwards'
+    'upwards'
+    ,
+    35
+    'inside cymbium'
+    'ectal margin'
+    ,
+    36
+    'absent'
+    'present'
+    ,
+    37
+    'blunt'
+    'strongly tapering'
+    ,
+    38
+    'narrow'
+    'broad'
+    'Spintharus'
+    ,
+    39
+    'translucent'
+    'opaque'
+    ,
+    40
+    'MA'
+    'E base'
+    ,
+    41
+    'ectal'
+    'central'
+    'mesal'
+    ,
+    42
+    'simple'
+    'with alveolar sclerite'
+    ,
+    43
+    'suboval'
+    'mesal extension'
+    ,
+    44
+    'entire'
+    'lobed'
+    ,
+    45
+    'normal'
+    'huge'
+    ,
+    46
+    'entire'
+    'protruded'
+    ,
+    47
+    'absent'
+    'present'
+    ,
+    48
+    'absent'
+    'present'
+    ,
+    49
+    'absent'
+    'present'
+    ,
+    50
+    'E base'
+    'E apophysis'
+    ,
+    51
+    'present'
+    'absent'
+    ,
+    52
+    'separate'
+    'touching'
+    ,
+    53
+    'entirely in tegulum'
+    'terminates in E'
+    ,
+    54
+    'absent'
+    'present'
+    ,
+    55
+    'diverg.'
+    'parallel'
+    ,
+    56
+    'in plane'
+    'out of plane'
+    ,
+    57
+    'absent'
+    'present'
+    ,
+    58
+    'absent'
+    'present'
+    ,
+    59
+    'absent'
+    'present'
+    ,
+    60
+    'clockwise'
+    'counter-clockwise'
+    ,
+    61
+    'gradual'
+    'abrupt before SB I'
+    ,
+    62
+    'present'
+    'absent '
+    ,
+    63
+    'subequal to base'
+    'enlarged'
+    ,
+    64
+    'with a groove for embolus'
+    'entire'
+    ,
+    65
+    'smooth'
+    'heavily ridged'
+    ,
+    66
+    'entire'
+    'complex'
+    'Helvibis'
+    ,
+    67
+    'like base'
+    'more than base'
+    ,
+    68
+    'entire'
+    'grooved'
+    ,
+    69
+    'tegular margin'
+    'apical to teg. margin'
+    ,
+    70
+    'absent'
+    'present'
+    ,
+    71
+    'present'
+    'absent'
+    ,
+    72
+    'not in MA'
+    'inside MA'
+    ,
+    73
+    'membraneous'
+    'fused'
+    ,
+    74
+    'broad'
+    'narrow'
+    ,
+    75
+    'unbranched'
+    'two branches'
+    ,
+    76
+    'entire'
+    'w/apophysis'
+    ,
+    77
+    'absent'
+    'present'
+    ,
+    78
+    'entire'
+    'hooded'
+    ,
+    79
+    'narrow, pit-like'
+    'scoop-shaped'
+    ,
+    80
+    'absent'
+    'present'
+    ,
+    81
+    'unbranched'
+    'two branches'
+    ,
+    82
+    'entire'
+    'with a small apophysis'
+    ,
+    83
+    'entire'
+    'grooved'
+    'excavate'
+    ,
+    84
+    'bulky'
+    'huge, membranous'
+    ,
+    85
+    'entire'
+    'hooked'
+    ,
+    86
+    'smooth'
+    'ridged'
+    ,
+    87
+    'loosely assoc.'
+    'E enclosed in TTA'
+    ,
+    88
+    'entire'
+    'bifid'
+    ,
+    89
+    'retroventral on tegulum'
+    'retrolateral'
+    ,
+    90
+    'smooth'
+    'ridged'
+    ,
+    91
+    'short to moderate'
+    'extremely long'
+    ,
+    92
+    'normal'
+    'thick, much broader than tip'
+    ,
+    93
+    'suboval or round'
+    'distinctly flattened'
+    ,
+    94
+    'entire'
+    'with transverse suture'
+    ,
+    95
+    'entire'
+    'deeply grooved'
+    ,
+    96
+    'abrupt'
+    'with a distal apophysis'
+    ,
+    97
+    'fixed'
+    'membraneous'
+    ,
+    98
+    'entire'
+    'lobed'
+    ,
+    99
+    'absent'
+    'present'
+    ,
+    100
+    'entire'
+    'break-off point'
+    ,
+    101
+    'absent'
+    'present'
+    ,
+    102
+    'juxtaposed'
+    'separate'
+    ,
+    103
+    'normal'
+    'on tubercle'
+    'eye region raised'
+    ,
+    104
+    'subequal'
+    'smaller'
+    ,
+    105
+    '>1 diam.'
+    '=.0141diam.'
+    ,
+    106
+    'toothed'
+    'smooth'
+    ,
+    107
+    'blunt'
+    'pointed'
+    ,
+    108
+    'four+ three'
+    'two'
+    'one'
+    ,
+    109
+    '=.014adjacent'
+    '>adjacent'
+    ,
+    110
+    'toothed'
+    'smooth'
+    ,
+    111
+    'four+ three'
+    'two'
+    'one'
+    ,
+    112
+    'smooth'
+    'denticulate'
+    ,
+    113
+    'subequal'
+    'male larger'
+    ,
+    114
+    'smooth'
+    'stridulatory'
+    ,
+    115
+    'rounded'
+    'with a distinct knob'
+    ,
+    116
+    'absent'
+    'present'
+    ,
+    117
+    'normal'
+    'short'
+    ,
+    118
+    'normal'
+    'thin'
+    ,
+    119
+    'normal'
+    'huge'
+    ,
+    120
+    'cylindrical'
+    'sickle-shaped'
+    ,
+    121
+    'weakly serrate'
+    'strongly serrate'
+    ,
+    122
+    'present'
+    'absent'
+    ,
+    123
+    'smooth'
+    'rugose'
+    'scaly'
+    'rippled'
+    'bumpy'
+    ,
+    124
+    'normal'
+    'raised (hadrotarsid)'
+    ,
+    125
+    'uniform'
+    'longitudinal dark band'
+    ,
+    126
+    'longer than wide'
+    'subequal'
+    ,
+    127
+    'sparse or patchy'
+    'uniform'
+    ,
+    128
+    'irregular'
+    'regular ridges'
+    ,
+    129
+    'separate'
+    'continuous'
+    ,
+    130
+    'flush with clypeus'
+    'projecting'
+    ,
+    131
+    'concave or flat'
+    'projected'
+    ,
+    132
+    'sparse'
+    'in a dense field'
+    ,
+    133
+    'normal'
+    'modified'
+    ,
+    134
+    'rebordered'
+    'not rebord.'
+    ,
+    135
+    'seam'
+    'fused'
+    ,
+    136
+    'subrectangular'
+    'triangular'
+    ,
+    137
+    'elongate'
+    'subequal or wider than long'
+    ,
+    138
+    'present'
+    'absent'
+    ,
+    139
+    'unmodified'
+    'raised'
+    ,
+    140
+    'anterior'
+    'medial'
+    ,
+    141
+    'narrow'
+    'broad'
+    ,
+    142
+    'w/paired humps'
+    'ellipisoid, smooth'
+    ,
+    143
+    'folium'
+    'uniform or unpigm.'
+    ,
+    144
+    'spots or blotches'
+    'central band'
+    ,
+    145
+    'edge light'
+    'edge dark'
+    'Ameridion'
+    ,
+    146
+    'silver'
+    'non-reflective, dull'
+    ,
+    147
+    'smooth'
+    'sclerotized'
+    ,
+    148
+    'continuous'
+    'separ.'
+    ,
+    149
+    'abs.'
+    'present'
+    ,
+    150
+    'absent'
+    'present'
+    ,
+    151
+    'weakly keeled'
+    'strongly keeled'
+    ,
+    152
+    'three or less'
+    'four or more'
+    ,
+    153
+    'present'
+    'absent'
+    ,
+    154
+    'flush with abd. surface'
+    'on ridge'
+    ,
+    155
+    'smooth'
+    'grooved'
+    ,
+    156
+    'absent'
+    'present'
+    ,
+    157
+    'dorsal'
+    'perp. or ventral'
+    ,
+    158
+    'low, gently ridged'
+    'acute'
+    ,
+    159
+    'straight'
+    'distinctly curved'
+    'argyrodine'
+    ,
+    160
+    'normal'
+    'compressed'
+    ,
+    161
+    'lateral'
+    'dorsal'
+    ,
+    162
+    'absent'
+    'present'
+    ,
+    163
+    'abs.'
+    'present'
+    ,
+    164
+    'abs.'
+    'pres.'
+    ,
+    165
+    'rugose'
+    'smooth'
+    ,
+    166
+    'smooth'
+    'with scuta'
+    ,
+    167
+    'conspicuous'
+    'inconspicuous, unicolor.'
+    ,
+    168
+    'present'
+    'absent'
+    ,
+    169
+    'in pair of sockets'
+    'in a row'
+    ,
+    170
+    '>ten'
+    '<=eight'
+    ,
+    171
+    'small'
+    'large and dark'
+    ,
+    172
+    'present'
+    'absent'
+    'invaginated'
+    ,
+    173
+    'large'
+    'small'
+    ,
+    174
+    'present'
+    'absent'
+    ,
+    175
+    'three or more'
+    'two'
+    ,
+    176
+    'present'
+    'absent'
+    ,
+    177
+    'attenuate'
+    'palmate'
+    'semi-palmate'
+    ,
+    178
+    'dense'
+    'sparse'
+    ,
+    179
+    '>six'
+    '3–5'
+    '1–2'
+    ,
+    180
+    'smooth'
+    'serrated'
+    ,
+    181
+    'present'
+    'absent'
+    ,
+    182
+    'subequal'
+    'robust, larger'
+    ,
+    183
+    'present'
+    'absent'
+    ,
+    184
+    'third'
+    'second'
+    'longest'
+    ,
+    185
+    'third'
+    'second'
+    'longest'
+    ,
+    186
+    'metat. longer'
+    'metat. shorter'
+    ,
+    187
+    'metat. longer'
+    'metat. shorter'
+    ,
+    188
+    'normal'
+    'thick'
+    ,
+    189
+    'proxim.'
+    'distal'
+    'submed.'
+    ,
+    190
+    'present'
+    'absent'
+    ,
+    191
+    'absent'
+    'present'
+    ,
+    192
+    'absent'
+    'present '
+    ,
+    193
+    'smooth'
+    'serrate (tarsal comb)'
+    ,
+    194
+    'smooth'
+    'theridiid grooves'
+    ,
+    195
+    'simple, straight'
+    'curved hooks'
+    ,
+    196
+    'straight'
+    'notched'
+    ,
+    197
+    'ungrouped'
+    'grouped'
+    ,
+    198
+    'small (normal)'
+    'enlarged'
+    ,
+    199
+    'short'
+    'longer'
+    ,
+    200
+    'normal'
+    'long'
+    'minute'
+    ,
+    201
+    'normal'
+    'abd. extend. beyond'
+    ,
+    202
+    'absent'
+    'present'
+    ,
+    203
+    'normal'
+    'w/parallel ridges'
+    ,
+    204
+    'normal'
+    'reduced'
+    ,
+    205
+    'large'
+    'small'
+    ,
+    206
+    '= PLS CY'
+    'longer than PLS CY'
+    ,
+    207
+    'normal'
+    'enlarged'
+    ,
+    208
+    '=.014ampullates'
+    'huge'
+    ,
+    209
+    'smooth'
+    'grooved'
+    ,
+    210
+    'two'
+    'one'
+    ,
+    211
+    '5+'
+    'four or less'
+    ,
+    212
+    'present'
+    'absent'
+    ,
+    213
+    'two'
+    'one'
+    ,
+    214
+    '<=CY'
+    'larger than CY'
+    ,
+    215
+    'normal'
+    'flat'
+    ,
+    216
+    'normal'
+    'flat'
+    ,
+    217
+    'entire'
+    'lobed'
+    ,
+    218
+    'parallel'
+    'end to end'
+    ,
+    219
+    'absent'
+    'present'
+    ,
+    220
+    'present'
+    'absent'
+    ,
+    221
+    'distinct'
+    'indistinct, abs.'
+    ,
+    222
+    '5+'
+    '4'
+    '3'
+    '2'
+    '1'
+    '0'
+    ,
+    223
+    'short'
+    '>CY shafts'
+    ,
+    224
+    'present'
+    'absent'
+    ,
+    225
+    'orb'
+    'sheet'
+    'rect.'
+    'cob'
+    'H'
+    'mesh'
+    'line'
+    'Ph.'
+    ,
+    226
+    'present'
+    'absent'
+    ,
+    227
+    'sheet'
+    'on gumfoot lines'
+    ,
+    228
+    'present'
+    'absent'
+    ,
+    229
+    'absent'
+    'present'
+    ,
+    230
+    'spherical to lenticular'
+    'stalked'
+    ,
+    231
+    'round'
+    'knob.'
+    'rhomb.'
+    'elong.'
+    'spiky'
+    ,
+    232
+    'fine'
+    'thick, loose'
+    ,
+    233
+    'smooth'
+    'spiny'
+    ,
+    234
+    'solitary'
+    'communal'
+    ,
+    235
+    'subequal'
+    '>three x female-biased'
+    ,
+    236
+    'absent'
+    'present'
+    ,
+    237
+    'transfer sperm'
+    'pseudocop.'
+    ,
+    238
+    'ipsilateral'
+    'contralateral'
+    ,
+    239
+    'indep.'
+    'during copulation'
+    ,
+    240
+    'present'
+    'absent'
+    ,
+    241
+    'no'
+    'rythmic haematodocha'
+    ,
+    242
+    'below'
+    'above'
+  ;
+END;
+
+BEGIN NOTES;
+  TEXT CHARACTER=1 TEXT='Epigynal scapes are widespread in araneoid spiders (see e.g. Scharff & Coddington, 1997: character 28), but to my best knowledge, Anelosimus pulchellus and A. vittatus, along with A. ethicus (pers. observ.), are unique among theridiids in having an araneid-like epigynal scape. Thymoites unimaculatum has a similar ventral scape-like projection (Fig. 85F), here considered putatively homologous, although the homology is rejected on the cladogram.';
+  TEXT CHARACTER=2 TEXT='Pimoids and linyphiids typically have a distinct dorsal plate in the epigynum (see e.g.
+Millidge, 1984: fig. 9; Hormiga, 1994a: fig. 60). Such a plate is absent in theridiids and other taxa in this study';
+  TEXT CHARACTER=3 TEXT='In most theridiids the epigynal plate is smooth (e.g. Figs 12E, 40B). On this cladogram the presence of conspicuous ridges on the epigynal plate is a synapomorphy of Anelosimus (e.g. Figs 21G, 24G) secondarily lost in clade 19 (Fig. 29A). Presumably the theridiid epigynal plate is a homologue of the ventral plate of linyphioids.';
+  TEXT CHARACTER=4 TEXT='A conspicuous projection overlies the copulatory openings in many araneoids (see e.g. Pimoa rupicola in
+Hormiga, 1994a: figs 27-29). In theridiids and Synotaxus, such a projection is generally absent and the openings are thus clearly visible in ventral view (Figs 12E, 22G, 69G). This character is inapplicable to the haplogyne Tetragnatha.';
+  TEXT CHARACTER=7 TEXT='. Most commonly the copulatory ducts enter the spermathecae posteriorly or basally (Fig. 93J), but in a few taxa medially or anteriorly (Fig. 93H).';
+  TEXT CHARACTER=9 TEXT=' In Latrodectus and independently in Kochiura, the copulatory ducts wrap around the spermathecae.';
+  TEXT CHARACTER=10 TEXT='Many hadrotarsines have two pairs of spermathecae: Anatea, Audifia, Dipoena, Dipoenata, Emertonella, Euryopis, Guaraniella, Lasaeola, Trigonobothrys, Yaginumena, Yoroa and some Hadrotarsus (Hickman, 1943; Levi & Levi, 1962; Wunderlich, 1978; Baert, 1984a, b; Forster et al., 1990; Griswold et al., 1998; Harvey & Waldock, 2000; Yoshida, 2002). The monotypic Gmogala scarabaeus Keyserling, however, has one pair of spermathecae, as do some species of Hadrotarsus and Euryopis, and a number of new genera from Australia (M. Harvey, pers. comm.). Genera with both conditions may not be monophyletic; this character will be important in future phylogenetic studies of Hadrotarsinae. On this cladogram the possession of four spermathecae is synapomorphic for Hadrotarsinae.';
+  TEXT CHARACTER=11 TEXT='. Spermathecae are most commonly ovoid in shape, and this is certainly true of most theridiids (Fig. 93H, I). In this cladogram highly elongate spermathecae are an autapomorphy of Ariamnes cf. attenuatus, and appear to be a synapomorphy of that genus. Dumbbell-shaped spermathecae are here a synapomorphy of Latrodectus (Levi & Levi, 1962: fig. 253).';
+  TEXT CHARACTER=12 TEXT='Most nesticids have distinct ‘accessory lobes’ associated with the spermathecae (e.g. Gertsch, 1984: Nesticus silvestrii, fig. 184, Eidmanella pallida, figs 260, 262).';
+END;

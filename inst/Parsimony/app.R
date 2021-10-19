@@ -191,7 +191,10 @@ ui <- fluidPage(theme = 'app.css',
   column(3,
     fluidRow(
       tags$h1("TreeSearch"),
-      fileInput("datafile", "Load data",
+      selectInput("dataSource", "Load dataset",
+                  c("< From file >" = "file", 
+                    setNames(names(inapplicable.datasets), names(inapplicable.datasets)))),
+      fileInput("dataFile", "Load data from file",
                 placeholder = "No data file selected"),
       tags$label("Search", class = "control-label", 
                  style = 'display: block; margin-top: -15px;'),
@@ -331,32 +334,43 @@ server <- function(input, output, session) {
       length(r$dataset)
   })
   
-  observeEvent(input$datafile, {
-    fileInput <- input$datafile
-    r$dataset <- NULL
-    r$chars <- NULL
-    if (is.null(input)) {
-      showNotification(type = "error", "No data file selected")
-      return("No data file selected.")
-    }
-    tmpFile <- fileInput$datapath
-    if (is.null(tmpFile)) {
-     showNotification(type = "error", "No data file found.")
-     return ("No data file found.")
-    }
-    r$dataset <- tryCatch(ReadTntAsPhyDat(tmpFile),
-                          error = function (e) tryCatch({
-                            r$chars <- ReadCharacters(tmpFile)
-                            r$charNotes <- ReadNotes(tmpFile)
-                            ReadAsPhyDat(tmpFile)
+  updateData <- reactive({
+    source <- input$dataSource
+    if (source == 'file') {
+      
+      fileInput <- input$dataFile
+      r$dataset <- NULL
+      r$chars <- NULL
+    
+      if (is.null(input)) {
+        showNotification(type = "error", "No data file selected")
+        return("No data file selected.")
+      }
+      tmpFile <- fileInput$datapath
+      if (is.null(tmpFile)) {
+        showNotification(type = "error", "No data file found.")
+        return ("No data file found.")
+      }
+      r$dataset <- tryCatch(ReadTntAsPhyDat(tmpFile),
+                            error = function (e) tryCatch({
+                              r$chars <- ReadCharacters(tmpFile)
+                              r$charNotes <- ReadNotes(tmpFile)
+                              ReadAsPhyDat(tmpFile)
                             }, error = function (e) NULL))
+    } else {
+      fileInput <- system.file(paste0('data-raw/', source, '.nex'),
+                               package = 'TreeSearch')
+      r$chars <- ReadCharacters(fileInput)
+      r$charNotes <- ReadNotes(fileInput)
+      r$dataset <- ReadAsPhyDat(fileInput)
+    }
     
     if (is.null(r$dataset)) {
-     showNotification(type = "error", "Could not read data from file")
+      showNotification(type = "error", "Could not read data from file")
       
       updateSliderInput(session, 'whichChar', min = 0L,
                         max = 0L, value = 0L)
-     return ("Could not read data from file")
+      return ("Could not read data from file")
     } else {
       showNotification(type = "message", 
                        paste("Loaded", attr(r$dataset, 'nr'), "characters and",
@@ -365,7 +379,6 @@ server <- function(input, output, session) {
       updateSliderInput(session, 'whichChar', min = 0L,
                         max = as.integer(attr(r$dataset, 'nr')), value = 1L)
     }
-    
     
     if (!is.null(r$trees)) {
       if (!datasetMatchesTrees()) {
@@ -377,8 +390,10 @@ server <- function(input, output, session) {
       
       output$results <- TreeSummary()
     }
-    
   })
+  
+  observeEvent(input$dataSource, updateData())
+  observeEvent(input$dataFile, updateData())
   
   observeEvent(input$searchConfig, {
     updateSelectInput(session, 'character.weight',
