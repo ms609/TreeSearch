@@ -561,8 +561,15 @@ server <- function(input, output, session) {
     updateSelectizeInput(inputId = 'neverDrop', choices = tipLabels(),
                          selected = input$neverDrop)
     updateSelectizeInput(inputId = 'outgroup', choices = tipLabels(),
-                         selected = if (length(input$outgroup) == 0)
-                           tipLabels()[1] else input$outgroup)
+                         selected = if (length(input$outgroup) == 0) {
+                           if (!is.null(r$dataset)) {
+                             names(r$dataset)[1]
+                           } else {
+                             tipLabels()[1]
+                           }
+                         } else {
+                             input$outgroup
+                         })
     updateSelectizeInput(inputId = 'relators', choices = tipLabels(),
                          selected = input$relators)
   })
