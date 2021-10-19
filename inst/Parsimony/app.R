@@ -479,8 +479,6 @@ server <- function(input, output, session) {
       }
       removeModal()
       showNotification(paste("Loaded", length(r$trees), "trees"), type = "message")
-      updateSliderInput(session, 'whichTree', min = 1L,
-                        max = length(r$trees), value = 1L)
       updateActionButton(session, "modalGo", "Continue search")
       updateActionButton(session, "go", "Continue")
       show('displayConfig')
@@ -552,6 +550,8 @@ server <- function(input, output, session) {
     if (length(r$trees) > 1L) {
       r$trees <- c(r$trees[[1]], RenumberTips(r$trees[-1], tipLabels()))
     }
+    updateSliderInput(session, 'whichTree', min = 1L,
+                      max = length(r$trees), value = 1L)
     updateNumericInput(inputId = 'keepTips', max = nTip,
                        value = nNonRogues())
     updateSliderInput(inputId = 'spaceDim', max = max(1L, maxProjDim()),
