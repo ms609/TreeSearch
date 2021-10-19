@@ -339,6 +339,7 @@ server <- function(input, output, session) {
   updateData <- reactive({
     source <- input$dataSource
     if (source == 'file') {
+      Log("updateData: from file")
       
       fileInput <- input$dataFile
       r$dataset <- NULL
@@ -360,6 +361,7 @@ server <- function(input, output, session) {
                               ReadAsPhyDat(dataFile)
                             }, error = function (e) NULL))
     } else {
+      Log("updateData: from package")
       dataFile <- system.file(paste0('data-raw/', source, '.nex'),
                                package = 'TreeSearch')
       r$chars <- ReadCharacters(dataFile)
@@ -391,9 +393,9 @@ server <- function(input, output, session) {
       } else {
         show('displayConfig')
       }
-      
-      output$results <- TreeSummary()
     }
+    
+    output$results <- TreeSummary()
   })
   
   observeEvent(input$dataSource, updateData())
@@ -577,6 +579,7 @@ server <- function(input, output, session) {
       } else {
         r$trees[[1]]
       }
+      Log("StartSearch()")
       PutData(r$dataset)
       PutTree(startTree)
       results <- withProgress(MaximizeParsimony(r$dataset,
