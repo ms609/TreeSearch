@@ -84,14 +84,21 @@
 #' @return `MaximizeParsimony()` returns a list of trees with class
 #' `multiPhylo`. This lists all trees found during each search step that
 #' are within `tolerance` of the optimal score, listed in the sequence that
-#' they were first visited; it may contain more than `maxHits` elements.
+#' they were first visited, and named according to the step in which they were
+#' first found; it may contain more than `maxHits` elements.
 #' Note that the default search parameters may need to be increased in order for
 #' these trees to be the globally optimal trees; examine the messages printed
 #' during tree search to evaluate whether the optimal score has stabilized.
 #' 
-#' The return value has the attribute `newTrees`, a named integer vector listing
+#' The return value has the attribute `firstHit`, a named integer vector listing
 #' the number of optimal trees visited for the first time in each stage of
-#' the tree search.
+#' the tree search. Stages are named:
+#' - `seed`: starting trees;
+#' - `start`: Initial TBR search;
+#' - `ratchN`: Ratchet iteration `N`;
+#' - `final`: Final TBR search.
+#' The first tree hit for the first time in ratchet iteration three is named
+#' `ratch3_1`.
 #' 
 #' @examples
 #' ## Only run examples in interactive R sessions
@@ -113,6 +120,7 @@
 #' trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
 #'                            tbrIter = 1, maxHits = 4, maxTime = 1/100,
 #'                            concavity = 10, verbosity = 4)
+#' names(trees)
 #'
 #' # In actual use, be sure to check that the score has converged on a global
 #' # optimum, conducting additional iterations and runs as necessary.
@@ -363,6 +371,7 @@ MaximizeParsimony <- function (dataset, tree,
                                ": Tree search terminated with score {.strong ",
                                "{signif(.Score(bestEdges[, , 1]))}}"))
     }
+    firstHit <- attr(bestEdges, 'firstHit')
     structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
       tr <- tree
       tr$edge <- bestEdges[, , i]
@@ -372,7 +381,8 @@ MaximizeParsimony <- function (dataset, tree,
         RootTree(tr, outgroup)
       }
     }),
-    firstHit = attr(bestEdges, 'firstHit'),
+    firstHit = firstHit,
+    names = paste0(rep(names(firstHit), firstHit), '_', unlist(lapply(firstHit, seq_len))),
     class = 'multiPhylo')
   }
   
