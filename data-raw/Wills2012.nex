@@ -223,7 +223,8 @@ BEGIN CHARACTERS;
   "present"
 ,
   14
- "none or unarmed (0)*, one to four"
+ "none or unarmed"
+  "one to four"
   " six to fourteen"
   " sixteen or more"
 ,
@@ -495,7 +496,8 @@ BEGIN CHARACTERS;
   "present" 
 ,
   74
- "none (0)*, predominantly within the middle cuticle layer (exocuticle)"
+ "none"
+ "predominantly within the middle cuticle layer (exocuticle)"
   " predominantly within the lowermost cuticle layer (endocuticle)" 
 ,
   75
@@ -534,7 +536,8 @@ BEGIN CHARACTERS;
 ,
   83
  "None (no introvert)"
-  "2% (as in Halicryptus higginsi) (1)*, between 2% and 30%"
+  "2% (as in Halicryptus higginsi)"
+  "between 2% and 30%"
   " 30 to 50%" 
 ,
   84
@@ -558,7 +561,7 @@ BEGIN CHARACTERS;
   "membrane containing scattered nuclei"
 ;
 
-BEGIN NOTES
+BEGIN NOTES;
   TEXT CHARACTER=27 TEXT="Budd (2003) has drawn comparison between the patterns of cuticular ornament in association with the trunk annulae in lobopods and palacoscolecids. However, although palaeoscolecids exhibit an alternating pattern of cuticular ornament (Conway Morris 1997) and although this varies from one body region to another, adjacent annulae are identical; they exhibit homomous annulation. This contrasts with the condition in lobopods where adjacent annulae vary both in terms of their axial length and their cuticular ornamentation.";
   TEXT CHARACTER=3 TEXT="Schmidt-Rhaesa (1998) has demonstrated that, in comparison to the scalids of Scalidophora (Kinorhyncha +Loricifera+Priapulida), the scalids of nematoids (Nematoda+Nematomorpha) are composed exclusively of cuticle. The collapse and folding of the scalids in Markuelia indicates that they are hollow structures and, thus, not wholly composed of cuticle.";
   TEXT CHARACTER=4 TEXT="The mouth cone is the eversible (though not necessarily inversible) upstanding anterior limit of the pharynx.";
@@ -579,9 +582,5 @@ BEGIN NOTES
   TEXT CHARACTER=59 TEXT="Proposed by Nielsen (2001) as a synapomorphy of kinorhynchs, loriciferans and extant priapulids.";
   TEXT CHARACTER=52 TEXT=" Living priapulids possess unpaired ventral nerve cords, whereas gastrotrichs, onychophorans and loriciferans possess ventral nerve cords that are paired throughout their length, and the ventral nerve cords of nematomorphs and nematodes divide at points along their length (Schmidt-Rhaesa, 1998); the situation in kinorhynchs is unresolved (paired according to Kristensen and Higgins, 1991; unpaired according to Neuhaus 1994). The condition in Ottoia is common to extant priapulids (Conway Morris, 1977).";
   TEXT CHARACTER=49 TEXT="This definition of 'spines, hooks or cones' excludes the posterior body bifurcations of Aysheaia, Kerygmachela, tardigrades, some nematomorphs, some kinorhynchs and gastrotrichs. The paired, peri-anal structures in Halicryptus and Maccabeus are much smaller relative to body width. ";
-  TEXT CHARACTER= TEXT="";
-  TEXT CHARACTER= TEXT="";
-  TEXT CHARACTER= TEXT="";
-  TEXT CHARACTER= TEXT="";
   
 END;
