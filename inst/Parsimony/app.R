@@ -549,6 +549,9 @@ server <- function(input, output, session) {
     Log("observed r$trees")
     nTip <- length(tipLabels())
     r$trees <- c(r$trees[[1]], RenumberTips(r$trees[-1], tipLabels()))
+    if (length(r$trees) > 1L) {
+      r$trees <- c(r$trees[[1]], RenumberTips(r$trees[-1], tipLabels()))
+    }
     updateNumericInput(inputId = 'keepTips', max = nTip,
                        value = nNonRogues())
     updateSliderInput(inputId = 'spaceDim', max = max(1L, maxProjDim()),
@@ -557,7 +560,7 @@ server <- function(input, output, session) {
                          selected = input$neverDrop)
     updateSelectizeInput(inputId = 'outgroup', choices = tipLabels(),
                          selected = if (length(input$outgroup) == 0)
-                           tipLabels[1] else input$outgroup)
+                           tipLabels()[1] else input$outgroup)
     updateSelectizeInput(inputId = 'relators', choices = tipLabels(),
                          selected = input$relators)
   })
@@ -735,7 +738,7 @@ server <- function(input, output, session) {
       )
     })
     if (length(dropped) &&
-        packageVersion('TreeTools') >= "1.5.0.9100" && # TODO REMOVE once required.
+        packageVersion('TreeTools') >= "1.5.1.9100" && # TODO REMOVE once required.
         length(input$excludedTip) &&
         nchar(input$excludedTip) ) {
       consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
@@ -754,7 +757,7 @@ server <- function(input, output, session) {
         )
       })
     } else {
-      Log("ConsensusWithout 613")
+      Log("ConsensusWithout 756")
       PutTree(r$trees)
       cons <- ConsensusWithout(r$trees, dropped, p = consP())
       if (unitEdge()) {
