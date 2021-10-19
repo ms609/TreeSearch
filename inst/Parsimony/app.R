@@ -166,10 +166,11 @@ Smith2020 <- Reference('Smith, M.R.', 2020,
                        doi = "10.1093/bioinformatics/btaa614")
 Smith2021 <- Reference('Smith, M.R.', 2022,
                        'Robust analysis of phylogenetic tree space',
-                       'Submitted MS')
+                       'Under review')
 Smith2022 <- Reference("Smith, M.R.", 2022, 
-                       "Improving consensus trees by detecting rogue taxa",
-                       "In revision")
+                       "Using information theory to detect rogue taxa and improve consensus trees",
+                       "Systematic Biology",
+                       "Accepted MS")
 Stockham2002 <- Reference(
   author = c('Stockham, C.', 'Wang, L.-S.', 'Warnow, T.'), 2002,
   "Statistically based postprocessing of phylogenetic analysis by clustering",
