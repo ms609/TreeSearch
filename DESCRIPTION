@@ -36,7 +36,7 @@ Imports:
     protoclust,
     Rcpp,
     Rdpack (>= 0.7),
-    Rogue (> 1.0.0),
+    Rogue (> 2.0.0),
     shiny,
     shinyjs,
     stats,
