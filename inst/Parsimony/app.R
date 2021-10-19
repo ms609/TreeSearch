@@ -539,7 +539,7 @@ server <- function(input, output, session) {
   observeEvent(r$trees, {
     tipLabels <- r$trees[[1]]$tip.label
     nTip <- length(tipLabels)
-    r$trees[-1] <- RenumberTips(r$trees[-1], tipLabels)
+    r$trees <- c(r$trees[[1]], RenumberTips(r$trees[-1], tipLabels))
     updateNumericInput(inputId = 'keepTips', max = nTip,
                        value = nNonRogues())
     updateSliderInput(inputId = 'spaceDim', max = max(2L, maxProjDim()),
