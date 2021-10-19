@@ -386,6 +386,9 @@ server <- function(input, output, session) {
     
     if (is.null(r$trees)) {
       r$trees <- tryCatch(read.nexus(dataFile), error = function (e) NULL)
+      if (!is.null(r$trees)) {
+        show('displayConfig')
+      }
     } else {
       if (!datasetMatchesTrees()) {
         r$trees <- NULL
