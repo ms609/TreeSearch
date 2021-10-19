@@ -84,12 +84,12 @@ test_that("Mismatched tree/dataset handled with warnings", {
   QP <- function (...) MaximizeParsimony(..., ratchIter = 0, maxHits = 1,
                                          verbosity = 0)
   
-  expect_equal(5, NTip(expect_warning(QP(datAf, treeBg))))
-  expect_equal(5, NTip(expect_warning(QP(datAe, treeAf))))
-  expect_equal(6, NTip(expect_warning(QP(datAg, treeAf))))
-  expect_equal(5, NTip(expect_warning(QP(datAf, treeBg, constraint = datAe))))
-  expect_equal(6, NTip(QP(datAf, treeAf, constraint = datAe)))
-  expect_equal(6, NTip(expect_warning(QP(datAf, treeAf, constraint = datAg))))
+  expect_equal(5, unname(NTip(expect_warning(QP(datAf, treeBg)))))
+  expect_equal(5, unname(NTip(expect_warning(QP(datAe, treeAf)))))
+  expect_equal(6, unname(NTip(expect_warning(QP(datAg, treeAf)))))
+  expect_equal(5, unname(NTip(expect_warning(QP(datAf, treeBg, constraint = datAe)))))
+  expect_equal(6, unname(NTip(QP(datAf, treeAf, constraint = datAe))))
+  expect_equal(6, unname(NTip(expect_warning(QP(datAf, treeAf, constraint = datAg)))))
 })
 
 test_that("Root retained if not 1", {
