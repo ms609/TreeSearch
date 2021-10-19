@@ -170,7 +170,7 @@ Smith2021 <- Reference('Smith, M.R.', 2022,
 Smith2022 <- Reference("Smith, M.R.", 2022, 
                        "Using information theory to detect rogue taxa and improve consensus trees",
                        "Systematic Biology",
-                       "Accepted MS")
+                       pages = "Accepted MS")
 Stockham2002 <- Reference(
   author = c('Stockham, C.', 'Wang, L.-S.', 'Warnow, T.'), 2002,
   "Statistically based postprocessing of phylogenetic analysis by clustering",
@@ -192,7 +192,8 @@ ui <- fluidPage(theme = 'app.css',
     fluidRow(
       tags$h1("TreeSearch"),
       selectInput("dataSource", "Load dataset",
-                  c("< From file >" = "file", 
+                  c("< From file >" = "file",
+                    "Sun et al. 2018" = "Sun2018",
                     setNames(names(inapplicable.datasets), names(inapplicable.datasets)))),
       fileInput("dataFile", "Load data from file",
                 placeholder = "No data file selected"),
@@ -346,23 +347,23 @@ server <- function(input, output, session) {
         showNotification(type = "error", "No data file selected")
         return("No data file selected.")
       }
-      tmpFile <- fileInput$datapath
-      if (is.null(tmpFile)) {
+      dataFile <- fileInput$datapath
+      if (is.null(dataFile)) {
         showNotification(type = "error", "No data file found.")
         return ("No data file found.")
       }
-      r$dataset <- tryCatch(ReadTntAsPhyDat(tmpFile),
+      r$dataset <- tryCatch(ReadTntAsPhyDat(dataFile),
                             error = function (e) tryCatch({
-                              r$chars <- ReadCharacters(tmpFile)
-                              r$charNotes <- ReadNotes(tmpFile)
-                              ReadAsPhyDat(tmpFile)
+                              r$chars <- ReadCharacters(dataFile)
+                              r$charNotes <- ReadNotes(dataFile)
+                              ReadAsPhyDat(dataFile)
                             }, error = function (e) NULL))
     } else {
-      fileInput <- system.file(paste0('data-raw/', source, '.nex'),
+      dataFile <- system.file(paste0('data-raw/', source, '.nex'),
                                package = 'TreeSearch')
-      r$chars <- ReadCharacters(fileInput)
-      r$charNotes <- ReadNotes(fileInput)
-      r$dataset <- ReadAsPhyDat(fileInput)
+      r$chars <- ReadCharacters(dataFile)
+      r$charNotes <- ReadNotes(dataFile)
+      r$dataset <- ReadAsPhyDat(dataFile)
     }
     
     if (is.null(r$dataset)) {
@@ -380,7 +381,9 @@ server <- function(input, output, session) {
                         max = as.integer(attr(r$dataset, 'nr')), value = 1L)
     }
     
-    if (!is.null(r$trees)) {
+    if (is.null(r$trees)) {
+      r$trees <- tryCatch(read.nexus(dataFile), error = function (e) NULL)
+    } else {
       if (!datasetMatchesTrees()) {
         r$trees <- NULL
         updateActionButton(session, "go", "New search")
@@ -543,7 +546,8 @@ server <- function(input, output, session) {
     updateSelectizeInput(inputId = 'neverDrop', choices = tipLabels,
                          selected = input$neverDrop)
     updateSelectizeInput(inputId = 'outgroup', choices = tipLabels,
-                         selected = input$outgroup)
+                         selected = if (length(input$outgroup) == 0)
+                           tipLabels[1] else input$outgroup)
     updateSelectizeInput(inputId = 'relators', choices = tipLabels,
                          selected = input$relators)
   })
