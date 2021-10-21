@@ -1130,7 +1130,7 @@ server <- function(input, output, session) {
           norm <- scores() - min(scores())
           norm <- scores() - min(scores())
           norm <- (length(badToGood) - 1L) * norm / max(norm)
-          badToGood[1 + norm]
+          rev(badToGood)[1 + norm]
         }
       }, 'firstHit' = {
         if (is.null(firstHit())) {
@@ -1330,6 +1330,13 @@ server <- function(input, output, session) {
       if (input$spaceCol == 'firstHit' && length(firstHit())) {
         legend(bty = 'n', 'topleft', pch = 16, col = firstHitCols(),
                names(firstHit()), title = 'Iteration first hit')
+      } else if (input$spaceCol == 'score') {
+        legendRes <- length(badToGood)
+        leg = rep(NA, legendRes)
+        leg[c(legendRes, 1)] = signif(range(scores()))
+        legend('topright', bty = 'n', border = NA,
+               legend = leg, fill = rev(badToGood),
+               y.intersp = 0.04, cex = 1.1)
       }
     })
   }
