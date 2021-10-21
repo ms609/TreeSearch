@@ -1,3 +1,4 @@
+#options("TreeSearch.logging"= TRUE)
 logging <- isTRUE(getOption("TreeSearch.logging"))
 options(shiny.maxRequestSize = 1024^3) # Allow max 1 GB files
 
@@ -298,7 +299,8 @@ ui <- fluidPage(theme = 'app.css',
           selectInput('spacePch', "Plotting symbol:",
                       selected = 'relat',
                       list('Cluster membership' = 'clust',
-                           'Relationships' = 'relat')),
+                           'Relationships' = 'relat',
+                           'Tree name' = 'name')),
           selectizeInput('relators', "Show relationship between:",
                          choices = list(), multiple = TRUE),
                  ),
@@ -548,9 +550,10 @@ server <- function(input, output, session) {
   
   observeEvent(r$trees, {
     Log("observed r$trees")
+    dput(names(r$trees))
     nTip <- length(tipLabels())
     if (length(r$trees) > 1L) {
-      r$trees <- c(r$trees[[1]], RenumberTips(r$trees[-1], tipLabels()))
+      r$trees <- RenumberTips(r$trees, tipLabels())
     }
     updateSliderInput(session, 'whichTree', min = 1L,
                       max = length(r$trees), value = 1L)
@@ -780,7 +783,7 @@ server <- function(input, output, session) {
   
   ShowConfigs <- function (visible = character(0)) {
     allConfigs <- c('whichTree', 'charChooser', 'consConfig', 'clusConfig',
-                    'spaceConfig', 'treePlotConfig')
+                    'spaceConfig', 'treePlotConfig', 'droppedTips')
     lapply(visible, show)
     lapply(setdiff(allConfigs, visible), hide)
   }
@@ -790,8 +793,8 @@ server <- function(input, output, session) {
       
     ShowConfigs(switch(input$plotFormat,
                        'ind' = c('whichTree', 'charChooser', 'treePlotConfig'),
-                       'cons' = c('consConfig', 'treePlotConfig'),
-                       'clus' = c('clusConfig', 'treePlotConfig'),
+                       'cons' = c('consConfig', 'treePlotConfig', 'droppedTips'),
+                       'clus' = c('clusConfig', 'consConfig', 'treePlotConfig'),
                        'space' = c('clusConfig', 'spaceConfig'),
                        ''))
     switch(input$plotFormat,
@@ -1065,6 +1068,12 @@ server <- function(input, output, session) {
   
   PlotClusterCons <- function () {
     cl <- clusterings()
+    kept <- rev(dropSeq())[seq_len(input$keepTips)]
+    dropped <- if (length(kept) > 1) {
+      setdiff(TipLabels(r$trees[[1]]), kept)
+    } else {
+      character(0)
+    }
     par(mar = c(0.2, 0, 0.2, 0), xpd = NA)
     if (cl$sil > silThreshold()) {
       nRow <- ceiling(cl$n / 3)
@@ -1073,7 +1082,9 @@ server <- function(input, output, session) {
         col <- palettes[[min(length(palettes), cl$n)]][i]
         Log("ClusterCons 926")
         PutTree(r$trees)
-        tr <- UserRoot(Consensus(r$trees[cl$cluster == i]))
+        PutData(cl$cluster)
+        
+        tr <- UserRoot(ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP()))
         tr$edge.length <- rep.int(1, dim(tr$edge)[1])
         plot(tr, edge.width = 2, font = 1, cex = 0.83,
              edge.color = col, tip.color = tipCols())
@@ -1081,7 +1092,7 @@ server <- function(input, output, session) {
     } else {
       Log("ClusterCons 934")
       PutTree(r$trees)
-      tr <- UserRoot(Consensus(r$trees))
+      tr <- UserRoot(ConsensusWithout(r$trees, dropped, p = consP()))
       tr$edge.length <- rep.int(1, dim(tr$edge)[1])
       plot(tr,edge.width = 2, font = 1, cex = 0.83,
            edge.color = palettes[[1]], tip.color = tipCols())
@@ -1134,6 +1145,10 @@ server <- function(input, output, session) {
     )
   })
   
+  treeNameClustering <- reactive({
+    ClusterStrings(names(r$trees))
+  })
+ 
   treePch <- reactive({
     switch(
       input$spacePch,
@@ -1151,8 +1166,15 @@ server <- function(input, output, session) {
             as.raw, raw(1)))
           log2(fours - 1L)
         } else {
-          showNotification("Select four taxa")
+          showNotification("Select four taxa to show relationships")
           0
+        }
+      }, 'name' = {
+        if (is.null(names(r$trees))) {
+          showNotification("Trees lack names", type = 'warning')
+          16
+        } else {
+          treeNameClustering()
         }
       }, 0)
   })
@@ -1290,10 +1312,20 @@ server <- function(input, output, session) {
         }
       }
       if (nDim > 2) plot.new()
-      if (input$spacePch == 'relat' && length(input$relators) == 4L) {
-        legend(bty = 'n', 'topright', pch = 1:3, xpd = NA,
-               gsub("_", " ", fixed = TRUE,
-                    paste(input$relators[2:4], "&", input$relators[[1]])))
+      if (input$spacePch == 'relat') {
+        if (length(input$relators) == 4L) {
+          legend(bty = 'n', 'topright', pch = 1:3, xpd = NA,
+                 gsub("_", " ", fixed = TRUE,
+                      paste(input$relators[2:4], "&", input$relators[[1]])))
+        }
+      } else if (input$spacePch == 'name') {
+        clstr <- treeNameClustering()
+        clusters <- unique(clstr)
+        message(length(clusters))
+        if (length(clusters) > 1L) {
+          legend(bty = 'n', 'topright', pch = clusters, xpd = NA,
+                 paste('~', attr(clstr, 'med')))
+        }
       }
       if (input$spaceCol == 'firstHit' && length(firstHit())) {
         legend(bty = 'n', 'topleft', pch = 16, col = firstHitCols(),
