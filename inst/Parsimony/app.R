@@ -1321,10 +1321,9 @@ server <- function(input, output, session) {
       } else if (input$spacePch == 'name') {
         clstr <- treeNameClustering()
         clusters <- unique(clstr)
-        message(length(clusters))
         if (length(clusters) > 1L) {
           legend(bty = 'n', 'topright', pch = clusters, xpd = NA,
-                 paste('~', attr(clstr, 'med')))
+                 paste0('~ ', attr(clstr, 'med'), ' (', table(clstr), ')'))
         }
       }
       if (input$spaceCol == 'firstHit' && length(firstHit())) {
@@ -1334,7 +1333,7 @@ server <- function(input, output, session) {
         legendRes <- length(badToGood)
         leg = rep(NA, legendRes)
         leg[c(legendRes, 1)] = signif(range(scores()))
-        legend('topright', bty = 'n', border = NA,
+        legend('bottomright', bty = 'n', border = NA,
                legend = leg, fill = rev(badToGood),
                y.intersp = 0.04, cex = 1.1)
       }
