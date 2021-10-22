@@ -9,7 +9,8 @@
 #' to a cluster, with an attribute `med` specifying the median string in each 
 #' cluster, and `silhouette` reporting the silhouette coefficient of the optimal
 #' clustering.  Coefficients < 0.5 indicate weak structure, and no clusters are
-#' returned.
+#' returned.  If the number of unique elements of `x` is less than `maxCluster`,
+#' all occurrences of each entry are assigned to an individual cluster.
 #' 
 #' @examples
 #' ClusterStrings(c(paste0('FirstCluster ', 1:5),
@@ -22,8 +23,9 @@
 #' @family utility functions
 #' @export
 ClusterStrings <- function (x, maxCluster = 12) {
-  if (length(x) < 3) {
-    structure(seq_along(x), 'med' = x)
+  if (length(unique(x)) < maxCluster){
+    nom <- unique(x)
+    structure(match(x, nom), 'med' = nom)
   } else {
     possibleClusters <- 2:maxCluster
     hSil <- pamSil <- -99

@@ -16,7 +16,8 @@ ClusterStrings(x, maxCluster = 12)
 to a cluster, with an attribute \code{med} specifying the median string in each
 cluster, and \code{silhouette} reporting the silhouette coefficient of the optimal
 clustering.  Coefficients < 0.5 indicate weak structure, and no clusters are
-returned.
+returned.  If the number of unique elements of \code{x} is less than \code{maxCluster},
+all occurrences of each entry are assigned to an individual cluster.
 }
 \description{
 Calculate string similarity using the Levenshtein distance and return
