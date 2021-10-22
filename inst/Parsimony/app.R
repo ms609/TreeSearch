@@ -550,7 +550,6 @@ server <- function(input, output, session) {
   
   observeEvent(r$trees, {
     Log("observed r$trees")
-    dput(names(r$trees))
     nTip <- length(tipLabels())
     if (length(r$trees) > 1L) {
       r$trees <- RenumberTips(r$trees, tipLabels())
