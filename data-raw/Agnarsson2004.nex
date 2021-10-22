@@ -1342,6 +1342,8 @@ Hormiga, 1994a: figs 27-29). In theridiids and Synotaxus, such a projection is g
   TEXT CHARACTER=10 TEXT='Many hadrotarsines have two pairs of spermathecae: Anatea, Audifia, Dipoena, Dipoenata, Emertonella, Euryopis, Guaraniella, Lasaeola, Trigonobothrys, Yaginumena, Yoroa and some Hadrotarsus (Hickman, 1943; Levi & Levi, 1962; Wunderlich, 1978; Baert, 1984a, b; Forster et al., 1990; Griswold et al., 1998; Harvey & Waldock, 2000; Yoshida, 2002). The monotypic Gmogala scarabaeus Keyserling, however, has one pair of spermathecae, as do some species of Hadrotarsus and Euryopis, and a number of new genera from Australia (M. Harvey, pers. comm.). Genera with both conditions may not be monophyletic; this character will be important in future phylogenetic studies of Hadrotarsinae. On this cladogram the possession of four spermathecae is synapomorphic for Hadrotarsinae.';
   TEXT CHARACTER=11 TEXT='Spermathecae are most commonly ovoid in shape, and this is certainly true of most theridiids (Fig. 93H, I). In this cladogram highly elongate spermathecae are an autapomorphy of Ariamnes cf. attenuatus, and appear to be a synapomorphy of that genus. Dumbbell-shaped spermathecae are here a synapomorphy of Latrodectus (Levi & Levi, 1962: fig. 253).';
   TEXT CHARACTER=12 TEXT='Most nesticids have distinct ‘accessory lobes’ associated with the spermathecae (e.g. Gertsch, 1984: Nesticus silvestrii, fig. 184, Eidmanella pallida, figs 260, 262).';
+END;
+
 BEGIN TREES;
 	TRANSLATE
 		1	Argiope,
