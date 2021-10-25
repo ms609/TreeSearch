@@ -370,7 +370,6 @@ server <- function(input, output, session) {
       r$charNotes <- ReadNotes(dataFile)
       r$dataset <- ReadAsPhyDat(dataFile)
     }
-    
     if (is.null(r$dataset)) {
       showNotification(type = "error", "Could not read data from file")
       
@@ -386,18 +385,11 @@ server <- function(input, output, session) {
                         max = as.integer(attr(r$dataset, 'nr')), value = 1L)
     }
     
-    if (is.null(r$trees)) {
-      r$rawTrees <- tryCatch(read.nexus(dataFile), error = function (e) NULL)
-      if (!is.null(r$rawTrees)) {
-        show('displayConfig')
-      }
+    updateTrees(tryCatch(read.nexus(dataFile), error = function (e) r$trees))
+    if (is.null(r$trees) || !datasetMatchesTrees()) {
+      updateActionButton(session, "go", "New search")
     } else {
-      if (!datasetMatchesTrees()) {
-        r$rawTrees <- NULL
-        updateActionButton(session, "go", "New search")
-      } else {
-        show('displayConfig')
-      }
+      show('displayConfig')
     }
     
     output$results <- TreeSummary()
@@ -512,7 +504,7 @@ server <- function(input, output, session) {
                             'off' = 'EW',
                             'prof' = 'PP'))
   
-  scores <- reactive(tryCatch(
+  scores <- reactive({tryCatch(
     signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
     error = function (x) {
       if (length(r$dataset) > 0 && 
@@ -523,10 +515,12 @@ server <- function(input, output, session) {
                          "Could not score all trees with dataset")
       }
       NULL
-   }))
+   })})
   
-  TreeSummary <- debounce(reactive({
+  TreeSummary <- reactive({
+    Log("TreeSummary(): Scoring trees")
     treeScores <- scores()
+    Log("Scored trees")
     score <- if (is.null(treeScores)) {
       "; could not be scored from dataset"
     } else if (length(unique(treeScores)) == 1) {
@@ -538,7 +532,7 @@ server <- function(input, output, session) {
     
     
     renderText(paste0(length(r$trees), " trees in memory", score))
-  }), 50)
+  })
   
   observeEvent(input$implied.weights, {
     output$results <- TreeSummary()
@@ -548,22 +542,20 @@ server <- function(input, output, session) {
     output$results <- TreeSummary()
   })
   
-  observeEvent(r$rawTrees, {
-    Log("observed r$rawTrees")
-    rawLabels <- r$rawTrees[[1]]$tip.label
-    nTip <- length(rawLabels)
-    if (length(r$rawTrees) > 1L) {
-      r$rawTrees <- RenumberTips(r$rawTrees, rawLabels)
+  updateTrees <- function (trees) {
+    if (length(trees) > 1L) {
+      trees <- RenumberTips(trees, trees[[1]]$tip.label)
     }
-    
-    if (identical(r$rawTrees, r$trees)) {
-      Log("Trees re-loaded but not changed")
+    if (identical(trees, r$trees)) {
+      Log("No need to update trees; no change")
       return()
     }
     r$treeLoadTime <- signif(as.numeric(Sys.time()), digits = 15)
-    r$trees <- r$rawTrees
+    r$trees <- trees
     r$distances <- list()
     r$concordance <- list()
+    nTip <- length(trees[[1]]$tip.label)
+    
     updateSliderInput(session, 'whichTree', min = 1L,
                       max = length(r$trees), value = 1L)
     updateNumericInput(inputId = 'keepTips', max = nTip,
@@ -580,10 +572,21 @@ server <- function(input, output, session) {
                              tipLabels()[1]
                            }
                          } else {
-                             input$outgroup
+                           input$outgroup
                          })
     updateSelectizeInput(inputId = 'relators', choices = tipLabels(),
                          selected = input$relators)
+  }
+  
+  observeEvent(r$rawTrees, {
+    Log("observed r$rawTrees")
+    rawLabels <- r$rawTrees[[1]]$tip.label
+    nTip <- length(rawLabels)
+    if (length(r$rawTrees) > 1L) {
+      r$rawTrees <- RenumberTips(r$rawTrees, rawLabels)
+    }
+    
+    updateTrees(r$rawTrees)
   })
 
   observeEvent(input$implied.weights, {
@@ -765,7 +768,9 @@ server <- function(input, output, session) {
     if (length(dropped) &&
         packageVersion('TreeTools') >= "1.5.1.9100" && # TODO REMOVE once required.
         length(input$excludedTip) &&
-        nchar(input$excludedTip) ) {
+        nchar(input$excludedTip) && 
+        input$excludedTip %in% tipLabels()) {
+      Log("ConsensusPlot(): 773")
       consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
       plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
                            edgeLength = 1,
@@ -782,9 +787,12 @@ server <- function(input, output, session) {
         )
       })
     } else {
-      Log("ConsensusWithout 756")
+      Log("ConsensusPlot(): 790->ConsensusWithout")
       PutTree(r$trees)
-      cons <- ConsensusWithout(r$trees, dropped, p = consP())
+      cons <- ConsensusWithout(r$trees,
+                               # `dropped` might be out of date
+                               intersect(dropped, tipLabels()),
+                               p = consP())
       if (unitEdge()) {
         cons$edge.length <- rep_len(1L, dim(cons$edge)[1])
       }
@@ -814,7 +822,7 @@ server <- function(input, output, session) {
   MainPlot <- reactive({
     if (!is.null(r$trees)) {
     
-    switch(input$plotFormat,
+      switch(input$plotFormat,
            'cons' = {
              ConsensusPlot()
            },
@@ -969,6 +977,7 @@ server <- function(input, output, session) {
                        treePch(),
                        input$distMeth,
                        input$spaceCol,
+                       concavity(),
                        input$spacePch,
                        if (input$spacePch == 'relat') input$relators,
                        silThreshold(),
