@@ -56,310 +56,314 @@ begin data;
     Thysanocardia_nigra             110100020--0--0-0-001010100--00-0000--00001010100-?0100200
     Xenosiphon_branchiatus          10000002111110100-001000100--00-0000--00000-00000001000???
  ;                                                                     
-end;                                                                       
-                                                                            
-                                                                            
-                                                                            
-                                                                            
-                                                                            
-                                                                            
-                                                                            
-                                                                            
-                                                                            
-                                                                            
-                                                                            
-                                                                            
-                                                                            
-                                                                            
-                                                               
-                                                               
-                                                               
-                                                               
-                                                               
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+end;  
 
-STATELABELS
-  1
-    'absent'
-    'present'
-  ,
-  2
-    'absent'
-    'present'
-  ,
-  3
-    'absent'
-    'present'
-  ,
-  4
-    'absent'
-    'present'
-  ,
-  5
-    'paired'
-    'single'
-  ,
-  6
-    'mostly unattached'
-    'at least 50% attached'
-  ,
-  7
-    'unilobed'
-    'bilobed'
-  ,
-  8
-    'anterior to anus'
-    'same level as anus'
-    'posterior to anus'
-  ,
-  9
-    'absent'
-    'present'
-  ,
-  10
-    'sacs'
-    'canals'
-  ,
-  11
-    'longitudinal'
-    'in bands'
-  ,
-  12
-    'distinct'
-    'anastomosing'
-  ,
-  13
-    'commonly < 25'
-    '25-40'
-    '> 40'
-  ,
-  14
-    'distinct'
-    'anastomosing'
-  ,
-  15
-    'continuous sheet'
-    'in bands'
-  ,
-  16
-    'distinct'
-    'anastomosing'
-  ,
-  17
-    'absent'
-    'present'
-  ,
-  18
-    'flat'
-    'cone-shaped'
-  ,
-  19
-    'absent'
-    'present'
-  ,
-  20
-    'absent'
-    'present'
-  ,
-  21
-    'absent'
-    'present'
-  ,
-  22
-    'body wall'
-    'on rectum'
-  ,
-  23
-    'anterior to anus'
-    'same level as anus'
-    'posterior to anus'
-  ,
-  24
-    'one'
-    'two or more'
-  ,
-  25
-    'posterior body wall'
-    'within gut coil'
-  ,
-  26
-    'absent'
-    'present'
-  ,
-  27
-    'absent'
-    'present'
-  ,
-  28
-    '< 50'
-    '> 50'
-  ,
-  29
-    'some scattered'
-    'entirely in rows'
-  ,
-  30
-    'absent'
-    'present'
-  ,
-  31
-    'absent'
-    'present'
-  ,
-  32
-    'blunt'
-    'pointed'
-  ,
-  33
-    'absent'
-    'present'
-  ,
-  34
-    'absent'
-    'present'
-  ,
-  35
-    'absent'
-    'present'
-  ,
-  36
-    'absent'
-    'present'
-  ,
-  37
-    'warts'
-    'rootlets'
-  ,
-  38
-    '< 90%'
-    '> 90%'
-  ,
-  39
-    'absent'
-    'present'
-  ,
-  40
-    'absent'
-    'present'
-  ,
-  41
-    'on anterior trunk'
-    'on introvert'
-  ,
-  42
-    'absent'
-    'present'
-  ,
-  43
-    'absent'
-    '1 present'
-  ,
-  44
-    'digitiform'
-    'elongate tubules '
-  ,
-  45
-    'two pairs'
-    'less than two pairs'
-  ,
-  46
-    'not fused (< 10%)'
-    'partially fused'
-    'completely fused'
-  ,
-  47
-    'not fused (< 10%)'
-    'partially fused'
-    'completely fused'
-  ,
-  48
-    'absent'
-    'present'
-  ,
-  49
-    'absent'
-    'present'
-  ,
-  50
-    'anterior 1/3 of body'
-    'middle 1/3 of body'
-    'posterior 1/3 of body'
-  ,
-  51
-    'anterior 1/3 of body'
-    'middle 1/3 of body'
-    'posterior 1/3 of body'
-  ,
-  52
-    'absent'
-    'present'
-  ,
-  53
-    '< 0.75'
-    '0.75-2'
-    '> 2'
-  ,
-  54
-    'absent'
-    'present'
-  ,
-  55
-    'absent'
-    'present'
-  ,
-  56
-    'pit'
-    'ciliated band'
-    'patch or patches'
-  ,
-  57
-    'one'
-    'two'
-  ,
-  58
-    'triangular'
-    'bilobed'
-    'multi-lobed'
-;
+BEGIN CHARACTERS;
+  CHARLABELS
+    [1]   'Peripheral tentacles'
+    [2]   'Nuchal tentacles'
+    [3]   'Branched tentacles'
+    [4]   'Tentacles along introvert'
+    [5]   'Nephridia'
+    [6]   'Nephridial attachment'
+    [7]   'Nephridial shape'
+    [8]   'Position of nephridiopores'
+    [9]   'Coelomic extensions in body wall'
+    [10]  'Type of coelomic extensions'
+    [11]  'Orientation of coelomic canals'
+    [12]  'Longitudinal musculature'
+    [13]  'Number of longitudinal muscle bands'
+    [14]  'Longitudinal muscle bands'
+    [15]  'Circular musculature'
+    [16]  'Circular muscle bands'
+    [17]  'Dorsal shield'
+    [18]  'Shape of dorsal shield'
+    [19]  'Grooves in dorsal shield'
+    [20]  'Pineapple shield'
+    [21]  'Spindle muscle'
+    [22]  'Anterior attachment of spindle muscle'
+    [23]  'Level of attachment on body wall'
+    [24]  'Anterior roots of spindle muscle'
+    [25]  'Posterior attachment of spindle muscle'
+    [26]  'Hooks on introvert in adults'
+    [27]  'Hooks in rings'
+    [28]  'Number of rings of hooks'
+    [29]  'Hook arrangement'
+    [30]  'Bidentate hooks'
+    [31]  'Secondary tooth on hook'
+    [32]  'Shape of secondary tooth'
+    [33]  'Hook interior: Anterior clear triangle'
+    [34]  'Hook interior: Clear streak'
+    [35]  'Hook interior: Crescent-shaped space'
+    [36]  'Posterior basal structures'
+    [37]  'Posterior basal structure type'
+    [38]  'Angle of hook'
+    [39]  'Pyramidal hooks'
+    [40]  'Conical hooks'
+    [41]  'Location of anus'
+    [42]  'Pigmented introvert bands'
+    [43]  'Contractile vessel villi'
+    [44]  'Type of contractile vessel villi'
+    [45]  'Introvert retractor muscles in adult'
+    [46]  'Fusion of dorsal retractors'
+    [47]  'Fusion in ventral retractors'
+    [48]  'Fusion of dorsal and ventral retractors'
+    [49]  'Retractor column'
+    [50]  'Origin of dorsal retractor muscles'
+    [51]  'Origin of ventral retractor muscles'
+    [52]  'Protractor muscle'
+    [53]  'Ratio of introvert/trunk length'
+    [54]  'Holdfast papillae with hardened borders'
+    [55]  'Caudal appendage'
+    [56]  'Nuchal organ'
+    [57]  'Number of nuchal patches'
+    [58]  'Shape of nuchal patch'
+  ;
+  STATELABELS
+    1
+      'absent'
+      'present'
+    ,
+    2
+      'absent'
+      'present'
+    ,
+    3
+      'absent'
+      'present'
+    ,
+    4
+      'absent'
+      'present'
+    ,
+    5
+      'paired'
+      'single'
+    ,
+    6
+      'mostly unattached'
+      'at least 50% attached'
+    ,
+    7
+      'unilobed'
+      'bilobed'
+    ,
+    8
+      'anterior to anus'
+      'same level as anus'
+      'posterior to anus'
+    ,
+    9
+      'absent'
+      'present'
+    ,
+    10
+      'sacs'
+      'canals'
+    ,
+    11
+      'longitudinal'
+      'in bands'
+    ,
+    12
+      'distinct'
+      'anastomosing'
+    ,
+    13
+      'commonly < 25'
+      '25-40'
+      '> 40'
+    ,
+    14
+      'distinct'
+      'anastomosing'
+    ,
+    15
+      'continuous sheet'
+      'in bands'
+    ,
+    16
+      'distinct'
+      'anastomosing'
+    ,
+    17
+      'absent'
+      'present'
+    ,
+    18
+      'flat'
+      'cone-shaped'
+    ,
+    19
+      'absent'
+      'present'
+    ,
+    20
+      'absent'
+      'present'
+    ,
+    21
+      'absent'
+      'present'
+    ,
+    22
+      'body wall'
+      'on rectum'
+    ,
+    23
+      'anterior to anus'
+      'same level as anus'
+      'posterior to anus'
+    ,
+    24
+      'one'
+      'two or more'
+    ,
+    25
+      'posterior body wall'
+      'within gut coil'
+    ,
+    26
+      'absent'
+      'present'
+    ,
+    27
+      'absent'
+      'present'
+    ,
+    28
+      '< 50'
+      '> 50'
+    ,
+    29
+      'some scattered'
+      'entirely in rows'
+    ,
+    30
+      'absent'
+      'present'
+    ,
+    31
+      'absent'
+      'present'
+    ,
+    32
+      'blunt'
+      'pointed'
+    ,
+    33
+      'absent'
+      'present'
+    ,
+    34
+      'absent'
+      'present'
+    ,
+    35
+      'absent'
+      'present'
+    ,
+    36
+      'absent'
+      'present'
+    ,
+    37
+      'warts'
+      'rootlets'
+    ,
+    38
+      '< 90%'
+      '> 90%'
+    ,
+    39
+      'absent'
+      'present'
+    ,
+    40
+      'absent'
+      'present'
+    ,
+    41
+      'on anterior trunk'
+      'on introvert'
+    ,
+    42
+      'absent'
+      'present'
+    ,
+    43
+      'absent'
+      '1 present'
+    ,
+    44
+      'digitiform'
+      'elongate tubules '
+    ,
+    45
+      'two pairs'
+      'less than two pairs'
+    ,
+    46
+      'not fused (< 10%)'
+      'partially fused'
+      'completely fused'
+    ,
+    47
+      'not fused (< 10%)'
+      'partially fused'
+      'completely fused'
+    ,
+    48
+      'absent'
+      'present'
+    ,
+    49
+      'absent'
+      'present'
+    ,
+    50
+      'anterior 1/3 of body'
+      'middle 1/3 of body'
+      'posterior 1/3 of body'
+    ,
+    51
+      'anterior 1/3 of body'
+      'middle 1/3 of body'
+      'posterior 1/3 of body'
+    ,
+    52
+      'absent'
+      'present'
+    ,
+    53
+      '< 0.75'
+      '0.75-2'
+      '> 2'
+    ,
+    54
+      'absent'
+      'present'
+    ,
+    55
+      'absent'
+      'present'
+    ,
+    56
+      'pit'
+      'ciliated band'
+      'patch or patches'
+    ,
+    57
+      'one'
+      'two'
+    ,
+    58
+      'triangular'
+      'bilobed'
+      'multi-lobed'
+  ;
+END;
+
 BEGIN TAXA;
 	DIMENSIONS NTAX = 52;
 	TAXLABELS
