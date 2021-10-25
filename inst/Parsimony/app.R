@@ -553,6 +553,7 @@ server <- function(input, output, session) {
     r$treeLoadTime <- signif(as.numeric(Sys.time()), digits = 15)
     r$trees <- trees
     r$distances <- list()
+    r$mapping <- list()
     r$concordance <- list()
     nTip <- length(trees[[1]]$tip.label)
     
@@ -995,7 +996,7 @@ server <- function(input, output, session) {
     par(mar = c(2, 0, 0, 0))
     nStop <- length(badToGood) + 1L
     
-    Log("QualityPlot 800")
+    Log("QualityPlot 998")
     plot(NULL, xlim = c(0, 1), ylim = c(-1.5, 2.5),
          ann = FALSE, axes = FALSE)
     x <- seq.int(from = 0, to = 1, length.out = nStop)
@@ -1258,7 +1259,7 @@ server <- function(input, output, session) {
       Quartet::ManyToManyQuartetAgreement(...), similarity = FALSE))
   }
   
-  distances <- debounce(reactive({
+  distances <- reactive({
     if (length(r$trees) > 1L) {
       cached <- r$distances[[input$distMeth]]
       if (is.null(cached)) {
@@ -1268,8 +1269,9 @@ server <- function(input, output, session) {
                        'msid' = TreeDist::MatchingSplitInfoDistance,
                        'rf' = TreeDist::RobinsonFoulds,
                        'qd' = Quartet)
+        Log("distances(): ", input$distMeth)
         withProgress(
-          message = 'Calculating distances', value = 0.99,
+          message = 'Initializing distances...', value = 0.99,
           cached <- r$distances[[input$distMeth]] <- Dist(r$trees)
         )
       }
@@ -1278,12 +1280,13 @@ server <- function(input, output, session) {
       matrix(0, 0, 0)
     }
     
-  }), 200)
+  })
   
   mapping <- reactive({
     if (maxProjDim() > 1L) {
       cache <- r$mapping[[input$distMeth]]
       if (is.null(cache)) {
+        Log("mapping(): No cache available")
         withProgress(
           message = 'Mapping trees',
           value = 0.99,
@@ -1298,6 +1301,8 @@ server <- function(input, output, session) {
                             })
         )
         r$mapping[[input$distMeth]] <- cache
+      } else {
+        Log("mapping(): Using cache")
       }
       cache
     } else {
