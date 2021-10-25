@@ -556,8 +556,14 @@ server <- function(input, output, session) {
       r$rawTrees <- RenumberTips(r$rawTrees, rawLabels)
     }
     
+    if (identical(r$rawTrees, r$trees)) {
+      Log("Trees re-loaded but not changed")
+      return()
+    }
+    r$treeLoadTime <- signif(as.numeric(Sys.time()), digits = 15)
     r$trees <- r$rawTrees
     r$distances <- list()
+    r$concordance <- list()
     updateSliderInput(session, 'whichTree', min = 1L,
                       max = length(r$trees), value = 1L)
     updateNumericInput(inputId = 'keepTips', max = nTip,
@@ -700,12 +706,17 @@ server <- function(input, output, session) {
   
   concordance <- reactive({
     if (input$concordance != 'none') {
-      Concordance <- switch(input$concordance,
-                            'qc' = QuartetConcordance,
-                            'clc' = ClusteringConcordance,
-                            'phc' = PhylogeneticConcordance
-      )
-      Concordance(r$plottedTree, r$dataset)
+      cache <- r$concordance[[input$concordance]]
+      if (is.null(cache)) {
+        Concordance <- switch(input$concordance,
+                              'qc' = QuartetConcordance,
+                              'clc' = ClusteringConcordance,
+                              'phc' = PhylogeneticConcordance
+        )
+        cache <- Concordance(r$plottedTree, r$dataset)
+        r$concordance[[input$concordance]]<- cache
+      }
+      cache
     }
   })
   
@@ -791,15 +802,18 @@ server <- function(input, output, session) {
     lapply(setdiff(allConfigs, visible), hide)
   }
   
+  observeEvent(input$plotFormat, {
+               ShowConfigs(switch(input$plotFormat,
+                                  'ind' = c('whichTree', 'charChooser', 'treePlotConfig'),
+                                  'cons' = c('consConfig', 'treePlotConfig', 'droppedTips'),
+                                  'clus' = c('clusConfig', 'consConfig', 'treePlotConfig'),
+                                  'space' = c('clusConfig', 'spaceConfig'),
+                                  ''))
+  })
+  
   MainPlot <- reactive({
     if (!is.null(r$trees)) {
-      
-    ShowConfigs(switch(input$plotFormat,
-                       'ind' = c('whichTree', 'charChooser', 'treePlotConfig'),
-                       'cons' = c('consConfig', 'treePlotConfig', 'droppedTips'),
-                       'clus' = c('clusConfig', 'consConfig', 'treePlotConfig'),
-                       'space' = c('clusConfig', 'spaceConfig'),
-                       ''))
+    
     switch(input$plotFormat,
            'cons' = {
              ConsensusPlot()
@@ -922,7 +936,7 @@ server <- function(input, output, session) {
              } else {
                output$charMapLegend <- renderUI({})
                output$charNotes <- renderUI({})
-               Log("Plotting PLottedTree() 777")
+               Log("Plotting PlottedTree() 777")
                r$plottedTree <- PlottedTree()
                plot(r$plottedTree, tip.color = tipCols())
              }
@@ -935,10 +949,35 @@ server <- function(input, output, session) {
   
   PlotSize <- function () debounce(reactive(input$plotSize), 100)
   
-  output$treePlot <- renderPlot(MainPlot(),
-                                width = PlotSize(),
-                                height = PlotSize())
+  output$treePlot <- renderCachedPlot(MainPlot(), cacheKeyExpr = {
+      switch(input$plotFormat,
+             'clus' = list(r$treeLoadTime, input$plotFormat,
+                           input$keepTips, input$excludedTip,
+                           consP(),
+                           input$neverDrop, input$outgroup,
+                           input$distMeth,
+                           silThreshold(),
+                           input$consP, input$concordance),
+             'cons' = list(r$treeLoadTime, input$plotFormat,
+                           input$keepTips, input$excludedTip,
+                           consP(),
+                           input$neverDrop, input$outgroup,
+                           input$consP, input$concordance),
+             'space' = list(r$treeLoadTime, input$plotFormat,
+                       min(dims(), nProjDim()),
+                       treeCols(),
+                       treePch(),
+                       input$distMeth,
+                       input$spaceCol,
+                       input$spacePch,
+                       if (input$spacePch == 'relat') input$relators,
+                       silThreshold(),
+                       input$display),
+        Sys.time()
+      )}, sizePolicy = function(x) rep(input$plotSize, 2)
+    )
   
+    
   LogScore <- function (x) {
     (-(log10(1 - x + 1e-2))) / 2
   }
@@ -967,7 +1006,7 @@ server <- function(input, output, session) {
          paste0(dims(), 'D mapping quality (trustw. \ud7 contin.):'))
   }
   
-  output$pcQuality <- renderPlot({
+  output$pcQuality <- renderCachedPlot({
     if (length(r$trees) < 3) {
       return()
     }
@@ -976,7 +1015,11 @@ server <- function(input, output, session) {
     mppng <- mapping()[, seq_len(min(dim(mppng)[2], dims()))]
     future_promise(TreeDist::MappingQuality(dstnc, dist(mppng))['TxC'],
                    seed = NULL) %...>% QualityPlot
-  })
+  }, cacheKeyExpr = {
+    list(r$treeLoadTime, input$distMeth, dims())
+  },
+    sizePolicy = function (dims) dims
+  )
   
   
   output$howManyDims <- renderPlot({
@@ -1216,7 +1259,6 @@ server <- function(input, output, session) {
                        'msid' = TreeDist::MatchingSplitInfoDistance,
                        'rf' = TreeDist::RobinsonFoulds,
                        'qd' = Quartet)
-        Log(length(r$trees), "; ", input$distMeth)
         withProgress(
           message = 'Calculating distances', value = 0.99,
           cached <- r$distances[[input$distMeth]] <- Dist(r$trees)
@@ -1371,6 +1413,7 @@ server <- function(input, output, session) {
              plot(r$trees[[input$whichTree]])
            },
            'space' = {
+             Log("plotContent(): treespacePlot()")
              treespacePlot()
            })
   })
