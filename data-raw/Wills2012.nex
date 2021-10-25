@@ -58,7 +58,7 @@ begin data;
     Xiaoheiqingella_peculiaris     ?02?110120010?011??????010130?0000000001?00?1020000?????????????????????????????112?????
     Xystoscolex_boreogyrus         ?0?110?1??0?0?011????0001014001?0000000000?000-000??????????????????????????????112???1?
     Yunnanpriapulus_halteroformis  ?02?110?200????????????0101?010000000001?00?1000000?????????????????????????????112?????
-  ; 
+  ;
 end;
 
 
@@ -560,6 +560,7 @@ BEGIN CHARACTERS;
  "membrane without nuclei or simply with amoebocytes in association with the surface"
   "membrane containing scattered nuclei"
 ;
+END;
 
 BEGIN NOTES;
   TEXT CHARACTER=27 TEXT="Budd (2003) has drawn comparison between the patterns of cuticular ornament in association with the trunk annulae in lobopods and palacoscolecids. However, although palaeoscolecids exhibit an alternating pattern of cuticular ornament (Conway Morris 1997) and although this varies from one body region to another, adjacent annulae are identical; they exhibit homomous annulation. This contrasts with the condition in lobopods where adjacent annulae vary both in terms of their axial length and their cuticular ornamentation.";
@@ -583,7 +584,10 @@ BEGIN NOTES;
   TEXT CHARACTER=52 TEXT=" Living priapulids possess unpaired ventral nerve cords, whereas gastrotrichs, onychophorans and loriciferans possess ventral nerve cords that are paired throughout their length, and the ventral nerve cords of nematomorphs and nematodes divide at points along their length (Schmidt-Rhaesa, 1998); the situation in kinorhynchs is unresolved (paired according to Kristensen and Higgins, 1991; unpaired according to Neuhaus 1994). The condition in Ottoia is common to extant priapulids (Conway Morris, 1977).";
   TEXT CHARACTER=49 TEXT="This definition of 'spines, hooks or cones' excludes the posterior body bifurcations of Aysheaia, Kerygmachela, tardigrades, some nematomorphs, some kinorhynchs and gastrotrichs. The paired, peri-anal structures in Halicryptus and Maccabeus are much smaller relative to body width. ";
   
-END;	DIMENSIONS NTAX = 55;
+END;
+
+BEGIN TAXA;
+	DIMENSIONS NTAX = 55;
 	TAXLABELS
 		Gastrotricha
 		Kinorhyncha
