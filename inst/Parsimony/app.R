@@ -364,7 +364,7 @@ server <- function(input, output, session) {
                             }, error = function (e) NULL))
     } else {
       Log("updateData: from package")
-      dataFile <- system.file(paste0('data-raw/', source, '.nex'),
+      dataFile <- system.file(paste0('datasets/', source, '.nex'),
                                package = 'TreeSearch')
       r$chars <- ReadCharacters(dataFile)
       r$charNotes <- ReadNotes(dataFile)
@@ -387,13 +387,13 @@ server <- function(input, output, session) {
     }
     
     if (is.null(r$trees)) {
-      r$trees <- tryCatch(read.nexus(dataFile), error = function (e) NULL)
-      if (!is.null(r$trees)) {
+      r$rawTrees <- tryCatch(read.nexus(dataFile), error = function (e) NULL)
+      if (!is.null(r$rawTrees)) {
         show('displayConfig')
       }
     } else {
       if (!datasetMatchesTrees()) {
-        r$trees <- NULL
+        r$rawTrees <- NULL
         updateActionButton(session, "go", "New search")
       } else {
         show('displayConfig')
@@ -475,7 +475,7 @@ server <- function(input, output, session) {
       showNotification("Trees not in a recognized format", type = 'error')
     } else {
       treeNames <- names(trees)
-      r$trees <- c(trees)
+      r$rawTrees <- c(trees)
       pattern <- '(seed|start|ratch\\d+|final)_\\d+'
       if (length(grep(pattern, treeNames, perl = TRUE)) ==
           length(r$trees)) {
@@ -548,12 +548,16 @@ server <- function(input, output, session) {
     output$results <- TreeSummary()
   })
   
-  observeEvent(r$trees, {
-    Log("observed r$trees")
-    nTip <- length(tipLabels())
-    if (length(r$trees) > 1L) {
-      r$trees <- RenumberTips(r$trees, tipLabels())
+  observeEvent(r$rawTrees, {
+    Log("observed r$rawTrees")
+    rawLabels <- r$rawTrees[[1]]$tip.label
+    nTip <- length(rawLabels)
+    if (length(r$rawTrees) > 1L) {
+      r$rawTrees <- RenumberTips(r$rawTrees, rawLabels)
     }
+    
+    r$trees <- r$rawTrees
+    r$distances <- list()
     updateSliderInput(session, 'whichTree', min = 1L,
                       max = length(r$trees), value = 1L)
     updateNumericInput(inputId = 'keepTips', max = nTip,
@@ -617,11 +621,11 @@ server <- function(input, output, session) {
                               detail = paste0(ceiling(10^input$maxHits),
                                               ' hits; ', wtType()))
       if (inherits(results, 'phylo')) {
-        r$trees <- list(results)
+        r$rawTrees <- list(results)
         attr(r$trees, 'firstHit') <- attr(results, 'firstHit')
         attr(r$trees[[1]], 'firstHit') <- NULL
       } else {
-        r$trees <- results
+        r$rawTrees <- results
       }
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
@@ -1212,6 +1216,7 @@ server <- function(input, output, session) {
                        'msid' = TreeDist::MatchingSplitInfoDistance,
                        'rf' = TreeDist::RobinsonFoulds,
                        'qd' = Quartet)
+        Log(length(r$trees), "; ", input$distMeth)
         withProgress(
           message = 'Calculating distances', value = 0.99,
           cached <- r$distances[[input$distMeth]] <- Dist(r$trees)
