@@ -1202,37 +1202,48 @@ server <- function(input, output, session) {
       Quartet::ManyToManyQuartetAgreement(...), similarity = FALSE))
   }
   
-  distances <- reactive({
+  distances <- debounce(reactive({
     if (length(r$trees) > 1L) {
-      Dist <- switch(input$distMeth,
-                     'cid' = TreeDist::ClusteringInfoDistance,
-                     'pid' = TreeDist::PhylogeneticInfoDistance,
-                     'msid' = TreeDist::MatchingSplitInfoDistance,
-                     'rf' = TreeDist::RobinsonFoulds,
-                     'qd' = Quartet)
-      withProgress(
-        message = 'Calculating distances', value = 0.99,
-        Dist(r$trees)
-      )
+      cached <- r$distances[[input$distMeth]]
+      if (is.null(cached)) {
+        Dist <- switch(input$distMeth,
+                       'cid' = TreeDist::ClusteringInfoDistance,
+                       'pid' = TreeDist::PhylogeneticInfoDistance,
+                       'msid' = TreeDist::MatchingSplitInfoDistance,
+                       'rf' = TreeDist::RobinsonFoulds,
+                       'qd' = Quartet)
+        withProgress(
+          message = 'Calculating distances', value = 0.99,
+          cached <- r$distances[[input$distMeth]] <- Dist(r$trees)
+        )
+      }
+      cached
     } else {
       matrix(0, 0, 0)
     }
     
-  })
+  }), 200)
   
   mapping <- reactive({
     if (maxProjDim() > 1L) {
-      withProgress(
-        message = 'Mapping trees',
-        value = 0.99,
-        tryCatch(return(cmdscale(distances(), k = maxProjDim())),
-                 warning = function (e) {
-                   nDim <- as.integer(substr(e$message, 6, 7))
-                   updateSliderInput(inputId = 'spaceDim', value = nDim, max = nDim)
-                   message("Can't map into more than ", nDim, " dimensions.")
-                   return(cmdscale(distances(), k = nDim))
-                 })
-      )
+      cache <- r$mapping[[input$distMeth]]
+      if (is.null(cache)) {
+        withProgress(
+          message = 'Mapping trees',
+          value = 0.99,
+          cache <- tryCatch(cmdscale(distances(), k = maxProjDim()),
+                            warning = function (e) {
+                              nDim <- as.integer(substr(e$message, 6, 7))
+                              updateSliderInput(inputId = 'spaceDim',
+                                                value = nDim, max = nDim)
+                              message("Can't map into more than ", nDim,
+                                      " dimensions.")
+                              cmdscale(distances(), k = nDim)
+                            })
+        )
+        r$mapping[[input$distMeth]] <- cache
+      }
+      cache
     } else {
       matrix(0, 0, 0)
     }
