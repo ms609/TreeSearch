@@ -1230,7 +1230,10 @@ server <- function(input, output, session) {
           showNotification("Trees lack names", type = 'warning')
           16
         } else {
-          treeNameClustering()
+          indices <- treeNameClustering()
+          # Match pch from BGS2019 Fig. 9 for pre-loaded datasets.
+          # Embarrassingly, in BGS19 I plotted ambigAbsent instead of ambiguous. Oops.
+          c(1, 3, 4, 2, seq_len(max(indices))[-(1:4)])[indices]
         }
       }, 0)
   })
@@ -1393,7 +1396,8 @@ server <- function(input, output, session) {
         clstr <- treeNameClustering()
         clusters <- unique(clstr)
         if (length(clusters) > 1L) {
-          legend(bty = 'n', 'topright', pch = clusters, xpd = NA,
+          legend(bty = 'n', 'topright', xpd = NA,
+                 pch = c(1, 3, 4, 2, seq_len(max(clstr))[-(1:4)])[clusters],
                  paste0('~ ', attr(clstr, 'med'), ' (', table(clstr), ')'))
         }
       }
