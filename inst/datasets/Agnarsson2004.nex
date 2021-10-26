@@ -1,0 +1,1435 @@
+#NEXUS
+begin data;
+  dimensions ntax=62 nchar=242;
+  format datatype=standard gap=- missing=? Interleave=no;
+  matrix
+    Argiope                   000000?0-0000000000000000000000----00---000000000-0000000000000000000000000000-00------000000000100000000000001100000000000000?0-000000000000000-00-10--0000-----000000001?00000000?00000000000000--00000000000000000000?-00000000000000?000???00?
+    Tetragnatha               000-0000-1000100000000000000010----00---100000000-000000000000000000001-----0--00------000000000100001000000000010000010000000?0-000000001000101100-10--0000-----000000000?0000000000000?0000?0000--00?000000000100000000-00020001-10000?000010?10
+    Pimoa                     01000000-0000000000010000000020----00---200000000-00000000000001000000001-0000-00------000000000000?0000100100200100000001000000-0000000010?0100-10-10--0000-----001001010?00000010000011?10101100--00020001001000100100?-0105-01??10????000??????
+    Linyphia                  1100000100100000001000000000030----00---100000000-000000000001--------1-----0--00------00000000010000001100000001100001000000000-000001001000101010-10--0000-----001001010?00000001000011110000100--000000010010000000000-01021010010000?000101?01
+    Synotaxus_waiwa           0000000100001000011102000000040----00---100000000-1--0--000001--------1-----0--1002000100000000000000000100100000000000011000000-000010011000100-10-10--0000-----001001010?000000111101000001000100000101001100000000100?-0012002000100??000??????
+    Synotaxus_monoceros       0000000100001000011102000000040----00---100000000-1--0--000001--------001-0000-1002000100000000000000000100100000000000011000000-010010011000100-10-10--0000-----001001010?000000111101000001000100000101001100000000100?-0012002000100??000??????
+    Eidmanella                00010000-0010000011000000000050----00---100100000-000010011001--------001-0000-1000000100000000000000001100100000000000011000000-00000101100011--10-10--0000-----001001011?000100011101111101010100000000001100000100100?-0002?03010100??000??????
+    Nesticus                  00010000-0010000011001000000050----00---100100000-00001001100001000000001-0000-1000000100000000000000001100100000000000011000000-00000101100011--10-10--0000-----0110010?1?0001000111011111010101000000000011000001001001-0002?03010100??000000??0
+    Dipoena                   00000010-10001000110000000001-1100010--0200010000-00000001010001000000010100010100000000000000001000000011---1-00000110111010100-000010111010100-10-10--0000-----011100001?000101011101110001000100010001001100000010?10?-11030??????????0000?0???
+    Emertonella               00011010-10001000210000000001-1100010--0200000000-000000010101--------010100010100000100000000001000000011---1-00000110111010100-000010111010100-10-10--0000-----0011001--?2-0101021101220001000100010020011100000110111?1110301-0-01????000??0???
+    Euryopis                  00011010-10001000220000000001-1100010--0200000000-000000010101--------010100010100000100000000001000000011---1-00000110111010100-000010111010100-10-10--0000-----0011001--?2-1-0102110122000100010001002001110000011011111110301-0-??????000??0???
+    Thwaitesia                00010000-00001011110000000001-1100010--0210000000-1--0--010000100110000101000101000010000000000010001000101101-00000010001000000-000011001000000-00-11000000--0010111010?1?0101000111011100010001111010000011-0000010111?101030061-????11000??????
+    Episinus                  00011011000001011110000000001-1100010--0200000000-000000011000101110000101000101000010000000000010001000101201-00000010001000000-000011001000000-10-11000000--001011101001?0101000111011100010001111010000011000000001111101030040101??1?000??????
+    Spintharus                00010001000001011110000000001-111--1-210200000000-0000000100001011100001010000-10000000000000000100000011003-1-00000010001000000-000010001000000-10-11000000--0010111011--?010100021101110001?00111101000001100000000111?1010300401??????000??????
+    Latrodectus_geometricus   00010111102001111110000200011-1100010--0200000000-00000000001001000100010100010100000100001010001101010011---1-00000000001000010-000010001000100-10-11000000--001011100011000000001010111000000011100000000110000000011110010100301010400000??????
+    Latrodectus_mactans       00010111102001111110000200011-1100010--0200000000-00000000001001000100010100010100000100001010001101010011---1-00000000001000010-000010001000100-10-11000000--001011100011?000000010101110000000111000000001100000000111100101003010100??00000011?
+    Crustulina                00010010-00001111220000100001-1100010--0200000000-0000000000100100010001010001010000100001000001110000001003-1-000000000011000110000011001110100-1101111010100000011100011?000000121101111100000111000000001100000000111100101003????????0000?01??
+    Steatoda                  00011010-00001111110000000001-1100010--0200000000-0000000000100100010001010001010000100000000001110000001003-1-000000000011000110000010001100100-1101111010100001011100001?0000000111011110010001110000000011000000001111001011030101????000??001?
+    Carniella                 00010001000001111220000000001-1001101--0200000000-00000001000?????????01010001100------00000000010000001100110200000000001000001101101101101011--11011100101000010101011--?00010012?1011211001001?00010200011?????100100?-11?50??????????000??????
+    Robertus                  00011010-02001111220000000001-1101101--0200000000-000000010000010000000101000111000000000000000011001001100100200000000001000001100001101101011--11011110100--001010100001?000100121101111100000110001020001100000100110?-01030??????0???000??????
+    Pholcomma                 00011011000001111220000000001-1101101--0200000000-000001000000010000000001000111001000001000000010001001100100000000000001200001100001101101011--1101110010100-01010110001?000100121101111100000110001020001100000100110?-11040??????00??000??????
+    Enoplognatha_latimana     00010000-00001011110000000001-1101100--0200000000-1--0--010000001010000101000101001000101000000010001001100110301001001001000001000001000100010111101111010100000111101000?000100011101110001000110001000001000000000111100103103????????000??????
+    Enoplognatha_ovata        00010000-00001011110000000001-1101100--0200000000-1--0--0100000010100001010001010010001010000000100010011001103010010010010000010000011001000101111011110101000001111010000000100011101110001000110001000001000000000111100103103??0100??0000?0000
+    Selkirkiella_magallanes   00011001000001011210000000001-1101101--0200000000-0000000100001010100001010001110111001010000000100010011001001000000000010000011000010001010101110-11001011-0--1011101001?000100121101111100000110001000001110000000110?-01030031-??00??000??????
+    Selkirkiella_alboguttata  00011001000001011210000000001-1101101--0200000000-00000001000010101000010?000111011100101000000010001001100100100000000001000001100001000101011--10-11001011-0--1011101001?000100121101111100000110001000001110000000110?-01030031-??00??000??????
+    Phoroncidia               00011001100001000220000000011-1101100--0200000000-000000110001--------000?0000-10011001010000000110000201003-1-000001100?1000000-100010011010000-10-00--0-00-----010100001?2-011--211111211000001?0001000101100000100111?0110300601??????000??????
+    Cerocida                  000110?1102001011220000000001-1101100--0200000000-1--0--000001--------0001000111001100101000000010000001100010010000000011300000-00001100101011--11010--0-00-----0001011--?010100121101111100100110001000001100001100110?-11030???????????00??????
+    Stemmops                  00011001100001011210000010001-1101000--0200000000-0000000000000000000000010001110000000000100000110000201003-1-00000110001000000-00001100101011--10-1100000100-01010101001?000100121101221100000110001020101100000100111?0?1030??????????000??????
+    Argyrodes_argyrodes       00010000-00001111110000100001-1100000--0200000000-0000011110000000000001010001010000010001000001110000101001103100000000010000010111111000000100-0101111010100200010101001?0001001111010011000001100011110011-0110010111110103006????11?0-0000??0?
+    Argyrodes_elevatus        00010000-00001111110000100001-1100000--0200000000-0000011110000000000001010001010000010001000001110000101001103100000000010000010111?11000000100-0101111010100200010101001?0001001111010011000001100011110011-0110010111110103006????11?0-00??????
+    Neospintharus             00010000-00001111110000000001-1100000--0200000000-0000011110000100000001010001010000010000000000110000001001103100000000010000010111110000001000-01011110100--200010101001?0001001111011111000001110011110011-0110010111?01103006????11??-00??????
+    Rhomphaea                 00010000-00001011220000000001-1100000--0200000000-0000011110000000000001010001010000010001000000110000001001103100000000010010010101111000001100-01111010100--2000101011--?00010012110111110000011000111100110011000111-?-11030061-0112??000??????
+    Ariamnes                  00010010-01001111220000100001-1100000--0200000000-000001111000000000000101000101000001000100000111000000100110310000000001000000-101111001001100-01111010100--200010101011?00010012110111110000011100111100110011000111-?-11030061-0113??000??????
+    Faiditus                  00010110-00001111110000000001-1100000--0200000000-0000011110000000000001010001010000100000000000110000001001101100000000010000010011011000000000-0101111010100000010101001?000100111101001100?001100011110011-0110010111?11103006???111??000??????
+    Kochiura_aulica           00010001100001111110000000111-1101010--0200000000-00000100000010000000000?0001110010110000100000110000001001101000000000010000010000010001000101011011110001000010111010010010100?21101011100000110001100001110000000111?10103103????????0000?00??
+    Kochiura_rosea            00010001100001111110000000111-1101010--0200000000-000001000000100000000001000111101001000010000011000000100110000000000001000001000001000100010101101111000100001011101001?010100021101011100000110001100001110000000111?10103103????????0?0??????
+    Anelosimus_lorenzo        00110110-00001111110000010011-111--0-110201000000-0000010000000100000000001000-1000010000000001011000000100110100000000001000000-0000100010001010111110100010-000011101001?1-0100011101010000000110001100001110000000111?10103105????00??110??????
+    Anelosimus_rupununi       00110110-00001111110000010011-111--0-110201000000-0000010000000100000000001000-1000010000000001011000000100110100000000001000000-0000100010001010111110100010-000011101001?1-0100011101010000000110001100001110000000111?10103105????00??110??????
+    Anelosimus_pulchellus     10110000-00001111110000000001-121--0-010200000000-0100110000000100000100000000-1000000000?00000011?00000100110100000000001000000-0000100010101010110111?000???????111010?0?1-0100011111011110000110001100001110000000111?101031????????????0??????
+    Anelosimus_vittatus       10110000-00001111110000000001-121--0-010200000000-0100110000000100000100000000-1000000000100000011100000100110100000000001000000-000010001010101011011110000--001011101000?1-0100011111011110000110001100001110000000111?10103103????00??000??????
+    Anelosimus_sp_A           00010000-00001111110000011001-111--0-000200010100-0000110000000000000000000000-1000010000000000011000000100110100000000001000000-00001000101010101101111000100101011101001?1-0100011111011100000110001100001110000000111?101031???????????00??????
+    Anelosimus_sp_B           00010000-00001111110000011001-111--0-000200010100-0000110000000000000000000000-1000010000000000011000000100110100000000001000000-00001000101010101101111000100101011101001?1-0100011111011100000110001100001110000000111?101031???????????00??????
+    Anelosimus_analyticus     00110000-00001111110000011001-111--0-000200000000-0001110000000100000100000000-1000011000000000011100000100110100000000001000000-00001000100010101101111000110111011101001?1-0100011101011110000110001100001100000000111?101031011-0100??1?0??????
+    Anelosimus_eximius        00110000-00001111110000011001-111--0-000200000000-0001110000000100000100000000-1000011010001000011000000100110100000000001000010-00001000100010101101111000110111011101001?1-0100011101011100000110001100001100000000111?101031011-01000?110??????
+    Anelosimus_cf_jucundus    00110000-00001111110000011001-111--0-000200001000-0001110000000100000100000000-1000011010101000011100000100110100000000001000010-00001000100010101101111000110111011101000?1-01000111010111000001100011000011000?0000111?101031011-0100??110??????
+    Anelosimus_studiosus      00110000-00001111110000011001-111--0-000200000000-0001110000000100000100000000-1000011010101000011100000100110100000000001000010-00001000100010101101111000110111011101001?1-01000111010111?0000110001100001100000000111?101031011-0100??110??????
+    Chrysso                   00010100-00001111220000000001-111--0-11020000000100000010000000100000100000100-1000000000000000011000000100110100000000001000000-000011001000100-111110?000100001011101011?1-1-00111101111100000110001101001010000000111?101031??????????000??????
+    Nesticodes                00010010-00001111120000000001-111--0-010200000000-0000010000000110000000000000-1000000000000000011000000100211-000000000010000010000010001010100-1101111000100000111101011?1-1-00011101110001000111001100001010000000111?10103103010100??000??????
+    Theridion_frondeum        00010000-00001111120000000001-111--0-11020000000110000010110000000001000000110-1000000000000000011000001100?01-00010000001000001000001000100010111101111010100001111101011?1-1-00021101111000000111001100001110000000111?10103103????00??000??????
+    Theridion_longipedatum    00010000-00001111120000000001-111--0-11020000000110000010110000000001000000110-1000000000000000011000001100??03000100000010000010000010001010101-1101111010100001111101011?1-1-0002110111100000011100110000111000?000111?10103103????????000??????
+    Theridion_varians         00010000-00001111220000000001-111--0-01020000000110000010100000000101000000100-1000011000000000011000000100211-000000000010010010000010001000101110-111100010000001110101111-1-0002110111100000011100110000111000000011111010310300??00?0000111100
+    Theridion_pictum          00010000-00001111220000000001-111--0-01020000000110000010100000000101000000100-1000011000000000011000000100211-00000000001001?0100000100?1??0?011???111??0????????111??01?11-1-?002?1??1?100?00011100110?001110000000111110103103000100?0??01111??
+    Coleosoma                 00010000-00001111220000000001-111--0-01010000000110000010110000000101000000000-1000000000000000011000001100201-00010000001000001000001100100010111101110010100001011101011?1-1-00?2110111100000011?0011000011??0000?0111??01?31030???00??0001111??
+    Tidarren                  00010000-00001111220002000001-1100100--020001000101--0--000000010000000000000111000001000000000011000000100211-000000000010000011000010001010100-10-1100000100-01011101011?1-1-02011101110000000111001?00001010000000111?101031031-0100??0010?00??
+    Helvibis                  00010011000001111220000000001-111--0-01010000000100000110110001002100000000100-1000000000010000010000000100201-000000000014000010000011001000100-1101110010100001011101011?1-1-00?21101111100000110001001001110000000111?101031??????????000??????
+    Theridula                 10010000-00001111220000000001-111--0-01020000000100000010000000000101000000000-1000000000000000010000000100201-00000000001000001000001101101011--1101111000100001011101011?1-1-001211011111001001100011000011?000?000111?10103103????00??000??????
+    Ameridion_sp              00000000-00001111220000000001-111--0-010200000000-1--0--0000000100001000000100-1000000000000000010000000100?11-000100000010000010000011001010101210-1111000101001011101011?1-1-00021101111102000110001100001100000000111?101031??????????000??????
+    Ameridion_cf_petrum       00000000-00001111220010000001-111--0-010200000000-1--0--0000000100001000000100-1000000000000000010000000100?11-000100000010000010000011001010101210-1111000101001011101011?1-1-00021101111102000110001100001100000000111?101031??????????000??????
+    Thymoites                 00010000-00001111220010000001-112--0----200000000-000000000001--------00??000--00------00000000000000000100211-000000000010010010000011001010100-10-1110000101001011101011?1-1-00121101111100000110001100001110000000111?001030??????????000??????
+    Achaearanea_tepidariorum  00010000-00001111120001000001-111--0-011100000010-001001000000001010001-----0--00------00000000011000000100211-000000000010000010000011001010100-1111111000100001111101011?1-1-02011101?10000000111001100001010000000111?10103105????????110??????
+    Achaearanea_vervoorti     00010000-00001111120001000001-111--0-011100000010-001001000000001010001-----0--00------00000000011000000100211-000000000010000010000011001010100-1111111000100001111101011?1-1-02011101?10000000111001100001010000000111?10103105????00??1100?????
+    Achaearanea_wau           00010000-00001111120001000001-111--0-011100000000-001001000000001010001-----0--00------00000010011000000100111-000000000010000010000011001010100-111111100010000111110101101-1-02011101?10000000111001100001010000000111?10103103010100??00000010?
+  ;                                                                     
+end;                                                                       
+
+
+BEGIN CHARACTERS;
+  CHARLABELS
+    [001] 'Female genitalia: Epigynal ventral margin'
+    [002] 'Female genitalia: Epigynal dorsal plate'
+    [003] 'Female genitalia: Epigynal plate surface'
+    [004] 'Female genitalia: Copulatory pore position'
+    [005] 'Female genitalia: Copulatory pore shape'
+    [006] 'Female genitalia: Copul. bursa ant. margin'
+    [007] 'Female genitalia: Cop. duct to spermath'
+    [008] 'Female genitalia: Copulatory duct'
+    [009] 'Female genitalia: Copul. duct rel. to spermath.'
+    [010] 'Female genitalia: Spermathecal number'
+    [011] 'Female genitalia: Spermathecal shape'
+    [012] 'Female genitalia: Spermathecal accessory lobes'
+    [013] 'Female genitalia: Fertilization duct sclerot.'
+    [014] 'Male genitalia: Tibial distal end'
+    [015] 'Male genitalia: Tibial rim'
+    [016] 'Male genitalia: Tibial rim setae'
+    [017] 'Male genitalia: Tibial rim protrution'
+    [018] 'Male genitalia: Tibial retrol. trichob.'
+    [019] 'Male genitalia: Tibial prol.trichob.'
+    [020] 'Male genitalia: Patellal spur'
+    [021] 'Male genitalia: Cymbium'
+    [022] 'Male genitalia: Cymbial retromargin'
+    [023] 'Male genitalia: Cymb. dorsob. margin'
+    [024] 'Male genitalia: Cymbial dist. prom.'
+    [025] 'Male genitalia: Cymbial mesal margin'
+    [026] 'Male genitalia: Cymbial tip sclerotization'
+    [027] 'Male genitalia: Cymbial tip setae'
+    [028] 'Male genitalia: Cymbial sheath'
+    [029] 'Male genitalia: Paracymbium (PC)'
+    [030] 'Male genitalia: PC'
+    [031] 'Male genitalia: Bulb-cymbium lock mechan.'
+    [032] 'Male genitalia: Lock placement'
+    [033] 'Male genitalia: Lock mechanism'
+    [034] 'Male genitalia: Cymbial hook orient.'
+    [035] 'Male genitalia: Cymbial hook'
+    [036] 'Male genitalia: Cymbial hook inferior groove'
+    [037] 'Male genitalia: Cymbial hook tip'
+    [038] 'Male genitalia: Cymbial hood size'
+    [039] 'Male genitalia: Cymbial hood region'
+    [040] 'Male genitalia: Bulbal sclerite of lock mechanism'
+    [041] 'Male genitalia: Alveolus placement'
+    [042] 'Male genitalia: Alveolar cavity'
+    [043] 'Male genitalia: Alveolus shape'
+    [044] 'Male genitalia: Subtegular retrolateral margin'
+    [045] 'Male genitalia: Tegulum size'
+    [046] 'Male genitalia: Tegulum ectal margin'
+    [047] 'Male genitalia: Tegular groove'
+    [048] 'Male genitalia: Tegular arch'
+    [049] 'Male genitalia: Tegular pit'
+    [050] 'Male genitalia: Tegular pit, E interaction'
+    [051] 'Male genitalia: SDT Switchbacks I & II'
+    [052] 'Male genitalia: SDT SB I'
+    [053] 'Male genitalia: SDT SB II'
+    [054] 'Male genitalia: SDT post-SB II turn'
+    [055] 'Male genitalia: SDT SB I & II segm. alignment'
+    [056] 'Male genitalia: SDT SB I & II orient.'
+    [057] 'Male genitalia: SDT RSB I & II'
+    [058] 'Male genitalia: SDT SB III'
+    [059] 'Male genitalia: SDT SB IV'
+    [060] 'Male genitalia: SDT entering E'
+    [061] 'Male genitalia: SDT constriction'
+    [062] 'Male genitalia: Conductor'
+    [063] 'Male genitalia: C tip width'
+    [064] 'Male genitalia: C with a groove for embolus; entire;
+    [065] 'Male genitalia: C surface'
+    [066] 'Male genitalia: C folding'
+    [067] 'Male genitalia: C tip sclerotization'
+    [068] 'Male genitalia: C base'
+    [069] 'Male genitalia: C origin'
+    [070] 'Male genitalia: Subconductor'
+    [071] 'Male genitalia: Median apophysis'
+    [072] 'Male genitalia: MA and sperm duct'
+    [073] 'Male genitalia: MA-tegulum attachment'
+    [074] 'Male genitalia: MA-tegular connection'
+    [075] 'Male genitalia: MA form'
+    [076] 'Male genitalia: MA central region'
+    [077] 'Male genitalia: MA apophysis II'
+    [078] 'Male genitalia: MA distal tip'
+    [079] 'Male genitalia: MA hood form'
+    [080] 'Male genitalia: Theridioid tegular apophysis'
+    [081] 'Male genitalia: TTA branches'
+    [082] 'Male genitalia: TTA apex'
+    [083] 'Male genitalia: TTA form'
+    [084] 'Male genitalia: TTA basal portion'
+    [085] 'Male genitalia: TTA distal tip'
+    [086] 'Male genitalia: TTA surface'
+    [087] 'Male genitalia: E and TTA'
+    [088] 'Male genitalia: E tip'
+    [089] 'Male genitalia: E origin'
+    [090] 'Male genitalia: E surface'
+    [091] 'Male genitalia: E shape'
+    [092] 'Male genitalia: E spiral'
+    [093] 'Male genitalia: E spiral'
+    [094] 'Male genitalia: E form'
+    [095] 'Male genitalia: E distal rim'
+    [096] 'Male genitalia: E terminus'
+    [097] 'Male genitalia: E-tegulum junction'
+    [098] 'Male genitalia: E base'
+    [099] 'Male genitalia: Embolic division b'
+    [100] 'Male genitalia: E spiral insertive piece'
+    [101] 'Male genitalia: Extra tegular sclerite'
+    [102] 'Somatic morphology: Lateral eyes (male)'
+    [103] 'Somatic morphology: ME (M)'
+    [104] 'Somatic morphology: AME size vs. ALE (M)'
+    [105] 'Somatic morphology: AME-ALE separ. (F)'
+    [106] 'Somatic morphology: Chel. promargin'
+    [107] 'Somatic morphology: Chel. anterior tooth shape'
+    [108] 'Somatic morphology: Chel. ant. tooth no.'
+    [109] 'Somatic morphology: Chel. prox. tooth size'
+    [110] 'Somatic morphology: Chel. posterior margin'
+    [111] 'Somatic morphology: Chel. post. tooth no.'
+    [112] 'Somatic morphology: Chel. furrow'
+    [113] 'Somatic morphology: Chel. sexual dimorph.'
+    [114] 'Somatic morphology: Chel. ectal surface (M)'
+    [115] 'Somatic morphology: Chel. ant.base'
+    [116] 'Somatic morphology: Chel. apophysis (M)'
+    [117] 'Somatic morphology: Chel. paturon length'
+    [118] 'Somatic morphology: Chel. paturon width'
+    [119] 'Somatic morphology: Chel. fang length (M)'
+    [120] 'Somatic morphology: Chel. fang shape'
+    [121] 'Somatic morphology: Chel. hairs'
+    [122] 'Somatic morphology: Chel. boss'
+    [123] 'Somatic morphology: Carap.'
+    [124] 'Somatic morphology: Carap. height (M)'
+    [125] 'Somatic morphology: Carap. color.'
+    [126] 'Somatic morphology: Carapace shape'
+    [127] 'Somatic morphology: Carapace hairiness'
+    [128] 'Somatic morphology: Carap. pars stridens'
+    [129] 'Somatic morphology: Regular pars stridens'
+    [130] 'Somatic morphology: Interocular area'
+    [131] 'Somatic morphology: Clypeus'
+    [132] 'Somatic morphology: Ocular area setae (M)'
+    [133] 'Somatic morphology: Clypeal setae (M)'
+    [134] 'Somatic morphology: Labium distal margin'
+    [135] 'Somatic morphology: Labium-sternum connection'
+    [136] 'Somatic morphology: Labium shape'
+    [137] 'Somatic morphology: Sternum'
+    [138] 'Somatic morphology: Sternocoxal tubercles'
+    [139] 'Somatic morphology: Sternum setal bases'
+    [140] 'Somatic morphology: Pedicel location'
+    [141] 'Somatic morphology: Pedicel lyriform organs'
+    [142] 'Somatic morphology: Abdomen'
+    [143] 'Somatic morphology: Abd. color pattern'
+    [144] 'Somatic morphology: Abd. folium'
+    [145] 'Somatic morphology: Dorsal band'
+    [146] 'Somatic morphology: Abd. dot pigment'
+    [147] 'Somatic morphology: Abd. pedicel area (M)'
+    [148] 'Somatic morphology: Abd. pedicel area sclerot.'
+    [149] 'Somatic morphology: Abd. supra-pedicellate nubbins'
+    [150] 'Somatic morphology: Stridulatory pick row (SPR)'
+    [151] 'Somatic morphology: SPR form'
+    [152] 'Somatic morphology: SPR pick number'
+    [153] 'Somatic morphology: SPR ectally-oriented picks'
+    [154] 'Somatic morphology: SPR insertion'
+    [155] 'Somatic morphology: SPR region'
+    [156] 'Somatic morphology: SPR mesal pointing picks'
+    [157] 'Somatic morphology: SPR mp-picks angle'
+    [158] 'Somatic morphology: SPR setal bases'
+    [159] 'Somatic morphology: SPR'
+    [160] 'Somatic morphology: SPR dorsal pick spacing'
+    [161] 'Somatic morphology: SPR relative to pedicel'
+    [162] 'Somatic morphology: Additional stridulatory picks'
+    [163] 'Somatic morphology: Suprapedicillate dorsal proprio.'
+    [164] 'Somatic morphology: Suprapedicillate ventrolat. proprio.'
+    [165] 'Somatic morphology: Abd. suprapedicellate apod.'
+    [166] 'Somatic morphology: Abd. surface'
+    [167] 'Somatic morphology: Sigilla'
+    [168] 'Somatic morphology: Epiandrous fusules'
+    [169] 'Somatic morphology: Epiandrous fusule'
+    [170] 'Somatic morphology: Epiandrous fusule pair number'
+    [171] 'Somatic morphology: Male seminal vesicula'
+    [172] 'Somatic morphology: Colulus'
+    [173] 'Somatic morphology: Colulus size'
+    [174] 'Somatic morphology: Colular setae'
+    [175] 'Somatic morphology: Colular setae number (F)'
+    [176] 'Somatic morphology: Palpal claw (female)'
+    [177] 'Somatic morphology: Palpal claw'
+    [178] 'Somatic morphology: Palpal claw dentition (female)'
+    [179] 'Somatic morphology: Palpal tibial trichob. (F)'
+    [180] 'Somatic morphology: Palpal tarsal setae (F)'
+    [181] 'Somatic morphology: Palpal tarsus dorsal setae (F)'
+    [182] 'Somatic morphology: Femur I relative to II'
+    [183] 'Somatic morphology: Femoral macrosetae'
+    [184] 'Somatic morphology: Leg IV rel. length (M)'
+    [185] 'Somatic morphology: Leg IV rel. length (F)'
+    [186] 'Somatic morphology: Femur vs. metat.'
+    [187] 'Somatic morphology: Metat. vs. tibia'
+    [188] 'Somatic morphology: Metatarsal ventral macrosetae'
+    [189] 'Somatic morphology: Metat. I trichob. pos.'
+    [190] 'Somatic morphology: Metatarsus III trichobothrium'
+    [191] 'Somatic morphology: Metatarsus IV trichobothrium'
+    [192] 'Somatic morphology: Patella-tibia autospasy'
+    [193] 'Somatic morphology: Tarsus IV setae'
+    [194] 'Somatic morphology: Tarsus IV comb'
+    [195] 'Somatic morphology: Tarsus IV comb'
+    [196] 'Somatic morphology: Tarsus IV comb dors. margin'
+    [197] 'Somatic morphology: Tarsus I ventral setae'
+    [198] 'Somatic morphology: Tarsal organ size'
+    [199] 'Somatic morphology: Tarsus IV central claw vs. lat. (M)'
+    [200] 'Somatic morphology: Tarsus IV central claw (F)'
+    [201] 'Spinnarets: Spinneret insert.'
+    [202] 'Spinnarets: Spinneret sclerotized ring'
+    [203] 'Spinnarets: ALS median surface'
+    [204] 'Spinnarets: ALS PI spigot bases'
+    [205] 'Spinnarets: ALS piriform field size'
+    [206] 'Spinnarets: PLS FL spigot'
+    [207] 'Spinnarets: PLS post CY base'
+    [208] 'Spinnarets: CY spigot bases'
+    [209] 'Spinnarets: CY shaft surface'
+    [210] 'Spinnarets: PLS CY spigot number'
+    [211] 'Spinnarets: PLS AC spigot number'
+    [212] 'Spinnarets: PLS FL spigot'
+    [213] 'Spinnarets: PLS AG spigot number (F)'
+    [214] 'Spinnarets: PLS AG spigot size'
+    [215] 'Spinnarets: PLS anterior AG spigot shape'
+    [216] 'Spinnarets: PLS posterior AG spigot shape'
+    [217] 'Spinnarets: PLS aggregate gland form'
+    [218] 'Spinnarets: PLS theridiid AG position'
+    [219] 'Spinnarets: PLS AG and FL (M)'
+    [220] 'Spinnarets: PMS mAP nubbins'
+    [221] 'Spinnarets: PMS CY spigot base'
+    [222] 'Spinnarets: PMS AC spigot no.'
+    [223] 'Spinnarets: PMS mAP spigot shaft'
+    [224] 'Web building: Prey-catching web'
+    [225] 'Web building: Web'
+    [226] 'Web building: Sticky silk in web'
+    [227] 'Web building: Sticky silk placement'
+    [228] 'Web building: Wrap-bite attack'
+    [229] 'Web building: Sticky silk wrap attack'
+    [230] 'Web building: Egg sac'
+    [231] 'Web building: Egg case'
+    [232] 'Web building: Egg sac outermost fibers'
+    [233] 'Web building: Egg sac fiber ultrastructure'
+    [234] 'Web building: Web construction'
+    [235] 'Behaviour: Sex ratio'
+    [236] 'Behaviour: Male palp amputation'
+    [237] 'Behaviour: First palpal insert.'
+    [238] 'Behaviour: Palpal insertions'
+    [239] 'Behaviour: Sperm induction'
+    [240] 'Behaviour: Mating thread'
+    [241] 'Behaviour: Bulbal movements'
+    [242] 'Behaviour: Male during sperm depos.'
+  ;
+
+  STATELABELS
+    1
+    'entire'
+    'with scape'
+    ,
+    2
+    'absent'
+    'present'
+    ,
+    3
+    'smooth'
+    'ridged'
+    ,
+    4
+    'caudal'
+    'ventral'
+    ,
+    5
+    'wide'
+    'narrow slits'
+    ,
+    6
+    'entire'
+    'medially acute'
+    ,
+    7
+    'posterior'
+    'lat./anterior'
+    ,
+    8
+    'simple loop'
+    '2 or more loops'
+    ,
+    9
+    'apart'
+    'encircling'
+    ,
+    10
+    'two'
+    'four'
+    ,
+    11
+    'ovoid'
+    'elongate'
+    'dumbbell'
+    ,
+    12
+    'absent'
+    'present'
+    ,
+    13
+    'light'
+    'heavy'
+    ,
+    14
+    'subequal to base'
+    'broadened'
+    ,
+    15
+    'slightly asymmetric'
+    'scoop-shaped'
+    ,
+    16
+    'irregular'
+    'regular, strong setae'
+    ,
+    17
+    'dorsal to cymb.'
+    'faces bulb'
+    ,
+    18
+    '=>three'
+    'two'
+    'one or none'
+    ,
+    19
+    '=>two'
+    'one'
+    'none'
+    ,
+    20
+    'absent'
+    'present'
+    ,
+    21
+    'entire'
+    'expanded retrolaterally'
+    ,
+    22
+    'entire'
+    'w/apoph.'
+    'groove'
+    ,
+    23
+    'entire'
+    'incised'
+    'ridged'
+    ,
+    24
+    'entire'
+    'w/apoph.'
+    'Latrod.'
+    ,
+    25
+    'entire'
+    'incised'
+    ,
+    26
+    'normal'
+    'light'
+    ,
+    27
+    'normal'
+    'thick and curved'
+    ,
+    28
+    'absent'
+    'present'
+    ,
+    29
+    'present'
+    'absent'
+    ,
+    30
+    'Argio.'
+    'Tetrag.'
+    'Pimoa'
+    'Liny.'
+    'cup'
+    'Nestic.'
+    ,
+    31
+    'absent'
+    'present'
+    ,
+    32
+    'basal'
+    'distal'
+    'central'
+    ,
+    33
+    'hook'
+    'hood'
+    'Theridula'
+    ,
+    34
+    'downwards'
+    'upwards'
+    ,
+    35
+    'inside cymbium'
+    'ectal margin'
+    ,
+    36
+    'absent'
+    'present'
+    ,
+    37
+    'blunt'
+    'strongly tapering'
+    ,
+    38
+    'narrow'
+    'broad'
+    'Spintharus'
+    ,
+    39
+    'translucent'
+    'opaque'
+    ,
+    40
+    'MA'
+    'E base'
+    ,
+    41
+    'ectal'
+    'central'
+    'mesal'
+    ,
+    42
+    'simple'
+    'with alveolar sclerite'
+    ,
+    43
+    'suboval'
+    'mesal extension'
+    ,
+    44
+    'entire'
+    'lobed'
+    ,
+    45
+    'normal'
+    'huge'
+    ,
+    46
+    'entire'
+    'protruded'
+    ,
+    47
+    'absent'
+    'present'
+    ,
+    48
+    'absent'
+    'present'
+    ,
+    49
+    'absent'
+    'present'
+    ,
+    50
+    'E base'
+    'E apophysis'
+    ,
+    51
+    'present'
+    'absent'
+    ,
+    52
+    'separate'
+    'touching'
+    ,
+    53
+    'entirely in tegulum'
+    'terminates in E'
+    ,
+    54
+    'absent'
+    'present'
+    ,
+    55
+    'diverg.'
+    'parallel'
+    ,
+    56
+    'in plane'
+    'out of plane'
+    ,
+    57
+    'absent'
+    'present'
+    ,
+    58
+    'absent'
+    'present'
+    ,
+    59
+    'absent'
+    'present'
+    ,
+    60
+    'clockwise'
+    'counter-clockwise'
+    ,
+    61
+    'gradual'
+    'abrupt before SB I'
+    ,
+    62
+    'present'
+    'absent '
+    ,
+    63
+    'subequal to base'
+    'enlarged'
+    ,
+    64
+    'with a groove for embolus'
+    'entire'
+    ,
+    65
+    'smooth'
+    'heavily ridged'
+    ,
+    66
+    'entire'
+    'complex'
+    'Helvibis'
+    ,
+    67
+    'like base'
+    'more than base'
+    ,
+    68
+    'entire'
+    'grooved'
+    ,
+    69
+    'tegular margin'
+    'apical to teg. margin'
+    ,
+    70
+    'absent'
+    'present'
+    ,
+    71
+    'present'
+    'absent'
+    ,
+    72
+    'not in MA'
+    'inside MA'
+    ,
+    73
+    'membraneous'
+    'fused'
+    ,
+    74
+    'broad'
+    'narrow'
+    ,
+    75
+    'unbranched'
+    'two branches'
+    ,
+    76
+    'entire'
+    'w/apophysis'
+    ,
+    77
+    'absent'
+    'present'
+    ,
+    78
+    'entire'
+    'hooded'
+    ,
+    79
+    'narrow, pit-like'
+    'scoop-shaped'
+    ,
+    80
+    'absent'
+    'present'
+    ,
+    81
+    'unbranched'
+    'two branches'
+    ,
+    82
+    'entire'
+    'with a small apophysis'
+    ,
+    83
+    'entire'
+    'grooved'
+    'excavate'
+    ,
+    84
+    'bulky'
+    'huge, membranous'
+    ,
+    85
+    'entire'
+    'hooked'
+    ,
+    86
+    'smooth'
+    'ridged'
+    ,
+    87
+    'loosely assoc.'
+    'E enclosed in TTA'
+    ,
+    88
+    'entire'
+    'bifid'
+    ,
+    89
+    'retroventral on tegulum'
+    'retrolateral'
+    ,
+    90
+    'smooth'
+    'ridged'
+    ,
+    91
+    'short to moderate'
+    'extremely long'
+    ,
+    92
+    'normal'
+    'thick, much broader than tip'
+    ,
+    93
+    'suboval or round'
+    'distinctly flattened'
+    ,
+    94
+    'entire'
+    'with transverse suture'
+    ,
+    95
+    'entire'
+    'deeply grooved'
+    ,
+    96
+    'abrupt'
+    'with a distal apophysis'
+    ,
+    97
+    'fixed'
+    'membraneous'
+    ,
+    98
+    'entire'
+    'lobed'
+    ,
+    99
+    'absent'
+    'present'
+    ,
+    100
+    'entire'
+    'break-off point'
+    ,
+    101
+    'absent'
+    'present'
+    ,
+    102
+    'juxtaposed'
+    'separate'
+    ,
+    103
+    'normal'
+    'on tubercle'
+    'eye region raised'
+    ,
+    104
+    'subequal'
+    'smaller'
+    ,
+    105
+    '>1 diam.'
+    '=.0141diam.'
+    ,
+    106
+    'toothed'
+    'smooth'
+    ,
+    107
+    'blunt'
+    'pointed'
+    ,
+    108
+    'four+ three'
+    'two'
+    'one'
+    ,
+    109
+    '=.014adjacent'
+    '>adjacent'
+    ,
+    110
+    'toothed'
+    'smooth'
+    ,
+    111
+    'four+ three'
+    'two'
+    'one'
+    ,
+    112
+    'smooth'
+    'denticulate'
+    ,
+    113
+    'subequal'
+    'male larger'
+    ,
+    114
+    'smooth'
+    'stridulatory'
+    ,
+    115
+    'rounded'
+    'with a distinct knob'
+    ,
+    116
+    'absent'
+    'present'
+    ,
+    117
+    'normal'
+    'short'
+    ,
+    118
+    'normal'
+    'thin'
+    ,
+    119
+    'normal'
+    'huge'
+    ,
+    120
+    'cylindrical'
+    'sickle-shaped'
+    ,
+    121
+    'weakly serrate'
+    'strongly serrate'
+    ,
+    122
+    'present'
+    'absent'
+    ,
+    123
+    'smooth'
+    'rugose'
+    'scaly'
+    'rippled'
+    'bumpy'
+    ,
+    124
+    'normal'
+    'raised (hadrotarsid)'
+    ,
+    125
+    'uniform'
+    'longitudinal dark band'
+    ,
+    126
+    'longer than wide'
+    'subequal'
+    ,
+    127
+    'sparse or patchy'
+    'uniform'
+    ,
+    128
+    'irregular'
+    'regular ridges'
+    ,
+    129
+    'separate'
+    'continuous'
+    ,
+    130
+    'flush with clypeus'
+    'projecting'
+    ,
+    131
+    'concave or flat'
+    'projected'
+    ,
+    132
+    'sparse'
+    'in a dense field'
+    ,
+    133
+    'normal'
+    'modified'
+    ,
+    134
+    'rebordered'
+    'not rebord.'
+    ,
+    135
+    'seam'
+    'fused'
+    ,
+    136
+    'subrectangular'
+    'triangular'
+    ,
+    137
+    'elongate'
+    'subequal or wider than long'
+    ,
+    138
+    'present'
+    'absent'
+    ,
+    139
+    'unmodified'
+    'raised'
+    ,
+    140
+    'anterior'
+    'medial'
+    ,
+    141
+    'narrow'
+    'broad'
+    ,
+    142
+    'w/paired humps'
+    'ellipisoid, smooth'
+    ,
+    143
+    'folium'
+    'uniform or unpigm.'
+    ,
+    144
+    'spots or blotches'
+    'central band'
+    ,
+    145
+    'edge light'
+    'edge dark'
+    'Ameridion'
+    ,
+    146
+    'silver'
+    'non-reflective, dull'
+    ,
+    147
+    'smooth'
+    'sclerotized'
+    ,
+    148
+    'continuous'
+    'separ.'
+    ,
+    149
+    'abs.'
+    'present'
+    ,
+    150
+    'absent'
+    'present'
+    ,
+    151
+    'weakly keeled'
+    'strongly keeled'
+    ,
+    152
+    'three or less'
+    'four or more'
+    ,
+    153
+    'present'
+    'absent'
+    ,
+    154
+    'flush with abd. surface'
+    'on ridge'
+    ,
+    155
+    'smooth'
+    'grooved'
+    ,
+    156
+    'absent'
+    'present'
+    ,
+    157
+    'dorsal'
+    'perp. or ventral'
+    ,
+    158
+    'low, gently ridged'
+    'acute'
+    ,
+    159
+    'straight'
+    'distinctly curved'
+    'argyrodine'
+    ,
+    160
+    'normal'
+    'compressed'
+    ,
+    161
+    'lateral'
+    'dorsal'
+    ,
+    162
+    'absent'
+    'present'
+    ,
+    163
+    'abs.'
+    'present'
+    ,
+    164
+    'abs.'
+    'pres.'
+    ,
+    165
+    'rugose'
+    'smooth'
+    ,
+    166
+    'smooth'
+    'with scuta'
+    ,
+    167
+    'conspicuous'
+    'inconspicuous, unicolor.'
+    ,
+    168
+    'present'
+    'absent'
+    ,
+    169
+    'in pair of sockets'
+    'in a row'
+    ,
+    170
+    '>ten'
+    '<=eight'
+    ,
+    171
+    'small'
+    'large and dark'
+    ,
+    172
+    'present'
+    'absent'
+    'invaginated'
+    ,
+    173
+    'large'
+    'small'
+    ,
+    174
+    'present'
+    'absent'
+    ,
+    175
+    'three or more'
+    'two'
+    ,
+    176
+    'present'
+    'absent'
+    ,
+    177
+    'attenuate'
+    'palmate'
+    'semi-palmate'
+    ,
+    178
+    'dense'
+    'sparse'
+    ,
+    179
+    '>six'
+    '3–5'
+    '1–2'
+    ,
+    180
+    'smooth'
+    'serrated'
+    ,
+    181
+    'present'
+    'absent'
+    ,
+    182
+    'subequal'
+    'robust, larger'
+    ,
+    183
+    'present'
+    'absent'
+    ,
+    184
+    'third'
+    'second'
+    'longest'
+    ,
+    185
+    'third'
+    'second'
+    'longest'
+    ,
+    186
+    'metat. longer'
+    'metat. shorter'
+    ,
+    187
+    'metat. longer'
+    'metat. shorter'
+    ,
+    188
+    'normal'
+    'thick'
+    ,
+    189
+    'proxim.'
+    'distal'
+    'submed.'
+    ,
+    190
+    'present'
+    'absent'
+    ,
+    191
+    'absent'
+    'present'
+    ,
+    192
+    'absent'
+    'present '
+    ,
+    193
+    'smooth'
+    'serrate (tarsal comb)'
+    ,
+    194
+    'smooth'
+    'theridiid grooves'
+    ,
+    195
+    'simple, straight'
+    'curved hooks'
+    ,
+    196
+    'straight'
+    'notched'
+    ,
+    197
+    'ungrouped'
+    'grouped'
+    ,
+    198
+    'small (normal)'
+    'enlarged'
+    ,
+    199
+    'short'
+    'longer'
+    ,
+    200
+    'normal'
+    'long'
+    'minute'
+    ,
+    201
+    'normal'
+    'abd. extend. beyond'
+    ,
+    202
+    'absent'
+    'present'
+    ,
+    203
+    'normal'
+    'w/parallel ridges'
+    ,
+    204
+    'normal'
+    'reduced'
+    ,
+    205
+    'large'
+    'small'
+    ,
+    206
+    '= PLS CY'
+    'longer than PLS CY'
+    ,
+    207
+    'normal'
+    'enlarged'
+    ,
+    208
+    '=.014ampullates'
+    'huge'
+    ,
+    209
+    'smooth'
+    'grooved'
+    ,
+    210
+    'two'
+    'one'
+    ,
+    211
+    '5+'
+    'four or less'
+    ,
+    212
+    'present'
+    'absent'
+    ,
+    213
+    'two'
+    'one'
+    ,
+    214
+    '<=CY'
+    'larger than CY'
+    ,
+    215
+    'normal'
+    'flat'
+    ,
+    216
+    'normal'
+    'flat'
+    ,
+    217
+    'entire'
+    'lobed'
+    ,
+    218
+    'parallel'
+    'end to end'
+    ,
+    219
+    'absent'
+    'present'
+    ,
+    220
+    'present'
+    'absent'
+    ,
+    221
+    'distinct'
+    'indistinct, abs.'
+    ,
+    222
+    '5+'
+    '4'
+    '3'
+    '2'
+    '1'
+    '0'
+    ,
+    223
+    'short'
+    '>CY shafts'
+    ,
+    224
+    'present'
+    'absent'
+    ,
+    225
+    'orb'
+    'sheet'
+    'rect.'
+    'cob'
+    'H'
+    'mesh'
+    'line'
+    'Ph.'
+    ,
+    226
+    'present'
+    'absent'
+    ,
+    227
+    'sheet'
+    'on gumfoot lines'
+    ,
+    228
+    'present'
+    'absent'
+    ,
+    229
+    'absent'
+    'present'
+    ,
+    230
+    'spherical to lenticular'
+    'stalked'
+    ,
+    231
+    'round'
+    'knob.'
+    'rhomb.'
+    'elong.'
+    'spiky'
+    ,
+    232
+    'fine'
+    'thick, loose'
+    ,
+    233
+    'smooth'
+    'spiny'
+    ,
+    234
+    'solitary'
+    'communal'
+    ,
+    235
+    'subequal'
+    '>three x female-biased'
+    ,
+    236
+    'absent'
+    'present'
+    ,
+    237
+    'transfer sperm'
+    'pseudocop.'
+    ,
+    238
+    'ipsilateral'
+    'contralateral'
+    ,
+    239
+    'indep.'
+    'during copulation'
+    ,
+    240
+    'present'
+    'absent'
+    ,
+    241
+    'no'
+    'rythmic haematodocha'
+    ,
+    242
+    'below'
+    'above'
+  ;
+END;
+
+BEGIN NOTES;
+  TEXT CHARACTER=1 TEXT='Epigynal scapes are widespread in araneoid spiders (see e.g. Scharff & Coddington, 1997: character 28), but to my best knowledge, Anelosimus pulchellus and A. vittatus, along with A. ethicus (pers. observ.), are unique among theridiids in having an araneid-like epigynal scape. Thymoites unimaculatum has a similar ventral scape-like projection (Fig. 85F), here considered putatively homologous, although the homology is rejected on the cladogram.';
+  TEXT CHARACTER=2 TEXT='Pimoids and linyphiids typically have a distinct dorsal plate in the epigynum (see e.g.
+Millidge, 1984: fig. 9; Hormiga, 1994a: fig. 60). Such a plate is absent in theridiids and other taxa in this study';
+  TEXT CHARACTER=3 TEXT='In most theridiids the epigynal plate is smooth (e.g. Figs 12E, 40B). On this cladogram the presence of conspicuous ridges on the epigynal plate is a synapomorphy of Anelosimus (e.g. Figs 21G, 24G) secondarily lost in clade 19 (Fig. 29A). Presumably the theridiid epigynal plate is a homologue of the ventral plate of linyphioids.';
+  TEXT CHARACTER=4 TEXT='A conspicuous projection overlies the copulatory openings in many araneoids (see e.g. Pimoa rupicola in
+Hormiga, 1994a: figs 27-29). In theridiids and Synotaxus, such a projection is generally absent and the openings are thus clearly visible in ventral view (Figs 12E, 22G, 69G). This character is inapplicable to the haplogyne Tetragnatha.';
+  TEXT CHARACTER=7 TEXT='Most commonly the copulatory ducts enter the spermathecae posteriorly or basally (Fig. 93J), but in a few taxa medially or anteriorly (Fig. 93H).';
+  TEXT CHARACTER=9 TEXT='In Latrodectus and independently in Kochiura, the copulatory ducts wrap around the spermathecae.';
+  TEXT CHARACTER=10 TEXT='Many hadrotarsines have two pairs of spermathecae: Anatea, Audifia, Dipoena, Dipoenata, Emertonella, Euryopis, Guaraniella, Lasaeola, Trigonobothrys, Yaginumena, Yoroa and some Hadrotarsus (Hickman, 1943; Levi & Levi, 1962; Wunderlich, 1978; Baert, 1984a, b; Forster et al., 1990; Griswold et al., 1998; Harvey & Waldock, 2000; Yoshida, 2002). The monotypic Gmogala scarabaeus Keyserling, however, has one pair of spermathecae, as do some species of Hadrotarsus and Euryopis, and a number of new genera from Australia (M. Harvey, pers. comm.). Genera with both conditions may not be monophyletic; this character will be important in future phylogenetic studies of Hadrotarsinae. On this cladogram the possession of four spermathecae is synapomorphic for Hadrotarsinae.';
+  TEXT CHARACTER=11 TEXT='Spermathecae are most commonly ovoid in shape, and this is certainly true of most theridiids (Fig. 93H, I). In this cladogram highly elongate spermathecae are an autapomorphy of Ariamnes cf. attenuatus, and appear to be a synapomorphy of that genus. Dumbbell-shaped spermathecae are here a synapomorphy of Latrodectus (Levi & Levi, 1962: fig. 253).';
+  TEXT CHARACTER=12 TEXT='Most nesticids have distinct ‘accessory lobes’ associated with the spermathecae (e.g. Gertsch, 1984: Nesticus silvestrii, fig. 184, Eidmanella pallida, figs 260, 262).';
+END;
+
+BEGIN TREES;
+	TRANSLATE
+		1	Argiope,
+		2	Tetragnatha,
+		3	Pimoa,
+		4	Linyphia,
+		5	Synotaxus_waiwa,
+		6	Synotaxus_monoceros,
+		7	Eidmanella,
+		8	Nesticus,
+		9	Dipoena,
+		10	Emertonella,
+		11	Euryopis,
+		12	Thwaitesia,
+		13	Episinus,
+		14	Spintharus,
+		15	Latrodectus_geometricus,
+		16	Latrodectus_mactans,
+		17	Crustulina,
+		18	Steatoda,
+		19	Carniella,
+		20	Robertus,
+		21	Pholcomma,
+		22	Enoplognatha_latimana,
+		23	Enoplognatha_ovata,
+		24	Selkirkiella_magallanes,
+		25	Selkirkiella_alboguttata,
+		26	Phoroncidia,
+		27	Cerocida,
+		28	Stemmops,
+		29	Argyrodes_argyrodes,
+		30	Argyrodes_elevatus,
+		31	Neospintharus,
+		32	Rhomphaea,
+		33	Ariamnes,
+		34	Faiditus,
+		35	Kochiura_aulica,
+		36	Kochiura_rosea,
+		37	Anelosimus_lorenzo,
+		38	Anelosimus_rupununi,
+		39	Anelosimus_pulchellus,
+		40	Anelosimus_vittatus,
+		41	Anelosimus_sp_A,
+		42	Anelosimus_sp_B,
+		43	Anelosimus_analyticus,
+		44	Anelosimus_eximius,
+		45	Anelosimus_cf_jucundus,
+		46	Anelosimus_studiosus,
+		47	Chrysso,
+		48	Nesticodes,
+		49	Theridion_frondeum,
+		50	Theridion_longipedatum,
+		51	Theridion_varians,
+		52	Theridion_pictum,
+		53	Coleosoma,
+		54	Tidarren,
+		55	Helvibis,
+		56	Theridula,
+		57	Ameridion_sp,
+		58	Ameridion_cf_petrum,
+		59	Thymoites,
+		60	Achaearanea_tepidariorum,
+		61	Achaearanea_vervoorti,
+		62	Achaearanea_wau
+	;
+	TREE * ambiguous = [&R] (1,(2,((3,4),((5,6),((7,8),((9,(10,11)),(((14,(12,13)),(((((19,(20,21)),(27,(26,28))),(24,25)),(22,23)),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((54,(48,(62,(60,61)))),((56,(55,((53,(49,50)),(51,52)))),(59,(57,58)))))))))),((15,16),(17,18)))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),((9,(10,11)),((((14,(12,13)),((15,16),(17,18))),(28,(((19,(20,21)),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((48,((56,(55,((53,(49,50)),(51,52)))),(59,(62,(60,61))))),(54,(57,58))))))))),(24,25)))),(26,27)))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),((9,(10,11)),((((14,(12,13)),((15,16),(17,18))),((28,((19,(20,21)),(24,25))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((54,(48,(62,(60,61)))),((56,(55,((53,(49,50)),(51,52)))),(59,(57,58))))))))))),(26,27)))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),(((9,(10,11)),(((14,(12,13)),((28,((19,(20,21)),(24,25))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((48,((56,(55,((53,(49,50)),(51,52)))),(59,(62,(60,61))))),(54,(57,58)))))))))),((15,16),(17,18)))),(26,27))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),((9,(10,11)),(26,(27,((28,(((14,(12,13)),((15,16),(17,18))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((54,(48,(62,(60,61)))),((56,(55,((53,(49,50)),(51,52)))),(59,(57,58))))))))))),((20,(19,21)),(24,25))))))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),((9,(10,11)),((((14,(12,13)),((15,16),(17,18))),(28,(((19,(20,21)),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((54,(48,(62,(60,61)))),((56,(55,((53,(49,50)),(51,52)))),(59,(57,58)))))))))),(24,25)))),(26,27)))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),((9,(10,11)),(26,(27,((28,(((14,(12,13)),((15,16),(17,18))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((48,((56,(55,((53,(49,50)),(51,52)))),(59,(62,(60,61))))),(54,(57,58)))))))))),((20,(19,21)),(24,25))))))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),((9,(10,11)),((((14,(12,13)),((15,16),(17,18))),((28,((19,(20,21)),(24,25))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((48,((56,(55,((53,(49,50)),(51,52)))),(59,(62,(60,61))))),(54,(57,58)))))))))),(26,27)))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),((9,(10,11)),(26,(27,((28,(((14,(12,13)),((15,16),(17,18))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((54,(48,(62,(60,61)))),((56,(55,((53,(49,50)),(51,52)))),(59,(57,58))))))))))),((19,(20,21)),(24,25))))))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),(((9,(10,11)),(((14,(12,13)),((28,((19,(20,21)),(24,25))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((54,(48,(62,(60,61)))),((56,(55,((53,(49,50)),(51,52)))),(59,(57,58))))))))))),((15,16),(17,18)))),(26,27))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),((9,(10,11)),(26,(27,((28,(((14,(12,13)),((15,16),(17,18))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((48,((56,(55,((53,(49,50)),(51,52)))),(59,(62,(60,61))))),(54,(57,58)))))))))),((19,(20,21)),(24,25))))))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),((9,(10,11)),(26,(27,(((28,(((14,(12,13)),((15,16),(17,18))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((54,(48,(62,(60,61)))),((56,(55,((53,(49,50)),(51,52)))),(59,(57,58))))))))))),(19,(20,21))),(24,25)))))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),(((9,(10,11)),(((14,(12,13)),((15,16),(17,18))),((28,((19,(20,21)),(24,25))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((54,(48,(62,(60,61)))),((56,(55,((53,(49,50)),(51,52)))),(59,(57,58)))))))))))),(26,27))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),((9,(10,11)),(26,(27,((28,(((14,(12,13)),((15,16),(17,18))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((48,((56,(55,((53,(49,50)),(51,52)))),(59,(62,(60,61))))),(54,(57,58)))))))))),((21,(19,20)),(24,25))))))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),(((9,(10,11)),(((14,(12,13)),((15,16),(17,18))),((28,((19,(20,21)),(24,25))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((48,((56,(55,((53,(49,50)),(51,52)))),(59,(62,(60,61))))),(54,(57,58))))))))))),(26,27))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),(((9,(10,11)),((14,(12,13)),(((15,16),(17,18)),((28,((19,(20,21)),(24,25))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((54,(48,(62,(60,61)))),((56,(55,((53,(49,50)),(51,52)))),(59,(57,58))))))))))))),(26,27))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),((9,(10,11)),(26,(27,(((28,(((14,(12,13)),((15,16),(17,18))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((48,((56,(55,((53,(49,50)),(51,52)))),(59,(62,(60,61))))),(54,(57,58)))))))))),(19,(20,21))),(24,25)))))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),((9,(10,11)),(26,(27,((28,(((14,(12,13)),((15,16),(17,18))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((54,(48,(62,(60,61)))),((56,(55,((53,(49,50)),(51,52)))),(59,(57,58))))))))))),((21,(19,20)),(24,25))))))))))));
+	TREE * extraState = [&R] (1,(2,(3,(4,((5,6),((7,8),(((9,(10,11)),((14,(12,13)),(((15,16),(17,18)),((28,((19,(20,21)),(24,25))),((22,23),((34,((29,30),(31,(32,33)))),((35,36),((((37,38),((41,42),(43,(44,(45,46))))),(39,40)),(47,((48,((56,(55,((53,(49,50)),(51,52)))),(59,(62,(60,61))))),(54,(57,58)))))))))))),(26,27))))))));
+	TREE * inapplicable = [&R] (1,(2,((3,4),((((((((((47,(((56,(55,((53,(49,50)),(51,52)))),(59,(57,58))),(54,(48,(62,(60,61)))))),((((41,42),(43,(44,(45,46)))),(37,38)),(39,40))),(35,36)),(34,((31,(32,33)),(29,30)))),((17,18),(15,16))),(((24,25),((27,(26,28)),(19,(20,21)))),(22,23))),(14,(12,13))),(9,(10,11))),(7,8)),(5,6)))));
+	TREE * inapplicable = [&R] (1,(2,((4,3),((((((((((47,(((56,(55,((53,(50,49)),(52,51)))),(59,(58,57))),(54,(48,(62,(61,60)))))),((((42,41),(43,(44,(46,45)))),(38,37)),(40,39))),(36,35)),(((25,24),((27,(28,26)),(19,(21,20)))),(23,22))),(34,((31,(33,32)),(30,29)))),((18,17),(16,15))),(14,(13,12))),(9,(11,10))),(8,7)),(6,5)))));
+	TREE * inapplicable = [&R] (1,(2,((4,3),((((((((((47,(((56,(55,((53,(50,49)),(52,51)))),(59,(58,57))),(54,(48,(62,(61,60)))))),((40,39),(((42,41),(43,(44,(46,45)))),(38,37)))),(36,35)),(34,((31,(33,32)),(30,29)))),(((25,24),((27,(28,26)),(19,(21,20)))),(23,22))),((18,17),(16,15))),(14,(13,12))),(9,(11,10))),(8,7)),(6,5)))));
+	TREE * inapplicable = [&R] (1,(2,((3,4),((((((((((47,(((56,(55,((53,(50,49)),(52,51)))),(59,(58,57))),(54,(48,(62,(61,60)))))),((40,39),(((43,(44,(45,46))),(42,41)),(38,37)))),(34,((31,(33,32)),(30,29)))),(36,35)),((18,17),(16,15))),(((25,24),((27,(28,26)),(19,(20,21)))),(23,22))),(14,(13,12))),(9,(11,10))),(8,7)),(6,5)))));
+END;
