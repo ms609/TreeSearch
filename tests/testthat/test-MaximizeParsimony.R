@@ -71,6 +71,19 @@ test_that("MaximizeParsimony() times out", {
   expect_gt(as.difftime(5, units = 'secs'), Sys.time() - startTime)
 })
 
+test_that("Seed trees retained", {
+  tree1 <- read.tree(text = "(a, (b, (c, (d, (e, f)))));")
+  tree2 <- read.tree(text = "(a, (b, (c, (f, (e, d)))));")
+  badTree <- read.tree(text = "(f, (b, (c, (a, (e, d)))));")
+  dat <- StringToPhyDat('110000 110000 111000 111000 111100 111001',
+                        letters[1:6], byTaxon = FALSE)
+  results <- MaximizeParsimony(dataset = dat, 
+                               tree = c(tree1, tree2, badTree),
+                               ratchIter = 0, verbosity = 4)
+  expect_equal(attr(results, 'firstHit'),
+               c(seed = 2, start = 0, final = 0))
+})
+
 test_that("Mismatched tree/dataset handled with warnings", {
   treeAf <- read.tree(text = "(a, (b, (c, (d, (e, f)))));")
   treeBg <- read.tree(text = "(g, (b, (c, (d, (e, f)))));")
