@@ -397,12 +397,17 @@ MaximizeParsimony <- function (dataset, tree,
   stopTime <- startTime + as.difftime(maxTime, units = 'mins')
   
   # Initialize tree
+  startTrees <- NULL
   if (missing(tree)) {
     tree <- AdditionTree(dataset, constraint = constraint,
                          concavity = concavity)
   } else if (inherits(tree, 'multiPhylo')) {
-    .Info(2L, "Starting search from {.var tree[[1]]}")
-    tree <- tree[[1]]
+    startTrees <- tree
+    sampledTree <- sample.int(length(tree), 1)
+    .Info(2L, paste0("Starting search from {.var tree[[", sampledTree, "]]}"))
+    tree <- tree[[sampledTree]]
+  } else if (inherits(tree, 'phylo')) {
+    startTrees <- c(tree)
   }
   if (dim(tree$edge)[1] != 2 * tree$Nnode) {
     cli_alert_warning("`tree` is not bifurcating; collapsing polytomies at random")
@@ -422,16 +427,17 @@ MaximizeParsimony <- function (dataset, tree,
   treeOnly <- setdiff(leaves, taxa) 
   datOnly <- setdiff(taxa, leaves) 
   if (length(treeOnly)) {
-    cli_alert_warning("Ignoring taxa on tree missing in dataset:\n   ",
-                      paste0(treeOnly, collapse = ', '), "\n")
+    cli_alert_warning(paste0("Ignoring taxa on tree missing in dataset:\n>   ",
+                      paste0(treeOnly, collapse = ', ')))
     warning("Ignored taxa on tree missing in dataset:\n   ",
              paste0(treeOnly, collapse = ', '))
     tree <- DropTip(tree, treeOnly)
+    startTrees <- DropTip(startTrees, treeOnly)
   }
   if (length(datOnly)) {
-    cli_alert_warning("Ignoring taxa in dataset missing on tree:\n   ",
-                      paste0(datOnly, collapse = ', '), "\n")
-    warning("Ignored taxa in dataset missing on tree:\n   ",
+    cli_alert_warning(paste0("Ignoring taxa in dataset missing on tree:\n>   ",
+                      paste0(datOnly, collapse = ', ')))
+    warning("Ignored taxa in dataset missing on tree:\n>   ",
             paste0(datOnly, collapse = ', '))
     dataset <- dataset[-fmatch(datOnly, taxa)]
   }
@@ -443,8 +449,8 @@ MaximizeParsimony <- function (dataset, tree,
     }
     consOnly <- setdiff(consTaxa, tree$tip.label)
     if (length(consOnly)) {
-      cli_alert_warning("Ignoring taxa in constraint missing on tree:\n   ", 
-              paste0(consOnly, collapse = ', '), "\n")
+      cli_alert_warning(paste0("Ignoring taxa in constraint missing on tree:\n>   ", 
+              paste0(consOnly, collapse = ', ')))
       warning("Ignored taxa in constraint missing on tree:\n   ", 
               paste0(consOnly, collapse = ', '))
       constraint <- constraint[-fmatch(consOnly, consTaxa)]
@@ -564,11 +570,20 @@ MaximizeParsimony <- function (dataset, tree,
   nHits <- 1L
   tbrStart <- startIter > 0
   tbrEnd <- finalIter > 0
-  bestEdges <- edge
-  bestScore <- .Score(edge)
-  dim(bestEdges) <- c(dim(bestEdges), 1)
+  if (is.null(startTrees)) {
+    bestEdges <- edge
+    dim(bestEdges) <- c(dim(bestEdges), 1)
+    bestScore <- .Score(edge)
+  } else {
+    starters <- RenumberTips(startTrees, names(dataset))
+    startEdges <- vapply(lapply(starters, Preorder), `[[`, startTrees[[1]]$edge,
+                        'edge')
+    startScores <- apply(startEdges, 3, .Score)
+    bestScore <- min(startScores)
+    bestEdges <- startEdges[, , startScores == bestScore, drop = FALSE]
+  }
   nStages <- sum(tbrStart, ratchIter, tbrEnd)
-  attr(bestEdges, 'firstHit') <- c('seed' = 1,
+  attr(bestEdges, 'firstHit') <- c('seed' = dim(bestEdges)[3],
     setNames(double(nStages),
              c(if(tbrStart) 'start',
                if (ratchIter > 0) paste0('ratch', seq_len(ratchIter)),
