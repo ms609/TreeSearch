@@ -603,7 +603,6 @@ server <- function(input, output, session) {
   })
   
   observeEvent(r$visibleConfigs, {
-    Log(r$visibleConfigs)
     UpdateDroppedTaxaDisplay()
   })
   
@@ -1035,7 +1034,7 @@ server <- function(input, output, session) {
                output$charNotes <- renderUI({})
                Log("Plotting PlottedTree() 777")
                r$plottedTree <- PlottedTree()
-               plot(r$plottedTree, tip.color = tipCols())
+               plot(r$plottedTree, tip.color = tipCols()[r$plottedTree$tip.label])
              }
            },
            'space' = {
@@ -1242,7 +1241,7 @@ server <- function(input, output, session) {
         tr <- UserRoot(ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP()))
         tr$edge.length <- rep.int(1, dim(tr$edge)[1])
         plot(tr, edge.width = 2, font = 1, cex = 0.83,
-             edge.color = col, tip.color = tipCols())
+             edge.color = col, tip.color = tipCols()[tr$tip.label])
       }
     } else {
       Log("ClusterCons 934")
@@ -1250,7 +1249,7 @@ server <- function(input, output, session) {
       tr <- UserRoot(ConsensusWithout(r$trees, dropped, p = consP()))
       tr$edge.length <- rep.int(1, dim(tr$edge)[1])
       plot(tr,edge.width = 2, font = 1, cex = 0.83,
-           edge.color = palettes[[1]], tip.color = tipCols())
+           edge.color = palettes[[1]], tip.color = tipCols()[tr$tip.label])
     }
   }
   
