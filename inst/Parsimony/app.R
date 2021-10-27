@@ -996,14 +996,13 @@ server <- function(input, output, session) {
                        input$spacePch,
                        if (input$spacePch == 'relat') input$relators,
                        silThreshold(),
-                       input$display),
         Sys.time()
       )}, sizePolicy = function(x) rep(input$plotSize, 2)
     )
   
     
   LogScore <- function (x) {
-    (-(log10(1 - x + 1e-2))) / 2
+    (-(log10(1 - pmin(1, x) + 1e-2))) / 2
   }
   
   QualityPlot <- function (quality) {
