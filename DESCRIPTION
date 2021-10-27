@@ -37,7 +37,7 @@ Imports:
     Rcpp,
     Rdpack (>= 0.7),
     Rogue (> 2.0.0),
-    shiny,
+    shiny (>= 1.6.0),
     shinyjs,
     stats,
     TreeDist (> 2.0.3),
