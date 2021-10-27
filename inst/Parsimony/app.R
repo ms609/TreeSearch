@@ -561,7 +561,6 @@ server <- function(input, output, session) {
   })
   
   UpdateKeepTipsInput <- reactive({
-    Log('KTI')
     if ('consConfig' %in% r$visibleConfigs) {
       updateNumericInput(inputId = 'keepTips',
                          max = length(r$trees[[1]]$tip.label),
@@ -571,7 +570,6 @@ server <- function(input, output, session) {
   
   UpdateExcludedTipsInput <- reactive({
     if ('consConfig' %in% r$visibleConfigs) {
-      Log('ETI')
       updateSelectInput(inputId = 'excludedTip',
                         choices = dropSeq()[seq_along(DroppedTips())],
                         selected = if(input$excludedTip %in% DroppedTips())
@@ -587,16 +585,18 @@ server <- function(input, output, session) {
   UpdateOutgroupInput <- reactive({
     if ('treePlotConfig' %in% r$visibleConfigs) {
       Log("UpdateOutgroupInput()")
-      updateSelectizeInput(inputId = 'outgroup', choices = KeptTips(),
-                           selected = if (length(input$outgroup) == 0) {
-                             if (!is.null(r$dataset)) {
-                               intersect(names(r$dataset), KeptTips())[1]
-                             } else {
-                               KeptTips()[1]
-                             }
-                           } else {
-                             input$outgroup
-                           })
+      keptOutgroup <- intersect(input$outgroup, KeptTips())
+      updateSelectizeInput(
+        inputId = 'outgroup', choices = KeptTips(),
+        selected = if (length(keptOutgroup) == 0) {
+          if (!is.null(r$dataset)) {
+            intersect(names(r$dataset), KeptTips())[1]
+          } else {
+            KeptTips()[1]
+          }
+        } else {
+          keptOutgroup
+        })
     }
   })
   
@@ -707,7 +707,7 @@ server <- function(input, output, session) {
     }
   }
   
-  PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 50)
+  PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 140)
   PlottedTree <- debounce(reactive({
     if (length(r$trees) > 0L) {
       tr <- UserRoot(Postorder(r$trees[[input$whichTree]]))
@@ -788,8 +788,6 @@ server <- function(input, output, session) {
   }
   
   observeEvent(input$keepTips, {
-    Log("Observed KeptTips()")
-    
     UpdateOutgroupInput()
     
     if (length(DroppedTips())) {
@@ -860,8 +858,6 @@ server <- function(input, output, session) {
         )
       })
     } else {
-      Log("ConsensusPlot(): 790->ConsensusWithout")
-      PutTree(r$trees)
       cons <- UserRoot(ConsensusWithout(r$trees,
                                         # `dropped` might be out of date
                                         intersect(dropped, tipLabels()),
@@ -1077,7 +1073,7 @@ server <- function(input, output, session) {
     par(mar = c(2, 0, 0, 0))
     nStop <- length(badToGood) + 1L
     
-    Log("QualityPlot()")
+    # Log("QualityPlot()")
     plot(NULL, xlim = c(0, 1), ylim = c(-1.5, 2.5),
          ann = FALSE, axes = FALSE)
     x <- seq.int(from = 0, to = 1, length.out = nStop)
@@ -1406,10 +1402,8 @@ server <- function(input, output, session) {
       return(ErrorPlot("Need at least\nthree trees to\nmap tree space"))
     }
     
-    Log("treespacePlot()")
     cl <- clusterings()
     proj <- mapping()
-    Log("Clusterings and mappings available.")
     
     nDim <- min(dims(), nProjDim())
     if (nDim < 2) {
@@ -1429,7 +1423,6 @@ server <- function(input, output, session) {
       }
       layout(t(plotSeq[-nDim, -1]))
     }
-    Log("  - Drawing plot...")
     par(mar = rep(0.2, 4))
     withProgress(message = 'Drawing plot', {
       for (i in 2:nDim) for (j in seq_len(i - 1)) {
