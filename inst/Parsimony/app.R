@@ -1243,6 +1243,7 @@ server <- function(input, output, session) {
         tr$edge.length <- rep.int(1, dim(tr$edge)[1])
         plot(tr, edge.width = 2, font = 1, cex = 0.83,
              edge.color = col, tip.color = tipCols()[tr$tip.label])
+        LabelConcordance(tr)
       }
     } else {
       Log(" > Single cluster")
