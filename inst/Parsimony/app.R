@@ -10,8 +10,17 @@ if (logging) {
     writeLines(as.character(Sys.time()), con = logFile)
     writeLines(paste0('  ', ...), con = logFile)
   }
-  PutTree <- function (...) dput(..., file = 'tree.lg')
-  PutData <- function (...) dput(..., file = 'dataset.lg')
+  Put <- function (..., file) {
+    dput(..., file = file)
+    writeLines(gsub("<pointer: [^.]+>", '"expired pointer"', readLines(file)),
+               file)
+  }
+  PutTree <- function (...) {
+    Put(..., file = 'tree.lg')
+  }
+  PutData <- function (...) {
+    Put(..., file = 'dataset.lg')
+  }
 } else {
   PutData <- PutTree <- Log <- function (...) {}
 }
