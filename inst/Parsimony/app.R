@@ -986,6 +986,13 @@ server <- function(input, output, session) {
                            consP(),
                            input$neverDrop, input$outgroup,
                            input$consP, input$concordance),
+             'ind' = list(input$whichChar,
+                          input$whichTree,
+                          input$concordance,
+                          input$outgroup,
+                          input$mapDisplay,
+                          r$dataset, r$treeLoadTime
+                          ), 
              'space' = list(r$treeLoadTime, input$plotFormat,
                        min(dims(), nProjDim()),
                        treeCols(),
@@ -996,7 +1003,7 @@ server <- function(input, output, session) {
                        input$spacePch,
                        if (input$spacePch == 'relat') input$relators,
                        silThreshold(),
-        Sys.time()
+                       input$display)
       )}, sizePolicy = function(x) rep(input$plotSize, 2)
     )
   
