@@ -802,14 +802,14 @@ server <- function(input, output, session) {
     )
   }), r$plottedTree, r$treeHash, r$dataHash, input$concordance)
   
-  LabelConcordance <- function (tree) {
+  LabelConcordance <- reactive({
     if (input$concordance != 'none' &&
-        !is.null(tree)) {
-      LabelSplits(tree, signif(concordance(), 3),
+        !is.null(r$plottedTree)) {
+      LabelSplits(r$plottedTree, signif(concordance(), 3),
                   col = SupportColor(concordance()),
                   frame = 'none', pos = 3L)
     }
-  }
+  })
   
   observeEvent(input$keepTips, {
     UpdateOutgroupInput()
@@ -858,7 +858,7 @@ server <- function(input, output, session) {
                            outgroupTips = input$outgroup,
                            tip.color = tipCols()[intersect(consTrees[[1]]$tip.label, kept)])
       r$plottedTree <- plotted$cons
-      LabelConcordance(r$plottedTree)
+      LabelConcordance()
       output$branchLegend <- renderUI({
         tagList(
           tags$span(class = 'legendLeft', "1 tree"),
@@ -877,7 +877,7 @@ server <- function(input, output, session) {
       }
       r$plottedTree <- cons
       plot(r$plottedTree, tip.color = tipCols()[intersect(cons$tip.label, kept)])
-      LabelConcordance(r$plottedTree)
+      LabelConcordance()
     }
     
   }
@@ -934,7 +934,7 @@ server <- function(input, output, session) {
                  ErrorPlot('Load dataset with\ncharacter codings\nfor taxa on tree')
                  return()
                })
-               LabelConcordance(r$plottedTree)
+               LabelConcordance()
                
                if (!is.null(r$chars)) {
                  output$charMapLegend <- renderUI({
@@ -1241,18 +1241,24 @@ server <- function(input, output, session) {
         
         tr <- UserRoot(ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP()))
         tr$edge.length <- rep.int(1, dim(tr$edge)[1])
+        r$plottedTree <- tr
         plot(tr, edge.width = 2, font = 1, cex = 0.83,
              edge.color = col, tip.color = tipCols()[tr$tip.label])
-        LabelConcordance(tr)
+        LabelConcordance()
+        legend('bottomright', paste0('Cluster ', i), pch = 15, col = col,
+               pt.cex = 1.5, bty = 'n')
       }
     } else {
       Log(" > Single cluster")
       PutTree(r$trees)
       tr <- UserRoot(ConsensusWithout(r$trees, dropped, p = consP()))
       tr$edge.length <- rep.int(1, dim(tr$edge)[1])
+      r$plottedTree <- tr
       plot(tr,edge.width = 2, font = 1, cex = 0.83,
            edge.color = palettes[[1]], tip.color = tipCols()[tr$tip.label])
-      LabelConcordance(tr)
+      LabelConcordance()
+      legend('bottomright', 'No clustering', pch = 16, col = palettes[[1]],
+             bty = 'n')
     }
   }
   
