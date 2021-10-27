@@ -282,8 +282,11 @@ ui <- fluidPage(theme = 'app.css',
           selectInput('excludedTip', 'Show excluded tip', choices = list()),
         )
       )),
+      hidden(tags$div(id = 'clusLegend',
+                      htmlOutput('instabLegend2', inline = TRUE)
+      )),
       hidden(tags$div(id = 'clusConfig',
-        tags$div(style = "float: right; width: 200px; margin-left: 2em;",
+                      style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput('clThresh', 'Cluster threshold:', value = 0.5,
                       min = 0, max = 1, width = 200),
           selectInput('distMeth', 'Distance method:', selected = 'cid',
@@ -293,9 +296,6 @@ ui <- fluidPage(theme = 'app.css',
                                      'Robinson-Foulds (fast, iffy)' = 'rf',
                                      'Quartet (slower)' = 'qd'),
                       width = 200)
-                 ),
-        tags$div(id = 'clusLegend',
-                 htmlOutput('instabLegend2', inline = TRUE)),
       )),
       hidden(tags$div(id = 'spaceConfig',
         tags$div(style = "float: right; width: 200px; margin-left: 2em;",
@@ -817,7 +817,9 @@ server <- function(input, output, session) {
   }
   
   ShowConfigs <- function (visible = character(0)) {
-    allConfigs <- c('whichTree', 'charChooser', 'consConfig', 'clusConfig',
+    allConfigs <- c('whichTree', 'charChooser',
+                    'consConfig', 'clusConfig',
+                    'clusLegend',
                     'spaceConfig', 'treePlotConfig', 'droppedTips')
     lapply(visible, show)
     lapply(setdiff(allConfigs, visible), hide)
@@ -827,8 +829,8 @@ server <- function(input, output, session) {
                ShowConfigs(switch(input$plotFormat,
                                   'ind' = c('whichTree', 'charChooser', 'treePlotConfig'),
                                   'cons' = c('consConfig', 'treePlotConfig', 'droppedTips'),
-                                  'clus' = c('clusConfig', 'consConfig', 'treePlotConfig'),
-                                  'space' = c('clusConfig', 'spaceConfig'),
+                                  'clus' = c('clusConfig', 'clusLegend', 'consConfig', 'treePlotConfig'),
+                                  'space' = c('clusConfig', 'clusLegend', 'spaceConfig'),
                                   ''))
   })
   
