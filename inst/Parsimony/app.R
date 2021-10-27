@@ -401,7 +401,7 @@ server <- function(input, output, session) {
       show('displayConfig')
     }
     
-    output$results <- TreeSummary()
+    DisplayTreeScores()
   })
   
   observeEvent(input$dataSource, updateData())
@@ -488,8 +488,6 @@ server <- function(input, output, session) {
       updateActionButton(session, "modalGo", "Continue search")
       updateActionButton(session, "go", "Continue")
       show('displayConfig')
-      
-      output$results <- TreeSummary()
     }
     
   })
@@ -513,23 +511,26 @@ server <- function(input, output, session) {
                             'off' = 'EW',
                             'prof' = 'PP'))
   
-  scores <- reactive({tryCatch(
-    signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
-    error = function (x) {
-      if (length(r$dataset) > 0 && 
-          length(r$trees) > 0) {
-        cli::cli_alert(x[[2]])
-        cli::cli_alert_danger(x[[1]])
-        showNotification(type = "error",
-                         "Could not score all trees with dataset")
-      }
-      NULL
-   })})
+  scores <- reactive({
+    PutTree(r$trees)
+    PutData(r$dataset)
+    Log("scores(): Recalculating scores with k = ", concavity())
+    tryCatch(
+      signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
+      error = function (x) {
+        if (length(r$dataset) > 0 && 
+            length(r$trees) > 0) {
+          cli::cli_alert(x[[2]])
+          cli::cli_alert_danger(x[[1]])
+          showNotification(type = "error",
+                           "Could not score all trees with dataset")
+        }
+        NULL
+     })
+  })
   
-  TreeSummary <- reactive({
-    Log("TreeSummary(): Scoring trees")
+  DisplayTreeScores <- function (){
     treeScores <- scores()
-    Log("Scored trees")
     score <- if (is.null(treeScores)) {
       "; could not be scored from dataset"
     } else if (length(unique(treeScores)) == 1) {
@@ -539,16 +540,18 @@ server <- function(input, output, session) {
              " (", wtType(), ")")
     }
     
-    
-    renderText(paste0(length(r$trees), " trees in memory", score))
-  })
+    msg <- paste0(length(r$trees), " trees in memory", score)
+    output$results <- renderText(msg)
+    Log("DisplayTreeScores(): ", msg)
+    msg
+  }
   
   observeEvent(input$implied.weights, {
-    output$results <- TreeSummary()
+    DisplayTreeScores()
   })
   
   observeEvent(input$concavity, {
-    output$results <- TreeSummary()
+    DisplayTreeScores()
   })
   
   updateTrees <- function (trees) {
@@ -565,6 +568,7 @@ server <- function(input, output, session) {
     r$mapping <- list()
     r$concordance <- list()
     nTip <- length(trees[[1]]$tip.label)
+    DisplayTreeScores()
     
     updateSliderInput(session, 'whichTree', min = 1L,
                       max = length(r$trees), value = 1L)
@@ -626,19 +630,19 @@ server <- function(input, output, session) {
       Log("StartSearch()")
       PutData(r$dataset)
       PutTree(startTree)
-      results <- withProgress(MaximizeParsimony(r$dataset,
-                                     tree = startTree,
-                                     concavity = concavity(),
-                                     ratchIter = input$ratchIter,
-                                     tbrIter = input$tbrIter,
-                                     maxHits = ceiling(10 ^ input$maxHits),
-                                     startIter = input$startIter,
-                                     finalIter = input$finalIter,
-                                     verbosity = 4L),
-                              value = 0.85,
-                              message = 'Finding MPT',
-                              detail = paste0(ceiling(10^input$maxHits),
-                                              ' hits; ', wtType()))
+      results <- withProgress(
+        MaximizeParsimony(r$dataset,
+                          tree = startTree,
+                          concavity = concavity(),
+                          ratchIter = input$ratchIter,
+                          tbrIter = input$tbrIter,
+                          maxHits = ceiling(10 ^ input$maxHits),
+                          startIter = input$startIter,
+                          finalIter = input$finalIter,
+                          verbosity = 4L),
+        value = 0.85, message = 'Finding MPT',
+        detail = paste0(ceiling(10^input$maxHits), ' hits; ', wtType())
+      )
       if (inherits(results, 'phylo')) {
         r$rawTrees <- list(results)
         attr(r$trees, 'firstHit') <- attr(results, 'firstHit')
@@ -648,8 +652,7 @@ server <- function(input, output, session) {
       }
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
-      output$results <- renderText(paste0(
-        "Found ", length(r$trees), " trees with score ", scores()))
+      
       updateActionButton(session, "go", "Continue")
       updateActionButton(session, "modalGo", "Continue search")
       show('displayConfig')
