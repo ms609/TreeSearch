@@ -1311,7 +1311,8 @@ server <- function(input, output, session) {
                             warning = function (e) {
                               nDim <- as.integer(substr(e$message, 6, 7))
                               updateSliderInput(inputId = 'spaceDim',
-                                                value = nDim, max = nDim)
+                                                value = min(nDim, input$spaceDim),
+                                                max = nDim)
                               message("Can't map into more than ", nDim,
                                       " dimensions.")
                               cmdscale(distances(), k = nDim)
