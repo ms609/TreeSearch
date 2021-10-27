@@ -282,8 +282,8 @@ ui <- fluidPage(theme = 'app.css',
                  htmlOutput('instabLegend', inline = TRUE),
                  htmlOutput('branchLegend', inline = TRUE)),
         tags$div(id = 'droppedTips',
-          selectInput('excludedTip', 'Show excluded tip', choices = list()),
-        )
+          selectInput('excludedTip', 'Show excluded tip', choices = list())),
+        tags$div(id = 'droppedList'),
       )),
       hidden(tags$div(id = 'clusLegend',
                       htmlOutput('instabLegend2', inline = TRUE)
@@ -570,16 +570,41 @@ server <- function(input, output, session) {
   
   UpdateExcludedTipsInput <- reactive({
     if ('consConfig' %in% r$visibleConfigs) {
+      dropList <- dropSeq()[seq_along(DroppedTips())]
       updateSelectInput(inputId = 'excludedTip',
-                        choices = dropSeq()[seq_along(DroppedTips())],
+                        choices = dropList,
                         selected = if(input$excludedTip %in% DroppedTips())
                           input$excludedTip else dropSeq()[1])
+      html('droppedList',
+           paste0('<label class="control-label">Dropped tips:</label>', 
+                  '<ul>', 
+                  paste0('<li style="color: ', tipCols()[dropList], '">',
+                         dropList, '</li>', collapse = "\r\n"),
+                  '</ul>'))
     }
   })
   
-  observeEvent(r$visibleConfigs, {
+  UpdateDroppedTaxaDisplay <- reactive({
+    if ('consConfig' %in% r$visibleConfigs) {
+      if (length(DroppedTips())) {
+        UpdateExcludedTipsInput()
+        if ('droppedTips' %in% r$visibleConfigs) {
+          show('droppedTips')
+        }
+        if ('droppedList' %in% r$visibleConfigs) {
+          show('droppedList')
+        }
+      } else {
+        hide('droppedTips')
+        hide('droppedList')
+      }
+    }
     UpdateKeepTipsInput()
-    UpdateExcludedTipsInput()
+  })
+  
+  observeEvent(r$visibleConfigs, {
+    Log(r$visibleConfigs)
+    UpdateDroppedTaxaDisplay()
   })
   
   UpdateOutgroupInput <- reactive({
@@ -789,13 +814,7 @@ server <- function(input, output, session) {
   
   observeEvent(input$keepTips, {
     UpdateOutgroupInput()
-    
-    if (length(DroppedTips())) {
-      UpdateExcludedTipsInput()
-      show('droppedTips')
-    } else {
-      hide('droppedTips')
-    }
+    UpdateDroppedTaxaDisplay()
   })
   observeEvent(input$neverDrop, {
     UpdateOutgroupInput()
@@ -803,12 +822,10 @@ server <- function(input, output, session) {
   })
   
   KeptTips <- reactive({
-    Log('KeptTips()')
     rev(dropSeq())[seq_len(input$keepTips)]
   })
   
   DroppedTips <- reactive({
-    Log('DroppedTips()')
     if (length(KeptTips()) > 1) {
       setdiff(tipLabels(), KeptTips())
     } else {
@@ -823,12 +840,6 @@ server <- function(input, output, session) {
     #dropped <- names(instab[order(instab) > input$keepTips])
     kept <- KeptTips()
     dropped <- DroppedTips()
-    if (length(dropped)) {
-      UpdateExcludedTipsInput()
-      show('droppedTips')
-    } else {
-      hide('droppedTips')
-    }
     
     output$instabLegend <- renderUI({
       tagList(
@@ -876,7 +887,8 @@ server <- function(input, output, session) {
     allConfigs <- c('whichTree', 'charChooser',
                     'consConfig', 'clusConfig',
                     'clusLegend',
-                    'spaceConfig', 'treePlotConfig', 'droppedTips')
+                    'spaceConfig', 'treePlotConfig',
+                    'droppedTips', 'droppedList')
     r$visibleConfigs <- visible
     lapply(visible, show)
     lapply(setdiff(allConfigs, visible), hide)
@@ -884,10 +896,15 @@ server <- function(input, output, session) {
   
   observeEvent(input$plotFormat, {
                ShowConfigs(switch(input$plotFormat,
-                                  'ind' = c('whichTree', 'charChooser', 'treePlotConfig'),
-                                  'cons' = c('consConfig', 'treePlotConfig', 'droppedTips'),
-                                  'clus' = c('clusConfig', 'clusLegend', 'consConfig', 'treePlotConfig'),
-                                  'space' = c('clusConfig', 'clusLegend', 'spaceConfig'),
+                                  'ind' = c('whichTree', 'charChooser',
+                                            'treePlotConfig'),
+                                  'cons' = c('consConfig', 'droppedTips',
+                                             'treePlotConfig'),
+                                  'clus' = c('clusConfig', 'clusLegend',
+                                             'consConfig', 'droppedList',
+                                             'treePlotConfig'),
+                                  'space' = c('clusConfig', 'clusLegend',
+                                              'spaceConfig'),
                                   ''))
   })
   
