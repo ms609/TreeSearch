@@ -1258,7 +1258,7 @@ server <- function(input, output, session) {
         tr <- UserRoot(ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP()))
         tr$edge.length <- rep.int(1, dim(tr$edge)[1])
         r$plottedTree <- tr
-        plot(tr, edge.width = 2, font = 1, cex = 0.83,
+        plot(tr, edge.width = 2, font = 3, cex = 0.83,
              edge.color = col, tip.color = tipCols()[tr$tip.label])
         LabelConcordance()
         legend('bottomright', paste0('Cluster ', i), pch = 15, col = col,
@@ -1270,7 +1270,7 @@ server <- function(input, output, session) {
       tr <- UserRoot(ConsensusWithout(r$trees, dropped, p = consP()))
       tr$edge.length <- rep.int(1, dim(tr$edge)[1])
       r$plottedTree <- tr
-      plot(tr,edge.width = 2, font = 1, cex = 0.83,
+      plot(tr,edge.width = 2, font = 3, cex = 0.83,
            edge.color = palettes[[1]], tip.color = tipCols()[tr$tip.label])
       LabelConcordance()
       legend('bottomright', 'No clustering', pch = 16, col = palettes[[1]],
