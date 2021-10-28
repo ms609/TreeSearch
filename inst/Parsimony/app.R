@@ -243,16 +243,20 @@ ui <- fluidPage(theme = 'app.css',
   ),
   column(9,
     fluidRow(id = 'plotConfig',
-      tags$span("Plot size:", id = 'plotSizeSpan'),
-      sliderInput(inputId = "plotSize", label = NULL,
-                                            width = '200px',
-                                            min = 100, max = 2000,
-                                            post = 'px', value = 600),
-      tags$span("Save as: "),
-      downloadButton('savePdf', 'PDF'),
-      downloadButton('savePng', 'PNG'),
-      downloadButton('saveNwk', 'Newick'),
-      downloadButton('saveNex', 'Nexus'),
+      tags$div(id = "plotSizer", 
+               tags$span("Plot size:", id = 'plotSizeSpan'),
+               sliderInput(inputId = "plotSize",
+                           label = NULL, width = '200px',
+                           min = 100, max = 2000,
+                           post = 'px', value = 600),
+      ),
+      tags$div(id = 'saveAs', 
+               tags$span("Save as: "),
+                downloadButton('savePdf', 'PDF'),
+                downloadButton('savePng', 'PNG'),
+                downloadButton('saveNwk', 'Newick'),
+                downloadButton('saveNex', 'Nexus')
+      )
     ),
     fluidRow(
       plotOutput(outputId = "treePlot", height = "600px"),
@@ -1193,6 +1197,7 @@ server <- function(input, output, session) {
       bestK <- which.max(kSils)
       kSil <- kSils[bestK]
       kCluster <- kClusters[[bestK]]$cluster
+      Log(kSil)
       
       cli::cli_progress_update(1, status = 'PAM')
       pamClusters <- lapply(possibleClusters, function (k) {
