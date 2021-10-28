@@ -1180,11 +1180,21 @@ server <- function(input, output, session) {
       hSil <- pamSil <- -99
       dists <- distances()
       
-      nMethodsChecked <- 2
-      methInc <- 1 / nMethodsChecked
+      nMethodsChecked <- 3L
+      cli::cli_progress_bar("Computing clusterings", 'K-means',
+                            total = nMethodsChecked)
+      
       nK <- length(possibleClusters)
-      kInc <- 1 / (nMethodsChecked * nK)
     
+      kClusters <- lapply(possibleClusters, function (k) kmeans(dists, k))
+      kSils <- vapply(kClusters, function (kCluster) {
+        mean(cluster::silhouette(kCluster$cluster, dists)[, 3])
+      }, double(1))
+      bestK <- which.max(kSils)
+      kSil <- kSils[bestK]
+      kCluster <- kClusters[[bestK]]$cluster
+      
+      cli::cli_progress_update(1, status = 'PAM')
       pamClusters <- lapply(possibleClusters, function (k) {
         cluster::pam(dists, k = k)
       })
@@ -1195,6 +1205,7 @@ server <- function(input, output, session) {
       pamSil <- pamSils[bestPam]
       pamCluster <- pamClusters[[bestPam]]$cluster
       
+      cli::cli_progress_update(1, status = 'Hierarchical')
       hTree <- protoclust::protoclust(dists)
       hClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
       hSils <- vapply(hClusters, function (hCluster) {
@@ -1203,19 +1214,24 @@ server <- function(input, output, session) {
       bestH <- which.max(hSils)
       hSil <- hSils[bestH]
       hCluster <- hClusters[[bestH]]
-    
-      bestCluster <- c('none', 'pam', 'hmm')[which.max(c(silThreshold(), pamSil, hSil))]
+      cli::cli_progress_update(1, status = 'Done')
+      
+      bestCluster <- c('none', 'pam', 'hmm', 'kmn')[
+        which.max(c(silThreshold(), pamSil, hSil, kSil))]
     } else {
       bestCluster <- 'none'
     }
-      
+     
+    Log("Best clustering: ", bestCluster, 
+        "; sil: ", signif(switch(bestCluster, pam = pamSil, hmm = hSil, kmn = kSil, 0)))
     # Return:
     list(method = switch(bestCluster, pam = 'part. around medoids',
                                       hmm = 'minimax linkage',
+                                      kmn = 'k-means',
                                       none = 'no significant clustering'),
-         n = 1 + switch(bestCluster, pam = bestPam, hmm = bestH, 0),
-         sil = switch(bestCluster, pam = pamSil, hmm = hSil, 0), 
-         cluster = switch(bestCluster, pam = pamCluster, hmm = hCluster, 1)
+         n = 1 + switch(bestCluster, pam = bestPam, hmm = bestH, kmn = bestK, 0),
+         sil = switch(bestCluster, pam = pamSil, hmm = hSil, kmn = kSil, 0), 
+         cluster = switch(bestCluster, pam = pamCluster, hmm = hCluster, kmn = kCluster, 1)
     )
 
   }), r$treeHash, input$distMeth)
