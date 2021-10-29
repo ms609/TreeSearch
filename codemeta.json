@@ -8,7 +8,7 @@
   "relatedLink": "https://ms609.github.io/TreeSearch/",
   "issueTracker": "https://github.com/ms609/TreeSearch/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.0.1.9001",
+  "version": "1.0.9001",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -135,7 +135,7 @@
         "name": "Comprehensive R Archive Network (CRAN)",
         "url": "https://cran.r-project.org"
       },
-      "sameAs": "https://CRAN.R-project.org/package=ape"
+      "sameAs": "https://github.com/emmanuelparadis/ape"
     },
     "3": {
       "@type": "SoftwareApplication",
@@ -260,7 +260,7 @@
         "name": "Comprehensive R Archive Network (CRAN)",
         "url": "https://cran.r-project.org"
       },
-      "sameAs": "https://CRAN.R-project.org/package=Rogue"
+      "sameAs": "https://github.com/ms609/Rogue"
     },
     "13": {
       "@type": "SoftwareApplication",
@@ -303,7 +303,7 @@
         "name": "Comprehensive R Archive Network (CRAN)",
         "url": "https://cran.r-project.org"
       },
-      "sameAs": "https://CRAN.R-project.org/package=TreeDist"
+      "sameAs": "https://github.com/ms609/TreeDist"
     },
     "17": {
       "@type": "SoftwareApplication",
@@ -316,11 +316,11 @@
         "name": "Comprehensive R Archive Network (CRAN)",
         "url": "https://cran.r-project.org"
       },
-      "sameAs": "https://CRAN.R-project.org/package=TreeTools"
+      "sameAs": "https://github.com/ms609/TreeTools"
     },
     "SystemRequirements": "C++14"
   },
-  "fileSize": "4324.206KB",
+  "fileSize": "3893.862KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -389,7 +389,7 @@
       ],
       "name": "TreeSearch: phylogenetic tree search using custom optimality criteria",
       "identifier": "10.5281/zenodo.1042590",
-      "description": "R package version 1.0.1.9001",
+      "description": "R package version 1.0.9001",
       "@id": "https://doi.org/10.5281/zenodo.1042590",
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
     }

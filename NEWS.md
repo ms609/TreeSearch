@@ -1,8 +1,8 @@
-# TreeSearch 1.0.1.9001 (development)
+# TreeSearch 1.1.0
 
+- Improvements to 'shiny' GUI.
 - New vignette describing profile parsimony.
 - `MinimumLength()` fully supports ambiguous applicability.
-- Minor improvements to 'shiny' GUI.
 
 
 # TreeSearch 1.0.1
