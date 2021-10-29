@@ -103,3 +103,11 @@ li.state-note {
   background: #F0F921;
   border-color: #F0F921;
 }
+
+div#plotSizer, div#saveAs {
+  float: left;
+}
+
+div#saveAs {
+  padding: 1em;
+}

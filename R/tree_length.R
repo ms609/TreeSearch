@@ -43,8 +43,14 @@ TreeLength <- function (tree, dataset, concavity = Inf) UseMethod('TreeLength')
 #' @rdname TreeLength
 #' @export
 TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
-  if (length(tree$tip.label) < length(dataset)) {
+  tipLabels <- tree$tip.label
+  if (length(tipLabels) < length(dataset)) {
+    if (!all(tipLabels %in% names(dataset))) {
+      stop("Missing in `dataset`: ",
+           paste(setdiff(tipLabels, names(dataset)), collapse = ', '))
+    }
     dataset <- .Recompress(dataset[tree$tip.label])
+    
   }
   if (is.finite(concavity)) {
     if (!('min.length' %fin% names(attributes(dataset)))) {

@@ -10,8 +10,17 @@ if (logging) {
     writeLines(as.character(Sys.time()), con = logFile)
     writeLines(paste0('  ', ...), con = logFile)
   }
-  PutTree <- function (...) dput(..., file = 'tree.lg')
-  PutData <- function (...) dput(..., file = 'dataset.lg')
+  Put <- function (..., file) {
+    dput(..., file = file)
+    writeLines(gsub("<pointer: [^.]+>", 'NULL', readLines(file)),
+               file)
+  }
+  PutTree <- function (...) {
+    Put(..., file = 'tree.lg')
+  }
+  PutData <- function (...) {
+    Put(..., file = 'dataset.lg')
+  }
 } else {
   PutData <- PutTree <- Log <- function (...) {}
 }
@@ -121,6 +130,12 @@ Gower1969 <- Reference(
   author = c("Gower, J.C.", "Ross, G.J.S."),
   year = 1969, volume = 18, pages = c(54, 64), doi = "10.2307/2346439",
   journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)")
+Hartigan1979 <- Reference(
+  title = "Algorithm AS 136: a <i>K</i>-means clustering algorithm",
+  author = c("Hartigan, J.A.", "Wong, M.A."),
+  journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)",
+  year = 1979, volume = 28, pages = c(100, 108),
+  doi = "10.2307/2346830")
 Kaski2003 <- Reference(
   title = "Trustworthiness and metrics in visualizing similarity of gene expression",
   author = c("Kaski, S.", "Nikkil&auml;, J.", "Oja, M.", "Venna, J.",
@@ -195,8 +210,10 @@ ui <- fluidPage(theme = 'app.css',
       tags$h1("TreeSearch"),
       selectInput("dataSource", "Load dataset",
                   c("< From file >" = "file",
+                    'Agnarsson 2004' = 'Agnarsson2004',
                     "Sun et al. 2018" = "Sun2018",
-                    setNames(names(inapplicable.datasets), names(inapplicable.datasets)))),
+                    "Wills et al. 2012" = "Wills2012",
+                    if (logging) setNames(names(inapplicable.datasets), names(inapplicable.datasets)))),
       fileInput("dataFile", "Load data from file",
                 placeholder = "No data file selected"),
       tags$label("Search", class = "control-label", 
@@ -220,6 +237,7 @@ ui <- fluidPage(theme = 'app.css',
                                   choices = list()),
                    selectizeInput('concordance', 'Split support:',
                                   choices = list('None' = 'none',
+                                                 '% trees containing' = 'p',
                                                  'Quartet concordance' = 'qc',
                                                  'Clustering concordance' = 'clc',
                                                  'Phylogenetic concordance' = 'phc'
@@ -231,16 +249,20 @@ ui <- fluidPage(theme = 'app.css',
   ),
   column(9,
     fluidRow(id = 'plotConfig',
-      tags$span("Plot size:", id = 'plotSizeSpan'),
-      sliderInput(inputId = "plotSize", label = NULL,
-                                            width = '200px',
-                                            min = 100, max = 2000,
-                                            post = 'px', value = 600),
-      tags$span("Save as: "),
-      downloadButton('savePdf', 'PDF'),
-      downloadButton('savePng', 'PNG'),
-      downloadButton('saveNwk', 'Newick'),
-      downloadButton('saveNex', 'Nexus'),
+      tags$div(id = "plotSizer", 
+               tags$span("Plot size:", id = 'plotSizeSpan'),
+               sliderInput(inputId = "plotSize",
+                           label = NULL, width = '200px',
+                           min = 100, max = 2000,
+                           post = 'px', value = 600),
+      ),
+      tags$div(id = 'saveAs', 
+               tags$span("Save as: "),
+               downloadButton('savePdf', 'PDF'),
+               downloadButton('savePng', 'PNG'),
+               downloadButton('saveNwk', 'Newick'),
+               downloadButton('saveNex', 'Nexus')
+      )
     ),
     fluidRow(
       plotOutput(outputId = "treePlot", height = "600px"),
@@ -261,8 +283,8 @@ ui <- fluidPage(theme = 'app.css',
         tags$div(style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput('consP', 'Majority:', value = 1,
                       min = 0.5, max = 1, width = 200),
-          numericInput('keepTips', 'Tips to show:', value = 1L,
-                       min = 1L, max = 1L, step = 1L, width = 200),
+          numericInput('keepTips', 'Tips to show:', value = 2L,
+                       min = 2L, max = 2L, step = 1L, width = 200),
           selectizeInput('neverDrop', 'Never drop:', multiple = TRUE,
                          choices = list("NA" = "No trees loaded"))
                  ),
@@ -270,11 +292,14 @@ ui <- fluidPage(theme = 'app.css',
                  htmlOutput('instabLegend', inline = TRUE),
                  htmlOutput('branchLegend', inline = TRUE)),
         tags$div(id = 'droppedTips',
-          selectInput('excludedTip', 'Show excluded tip', choices = list()),
-        )
+          selectInput('excludedTip', 'Show excluded tip', choices = list())),
+        tags$div(id = 'droppedList'),
+      )),
+      hidden(tags$div(id = 'clusLegend',
+                      htmlOutput('instabLegend2', inline = TRUE)
       )),
       hidden(tags$div(id = 'clusConfig',
-        tags$div(style = "float: right; width: 200px; margin-left: 2em;",
+                      style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput('clThresh', 'Cluster threshold:', value = 0.5,
                       min = 0, max = 1, width = 200),
           selectInput('distMeth', 'Distance method:', selected = 'cid',
@@ -284,9 +309,6 @@ ui <- fluidPage(theme = 'app.css',
                                      'Robinson-Foulds (fast, iffy)' = 'rf',
                                      'Quartet (slower)' = 'qd'),
                       width = 200)
-                 ),
-        tags$div(id = 'clusLegend',
-                 htmlOutput('instabLegend2', inline = TRUE)),
       )),
       hidden(tags$div(id = 'spaceConfig',
         tags$div(style = "float: right; width: 200px; margin-left: 2em;",
@@ -364,13 +386,12 @@ server <- function(input, output, session) {
                             }, error = function (e) NULL))
     } else {
       Log("updateData: from package")
-      dataFile <- system.file(paste0('data-raw/', source, '.nex'),
+      dataFile <- system.file(paste0('datasets/', source, '.nex'),
                                package = 'TreeSearch')
       r$chars <- ReadCharacters(dataFile)
       r$charNotes <- ReadNotes(dataFile)
       r$dataset <- ReadAsPhyDat(dataFile)
     }
-    
     if (is.null(r$dataset)) {
       showNotification(type = "error", "Could not read data from file")
       
@@ -386,25 +407,21 @@ server <- function(input, output, session) {
                         max = as.integer(attr(r$dataset, 'nr')), value = 1L)
     }
     
-    if (is.null(r$trees)) {
-      r$trees <- tryCatch(read.nexus(dataFile), error = function (e) NULL)
-      if (!is.null(r$trees)) {
-        show('displayConfig')
-      }
+    updateTrees(tryCatch(read.nexus(dataFile), error = function (e) r$trees))
+    if (is.null(r$trees) || !datasetMatchesTrees()) {
+      updateActionButton(session, "go", "New search")
     } else {
-      if (!datasetMatchesTrees()) {
-        r$trees <- NULL
-        updateActionButton(session, "go", "New search")
-      } else {
-        show('displayConfig')
-      }
+      show('displayConfig')
     }
     
-    output$results <- TreeSummary()
+    DisplayTreeScores()
   })
   
   observeEvent(input$dataSource, updateData())
   observeEvent(input$dataFile, updateData())
+  observeEvent(r$dataset, {
+    r$dataHash <- rlang::hash(r$dataset)
+  })
   
   observeEvent(input$searchConfig, {
     updateSelectInput(session, 'character.weight',
@@ -475,7 +492,7 @@ server <- function(input, output, session) {
       showNotification("Trees not in a recognized format", type = 'error')
     } else {
       treeNames <- names(trees)
-      r$trees <- c(trees)
+      r$rawTrees <- c(trees)
       pattern <- '(seed|start|ratch\\d+|final)_\\d+'
       if (length(grep(pattern, treeNames, perl = TRUE)) ==
           length(r$trees)) {
@@ -487,8 +504,6 @@ server <- function(input, output, session) {
       updateActionButton(session, "modalGo", "Continue search")
       updateActionButton(session, "go", "Continue")
       show('displayConfig')
-      
-      output$results <- TreeSummary()
     }
     
   })
@@ -512,20 +527,26 @@ server <- function(input, output, session) {
                             'off' = 'EW',
                             'prof' = 'PP'))
   
-  scores <- reactive(tryCatch(
-    signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
-    error = function (x) {
-      if (length(r$dataset) > 0 && 
-          length(r$trees) > 0) {
-        cli::cli_alert(x[[2]])
-        cli::cli_alert_danger(x[[1]])
-        showNotification(type = "error",
-                         "Could not score all trees with dataset")
-      }
-      NULL
-   }))
+  scores <- bindCache(reactive({
+    PutTree(r$trees)
+    PutData(r$dataset)
+    Log("scores(): Recalculating scores with k = ", concavity())
+    withProgress(tryCatch(
+      signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
+      error = function (x) {
+        if (length(r$dataset) > 0 && 
+            length(r$trees) > 0) {
+          cli::cli_alert(x[[2]])
+          cli::cli_alert_danger(x[[1]])
+          showNotification(type = "error",
+                           "Could not score all trees with dataset")
+        }
+        NULL
+     }),
+     value = 0.85, message = 'Scoring trees')
+  }), r$treeHash, r$dataHash, concavity())
   
-  TreeSummary <- debounce(reactive({
+  DisplayTreeScores <- function () {
     treeScores <- scores()
     score <- if (is.null(treeScores)) {
       "; could not be scored from dataset"
@@ -536,44 +557,117 @@ server <- function(input, output, session) {
              " (", wtType(), ")")
     }
     
-    
-    renderText(paste0(length(r$trees), " trees in memory", score))
-  }), 50)
+    msg <- paste0(length(r$trees), " trees in memory", score)
+    output$results <- renderText(msg)
+    msg
+  }
   
   observeEvent(input$implied.weights, {
-    output$results <- TreeSummary()
+    DisplayTreeScores()
   })
   
   observeEvent(input$concavity, {
-    output$results <- TreeSummary()
+    DisplayTreeScores()
   })
   
-  observeEvent(r$trees, {
-    Log("observed r$trees")
-    nTip <- length(tipLabels())
-    if (length(r$trees) > 1L) {
-      r$trees <- RenumberTips(r$trees, tipLabels())
+  UpdateKeepTipsInput <- reactive({
+    if ('consConfig' %in% r$visibleConfigs) {
+      updateNumericInput(inputId = 'keepTips',
+                         max = length(r$trees[[1]]$tip.label),
+                         value = nNonRogues())
     }
+  })
+  
+  UpdateExcludedTipsInput <- reactive({
+    if ('consConfig' %in% r$visibleConfigs) {
+      dropList <- dropSeq()[seq_along(DroppedTips())]
+      updateSelectInput(inputId = 'excludedTip',
+                        choices = dropList,
+                        selected = if(input$excludedTip %in% DroppedTips())
+                          input$excludedTip else dropSeq()[1])
+      html('droppedList',
+           paste0('<label class="control-label">Dropped tips:</label>', 
+                  '<ul>', 
+                  paste0('<li style="color: ', tipCols()[dropList], '">',
+                         dropList, '</li>', collapse = "\r\n"),
+                  '</ul>'))
+    }
+  })
+  
+  UpdateDroppedTaxaDisplay <- reactive({
+    if ('consConfig' %in% r$visibleConfigs) {
+      if (length(DroppedTips())) {
+        UpdateExcludedTipsInput()
+        if ('droppedTips' %in% r$visibleConfigs) {
+          show('droppedTips')
+        }
+        if ('droppedList' %in% r$visibleConfigs) {
+          show('droppedList')
+        }
+      } else {
+        hide('droppedTips')
+        hide('droppedList')
+      }
+    }
+    UpdateKeepTipsInput()
+  })
+  
+  observeEvent(r$visibleConfigs, {
+    UpdateDroppedTaxaDisplay()
+  })
+  
+  UpdateOutgroupInput <- reactive({
+    if ('treePlotConfig' %in% r$visibleConfigs) {
+      Log("UpdateOutgroupInput()")
+      keptOutgroup <- intersect(input$outgroup, KeptTips())
+      updateSelectizeInput(
+        inputId = 'outgroup', choices = KeptTips(),
+        selected = if (length(keptOutgroup) == 0) {
+          if (!is.null(r$dataset)) {
+            intersect(names(r$dataset), KeptTips())[1]
+          } else {
+            KeptTips()[1]
+          }
+        } else {
+          keptOutgroup
+        })
+    }
+  })
+  
+  updateTrees <- function (trees) {
+    if (length(trees) > 1L) {
+      trees <- RenumberTips(trees, trees[[1]]$tip.label)
+    }
+    if (identical(trees, r$trees)) {
+      Log("No need to update trees; no change")
+      return()
+    }
+    r$trees <- trees
+    r$treeHash <- rlang::hash(r$trees)
+    
+    DisplayTreeScores()
+    
     updateSliderInput(session, 'whichTree', min = 1L,
                       max = length(r$trees), value = 1L)
-    updateNumericInput(inputId = 'keepTips', max = nTip,
-                       value = nNonRogues())
+    UpdateKeepTipsInput()
+    UpdateExcludedTipsInput()
     updateSliderInput(inputId = 'spaceDim', max = max(1L, maxProjDim()),
                       value = min(maxProjDim(), input$spaceDim))
     updateSelectizeInput(inputId = 'neverDrop', choices = tipLabels(),
                          selected = input$neverDrop)
-    updateSelectizeInput(inputId = 'outgroup', choices = tipLabels(),
-                         selected = if (length(input$outgroup) == 0) {
-                           if (!is.null(r$dataset)) {
-                             names(r$dataset)[1]
-                           } else {
-                             tipLabels()[1]
-                           }
-                         } else {
-                             input$outgroup
-                         })
+    UpdateOutgroupInput()
     updateSelectizeInput(inputId = 'relators', choices = tipLabels(),
                          selected = input$relators)
+  }
+  
+  observeEvent(r$rawTrees, {
+    Log("observed r$rawTrees")
+    rawLabels <- r$rawTrees[[1]]$tip.label
+    if (length(r$rawTrees) > 1L) {
+      r$rawTrees <- RenumberTips(r$rawTrees, rawLabels)
+    }
+    
+    updateTrees(r$rawTrees)
   })
 
   observeEvent(input$implied.weights, {
@@ -603,30 +697,29 @@ server <- function(input, output, session) {
       Log("StartSearch()")
       PutData(r$dataset)
       PutTree(startTree)
-      results <- withProgress(MaximizeParsimony(r$dataset,
-                                     tree = startTree,
-                                     concavity = concavity(),
-                                     ratchIter = input$ratchIter,
-                                     tbrIter = input$tbrIter,
-                                     maxHits = ceiling(10 ^ input$maxHits),
-                                     startIter = input$startIter,
-                                     finalIter = input$finalIter,
-                                     verbosity = 4L),
-                              value = 0.85,
-                              message = 'Finding MPT',
-                              detail = paste0(ceiling(10^input$maxHits),
-                                              ' hits; ', wtType()))
+      results <- withProgress(
+        MaximizeParsimony(r$dataset,
+                          tree = startTree,
+                          concavity = concavity(),
+                          ratchIter = input$ratchIter,
+                          tbrIter = input$tbrIter,
+                          maxHits = ceiling(10 ^ input$maxHits),
+                          startIter = input$startIter,
+                          finalIter = input$finalIter,
+                          verbosity = 4L),
+        value = 0.85, message = 'Finding MPT',
+        detail = paste0(ceiling(10^input$maxHits), ' hits; ', wtType())
+      )
       if (inherits(results, 'phylo')) {
-        r$trees <- list(results)
+        r$rawTrees <- list(results)
         attr(r$trees, 'firstHit') <- attr(results, 'firstHit')
         attr(r$trees[[1]], 'firstHit') <- NULL
       } else {
-        r$trees <- results
+        r$rawTrees <- results
       }
       updateSliderInput(session, 'whichTree', min = 1L,
                         max = length(r$trees), value = 1L)
-      output$results <- renderText(paste0(
-        "Found ", length(r$trees), " trees with score ", scores()))
+      
       updateActionButton(session, "go", "Continue")
       updateActionButton(session, "modalGo", "Continue search")
       show('displayConfig')
@@ -648,7 +741,7 @@ server <- function(input, output, session) {
     }
   }
   
-  PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 50)
+  PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 140)
   PlottedTree <- debounce(reactive({
     if (length(r$trees) > 0L) {
       tr <- UserRoot(Postorder(r$trees[[input$whichTree]]))
@@ -667,7 +760,9 @@ server <- function(input, output, session) {
     TipInstability(r$trees)
   })
   
-  dropSeq <- reactive(rogues()$taxon[-1])
+  dropSeq <- reactive({
+    rogues()$taxon[-1]
+  })
   
   stableCol <- reactive({
     Rogue::ColByStability(r$trees)
@@ -675,11 +770,17 @@ server <- function(input, output, session) {
   
   
   rogues <- reactive({
-    withProgress(
-      message = 'Identifying rogues', value = 0.99,
-      Rogue::QuickRogue(r$trees, neverDrop = input$neverDrop,
-                        fullSeq = TRUE)
-    )
+    Log('Rogues()')
+    if (inherits(r$trees, 'multiPhylo')) {
+      withProgress(
+        message = 'Identifying rogues', value = 0.99,
+        Rogue::QuickRogue(r$trees, neverDrop = input$neverDrop,
+                          fullSeq = TRUE, p = consP())
+      )
+    } else {
+      data.frame(num = 0, taxNum = NA_integer_, taxon = NA_character_,
+                 rawImprovement = NA_real_, IC = 0)
+    }
   })
   
   unitEdge <- reactive({
@@ -687,58 +788,72 @@ server <- function(input, output, session) {
   })
   
   nNonRogues <- reactive({
+    Log("nNonRogues()")
     nrow(rogues()) - which.max(rogues()$IC)
   })
   
   tipCols <- reactive(stableCol()) # TODO allow user to choose how to colour
   
   consP <- debounce(reactive(input$consP), 50)
-  
-  concordance <- reactive({
-    if (input$concordance != 'none') {
-      Concordance <- switch(input$concordance,
-                            'qc' = QuartetConcordance,
-                            'clc' = ClusteringConcordance,
-                            'phc' = PhylogeneticConcordance
-      )
-      Concordance(r$plottedTree, r$dataset)
-    }
+  observeEvent(consP(), {
+    UpdateKeepTipsInput()
+    UpdateExcludedTipsInput()
+    r$concordance <- list()
   })
   
-  LabelConcordance <- function () {
+  concordance <- bindCache(reactive({
+    Log("concordance()")
+    switch(input$concordance,
+          'p' = SplitFrequency(r$plottedTree, r$trees) / length(r$trees),
+          'qc' = QuartetConcordance(r$plottedTree, r$dataset),
+          'clc' = ClusteringConcordance(r$plottedTree, r$dataset),
+          'phc' = PhylogeneticConcordance(r$plottedTree, r$dataset),
+          NULL
+    )
+  }), r$plottedTree, r$treeHash, r$dataHash, input$concordance)
+  
+  LabelConcordance <- reactive({
     if (input$concordance != 'none' &&
-        !is.null(r$plottedTree) &&
-        !is.null(r$dataset)) {
-      Concordance <- switch(input$concordance,
-                            'qc' = QuartetConcordance,
-                            'clc' = ClusteringConcordance,
-                            'phc' = PhylogeneticConcordance
-      )
+        !is.null(r$plottedTree)) {
       LabelSplits(r$plottedTree, signif(concordance(), 3),
                   col = SupportColor(concordance()),
                   frame = 'none', pos = 3L)
     }
-  }
+  })
   
-  ConsensusPlot <- function() {
-    par(mar = rep(0, 4), cex = 0.9)
-    #instab <- Instab()
-    #dropped <- names(instab[order(instab) > input$keepTips])
-    kept <- rev(dropSeq())[seq_len(input$keepTips)]
-    dropped <- if (length(kept) > 1) {
-      setdiff(TipLabels(r$trees[[1]]), kept)
+  observeEvent(input$keepTips, {
+    UpdateOutgroupInput()
+    UpdateDroppedTaxaDisplay()
+  })
+  observeEvent(input$neverDrop, {
+    UpdateOutgroupInput()
+    UpdateExcludedTipsInput()
+  })
+  
+  KeptTips <- reactive({
+    n <- input$keepTips
+    maxN <- length(tipLabels())
+    if (is.na(n) || is.null(n) || n < 2L || n > maxN) {
+      n <- maxN
+    }
+    rev(dropSeq())[seq_len(n)]
+  })
+  
+  DroppedTips <- reactive({
+    if (length(KeptTips()) > 1) {
+      setdiff(tipLabels(), KeptTips())
     } else {
       character(0)
     }
-    if (length(dropped)) {
-      updateSelectInput(inputId = 'excludedTip',
-                        choices = dropSeq()[seq_along(dropped)],
-                        selected = if(input$excludedTip %in% dropped)
-                          input$excludedTip else dropSeq()[1])
-      show('droppedTips')
-    } else {
-      hide('droppedTips')
-    }
+  })
+  
+  ConsensusPlot <- function() {
+    Log("ConsensusPlot()")
+    par(mar = rep(0, 4), cex = 0.9)
+    #instab <- Instab()
+    #dropped <- names(instab[order(instab) > input$keepTips])
+    kept <- KeptTips()
+    dropped <- DroppedTips()
     
     output$instabLegend <- renderUI({
       tagList(
@@ -750,7 +865,8 @@ server <- function(input, output, session) {
     if (length(dropped) &&
         packageVersion('TreeTools') >= "1.5.1.9100" && # TODO REMOVE once required.
         length(input$excludedTip) &&
-        nchar(input$excludedTip) ) {
+        nchar(input$excludedTip) && 
+        input$excludedTip %in% tipLabels()) {
       consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
       plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
                            edgeLength = 1,
@@ -767,36 +883,49 @@ server <- function(input, output, session) {
         )
       })
     } else {
-      Log("ConsensusWithout 756")
-      PutTree(r$trees)
-      cons <- ConsensusWithout(r$trees, dropped, p = consP())
+      cons <- UserRoot(ConsensusWithout(r$trees,
+                                        # `dropped` might be out of date
+                                        intersect(dropped, tipLabels()),
+                                        p = consP()))
       if (unitEdge()) {
         cons$edge.length <- rep_len(1L, dim(cons$edge)[1])
       }
       r$plottedTree <- cons
-      plot(UserRoot(cons), tip.color = tipCols()[intersect(cons$tip.label, kept)])
+      plot(r$plottedTree, tip.color = tipCols()[intersect(cons$tip.label, kept)])
       LabelConcordance()
     }
     
   }
   
   ShowConfigs <- function (visible = character(0)) {
-    allConfigs <- c('whichTree', 'charChooser', 'consConfig', 'clusConfig',
-                    'spaceConfig', 'treePlotConfig', 'droppedTips')
+    allConfigs <- c('whichTree', 'charChooser',
+                    'consConfig', 'clusConfig',
+                    'clusLegend',
+                    'spaceConfig', 'treePlotConfig',
+                    'droppedTips', 'droppedList')
+    r$visibleConfigs <- visible
     lapply(visible, show)
     lapply(setdiff(allConfigs, visible), hide)
   }
   
+  observeEvent(input$plotFormat, {
+               ShowConfigs(switch(input$plotFormat,
+                                  'ind' = c('whichTree', 'charChooser',
+                                            'treePlotConfig'),
+                                  'cons' = c('consConfig', 'droppedTips',
+                                             'treePlotConfig'),
+                                  'clus' = c('clusConfig', 'clusLegend',
+                                             'consConfig', 'droppedList',
+                                             'treePlotConfig'),
+                                  'space' = c('clusConfig', 'clusLegend',
+                                              'spaceConfig'),
+                                  ''))
+  })
+  
   MainPlot <- reactive({
     if (!is.null(r$trees)) {
-      
-    ShowConfigs(switch(input$plotFormat,
-                       'ind' = c('whichTree', 'charChooser', 'treePlotConfig'),
-                       'cons' = c('consConfig', 'treePlotConfig', 'droppedTips'),
-                       'clus' = c('clusConfig', 'consConfig', 'treePlotConfig'),
-                       'space' = c('clusConfig', 'spaceConfig'),
-                       ''))
-    switch(input$plotFormat,
+    
+      switch(input$plotFormat,
            'cons' = {
              ConsensusPlot()
            },
@@ -918,9 +1047,9 @@ server <- function(input, output, session) {
              } else {
                output$charMapLegend <- renderUI({})
                output$charNotes <- renderUI({})
-               Log("Plotting PLottedTree() 777")
+               Log("Plotting PlottedTree() 777")
                r$plottedTree <- PlottedTree()
-               plot(r$plottedTree, tip.color = tipCols())
+               plot(r$plottedTree, tip.color = tipCols()[r$plottedTree$tip.label])
              }
            },
            'space' = {
@@ -931,24 +1060,60 @@ server <- function(input, output, session) {
   
   PlotSize <- function () debounce(reactive(input$plotSize), 100)
   
-  output$treePlot <- renderPlot(MainPlot(),
-                                width = PlotSize(),
-                                height = PlotSize())
+  output$treePlot <- renderCachedPlot(MainPlot(), cacheKeyExpr = {
+      switch(input$plotFormat,
+             'clus' = list(r$treeHash, input$plotFormat,
+                           input$keepTips, input$excludedTip,
+                           consP(),
+                           input$neverDrop, input$outgroup,
+                           input$distMeth,
+                           input$concordance,
+                           silThreshold(),
+                           input$consP, input$concordance),
+             'cons' = list(r$treeHash, input$plotFormat,
+                           input$keepTips, input$excludedTip,
+                           consP(),
+                           input$neverDrop, input$outgroup,
+                           input$consP, input$concordance),
+             'ind' = list(input$whichChar,
+                          input$whichTree,
+                          input$concordance,
+                          input$outgroup,
+                          input$mapDisplay,
+                          r$dataHash, r$treeHash
+                          ), 
+             'space' = list(r$treeHash, input$plotFormat,
+                       min(dims(), nProjDim()),
+                       treeCols(),
+                       treePch(),
+                       input$distMeth,
+                       input$spaceCol,
+                       concavity(),
+                       input$spacePch,
+                       if (input$spacePch == 'relat') input$relators,
+                       silThreshold(),
+                       input$display)
+      )}, sizePolicy = function(x) rep(input$plotSize, 2)
+    )
   
+    
   LogScore <- function (x) {
-    (-(log10(1 - x + 1e-2))) / 2
+    (-(log10(1 - pmin(1, x) + 1e-2))) / 2
   }
   
   QualityPlot <- function (quality) {
     par(mar = c(2, 0, 0, 0))
     nStop <- length(badToGood) + 1L
     
-    Log("QualityPlot 800")
+    # Log("QualityPlot()")
     plot(NULL, xlim = c(0, 1), ylim = c(-1.5, 2.5),
          ann = FALSE, axes = FALSE)
     x <- seq.int(from = 0, to = 1, length.out = nStop)
     segments(x[-nStop], numeric(nStop), x[-1], lwd = 5, col = badToGood)
     
+    if (quality > 1) {
+      Log("Preternaturally high quality: ", quality)
+    }
     segments(LogScore(quality), -1, y1 = 1, lty = 3)
     
     tickPos <- c(0, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0)
@@ -963,7 +1128,7 @@ server <- function(input, output, session) {
          paste0(dims(), 'D mapping quality (trustw. \ud7 contin.):'))
   }
   
-  output$pcQuality <- renderPlot({
+  output$pcQuality <- renderCachedPlot({
     if (length(r$trees) < 3) {
       return()
     }
@@ -972,7 +1137,11 @@ server <- function(input, output, session) {
     mppng <- mapping()[, seq_len(min(dim(mppng)[2], dims()))]
     future_promise(TreeDist::MappingQuality(dstnc, dist(mppng))['TxC'],
                    seed = NULL) %...>% QualityPlot
-  })
+  }, cacheKeyExpr = {
+    list(r$treeHash, input$distMeth, dims())
+  },
+    sizePolicy = function (dims) dims
+  )
   
   
   output$howManyDims <- renderPlot({
@@ -1017,7 +1186,8 @@ server <- function(input, output, session) {
   ##############################################################################
   # Clusterings
   ##############################################################################
-  clusterings <- reactive({
+  clusterings <- bindCache(reactive({
+    Log("clusterings()")
     maxCluster <- min(15L, length(r$trees) - 1L)
     if (maxCluster > 1L) {
       possibleClusters <- 2:maxCluster
@@ -1025,11 +1195,21 @@ server <- function(input, output, session) {
       hSil <- pamSil <- -99
       dists <- distances()
       
-      nMethodsChecked <- 2
-      methInc <- 1 / nMethodsChecked
+      nMethodsChecked <- 3L
+      cli::cli_progress_bar("Computing clusterings", 'K-means',
+                            total = nMethodsChecked)
+      
       nK <- length(possibleClusters)
-      kInc <- 1 / (nMethodsChecked * nK)
     
+      kClusters <- lapply(possibleClusters, function (k) kmeans(dists, k))
+      kSils <- vapply(kClusters, function (kCluster) {
+        mean(cluster::silhouette(kCluster$cluster, dists)[, 3])
+      }, double(1))
+      bestK <- which.max(kSils)
+      kSil <- kSils[bestK]
+      kCluster <- kClusters[[bestK]]$cluster
+      
+      cli::cli_progress_update(1, status = 'PAM')
       pamClusters <- lapply(possibleClusters, function (k) {
         cluster::pam(dists, k = k)
       })
@@ -1040,6 +1220,7 @@ server <- function(input, output, session) {
       pamSil <- pamSils[bestPam]
       pamCluster <- pamClusters[[bestPam]]$cluster
       
+      cli::cli_progress_update(1, status = 'Hierarchical')
       hTree <- protoclust::protoclust(dists)
       hClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
       hSils <- vapply(hClusters, function (hCluster) {
@@ -1048,24 +1229,30 @@ server <- function(input, output, session) {
       bestH <- which.max(hSils)
       hSil <- hSils[bestH]
       hCluster <- hClusters[[bestH]]
-    
-      bestCluster <- c('none', 'pam', 'hmm')[which.max(c(silThreshold(), pamSil, hSil))]
+      cli::cli_progress_update(1, status = 'Done')
+      
+      bestCluster <- c('none', 'pam', 'hmm', 'kmn')[
+        which.max(c(silThreshold(), pamSil, hSil, kSil))]
     } else {
       bestCluster <- 'none'
     }
-      
+     
+    Log("Best clustering: ", bestCluster, 
+        "; sil: ", signif(switch(bestCluster, pam = pamSil, hmm = hSil, kmn = kSil, 0)))
     # Return:
     list(method = switch(bestCluster, pam = 'part. around medoids',
                                       hmm = 'minimax linkage',
+                                      kmn = 'k-means',
                                       none = 'no significant clustering'),
-         n = 1 + switch(bestCluster, pam = bestPam, hmm = bestH, 0),
-         sil = switch(bestCluster, pam = pamSil, hmm = hSil, 0), 
-         cluster = switch(bestCluster, pam = pamCluster, hmm = hCluster, 1)
+         n = 1 + switch(bestCluster, pam = bestPam, hmm = bestH, kmn = bestK, 0),
+         sil = switch(bestCluster, pam = pamSil, hmm = hSil, kmn = kSil, 0), 
+         cluster = switch(bestCluster, pam = pamCluster, hmm = hCluster, kmn = kCluster, 1)
     )
 
-  })
+  }), r$treeHash, input$distMeth)
   
   PlotClusterCons <- function () {
+    Log("PlotClusterCons()")
     cl <- clusterings()
     kept <- rev(dropSeq())[seq_len(input$keepTips)]
     dropped <- if (length(kept) > 1) {
@@ -1079,22 +1266,30 @@ server <- function(input, output, session) {
       par(mfrow = c(nRow, ceiling(cl$n / nRow)))
       for (i in seq_len(cl$n)) {
         col <- palettes[[min(length(palettes), cl$n)]][i]
-        Log("ClusterCons 926")
+        Log(" > Multi-Clusters")
         PutTree(r$trees)
         PutData(cl$cluster)
         
         tr <- UserRoot(ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP()))
         tr$edge.length <- rep.int(1, dim(tr$edge)[1])
-        plot(tr, edge.width = 2, font = 1, cex = 0.83,
-             edge.color = col, tip.color = tipCols())
+        r$plottedTree <- tr
+        plot(tr, edge.width = 2, font = 3, cex = 0.83,
+             edge.color = col, tip.color = tipCols()[tr$tip.label])
+        LabelConcordance()
+        legend('bottomright', paste0('Cluster ', i), pch = 15, col = col,
+               pt.cex = 1.5, bty = 'n')
       }
     } else {
-      Log("ClusterCons 934")
+      Log(" > Single cluster")
       PutTree(r$trees)
       tr <- UserRoot(ConsensusWithout(r$trees, dropped, p = consP()))
       tr$edge.length <- rep.int(1, dim(tr$edge)[1])
-      plot(tr,edge.width = 2, font = 1, cex = 0.83,
-           edge.color = palettes[[1]], tip.color = tipCols())
+      r$plottedTree <- tr
+      plot(tr,edge.width = 2, font = 3, cex = 0.83,
+           edge.color = palettes[[1]], tip.color = tipCols()[tr$tip.label])
+      LabelConcordance()
+      legend('bottomright', 'No clustering', pch = 16, col = palettes[[1]],
+             bty = 'n')
     }
   }
   
@@ -1173,7 +1368,10 @@ server <- function(input, output, session) {
           showNotification("Trees lack names", type = 'warning')
           16
         } else {
-          treeNameClustering()
+          indices <- treeNameClustering()
+          # Match pch from BGS2019 Fig. 9 for pre-loaded datasets.
+          # Embarrassingly, in BGS19 I plotted ambigAbsent instead of ambiguous. Oops.
+          c(1, 3, 4, 2, seq_len(max(indices))[-(1:4)])[indices]
         }
       }, 0)
   })
@@ -1202,7 +1400,8 @@ server <- function(input, output, session) {
       Quartet::ManyToManyQuartetAgreement(...), similarity = FALSE))
   }
   
-  distances <- reactive({
+  distances <- bindCache(reactive({
+    Log("distances(): ", input$distMeth)
     if (length(r$trees) > 1L) {
       Dist <- switch(input$distMeth,
                      'cid' = TreeDist::ClusteringInfoDistance,
@@ -1211,41 +1410,45 @@ server <- function(input, output, session) {
                      'rf' = TreeDist::RobinsonFoulds,
                      'qd' = Quartet)
       withProgress(
-        message = 'Calculating distances', value = 0.99,
+        message = 'Initializing distances...', value = 0.99,
         Dist(r$trees)
       )
     } else {
       matrix(0, 0, 0)
     }
     
-  })
+  }), input$distMeth, r$treeHash)
   
-  mapping <- reactive({
+  mapping <- bindCache(reactive({
+    Log("mapping()")
     if (maxProjDim() > 1L) {
       withProgress(
         message = 'Mapping trees',
         value = 0.99,
-        tryCatch(return(cmdscale(distances(), k = maxProjDim())),
+        tryCatch(cmdscale(distances(), k = maxProjDim()),
                  warning = function (e) {
                    nDim <- as.integer(substr(e$message, 6, 7))
-                   updateSliderInput(inputId = 'spaceDim', value = nDim, max = nDim)
-                   message("Can't map into more than ", nDim, " dimensions.")
-                   return(cmdscale(distances(), k = nDim))
+                   updateSliderInput(inputId = 'spaceDim',
+                                     value = min(nDim, input$spaceDim),
+                                     max = nDim)
+                   message("Can't map into more than ", nDim,
+                           " dimensions.")
+                   cmdscale(distances(), k = nDim)
                  })
       )
     } else {
       matrix(0, 0, 0)
     }
-  })
+  }), r$treeHash, input$distMeth, maxProjDim())
   
-  mstEnds <- reactive({
+  mstEnds <- bindCache(reactive({
     dist <- as.matrix(distances())
     nRows <- dim(dist)[1]
     withProgress(message = 'Calculating MST', {
       edges <- MSTEdges(dist)
     })
     edges
-  })
+  }), input$distMeth, r$treeHash)
   
   ##############################################################################
   # Plot tree space
@@ -1321,7 +1524,8 @@ server <- function(input, output, session) {
         clstr <- treeNameClustering()
         clusters <- unique(clstr)
         if (length(clusters) > 1L) {
-          legend(bty = 'n', 'topright', pch = clusters, xpd = NA,
+          legend(bty = 'n', 'topright', xpd = NA,
+                 pch = c(1, 3, 4, 2, seq_len(max(clstr))[-(1:4)])[clusters],
                  paste0('~ ', attr(clstr, 'med'), ' (', table(clstr), ')'))
         }
       }
@@ -1355,6 +1559,7 @@ server <- function(input, output, session) {
              plot(r$trees[[input$whichTree]])
            },
            'space' = {
+             Log("plotContent(): treespacePlot()")
              treespacePlot()
            })
   })
@@ -1412,9 +1617,10 @@ server <- function(input, output, session) {
                  Venna2001)),
      tags$h3('Clustering'),
      HTML(paste("Cluster consensus trees:", Stockham2002)),
-     HTML(paste0('Partitioning around medoids:', Maechler2019,
-                 "Hierarchical, minimax linkage:", Bien2011,
-                 Murtagh1983)),
+     HTML(paste0(
+       'k-means:', Hartigan1979,
+       'Partitioning around medoids:', Maechler2019,
+       "Hierarchical, minimax linkage:", Bien2011, Murtagh1983)),
      tags$h3("Rogue taxa"),
      HTML(paste("Detection:", Smith2022)),
      HTML(paste("Plotting:", Klopfstein2019)),

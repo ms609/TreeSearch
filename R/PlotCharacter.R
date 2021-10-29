@@ -78,7 +78,11 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   dataset <- dataset[treeTaxa]
   
   # Read tree
+  edgeLength <- tree$edge.length
   tree <- Postorder(tree)
+  if (!is.null(edgeLength) && length(unique(edgeLength)) == 1) {
+    tree$edge.length <- edgeLength
+  }
   nNode <- tree$Nnode
   nTip <- NTip(tree)
   edge <- tree$edge

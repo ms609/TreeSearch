@@ -1,5 +1,13 @@
 library("TreeTools", quietly = TRUE)
 
+test_that("_Concordance() handles null input", {
+  expect_warning(expect_null(QuartetConcordance(BalancedTree(8), NULL)))
+  expect_warning(expect_null(PhylogeneticConcordance(BalancedTree(8), NULL)))
+  expect_warning(expect_null(ClusteringConcordance(BalancedTree(8), NULL)))
+  expect_warning(expect_null(MutualClusteringConcordance(BalancedTree(8), NULL)))
+  expect_warning(expect_null(SharedPhylogeneticConcordance(BalancedTree(8), NULL)))
+})
+
 test_that("QuartetConcordance() works", {
   tree <- BalancedTree(8)
   splits <- as.Splits(tree)

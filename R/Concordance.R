@@ -60,7 +60,11 @@
 #' @name SiteConcordance
 #' @family split support functions
 #' @export
-QuartetConcordance <- function (tree, dataset) {
+QuartetConcordance <- function (tree, dataset = NULL) {
+  if (is.null(dataset)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
   dataset <- dataset[tree$tip.label]
   splits <- as.Splits(tree, dataset)
   logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
@@ -119,6 +123,10 @@ QuartetConcordance <- function (tree, dataset) {
 #' @importFrom stats setNames
 #' @export
 ClusteringConcordance <- function (tree, dataset) {
+  if (is.null(dataset)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
   dataset <- dataset[tree$tip.label]
   splits <- as.logical(as.Splits(tree))
   
@@ -161,6 +169,10 @@ ClusteringConcordance <- function (tree, dataset) {
 #' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
 #' @export
 PhylogeneticConcordance <- function (tree, dataset) {
+  if (is.null(dataset)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
   dataset <- dataset[tree$tip.label]
   splits <- as.Splits(tree)
   characters <- as.multiPhylo(dataset)
@@ -192,6 +204,10 @@ PhylogeneticConcordance <- function (tree, dataset) {
 #' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
 #' @export
 MutualClusteringConcordance <- function (tree, dataset) {
+  if (is.null(dataset)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
   dataset <- dataset[tree$tip.label]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
@@ -211,6 +227,10 @@ MutualClusteringConcordance <- function (tree, dataset) {
 #' @importFrom TreeDist ClusteringInfo SharedPhylogeneticInfo
 #' @export
 SharedPhylogeneticConcordance <- function (tree, dataset) {
+  if (is.null(dataset)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
   dataset <- dataset[tree$tip.label]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)

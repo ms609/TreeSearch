@@ -8,22 +8,21 @@
 -->
 [![Project Status: Active – – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
-Search for phylogenetic trees that are optimal using a user-defined criterion.
-
 "TreeSearch" is an R package that contains a "shiny" user interface for 
 interactive tree search and exploration of results, including character
 visualization,
 [rogue taxon detection](https://ms609.github.io/Rogue),
-[tree space mapping](https://ms609.github.io/TreeDist),
+[tree space mapping](https://ms609.github.io/TreeDist/articles/treespace.html),
 and cluster consensus trees.
 
-It handles inapplicable data using the algorithm of Brazeau, Guillerme and
-Smith (2019) using the "Morphy" C library (Brazeau _et al_. 2017), and
-implements implied weighting (Goloboff, 1993),
+Inapplicable character states are handled using the algorithm of Brazeau,
+Guillerme and Smith (2019) using the "Morphy" C library (Brazeau _et al_. 2017).
+Implied weighting (Goloboff, 1993),
 Profile Parsimony (Faith and Trueman, 2001)
-and Successive Approximations (Farris, 1969).
-[Custom optimality criteria](https://ms609.github.io/TreeSearch/articles/custom.html)
-and search approaches can be defined.
+and Successive Approximations (Farris, 1969)
+are implemented; 
+[custom optimality criteria](https://ms609.github.io/TreeSearch/articles/custom.html)
+and search approaches can also be defined.
 
 
 # Installation
@@ -34,24 +33,28 @@ in a [vignette](https://ms609.github.io/TreeSearch/articles/getting-started.html
 Install and load the stable version from CRAN as follows:
 
 ```r
-install.packages('TreeSearch')
-library('TreeSearch')
+install.packages("TreeSearch")
+library("TreeSearch")
 ```
 
-Some features available through the GUI require versions of packages scheduled
-for release to CRAN in late 2021.  Until then, you can install them using:
+Some features of the GUI require versions of packages scheduled for release to
+CRAN in late 2021.  Until then, you can install them using:
 ```r
 if(!require("remotes")) install.packages("remotes")
 if (packageVersion("ape" < "5.5.2")) 
   remotes::install_github("emmanuelparadis/ape")
-if (packageVersion("TreeTools") < "1.5.0.9100")
+if (packageVersion("TreeTools") < "1.5.1.9100")
   remotes::install_github("ms609/TreeTools")
+if (packageVersion("TreeDist") <= "2.0.3")
+  remotes::install_github("ms609/TreeTools")
+if (packageVersion("Rogue") <= "2.0.0")
+  remotes::install_github("ms609/Rogue")
 ```
 
-Install the development version of "TreeSearch" with:
+Install and load the development version of "TreeSearch" with:
 
 ```r
-remotes::install_github('ms609/TreeSearch')
+remotes::install_github("ms609/TreeSearch")
 library("TreeSearch")
 ```
 
@@ -67,6 +70,7 @@ For more control over search settings, see [`?MaximizeParsimony()`](https://ms60
 
 - [Package functions](https://ms609.github.io/TreeSearch/reference) reference manual
 - [Getting started](https://ms609.github.io/TreeSearch/articles/getting-started.html)
+- [Using the GUI](https://ms609.github.io/TreeSearch/articles/tree-search.html)
 - [Loading phylogenetic data into R](https://ms609.github.io/TreeTools/articles/load-data.html)
 - [Parsimony search with inapplicable data](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
 
