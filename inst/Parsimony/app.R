@@ -252,10 +252,10 @@ ui <- fluidPage(theme = 'app.css',
       ),
       tags$div(id = 'saveAs', 
                tags$span("Save as: "),
-                downloadButton('savePdf', 'PDF'),
-                downloadButton('savePng', 'PNG'),
-                downloadButton('saveNwk', 'Newick'),
-                downloadButton('saveNex', 'Nexus')
+               downloadButton('savePdf', 'PDF'),
+               downloadButton('savePng', 'PNG'),
+               downloadButton('saveNwk', 'Newick'),
+               downloadButton('saveNex', 'Nexus')
       )
     ),
     fluidRow(
