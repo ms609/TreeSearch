@@ -12,7 +12,7 @@
 interactive tree search and exploration of results, including character
 visualization,
 [rogue taxon detection](https://ms609.github.io/Rogue),
-[tree space mapping](https://ms609.github.io/TreeDist),
+[tree space mapping](https://ms609.github.io/TreeDist/articles/treespace.html),
 and cluster consensus trees.
 
 Inapplicable character states are handled using the algorithm of Brazeau,
