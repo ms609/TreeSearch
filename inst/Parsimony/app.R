@@ -130,6 +130,12 @@ Gower1969 <- Reference(
   author = c("Gower, J.C.", "Ross, G.J.S."),
   year = 1969, volume = 18, pages = c(54, 64), doi = "10.2307/2346439",
   journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)")
+Hartigan1979 <- Reference(
+  title = "Algorithm AS 136: a <i>K</i>-means clustering algorithm",
+  author = c("Hartigan, J.A.", "Wong, M.A."),
+  journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)",
+  year = 1979, volume = 28, pages = c(100, 108),
+  doi = "10.2307/2346830")
 Kaski2003 <- Reference(
   title = "Trustworthiness and metrics in visualizing similarity of gene expression",
   author = c("Kaski, S.", "Nikkil&auml;, J.", "Oja, M.", "Venna, J.",
@@ -277,8 +283,8 @@ ui <- fluidPage(theme = 'app.css',
         tags$div(style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput('consP', 'Majority:', value = 1,
                       min = 0.5, max = 1, width = 200),
-          numericInput('keepTips', 'Tips to show:', value = 1L,
-                       min = 1L, max = 1L, step = 1L, width = 200),
+          numericInput('keepTips', 'Tips to show:', value = 2L,
+                       min = 2L, max = 2L, step = 1L, width = 200),
           selectizeInput('neverDrop', 'Never drop:', multiple = TRUE,
                          choices = list("NA" = "No trees loaded"))
                  ),
@@ -825,7 +831,12 @@ server <- function(input, output, session) {
   })
   
   KeptTips <- reactive({
-    rev(dropSeq())[seq_len(input$keepTips)]
+    n <- input$keepTips
+    maxN <- length(tipLabels())
+    if (is.na(n) || is.null(n) || n < 2L || n > maxN) {
+      n <- maxN
+    }
+    rev(dropSeq())[seq_len(n)]
   })
   
   DroppedTips <- reactive({
@@ -1101,7 +1112,7 @@ server <- function(input, output, session) {
     segments(x[-nStop], numeric(nStop), x[-1], lwd = 5, col = badToGood)
     
     if (quality > 1) {
-      Log(quality)
+      Log("Preternaturally high quality: ", quality)
     }
     segments(LogScore(quality), -1, y1 = 1, lty = 3)
     
@@ -1197,7 +1208,6 @@ server <- function(input, output, session) {
       bestK <- which.max(kSils)
       kSil <- kSils[bestK]
       kCluster <- kClusters[[bestK]]$cluster
-      Log(kSil)
       
       cli::cli_progress_update(1, status = 'PAM')
       pamClusters <- lapply(possibleClusters, function (k) {
@@ -1607,9 +1617,10 @@ server <- function(input, output, session) {
                  Venna2001)),
      tags$h3('Clustering'),
      HTML(paste("Cluster consensus trees:", Stockham2002)),
-     HTML(paste0('Partitioning around medoids:', Maechler2019,
-                 "Hierarchical, minimax linkage:", Bien2011,
-                 Murtagh1983)),
+     HTML(paste0(
+       'k-means:', Hartigan1979,
+       'Partitioning around medoids:', Maechler2019,
+       "Hierarchical, minimax linkage:", Bien2011, Murtagh1983)),
      tags$h3("Rogue taxa"),
      HTML(paste("Detection:", Smith2022)),
      HTML(paste("Plotting:", Klopfstein2019)),
