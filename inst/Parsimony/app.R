@@ -283,8 +283,8 @@ ui <- fluidPage(theme = 'app.css',
         tags$div(style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput('consP', 'Majority:', value = 1,
                       min = 0.5, max = 1, width = 200),
-          numericInput('keepTips', 'Tips to show:', value = 1L,
-                       min = 1L, max = 1L, step = 1L, width = 200),
+          numericInput('keepTips', 'Tips to show:', value = 2L,
+                       min = 2L, max = 2L, step = 1L, width = 200),
           selectizeInput('neverDrop', 'Never drop:', multiple = TRUE,
                          choices = list("NA" = "No trees loaded"))
                  ),
@@ -831,7 +831,12 @@ server <- function(input, output, session) {
   })
   
   KeptTips <- reactive({
-    rev(dropSeq())[seq_len(input$keepTips)]
+    n <- input$keepTips
+    maxN <- length(tipLabels())
+    if (is.na(n) || is.null(n) || n < 2L || n > maxN) {
+      n <- maxN
+    }
+    rev(dropSeq())[seq_len(n)]
   })
   
   DroppedTips <- reactive({
