@@ -46,7 +46,7 @@ if (packageVersion("ape" < "5.5.2"))
 if (packageVersion("TreeTools") < "1.5.1.9100")
   remotes::install_github("ms609/TreeTools")
 if (packageVersion("TreeDist") <= "2.0.3")
-  remotes::install_github("ms609/TreeTools")
+  remotes::install_github("ms609/TreeDist")
 if (packageVersion("Rogue") <= "2.0.0")
   remotes::install_github("ms609/Rogue")
 ```
