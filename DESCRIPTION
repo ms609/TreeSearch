@@ -48,6 +48,11 @@ Suggests:
     Quartet,
     testthat,
     vdiffr (>= 1.0.0),
+Remotes:
+    ms609/Rogue,
+    ms609/TreeTools,
+    ms609/TreeDist,
+    emmanuelparadis/ape,
 Config/Needs/coverage: covr
 Config/Needs/github-actions:
     callr,
