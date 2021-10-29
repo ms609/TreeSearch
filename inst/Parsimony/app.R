@@ -1112,7 +1112,7 @@ server <- function(input, output, session) {
     segments(x[-nStop], numeric(nStop), x[-1], lwd = 5, col = badToGood)
     
     if (quality > 1) {
-      Log(quality)
+      Log("Preternaturally high quality: ", quality)
     }
     segments(LogScore(quality), -1, y1 = 1, lty = 3)
     
@@ -1208,7 +1208,6 @@ server <- function(input, output, session) {
       bestK <- which.max(kSils)
       kSil <- kSils[bestK]
       kCluster <- kClusters[[bestK]]$cluster
-      Log(kSil)
       
       cli::cli_progress_update(1, status = 'PAM')
       pamClusters <- lapply(possibleClusters, function (k) {
