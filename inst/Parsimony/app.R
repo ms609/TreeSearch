@@ -130,6 +130,12 @@ Gower1969 <- Reference(
   author = c("Gower, J.C.", "Ross, G.J.S."),
   year = 1969, volume = 18, pages = c(54, 64), doi = "10.2307/2346439",
   journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)")
+Hartigan1979 <- Reference(
+  title = "Algorithm AS 136: a <i>K</i>-means clustering algorithm",
+  author = c("Hartigan, J.A.", "Wong, M.A."),
+  journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)",
+  year = 1979, volume = 28, pages = c(100, 108),
+  doi = "10.2307/2346830")
 Kaski2003 <- Reference(
   title = "Trustworthiness and metrics in visualizing similarity of gene expression",
   author = c("Kaski, S.", "Nikkil&auml;, J.", "Oja, M.", "Venna, J.",
@@ -1607,9 +1613,10 @@ server <- function(input, output, session) {
                  Venna2001)),
      tags$h3('Clustering'),
      HTML(paste("Cluster consensus trees:", Stockham2002)),
-     HTML(paste0('Partitioning around medoids:', Maechler2019,
-                 "Hierarchical, minimax linkage:", Bien2011,
-                 Murtagh1983)),
+     HTML(paste0(
+       'k-means:', Hartigan1979,
+       'Partitioning around medoids:', Maechler2019,
+       "Hierarchical, minimax linkage:", Bien2011, Murtagh1983)),
      tags$h3("Rogue taxa"),
      HTML(paste("Detection:", Smith2022)),
      HTML(paste("Plotting:", Klopfstein2019)),
