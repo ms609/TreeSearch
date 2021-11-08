@@ -40,7 +40,7 @@ citEntry(entry = "Article",
               
 citEntry(entry = "Manual",
          key = "Smith2018",
-         title = "TreeSearch: phylogenetic tree search using custom optimality criteria",
+         title = "{TreeSearch}: phylogenetic tree search using custom optimality criteria",
          author = personList(as.person("Martin R. Smith")),
          note = paste("R package version", meta$Version),
          year = 2018,
@@ -51,10 +51,10 @@ citEntry(entry = "Manual",
               
 citEntry(entry = "Article",
          key = "Smith2021",
-         title = "TreeSearch: morphological phylogenetic analysis in R",
+         title = "{TreeSearch}: morphological phylogenetic analysis in {{R}}",
          author = personList(as.person("Martin R. Smith")),
          year = 2021,
-         journal = "bioR$chi$iv",
+         journal = "bioR$\\chi$iv",
          doi = "10.1101/2021.11.08.XXXXX",
      
          textVersion =
