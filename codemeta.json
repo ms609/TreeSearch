@@ -8,13 +8,13 @@
   "relatedLink": "https://ms609.github.io/TreeSearch/",
   "issueTracker": "https://github.com/ms609/TreeSearch/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.0.9001",
+  "version": "1.1.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R Under development (unstable) (2021-10-05 r81008)",
+  "runtimePlatform": "R Under development (unstable) (2021-11-01 r81125)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -128,7 +128,7 @@
       "@type": "SoftwareApplication",
       "identifier": "ape",
       "name": "ape",
-      "version": ">= 5.1.2",
+      "version": ">= 5.5.2",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -296,7 +296,7 @@
       "@type": "SoftwareApplication",
       "identifier": "TreeDist",
       "name": "TreeDist",
-      "version": "> 2.0.3",
+      "version": ">= 2.2.0.9001",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -309,7 +309,7 @@
       "@type": "SoftwareApplication",
       "identifier": "TreeTools",
       "name": "TreeTools",
-      "version": ">= 1.5.0",
+      "version": ">= 1.5.1.9103",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -320,7 +320,7 @@
     },
     "SystemRequirements": "C++14"
   },
-  "fileSize": "3893.862KB",
+  "fileSize": "3894.352KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -389,9 +389,32 @@
       ],
       "name": "TreeSearch: phylogenetic tree search using custom optimality criteria",
       "identifier": "10.5281/zenodo.1042590",
-      "description": "R package version 1.0.9001",
+      "description": "R package version 1.1.0",
       "@id": "https://doi.org/10.5281/zenodo.1042590",
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
+    },
+    {
+      "@type": "ScholarlyArticle",
+      "datePublished": "2021",
+      "author": [
+        {
+          "@type": "Person",
+          "givenName": ["Martin", "R."],
+          "familyName": "Smith"
+        }
+      ],
+      "name": "TreeSearch: morphological phylogenetic analysis in R",
+      "identifier": "10.1101/2021.11.08.XXXXX",
+      "@id": "https://doi.org/10.1101/2021.11.08.XXXXX",
+      "sameAs": "https://doi.org/10.1101/2021.11.08.XXXXX",
+      "isPartOf": {
+        "@type": "PublicationIssue",
+        "datePublished": "2021",
+        "isPartOf": {
+          "@type": ["PublicationVolume", "Periodical"],
+          "name": "bioR$chi$iv"
+        }
+      }
     }
   ]
 }

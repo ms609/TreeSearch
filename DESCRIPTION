@@ -1,6 +1,6 @@
 Package: TreeSearch
 Title: Phylogenetic Analysis with Morphological Data
-Version: 1.0.9001
+Version: 1.1.0
 Authors@R: c(person("Martin R.", 'Smith',
                   email="martin.smith@durham.ac.uk", 
                   role=c("aut", "cre", "cph"), 
@@ -26,49 +26,49 @@ URL: https://ms609.github.io/TreeSearch/, https://github.com/ms609/TreeSearch/
 BugReports: https://github.com/ms609/TreeSearch/issues/
 Depends: R (>= 3.5.0)
 Imports: 
-    ape (>= 5.1.2),
-    cli (>= 3.0),
-    cluster,
-    fastmatch (>= 1.1.3),
-    future,
-    phangorn (>= 2.2.1),
-    promises,
-    protoclust,
-    Rcpp,
-    Rdpack (>= 0.7),
-    Rogue (> 2.0.0),
-    shiny (>= 1.6.0),
-    shinyjs,
-    stats,
-    TreeDist (> 2.0.3),
-    TreeTools (>= 1.5.0),
+  ape (>= 5.5.2),
+  cli (>= 3.0),
+  cluster,
+  fastmatch (>= 1.1.3),
+  future,
+  phangorn (>= 2.2.1),
+  promises,
+  protoclust,
+  Rcpp,
+  Rdpack (>= 0.7),
+  Rogue (> 2.0.0),
+  shiny (>= 1.6.0),
+  shinyjs,
+  stats,
+  TreeDist (>= 2.2.0.9001),
+  TreeTools (>= 1.5.1.9103),
 Suggests:
-    knitr,
-    rmarkdown,
-    Quartet,
-    testthat,
-    vdiffr (>= 1.0.0),
+  knitr,
+  rmarkdown,
+  Quartet,
+  testthat,
+  vdiffr (>= 1.0.0),
 Remotes:
-    ms609/Rogue,
-    ms609/TreeTools,
-    ms609/TreeDist,
-    emmanuelparadis/ape,
+  emmanuelparadis/ape,
+  ms609/Rogue,
+  ms609/TreeTools,
+  ms609/TreeDist,
 Config/Needs/coverage: covr
 Config/Needs/github-actions:
-    callr,
-    pkgbuild,
-    rcmdcheck
+  callr,
+  pkgbuild,
+  rcmdcheck
 Config/Needs/memcheck: devtools
 Config/Needs/metadata: codemetar
 Config/Needs/revdeps: revdepcheck
 Config/Needs/website: 
-    curl,
-    igraph,
-    pkgdown
+  curl,
+  igraph,
+  pkgdown
 RdMacros: Rdpack
 LinkingTo:
-    Rcpp,
-    TreeTools
+  Rcpp,
+  TreeTools
 SystemRequirements: C++14
 LazyData: true
 ByteCompile: true
