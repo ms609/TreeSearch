@@ -493,6 +493,7 @@ server <- function(input, output, session) {
     } else {
       treeNames <- names(trees)
       r$rawTrees <- c(trees)
+      updateTrees(r$rawTrees) # updates r$trees
       pattern <- '(seed|start|ratch\\d+|final)_\\d+'
       if (length(grep(pattern, treeNames, perl = TRUE)) ==
           length(r$trees)) {
