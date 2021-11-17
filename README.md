@@ -8,7 +8,7 @@
 -->
 [![Project Status: Active – – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
-"TreeSearch" is an R package that contains a "shiny" user interface for 
+"TreeSearch" (Smith 2021) is an R package that contains a "shiny" user interface for 
 interactive tree search and exploration of results, including character
 visualization,
 [rogue taxon detection](https://ms609.github.io/Rogue),
@@ -110,3 +110,7 @@ Goloboff, P. A., Torres, A., Arias, J. S. (2018).
   Weighted parsimony outperforms other methods of phylogenetic inference under 
   models appropriate for morphology.
   Cladistics, 34(4), 407–437. doi: [10.1111/cla.12205](https://doi.org/10.1111/cla.12205).
+  
+Smith, M. R. (2021).
+  TreeSearch: morphological phylogenetic analysis in R.
+  BioR&chi;iv. doi: [/10.1101/2021.11.08.467735](https://www.biorxiv.org/content/10.1101/2021.11.08.467735.full.pdf).
