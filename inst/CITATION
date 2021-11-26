@@ -55,7 +55,7 @@ citEntry(entry = "Article",
          author = personList(as.person("Martin R. Smith")),
          year = 2021,
          journal = "bioR$\\chi$iv",
-         doi = "10.1101/2021.11.08.XXXXX",
+         doi = "10.1101/2021.11.08.467735",
      
          textVersion =
-              paste0("Smith (2021). TreeSearch: morphological phylogenetic analysis in R. preprint at bioRxiv. doi: 10.1101/2021.11.08.XXXXX"))
+              paste0("Smith (2021). TreeSearch: morphological phylogenetic analysis in R. preprint at bioRxiv. doi: 10.1101/2021.11.08.467735"))
