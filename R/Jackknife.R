@@ -15,7 +15,7 @@
 #' @param jackIter Integer specifying number of jackknife iterations to conduct.
 #' @return `Jackknife()` returns a list of trees recovered after jackknife
 #' iterations.
-#' @author Martin R. Smith
+#' @template MRS
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @seealso 
 #' - [`JackLabels()`]: Label nodes of a tree with jackknife supports.

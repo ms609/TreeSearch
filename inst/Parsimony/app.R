@@ -119,7 +119,7 @@ Bien2011 <- Reference(
   pages = c(1075, 1084),
   journal = "Journal of the American Statistical Association")
 Gower1966 <- Reference(title = "Some distance properties of latent root and vector methods used in multivariate analysis",
-                       author = "Gower, J.C.",
+                       authors = "Gower, J.C.",
                        year = 1966,
                        volume = 53,
                        pages = c(325, 338),
@@ -127,37 +127,37 @@ Gower1966 <- Reference(title = "Some distance properties of latent root and vect
                        journal = "Biometrika")
 Gower1969 <- Reference(
   title = "Minimum spanning trees and single linkage cluster analysis",
-  author = c("Gower, J.C.", "Ross, G.J.S."),
+  authors = c("Gower, J.C.", "Ross, G.J.S."),
   year = 1969, volume = 18, pages = c(54, 64), doi = "10.2307/2346439",
   journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)")
 Hartigan1979 <- Reference(
   title = "Algorithm AS 136: a <i>K</i>-means clustering algorithm",
-  author = c("Hartigan, J.A.", "Wong, M.A."),
+  authors = c("Hartigan, J.A.", "Wong, M.A."),
   journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)",
   year = 1979, volume = 28, pages = c(100, 108),
   doi = "10.2307/2346830")
 Kaski2003 <- Reference(
   title = "Trustworthiness and metrics in visualizing similarity of gene expression",
-  author = c("Kaski, S.", "Nikkil&auml;, J.", "Oja, M.", "Venna, J.",
+  authors = c("Kaski, S.", "Nikkil&auml;, J.", "Oja, M.", "Venna, J.",
              "T&ouml;r&ouml;nen, P.", "Castr&eacute;n, E."),
   year = 2003, volume = 4, pages = 48, doi = "10.1186/1471-2105-4-48",
   journal = "BMC Bioinformatics")
 Klopfstein2019 <- Reference(
   title = "Illustrating phylogenetic placement of fossils using RoguePlots: An example from ichneumonid parasitoid wasps (Hymenoptera, Ichneumonidae) and an extensive morphological matrix.",
-  author = c("Klopfstein, S.", "Spasojevic, T."), year = 2019, 
+  authors = c("Klopfstein, S.", "Spasojevic, T."), year = 2019, 
   journal = "PLoS ONE", volume = 14, pages = "e0212942",
   doi = "10.1371/journal.pone.0212942"
 )
 Maechler2019 <- Reference(
   title = "cluster: cluster analysis basics and extensions", year = 2019,
-  author = c("Maechler, M.", "Rousseeuw, P.", "Struyf, A.", "Hubert, M.", "Hornik, K."),
+  authors = c("Maechler, M.", "Rousseeuw, P.", "Struyf, A.", "Hubert, M.", "Hornik, K."),
   journal = "Comprehensive R Archive Network")
 Morphy <- Reference(c("Brazeau, M.D.", "Smith, M.R.", "Guillerme, T."), 2017,
                     'MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability.',
                     doi = '10.5281/zenodo.815371')
 Murtagh1983 <- Reference(
   title = "A survey of recent advances in hierarchical clustering algorithms",
-  author = "Murtagh, F.", year = 1983, volume = 26, pages = c(354, 359),
+  authors = "Murtagh, F.", year = 1983, volume = 26, pages = c(354, 359),
   doi = "10.1093/comjnl/26.4.354", journal = "The Computer Journal")
 Nixon1999 <- Reference(
   "Nixon, K.C.", 1999,
@@ -165,7 +165,7 @@ Nixon1999 <- Reference(
   title = "The Parsimony Ratchet, a new method for rapid parsimony analysis",
   doi = "10.1111/j.1096-0031.1999.tb00277.x")
 RCoreTeam <- Reference(
-  author = "R Core Team", year = 2020,
+  authors = "R Core Team", year = 2020,
   title = "R: A language and environment for statistical computing",
   publisher = "R Foundation for Statistical Computing, Vienna, Austria")
 SmithDist <- Reference('Smith, M.R.', 2020,
@@ -181,22 +181,23 @@ Smith2020 <- Reference('Smith, M.R.', 2020,
                        'Information theoretic Generalized Robinson-Foulds metrics for comparing phylogenetic trees',
                        'Bioinformatics', volume = 36, pages = '5007--5013',
                        doi = "10.1093/bioinformatics/btaa614")
-Smith2021 <- Reference('Smith, M.R.', 2022,
+SmithSpace <- Reference('Smith, M.R.', "2022b",
                        'Robust analysis of phylogenetic tree space',
-                       'Under review')
-Smith2022 <- Reference("Smith, M.R.", 2022, 
+                       "Systematic Biology", pages = "syab100",
+                       doi = "10.1093/sysbio/syab100")
+SmithRogue <- Reference("Smith, M.R.", "2022a", 
                        "Using information theory to detect rogue taxa and improve consensus trees",
-                       "Systematic Biology",
-                       pages = "Accepted MS")
+                       "Systematic Biology", pages = "syab099",
+                       doi = "10.1093/sysbio/syab099")
 Stockham2002 <- Reference(
-  author = c('Stockham, C.', 'Wang, L.-S.', 'Warnow, T.'), 2002,
+  authors = c('Stockham, C.', 'Wang, L.-S.', 'Warnow, T.'), 2002,
   "Statistically based postprocessing of phylogenetic analysis by clustering",
   "Bioinformatics", 18, c('S285', 'S293'),
   doi = "10.1093/bioinformatics/18.suppl_1.S285")
 
 Venna2001 <- Reference(
   title = "Neighborhood preservation in nonlinear projection methods: an experimental study",
-  author = c("Venna, J.", "Kaski, S."), year = 2001, pages = c(485, 491),
+  authors = c("Venna, J.", "Kaski, S."), year = 2001, pages = c(485, 491),
   journal = "Lecture Notes in Computer Science: Artificial Neural Networks&mdash;ICANN 2001",
   editors = c("Dorffner, G.", "Bischof, H.", "Hornik, K."),
   publisher = "Springer, Berlin",
@@ -1614,7 +1615,7 @@ server <- function(input, output, session) {
      HTML(Brazeau2019, Morphy, Nixon1999, SmithSearch),
      tags$h3('Tree space mapping'),
      HTML(paste0(Gower1966, Gower1969, Kaski2003, RCoreTeam,
-                 SmithDist, Smith2020, Smith2021, 
+                 SmithDist, Smith2020, SmithSpace, 
                  Venna2001)),
      tags$h3('Clustering'),
      HTML(paste("Cluster consensus trees:", Stockham2002)),
@@ -1623,7 +1624,7 @@ server <- function(input, output, session) {
        'Partitioning around medoids:', Maechler2019,
        "Hierarchical, minimax linkage:", Bien2011, Murtagh1983)),
      tags$h3("Rogue taxa"),
-     HTML(paste("Detection:", Smith2022)),
+     HTML(paste("Detection:", SmithRogue)),
      HTML(paste("Plotting:", Klopfstein2019)),
     )
   })

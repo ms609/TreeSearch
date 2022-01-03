@@ -11,8 +11,9 @@
 "TreeSearch" (Smith 2021) is an R package that contains a "shiny" user interface for 
 interactive tree search and exploration of results, including character
 visualization,
-[rogue taxon detection](https://ms609.github.io/Rogue),
-[tree space mapping](https://ms609.github.io/TreeDist/articles/treespace.html),
+[rogue taxon detection](https://ms609.github.io/Rogue) (Smith 2022a),
+[tree space mapping](https://ms609.github.io/TreeDist/articles/treespace.html)
+(Smith 2022b),
 and cluster consensus trees.
 
 Inapplicable character states are handled using the algorithm of Brazeau,
@@ -113,4 +114,14 @@ Goloboff, P. A., Torres, A., Arias, J. S. (2018).
   
 Smith, M. R. (2021).
   TreeSearch: morphological phylogenetic analysis in R.
-  BioR&chi;iv. doi: [/10.1101/2021.11.08.467735](https://www.biorxiv.org/content/10.1101/2021.11.08.467735.full.pdf).
+  BioR&chi;iv. doi: [10.1101/2021.11.08.467735](https://www.biorxiv.org/content/10.1101/2021.11.08.467735.full.pdf).
+
+Smith, M. R. (2022a).
+  Using information theory to detect rogue taxa and improve phylogenetic trees.
+  Systematic Biology, syab099.
+  doi: [10.1093/sysbio/syab099](https://dx.doi.org/10.1093/sysbio/syab099)
+
+Smith, M. R. (2022b).
+  Robust analysis of phylogenetic tree space.
+  Systematic Biology, syab100.
+  doi: [10.1093/sysbio/syab100](https://dx.doi.org/10.1093/sysbio/syab100)

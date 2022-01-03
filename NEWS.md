@@ -100,7 +100,7 @@
 # TreeSearch 0.3.0
 
 ## New features
- - Implement an information theoretic tree distance measure (Smith, in prep)
+ - Implement an information theoretic tree distance measure (Smith, 2020)
  - Prepare for new random number generator in R3.6.0
 
 ## Deprecations

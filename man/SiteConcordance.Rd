@@ -9,7 +9,7 @@
 \alias{SharedPhylogeneticConcordance}
 \title{Calculate site concordance factor}
 \usage{
-QuartetConcordance(tree, dataset)
+QuartetConcordance(tree, dataset = NULL)
 
 ClusteringConcordance(tree, dataset)
 

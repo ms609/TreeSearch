@@ -6,7 +6,7 @@
 #'
 #' @examples mpl_translate_error(-1) # "ERR_INVALID_SYMBOL"
 #'
-#' @author Martin R. Smith
+#' @template MRS
 #' @family Morphy API functions
 #' @keywords internal
 #' @export
@@ -140,7 +140,7 @@ mpl_get_numtaxa <- function(morphyobj) {
 #' 
 #' @return An error code.
 #' 
-#' @author Martin R. Smith
+#' @template MRS
 #' @family Morphy API functions
 #' @keywords internal
 #' @export
@@ -159,7 +159,7 @@ mpl_set_charac_weight <- function (charID, weight, morphyobj) {
 #' @return A list, detailing (item 1) the exact weight of the character; (item 2) the integer
 #'         approximation used by Morphy.
 #' 
-#' @author Martin R. Smith
+#' @template MRS
 #' @family Morphy API functions
 #' @keywords internal
 #' @export

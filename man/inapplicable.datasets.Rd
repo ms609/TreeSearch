@@ -8,9 +8,9 @@
 \alias{inapplicable.citations}
 \title{Thirty datasets with inapplicable data}
 \format{
-An object of class \code{list} of length 31.
+An object of class \code{list} of length 30.
 
-An object of class \code{list} of length 31.
+An object of class \code{list} of length 30.
 
 An object of class \code{list} of length 31.
 

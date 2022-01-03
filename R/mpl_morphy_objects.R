@@ -5,7 +5,7 @@
 #'
 #' @return A list detailing the number of taxa, internal nodes, and characters and their weights.
 #'
-#' @author Martin R. Smith
+#' @template MRS
 #' @method summary morphyPtr
 #' @family Morphy API functions
 #' @importFrom Rcpp compileAttributes
