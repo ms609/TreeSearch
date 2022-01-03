@@ -8,7 +8,10 @@ test_that("Addition tree is more parsimonious", {
   eq <- AdditionTree(Lobo.phy)
   kx <- AdditionTree(L10, sequence = seq10, concavity = 10)
   pr <- AdditionTree(L10, sequence = 1:10, concavity = 'pr')
-  nj <- TreeTools::NJTree(Lobo.phy)
+  
+  # Previously used TreeTools::NJTree but since rewriting it's more parsimonious
+  # than ape/phangorn.
+  nj <- RootTree(ape::nj(phangorn::dist.hamming(Lobo.phy)), 1)
   nj10 <- TreeTools::KeepTip(nj, 1:10)
   
   expect_lt(TreeLength(eq, Lobo.phy), TreeLength(nj, Lobo.phy))
