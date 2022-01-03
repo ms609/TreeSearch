@@ -108,7 +108,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   tips <- seq_len(nTip)
   
   # Read states
-  if (!inherits(dataset, 'phylo')) {
+  if (!inherits(dataset, 'phyDat')) {
     dataset <- MatrixToPhyDat(dataset)
   }
   character <- dataset[, char]
