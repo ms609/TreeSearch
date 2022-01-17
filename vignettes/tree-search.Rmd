@@ -11,6 +11,9 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r, echo = FALSE}
+knitr::opts_chunk$set(fig.width = 7.2, fig.asp = 0.7) 
+```
 
 "TreeSearch" is an R package that allows, among other things, 
 parsimony search on morphological datasets that contain inapplicable data,
@@ -29,22 +32,22 @@ at the R / RStudio command line.
 This will allow you to load data from a file, modify search settings, and
 explore the distribution of most parsimonious trees in tree space.
 
-![Starting parsimony search](gui_start.png)
+![Starting parsimony search](gui_start.png){ width=100% }
 
-View a consensus tree and explore the position of rogue taxa:
+View a consensus tree and explore the position of rogue taxa [@SmithCons]:
 
-![Visualizing position of rogue taxon on search result consensus tree](gui_rogue.png)
+![Visualizing position of rogue taxon on search result consensus tree](gui_rogue.png){ width=100% }
 
 Explore the distribution of trees (whether found by search or loaded from file)
-in tree space:
+in tree space [@SmithSpace]:
 
-![Evaluating search progress using tree space](gui_space.png)
+![Evaluating search progress using tree space](gui_space.png){ width=100% }
 
 Map characters on a chosen tree, using character and taxon notes imported from
 a Nexus file, if present.  (This is designed to be interoperable with
 [MorphoBank](https://morphobank.org) matrices.)
 
-![Mapping character reconstructions](gui_char.png)
+![Mapping character reconstructions](gui_char.png){ width=100% }
 
 Trees can be saved as images, or in Nexus/Newick for further analysis.
 
@@ -60,7 +63,7 @@ library("TreeSearch")
 You can 
 [load your own dataset](https://ms609.github.io/TreeTools/articles/load-data.html),
 but for now, we'll use the Vinther _et al._ [-@Vinther2008] dataset that comes 
-bundled with the "TreeSearch".
+bundled with "TreeSearch".
 
 This dataset is small enough that it runs reasonably quickly, but its 
 phylogenetic signal is obscure enough that it can require Ratchet searches to
@@ -73,7 +76,7 @@ vinther <- phangorn::phyDat(rawData, type = 'USER', levels = c(0:9, '-'))
 
 ```{R RNG-version}
 # Set a random seed so that random functions in this document are reproducible
-suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
+suppressWarnings(RNGversion("3.5.0")) # Until we require R v3.6.0
 set.seed(0)
 ```
 
@@ -148,13 +151,25 @@ sampled most-parsimonious trees:
 
 ```{r plot-label-nodes}
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-cons <- ape::consensus(bestTrees, p = 0.5)
-splitFreqs <- TreeTools::SplitFrequency(cons, bestTrees) / length(bestTrees)
-plot(cons)
-TreeTools::LabelSplits(cons, round(splitFreqs * 100), unit = '%',
+majCons <- ape::consensus(bestTrees, p = 0.5)
+splitFreqs <- TreeTools::SplitFrequency(majCons, bestTrees) / length(bestTrees)
+plot(majCons)
+TreeTools::LabelSplits(majCons, round(splitFreqs * 100), unit = '%',
                        col = TreeTools::SupportColor(splitFreqs),
                        frame = 'none', pos = 3L)
 ```
+
+This approach is a sensible way to analyse clade credibility when the frequency
+of a split corresponds to its probability, as is the case in a Bayesian
+posterior sample of trees.
+This is not the case, however, in sets of most parsimonious trees.
+If it were equally parsimonious to place _Halkieria_ as a mollusc (as depicted)
+or a brachiopod (with _Lingula_ and _Terebratulina_ close to the outgroup),
+then neither interpretation should be considered more or less plausible –
+but we would expect to observe more unique most parsimonious trees in which 
+_Halkieria_ is a mollusc simply because of the greater uncertainty in the 
+placement of taxa such as _Odontogriphus_ and _Wiwaxia_, which corresponds
+to a greater number of permutations for trees in which _Halkieria_ is a mollusc.
 
 A more instructive measure of clade support can be generated using
 Jackknife resampling.
@@ -170,9 +185,11 @@ jackTrees <- lapply(logical(nReplicates), function (x)
           verbosity = 0)
 )
 
+strict <- ape::consensus(bestTrees, p = 1)
+
 par(mar = rep(0, 4), cex = 0.8)
 # Take the strict consensus of all trees for each replicate
-JackLabels(cons, lapply(jackTrees, ape::consensus)) -> XX
+JackLabels(strict, lapply(jackTrees, ape::consensus)) -> XX
 ```
 
 Jackknife and bootstrap support values give an indication of the volume of data
@@ -186,21 +203,67 @@ whether a dataset is unanimous or divided in support of a grouping,
 independently of the method of tree reconstruction.
 
 ```{r concordance}
-concordance <- QuartetConcordance(cons, vinther)
+concordance <- QuartetConcordance(strict, vinther)
 
 # Alternative measures:
-# concordance <- ClusteringConcordance(cons, vinther)
-# concordance <- PhylogeneticConcordance(cons, vinther)
+# concordance <- ClusteringConcordance(strict, vinther)
+# concordance <- PhylogeneticConcordance(strict, vinther)
 
 par(mar = rep(0, 4), cex = 0.8)
-plot(cons)
-TreeTools::LabelSplits(cons, signif(concordance, 3),
+plot(strict)
+TreeTools::LabelSplits(strict, signif(concordance, 3),
                        col = TreeTools::SupportColor(concordance / max(concordance)),
                        frame = 'none', pos = 3L)
 ```
 
+### Exploring taxon stability
 
+Measure of clade support can only captures one aspect of the uncertainty in a
+set of trees.  Often one "rogue" taxon with an uncertain position can mask
+agreement in the relationships of other taxa [@SmithCons].
+The potential impact of rogue taxa can be explored by colouring individual tips
+according to their stability in the tree set:
 
+```{r stability}
+par(mar = rep(0, 4), cex = 0.8)
+
+plot(strict, tip.color = Rogue::ColByStability(bestTrees))
+```
+
+Would removing an unstable taxon reveal hidden support for relationships at
+the base of Mollusca?  We can test to see whether the removal of a taxon from
+a summary tree is justified using:
+
+```{r find-rogues}
+Rogue::QuickRogue(bestTrees, p = 1)
+```
+
+In this case, dropping _Wiwaxia_ would improve the resolution of the
+strict consensus by enough to justify the loss of the information
+regarding its own position. The best single summary tree is provided
+by:
+
+```{r cons-without-halk}
+par(mar = rep(0, 4), cex = 0.8)
+noWiwaxia <- lapply(bestTrees, TreeTools::DropTip, 'Wiwaxia')
+plot(ape::consensus(noWiwaxia), tip.color = Rogue::ColByStability(noWiwaxia))
+```
+
+This reveals that all trees agree that _Halkieria_ and _Orthrozanclus_ are
+closer to aculiferan molluscs than _Odontogriphus_ and _Neopilina_, a fact
+masked in the strict consensus due to the uncertain position of _Wiwaxia_.
+
+We can see where _Wiwaxia_ would plot on this tree using:
+
+```{r restore-wiwaxia}
+par(mar = rep(0, 4), cex = 0.8)
+xx <- TreeTools::RoguePlot(bestTrees, 'Wiwaxia', p = 1)
+```
+
+Brighter greens indicate that more trees contained _Wiwaxia_ in this position.
+
+More details on rogue taxon identification are available in the package
+["Rogue"](https://ms609.github.io/Rogue/).
 
 ## Implied weighting
 

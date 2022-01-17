@@ -402,7 +402,7 @@ MaximizeParsimony <- function (dataset, tree,
     tree <- AdditionTree(dataset, constraint = constraint,
                          concavity = concavity)
   } else if (inherits(tree, 'multiPhylo')) {
-    startTrees <- tree
+    startTrees <- unique(tree)
     sampledTree <- sample.int(length(tree), 1)
     .Info(2L, paste0("Starting search from {.var tree[[", sampledTree, "]]}"))
     tree <- tree[[sampledTree]]
@@ -586,7 +586,7 @@ MaximizeParsimony <- function (dataset, tree,
   attr(bestEdges, 'firstHit') <- c('seed' = dim(bestEdges)[3],
     setNames(double(nStages),
              c(if(tbrStart) 'start',
-               if (ratchIter > 0) paste0('ratch', seq_len(ratchIter)),
+               if(ratchIter > 0) paste0('ratch', seq_len(ratchIter)),
                if(tbrEnd) 'final')))
   
   
@@ -733,7 +733,7 @@ MaximizeParsimony <- function (dataset, tree,
 #' Combine two edge matrices
 #' 
 #' @param x,y 3D arrays, each slice containing an edge matrix from a tree
-#' of class `phylo`.
+#' of class `phylo`.  `x` should not contain duplicates.
 #' @return A single 3D array containing each unique edge matrix from (`x` and)
 #' `y`, with a `firstHit` attribute as documented in [`MaximizeParsimony()`].
 #' @template MRS
@@ -742,6 +742,9 @@ MaximizeParsimony <- function (dataset, tree,
   xDim <- dim(x)
   if (length(xDim) == 2L) {
     xDim <- c(xDim, 1L)
+  }
+  if (any(duplicated(x, MARGIN = 3L))) {
+    warning(".CombineResults(x) should not contain duplicates.")
   }
   
   res <- unique(array(c(x, y), dim = xDim + c(0, 0, dim(y)[3])), MARGIN = 3L)

@@ -151,3 +151,30 @@ test_that("Resample() fails and works", {
                tolerance = 0.2)
     
 })
+
+test_that(".CombineResults() handles duplicates", {
+  x <- structure(
+    array(c(
+      rep(1L, 8),
+      rep(2L, 8),
+      rep(3L, 8),
+      rep(2L, 8),
+      rep(1L, 8)
+      ),
+      dim = c(4, 2, 5)),
+    firstHit = c(start = 5, test = 0, end = 0)
+  )
+  y <- array(c(rep(1L, 8),
+               rep(4L, 8),
+               rep(1L, 8),
+               rep(4L, 8),
+               rep(1L, 8)),
+          dim = c(4, 2, 5)
+          )
+  expect_warning(.CombineResults(x, y, stage = "test"))
+  uX <- structure(unique(x, MARGIN = 3L),
+                  firstHit = c(start = 3, test = 0, end = 0))
+  expect_equal(attr(.CombineResults(uX, y, stage = "test"), "firstHit"),
+               c(start = 3, test = 1, end = 0))
+               
+})
