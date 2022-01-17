@@ -56,8 +56,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          remotes::install_github("r-lib/pkgdown")
-          remotes::install_github("ms609/TreeTools@rogue")
           remotes::install_deps(
             dependencies = c("soft", "Config/Needs/website")
           )
