@@ -179,10 +179,12 @@ such as _Odontogriphus_ and _Wiwaxia_.
 
 A more instructive measure of clade support can be generated using
 Jackknife resampling.
-The `Resample()` manual page has suggestions for appropriate numbers of 
-replicates and search intensity, and instructions for calculating bootstrap
-support; the code here gives a quick-to-run jackknife framework that can be
-adapted to the requirements of a particular dataset.
+The `Resample()` [manual page](
+https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html)
+has suggestions for appropriate numbers of replicates and search intensity, 
+and instructions for calculating bootstrap support;
+the code here gives a quick-to-run jackknife framework that can be adapted to
+the requirements of a particular dataset.
 
 ```{r Jackknife-annotations}
 nReplicates <- 10
@@ -246,8 +248,8 @@ Rogue::QuickRogue(bestTrees, p = 1)
 
 In this case, dropping _Wiwaxia_ would improve the resolution of the
 strict consensus by enough to justify the loss of the information
-regarding its own position. The best single summary tree is provided
-by:
+regarding its own position (a net gain of 14.3 bits).
+The most informative single summary tree is thus provided by:
 
 ```{r cons-without-halk}
 par(mar = rep(0, 4), cex = 0.8)
