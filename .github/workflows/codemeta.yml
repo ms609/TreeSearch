@@ -5,7 +5,9 @@ on:
       - master
     paths:
       - 'DESCRIPTION'
+      - '**codemeta.yml'
       
+name: codemeta
       
 jobs:
   codemeta:
