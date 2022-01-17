@@ -1,0 +1,62 @@
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'DESCRIPTION'
+      
+      
+jobs:
+  codemeta:
+    runs-on: ubuntu-20.04
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_COMPILE_AND_INSTALL_PACKAGES: 'never'
+      
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: r-lib/actions/setup-r@master
+
+      - name: Install system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install libcurl4-openssl-dev
+          while read -r cmd
+          do
+            eval sudo $cmd
+          done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
+
+      - name: Query dependencies
+        run: |
+          install.packages('remotes')
+          saveRDS(remotes::dev_package_deps(
+            dependencies = c("soft", "Config/Needs/metadata")
+          ),
+          ".github/depends.Rds", version = 2)
+          writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
+        shell: Rscript {0}
+
+      - name: Cache R packages
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
+
+      - name: Install dependencies
+        run: |
+          remotes::install_deps(
+            dependencies = c("soft", "Config/Needs/metadata")
+          )
+        shell: Rscript {0}
+
+      - name: Build and deploy metadata
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          Rscript -e 'codemeta::write_codemeta()'
+          git commit -m "Update codemeta.js"
+          git push
+
