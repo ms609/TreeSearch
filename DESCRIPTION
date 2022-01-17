@@ -45,8 +45,9 @@ Imports:
   TreeTools (>= 1.6.0),
 Suggests:
   knitr,
-  rmarkdown,
   Quartet,
+  rmarkdown,
+  spelling,
   testthat,
   vdiffr (>= 1.0.0),
 Config/Needs/coverage: covr
