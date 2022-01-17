@@ -117,9 +117,10 @@ legend('topright', names(firstHit), col = cols, pch = 16, bty = 'n')
 
 A quick glance suggests that early ratchet iterations captured a large part of
 the diversity of optimal trees, and that iterations aren't getting stuck in 
-local optima -- though conscientious users will ensure that the mapping of tree 
-space is meaningful and adequate to detect structure before making
-any firm conclusions [@SmithSpace].
+local optima -- though conscientious users will 
+[ensure that the mapping of tree space is meaningful and adequate](
+https://ms609.github.io/TreeDist/articles/treespace.html)
+to detect structure before making any firm conclusions [@SmithSpace].
 
 To be thorough, we might consider continuing the search for a little longer,
 fine-tuning the search parameters:
@@ -163,13 +164,18 @@ This approach is a sensible way to analyse clade credibility when the frequency
 of a split corresponds to its probability, as is the case in a Bayesian
 posterior sample of trees.
 This is not the case, however, in sets of most parsimonious trees.
-If it were equally parsimonious to place _Halkieria_ as a mollusc (as depicted)
-or a brachiopod (with _Lingula_ and _Terebratulina_ close to the outgroup),
-then neither interpretation should be considered more or less plausible –
-but we would expect to observe more unique most parsimonious trees in which 
-_Halkieria_ is a mollusc simply because of the greater uncertainty in the 
-placement of taxa such as _Odontogriphus_ and _Wiwaxia_, which corresponds
-to a greater number of permutations for trees in which _Halkieria_ is a mollusc.
+
+Imagine if our set of most parsimonious trees was expanded to include a single
+additional tree in which _Halkieria_ was sister to the brachiopod
+_Terebratulina_ (close to the outgroup).
+We would then be in a situation in which _Halkieria_ may be a brachiopod –
+in which case a single interpretation of molluscan relationships is most
+parsimonious – or may be a mollusc, in which case its mosaic of characters
+can be reconciled with molluscs in a number of equally-parsimonious ways.
+Neither interpretation should be considered more or less plausible, even if we
+observe more unique most parsimonious trees in which _Halkieria_ is a mollusc
+simply because of the greater resultant uncertainty in the placement of taxa
+such as _Odontogriphus_ and _Wiwaxia_.
 
 A more instructive measure of clade support can be generated using
 Jackknife resampling.
@@ -308,7 +314,7 @@ constraints, but if it cannot, it may be necessary to specify one manually
 
 Here's a simple example on six taxa that enforces the bipartition ab | cdef:
 
-```{r simple-constraints, message = FALSE}
+```{r simple-constraints, fig.width = 4, fig.align = "center", message = FALSE}
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
 characters <- MatrixToPhyDat(matrix(
@@ -322,7 +328,7 @@ plot(MaximizeParsimony(characters, constraint = constraint,
 Here's a more complex example that imposes the splits `ab | cef` and `abcd | ef`,
 whilst allowing `g` to plot anywhere on the tree:
 
-```{r complex-constraints, message = FALSE}
+```{r complex-constraints, fig.width = 4, fig.align = "center", message = FALSE}
 characters <- MatrixToPhyDat(matrix(
   c(0, 0, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 0, 0, 0), ncol = 2,
