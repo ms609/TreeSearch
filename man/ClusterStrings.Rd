@@ -32,5 +32,4 @@ ClusterStrings(c(paste0('FirstCluster ', 1:5),
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
-\concept{stats as.dist cutree}
 \concept{utility functions}

@@ -20,7 +20,7 @@
 #' @importFrom utils adist
 #' @importFrom cluster pam silhouette
 #' @importFrom protoclust protoclust
-#' @family stats as.dist cutree
+#' @importFrom stats as.dist cutree
 #' @family utility functions
 #' @export
 ClusterStrings <- function (x, maxCluster = 12) {
