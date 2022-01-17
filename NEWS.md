@@ -1,8 +1,9 @@
 # TreeSearch 1.1.0
 
-- Improvements to 'shiny' GUI.
-- New vignette describing profile parsimony.
-- `MinimumLength()` fully supports ambiguous applicability.
+- Improvements to 'shiny' GUI
+- Better integration of rogue taxon exploration
+- New vignette describing profile parsimony
+- `MinimumLength()` fully supports ambiguous applicability
 
 
 # TreeSearch 1.0.1
