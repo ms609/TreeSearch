@@ -31,3 +31,4 @@ vignettes/*_cache*
 gen-*tip/*
 results-*
 inst/DELETE*
+*.bak

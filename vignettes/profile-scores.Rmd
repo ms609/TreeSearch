@@ -11,7 +11,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-## Scope of this doucment
+## Scope of this document
 
 This document aims to give a flavour of the justification for using parsimony
 in general, and profile parsimony in particular, to reconstruct evolutionary
@@ -39,7 +39,7 @@ of why this might be.
 ## A philosophy of parsimony
 
 There are a number of complementary perspectives on the philosophical
-justificaion for a parsimony approach [e.g. @Farris1983], which this brief
+justification for a parsimony approach [e.g. @Farris1983], which this brief
 overview will not do justice to;
 but hopefully my unqualified and largely unreferenced perspective captures some
 of the nature of the principal arguments.
@@ -50,7 +50,7 @@ Parsimony has been defended by reference to Occam's Razor: the principle that
 scientists should prefer the simplest explanation that can provide an 
 adequate account for observed data.
 In the context of morphological phylogenetics, "observed data"
-are codified as scorings of observed character states in a matrix.
+are codified as observed character states scored within a matrix.
 Ideally, a phylogenetic tree would explain the distribution of character states
 between taxa by reconstructing each character state as representing a 
 homologous feature, with a single evolutionary origin on the tree.
@@ -189,7 +189,7 @@ to common ancestry after learning of the existence of the $n$th step.
 
 Whereas the value of a parsimony score obtained under implied weights does not
 have any inherent meaning,
-the profile parismony score of a given tree represents the amount of information
+the profile parsimony score of a given tree represents the amount of information
 within a character matrix that can be attributed to common ancestry under
 that tree, which, if expressed as a proportion of the total cladistic
 information content of the characters in the matrix [@Cotton2008], gives an 
