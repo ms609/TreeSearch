@@ -3,21 +3,32 @@ on:
     branches:
       - main
       - master
+    paths-ignore:
+      - "memcheck**"
+      - "Meta**"
+      - "docs**"
+      - "**.git"
+      - "**.json"
+      - "**.md"
+      - "**.yml"
+      - "!**R-cmd-check.yml"
+      - "**.R[dD]ata"
+      - "**.Rpro*"
   pull_request:
     branches:
       - main
       - master
-  paths-ignore:
-    - "memcheck**"
-    - "Meta**"
-    - "docs**"
-    - "**.git"
-    - "**.json"
-    - "**.md"
-    - "**.yml"
-    - "!**R-cmd-check.yml"
-    - "**.R[dD]ata"
-    - "**.Rpro*"
+    paths-ignore:
+      - "memcheck**"
+      - "Meta**"
+      - "docs**"
+      - "**.git"
+      - "**.json"
+      - "**.md"
+      - "**.yml"
+      - "!**R-cmd-check.yml"
+      - "**.R[dD]ata"
+      - "**.Rpro*"
 
 name: revdep-check
 
