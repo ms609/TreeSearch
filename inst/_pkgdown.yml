@@ -57,7 +57,7 @@ reference:
   - title: "Utility functions"
     desc: "Miscellaneous functions used within the package."
     contents:
-      - has_keyword("utility functions")
+      - has_concept("utility functions")
 
 template:
   params:
