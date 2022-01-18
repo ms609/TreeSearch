@@ -16,7 +16,8 @@ name: pkgdown
 
 jobs:
   pkgdown:
-    runs-on: ubuntu-20.04
+    runs-on: macOS-latest
+    
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_COMPILE_AND_INSTALL_PACKAGES: 'never'
@@ -28,10 +29,12 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v2
       
-      - name: Install apt pacakges
+      - name: Install Mac OS dependencies
         run: |
-          sudo apt-get install libharfbuzz-dev libfribidi-dev libglpk-dev libcurl4-openssl-dev
-
+          brew install libgit2
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          
       - name: Query dependencies
         run: |
           install.packages('remotes')
@@ -41,15 +44,7 @@ jobs:
           ".github/depends.Rds", version = 2)
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
-
-      - name: Install system dependencies
-        if: runner.os == 'Linux'
-        run: |
-          while read -r cmd
-          do
-            eval sudo $cmd
-          done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
-
+        
       - name: Cache R packages
         uses: actions/cache@v2
         with:
@@ -66,11 +61,6 @@ jobs:
 
       - name: Install package
         run: R CMD INSTALL .
-
-      - name: Configure Git
-        run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
 
       - name: Build and deploy documentation
         run: |
