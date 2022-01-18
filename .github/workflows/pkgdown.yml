@@ -66,6 +66,6 @@ jobs:
         run: |
           pkgdown::deploy_to_branch(new_process = FALSE)
           if (length(warnings()) > 0) {
-            stop("Fail on warning")
+            on.exit(stop("Fail on warning"))
           }
         shell: Rscript {0}
