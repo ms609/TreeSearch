@@ -15,7 +15,7 @@ reference:
       
   - title: "Tree scoring"
     desc: "Functions that provide tree scores, for optimization."
-    contents: 
+    contents:
       - has_concept("tree scoring")
       - ConcordantInformation
       - Consistency
@@ -52,7 +52,12 @@ reference:
   - title: "Datasets"
     desc: "Data that accompanies the package."
     contents:
-      - has_keyword('datasets')
+      - has_keyword("datasets")
+      
+  - title: "Utility functions"
+    desc: "Miscellaneous functions used within the package."
+    contents:
+      - has_keyword("utility functions")
 
 template:
   params:
