@@ -47,9 +47,11 @@ jobs:
       - name: Query dependencies
         run: |
           install.packages('remotes')
-          saveRDS(c(
-            remotes::dev_package_deps(dependencies = c("soft", "Config/Needs/github-actions"))
-          ), ".github/depends.Rds", version = 2)
+          saveRDS(
+            c(remotes::dev_package_deps(
+                dependencies = c("soft", "Config/Needs/github-actions"))
+              ),
+              ".github/depends.Rds", version = 2)
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
 
@@ -75,7 +77,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          remotes::install_deps(dependencies = c("soft", "Config/Needs/github-actions"))
+          remotes::install_deps(
+            dependencies = c("soft", "Config/Needs/github-actions")
+          )
         shell: Rscript {0}
         
       - name: Install coverage dependencies
@@ -87,12 +91,16 @@ jobs:
       - name: Check
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
-        run: rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "warning", check_dir = "check")
+        run: |
+          rcmdcheck::rcmdcheck(
+            args = c("--no-manual", "--as-cran"),
+            error_on = "warning", check_dir = "check"
+          )
         shell: Rscript {0}
 
       - name: Upload check results
         if: failure()
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-r${{ matrix.config.r }}-results
           path: check

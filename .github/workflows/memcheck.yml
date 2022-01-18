@@ -55,7 +55,7 @@ jobs:
 
       - name: Setup pandoc
         if: ${{ matrix.config.test }} == 'vignettes'
-        uses: r-lib/actions/setup-pandoc@master
+        uses: r-lib/actions/setup-pandoc@r2
 
       - name: Query dependencies
         run: |
@@ -81,7 +81,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          remotes::install_github('emmanuelparadis/ape')
           if ("${{ matrix.config.test }}" == 'tests') {
             remotes::install_github('r-lib/brio#20') # brio mem leak
           }

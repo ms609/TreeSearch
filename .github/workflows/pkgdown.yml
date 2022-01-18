@@ -64,8 +64,15 @@ jobs:
       - name: Install package
         run: R CMD INSTALL .
 
-      - name: Build and deploy documentation
+      - name: Configure Git
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
-          Rscript -e 'pkgdown::deploy_to_branch(new_process = FALSE); if (length(warnings()) > 0) stop("Fail on warning")'
+
+      - name: Build and deploy documentation
+        run: |
+          pkgdown::deploy_to_branch(new_process = FALSE)
+          if (length(warnings()) > 0) {
+            stop("Fail on warning")
+          }
+        shell: Rscript {0}
