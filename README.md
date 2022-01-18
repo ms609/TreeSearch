@@ -38,16 +38,6 @@ install.packages("TreeSearch")
 library("TreeSearch")
 ```
 
-Some features of the GUI require versions of packages scheduled for release to
-CRAN in Jan 2022.  Until then, you can install them using:
-```r
-if(!require("remotes")) install.packages("remotes")
-if (packageVersion("TreeTools") < "1.5.1.9100")
-  remotes::install_github("ms609/TreeTools")
-if (packageVersion("Rogue") <= "2.0.0")
-  remotes::install_github("ms609/Rogue", args="--recursive")
-```
-
 Install and load the development version of "TreeSearch" with:
 
 ```r
