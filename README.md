@@ -45,6 +45,19 @@ remotes::install_github("ms609/TreeSearch")
 library("TreeSearch")
 ```
 
+# Errors reading trees
+
+Some users are reporting an error when loading trees from Nexus files:
+` Error in [<-.multiPhylo: argument "..1" is missing, with no default  `
+
+This arises due to an underlying issue in the "ape" package, which can be fixed by installing a patch:
+
+```r
+remotes::install_github("ms609/ape@patch-3")
+```
+
+(You may first need to exit and re-launch R to be sure that the "ape" package is not in use.)
+
 # Quick start
 
 Launch a graphical user interface (development version only)
