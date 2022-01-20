@@ -36,16 +36,13 @@ library('TreeSearch')
 
 Activate the graphical user interface by typing `EasyTrees()`.
 
-Some features of the graphical user interface require up-to-date versions of
-the "ape" and "TreeTools" packages, due on CRAN in late 2021.
-Until then, install the latest versions using
+In Jan 2022, some users are reporting issues after loading trees from Nexus files.
+These arise due to an issue in the underlying "ape" package.
+To install a patched version, close and re-launch R and run:
 
 ```r
 if (!require('remotes')) install.packages('remotes')
-remotes::install_github('emmanuelparadis/ape')
-packageVersion('ape') # Should be at least 5.5.2
-remotes::install_github('ms609/TreeTools@Rogue')
-packageVersion('TreeTools') # Should be > 1.5.0 or end in .91XX
+remotes::install_github("ms609/ape@patch-3")
 ```
 
 Windows users may need to install 
