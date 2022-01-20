@@ -135,6 +135,15 @@
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span></code></pre></div>
 </div>
 <div class="section level1">
+<h1 id="errors-reading-trees">Errors reading trees<a class="anchor" aria-label="anchor" href="#errors-reading-trees"></a>
+</h1>
+<p>Some users are reporting an error when loading trees from Nexus files: <code>Error in [&lt;-.multiPhylo: argument "..1" is missing, with no default</code></p>
+<p>This arises due to an underlying issue in the “ape” package, which can be fixed by installing a patch:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ms609/ape@patch-3"</span><span class="op">)</span></code></pre></div>
+<p>(You may first need to exit and re-launch R to be sure that the “ape” package is not in use.)</p>
+</div>
+<div class="section level1">
 <h1 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h1>
 <p>Launch a graphical user interface (development version only) by typing <code><a href="reference/MaximizeParsimony.html">TreeSearch::EasyTrees()</a></code> in the R console.</p>

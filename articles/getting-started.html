@@ -107,7 +107,7 @@
       <h1 data-toc-skip>Getting started: Installing R and TreeSearch</h1>
                         <h4 data-toc-skip class="author">Martin R. Smith</h4>
             
-            <h4 data-toc-skip class="date">2022-01-18</h4>
+            <h4 data-toc-skip class="date">2022-01-20</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="hidden name"><code>getting-started.Rmd</code></div>
@@ -132,13 +132,10 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">'TreeSearch'</a></span><span class="op">)</span></code></pre></div>
 <p>Activate the graphical user interface by typing <code><a href="../reference/MaximizeParsimony.html">EasyTrees()</a></code>.</p>
-<p>Some features of the graphical user interface require up-to-date versions of the “ape” and “TreeTools” packages, due on CRAN in late 2021. Until then, install the latest versions using</p>
+<p>In Jan 2022, some users are reporting issues after loading trees from Nexus files. These arise due to an issue in the underlying “ape” package. To install a patched version, close and re-launch R and run:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://remotes.r-lib.org" class="external-link">'remotes'</a></span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'remotes'</span><span class="op">)</span>
-<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'emmanuelparadis/ape'</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">packageVersion</a></span><span class="op">(</span><span class="st">'ape'</span><span class="op">)</span> <span class="co"># Should be at least 5.5.2</span>
-<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'ms609/TreeTools@Rogue'</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">packageVersion</a></span><span class="op">(</span><span class="st">'TreeTools'</span><span class="op">)</span> <span class="co"># Should be &gt; 1.5.0 or end in .91XX</span></code></pre></div>
+<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ms609/ape@patch-3"</span><span class="op">)</span></code></pre></div>
 <p>Windows users may need to install <a href="https://cran.r-project.org/bin/windows/Rtools/" class="external-link">Rtools</a> before installing from the GitHub source.</p>
 </div>
 <div class="section level3">
