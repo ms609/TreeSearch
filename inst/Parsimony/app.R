@@ -1585,9 +1585,9 @@ server <- function(input, output, session) {
            },
            'clus' = {
              list(
-               fileName = "CluserConsensus",
+               fileName = "ClusterCons",
                title = "Cluster Consensus trees - TreeSearch",
-               asp = 2L
+               asp = 1.6
              )
            },
            'ind' = {
@@ -1618,7 +1618,7 @@ server <- function(input, output, session) {
     filename = function() paste0(saveDetails()$fileName, ".pdf"),
     content = function (file) {
       pdf(file, title = saveDetails()$title,
-          width = 10L,
+          width = 8L,
           height = saveDetails()$asp * 10L)
       plotContent()
       dev.off()
