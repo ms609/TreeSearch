@@ -1460,6 +1460,9 @@ server <- function(input, output, session) {
       return(ErrorPlot("Need at least\nthree trees to\nmap tree space"))
     }
     
+    spaceCex <- 1.7
+    spaceLwd <- 2
+    
     cl <- clusterings()
     proj <- mapping()
     
@@ -1497,7 +1500,9 @@ server <- function(input, output, session) {
         # Add points
         points(proj[, j], proj[, i], pch = treePch(),
                col = paste0(treeCols(), as.hexmode(200)),
-               cex = 1.5)#input$pt.cex)
+               cex = spaceCex,
+               lwd = spaceLwd
+               )#input$pt.cex)
         
         if (cl$sil > silThreshold()) {
           # Mark clusters
@@ -1519,6 +1524,7 @@ server <- function(input, output, session) {
       if (input$spacePch == 'relat') {
         if (length(input$relators) == 4L) {
           legend(bty = 'n', 'topright', pch = 1:3, xpd = NA,
+                 pt.cex = spaceCex, pt.lwd = spaceLwd,
                  gsub("_", " ", fixed = TRUE,
                       paste(input$relators[2:4], "&", input$relators[[1]])))
         }
@@ -1533,6 +1539,7 @@ server <- function(input, output, session) {
       }
       if (input$spaceCol == 'firstHit' && length(firstHit())) {
         legend(bty = 'n', 'topleft', pch = 16, col = firstHitCols(),
+               pt.cex = spaceCex,
                names(firstHit()), title = 'Iteration first hit')
       } else if (input$spaceCol == 'score') {
         legendRes <- length(badToGood)
