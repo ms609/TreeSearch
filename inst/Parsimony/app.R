@@ -387,8 +387,8 @@ server <- function(input, output, session) {
                             }, error = function (e) NULL))
     } else {
       Log("updateData: from package")
-      dataFile <- system.file(paste0('datasets/', source, '.nex'),
-                               package = 'TreeSearch')
+      dataFile <- system.file(paste0("datasets/", source, ".nex"),
+                               package = "TreeSearch")
       r$chars <- ReadCharacters(dataFile)
       r$charNotes <- ReadNotes(dataFile)
       r$dataset <- ReadAsPhyDat(dataFile)
@@ -1566,8 +1566,41 @@ server <- function(input, output, session) {
            })
   })
   
+  saveDetails <- reactive({
+    message("Reacgin£ to ", input$plotFormat)
+    switch(input$plotFormat,
+           'cons' = {
+             list(
+               fileName = "ConsensusTrees",
+               title = "Consensus tree - TreeSearch",
+               asp = 2L
+             )
+           },
+           'clus' = {
+             list(
+               fileName = "CluserConsensus",
+               title = "Cluster Consensus trees - TreeSearch",
+               asp = 2L
+             )
+           },
+           'ind' = {
+             list(
+               fileName = "OptimalTree",
+               title = "Optimal tree - TreeSearch",
+               asp = 2L
+             )
+           },
+           'space' = {
+             list(
+               fileName = "TreeSpace",
+               title = "Tree space - TreeSearch",
+               asp = 1L
+             )
+           })
+  })
+  
   output$savePng <- downloadHandler(
-    filename = 'TreeSearch.png',
+    filename = function() paste0(saveDetails()$fileName, ".png"),
     content = function (file) {
       png(file, width = input$plotSize, height = input$plotSize)
       plotContent()
@@ -1575,11 +1608,11 @@ server <- function(input, output, session) {
     })
   
   output$savePdf <- downloadHandler(
-    filename = 'TreeSearch.pdf',
+    filename = function() paste0(saveDetails()$fileName, ".pdf"),
     content = function (file) {
-      pdf(file, title = paste0('Tree space mapping'),
-          width = 10,
-          height = 20)
+      pdf(file, title = saveDetails()$title,
+          width = 10L,
+          height = saveDetails()$asp * 10L)
       plotContent()
       dev.off()
     })
