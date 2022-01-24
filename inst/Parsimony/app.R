@@ -1574,7 +1574,6 @@ server <- function(input, output, session) {
   })
   
   saveDetails <- reactive({
-    message("Reacgin£ to ", input$plotFormat)
     switch(input$plotFormat,
            'cons' = {
              list(
