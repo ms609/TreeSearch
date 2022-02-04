@@ -1,3 +1,8 @@
+# TreeSearch 1.1.0.9000
+
+- Update tests for TreeSearch >1.5.0
+
+
 # TreeSearch 1.1.0
 
 - Improvements to 'shiny' GUI

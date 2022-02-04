@@ -134,21 +134,25 @@ test_that("Resample() fails and works", {
   skip_if_not_installed("TreeTools", "1.4.5.9003") # postorder / as.Splits order
   jackTrees <- replicate(nRep, Resample(dataset, NJTree(dataset), verbosity = 0L))
   jackSplits <- as.Splits(unlist(jackTrees, recursive = FALSE))
-  jackSupport <- rowSums(vapply(jackSplits, function (sp) in.Splits(bal, sp),
+  jackSupport <- rowSums(vapply(jackSplits, function(sp) in.Splits(bal, sp),
                                 logical(3)))
+  
+  skip_if_not_installed("TreeTools", "1.5.0.9001") # names
   # This test could be replaced with a more statistically robust alternative!
-  expect_equal(c(1, 1/2, 0) * sum(vapply(jackTrees, length, 1L)), jackSupport,
-               tolerance = 0.2)
+  expect_equal(jackSupport, tolerance = 0.2,
+               c("9" = 1, "10" = 1/2, "11" = 0) *
+                 sum(vapply(jackTrees, length, 1L)))
   
   bootTrees <- replicate(nRep, Resample(dataset, method = 'bootstrap',
                                         verbosity = 0))
   #bootSupport <- rowSums(vapply(lapply(bootTrees, `[[`, 1),
   bootSupport <- rowSums(vapply(unlist(bootTrees, recursive = FALSE),
-                                function (tr) in.Splits(bal, as.Splits(tr)),
+                                function(tr) in.Splits(bal, as.Splits(tr)),
                                 logical(3)))
   # This test could be replaced with a more statistically robust alternative!
-  expect_equal(c(1, 1/2, 0) * sum(vapply(bootTrees, length, 1L)), bootSupport,
-               tolerance = 0.2)
+  expect_equal(bootSupport, tolerance = 0.2,
+               c("9" = 1, "10" = 1/2, "11" = 0) * 
+                 sum(vapply(bootTrees, length, 1L)))
     
 })
 
