@@ -137,7 +137,7 @@ test_that("Resample() fails and works", {
   jackSupport <- rowSums(vapply(jackSplits, function(sp) in.Splits(bal, sp),
                                 logical(3)))
   
-  skip_if_not_installed("TreeTools", "1.5.0.9001") # names
+  skip_if_not_installed("TreeTools", "1.6.0.9002") # names
   # This test could be replaced with a more statistically robust alternative!
   expect_equal(jackSupport, tolerance = 0.2,
                c("9" = 1, "10" = 1/2, "11" = 0) *
