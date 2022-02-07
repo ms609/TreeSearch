@@ -28,6 +28,8 @@
 </script>
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -40,18 +42,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.0.1.9001</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.1.0.9000</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
@@ -85,7 +81,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/ms609/TreeSearch/">
+  <a href="https://github.com/ms609/TreeSearch/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -106,46 +102,46 @@
 
       
 
-      </header><script src="profile-scores_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Profile parsimony</h1>
-                        <h4 class="author">Martin R. Smith</h4>
+                        <h4 data-toc-skip class="author">Martin R. Smith</h4>
             
-            <h4 class="date">2021-10-19</h4>
+            <h4 data-toc-skip class="date">2022-02-07</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/profile-scores.Rmd"><code>vignettes/profile-scores.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/profile-scores.Rmd" class="external-link"><code>vignettes/profile-scores.Rmd</code></a></small>
       <div class="hidden name"><code>profile-scores.Rmd</code></div>
 
     </div>
 
     
     
-<div id="scope-of-this-doucment" class="section level2">
-<h2 class="hasAnchor">
-<a href="#scope-of-this-doucment" class="anchor"></a>Scope of this doucment</h2>
+<div class="section level2">
+<h2 id="scope-of-this-document">Scope of this document<a class="anchor" aria-label="anchor" href="#scope-of-this-document"></a>
+</h2>
 <p>This document aims to give a flavour of the justification for using parsimony in general, and profile parsimony in particular, to reconstruct evolutionary history; and to summarize the mathematical/information theoretic underpinning of the profile parsimony approach.</p>
-<p>I’ll open by acknowledging that a philosophical approach is not everyone’s cup of tea – it’s certainly not my home turf. I tend to prefer models that can be shown to work well, without worrying too much about their abstract philosophy – though admittedly, identifying a ‘best’ method is not always straightforward <span class="citation">(e.g. Smith, 2019)</span>.</p>
+<p>I’ll open by acknowledging that a philosophical approach is not everyone’s cup of tea – it’s certainly not my home turf. I tend to prefer models that can be shown to work well, without worrying too much about their abstract philosophy – though admittedly, identifying a ‘best’ method is not always straightforward <span class="citation">(e.g. Smith, 2019)</span>.</p>
 <p>I should also acknowledge that practical considerations can influence the choice of reconstruction method: a tip-dated phylogeny cannot be accomplished in a parsimony framework, for example; and where a principled model of evolutionary change is available, as with certain subsets of molecular data, some see a compelling case for using such models to infer phylogeny.</p>
 <p>My goal here is not to argue that any method is superior, but to develop a case that profile parsimony rests on a principled underpinning – and, if it does prove to outperform other methods in certain circumstances, to give a sense of why this might be.</p>
 </div>
-<div id="a-philosophy-of-parsimony" class="section level2">
-<h2 class="hasAnchor">
-<a href="#a-philosophy-of-parsimony" class="anchor"></a>A philosophy of parsimony</h2>
-<p>There are a number of complementary perspectives on the philosophical justificaion for a parsimony approach <span class="citation">(e.g. Farris, 1983)</span>, which this brief overview will not do justice to; but hopefully my unqualified and largely unreferenced perspective captures some of the nature of the principal arguments. Better-versed readers are invited to suggest improvements or modifications by e-mail or by opening a <a href="https://github.com/ms609/TreeSearch/issues/new/">GitHub issue</a>.</p>
-<p>Parsimony has been defended by reference to Occam’s Razor: the principle that scientists should prefer the simplest explanation that can provide an adequate account for observed data. In the context of morphological phylogenetics, “observed data” are codified as scorings of observed character states in a matrix. Ideally, a phylogenetic tree would explain the distribution of character states between taxa by reconstructing each character state as representing a homologous feature, with a single evolutionary origin on the tree. An explanation in which a certain trait evolved once is simpler than one in which that trait evolved twice; it is less faithful to the information inherent in the character coding, and attributes less of this information to common ancestry. Each additional step on a tree can be viewed as an additional “assumption”, and on a simple or “pure” view, the tree that makes the fewest assumptions should be preferred.</p>
+<div class="section level2">
+<h2 id="a-philosophy-of-parsimony">A philosophy of parsimony<a class="anchor" aria-label="anchor" href="#a-philosophy-of-parsimony"></a>
+</h2>
+<p>There are a number of complementary perspectives on the philosophical justification for a parsimony approach <span class="citation">(e.g. Farris, 1983)</span>, which this brief overview will not do justice to; but hopefully my unqualified and largely unreferenced perspective captures some of the nature of the principal arguments. Better-versed readers are invited to suggest improvements or modifications by e-mail or by opening a <a href="https://github.com/ms609/TreeSearch/issues/new/" class="external-link">GitHub issue</a>.</p>
+<p>Parsimony has been defended by reference to Occam’s Razor: the principle that scientists should prefer the simplest explanation that can provide an adequate account for observed data. In the context of morphological phylogenetics, “observed data” are codified as observed character states scored within a matrix. Ideally, a phylogenetic tree would explain the distribution of character states between taxa by reconstructing each character state as representing a homologous feature, with a single evolutionary origin on the tree. An explanation in which a certain trait evolved once is simpler than one in which that trait evolved twice; it is less faithful to the information inherent in the character coding, and attributes less of this information to common ancestry. Each additional step on a tree can be viewed as an additional “assumption”, and on a simple or “pure” view, the tree that makes the fewest assumptions should be preferred.</p>
 <p>However, this perspective – which implicitly underpins the practice of <em>equal-weights</em> parsimony – treats all assumptions as equivalent; the simplest hypothesis is the one that makes the fewest assumptions (here, assumptions of homoplasy).</p>
 <p>A more nuanced interpretation of Occam’s Razor suggests that the simplest hypothesis is the one that is least surprising. A hypothesis predicated on the existence of a flying spaghetti monster may require only a single (barmy) assumption, but we might nevertheless tend to prefer a hypothesis that requires a greater number of assumptions that are better aligned with previous experience.</p>
-<div id="application-of-occams-razor" class="section level3">
-<h3 class="hasAnchor">
-<a href="#application-of-occams-razor" class="anchor"></a>Application of Occam’s Razor</h3>
+<div class="section level3">
+<h3 id="application-of-occams-razor">Application of Occam’s Razor<a class="anchor" aria-label="anchor" href="#application-of-occams-razor"></a>
+</h3>
 <p>This interpretation has two applications for phylogenetics. The first is that we may wish to prefer trees (which are depictions of phylogenetic hypotheses) that concentrate homoplasy in characters that we believe to be prone to convergent evolution. This view calls for <em>character weighting</em>, that is, assigning less weight to changes in characters that are believed to be less phylogenetically reliable. Such characters may be identified by successive approximations <span class="citation">(Farris, 1969)</span>, by comparing the pattern of their tokens with that of other characters, by expert judgement, or by other <em>a priori</em> means.</p>
 <p>The second application argues that each additional case of homoplasy beyond the first is successively less surprising: the first observation of homoplasy (rather than some prior intuition) taught us that the character was not entirely reliable, making a second homoplasy less unexpected; the second observed homoplasy, in turn, makes us less surprised by the third. This approach calls for a <em>step weighting</em> approach, in which each additional step in a given character receives less penalty than the last. (Mathematically, this can be expressed in as if it were a character weighting strategy; but I feel that its <em>a posteriori</em> nature conveys a subtly different motivation and justifies a separate treatment.)</p>
 <p>This raises the question of how each step beyond the first ought to be penalized. Ultimately, any concave function (in which each step is penalized by a positive amount that is smaller than the penalty applied to the previous step) is consistent with this philosophy <span class="citation">(Arias &amp; Miranda-Esquivel, 2004)</span>. The most widely used step weighting approach is Goloboff’s <span class="citation">(1993)</span> implied weighting, where the total cost associated with a character is expressed as <em>e</em> / (<em>e</em> + <em>k</em>), where <em>e</em> is the number of homoplasies within a character, and <em>k</em> is an arbitrary constant. As <em>e</em> tends to infinity, this approach tends to equal weights; as <em>k</em> tends to zero, it tends to clique analysis (in which a character is either homologous or ignored) <span class="citation">(Farris, 1983)</span>. The most appropriate value for <em>k</em> may depend on the number of taxa, the number and distribution of observed states, and other factors <span class="citation">(Goloboff, Carpenter, Arias, &amp; Esquivel, 2008; Goloboff, Torres, &amp; Arias, 2018)</span> (a more detailed treatment will be provided in a revision of this document). Moreover, some adjustment must be made for ‘missing’ data, i.e. ambiguous tokens, which reduce the opportunity to observe homoplasy <span class="citation">(Goloboff, 2014)</span>. Implied weighting is described as an approximation <span class="citation">(Goloboff, 1993)</span>, and I am not aware of a straightforward interpretation of the ‘fit’ score, or a principled definition of the nature of the quantity that is being approximated.</p>
 </div>
-<div id="an-information-theoretic-basis" class="section level3">
-<h3 class="hasAnchor">
-<a href="#an-information-theoretic-basis" class="anchor"></a>An information theoretic basis</h3>
+<div class="section level3">
+<h3 id="an-information-theoretic-basis">An information theoretic basis<a class="anchor" aria-label="anchor" href="#an-information-theoretic-basis"></a>
+</h3>
 <p>I argue that the quantity that we should seek to minimise is the “surprise” of a tree. Information theory is the science of quantifying unexpectedness. Information is usually measured in <em>bits</em>. One bit is the amount of information generated by tossing a fair coin: to record the outcome of a coin toss, I must record either a <code>H</code> or a <code>T</code>, and with each of the two symbols equally likely, there is no way to compress the results of multiple tosses.</p>
 <p>The Shannon <span class="citation">(1948)</span> information content of an outcome <span class="math inline">\(x\)</span> is defined to be <span class="math inline">\(h(x) = -\log_2{P(x)}\)</span>, which simplifies to <span class="math inline">\(\log_2{n}\)</span> when all <span class="math inline">\(n\)</span> outcomes are equally likely. Thus, the outcome of a fair coin toss delivers <span class="math inline">\(\log_2{2} = 1\textrm{ bit}\)</span> of information; the outcome of rolling a fair six-sided die contains <span class="math inline">\(\log_2{6} \approx 2.58\textrm{ bits}\)</span> of information; and the outcome of selecting at random one of the 105 unrooted binary six-leaf trees is <span class="math inline">\(\log_2{105} \approx 6.71\textrm{ bits}\)</span>.</p>
 <p>Unlikely outcomes are more surprising, and thus contain more information than likely outcomes. The information content of rolling a twelve on two fair six-sided dice is <span class="math inline">\(-\log_2{\frac{1}{36}} \approx 5.16\textrm{ bits}\)</span>, whereas a seven, which could be produced by six of the 36 possible rolls (<code>1 &amp; 6</code>, <code>2 &amp; 5</code>, …), is less surprising, and thus contains less information: <span class="math inline">\(-\log_2{\frac{6}{36}} \approx 2.58\textrm{ bits}\)</span>. An additional 2.58 bits of information would be required to establish whether which of the rolls <code>1 &amp; 6</code>, <code>2 &amp; 5</code>, … occurred.</p>
@@ -154,67 +150,67 @@
 <p>If we subsequently learn that the character contains three steps, then it can occur on any six-leaf tree, and contains no phylogenetic information. We are less surprised by this third step, which attributes the remaining 0.74 bits of information to factors other than common ancestry, because the second step had already reduced the amount of phylogenetic information we expected the character to hold.</p>
 </div>
 </div>
-<div id="profile-parsimony" class="section level2">
-<h2 class="hasAnchor">
-<a href="#profile-parsimony" class="anchor"></a>Profile parsimony</h2>
+<div class="section level2">
+<h2 id="profile-parsimony">Profile parsimony<a class="anchor" aria-label="anchor" href="#profile-parsimony"></a>
+</h2>
 <p>Although this is not how the approach was initially justified <span class="citation">(Faith &amp; Trueman, 2001)</span>, profile parsimony aims to ascribe as much of the information in each character as possible to common ancestry; in the example above, it assigns the first extra step a penalty of 2.81, and the second extra step a penalty of 0.74, corresponding to the amount of information that could no longer be assigned to common ancestry after learning of the existence of the <span class="math inline">\(n\)</span>th step.</p>
-<p>Whereas the value of a parsimony score obtained under implied weights does not have any inherent meaning, the profile parismony score of a given tree represents the amount of information within a character matrix that can be attributed to common ancestry under that tree, which, if expressed as a proportion of the total cladistic information content of the characters in the matrix <span class="citation">(Cotton &amp; Wilkinson, 2008)</span>, gives an indication of the degree of homoplasy in the underlying character matrix.</p>
+<p>Whereas the value of a parsimony score obtained under implied weights does not have any inherent meaning, the profile parsimony score of a given tree represents the amount of information within a character matrix that can be attributed to common ancestry under that tree, which, if expressed as a proportion of the total cladistic information content of the characters in the matrix <span class="citation">(Cotton &amp; Wilkinson, 2008)</span>, gives an indication of the degree of homoplasy in the underlying character matrix.</p>
 <p>Profile parsimony produces a concavity profile that reflects the opportunity to observe additional steps in each character, unlike implied weighting, where a single concavity value is applied to all characters, regardless of the opportunity for additional steps to be observed.</p>
 <p><img src="profile-scores_files/figure-html/plot-concavities-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>The graph shows the profiles under implied weighting (with different concavity constants) and profile parsimony (under different distributions of the tokens <code>0</code> and <code>1</code> in a character coded for forty leaves). One prominent difference between the character of concavity profiles is that implied weighting continues to assign relatively large penalties to additional steps even when the distribution of a character is almost random on a tree. Another is that profile parsimony treats a second (and each subsequent) step as less surprising if there are fewer opportunities to observe a second step by chance, on account of there being a smaller number of tokens with the rarer step; implied weighting is blind to the distribution of tokens within a character.</p>
 </div>
-<div id="implementation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#implementation" class="anchor"></a>Implementation</h2>
+<div class="section level2">
+<h2 id="implementation">Implementation<a class="anchor" aria-label="anchor" href="#implementation"></a>
+</h2>
 <p>The present implementation of profile parsimony in “TreeSearch” is restricted: inapplicable tokens are treated as ambiguous; partial ambiguity (e.g. <code>{02}</code>) is treated as complete (<code>?</code>), and informative states (i.e. states present in more than one taxon) beyond the first two are ignored (treated as ambiguous). This reflects the complicated mathematics of calculating the number of trees with a given number of steps.</p>
 <p>Tree length can be calculated with <a href="https://ms609.github.io/TreeSearch/reference/TreeLength.html"><code>TreeLength(concavity = 'profile')</code></a>, and tree search performed with <a href="https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html"><code>MaximizeParsimony(concavity = 'profile')</code></a>. Data can be prepared for profile parsimony using <a href="https://ms609.github.io/TreeSearch/reference/PrepareDataProfile.html"><code>PrepareDataProfile()</code></a>, and the profile of a character calculated using <a href="https://ms609.github.io/TreeSearch/reference/StepInformation.html"><code>StepInformation()</code></a>.</p>
 </div>
-<div id="where-next" class="section level2">
-<h2 class="hasAnchor">
-<a href="#where-next" class="anchor"></a>Where next</h2>
+<div class="section level2">
+<h2 id="where-next">Where next<a class="anchor" aria-label="anchor" href="#where-next"></a>
+</h2>
 <ul>
 <li>Conduct <a href="profile.html">tree search</a> using profile parsimony</li>
 </ul>
 </div>
-<div id="references" class="section level2 unnumbered">
-<h2 class="hasAnchor">
-<a href="#references" class="anchor"></a>References</h2>
-<div id="refs" class="references">
-<div id="ref-Arias2004">
-<p>Arias, J. S., &amp; Miranda-Esquivel, D. R. (2004). Profile parsimony (PP): An analysis under implied weights (IW). <em>Cladistics</em>, <em>20</em>(1), 56–63. doi:<a href="https://doi.org/10.1111/j.1096-0031.2003.00001.x">10.1111/j.1096-0031.2003.00001.x</a></p>
+<div class="section level2 unnumbered">
+<h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
+<div id="ref-Arias2004" class="csl-entry">
+Arias, J. S., &amp; Miranda-Esquivel, D. R. (2004). Profile parsimony (<span>PP</span>): An analysis under implied weights (<span>IW</span>). <em>Cladistics</em>, <em>20</em>(1), 56–63. doi:<a href="https://doi.org/10.1111/j.1096-0031.2003.00001.x" class="external-link">10.1111/j.1096-0031.2003.00001.x</a>
 </div>
-<div id="ref-Carter1990">
-<p>Carter, M., Hendy, M., Penny, D., Székely, L. A., &amp; Wormald, N. C. (1990). On the distribution of lengths of evolutionary trees. <em>SIAM Journal on Discrete Mathematics</em>, <em>3</em>(1), 38–47. doi:<a href="https://doi.org/10.1137/0403005">10.1137/0403005</a></p>
+<div id="ref-Carter1990" class="csl-entry">
+Carter, M., Hendy, M., Penny, D., Székely, L. A., &amp; Wormald, N. C. (1990). On the distribution of lengths of evolutionary trees. <em>SIAM Journal on Discrete Mathematics</em>, <em>3</em>(1), 38–47. doi:<a href="https://doi.org/10.1137/0403005" class="external-link">10.1137/0403005</a>
 </div>
-<div id="ref-Cotton2008">
-<p>Cotton, J., &amp; Wilkinson, M. (2008). Quantifying the potential utility of phylogenetic characters. <em>Taxon</em>, <em>57</em>(1), 131–136.</p>
+<div id="ref-Cotton2008" class="csl-entry">
+Cotton, J., &amp; Wilkinson, M. (2008). Quantifying the potential utility of phylogenetic characters. <em>Taxon</em>, <em>57</em>(1), 131–136.
 </div>
-<div id="ref-Faith2001">
-<p>Faith, D. P., &amp; Trueman, J. W. H. (2001). Towards an inclusive philosophy for phylogenetic inference. <em>Systematic Biology</em>, <em>50</em>(3), 331–350. doi:<a href="https://doi.org/10.1080/10635150118627">10.1080/10635150118627</a></p>
+<div id="ref-Faith2001" class="csl-entry">
+Faith, D. P., &amp; Trueman, J. W. H. (2001). <span class="nocase">Towards an inclusive philosophy for phylogenetic inference</span>. <em>Systematic Biology</em>, <em>50</em>(3), 331–350. doi:<a href="https://doi.org/10.1080/10635150118627" class="external-link">10.1080/10635150118627</a>
 </div>
-<div id="ref-Farris1969">
-<p>Farris, J. S. (1969). A successive approximations approach to character weighting. <em>Systematic Biology</em>, <em>18</em>(4), 374–385. doi:<a href="https://doi.org/10.2307/2412182">10.2307/2412182</a></p>
+<div id="ref-Farris1969" class="csl-entry">
+Farris, J. S. (1969). A successive approximations approach to character weighting. <em>Systematic Biology</em>, <em>18</em>(4), 374–385. doi:<a href="https://doi.org/10.2307/2412182" class="external-link">10.2307/2412182</a>
 </div>
-<div id="ref-Farris1983">
-<p>Farris, J. S. (1983). The logical basis of phylogenetic analysis. In N. Platnick &amp; V. A. Funk (Eds.), <em>Advances in Cladistics, Vol. 2</em> (pp. 7–36). New York: Columbia University Press.</p>
+<div id="ref-Farris1983" class="csl-entry">
+Farris, J. S. (1983). The logical basis of phylogenetic analysis. In N. Platnick &amp; V. A. Funk (Eds.), <em>Advances in <span>Cladistics</span>, <span>Vol</span>. 2</em> (pp. 7–36). <span>New York</span>: <span>Columbia University Press</span>.
 </div>
-<div id="ref-Goloboff1993">
-<p>Goloboff, P. A. (1993). Estimating character weights during tree search. <em>Cladistics</em>, <em>9</em>(1), 83–91. doi:<a href="https://doi.org/10.1111/j.1096-0031.1993.tb00209.x">10.1111/j.1096-0031.1993.tb00209.x</a></p>
+<div id="ref-Goloboff1993" class="csl-entry">
+Goloboff, P. A. (1993). Estimating character weights during tree search. <em>Cladistics</em>, <em>9</em>(1), 83–91. doi:<a href="https://doi.org/10.1111/j.1096-0031.1993.tb00209.x" class="external-link">10.1111/j.1096-0031.1993.tb00209.x</a>
 </div>
-<div id="ref-Goloboff2014">
-<p>Goloboff, P. A. (2014). Extended implied weighting. <em>Cladistics</em>, <em>30</em>(3), 260–272. doi:<a href="https://doi.org/10.1111/cla.12047">10.1111/cla.12047</a></p>
+<div id="ref-Goloboff2014" class="csl-entry">
+Goloboff, P. A. (2014). Extended implied weighting. <em>Cladistics</em>, <em>30</em>(3), 260–272. doi:<a href="https://doi.org/10.1111/cla.12047" class="external-link">10.1111/cla.12047</a>
 </div>
-<div id="ref-Goloboff2008">
-<p>Goloboff, P. A., Carpenter, J. M., Arias, J. S., &amp; Esquivel, D. R. M. (2008). Weighting against homoplasy improves phylogenetic analysis of morphological data sets. <em>Cladistics</em>, <em>24</em>(5), 758–773. doi:<a href="https://doi.org/10.1111/j.1096-0031.2008.00209.x">10.1111/j.1096-0031.2008.00209.x</a></p>
+<div id="ref-Goloboff2008" class="csl-entry">
+Goloboff, P. A., Carpenter, J. M., Arias, J. S., &amp; Esquivel, D. R. M. (2008). Weighting against homoplasy improves phylogenetic analysis of morphological data sets. <em>Cladistics</em>, <em>24</em>(5), 758–773. doi:<a href="https://doi.org/10.1111/j.1096-0031.2008.00209.x" class="external-link">10.1111/j.1096-0031.2008.00209.x</a>
 </div>
-<div id="ref-Goloboff2018">
-<p>Goloboff, P. A., Torres, A., &amp; Arias, J. S. (2018). Weighted parsimony outperforms other methods of phylogenetic inference under models appropriate for morphology. <em>Cladistics</em>, <em>34</em>(4), 407–437. doi:<a href="https://doi.org/10.1111/cla.12205">10.1111/cla.12205</a></p>
+<div id="ref-Goloboff2018" class="csl-entry">
+Goloboff, P. A., Torres, A., &amp; Arias, J. S. (2018). Weighted parsimony outperforms other methods of phylogenetic inference under models appropriate for morphology. <em>Cladistics</em>, <em>34</em>(4), 407–437. doi:<a href="https://doi.org/10.1111/cla.12205" class="external-link">10.1111/cla.12205</a>
 </div>
-<div id="ref-Shannon1948">
-<p>Shannon, C. E. (1948). A mathematical theory of communication. <em>Bell System Technical Journal</em>, <em>27</em>, 379–423, 623–656.</p>
+<div id="ref-Shannon1948" class="csl-entry">
+Shannon, C. E. (1948). A mathematical theory of communication. <em>Bell System Technical Journal</em>, <em>27</em>, 379–423, 623–656.
 </div>
-<div id="ref-Smith2019">
-<p>Smith, M. R. (2019). Bayesian and parsimony approaches reconstruct informative trees from simulated morphological datasets. <em>Biology Letters</em>, <em>15</em>(2), 20180632. doi:<a href="https://doi.org/10.1098/rsbl.2018.0632">10.1098/rsbl.2018.0632</a></p>
+<div id="ref-Smith2019" class="csl-entry">
+Smith, M. R. (2019). Bayesian and parsimony approaches reconstruct informative trees from simulated morphological datasets. <em>Biology Letters</em>, <em>15</em>(2), 20180632. doi:<a href="https://doi.org/10.1098/rsbl.2018.0632" class="external-link">10.1098/rsbl.2018.0632</a>
 </div>
 </div>
 </div>
@@ -231,11 +227,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by <a href="https://smithlabdurham.github.io/">Martin R. Smith</a>.</p>
+  <p></p>
+<p>Developed by <a href="https://smithlabdurham.github.io/" class="external-link">Martin R. Smith</a>.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>
