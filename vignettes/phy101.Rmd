@@ -11,7 +11,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-# Initial Reading #
+# Background #
 
 For an initial introduction to phylogenetics, we recommend Berkley's
 "Understanding Evolution" resources, in particular:
@@ -80,15 +80,60 @@ Even if simple models can do a decent job of reconstructing trees
 [e.g. @Goloboff2018;@Sansom2018;@Smith2019], parsimony methods are more
 widely used to infer phylogeny from morphological datasets.
 
-
-
-In its pursuit of a single optimal tree, maximum parsimony has something in
-common with maximum likelihood. 
-
 In essence, maximum parsimony asserts that the simplest tree is correct.
 (For a justification of this philosophy, see @Haber2021.)
+In its pursuit of a single optimal tree, maximum parsimony has something in
+common with maximum likelihood -- even if there sometimes exist multiple
+equally parsimonious trees that must be summarised using consensus methods.
 
 
+
+# Strict consensus trees #
+
+If multiple trees are equally parsimonious, how can we summarise our 
+best understanding of evolutionary history?
+One approach is to take the strict consensus all all our most parsimonious
+trees.
+A strict consensus tree contains only the edges (branches) that occur in each
+of the input trees.
+
+- Exercise: Calculate the strict consensus of the two trees below.
+
+```{r ex-strict-cons}
+tree1 <- ape::read.tree(text = "((((a, b), x), c), (d, (e, (f, (g, h)))));")
+tree2 <- ape::read.tree(text = "(((a, b), c), (d, (e, (x, ((f, h), g)))));")
+par(mar = rep(0, 4), mfrow = c(1, 2))
+plot(tree1)
+plot(tree2)
+```
+
+A strict consensus tree can conceal structure that is in fact held in common
+between all input trees, suggesting more uncertainty than truly exists.
+
+- Exercise: Identify a tree that is consistent with the strict consensus
+  tree, but does not belong to the set of input trees.  Is this new tree
+  necessarily as parsimonious as the input trees?
+
+A single taxon with an uncertain phylogenetic position can reduce the resolution
+of a consensus tree.  Sometimes the information we lose by omitting the leaf
+from our consensus tree is compensated by the information we gain regarding the
+relationships between other taxa.
+
+- Exercise: Construct a "reduced" strict consensus tree by removing leaf _x_
+  from each of the input trees, then computing the consensus of the reduced
+  tree.
+  What information do you gain by omitting _x_?
+  What information is lost in the reduced tree?
+  
+- Extension exercise: Find another taxon whose removal reduces causes a
+  polytomy in the strict consensus to become resolved.
+  What information do you gain by omitting this taxon?
+  What information is lost in the reduced tree?
+  Is the removal of this taxon from the consensus justified?
+  
+The net information gained by removing such "rogue" taxa can be calculated
+using information theory [@SmithCons]; you may wish to explore the "[Rogue](
+https://ms609.github.io/Rogue/)" R package.
 
 
 # Further Reading #
