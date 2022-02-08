@@ -82,13 +82,94 @@ widely used to infer phylogeny from morphological datasets.
 
 In essence, maximum parsimony asserts that the simplest tree is correct.
 (For a justification of this philosophy, see @Haber2021.)
-In its pursuit of a single optimal tree, maximum parsimony has something in
-common with maximum likelihood -- even if there sometimes exist multiple
-equally parsimonious trees that must be summarised using consensus methods.
+What is the simplest tree? Under the equal weights paradigm, this is the tree
+that implies the fewest character transformations.
 
+- Exercise: Colour the branches in the trees below in order to minimize the
+  number of places where the colour changes.
+
+```{r char-changes}
+par(mar = rep(0, 4), mfrow = c(1, 2))
+tree1 <- TreeTools::BalancedTree(rep(c("orange", "blue"), each = 4))
+plot(tree1, tip.col = tree1$tip.label)
+tree2 <- TreeTools::PectinateTree(rep(c("red", "grey"), length.out = 8))
+plot(tree2, tip.col = tree2$tip.label)
+```
+
+- Exercise: How many changes in colour does each tree require?  Which tree is
+  the most parsimonious?
+  
+To score a tree, we sum all necessary changes in all characters.
+
+The falsification view of parsimony asserts that each character in a dataset
+represents a statement of homology, and thus falsifies any tree in which the
+character evolves more than once: if "blue" evolved twice, then it should be
+coded as two separate blues in the dataset.
+In practice, however, it is very rare for all morphological characters to be
+compatible: that is to say, no tree exists in which all characters can be
+reconstructed without homoplasy.
+
+If all trees are falsified, then some of our characters must code homoplasies,
+where they should only contain traits with a single change on the true tree.
+But is it not necessarily straightforward to identify which characters might 
+contain homoplasies and should thus be recoded or discarded.
+Of course, even if a character does contain homoplasy, it may still
+contain some phylogenetic information: even if you're not sure which "blue" a
+taxon exhibits, its blueness does at least exclude it from an orange region
+of the tree.
+
+The alternative justification of parsimony invokes Ockham's razor to assert
+that the "simplest" solution is always the best.
+
+This assumes that change is equally likely in all characters: that is, that
+all characters are equally likely to evolve, or equally likely to represent
+homology statements.
+
+- Exercise: Consider the two trees below.  What colour would you expect the
+  unlabelled tip to exhibit in each tree?  For which character are you most
+  confident in your answer?
+
+
+```{r char-reliability}
+library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
+par(mar = rep(0, 4), mfrow = c(1, 2))
+tree1 <- BalancedTree(c(rep("orange", 8), rep("blue", 7), "0"))
+plot(tree1, tip.col = tree1$tip.label)
+tree2 <- BalancedTree(c(sample(c("red", "grey"), 15, replace = TRUE), "0"))
+plot(tree2, tip.col = tree2$tip.label)
+```
+
+
+Now consider two trees: one tree proposes that nine characters each exhibit
+a single additional step – in total, that's nine evolutionary events more than
+we'd see if all characters lacked homoplasy.
+The second tree also contains nine "extra" evolutionary events, but all these
+occur in a single character.
+
+- Exercise: Which tree represents a more parsimonious evolutionary scenario?
+  Which evolutionary scenario do you consider more plausible?
+
+
+If we expect evolutionary change to be clustered in "unreliable" characters,
+but we can't (or don't want to) estimate how reliable characters _a priori_,
+we can use concave weighting functions that assign less penalty to each
+additional step beyond the first.
+Implied weights [@Goloboff1993] and profile parsimony [@Faith2001]
+are two approaches that can be used; see the function [`IWScore()`](
+https://ms609.github.io/TreeSearch/reference/TreeLength.html) or the 
+vignette on [profile parsimony](
+https://ms609.github.io/TreeSearch/articles/profile.html) for more details.
+
+In empirical studies, implied weighting tends to produce "better" trees than
+equal weights [@Goloboff2018;@Smith2019]; yet some researchers deem it "impure"
+and equal weights is probably more widely used.
 
 
 # Strict consensus trees #
+
+In its pursuit of a single optimal tree, maximum parsimony has something in
+common with maximum likelihood -- even if there sometimes exist multiple
+equally parsimonious trees that must be summarised using consensus methods.
 
 If multiple trees are equally parsimonious, how can we summarise our 
 best understanding of evolutionary history?
