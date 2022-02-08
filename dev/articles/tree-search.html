@@ -108,7 +108,7 @@
       <h1 data-toc-skip>Getting started: Simple tree searches</h1>
                         <h4 data-toc-skip class="author">Martin R. Smith</h4>
             
-            <h4 data-toc-skip class="date">2022-02-07</h4>
+            <h4 data-toc-skip class="date">2022-02-08</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/tree-search.Rmd" class="external-link"><code>vignettes/tree-search.Rmd</code></a></small>
       <div class="hidden name"><code>tree-search.Rmd</code></div>
@@ -218,7 +218,7 @@
 <code class="sourceCode R"><span class="va">nReplicates</span> <span class="op">&lt;-</span> <span class="fl">10</span>
 <span class="va">jackTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a></span><span class="op">(</span><span class="va">nReplicates</span><span class="op">)</span>, <span class="kw">function</span> <span class="op">(</span><span class="va">x</span><span class="op">)</span>
   <span class="fu"><a href="../reference/MaximizeParsimony.html">Resample</a></span><span class="op">(</span><span class="va">vinther</span>, <span class="va">bestTrees</span>, ratchIter <span class="op">=</span> <span class="fl">0</span>, tbrIter <span class="op">=</span> <span class="fl">1</span>, maxHits <span class="op">=</span> <span class="fl">4</span>,
-          verbosity <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>
+           verbosity <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>
 <span class="op">)</span>
 
 <span class="va">strict</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">bestTrees</span>, p <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>
