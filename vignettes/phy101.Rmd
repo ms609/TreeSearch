@@ -69,7 +69,18 @@ analysis, it is widely used, even if its results require caution to interpret,
 and uncertainty is harder to characterize.
 
 
-# Maximum parsimony #
+# Analysing morpological data with parsimony #
+
+Morphological data do not lend themselves particularly well to modelling.
+Because different morphological features are likely to evolve in different ways,
+a realistic model of morphological evolution is difficult to construct, and
+would likely contain more unknown parameters besides tree topology than could
+reasonably be reconstructed from a typical morphological dataset.
+Even if simple models can do a decent job of reconstructing trees
+[e.g. @Goloboff2018;@Sansom2018;@Smith2019], parsimony methods are more
+widely used to infer phylogeny from morphological datasets.
+
+
 
 In its pursuit of a single optimal tree, maximum parsimony has something in
 common with maximum likelihood. 
