@@ -134,6 +134,7 @@ homology statements.
 
 ```{r char-reliability}
 library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
+set.seed(11)
 par(mar = rep(0, 4), mfrow = c(1, 2))
 tree1 <- BalancedTree(c(rep("orange", 8), rep("blue", 7), "0"))
 plot(tree1, tip.col = tree1$tip.label)
