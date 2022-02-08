@@ -190,7 +190,7 @@ the requirements of a particular dataset.
 nReplicates <- 10
 jackTrees <- lapply(logical(nReplicates), function (x)
   Resample(vinther, bestTrees, ratchIter = 0, tbrIter = 1, maxHits = 4,
-          verbosity = 0)
+           verbosity = 0)
 )
 
 strict <- ape::consensus(bestTrees, p = 1)
