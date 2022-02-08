@@ -2,7 +2,10 @@
 title: "Phy101: Introduction to Parsimony"
 author: "Martin R. Smith"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette:
+    fig_width: 7
+    fig_height: 5
 bibliography: ../inst/REFERENCES.bib
 csl: ../inst/apa-old-doi-prefix.csl
 vignette: >
@@ -11,9 +14,9 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-# Background #
+## Background ##
 
-For an initial introduction to phylogenetics, we recommend Berkley's
+For an initial introduction to phylogenetics, I recommend Berkley's
 "Understanding Evolution" resources, in particular:
 
 - [Evolutionary trees: A primer](
@@ -24,7 +27,7 @@ https://evolution.berkeley.edu/the-tree-room/evolutionary-trees-a-primer/)
   https://evolution.berkeley.edu/the-tree-room/how-to-build-a-tree/)
 
 
-# Reconstructing evolutionary history #
+## Reconstructing evolutionary history ##
 
 To reconstruct evolutionary history, we must first infer the pattern of
 relationships between taxa.  This phylogenetic framework may then allow us to
@@ -38,9 +41,9 @@ Fossil taxa are particularly important at resolving deep relationships
 evolutionary time.
 
 
-# Analysing molecular data #
+## Analysing molecular data ##
 
-Nucleotide sequences (e.g. the ACGT bases of DNA) evolve in a predictable and
+Nucleotide sequences (e.g. the A/C/G/T bases of DNA) evolve in a predictable and
 observable fashion.  As such, their evolution can be modelled statistically,
 making it possible to assign a probabilistic likelihood to any given
 phylogenetic tree. Data are usually aligned using either maximum likelihood,
@@ -69,7 +72,7 @@ analysis, it is widely used, even if its results require caution to interpret,
 and uncertainty is harder to characterize.
 
 
-# Analysing morpological data with parsimony #
+## Analysing morpological data with parsimony ##
 
 Morphological data do not lend themselves particularly well to modelling.
 Because different morphological features are likely to evolve in different ways,
@@ -120,7 +123,6 @@ of the tree.
 
 The alternative justification of parsimony invokes Ockham's razor to assert
 that the "simplest" solution is always the best.
-
 This assumes that change is equally likely in all characters: that is, that
 all characters are equally likely to evolve, or equally likely to represent
 homology statements.
@@ -165,7 +167,7 @@ equal weights [@Goloboff2018;@Smith2019]; yet some researchers deem it "impure"
 and equal weights is probably more widely used.
 
 
-# Strict consensus trees #
+## Strict consensus trees ##
 
 In its pursuit of a single optimal tree, maximum parsimony has something in
 common with maximum likelihood -- even if there sometimes exist multiple
@@ -217,8 +219,8 @@ using information theory [@SmithCons]; you may wish to explore the "[Rogue](
 https://ms609.github.io/Rogue/)" R package.
 
 
-# Further Reading #
+## Further Reading ##
 
 History and philosophy of phylogenetic methods: @Haber2021
 
-# References #
+## References ##
