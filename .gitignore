@@ -27,6 +27,7 @@ vignettes/*_files
 vignettes/*_cache*
 *.Rproj*
 .Rproj.user
+!TreeSearch.Rproj
 *.site
 gen-*tip/*
 results-*
