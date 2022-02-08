@@ -1,0 +1,87 @@
+---
+title: "Phy101: Introduction to Parsimony"
+author: "Martin R. Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: ../inst/REFERENCES.bib
+csl: ../inst/apa-old-doi-prefix.csl
+vignette: >
+  %\VignetteIndexEntry{Phy101: Introduction to Parsimony}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Initial Reading #
+
+For an initial introduction to phylogenetics, we recommend Berkley's
+"Understanding Evolution" resources, in particular:
+
+- [Evolutionary trees: A primer](
+https://evolution.berkeley.edu/the-tree-room/evolutionary-trees-a-primer/)
+- [Tree misinterpretations](
+  https://evolution.berkeley.edu/the-tree-room/tree-misinterpretations/)
+- [How to build a tree](
+  https://evolution.berkeley.edu/the-tree-room/how-to-build-a-tree/)
+
+
+# Reconstructing evolutionary history #
+
+To reconstruct evolutionary history, we must first infer the pattern of
+relationships between taxa.  This phylogenetic framework may then allow us to
+explore the timing, rate and pattern of evolutionary processes.
+
+To reconstruct a tree, we require data, in the form of observations from the
+taxa of interest. Tree inference is most effective when we combine
+morphological observations with molecular sequence data [e.g. @Asher2022].
+Fossil taxa are particularly important at resolving deep relationships
+[e.g. @Koch2020], whose phylogenetic signature is overprinted by the passing of
+evolutionary time.
+
+
+# Analysing molecular data #
+
+Nucleotide sequences (e.g. the ACGT bases of DNA) evolve in a predictable and
+observable fashion.  As such, their evolution can be modelled statistically,
+making it possible to assign a probabilistic likelihood to any given
+phylogenetic tree. Data are usually aligned using either maximum likelihood,
+which seeks to find the single most likely tree topology, or Bayesian methods,
+which sample a subset of trees in proportion to their probability, and thus
+allow uncertainty in tree reconstruction to be depicted.
+
+As an illustration, assume a friend tells you that they are driving to the
+shops.  Where could you expect to locate their car in 30 minutes' time?
+A Bayesian approach could assign a probability to each car parking space within
+30 minutes' drive of their home. Given the thousands of possibilities, no single
+space will have a particularly high probability; but by summarising the results,
+it might be possible to conclude with say 75% probability that the car will be
+close to a particular supermarket.
+
+A maximum likelihood approach would simply return the single most likely
+location of the car, which might not be representative of the broader
+probability distribution: 
+here, the small possibility that your friend's car won't start may nevertheless
+be greater than the probability associated with any one of the thousands of
+possible parking spaces, so the most likely single location for the
+car would be your friend's front drive.
+
+Because maximum likelihood analysis is much faster to conduct than Bayesian
+analysis, it is widely used, even if its results require caution to interpret,
+and uncertainty is harder to characterize.
+
+
+# Maximum parsimony #
+
+In its pursuit of a single optimal tree, maximum parsimony has something in
+common with maximum likelihood. 
+
+In essence, maximum parsimony asserts that the simplest tree is correct.
+(For a justification of this philosophy, see @Haber2021.)
+
+
+
+
+# Further Reading #
+
+History and philosophy of phylogenetic methods: @Haber2021
+
+# References #
