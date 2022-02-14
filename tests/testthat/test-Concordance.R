@@ -1,4 +1,4 @@
-library("TreeTools", quietly = TRUE)
+library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
 
 test_that("_Concordance() handles null input", {
   expect_warning(expect_null(QuartetConcordance(BalancedTree(8), NULL)))
@@ -22,7 +22,8 @@ test_that("QuartetConcordance() works", {
   expect_equal(unname(QuartetConcordance(tree, dat[, 1])), rep(1, 5))
   # plot(tree); nodelabels();
   expect_equal(QuartetConcordance(tree, dat[, 2]),
-               c('11' = 0, '12' = 0, '13' = 1/9, '14' = 0, '15' = 0))
+               c("10" = 1/9, '11' = 0, '12' = 0,
+                 '13' = 1/9, '14' = 0, '15' = 0)[names(as.Splits(tree))])
   
   allQuartets <- combn(8, 4)
   for (charI in seq_len(ncol(mataset))) {
@@ -55,11 +56,13 @@ test_that("QuartetConcordance() works", {
   }
   
   expect_equal(QuartetConcordance(tree, dat[, c(1:4, 6)]),
-               c('11' = ( 6 + 0 + 6 +  2) / ( 6 +  9 +  6 +  2 + 1),
+               c('10' = (36 + 2 + 9 + 12) / (36 + 18 + 18 + 12 + 6),
+                 '11' = ( 6 + 0 + 6 +  2) / ( 6 +  9 +  6 +  2 + 1),
                  '12' = ( 6 + 0 + 0 +  2) / ( 6 +  9 +  9 +  2 + 1),
                  '13' = (36 + 2 + 9 + 12) / (36 + 18 + 18 + 12 + 6),
                  '14' = ( 6 + 0 + 0 +  7) / ( 6 +  9 +  9 +  7 + 1),
-                 '15' = ( 6 + 0 + 6 +  7) / ( 6 +  9 +  6 +  7 + 1))
+                 '15' = ( 6 + 0 + 6 +  7) / ( 6 +  9 +  6 +  7 + 1))[
+                   names(as.Splits(tree))]
   )
 })
 
@@ -76,10 +79,19 @@ test_that("QuartetConcordance() handles ambiguity", {
                     dimnames = list(paste0('t', 1:12), NULL))
   dat <- MatrixToPhyDat(mataset)
   
-  expect_equal(unname(QuartetConcordance(tree, dat)[c('16', '18', '19', '21', '23')]),
-               unname(QuartetConcordance(DropTip(tree, paste0('t', 3 * 1:4)), dat)))
-  expect_equal(unname(QuartetConcordance(tree, dat)[c('15', '17', '19', '20', '22')]),
-               unname(QuartetConcordance(DropTip(tree, paste0('t', 3 * 1:4)), dat)))
+  expectation <- unname(QuartetConcordance(tree, dat)[
+    c('14', '16', '18', '19', '21', '23')])
+  expect_equal(
+    unname(QuartetConcordance(DropTip(tree, paste0('t', 3 * 1:4)), dat)),
+    expectation[!is.na(expectation)]
+  )
+  
+  expectation <- unname(QuartetConcordance(tree, dat)[
+    c('14', '15', '17', '19', '20', '22')])
+  expect_equal(
+    unname(QuartetConcordance(DropTip(tree, paste0('t', 3 * 1:4)), dat)),
+    expectation[!is.na(expectation)]
+  )
 })
 
 test_that("QuartetConcordance() handles incomplete data", {
