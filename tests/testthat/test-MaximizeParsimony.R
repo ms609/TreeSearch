@@ -140,7 +140,7 @@ test_that("Resample() fails and works", {
   skip_if_not_installed("TreeTools", "1.6.0.9002") # names
   # This test could be replaced with a more statistically robust alternative!
   expect_equal(jackSupport, tolerance = 0.2,
-               c("9" = 1, "10" = 1/2, "11" = 0) *
+               c("8" = 1/2, "9" = 1, "10" = 1/2, "11" = 0)[names(bal)] *
                  sum(vapply(jackTrees, length, 1L)))
   
   bootTrees <- replicate(nRep, Resample(dataset, method = 'bootstrap',
@@ -151,7 +151,7 @@ test_that("Resample() fails and works", {
                                 logical(3)))
   # This test could be replaced with a more statistically robust alternative!
   expect_equal(bootSupport, tolerance = 0.2,
-               c("9" = 1, "10" = 1/2, "11" = 0) * 
+               c("8" = 1/2, "9" = 1, "10" = 1/2, "11" = 0)[names(bal)] * 
                  sum(vapply(bootTrees, length, 1L)))
     
 })
