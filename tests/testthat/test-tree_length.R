@@ -247,7 +247,8 @@ test_that("X_MorphyLength", {
   nTaxa <- mpl_get_numtaxa(morphyObj)
   
   tree <- NJTree(dataset)
-  edgeList <- Postorder(Preorder(tree$edge))
+  edgeList <- Preorder(tree$edge)
+  edgeList <- edgeList[PostorderOrder(edgeList), ]
   parent <- edgeList[, 1]
   child <- edgeList[, 2]
 

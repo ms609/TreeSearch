@@ -746,7 +746,7 @@ server <- function(input, output, session) {
   PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 140)
   PlottedTree <- debounce(reactive({
     if (length(r$trees) > 0L) {
-      tr <- UserRoot(Postorder(r$trees[[input$whichTree]]))
+      tr <- UserRoot(r$trees[[input$whichTree]])
       if (!('tipsRight' %in% input$mapDisplay)) {
         tr$edge.length <- rep_len(2, dim(tr$edge)[1])
       }
