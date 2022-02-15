@@ -50,7 +50,7 @@
 #' @template MRS
 #' @importFrom ape plot.phylo nodelabels 
 #' @importFrom graphics par
-#' @importFrom TreeTools Postorder
+#' @importFrom TreeTools PostorderOrder
 #' @export
 PlotCharacter <- function (tree, dataset, char = 1L,
                            updateTips = FALSE,
@@ -78,14 +78,14 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   dataset <- dataset[treeTaxa]
   
   # Read tree
-  edgeLength <- tree$edge.length
-  tree <- Postorder(tree)
+  postorder <- PostorderOrder(tree)
+  edgeLength <- tree$edge.length[postorder]
   if (!is.null(edgeLength) && length(unique(edgeLength)) == 1) {
     tree$edge.length <- edgeLength
   }
   nNode <- tree$Nnode
   nTip <- NTip(tree)
-  edge <- tree$edge
+  edge <- tree$edge[postorder, ]
   parent <- edge[, 1]
   child <- edge[, 2]
   left <- integer(nNode + nTip)
@@ -101,8 +101,8 @@ PlotCharacter <- function (tree, dataset, char = 1L,
       right[pa] <- ch
     }
   }
-  postOrderNodes <- unique(parent)
-  preOrderNodes <- rev(postOrderNodes)
+  preOrderNodes <- unique(rev(parent)) # Root guaranteed first
+  postOrderNodes <- rev(preOrderNodes)
   rootNode <- preOrderNodes[1]
   parentOf[rootNode] <- rootNode
   tips <- seq_len(nTip)

@@ -323,13 +323,14 @@ MorphyTreeLength <- function (tree, morphyObj) {
 #' @template treeChild
 #' @author Martin R. Smith
 #' @keywords internal
-#' @importFrom TreeTools Postorder Preorder
+#' @importFrom TreeTools PostorderOrder Preorder
 #' @importFrom fastmatch fmatch
 #' @export
 MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
                           nTaxa = mpl_get_numtaxa(morphyObj)) {
   if (!inPostorder) {
-    edgeList <- Postorder(Preorder(cbind(parent, child)))
+    edgeList <- Preorder(cbind(parent, child))
+    edgeList <- edgeList[PostorderOrder(edgeList), ]
     parent <- edgeList[, 1]
     child <- edgeList[, 2]
   }
