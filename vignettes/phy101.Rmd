@@ -224,4 +224,6 @@ https://ms609.github.io/Rogue/)" R package.
 
 History and philosophy of phylogenetic methods: @Haber2021
 
+Assumptions in molecular dating: @Bromham2019
+
 ## References ##
