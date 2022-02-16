@@ -119,10 +119,10 @@ test_that("Edge cases work", {
 test_that("Out-of-sequence works", {
   skip_if_not_installed('vdiffr')
   skip_if_not_installed("ape", "5.5.2") # Node colours
-  vdiffr::expect_doppelganger('PlotChar_out-of-sequence',
-                              function () {
-  PlotCharacter(ape::read.tree(text = '(a, (b, (c, d)));'),
-                TreeTools::StringToPhyDat('1342', tips = c('a', 'c', 'd', 'b'))
-                )
-                              })
+  vdiffr::expect_doppelganger('PlotChar_out-of-sequence', function () {
+    PlotCharacter(ape::read.tree(text = '(a, (b, (c, d)));'),
+                  TreeTools::StringToPhyDat('1342',
+                                            tips = c('a', 'c', 'd', 'b'))
+                  )}
+  )
 })
