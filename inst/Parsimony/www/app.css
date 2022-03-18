@@ -111,3 +111,11 @@ div#plotSizer, div#saveAs {
 div#saveAs {
   padding: 1em;
 }
+
+label#treeRange-label {
+  display: none;
+}
+
+div.progress {
+  margin-bottom: 0;
+}
