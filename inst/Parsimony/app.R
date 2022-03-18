@@ -1,4 +1,4 @@
-#options("TreeSearch.logging"= TRUE)
+# options("TreeSearch.logging" = TRUE)
 logging <- isTRUE(getOption("TreeSearch.logging"))
 options(shiny.maxRequestSize = 1024^3) # Allow max 1 GB files
 
@@ -230,7 +230,9 @@ ui <- fluidPage(theme = "app.css",
                    list("Characters on trees" = "ind",
                         "Consensus tree" = "cons",
                         "Cluster consensus trees" = "clus",
-                        "Tree space" = "space"), "cons"),
+                        "Tree space" = "space"),
+                   "ind"),
+                   #"cons"),
                  hidden(sliderInput("whichTree", "Tree to plot", value = 1L,
                                     min = 1L, max = 1L, step = 1L)),
                  tags$div(id = "treePlotConfig",
@@ -743,16 +745,18 @@ server <- function(input, output, session) {
     }
   }
   
-  PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 100)
-  PlottedTree <- debounce(reactive({
+  PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 42)
+  whichTree <- debounce(reactive(input$whichTree), 42)
+  
+  PlottedTree <- reactive({
     if (length(r$trees) > 0L) {
-      tr <- UserRoot(r$trees[[input$whichTree]])
+      tr <- UserRoot(r$trees[[whichTree()]])
       if (!("tipsRight" %in% input$mapDisplay)) {
         tr$edge.length <- rep_len(2, dim(tr$edge)[1])
       }
       tr
     }
-  }), 100)
+  })
   
   RenderMainPlot <- function (x) {
     renderPlot(x, width = PlotSize(), height = PlotSize())
@@ -924,7 +928,7 @@ server <- function(input, output, session) {
                                   ""))
   })
   
-  MainPlot <- reactive({
+  MainPlot <- function() {
     if (!is.null(r$trees)) {
     
       switch(
@@ -938,8 +942,9 @@ server <- function(input, output, session) {
         "ind" = {
           par(mar = rep(0, 4), cex = 0.9)
           n <- PlottedChar()
+          Log("Plotting PlottedTree(", whichTree(), ", ", n, ")")
+          r$plottedTree <- PlottedTree()
           if (length(n) && n > 0L) {
-            r$plottedTree <- PlottedTree()
             pc <- tryCatch({
                 PlotCharacter(r$plottedTree, r$dataset, n,
                               edge.width = 2.5,
@@ -956,8 +961,6 @@ server <- function(input, output, session) {
             )
             LabelConcordance()
           } else {
-            Log("Plotting PlottedTree()")
-            r$plottedTree <- PlottedTree()
             plot(r$plottedTree, tip.color = tipCols()[r$plottedTree$tip.label])
           }
         },
@@ -966,12 +969,13 @@ server <- function(input, output, session) {
         }
       ) # end switch
     }
-  })
+  }
+  ReactiveMainPlot <- reactive({MainPlot()})
   
   PlotSize <- function () debounce(reactive(input$plotSize), 100)
   
   output$treePlot <- renderCachedPlot(
-    MainPlot(),
+    ReactiveMainPlot(),
     cacheKeyExpr = {
       switch(
         input$plotFormat,
@@ -990,7 +994,7 @@ server <- function(input, output, session) {
                       input$neverDrop, input$outgroup,
                       input$consP, input$concordance),
         "ind" = list(PlottedChar(),
-                     PlottedTree(),
+                     whichTree(),
                      input$concordance,
                      input$outgroup,
                      input$mapDisplay,
