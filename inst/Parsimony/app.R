@@ -1016,11 +1016,18 @@ server <- function(input, output, session) {
            substr(str, 2, nchar(str)))
   }
   
+  nonAmbigContrast <- reactive({
+    cont <- attr(r$dataset, "contrast")
+    applic <- cont[, setdiff(colnames(cont), "-")]
+    cont[rowSums(applic) == dim(applic)[2], ] <- 0
+    
+    # Return:
+    cont
+  })
+  
   plottedTokens <- reactive({
     n <- PlottedChar()
-    tokens <- colSums(
-      attr(r$dataset, "contrast")[unlist(r$dataset[, n]), ]
-    ) > 0L
+    tokens <- colSums(nonAmbigContrast()[unlist(r$dataset[, n]), ]) > 0L
     names(tokens[tokens])
   })
   
