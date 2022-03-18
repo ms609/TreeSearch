@@ -1055,7 +1055,7 @@ server <- function(input, output, session) {
           } else {
              output$charMapLegend <- renderUI({})
              output$charNotes <- renderUI({})
-             Log("Plotting PlottedTree() 777")
+             Log("Plotting PlottedTree()")
              r$plottedTree <- PlottedTree()
              plot(r$plottedTree, tip.color = tipCols()[r$plottedTree$tip.label])
            }
@@ -1069,29 +1069,32 @@ server <- function(input, output, session) {
   
   PlotSize <- function () debounce(reactive(input$plotSize), 100)
   
-  output$treePlot <- renderCachedPlot(MainPlot(), cacheKeyExpr = {
-      switch(input$plotFormat,
-             'clus' = list(r$treeHash, input$plotFormat,
-                           input$keepTips, input$excludedTip,
-                           consP(),
-                           input$neverDrop, input$outgroup,
-                           input$distMeth,
-                           input$concordance,
-                           silThreshold(),
-                           input$consP, input$concordance),
-             'cons' = list(r$treeHash, input$plotFormat,
-                           input$keepTips, input$excludedTip,
-                           consP(),
-                           input$neverDrop, input$outgroup,
-                           input$consP, input$concordance),
-             'ind' = list(input$whichChar,
-                          input$whichTree,
-                          input$concordance,
-                          input$outgroup,
-                          input$mapDisplay,
-                          r$dataHash, r$treeHash
-                          ), 
-             'space' = list(r$treeHash, input$plotFormat,
+  output$treePlot <- renderCachedPlot(
+    MainPlot(),
+    cacheKeyExpr = {
+      switch(
+        input$plotFormat,
+        
+        'clus' = list(r$treeHash, input$plotFormat,
+                      input$keepTips, input$excludedTip,
+                      consP(),
+                      input$neverDrop, input$outgroup,
+                      input$distMeth,
+                      input$concordance,
+                      silThreshold(),
+                      input$consP, input$concordance),
+        'cons' = list(r$treeHash, input$plotFormat,
+                      input$keepTips, input$excludedTip,
+                      consP(),
+                      input$neverDrop, input$outgroup,
+                      input$consP, input$concordance),
+        'ind' = list(input$whichChar,
+                     input$whichTree,
+                     input$concordance,
+                     input$outgroup,
+                     input$mapDisplay,
+                     r$dataHash, r$treeHash), 
+        'space' = list(r$treeHash, input$plotFormat,
                        min(dims(), nProjDim()),
                        treeCols(),
                        treePch(),
@@ -1102,10 +1105,12 @@ server <- function(input, output, session) {
                        if (input$spacePch == 'relat') input$relators,
                        silThreshold(),
                        input$display)
-      )}, sizePolicy = function(x) rep(input$plotSize, 2)
-    )
+      )
+    },
+    sizePolicy = function(x) rep(input$plotSize, 2)
+  )
   
-    
+  
   LogScore <- function (x) {
     (-(log10(1 - pmin(1, x) + 1e-2))) / 2
   }
