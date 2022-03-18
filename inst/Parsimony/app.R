@@ -1597,25 +1597,6 @@ server <- function(input, output, session) {
   
   mode3D <- reactive("show3d" %in% input$display)
   
-  plotContent <- reactive({
-    switch(input$plotFormat,
-           "cons" = {
-             par(mar = rep(0, 4), cex = 0.9)
-             ConsensusPlot()
-           },
-           "clus" = {
-             PlotClusterCons()
-           },
-           "ind" = {
-             par(mar = rep(0, 4), cex = 0.9)
-             plot(r$trees[[input$whichTree]])
-           },
-           "space" = {
-             Log("plotContent(): treespacePlot()")
-             treespacePlot()
-           })
-  })
-  
   saveDetails <- reactive({
     switch(input$plotFormat,
            "cons" = {
@@ -1652,7 +1633,7 @@ server <- function(input, output, session) {
     filename = function() paste0(saveDetails()$fileName, ".png"),
     content = function (file) {
       png(file, width = input$plotSize, height = input$plotSize)
-      plotContent()
+      MainPlot()
       dev.off()
     })
   
@@ -1662,7 +1643,7 @@ server <- function(input, output, session) {
       pdf(file, title = saveDetails()$title,
           width = 8L,
           height = saveDetails()$asp * 10L)
-      plotContent()
+      MainPlot()
       dev.off()
     })
   
