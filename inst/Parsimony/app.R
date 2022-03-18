@@ -441,8 +441,6 @@ server <- function(input, output, session) {
         TreeRange()[1], TreeRange()[2], length.out = NTrees())))]
     r$treeHash <- rlang::hash(r$trees)
     
-    Log(paste0(length(r$trees), " trees in memory: ", TreeRange()[1], "..",
-               TreeRange()[2]))
     DisplayTreeScores()
     
     updateSliderInput(session, "whichTree", min = 1L,
@@ -710,7 +708,6 @@ server <- function(input, output, session) {
   })
   
   observeEvent(NTrees(), {
-    Log(paste0("Updated NTrees(", input$nTree, ")"))
     range <- TreeRange()[2] - TreeRange()[1]
     nTrees <- length(r$allTrees)
     if (NTrees() > range + 1L) {
@@ -724,7 +721,6 @@ server <- function(input, output, session) {
   })
 
   observeEvent(TreeRange(), {
-    Log("Updated TreeRange()")
     range <- TreeRange()[2] - TreeRange()[1]
     if (NTrees() > range + 1L) {
       updateNumericInput(session, "nTree", value = range + 1L)
