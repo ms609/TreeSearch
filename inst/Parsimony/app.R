@@ -46,6 +46,10 @@ plan(multisession)
 startOpt <- options("cli.progress_show_after" = 0.1)
 on.exit(options(startOpt), add = TRUE)
 
+aJiffy <- 42 # ms, default debounce period for input sliders etc
+typingJiffy <- 2.5 * aJiffy # slightly slower if might be typing
+aFewTrees <- 48L # Too many and rogues / tree space are slowed
+
 palettes <- list("#7a6c36",
                  c("#7a6c36", "#864885"),
                  c("#7a6c36", "#864885", "#427743"),
@@ -209,8 +213,8 @@ ui <- fluidPage(theme = "app.css",
   column(3,
     fluidRow(
       tags$h1("TreeSearch"),
-      selectInput("dataSource", "Load dataset",
-                  c("< From file >" = "file",
+      selectInput("dataSource", "Dataset",
+                  c("< Load from file >" = "file",
                     "Agnarsson 2004" = "Agnarsson2004",
                     "Sun et al. 2018" = "Sun2018",
                     "Wills et al. 2012" = "Wills2012",
@@ -223,6 +227,10 @@ ui <- fluidPage(theme = "app.css",
       hidden(actionButton("go", "Search", icon = icon("search"))),
       fileInput("treeFile", label = "Load trees",
                 placeholder = "No tree file selected"),
+      numericInput("nTree", label = "Sample",
+                   min = 1L, value = 1L, step = 1L),
+      sliderInput("treeRange", label = "from range", min = 1L, max = 1L,
+                  step = 1L, value = c(1, 1)),
       textOutput("results"),
       hidden(
         tags$div(id = "displayConfig",
@@ -356,22 +364,21 @@ server <- function(input, output, session) {
   # Load data
   ##############################################################################
   
-  tipLabels <- reactive({r$trees[[1]]$tip.label})
+  tipLabels <- reactive({r$trees[[1]][["tip.label"]]})
   
   datasetMatchesTrees <- reactive({
-    length(intersect(names(r$dataset), tipLabels())) == 
-      length(r$dataset)
+    length(intersect(names(r$dataset), tipLabels())) == length(r$dataset)
   })
   
-  updateData <- reactive({
+  UpdateData <- reactive({
     source <- input$dataSource
     if (source == "file") {
-      Log("updateData: from file")
+      Log("UpdateData: from file")
+      showElement("dataFile")
       
       fileInput <- input$dataFile
       r$dataset <- NULL
       r$chars <- NULL
-    
       if (is.null(input)) {
         showNotification(type = "error", "No data file selected")
         return("No data file selected.")
@@ -379,6 +386,7 @@ server <- function(input, output, session) {
       dataFile <- fileInput$datapath
       if (is.null(dataFile)) {
         showNotification(type = "error", "No data file found.")
+        Log(387)
         return ("No data file found.")
       }
       r$dataset <- tryCatch(ReadTntAsPhyDat(dataFile),
@@ -388,7 +396,9 @@ server <- function(input, output, session) {
                               ReadAsPhyDat(dataFile)
                             }, error = function (e) NULL))
     } else {
-      Log("updateData: from package")
+      Log("UpdateData: from package")
+      hideElement("dataFile")
+      
       dataFile <- system.file(paste0("datasets/", source, ".nex"),
                                package = "TreeSearch")
       r$chars <- ReadCharacters(dataFile)
@@ -410,7 +420,7 @@ server <- function(input, output, session) {
                         max = as.integer(attr(r$dataset, "nr")), value = 1L)
     }
     
-    updateTrees(tryCatch(read.nexus(dataFile), error = function (e) r$trees))
+    UpdateAllTrees(tryCatch(read.nexus(dataFile), error = function (e) r$trees))
     if (is.null(r$trees) || !datasetMatchesTrees()) {
       updateActionButton(session, "go", "New search")
     } else {
@@ -420,8 +430,58 @@ server <- function(input, output, session) {
     DisplayTreeScores()
   })
   
-  observeEvent(input$dataSource, updateData())
-  observeEvent(input$dataFile, updateData())
+  NTrees <- debounce(reactive(input$nTree), typingJiffy)
+  TreeRange <- debounce(reactive(input$treeRange), aJiffy)
+  
+  UpdateTrees <- reactive({
+    Log("Updating trees")
+    r$trees <- r$allTrees[
+      unique(as.integer(seq.int(
+        TreeRange()[1], TreeRange()[2], length.out = NTrees())))]
+    r$treeHash <- rlang::hash(r$trees)
+    
+    Log(paste0(length(r$trees), " trees in memory: ", TreeRange()[1], "..",
+               TreeRange()[2]))
+    DisplayTreeScores()
+    
+    updateSliderInput(session, "whichTree", min = 1L,
+                      max = length(r$trees), value = 1L)
+    UpdateKeepTipsInput()
+    UpdateExcludedTipsInput()
+    updateSliderInput(inputId = "spaceDim", max = max(1L, maxProjDim()),
+                      value = min(maxProjDim(), input$spaceDim))
+    updateSelectizeInput(inputId = "neverDrop", choices = tipLabels(),
+                         selected = input$neverDrop)
+    UpdateOutgroupInput()
+    updateSelectizeInput(inputId = "relators", choices = tipLabels(),
+                         selected = input$relators)
+  })
+  
+  UpdateAllTrees <- function (trees) {
+    Log("UpdateAllTrees()")
+    
+    trees <- c(trees)
+    if (length(trees) > 1L) {
+      trees <- RenumberTips(trees, trees[[1]]$tip.label)
+    }
+    if (identical(trees, r$trees)) {
+      Log("No need to update trees; no change")
+      return()
+    }
+    r$allTrees <- trees
+    
+    nTrees <- length(trees)
+    updateSliderInput(session, "treeRange",
+                      min = 1L, max = nTrees,
+                      value = c(max(1L, nTrees - aFewTrees), nTrees))
+    updateNumericInput(session, "nTree", max = nTrees,
+                       value = min(max(input$nTree, aFewTrees), nTrees))
+    
+    UpdateTrees()
+  }
+  
+  observeEvent(input$dataSource, UpdateData())
+  observeEvent(input$dataFile, UpdateData())
   observeEvent(r$dataset, {
     r$dataHash <- rlang::hash(r$dataset)
   })
@@ -496,7 +556,7 @@ server <- function(input, output, session) {
     } else {
       treeNames <- names(trees)
       r$rawTrees <- c(trees)
-      updateTrees(r$rawTrees) # updates r$trees
+      UpdateAllTrees(r$rawTrees) # updates r$trees
       pattern <- "(seed|start|ratch\\d+|final)_\\d+"
       if (length(grep(pattern, treeNames, perl = TRUE)) ==
           length(r$trees)) {
@@ -638,32 +698,6 @@ server <- function(input, output, session) {
     }
   })
   
-  updateTrees <- function (trees) {
-    if (length(trees) > 1L) {
-      trees <- RenumberTips(trees, trees[[1]]$tip.label)
-    }
-    if (identical(trees, r$trees)) {
-      Log("No need to update trees; no change")
-      return()
-    }
-    r$trees <- trees
-    r$treeHash <- rlang::hash(r$trees)
-    
-    DisplayTreeScores()
-    
-    updateSliderInput(session, "whichTree", min = 1L,
-                      max = length(r$trees), value = 1L)
-    UpdateKeepTipsInput()
-    UpdateExcludedTipsInput()
-    updateSliderInput(inputId = "spaceDim", max = max(1L, maxProjDim()),
-                      value = min(maxProjDim(), input$spaceDim))
-    updateSelectizeInput(inputId = "neverDrop", choices = tipLabels(),
-                         selected = input$neverDrop)
-    UpdateOutgroupInput()
-    updateSelectizeInput(inputId = "relators", choices = tipLabels(),
-                         selected = input$relators)
-  }
-  
   observeEvent(r$rawTrees, {
     Log("observed r$rawTrees")
     rawLabels <- r$rawTrees[[1]]$tip.label
@@ -671,7 +705,32 @@ server <- function(input, output, session) {
       r$rawTrees <- RenumberTips(r$rawTrees, rawLabels)
     }
     
-    updateTrees(r$rawTrees)
+    UpdateAllTrees(r$rawTrees)
+  })
+  
+  observeEvent(NTrees(), {
+    Log(paste0("Updated NTrees(", input$nTree, ")"))
+    range <- TreeRange()[2] - TreeRange()[1]
+    nTrees <- length(r$allTrees)
+    if (NTrees() > range + 1L) {
+      upper <- min(nTrees, TreeRange()[1] + NTrees() - 1L)
+      lower <- min(TreeRange()[1], upper + 1L - NTrees())
+      updateSliderInput(session, "treeRange", value = c(lower, upper))
+      # The resultant observeEvent will update trees
+    } else {
+      UpdateTrees()
+    }
+  })
+
+  observeEvent(TreeRange(), {
+    Log("Updated TreeRange()")
+    range <- TreeRange()[2] - TreeRange()[1]
+    if (NTrees() > range + 1L) {
+      updateNumericInput(session, "nTree", value = range + 1L)
+      # The resultant observeEvent will update trees
+    } else {
+      UpdateTrees()
+    }
   })
 
   observeEvent(input$implied.weights, {
@@ -745,8 +804,8 @@ server <- function(input, output, session) {
     }
   }
   
-  PlottedChar <- debounce(reactive(as.integer(input$whichChar)), 42)
-  whichTree <- debounce(reactive(input$whichTree), 42)
+  PlottedChar <- debounce(reactive(as.integer(input$whichChar)), aJiffy)
+  whichTree <- debounce(reactive(input$whichTree), aJiffy)
   
   PlottedTree <- reactive({
     if (length(r$trees) > 0L) {
@@ -954,7 +1013,7 @@ server <- function(input, output, session) {
                 cli::cli_alert_danger(cond)
                 showNotification(type = "error",
                                  "Could not match dataset to taxa in trees")
-                ErrorPlot("Load dataset with", "character codings",
+                ErrorPlot("Load dataset with\n", "character codings\n",
                           "for taxa on tree")
                 return()
               }
@@ -972,7 +1031,7 @@ server <- function(input, output, session) {
   }
   ReactiveMainPlot <- reactive({MainPlot()})
   
-  PlotSize <- function () debounce(reactive(input$plotSize), 100)
+  PlotSize <- function () debounce(reactive(input$plotSize), 2 * aJiffy)
   
   output$treePlot <- renderCachedPlot(
     ReactiveMainPlot(),
