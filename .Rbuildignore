@@ -1,6 +1,7 @@
 .covrignore
 .github
 ^Meta$
+^debug$
 ^doc$
 ^docs$
 ^data-raw$
