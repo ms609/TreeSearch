@@ -9,7 +9,7 @@ app$snapshot()
 app$setInputs(keepTips = 61)
 app$snapshot()
 app$setInputs(keepTips = 59) # Check tips kept legend changes to 17
-app$setInputs(excludedTip = "Emertonella", timeout_  =2e05)
+app$setInputs(excludedTip = "Emertonella", timeout_ = 2e05)
 app$snapshot()
 app$setInputs(neverDrop = "Emertonella")
 app$snapshot()
