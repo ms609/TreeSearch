@@ -1653,7 +1653,6 @@ server <- function(input, output, session) {
             hull <- chull(clusterX, clusterY)
             polygon(clusterX[hull], clusterY[hull], lty = 1, lwd = 2,
                     border = palettes[[min(length(palettes), cl$n)]][clI])
-            #border = "#54de25bb")
           }
         }
         if ("labelTrees" %in% input$display) {
