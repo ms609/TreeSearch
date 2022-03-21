@@ -1,4 +1,4 @@
-library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
+library("TreeTools", quietly = TRUE)
 
 test_that("Profile fails gracefully", {
   dataset <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 3, f = 3))

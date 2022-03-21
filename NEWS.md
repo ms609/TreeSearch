@@ -1,8 +1,8 @@
 # TreeSearch 1.1.1
 
-- Update tests for TreeSearch 1.7.0
+- Update tests for TreeSearch 1.7
 - 'shiny' GUI allows selection of subset of trees, for easier analysis of
-  Bayesian tree sets.
+  Bayesian tree sets
 - Test suite for 'shiny' GUI
 
 

@@ -1,4 +1,4 @@
-library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
+library("TreeTools", quietly = TRUE)
 devtools::load_all("c:/research/r/TreeSearch")
 #library("TreeSearch")
 library("TreeDist")

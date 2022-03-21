@@ -1,5 +1,5 @@
 test_that("IW Scoring", {
-  library('TreeTools', quietly = TRUE, warn.conflicts = FALSE)
+  library('TreeTools', quietly = TRUE)
   data('Lobo', package = 'TreeTools')
   dataset <- Lobo.phy
   tree <- NJTree(dataset)

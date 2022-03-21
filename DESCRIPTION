@@ -65,7 +65,7 @@ Config/Needs/website:
 RdMacros: Rdpack
 LinkingTo:
   Rcpp,
-  TreeTools
+  TreeTools,
 SystemRequirements: C++14
 LazyData: true
 ByteCompile: true

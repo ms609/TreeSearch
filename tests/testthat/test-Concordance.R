@@ -1,4 +1,4 @@
-library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
+library("TreeTools", quietly = TRUE)
 
 test_that("_Concordance() handles null input", {
   expect_warning(expect_null(QuartetConcordance(BalancedTree(8), NULL)))
