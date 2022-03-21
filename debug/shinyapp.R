@@ -17,3 +17,6 @@ r$plottedTree = r$trees[[1]]
 
 distances <- ClusteringInfoDist(r$trees)
 mapped <- cmdscale(distances, k = 6)
+
+
+dataset <- source("inst/Parsimony/dataset.lg")$value
