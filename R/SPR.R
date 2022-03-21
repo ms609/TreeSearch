@@ -28,7 +28,7 @@ SPRWarning <- function (parent, child, error) {
 #' the root edge.
 #'
 #' @examples
-#' tree <- TreeTools::Preorder(BalancedTree(8))
+#' tree <- TreeTools::Preorder(TreeTools::BalancedTree(8))
 #' edge <- tree$edge
 #' parent <- edge[, 1]
 #' child <- edge[, 2]

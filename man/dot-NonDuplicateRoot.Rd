@@ -32,7 +32,7 @@ This function is a copy of a deprecated ancestor in TreeTools; see
 \href{https://github.com/ms609/TreeTools/issues/32}{#32}.
 }
 \examples{
-tree <- TreeTools::Preorder(BalancedTree(8))
+tree <- TreeTools::Preorder(TreeTools::BalancedTree(8))
 edge <- tree$edge
 parent <- edge[, 1]
 child <- edge[, 2]
