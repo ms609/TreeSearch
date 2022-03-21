@@ -546,18 +546,31 @@ server <- function(input, output, session) {
       read.tree(tmpFile),
       error = function (x) tryCatch(
         read.nexus(tmpFile),
-        error = function (x) tryCatch(
-          ReadTntTree(tmpFile), warning = function (x) tryCatch({
-            Notification(as.character(x), type = "warning")
-            tryLabels <- TipLabels(r$dataset)
-            if (length(tryLabels) > 2) {
-              Notification("Inferring tip labels from dataset",
-                               type = "warning")
-              ReadTntTree(tmpFile, tipLabels = tryLabels)
+        error = function (err) tryCatch(
+          {
+            if (err == "NA/NaN argument") {
+              # Unterminated tree block, perhaps because a search is ongoing
+              withEnd <- tempfile()
+              on.exit(unlink(withEnd))
+              writeLines(c(readLines(tmpFile), "\nEND;"), withEnd)
+              read.nexus(withEnd)
             } else {
-              NULL
+              stop("Next handler, please")
             }
-          }, error = NULL
+          },
+          error = function (x) tryCatch(
+            ReadTntTree(tmpFile), warning = function (x) tryCatch({
+              Notification(as.character(x), type = "warning")
+              tryLabels <- TipLabels(r$dataset)
+              if (length(tryLabels) > 2) {
+                Notification("Inferring tip labels from dataset",
+                                 type = "warning")
+                ReadTntTree(tmpFile, tipLabels = tryLabels)
+              } else {
+                NULL
+              }
+            }, error = NULL
+            )
           )
         )
       )

@@ -1,6 +1,6 @@
 Package: TreeSearch
 Title: Phylogenetic Analysis with Morphological Data
-Version: 1.1.0.9000
+Version: 1.1.1
 Authors@R: c(person("Martin R.", 'Smith',
                   email="martin.smith@durham.ac.uk", 
                   role=c("aut", "cre", "cph"), 
