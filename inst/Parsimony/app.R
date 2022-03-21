@@ -397,7 +397,6 @@ server <- function(input, output, session) {
       dataFile <- fileInput$datapath
       if (is.null(dataFile)) {
         Notification(type = "error", "No data file found.")
-        Log(387)
         return ("No data file found.")
       }
       r$dataset <- tryCatch(ReadTntAsPhyDat(dataFile),
@@ -495,6 +494,10 @@ server <- function(input, output, session) {
     
     UpdateTrees()
   }
+  
+  ##############################################################################
+  # Event listeners
+  ##############################################################################
   
   observeEvent(input$dataSource, UpdateData())
   observeEvent(input$dataFile, UpdateData())
@@ -959,7 +962,7 @@ server <- function(input, output, session) {
     
     if (length(dropped) &&
         length(input$excludedTip) &&
-        nchar(input$excludedTip) && 
+        nchar(input$excludedTip) &&
         input$excludedTip %in% tipLabels()) {
       consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
       plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
