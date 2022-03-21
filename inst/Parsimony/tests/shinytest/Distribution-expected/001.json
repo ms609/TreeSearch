@@ -8,9 +8,10 @@
     "distMeth": "cid",
     "excludedTip": "Paterimitra",
     "go": 0,
-    "keepTips": 49,
+    "keepTips": 47,
     "mapDisplay": null,
     "neverDrop": null,
+    "nTree": 48,
     "outgroup": "Namacalathus",
     "plotFormat": "clus",
     "plotSize": 600,
@@ -20,16 +21,14 @@
     "spaceDim": 5,
     "spacePch": "relat",
     "treeFile": null,
+    "treeRange": [
+      77,
+      125
+    ],
     "whichChar": 1,
     "whichTree": 1
   },
   "output": {
-    "branchLegend": {
-      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">50 trees<\/span>",
-      "deps": [
-
-      ]
-    },
     "instabLegend": {
       "html": "<span class=\"legendLeft\">Stable<\/span>\n<span class=\"infernoScale legendBar\"> <\/span>\n<span class=\"legendRight\">Unstable<\/span>",
       "deps": [
@@ -48,24 +47,24 @@
 
       ]
     },
-    "results": "125 trees in memory with scores 27.3948 to 32.2033 (k = 10)",
+    "results": "48 trees in memory with scores 27.3948 to 30.1826 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: fadc21e981033428df5d11acf1315fd0877a0ad5]",
+      "src": "[image data sha1: aa9148c1796b37ff1c6c66f16c48af7d71118a44]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -3.49342767796035,
-              "right": 90.8291196269692,
-              "bottom": -0.92,
-              "top": 50.92
+              "left": -2.93971929209228,
+              "right": 76.4327015943993,
+              "bottom": -0.84,
+              "top": 48.84
             },
             "range": {
-              "left": 400,
+              "left": 300,
               "right": 600,
-              "bottom": 597.0991996832,
-              "top": 0.900800316799955
+              "bottom": 596.11999952,
+              "top": 1.88000048000006
             },
             "log": {
               "x": null,

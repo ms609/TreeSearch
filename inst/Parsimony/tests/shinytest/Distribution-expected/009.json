@@ -11,6 +11,7 @@
     "keepTips": 47,
     "mapDisplay": null,
     "neverDrop": null,
+    "nTree": 125,
     "outgroup": "Namacalathus",
     "plotFormat": "space",
     "plotSize": 400,
@@ -25,16 +26,14 @@
     "spaceDim": 3,
     "spacePch": "relat",
     "treeFile": null,
+    "treeRange": [
+      1,
+      125
+    ],
     "whichChar": 1,
     "whichTree": 1
   },
   "output": {
-    "branchLegend": {
-      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">50 trees<\/span>",
-      "deps": [
-
-      ]
-    },
     "charMapLegend": {
       "html": "<h3>Brephic shell: Embryonic shell<\/h3>\n<ul style=\"list-style: none;\">\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #00bfc6 ;\">0<\/span>\n    <span>Absent<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #ffd46f ;\">1<\/span>\n    <span>Present<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: grey ;\">?<\/span>\n    <span>Ambiguous<\/span>\n  <\/li>\n<\/ul>",
       "deps": [
@@ -101,7 +100,7 @@
     },
     "results": "125 trees in memory with scores 27.3948 to 32.2033 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: ab0d009894ac8278aef24eb8f7eb2b424bf80846]",
+      "src": "[image data sha1: bfea4a50bc4bd7bb5b0f1f62152d54c1619ca35c]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [

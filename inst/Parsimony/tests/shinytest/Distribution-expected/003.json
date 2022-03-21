@@ -11,6 +11,7 @@
     "keepTips": 47,
     "mapDisplay": null,
     "neverDrop": null,
+    "nTree": 125,
     "outgroup": "Namacalathus",
     "plotFormat": "clus",
     "plotSize": 600,
@@ -20,16 +21,14 @@
     "spaceDim": 5,
     "spacePch": "relat",
     "treeFile": null,
+    "treeRange": [
+      1,
+      125
+    ],
     "whichChar": 1,
     "whichTree": 1
   },
   "output": {
-    "branchLegend": {
-      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">50 trees<\/span>",
-      "deps": [
-
-      ]
-    },
     "instabLegend": {
       "html": "<span class=\"legendLeft\">Stable<\/span>\n<span class=\"infernoScale legendBar\"> <\/span>\n<span class=\"legendRight\">Unstable<\/span>",
       "deps": [

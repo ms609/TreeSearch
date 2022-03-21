@@ -311,7 +311,7 @@ ui <- fluidPage(theme = "app.css",
                  htmlOutput("branchLegend", inline = TRUE)),
         tags$div(id = "droppedTips",
           selectInput("excludedTip", "Show excluded tip", choices = list())),
-        tags$div(id = "droppedList"),
+        tags$div(id = "droppedList", style = "float: left;"),
       )),
       hidden(tags$div(id = "clusLegend",
                       htmlOutput("instabLegend2", inline = TRUE)
