@@ -8,13 +8,13 @@
   "codeRepository": "https://github.com/ms609/TreeSearch/",
   "issueTracker": "https://github.com/ms609/TreeSearch/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.1.0.9000",
+  "version": "1.1.1",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.1.2 (2021-11-01)",
+  "runtimePlatform": "R version 4.1.3 (2022-03-10)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -332,7 +332,7 @@
     },
     "SystemRequirements": "C++14"
   },
-  "fileSize": "3850.334KB",
+  "fileSize": "8642.305KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -401,7 +401,7 @@
       ],
       "name": "{TreeSearch}: phylogenetic tree search using custom optimality criteria",
       "identifier": "10.5281/zenodo.1042590",
-      "description": "R package version 1.1.0.9000",
+      "description": "R package version 1.1.1",
       "@id": "https://doi.org/10.5281/zenodo.1042590",
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
     },
