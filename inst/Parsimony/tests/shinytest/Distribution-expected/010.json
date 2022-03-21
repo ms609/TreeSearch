@@ -4,18 +4,23 @@
     "concordance": "clc",
     "consP": 0.5,
     "dataFile": null,
-    "dataSource": "Agnarsson2004",
-    "distMeth": "qd",
+    "dataSource": "Sun2018",
+    "distMeth": "rf",
     "excludedTip": "Paterimitra",
     "go": 0,
     "keepTips": 47,
     "mapDisplay": null,
     "neverDrop": null,
-    "nTree": 23,
+    "nTree": 125,
     "outgroup": "Namacalathus",
     "plotFormat": "space",
     "plotSize": 400,
-    "relators": null,
+    "relators": [
+      "Wiwaxia_corrugata",
+      "Tonicella",
+      "Dentalium",
+      "Phoronis"
+    ],
     "searchConfig": 0,
     "spaceCol": "score",
     "spaceDim": 3,
@@ -23,7 +28,7 @@
     "treeFile": null,
     "treeRange": [
       1,
-      23
+      125
     ],
     "whichChar": 1,
     "whichTree": 1
@@ -48,7 +53,7 @@
       ]
     },
     "pcQuality": {
-      "src": "[image data sha1: 37a890dc660569e34736f5067f59697db0bd2bf0]",
+      "src": "[image data sha1: e63fca5c4327f922332fbfe920b66dbd2c504453]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
@@ -93,9 +98,9 @@
 
       ]
     },
-    "results": "23 trees in memory with scores 34.7693 to 38.2276 (k = 10)",
+    "results": "125 trees in memory with scores 27.3948 to 32.2033 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: e5e0991065dbc3483a2eb20b1a4c7349ac1ddcf6]",
+      "src": "[image data sha1: bfea4a50bc4bd7bb5b0f1f62152d54c1619ca35c]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [

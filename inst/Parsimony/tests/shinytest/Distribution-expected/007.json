@@ -14,16 +14,11 @@
     "nTree": 125,
     "outgroup": "Namacalathus",
     "plotFormat": "space",
-    "plotSize": 400,
-    "relators": [
-      "Wiwaxia_corrugata",
-      "Tonicella",
-      "Dentalium",
-      "Phoronis"
-    ],
+    "plotSize": 600,
+    "relators": null,
     "searchConfig": 0,
-    "spaceCol": "score",
-    "spaceDim": 3,
+    "spaceCol": "clust",
+    "spaceDim": 5,
     "spacePch": "relat",
     "treeFile": null,
     "treeRange": [
@@ -53,7 +48,7 @@
       ]
     },
     "pcQuality": {
-      "src": "[image data sha1: b3c90fbad30645d8384e8799b6883a35c6d60751]",
+      "src": "[image data sha1: 64e522ff1fde05514e3e9a01ffaf0802af3af42b]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
@@ -87,7 +82,7 @@
       "class": "shiny-scalable"
     },
     "plotSpacer": {
-      "html": "<div style=\"margin-bottom: -200px\"> <\/div>",
+      "html": "<div style=\"margin-bottom: 0px\"> <\/div>",
       "deps": [
 
       ]
@@ -100,7 +95,7 @@
     },
     "results": "125 trees in memory with scores 27.3948 to 32.2033 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 522bc65f46d0df2626de608d1e4eff4f532124e5]",
+      "src": "[image data sha1: ef8a14ba33228ed4e828561d6948f779f2d6a2ef]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
@@ -112,10 +107,10 @@
               "top": 1.04
             },
             "range": {
-              "left": 202.3904005976,
-              "right": 397.6095994024,
-              "bottom": 196.6095994024,
-              "top": 1.39040059760014
+              "left": 451.9008003168,
+              "right": 598.0991996832,
+              "bottom": 147.0991996832,
+              "top": 0.900800316800089
             },
             "log": {
               "x": null,
@@ -127,8 +122,8 @@
           }
         ],
         "dims": {
-          "width": 400,
-          "height": 400
+          "width": 600,
+          "height": 600
         }
       },
       "class": "shiny-scalable"

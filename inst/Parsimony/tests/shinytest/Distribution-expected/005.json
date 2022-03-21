@@ -13,7 +13,7 @@
     "neverDrop": null,
     "nTree": 125,
     "outgroup": "Namacalathus",
-    "plotFormat": "space",
+    "plotFormat": "ind",
     "plotSize": 600,
     "relators": null,
     "searchConfig": 0,
@@ -61,22 +61,22 @@
     },
     "results": "125 trees in memory with scores 27.3948 to 32.2033 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 5589ea1cc7d93eba0d85661031a0446b7b95f3f7]",
+      "src": "[image data sha1: 12851a79cd90a89b95d00bacee010f2dac84822a]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -0.04,
-              "right": 1.04,
-              "bottom": -0.04,
-              "top": 1.04
+              "left": -2.19651494975484,
+              "right": 57.1093886936258,
+              "bottom": -1.12,
+              "top": 56.12
             },
             "range": {
-              "left": 451.9008003168,
-              "right": 598.0991996832,
-              "bottom": 147.0991996832,
-              "top": 0.900800316800089
+              "left": 0,
+              "right": 600,
+              "bottom": 599,
+              "top": -1
             },
             "log": {
               "x": null,

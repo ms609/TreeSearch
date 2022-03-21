@@ -5,7 +5,7 @@
     "consP": 0.5,
     "dataFile": null,
     "dataSource": "Sun2018",
-    "distMeth": "pid",
+    "distMeth": "cid",
     "excludedTip": "Paterimitra",
     "go": 0,
     "keepTips": 47,
@@ -53,7 +53,7 @@
       ]
     },
     "pcQuality": {
-      "src": "[image data sha1: 685a578f411ffdabaaf3827a8c3df93758620fef]",
+      "src": "[image data sha1: b3c90fbad30645d8384e8799b6883a35c6d60751]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
@@ -100,7 +100,7 @@
     },
     "results": "125 trees in memory with scores 27.3948 to 32.2033 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 618298636e83022fa8f69b8efbf8bab987d184f6]",
+      "src": "[image data sha1: 522bc65f46d0df2626de608d1e4eff4f532124e5]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [

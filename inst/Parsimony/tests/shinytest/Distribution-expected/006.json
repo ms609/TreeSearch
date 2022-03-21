@@ -1,6 +1,6 @@
 {
   "input": {
-    "clThresh": 0.5,
+    "clThresh": 1,
     "concordance": "clc",
     "consP": 0.5,
     "dataFile": null,
@@ -47,40 +47,6 @@
 
       ]
     },
-    "pcQuality": {
-      "src": "[image data sha1: 64e522ff1fde05514e3e9a01ffaf0802af3af42b]",
-      "alt": "Plot object",
-      "coordmap": {
-        "panels": [
-          {
-            "domain": {
-              "left": -0.04,
-              "right": 1.04,
-              "bottom": -1.66,
-              "top": 2.66
-            },
-            "range": {
-              "left": 0,
-              "right": 240,
-              "bottom": 42.1999599999445,
-              "top": -1
-            },
-            "log": {
-              "x": null,
-              "y": null
-            },
-            "mapping": {
-
-            }
-          }
-        ],
-        "dims": {
-          "width": 240,
-          "height": 72
-        }
-      },
-      "class": "shiny-scalable"
-    },
     "plotSpacer": {
       "html": "<div style=\"margin-bottom: 0px\"> <\/div>",
       "deps": [
@@ -95,7 +61,7 @@
     },
     "results": "125 trees in memory with scores 27.3948 to 32.2033 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: ef8a14ba33228ed4e828561d6948f779f2d6a2ef]",
+      "src": "[image data sha1: 5589ea1cc7d93eba0d85661031a0446b7b95f3f7]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
