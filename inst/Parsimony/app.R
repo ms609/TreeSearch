@@ -441,14 +441,16 @@ server <- function(input, output, session) {
     DisplayTreeScores()
   })
   
-  NTrees <- debounce(reactive(input$nTree), typingJiffy)
-  TreeRange <- debounce(reactive(input$treeRange), aJiffy)
+  FetchNTree <- debounce(reactive(r$nTree <- input$nTree), typingJiffy)
+  FetchTreeRange <- debounce(reactive(r$treeRange <- input$treeRange), aJiffy)
   
   UpdateTrees <- reactive({
     Log("Updating trees")
+    FetchNTree()
+    FetchTreeRange()
     r$trees <- r$allTrees[
       unique(as.integer(seq.int(
-        TreeRange()[1], TreeRange()[2], length.out = NTrees())))]
+        r$treeRange[1], r$treeRange[2], length.out = r$nTree)))]
     r$treeHash <- rlang::hash(r$trees)
     
     DisplayTreeScores()
@@ -482,11 +484,14 @@ server <- function(input, output, session) {
     r$allTrees <- trees
     
     nTrees <- length(trees)
+    r$treeRange <- c(max(1L, nTrees - aFewTrees), nTrees)
     updateSliderInput(session, "treeRange",
                       min = 1L, max = nTrees,
-                      value = c(max(1L, nTrees - aFewTrees), nTrees))
+                      value = r$treeRange)
+    
+    r$nTree <- min(max(input$nTree, aFewTrees), nTrees)
     updateNumericInput(session, "nTree", max = nTrees,
-                       value = min(max(input$nTree, aFewTrees), nTrees))
+                       value = r$nTree)
     
     UpdateTrees()
   }
@@ -627,7 +632,7 @@ server <- function(input, output, session) {
           cli::cli_alert(x[[2]])
           cli::cli_alert_danger(x[[1]])
           Notification(type = "error",
-                           "Could not score all trees with dataset")
+                       "Could not score all trees with dataset")
         }
         NULL
      }),
@@ -732,23 +737,25 @@ server <- function(input, output, session) {
     UpdateAllTrees(r$rawTrees)
   })
   
-  observeEvent(NTrees(), {
-    range <- TreeRange()[2] - TreeRange()[1]
+  observeEvent(FetchNTree(), {
+    range <- r$treeRange[2] - r$treeRange[1]
     nTrees <- length(r$allTrees)
-    if (NTrees() > range + 1L) {
-      upper <- min(nTrees, TreeRange()[1] + NTrees() - 1L)
-      lower <- min(TreeRange()[1], upper + 1L - NTrees())
-      updateSliderInput(session, "treeRange", value = c(lower, upper))
+    if (r$nTree > range + 1L) {
+      upper <- min(nTrees, r$treeRange[1] + r$nTree - 1L)
+      lower <- min(r$treeRange[1], upper + 1L - r$nTree)
+      r$treeRange <- c(lower, upper)
+      updateSliderInput(session, "treeRange", value = r$treeRange)
       # The resultant observeEvent will update trees
     } else {
       UpdateTrees()
     }
   })
 
-  observeEvent(TreeRange(), {
-    range <- TreeRange()[2] - TreeRange()[1]
-    if (NTrees() > range + 1L) {
-      updateNumericInput(session, "nTree", value = range + 1L)
+  observeEvent(FetchTreeRange(), {
+    range <- r$treeRange[2] - r$treeRange[1]
+    if (r$nTree > range + 1L) {
+      r$nTree <- range + 1L
+      updateNumericInput(session, "nTree", value = r$nTree)
       # The resultant observeEvent will update trees
     } else {
       UpdateTrees()
@@ -949,6 +956,7 @@ server <- function(input, output, session) {
         tags$span(class = "legendRight", "Unstable"),
       )
     })
+    
     if (length(dropped) &&
         length(input$excludedTip) &&
         nchar(input$excludedTip) && 
