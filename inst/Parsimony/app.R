@@ -25,6 +25,12 @@ if (logging) {
   PutData <- PutTree <- Log <- function (...) {}
 }
 
+Notification <- function (...) {
+  if (!isTRUE(getOption("shiny.testmode"))) {
+    showNotification(...)
+  }
+}
+
 library("methods", exclude = c("show", "removeClass"))
 library("cli")
 suppressPackageStartupMessages({
@@ -322,8 +328,16 @@ ui <- fluidPage(theme = "app.css",
                                      "Quartet (slower)" = "qd"),
                       width = 200)
       )),
-      hidden(tags$div(id = "spaceConfig",
-        tags$div(style = "float: right; width: 200px; margin-left: 2em;",
+      hidden(tags$div(
+        id = "spaceConfig",
+        tags$div(id = "spaceLegend",
+                 style = "float: left;",
+                 plotOutput(outputId = "pcQuality",
+                            height = "72px", width = "240px"),
+                 htmlOutput("stressLegend", inline = TRUE)
+        ),
+        tags$div(
+          style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput("spaceDim", "Dimensions:", value = 5,
                       min = 1, max = 12, step = 1, width = 200),
           selectInput("spaceCol", "Colour trees by:",
@@ -337,11 +351,7 @@ ui <- fluidPage(theme = "app.css",
                            "Tree name" = "name")),
           selectizeInput("relators", "Show relationship between:",
                          choices = list(), multiple = TRUE),
-                 ),
-        tags$div(id = "spaceLegend",
-                 plotOutput(outputId = "pcQuality",
-                            height = "72px", width = "240px"),
-                 htmlOutput("stressLegend", inline = TRUE)),
+        ),
       )),
       htmlOutput("references", style = "clear: both;"),
     ),
@@ -350,11 +360,11 @@ ui <- fluidPage(theme = "app.css",
 
 server <- function(input, output, session) {
   if (packageVersion("ape") < "5.5.2") {
-    showNotification("Character plots require latest \"ape\" version. Install with devtools::install_github( \"emmanuelparadis/ape\")",
+    Notification("Character plots require latest \"ape\" version. Install with devtools::install_github( \"emmanuelparadis/ape\")",
                      type = "error", duration = 25)
   }
   if (packageVersion("TreeTools") <= "1.5.0.9100") {
-    showNotification("Rogue plots require \"TreeTools\" development version. Install with devtools::install_github( \"ms609/TreeTools@rogue\")",
+    Notification("Rogue plots require \"TreeTools\" development version. Install with devtools::install_github( \"ms609/TreeTools@rogue\")",
                      type = "error", duration = 30)
   }
   
@@ -381,12 +391,12 @@ server <- function(input, output, session) {
       r$dataset <- NULL
       r$chars <- NULL
       if (is.null(input)) {
-        showNotification(type = "error", "No data file selected")
+        Notification(type = "error", "No data file selected")
         return("No data file selected.")
       }
       dataFile <- fileInput$datapath
       if (is.null(dataFile)) {
-        showNotification(type = "error", "No data file found.")
+        Notification(type = "error", "No data file found.")
         Log(387)
         return ("No data file found.")
       }
@@ -407,13 +417,13 @@ server <- function(input, output, session) {
       r$dataset <- ReadAsPhyDat(dataFile)
     }
     if (is.null(r$dataset)) {
-      showNotification(type = "error", "Could not read data from file")
+      Notification(type = "error", "Could not read data from file")
       
       updateSliderInput(session, "whichChar", min = 0L,
                         max = 0L, value = 0L)
       return ("Could not read data from file")
     } else {
-      showNotification(type = "message", 
+      Notification(type = "message", 
                        paste("Loaded", attr(r$dataset, "nr"), "characters and",
                              length(r$dataset), "taxa"))
       
@@ -447,8 +457,10 @@ server <- function(input, output, session) {
                       max = length(r$trees), value = 1L)
     UpdateKeepTipsInput()
     UpdateExcludedTipsInput()
-    updateSliderInput(inputId = "spaceDim", max = max(1L, maxProjDim()),
-                      value = min(maxProjDim(), input$spaceDim))
+    if (maxProjDim() > 0) {
+      updateSliderInput(inputId = "spaceDim", max = max(1L, maxProjDim()),
+                        value = min(maxProjDim(), input$spaceDim))
+    }
     updateSelectizeInput(inputId = "neverDrop", choices = tipLabels(),
                          selected = input$neverDrop)
     UpdateOutgroupInput()
@@ -536,10 +548,10 @@ server <- function(input, output, session) {
         read.nexus(tmpFile),
         error = function (x) tryCatch(
           ReadTntTree(tmpFile), warning = function (x) tryCatch({
-            showNotification(as.character(x), type = "warning")
+            Notification(as.character(x), type = "warning")
             tryLabels <- TipLabels(r$dataset)
             if (length(tryLabels) > 2) {
-              showNotification("Inferring tip labels from dataset",
+              Notification("Inferring tip labels from dataset",
                                type = "warning")
               ReadTntTree(tmpFile, tipLabels = tryLabels)
             } else {
@@ -551,7 +563,7 @@ server <- function(input, output, session) {
       )
     )
     if (is.null(trees)) {
-      showNotification("Trees not in a recognized format", type = "error")
+      Notification("Trees not in a recognized format", type = "error")
     } else {
       treeNames <- names(trees)
       r$rawTrees <- c(trees)
@@ -563,7 +575,7 @@ server <- function(input, output, session) {
         attr(r$trees, "firstHit") <- table(whenHit)[unique(whenHit)]
       }
       removeModal()
-      showNotification(paste("Loaded", length(r$trees), "trees"), type = "message")
+      Notification(paste("Loaded", length(r$trees), "trees"), type = "message")
       updateActionButton(session, "modalGo", "Continue search")
       updateActionButton(session, "go", "Continue")
       show("displayConfig")
@@ -601,7 +613,7 @@ server <- function(input, output, session) {
             length(r$trees) > 0) {
           cli::cli_alert(x[[2]])
           cli::cli_alert_danger(x[[1]])
-          showNotification(type = "error",
+          Notification(type = "error",
                            "Could not score all trees with dataset")
         }
         NULL
@@ -747,7 +759,7 @@ server <- function(input, output, session) {
   
   StartSearch <- function () {
     if (!inherits(r$dataset, "phyDat")) {
-      showNotification("No data loaded", type = "error")
+      Notification("No data loaded", type = "error")
     } else {
       startTree <- if (is.null(r$trees)) {
         AdditionTree(r$dataset, concavity = concavity())
@@ -1008,7 +1020,7 @@ server <- function(input, output, session) {
               },
               error = function (cond) {
                 cli::cli_alert_danger(cond)
-                showNotification(type = "error",
+                Notification(type = "error",
                                  "Could not match dataset to taxa in trees")
                 ErrorPlot("Load dataset with\n", "character codings\n",
                           "for taxa on tree")
@@ -1240,8 +1252,10 @@ server <- function(input, output, session) {
     dstnc <- distances()
     mppng <- mapping()
     mppng <- mapping()[, seq_len(min(dim(mppng)[2], dims()))]
-    future_promise(TreeDist::MappingQuality(dstnc, dist(mppng))["TxC"],
-                   seed = NULL) %...>% QualityPlot
+    neighbs <- min(10L, length(r$trees) / 2)
+    future_promise(
+      TreeDist::MappingQuality(dstnc, dist(mppng), neighbs)["TxC"],
+      seed = NULL) %...>% QualityPlot
   }, cacheKeyExpr = {
     list(r$treeHash, input$distMeth, dims())
   },
@@ -1433,7 +1447,7 @@ server <- function(input, output, session) {
         }
       }, "firstHit" = {
         if (is.null(firstHit())) {
-          showNotification("Data not available; were trees loaded from file?",
+          Notification("Data not available; were trees loaded from file?",
                            type = "warning")
           palettes[[1]]
         } else {
@@ -1465,12 +1479,12 @@ server <- function(input, output, session) {
             as.raw, raw(1)))
           log2(fours - 1L)
         } else {
-          showNotification("Select four taxa to show relationships")
+          Notification("Select four taxa to show relationships")
           0
         }
       }, "name" = {
         if (is.null(names(r$trees))) {
-          showNotification("Trees lack names", type = "warning")
+          Notification("Trees lack names", type = "warning")
           16
         } else {
           indices <- treeNameClustering()
@@ -1497,7 +1511,7 @@ server <- function(input, output, session) {
   
   Quartet <- function (...) {
     if (!requireNamespace("Quartet", quietly = TRUE)) {
-      showNotification("Installing required package \"Quartet\"",
+      Notification("Installing required package \"Quartet\"",
                        type = "warning", duration = 20)
       install.packages("Quartet")
     }
