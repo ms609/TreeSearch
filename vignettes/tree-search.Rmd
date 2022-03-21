@@ -19,7 +19,7 @@ knitr::opts_chunk$set(fig.width = 7.2, fig.asp = 0.7)
 parsimony search on morphological datasets that contain inapplicable data,
 using the algorithm proposed by Brazeau, Guillerme and Smith [-@Brazeau2019]
 and implemented in the 'MorphyLib' C library [@Brazeau2017]
-([details](https://cdn.jsdelivr.net/gh/TGuillerme/Inapp@c4d502fa4ae3702eb207b2da3a692e469ba3b6ab/inst/gitbook/_book/index.html)).
+([details](https://rawgit.com/TGuillerme/Inapp/c4d502fa4ae3702eb207b2da3a692e469ba3b6ab/inst/gitbook/_book/index.html)).
 
 ## Getting started
 
