@@ -11,6 +11,7 @@
     "keepTips": 59,
     "mapDisplay": "tipsRight",
     "neverDrop": "Emertonella",
+    "nTree": 23,
     "outgroup": "Thymoites",
     "plotFormat": "ind",
     "plotSize": 600,
@@ -20,6 +21,10 @@
     "spaceDim": 5,
     "spacePch": "relat",
     "treeFile": null,
+    "treeRange": [
+      1,
+      23
+    ],
     "whichChar": 0,
     "whichTree": 1
   },
