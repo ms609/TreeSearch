@@ -103,7 +103,7 @@ in search results, which may improve the accuracy of the consensus tree
 \item{constraint}{An object of class \code{phyDat}; returned trees will be
 perfectly compatible with each character in \code{constraint}.
 See \code{\link[=ImposeConstraint]{ImposeConstraint()}} and
-\href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
+\href{https://ms609.github.io/TreeSearch/articles/tree-search.html}{vignette}
 for further examples.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give

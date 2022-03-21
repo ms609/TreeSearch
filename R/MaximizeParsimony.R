@@ -75,7 +75,7 @@
 #' @param constraint An object of class `phyDat`; returned trees will be
 #' perfectly compatible with each character in `constraint`.
 #' See [`ImposeConstraint()`] and 
-#' [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
+#' [vignette](https://ms609.github.io/TreeSearch/articles/tree-search.html)
 #' for further examples.
 #' @param verbosity Integer specifying level of messaging; higher values give
 #' more detailed commentary on search progress. Set to `0` to run silently.

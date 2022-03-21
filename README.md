@@ -72,7 +72,7 @@ For more control over search settings, see [`?MaximizeParsimony()`](https://ms60
 - [Getting started](https://ms609.github.io/TreeSearch/articles/getting-started.html)
 - [Using the GUI](https://ms609.github.io/TreeSearch/articles/tree-search.html)
 - [Loading phylogenetic data into R](https://ms609.github.io/TreeTools/articles/load-data.html)
-- [Parsimony search with inapplicable data](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
+- [Parsimony search with inapplicable data](https://ms609.github.io/TreeSearch/articles/tree-search.html)
 
 - [Calculating concavity profiles](https://ms609.github.io/TreeSearch/articles/profile-scores.html) for Profile Parsimony
 - [Tree search with profile parsimony](https://ms609.github.io/TreeSearch/articles/profile.html)
