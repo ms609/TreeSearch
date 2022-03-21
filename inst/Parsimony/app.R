@@ -307,7 +307,12 @@ ui <- fluidPage(theme = "app.css",
                          choices = list("NA" = "No trees loaded"))
                  ),
         tags$div(id = "consLegend",
-                 htmlOutput("instabLegend", inline = TRUE),
+                 tags$span(id = "instabLegend",
+                          tagList(
+                            tags$span(class = "legendLeft", "Stable"),
+                            tags$span(class = "infernoScale legendBar", "\ua0"),
+                            tags$span(class = "legendRight", "Unstable"),
+                          )),
                  htmlOutput("branchLegend", inline = TRUE)),
         tags$div(id = "droppedTips",
           selectInput("excludedTip", "Show excluded tip", choices = list())),
@@ -771,7 +776,54 @@ server <- function(input, output, session) {
            hide("concavity")
     )
   })
-
+  
+  ShowConfigs <- function (visible = character(0)) {
+    allConfigs <- c("whichTree", "charChooser",
+                    "consConfig", "clusConfig",
+                    "clusLegend", "branchLegend",
+                    "spaceConfig", "treePlotConfig",
+                    "droppedTips", "droppedList")
+    r$visibleConfigs <- visible
+    lapply(visible, show)
+    lapply(setdiff(allConfigs, visible), hide)
+  }
+  
+  observeEvent(input$plotFormat, {
+    ShowConfigs(switch(input$plotFormat,
+                       "ind" = c("whichTree", "charChooser",
+                                 "treePlotConfig"),
+                       "cons" = c("consConfig", "droppedTips",
+                                  "treePlotConfig", "branchLegend"),
+                       "clus" = c("clusConfig", "clusLegend",
+                                  "consConfig", "droppedList",
+                                  "treePlotConfig"),
+                       "space" = c("clusConfig", "clusLegend",
+                                   "spaceConfig"),
+                       ""))
+  })
+  
+  
+  output$branchLegend <- renderUI({
+    kept <- KeptTips()
+    dropped <- DroppedTips()
+    Log("Update branchLegend")
+    
+    if (length(dropped) &&
+        length(input$excludedTip) &&
+        nchar(input$excludedTip) &&
+        input$excludedTip %in% tipLabels()) {
+      consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
+      plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
+                           plot = FALSE)
+      tagList(
+        tags$span(class = "legendLeft", "1 tree"),
+        tags$span(id = "blackToGreen", class = "legendBar", "\ua0"),
+        tags$span(class = "legendRight",
+                  paste(max(c(plotted$onEdge, plotted$atNode)), "trees")),
+      )
+    }
+  })
+  
   concavity <- reactive({
     kExp <- if (length(input$concavity)) input$concavity else 1
     switch(weighting(),
@@ -952,14 +1004,6 @@ server <- function(input, output, session) {
     kept <- KeptTips()
     dropped <- DroppedTips()
     
-    output$instabLegend <- renderUI({
-      tagList(
-        tags$span(class = "legendLeft", "Stable"),
-        tags$span(class = "infernoScale legendBar", "\ua0"),
-        tags$span(class = "legendRight", "Unstable"),
-      )
-    })
-    
     if (length(dropped) &&
         length(input$excludedTip) &&
         nchar(input$excludedTip) &&
@@ -971,14 +1015,6 @@ server <- function(input, output, session) {
                            tip.color = tipCols()[intersect(consTrees[[1]]$tip.label, kept)])
       r$plottedTree <- plotted$cons
       LabelConcordance()
-      output$branchLegend <- renderUI({
-        tagList(
-          tags$span(class = "legendLeft", "1 tree"),
-          tags$span(id = "blackToGreen", class = "legendBar", "\ua0"),
-          tags$span(class = "legendRight", 
-                    paste(max(c(plotted$onEdge, plotted$atNode)), "trees")),
-        )
-      })
     } else {
       cons <- UserRoot(ConsensusWithout(r$trees,
                                         # `dropped` might be out of date
@@ -994,30 +1030,6 @@ server <- function(input, output, session) {
     
   }
   
-  ShowConfigs <- function (visible = character(0)) {
-    allConfigs <- c("whichTree", "charChooser",
-                    "consConfig", "clusConfig",
-                    "clusLegend",
-                    "spaceConfig", "treePlotConfig",
-                    "droppedTips", "droppedList")
-    r$visibleConfigs <- visible
-    lapply(visible, show)
-    lapply(setdiff(allConfigs, visible), hide)
-  }
-  
-  observeEvent(input$plotFormat, {
-               ShowConfigs(switch(input$plotFormat,
-                                  "ind" = c("whichTree", "charChooser",
-                                            "treePlotConfig"),
-                                  "cons" = c("consConfig", "droppedTips",
-                                             "treePlotConfig"),
-                                  "clus" = c("clusConfig", "clusLegend",
-                                             "consConfig", "droppedList",
-                                             "treePlotConfig"),
-                                  "space" = c("clusConfig", "clusLegend",
-                                              "spaceConfig"),
-                                  ""))
-  })
   
   MainPlot <- function() {
     if (!is.null(r$trees)) {
@@ -1405,6 +1417,7 @@ server <- function(input, output, session) {
   
   PlotClusterCons <- function () {
     Log("PlotClusterCons()")
+    
     cl <- clusterings()
     kept <- rev(dropSeq())[seq_len(input$keepTips)]
     dropped <- if (length(kept) > 1) {
