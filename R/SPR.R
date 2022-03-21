@@ -28,7 +28,7 @@ SPRWarning <- function (parent, child, error) {
 #' the root edge.
 #'
 #' @examples
-#' tree <- Preorder(BalancedTree(8))
+#' tree <- TreeTools::Preorder(BalancedTree(8))
 #' edge <- tree$edge
 #' parent <- edge[, 1]
 #' child <- edge[, 2]
@@ -37,6 +37,7 @@ SPRWarning <- function (parent, child, error) {
 #' @keywords internal
 #' @importFrom TreeTools DescendantEdges
 #' @template MRS
+#' @export
 .NonDuplicateRoot <- function(parent, child, nEdge = length(parent)) {
   notDuplicateRoot <- !logical(nEdge)
   rightSide <- DescendantEdges(1, parent, child, nEdge)
