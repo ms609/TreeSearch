@@ -104,7 +104,9 @@ Ratchet <- function (tree, dataset,
     }
     return(tree)
   }
-  if (class(swappers) == 'function') swappers <- list(swappers)
+  if (is.function(swappers)){
+    swappers <- list(swappers)
+  }
   
   if (returnAll) {
     nullForest <- vector('list', ratchIter)
@@ -114,7 +116,7 @@ Ratchet <- function (tree, dataset,
 
   iterationsWithBestScore <- 0
   BREAK <- FALSE
-  for (i in 1:ratchIter) {
+  for (i in seq_len(ratchIter)) {
     if (verbosity > 1L) {                                                       # nocov start
       message("\n* Ratchet iteration ", i, '.')
       if (verbosity > 2L) {
