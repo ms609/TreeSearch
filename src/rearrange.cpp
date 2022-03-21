@@ -1,6 +1,7 @@
 #include <Rcpp.h>
 // [ [Rcpp::depends(TreeTools)]]
-#include <TreeTools.h>
+#include <TreeTools/renumber_tree.h> /* for preorder_edges_and_nodes */
+#include <TreeTools/root_tree.h> /* for root_binary */
 #include <memory> /* for unique_ptr */
 using namespace std;
 using namespace Rcpp;
@@ -445,7 +446,7 @@ List all_spr (const IntegerMatrix edge,
         
         const bool new_root_on_right = invert_next == fragment_base_right;
         const int16 repurposed_edge = new_root_on_right ?
-          fragment_base_left : 
+          fragment_base_left :
           fragment_base_right;
         rerooted(invert_next, 1) = two_bits(repurposed_edge, 1);
         rerooted(repurposed_edge, 1) = two_bits(insertion_point, 1);
