@@ -106,6 +106,18 @@
     },
     {
       "@type": "SoftwareApplication",
+      "identifier": "shinytest",
+      "name": "shinytest",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=shinytest"
+    },
+    {
+      "@type": "SoftwareApplication",
       "identifier": "spelling",
       "name": "spelling",
       "provider": {
@@ -332,7 +344,7 @@
     },
     "SystemRequirements": "C++14"
   },
-  "fileSize": "8642.464KB",
+  "fileSize": "8874.667KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
