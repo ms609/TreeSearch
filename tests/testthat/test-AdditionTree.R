@@ -1,5 +1,5 @@
 test_that("Addition tree is more parsimonious", {
-  data('Lobo', package = 'TreeTools')
+  data("Lobo", package = "TreeTools")
   L10 <- Lobo.phy[1:10]
   seq10 <- names(L10)
   Score <- function (tr, k) TreeLength(tr, Lobo.phy, concavity = k)
@@ -7,8 +7,9 @@ test_that("Addition tree is more parsimonious", {
   set.seed(1) # ensure consistent addition sequence
   eq <- AdditionTree(Lobo.phy)
   kx <- AdditionTree(L10, sequence = seq10, concavity = 10)
-  pr <- AdditionTree(L10, sequence = 1:10, concavity = 'pr')
+  pr <- AdditionTree(L10, sequence = 1:10, concavity = "pr")
   
+  skip_if_not_installed("phangorn")
   # Previously used TreeTools::NJTree but since rewriting it's more parsimonious
   # than ape/phangorn.
   nj <- RootTree(ape::nj(phangorn::dist.hamming(Lobo.phy)), 1)
@@ -16,7 +17,7 @@ test_that("Addition tree is more parsimonious", {
   
   expect_lt(TreeLength(eq, Lobo.phy), TreeLength(nj, Lobo.phy))
   expect_lt(Score(kx, 10), Score(nj10, 10))
-  expect_lt(Score(pr, 'pr'), Score(nj10, 'pr'))
+  expect_lt(Score(pr, "pr"), Score(nj10, "pr"))
 })
 
 test_that("Addition tree obeys constraints", {
@@ -33,19 +34,19 @@ test_that("Addition tree obeys constraints", {
   subtree <- TreeTools::KeepTip(
     AdditionTree(dataset, constraint = constraint[3:6], seq = letters[1:6]), 
     cdef)
-  expect_equal(ape::read.tree(text = '(c, d, (e, f));'),
+  expect_equal(ape::read.tree(text = "(c, d, (e, f));"),
                TreeTools::UnrootTree(subtree))
 })
 
 test_that("AdditionTree() handles edge cases", {
-  library('TreeTools')
+  library("TreeTools")
   dataset <- MatrixToPhyDat(matrix(
     c(0, 1, 1, 1, 0, 1,
       0, 1, 1, 0, 0, 1), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
   expect_equal(PectinateTree(letters[1:3]), AdditionTree(dataset[1:3]))
-  expect_equal(UnrootTree(PectinateTree(c('a', 'd', 'b', 'c'))), 
-               UnrootTree(AdditionTree(dataset[1:4], conc = 'pr')))
+  expect_equal(UnrootTree(PectinateTree(c("a", "d", "b", "c"))), 
+               UnrootTree(AdditionTree(dataset[1:4], conc = "pr")))
   # All trees have equal score
   expect_equal(5, NTip(AdditionTree(dataset[-4])))
 })

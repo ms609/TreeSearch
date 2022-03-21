@@ -15,8 +15,8 @@ FastCharacterLength(tree, dataset)
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
 \code{phyDat} object or to return a vector specifying to each individual
@@ -33,7 +33,7 @@ Homoplasy length of each character in a dataset on a specified tree.
 \section{Functions}{
 \itemize{
 \item \code{FastCharacterLength}: Do not perform checks.  Use with care: may cause
-erroneous results or  software crash if variables are in the incorrect format.
+erroneous results or software crash if variables are in the incorrect format.
 }}
 
 \examples{

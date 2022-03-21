@@ -56,7 +56,7 @@ SPRWarning <- function (parent, child, error) {
 #'
 #' Perform one \acronym{SPR} rearrangement on a tree
 #' 
-#' Equivalent to `kSPR` in the `phangorn` package, but faster.
+#' Equivalent to `kSPR()` in the \pkg{phangorn} package, but faster.
 #' Note that rearrangements that only change the position of the root WILL be returned by 
 #' \code{SPR}.  If the position of the root is irrelevant (as in Fitch parsimony, for example)
 #' then this function will occasionally return a functionally equivalent topology.  

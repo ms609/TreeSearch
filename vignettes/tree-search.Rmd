@@ -70,8 +70,7 @@ phylogenetic signal is obscure enough that it can require Ratchet searches to
 escape from local optima.
 
 ```{r Load-data}
-rawData <- TreeSearch::inapplicable.datasets[['Vinther2008']]
-vinther <- phangorn::phyDat(rawData, type = 'USER', levels = c(0:9, '-'))
+vinther <- TreeSearch::inapplicable.phyData[["Vinther2008"]]
 ```
 
 ```{R RNG-version}
@@ -88,7 +87,7 @@ bestTrees <- MaximizeParsimony(vinther)
 It can be instructive to inspect the progress of tree search.
 
 ```{r inspect-progress}
-firstHit <- attr(bestTrees, 'firstHit')
+firstHit <- attr(bestTrees, "firstHit")
 firstHit
 ```
 
@@ -109,10 +108,10 @@ par(mar = rep(0, 4))
 TreeDist::Plot3(map,
                 col = cols[rep(seq_along(firstHit), firstHit)],
                 pch = 16, cex = 2,
-                axes = FALSE, xlab = '', ylab = '', asp = 1)
+                axes = FALSE, xlab = "", ylab = "", asp = 1)
 TreeTools::MSTEdges(distances, plot = TRUE, map[, 1], map[, 2],
                     col = '#00000030', lty = 2)
-legend('topright', names(firstHit), col = cols, pch = 16, bty = 'n')
+legend("topright", names(firstHit), col = cols, pch = 16, bty = "n")
 ```
 
 A quick glance suggests that early ratchet iterations captured a large part of
@@ -155,9 +154,9 @@ par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 majCons <- ape::consensus(bestTrees, p = 0.5)
 splitFreqs <- TreeTools::SplitFrequency(majCons, bestTrees) / length(bestTrees)
 plot(majCons)
-TreeTools::LabelSplits(majCons, round(splitFreqs * 100), unit = '%',
+TreeTools::LabelSplits(majCons, round(splitFreqs * 100), unit = "%",
                        col = TreeTools::SupportColor(splitFreqs),
-                       frame = 'none', pos = 3L)
+                       frame = "none", pos = 3L)
 ```
 
 This approach is a sensible way to analyse clade credibility when the frequency
@@ -221,7 +220,7 @@ par(mar = rep(0, 4), cex = 0.8)
 plot(strict)
 TreeTools::LabelSplits(strict, signif(concordance, 3),
                        col = TreeTools::SupportColor(concordance / max(concordance)),
-                       frame = 'none', pos = 3L)
+                       frame = "none", pos = 3L)
 ```
 
 ### Exploring taxon stability
@@ -253,7 +252,7 @@ The most informative single summary tree is thus provided by:
 
 ```{r cons-without-halk}
 par(mar = rep(0, 4), cex = 0.8)
-noWiwaxia <- lapply(bestTrees, TreeTools::DropTip, 'Wiwaxia')
+noWiwaxia <- lapply(bestTrees, TreeTools::DropTip, "Wiwaxia")
 plot(ape::consensus(noWiwaxia), tip.color = Rogue::ColByStability(noWiwaxia))
 ```
 
@@ -265,7 +264,7 @@ We can see where _Wiwaxia_ would plot on this tree using:
 
 ```{r restore-wiwaxia}
 par(mar = rep(0, 4), cex = 0.8)
-xx <- TreeTools::RoguePlot(bestTrees, 'Wiwaxia', p = 1)
+xx <- TreeTools::RoguePlot(bestTrees, "Wiwaxia", p = 1)
 ```
 
 Brighter greens indicate that more trees contained _Wiwaxia_ in this position.

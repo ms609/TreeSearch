@@ -38,7 +38,6 @@ Imports:
   cluster,
   fastmatch (>= 1.1.3),
   future,
-  phangorn (>= 2.2.1),
   promises,
   protoclust,
   Rcpp,
@@ -51,6 +50,7 @@ Imports:
   TreeTools (>= 1.7.0),
 Suggests:
   knitr,
+  phangorn (>= 2.2.1),
   Quartet,
   rmarkdown,
   spelling,

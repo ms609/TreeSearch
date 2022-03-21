@@ -7,8 +7,8 @@
 Consistency(dataset, tree, compress = FALSE)
 }
 \arguments{
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{tree}{A tree of class \code{\link{phylo}}.}
 

@@ -29,8 +29,8 @@ Fitch(tree, dataset)
 \code{multiPhylo}), or an integer -- in which case \code{tree} random trees will be
 uniformly sampled.}
 
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
@@ -63,7 +63,7 @@ data("inapplicable.datasets")
 tree <- TreeTools::BalancedTree(inapplicable.phyData[[1]])
 TreeLength(tree, inapplicable.phyData[[1]])
 TreeLength(tree, inapplicable.phyData[[1]], concavity = 10)
-TreeLength(tree, inapplicable.phyData[[1]], concavity = 'profile')
+TreeLength(tree, inapplicable.phyData[[1]], concavity = "profile")
 TreeLength(5, inapplicable.phyData[[1]])
 }
 \references{

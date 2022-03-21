@@ -71,7 +71,7 @@ a list containing two elements, corresponding in turn to the rearranged parent a
 Perform one \acronym{SPR} rearrangement on a tree
 }
 \details{
-Equivalent to \code{kSPR} in the \code{phangorn} package, but faster.
+Equivalent to \code{kSPR()} in the \pkg{phangorn} package, but faster.
 Note that rearrangements that only change the position of the root WILL be returned by
 \code{SPR}.  If the position of the root is irrelevant (as in Fitch parsimony, for example)
 then this function will occasionally return a functionally equivalent topology.

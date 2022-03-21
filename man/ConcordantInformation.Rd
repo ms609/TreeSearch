@@ -15,8 +15,8 @@ ConcordantInfo(tree, dataset)
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 }
 \value{
 \code{ConcordantInformation()} returns a named vector with elements:
