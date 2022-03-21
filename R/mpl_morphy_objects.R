@@ -118,7 +118,7 @@ GapHandler <- function (morphyObj) {
 #' [`UnloadMorphy()`] to free the allocated memory.
 #' 
 #'
-#' @param phy An object of class \code{\link{phyDat}}.
+#' @param phy An object of \pkg{phangorn} class \code{phyDat}.
 #' @template gapParam
 #' @return `PhyDat2Morphy()` returns a pointer to an initialized Morphy object.
 #' 
