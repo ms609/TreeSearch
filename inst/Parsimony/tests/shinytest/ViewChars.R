@@ -1,4 +1,5 @@
-app <- ShinyDriver$new("../../", seed = 0, loadTimeout = 2e+05)
+app <- ShinyDriver$new("../../", seed = 0, loadTimeout = 2e+05,
+                       shinyOptions = list(test.mode = TRUE))
 app$snapshotInit("ViewChars")
 
 app$setInputs(dataSource = "Agnarsson2004")
