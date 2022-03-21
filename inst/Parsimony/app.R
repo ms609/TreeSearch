@@ -950,7 +950,6 @@ server <- function(input, output, session) {
       )
     })
     if (length(dropped) &&
-        packageVersion("TreeTools") >= "1.5.1.9100" && # TODO REMOVE once required.
         length(input$excludedTip) &&
         nchar(input$excludedTip) && 
         input$excludedTip %in% tipLabels()) {
