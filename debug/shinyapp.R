@@ -10,7 +10,10 @@ r <- list(
   charNotes = ReadNotes(dataFile),
   dataset = ReadAsPhyDat(dataFile),
   trees = read.nexus(dataFile),
+  null = NULL
 )
 
 r$plottedTree = r$trees[[1]]
 
+distances <- ClusteringInfoDist(r$trees)
+mapped <- cmdscale(distances, k = 6)
