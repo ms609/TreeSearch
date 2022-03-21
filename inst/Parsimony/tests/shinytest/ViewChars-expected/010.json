@@ -2,18 +2,18 @@
   "input": {
     "clThresh": 0.5,
     "concordance": "none",
-    "consP": 1,
+    "consP": 0.5,
     "dataFile": null,
     "dataSource": "Agnarsson2004",
     "distMeth": "cid",
-    "excludedTip": "",
+    "excludedTip": "Dipoena",
     "go": 0,
-    "keepTips": 62,
+    "keepTips": 59,
     "mapDisplay": null,
-    "neverDrop": null,
+    "neverDrop": "Emertonella",
     "nTree": 23,
-    "outgroup": "Argiope",
-    "plotFormat": "cons",
+    "outgroup": "Thymoites",
+    "plotFormat": "ind",
     "plotSize": 600,
     "relators": null,
     "searchConfig": 0,
@@ -25,11 +25,23 @@
       1,
       23
     ],
-    "whichChar": 1,
-    "whichTree": 1
+    "whichChar": 53,
+    "whichTree": 7
   },
   "output": {
-    "branchLegend": null,
+    "branchLegend": {
+      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">23 trees<\/span>",
+      "deps": [
+
+      ]
+    },
+    "charMapLegend": {
+      "html": "<h3>Male genitalia: SDT SB II<\/h3>\n<ul style=\"list-style: none;\">\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #00bfc6 ;\">0<\/span>\n    <span>Entirely in tegulum<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #ffd46f ;\">1<\/span>\n    <span>Terminates in E<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: lightgrey ;\">-<\/span>\n    <span>Inapplicable<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: grey ;\">?<\/span>\n    <span>Ambiguous<\/span>\n  <\/li>\n<\/ul>",
+      "deps": [
+
+      ]
+    },
+    "charNotes": null,
     "plotSpacer": {
       "html": "<div style=\"margin-bottom: 0px\"> <\/div>",
       "deps": [
@@ -44,14 +56,14 @@
     },
     "results": "23 trees in memory with scores 34.7693 to 38.2276 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: f93569afec7eed345e0754244e523b8935b46d2e]",
+      "src": "[image data sha1: 2206ab9a87dfd16c26fa78d0c49ce24ea9cd41c5]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -0.860628826196086,
-              "right": 22.3763494810982,
+              "left": -2.69734766074653,
+              "right": 70.1310391794098,
               "bottom": -1.44,
               "top": 64.44
             },

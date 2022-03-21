@@ -12,7 +12,7 @@
     "mapDisplay": null,
     "neverDrop": "Emertonella",
     "nTree": 23,
-    "outgroup": "Thymoites",
+    "outgroup": "Argiope",
     "plotFormat": "cons",
     "plotSize": 600,
     "relators": null,
@@ -35,12 +35,6 @@
 
       ]
     },
-    "instabLegend": {
-      "html": "<span class=\"legendLeft\">Stable<\/span>\n<span class=\"infernoScale legendBar\"> <\/span>\n<span class=\"legendRight\">Unstable<\/span>",
-      "deps": [
-
-      ]
-    },
     "plotSpacer": {
       "html": "<div style=\"margin-bottom: 0px\"> <\/div>",
       "deps": [
@@ -55,14 +49,14 @@
     },
     "results": "23 trees in memory with scores 34.7693 to 38.2276 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 196bbc0f3b0b935b153558abea855fb2ebf56bf0]",
+      "src": "[image data sha1: 5989c56267dec307f02f14283952288bb512931b]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -1.05712268165494,
-              "right": 27.4851897230285,
+              "left": -1.29094323929413,
+              "right": 33.5645242216474,
               "bottom": -1.32,
               "top": 61.32
             },

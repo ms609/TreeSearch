@@ -29,12 +29,7 @@
     "whichTree": 1
   },
   "output": {
-    "instabLegend": {
-      "html": "<span class=\"legendLeft\">Stable<\/span>\n<span class=\"infernoScale legendBar\"> <\/span>\n<span class=\"legendRight\">Unstable<\/span>",
-      "deps": [
-
-      ]
-    },
+    "branchLegend": null,
     "plotSpacer": {
       "html": "<div style=\"margin-bottom: 0px\"> <\/div>",
       "deps": [

@@ -29,6 +29,12 @@
     "whichTree": 1
   },
   "output": {
+    "branchLegend": {
+      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">24 trees<\/span>",
+      "deps": [
+
+      ]
+    },
     "charMapLegend": {
       "html": "<h3>Brephic shell: Embryonic shell<\/h3>\n<ul style=\"list-style: none;\">\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #00bfc6 ;\">0<\/span>\n    <span>Absent<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #ffd46f ;\">1<\/span>\n    <span>Present<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: grey ;\">?<\/span>\n    <span>Ambiguous<\/span>\n  <\/li>\n<\/ul>",
       "deps": [
@@ -41,14 +47,8 @@
 
       ]
     },
-    "instabLegend": {
-      "html": "<span class=\"legendLeft\">Stable<\/span>\n<span class=\"infernoScale legendBar\"> <\/span>\n<span class=\"legendRight\">Unstable<\/span>",
-      "deps": [
-
-      ]
-    },
     "pcQuality": {
-      "src": "[image data sha1: c01dcd519167d0036aa1818e88751805aa618ef6]",
+      "src": "[image data sha1: 28f0deba9fd85becef99bc3adbfaac96a5956869]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
@@ -95,7 +95,7 @@
     },
     "results": "125 trees in memory with scores 27.3948 to 32.2033 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: ef8a14ba33228ed4e828561d6948f779f2d6a2ef]",
+      "src": "[image data sha1: 6c9f49dd7fe31b5e98d7bd9c8cb8ddfe3631ee26]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [

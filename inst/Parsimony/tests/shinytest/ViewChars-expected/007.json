@@ -9,7 +9,7 @@
     "excludedTip": "Dipoena",
     "go": 0,
     "keepTips": 59,
-    "mapDisplay": "tipsRight",
+    "mapDisplay": null,
     "neverDrop": "Emertonella",
     "nTree": 23,
     "outgroup": "Thymoites",
@@ -25,7 +25,7 @@
       1,
       23
     ],
-    "whichChar": 0,
+    "whichChar": 1,
     "whichTree": 1
   },
   "output": {
@@ -35,10 +35,14 @@
 
       ]
     },
-    "charMapLegend": null,
-    "charNotes": null,
-    "instabLegend": {
-      "html": "<span class=\"legendLeft\">Stable<\/span>\n<span class=\"infernoScale legendBar\"> <\/span>\n<span class=\"legendRight\">Unstable<\/span>",
+    "charMapLegend": {
+      "html": "<h3>Female genitalia: Epigynal ventral margin<\/h3>\n<ul style=\"list-style: none;\">\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #00bfc6 ;\">0<\/span>\n    <span>Entire<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #ffd46f ;\">1<\/span>\n    <span>With scape<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: grey ;\">?<\/span>\n    <span>Ambiguous<\/span>\n  <\/li>\n<\/ul>",
+      "deps": [
+
+      ]
+    },
+    "charNotes": {
+      "html": "<div id=\"char-description\">\n  <p>Epigynal scapes are widespread in araneoid spiders (see e.g. Scharff &amp; Coddington, 1997: character 28), but to my best knowledge, Anelosimus pulchellus and A. vittatus, along with A. ethicus (pers. observ.), are unique among theridiids in having an araneid-like epigynal scape. Thymoites unimaculatum has a similar ventral scape-like projection (Fig. 85F), here considered putatively homologous, although the homology is rejected on the cladogram.<\/p>\n<\/div>\n<ul class=\"state-notes\"><\/ul>",
       "deps": [
 
       ]
@@ -57,14 +61,14 @@
     },
     "results": "23 trees in memory with scores 34.7693 to 38.2276 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 33c262f790bdc918153f65d1dbe950d44dc71284]",
+      "src": "[image data sha1: 490d816d2a345d0a9757dfca4b3297ebae668a80]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -3.82047976147494,
-              "right": 99.3324737983484,
+              "left": -1.78390452125193,
+              "right": 46.3815175525501,
               "bottom": -1.44,
               "top": 64.44
             },

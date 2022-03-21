@@ -6,9 +6,9 @@
     "dataFile": null,
     "dataSource": "Agnarsson2004",
     "distMeth": "cid",
-    "excludedTip": "Emertonella",
+    "excludedTip": "Dipoena",
     "go": 0,
-    "keepTips": 59,
+    "keepTips": 61,
     "mapDisplay": null,
     "neverDrop": null,
     "nTree": 23,
@@ -30,13 +30,7 @@
   },
   "output": {
     "branchLegend": {
-      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">17 trees<\/span>",
-      "deps": [
-
-      ]
-    },
-    "instabLegend": {
-      "html": "<span class=\"legendLeft\">Stable<\/span>\n<span class=\"infernoScale legendBar\"> <\/span>\n<span class=\"legendRight\">Unstable<\/span>",
+      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">23 trees<\/span>",
       "deps": [
 
       ]
@@ -55,16 +49,16 @@
     },
     "results": "23 trees in memory with scores 34.7693 to 38.2276 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 6ef5f9b1a06d7fcfcf08e40293b559fdd12d8631]",
+      "src": "[image data sha1: 3afa6e1c21267263664c01d11bce7132026ffb30]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -1.22946975170869,
-              "right": 31.9662135444261,
-              "bottom": -1.32,
-              "top": 61.32
+              "left": -1.29094323929413,
+              "right": 33.5645242216474,
+              "bottom": -1.4,
+              "top": 63.4
             },
             "range": {
               "left": 0,

@@ -8,7 +8,7 @@
     "distMeth": "cid",
     "excludedTip": "Paterimitra",
     "go": 0,
-    "keepTips": 49,
+    "keepTips": 47,
     "mapDisplay": null,
     "neverDrop": null,
     "nTree": 125,
@@ -29,8 +29,8 @@
     "whichTree": 1
   },
   "output": {
-    "instabLegend": {
-      "html": "<span class=\"legendLeft\">Stable<\/span>\n<span class=\"infernoScale legendBar\"> <\/span>\n<span class=\"legendRight\">Unstable<\/span>",
+    "branchLegend": {
+      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">24 trees<\/span>",
       "deps": [
 
       ]
@@ -49,22 +49,22 @@
     },
     "results": "125 trees in memory with scores 27.3948 to 32.2033 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 1e1742bec52b05aa34e4c2277c56c61fb3517e3c]",
+      "src": "[image data sha1: db43a1316a914a9a2f31ad4280ec1bcc67c192f2]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -1.99178429716053,
-              "right": 51.7863917261738,
-              "bottom": -0.92,
-              "top": 50.92
+              "left": -1.36137529483306,
+              "right": 35.3957576656595,
+              "bottom": -0.84,
+              "top": 48.84
             },
             "range": {
               "left": 400,
               "right": 600,
               "bottom": 597.0991996832,
-              "top": 0.900800316799955
+              "top": 0.900800316800089
             },
             "log": {
               "x": null,

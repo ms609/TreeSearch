@@ -29,6 +29,12 @@
     "whichTree": 1
   },
   "output": {
+    "branchLegend": {
+      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">24 trees<\/span>",
+      "deps": [
+
+      ]
+    },
     "charMapLegend": {
       "html": "<h3>Brephic shell: Embryonic shell<\/h3>\n<ul style=\"list-style: none;\">\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #00bfc6 ;\">0<\/span>\n    <span>Absent<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #ffd46f ;\">1<\/span>\n    <span>Present<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: grey ;\">?<\/span>\n    <span>Ambiguous<\/span>\n  <\/li>\n<\/ul>",
       "deps": [
@@ -37,12 +43,6 @@
     },
     "charNotes": {
       "html": "<div id=\"char-description\">\n  <p>The embryonic shell or protegulum is secreted by the embryo immediately before hatching.<\/p>\n<\/div>\n<ul class=\"state-notes\">\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Amathia<\/span>\n    <span class=\"state-note-detail\">@Reed1982.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Clupeafumosus socialis<\/span>\n    <span class=\"state-note-detail\">Described by Topper et al. (2013R).<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Conotheca<\/span>\n    <span class=\"state-note-detail\">[@Wrona2003].<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Dentalium<\/span>\n    <span class=\"state-note-detail\">The shell does not form until the trochophore larval stage, which has been exquisitely described in Antalis [@Wanninger2001].  \nThis shell field is initially disc-like, subsequently expanding to fuse ventrally and produce the cylindrical protoconch. The prototroch is clearly delineated fro the telotroch in post-metamorphic juveniles [@Wanninger2001].<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Gasconsia<\/span>\n    <span class=\"state-note-detail\">The earliest shell is not described by @Hanken1985Thetaxonomy or @Watkins2002Newrecord.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Loxosomella<\/span>\n    <span class=\"state-note-detail\">Absent, with no possible equivalent [@Nielsen1966].<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Namacalathus<\/span>\n    <span class=\"state-note-detail\">Inapplicable insofar as reproduction occurs by budding; there is no evidence for a free-living larval stage.  Nevertheless, the presence of a sexual reproductive phase in addition to asexual reproduction cannot be discounted.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Novocrania<\/span>\n    <span class=\"state-note-detail\">Shell not secreted until after metamorphosis (Popov et al. 2010).   Freeman &amp; Lundelius (1999) report a Craniops-like larval shell in fossil \"Crania\", but observe that Quaternary [Novo]crania no longer exhibit a larval shell.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Paramicrocornus<\/span>\n    <span class=\"state-note-detail\">\"The initial part of the conch appears to be a simple apex without clearly delineated protoconch\" [@Zhang2018Ahyolithid], though it is not clear from illustrated figures whether an embryonic shell contiguous with the adult shell was present.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Pauxillites<\/span>\n    <span class=\"state-note-detail\">Coded following Recilites [@Dzik1978], a fellow member of Pauxillitidae [@Marek1967].<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Tonicella<\/span>\n    <span class=\"state-note-detail\">On hatching, the polyplacophoran larva lacks a shell field.    \n  \nShell fields develop during the trochophore larva stage. The larva of the chiton Mopalia has two distinct shell fields: that anterior to the prototroch will develop into the first shell plate; the one posterior to the prototroch becomes the subsequent plates [@Wanninger2002C].  \n  \nThis disc-shaped posterior plate, whose position corresponds to the conchiferan shell field, bears a polygonal ornament and is subdivided by a series of grooves that prefigure the adult shell plates [@Wanninger2002C].<\/span>\n  <\/li>\n<\/ul>",
-      "deps": [
-
-      ]
-    },
-    "instabLegend": {
-      "html": "<span class=\"legendLeft\">Stable<\/span>\n<span class=\"infernoScale legendBar\"> <\/span>\n<span class=\"legendRight\">Unstable<\/span>",
       "deps": [
 
       ]

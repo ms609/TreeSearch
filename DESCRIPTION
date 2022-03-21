@@ -53,6 +53,7 @@ Suggests:
   phangorn (>= 2.2.1),
   Quartet,
   rmarkdown,
+  shinytest,
   spelling,
   testthat,
   vdiffr (>= 1.0.0),

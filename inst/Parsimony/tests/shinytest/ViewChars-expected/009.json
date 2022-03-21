@@ -25,8 +25,8 @@
       1,
       23
     ],
-    "whichChar": 53,
-    "whichTree": 7
+    "whichChar": 7,
+    "whichTree": 1
   },
   "output": {
     "branchLegend": {
@@ -36,14 +36,13 @@
       ]
     },
     "charMapLegend": {
-      "html": "<h3>Male genitalia: SDT SB II<\/h3>\n<ul style=\"list-style: none;\">\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #00bfc6 ;\">0<\/span>\n    <span>Entirely in tegulum<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #ffd46f ;\">1<\/span>\n    <span>Terminates in E<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: lightgrey ;\">-<\/span>\n    <span>Inapplicable<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: grey ;\">?<\/span>\n    <span>Ambiguous<\/span>\n  <\/li>\n<\/ul>",
+      "html": "<h3>Female genitalia: Cop. duct to spermath<\/h3>\n<ul style=\"list-style: none;\">\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #00bfc6 ;\">0<\/span>\n    <span>Posterior<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #ffd46f ;\">1<\/span>\n    <span>Lat./anterior<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: grey ;\">?<\/span>\n    <span>Ambiguous<\/span>\n  <\/li>\n<\/ul>",
       "deps": [
 
       ]
     },
-    "charNotes": null,
-    "instabLegend": {
-      "html": "<span class=\"legendLeft\">Stable<\/span>\n<span class=\"infernoScale legendBar\"> <\/span>\n<span class=\"legendRight\">Unstable<\/span>",
+    "charNotes": {
+      "html": "<div id=\"char-description\">\n  <p>Most commonly the copulatory ducts enter the spermathecae posteriorly or basally (Fig. 93J), but in a few taxa medially or anteriorly (Fig. 93H).<\/p>\n<\/div>\n<ul class=\"state-notes\"><\/ul>",
       "deps": [
 
       ]
@@ -62,14 +61,14 @@
     },
     "results": "23 trees in memory with scores 34.7693 to 38.2276 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 2206ab9a87dfd16c26fa78d0c49ce24ea9cd41c5]",
+      "src": "[image data sha1: 04362ea985053ef7034d9625d299d1862fc54c3d]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -2.69734766074653,
-              "right": 70.1310391794098,
+              "left": -1.78390452125193,
+              "right": 46.3815175525501,
               "bottom": -1.44,
               "top": 64.44
             },
