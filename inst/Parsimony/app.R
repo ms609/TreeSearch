@@ -1241,10 +1241,20 @@ server <- function(input, output, session) {
     x <- seq.int(from = 0, to = 1, length.out = nStop)
     segments(x[-nStop], numeric(nStop), x[-1], lwd = 5, col = badToGood)
     
-    if (quality > 1) {
-      Log("Preternaturally high quality: ", quality)
+    trust <- quality[["Trustworthiness"]]
+    cont <- quality[["Continuity"]]
+    txc <- quality[["sqrtTxC"]]
+    
+    if (trust > 1) {
+      Log("Preternaturally high Trustworthiness: ", trust)
     }
-    segments(LogScore(quality), -1, y1 = 1, lty = 3)
+    if (cont > 1) {
+      Log("Preternaturally high Continuity: ", cont)
+    }
+    Log(trust * nStop)
+    segments(LogScore(txc), -1, y1 = 1, lty = 3)
+    text(LogScore(trust), 1, "T", col = badToGood[LogScore(trust) * nStop])
+    text(LogScore(cont), -1, "C", col = badToGood[LogScore(cont) * nStop])
     
     tickPos <- c(0, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0)
     ticks <- LogScore(tickPos)
@@ -1255,7 +1265,7 @@ server <- function(input, output, session) {
          at = ticks[-1] - ((ticks[-1] - ticks[-length(ticks)]) / 2),
          labels = c("", "dire", "", "ok", "gd", "excellent"))
     axis(3, at = 0.5, tick = FALSE, line = -2, 
-         paste0(dims(), "D mapping quality (trustw. \ud7 contin.):"))
+         paste0(dims(), "D mapping quality (trustw. / contin.):"))
   }
   
   output$pcQuality <- renderCachedPlot({
@@ -1267,7 +1277,7 @@ server <- function(input, output, session) {
     mppng <- mapping()[, seq_len(min(dim(mppng)[2], dims()))]
     neighbs <- min(10L, length(r$trees) / 2)
     future_promise(
-      TreeDist::MappingQuality(dstnc, dist(mppng), neighbs)["TxC"],
+      TreeDist::MappingQuality(dstnc, dist(mppng), neighbs),
       seed = NULL) %...>% QualityPlot
   }, cacheKeyExpr = {
     list(r$treeHash, input$distMeth, dims())
