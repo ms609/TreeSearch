@@ -4,11 +4,6 @@
 #' modified Fitch algorithm presented in 
 #' \insertCite{Brazeau2019;textual}{TreeSearch}.
 #' 
-#TODO November 2021: REMOVE next para
-#' Correct colouration of internal nodes requires "ape" version 5.5.2.
-#' Until this is available on CRAN (expected in winter 2021), download it
-#' using `devtools::install_github('emmanuelparadis/ape')`.
-#' 
 #' @template treeParam
 #' @template datasetParam
 #' @param char Index of character to plot.
