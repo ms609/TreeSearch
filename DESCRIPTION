@@ -1,6 +1,6 @@
 Package: TreeSearch
 Title: Phylogenetic Analysis with Morphological Data
-Version: 1.1.1
+Version: 1.1.1.9000
 Authors@R: c(
     person(
       "Martin R.", 'Smith',
