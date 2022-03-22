@@ -1,4 +1,5 @@
 test_that("ClusterStrings() works", {
+  skip("Locate memory leak, #TODO remove")
   x <- rep(letters[1:6], 1:6)
   expect_equal(ClusterStrings(x),
                structure(rep(1:6, 1:6), 'med' = letters[1:6]))
