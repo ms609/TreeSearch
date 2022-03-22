@@ -27,11 +27,11 @@ PolEscapa <- function(trees, char, concavity = Inf) {
   cont <- attr(char, "contrast")
   qm <- which(rowSums(cont) == dim(cont)[2])
   loss <- colSums(
-    start - vapply(names(char), function(leaf) {
+    abs(start - vapply(names(char), function(leaf) {
       charQm <- char
       charQm[[leaf]] <- qm
       TreeLength(trees, charQm, concavity)
-    }, start)
+    }, start))
   )
   
   # Return:

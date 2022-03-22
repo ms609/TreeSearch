@@ -1049,12 +1049,14 @@ server <- function(input, output, session) {
           r$plottedTree <- PlottedTree()
           if (length(n) && n > 0L) {
             pc <- tryCatch({
-                rogueCont <- PolEscapa(r$trees, r$dataset[, n], concavity())
+                rogueCont <- PolEscapa(r$trees,
+                                       r$dataset[tipLabels(), n],
+                                       concavity())
                 roguishness <- if (max(rogueCont) == 0) {
                   "black"
                 } else {
                   hcl.colors(256, "inferno")[
-                    (255 * rogueCont[r$plottedTree[["tip.label"]]] / max(rogueCont)) + 1
+                    (172 * rogueCont / max(rogueCont)) + 1
                     ]
                 }
                 PlotCharacter(r$plottedTree, r$dataset, n,
