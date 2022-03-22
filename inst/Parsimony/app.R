@@ -1056,7 +1056,7 @@ server <- function(input, output, session) {
                   "black"
                 } else {
                   hcl.colors(256, "inferno")[
-                    (172 * rogueCont / max(rogueCont)) + 1
+                    (192 * rogueCont / max(rogueCont)) + 1
                     ]
                 }
                 PlotCharacter(r$plottedTree, r$dataset, n,
