@@ -41,26 +41,26 @@ ClusterStrings <- function (x, maxCluster = 12) {
     nK <- length(possibleClusters)
     kInc <- 1 / (nMethodsChecked * nK)
     
-    # pamClusters <- lapply(possibleClusters, function (k) {
-    #   pam(dists, k = k)
-    # })
-    # pamSils <- vapply(pamClusters, function (pamCluster) {
-    #   mean(silhouette(pamCluster)[, 3])
-    # }, double(1))
-    # bestPam <- which.max(pamSils)
-    # pamSil <- pamSils[bestPam]
-    # pamCluster <- pamClusters[[bestPam]]$cluster
+    pamClusters <- lapply(possibleClusters, function (k) {
+      pam(dists, k = k)
+    })
+    pamSils <- vapply(pamClusters, function (pamCluster) {
+      mean(silhouette(pamCluster)[, 3])
+    }, double(1))
+    bestPam <- which.max(pamSils)
+    pamSil <- pamSils[bestPam]
+    pamCluster <- pamClusters[[bestPam]]$cluster
     
     hTree <- protoclust(as.dist(dists))
-    hClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
-    hSils <- vapply(hClusters, function (hCluster) {
-      mean(silhouette(hCluster, dists)[, 3])
-    }, double(1))
-    bestH <- which.max(hSils)
-    hSil <- hSils[bestH]
-    hCluster <- hClusters[[bestH]]
-    pamSil <- hSil
-    pamCluster <- hCluster
+    # hClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
+    # hSils <- vapply(hClusters, function (hCluster) {
+    #   mean(silhouette(hCluster, dists)[, 3])
+    # }, double(1))
+    # bestH <- which.max(hSils)
+    # hSil <- hSils[bestH]
+    # hCluster <- hClusters[[bestH]]
+    hSil <- pamSil
+    hCluster <- pamCluster
     
     bestCluster <- c("none", "pam", "hmm")[which.max(c(0.5, pamSil, hSil))]
     
