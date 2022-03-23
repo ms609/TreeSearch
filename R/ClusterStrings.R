@@ -13,9 +13,9 @@
 #' all occurrences of each entry are assigned to an individual cluster.
 #' 
 #' @examples
-#' ClusterStrings(c(paste0('FirstCluster ', 1:5),
-#'                  paste0('SecondCluster.', 8:12),
-#'                  paste0('AnotherCluster_', letters[1:6])))
+#' ClusterStrings(c(paste0("FirstCluster ", 1:5),
+#'                  paste0("SecondCluster.", 8:12),
+#'                  paste0("AnotherCluster_", letters[1:6])))
 #' @template MRS
 #' @importFrom utils adist
 #' @importFrom cluster pam silhouette
@@ -30,7 +30,7 @@ ClusterStrings <- function (x, maxCluster = 12) {
   
   if (length(unique(x)) < maxCluster) {
     nom <- unique(x)
-    structure(match(x, nom), 'med' = nom)
+    structure(match(x, nom), "med" = nom)
   } else {
     possibleClusters <- 2:maxCluster
     hSil <- pamSil <- -99
@@ -62,7 +62,7 @@ ClusterStrings <- function (x, maxCluster = 12) {
     hSil <- pamSil
     hCluster <- pamCluster
     
-    bestCluster <- c('none', 'pam', 'hmm')[which.max(c(0.5, pamSil, hSil))]
+    bestCluster <- c("none", "pam", "hmm")[which.max(c(0.5, pamSil, hSil))]
     
     clustering <- switch(bestCluster, pam = pamCluster, hmm = hCluster, 1)
     
