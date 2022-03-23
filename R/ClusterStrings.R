@@ -51,7 +51,8 @@ ClusterStrings <- function (x, maxCluster = 12) {
     pamSil <- pamSils[bestPam]
     pamCluster <- pamClusters[[bestPam]]$cluster
     
-    hTree <- protoclust(as.dist(dists))
+    distDists <- as.dist(dists)
+    # hTree <- protoclust(distDists)
     # hClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
     # hSils <- vapply(hClusters, function (hCluster) {
     #   mean(silhouette(hCluster, dists)[, 3])
