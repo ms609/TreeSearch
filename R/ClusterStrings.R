@@ -51,14 +51,16 @@ ClusterStrings <- function (x, maxCluster = 12) {
     pamSil <- pamSils[bestPam]
     pamCluster <- pamClusters[[bestPam]]$cluster
     
-    hTree <- protoclust(as.dist(dists))
-    hClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
-    hSils <- vapply(hClusters, function (hCluster) {
-      mean(silhouette(hCluster, dists)[, 3])
-    }, double(1))
-    bestH <- which.max(hSils)
-    hSil <- hSils[bestH]
-    hCluster <- hClusters[[bestH]]
+    # hTree <- protoclust(as.dist(dists))
+    # hClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
+    # hSils <- vapply(hClusters, function (hCluster) {
+    #   mean(silhouette(hCluster, dists)[, 3])
+    # }, double(1))
+    # bestH <- which.max(hSils)
+    # hSil <- hSils[bestH]
+    # hCluster <- hClusters[[bestH]]
+    hSil <- pamSil
+    hCluster <- pamCluster
     
     bestCluster <- c('none', 'pam', 'hmm')[which.max(c(0.5, pamSil, hSil))]
     
