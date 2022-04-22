@@ -35,7 +35,7 @@ Tree length is calculated using the MorphyLib C library
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.1.0.9000</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.1.1.9000</span>
       </span>
     </div>
 
@@ -44,7 +44,7 @@ Tree length is calculated using the MorphyLib C library
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -150,8 +150,8 @@ Tree length is calculated using the MorphyLib C library
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>dataset</dt>
-<dd><p>A phylogenetic data matrix of class <code><a href="https://rdrr.io/pkg/phangorn/man/phyDat.html" class="external-link">phyDat</a></code>,
-whose names correspond to the labels of any accompanying tree.</p></dd>
+<dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
+<code>phyDat</code>, whose names correspond to the labels of any accompanying tree.</p></dd>
 <dt>tree</dt>
 <dd><p>(optional) A bifurcating tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>,
 containing only the tips listed in <code>dataset</code>, from which the search
@@ -213,7 +213,7 @@ in search results, which may improve the accuracy of the consensus tree
 <dd><p>An object of class <code>phyDat</code>; returned trees will be
 perfectly compatible with each character in <code>constraint</code>.
 See <code><a href="https://ms609.github.io/TreeTools/reference/ImposeConstraint.html" class="external-link">ImposeConstraint()</a></code> and
-<a href="https://ms609.github.io/TreeSearch/articles/inapplicable.html">vignette</a>
+<a href="https://ms609.github.io/TreeSearch/articles/tree-search.html">vignette</a>
 for further examples.</p></dd>
 <dt>verbosity</dt>
 <dd><p>Integer specifying level of messaging; higher values give
@@ -393,10 +393,10 @@ doi: <a href="https://doi.org/10.1186/1742-9994-6-12" class="external-link">10.1
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Sample local optimum</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → TBR depth 1; keeping 4 trees; k = 10</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2022-02-08 08:54:31: Score: 12.4934</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2022-02-08 08:54:31: Tree search terminated with score <span style="font-weight: bold;">12.4934</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2022-04-22 11:16:38: Score: 12.7171</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2022-04-22 11:16:40: Tree search terminated with score <span style="font-weight: bold;">11.9918</span></span>
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "seed_1"  "final_1" "final_2"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "final_1"</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># In actual use, be sure to check that the score has converged on a global</span></span>
 <span class="r-in"><span class="co"># optimum, conducting additional iterations and runs as necessary.</span></span>
@@ -435,7 +435,7 @@ doi: <a href="https://doi.org/10.1186/1742-9994-6-12" class="external-link">10.1
 <span class="r-in">  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span class="r-in"><span class="fu">MaximizeParsimony</span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>, verbosity <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Initialized 1 distinct constraints.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> → 2022-02-08 08:54:31: Score to beat: <span style="font-weight: bold;">3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> → 2022-04-22 11:16:40: Score to beat: <span style="font-weight: bold;">3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 phylogenetic tree</span>
 <span class="r-in"></span>
 </code></pre></div>

@@ -32,7 +32,7 @@ Trees may be scored using equal weights, implied weights
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.1.0.9000</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.1.1.9000</span>
       </span>
     </div>
 
@@ -41,7 +41,7 @@ Trees may be scored using equal weights, implied weights
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -130,8 +130,8 @@ Trees may be scored using equal weights, implied weights
 <code>multiPhylo</code>), or an integer -- in which case <code>tree</code> random trees will be
 uniformly sampled.</p></dd>
 <dt>dataset</dt>
-<dd><p>A phylogenetic data matrix of class <code><a href="https://rdrr.io/pkg/phangorn/man/phyDat.html" class="external-link">phyDat</a></code>,
-whose names correspond to the labels of any accompanying tree.</p></dd>
+<dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
+<code>phyDat</code>, whose names correspond to the labels of any accompanying tree.</p></dd>
 <dt>concavity</dt>
 <dd><p>Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
@@ -207,7 +207,7 @@ doi: <a href="https://doi.org/10.1098/rsbl.2018.0632" class="external-link">10.1
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1117</span>
 <span class="r-in"><span class="fu">TreeLength</span><span class="op">(</span><span class="va">tree</span>, <span class="va">inapplicable.phyData</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, concavity <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 52.75785</span>
-<span class="r-in"><span class="fu">TreeLength</span><span class="op">(</span><span class="va">tree</span>, <span class="va">inapplicable.phyData</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, concavity <span class="op">=</span> <span class="st">'profile'</span><span class="op">)</span></span>
+<span class="r-in"><span class="fu">TreeLength</span><span class="op">(</span><span class="va">tree</span>, <span class="va">inapplicable.phyData</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, concavity <span class="op">=</span> <span class="st">"profile"</span><span class="op">)</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → Inapplicable tokens treated as ambiguous for profile parsimony</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
@@ -231,7 +231,7 @@ doi: <a href="https://doi.org/10.1098/rsbl.2018.0632" class="external-link">10.1
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3941.387</span>
 <span class="r-in"><span class="fu">TreeLength</span><span class="op">(</span><span class="fl">5</span>, <span class="va">inapplicable.phyData</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1935 1956 2047 1968 1912</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1966 1952 1943 1945 1877</span>
 </code></pre></div>
     </div>
   </div>
