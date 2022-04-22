@@ -1,3 +1,7 @@
+# TreeSearch 1.1.1.9000
+
+- Replace `throw` with `stop` in C++.
+
 # TreeSearch 1.1.1
 
 - GUI allows selection of subset of trees, for easier analysis of Bayesian tree sets

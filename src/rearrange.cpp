@@ -28,7 +28,7 @@ IntegerMatrix nni(const IntegerMatrix edge,
     }
   }
   if (!n_samplable) {
-    throw std::length_error("Not enough edges to allow NNI rearrangement");
+    Rcpp::stop("Not enough edges to allow NNI rearrangement");
   }
    
   const int16
@@ -75,8 +75,8 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
     second_root_child = root_node + 1
   ;
   if (n_edge < 5) return IntegerMatrix(0, 0);
-  if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
-  if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (edge(0, 0) != root_node) Rcpp::stop("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (edge(1, 0) != root_node) Rcpp::stop("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
   
   std::unique_ptr<int16[]> 
@@ -190,9 +190,9 @@ IntegerMatrix spr (const IntegerMatrix edge,
     broken_edge_parent = edge(prune_edge, 0)
   ;
   
-  if (n_edge < 5) throw std::invalid_argument("No SPR rearrangements possible on a tree with < 5 edges");
-  if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
-  if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (n_edge < 5) Rcpp::stop("No SPR rearrangements possible on a tree with < 5 edges");
+  if (edge(0, 0) != root_node) Rcpp::stop("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (edge(1, 0) != root_node) Rcpp::stop("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
   IntegerMatrix ret = clone(edge);
   
@@ -233,9 +233,9 @@ IntegerMatrix tbr_moves(const IntegerMatrix edge) {
     root_node = n_tip + 1,
     second_root_child = root_node + 1
   ;
-  if (n_edge < 5) throw std::invalid_argument("No TBR rearrangements possible on a tree with < 5 edges");
-  if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
-  if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (n_edge < 5) Rcpp::stop("No TBR rearrangements possible on a tree with < 5 edges");
+  if (edge(0, 0) != root_node) Rcpp::stop("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (edge(1, 0) != root_node) Rcpp::stop("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
   std::unique_ptr<int16[]>
     n_edges_above = std::make_unique<int16[]>(n_edge),
@@ -487,9 +487,9 @@ List all_tbr (const IntegerMatrix edge,
     n_vert = n_internal + n_tip,
     root_node = n_tip + 1
   ;
-  if (n_edge < 5) throw std::invalid_argument("No TBR rearrangements possible on a tree with < 5 edges");
-  if (edge(0, 0) != root_node) throw std::invalid_argument("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
-  if (edge(1, 0) != root_node) throw std::invalid_argument("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (n_edge < 5) Rcpp::stop("No TBR rearrangements possible on a tree with < 5 edges");
+  if (edge(0, 0) != root_node) Rcpp::stop("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (edge(1, 0) != root_node) Rcpp::stop("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   
   IntegerVector break_seq;
   if (break_order.length()) {
