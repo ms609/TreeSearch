@@ -1,6 +1,7 @@
-# TreeSearch 1.1.1.9000
+# TreeSearch 1.1.2
 
-- Replace `throw` with `stop` in C++.
+- Replace `throw` with `stop` in C++
+- Remove test of elapsed times, for CRAN compliance
 
 # TreeSearch 1.1.1
 
