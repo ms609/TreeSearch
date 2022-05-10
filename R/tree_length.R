@@ -42,6 +42,7 @@ TreeLength <- function (tree, dataset, concavity = Inf) UseMethod("TreeLength")
 #' @rdname TreeLength
 #' @export
 TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
+  if(any(!is.binary(tree))) stop("tree must be binary!")
   tipLabels <- tree$tip.label
   if (length(tipLabels) < length(dataset)) {
     if (!all(tipLabels %in% names(dataset))) {
