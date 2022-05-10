@@ -64,7 +64,8 @@ test_that("Inconsistent constraints fail", {
 
 test_that("MaximizeParsimony() times out", {
   # Do not run on CRAN: Writing R Extensions discourages testing timings
-  skip_if_not(Sys.getenv("GITHUB_PAT"))
+  skip_if(Sys.getenv("GITHUB_PAT") == "") # Run only on GH Actions
+  
   data("congreveLamsdellMatrices", package = "TreeSearch")
   dataset <- congreveLamsdellMatrices[[42]]
   startTime <- Sys.time()

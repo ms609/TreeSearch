@@ -1,6 +1,6 @@
 ## Test environments
 
-* local Windows 10 install, R 4.1.2
+* local Windows 10 install, R 4.2.0
 
 * [Github Actions](https://github.com/ms609/TreeSearch/actions):
   - Ubuntu 20.04
