@@ -175,6 +175,16 @@ test_that("(random) lists of trees are scored", {
   expect_gt(t.test(TreeLength(100, mat, 'profile'), mu = 830.0585)$p.val, 0.001)
 })
 
+test_that("TreeLength() handles tree order", {
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  mat <- congreveLamsdellMatrices[[42]]
+  
+  set.seed(0)
+  rand <- RandomTree(mat)
+  scores <- TreeLength(c(rand, Postorder(rand)), mat)
+  expect_equal(scores[[1]], scores[[2]])
+})
+
 test_that("TreeLength() handles subsetted trees", {
   data('inapplicable.datasets')
   dat <- inapplicable.phyData[[1]] 

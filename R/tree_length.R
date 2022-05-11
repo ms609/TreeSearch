@@ -134,6 +134,8 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
   tree <- RenumberTips(tree, dataset)
   attributes(tree) <- at
   
+  tree <- Preorder(tree)
+  
   nEdge <- unique(vapply(tree, function (tr) dim(tr$edge)[1], integer(1)))
   if (length(nEdge) > 1L) {
     tree <- lapply(tree, RootTree, 1)
