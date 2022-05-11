@@ -1,5 +1,6 @@
 # TreeSearch 1.1.2
 
+- Improve error handling
 - Replace `throw` with `stop` in C++
 - Remove test of elapsed times, for CRAN compliance
 
