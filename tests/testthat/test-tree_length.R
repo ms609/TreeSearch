@@ -1,23 +1,28 @@
-## Test cases designed by Thomas Guillerme
-
 test_that("Failures are graceful", {
   library("TreeTools", quietly = TRUE)
   data('inapplicable.datasets')
   dat <- inapplicable.phyData[[1]]
   unrooted <- RandomTree(dat, root = FALSE)
-  expect_error(TreeLength(unrooted, dat))
+  expect_error(TreeLength(unrooted, dat), "must be rooted")
+  expect_error(TreeLength(CollapseNode(RandomTree(dat, root = TRUE), 77), mo),
+               "must be binary")
   
   mo <- PhyDat2Morphy(dat)
   on.exit(mo <- UnloadMorphy(mo))
   
   sparse <- DropTip(RandomTree(dat, root = FALSE), 10)
-  expect_error(MorphyTreeLength(sparse, mo))
-  expect_error(MorphyTreeLength(sparse, NA))
+  expect_error(MorphyTreeLength(sparse, mo),
+               "Number of taxa .* not equal to number of tips")
+  expect_error(MorphyTreeLength(sparse, NA),
+               "a valid Morphy pointer")
   
-  expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], mo, nTaxa = 0))
-  expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], dat))
+  expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], mo, nTaxa = 0),
+               mpl_translate_error(0))
+  expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], dat),
+               "must be a Morphy pointer")
   
   expect_null(TreeLength(NULL))
+  
 })
 
 test_that("Deprecations throw warning", {
@@ -36,6 +41,7 @@ test_that("Morphy generates correct lengths", {
   tree <- ape::read.tree(text = "((((((1,2),3),4),5),6),(7,(8,(9,(10,(11,12))))));")
   relabel <- ape::read.tree(text = "((6,(5,(4,(3,(2,1))))),(7,(8,(9,(10,(11,12))))));")
   trees <- list(tree, relabel)
+  ## Test cases designed by Thomas Guillerme
   characters <- c("23--1??--032", # 0,  expect score = 5 
                   "1---1111---1", # 1,  expect score = 2
                   "1100----1100", # 2,  expect score = 3
