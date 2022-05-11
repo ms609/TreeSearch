@@ -175,14 +175,32 @@ test_that("(random) lists of trees are scored", {
   expect_gt(t.test(TreeLength(100, mat, "profile"), mu = 830.0585)$p.val, 0.001)
 })
 
-test_that("TreeLength() handles tree order", {
+test_that("TreeLength() handles unrooted / non-preorder trees", {
+  library("TreeTools", quietly = TRUE)
   data("congreveLamsdellMatrices", package = "TreeSearch")
   mat <- congreveLamsdellMatrices[[42]]
   
   set.seed(0)
-  rand <- RandomTree(mat)
+  rand <- RandomTree(mat, root = TRUE)
   scores <- TreeLength(c(rand, Postorder(rand)), mat)
   expect_equal(scores[[1]], scores[[2]])
+  expect_equal(TreeLength(RootTree(Postorder(rand), 1), mat), scores[[1]])
+  expect_equal(TreeLength(RootTree(Preorder(rand), 1), mat), scores[[1]])
+  
+  set.seed(0)
+  unrooted <- RandomTree(mat, root = FALSE)
+  
+  expect_equal(expect_warning(TreeLength(c(unrooted), mat),
+                              "rooted on tip 1"),
+               TreeLength(c(RootTree(unrooted, 1)), mat))
+  
+  expect_equal(TreeLength(RootTree(Postorder(unrooted), 1), mat),
+               TreeLength(RootTree(unrooted, 1), mat))
+  scores <- expect_warning(
+    TreeLength(c(unrooted, Postorder(unrooted)), mat),
+    "rooted on tip 1")
+  expect_equal(scores[[1]], scores[[2]])
+  expect_equal(TreeLength(RootTree(unrooted, 1), mat), scores[[1]])
 })
 
 test_that("TreeLength() handles subsetted trees", {

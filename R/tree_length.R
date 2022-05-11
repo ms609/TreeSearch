@@ -128,26 +128,22 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
     dataset <- .Recompress(dataset[TipLabels(tree[[1]])])
   }
   
-  # TODO replace with tree[] <- ... when fix available for
-  #  https://github.com/emmanuelparadis/ape/issues/36
-  at <- attributes(tree)
-  tree <- RenumberTips(tree, dataset)
-  attributes(tree) <- at
-  
+  tree[] <- RenumberTips(tree, dataset)
   tree <- Preorder(tree)
+  tree[] <- lapply(tree, function (tr) {
+    if (TreeIsRooted(tr)) {
+      tr
+    } else {
+      warning("Unrooted tree rooted on tip 1.")
+      RootTree(tr, 1)
+    }
+  })
   
   nEdge <- unique(vapply(tree, function (tr) dim(tr$edge)[1], integer(1)))
   if (length(nEdge) > 1L) {
-    tree <- lapply(tree, RootTree, 1)
-    nEdge <- unique(vapply(tree, function (tr) dim(tr$edge)[1], integer(1)))
-    
-    if (length(nEdge) > 1L) {
-      stop("Trees have different numbers of edges (",
+    stop("Trees have different numbers of edges (",
            paste0(nEdge, collapse = ", "), 
            "); try collapsing polytomies?)")
-    } else {
-      warning("Mixture of rooted and unrooted trees; all re-rooted on tip 1.")
-    }
   }
   
   edges <- vapply(tree, `[[`, tree[[1]]$edge, "edge")
