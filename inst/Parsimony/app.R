@@ -1,3 +1,10 @@
+library("methods", exclude = c("show", "removeClass"))
+library("cli")
+suppressPackageStartupMessages({
+  library("shiny", exclude = c("runExample"))
+  library("shinyjs", exclude = c("runExample"))
+})
+
 # options("TreeSearch.logging" = TRUE)
 logging <- isTRUE(getOption("TreeSearch.logging"))
 options("TreeSearch.logging.code" = FALSE)
@@ -269,8 +276,13 @@ ui <- fluidPage(
                            min = 100, max = 2000,
                            post = "px", value = 600),
       ),
+      tags$div(id = "exportAs", 
+               tags$span("Export history: "),
+               downloadButton("saveR", "R script"),
+               downloadButton("saveMd", "Session log"),
+      ),
       tags$div(id = "saveAs", 
-               tags$span("Save as: "),
+               tags$span("Save graphic: "),
                downloadButton("savePdf", "PDF"),
                downloadButton("savePng", "PNG"),
                downloadButton("saveNwk", "Newick"),
@@ -361,7 +373,71 @@ ui <- fluidPage(
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 server <- function(input, output, session) {
+  
+  sessionLogFile <- tempfile("TreeSearch-", fileext = ".md")
+  cmdLogFile <- tempfile("TreeSearch-", fileext = ".R")
+  Write <- function (txt, file) {
+    con <- file(file, open = "w+")
+    on.exit(close(con))
+    writeLines(txt, con)
+  }
+  cmdCon <- file(cmdLogFile, open = "w+")
+  
+  LogText <- function (lines) {
+    if (isTRUE(getOption("TreeSearch.logging"))) {
+      Write("```", sessionLogFile)
+      options("TreeSearch.logging.code" = FALSE)
+    }
+    Write(c(as.character(Sys.time()), lines), sessionLogFile)
+  }
+  LogExpr <- function (exps) {
+    if (!isTRUE(getOption("TreeSearch.logging"))) {
+      Write("```r", sessionLogFile)
+      options("TreeSearch.logging.code" = TRUE)
+    }
+    for (exp in exps) {
+      Write(as.character(exp), sessionLogFile)
+      Write(as.character(exp), cmdLogFile)
+      eval(exp)
+    }
+  }
+  
+  LogText("# Initialize R session")
+  
+  if (!requireNamespace("TreeDist", quietly = TRUE)) {
+    install.packages("TreeDist")
+  }
+  LogExpr(c(
+    X(library("TreeTools", quietly = TRUE)),
+    X(library("TreeSearch")),
+    X(library("TreeDist"))
+  ))
+  
+  message(gsub("\\\\", "/", sessionLogFile))
+  
+  library("future")
+  library("promises")
+  plan(multisession)
+  
+  startOpt <- options("cli.progress_show_after" = 0.1)
+  
+  
+  LogMsg("Started server")
   
   r <- reactiveValues()
   
@@ -1737,6 +1813,23 @@ server <- function(input, output, session) {
            })
   })
   
+  output$saveR <- downloadHandler(
+    filename = function() paste0(saveDetails()$fileName, ".R"),
+    content = function (file) {
+      dput(cmdLogFile)
+      file.copy(cmdLogFile, file)
+    })
+  
+  output$saveMd <- downloadHandler(
+    filename = function() paste0(saveDetails()$fileName, ".md"),
+    content = function (file) {
+      file.copy(sessionLogFile, file)
+      if (isTRUE(getOption("TreeSearch.logging"))) {
+        writeLines("```", file)
+      }
+    })
+  
+  
   output$savePng <- downloadHandler(
     filename = function() paste0(saveDetails()$fileName, ".png"),
     content = function (file) {
@@ -1803,10 +1896,12 @@ server <- function(input, output, session) {
   onStop(function() {
     options(startOpt)
     if (file.exists(sessionLogFile)) {
-      file.remove(sessionLogFile)
+      close(ssnCon)
+      unlink(sessionLogFile)
     }
     if (file.exists(cmdLogFile)) {
-      file.remove(cmdLogFile)
+      close(cmdCon)
+      unlink(cmdLogFile)
     }
     LogMsg("Session has ended")
   })
@@ -1816,50 +1911,4 @@ server <- function(input, output, session) {
 
 X <- expression
 
-shinyApp(ui = ui, server = server, onStart = function() {
-  sessionLogFile <- tempfile("TreeSearch-", fileext = ".md")
-  cmdLogFile <- tempfile("TreeSearch-", fileext = ".R")
-  ssnCon <- file(sessionLogFile, open = "w+")
-  cmdCon <- file(cmdLogFile, open = "w+")
-
-  LogText <- function (lines) {
-    if (isTRUE(getOption("TreeSearch.logging"))) {
-      writeLines("```", con = ssnCon)
-      options("TreeSearch.logging.code" = FALSE)
-    }
-    writeLines(c(as.character(Sys.time()), lines), con = ssnCon)
-  }
-  LogExpr <- function (exps) {
-    if (!isTRUE(getOption("TreeSearch.logging"))) {
-      writeLines("```r", con = ssnCon)
-      options("TreeSearch.logging.code" = TRUE)
-    }
-    writeLines(as.character(exp), con = ssnCon)
-    writeLines(as.character(exp), con = cmdCon)
-    eval(exp)
-  }
-  
-  LogText("# Initialize R session")
-  LogExpr(X(library("methods", exclude = c("show", "removeClass"))))
-  library("cli")
-  suppressPackageStartupMessages({
-    library("shiny", exclude = c("runExample"))
-    library("shinyjs", exclude = c("runExample"))
-  })
-  library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
-  library("TreeSearch")
-  
-  if (!requireNamespace("TreeDist", quietly = TRUE)) {
-    install.packages("TreeDist")
-  }
-  library("TreeDist")
-  
-  library("future")
-  library("promises")
-  plan(multisession)
-  
-  startOpt <- options("cli.progress_show_after" = 0.1)
-  
-  
-  LogMsg("Started server")
-})
+shinyApp(ui = ui, server = server)
