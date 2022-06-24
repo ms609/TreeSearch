@@ -18,7 +18,7 @@ bug, create an associated issue and illustrate the bug with a minimal
 ### Pull request process
 
 *  We recommend that you create a Git branch for each pull request (PR).  
-*  Look at the Travis and CodeCovr build status before and after making changes.
+*  Look at the GitHub actions build status before and after making changes.
 *  We follow [Google's R style guide](https://google.github.io/styleguide/Rguide.html)
 *  We use camelCase for variable names, and TitleCase for function names.
 *  We use the Oxford ending of 'ize' (not 'ise'), and UK spelling (e.g. 'colour') 
