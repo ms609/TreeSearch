@@ -103,22 +103,33 @@
     <h2>Arguments</h2>
     <dl><dt>tree</dt>
 <dd><p>A tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.</p></dd>
+
+
 <dt>jackTrees</dt>
 <dd><p>A list or <code>multiPhylo</code> object containing trees generated
 by <code><a href="Jackknife.html">Jackknife()</a></code>.</p></dd>
+
+
 <dt>plot</dt>
 <dd><p>Logical specifying whether to plot results; if <code>FALSE</code>,
 returns blank labels for nodes near the root that do not correspond to a
 unique split.</p></dd>
+
+
 <dt>add</dt>
 <dd><p>Logical specifying whether to add the labels to an existing
 plot.</p></dd>
+
+
 <dt>adj, col, frame, pos, ...</dt>
 <dd><p>Parameters to pass to <code><a href="https://rdrr.io/pkg/ape/man/nodelabels.html" class="external-link">nodelabels()</a></code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A named vector specifying the proportion of jackknife trees
+    
+
+<p>A named vector specifying the proportion of jackknife trees
 consistent with each node in <code>tree</code>, as plotted.
 If <code>plot = FALSE</code>, blank entries are included corresponding to nodes
 that do not require labelling; the return value is in the value required
@@ -166,7 +177,7 @@ by <code>phylo$node.label</code>.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

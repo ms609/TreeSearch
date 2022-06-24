@@ -152,6 +152,8 @@ Tree length is calculated using the MorphyLib C library
     <dl><dt>dataset</dt>
 <dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
 <code>phyDat</code>, whose names correspond to the labels of any accompanying tree.</p></dd>
+
+
 <dt>tree</dt>
 <dd><p>(optional) A bifurcating tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>,
 containing only the tips listed in <code>dataset</code>, from which the search
@@ -159,10 +161,14 @@ should begin.
 If unspecified, an <a href="AdditionTree.html">addition tree</a> will be generated from
 <code>dataset</code>, respecting any supplied <code>constraint</code>.
 Edge lengths are not supported and will be deleted.</p></dd>
+
+
 <dt>ratchIter</dt>
 <dd><p>Numeric specifying number of iterations of the
 parsimony ratchet (Nixon 1999)
  to conduct.</p></dd>
+
+
 <dt>tbrIter</dt>
 <dd><p>Numeric specifying the maximum number of <acronym>TBR</acronym>
 break points to evaluate before concluding each search.
@@ -170,24 +176,36 @@ The counter is reset to zero each time tree score improves.
 The counter is reset to zero each time tree score improves.
 One 'iteration' comprises breaking a single branch and evaluating all
 possible reconnections.</p></dd>
+
+
 <dt>startIter</dt>
 <dd><p>Numeric: an initial round of tree search with
 <code>startIter</code> × <code>tbrIter</code> <acronym>TBR</acronym> break points is conducted in
 order to locate a local optimum before beginning ratchet searches.</p></dd>
+
+
 <dt>finalIter</dt>
 <dd><p>Numeric: a final round of tree search will evaluate
 <code>finalIter</code> × <code>tbrIter</code> <acronym>TBR</acronym> break points, in order to
 sample the final optimal neighbourhood more intensely.</p></dd>
+
+
 <dt>maxHits</dt>
 <dd><p>Numeric specifying the maximum times that an optimal
 parsimony score may be hit before concluding a ratchet iteration or final
 search concluded.</p></dd>
+
+
 <dt>maxTime</dt>
 <dd><p>Numeric: after <code>maxTime</code> minutes, stop tree search at the
 next opportunity.</p></dd>
+
+
 <dt>quickHits</dt>
 <dd><p>Numeric: iterations on subsampled datasets
 will retain <code>quickHits</code> × <code>maxHits</code> trees with the best score.</p></dd>
+
+
 <dt>concavity</dt>
 <dd><p>Numeric specifying concavity constant for implied step
 weighting.
@@ -201,6 +219,8 @@ Set as <code>Inf</code> for equal step weights, which underperforms step weighti
 approaches
 (Goloboff et al. 2008; Goloboff et al. 2018; Goloboff and Arias 2019; Smith 2019)
 .</p></dd>
+
+
 <dt>tolerance</dt>
 <dd><p>Numeric specifying degree of suboptimality to tolerate
 before rejecting a tree.  The default, <code>sqrt(.Machine$double.eps)</code>, retains
@@ -209,36 +229,51 @@ Setting to larger values will include trees suboptimal by up to <code>tolerance<
 in search results, which may improve the accuracy of the consensus tree
 (at the expense of resolution) (Smith 2019)
 .</p></dd>
+
+
 <dt>constraint</dt>
 <dd><p>An object of class <code>phyDat</code>; returned trees will be
 perfectly compatible with each character in <code>constraint</code>.
 See <code><a href="https://ms609.github.io/TreeTools/reference/ImposeConstraint.html" class="external-link">ImposeConstraint()</a></code> and
 <a href="https://ms609.github.io/TreeSearch/articles/tree-search.html">vignette</a>
 for further examples.</p></dd>
+
+
 <dt>verbosity</dt>
 <dd><p>Integer specifying level of messaging; higher values give
 more detailed commentary on search progress. Set to <code>0</code> to run silently.</p></dd>
+
+
 <dt>method</dt>
 <dd><p>Unambiguous abbreviation of <code>jackknife</code> or <code>bootstrap</code>
 specifying how to resample characters.  Note that jackknife is considered
 to give more meaningful results.</p></dd>
+
+
 <dt>proportion</dt>
 <dd><p>Numeric between 0 and 1 specifying what proportion of
 characters to retain under jackknife resampling.</p></dd>
+
+
 <dt>...</dt>
 <dd><p>Additional parameters to <code>MaximizeParsimony()</code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>MaximizeParsimony()</code> returns a list of trees with class
+    
+
+<p><code>MaximizeParsimony()</code> returns a list of trees with class
 <code>multiPhylo</code>. This lists all trees found during each search step that
 are within <code>tolerance</code> of the optimal score, listed in the sequence that
 they were first visited, and named according to the step in which they were
 first found; it may contain more than <code>maxHits</code> elements.
 Note that the default search parameters may need to be increased in order for
 these trees to be the globally optimal trees; examine the messages printed
-during tree search to evaluate whether the optimal score has stabilized.
-The return value has the attribute <code>firstHit</code>, a named integer vector listing
+during tree search to evaluate whether the optimal score has stabilized.</p>
+
+
+<p>The return value has the attribute <code>firstHit</code>, a named integer vector listing
 the number of optimal trees visited for the first time in each stage of
 the tree search. Stages are named:</p><ul><li><p><code>seed</code>: starting trees;</p></li>
 <li><p><code>start</code>: Initial TBR search;</p></li>
@@ -393,10 +428,10 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Sample local optimum</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → TBR depth 1; keeping 4 trees; k = 10</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2022-05-11 07:32:46: Score: 12.4347</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2022-05-11 07:32:46: Tree search terminated with score <span style="font-weight: bold;">12.112</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2022-06-24 10:48:07: Score: 12.3671</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2022-06-24 10:48:09: Tree search terminated with score <span style="font-weight: bold;">11.9813</span></span>
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "final_1" "final_2" "final_3"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "final_1"</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># In actual use, be sure to check that the score has converged on a global</span></span>
 <span class="r-in"><span class="co"># optimum, conducting additional iterations and runs as necessary.</span></span>
@@ -435,7 +470,7 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-in">  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span class="r-in"><span class="fu">MaximizeParsimony</span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>, verbosity <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Initialized 1 distinct constraints.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> → 2022-05-11 07:32:46: Score to beat: <span style="font-weight: bold;">3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> → 2022-06-24 10:48:09: Score to beat: <span style="font-weight: bold;">3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 phylogenetic tree</span>
 <span class="r-in"></span>
 </code></pre></div>
@@ -452,7 +487,7 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

@@ -112,6 +112,8 @@ These functions are based on equivalents in the <span class="pkg">phangorn</span
     <h2>Arguments</h2>
     <dl><dt>tree</dt>
 <dd><p>A tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.</p></dd>
+
+
 <dt>edgeToBreak</dt>
 <dd><p>In (<code>Rooted</code>)<code>NNI()</code>, an optional integer specifying the
 index of an edge to bisect/prune, generated randomly if not specified.
@@ -119,27 +121,44 @@ If <code>-1</code>, a complete list of all trees one step from the input tree
 will be returned.
 In <code>cNNI()</code>, an integer from zero to <code>nEdge(tree) - nTip(tree) - 2</code>,
 specifying which internal edge to break.</p></dd>
+
+
 <dt>whichSwitch</dt>
 <dd><p>Integer from zero to one, specifying which way to re-build
 the broken internal edge.</p></dd>
+
+
 <dt>parent</dt>
 <dd><p>Integer vector corresponding to the first column of the edge
 matrix of a tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>, i.e. <code>tree$edge[, 1]</code>.</p></dd>
+
+
 <dt>child</dt>
 <dd><p>Integer vector corresponding to the second column of the edge
 matrix of a tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>, i.e. <code>tree$edge[, 2]</code>.</p></dd>
+
+
 <dt>nTips</dt>
 <dd><p>(optional) Number of tips.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>Returns a tree with class <code>phylo</code> (if <code>returnAll = FALSE</code>) or
-a set of trees, with class <code>multiPhylo</code> (if <code>returnAll = TRUE</code>).
-<code>cNNI()</code> returns a tree of class <code>phylo</code>, rooted on the same leaf,
-on which the specified rearrangement has been conducted.
-<code>NNISwap()</code> returns a list containing two elements, corresponding in
-turn to the  rearranged parent and child parameters.
-a list containing two elements, corresponding in turn to the rearranged parent and child parameters</p>
+    
+
+<p>Returns a tree with class <code>phylo</code> (if <code>returnAll = FALSE</code>) or
+a set of trees, with class <code>multiPhylo</code> (if <code>returnAll = TRUE</code>).</p>
+
+
+<p><code>cNNI()</code> returns a tree of class <code>phylo</code>, rooted on the same leaf,
+on which the specified rearrangement has been conducted.</p>
+
+
+<p><code>NNISwap()</code> returns a list containing two elements, corresponding in
+turn to the  rearranged parent and child parameters.</p>
+
+
+<p>a list containing two elements, corresponding in turn to the rearranged parent and child parameters</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -240,7 +259,7 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

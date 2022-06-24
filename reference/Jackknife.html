@@ -108,46 +108,71 @@ characters.</p>
     <h2>Arguments</h2>
     <dl><dt>tree</dt>
 <dd><p>A tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.</p></dd>
+
+
 <dt>dataset</dt>
 <dd><p>a dataset in the format required by <code>TreeScorer()</code>.</p></dd>
+
+
 <dt>resampleFreq</dt>
 <dd><p>Double between 0 and 1 stating proportion of characters
 to resample.</p></dd>
+
+
 <dt>InitializeData</dt>
 <dd><p>Function that sets up data object to prepare for tree search.
 The function will be passed the <code>dataset</code> parameter.
 Its return value will be passed to <code>TreeScorer()</code> and <code>CleanUpData()</code>.</p></dd>
+
+
 <dt>CleanUpData</dt>
 <dd><p>Function to destroy data object on function exit.
 The function will be passed the value returned by <code>InitializeData()</code>.</p></dd>
+
+
 <dt>TreeScorer</dt>
 <dd><p>function to score a given tree.
 The function will be passed three parameters, corresponding to the
 <code>parent</code> and <code>child</code> entries of a tree's edge list, and a dataset.</p></dd>
+
+
 <dt>EdgeSwapper</dt>
 <dd><p>a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example <code><a href="SPR.html">SPRSwap()</a></code>.</p></dd>
+
+
 <dt>jackIter</dt>
 <dd><p>Integer specifying number of jackknife iterations to conduct.</p></dd>
+
+
 <dt>searchIter</dt>
 <dd><p>Integer specifying maximum rearrangements to perform on each bootstrap or
 ratchet iteration.
 To override this value for a single swapper function, set e.g.
 <code>attr(SwapperFunction, 'searchIter') &lt;- 99</code></p></dd>
+
+
 <dt>searchHits</dt>
 <dd><p>Integer specifying maximum times to hit best score before terminating a tree
 search within a ratchet iteration.
 To override this value for a single swapper function, set e.g.
 <code>attr(SwapperFunction, 'searchHits') &lt;- 99</code></p></dd>
+
+
 <dt>verbosity</dt>
 <dd><p>Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.</p></dd>
+
+
 <dt>...</dt>
 <dd><p>further arguments to pass to <code>TreeScorer()</code>, e.g. <code>dataset = </code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>Jackknife()</code> returns a list of trees recovered after jackknife
+    
+
+<p><code>Jackknife()</code> returns a list of trees recovered after jackknife
 iterations.</p>
     </div>
     <div id="details">
@@ -188,7 +213,7 @@ or e-mail the maintainer.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

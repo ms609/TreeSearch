@@ -98,21 +98,30 @@ characters in a <code>Morphy</code> object; <code>SetMorphyWeights()</code> edit
     <dl><dt>morphyObj</dt>
 <dd><p>Object of class <code>morphy</code>, perhaps created with
 <code><a href="PhyDat2Morphy.html">PhyDat2Morphy()</a></code>.</p></dd>
+
+
 <dt>weight</dt>
 <dd><p>A vector listing the new weights to be applied to each character</p></dd>
+
+
 <dt>checkInput</dt>
 <dd><p>Whether to sanity-check input data before applying.
 Defaults to <code>TRUE</code> to protect the user from crashes.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>MorphyWeights()</code> returns a data frame with two named rows and
+    
+
+<p><code>MorphyWeights()</code> returns a data frame with two named rows and
 one column per character pattern:
 row 1, <code>approx</code>, is a list of integers specifying the approximate (integral)
 weights used by MorphyLib;
 row 2, <code>exact</code>, is a list of numerics specifying the exact weights specified
-by the user.
-<code>SetMorphyWeights()</code> returns the Morphy error code generated when
+by the user.</p>
+
+
+<p><code>SetMorphyWeights()</code> returns the Morphy error code generated when
 applying <code>weight</code>.</p>
     </div>
     <div id="see-also">
@@ -187,7 +196,7 @@ applying <code>weight</code>.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

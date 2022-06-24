@@ -114,33 +114,54 @@ Brazeau et al. (2019)
     <h2>Arguments</h2>
     <dl><dt>tree</dt>
 <dd><p>A tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.</p></dd>
+
+
 <dt>dataset</dt>
 <dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
 <code>phyDat</code>, whose names correspond to the labels of any accompanying tree.</p></dd>
+
+
 <dt>char</dt>
 <dd><p>Index of character to plot.</p></dd>
+
+
 <dt>updateTips</dt>
 <dd><p>Logical; if <code>FALSE</code>, tips will be labelled with their
 original state in <code>dataset</code>.</p></dd>
+
+
 <dt>plot</dt>
 <dd><p>Logical specifying whether to plot the output.</p></dd>
+
+
 <dt>tokenCol</dt>
 <dd><p>Palette specifying colours to associate with each token in
 turn, in the sequence listed in <code>attr(dataset, 'levels')</code>.</p></dd>
+
+
 <dt>ambigCol, ambigLty, inappCol, inappLty, plainLty</dt>
 <dd><p>Colours and line types
 to apply to ambiguous, inapplicable and applicable tokens.  See the <code>lty</code>
 <a href="https://rdrr.io/r/graphics/par.html" class="external-link">graphical parameter</a> for details of line styles.  Overrides <code>tokenCol</code>.</p></dd>
+
+
 <dt>tipOffset</dt>
 <dd><p>Numeric: how much to offset tips from their labels.</p></dd>
+
+
 <dt>unitEdge</dt>
 <dd><p>Logical: Should all edges be plotted with a unit length?</p></dd>
+
+
 <dt>...</dt>
 <dd><p>Further arguments to pass to <code><a href="https://rdrr.io/pkg/ape/man/plot.phylo.html" class="external-link">plot.phylo()</a></code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>PlotCharacter()</code> returns a matrix in which each row corresponds
+    
+
+<p><code>PlotCharacter()</code> returns a matrix in which each row corresponds
 to a numbered tip or node of <code>tree</code>, and each column corresponds to a
 token; the tokens that might parsimoniously be present at each point
 on a tree are denoted with <code>TRUE</code>.</p>
@@ -312,7 +333,7 @@ on a tree are denoted with <code>TRUE</code>.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

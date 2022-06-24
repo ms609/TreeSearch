@@ -129,9 +129,13 @@ Trees may be scored using equal weights, implied weights
 <dd><p>A tree of class <code>phylo</code>, a list thereof (optionally of class
 <code>multiPhylo</code>), or an integer -- in which case <code>tree</code> random trees will be
 uniformly sampled.</p></dd>
+
+
 <dt>dataset</dt>
 <dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
 <code>phyDat</code>, whose names correspond to the labels of any accompanying tree.</p></dd>
+
+
 <dt>concavity</dt>
 <dd><p>Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
@@ -146,13 +150,18 @@ concavity values, e.g. <code>k = 2 ^ (1:7)</code>.
 Specify <code>Inf</code> to weight each additional step equally.
 Specify <code>'profile'</code> to employ profile parsimony (Faith and Trueman 2001)
 .</p></dd>
+
+
 <dt>...</dt>
 <dd><p>unused; allows additional parameters specified within ... to be
 received by the function without throwing an error.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>TreeLength()</code> returns a numeric vector containing the score for
+    
+
+<p><code>TreeLength()</code> returns a numeric vector containing the score for
 each tree in <code>tree</code>.</p>
     </div>
     <div id="references">
@@ -231,7 +240,7 @@ each tree in <code>tree</code>.</p>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3941.387</span>
 <span class="r-in"><span class="fu">TreeLength</span><span class="op">(</span><span class="fl">5</span>, <span class="va">inapplicable.phyData</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1916 1979 1937 1929 1950</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1939 1942 1937 1906 1974</span>
 </code></pre></div>
     </div>
   </div>
@@ -246,7 +255,7 @@ each tree in <code>tree</code>.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

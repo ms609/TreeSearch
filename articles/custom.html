@@ -107,7 +107,7 @@
       <h1 data-toc-skip>Tree search with custom optimality criteria</h1>
                         <h4 data-toc-skip class="author">Martin R. Smith</h4>
             
-            <h4 data-toc-skip class="date">2022-05-11</h4>
+            <h4 data-toc-skip class="date">2022-06-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/custom.Rmd" class="external-link"><code>vignettes/custom.Rmd</code></a></small>
       <div class="hidden name"><code>custom.Rmd</code></div>
@@ -159,7 +159,7 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
                      verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
 <pre><code><span class="co">##   - Performing tree search.  Initial score: 56</span></code></pre>
-<pre><code><span class="co">##   - Final score 33 found 5 times after 50 rearrangements.</span></code></pre>
+<pre><code><span class="co">##   - Final score 33 found 8 times after 50 rearrangements.</span></code></pre>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></code></pre></div>
 <p><img src="custom_files/figure-html/tci-search-1.png" width="700"></p>
@@ -184,8 +184,8 @@ Here, we can use a copy of our starting tree as a template, to be populated with
                      TreeScorer <span class="op">=</span> <span class="va">DistanceScore</span>,
                      maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
                      verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
-<pre><code><span class="co">##   - Performing tree search.  Initial score: -5.60736488571773</span></code></pre>
-<pre><code><span class="co">##   - Final score -7.6637555080134 found 3 times after 50 rearrangements.</span></code></pre>
+<pre><code><span class="co">##   - Performing tree search.  Initial score: -7.18872187554087</span></code></pre>
+<pre><code><span class="co">##   - Final score -7.87744375108174 found 2 times after 50 rearrangements.</span></code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
 <span class="fu">PlotTree</span><span class="op">(</span><span class="va">startTree</span><span class="op">)</span>
@@ -333,7 +333,7 @@ Nixon, K. C. (1999). <span class="nocase">The Parsimony Ratchet, a new method fo
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer>

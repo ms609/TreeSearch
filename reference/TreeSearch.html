@@ -141,57 +141,86 @@ configuring tree search, see the
 - vector of integers corresponding to the child of each edge in turn
 - (optionally) score of the tree
 - (optionally, if score provided) number of times this score has been hit</p></dd>
+
+
 <dt>dataset</dt>
 <dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
 <code>phyDat</code>, whose names correspond to the labels of any accompanying tree.</p></dd>
+
+
 <dt>TreeScorer</dt>
 <dd><p>function to score a given tree.
 The function will be passed three parameters, corresponding to the
 <code>parent</code> and <code>child</code> entries of a tree's edge list, and a dataset.</p></dd>
+
+
 <dt>EdgeSwapper</dt>
 <dd><p>a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example <code><a href="SPR.html">SPRSwap()</a></code>.</p></dd>
+
+
 <dt>maxIter</dt>
 <dd><p>Numeric specifying maximum number of iterations to perform
 before abandoning the search.</p></dd>
+
+
 <dt>maxHits</dt>
 <dd><p>Numeric specifying maximum times to hit the best pscore
 before abandoning the search.</p></dd>
+
+
 <dt>stopAtPeak</dt>
 <dd><p>Logical specifying whether to terminate search once a
 subsequent iteration recovers a sub-optimal score.
 Will be overridden if a passed function has an attribute <code>stopAtPeak</code> set by
 <code>attr(FunctionName, 'stopAtPeak') &lt;- TRUE</code>.</p></dd>
+
+
 <dt>stopAtPlateau</dt>
 <dd><p>Integer. If &gt; 0, tree search will terminate if the score
 has not improved after <code>stopAtPlateau</code> iterations.
 Will be overridden if a passed function has an attribute <code>stopAtPlateau</code> set
 by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></dd>
+
+
 <dt>verbosity</dt>
 <dd><p>Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.</p></dd>
+
+
 <dt>...</dt>
 <dd><p>further arguments to pass to <code>TreeScorer()</code>, e.g. <code>dataset = </code>.</p></dd>
+
+
 <dt>tree</dt>
 <dd><p>A fully-resolved starting tree in <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code> format,
 with the desired outgroup.
 Edge lengths are not supported and will be removed.</p></dd>
+
+
 <dt>InitializeData</dt>
 <dd><p>Function that sets up data object to prepare for tree search.
 The function will be passed the <code>dataset</code> parameter.
 Its return value will be passed to <code>TreeScorer()</code> and <code>CleanUpData()</code>.</p></dd>
+
+
 <dt>CleanUpData</dt>
 <dd><p>Function to destroy data object on function exit.
 The function will be passed the value returned by <code>InitializeData()</code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>TreeSearch()</code> returns a tree, with an attribute <code>pscore</code> conveying its
+    
+
+<p><code>TreeSearch()</code> returns a tree, with an attribute <code>pscore</code> conveying its
 parsimony score.
 #' Note that the parsimony score will be inherited from the tree's
 attributes, which is only valid if it was generated using the same
-<code>data</code> that is passed here.
-<code>EmptyPhyDat()</code> returns a <code>phyDat</code> object comprising a single
+<code>data</code> that is passed here.</p>
+
+
+<p><code>EmptyPhyDat()</code> returns a <code>phyDat</code> object comprising a single
 null character, coded with state zero for every leaf in <code>tree</code>.</p>
     </div>
     <div id="functions">
@@ -242,7 +271,7 @@ optima.</p></li>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

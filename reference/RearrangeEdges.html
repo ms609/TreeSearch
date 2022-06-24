@@ -111,33 +111,54 @@ Will generally be called from within a tree search function.</p>
     <dl><dt>parent</dt>
 <dd><p>Integer vector corresponding to the first column of the edge
 matrix of a tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>, i.e. <code>tree$edge[, 1]</code>.</p></dd>
+
+
 <dt>child</dt>
 <dd><p>Integer vector corresponding to the second column of the edge
 matrix of a tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>, i.e. <code>tree$edge[, 2]</code>.</p></dd>
+
+
 <dt>dataset</dt>
 <dd><p>Third argument to pass to <code>TreeScorer</code>.</p></dd>
+
+
 <dt>TreeScorer</dt>
 <dd><p>function to score a given tree.
 The function will be passed three parameters, corresponding to the
 <code>parent</code> and <code>child</code> entries of a tree's edge list, and a dataset.</p></dd>
+
+
 <dt>EdgeSwapper</dt>
 <dd><p>a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example <code><a href="SPR.html">SPRSwap()</a></code>.</p></dd>
+
+
 <dt>scoreToBeat</dt>
 <dd><p>Double giving score of input tree.</p></dd>
+
+
 <dt>iter</dt>
 <dd><p>iteration number of calling function, for reporting to user only.</p></dd>
+
+
 <dt>hits</dt>
 <dd><p>Integer giving number of times the input tree has already been hit.</p></dd>
+
+
 <dt>verbosity</dt>
 <dd><p>Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.</p></dd>
+
+
 <dt>...</dt>
 <dd><p>further arguments to pass to <code>TreeScorer()</code>, e.g. <code>dataset = </code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>This function returns a list with two to four elements, corresponding to a binary tree:
+    
+
+<p>This function returns a list with two to four elements, corresponding to a binary tree:
 - 1. Integer vector listing the parent node of each edge;
 - 2. Integer vector listing the child node of each edge;
 - 3. Score of the tree;
@@ -198,7 +219,7 @@ current function call.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

@@ -111,33 +111,61 @@ criterion (Farris 1969)
     <h2>Arguments</h2>
     <dl><dt>tree</dt>
 <dd><p>A tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.</p></dd>
+
+
 <dt>dataset</dt>
 <dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
 <code>phyDat</code>, whose names correspond to the labels of any accompanying tree.</p></dd>
+
+
 <dt>outgroup</dt>
 <dd><p>if not NULL, taxa on which the tree should be rooted</p></dd>
+
+
 <dt>k</dt>
 <dd><p>Constant for successive approximations, see Farris 1969 p. 379</p></dd>
+
+
 <dt>maxSuccIter</dt>
 <dd><p>maximum iterations of successive approximation</p></dd>
+
+
 <dt>ratchetHits</dt>
 <dd><p>maximum hits for parsimony ratchet</p></dd>
+
+
 <dt>searchHits</dt>
 <dd><p>maximum hits in tree search</p></dd>
+
+
 <dt>searchIter</dt>
 <dd><p>maximum iterations in tree search</p></dd>
+
+
 <dt>ratchetIter</dt>
 <dd><p>maximum iterations of parsimony ratchet</p></dd>
+
+
 <dt>verbosity</dt>
 <dd><p>Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.</p></dd>
+
+
 <dt>suboptimal</dt>
 <dd><p>retain trees that are this proportion less optimal than the optimal tree</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>SuccessiveApproximations()</code> returns a list of class <code>multiPhylo</code>containing optimal (and slightly suboptimal, if suboptimal &gt; 0) trees.
-<code>SuccessiveWeights()</code> returns the score of a tree, given the
+    
+
+<p><code>SuccessiveApproximations()</code> returns a list of class <code>multiPhylo</code></p>
+
+
+<p>containing optimal (and slightly suboptimal, if suboptimal &gt; 0) trees.</p>
+
+
+<p><code>SuccessiveWeights()</code> returns the score of a tree, given the
 weighting instructions specified in the attributes of the dataset.</p>
     </div>
     <div id="references">
@@ -168,7 +196,7 @@ weighting instructions specified in the attributes of the dataset.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

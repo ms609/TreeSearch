@@ -95,12 +95,20 @@ clusters of similar strings.</p>
     <h2>Arguments</h2>
     <dl><dt>x</dt>
 <dd><p>Character vector.</p></dd>
+
+
 <dt>maxCluster</dt>
 <dd><p>Integer specifying maximum number of clusters to consider.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>NameClusters()</code> returns an integer assigning each element of <code>x</code>to a cluster, with an attribute <code>med</code> specifying the median string in each
+    
+
+<p><code>NameClusters()</code> returns an integer assigning each element of <code>x</code></p>
+
+
+<p>to a cluster, with an attribute <code>med</code> specifying the median string in each
 cluster, and <code>silhouette</code> reporting the silhouette coefficient of the optimal
 clustering.  Coefficients &lt; 0.5 indicate weak structure, and no clusters are
 returned.  If the number of unique elements of <code>x</code> is less than <code>maxCluster</code>,
@@ -136,7 +144,7 @@ all occurrences of each entry are assigned to an individual cluster.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

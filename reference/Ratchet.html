@@ -161,52 +161,82 @@ to search for a more parsimonious tree using custom optimality criteria.</p>
 - vector of integers corresponding to the child of each edge in turn
 - (optionally) score of the tree
 - (optionally, if score provided) number of times this score has been hit</p></dd>
+
+
 <dt>morphyObj</dt>
 <dd><p>Object of class <code>morphy</code>, perhaps created with
 <code><a href="PhyDat2Morphy.html">PhyDat2Morphy()</a></code>.</p></dd>
+
+
 <dt>EdgeSwapper</dt>
 <dd><p>a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example <code><a href="SPR.html">SPRSwap()</a></code>.</p></dd>
+
+
 <dt>maxIter</dt>
 <dd><p>Numeric specifying maximum number of iterations to perform in
 tree search.</p></dd>
+
+
 <dt>maxHits</dt>
 <dd><p>Numeric specifying maximum number of hits to accomplish in
 tree search.</p></dd>
+
+
 <dt>verbosity</dt>
 <dd><p>Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.</p></dd>
+
+
 <dt>stopAtPeak</dt>
 <dd><p>Logical specifying whether to terminate search once a
 subsequent iteration recovers a sub-optimal score.
 Will be overridden if a passed function has an attribute <code>stopAtPeak</code> set by
 <code>attr(FunctionName, 'stopAtPeak') &lt;- TRUE</code>.</p></dd>
+
+
 <dt>stopAtPlateau</dt>
 <dd><p>Integer. If &gt; 0, tree search will terminate if the score
 has not improved after <code>stopAtPlateau</code> iterations.
 Will be overridden if a passed function has an attribute <code>stopAtPlateau</code> set
 by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></dd>
+
+
 <dt>...</dt>
 <dd><p>further arguments to pass to <code>TreeScorer()</code>, e.g. <code>dataset = </code>.</p></dd>
+
+
 <dt>tree</dt>
 <dd><p>A tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.</p></dd>
+
+
 <dt>dataset</dt>
 <dd><p>a dataset in the format required by <code>TreeScorer()</code>.</p></dd>
+
+
 <dt>InitializeData</dt>
 <dd><p>Function that sets up data object to prepare for tree search.
 The function will be passed the <code>dataset</code> parameter.
 Its return value will be passed to <code>TreeScorer()</code> and <code>CleanUpData()</code>.</p></dd>
+
+
 <dt>CleanUpData</dt>
 <dd><p>Function to destroy data object on function exit.
 The function will be passed the value returned by <code>InitializeData()</code>.</p></dd>
+
+
 <dt>TreeScorer</dt>
 <dd><p>function to score a given tree.
 The function will be passed three parameters, corresponding to the
 <code>parent</code> and <code>child</code> entries of a tree's edge list, and a dataset.</p></dd>
+
+
 <dt>Bootstrapper</dt>
 <dd><p>Function to perform bootstrapped rearrangements of tree.
 First arguments will be an <code>edgeList</code> and a dataset, initialized using
 <code>InitializeData()</code>. Should return a rearranged <code>edgeList</code>.</p></dd>
+
+
 <dt>swappers</dt>
 <dd><p>A list of functions to use to conduct edge rearrangement during tree search.
 Provide functions like <code><a href="NNI.html">NNISwap</a></code> to shuffle root position,
@@ -214,49 +244,81 @@ or <code><a href="TBR.html">RootedTBRSwap</a></code> if the position of the root
 You may wish to use extreme swappers (such as <acronym>TBR</acronym>) early in the list,
 and a more subtle rearranger (such as <acronym>NNI</acronym>) later in the list to make
 incremental tinkerings once an almost-optimal tree has been found.</p></dd>
+
+
 <dt>BootstrapSwapper</dt>
 <dd><p>Function such as <code><a href="NNI.html">RootedNNISwap</a></code> to use
 to rearrange trees within <code>Bootstrapper()</code>.</p></dd>
+
+
 <dt>returnAll</dt>
 <dd><p>Set to <code>TRUE</code> to report all MPTs encountered during the
 search, perhaps to analyse consensus.</p></dd>
+
+
 <dt>stopAtScore</dt>
 <dd><p>stop search as soon as this score is hit or beaten.</p></dd>
+
+
 <dt>ratchIter</dt>
 <dd><p>Stop when this many ratchet iterations have been performed.</p></dd>
+
+
 <dt>ratchHits</dt>
 <dd><p>Stop when this many ratchet iterations have found the same
 best score.</p></dd>
+
+
 <dt>searchIter</dt>
 <dd><p>Integer specifying maximum rearrangements to perform on each bootstrap or
 ratchet iteration.
 To override this value for a single swapper function, set e.g.
 <code>attr(SwapperFunction, 'searchIter') &lt;- 99</code></p></dd>
+
+
 <dt>searchHits</dt>
 <dd><p>Integer specifying maximum times to hit best score before terminating a tree
 search within a ratchet iteration.
 To override this value for a single swapper function, set e.g.
 <code>attr(SwapperFunction, 'searchHits') &lt;- 99</code></p></dd>
+
+
 <dt>bootstrapIter</dt>
 <dd><p>Integer specifying maximum rearrangements to perform on each bootstrap
 iteration (default: <code>searchIter</code>).</p></dd>
+
+
 <dt>bootstrapHits</dt>
 <dd><p>Integer specifying maximum times to hit best score on each bootstrap
 iteration (default: <code>searchHits</code>).</p></dd>
+
+
 <dt>suboptimal</dt>
 <dd><p>retain trees that are suboptimal by this score.
 Defaults to a small value that will counter rounding errors.</p></dd>
+
+
 <dt>nSearch</dt>
 <dd><p>Number of Ratchet searches to conduct
 (for <code>RatchetConsensus()</code>)</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>MorphyBootstrap()</code> returns a tree that is optimal under a random
-sampling of the original characters.
-<code>Ratchet()</code> returns a tree modified by parsimony ratchet iterations.
-<code>MultiRatchet()</code> returns a list of optimal trees
-produced by <code>nSearch</code>ratchet searches, from which a consensus tree can be generated using
+    
+
+<p><code>MorphyBootstrap()</code> returns a tree that is optimal under a random
+sampling of the original characters.</p>
+
+
+<p><code>Ratchet()</code> returns a tree modified by parsimony ratchet iterations.</p>
+
+
+<p><code>MultiRatchet()</code> returns a list of optimal trees
+produced by <code>nSearch</code></p>
+
+
+<p>ratchet searches, from which a consensus tree can be generated using
 <code><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">ape::consensus()</a></code> or <code><a href="https://ms609.github.io/TreeTools/reference/ConsensusWithout.html" class="external-link">TreeTools::ConsensusWithout()</a></code>.</p>
     </div>
     <div id="details">
@@ -280,7 +342,7 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
     <div id="see-also">
     <h2>See also</h2>
     <div class="dont-index">
-<ul><li><p>Adapted from <code><a href="https://rdrr.io/pkg/phangorn/man/parsimony.html" class="external-link">pratchet()</a></code> in the
+<ul><li><p>Adapted from <code><a href="http://klausvigo.github.io/phangorn/reference/parsimony.html" class="external-link">pratchet()</a></code> in the
 <span class="pkg">phangorn</span> package.</p></li>
 </ul><p>Other custom search functions: 
 <code><a href="TreeSearch.html">EdgeListSearch</a>()</code>,
@@ -300,7 +362,7 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-in"><span class="co"># Increase value of ratchIter and searchHits to do a proper search</span></span>
 <span class="r-in"><span class="va">quickResult</span> <span class="op">&lt;-</span> <span class="fu">Ratchet</span><span class="op">(</span><span class="va">njtree</span>, <span class="va">Lobo.phy</span>, ratchIter <span class="op">=</span> <span class="fl">2</span>, searchHits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> * Beginning Parsimony Ratchet, with initial score 231</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Completed parsimony ratchet after 2 iterations with score 219</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Completed parsimony ratchet after 2 iterations with score 223</span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Plot result (legibly)</span></span>
 <span class="r-in"><span class="va">oldPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span>
@@ -321,7 +383,7 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>
