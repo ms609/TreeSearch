@@ -1,14 +1,15 @@
 # options("TreeSearch.logging" = TRUE)
 logging <- isTRUE(getOption("TreeSearch.logging"))
+options("TreeSearch.logging.code" = FALSE)
 options(shiny.maxRequestSize = 1024^3) # Allow max 1 GB files
 
 
 if (logging) {
-  logFile <- file("log.lg", open = "w+")
-  Log <- function (...) {
+  logMsgFile <- file("log.lg", open = "w+")
+  LogMsg <- function (...) {
     message(Sys.time(), ": ", ...)
-    writeLines(as.character(Sys.time()), con = logFile)
-    writeLines(paste0("  ", ...), con = logFile)
+    writeLines(as.character(Sys.time()), con = logMsgFile)
+    writeLines(paste0("  ", ...), con = logMsgFile)
   }
   Put <- function (..., file) {
     dput(..., file = file)
@@ -22,7 +23,7 @@ if (logging) {
     Put(..., file = "dataset.lg")
   }
 } else {
-  PutData <- PutTree <- Log <- function (...) {}
+  PutData <- PutTree <- LogMsg <- function (...) {}
 }
 
 Notification <- function (...) {
@@ -30,27 +31,6 @@ Notification <- function (...) {
     showNotification(...)
   }
 }
-
-library("methods", exclude = c("show", "removeClass"))
-library("cli")
-suppressPackageStartupMessages({
-  library("shiny", exclude = c("runExample"))
-  library("shinyjs", exclude = c("runExample"))
-})
-library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
-library("TreeSearch")
-
-if (!requireNamespace("TreeDist", quietly = TRUE)) {
-  install.packages("TreeDist")
-}
-library("TreeDist")
-
-library("future")
-library("promises")
-plan(multisession)
-
-startOpt <- options("cli.progress_show_after" = 0.1)
-on.exit(options(startOpt), add = TRUE)
 
 aJiffy <- 42 # ms, default debounce period for input sliders etc
 typingJiffy <- 2.5 * aJiffy # slightly slower if might be typing
@@ -213,8 +193,23 @@ Venna2001 <- Reference(
   publisher = "Springer, Berlin",
   doi = "10.1007/3-540-44668-0_68")
 
-ui <- fluidPage(theme = "app.css",
-                title = "TreeSearch",
+
+
+
+
+
+
+
+
+
+
+
+
+
+ui <- fluidPage(
+  theme = "app.css",
+  title = "TreeSearch",
+  
   useShinyjs(),
   column(3,
     fluidRow(
@@ -363,17 +358,11 @@ ui <- fluidPage(theme = "app.css",
   )
 )
 
+
+
+
 server <- function(input, output, session) {
-  if (packageVersion("ape") < "5.5.2") {
-    Notification("Character plots require latest \"ape\" version. Install with devtools::install_github( \"emmanuelparadis/ape\")",
-                     type = "error", duration = 25)
-  }
-  if (packageVersion("TreeTools") <= "1.5.0.9100") {
-    Notification("Rogue plots require \"TreeTools\" development version. Install with devtools::install_github( \"ms609/TreeTools@rogue\")",
-                     type = "error", duration = 30)
-  }
   
-  Log("Started server")
   r <- reactiveValues()
   
   ##############################################################################
@@ -389,7 +378,7 @@ server <- function(input, output, session) {
   UpdateData <- reactive({
     source <- input$dataSource
     if (source == "file") {
-      Log("UpdateData: from file")
+      LogMsg("UpdateData: from file")
       showElement("dataFile")
       
       fileInput <- input$dataFile
@@ -411,7 +400,7 @@ server <- function(input, output, session) {
                               ReadAsPhyDat(dataFile)
                             }, error = function (e) NULL))
     } else {
-      Log("UpdateData: from package")
+      LogMsg("UpdateData: from package")
       hideElement("dataFile")
       
       dataFile <- system.file(paste0("datasets/", source, ".nex"),
@@ -449,7 +438,7 @@ server <- function(input, output, session) {
   FetchTreeRange <- debounce(reactive(r$treeRange <- input$treeRange), aJiffy)
   
   UpdateTrees <- reactive({
-    Log("Updating trees")
+    LogMsg("Updating trees")
     FetchNTree()
     FetchTreeRange()
     r$trees <- r$allTrees[
@@ -475,14 +464,14 @@ server <- function(input, output, session) {
   })
   
   UpdateAllTrees <- function (trees) {
-    Log("UpdateAllTrees()")
+    LogMsg("UpdateAllTrees()")
     
     trees <- c(trees)
     if (length(trees) > 1L) {
       trees <- RenumberTips(trees, trees[[1]]$tip.label)
     }
     if (identical(trees, r$trees)) {
-      Log("No need to update trees; no change")
+      LogMsg("No need to update trees; no change")
       return()
     }
     r$allTrees <- trees
@@ -631,7 +620,7 @@ server <- function(input, output, session) {
   scores <- bindCache(reactive({
     PutTree(r$trees)
     PutData(r$dataset)
-    Log("scores(): Recalculating scores with k = ", concavity())
+    LogMsg("scores(): Recalculating scores with k = ", concavity())
     withProgress(tryCatch(
       signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
       error = function (x) {
@@ -719,7 +708,7 @@ server <- function(input, output, session) {
   
   UpdateOutgroupInput <- reactive({
     if ("treePlotConfig" %in% r$visibleConfigs) {
-      Log("UpdateOutgroupInput()")
+      LogMsg("UpdateOutgroupInput()")
       keptOutgroup <- intersect(input$outgroup, KeptTips())
       updateSelectizeInput(
         inputId = "outgroup", choices = KeptTips(),
@@ -736,7 +725,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(r$rawTrees, {
-    Log("observed r$rawTrees")
+    LogMsg("observed r$rawTrees")
     rawLabels <- r$rawTrees[[1]]$tip.label
     if (length(r$rawTrees) > 1L) {
       r$rawTrees <- RenumberTips(r$rawTrees, rawLabels)
@@ -806,7 +795,7 @@ server <- function(input, output, session) {
   output$branchLegend <- renderUI({
     kept <- KeptTips()
     dropped <- DroppedTips()
-    Log("Update branchLegend")
+    LogMsg("Update branchLegend")
     
     if (length(dropped) &&
         length(input$excludedTip) &&
@@ -841,7 +830,7 @@ server <- function(input, output, session) {
       } else {
         r$trees[[1]]
       }
-      Log("StartSearch()")
+      LogMsg("StartSearch()")
       PutData(r$dataset)
       PutTree(startTree)
       results <- withProgress(
@@ -919,7 +908,7 @@ server <- function(input, output, session) {
   
   
   rogues <- reactive({
-    Log("Rogues()")
+    LogMsg("Rogues()")
     if (inherits(r$trees, "multiPhylo")) {
       withProgress(
         message = "Identifying rogues", value = 0.99,
@@ -937,7 +926,7 @@ server <- function(input, output, session) {
   })
   
   nNonRogues <- reactive({
-    Log("nNonRogues()")
+    LogMsg("nNonRogues()")
     nrow(rogues()) - which.max(rogues()$IC)
   })
   
@@ -951,7 +940,7 @@ server <- function(input, output, session) {
   })
   
   concordance <- bindCache(reactive({
-    Log("concordance()")
+    LogMsg("concordance()")
     switch(input$concordance,
           "p" = SplitFrequency(r$plottedTree, r$trees) / length(r$trees),
           "qc" = QuartetConcordance(r$plottedTree, r$dataset),
@@ -997,7 +986,7 @@ server <- function(input, output, session) {
   })
   
   ConsensusPlot <- function() {
-    Log("ConsensusPlot()")
+    LogMsg("ConsensusPlot()")
     par(mar = rep(0, 4), cex = 0.9)
     #instab <- Instab()
     #dropped <- names(instab[order(instab) > input$keepTips])
@@ -1045,7 +1034,7 @@ server <- function(input, output, session) {
         "ind" = {
           par(mar = rep(0, 4), cex = 0.9)
           n <- PlottedChar()
-          Log("Plotting PlottedTree(", whichTree(), ", ", n, ")")
+          LogMsg("Plotting PlottedTree(", whichTree(), ", ", n, ")")
           r$plottedTree <- PlottedTree()
           if (length(n) && n > 0L) {
             pc <- tryCatch({
@@ -1257,7 +1246,7 @@ server <- function(input, output, session) {
     par(mar = c(2, 0, 0, 0))
     nStop <- length(badToGood) + 1L
     
-    # Log("QualityPlot()")
+    # LogMsg("QualityPlot()")
     plot(NULL, xlim = c(0, 1), ylim = c(-1.5, 2.5),
          ann = FALSE, axes = FALSE)
     x <- seq.int(from = 0, to = 1, length.out = nStop)
@@ -1268,12 +1257,12 @@ server <- function(input, output, session) {
     txc <- quality[["sqrtTxC"]]
     
     if (trust > 1) {
-      Log("Preternaturally high Trustworthiness: ", trust)
+      LogMsg("Preternaturally high Trustworthiness: ", trust)
     }
     if (cont > 1) {
-      Log("Preternaturally high Continuity: ", cont)
+      LogMsg("Preternaturally high Continuity: ", cont)
     }
-    Log(trust * nStop)
+    LogMsg(trust * nStop)
     segments(LogScore(txc), -1, y1 = 1, lty = 3)
     text(LogScore(trust), 1, "T", col = badToGood[LogScore(trust) * nStop])
     text(LogScore(cont), -1, "C", col = badToGood[LogScore(cont) * nStop])
@@ -1351,7 +1340,7 @@ server <- function(input, output, session) {
   # Clusterings
   ##############################################################################
   clusterings <- bindCache(reactive({
-    Log("clusterings()")
+    LogMsg("clusterings()")
     maxCluster <- min(15L, length(r$trees) - 1L)
     if (maxCluster > 1L) {
       possibleClusters <- 2:maxCluster
@@ -1401,7 +1390,7 @@ server <- function(input, output, session) {
       bestCluster <- "none"
     }
      
-    Log("Best clustering: ", bestCluster, 
+    LogMsg("Best clustering: ", bestCluster, 
         "; sil: ", signif(switch(bestCluster, pam = pamSil, hmm = hSil, kmn = kSil, 0)))
     # Return:
     list(method = switch(bestCluster, pam = "part. around medoids",
@@ -1416,7 +1405,7 @@ server <- function(input, output, session) {
   }), r$treeHash, input$distMeth)
   
   PlotClusterCons <- function () {
-    Log("PlotClusterCons()")
+    LogMsg("PlotClusterCons()")
     
     cl <- clusterings()
     kept <- rev(dropSeq())[seq_len(input$keepTips)]
@@ -1431,7 +1420,7 @@ server <- function(input, output, session) {
       par(mfrow = c(nRow, ceiling(cl$n / nRow)))
       for (i in seq_len(cl$n)) {
         col <- palettes[[min(length(palettes), cl$n)]][i]
-        Log(" > Multi-Clusters")
+        LogMsg(" > Multi-Clusters")
         PutTree(r$trees)
         PutData(cl$cluster)
         
@@ -1445,7 +1434,7 @@ server <- function(input, output, session) {
                pt.cex = 1.5, bty = "n")
       }
     } else {
-      Log(" > Single cluster")
+      LogMsg(" > Single cluster")
       PutTree(r$trees)
       tr <- UserRoot(ConsensusWithout(r$trees, dropped, p = consP()))
       tr$edge.length <- rep.int(1, dim(tr$edge)[1])
@@ -1566,7 +1555,7 @@ server <- function(input, output, session) {
   }
   
   distances <- bindCache(reactive({
-    Log("distances(): ", input$distMeth)
+    LogMsg("distances(): ", input$distMeth)
     if (length(r$trees) > 1L) {
       Dist <- switch(input$distMeth,
                      "cid" = TreeDist::ClusteringInfoDistance,
@@ -1585,7 +1574,7 @@ server <- function(input, output, session) {
   }), input$distMeth, r$treeHash)
   
   mapping <- bindCache(reactive({
-    Log("mapping()")
+    LogMsg("mapping()")
     if (maxProjDim() > 1L) {
       withProgress(
         message = "Mapping trees",
@@ -1811,6 +1800,66 @@ server <- function(input, output, session) {
     )
   })
 
+  onStop(function() {
+    options(startOpt)
+    if (file.exists(sessionLogFile)) {
+      file.remove(sessionLogFile)
+    }
+    if (file.exists(cmdLogFile)) {
+      file.remove(cmdLogFile)
+    }
+    LogMsg("Session has ended")
+  })
 }
 
-shinyApp(ui = ui, server = server)
+
+
+X <- expression
+
+shinyApp(ui = ui, server = server, onStart = function() {
+  sessionLogFile <- tempfile("TreeSearch-", fileext = ".md")
+  cmdLogFile <- tempfile("TreeSearch-", fileext = ".R")
+  ssnCon <- file(sessionLogFile, open = "w+")
+  cmdCon <- file(cmdLogFile, open = "w+")
+
+  LogText <- function (lines) {
+    if (isTRUE(getOption("TreeSearch.logging"))) {
+      writeLines("```", con = ssnCon)
+      options("TreeSearch.logging.code" = FALSE)
+    }
+    writeLines(c(as.character(Sys.time()), lines), con = ssnCon)
+  }
+  LogExpr <- function (exps) {
+    if (!isTRUE(getOption("TreeSearch.logging"))) {
+      writeLines("```r", con = ssnCon)
+      options("TreeSearch.logging.code" = TRUE)
+    }
+    writeLines(as.character(exp), con = ssnCon)
+    writeLines(as.character(exp), con = cmdCon)
+    eval(exp)
+  }
+  
+  LogText("# Initialize R session")
+  LogExpr(X(library("methods", exclude = c("show", "removeClass"))))
+  library("cli")
+  suppressPackageStartupMessages({
+    library("shiny", exclude = c("runExample"))
+    library("shinyjs", exclude = c("runExample"))
+  })
+  library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
+  library("TreeSearch")
+  
+  if (!requireNamespace("TreeDist", quietly = TRUE)) {
+    install.packages("TreeDist")
+  }
+  library("TreeDist")
+  
+  library("future")
+  library("promises")
+  plan(multisession)
+  
+  startOpt <- options("cli.progress_show_after" = 0.1)
+  
+  
+  LogMsg("Started server")
+})
