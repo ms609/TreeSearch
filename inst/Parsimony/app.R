@@ -386,17 +386,18 @@ ui <- fluidPage(
 
 
 
+X <- expression
 
 server <- function(input, output, session) {
   
   sessionLogFile <- tempfile("TreeSearch-", fileext = ".md")
   cmdLogFile <- tempfile("TreeSearch-", fileext = ".R")
   Write <- function (txt, file) {
-    con <- file(file, open = "w+")
+    con <- file(file, open = "a")
     on.exit(close(con))
     writeLines(txt, con)
   }
-  cmdCon <- file(cmdLogFile, open = "w+")
+  cmdCon <- file(cmdLogFile, open = "a")
   
   LogText <- function (lines) {
     if (isTRUE(getOption("TreeSearch.logging"))) {
@@ -406,7 +407,7 @@ server <- function(input, output, session) {
     Write(c(as.character(Sys.time()), lines), sessionLogFile)
   }
   LogExpr <- function (exps) {
-    if (!isTRUE(getOption("TreeSearch.logging"))) {
+    if (!isTRUE(getOption("TreeSearch.logging.code"))) {
       Write("```r", sessionLogFile)
       options("TreeSearch.logging.code" = TRUE)
     }
@@ -417,18 +418,30 @@ server <- function(input, output, session) {
     }
   }
   
+  LogComment <- function (exps, returns = 0) {
+    if (!isTRUE(getOption("TreeSearch.logging.code"))) {
+      Write("```r", sessionLogFile)
+      options("TreeSearch.logging.code" = TRUE)
+    }
+    Write(rep("", returns), cmdLogFile)
+    for (exp in exps) {
+      Write(paste("#", exp), cmdLogFile)
+    }
+  }
+  
   LogText("# Initialize R session")
   
   if (!requireNamespace("TreeDist", quietly = TRUE)) {
     install.packages("TreeDist")
   }
-  LogExpr(c(
+  
+  LogComment("Load required libraries")
+  LogExpr(list(
     X(library("TreeTools", quietly = TRUE)),
     X(library("TreeSearch")),
     X(library("TreeDist"))
   ))
   
-  message(gsub("\\\\", "/", sessionLogFile))
   
   library("future")
   library("promises")
@@ -1814,14 +1827,14 @@ server <- function(input, output, session) {
   })
   
   output$saveR <- downloadHandler(
-    filename = function() paste0(saveDetails()$fileName, ".R"),
+    filename = function() paste0("TreeSearch-session.R"),
     content = function (file) {
       dput(cmdLogFile)
       file.copy(cmdLogFile, file)
     })
   
   output$saveMd <- downloadHandler(
-    filename = function() paste0(saveDetails()$fileName, ".md"),
+    filename = function() paste0("TreeSearch-session.md"),
     content = function (file) {
       file.copy(sessionLogFile, file)
       if (isTRUE(getOption("TreeSearch.logging"))) {
@@ -1907,8 +1920,5 @@ server <- function(input, output, session) {
   })
 }
 
-
-
-X <- expression
 
 shinyApp(ui = ui, server = server)
