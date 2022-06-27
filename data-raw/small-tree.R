@@ -2,8 +2,8 @@ library("TreeTools", quietly = TRUE)
 devtools::load_all("c:/research/r/TreeSearch")
 #library("TreeSearch")
 library("TreeDist")
-library("Quartet", exclude = 'RobinsonFoulds')
-cols <- paste0(Ternary::cbPalette8, '44')[rep(1:8,
+library("Quartet", exclude = "RobinsonFoulds")
+cols <- paste0(Ternary::cbPalette8, "44")[rep(1:8,
                                               c(2, 4, 3, rep(1, 5)))]
 
 nTree <- NUnrooted(nTip)
@@ -14,9 +14,9 @@ CompareMethods <- function (repl, nTip,
                             nTree = NUnrooted(nTip),
                             trees = lapply(seq_len(nTree) - 1L, as.phylo, 
                                            nTip = nTip)) {
-  cacheFile <- paste0('gen-', nTip, 'tip/', repl, '.csv')
+  cacheFile <- paste0("gen-", nTip, "tip/", repl, ".csv")
   if (file.exists(cacheFile)) {
-    tab <- read.table(cacheFile, sep = ',')
+    tab <- read.table(cacheFile, sep = ",")
     performance <- matrix(unlist(tab), nrow = nrow(tab), ncol = ncol(tab),
                           dimnames = dimnames(tab))
   } else {
@@ -26,24 +26,24 @@ CompareMethods <- function (repl, nTip,
     # Desire mean 1 change per character.
     edgeLengths <- rgamma(nEdge, shape = 1) / nEdge
     generative$edge.length <- c(0, edgeLengths)
-    dirName <- paste0('gen-', nTip, 'tip')
+    dirName <- paste0("gen-", nTip, "tip")
     if (!dir.exists(dirName)) dir.create(dirName)
-    write.tree(generative, paste0(dirName, '/', repl, '.tre'))
+    write.tree(generative, paste0(dirName, "/", repl, ".tre"))
     
     
     nChar <- 2 * nEdge
     #shape = 2.5 from Iotuba IQTree ML analysis
     dataBits <- lapply(phangorn::discrete.gamma(2.5, 4), function (rate)
       phangorn::simSeq(generative, l = nChar, rate = rate,
-                       type = 'USER', levels = 0:1, rootseq = rep(0, nChar)))
+                       type = "USER", levels = 0:1, rootseq = rep(0, nChar)))
     dataset <- do.call(c, dataBits)
-    write.nexus.data(dataset, file = paste0(dirName, '/', repl, '.nex'))
+    write.nexus.data(dataset, file = paste0(dirName, "/", repl, ".nex"))
     
     morphyObj <- PhyDat2Morphy(dataset)
     on.exit(morphyObj <- UnloadMorphy(morphyObj))
     
     at <- attributes(dataset)
-    characters <- PhyToString(dataset, ps = '', useIndex = FALSE,
+    characters <- PhyToString(dataset, ps = "", useIndex = FALSE,
                               byTaxon = FALSE, concatenate = FALSE)
     weight <- at$weight
     morphyObjects <- lapply(characters, SingleCharMorphy)
@@ -54,7 +54,7 @@ CompareMethods <- function (repl, nTip,
     cont <- at$contrast
     simpleCont <- ifelse(rowSums(cont) == 1,
                          apply(cont != 0, 1, function (x) at$levels[x][1]),
-                         '?')
+                         "?")
     
     minLength <- MinimumLength(dataset, compress = TRUE)
     charSeq <- seq_len(nChar) - 1L
@@ -65,7 +65,7 @@ CompareMethods <- function (repl, nTip,
     
     tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip, byrow = FALSE)
     profileTables <- apply(tokenMatrix, 1, table)
-    data('profiles', package = 'TreeSearch')
+    data("profiles", package = "TreeSearch")
     profileCost <- lapply(profileTables, function (x) {
       x <- sort(x[x > 1])
       n <- length(x)
@@ -78,14 +78,16 @@ CompareMethods <- function (repl, nTip,
     
     
     PP <- function (edge) {
-      TreeSearch:::morphy_pp(edge, morphyObjects, weight, profileCost, charSeq, Inf)
+      TreeSearch:::morphy_pp(edge, morphyObjects, weight, profileCost, charSeq,
+                             Inf)
     }
     
     profileMax <- lapply(profileCost, function (x) {
       if (length(x) == 1L) x else x / max(x)
     })
     PPx <- function (edge) {
-      TreeSearch:::morphy_pp(edge, morphyObjects, weight, profileMax, charSeq, Inf)
+      TreeSearch:::morphy_pp(edge, morphyObjects, weight, profileMax, charSeq,
+                             Inf)
     }
     
     ewMax <- lapply(profileTables, function (x) {
@@ -132,22 +134,22 @@ CompareMethods <- function (repl, nTip,
     #     extra / max(extra)
     #   }
     #   score <- apply(scores, 1, Normalize)
-    #   plot(0, 0, type = 'n', xlab = lab, ylab = 'Excess score',
+    #   plot(0, 0, type = "n", xlab = lab, ylab = "Excess score",
     #        xlim = c(0, 0.8), ylim = c(0.3, 0))
-    #   points(score[, 'i1'] ~ x, pch = 0, col = cols[1])
-    #   points(score[, 'i3'] ~ x, pch = 1, col = cols[2])
-    #   points(score[, 'i10.5'] ~ x, pch = 2, col = cols[3])
-    #   points(score[, 'i36'] ~ x, pch = 3, col = cols[4])
-    #   points(score[, 'ew'] ~ x, pch = 4, col = cols[5])
-    #   legend('topright', bty = 'n',
+    #   points(score[, "i1"] ~ x, pch = 0, col = cols[1])
+    #   points(score[, "i3"] ~ x, pch = 1, col = cols[2])
+    #   points(score[, "i10.5"] ~ x, pch = 2, col = cols[3])
+    #   points(score[, "i36"] ~ x, pch = 3, col = cols[4])
+    #   points(score[, "ew"] ~ x, pch = 4, col = cols[5])
+    #   legend("topright", bty = "n",
     #          col = cols[1:5], pch = 16, 
-    #          legend = c('IW, k = 1', 'IW, k = 3', 'I", k = 10.5', 'IW, k = 36', 'EW'))
+    #          legend = c("IW, k = 1", "IW, k = 3", "I", k = 10.5", "IW, k = 36", "EW"))
     # }
     # 
     #par(mfrow = c(2, 1), mar = rep(2, 4), mgp = c(1, 1, 1))
-    #Plot(cid, 'CID')
-    #Plot(qd, 'QD')
-    #Plot(tbr / max(tbr), 'TBR')
+    #Plot(cid, "CID")
+    #Plot(qd, "QD")
+    #Plot(tbr / max(tbr), "TBR")
     
     message(Sys.time(), ": Evaluating performace")
     generativeScore <- scores[, as.integer(as.TreeNumber(generative)) + 1L]
@@ -160,11 +162,11 @@ CompareMethods <- function (repl, nTip,
         mean(qd[minima]),
         mean(tbr[minima])
       )
-    }, c('betterThanGen' = 0, 'equalToGen' = 0,
-         'cidFromGen' = 0, 'qdFromGen' = 0, 'tbrFromGen' = 0))
+    }, c("betterThanGen" = 0, "equalToGen" = 0,
+         "cidFromGen" = 0, "qdFromGen" = 0, "tbrFromGen" = 0))
     colnames(performance) <- rownames(scores)
     message(Sys.time(), ": Complete.\n")
-    write.table(performance, file = cacheFile, sep = ',')
+    write.table(performance, file = cacheFile, sep = ",")
   }
   performance
 }

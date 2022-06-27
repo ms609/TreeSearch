@@ -1,5 +1,7 @@
 # TreeSearch 1.1.2
 
+- Check tree order & rootedness before scoring ([#133](https://github.com/ms609/TreeSearch/issues/133))
+- Improve error handling
 - Replace `throw` with `stop` in C++
 - Remove test of elapsed times, for CRAN compliance
 
