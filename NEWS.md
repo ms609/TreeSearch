@@ -5,7 +5,8 @@
 
 # TreeSearch 1.1.1
 
-- GUI allows selection of subset of trees, for easier analysis of Bayesian tree sets
+- GUI allows selection of subset of trees, for easier analysis of Bayesian
+  tree sets
 - Miscellaneous fixes and improvements in 'shiny' GUI
 - Test suite for 'shiny' GUI
 - Update tests for TreeSearch 1.7
@@ -191,7 +192,8 @@
 ## Bug fixes
 - C11 compliance
 - `IWRatchetConsensus` now relays concavity value to subsequent functions
-- `ReadCharacters` returns labels for all characters and states if `character_num = NULL`
+- `ReadCharacters` returns labels for all characters and states if
+  `character_num = NULL`
 
 
 # TreeSearch 0.0.8
@@ -208,8 +210,10 @@
 - [9004] Bootstrap search improvements
 
 ## Bug fixes
-- [9003] User now able to specify value of concavity constant (was overridden to k = 4)
-- [9003] Bootstrap replicates now scored correctly (and without warning) under implied weights
+- [9003] User now able to specify value of concavity constant
+  (was overridden to k = 4)
+- [9003] Bootstrap replicates now scored correctly (and without warning)
+  under implied weights
 
 
 # TreeSearch 0.0.7
