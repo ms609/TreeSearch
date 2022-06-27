@@ -388,11 +388,11 @@ ui <- fluidPage(
 
 X <- expression
 
-Enquote <- function (x) {
+Enquote <- function (x, ...) {
   if (mode(x) == "character") {
     paste0("\"", x, "\"")
   } else {
-    x
+    signif(x, ...)
   }
 }
 
