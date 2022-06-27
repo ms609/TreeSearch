@@ -483,11 +483,11 @@ server <- function(input, output, session) {
         return ("No data file found.")
       }
       r$dataset <- tryCatch(ReadTntAsPhyDat(dataFile),
-                            error = function (e) tryCatch({
+                            error = function(e) tryCatch({
                               r$chars <- ReadCharacters(dataFile)
                               r$charNotes <- ReadNotes(dataFile)
                               ReadAsPhyDat(dataFile)
-                            }, error = function (e) NULL))
+                            }, error = function(e) NULL))
     } else {
       LogMsg("UpdateData: from package")
       hideElement("dataFile")
@@ -1909,11 +1909,9 @@ server <- function(input, output, session) {
   onStop(function() {
     options(startOpt)
     if (file.exists(sessionLogFile)) {
-      close(ssnCon)
       unlink(sessionLogFile)
     }
     if (file.exists(cmdLogFile)) {
-      close(cmdCon)
       unlink(cmdLogFile)
     }
     LogMsg("Session has ended")
