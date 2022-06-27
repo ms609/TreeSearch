@@ -388,6 +388,14 @@ ui <- fluidPage(
 
 X <- expression
 
+Enquote <- function (x) {
+  if (mode(x) == "character") {
+    paste0("\"", x, "\"")
+  } else {
+    x
+  }
+}
+
 server <- function(input, output, session) {
   
   sessionLogFile <- tempfile("TreeSearch-", fileext = ".md")
@@ -399,14 +407,14 @@ server <- function(input, output, session) {
   }
   cmdCon <- file(cmdLogFile, open = "a")
   
-  LogText <- function (lines) {
+  LogText <- function(lines) {
     if (isTRUE(getOption("TreeSearch.logging"))) {
       Write("```", sessionLogFile)
       options("TreeSearch.logging.code" = FALSE)
     }
     Write(c(as.character(Sys.time()), lines), sessionLogFile)
   }
-  LogExpr <- function (exps) {
+  LogExpr <- function(exps, evaluate = TRUE) {
     if (!isTRUE(getOption("TreeSearch.logging.code"))) {
       Write("```r", sessionLogFile)
       options("TreeSearch.logging.code" = TRUE)
@@ -414,11 +422,21 @@ server <- function(input, output, session) {
     for (exp in exps) {
       Write(as.character(exp), sessionLogFile)
       Write(as.character(exp), cmdLogFile)
-      eval(exp)
+      if (evaluate) {
+        eval(exp)
+      }
     }
   }
   
-  LogComment <- function (exps, returns = 0) {
+  LogCode <- function(text) {
+    if (!isTRUE(getOption("TreeSearch.logging.code"))) {
+      Write("```r", sessionLogFile)
+      options("TreeSearch.logging.code" = TRUE)
+    }
+    Write(text, cmdLogFile)
+  }
+  
+  LogComment <- function(exps, returns = 0) {
     if (!isTRUE(getOption("TreeSearch.logging.code"))) {
       Write("```r", sessionLogFile)
       options("TreeSearch.logging.code" = TRUE)
@@ -438,8 +456,8 @@ server <- function(input, output, session) {
   LogComment("Load required libraries")
   LogExpr(list(
     X(library("TreeTools", quietly = TRUE)),
-    X(library("TreeSearch")),
-    X(library("TreeDist"))
+    X(library("TreeDist")),
+    X(library("TreeSearch"))
   ))
   
   
@@ -488,6 +506,13 @@ server <- function(input, output, session) {
                               r$charNotes <- ReadNotes(dataFile)
                               ReadAsPhyDat(dataFile)
                             }, error = function(e) NULL))
+      LogComment("Load data from file", 2)
+      LogCode(c(
+        "dataFile <- \"path/to/file.nex\"",
+        "## Load a NEXUS file with:",
+        "dataset <- ReadAsPhyDat(dataFile)",
+        "## Load a TNT file with:",
+        "dataset <- ReadTntAsPhyDat(dataFile)"))
     } else {
       LogMsg("UpdateData: from package")
       hideElement("dataFile")
@@ -497,6 +522,10 @@ server <- function(input, output, session) {
       r$chars <- ReadCharacters(dataFile)
       r$charNotes <- ReadNotes(dataFile)
       r$dataset <- ReadAsPhyDat(dataFile)
+      LogCode(c("dataset <- ReadAsPhyDat(",
+              paste0("  system.file(\"datasets/", source,
+                     ".nex\", package = \"TreeSearch\")"),
+              ")"))
     }
     if (is.null(r$dataset)) {
       Notification(type = "error", "Could not read data from file")
@@ -626,7 +655,11 @@ server <- function(input, output, session) {
       title = "Tree search settings",
       footer = tagList(modalButton("Close", icon = icon("window-close")),
                        actionButton("modalGo", icon = icon("search"), 
-                                    if(length(r$trees)) "Continue search" else "Start search"))
+                                    if(length(r$trees)) {
+                                      "Continue search" 
+                                    } else {
+                                      "Start search"
+                                    }))
     ))
     show("go")
   })
@@ -915,13 +948,31 @@ server <- function(input, output, session) {
       Notification("No data loaded", type = "error")
     } else {
       startTree <- if (is.null(r$trees)) {
+        LogComment("Select starting tree")
+        LogCode(paste0("startTree <- AdditionTree(dataset, concavity = ",
+                       Enquote(concavity()), ")"))
         AdditionTree(r$dataset, concavity = concavity())
       } else {
+        LogComment("Select starting tree")
+        LogCode("startTree <- trees[[1]]")
         r$trees[[1]]
       }
       LogMsg("StartSearch()")
       PutData(r$dataset)
       PutTree(startTree)
+      LogComment("Search for optimal trees", 1)
+      LogCode(c(
+        "results <- MaximizeParsimony(",
+        "  dataset,",
+        "  tree = startTree,",
+        paste0("  concavity = ", Enquote(concavity()), ","),
+        paste0("  ratchIter = ", input$ratchIter, ","), 
+        paste0("  tbrIter = ", input$tbrIter, ","), 
+        paste0("  maxHits = ", ceiling(10 ^ input$maxHits), ","), 
+        paste0("  startIter = ", input$startIter, ","), 
+        paste0("  finalIter = ", input$finalIter, ","), 
+        "  verbosity = 4L",
+        ")"))
       results <- withProgress(
         MaximizeParsimony(r$dataset,
                           tree = startTree,
@@ -935,6 +986,16 @@ server <- function(input, output, session) {
         value = 0.85, message = "Finding MPT",
         detail = paste0(ceiling(10^input$maxHits), " hits; ", wtType())
       )
+      LogComment("Overwrite any previous trees with results")
+      LogCode(c(
+        "if (inherits(results, \"phylo\")) {",
+        "  trees <- list(results)",
+        "  attr(trees, \"firstHit\") <- attr(results, \"firstHit\")",
+        "  attr(trees[[1]], \"firstHit\") <- NULL",
+        "} else {",
+        "  trees <- results",
+        "}"
+      ))
       if (inherits(results, "phylo")) {
         r$rawTrees <- list(results)
         attr(r$trees, "firstHit") <- attr(results, "firstHit")
@@ -942,6 +1003,7 @@ server <- function(input, output, session) {
       } else {
         r$rawTrees <- results
       }
+      
       updateSliderInput(session, "whichTree", min = 1L,
                         max = length(r$trees), value = 1L)
       
