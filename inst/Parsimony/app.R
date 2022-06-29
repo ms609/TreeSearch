@@ -398,6 +398,8 @@ Enquote <- function (x, ...) {
 
 server <- function(input, output, session) {
   
+  r <- reactiveValues()
+  
   cmdLogFile <- tempfile("TreeSearch-", fileext = ".R")
   Write <- function (txt, file) {
     con <- file(file, open = "a")
@@ -423,6 +425,29 @@ server <- function(input, output, session) {
     for (exp in exps) {
       Write(paste("#", exp), cmdLogFile)
     }
+  }
+  
+  r$dataFiles <- 0
+  r$treeFiles <- 0
+  TwoWide <- function(n) {
+    formatC(n, width = 2, flag = "0")
+  }
+  DataFileName <- function(n) if (length(n)) {
+    paste0("dataFile-", TwoWide(n), ".txt")
+  }
+  TreeFileName <- function(n) if (length(n)) {
+    paste0("treeFile-", TwoWide(n), ".txt")
+  }
+  LastFile <- function(type) {
+    switch(pmatch(type, c("data", "tree")), 
+           DataFileName(r$dataFiles),
+           TreeFileName(r$dataFiles)
+    )
+  }
+  CacheInput <- function(type, fileName) {
+    key <- paste0(type, "Files")
+    r[[key]] <- r[[key]] + 1
+    file.copy(fileName, paste(tempdir(), FileName(type), collapse = "/"))
   }
   
   if (!requireNamespace("TreeDist", quietly = TRUE)) {
@@ -476,7 +501,6 @@ server <- function(input, output, session) {
   
   LogMsg("Started server")
   
-  r <- reactiveValues()
   
   ##############################################################################
   # Load data
@@ -513,8 +537,9 @@ server <- function(input, output, session) {
                               ReadAsPhyDat(dataFile)
                             }, error = function(e) NULL))
       LogComment("Load data from file", 2)
+      CacheInput("data", dataFile)
       LogCode(c(
-        "dataFile <- \"path/to/file.nex\"",
+        paste0("dataFile <- \"", LastFile("data"), "\""),
         "## Load a NEXUS file with:",
         "dataset <- ReadAsPhyDat(dataFile)",
         "## Load a TNT file with:",
@@ -727,7 +752,8 @@ server <- function(input, output, session) {
       Notification("Trees not in a recognized format", type = "error")
     } else {
       LogComment("Load tree from file", 2)
-      LogCode("treeFile <- \"path/to/trees.nex\" # or .tnt, .nwk, .tr...")
+      CacheInput("tree", tmpFile)
+      LogCode(paste0("treeFile <- \"", LastFile("tree"), "\""))
       LogCode(paste0("trees <- ", codeToLog))
       
       treeNames <- names(trees)
@@ -1924,9 +1950,18 @@ server <- function(input, output, session) {
   
   output$saveR <- downloadHandler(
     filename = function() paste0("TreeSearch-session.R"),
-    content = function (file) {
-      dput(cmdLogFile)
+    content = function(file) {
       file.copy(cmdLogFile, file)
+    })
+  
+  output$saveZip <- downloadHandler(
+    filename = function() paste0("TreeSearch-session.zip"),
+    content = function(file) {
+      zip(file, c(
+        cmdLogFile,
+        paste0(tempdir(), DataFileName(seq_len(r$dataFiles)), collapse = "/"),
+        paste0(tempdir(), TreeFileName(seq_len(r$treeFiles)), collapse = "/")
+      ), flags = "-r9Xj")
     })
   
   output$savePng <- downloadHandler(
@@ -1997,6 +2032,9 @@ server <- function(input, output, session) {
     if (file.exists(cmdLogFile)) {
       unlink(cmdLogFile)
     }
+    message(tempdir())
+    unlink(DataFileName("*"))
+    unlink(TreeFileName("*"))
     LogMsg("Session has ended")
   })
 }
