@@ -404,7 +404,6 @@ server <- function(input, output, session) {
     on.exit(close(con))
     writeLines(txt, con)
   }
-  cmdCon <- file(cmdLogFile, open = "a")
   
   LogExpr <- function(exps, evaluate = TRUE) {
     for (exp in exps) {
