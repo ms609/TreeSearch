@@ -276,17 +276,17 @@ ui <- fluidPage(
                            min = 100, max = 2000,
                            post = "px", value = 600),
       ),
-      tags$div(id = "exportAs", 
-               tags$span("Export history: "),
-               downloadButton("saveR", "R script"),
-               downloadButton("saveMd", "Session log"),
-      ),
       tags$div(id = "saveAs", 
-               tags$span("Save graphic: "),
+               tags$span("Save\ua0tree: "),
                downloadButton("savePdf", "PDF"),
                downloadButton("savePng", "PNG"),
                downloadButton("saveNwk", "Newick"),
                downloadButton("saveNex", "Nexus")
+      ),
+      tags$div(id = "exportAs", 
+               tags$span("Export\ua0session:" ),
+               downloadButton("saveR", "R commands"),
+               downloadButton("saveZip", "Zip, with data")
       )
     ),
     fluidRow(
@@ -398,7 +398,6 @@ Enquote <- function (x, ...) {
 
 server <- function(input, output, session) {
   
-  sessionLogFile <- tempfile("TreeSearch-", fileext = ".md")
   cmdLogFile <- tempfile("TreeSearch-", fileext = ".R")
   Write <- function (txt, file) {
     con <- file(file, open = "a")
@@ -407,20 +406,8 @@ server <- function(input, output, session) {
   }
   cmdCon <- file(cmdLogFile, open = "a")
   
-  LogText <- function(lines) {
-    if (isTRUE(getOption("TreeSearch.logging"))) {
-      Write("```", sessionLogFile)
-      options("TreeSearch.logging.code" = FALSE)
-    }
-    Write(c(as.character(Sys.time()), lines), sessionLogFile)
-  }
   LogExpr <- function(exps, evaluate = TRUE) {
-    if (!isTRUE(getOption("TreeSearch.logging.code"))) {
-      Write("```r", sessionLogFile)
-      options("TreeSearch.logging.code" = TRUE)
-    }
     for (exp in exps) {
-      Write(as.character(exp), sessionLogFile)
       Write(as.character(exp), cmdLogFile)
       if (evaluate) {
         eval(exp)
@@ -429,31 +416,51 @@ server <- function(input, output, session) {
   }
   
   LogCode <- function(text) {
-    if (!isTRUE(getOption("TreeSearch.logging.code"))) {
-      Write("```r", sessionLogFile)
-      options("TreeSearch.logging.code" = TRUE)
-    }
     Write(text, cmdLogFile)
   }
   
   LogComment <- function(exps, returns = 0) {
-    if (!isTRUE(getOption("TreeSearch.logging.code"))) {
-      Write("```r", sessionLogFile)
-      options("TreeSearch.logging.code" = TRUE)
-    }
     Write(rep("", returns), cmdLogFile)
     for (exp in exps) {
       Write(paste("#", exp), cmdLogFile)
     }
   }
   
-  LogText("# Initialize R session")
-  
   if (!requireNamespace("TreeDist", quietly = TRUE)) {
     install.packages("TreeDist")
   }
   
-  LogComment("Load required libraries")
+  LogComment(c(
+    "# # TreeSearch session log # # #",
+    "",
+    paste("System time: ", Sys.time()),
+    "",
+    paste(
+      "System:", Sys.info()["sysname"], Sys.info()["release"],
+      Sys.info()["version"], "-",
+      .Platform$OS.type, R.version$platform
+    ),
+    paste(
+      "-", R.version$version.string
+    ),
+    paste("- TreeSearch", packageVersion("TreeSearch")),
+    paste("- TreeTools", packageVersion("TreeTools")),
+    paste("- TreeDist", packageVersion("TreeDist")),
+    paste("- ape", packageVersion("ape")),
+    "",
+    "This log was generated procedurally to facilitate the reproduction of",
+    "results obtained during an interactive Shiny session.",
+    "It is provided without guarantee of correctness or validity.",
+    "",
+    "Please validate the code before reproducing in a manuscript, reporting",
+    "any errors at https://github.com/ms609/treesearch/issues or by e-mail to",
+    "the maintainer.",
+    "",
+    "# # # # #"
+  ))
+  
+  
+  LogComment("Load required libraries", 2)
   LogExpr(list(
     X(library("TreeTools", quietly = TRUE)),
     X(library("TreeDist")),
@@ -559,6 +566,14 @@ server <- function(input, output, session) {
     LogMsg("Updating trees")
     FetchNTree()
     FetchTreeRange()
+    
+    if (!is.null(r$allTrees)) {
+      LogCode(paste0(
+        "trees <- allTrees[unique(as.integer(seq.int(",
+        r$treeRange[1], ", ", r$treeRange[2], ", length.out = ", r$nTree, ")))]"
+      ))
+    }
+    
     r$trees <- r$allTrees[
       unique(as.integer(seq.int(
         r$treeRange[1], r$treeRange[2], length.out = r$nTree)))]
@@ -592,6 +607,8 @@ server <- function(input, output, session) {
       LogMsg("No need to update trees; no change")
       return()
     }
+    
+    LogCode("allTrees <- trees")
     r$allTrees <- trees
     
     nTrees <- length(trees)
@@ -666,10 +683,14 @@ server <- function(input, output, session) {
   
   observeEvent(input$treeFile, {
     tmpFile <- input$treeFile$datapath
-    trees <- tryCatch(
-      read.tree(tmpFile),
-      error = function (x) tryCatch(
-        read.nexus(tmpFile),
+    trees <- tryCatch({
+        codeToLog <- "read.tree(treeFile)"
+        read.tree(tmpFile)
+      },
+      error = function (x) tryCatch({
+          codeToLog <- "read.nexus(treeFile)"
+          read.nexus(tmpFile)
+        },
         error = function (err) tryCatch(
           {
             if (err == "NA/NaN argument") {
@@ -682,13 +703,17 @@ server <- function(input, output, session) {
               stop("Next handler, please")
             }
           },
-          error = function (x) tryCatch(
-            ReadTntTree(tmpFile), warning = function (x) tryCatch({
+          error = function (x) tryCatch({
+              codeToLog <- "ReadTntTree(treeFile)"
+              ReadTntTree(tmpFile)
+            }, warning = function (x) tryCatch({
               Notification(as.character(x), type = "warning")
               tryLabels <- TipLabels(r$dataset)
               if (length(tryLabels) > 2) {
                 Notification("Inferring tip labels from dataset",
                                  type = "warning")
+                codeToLog <- 
+                  "ReadTntTree(treeFile, tipLabels = TipLabels(dataset))"
                 ReadTntTree(tmpFile, tipLabels = tryLabels)
               } else {
                 NULL
@@ -702,15 +727,25 @@ server <- function(input, output, session) {
     if (is.null(trees)) {
       Notification("Trees not in a recognized format", type = "error")
     } else {
+      LogComment("Load tree from file", 2)
+      LogCode("treeFile <- \"path/to/trees.nex\" # or .tnt, .nwk, .tr...")
+      LogCode(paste0("trees <- ", codeToLog))
+      
       treeNames <- names(trees)
       r$rawTrees <- c(trees)
       UpdateAllTrees(r$rawTrees) # updates r$trees
       pattern <- "(seed|start|ratch\\d+|final)_\\d+"
       if (length(grep(pattern, treeNames, perl = TRUE)) ==
           length(r$trees)) {
+        
+        LogCode("whenHit <- gsub(\"(seed|start|ratch\\d+|final)_\\d+\", \"\\\\1\",
+                names(trees), perl = TRUE)")
         whenHit <- gsub(pattern, "\\1", treeNames, perl = TRUE)
+        
+        LogCode("attr(trees, \"firstHit\") <- table(whenHit)[unique(whenHit)]")
         attr(r$trees, "firstHit") <- table(whenHit)[unique(whenHit)]
       }
+      
       removeModal()
       Notification(paste("Loaded", length(r$trees), "trees"), type = "message")
       updateActionButton(session, "modalGo", "Continue search")
@@ -1895,16 +1930,6 @@ server <- function(input, output, session) {
       file.copy(cmdLogFile, file)
     })
   
-  output$saveMd <- downloadHandler(
-    filename = function() paste0("TreeSearch-session.md"),
-    content = function (file) {
-      file.copy(sessionLogFile, file)
-      if (isTRUE(getOption("TreeSearch.logging"))) {
-        writeLines("```", file)
-      }
-    })
-  
-  
   output$savePng <- downloadHandler(
     filename = function() paste0(saveDetails()$fileName, ".png"),
     content = function (file) {
@@ -1970,9 +1995,6 @@ server <- function(input, output, session) {
 
   onStop(function() {
     options(startOpt)
-    if (file.exists(sessionLogFile)) {
-      unlink(sessionLogFile)
-    }
     if (file.exists(cmdLogFile)) {
       unlink(cmdLogFile)
     }
