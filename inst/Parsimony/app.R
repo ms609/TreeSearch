@@ -1,14 +1,15 @@
+# options("TreeSearch.logging" = TRUE)
+logging <- isTRUE(getOption("TreeSearch.logging"))
+options("TreeSearch.logging.code" = FALSE)
+options(shiny.maxRequestSize = 1024^3) # Allow max 1 GB files
+
+
 library("methods", exclude = c("show", "removeClass"))
 library("cli")
 suppressPackageStartupMessages({
   library("shiny", exclude = c("runExample"))
   library("shinyjs", exclude = c("runExample"))
 })
-
-# options("TreeSearch.logging" = TRUE)
-logging <- isTRUE(getOption("TreeSearch.logging"))
-options("TreeSearch.logging.code" = FALSE)
-options(shiny.maxRequestSize = 1024^3) # Allow max 1 GB files
 
 
 if (logging) {
@@ -447,7 +448,7 @@ server <- function(input, output, session) {
   CacheInput <- function(type, fileName) {
     key <- paste0(type, "Files")
     r[[key]] <- r[[key]] + 1
-    file.copy(fileName, paste(tempdir(), FileName(type), collapse = "/"))
+    file.copy(fileName, paste0(tempdir(), "/", LastFile(type)))
   }
   
   if (!requireNamespace("TreeDist", quietly = TRUE)) {
@@ -474,7 +475,10 @@ server <- function(input, output, session) {
     "",
     "This log was generated procedurally to facilitate the reproduction of",
     "results obtained during an interactive Shiny session.",
-    "It is provided without guarantee of correctness or validity.",
+    "It is provided without guarantee of completeness or accuracy.",
+    "",
+    "Before running, check that the script and any data files are in the",
+    "R working directory, which can be read with getwd() and set with setwd().",
     "",
     "Please validate the code before reproducing in a manuscript, reporting",
     "any errors at https://github.com/ms609/treesearch/issues or by e-mail to",
@@ -530,20 +534,29 @@ server <- function(input, output, session) {
         Notification(type = "error", "No data file found.")
         return ("No data file found.")
       }
-      r$dataset <- tryCatch(ReadTntAsPhyDat(dataFile),
-                            error = function(e) tryCatch({
-                              r$chars <- ReadCharacters(dataFile)
-                              r$charNotes <- ReadNotes(dataFile)
-                              ReadAsPhyDat(dataFile)
-                            }, error = function(e) NULL))
-      LogComment("Load data from file", 2)
-      CacheInput("data", dataFile)
-      LogCode(c(
-        paste0("dataFile <- \"", LastFile("data"), "\""),
-        "## Load a NEXUS file with:",
-        "dataset <- ReadAsPhyDat(dataFile)",
-        "## Load a TNT file with:",
-        "dataset <- ReadTntAsPhyDat(dataFile)"))
+      
+      codeToLog <- NULL
+      r$dataset <- tryCatch({
+        codeToLog <- "ReadTntAsPhyDat(dataFile)"
+        ReadTntAsPhyDat(dataFile)
+      }, error = function(e) tryCatch({
+        r$chars <- ReadCharacters(dataFile)
+        r$charNotes <- ReadNotes(dataFile)
+        codeToLog <- "ReadTntAsPhyDat(dataFile)"
+        ReadAsPhyDat(dataFile)
+      }, error = function(e) {
+        codeToLog <- NULL
+        NULL
+      }))
+      
+      if (!is.null(r$dataset)) {
+        LogComment("Load data from file", 2)
+        CacheInput("data", dataFile)
+        LogCode(c(
+          paste0("dataFile <- \"", LastFile("data"), "\""),
+          paste0("dataset <- ", codeToLog)
+        ))
+      }
     } else {
       LogMsg("UpdateData: from package")
       hideElement("dataFile")
@@ -591,16 +604,18 @@ server <- function(input, output, session) {
     FetchNTree()
     FetchTreeRange()
     
-    if (!is.null(r$allTrees)) {
+    thinnedTrees <- r$allTrees[
+      unique(as.integer(seq.int(
+        r$treeRange[1], r$treeRange[2], length.out = r$nTree)))]
+    
+    if (!is.null(r$allTrees) && !identical(trees, thinnedTrees)) {
       LogCode(paste0(
         "trees <- allTrees[unique(as.integer(seq.int(",
         r$treeRange[1], ", ", r$treeRange[2], ", length.out = ", r$nTree, ")))]"
       ))
     }
     
-    r$trees <- r$allTrees[
-      unique(as.integer(seq.int(
-        r$treeRange[1], r$treeRange[2], length.out = r$nTree)))]
+    r$trees <- thinnedTrees
     r$treeHash <- rlang::hash(r$trees)
     
     DisplayTreeScores()
@@ -632,18 +647,25 @@ server <- function(input, output, session) {
       return()
     }
     
-    LogCode("allTrees <- trees")
-    r$allTrees <- trees
+    oldNTrees <- length(r$allTrees)
+    
+    if (!identical(r$allTrees, trees)) {
+      LogCode("allTrees <- trees")
+      r$allTrees <- trees
+    }
     
     nTrees <- length(trees)
-    r$treeRange <- c(max(1L, nTrees - aFewTrees), nTrees)
-    updateSliderInput(session, "treeRange",
-                      min = 1L, max = nTrees,
-                      value = r$treeRange)
     
-    r$nTree <- min(max(input$nTree, aFewTrees), nTrees)
-    updateNumericInput(session, "nTree", max = nTrees,
-                       value = r$nTree)
+    if (nTrees != oldNTrees) {
+      r$treeRange <- c(max(1L, nTrees - aFewTrees), nTrees)
+      updateSliderInput(session, "treeRange",
+                        min = 1L, max = nTrees,
+                        value = r$treeRange)
+    
+      r$nTree <- min(max(input$nTree, aFewTrees), nTrees)
+      updateNumericInput(session, "nTree", max = nTrees,
+                         value = r$nTree)
+    }
     
     UpdateTrees()
   }
@@ -659,8 +681,8 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$searchConfig, {
-    updateSelectInput(session, "character.weight",
-                      selected = input$character.weight)
+    #updateSelectInput(session, "character.weight",
+    #                  selected = input$character.weight)
     updateSelectInput(session, "implied.weights",
                       selected = input$implied.weights)
     updateSliderInput(session, "concavity", value = input$concavity)
@@ -672,8 +694,9 @@ server <- function(input, output, session) {
     showModal(modalDialog(
       easyClose = TRUE,
       fluidPage(column(6,
-      tagList(selectInput("character.weight", "Character weighting",
-                          list("Equal" = "equal"), "equal"),
+      tagList(
+        #selectInput("character.weight", "Character weighting",
+        #                  list("Equal" = "equal"), "equal"),
               selectInput("implied.weights", "Step weighting", 
                          list("Implied" = "on", "Profile" = "prof",
                               "Equal" = "off"), "on"),
@@ -1031,7 +1054,7 @@ server <- function(input, output, session) {
         paste0("  maxHits = ", ceiling(10 ^ input$maxHits), ","), 
         paste0("  startIter = ", input$startIter, ","), 
         paste0("  finalIter = ", input$finalIter, ","), 
-        "  verbosity = 4L",
+        "  verbosity = 4",
         ")"))
       results <- withProgress(
         MaximizeParsimony(r$dataset,
@@ -1957,10 +1980,15 @@ server <- function(input, output, session) {
   output$saveZip <- downloadHandler(
     filename = function() paste0("TreeSearch-session.zip"),
     content = function(file) {
+      tempDir <- tempfile("zip-")
+      dir.create(tempDir)
+      on.exit(unlink(tempDir))
+      rFile <-paste0(tempDir, "/TreeSearch-session.R")
+      file.copy(cmdLogFile, rFile)
       zip(file, c(
-        cmdLogFile,
-        paste0(tempdir(), DataFileName(seq_len(r$dataFiles)), collapse = "/"),
-        paste0(tempdir(), TreeFileName(seq_len(r$treeFiles)), collapse = "/")
+        rFile,
+        paste0(tempdir(), "/", DataFileName(seq_len(r$dataFiles))),
+        paste0(tempdir(), "/", TreeFileName(seq_len(r$treeFiles)))
       ), flags = "-r9Xj")
     })
   
@@ -2032,7 +2060,6 @@ server <- function(input, output, session) {
     if (file.exists(cmdLogFile)) {
       unlink(cmdLogFile)
     }
-    message(tempdir())
     unlink(DataFileName("*"))
     unlink(TreeFileName("*"))
     LogMsg("Session has ended")
