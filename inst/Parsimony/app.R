@@ -389,11 +389,19 @@ ui <- fluidPage(
 
 X <- expression
 
-Enquote <- function (x, ...) {
+Enquote <- function(x, ...) {
   if (mode(x) == "character") {
     paste0("\"", x, "\"")
   } else {
     signif(x, ...)
+  }
+}
+
+EnC <- function(...) {
+  if (length(...) == 1) {
+    Enquote(...)
+  } else {
+    paste0("c(", paste(sapply(..., Enquote), collapse = ", "), ")")
   }
 }
 
@@ -417,8 +425,10 @@ server <- function(input, output, session) {
     }
   }
   
-  LogCode <- function(text) {
-    Write(text, cmdLogFile)
+  LogCode <- function(...) {
+    for (line in list(...)) {
+      Write(line, cmdLogFile)
+    }
   }
   
   LogComment <- function(exps, returns = 0) {
@@ -1231,7 +1241,37 @@ server <- function(input, output, session) {
         length(input$excludedTip) &&
         nchar(input$excludedTip) &&
         input$excludedTip %in% tipLabels()) {
-      consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
+      
+      LogComment("Plot reduced consensus tree", 1)
+      if (length(setdiff(dropped, input$excludedTip))) {
+        LogCode("consTrees <- lapply(",
+                "  trees,",
+                "  DropTip,",
+                paste0("  ", EnC(setdiff(dropped, input$excludedTip))),
+                ")")
+        consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
+        LogCode(
+          "labels <- setdiff(",
+          "  consTrees[[1]]$tip.label,",
+          paste0("  ", EnC(setdiff(dropped, input$excludedTip))),
+          ")"
+        )
+      } else {
+        LogCode("consTrees <- trees",
+                "labels <- consTrees[[1]]$tip.label")
+        consTrees <- r$trees
+      }
+      
+      LogCode("tipCols <- Rogue::ColByStability(trees)[labels]")
+      LogCode("RoguePlot(",
+              "  trees = consTrees,",
+              paste0("  tip = ", Enquote(input$excludedTip), ","),
+              paste0("  p = ", signif(consP()), ","),
+              "  edgeLength = 1,",
+              paste0("  outgroupTips = ", EnC(input$outgroup), ","),
+              "  tip.color = tipCols",
+              ")")
+      
       plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
                            edgeLength = 1,
                            outgroupTips = input$outgroup,
