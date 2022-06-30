@@ -431,7 +431,7 @@ server <- function(input, output, session) {
     }
   }
   
-  LogComment <- function(exps, returns = 0) {
+  LogComment <- function(exps, returns = 1) {
     Write(rep("", returns), cmdLogFile)
     for (exp in exps) {
       Write(paste("#", exp), cmdLogFile)
@@ -1115,6 +1115,9 @@ server <- function(input, output, session) {
   UserRoot <- function (tree) {
     outgroupTips <- intersect(input$outgroup, tree$tip.label)
     if (length(outgroupTips)) {
+      tr <- deparse(substitute(tree))
+      LogComment("Root tree")
+      LogCode(paste0(tr, " <- RootTree(", tr, ", ", EnC(outgroupTips), ")"))
       RootTree(tree, outgroupTips)
     } else {
       tree
@@ -1126,7 +1129,8 @@ server <- function(input, output, session) {
   
   PlottedTree <- reactive({
     if (length(r$trees) > 0L) {
-      tr <- UserRoot(r$trees[[whichTree()]])
+      tr <- r$trees[[whichTree()]]
+      tr <- UserRoot(tr)
       if (!("tipsRight" %in% input$mapDisplay)) {
         tr$edge.length <- rep_len(2, dim(tr$edge)[1])
       }
@@ -1185,6 +1189,20 @@ server <- function(input, output, session) {
   
   concordance <- bindCache(reactive({
     LogMsg("concordance()")
+    concCode <- switch(
+      input$concordance,
+      "p" = "SplitFrequency(plottedTree, trees) / length(trees)",
+      "qc" = "QuartetConcordance(plottedTree, dataset)",
+      "clc" = "ClusteringConcordance(plottedTree, dataset)",
+      "phc" = "PhylogeneticConcordance(plottedTree, dataset)",
+      NULL
+    )
+    if (!is.null(concCode)) {
+      LogComment("Calculate split concordance", 1)
+      LogCode(paste0("concordance <- ", concCode))
+    }
+    
+    # Return:
     switch(input$concordance,
           "p" = SplitFrequency(r$plottedTree, r$trees) / length(r$trees),
           "qc" = QuartetConcordance(r$plottedTree, r$dataset),
@@ -1197,9 +1215,20 @@ server <- function(input, output, session) {
   LabelConcordance <- reactive({
     if (input$concordance != "none" &&
         !is.null(r$plottedTree)) {
-      LabelSplits(r$plottedTree, signif(concordance(), 3),
-                  col = SupportColor(concordance()),
-                  frame = "none", pos = 3L)
+      # This call also ensures that concordance assignment is logged before
+      # LabelSplits()
+      if (!is.null(concordance())) {
+        LogCode("LabelSplits(",
+                "  tree = plottedTree,",
+                "  labels = signif(concordance, 3),",
+                "  col = SupportColor(concordance),",
+                "  frame = \"none\",",
+                "  pos = 3",
+                ")")
+        LabelSplits(r$plottedTree, signif(concordance(), 3),
+                    col = SupportColor(concordance()),
+                    frame = "none", pos = 3L)
+      }
     }
   })
   
@@ -1242,7 +1271,7 @@ server <- function(input, output, session) {
         nchar(input$excludedTip) &&
         input$excludedTip %in% tipLabels()) {
       
-      LogComment("Plot reduced consensus tree", 1)
+      LogComment("Prepare reduced consensus tree", 1)
       if (length(setdiff(dropped, input$excludedTip))) {
         LogCode("consTrees <- lapply(",
                 "  trees,",
@@ -1263,7 +1292,8 @@ server <- function(input, output, session) {
       }
       
       LogCode("tipCols <- Rogue::ColByStability(trees)[labels]")
-      LogCode("RoguePlot(",
+      LogComment("Plot the reduced consensus tree")
+      LogCode("plotted <- RoguePlot(",
               "  trees = consTrees,",
               paste0("  tip = ", Enquote(input$excludedTip), ","),
               paste0("  p = ", signif(consP()), ","),
@@ -1276,13 +1306,27 @@ server <- function(input, output, session) {
                            edgeLength = 1,
                            outgroupTips = input$outgroup,
                            tip.color = tipCols()[intersect(consTrees[[1]]$tip.label, kept)])
+      LogCode("plottedTree <- plotted$cons # Store tree for future reference")
       r$plottedTree <- plotted$cons
+      
       LabelConcordance()
     } else {
-      cons <- UserRoot(ConsensusWithout(r$trees,
-                                        # `dropped` might be out of date
-                                        intersect(dropped, tipLabels()),
-                                        p = consP()))
+      without <- intersect(dropped, tipLabels()) # `dropped` might be outdated
+      LogComment("Calculate consensus tree")
+      if (length(without)) {
+        LogCode(
+          "cons <- ConsensusWithout(",
+          "  trees,",
+          paste0("  ", EnC(without), ","),
+          paste0("  p = ", signif(consP())),
+          ")")
+      } else {
+        LogCode(paste0(
+          "cons <- Consensus(trees, p = ", signif(consP()), ")"
+        ))
+      }
+      cons <- ConsensusWithout(r$trees, without, p = consP())
+      cons <- UserRoot(cons)
       if (unitEdge()) {
         cons$edge.length <- rep_len(1L, dim(cons$edge)[1])
       }
@@ -1698,7 +1742,8 @@ server <- function(input, output, session) {
         PutTree(r$trees)
         PutData(cl$cluster)
         
-        tr <- UserRoot(ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP()))
+        tr <- ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP())
+        tr <- UserRoot(tr)
         tr$edge.length <- rep.int(1, dim(tr$edge)[1])
         r$plottedTree <- tr
         plot(tr, edge.width = 2, font = 3, cex = 0.83,
@@ -1710,7 +1755,8 @@ server <- function(input, output, session) {
     } else {
       LogMsg(" > Single cluster")
       PutTree(r$trees)
-      tr <- UserRoot(ConsensusWithout(r$trees, dropped, p = consP()))
+      tr <- ConsensusWithout(r$trees, dropped, p = consP())
+      tr <- UserRoot(tr)
       tr$edge.length <- rep.int(1, dim(tr$edge)[1])
       r$plottedTree <- tr
       plot(tr,edge.width = 2, font = 3, cex = 0.83,
