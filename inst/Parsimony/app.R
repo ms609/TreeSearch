@@ -2203,10 +2203,10 @@ server <- function(input, output, session) {
     if (file.exists(cmdLogFile)) {
       unlink(cmdLogFile)
     }
-    close(logMsgFile)
     unlink(DataFileName("*"))
     unlink(TreeFileName("*"))
     LogMsg("Session has ended")
+    close(logMsgFile)
   })
 }
 
