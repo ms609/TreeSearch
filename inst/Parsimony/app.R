@@ -1141,10 +1141,6 @@ server <- function(input, output, session) {
     }
   })
   
-  RenderMainPlot <- function (x) {
-    renderPlot(x, width = PlotSize(), height = PlotSize())
-  }
-  
   Instab <- reactive({
     TipInstability(r$trees)
   })
