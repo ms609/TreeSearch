@@ -34,6 +34,18 @@ if (logging) {
   PutData <- PutTree <- LogMsg <- function (...) {}
 }
 
+WriteLoggedCode <- if (requireNamespace("crayon", quiet = TRUE)) {
+  function(txt) {
+    for (line in txt) cat(if (substr(trimws(line), 0, 1) == "#") {
+      crayon::green("  ", line, "\n")
+    } else {
+      crayon::yellow("  ", line, "\n")
+    })
+  }
+} else {
+  function(txt) message("       ", txt)
+}
+
 Notification <- function (...) {
   if (!isTRUE(getOption("shiny.testmode"))) {
     showNotification(...)
@@ -309,7 +321,7 @@ ui <- fluidPage(
         tags$div(style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput("consP", "Majority:", value = 1,
                       min = 0.5, max = 1, width = 200),
-          numericInput("keepTips", "Tips to show:", value = 2L,
+          numericInput("keepTips", "Tips to show:", value = 0L,
                        min = 2L, max = 2L, step = 1L, width = 200),
           selectizeInput("neverDrop", "Never drop:", multiple = TRUE,
                          choices = list("NA" = "No trees loaded"))
@@ -407,14 +419,19 @@ EnC <- function(...) {
 
 server <- function(input, output, session) {
   
-  r <- reactiveValues()
+  r <- reactiveValues(
+    nTree = 0,
+    nTreeChanged = FALSE,
+    treeRange = c(0, 0),
+    treeRangeChanged = FALSE
+  )
   
   cmdLogFile <- tempfile("TreeSearch-", fileext = ".R")
   Write <- function (txt, file) {
     con <- file(file, open = "a")
     on.exit(close(con))
     if (logging) {
-      message(txt)
+      WriteLoggedCode(txt)
     }
     writeLines(txt, con)
   }
@@ -525,14 +542,14 @@ server <- function(input, output, session) {
   
   tipLabels <- reactive({r$trees[[1]][["tip.label"]]})
   
-  datasetMatchesTrees <- reactive({
+  DatasetMatchesTrees <- reactive({
     length(intersect(names(r$dataset), tipLabels())) == length(r$dataset)
   })
   
   UpdateData <- reactive({
     source <- input$dataSource
     if (source == "file") {
-      LogMsg("UpdateData: from file")
+      LogMsg("UpdateData(): from file")
       showElement("dataFile")
       
       fileInput <- input$dataFile
@@ -571,7 +588,7 @@ server <- function(input, output, session) {
         ))
       }
     } else {
-      LogMsg("UpdateData: from package")
+      LogMsg("UpdateData(): from package")
       hideElement("dataFile")
       
       dataFile <- system.file(paste0("datasets/", source, ".nex"),
@@ -600,7 +617,7 @@ server <- function(input, output, session) {
     }
     
     UpdateAllTrees(tryCatch(read.nexus(dataFile), error = function (e) r$trees))
-    if (is.null(r$trees) || !datasetMatchesTrees()) {
+    if (!AnyTrees() || !DatasetMatchesTrees()) {
       updateActionButton(session, "go", "New search")
     } else {
       show("displayConfig")
@@ -609,13 +626,27 @@ server <- function(input, output, session) {
     DisplayTreeScores()
   })
   
-  FetchNTree <- debounce(reactive(r$nTree <- input$nTree), typingJiffy)
-  FetchTreeRange <- debounce(reactive(r$treeRange <- input$treeRange), aJiffy)
+  AnyTrees <- reactive({!is.null(r$trees) && r$nTree > 0})
+  HaveData <- reactive({!is.null(r$dataset) && length(r$dataset) > 0 && inherits(r$dataset, "phyDat")})
+  FetchNTree <- debounce(reactive({
+    r$nTreeChanged <- r$nTree != input$nTree
+    if (r$nTreeChanged) {
+      r$nTree <- input$nTree
+    }
+  }), typingJiffy)
+  FetchTreeRange <- debounce(reactive({
+    r$treeRangeChanged <- !identical(r$treeRange, input$treeRange)
+    if (r$treeRangeChanged) {
+      r$treeRange <- input$treeRange
+    }
+  }), aJiffy)
   
   UpdateTrees <- reactive({
-    LogMsg("Updating trees")
-    FetchNTree()
-    FetchTreeRange()
+    LogMsg("UpdateTrees()")
+    # FetchNTree()
+    r$nTree <- input$nTree
+    # FetchTreeRange()
+    r$treeRange <- input$treeRange
     
     thinnedTrees <- r$allTrees[
       unique(as.integer(seq.int(
@@ -632,6 +663,16 @@ server <- function(input, output, session) {
     r$treeHash <- rlang::hash(r$trees)
     
     DisplayTreeScores()
+    
+    if (AnyTrees()) {
+      for (elem in c("keepTips", "neverDrop")) {
+        show(elem, anim = TRUE)
+      }
+    } else {
+      for (elem in c("keepTips", "neverDrop")) {
+        hide(elem)
+      }
+    }
     
     updateSliderInput(session, "whichTree", min = 1L,
                       max = length(r$trees), value = 1L)
@@ -656,7 +697,7 @@ server <- function(input, output, session) {
       trees <- RenumberTips(trees, trees[[1]]$tip.label)
     }
     if (identical(trees, r$trees)) {
-      LogMsg("No need to update trees; no change")
+      LogMsg("   <Trees unchanged; returning>")
       return()
     }
     
@@ -836,14 +877,16 @@ server <- function(input, output, session) {
                             "prof" = "PP"))
   
   scores <- bindCache(reactive({
+    if (!HaveData() || !AnyTrees()) {
+      return(NULL)
+    }
     PutTree(r$trees)
     PutData(r$dataset)
     LogMsg("scores(): Recalculating scores with k = ", concavity())
     withProgress(tryCatch(
       signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
       error = function (x) {
-        if (length(r$dataset) > 0 && 
-            length(r$trees) > 0) {
+        if (HaveData() && AnyTrees()) {
           cli::cli_alert(x[[2]])
           cli::cli_alert_danger(x[[1]])
           Notification(type = "error",
@@ -879,7 +922,7 @@ server <- function(input, output, session) {
   })
   
   UpdateKeepTipsInput <- reactive({
-    if ("consConfig" %in% r$visibleConfigs) {
+    if (AnyTrees() && "consConfig" %in% r$visibleConfigs) {
       updateNumericInput(inputId = "keepTips",
                          max = length(r$trees[[1]]$tip.label),
                          value = nNonRogues())
@@ -887,7 +930,7 @@ server <- function(input, output, session) {
   })
   
   UpdateExcludedTipsInput <- reactive({
-    if ("consConfig" %in% r$visibleConfigs) {
+    if (AnyTrees() && "consConfig" %in% r$visibleConfigs) {
       dropList <- dropSeq()[seq_along(DroppedTips())]
       updateSelectInput(inputId = "excludedTip",
                         choices = dropList,
@@ -925,13 +968,13 @@ server <- function(input, output, session) {
   })
   
   UpdateOutgroupInput <- reactive({
-    if ("treePlotConfig" %in% r$visibleConfigs) {
+    if (HaveData() && "treePlotConfig" %in% r$visibleConfigs) {
       LogMsg("UpdateOutgroupInput()")
       keptOutgroup <- intersect(input$outgroup, KeptTips())
       updateSelectizeInput(
         inputId = "outgroup", choices = KeptTips(),
         selected = if (length(keptOutgroup) == 0) {
-          if (!is.null(r$dataset)) {
+          if (HaveData()) {
             intersect(names(r$dataset), KeptTips())[1]
           } else {
             KeptTips()[1]
@@ -953,27 +996,37 @@ server <- function(input, output, session) {
   })
   
   observeEvent(FetchNTree(), {
-    range <- r$treeRange[2] - r$treeRange[1]
-    nTrees <- length(r$allTrees)
-    if (r$nTree > range + 1L) {
-      upper <- min(nTrees, r$treeRange[1] + r$nTree - 1L)
-      lower <- min(r$treeRange[1], upper + 1L - r$nTree)
-      r$treeRange <- c(lower, upper)
-      updateSliderInput(session, "treeRange", value = r$treeRange)
-      # The resultant observeEvent will update trees
-    } else {
-      UpdateTrees()
+    if (r$nTreeChanged) {
+      LogMsg("Observed: FetchNTree()")
+      r$nTreeChanged <- FALSE
+      range <- r$treeRange[2] - r$treeRange[1]
+      nTrees <- length(r$allTrees)
+      if (r$nTree > range + 1L) {
+        upper <- min(nTrees, r$treeRange[1] + r$nTree - 1L)
+        lower <- min(r$treeRange[1], upper + 1L - r$nTree)
+        r$treeRange <- c(lower, upper)
+        r$treeRangeChanged <- TRUE
+        updateSliderInput(session, "treeRange", value = r$treeRange)
+        # The resultant observeEvent will update trees
+      } else {
+        UpdateTrees()
+      }
     }
   })
 
   observeEvent(FetchTreeRange(), {
-    range <- r$treeRange[2] - r$treeRange[1]
-    if (r$nTree > range + 1L) {
-      r$nTree <- range + 1L
-      updateNumericInput(session, "nTree", value = r$nTree)
-      # The resultant observeEvent will update trees
-    } else {
-      UpdateTrees()
+    if (r$treeRangeChanged) {
+      LogMsg("Observed: FetchTreeRange()")
+      r$treeRangeChanged <- FALSE
+      range <- r$treeRange[2] - r$treeRange[1]
+      if (r$nTree > range + 1L) {
+        r$nTree <- range + 1L
+        r$nTreeChanged <- TRUE
+        updateNumericInput(session, "nTree", value = r$nTree)
+        # The resultant observeEvent will update trees
+      } else {
+        UpdateTrees()
+      }
     }
   })
 
@@ -1011,9 +1064,12 @@ server <- function(input, output, session) {
   
   
   output$branchLegend <- renderUI({
+    if (!AnyTrees()) {
+      return()
+    }
+    LogMsg("Update branchLegend")
     kept <- KeptTips()
     dropped <- DroppedTips()
-    LogMsg("Update branchLegend")
     
     if (length(dropped) &&
         length(input$excludedTip) &&
@@ -1040,10 +1096,10 @@ server <- function(input, output, session) {
   })
   
   StartSearch <- function () {
-    if (!inherits(r$dataset, "phyDat")) {
+    if (!HaveData()) {
       Notification("No data loaded", type = "error")
     } else {
-      startTree <- if (is.null(r$trees)) {
+      startTree <- if (!AnyTrees()) {
         LogComment("Select starting tree")
         LogCode(paste0("startTree <- AdditionTree(dataset, concavity = ",
                        Enquote(concavity()), ")"))
@@ -1146,7 +1202,7 @@ server <- function(input, output, session) {
   })
   
   dropSeq <- reactive({
-    rogues()$taxon[-1]
+    Rogues()$taxon[-1]
   })
   
   stableCol <- reactive({
@@ -1154,9 +1210,9 @@ server <- function(input, output, session) {
   })
   
   
-  rogues <- reactive({
-    LogMsg("Rogues()")
-    if (inherits(r$trees, "multiPhylo")) {
+  Rogues <- reactive({
+    if (AnyTrees() && inherits(r$trees, "multiPhylo")) {
+      LogMsg("Rogues()")
       withProgress(
         message = "Identifying rogues", value = 0.99,
         Rogue::QuickRogue(r$trees, neverDrop = input$neverDrop,
@@ -1174,7 +1230,7 @@ server <- function(input, output, session) {
   
   nNonRogues <- reactive({
     LogMsg("nNonRogues()")
-    nrow(rogues()) - which.max(rogues()$IC)
+    nrow(Rogues()) - which.max(Rogues()$IC)
   })
   
   tipCols <- reactive(stableCol()) # TODO allow user to choose how to colour
@@ -1241,6 +1297,7 @@ server <- function(input, output, session) {
   })
   
   KeptTips <- reactive({
+    LogMsg("KeptTips()")
     n <- input$keepTips
     maxN <- length(tipLabels())
     if (is.na(n) || is.null(n) || n < 2L || n > maxN) {
@@ -1250,6 +1307,7 @@ server <- function(input, output, session) {
   })
   
   DroppedTips <- reactive({
+    LogMsg("DroppedTips()")
     if (length(KeptTips()) > 1) {
       setdiff(tipLabels(), KeptTips())
     } else {
@@ -1338,7 +1396,7 @@ server <- function(input, output, session) {
   
   
   MainPlot <- function() {
-    if (!is.null(r$trees)) {
+    if (AnyTrees()) {
     
       switch(
         input$plotFormat,
@@ -2145,6 +2203,7 @@ server <- function(input, output, session) {
     if (file.exists(cmdLogFile)) {
       unlink(cmdLogFile)
     }
+    close(logMsgFile)
     unlink(DataFileName("*"))
     unlink(TreeFileName("*"))
     LogMsg("Session has ended")
