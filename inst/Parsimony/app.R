@@ -413,6 +413,9 @@ server <- function(input, output, session) {
   Write <- function (txt, file) {
     con <- file(file, open = "a")
     on.exit(close(con))
+    if (logging) {
+      message(txt)
+    }
     writeLines(txt, con)
   }
   
