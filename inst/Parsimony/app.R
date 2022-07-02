@@ -423,7 +423,9 @@ server <- function(input, output, session) {
     nTree = 0,
     nTreeChanged = FALSE,
     treeRange = c(0, 0),
-    treeRangeChanged = FALSE
+    treeRangeChanged = FALSE,
+    updatingRawTrees = FALSE,
+    updatingTrees = FALSE
   )
   
   cmdLogFile <- tempfile("TreeSearch-", fileext = ".R")
@@ -525,6 +527,13 @@ server <- function(input, output, session) {
     X(library("TreeSearch"))
   ))
   
+  LogComment("View recommended citations", 1)
+  LogCode(c(
+    "citation(\"TreeTools\")",
+    "citation(\"TreeDist\")",
+    "citation(\"TreeSearch\")",
+    "citation(\"Rogue\")"
+  ))
   
   library("future")
   library("promises")
@@ -642,11 +651,15 @@ server <- function(input, output, session) {
   }), aJiffy)
   
   UpdateTrees <- reactive({
+    if (r$updatingTrees) {
+      LogMsg("   Skipping UpdateTrees()")
+      return()
+    }
+    r$updatingTrees <- TRUE
+    on.exit(r$updatingTrees <- FALSE)
     LogMsg("UpdateTrees()")
-    # FetchNTree()
-    r$nTree <- input$nTree
-    # FetchTreeRange()
-    r$treeRange <- input$treeRange
+    FetchNTree()
+    FetchTreeRange()
     
     thinnedTrees <- r$allTrees[
       unique(as.integer(seq.int(
@@ -939,7 +952,7 @@ server <- function(input, output, session) {
       html("droppedList",
            paste0("<label class=\"control-label\">Dropped tips:</label>", 
                   "<ul>", 
-                  paste0("<li style=\"color: ", tipCols()[dropList], "\">",
+                  paste0("<li style=\"color: ", TipCols()[dropList], "\">",
                          dropList, "</li>", collapse = "\r\n"),
                   "</ul>"))
     }
@@ -986,13 +999,20 @@ server <- function(input, output, session) {
   })
   
   observeEvent(r$rawTrees, {
-    LogMsg("observed r$rawTrees")
-    rawLabels <- r$rawTrees[[1]]$tip.label
-    if (length(r$rawTrees) > 1L) {
-      r$rawTrees <- RenumberTips(r$rawTrees, rawLabels)
+    if (r$updatingRawTrees) {
+      LogMsg("   - observed r$rawTrees but recursive, so returning")
+    } else {
+      r$updatingRawTrees <- TRUE
+      on.exit(r$updatingRawTrees <- FALSE)
+      LogMsg("observed r$rawTrees")
+      rawLabels <- r$rawTrees[[1]]$tip.label
+      if (length(r$rawTrees) > 1L) {
+        LogMsg("Renumbered tips of r$rawTrees")
+        r$rawTrees <- RenumberTips(r$rawTrees, rawLabels)
+      }
+      
+      UpdateAllTrees(r$rawTrees)
     }
-    
-    UpdateAllTrees(r$rawTrees)
   })
   
   observeEvent(FetchNTree(), {
@@ -1085,6 +1105,7 @@ server <- function(input, output, session) {
                   paste(max(c(plotted$onEdge, plotted$atNode)), "trees")),
       )
     }
+    LogMsg("Updated branchLegend")
   })
   
   concavity <- reactive({
@@ -1172,6 +1193,7 @@ server <- function(input, output, session) {
   })
   
   UserRoot <- function (tree) {
+    LogMsg("UserRoot()")
     outgroupTips <- intersect(input$outgroup, tree$tip.label)
     if (length(outgroupTips)) {
       tr <- deparse(substitute(tree))
@@ -1233,7 +1255,7 @@ server <- function(input, output, session) {
     nrow(Rogues()) - which.max(Rogues()$IC)
   })
   
-  tipCols <- reactive(stableCol()) # TODO allow user to choose how to colour
+  TipCols <- reactive(stableCol()) # TODO allow user to choose how to colour
   
   consP <- debounce(reactive(input$consP), 50)
   observeEvent(consP(), {
@@ -1362,7 +1384,7 @@ server <- function(input, output, session) {
       plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
                            edgeLength = 1,
                            outgroupTips = input$outgroup,
-                           tip.color = tipCols()[intersect(consTrees[[1]]$tip.label, kept)])
+                           tip.color = TipCols()[intersect(consTrees[[1]]$tip.label, kept)])
       LogCode("plottedTree <- plotted$cons # Store tree for future reference")
       r$plottedTree <- plotted$cons
       
@@ -1388,7 +1410,7 @@ server <- function(input, output, session) {
         cons$edge.length <- rep_len(1L, dim(cons$edge)[1])
       }
       r$plottedTree <- cons
-      plot(r$plottedTree, tip.color = tipCols()[intersect(cons$tip.label, kept)])
+      plot(r$plottedTree, tip.color = TipCols()[intersect(cons$tip.label, kept)])
       LabelConcordance()
     }
     
@@ -1428,7 +1450,7 @@ server <- function(input, output, session) {
             )
             LabelConcordance()
           } else {
-            plot(r$plottedTree, tip.color = tipCols()[r$plottedTree$tip.label])
+            plot(r$plottedTree, tip.color = TipCols()[r$plottedTree$tip.label])
           }
         },
         "space" = {
@@ -1804,7 +1826,7 @@ server <- function(input, output, session) {
         tr$edge.length <- rep.int(1, dim(tr$edge)[1])
         r$plottedTree <- tr
         plot(tr, edge.width = 2, font = 3, cex = 0.83,
-             edge.color = col, tip.color = tipCols()[tr$tip.label])
+             edge.color = col, tip.color = TipCols()[tr$tip.label])
         LabelConcordance()
         legend("bottomright", paste0("Cluster ", i), pch = 15, col = col,
                pt.cex = 1.5, bty = "n")
@@ -1817,7 +1839,7 @@ server <- function(input, output, session) {
       tr$edge.length <- rep.int(1, dim(tr$edge)[1])
       r$plottedTree <- tr
       plot(tr,edge.width = 2, font = 3, cex = 0.83,
-           edge.color = palettes[[1]], tip.color = tipCols()[tr$tip.label])
+           edge.color = palettes[[1]], tip.color = TipCols()[tr$tip.label])
       LabelConcordance()
       legend("bottomright", "No clustering", pch = 16, col = palettes[[1]],
              bty = "n")
