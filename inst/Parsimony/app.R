@@ -424,8 +424,9 @@ server <- function(input, output, session) {
     nTreeChanged = FALSE,
     treeRange = c(0, 0),
     treeRangeChanged = FALSE,
-    updatingRawTrees = FALSE,
-    updatingTrees = FALSE
+    uiEnabled = TRUE,
+    updatingTrees = FALSE # TODO DELETE?
+    ,updatingRawTrees = FALSE #TODO DELTE
   )
   
   cmdLogFile <- tempfile("TreeSearch-", fileext = ".R")
@@ -638,38 +639,50 @@ server <- function(input, output, session) {
   AnyTrees <- reactive({!is.null(r$trees) && r$nTree > 0})
   HaveData <- reactive({!is.null(r$dataset) && length(r$dataset) > 0 && inherits(r$dataset, "phyDat")})
   FetchNTree <- debounce(reactive({
-    r$nTreeChanged <- r$nTree != input$nTree
-    if (r$nTreeChanged) {
-      r$nTree <- input$nTree
+    if (r$uiEnabled) {
+      r$nTreeChanged <- r$nTree != input$nTree
+      if (r$nTreeChanged) {
+        r$nTree <- input$nTree
+      }
     }
   }), typingJiffy)
   FetchTreeRange <- debounce(reactive({
-    r$treeRangeChanged <- !identical(r$treeRange, input$treeRange)
-    if (r$treeRangeChanged) {
-      r$treeRange <- input$treeRange
+    if (r$uiEnabled) {
+      r$treeRangeChanged <- !identical(r$treeRange, input$treeRange)
+      if (r$treeRangeChanged) {
+        r$treeRange <- input$treeRange
+      }
     }
   }), aJiffy)
   
-  UpdateTrees <- reactive({
+  UpdateActiveTrees <- reactive({
     if (r$updatingTrees) {
-      LogMsg("   Skipping UpdateTrees()")
+      LogMsg("   Skipping UpdateActiveTrees()")
       return()
     }
     r$updatingTrees <- TRUE
     on.exit(r$updatingTrees <- FALSE)
-    LogMsg("UpdateTrees()")
+    LogMsg("UpdateActiveTrees()")
     FetchNTree()
     FetchTreeRange()
     
-    thinnedTrees <- r$allTrees[
-      unique(as.integer(seq.int(
-        r$treeRange[1], r$treeRange[2], length.out = r$nTree)))]
-    
-    if (!is.null(r$allTrees) && !identical(trees, thinnedTrees)) {
-      LogCode(paste0(
-        "trees <- allTrees[unique(as.integer(seq.int(",
-        r$treeRange[1], ", ", r$treeRange[2], ", length.out = ", r$nTree, ")))]"
-      ))
+    nTrees <- length(r$allTrees)
+    if (r$nTree == nTrees && r$treeRange[1] == 1L && r$treeRange[2] == nTrees) {
+      thinnedTrees <- r$allTrees
+      if (!is.null(r$allTrees) && !identical(trees, thinnedTrees)) {
+        LogCode("trees <- allTrees")
+      }
+    } else {
+      thinnedTrees <- r$allTrees[
+        unique(as.integer(seq.int(
+          r$treeRange[1], r$treeRange[2], length.out = r$nTree)))]
+      
+      if (!is.null(r$allTrees) && !identical(trees, thinnedTrees)) {
+        LogCode(paste0(
+          "trees <- allTrees[unique(as.integer(seq.int(",
+          r$treeRange[1], ", ", r$treeRange[2], ", length.out = ", r$nTree, ")))]"
+        ))
+      }
     }
     
     r$trees <- thinnedTrees
@@ -704,6 +717,8 @@ server <- function(input, output, session) {
   
   UpdateAllTrees <- function (trees) {
     LogMsg("UpdateAllTrees()")
+    r$uiEnabled <- FALSE # Update permissible values before re-enabling
+    on.exit(r$uiEnabled <- TRUE, add = TRUE)
     
     trees <- c(trees)
     if (length(trees) > 1L) {
@@ -720,11 +735,10 @@ server <- function(input, output, session) {
       LogCode("allTrees <- trees")
       r$allTrees <- trees
     }
-    
     nTrees <- length(trees)
     
     if (nTrees != oldNTrees) {
-      r$treeRange <- c(max(1L, nTrees - aFewTrees), nTrees)
+      r$treeRange <- c(1L, nTrees)
       updateSliderInput(session, "treeRange",
                         min = 1L, max = nTrees,
                         value = r$treeRange)
@@ -734,7 +748,7 @@ server <- function(input, output, session) {
                          value = r$nTree)
     }
     
-    UpdateTrees()
+    UpdateActiveTrees()
   }
   
   ##############################################################################
@@ -847,8 +861,7 @@ server <- function(input, output, session) {
       LogCode(paste0("trees <- ", codeToLog))
       
       treeNames <- names(trees)
-      r$rawTrees <- c(trees)
-      UpdateAllTrees(r$rawTrees) # updates r$trees
+      UpdateAllTrees(trees) # updates r$trees
       pattern <- "(seed|start|ratch\\d+|final)_\\d+"
       if (length(grep(pattern, treeNames, perl = TRUE)) ==
           length(r$trees)) {
@@ -998,23 +1011,6 @@ server <- function(input, output, session) {
     }
   })
   
-  observeEvent(r$rawTrees, {
-    if (r$updatingRawTrees) {
-      LogMsg("   - observed r$rawTrees but recursive, so returning")
-    } else {
-      r$updatingRawTrees <- TRUE
-      on.exit(r$updatingRawTrees <- FALSE)
-      LogMsg("observed r$rawTrees")
-      rawLabels <- r$rawTrees[[1]]$tip.label
-      if (length(r$rawTrees) > 1L) {
-        LogMsg("Renumbered tips of r$rawTrees")
-        r$rawTrees <- RenumberTips(r$rawTrees, rawLabels)
-      }
-      
-      UpdateAllTrees(r$rawTrees)
-    }
-  })
-  
   observeEvent(FetchNTree(), {
     if (r$nTreeChanged) {
       LogMsg("Observed: FetchNTree()")
@@ -1029,7 +1025,7 @@ server <- function(input, output, session) {
         updateSliderInput(session, "treeRange", value = r$treeRange)
         # The resultant observeEvent will update trees
       } else {
-        UpdateTrees()
+        UpdateActiveTrees()
       }
     }
   })
@@ -1045,7 +1041,7 @@ server <- function(input, output, session) {
         updateNumericInput(session, "nTree", value = r$nTree)
         # The resultant observeEvent will update trees
       } else {
-        UpdateTrees()
+        UpdateActiveTrees()
       }
     }
   })
@@ -1169,12 +1165,10 @@ server <- function(input, output, session) {
         "  trees <- results",
         "}"
       ))
+      UpdateAllTrees(results)
       if (inherits(results, "phylo")) {
-        r$rawTrees <- list(results)
         attr(r$trees, "firstHit") <- attr(results, "firstHit")
         attr(r$trees[[1]], "firstHit") <- NULL
-      } else {
-        r$rawTrees <- results
       }
       
       updateSliderInput(session, "whichTree", min = 1L,
