@@ -659,18 +659,15 @@ server <- function(input, output, session) {
     DisplayTreeScores()
   })
   
-  observeEvent(r$uiEnabled, function() {
-    # TODO DELETE
-    LogMsg("r$uiEnabled -> ", r$uiEnabled)
-  })
-  
   AnyTrees <- reactive({!is.null(r$trees) && length(r$trees) > 0})
   HaveData <- reactive({!is.null(r$dataset) && length(r$dataset) > 0 && inherits(r$dataset, "phyDat")})
   FetchNTree <- debounce(reactive({
     if (r$uiEnabled) {
+      LogMsg("FetchNTree(): ", r$nTree, ", ", input$nTree)
       r$nTreeChanged <- r$nTree != input$nTree
       if (r$nTreeChanged) {
         r$nTree <- input$nTree
+        UpdateActiveTrees()
       }
     }
   }), typingJiffy)
@@ -679,6 +676,7 @@ server <- function(input, output, session) {
       r$treeRangeChanged <- !identical(r$treeRange, input$treeRange)
       if (r$treeRangeChanged) {
         r$treeRange <- input$treeRange
+        UpdateActiveTrees()
       }
     }
   }), aJiffy)
@@ -720,17 +718,17 @@ server <- function(input, output, session) {
     
     if (AnyTrees()) {
       for (elem in c("keepTips", "neverDrop")) {
-        show(elem, anim = TRUE)
+        showElement(elem, anim = TRUE)
       }
     } else {
       for (elem in c("keepTips", "neverDrop")) {
-        hide(elem)
+        hideElement(elem)
       }
     }
     
     updateSliderInput(session, "whichTree", min = 1L,
                       max = length(r$trees), value = 1L)
-    UpdateKeepTipsMaximum()
+    UpdateKeepTipsMaximum() # Updates Rogues()
     UpdateExcludedTipsInput()
     if (maxProjDim() > 0) {
       updateSliderInput(inputId = "spaceDim", max = max(1L, maxProjDim()),
@@ -1118,7 +1116,8 @@ server <- function(input, output, session) {
     if (!AnyTrees()) {
       return()
     }
-    LogMsg("Update branchLegend")
+    LogMsg("renderUI(branchLegend)")
+    on.exit(LogMsg("/renderUI(branchLegend)"))
     kept <- KeptTips()
     dropped <- DroppedTips()
     
@@ -1136,7 +1135,6 @@ server <- function(input, output, session) {
                   paste(max(c(plotted$onEdge, plotted$atNode)), "trees")),
       )
     }
-    LogMsg("Updated branchLegend")
   })
   
   concavity <- reactive({
@@ -1220,8 +1218,6 @@ server <- function(input, output, session) {
   })
   
   UserRoot <- function (tree) {
-    LogMsg("UserRoot()")
-    on.exit(LogMsg("/UserRoot()"))
     outgroupTips <- intersect(input$outgroup, tree$tip.label)
     if (length(outgroupTips)) {
       tr <- deparse(substitute(tree))
@@ -1252,13 +1248,13 @@ server <- function(input, output, session) {
   })
   
   dropSeq <- reactive({
+    LogMsg("dropSeq()")
     Rogues()$taxon[-1]
   })
   
   stableCol <- reactive({
     Rogue::ColByStability(r$trees)
   })
-  
   
   Rogues <- bindCache(reactive({
     if (AnyTrees() && inherits(r$trees, "multiPhylo")) {
@@ -1295,6 +1291,7 @@ server <- function(input, output, session) {
   
   nNonRogues <- reactive({
     LogMsg("nNonRogues()")
+    on.exit(LogMsg("nNonRogues: ", nrow(Rogues()) - which.max(Rogues()$IC)))
     nrow(Rogues()) - which.max(Rogues()$IC)
   })
   
@@ -1470,10 +1467,35 @@ server <- function(input, output, session) {
     
   }
   
+  CharacterPlot <- function() {
+    par(mar = rep(0, 4), cex = 0.9)
+    n <- PlottedChar()
+    LogMsg("Plotting PlottedTree(", whichTree(), ", ", n, ")")
+    r$plottedTree <- PlottedTree()
+    if (length(n) && n > 0L) {
+      pc <- tryCatch({
+        PlotCharacter(r$plottedTree, r$dataset, n,
+                      edge.width = 2.5,
+                      updateTips = "updateTips" %in% input$mapDisplay)
+      },
+      error = function (cond) {
+        cli::cli_alert_danger(cond)
+        Notification(type = "error",
+                     "Could not match dataset to taxa in trees")
+        ErrorPlot("Load dataset with\n", "character codings\n",
+                  "for taxa on tree")
+        return()
+      }
+      )
+      LabelConcordance()
+    } else {
+      plot(r$plottedTree, tip.color = TipCols()[r$plottedTree$tip.label])
+    }
+  }
   
   MainPlot <- function() {
     if (AnyTrees()) {
-    
+      LogMsg("MainPlot()")
       switch(
         input$plotFormat,
         "cons" = {
@@ -1483,29 +1505,7 @@ server <- function(input, output, session) {
           PlotClusterCons()
         },
         "ind" = {
-          par(mar = rep(0, 4), cex = 0.9)
-          n <- PlottedChar()
-          LogMsg("Plotting PlottedTree(", whichTree(), ", ", n, ")")
-          r$plottedTree <- PlottedTree()
-          if (length(n) && n > 0L) {
-            pc <- tryCatch({
-                PlotCharacter(r$plottedTree, r$dataset, n,
-                              edge.width = 2.5,
-                              updateTips = "updateTips" %in% input$mapDisplay)
-              },
-              error = function (cond) {
-                cli::cli_alert_danger(cond)
-                Notification(type = "error",
-                                 "Could not match dataset to taxa in trees")
-                ErrorPlot("Load dataset with\n", "character codings\n",
-                          "for taxa on tree")
-                return()
-              }
-            )
-            LabelConcordance()
-          } else {
-            plot(r$plottedTree, tip.color = TipCols()[r$plottedTree$tip.label])
-          }
+          CharacterwisePlot()
         },
         "space" = {
           treespacePlot()
