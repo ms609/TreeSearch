@@ -324,7 +324,7 @@ ui <- fluidPage(
           numericInput("keepTips", "Tips to show:", value = 0L,
                        min = 2L, max = 2L, step = 1L, width = 200),
           selectizeInput("neverDrop", "Never drop:", multiple = TRUE,
-                         choices = list("NA" = "No trees loaded"))
+                         choices = c())
                  ),
         tags$div(id = "consLegend",
                  tags$span(id = "instabLegend",
@@ -962,8 +962,10 @@ server <- function(input, output, session) {
   
   UpdateKeepTipsInput <- reactive({
     if (AnyTrees() && "consConfig" %in% r$visibleConfigs) {
+      nTip <- length(r$trees[[1]]$tip.label)
       updateNumericInput(inputId = "keepTips",
-                         max = length(r$trees[[1]]$tip.label),
+                         label = paste0("Tips to show (/", nTip, "):"),
+                         max = nTip,
                          value = nNonRogues())
     }
   })
