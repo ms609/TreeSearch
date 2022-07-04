@@ -1237,7 +1237,7 @@ server <- function(input, output, session) {
   })
   
   
-  Rogues <- reactive({
+  Rogues <- bindCache(reactive({
     if (AnyTrees() && inherits(r$trees, "multiPhylo")) {
       LogMsg("Rogues()")
       withProgress(
@@ -1249,7 +1249,7 @@ server <- function(input, output, session) {
       data.frame(num = 0, taxNum = NA_integer_, taxon = NA_character_,
                  rawImprovement = NA_real_, IC = 0)
     }
-  })
+  }), r$treeHash, input$neverDrop, consP())
   
   unitEdge <- reactive({
     TRUE
