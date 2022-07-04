@@ -240,13 +240,21 @@ ui <- fluidPage(
                     "Sun et al. 2018" = "Sun2018",
                     "Wills et al. 2012" = "Wills2012",
                     if (logging) setNames(names(inapplicable.datasets), names(inapplicable.datasets)))),
-      fileInput("dataFile", "Load data from file",
+      fileInput("dataFile",
+                tags$span(
+                  tags$span("Load data from file"),
+                  tags$i(class="fas fa-solid fa-table")
+                  ),
                 placeholder = "No data file selected"),
       tags$label("Search", class = "control-label", 
                  style = "display: block; margin-top: -15px;"),
       actionButton("searchConfig", "Configure", icon = icon("cogs")),
       hidden(actionButton("go", "Search", icon = icon("search"))),
-      fileInput("treeFile", label = "Load trees",
+      fileInput("treeFile",
+                label = tags$span(
+                  tags$span("Load trees"),
+                  tags$i(class="fas fa-solid fa-tree")
+                ),
                 placeholder = "No tree file selected"),
       numericInput("nTree",
                    label = HTML("Sample <i>n</i> trees from range:"),
@@ -649,7 +657,12 @@ server <- function(input, output, session) {
     DisplayTreeScores()
   })
   
-  AnyTrees <- reactive({!is.null(r$trees) && r$nTree > 0})
+  observeEvent(r$uiEnabled, function() {
+    # TODO DELETE
+    LogMsg("r$uiEnabled -> ", r$uiEnabled)
+  })
+  
+  AnyTrees <- reactive({!is.null(r$trees) && length(r$trees) > 0})
   HaveData <- reactive({!is.null(r$dataset) && length(r$dataset) > 0 && inherits(r$dataset, "phyDat")})
   FetchNTree <- debounce(reactive({
     if (r$uiEnabled) {
@@ -963,15 +976,19 @@ server <- function(input, output, session) {
   UpdateKeepTipsInput <- reactive({
     if (AnyTrees() && "consConfig" %in% r$visibleConfigs) {
       nTip <- length(r$trees[[1]]$tip.label)
-      updateNumericInput(inputId = "keepTips",
-                         label = paste0("Tips to show (/", nTip, "):"),
-                         max = nTip,
-                         value = nNonRogues())
+      if (input$keepTips != nTip) {
+        LogMsg("UpdateKeepTipsInput(", input$keepTips, " -> ", nTip, ")")
+        updateNumericInput(inputId = "keepTips",
+                           label = paste0("Tips to show (/", nTip, "):"),
+                           max = nTip,
+                           value = nNonRogues())
+      }
     }
   })
   
   UpdateExcludedTipsInput <- reactive({
     if (AnyTrees() && "consConfig" %in% r$visibleConfigs) {
+      LogMsg("UpdateExcludedTipsInput()")
       dropList <- dropSeq()[seq_along(DroppedTips())]
       updateSelectInput(inputId = "excludedTip",
                         choices = dropList,
@@ -987,6 +1004,7 @@ server <- function(input, output, session) {
   })
   
   UpdateDroppedTaxaDisplay <- reactive({
+    LogMsg("UpdateDroppedTaxaDisplay()")
     if ("consConfig" %in% r$visibleConfigs) {
       if (length(DroppedTips())) {
         UpdateExcludedTipsInput()
@@ -1201,6 +1219,7 @@ server <- function(input, output, session) {
   
   UserRoot <- function (tree) {
     LogMsg("UserRoot()")
+    on.exit(LogMsg("/UserRoot()"))
     outgroupTips <- intersect(input$outgroup, tree$tip.label)
     if (length(outgroupTips)) {
       tr <- deparse(substitute(tree))
@@ -1349,11 +1368,11 @@ server <- function(input, output, session) {
   
   ConsensusPlot <- function() {
     LogMsg("ConsensusPlot()")
+    on.exit(LogMsg("/ConsensusPlot()"))
     par(mar = rep(0, 4), cex = 0.9)
-    #instab <- Instab()
-    #dropped <- names(instab[order(instab) > input$keepTips])
     kept <- KeptTips()
     dropped <- DroppedTips()
+    LogMsg("   ConsPl: ", length(dropped), " ", "rogues")
     
     if (length(dropped) &&
         length(input$excludedTip) &&
