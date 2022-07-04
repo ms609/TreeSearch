@@ -518,6 +518,7 @@ server <- function(input, output, session) {
     "This log was generated procedurally to facilitate the reproduction of",
     "results obtained during an interactive Shiny session.",
     "It is provided without guarantee of completeness or accuracy.",
+    "In particular, code will not be logged when cached images are retrieved.",
     "",
     "Before running, check that the script and any data files are in the",
     "R working directory, which can be read with getwd() and set with setwd().",
@@ -728,7 +729,7 @@ server <- function(input, output, session) {
     
     updateSliderInput(session, "whichTree", min = 1L,
                       max = length(r$trees), value = 1L)
-    UpdateKeepTipsInput()
+    UpdateKeepTipsMaximum()
     UpdateExcludedTipsInput()
     if (maxProjDim() > 0) {
       updateSliderInput(inputId = "spaceDim", max = max(1L, maxProjDim()),
@@ -973,16 +974,14 @@ server <- function(input, output, session) {
     DisplayTreeScores()
   })
   
-  UpdateKeepTipsInput <- reactive({
+  UpdateKeepTipsMaximum <- reactive({
     if (AnyTrees() && "consConfig" %in% r$visibleConfigs) {
       nTip <- length(r$trees[[1]]$tip.label)
-      if (input$keepTips != nTip) {
-        LogMsg("UpdateKeepTipsInput(", input$keepTips, " -> ", nTip, ")")
-        updateNumericInput(inputId = "keepTips",
-                           label = paste0("Tips to show (/", nTip, "):"),
-                           max = nTip,
-                           value = nNonRogues())
-      }
+      LogMsg("UpdateKeepTipsMaximum(", input$keepTips, " -> ", nTip, ")")
+      updateNumericInput(inputId = "keepTips",
+                         label = paste0("Tips to show (/", nTip, "):"),
+                         max = nTip,
+                         value = nNonRogues())
     }
   })
   
@@ -1019,7 +1018,6 @@ server <- function(input, output, session) {
         hide("droppedList")
       }
     }
-    UpdateKeepTipsInput()
   })
   
   observeEvent(r$visibleConfigs, {
@@ -1260,7 +1258,22 @@ server <- function(input, output, session) {
   
   Rogues <- bindCache(reactive({
     if (AnyTrees() && inherits(r$trees, "multiPhylo")) {
-      LogMsg("Rogues()")
+      LogComment("Check for rogue taxa", 2)
+      LogComment(paste0(
+        "Use RogueTaxa() in place of QuickRogue() for a more complete ",
+        "analysis"))
+      LogCode(c(
+        "rogues <- Rogue::QuickRogue(",
+        "  trees,",
+        if (length(input$neverDrop)) paste0(
+          "  neverDrop = ", EnC(input$neverDrop), ","
+        ),
+        "  fullSeq = TRUE,",
+        paste0("  p = ", Enquote(consP())),
+        ")",
+        "print(rogues) # Full analysis results",
+        "print(rogues$taxon[-1]) # Sequence of taxa to drop"
+      ))
       withProgress(
         message = "Identifying rogues", value = 0.99,
         Rogue::QuickRogue(r$trees, neverDrop = input$neverDrop,
@@ -1286,7 +1299,7 @@ server <- function(input, output, session) {
   consP <- debounce(reactive(input$consP), 50)
   observeEvent(consP(), {
     LogMsg("Observed consP()")
-    UpdateKeepTipsInput()
+    UpdateKeepTipsMaximum()
     UpdateExcludedTipsInput()
     r$concordance <- list()
   })
@@ -1399,8 +1412,15 @@ server <- function(input, output, session) {
         consTrees <- r$trees
       }
       
+      LogComment(paste0(
+        "Colour tip labels according to their original 'instability' ",
+        "(Smith 2022)")
+      )
       LogCode("tipCols <- Rogue::ColByStability(trees)[labels]")
-      LogComment("Plot the reduced consensus tree")
+      LogComment(paste0(
+        "Plot the reduced consensus tree, showing position of ",
+        gsub("_", " ", input$excludedTip, fixed = TRUE))
+      )
       LogCode("plotted <- RoguePlot(",
               "  trees = consTrees,",
               paste0("  tip = ", Enquote(input$excludedTip), ","),
@@ -1414,7 +1434,8 @@ server <- function(input, output, session) {
                            edgeLength = 1,
                            outgroupTips = input$outgroup,
                            tip.color = TipCols()[intersect(consTrees[[1]]$tip.label, kept)])
-      LogCode("plottedTree <- plotted$cons # Store tree for future reference")
+      LogComment("Store tree for future reference")
+      LogCode("plottedTree <- plotted$cons")
       r$plottedTree <- plotted$cons
       
       LabelConcordance()
