@@ -430,9 +430,7 @@ server <- function(input, output, session) {
   r <- reactiveValues(
     dataFileVisible = TRUE,
     nTree = 0,
-    nTreeChanged = FALSE,
     treeRange = c(0, 0),
-    treeRangeChanged = FALSE,
     uiEnabled = TRUE,
     updatingTrees = FALSE # TODO DELETE?
     ,updatingRawTrees = FALSE #TODO DELTE
@@ -664,22 +662,65 @@ server <- function(input, output, session) {
   FetchNTree <- debounce(reactive({
     if (r$uiEnabled) {
       LogMsg("FetchNTree(): ", r$nTree, ", ", input$nTree)
-      r$nTreeChanged <- r$nTree != input$nTree
-      if (r$nTreeChanged) {
-        r$nTree <- input$nTree
+      if (UpdateNTree(input$nTree)) {
         UpdateActiveTrees()
       }
     }
   }), typingJiffy)
+  
+  # Return TRUE if n has changed, FALSE if not
+  # Don't update active trees here: Leave this to the calling function
+  UpdateNTree <- function(n) {
+    if (r$nTree == n) {
+      # Return:
+      FALSE
+    } else {
+      LogMsg("Updating NTree: ", r$nTree, "->", n)
+      r$nTree <- n
+      # range <- r$treeRange[2] - r$treeRange[1]
+      # if (n > range + 1L) {
+      #   nTrees <- length(r$allTrees)
+      #   upper <- min(nTrees, r$treeRange[1] + n - 1L)
+      #   lower <- min(r$treeRange[1], upper + 1L - n)
+      #   r$treeRange <- c(lower, upper)
+      #   updateSliderInput(session, "treeRange", value = r$treeRange)
+      # }
+      if (input$nTree != n) {
+        updateNumericInput(session, "nTree", value = n)
+      }
+      # Return:
+      TRUE
+    }
+  }
+  
   FetchTreeRange <- debounce(reactive({
     if (r$uiEnabled) {
       r$treeRangeChanged <- !identical(r$treeRange, input$treeRange)
-      if (r$treeRangeChanged) {
-        r$treeRange <- input$treeRange
+      if (UpdateTreeRange(input$treeRange)) {
         UpdateActiveTrees()
       }
     }
   }), aJiffy)
+  
+  # Return TRUE if changed, FALSE if not
+  # Don't update active trees here: Leave this to the calling function
+  UpdateTreeRange <- function(range) {
+    if (identical(range, r$treeRange)) {
+      # Return:
+      FALSE
+    } else {
+      LogMsg("UpdateTreeRange()")
+      r$treeRange <- range
+      span <- r$treeRange[2] - r$treeRange[1]
+      if (r$nTree > span + 1L) {
+        UpdateNTree(span + 1L)
+      }
+      
+      # Return:
+      TRUE
+    }
+  }
+  
   
   UpdateActiveTrees <- reactive({
     if (r$updatingTrees) {
@@ -689,8 +730,8 @@ server <- function(input, output, session) {
     r$updatingTrees <- TRUE
     on.exit(r$updatingTrees <- FALSE)
     LogMsg("UpdateActiveTrees()")
-    FetchNTree()
     FetchTreeRange()
+    FetchNTree()
     
     nTrees <- length(r$allTrees)
     if (r$nTree == nTrees && r$treeRange[1] == 1L && r$treeRange[2] == nTrees) {
@@ -1044,41 +1085,6 @@ server <- function(input, output, session) {
     }
   })
   
-  observeEvent(FetchNTree(), {
-    if (r$nTreeChanged) {
-      LogMsg("Observed: FetchNTree()")
-      r$nTreeChanged <- FALSE
-      range <- r$treeRange[2] - r$treeRange[1]
-      nTrees <- length(r$allTrees)
-      if (r$nTree > range + 1L) {
-        upper <- min(nTrees, r$treeRange[1] + r$nTree - 1L)
-        lower <- min(r$treeRange[1], upper + 1L - r$nTree)
-        r$treeRange <- c(lower, upper)
-        r$treeRangeChanged <- TRUE
-        updateSliderInput(session, "treeRange", value = r$treeRange)
-        # The resultant observeEvent will update trees
-      } else {
-        UpdateActiveTrees()
-      }
-    }
-  })
-
-  observeEvent(FetchTreeRange(), {
-    if (r$treeRangeChanged) {
-      LogMsg("Observed: FetchTreeRange()")
-      r$treeRangeChanged <- FALSE
-      range <- r$treeRange[2] - r$treeRange[1]
-      if (r$nTree > range + 1L) {
-        r$nTree <- range + 1L
-        r$nTreeChanged <- TRUE
-        updateNumericInput(session, "nTree", value = r$nTree)
-        # The resultant observeEvent will update trees
-      } else {
-        UpdateActiveTrees()
-      }
-    }
-  })
-
   observeEvent(input$implied.weights, {
     switch(input$implied.weights,
            "on" = show("concavity"),
