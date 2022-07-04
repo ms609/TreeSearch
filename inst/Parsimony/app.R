@@ -518,7 +518,8 @@ server <- function(input, output, session) {
     "This log was generated procedurally to facilitate the reproduction of",
     "results obtained during an interactive Shiny session.",
     "It is provided without guarantee of completeness or accuracy.",
-    "In particular, code will not be logged when cached images are retrieved.",
+    "In particular, code will not be logged when previously computed values",
+    "are retrieved from cache.",
     "",
     "Before running, check that the script and any data files are in the",
     "R working directory, which can be read with getwd() and set with setwd().",
@@ -745,7 +746,10 @@ server <- function(input, output, session) {
   UpdateAllTrees <- function (newTrees) {
     LogMsg("UpdateAllTrees()")
     r$uiEnabled <- FALSE # Update permissible values before re-enabling
-    on.exit(r$uiEnabled <- TRUE, add = TRUE)
+    on.exit({
+      LogMsg("/UpdateAllTrees()")
+      r$uiEnabled <- TRUE
+    }, add = TRUE)
     
     newTrees <- c(newTrees)
     if (length(newTrees) > 1L) {
@@ -1271,7 +1275,7 @@ server <- function(input, output, session) {
         "  fullSeq = TRUE,",
         paste0("  p = ", Enquote(consP())),
         ")",
-        "print(rogues) # Full analysis results",
+        "print(rogues) # Detailed results of rogue analysis",
         "print(rogues$taxon[-1]) # Sequence of taxa to drop"
       ))
       withProgress(
