@@ -728,27 +728,27 @@ server <- function(input, output, session) {
                          selected = input$relators)
   })
   
-  UpdateAllTrees <- function (trees) {
+  UpdateAllTrees <- function (newTrees) {
     LogMsg("UpdateAllTrees()")
     r$uiEnabled <- FALSE # Update permissible values before re-enabling
     on.exit(r$uiEnabled <- TRUE, add = TRUE)
     
-    trees <- c(trees)
-    if (length(trees) > 1L) {
-      trees <- RenumberTips(trees, trees[[1]]$tip.label)
+    newTrees <- c(newTrees)
+    if (length(newTrees) > 1L) {
+      newTrees <- RenumberTips(newTrees, newTrees[[1]]$tip.label)
     }
-    if (identical(trees, r$trees)) {
+    if (identical(newTrees, r$newTrees)) {
       LogMsg("   <Trees unchanged; returning>")
       return()
     }
     
     oldNTrees <- length(r$allTrees)
     
-    if (!identical(r$allTrees, trees)) {
-      LogCode("allTrees <- trees")
-      r$allTrees <- trees
+    if (!identical(r$allTrees, newTrees)) {
+      LogCode("allTrees <- newTrees")
+      r$allTrees <- newTrees
     }
-    nTrees <- length(trees)
+    nTrees <- length(newTrees)
     
     if (nTrees != oldNTrees) {
       r$treeRange <- c(1L, nTrees)
@@ -824,7 +824,7 @@ server <- function(input, output, session) {
   
   observeEvent(input$treeFile, {
     tmpFile <- input$treeFile$datapath
-    trees <- tryCatch({
+    newTrees <- tryCatch({
         codeToLog <- "read.tree(treeFile)"
         read.tree(tmpFile)
       },
@@ -865,27 +865,27 @@ server <- function(input, output, session) {
         )
       )
     )
-    if (is.null(trees)) {
+    if (is.null(newTrees)) {
       Notification("Trees not in a recognized format", type = "error")
     } else {
       LogComment("Load tree from file", 2)
       CacheInput("tree", tmpFile)
       LogCode(paste0("treeFile <- \"", LastFile("tree"), "\""))
-      LogCode(paste0("trees <- ", codeToLog))
+      LogCode(paste0("newTrees <- ", codeToLog))
       
-      treeNames <- names(trees)
-      UpdateAllTrees(trees) # updates r$trees
+      treeNames <- names(newTrees)
       pattern <- "(seed|start|ratch\\d+|final)_\\d+"
       if (length(grep(pattern, treeNames, perl = TRUE)) ==
-          length(r$trees)) {
+          length(newTrees)) {
         
         LogCode("whenHit <- gsub(\"(seed|start|ratch\\d+|final)_\\d+\", \"\\\\1\",
-                names(trees), perl = TRUE)")
+                names(newTrees), perl = TRUE)")
         whenHit <- gsub(pattern, "\\1", treeNames, perl = TRUE)
         
-        LogCode("attr(trees, \"firstHit\") <- table(whenHit)[unique(whenHit)]")
-        attr(r$trees, "firstHit") <- table(whenHit)[unique(whenHit)]
+        LogCode("attr(newTrees, \"firstHit\") <- table(whenHit)[unique(whenHit)]")
+        attr(newTrees, "firstHit") <- table(whenHit)[unique(whenHit)]
       }
+      UpdateAllTrees(newTrees) # updates r$trees
       
       removeModal()
       Notification(paste("Loaded", length(r$trees), "trees"), type = "message")
@@ -1144,7 +1144,7 @@ server <- function(input, output, session) {
       PutTree(startTree)
       LogComment("Search for optimal trees", 1)
       LogCode(c(
-        "results <- MaximizeParsimony(",
+        "newTrees <- MaximizeParsimony(",
         "  dataset,",
         "  tree = startTree,",
         paste0("  concavity = ", Enquote(concavity()), ","),
@@ -1155,7 +1155,7 @@ server <- function(input, output, session) {
         paste0("  finalIter = ", input$finalIter, ","), 
         "  verbosity = 4",
         ")"))
-      results <- withProgress(
+      newTrees <- withProgress(
         MaximizeParsimony(r$dataset,
                           tree = startTree,
                           concavity = concavity(),
@@ -1170,17 +1170,15 @@ server <- function(input, output, session) {
       )
       LogComment("Overwrite any previous trees with results")
       LogCode(c(
-        "if (inherits(results, \"phylo\")) {",
-        "  trees <- list(results)",
-        "  attr(trees, \"firstHit\") <- attr(results, \"firstHit\")",
+        "if (inherits(newTrees, \"phylo\")) {",
+        "  trees <- list(newTrees)",
+        "  attr(trees, \"firstHit\") <- attr(newTrees, \"firstHit\")",
         "  attr(trees[[1]], \"firstHit\") <- NULL",
-        "} else {",
-        "  trees <- results",
         "}"
       ))
-      UpdateAllTrees(results)
-      if (inherits(results, "phylo")) {
-        attr(r$trees, "firstHit") <- attr(results, "firstHit")
+      UpdateAllTrees(newTrees)
+      if (inherits(newTrees, "phylo")) {
+        attr(r$trees, "firstHit") <- attr(newTrees, "firstHit")
         attr(r$trees[[1]], "firstHit") <- NULL
       }
       
@@ -1266,6 +1264,7 @@ server <- function(input, output, session) {
   
   consP <- debounce(reactive(input$consP), 50)
   observeEvent(consP(), {
+    LogMsg("Observed consP()")
     UpdateKeepTipsInput()
     UpdateExcludedTipsInput()
     r$concordance <- list()
@@ -1317,10 +1316,12 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$keepTips, {
+    LogMsg("Observed input$keepTips")
     UpdateOutgroupInput()
     UpdateDroppedTaxaDisplay()
   })
   observeEvent(input$neverDrop, {
+    LogMsg("Observed input$neverDrop")
     UpdateOutgroupInput()
     UpdateExcludedTipsInput()
   })
