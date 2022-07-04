@@ -420,6 +420,7 @@ EnC <- function(...) {
 server <- function(input, output, session) {
   
   r <- reactiveValues(
+    dataFileVisible = TRUE,
     nTree = 0,
     nTreeChanged = FALSE,
     treeRange = c(0, 0),
@@ -559,22 +560,33 @@ server <- function(input, output, session) {
   UpdateData <- reactive({
     source <- input$dataSource
     if (source == "file") {
-      LogMsg("UpdateData(): from file")
-      showElement("dataFile")
+      if (!r$dataFileVisible) {
+        showElement("dataFile")
+        r$dataFileVisible <- TRUE
+        runjs("console.log($('#dataFile-label'))")
+        runjs(paste0(
+          "$('#dataFile-label').parent()",
+          ".css({'outline': 'dashed #428bca 20px', ", 
+          "'width': '100%'})", 
+          ".animate({'outline-width': '0px'}, 'slow');"))
+        return()
+      }
       
       fileInput <- input$dataFile
       r$dataset <- NULL
       r$chars <- NULL
-      if (is.null(input)) {
+      if (is.null(fileInput)) {
+        # How can this be?
         Notification(type = "error", "No data file selected")
         return("No data file selected.")
       }
       dataFile <- fileInput$datapath
       if (is.null(dataFile)) {
         Notification(type = "error", "No data file found.")
-        return ("No data file found.")
+        return ("No data file specified.")
       }
       
+      LogMsg("UpdateData(): from file")
       codeToLog <- NULL
       r$dataset <- tryCatch({
         codeToLog <- "ReadTntAsPhyDat(dataFile)"
@@ -599,6 +611,7 @@ server <- function(input, output, session) {
       }
     } else {
       LogMsg("UpdateData(): from package")
+      r$dataFileVisible <- FALSE
       hideElement("dataFile")
       
       dataFile <- system.file(paste0("datasets/", source, ".nex"),
