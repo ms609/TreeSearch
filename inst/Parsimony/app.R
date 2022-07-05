@@ -1497,6 +1497,11 @@ server <- function(input, output, session) {
       }
       r$plottedTree <- cons
       plot(r$plottedTree, tip.color = TipCols()[intersect(cons$tip.label, kept)])
+      LogComment("Plot consensus tree")
+      LogCode(
+        "plottedTree <- cons # Store for potential future use",
+        "tipCols <- Rogue::ColByStability(trees)[plottedTree$tip.label]",
+        "plot(plottedTree, tip.color = tipCols)")
       LabelConcordance()
     }
     
