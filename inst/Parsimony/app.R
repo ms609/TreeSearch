@@ -34,7 +34,7 @@ if (logging) {
   PutData <- PutTree <- LogMsg <- function (...) {}
 }
 
-WriteLoggedCode <- if (requireNamespace("crayon", quiet = TRUE)) {
+WriteLoggedCode <- if (requireNamespace("crayon", quietly = TRUE)) {
   function(txt) {
     for (line in txt) cat(if (substr(trimws(line), 0, 1) == "#") {
       crayon::green("  ", line, "\n")
@@ -2287,8 +2287,10 @@ server <- function(input, output, session) {
     }
     unlink(DataFileName("*"))
     unlink(TreeFileName("*"))
-    LogMsg("Session has ended")
-    close(logMsgFile)
+    if (logging) {
+      LogMsg("Session has ended")
+      close(logMsgFile)
+    }
   })
 }
 
