@@ -2352,7 +2352,6 @@ server <- function(input, output, session) {
   
   LogMapping <- function() {
     k <- dim(mapping())[2]
-    dput(k)
     if (!is.null(k) && k > 0) {
       LogComment(paste0(
         "Generate first ", k, " dimensions of tree space using PCoA"
@@ -2406,7 +2405,8 @@ server <- function(input, output, session) {
     }
     
     LogComment("Set plot margins", 0)
-    LogExpr("par(mar = rep(0.2, 4))")
+    LogCode("par(mar = rep(0.2, 4))")
+    par(mar = rep(0.2, 4))
     LogCode(paste0(
       "for (i in 2:", nDim, ") for (j in seq_len(i - 1)) {"
     ))
@@ -2611,7 +2611,7 @@ server <- function(input, output, session) {
       } else if (input$spaceCol == "score") {
         legendRes <- length(badToGood)
         leg <- rep(NA, legendRes)
-        leg[c(legendRes, 1)] = signif(range(scores()))
+        leg[c(legendRes, 1)] <- signif(range(scores()))
         legend("bottomright", bty = "n", border = NA,
                legend = leg, fill = rev(badToGood),
                y.intersp = 0.04, cex = 1.1)
