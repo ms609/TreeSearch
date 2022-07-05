@@ -462,7 +462,7 @@ server <- function(input, output, session) {
   
   LogCode <- function(...) {
     for (line in list(...)) {
-      Write(line, cmdLogFile)
+      Write(as.character(line), cmdLogFile)
     }
   }
   
@@ -1416,8 +1416,6 @@ server <- function(input, output, session) {
   observeEvent(input$outgroup, {
     if (!is.null(r$oldOutgroup)) {
       if (!identical(input$outgroup, r$oldOutgroup)) {
-        dput(input$outgroup)
-        dput(r$oldOutgroup)
         r$oldOutgroup <- NULL
       }
     } else {
@@ -1884,6 +1882,8 @@ server <- function(input, output, session) {
   # Clusterings
   ##############################################################################
   clusterings <- bindCache(reactive({
+    ## CAUTION: Update LogClusterings() to reflect any changes made
+    ## to this function 
     LogMsg("clusterings()")
     maxCluster <- min(15L, length(r$trees) - 1L)
     if (maxCluster > 1L) {
@@ -1948,10 +1948,95 @@ server <- function(input, output, session) {
 
   }), r$treeHash, input$distMeth)
   
+  LogClusterings <- function() {
+    maxCluster <- min(15L, length(r$trees) - 1L)
+    if (maxCluster > 1L) {
+      possibleClusters <- paste(2, maxCluster, collapse = ":")
+      
+      hSil <- pamSil <- -99
+      LogDistances()
+      dists <- distances()
+      
+      LogComment("Compute clusters of trees", 2)
+      nK <- length(possibleClusters)
+      LogComment("Try K-means clustering:")
+      LogCode(
+        paste0(
+          "kClusters <- lapply(", possibleClusters, ", ",
+          "function (k) kmeans(dists, k)", ")"
+        ),
+        "kSils <- vapply(kClusters, function (kCluster) {",
+        "  mean(cluster::silhouette(kCluster$cluster, dists)[, 3])",
+        "}, double(1))",
+        "bestK <- which.max(kSils)",
+        "kSil <- kSils[bestK] # Best silhouette coefficient",
+        "kCluster <- kClusters[[bestK]]$cluster # Best solution"
+      )
+      
+      LogComment("Try partitioning around medoids:")
+      LogCode(
+        paste0(
+          "pamClusters <- lapply(", possibleClusters, ", ",
+          "function (k) cluster::pam(dists, k = k)", ")"
+        ),
+        "pamSils <- vapply(pamClusters, function (pamCluster) {",
+        "  mean(cluster::silhouette(pamCluster)[, 3])",
+        "}, double(1))",
+        "bestPam <- which.max(pamSils)",
+        "pamSil <- pamSils[bestPam] # Best silhouette coefficient",
+        "pamCluster <- pamClusters[[bestPam]]$cluster # Best solution"
+      )
+      
+      
+      LogComment("Try hierarchical clustering with minimax linkage")
+      LogCode(
+        "hTree <- protoclust::protoclust(dists)",
+        paste0(
+          "hClusters <- lapply(", possibleClusters, ", ", 
+          "function (k) cutree(hTree, k = k)", ")"
+        ),
+        "hSils <- vapply(hClusters, function (hCluster) {",
+        "  mean(cluster::silhouette(hCluster, dists)[, 3])",
+        "}, double(1))",
+        "bestH <- which.max(hSils)",
+        "hSil <- hSils[bestH] # Best silhouette coefficient",
+        "hCluster <- hClusters[[bestH]] # Best solution"
+      )
+      
+      LogComment("Set threshold for recognizing meaningful clustering")
+      LogComment("no support < 0.25 < weak < 0.5 < good < 0.7 < strong", 0)
+      LogCode(paste0("threshold <- ", silThreshold()))
+      
+      LogComment("Compare silhouette coefficients of each method")
+      LogCode(
+        "bestMethodId <- which.max(c(threshold, pamSil, hSil, kSil))",
+        "bestCluster <- c(\"none\", \"pam\", \"hmm\", \"kmn\")[bestMethodId]"
+      )
+      if (clusterings()$n == 1) {
+        LogComment("No significant clustering was found.")
+        LogCode("clustering <- 1 # Assign all trees to single cluster")
+      } else {
+        LogComment(paste0("Best clustering was ", clusterings()$method, ":"))
+        LogComment(paste0("Silhouette coefficient = ",
+                          signif(clusterings()$sil), 0))
+        LogComment(paste0("Store the cluster to which each tree is ",
+                          "optimally assigned:"))
+        LogCode(paste0(
+          "clustering <- switch(bestCluster, pam = pamCluster, hmm = hCluster,",
+          " kmn = kCluster, 1)")
+        )
+      }
+    } else {
+      LogComment("Not enough trees for clustering analysis")
+      LogCode("bestCluster <- \"none\"")
+    }
+  }
+  
   PlotClusterCons <- function () {
     LogMsg("PlotClusterCons()")
     
     cl <- clusterings()
+    LogClusterings()
     kept <- rev(dropSeq())[seq_len(input$keepTips)]
     dropped <- if (length(kept) > 1) {
       setdiff(TipLabels(r$trees[[1]]), kept)
@@ -2012,6 +2097,7 @@ server <- function(input, output, session) {
       input$spaceCol,
       "clust" = {
         cl <- clusterings()
+        LogClusterings()
         if (cl$sil > silThreshold()) {
           palettes[[min(length(palettes), cl$n)]][cl$cluster]
         } else {
@@ -2048,6 +2134,7 @@ server <- function(input, output, session) {
       input$spacePch,
       "clust" = {
         cl <- clusterings()
+        LogClusterings()
         if (cl$sil > silThreshold()) {
           cl$cluster - 1
         } else 16
@@ -2101,6 +2188,8 @@ server <- function(input, output, session) {
   }
   
   distances <- bindCache(reactive({
+    ## CAUTION: LogDistances() must be updated to reflect any changes to
+    ## this code
     LogMsg("distances(): ", input$distMeth)
     if (length(r$trees) > 1L) {
       Dist <- switch(input$distMeth,
@@ -2118,6 +2207,24 @@ server <- function(input, output, session) {
     }
     
   }), input$distMeth, r$treeHash)
+  
+  LogDistances <- function() {
+    LogComment("Compute tree distances")
+    LogCode(paste0(
+      "dists <- ", 
+      switch(
+        input$distMeth,
+        "cid" = "TreeDist::ClusteringInfoDistance(trees)",
+        "pid" = "TreeDist::PhylogeneticInfoDistance(trees)",
+        "msid" = "TreeDist::MatchingSplitInfoDistance(trees)",
+        "rf" = "TreeDist::RobinsonFoulds(trees)",
+        "qd" = c(
+          "as.dist(Quartet::QuartetDivergence(",
+          "  Quartet::ManyToManyQuartetAgreement(trees),",
+          "  similarity = FALSE))")
+      )
+    ))
+  }
   
   mapping <- bindCache(reactive({
     LogMsg("mapping()")
@@ -2162,6 +2269,7 @@ server <- function(input, output, session) {
     spaceLwd <- 2
     
     cl <- clusterings()
+    LogClusterings()
     proj <- mapping()
     
     nDim <- min(dims(), nProjDim())
