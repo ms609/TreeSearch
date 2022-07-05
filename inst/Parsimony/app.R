@@ -1624,7 +1624,7 @@ server <- function(input, output, session) {
           CharacterwisePlot()
         },
         "space" = {
-          treespacePlot()
+          TreespacePlot()
         }
       ) # end switch
     }
@@ -2048,12 +2048,19 @@ server <- function(input, output, session) {
                           "optimally assigned:"))
         LogCode(paste0(
           "clustering <- switch(bestCluster, pam = pamCluster, hmm = hCluster,",
-          " kmn = kCluster, 1)")
+          " kmn = kCluster, 1)"),
+          paste0("nClusters <- length(unique(clustering))"),
+          paste0(
+          "clusterCol <- ",
+          EnC(palettes[[min(length(palettes), clusterings()$n)]]),
+          " # Arbitrarily"
+          )
         )
       }
     } else {
       LogComment("Not enough trees for clustering analysis")
       LogCode("bestCluster <- \"none\"")
+      LogCode("nClusters <- 1")
     }
   }
   
@@ -2085,14 +2092,11 @@ server <- function(input, output, session) {
         paste0(
           "tipCols <- Rogue::ColByStability(trees)", 
           " # Colour tips by stability"
-        ), paste0(
-          "treeCols <- ", EnC(palettes[[min(length(palettes), cl$n)]]),
-          " # Arbitrarily"
         )
       )
       LogComment("Plot each consensus tree in turn:", 1)
       LogCode(paste0("for (i in seq_len(", cl$n, ")) {"))
-      LogIndent(2)
+      LogIndent(+2)
       LogCode(
         "clusterTrees <- trees[clustering == i]",
         "cons <- ConsensusWithout(", 
@@ -2104,10 +2108,10 @@ server <- function(input, output, session) {
       LogExpr("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
       LogCode("plot(",
               "  cons,",
-              "  edge.width = 2,           # Widen lines",
-              "  font = 3,                 # Italicize labels",
-              "  cex = 0.83,               # Shrink tip font size",
-              "  edge.color = treeCols[i], # Colour tree",
+              "  edge.width = 2,             # Widen lines",
+              "  font = 3,                   # Italicize labels",
+              "  cex = 0.83,                 # Shrink tip font size",
+              "  edge.color = clusterCol[i], # Colour tree",
               "  tip.color = tipCols[cons$tip.label]",
               ")")
       LogCode("legend(", 
@@ -2115,7 +2119,7 @@ server <- function(input, output, session) {
               "  paste(\"Cluster\", i),",
               "  pch = 15,            # Filled circle icon",
               "  pt.cex = 1.5,        # Increase icon size",
-              "  col = treeCols[i],",
+              "  col = clusterCol[i],",
               "  bty = \"n\"            # Don't plot legend in box",
               ")")
       LogConcordance("cons")
@@ -2344,11 +2348,20 @@ server <- function(input, output, session) {
     } else {
       matrix(0, 0, 0)
     }
-  }), r$treeHash, input$distMeth, maxProjDim())
+  }), r$treeHash, input$distMeth, maxProjDim()).
+  
+  LogMapping <- function() {
+    k <- dim(mapping)[2]
+    if (k > 0) {
+      LogComment(paste0(
+        "Generate first ", k, " dimensions of tree space using PCoA"
+      ))
+      LogCode(paste0("map <- cmdscale(dists, k = ", k, ")"))
+    }
+  }
   
   mstEnds <- bindCache(reactive({
     dist <- as.matrix(distances())
-    nRows <- dim(dist)[1]
     withProgress(message = "Calculating MST", {
       edges <- MSTEdges(dist)
     })
@@ -2358,7 +2371,7 @@ server <- function(input, output, session) {
   ##############################################################################
   # Plot tree space
   ##############################################################################
-  treespacePlot <- function() {
+  TreespacePlot <- function() {
     if (length(r$trees) < 3) {
       return(ErrorPlot("Need at least\nthree trees to\nmap tree space"))
     }
@@ -2368,14 +2381,16 @@ server <- function(input, output, session) {
     
     cl <- clusterings()
     LogClusterings()
-    proj <- mapping()
+    map <- mapping()
+    LogMapping()
     
     nDim <- min(dims(), nProjDim())
     if (nDim < 2) {
-      if (dim(proj)[2] == 1L) {
-        proj <- cbind(proj, 0)
+      LogComment("Prepare 1D map", 0)
+      if (dim(map)[2] == 1L) {
+        LogExpr("map <- cbind(map, 0)")
       } else {
-        proj[, 2] <- 0
+        LogExpr("map[, 2] <- 0")
       }
       nDim <- 2L
       nPanels <- 1L
@@ -2388,21 +2403,134 @@ server <- function(input, output, session) {
       }
       layout(t(plotSeq[-nDim, -1]))
     }
-    par(mar = rep(0.2, 4))
+    LogComment("Set plot margins", 0)
+    LogExpr("par(mar = rep(0.2, 4))")
+    LogCode(paste0(
+      "for (i in 2:", nDim, ") for (j in seq_len(i - 1)) {"
+    ))
+    LogIndent(+2)
+    LogComment("Set up blank plot")
+    LogCode("plot(",
+            "  x = map[, j],",
+            "  y = map[, i],",
+            "  ann = FALSE,       # No annotations",
+            "  axes = FALSE,      # No axes",
+            paste0("  frame.plot = ", 
+                   if(nDim > 2L) {
+                     "TRUE,  # Border around plot"
+                   } else {
+                     "FALSE, # No border around plot"  
+                   }),
+            "  type = \"n\",        # Don't plot any points yet",
+            "  asp = 1,           # Fix aspect ratio to avoid distortion",
+            "  xlim = range(map), # Constant X range for all dimensions",
+            "  ylim = range(map)  # Constant Y range for all dimensions",
+            ")")
+      
+      LogComment("Plot minimum spanning tree") #TODO add option to connect consecutive
+      LogCode(
+        "mst <- MSTEdges(as.matrix(dists))",
+        "apply(mst, 1, function (segment) {",
+        "  lines(", #TODO use segments()?
+        "    x = map[segment, j],",
+        "    y = map[segment, i],",
+        "    col = \"#bbbbbb\", # Light grey",
+        "    lty = 1     # Solid lines",
+        "  )",
+        "})"
+      )
+      
+      LogComment("Add points")
+      LogCode(
+        "points("
+        "  x = map[, j],",
+        "  y = map[, i],",
+        "  pch = treePch(),", #TODO
+        "  col = paste0(treeCols(), as.hexmode(200)),", #TODO
+        "  cex = spaceCex," # TODO
+        "  lwd = spaceLwd" # TODO
+        ")"
+      )
+      
+      if (cl$sil > silThreshold()) {
+        LogComment("Mark clusters")
+        LogCode("for (clI in seq_len(nClusters)) {")
+        LogIndent(+2)
+        LogCode(
+          "inCluster <- clustering == clI",
+          "clusterX <- map[inCluster, j]",
+          "clusterY <- map[inCluster, i]",
+          "hull <- chull(clusterX, clusterY)",
+          "polygon(",
+          "  x = clusterX[hull],",
+          "  y = clusterY[hull],",
+          "  lty = 1, # Solid line style",
+          "  lwd = 2, # Wider line width",
+          "  border = clusterCol[clI]",
+          ")")
+        LogCode("}")
+        LogIndent(-2)
+      }
+      if ("labelTrees" %in% input$display) {
+        #TODO input$display doesn't exist. If useful, implement below too.
+        LogCode("text(map[, j], map[, i], trees)")
+      }
+    }
+    if (nDim > 2) {
+      LogCode("plot.new() # Move to next plot")
+    }
+    if (input$spacePch == "relat") {
+      if (length(input$relators) == 4L) {
+        LogCode(
+          "legend(",
+          "  \"topright\",",
+          "  bty = \"n\", # No legend border box",
+          "  pch = 1:3, # Legend symbols",
+          "  xpd = NA, # Display overflowing text",
+          "  pt.cex = spaceCex,", #TODO
+          "  pt.lwd = spaceLwd,", #TODO
+          paste0("  ",
+                 EnC(gsub("_", " ", fixed = TRUE,
+                          paste(input$relators[2:4], "&", input$relators[[1]])))
+          ), ")"
+        )
+      }
+    } else if (input$spacePch == "name") {
+      clstr <- treeNameClustering()
+      clusters <- unique(clstr)
+      if (length(clusters) > 1L) {
+        legend(bty = "n", "topright", xpd = NA,
+               pch = c(1, 3, 4, 2, seq_len(max(clstr))[-(1:4)])[clusters],
+               paste0("~ ", attr(clstr, "med"), " (", table(clstr), ")"))
+      }
+    }
+    if (input$spaceCol == "firstHit" && length(firstHit())) {
+      legend(bty = "n", "topleft", pch = 16, col = firstHitCols(),
+             pt.cex = spaceCex,
+             names(firstHit()), title = "Iteration first hit")
+    } else if (input$spaceCol == "score") {
+      legendRes <- length(badToGood)
+      leg = rep(NA, legendRes)
+      leg[c(legendRes, 1)] = signif(range(scores()))
+      legend("bottomright", bty = "n", border = NA,
+             legend = leg, fill = rev(badToGood),
+             y.intersp = 0.04, cex = 1.1)
+    }
+    
     withProgress(message = "Drawing plot", {
       for (i in 2:nDim) for (j in seq_len(i - 1)) {
         incProgress(1 / nPanels)
         # Set up blank plot
-        plot(proj[, j], proj[, i], ann = FALSE, axes = FALSE,
+        plot(map[, j], map[, i], ann = FALSE, axes = FALSE,
              frame.plot = nDim > 2L,
-             type = "n", asp = 1, xlim = range(proj), ylim = range(proj))
+             type = "n", asp = 1, xlim = range(map), ylim = range(map))
         
         # Plot MST
         apply(mstEnds(), 1, function (segment)
-          lines(proj[segment, j], proj[segment, i], col = "#bbbbbb", lty = 1))
+          lines(map[segment, j], map[segment, i], col = "#bbbbbb", lty = 1))
         
         # Add points
-        points(proj[, j], proj[, i], pch = treePch(),
+        points(map[, j], map[, i], pch = treePch(),
                col = paste0(treeCols(), as.hexmode(200)),
                cex = spaceCex,
                lwd = spaceLwd
@@ -2412,18 +2540,20 @@ server <- function(input, output, session) {
           # Mark clusters
           for (clI in seq_len(cl$n)) {
             inCluster <- cl$cluster == clI
-            clusterX <- proj[inCluster, j]
-            clusterY <- proj[inCluster, i]
+            clusterX <- map[inCluster, j]
+            clusterY <- map[inCluster, i]
             hull <- chull(clusterX, clusterY)
             polygon(clusterX[hull], clusterY[hull], lty = 1, lwd = 2,
                     border = palettes[[min(length(palettes), cl$n)]][clI])
           }
         }
         if ("labelTrees" %in% input$display) {
-          text(proj[, j], proj[, i], thinnedTrees())
+          text(map[, j], map[, i], names(r$trees))
         }
       }
-      if (nDim > 2) plot.new()
+      if (nDim > 2) {
+        plot.new()
+      }
       if (input$spacePch == "relat") {
         if (length(input$relators) == 4L) {
           legend(bty = "n", "topright", pch = 1:3, xpd = NA,
