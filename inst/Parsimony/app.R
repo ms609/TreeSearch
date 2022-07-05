@@ -242,8 +242,8 @@ ui <- fluidPage(
                     if (logging) setNames(names(inapplicable.datasets), names(inapplicable.datasets)))),
       fileInput("dataFile",
                 tags$span(
-                  tags$span("Load data from file"),
-                  tags$i(class="fas fa-solid fa-table")
+                  tags$i(class="fas fa-solid fa-table"),
+                  tags$span("Load data from file")
                   ),
                 placeholder = "No data file selected"),
       tags$label("Search", class = "control-label", 
@@ -252,8 +252,8 @@ ui <- fluidPage(
       hidden(actionButton("go", "Search", icon = icon("search"))),
       fileInput("treeFile",
                 label = tags$span(
-                  tags$span("Load trees"),
-                  tags$i(class="fas fa-solid fa-tree")
+                  tags$i(class="fas fa-solid fa-tree"),
+                  tags$span("Load trees")
                 ),
                 placeholder = "No tree file selected"),
       numericInput("nTree",
