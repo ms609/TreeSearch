@@ -316,7 +316,6 @@ ui <- fluidPage(
     ),
     fluidRow(
       plotOutput(outputId = "treePlot", height = "600px"),
-      htmlOutput(outputId = "plotSpacer", height = "0px"),
       hidden(plotOutput("clustCons", height = "200px")),
       hidden(tags$div(id = "charChooser",
         tags$div(numericInput("whichChar", "Character to map:", value = 1L,
@@ -875,6 +874,10 @@ server <- function(input, output, session) {
   observeEvent(input$dataFile, UpdateData(), ignoreInit = TRUE)
   observeEvent(r$dataset, {
     r$dataHash <- rlang::hash(r$dataset)
+  })
+  observeEvent(input$plotSize, {
+    px <- paste0("'", input$plotSize, "px'")
+    runjs(paste0("$('#treePlot').css({height: ", px, ", width: ", px, "});"))
   })
   
   observeEvent(input$searchConfig, {
@@ -1630,8 +1633,6 @@ server <- function(input, output, session) {
     }
   }
   ReactiveMainPlot <- reactive({MainPlot()})
-  
-  PlotSize <- function () debounce(reactive(input$plotSize), 2 * aJiffy)
   
   output$treePlot <- renderCachedPlot(
     ReactiveMainPlot(),
@@ -2709,12 +2710,6 @@ server <- function(input, output, session) {
   ##############################################################################
   # References
   ##############################################################################
-  output$plotSpacer <- renderUI({
-    tags$div(style = paste0("margin-bottom: ", 
-                            (input$plotSize - 600)
-                            , "px"),
-             " ")
-  })
   
   output$references <- renderUI({
     tagList(
