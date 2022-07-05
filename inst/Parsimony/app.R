@@ -56,6 +56,7 @@ Notification <- function (...) {
 aJiffy <- 42 # ms, default debounce period for input sliders etc
 typingJiffy <- 2.5 * aJiffy # slightly slower if might be typing
 aFewTrees <- 48L # Too many and rogues / tree space are slowed
+NO_OUTGROUP <- "! TREESEARCH_no outgroup specified ."
 
 palettes <- list("#7a6c36",
                  c("#7a6c36", "#864885"),
@@ -434,7 +435,8 @@ server <- function(input, output, session) {
     dataFileVisible = TRUE,
     ignoreTreeRange = TRUE,
     ignoreNTree = TRUE,
-    nTree = 1L,
+    nTree = 0L,
+    oldOutgroup = NO_OUTGROUP,
     treeRange = c(1L, 1L),
     updatingTrees = FALSE # TODO DELETE?
   )
@@ -1042,6 +1044,7 @@ server <- function(input, output, session) {
     if (AnyTrees() && "consConfig" %in% r$visibleConfigs) {
       nTip <- length(r$trees[[1]]$tip.label)
       LogMsg("UpdateKeepTipsMaximum(", input$keepTips, " -> ", nTip, ")")
+      r$oldKeepTips <- input$keepTips
       updateNumericInput(inputId = "keepTips",
                          label = paste0("Tips to show (/", nTip, "):"),
                          max = nTip,
@@ -1091,18 +1094,23 @@ server <- function(input, output, session) {
   UpdateOutgroupInput <- reactive({
     if (AnyTrees() && "treePlotConfig" %in% r$visibleConfigs) {
       LogMsg("UpdateOutgroupInput()")
-      keptOutgroup <- intersect(input$outgroup, KeptTips())
+      r$outgroup <- intersect(r$outgroup, KeptTips())
+      if (length(r$outgroup) == 0) {
+        r$outgroup <- if (HaveData()) {
+          intersect(names(r$dataset), KeptTips())[1]
+        } else {
+          KeptTips()[1]
+        }
+      }
+      
+      r$oldOutgroup <- if (is.null(input$outgroup)) {
+        NO_OUTGROUP
+      } else {
+        input$outgroup
+      }
       updateSelectizeInput(
         inputId = "outgroup", choices = KeptTips(),
-        selected = if (length(keptOutgroup) == 0) {
-          if (HaveData()) {
-            intersect(names(r$dataset), KeptTips())[1]
-          } else {
-            KeptTips()[1]
-          }
-        } else {
-          keptOutgroup
-        })
+        selected = r$outgroup)
     }
   })
   
@@ -1245,7 +1253,7 @@ server <- function(input, output, session) {
   }, ignoreInit = TRUE)
   
   UserRoot <- function (tree) {
-    outgroupTips <- intersect(input$outgroup, tree$tip.label)
+    outgroupTips <- intersect(r$outgroup, tree$tip.label)
     if (length(outgroupTips)) {
       tr <- deparse(substitute(tree))
       LogComment("Root tree")
@@ -1269,9 +1277,6 @@ server <- function(input, output, session) {
   PlottedTree <- reactive({
     if (length(r$trees) > 0L) {
       plottedTree <- r$trees[[whichTree()]]
-      LogCode(paste0(
-        "plottedTree <- trees[[", whichTree(), "]]"
-      ))
       plottedTree <- UserRoot(plottedTree)
       if (!("tipsRight" %in% input$mapDisplay)) {
         plottedTree$edge.length <- rep_len(2, dim(plottedTree$edge)[1])
@@ -1375,6 +1380,7 @@ server <- function(input, output, session) {
       # This call also ensures that concordance assignment is logged before
       # LabelSplits()
       if (!is.null(concordance())) {
+        LogComment("Annotate splits by concordance", 1)
         LogCode("LabelSplits(",
                 "  tree = plottedTree,",
                 "  labels = signif(concordance, 3),",
@@ -1390,15 +1396,34 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$keepTips, {
-    LogMsg("Observed input$keepTips -> ", input$keepTips)
-    UpdateOutgroupInput()
-    UpdateDroppedTaxaDisplay()
+    if (!is.null(r$oldKeepTips)) {
+      if (!identical(input$keepTips, r$oldKeepTips)) {
+        r$oldKeepTips <- NULL
+      }
+    } else {
+      LogMsg("Observed input$keepTips -> ", input$keepTips)
+      UpdateOutgroupInput()
+      UpdateDroppedTaxaDisplay()
+    }
   }, ignoreInit = TRUE)
   
   observeEvent(input$neverDrop, {
     LogMsg("Observed input$neverDrop -> ", input$neverDrop)
     UpdateOutgroupInput()
     UpdateExcludedTipsInput()
+  }, ignoreInit = TRUE)
+  
+  observeEvent(input$outgroup, {
+    if (!is.null(r$oldOutgroup)) {
+      if (!identical(input$outgroup, r$oldOutgroup)) {
+        dput(input$outgroup)
+        dput(r$oldOutgroup)
+        r$oldOutgroup <- NULL
+      }
+    } else {
+      LogMsg("Observed input$outgroup -> ", input$outgroup)
+      r$outgroup <- input$outgroup
+    }
   }, ignoreInit = TRUE)
   
   KeptTips <- reactive({
@@ -1426,7 +1451,6 @@ server <- function(input, output, session) {
     par(mar = rep(0, 4), cex = 0.9)
     kept <- KeptTips()
     dropped <- DroppedTips()
-    LogMsg("   ConsPl: ", length(dropped), " ", "rogues")
     
     if (length(dropped) &&
         length(input$excludedTip) &&
@@ -1438,7 +1462,8 @@ server <- function(input, output, session) {
         LogCode(paste0("exclude <- ",
                        EnC(setdiff(dropped, input$excludedTip))))
         LogCode("consTrees <- lapply(trees, DropTip, exclude)")
-        consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
+        consTrees <- lapply(r$trees, DropTip,
+                            setdiff(dropped, input$excludedTip))
         LogCode("labels <- setdiff(consTrees[[1]]$tip.label, exclude)")
       } else {
         LogCode("consTrees <- trees",
@@ -1461,15 +1486,19 @@ server <- function(input, output, session) {
               paste0("  p = ", signif(consP()), ","),
               "  edgeLength = 1,",
               paste0(
-                if(length(input$outgroup)) {
-                  paste0("  outgroupTips = ", EnC(input$outgroup), ",\n")
+                if(length(r$outgroup)) {
+                  paste0("  outgroupTips = ", EnC(r$outgroup), ",\n")
               }, "  tip.color = tipCols"),
               ")")
       
-      plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
-                           edgeLength = 1,
-                           outgroupTips = input$outgroup,
-                           tip.color = TipCols()[intersect(consTrees[[1]]$tip.label, kept)])
+      plotted <- RoguePlot(
+        consTrees,
+        input$excludedTip,
+        p = consP(),
+        edgeLength = 1,
+        outgroupTips = r$outgroup,
+        tip.color = TipCols()[intersect(consTrees[[1]]$tip.label, kept)]
+      )
       LogComment("Store tree for future reference")
       LogCode("plottedTree <- plotted$cons")
       r$plottedTree <- plotted$cons
@@ -1493,24 +1522,27 @@ server <- function(input, output, session) {
       cons <- ConsensusWithout(r$trees, without, p = consP())
       cons <- UserRoot(cons)
       if (unitEdge()) {
-        cons$edge.length <- rep_len(1L, dim(cons$edge)[1])
+        LogExpr("cons$edge.length <- rep_len(1L, dim(cons$edge)[1])")
       }
       r$plottedTree <- cons
-      plot(r$plottedTree, tip.color = TipCols()[intersect(cons$tip.label, kept)])
       LogComment("Plot consensus tree")
       LogCode(
         "plottedTree <- cons # Store for potential future use",
         "tipCols <- Rogue::ColByStability(trees)[plottedTree$tip.label]",
         "plot(plottedTree, tip.color = tipCols)")
+      plot(r$plottedTree, tip.color = TipCols()[intersect(cons$tip.label, kept)])
       LabelConcordance()
     }
-    
   }
   
   CharacterwisePlot <- function() {
     par(mar = rep(0, 4), cex = 0.9)
     n <- PlottedChar()
     LogMsg("Plotting PlottedTree(", whichTree(), ", ", n, ")")
+    LogCode(paste0(
+      # Log here, not in reactive PlottedTree() function
+      "plottedTree <- trees[[", whichTree(), "]]"
+    ))
     r$plottedTree <- PlottedTree()
     if (length(n) && n > 0L) {
       pc <- tryCatch({
@@ -1571,7 +1603,7 @@ server <- function(input, output, session) {
         "clus" = list(r$treeHash, input$plotFormat,
                       input$keepTips, input$excludedTip,
                       consP(),
-                      input$neverDrop, input$outgroup,
+                      input$neverDrop, r$outgroup,
                       input$distMeth,
                       input$concordance,
                       silThreshold(),
@@ -1579,12 +1611,12 @@ server <- function(input, output, session) {
         "cons" = list(r$treeHash, input$plotFormat,
                       input$keepTips, input$excludedTip,
                       consP(),
-                      input$neverDrop, input$outgroup,
+                      input$neverDrop, r$outgroup,
                       input$consP, input$concordance),
         "ind" = list(PlottedChar(),
                      whichTree(),
                      input$concordance,
-                     input$outgroup,
+                     r$outgroup,
                      input$mapDisplay,
                      r$dataHash, r$treeHash), 
         "space" = list(r$treeHash, input$plotFormat,
