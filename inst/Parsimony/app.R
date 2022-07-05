@@ -1090,7 +1090,7 @@ server <- function(input, output, session) {
   })
   
   UpdateOutgroupInput <- reactive({
-    if (HaveData() && "treePlotConfig" %in% r$visibleConfigs) {
+    if (AnyTrees() && "treePlotConfig" %in% r$visibleConfigs) {
       LogMsg("UpdateOutgroupInput()")
       keptOutgroup <- intersect(input$outgroup, KeptTips())
       updateSelectizeInput(
@@ -1262,12 +1262,15 @@ server <- function(input, output, session) {
   
   PlottedTree <- reactive({
     if (length(r$trees) > 0L) {
-      tr <- r$trees[[whichTree()]]
-      tr <- UserRoot(tr)
+      plottedTree <- r$trees[[whichTree()]]
+      LogCode(paste0(
+        "plottedTree <- trees[[", whichTree(), "]]"
+      ))
+      plottedTree <- UserRoot(plottedTree)
       if (!("tipsRight" %in% input$mapDisplay)) {
-        tr$edge.length <- rep_len(2, dim(tr$edge)[1])
+        plottedTree$edge.length <- rep_len(2, dim(plottedTree$edge)[1])
       }
-      tr
+      plottedTree
     }
   })
   
@@ -1515,6 +1518,11 @@ server <- function(input, output, session) {
       )
       LabelConcordance()
     } else {
+      LogComment("Plot single tree")
+      LogCode(
+        "tipCols <- Rogue::ColByStability(trees)[plottedTree$tip.label]",
+        "plot(plottedTree, tip.color = tipCols)"
+      )
       plot(r$plottedTree, tip.color = TipCols()[r$plottedTree$tip.label])
     }
   }
