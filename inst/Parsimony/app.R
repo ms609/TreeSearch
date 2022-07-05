@@ -499,9 +499,7 @@ server <- function(input, output, session) {
   }
   
   LogComment(c(
-    "# # TreeSearch session log # # #",
-    "",
-    paste("System time: ", Sys.time()),
+    paste("# # TreeSearch session log:", Sys.time(), "# # #"),
     "",
     paste(
       "System:", Sys.info()["sysname"], Sys.info()["release"],
