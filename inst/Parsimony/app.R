@@ -1539,6 +1539,7 @@ server <- function(input, output, session) {
     par(mar = rep(0, 4), cex = 0.9)
     n <- PlottedChar()
     LogMsg("Plotting PlottedTree(", whichTree(), ", ", n, ")")
+    LogComment(paste("Select tree", n, "from tree set"))
     LogCode(paste0(
       # Log here, not in reactive PlottedTree() function
       "plottedTree <- trees[[", whichTree(), "]]"
@@ -1559,6 +1560,21 @@ server <- function(input, output, session) {
         return()
       }
       )
+      LogComment(paste("Map character", n, "onto tree", whichTree()))
+      LogCode(
+        "PlotCharacter(",
+        "  tree = plottedTree,",
+        "  dataset = dataset,",
+        paste0("  char = ", n, ","),
+        paste0("  updateTips = ", "updateTips" %in% input$mapDisplay, ","),
+        "  edge.width = 2.5",
+        ")"
+      )
+              
+      PlotCharacter(r$plottedTree, r$dataset, n,
+                    edge.width = 2.5,
+                    updateTips = "updateTips" %in% input$mapDisplay)
+      
       LabelConcordance()
     } else {
       LogComment("Plot single tree")
