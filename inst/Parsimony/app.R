@@ -2348,7 +2348,7 @@ server <- function(input, output, session) {
     } else {
       matrix(0, 0, 0)
     }
-  }), r$treeHash, input$distMeth, maxProjDim()).
+  }), r$treeHash, input$distMeth, maxProjDim())
   
   LogMapping <- function() {
     k <- dim(mapping)[2]
@@ -2403,6 +2403,7 @@ server <- function(input, output, session) {
       }
       layout(t(plotSeq[-nDim, -1]))
     }
+    
     LogComment("Set plot margins", 0)
     LogExpr("par(mar = rep(0.2, 4))")
     LogCode(paste0(
@@ -2427,55 +2428,55 @@ server <- function(input, output, session) {
             "  ylim = range(map)  # Constant Y range for all dimensions",
             ")")
       
-      LogComment("Plot minimum spanning tree") #TODO add option to connect consecutive
+    LogComment("Plot minimum spanning tree") #TODO add option to connect consecutive
+    LogCode(
+      "mst <- MSTEdges(as.matrix(dists))",
+      "apply(mst, 1, function (segment) {",
+      "  lines(", #TODO use segments()?
+      "    x = map[segment, j],",
+      "    y = map[segment, i],",
+      "    col = \"#bbbbbb\", # Light grey",
+      "    lty = 1     # Solid lines",
+      "  )",
+      "})"
+    )
+    
+    LogComment("Add points")
+    LogCode(
+      "points(",
+      "  x = map[, j],",
+      "  y = map[, i],",
+      "  pch = treePch(),", #TODO
+      "  col = paste0(treeCols(), as.hexmode(200)),", #TODO
+      "  cex = spaceCex,", # TODO
+      "  lwd = spaceLwd", # TODO
+      ")"
+    )
+    
+    if (cl$sil > silThreshold()) {
+      LogComment("Mark clusters")
+      LogCode("for (clI in seq_len(nClusters)) {")
+      LogIndent(+2)
       LogCode(
-        "mst <- MSTEdges(as.matrix(dists))",
-        "apply(mst, 1, function (segment) {",
-        "  lines(", #TODO use segments()?
-        "    x = map[segment, j],",
-        "    y = map[segment, i],",
-        "    col = \"#bbbbbb\", # Light grey",
-        "    lty = 1     # Solid lines",
-        "  )",
-        "})"
-      )
-      
-      LogComment("Add points")
-      LogCode(
-        "points("
-        "  x = map[, j],",
-        "  y = map[, i],",
-        "  pch = treePch(),", #TODO
-        "  col = paste0(treeCols(), as.hexmode(200)),", #TODO
-        "  cex = spaceCex," # TODO
-        "  lwd = spaceLwd" # TODO
-        ")"
-      )
-      
-      if (cl$sil > silThreshold()) {
-        LogComment("Mark clusters")
-        LogCode("for (clI in seq_len(nClusters)) {")
-        LogIndent(+2)
-        LogCode(
-          "inCluster <- clustering == clI",
-          "clusterX <- map[inCluster, j]",
-          "clusterY <- map[inCluster, i]",
-          "hull <- chull(clusterX, clusterY)",
-          "polygon(",
-          "  x = clusterX[hull],",
-          "  y = clusterY[hull],",
-          "  lty = 1, # Solid line style",
-          "  lwd = 2, # Wider line width",
-          "  border = clusterCol[clI]",
-          ")")
-        LogCode("}")
-        LogIndent(-2)
-      }
-      if ("labelTrees" %in% input$display) {
-        #TODO input$display doesn't exist. If useful, implement below too.
-        LogCode("text(map[, j], map[, i], trees)")
-      }
+        "inCluster <- clustering == clI",
+        "clusterX <- map[inCluster, j]",
+        "clusterY <- map[inCluster, i]",
+        "hull <- chull(clusterX, clusterY)",
+        "polygon(",
+        "  x = clusterX[hull],",
+        "  y = clusterY[hull],",
+        "  lty = 1, # Solid line style",
+        "  lwd = 2, # Wider line width",
+        "  border = clusterCol[clI]",
+        ")")
+      LogCode("}")
+      LogIndent(-2)
     }
+    if ("labelTrees" %in% input$display) {
+      #TODO input$display doesn't exist. If useful, implement below too.
+      LogCode("text(map[, j], map[, i], trees)")
+    }
+    
     if (nDim > 2) {
       LogCode("plot.new() # Move to next plot")
     }
@@ -2499,22 +2500,54 @@ server <- function(input, output, session) {
       clstr <- treeNameClustering()
       clusters <- unique(clstr)
       if (length(clusters) > 1L) {
-        legend(bty = "n", "topright", xpd = NA,
-               pch = c(1, 3, 4, 2, seq_len(max(clstr))[-(1:4)])[clusters],
-               paste0("~ ", attr(clstr, "med"), " (", table(clstr), ")"))
+        LogCode(
+          "nameClusters <- ClusterStrings(names(trees))",
+          "uniqueClusters <- unique(nameClusters)",
+          "legend(",
+          "  \"topright\",",
+          "  bty = \"n\", # No legend border box",
+          "  pch = 1:3, # Legend symbols",
+          "  xpd = NA, # Display overflowing text",
+          paste0(
+            "  pch = ",
+            EnC(c(1, 3, 4, 2, seq_len(max(clstr))[-(1:4)])[clusters]),
+            ","
+          ), paste0("  ", 
+                    Enquote(paste0("~ ", attr(clstr, "med"),
+                                   " (", table(clstr), ")"))
+          ),
+          ")")
       }
     }
     if (input$spaceCol == "firstHit" && length(firstHit())) {
-      legend(bty = "n", "topleft", pch = 16, col = firstHitCols(),
-             pt.cex = spaceCex,
-             names(firstHit()), title = "Iteration first hit")
+      LogCode(
+        "legend(",
+        "  \"topleft\",",
+        "  bty = \"n\", # No legend border box",
+        "  pch = 16, # Circle symbol",
+        "  xpd = NA, # Display overflowing text",
+        "  col = firstHitCols(),", #TODO
+        "  pt.cex = spaceCex,", #TODO
+        paste0("  ", Enquote(names(firstHit())), ","),
+        "  title = \"Iteration first hit\"",
+        ")"
+      )
     } else if (input$spaceCol == "score") {
-      legendRes <- length(badToGood)
-      leg = rep(NA, legendRes)
-      leg[c(legendRes, 1)] = signif(range(scores()))
-      legend("bottomright", bty = "n", border = NA,
-             legend = leg, fill = rev(badToGood),
-             y.intersp = 0.04, cex = 1.1)
+      LogCode(
+        "goodToBad <- hcl.colors(108, \"Temps\")",
+        "leg <- rep_len(NA, 108)",
+        paste0("leg[c(1, 108)] <- ", EnC(rev(signif(range(scores()))))),
+        "legend(",
+        "  \"bottomright\"",
+        "  legend = leg,",
+        "  bty = \"n\", # No legend border box",
+        "  border = NA, # No border around plot icons",
+        "  xpd = NA, # Display overflowing text",
+        "  fill = goodToBad,",
+        "  y.intersp = 0.04, # Compress squares to make gradient scale",
+        "  cex = 1.1 # Increase font and icon size slightly",
+        ")"
+      )
     }
     
     withProgress(message = "Drawing plot", {
@@ -2576,7 +2609,7 @@ server <- function(input, output, session) {
                names(firstHit()), title = "Iteration first hit")
       } else if (input$spaceCol == "score") {
         legendRes <- length(badToGood)
-        leg = rep(NA, legendRes)
+        leg <- rep(NA, legendRes)
         leg[c(legendRes, 1)] = signif(range(scores()))
         legend("bottomright", bty = "n", border = NA,
                legend = leg, fill = rev(badToGood),
