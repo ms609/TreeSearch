@@ -1493,7 +1493,7 @@ server <- function(input, output, session) {
     
   }
   
-  CharacterPlot <- function() {
+  CharacterwisePlot <- function() {
     par(mar = rep(0, 4), cex = 0.9)
     n <- PlottedChar()
     LogMsg("Plotting PlottedTree(", whichTree(), ", ", n, ")")
