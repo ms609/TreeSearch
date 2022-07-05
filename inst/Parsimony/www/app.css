@@ -13,6 +13,7 @@ body {
 
 #shiny-notification-panel {
   top: 0;
+  pointer-events: none;
 }
 
 .message {
