@@ -483,7 +483,9 @@ server <- function(input, output, session) {
   
   LogCode <- function(...) {
     for (line in list(...)) {
-      Write(as.character(line), cmdLogFile)
+      if (!is.null(line)) {
+        Write(as.character(line), cmdLogFile)
+      }
     }
   }
   
@@ -1312,6 +1314,17 @@ server <- function(input, output, session) {
       plottedTree
     }
   })
+  LogPlottedTree <- function() {
+    LogCode(paste0(
+      "plottedTree <- trees[[", whichTree(), "]]"
+      ),
+      if (!("tipsRight" %in% input$mapDisplay)) {
+        c("# Set uniform edge length",
+          "plottedTree$edge.length <- rep_len(2, dim(plottedTree$edge)[1])"
+        )
+      }
+    )
+  }
   
   Instab <- reactive({
     TipInstability(r$trees)
@@ -1511,10 +1524,10 @@ server <- function(input, output, session) {
               paste0("  tip = ", Enquote(input$excludedTip), ","),
               paste0("  p = ", consP(), ","),
               "  edgeLength = 1,",
-              paste0(
-                if(length(r$outgroup)) {
-                  paste0("  outgroupTips = ", EnC(r$outgroup), ",\n")
-              }, "  tip.color = tipCols"),
+              if(length(r$outgroup)) {
+                  paste0("  outgroupTips = ", EnC(r$outgroup), ",")
+              },
+              "  tip.color = tipCols",
               ")")
       
       plotted <- RoguePlot(
@@ -1566,11 +1579,8 @@ server <- function(input, output, session) {
     n <- PlottedChar()
     LogMsg("Plotting PlottedTree(", whichTree(), ", ", n, ")")
     LogComment(paste("Select tree", n, "from tree set"))
-    LogCode(paste0(
-      # Log here, not in reactive PlottedTree() function
-      "plottedTree <- trees[[", whichTree(), "]]"
-    ))
     r$plottedTree <- PlottedTree()
+    LogPlottedTree()
     if (length(n) && n > 0L) {
       pc <- tryCatch({
         PlotCharacter(r$plottedTree, r$dataset, n,
@@ -2416,18 +2426,18 @@ server <- function(input, output, session) {
     LogCode("plot(",
             "  x = map[, j],",
             "  y = map[, i],",
-            "  ann = FALSE,       # No annotations",
-            "  axes = FALSE,      # No axes",
+            "  ann = FALSE,        # No annotations",
+            "  axes = FALSE,       # No axes",
             paste0("  frame.plot = ", 
                    if(nDim > 2L) {
                      "TRUE,  # Border around plot"
                    } else {
                      "FALSE, # No border around plot"  
                    }),
-            "  type = \"n\",        # Don't plot any points yet",
-            "  asp = 1,           # Fix aspect ratio to avoid distortion",
-            "  xlim = range(map), # Constant X range for all dimensions",
-            "  ylim = range(map)  # Constant Y range for all dimensions",
+            "  type = \"n\",         # Don't plot any points yet",
+            "  asp = 1,            # Fix aspect ratio to avoid distortion",
+            "  xlim = range(map),  # Constant X range for all dimensions",
+            "  ylim = range(map)   # Constant Y range for all dimensions",
             ")")
       
     LogComment("Plot minimum spanning tree") #TODO add option to connect consecutive
@@ -2471,8 +2481,8 @@ server <- function(input, output, session) {
         "  lwd = 2, # Wider line width",
         "  border = clusterCol[clI]",
         ")")
-      LogCode("}")
       LogIndent(-2)
+      LogCode("}")
     }
     if ("labelTrees" %in% input$display) {
       #TODO input$display doesn't exist. If useful, implement below too.
@@ -2480,10 +2490,11 @@ server <- function(input, output, session) {
     }
     
     if (nDim > 2) {
-      LogCode("plot.new() # Move to next plot")
+      LogCode("plot.new() # Use new panel to plot legends")
     }
     if (input$spacePch == "relat") {
       if (length(input$relators) == 4L) {
+        LogComment("Add legend for plotting symbols")
         LogCode(
           "legend(",
           "  \"topright\",",
@@ -2502,6 +2513,7 @@ server <- function(input, output, session) {
       clstr <- treeNameClustering()
       clusters <- unique(clstr)
       if (length(clusters) > 1L) {
+        LogComment("Add legend for plotting symbols")
         LogCode(
           "nameClusters <- ClusterStrings(names(trees))",
           "uniqueClusters <- unique(nameClusters)",
@@ -2522,6 +2534,7 @@ server <- function(input, output, session) {
       }
     }
     if (input$spaceCol == "firstHit" && length(firstHit())) {
+      LogComment("Add legend for symbol colours")
       LogCode(
         "legend(",
         "  \"topleft\",",
@@ -2535,6 +2548,7 @@ server <- function(input, output, session) {
         ")"
       )
     } else if (input$spaceCol == "score") {
+      LogComment("Add legend for symbol colours")
       LogCode(
         "goodToBad <- hcl.colors(108, \"Temps\")",
         "leg <- rep_len(NA, 108)",
