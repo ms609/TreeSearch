@@ -441,14 +441,21 @@ server <- function(input, output, session) {
     updatingTrees = FALSE # TODO DELETE?
   )
   
+  serverEnv <- environment()
+  logIndent <- 0
+  loggingOn <- TRUE
+  
   cmdLogFile <- tempfile("TreeSearch-", fileext = ".R")
   Write <- function (txt, file) {
-    con <- file(file, open = "a")
-    on.exit(close(con))
-    if (logging) {
-      WriteLoggedCode(txt)
+    if (serverEnv$loggingOn) {
+      txt <- paste0(strrep(" ", logIndent), txt)
+      con <- file(file, open = "a")
+      on.exit(close(con))
+      if (logging) {
+        WriteLoggedCode(txt)
+      }
+      writeLines(txt, con)
     }
-    writeLines(txt, con)
   }
   
   LogExpr <- function(exps, evaluate = TRUE) {
@@ -460,6 +467,21 @@ server <- function(input, output, session) {
     }
   }
   
+  LogIndent <- function(n) {
+    serverEnv$logIndent <- serverEnv$logIndent + n
+    if (serverEnv$logIndent < 0) {
+      warning("Negative indent")
+    }
+  }
+  
+  PauseLog <- function() {
+    serverEnv$loggingOn <- FALSE
+  }
+  
+  ResumeLog <- function() {
+    serverEnv$loggingOn <- TRUE
+  }
+  
   LogCode <- function(...) {
     for (line in list(...)) {
       Write(as.character(line), cmdLogFile)
@@ -467,7 +489,9 @@ server <- function(input, output, session) {
   }
   
   LogComment <- function(exps, returns = 1) {
-    Write(rep("", returns), cmdLogFile)
+    if (returns > 0) {
+      Write(rep("", returns), cmdLogFile)
+    }
     for (exp in exps) {
       Write(paste("#", exp), cmdLogFile)
     }
@@ -1257,7 +1281,8 @@ server <- function(input, output, session) {
     if (length(outgroupTips)) {
       tr <- deparse(substitute(tree))
       LogComment("Root tree")
-      LogCode(paste0(tr, " <- RootTree(", tr, ", ", EnC(outgroupTips), ")"))
+      LogCode(paste0(tr, " <- RootTree(", tr, ", ", EnC(outgroupTips), ")")
+      )
       RootTree(tree, outgroupTips)
     } else {
       tree
@@ -1351,19 +1376,6 @@ server <- function(input, output, session) {
   
   concordance <- bindCache(reactive({
     LogMsg("concordance()")
-    concCode <- switch(
-      input$concordance,
-      "p" = "SplitFrequency(plottedTree, trees) / length(trees)",
-      "qc" = "QuartetConcordance(plottedTree, dataset)",
-      "clc" = "ClusteringConcordance(plottedTree, dataset)",
-      "phc" = "PhylogeneticConcordance(plottedTree, dataset)",
-      NULL
-    )
-    if (!is.null(concCode)) {
-      LogComment("Calculate split concordance", 1)
-      LogCode(paste0("concordance <- ", concCode))
-    }
-    
     # Return:
     switch(input$concordance,
           "p" = SplitFrequency(r$plottedTree, r$trees) / length(r$trees),
@@ -1377,23 +1389,36 @@ server <- function(input, output, session) {
   LabelConcordance <- reactive({
     if (input$concordance != "none" &&
         !is.null(r$plottedTree)) {
-      # This call also ensures that concordance assignment is logged before
-      # LabelSplits()
-      if (!is.null(concordance())) {
-        LogComment("Annotate splits by concordance", 1)
-        LogCode("LabelSplits(",
-                "  tree = plottedTree,",
-                "  labels = signif(concordance, 3),",
-                "  col = SupportColor(concordance),",
-                "  frame = \"none\",",
-                "  pos = 3",
-                ")")
-        LabelSplits(r$plottedTree, signif(concordance(), 3),
-                    col = SupportColor(concordance()),
-                    frame = "none", pos = 3L)
-      }
+      LogConcordance()
+      LabelSplits(r$plottedTree, signif(concordance(), 3),
+                  col = SupportColor(concordance()),
+                  frame = "none", pos = 3L)
     }
   })
+  
+  LogConcordance <- function(plottedTree = "plottedTree") {
+    if (input$concordance != "none") {
+      LogComment("Calculate split concordance", 1)
+      concCode <- switch(
+        input$concordance,
+        "p"   = paste0("SplitFrequency(", plottedTree,
+                       ", trees) / length(trees)"),
+        "qc"  = paste0("QuartetConcordance(", plottedTree, ", dataset)"),
+        "clc" = paste0("ClusteringConcordance(", plottedTree, ", dataset)"),
+        "phc" = paste0("PhylogeneticConcordance(", plottedTree, ", dataset)"),
+        NULL
+      )
+      LogCode(paste0("concordance <- ", concCode))
+      LogComment("Annotate splits by concordance", 1)
+      LogCode("LabelSplits(",
+              paste0("  tree = ", plottedTree, ","),
+              "  labels = signif(concordance, 3),",
+              "  col = SupportColor(concordance),",
+              "  frame = \"none\",",
+              "  pos = 3",
+              ")")
+    }
+  }
   
   observeEvent(input$keepTips, {
     if (!is.null(r$oldKeepTips)) {
@@ -2039,7 +2064,6 @@ server <- function(input, output, session) {
     cl <- clusterings()
     LogClusterings()
     
-    LogComment("Plot consensus of each tree cluster", 2)
     kept <- rev(dropSeq())[seq_len(input$keepTips)]
     dropped <- if (length(kept) > 1) {
       setdiff(TipLabels(r$trees[[1]]), kept)
@@ -2049,26 +2073,73 @@ server <- function(input, output, session) {
     par(mar = c(0.2, 0, 0.2, 0), xpd = NA)
     if (cl$sil > silThreshold()) {
       nRow <- ceiling(cl$n / 3)
+      
+      LogComment("Plot consensus of each tree cluster", 2)
+      LogCode(paste0(
+        "par(mfrow = c(", nRow, ", ",
+        ceiling(cl$n / nRow), "))",
+        " # Configure plotting area"
+      ))
       par(mfrow = c(nRow, ceiling(cl$n / nRow)))
+      LogCode(
+        paste0(
+          "tipCols <- Rogue::ColByStability(trees)", 
+          " # Colour tips by stability"
+        ), paste0(
+          "treeCols <- ", EnC(palettes[[min(length(palettes), cl$n)]]),
+          " # Arbitrarily"
+        )
+      )
+      LogComment("Plot each consensus tree in turn:", 1)
+      LogCode(paste0("for (i in seq_len(", cl$n, ")) {"))
+      LogIndent(2)
+      LogCode(
+        "clusterTrees <- trees[clustering == i]",
+        "cons <- ConsensusWithout(", 
+        "  trees = clusterTrees,",
+        paste0("  tip = ", EnC(dropped), ","),
+        paste0("  p = ", consP()),
+        ")"
+      )
+      LogExpr("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
+      LogCode("plot(",
+              "  cons,",
+              "  edge.width = 2,           # Widen lines",
+              "  font = 3,                 # Italicize labels",
+              "  cex = 0.83,               # Shrink tip font size",
+              "  edge.color = treeCols[i], # Colour tree",
+              "  tip.color = tipCols[cons$tip.label]",
+              ")")
+      LogCode("legend(", 
+              "  \"bottomright\",",
+              "  paste(\"Cluster\", i),",
+              "  pch = 15,            # Filled circle icon",
+              "  pt.cex = 1.5,        # Increase icon size",
+              "  col = treeCols[i],",
+              "  bty = \"n\"            # Don't plot legend in box",
+              ")")
+      LogConcordance("cons")
+      LogIndent(-2)
+      LogCode("}")
+      PauseLog()
       for (i in seq_len(cl$n)) {
         col <- palettes[[min(length(palettes), cl$n)]][i]
-        LogMsg(" > Multi-Clusters")
         PutTree(r$trees)
         PutData(cl$cluster)
         
-        tr <- ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP())
-        tr <- UserRoot(tr)
-        tr$edge.length <- rep.int(1, dim(tr$edge)[1])
-        r$plottedTree <- tr
-        plot(tr, edge.width = 2, font = 3, cex = 0.83,
-             edge.color = col, tip.color = TipCols()[tr$tip.label])
-        LabelConcordance()
+        cons <- ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP())
+        cons <- UserRoot(cons)
+        r$plottedTree <- cons
+        plot(cons, edge.width = 2, font = 3, cex = 0.83,
+             edge.color = col, tip.color = TipCols()[cons$tip.label])
         legend("bottomright", paste0("Cluster ", i), pch = 15, col = col,
                pt.cex = 1.5, bty = "n")
+        LabelConcordance()
       }
+      ResumeLog()
     } else {
-      LogMsg(" > Single cluster")
       PutTree(r$trees)
+      LogComment("No clustering structure: Plot consensus tree")
       LogCode(
         if (length(dropped)) {
           paste0("cons <- Consensus(trees, p = ", consP(), ")")
@@ -2511,7 +2582,7 @@ server <- function(input, output, session) {
     unlink(TreeFileName("*"))
     if (logging) {
       LogMsg("Session has ended")
-      close(logMsgFile)
+      on.exit(close(logMsgFile))
     }
   })
 }
