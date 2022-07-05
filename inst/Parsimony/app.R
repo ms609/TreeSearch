@@ -1339,7 +1339,7 @@ server <- function(input, output, session) {
   
   TipCols <- reactive(stableCol()) # TODO allow user to choose how to colour
   
-  consP <- debounce(reactive(input$consP), 50)
+  consP <- debounce(reactive(signif(input$consP)), 50)
   observeEvent(consP(), {
     if (AnyTrees()) {
       LogMsg("Observed consP()")
@@ -1481,7 +1481,7 @@ server <- function(input, output, session) {
       LogCode("plotted <- RoguePlot(",
               "  trees = consTrees,",
               paste0("  tip = ", Enquote(input$excludedTip), ","),
-              paste0("  p = ", signif(consP()), ","),
+              paste0("  p = ", consP(), ","),
               "  edgeLength = 1,",
               paste0(
                 if(length(r$outgroup)) {
@@ -1510,11 +1510,11 @@ server <- function(input, output, session) {
           "cons <- ConsensusWithout(",
           "  trees,",
           paste0("  ", EnC(without), ","),
-          paste0("  p = ", signif(consP())),
+          paste0("  p = ", consP()),
           ")")
       } else {
         LogCode(paste0(
-          "cons <- Consensus(trees, p = ", signif(consP()), ")"
+          "cons <- Consensus(trees, p = ", consP(), ")"
         ))
       }
       cons <- ConsensusWithout(r$trees, without, p = consP())
@@ -2034,9 +2034,12 @@ server <- function(input, output, session) {
   
   PlotClusterCons <- function () {
     LogMsg("PlotClusterCons()")
+    on.exit(LogMsg("/PlotClusterCons()"))
     
     cl <- clusterings()
     LogClusterings()
+    
+    LogComment("Plot consensus of each tree cluster", 2)
     kept <- rev(dropSeq())[seq_len(input$keepTips)]
     dropped <- if (length(kept) > 1) {
       setdiff(TipLabels(r$trees[[1]]), kept)
@@ -2066,12 +2069,36 @@ server <- function(input, output, session) {
     } else {
       LogMsg(" > Single cluster")
       PutTree(r$trees)
-      tr <- ConsensusWithout(r$trees, dropped, p = consP())
-      tr <- UserRoot(tr)
-      tr$edge.length <- rep.int(1, dim(tr$edge)[1])
-      r$plottedTree <- tr
-      plot(tr,edge.width = 2, font = 3, cex = 0.83,
-           edge.color = palettes[[1]], tip.color = TipCols()[tr$tip.label])
+      LogCode(
+        if (length(dropped)) {
+          paste0("cons <- Consensus(trees, p = ", consP(), ")")
+        } else {
+          c("cons <- ConsensusWithout(",
+            "  trees = trees,",
+            paste0("  tip = ", EnC(dropped), ","),
+            paste0("  p = ", consP()),
+            ")"
+          )
+        }
+      )
+      cons <- ConsensusWithout(r$trees, dropped, p = consP())
+      cons <- UserRoot(cons)
+      LogExpr("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
+      LogCode("plottedTree <- cons # Store for future reference")
+      r$plottedTree <- cons
+      LogCode("tipCols <- Rogue::ColByStability(trees)[con$tip.label]")
+      LogComment("Plot consensus tree")
+      LogCode(
+        "plot(",
+        "  cons,",
+        "  edge.width = 2, # Widen lines",
+        "  font = 3,       # Italicize labels",
+        "  cex = 0.83,     # Shrink tip font size",
+        "  tip.color = tipCols",
+        ")"
+      )
+      plot(cons, edge.width = 2, font = 3, cex = 0.83,
+           edge.color = palettes[[1]], tip.color = TipCols()[cons$tip.label])
       LabelConcordance()
       legend("bottomright", "No clustering", pch = 16, col = palettes[[1]],
              bty = "n")
