@@ -2351,8 +2351,9 @@ server <- function(input, output, session) {
   }), r$treeHash, input$distMeth, maxProjDim())
   
   LogMapping <- function() {
-    k <- dim(mapping)[2]
-    if (k > 0) {
+    k <- dim(mapping())[2]
+    dput(k)
+    if (!is.null(k) && k > 0) {
       LogComment(paste0(
         "Generate first ", k, " dimensions of tree space using PCoA"
       ))
