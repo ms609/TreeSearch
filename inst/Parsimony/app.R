@@ -676,6 +676,10 @@ server <- function(input, output, session) {
   # Return TRUE if n has changed, FALSE if not
   # Don't update active trees here: Leave this to the calling function
   UpdateNTree <- function(n) {
+    if (n > length(r$allTrees)) { # nTree "max" can be beaten by typing
+      r$oldNTree <- n
+      n <- length(r$allTrees)
+    }
     if (r$nTree == n) {
       # Return:
       FALSE
@@ -1422,18 +1426,11 @@ server <- function(input, output, session) {
       
       LogComment("Prepare reduced consensus tree", 1)
       if (length(setdiff(dropped, input$excludedTip))) {
-        LogCode("consTrees <- lapply(",
-                "  trees,",
-                "  DropTip,",
-                paste0("  ", EnC(setdiff(dropped, input$excludedTip))),
-                ")")
+        LogCode(paste0("exclude <- ",
+                       EnC(setdiff(dropped, input$excludedTip))))
+        LogCode("consTrees <- lapply(trees, DropTip, exclude)")
         consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
-        LogCode(
-          "labels <- setdiff(",
-          "  consTrees[[1]]$tip.label,",
-          paste0("  ", EnC(setdiff(dropped, input$excludedTip))),
-          ")"
-        )
+        LogCode("labels <- setdiff(consTrees[[1]]$tip.label, exclude)")
       } else {
         LogCode("consTrees <- trees",
                 "labels <- consTrees[[1]]$tip.label")
@@ -1454,8 +1451,10 @@ server <- function(input, output, session) {
               paste0("  tip = ", Enquote(input$excludedTip), ","),
               paste0("  p = ", signif(consP()), ","),
               "  edgeLength = 1,",
-              paste0("  outgroupTips = ", EnC(input$outgroup), ","),
-              "  tip.color = tipCols",
+              paste0(
+                if(length(input$outgroup)) {
+                  paste0("  outgroupTips = ", EnC(input$outgroup), ",\n")
+              }, "  tip.color = tipCols"),
               ")")
       
       plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
