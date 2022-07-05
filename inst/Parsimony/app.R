@@ -6,6 +6,7 @@ options(shiny.maxRequestSize = 1024^3) # Allow max 1 GB files
 
 library("methods", exclude = c("show", "removeClass"))
 library("cli")
+library("TreeSearch") # load now: inapplicable.datasets required within ui
 suppressPackageStartupMessages({
   library("shiny", exclude = c("runExample"))
   library("shinyjs", exclude = c("runExample"))
