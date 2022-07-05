@@ -1258,6 +1258,13 @@ server <- function(input, output, session) {
   }
   
   PlottedChar <- debounce(reactive(as.integer(input$whichChar)), aJiffy)
+  observeEvent(input$whichChar, {
+    if (input$whichChar > 0) {
+      showElement("mapDisplay")
+    } else {
+      hideElement("mapDisplay")
+    }
+  })
   whichTree <- debounce(reactive(input$whichTree), aJiffy)
   
   PlottedTree <- reactive({
