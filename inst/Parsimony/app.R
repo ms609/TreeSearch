@@ -2803,8 +2803,8 @@ server <- function(input, output, session) {
       writeLines(r$plotLog, con = rFile)
       zip(file, c(
         rFile,
-        paste0(tempdir(), "/", DataFileName(r$dataFiles)),
-        paste0(tempdir(), "/", TreeFileName(r$treeFiles))
+        paste0(tempdir(), "/", LastFile("data")),
+        paste0(tempdir(), "/", LastFile("tree"))
       ), flags = "-r9Xj")
     })
   
