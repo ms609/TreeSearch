@@ -1372,7 +1372,7 @@ server <- function(input, output, session) {
     StartSearch()
   }, ignoreInit = TRUE)
   
-  UserRoot <- function (tree) {
+  UserRoot <- function(tree) {
     outgroupTips <- intersect(r$outgroup, tree$tip.label)
     if (length(outgroupTips)) {
       tr <- deparse(substitute(tree))
@@ -1382,6 +1382,15 @@ server <- function(input, output, session) {
       RootTree(tree, outgroupTips)
     } else {
       tree
+    }
+  }
+  
+  LogUserRoot <- function(tree) {
+    outgroupTips <- intersect(r$outgroup, r$plottedTree$tip.label)
+    if (length(outgroupTips)) {
+      tr <- deparse(substitute(tree))
+      LogComment("Root tree")
+      LogCode(paste0(tr, " <- RootTree(", tr, ", ", EnC(outgroupTips), ")")
     }
   }
   
@@ -1577,19 +1586,51 @@ server <- function(input, output, session) {
   ConsensusPlot <- function() {
     LogMsg("ConsensusPlot()")
     on.exit(LogMsg("/ConsensusPlot()"))
-    BeginLogP()
     
-    LogCommentP("Set up plotting area")
-    LogCodeP(c(
-      "par(",
-      "  mar = c(0, 0, 0, 0), # Zero margins",
-      "  cex = 0.9            # Smaller font size",
-      ")"
-    ))
     par(mar = rep(0, 4), cex = 0.9)
     kept <- KeptTips()
     dropped <- DroppedTips()
     
+    if (length(dropped) &&
+        length(input$excludedTip) &&
+        nchar(input$excludedTip) &&
+        input$excludedTip %in% tipLabels()) {
+      
+      if (length(setdiff(dropped, input$excludedTip))) {
+        consTrees <- lapply(r$trees, DropTip,
+                            setdiff(dropped, input$excludedTip))
+      } else {
+        consTrees <- r$trees
+      }
+      
+      plotted <- RoguePlot(
+        consTrees,
+        input$excludedTip,
+        p = consP(),
+        edgeLength = 1,
+        outgroupTips = r$outgroup,
+        tip.color = TipCols()[intersect(consTrees[[1]]$tip.label, kept)]
+      )
+      r$plottedTree <- plotted$cons
+      
+      LabelConcordance()
+    } else {
+      without <- intersect(dropped, tipLabels()) # `dropped` might be outdated
+      if (length(without)) {
+      } else {
+      }
+      cons <- ConsensusWithout(r$trees, without, p = consP())
+      cons <- UserRoot(cons)
+      r$plottedTree <- cons
+      plot(r$plottedTree, tip.color = TipCols()[intersect(cons$tip.label, kept)])
+      LabelConcordance()
+    }
+  }
+  
+  LogConsensusPlot <- function() {
+    BeginLogP()
+    LogPar()
+
     if (length(dropped) &&
         length(input$excludedTip) &&
         nchar(input$excludedTip) &&
@@ -1600,13 +1641,10 @@ server <- function(input, output, session) {
         LogCodeP(paste0("exclude <- ",
                        EnC(setdiff(dropped, input$excludedTip))))
         LogCodeP("consTrees <- lapply(trees, DropTip, exclude)")
-        consTrees <- lapply(r$trees, DropTip,
-                            setdiff(dropped, input$excludedTip))
         LogCodeP("labels <- setdiff(consTrees[[1]]$tip.label, exclude)")
       } else {
         LogCodeP("consTrees <- trees",
                 "labels <- consTrees[[1]]$tip.label")
-        consTrees <- r$trees
       }
       
       LogCommentP(paste0(
@@ -1629,20 +1667,10 @@ server <- function(input, output, session) {
               "  tip.color = tipCols",
               ")")
       
-      plotted <- RoguePlot(
-        consTrees,
-        input$excludedTip,
-        p = consP(),
-        edgeLength = 1,
-        outgroupTips = r$outgroup,
-        tip.color = TipCols()[intersect(consTrees[[1]]$tip.label, kept)]
-      )
-      LogCommentP("Store tree for future reference")
+      LogCommentP("Store tree to plot concordance")
       LogCodeP("plottedTree <- plotted$cons")
-      r$plottedTree <- plotted$cons
       
       LogConcordance()
-      LabelConcordance()
     } else {
       without <- intersect(dropped, tipLabels()) # `dropped` might be outdated
       LogCommentP("Calculate consensus tree")
@@ -1659,28 +1687,22 @@ server <- function(input, output, session) {
         ))
       }
       cons <- ConsensusWithout(r$trees, without, p = consP())
-      cons <- UserRoot(cons)
+      LogUserRoot(cons)
       if (unitEdge()) {
         LogExpr("cons$edge.length <- rep_len(1L, dim(cons$edge)[1])")
       }
-      r$plottedTree <- cons
       LogCommentP("Plot consensus tree")
       LogCodeP(
         "tipCols <- Rogue::ColByStability(trees)[cons$tip.label]",
         "plot(cons, tip.color = tipCols)")
-      plot(r$plottedTree, tip.color = TipCols()[intersect(cons$tip.label, kept)])
       LogConcordance("cons")
-      LabelConcordance()
     }
   }
   
   CharacterwisePlot <- function() {
     par(mar = rep(0, 4), cex = 0.9)
     n <- PlottedChar()
-    LogMsg("Plotting PlottedTree(", whichTree(), ", ", n, ")")
-    LogComment(paste("Select tree", n, "from tree set"))
     r$plottedTree <- PlottedTree()
-    LogPlottedTree()
     if (length(n) && n > 0L) {
       pc <- tryCatch({
         PlotCharacter(r$plottedTree, r$dataset, n,
@@ -1696,6 +1718,34 @@ server <- function(input, output, session) {
         return()
       }
       )
+              
+      PlotCharacter(r$plottedTree, r$dataset, n,
+                    edge.width = 2.5,
+                    updateTips = "updateTips" %in% input$mapDisplay)
+      
+      LabelConcordance()
+    } else {
+      plot(r$plottedTree, tip.color = TipCols()[r$plottedTree$tip.label])
+    }
+  }
+  
+  LogPar <- function() {
+    LogCommentP("Set up plotting area")
+    LogCodeP(c(
+      "par(",
+      "  mar = c(0, 0, 0, 0), # Zero margins",
+      "  cex = 0.9            # Smaller font size",
+      ")"
+    ))
+  }
+  
+  LogCharacterwisePlot <- function() {
+    BeginLogP()
+    LogPar()
+    n <- PlottedChar()
+    LogComment(paste("Select tree", whichTree(), "from tree set"))
+    LogPlottedTree()
+    if (length(n) && n > 0L) {
       LogComment(paste("Map character", n, "onto tree", whichTree()))
       LogCode(
         "PlotCharacter(",
@@ -1706,11 +1756,6 @@ server <- function(input, output, session) {
         "  edge.width = 2.5",
         ")"
       )
-              
-      PlotCharacter(r$plottedTree, r$dataset, n,
-                    edge.width = 2.5,
-                    updateTips = "updateTips" %in% input$mapDisplay)
-      
       LogConcordance()
       LabelConcordance()
     } else {
@@ -1719,7 +1764,6 @@ server <- function(input, output, session) {
         "tipCols <- Rogue::ColByStability(trees)[plottedTree$tip.label]",
         "plot(plottedTree, tip.color = tipCols)"
       )
-      plot(r$plottedTree, tip.color = TipCols()[r$plottedTree$tip.label])
     }
   }
   
@@ -2796,11 +2840,29 @@ server <- function(input, output, session) {
   output$savePlotZip <- downloadHandler(
     filename = function() paste0(saveDetails()$fileName, ".zip"),
     content = function(file) {
+      switch(
+        input$plotFormat,
+        "cons" = {
+          LogConsensusPlot()
+        },
+        "clus" = {
+          LogPlotClusterCons()
+        },
+        "ind" = {
+          LogCharacterwisePlot()
+        },
+        "space" = {
+          LogTreespacePlot()
+        }
+      )
+      
       tempDir <- tempfile("plot-zip-")
       dir.create(tempDir)
       on.exit(unlink(tempDir))
       rFile <- paste0(tempDir, "/", saveDetails()$fileName, ".R")
       writeLines(r$plotLog, con = rFile)
+      
+      # Create ZIP
       zip(file, c(
         rFile,
         paste0(tempdir(), "/", LastFile("data")),
