@@ -307,7 +307,7 @@ ui <- fluidPage(
       ),
       tags$div(id = "saveAs", 
                tags$span("Save\ua0plot: "),
-               downloadButton("savePlotR", "R script"),
+               downloadButton("savePlotZip", "R script"),
                downloadButton("savePdf", "PDF"),
                downloadButton("savePng", "PNG")
       )
@@ -462,17 +462,21 @@ server <- function(input, output, session) {
       if (logging) {
         WriteLoggedCode(txt)
       }
-      r$plotLog <- c(r$plotLog, txt)
+      r$plotLog <- c(r$plotLog, as.character(txt))
     }
   }
   
-  LogExpr <- function(exps, evaluate = TRUE) {
+  LogExpr <- function(exps, evaluate = TRUE, WriteFn = Write) {
     for (exp in exps) {
-      Write(as.character(exp), cmdLogFile)
+      WriteFn(as.character(exp), cmdLogFile)
       if (evaluate) {
         eval(exp)
       }
     }
+  }
+  
+  LogExprP <- function(...) {
+    LogExpr(..., WriteFn = WriteP)
   }
   
   LogIndent <- function(n) {
@@ -540,6 +544,7 @@ server <- function(input, output, session) {
   }
   
   BeginLogP <- function() {
+    r$plotLog <- NULL
     LogCommentP(c(
       paste("# # TreeSearch plot log:", Sys.time(), "# # #"),
       "",
@@ -553,8 +558,7 @@ server <- function(input, output, session) {
       "",
       logCaveats,
       "",
-      "# # # # #",
-      ""
+      "# # # # #"
     ))
     LogCommentP("Load required libraries", 2)
     LogCodeP(c(
@@ -571,6 +575,22 @@ server <- function(input, output, session) {
       "citation(\"TreeSearch\")",
       "citation(\"Rogue\")"
     ))
+    
+    if (HaveData()) {
+      LogCommentP("Load data from file")
+      LogCodeP(c(
+        paste0("dataFile <- ", Enquote(DataFileName(r$dataFiles))),
+        paste0("dataset <- ", r$readDataFile)
+      ))
+    }
+    
+    if (AnyTrees()) {
+      LogCommentP("Load trees from file")
+      LogCodeP(c(
+        paste0("treeFile <- ", Enquote(TreeFileName(r$treeFiles))),
+        paste0("trees <- ", r$readTreeFile)
+      ))
+    }
   }
   
   PauseLog <- function() {
@@ -590,7 +610,7 @@ server <- function(input, output, session) {
   }
   
   LogCodeP <- function(...) {
-    LogCode(..., WriteP)
+    LogCode(..., WriteFn = WriteP)
   }
   
   LogComment <- function(exps, returns = 1, WriteFn = Write) {
@@ -689,17 +709,17 @@ server <- function(input, output, session) {
       }
       
       LogMsg("UpdateData(): from file")
-      codeToLog <- NULL
+      r$readDataFile <- NULL
       r$dataset <- tryCatch({
-        codeToLog <- "ReadTntAsPhyDat(dataFile)"
+        r$readDataFile <- "ReadTntAsPhyDat(dataFile)"
         ReadTntAsPhyDat(dataFile)
       }, error = function(e) tryCatch({
         r$chars <- ReadCharacters(dataFile)
         r$charNotes <- ReadNotes(dataFile)
-        codeToLog <- "ReadTntAsPhyDat(dataFile)"
+        r$readDataFile <- "ReadTntAsPhyDat(dataFile)"
         ReadAsPhyDat(dataFile)
       }, error = function(e) {
-        codeToLog <- NULL
+        r$readDataFile <- NULL
         NULL
       }))
       
@@ -708,7 +728,7 @@ server <- function(input, output, session) {
         CacheInput("data", dataFile)
         LogCode(c(
           paste0("dataFile <- \"", LastFile("data"), "\""),
-          paste0("dataset <- ", codeToLog)
+          paste0("dataset <- ", r$readDataFile)
         ))
       }
     } else {
@@ -718,8 +738,10 @@ server <- function(input, output, session) {
       
       dataFile <- system.file(paste0("datasets/", source, ".nex"),
                                package = "TreeSearch")
+      CacheInput("data", dataFile)
       r$chars <- ReadCharacters(dataFile)
       r$charNotes <- ReadNotes(dataFile)
+      r$readDataFile <- "ReadAsPhyDat(dataFile)"
       r$dataset <- ReadAsPhyDat(dataFile)
       LogCode(c("dataset <- ReadAsPhyDat(",
               paste0("  system.file(\"datasets/", source,
@@ -741,7 +763,12 @@ server <- function(input, output, session) {
                         max = as.integer(attr(r$dataset, "nr")), value = 1L)
     }
     
-    UpdateAllTrees(tryCatch(read.nexus(dataFile), error = function (e) r$trees))
+    tryCatch({
+      dataFileTrees <- read.nexus(dataFile)
+      UpdateAllTrees(dataFileTrees)
+      CacheInput("tree", dataFile)
+      r$readTreeFile <- "read.nexus(treeFile)"
+    }, error = function (e) NULL)
     if (!AnyTrees() || !DatasetMatchesTrees()) {
       updateActionButton(session, "go", "New search")
     } else {
@@ -997,11 +1024,11 @@ server <- function(input, output, session) {
   observeEvent(input$treeFile, {
     tmpFile <- input$treeFile$datapath
     newTrees <- tryCatch({
-        codeToLog <- "read.tree(treeFile)"
+        r$readTreeFile <- "read.tree(treeFile)"
         read.tree(tmpFile)
       },
       error = function (x) tryCatch({
-          codeToLog <- "read.nexus(treeFile)"
+        r$readTreeFile <- "read.nexus(treeFile)"
           read.nexus(tmpFile)
         },
         error = function (err) tryCatch(
@@ -1017,7 +1044,7 @@ server <- function(input, output, session) {
             }
           },
           error = function (x) tryCatch({
-              codeToLog <- "ReadTntTree(treeFile)"
+              r$readTreeFile <- "ReadTntTree(treeFile)"
               ReadTntTree(tmpFile)
             }, warning = function (x) tryCatch({
               Notification(as.character(x), type = "warning")
@@ -1025,7 +1052,7 @@ server <- function(input, output, session) {
               if (length(tryLabels) > 2) {
                 Notification("Inferring tip labels from dataset",
                                  type = "warning")
-                codeToLog <- 
+                r$readTreeFile <- 
                   "ReadTntTree(treeFile, tipLabels = TipLabels(dataset))"
                 ReadTntTree(tmpFile, tipLabels = tryLabels)
               } else {
@@ -1043,7 +1070,7 @@ server <- function(input, output, session) {
       LogComment("Load tree from file", 2)
       CacheInput("tree", tmpFile)
       LogCode(paste0("treeFile <- \"", LastFile("tree"), "\""))
-      LogCode(paste0("newTrees <- ", codeToLog))
+      LogCode(paste0("newTrees <- ", r$readTreeFile))
       
       treeNames <- names(newTrees)
       pattern <- "(seed|start|ratch\\d+|final)_\\d+"
@@ -1469,7 +1496,6 @@ server <- function(input, output, session) {
   LabelConcordance <- reactive({
     if (input$concordance != "none" &&
         !is.null(r$plottedTree)) {
-      LogConcordance()
       LabelSplits(r$plottedTree, signif(concordance(), 3),
                   col = SupportColor(concordance()),
                   frame = "none", pos = 3L)
@@ -1478,7 +1504,7 @@ server <- function(input, output, session) {
   
   LogConcordance <- function(plottedTree = "plottedTree") {
     if (input$concordance != "none") {
-      LogComment("Calculate split concordance", 1)
+      LogCommentP("Calculate split concordance", 1)
       concCode <- switch(
         input$concordance,
         "p"   = paste0("SplitFrequency(", plottedTree,
@@ -1488,9 +1514,9 @@ server <- function(input, output, session) {
         "phc" = paste0("PhylogeneticConcordance(", plottedTree, ", dataset)"),
         NULL
       )
-      LogCode(paste0("concordance <- ", concCode))
-      LogComment("Annotate splits by concordance", 1)
-      LogCode("LabelSplits(",
+      LogCodeP(paste0("concordance <- ", concCode))
+      LogCommentP("Annotate splits by concordance", 1)
+      LogCodeP("LabelSplits(",
               paste0("  tree = ", plottedTree, ","),
               "  labels = signif(concordance, 3),",
               "  col = SupportColor(concordance),",
@@ -1551,6 +1577,15 @@ server <- function(input, output, session) {
   ConsensusPlot <- function() {
     LogMsg("ConsensusPlot()")
     on.exit(LogMsg("/ConsensusPlot()"))
+    BeginLogP()
+    
+    LogCommentP("Set up plotting area")
+    LogCodeP(c(
+      "par(",
+      "  mar = c(0, 0, 0, 0), # Zero margins",
+      "  cex = 0.9            # Smaller font size",
+      ")"
+    ))
     par(mar = rep(0, 4), cex = 0.9)
     kept <- KeptTips()
     dropped <- DroppedTips()
@@ -1562,28 +1597,28 @@ server <- function(input, output, session) {
       
       LogCommentP("Prepare reduced consensus tree", 1)
       if (length(setdiff(dropped, input$excludedTip))) {
-        LogCode(paste0("exclude <- ",
+        LogCodeP(paste0("exclude <- ",
                        EnC(setdiff(dropped, input$excludedTip))))
-        LogCode("consTrees <- lapply(trees, DropTip, exclude)")
+        LogCodeP("consTrees <- lapply(trees, DropTip, exclude)")
         consTrees <- lapply(r$trees, DropTip,
                             setdiff(dropped, input$excludedTip))
-        LogCode("labels <- setdiff(consTrees[[1]]$tip.label, exclude)")
+        LogCodeP("labels <- setdiff(consTrees[[1]]$tip.label, exclude)")
       } else {
-        LogCode("consTrees <- trees",
+        LogCodeP("consTrees <- trees",
                 "labels <- consTrees[[1]]$tip.label")
         consTrees <- r$trees
       }
       
-      LogComment(paste0(
+      LogCommentP(paste0(
         "Colour tip labels according to their original 'instability' ",
         "(Smith 2022)")
       )
-      LogCode("tipCols <- Rogue::ColByStability(trees)[labels]")
-      LogComment(paste0(
+      LogCodeP("tipCols <- Rogue::ColByStability(trees)[labels]")
+      LogCommentP(paste0(
         "Plot the reduced consensus tree, showing position of ",
         gsub("_", " ", input$excludedTip, fixed = TRUE))
       )
-      LogCode("plotted <- RoguePlot(",
+      LogCodeP("plotted <- RoguePlot(",
               "  trees = consTrees,",
               paste0("  tip = ", Enquote(input$excludedTip), ","),
               paste0("  p = ", consP(), ","),
@@ -1602,23 +1637,24 @@ server <- function(input, output, session) {
         outgroupTips = r$outgroup,
         tip.color = TipCols()[intersect(consTrees[[1]]$tip.label, kept)]
       )
-      LogComment("Store tree for future reference")
-      LogCode("plottedTree <- plotted$cons")
+      LogCommentP("Store tree for future reference")
+      LogCodeP("plottedTree <- plotted$cons")
       r$plottedTree <- plotted$cons
       
+      LogConcordance()
       LabelConcordance()
     } else {
       without <- intersect(dropped, tipLabels()) # `dropped` might be outdated
-      LogComment("Calculate consensus tree")
+      LogCommentP("Calculate consensus tree")
       if (length(without)) {
-        LogCode(
+        LogCodeP(
           "cons <- ConsensusWithout(",
           "  trees,",
           paste0("  ", EnC(without), ","),
           paste0("  p = ", consP()),
           ")")
       } else {
-        LogCode(paste0(
+        LogCodeP(paste0(
           "cons <- Consensus(trees, p = ", consP(), ")"
         ))
       }
@@ -1628,12 +1664,12 @@ server <- function(input, output, session) {
         LogExpr("cons$edge.length <- rep_len(1L, dim(cons$edge)[1])")
       }
       r$plottedTree <- cons
-      LogComment("Plot consensus tree")
-      LogCode(
-        "plottedTree <- cons # Store for potential future use",
-        "tipCols <- Rogue::ColByStability(trees)[plottedTree$tip.label]",
-        "plot(plottedTree, tip.color = tipCols)")
+      LogCommentP("Plot consensus tree")
+      LogCodeP(
+        "tipCols <- Rogue::ColByStability(trees)[cons$tip.label]",
+        "plot(cons, tip.color = tipCols)")
       plot(r$plottedTree, tip.color = TipCols()[intersect(cons$tip.label, kept)])
+      LogConcordance("cons")
       LabelConcordance()
     }
   }
@@ -1675,6 +1711,7 @@ server <- function(input, output, session) {
                     edge.width = 2.5,
                     updateTips = "updateTips" %in% input$mapDisplay)
       
+      LogConcordance()
       LabelConcordance()
     } else {
       LogComment("Plot single tree")
@@ -2057,10 +2094,10 @@ server <- function(input, output, session) {
       LogDistances()
       dists <- distances()
       
-      LogComment("Compute clusters of trees", 2)
+      LogCommentP("Compute clusters of trees", 2)
       nK <- length(possibleClusters)
-      LogComment("Try K-means clustering:")
-      LogCode(
+      LogCommentP("Try K-means clustering:")
+      LogCodeP(
         paste0(
           "kClusters <- lapply(", possibleClusters, ", ",
           "function (k) kmeans(dists, k)", ")"
@@ -2073,8 +2110,8 @@ server <- function(input, output, session) {
         "kCluster <- kClusters[[bestK]]$cluster # Best solution"
       )
       
-      LogComment("Try partitioning around medoids:")
-      LogCode(
+      LogCommentP("Try partitioning around medoids:")
+      LogCodeP(
         paste0(
           "pamClusters <- lapply(", possibleClusters, ", ",
           "function (k) cluster::pam(dists, k = k)", ")"
@@ -2088,8 +2125,8 @@ server <- function(input, output, session) {
       )
       
       
-      LogComment("Try hierarchical clustering with minimax linkage")
-      LogCode(
+      LogCommentP("Try hierarchical clustering with minimax linkage")
+      LogCodeP(
         "hTree <- protoclust::protoclust(dists)",
         paste0(
           "hClusters <- lapply(", possibleClusters, ", ", 
@@ -2103,25 +2140,25 @@ server <- function(input, output, session) {
         "hCluster <- hClusters[[bestH]] # Best solution"
       )
       
-      LogComment("Set threshold for recognizing meaningful clustering")
-      LogComment("no support < 0.25 < weak < 0.5 < good < 0.7 < strong", 0)
-      LogCode(paste0("threshold <- ", silThreshold()))
+      LogCommentP("Set threshold for recognizing meaningful clustering")
+      LogCommentP("no support < 0.25 < weak < 0.5 < good < 0.7 < strong", 0)
+      LogCodeP(paste0("threshold <- ", silThreshold()))
       
-      LogComment("Compare silhouette coefficients of each method")
-      LogCode(
+      LogCommentP("Compare silhouette coefficients of each method")
+      LogCodeP(
         "bestMethodId <- which.max(c(threshold, pamSil, hSil, kSil))",
         "bestCluster <- c(\"none\", \"pam\", \"hmm\", \"kmn\")[bestMethodId]"
       )
       if (clusterings()$n == 1) {
-        LogComment("No significant clustering was found.")
-        LogCode("clustering <- 1 # Assign all trees to single cluster")
+        LogCommentP("No significant clustering was found.")
+        LogCodeP("clustering <- 1 # Assign all trees to single cluster")
       } else {
-        LogComment(paste0("Best clustering was ", clusterings()$method, ":"))
-        LogComment(paste0("Silhouette coefficient = ",
+        LogCommentP(paste0("Best clustering was ", clusterings()$method, ":"))
+        LogCommentP(paste0("Silhouette coefficient = ",
                           signif(clusterings()$sil), 0))
-        LogComment(paste0("Store the cluster to which each tree is ",
+        LogCommentP(paste0("Store the cluster to which each tree is ",
                           "optimally assigned:"))
-        LogCode(paste0(
+        LogCodeP(paste0(
           "clustering <- switch(bestCluster, pam = pamCluster, hmm = hCluster,",
           " kmn = kCluster, 1)"),
           paste0("nClusters <- length(unique(clustering))"),
@@ -2133,9 +2170,9 @@ server <- function(input, output, session) {
         )
       }
     } else {
-      LogComment("Not enough trees for clustering analysis")
-      LogCode("bestCluster <- \"none\"")
-      LogCode("nClusters <- 1")
+      LogCommentP("Not enough trees for clustering analysis")
+      LogCodeP("bestCluster <- \"none\"")
+      LogCodeP("nClusters <- 1")
     }
   }
   
@@ -2156,23 +2193,23 @@ server <- function(input, output, session) {
     if (cl$sil > silThreshold()) {
       nRow <- ceiling(cl$n / 3)
       
-      LogComment("Plot consensus of each tree cluster", 2)
-      LogCode(paste0(
+      LogCommentP("Plot consensus of each tree cluster", 2)
+      LogCodeP(paste0(
         "par(mfrow = c(", nRow, ", ",
         ceiling(cl$n / nRow), "))",
         " # Configure plotting area"
       ))
       par(mfrow = c(nRow, ceiling(cl$n / nRow)))
-      LogCode(
+      LogCodeP(
         paste0(
           "tipCols <- Rogue::ColByStability(trees)", 
           " # Colour tips by stability"
         )
       )
-      LogComment("Plot each consensus tree in turn:", 1)
-      LogCode(paste0("for (i in seq_len(", cl$n, ")) {"))
+      LogCommentP("Plot each consensus tree in turn:", 1)
+      LogCodeP(paste0("for (i in seq_len(", cl$n, ")) {"))
       LogIndent(+2)
-      LogCode(
+      LogCodeP(
         "clusterTrees <- trees[clustering == i]",
         "cons <- ConsensusWithout(", 
         "  trees = clusterTrees,",
@@ -2180,8 +2217,8 @@ server <- function(input, output, session) {
         paste0("  p = ", consP()),
         ")"
       )
-      LogExpr("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
-      LogCode("plot(",
+      LogExprP("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
+      LogCodeP("plot(",
               "  cons,",
               "  edge.width = 2,             # Widen lines",
               "  font = 3,                   # Italicize labels",
@@ -2189,7 +2226,7 @@ server <- function(input, output, session) {
               "  edge.color = clusterCol[i], # Colour tree",
               "  tip.color = tipCols[cons$tip.label]",
               ")")
-      LogCode("legend(", 
+      LogCodeP("legend(", 
               "  \"bottomright\",",
               "  paste(\"Cluster\", i),",
               "  pch = 15,            # Filled circle icon",
@@ -2197,9 +2234,9 @@ server <- function(input, output, session) {
               "  col = clusterCol[i],",
               "  bty = \"n\"            # Don't plot legend in box",
               ")")
-      LogConcordance("cons")
+      LogConcordanceP("cons")
       LogIndent(-2)
-      LogCode("}")
+      LogCodeP("}")
       PauseLog()
       for (i in seq_len(cl$n)) {
         col <- palettes[[min(length(palettes), cl$n)]][i]
@@ -2213,13 +2250,14 @@ server <- function(input, output, session) {
              edge.color = col, tip.color = TipCols()[cons$tip.label])
         legend("bottomright", paste0("Cluster ", i), pch = 15, col = col,
                pt.cex = 1.5, bty = "n")
+        LogConcordance()
         LabelConcordance()
       }
       ResumeLog()
     } else {
       PutTree(r$trees)
-      LogComment("No clustering structure: Plot consensus tree")
-      LogCode(
+      LogCommentP("No clustering structure: Plot consensus tree")
+      LogCodeP(
         if (length(dropped)) {
           paste0("cons <- Consensus(trees, p = ", consP(), ")")
         } else {
@@ -2233,12 +2271,12 @@ server <- function(input, output, session) {
       )
       cons <- ConsensusWithout(r$trees, dropped, p = consP())
       cons <- UserRoot(cons)
-      LogExpr("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
-      LogCode("plottedTree <- cons # Store for future reference")
+      LogExprP("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
+      LogCodeP("plottedTree <- cons # Store for future reference")
       r$plottedTree <- cons
-      LogCode("tipCols <- Rogue::ColByStability(trees)[con$tip.label]")
-      LogComment("Plot consensus tree")
-      LogCode(
+      LogCodeP("tipCols <- Rogue::ColByStability(trees)[con$tip.label]")
+      LogCommentP("Plot consensus tree")
+      LogCodeP(
         "plot(",
         "  cons,",
         "  edge.width = 2, # Widen lines",
@@ -2249,6 +2287,7 @@ server <- function(input, output, session) {
       )
       plot(cons, edge.width = 2, font = 3, cex = 0.83,
            edge.color = palettes[[1]], tip.color = TipCols()[cons$tip.label])
+      LogConcordance()
       LabelConcordance()
       legend("bottomright", "No clustering", pch = 16, col = palettes[[1]],
              bty = "n")
@@ -2386,8 +2425,8 @@ server <- function(input, output, session) {
   }), input$distMeth, r$treeHash)
   
   LogDistances <- function() {
-    LogComment("Compute tree distances")
-    LogCode(paste0(
+    LogCommentP("Compute tree distances")
+    LogCodeP(paste0(
       "dists <- ", 
       switch(
         input$distMeth,
@@ -2428,10 +2467,10 @@ server <- function(input, output, session) {
   LogMapping <- function() {
     k <- dim(mapping())[2]
     if (!is.null(k) && k > 0) {
-      LogComment(paste0(
+      LogCommentP(paste0(
         "Generate first ", k, " dimensions of tree space using PCoA"
       ))
-      LogCode(paste0("map <- cmdscale(dists, k = ", k, ")"))
+      LogCodeP(paste0("map <- cmdscale(dists, k = ", k, ")"))
     }
   }
   
@@ -2461,11 +2500,11 @@ server <- function(input, output, session) {
     
     nDim <- min(dims(), nProjDim())
     if (nDim < 2) {
-      LogComment("Prepare 1D map", 0)
+      LogCommentP("Prepare 1D map", 0)
       if (dim(map)[2] == 1L) {
-        LogExpr("map <- cbind(map, 0)")
+        LogExprP("map <- cbind(map, 0)")
       } else {
-        LogExpr("map[, 2] <- 0")
+        LogExprP("map[, 2] <- 0")
       }
       nDim <- 2L
       nPanels <- 1L
@@ -2479,15 +2518,15 @@ server <- function(input, output, session) {
       layout(t(plotSeq[-nDim, -1]))
     }
     
-    LogComment("Set plot margins", 0)
-    LogCode("par(mar = rep(0.2, 4))")
+    LogCommentP("Set plot margins", 0)
+    LogCodeP("par(mar = rep(0.2, 4))")
     par(mar = rep(0.2, 4))
-    LogCode(paste0(
+    LogCodeP(paste0(
       "for (i in 2:", nDim, ") for (j in seq_len(i - 1)) {"
     ))
     LogIndent(+2)
-    LogComment("Set up blank plot")
-    LogCode("plot(",
+    LogCommentP("Set up blank plot")
+    LogCodeP("plot(",
             "  x = map[, j],",
             "  y = map[, i],",
             "  ann = FALSE,        # No annotations",
@@ -2504,8 +2543,8 @@ server <- function(input, output, session) {
             "  ylim = range(map)   # Constant Y range for all dimensions",
             ")")
       
-    LogComment("Plot minimum spanning tree") #TODO add option to connect consecutive
-    LogCode(
+    LogCommentP("Plot minimum spanning tree") #TODO add option to connect consecutive
+    LogCodeP(
       "mst <- MSTEdges(as.matrix(dists))",
       "apply(mst, 1, function (segment) {",
       "  lines(", #TODO use segments()?
@@ -2517,8 +2556,8 @@ server <- function(input, output, session) {
       "})"
     )
     
-    LogComment("Add points")
-    LogCode(
+    LogCommentP("Add points")
+    LogCodeP(
       "points(",
       "  x = map[, j],",
       "  y = map[, i],",
@@ -2530,10 +2569,10 @@ server <- function(input, output, session) {
     )
     
     if (cl$sil > silThreshold()) {
-      LogComment("Mark clusters")
-      LogCode("for (clI in seq_len(nClusters)) {")
+      LogCommentP("Mark clusters")
+      LogCodeP("for (clI in seq_len(nClusters)) {")
       LogIndent(+2)
-      LogCode(
+      LogCodeP(
         "inCluster <- clustering == clI",
         "clusterX <- map[inCluster, j]",
         "clusterY <- map[inCluster, i]",
@@ -2546,20 +2585,20 @@ server <- function(input, output, session) {
         "  border = clusterCol[clI]",
         ")")
       LogIndent(-2)
-      LogCode("}")
+      LogCodeP("}")
     }
     if ("labelTrees" %in% input$display) {
       #TODO input$display doesn't exist. If useful, implement below too.
-      LogCode("text(map[, j], map[, i], trees)")
+      LogCodeP("text(map[, j], map[, i], trees)")
     }
     
     if (nDim > 2) {
-      LogCode("plot.new() # Use new panel to plot legends")
+      LogCodeP("plot.new() # Use new panel to plot legends")
     }
     if (input$spacePch == "relat") {
       if (length(input$relators) == 4L) {
-        LogComment("Add legend for plotting symbols")
-        LogCode(
+        LogCommentP("Add legend for plotting symbols")
+        LogCodeP(
           "legend(",
           "  \"topright\",",
           "  bty = \"n\", # No legend border box",
@@ -2577,8 +2616,8 @@ server <- function(input, output, session) {
       clstr <- treeNameClustering()
       clusters <- unique(clstr)
       if (length(clusters) > 1L) {
-        LogComment("Add legend for plotting symbols")
-        LogCode(
+        LogCommentP("Add legend for plotting symbols")
+        LogCodeP(
           "nameClusters <- ClusterStrings(names(trees))",
           "uniqueClusters <- unique(nameClusters)",
           "legend(",
@@ -2598,8 +2637,8 @@ server <- function(input, output, session) {
       }
     }
     if (input$spaceCol == "firstHit" && length(firstHit())) {
-      LogComment("Add legend for symbol colours")
-      LogCode(
+      LogCommentP("Add legend for symbol colours")
+      LogCodeP(
         "legend(",
         "  \"topleft\",",
         "  bty = \"n\", # No legend border box",
@@ -2612,8 +2651,8 @@ server <- function(input, output, session) {
         ")"
       )
     } else if (input$spaceCol == "score") {
-      LogComment("Add legend for symbol colours")
-      LogCode(
+      LogCommentP("Add legend for symbol colours")
+      LogCodeP(
         "goodToBad <- hcl.colors(108, \"Temps\")",
         "leg <- rep_len(NA, 108)",
         paste0("leg[c(1, 108)] <- ", EnC(rev(signif(range(scores()))))),
@@ -2761,7 +2800,7 @@ server <- function(input, output, session) {
       dir.create(tempDir)
       on.exit(unlink(tempDir))
       rFile <- paste0(tempDir, "/", saveDetails()$fileName, ".R")
-      writeLines(r$plotLog, rFile)
+      writeLines(r$plotLog, con = rFile)
       zip(file, c(
         rFile,
         paste0(tempdir(), "/", DataFileName(r$dataFiles)),
