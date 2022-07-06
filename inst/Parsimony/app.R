@@ -252,6 +252,7 @@ ui <- fluidPage(
                  style = "display: block; margin-top: -15px;"),
       actionButton("searchConfig", "Configure", icon = icon("cogs")),
       hidden(actionButton("go", "Search", icon = icon("search"))),
+      downloadButton("saveZip", "Save session log"),
       fileInput("treeFile",
                 label = tags$span(
                   tags$i(class="fas fa-solid fa-tree"),
@@ -259,13 +260,16 @@ ui <- fluidPage(
                 ),
                 placeholder = "No tree file selected"),
       textOutput("results"),
-      hidden(
+      hidden(tags$div(id = "manipulateTreeset",
         numericInput("nTree",
                      label = HTML("Sample <i>n</i> trees from range:"),
                      min = 1L, value = 1L, step = 1L),
         sliderInput("treeRange", label = "", min = 1L, max = 1L,
-                    step = 1L, value = c(1, 1))
-      ),
+                    step = 1L, value = c(1, 1)),
+        tags$label("Save chosen trees:", class = "control-label"),
+        downloadButton("saveNwk", "Newick"),
+        downloadButton("saveNex", "Nexus")
+      )),
       hidden(
         tags$div(id = "displayConfig",
                  radioButtons("plotFormat", "Display:",
@@ -302,16 +306,10 @@ ui <- fluidPage(
                            post = "px", value = 600),
       ),
       tags$div(id = "saveAs", 
-               tags$span("Save\ua0tree: "),
+               tags$span("Save\ua0plot: "),
+               downloadButton("savePlotR", "R script"),
                downloadButton("savePdf", "PDF"),
-               downloadButton("savePng", "PNG"),
-               downloadButton("saveNwk", "Newick"),
-               downloadButton("saveNex", "Nexus")
-      ),
-      tags$div(id = "exportAs", 
-               tags$span("Export\ua0session:" ),
-               downloadButton("saveR", "R commands"),
-               downloadButton("saveZip", "Zip, with data")
+               downloadButton("savePng", "PNG")
       )
     ),
     fluidRow(
@@ -457,6 +455,17 @@ server <- function(input, output, session) {
     }
   }
   
+  
+  WriteP <- function (txt, file = NULL) {
+    if (serverEnv$loggingOn) {
+      txt <- paste0(strrep(" ", logIndent), txt)
+      if (logging) {
+        WriteLoggedCode(txt)
+      }
+      r$plotLog <- c(r$plotLog, txt)
+    }
+  }
+  
   LogExpr <- function(exps, evaluate = TRUE) {
     for (exp in exps) {
       Write(as.character(exp), cmdLogFile)
@@ -473,6 +482,97 @@ server <- function(input, output, session) {
     }
   }
   
+  systemInfo <- c(
+    paste(
+      "System:", Sys.info()["sysname"], Sys.info()["release"],
+      Sys.info()["version"], "-",
+      .Platform$OS.type, R.version$platform
+    ),
+    paste(
+      "-", R.version$version.string
+    ),
+    paste("- TreeSearch", packageVersion("TreeSearch")),
+    paste("- TreeTools", packageVersion("TreeTools")),
+    paste("- TreeDist", packageVersion("TreeDist")),
+    paste("- ape", packageVersion("ape"))
+  )
+  
+  logCaveats <- c(
+    "Before running, check that the script and any data files are in the",
+    "R working directory, which can be read with getwd() and set with setwd().",
+    "",
+    "Please validate the code before reproducing in a manuscript, reporting",
+    "any errors at https://github.com/ms609/treesearch/issues or by e-mail to",
+    "the maintainer."
+  )
+  
+  BeginLog <- function() {
+    LogComment(c(
+      paste("# # TreeSearch session log:", Sys.time(), "# # #"),
+      "",
+      systemInfo,
+      "",
+      "This log was generated procedurally to facilitate the reproduction of",
+      "results obtained during an interactive Shiny session.",
+      "It is provided without guarantee of completeness or accuracy.",
+      "In particular, code will not be logged when previously computed values",
+      "are retrieved from cache.",
+      "",
+      logCaveats,
+      "",
+      "# # # # #"
+    ))
+    
+    LogComment("Load required libraries", 2)
+    LogCode(c(
+      "library(\"TreeTools\", quietly = TRUE)",
+      "library(\"TreeDist\")",
+      "library(\"TreeSearch\")"
+    ))
+    
+    LogComment("View recommended citations", 1)
+    LogCode(c(
+      "citation(\"TreeTools\")",
+      "citation(\"TreeDist\")",
+      "citation(\"TreeSearch\")",
+      "citation(\"Rogue\")"
+    ))
+  }
+  
+  BeginLogP <- function() {
+    LogCommentP(c(
+      paste("# # TreeSearch plot log:", Sys.time(), "# # #"),
+      "",
+      systemInfo,
+      "",
+      "This log was generated procedurally to facilitate the reproduction of",
+      "figures obtained during an interactive Shiny session.",
+      "It is provided without guarantee of completeness or accuracy.",
+      "In particular, code will not be logged when previously computed values",
+      "are retrieved from cache.",
+      "",
+      logCaveats,
+      "",
+      "# # # # #",
+      ""
+    ))
+    LogCommentP("Load required libraries", 2)
+    LogCodeP(c(
+      "library(\"TreeTools\", quietly = TRUE)",
+      "library(\"TreeDist\")",
+      "library(\"TreeSearch\")"
+    ))
+    
+    LogCommentP("View recommended citations", 1)
+    LogCodeP(c(
+      "citation(\"TreeTools\")",
+      "citation(\"TreeDist\")",
+      "citation(\"Quartet\")",
+      "citation(\"TreeSearch\")",
+      "citation(\"Rogue\")"
+    ))
+  }
+  
   PauseLog <- function() {
     serverEnv$loggingOn <- FALSE
   }
@@ -481,21 +581,29 @@ server <- function(input, output, session) {
     serverEnv$loggingOn <- TRUE
   }
   
-  LogCode <- function(...) {
+  LogCode <- function(..., WriteFn = Write) {
     for (line in list(...)) {
       if (!is.null(line)) {
-        Write(as.character(line), cmdLogFile)
+        WriteFn(as.character(line), cmdLogFile)
       }
     }
   }
   
-  LogComment <- function(exps, returns = 1) {
+  LogCodeP <- function(...) {
+    LogCode(..., WriteP)
+  }
+  
+  LogComment <- function(exps, returns = 1, WriteFn = Write) {
     if (returns > 0) {
-      Write(rep("", returns), cmdLogFile)
+      WriteFn(rep("", returns), cmdLogFile)
     }
     for (exp in exps) {
-      Write(paste("#", exp), cmdLogFile)
+      WriteFn(paste("#", exp), cmdLogFile)
     }
+  }
+  
+  LogCommentP <- function (exps, returns = 1) {
+    LogComment(exps, returns, WriteFn = WriteP)
   }
   
   r$dataFiles <- 0
@@ -525,53 +633,11 @@ server <- function(input, output, session) {
     install.packages("TreeDist")
   }
   
-  LogComment(c(
-    paste("# # TreeSearch session log:", Sys.time(), "# # #"),
-    "",
-    paste(
-      "System:", Sys.info()["sysname"], Sys.info()["release"],
-      Sys.info()["version"], "-",
-      .Platform$OS.type, R.version$platform
-    ),
-    paste(
-      "-", R.version$version.string
-    ),
-    paste("- TreeSearch", packageVersion("TreeSearch")),
-    paste("- TreeTools", packageVersion("TreeTools")),
-    paste("- TreeDist", packageVersion("TreeDist")),
-    paste("- ape", packageVersion("ape")),
-    "",
-    "This log was generated procedurally to facilitate the reproduction of",
-    "results obtained during an interactive Shiny session.",
-    "It is provided without guarantee of completeness or accuracy.",
-    "In particular, code will not be logged when previously computed values",
-    "are retrieved from cache.",
-    "",
-    "Before running, check that the script and any data files are in the",
-    "R working directory, which can be read with getwd() and set with setwd().",
-    "",
-    "Please validate the code before reproducing in a manuscript, reporting",
-    "any errors at https://github.com/ms609/treesearch/issues or by e-mail to",
-    "the maintainer.",
-    "",
-    "# # # # #"
-  ))
+  library("TreeTools", quietly = TRUE)
+  library("TreeDist")
+  library("TreeSearch")
   
-  
-  LogComment("Load required libraries", 2)
-  LogExpr(list(
-    X(library("TreeTools", quietly = TRUE)),
-    X(library("TreeDist")),
-    X(library("TreeSearch"))
-  ))
-  
-  LogComment("View recommended citations", 1)
-  LogCode(c(
-    "citation(\"TreeTools\")",
-    "citation(\"TreeDist\")",
-    "citation(\"TreeSearch\")",
-    "citation(\"Rogue\")"
-  ))
+  BeginLog()
   
   library("future")
   library("promises")
@@ -860,11 +926,9 @@ server <- function(input, output, session) {
     
     UpdateActiveTrees()
     if (AnyTrees()) {
-      showElement("nTree")
-      showElement("treeRange")
+      showElement("manipulateTreeset")
     } else {
-      hideElement("nTree")
-      hideElement("treeRange")
+      hideElement("manipulateTreeset")
     }
   }
   
@@ -1496,7 +1560,7 @@ server <- function(input, output, session) {
         nchar(input$excludedTip) &&
         input$excludedTip %in% tipLabels()) {
       
-      LogComment("Prepare reduced consensus tree", 1)
+      LogCommentP("Prepare reduced consensus tree", 1)
       if (length(setdiff(dropped, input$excludedTip))) {
         LogCode(paste0("exclude <- ",
                        EnC(setdiff(dropped, input$excludedTip))))
@@ -2669,6 +2733,7 @@ server <- function(input, output, session) {
   })
   
   output$saveR <- downloadHandler(
+    # TODO delete if redundant
     filename = function() paste0("TreeSearch-session.R"),
     content = function(file) {
       file.copy(cmdLogFile, file)
@@ -2680,12 +2745,27 @@ server <- function(input, output, session) {
       tempDir <- tempfile("zip-")
       dir.create(tempDir)
       on.exit(unlink(tempDir))
-      rFile <-paste0(tempDir, "/TreeSearch-session.R")
+      rFile <- paste0(tempDir, "/TreeSearch-session.R")
       file.copy(cmdLogFile, rFile)
       zip(file, c(
         rFile,
         paste0(tempdir(), "/", DataFileName(seq_len(r$dataFiles))),
         paste0(tempdir(), "/", TreeFileName(seq_len(r$treeFiles)))
+      ), flags = "-r9Xj")
+    })
+  
+  output$savePlotZip <- downloadHandler(
+    filename = function() paste0(saveDetails()$fileName, ".zip"),
+    content = function(file) {
+      tempDir <- tempfile("plot-zip-")
+      dir.create(tempDir)
+      on.exit(unlink(tempDir))
+      rFile <- paste0(tempDir, "/", saveDetails()$fileName, ".R")
+      writeLines(r$plotLog, rFile)
+      zip(file, c(
+        rFile,
+        paste0(tempdir(), "/", DataFileName(r$dataFiles)),
+        paste0(tempdir(), "/", TreeFileName(r$treeFiles))
       ), flags = "-r9Xj")
     })
   
