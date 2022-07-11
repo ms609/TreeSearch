@@ -107,7 +107,7 @@
       <h1 data-toc-skip>Tree search with custom optimality criteria</h1>
                         <h4 data-toc-skip class="author">Martin R. Smith</h4>
             
-            <h4 data-toc-skip class="date">2022-06-27</h4>
+            <h4 data-toc-skip class="date">2022-07-11</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/custom.Rmd" class="external-link"><code>vignettes/custom.Rmd</code></a></small>
       <div class="hidden name"><code>custom.Rmd</code></div>
@@ -123,15 +123,15 @@
 <p>All that is needed is to provide a function that will return a score for a given tree (and dataset).</p>
 <p>First we’ll load the necessary R libraries:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/" class="external-link">"TreeTools"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span>, warn.conflict <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span>
-
-<span class="co"># Plot trees nicely</span>
-<span class="va">PlotTree</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">tree</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">oPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span>
-  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span>
-  <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">oPar</span><span class="op">)</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/" class="external-link">"TreeTools"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span>, warn.conflict <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Plot trees nicely</span></span>
+<span><span class="va">PlotTree</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">tree</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">oPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">oPar</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="maximizing-tree-balance">Maximizing tree balance<a class="anchor" aria-label="anchor" href="#maximizing-tree-balance"></a>
@@ -140,28 +140,28 @@
 This function will be sent the <code>parent</code> and <code>child</code> nodes for each edge in a tree, and a (here, empty) <code>dataset</code> parameter. The function should return a score to be minimized.<br>
 Here, we can use a copy of our starting tree as a template, to be populated with the rearranged <code>parent</code> and <code>child</code> vectors:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">PectinateTree</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span>
-<span class="fu">PlotTree</span><span class="op">(</span><span class="va">tree</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">PectinateTree</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span>
+<span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">tree</span><span class="op">)</span></span></code></pre></div>
 <p><img src="custom_files/figure-html/tci-setup-1.png" width="700"></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">TCIScore</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">parent</span>, <span class="va">child</span>, <span class="va">dataset</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">tree</span><span class="op">$</span><span class="va">edge</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">parent</span>, <span class="va">child</span><span class="op">)</span>
-  <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/TotalCopheneticIndex.html" class="external-link">TotalCopheneticIndex</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span>
-<span class="op">}</span>
-
-<span class="fu">TCIScore</span><span class="op">(</span><span class="va">tree</span><span class="op">$</span><span class="va">edge</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">tree</span><span class="op">$</span><span class="va">edge</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, <span class="cn">NA</span><span class="op">)</span></code></pre></div>
-<pre><code><span class="co">## [1] 56</span></code></pre>
+<code class="sourceCode R"><span><span class="va">TCIScore</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">parent</span>, <span class="va">child</span>, <span class="va">dataset</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">tree</span><span class="op">$</span><span class="va">edge</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">parent</span>, <span class="va">child</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/TotalCopheneticIndex.html" class="external-link">TotalCopheneticIndex</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="fu">TCIScore</span><span class="op">(</span><span class="va">tree</span><span class="op">$</span><span class="va">edge</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">tree</span><span class="op">$</span><span class="va">edge</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, <span class="cn">NA</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] 56</span></span></code></pre>
 <p>Now we can use our scorer for tree search. We need to initialize some parameters to <code><a href="../reference/TreeSearch.html">TreeSearch()</a></code> with null values: <code>dataset = EmptyPhyDat(tree)</code> sends a blank dataset (as our tree scorer doesn’t require any data); we set <code>InitializeData = DoNothing</code> and <code>CleanUpData = DoNothing</code> because we don’t need to do anything to <code>dataset</code> before it is sent to <code>TreeScorer()</code>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">TreeSearch</a></span><span class="op">(</span><span class="va">tree</span>, dataset <span class="op">=</span> <span class="fu"><a href="../reference/TreeSearch.html">EmptyPhyDat</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span>,
-                     InitializeData <span class="op">=</span> <span class="va">DoNothing</span>, CleanUpData <span class="op">=</span> <span class="va">DoNothing</span>,
-                     TreeScorer <span class="op">=</span> <span class="va">TCIScore</span>,
-                     maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
-                     verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
-<pre><code><span class="co">##   - Performing tree search.  Initial score: 56</span></code></pre>
-<pre><code><span class="co">##   - Final score 33 found 3 times after 50 rearrangements.</span></code></pre>
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">TreeSearch</a></span><span class="op">(</span><span class="va">tree</span>, dataset <span class="op">=</span> <span class="fu"><a href="../reference/TreeSearch.html">EmptyPhyDat</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span>,</span>
+<span>                     InitializeData <span class="op">=</span> <span class="va">DoNothing</span>, CleanUpData <span class="op">=</span> <span class="va">DoNothing</span>,</span>
+<span>                     TreeScorer <span class="op">=</span> <span class="va">TCIScore</span>,</span>
+<span>                     maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, </span>
+<span>                     verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   - Performing tree search.  Initial score: 56</span></span></code></pre>
+<pre><code><span><span class="co">##   - Final score 33 found 2 times after 50 rearrangements.</span></span></code></pre>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 <p><img src="custom_files/figure-html/tci-search-1.png" width="700"></p>
 </div>
 <div class="section level2">
@@ -169,27 +169,27 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 </h2>
 <p>Let’s make things slightly more complex, and try to find the tree that is most different from a starting tree. Notice that <code>TreeSearch</code> aims to <em>minimize</em> the output of <code>TreeScorer()</code>, so we negate the tree <em>distance</em> (which we aim to maximize) before returning it.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">startTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">BalancedTree</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span>
-
-<span class="va">DistanceScore</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">parent</span>, <span class="va">child</span>, <span class="va">dataset</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">tmpTree</span> <span class="op">&lt;-</span> <span class="va">startTree</span>
-  <span class="va">tmpTree</span><span class="op">$</span><span class="va">edge</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">parent</span>, <span class="va">child</span><span class="op">)</span>
-  <span class="va">distance</span> <span class="op">&lt;-</span> <span class="fu">TreeDist</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeDist/reference/TreeDistance.html" class="external-link">ClusteringInfoDistance</a></span><span class="op">(</span><span class="va">startTree</span>, <span class="va">tmpTree</span><span class="op">)</span>
-  <span class="co"># Return:</span>
-  <span class="op">-</span><span class="va">distance</span>
-<span class="op">}</span>
-
-<span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">TreeSearch</a></span><span class="op">(</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">RandomTree</a></span><span class="op">(</span><span class="fl">8</span>, root <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, dataset <span class="op">=</span> <span class="fu"><a href="../reference/TreeSearch.html">EmptyPhyDat</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span>,
-                     InitializeData <span class="op">=</span> <span class="va">DoNothing</span>, CleanUpData <span class="op">=</span> <span class="va">DoNothing</span>,
-                     TreeScorer <span class="op">=</span> <span class="va">DistanceScore</span>,
-                     maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, 
-                     verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></code></pre></div>
-<pre><code><span class="co">##   - Performing tree search.  Initial score: -7.77985386969094</span></code></pre>
-<pre><code><span class="co">##   - Final score -7.87744375108174 found 2 times after 50 rearrangements.</span></code></pre>
+<code class="sourceCode R"><span><span class="va">startTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">BalancedTree</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">DistanceScore</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">parent</span>, <span class="va">child</span>, <span class="va">dataset</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">tmpTree</span> <span class="op">&lt;-</span> <span class="va">startTree</span></span>
+<span>  <span class="va">tmpTree</span><span class="op">$</span><span class="va">edge</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">parent</span>, <span class="va">child</span><span class="op">)</span></span>
+<span>  <span class="va">distance</span> <span class="op">&lt;-</span> <span class="fu">TreeDist</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeDist/reference/TreeDistance.html" class="external-link">ClusteringInfoDistance</a></span><span class="op">(</span><span class="va">startTree</span>, <span class="va">tmpTree</span><span class="op">)</span></span>
+<span>  <span class="co"># Return:</span></span>
+<span>  <span class="op">-</span><span class="va">distance</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">TreeSearch</a></span><span class="op">(</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">RandomTree</a></span><span class="op">(</span><span class="fl">8</span>, root <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, dataset <span class="op">=</span> <span class="fu"><a href="../reference/TreeSearch.html">EmptyPhyDat</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span>,</span>
+<span>                     InitializeData <span class="op">=</span> <span class="va">DoNothing</span>, CleanUpData <span class="op">=</span> <span class="va">DoNothing</span>,</span>
+<span>                     TreeScorer <span class="op">=</span> <span class="va">DistanceScore</span>,</span>
+<span>                     maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, </span>
+<span>                     verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   - Performing tree search.  Initial score: -4.02496636752747</span></span></code></pre>
+<pre><code><span><span class="co">##   - Final score -7.87744375108174 found 1 times after 50 rearrangements.</span></span></code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
-<span class="fu">PlotTree</span><span class="op">(</span><span class="va">startTree</span><span class="op">)</span>
-<span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">startTree</span><span class="op">)</span></span>
+<span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 <p><img src="custom_files/figure-html/cid-1.png" width="700"></p>
 </div>
 <div class="section level2">
@@ -198,88 +198,88 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 <p>Now we consider a more complex case in which a scorer must undergo a time-consuming initialization before tree search can begin, and must be safely destroyed once tree search has completed.</p>
 <p>We start by defining an initialization function, which will create a new Morphy object <span class="citation">(Brazeau, Smith, &amp; Guillerme, 2017)</span> for each character in a phylogenetic dataset:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">IWInitMorphy</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">dataset</span><span class="op">)</span> <span class="op">{</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">'morphyObjs'</span><span class="op">)</span> <span class="op">&lt;-</span> 
-    <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/PhyToString.html" class="external-link">PhyToString</a></span><span class="op">(</span><span class="va">dataset</span>, byTaxon <span class="op">=</span> <span class="cn">FALSE</span>, useIndex <span class="op">=</span> <span class="cn">FALSE</span>, 
-                       concatenate <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, 
-           <span class="va">SingleCharMorphy</span><span class="op">)</span>
-  
-  <span class="co"># Return:</span>
-  <span class="va">dataset</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">IWInitMorphy</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">dataset</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">'morphyObjs'</span><span class="op">)</span> <span class="op">&lt;-</span> </span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/PhyToString.html" class="external-link">PhyToString</a></span><span class="op">(</span><span class="va">dataset</span>, byTaxon <span class="op">=</span> <span class="cn">FALSE</span>, useIndex <span class="op">=</span> <span class="cn">FALSE</span>, </span>
+<span>                       concatenate <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, </span>
+<span>           <span class="va">SingleCharMorphy</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Return:</span></span>
+<span>  <span class="va">dataset</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 <p>To release memory back to the operating system, we must destroy each Morphy object once we’re finished with it:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">IWDestroyMorphy</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">dataset</span><span class="op">)</span> <span class="op">{</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">'morphyObjs'</span><span class="op">)</span>, <span class="va">UnloadMorphy</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">IWDestroyMorphy</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">dataset</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">'morphyObjs'</span><span class="op">)</span>, <span class="va">UnloadMorphy</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 <p>Now we can write our tree scoring function, which will return the ‘fit’ under implied weights <span class="citation">(Goloboff, 1993)</span>.</p>
 <p>Note that we need to specify some extra parameters: <code>concavity</code> is the <em>k</em> value required by the implied weights formula (fit = <em>e / e + k</em>), and <code>minLength</code> is the minimum number of steps required by each character – which we need in order to convert the total number of steps (returned by <code><a href="../reference/MorphyTreeLength.html">MorphyLength()</a></code> to a number of excess steps (<em>e</em> in the implied weights formula)</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">IWScoreMorphy</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">parent</span>, <span class="va">child</span>, <span class="va">dataset</span>, <span class="va">concavity</span> <span class="op">=</span> <span class="fl">10L</span>, 
-                           <span class="va">minLength</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">'min.length'</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">'morphyObjs'</span><span class="op">)</span>, <span class="va">MorphyLength</span>,
-                  parent <span class="op">=</span> <span class="va">parent</span>, child <span class="op">=</span> <span class="va">child</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span>
-  <span class="va">homoplasies</span> <span class="op">&lt;-</span> <span class="va">steps</span> <span class="op">-</span> <span class="va">minLength</span>
-  <span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">homoplasies</span> <span class="op">/</span> <span class="op">(</span><span class="va">homoplasies</span> <span class="op">+</span> <span class="va">concavity</span><span class="op">)</span>
-  <span class="co"># Return:</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">fit</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">'weight'</span><span class="op">)</span><span class="op">)</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">IWScoreMorphy</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">parent</span>, <span class="va">child</span>, <span class="va">dataset</span>, <span class="va">concavity</span> <span class="op">=</span> <span class="fl">10L</span>, </span>
+<span>                           <span class="va">minLength</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">'min.length'</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">'morphyObjs'</span><span class="op">)</span>, <span class="va">MorphyLength</span>,</span>
+<span>                  parent <span class="op">=</span> <span class="va">parent</span>, child <span class="op">=</span> <span class="va">child</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">homoplasies</span> <span class="op">&lt;-</span> <span class="va">steps</span> <span class="op">-</span> <span class="va">minLength</span></span>
+<span>  <span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">homoplasies</span> <span class="op">/</span> <span class="op">(</span><span class="va">homoplasies</span> <span class="op">+</span> <span class="va">concavity</span><span class="op">)</span></span>
+<span>  <span class="co"># Return:</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">fit</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">'weight'</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 <p>Now we are ready to search:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"inapplicable.datasets"</span><span class="op">)</span>
-<span class="va">dataset</span> <span class="op">&lt;-</span> <span class="va">congreveLamsdellMatrices</span><span class="op">[[</span><span class="fl">42</span><span class="op">]</span><span class="op">]</span>
-
-<span class="co"># Populate `min.length` attribute</span>
-<span class="va">dataset</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PrepareDataProfile.html">PrepareDataIW</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span>
-<span class="va">iwTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">TreeSearch</a></span><span class="op">(</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span>, <span class="va">dataset</span>,
-                     InitializeData <span class="op">=</span> <span class="va">IWInitMorphy</span>,
-                     CleanUpData <span class="op">=</span> <span class="va">IWDestroyMorphy</span>,
-                     TreeScorer <span class="op">=</span> <span class="va">IWScoreMorphy</span>,
-                     concavity <span class="op">=</span> <span class="fl">10</span>, <span class="co"># Will be sent to TreeScorer</span>
-                     verbosity <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"inapplicable.datasets"</span><span class="op">)</span></span>
+<span><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="va">congreveLamsdellMatrices</span><span class="op">[[</span><span class="fl">42</span><span class="op">]</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co"># Populate `min.length` attribute</span></span>
+<span><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PrepareDataProfile.html">PrepareDataIW</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span></span>
+<span><span class="va">iwTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">TreeSearch</a></span><span class="op">(</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span>, <span class="va">dataset</span>,</span>
+<span>                     InitializeData <span class="op">=</span> <span class="va">IWInitMorphy</span>,</span>
+<span>                     CleanUpData <span class="op">=</span> <span class="va">IWDestroyMorphy</span>,</span>
+<span>                     TreeScorer <span class="op">=</span> <span class="va">IWScoreMorphy</span>,</span>
+<span>                     concavity <span class="op">=</span> <span class="fl">10</span>, <span class="co"># Will be sent to TreeScorer</span></span>
+<span>                     verbosity <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p>This quick search probably hasn’t found the globally optimal tree. Besides increasing the number of hits and rearrangements, the parsimony ratchet <span class="citation">(Nixon, 1999)</span> can help to escape local optima. This introduces an additional complication: we need to bootstrap the characters within <code>dataset</code>, and their accompanying Morphy objects.</p>
 <p>A <code>Bootstraper</code> function expects an <code>edgeList</code> (a list of the parent and child of each edge in a tree, in turn) and a <code>dataset</code> argument, and conducts a tree search, starting at <code>edgeList</code>, on a bootstrapped version of the dataset. It is also sent the arguments <code>maxIter = bootstrapIter</code> and <code>maxHits = bootstrapHits</code>, allowing ratchet search intensity to be controlled from parameters sent to the <code><a href="../reference/Ratchet.html">Ratchet()</a></code> function.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">IWBootstrap</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">edgeList</span>, <span class="va">dataset</span>, <span class="va">concavity</span> <span class="op">=</span> <span class="fl">10L</span>, <span class="va">EdgeSwapper</span> <span class="op">=</span> <span class="va">NNISwap</span>, 
-                         <span class="va">maxIter</span>, <span class="va">maxHits</span>, <span class="va">verbosity</span> <span class="op">=</span> <span class="fl">1L</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">att</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attributes.html" class="external-link">attributes</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span>
-  <span class="va">startWeights</span> <span class="op">&lt;-</span> <span class="va">att</span><span class="op">[[</span><span class="st">'weight'</span><span class="op">]</span><span class="op">]</span>
-  
-  <span class="co"># Decompress phyDat object so each character is listed once</span>
-  <span class="va">eachChar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">startWeights</span><span class="op">)</span>
-  <span class="va">deindexedChars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep.int</a></span><span class="op">(</span><span class="va">eachChar</span>, <span class="va">startWeights</span><span class="op">)</span>
-  
-  <span class="co"># Resample characters</span>
-  <span class="va">resampling</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tabulate.html" class="external-link">tabulate</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">deindexedChars</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">startWeights</span><span class="op">)</span><span class="op">)</span>
-  <span class="va">sampled</span> <span class="op">&lt;-</span> <span class="va">resampling</span> <span class="op">!=</span> <span class="fl">0</span>
-  <span class="va">sampledData</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="kw">function</span> <span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span><span class="op">[</span><span class="va">sampled</span><span class="op">]</span><span class="op">)</span>
-  <span class="va">sampledAtt</span> <span class="op">&lt;-</span> <span class="va">att</span>
-  <span class="va">sampledAtt</span><span class="op">[[</span><span class="st">'weight'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">resampling</span><span class="op">[</span><span class="va">sampled</span><span class="op">]</span>
-  <span class="va">sampledAtt</span><span class="op">[[</span><span class="st">'index'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep.int</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">sampled</span><span class="op">)</span><span class="op">)</span>, <span class="va">resampling</span><span class="op">[</span><span class="va">sampled</span><span class="op">]</span><span class="op">)</span>
-  <span class="va">sampledAtt</span><span class="op">[[</span><span class="st">'min.length'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">minLength</span> <span class="op">&lt;-</span> <span class="va">att</span><span class="op">[[</span><span class="st">'min.length'</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">sampled</span><span class="op">]</span>
-  <span class="va">sampledAtt</span><span class="op">[[</span><span class="st">'morphyObjs'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">att</span><span class="op">[[</span><span class="st">'morphyObjs'</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">sampled</span><span class="op">]</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/attributes.html" class="external-link">attributes</a></span><span class="op">(</span><span class="va">sampledData</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">sampledAtt</span>
-  
-  <span class="co"># Search using resampled dataset</span>
-  <span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">EdgeListSearch</a></span><span class="op">(</span><span class="va">edgeList</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>, <span class="va">sampledData</span>, TreeScorer <span class="op">=</span> <span class="va">IWScoreMorphy</span>,
-                        concavity <span class="op">=</span> <span class="va">concavity</span>, minLength <span class="op">=</span> <span class="va">minLength</span>,
-                        EdgeSwapper <span class="op">=</span> <span class="va">EdgeSwapper</span>, 
-                        maxIter <span class="op">=</span> <span class="va">maxIter</span>, maxHits <span class="op">=</span> <span class="va">maxHits</span>,
-                        verbosity <span class="op">=</span> <span class="va">verbosity</span> <span class="op">-</span> <span class="fl">1L</span><span class="op">)</span>
-  
-  <span class="va">res</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>
-<span class="op">}</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">IWBootstrap</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">edgeList</span>, <span class="va">dataset</span>, <span class="va">concavity</span> <span class="op">=</span> <span class="fl">10L</span>, <span class="va">EdgeSwapper</span> <span class="op">=</span> <span class="va">NNISwap</span>, </span>
+<span>                         <span class="va">maxIter</span>, <span class="va">maxHits</span>, <span class="va">verbosity</span> <span class="op">=</span> <span class="fl">1L</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">att</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attributes.html" class="external-link">attributes</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span></span>
+<span>  <span class="va">startWeights</span> <span class="op">&lt;-</span> <span class="va">att</span><span class="op">[[</span><span class="st">'weight'</span><span class="op">]</span><span class="op">]</span></span>
+<span>  </span>
+<span>  <span class="co"># Decompress phyDat object so each character is listed once</span></span>
+<span>  <span class="va">eachChar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">startWeights</span><span class="op">)</span></span>
+<span>  <span class="va">deindexedChars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep.int</a></span><span class="op">(</span><span class="va">eachChar</span>, <span class="va">startWeights</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Resample characters</span></span>
+<span>  <span class="va">resampling</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tabulate.html" class="external-link">tabulate</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">deindexedChars</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">startWeights</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">sampled</span> <span class="op">&lt;-</span> <span class="va">resampling</span> <span class="op">!=</span> <span class="fl">0</span></span>
+<span>  <span class="va">sampledData</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="kw">function</span> <span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span><span class="op">[</span><span class="va">sampled</span><span class="op">]</span><span class="op">)</span></span>
+<span>  <span class="va">sampledAtt</span> <span class="op">&lt;-</span> <span class="va">att</span></span>
+<span>  <span class="va">sampledAtt</span><span class="op">[[</span><span class="st">'weight'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">resampling</span><span class="op">[</span><span class="va">sampled</span><span class="op">]</span></span>
+<span>  <span class="va">sampledAtt</span><span class="op">[[</span><span class="st">'index'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep.int</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">sampled</span><span class="op">)</span><span class="op">)</span>, <span class="va">resampling</span><span class="op">[</span><span class="va">sampled</span><span class="op">]</span><span class="op">)</span></span>
+<span>  <span class="va">sampledAtt</span><span class="op">[[</span><span class="st">'min.length'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">minLength</span> <span class="op">&lt;-</span> <span class="va">att</span><span class="op">[[</span><span class="st">'min.length'</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">sampled</span><span class="op">]</span></span>
+<span>  <span class="va">sampledAtt</span><span class="op">[[</span><span class="st">'morphyObjs'</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">att</span><span class="op">[[</span><span class="st">'morphyObjs'</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">sampled</span><span class="op">]</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/attributes.html" class="external-link">attributes</a></span><span class="op">(</span><span class="va">sampledData</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">sampledAtt</span></span>
+<span>  </span>
+<span>  <span class="co"># Search using resampled dataset</span></span>
+<span>  <span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">EdgeListSearch</a></span><span class="op">(</span><span class="va">edgeList</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>, <span class="va">sampledData</span>, TreeScorer <span class="op">=</span> <span class="va">IWScoreMorphy</span>,</span>
+<span>                        concavity <span class="op">=</span> <span class="va">concavity</span>, minLength <span class="op">=</span> <span class="va">minLength</span>,</span>
+<span>                        EdgeSwapper <span class="op">=</span> <span class="va">EdgeSwapper</span>, </span>
+<span>                        maxIter <span class="op">=</span> <span class="va">maxIter</span>, maxHits <span class="op">=</span> <span class="va">maxHits</span>,</span>
+<span>                        verbosity <span class="op">=</span> <span class="va">verbosity</span> <span class="op">-</span> <span class="fl">1L</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="va">res</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 <p>Having defined the <code>Bootstrapper()</code> function we can now complete a Ratchet search with:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">ratchetTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Ratchet.html">Ratchet</a></span><span class="op">(</span>tree <span class="op">=</span> <span class="va">iwTree</span>, dataset <span class="op">=</span> <span class="va">dataset</span>,
-                       concavity <span class="op">=</span> <span class="fl">10</span>,
-                       InitializeData <span class="op">=</span> <span class="va">IWInitMorphy</span>, 
-                       CleanUpData <span class="op">=</span> <span class="va">IWDestroyMorphy</span>,
-                       TreeScorer <span class="op">=</span> <span class="va">IWScoreMorphy</span>,
-                       Bootstrapper <span class="op">=</span> <span class="va">IWBootstrap</span>,
-                       ratchIter <span class="op">=</span> <span class="fl">2</span>, ratchHits <span class="op">=</span> <span class="fl">2</span>,
-                       searchIter <span class="op">=</span> <span class="fl">20</span>, searchHits <span class="op">=</span> <span class="fl">10</span>,
-                       verbosity <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">ratchetTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Ratchet.html">Ratchet</a></span><span class="op">(</span>tree <span class="op">=</span> <span class="va">iwTree</span>, dataset <span class="op">=</span> <span class="va">dataset</span>,</span>
+<span>                       concavity <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>                       InitializeData <span class="op">=</span> <span class="va">IWInitMorphy</span>, </span>
+<span>                       CleanUpData <span class="op">=</span> <span class="va">IWDestroyMorphy</span>,</span>
+<span>                       TreeScorer <span class="op">=</span> <span class="va">IWScoreMorphy</span>,</span>
+<span>                       Bootstrapper <span class="op">=</span> <span class="va">IWBootstrap</span>,</span>
+<span>                       ratchIter <span class="op">=</span> <span class="fl">2</span>, ratchHits <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>                       searchIter <span class="op">=</span> <span class="fl">20</span>, searchHits <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>                       verbosity <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <p>It would be sensible to use much larger values of <code>ratchIter</code>, <code>ratchHits</code>, <code>searchIter</code> and <code>searchHits</code> to be confident of locating an optimal tree. And note that in this specific case, implied weights tree search with the parsimony ratchet is implemented much more efficiently with <code>MaximizeParsimony(concavity = k)</code>.</p>
 <p>Hopefully these examples give a template from which you are able to construct your own optimality criteria. The maintainer is happy to answer questions via e-mail, or you can file queries by opening a <a href="https://github.com/ms609/TreeDist/issues/new/" class="external-link">GitHub issue</a>.</p>
 </div>

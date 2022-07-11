@@ -86,11 +86,11 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">CharacterLength</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span>, compress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
-
-<span class="fu">FitchSteps</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span>
-
-<span class="fu">FastCharacterLength</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">CharacterLength</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span>, compress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">FitchSteps</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">FastCharacterLength</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -148,17 +148,17 @@ erroneous results or software crash if variables are in the incorrect format.</p
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">'inapplicable.datasets'</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="va">inapplicable.phyData</span><span class="op">[[</span><span class="fl">12</span><span class="op">]</span><span class="op">]</span></span>
-<span class="r-in"><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">CharacterLength</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">'inapplicable.datasets'</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="va">inapplicable.phyData</span><span class="op">[[</span><span class="fl">12</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">CharacterLength</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1]  1  1  2  2  3  4  4  5  1  6  1  1  2  1  2  4  2  5  2  4  1  1  2  1  1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [26]  2  2  2  5  1  1  1  2  1  4  3  6  5  5  1  2  1  2  1  1  1  1  1  1  1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [51]  2  1  1  8  3  7  3  3  2  5  2  1  2  2  2  9 10  5  5  2  4  3  5  1  1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [76]  5  6  3  5  5  3  3  2  7  2  1  9  5  7  5  1  7  1  5  2  2  8  1  2  2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [101]  1  1  3  2  3  4 12  6  8  4  5  8  7  1  1  2  2  1  1  4  6  2  3  6  6</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [126]  1  1  1  1  2  1  1  1  2  1  1  6</span>
-<span class="r-in"><span class="fu">CharacterLength</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span>, compress <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span class="r-in"><span><span class="fu">CharacterLength</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span>, compress <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1]  1  1  2  2  3  4  4  5  1  6  1  1  2  1  2  4  2  5  2  4  1  2  1  1  2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [26]  2  2  5  1  1  1  2  4  3  6  5  5  1  2  2  2  1  8  3  7  3  3  2  5  2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [51]  1  2  2  9 10  5  5  2  4  3  5  1  1  5  6  3  5  5  3  3  2  7  2  1  9</span>

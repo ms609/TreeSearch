@@ -92,7 +92,7 @@ Once finished with the object, it should be destroyed using
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">PhyDat2Morphy</span><span class="op">(</span><span class="va">phy</span>, gap <span class="op">=</span> <span class="st">"inapplicable"</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">PhyDat2Morphy</span><span class="op">(</span><span class="va">phy</span>, gap <span class="op">=</span> <span class="st">"inapplicable"</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -154,16 +154,16 @@ Once finished with the object, it should be destroyed using
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">'Lobo'</span>, package<span class="op">=</span><span class="st">'TreeTools'</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">morphyObj</span> <span class="op">&lt;-</span> <span class="fu">PhyDat2Morphy</span><span class="op">(</span><span class="va">Lobo.phy</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># Set object to be destroyed at end of session or closure of function</span></span>
-<span class="r-in"><span class="co"># on.exit(morphyObj &lt;- UnloadMorphy(morphyObj), add = TRUE)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># Do something with pointer</span></span>
-<span class="r-in"><span class="co"># ....</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># Or, instead of on.exit, manually destroy morphy object and free memory:</span></span>
-<span class="r-in"><span class="va">morphyObj</span> <span class="op">&lt;-</span> <span class="fu"><a href="UnloadMorphy.html">UnloadMorphy</a></span><span class="op">(</span><span class="va">morphyObj</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">'Lobo'</span>, package<span class="op">=</span><span class="st">'TreeTools'</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">morphyObj</span> <span class="op">&lt;-</span> <span class="fu">PhyDat2Morphy</span><span class="op">(</span><span class="va">Lobo.phy</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Set object to be destroyed at end of session or closure of function</span></span></span>
+<span class="r-in"><span><span class="co"># on.exit(morphyObj &lt;- UnloadMorphy(morphyObj), add = TRUE)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Do something with pointer</span></span></span>
+<span class="r-in"><span><span class="co"># ....</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Or, instead of on.exit, manually destroy morphy object and free memory:</span></span></span>
+<span class="r-in"><span><span class="va">morphyObj</span> <span class="op">&lt;-</span> <span class="fu"><a href="UnloadMorphy.html">UnloadMorphy</a></span><span class="op">(</span><span class="va">morphyObj</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </div>

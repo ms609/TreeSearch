@@ -90,67 +90,67 @@ to search for a more parsimonious tree using custom optimality criteria.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">MorphyBootstrap</span><span class="op">(</span>
-  <span class="va">edgeList</span>,
-  <span class="va">morphyObj</span>,
-  EdgeSwapper <span class="op">=</span> <span class="va">NNISwap</span>,
-  <span class="va">maxIter</span>,
-  <span class="va">maxHits</span>,
-  verbosity <span class="op">=</span> <span class="fl">1L</span>,
-  stopAtPeak <span class="op">=</span> <span class="cn">FALSE</span>,
-  stopAtPlateau <span class="op">=</span> <span class="fl">0L</span>,
-  <span class="va">...</span>
-<span class="op">)</span>
-
-<span class="fu">Ratchet</span><span class="op">(</span>
-  <span class="va">tree</span>,
-  <span class="va">dataset</span>,
-  InitializeData <span class="op">=</span> <span class="va">PhyDat2Morphy</span>,
-  CleanUpData <span class="op">=</span> <span class="va">UnloadMorphy</span>,
-  TreeScorer <span class="op">=</span> <span class="va">MorphyLength</span>,
-  Bootstrapper <span class="op">=</span> <span class="va">MorphyBootstrap</span>,
-  swappers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">TBRSwap</span>, <span class="va">SPRSwap</span>, <span class="va">NNISwap</span><span class="op">)</span>,
-  BootstrapSwapper <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">is.list</a></span><span class="op">(</span><span class="va">swappers</span><span class="op">)</span><span class="op">)</span> <span class="va">swappers</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">swappers</span><span class="op">)</span><span class="op">]</span><span class="op">]</span> <span class="kw">else</span> <span class="va">swappers</span>,
-  returnAll <span class="op">=</span> <span class="cn">FALSE</span>,
-  stopAtScore <span class="op">=</span> <span class="cn">NULL</span>,
-  stopAtPeak <span class="op">=</span> <span class="cn">FALSE</span>,
-  stopAtPlateau <span class="op">=</span> <span class="fl">0L</span>,
-  ratchIter <span class="op">=</span> <span class="fl">100</span>,
-  ratchHits <span class="op">=</span> <span class="fl">10</span>,
-  searchIter <span class="op">=</span> <span class="fl">4000</span>,
-  searchHits <span class="op">=</span> <span class="fl">42</span>,
-  bootstrapIter <span class="op">=</span> <span class="va">searchIter</span>,
-  bootstrapHits <span class="op">=</span> <span class="va">searchHits</span>,
-  verbosity <span class="op">=</span> <span class="fl">1L</span>,
-  suboptimal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">.Machine</span><span class="op">$</span><span class="va">double.eps</span><span class="op">)</span>,
-  <span class="va">...</span>
-<span class="op">)</span>
-
-<span class="fu">MultiRatchet</span><span class="op">(</span>
-  <span class="va">tree</span>,
-  <span class="va">dataset</span>,
-  ratchHits <span class="op">=</span> <span class="fl">10</span>,
-  searchIter <span class="op">=</span> <span class="fl">500</span>,
-  searchHits <span class="op">=</span> <span class="fl">20</span>,
-  verbosity <span class="op">=</span> <span class="fl">0L</span>,
-  swappers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">RootedNNISwap</span><span class="op">)</span>,
-  nSearch <span class="op">=</span> <span class="fl">10</span>,
-  stopAtScore <span class="op">=</span> <span class="cn">NULL</span>,
-  <span class="va">...</span>
-<span class="op">)</span>
-
-<span class="fu">RatchetConsensus</span><span class="op">(</span>
-  <span class="va">tree</span>,
-  <span class="va">dataset</span>,
-  ratchHits <span class="op">=</span> <span class="fl">10</span>,
-  searchIter <span class="op">=</span> <span class="fl">500</span>,
-  searchHits <span class="op">=</span> <span class="fl">20</span>,
-  verbosity <span class="op">=</span> <span class="fl">0L</span>,
-  swappers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">RootedNNISwap</span><span class="op">)</span>,
-  nSearch <span class="op">=</span> <span class="fl">10</span>,
-  stopAtScore <span class="op">=</span> <span class="cn">NULL</span>,
-  <span class="va">...</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">MorphyBootstrap</span><span class="op">(</span></span>
+<span>  <span class="va">edgeList</span>,</span>
+<span>  <span class="va">morphyObj</span>,</span>
+<span>  EdgeSwapper <span class="op">=</span> <span class="va">NNISwap</span>,</span>
+<span>  <span class="va">maxIter</span>,</span>
+<span>  <span class="va">maxHits</span>,</span>
+<span>  verbosity <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  stopAtPeak <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  stopAtPlateau <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">Ratchet</span><span class="op">(</span></span>
+<span>  <span class="va">tree</span>,</span>
+<span>  <span class="va">dataset</span>,</span>
+<span>  InitializeData <span class="op">=</span> <span class="va">PhyDat2Morphy</span>,</span>
+<span>  CleanUpData <span class="op">=</span> <span class="va">UnloadMorphy</span>,</span>
+<span>  TreeScorer <span class="op">=</span> <span class="va">MorphyLength</span>,</span>
+<span>  Bootstrapper <span class="op">=</span> <span class="va">MorphyBootstrap</span>,</span>
+<span>  swappers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">TBRSwap</span>, <span class="va">SPRSwap</span>, <span class="va">NNISwap</span><span class="op">)</span>,</span>
+<span>  BootstrapSwapper <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">is.list</a></span><span class="op">(</span><span class="va">swappers</span><span class="op">)</span><span class="op">)</span> <span class="va">swappers</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">swappers</span><span class="op">)</span><span class="op">]</span><span class="op">]</span> <span class="kw">else</span> <span class="va">swappers</span>,</span>
+<span>  returnAll <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  stopAtScore <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  stopAtPeak <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  stopAtPlateau <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  ratchIter <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>  ratchHits <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  searchIter <span class="op">=</span> <span class="fl">4000</span>,</span>
+<span>  searchHits <span class="op">=</span> <span class="fl">42</span>,</span>
+<span>  bootstrapIter <span class="op">=</span> <span class="va">searchIter</span>,</span>
+<span>  bootstrapHits <span class="op">=</span> <span class="va">searchHits</span>,</span>
+<span>  verbosity <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  suboptimal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">.Machine</span><span class="op">$</span><span class="va">double.eps</span><span class="op">)</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">MultiRatchet</span><span class="op">(</span></span>
+<span>  <span class="va">tree</span>,</span>
+<span>  <span class="va">dataset</span>,</span>
+<span>  ratchHits <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  searchIter <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>  searchHits <span class="op">=</span> <span class="fl">20</span>,</span>
+<span>  verbosity <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  swappers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">RootedNNISwap</span><span class="op">)</span>,</span>
+<span>  nSearch <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  stopAtScore <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">RatchetConsensus</span><span class="op">(</span></span>
+<span>  <span class="va">tree</span>,</span>
+<span>  <span class="va">dataset</span>,</span>
+<span>  ratchHits <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  searchIter <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>  searchHits <span class="op">=</span> <span class="fl">20</span>,</span>
+<span>  verbosity <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  swappers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">RootedNNISwap</span><span class="op">)</span>,</span>
+<span>  nSearch <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  stopAtScore <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -342,7 +342,7 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
     <div id="see-also">
     <h2>See also</h2>
     <div class="dont-index">
-<ul><li><p>Adapted from <code><a href="http://klausvigo.github.io/phangorn/reference/parsimony.html" class="external-link">pratchet()</a></code> in the
+<ul><li><p>Adapted from <code><a href="https://klausvigo.github.io/phangorn/reference/parsimony.html" class="external-link">pratchet()</a></code> in the
 <span class="pkg">phangorn</span> package.</p></li>
 </ul><p>Other custom search functions: 
 <code><a href="TreeSearch.html">EdgeListSearch</a>()</code>,
@@ -357,18 +357,18 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">'Lobo'</span>, package <span class="op">=</span> <span class="st">'TreeTools'</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">njtree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">Lobo.phy</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># Increase value of ratchIter and searchHits to do a proper search</span></span>
-<span class="r-in"><span class="va">quickResult</span> <span class="op">&lt;-</span> <span class="fu">Ratchet</span><span class="op">(</span><span class="va">njtree</span>, <span class="va">Lobo.phy</span>, ratchIter <span class="op">=</span> <span class="fl">2</span>, searchHits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">'Lobo'</span>, package <span class="op">=</span> <span class="st">'TreeTools'</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">njtree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">Lobo.phy</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Increase value of ratchIter and searchHits to do a proper search</span></span></span>
+<span class="r-in"><span><span class="va">quickResult</span> <span class="op">&lt;-</span> <span class="fu">Ratchet</span><span class="op">(</span><span class="va">njtree</span>, <span class="va">Lobo.phy</span>, ratchIter <span class="op">=</span> <span class="fl">2</span>, searchHits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> * Beginning Parsimony Ratchet, with initial score 231</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Completed parsimony ratchet after 2 iterations with score 221</span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># Plot result (legibly)</span></span>
-<span class="r-in"><span class="va">oldPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">quickResult</span><span class="op">)</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Completed parsimony ratchet after 2 iterations with score 219</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Plot result (legibly)</span></span></span>
+<span class="r-in"><span><span class="va">oldPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">quickResult</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="Ratchet-1.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">oldPar</span><span class="op">)</span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">oldPar</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </div>

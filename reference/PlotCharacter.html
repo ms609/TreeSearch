@@ -92,22 +92,22 @@ Brazeau et al. (2019)
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">PlotCharacter</span><span class="op">(</span>
-  <span class="va">tree</span>,
-  <span class="va">dataset</span>,
-  char <span class="op">=</span> <span class="fl">1L</span>,
-  updateTips <span class="op">=</span> <span class="cn">FALSE</span>,
-  plot <span class="op">=</span> <span class="cn">TRUE</span>,
-  tokenCol <span class="op">=</span> <span class="cn">NULL</span>,
-  ambigCol <span class="op">=</span> <span class="st">"grey"</span>,
-  inappCol <span class="op">=</span> <span class="st">"lightgrey"</span>,
-  ambigLty <span class="op">=</span> <span class="st">"dotted"</span>,
-  inappLty <span class="op">=</span> <span class="st">"dashed"</span>,
-  plainLty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="st">"lty"</span><span class="op">)</span>,
-  tipOffset <span class="op">=</span> <span class="fl">1</span>,
-  unitEdge <span class="op">=</span> <span class="cn">FALSE</span>,
-  <span class="va">...</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">PlotCharacter</span><span class="op">(</span></span>
+<span>  <span class="va">tree</span>,</span>
+<span>  <span class="va">dataset</span>,</span>
+<span>  char <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  updateTips <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  tokenCol <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ambigCol <span class="op">=</span> <span class="st">"grey"</span>,</span>
+<span>  inappCol <span class="op">=</span> <span class="st">"lightgrey"</span>,</span>
+<span>  ambigLty <span class="op">=</span> <span class="st">"dotted"</span>,</span>
+<span>  inappLty <span class="op">=</span> <span class="st">"dashed"</span>,</span>
+<span>  plainLty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="st">"lty"</span><span class="op">)</span>,</span>
+<span>  tipOffset <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  unitEdge <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -182,14 +182,14 @@ on a tree are denoted with <code>TRUE</code>.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="co"># Set up plotting area</span></span>
-<span class="r-in"><span class="va">oPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">read.tree</a></span><span class="op">(</span>text <span class="op">=</span> </span>
-<span class="r-in">  <span class="st">"((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));"</span><span class="op">)</span></span>
-<span class="r-in"><span class="co">## A character with inapplicable data</span></span>
-<span class="r-in"><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/PhyToString.html" class="external-link">StringToPhyDat</a></span><span class="op">(</span><span class="st">"23--1??--032"</span>, tips <span class="op">=</span> <span class="va">tree</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">PlotCharacter</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Set up plotting area</span></span></span>
+<span class="r-in"><span><span class="va">oPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">read.tree</a></span><span class="op">(</span>text <span class="op">=</span> </span></span>
+<span class="r-in"><span>  <span class="st">"((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## A character with inapplicable data</span></span></span>
+<span class="r-in"><span><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/PhyToString.html" class="external-link">StringToPhyDat</a></span><span class="op">(</span><span class="st">"23--1??--032"</span>, tips <span class="op">=</span> <span class="va">tree</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">PlotCharacter</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="PlotCharacter-1.png" alt="" width="700" height="433"></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           -     0     1     2     3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [1,] FALSE FALSE FALSE  TRUE FALSE</span>
@@ -215,12 +215,12 @@ on a tree are denoted with <code>TRUE</code>.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [21,]  TRUE FALSE FALSE FALSE FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [22,] FALSE  TRUE FALSE  TRUE  TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [23,] FALSE  TRUE FALSE  TRUE  TRUE</span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># Character from a real dataset </span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"Lobo"</span>, package <span class="op">=</span> <span class="st">"TreeTools"</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="va">Lobo.phy</span></span>
-<span class="r-in"><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">PlotCharacter</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span>, <span class="fl">14</span><span class="op">)</span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Character from a real dataset </span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"Lobo"</span>, package <span class="op">=</span> <span class="st">"TreeTools"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="va">Lobo.phy</span></span></span>
+<span class="r-in"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">PlotCharacter</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span>, <span class="fl">14</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="PlotCharacter-2.png" alt="" width="700" height="433"></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           0     1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [1,] FALSE  TRUE</span>
@@ -318,7 +318,7 @@ on a tree are denoted with <code>TRUE</code>.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [93,]  TRUE  TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [94,]  TRUE FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [95,]  TRUE FALSE</span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">oPar</span><span class="op">)</span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">oPar</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </div>

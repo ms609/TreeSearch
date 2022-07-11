@@ -88,9 +88,9 @@ characters in a <code>Morphy</code> object; <code>SetMorphyWeights()</code> edit
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">MorphyWeights</span><span class="op">(</span><span class="va">morphyObj</span><span class="op">)</span>
-
-<span class="fu">SetMorphyWeights</span><span class="op">(</span><span class="va">weight</span>, <span class="va">morphyObj</span>, checkInput <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">MorphyWeights</span><span class="op">(</span><span class="va">morphyObj</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">SetMorphyWeights</span><span class="op">(</span><span class="va">weight</span>, <span class="va">morphyObj</span>, checkInput <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -166,22 +166,22 @@ applying <code>weight</code>.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="va">tokens</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span class="r-in">  <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>,</span>
-<span class="r-in">  <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span>, nrow <span class="op">=</span> <span class="fl">2L</span>,</span>
-<span class="r-in">  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">pd</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html" class="external-link">MatrixToPhyDat</a></span><span class="op">(</span><span class="va">tokens</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">morphyObj</span> <span class="op">&lt;-</span> <span class="fu"><a href="PhyDat2Morphy.html">PhyDat2Morphy</a></span><span class="op">(</span><span class="va">pd</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">MorphyWeights</span><span class="op">(</span><span class="va">morphyObj</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">tokens</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>,</span></span>
+<span class="r-in"><span>  <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span>, nrow <span class="op">=</span> <span class="fl">2L</span>,</span></span>
+<span class="r-in"><span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">pd</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html" class="external-link">MatrixToPhyDat</a></span><span class="op">(</span><span class="va">tokens</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">morphyObj</span> <span class="op">&lt;-</span> <span class="fu"><a href="PhyDat2Morphy.html">PhyDat2Morphy</a></span><span class="op">(</span><span class="va">pd</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">MorphyWeights</span><span class="op">(</span><span class="va">morphyObj</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        [,1] [,2] [,3]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> approx 3    2    1   </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> exact  3    2    1   </span>
-<span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="fu">SetMorphyWeights</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1.5</span>, <span class="fl">2</span><span class="op">/</span><span class="fl">3</span><span class="op">)</span>, <span class="va">morphyObj</span><span class="op">)</span> <span class="op">!=</span> <span class="fl">0L</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Errored"</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">MorphyWeights</span><span class="op">(</span><span class="va">morphyObj</span><span class="op">)</span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu">SetMorphyWeights</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1.5</span>, <span class="fl">2</span><span class="op">/</span><span class="fl">3</span><span class="op">)</span>, <span class="va">morphyObj</span><span class="op">)</span> <span class="op">!=</span> <span class="fl">0L</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Errored"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">MorphyWeights</span><span class="op">(</span><span class="va">morphyObj</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        [,1] [,2] [,3]     </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> approx 6    9    4        </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> exact  1    1.5  0.6666667</span>
-<span class="r-in"><span class="va">morphyObj</span> <span class="op">&lt;-</span> <span class="fu"><a href="UnloadMorphy.html">UnloadMorphy</a></span><span class="op">(</span><span class="va">morphyObj</span><span class="op">)</span></span>
+<span class="r-in"><span><span class="va">morphyObj</span> <span class="op">&lt;-</span> <span class="fu"><a href="UnloadMorphy.html">UnloadMorphy</a></span><span class="op">(</span><span class="va">morphyObj</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </div>

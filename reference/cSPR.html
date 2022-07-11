@@ -86,7 +86,7 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">cSPR</span><span class="op">(</span><span class="va">tree</span>, whichMove <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cSPR</span><span class="op">(</span><span class="va">tree</span>, whichMove <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -107,13 +107,13 @@
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">BalancedTree</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># Tree must be rooted on leaf</span></span>
-<span class="r-in"><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/RootTree.html" class="external-link">RootTree</a></span><span class="op">(</span><span class="va">tree</span>, <span class="fl">1</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># Random rearrangement</span></span>
-<span class="r-in"><span class="fu">cSPR</span><span class="op">(</span><span class="va">tree</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">BalancedTree</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Tree must be rooted on leaf</span></span></span>
+<span class="r-in"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/RootTree.html" class="external-link">RootTree</a></span><span class="op">(</span><span class="va">tree</span>, <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Random rearrangement</span></span></span>
+<span class="r-in"><span><span class="fu">cSPR</span><span class="op">(</span><span class="va">tree</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Phylogenetic tree with 8 tips and 7 internal nodes.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -121,9 +121,9 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span>   t1, t2, t3, t4, t5, t6, ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Rooted; no branch lengths.</span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># Specific rearrangement</span></span>
-<span class="r-in"><span class="fu">cSPR</span><span class="op">(</span><span class="va">tree</span>, <span class="fl">9</span><span class="op">)</span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Specific rearrangement</span></span></span>
+<span class="r-in"><span><span class="fu">cSPR</span><span class="op">(</span><span class="va">tree</span>, <span class="fl">9</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Phylogenetic tree with 8 tips and 7 internal nodes.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>

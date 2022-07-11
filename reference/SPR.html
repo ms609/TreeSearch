@@ -86,35 +86,35 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">SPR</span><span class="op">(</span><span class="va">tree</span>, edgeToBreak <span class="op">=</span> <span class="cn">NULL</span>, mergeEdge <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>
-
-<span class="fu">SPRMoves</span><span class="op">(</span><span class="va">tree</span>, edgeToBreak <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span>
-
-<span class="co"># S3 method for phylo</span>
-<span class="fu">SPRMoves</span><span class="op">(</span><span class="va">tree</span>, edgeToBreak <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span>
-
-<span class="co"># S3 method for matrix</span>
-<span class="fu">SPRMoves</span><span class="op">(</span><span class="va">tree</span>, edgeToBreak <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span>
-
-<span class="fu">SPRSwap</span><span class="op">(</span>
-  <span class="va">parent</span>,
-  <span class="va">child</span>,
-  nEdge <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">parent</span><span class="op">)</span>,
-  nNode <span class="op">=</span> <span class="va">nEdge</span><span class="op">/</span><span class="fl">2L</span>,
-  edgeToBreak <span class="op">=</span> <span class="cn">NULL</span>,
-  mergeEdge <span class="op">=</span> <span class="cn">NULL</span>
-<span class="op">)</span>
-
-<span class="fu">RootedSPR</span><span class="op">(</span><span class="va">tree</span>, edgeToBreak <span class="op">=</span> <span class="cn">NULL</span>, mergeEdge <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>
-
-<span class="fu">RootedSPRSwap</span><span class="op">(</span>
-  <span class="va">parent</span>,
-  <span class="va">child</span>,
-  nEdge <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">parent</span><span class="op">)</span>,
-  nNode <span class="op">=</span> <span class="va">nEdge</span><span class="op">/</span><span class="fl">2L</span>,
-  edgeToBreak <span class="op">=</span> <span class="cn">NULL</span>,
-  mergeEdge <span class="op">=</span> <span class="cn">NULL</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">SPR</span><span class="op">(</span><span class="va">tree</span>, edgeToBreak <span class="op">=</span> <span class="cn">NULL</span>, mergeEdge <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">SPRMoves</span><span class="op">(</span><span class="va">tree</span>, edgeToBreak <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for phylo</span></span>
+<span><span class="fu">SPRMoves</span><span class="op">(</span><span class="va">tree</span>, edgeToBreak <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for matrix</span></span>
+<span><span class="fu">SPRMoves</span><span class="op">(</span><span class="va">tree</span>, edgeToBreak <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">SPRSwap</span><span class="op">(</span></span>
+<span>  <span class="va">parent</span>,</span>
+<span>  <span class="va">child</span>,</span>
+<span>  nEdge <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">parent</span><span class="op">)</span>,</span>
+<span>  nNode <span class="op">=</span> <span class="va">nEdge</span><span class="op">/</span><span class="fl">2L</span>,</span>
+<span>  edgeToBreak <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mergeEdge <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">RootedSPR</span><span class="op">(</span><span class="va">tree</span>, edgeToBreak <span class="op">=</span> <span class="cn">NULL</span>, mergeEdge <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">RootedSPRSwap</span><span class="op">(</span></span>
+<span>  <span class="va">parent</span>,</span>
+<span>  <span class="va">child</span>,</span>
+<span>  nEdge <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">parent</span><span class="op">)</span>,</span>
+<span>  nNode <span class="op">=</span> <span class="va">nEdge</span><span class="op">/</span><span class="fl">2L</span>,</span>
+<span>  edgeToBreak <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mergeEdge <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -207,15 +207,15 @@ Sinauer Associates, Sunderland, Massachusetts.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="op">{</span></span>
-<span class="r-in"><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/rtree.html" class="external-link">rtree</a></span><span class="op">(</span><span class="fl">20</span>, br<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">SPR</span><span class="op">(</span><span class="va">tree</span><span class="op">)</span></span>
-<span class="r-in"><span class="op">}</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="op">{</span></span></span>
+<span class="r-in"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/rtree.html" class="external-link">rtree</a></span><span class="op">(</span><span class="fl">20</span>, br<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">SPR</span><span class="op">(</span><span class="va">tree</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Phylogenetic tree with 20 tips and 19 internal nodes.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Tip labels:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   t20, t5, t14, t17, t4, t1, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   t19, t20, t7, t17, t3, t12, ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Rooted; includes branch lengths.</span>
 </code></pre></div>

@@ -90,11 +90,11 @@ ratio of the character matrix implied if the tree is true.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">ConcordantInformation</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span>
-
-<span class="fu">Evaluate</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span>
-
-<span class="fu">ConcordantInfo</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ConcordantInformation</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">Evaluate</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">ConcordantInfo</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -139,9 +139,9 @@ two parsimony-informative states.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">congreveLamsdellMatrices</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">myMatrix</span> <span class="op">&lt;-</span> <span class="va">congreveLamsdellMatrices</span><span class="op">[[</span><span class="fl">10</span><span class="op">]</span><span class="op">]</span></span>
-<span class="r-in"><span class="fu">ConcordantInformation</span><span class="op">(</span><span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">myMatrix</span><span class="op">)</span>, <span class="va">myMatrix</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">congreveLamsdellMatrices</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">myMatrix</span> <span class="op">&lt;-</span> <span class="va">congreveLamsdellMatrices</span><span class="op">[[</span><span class="fl">10</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="fu">ConcordantInformation</span><span class="op">(</span><span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">myMatrix</span><span class="op">)</span>, <span class="va">myMatrix</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> dataset contains 821.038 bits, of which 280.813 signal, 540.226 noise, 78.0817 needed.  S:N = 0.519806</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> informationContent             signal              noise      signalToNoise </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        821.0383923        280.8125010        540.2258914          0.5198057 </span>

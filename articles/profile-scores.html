@@ -107,7 +107,7 @@
       <h1 data-toc-skip>Profile parsimony</h1>
                         <h4 data-toc-skip class="author">Martin R. Smith</h4>
             
-            <h4 data-toc-skip class="date">2022-06-27</h4>
+            <h4 data-toc-skip class="date">2022-07-11</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/profile-scores.Rmd" class="external-link"><code>vignettes/profile-scores.Rmd</code></a></small>
       <div class="hidden name"><code>profile-scores.Rmd</code></div>
@@ -155,11 +155,11 @@
 <p>Although this is not how the approach was initially justified <span class="citation">(Faith &amp; Trueman, 2001)</span>, profile parsimony aims to ascribe as much of the information in each character as possible to common ancestry; in the example above, it assigns the first extra step a penalty of 2.81, and the second extra step a penalty of 0.74, corresponding to the amount of information that could no longer be assigned to common ancestry after learning of the existence of the <span class="math inline">\(n\)</span>th step.</p>
 <p>Whereas the value of a parsimony score obtained under implied weights does not have any inherent meaning, the profile parsimony score of a given tree represents the amount of information within a character matrix that can be attributed to common ancestry under that tree, which, if expressed as a proportion of the total cladistic information content of the characters in the matrix <span class="citation">(Cotton &amp; Wilkinson, 2008)</span>, gives an indication of the degree of homoplasy in the underlying character matrix.</p>
 <p>Profile parsimony produces a concavity profile that reflects the opportunity to observe additional steps in each character, unlike implied weighting, where a single concavity value is applied to all characters, regardless of the opportunity for additional steps to be observed.</p>
-<pre><code><span class="co">## Registered S3 methods overwritten by 'TreeDist':</span>
-<span class="co">##   method                 from     </span>
-<span class="co">##   as.matrix.ClusterTable TreeTools</span>
-<span class="co">##   print.ClusterTable     TreeTools</span>
-<span class="co">##   summary.ClusterTable   TreeTools</span></code></pre>
+<pre><code><span><span class="co">## Registered S3 methods overwritten by 'TreeDist':</span></span>
+<span><span class="co">##   method                 from     </span></span>
+<span><span class="co">##   as.matrix.ClusterTable TreeTools</span></span>
+<span><span class="co">##   print.ClusterTable     TreeTools</span></span>
+<span><span class="co">##   summary.ClusterTable   TreeTools</span></span></code></pre>
 <p><img src="profile-scores_files/figure-html/plot-concavities-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>The graph shows the profiles under implied weighting (with different concavity constants) and profile parsimony (under different distributions of the tokens <code>0</code> and <code>1</code> in a character coded for forty leaves). One prominent difference between the character of concavity profiles is that implied weighting continues to assign relatively large penalties to additional steps even when the distribution of a character is almost random on a tree. Another is that profile parsimony treats a second (and each subsequent) step as less surprising if there are fewer opportunities to observe a second step by chance, on account of there being a smaller number of tokens with the rarer step; implied weighting is blind to the distribution of tokens within a character.</p>
 </div>
