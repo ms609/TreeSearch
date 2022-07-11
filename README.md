@@ -40,6 +40,8 @@ library("TreeSearch")
 Install and load the development version of "TreeSearch" with:
 
 ```r
+if(!require("curl")) install.packages("curl")
+if(!require("remotes")) install.packages("remotes")
 remotes::install_github("ms609/TreeSearch")
 library("TreeSearch")
 ```
