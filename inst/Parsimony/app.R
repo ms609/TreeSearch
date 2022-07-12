@@ -1390,7 +1390,7 @@ server <- function(input, output, session) {
     if (length(outgroupTips)) {
       tr <- deparse(substitute(tree))
       LogComment("Root tree")
-      LogCode(paste0(tr, " <- RootTree(", tr, ", ", EnC(outgroupTips), ")")
+      LogCode(paste0(tr, " <- RootTree(", tr, ", ", EnC(outgroupTips), ")"))
     }
   }
   
