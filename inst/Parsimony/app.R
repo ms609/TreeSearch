@@ -576,6 +576,10 @@ server <- function(input, output, session) {
       "citation(\"Rogue\")"
     ))
     
+    LogCommentP("Check working directory", 1)
+    LogCodeP("getwd() # Should match location of data / tree files",
+             "# Use setwd(\"desired/directory\") to change")
+    
     if (HaveData()) {
       LogCommentP("Load data from file")
       LogCodeP(c(
@@ -646,7 +650,8 @@ server <- function(input, output, session) {
   CacheInput <- function(type, fileName) {
     key <- paste0(type, "Files")
     r[[key]] <- r[[key]] + 1
-    file.copy(fileName, paste0(tempdir(), "/", LastFile(type)))
+    file.copy(fileName, paste0(tempdir(), "/", LastFile(type)),
+              overwrite = TRUE)
   }
   
   if (!requireNamespace("TreeDist", quietly = TRUE)) {
@@ -1631,6 +1636,8 @@ server <- function(input, output, session) {
     BeginLogP()
     LogPar()
     dropped <- DroppedTips()
+    message(1635)
+    dput(dropped)
 
     if (length(dropped) &&
         length(input$excludedTip) &&
@@ -1687,10 +1694,13 @@ server <- function(input, output, session) {
           "cons <- Consensus(trees, p = ", consP(), ")"
         ))
       }
-      cons <- ConsensusWithout(r$trees, without, p = consP())
-      LogUserRoot(cons)
+      outgroupTips <- intersect(r$outgroup, r$plottedTree$tip.label)
+      if (length(outgroupTips)) {
+        LogCommentP("Root tree")
+        LogCodeP(paste0("cons <- RootTree(cons, ", EnC(outgroupTips), ")"))
+      }
       if (unitEdge()) {
-        LogExpr("cons$edge.length <- rep_len(1L, dim(cons$edge)[1])")
+        LogCodeP("cons$edge.length <- rep_len(1L, dim(cons$edge)[1])")
       }
       LogCommentP("Plot consensus tree")
       LogCodeP(
@@ -1757,7 +1767,7 @@ server <- function(input, output, session) {
         "  edge.width = 2.5",
         ")"
       )
-      LogConcordanceP()
+      LogConcordance()
     } else {
       LogCommentP("Plot single tree")
       LogCodeP(
@@ -1791,7 +1801,7 @@ server <- function(input, output, session) {
   
   output$treePlot <- renderCachedPlot(
     ReactiveMainPlot(),
-    cacheKeyExpr = { # Must be identical to output$rCode below
+    cacheKeyExpr = { # Must be identical to RCode below
       switch(
         input$plotFormat,
         
@@ -1849,7 +1859,7 @@ server <- function(input, output, session) {
     
     # Return:
     r$plotLog
-  }), { # Must be identical to output$rCode below
+  }),  # Must be identical to output$treePlot above
     switch(
       input$plotFormat,
       
@@ -1884,7 +1894,7 @@ server <- function(input, output, session) {
                      silThreshold(),
                      input$display)
     )
-  })
+  )
   
   UCFirst <- function (str) {
     paste0(toupper(substr(str, 1, 1)),
@@ -2334,7 +2344,7 @@ server <- function(input, output, session) {
               "  col = clusterCol[i],",
               "  bty = \"n\"            # Don't plot legend in box",
               ")")
-      LogConcordanceP("cons")
+      LogConcordance("cons")
       LogIndent(-2)
       LogCodeP("}")
       PauseLog()
@@ -2878,7 +2888,7 @@ server <- function(input, output, session) {
       dir.create(tempDir)
       on.exit(unlink(tempDir))
       rFile <- paste0(tempDir, "/TreeSearch-session.R")
-      file.copy(cmdLogFile, rFile)
+      file.copy(cmdLogFile, rFile, overwrite = TRUE)
       zip(file, c(
         rFile,
         paste0(tempdir(), "/", DataFileName(seq_len(r$dataFiles))),
@@ -2889,13 +2899,11 @@ server <- function(input, output, session) {
   output$savePlotZip <- downloadHandler(
     filename = function() paste0(saveDetails()$fileName, ".zip"),
     content = function(file) {
-      RCode()
-      
       tempDir <- tempfile("plot-zip-")
       dir.create(tempDir)
       on.exit(unlink(tempDir))
       rFile <- paste0(tempDir, "/", saveDetails()$fileName, ".R")
-      writeLines(r$plotLog, con = rFile)
+      writeLines(RCode(), con = rFile)
       
       # Create ZIP
       zip(file, c(
