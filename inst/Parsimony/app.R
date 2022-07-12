@@ -1415,7 +1415,7 @@ server <- function(input, output, session) {
     }
   })
   LogPlottedTree <- function() {
-    LogCode(paste0(
+    LogCodeP(paste0(
       "plottedTree <- trees[[", whichTree(), "]]"
       ),
       if (!("tipsRight" %in% input$mapDisplay)) {
@@ -1747,8 +1747,8 @@ server <- function(input, output, session) {
     LogComment(paste("Select tree", whichTree(), "from tree set"))
     LogPlottedTree()
     if (length(n) && n > 0L) {
-      LogComment(paste("Map character", n, "onto tree", whichTree()))
-      LogCode(
+      LogCommentP(paste("Map character", n, "onto tree", whichTree()))
+      LogCodeP(
         "PlotCharacter(",
         "  tree = plottedTree,",
         "  dataset = dataset,",
@@ -1757,11 +1757,10 @@ server <- function(input, output, session) {
         "  edge.width = 2.5",
         ")"
       )
-      LogConcordance()
-      LabelConcordance()
+      LogConcordanceP()
     } else {
-      LogComment("Plot single tree")
-      LogCode(
+      LogCommentP("Plot single tree")
+      LogCodeP(
         "tipCols <- Rogue::ColByStability(trees)[plottedTree$tip.label]",
         "plot(plottedTree, tip.color = tipCols)"
       )
