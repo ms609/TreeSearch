@@ -2445,7 +2445,6 @@ server <- function(input, output, session) {
       input$spaceCol,
       "clust" = {
         cl <- clusterings()
-        LogClusterings()
         if (cl$sil > silThreshold()) {
           palettes[[min(length(palettes), cl$n)]][cl$cluster]
         } else {
@@ -2482,7 +2481,6 @@ server <- function(input, output, session) {
       input$spacePch,
       "clust" = {
         cl <- clusterings()
-        LogClusterings()
         if (cl$sil > silThreshold()) {
           cl$cluster - 1
         } else 16
@@ -2613,7 +2611,102 @@ server <- function(input, output, session) {
   ##############################################################################
   # Plot tree space
   ##############################################################################
+  # CAUTION: Remember to update accompanying logging function below.
   TreespacePlot <- function() {
+    if (length(r$trees) < 3) {
+      return(ErrorPlot("Need at least\nthree trees to\nmap tree space"))
+    }
+    
+    spaceCex <- 1.7
+    spaceLwd <- 2
+    
+    cl <- clusterings()
+    map <- mapping()
+    
+    nDim <- min(dims(), nProjDim())
+    if (nDim < 2) {
+      nDim <- 2L
+      nPanels <- 1L
+    } else {
+      plotSeq <- matrix(0, nDim, nDim)
+      nPanels <- nDim * (nDim - 1L) / 2L
+      plotSeq[upper.tri(plotSeq)] <- seq_len(nPanels)
+      if (nDim > 2) {
+        plotSeq[nDim - 1, 2] <- max(plotSeq) + 1L
+      }
+      layout(t(plotSeq[-nDim, -1]))
+    }
+    
+    par(mar = rep(0.2, 4))
+    withProgress(message = "Drawing plot", {
+      for (i in 2:nDim) for (j in seq_len(i - 1)) {
+        incProgress(1 / nPanels)
+        # Set up blank plot
+        plot(map[, j], map[, i], ann = FALSE, axes = FALSE,
+             frame.plot = nDim > 2L,
+             type = "n", asp = 1, xlim = range(map), ylim = range(map))
+        
+        # Plot MST
+        apply(mstEnds(), 1, function (segment)
+          lines(map[segment, j], map[segment, i], col = "#bbbbbb", lty = 1))
+        
+        # Add points
+        points(map[, j], map[, i], pch = treePch(),
+               col = paste0(treeCols(), as.hexmode(200)),
+               cex = spaceCex,
+               lwd = spaceLwd
+               )#input$pt.cex)
+        
+        if (cl$sil > silThreshold()) {
+          # Mark clusters
+          for (clI in seq_len(cl$n)) {
+            inCluster <- cl$cluster == clI
+            clusterX <- map[inCluster, j]
+            clusterY <- map[inCluster, i]
+            hull <- chull(clusterX, clusterY)
+            polygon(clusterX[hull], clusterY[hull], lty = 1, lwd = 2,
+                    border = palettes[[min(length(palettes), cl$n)]][clI])
+          }
+        }
+        if ("labelTrees" %in% input$display) {
+          text(map[, j], map[, i], names(r$trees))
+        }
+      }
+      if (nDim > 2) {
+        plot.new()
+      }
+      if (input$spacePch == "relat") {
+        if (length(input$relators) == 4L) {
+          legend(bty = "n", "topright", pch = 1:3, xpd = NA,
+                 pt.cex = spaceCex, pt.lwd = spaceLwd,
+                 gsub("_", " ", fixed = TRUE,
+                      paste(input$relators[2:4], "&", input$relators[[1]])))
+        }
+      } else if (input$spacePch == "name") {
+        clstr <- treeNameClustering()
+        clusters <- unique(clstr)
+        if (length(clusters) > 1L) {
+          legend(bty = "n", "topright", xpd = NA,
+                 pch = c(1, 3, 4, 2, seq_len(max(clstr))[-(1:4)])[clusters],
+                 paste0("~ ", attr(clstr, "med"), " (", table(clstr), ")"))
+        }
+      }
+      if (input$spaceCol == "firstHit" && length(firstHit())) {
+        legend(bty = "n", "topleft", pch = 16, col = firstHitCols(),
+               pt.cex = spaceCex,
+               names(firstHit()), title = "Iteration first hit")
+      } else if (input$spaceCol == "score") {
+        legendRes <- length(badToGood)
+        leg <- rep(NA, legendRes)
+        leg[c(legendRes, 1)] <- signif(range(scores()))
+        legend("bottomright", bty = "n", border = NA,
+               legend = leg, fill = rev(badToGood),
+               y.intersp = 0.04, cex = 1.1)
+      }
+    })
+  }
+  
+  LogTreespacePlot <- function() {
     if (length(r$trees) < 3) {
       return(ErrorPlot("Need at least\nthree trees to\nmap tree space"))
     }
