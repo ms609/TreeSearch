@@ -2678,8 +2678,9 @@ server <- function(input, output, session) {
         
         # Plot MST
         if ("mst" %in% input$mapLines) {
-          apply(mstEnds(), 1, function (segment)
-            lines(map[segment, j], map[segment, i], col = "#bbbbbb", lty = 1))
+          segments(map[mstEnds()[, 1], j], map[mstEnds()[, 1], i],
+                   map[mstEnds()[, 2], j], map[mstEnds()[, 2], i],
+                   col = "#bbbbbb", lty = 1)
         }
         
         
@@ -2790,24 +2791,29 @@ server <- function(input, output, session) {
             "  xlim = range(map),  # Constant X range for all dimensions",
             "  ylim = range(map)   # Constant Y range for all dimensions",
             ")")
-    # Connect sequential trees
+    
     if ("seq" %in% input$mapLines) {
-      LogCommentP("Connect subsequent trees")
-      LogCodeP("lines(map[, j], map[, i], col = \"#ffcc33\", lty = 2)")
+      LogCommentP("Connect trees in sequence")
+      LogCodeP("lines(",
+               "  x = map[, j],",
+               "  y = map[, i],",
+               "  col = \"#ffcc33\", # Orange",
+               "  lty = 2 # dashed",
+               ")")
     }
     
     if ("mst" %in% input$mapLines) {
       LogCommentP("Plot minimum spanning tree")
       LogCodeP(
         "mst <- MSTEdges(as.matrix(dists))",
-        "apply(mst, 1, function (segment) {",
-        "  lines(", #TODO use segments()?
-        "    x = map[segment, j],",
-        "    y = map[segment, i],",
-        "    col = \"#bbbbbb\", # Light grey",
-        "    lty = 1     # Solid lines",
-        "  )",
-        "})"
+        "segments(",
+        "  x0 = map[mst[, 1], j],",
+        "  y0 = map[mst[, 1], i],",
+        "  x1 = map[mst[, 2], j],",
+        "  y1 = map[mst[, 2], i],",
+        "  col = \"#bbbbbb\", # Light grey",
+        "  lty = 1          # Solid lines",
+        ")"
       )
     }
     
