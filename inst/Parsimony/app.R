@@ -906,7 +906,7 @@ server <- function(input, output, session) {
     updateSliderInput(session, "whichTree", min = 1L,
                       max = length(r$trees), value = 1L)
     UpdateKeepTipsMaximum() # Updates Rogues()
-    UpdateExcludedTipsInput()
+    UpdateDroppedTaxaDisplay()
     if (maxProjDim() > 0) {
       updateSliderInput(inputId = "spaceDim", max = max(1L, maxProjDim()),
                         value = min(maxProjDim(), input$spaceDim))
@@ -1165,11 +1165,20 @@ server <- function(input, output, session) {
     DisplayTreeScores()
   }, ignoreInit = TRUE)
   
+  TipsInTree <- reactive({
+    if (AnyTrees()) {
+      length(r$trees[[1]]$tip.label)
+    } else {
+      0L
+    }
+  })
+  
   UpdateKeepTipsMaximum <- reactive({
     if (AnyTrees() && "consConfig" %in% r$visibleConfigs) {
-      nTip <- length(r$trees[[1]]$tip.label)
+      nTip <- TipsInTree()
       LogMsg("UpdateKeepTipsMaximum(", input$keepTips, " -> ", nTip, ")")
       r$oldKeepTips <- input$keepTips
+      r$keepTips <- nNonRogues()
       updateNumericInput(inputId = "keepTips",
                          label = paste0("Tips to show (/", nTip, "):"),
                          max = nTip,
@@ -1490,7 +1499,7 @@ server <- function(input, output, session) {
     if (AnyTrees()) {
       LogMsg("Observed consP()")
       UpdateKeepTipsMaximum()
-      UpdateExcludedTipsInput()
+      UpdateDroppedTaxaDisplay()
       r$concordance <- list()
     }
   }, ignoreInit = TRUE)
@@ -1547,6 +1556,7 @@ server <- function(input, output, session) {
       }
     } else {
       LogMsg("Observed input$keepTips -> ", input$keepTips)
+      r$keepTips <- min(input$keepTips, TipsInTree())
       UpdateOutgroupInput()
       UpdateDroppedTaxaDisplay()
     }
@@ -1555,7 +1565,7 @@ server <- function(input, output, session) {
   observeEvent(input$neverDrop, {
     LogMsg("Observed input$neverDrop -> ", input$neverDrop)
     UpdateOutgroupInput()
-    UpdateExcludedTipsInput()
+    UpdateDroppedTaxaDisplay()
   }, ignoreInit = TRUE)
   
   observeEvent(input$outgroup, {
@@ -1571,7 +1581,7 @@ server <- function(input, output, session) {
   
   KeptTips <- reactive({
     LogMsg("KeptTips()")
-    n <- input$keepTips
+    n <- r$keepTips
     maxN <- length(tipLabels())
     if (is.na(n) || is.null(n) || n < 2L || n > maxN) {
       n <- maxN
