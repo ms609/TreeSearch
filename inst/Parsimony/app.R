@@ -2196,7 +2196,7 @@ server <- function(input, output, session) {
          cluster = switch(bestCluster, pam = pamCluster, hmm = hCluster, kmn = kCluster, 1)
     )
 
-  }), r$treeHash, input$distMeth)
+  }), r$treeHash, silThreshold(), input$distMeth)
   
   LogClusterings <- function() {
     maxCluster <- min(15L, length(r$trees) - 1L)
