@@ -76,10 +76,6 @@ Other tree scoring:
 }
 \author{
 Martin R. Smith
-
-Martin R. Smith
-
-Martin R. Smith
 }
 \concept{tree scoring}
 \keyword{internal}

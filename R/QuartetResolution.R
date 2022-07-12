@@ -7,11 +7,11 @@
 #' @return A vector specifying an integer, for each tree, which of `tips` is
 #' most closely related to `tips[4]`.
 #' 
-#' @importFrom TreeTools as.Split KeepTip PolarizeSplits
 #' @examples 
 #' trees <- inapplicable.trees[["Vinther2008"]]
 #' tips <- c("Lingula", "Halkieria", "Wiwaxia", "Acaenoplax")
 #' QuartetResolution(trees, tips)
+#' @importFrom TreeTools as.Split KeepTip PolarizeSplits
 #' @export
 QuartetResolution <- function(trees, tips) {
   fours <- as.integer(vapply(
