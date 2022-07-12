@@ -15,8 +15,9 @@
 #' @export
 QuartetResolution <- function(trees, tips) {
   fours <- as.integer(vapply(
-    lapply(as.Splits(lapply(trees, KeepTip, tips)),
-           PolarizeSplits),
-    as.raw, raw(1)))
+    lapply(as.Splits(KeepTip(trees, tips)), PolarizeSplits),
+    as.raw,
+    raw(1)
+  ))
   log2(fours - 1L)
 }
