@@ -1399,10 +1399,9 @@ server <- function(input, output, session) {
     }
   }
   
-  LogUserRoot <- function(tree) {
+  LogUserRoot <- function(tree = "cons") {
     outgroupTips <- intersect(r$outgroup, r$plottedTree$tip.label)
     if (length(outgroupTips)) {
-      tr <- deparse(substitute(tree))
       LogComment("Root tree")
       LogCode(paste0(tr, " <- RootTree(", tr, ", ", EnC(outgroupTips), ")"))
     }
@@ -1555,7 +1554,7 @@ server <- function(input, output, session) {
         r$oldKeepTips <- NULL
       }
     } else {
-      LogMsg("Observed input$keepTips -> ", input$keepTips)
+      LogMsg("Observed input$keepTips -> ", EnC(input$keepTips))
       r$keepTips <- min(input$keepTips, TipsInTree())
       UpdateOutgroupInput()
       UpdateDroppedTaxaDisplay()
@@ -1563,7 +1562,7 @@ server <- function(input, output, session) {
   }, ignoreInit = TRUE)
   
   observeEvent(input$neverDrop, {
-    LogMsg("Observed input$neverDrop -> ", input$neverDrop)
+    LogMsg("Observed input$neverDrop -> ", EnC(input$neverDrop))
     UpdateOutgroupInput()
     UpdateDroppedTaxaDisplay()
   }, ignoreInit = TRUE)
@@ -1574,7 +1573,7 @@ server <- function(input, output, session) {
         r$oldOutgroup <- NULL
       }
     } else {
-      LogMsg("Observed input$outgroup -> ", input$outgroup)
+      LogMsg("Observed input$outgroup -> ", EnC(input$outgroup))
       r$outgroup <- input$outgroup
     }
   }, ignoreInit = TRUE)
@@ -1646,9 +1645,7 @@ server <- function(input, output, session) {
     BeginLogP()
     LogPar()
     dropped <- DroppedTips()
-    message(1635)
-    dput(dropped)
-
+    
     if (length(dropped) &&
         length(input$excludedTip) &&
         nchar(input$excludedTip) &&
@@ -1704,11 +1701,7 @@ server <- function(input, output, session) {
           "cons <- Consensus(trees, p = ", consP(), ")"
         ))
       }
-      outgroupTips <- intersect(r$outgroup, r$plottedTree$tip.label)
-      if (length(outgroupTips)) {
-        LogCommentP("Root tree")
-        LogCodeP(paste0("cons <- RootTree(cons, ", EnC(outgroupTips), ")"))
-      }
+      LogUserRoot()
       if (unitEdge()) {
         LogCodeP("cons$edge.length <- rep_len(1L, dim(cons$edge)[1])")
       }
@@ -2208,7 +2201,7 @@ server <- function(input, output, session) {
   LogClusterings <- function() {
     maxCluster <- min(15L, length(r$trees) - 1L)
     if (maxCluster > 1L) {
-      possibleClusters <- paste(2, maxCluster, collapse = ":")
+      possibleClusters <- paste(2, maxCluster, sep = ":")
       
       hSil <- pamSil <- -99
       LogDistances()
@@ -2275,7 +2268,7 @@ server <- function(input, output, session) {
       } else {
         LogCommentP(paste0("Best clustering was ", clusterings()$method, ":"))
         LogCommentP(paste0("Silhouette coefficient = ",
-                          signif(clusterings()$sil), 0))
+                          signif(clusterings()$sil)), 0)
         LogCommentP(paste0("Store the cluster to which each tree is ",
                           "optimally assigned:"))
         LogCodeP(paste0(
@@ -2296,12 +2289,11 @@ server <- function(input, output, session) {
     }
   }
   
-  PlotClusterCons <- function () {
+  PlotClusterCons <- function() {
     LogMsg("PlotClusterCons()")
     on.exit(LogMsg("/PlotClusterCons()"))
     
     cl <- clusterings()
-    LogClusterings()
     
     kept <- rev(dropSeq())[seq_len(input$keepTips)]
     dropped <- if (length(kept) > 1) {
@@ -2312,14 +2304,58 @@ server <- function(input, output, session) {
     par(mar = c(0.2, 0, 0.2, 0), xpd = NA)
     if (cl$sil > silThreshold()) {
       nRow <- ceiling(cl$n / 3)
-      
+      par(mfrow = c(nRow, ceiling(cl$n / nRow)))
+
+      for (i in seq_len(cl$n)) {
+        col <- palettes[[min(length(palettes), cl$n)]][i]
+        PutTree(r$trees)
+        PutData(cl$cluster)
+        
+        cons <- ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP())
+        cons <- UserRoot(cons)
+        r$plottedTree <- cons
+        plot(cons, edge.width = 2, font = 3, cex = 0.83,
+             edge.color = col, tip.color = TipCols()[cons$tip.label])
+        legend("bottomright", paste0("Cluster ", i), pch = 15, col = col,
+               pt.cex = 1.5, bty = "n")
+        LabelConcordance()
+      }
+    } else {
+      PutTree(r$trees)
+      cons <- ConsensusWithout(r$trees, dropped, p = consP())
+      cons <- UserRoot(cons)
+      r$plottedTree <- cons
+      plot(cons, edge.width = 2, font = 3, cex = 0.83,
+           edge.color = palettes[[1]], tip.color = TipCols()[cons$tip.label])
+      LabelConcordance()
+      legend("bottomright", "No clustering", pch = 16, col = palettes[[1]],
+             bty = "n")
+    }
+  }
+  
+  LogPlotClusterCons <- function() {
+    LogMsg("PlotClusterCons()")
+    on.exit(LogMsg("/PlotClusterCons()"))
+    
+    BeginLogP()
+    
+    cl <- clusterings()
+    LogClusterings()
+    
+    kept <- rev(dropSeq())[seq_len(input$keepTips)]
+    dropped <- if (length(kept) > 1) {
+      setdiff(TipLabels(r$trees[[1]]), kept)
+    } else {
+      character(0)
+    }
+    if (cl$sil > silThreshold()) {
+      nRow <- ceiling(cl$n / 3)
       LogCommentP("Plot consensus of each tree cluster", 2)
       LogCodeP(paste0(
         "par(mfrow = c(", nRow, ", ",
         ceiling(cl$n / nRow), "))",
-        " # Configure plotting area"
+        " # Plotting area layout"
       ))
-      par(mfrow = c(nRow, ceiling(cl$n / nRow)))
       LogCodeP(
         paste0(
           "tipCols <- Rogue::ColByStability(trees)", 
@@ -2357,25 +2393,7 @@ server <- function(input, output, session) {
       LogConcordance("cons")
       LogIndent(-2)
       LogCodeP("}")
-      PauseLog()
-      for (i in seq_len(cl$n)) {
-        col <- palettes[[min(length(palettes), cl$n)]][i]
-        PutTree(r$trees)
-        PutData(cl$cluster)
-        
-        cons <- ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP())
-        cons <- UserRoot(cons)
-        r$plottedTree <- cons
-        plot(cons, edge.width = 2, font = 3, cex = 0.83,
-             edge.color = col, tip.color = TipCols()[cons$tip.label])
-        legend("bottomright", paste0("Cluster ", i), pch = 15, col = col,
-               pt.cex = 1.5, bty = "n")
-        LogConcordance()
-        LabelConcordance()
-      }
-      ResumeLog()
     } else {
-      PutTree(r$trees)
       LogCommentP("No clustering structure: Plot consensus tree")
       LogCodeP(
         if (length(dropped)) {
@@ -2389,11 +2407,10 @@ server <- function(input, output, session) {
           )
         }
       )
-      cons <- ConsensusWithout(r$trees, dropped, p = consP())
-      cons <- UserRoot(cons)
+      LogUserRoot("cons")
       LogExprP("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
       LogCodeP("plottedTree <- cons # Store for future reference")
-      r$plottedTree <- cons
+      
       LogCodeP("tipCols <- Rogue::ColByStability(trees)[con$tip.label]")
       LogCommentP("Plot consensus tree")
       LogCodeP(
@@ -2405,12 +2422,7 @@ server <- function(input, output, session) {
         "  tip.color = tipCols",
         ")"
       )
-      plot(cons, edge.width = 2, font = 3, cex = 0.83,
-           edge.color = palettes[[1]], tip.color = TipCols()[cons$tip.label])
       LogConcordance()
-      LabelConcordance()
-      legend("bottomright", "No clustering", pch = 16, col = palettes[[1]],
-             bty = "n")
     }
   }
   
@@ -2546,19 +2558,15 @@ server <- function(input, output, session) {
   
   LogDistances <- function() {
     LogCommentP("Compute tree distances")
-    LogCodeP(paste0(
-      "dists <- ", 
-      switch(
+    LogCodeP(switch(
         input$distMeth,
-        "cid" = "TreeDist::ClusteringInfoDistance(trees)",
-        "pid" = "TreeDist::PhylogeneticInfoDistance(trees)",
-        "msid" = "TreeDist::MatchingSplitInfoDistance(trees)",
-        "rf" = "TreeDist::RobinsonFoulds(trees)",
-        "qd" = c(
-          "as.dist(Quartet::QuartetDivergence(",
+        "cid" = "dists <- TreeDist::ClusteringInfoDistance(trees)",
+        "pid" = "dists <- TreeDist::PhylogeneticInfoDistance(trees)",
+        "msid" = "dists <- TreeDist::MatchingSplitInfoDistance(trees)",
+        "rf" = "dists <- TreeDist::RobinsonFoulds(trees)",
+        "qd" = c("dists <- as.dist(Quartet::QuartetDivergence(",
           "  Quartet::ManyToManyQuartetAgreement(trees),",
-          "  similarity = FALSE))")
-      )
+          "  similarity = FALSE)", ")")
     ))
   }
   
