@@ -1630,6 +1630,7 @@ server <- function(input, output, session) {
   LogConsensusPlot <- function() {
     BeginLogP()
     LogPar()
+    dropped <- DroppedTips()
 
     if (length(dropped) &&
         length(input$excludedTip) &&
@@ -1791,7 +1792,7 @@ server <- function(input, output, session) {
   
   output$treePlot <- renderCachedPlot(
     ReactiveMainPlot(),
-    cacheKeyExpr = {
+    cacheKeyExpr = { # Must be identical to output$rCode below
       switch(
         input$plotFormat,
         
@@ -1829,6 +1830,62 @@ server <- function(input, output, session) {
     },
     sizePolicy = function(x) rep(input$plotSize, 2)
   )
+  
+  RCode <- bindCache(reactive({
+    switch(
+      input$plotFormat,
+      "cons" = {
+        LogConsensusPlot()
+      },
+      "clus" = {
+        LogPlotClusterCons()
+      },
+      "ind" = {
+        LogCharacterwisePlot()
+      },
+      "space" = {
+        LogTreespacePlot()
+      }
+    )
+    
+    # Return:
+    r$plotLog
+  }), { # Must be identical to output$rCode below
+    switch(
+      input$plotFormat,
+      
+      "clus" = list(r$treeHash, input$plotFormat,
+                    input$keepTips, input$excludedTip,
+                    consP(),
+                    input$neverDrop, r$outgroup,
+                    input$distMeth,
+                    input$concordance,
+                    silThreshold(),
+                    input$consP, input$concordance),
+      "cons" = list(r$treeHash, input$plotFormat,
+                    input$keepTips, input$excludedTip,
+                    consP(),
+                    input$neverDrop, r$outgroup,
+                    input$consP, input$concordance),
+      "ind" = list(PlottedChar(),
+                   whichTree(),
+                   input$concordance,
+                   r$outgroup,
+                   input$mapDisplay,
+                   r$dataHash, r$treeHash), 
+      "space" = list(r$treeHash, input$plotFormat,
+                     min(dims(), nProjDim()),
+                     treeCols(),
+                     treePch(),
+                     input$distMeth,
+                     input$spaceCol,
+                     concavity(),
+                     input$spacePch,
+                     if (input$spacePch == "relat") input$relators,
+                     silThreshold(),
+                     input$display)
+    )
+  })
   
   UCFirst <- function (str) {
     paste0(toupper(substr(str, 1, 1)),
@@ -2815,13 +2872,6 @@ server <- function(input, output, session) {
            })
   })
   
-  output$saveR <- downloadHandler(
-    # TODO delete if redundant
-    filename = function() paste0("TreeSearch-session.R"),
-    content = function(file) {
-      file.copy(cmdLogFile, file)
-    })
-  
   output$saveZip <- downloadHandler(
     filename = function() paste0("TreeSearch-session.zip"),
     content = function(file) {
@@ -2840,21 +2890,7 @@ server <- function(input, output, session) {
   output$savePlotZip <- downloadHandler(
     filename = function() paste0(saveDetails()$fileName, ".zip"),
     content = function(file) {
-      switch(
-        input$plotFormat,
-        "cons" = {
-          LogConsensusPlot()
-        },
-        "clus" = {
-          LogPlotClusterCons()
-        },
-        "ind" = {
-          LogCharacterwisePlot()
-        },
-        "space" = {
-          LogTreespacePlot()
-        }
-      )
+      RCode()
       
       tempDir <- tempfile("plot-zip-")
       dir.create(tempDir)
