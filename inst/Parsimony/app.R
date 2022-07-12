@@ -281,7 +281,7 @@ ui <- fluidPage(
                    "cons"),
                  hidden(sliderInput("whichTree", "Tree to plot", value = 1L,
                                     min = 1L, max = 1L, step = 1L)),
-                 tags$div(id = "treePlotConfig",
+                 hidden(tags$div(id = "treePlotConfig",
                    selectizeInput("outgroup", "Root on:", multiple = TRUE,
                                   choices = list()),
                    selectizeInput("concordance", "Split support:",
@@ -291,7 +291,15 @@ ui <- fluidPage(
                                                  "Clustering concordance" = "clc",
                                                  "Phylogenetic concordance" = "phc"
                                                  ))
-                 )
+                 )),
+                 hidden(tags$div(id = "mapConfig",
+                   checkboxGroupInput("mapLines", "Connect:",
+                                      choices = list(
+                                        "Cluster convex hulls" = "hull",
+                                        "Minimum spanning tree" = "mst",
+                                        "Trees in sequence" = "seq"
+                                      ), selected = c("hull", "mst"))
+                 ))
         )
       ),
     ),
@@ -869,7 +877,7 @@ server <- function(input, output, session) {
     LogMsg("UpdateActiveTrees()")
     
     nTrees <- length(r$allTrees)
-    if (r$nTree == nTrees && 
+    if (r$nTree == nTrees &&
         r$treeRange[1] == 1L && r$treeRange[2] == nTrees) {
       thinnedTrees <- r$allTrees
       if (!is.null(r$allTrees) && !identical(trees, thinnedTrees)) {
@@ -1077,18 +1085,6 @@ server <- function(input, output, session) {
       LogCode(paste0("treeFile <- \"", LastFile("tree"), "\""))
       LogCode(paste0("newTrees <- ", r$readTreeFile))
       
-      treeNames <- names(newTrees)
-      pattern <- "(seed|start|ratch\\d+|final)_\\d+"
-      if (length(grep(pattern, treeNames, perl = TRUE)) ==
-          length(newTrees)) {
-        
-        LogCode("whenHit <- gsub(\"(seed|start|ratch\\d+|final)_\\d+\", \"\\\\1\",
-                names(newTrees), perl = TRUE)")
-        whenHit <- gsub(pattern, "\\1", treeNames, perl = TRUE)
-        
-        LogCode("attr(newTrees, \"firstHit\") <- table(whenHit)[unique(whenHit)]")
-        attr(newTrees, "firstHit") <- table(whenHit)[unique(whenHit)]
-      }
       UpdateAllTrees(newTrees) # updates r$trees
       
       removeModal()
@@ -1260,6 +1256,7 @@ server <- function(input, output, session) {
                     "consConfig", "clusConfig",
                     "clusLegend", "branchLegend",
                     "spaceConfig", "treePlotConfig",
+                    "mapConfig",
                     "droppedTips", "droppedList")
     r$visibleConfigs <- visible
     lapply(visible, show)
@@ -1276,7 +1273,7 @@ server <- function(input, output, session) {
                                   "consConfig", "droppedList",
                                   "treePlotConfig"),
                        "space" = c("clusConfig", "clusLegend",
-                                   "spaceConfig"),
+                                   "spaceConfig", "mapConfig"),
                        ""))
   })
   
@@ -1833,6 +1830,7 @@ server <- function(input, output, session) {
                        treePch(),
                        input$distMeth,
                        input$spaceCol,
+                       input$mapLines,
                        concavity(),
                        input$spacePch,
                        if (input$spacePch == "relat") input$relators,
@@ -1891,6 +1889,7 @@ server <- function(input, output, session) {
                      treePch(),
                      input$distMeth,
                      input$spaceCol,
+                     input$mapLines,
                      concavity(),
                      input$spacePch,
                      if (input$spacePch == "relat") input$relators,
@@ -2430,13 +2429,34 @@ server <- function(input, output, session) {
   # Plot settings: point style
   ##############################################################################
 
-  firstHit <- reactive({attr(r$trees, "firstHit")})
+  FirstHit <- reactive({
+    if (is.null(attr(r$trees, "firstHit"))) {
+      treeNames <- names(r$trees)
+      pattern <- "(seed|start|ratch\\d+|final)_\\d+"
+      if (length(grep(pattern, treeNames, perl = TRUE)) ==
+          length(r$trees)) {
+        
+        whenHit <- gsub(pattern, "\\1", treeNames, perl = TRUE)
+        
+        attr(r$trees, "firstHit") <- table(whenHit)[unique(whenHit)]
+      }
+    }
+    
+    # Return:
+    attr(r$trees, "firstHit")
+  })
   
-  firstHitCols <- reactive({
-    if (is.null(firstHit())) {
+  LogFirstHit <- function() {
+    LogCodeP("whenHit <- gsub(\"(seed|start|ratch\\d+|final)_\\d+\", \"\\\\1\",
+              names(trees), perl = TRUE)")
+    LogCodeP("attr(trees, \"firstHit\") <- table(whenHit)[unique(whenHit)]")
+  }
+  
+  FirstHitCols <- reactive({
+    if (is.null(FirstHit())) {
       palettes[[1]]
     } else {
-      hcl.colors(length(firstHit()), "viridis")
+      hcl.colors(length(FirstHit()), "viridis")
     }
   })
   
@@ -2460,12 +2480,12 @@ server <- function(input, output, session) {
           rev(badToGood)[1 + norm]
         }
       }, "firstHit" = {
-        if (is.null(firstHit())) {
+        if (is.null(FirstHit())) {
           Notification("Data not available; were trees loaded from file?",
                            type = "warning")
           palettes[[1]]
         } else {
-          rep(firstHitCols(), firstHit())
+          rep(FirstHitCols(), FirstHit())
         }
       },
       "black"
@@ -2625,6 +2645,11 @@ server <- function(input, output, session) {
     
     nDim <- min(dims(), nProjDim())
     if (nDim < 2) {
+      if (dim(map)[2] == 1L) {
+        map <- cbind(map, 0)
+      } else {
+        map[, 2] <- 0
+      }
       nDim <- 2L
       nPanels <- 1L
     } else {
@@ -2646,9 +2671,17 @@ server <- function(input, output, session) {
              frame.plot = nDim > 2L,
              type = "n", asp = 1, xlim = range(map), ylim = range(map))
         
+        # Connect sequential trees
+        if ("seq" %in% input$mapLines) {
+          lines(map[, j], map[, i], col = "#ffcc33", lty = 2)
+        }
+        
         # Plot MST
-        apply(mstEnds(), 1, function (segment)
-          lines(map[segment, j], map[segment, i], col = "#bbbbbb", lty = 1))
+        if ("mst" %in% input$mapLines) {
+          apply(mstEnds(), 1, function (segment)
+            lines(map[segment, j], map[segment, i], col = "#bbbbbb", lty = 1))
+        }
+        
         
         # Add points
         points(map[, j], map[, i], pch = treePch(),
@@ -2657,7 +2690,7 @@ server <- function(input, output, session) {
                lwd = spaceLwd
                )#input$pt.cex)
         
-        if (cl$sil > silThreshold()) {
+        if (cl$sil > silThreshold() && "hull" %in% input$mapLines) {
           # Mark clusters
           for (clI in seq_len(cl$n)) {
             inCluster <- cl$cluster == clI
@@ -2691,10 +2724,10 @@ server <- function(input, output, session) {
                  paste0("~ ", attr(clstr, "med"), " (", table(clstr), ")"))
         }
       }
-      if (input$spaceCol == "firstHit" && length(firstHit())) {
-        legend(bty = "n", "topleft", pch = 16, col = firstHitCols(),
+      if (input$spaceCol == "firstHit" && length(FirstHit())) {
+        legend(bty = "n", "topleft", pch = 16, col = FirstHitCols(),
                pt.cex = spaceCex,
-               names(firstHit()), title = "Iteration first hit")
+               names(FirstHit()), title = "Iteration first hit")
       } else if (input$spaceCol == "score") {
         legendRes <- length(badToGood)
         leg <- rep(NA, legendRes)
@@ -2707,44 +2740,38 @@ server <- function(input, output, session) {
   }
   
   LogTreespacePlot <- function() {
-    if (length(r$trees) < 3) {
-      return(ErrorPlot("Need at least\nthree trees to\nmap tree space"))
-    }
-    
-    spaceCex <- 1.7
-    spaceLwd <- 2
-    
-    cl <- clusterings()
     LogClusterings()
-    map <- mapping()
     LogMapping()
     
     nDim <- min(dims(), nProjDim())
     if (nDim < 2) {
       LogCommentP("Prepare 1D map", 0)
       if (dim(map)[2] == 1L) {
-        LogExprP("map <- cbind(map, 0)")
+        LogCodeP("map <- cbind(map, 0)")
       } else {
-        LogExprP("map[, 2] <- 0")
+        LogCodeP("map[, 2] <- 0")
       }
       nDim <- 2L
       nPanels <- 1L
     } else {
-      plotSeq <- matrix(0, nDim, nDim)
-      nPanels <- nDim * (nDim - 1L) / 2L
-      plotSeq[upper.tri(plotSeq)] <- seq_len(nPanels)
-      if (nDim > 2) {
-        plotSeq[nDim - 1, 2] <- max(plotSeq) + 1L
-      }
-      layout(t(plotSeq[-nDim, -1]))
+      LogCommentP("Prepare plot layout")
+      LogCodeP(c(
+        paste0("nDim <- ", nDim),
+        paste0("nPanels <- ", nPanels),
+        "plotSeq <- matrix(0, nDim, nDim)",
+        "nPanels <- nDim * (nDim - 1L) / 2L",
+        "plotSeq[upper.tri(plotSeq)] <- seq_len(nPanels)",
+        if (nDim > 2) {
+           "plotSeq[nDim - 1, 2] <- max(plotSeq) + 1L"
+        },
+        "layout(t(plotSeq[-nDim, -1]))"
+      ))
     }
     
     LogCommentP("Set plot margins", 0)
     LogCodeP("par(mar = rep(0.2, 4))")
-    par(mar = rep(0.2, 4))
-    LogCodeP(paste0(
-      "for (i in 2:", nDim, ") for (j in seq_len(i - 1)) {"
-    ))
+    
+    LogCodeP("for (i in 2:nDim) for (j in seq_len(i - 1)) {")
     LogIndent(+2)
     LogCommentP("Set up blank plot")
     LogCodeP("plot(",
@@ -2763,19 +2790,26 @@ server <- function(input, output, session) {
             "  xlim = range(map),  # Constant X range for all dimensions",
             "  ylim = range(map)   # Constant Y range for all dimensions",
             ")")
-      
-    LogCommentP("Plot minimum spanning tree") #TODO add option to connect consecutive
-    LogCodeP(
-      "mst <- MSTEdges(as.matrix(dists))",
-      "apply(mst, 1, function (segment) {",
-      "  lines(", #TODO use segments()?
-      "    x = map[segment, j],",
-      "    y = map[segment, i],",
-      "    col = \"#bbbbbb\", # Light grey",
-      "    lty = 1     # Solid lines",
-      "  )",
-      "})"
-    )
+    # Connect sequential trees
+    if ("seq" %in% input$mapLines) {
+      LogCommentP("Connect subsequent trees")
+      LogCodeP("lines(map[, j], map[, i], col = \"#ffcc33\", lty = 2)")
+    }
+    
+    if ("mst" %in% input$mapLines) {
+      LogCommentP("Plot minimum spanning tree")
+      LogCodeP(
+        "mst <- MSTEdges(as.matrix(dists))",
+        "apply(mst, 1, function (segment) {",
+        "  lines(", #TODO use segments()?
+        "    x = map[segment, j],",
+        "    y = map[segment, i],",
+        "    col = \"#bbbbbb\", # Light grey",
+        "    lty = 1     # Solid lines",
+        "  )",
+        "})"
+      )
+    }
     
     LogCommentP("Add points")
     LogCodeP(
@@ -2789,7 +2823,7 @@ server <- function(input, output, session) {
       ")"
     )
     
-    if (cl$sil > silThreshold()) {
+    if (cl$sil > silThreshold() && "hull" %in% input$mapLines) {
       LogCommentP("Mark clusters")
       LogCodeP("for (clI in seq_len(nClusters)) {")
       LogIndent(+2)
@@ -2857,7 +2891,7 @@ server <- function(input, output, session) {
           ")")
       }
     }
-    if (input$spaceCol == "firstHit" && length(firstHit())) {
+    if (input$spaceCol == "firstHit" && length(FirstHit())) {
       LogCommentP("Add legend for symbol colours")
       LogCodeP(
         "legend(",
@@ -2865,9 +2899,9 @@ server <- function(input, output, session) {
         "  bty = \"n\", # No legend border box",
         "  pch = 16, # Circle symbol",
         "  xpd = NA, # Display overflowing text",
-        "  col = firstHitCols(),", #TODO
+        "  col = FirstHitCols(),", #TODO
         "  pt.cex = spaceCex,", #TODO
-        paste0("  ", Enquote(names(firstHit())), ","),
+        paste0("  ", Enquote(names(FirstHit())), ","),
         "  title = \"Iteration first hit\"",
         ")"
       )
@@ -2889,73 +2923,6 @@ server <- function(input, output, session) {
         ")"
       )
     }
-    
-    withProgress(message = "Drawing plot", {
-      for (i in 2:nDim) for (j in seq_len(i - 1)) {
-        incProgress(1 / nPanels)
-        # Set up blank plot
-        plot(map[, j], map[, i], ann = FALSE, axes = FALSE,
-             frame.plot = nDim > 2L,
-             type = "n", asp = 1, xlim = range(map), ylim = range(map))
-        
-        # Plot MST
-        apply(mstEnds(), 1, function (segment)
-          lines(map[segment, j], map[segment, i], col = "#bbbbbb", lty = 1))
-        
-        # Add points
-        points(map[, j], map[, i], pch = treePch(),
-               col = paste0(treeCols(), as.hexmode(200)),
-               cex = spaceCex,
-               lwd = spaceLwd
-               )#input$pt.cex)
-        
-        if (cl$sil > silThreshold()) {
-          # Mark clusters
-          for (clI in seq_len(cl$n)) {
-            inCluster <- cl$cluster == clI
-            clusterX <- map[inCluster, j]
-            clusterY <- map[inCluster, i]
-            hull <- chull(clusterX, clusterY)
-            polygon(clusterX[hull], clusterY[hull], lty = 1, lwd = 2,
-                    border = palettes[[min(length(palettes), cl$n)]][clI])
-          }
-        }
-        if ("labelTrees" %in% input$display) {
-          text(map[, j], map[, i], names(r$trees))
-        }
-      }
-      if (nDim > 2) {
-        plot.new()
-      }
-      if (input$spacePch == "relat") {
-        if (length(input$relators) == 4L) {
-          legend(bty = "n", "topright", pch = 1:3, xpd = NA,
-                 pt.cex = spaceCex, pt.lwd = spaceLwd,
-                 gsub("_", " ", fixed = TRUE,
-                      paste(input$relators[2:4], "&", input$relators[[1]])))
-        }
-      } else if (input$spacePch == "name") {
-        clstr <- treeNameClustering()
-        clusters <- unique(clstr)
-        if (length(clusters) > 1L) {
-          legend(bty = "n", "topright", xpd = NA,
-                 pch = c(1, 3, 4, 2, seq_len(max(clstr))[-(1:4)])[clusters],
-                 paste0("~ ", attr(clstr, "med"), " (", table(clstr), ")"))
-        }
-      }
-      if (input$spaceCol == "firstHit" && length(firstHit())) {
-        legend(bty = "n", "topleft", pch = 16, col = firstHitCols(),
-               pt.cex = spaceCex,
-               names(firstHit()), title = "Iteration first hit")
-      } else if (input$spaceCol == "score") {
-        legendRes <- length(badToGood)
-        leg <- rep(NA, legendRes)
-        leg[c(legendRes, 1)] <- signif(range(scores()))
-        legend("bottomright", bty = "n", border = NA,
-               legend = leg, fill = rev(badToGood),
-               y.intersp = 0.04, cex = 1.1)
-      }
-    })
   }
   
   mode3D <- reactive("show3d" %in% input$display)
