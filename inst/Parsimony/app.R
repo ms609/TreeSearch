@@ -2503,15 +2503,13 @@ server <- function(input, output, session) {
         cl <- clusterings()
         if (cl$sil > silThreshold()) {
           cl$cluster - 1
-        } else 16
+        } else {
+          16 # Filled circle
+        }
       }, "relat" = {
         quartet <- input$relators
         if (length(quartet) == 4) {
-          fours <- as.integer(vapply(
-            lapply(as.Splits(lapply(r$trees, KeepTip, input$relators)),
-                   PolarizeSplits),
-            as.raw, raw(1)))
-          log2(fours - 1L)
+          QuartetResolution(r$trees, input$relators)
         } else {
           Notification("Select four taxa to show relationships")
           0
@@ -2523,11 +2521,38 @@ server <- function(input, output, session) {
         } else {
           indices <- treeNameClustering()
           # Match pch from BGS2019 Fig. 9 for pre-loaded datasets.
-          # Embarrassingly, in BGS19 I plotted ambigAbsent instead of ambiguous. Oops.
+          # Embarrassingly, in BGS19 I plotted ambigAbsent instead of ambiguous.
+          # Sadly, Systematic Biology will not allow a correction.
           c(1, 3, 4, 2, seq_len(max(indices))[-(1:4)])[indices]
         }
       }, 0)
   })
+  
+  LogTreePch <- function() {
+    switch(
+      input$spacePch,
+      "clust" = {
+        cl <- clusterings()
+        if (cl$sil > silThreshold()) {
+          "cl$cluster - 1"
+        } else {
+          "16 # No clustering structure: Use filled circle"
+        }
+      }, "relat" = {
+        quartet <- input$relators
+        if (length(quartet) == 4) {
+          paste0("QuartetResolution(trees, ", EnC(input$relators), ")")
+        } else {
+          "0 # Square"
+        }
+      }, "name" = {
+        if (is.null(names(r$trees))) {
+          "16 # Filled circle"
+        } else {
+          "ClusterStrings(names(trees))"
+        }
+      }, "0 # Square")
+  }
   
   maxProjDim <- reactive({
     min(12, length(r$trees) - 1L)
@@ -2741,9 +2766,12 @@ server <- function(input, output, session) {
   }
   
   LogTreespacePlot <- function() {
+    BeginLogP()
+    
     LogClusterings()
     LogMapping()
     
+    map <- mapping()
     nDim <- min(dims(), nProjDim())
     if (nDim < 2) {
       LogCommentP("Prepare 1D map", 0)
@@ -2756,11 +2784,11 @@ server <- function(input, output, session) {
       nPanels <- 1L
     } else {
       LogCommentP("Prepare plot layout")
+      
       LogCodeP(c(
-        paste0("nDim <- ", nDim),
-        paste0("nPanels <- ", nPanels),
+        paste0("nDim <- ", nDim, " # Number of dimensions to plot"),
+        "nPanels <- nDim * (nDim - 1L) / 2L # Lower-left triangle",
         "plotSeq <- matrix(0, nDim, nDim)",
-        "nPanels <- nDim * (nDim - 1L) / 2L",
         "plotSeq[upper.tri(plotSeq)] <- seq_len(nPanels)",
         if (nDim > 2) {
            "plotSeq[nDim - 1, 2] <- max(plotSeq) + 1L"
@@ -2829,6 +2857,7 @@ server <- function(input, output, session) {
       ")"
     )
     
+    cl <- clusterings()
     if (cl$sil > silThreshold() && "hull" %in% input$mapLines) {
       LogCommentP("Mark clusters")
       LogCodeP("for (clI in seq_len(nClusters)) {")
@@ -2856,6 +2885,10 @@ server <- function(input, output, session) {
     if (nDim > 2) {
       LogCodeP("plot.new() # Use new panel to plot legends")
     }
+    
+    LogIndent(-2)
+    LogCodeP("}")
+    
     if (input$spacePch == "relat") {
       if (length(input$relators) == 4L) {
         LogCommentP("Add legend for plotting symbols")
