@@ -1,3 +1,12 @@
+# TreeSearch 1.1.2.9000 (development)
+
+- New function `QuartetResolution()` evaluates how a quartet is resolved in
+  each of a list of trees.
+- 'shiny' GUI improvements:
+  - Log tree search commands
+  - Output R scripts to reproduce figures
+
+
 # TreeSearch 1.1.2
 
 - Check tree order & rootedness before scoring ([#133](https://github.com/ms609/TreeSearch/issues/133))
