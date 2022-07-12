@@ -13,8 +13,8 @@ QuartetResolution(trees, tips)
 reported, in a format accepted by \code{\link[TreeTools]{KeepTip}()}.}
 }
 \value{
-A vector specifying an integer, for each tree, which of \code{tips} is
-most closely related to \code{tips[4]}.
+A vector specifying an integer, for each tree, which of \code{tips[-1]}
+is most closely related to \code{tips[1]}.
 }
 \description{
 Resolution of quartet

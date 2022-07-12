@@ -4,8 +4,8 @@
 #' @param tips Vector specifying four tips whose relationship should be
 #' reported, in a format accepted by \code{\link[TreeTools]{KeepTip}()}.
 #' 
-#' @return A vector specifying an integer, for each tree, which of `tips` is
-#' most closely related to `tips[4]`.
+#' @return A vector specifying an integer, for each tree, which of `tips[-1]`
+#' is most closely related to `tips[1]`.
 #' 
 #' @examples 
 #' trees <- inapplicable.trees[["Vinther2008"]]
@@ -15,7 +15,7 @@
 #' @export
 QuartetResolution <- function(trees, tips) {
   fours <- as.integer(vapply(
-    lapply(as.Splits(KeepTip(trees, tips)), PolarizeSplits),
+    lapply(as.Splits(KeepTip(trees, tips), tips), PolarizeSplits),
     as.raw,
     raw(1)
   ))
