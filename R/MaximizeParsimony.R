@@ -569,6 +569,7 @@ MaximizeParsimony <- function (dataset, tree,
   
   # Initialize variables and prepare search
   
+  .Heading(paste0("BEGIN TREE SEARCH (k = ", concavity, ")"))
   nHits <- 1L
   tbrStart <- startIter > 0
   tbrEnd <- finalIter > 0
