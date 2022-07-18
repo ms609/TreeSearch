@@ -83,13 +83,13 @@ All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collap
 }
 \section{Functions}{
 \itemize{
-\item \code{SPRSwap}: faster version that takes and returns parent and child parameters
+\item \code{SPRSwap()}: faster version that takes and returns parent and child parameters
 
-\item \code{RootedSPR}: Perform \acronym{SPR} rearrangement, retaining position of root
+\item \code{RootedSPR()}: Perform \acronym{SPR} rearrangement, retaining position of root
 
-\item \code{RootedSPRSwap}: faster version that takes and returns parent and child parameters
+\item \code{RootedSPRSwap()}: faster version that takes and returns parent and child parameters
+
 }}
-
 \examples{
 {
 tree <- ape::rtree(20, br=FALSE)

@@ -48,9 +48,9 @@ ignored.
 }
 \section{Functions}{
 \itemize{
-\item \code{PrepareDataIW}: Prepare data for implied weighting
-}}
+\item \code{PrepareDataIW()}: Prepare data for implied weighting
 
+}}
 \examples{
 data('congreveLamsdellMatrices')
 dataset <- congreveLamsdellMatrices[[42]]
