@@ -183,7 +183,7 @@
 #' @encoding UTF-8
 #' @export
 MaximizeParsimony <- function (dataset, tree,
-                               ratchIter = 6L,
+                               ratchIter = 7L,
                                tbrIter = 2L,
                                startIter = 2L, finalIter = 1L,
                                maxHits = NTip(dataset) * 1.8,

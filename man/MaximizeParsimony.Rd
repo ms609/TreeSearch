@@ -11,7 +11,7 @@
 MaximizeParsimony(
   dataset,
   tree,
-  ratchIter = 6L,
+  ratchIter = 7L,
   tbrIter = 2L,
   startIter = 2L,
   finalIter = 1L,
