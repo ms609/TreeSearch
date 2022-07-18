@@ -183,24 +183,25 @@ RCoreTeam <- Reference(
 SmithDist <- Reference("Smith, M.R.", 2020,
                        "TreeDist: distances between phylogenetic trees",
                        doi = "10.5281/zenodo.3528123", "Comprehensive R Archive Network")
-SmithQuartet <- Reference("Smith, M.R.", 2019,
-                          "Quartet: comparison of phylogenetic trees using quartet and split measures",
-                          "Comprehensive R Archive Network", doi = "10.5281/zenodo.2536318")
-SmithSearch <- Reference("Smith, M.R.", 2018,
-                         "TreeSearch: phylogenetic tree search using custom optimality criteria",
-                         "Comprehensive R Archive Network", doi = "10.5281/zenodo.1042590")
-Smith2020 <- Reference("Smith, M.R.", 2020,
-                       "Information theoretic Generalized Robinson-Foulds metrics for comparing phylogenetic trees",
-                       "Bioinformatics", volume = 36, pages = "5007--5013",
-                       doi = "10.1093/bioinformatics/btaa614")
-SmithSpace <- Reference("Smith, M.R.", "2022b",
-                       "Robust analysis of phylogenetic tree space",
-                       "Systematic Biology", pages = "syab100",
-                       doi = "10.1093/sysbio/syab100")
-SmithRogue <- Reference("Smith, M.R.", "2022a", 
-                       "Using information theory to detect rogue taxa and improve consensus trees",
-                       "Systematic Biology", pages = "syab099",
-                       doi = "10.1093/sysbio/syab099")
+SmithQuartet <- Reference(
+  "Smith, M.R.", 2019,
+  "Quartet: comparison of phylogenetic trees using quartet and split measures",
+  "Comprehensive R Archive Network", doi = "10.5281/zenodo.2536318")
+SmithSearch <- Reference(
+  "Smith, M.R.", 2021, " TreeSearch: morphological phylogenetic analysis in R",
+  "Preprint at bioRxiv.", doi = "10.1101/2021.11.08.467735")
+Smith2020 <- Reference(
+  "Smith, M.R.", 2020,
+  "Information theoretic Generalized Robinson-Foulds metrics for comparing phylogenetic trees",
+  "Bioinformatics", volume = 36, pages = "5007--5013",
+  doi = "10.1093/bioinformatics/btaa614")
+SmithSpace <- Reference(
+  "Smith, M.R.", "2022b", "Robust analysis of phylogenetic tree space",
+  "Systematic Biology", pages = "syab100", doi = "10.1093/sysbio/syab100")
+SmithRogue <- Reference(
+  "Smith, M.R.", "2022a",
+  "Using information theory to detect rogue taxa and improve consensus trees",
+  "Systematic Biology", pages = "syab099", doi = "10.1093/sysbio/syab099")
 Stockham2002 <- Reference(
   authors = c("Stockham, C.", "Wang, L.-S.", "Warnow, T."), 2002,
   "Statistically based postprocessing of phylogenetic analysis by clustering",
