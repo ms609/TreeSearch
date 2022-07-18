@@ -2,12 +2,12 @@
 % Please edit documentation in R/QuartetResolution.R
 \name{QuartetResolution}
 \alias{QuartetResolution}
-\title{Resolution of quartet}
+\title{Relationship between four taxa}
 \usage{
 QuartetResolution(trees, tips)
 }
 \arguments{
-\item{trees}{A list of trees of class phylo, or a multiPhylo object}
+\item{trees}{A list of trees of class \code{phylo}, or a \code{multiPhylo} object.}
 
 \item{tips}{Vector specifying four tips whose relationship should be
 reported, in a format accepted by \code{\link[TreeTools]{KeepTip}()}.}
@@ -17,7 +17,7 @@ A vector specifying an integer, for each tree, which of \code{tips[-1]}
 is most closely related to \code{tips[1]}.
 }
 \description{
-Resolution of quartet
+Relationship between four taxa
 }
 \examples{
 trees <- inapplicable.trees[["Vinther2008"]]

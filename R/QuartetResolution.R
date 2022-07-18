@@ -1,6 +1,6 @@
-#' Resolution of quartet
+#' Relationship between four taxa
 #' 
-#' @param trees A list of trees of class phylo, or a multiPhylo object
+#' @param trees A list of trees of class `phylo`, or a `multiPhylo` object.
 #' @param tips Vector specifying four tips whose relationship should be
 #' reported, in a format accepted by \code{\link[TreeTools]{KeepTip}()}.
 #' 
