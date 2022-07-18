@@ -586,7 +586,7 @@ server <- function(input, output, session) {
     
     LogCommentP("Check working directory", 1)
     LogCodeP("getwd() # Should match location of data / tree files",
-             "# Use setwd(\"desired/directory\") to change")
+             "setwd(\".\") # Replace . with desired/directory to change")
     
     if (HaveData()) {
       LogCommentP("Load data from file")
@@ -1400,7 +1400,7 @@ server <- function(input, output, session) {
     outgroupTips <- intersect(r$outgroup, r$plottedTree$tip.label)
     if (length(outgroupTips)) {
       LogComment("Root tree")
-      LogCode(paste0(tr, " <- RootTree(", tr, ", ", EnC(outgroupTips), ")"))
+      LogCode(paste0(tree, " <- RootTree(", tree, ", ", EnC(outgroupTips), ")"))
     }
   }
   
@@ -2736,10 +2736,16 @@ server <- function(input, output, session) {
       }
       if (input$spacePch == "relat") {
         if (length(input$relators) == 4L) {
-          legend(bty = "n", "topright", pch = 1:3, xpd = NA,
-                 pt.cex = spaceCex, pt.lwd = spaceLwd,
-                 gsub("_", " ", fixed = TRUE,
-                      paste(input$relators[2:4], "&", input$relators[[1]])))
+          legend(
+            "topright",
+            bty = "n",
+            pch = 1:3,
+            xpd = NA,
+            pt.cex = spaceCex,
+            pt.lwd = spaceLwd,
+            gsub("_", " ", fixed = TRUE,
+                 paste(input$relators[2:4], "&", input$relators[[1]]))
+          )
         }
       } else if (input$spacePch == "name") {
         clstr <- treeNameClustering()
@@ -2845,15 +2851,18 @@ server <- function(input, output, session) {
       )
     }
     
+    LogCommentP("Set tree plotting symbols")
+    LogCodeP(paste0("treePch <- ", LogTreePch()))
+    
     LogCommentP("Add points")
     LogCodeP(
       "points(",
       "  x = map[, j],",
       "  y = map[, i],",
-      "  pch = treePch(),", #TODO
+      "  pch = treePch,",
       "  col = paste0(treeCols(), as.hexmode(200)),", #TODO
-      "  cex = spaceCex,", # TODO
-      "  lwd = spaceLwd", # TODO
+      paste0("  cex = ", spaceCex, ", # Point size"),
+      paste0("  lwd = ", spaceLwd, ", # Line width"),
       ")"
     )
     
@@ -2898,8 +2907,8 @@ server <- function(input, output, session) {
           "  bty = \"n\", # No legend border box",
           "  pch = 1:3, # Legend symbols",
           "  xpd = NA, # Display overflowing text",
-          "  pt.cex = spaceCex,", #TODO
-          "  pt.lwd = spaceLwd,", #TODO
+          paste0("  pt.cex = ", spaceCex, ", # Point size"),
+          paste0("  pt.lwd = ", spaceLwd, ", # Line width"),
           paste0("  ",
                  EnC(gsub("_", " ", fixed = TRUE,
                           paste(input$relators[2:4], "&", input$relators[[1]])))
@@ -2924,7 +2933,7 @@ server <- function(input, output, session) {
             EnC(c(1, 3, 4, 2, seq_len(max(clstr))[-(1:4)])[clusters]),
             ","
           ), paste0("  ", 
-                    Enquote(paste0("~ ", attr(clstr, "med"),
+                    EnC(paste0("~ ", attr(clstr, "med"),
                                    " (", table(clstr), ")"))
           ),
           ")")
@@ -2939,7 +2948,7 @@ server <- function(input, output, session) {
         "  pch = 16, # Circle symbol",
         "  xpd = NA, # Display overflowing text",
         "  col = FirstHitCols(),", #TODO
-        "  pt.cex = spaceCex,", #TODO
+        paste0("  pt.cex = ", spaceCex, ", # Point size"),
         paste0("  ", Enquote(names(FirstHit())), ","),
         "  title = \"Iteration first hit\"",
         ")"
