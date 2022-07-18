@@ -600,7 +600,14 @@ server <- function(input, output, session) {
       LogCommentP("Load trees from file")
       LogCodeP(c(
         paste0("treeFile <- ", Enquote(TreeFileName(r$treeFiles))),
-        paste0("trees <- ", r$readTreeFile)
+        paste0("trees <- ", r$readTreeFile),
+        if (!identical(r$trees, r$allTrees)) {
+          paste0(
+            "trees <- trees[unique(as.integer(seq.int(",
+            r$treeRange[1], ", ", r$treeRange[2],
+            ", length.out = ", r$nTree, ")))]"
+          )
+        }
       ))
     }
   }
@@ -750,7 +757,7 @@ server <- function(input, output, session) {
       hideElement("dataFile")
       
       dataFile <- system.file(paste0("datasets/", source, ".nex"),
-                               package = "TreeSearch")
+                              package = "TreeSearch")
       CacheInput("data", dataFile)
       r$chars <- ReadCharacters(dataFile)
       r$charNotes <- ReadNotes(dataFile)
