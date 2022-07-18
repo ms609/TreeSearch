@@ -2429,6 +2429,9 @@ server <- function(input, output, session) {
   # Plot settings: point style
   ##############################################################################
 
+  spaceCex <- reactive(1.7)
+  spaceLwd <- reactive(2)
+  
   FirstHit <- reactive({
     if (is.null(attr(r$trees, "firstHit"))) {
       treeNames <- names(r$trees)
@@ -2457,6 +2460,14 @@ server <- function(input, output, session) {
       palettes[[1]]
     } else {
       hcl.colors(length(FirstHit()), "viridis")
+    }
+  })
+  
+  LogFirstHitCols <- reactive({
+    if (is.null(FirstHit())) {
+      paste0(palettes[[1]], " # Arbitrarily")
+    } else {
+      "hcl.colors(length(attr(trees, \"firstHit\")), \"viridis\")"
     }
   })
   
@@ -2662,9 +2673,6 @@ server <- function(input, output, session) {
       return(ErrorPlot("Need at least\nthree trees to\nmap tree space"))
     }
     
-    spaceCex <- 1.7
-    spaceLwd <- 2
-    
     cl <- clusterings()
     map <- mapping()
     
@@ -2712,8 +2720,8 @@ server <- function(input, output, session) {
         # Add points
         points(map[, j], map[, i], pch = treePch(),
                col = paste0(treeCols(), as.hexmode(200)),
-               cex = spaceCex,
-               lwd = spaceLwd
+               cex = spaceCex(),
+               lwd = spaceLwd()
                )#input$pt.cex)
         
         if (cl$sil > silThreshold() && "hull" %in% input$mapLines) {
@@ -2741,8 +2749,8 @@ server <- function(input, output, session) {
             bty = "n",
             pch = 1:3,
             xpd = NA,
-            pt.cex = spaceCex,
-            pt.lwd = spaceLwd,
+            pt.cex = spaceCex(),
+            pt.lwd = spaceLwd(),
             gsub("_", " ", fixed = TRUE,
                  paste(input$relators[2:4], "&", input$relators[[1]]))
           )
@@ -2758,7 +2766,7 @@ server <- function(input, output, session) {
       }
       if (input$spaceCol == "firstHit" && length(FirstHit())) {
         legend(bty = "n", "topleft", pch = 16, col = FirstHitCols(),
-               pt.cex = spaceCex,
+               pt.cex = spaceCex(),
                names(FirstHit()), title = "Iteration first hit")
       } else if (input$spaceCol == "score") {
         legendRes <- length(badToGood)
@@ -2861,8 +2869,8 @@ server <- function(input, output, session) {
       "  y = map[, i],",
       "  pch = treePch,",
       "  col = paste0(treeCols(), as.hexmode(200)),", #TODO
-      paste0("  cex = ", spaceCex, ", # Point size"),
-      paste0("  lwd = ", spaceLwd, ", # Line width"),
+      paste0("  cex = ", spaceCex(), ", # Point size"),
+      paste0("  lwd = ", spaceLwd(), ", # Line width"),
       ")"
     )
     
@@ -2907,8 +2915,8 @@ server <- function(input, output, session) {
           "  bty = \"n\", # No legend border box",
           "  pch = 1:3, # Legend symbols",
           "  xpd = NA, # Display overflowing text",
-          paste0("  pt.cex = ", spaceCex, ", # Point size"),
-          paste0("  pt.lwd = ", spaceLwd, ", # Line width"),
+          paste0("  pt.cex = ", spaceCex(), ", # Point size"),
+          paste0("  pt.lwd = ", spaceLwd(), ", # Line width"),
           paste0("  ",
                  EnC(gsub("_", " ", fixed = TRUE,
                           paste(input$relators[2:4], "&", input$relators[[1]])))
@@ -2947,8 +2955,8 @@ server <- function(input, output, session) {
         "  bty = \"n\", # No legend border box",
         "  pch = 16, # Circle symbol",
         "  xpd = NA, # Display overflowing text",
-        "  col = FirstHitCols(),", #TODO
-        paste0("  pt.cex = ", spaceCex, ", # Point size"),
+        paste0("  col = ", LogFirstHitCols(), ","),
+        paste0("  pt.cex = ", spaceCex(), ", # Point size"),
         paste0("  ", Enquote(names(FirstHit())), ","),
         "  title = \"Iteration first hit\"",
         ")"
