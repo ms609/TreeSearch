@@ -1826,7 +1826,7 @@ server <- function(input, output, session) {
                      r$dataHash, r$treeHash), 
         "space" = list(r$treeHash, input$plotFormat,
                        min(dims(), nProjDim()),
-                       treeCols(),
+                       TreeCols(),
                        treePch(),
                        input$distMeth,
                        input$spaceCol,
@@ -1885,7 +1885,7 @@ server <- function(input, output, session) {
                    r$dataHash, r$treeHash), 
       "space" = list(r$treeHash, input$plotFormat,
                      min(dims(), nProjDim()),
-                     treeCols(),
+                     TreeCols(),
                      treePch(),
                      input$distMeth,
                      input$spaceCol,
@@ -2450,7 +2450,7 @@ server <- function(input, output, session) {
   })
   
   LogFirstHit <- function() {
-    LogCodeP("whenHit <- gsub(\"(seed|start|ratch\\d+|final)_\\d+\", \"\\\\1\",
+    LogCodeP("whenHit <- gsub(\"(seed|start|ratch\\\\d+|final)_\\\\d+\", \"\\\\1\",
               names(trees), perl = TRUE)")
     LogCodeP("attr(trees, \"firstHit\") <- table(whenHit)[unique(whenHit)]")
   }
@@ -2471,7 +2471,7 @@ server <- function(input, output, session) {
     }
   })
   
-  treeCols <- reactive({
+  TreeCols <- reactive({
     switch(
       input$spaceCol,
       "clust" = {
@@ -2486,7 +2486,6 @@ server <- function(input, output, session) {
           palettes[[1]]
         } else {
           norm <- scores() - min(scores())
-          norm <- scores() - min(scores())
           norm <- (length(badToGood) - 1L) * norm / max(norm)
           rev(badToGood)[1 + norm]
         }
@@ -2497,6 +2496,41 @@ server <- function(input, output, session) {
           palettes[[1]]
         } else {
           rep(FirstHitCols(), FirstHit())
+        }
+      },
+      "black"
+    )
+  })
+  
+  LogTreeCols <- reactive({
+    beige <- paste0("treeCols <- ", palettes[[1]], " # Arbitrarily")
+    switch(
+      input$spaceCol,
+      "clust" = {
+        cl <- clusterings()
+        if (cl$sil > silThreshold()) {
+          paste0(EnC(palettes[[min(length(palettes), cl$n)]]), 
+                 "[clustering]")
+        } else {
+          beige
+        }
+      }, "score" = {
+        if (is.null(scores()) || length(unique(scores())) == 1L) {
+          beige
+        } else {
+          c(paste0("scores <- TreeLength(trees, dataset, concavity = ",
+                   Enquote(concavity()), ")"),
+            "normalized <- scores - min(scores)",
+            "normalized <- 107 * normalized / max(normalized)",
+            "goodToBad <- hcl.colors(108, \"Temps\")",
+            "treeCols <- goodToBad[1 + normalized]"
+          )
+        }
+      }, "firstHit" = {
+        if (is.null(FirstHit())) {
+          beige
+        } else {
+          paste0("rep(", LogFirstHitCols(), ", attr(trees, \"firstHit\"))")
         }
       },
       "black"
@@ -2719,7 +2753,7 @@ server <- function(input, output, session) {
         
         # Add points
         points(map[, j], map[, i], pch = treePch(),
-               col = paste0(treeCols(), as.hexmode(200)),
+               col = paste0(TreeCols(), as.hexmode(200)),
                cex = spaceCex(),
                lwd = spaceLwd()
                )#input$pt.cex)
@@ -2860,7 +2894,11 @@ server <- function(input, output, session) {
     }
     
     LogCommentP("Set tree plotting symbols")
-    LogCodeP(paste0("treePch <- ", LogTreePch()))
+    LogCodeP(
+      paste0("treePch <- ", LogTreePch()),
+      paste0("treeCols <- ", LogTreeCols()),
+      "treeCols <- paste0(treeCols, as.hexmode(200))"
+    )
     
     LogCommentP("Add points")
     LogCodeP(
@@ -2868,9 +2906,9 @@ server <- function(input, output, session) {
       "  x = map[, j],",
       "  y = map[, i],",
       "  pch = treePch,",
-      "  col = paste0(treeCols(), as.hexmode(200)),", #TODO
+      "  col = treeCols,",
       paste0("  cex = ", spaceCex(), ", # Point size"),
-      paste0("  lwd = ", spaceLwd(), ", # Line width"),
+      paste0("  lwd = ", spaceLwd(), " # Line width"),
       ")"
     )
     
@@ -2934,12 +2972,11 @@ server <- function(input, output, session) {
           "legend(",
           "  \"topright\",",
           "  bty = \"n\", # No legend border box",
-          "  pch = 1:3, # Legend symbols",
           "  xpd = NA, # Display overflowing text",
           paste0(
             "  pch = ",
             EnC(c(1, 3, 4, 2, seq_len(max(clstr))[-(1:4)])[clusters]),
-            ","
+            ", # Legend symbols"
           ), paste0("  ", 
                     EnC(paste0("~ ", attr(clstr, "med"),
                                    " (", table(clstr), ")"))
@@ -2948,6 +2985,9 @@ server <- function(input, output, session) {
       }
     }
     if (input$spaceCol == "firstHit" && length(FirstHit())) {
+      LogCommentP("Record when trees first hit")
+      LogFirstHit()
+      
       LogCommentP("Add legend for symbol colours")
       LogCodeP(
         "legend(",
@@ -2968,7 +3008,7 @@ server <- function(input, output, session) {
         "leg <- rep_len(NA, 108)",
         paste0("leg[c(1, 108)] <- ", EnC(rev(signif(range(scores()))))),
         "legend(",
-        "  \"bottomright\"",
+        "  \"bottomright\",",
         "  legend = leg,",
         "  bty = \"n\", # No legend border box",
         "  border = NA, # No border around plot icons",
