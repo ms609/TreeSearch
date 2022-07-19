@@ -788,10 +788,12 @@ server <- function(input, output, session) {
       r$charNotes <- ReadNotes(dataFile)
       r$readDataFile <- "ReadAsPhyDat(dataFile)"
       r$dataset <- ReadAsPhyDat(dataFile)
-      LogCode(c("dataset <- ReadAsPhyDat(",
-              paste0("  system.file(\"datasets/", source,
-                     ".nex\", package = \"TreeSearch\")"),
-              ")"))
+      LogComment("Load dataset file from TreeSearch package")
+      LogCode(c(
+        paste0("dataFile <- system.file(\"datasets/", source,
+               ".nex\", package = \"TreeSearch\")"),
+        "dataset <- ReadAsPhyDat(dataFile)"
+      ))
     }
     if (is.null(r$dataset)) {
       Notification(type = "error", "Could not read data from file")
@@ -810,6 +812,8 @@ server <- function(input, output, session) {
     
     tryCatch({
       dataFileTrees <- read.nexus(dataFile)
+      LogComment("Read trees from dataset file")
+      LogCode("newTrees <- read.nexus(dataFile)")
       UpdateAllTrees(dataFileTrees)
       CacheInput("tree", dataFile)
       r$readTreeFile <- "read.nexus(treeFile)"
@@ -1429,9 +1433,6 @@ server <- function(input, output, session) {
     outgroupTips <- intersect(r$outgroup, tree$tip.label)
     if (length(outgroupTips)) {
       tr <- deparse(substitute(tree))
-      LogComment("Root tree")
-      LogCode(paste0(tr, " <- RootTree(", tr, ", ", EnC(outgroupTips), ")")
-      )
       RootTree(tree, outgroupTips)
     } else {
       tree
