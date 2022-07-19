@@ -1,5 +1,5 @@
-# options("TreeSearch.logging" = TRUE)
-# options("TreeSearch.write.code" = TRUE)
+# options("TreeSearch.write.code" = TRUE) # Show code as it is written to log
+# options("TreeSearch.logging" = TRUE) # Log function entry and exit
 logging <- isTRUE(getOption("TreeSearch.logging"))
 options(shiny.maxRequestSize = 1024^3) # Allow max 1 GB files
 
@@ -1471,7 +1471,7 @@ server <- function(input, output, session) {
   LogPlottedTree <- function() {
     LogCodeP(paste0(
       "plottedTree <- trees[[", whichTree(), "]]",
-      if (SortPlotted()) 
+      if (r$sortTrees)
         "plottedTree <- SortTree(plottedTree, order = names(dataset))"
       ),
       if (!("tipsRight" %in% input$mapDisplay)) {
@@ -1540,12 +1540,13 @@ server <- function(input, output, session) {
   LogSortEdges <- function(tr) (
     if (r$sortTrees) {
       LogCodeP(paste0(
-        "SortTree(", tr, ", order = ", 
+        tr, " <- SortTree(", tr, ", order = ", 
         if (HaveData()) {
           "names(dataset)"
         } else {
           "trees[[1]]$tip.label"
-        }
+        },
+        ")"
       ))
     }
   )
@@ -1737,7 +1738,10 @@ server <- function(input, output, session) {
         "Colour tip labels according to their original 'instability' ",
         "(Smith 2022)")
       )
-      LogCodeP("tipCols <- Rogue::ColByStability(trees)[labels]")
+      LogCodeP(paste0(
+        "tipCols <- Rogue::ColByStability(trees)[setdiff(labels, ",
+        Enquote(input$excludedTip), ")]"
+      ))
       LogCommentP(paste0(
         "Plot the reduced consensus tree, showing position of ",
         gsub("_", " ", input$excludedTip, fixed = TRUE))
@@ -3147,33 +3151,52 @@ server <- function(input, output, session) {
   output$saveZip <- downloadHandler(
     filename = function() paste0("TreeSearch-session.zip"),
     content = function(file) {
-      tempDir <- tempfile("zip-")
-      dir.create(tempDir)
-      on.exit(unlink(tempDir))
-      rFile <- paste0(tempDir, "/TreeSearch-session.R")
-      file.copy(cmdLogFile, rFile, overwrite = TRUE)
-      zip(file, c(
-        rFile,
-        paste0(tempdir(), "/", DataFileName(seq_len(r$dataFiles))),
-        paste0(tempdir(), "/", TreeFileName(seq_len(r$treeFiles)))
-      ), flags = "-r9Xj")
+      if (isTRUE(getOption("shiny.testmode"))) {
+        file.copy(cmdLogFile, file)
+      } else {
+        tempDir <- tempfile("zip-")
+        dir.create(tempDir)
+        on.exit(unlink(tempDir))
+        rFile <- paste0(tempDir, "/TreeSearch-session.R")
+        file.copy(cmdLogFile, rFile, overwrite = TRUE)
+        zip(file, c(
+          rFile,
+          paste0(tempdir(), "/", DataFileName(seq_len(r$dataFiles))),
+          paste0(tempdir(), "/", TreeFileName(seq_len(r$treeFiles)))
+        ), flags = "-r9Xj")
+      }
     })
   
   output$savePlotZip <- downloadHandler(
     filename = function() paste0(saveDetails()$fileName, ".zip"),
     content = function(file) {
-      tempDir <- tempfile("plot-zip-")
-      dir.create(tempDir)
-      on.exit(unlink(tempDir))
-      rFile <- paste0(tempDir, "/", saveDetails()$fileName, ".R")
-      writeLines(RCode(), con = rFile)
-      
-      # Create ZIP
-      zip(file, c(
-        rFile,
-        paste0(tempdir(), "/", LastFile("data")),
-        paste0(tempdir(), "/", LastFile("tree"))
-      ), flags = "-r9Xj")
+      if (isTRUE(getOption("shiny.testmode"))) {
+        rCode <- RCode()
+        rCode <- sub("dataFile <- .*$",
+                     paste0("dataFile <- system.file(\"datasets/",
+                            input$dataSource,
+                            ".nex\", package = \"TreeSearch\") # Test mode"),
+                     rCode,
+                     perl = TRUE)
+        rCode <- sub("treeFile <- .*$",
+                     "treeFile <- dataFile # Test mode",
+                     rCode,
+                     perl = TRUE)
+        writeLines(rCode, con = file)
+      } else {
+        tempDir <- tempfile("plot-zip-")
+        dir.create(tempDir)
+        on.exit(unlink(tempDir))
+        rFile <- paste0(tempDir, "/", saveDetails()$fileName, ".R")
+        writeLines(RCode(), con = rFile)
+        
+        # Create ZIP
+        zip(file, c(
+          rFile,
+          paste0(tempdir(), "/", LastFile("data")),
+          paste0(tempdir(), "/", LastFile("tree"))
+        ), flags = "-r9Xj")
+      }
     })
   
   output$savePng <- downloadHandler(
