@@ -164,9 +164,10 @@ Maechler2019 <- Reference(
   title = "cluster: cluster analysis basics and extensions", year = 2019,
   authors = c("Maechler, M.", "Rousseeuw, P.", "Struyf, A.", "Hubert, M.", "Hornik, K."),
   journal = "Comprehensive R Archive Network")
-Morphy <- Reference(c("Brazeau, M.D.", "Smith, M.R.", "Guillerme, T."), 2017,
-                    "MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability.",
-                    doi = "10.5281/zenodo.815371")
+Morphy <- Reference(
+  c("Brazeau, M.D.", "Smith, M.R.", "Guillerme, T."), 2017,
+  "MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability.",
+  doi = "10.5281/zenodo.815371")
 Murtagh1983 <- Reference(
   title = "A survey of recent advances in hierarchical clustering algorithms",
   authors = "Murtagh, F.", year = 1983, volume = 26, pages = c(354, 359),
@@ -1646,6 +1647,11 @@ server <- function(input, output, session) {
       }
       cons <- ConsensusWithout(r$trees, without, p = consP())
       cons <- UserRoot(cons)
+      
+      if (unitEdge()) {
+        cons$edge.length <- rep.int(1, dim(cons$edge)[1])
+      }
+      
       r$plottedTree <- cons
       plot(r$plottedTree, tip.color = TipCols()[intersect(cons$tip.label, kept)])
       LabelConcordance()
@@ -1714,7 +1720,7 @@ server <- function(input, output, session) {
       }
       LogUserRoot()
       if (unitEdge()) {
-        LogCodeP("cons$edge.length <- rep_len(1L, dim(cons$edge)[1])")
+        LogCodeP("cons$edge.length <- rep.int(1L, nrow(cons$edge))")
       }
       LogCommentP("Plot consensus tree")
       LogCodeP(
@@ -2326,7 +2332,9 @@ server <- function(input, output, session) {
         
         cons <- ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP())
         cons <- UserRoot(cons)
-        cons$edge.length <- rep.int(1, dim(cons$edge)[1])
+        if (unitEdge()) {
+          cons$edge.length <- rep.int(1, dim(cons$edge)[1])
+        }
         r$plottedTree <- cons
         plot(cons, edge.width = 2, font = 3, cex = 0.83,
              edge.color = col, tip.color = TipCols()[cons$tip.label])
@@ -2338,7 +2346,9 @@ server <- function(input, output, session) {
       PutTree(r$trees)
       cons <- ConsensusWithout(r$trees, dropped, p = consP())
       cons <- UserRoot(cons)
-      cons$edge.length <- rep.int(1, dim(cons$edge)[1])
+      if (unitEdge()) {
+        cons$edge.length <- rep.int(1, dim(cons$edge)[1])
+      }
       r$plottedTree <- cons
       plot(cons, edge.width = 2, font = 3, cex = 0.83,
            edge.color = palettes[[1]], tip.color = TipCols()[cons$tip.label])
@@ -2388,7 +2398,9 @@ server <- function(input, output, session) {
         paste0("  p = ", consP()),
         ")"
       )
-      LogExprP("cons$edge.length <- rep.int(1, nrow(cons$edge))")
+      if (unitEdge()) {
+        LogExprP("cons$edge.length <- rep.int(1, nrow(cons$edge))")
+      }
       LogCodeP("plot(",
               "  cons,",
               "  edge.width = 2,             # Widen lines",
@@ -2423,7 +2435,9 @@ server <- function(input, output, session) {
         }
       )
       LogUserRoot("cons")
-      LogExprP("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
+      if (unitEdge()) {
+        LogExprP("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
+      }
       LogCodeP("plottedTree <- cons # Store for future reference")
       
       LogCodeP("tipCols <- Rogue::ColByStability(trees)[con$tip.label]")
