@@ -2603,7 +2603,8 @@ server <- function(input, output, session) {
       "clust" = {
         cl <- clusterings()
         if (cl$sil > silThreshold()) {
-          paste0(EnC(palettes[[min(length(palettes), cl$n)]]), 
+          paste0("treeCols <- ", 
+                 EnC(palettes[[min(length(palettes), cl$n)]]), 
                  "[clustering]")
         } else {
           beige
@@ -2624,10 +2625,10 @@ server <- function(input, output, session) {
         if (is.null(FirstHit())) {
           beige
         } else {
-          paste0("rep(", LogFirstHitCols(), ", attr(trees, \"firstHit\"))")
+          paste0("treeCols <- rep(", LogFirstHitCols(), ", attr(trees, \"firstHit\"))")
         }
       },
-      "black"
+      "treeCols <- black"
     )
   })
   
@@ -2942,6 +2943,12 @@ server <- function(input, output, session) {
     LogCommentP("Set plot margins", 0)
     LogCodeP("par(mar = rep(0.2, 4))")
     
+    LogCommentP("Set up tree plotting symbols")
+    LogCodeP(paste0("treePch <- ", LogTreePch()),
+             LogTreeCols(),
+             "treeCols <- paste0(treeCols, as.hexmode(200)) # Semitransparent"
+    )
+    
     LogCodeP("for (i in 2:nDim) for (j in seq_len(i - 1)) {")
     LogIndent(+2)
     LogCommentP("Set up blank plot")
@@ -2987,12 +2994,6 @@ server <- function(input, output, session) {
       )
     }
     
-    LogCommentP("Set tree plotting symbols")
-    LogCodeP(paste0("treePch <- ", LogTreePch()),
-      LogTreeCols(),
-      "treeCols <- paste0(treeCols, as.hexmode(200)) # Semitransparent"
-    )
-    
     LogCommentP("Add points")
     LogCodeP(
       "points(",
@@ -3030,12 +3031,12 @@ server <- function(input, output, session) {
       LogCodeP("text(map[, j], map[, i], trees)")
     }
     
+    LogIndent(-2)
+    LogCodeP("}")
+    
     if (nDim > 2) {
       LogCodeP("plot.new() # Use new panel to plot legends")
     }
-    
-    LogIndent(-2)
-    LogCodeP("}")
     
     if (input$spacePch == "relat") {
       if (length(input$relators) == 4L) {
