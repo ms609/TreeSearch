@@ -1,12 +1,12 @@
 
-# # # TreeSearch plot log: 2022-07-19 11:25:32 # # #
+# # # TreeSearch plot log: <DATE-AND-TIME> # # #
 # 
-# System: Windows 10 x64 build 19043 - windows x86_64-w64-mingw32
-# - R Under development (unstable) (2022-05-15 r82362 ucrt)
-# - TreeSearch 1.1.2.9000
-# - TreeTools 1.7.2.9000
-# - TreeDist 2.4.0
-# - ape 5.6.2
+# System: <SYS-INFO>
+# - R <VERSION>
+# - TreeSearch <VERSION>
+# - TreeTools <VERSION>
+# - TreeDist <VERSION>
+# - ape <VERSION>
 # 
 # This log was generated procedurally to facilitate the reproduction of
 # figures obtained during an interactive Shiny session.
@@ -19,7 +19,7 @@
 # 
 # Please validate the code before reproducing in a manuscript, reporting
 # any errors at https://github.com/ms609/treesearch/issues or by e-mail to
-# the maintainer.
+# the package maintainer.
 # 
 # # # # # #
 
