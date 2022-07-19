@@ -1,14 +1,14 @@
 {
   "input": {
-    "clThresh": 1,
+    "clThresh": 0.5,
     "concordance": "none",
-    "consP": 0.5,
+    "consP": 1,
     "dataFile": null,
     "dataSource": "Sun2018",
     "distMeth": "cid",
     "excludedTip": "Paterimitra",
     "go": 0,
-    "keepTips": 47,
+    "keepTips": 49,
     "mapDisplay": null,
     "mapLines": [
       "hull",
@@ -47,22 +47,22 @@
     },
     "results": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 67aced916c3f10cb076751eae61834b16a5d78a9]",
+      "src": "[image data sha1: e9c2d2fda41488faeec70e3bf70c89dd62039e84]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -0.729326419196189,
-              "right": 18.9624868991009,
-              "bottom": -0.84,
-              "top": 48.84
+              "left": -3.49342767796035,
+              "right": 90.8291196269692,
+              "bottom": -0.92,
+              "top": 50.92
             },
             "range": {
-              "left": 0,
+              "left": 400,
               "right": 600,
-              "bottom": 596.11999952,
-              "top": 1.88000048000006
+              "bottom": 597.0991996832,
+              "top": 0.900800316799955
             },
             "log": {
               "x": null,
