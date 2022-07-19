@@ -969,7 +969,9 @@ server <- function(input, output, session) {
     nTrees <- length(newTrees)
     
     if (nTrees != oldNTrees) {
-      r$oldTreeRange <- input$treeRange
+      if (!identical(input$treeRange, c(1L, nTrees))) {
+        r$oldTreeRange <- input$treeRange
+      }
       UpdateTreeRange(c(1L, nTrees))
       # update*Input messages are collected and sent after all the observers
       # (including outputs) have finished running.
@@ -1254,16 +1256,19 @@ server <- function(input, output, session) {
         }
       }
       
-      if (r$outgroup != input$outgroup) {
+      if (!identical(sort(r$outgroup), sort(input$outgroup))) {
         r$oldOutgroup <- if (is.null(input$outgroup)) {
           NO_OUTGROUP
         } else {
           input$outgroup
         }
       }
+      
       updateSelectizeInput(
-        inputId = "outgroup", choices = KeptTips(),
-        selected = r$outgroup)
+        inputId = "outgroup",
+        selected = r$outgroup,
+        choices = KeptTips()
+        )
     }
   })
   
