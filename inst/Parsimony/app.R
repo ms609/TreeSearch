@@ -1,6 +1,6 @@
 # options("TreeSearch.logging" = TRUE)
+# options("TreeSearch.write.code" = TRUE)
 logging <- isTRUE(getOption("TreeSearch.logging"))
-options("TreeSearch.logging.code" = FALSE)
 options(shiny.maxRequestSize = 1024^3) # Allow max 1 GB files
 
 
@@ -35,16 +35,20 @@ if (logging) {
   PutData <- PutTree <- LogMsg <- function (...) {}
 }
 
-WriteLoggedCode <- if (requireNamespace("crayon", quietly = TRUE)) {
-  function(txt) {
-    for (line in txt) cat(if (substr(trimws(line), 0, 1) == "#") {
-      crayon::green("  ", line, "\n")
-    } else {
-      crayon::yellow("  ", line, "\n")
-    })
+WriteLoggedCode <- if (isTRUE(getOption("TreeSearch.write.code"))) {
+  if (requireNamespace("crayon", quietly = TRUE)) {
+    function(txt) {
+      for (line in txt) cat(if (substr(trimws(line), 0, 1) == "#") {
+        crayon::green("  ", line, "\n")
+      } else {
+        crayon::yellow("  ", line, "\n")
+      })
+    }
+  } else {
+    function(txt) message("       ", txt)
   }
 } else {
-  function(txt) message("       ", txt)
+  function(txt) {}
 }
 
 Notification <- function (...) {
@@ -1188,8 +1192,10 @@ server <- function(input, output, session) {
     if (AnyTrees() && "consConfig" %in% r$visibleConfigs) {
       nTip <- TipsInTree()
       LogMsg("UpdateKeepTipsMaximum(", input$keepTips, " -> ", nTip, ")")
-      r$oldKeepTips <- input$keepTips
       r$keepTips <- nNonRogues()
+      if (r$keepTips != input$keepTips) {
+        r$oldKeepTips <- input$keepTips
+      }
       updateNumericInput(inputId = "keepTips",
                          label = paste0("Tips to show (/", nTip, "):"),
                          max = nTip,
@@ -1248,10 +1254,12 @@ server <- function(input, output, session) {
         }
       }
       
-      r$oldOutgroup <- if (is.null(input$outgroup)) {
-        NO_OUTGROUP
-      } else {
-        input$outgroup
+      if (r$outgroup != input$outgroup) {
+        r$oldOutgroup <- if (is.null(input$outgroup)) {
+          NO_OUTGROUP
+        } else {
+          input$outgroup
+        }
       }
       updateSelectizeInput(
         inputId = "outgroup", choices = KeptTips(),
