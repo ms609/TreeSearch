@@ -4,6 +4,7 @@ app$snapshotInit("Distribution")
 
 app$setInputs(dataSource = "Sun2018")
 app$setInputs(plotFormat = "clus")
+app$setInputs(treeRange = c(77, 125))
 app$snapshot()
 app$setInputs(nTree = 125)
 app$setInputs(treeRange = c(1, 125))

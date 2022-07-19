@@ -2130,7 +2130,7 @@ server <- function(input, output, session) {
                                         include.lowest = TRUE, right = FALSE))]
     addClass("clThresh-label", liveClass)
     removeClass("clThresh-label", setdiff(classes, liveClass))
-  }, ignoreInit = TRUE)
+  })
   silThreshold <- debounce(reactive({
     input$clThresh
   }), 50)
