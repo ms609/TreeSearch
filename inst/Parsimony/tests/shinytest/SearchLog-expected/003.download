@@ -100,7 +100,7 @@ startTree <- trees[[1]]
 newTrees <- MaximizeParsimony(
   dataset,
   tree = startTree,
-  concavity = 10,
+  concavity = 12.5893,
   ratchIter = 2,
   tbrIter = 1,
   maxHits = 10,
