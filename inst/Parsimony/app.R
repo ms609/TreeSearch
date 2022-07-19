@@ -2597,7 +2597,7 @@ server <- function(input, output, session) {
   })
   
   LogTreeCols <- reactive({
-    beige <- paste0("treeCols <- ", palettes[[1]], " # Arbitrarily")
+    beige <- paste0("treeCols <- ", Enquote(palettes[[1]]), " # Arbitrarily")
     switch(
       input$spaceCol,
       "clust" = {
@@ -2988,10 +2988,9 @@ server <- function(input, output, session) {
     }
     
     LogCommentP("Set tree plotting symbols")
-    LogCodeP(
-      paste0("treePch <- ", LogTreePch()),
-      paste0("treeCols <- ", LogTreeCols()),
-      "treeCols <- paste0(treeCols, as.hexmode(200))"
+    LogCodeP(paste0("treePch <- ", LogTreePch()),
+      LogTreeCols(),
+      "treeCols <- paste0(treeCols, as.hexmode(200)) # Semitransparent"
     )
     
     LogCommentP("Add points")
