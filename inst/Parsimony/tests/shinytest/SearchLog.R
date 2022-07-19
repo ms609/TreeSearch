@@ -4,7 +4,7 @@ app$snapshotInit("SearchLog")
 
 app$setInputs(dataSource = "Wills2012", timeout_ = 4000)
 app$setInputs(searchConfig = "click")
-app$setInputs(concavity = 1.1) # Set 
+app$setInputs(concavity = 1.1) # Set whilst visible; remembered later?
 app$setInputs(`implied.weights` = "off")
 app$setInputs(finalIter = 1.4)
 app$setInputs(maxHits = 1.3)
