@@ -264,7 +264,7 @@ ui <- fluidPage(
                  style = "display: block; margin-top: -15px;"),
       actionButton("searchConfig", "Configure", icon = icon("cogs")),
       hidden(actionButton("go", "Search", icon = icon("search"))),
-      downloadButton("saveZip", "Save session log"),
+      downloadButton("saveZip", "Save search log"),
       fileInput("treeFile",
                 label = tags$span(
                   tags$i(class="fas fa-solid fa-tree"),
