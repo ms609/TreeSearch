@@ -180,9 +180,9 @@ RCoreTeam <- Reference(
   authors = "R Core Team", year = 2020,
   title = "R: A language and environment for statistical computing",
   publisher = "R Foundation for Statistical Computing, Vienna, Austria")
-SmithDist <- Reference("Smith, M.R.", 2020,
-                       "TreeDist: distances between phylogenetic trees",
-                       doi = "10.5281/zenodo.3528123", "Comprehensive R Archive Network")
+SmithDist <- Reference(
+  "Smith, M.R.", 2020, "TreeDist: distances between phylogenetic trees",
+  doi = "10.5281/zenodo.3528123", "Comprehensive R Archive Network")
 SmithQuartet <- Reference(
   "Smith, M.R.", 2019,
   "Quartet: comparison of phylogenetic trees using quartet and split measures",
@@ -233,6 +233,12 @@ ui <- fluidPage(
   theme = "app.css",
   title = "TreeSearch",
   
+  if (isTRUE(getOption("shiny.testmode"))) {
+    tags$head(
+      tags$style(HTML("#shiny-notification-panel {visibility: hidden;}")
+      )
+    )
+  },
   useShinyjs(),
   column(3,
     fluidRow(

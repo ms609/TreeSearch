@@ -10,10 +10,7 @@
     "go": 0,
     "keepTips": 47,
     "mapDisplay": null,
-    "mapLines": [
-      "hull",
-      "mst"
-    ],
+    "mapLines": "seq",
     "neverDrop": null,
     "nTree": 125,
     "outgroup": "Namacalathus",
@@ -98,7 +95,7 @@
     },
     "results": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 1cda1f4664deb30994daa2b10aa6f5f7e6a846d0]",
+      "src": "[image data sha1: 6b881e844d29099aaedeaa145ffe67260701b042]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
