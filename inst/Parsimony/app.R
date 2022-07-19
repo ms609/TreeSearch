@@ -1681,7 +1681,6 @@ server <- function(input, output, session) {
       } else {
         consTrees <- r$trees
       }
-      consTrees <- lapply(consTrees, SortEdges)
       
       plotted <- RoguePlot(
         consTrees,
