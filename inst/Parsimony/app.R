@@ -1425,7 +1425,7 @@ server <- function(input, output, session) {
   PlottedTree <- reactive({
     if (length(r$trees) > 0L) {
       plottedTree <- r$trees[[whichTree()]]
-      plottedTree <- UserRoot(plottedTree)
+      plottedTree <- SortTree(UserRoot(plottedTree))
       if (!("tipsRight" %in% input$mapDisplay)) {
         plottedTree$edge.length <- rep_len(2, dim(plottedTree$edge)[1])
       }
@@ -1434,7 +1434,7 @@ server <- function(input, output, session) {
   })
   LogPlottedTree <- function() {
     LogCodeP(paste0(
-      "plottedTree <- trees[[", whichTree(), "]]"
+      "plottedTree <- SortTree(trees[[", whichTree(), "]])"
       ),
       if (!("tipsRight" %in% input$mapDisplay)) {
         c("# Set uniform edge length",
@@ -2320,7 +2320,7 @@ server <- function(input, output, session) {
         
         cons <- ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP())
         cons <- UserRoot(cons)
-        cons$edge.length <- rep_len(1, dim(cons$edge)[1])
+        cons$edge.length <- rep.int(1, dim(cons$edge)[1])
         r$plottedTree <- cons
         plot(cons, edge.width = 2, font = 3, cex = 0.83,
              edge.color = col, tip.color = TipCols()[cons$tip.label])
@@ -2332,7 +2332,7 @@ server <- function(input, output, session) {
       PutTree(r$trees)
       cons <- ConsensusWithout(r$trees, dropped, p = consP())
       cons <- UserRoot(cons)
-      cons$edge.length <- rep_len(1, dim(cons$edge)[1])
+      cons$edge.length <- rep.int(1, dim(cons$edge)[1])
       r$plottedTree <- cons
       plot(cons, edge.width = 2, font = 3, cex = 0.83,
            edge.color = palettes[[1]], tip.color = TipCols()[cons$tip.label])
@@ -2382,7 +2382,7 @@ server <- function(input, output, session) {
         paste0("  p = ", consP()),
         ")"
       )
-      LogExprP("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
+      LogExprP("cons$edge.length <- rep.int(1, nrow(cons$edge))")
       LogCodeP("plot(",
               "  cons,",
               "  edge.width = 2,             # Widen lines",
