@@ -528,7 +528,7 @@ server <- function(input, output, session) {
     "",
     "Please validate the code before reproducing in a manuscript, reporting",
     "any errors at https://github.com/ms609/treesearch/issues or by e-mail to",
-    "the maintainer."
+    "the package maintainer."
   )
   
   BeginLog <- function() {
@@ -3173,6 +3173,12 @@ server <- function(input, output, session) {
     content = function(file) {
       if (isTRUE(getOption("shiny.testmode"))) {
         rCode <- RCode()
+        rCode <- sub("TreeSearch plot log: 2[\\d\\-]{9} [012][\\d:]{7}",
+                     "TreeSearch plot log: <DATE-AND-TIME>", 
+                     rCode, perl = TRUE)
+        rCode[4] <- "# System: <SYS-INFO>"
+        rCode[5:9] <- sub("^(# \\- \\w+ ).*$", "\\1<VERSION>",
+                          rCode[5:9], perl = TRUE)
         rCode <- sub("dataFile <- .*$",
                      paste0("dataFile <- system.file(\"datasets/",
                             input$dataSource,
