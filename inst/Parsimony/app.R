@@ -1438,11 +1438,11 @@ server <- function(input, output, session) {
     }
   }
   
-  LogUserRoot <- function(tree = "cons") {
-    outgroupTips <- intersect(r$outgroup, r$plottedTree$tip.label)
+  LogUserRoot <- function(tree = "cons", dropped = character(0)) {
+    outgroupTips <- setdiff(r$outgroup, dropped)
     if (length(outgroupTips)) {
-      LogComment("Root tree")
-      LogCode(paste0(tree, " <- RootTree(", tree, ", ", EnC(outgroupTips), ")"))
+      LogCommentP("Root tree")
+      LogCodeP(paste0(tree, " <- RootTree(", tree, ", ", EnC(outgroupTips), ")"))
     }
   }
   
@@ -1469,14 +1469,14 @@ server <- function(input, output, session) {
     }
   })
   LogPlottedTree <- function() {
-    LogCodeP(
-      paste0("plottedTree <- trees[[", whichTree(), "]]"),
-      if (!("tipsRight" %in% input$mapDisplay)) {
-        c("# Set uniform edge length",
-          "plottedTree$edge.length <- rep_len(2, dim(plottedTree$edge)[1])"
-        )
-      }
-    )
+    LogCodeP(paste0("plottedTree <- trees[[", whichTree(), "]]"))
+    LogUserRoot("plottedTree")
+    if (!("tipsRight" %in% input$mapDisplay)) {
+      LogCommentP("Set uniform edge length", 0)
+      LogCodeP(
+        "plottedTree$edge.length <- rep.int(2, nrow(plottedTree$edge))"
+      )
+    }
     LogSortEdges("plottedTree")
   }
   
@@ -1775,7 +1775,7 @@ server <- function(input, output, session) {
           "cons <- Consensus(trees, p = ", consP(), ")"
         ))
       }
-      LogUserRoot()
+      LogUserRoot(dropped = without)
       if (unitEdge()) {
         LogCodeP("cons$edge.length <- rep.int(1L, nrow(cons$edge))")
       }
@@ -2495,7 +2495,7 @@ server <- function(input, output, session) {
           )
         }
       )
-      LogUserRoot("cons")
+      LogUserRoot("cons", dropped = dropped)
       if (unitEdge()) {
         LogExprP("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
       }
