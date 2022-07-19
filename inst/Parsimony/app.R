@@ -454,6 +454,7 @@ server <- function(input, output, session) {
     ignoreNTree = TRUE,
     nTree = 0L,
     oldOutgroup = NO_OUTGROUP,
+    sortTrees = FALSE, # May be arranged nicely in input files
     treeRange = c(1L, 1L),
     updatingTrees = FALSE # TODO DELETE?
   )
@@ -707,6 +708,14 @@ server <- function(input, output, session) {
   
   tipLabels <- reactive({r$trees[[1]][["tip.label"]]})
   
+  TaxonOrder <- reactive({
+    if (HaveData()) {
+      names(r$dataset)
+    } else {
+      tipLabels()
+    }
+  })
+  
   DatasetMatchesTrees <- reactive({
     length(intersect(names(r$dataset), tipLabels())) == length(r$dataset)
   })
@@ -741,6 +750,7 @@ server <- function(input, output, session) {
       }
       
       LogMsg("UpdateData(): from file")
+      r$sortTrees <- FALSE # Trees loaded from dataset may be in sequence
       r$readDataFile <- NULL
       r$dataset <- tryCatch({
         r$readDataFile <- "ReadTntAsPhyDat(dataFile)"
@@ -765,6 +775,9 @@ server <- function(input, output, session) {
       }
     } else {
       LogMsg("UpdateData(): from package")
+      
+      r$sortTrees <- TRUE # Nicer plots
+      
       r$dataFileVisible <- FALSE
       hideElement("dataFile")
       
@@ -1382,6 +1395,7 @@ server <- function(input, output, session) {
         value = 0.85, message = "Finding MPT",
         detail = paste0(ceiling(10^input$maxHits), " hits; ", wtType())
       )
+      r$sortTrees <- TRUE # No meaning in order; display nicely
       LogComment("Overwrite any previous trees with results")
       LogCode(c(
         "if (inherits(newTrees, \"phylo\")) {",
@@ -1445,7 +1459,9 @@ server <- function(input, output, session) {
   PlottedTree <- reactive({
     if (length(r$trees) > 0L) {
       plottedTree <- r$trees[[whichTree()]]
-      plottedTree <- SortTree(UserRoot(plottedTree))
+      plottedTree <- UserRoot(plottedTree)
+      plottedTree <- SortEdges(plottedTree)
+
       if (!("tipsRight" %in% input$mapDisplay)) {
         plottedTree$edge.length <- rep_len(2, dim(plottedTree$edge)[1])
       }
@@ -1454,7 +1470,9 @@ server <- function(input, output, session) {
   })
   LogPlottedTree <- function() {
     LogCodeP(paste0(
-      "plottedTree <- SortTree(trees[[", whichTree(), "]])"
+      "plottedTree <- trees[[", whichTree(), "]]",
+      if (SortPlotted()) 
+        "plottedTree <- SortTree(plottedTree, order = names(dataset))"
       ),
       if (!("tipsRight" %in% input$mapDisplay)) {
         c("# Set uniform edge length",
@@ -1509,6 +1527,28 @@ server <- function(input, output, session) {
   unitEdge <- reactive({
     TRUE
   })
+  
+  SortEdges <- function (tr, force = FALSE) {
+    if (force || r$sortTrees) {
+      # Return:
+      SortTree(tr, order = TaxonOrder())
+    } else {
+      # Return:
+      tr
+    }
+  }
+  LogSortEdges <- function(tr) (
+    if (r$sortTrees) {
+      LogCodeP(paste0(
+        "SortTree(", tr, ", order = ", 
+        if (HaveData()) {
+          "names(dataset)"
+        } else {
+          "trees[[1]]$tip.label"
+        }
+      ))
+    }
+  )
   
   nNonRogues <- reactive({
     LogMsg("nNonRogues()")
@@ -1641,6 +1681,7 @@ server <- function(input, output, session) {
       } else {
         consTrees <- r$trees
       }
+      consTrees <- lapply(consTrees, SortEdges)
       
       plotted <- RoguePlot(
         consTrees,
@@ -1664,6 +1705,7 @@ server <- function(input, output, session) {
       if (unitEdge()) {
         cons$edge.length <- rep.int(1, dim(cons$edge)[1])
       }
+      cons <- SortEdges(cons)
       
       r$plottedTree <- cons
       plot(r$plottedTree, tip.color = TipCols()[intersect(cons$tip.label, kept)])
@@ -1735,6 +1777,7 @@ server <- function(input, output, session) {
       if (unitEdge()) {
         LogCodeP("cons$edge.length <- rep.int(1L, nrow(cons$edge))")
       }
+      LogSortEdges("cons")
       LogCommentP("Plot consensus tree")
       LogCodeP(
         "tipCols <- Rogue::ColByStability(trees)[cons$tip.label]",
@@ -2348,10 +2391,11 @@ server <- function(input, output, session) {
         if (unitEdge()) {
           cons$edge.length <- rep.int(1, dim(cons$edge)[1])
         }
+        cons <- SortEdges(cons)
         r$plottedTree <- cons
         plot(cons, edge.width = 2, font = 3, cex = 0.83,
              edge.color = col, tip.color = TipCols()[cons$tip.label])
-        legend("bottomright", paste0("Cluster ", i), pch = 15, col = col,
+        legend("topright", paste0("Cluster ", i), pch = 15, col = col,
                pt.cex = 1.5, bty = "n")
         LabelConcordance()
       }
@@ -2362,11 +2406,12 @@ server <- function(input, output, session) {
       if (unitEdge()) {
         cons$edge.length <- rep.int(1, dim(cons$edge)[1])
       }
+      cons <- SortEdges(cons)
       r$plottedTree <- cons
       plot(cons, edge.width = 2, font = 3, cex = 0.83,
            edge.color = palettes[[1]], tip.color = TipCols()[cons$tip.label])
       LabelConcordance()
-      legend("bottomright", "No clustering", pch = 16, col = palettes[[1]],
+      legend("topright", "No clustering", pch = 16, col = palettes[[1]],
              bty = "n")
     }
   }
@@ -2414,6 +2459,7 @@ server <- function(input, output, session) {
       if (unitEdge()) {
         LogExprP("cons$edge.length <- rep.int(1, nrow(cons$edge))")
       }
+      LogSortEdges("cons")
       LogCodeP("plot(",
               "  cons,",
               "  edge.width = 2,             # Widen lines",
@@ -2451,6 +2497,7 @@ server <- function(input, output, session) {
       if (unitEdge()) {
         LogExprP("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
       }
+      LogSortEdges("cons")
       LogCodeP("plottedTree <- cons # Store for future reference")
       
       LogCodeP("tipCols <- Rogue::ColByStability(trees)[con$tip.label]")
