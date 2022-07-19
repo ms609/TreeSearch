@@ -2486,19 +2486,20 @@ server <- function(input, output, session) {
       LogCommentP("No clustering structure: Plot consensus tree")
       LogCodeP(
         if (length(dropped)) {
-          paste0("cons <- Consensus(trees, p = ", consP(), ")")
-        } else {
           c("cons <- ConsensusWithout(",
             "  trees = trees,",
             paste0("  tip = ", EnC(dropped), ","),
             paste0("  p = ", consP()),
             ")"
           )
+        } else {
+          paste0("cons <- Consensus(trees, p = ", consP(), ")")
         }
       )
       LogUserRoot("cons", dropped = dropped)
       if (unitEdge()) {
-        LogExprP("cons$edge.length <- rep.int(1, dim(cons$edge)[1])")
+        LogCommentP("Set unit edge length", 0)
+        LogCodeP("cons$edge.length <- rep.int(1, nrow(cons$edge))")
       }
       LogSortEdges("cons")
       LogCodeP("plottedTree <- cons # Store for future reference")
