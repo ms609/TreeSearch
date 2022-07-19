@@ -1469,17 +1469,15 @@ server <- function(input, output, session) {
     }
   })
   LogPlottedTree <- function() {
-    LogCodeP(paste0(
-      "plottedTree <- trees[[", whichTree(), "]]",
-      if (r$sortTrees)
-        "plottedTree <- SortTree(plottedTree, order = names(dataset))"
-      ),
+    LogCodeP(
+      paste0("plottedTree <- trees[[", whichTree(), "]]"),
       if (!("tipsRight" %in% input$mapDisplay)) {
         c("# Set uniform edge length",
           "plottedTree$edge.length <- rep_len(2, dim(plottedTree$edge)[1])"
         )
       }
     )
+    LogSortEdges("plottedTree")
   }
   
   Instab <- reactive({
@@ -1539,6 +1537,7 @@ server <- function(input, output, session) {
   }
   LogSortEdges <- function(tr) (
     if (r$sortTrees) {
+      LogCommentP("Rotate nodes, to display clades in order of size", 0)
       LogCodeP(paste0(
         tr, " <- SortTree(", tr, ", order = ", 
         if (HaveData()) {
