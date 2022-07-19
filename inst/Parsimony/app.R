@@ -2320,6 +2320,7 @@ server <- function(input, output, session) {
         
         cons <- ConsensusWithout(r$trees[cl$cluster == i], dropped, p = consP())
         cons <- UserRoot(cons)
+        cons$edge.length <- rep_len(1, dim(cons$edge)[1])
         r$plottedTree <- cons
         plot(cons, edge.width = 2, font = 3, cex = 0.83,
              edge.color = col, tip.color = TipCols()[cons$tip.label])
@@ -2331,6 +2332,7 @@ server <- function(input, output, session) {
       PutTree(r$trees)
       cons <- ConsensusWithout(r$trees, dropped, p = consP())
       cons <- UserRoot(cons)
+      cons$edge.length <- rep_len(1, dim(cons$edge)[1])
       r$plottedTree <- cons
       plot(cons, edge.width = 2, font = 3, cex = 0.83,
            edge.color = palettes[[1]], tip.color = TipCols()[cons$tip.label])
