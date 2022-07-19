@@ -1,0 +1,68 @@
+
+# # # TreeSearch plot log: 2022-07-19 11:25:30 # # #
+# 
+# System: Windows 10 x64 build 19043 - windows x86_64-w64-mingw32
+# - R Under development (unstable) (2022-05-15 r82362 ucrt)
+# - TreeSearch 1.1.2.9000
+# - TreeTools 1.7.2.9000
+# - TreeDist 2.4.0
+# - ape 5.6.2
+# 
+# This log was generated procedurally to facilitate the reproduction of
+# figures obtained during an interactive Shiny session.
+# It is provided without guarantee of completeness or accuracy.
+# In particular, code will not be logged when previously computed values
+# are retrieved from cache.
+# 
+# Before running, check that the script and any data files are in the
+# R working directory, which can be read with getwd() and set with setwd().
+# 
+# Please validate the code before reproducing in a manuscript, reporting
+# any errors at https://github.com/ms609/treesearch/issues or by e-mail to
+# the maintainer.
+# 
+# # # # # #
+
+
+# Load required libraries
+library("TreeTools", quietly = TRUE)
+library("TreeDist")
+library("TreeSearch")
+
+# View recommended citations
+citation("TreeTools")
+citation("TreeDist")
+citation("Quartet")
+citation("TreeSearch")
+citation("Rogue")
+
+# Check working directory
+getwd() # Should match location of data / tree files
+setwd(".") # Replace . with desired/directory to change
+
+# Load data from file
+dataFile <- system.file("datasets/Agnarsson2004.nex", package = "TreeSearch") # Test mode
+dataset <- ReadAsPhyDat(dataFile)
+
+# Load trees from file
+treeFile <- dataFile # Test mode
+trees <- read.nexus(treeFile)
+
+# Set up plotting area
+par(
+  mar = c(0, 0, 0, 0), # Zero margins
+  cex = 0.9            # Smaller font size
+)
+
+# Calculate consensus tree
+cons <- Consensus(trees, p = 0.5)
+
+# Root tree
+cons <- RootTree(cons, "Argiope")
+cons$edge.length <- rep.int(1L, nrow(cons$edge))
+# Rotate nodes, to display clades in order of size
+cons <- SortTree(cons, order = names(dataset))
+
+# Plot consensus tree
+tipCols <- Rogue::ColByStability(trees)[cons$tip.label]
+plot(cons, tip.color = tipCols)

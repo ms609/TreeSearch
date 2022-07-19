@@ -6,7 +6,7 @@
     "dataFile": null,
     "dataSource": "Agnarsson2004",
     "distMeth": "cid",
-    "excludedTip": "Emertonella",
+    "excludedTip": "Dipoena",
     "go": 0,
     "keepTips": 59,
     "mapDisplay": null,
@@ -14,10 +14,10 @@
       "hull",
       "mst"
     ],
-    "neverDrop": null,
+    "neverDrop": "Emertonella",
     "nTree": 23,
-    "outgroup": "Argiope",
-    "plotFormat": "cons",
+    "outgroup": "Thymoites",
+    "plotFormat": "ind",
     "plotSize": 600,
     "relators": null,
     "searchConfig": 0,
@@ -34,7 +34,19 @@
   },
   "output": {
     "branchLegend": {
-      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">17 trees<\/span>",
+      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">23 trees<\/span>",
+      "deps": [
+
+      ]
+    },
+    "charMapLegend": {
+      "html": "<h3>Female genitalia: Epigynal ventral margin<\/h3>\n<ul style=\"list-style: none;\">\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #00bfc6 ;\">0<\/span>\n    <span>Entire<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #ffd46f ;\">1<\/span>\n    <span>With scape<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: grey ;\">?<\/span>\n    <span>Ambiguous<\/span>\n  <\/li>\n<\/ul>",
+      "deps": [
+
+      ]
+    },
+    "charNotes": {
+      "html": "<div id=\"char-description\">\n  <p>Epigynal scapes are widespread in araneoid spiders (see e.g. Scharff &amp; Coddington, 1997: character 28), but to my best knowledge, Anelosimus pulchellus and A. vittatus, along with A. ethicus (pers. observ.), are unique among theridiids in having an araneid-like epigynal scape. Thymoites unimaculatum has a similar ventral scape-like projection (Fig. 85F), here considered putatively homologous, although the homology is rejected on the cladogram.<\/p>\n<\/div>\n<ul class=\"state-notes\"><\/ul>",
       "deps": [
 
       ]
@@ -47,16 +59,16 @@
     },
     "results": "23 trees in memory: 23 sampled with scores 34.7693 to 38.2276 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 6ef5f9b1a06d7fcfcf08e40293b559fdd12d8631]",
+      "src": "[image data sha1: b4ec56a15c373a43cd4d0f51fee7df12896659c2]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -1.22946975170869,
-              "right": 31.9662135444261,
-              "bottom": -1.32,
-              "top": 61.32
+              "left": -1.79511585048085,
+              "right": 46.6730121125022,
+              "bottom": -1.44,
+              "top": 64.44
             },
             "range": {
               "left": 0,

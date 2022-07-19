@@ -16,8 +16,8 @@
     ],
     "neverDrop": "Emertonella",
     "nTree": 23,
-    "outgroup": "Thymoites",
-    "plotFormat": "ind",
+    "outgroup": "Argiope",
+    "plotFormat": "cons",
     "plotSize": 600,
     "relators": null,
     "searchConfig": 0,
@@ -29,24 +29,12 @@
       1,
       23
     ],
-    "whichChar": 7,
+    "whichChar": 1,
     "whichTree": 1
   },
   "output": {
     "branchLegend": {
       "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">23 trees<\/span>",
-      "deps": [
-
-      ]
-    },
-    "charMapLegend": {
-      "html": "<h3>Female genitalia: Cop. duct to spermath<\/h3>\n<ul style=\"list-style: none;\">\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #00bfc6 ;\">0<\/span>\n    <span>Posterior<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #ffd46f ;\">1<\/span>\n    <span>Lat./anterior<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: grey ;\">?<\/span>\n    <span>Ambiguous<\/span>\n  <\/li>\n<\/ul>",
-      "deps": [
-
-      ]
-    },
-    "charNotes": {
-      "html": "<div id=\"char-description\">\n  <p>Most commonly the copulatory ducts enter the spermathecae posteriorly or basally (Fig. 93J), but in a few taxa medially or anteriorly (Fig. 93H).<\/p>\n<\/div>\n<ul class=\"state-notes\"><\/ul>",
       "deps": [
 
       ]
@@ -59,16 +47,16 @@
     },
     "results": "23 trees in memory: 23 sampled with scores 34.7693 to 38.2276 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: b679927b4e4cc921c7f5e437e18647d24eb1b8fc]",
+      "src": "[image data sha1: 5989c56267dec307f02f14283952288bb512931b]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -1.79511585048085,
-              "right": 46.6730121125022,
-              "bottom": -1.44,
-              "top": 64.44
+              "left": -1.29094323929413,
+              "right": 33.5645242216474,
+              "bottom": -1.32,
+              "top": 61.32
             },
             "range": {
               "left": 0,

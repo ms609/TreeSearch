@@ -8,13 +8,13 @@
     "distMeth": "cid",
     "excludedTip": "Dipoena",
     "go": 0,
-    "keepTips": 59,
+    "keepTips": 61,
     "mapDisplay": null,
     "mapLines": [
       "hull",
       "mst"
     ],
-    "neverDrop": "Emertonella",
+    "neverDrop": null,
     "nTree": 23,
     "outgroup": "Argiope",
     "plotFormat": "cons",
@@ -47,7 +47,7 @@
     },
     "results": "23 trees in memory: 23 sampled with scores 34.7693 to 38.2276 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 5989c56267dec307f02f14283952288bb512931b]",
+      "src": "[image data sha1: 3afa6e1c21267263664c01d11bce7132026ffb30]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
@@ -55,8 +55,8 @@
             "domain": {
               "left": -1.29094323929413,
               "right": 33.5645242216474,
-              "bottom": -1.32,
-              "top": 61.32
+              "bottom": -1.4,
+              "top": 63.4
             },
             "range": {
               "left": 0,
