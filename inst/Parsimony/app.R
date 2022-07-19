@@ -2458,6 +2458,7 @@ server <- function(input, output, session) {
         paste0("  p = ", consP()),
         ")"
       )
+      LogUserRoot(dropped = dropped)
       if (unitEdge()) {
         LogExprP("cons$edge.length <- rep.int(1, nrow(cons$edge))")
       }
@@ -2502,7 +2503,7 @@ server <- function(input, output, session) {
       LogSortEdges("cons")
       LogCodeP("plottedTree <- cons # Store for future reference")
       
-      LogCodeP("tipCols <- Rogue::ColByStability(trees)[con$tip.label]")
+      LogCodeP("tipCols <- Rogue::ColByStability(trees)[cons$tip.label]")
       LogCommentP("Plot consensus tree")
       LogCodeP(
         "plot(",

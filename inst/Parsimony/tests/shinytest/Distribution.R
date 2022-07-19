@@ -1,6 +1,8 @@
 app <- ShinyDriver$new("../../", seed = 0, loadTimeout = 2e+05,
                        shinyOptions = list(test.mode = TRUE))
 app$snapshotInit("Distribution")
+# Test downloaded logs with
+# source("inst/parsimony/tests/shinytest/Distribution-current/002.download")
 
 app$setInputs(dataSource = "Sun2018")
 app$setInputs(plotFormat = "clus")
