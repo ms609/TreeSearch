@@ -80,16 +80,7 @@ jobs:
         run: |
           brew install libgit2 xquartz ghostscript
       
-      - name: Set up R dependencies (Windows)
-        if: runner.os == 'Windows'
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          needs: |
-            check
-            coverage
-            
-      - name: Set up R dependencies (Non-Windows)
-        if: runner.os != 'Windows'
+      - name: Set up R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: |
@@ -102,11 +93,3 @@ jobs:
 
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
-
-      - name: Code coverage
-        if: runner.os == 'Windows'
-        run: |
-          unloadNamespace("TreeSearch")
-          covr::package_coverage(quiet = FALSE) # https://github.com/r-lib/covr/issues/252
-          covr::codecov()
-        shell: Rscript {0}
