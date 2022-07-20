@@ -1055,9 +1055,9 @@ server <- function(input, output, session) {
               sliderInput("tbrIter", "TBR depth", min = 1L, max = 20L,
                           value = 1L, step = 1L),
               sliderInput("startIter", "First iteration extra depth", min = 1L,
-                          max = 10L, value = 3L),
+                          max = 10L, value = 3L, pre = "\ud7"),
               sliderInput("finalIter", "Final iteration extra depth", min = 1L,
-                          max = 10L, value = 1L),
+                          max = 10L, value = 1L, pre = "\ud7"),
              ))
       ),
       title = "Tree search settings",
