@@ -30,19 +30,13 @@ on:
       - "**.R[dD]ata"
       - "**.Rpro*"
 
-name: Code coverage
+name: test-coverage
 
 jobs:
-  R-CMD-check:
-    runs-on: ubuntu-20.04
-
-    name: Code coverage
+  test-coverage:
+    runs-on: ubuntu-latest
 
     env:
-      _R_CHECK_CRAN_INCOMING_: true # Seemingly not set by --as-cran
-      _R_CHECK_FORCE_SUGGESTS_: false # CRAN settings
-      R_COMPILE_AND_INSTALL_PACKAGES: 'never'
-      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
@@ -51,6 +45,8 @@ jobs:
 
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
         
       - name: Set up R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
@@ -59,6 +55,5 @@ jobs:
             coverage
 
       - name: Code coverage
-        run: |
-          covr::codecov()
+        run: covr::codecov()
         shell: Rscript {0}
