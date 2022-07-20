@@ -34,7 +34,7 @@ name: Code coverage
 
 jobs:
   R-CMD-check:
-    runs-on: ubuntu
+    runs-on: ubuntu-20.04
 
     name: Code coverage
 
