@@ -55,5 +55,7 @@ jobs:
             coverage
 
       - name: Code coverage
-        run: covr::codecov()
+        run: |
+          covr::package_coverage(quiet = FALSE) # https://github.com/r-lib/covr/issues/252
+          covr::codecov()
         shell: Rscript {0}
