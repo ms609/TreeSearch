@@ -34,7 +34,7 @@ name: Code coverage
 
 jobs:
   R-CMD-check:
-    runs-on: windows-latest
+    runs-on: ubuntu
 
     name: Code coverage
 
@@ -61,7 +61,5 @@ jobs:
       - name: Code coverage
         if: runner.os == 'Windows'
         run: |
-          unloadNamespace("TreeSearch")
-          covr::package_coverage(quiet = FALSE) # https://github.com/r-lib/covr/issues/252
           covr::codecov()
         shell: Rscript {0}
