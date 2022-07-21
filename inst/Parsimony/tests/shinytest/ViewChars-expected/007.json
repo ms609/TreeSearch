@@ -8,13 +8,13 @@
     "distMeth": "cid",
     "excludedTip": "Emertonella",
     "go": 0,
-    "keepTips": 59,
+    "keepNTips": 59,
     "mapDisplay": null,
     "mapLines": [
       "hull",
       "mst"
     ],
-    "neverDrop": null,
+    "neverDrop": "Argiope",
     "nTree": 23,
     "outgroup": "Argiope",
     "plotFormat": "cons",

@@ -8,13 +8,13 @@
     "distMeth": "cid",
     "excludedTip": "Dipoena",
     "go": 0,
-    "keepTips": 61,
+    "keepNTips": 61,
     "mapDisplay": null,
     "mapLines": [
       "hull",
       "mst"
     ],
-    "neverDrop": null,
+    "neverDrop": "Argiope",
     "nTree": 23,
     "outgroup": "Argiope",
     "plotFormat": "cons",

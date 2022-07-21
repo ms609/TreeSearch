@@ -8,7 +8,7 @@
     "distMeth": "cid",
     "excludedTip": "",
     "go": 0,
-    "keepTips": 62,
+    "keepNTips": 62,
     "mapDisplay": null,
     "mapLines": [
       "hull",
