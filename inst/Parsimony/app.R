@@ -247,7 +247,7 @@ ui <- fluidPage(
   useShinyjs(),
   column(3,
     fluidRow(
-      tags$h1("TreeSearch"),
+      tags$h1("TreeSearch", style = "margin-top: 0.4em;"),
       selectInput("dataSource", "Dataset",
                   c("< Load from file >" = "file",
                     "Agnarsson 2004" = "Agnarsson2004",
