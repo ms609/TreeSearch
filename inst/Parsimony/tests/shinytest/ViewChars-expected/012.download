@@ -55,12 +55,13 @@ par(
 )
 
 # Prepare reduced consensus tree
-exclude <- c("Euryopis", "Cerocida")
+exclude <- "Euryopis"
 consTrees <- lapply(trees, DropTip, exclude)
 labels <- setdiff(consTrees[[1]]$tip.label, exclude)
 
 # Colour tip labels according to their original 'instability' (Smith 2022)
-tipCols <- Rogue::ColByStability(trees)[setdiff(labels, "Dipoena")]
+tipCols <- Rogue::ColByStability(trees)
+tipCols <- tipCols[setdiff(labels, "Dipoena")]
 
 # Plot the reduced consensus tree, showing position of Dipoena
 plotted <- RoguePlot(

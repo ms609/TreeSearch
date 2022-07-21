@@ -47,7 +47,7 @@
     },
     "results": "23 trees in memory: 23 sampled with scores 34.7693 to 38.2276 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 196bbc0f3b0b935b153558abea855fb2ebf56bf0]",
+      "src": "[image data sha1: 3856b359c5303adc2a718f20549b4d2700728bd0]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
@@ -55,8 +55,8 @@
             "domain": {
               "left": -1.05712268165494,
               "right": 27.4851897230285,
-              "bottom": -1.32,
-              "top": 61.32
+              "bottom": -1.36,
+              "top": 62.36
             },
             "range": {
               "left": 0,

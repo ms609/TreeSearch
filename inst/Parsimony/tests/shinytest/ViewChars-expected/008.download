@@ -60,7 +60,8 @@ consTrees <- lapply(trees, DropTip, exclude)
 labels <- setdiff(consTrees[[1]]$tip.label, exclude)
 
 # Colour tip labels according to their original 'instability' (Smith 2022)
-tipCols <- Rogue::ColByStability(trees)[setdiff(labels, "Emertonella")]
+tipCols <- Rogue::ColByStability(trees)
+tipCols <- tipCols[setdiff(labels, "Emertonella")]
 
 # Plot the reduced consensus tree, showing position of Emertonella
 plotted <- RoguePlot(

@@ -1740,10 +1740,13 @@ server <- function(input, output, session) {
         "Colour tip labels according to their original 'instability' ",
         "(Smith 2022)")
       )
-      LogCodeP(paste0(
-        "tipCols <- Rogue::ColByStability(trees)[setdiff(labels, ",
-        Enquote(input$excludedTip), ")]"
-      ))
+      LogCodeP(
+        "tipCols <- Rogue::ColByStability(trees)",
+        paste0(
+          "tipCols <- tipCols[setdiff(labels, ",
+          Enquote(input$excludedTip), ")]"
+        )
+      )
       LogCommentP(paste0(
         "Plot the reduced consensus tree, showing position of ",
         gsub("_", " ", input$excludedTip, fixed = TRUE))

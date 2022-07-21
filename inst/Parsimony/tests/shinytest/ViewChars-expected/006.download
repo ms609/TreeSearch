@@ -59,7 +59,8 @@ consTrees <- trees
 labels <- consTrees[[1]]$tip.label
 
 # Colour tip labels according to their original 'instability' (Smith 2022)
-tipCols <- Rogue::ColByStability(trees)[setdiff(labels, "Dipoena")]
+tipCols <- Rogue::ColByStability(trees)
+tipCols <- tipCols[setdiff(labels, "Dipoena")]
 
 # Plot the reduced consensus tree, showing position of Dipoena
 plotted <- RoguePlot(

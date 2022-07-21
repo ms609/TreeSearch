@@ -8,7 +8,7 @@
     "distMeth": "cid",
     "excludedTip": "Paterimitra",
     "go": 0,
-    "keepTips": 49,
+    "keepTips": 47,
     "mapDisplay": null,
     "mapLines": [
       "hull",
@@ -47,16 +47,16 @@
     },
     "results": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: ab8caf5e22c801eb5411c98b772ee42888ebd462]",
+      "src": "[image data sha1: 67aced916c3f10cb076751eae61834b16a5d78a9]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -0.872844967631553,
-              "right": 22.6939691584204,
-              "bottom": -0.92,
-              "top": 50.92
+              "left": -0.729326419196189,
+              "right": 18.9624868991009,
+              "bottom": -0.84,
+              "top": 48.84
             },
             "range": {
               "left": 0,
