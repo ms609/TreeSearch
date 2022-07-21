@@ -137,7 +137,7 @@ test_that("Resample() fails and works", {
   skip_if_not_installed("TreeTools", "1.4.5.9003") # postorder / as.Splits order
   jackTrees <- replicate(nRep, Resample(dataset, NJTree(dataset), verbosity = 0L))
   jackSplits <- as.Splits(unlist(jackTrees, recursive = FALSE))
-  jackSupport <- rowSums(vapply(jackSplits, function(sp) in.Splits(bal, sp),
+  jackSupport <- rowSums(vapply(jackSplits, function(sp) bal %in% sp,
                                 logical(3)))
   
   skip_if_not_installed("TreeTools", "1.6.0.9002") # names
@@ -150,7 +150,7 @@ test_that("Resample() fails and works", {
                                         verbosity = 0))
   #bootSupport <- rowSums(vapply(lapply(bootTrees, `[[`, 1),
   bootSupport <- rowSums(vapply(unlist(bootTrees, recursive = FALSE),
-                                function(tr) in.Splits(bal, as.Splits(tr)),
+                                function(tr) bal %in% as.Splits(tr),
                                 logical(3)))
   # This test could be replaced with a more statistically robust alternative!
   expect_equal(bootSupport, tolerance = 0.2,
