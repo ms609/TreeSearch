@@ -24,3 +24,8 @@ trees <- inapplicable.trees[["Vinther2008"]]
 tips <- c("Lingula", "Halkieria", "Wiwaxia", "Acaenoplax")
 QuartetResolution(trees, tips)
 }
+\seealso{
+Other utility functions: 
+\code{\link{ClusterStrings}()}
+}
+\concept{utility functions}

@@ -28,6 +28,10 @@ ClusterStrings(c(paste0('FirstCluster ', 1:5),
                  paste0('SecondCluster.', 8:12),
                  paste0('AnotherCluster_', letters[1:6])))
 }
+\seealso{
+Other utility functions: 
+\code{\link{QuartetResolution}()}
+}
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})

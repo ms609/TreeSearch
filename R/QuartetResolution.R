@@ -12,6 +12,7 @@
 #' tips <- c("Lingula", "Halkieria", "Wiwaxia", "Acaenoplax")
 #' QuartetResolution(trees, tips)
 #' @importFrom TreeTools as.Splits KeepTip PolarizeSplits
+#' @family utility functions
 #' @export
 QuartetResolution <- function(trees, tips) {
   fours <- as.integer(vapply(
