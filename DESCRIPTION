@@ -1,5 +1,5 @@
 Package: TreeSearch
-Title: Phylogenetic Analysis with Morphological Data
+Title: Phylogenetic Analysis with Discrete Character Data
 Version: 1.1.2.9000
 Authors@R: c(
     person(
