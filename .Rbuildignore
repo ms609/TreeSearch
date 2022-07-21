@@ -30,4 +30,3 @@ vignettes/\.RData
 ^_pkgdown\.yml$
 ^codemeta\.json$
 ^LICENSE$
-^Flow.svg$

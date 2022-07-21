@@ -57,7 +57,7 @@ Launch a graphical user interface by typing `TreeSearch::EasyTrees()` in the R c
 
 For more control over search settings, see [`?MaximizeParsimony()`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
 
-![Flow charts listing common actions facilitated by TreeSearch](Flow.svg)
+![Flow charts listing common actions facilitated by TreeSearch](man/figures/Flow.svg)
 
 # Documentation
 
