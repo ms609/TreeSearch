@@ -428,7 +428,6 @@ ui <- fluidPage(
 
 
 
-X <- expression
 
 Enquote <- function(x, ...) {
   if (mode(x) == "character") {
