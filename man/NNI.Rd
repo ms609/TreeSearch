@@ -70,13 +70,13 @@ All nodes in a tree must be bifurcating; \code{\link[ape:collapse.singles]{ape::
 }
 \section{Functions}{
 \itemize{
-\item \code{NNISwap}: faster version that takes and returns parent and child parameters
+\item \code{NNISwap()}: faster version that takes and returns parent and child parameters
 
-\item \code{RootedNNI}: Perform \acronym{NNI} rearrangement, retaining position of root
+\item \code{RootedNNI()}: Perform \acronym{NNI} rearrangement, retaining position of root
 
-\item \code{RootedNNISwap}: faster version that takes and returns parent and child parameters
+\item \code{RootedNNISwap()}: faster version that takes and returns parent and child parameters
+
 }}
-
 \examples{
 tree <- TreeTools::BalancedTree(8)
 # A random rearrangement

@@ -14,7 +14,7 @@ on:
       - "**.git"
       - "**.json"
       - "**.md"
-      - "**.yml"
+      - "**/**.yml"
       - "!**R-CMD-check.yml"
       - "**.R[dD]ata"
       - "**.Rpro*"
@@ -29,7 +29,7 @@ on:
       - "**.git"
       - "**.json"
       - "**.md"
-      - "**.yml"
+      - "**/**.yml"
       - "!**R-CMD-check.yml"
       - "**.R[dD]ata"
       - "**.Rpro*"
@@ -48,7 +48,8 @@ jobs:
         config:
           - {os: windows-latest, r: 'release'}
           - {os: macOS-latest, r: 'release'}
-          - {os: ubuntu-20.04, r: '3.6', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
+          - {os: ubuntu-20.04, r: '4.1', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"} # Until TreeDist can slough phangorn
+          #- {os: ubuntu-20.04, r: '3.6', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
           - {os: ubuntu-20.04, r: 'release', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
           - {os: ubuntu-20.04, r: 'devel', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
 
@@ -79,16 +80,7 @@ jobs:
         run: |
           brew install libgit2 xquartz ghostscript
       
-      - name: Set up R dependencies (Windows)
-        if: runner.os == 'Windows'
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          needs: |
-            check
-            coverage
-            
-      - name: Set up R dependencies (Non-Windows)
-        if: runner.os != 'Windows'
+      - name: Set up R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: |
@@ -101,9 +93,3 @@ jobs:
 
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
-
-      - name: Code coverage
-        if: runner.os == 'Windows'
-        run: |
-          covr::codecov()
-        shell: Rscript {0}

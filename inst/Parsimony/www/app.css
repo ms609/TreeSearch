@@ -13,6 +13,7 @@ body {
 
 #shiny-notification-panel {
   top: 0;
+  pointer-events: none;
 }
 
 .message {
@@ -104,12 +105,12 @@ li.state-note {
   border-color: #F0F921;
 }
 
-div#plotSizer, div#saveAs {
+div#plotSizer, div#saveAs, div#exportAs {
   float: left;
 }
 
-div#saveAs {
-  padding: 1em;
+div#saveAs, div#exportAs {
+  padding: 0.8em;
 }
 
 label#treeRange-label {

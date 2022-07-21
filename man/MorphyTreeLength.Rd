@@ -53,14 +53,14 @@ For most users, the function \code{\link[=TreeLength]{TreeLength()}} will be mor
 }
 \section{Functions}{
 \itemize{
-\item \code{MorphyLength}: Faster function that requires internal tree
+\item \code{MorphyLength()}: Faster function that requires internal tree
 parameters. Node numbering must increase monotonically away from root.
 
-\item \code{GetMorphyLength}: Fastest function that requires internal tree parameters
+\item \code{GetMorphyLength()}: Fastest function that requires internal tree parameters
 
-\item \code{C_MorphyLength}: Direct call to C function. Use with caution.
+\item \code{C_MorphyLength()}: Direct call to C function. Use with caution.
+
 }}
-
 \seealso{
 PhyDat2Morphy
 
@@ -75,10 +75,6 @@ Other tree scoring:
 \code{\link{MinimumLength}()}
 }
 \author{
-Martin R. Smith
-
-Martin R. Smith
-
 Martin R. Smith
 }
 \concept{tree scoring}

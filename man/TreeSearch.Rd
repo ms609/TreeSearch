@@ -115,9 +115,9 @@ configuring tree search, see the
 }
 \section{Functions}{
 \itemize{
-\item \code{EdgeListSearch}: Tree search from edge lists
-}}
+\item \code{EdgeListSearch()}: Tree search from edge lists
 
+}}
 \examples{
 data('Lobo', package='TreeTools')
 njtree <- TreeTools::NJTree(Lobo.phy)

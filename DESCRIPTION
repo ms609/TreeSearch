@@ -1,6 +1,6 @@
 Package: TreeSearch
-Title: Phylogenetic Analysis with Morphological Data
-Version: 1.1.2
+Title: Phylogenetic Analysis with Discrete Character Data
+Version: 1.1.2.9000
 Authors@R: c(
     person(
       "Martin R.", 'Smith',
@@ -61,7 +61,7 @@ Config/Needs/check:
   callr,
   pkgbuild,
   rcmdcheck,
-Config/Needs/coverage: covr
+Config/Needs/coverage: covr, spelling
 Config/Needs/memcheck: devtools
 Config/Needs/metadata: codemeta
 Config/Needs/revdeps: revdepcheck
@@ -79,5 +79,5 @@ ByteCompile: true
 Encoding: UTF-8
 Language: en-GB
 VignetteBuilder: knitr
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0.9000
 Roxygen: list(markdown = TRUE)

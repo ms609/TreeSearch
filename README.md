@@ -27,6 +27,11 @@ and search approaches can also be defined.
 
 # Installation
 
+The TreeSearch user interface can be run as a stand-alone application without
+installing R.
+[Download](https://github.com/ms609/TreeSearch/releases) for your platform.
+If your preferred platform is not supported, please contact the maintainer.
+
 Full installation instructions, including notes on installing R, are available
 in a [vignette](https://ms609.github.io/TreeSearch/articles/getting-started.html).
 
@@ -46,26 +51,13 @@ remotes::install_github("ms609/TreeSearch")
 library("TreeSearch")
 ```
 
-# Errors reading trees
-
-Some users are reporting an error when loading trees from Nexus files:
-` Error in [<-.multiPhylo: argument "..1" is missing, with no default  `
-
-This arises due to an underlying issue in the "ape" package, which can be fixed by installing a patch:
-
-```r
-remotes::install_github("ms609/ape@patch-3")
-```
-
-(You may first need to exit and re-launch R to be sure that the "ape" package is not in use.)
-
 # Quick start
 
-Launch a graphical user interface (development version only)
-by typing `TreeSearch::EasyTrees()` in the R console.
+Launch a graphical user interface by typing `TreeSearch::EasyTrees()` in the R console.
 
 For more control over search settings, see [`?MaximizeParsimony()`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
 
+![Flow charts listing common actions facilitated by TreeSearch](Flow.svg)
 
 # Documentation
 
