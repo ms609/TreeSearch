@@ -24,15 +24,15 @@
      inkscape:pagecheckerboard="0"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="4.7322621"
-     inkscape:cx="85.477092"
-     inkscape:cy="383.43185"
+     inkscape:zoom="3.230505"
+     inkscape:cx="145.33331"
+     inkscape:cy="130.16541"
      inkscape:window-width="1080"
      inkscape:window-height="1836"
      inkscape:window-x="1072"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
-     inkscape:current-layer="g79702"
+     inkscape:current-layer="layer1"
      inkscape:snap-global="true"
      inkscape:snap-text-baseline="true"
      showguides="false"
@@ -608,7 +608,7 @@
        y="0" />
     <path
        id="rect102261"
-       style="fill:#ffffff;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stop-color:#000000"
+       style="fill:#ffffff;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stop-color:#000000;font-variation-settings:normal;opacity:1;vector-effect:none;fill-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-opacity:1"
        d="M 74.788889,60.677778 H 105.83333 L 103.01111,69.85 H 71.966667 Z"
        sodipodi:nodetypes="ccccc" />
     <text
@@ -627,12 +627,12 @@
        y="0"><tspan
          x="243.77882"
          y="364.05208"
-         id="tspan1641">Nexus / TNT / Excel </tspan><tspan
+         id="tspan1473">Nexus / TNT / Excel </tspan><tspan
          x="273.50808"
          y="374.71877"
-         id="tspan1643">dataset</tspan></text>
+         id="tspan1475">dataset</tspan></text>
     <path
-       style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9);stop-color:#000000"
+       style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9);stop-color:#000000"
        d="m 88.900001,69.85 v 4.233334"
        id="path108185-7"
        sodipodi:nodetypes="cc" />
@@ -641,7 +641,7 @@
        transform="translate(0,12.651112)">
       <path
          id="rect102261-9"
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          d="m 74.083332,122.76666 h 31.044448 c -2.11666,1.46538 -2.11666,4.88461 0,6.35 H 74.083337 c -2.116666,-1.46539 -2.116666,-4.88462 -5e-6,-6.35 z"
          sodipodi:nodetypes="ccccc" />
       <text
@@ -653,7 +653,7 @@
          y="0"><tspan
            x="271.63829"
            y="364.05208"
-           id="tspan1645">Tree set</tspan></text>
+           id="tspan1477">Tree set</tspan></text>
       <path
          d="m 78.10095,126.7856 -0.550437,-0.62347 h 0.211038 c 0.06208,0 0.116992,-0.0345 0.143176,-0.09 0.02618,-0.0554 0.01756,-0.11892 -0.02261,-0.16571 l -0.538311,-0.62623 h 0.199052 c 0.0627,0 0.119195,-0.0369 0.143724,-0.0938 0.02426,-0.056 0.01282,-0.12119 -0.02921,-0.16591 l -0.759757,-0.80943 c -0.04155,-0.0444 -0.119058,-0.0444 -0.160674,0 l -0.759825,0.80943 c -0.04203,0.0447 -0.0534,0.1099 -0.02921,0.16591 0.02452,0.0569 0.0811,0.0938 0.143792,0.0938 h 0.199052 l -0.538382,0.62637 c -0.04003,0.0467 -0.04864,0.11017 -0.02252,0.16564 0.02617,0.0555 0.08103,0.0899 0.143175,0.0899 h 0.211038 l -0.55044,0.62347 c -0.04134,0.0468 -0.05071,0.11086 -0.02452,0.16715 0.02583,0.0555 0.08268,0.0913 0.14476,0.0913 h 0.942958 v 0.16846 l -0.208694,0.33348 c -0.03665,0.0733 0.01667,0.15957 0.09859,0.15957 h 0.66116 c 0.08192,0 0.135248,-0.0863 0.09859,-0.15957 l -0.208695,-0.33348 v -0.16846 h 0.942961 c 0.06208,0 0.118921,-0.0358 0.144757,-0.0913 0.02618,-0.0563 0.01681,-0.12037 -0.02452,-0.16715 z"
          id="use115267"
@@ -662,7 +662,7 @@
     <g
        id="g76235">
       <rect
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          id="rect115293"
          width="31.044443"
          height="10.534437"
@@ -680,9 +680,9 @@
            y="0"><tspan
              x="299.46048"
              y="635.28841"
-             id="tspan1649"><tspan
+             id="tspan1481"><tspan
                style="font-family:Consolas;-inkscape-font-specification:Consolas"
-               id="tspan1647">AdditionTree()</tspan></tspan></text>
+               id="tspan1479">AdditionTree()</tspan></tspan></text>
       </a>
       <text
          xml:space="preserve"
@@ -693,10 +693,10 @@
          y="0"><tspan
            x="239.12256"
            y="364.05208"
-           id="tspan1651">Generate starting tree
+           id="tspan1483">Generate starting tree
 </tspan></text>
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-0);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-0);stop-color:#000000"
          d="M 88.899998,114.95667 V 119.19"
          id="path108185-8"
          sodipodi:nodetypes="cc" />
@@ -706,7 +706,7 @@
       <g
          id="g73399">
         <rect
-           style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+           style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
            id="rect21470"
            width="31.044447"
            height="10.583323"
@@ -721,9 +721,9 @@
            y="0"><tspan
              x="257.29189"
              y="364.05208"
-             id="tspan1655">Load into <tspan
+             id="tspan1487">Load into <tspan
    style="fill:#ffffff"
-   id="tspan1653">|___</tspan></tspan></text>
+   id="tspan1485">|___</tspan></tspan></text>
         <g
            id="g1026"
            transform="matrix(0.00689009,0,0,0.00689009,92.392023,76.179327)"
@@ -742,7 +742,7 @@
              style="fill:url(#gradientFill-2-4);stroke-width:144.472" />
         </g>
         <path
-           style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend);stop-color:#000000"
+           style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend);stop-color:#000000"
            d="m 88.900001,85.372222 v 4.233334"
            id="path108185"
            sodipodi:nodetypes="cc" />
@@ -758,16 +758,16 @@
              y="0"><tspan
                x="291.02556"
                y="635.28841"
-               id="tspan1659"><tspan
+               id="tspan1491"><tspan
    style="font-family:Consolas;-inkscape-font-specification:Consolas"
-   id="tspan1657">TreeTools </tspan>package</tspan></text>
+   id="tspan1489">TreeTools </tspan>package</tspan></text>
         </a>
       </g>
     </g>
     <g
        id="g76508">
       <rect
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          id="rect30905"
          width="31.044443"
          height="10.534434"
@@ -785,9 +785,9 @@
            y="0"><tspan
              x="284.79898"
              y="635.28841"
-             id="tspan1663"><tspan
+             id="tspan1495"><tspan
                style="font-family:Consolas;-inkscape-font-specification:Consolas"
-               id="tspan1661">MaximizeParsimony()</tspan></tspan></text>
+               id="tspan1493">MaximizeParsimony()</tspan></tspan></text>
       </a>
       <text
          xml:space="preserve"
@@ -798,9 +798,9 @@
          y="0"><tspan
            x="248.61477"
            y="364.05208"
-           id="tspan1665">Find optimal trees</tspan></text>
+           id="tspan1497">Find optimal trees</tspan></text>
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-0);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-0);stop-color:#000000"
          d="m 88.900003,130.47888 v 4.23334"
          id="path30907"
          sodipodi:nodetypes="cc" />
@@ -812,12 +812,13 @@
        id="use69120"
        transform="translate(0.17639544,53.8475)"
        width="100%"
-       height="100%" />
+       height="100%"
+       style="stroke:#666666" />
     <g
        id="g88771">
       <path
          id="path45228"
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          d="m 74.083332,90.214656 h 31.044448 c -2.11666,2.138916 -2.11666,7.129746 0,9.268676 H 74.083337 c -2.116666,-2.13893 -2.116666,-7.12976 -5e-6,-9.268676 z"
          sodipodi:nodetypes="ccccc" />
       <text
@@ -829,18 +830,18 @@
          y="0"><tspan
            x="235.00701"
            y="364.05208"
-           id="tspan1669"><tspan
+           id="tspan1501"><tspan
    style="fill:#ffffff"
-   id="tspan1667">___</tspan>Dataset: discrete </tspan><tspan
+   id="tspan1499">___</tspan>Dataset: discrete </tspan><tspan
            x="259.02531"
            y="374.71877"
-           id="tspan1671">characters</tspan></text>
+           id="tspan1503">characters</tspan></text>
       <path
          d="m 78.644247,93.133332 h -3.27579 c -0.208753,0 -0.377977,0.16923 -0.377977,0.37798 v 2.77182 c 0,0.20876 0.169224,0.37798 0.377977,0.37798 h 3.27579 c 0.208757,0 0.377977,-0.16922 0.377977,-0.37798 v -2.77182 c 0,-0.20875 -0.16922,-0.37798 -0.377977,-0.37798 z m -1.88988,3.02381 h -1.25992 v -0.75595 h 1.25992 z m 0,-1.25992 h -1.25992 v -0.75595 h 1.25992 z m 1.76389,1.25992 h -1.25992 v -0.75595 h 1.25992 z m 0,-1.25992 h -1.25992 v -0.75595 h 1.25992 z"
          id="use115269"
          style="fill:#d55e00;stroke-width:0.0863172" />
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-8);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-8);stop-color:#000000"
          d="m 88.900002,99.483332 v 4.233338"
          id="path108185-85"
          sodipodi:nodetypes="cc" />
@@ -849,11 +850,11 @@
        id="g88563">
       <path
          id="path45228-4"
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#e6e6e6;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#e6e6e6;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          d="M 76.200001,49.38889 H 101.6 c 4.23333,0 4.23333,6.35 0,6.35 H 76.200001 c -4.233333,0 -4.233333,-6.35 0,-6.35 z"
          sodipodi:nodetypes="ccccc" />
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9-6);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9-6);stop-color:#000000"
          d="m 88.900001,55.738889 v 4.233334"
          id="path108185-7-7"
          sodipodi:nodetypes="cc" />
@@ -866,16 +867,16 @@
          y="0"><tspan
            x="245.05226"
            y="364.05208"
-           id="tspan1675"><tspan
+           id="tspan1507"><tspan
              style="font-weight:bold"
-             id="tspan1673">Parsimony search</tspan></tspan></text>
+             id="tspan1505">Parsimony search</tspan></tspan></text>
     </g>
     <g
        id="g92582"
        transform="translate(-36.512497,98.954166)">
       <path
          id="path79678"
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          d="m 111.47778,60.677778 h 31.04444 L 139.7,69.85 h -31.04444 z"
          sodipodi:nodetypes="ccccc" />
       <text
@@ -887,12 +888,12 @@
          y="0"><tspan
            x="239.63298"
            y="364.05208"
-           id="tspan1677">Nexus / TNT / Newick </tspan><tspan
+           id="tspan1509">Nexus / TNT / Newick </tspan><tspan
            x="273.51329"
            y="374.71877"
-           id="tspan1679">tree file</tspan></text>
+           id="tspan1511">tree file</tspan></text>
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9);stop-color:#000000"
          d="m 125.58889,69.85 v 4.233334"
          id="path79684"
          sodipodi:nodetypes="cc" />
@@ -903,7 +904,7 @@
       <g
          id="g79702">
         <rect
-           style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+           style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
            id="rect79700"
            width="31.044447"
            height="10.583323"
@@ -918,9 +919,9 @@
            y="0"><tspan
              x="257.29189"
              y="364.05208"
-             id="tspan1683">Load into <tspan
+             id="tspan1515">Load into <tspan
    style="fill:#ffffff"
-   id="tspan1681">|___</tspan></tspan></text>
+   id="tspan1513">|___</tspan></tspan></text>
         <g
            id="g1026-1"
            transform="matrix(0.00689009,0,0,0.00689009,92.392023,76.174965)"
@@ -939,7 +940,7 @@
              style="fill:url(#gradientFill-2-4-6);stroke-width:144.472" />
         </g>
         <path
-           style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend);stop-color:#000000"
+           style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend);stop-color:#000000"
            d="m 88.900001,85.372222 v 4.233334"
            id="path79694"
            sodipodi:nodetypes="cc" />
@@ -955,9 +956,9 @@
              y="0"><tspan
                x="291.02556"
                y="635.28841"
-               id="tspan1687"><tspan
+               id="tspan1519"><tspan
    style="font-family:Consolas;-inkscape-font-specification:Consolas"
-   id="tspan1685">TreeTools </tspan>package</tspan></text>
+   id="tspan1517">TreeTools </tspan>package</tspan></text>
         </a>
       </g>
     </g>
@@ -966,11 +967,11 @@
        transform="translate(0.17639244,98.954166)">
       <path
          id="path88974"
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#e6e6e6;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#e6e6e6;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          d="M 76.200001,49.38889 H 101.6 c 4.23333,0 4.23333,6.35 0,6.35 H 76.200001 c -4.233333,0 -4.233333,-6.35 0,-6.35 z"
          sodipodi:nodetypes="ccccc" />
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9-6);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9-6);stop-color:#000000"
          d="m 88.900001,55.738889 v 4.233334"
          id="path88976"
          sodipodi:nodetypes="cc" />
@@ -983,20 +984,20 @@
          y="0"><tspan
            x="242.39601"
            y="364.05208"
-           id="tspan1691"><tspan
+           id="tspan1523"><tspan
              style="font-weight:bold"
-             id="tspan1689">Load existing trees</tspan></tspan></text>
+             id="tspan1521">Load existing trees</tspan></tspan></text>
     </g>
     <g
        id="g125793"
        transform="translate(42.333334,87.504038)">
       <path
          id="path125785"
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#e6e6e6;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#e6e6e6;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          d="M 76.200001,49.38889 H 101.6 c 4.23333,0 4.23333,6.35 0,6.35 H 76.200001 c -4.233333,0 -4.233333,-6.35 0,-6.35 z"
          sodipodi:nodetypes="ccccc" />
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9-6);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9-6);stop-color:#000000"
          d="m 88.900001,55.738889 v 4.233334"
          id="path125787"
          sodipodi:nodetypes="cc" />
@@ -1009,20 +1010,20 @@
          y="0"><tspan
            x="254.83354"
            y="364.05208"
-           id="tspan1695"><tspan
+           id="tspan1527"><tspan
              style="font-weight:bold"
-             id="tspan1693">Evaluate trees</tspan></tspan></text>
+             id="tspan1525">Evaluate trees</tspan></tspan></text>
     </g>
     <g
        id="g90176"
        transform="translate(42.333333)">
       <path
          id="path90168"
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#e6e6e6;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#e6e6e6;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          d="M 76.200001,49.38889 H 101.6 c 4.23333,0 4.23333,6.35 0,6.35 H 76.200001 c -4.233333,0 -4.233333,-6.35 0,-6.35 z"
          sodipodi:nodetypes="ccccc" />
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9-6);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9-6);stop-color:#000000"
          d="m 88.900001,55.738889 v 4.233334"
          id="path90170"
          sodipodi:nodetypes="cc" />
@@ -1035,15 +1036,15 @@
          y="0"><tspan
            x="249.30228"
            y="364.05208"
-           id="tspan1699"><tspan
+           id="tspan1531"><tspan
              style="font-weight:bold"
-             id="tspan1697">Visualize results</tspan></tspan></text>
+             id="tspan1529">Visualize results</tspan></tspan></text>
     </g>
     <g
        id="g125805"
        transform="translate(42.333336,43.759574)">
       <rect
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          id="rect125801"
          width="31.044443"
          height="10.534437"
@@ -1061,9 +1062,9 @@
            y="0"><tspan
              x="305.32508"
              y="635.28841"
-             id="tspan1703"><tspan
+             id="tspan1535"><tspan
                style="font-family:Consolas;-inkscape-font-specification:Consolas"
-               id="tspan1701">TreeLength()</tspan></tspan></text>
+               id="tspan1533">TreeLength()</tspan></tspan></text>
       </a>
       <text
          xml:space="preserve"
@@ -1074,9 +1075,9 @@
          y="0"><tspan
            x="263.73201"
            y="364.05208"
-           id="tspan1705">Score trees</tspan></text>
+           id="tspan1537">Score trees</tspan></text>
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-0);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-0);stop-color:#000000"
          d="M 88.899998,114.95667 V 119.19"
          id="path125803"
          sodipodi:nodetypes="cc" />
@@ -1085,7 +1086,7 @@
        id="g92922"
        transform="translate(42.333335,-43.744456)">
       <rect
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          id="rect92918"
          width="31.044443"
          height="10.534437"
@@ -1103,9 +1104,9 @@
            y="0"><tspan
              x="293.95786"
              y="635.28841"
-             id="tspan1709"><tspan
+             id="tspan1541"><tspan
    style="font-family:Consolas;-inkscape-font-specification:Consolas"
-   id="tspan1707">TreeDist </tspan>package</tspan></text>
+   id="tspan1539">TreeDist </tspan>package</tspan></text>
       </a>
       <text
          xml:space="preserve"
@@ -1116,9 +1117,9 @@
          y="0"><tspan
            x="242.5809"
            y="364.05208"
-           id="tspan1711">Tree space mapping</tspan></text>
+           id="tspan1543">Tree space mapping</tspan></text>
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-0);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-0);stop-color:#000000"
          d="M 88.899998,114.95667 V 119.19"
          id="path92920"
          sodipodi:nodetypes="cc" />
@@ -1128,7 +1129,7 @@
        transform="translate(5.6444395,42.105299)">
       <path
          id="path125813"
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          d="m 110.06667,142.74751 h 31.04444 v 10.53444 h -31.04444 z" />
       <a
          id="a206874"
@@ -1142,9 +1143,9 @@
            y="0"><tspan
              x="296.52818"
              y="635.28841"
-             id="tspan1715"><tspan
+             id="tspan1547"><tspan
                style="font-family:Consolas;-inkscape-font-specification:Consolas"
-               id="tspan1713">**Concordance()</tspan></tspan></text>
+               id="tspan1545">**Concordance()</tspan></tspan></text>
       </a>
       <text
          xml:space="preserve"
@@ -1155,14 +1156,14 @@
          y="0"><tspan
            x="239.12516"
            y="364.05208"
-           id="tspan1717">Compute split support</tspan></text>
+           id="tspan1549">Compute split support</tspan></text>
     </g>
     <g
        id="g142112"
        transform="translate(5.6444444)">
       <path
          id="rect108307"
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          d="m 110.06667,76.248897 h 31.04444 v 10.53444 h -31.04444 z" />
       <a
          id="a205883"
@@ -1176,9 +1177,9 @@
            y="0"><tspan
              x="293.59588"
              y="635.28841"
-             id="tspan1721"><tspan
+             id="tspan1553"><tspan
                style="font-family:Consolas;-inkscape-font-specification:Consolas"
-               id="tspan1719">TreeDist package</tspan></tspan></text>
+               id="tspan1551">TreeDist package</tspan></tspan></text>
       </a>
       <text
          xml:space="preserve"
@@ -1189,18 +1190,18 @@
          y="0"><tspan
            x="247.1304"
            y="364.05208"
-           id="tspan1723">Cluster consensus</tspan></text>
+           id="tspan1555">Cluster consensus</tspan></text>
     </g>
     <g
        id="g142122"
        transform="translate(42.33333,43.744445)">
       <path
          id="path142114"
-         style="fill:#e6e6e6;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stop-color:#000000"
+         style="fill:#e6e6e6;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stop-color:#000000;font-variation-settings:normal;opacity:1;vector-effect:none;fill-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-opacity:1"
          d="M 76.200001,49.38889 H 101.6 c 4.23333,0 4.23333,6.35 0,6.35 H 76.200001 c -4.233333,0 -4.233333,-6.35 0,-6.35 z"
          sodipodi:nodetypes="ccccc" />
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9-6);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-9-6);stop-color:#000000"
          d="m 88.900001,55.738889 v 4.233334"
          id="path142116"
          sodipodi:nodetypes="cc" />
@@ -1213,15 +1214,15 @@
          y="0"><tspan
            x="253.64865"
            y="364.05208"
-           id="tspan1727"><tspan
+           id="tspan1559"><tspan
              style="font-weight:bold"
-             id="tspan1725">Dataset review</tspan></tspan></text>
+             id="tspan1557">Dataset review</tspan></tspan></text>
     </g>
     <g
        id="g142134"
        transform="translate(42.333332)">
       <rect
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          id="rect142130"
          width="31.044443"
          height="10.534437"
@@ -1239,9 +1240,9 @@
            y="0"><tspan
              x="293.59588"
              y="635.28841"
-             id="tspan1731"><tspan
+             id="tspan1563"><tspan
                style="font-family:Consolas;-inkscape-font-specification:Consolas"
-               id="tspan1729">ConcordantInfo()</tspan></tspan></text>
+               id="tspan1561">ConcordantInfo()</tspan></tspan></text>
       </a>
       <text
          xml:space="preserve"
@@ -1252,9 +1253,9 @@
          y="0"><tspan
            x="255.72417"
            y="364.05208"
-           id="tspan1733">Dataset quality</tspan></text>
+           id="tspan1565">Dataset quality</tspan></text>
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-0);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-0);stop-color:#000000"
          d="M 88.899998,114.95667 V 119.19"
          id="path142132"
          sodipodi:nodetypes="cc" />
@@ -1264,7 +1265,7 @@
        transform="translate(5.644441,43.744445)">
       <path
          id="path142142"
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          d="m 110.06667,76.248897 h 31.04444 v 10.53444 h -31.04444 z" />
       <a
          id="a206211"
@@ -1278,9 +1279,9 @@
            y="0"><tspan
              x="296.52818"
              y="635.28841"
-             id="tspan1737"><tspan
+             id="tspan1569"><tspan
                style="font-family:Consolas;-inkscape-font-specification:Consolas"
-               id="tspan1735">PlotCharacter()</tspan></tspan></text>
+               id="tspan1567">PlotCharacter()</tspan></tspan></text>
       </a>
       <text
          xml:space="preserve"
@@ -1291,14 +1292,14 @@
          y="0"><tspan
            x="240.90902"
            y="364.05208"
-           id="tspan1739">Examine character fit</tspan></text>
+           id="tspan1571">Examine character fit</tspan></text>
     </g>
     <g
        id="g145616"
        transform="translate(42.333336,59.266648)">
       <path
          id="rect145612"
-         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+         style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
          d="m 73.377777,104.42223 h 31.044443 v 16.17888 H 73.377777 Z"
          sodipodi:nodetypes="ccccc" />
       <a
@@ -1313,15 +1314,15 @@
            y="0"><tspan
              x="308.25739"
              y="635.28841"
-             id="tspan1743"><tspan
+             id="tspan1575"><tspan
                style="font-family:Consolas;-inkscape-font-specification:Consolas"
-               id="tspan1741">TreeTools::
+               id="tspan1573">TreeTools::
 </tspan></tspan><tspan
              x="287.73128"
              y="646.30794"
-             id="tspan1747"><tspan
+             id="tspan1579"><tspan
                style="font-family:Consolas;-inkscape-font-specification:Consolas"
-               id="tspan1745">ConsensusWithout()</tspan></tspan></text>
+               id="tspan1577">ConsensusWithout()</tspan></tspan></text>
       </a>
       <text
          xml:space="preserve"
@@ -1332,9 +1333,9 @@
          y="0"><tspan
            x="244.45851"
            y="364.05208"
-           id="tspan1749">Remove rogue taxa</tspan></text>
+           id="tspan1581">Remove rogue taxa</tspan></text>
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-0);stop-color:#000000"
+         style="fill:none;stroke:#666666;stroke-width:0.352777;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#Arrow2Mend-0);stop-color:#000000"
          d="m 88.899998,120.60111 v 4.23333"
          id="path145614"
          sodipodi:nodetypes="cc" />
@@ -1350,9 +1351,9 @@
            y="0"><tspan
              x="287.73128"
              y="635.28841"
-             id="tspan1753"><tspan
+             id="tspan1585"><tspan
                style="font-family:Consolas;-inkscape-font-specification:Consolas"
-               id="tspan1751">Rogue::RogueTaxa()</tspan></tspan></text>
+               id="tspan1583">Rogue::RogueTaxa()</tspan></tspan></text>
       </a>
     </g>
   </g>
