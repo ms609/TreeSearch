@@ -8,7 +8,7 @@
     "distMeth": "cid",
     "excludedTip": "Dipoena",
     "go": 0,
-    "keepNTips": 2,
+    "keepNTips": 61,
     "mapDisplay": null,
     "mapLines": [
       "hull",
@@ -47,16 +47,16 @@
     },
     "results": "23 trees in memory: 23 sampled with scores 34.7693 to 38.2276 (k = 10)",
     "treePlot": {
-      "src": "[image data sha1: 7cebe1e841094b9a0594c1d124f75cff8c2bf49d]",
+      "src": "[image data sha1: 3afa6e1c21267263664c01d11bce7132026ffb30]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -0.114761858495288,
-              "right": 2.98380832087749,
-              "bottom": 0.92,
-              "top": 3.08
+              "left": -1.29094323929413,
+              "right": 33.5645242216474,
+              "bottom": -1.4,
+              "top": 63.4
             },
             "range": {
               "left": 0,

@@ -13,9 +13,10 @@ app$snapshotDownload("savePlotZip")
 app$setInputs(neverDrop = "Argiope") # Avoid resetting root
 app$setInputs(keepNTips = 1)
 app$setInputs(keepNTips = 2)
-#app$snapshot() # Check for correct display of invalid input: no log needed
+app$snapshot() # Check for correct display of invalid input: no log needed
 app$setInputs(keepNTips = 61)
-app$setInputs(outgroup = "Argiope") # Ensure not modified by dropping tips
+app$setInputs(outgroup = "Argiope",
+              timeout_ = 5000) # Ensure not modified by dropping tips
 app$snapshot()
 app$snapshotDownload("savePlotZip")
 app$setInputs(keepNTips = 59) # Check tips kept legend changes to 17
