@@ -1,10 +1,13 @@
-# TreeSearch 1.1.2.9000 (development)
+# TreeSearch 1.2.0
 
-- New function `QuartetResolution()` evaluates how a quartet is resolved in
-  each of a list of trees.
 - 'shiny' GUI improvements:
   - Log tree search commands
   - Output R scripts to reproduce figures
+  - Layout improvements
+  - Misc bug fixes
+
+- New function `QuartetResolution()` evaluates how a quartet is resolved in
+  each of a list of trees.
 
 
 # TreeSearch 1.1.2
