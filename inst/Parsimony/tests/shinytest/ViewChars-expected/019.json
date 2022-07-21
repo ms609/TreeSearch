@@ -8,7 +8,7 @@
     "distMeth": "cid",
     "excludedTip": "Dipoena",
     "go": 0,
-    "keepTips": 59,
+    "keepNTips": 59,
     "mapDisplay": null,
     "mapLines": [
       "hull",
