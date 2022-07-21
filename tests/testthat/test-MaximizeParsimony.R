@@ -1,9 +1,12 @@
 library("TreeTools", quietly = TRUE)
 
 test_that("Profile fails gracefully", {
+  skip_if(interactive()) # Uses CLI instead of warning()
   dataset <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 3, f = 3))
-  expect_warning(PrepareDataProfile(dataset))
-  expect_warning(MaximizeParsimony(dataset, concavity = "pr"))
+  expect_warning(PrepareDataProfile(dataset),
+                 "Can handle max. 2 informative tokens")
+  expect_warning(MaximizeParsimony(dataset, concavity = "pr"),
+                 "Can handle max. 2 informative tokens")
 })
 
 test_that("Constraints work", {
