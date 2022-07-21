@@ -27,6 +27,11 @@ and search approaches can also be defined.
 
 # Installation
 
+The TreeSearch user interface can be run as a stand-alone application without
+installing R.
+[Download](https://github.com/ms609/TreeSearch/releases) for your platform.
+If your preferred platform is not supported, please contact the maintainer.
+
 Full installation instructions, including notes on installing R, are available
 in a [vignette](https://ms609.github.io/TreeSearch/articles/getting-started.html).
 
