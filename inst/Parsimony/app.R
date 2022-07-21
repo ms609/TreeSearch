@@ -477,7 +477,6 @@ server <- function(input, output, session) {
     }
   }
   
-  
   WriteP <- function (txt, file = NULL) {
     if (serverEnv$loggingOn) {
       txt <- paste0(strrep(" ", logIndent), txt)
@@ -1585,14 +1584,15 @@ server <- function(input, output, session) {
     )
   }), r$plottedTree, r$treeHash, r$dataHash, input$concordance)
   
-  LabelConcordance <- reactive({
+  LabelConcordance <- \() {
+    LogMsg("LabelConcordance()")
     if (input$concordance != "none" &&
         !is.null(r$plottedTree)) {
       LabelSplits(r$plottedTree, signif(concordance(), 3),
                   col = SupportColor(concordance()),
                   frame = "none", pos = 3L)
     }
-  })
+  }
   
   LogConcordance <- function(plottedTree = "plottedTree") {
     if (input$concordance != "none") {
