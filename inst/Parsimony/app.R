@@ -264,7 +264,7 @@ ui <- fluidPage(
                  style = "display: block; margin-top: -15px;"),
       actionButton("searchConfig", "Configure", icon = icon("cogs")),
       hidden(actionButton("go", "Search", icon = icon("search"))),
-      downloadButton("saveZip", "Save search log"),
+      downloadButton("saveZip", "Save log"),
       fileInput("treeFile",
                 label = tags$span(
                   tags$i(class="fas fa-solid fa-tree"),
@@ -279,8 +279,10 @@ ui <- fluidPage(
         sliderInput("treeRange", label = "", min = 1L, max = 1L,
                     step = 1L, value = c(1, 1)),
         tags$label("Save chosen trees:", class = "control-label"),
-        downloadButton("saveNwk", "Newick"),
-        downloadButton("saveNex", "Nexus")
+        tags$div(style = "display: inline-block",
+          downloadButton("saveNwk", "Newick"),
+          downloadButton("saveNex", "Nexus")
+        )
       )),
       hidden(
         tags$div(id = "displayConfig",
@@ -1652,7 +1654,6 @@ server <- function(input, output, session) {
     LogMsg("KeptTips()")
     n <- r$keepNTips
     maxN <- length(tipLabels())
-    dput(maxN)
     if (is.na(n) || is.null(n)) {
       n <- maxN
     }
