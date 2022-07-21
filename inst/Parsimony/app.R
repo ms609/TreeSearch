@@ -1650,10 +1650,20 @@ server <- function(input, output, session) {
     LogMsg("KeptTips()")
     n <- r$keepTips
     maxN <- length(tipLabels())
-    if (is.na(n) || is.null(n) || n < 2L || n > maxN) {
+    if (is.na(n) || is.null(n) || n < 2L) {
       n <- maxN
     }
-    c(input$neverDrop, rev(dropSeq())[seq_len(n)])
+    nNeverDrop <- length(input$neverDrop)
+    nFromDropSeq <- n - nNeverDrop
+    
+    # Return:
+    if (nFromDropSeq > length(dropSeq())) {
+      c(input$neverDrop, dropSeq())
+    } else if (nFromDropSeq < 1) {
+      input$neverDrop
+    } else {
+      c(input$neverDrop, rev(dropSeq())[seq_len(nFromDropSeq)])
+    }
   })
   
   DroppedTips <- reactive({
@@ -1901,7 +1911,7 @@ server <- function(input, output, session) {
                       r$keepTips, input$excludedTip,
                       consP(),
                       input$neverDrop, r$outgroup,
-                      input$consP, input$concordance),
+                      input$concordance),
         "ind" = list(PlottedChar(),
                      whichTree(),
                      input$concordance,
@@ -1949,7 +1959,7 @@ server <- function(input, output, session) {
       input$plotFormat,
       
       "clus" = list(r$treeHash, input$plotFormat,
-                    input$keepTips, input$excludedTip,
+                    r$keepTips, input$excludedTip,
                     consP(),
                     input$neverDrop, r$outgroup,
                     input$distMeth,
@@ -1957,7 +1967,7 @@ server <- function(input, output, session) {
                     silThreshold(),
                     input$consP, input$concordance),
       "cons" = list(r$treeHash, input$plotFormat,
-                    input$keepTips, input$excludedTip,
+                    r$keepTips, input$excludedTip,
                     consP(),
                     input$neverDrop, r$outgroup,
                     input$concordance),

@@ -55,7 +55,7 @@ par(
 )
 
 # Prepare reduced consensus tree
-exclude <- "Euryopis"
+exclude <- c("Euryopis", "Cerocida")
 consTrees <- lapply(trees, DropTip, exclude)
 labels <- setdiff(consTrees[[1]]$tip.label, exclude)
 
