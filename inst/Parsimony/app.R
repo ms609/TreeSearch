@@ -1653,7 +1653,7 @@ server <- function(input, output, session) {
     if (is.na(n) || is.null(n) || n < 2L || n > maxN) {
       n <- maxN
     }
-    rev(dropSeq())[seq_len(n)]
+    c(input$neverDrop, rev(dropSeq())[seq_len(n)])
   })
   
   DroppedTips <- reactive({
