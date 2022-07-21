@@ -1514,9 +1514,11 @@ server <- function(input, output, session) {
       ))
       withProgress(
         message = "Identifying rogues", value = 0.99,
-        Rogue::QuickRogue(r$trees, neverDrop = input$neverDrop,
+        rogues <- Rogue::QuickRogue(r$trees, neverDrop = input$neverDrop,
                           fullSeq = TRUE, p = consP())
       )
+      # TODO delete once Rogue 2.1.2 released -- return QuickRogue above.
+      rogues[!rogues$taxon %in% input$neverDrop, ]
     } else {
       data.frame(num = 0, taxNum = NA_integer_, taxon = NA_character_,
                  rawImprovement = NA_real_, IC = 0)
