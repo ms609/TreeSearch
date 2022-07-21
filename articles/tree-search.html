@@ -41,7 +41,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.0</span>
       </span>
     </div>
 
@@ -107,7 +107,7 @@
       <h1 data-toc-skip>Getting started: Simple tree searches</h1>
                         <h4 data-toc-skip class="author">Martin R. Smith</h4>
             
-            <h4 data-toc-skip class="date">2022-07-11</h4>
+            <h4 data-toc-skip class="date">2022-07-21</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/tree-search.Rmd" class="external-link"><code>vignettes/tree-search.Rmd</code></a></small>
       <div class="hidden name"><code>tree-search.Rmd</code></div>
@@ -166,8 +166,8 @@
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">firstHit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">bestTrees</span>, <span class="st">"firstHit"</span><span class="op">)</span></span>
 <span><span class="va">firstHit</span></span></code></pre></div>
-<pre><code><span><span class="co">##   seed  start ratch1 ratch2 ratch3 ratch4 ratch5 ratch6  final </span></span>
-<span><span class="co">##      0     27      0      0     15      2      6      0      2</span></span></code></pre>
+<pre><code><span><span class="co">##   seed  start ratch1 ratch2 ratch3 ratch4 ratch5 ratch6 ratch7  final </span></span>
+<span><span class="co">##      0     27      0      0     15      2      6      0      1      0</span></span></code></pre>
 <p>Here, we can see that many of the earliest ratchet iterations were finding optimal trees that had not previously been visited. Later iterations found progressively fewer new trees, suggesting that the search is likely to have been effective.</p>
 <p>Advanced users might wish to visualize the progress of tree search by mapping tree space:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -376,7 +376,7 @@ Vinther, J., Van Roy, P., &amp; Briggs, D. E. G. (2008). <span class="nocase">Ma
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer>

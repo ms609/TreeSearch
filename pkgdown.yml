@@ -1,5 +1,5 @@
 pandoc: 2.14.2
-pkgdown: 2.0.5
+pkgdown: 2.0.6
 pkgdown_sha: ~
 articles:
   custom: custom.html
@@ -7,7 +7,7 @@ articles:
   profile-scores: profile-scores.html
   profile: profile.html
   tree-search: tree-search.html
-last_built: 2022-07-11T07:36Z
+last_built: 2022-07-21T16:08Z
 urls:
   reference: https://ms609.github.io/TreeSearch/reference
   article: https://ms609.github.io/TreeSearch/articles
