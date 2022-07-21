@@ -8,7 +8,7 @@
     "distMeth": "pid",
     "excludedTip": "Paterimitra",
     "go": 0,
-    "keepTips": 47,
+    "keepNTips": 47,
     "mapDisplay": null,
     "mapLines": null,
     "neverDrop": null,

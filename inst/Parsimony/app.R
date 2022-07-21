@@ -350,8 +350,8 @@ ui <- fluidPage(
         tags$div(style = "float: right; width: 200px; margin-left: 2em;",
           sliderInput("consP", "Majority:", value = 1,
                       min = 0.5, max = 1, width = 200),
-          numericInput("keepTips", "Tips to show:", value = 0L,
-                       min = 2L, max = 2L, step = 1L, width = 200),
+          numericInput("keepNTips", "Tips to show:", value = 0L,
+                       min = 3L, max = 2L, step = 1L, width = 200),
           selectizeInput("neverDrop", "Never drop:", multiple = TRUE,
                          choices = c())
                  ),
@@ -937,18 +937,18 @@ server <- function(input, output, session) {
     DisplayTreeScores()
     
     if (AnyTrees()) {
-      for (elem in c("keepTips", "neverDrop")) {
+      for (elem in c("keepNTips", "neverDrop")) {
         showElement(elem, anim = TRUE)
       }
     } else {
-      for (elem in c("keepTips", "neverDrop")) {
+      for (elem in c("keepNTips", "neverDrop")) {
         hideElement(elem)
       }
     }
     
     updateSliderInput(session, "whichTree", min = 1L,
                       max = length(r$trees), value = 1L)
-    UpdateKeepTipsMaximum() # Updates Rogues()
+    UpdateKeepNTipsRange() # Updates Rogues()
     UpdateDroppedTaxaDisplay()
     if (maxProjDim() > 0) {
       updateSliderInput(inputId = "spaceDim", max = max(1L, maxProjDim()),
@@ -1206,16 +1206,17 @@ server <- function(input, output, session) {
     }
   })
   
-  UpdateKeepTipsMaximum <- reactive({
+  UpdateKeepNTipsRange <- reactive({
     if (AnyTrees() && "consConfig" %in% r$visibleConfigs) {
       nTip <- TipsInTree()
-      LogMsg("UpdateKeepTipsMaximum(", input$keepTips, " -> ", nTip, ")")
-      r$keepTips <- nNonRogues()
-      if (r$keepTips != input$keepTips) {
-        r$oldKeepTips <- input$keepTips
+      LogMsg("UpdateKeepNTipsRange(", input$keepNTips, " -> ", nTip, ")")
+      r$keepNTips <- nNonRogues()
+      if (r$keepNTips != input$keepNTips) {
+        r$oldkeepNTips <- input$keepNTips
       }
-      updateNumericInput(inputId = "keepTips",
+      updateNumericInput(inputId = "keepNTips",
                          label = paste0("Tips to show (/", nTip, "):"),
+                         min = max(3L, length(input$neverDrop)),
                          max = nTip,
                          value = nNonRogues())
     }
@@ -1564,7 +1565,7 @@ server <- function(input, output, session) {
   observeEvent(consP(), {
     if (AnyTrees()) {
       LogMsg("Observed consP()")
-      UpdateKeepTipsMaximum()
+      UpdateKeepNTipsRange()
       UpdateDroppedTaxaDisplay()
       r$concordance <- list()
     }
@@ -1615,14 +1616,15 @@ server <- function(input, output, session) {
     }
   }
   
-  observeEvent(input$keepTips, {
-    if (!is.null(r$oldKeepTips)) {
-      if (!identical(input$keepTips, r$oldKeepTips)) {
-        r$oldKeepTips <- NULL
+  observeEvent(input$keepNTips, {
+    if (!is.null(r$oldkeepNTips)) {
+      if (!identical(input$keepNTips, r$oldkeepNTips)) {
+        r$oldkeepNTips <- NULL
       }
     } else {
-      LogMsg("Observed input$keepTips -> ", EnC(input$keepTips))
-      r$keepTips <- min(input$keepTips, TipsInTree())
+      LogMsg("Observed input$keepNTips -> ", EnC(input$keepNTips))
+      r$keepNTips <- max(length(input$neverDrop), 3L,
+                         min(input$keepNTips, TipsInTree()))
       UpdateOutgroupInput()
       UpdateDroppedTaxaDisplay()
     }
@@ -1630,6 +1632,7 @@ server <- function(input, output, session) {
   
   observeEvent(input$neverDrop, {
     LogMsg("Observed input$neverDrop -> ", EnC(input$neverDrop))
+    UpdateKeepNTipsRange()
     UpdateOutgroupInput()
     UpdateDroppedTaxaDisplay()
   }, ignoreInit = TRUE)
@@ -1647,19 +1650,24 @@ server <- function(input, output, session) {
   
   KeptTips <- reactive({
     LogMsg("KeptTips()")
-    n <- r$keepTips
+    n <- r$keepNTips
     maxN <- length(tipLabels())
-    if (is.na(n) || is.null(n) || n < 2L) {
+    dput(maxN)
+    if (is.na(n) || is.null(n)) {
       n <- maxN
     }
+    if (n < 3L) {
+      n <- 3L 
+    }
     nNeverDrop <- length(input$neverDrop)
+    if (n < nNeverDrop) {
+      n <- nNeverDrop
+    }
     nFromDropSeq <- n - nNeverDrop
     
     # Return:
     if (nFromDropSeq > length(dropSeq())) {
       c(input$neverDrop, dropSeq())
-    } else if (nFromDropSeq < 1) {
-      input$neverDrop
     } else {
       c(input$neverDrop, rev(dropSeq())[seq_len(nFromDropSeq)])
     }
@@ -1899,7 +1907,7 @@ server <- function(input, output, session) {
         input$plotFormat,
         
         "clus" = list(r$treeHash, input$plotFormat,
-                      r$keepTips, input$excludedTip,
+                      r$keepNTips, input$excludedTip,
                       consP(),
                       input$neverDrop, r$outgroup,
                       input$distMeth,
@@ -1907,7 +1915,7 @@ server <- function(input, output, session) {
                       silThreshold(),
                       input$consP, input$concordance),
         "cons" = list(r$treeHash, input$plotFormat,
-                      r$keepTips, input$excludedTip,
+                      r$keepNTips, input$excludedTip,
                       consP(),
                       input$neverDrop, r$outgroup,
                       input$concordance),
@@ -1958,7 +1966,7 @@ server <- function(input, output, session) {
       input$plotFormat,
       
       "clus" = list(r$treeHash, input$plotFormat,
-                    r$keepTips, input$excludedTip,
+                    r$keepNTips, input$excludedTip,
                     consP(),
                     input$neverDrop, r$outgroup,
                     input$distMeth,
@@ -1966,7 +1974,7 @@ server <- function(input, output, session) {
                     silThreshold(),
                     input$consP, input$concordance),
       "cons" = list(r$treeHash, input$plotFormat,
-                    r$keepTips, input$excludedTip,
+                    r$keepNTips, input$excludedTip,
                     consP(),
                     input$neverDrop, r$outgroup,
                     input$concordance),
@@ -2387,7 +2395,7 @@ server <- function(input, output, session) {
     
     cl <- clusterings()
     
-    kept <- rev(dropSeq())[seq_len(input$keepTips)]
+    kept <- KeptTips()
     dropped <- if (length(kept) > 1) {
       setdiff(TipLabels(r$trees[[1]]), kept)
     } else {
@@ -2442,7 +2450,7 @@ server <- function(input, output, session) {
     cl <- clusterings()
     LogClusterings()
     
-    kept <- rev(dropSeq())[seq_len(input$keepTips)]
+    kept <- KeptTips()
     dropped <- if (length(kept) > 1) {
       setdiff(TipLabels(r$trees[[1]]), kept)
     } else {

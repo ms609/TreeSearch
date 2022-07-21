@@ -8,7 +8,7 @@
     "distMeth": "cid",
     "excludedTip": "Paterimitra",
     "go": 0,
-    "keepTips": 49,
+    "keepNTips": 49,
     "mapDisplay": null,
     "mapLines": [
       "hull",
