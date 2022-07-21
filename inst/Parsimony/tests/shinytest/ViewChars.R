@@ -10,14 +10,21 @@ app$snapshotDownload("savePlotZip")
 app$setInputs(consP = 0.5)
 app$snapshot()
 app$snapshotDownload("savePlotZip")
-app$setInputs(keepTips = 61)
+app$setInputs(neverDrop = "Argiope") # Avoid resetting root
+app$setInputs(keepNTips = 1)
+app$setInputs(keepNTips = 2)
+#app$snapshot() # Check for correct display of invalid input: no log needed
+app$setInputs(keepNTips = 61)
+app$setInputs(outgroup = "Argiope") # Ensure not modified by dropping tips
 app$snapshot()
 app$snapshotDownload("savePlotZip")
-app$setInputs(keepTips = 59) # Check tips kept legend changes to 17
+app$setInputs(keepNTips = 59) # Check tips kept legend changes to 17
 app$setInputs(excludedTip = "Emertonella", timeout_ = 2e05)
 app$snapshot()
 app$snapshotDownload("savePlotZip")
-app$setInputs(neverDrop = "Emertonella")
+app$setInputs(neverDrop = "Emertonella") 
+# QuickRogue triggered; keepNTips will change to 61
+app$setInputs(keepNTips = 59)
 app$snapshot()
 app$snapshotDownload("savePlotZip")
 app$setInputs(outgroup = character(0))
