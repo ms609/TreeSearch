@@ -107,7 +107,7 @@
       <h1 data-toc-skip>Tree Search with Profile Parsimony</h1>
                         <h4 data-toc-skip class="author">Martin R. Smith</h4>
             
-            <h4 data-toc-skip class="date">2022-07-21</h4>
+            <h4 data-toc-skip class="date">2022-07-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/profile.Rmd" class="external-link"><code>vignettes/profile.Rmd</code></a></small>
       <div class="hidden name"><code>profile.Rmd</code></div>
@@ -130,11 +130,11 @@
 -->
 <p>Once installed, load the inapplicable package into R using</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">'TreeSearch'</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span></span></code></pre></div>
 <p>In order to reproduce the random elements of this document, set a random seed:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set a random seed so that random functions in this document are reproducible</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">RNGversion</a></span><span class="op">(</span><span class="st">'3.5.0'</span><span class="op">)</span><span class="op">)</span> <span class="co"># Until we can require R3.6.0</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">RNGversion</a></span><span class="op">(</span><span class="st">"3.5.0"</span><span class="op">)</span><span class="op">)</span> <span class="co"># Until we can require R3.6.0</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">888</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -146,8 +146,8 @@
 <span><span class="va">myMatrix</span> <span class="op">&lt;-</span> <span class="va">congreveLamsdellMatrices</span><span class="op">[[</span><span class="fl">10</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <p>Unless a starting tree is provided, tree search will from a random addition tree:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">additionTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/AdditionTree.html">AdditionTree</a></span><span class="op">(</span><span class="va">myMatrix</span>, concavity <span class="op">=</span> <span class="st">'profile'</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">additionTree</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">additionTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/AdditionTree.html">AdditionTree</a></span><span class="op">(</span><span class="va">myMatrix</span>, concavity <span class="op">=</span> <span class="st">"profile"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">additionTree</span>, <span class="va">myMatrix</span>, <span class="st">"profile"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 552.6187</span></span></code></pre>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
@@ -156,19 +156,19 @@
 <p>We could alternatively use a random or neighbour-joining tree:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomTree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">RandomTree</a></span><span class="op">(</span><span class="va">myMatrix</span>, root <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">randomTree</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">randomTree</span>, <span class="va">myMatrix</span>, <span class="st">"profile"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 796.1884</span></span></code></pre>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">njTree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">myMatrix</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">njTree</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">njTree</span>, <span class="va">myMatrix</span>, <span class="st">"profile"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 540.2259</span></span></code></pre>
 <p>We search for trees with a better score using TBR rearrangements and the parsimony ratchet <span class="citation">(Nixon, 1999)</span>:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">betterTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">myMatrix</span>, <span class="va">additionTree</span>, concavity <span class="op">=</span> <span class="st">'profile'</span>,</span>
+<code class="sourceCode R"><span><span class="va">betterTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">myMatrix</span>, <span class="va">additionTree</span>, concavity <span class="op">=</span> <span class="st">"profile"</span>,</span>
 <span>                                 ratchIter <span class="op">=</span> <span class="fl">3</span>, tbrIter <span class="op">=</span> <span class="fl">3</span>, maxHits <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></code></pre></div>
 <p>We’ve used very low values of <code>ratchIter</code>, <code>tbrIter</code> and <code>maxHits</code> for a rapid run, so this is not necessarily a thorough enough search to find a globally optimal tree. Nevertheless, let’s see the resultant tree, and its score:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">betterTrees</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">betterTrees</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">myMatrix</span>, <span class="st">"profile"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 512.1181</span></span></code></pre>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
@@ -185,11 +185,11 @@
 <code class="sourceCode R"><span><span class="va">suboptimals</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">myMatrix</span>, <span class="va">betterTrees</span>, tolerance <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>                                 ratchIter <span class="op">=</span> <span class="fl">2</span>, tbrIter <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>                                 maxHits <span class="op">=</span> <span class="fl">25</span>,</span>
-<span>                                 concavity <span class="op">=</span> <span class="st">'profile'</span><span class="op">)</span></span></code></pre></div>
+<span>                                 concavity <span class="op">=</span> <span class="st">"profile"</span><span class="op">)</span></span></code></pre></div>
 <p>The consensus of these slightly suboptimal trees provides a less resolved, but typically more reliable, summary of the signal with the phylogenetic dataset <span class="citation">(Smith, 2019)</span>:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">suboptimals</span>, <span class="va">myMatrix</span>, <span class="st">'profile'</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">suboptimals</span>, <span class="va">myMatrix</span>, <span class="st">"profile"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## 512.118 513.229 513.897 513.966 514.739 514.849 </span></span>
 <span><span class="co">##       2       1       1       3       1       1</span></span></code></pre>
