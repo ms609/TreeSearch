@@ -139,8 +139,12 @@ test_that("Resample() fails and works", {
   
   jackTrees <- replicate(nRep, Resample(dataset, NJTree(dataset), verbosity = 0L))
   jackSplits <- as.Splits(unlist(jackTrees, recursive = FALSE))
-  jackSupport <- rowSums(vapply(jackSplits, function(sp) bal %in% sp,
-                                logical(3)))
+  jackSupport <- rowSums(
+    # TODO replace :::.in.Splits with exported %in%
+    # %in% works when testing file but not entire package
+    # See https://github.com/r-lib/testthat/issues/1661
+    vapply(jackSplits, function(sp) TreeTools:::.in.Splits(bal, sp), logical(3))
+  )
   
   # This test could be replaced with a more statistically robust alternative!
   expect_equal(jackSupport, tolerance = 0.2,
@@ -150,9 +154,14 @@ test_that("Resample() fails and works", {
   bootTrees <- replicate(nRep, Resample(dataset, method = "bootstrap",
                                         verbosity = 0))
   #bootSupport <- rowSums(vapply(lapply(bootTrees, `[[`, 1),
-  bootSupport <- rowSums(vapply(unlist(bootTrees, recursive = FALSE),
-                                function(tr) bal %in% as.Splits(tr),
-                                logical(3)))
+  bootSupport <- rowSums(vapply(
+    unlist(bootTrees, recursive = FALSE),
+    # TODO replace :::.in.Splits with exported %in%
+    # %in% works when testing file but not entire package
+    # See https://github.com/r-lib/testthat/issues/1661
+    function(tr) TreeTools:::.in.Splits(bal, as.Splits(tr)),
+    logical(3)
+  ))
   # This test could be replaced with a more statistically robust alternative!
   expect_equal(bootSupport, tolerance = 0.2,
                c("8" = 1/2, "9" = 1, "10" = 1/2, "11" = 0)[names(bal)] * 
