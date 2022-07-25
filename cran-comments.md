@@ -4,7 +4,7 @@
 
 * [Github Actions](https://github.com/ms609/TreeSearch/actions):
   - Ubuntu 20.04
-    - R 3.6.3
+    - R 4.1
     - R release (tests, examples & vignettes run with valgrind & ASan)
     - R devel
   - Mac OS X 10.15.7, R release

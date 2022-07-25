@@ -1,9 +1,9 @@
 # TreeSearch 1.2.0
 
 - 'shiny' GUI improvements:
-  - Log tree search commands
-  - Output R scripts to reproduce figures
-  - Layout improvements
+  - Export log of tree search commands
+  - Export R scripts to reproduce figures
+  - Simplify layout
   - Misc bug fixes
 
 - New function `QuartetResolution()` evaluates how a quartet is resolved in
