@@ -35,14 +35,14 @@ the package and getting up and running.
 
 Once installed, load the inapplicable package into R using
 ```{r Load-library, message=FALSE}
-library('TreeSearch')
+library("TreeSearch")
 ```
 
 In order to reproduce the random elements of this document, set a random seed:
 
 ```{R RNG-version}
 # Set a random seed so that random functions in this document are reproducible
-suppressWarnings(RNGversion('3.5.0')) # Until we can require R3.6.0
+suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
 set.seed(888)
 ```
 
@@ -64,8 +64,8 @@ Unless a starting tree is provided, tree search will from a random addition
 tree:
 
 ```{r Addition tree}
-additionTree <- AdditionTree(myMatrix, concavity = 'profile')
-TreeLength(additionTree, myMatrix, 'profile')
+additionTree <- AdditionTree(myMatrix, concavity = "profile")
+TreeLength(additionTree, myMatrix, "profile")
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(additionTree)
 ```
@@ -74,16 +74,16 @@ We could alternatively use a random or neighbour-joining tree:
 
 ```{r Random tree}
 randomTree <- TreeTools::RandomTree(myMatrix, root = TRUE)
-TreeLength(randomTree, myMatrix, 'profile')
+TreeLength(randomTree, myMatrix, "profile")
 njTree <- TreeTools::NJTree(myMatrix)
-TreeLength(njTree, myMatrix, 'profile')
+TreeLength(njTree, myMatrix, "profile")
 ```
 
 We search for trees with a better score using TBR rearrangements and the 
 parsimony ratchet [@Nixon1999]:
 
 ```{R Starting score, message = FALSE}
-betterTrees <- MaximizeParsimony(myMatrix, additionTree, concavity = 'profile',
+betterTrees <- MaximizeParsimony(myMatrix, additionTree, concavity = "profile",
                                  ratchIter = 3, tbrIter = 3, maxHits = 8)
 ```
 
@@ -93,7 +93,7 @@ optimal tree.
 Nevertheless, let's see the resultant tree, and its score:
 
 ```{r Ratchet-search-results}
-TreeLength(betterTrees[[1]], myMatrix, 'profile')
+TreeLength(betterTrees[[1]], myMatrix, "profile")
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(ape::consensus(betterTrees))
 ```
@@ -117,7 +117,7 @@ In a serious study, you would want to sample many more than the 3 Ratchet hits (
 suboptimals <- MaximizeParsimony(myMatrix, betterTrees, tolerance = 3,
                                  ratchIter = 2, tbrIter = 3,
                                  maxHits = 25,
-                                 concavity = 'profile')
+                                 concavity = "profile")
 ```
 
 The consensus of these slightly suboptimal trees provides a less resolved, but
@@ -126,7 +126,7 @@ typically more reliable, summary of the signal with the phylogenetic dataset
 
 ```{r Plot suboptimal consensus}
 par(mar = rep(0.25, 4), cex = 0.75)
-table(signif(TreeLength(suboptimals, myMatrix, 'profile')))
+table(signif(TreeLength(suboptimals, myMatrix, "profile")))
 plot(ape::consensus(suboptimals))
 ```
 
