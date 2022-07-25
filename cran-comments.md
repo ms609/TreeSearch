@@ -16,6 +16,9 @@
 ## R CMD check results
 There were no ERRORs or WARNINGs or (relevant) NOTEs.
 
+Note that the "DOI not found" error is a publisher issue: the DOI provided
+is as stated at https://academic.oup.com/sysbio/article/50/3/331/1661220.
+
 
 ## Downstream dependencies
 
