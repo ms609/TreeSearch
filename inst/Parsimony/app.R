@@ -202,11 +202,13 @@ Smith2020 <- Reference(
   doi = "10.1093/bioinformatics/btaa614")
 SmithSpace <- Reference(
   "Smith, M.R.", "2022b", "Robust analysis of phylogenetic tree space",
-  "Systematic Biology", pages = "syab100", doi = "10.1093/sysbio/syab100")
+  "Systematic Biology", 71, pages = c("1255", "1270"),
+  doi = "10.1093/sysbio/syab100")
 SmithRogue <- Reference(
   "Smith, M.R.", "2022a",
   "Using information theory to detect rogue taxa and improve consensus trees",
-  "Systematic Biology", pages = "syab099", doi = "10.1093/sysbio/syab099")
+  "Systematic Biology", 71, pages = c("1088", "1094"),
+  doi = "10.1093/sysbio/syab099")
 Stockham2002 <- Reference(
   authors = c("Stockham, C.", "Wang, L.-S.", "Warnow, T."), 2002,
   "Statistically based postprocessing of phylogenetic analysis by clustering",

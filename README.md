@@ -110,10 +110,10 @@ Smith, M. R. (2021).
 
 Smith, M. R. (2022a).
   Using information theory to detect rogue taxa and improve phylogenetic trees.
-  Systematic Biology, syab099.
+  Systematic Biology, 71(5),  1088–1094.
   doi: [10.1093/sysbio/syab099](https://dx.doi.org/10.1093/sysbio/syab099)
 
 Smith, M. R. (2022b).
   Robust analysis of phylogenetic tree space.
-  Systematic Biology, syab100.
+  Systematic Biology, 71(5), 1255–1270.
   doi: [10.1093/sysbio/syab100](https://dx.doi.org/10.1093/sysbio/syab100)
