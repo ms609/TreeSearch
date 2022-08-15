@@ -64,6 +64,7 @@ For more control over search settings, see [`?MaximizeParsimony()`](https://ms60
 - [Package functions](https://ms609.github.io/TreeSearch/reference) reference manual
 - [Getting started](https://ms609.github.io/TreeSearch/articles/getting-started.html)
 - [Using the GUI](https://ms609.github.io/TreeSearch/articles/tree-search.html)
+- [Analysing tree spaces](https://ms609.github.io/TreeSearch/articles/tree-space.html)
 - [Loading phylogenetic data into R](https://ms609.github.io/TreeTools/articles/load-data.html)
 - [Parsimony search with inapplicable data](https://ms609.github.io/TreeSearch/articles/tree-search.html)
 
