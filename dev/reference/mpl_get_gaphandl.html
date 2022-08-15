@@ -23,7 +23,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.1.1.9000</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.2.0.9000</span>
       </span>
     </div>
 
@@ -37,20 +37,27 @@
      
     <span class="caret"></span>
   </a>
-  <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
-    </li>
+  <ul class="dropdown-menu" role="menu"><li class="divider">
+    <li class="dropdown-header">Getting started</li>
     <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
+      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
+    </li>
+    <li>
+      <a href="../articles/tree-space.html">Getting started: Exploring tree space</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">Advanced use</li>
+    <li>
       <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
-      <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+      <a href="../articles/profile.html">Tree search with Profile parsimony</a>
     </li>
     <li>
-      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
+      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
     </li>
   </ul></li>
 <li>
@@ -86,16 +93,20 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">mpl_get_gaphandl</span><span class="op">(</span><span class="va">morphyobj</span><span class="op">)</span>
-
-<span class="fu">mpl_set_gaphandl</span><span class="op">(</span><span class="va">handl</span>, <span class="va">morphyobj</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mpl_get_gaphandl</span><span class="op">(</span><span class="va">morphyobj</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">mpl_set_gaphandl</span><span class="op">(</span><span class="va">handl</span>, <span class="va">morphyobj</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="value">
     <h2>Value</h2>
-    <p><code>mpl_get_gaphandl()</code> returns an integer corresponding to the gap
-handling approach.
-<code>mpl_set_gaphandl()</code> returns a Morphy error code.</p>
+    
+
+<p><code>mpl_get_gaphandl()</code> returns an integer corresponding to the gap
+handling approach.</p>
+
+
+<p><code>mpl_set_gaphandl()</code> returns a Morphy error code.</p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
@@ -144,7 +155,7 @@ handling approach.
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer></div>

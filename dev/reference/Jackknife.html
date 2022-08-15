@@ -24,7 +24,7 @@ characters."><meta name="robots" content="noindex"><!-- mathjax --><script src="
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.1.1.9000</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.2.0.9000</span>
       </span>
     </div>
 
@@ -38,20 +38,27 @@ characters."><meta name="robots" content="noindex"><!-- mathjax --><script src="
      
     <span class="caret"></span>
   </a>
-  <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
-    </li>
+  <ul class="dropdown-menu" role="menu"><li class="divider">
+    <li class="dropdown-header">Getting started</li>
     <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
+      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
+    </li>
+    <li>
+      <a href="../articles/tree-space.html">Getting started: Exploring tree space</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">Advanced use</li>
+    <li>
       <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
-      <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+      <a href="../articles/profile.html">Tree search with Profile parsimony</a>
     </li>
     <li>
-      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
+      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
     </li>
   </ul></li>
 <li>
@@ -88,66 +95,91 @@ characters.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">Jackknife</span><span class="op">(</span>
-  <span class="va">tree</span>,
-  <span class="va">dataset</span>,
-  resampleFreq <span class="op">=</span> <span class="fl">2</span><span class="op">/</span><span class="fl">3</span>,
-  InitializeData <span class="op">=</span> <span class="va">PhyDat2Morphy</span>,
-  CleanUpData <span class="op">=</span> <span class="va">UnloadMorphy</span>,
-  TreeScorer <span class="op">=</span> <span class="va">MorphyLength</span>,
-  EdgeSwapper <span class="op">=</span> <span class="va">TBRSwap</span>,
-  jackIter <span class="op">=</span> <span class="fl">5000L</span>,
-  searchIter <span class="op">=</span> <span class="fl">4000L</span>,
-  searchHits <span class="op">=</span> <span class="fl">42L</span>,
-  verbosity <span class="op">=</span> <span class="fl">1L</span>,
-  <span class="va">...</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">Jackknife</span><span class="op">(</span></span>
+<span>  <span class="va">tree</span>,</span>
+<span>  <span class="va">dataset</span>,</span>
+<span>  resampleFreq <span class="op">=</span> <span class="fl">2</span><span class="op">/</span><span class="fl">3</span>,</span>
+<span>  InitializeData <span class="op">=</span> <span class="va">PhyDat2Morphy</span>,</span>
+<span>  CleanUpData <span class="op">=</span> <span class="va">UnloadMorphy</span>,</span>
+<span>  TreeScorer <span class="op">=</span> <span class="va">MorphyLength</span>,</span>
+<span>  EdgeSwapper <span class="op">=</span> <span class="va">TBRSwap</span>,</span>
+<span>  jackIter <span class="op">=</span> <span class="fl">5000L</span>,</span>
+<span>  searchIter <span class="op">=</span> <span class="fl">4000L</span>,</span>
+<span>  searchHits <span class="op">=</span> <span class="fl">42L</span>,</span>
+<span>  verbosity <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>tree</dt>
 <dd><p>A tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.</p></dd>
+
+
 <dt>dataset</dt>
 <dd><p>a dataset in the format required by <code>TreeScorer()</code>.</p></dd>
+
+
 <dt>resampleFreq</dt>
 <dd><p>Double between 0 and 1 stating proportion of characters
 to resample.</p></dd>
+
+
 <dt>InitializeData</dt>
 <dd><p>Function that sets up data object to prepare for tree search.
 The function will be passed the <code>dataset</code> parameter.
 Its return value will be passed to <code>TreeScorer()</code> and <code>CleanUpData()</code>.</p></dd>
+
+
 <dt>CleanUpData</dt>
 <dd><p>Function to destroy data object on function exit.
 The function will be passed the value returned by <code>InitializeData()</code>.</p></dd>
+
+
 <dt>TreeScorer</dt>
 <dd><p>function to score a given tree.
 The function will be passed three parameters, corresponding to the
 <code>parent</code> and <code>child</code> entries of a tree's edge list, and a dataset.</p></dd>
+
+
 <dt>EdgeSwapper</dt>
 <dd><p>a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example <code><a href="SPR.html">SPRSwap()</a></code>.</p></dd>
+
+
 <dt>jackIter</dt>
 <dd><p>Integer specifying number of jackknife iterations to conduct.</p></dd>
+
+
 <dt>searchIter</dt>
 <dd><p>Integer specifying maximum rearrangements to perform on each bootstrap or
 ratchet iteration.
 To override this value for a single swapper function, set e.g.
 <code>attr(SwapperFunction, 'searchIter') &lt;- 99</code></p></dd>
+
+
 <dt>searchHits</dt>
 <dd><p>Integer specifying maximum times to hit best score before terminating a tree
 search within a ratchet iteration.
 To override this value for a single swapper function, set e.g.
 <code>attr(SwapperFunction, 'searchHits') &lt;- 99</code></p></dd>
+
+
 <dt>verbosity</dt>
 <dd><p>Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.</p></dd>
+
+
 <dt>...</dt>
 <dd><p>further arguments to pass to <code>TreeScorer()</code>, e.g. <code>dataset = </code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>Jackknife()</code> returns a list of trees recovered after jackknife
+    
+
+<p><code>Jackknife()</code> returns a list of trees recovered after jackknife
 iterations.</p>
     </div>
     <div id="details">
@@ -188,7 +220,7 @@ or e-mail the maintainer.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer></div>

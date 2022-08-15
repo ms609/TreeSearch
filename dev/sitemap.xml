@@ -7,6 +7,9 @@
     <loc>https://ms609.github.io/TreeSearch/CONTRIBUTING.html</loc>
   </url>
   <url>
+    <loc>https://ms609.github.io/TreeSearch/LICENSE-text.html</loc>
+  </url>
+  <url>
     <loc>https://ms609.github.io/TreeSearch/articles/custom.html</loc>
   </url>
   <url>
@@ -23,6 +26,9 @@
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/articles/tree-search.html</loc>
+  </url>
+  <url>
+    <loc>https://ms609.github.io/TreeSearch/articles/tree-space.html</loc>
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/authors.html</loc>
@@ -92,6 +98,9 @@
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/reference/PrepareDataProfile.html</loc>
+  </url>
+  <url>
+    <loc>https://ms609.github.io/TreeSearch/reference/QuartetResolution.html</loc>
   </url>
   <url>
     <loc>https://ms609.github.io/TreeSearch/reference/RandomMorphyTree.html</loc>

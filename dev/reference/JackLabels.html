@@ -23,7 +23,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.1.1.9000</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.2.0.9000</span>
       </span>
     </div>
 
@@ -37,20 +37,27 @@
      
     <span class="caret"></span>
   </a>
-  <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
-    </li>
+  <ul class="dropdown-menu" role="menu"><li class="divider">
+    <li class="dropdown-header">Getting started</li>
     <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
+      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
+    </li>
+    <li>
+      <a href="../articles/tree-space.html">Getting started: Exploring tree space</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">Advanced use</li>
+    <li>
       <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
-      <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+      <a href="../articles/profile.html">Tree search with Profile parsimony</a>
     </li>
     <li>
-      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
+      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
     </li>
   </ul></li>
 <li>
@@ -86,39 +93,50 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">JackLabels</span><span class="op">(</span>
-  <span class="va">tree</span>,
-  <span class="va">jackTrees</span>,
-  plot <span class="op">=</span> <span class="cn">TRUE</span>,
-  add <span class="op">=</span> <span class="cn">FALSE</span>,
-  adj <span class="op">=</span> <span class="fl">0</span>,
-  col <span class="op">=</span> <span class="cn">NULL</span>,
-  frame <span class="op">=</span> <span class="st">"none"</span>,
-  pos <span class="op">=</span> <span class="fl">2L</span>,
-  <span class="va">...</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">JackLabels</span><span class="op">(</span></span>
+<span>  <span class="va">tree</span>,</span>
+<span>  <span class="va">jackTrees</span>,</span>
+<span>  plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  add <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  adj <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  col <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  frame <span class="op">=</span> <span class="st">"none"</span>,</span>
+<span>  pos <span class="op">=</span> <span class="fl">2L</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>tree</dt>
 <dd><p>A tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.</p></dd>
+
+
 <dt>jackTrees</dt>
 <dd><p>A list or <code>multiPhylo</code> object containing trees generated
 by <code><a href="Jackknife.html">Jackknife()</a></code>.</p></dd>
+
+
 <dt>plot</dt>
 <dd><p>Logical specifying whether to plot results; if <code>FALSE</code>,
 returns blank labels for nodes near the root that do not correspond to a
 unique split.</p></dd>
+
+
 <dt>add</dt>
 <dd><p>Logical specifying whether to add the labels to an existing
 plot.</p></dd>
+
+
 <dt>adj, col, frame, pos, ...</dt>
 <dd><p>Parameters to pass to <code><a href="https://rdrr.io/pkg/ape/man/nodelabels.html" class="external-link">nodelabels()</a></code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A named vector specifying the proportion of jackknife trees
+    
+
+<p>A named vector specifying the proportion of jackknife trees
 consistent with each node in <code>tree</code>, as plotted.
 If <code>plot = FALSE</code>, blank entries are included corresponding to nodes
 that do not require labelling; the return value is in the value required
@@ -140,18 +158,18 @@ by <code>phylo$node.label</code>.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/" class="external-link">'TreeTools'</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># for as.phylo</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># jackTrees will usually be generated with Jackknife(), but for simplicity:</span></span>
-<span class="r-in"><span class="va">jackTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ape/man/as.phylo.html" class="external-link">as.phylo</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, <span class="fl">8</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ape/man/as.phylo.html" class="external-link">as.phylo</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">8</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">JackLabels</span><span class="op">(</span><span class="va">tree</span>, <span class="va">jackTrees</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/" class="external-link">'TreeTools'</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># for as.phylo</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># jackTrees will usually be generated with Jackknife(), but for simplicity:</span></span></span>
+<span class="r-in"><span><span class="va">jackTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ape/man/as.phylo.html" class="external-link">as.phylo</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, <span class="fl">8</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ape/man/as.phylo.html" class="external-link">as.phylo</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">8</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">JackLabels</span><span class="op">(</span><span class="va">tree</span>, <span class="va">jackTrees</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="JackLabels-1.png" alt="" width="700" height="433"></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   11   12   13   14   15 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 0.13 0.08 0.14 1.00 1.00 </span>
-<span class="r-in"></span>
-<span class="r-in"><span class="va">tree</span><span class="op">$</span><span class="va">node.label</span> <span class="op">&lt;-</span> <span class="fu">JackLabels</span><span class="op">(</span><span class="va">tree</span>, <span class="va">jackTrees</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">tree</span><span class="op">$</span><span class="va">node.label</span> <span class="op">&lt;-</span> <span class="fu">JackLabels</span><span class="op">(</span><span class="va">tree</span>, <span class="va">jackTrees</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -166,7 +184,7 @@ by <code>phylo$node.label</code>.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer></div>

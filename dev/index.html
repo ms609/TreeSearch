@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Phylogenetic Analysis with Morphological Data • TreeSearch</title>
+<title>Phylogenetic Analysis with Discrete Character Data • TreeSearch</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
@@ -13,7 +13,7 @@
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><!-- docsearch --><script src="docsearch.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch.js/2.6.3/docsearch.min.css" integrity="sha256-QOSRU/ra9ActyXkIBbiIB144aDBdtvXBcNc3OTNuX/Q=" crossorigin="anonymous">
 <link href="docsearch.css" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><meta property="og:title" content="Phylogenetic Analysis with Morphological Data">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script><meta property="og:title" content="Phylogenetic Analysis with Discrete Character Data">
 <meta property="og:description" content='Reconstruct phylogenetic trees from discrete data.
   Inapplicable character states are handled using the algorithm of Brazeau,
   Guillerme and Smith (2019) &lt;doi:10.1093/sysbio/syy083&gt; with the "Morphy"
@@ -52,7 +52,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.1.1.9000</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.2.0.9000</span>
       </span>
     </div>
 
@@ -68,20 +68,29 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-<li>
-      <a href="articles/custom.html">Tree search with custom optimality criteria</a>
+<li class="divider">
     </li>
+<li class="dropdown-header">Getting started</li>
     <li>
       <a href="articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
+      <a href="articles/tree-search.html">Getting started: Simple tree searches</a>
+    </li>
+    <li>
+      <a href="articles/tree-space.html">Getting started: Exploring tree space</a>
+    </li>
+    <li class="divider">
+    </li>
+<li class="dropdown-header">Advanced use</li>
+    <li>
       <a href="articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
-      <a href="articles/profile.html">Tree Search with Profile Parsimony</a>
+      <a href="articles/profile.html">Tree search with Profile parsimony</a>
     </li>
     <li>
-      <a href="articles/tree-search.html">Getting started: Simple tree searches</a>
+      <a href="articles/custom.html">Tree search with custom optimality criteria</a>
     </li>
   </ul>
 </li>
@@ -123,32 +132,40 @@
 <p>Inapplicable character states are handled using the algorithm of Brazeau, Guillerme and Smith (2019) using the “Morphy” C library (Brazeau <em>et al</em>. 2017). Implied weighting (Goloboff, 1993), Profile Parsimony (Faith and Trueman, 2001) and Successive Approximations (Farris, 1969) are implemented; <a href="https://ms609.github.io/TreeSearch/articles/custom.html">custom optimality criteria</a> and search approaches can also be defined.</p>
 </div>
 <div class="section level1">
-<h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+<h1 id="installing-in-r">Installing in R<a class="anchor" aria-label="anchor" href="#installing-in-r"></a>
 </h1>
 <p>Full installation instructions, including notes on installing R, are available in a <a href="https://ms609.github.io/TreeSearch/articles/getting-started.html">vignette</a>.</p>
 <p>Install and load the stable version from CRAN as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"TreeSearch"</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"TreeSearch"</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span></span></code></pre></div>
 <p>Install and load the development version of “TreeSearch” with:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ms609/TreeSearch"</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://github.com/jeroen/curl" class="external-link">"curl"</a></span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"curl"</span><span class="op">)</span></span>
+<span><span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://remotes.r-lib.org" class="external-link">"remotes"</a></span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ms609/TreeSearch"</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level1">
-<h1 id="errors-reading-trees">Errors reading trees<a class="anchor" aria-label="anchor" href="#errors-reading-trees"></a>
+<h1 id="installing-stand-alone-application">Installing stand-alone application<a class="anchor" aria-label="anchor" href="#installing-stand-alone-application"></a>
 </h1>
-<p>Some users are reporting an error when loading trees from Nexus files: <code>Error in [&lt;-.multiPhylo: argument "..1" is missing, with no default</code></p>
-<p>This arises due to an underlying issue in the “ape” package, which can be fixed by installing a patch:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ms609/ape@patch-3"</span><span class="op">)</span></code></pre></div>
-<p>(You may first need to exit and re-launch R to be sure that the “ape” package is not in use.)</p>
+<p>The TreeSearch user interface can be run as a stand-alone application without installing R. <a href="https://github.com/ms609/TreeSearch/releases" class="external-link">Download</a> the latest release for your platform. If your preferred platform is not supported, please contact the maintainer.</p>
+<div class="section level2">
+<h2 id="installation-on-windows">Installation on Windows<a class="anchor" aria-label="anchor" href="#installation-on-windows"></a>
+</h2>
+<p>You may need to obtain the <a href="https://community.chocolatey.org/packages/ffmpeg" class="external-link">ffmpeg library</a> before you can run TreeSearch.</p>
+<p>This is best installed using <a href="https://chocolatey.org/" class="external-link">‘Chocolatey’</a>.</p>
+<p>Once chocolatey is installed, open a PowerShell window with administrative privileges, and type <code>choco install ffmpeg</code>; then restart your computer.</p>
+</div>
 </div>
 <div class="section level1">
 <h1 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h1>
-<p>Launch a graphical user interface (development version only) by typing <code><a href="reference/MaximizeParsimony.html">TreeSearch::EasyTrees()</a></code> in the R console.</p>
+<p>Launch a graphical user interface by typing <code><a href="reference/MaximizeParsimony.html">TreeSearch::EasyTrees()</a></code> in the R console.</p>
 <p>For more control over search settings, see <a href="https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html"><code>?MaximizeParsimony()</code></a>.</p>
+<div class="figure">
+<img src="reference/figures/Flow.svg" alt=""><p class="caption">Flow charts listing common actions facilitated by TreeSearch</p>
+</div>
 </div>
 <div class="section level1">
 <h1 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
@@ -157,6 +174,7 @@
 <li><p><a href="https://ms609.github.io/TreeSearch/reference">Package functions</a> reference manual</p></li>
 <li><p><a href="https://ms609.github.io/TreeSearch/articles/getting-started.html">Getting started</a></p></li>
 <li><p><a href="https://ms609.github.io/TreeSearch/articles/tree-search.html">Using the GUI</a></p></li>
+<li><p><a href="https://ms609.github.io/TreeSearch/articles/tree-space.html">Analysing tree spaces</a></p></li>
 <li><p><a href="https://ms609.github.io/TreeTools/articles/load-data.html" class="external-link">Loading phylogenetic data into R</a></p></li>
 <li><p><a href="https://ms609.github.io/TreeSearch/articles/tree-search.html">Parsimony search with inapplicable data</a></p></li>
 <li><p><a href="https://ms609.github.io/TreeSearch/articles/profile-scores.html">Calculating concavity profiles</a> for Profile Parsimony</p></li>
@@ -174,8 +192,8 @@
 <p>Goloboff, P. A. (1993). Estimating character weights during tree search. Cladistics, 9(1), 83–91. doi: <a href="https://doi.org/10.1111/j.1096-0031.1993.tb00209.x" class="external-link">10.1111/j.1096-0031.1993.tb00209.x</a>.</p>
 <p>Goloboff, P. A., Torres, A., Arias, J. S. (2018). Weighted parsimony outperforms other methods of phylogenetic inference under models appropriate for morphology. Cladistics, 34(4), 407–437. doi: <a href="https://doi.org/10.1111/cla.12205" class="external-link">10.1111/cla.12205</a>.</p>
 <p>Smith, M. R. (2021). TreeSearch: morphological phylogenetic analysis in R. BioRχiv. doi: <a href="https://www.biorxiv.org/content/10.1101/2021.11.08.467735.full.pdf" class="external-link">10.1101/2021.11.08.467735</a>.</p>
-<p>Smith, M. R. (2022a). Using information theory to detect rogue taxa and improve phylogenetic trees. Systematic Biology, syab099. doi: <a href="https://dx.doi.org/10.1093/sysbio/syab099" class="external-link">10.1093/sysbio/syab099</a></p>
-<p>Smith, M. R. (2022b). Robust analysis of phylogenetic tree space. Systematic Biology, syab100. doi: <a href="https://dx.doi.org/10.1093/sysbio/syab100" class="external-link">10.1093/sysbio/syab100</a></p>
+<p>Smith, M. R. (2022a). Using information theory to detect rogue taxa and improve phylogenetic trees. Systematic Biology, 71(5), 1088–1094. doi: <a href="https://dx.doi.org/10.1093/sysbio/syab099" class="external-link">10.1093/sysbio/syab099</a></p>
+<p>Smith, M. R. (2022b). Robust analysis of phylogenetic tree space. Systematic Biology, 71(5), 1255–1270. doi: <a href="https://dx.doi.org/10.1093/sysbio/syab100" class="external-link">10.1093/sysbio/syab100</a></p>
 </div>
 
   </div>
@@ -224,7 +242,6 @@
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://travis-ci.org/ms609/TreeSearch" class="external-link"><img src="https://travis-ci.org/ms609/TreeSearch.svg?branch=master" alt="Build Status"></a></li>
 <li><a href="https://codecov.io/gh/ms609/TreeSearch" class="external-link"><img src="https://codecov.io/gh/ms609/TreeSearch/branch/master/graph/badge.svg" alt="codecov"></a></li>
 <li><a href="https://cran.r-project.org/package=TreeSearch" class="external-link"><img src="http://www.r-pkg.org/badges/version/TreeSearch" alt="CRAN Status Badge"></a></li>
 <li><a href="https://cran.r-project.org/package=TreeSearch" class="external-link"><img src="http://cranlogs.r-pkg.org/badges/grand-total/TreeSearch" alt="CRAN RStudio mirror downloads"></a></li>
@@ -244,7 +261,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer>

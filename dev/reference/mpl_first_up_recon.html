@@ -29,7 +29,7 @@ parameters have been set before use."><meta name="robots" content="noindex"><!--
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.1.1.9000</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.2.0.9000</span>
       </span>
     </div>
 
@@ -43,20 +43,27 @@ parameters have been set before use."><meta name="robots" content="noindex"><!--
      
     <span class="caret"></span>
   </a>
-  <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
-    </li>
+  <ul class="dropdown-menu" role="menu"><li class="divider">
+    <li class="dropdown-header">Getting started</li>
     <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
+      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
+    </li>
+    <li>
+      <a href="../articles/tree-space.html">Getting started: Exploring tree space</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">Advanced use</li>
+    <li>
       <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
-      <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+      <a href="../articles/profile.html">Tree search with Profile parsimony</a>
     </li>
     <li>
-      <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
+      <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
     </li>
   </ul></li>
 <li>
@@ -98,25 +105,36 @@ parameters have been set before use.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">mpl_first_up_recon</span><span class="op">(</span><span class="va">node_id</span>, <span class="va">left_id</span>, <span class="va">right_id</span>, <span class="va">anc_id</span>, <span class="va">morphyobj</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mpl_first_up_recon</span><span class="op">(</span><span class="va">node_id</span>, <span class="va">left_id</span>, <span class="va">right_id</span>, <span class="va">anc_id</span>, <span class="va">morphyobj</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>node_id</dt>
 <dd><p>The index of the node being reconstructed.</p></dd>
+
+
 <dt>left_id</dt>
 <dd><p>The index of the left descendant.</p></dd>
+
+
 <dt>right_id</dt>
 <dd><p>The index of the right descendant.</p></dd>
+
+
 <dt>anc_id</dt>
 <dd><p>The index of the immediate ancestor of the node.</p></dd>
+
+
 <dt>morphyobj</dt>
 <dd><p>An instance of the Morphy object.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A null value (for now).</p>
+    
+
+<p>A null value (for now).</p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
@@ -169,7 +187,7 @@ parameters have been set before use.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer></div>
