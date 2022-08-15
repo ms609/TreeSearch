@@ -25,12 +25,7 @@ are implemented;
 and search approaches can also be defined.
 
 
-# Installation
-
-The TreeSearch user interface can be run as a stand-alone application without
-installing R.
-[Download](https://github.com/ms609/TreeSearch/releases) the latest release for your platform.
-If your preferred platform is not supported, please contact the maintainer.
+# Installing in R
 
 Full installation instructions, including notes on installing R, are available
 in a [vignette](https://ms609.github.io/TreeSearch/articles/getting-started.html).
@@ -50,6 +45,24 @@ if(!require("remotes")) install.packages("remotes")
 remotes::install_github("ms609/TreeSearch")
 library("TreeSearch")
 ```
+
+# Installing stand-alone application
+
+The TreeSearch user interface can be run as a stand-alone application without
+installing R.
+[Download](https://github.com/ms609/TreeSearch/releases) the latest release for your platform.
+If your preferred platform is not supported, please contact the maintainer.
+
+## Installation on Windows
+
+You may need to obtain the [ffmpeg library](https://community.chocolatey.org/packages/ffmpeg)
+before you can run TreeSearch.
+
+This is best installed using ['Chocolatey'](https://chocolatey.org/).
+
+Once chocolatey is installed, open a PowerShell window with administrative privileges, and
+type `choco install ffmpeg`; then restart your computer.
+
 
 # Quick start
 
