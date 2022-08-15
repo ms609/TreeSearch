@@ -352,11 +352,9 @@ more comfortable on-screen viewing.
 
 ![Consensus of tree clusters](gui_cluster_cons.png)
 
-Equivalent R code can be downloaded using the "Save plot: R script" button
-within the GUI.
-A modified version, which conducts rogue taxon analysis for each cluster
-separately, is provided here for reference; note that it draws on
-the results of the clustering analysis detailed above.
+The R code below is modified from that output by the GUI, in order to conduct
+rogue taxon analysis for each cluster separately.
+Note that it draws on the results of the clustering analysis above.
 
 ```{r cluster-consensus, fig.keep = "none"}
 # Select proportion for majority rule consensus trees
