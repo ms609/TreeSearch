@@ -353,10 +353,72 @@ more comfortable on-screen viewing.
 ![Consensus of tree clusters](gui_cluster_cons.png)
 
 Equivalent R code can be downloaded using the "Save plot: R script" button
-within the GUI, and is provided here for reference:
+within the GUI.
+A modified version, which conducts rogue taxon analysis for each cluster
+separately, is provided here for reference; note that it draws on
+the results of the clustering analysis detailed above.
 
 ```{r cluster-consensus, fig.keep = "none"}
+# Select proportion for majority rule consensus trees
+# 1 is the appropriate value when parsimony trees are included
+majority <- 1
 
+# Plot each consensus tree in turn: 
+for (i in seq_len(nClusters)) {
+  clusterTrees <- trees[clustering == i]
+  # Identify rogue taxa for this cluster
+  clusterRogues <- Rogue::QuickRogue(clusterTrees, p = majority)$taxon[-1]
+  
+  # Colour tree labels based on stability across cluster
+  tipCols <- Rogue::ColByStability(clusterTrees)
+  
+  cons <- ConsensusWithout( 
+    trees = clusterTrees, 
+    tip = clusterRogues,
+    p = majority
+  ) 
+  
+  # Root tree 
+  cons <- RootTree(cons, trees[[1]]$tip.label[1])
+  
+  # Set unit edge lengths for viewing
+  cons$edge.length <- rep.int(1, nrow(cons$edge)) 
+  
+  # Rotate nodes, to display clades in order of size 
+  cons <- SortTree(cons, order = names(trees[[1]]$tip.label))
+  
+  # Plot tree
+  par(mar = c(0, 0, 0, 0), cex = 0.8) # Set up plotting area
+  plot( 
+    cons, 
+    edge.width = 2,             # Widen lines 
+    font = 3,                   # Italicize labels 
+    cex = 0.83,                 # Shrink tip font size 
+    edge.color = clusterCol[i], # Colour tree according to previous plot
+    tip.color = tipCols[cons$tip.label] 
+  ) 
+  legend(
+    "bottomright", 
+    paste("Cluster", i), 
+    pch = 15,            # Filled circle icon 
+    pt.cex = 1.5,        # Increase icon size 
+    col = clusterCol[i], 
+    bty = "n"            # Don't plot legend in box 
+  ) 
+  if (length(clusterRogues)) {
+    # Mark omitted taxa, if any rogues present
+    legend(
+      "topright",
+      clusterRogues,
+      col = tipCols[clusterRogues],
+      text.col = tipCols[clusterRogues],
+      pch = "-",      # Mark as excluded
+      cex = 0.8,      # Smaller font
+      text.font = 3,  # Italicize
+      bty = "n"       # Don't plot legend in box 
+    )
+  }
+}
 ```
 
 # References
