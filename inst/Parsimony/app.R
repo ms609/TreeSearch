@@ -2312,7 +2312,7 @@ server <- function(input, output, session) {
       
       LogCommentP("Compute clusters of trees", 2)
       nK <- length(possibleClusters)
-      LogCommentP("Try K-means clustering:")
+      LogCommentP("Try K-means clustering (Hartigan & Wong 1979):")
       LogCodeP(
         paste0(
           "kClusters <- lapply(", possibleClusters, ", ",
@@ -2326,7 +2326,7 @@ server <- function(input, output, session) {
         "kCluster <- kClusters[[bestK]]$cluster # Best solution"
       )
       
-      LogCommentP("Try partitioning around medoids:")
+      LogCommentP("Try partitioning around medoids (Maechler et al. 2019):")
       LogCodeP(
         paste0(
           "pamClusters <- lapply(", possibleClusters, ", ",
@@ -2341,7 +2341,10 @@ server <- function(input, output, session) {
       )
       
       
-      LogCommentP("Try hierarchical clustering with minimax linkage")
+      LogCommentP(
+        paste("Try hierarchical clustering with minimax linkage",
+              "(Bien & Tibshirani 2011):")
+      )
       LogCodeP(
         "hTree <- protoclust::protoclust(dists)",
         paste0(
@@ -3006,7 +3009,7 @@ server <- function(input, output, session) {
     }
     
     if ("mst" %in% input$mapLines) {
-      LogCommentP("Plot minimum spanning tree")
+      LogCommentP("Plot minimum spanning tree (Gower 1969)")
       LogCodeP(
         "mst <- MSTEdges(as.matrix(dists))",
         "segments(",

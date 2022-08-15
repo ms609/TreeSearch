@@ -1,3 +1,7 @@
+# TreeSearch 1.2.0.9000
+
+- New vignette on tree space mapping
+
 # TreeSearch 1.2.0
 
 - 'shiny' GUI improvements:
@@ -7,7 +11,7 @@
   - Misc bug fixes
 
 - New function `QuartetResolution()` evaluates how a quartet is resolved in
-  each of a list of trees.
+  each of a list of trees
 
 
 # TreeSearch 1.1.2
