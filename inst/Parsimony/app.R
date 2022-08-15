@@ -264,8 +264,8 @@ ui <- fluidPage(
                 placeholder = "No data file selected"),
       tags$label("Search", class = "control-label", 
                  style = "display: block; margin-top: -15px;"),
-      actionButton("searchConfig", "Configure", icon = icon("cogs")),
-      hidden(actionButton("go", "Search", icon = icon("search"))),
+      actionButton("searchConfig", "Configure", icon = icon("gears")),
+      hidden(actionButton("go", "Search", icon = icon("magnifying-glass"))),
       downloadButton("saveZip", "Save log"),
       fileInput("treeFile",
                 label = tags$span(
@@ -1063,8 +1063,8 @@ server <- function(input, output, session) {
              ))
       ),
       title = "Tree search settings",
-      footer = tagList(modalButton("Close", icon = icon("window-close")),
-                       actionButton("modalGo", icon = icon("search"), 
+      footer = tagList(modalButton("Close", icon = icon("rectangle-xmark")),
+                       actionButton("modalGo", icon = icon("magnifying-glass"), 
                                     if(length(r$trees)) {
                                       "Continue search" 
                                     } else {
