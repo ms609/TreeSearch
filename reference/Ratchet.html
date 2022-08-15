@@ -39,17 +39,24 @@ to search for a more parsimonious tree using custom optimality criteria."><!-- m
      
     <span class="caret"></span>
   </a>
-  <ul class="dropdown-menu" role="menu"><li>
+  <ul class="dropdown-menu" role="menu"><li class="divider">
+    <li class="dropdown-header">Getting started</li>
+    <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
       <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
     </li>
     <li>
+      <a href="../articles/tree-space.html">Getting started: Exploring tree space</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">Advanced use</li>
+    <li>
       <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
-      <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+      <a href="../articles/profile.html">Tree search with Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
@@ -362,7 +369,7 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-in"><span><span class="co"># Increase value of ratchIter and searchHits to do a proper search</span></span></span>
 <span class="r-in"><span><span class="va">quickResult</span> <span class="op">&lt;-</span> <span class="fu">Ratchet</span><span class="op">(</span><span class="va">njtree</span>, <span class="va">Lobo.phy</span>, ratchIter <span class="op">=</span> <span class="fl">2</span>, searchHits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> * Beginning Parsimony Ratchet, with initial score 231</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Completed parsimony ratchet after 2 iterations with score 218</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Completed parsimony ratchet after 2 iterations with score 216</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot result (legibly)</span></span></span>
 <span class="r-in"><span><span class="va">oldPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></span>

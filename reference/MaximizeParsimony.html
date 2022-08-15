@@ -49,17 +49,24 @@ Tree length is calculated using the MorphyLib C library
      
     <span class="caret"></span>
   </a>
-  <ul class="dropdown-menu" role="menu"><li>
+  <ul class="dropdown-menu" role="menu"><li class="divider">
+    <li class="dropdown-header">Getting started</li>
+    <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
       <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
     </li>
     <li>
+      <a href="../articles/tree-space.html">Getting started: Exploring tree space</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">Advanced use</li>
+    <li>
       <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
-      <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+      <a href="../articles/profile.html">Tree search with Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
@@ -431,14 +438,10 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Sample local optimum</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → TBR depth 1; keeping 4 trees; k = 10</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2022-08-15 10:09:03: Score: 12.5954</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Final search <span style="color: #00BB00;">■■■■■■                          </span>  18% | D1, score 11.9697, hit 1. …</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Final search <span style="color: #00BB00;">■■■■■■■■■■■                     </span>  35% | D1, score 11.9697, hit 1. …</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   - TBR rearrangement at depth 1 found score 11.9697 1 time.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2022-08-15 10:09:05: Tree search terminated with score <span style="font-weight: bold;">11.9697</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2022-08-15 14:37:55: Score: 12.4756</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2022-08-15 14:37:56: Tree search terminated with score <span style="font-weight: bold;">12.0455</span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "final_1"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "final_1" "final_2"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># In actual use, be sure to check that the score has converged on a global</span></span></span>
 <span class="r-in"><span><span class="co"># optimum, conducting additional iterations and runs as necessary.</span></span></span>
@@ -477,7 +480,7 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-in"><span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">MaximizeParsimony</span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>, verbosity <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Initialized 1 distinct constraints.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> → 2022-08-15 10:09:06: Score to beat: <span style="font-weight: bold;">3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> → 2022-08-15 14:37:56: Score to beat: <span style="font-weight: bold;">3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 phylogenetic tree</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

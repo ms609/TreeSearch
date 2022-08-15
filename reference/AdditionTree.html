@@ -38,17 +38,24 @@ parsimonious location."><!-- mathjax --><script src="https://cdnjs.cloudflare.co
      
     <span class="caret"></span>
   </a>
-  <ul class="dropdown-menu" role="menu"><li>
+  <ul class="dropdown-menu" role="menu"><li class="divider">
+    <li class="dropdown-header">Getting started</li>
+    <li>
       <a href="../articles/getting-started.html">Getting started: Installing R and TreeSearch</a>
     </li>
     <li>
       <a href="../articles/tree-search.html">Getting started: Simple tree searches</a>
     </li>
     <li>
+      <a href="../articles/tree-space.html">Getting started: Exploring tree space</a>
+    </li>
+    <li class="divider">
+    <li class="dropdown-header">Advanced use</li>
+    <li>
       <a href="../articles/profile-scores.html">Profile parsimony</a>
     </li>
     <li>
-      <a href="../articles/profile.html">Tree Search with Profile Parsimony</a>
+      <a href="../articles/profile.html">Tree search with Profile parsimony</a>
     </li>
     <li>
       <a href="../articles/custom.html">Tree search with custom optimality criteria</a>
@@ -151,14 +158,14 @@ taxa. Randomized if not provided.</p></dd>
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">'Lobo'</span>, package <span class="op">=</span> <span class="st">'TreeTools'</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">AdditionTree</span><span class="op">(</span><span class="va">Lobo.phy</span>, concavity <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Addition tree <span style="color: #00BB00;">■■■■■■■■■■■                     </span>  32% | ETA:  5s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Addition tree <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■       </span>  79% | ETA:  1s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Addition tree <span style="color: #00BB00;">■■■■■■■■■■■■                    </span>  37% | ETA:  3s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Addition tree <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  </span>  96% | ETA:  0s</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Addition tree <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Phylogenetic tree with 48 tips and 47 internal nodes.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Tip labels:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Tubiluchus_Priapulida, Xenusion, Helenodora, Carbotubulus, Leanchoilia, Acinocrinus, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Tubiluchus_Priapulida, Hadranax, Actinarctus_Heterotardigrada, Siberion, Orstenotubulus, Xenusion, ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Rooted; no branch lengths.</span>
 </code></pre></div>
