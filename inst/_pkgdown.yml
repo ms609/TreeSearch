@@ -61,13 +61,14 @@ reference:
 
 articles:
   - title: Getting started
-    navbar: ~
+    navbar: Getting started
     contents:
     - getting-started
     - tree-search
+    - tree-space
   
   - title: Advanced use
-    navbar: ~
+    navbar: Advanced use
     desc: Changing optimality criteria for tree search
     contents:
     - profile-scores
