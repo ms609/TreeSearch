@@ -59,6 +59,21 @@ reference:
     contents:
       - has_concept("utility functions")
 
+articles:
+  - title: Getting started
+    navbar: ~
+    contents:
+    - getting-started
+    - tree-search
+  
+  - title: Advanced use
+    navbar: ~
+    desc: Changing optimality criteria for tree search
+    contents:
+    - profile-scores
+    - profile
+    - custom
+
 template:
   params:
     docsearch:
