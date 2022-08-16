@@ -800,7 +800,7 @@ server <- function(input, output, session) {
           
           firstCol <- input$readxlSkipCols - 1L
           chars <- colnames(tibble)[-seq_len(firstCol)]
-          taxNames <- unlist(tibble[, firstCol])
+          taxNames <- gsub(" ", "_", trimws(unlist(tibble[, firstCol])))
           output$readxl.taxa <- renderUI(HTML(paste(
             "<em>Taxon names</em>:",
             paste(taxNames[1:3], collapse = ", "),
