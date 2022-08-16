@@ -255,7 +255,8 @@ ui <- fluidPage(
                     "Agnarsson 2004" = "Agnarsson2004",
                     "Sun et al. 2018" = "Sun2018",
                     "Wills et al. 2012" = "Wills2012",
-                    if (logging) setNames(names(inapplicable.datasets), names(inapplicable.datasets)))),
+                    if (logging) setNames(names(inapplicable.datasets),
+                                          names(inapplicable.datasets)))),
       fileInput("dataFile",
                 tags$span(
                   tags$i(class="fas fa-solid fa-table"),
