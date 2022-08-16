@@ -54,7 +54,7 @@ dists <- TreeDist::RobinsonFoulds(trees)
 
 # Compute clusters of trees
 
-# Try K-means clustering:
+# Try K-means clustering (Hartigan & Wong 1979):
 kClusters <- lapply(2:15, function (k) kmeans(dists, k))
 kSils <- vapply(kClusters, function (kCluster) {
   mean(cluster::silhouette(kCluster$cluster, dists)[, 3])
@@ -63,7 +63,7 @@ bestK <- which.max(kSils)
 kSil <- kSils[bestK] # Best silhouette coefficient
 kCluster <- kClusters[[bestK]]$cluster # Best solution
 
-# Try partitioning around medoids:
+# Try partitioning around medoids (Maechler et al. 2019):
 pamClusters <- lapply(2:15, function (k) cluster::pam(dists, k = k))
 pamSils <- vapply(pamClusters, function (pamCluster) {
   mean(cluster::silhouette(pamCluster)[, 3])
@@ -72,7 +72,7 @@ bestPam <- which.max(pamSils)
 pamSil <- pamSils[bestPam] # Best silhouette coefficient
 pamCluster <- pamClusters[[bestPam]]$cluster # Best solution
 
-# Try hierarchical clustering with minimax linkage
+# Try hierarchical clustering with minimax linkage (Bien & Tibshirani 2011):
 hTree <- protoclust::protoclust(dists)
 hClusters <- lapply(2:15, function (k) cutree(hTree, k = k))
 hSils <- vapply(hClusters, function (hCluster) {
