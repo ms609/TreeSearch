@@ -761,7 +761,7 @@ server <- function(input, output, session) {
       }, error = function(e) tryCatch({
         r$chars <- ReadCharacters(dataFile)
         r$charNotes <- ReadNotes(dataFile)
-        r$readDataFile <- "ReadTntAsPhyDat(dataFile)"
+        r$readDataFile <- "ReadAsPhyDat(dataFile)"
         ReadAsPhyDat(dataFile)
       }, error = function(e) {
         r$readDataFile <- NULL
