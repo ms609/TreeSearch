@@ -263,6 +263,18 @@ ui <- fluidPage(
                   tags$span("Load data from file")
                   ),
                 placeholder = "No data file selected"),
+      hidden(tags$span(id = "readxl.options",
+        selectInput("readxl.sheet", "Excel sheet to read:", "Sheet 1", "Sheet 1"),
+        tags$span("First character row & column:"),
+        numericInput("readxlSkip",
+                     label = NULL,
+                     min = 2L, value = 2L, step = 1L),
+        numericInput("readxlSkipCols",
+                     label = NULL,
+                     min = 2L, value = 2L, step = 1L),
+        htmlOutput("readxl.chars", style = "clear: both;"),
+        htmlOutput("readxl.taxa", style = "clear: both; margin-bottom: 1em;")
+      )),
       tags$label("Search", class = "control-label", 
                  style = "display: block; margin-top: -15px;"),
       actionButton("searchConfig", "Configure", icon = icon("gears")),
@@ -662,6 +674,7 @@ server <- function(input, output, session) {
   }
   
   r$dataFiles <- 0
+  r$excelFiles <- 0
   r$treeFiles <- 0
   TwoWide <- function(n) {
     formatC(n, width = 2, flag = "0")
@@ -669,13 +682,17 @@ server <- function(input, output, session) {
   DataFileName <- function(n) if (length(n)) {
     paste0("dataFile-", TwoWide(n), ".txt")
   }
+  ExcelFileName <- function(n) if (length(n)) {
+    paste0("excelFile-", TwoWide(n), ".xlsx")
+  }
   TreeFileName <- function(n) if (length(n)) {
     paste0("treeFile-", TwoWide(n), ".txt")
   }
   LastFile <- function(type) {
-    switch(pmatch(type, c("data", "tree")), 
+    switch(pmatch(type, c("data", "excel", "tree")), 
            DataFileName(r$dataFiles),
-           TreeFileName(r$dataFiles)
+           ExcelFileName(r$excelFiles),
+           TreeFileName(r$treeFiles)
     )
   }
   CacheInput <- function(type, fileName) {
@@ -755,27 +772,113 @@ server <- function(input, output, session) {
       LogMsg("UpdateData(): from file")
       r$sortTrees <- FALSE # Trees loaded from dataset may be in sequence
       r$readDataFile <- NULL
-      r$dataset <- tryCatch({
-        r$readDataFile <- "ReadTntAsPhyDat(dataFile)"
-        ReadTntAsPhyDat(dataFile)
-      }, error = function(e) tryCatch({
-        r$chars <- ReadCharacters(dataFile)
-        r$charNotes <- ReadNotes(dataFile)
-        r$readDataFile <- "ReadTntAsPhyDat(dataFile)"
-        ReadAsPhyDat(dataFile)
-      }, error = function(e) {
-        r$readDataFile <- NULL
-        NULL
-      }))
       
-      if (!is.null(r$dataset)) {
-        LogComment("Load data from file", 2)
-        CacheInput("data", dataFile)
-        LogCode(c(
-          paste0("dataFile <- \"", LastFile("data"), "\""),
-          paste0("dataset <- ", r$readDataFile)
-        ))
+      if (grep("\\.xlsx?$", dataFile)) {
+        if (!requireNamespace("readxl", quietly = TRUE)) {
+          install.packages("readxl")
+        }
+        showElement("readxl.options", anim = TRUE)
+        
+        r$dataset <- tryCatch({
+          sheets <- readxl::excel_sheets(dataFile)
+          updateSelectInput(session,
+                            inputId = "readxl.sheet",
+                            choices = setNames(sheets, sheets),
+                            selected = if (input$readxl.sheet %in% sheets) {
+                                input$readxl.sheet
+                              } else {
+                                sheets[1]
+                              })
+
+          tibble <- readxl::read_excel(
+            path = dataFile,
+            sheet = match(input$readxl.sheet, sheets, nomatch = 1L),
+            skip = max(0L, input$readxlSkip - 2L),
+            .name_repair = "minimal",
+            col_types = "text"
+          )
+          
+          firstCol <- input$readxlSkipCols - 1L
+          chars <- colnames(tibble)[-seq_len(firstCol)]
+          taxNames <- unlist(tibble[, firstCol])
+          output$readxl.taxa <- renderUI(HTML(paste(
+            "<em>Taxon names</em>:",
+            paste(taxNames[1:3], collapse = ", "),
+            "...\n")))
+          output$readxl.chars <- renderUI(HTML(paste(
+            "<em>Character names</em>:",
+            # not r$chars, which may be modified before output updated
+            paste(chars[1:3], collapse = ", "),
+            "..."
+          )))
+          r$chars <- chars
+          
+          dat <- as.matrix(tibble[, -seq_len(firstCol)])
+          rownames(dat) <- taxNames
+          dat <- MatrixToPhyDat(dat)
+          if (attr(dat, "nr") == 0) {
+            stop("No characters loaded; throw error")
+          }
+          
+          # Lines that could cause an error must come before log
+          
+          LogComment("Load data from spreadsheet", 2)
+          if (r$excelFiles == 0 ||
+              tools::md5sum(dataFile) != 
+              tools::md5sum(paste0(tempdir(), "/", LastFile("excel")))) {
+            CacheInput("excel", dataFile)
+          }
+          LogCode(c(
+            paste0("dataFile <- \"", LastFile("excel"), "\""),
+            "excelSheet <- readxl::read_excel(",
+            "  path = dataFile,",
+            paste0("  sheet = ", match(input$readxl.sheet, sheets, 1L), ","),
+            paste0("  skip = ", max(0L, input$readxlSkip - 2L), ","),
+            "  .name_repair = \"minimal\",",
+            "  col_types = \"text\"",
+            ")",
+            paste0("dat <- as.matrix(excelSheet[, -seq_len(", firstCol, ")])"),
+            paste0("rownames(dat) <- unlist(excelSheet[, ", firstCol, "])"),
+            "dataset <- MatrixToPhyDat(dat)"
+          ))
+          
+          # Return:
+          dat
+        }, error = function(e) {
+          print (e) #TODO DELETE
+          NULL
+        })
+      } else {
+        hideElement("readxl.options")
       }
+      
+      if (is.null(r$dataset)) suppressWarnings({
+        r$dataset <- tryCatch({
+          r$readDataFile <- "ReadTntAsPhyDat(dataFile)"
+          
+          # Return:
+          ReadTntAsPhyDat(dataFile)
+        }, error = function(e) tryCatch({
+          r$chars <- ReadCharacters(dataFile)
+          r$charNotes <- ReadNotes(dataFile)
+          r$readDataFile <- "ReadTntAsPhyDat(dataFile)"
+          # Return:
+          ReadAsPhyDat(dataFile)
+        }, error = function(e) {
+          r$readDataFile <- NULL
+          # Return:
+          NULL
+        }))
+        
+        if (!is.null(r$dataset)) {
+          LogComment("Load data from file", 2)
+          CacheInput("data", dataFile)
+          LogCode(c(
+            paste0("dataFile <- \"", LastFile("data"), "\""),
+            paste0("dataset <- ", r$readDataFile)
+          ))
+        }
+      })
     } else {
       LogMsg("UpdateData(): from package")
       
@@ -1019,6 +1122,10 @@ server <- function(input, output, session) {
   
   observeEvent(input$dataSource, UpdateData(), ignoreInit = TRUE)
   observeEvent(input$dataFile, UpdateData(), ignoreInit = TRUE)
+  observeEvent(input$readxl.sheet, UpdateData(), ignoreInit = TRUE)
+  observeEvent(input$readxlSkip, UpdateData(), ignoreInit = TRUE)
+  observeEvent(input$readxlSkipCols, UpdateData(), ignoreInit = TRUE)
+  
   observeEvent(r$dataset, {
     r$dataHash <- rlang::hash(r$dataset)
   })
@@ -3185,16 +3292,21 @@ server <- function(input, output, session) {
       if (isTRUE(getOption("shiny.testmode"))) {
         file.copy(cmdLogFile, file)
       } else {
-        tempDir <- tempfile("zip-")
-        dir.create(tempDir)
-        on.exit(unlink(tempDir))
-        rFile <- paste0(tempDir, "/TreeSearch-session.R")
+        zipDir <- tempfile("zip-")
+        dir.create(zipDir)
+        on.exit(unlink(zipDir))
+        rFile <- paste0(zipDir, "/TreeSearch-session.R")
         file.copy(cmdLogFile, rFile, overwrite = TRUE)
+        dput(ExcelFileName(seq_len(r$excelFiles)))
         zip(file, c(
           rFile,
-          paste0(tempdir(), "/", DataFileName(seq_len(r$dataFiles))),
-          paste0(tempdir(), "/", TreeFileName(seq_len(r$treeFiles)))
-        ), flags = "-r9Xj")
+          if (r$dataFiles)
+            paste0(tempdir(), "/", DataFileName(seq_len(r$dataFiles))),
+          if (r$excelFiles)
+            paste0(tempdir(), "/", ExcelFileName(seq_len(r$excelFiles))),
+          if (r$treeFiles)
+            paste0(tempdir(), "/", TreeFileName(seq_len(r$treeFiles)))
+        ), flags = "-9Xj")
       }
     })
   
@@ -3231,6 +3343,7 @@ server <- function(input, output, session) {
         zip(file, c(
           rFile,
           paste0(tempdir(), "/", LastFile("data")),
+          paste0(tempdir(), "/", LastFile("excel")),
           paste0(tempdir(), "/", LastFile("tree"))
         ), flags = "-r9Xj")
       }

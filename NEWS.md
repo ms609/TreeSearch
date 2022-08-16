@@ -1,6 +1,9 @@
-# TreeSearch 1.2.0.9000
+# TreeSearch 1.2.0.9001
 
 - New vignette on tree space mapping
+
+- Support reading characters from Excel spreadsheets in GUI
+
 
 # TreeSearch 1.2.0
 
