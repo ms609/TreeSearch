@@ -1954,10 +1954,6 @@ server <- function(input, output, session) {
       }
       )
       
-      PlotCharacter(r$plottedTree, r$dataset, n,
-                    edge.width = 2.5,
-                    updateTips = "updateTips" %in% input$mapDisplay)
-      
       LabelConcordance()
     } else {
       plot(r$plottedTree, tip.color = TipCols()[r$plottedTree$tip.label])
