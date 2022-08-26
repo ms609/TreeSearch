@@ -1,3 +1,9 @@
+# branch morphy-bug #
+
+- Correct reading of {-1} and {+} type characters in Morphy
+  ([#112](https://github.com/ms609/TreeSearch/issues/112))
+
+
 # TreeSearch 1.2.0.9002
 
 - New function `LengthAdded()` tests which characters contribute to taxon
