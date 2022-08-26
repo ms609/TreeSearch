@@ -35,6 +35,15 @@ ExtraLength <- function(trees, char, concavity = Inf, applicability = FALSE) {
   if(!inherits(char, "phyDat")) {
     stop("`char` must be a character of class `phyDat`.")
   }
+  if (attr(char, "nr") > 1L) {
+    stop("`char` must comprise a single character; try char[, 1]")
+  }
+  cont <- attr(char, "contrast")
+  if (any(rowSums(cont) == 0)) {
+    stop("`char` contract matrix lacks levels for ",
+         paste(which(rowSums(cont) == 0), collapse = ", "))
+  }
+  
   trees <- RootTree(trees, 1) # Avoid warnings in TreeLength()
   start <- TreeLength(trees, char, concavity)
   contApp <- cont[, setdiff(colnames(cont), "-")]
@@ -70,8 +79,17 @@ ExtraLength <- function(trees, char, concavity = Inf, applicability = FALSE) {
     }
   }
   
+  # Temp:
+  deltas <- start - vapply(seq_along(char), QMScore, start)
+  if (any(deltas < 0)) {
+    #dput(which(apply(deltas < 0, 1, any)))
+    warning("Scoring issue (#112) may distort score of ",
+            paste(names(char)[apply(deltas < 0, 2, any)], collapse = ", "))
+  }
+  # /Temp
+  
   delta <- setNames(
-    pmax(0, colSums(start - vapply(seq_along(char), QMScore, start))),
+    pmax(0, colSums(deltas)),
     # TODO pmax is a workaround for the Morphy bug that treats {+} as {?}.
     # TODO remove when that bug is fixed.
     names(char)
