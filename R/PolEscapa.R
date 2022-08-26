@@ -67,11 +67,8 @@ ExtraLength <- function(trees, char, concavity = Inf, applicability = FALSE) {
   QMScore <- function(leaf) {
     startToken <- char[[leaf]]
     if (!app[startToken]) {
-      if (inapp[startToken]) {
-        start
-      } else {
-        stop("Character has no valid levels for leaf ", leaf)
-      }
+      stopifnot(inapp[startToken])
+      start
     } else {
       charQm <- char
       charQm[[leaf]] <- if (inapp[startToken]) qm else qmApp
