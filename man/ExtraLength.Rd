@@ -2,9 +2,12 @@
 % Please edit documentation in R/PolEscapa.R
 \name{ExtraLength}
 \alias{ExtraLength}
+\alias{PolEscapa}
 \title{Contribution of character to leaf instability}
 \usage{
 ExtraLength(trees, char, concavity = Inf)
+
+PolEscapa(trees, char, concavity = Inf)
 }
 \arguments{
 \item{trees}{List of trees of class \code{phylo}, or \code{multiPhylo} object.}

@@ -96,5 +96,6 @@ ExtraLength <- function(trees, char, concavity = Inf) {
   delta / length(trees)
 }
 
+#' @rdname ExtraLength
 #' @export
 PolEscapa <- ExtraLength
