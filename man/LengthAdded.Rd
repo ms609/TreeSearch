@@ -35,6 +35,13 @@ Would tree lengths change if a character was coded as ambiguous for each
 leaf \insertRef{Pol2009}{TreeSearch}?
 }
 \details{
+High values for a leaf indicate that its coding contributes to instability
+("Roguish" behaviour -- see \href{https://ms609.github.io/Rogue/}{\pkg{Rogue}}
+for further details).  The coding is in tension with other data, which may
+indicate that the assumptions of homology that underlie the character's
+construction and scoring require careful scrutiny -- or that the taxon in
+question has been subject to convergent evolution.
+
 When inapplicable tokens are present in a character, the applicability of
 each coding is maintained: i.e. a leaf coded with an applicable token is
 never allowed to take an inapplicable value; and an inapplicable token
