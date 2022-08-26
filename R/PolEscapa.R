@@ -1,6 +1,6 @@
 #' Contribution of character to leaf instability
 #' 
-#' Would tree length change if a character was coded as ambiguous for each 
+#' Would tree lengths change if a character was coded as ambiguous for each 
 #' leaf \insertRef{Pol2009}{TreeSearch}?
 #' 
 #' When inapplicable tokens are present in a character, the applicability of
@@ -12,7 +12,7 @@
 #' @param char `phyDat` object containing a single character.
 #' @template concavityParam
 #' 
-#' @return `ExtraLength()` returns a named numeric vector listing the mean
+#' @return `LengthAdded()` returns a named numeric vector listing the mean
 #' absolute change to tree length resulting if the character were coded
 #' ambiguous for each leaf in turn, under the specified concavity constant.
 #' 
@@ -22,16 +22,17 @@
 #' trees <- inapplicable.trees[["Vinther2008"]]
 #' dataset <- inapplicable.phyData[["Vinther2008"]]
 #' char <- dataset[, 11]
-#' extra <- ExtraLength(trees, char)
+#' added <- LengthAdded(trees, char)
 #' 
 #' PlotCharacter(
 #'   tree = trees[[1]], 
 #'   dataset = char,
-#'   tip.color = 1 + extra[trees[[1]]$tip.label] # Colour by extra steps
+#'   tip.color = 1 + added[trees[[1]]$tip.label] # Colour by added steps
 #' ) -> XX # Suppress return value; display plot only
 #' 
+#' @family tree scoring
 #' @export
-ExtraLength <- function(trees, char, concavity = Inf) {
+LengthAdded <- function(trees, char, concavity = Inf) {
   if(!inherits(char, "phyDat")) {
     stop("`char` must be a character of class `phyDat`.")
   }
@@ -96,6 +97,6 @@ ExtraLength <- function(trees, char, concavity = Inf) {
   delta / length(trees)
 }
 
-#' @rdname ExtraLength
+#' @rdname LengthAdded
 #' @export
-PolEscapa <- ExtraLength
+PolEscapa <- LengthAdded

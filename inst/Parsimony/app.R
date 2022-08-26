@@ -1923,7 +1923,7 @@ server <- function(input, output, session) {
   }
   
   PolEscVal <- reactive({
-    ExtraLength(r$trees,
+    LengthAdded(r$trees,
                 r$dataset[tipLabels(), PlottedChar()],
                 concavity())
   })
