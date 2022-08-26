@@ -4,12 +4,18 @@ on:
       - main
       - master
     paths-ignore:
-      - "memcheck**"
       - "Meta**"
+      - "data-raw**"
       - "docs**"
+      - "inst**"
+      - "man**"
+      - "memcheck**"
+      - "tests**"
+      - "vignettes**"
       - "**.git"
       - "**.json"
       - "**.md"
+      - "**.yml"
       - "!**revdep.yml"
       - "**.R[dD]ata"
       - "**.Rpro*"
@@ -18,9 +24,14 @@ on:
       - main
       - master
     paths-ignore:
-      - "memcheck**"
       - "Meta**"
+      - "data-raw**"
       - "docs**"
+      - "inst**"
+      - "man**"
+      - "memcheck**"
+      - "tests**"
+      - "vignettes**"
       - "**.git"
       - "**.json"
       - "**.md"
