@@ -1922,15 +1922,40 @@ server <- function(input, output, session) {
     }
   }
   
+  PolEscVal <- reactive({
+    LengthAdded(r$trees,
+                r$dataset[tipLabels(), PlottedChar()],
+                concavity())
+  })
+  
   CharacterwisePlot <- function() {
     par(mar = rep(0, 4), cex = 0.9)
     n <- PlottedChar()
+    LogMsg("Plotting PlottedTree(", whichTree(), ", ", n, ")")
     r$plottedTree <- PlottedTree()
     if (length(n) && n > 0L) {
       pc <- tryCatch({
+        extraLen <- PolEscVal()
+        roguishness <- if (max(extraLen) == 0) {
+          "black"
+        } else {
+          hcl.colors(256, "inferno")[
+            (192 * extraLen[r$plottedTree$tip.label] / max(extraLen)) + 1
+          ]
+        }
         PlotCharacter(r$plottedTree, r$dataset, n,
                       edge.width = 2.5,
-                      updateTips = "updateTips" %in% input$mapDisplay)
+                      updateTips = "updateTips" %in% input$mapDisplay,
+                      tip.color = roguishness)
+        if (max(extraLen) > 0) {
+          SpectrumLegend(
+            palette = hcl.colors(256, "inferno")[1:193],
+            legend = c("No impact",
+                       "Mean tree\nscore impact",
+                       signif(max(extraLen))),
+            font = c(1, 3, 1)
+            )
+        }
       },
       error = function (cond) {
         cli::cli_alert_danger(cond)
@@ -1941,10 +1966,6 @@ server <- function(input, output, session) {
         return()
       }
       )
-              
-      PlotCharacter(r$plottedTree, r$dataset, n,
-                    edge.width = 2.5,
-                    updateTips = "updateTips" %in% input$mapDisplay)
       
       LabelConcordance()
     } else {

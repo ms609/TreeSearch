@@ -67,11 +67,13 @@ PhyDat2Morphy
 Other tree scoring: 
 \code{\link{CharacterLength}()},
 \code{\link{IWScore}()},
+\code{\link{LengthAdded}()},
 \code{\link{MinimumLength}()}
 
 Other tree scoring: 
 \code{\link{CharacterLength}()},
 \code{\link{IWScore}()},
+\code{\link{LengthAdded}()},
 \code{\link{MinimumLength}()}
 }
 \author{

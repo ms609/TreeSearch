@@ -49,6 +49,7 @@ CharacterLength(tree, dataset, compress = TRUE)
 \seealso{
 Other tree scoring: 
 \code{\link{IWScore}()},
+\code{\link{LengthAdded}()},
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()}
 }

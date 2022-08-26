@@ -39,7 +39,7 @@ test_that("Addition tree obeys constraints", {
 })
 
 test_that("AdditionTree() handles edge cases", {
-  library("TreeTools")
+  library("TreeTools", quietly = TRUE)
   dataset <- MatrixToPhyDat(matrix(
     c(0, 1, 1, 1, 0, 1,
       0, 1, 1, 0, 0, 1), ncol = 2,

@@ -24,13 +24,17 @@
 #' @family utility functions
 #' @export
 ClusterStrings <- function (x, maxCluster = 12) {
-  if (length(unique(x)) < maxCluster){
+  if (maxCluster < 2L) {
+    stop("`maxCluster` must be at least two.")
+  }
+  
+  if (length(unique(x)) < maxCluster) {
     nom <- unique(x)
     structure(match(x, nom), 'med' = nom)
   } else {
     possibleClusters <- 2:maxCluster
     hSil <- pamSil <- -99
-    dists <- adist(x)
+    dists <- adist(x) # approximate string distance
     
     nMethodsChecked <- 2
     methInc <- 1 / nMethodsChecked
