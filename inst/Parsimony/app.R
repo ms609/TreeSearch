@@ -353,7 +353,7 @@ ui <- fluidPage(
       plotOutput(outputId = "treePlot", height = "600px"),
       hidden(plotOutput("clustCons", height = "200px")),
       hidden(tags$div(id = "charChooser",
-        tags$div(numericInput("whichChar", "Character to map:", value = 1L,
+        tags$div(numericInput("plottedChar", "Character to map:", value = 1L,
                               min = 0L, max = 1L, step = 1L, width = 200),
                  checkboxGroupInput("mapDisplay", "", list(
                    "Align tips" = "tipsRight",
@@ -728,6 +728,14 @@ server <- function(input, output, session) {
   
   tipLabels <- reactive({r$trees[[1]][["tip.label"]]})
   
+  nChars <- reactive({
+    if (HaveData()) {
+      as.integer(attr(r$dataset, "nr"))
+    } else {
+      0L
+    }
+  })
+  
   TaxonOrder <- reactive({
     if (HaveData()) {
       names(r$dataset)
@@ -904,7 +912,7 @@ server <- function(input, output, session) {
     if (is.null(r$dataset)) {
       Notification(type = "error", "Could not read data from file")
       
-      updateSliderInput(session, "whichChar", min = 0L,
+      updateSliderInput(session, "plottedChar", min = 0L,
                         max = 0L, value = 0L)
       return ("Could not read data from file")
     } else {
@@ -912,8 +920,8 @@ server <- function(input, output, session) {
                        paste("Loaded", attr(r$dataset, "nr"), "characters and",
                              length(r$dataset), "taxa"))
       
-      updateSliderInput(session, "whichChar", min = 0L,
-                        max = as.integer(attr(r$dataset, "nr")), value = 1L)
+      updateSliderInput(session, "plottedChar", min = 0L,
+                        max = nChars(), value = 1L)
     }
     
     tryCatch({
@@ -1558,14 +1566,25 @@ server <- function(input, output, session) {
     }
   }
   
-  PlottedChar <- debounce(reactive(as.integer(input$whichChar)), aJiffy)
-  observeEvent(input$whichChar, {
-    if (input$whichChar > 0) {
+  PlottedChar <- debounce(reactive({
+    typed <- max(0L, as.integer(input$plottedChar), na.rm = TRUE)
+    if (nChars() > 0 && typed > nChars()) {
+      Notification(type = "warning",
+                   paste("Dataset contains", nChars(), "characters.")
+      )
+      updateSliderInput(session, "plottedChar", value = nChars())
+    }
+    min(typed, nChars())
+  }), aJiffy)
+  
+  observeEvent(PlottedChar(), {
+    if (PlottedChar() > 0) {
       showElement("mapDisplay")
     } else {
       hideElement("mapDisplay")
     }
-  })
+  }, ignoreInit = TRUE)
+  
   whichTree <- debounce(reactive(input$whichTree), aJiffy)
   
   PlottedTree <- reactive({
@@ -1671,6 +1690,12 @@ server <- function(input, output, session) {
   })
   
   TipCols <- reactive(stableCol()) # TODO allow user to choose how to colour
+  
+  TipColLegend <- function() {
+    SpectrumLegend(palette = hcl.colors(131, "inferno")[1:101],
+                   legend = c("Stable", "Unstable"),
+                   title = "Leaf stability")
+  }
   
   consP <- debounce(reactive(signif(input$consP)), 50)
   observeEvent(consP(), {
@@ -1950,10 +1975,10 @@ server <- function(input, output, session) {
         if (max(extraLen) > 0) {
           SpectrumLegend(
             palette = hcl.colors(256, "inferno")[1:193],
+            title = "Mean tree score\nimpact",
             legend = c("No impact",
-                       "Mean tree\nscore impact",
-                       signif(max(extraLen))),
-            font = c(1, 3, 1)
+                       signif(max(extraLen) / 2),
+                       signif(max(extraLen)))
             )
         }
       },
@@ -1970,6 +1995,7 @@ server <- function(input, output, session) {
       LabelConcordance()
     } else {
       plot(r$plottedTree, tip.color = TipCols()[r$plottedTree$tip.label])
+      TipColLegend()
     }
   }
   
@@ -2153,7 +2179,7 @@ server <- function(input, output, session) {
   
   output$charMapLegend <- bindCache(
     renderUI({
-      n <- PlottedChar() # Debounces input$whichChar
+      n <- PlottedChar()
       if (length(n) && n > 0L && !is.null(r$chars)) {
       
         pal <- c("#00bfc6", "#ffd46f", "#ffbcc5", "#c8a500",
@@ -2207,7 +2233,7 @@ server <- function(input, output, session) {
   
   output$charNotes <- bindCache(
     renderUI({
-      n <- PlottedChar() # Debounces input$whichChar
+      n <- PlottedChar()
       if (length(n) && n > 0L
           && is.list(r$charNotes) && is.list(r$charNotes[[1]])
           && length(r$charNotes) >= n) {
