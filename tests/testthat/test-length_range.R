@@ -18,18 +18,18 @@ test_that("Minimum step counts are correctly calculated", {
   # ++++++, +....., .++..., .+.+.., ...++.
   expect_equal(2, MinimumLength(c(63, 32, 24, 20, 6)))
   
-  dudDat <- TreeTools::StringToPhyDat('----{-,1}22', letters[1:7])
-  expect_equal('----<-,1>22', TreeTools::PhyDatToString(dudDat, '>', ','))
-  expect_equal(0, attr(PrepareDataIW(dudDat), 'min.length'))
+  dudDat <- TreeTools::StringToPhyDat("----{-,1}22", letters[1:7])
+  expect_equal("----<-,1>22", TreeTools::PhyDatToString(dudDat, ">", ","))
+  expect_equal(0, attr(PrepareDataIW(dudDat), "min.length"))
   
-  dudTwo <- TreeTools::StringToPhyDat('{-1}{-2}{-3}2233', letters[1:7])
-  expect_equal('{-1}{-2}{-3}2233', TreeTools::PhyDatToString(PrepareDataIW(dudTwo)))
+  dudTwo <- TreeTools::StringToPhyDat("{-1}{-2}{-3}2233", letters[1:7])
+  expect_equal("{-1}{-2}{-3}2233", TreeTools::PhyDatToString(PrepareDataIW(dudTwo)))
   
-  morphyObj <- SingleCharMorphy('{-1}{-2}{-3}2233')
+  morphyObj <- SingleCharMorphy("{-1}{-2}{-3}2233")
   expect_equal(MorphyTreeLength(TreeTools::PectinateTree(7), morphyObj), 1)
   morphyObj <- UnloadMorphy(morphyObj)
   
-  owch2 <- '{-1}{-2}22{-3}33'
+  owch2 <- "{-1}{-2}22{-3}33"
   tr2 <- ape::read.tree(text=("(a, ((b, (c, d)), (e, (f, g))));"))
   # PlotCharacter(tr2, StringToPhyDat(owch2, letters[1:7]))
   
@@ -38,7 +38,7 @@ test_that("Minimum step counts are correctly calculated", {
   expect_equal(MorphyTreeLength(TreeTools::PectinateTree(7), morphyObj), 1)
   morphyObj <- UnloadMorphy(morphyObj)
   
-  owch3 <- '-1-222-333'
+  owch3 <- "-1-222-333"
   tr3 <- ape::read.tree(text=("((a1, a2), (((b1, b2), (c, d)), ((e1, e2), (f, g))));"))
   # PlotCharacter(tr3, StringToPhyDat(owch3, TipLabels(tr3)))
   
@@ -47,14 +47,14 @@ test_that("Minimum step counts are correctly calculated", {
   expect_equal(MorphyTreeLength(tr3, morphyObj), 2)
   morphyObj <- UnloadMorphy(morphyObj)
   
-  expect_equal(2, MinimumLength('-{-1}{-2}{-3}2233'))
-  expect_equal(1, MinimumLength('--{-1}{-2}{-3}2233'))
+  expect_equal(2, MinimumLength("-{-1}{-2}{-3}2233"))
+  expect_equal(1, MinimumLength("--{-1}{-2}{-3}2233"))
   
-  expect_equal(0, attr(PrepareDataIW(dudDat), 'min.length'))
+  expect_equal(0, attr(PrepareDataIW(dudDat), "min.length"))
   
-  tr <- ape::read.tree(text='(((a, b), c), (d, (e, ((f, g), (h, (i, (j, k)))))));')
+  tr <- ape::read.tree(text="(((a, b), c), (d, (e, ((f, g), (h, (i, (j, k)))))));")
   expect_equal(CharacterLength(tr, compress = TRUE,
-                               TreeTools::StringToPhyDat('11---22--33', letters[1:11])),
+                               TreeTools::StringToPhyDat("11---22--33", letters[1:11])),
                MinimumLength(c(0, 0, 0, 0, 0, 0, 2, 2, 4, 4, 8, 8)))
   
   # 04, 14, 24, 34, 05, 16, 27, 38, 9A
@@ -73,7 +73,7 @@ test_that("Minimum step counts are correctly calculated", {
     2^9 + 2^10
   )))
   
-  data('inapplicable.datasets')
+  data("inapplicable.datasets")
   expect_equal(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
                  1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
                  1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 
