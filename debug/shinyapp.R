@@ -14,21 +14,21 @@ r <- list(
   null = NULL
 )
 
-r$plottedTree = r$trees[[1]]
-concavity <- function() 10
-n=3
+conc <- function() 10
+n=16
 
 rogueCont <- PolEscapa(r$trees,
                        r$dataset[r$trees[[1]][["tip.label"]], n],
-                       concavity())
+                       10)
 roguishness <- if (max(rogueCont) == 0) {
   "black"
 } else {
   hcl.colors(256, "inferno")[
-    (192 * rogueCont / max(rogueCont)) + 1
+    (192 * rogueCont[r$trees[[1]][["tip.label"]]] / max(rogueCont)) + 1
   ]
 }
 par(mar = rep(0, 4), cex=0.9)
+r$plottedTree = r$trees[[2]]
 PlotCharacter(r$plottedTree, r$dataset, n,
               edge.width = 2.5,
               updateTips = "updateTips" %in% input$mapDisplay,

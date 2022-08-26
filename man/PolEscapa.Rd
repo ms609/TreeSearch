@@ -4,11 +4,38 @@
 \alias{PolEscapa}
 \title{Contribution of character to leaf instability}
 \usage{
-PolEscapa(trees, char, concavity = Inf)
+PolEscapa(trees, char, concavity = Inf, applicability = FALSE)
+}
+\arguments{
+\item{trees}{List of trees of class \code{phylo}, or \code{multiPhylo} object.}
+
+\item{char}{\code{phyDat} object containing a single character.}
+
+\item{concavity}{Determines the degree to which extra steps beyond the first
+are penalized.  Specify a numeric value to use implied weighting
+\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
+\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+TNT sets a default of 3, but this is too low in some circumstances
+\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+Better still explore the sensitivity of results under a range of
+concavity values, e.g. \code{k = 2 ^ (1:7)}.
+Specify \code{Inf} to weight each additional step equally.
+Specify \code{'profile'} to employ profile parsimony \insertCite{Faith2001}{TreeSearch}.}
+}
+\value{
+\code{PolEscapa()} returns a named numeric vector listing the mean
+absolute change to tree length resulting if the character were coded
+ambiguous for each leaf in turn, under the specified concavity constant.
 }
 \description{
 Would tree length change if a character was coded as ambiguous for each
 leaf \insertRef{Pol2009}{TreeSearch}?
+}
+\details{
+When inapplicable tokens are present in a character, the applicability of
+each coding is maintained: i.e. a leaf coded with an applicable token is
+never allowed to take an inapplicable value; and an inapplicable token
+remains inapplicable.
 }
 \examples{
 trees <- inapplicable.trees[["Vinther2008"]]
