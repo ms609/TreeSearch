@@ -23,6 +23,7 @@ PolEscapa <- function(trees, char, concavity = Inf) {
   if(!inherits(char, "phyDat")) {
     stop("`char` must be a character of class `phyDat`.")
   }
+  trees <- RootTree(trees, 1) # Avoid warnings in TreeLength()
   start <- TreeLength(trees, char, concavity)
   cont <- attr(char, "contrast")
   qm <- which(rowSums(cont) == dim(cont)[2])
