@@ -27,6 +27,9 @@ test_that("LengthAdded()", {
   expect_equal(pe10["Neopilina"], c(Neopilina = 1))
   expect_equal(sum(pe10), 1)
   
+  # Single tree
+  expect_equal(LengthAdded(trees[[1]], dataset[, 10]), pe10)
+  
   # Implied weighting
   expect_equal(
     unname(PolEscapa(trees, dataset[, 11], concavity = 5)["Neopilina"]),

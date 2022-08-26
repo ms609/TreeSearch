@@ -44,6 +44,9 @@ LengthAdded <- function(trees, char, concavity = Inf) {
     stop("`char` contract matrix lacks levels for ",
          paste(which(rowSums(cont) == 0), collapse = ", "))
   }
+  if (inherits(trees, "phylo")) {
+    trees <- c(trees)
+  }
   
   trees <- RootTree(trees, 1) # Avoid warnings in TreeLength()
   start <- TreeLength(trees, char, concavity)
@@ -78,7 +81,7 @@ LengthAdded <- function(trees, char, concavity = Inf) {
   }
   
   # Temp:
-  deltas <- start - vapply(seq_along(char), QMScore, start)
+  deltas <- start - .vapply(seq_along(char), QMScore, start)
   if (any(deltas < 0)) {
     #dput(which(apply(deltas < 0, 1, any)))
     warning("Scoring issue (#112) may distort score of ",
@@ -95,6 +98,14 @@ LengthAdded <- function(trees, char, concavity = Inf) {
   
   # Return:
   delta / length(trees)
+}
+
+.vapply <- function(...) {
+  ret <- vapply(...)
+  if (is.null(dim(ret))) {
+    ret <- matrix(ret, 1)
+  }
+  ret
 }
 
 #' @rdname LengthAdded
