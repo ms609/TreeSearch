@@ -57,6 +57,8 @@ Notification <- function (...) {
   }
 }
 
+Icon <- function(...) icon(..., class = "fas")
+
 aJiffy <- 42 # ms, default debounce period for input sliders etc
 typingJiffy <- 2.5 * aJiffy # slightly slower if might be typing
 aFewTrees <- 48L # Too many and rogues / tree space are slowed
@@ -283,9 +285,9 @@ ui <- fluidPage(
       )),
       tags$label("Search", class = "control-label", 
                  style = "display: block; margin-top: -15px;"),
-      actionButton("searchConfig", "Configure", icon = icon("gears")),
-      hidden(actionButton("go", "Search", icon = icon("magnifying-glass"))),
-      downloadButton("saveZip", "Save log"),
+      actionButton("searchConfig", "Configure", icon = Icon("gears")),
+      hidden(actionButton("go", "Search", icon = Icon("magnifying-glass"))),
+      downloadButton("saveZip", "Save log", icon = Icon("download")),
       fileInput("treeFile",
                 label = tags$span(
                   tags$i(class="fas fa-solid fa-tree"),
@@ -301,8 +303,8 @@ ui <- fluidPage(
                     step = 1L, value = c(1, 1)),
         tags$label("Save chosen trees:", class = "control-label"),
         tags$div(style = "display: inline-block",
-          downloadButton("saveNwk", "Newick"),
-          downloadButton("saveNex", "Nexus")
+          downloadButton("saveNwk", "Newick", icon = Icon("download")),
+          downloadButton("saveNex", "Nexus", icon = Icon("download"))
         )
       )),
       hidden(
@@ -350,9 +352,9 @@ ui <- fluidPage(
       ),
       tags$div(id = "saveAs", 
                tags$span("Save\ua0plot: "),
-               downloadButton("savePlotZip", "R script"),
-               downloadButton("savePdf", "PDF"),
-               downloadButton("savePng", "PNG")
+               downloadButton("savePlotZip", "R script", icon = Icon("download")),
+               downloadButton("savePdf", "PDF", icon = Icon("download")),
+               downloadButton("savePng", "PNG", icon = Icon("download"))
       )
     ),
     fluidRow(
@@ -1185,8 +1187,8 @@ server <- function(input, output, session) {
              ))
       ),
       title = "Tree search settings",
-      footer = tagList(modalButton("Close", icon = icon("rectangle-xmark")),
-                       actionButton("modalGo", icon = icon("magnifying-glass"), 
+      footer = tagList(modalButton("Close", icon = Icon("rectangle-xmark")),
+                       actionButton("modalGo", icon = Icon("magnifying-glass"), 
                                     if(length(r$trees)) {
                                       "Continue search" 
                                     } else {
