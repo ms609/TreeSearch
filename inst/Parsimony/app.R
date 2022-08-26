@@ -1922,6 +1922,12 @@ server <- function(input, output, session) {
     }
   }
   
+  PolEscVal <- reactive({
+    PolEscapa(r$trees,
+              r$dataset[tipLabels(), PlottedChar()],
+              concavity())
+  })
+  
   CharacterwisePlot <- function() {
     par(mar = rep(0, 4), cex = 0.9)
     n <- PlottedChar()
@@ -1929,14 +1935,12 @@ server <- function(input, output, session) {
     r$plottedTree <- PlottedTree()
     if (length(n) && n > 0L) {
       pc <- tryCatch({
-        rogueCont <- PolEscapa(r$trees,
-                               r$dataset[tipLabels(), n],
-                               concavity())
+        rogueCont <- PolEscVal()
         roguishness <- if (max(rogueCont) == 0) {
           "black"
         } else {
           hcl.colors(256, "inferno")[
-            (192 * rogueCont / max(rogueCont)) + 1
+            (192 * rogueCont[r$plottedTree$tip.label] / max(rogueCont)) + 1
           ]
         }
         PlotCharacter(r$plottedTree, r$dataset, n,
