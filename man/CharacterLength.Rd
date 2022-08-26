@@ -32,10 +32,10 @@ Homoplasy length of each character in a dataset on a specified tree.
 }
 \section{Functions}{
 \itemize{
-\item \code{FastCharacterLength}: Do not perform checks.  Use with care: may cause
+\item \code{FastCharacterLength()}: Do not perform checks.  Use with care: may cause
 erroneous results or software crash if variables are in the incorrect format.
-}}
 
+}}
 \examples{
 data('inapplicable.datasets')
 dataset <- inapplicable.phyData[[12]]

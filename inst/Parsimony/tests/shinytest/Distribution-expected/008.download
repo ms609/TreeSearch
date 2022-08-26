@@ -1,0 +1,131 @@
+
+# # # TreeSearch plot log: <DATE-AND-TIME> # # #
+# 
+# System: <SYS-INFO>
+# - R <VERSION>
+# - TreeSearch <VERSION>
+# - TreeTools <VERSION>
+# - TreeDist <VERSION>
+# - ape <VERSION>
+# 
+# This log was generated procedurally to facilitate the reproduction of
+# figures obtained during an interactive Shiny session.
+# It is provided without guarantee of completeness or accuracy.
+# In particular, code will not be logged when previously computed values
+# are retrieved from cache.
+# 
+# Before running, check that the script and any data files are in the
+# R working directory, which can be read with getwd() and set with setwd().
+# 
+# Please validate the code before reproducing in a manuscript, reporting
+# any errors at https://github.com/ms609/treesearch/issues or by e-mail to
+# the package maintainer.
+# 
+# # # # # #
+
+
+# Load required libraries
+library("TreeTools", quietly = TRUE)
+library("TreeDist")
+library("TreeSearch")
+
+# View recommended citations
+citation("TreeTools")
+citation("TreeDist")
+citation("Quartet")
+citation("TreeSearch")
+citation("Rogue")
+
+# Check working directory
+getwd() # Should match location of data / tree files
+setwd(".") # Replace . with desired/directory to change
+
+# Load data from file
+dataFile <- system.file("datasets/Sun2018.nex", package = "TreeSearch") # Test mode
+dataset <- ReadAsPhyDat(dataFile)
+
+# Load trees from file
+treeFile <- dataFile # Test mode
+trees <- read.nexus(treeFile)
+
+# Compute tree distances
+dists <- TreeDist::ClusteringInfoDistance(trees)
+
+
+# Compute clusters of trees
+
+# Try K-means clustering (Hartigan & Wong 1979):
+kClusters <- lapply(2:15, function (k) kmeans(dists, k))
+kSils <- vapply(kClusters, function (kCluster) {
+  mean(cluster::silhouette(kCluster$cluster, dists)[, 3])
+}, double(1))
+bestK <- which.max(kSils)
+kSil <- kSils[bestK] # Best silhouette coefficient
+kCluster <- kClusters[[bestK]]$cluster # Best solution
+
+# Try partitioning around medoids (Maechler et al. 2019):
+pamClusters <- lapply(2:15, function (k) cluster::pam(dists, k = k))
+pamSils <- vapply(pamClusters, function (pamCluster) {
+  mean(cluster::silhouette(pamCluster)[, 3])
+}, double(1))
+bestPam <- which.max(pamSils)
+pamSil <- pamSils[bestPam] # Best silhouette coefficient
+pamCluster <- pamClusters[[bestPam]]$cluster # Best solution
+
+# Try hierarchical clustering with minimax linkage (Bien & Tibshirani 2011):
+hTree <- protoclust::protoclust(dists)
+hClusters <- lapply(2:15, function (k) cutree(hTree, k = k))
+hSils <- vapply(hClusters, function (hCluster) {
+  mean(cluster::silhouette(hCluster, dists)[, 3])
+}, double(1))
+bestH <- which.max(hSils)
+hSil <- hSils[bestH] # Best silhouette coefficient
+hCluster <- hClusters[[bestH]] # Best solution
+
+# Set threshold for recognizing meaningful clustering
+# no support < 0.25 < weak < 0.5 < good < 0.7 < strong
+threshold <- 1
+
+# Compare silhouette coefficients of each method
+bestMethodId <- which.max(c(threshold, pamSil, hSil, kSil))
+bestCluster <- c("none", "pam", "hmm", "kmn")[bestMethodId]
+
+# No significant clustering was found.
+clustering <- 1 # Assign all trees to single cluster
+
+# No clustering structure: Plot consensus tree
+cons <- ConsensusWithout(
+  trees = trees,
+  tip = c("Paterimitra", "Yuganotheca_elegans", "Salanygolina", "Eccentrotheca", "Dailyatia", "Halkieria_evangelista", "Cotyledion_tylodes"),
+  p = 0.5
+)
+
+# Root tree
+cons <- RootTree(cons, "Namacalathus")
+# Set unit edge length
+cons$edge.length <- rep.int(1, nrow(cons$edge))
+# Rotate nodes, to display clades in order of size
+cons <- SortTree(cons, order = names(dataset))
+plottedTree <- cons # Store for future reference
+tipCols <- Rogue::ColByStability(trees)[cons$tip.label]
+
+# Plot consensus tree
+plot(
+  cons,
+  edge.width = 2, # Widen lines
+  font = 3,       # Italicize labels
+  cex = 0.83,     # Shrink tip font size
+  tip.color = tipCols
+)
+
+# Calculate split concordance
+concordance <- QuartetConcordance(plottedTree, dataset)
+
+# Annotate splits by concordance
+LabelSplits(
+  tree = plottedTree,
+  labels = signif(concordance, 3),
+  col = SupportColor(concordance),
+  frame = "none",
+  pos = 3
+)

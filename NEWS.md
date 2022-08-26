@@ -1,10 +1,40 @@
-# TreeSearch 1.1.1.9000 (development)
+# branch pol-escapa #
 
-- Fix memory leak
+- New function `PolEscapa()` tests which characters contribute to taxon
+  instability, per Pol & Escapa (2009) <doi:10.1111/j.1096-0031.2009.00258.x>.
+
+
+# TreeSearch 1.2.0.9001
+
+- New vignette on tree space mapping
+
+- Support reading characters from Excel spreadsheets in GUI
+
+
+# TreeSearch 1.2.0
+
+- 'shiny' GUI improvements:
+  - Export log of tree search commands
+  - Export R scripts to reproduce figures
+  - Simplify layout
+  - Misc bug fixes
+
+- New function `QuartetResolution()` evaluates how a quartet is resolved in
+  each of a list of trees
+
+
+# TreeSearch 1.1.2
+
+- Check tree order & rootedness before scoring ([#133](https://github.com/ms609/TreeSearch/issues/133))
+- Improve error handling
+- Replace `throw` with `stop` in C++
+- Remove test of elapsed times, for CRAN compliance
+
 
 # TreeSearch 1.1.1
 
-- GUI allows selection of subset of trees, for easier analysis of Bayesian tree sets
+- GUI allows selection of subset of trees, for easier analysis of Bayesian
+  tree sets
 - Miscellaneous fixes and improvements in 'shiny' GUI
 - Test suite for 'shiny' GUI
 - Update tests for TreeSearch 1.7
@@ -190,7 +220,8 @@
 ## Bug fixes
 - C11 compliance
 - `IWRatchetConsensus` now relays concavity value to subsequent functions
-- `ReadCharacters` returns labels for all characters and states if `character_num = NULL`
+- `ReadCharacters` returns labels for all characters and states if
+  `character_num = NULL`
 
 
 # TreeSearch 0.0.8
@@ -207,8 +238,10 @@
 - [9004] Bootstrap search improvements
 
 ## Bug fixes
-- [9003] User now able to specify value of concavity constant (was overridden to k = 4)
-- [9003] Bootstrap replicates now scored correctly (and without warning) under implied weights
+- [9003] User now able to specify value of concavity constant
+  (was overridden to k = 4)
+- [9003] Bootstrap replicates now scored correctly (and without warning)
+  under implied weights
 
 
 # TreeSearch 0.0.7

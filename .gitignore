@@ -3,6 +3,7 @@
 /docs/
 gen-*
 src-*
+src/*.gcda
 src/*.o
 src/*.so
 src/*.dll

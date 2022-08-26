@@ -1,0 +1,137 @@
+{
+  "input": {
+    "clThresh": 0.5,
+    "concordance": "clc",
+    "consP": 0.5,
+    "dataFile": null,
+    "dataSource": "Sun2018",
+    "distMeth": "pid",
+    "excludedTip": "Paterimitra",
+    "go": 0,
+    "keepNTips": 47,
+    "mapDisplay": null,
+    "mapLines": null,
+    "neverDrop": null,
+    "nTree": 125,
+    "outgroup": "Namacalathus",
+    "plotFormat": "space",
+    "plotSize": 400,
+    "readxl.sheet": "Sheet 1",
+    "readxlSkip": 2,
+    "readxlSkipCols": 2,
+    "relators": [
+      "Wiwaxia_corrugata",
+      "Tonicella",
+      "Dentalium",
+      "Phoronis"
+    ],
+    "searchConfig": 0,
+    "spaceCol": "score",
+    "spaceDim": 3,
+    "spacePch": "relat",
+    "treeFile": null,
+    "treeRange": [
+      1,
+      125
+    ],
+    "whichChar": 1,
+    "whichTree": 1
+  },
+  "output": {
+    "branchLegend": {
+      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">19 trees<\/span>",
+      "deps": [
+
+      ]
+    },
+    "charMapLegend": {
+      "html": "<h3>Brephic shell: Embryonic shell<\/h3>\n<ul style=\"list-style: none;\">\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #00bfc6 ;\">0<\/span>\n    <span>Absent<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #ffd46f ;\">1<\/span>\n    <span>Present<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: grey ;\">?<\/span>\n    <span>Ambiguous<\/span>\n  <\/li>\n<\/ul>",
+      "deps": [
+
+      ]
+    },
+    "charNotes": {
+      "html": "<div id=\"char-description\">\n  <p>The embryonic shell or protegulum is secreted by the embryo immediately before hatching.<\/p>\n<\/div>\n<ul class=\"state-notes\">\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Amathia<\/span>\n    <span class=\"state-note-detail\">@Reed1982.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Clupeafumosus socialis<\/span>\n    <span class=\"state-note-detail\">Described by Topper et al. (2013R).<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Conotheca<\/span>\n    <span class=\"state-note-detail\">[@Wrona2003].<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Dentalium<\/span>\n    <span class=\"state-note-detail\">The shell does not form until the trochophore larval stage, which has been exquisitely described in Antalis [@Wanninger2001].  \nThis shell field is initially disc-like, subsequently expanding to fuse ventrally and produce the cylindrical protoconch. The prototroch is clearly delineated fro the telotroch in post-metamorphic juveniles [@Wanninger2001].<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Gasconsia<\/span>\n    <span class=\"state-note-detail\">The earliest shell is not described by @Hanken1985Thetaxonomy or @Watkins2002Newrecord.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Loxosomella<\/span>\n    <span class=\"state-note-detail\">Absent, with no possible equivalent [@Nielsen1966].<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Namacalathus<\/span>\n    <span class=\"state-note-detail\">Inapplicable insofar as reproduction occurs by budding; there is no evidence for a free-living larval stage.  Nevertheless, the presence of a sexual reproductive phase in addition to asexual reproduction cannot be discounted.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Novocrania<\/span>\n    <span class=\"state-note-detail\">Shell not secreted until after metamorphosis (Popov et al. 2010).   Freeman &amp; Lundelius (1999) report a Craniops-like larval shell in fossil \"Crania\", but observe that Quaternary [Novo]crania no longer exhibit a larval shell.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Paramicrocornus<\/span>\n    <span class=\"state-note-detail\">\"The initial part of the conch appears to be a simple apex without clearly delineated protoconch\" [@Zhang2018Ahyolithid], though it is not clear from illustrated figures whether an embryonic shell contiguous with the adult shell was present.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Pauxillites<\/span>\n    <span class=\"state-note-detail\">Coded following Recilites [@Dzik1978], a fellow member of Pauxillitidae [@Marek1967].<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Tonicella<\/span>\n    <span class=\"state-note-detail\">On hatching, the polyplacophoran larva lacks a shell field.    \n  \nShell fields develop during the trochophore larva stage. The larva of the chiton Mopalia has two distinct shell fields: that anterior to the prototroch will develop into the first shell plate; the one posterior to the prototroch becomes the subsequent plates [@Wanninger2002C].  \n  \nThis disc-shaped posterior plate, whose position corresponds to the conchiferan shell field, bears a polygonal ornament and is subdivided by a series of grooves that prefigure the adult shell plates [@Wanninger2002C].<\/span>\n  <\/li>\n<\/ul>",
+      "deps": [
+
+      ]
+    },
+    "pcQuality": {
+      "src": "[image data sha1: 140d8787b98103c8c9b6cb9d5f4bedcc869f0deb]",
+      "alt": "Plot object",
+      "coordmap": {
+        "panels": [
+          {
+            "domain": {
+              "left": -0.04,
+              "right": 1.04,
+              "bottom": -1.66,
+              "top": 2.66
+            },
+            "range": {
+              "left": 0,
+              "right": 240,
+              "bottom": 42.1999599999445,
+              "top": -1
+            },
+            "log": {
+              "x": null,
+              "y": null
+            },
+            "mapping": {
+
+            }
+          }
+        ],
+        "dims": {
+          "width": 240,
+          "height": 72
+        }
+      },
+      "class": "shiny-scalable"
+    },
+    "references": {
+      "deps": [
+
+      ]
+    },
+    "results": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
+    "treePlot": {
+      "src": "[image data sha1: 285be0e18c186ff2dffb562d8caf4502a7dc1bca]",
+      "alt": "Plot object",
+      "coordmap": {
+        "panels": [
+          {
+            "domain": {
+              "left": -0.04,
+              "right": 1.04,
+              "bottom": -0.04,
+              "top": 1.04
+            },
+            "range": {
+              "left": 202.3904005976,
+              "right": 397.6095994024,
+              "bottom": 196.6095994024,
+              "top": 1.39040059760014
+            },
+            "log": {
+              "x": null,
+              "y": null
+            },
+            "mapping": {
+
+            }
+          }
+        ],
+        "dims": {
+          "width": 400,
+          "height": 400
+        }
+      },
+      "class": "shiny-scalable"
+    }
+  },
+  "export": {
+
+  }
+}

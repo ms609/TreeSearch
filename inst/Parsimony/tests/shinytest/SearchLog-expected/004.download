@@ -1,0 +1,138 @@
+#NEXUS
+[R-package APE, <DATE-AND-TIME>]
+
+BEGIN TAXA;
+	DIMENSIONS NTAX = 55;
+	TAXLABELS
+		Gastrotricha
+		Kinorhyncha
+		Loricifera
+		Nematomorpha
+		Nematoda
+		Aysheaia
+		Peripatus
+		Kerygmachela
+		Microdictyon
+		Tardigrada
+		Acanthopriapulus_horridus
+		Ancalagon_minor
+		Anningvermis_multispinosus
+		Chalazoscolex_pharkus
+		Corynetis_brevis
+		Cricocosmia_jinningensis
+		Fieldia_lanceolata
+		Guanduscolex_minor
+		Halicryptus_higginsi
+		Halicryptus_spinulosus
+		Laojieella_thecata
+		Louisella_pedunculata
+		Maccabeus_cirratus
+		Maccabeus_tentaculatus
+		Maotianshania_cylindrica
+		Markuelia
+		Meiopriapulus_fijiensis
+		Ottoia_prolifica
+		Palaeopriapulites_parvus
+		Palaeoscolex_piscatorum
+		Paraselkirkia_jinningensis
+		Paratubiluchus_bicaudatus
+		Priapulites_konecniorum
+		Priapulopsis_australis
+		Priapulopsis_bicaudatus
+		Priapulopsis_cnidephorus
+		Priapulus_abyssorum
+		Priapulus_caudatus
+		Priapulus_tuberculatospinosus
+		Scolecofurca_rara
+		Selkirkia_columbia
+		Sicyophorus_rarus
+		Tabelliscolex_hexagonus
+		Tabelliscolex_maanshanensis
+		Tubiluchus_arcticus
+		Tubiluchus_australensis
+		Tubiluchus_corallicola
+		Tubiluchus_philippinensis
+		Tubiluchus_remanei
+		Tubiluchus_troglodytes
+		Tubiluchus_vanuatensis
+		Tylotites_petiolaris
+		Xiaoheiqingella_peculiaris
+		Xystoscolex_boreogyrus
+		Yunnanpriapulus_halteroformis
+	;
+END;
+BEGIN TREES;
+	TRANSLATE
+		1	Gastrotricha,
+		2	Kinorhyncha,
+		3	Loricifera,
+		4	Nematomorpha,
+		5	Nematoda,
+		6	Aysheaia,
+		7	Peripatus,
+		8	Kerygmachela,
+		9	Microdictyon,
+		10	Tardigrada,
+		11	Acanthopriapulus_horridus,
+		12	Ancalagon_minor,
+		13	Anningvermis_multispinosus,
+		14	Chalazoscolex_pharkus,
+		15	Corynetis_brevis,
+		16	Cricocosmia_jinningensis,
+		17	Fieldia_lanceolata,
+		18	Guanduscolex_minor,
+		19	Halicryptus_higginsi,
+		20	Halicryptus_spinulosus,
+		21	Laojieella_thecata,
+		22	Louisella_pedunculata,
+		23	Maccabeus_cirratus,
+		24	Maccabeus_tentaculatus,
+		25	Maotianshania_cylindrica,
+		26	Markuelia,
+		27	Meiopriapulus_fijiensis,
+		28	Ottoia_prolifica,
+		29	Palaeopriapulites_parvus,
+		30	Palaeoscolex_piscatorum,
+		31	Paraselkirkia_jinningensis,
+		32	Paratubiluchus_bicaudatus,
+		33	Priapulites_konecniorum,
+		34	Priapulopsis_australis,
+		35	Priapulopsis_bicaudatus,
+		36	Priapulopsis_cnidephorus,
+		37	Priapulus_abyssorum,
+		38	Priapulus_caudatus,
+		39	Priapulus_tuberculatospinosus,
+		40	Scolecofurca_rara,
+		41	Selkirkia_columbia,
+		42	Sicyophorus_rarus,
+		43	Tabelliscolex_hexagonus,
+		44	Tabelliscolex_maanshanensis,
+		45	Tubiluchus_arcticus,
+		46	Tubiluchus_australensis,
+		47	Tubiluchus_corallicola,
+		48	Tubiluchus_philippinensis,
+		49	Tubiluchus_remanei,
+		50	Tubiluchus_troglodytes,
+		51	Tubiluchus_vanuatensis,
+		52	Tylotites_petiolaris,
+		53	Xiaoheiqingella_peculiaris,
+		54	Xystoscolex_boreogyrus,
+		55	Yunnanpriapulus_halteroformis
+	;
+	TREE * ratch1_1 = [&R] (1,((((((((((2,3),(29,42)),(12,17)),21),((((((((((11,(38,39)),37),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),((((((13,15),22),28),40),(14,(((16,44),43),52))),25))),18),26),54),((4,30),5)),(((6,8),(9,10)),7)));
+	TREE * ratch1_2 = [&R] (1,((((((((((2,3),(29,42)),(12,17)),21),((((((((((11,(38,39)),37),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),((((((13,15),22),28),40),(14,(((16,43),44),52))),25))),18),26),54),((4,30),5)),(((6,8),(9,10)),7)));
+	TREE * ratch1_3 = [&R] (1,((((((((((2,3),(29,42)),(12,17)),21),((((((((((11,(38,39)),37),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),((((((13,15),22),28),40),(14,((16,(43,44)),52))),25))),18),26),54),((4,30),5)),(((6,8),(9,10)),7)));
+	TREE * ratch1_4 = [&R] (1,((((((((((2,3),(29,42)),(12,17)),21),((((((((((11,(38,39)),37),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),(((((13,15),22),28),40),(14,((16,(43,44)),52))))),(18,25)),26),54),((4,30),5)),(((6,8),(9,10)),7)));
+	TREE * ratch1_5 = [&R] (1,(((((((((((2,3),(29,42)),(12,17)),21),((((((((((11,(38,39)),37),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),(((((13,15),22),28),40),(14,((16,(43,44)),52))))),18),25),26),54),((4,30),5)),(((6,8),(9,10)),7)));
+	TREE * ratch1_6 = [&R] (1,(((((((((((2,3),(29,42)),(12,17)),21),((((((((((11,(38,39)),37),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),(((((13,15),22),28),40),(14,((16,(43,44)),52))))),25),18),26),54),((4,30),5)),(((6,8),(9,10)),7)));
+	TREE * ratch1_7 = [&R] (1,((((((((((2,3),(29,42)),(12,17)),21),(((((((((((11,(38,39)),37),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),(((((13,15),22),28),40),(14,((16,(43,44)),52)))),25)),18),26),54),((4,30),5)),(((6,8),(9,10)),7)));
+	TREE * ratch1_8 = [&R] (1,((((((((((2,3),(29,42)),(12,17)),21),(((((((((((11,(38,39)),37),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),25),(((((13,15),22),28),40),(14,((16,(43,44)),52))))),18),26),54),((4,30),5)),(((6,8),(9,10)),7)));
+	TREE * ratch1_9 = [&R] (1,(((((((((((2,3),(29,42)),(12,17)),21),25),((((((((((11,(38,39)),37),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),(((((13,15),22),28),40),(14,((16,(43,44)),52))))),18),26),54),((4,30),5)),(((6,8),(9,10)),7)));
+	TREE * ratch1_10 = [&R] (1,(((((((((((2,3),(29,42)),(12,17)),21),25),((((((((((11,37),(38,39)),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),(((((13,15),22),28),40),(14,((16,(43,44)),52))))),18),26),54),((4,30),5)),(((6,8),(9,10)),7)));
+	TREE * final_1 = [&R] (1,(((((((((((2,3),(29,42)),(12,17)),21),(((((((((((11,(38,39)),37),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),25),(((((13,15),22),28),40),(14,((16,(43,44)),52))))),18),26),54),((4,30),5)),((6,8),(9,10))),7));
+	TREE * final_2 = [&R] (1,(((((((((((2,3),(29,42)),(12,17)),21),((((((((((11,(37,(38,39))),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),25),(((((13,15),22),28),40),(14,((16,(43,44)),52))))),18),26),54),((4,30),5)),((6,8),(9,10))),7));
+	TREE * final_3 = [&R] (1,(((((((((((2,3),(29,42)),(12,17)),21),(((((((((((11,37),(38,39)),((34,36),35)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),25),(((((13,15),22),28),40),(14,((16,(43,44)),52))))),18),26),54),((4,30),5)),((6,8),(9,10))),7));
+	TREE * final_4 = [&R] (1,(((((((((((2,3),(29,42)),(12,17)),21),(((((((((((11,37),(38,39)),(34,(35,36))),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),25),(((((13,15),22),28),40),(14,((16,(43,44)),52))))),18),26),54),((4,30),5)),((6,8),(9,10))),7));
+	TREE * final_5 = [&R] (1,(((((((((((2,3),(29,42)),(12,17)),21),(((((((((((11,37),(38,39)),((34,35),36)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),25),(((((13,15),22),28),40),(14,((16,(43,44)),52))))),18),26),54),((4,30),5)),((6,8),(9,10))),7));
+	TREE * final_6 = [&R] (1,((((((((((2,3),(29,42)),(12,17)),21),(((((((((((11,37),(38,39)),((34,35),36)),33),(19,20)),(23,24)),(31,41)),((27,(((((45,51),(47,48)),46),49),50)),32)),(53,55)),25),(((((13,15),22),28),40),(14,((16,(43,44)),52))))),18),26),54),((4,30),5)),(((6,8),(9,10)),7)));
+END;

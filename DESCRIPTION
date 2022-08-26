@@ -1,6 +1,6 @@
 Package: TreeSearch
-Title: Phylogenetic Analysis with Morphological Data
-Version: 1.1.1.9000
+Title: Phylogenetic Analysis with Discrete Character Data
+Version: 1.2.0.9101
 Authors@R: c(
     person(
       "Martin R.", 'Smith',
@@ -9,7 +9,7 @@ Authors@R: c(
       comment = c(ORCID = "0000-0001-5660-1727")
     ),
     person(
-      given = "Martin", family="Brazeau",
+      given = "Martin", family = "Brazeau",
       role = c("cph"),
       comment = c(ORCID = "0000-0002-0650-1282")
     )
@@ -52,6 +52,7 @@ Suggests:
   knitr,
   phangorn (>= 2.2.1),
   Quartet,
+  readxl,
   rmarkdown,
   shinytest,
   spelling,
@@ -61,7 +62,7 @@ Config/Needs/check:
   callr,
   pkgbuild,
   rcmdcheck,
-Config/Needs/coverage: covr
+Config/Needs/coverage: covr, spelling
 Config/Needs/memcheck: devtools
 Config/Needs/metadata: codemeta
 Config/Needs/revdeps: revdepcheck
@@ -79,5 +80,5 @@ ByteCompile: true
 Encoding: UTF-8
 Language: en-GB
 VignetteBuilder: knitr
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1
 Roxygen: list(markdown = TRUE)
