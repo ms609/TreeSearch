@@ -12,7 +12,7 @@
 #' @param char `phyDat` object containing a single character.
 #' @template concavityParam
 #' 
-#' @return `PolEscapa()` returns a named numeric vector listing the mean
+#' @return `ExtraLength()` returns a named numeric vector listing the mean
 #' absolute change to tree length resulting if the character were coded
 #' ambiguous for each leaf in turn, under the specified concavity constant.
 #' 
@@ -21,16 +21,22 @@
 #' @examples
 #' trees <- inapplicable.trees[["Vinther2008"]]
 #' dataset <- inapplicable.phyData[["Vinther2008"]]
-#' char <- dataset[, 10]
-#' PolEscapa(trees, dataset[, 10])
+#' char <- dataset[, 11]
+#' extra <- ExtraLength(trees, char)
+#' 
+#' PlotCharacter(
+#'   tree = trees[[1]], 
+#'   dataset = char,
+#'   tip.color = 1 + extra[trees[[1]]$tip.label] # Colour by extra steps
+#' ) -> XX # Suppress return value; display plot only
+#' 
 #' @export
-PolEscapa <- function(trees, char, concavity = Inf, applicability = FALSE) {
+ExtraLength <- function(trees, char, concavity = Inf, applicability = FALSE) {
   if(!inherits(char, "phyDat")) {
     stop("`char` must be a character of class `phyDat`.")
   }
   trees <- RootTree(trees, 1) # Avoid warnings in TreeLength()
   start <- TreeLength(trees, char, concavity)
-  cont <- attr(char, "contrast")
   contApp <- cont[, setdiff(colnames(cont), "-")]
   
   # Define ambiguous state, depending on applicability
@@ -74,3 +80,6 @@ PolEscapa <- function(trees, char, concavity = Inf, applicability = FALSE) {
   # Return:
   delta / length(trees)
 }
+
+#' @export
+PolEscapa <- ExtraLength

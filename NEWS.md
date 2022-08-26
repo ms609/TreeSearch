@@ -1,6 +1,6 @@
 # branch Pol-Escapa #
 
-- New function `PolEscapa()` tests which characters contribute to taxon
+- New function `ExtraLength()` tests which characters contribute to taxon
   instability, per Pol & Escapa (2009) <doi:10.1111/j.1096-0031.2009.00258.x>.
 
 
