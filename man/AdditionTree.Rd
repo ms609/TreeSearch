@@ -7,8 +7,8 @@
 AdditionTree(dataset, concavity = Inf, constraint, sequence)
 }
 \arguments{
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{concavity}{Numeric specifying concavity constant for implied step
 weighting.
@@ -23,7 +23,7 @@ approaches
 \item{constraint}{An object of class \code{phyDat}; returned trees will be
 perfectly compatible with each character in \code{constraint}.
 See \code{\link[=ImposeConstraint]{ImposeConstraint()}} and
-\href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
+\href{https://ms609.github.io/TreeSearch/articles/tree-search.html}{vignette}
 for further examples.}
 
 \item{sequence}{Character or numeric vector listing sequence in which to add

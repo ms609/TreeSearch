@@ -64,6 +64,7 @@ MinimumLength('-{-1}{-2}{-3}2233')
 Other tree scoring: 
 \code{\link{CharacterLength}()},
 \code{\link{IWScore}()},
+\code{\link{LengthAdded}()},
 \code{\link{MorphyTreeLength}()}
 }
 \author{

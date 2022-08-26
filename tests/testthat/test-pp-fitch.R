@@ -3,7 +3,7 @@ context("pp_exact")
 # TODO this test was recovered from a stash and requires updating -- 
 # or may be obselete.
 test_that("Profile score correct for small trees", {
-  library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
+  library("TreeTools", quietly = TRUE)
   tree <- as.phylo(200, 9)
   
   mataset <- matrix(c(

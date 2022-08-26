@@ -79,14 +79,14 @@ All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collap
 }
 \section{Functions}{
 \itemize{
-\item \code{TBRSwap}: faster version that takes and returns parent and child
+\item \code{TBRSwap()}: faster version that takes and returns parent and child
 parameters
 
-\item \code{RootedTBR}: Perform \acronym{TBR} rearrangement, retaining position of root
+\item \code{RootedTBR()}: Perform \acronym{TBR} rearrangement, retaining position of root
 
-\item \code{RootedTBRSwap}: faster version that takes and returns parent and child parameters
+\item \code{RootedTBRSwap()}: faster version that takes and returns parent and child parameters
+
 }}
-
 \examples{
 {
 library('ape')

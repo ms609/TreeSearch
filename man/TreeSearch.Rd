@@ -52,8 +52,8 @@ DoNothing(...)
 - (optionally) score of the tree
 - (optionally, if score provided) number of times this score has been hit}
 
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{TreeScorer}{function to score a given tree.
 The function will be passed three parameters, corresponding to the
@@ -115,9 +115,9 @@ configuring tree search, see the
 }
 \section{Functions}{
 \itemize{
-\item \code{EdgeListSearch}: Tree search from edge lists
-}}
+\item \code{EdgeListSearch()}: Tree search from edge lists
 
+}}
 \examples{
 data('Lobo', package='TreeTools')
 njtree <- TreeTools::NJTree(Lobo.phy)

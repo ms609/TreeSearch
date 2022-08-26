@@ -1,0 +1,89 @@
+{
+  "input": {
+    "clThresh": 1,
+    "concordance": "qc",
+    "consP": 0.5,
+    "dataFile": null,
+    "dataSource": "Sun2018",
+    "distMeth": "cid",
+    "excludedTip": "Paterimitra",
+    "go": 0,
+    "keepNTips": 47,
+    "mapDisplay": null,
+    "mapLines": [
+      "hull",
+      "mst"
+    ],
+    "neverDrop": null,
+    "nTree": 125,
+    "outgroup": "Namacalathus",
+    "plotFormat": "clus",
+    "plotSize": 600,
+    "readxl.sheet": "Sheet 1",
+    "readxlSkip": 2,
+    "readxlSkipCols": 2,
+    "relators": null,
+    "searchConfig": 0,
+    "spaceCol": "clust",
+    "spaceDim": 5,
+    "spacePch": "relat",
+    "treeFile": null,
+    "treeRange": [
+      1,
+      125
+    ],
+    "whichChar": 1,
+    "whichTree": 1
+  },
+  "output": {
+    "branchLegend": {
+      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">19 trees<\/span>",
+      "deps": [
+
+      ]
+    },
+    "references": {
+      "deps": [
+
+      ]
+    },
+    "results": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
+    "treePlot": {
+      "src": "[image data sha1: 15cbbd9b76648225e7edc1ba33e129eb22cce2ca]",
+      "alt": "Plot object",
+      "coordmap": {
+        "panels": [
+          {
+            "domain": {
+              "left": -0.729326419196189,
+              "right": 18.9624868991009,
+              "bottom": -0.84,
+              "top": 48.84
+            },
+            "range": {
+              "left": 0,
+              "right": 600,
+              "bottom": 596.11999952,
+              "top": 1.88000048000006
+            },
+            "log": {
+              "x": null,
+              "y": null
+            },
+            "mapping": {
+
+            }
+          }
+        ],
+        "dims": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "class": "shiny-scalable"
+    }
+  },
+  "export": {
+
+  }
+}

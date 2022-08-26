@@ -15,17 +15,7 @@ release_questions <- function() {
 
 
 # Additional checks:
-#
-# codemetar::write_codemeta()
 # 
-# spell_check()
-# pkgdown::build_reference_index()
-#
-# run_examples()
-# build_vignettes()
-#
-# devtools::check_win_devel(); rhub::check_for_cran()
-#
 #
 # tools::resaveRdaFiles('R', compress='auto') - is default bzip2 the optimal?
 # tools::checkRdaFiles('R') - set optimal compression in `data-raw`

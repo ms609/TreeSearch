@@ -1,10 +1,10 @@
 ## Test environments
 
-* local Windows 10 install, R 4.1.1
+* local Windows 10 install, R devel
 
 * [Github Actions](https://github.com/ms609/TreeSearch/actions):
   - Ubuntu 20.04
-    - R 3.6.3
+    - R 4.1
     - R release (tests, examples & vignettes run with valgrind & ASan)
     - R devel
   - Mac OS X 10.15.7, R release
@@ -15,6 +15,9 @@
 
 ## R CMD check results
 There were no ERRORs or WARNINGs or (relevant) NOTEs.
+
+Note that the "DOI not found" error is a publisher issue: the DOI provided
+is as stated at https://academic.oup.com/sysbio/article/50/3/331/1661220.
 
 
 ## Downstream dependencies

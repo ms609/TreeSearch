@@ -11,12 +11,15 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r, echo = FALSE}
+knitr::opts_chunk$set(fig.width = 7.2, fig.asp = 0.7) 
+```
 
 "TreeSearch" is an R package that allows, among other things, 
 parsimony search on morphological datasets that contain inapplicable data,
 using the algorithm proposed by Brazeau, Guillerme and Smith [-@Brazeau2019]
 and implemented in the 'MorphyLib' C library [@Brazeau2017]
-([details](https://cdn.jsdelivr.net/gh/TGuillerme/Inapp@c4d502fa4ae3702eb207b2da3a692e469ba3b6ab/inst/gitbook/_book/index.html)).
+([details](https://rawgit.com/TGuillerme/Inapp/c4d502fa4ae3702eb207b2da3a692e469ba3b6ab/inst/gitbook/_book/index.html)).
 
 ## Getting started
 
@@ -29,22 +32,22 @@ at the R / RStudio command line.
 This will allow you to load data from a file, modify search settings, and
 explore the distribution of most parsimonious trees in tree space.
 
-![Starting parsimony search](gui_start.png)
+![Starting parsimony search](gui_start.png){ width=100% }
 
-View a consensus tree and explore the position of rogue taxa:
+View a consensus tree and explore the position of rogue taxa [@SmithCons]:
 
-![Visualizing position of rogue taxon on search result consensus tree](gui_rogue.png)
+![Visualizing position of rogue taxon on search result consensus tree](gui_rogue.png){ width=100% }
 
 Explore the distribution of trees (whether found by search or loaded from file)
-in tree space:
+in tree space [@SmithSpace]:
 
-![Evaluating search progress using tree space](gui_space.png)
+![Evaluating search progress using tree space](gui_space.png){ width=100% }
 
 Map characters on a chosen tree, using character and taxon notes imported from
 a Nexus file, if present.  (This is designed to be interoperable with
 [MorphoBank](https://morphobank.org) matrices.)
 
-![Mapping character reconstructions](gui_char.png)
+![Mapping character reconstructions](gui_char.png){ width=100% }
 
 Trees can be saved as images, or in Nexus/Newick for further analysis.
 
@@ -60,20 +63,19 @@ library("TreeSearch")
 You can 
 [load your own dataset](https://ms609.github.io/TreeTools/articles/load-data.html),
 but for now, we'll use the Vinther _et al._ [-@Vinther2008] dataset that comes 
-bundled with the "TreeSearch".
+bundled with "TreeSearch".
 
 This dataset is small enough that it runs reasonably quickly, but its 
 phylogenetic signal is obscure enough that it can require Ratchet searches to
 escape from local optima.
 
 ```{r Load-data}
-rawData <- TreeSearch::inapplicable.datasets[['Vinther2008']]
-vinther <- phangorn::phyDat(rawData, type = 'USER', levels = c(0:9, '-'))
+vinther <- TreeSearch::inapplicable.phyData[["Vinther2008"]]
 ```
 
 ```{R RNG-version}
 # Set a random seed so that random functions in this document are reproducible
-suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
+suppressWarnings(RNGversion("3.5.0")) # Until we require R v3.6.0
 set.seed(0)
 ```
 
@@ -85,7 +87,7 @@ bestTrees <- MaximizeParsimony(vinther)
 It can be instructive to inspect the progress of tree search.
 
 ```{r inspect-progress}
-firstHit <- attr(bestTrees, 'firstHit')
+firstHit <- attr(bestTrees, "firstHit")
 firstHit
 ```
 
@@ -106,17 +108,18 @@ par(mar = rep(0, 4))
 TreeDist::Plot3(map,
                 col = cols[rep(seq_along(firstHit), firstHit)],
                 pch = 16, cex = 2,
-                axes = FALSE, xlab = '', ylab = '', asp = 1)
+                axes = FALSE, xlab = "", ylab = "", asp = 1)
 TreeTools::MSTEdges(distances, plot = TRUE, map[, 1], map[, 2],
-                    col = '#00000030', lty = 2)
-legend('topright', names(firstHit), col = cols, pch = 16, bty = 'n')
+                    col = "#00000030", lty = 2)
+legend("topright", names(firstHit), col = cols, pch = 16, bty = "n")
 ```
 
 A quick glance suggests that early ratchet iterations captured a large part of
 the diversity of optimal trees, and that iterations aren't getting stuck in 
-local optima -- though conscientious users will ensure that the mapping of tree 
-space is meaningful and adequate to detect structure before making
-any firm conclusions [@SmithSpace].
+local optima -- though conscientious users will 
+[ensure that the mapping of tree space is meaningful and adequate](
+https://ms609.github.io/TreeDist/articles/treespace.html)
+to detect structure before making any firm conclusions [@SmithSpace].
 
 To be thorough, we might consider continuing the search for a little longer,
 fine-tuning the search parameters:
@@ -148,31 +151,52 @@ sampled most-parsimonious trees:
 
 ```{r plot-label-nodes}
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-cons <- ape::consensus(bestTrees, p = 0.5)
-splitFreqs <- TreeTools::SplitFrequency(cons, bestTrees) / length(bestTrees)
-plot(cons)
-TreeTools::LabelSplits(cons, round(splitFreqs * 100), unit = '%',
+majCons <- ape::consensus(bestTrees, p = 0.5)
+splitFreqs <- TreeTools::SplitFrequency(majCons, bestTrees) / length(bestTrees)
+plot(majCons)
+TreeTools::LabelSplits(majCons, round(splitFreqs * 100), unit = "%",
                        col = TreeTools::SupportColor(splitFreqs),
-                       frame = 'none', pos = 3L)
+                       frame = "none", pos = 3L)
 ```
+
+This approach is a sensible way to analyse clade credibility when the frequency
+of a split corresponds to its probability, as is the case in a Bayesian
+posterior sample of trees.
+This is not the case, however, in sets of most parsimonious trees.
+
+Imagine if our set of most parsimonious trees was expanded to include a single
+additional tree in which _Halkieria_ was sister to the brachiopod
+_Terebratulina_ (close to the outgroup).
+We would then be in a situation in which _Halkieria_ may be a brachiopod –
+in which case a single interpretation of molluscan relationships is most
+parsimonious – or may be a mollusc, in which case its mosaic of characters
+can be reconciled with molluscs in a number of equally-parsimonious ways.
+Neither interpretation should be considered more or less plausible, even if we
+observe more unique most parsimonious trees in which _Halkieria_ is a mollusc
+simply because of the greater resultant uncertainty in the placement of taxa
+such as _Odontogriphus_ and _Wiwaxia_.
 
 A more instructive measure of clade support can be generated using
 Jackknife resampling.
-The `Resample()` manual page has suggestions for appropriate numbers of 
-replicates and search intensity, and instructions for calculating bootstrap
-support; the code here gives a quick-to-run jackknife framework that can be
-adapted to the requirements of a particular dataset.
+The `Resample()` [manual page](
+https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html)
+has suggestions for appropriate numbers of replicates and search intensity, 
+and instructions for calculating bootstrap support;
+the code here gives a quick-to-run jackknife framework that can be adapted to
+the requirements of a particular dataset.
 
 ```{r Jackknife-annotations}
 nReplicates <- 10
 jackTrees <- lapply(logical(nReplicates), function (x)
   Resample(vinther, bestTrees, ratchIter = 0, tbrIter = 1, maxHits = 4,
-          verbosity = 0)
+           verbosity = 0)
 )
+
+strict <- ape::consensus(bestTrees, p = 1)
 
 par(mar = rep(0, 4), cex = 0.8)
 # Take the strict consensus of all trees for each replicate
-JackLabels(cons, lapply(jackTrees, ape::consensus)) -> XX
+JackLabels(strict, lapply(jackTrees, ape::consensus)) -> XX
 ```
 
 Jackknife and bootstrap support values give an indication of the volume of data
@@ -186,21 +210,67 @@ whether a dataset is unanimous or divided in support of a grouping,
 independently of the method of tree reconstruction.
 
 ```{r concordance}
-concordance <- QuartetConcordance(cons, vinther)
+concordance <- QuartetConcordance(strict, vinther)
 
 # Alternative measures:
-# concordance <- ClusteringConcordance(cons, vinther)
-# concordance <- PhylogeneticConcordance(cons, vinther)
+# concordance <- ClusteringConcordance(strict, vinther)
+# concordance <- PhylogeneticConcordance(strict, vinther)
 
 par(mar = rep(0, 4), cex = 0.8)
-plot(cons)
-TreeTools::LabelSplits(cons, signif(concordance, 3),
+plot(strict)
+TreeTools::LabelSplits(strict, signif(concordance, 3),
                        col = TreeTools::SupportColor(concordance / max(concordance)),
-                       frame = 'none', pos = 3L)
+                       frame = "none", pos = 3L)
 ```
 
+### Exploring taxon stability
 
+Measure of clade support can only captures one aspect of the uncertainty in a
+set of trees.  Often one "rogue" taxon with an uncertain position can mask
+agreement in the relationships of other taxa [@SmithCons].
+The potential impact of rogue taxa can be explored by colouring individual tips
+according to their stability in the tree set:
 
+```{r stability}
+par(mar = rep(0, 4), cex = 0.8)
+
+plot(strict, tip.color = Rogue::ColByStability(bestTrees))
+```
+
+Would removing an unstable taxon reveal hidden support for relationships at
+the base of Mollusca?  We can test to see whether the removal of a taxon from
+a summary tree is justified using:
+
+```{r find-rogues}
+Rogue::QuickRogue(bestTrees, p = 1)
+```
+
+In this case, dropping _Wiwaxia_ would improve the resolution of the
+strict consensus by enough to justify the loss of the information
+regarding its own position (a net gain of 14.3 bits).
+The most informative single summary tree is thus provided by:
+
+```{r cons-without-halk}
+par(mar = rep(0, 4), cex = 0.8)
+noWiwaxia <- lapply(bestTrees, TreeTools::DropTip, "Wiwaxia")
+plot(ape::consensus(noWiwaxia), tip.color = Rogue::ColByStability(noWiwaxia))
+```
+
+This reveals that all trees agree that _Halkieria_ and _Orthrozanclus_ are
+closer to aculiferan molluscs than _Odontogriphus_ and _Neopilina_, a fact
+masked in the strict consensus due to the uncertain position of _Wiwaxia_.
+
+We can see where _Wiwaxia_ would plot on this tree using:
+
+```{r restore-wiwaxia}
+par(mar = rep(0, 4), cex = 0.8)
+xx <- TreeTools::RoguePlot(bestTrees, "Wiwaxia", p = 1)
+```
+
+Brighter greens indicate that more trees contained _Wiwaxia_ in this position.
+
+More details on rogue taxon identification are available in the package
+["Rogue"](https://ms609.github.io/Rogue/).
 
 ## Implied weighting
 
@@ -245,8 +315,8 @@ constraints, but if it cannot, it may be necessary to specify one manually
 
 Here's a simple example on six taxa that enforces the bipartition ab | cdef:
 
-```{r simple-constraints, message = FALSE}
-library("TreeTools", quietly = TRUE, warn.conflicts = FALSE)
+```{r simple-constraints, fig.width = 4, fig.align = "center", message = FALSE}
+library("TreeTools", quietly = TRUE)
 constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
 characters <- MatrixToPhyDat(matrix(
   c(0, 1, 1, 1, 0, 0,
@@ -259,13 +329,13 @@ plot(MaximizeParsimony(characters, constraint = constraint,
 Here's a more complex example that imposes the splits `ab | cef` and `abcd | ef`,
 whilst allowing `g` to plot anywhere on the tree:
 
-```{r complex-constraints, message = FALSE}
+```{r complex-constraints, fig.width = 4, fig.align = "center", message = FALSE}
 characters <- MatrixToPhyDat(matrix(
   c(0, 0, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 0, 0, 0), ncol = 2,
   dimnames = list(letters[1:7], NULL)))
 constraint <- MatrixToPhyDat(matrix(
-  c(0, 0, 1, '?', 1, 1,
+  c(0, 0, 1, "?", 1, 1,
     1, 1, 1,   1, 0, 0), ncol = 2,
   dimnames = list(letters[1:6], NULL)))
 plot(MaximizeParsimony(characters, constraint = constraint,
@@ -273,6 +343,6 @@ plot(MaximizeParsimony(characters, constraint = constraint,
 ```
 
 Constraints can also be loaded from a Nexus file with
-`constraint <- TreeTools::ReadAsPhyDat('constraint_file.nex')`.
+`constraint <- TreeTools::ReadAsPhyDat("constraint_file.nex")`.
 
 ## References

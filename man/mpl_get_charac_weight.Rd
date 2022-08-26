@@ -52,7 +52,8 @@ Other Morphy API functions:
 \code{\link{summary.morphyPtr}()}
 }
 \author{
-Martin R. Smith
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{Morphy API functions}
 \keyword{internal}

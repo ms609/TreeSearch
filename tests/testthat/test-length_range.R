@@ -37,6 +37,7 @@ test_that("Minimum step counts are correctly calculated", {
   morphyObj <- SingleCharMorphy(owch2)
   expect_equal(MorphyTreeLength(TreeTools::PectinateTree(7), morphyObj), 1)
   expect_equal(MorphyTreeLength(tr2, morphyObj), 2)
+
   morphyObj <- UnloadMorphy(morphyObj)
   
   owch3 <- '-1-222-333'

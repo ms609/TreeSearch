@@ -185,9 +185,9 @@ For usage pointers, see the
 }
 \section{Functions}{
 \itemize{
-\item \code{RatchetConsensus}: deprecated alias for \code{MultiRatchet()}
-}}
+\item \code{RatchetConsensus()}: deprecated alias for \code{MultiRatchet()}
 
+}}
 \examples{
 data('Lobo', package = 'TreeTools')
 njtree <- TreeTools::NJTree(Lobo.phy)

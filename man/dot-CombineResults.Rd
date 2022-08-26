@@ -11,7 +11,7 @@
 }
 \arguments{
 \item{x, y}{3D arrays, each slice containing an edge matrix from a tree
-of class \code{phylo}.}
+of class \code{phylo}.  \code{x} should not contain duplicates.}
 
 \item{stage}{Integer specifying element of \code{firstHit} in which new hits
 should be recorded.}

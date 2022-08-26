@@ -29,8 +29,8 @@ Fitch(tree, dataset)
 \code{multiPhylo}), or an integer -- in which case \code{tree} random trees will be
 uniformly sampled.}
 
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
@@ -48,21 +48,22 @@ received by the function without throwing an error.}
 }
 \value{
 \code{TreeLength()} returns a numeric vector containing the score for
-each tree.
+each tree in \code{tree}.
 }
 \description{
 \code{TreeLength()} uses the Morphy library \insertCite{Brazeau2017}{TreeSearch}
 to calculate a parsimony score for a tree, handling inapplicable data
 according to the algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
-Tree scoring can employ implied weights \insertCite{Goloboff1993}{TreeSearch}
-or profile parsimony \insertCite{Faith2001}{TreeSearch}.
+Trees may be scored using equal weights, implied weights
+\insertCite{Goloboff1993}{TreeSearch}, or profile parsimony
+\insertCite{Faith2001}{TreeSearch}.
 }
 \examples{
 data("inapplicable.datasets")
 tree <- TreeTools::BalancedTree(inapplicable.phyData[[1]])
 TreeLength(tree, inapplicable.phyData[[1]])
 TreeLength(tree, inapplicable.phyData[[1]], concavity = 10)
-TreeLength(tree, inapplicable.phyData[[1]], concavity = 'profile')
+TreeLength(tree, inapplicable.phyData[[1]], concavity = "profile")
 TreeLength(5, inapplicable.phyData[[1]])
 }
 \references{
@@ -78,6 +79,7 @@ TreeLength(5, inapplicable.phyData[[1]])
 
 Other tree scoring: 
 \code{\link{CharacterLength}()},
+\code{\link{LengthAdded}()},
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()}
 }

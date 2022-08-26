@@ -2,7 +2,7 @@
 #' 
 #' `NNI()`performs a single iteration of the nearest-neighbour interchange
 #' algorithm; `RootedNNI()` retains the position of the root.
-#' These functions are based on equivalents in the '\pkg{phangorn}' package.
+#' These functions are based on equivalents in the \pkg{phangorn} package.
 #' `cNNI()` is an equivalent function coded in C, that runs much faster.
 #' 
 #' Branch lengths are not supported.

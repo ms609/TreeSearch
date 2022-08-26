@@ -7,7 +7,7 @@
 PhyDat2Morphy(phy, gap = "inapplicable")
 }
 \arguments{
-\item{phy}{An object of class \code{\link{phyDat}}.}
+\item{phy}{An object of \pkg{phangorn} class \code{phyDat}.}
 
 \item{gap}{An unambiguous abbreviation of \code{inapplicable}, \code{ambiguous}
 (= \code{missing}), or \verb{extra state}, specifying how gaps will be handled.}

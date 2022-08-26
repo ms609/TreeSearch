@@ -1,11 +1,48 @@
-# Branch pp-vignettes
+# TreeSearch 1.2.0.9002
 
-- New vignette describing profile parsimony.
+- New function `LengthAdded()` tests which characters contribute to taxon
+  instability, per Pol & Escapa (2009) <doi:10.1111/j.1096-0031.2009.00258.x>
+
+- New vignette on tree space mapping
+
+- Support reading characters from Excel spreadsheets in GUI
+  
+
+# TreeSearch 1.2.0
+
+- 'shiny' GUI improvements:
+  - Export log of tree search commands
+  - Export R scripts to reproduce figures
+  - Simplify layout
+  - Misc bug fixes
+
+- New function `QuartetResolution()` evaluates how a quartet is resolved in
+  each of a list of trees
 
 
-# TreeSearch 1.0.1.9000 (development)
+# TreeSearch 1.1.2
 
-- Minor improvements to 'shiny' GUI.
+- Check tree order & rootedness before scoring ([#133](https://github.com/ms609/TreeSearch/issues/133))
+- Improve error handling
+- Replace `throw` with `stop` in C++
+- Remove test of elapsed times, for CRAN compliance
+
+
+# TreeSearch 1.1.1
+
+- GUI allows selection of subset of trees, for easier analysis of Bayesian
+  tree sets
+- Miscellaneous fixes and improvements in 'shiny' GUI
+- Test suite for 'shiny' GUI
+- Update tests for TreeSearch 1.7
+
+
+# TreeSearch 1.1.0
+
+- Improvements to 'shiny' GUI
+- Better integration of rogue taxon exploration
+- New vignette describing profile parsimony
+- `MinimumLength()` fully supports ambiguous applicability
 
 
 # TreeSearch 1.0.1
@@ -103,7 +140,7 @@
 # TreeSearch 0.3.0
 
 ## New features
- - Implement an information theoretic tree distance measure (Smith, in prep)
+ - Implement an information theoretic tree distance measure (Smith, 2020)
  - Prepare for new random number generator in R3.6.0
 
 ## Deprecations
@@ -180,7 +217,8 @@
 ## Bug fixes
 - C11 compliance
 - `IWRatchetConsensus` now relays concavity value to subsequent functions
-- `ReadCharacters` returns labels for all characters and states if `character_num = NULL`
+- `ReadCharacters` returns labels for all characters and states if
+  `character_num = NULL`
 
 
 # TreeSearch 0.0.8
@@ -197,8 +235,10 @@
 - [9004] Bootstrap search improvements
 
 ## Bug fixes
-- [9003] User now able to specify value of concavity constant (was overridden to k = 4)
-- [9003] Bootstrap replicates now scored correctly (and without warning) under implied weights
+- [9003] User now able to specify value of concavity constant
+  (was overridden to k = 4)
+- [9003] Bootstrap replicates now scored correctly (and without warning)
+  under implied weights
 
 
 # TreeSearch 0.0.7

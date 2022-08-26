@@ -8,11 +8,55 @@ SPRWarning <- function (parent, child, error) {
   list(parent, child)
 }
 
+
+#' Non-duplicate root
+#'
+#' Identify, for each edge, whether it denotes a different partition from
+#' the root edge.
+#' The first edge of the input tree must be a root edge; this can be
+#' accomplished using `Preorder()`.
+#'
+#' This function is a copy of a deprecated ancestor in TreeTools; see 
+#' [#32](https://github.com/ms609/TreeTools/issues/32).
+#'
+#' @template treeParent
+#' @template treeChild
+#' @template treeNEdgeOptional
+#'
+#' @return `.NonDuplicateRoot()` returns a logical vector of length `nEdge`,
+#' specifying `TRUE` unless an edge identifies the same partition as
+#' the root edge.
+#'
+#' @examples
+#' tree <- TreeTools::Preorder(TreeTools::BalancedTree(8))
+#' edge <- tree$edge
+#' parent <- edge[, 1]
+#' child <- edge[, 2]
+#'
+#' which(!.NonDuplicateRoot(parent, child))
+#' @keywords internal
+#' @importFrom TreeTools DescendantEdges
+#' @template MRS
+#' @export
+.NonDuplicateRoot <- function(parent, child, nEdge = length(parent)) {
+  notDuplicateRoot <- !logical(nEdge)
+  rightSide <- DescendantEdges(1, parent, child, nEdge)
+  nEdgeRight <- sum(rightSide)
+  if (nEdgeRight == 1) {
+    notDuplicateRoot[2] <- FALSE
+  } else if (nEdgeRight == 3) {
+    notDuplicateRoot[4] <- FALSE
+  } else {
+    notDuplicateRoot[1] <- FALSE
+  }
+  notDuplicateRoot
+}
+
 #' Subtree pruning and rearrangement (SPR)
 #'
 #' Perform one \acronym{SPR} rearrangement on a tree
 #' 
-#' Equivalent to `kSPR` in the `phangorn` package, but faster.
+#' Equivalent to `kSPR()` in the \pkg{phangorn} package, but faster.
 #' Note that rearrangements that only change the position of the root WILL be returned by 
 #' \code{SPR}.  If the position of the root is irrelevant (as in Fitch parsimony, for example)
 #' then this function will occasionally return a functionally equivalent topology.  
@@ -41,7 +85,7 @@ SPRWarning <- function (parent, child, error) {
 #' SPR(tree)
 #' }
 #' @importFrom ape root
-#' @importFrom TreeTools Preorder NonDuplicateRoot
+#' @importFrom TreeTools Preorder
 #' @export
 SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
@@ -54,7 +98,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
     child <- edge[, 2]
     nEdge <- length(parent)
     stop('Negative edgeToBreak not yet supported; on TODO list for next release')
-    notDuplicateRoot <- NonDuplicateRoot(parent, child, nEdge)
+    notDuplicateRoot <- .NonDuplicateRoot(parent, child, nEdge)
     # Return:
     unique(unlist(lapply(which(notDuplicateRoot), AllSPR,
       parent=parent, child=child, nEdge=nEdge, notDuplicateRoot=notDuplicateRoot),
@@ -122,14 +166,14 @@ SPRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
 #' @param nNode (optional) Number of nodes.
 #' @return a list containing two elements, corresponding in turn to the
 #'  rearranged parent and child parameters
-#' @importFrom TreeTools DescendantEdges NonDuplicateRoot
+#' @importFrom TreeTools DescendantEdges
 #' @export
 SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
                      edgeToBreak = NULL, mergeEdge = NULL) {
   
   if (nEdge < 5) return (list(parent, child)) #TODO we need to re-root this tree...
   
-  notDuplicateRoot <- NonDuplicateRoot(parent, child, nEdge)
+  notDuplicateRoot <- .NonDuplicateRoot(parent, child, nEdge)
   
   if (is.null(edgeToBreak)) {
     # Pick an edge at random
@@ -299,7 +343,6 @@ RootedSPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
 ## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn SPR faster version that takes and returns parent and child parameters
 #' @return a list containing two elements, corresponding in turn to the rearranged parent and child parameters
-#' @importFrom TreeTools NonDuplicateRoot
 #' @export
 RootedSPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
                      edgeToBreak=NULL, mergeEdge=NULL) {
@@ -312,7 +355,7 @@ RootedSPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge 
   
   
   if (!is.null(edgeToBreak) && edgeToBreak == -1) {
-    notDuplicateRoot <- NonDuplicateRoot(parent, child, nEdge)
+    notDuplicateRoot <- .NonDuplicateRoot(parent, child, nEdge)
     return(unique(unlist(lapply(which(breakable), AllSPR,
       parent=parent, child=child, nEdge=nEdge, notDuplicateRoot=notDuplicateRoot),
       recursive=FALSE))) # TODO the fact that we need to use `unique` indicates that 

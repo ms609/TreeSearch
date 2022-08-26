@@ -1,9 +1,10 @@
-citHeader(paste0("When using the package, please acknowledge your use of ",
-"TreeSearch and (if you use it) MorphyLib in the article text, and cite ",
-"Brazeau et al. (2019). For example, 'Phylogenetic search was performed ",
-"using the R package TreeSearch v", meta$Version, " (Smith 2018), which ",
+citHeader(paste0("Please acknowledge your use of TreeSearch and MorphyLib in ",
+"any article in which they are used, and cite Smith (2021) and Brazeau et al. ",
+"(2019). For example, 'Phylogenetic search was performed ",
+"using the R package TreeSearch v", meta$Version, " (Smith 2021), which ",
 "uses MorphyLib (Brazeau et al. 2017) to handle inapplicable data ",
-"(Brazeau et al. 2019)'."))
+"(Brazeau et al. 2019)'.  ",
+"The GUI lists recommended citations for methods it employs."))
 
 citEntry(entry = "Manual",
          key = "Brazeau2017",
@@ -39,7 +40,7 @@ citEntry(entry = "Article",
               
 citEntry(entry = "Manual",
          key = "Smith2018",
-         title = "TreeSearch: phylogenetic tree search using custom optimality criteria",
+         title = "{TreeSearch}: phylogenetic tree search using custom optimality criteria",
          author = personList(as.person("Martin R. Smith")),
          note = paste("R package version", meta$Version),
          year = 2018,
@@ -47,3 +48,14 @@ citEntry(entry = "Manual",
      
          textVersion =
               paste0("Smith (2018). TreeSearch: phylogenetic tree search using custom optimality criteria. doi: 10.5281/zenodo.1042590"))
+              
+citEntry(entry = "Article",
+         key = "Smith2021",
+         title = "{TreeSearch}: morphological phylogenetic analysis in {{R}}",
+         author = personList(as.person("Martin R. Smith")),
+         year = 2021,
+         journal = "bioR$\\chi$iv",
+         doi = "10.1101/2021.11.08.467735",
+     
+         textVersion =
+              paste0("Smith (2021). TreeSearch: morphological phylogenetic analysis in R. preprint at bioRxiv. doi: 10.1101/2021.11.08.467735"))

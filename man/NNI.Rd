@@ -59,7 +59,7 @@ a list containing two elements, corresponding in turn to the rearranged parent a
 \description{
 \code{NNI()}performs a single iteration of the nearest-neighbour interchange
 algorithm; \code{RootedNNI()} retains the position of the root.
-These functions are based on equivalents in the '\pkg{phangorn}' package.
+These functions are based on equivalents in the \pkg{phangorn} package.
 \code{cNNI()} is an equivalent function coded in C, that runs much faster.
 }
 \details{
@@ -70,13 +70,13 @@ All nodes in a tree must be bifurcating; \code{\link[ape:collapse.singles]{ape::
 }
 \section{Functions}{
 \itemize{
-\item \code{NNISwap}: faster version that takes and returns parent and child parameters
+\item \code{NNISwap()}: faster version that takes and returns parent and child parameters
 
-\item \code{RootedNNI}: Perform \acronym{NNI} rearrangement, retaining position of root
+\item \code{RootedNNI()}: Perform \acronym{NNI} rearrangement, retaining position of root
 
-\item \code{RootedNNISwap}: faster version that takes and returns parent and child parameters
+\item \code{RootedNNISwap()}: faster version that takes and returns parent and child parameters
+
 }}
-
 \examples{
 tree <- TreeTools::BalancedTree(8)
 # A random rearrangement

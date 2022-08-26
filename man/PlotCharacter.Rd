@@ -24,8 +24,8 @@ PlotCharacter(
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{char}{Index of character to plot.}
 
@@ -35,7 +35,7 @@ original state in \code{dataset}.}
 \item{plot}{Logical specifying whether to plot the output.}
 
 \item{tokenCol}{Palette specifying colours to associate with each token in
-turn, in the sequence listed in \code{attr(dataset, 'levels')}.}
+turn, in the sequence listed in \code{attr(dataset, "levels")}.}
 
 \item{ambigCol, ambigLty, inappCol, inappLty, plainLty}{Colours and line types
 to apply to ambiguous, inapplicable and applicable tokens.  See the \code{lty}
@@ -57,11 +57,6 @@ on a tree are denoted with \code{TRUE}.
 Reconstructs the distribution of a character on a tree topology using the
 modified Fitch algorithm presented in
 \insertCite{Brazeau2019;textual}{TreeSearch}.
-}
-\details{
-Correct colouration of internal nodes requires "ape" version 5.5.2.
-Until this is available on CRAN (expected in winter 2021), download it
-using \code{devtools::install_github('emmanuelparadis/ape')}.
 }
 \examples{
 # Set up plotting area

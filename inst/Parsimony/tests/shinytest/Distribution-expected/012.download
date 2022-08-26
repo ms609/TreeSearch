@@ -1,0 +1,149 @@
+
+# # # TreeSearch plot log: <DATE-AND-TIME> # # #
+# 
+# System: <SYS-INFO>
+# - R <VERSION>
+# - TreeSearch <VERSION>
+# - TreeTools <VERSION>
+# - TreeDist <VERSION>
+# - ape <VERSION>
+# 
+# This log was generated procedurally to facilitate the reproduction of
+# figures obtained during an interactive Shiny session.
+# It is provided without guarantee of completeness or accuracy.
+# In particular, code will not be logged when previously computed values
+# are retrieved from cache.
+# 
+# Before running, check that the script and any data files are in the
+# R working directory, which can be read with getwd() and set with setwd().
+# 
+# Please validate the code before reproducing in a manuscript, reporting
+# any errors at https://github.com/ms609/treesearch/issues or by e-mail to
+# the package maintainer.
+# 
+# # # # # #
+
+
+# Load required libraries
+library("TreeTools", quietly = TRUE)
+library("TreeDist")
+library("TreeSearch")
+
+# View recommended citations
+citation("TreeTools")
+citation("TreeDist")
+citation("Quartet")
+citation("TreeSearch")
+citation("Rogue")
+
+# Check working directory
+getwd() # Should match location of data / tree files
+setwd(".") # Replace . with desired/directory to change
+
+# Load data from file
+dataFile <- system.file("datasets/Sun2018.nex", package = "TreeSearch") # Test mode
+dataset <- ReadAsPhyDat(dataFile)
+
+# Load trees from file
+treeFile <- dataFile # Test mode
+trees <- read.nexus(treeFile)
+
+# Compute tree distances
+dists <- TreeDist::ClusteringInfoDistance(trees)
+
+
+# Compute clusters of trees
+
+# Try K-means clustering (Hartigan & Wong 1979):
+kClusters <- lapply(2:15, function (k) kmeans(dists, k))
+kSils <- vapply(kClusters, function (kCluster) {
+  mean(cluster::silhouette(kCluster$cluster, dists)[, 3])
+}, double(1))
+bestK <- which.max(kSils)
+kSil <- kSils[bestK] # Best silhouette coefficient
+kCluster <- kClusters[[bestK]]$cluster # Best solution
+
+# Try partitioning around medoids (Maechler et al. 2019):
+pamClusters <- lapply(2:15, function (k) cluster::pam(dists, k = k))
+pamSils <- vapply(pamClusters, function (pamCluster) {
+  mean(cluster::silhouette(pamCluster)[, 3])
+}, double(1))
+bestPam <- which.max(pamSils)
+pamSil <- pamSils[bestPam] # Best silhouette coefficient
+pamCluster <- pamClusters[[bestPam]]$cluster # Best solution
+
+# Try hierarchical clustering with minimax linkage (Bien & Tibshirani 2011):
+hTree <- protoclust::protoclust(dists)
+hClusters <- lapply(2:15, function (k) cutree(hTree, k = k))
+hSils <- vapply(hClusters, function (hCluster) {
+  mean(cluster::silhouette(hCluster, dists)[, 3])
+}, double(1))
+bestH <- which.max(hSils)
+hSil <- hSils[bestH] # Best silhouette coefficient
+hCluster <- hClusters[[bestH]] # Best solution
+
+# Set threshold for recognizing meaningful clustering
+# no support < 0.25 < weak < 0.5 < good < 0.7 < strong
+threshold <- 1
+
+# Compare silhouette coefficients of each method
+bestMethodId <- which.max(c(threshold, pamSil, hSil, kSil))
+bestCluster <- c("none", "pam", "hmm", "kmn")[bestMethodId]
+
+# No significant clustering was found.
+clustering <- 1 # Assign all trees to single cluster
+
+# Generate first 12 dimensions of tree space using PCoA
+map <- cmdscale(dists, k = 12)
+
+# Prepare plot layout
+nDim <- 5 # Number of dimensions to plot
+nPanels <- nDim * (nDim - 1L) / 2L # Lower-left triangle
+plotSeq <- matrix(0, nDim, nDim)
+plotSeq[upper.tri(plotSeq)] <- seq_len(nPanels)
+plotSeq[nDim - 1, 2] <- max(plotSeq) + 1L
+layout(t(plotSeq[-nDim, -1]))
+# Set plot margins
+par(mar = rep(0.2, 4))
+
+# Set up tree plotting symbols
+treePch <- 0 # Square
+treeCols <- "#7a6c36" # Arbitrarily
+treeCols <- paste0(treeCols, as.hexmode(200)) # Semitransparent
+for (i in 2:nDim) for (j in seq_len(i - 1)) {
+  
+  # Set up blank plot
+  plot(
+    x = map[, j],
+    y = map[, i],
+    ann = FALSE,        # No annotations
+    axes = FALSE,       # No axes
+    frame.plot = TRUE,  # Border around plot
+    type = "n",         # Don't plot any points yet
+    asp = 1,            # Fix aspect ratio to avoid distortion
+    xlim = range(map),  # Constant X range for all dimensions
+    ylim = range(map)   # Constant Y range for all dimensions
+  )
+  
+  # Plot minimum spanning tree (Gower 1969)
+  mst <- MSTEdges(as.matrix(dists))
+  segments(
+    x0 = map[mst[, 1], j],
+    y0 = map[mst[, 1], i],
+    x1 = map[mst[, 2], j],
+    y1 = map[mst[, 2], i],
+    col = "#bbbbbb", # Light grey
+    lty = 1          # Solid lines
+  )
+  
+  # Add points
+  points(
+    x = map[, j],
+    y = map[, i],
+    pch = treePch,
+    col = treeCols,
+    cex = 1.7, # Point size
+    lwd = 2 # Line width
+  )
+}
+plot.new() # Use new panel to plot legends

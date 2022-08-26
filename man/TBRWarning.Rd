@@ -24,9 +24,9 @@ Print a warning and return given tree
 }
 \section{Functions}{
 \itemize{
-\item \code{SPRWarning}: for SPR rearrangements
-}}
+\item \code{SPRWarning()}: for SPR rearrangements
 
+}}
 \examples{
 suppressWarnings(TBRWarning(0, 0, 'Message text')) # will trigger warning
 

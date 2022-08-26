@@ -1,4 +1,4 @@
-library('testthat')
-library('TreeSearch')
+library("testthat")
+library("TreeSearch")
 
 test_check("TreeSearch")
