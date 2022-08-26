@@ -1925,7 +1925,7 @@ server <- function(input, output, session) {
   CharacterwisePlot <- function() {
     par(mar = rep(0, 4), cex = 0.9)
     n <- PlottedChar()
-    Log("Plotting PlottedTree(", whichTree(), ", ", n, ")")
+    LogMsg("Plotting PlottedTree(", whichTree(), ", ", n, ")")
     r$plottedTree <- PlottedTree()
     if (length(n) && n > 0L) {
       pc <- tryCatch({
