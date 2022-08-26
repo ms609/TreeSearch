@@ -4,7 +4,7 @@
 \alias{ExtraLength}
 \title{Contribution of character to leaf instability}
 \usage{
-ExtraLength(trees, char, concavity = Inf, applicability = FALSE)
+ExtraLength(trees, char, concavity = Inf)
 }
 \arguments{
 \item{trees}{List of trees of class \code{phylo}, or \code{multiPhylo} object.}

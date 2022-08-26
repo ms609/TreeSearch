@@ -31,7 +31,7 @@
 #' ) -> XX # Suppress return value; display plot only
 #' 
 #' @export
-ExtraLength <- function(trees, char, concavity = Inf, applicability = FALSE) {
+ExtraLength <- function(trees, char, concavity = Inf) {
   if(!inherits(char, "phyDat")) {
     stop("`char` must be a character of class `phyDat`.")
   }

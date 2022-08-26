@@ -17,7 +17,6 @@ test_that("ExtraLength() errors", {
     ExtraLength(trees, dataset[, 51]),
     "`char` contract matrix lacks levels for 6"
   )
-
 })
 
 test_that("ExtraLength()", {
