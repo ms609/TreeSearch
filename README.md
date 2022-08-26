@@ -1,7 +1,6 @@
 # TreeSearch
 
-[![Build Status](https://travis-ci.org/ms609/TreeSearch.svg?branch=master)](https://travis-ci.org/ms609/TreeSearch)
-[![codecov](https://codecov.io/gh/ms609/TreeSearch/branch/master/graph/badge.svg)](https://codecov.io/gh/ms609/TreeSearch)
+  [![codecov](https://codecov.io/gh/ms609/TreeSearch/branch/master/graph/badge.svg)](https://codecov.io/gh/ms609/TreeSearch)
 [![CRAN Status Badge](http://www.r-pkg.org/badges/version/TreeSearch)](https://cran.r-project.org/package=TreeSearch)
 [![CRAN RStudio mirror downloads](http://cranlogs.r-pkg.org/badges/grand-total/TreeSearch)](https://cran.r-project.org/package=TreeSearch)
 [![DOI](https://zenodo.org/badge/98171642.svg)](https://zenodo.org/badge/latestdoi/98171642)<!--[![Project Status: Inactive – The project has reached a stable, usable state but is no longer being actively developed; support/maintenance will be provided as time allows.](http://www.repostatus.org/badges/latest/inactive.svg)](http://www.repostatus.org/#inactive)
@@ -26,7 +25,7 @@ are implemented;
 and search approaches can also be defined.
 
 
-# Installation
+# Installing in R
 
 Full installation instructions, including notes on installing R, are available
 in a [vignette](https://ms609.github.io/TreeSearch/articles/getting-started.html).
@@ -41,36 +40,44 @@ library("TreeSearch")
 Install and load the development version of "TreeSearch" with:
 
 ```r
+if(!require("curl")) install.packages("curl")
+if(!require("remotes")) install.packages("remotes")
 remotes::install_github("ms609/TreeSearch")
 library("TreeSearch")
 ```
 
-# Errors reading trees
+# Installing stand-alone application
 
-Some users are reporting an error when loading trees from Nexus files:
-` Error in [<-.multiPhylo: argument "..1" is missing, with no default  `
+The TreeSearch user interface can be run as a stand-alone application without
+installing R.
+[Download](https://github.com/ms609/TreeSearch/releases) the latest release for your platform.
+If your preferred platform is not supported, please contact the maintainer.
 
-This arises due to an underlying issue in the "ape" package, which can be fixed by installing a patch:
+## Installation on Windows
 
-```r
-remotes::install_github("ms609/ape@patch-3")
-```
+You may need to obtain the [ffmpeg library](https://community.chocolatey.org/packages/ffmpeg)
+before you can run TreeSearch.
 
-(You may first need to exit and re-launch R to be sure that the "ape" package is not in use.)
+This is best installed using ['Chocolatey'](https://chocolatey.org/).
+
+Once chocolatey is installed, open a PowerShell window with administrative privileges, and
+type `choco install ffmpeg`; then restart your computer.
+
 
 # Quick start
 
-Launch a graphical user interface (development version only)
-by typing `TreeSearch::EasyTrees()` in the R console.
+Launch a graphical user interface by typing `TreeSearch::EasyTrees()` in the R console.
 
 For more control over search settings, see [`?MaximizeParsimony()`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
 
+![Flow charts listing common actions facilitated by TreeSearch](man/figures/Flow.svg)
 
 # Documentation
 
 - [Package functions](https://ms609.github.io/TreeSearch/reference) reference manual
 - [Getting started](https://ms609.github.io/TreeSearch/articles/getting-started.html)
 - [Using the GUI](https://ms609.github.io/TreeSearch/articles/tree-search.html)
+- [Analysing tree spaces](https://ms609.github.io/TreeSearch/articles/tree-space.html)
 - [Loading phylogenetic data into R](https://ms609.github.io/TreeTools/articles/load-data.html)
 - [Parsimony search with inapplicable data](https://ms609.github.io/TreeSearch/articles/tree-search.html)
 
@@ -117,10 +124,10 @@ Smith, M. R. (2021).
 
 Smith, M. R. (2022a).
   Using information theory to detect rogue taxa and improve phylogenetic trees.
-  Systematic Biology, syab099.
+  Systematic Biology, 71(5),  1088–1094.
   doi: [10.1093/sysbio/syab099](https://dx.doi.org/10.1093/sysbio/syab099)
 
 Smith, M. R. (2022b).
   Robust analysis of phylogenetic tree space.
-  Systematic Biology, syab100.
+  Systematic Biology, 71(5), 1255–1270.
   doi: [10.1093/sysbio/syab100](https://dx.doi.org/10.1093/sysbio/syab100)

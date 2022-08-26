@@ -210,11 +210,11 @@ IW <- function (k) {
   iwStep / max(iwStep)
 }
 IWPoints <- function (k, n) {
-  points(IW(k) ~ e[-1], type = 'b', col = n, pch = 2, lty = 2)
+  points(IW(k) ~ e[-1], type = "b", col = n, pch = 2, lty = 2)
 }
 
-plot(e[-1], e[-1], type = 'n', frame.plot = FALSE,
-     xlab = 'Extra step',
+plot(e[-1], e[-1], type = "n", frame.plot = FALSE,
+     xlab = "Extra step",
      ylab = "Relative cost of this extra step",
      ylim = c(0, 1))
 k <- c(3, 10, 30)
@@ -223,15 +223,15 @@ for (i in seq_along(k)) IWPoints(k[i], i)
 PP <- function (a, col, n = 40) {
   char <- rep(0:1, c(a, n - a))
   si <- TreeSearch::StepInformation(char)
-  points(I(si / max(si)) ~ I(seq_along(si)), type = 'b', col = col, pch = 1)
+  points(I(si / max(si)) ~ I(seq_along(si)), type = "b", col = col, pch = 1)
 }
 p <- c(3, 8, 20)
 for (i in seq_along(p)) PP(p[i], i + 3)
-legend('topright', col = 1:6, lty = c(rep(2, 3), rep(1, 3)),
+legend("topright", col = 1:6, lty = c(rep(2, 3), rep(1, 3)),
        pch = c(rep(2, 3), rep(1, 3)),
-       bty = 'n', cex = 0.9,
-       c(paste0('IW, k = ', k),
-         paste0('PP, ', p, ' | ', 40 - p)))
+       bty = "n", cex = 0.9,
+       c(paste0("IW, k = ", k),
+         paste0("PP, ", p, " | ", 40 - p)))
 
 
 ```
@@ -258,9 +258,9 @@ This reflects the complicated mathematics of calculating the number of trees
 with a given number of steps.
 
 Tree length can be calculated with 
-[`TreeLength(concavity = 'profile')`](https://ms609.github.io/TreeSearch/reference/TreeLength.html),
+[`TreeLength(concavity = "profile")`](https://ms609.github.io/TreeSearch/reference/TreeLength.html),
 and tree search performed with 
-[`MaximizeParsimony(concavity = 'profile')`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
+[`MaximizeParsimony(concavity = "profile")`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
 Data can be prepared for profile parsimony using [`PrepareDataProfile()`](https://ms609.github.io/TreeSearch/reference/PrepareDataProfile.html), and the profile of a character calculated using 
 [`StepInformation()`](https://ms609.github.io/TreeSearch/reference/StepInformation.html).
 

@@ -1,0 +1,61 @@
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - "Meta**"
+      - "memcheck**"
+      - "docs**"
+      - "**.git"
+      - "**.json"
+      - "**.md"
+      - "**/**.yml"
+      - "!**coverage.yml"
+      - "**.R[dD]ata"
+      - "**.Rpro*"
+  pull_request:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - "Meta**"
+      - "memcheck**"
+      - "docs**"
+      - "**.git"
+      - "**.json"
+      - "**.md"
+      - "**/**.yml"
+      - "!**coverage.yml"
+      - "**.R[dD]ata"
+      - "**.Rpro*"
+
+name: test-coverage
+
+jobs:
+  test-coverage:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v2
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+        
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: |
+            coverage
+
+      - name: Code coverage
+        run: |
+          covr::package_coverage(quiet = FALSE) # https://github.com/r-lib/covr/issues/252
+          covr::codecov()
+        shell: Rscript {0}

@@ -35,7 +35,7 @@ original state in \code{dataset}.}
 \item{plot}{Logical specifying whether to plot the output.}
 
 \item{tokenCol}{Palette specifying colours to associate with each token in
-turn, in the sequence listed in \code{attr(dataset, 'levels')}.}
+turn, in the sequence listed in \code{attr(dataset, "levels")}.}
 
 \item{ambigCol, ambigLty, inappCol, inappLty, plainLty}{Colours and line types
 to apply to ambiguous, inapplicable and applicable tokens.  See the \code{lty}

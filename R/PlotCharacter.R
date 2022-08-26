@@ -11,7 +11,7 @@
 #' original state in `dataset`.
 #' @param plot Logical specifying whether to plot the output.
 #' @param tokenCol Palette specifying colours to associate with each token in
-#' turn, in the sequence listed in `attr(dataset, 'levels')`.
+#' turn, in the sequence listed in `attr(dataset, "levels")`.
 #' @param ambigCol,ambigLty,inappCol,inappLty,plainLty Colours and line types
 #' to apply to ambiguous, inapplicable and applicable tokens.  See the `lty` 
 #' [graphical parameter] for details of line styles.  Overrides `tokenCol`.
@@ -52,12 +52,12 @@ PlotCharacter <- function (tree, dataset, char = 1L,
                            plot = TRUE,
                            
                            tokenCol = NULL,
-                           ambigCol = 'grey',
-                           inappCol = 'lightgrey',
+                           ambigCol = "grey",
+                           inappCol = "lightgrey",
                            
-                           ambigLty = 'dotted',
-                           inappLty = 'dashed',
-                           plainLty = par('lty'),
+                           ambigLty = "dotted",
+                           inappLty = "dashed",
+                           plainLty = par("lty"),
                            
                            tipOffset = 1,
                            unitEdge = FALSE,
@@ -68,7 +68,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   treeTaxa <- tree$tip.label
   if(!all(treeTaxa %fin% datasetTaxa)) {
     stop("Taxa in tree missing from dataset:\n  ",
-         paste0(setdiff(treeTaxa, datasetTaxa), collapse = ', '))
+         paste0(setdiff(treeTaxa, datasetTaxa), collapse = ", "))
   }
   dataset <- dataset[treeTaxa]
   
@@ -103,16 +103,16 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   tips <- seq_len(nTip)
   
   # Read states
-  if (!inherits(dataset, 'phyDat')) {
+  if (!inherits(dataset, "phyDat")) {
     dataset <- MatrixToPhyDat(dataset)
   }
   character <- dataset[, char]
-  contrast <- attr(character, 'contrast') == 1
+  contrast <- attr(character, "contrast") == 1
   levels <- colnames(contrast)
   inputState <- contrast[as.integer(character), , drop = FALSE]
   state <- rbind(inputState, matrix(NA, nNode, dim(contrast)[2]))
   
-  if (is.na(match('-', levels))) {
+  if (is.na(match("-", levels))) {
     # Standard Fitch
     for (n in postOrderNodes) {
       lState <- state[left[n], ]
@@ -152,7 +152,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     
   } else {
     # Inapplicable Fitch, Brazeau, Guillerme & Smith 2019
-    inappLevel <- levels == '-'
+    inappLevel <- levels == "-"
     appLevels <- !inappLevel
     
     # First downpass
@@ -184,7 +184,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
           state[n, ] <- lState | rState
         }
       }
-      # message ("DP1: Set node ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
+      # message ("DP1: Set node ", n, " to: ", paste0(levels[state[n, ]], collapse = ""))
     }
     
     # First uppass
@@ -227,7 +227,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
           }
         }
       }
-      # message ("UP1: Set node ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
+      # message ("UP1: Set node ", n, " to: ", paste0(levels[state[n, ]], collapse = ""))
     }
     for (n in tips) {
       nState <- state[n, ]
@@ -243,7 +243,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
           state[n, ] <- nState & appLevels
         }
       }
-      # message ("UP1: Set tip  ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
+      # message ("UP1: Set tip  ", n, " to: ", paste0(levels[state[n, ]], collapse = ""))
     }
     
     # Second downpass
@@ -271,7 +271,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
           state[n, ] <- (lState | rState) & appLevels 
         }
       }
-      # message ("DP2: Set node ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
+      # message ("DP2: Set node ", n, " to: ", paste0(levels[state[n, ]], collapse = ""))
     }
     
     # Second uppass
@@ -320,7 +320,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
           }
         }
       }
-      # message ("UP2: Set node ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
+      # message ("UP2: Set node ", n, " to: ", paste0(levels[state[n, ]], collapse = ""))
     }
     
     for (n in tips) {
@@ -329,7 +329,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
       common <- aState & nState
       if (any(common)) {
         state[n, ] <- common
-        # message ("UP2: Set tip ", n, " to: ", paste0(levels[state[n, ]], collapse = ''))
+        # message ("UP2: Set tip ", n, " to: ", paste0(levels[state[n, ]], collapse = ""))
       }
     }
   }
@@ -338,8 +338,8 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     state[seq_len(nTip), ] <- inputState
   }
   
-  hasToken <- if (length(setdiff(colnames(state), '-')) > 1L) {
-    as.logical(rowSums(!state[, colnames(state) != '-', drop = FALSE]))
+  hasToken <- if (length(setdiff(colnames(state), "-")) > 1L) {
+    as.logical(rowSums(!state[, colnames(state) != "-", drop = FALSE]))
   } else {
     !logical(nrow(state))
   }
@@ -349,7 +349,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     tokens <- colnames(slimState)
     if (is.null(tokenCol)) {
       tokenCol <- tokens
-      tokenCol[tokens != '-'] <- c("#00bfc6",
+      tokenCol[tokens != "-"] <- c("#00bfc6",
                                    "#ffd46f",
                                    "#ffbcc5",
                                    "#c8a500",
@@ -361,8 +361,8 @@ PlotCharacter <- function (tree, dataset, char = 1L,
                                    "#e6f3cc",
                                    "#67c4ff",
                                    "#9ba75c",
-                                   "#60b17f")[seq_along(setdiff(tokens, '-'))]
-      tokenCol[tokens == '-'] <- inappCol
+                                   "#60b17f")[seq_along(setdiff(tokens, "-"))]
+      tokenCol[tokens == "-"] <- inappCol
     }
     nodeStyle <- apply(slimState, 1, function (tkn) {
       if (length(tkn) == 0) {
@@ -371,28 +371,28 @@ PlotCharacter <- function (tree, dataset, char = 1L,
         c(col = ambigCol, lty = ambigLty)
       } else {
         c(col = tokenCol[tkn],
-          lty = ifelse(tokens[tkn] == '-', inappLty, plainLty))
+          lty = ifelse(tokens[tkn] == "-", inappLty, plainLty))
       }
     })
     if (unitEdge) {
       tree$edge.length <- rep_len(1, dim(tree$edge)[1])
     }
     plot.phylo(tree,
-               node.color = nodeStyle['col', , drop = FALSE],
-               node.lty = nodeStyle['lty', , drop = FALSE],
+               node.color = nodeStyle["col", , drop = FALSE],
+               node.lty = nodeStyle["lty", , drop = FALSE],
                label.offset = tipOffset,
                ...)
     
     NodeText <- function (n) {
       if (length(n) == 0 || (
-        sum(n) > 1L && all(n[anywhere & names(n) != '-']))) {
-        '?'
+        sum(n) > 1L && all(n[anywhere & names(n) != "-"]))) {
+        "?"
       } else {
-        paste0(levels[n], collapse = '')
+        paste0(levels[n], collapse = "")
       }
     }
     nodelabels(apply(state, 1, NodeText),
-               seq_len(nTip + nNode), bg = nodeStyle['col', , drop = FALSE])
+               seq_len(nTip + nNode), bg = nodeStyle["col", , drop = FALSE])
   }
   
   # Return:

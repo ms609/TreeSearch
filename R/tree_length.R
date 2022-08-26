@@ -43,7 +43,18 @@ TreeLength <- function (tree, dataset, concavity = Inf) UseMethod("TreeLength")
 #' @export
 TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
   tipLabels <- tree$tip.label
-  if (length(tipLabels) < length(dataset)) {
+  
+  if (!TreeIsRooted(tree)) {
+    stop("`tree` must be rooted; try RootTree(tree)")
+  }
+  
+  nTip <- length(tipLabels)
+  edge <- tree$edge
+  if (dim(edge)[1] != nTip + nTip - 2) {
+    stop("`tree` must be binary")
+  }
+  
+  if (nTip < length(dataset)) {
     if (!all(tipLabels %in% names(dataset))) {
       stop("Missing in `dataset`: ",
            paste(setdiff(tipLabels, names(dataset)), collapse = ", "))
@@ -85,7 +96,6 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
                double(1)) * attr(dataset, "weight")[steps > 0])
   } else {
     tree <- RenumberTips(Renumber(tree), names(dataset))
-    if (!TreeIsRooted(tree)) stop("`tree` must be rooted; try RootTree(tree)")
     morphyObj <- PhyDat2Morphy(dataset)
     on.exit(morphyObj <- UnloadMorphy(morphyObj))
     MorphyTreeLength(tree, morphyObj)
@@ -118,24 +128,22 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
     dataset <- .Recompress(dataset[TipLabels(tree[[1]])])
   }
   
-  # TODO replace with tree[] <- ... when fix available for
-  #  https://github.com/emmanuelparadis/ape/issues/36
-  at <- attributes(tree)
-  tree <- RenumberTips(tree, dataset)
-  attributes(tree) <- at
+  tree[] <- RenumberTips(tree, dataset)
+  tree <- Preorder(tree)
+  tree[] <- lapply(tree, function (tr) {
+    if (TreeIsRooted(tr)) {
+      tr
+    } else {
+      warning("Unrooted tree rooted on tip 1.")
+      RootTree(tr, 1)
+    }
+  })
   
   nEdge <- unique(vapply(tree, function (tr) dim(tr$edge)[1], integer(1)))
   if (length(nEdge) > 1L) {
-    tree <- lapply(tree, RootTree, 1)
-    nEdge <- unique(vapply(tree, function (tr) dim(tr$edge)[1], integer(1)))
-    
-    if (length(nEdge) > 1L) {
-      stop("Trees have different numbers of edges (",
+    stop("Trees have different numbers of edges (",
            paste0(nEdge, collapse = ", "), 
            "); try collapsing polytomies?)")
-    } else {
-      warning("Mixture of rooted and unrooted trees; all re-rooted on tip 1.")
-    }
   }
   
   edges <- vapply(tree, `[[`, tree[[1]]$edge, "edge")
@@ -302,11 +310,11 @@ FastCharacterLength <- function (tree, dataset) {
 #' @export
 MorphyTreeLength <- function (tree, morphyObj) {
   if (!is.morphyPtr(morphyObj)) {
-    stop("`morphyObj` must be a valid morphy pointer")
+    stop("`morphyObj` must be a valid Morphy pointer")
   }
   nTaxa <- mpl_get_numtaxa(morphyObj)
   if (nTaxa != length(tree$tip.label)) {
-    stop ("Number of taxa in morphy object (", nTaxa,
+    stop ("Number of taxa in Morphy object (", nTaxa,
           ") not equal to number of tips in tree")
   }
   treeOrder <- attr(tree, "order")
@@ -335,7 +343,7 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
     child <- edgeList[, 2]
   }
   if (!inherits(morphyObj, "morphyPtr")) {
-    stop("morphyObj must be a morphy pointer. See ?LoadMorphy().")
+    stop("`morphyObj` must be a Morphy pointer. See ?LoadMorphy().")
   }
   if (nTaxa < 1L) {
     # Run this test after we're sure that morphyObj is a morphyPtr, or lazy
