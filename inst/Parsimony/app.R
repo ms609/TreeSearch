@@ -1947,6 +1947,15 @@ server <- function(input, output, session) {
                       edge.width = 2.5,
                       updateTips = "updateTips" %in% input$mapDisplay,
                       tip.color = roguishness)
+        if (max(rogueCont) > 0) {
+          SpectrumLegend(
+            palette = hcl.colors(256, "inferno")[1:193],
+            legend = c("No impact",
+                       "Mean tree\nscore impact",
+                       signif(max(rogueCont))),
+            font = c(1, 3, 1)
+            )
+        }
       },
       error = function (cond) {
         cli::cli_alert_danger(cond)
