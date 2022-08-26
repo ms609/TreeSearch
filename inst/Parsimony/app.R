@@ -181,6 +181,12 @@ Nixon1999 <- Reference(
   journal = "Cladistics", volume = 15, pages = "407-414",
   title = "The Parsimony Ratchet, a new method for rapid parsimony analysis",
   doi = "10.1111/j.1096-0031.1999.tb00277.x")
+Pol2009 <- Reference(
+  title = "Unstable taxa in cladistic analysis: identification and the assessment of relevant characters",
+  authors = c("Pol, D.", "Escapa, I.H."),
+  journal = "Cladistics", 2009, 25, pages = c(515, 527), 
+  doi = "10.1111/j.1096-0031.2009.00258.x"
+)
 RCoreTeam <- Reference(
   authors = "R Core Team", year = 2020,
   title = "R: A language and environment for statistical computing",
@@ -3450,6 +3456,7 @@ server <- function(input, output, session) {
      tags$h3("Rogue taxa"),
      HTML(paste("Detection:", SmithRogue)),
      HTML(paste("Plotting:", Klopfstein2019)),
+     HTML(paste("Character analysis:", Pol2009)),
     )
   })
 
