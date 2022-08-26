@@ -59,6 +59,15 @@ LengthAdded <- function(trees, char, concavity = Inf) {
   start <- TreeLength(trees, char, concavity)
   contApp <- cont[, setdiff(colnames(cont), "-")]
   
+  if (is.finite(concavity)) {
+    # minLength attribute must be fixed.
+    # Otherwise setting the only instance of a `1` to `?` will change the
+    # calculated minimum length, potentially resulting in negative scores.
+    char <- PrepareDataIW(char)
+  } else if (.UseProfile(concavity)) {
+    char <- PrepareDataProfile(char)
+  }
+  
   # Define ambiguous state, depending on applicability
   qm <- which(rowSums(cont) == dim(cont)[2])
   if ("-" %in% colnames(cont)) {
@@ -87,21 +96,16 @@ LengthAdded <- function(trees, char, concavity = Inf) {
     }
   }
   
-  # Temp:
   deltas <- start - .vapply(seq_along(char), QMScore, start)
+  # Temp:
   if (any(deltas < 0)) {
-    #dput(which(apply(deltas < 0, 1, any)))
-    warning("Scoring issue (#112) may distort score of ",
-            paste(names(char)[apply(deltas < 0, 2, any)], collapse = ", "))
+    warning("Unknown scoring issue may distort score of ",
+            paste(names(char)[apply(deltas < 0, 2, any)], collapse = ", "),
+            ". Please report bug to maintainer.")
   }
   # /Temp
   
-  delta <- setNames(
-    pmax(0, colSums(deltas)),
-    # TODO pmax is a workaround for the Morphy bug that treats {+} as {?}.
-    # TODO remove when that bug is fixed.
-    names(char)
-  )
+  delta <- setNames(colSums(deltas), names(char))
   
   # Return:
   delta / length(trees)

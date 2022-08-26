@@ -45,11 +45,8 @@ test_that("LengthAdded()", {
     as.numeric(TreeLength(trees[[1]], dataset[, 11], concavity = 5))
   )
   
-  # Forced-applicable: trees[[14]] loses length if Wiwaxia: 1 -> ?
-  expect_warning(
-    wiwaxia <- LengthAdded(trees, dataset[, 39], concavity = 10),
-    "may distort score of Wiwaxia"
-  )
+  # minLength changes when only occurrence of 1 -> ?
+  wiwaxia <- LengthAdded(trees, dataset[, 39], concavity = 10)
   expect_true(all(wiwaxia >= 0))
   
 })
