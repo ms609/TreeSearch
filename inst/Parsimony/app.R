@@ -1923,9 +1923,9 @@ server <- function(input, output, session) {
   }
   
   PolEscVal <- reactive({
-    PolEscapa(r$trees,
-              r$dataset[tipLabels(), PlottedChar()],
-              concavity())
+    ExtraLength(r$trees,
+                r$dataset[tipLabels(), PlottedChar()],
+                concavity())
   })
   
   CharacterwisePlot <- function() {
@@ -1935,24 +1935,24 @@ server <- function(input, output, session) {
     r$plottedTree <- PlottedTree()
     if (length(n) && n > 0L) {
       pc <- tryCatch({
-        rogueCont <- PolEscVal()
-        roguishness <- if (max(rogueCont) == 0) {
+        extraLen <- PolEscVal()
+        roguishness <- if (max(extraLen) == 0) {
           "black"
         } else {
           hcl.colors(256, "inferno")[
-            (192 * rogueCont[r$plottedTree$tip.label] / max(rogueCont)) + 1
+            (192 * extraLen[r$plottedTree$tip.label] / max(extraLen)) + 1
           ]
         }
         PlotCharacter(r$plottedTree, r$dataset, n,
                       edge.width = 2.5,
                       updateTips = "updateTips" %in% input$mapDisplay,
                       tip.color = roguishness)
-        if (max(rogueCont) > 0) {
+        if (max(extraLen) > 0) {
           SpectrumLegend(
             palette = hcl.colors(256, "inferno")[1:193],
             legend = c("No impact",
                        "Mean tree\nscore impact",
-                       signif(max(rogueCont))),
+                       signif(max(extraLen))),
             font = c(1, 3, 1)
             )
         }
