@@ -181,7 +181,7 @@ parsimony ratchet (Nixon 1999)
 break points to evaluate before concluding each search.
 The counter is reset to zero each time tree score improves.
 The counter is reset to zero each time tree score improves.
-One 'iteration' comprises breaking a single branch and evaluating all
+One "iteration" comprises breaking a single branch and evaluating all
 possible reconnections.</p></dd>
 
 
@@ -300,8 +300,8 @@ in order to escape local optima.
 A final round of tree bisection and reconnection (<acronym>TBR</acronym>)
 is conducted to broaden the sampling of trees.</p>
 <p>This function can be called using the R command line / terminal, or through
-the 'shiny' graphical user interface app (type <code>EasyTrees()</code> to launch).</p>
-<p>For detailed documentation of the 'TreeSearch' package, including full
+the "shiny" graphical user interface app (type <code>EasyTrees()</code> to launch).</p>
+<p>For detailed documentation of the "TreeSearch" package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
 <a href="https://ms609.github.io/TreeSearch/">package documentation</a>.</p>
@@ -415,7 +415,7 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">## Only run examples in interactive R sessions</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="co"># launch 'shiny' point-and-click interface</span></span></span>
+<span class="r-in"><span>  <span class="co"># launch "shiny" point-and-click interface</span></span></span>
 <span class="r-in"><span>  <span class="fu">EasyTrees</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  </span></span>
 <span class="r-in"><span>  <span class="co"># Here too, use the "continue search" function to ensure that tree score</span></span></span>
@@ -424,8 +424,8 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load data for analysis in R</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/" class="external-link">'TreeTools'</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">'congreveLamsdellMatrices'</span>, package <span class="op">=</span> <span class="st">'TreeSearch'</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/" class="external-link">"TreeTools"</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"congreveLamsdellMatrices"</span>, package <span class="op">=</span> <span class="st">"TreeSearch"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="va">congreveLamsdellMatrices</span><span class="op">[[</span><span class="fl">42</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A very quick run for demonstration purposes</span></span></span>
@@ -438,8 +438,11 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Sample local optimum</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → TBR depth 1; keeping 4 trees; k = 10</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2022-08-26 11:05:53: Score: 12.0979</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2022-08-26 11:05:55: Tree search terminated with score <span style="font-weight: bold;">11.9697</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2022-08-27 05:03:59: Score: 12.4392</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Final search <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■      </span>  82% | D1, score 11.9813, hit 1. …</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   - TBR rearrangement at depth 1 found score 11.9813 1 time.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2022-08-27 05:04:01: Tree search terminated with score <span style="font-weight: bold;">11.9813</span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "final_1"</span>
 <span class="r-in"><span></span></span>
@@ -480,7 +483,7 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-in"><span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">MaximizeParsimony</span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>, verbosity <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Initialized 1 distinct constraints.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> → 2022-08-26 11:05:55: Score to beat: <span style="font-weight: bold;">3</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> → 2022-08-27 05:04:01: Score to beat: <span style="font-weight: bold;">3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 phylogenetic tree</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

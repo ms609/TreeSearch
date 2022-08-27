@@ -199,14 +199,14 @@ larger numbers provide more verbose feedback to the user.</p></dd>
 <dd><p>Logical specifying whether to terminate search once a
 subsequent iteration recovers a sub-optimal score.
 Will be overridden if a passed function has an attribute <code>stopAtPeak</code> set by
-<code>attr(FunctionName, 'stopAtPeak') &lt;- TRUE</code>.</p></dd>
+<code>attr(FunctionName, "stopAtPeak") &lt;- TRUE</code>.</p></dd>
 
 
 <dt>stopAtPlateau</dt>
 <dd><p>Integer. If &gt; 0, tree search will terminate if the score
 has not improved after <code>stopAtPlateau</code> iterations.
 Will be overridden if a passed function has an attribute <code>stopAtPlateau</code> set
-by <code>attr(FunctionName, 'stopAtPlateau') &lt;- TRUE</code>.</p></dd>
+by <code>attr(FunctionName, "stopAtPlateau") &lt;- TRUE</code>.</p></dd>
 
 
 <dt>...</dt>
@@ -280,14 +280,14 @@ best score.</p></dd>
 <dd><p>Integer specifying maximum rearrangements to perform on each bootstrap or
 ratchet iteration.
 To override this value for a single swapper function, set e.g.
-<code>attr(SwapperFunction, 'searchIter') &lt;- 99</code></p></dd>
+<code>attr(SwapperFunction, "searchIter") &lt;- 99</code></p></dd>
 
 
 <dt>searchHits</dt>
 <dd><p>Integer specifying maximum times to hit best score before terminating a tree
 search within a ratchet iteration.
 To override this value for a single swapper function, set e.g.
-<code>attr(SwapperFunction, 'searchHits') &lt;- 99</code></p></dd>
+<code>attr(SwapperFunction, "searchHits") &lt;- 99</code></p></dd>
 
 
 <dt>bootstrapIter</dt>
@@ -364,12 +364,12 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">'Lobo'</span>, package <span class="op">=</span> <span class="st">'TreeTools'</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"Lobo"</span>, package <span class="op">=</span> <span class="st">"TreeTools"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">njtree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">Lobo.phy</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># Increase value of ratchIter and searchHits to do a proper search</span></span></span>
 <span class="r-in"><span><span class="va">quickResult</span> <span class="op">&lt;-</span> <span class="fu">Ratchet</span><span class="op">(</span><span class="va">njtree</span>, <span class="va">Lobo.phy</span>, ratchIter <span class="op">=</span> <span class="fl">2</span>, searchHits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> * Beginning Parsimony Ratchet, with initial score 231</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Completed parsimony ratchet after 2 iterations with score 221</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Completed parsimony ratchet after 2 iterations with score 217</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot result (legibly)</span></span></span>
 <span class="r-in"><span><span class="va">oldPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></span>
