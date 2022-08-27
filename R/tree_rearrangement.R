@@ -29,7 +29,7 @@
 #' @template returnEdgeList
 #' 
 #' @examples
-#' data('Lobo', package='TreeTools')
+#' data("Lobo", package="TreeTools")
 #' tree <- TreeTools::NJTree(Lobo.phy)
 #' edge <- tree$edge
 #' parent <- edge[, 1]
@@ -42,7 +42,7 @@
 RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
                             EdgeSwapper, 
                             scoreToBeat = TreeScorer(parent, child, dataset, ...),
-                            iter = '?', hits = 0L, verbosity = 0L, ...) {
+                            iter = "?", hits = 0L, verbosity = 0L, ...) {
   eps <- .Machine$double.eps ^ 0.5
   rearrangedEdges <- EdgeSwapper(parent, child)
   if (is.list(rearrangedEdges[[1]])) {
@@ -56,7 +56,7 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
     if (candidateScore > (scoreToBeat + eps)) {
       if (verbosity > 3L) {                                                     # nocov start
         message("    . Iteration ", iter, 
-                                  ' - Rearranged tree score ', candidateScore, 
+                                  " - Rearranged tree score ", candidateScore, 
                               " > target ", scoreToBeat)
       }                                                                         # nocov end
     } else if (candidateScore + eps > scoreToBeat) { # i.e. scores are equal
@@ -77,7 +77,7 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
     candidateScore <- TreeScorer(rearrangedEdges[[1]], rearrangedEdges[[2]], dataset, ...)
     if (candidateScore > (scoreToBeat + eps)) {
       if (verbosity > 3L) {                                                     # nocov start
-        message("    . Iteration ", iter, ' - Rearranged tree score ',
+        message("    . Iteration ", iter, " - Rearranged tree score ",
                 signif(candidateScore, 6), " > target ", signif(scoreToBeat, 6))
       }                                                                         # nocov end
     } else if (candidateScore + eps > scoreToBeat) { # i.e. scores are equal

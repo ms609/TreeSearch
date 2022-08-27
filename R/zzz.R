@@ -17,5 +17,5 @@ release_questions <- function() {
 # Additional checks:
 # 
 #
-# tools::resaveRdaFiles('R', compress='auto') - is default bzip2 the optimal?
-# tools::checkRdaFiles('R') - set optimal compression in `data-raw`
+# tools::resaveRdaFiles("R", compress="auto") - is default bzip2 the optimal?
+# tools::checkRdaFiles("R") - set optimal compression in `data-raw`

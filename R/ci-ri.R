@@ -1,6 +1,6 @@
-#' Consistency / retention 'indices'
+#' Consistency / retention "indices"
 #' 
-#' `Consistency()` calculates the so-called consistency and retention 'indices'
+#' `Consistency()` calculates the so-called consistency and retention "indices"
 #' for each character in a dataset, given a bifurcating tree.
 #' Although there is not a straightforward interpretation of these indices,
 #' they are sometimes taken as an indicator of the fit of a character to a 
@@ -32,6 +32,6 @@ Consistency <- function (dataset, tree, compress = FALSE) {
   if (compress) {
     ci
   } else {
-    ci[attr(dataset, 'index')]
+    ci[attr(dataset, "index")]
   }
 }

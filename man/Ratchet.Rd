@@ -94,12 +94,12 @@ larger numbers provide more verbose feedback to the user.}
 \item{stopAtPeak}{Logical specifying whether to terminate search once a
 subsequent iteration recovers a sub-optimal score.
 Will be overridden if a passed function has an attribute \code{stopAtPeak} set by
-\code{attr(FunctionName, 'stopAtPeak') <- TRUE}.}
+\code{attr(FunctionName, "stopAtPeak") <- TRUE}.}
 
 \item{stopAtPlateau}{Integer. If > 0, tree search will terminate if the score
 has not improved after \code{stopAtPlateau} iterations.
 Will be overridden if a passed function has an attribute \code{stopAtPlateau} set
-by \code{attr(FunctionName, 'stopAtPlateau') <- TRUE}.}
+by \code{attr(FunctionName, "stopAtPlateau") <- TRUE}.}
 
 \item{\dots}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
 
@@ -145,12 +145,12 @@ best score.}
 \item{searchIter}{Integer specifying maximum rearrangements to perform on each bootstrap or
 ratchet iteration.
 To override this value for a single swapper function, set e.g.
-\code{attr(SwapperFunction, 'searchIter') <- 99}}
+\code{attr(SwapperFunction, "searchIter") <- 99}}
 
 \item{searchHits}{Integer specifying maximum times to hit best score before terminating a tree
 search within a ratchet iteration.
 To override this value for a single swapper function, set e.g.
-\code{attr(SwapperFunction, 'searchHits') <- 99}}
+\code{attr(SwapperFunction, "searchHits") <- 99}}
 
 \item{bootstrapIter}{Integer specifying maximum rearrangements to perform on each bootstrap
 iteration (default: \code{searchIter}).}
@@ -189,7 +189,7 @@ For usage pointers, see the
 
 }}
 \examples{
-data('Lobo', package = 'TreeTools')
+data("Lobo", package = "TreeTools")
 njtree <- TreeTools::NJTree(Lobo.phy)
 # Increase value of ratchIter and searchHits to do a proper search
 quickResult <- Ratchet(njtree, Lobo.phy, ratchIter = 2, searchHits = 3)

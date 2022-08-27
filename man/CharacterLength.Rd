@@ -37,7 +37,7 @@ erroneous results or software crash if variables are in the incorrect format.
 
 }}
 \examples{
-data('inapplicable.datasets')
+data("inapplicable.datasets")
 dataset <- inapplicable.phyData[[12]]
 tree <- TreeTools::NJTree(dataset)
 CharacterLength(tree, dataset)

@@ -12,13 +12,13 @@ test_that("Profile score correct for small trees", {
     1, 0, 0, 1, 0, 0, 1, 0, 0, # 2 steps again [duplicated]
     0, 1, 0, 0, 0, 0, 0, 1, 1, # 1 step
     2, 1, 1, 1, 1, 1, 1, 1, 1),# 1 step; non-informative
-    nrow = 9, dimnames = list(paste0('t', 1:9), NULL))
+    nrow = 9, dimnames = list(paste0("t", 1:9), NULL))
     
   
   dataset <- MatrixToPhyDat(mataset)
   
   at <- attributes(dataset)
-  characters <- PhyToString(dataset, ps = '', useIndex = FALSE,
+  characters <- PhyToString(dataset, ps = "", useIndex = FALSE,
                             byTaxon = FALSE, concatenate = FALSE)
   weight <- at$weight
   morphyObjects <- lapply(characters, SingleCharMorphy)
@@ -29,18 +29,18 @@ test_that("Profile score correct for small trees", {
   cont <- at$contrast
   simpleCont <- ifelse(rowSums(cont) == 1,
                        apply(cont != 0, 1, function (x) at$levels[x][1]),
-                       '?')
-  inappLevel <- at$levels == '-'
+                       "?")
+  inappLevel <- at$levels == "-"
   
   unlisted <- unlist(dataset, use.names = FALSE)
   charSeq <- seq_len(nChar) - 1L
   
   tokenMatrix <- matrix(simpleCont[unlisted], nChar, 9, byrow = FALSE)
   profileTables <- apply(tokenMatrix, 1, table)
-  if (inherits(profileTables, 'matrix')) {
+  if (inherits(profileTables, "matrix")) {
     profileTables <- lapply(seq_len(ncol(profileTables)), function (i) profileTables[, i])
   }
-  data('profiles', package = 'TreeSearch')
+  data("profiles", package = "TreeSearch")
   profileCost <- lapply(profileTables, function (x) {
     x <- sort(x[x > 1])
     n <- length(x)
@@ -83,8 +83,8 @@ test_that("Profile score can be calculated from real data", {
   dataset <- PrepareDataProfile(congreveLamsdellMatrices[[1]])
   expect_equal(TreeLength(tree, dataset), 
                sum(CharacterLength(tree, dataset, compress = TRUE) *
-                     attr(dataset, 'weight')))
-  score <- TreeLength(tree, dataset, 'profile')
+                     attr(dataset, "weight")))
+  score <- TreeLength(tree, dataset, "profile")
 
   # Check score hasn't materially changed:
   # 511.732 is "previous value"; not manually checked.

@@ -25,11 +25,11 @@
 #' @param searchIter Integer specifying maximum rearrangements to perform on each bootstrap or 
 #' ratchet iteration.  
 #' To override this value for a single swapper function, set e.g. 
-#' `attr(SwapperFunction, 'searchIter') <- 99`
+#' `attr(SwapperFunction, "searchIter") <- 99`
 #' @param searchHits Integer specifying maximum times to hit best score before terminating a tree
 #' search within a ratchet iteration.
 #' To override this value for a single swapper function, set e.g. 
-#' `attr(SwapperFunction, 'searchHits') <- 99`
+#' `attr(SwapperFunction, "searchHits") <- 99`
 #' @param bootstrapIter Integer specifying maximum rearrangements to perform on each bootstrap
 #'  iteration (default: `searchIter`).
 #' @param bootstrapHits Integer specifying maximum times to hit best score on each bootstrap 
@@ -48,7 +48,7 @@
 #' \insertAllCited{}
 #'
 #' @examples
-#' data('Lobo', package = 'TreeTools')
+#' data("Lobo", package = "TreeTools")
 #' njtree <- TreeTools::NJTree(Lobo.phy)
 #' # Increase value of ratchIter and searchHits to do a proper search
 #' quickResult <- Ratchet(njtree, Lobo.phy, ratchIter = 2, searchHits = 3)
@@ -109,7 +109,7 @@ Ratchet <- function (tree, dataset,
   }
   
   if (returnAll) {
-    nullForest <- vector('list', ratchIter)
+    nullForest <- vector("list", ratchIter)
     forest <- nullForest
     forestScores <- rep.int(NA, ratchIter)
   }
@@ -118,7 +118,7 @@ Ratchet <- function (tree, dataset,
   BREAK <- FALSE
   for (i in seq_len(ratchIter)) {
     if (verbosity > 1L) {                                                       # nocov start
-      message("\n* Ratchet iteration ", i, '.')
+      message("\n* Ratchet iteration ", i, ".")
       if (verbosity > 2L) {
         message(" - Generating new candidate tree by bootstrapping dataset.")   
       }
@@ -167,7 +167,7 @@ Ratchet <- function (tree, dataset,
       forestScores[i] <- candScore
     }
     if ((candScore + epsilon) < bestScore) {
-      # New 'best' tree
+      # New "best" tree
       edgeList <- candidate
       bestScore <- candScore
       iterationsWithBestScore <- 1L
@@ -203,14 +203,14 @@ Ratchet <- function (tree, dataset,
       forest[] <- lapply(forest, function (phy) {
         x <- tree
         x$edge <- cbind(phy[[1]], phy[[2]])
-        attr(x, 'score') <- phy[[3]]
+        attr(x, "score") <- phy[[3]]
         # Return to lapply: 
         x})
       ret <- unique(forest)
       if (verbosity > 1L) {
         message(" - Removing duplicates leaves ", length(ret), " unique trees")
       }
-      uniqueScores <- vapply(ret, attr, double(1), 'score')
+      uniqueScores <- vapply(ret, attr, double(1), "score")
     } else if (length(forest) == 1) {
       ret <- tree
       newEdge <- forest[[1]]
@@ -220,28 +220,28 @@ Ratchet <- function (tree, dataset,
       stop("\nNo trees!? Is suboptimal set to a sensible (positive) value?")
     }
     if (verbosity > 0L) {                                                       # nocov start
-      message('\nFound ', sum(uniqueScores == min(uniqueScores)),
-              ' unique MPTs and ',
+      message("\nFound ", sum(uniqueScores == min(uniqueScores)),
+              " unique MPTs and ",
               length(ret) - sum(uniqueScores == min(uniqueScores)), 
-              ' suboptimal trees.\n')
+              " suboptimal trees.\n")
     }                                                                           # nocov end
     # Return:
     ret
   } else {
     tree$edge <- cbind(edgeList[[1]], edgeList[[2]])
-    attr(tree, 'score') <- bestScore
+    attr(tree, "score") <- bestScore
     # Return:
     tree  
   }
 }
 
-#' Unique trees (ignoring 'hits' attribute)
+#' Unique trees (ignoring "hits" attribute)
 #' @author Martin R. Smith
 #' @keywords internal
 #' @export
 .UniqueExceptHits <- function (trees) {
   unique(lapply(trees, function(tree) {
-    attr(tree, 'hits') <- NULL
+    attr(tree, "hits") <- NULL
     tree
   }))
 }
@@ -259,18 +259,18 @@ MultiRatchet <- function (tree, dataset, ratchHits=10,
                               swappers=list(RootedNNISwap), nSearch=10, 
                               stopAtScore=NULL, ...) {
   trees <- lapply(seq_len(nSearch), function (i) {
-    if (verbosity > 1L) message("\nRatchet search ", i, '/', nSearch, ':')
+    if (verbosity > 1L) message("\nRatchet search ", i, "/", nSearch, ":")
     Ratchet(tree, dataset, ratchIter = 1, ratchHits = 0L, 
             searchIter = searchIter, searchHits = searchHits, 
             verbosity = verbosity, swappers = swappers, 
             stopAtScore = stopAtScore, ...)
   })
-  scores <- vapply(trees, function (x) attr(x, 'score'), double(1))
+  scores <- vapply(trees, function (x) attr(x, "score"), double(1))
   trees <- .UniqueExceptHits(trees[scores == min(scores)])
-  message("Found ", length(trees), ' unique trees from ', nSearch, ' searches.')
+  message("Found ", length(trees), " unique trees from ", nSearch, " searches.")
   
   # Return:
-  structure(trees, class = 'multiPhylo')
+  structure(trees, class = "multiPhylo")
 }
 
 #' @describeIn Ratchet deprecated alias for `MultiRatchet()`

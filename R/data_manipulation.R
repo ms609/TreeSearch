@@ -24,7 +24,7 @@
 #'     phylogenetic information.
 #'   
 #'   - `bootstrap`: The character vector 
-#'     \code{c('info.amounts', 'split.sizes')}, indicating attributes to sample
+#'     \code{c("info.amounts", "split.sizes")}, indicating attributes to sample
 #'      when bootstrapping the dataset (e.g. in Ratchet searches).
 #'
 #' `PrepareDataIW` adds the attribute:
@@ -32,7 +32,7 @@
 #'  - \code{min.length}: The minimum number of steps that must be present in each
 #'    transformation series.
 #' @examples 
-#' data('congreveLamsdellMatrices')
+#' data("congreveLamsdellMatrices")
 #' dataset <- congreveLamsdellMatrices[[42]]
 #' PrepareDataProfile(dataset)
 #' @author Martin R. Smith; written with reference to 
@@ -42,7 +42,7 @@
 #' @encoding UTF-8
 #' @export
 PrepareDataProfile <- function (dataset) {
-  if ('info.amounts' %fin% names(attributes(dataset))) {
+  if ("info.amounts" %fin% names(attributes(dataset))) {
     # Already prepared
     return(dataset)
   }
@@ -58,16 +58,16 @@ PrepareDataProfile <- function (dataset) {
   
   if (length(qmLevel) == 0) {
     attr(dataset, "contrast") <- rbind(attr(dataset, "contrast"), 1)
-    attr(dataset, "allLevels") <- c(attr(dataset, "allLevels"), '{?}')
+    attr(dataset, "allLevels") <- c(attr(dataset, "allLevels"), "{?}")
     qmLevel <- length(allLevels) + 1L
   }
   
   ambigs <- which(contSums > 1L & contSums < ncol(cont))
-  inappLevel <- which(colnames(cont) == '-')
+  inappLevel <- which(colnames(cont) == "-")
   if (length(inappLevel) != 0L) {
     cli_alert("Inapplicable tokens treated as ambiguous for profile parsimony")
     inappLevel <- which(apply(unname(cont), 1, identical,
-                              as.double(colnames(cont) == '-')))
+                              as.double(colnames(cont) == "-")))
     dataset[] <- lapply(dataset, function (i) {
       i[i %fin% inappLevel] <- qmLevel
       i
@@ -76,8 +76,8 @@ PrepareDataProfile <- function (dataset) {
   
   if (length(ambigs) != 0L) {
     # Message unnecessary until multiple informative states are supported
-    # message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ', '),
-    #         " converted to '?'")
+    # message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ", "),
+    #         " converted to "?"")
     dataset[] <- lapply(dataset, function (i) {
         i[i %fin% ambigs] <- qmLevel
         i
@@ -120,7 +120,7 @@ PrepareDataProfile <- function (dataset) {
   nChar <- vapply(decomposed, dim, c(0, 0))[2, ]
   if (sum(nChar) == 0) {
     cli_alert("No informative characters in `dataset`.")
-    attr(dataset, 'info.amounts') <- double(0)
+    attr(dataset, "info.amounts") <- double(0)
     return(dataset[0])
   }
   newIndex <- seq_len(sum(nChar))
@@ -148,7 +148,7 @@ PrepareDataProfile <- function (dataset) {
   }
   if (length(mataset) == 0) {
     cli_alert("No informative characters in `dataset`.")
-    attr(dataset, 'info.amounts') <- double(0)
+    attr(dataset, "info.amounts") <- double(0)
     return(dataset[0])
   }
   mataset <- apply(mataset, 2, .Recompress, qmLevel)
@@ -184,7 +184,7 @@ PrepareDataProfile <- function (dataset) {
   info <- vapply(info,
                  function (x) {
                     ret <- setNames(double(maxSteps), seq_len(maxSteps))
-                    x <- x[setdiff(names(x), '0')]
+                    x <- x[setdiff(names(x), "0")]
                     if (length(x)) {
                       ret[names(x)] <- max(x) - x
                     }
@@ -193,21 +193,21 @@ PrepareDataProfile <- function (dataset) {
   if (is.null(dim(info))) {
     dim(info) <- c(1L, length(info))
   }
-  attr(dataset, 'index') <- index
+  attr(dataset, "index") <- index
   weight <- as.integer(table(index))
-  attr(dataset, 'weight') <- weight
-  attr(dataset, 'nr') <- length(weight)
-  attr(dataset, 'info.amounts') <- info
-  attr(dataset, 'informative') <- colSums(info) > 0
-  lvls <- c('0', '1')
-  attr(dataset, 'levels') <- lvls
-  attr(dataset, 'allLevels') <- c(lvls, '?')
-  attr(dataset, 'contrast') <- matrix(c(1,0,1,0,1,1), length(lvls) + 1L, length(lvls), 
+  attr(dataset, "weight") <- weight
+  attr(dataset, "nr") <- length(weight)
+  attr(dataset, "info.amounts") <- info
+  attr(dataset, "informative") <- colSums(info) > 0
+  lvls <- c("0", "1")
+  attr(dataset, "levels") <- lvls
+  attr(dataset, "allLevels") <- c(lvls, "?")
+  attr(dataset, "contrast") <- matrix(c(1,0,1,0,1,1), length(lvls) + 1L, length(lvls), 
                                       dimnames = list(NULL, lvls))
-  attr(dataset, 'nc') <- length(lvls)
+  attr(dataset, "nc") <- length(lvls)
   
-  if (!any(attr(dataset, 'bootstrap') == 'info.amounts')) {
-    attr(dataset, 'bootstrap') <- c(attr(dataset, 'bootstrap'), 'info.amounts')
+  if (!any(attr(dataset, "bootstrap") == "info.amounts")) {
+    attr(dataset, "bootstrap") <- c(attr(dataset, "bootstrap"), "info.amounts")
   }
   
   dataset
@@ -217,7 +217,7 @@ PrepareDataProfile <- function (dataset) {
 #' @describeIn PrepareDataProfile Prepare data for implied weighting
 #' @export
 PrepareDataIW <- function (dataset) {
-  attr(dataset, 'min.length') <- MinimumLength(dataset, compress = TRUE)
+  attr(dataset, "min.length") <- MinimumLength(dataset, compress = TRUE)
   
   # Return:
   dataset

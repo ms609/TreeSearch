@@ -62,7 +62,7 @@ parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.}
 break points to evaluate before concluding each search.
 The counter is reset to zero each time tree score improves.
 The counter is reset to zero each time tree score improves.
-One 'iteration' comprises breaking a single branch and evaluating all
+One "iteration" comprises breaking a single branch and evaluating all
 possible reconnections.}
 
 \item{startIter}{Numeric: an initial round of tree search with
@@ -164,9 +164,9 @@ A final round of tree bisection and reconnection (\acronym{TBR})
 is conducted to broaden the sampling of trees.
 
 This function can be called using the R command line / terminal, or through
-the 'shiny' graphical user interface app (type \code{EasyTrees()} to launch).
+the "shiny" graphical user interface app (type \code{EasyTrees()} to launch).
 
-For detailed documentation of the 'TreeSearch' package, including full
+For detailed documentation of the "TreeSearch" package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
 \href{https://ms609.github.io/TreeSearch/}{package documentation}.
@@ -197,7 +197,7 @@ For other ways to estimate clade concordance, see \code{\link[=SiteConcordance]{
 \examples{
 ## Only run examples in interactive R sessions
 if (interactive()) {
-  # launch 'shiny' point-and-click interface
+  # launch "shiny" point-and-click interface
   EasyTrees()
   
   # Here too, use the "continue search" function to ensure that tree score
@@ -206,8 +206,8 @@ if (interactive()) {
 
 
 # Load data for analysis in R
-library('TreeTools')
-data('congreveLamsdellMatrices', package = 'TreeSearch')
+library("TreeTools")
+data("congreveLamsdellMatrices", package = "TreeSearch")
 dataset <- congreveLamsdellMatrices[[42]]
 
 # A very quick run for demonstration purposes

@@ -70,7 +70,7 @@ NNI <- function (tree, edgeToBreak = NULL) {
     newEdges <- unlist(lapply(which(samplable), DoubleNNI,
                               parent = parent, child = child), recursive = FALSE) # Quicker than vapply, surprisingly
     newTrees <- structure(lapply(newEdges, function (edges) {tree$edge <- edges; tree}), # Quicker than vapply, surprisingly
-                          class = 'multiPhylo')
+                          class = "multiPhylo")
     # Return:
     newTrees
   } else {

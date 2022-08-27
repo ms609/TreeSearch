@@ -145,7 +145,7 @@ mpl_get_numtaxa <- function(morphyobj) {
 #' @keywords internal
 #' @export
 mpl_set_charac_weight <- function (charID, weight, morphyobj) {
-  .Call('_R_wrap_mpl_set_charac_weight', as.integer(charID - 1L),
+  .Call("_R_wrap_mpl_set_charac_weight", as.integer(charID - 1L),
         as.numeric(weight), morphyobj)
 }
 
@@ -164,7 +164,7 @@ mpl_set_charac_weight <- function (charID, weight, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_get_charac_weight <- function (charID, morphyobj) {
-  .Call('_R_wrap_mpl_get_charac_weight', as.integer(charID) - 1L, morphyobj)
+  .Call("_R_wrap_mpl_get_charac_weight", as.integer(charID) - 1L, morphyobj)
 }
 
 #' Retrieve the number of character (columns) in the dataset.
@@ -479,10 +479,10 @@ mpl_update_tip <- function(tip_id, anc_id, morphyobj) {
     .Call("_R_wrap_mpl_update_tip", as.integer(tip_id), as.integer(anc_id), morphyobj)
 }
 
-#' Updates the nodal sets for a lower ('dummy') root node
+#' Updates the nodal sets for a lower ("dummy") root node
 #'
 #' If trees are rooted, then Morphy uppass functions
-#' require a lower or 'dummy' root in order to function properly. This
+#' require a lower or "dummy" root in order to function properly. This
 #' function should be called to set the nodal state sets to the dummy
 #' root. The nodal set will be equal to the set of the root node, unless
 #' there is an ambiguous union of applicable and gap tokens when gaps are 

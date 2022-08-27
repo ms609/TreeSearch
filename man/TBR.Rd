@@ -89,7 +89,7 @@ parameters
 }}
 \examples{
 {
-library('ape')
+library("ape")
 tree <- rtree(20, br=NULL)
 TBR(tree)
 }

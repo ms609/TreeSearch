@@ -41,11 +41,11 @@ minimum number of steps that each character must contain.
 The smallest length that a character can obtain on any tree.
 }
 \examples{
-data('inapplicable.datasets')
+data("inapplicable.datasets")
 myPhyDat <- inapplicable.phyData[[4]]
 
 # load your own data with
-# my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
+# my.PhyDat <- as.phyDat(read.nexus.data("filepath"))
 # or Windows users can select a file interactively using:
 # my.PhyDat <- as.phyDat(read.nexus.data(choose.files()))
 
@@ -58,7 +58,7 @@ MinimumLength(myPhyDat)
 MinimumLength(myPhyDat, compress = TRUE)
 
 # Calculate length of a single character from its textual representation
-MinimumLength('-{-1}{-2}{-3}2233')
+MinimumLength("-{-1}{-2}{-3}2233")
 }
 \seealso{
 Other tree scoring: 

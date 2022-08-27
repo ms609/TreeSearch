@@ -28,7 +28,7 @@ Print a warning and return given tree
 
 }}
 \examples{
-suppressWarnings(TBRWarning(0, 0, 'Message text')) # will trigger warning
+suppressWarnings(TBRWarning(0, 0, "Message text")) # will trigger warning
 
 
 }

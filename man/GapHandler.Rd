@@ -15,13 +15,13 @@ GapHandler(morphyObj)
 gaps are handled by \code{morphyObj}.
 }
 \description{
-Gaps represented by the inapplicable token can be treated as 'missing data',
+Gaps represented by the inapplicable token can be treated as "missing data",
 i.e. as equivalent to the ambiguous token \verb{?}; as an extra state, equivalent
-to other states such as \code{0} or \code{1}; or as 'inapplicable data' using the
+to other states such as \code{0} or \code{1}; or as "inapplicable data" using the
 algorithm of Brazeau, Guillerme and Smith (2019).
 }
 \examples{
-morphyObj <- SingleCharMorphy('-0-0', 'Extra')
+morphyObj <- SingleCharMorphy("-0-0", "Extra")
 GapHandler(morphyObj)
 morphyObj <- UnloadMorphy(morphyObj)
 }

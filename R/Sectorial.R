@@ -2,8 +2,8 @@
 ########Sectorial <- function (tree, dataset, TreeScorer = TODO, sectRearrangements=list(RootedNNI), 
 ########                             searchRearrangements=list(RootedNNI, RootedTBR, RootedNNI), 
 ########                             maxHits=c(30, 40, 60), maxIter=2000, verbosity=3, ...) {
-########  best.score <- attr(tree, 'score')
-########  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') tree <- Preorder(tree)
+########  best.score <- attr(tree, "score")
+########  if (is.null(treeOrder <- attr(tree, "order")) || treeOrder != "preorder") tree <- Preorder(tree)
 ######## 
 ########  tree <- RenumberTips(tree, names(dataset))
 ########  if (length(best.score) == 0) best.score <- TreeScorer(tree, dataset, ...)
@@ -16,7 +16,7 @@
 ########    sect <- TreeSearch(sect, dataset, TreeScorer, sectRearrangements[[i]], maxIter=iters,
 ########                         maxHits=hits, verbosity=verbosity-1)
 ########  }
-########  if (attr(sect, 'score') <= best.score) {
+########  if (attr(sect, "score") <= best.score) {
 ########    return (sect)
 ########  } else return (tree)
 ########}
@@ -25,7 +25,7 @@
 #########' Check that chosen sector contains parsimony-informative data
 #########'
 #########' The function simply checks that some characters have more than one state.
-#########' It's crude, but the cost of a false positive is low.
+#########" It"s crude, but the cost of a false positive is low.
 #########'
 #########' @param dataset the dataset to subsample
 #########' @param tips character vector listing tips that exist in the sector 
@@ -33,11 +33,11 @@
 #########' @keywords internal
 #########' @export
 ########SectorHasData <- function (dataset, tips) {
-########  if (class(dataset) =='phyDat') {
-########    levs <- attr(dataset, 'levels')
-########    contrast <- attr(dataset, 'contrast')
-########    index <- as.integer(contrast %*% 2L ^ (seq_along(attr(dataset, 'levels')) - 1))
-########    characters <- vapply(dataset, function (X) index[X], integer(attr(dataset, 'nr')))
+########  if (class(dataset) =="phyDat") {
+########    levs <- attr(dataset, "levels")
+########    contrast <- attr(dataset, "contrast")
+########    index <- as.integer(contrast %*% 2L ^ (seq_along(attr(dataset, "levels")) - 1))
+########    characters <- vapply(dataset, function (X) index[X], integer(attr(dataset, "nr")))
 ########  } else if (names(dataset)) {
 ########    characters <- vapply(dataset, c, integer(length(dataset[[1]])))
 ########  } else if(rownames(dataset)) {
@@ -72,7 +72,7 @@
 ######MorphySectorial <- function (parent, child, dataset, TreeScorer = MorphyLength, maxSectIter=100, 
 ######                         maxIter=500, maxImprovements=5, smallestSector=4, largestSector=1e+06, 
 ######                         Rearrangements=list(RootedNNI), verbosity=0, ...) {
-######  if (verbosity >= 0) message(' - Sectorial search: optimizing sectors of', smallestSector, 'to', floor(largestSector), 'tips')
+######  if (verbosity >= 0) message(" - Sectorial search: optimizing sectors of", smallestSector, "to", floor(largestSector), "tips")
 ######  nEdge <- length(parent)
 ######  nTip <- (nEdge / 2) + 1
 ######  nonRootNodes <- (nTip + 2):(nEdge + 1)
@@ -100,25 +100,25 @@
 ######      candidate <- Subtree(tree, sector)
 ######      crownTips <- candidate$tip.label
 ######      sectorSize <- length(crownTips)
-######      message(sector, 'size', sectorSize, '...')
+######      message(sector, "size", sectorSize, "...")
 ######      
-######      if (SectorHasData(dataset, crownTips)) break else message('unsuitable (no dataset); trying')
+######      if (SectorHasData(dataset, crownTips)) break else message("unsuitable (no dataset); trying")
 ######      
 ######      candidateNodes <- candidateNodes[-match(sector, candidateNodes)]
-######      if (length(candidateNodes == 0)) stop('No selectable sectors contain parsimony information! Either "largestSector" is close to "smallestSector" or your dataset is short of parsimony information.')
+######      if (length(candidateNodes == 0)) stop("No selectable sectors contain parsimony information! Either "largestSector" is close to "smallestSector" or your dataset is short of parsimony information.")
 ######    }
-######    if (verbosity >= 0) message(' Sector OK.')
+######    if (verbosity >= 0) message(" Sector OK.")
 ######    
-######    crown <- root(AddTip(crown, 0, 'SECTOR_ROOT'), length(crown$tip.label) + 1, resolve.root=TRUE)
+######    crown <- root(AddTip(crown, 0, "SECTOR_ROOT"), length(crown$tip.label) + 1, resolve.root=TRUE)
 ######    initialScore <- TreeScorer(candidate, dataset, ...)
-######    attr(candidate, 'score') <- initialScore
+######    attr(candidate, "score") <- initialScore
 ######    
 ######    if (verbosity >= 0) message("\n - Rearranging sector", sector)
 ######    for (Rearrange in Rearrangements) {
 ######      candidate <- TreeSearch(candidate, dataset, TreeScorer, Rearrange,
 ######                                verbosity=verbosity-1, maxIter=maxIter, ...) 
 ######    }
-######    candidateScore <- attr(candidate, 'score')
+######    candidateScore <- attr(candidate, "score")
 ######    
 ######    if((candidateScore + epsilon) < initialScore) {
 ######      improvements <- improvements + 1
@@ -138,14 +138,14 @@
 ######      tree$edge[edges, 1] <- subtree.parent + nodeAdjust
 ######      tree$edge[edges, 2] <- subtree.child
 ######      
-######      if (verbosity > 0) message(' : improved local pscore, updated tree')
-######    } else if (verbosity > 0) message (' : no improvement to local pscore')
+######      if (verbosity > 0) message(" : improved local pscore, updated tree")
+######    } else if (verbosity > 0) message (" : no improvement to local pscore")
 ######    if (improvements == maxImprovements) break()
 ######  } # for
 ######  if (verbosity >= 0)
 ######    message ("\nCompleted sectorial rearrangements.\n")
-######  attr(tree, 'score') <- NULL
-######  attr(tree, 'hits') <- NULL
+######  attr(tree, "score") <- NULL
+######  attr(tree, "hits") <- NULL
 ######  # Return:
 ######  tree
 ######}  # DoSectorial
@@ -194,7 +194,7 @@
 #######' @seealso \code{\link{MorphyRatchet}}
 #######' 
 #######' @examples
-#######' data('Lobo', package='TreeTools')
+#######" data("Lobo", package="TreeTools')
 #######' njtree <- TreeTools::NJTree(Lobo.phy)
 #######'
 #######' \dontrun{
@@ -225,10 +225,10 @@
 ######  initializedData <- InitializeData(dataset)
 ######  on.exit(initializedData <- CleanUpData(initializedData))
 ######  
-######  bestScore <- if (is.null(attr(tree, 'score'))) {
+######  bestScore <- if (is.null(attr(tree, "score"))) {
 ######    TreeScorer(edgeList[[1]], edgeList[[2]], initializedData, ...)
 ######  } else {
-######    attr(tree, 'score')
+######    attr(tree, "score")
 ######  }
 ######  
 ######  if (verbosity > 0L) message("\n* Beginning Sectorial Search, with initial score", bestScore)
@@ -240,7 +240,7 @@
 ######    maxIter=maxIter, maxHits=15, smallest.sector=6, 
 ######    largest.sector=length(edgeList[[1]]) * 0.25, rearrangements=rearrangements)
 ######  
-######  if (class(swappers) == 'function') swappers <- list(swappers)
+######  if (class(swappers) == "function") swappers <- list(swappers)
 ######  # Now use sectorially rearranged tree as starting point for conventional search
 ######  edgeList <- EdgeListSearch(edgeList, initializedData, TreeScorer=TreeScorer,
 ######                             EdgeSwapper=swappers, maxIter = maxIter, 
@@ -248,8 +248,8 @@
 ######  
 ######  if (edgeList[[3]] <= bestScore) {
 ######    sect$edge <- cbind(edgeList[[1]], edgeList[[2]])
-######    attr(sect, 'score') <- edgeList[[3]]
-######    attr(sect, 'hits') <- edgeList[[4]]
+######    attr(sect, "score") <- edgeList[[3]]
+######    attr(sect, "hits") <- edgeList[[4]]
 ######    # Return:
 ######    sect
 ######  } else {

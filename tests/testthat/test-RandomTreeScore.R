@@ -15,9 +15,9 @@ test_that("RandomTreeScore() on small trees", {
   mpl_delete_Morphy(mo)
   
   tokens <- matrix(c(
-    0, '-', '-', 1, 1, 2,
-    0, '-', '-', 1, 1, 2,
-    0, '-', '-', 0, 0, 0), byrow = TRUE, nrow = 3L,
+    0, "-", "-", 1, 1, 2,
+    0, "-", "-", 1, 1, 2,
+    0, "-", "-", 0, 0, 0), byrow = TRUE, nrow = 3L,
     dimnames = list(letters[1:3], NULL))
   
   # One leaf

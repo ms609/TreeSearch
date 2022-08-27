@@ -34,11 +34,11 @@ test_that("PlotCharacter()", {
   } else {
     function (str, edges = FALSE) {
       vdiffr::expect_doppelganger(
-        paste0('PlotChar_',
-               gsub('?', 'Q',
-                    gsub('(', 'd',
-                         gsub(')', 'b',
-                              gsub('-', 'I', str,
+        paste0("PlotChar_",
+               gsub("?", "Q",
+                    gsub("(", "d",
+                         gsub(")", "b",
+                              gsub("-", "I", str,
                                    fixed = TRUE), fixed = TRUE), fixed = TRUE), fixed = TRUE)),
         function() Character(str, plot = TRUE, edges = edges))
     }
@@ -93,33 +93,33 @@ test_that("PlotCharacter()", {
 })
 
 test_that("Edge cases work", {
-  tree <- ape::read.tree(text = '(a, (b, ((c, d), (e, f))));')
-  dataset <- TreeTools::StringToPhyDat('-01100', tips = tree)
+  tree <- ape::read.tree(text = "(a, (b, ((c, d), (e, f))));")
+  dataset <- TreeTools::StringToPhyDat("-01100", tips = tree)
   if (interactive()) {
     PlotCharacter(tree, dataset)
   } else {
-    expect_equal(c('-' = FALSE, '0' = TRUE, '1' = FALSE),
+    expect_equal(c("-" = FALSE, "0" = TRUE, "1" = FALSE),
                  PlotCharacter(tree, dataset, plot = FALSE)[9, ])
   }
   
-  tree <- ape::read.tree(text = '(a, (b, (c, (d, (e, f)))));')
-  dataset <- TreeTools::StringToPhyDat('--0101', tips = tree)
+  tree <- ape::read.tree(text = "(a, (b, (c, (d, (e, f)))));")
+  dataset <- TreeTools::StringToPhyDat("--0101", tips = tree)
   if (interactive()) {
     PlotCharacter(tree, dataset)
   } else {
-    expect_equal(cbind('-' = c(1, 1, 0, 0, 0),
-                       '0' = c(0, 0, 1, 1, 1),
-                       '1' = c(0, 0, 1, 1, 1)),
+    expect_equal(cbind("-" = c(1, 1, 0, 0, 0),
+                       "0" = c(0, 0, 1, 1, 1),
+                       "1" = c(0, 0, 1, 1, 1)),
                  1 * PlotCharacter(tree, dataset, plot = FALSE)[7:11, ])
   }
 })
 
 test_that("Out-of-sequence works", {
   skip_if_not_installed("vdiffr")
-  vdiffr::expect_doppelganger('PlotChar_out-of-sequence', function () {
-    PlotCharacter(ape::read.tree(text = '(a, (b, (c, d)));'),
-                  TreeTools::StringToPhyDat('1342',
-                                            tips = c('a', 'c', 'd', 'b'))
+  vdiffr::expect_doppelganger("PlotChar_out-of-sequence", function () {
+    PlotCharacter(ape::read.tree(text = "(a, (b, (c, d)));"),
+                  TreeTools::StringToPhyDat("1342",
+                                            tips = c("a", "c", "d", "b"))
                   )}
   )
 })

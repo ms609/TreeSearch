@@ -31,7 +31,7 @@ Calculates the number of trees consistent with the character having
 (i.e. number of different tokens minus one) to its maximum.
 }
 \examples{
-character <- rep(c(0:3, '?', '-'), c(8, 5, 1, 1, 2, 2))
+character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))
 StepInformation(character)
 }
 \seealso{

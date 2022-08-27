@@ -22,7 +22,7 @@ Once finished with the object, it should be destroyed using
 \code{\link[=UnloadMorphy]{UnloadMorphy()}} to free the allocated memory.
 }
 \examples{
-data('Lobo', package='TreeTools')
+data("Lobo", package="TreeTools")
 morphyObj <- PhyDat2Morphy(Lobo.phy)
 # Set object to be destroyed at end of session or closure of function
 # on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)

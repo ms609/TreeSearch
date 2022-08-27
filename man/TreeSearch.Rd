@@ -71,12 +71,12 @@ before abandoning the search.}
 \item{stopAtPeak}{Logical specifying whether to terminate search once a
 subsequent iteration recovers a sub-optimal score.
 Will be overridden if a passed function has an attribute \code{stopAtPeak} set by
-\code{attr(FunctionName, 'stopAtPeak') <- TRUE}.}
+\code{attr(FunctionName, "stopAtPeak") <- TRUE}.}
 
 \item{stopAtPlateau}{Integer. If > 0, tree search will terminate if the score
 has not improved after \code{stopAtPlateau} iterations.
 Will be overridden if a passed function has an attribute \code{stopAtPlateau} set
-by \code{attr(FunctionName, 'stopAtPlateau') <- TRUE}.}
+by \code{attr(FunctionName, "stopAtPlateau") <- TRUE}.}
 
 \item{verbosity}{Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.}
@@ -97,7 +97,7 @@ The function will be passed the value returned by \code{InitializeData()}.}
 \value{
 \code{TreeSearch()} returns a tree, with an attribute \code{pscore} conveying its
 parsimony score.
-#' Note that the parsimony score will be inherited from the tree's
+#" Note that the parsimony score will be inherited from the tree"s
 attributes, which is only valid if it was generated using the same
 \code{data} that is passed here.
 
@@ -108,7 +108,7 @@ null character, coded with state zero for every leaf in \code{tree}.
 Run standard search algorithms (\acronym{NNI}, \acronym{SPR} or \acronym{TBR})
 to search for a more parsimonious tree.
 
-For detailed documentation of the 'TreeSearch' package, including full
+For detailed documentation of the "TreeSearch" package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
 \href{https://ms609.github.io/TreeSearch/}{package documentation}.
@@ -119,7 +119,7 @@ configuring tree search, see the
 
 }}
 \examples{
-data('Lobo', package='TreeTools')
+data("Lobo", package="TreeTools")
 njtree <- TreeTools::NJTree(Lobo.phy)
 
 ## Only run examples in interactive R sessions

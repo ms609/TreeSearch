@@ -2,7 +2,7 @@
 % Please edit documentation in R/ci-ri.R
 \name{Consistency}
 \alias{Consistency}
-\title{Consistency / retention 'indices'}
+\title{Consistency / retention "indices"}
 \usage{
 Consistency(dataset, tree, compress = FALSE)
 }
@@ -22,7 +22,7 @@ consistency index (\code{ci}),
 retention index (\code{ri}), and rescaled consistency index (\code{rc}).
 }
 \description{
-\code{Consistency()} calculates the so-called consistency and retention 'indices'
+\code{Consistency()} calculates the so-called consistency and retention "indices"
 for each character in a dataset, given a bifurcating tree.
 Although there is not a straightforward interpretation of these indices,
 they are sometimes taken as an indicator of the fit of a character to a

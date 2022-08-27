@@ -55,7 +55,7 @@ summary.morphyPtr <- function (object, ...) {
 #' @export
 MorphyWeights <- function (morphyObj) {
  vapply(seq_len(mpl_get_num_charac(morphyObj)), mpl_get_charac_weight, 
-        list('approx' = 0L, 'exact' = 0), morphyobj = morphyObj)
+        list("approx" = 0L, "exact" = 0), morphyobj = morphyObj)
 }
 
 #' @rdname MorphyWeights
@@ -80,9 +80,9 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 
 #' Read how a Morphy Object handles the inapplicable token
 #' 
-#' Gaps represented by the inapplicable token can be treated as 'missing data',
+#' Gaps represented by the inapplicable token can be treated as "missing data",
 #' i.e. as equivalent to the ambiguous token `?`; as an extra state, equivalent
-#' to other states such as `0` or `1`; or as 'inapplicable data' using the 
+#' to other states such as `0` or `1`; or as "inapplicable data" using the 
 #' algorithm of Brazeau, Guillerme and Smith (2019).
 #' 
 #' @template morphyObjParam
@@ -90,7 +90,7 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 #' @return `GapHandler()` returns a character string stating how
 #' gaps are handled by `morphyObj`.
 #' @examples 
-#' morphyObj <- SingleCharMorphy('-0-0', 'Extra')
+#' morphyObj <- SingleCharMorphy("-0-0", "Extra")
 #' GapHandler(morphyObj)
 #' morphyObj <- UnloadMorphy(morphyObj)
 #' @family Morphy API functions
@@ -101,7 +101,7 @@ GapHandler <- function (morphyObj) {
     stop("`morphyObj` is not a valid Morphy object")
   }
     
-  ret <- c('Inapplicable', 'Missing data', 'Extra state', 'Unspecified') # 4 = GAP_MAX
+  ret <- c("Inapplicable", "Missing data", "Extra state", "Unspecified") # 4 = GAP_MAX
   handler <- mpl_get_gaphandl(morphyObj)
   if (handler < 0L) {
     stop("Morphy object error: ", mpl_translate_error(handler))
@@ -123,7 +123,7 @@ GapHandler <- function (morphyObj) {
 #' @return `PhyDat2Morphy()` returns a pointer to an initialized Morphy object.
 #' 
 #' @examples
-#' data('Lobo', package='TreeTools')
+#' data("Lobo", package="TreeTools")
 #' morphyObj <- PhyDat2Morphy(Lobo.phy)
 #' # Set object to be destroyed at end of session or closure of function
 #' # on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
@@ -211,14 +211,14 @@ MorphyErrorCheck <- function (action) {
 #' Morphy object from single character
 #' 
 #' @param char State of each character at each tip in turn, in a format that will be converted
-#'             to a character string by \code{\link{paste0}(char, ';', collapse='')}.
+#'             to a character string by \code{\link{paste0}(char, ";", collapse="")}.
 #' @template gapParam
 #'
 #' @return A pointer to an object of class `morphyObj`.
 #' Don't forget to unload it when you've finished with it.
 #'
 #' @examples 
-#' morphyObj <- SingleCharMorphy('-0-0', gap = 'Extra')
+#' morphyObj <- SingleCharMorphy("-0-0", gap = "Extra")
 #' RandomTreeScore(morphyObj)
 #' morphyObj <- UnloadMorphy(morphyObj)
 #' @template MRS

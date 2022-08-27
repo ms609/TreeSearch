@@ -80,7 +80,7 @@ EdgeListSearch <- function (edgeList, dataset,
   }
   if (verbosity > 0L) { #nocov start
     message("  - Final score ", bestScore, " found ", hits, " times after ",
-            iter, " rearrangements.", if (verbosity > 1L) '\n' else '')
+            iter, " rearrangements.", if (verbosity > 1L) "\n" else "")
   } #nocov end
   
   edgeList[3:4] <- c(bestScore, hits)
@@ -94,7 +94,7 @@ EdgeListSearch <- function (edgeList, dataset,
 #' Run standard search algorithms (\acronym{NNI}, \acronym{SPR} or \acronym{TBR})
 #' to search for a more parsimonious tree.
 #'  
-#' For detailed documentation of the 'TreeSearch' package, including full
+#' For detailed documentation of the "TreeSearch" package, including full
 #' instructions for loading phylogenetic data into R and initiating and
 #' configuring tree search, see the
 #' [package documentation](https://ms609.github.io/TreeSearch/).
@@ -121,7 +121,7 @@ EdgeListSearch <- function (edgeList, dataset,
 #' @return
 #' `TreeSearch()` returns a tree, with an attribute `pscore` conveying its
 #' parsimony score.
-#' #' Note that the parsimony score will be inherited from the tree's
+#' #" Note that the parsimony score will be inherited from the tree"s
 #' attributes, which is only valid if it was generated using the same
 #' `data` that is passed here.
 #' 
@@ -135,7 +135,7 @@ EdgeListSearch <- function (edgeList, dataset,
 #' }
 #'
 #' @examples
-#' data('Lobo', package='TreeTools')
+#' data("Lobo", package="TreeTools")
 #' njtree <- TreeTools::NJTree(Lobo.phy)
 #'
 #' ## Only run examples in interactive R sessions
@@ -167,7 +167,7 @@ TreeSearch <- function (tree, dataset,
   initializedData <- InitializeData(dataset)
   on.exit(initializedData <- CleanUpData(initializedData))
 
-  bestScore <- attr(tree, 'score')
+  bestScore <- attr(tree, "score")
   edgeList <- EdgeListSearch(edgeList, initializedData, TreeScorer = TreeScorer, 
                              EdgeSwapper = EdgeSwapper, maxIter = maxIter, 
                              maxHits = maxHits, stopAtPeak = stopAtPeak,
@@ -175,8 +175,8 @@ TreeSearch <- function (tree, dataset,
                              verbosity = verbosity, ...)
   
   tree$edge <- cbind(edgeList[[1]], edgeList[[2]])
-  attr(tree, 'score') <- edgeList[[3]]
-  attr(tree, 'hits') <- edgeList[[4]]
+  attr(tree, "score") <- edgeList[[3]]
+  attr(tree, "hits") <- edgeList[[4]]
   
   # Return:
   tree 

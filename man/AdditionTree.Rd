@@ -38,7 +38,7 @@ Generates a starting tree by adding each taxon in turn to the most
 parsimonious location.
 }
 \examples{
-data('Lobo', package = 'TreeTools')
+data("Lobo", package = "TreeTools")
 AdditionTree(Lobo.phy, concavity = 10)
 }
 \seealso{

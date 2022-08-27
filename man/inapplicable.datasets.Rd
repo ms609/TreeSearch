@@ -153,7 +153,7 @@ obtained by tree search under each inapplicable treatment, named accordingly.
 each dataset.
 }
 \examples{
-data('inapplicable.datasets', package = 'TreeSearch')
+data("inapplicable.datasets", package = "TreeSearch")
 names(inapplicable.datasets)
 }
 \references{

@@ -129,7 +129,7 @@
 #' @references
 #' \insertAllCited{}
 #' @examples
-#' data('inapplicable.datasets', package = 'TreeSearch')
+#' data("inapplicable.datasets", package = "TreeSearch")
 #' names(inapplicable.datasets)
 #' @keywords datasets
 "inapplicable.datasets"
@@ -157,9 +157,9 @@
 #'  \insertAllCited{}
 #' 
 #' @examples 
-#' data('referenceTree')
-#' data('congreveLamsdellMatrices')
-#' TreeLength(referenceTree, congreveLamsdellMatrices[[17]], 'profile')
+#' data("referenceTree")
+#' data("congreveLamsdellMatrices")
+#' TreeLength(referenceTree, congreveLamsdellMatrices[[17]], "profile")
 #'
 #' @source \doi{10.5061/dryad.7dq0j}
 #' 

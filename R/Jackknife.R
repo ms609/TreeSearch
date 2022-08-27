@@ -41,7 +41,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
   morphyObj <- InitializeData(dataset)
   on.exit(morphyObj <- CleanUpData(morphyObj))
   
-  startWeights <- MorphyWeights(morphyObj)['exact', ]
+  startWeights <- MorphyWeights(morphyObj)["exact", ]
   eachChar <- seq_along(startWeights)
   deindexedChars <- rep.int(eachChar, startWeights)
   charsToKeep <- ceiling(resampleFreq * length(deindexedChars))
@@ -82,7 +82,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
     ret <- tree
     ret$edge <- cbind(edgeList[[1]], edgeList[[2]])
     ret
-  }), class = 'multiPhylo')
+  }), class = "multiPhylo")
 }
 
 
@@ -105,7 +105,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' by `phylo$node.label`.
 #' 
 #' @examples
-#' library('TreeTools', quietly = TRUE) # for as.phylo
+#' library("TreeTools", quietly = TRUE) # for as.phylo
 #' 
 #' # jackTrees will usually be generated with Jackknife(), but for simplicity:
 #' jackTrees <- as.phylo(1:100, 8)
@@ -123,14 +123,14 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 JackLabels <- function (tree, jackTrees,
                         plot = TRUE,
                         add = FALSE,
-                        adj = 0, col = NULL, frame = 'none', pos = 2L,
+                        adj = 0, col = NULL, frame = "none", pos = 2L,
                         ...) {
   jackSupport <- SplitFrequency(tree, jackTrees) / length(jackTrees)
   
   if (plot) {
     if (!add) plot(tree)
     if (is.null(col)) col <- SupportColour(jackSupport)
-    ape::nodelabels(paste('\n\n', signif(jackSupport, 2)), 
+    ape::nodelabels(paste("\n\n", signif(jackSupport, 2)), 
                     node = as.integer(names(jackSupport)),
                     adj = adj, col = col, pos = pos, frame = frame, ...)
     

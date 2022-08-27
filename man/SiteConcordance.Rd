@@ -44,7 +44,7 @@ or change without notice.
 Complete documentation and discussion will follow soon.
 }
 \examples{
-data('congreveLamsdellMatrices', package = 'TreeSearch')
+data("congreveLamsdellMatrices", package = "TreeSearch")
 dataset <- congreveLamsdellMatrices[[1]][, 1:20]
 tree <- referenceTree
 qc <- QuartetConcordance(tree, dataset)

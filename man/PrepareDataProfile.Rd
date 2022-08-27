@@ -22,7 +22,7 @@ character when subject to N additional steps.
 \item \code{informative}: logical specifying which characters contain any
 phylogenetic information.
 \item \code{bootstrap}: The character vector
-\code{c('info.amounts', 'split.sizes')}, indicating attributes to sample
+\code{c("info.amounts", "split.sizes")}, indicating attributes to sample
 when bootstrapping the dataset (e.g. in Ratchet searches).
 }
 
@@ -52,7 +52,7 @@ ignored.
 
 }}
 \examples{
-data('congreveLamsdellMatrices')
+data("congreveLamsdellMatrices")
 dataset <- congreveLamsdellMatrices[[42]]
 PrepareDataProfile(dataset)
 }

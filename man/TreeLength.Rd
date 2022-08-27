@@ -41,7 +41,7 @@ TNT sets a default of 3, but this is too low in some circumstances
 Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
 Specify \code{Inf} to weight each additional step equally.
-Specify \code{'profile'} to employ profile parsimony \insertCite{Faith2001}{TreeSearch}.}
+Specify \code{"profile"} to employ profile parsimony \insertCite{Faith2001}{TreeSearch}.}
 
 \item{\dots}{unused; allows additional parameters specified within \dots to be
 received by the function without throwing an error.}

@@ -1,11 +1,11 @@
-context('Jackknife.R')
+context("Jackknife.R")
 
 test_that("Jackknife supports are correct", {
   true_tree <-  ape::read.tree(text = "((((((A,B),C),D),E),F),out);")
   start_tree <- ape::read.tree(text = "(((((A,D),B),E),(C,F)),out);")
-  dataset <- TreeTools::StringToPhyDat('1100000 1110000 1111000 1111100 1100000 1110000 1111000 1111100 1001000',
+  dataset <- TreeTools::StringToPhyDat("1100000 1110000 1111000 1111100 1100000 1110000 1111000 1111100 1001000",
                             1:7, byTaxon = FALSE)
-  names(dataset) <- c(LETTERS[1:6], 'out')
+  names(dataset) <- c(LETTERS[1:6], "out")
   
   expect_error(Jackknife(unroot(true_tree), dataset))
   expect_error(Jackknife(start_tree, dataset, resampleFreq = 0))
@@ -25,21 +25,21 @@ test_that("Jackknife supports are correct", {
 })
 
 test_that("Jackknife ouputs good for node.labels", {
-  library('TreeTools', quietly = TRUE) # for as.phylo
+  library("TreeTools", quietly = TRUE) # for as.phylo
   
   # jackTrees will usually be generated with Jackknife(), but for simplicity:
   jackTrees <- as.phylo(1:100, 8)
   
   tree <- as.phylo(0, 8)
-  expect_equal(c('', '', '0.13', '0.08', '0.14', '1', '1'),
+  expect_equal(c("", "", "0.13", "0.08", "0.14", "1", "1"),
                JackLabels(tree, jackTrees, plot = FALSE))
   
-  tree <- RootTree(as.phylo(0, 8), c('t1', 't4'))
-  expect_equal(c('', '0.08', '0.13', '', '0.14', '1', '1'),
+  tree <- RootTree(as.phylo(0, 8), c("t1", "t4"))
+  expect_equal(c("", "0.08", "0.13", "", "0.14", "1", "1"),
                JackLabels(tree, jackTrees, plot = FALSE))
   
-  skip_if_not_installed('vdiffr')
-  vdiffr::expect_doppelganger('plot-jackknife', function() {
+  skip_if_not_installed("vdiffr")
+  vdiffr::expect_doppelganger("plot-jackknife", function() {
     expect_equal(as.double(JackLabels(tree, jackTrees, plot = FALSE)[-c(1, 4)]),
                  unname(JackLabels(tree, jackTrees)))
   })

@@ -64,7 +64,7 @@ It also reports the number of times that this score was hit in the
 current function call.
 }
 \examples{
-data('Lobo', package='TreeTools')
+data("Lobo", package="TreeTools")
 tree <- TreeTools::NJTree(Lobo.phy)
 edge <- tree$edge
 parent <- edge[, 1]

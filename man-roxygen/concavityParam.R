@@ -7,4 +7,4 @@
 #' Better still explore the sensitivity of results under a range of
 #' concavity values, e.g. `k = 2 ^ (1:7)`.
 #' Specify `Inf` to weight each additional step equally.
-#' Specify `'profile'` to employ profile parsimony \insertCite{Faith2001}{TreeSearch}.
+#' Specify `"profile"` to employ profile parsimony \insertCite{Faith2001}{TreeSearch}.

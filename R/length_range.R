@@ -19,11 +19,11 @@
 #' minimum number of steps that each character must contain.
 #'
 #' @examples
-#' data('inapplicable.datasets')
+#' data("inapplicable.datasets")
 #' myPhyDat <- inapplicable.phyData[[4]]
 #' 
 #' # load your own data with
-#' # my.PhyDat <- as.phyDat(read.nexus.data('filepath'))
+#' # my.PhyDat <- as.phyDat(read.nexus.data("filepath"))
 #' # or Windows users can select a file interactively using:
 #' # my.PhyDat <- as.phyDat(read.nexus.data(choose.files()))
 #' 
@@ -36,11 +36,11 @@
 #' MinimumLength(myPhyDat, compress = TRUE)
 #' 
 #' # Calculate length of a single character from its textual representation
-#' MinimumLength('-{-1}{-2}{-3}2233')
+#' MinimumLength("-{-1}{-2}{-3}2233")
 #' @template MRS
 #' @family tree scoring
 #' @export
-MinimumLength <- function (x, compress = FALSE) UseMethod('MinimumLength')
+MinimumLength <- function (x, compress = FALSE) UseMethod("MinimumLength")
 
 #' @rdname MinimumLength
 #' @export
@@ -55,20 +55,20 @@ MinimumLength.phyDat <- function (x, compress = FALSE) {
     colnames(cont) <- as.character(at$levels)
   }
   
-  inappLevel <- at$levels == '-'
+  inappLevel <- at$levels == "-"
   powersOf2 <- 2L ^ (seq_len(nLevel - sum(inappLevel)) - 1L)
   
   # Treat {-, 1} as {1}
   unlisted <- unlist(x, use.names = FALSE)
-  tmp <- as.integer(cont[, colnames(cont) != '-'] %*% powersOf2)
+  tmp <- as.integer(cont[, colnames(cont) != "-"] %*% powersOf2)
   ambigIsApp <- matrix(tmp[unlisted], nChar, nTip)
   
   if (any(inappLevel)) {
     # Treat {-, 1} as {-}
-    tmp[cont[, '-'] == 1] <- 0
+    tmp[cont[, "-"] == 1] <- 0
     ambigIsInapp <- matrix(tmp[unlisted], nChar, nTip)
     
-    inappCount <- rowSums(matrix(unlisted %in% which(at$allLevels == '-'),
+    inappCount <- rowSums(matrix(unlisted %in% which(at$allLevels == "-"),
                                  nChar, nTip))
     binaryMatrix <- ambigIsApp
     binaryMatrix[inappCount > 1, ] <- ambigIsInapp[inappCount > 1, ]
@@ -82,7 +82,7 @@ MinimumLength.phyDat <- function (x, compress = FALSE) {
   if (compress) {
     ret
   } else {
-    ret[attr(x, 'index')]
+    ret[attr(x, "index")]
   }
 }
 
@@ -141,6 +141,6 @@ MinimumLength.character <- function (x, compress = TRUE) {
 #' @rdname MinimumLength
 MinimumSteps <- function(x) {
   .Deprecated("MinimumLength",
-              msg = 'Renamed to `MinimumLength()` and recoded to better support inapplicable tokens')
+              msg = "Renamed to `MinimumLength()` and recoded to better support inapplicable tokens")
   MinimumLength(x, compress = TRUE)
 }

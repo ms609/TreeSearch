@@ -76,7 +76,7 @@
 ###   if (any(is.na(char.dat[tip.label]))) stop("Tree's tip labels could not all be found in dataset matrix")
 ###   
 ###   plot.fun(tree)
-###   ret <- .Call("FITCHINAPP", char.dat[tip.label], as.integer(1), as.integer(parent), as.integer(child), as.integer(parentof), as.integer(childof), as.integer(nEdge), as.integer(nNode), as.double(1), as.integer(maxNode), as.integer(nTip), as.integer(inapp), PACKAGE='inapplicable')
+###   ret <- .Call("FITCHINAPP", char.dat[tip.label], as.integer(1), as.integer(parent), as.integer(child), as.integer(parentof), as.integer(childof), as.integer(nEdge), as.integer(nNode), as.double(1), as.integer(maxNode), as.integer(nTip), as.integer(inapp), PACKAGE="inapplicable")
 ###   downpass.states <- ret[[3]]
 ###   down.scorers <- ret[[4]]
 ###   inapp.nodes <- ret[[5]] > 0
@@ -85,19 +85,19 @@
 ###       children <- child[parent==n]
 ###       return (down.scorers[n] != down.scorers[children[1]] + down.scorers[children[2]])   
 ###     })
-###   text(1,1,paste0('Char ', char.no, ' - TS', paste(which(at$index == char.no), collapse=', '), ': +', ret[[1]]), pos=4, cex=0.8)
+###   text(1,1,paste0("Char ", char.no, " - TS", paste(which(at$index == char.no), collapse=", "), ": +", ret[[1]]), pos=4, cex=0.8)
 ###   
 ###   
-###   tipcols = c('#fafafa', '#fafafa', '#fafabb', '#ffbbbb', '#bbffbb', '#bbbbff', '#bbbbff', '#bbffbb', '#ffbbbb', '#bbddff', '#ffbbdd')
+###   tipcols = c("#fafafa", "#fafafa", "#fafabb", "#ffbbbb", "#bbffbb", "#bbbbff", "#bbbbff", "#bbffbb", "#ffbbbb", "#bbddff", "#ffbbdd")
 ###   names(tipcols) <- c(NA, max(downpass.states[1,]), max(downpass.states[1,])-inapp, 2^(0:7))
-###   tipcols[as.character(inapp)] <- '#999999'
+###   tipcols[as.character(inapp)] <- "#999999"
 ###   tipcols <- rev(tipcols)
 ###   bgcols <- tipcols[as.character(downpass.states[1,tips])]
-###   bgcols[is.na(bgcols)] <- '#ffffbb'
-###   tiplabels(PossibleTokens(at$levels, downpass.states[1,tips]), adj=c(0.3,0.5), bg=bgcols, col='#000088', cex=0.85)
-###   nodelabels(PossibleTokens(at$levels, downpass.states[1,nodes]), adj=rep(1.25,2), bg=tipcols[as.character(downpass.states[1,nodes])], font=ifelse(down.change, 2, 1) , col=ifelse(down.change, '#cc3333', '#880000cc'), cex=ifelse(down.change,1,0.6))
+###   bgcols[is.na(bgcols)] <- "#ffffbb"
+###   tiplabels(PossibleTokens(at$levels, downpass.states[1,tips]), adj=c(0.3,0.5), bg=bgcols, col="#000088", cex=0.85)
+###   nodelabels(PossibleTokens(at$levels, downpass.states[1,nodes]), adj=rep(1.25,2), bg=tipcols[as.character(downpass.states[1,nodes])], font=ifelse(down.change, 2, 1) , col=ifelse(down.change, "#cc3333", "#880000cc"), cex=ifelse(down.change,1,0.6))
 ###   
-###   nodelabels(ifelse(inapp.nodes[nodes], '+', '-'), adj=c(1.25,-0.75), col=ifelse(inapp.nodes[nodes], '#008800', '#880000'), frame='none')
+###   nodelabels(ifelse(inapp.nodes[nodes], "+", "-"), adj=c(1.25,-0.75), col=ifelse(inapp.nodes[nodes], "#008800", "#880000"), frame="none")
 ### }
 ### #' TITLE GOES HERE
 ### #'
@@ -115,9 +115,9 @@
 ### PossibleTokens <- function (lvls, number) {
 ###   nTokens <- length(lvls)
 ###   nNumber <- length(number)
-###   output <- function (x) {paste0(x, collapse='')}
+###   output <- function (x) {paste0(x, collapse="")}
 ###   if (nNumber == 1) {    
-###     if (number == 2^nTokens - 1) return('?')
+###     if (number == 2^nTokens - 1) return("?")
 ###     which.levels <- rep(FALSE, nTokens)
 ###     binary <- AsBinary(number)
 ###     which.levels[seq_along(binary)] <- binary
@@ -126,5 +126,5 @@
 ###   which.levels <- matrix(FALSE, nNumber, nTokens)
 ###   binary <- AsBinary(number)
 ###   which.levels[,seq_along(binary[1,])] <- as.logical(binary)
-###   apply(which.levels, 1, function(x) {if (all(x)) return ('?') else y <- x; y[lvls=='-']<-TRUE; if (nTokens > 4 && all(y)) return ('+') else return (output(lvls[x]))})
+###   apply(which.levels, 1, function(x) {if (all(x)) return ("?") else y <- x; y[lvls=="-"]<-TRUE; if (nTokens > 4 && all(y)) return ("+") else return (output(lvls[x]))})
 ### }

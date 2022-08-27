@@ -6,9 +6,9 @@
 #'  for the given Morphy object.
 #' @examples 
 #' tokens <- matrix(c(
-#'   0, '-', '-', 1, 1, 2,
+#'   0, "-", "-", 1, 1, 2,
 #'   0, 1, 0, 1, 2, 2,
-#'   0, '-', '-', 0, 0, 0), byrow = TRUE, nrow = 3L,
+#'   0, "-", "-", 0, 0, 0), byrow = TRUE, nrow = 3L,
 #'   dimnames = list(letters[1:3], NULL))
 #' pd <- TreeTools::MatrixToPhyDat(tokens)
 #' morphyObj <- PhyDat2Morphy(pd)
@@ -24,7 +24,7 @@ RandomTreeScore <- function (morphyObj) {
     0L
   } else {
     # Return:
-    .Call('RANDOM_TREE_SCORE', as.integer(nTip), morphyObj)
+    .Call("RANDOM_TREE_SCORE", as.integer(nTip), morphyObj)
   }
 }
 
@@ -49,5 +49,5 @@ RandomMorphyTree <- function (nTip) {
     stop("nTip < 2 not implemented: a tip is not a tree.")
   }
   # Return:
-  .Call('RANDOM_TREE', as.integer(nTip))
+  .Call("RANDOM_TREE", as.integer(nTip))
 }

@@ -42,7 +42,7 @@ by \code{phylo$node.label}.
 Label nodes with jackknife support values
 }
 \examples{
-library('TreeTools', quietly = TRUE) # for as.phylo
+library("TreeTools", quietly = TRUE) # for as.phylo
 
 # jackTrees will usually be generated with Jackknife(), but for simplicity:
 jackTrees <- as.phylo(1:100, 8)

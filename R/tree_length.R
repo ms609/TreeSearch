@@ -218,7 +218,7 @@ Fitch <- function (tree, dataset) {
 #' \insertCite{Brazeau2018;textual}{TreeTools}.
 #'
 #' @examples
-#' data('inapplicable.datasets')
+#' data("inapplicable.datasets")
 #' dataset <- inapplicable.phyData[[12]]
 #' tree <- TreeTools::NJTree(dataset)
 #' CharacterLength(tree, dataset)

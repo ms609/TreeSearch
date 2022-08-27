@@ -1,6 +1,6 @@
 test_that("IW Scoring", {
-  library('TreeTools', quietly = TRUE)
-  data('Lobo', package = 'TreeTools')
+  library("TreeTools", quietly = TRUE)
+  data("Lobo", package = "TreeTools")
   dataset <- Lobo.phy
   tree <- NJTree(dataset)
   
@@ -21,7 +21,7 @@ test_that("IW Scoring", {
   edge <- tree$edge
   
   at <- attributes(dataset)
-  characters <- PhyToString(dataset, ps = '', useIndex = FALSE,
+  characters <- PhyToString(dataset, ps = "", useIndex = FALSE,
                             byTaxon = FALSE, concatenate = FALSE)
   startWeights <- at$weight
   morphyObjects <- lapply(characters, SingleCharMorphy)
@@ -33,12 +33,12 @@ test_that("IW Scoring", {
   cont <- at$contrast
   simpleCont <- ifelse(rowSums(cont) == 1,
                        apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
-                       '?')
+                       "?")
   
   unlisted <- unlist(dataset, use.names = FALSE)
   tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip)
   charInfo <- apply(tokenMatrix, 1, CharacterInformation)
-  needsInapp <- rowSums(tokenMatrix == '-') > 2
+  needsInapp <- rowSums(tokenMatrix == "-") > 2
   inappSlowdown <- 3L # A guess
   rawPriority <- charInfo / ifelse(needsInapp, inappSlowdown, 1)
   priority <- startWeights * rawPriority

@@ -6,7 +6,7 @@
 #'
 #' @return the tree specified in tree
 #' @examples
-#' suppressWarnings(TBRWarning(0, 0, 'Message text')) # will trigger warning
+#' suppressWarnings(TBRWarning(0, 0, "Message text")) # will trigger warning
 #' 
 #'
 #' @author Martin R. Smith
@@ -43,7 +43,7 @@ TBRWarning <- function (parent, child, error) {
 #' @family tree rearrangement functions
 #' 
 #' @examples{
-#' library('ape')
+#' library("ape")
 #' tree <- rtree(20, br=NULL)
 #' TBR(tree)
 #' }
@@ -51,7 +51,7 @@ TBRWarning <- function (parent, child, error) {
 #' @importFrom TreeTools DescendantEdges Preorder
 #' @export
 TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
-  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
+  if (is.null(treeOrder <- attr(tree, "order")) || treeOrder != "preorder") {
     tree <- Preorder(tree)
     if (!is.null(edgeToBreak)) {
       warning("Edge numbering modified as tree not in preorder;
@@ -73,7 +73,7 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 #'  \acronym{TBR} move away from `tree`, with edges and nodes in preorder,
 #'  rooted on the first-labelled tip.
 #' @export
-TBRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('TBRMoves')
+TBRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod("TBRMoves")
 
 #' @rdname TBR 
 #' @importFrom TreeTools Preorder RootTree
@@ -84,7 +84,7 @@ TBRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   structure(lapply(edges, function (edg) {
     tree$edge <- edg
     tree
-  }), class = 'multiPhylo', tip.label = tree$tip.label)
+  }), class = "multiPhylo", tip.label = tree$tip.label)
 }
 
 #' @rdname TBR
@@ -129,7 +129,7 @@ TBRSwap <- function(parent, child, nEdge = length(parent),
   if (!is.null(mergeEdges)) { # Quick sanity checks
     if (any(mergeEdges > nEdge)) return(TBRWarning(parent, child, "mergeEdges value > number of edges"))
     if (length(mergeEdges) > 2 || length(mergeEdges) == 0) 
-      return(TBRWarning(parent, child, paste0("mergeEdges value ", paste(mergeEdges, collapse='|'),  
+      return(TBRWarning(parent, child, paste0("mergeEdges value ", paste(mergeEdges, collapse="|"),  
                                               " invalid; must be NULL or a vector of length 1 or 2\n  ")))
     if (length(mergeEdges) == 2 && mergeEdges[1] == mergeEdges[2]) 
       return(TBRWarning(parent, child, "mergeEdges values must differ"))
@@ -186,9 +186,9 @@ TBRSwap <- function(parent, child, nEdge = length(parent),
   }
   if(nearBrokenEdge[rootedReconnectionEdge] && nearBrokenEdge[adriftReconnectionEdge]) 
     return(TBRWarning(parent, child, "Selected mergeEdges will not change tree topology."))
-  #### edgelabels(edge = edgeToBreak, bg='orange', cex=1.8)  #### DEBUGGING AID
-  #### edgelabels(edge=adriftReconnectionEdge, bg='cyan')    #### DEBUGGING AID
-  #### edgelabels(edge=rootedReconnectionEdge, bg='magenta') #### DEBUGGING AID
+  #### edgelabels(edge = edgeToBreak, bg="orange", cex=1.8)  #### DEBUGGING AID
+  #### edgelabels(edge=adriftReconnectionEdge, bg="cyan")    #### DEBUGGING AID
+  #### edgelabels(edge=rootedReconnectionEdge, bg="magenta") #### DEBUGGING AID
   
   if (!nearBrokenEdge[adriftReconnectionEdge]) {
     edgesToInvert <- EdgeAncestry(adriftReconnectionEdge, parent, child, stopAt = edgeToBreak) & !brokenEdge
@@ -235,7 +235,7 @@ TBRSwap <- function(parent, child, nEdge = length(parent),
 #' @importFrom TreeTools Preorder
 #' @export
 RootedTBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
-  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
+  if (is.null(treeOrder <- attr(tree, "order")) || treeOrder != "preorder") {
     tree <- Preorder(tree)
   }
   edge   <- tree$edge
@@ -250,7 +250,7 @@ RootedTBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
 #' @export
 RootedTBRSwap <- function (parent, child, nEdge=length(parent), 
                            edgeToBreak = NULL, mergeEdges = NULL) {
-  if (nEdge < 5) return (TBRWarning(parent, child, 'Fewer than 4 tips'))
+  if (nEdge < 5) return (TBRWarning(parent, child, "Fewer than 4 tips"))
   nTips <- (nEdge / 2L) + 1L
   rootNode <- parent[1]
   rootEdges <- parent == rootNode
@@ -275,7 +275,7 @@ RootedTBRSwap <- function (parent, child, nEdge=length(parent),
      selectableEdges[which( leftGrandchildEdges)[! leftGrandchildrenTips]] <- FALSE  
   }
   
-  if (!any(selectableEdges)) return(TBRWarning(parent, child, 'No opportunity to rearrange tree due to root position'))
+  if (!any(selectableEdges)) return(TBRWarning(parent, child, "No opportunity to rearrange tree due to root position"))
 
   if (is.null(edgeToBreak)) {
     edgeToBreak <- SampleOne(which(selectableEdges)) # Pick an edge at random
@@ -307,7 +307,7 @@ RootedTBRSwap <- function (parent, child, nEdge=length(parent),
   if (!is.null(mergeEdges)) { # Quick sanity checks
     if (any(mergeEdges > nEdge)) return(TBRWarning(parent, child, "mergeEdges value > number of edges"))
     if (length(mergeEdges) > 2 || length(mergeEdges) == 0) 
-        return(TBRWarning(parent, child, paste0("mergeEdges value ", paste(mergeEdges, collapse='|'),  
+        return(TBRWarning(parent, child, paste0("mergeEdges value ", paste(mergeEdges, collapse="|"),  
                " invalid; must be NULL or a vector of length 1 or 2\n  ")))
     if (length(mergeEdges) == 2 && mergeEdges[1] == mergeEdges[2]) 
       return(TBRWarning(parent, child, "mergeEdges values must differ"))
@@ -364,9 +364,9 @@ RootedTBRSwap <- function (parent, child, nEdge=length(parent),
   }
   if(nearBrokenEdge[rootedReconnectionEdge] && nearBrokenEdge[adriftReconnectionEdge]) 
     return(TBRWarning(parent, child, "Selected mergeEdges will not change tree topology."))
-  #### edgelabels(edge = edgeToBreak, bg='orange', cex=1.8)  #### DEBUGGING AID
-  #### edgelabels(edge=adriftReconnectionEdge, bg='cyan')    #### DEBUGGING AID
-  #### edgelabels(edge=rootedReconnectionEdge, bg='magenta') #### DEBUGGING AID
+  #### edgelabels(edge = edgeToBreak, bg="orange", cex=1.8)  #### DEBUGGING AID
+  #### edgelabels(edge=adriftReconnectionEdge, bg="cyan")    #### DEBUGGING AID
+  #### edgelabels(edge=rootedReconnectionEdge, bg="magenta") #### DEBUGGING AID
   
   ###Assert(edgesOnAdriftSegment[adriftReconnectionEdge])
   ###Assert(!edgesOnAdriftSegment[rootedReconnectionEdge])

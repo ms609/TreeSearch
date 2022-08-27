@@ -20,7 +20,7 @@
 #' entry (zero extra steps) is named `2` (two steps observed).
 #' 
 #' @examples
-#' character <- rep(c(0:3, '?', '-'), c(8, 5, 1, 1, 2, 2))
+#' character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))
 #' StepInformation(character)
 #' @template MRS
 #' @importFrom fastmatch %fin%
@@ -28,8 +28,8 @@
 #' @importFrom TreeTools Log2Unrooted
 #' @family profile parsimony functions
 #' @export
-StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
-  NIL <- c('0' = 0)
+StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
+  NIL <- c("0" = 0)
   char <- char[!char %fin% ambiguousTokens]
   if (length(char) == 0) {
     return(NIL)
@@ -206,12 +206,12 @@ LogCarter1 <- function (m, a, b) {
 #   analyticP <- 2 ^ -analyticIC[2]
 #   
 #   if (warn) {
-#     message('  Token count ', split, " = ",
+#     message("  Token count ", split, " = ",
 #             signif(analyticIc0, ceiling(log10(maxIter))),
-#             ' bits @ 0 extra steps. \n  Simulating ', nIter, 
-#             ' trees to estimate cost of further steps.')
-#     # message(c(round(analyticIc0, 3), 'bits @ 0 extra steps;', round(analyticIc1, 3),
-#     #    '@ 1; attempting', nIter, 'iterations.\n'))
+#             " bits @ 0 extra steps. \n  Simulating ", nIter, 
+#             " trees to estimate cost of further steps.")
+#     # message(c(round(analyticIc0, 3), "bits @ 0 extra steps;", round(analyticIc1, 3),
+#     #    "@ 1; attempting", nIter, "iterations.\n"))
 #   }
 #   
 #   morphyObj <- SingleCharMorphy(rep(seq_along(split) - 1L, split))

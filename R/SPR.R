@@ -88,7 +88,7 @@ SPRWarning <- function (parent, child, error) {
 #' @importFrom TreeTools Preorder
 #' @export
 SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
-  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
+  if (is.null(treeOrder <- attr(tree, "order")) || treeOrder != "preorder") {
     tree <- Preorder(tree)
   }
   edge <- tree$edge
@@ -97,7 +97,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   if (!is.null(edgeToBreak) && edgeToBreak == -1) {
     child <- edge[, 2]
     nEdge <- length(parent)
-    stop('Negative edgeToBreak not yet supported; on TODO list for next release')
+    stop("Negative edgeToBreak not yet supported; on TODO list for next release")
     notDuplicateRoot <- .NonDuplicateRoot(parent, child, nEdge)
     # Return:
     unique(unlist(lapply(which(notDuplicateRoot), AllSPR,
@@ -117,7 +117,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
 #' @return `TBRMoves()` returns a list of all trees one SPR move away from
 #'  `tree`, with edges and nodes in preorder, rooted on the first-labelled tip.
 #' @export
-SPRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod('SPRMoves')
+SPRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod("SPRMoves")
 
 #' @rdname SPR
 #' @importFrom TreeTools Preorder RootTree
@@ -128,7 +128,7 @@ SPRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   structure(lapply(edges, function (edg) {
     tree$edge <- edg
     tree
-  }), class = 'multiPhylo', tip.label = tree$tip.label)
+  }), class = "multiPhylo", tip.label = tree$tip.label)
 }
 
 # error checking for all_spr
@@ -204,7 +204,7 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
   if (!is.null(mergeEdge)) { # Quick sanity checks
     if (mergeEdge > nEdge) return(SPRWarning(parent, child, "mergeEdge value > number of edges"))
     if (length(mergeEdge) !=  1) 
-        return(SPRWarning(parent, child, paste0("mergeEdge value ", paste(mergeEdge, collapse='|'),  
+        return(SPRWarning(parent, child, paste0("mergeEdge value ", paste(mergeEdge, collapse="|"),  
                " invalid; must be NULL or a vector of length 1\n")))
     if(nearBrokenEdge[mergeEdge]) return(SPRWarning(parent, child, "Selected mergeEdge will not change tree topology."))
     if(DescendantEdges(edgeToBreak, parent, child, nEdge)[mergeEdge]) stop("mergeEdge is within pruned subtree")
@@ -330,7 +330,7 @@ AllSPR <- function (parent, child, nEdge, notDuplicateRoot, edgeToBreak) {
 #' @importFrom TreeTools Preorder
 #' @export
 RootedSPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
-  if (is.null(treeOrder <- attr(tree, 'order')) || treeOrder != 'preorder') {
+  if (is.null(treeOrder <- attr(tree, "order")) || treeOrder != "preorder") {
     tree <- Preorder(tree)
   }
   edge <- tree$edge
@@ -412,7 +412,7 @@ RootedSPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge 
   if (!is.null(mergeEdge)) { # Quick sanity checks
     if (mergeEdge > nEdge) return(SPRWarning(parent, child, "mergeEdge value > number of edges"))
     if (length(mergeEdge) !=  1) 
-        return(SPRWarning(parent, child, paste0("mergeEdge value ", paste(mergeEdge, collapse='|'),  
+        return(SPRWarning(parent, child, paste0("mergeEdge value ", paste(mergeEdge, collapse="|"),  
                " invalid; must be NULL or a vector of length 1\n")))
     if(nearBrokenEdge[mergeEdge]) return(SPRWarning(parent, child, "Selected mergeEdge will not change tree topology."))
     if(DescendantEdges(edgeToBreak, parent, child, nEdge)[mergeEdge]) stop("mergeEdge is within pruned subtree")

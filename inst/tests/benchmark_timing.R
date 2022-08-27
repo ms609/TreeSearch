@@ -1,6 +1,6 @@
 if (FALSE){  ## Don't allow codecov to get drawn in to this file
   load_all()
-data('inapplicable.datasets')
+data("inapplicable.datasets")
 scores <- c(
 "Agnarsson2004" =  778 , # 0.044 mins   
 "Aria2015" =       143 , # 0.041        
@@ -38,7 +38,7 @@ timestart <- double(length(scores))
 timeend   <- double(length(scores))
 names(timestart) <- names(timeend) <- names(scores)
 
-#install_github('ms609/inapplicable', rel='cefb5669352aca6425516805f60108063383b6c2')
+#install_github("ms609/inapplicable", rel="cefb5669352aca6425516805f60108063383b6c2")
 
 myDataset <- 13
 ## Find a good searchHits value
@@ -82,16 +82,16 @@ results3.30 <- vapply(candidates, bench, bootHits = 30, double(5))[1, ]
 results3.50 <- vapply(candidates, bench, bootHits = 50, double(5))[1, ]
 results3.90 <- vapply(candidates, bench, bootHits = 90, double(5))[1, ]
 
-greens <- c('#00ddbb', '#33dd99', '#99dd33', '#00ddbb', '#22bb22')
-plot(results1 ~ candidates, ylab='Time taken / s', col=2, pch=4)
+greens <- c("#00ddbb", "#33dd99", "#99dd33", "#00ddbb", "#22bb22")
+plot(results1 ~ candidates, ylab="Time taken / s", col=2, pch=4)
 points(results2 ~ candidates, pch=3, col=4)
 text(labels="10", results3.10 ~ candidates, pch=6, col=greens[1])
 text(labels="20", results3.20 ~ candidates, pch=6, col=greens[2])
 text(labels="30", results3.30 ~ candidates, pch=6, col=greens[3])
 text(labels="50", results3.50 ~ candidates, pch=6, col=greens[4])
 text(labels="90", results3.90 ~ candidates, pch=6, col=greens[5])
-legend('topright', legend=c('SearchHits (bh=sh)', 'BootHits (sh=30)',
-                            paste0('SearchHits (bh=', c(10, 20, 30, 50, 90), ')')), 
+legend("topright", legend=c("SearchHits (bh=sh)", "BootHits (sh=30)",
+                            paste0("SearchHits (bh=", c(10, 20, 30, 50, 90), ")")), 
        pch=c(4, 3, rep(6, 5)), 
        col=c(2,4, greens))
 
@@ -102,12 +102,12 @@ allRes <- array(c(results1, results2, results3.10, results3.20, results3.30, res
              c(7*length(candidates), 3)) 
 
 arr <- allRes
-TreeDist::Plot3(arr[, 2], arr[, 3], arr[, 1], zlab='Time', xlab='SearchHits', ylab='BootHits')
+TreeDist::Plot3(arr[, 2], arr[, 3], arr[, 1], zlab="Time", xlab="SearchHits", ylab="BootHits")
 manyBootHits <- allRes[allRes[, 3] > 30, ]
 arr <- manyBootHits
-TreeDist::Plot3(arr[, 2], arr[, 3], arr[, 1], zlab='Time', xlab='SearchHits', ylab='BootHits')
+TreeDist::Plot3(arr[, 2], arr[, 3], arr[, 1], zlab="Time", xlab="SearchHits", ylab="BootHits")
 
-library('profvis')
+library("profvis")
 RRprofStart()
 Rprof()
 oTree <- Ratchet(nj.tree[[dataName]], inapplicable.phyData[[dataName]],
@@ -130,7 +130,7 @@ oTree <- Ratchet(nj.tree[[dataName]], inapplicable.phyData[[dataName]],
 dev.new()
 library(proftools)
 proftools::flameGraph(pd)
-proftools::plotProfileCallGraph(pd, style=google.style, score='total')
+proftools::plotProfileCallGraph(pd, style=google.style, score="total")
 
 proftools::plotProfileCallGraph(pd)
 proftable
