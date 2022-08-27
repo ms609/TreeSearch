@@ -376,7 +376,7 @@ ConcordantInformation <- function (tree, dataset) {
     treeInformation = infoNeeded,
     matrixToTree = infoOverkill,
     ignored = discarded
-    )
+  )
 }
 
 #' @rdname ConcordantInformation

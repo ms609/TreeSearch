@@ -12,6 +12,7 @@
 ^memcheck$
 ^pkgdown$
 ^revdep$
+^split-support$
 /^src\-/
 CONTRIBUTING\.md
 README\.md
