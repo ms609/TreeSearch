@@ -5,15 +5,16 @@ begin mrbayes;
   prset statefreqpr=fixed(equal); [Jukes-Cantor model]
   prset brlenspr=unconstrained:uniform(0,0.250); [length * rate = 0.250]
   prset tratiopr=fixed(1);
-  showmodel;
   
   mcmcp nruns=2 nchains=8 samplefreq=100 burninfrac=0.5;
-  mcmcp checkpoint=no savebrlens=no;
+  mcmcp checkpoint=no;
   mcmcp printfreq=5000 diagnfreq=10000 printmax=4;
   mcmcp ngen=5000000 stoprule=yes stopval=0.007;
   
   mcmc;
   sump;
   sumt minpartfreq=0.1;
+  
+  quit;
   
 end;
