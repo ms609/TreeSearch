@@ -21,7 +21,7 @@ write.tree(referenceTree, file = "split-support/reference.tre")
 for (i in 1:1000) {
   write.nexus.data(
     toupper(PhyDatToMatrix(
-      phangorn::simSeq(referenceTree, 288) # Jukes-Cantor model
+      phangorn::simSeq(referenceTree, nTip * 10) # Jukes-Cantor model
     )), 
     file = paste0("split-support/alignments/aln",
                   formatC(i, width = 4, flag = "0"),
