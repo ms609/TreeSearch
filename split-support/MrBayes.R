@@ -12,8 +12,8 @@ template <- readLines("split-support/mb.nex")
 on.exit(unlink("split-support/mb.run"))
 
 for (i in formatC(1:1000, width = 4, flag = 0)) {
-  writeLines(c(readLines(paste0("split-support/alignments/aln", i)),
+  writeLines(c(readLines(paste0("split-support/alignments/aln", i, ".nex")),
                template),
-             file = "split-support/mb.run")
-  system2(paste0(mbPath, " split-support/mb.run")
+             "split-support/mb.run")
+  system2(paste0(mbPath, " split-support/mb.run"))
 }
