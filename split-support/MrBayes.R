@@ -9,11 +9,20 @@ if(!dir.exists("split-support/alignments")) {
 mbPath <-  "C:/Programs/Phylogeny/MrBayes/bin/mb.3.2.7-win64.exe"
 
 template <- readLines("split-support/mb.nex")
-on.exit(unlink("split-support/mb.run"))
 
 for (i in formatC(1:1000, width = 4, flag = 0)) {
-  writeLines(c(readLines(paste0("split-support/alignments/aln", i, ".nex")),
-               template),
-             "split-support/mb.run")
-  system2(paste0(mbPath, " split-support/mb.run"))
+  mbFile <- paste0("split-support/MrBayes/aln", i)
+  if (file.exists(paste0(mbFile, ".trprobs"))) {
+    message("Tree probabilities found for alignment", i)
+  } else {
+    on.exit(unlink(mbFile))
+    writeLines(
+      c(readLines(paste0("split-support/alignments/aln", i, ".nex")), template),
+      mbFile
+    )
+    system2(mbPath, mbFile)
+    
+    
+    keptFiles <- c("parts", "pstat", "trprobs", "tstat")
+  }
 }

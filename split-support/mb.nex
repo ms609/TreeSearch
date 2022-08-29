@@ -1,6 +1,8 @@
 begin mrbayes;
-  set autoclose = yes nowarnings = yes;
-  prset statefreqpr = fixed(equal); [Jukes-Cantor model
-  mcmcp nruns = 1 ngen = 100000 samplefreq = 100 nchains = 8 burninfrac = 0.5;
+  set autoclose=yes nowarnings=yes;
+  prset statefreqpr=fixed(equal); [Jukes-Cantor model]
+  mcmcp nruns=2 ngen=500000 samplefreq=200 nchains=8 burninfrac=0.5;
+  mcmc;
+  sump;
   sumt;
 ;
