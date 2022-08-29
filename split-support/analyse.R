@@ -52,4 +52,8 @@ for (aln in alns[1:7]) {
   concord <- rbind(concord, conc)
 }
 
-glm(1*partCorrect ~ postProb + concord, family = "binomial")
+model <- glm(partCorrect ~ postProb + concord, family = "binomial")
+
+# The lower the Brier score is for a set of predictions,
+# the better the predictions are calibrated.
+mclust::BrierScore(cbind(1 - postProb, postProb), partCorrect)
