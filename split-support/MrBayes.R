@@ -12,8 +12,9 @@ template <- readLines("split-support/mb.nex")
 
 for (i in formatC(1:1000, width = 4, flag = 0)) {
   mbFile <- paste0("split-support/MrBayes/aln", i)
+  
   if (file.exists(paste0(mbFile, ".trprobs"))) {
-    message("Tree probabilities found for alignment", i)
+    message("Tree probabilities found for alignment ", i)
   } else {
     on.exit(unlink(mbFile))
     writeLines(
