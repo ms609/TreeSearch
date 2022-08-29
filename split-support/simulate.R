@@ -5,8 +5,9 @@ CreateDir <- function(dir) {
   if (!dir.exists(dir)) dir.create(dir)
 }
 CreateDir("split-support/alignments")
-CreateDir("split-support/tnt")
+CreateDir("split-support/concordance")
 CreateDir("split-support/MrBayes")
+CreateDir("split-support/tnt")
 
 # Create reference tree
 set.seed(0)
