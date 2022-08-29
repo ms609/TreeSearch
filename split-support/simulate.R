@@ -2,9 +2,12 @@ set.seed(0)
 referenceTree <- RootTree(ape::rtree(48), "t1")
 plot(referenceTree)
 write.tree(referenceTree, file = "split-support/reference.tre")
-dir.create("split-support/alignments")
-dir.create("split-support/tnt")
-dir.create("split-support/MrBayes")
+CreateDir <- function(dir) {
+  if (!dir.exists(dir)) dir.create(dir)
+}
+CreateDir("split-support/alignments")
+CreateDir("split-support/tnt")
+CreateDir("split-support/MrBayes")
 
 for (i in 1:1000) {
   write.nexus.data(
