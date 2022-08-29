@@ -1,14 +1,24 @@
 source("split-support/config.R")
 
+DataFile <- function(aln) {
+  paste0("split-support/alignments/", aln, ".nex")
+}
+
 MBFile <- function(aln, suffix = NULL) {
   paste0("split-support/MrBayes/", aln, if(!is.null(suffix)) ".", suffix)
 }
 
 for (aln in alns) {
   
-  partitions <- readr::read_lines(MBFile(aln, "parts"), skip = 2 + nTip)
-  partitions <- vapply(strsplit(partitions, "\t", fixed = TRUE), `[`, "", 2)
-  as.Splits(partitions)
+  partitions <- as.Splits(read.table(MBFile(aln, "parts"),
+                                     skip = 2 + nTip)[, 2])
+  pp <- read.table(MBFile(aln, "tstat"), skip = 1,
+                   header = TRUE, comment.char = "")
+  dataset <- MatrixToPhyDat(matrix(unlist(read.nexus.data(DataFile(aln))), 
+                                   nrow = nTip, byrow = TRUE,
+                                   dimnames = list(tips, NULL)))
+  QuartetConcordance(partitions, dataset)
+  
   if (file.exists(paste0(mbFile, ".trprobs"))) {
     message("Tree probabilities found for alignment ", aln)
   } else {

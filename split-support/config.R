@@ -1,5 +1,6 @@
 # Size of tree and dataset
 nTip <- 48
+tips <- paste0("t", seq_len(nTip))
 nChar <- nTip * 2
 
 # Number of alignments to analyse
