@@ -20,7 +20,7 @@ partCorrect <- logical(0)
 postProb <- numeric(0)
 concord <- numeric(0)
 
-for (aln in alns[1:7]) {
+for (aln in alns[1:21]) {
   
   parts <- read.table(MBFile(aln, "parts"), skip = 2 + nTip)
   partitions <- setNames(as.Splits(parts[, 2], tips), parts[, 1])
@@ -53,6 +53,19 @@ for (aln in alns[1:7]) {
 }
 
 model <- glm(partCorrect ~ postProb + concord, family = "binomial")
+
+model <- glm(family = "binomial",
+             partCorrect ~ 
+               postProb +
+               concord[, "quartet"] +
+               concord[, "cluster"] +
+               concord[, "phylo"] +
+               concord[, "mutual"] +
+               concord[, "shared"]
+             )
+step(model) # AIC
+# BIC: https://stackoverflow.com/questions/19400494
+step(model, criterion = "BIC", k = log(length(partCorrect)))
 
 # The lower the Brier score is for a set of predictions,
 # the better the predictions are calibrated.
