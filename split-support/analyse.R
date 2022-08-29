@@ -1,5 +1,9 @@
 source("split-support/config.R")
 
+ConcFile <- function(aln) {
+  paste0("split-support/concordance/", aln, ".txt")
+}
+
 DataFile <- function(aln) {
   paste0("split-support/alignments/", aln, ".nex")
 }
@@ -8,50 +12,44 @@ MBFile <- function(aln, suffix = NULL) {
   paste0("split-support/MrBayes/", aln, if(!is.null(suffix)) ".", suffix)
 }
 
-for (aln in alns) {
+referenceTree <- read.tree("split-support/reference.tre")
+refSplits <- as.Splits(referenceTree)
+
+# Eugh, I don't like growing vectors like this!
+partCorrect <- logical(0)
+postProb <- numeric(0)
+concord <- numeric(0)
+
+for (aln in alns[1:7]) {
   
-  partitions <- as.Splits(read.table(MBFile(aln, "parts"),
-                                     skip = 2 + nTip)[, 2], tips)
+  parts <- read.table(MBFile(aln, "parts"), skip = 2 + nTip)
+  partitions <- setNames(as.Splits(parts[, 2], tips), parts[, 1])
+  truth <- partitions %in% refSplits
+  
   pp <- read.table(MBFile(aln, "tstat"), skip = 1,
                    header = TRUE, comment.char = "")
+  pp <- setNames(pp[, "Probability..s."], pp[, "ID"])
+  
   dataset <- MatrixToPhyDat(matrix(unlist(read.nexus.data(DataFile(aln))), 
                                    nrow = nTip, byrow = TRUE,
                                    dimnames = list(tips, NULL)))
-  conc <- c(
-    quartet = QuartetConcordance(partitions, dataset),
-    cluster = ClusteringConcordance(partitions, dataset),
-    phylo = PhylogeneticConcordance(partitions, dataset),
-    mutual = MutualClusteringConcordance(partitions, dataset),
-    shared = SharedPhylogeneticConcordance(partitions, dataset)
-  )
-    
   
-  if (file.exists(paste0(mbFile, ".trprobs"))) {
-    message("Tree probabilities found for alignment ", aln)
+  if (file.exists(ConcFile(aln))) {
+    conc <- as.matrix(read.table(ConcFile(aln)))
   } else {
-    on.exit(unlink(mbFile))
-    writeLines(
-      c(readLines(paste0("split-support/alignments/", aln, ".nex")), template),
-      mbFile
+    conc <- cbind(
+      quartet = QuartetConcordance(partitions, dataset),
+      cluster = ClusteringConcordance(partitions, dataset),
+      phylo = PhylogeneticConcordance(partitions, dataset),
+      mutual = MutualClusteringConcordance(partitions, dataset),
+      shared = SharedPhylogeneticConcordance(partitions, dataset)
     )
-    system2(mbPath, mbFile)
-    
-    
-    # Remove unneeded results files
-    keepExt <- c(
-      "con\\.tre", # Consensus tree - why not
-      "parts", "tstat", # Partitions an dprobabilities
-      # "trprobs" # Sampled trees and probabilities
-      # "mcmc" # Standard deviations of splits - see tstat
-      "pstat" # Convergence diagnostics
-    )
-    
-    outFiles <- list.files(path = "split-support/MrBayes/",
-                           pattern = paste0("aln", i),
-                           full.names = TRUE)
-    
-    unlink(outFiles[-grep(paste0("(", paste0(keepExt, collapse = "|"), ")$"),
-                          outFiles)])
-    
+    write.table(conc, ConcFile(aln))
   }
+  
+  partCorrect <- c(partCorrect, truth)
+  postProb <- c(postProb, pp)
+  concord <- rbind(concord, conc)
 }
+
+glm(1*partCorrect ~ postProb + concord, family = "binomial")
