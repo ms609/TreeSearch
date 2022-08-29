@@ -23,6 +23,10 @@ for (i in formatC(1:1000, width = 4, flag = 0)) {
     system2(mbPath, mbFile)
     
     
-    keptFiles <- c("parts", "pstat", "trprobs", "tstat")
+    keptFiles <- c("parts", "tstat", # Partitions an dprobabilities
+                   "pstat", # Convergence diagnostics
+                   "trprobs" # Sampled trees and probabilities
+                   # "mcmc" # Standard deviations of splits - see tstat
+                   )
   }
 }
