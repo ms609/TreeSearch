@@ -14,7 +14,7 @@ CreateDir("split-support/MrBayes")
 set.seed(0)
 referenceTree <- ape::rtree(nTip, equiprob = TRUE)
 referenceTree$tip.label <- paste0("t", seq_len(nTip))
-referenceTree <- RootTree(referenceTree, "t1")
+referenceTree <- TreeTools::RootTree(referenceTree, "t1")
 treeLength <- sum(referenceTree$edge.length)
 rate <- 12 / treeLength
 print(signif(rate)) # mb.nex: prset brlenspr=unconstrained:uniform(0,<RATE>);
