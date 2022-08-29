@@ -1,18 +1,17 @@
 macro=;
-proc split-support/alignments/aln####.nex;
+proc alignments/aln####.nex;
 xmult:rat25 drift25 hits 100 level 4 chklevel 5;
+sect:slack25;
 
 outgroup t1;
 var: nt;
 
-macro-;
-piwe-    ;xmult;tsav *TNT/aln###.ew.tre;sav;tsav/;nelsen *;set nt ntrees;ttag=;resample=sym replications 100 frequency from 'nt';log TNT/aln###.ew.sym;ttag/;log/; keep 0; ttag-; hold 10000;
-xpiwe=;
-piwe=3   ;xmult;tsav *TNT/aln###.xpiwe3.tre;sav;   tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe3.sym;   ttag/;log/; keep 0; ttag-; hold 10000;
-piwe=4.5 ;xmult;tsav *TNT/aln###.xpiwe4.5.tre;sav; tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe4.5.sym; ttag/;log/; keep 0; ttag-; hold 10000;
-piwe=7   ;xmult;tsav *TNT/aln###.xpiwe7.tre;sav;   tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe7.sym;   ttag/;log/; keep 0; ttag-; hold 10000;
-piwe=10.5;xmult;tsav *TNT/aln###.xpiwe10.5.tre;sav;tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe10.5.sym;ttag/;log/; keep 0; ttag-; hold 10000;
-piwe=16  ;xmult;tsav *TNT/aln###.xpiwe16.tre;sav;  tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe16.sym;  ttag/;log/; keep 0; ttag-; hold 10000;
-piwe=24  ;xmult;tsav *TNT/aln###.xpiwe24.tre;sav;  tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe24.sym;  ttag/;log/; keep 0; ttag-; hold 10000;
+piwe-    ;xmult;tsav *TNT/aln####.ew.tre;sav;tsav/;nelsen *;set nt ntrees;ttag=;resample=sym replications 100 frequency from 'nt';log TNT/aln####.ew.sym;ttag/;log/; keep 0; ttag-; hold 10000;
+piwe=3   ;xmult;tsav *TNT/aln####.iw3.tre;sav;   tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln####.iw3.sym;   ttag/;log/; keep 0; ttag-; hold 10000;
+piwe=4.5 ;xmult;tsav *TNT/aln####.iw4.5.tre;sav; tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln####.iw4.5.sym; ttag/;log/; keep 0; ttag-; hold 10000;
+piwe=7   ;xmult;tsav *TNT/aln####.iw7.tre;sav;   tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln####.iw7.sym;   ttag/;log/; keep 0; ttag-; hold 10000;
+piwe=10.5;xmult;tsav *TNT/aln####.iw10.5.tre;sav;tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln####.iw10.5.sym;ttag/;log/; keep 0; ttag-; hold 10000;
+piwe=16  ;xmult;tsav *TNT/aln####.iw16.tre;sav;  tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln####.iw16.sym;  ttag/;log/; keep 0; ttag-; hold 10000;
+piwe=24  ;xmult;tsav *TNT/aln####.iw24.tre;sav;  tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln####.iw24.sym;  ttag/;log/; keep 0; ttag-; hold 10000;
 
 macro -;

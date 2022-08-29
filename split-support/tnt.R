@@ -8,8 +8,7 @@ template <- readLines("split-support/tnt-template.run")
 on.exit(unlink("split-support/tnt.run"))
 
 for (i in aln) {
-  writeLines(gsub("aln####", aln, template),
+  writeLines(gsub("aln####", aln, template, fixed = TRUE),
             "split-support/tnt.run")
   system2(paste0(tntExec, " proc ",  "split-support/tnt.run"))
 }
-
