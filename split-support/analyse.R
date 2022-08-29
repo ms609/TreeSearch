@@ -1,15 +1,14 @@
 source("split-support/config.R")
 
-if(!dir.exists("split-support/alignments")) {
-  source("split-support/simulate.R")
+MBFile <- function(aln, suffix = NULL) {
+  paste0("split-support/MrBayes/", aln, if(!is.null(suffix)) ".", suffix)
 }
 
-
-template <- readLines("split-support/mb.nex")
-
-for (i in alns) {
-  mbFile <- paste0("split-support/MrBayes/", aln)
+for (aln in alns) {
   
+  partitions <- readr::read_lines(MBFile(aln, "parts"), skip = 2 + nTip)
+  partitions <- vapply(strsplit(partitions, "\t", fixed = TRUE), `[`, "", 2)
+  as.Splits(partitions)
   if (file.exists(paste0(mbFile, ".trprobs"))) {
     message("Tree probabilities found for alignment ", aln)
   } else {
@@ -18,7 +17,7 @@ for (i in alns) {
       c(readLines(paste0("split-support/alignments/", aln, ".nex")), template),
       mbFile
     )
-    system2(mbExec, mbFile)
+    system2(mbPath, mbFile)
     
     
     # Remove unneeded results files
@@ -31,7 +30,7 @@ for (i in alns) {
     )
     
     outFiles <- list.files(path = "split-support/MrBayes/",
-                           pattern = aln,
+                           pattern = paste0("aln", i),
                            full.names = TRUE)
     
     unlink(outFiles[-grep(paste0("(", paste0(keepExt, collapse = "|"), ")$"),

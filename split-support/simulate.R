@@ -1,6 +1,4 @@
-# Set constants
-nTip <- 48
-nChar <- nTip * 2
+source("split-support/config.R")
 
 # Set up directory structure
 CreateDir <- function(dir) {
