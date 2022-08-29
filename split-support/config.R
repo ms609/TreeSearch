@@ -21,3 +21,21 @@ tntExec <- "C:/Programs/Phylogeny/tnt/tnt.exe"
 
 # Command to launch MrBayes executable
 mbPath <- "C:/Programs/Phylogeny/MrBayes/bin/mb.3.2.7-win64.exe"
+
+
+# Patterns to use when creating files
+ConcFile <- function(aln) {
+  paste0("split-support/concordance/", aln, ".txt")
+}
+
+DataFile <- function(aln) {
+  paste0("split-support/alignments/", aln, ".nex")
+}
+
+MBFile <- function(aln, suffix = NULL) {
+  paste0("split-support/MrBayes/", aln, if(!is.null(suffix)) ".", suffix)
+}
+
+TNTFile <- function(aln, wt) {
+  paste0("split-support/TNT/", aln, ".", wt, ".sym")
+}
