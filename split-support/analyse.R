@@ -11,13 +11,20 @@ MBFile <- function(aln, suffix = NULL) {
 for (aln in alns) {
   
   partitions <- as.Splits(read.table(MBFile(aln, "parts"),
-                                     skip = 2 + nTip)[, 2])
+                                     skip = 2 + nTip)[, 2], tips)
   pp <- read.table(MBFile(aln, "tstat"), skip = 1,
                    header = TRUE, comment.char = "")
   dataset <- MatrixToPhyDat(matrix(unlist(read.nexus.data(DataFile(aln))), 
                                    nrow = nTip, byrow = TRUE,
                                    dimnames = list(tips, NULL)))
-  QuartetConcordance(partitions, dataset)
+  conc <- c(
+    quartet = QuartetConcordance(partitions, dataset),
+    cluster = ClusteringConcordance(partitions, dataset),
+    phylo = PhylogeneticConcordance(partitions, dataset),
+    mutual = MutualClusteringConcordance(partitions, dataset),
+    shared = SharedPhylogeneticConcordance(partitions, dataset)
+  )
+    
   
   if (file.exists(paste0(mbFile, ".trprobs"))) {
     message("Tree probabilities found for alignment ", aln)
