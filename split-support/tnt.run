@@ -1,0 +1,18 @@
+macro=;
+proc split-support/alignments/aln1000.nex;
+xmult:rat25 drift25 hits 100 level 4 chklevel 5;
+
+outgroup t1;
+var: nt;
+
+macro-;
+piwe-    ;xmult;tsav *TNT/aln###.ew.tre;sav;tsav/;nelsen *;set nt ntrees;ttag=;resample=sym replications 100 frequency from 'nt';log TNT/aln###.ew.sym;ttag/;log/; keep 0; ttag-; hold 10000;
+xpiwe=;
+piwe=3   ;xmult;tsav *TNT/aln###.xpiwe3.tre;sav;   tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe3.sym;   ttag/;log/; keep 0; ttag-; hold 10000;
+piwe=4.5 ;xmult;tsav *TNT/aln###.xpiwe4.5.tre;sav; tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe4.5.sym; ttag/;log/; keep 0; ttag-; hold 10000;
+piwe=7   ;xmult;tsav *TNT/aln###.xpiwe7.tre;sav;   tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe7.sym;   ttag/;log/; keep 0; ttag-; hold 10000;
+piwe=10.5;xmult;tsav *TNT/aln###.xpiwe10.5.tre;sav;tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe10.5.sym;ttag/;log/; keep 0; ttag-; hold 10000;
+piwe=16  ;xmult;tsav *TNT/aln###.xpiwe16.tre;sav;  tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe16.sym;  ttag/;log/; keep 0; ttag-; hold 10000;
+piwe=24  ;xmult;tsav *TNT/aln###.xpiwe24.tre;sav;  tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe24.sym;  ttag/;log/; keep 0; ttag-; hold 10000;
+
+macro -;
