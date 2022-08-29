@@ -34,3 +34,10 @@ gen-*tip/*
 results-*
 inst/DELETE*
 *.bak
+*.ckp~
+*.vstat
+*.p
+*.t
+*.mcmc
+*.lstat
+*.ckp
