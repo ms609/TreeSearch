@@ -24,10 +24,21 @@ for (i in formatC(1:1000, width = 4, flag = 0)) {
     system2(mbPath, mbFile)
     
     
-    keptFiles <- c("parts", "tstat", # Partitions an dprobabilities
-                   "pstat", # Convergence diagnostics
-                   "trprobs" # Sampled trees and probabilities
-                   # "mcmc" # Standard deviations of splits - see tstat
-                   )
+    # Remove unneeded results files
+    keepExt <- c(
+      "con\\.tre", # Consensus tree - why not
+      "parts", "tstat", # Partitions an dprobabilities
+      # "trprobs" # Sampled trees and probabilities
+      # "mcmc" # Standard deviations of splits - see tstat
+      "pstat" # Convergence diagnostics
+    )
+    
+    outFiles <- list.files(path = "split-support/MrBayes/",
+                           pattern = paste0("aln", i),
+                           full.names = TRUE)
+    
+    unlink(outFiles[-grep(paste0("(", paste0(keepExt, collapse = "|"), ")$"),
+                          outFiles)])
+    
   }
 }
