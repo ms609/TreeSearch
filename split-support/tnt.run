@@ -1,6 +1,7 @@
 macro=;
 proc split-support/alignments/aln1000.nex;
 xmult:rat25 drift25 hits 100 level 4 chklevel 5;
+sect:slack25;
 
 outgroup t1;
 var: nt;
@@ -16,3 +17,5 @@ piwe=16  ;xmult;tsav *TNT/aln###.xpiwe16.tre;sav;  tsav/;nelsen *;set nt ntrees;
 piwe=24  ;xmult;tsav *TNT/aln###.xpiwe24.tre;sav;  tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log TNT/aln###.xpiwe24.sym;  ttag/;log/; keep 0; ttag-; hold 10000;
 
 macro -;
+
+quit;
