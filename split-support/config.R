@@ -23,7 +23,7 @@ tntExec <- "C:/Programs/Phylogeny/tnt/tnt.exe"
 # and unzip/install to a convenient local folder.
 
 # Command to launch MrBayes executable
-mbPath <- "C:/Programs/Phylogeny/MrBayes/bin/mb.3.2.7-win64.exe"
+mbExec <- "C:/Programs/Phylogeny/MrBayes/bin/mb.3.2.7-win64.exe"
 
 
 ### Location of output files ###

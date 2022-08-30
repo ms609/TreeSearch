@@ -7,18 +7,17 @@ if(!dir.exists("split-support/alignments")) {
 
 template <- readLines("split-support/mb.nex")
 
-for (i in alns) {
-  mbFile <- paste0("split-support/MrBayes/", aln)
+for (aln in alns) {
   
-  if (file.exists(paste0(mbFile, ".trprobs"))) {
+  if (file.exists(MBFile(aln, "tstat"))) {
     message("Tree probabilities found for alignment ", aln)
   } else {
-    on.exit(unlink(mbFile))
+    on.exit(unlink(MBFile(aln)))
     writeLines(
-      c(readLines(paste0("split-support/alignments/", aln, ".nex")), template),
-      mbFile
+      c(readLines(DataFile(aln)), template),
+      MBFile(aln)
     )
-    system2(mbExec, mbFile)
+    system2(mbExec, MBFile(aln))
     
     
     # Remove unneeded results files
