@@ -1,3 +1,5 @@
+### Analytical setup ###
+
 # Size of tree and dataset
 nTip <- 48
 tips <- paste0("t", seq_len(nTip))
@@ -7,6 +9,7 @@ nChar <- nTip * 2
 nAln <- 1000
 alns <- paste0("aln", formatC(seq_len(nAln), width = 4, flag = 0))
 
+### Location of executables ###
 
 # Download command-driven TNT from 
 # http://www.lillo.org.ar/phylogeny/tnt/ZIPCHTNT.ZIP
@@ -22,6 +25,8 @@ tntExec <- "C:/Programs/Phylogeny/tnt/tnt.exe"
 # Command to launch MrBayes executable
 mbPath <- "C:/Programs/Phylogeny/MrBayes/bin/mb.3.2.7-win64.exe"
 
+
+### Location of output files ###
 
 # Patterns to use when creating files
 ConcFile <- function(aln) {
