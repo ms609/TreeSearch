@@ -10,7 +10,7 @@ postProb <- numeric(0)
 concord <- numeric(0)
 tntStat <- matrix(0, 0, 2, dimnames = list(NULL, c("sym", "freq")))
 
-for (aln in alns[1:30]) {
+for (aln in alns[1:76]) {
   
   parts <- read.table(MBFile(aln, "parts"), skip = 2 + nTip)
   partitions <- setNames(as.Splits(parts[, 2], tips), paste0("mb", parts[, 1]))
