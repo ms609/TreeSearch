@@ -1,9 +1,13 @@
 # Load required libraries
-library("TreeTools")
+#library("TreeTools")
+#library("TreeSearch")
+devtools::load_all("../TreeTools")
+devtools::load_all("../TreeSearch")
 
 # Load configuration settings
 source("split-support/config.R")
 
+nAln <- 242 #TODO DELETE: Some results forthcoming
 
 referenceTree <- read.tree("split-support/reference.tre")
 refSplits <- as.Splits(referenceTree)
@@ -14,8 +18,8 @@ postProb <- numeric(0)
 concord <- numeric(0)
 tntStat <- matrix(0, 0, 2, dimnames = list(NULL, c("sym", "freq")))
 
-for (aln in alns[1:242]) {
-  
+for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
+  aln <- alns[i]
   parts <- read.table(MBFile(aln, "parts"), skip = 2 + nTip)
   partitions <- setNames(as.Splits(parts[, 2], tips), paste0("mb", parts[, 1]))
   
@@ -24,7 +28,6 @@ for (aln in alns[1:242]) {
   tntParts <- as.Splits(tntTree)
   tntOnly <- !tntParts %in% partitions
   if (any(tntOnly)) {
-    message("Unique splits in TNT tree ", aln)
     partitions <- c(partitions, tntParts[[tntOnly]])
   }
   tags <- strsplit(
