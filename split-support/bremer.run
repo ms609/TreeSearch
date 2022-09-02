@@ -7,7 +7,7 @@ var = 10
   schalgs[30] + tmpstring[30] + numreps + fillonly + maxsave + maxsub 
   + savesub + hold + tmpbrem[ (2*(ntax+1)) ] + swaptype  + piweisoff 
   + scorinc + useconst + numsearches + avermin + alltrees + whichtree 
-  + allnods + whichnod + inclist [ (ntax+1) ] + overimpose + ratreps 
+  + allnods + whichnod + inclist [ (ntax+1) ] + ratreps 
   + driftreps + dofuse + secsearch + dorat + dodrift + domonosch 
   + timedsch + schtime + maxsupis 
   + beswith + beswithout + numincs + nowatsub + referscore + supis 
@@ -102,11 +102,6 @@ tsave/;
 tsave * tempbrem.tre ; 
 save 'whichtree' ; 
 loop (ntax+2) nnodes['whichtree'] set tmpbrem[#1] 1000000 ; stop 
-if ( !'overimpose' ) 
-     ttag - ; 
-     nak = ; 
-     ttag * 'whichtree' ; 
-end 
 set 0 ntrees ; 
 set maxsupis score['whichtree'] ; 
 keep '0' ; 
@@ -274,9 +269,11 @@ end   /* end of calculations for constrained searches  */
 keep 0 ; 
 p tempbrem.tre ; 
 if ( 'piweisoff' && 'avermin' ) macfloat 0 ; 
-else macfloat 2 ; end 
+else macfloat 2 ; 
+end
+
 loop (ntax+2) nnodes[0] 
-      if ( 'overimpose' ) ttag +#1 /; end 
+      ttag +#1 /;
       if ( 'tmpbrem[#1]' >= 'maxsupis' ) 
         ttag +#1 ???; continue ; end 
       if ( 'tmpbrem[#1]' < 0 ) 
@@ -298,8 +295,8 @@ tc 1.'0' ;
 
 /**********  SHOW SETTINGS AND TREE (SAVING IT, IF SO REQUESTED) *******/
 macfloat 0 ;
-sil - all ;  
-lquote [ ; 
+sil - all ;
+lquote [ ;
 quote &10&10SETTINGS FOR CALCULATION OF BREMER SUPPORTS: ; 
 if ( 'savesub' ) 
    sil = all ; 
@@ -342,7 +339,7 @@ if ( 'useconst' )
      end 
 end 
 if ( 'alltrees' ) 
-    quote &32  Calculating supports on consensus of shortest trees in memory ; 
+  quote &32  Calculating supports on consensus of shortest trees in memory ; 
 else 
   quote &32  Calculating supports for groups of tree 'whichtreewas' ; 
 end
