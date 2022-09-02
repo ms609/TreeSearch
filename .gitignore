@@ -34,6 +34,7 @@ gen-*tip/*
 results-*
 inst/DELETE*
 *.bak
+*.tmp.tre
 *.ckp~
 *.vstat
 *.p
