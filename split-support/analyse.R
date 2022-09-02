@@ -71,6 +71,33 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
 
 model <- glm(partCorrect ~ postProb + concord + tntStat, family = "binomial")
 
+Histy <- function(var, breaks = 12, even = TRUE) {
+  outcomes <- partCorrect[!is.na(var)]
+  var <- var[!is.na(var)]
+  if (even) {
+    breaks <- quantile(var, seq(0, 1, length.out = breaks))
+  }
+  bins <- cut(var, breaks = unique(breaks))
+  plot(table(bins, outcomes),
+       main = as.character(match.call()[-1]),
+       col = c("FALSE" = 2, "TRUE" = 3),
+       ann = FALSE,
+       xlab = "",
+       ylab = ""
+       )
+  axis(1, signif(breaks), at = seq_along(breaks) / 12)
+}
+
+par(mfrow = c(4, 2), mar = rep(2, 4))
+Histy(postProb)
+Histy(concord[, "quartet"])
+Histy(concord[, "mutual"])
+Histy(concord[, "shared"])
+Histy(concord[, "phylo"])
+Histy(concord[, "cluster"])
+Histy(tntStat[, "sym"])
+Histy(tntStat[, "freq"])
+
 Peek <- function(var) {
   m <- glm(partCorrect ~ var, family = "binomial")
   smry <- summary(m)
