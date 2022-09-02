@@ -106,12 +106,12 @@ tsave/;
 report- ; 
 if ( ( !'domonosch') && ( 'avermin' == 0 ) && ( 'numsearches' > 1 ) ) 
     set avermin 1 ;
-    sil - buff ;
+    silent - buff ;
     lquote [ ;
     quote &10&10NOTE: requested average scores, but it makes no sense ;
     quote when referring length to previous tree(s)., will use minimum.;
     quote &10;
-    sil = buff ;
+    silent = buff ;
 end 
 
 /*****  BEGIN CALCULATIONS WITH SUBOPTIMAL TREES   *****/
@@ -241,12 +241,15 @@ loop (ntax+2 ) '0'
        set beswith 'referscore' * 'numsearches' ; 
      end 
   end
-  loop 1 'numsearches' 
+  
+  loop 1 'numsearches'
     set 2 ++ ; 
-    keep 0 ;  
-    proc refbrem.tre ; 
+    keep 0 ;
+    silent = buf;
+    proc refbrem.tre ;
     force - [ @0 #1 ] ; 
-    constrain = ; 
+    constrain = ;
+    silent - buf;
     progress '2' '1' Constrained search '2' of '1'... ; 
     chkbreak 1 ; 
     rseed * ;
@@ -259,30 +262,34 @@ loop (ntax+2 ) '0'
       set beswithout += '0' ;
     end 
     if ( 'domonosch' ) 
-      keep 0 ; 
+      keep 0 ;
+      silent = buf;
       proc refbrem.tre ; 
       force + [ @0 #1 ] ; 
-      constrain = ; 
-      $schalgs ; 
+      constrain = ;
+      silent - buf;
+      $schalgs ;
       set 0 score[0] ; 
       if ( ( 'avermin' == 1 ) && ( 'beswith' > '0' ) ) 
         set beswith '0' ; 
       end
       if ( 'avermin' == 0 ) 
         set beswith += '0' ;
-      end 
-    end 
-  stop 
+      end
+    end
+  stop
   
-  if ( 'avermin' == 0 ) 
+  if ( 'avermin' == 0 )
     set supis ( ( 'beswithout' - 'beswith' ) / 'numsearches' ) ;
-  else 
+  else
     set supis ( 'beswithout' - 'beswith' ) ;
-  end 
-  if ( 'supis' < 'tmpbrem[#1]' ) 
-    set tmpbrem[#1] 'supis' ; 
-  end 
-stop 
+  end
+  if ( 'supis' < 'tmpbrem[#1]' )
+    set tmpbrem[#1] 'supis' ;
+  end
+stop
+
+quote At line 291 ;
 
 progress/; 
 constrain =;
@@ -325,15 +332,17 @@ tc 1.'0' ;
 
 /**********  SHOW SETTINGS AND TREE (SAVING IT, IF SO REQUESTED) *******/
 macfloat 0 ;
-sil - all ;
+silent - all ;
 lquote [ ;
 quote &10&10SETTINGS FOR CALCULATION OF BREMER SUPPORTS: ; 
 if ( 'savesub' ) 
-   sil = all ; 
+   silent = all ; 
    if ( !'piweisoff' ) macfloat 3 ; end 
-   sil - all ; 
+   silent - all ; 
    quote &32  Searching suboptimal trees, with score up to 'maxsub' worse than ; 
-   sil = all ; macfloat 0 ; sil - all ; 
+   silent = all ;
+   macfloat 0 ;
+   silent - all ; 
    quote &32     best (in 'numincs' searches, each 'scorinc' worse than previous); 
 end 
 
