@@ -10,7 +10,7 @@ for (aln in alns) {
   } else {
     system2(
       tntExec, 
-      paste0("proc split-support/tnt-ew.run ",
+      paste0("run split-support/tnt-ew.run ",
              "split-support/alignments/", aln, ".nex ",
              "split-support/TNT/", aln, ".ew.log")
     )
