@@ -23,8 +23,7 @@ var: nt;
 set nt ntrees;
 ttags=;
 
-resample=sym replications 250 frequency from 'nt';
-resample=sym gc;
+resample=sym replications 250 frequency from 'nt'; /* Writes freq then gc */
 resample=boot;
 resample=jak;
 resample=poisson;
