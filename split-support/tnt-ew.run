@@ -1,4 +1,8 @@
+mxram 512;
+mxram [;
+
 macro=;
+
 proc %1;
 xmult:rat25 drift25 hits 250 level 4 chklevel 5;
 sectsch:slack25;
