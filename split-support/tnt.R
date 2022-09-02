@@ -12,7 +12,7 @@ for (aln in alns) {
       tntExec, 
       paste0("run split-support/tnt-ew.run ",
              "split-support/alignments/", aln, ".nex ",
-             "split-support/TNT/", aln, ".ew.log")
+             "split-support/TNT/", aln, ".ew.log ;")
     )
   }
 }
