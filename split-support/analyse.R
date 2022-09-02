@@ -14,7 +14,8 @@ refSplits <- as.Splits(referenceTree)
 partCorrect <- logical(0)
 postProb <- numeric(0)
 concord <- numeric(0)
-tntStat <- matrix(0, 0, 2, dimnames = list(NULL, c("sym", "freq")))
+tntStats <- c("brem", "sf", "symFq", "symGC", "boot", "jak", "pois")
+tntStat <- matrix(0, 0, length(tntStats), dimnames = list(NULL, tntStats))
 
 for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   aln <- alns[i]
@@ -23,19 +24,31 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   
   tntFile <- TNTFile(aln, "ew")
   tntTree <- ReadTntTree(tntFile, tipLabels = tips)
+  if (!inherits(tntTree, "multiPhylo")) {
+    warning("Only one tree found in file ", aln, "; missing TNT output.")
+    next;
+  }
+  if (!all.equal(tntTree[[1]], tntTree[[2]])) {
+    warning("Trees don't match in ", aln, ". Check TNT output.")
+    next;
+  }
+  tntTree <- tntTree[[1]]
   tntParts <- as.Splits(tntTree)
+  nTntNode <- length(tntParts)
   tntOnly <- !tntParts %in% partitions
   if (any(tntOnly)) {
     partitions <- c(partitions, tntParts[[tntOnly]])
   }
+  brem <- read.table(tntFile, skip = 5, comment.char = ";", nrows = nTntNode)[, 3]
   tags <- strsplit(
-    read.table(tntFile, skip = 6 + nTip, comment.char = ";")[, 3],
+    read.table(tntFile, skip = 11 + nTntNode + nTip, comment.char = ";")[, 3],
     "/"
   )
-  tntTags <- t(vapply(tags, function(tag) {
-    as.numeric(gsub("[", "-", fixed = TRUE,
-                    gsub("]", "", fixed = TRUE, tag)))
-    }, c(sym = 0, freq = 0)))
+  tntTags <- cbind(brem, t(vapply(tags, function(tag) {
+    x <- gsub("[", "-", fixed = TRUE, gsub("]", "", fixed = TRUE, tag))
+    x[x == "?"] <- NA_real_
+    as.numeric(x)
+  }, setNames(numeric(length(tntStats) - 1), tntStats[-1]))))
   
   
   pp <- read.table(MBFile(aln, "tstat"), skip = 1,
