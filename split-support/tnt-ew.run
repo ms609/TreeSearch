@@ -4,14 +4,16 @@ xmult:rat25 drift25 hits 100 level 4 chklevel 5;
 sectsch:slack25;
 
 outgroup t1;
-var: nt;
 
 piwe-;
 xmult; /* Search for optimal trees */
 proc bremer.run;
 
 nelsen *;
+var: nt nrep;
 set nt ntrees;
+set nrep 10 ;/*100*/
+
 ttags =;
 resample=sym replications 100 frequency from 'nt';
 log %2;
