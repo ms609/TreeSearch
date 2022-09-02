@@ -107,17 +107,17 @@ if ( 'numincs' < 1 )
 end
 set nowatsub 'scorinc' ;
 
+silent = buffer console;
 loop 1 'numincs'
   subopt 'nowatsub' ;
-  silent = buff;
   hold + 'maxsave' ;
   bbreak = fillonly tbr ;
   set nowatsub += 'scorinc' ;
   if ( ( 'nowatsub' + 'scorinc' ) > 'maxsub' ) 
     set nowatsub 'maxsave' ; 
   end
-  silent - buff;
 stop
+silent - buffer console;
   
 if ( 'alltrees' ) 
   proc brem.tmp.tre ;
