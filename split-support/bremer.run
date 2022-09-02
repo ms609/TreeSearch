@@ -7,7 +7,7 @@ var = 10
   schalgs[30] + tmpstring[30] + numreps + fillonly + maxsave + maxsub 
   + savesub + hold + tmpbrem[ (2*(ntax+1)) ] + swaptype  + piweisoff 
   + scorinc + useconst + numsearches + avermin + alltrees + whichtree 
-  + allnods + whichnod + inclist [ (ntax+1) ] + ratreps 
+  + allnods + whichnod + ratreps 
   + driftreps + dofuse + secsearch + dorat + dodrift + domonosch 
   + timedsch + schtime + maxsupis 
   + beswith + beswithout + numincs + nowatsub + referscore + supis 
@@ -32,8 +32,6 @@ set avermin 1 ;           /*  if 0, use average difference of neg/pos constraine
 set numsearches 3 ;       /*  repeat constrained searches 3 times (to use either best/avg. score) */
 set numreps 1 ;           /*  use 1 repls. for each constrained search */
 set domonosch 1 ;         /*  do a search constraining for monophyly (instead of comparing score of negatively constrained search with score of reference tree) */ 
-loop 0 ntax               /*  by default, include all taxa  */
-  set inclist[#1] 1; stop   
 set schalgs $ ;           /*  default user-commands (i.e. none) */
 set dorat 0 ;             /*  do not use ratchet in constrained searches  */
 set ratreps 10 ;          /*  number of ratchet reps. in constrained searches */
@@ -48,8 +46,6 @@ set schtime 1 ;           /*  number of minutes to give up a constrained search 
 resettime ;
 silent = buf ;
 macfloat 6 ;
-
-loop 0 ntax if ( !'inclist[#1]' ) agroup >0 #1 ; end stop 
 
 if ( ntrees == ( maxtrees-1 ) ) 
    set 0 ntrees+2 ; hold '0' ; end
@@ -74,34 +70,23 @@ else
   set referscore score['whichtree'] ; 
   hold + 1 ; 
   copytree 'whichtree' ; 
-  loop 0 ntax 
-    if ( ( !'inclist[#1]' ) && isintree['whichtree' #1 ] ) 
-         lquote[ ; 
-         quote * When calculating support from a tree, tree cannot &10include any excluded taxon! ; 
-         lquote] ; 
-         proc/; end 
-    if ( !isintree['whichtree' #1] ) set inclist[#1] 0 ; end 
-    stop 
   loop (ntax+2) (nnodes[ntrees]) set tmpbrem[#1] 1000000 ; stop 
 end 
 
-set 5 0 ;    
-loop 0 ntax if ( 'inclist[#1]' ) set 5 ++ ; end stop 
-if ( '5' < 4 ) 
-     lquote[ ; 
-     quote * Sorry, cannot calculate support &10for only '5' taxa; 
-     lquote ] ; 
-     proc/ ; end 
-
+set 5 ntax ;
 
 set whichtree ntrees ; 
 tsave/ ; 
 tsave * refbrem.tre ; 
 save 'whichtree' ; 
-tsave/; 
+tsave/;
+
 tsave * tempbrem.tre ; 
 save 'whichtree' ; 
-loop (ntax+2) nnodes['whichtree'] set tmpbrem[#1] 1000000 ; stop 
+loop (ntax+2) nnodes['whichtree']
+  set tmpbrem[#1] 1000000 ;
+  stop 
+
 set 0 ntrees ; 
 set maxsupis score['whichtree'] ; 
 keep '0' ; 
