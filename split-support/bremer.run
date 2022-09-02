@@ -32,9 +32,9 @@ set numreps 1 ;           /*  use 1 repls. for each constrained search */
 set domonosch 1 ;         /*  do a search constraining for monophyly (instead of comparing score of negatively constrained search with score of reference tree) */ 
 set schalgs $ ;           /*  default user-commands (i.e. none) */
 set dorat 0 ;             /*  do not use ratchet in constrained searches  */
-set ratreps 6 ;          /*  number of ratchet reps. in constrained searches; default 10 */
+set ratreps 10 ;          /*  number of ratchet reps. in constrained searches; default 10 */
 set dodrift 1 ;           /*  use drift in constrained searches  */
-set driftreps 4 ;         /*  number of drift cycles in constrained searches   */
+set driftreps 5 ;         /*  number of drift cycles in constrained searches; default 5 */
 set secsearch 1 ;         /*  use sectorial search in constrained searches  */
 set dofuse 1 ;            /*  fuse results of the 'numreps' replications */
 set timedsch 1 ;          /*  use timeout for constrained searches */
