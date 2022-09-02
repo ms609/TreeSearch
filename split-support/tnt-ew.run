@@ -1,0 +1,32 @@
+macro=;
+proc %1;
+xmult:rat25 drift25 hits 100 level 4 chklevel 5;
+sectsch:slack25;
+
+outgroup t1;
+var: nt;
+
+piwe-;
+xmult; /* Search for optimal trees */
+proc bremer.run;
+
+nelsen *;
+set nt ntrees;
+ttags =;
+resample=sym replications 100 frequency from 'nt';
+log %2;
+ttags /;
+log/;
+/* Clear memory */
+keep 0; ttag-; hold 10000;
+
+/*piwe=3   ;xmult;/*tsav *split-support/TNT/%1.iw3.tre;sav;   tsav/;*//*nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log split-support/TNT/%1.iw3.sym;   ttag/;log/; keep 0; ttag-; hold 10000;*/
+/*piwe=4.5 ;xmult;tsav *split-support/TNT/%1.iw4.5.tre;sav; tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log split-support/TNT/%1.iw4.5.sym; ttag/;log/; keep 0; ttag-; hold 10000;*/
+/*piwe=7   ;xmult;/*tsav *split-support/TNT/%1.iw7.tre;sav;   tsav/;*//*nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log split-support/TNT/%1.iw7.sym;   ttag/;log/; keep 0; ttag-; hold 10000;*/
+/*piwe=10.5;xmult;tsav *split-support/TNT/%1.iw10.5.tre;sav;tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log split-support/TNT/%1.iw10.5.sym;ttag/;log/; keep 0; ttag-; hold 10000;*/
+/*piwe=16  ;xmult;/*tsav *split-support/TNT/%1.iw16.tre;sav;  tsav/;*//*nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log split-support/TNT/%1.iw16.sym;  ttag/;log/; keep 0; ttag-; hold 10000;*/
+/*piwe=24  ;xmult;tsav *split-support/TNT/%1.iw24.tre;sav;  tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log split-support/TNT/%1.iw24.sym;  ttag/;log/; keep 0; ttag-; hold 10000;*/
+
+macro -;
+
+quit;
