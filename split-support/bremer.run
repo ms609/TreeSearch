@@ -94,6 +94,9 @@ loop (ntax+2) nnodes['whichtree']
   set tmpbrem[#1] 1000000 ;
 stop 
 
+ttags - ;
+ttags * 'whichtree';
+
 set 0 ntrees ;
 set maxsupis score['whichtree'] ;
 keep '0' ;
@@ -305,7 +308,6 @@ else
 end
 
 loop (ntax+2) nnodes[0] 
-  ttags +#1 /;
   if ( 'tmpbrem[#1]' >= 'maxsupis' ) 
     ttags +#1 ???;
     continue ;
