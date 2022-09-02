@@ -22,7 +22,7 @@ set olrseed rseed ;
 /***********      SET DEFAULTS          ***********/
 set savesub 1 ;           /*  search suboptimal trees */
 set allnods 1 ;           /*  do all nodes, or single node    */
-set alltrees 0 ;          /*  calculate support using all trees  */
+set alltrees 1 ;          /*  calculate support using all trees  */
 set whichtree 0 ;         /*  if alltrees == 0, use groups from this tree */
 set maxsave 10 ; /*1000*/       /*  max. number of trees to save in each round  */
 set maxsub 1 ;            /*  save trees up to N steps longer */
