@@ -6,7 +6,7 @@ macro= ;
 var = 10 
   schalgs[30] + tmpstring[30] + numreps + fillonly + maxsave + maxsub 
   + savesub + hold + tmpbrem[ (2*(ntax+1)) ] + swaptype  + piweisoff 
-  + scorinc + numsearches + avermin + alltrees + whichtree 
+  + scorinc + numsearches + alltrees + whichtree 
   + allnods + whichnod + ratreps 
   + driftreps + dofuse + secsearch + dorat + dodrift + domonosch 
   + timedsch + schtime + maxsupis 
@@ -27,7 +27,6 @@ set whichtree 0 ;         /*  if alltrees == 0, use groups from this tree */
 set maxsave 250 ;         /*  max. number of trees to save in each round; default 1000  */
 set maxsub 1 ;            /*  save trees up to N steps longer */
 set scorinc 1 ;           /*  increase score gradually, in N steps each time  */
-set avermin 1 ;           /*  if 0, use average difference of neg/pos constrained searches */
 set numsearches 2 ;       /*  repeat constrained searches 3 times (to use either best/avg. score) */
 set numreps 1 ;           /*  use 1 repls. for each constrained search */
 set domonosch 1 ;         /*  do a search constraining for monophyly (instead of comparing score of negatively constrained search with score of reference tree) */ 
@@ -101,15 +100,6 @@ keep '0' ;
 tsave/;
 
 report- ;
-if ( ( !'domonosch') && ( 'avermin' == 0 ) && ( 'numsearches' > 1 ) ) 
-    set avermin 1 ;
-    silent - buff ;
-    lquote [ ;
-    quote &10&10NOTE: requested average scores, but it makes no sense ;
-    quote when referring length to previous tree(s)., will use minimum.;
-    quote &10;
-    silent = buff ;
-end 
 
 /*****  BEGIN CALCULATIONS WITH SUBOPTIMAL TREES   *****/
 if ( 'savesub' )
@@ -223,20 +213,11 @@ loop (ntax+2 ) '0'
     continue ;
   end 
   
-  if ( 'avermin' == 1 )      /*  i.e. use minimum   */
-     set beswith 10000000 ; 
-     set beswithout 10000000 ; 
-  else                       /*  i.e. use average   */
-     set beswith 0 ; 
-     set beswithout 0 ; 
-  end 
+  set beswith 10000000 ; 
+  set beswithout 10000000 ; 
   
   if ( !'domonosch' ) 
-     if ( 'avermin' == 1 ) 
-       set beswith 'referscore' ; 
-     else 
-       set beswith 'referscore' * 'numsearches' ; 
-     end 
+    set beswith 'referscore' ; 
   end
   
   loop 1 'numsearches'
@@ -252,12 +233,9 @@ loop (ntax+2 ) '0'
     rseed * ;
     $schalgs ;    
     set 0 score[0] ;
-    if ( ( 'avermin' == 1 ) && ( 'beswithout' > '0' ) ) 
+    if ( 'beswithout' > '0' )
       set beswithout '0' ;
     end
-    if ( 'avermin' == 0 )
-      set beswithout += '0' ;
-    end 
     if ( 'domonosch' ) 
       keep 0 ;
       silent = buf;
@@ -267,26 +245,17 @@ loop (ntax+2 ) '0'
       silent - buf;
       $schalgs ;
       set 0 score[0] ; 
-      if ( ( 'avermin' == 1 ) && ( 'beswith' > '0' ) ) 
+      if ( 'beswith' > '0' )
         set beswith '0' ; 
-      end
-      if ( 'avermin' == 0 ) 
-        set beswith += '0' ;
       end
     end
   stop
   
-  if ( 'avermin' == 0 )
-    set supis ( ( 'beswithout' - 'beswith' ) / 'numsearches' ) ;
-  else
-    set supis ( 'beswithout' - 'beswith' ) ;
-  end
+  set supis ( 'beswithout' - 'beswith' ) ;
   if ( 'supis' < 'tmpbrem[#1]' )
     set tmpbrem[#1] 'supis' ;
   end
 stop
-
-quote At line 291 ;
 
 progress/; 
 constrain =;
@@ -295,7 +264,7 @@ constrain =;
 /********  WRITE LABELS TO TARGET TREE  **************/
 keep 0 ;
 proc brem.tmp.tre ;
-if ( 'piweisoff' && 'avermin' ) 
+if ( 'piweisoff')
   macfloat 0 ;
 else
   macfloat 2 ;
@@ -361,11 +330,7 @@ lquote - ;
 lquote - ; 
 quote &10 ; 
 if ( 'numsearches' > 1 ) 
-   if ( 'avermin' == 0 ) 
-     quote &32  Calculating average scores (with and without constraints) ; 
-   else 
-     quote &32  Using the best scores (with and without constraints) ; 
-   end 
+  quote &32  Using the best scores (with and without constraints) ; 
 end 
 if ( 'domonosch' ) 
   quote &32  Best score with a group calculated constraining group for monophyly ; 
