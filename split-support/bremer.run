@@ -102,28 +102,28 @@ tsave/;
 /*****  BEGIN CALCULATIONS WITH SUBOPTIMAL TREES   *****/
 
 set numincs 'maxsub' / 'scorinc' ;
-if ( 'numincs' < 1 ) 
+if ( 'numincs' < 1 )
   set numincs 1 ;
 end
-set nowatsub 'scorinc' ; 
+set nowatsub 'scorinc' ;
 
 loop 1 'numincs'
-  sub 'nowatsub' ;
+  subopt 'nowatsub' ;
   silent = buff;
   hold + 'maxsave' ;
   bbreak = fillonly tbr ;
   set nowatsub += 'scorinc' ;
   if ( ( 'nowatsub' + 'scorinc' ) > 'maxsub' ) 
     set nowatsub 'maxsave' ; 
-  end 
+  end
   silent - buff;
 stop
   
 if ( 'alltrees' ) 
-  proc brem.tmp.tre ; 
-  unique ; 
-  collapse temp ; 
-  set tmpbrem bremlist ; 
+  proc brem.tmp.tre ;
+  unique ;
+  collapse temp ;
+  set tmpbrem bremlist ;
 else 
   set thereftree (ntrees+1) ; 
   proc refbrem.tmp.tre ;
@@ -165,8 +165,8 @@ else
   progress/; 
   report= ; 
 end 
-subopt 0 ; 
-/*  end of calculations for suboptimal searches    */
+subopt 0 ;
+/* end of calculations for suboptimal searches    */
 
 report- ; 
 
