@@ -280,31 +280,42 @@ constrain =;
 
 
 /********  WRITE LABELS TO TARGET TREE  **************/
-keep 0 ; 
-p tempbrem.tre ; 
-if ( 'piweisoff' && 'avermin' ) macfloat 0 ; 
-else macfloat 2 ; 
+keep 0 ;
+proc tempbrem.tre ;
+if ( 'piweisoff' && 'avermin' ) 
+  macfloat 0 ;
+else
+  macfloat 2 ;
 end
 
 loop (ntax+2) nnodes[0] 
-      ttag +#1 /;
-      if ( 'tmpbrem[#1]' >= 'maxsupis' ) 
-        ttag +#1 ???; continue ; end 
-      if ( 'tmpbrem[#1]' < 0 ) 
-           ttag +#1 ['tmpbrem[#1]']; 
-      else ttag +#1 'tmpbrem[#1]'; end 
-stop 
-const - ; 
+  ttags +#1 /;
+  if ( 'tmpbrem[#1]' >= 'maxsupis' ) 
+    ttags +#1 ???;
+    continue ;
+  end 
+  if ( 'tmpbrem[#1]' < 0 ) 
+    ttags +#1 ['tmpbrem[#1]']; 
+  else 
+    ttags +#1 'tmpbrem[#1]';
+  end
+stop
+
+log TNT/aln9999.brem;
+ttags/;
+log/;
+
+constrain - ;
 force - ; 
 macfloat 6 ; 
 rseed 'olrseed' ; 
 
 
 /*****  RE-READ ORIGINAL SET OF TREES  *************/
-keep 0 ; 
-p tempbrem.tre ; 
-set 0 ( ntrees - 1 ) ; 
-tc 1.'0' ; 
+keep 0 ;
+proc tempbrem.tre ;
+set 0 ( ntrees - 1 ) ;
+tc 1.'0' ;
 
 
 /**********  SHOW SETTINGS AND TREE (SAVING IT, IF SO REQUESTED) *******/
