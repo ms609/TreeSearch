@@ -24,22 +24,22 @@ set savesub 1 ;           /*  search suboptimal trees */
 set allnods 1 ;           /*  do all nodes, or single node    */
 set alltrees 1 ;          /*  calculate support using all trees  */
 set whichtree 0 ;         /*  if alltrees == 0, use groups from this tree */
-set maxsave 1000 ;        /*  max. number of trees to save in each round  */
+set maxsave 250 ;         /*  max. number of trees to save in each round; default 1000  */
 set maxsub 1 ;            /*  save trees up to N steps longer */
 set scorinc 1 ;           /*  increase score gradually, in N steps each time  */
 set avermin 1 ;           /*  if 0, use average difference of neg/pos constrained searches */
-set numsearches 3 ;       /*  repeat constrained searches 3 times (to use either best/avg. score) */
+set numsearches 2 ;       /*  repeat constrained searches 3 times (to use either best/avg. score) */
 set numreps 1 ;           /*  use 1 repls. for each constrained search */
 set domonosch 1 ;         /*  do a search constraining for monophyly (instead of comparing score of negatively constrained search with score of reference tree) */ 
 set schalgs $ ;           /*  default user-commands (i.e. none) */
 set dorat 0 ;             /*  do not use ratchet in constrained searches  */
-set ratreps 10 ;         /*  number of ratchet reps. in constrained searches */
+set ratreps 6 ;          /*  number of ratchet reps. in constrained searches; default 10 */
 set dodrift 1 ;           /*  use drift in constrained searches  */
-set driftreps 5 ;        /*  number of drift cycles in constrained searches   */
+set driftreps 4 ;         /*  number of drift cycles in constrained searches   */
 set secsearch 1 ;         /*  use sectorial search in constrained searches  */
 set dofuse 1 ;            /*  fuse results of the 'numreps' replications  */
 set timedsch 1 ;          /*  use timeout for constrained searches */
-set schtime 1 ;           /*  number of minutes to give up a constrained search (0 = don't give up) */
+set schtime 0.5 ;           /*  number of minutes to give up a constrained search (0 = don't give up) */
 
 /****************  SOME PRELIMINARY CALCULATIONS   ****************/
 resettime ;
@@ -59,8 +59,8 @@ set whichtreewas 'whichtree' ;
 if ( 'alltrees' ) 
   sort ; 
   set referscore score[0] ; 
-  coll temp ; 
-  coll rule 1 ; 
+  collapse temp ; 
+  collapse rule 1 ; 
   if ( score[0] == score[ntrees] ) 
     nelsen * ;
     loop (ntax+2) (nnodes[ntrees])
