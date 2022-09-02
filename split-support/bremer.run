@@ -151,8 +151,8 @@ if ( 'savesub' )
   else 
    set thereftree (ntrees+1) ; 
    proc refbrem.tre ;
-   report- ; 
-   set 2 0 ; 
+   report- ;
+   set 2 0 ;
    set 3 nnodes['thereftree'] - ( ntax+2 ) ; 
    loop ( ntax+2) nnodes['thereftree'] 
       progress '2' '3' Checking suboptimal groups ('2' of '3'); 
@@ -212,20 +212,17 @@ if ( 'useconst' )
     set 0 nnodes[0 ] ; 
     set 1 0 ; 
     set 2 0 ; 
-    if ( 'alltrees' || 'allnods' ) 
-      loop (ntax+2 ) '0' 
-        if ( ( 'tmpbrem[#1]' < 'maxsupis' ) &&
-             ( 'tmpbrem[#1]' > 'maxsub' ) ) continue ; end 
-        set 1 += 'numsearches' ; 
-        stop 
-    else 
-       set 1 'numsearches' ; 
-    end 
+    
     loop (ntax+2 ) '0' 
       if ( ( 'tmpbrem[#1]' < 'maxsupis' ) &&
            ( 'tmpbrem[#1]' > 'maxsub' ) ) continue ; end 
-      if ( ( !'alltrees' ) && ( !'allnods' ) && ( #1 != 'whichnod' ) ) 
-           continue ; end 
+      set 1 += 'numsearches' ; 
+      stop
+      
+    loop (ntax+2 ) '0' 
+      if ( ( 'tmpbrem[#1]' < 'maxsupis' ) &&
+           ( 'tmpbrem[#1]' > 'maxsub' ) ) continue ; end 
+      
       if ( 'avermin' == 1 )      /*  i.e. use minimum   */
          set beswith 10000000 ; 
          set beswithout 10000000 ; 
@@ -279,8 +276,6 @@ p tempbrem.tre ;
 if ( 'piweisoff' && 'avermin' ) macfloat 0 ; 
 else macfloat 2 ; end 
 loop (ntax+2) nnodes[0] 
-      if ( ( !'alltrees' ) && (!'allnods' ) && ( #1 != 'whichnod' ) ) 
-           continue ; end 
       if ( 'overimpose' ) ttag +#1 /; end 
       if ( 'tmpbrem[#1]' >= 'maxsupis' ) 
         ttag +#1 ???; continue ; end 
@@ -349,11 +344,7 @@ end
 if ( 'alltrees' ) 
     quote &32  Calculating supports on consensus of shortest trees in memory ; 
 else 
-  if ( 'allnods' ) 
-     quote &32  Calculating supports for groups of tree 'whichtreewas' ; 
-  else 
-     quote &32  Calculating support only for node 'whichnod' of tree 'whichtreewas' ; 
-  end 
+  quote &32  Calculating supports for groups of tree 'whichtreewas' ; 
 end
 
 
@@ -361,8 +352,7 @@ lquote - ; lquote [ ;
 set 0 time ; 
 quote TOTAL TIME USED: '0' secs.; 
 quote &10 ; 
-lquote ] ; 
-report= ; 
+lquote ] ;
 
 ttag ; 
 
