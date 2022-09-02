@@ -24,7 +24,7 @@
 #' 
 #' NOTE: These functions are under development, and may be incompletely tested
 #' or change without notice.
-#' Complete documentation and discussion will follow soon.
+#' Complete documentation and discussion will follow in due course.
 #' 
 #' @template treeParam
 #' @template datasetParam
@@ -65,7 +65,7 @@ QuartetConcordance <- function (tree, dataset = NULL) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[tree$tip.label]
+  dataset <- dataset[TipLabels(tree)]
   splits <- as.Splits(tree, dataset)
   logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
                        logical(NTip(dataset)))
@@ -127,7 +127,7 @@ ClusteringConcordance <- function (tree, dataset) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[tree$tip.label]
+  dataset <- dataset[TipLabels(tree)]
   splits <- as.logical(as.Splits(tree))
   
   at <- attributes(dataset)
@@ -173,8 +173,11 @@ PhylogeneticConcordance <- function (tree, dataset) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[tree$tip.label]
+  dataset <- dataset[TipLabels(tree)]
   splits <- as.Splits(tree)
+  if (is.null(names(splits))) {
+    names(splits) <- paste0("sp", seq_along(splits))
+  }
   characters <- as.multiPhylo(dataset)
   
   blankRet <- matrix(0, length(splits), 2,
@@ -201,6 +204,7 @@ PhylogeneticConcordance <- function (tree, dataset) {
 }
 
 #' @rdname SiteConcordance
+# Mutual clustering information of each split with the split implied by each character
 #' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
 #' @export
 MutualClusteringConcordance <- function (tree, dataset) {
@@ -208,7 +212,7 @@ MutualClusteringConcordance <- function (tree, dataset) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[tree$tip.label]
+  dataset <- dataset[TipLabels(tree)]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
   
@@ -231,7 +235,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[tree$tip.label]
+  dataset <- dataset[TipLabels(tree)]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
   
@@ -280,7 +284,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' @importFrom TreeTools Log2UnrootedMult Log2Unrooted
 #' @export
 ConcordantInformation <- function (tree, dataset) {
-  dataset <- dataset[tree$tip.label]
+  dataset <- dataset[TipLabels(tree)]
   originalInfo <- sum(apply(PhyDatToMatrix(dataset), 2, CharacterInformation))
   dataset <- PrepareDataProfile(dataset)
   

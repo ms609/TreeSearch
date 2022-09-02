@@ -325,8 +325,8 @@ ui <- fluidPage(
                                   choices = list("None" = "none",
                                                  "% trees containing" = "p",
                                                  "Quartet concordance" = "qc",
-                                                 "Clustering concordance" = "clc",
-                                                 "Phylogenetic concordance" = "phc"
+                                                 "Mutual Clustering conc." = "mcc",
+                                                 "Shared Phylog. conc." = "spc"
                                                  ))
                  )),
                  hidden(tags$div(id = "mapConfig",
@@ -1721,6 +1721,8 @@ server <- function(input, output, session) {
     switch(input$concordance,
           "p" = SplitFrequency(r$plottedTree, r$trees) / length(r$trees),
           "qc" = QuartetConcordance(r$plottedTree, r$dataset),
+          "mcc" = MutualClusteringConcordance(r$plottedTree, r$dataset),
+          "spc" = SharedPhylogeneticConcordance(r$plottedTree, r$dataset),
           "clc" = ClusteringConcordance(r$plottedTree, r$dataset),
           "phc" = PhylogeneticConcordance(r$plottedTree, r$dataset),
           NULL
