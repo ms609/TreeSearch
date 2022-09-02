@@ -4,6 +4,7 @@ if(!dir.exists("split-support/alignments")) {
   source("split-support/simulate.R")
 }
 
+on.exit(unlink("*.tmp.tre"))
 for (aln in alns) {
   if (file.exists(paste0("split-support/tnt/", aln, ".ew.log"))) {
     message("Results found for ", aln)
