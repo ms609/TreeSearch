@@ -6,16 +6,14 @@ if(!dir.exists("split-support/alignments")) {
 
 on.exit(unlink("*.tmp.tre"))
 for (aln in alns) {
-  if (file.exists(paste0("split-support/tnt/", aln, ".ew.log"))) {
+  if (file.exists(TNTFile(aln, "ew"))) {
     message("Results found for ", aln)
   } else {
     system2(
       tntExec, 
-      paste0("run split-support/tnt-ew.run ",
-             "split-support/alignments/", aln, ".nex ",
-             "split-support/TNT/", aln, ".ew.log ;")
+      paste0("run split-support/tnt-ew.run", " ",
+             DataFile(aln), " ",
+             TNTFile(aln, "ew"), " ;")
     )
   }
 }
-
-warnings()

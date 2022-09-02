@@ -41,6 +41,6 @@ MBFile <- function(aln, suffix = NULL) {
   paste0("split-support/MrBayes/", aln, if(!is.null(suffix)) ".", suffix)
 }
 
-TNTFile <- function(aln, wt) {
-  paste0("split-support/TNT/", aln, ".", wt, ".sym")
+TNTFile <- function(aln, wt = "ew") {
+  paste0("split-support/TNT/", aln, ".", wt, ".out")
 }
