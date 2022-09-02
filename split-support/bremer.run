@@ -57,19 +57,13 @@ stop
 set whichtreewas 'whichtree' ; 
 
 if ( 'alltrees' ) 
-  sort ; 
   set referscore score[0] ; 
   collapse temp ; 
   collapse rule 1 ; 
-  if ( score[0] == score[ntrees] ) 
-    nelsen * ;
-    loop (ntax+2) (nnodes[ntrees])
-      set tmpbrem[#1] 1000000 ;
-    stop 
-  else 
-    tread ( ... ) ; 
-    set tmpbrem bremlist * ; 
-  end 
+  nelsen * ;
+  loop (ntax+2) (nnodes[ntrees])
+    set tmpbrem[#1] 1000000 ;
+  stop
 else 
   set referscore score['whichtree'] ; 
   hold + 1 ; 
@@ -82,17 +76,17 @@ end
 set 5 ntax ;
 set whichtree ntrees ; 
 
-tsave/ ; /* Just in case? */
+tsave/ ; /* Close last open tsave file... Just in case? */
 
 tsave * refbrem.tmp.tre ; 
 save 'whichtree' ; 
 tsave/;
 
-tsave * brem.tmp.tre ; 
-save 'whichtree' ; 
+tsave * brem.tmp.tre ;
+save 'whichtree' ;
 loop (ntax+2) nnodes['whichtree']
   set tmpbrem[#1] 1000000 ;
-stop 
+stop
 
 ttags - ;
 ttags * 'whichtree';
@@ -103,10 +97,10 @@ keep '0' ;
 tread ( ... ) ;
 set maxsupis score['whichtree'] - 'maxsupis' ; 
 save;
-keep '0' ; 
-tsave/; 
+keep '0' ;
+tsave/;
 
-report- ; 
+report- ;
 if ( ( !'domonosch') && ( 'avermin' == 0 ) && ( 'numsearches' > 1 ) ) 
     set avermin 1 ;
     silent - buff ;
