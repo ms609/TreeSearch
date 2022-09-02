@@ -9,7 +9,7 @@ var = 10
   + scorinc + useconst + numsearches + avermin + alltrees + whichtree 
   + allnods + whichnod + inclist [ (ntax+1) ] + overimpose + ratreps 
   + driftreps + dofuse + secsearch + dorat + dodrift + domonosch 
-  + timedsch + schtime + saveemf + emfname[30] + usersch + maxsupis 
+  + timedsch + schtime + maxsupis 
   + beswith + beswithout + numincs + nowatsub + referscore + supis 
   + olrseed + whichtreewas + thereftree ; 
 
@@ -20,13 +20,10 @@ set 2 ( 2 * ntax ) ;
 set olrseed rseed ; 
 
 /***********      SET DEFAULTS          ***********/
-/*      in non-Windows versions, set variables    */
-/*      below to your preferred values!           */
 set savesub 1 ;           /*  search suboptimal trees */
 set useconst 1 ;          /*  do constrained searches */
 set allnods 1 ;           /*  do all nodes, or single node    */
-set whichnod (ntax+2) ;   /*  single node to do if allnods == 0  */
-set alltrees 1 ;          /*  calculate support using all trees  */
+set alltrees 0 ;          /*  calculate support using all trees  */
 set whichtree 0 ;         /*  if alltrees == 0, use groups from this tree */
 set maxsave 1000 ;        /*  max. number of trees to save in each round  */
 set maxsub 1 ;            /*  save trees up to N steps longer */
@@ -37,18 +34,15 @@ set numreps 1 ;           /*  use 1 repls. for each constrained search */
 set domonosch 1 ;         /*  do a search constraining for monophyly (instead of comparing score of negatively constrained search with score of reference tree) */ 
 loop 0 ntax               /*  by default, include all taxa  */
   set inclist[#1] 1; stop   
-set saveemf 0 ;           /*  don't save tree-diagrama to a metafile (Windows only)  */
-set emfname $bremer.emf ; /*  metafile default name */
-set usersch 0 ;           /*  for constrained searches, use commands given by user */
 set schalgs $ ;           /*  default user-commands (i.e. none) */
 set dorat 0 ;             /*  do not use ratchet in constrained searches  */
 set ratreps 10 ;          /*  number of ratchet reps. in constrained searches */
 set dodrift 1 ;           /*  use drift in constrained searches  */
-set driftreps 10 ;        /*  number of drift cycles in constrained searches   */
+set driftreps 5 ;        /*  number of drift cycles in constrained searches   */
 set secsearch 1 ;         /*  use sectorial search in constrained searches  */
 set dofuse 1 ;            /*  fuse results of the 'numreps' replications  */
-set timedsch 0 ;          /*  use timeout for constrained searches */
-set schtime 0 ;           /*  number of minutes to give up a constrained search (0 = don't give up) */
+set timedsch 1 ;          /*  use timeout for constrained searches */
+set schtime 1 ;           /*  number of minutes to give up a constrained search (0 = don't give up) */
 
 /****************  SOME PRELIMINARY CALCULATIONS   ****************/
 resettime ; 
@@ -150,13 +144,13 @@ if ( 'savesub' )
         end 
   stop 
   if ( 'alltrees' ) 
-    p tempbrem.tre ; 
-    uniq ; 
-    coll temp ; 
+    proc tempbrem.tre ; 
+    unique ; 
+    collapse temp ; 
     set tmpbrem bremlist / { floaters } ; 
   else 
    set thereftree (ntrees+1) ; 
-   p refbrem.tre ; 
+   proc refbrem.tre ;
    report- ; 
    set 2 0 ; 
    set 3 nnodes['thereftree'] - ( ntax+2 ) ; 
@@ -198,21 +192,21 @@ if ( 'useconst' )
         macfloat 6 ; 
         end 
     silent = all ; 
-    if ( !'usersch' ) 
-       set schalgs $xmu = noke rep'numreps'; 
-       if ( 'secsearch' ) set tmpstring $ $schalgs css rss autoc1 ; 
-       else set tmpstring $ $schalgs nocss norss noaut ; end 
-       set schalgs $ $tmpstring ; 
-       if ( 'dorat' ) set tmpstring $ $schalgs rat'ratreps'; 
-       else set tmpstring $ $schalgs norat; end 
-       set schalgs $ $tmpstring ; 
-       if ( 'dodrift' ) set tmpstring $ $schalgs drif'driftreps'; 
-       else set tmpstring $ $schalgs nodri; end 
-       set schalgs $ $tmpstring ; 
-       if ( 'dofuse' ) set tmpstring $ $schalgs fuse5; 
-       else set tmpstring $ $schalgs nofu ; end 
-       set schalgs $ $tmpstring ; 
-       end 
+    
+    set schalgs $xmu = noke rep'numreps'; 
+    if ( 'secsearch' ) set tmpstring $ $schalgs css rss autoc1 ; 
+    else set tmpstring $ $schalgs nocss norss noaut ; end 
+    set schalgs $ $tmpstring ; 
+    if ( 'dorat' ) set tmpstring $ $schalgs rat'ratreps'; 
+    else set tmpstring $ $schalgs norat; end 
+    set schalgs $ $tmpstring ; 
+    if ( 'dodrift' ) set tmpstring $ $schalgs drif'driftreps'; 
+    else set tmpstring $ $schalgs nodri; end 
+    set schalgs $ $tmpstring ; 
+    if ( 'dofuse' ) set tmpstring $ $schalgs fuse5; 
+    else set tmpstring $ $schalgs nofu ; end 
+    set schalgs $ $tmpstring ; 
+
     keep 0 ; 
     p refbrem.tre ; 
     set 0 nnodes[0 ] ; 
@@ -321,49 +315,47 @@ if ( 'savesub' )
    quote &32     best (in 'numincs' searches, each 'scorinc' worse than previous); 
 end 
 
-if ( 'useconst' ) 
-   quote &32  Searching with constraints, 'numsearches' times (each with ; 
-   if ( !'usersch' ) 
-      lquote = ; 
-      quote &32     'numreps' replications; 
-      if ( 'secsearch' ) quote , sectorial search; else quote , no sectorial search; end 
-      if ( 'dorat' ) quote , 'ratreps' ratchet iterations; else quote , no ratchet; end 
-      lquote - ; quote ,&10; lquote= ; 
-      if ( 'dodrift' ) quote &32     'driftreps' drifting cycles; else quote &32     no drifting; end 
-      if ( 'dofuse' ) 
-          quote , fusing results from the 'numreps' replications) ; 
-      else 
-          quote , no fusing); 
-      end 
-      lquote - ; 
-   else 
-      quote &32     user-defined search ($schalgs) ; 
-   end 
-   lquote - ; 
-    quote &10 ; 
-   if ( 'numsearches' > 1 ) 
-     if ( 'avermin' == 0 ) 
-       quote &32  Calculating average scores (with and without constraints) ; 
-     else 
-       quote &32  Using the best scores (with and without constraints) ; 
-     end 
-   end 
-   if ( 'useconst' ) 
-       if ( 'domonosch' ) 
-            quote &32  Best score with a group calculated constraining group for monophyly ; 
-       else quote &32  Best score with a group taken from reference tree(s) ; 
-       end 
-   end 
-   if ( 'alltrees' ) 
-      quote &32  Calculating supports on consensus of shortest trees in memory ; 
-   else 
-    if ( 'allnods' ) 
-       quote &32  Calculating supports for groups of tree 'whichtreewas' ; 
-    else 
-       quote &32  Calculating support only for node 'whichnod' of tree 'whichtreewas' ; 
-    end 
-   end
+
+quote &32  Searching with constraints, 'numsearches' times (each with ; 
+lquote = ; 
+quote &32     'numreps' replications; 
+if ( 'secsearch' ) quote , sectorial search; else quote , no sectorial search; end 
+if ( 'dorat' ) quote , 'ratreps' ratchet iterations; else quote , no ratchet; end 
+lquote - ; quote ,&10; lquote= ; 
+if ( 'dodrift' ) quote &32     'driftreps' drifting cycles; else quote &32     no drifting; end 
+if ( 'dofuse' ) 
+  quote , fusing results from the 'numreps' replications) ; 
+else 
+  quote , no fusing); 
 end 
+lquote - ; 
+
+
+lquote - ; 
+quote &10 ; 
+if ( 'numsearches' > 1 ) 
+   if ( 'avermin' == 0 ) 
+     quote &32  Calculating average scores (with and without constraints) ; 
+   else 
+     quote &32  Using the best scores (with and without constraints) ; 
+   end 
+end 
+if ( 'useconst' ) 
+     if ( 'domonosch' ) 
+          quote &32  Best score with a group calculated constraining group for monophyly ; 
+     else quote &32  Best score with a group taken from reference tree(s) ; 
+     end 
+end 
+if ( 'alltrees' ) 
+    quote &32  Calculating supports on consensus of shortest trees in memory ; 
+else 
+  if ( 'allnods' ) 
+     quote &32  Calculating supports for groups of tree 'whichtreewas' ; 
+  else 
+     quote &32  Calculating support only for node 'whichnod' of tree 'whichtreewas' ; 
+  end 
+end
+
 
 lquote - ; lquote [ ; 
 set 0 time ; 
@@ -372,8 +364,6 @@ quote &10 ;
 lquote ] ; 
 report= ; 
 
-if ( 'saveemf' ) log & $emfname ; end 
 ttag ; 
-if ( 'saveemf' ) log /& ; end 
 
 proc/ ;
