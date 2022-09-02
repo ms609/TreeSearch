@@ -14,6 +14,7 @@ src/*.dll
 *.knit.md
 *.log
 *.out
+!split-support/tnt/aln*.out
 *.Rhistory
 *.utf8.md
 /* *.Rd */
