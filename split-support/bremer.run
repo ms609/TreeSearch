@@ -84,11 +84,11 @@ set whichtree ntrees ;
 
 tsave/ ; /* Just in case? */
 
-tsave * refbrem.tre ; 
+tsave * refbrem.tmp.tre ; 
 save 'whichtree' ; 
 tsave/;
 
-tsave * tempbrem.tre ; 
+tsave * brem.tmp.tre ; 
 save 'whichtree' ; 
 loop (ntax+2) nnodes['whichtree']
   set tmpbrem[#1] 1000000 ;
@@ -134,13 +134,13 @@ if ( 'savesub' )
   stop
     
   if ( 'alltrees' ) 
-    proc tempbrem.tre ; 
+    proc brem.tmp.tre ; 
     unique ; 
     collapse temp ; 
     set tmpbrem bremlist ; 
   else 
    set thereftree (ntrees+1) ; 
-   proc refbrem.tre ;
+   proc refbrem.tmp.tre ;
    report- ;
    set 2 0 ;
    set 3 nnodes['thereftree'] - ( ntax+2 ) ; 
@@ -149,7 +149,7 @@ if ( 'savesub' )
       chkbreak 1 ; 
       set 2 ++ ; 
       keep 'thereftree' ; 
-      p refbrem.tre ; 
+      p refbrem.tmp.tre ; 
       force + [ @'thereftree' #1 ] ; 
       set beswith 100000000 ; 
       set beswithout 100000000 ; 
@@ -209,7 +209,7 @@ end
 set schalgs $ $tmpstring ; 
 
 keep 0 ; 
-proc refbrem.tre ; 
+proc refbrem.tmp.tre ; 
 set 0 nnodes[0 ] ; 
 set 1 0 ; 
 set 2 0 ; 
@@ -246,7 +246,7 @@ loop (ntax+2 ) '0'
     set 2 ++ ; 
     keep 0 ;
     silent = buf;
-    proc refbrem.tre ;
+    proc refbrem.tmp.tre ;
     force - [ @0 #1 ] ; 
     constrain = ;
     silent - buf;
@@ -264,7 +264,7 @@ loop (ntax+2 ) '0'
     if ( 'domonosch' ) 
       keep 0 ;
       silent = buf;
-      proc refbrem.tre ; 
+      proc refbrem.tmp.tre ; 
       force + [ @0 #1 ] ; 
       constrain = ;
       silent - buf;
@@ -297,7 +297,7 @@ constrain =;
 
 /********  WRITE LABELS TO TARGET TREE  **************/
 keep 0 ;
-proc tempbrem.tre ;
+proc brem.tmp.tre ;
 if ( 'piweisoff' && 'avermin' ) 
   macfloat 0 ;
 else
@@ -325,7 +325,7 @@ rseed 'olrseed' ;
 
 /*****  RE-READ ORIGINAL SET OF TREES  *************/
 keep 0 ;
-proc tempbrem.tre ;
+proc brem.tmp.tre ;
 set 0 ( ntrees - 1 ) ;
 tc 1.'0' ;
 
