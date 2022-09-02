@@ -301,10 +301,6 @@ loop (ntax+2) nnodes[0]
   end
 stop
 
-log TNT/aln9999.brem;
-ttags/;
-log/;
-
 constrain - ;
 force - ; 
 macfloat 6 ; 
@@ -357,12 +353,12 @@ if ( 'numsearches' > 1 )
      quote &32  Using the best scores (with and without constraints) ; 
    end 
 end 
-if ( 'useconst' ) 
-     if ( 'domonosch' ) 
-          quote &32  Best score with a group calculated constraining group for monophyly ; 
-     else quote &32  Best score with a group taken from reference tree(s) ; 
-     end 
+if ( 'domonosch' ) 
+  quote &32  Best score with a group calculated constraining group for monophyly ; 
+else
+  quote &32  Best score with a group taken from reference tree(s) ; 
 end 
+
 if ( 'alltrees' ) 
   quote &32  Calculating supports on consensus of shortest trees in memory ; 
 else 
@@ -376,6 +372,10 @@ quote TOTAL TIME USED: '0' secs.;
 quote &10 ; 
 lquote ] ;
 
-ttag ; 
+/* Write tree to file */
+log %1;
+ttags/;
+log/;
+
 
 proc/ ;
