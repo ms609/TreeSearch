@@ -14,7 +14,7 @@ refSplits <- as.Splits(referenceTree)
 partCorrect <- logical(0)
 postProb <- numeric(0)
 concord <- numeric(0)
-tntStats <- c("brem", "sf", "symFq", "symGC", "boot", "jak", "pois")
+tntStats <- c("brem", "symFq", "symGC", "boot", "jak", "pois")
 tntStat <- matrix(0, 0, length(tntStats), dimnames = list(NULL, tntStats))
 
 for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
@@ -47,6 +47,7 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   tntTags <- cbind(brem, t(vapply(tags, function(tag) {
     x <- gsub("[", "-", fixed = TRUE, gsub("]", "", fixed = TRUE, tag))
     x[x == "?"] <- NA_real_
+    x[x == "???"] <- Inf
     as.numeric(x)
   }, setNames(numeric(length(tntStats) - 1), tntStats[-1]))))
   
@@ -105,8 +106,12 @@ Histy(concord[, "mutual"])
 Histy(concord[, "shared"])
 Histy(concord[, "phylo"])
 Histy(concord[, "cluster"])
-Histy(tntStat[, "sym"])
-Histy(tntStat[, "freq"])
+Histy(tntStat[, "brem"])
+Histy(tntStat[, "symFq"])
+Histy(tntStat[, "simGc"])
+Histy(tntStat[, "boot"])
+Histy(tntStat[, "jak"])
+Histy(tntStat[, "pois"])
 
 Peek <- function(var) {
   m <- glm(partCorrect ~ var, family = "binomial")
