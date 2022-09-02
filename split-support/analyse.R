@@ -7,8 +7,6 @@ devtools::load_all("../TreeSearch")
 # Load configuration settings
 source("split-support/config.R")
 
-nAln <- 242 #TODO DELETE: Some results forthcoming
-
 referenceTree <- read.tree("split-support/reference.tre")
 refSplits <- as.Splits(referenceTree)
 
