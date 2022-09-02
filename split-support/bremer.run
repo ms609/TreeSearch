@@ -390,10 +390,4 @@ quote TOTAL TIME USED: '0' secs.;
 quote &10 ; 
 lquote ] ;
 
-/* Write tree to file */
-log %1;
-ttags/;
-log/;
-
-
 proc/ ;
