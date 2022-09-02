@@ -315,10 +315,16 @@ end
 quote &32  Searching with constraints, 'numsearches' times (each with ; 
 lquote = ; 
 quote &32     'numreps' replications; 
-if ( 'secsearch' ) quote , sectorial search; else quote , no sectorial search; end 
-if ( 'dorat' ) quote , 'ratreps' ratchet iterations; else quote , no ratchet; end 
+if ( 'secsearch' ) 
+  quote , sectorial search; else quote , no sectorial search;
+end 
+if ( 'dorat' ) 
+  quote , 'ratreps' ratchet iterations; else quote , no ratchet;
+end 
 lquote - ; quote ,&10; lquote= ; 
-if ( 'dodrift' ) quote &32     'driftreps' drifting cycles; else quote &32     no drifting; end 
+if ( 'dodrift' ) 
+  quote &32     'driftreps' drifting cycles; else quote &32     no drifting;
+end 
 if ( 'dofuse' ) 
   quote , fusing results from the 'numreps' replications) ; 
 else 
