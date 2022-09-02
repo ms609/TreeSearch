@@ -1,26 +1,38 @@
 macro=;
 proc %1;
-xmult:rat25 drift25 hits 100 level 4 chklevel 5;
+xmult:rat25 drift25 hits 250 level 4 chklevel 5;
 sectsch:slack25;
 
 outgroup t1;
 
 piwe-;
 xmult; /* Search for optimal trees */
+
 run split-support/bremer.run;
-
-nelsen *;
-var: nt nrep;
-set nt ntrees;
-set nrep 10 ;/*100*/
-
-ttags =;
-resample=sym replications 100 frequency from 'nt';
 log %2;
 ttags /;
 log/;
+ttags-;
+
+nelsen *;
+var: nt;
+set nt ntrees;
+ttags=;
+
+resample=sym replications 250 frequency from 'nt';
+resample=sym gc;
+resample=boot;
+resample=jak;
+resample=poisson;
+
+log +%2;
+ttags /;
+log/;
+
+quit;
+
 /* Clear memory */
-keep 0; ttag-; hold 10000;
+keep 0; ttags-; hold 10000;
 
 /*piwe=3   ;xmult;/*tsav *split-support/TNT/%1.iw3.tre;sav;   tsav/;*//*nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log split-support/TNT/%1.iw3.sym;   ttag/;log/; keep 0; ttag-; hold 10000;*/
 /*piwe=4.5 ;xmult;tsav *split-support/TNT/%1.iw4.5.tre;sav; tsav/;nelsen *;set nt ntrees;ttag=;resample=frequency from 'nt';log split-support/TNT/%1.iw4.5.sym; ttag/;log/; keep 0; ttag-; hold 10000;*/
