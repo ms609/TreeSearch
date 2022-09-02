@@ -45,10 +45,10 @@ set timedsch 1 ;          /*  use timeout for constrained searches */
 set schtime 1 ;           /*  number of minutes to give up a constrained search (0 = don't give up) */
 
 /****************  SOME PRELIMINARY CALCULATIONS   ****************/
-resettime ; 
-silent = buf ; 
-macfloat 6 ; 
-agroup =0 ( floaters ) ; 
+resettime ;
+silent = buf ;
+macfloat 6 ;
+
 loop 0 ntax if ( !'inclist[#1]' ) agroup >0 #1 ; end stop 
 
 if ( ntrees == ( maxtrees-1 ) ) 
@@ -64,11 +64,11 @@ if ( 'alltrees' )
    coll temp ; 
    coll rule 1 ; 
    if ( score[0] == score[ntrees] ) 
-       nelsen * / { floaters } ; 
+       nelsen * ;
        loop (ntax+2) (nnodes[ntrees]) set tmpbrem[#1] 1000000 ; stop 
    else 
      tread ( ... ) ; 
-     set tmpbrem bremlist * / { floaters } ; 
+     set tmpbrem bremlist * ; 
    end 
 else 
   set referscore score['whichtree'] ; 
@@ -142,7 +142,7 @@ if ( 'savesub' )
     proc tempbrem.tre ; 
     unique ; 
     collapse temp ; 
-    set tmpbrem bremlist / { floaters } ; 
+    set tmpbrem bremlist ; 
   else 
    set thereftree (ntrees+1) ; 
    proc refbrem.tre ;
@@ -155,7 +155,7 @@ if ( 'savesub' )
       set 2 ++ ; 
       keep 'thereftree' ; 
       p refbrem.tre ; 
-      force + [ @'thereftree' #1 ({floaters}) ] ; 
+      force + [ @'thereftree' #1 ] ; 
       set beswith 100000000 ; 
       set beswithout 100000000 ; 
       loop 0 ntrees 
@@ -233,7 +233,7 @@ if ( 'useconst' )
         set 2 ++ ; 
         keep 0 ;  
         p refbrem.tre ; 
-        force - [ @0 #1 ({floaters})] ; 
+        force - [ @0 #1 ] ; 
         const= ; 
         progress '2' '1' Constrained search '2' of '1'... ; 
         chkbreak 1 ; 
@@ -246,7 +246,7 @@ if ( 'useconst' )
         if ( 'domonosch' ) 
           keep 0 ; 
           p refbrem.tre ; 
-          force + [ @0 #1 ({floaters})] ; 
+          force + [ @0 #1 ] ; 
           const = ; 
           $schalgs ; 
           set 0 score[0] ; 
