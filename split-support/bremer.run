@@ -24,16 +24,16 @@ set savesub 1 ;           /*  search suboptimal trees */
 set allnods 1 ;           /*  do all nodes, or single node    */
 set alltrees 1 ;          /*  calculate support using all trees  */
 set whichtree 0 ;         /*  if alltrees == 0, use groups from this tree */
-set maxsave 10 ; /*1000*/       /*  max. number of trees to save in each round  */
+set maxsave 1000 ;        /*  max. number of trees to save in each round  */
 set maxsub 1 ;            /*  save trees up to N steps longer */
 set scorinc 1 ;           /*  increase score gradually, in N steps each time  */
 set avermin 1 ;           /*  if 0, use average difference of neg/pos constrained searches */
-set numsearches 1 ; /*3*/      /*  repeat constrained searches 3 times (to use either best/avg. score) */
+set numsearches 3 ;       /*  repeat constrained searches 3 times (to use either best/avg. score) */
 set numreps 1 ;           /*  use 1 repls. for each constrained search */
 set domonosch 1 ;         /*  do a search constraining for monophyly (instead of comparing score of negatively constrained search with score of reference tree) */ 
 set schalgs $ ;           /*  default user-commands (i.e. none) */
 set dorat 0 ;             /*  do not use ratchet in constrained searches  */
-set ratreps 1 ; /*10*/         /*  number of ratchet reps. in constrained searches */
+set ratreps 10 ;         /*  number of ratchet reps. in constrained searches */
 set dodrift 1 ;           /*  use drift in constrained searches  */
 set driftreps 5 ;        /*  number of drift cycles in constrained searches   */
 set secsearch 1 ;         /*  use sectorial search in constrained searches  */
