@@ -71,7 +71,7 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
 
 model <- glm(partCorrect ~ postProb + concord + tntStat, family = "binomial")
 
-Histy <- function(var, breaks = 12, even = TRUE) {
+Histy <- function(var, breaks = 12, even = TRUE) { # "Mosaic plot"
   outcomes <- partCorrect[!is.na(var)]
   var <- var[!is.na(var)]
   if (even) {
@@ -81,7 +81,6 @@ Histy <- function(var, breaks = 12, even = TRUE) {
   plot(table(bins, outcomes),
        main = as.character(match.call()[-1]),
        col = c("FALSE" = 2, "TRUE" = 3),
-       ann = FALSE,
        xlab = "",
        ylab = ""
        )
