@@ -7,7 +7,7 @@ outgroup t1;
 
 piwe-;
 xmult; /* Search for optimal trees */
-proc bremer.run;
+run split-support/bremer.run;
 
 nelsen *;
 var: nt nrep;
