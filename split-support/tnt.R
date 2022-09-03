@@ -17,3 +17,12 @@ for (aln in alns) {
     )
   }
 }
+
+# Validation step
+for (aln in alns) {
+  thisFile <- TNTFile(aln, "ew")
+  if (file.exists(thisFile) && length(readLines(thisFile)) < 60) {
+    message("Deleting incomplete analysis: ", aln)
+    file.remove(thisFile)
+  }
+}
