@@ -2,6 +2,9 @@
 #library("TreeTools")
 #library("TreeSearch")
 devtools::load_all("../TreeTools")
+if (packageVersion("TreeTools") < "1.7.3.9004") {
+  stop("Please upgrade to TreeTools v1.8.0 or above")
+}
 devtools::load_all("../TreeSearch")
 
 # Load configuration settings
