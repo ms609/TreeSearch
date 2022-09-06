@@ -94,6 +94,9 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   concord <- rbind(concord, conc)
   bremer <- c(bremer, brem)
   tntStat <- rbind(tntStat, tntTags)
+  
+  stopifnot(dim(concord)[1] == dim(tntStat)[1])
+  stopifnot(dim(concord)[1] == length(postProb))
 }
 
 model <- glm(partCorrect ~ postProb + concord + bremer + tntStat,
@@ -149,13 +152,17 @@ common <- rowSums(is.na(concord)) == 0 & rowSums(is.na(tntStat)) == 0
 model <- glm(family = "binomial",
              partCorrect[common] ~ 
                postProb[common] +
-               concord[common, "quartet"] + # Dropped
+               bremer[common] +
+               concord[common, "quartet"] +
                concord[common, "cluster"] +
                concord[common, "phylo"] +
                concord[common, "mutual"] +
                concord[common, "shared"] +
-               tntStat[common, "sym"] + # Dropped
-               tntStat[common, "freq"] # Dropped
+               tntStat[common, "symFq"] +
+               tntStat[common, "symGC"] +
+               tntStat[common, "boot"] +
+               tntStat[common, "jak"] + 
+               tntStat[common, "pois"]
              )
 step(model) # AIC
 # BIC: https://stackoverflow.com/questions/19400494
