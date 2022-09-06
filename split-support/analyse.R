@@ -18,7 +18,7 @@ tips <- names(read.nexus.data(DataFile(aln)))
 partCorrect <- logical(0)
 postProb <- numeric(0)
 concord <- numeric(0)
-bremner <- numeric(0)
+bremer <- numeric(0)
 tntStats <- c("symFq", "symGC", "boot", "jak", "pois")
 tntStat <- matrix(0, 0, length(tntStats), dimnames = list(NULL, tntStats))
 
@@ -51,7 +51,7 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   partId2 <- match(as.Splits(tntTree[[2]]), partitions)
   brem[partId2] <- 0
   partBrem <- tntTree[[1]]$node.label[as.numeric(names(as.Splits(tntTree[[1]]))) - NTip(tntTree[[1]])]
-  brem[match(as.Splits(tntTree[[1]]), partitions)] <- partBrem
+  brem[match(as.Splits(tntTree[[1]]), partitions)] <- as.numeric(partBrem)
   
   tags <- strsplit(tntTree[[2]]$node.label, "/")
   partTags <- tags[as.numeric(names(as.Splits(tntTree[[2]]))) - NTip(tntTree[[2]])]
@@ -90,9 +90,7 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   postProb <- c(postProb, pp, rep(NA_real_, sum(tntOnly)))
   concord <- rbind(concord, conc)
   bremer <- c(bremer, brem)
-  tntTmp <- matrix(NA_real_, length(partitions), dim(tntTags)[2])
-  tntTmp[match(tntParts, partitions), ] <- tntTags
-  tntStat <- rbind(tntStat, tntTmp)
+  tntStat <- rbind(tntStat, tntTags)
 }
 
 model <- glm(partCorrect ~ postProb + concord + bremer + tntStat,
@@ -114,16 +112,16 @@ Histy <- function(var, breaks = 12, even = TRUE) { # "Mosaic plot"
   axis(1, signif(breaks), at = seq_along(breaks) / 12)
 }
 
-par(mfrow = c(4, 2), mar = rep(2, 4))
+par(mfrow = c(4, 3), mar = rep(2, 4))
 Histy(postProb)
 Histy(concord[, "quartet"])
 Histy(concord[, "mutual"])
 Histy(concord[, "shared"])
 Histy(concord[, "phylo"])
 Histy(concord[, "cluster"])
-Histy(tntStat[, "brem"])
+Histy(bremer)
 Histy(tntStat[, "symFq"])
-Histy(tntStat[, "simGc"])
+Histy(tntStat[, "symGC"])
 Histy(tntStat[, "boot"])
 Histy(tntStat[, "jak"])
 Histy(tntStat[, "pois"])
