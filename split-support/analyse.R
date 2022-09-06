@@ -12,12 +12,14 @@ source("split-support/config.R")
 
 referenceTree <- read.tree("split-support/reference.tre")
 refSplits <- as.Splits(referenceTree)
+tips <- names(read.nexus.data(DataFile(aln)))
 
 # Eugh, I don't like growing vectors like this!
 partCorrect <- logical(0)
 postProb <- numeric(0)
 concord <- numeric(0)
-tntStats <- c("brem", "symFq", "symGC", "boot", "jak", "pois")
+bremner <- numeric(0)
+tntStats <- c("symFq", "symGC", "boot", "jak", "pois")
 tntStat <- matrix(0, 0, length(tntStats), dimnames = list(NULL, tntStats))
 
 for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
@@ -26,33 +28,41 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   partitions <- setNames(as.Splits(parts[, 2], tips), paste0("mb", parts[, 1]))
   
   tntFile <- TNTFile(aln, "ew")
-  tntTree <- ReadTntTree(tntFile, tipLabels = tips)
+  tntTree <- suppressMessages(ReadTntTree(tntFile, tipLabels = tips))
   if (!inherits(tntTree, "multiPhylo")) {
     warning("Only one tree found in file ", aln, "; missing TNT output.")
     next;
   }
   if (!all.equal(tntTree[[1]], tntTree[[2]])) {
-    warning("Trees don't match in ", aln, ". Check TNT output.")
-    next;
+    # Trees may differ in resolution: partitions with 0 Bremer support will
+    # be collapsed in tntTree[[1]].
+    if (any(!as.Splits(tntTree[[1]]) %in% as.Splits(tntTree[[2]]))) {
+      warning("Trees don't match in ", aln, ". Check TNT output.")
+      next;
+    }
   }
-  tntTree <- tntTree[[1]]
-  tntParts <- as.Splits(tntTree)
+  tntParts <- as.Splits(tntTree[[2]])
   nTntNode <- length(tntParts)
   tntOnly <- !tntParts %in% partitions
   if (any(tntOnly)) {
     partitions <- c(partitions, tntParts[[tntOnly]])
   }
-  brem <- read.table(tntFile, skip = 5, comment.char = ";", nrows = nTntNode)[, 3]
-  tags <- strsplit(
-    read.table(tntFile, skip = 11 + nTntNode + nTip, comment.char = ";")[, 3],
-    "/"
-  )
-  tntTags <- cbind(brem, t(vapply(tags, function(tag) {
+  brem <- rep(NA_real_, length(partitions))
+  partId2 <- match(as.Splits(tntTree[[2]]), partitions)
+  brem[partId2] <- 0
+  partBrem <- tntTree[[1]]$node.label[as.numeric(names(as.Splits(tntTree[[1]]))) - NTip(tntTree[[1]])]
+  brem[match(as.Splits(tntTree[[1]]), partitions)] <- partBrem
+  
+  tags <- strsplit(tntTree[[2]]$node.label, "/")
+  partTags <- tags[as.numeric(names(as.Splits(tntTree[[2]]))) - NTip(tntTree[[2]])]
+  tntTags <- matrix(NA_real_, length(partitions), length(tntStats),
+                    dimnames = list(NULL, tntStats))
+  tntTags[partId2, ] <- t(vapply(partTags, function(tag) {
     x <- gsub("[", "-", fixed = TRUE, gsub("]", "", fixed = TRUE, tag))
     x[x == "?"] <- NA_real_
     x[x == "???"] <- Inf
     as.numeric(x)
-  }, setNames(numeric(length(tntStats) - 1), tntStats[-1]))))
+  }, numeric(length(tntStats))))
   
   
   pp <- read.table(MBFile(aln, "tstat"), skip = 1,
@@ -79,12 +89,14 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   partCorrect <- c(partCorrect, partitions %in% refSplits)
   postProb <- c(postProb, pp, rep(NA_real_, sum(tntOnly)))
   concord <- rbind(concord, conc)
+  bremer <- c(bremer, brem)
   tntTmp <- matrix(NA_real_, length(partitions), dim(tntTags)[2])
   tntTmp[match(tntParts, partitions), ] <- tntTags
   tntStat <- rbind(tntStat, tntTmp)
 }
 
-model <- glm(partCorrect ~ postProb + concord + tntStat, family = "binomial")
+model <- glm(partCorrect ~ postProb + concord + bremer + tntStat,
+             family = "binomial")
 
 Histy <- function(var, breaks = 12, even = TRUE) { # "Mosaic plot"
   outcomes <- partCorrect[!is.na(var)]
