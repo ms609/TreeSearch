@@ -75,6 +75,9 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   
   if (file.exists(ConcFile(aln))) {
     conc <- as.matrix(read.table(ConcFile(aln)))
+    if (dim(conc)[1] != dim(tntTags)[1]) {
+      stop("Dimension mismatch; is concordance cache out of date?")
+    }
   } else {
     conc <- cbind(
       quartet = QuartetConcordance(partitions, dataset),
