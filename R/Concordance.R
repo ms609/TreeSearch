@@ -178,6 +178,9 @@ PhylogeneticConcordance <- function (tree, dataset) {
   if (is.null(names(splits))) {
     names(splits) <- paste0("sp", seq_along(splits))
   }
+  dupNames <- duplicated(names(splits))
+  names(splits)[dupNames] <- paste0(names(splits)[dupNames], "_", seq_along(dupNames))
+  
   characters <- as.multiPhylo(dataset)
   
   blankRet <- matrix(0, length(splits), 2,
