@@ -23,15 +23,13 @@ for (aln in alns) {
     # Remove unneeded results files
     keepExt <- c(
       "con\\.tre", # Consensus tree - why not
-      "parts", "tstat", # Partitions an dprobabilities
+      "parts", "tstat", # Partitions and probabilities
       # "trprobs" # Sampled trees and probabilities
-      # "mcmc" # Standard deviations of splits - see tstat
+      # "mcmc" # Standard deviations of splits - see `tstat`
       "pstat" # Convergence diagnostics
     )
     
-    outFiles <- list.files(path = "split-support/MrBayes/",
-                           pattern = aln,
-                           full.names = TRUE)
+    outFiles <- list.files(path = mbDir, pattern = aln, full.names = TRUE)
     
     unlink(outFiles[-grep(paste0("(", paste0(keepExt, collapse = "|"), ")$"),
                           outFiles)])

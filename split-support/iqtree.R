@@ -25,17 +25,29 @@ for (aln in alns) {
              " -st DNA ", # Sequence type: DNA
              " -mset JC ", # Model: Jukes-Cantor
              " -mrate E ", # Equal rates only
-             " -nt AUTO -ntmax 6 ", # Number of threads
+             " -nt auto -ntmax 6 ", # Number of threads
              " -seed 1 ", # Set random seed for reproducibility
              #" -b 1000", # Nonparametric bootstrap
              " -bb 1000 ", # Number of ultrafast bootstrap replicates
              " -bnni ", # Avoids branch support overestimates in UFB
              " -lbp 1000 ", # Fast local bootstrap probability
              " -alrt 1000 ", # Approximate likelihood ratio test
-             " -abayes 1000 ", # Approximate Bayes test
+             " -abayes ", # Approximate Bayes test
+             " --redo-tree ", # Overwrite previous run results
              ""
              )
     )
+    
+    # Remove unneeded results files
+    keepExt <- c(
+      "contree", # Consensus tree - why not
+      "splits\\.nex" # Convergence diagnostics
+    )
+    
+    outFiles <- list.files(path = iqDir, pattern = aln, full.names = TRUE)
+    
+    unlink(outFiles[-grep(paste0("(", paste0(keepExt, collapse = "|"), ")$"),
+                          outFiles)])
   }
 }
 

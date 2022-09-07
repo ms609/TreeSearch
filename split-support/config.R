@@ -32,33 +32,39 @@ mbExec <- "C:/Programs/Phylogeny/MrBayes/bin/mb.3.2.7-win64.exe"
 iqExec <- "C:/Programs/Phylogeny/iqtree-2.2.0-Windows/bin/iqtree2.exe"
 
 ### Location of output files ###
+iqDir <- "split-support/iqtree/"
+mbDir <- "split-support/MrBayes/"
+tntDir <- "split-support/TNT/"
+alnDir <- "split-support/alignments/"
+concDir <- "split-support/concordance/"
+
 # Set up directory structure
 CreateDir <- function(dir) {
   if (!dir.exists(dir)) dir.create(dir)
 }
 
 # Patterns to use when creating files
-CreateDir("split-support/concordance")
+CreateDir(concDir)
 ConcFile <- function(aln) {
-  paste0("split-support/concordance/", aln, ".txt")
+  paste0(concDir, "/", aln, ".txt")
 }
 
-CreateDir("split-support/alignments")
+CreateDir(alnDir)
 DataFile <- function(aln, ext = ".nex") {
-  paste0("split-support/alignments/", aln, ext)
+  paste0(alnDir, "/", aln, ext)
 }
 
-CreateDir("split-support/iqtree")
+CreateDir(iqDir)
 IQFile <- function(aln) {
-  paste0("split-support/iqtree/", aln, ".phy")
+  paste0(iqDir, "/", aln, ".phy")
 }
 
-CreateDir("split-support/MrBayes")
+CreateDir(mbDir)
 MBFile <- function(aln, suffix = NULL) {
-  paste0("split-support/MrBayes/", aln, if(!is.null(suffix)) ".", suffix)
+  paste0(mbDir, "/", aln, if(!is.null(suffix)) ".", suffix)
 }
 
-CreateDir("split-support/TNT")
+CreateDir(tntDir)
 TNTFile <- function(aln, wt = "ew") {
-  paste0("split-support/TNT/", aln, ".", wt, ".out")
+  paste0(tntDir, "/", aln, ".", wt, ".out")
 }
