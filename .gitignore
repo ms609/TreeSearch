@@ -48,3 +48,6 @@ split-support/MrBayes/aln*
 !split-support/MrBayes/aln*.parts
 !split-support/MrBayes/aln*.pstat
 !split-support/MrBayes/aln*.tstat
+split-support/iqtree/aln*
+!split-support/iqtree/aln*.splits.nex
+!split-support/iqtree/aln*.treefile

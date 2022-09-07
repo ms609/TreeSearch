@@ -5,7 +5,7 @@ if(!dir.exists("split-support/alignments")) {
 }
 
 for (aln in alns) {
-  if (file.exists(IQFile(aln))) {
+  if (file.exists(IQFile(aln, ".treefile"))) {
     message("Results found for ", aln)
   } else {
     seqs <- ape::read.nexus.data(DataFile(aln))

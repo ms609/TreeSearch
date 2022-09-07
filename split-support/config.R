@@ -55,8 +55,8 @@ DataFile <- function(aln, ext = ".nex") {
 }
 
 CreateDir(iqDir)
-IQFile <- function(aln) {
-  paste0(iqDir, "/", aln, ".phy")
+IQFile <- function(aln, suffix = "") {
+  paste0(iqDir, "/", aln, ".phy", suffix)
 }
 
 CreateDir(mbDir)
