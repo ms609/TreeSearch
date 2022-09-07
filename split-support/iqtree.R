@@ -25,7 +25,7 @@ for (aln in alns) {
              " -st DNA ", # Sequence type: DNA
              " -mset JC ", # Model: Jukes-Cantor
              " -mrate E ", # Equal rates only
-             " -nt auto -ntmax 6 ", # Number of threads
+             " -nt 1", # # Number of threads; -nt auto -ntmax 6 is slow
              " -seed 1 ", # Set random seed for reproducibility
              #" -b 1000", # Nonparametric bootstrap is slow and can't
                           # be run alongside UFB
@@ -34,6 +34,7 @@ for (aln in alns) {
              " -lbp 1000 ", # Fast local bootstrap probability
              " -alrt 1000 ", # Approximate likelihood ratio test
              " -abayes ", # Approximate Bayes test
+             " -quiet ", # Approximate Bayes test
              " --redo-tree ", # Overwrite previous run results
              ""
              )
