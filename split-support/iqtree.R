@@ -42,7 +42,10 @@ for (aln in alns) {
     
     # Remove unneeded results files
     keepExt <- c(
-      "treefile", # Maximum likelihood tree, with supports in order requested
+      "treefile", # Maximum likelihood tree
+      #"iqtree", # Lists order of support values
+      # Here: SH-aLRT support (%) / local bootstrap support (%) / 
+      #       aBayes support / ultrafast bootstrap support (%)
       #"contree", # UF Bootstrap consensus tree
       "splits\\.nex" # UF Bootstrap split supports
     )

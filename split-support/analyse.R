@@ -22,7 +22,7 @@ bremer <- numeric(0)
 tntStats <- c("symFq", "symGC", "boot", "jak", "pois")
 tntStat <- matrix(0, 0, length(tntStats), dimnames = list(NULL, tntStats))
 ufb <- numeric(0)
-iqStats <- c("ufb", "lbp", "alrt", "abayes")
+iqStats <- c("alrt", "lbp", "abayes", "ufb") # .iqtree output file gives order
 iqStat <- matrix(0, 0, length(iqStats), dimnames = list(NULL, iqStats))
 
 for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
