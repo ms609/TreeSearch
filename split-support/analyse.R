@@ -51,7 +51,10 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   nTntNode <- length(tntParts)
   tntOnly <- !tntParts %in% partitions
   if (any(tntOnly)) {
-    partitions <- c(partitions, tntParts[[tntOnly]])
+    partitions <- c(
+      partitions,
+      setNames(tntParts[[tntOnly]], paste0("tnt", seq_len(sum(tntOnly))))
+    )
   }
   
   # Load IQ-tree partitions
@@ -59,7 +62,10 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   iqParts <- as.Splits(iqTree)
   iqOnly <- !iqParts %in% partitions
   if (any(iqOnly)) {
-    partitions <- c(partitions, iqParts[[iqOnly]])
+    partitions <- c(
+      partitions,
+      setNames(iqParts[[iqOnly]], paste0("iq", seq_len(sum(iqOnly))))
+    )
   }
   ufbLines <- readLines(IQFile(aln, ".splits.nex"))[-seq_len(nTip + 13)]
   ufbLines <- ufbLines[seq_len(which.max(ufbLines == ";") - 1)]
@@ -74,7 +80,10 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   ufbParts <- ufbParts[[!trivial]]
   ufbOnly <- !ufbParts %in% partitions
   if (any(ufbOnly)) {
-    partitions <- c(partitions, ufbParts[[ufbOnly]])
+    partitions <- c(
+      partitions,
+      setNames(ufbParts[[ufbOnly]], paste0("ufb", seq_len(sum(ufbOnly))))
+    )
   }
   
   # Once all partitions are loaded, label where possible
