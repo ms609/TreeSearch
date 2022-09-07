@@ -1,14 +1,5 @@
 source("split-support/config.R")
 
-# Set up directory structure
-CreateDir <- function(dir) {
-  if (!dir.exists(dir)) dir.create(dir)
-}
-CreateDir("split-support/alignments")
-CreateDir("split-support/concordance")
-CreateDir("split-support/MrBayes")
-CreateDir("split-support/tnt")
-
 # Create reference tree
 set.seed(0)
 referenceTree <- ape::rtree(nTip, equiprob = TRUE)
@@ -20,7 +11,7 @@ print(signif(rate)) # mb.nex: prset brlenspr=unconstrained:uniform(0,<RATE>);
 plot(referenceTree)
 write.tree(referenceTree, file = "split-support/reference.tre")
 
-# Simulate alignments
+# Simulate J-C alignments
 for (i in formatC(1:1000, width = 4, flag = "0")) {
   write.nexus.data(
     toupper(PhyDatToMatrix(
