@@ -214,7 +214,10 @@ m <- glm(partCorrect ~ concord[, "quartet"] + postProb, family = "binomial")
 AIC(m)
 m <- glm(partCorrect ~ concord[, "quartet"], family = "binomial")
 
-common <- rowSums(is.na(concord)) == 0 & rowSums(is.na(tntStat)) == 0
+common <- rowSums(is.na(concord)) == 0 &
+  rowSums(is.na(tntStat)) == 0 &
+  !is.na(bremer) &
+  rowSums(is.na(iqStat)) == 0
 model <- glm(family = "binomial",
              partCorrect[common] ~ 
                postProb[common] +
@@ -228,14 +231,34 @@ model <- glm(family = "binomial",
                tntStat[common, "symGC"] +
                tntStat[common, "boot"] +
                tntStat[common, "jak"] + 
-               tntStat[common, "pois"]
+               tntStat[common, "pois"] +
+               iqStat[common, "alrt"] +
+               iqStat[common, "lbp"] +
+               iqStat[common, "abayes"] +
+               iqStat[common, "ufb"]
              )
 step(model) # AIC
+BIC(glm(family = "binomial", partCorrect[common] ~ postProb[common]))
+BIC(glm(family = "binomial", partCorrect[common] ~ iqStat[common, "ufb"]))
+BIC(glm(family = "binomial", partCorrect[common] ~ bremer[common]))
+BIC(glm(family = "binomial", partCorrect[common] ~ tntStat[common, "symGC"]))
+BIC(glm(family = "binomial", partCorrect[common] ~ concord[common, "quartet"]))
+BIC(glm(family = "binomial", partCorrect[common] ~ concord[common, "mutual"]))
+BIC(glm(family = "binomial", partCorrect[common] ~ concord[common, "shared"]))
 # BIC: https://stackoverflow.com/questions/19400494
 step(model, criterion = "BIC", k = log(length(partCorrect)))
+
+AIC(glm(family = "binomial", partCorrect[common] ~ postProb[common]))
+AIC(glm(family = "binomial", partCorrect[common] ~ iqStat[common, "ufb"]))
+AIC(glm(family = "binomial", partCorrect[common] ~ bremer[common]))
+AIC(glm(family = "binomial", partCorrect[common] ~ tntStat[common, "symGC"]))
+AIC(glm(family = "binomial", partCorrect[common] ~ concord[common, "quartet"]))
+AIC(glm(family = "binomial", partCorrect[common] ~ concord[common, "mutual"]))
+AIC(glm(family = "binomial", partCorrect[common] ~ concord[common, "shared"]))
+
 
 
 
 # The lower the Brier score is for a set of predictions,
 # the better the predictions are calibrated.
-mclust::BrierScore(cbind(1 - postProb, postProb), partCorrect)
+# mclust::BrierScore(cbind(1 - postProb, postProb), partCorrect)
