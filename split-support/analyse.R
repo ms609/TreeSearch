@@ -12,7 +12,7 @@ source("split-support/config.R")
 
 referenceTree <- read.tree("split-support/reference.tre")
 refSplits <- as.Splits(referenceTree)
-tips <- names(read.nexus.data(DataFile(aln)))
+tips <- names(read.nexus.data(DataFile("aln0001")))
 
 # Eugh, I don't like growing vectors like this!
 partCorrect <- logical(0)
@@ -140,6 +140,7 @@ Peek <- function(var) {
   AIC(m)
 }
 Peek(postProb)
+Peek(bremer)
 Peek(concord[, "quartet"])
 Peek(concord[, "cluster"])
 Peek(concord[, "mutual"])
