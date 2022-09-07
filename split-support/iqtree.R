@@ -27,7 +27,8 @@ for (aln in alns) {
              " -mrate E ", # Equal rates only
              " -nt auto -ntmax 6 ", # Number of threads
              " -seed 1 ", # Set random seed for reproducibility
-             #" -b 1000", # Nonparametric bootstrap
+             #" -b 1000", # Nonparametric bootstrap is slow and can't
+                          # be run alongside UFB
              " -bb 1000 ", # Number of ultrafast bootstrap replicates
              " -bnni ", # Avoids branch support overestimates in UFB
              " -lbp 1000 ", # Fast local bootstrap probability
