@@ -61,6 +61,21 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   if (any(iqOnly)) {
     partitions <- c(partitions, iqParts[[iqOnly]])
   }
+  ufbLines <- readLines(IQFile(aln, ".splits.nex"))[-seq_len(nTip + 13)]
+  ufbLines <- ufbLines[seq_len(which.max(ufbLines == ";") - 1)]
+  ufbLines <- do.call(rbind, strsplit(trimws(ufbLines), "\t"))
+  ufbParts <- as.Splits(t(vapply(
+    strsplit(trimws(gsub(",", "", fixed = TRUE, ufbLines[, 2])), " "),
+    function(a) {
+      tabulate(as.numeric(a), nTip) == 1
+    }, logical(nTip))), tipLabels = tips)
+  trivial <- TrivialSplits(ufbParts)
+  ufbVals <- as.numeric(ufbLines[!trivial, 1])
+  ufbParts <- ufbParts[[!trivial]]
+  ufbOnly <- !ufbParts %in% partitions
+  if (any(ufbOnly)) {
+    partitions <- c(partitions, ufbParts[[ufbOnly]])
+  }
   
   # Once all partitions are loaded, label where possible
   
@@ -102,7 +117,8 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   if (file.exists(ConcFile(aln))) {
     conc <- as.matrix(read.table(ConcFile(aln)))
     if (dim(conc)[1] != dim(tntTags)[1]) {
-      stop("Dimension mismatch; is concordance cache out of date?")
+      file.remove(ConcFile(aln))
+      stop("Dimension mismatch; is concordance cache ", aln, " out of date?")
     }
   } else {
     conc <- cbind(
