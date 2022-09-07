@@ -8,7 +8,7 @@ for (aln in alns) {
   if (file.exists(IQFile(aln))) {
     message("Results found for ", aln)
   } else {
-    seqs <- read.nexus.data(DataFile(aln))
+    seqs <- ape::read.nexus.data(DataFile(aln))
     phyle <- IQFile(aln)
     on.exit(unlink(phyle))
     writeLines(c(
@@ -52,13 +52,3 @@ for (aln in alns) {
                           outFiles)])
   }
 }
-
-# Validation step
-for (aln in alns) {
-  thisFile <- TNTFile(aln, "ew")
-  if (file.exists(thisFile) && length(readLines(thisFile)) < 60) {
-    message("Deleting incomplete analysis: ", aln)
-    file.remove(thisFile)
-  }
-}
-
