@@ -106,10 +106,19 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
                    dimnames = list(NULL, iqStats))
   iqTags[iqMatch, ] <- t(vapply(partTags, as.numeric, numeric(length(iqStats))))
   
+  
+  # Populate Ultra-Fast bootstrap supports for partitions not in consensus
+  ufbMatch <- match(ufbParts, partitions)
+  iqTags[ufbMatch, "ufb"] <- ufbVals
+  
+  
+  # Populate posterior probabilities
   pp <- read.table(MBFile(aln, "tstat"), skip = 1,
                    header = TRUE, comment.char = "")
   pp <- setNames(pp[, "Probability..s."], pp[, "ID"])
   
+  
+  # Calculate concordances
   dataset <- MatrixToPhyDat(matrix(unlist(read.nexus.data(DataFile(aln))), 
                                    nrow = nTip, byrow = TRUE,
                                    dimnames = list(tips, NULL)))
