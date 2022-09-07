@@ -40,8 +40,9 @@ for (aln in alns) {
     
     # Remove unneeded results files
     keepExt <- c(
-      "contree", # Consensus tree - why not
-      "splits\\.nex" # Convergence diagnostics
+      "treefile", # Maximum likelihood tree, with supports in order requested
+      #"contree", # UF Bootstrap consensus tree
+      "splits\\.nex" # UF Bootstrap split supports
     )
     
     outFiles <- list.files(path = iqDir, pattern = aln, full.names = TRUE)
