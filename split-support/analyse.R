@@ -21,12 +21,18 @@ concord <- numeric(0)
 bremer <- numeric(0)
 tntStats <- c("symFq", "symGC", "boot", "jak", "pois")
 tntStat <- matrix(0, 0, length(tntStats), dimnames = list(NULL, tntStats))
+ufb <- numeric(0)
+iqStats <- c("ufb", "lbp", "alrt", "abayes")
+iqStat <- matrix(0, 0, length(iqStats), dimnames = list(NULL, iqStats))
 
 for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   aln <- alns[i]
+  
+  # Load MrBayes partitions
   parts <- read.table(MBFile(aln, "parts"), skip = 2 + nTip)
   partitions <- setNames(as.Splits(parts[, 2], tips), paste0("mb", parts[, 1]))
   
+  # Load TNT partitions
   tntFile <- TNTFile(aln, "ew")
   tntTree <- suppressMessages(ReadTntTree(tntFile, tipLabels = tips))
   if (!inherits(tntTree, "multiPhylo")) {
@@ -47,6 +53,18 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   if (any(tntOnly)) {
     partitions <- c(partitions, tntParts[[tntOnly]])
   }
+  
+  # Load IQ-tree partitions
+  iqTree <- read.tree(IQFile(aln, ".treefile"))
+  iqParts <- as.Splits(iqTree)
+  iqOnly <- !iqParts %in% partitions
+  if (any(iqOnly)) {
+    partitions <- c(partitions, iqParts[[iqOnly]])
+  }
+  
+  # Once all partitions are loaded, label where possible
+  
+  # Populate TNT supports
   brem <- rep(NA_real_, length(partitions))
   partId2 <- match(as.Splits(tntTree[[2]]), partitions)
   brem[partId2] <- 0
@@ -64,6 +82,14 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
     as.numeric(x)
   }, numeric(length(tntStats))))
   
+  
+  # Populate IQ-tree supports
+  iqMatch <- match(iqParts, partitions)
+  tags <- strsplit(iqTree[["node.label"]], "/")
+  partTags <- tags[as.numeric(names(iqParts)) - NTip(iqTree)]
+  iqTags <- matrix(NA_real_, length(partitions), length(iqStats),
+                   dimnames = list(NULL, iqStats))
+  iqTags[iqMatch, ] <- t(vapply(partTags, as.numeric, numeric(length(iqStats))))
   
   pp <- read.table(MBFile(aln, "tstat"), skip = 1,
                    header = TRUE, comment.char = "")
@@ -94,12 +120,13 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   concord <- rbind(concord, conc)
   bremer <- c(bremer, brem)
   tntStat <- rbind(tntStat, tntTags)
+  iqStat <- rbind(iqStat, iqTags)
   
   stopifnot(dim(concord)[1] == dim(tntStat)[1])
   stopifnot(dim(concord)[1] == length(postProb))
 }
 
-model <- glm(partCorrect ~ postProb + concord + bremer + tntStat,
+model <- glm(partCorrect ~ postProb + concord + bremer + tntStat + iqStat,
              family = "binomial")
 
 Histy <- function(var, breaks = 12, even = TRUE) { # "Mosaic plot"
@@ -118,7 +145,7 @@ Histy <- function(var, breaks = 12, even = TRUE) { # "Mosaic plot"
   axis(1, signif(breaks), at = seq_along(breaks) / 12)
 }
 
-par(mfrow = c(4, 3), mar = rep(2, 4))
+par(mfrow = c(4, 4), mar = rep(2, 4))
 Histy(postProb)
 Histy(concord[, "quartet"])
 Histy(concord[, "mutual"])
@@ -131,6 +158,10 @@ Histy(tntStat[, "symGC"])
 Histy(tntStat[, "boot"])
 Histy(tntStat[, "jak"])
 Histy(tntStat[, "pois"])
+Histy(iqStat[, "ufb"])
+Histy(iqStat[, "lbp"])
+Histy(iqStat[, "alrt"])
+Histy(iqStat[, "abayes"])
 
 Peek <- function(var) {
   m <- glm(partCorrect ~ var, family = "binomial")
