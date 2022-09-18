@@ -328,8 +328,8 @@ ui <- fluidPage(
                        "None" = "none",
                        "% trees containing" = "p",
                        "Quartet concordance" = "qc",
-                       "Clustering conc." = "clc",
-                       "Phylogenetic conc." = "phc",
+                       "Clustering concordance" = "clc",
+                       "Phylogenetic concordance" = "phc",
                        "Mutual Clustering conc." = "mcc",
                        "Shared Phylog. conc." = "spc"
                      ))
