@@ -1,4 +1,4 @@
-# TreeSearch 1.2.0.9002
+# TreeSearch 1.2.0.9003
 
 - New function `LengthAdded()` tests which characters contribute to taxon
   instability, per Pol & Escapa (2009) <doi:10.1111/j.1096-0031.2009.00258.x>
@@ -6,6 +6,8 @@
 - New vignette on tree space mapping
 
 - Support reading characters from Excel spreadsheets in GUI
+
+- Allow retention of suboptimal trees in GUI
   
 
 # TreeSearch 1.2.0
