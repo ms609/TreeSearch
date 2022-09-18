@@ -1490,6 +1490,14 @@ server <- function(input, output, session) {
            "prof" = "Profile")
   })
   
+  tolerance <- reactive({
+    if (input$epsilon == 0) {
+      sqrt(.Machine$double.eps)
+    } else {
+      input$epsilon
+    }
+  })
+  
   StartSearch <- function () {
     if (!HaveData()) {
       Notification("No data loaded", type = "error")
@@ -1516,8 +1524,9 @@ server <- function(input, output, session) {
         paste0("  ratchIter = ", input$ratchIter, ","), 
         paste0("  tbrIter = ", input$tbrIter, ","), 
         paste0("  maxHits = ", ceiling(10 ^ input$maxHits), ","), 
-        paste0("  startIter = ", input$startIter, ","), 
-        paste0("  finalIter = ", input$finalIter, ","), 
+        paste0("  startIter = ", input$startIter, ","),
+        paste0("  finalIter = ", input$finalIter, ","),
+        paste0("  tolerance = ", tolerance(), ","),
         "  verbosity = 4",
         ")"))
       newTrees <- withProgress(
@@ -1529,6 +1538,7 @@ server <- function(input, output, session) {
                           maxHits = ceiling(10 ^ input$maxHits),
                           startIter = input$startIter,
                           finalIter = input$finalIter,
+                          tolerance = tolerance(),
                           verbosity = 4L),
         value = 0.85, message = "Finding MPT",
         detail = paste0(ceiling(10^input$maxHits), " hits; ", wtType())
