@@ -21,7 +21,7 @@ app$setInputs(ratchIter = 2)
 app$setInputs(maxHits = 1)
 app$setInputs(tbrIter = 1)
 app$setInputs(startIter = 1.2)
-app$setInputs(epsilon = 0) # tolerance line should be omitted
+app$setInputs(epsilon = 0) # No tolerance line here
 app$setInputs(finalIter = 1)
 app$setInputs(modalGo = "click", timeout_ = 2e05)
 app$snapshotDownload("saveZip")

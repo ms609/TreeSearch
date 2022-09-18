@@ -69,6 +69,7 @@ newTrees <- MaximizeParsimony(
   maxHits = 20,
   startIter = 1.6,
   finalIter = 1.4,
+  tolerance = 1,
   verbosity = 4
 )
 
