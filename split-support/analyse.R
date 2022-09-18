@@ -160,6 +160,11 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   stopifnot(dim(concord)[1] == length(postProb))
 }
 
+common <- rowSums(is.na(concord)) == 0 &
+  rowSums(is.na(tntStat)) == 0 &
+  !is.na(bremer) &
+  rowSums(is.na(iqStat)) == 0
+
 model <- glm(partCorrect ~ postProb + concord + bremer + tntStat + iqStat,
              family = "binomial")
 
@@ -214,10 +219,6 @@ m <- glm(partCorrect ~ concord[, "quartet"] + postProb, family = "binomial")
 AIC(m)
 m <- glm(partCorrect ~ concord[, "quartet"], family = "binomial")
 
-common <- rowSums(is.na(concord)) == 0 &
-  rowSums(is.na(tntStat)) == 0 &
-  !is.na(bremer) &
-  rowSums(is.na(iqStat)) == 0
 model <- glm(family = "binomial",
              partCorrect[common] ~ 
                postProb[common] +
