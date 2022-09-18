@@ -1527,7 +1527,7 @@ server <- function(input, output, session) {
         paste0("  maxHits = ", ceiling(10 ^ input$maxHits), ","), 
         paste0("  startIter = ", input$startIter, ","),
         paste0("  finalIter = ", input$finalIter, ","),
-        paste0("  tolerance = ", tolerance(), ","),
+        if (input$epsilon != 0) paste0("  tolerance = ", tolerance(), ","),
         "  verbosity = 4",
         ")"))
       newTrees <- withProgress(

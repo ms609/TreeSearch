@@ -5,6 +5,7 @@ app$snapshotInit("SearchLog")
 app$setInputs(dataSource = "Wills2012", timeout_ = 4000)
 app$setInputs(searchConfig = "click")
 app$setInputs(concavity = 1.1) # Set whilst visible; remembered later?
+app$setInputs(epsilon = 1) # Set whilst visible; remembered later?
 app$setInputs(`implied.weights` = "off")
 app$setInputs(finalIter = 1.4)
 app$setInputs(maxHits = 1.3)
@@ -20,6 +21,7 @@ app$setInputs(ratchIter = 2)
 app$setInputs(maxHits = 1)
 app$setInputs(tbrIter = 1)
 app$setInputs(startIter = 1.2)
+app$setInputs(epsilon = 10) # tolerance should not be set
 app$setInputs(finalIter = 1)
 app$setInputs(modalGo = "click", timeout_ = 2e05)
 app$snapshotDownload("saveZip")
