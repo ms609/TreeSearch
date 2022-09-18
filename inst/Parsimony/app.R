@@ -1161,6 +1161,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "implied.weights",
                       selected = input$implied.weights)
     updateSliderInput(session, "concavity", value = input$concavity)
+    updateNumericInput(session, "epsilon", value = input$epsilon)
     updateSliderInput(session, "ratchIter", value = input$ratchIter)
     updateSliderInput(session, "tbrIter", value = input$tbrIter)
     updateSliderInput(session, "maxHits", value = input$maxHits)
@@ -1177,10 +1178,10 @@ server <- function(input, output, session) {
                               "Equal" = "off"), "on"),
               sliderInput("concavity", "Step weight concavity constant", min = 0L,
                          max = 3L, pre = "10^", value = 1L),
-              sliderInput("ratchIter", "Ratchet iterations", min = 0L,
-                          max = 50L, value = 6L, step = 1L),
               numericInput("epsilon", "Keep if suboptimal by \u2264", min = 0,
                           value = 0),
+              sliderInput("ratchIter", "Ratchet iterations", min = 0L,
+                          max = 50L, value = 6L, step = 1L),
       )), column(6, 
              tagList(
               sliderInput("maxHits", "Maximum hits", min = 0L, max = 5L,
