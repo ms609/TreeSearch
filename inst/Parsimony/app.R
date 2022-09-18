@@ -321,13 +321,18 @@ ui <- fluidPage(
                  hidden(tags$div(id = "treePlotConfig",
                    selectizeInput("outgroup", "Root on:", multiple = TRUE,
                                   choices = list()),
-                   selectizeInput("concordance", "Split support:",
-                                  choices = list("None" = "none",
-                                                 "% trees containing" = "p",
-                                                 "Quartet concordance" = "qc",
-                                                 "Mutual Clustering conc." = "mcc",
-                                                 "Shared Phylog. conc." = "spc"
-                                                 ))
+                   selectizeInput(
+                     "concordance",
+                     "Split support:",
+                     choices = list(
+                       "None" = "none",
+                       "% trees containing" = "p",
+                       "Quartet concordance" = "qc",
+                       "Clustering conc." = "clc",
+                       "Phylogenetic conc." = "phc",
+                       "Mutual Clustering conc." = "mcc",
+                       "Shared Phylog. conc." = "spc"
+                     ))
                  )),
                  hidden(tags$div(id = "mapConfig",
                    checkboxGroupInput("mapLines", "Connect:",
@@ -1749,6 +1754,10 @@ server <- function(input, output, session) {
         "qc"  = paste0("QuartetConcordance(", plottedTree, ", dataset)"),
         "clc" = paste0("ClusteringConcordance(", plottedTree, ", dataset)"),
         "phc" = paste0("PhylogeneticConcordance(", plottedTree, ", dataset)"),
+        "mcc" = paste0("MutualClusteringConcordance(", plottedTree,
+                       ", dataset)"),
+        "spc" = paste0("SharedPhylogeneticConcordance(", plottedTree,
+                       ", dataset)"),
         NULL
       )
       LogCodeP(paste0("concordance <- ", concCode))
