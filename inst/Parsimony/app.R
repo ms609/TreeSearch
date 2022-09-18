@@ -1161,6 +1161,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "implied.weights",
                       selected = input$implied.weights)
     updateSliderInput(session, "concavity", value = input$concavity)
+    updateNumericInput(session, "epsilon", value = input$epsilon)
     updateSliderInput(session, "ratchIter", value = input$ratchIter)
     updateSliderInput(session, "tbrIter", value = input$tbrIter)
     updateSliderInput(session, "maxHits", value = input$maxHits)
@@ -1177,12 +1178,14 @@ server <- function(input, output, session) {
                               "Equal" = "off"), "on"),
               sliderInput("concavity", "Step weight concavity constant", min = 0L,
                          max = 3L, pre = "10^", value = 1L),
+              numericInput("epsilon", "Keep if suboptimal by \u2264", min = 0,
+                          value = 0),
               sliderInput("ratchIter", "Ratchet iterations", min = 0L,
                           max = 50L, value = 6L, step = 1L),
-              sliderInput("maxHits", "Maximum hits", min = 0L, max = 5L,
-                          value = 2L, pre = "10^"),
       )), column(6, 
              tagList(
+              sliderInput("maxHits", "Maximum hits", min = 0L, max = 5L,
+                         value = 2L, pre = "10^"),
               sliderInput("tbrIter", "TBR depth", min = 1L, max = 20L,
                           value = 1L, step = 1L),
               sliderInput("startIter", "First iteration extra depth", min = 1L,
@@ -1488,6 +1491,14 @@ server <- function(input, output, session) {
            "prof" = "Profile")
   })
   
+  tolerance <- reactive({
+    if (input$epsilon == 0) {
+      sqrt(.Machine$double.eps)
+    } else {
+      input$epsilon
+    }
+  })
+  
   StartSearch <- function () {
     if (!HaveData()) {
       Notification("No data loaded", type = "error")
@@ -1514,8 +1525,9 @@ server <- function(input, output, session) {
         paste0("  ratchIter = ", input$ratchIter, ","), 
         paste0("  tbrIter = ", input$tbrIter, ","), 
         paste0("  maxHits = ", ceiling(10 ^ input$maxHits), ","), 
-        paste0("  startIter = ", input$startIter, ","), 
-        paste0("  finalIter = ", input$finalIter, ","), 
+        paste0("  startIter = ", input$startIter, ","),
+        paste0("  finalIter = ", input$finalIter, ","),
+        if (input$epsilon > 0) paste0("  tolerance = ", tolerance(), ","),
         "  verbosity = 4",
         ")"))
       newTrees <- withProgress(
@@ -1527,6 +1539,7 @@ server <- function(input, output, session) {
                           maxHits = ceiling(10 ^ input$maxHits),
                           startIter = input$startIter,
                           finalIter = input$finalIter,
+                          tolerance = tolerance(),
                           verbosity = 4L),
         value = 0.85, message = "Finding MPT",
         detail = paste0(ceiling(10^input$maxHits), " hits; ", wtType())
