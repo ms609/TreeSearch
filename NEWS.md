@@ -8,6 +8,8 @@
 - Support reading characters from Excel spreadsheets in GUI
 
 - Allow retention of suboptimal trees in GUI
+
+- Use kmeans++ clustering in GUI
   
 
 # TreeSearch 1.2.0
