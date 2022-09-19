@@ -58,6 +58,8 @@ Suggests:
   spelling,
   testthat,
   vdiffr (>= 1.0.0),
+Remotes:
+  ms609/TreeDist
 Config/Needs/check:
   callr,
   pkgbuild,
