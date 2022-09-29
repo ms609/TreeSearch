@@ -3403,7 +3403,7 @@ server <- function(input, output, session) {
         rCode <- sub("dataFile <- .*$",
                      paste0("dataFile <- system.file(\"datasets/",
                             input$dataSource,
-                            ".nex\", package = \"TreeSearch\") # Test mode"),
+                            ".nex\", package = \"TreeSearch\") # FALSE CODE for TEST MODE"),
                      rCode,
                      perl = TRUE)
         rCode <- sub("treeFile <- .*$",
