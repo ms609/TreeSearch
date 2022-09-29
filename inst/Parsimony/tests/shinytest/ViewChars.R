@@ -4,7 +4,7 @@ app$snapshotInit("ViewChars")
 # Test downloaded logs with
 # source("inst/parsimony/tests/shinytest/viewchars-current/002.download")
 
-app$setInputs(dataSource = "Agnarsson2004")
+app$uploadFile(dataFile = "../../../datasets/Agnarsson2004.nex")
 app$snapshot()
 app$snapshotDownload("savePlotZip")
 app$setInputs(consP = 0.5)
