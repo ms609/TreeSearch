@@ -794,7 +794,7 @@ server <- function(input, output, session) {
       r$sortTrees <- FALSE # Trees loaded from dataset may be in sequence
       r$readDataFile <- NULL
       
-      if (grep("\\.xlsx?$", dataFile)) {
+      if (length(grep("\\.xlsx?$", dataFile))) {
         if (!requireNamespace("readxl", quietly = TRUE)) {
           install.packages("readxl")
         }
