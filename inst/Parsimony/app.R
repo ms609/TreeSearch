@@ -2911,7 +2911,7 @@ server <- function(input, output, session) {
   }
   
   maxProjDim <- reactive({
-    min(12, length(r$trees) - 1L)
+    min(11, length(r$trees) - 1L)
   })
   
   nProjDim <- reactive({
