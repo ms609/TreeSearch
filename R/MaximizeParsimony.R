@@ -353,9 +353,9 @@ MaximizeParsimony <- function (dataset, tree,
     }
   }
   
-  .Timeout <- function () {
+  .Timeout <- function() {
     if (Sys.time() > stopTime) {
-      .Info(1L, "Stopping search at ", Sys.time(), ": ", maxTime,
+      .Info(1L, "Stopping search at ", .DateTime(), ": ", maxTime,
             " minutes have elapsed.",
             "  Best score was ", signif(.Score(bestEdges[, , 1])), ".",
             if (maxTime == 60) "\nIncrease `maxTime` for longer runs.")
@@ -365,9 +365,9 @@ MaximizeParsimony <- function (dataset, tree,
     FALSE
   }
   
-  .ReturnValue <- function (bestEdges) {
+  .ReturnValue <- function(bestEdges) {
     if (verbosity > 0L) {
-      cli_alert_success(paste0(Sys.time(), 
+      cli_alert_success(paste0(.DateTime(),
                                ": Tree search terminated with score {.strong ",
                                "{signif(.Score(bestEdges[, , 1]))}}"))
     }
@@ -606,7 +606,7 @@ MaximizeParsimony <- function (dataset, tree,
              " TBR depth ", as.integer(searchIter),
              "; keeping max ", as.integer(searchHits),
              " trees; k = ", concavity, ".")
-    .Info(1L, Sys.time(), ": Score to beat: ", signif(bestScore))
+    .Info(1L, .DateTime(), ": Score to beat: ", signif(bestScore))
 
     newEdges <- .Search("TBR search 1")
     
@@ -639,8 +639,7 @@ MaximizeParsimony <- function (dataset, tree,
     iter <- 0L
     while (iter < ratchIter) {
       iter <- iter + 1L
-      .Message(1L, "Ratchet iteration {iter} @ ",
-               "{format(Sys.time(), \"%H:%M:%S\")}",
+      .Message(1L, "Ratchet iteration {iter} @ {.Time()}",
                "; score to beat: {.strong {signif(bestScore)} }")
       verbosity <- verbosity - 1L
       eachChar <- seq_along(startWeights)
@@ -718,7 +717,7 @@ MaximizeParsimony <- function (dataset, tree,
     .Heading("Sample local optimum",
              "TBR depth {searchIter}; keeping {searchHits}",
              " trees; k = {concavity}")
-    .Info(1L, Sys.time(), ": Score: ", signif(bestScore))
+    .Info(1L, .Time(), ": Score: ", signif(bestScore))
     finalEdges <- .Search("Final search")
     newBestScore <- .Score(finalEdges[, , 1])
     improved <- newBestScore + epsilon < bestScore
@@ -770,6 +769,14 @@ MaximizeParsimony <- function (dataset, tree,
   hit[] <- 0
   hit[stage] <- dim(new)[3]
   structure(new, "firstHit" = hit)
+}
+
+.Time <- function() {
+  format(Sys.time(), "%H:%M:%S")
+}
+
+.DateTime <- function() {
+  format(Sys.time(), "%Y-%m-%d %T")
 }
 
 #' @rdname MaximizeParsimony

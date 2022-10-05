@@ -16,8 +16,8 @@ suppressPackageStartupMessages({
 if (logging) {
   logMsgFile <- file("log.lg", open = "w+")
   LogMsg <- function (...) {
-    message(Sys.time(), ": ", ...)
-    writeLines(as.character(Sys.time()), con = logMsgFile)
+    message(.DateTime(), ": ", ...)
+    writeLines(.DateTime(), con = logMsgFile)
     writeLines(paste0("  ", ...), con = logMsgFile)
   }
   Put <- function (..., file) {
@@ -561,7 +561,7 @@ server <- function(input, output, session) {
   
   BeginLog <- function() {
     LogComment(c(
-      paste("# # TreeSearch session log:", Sys.time(), "# # #"),
+      paste("# # TreeSearch session log:", .DateTime(), "# # #"),
       "",
       systemInfo,
       "",
@@ -595,7 +595,7 @@ server <- function(input, output, session) {
   BeginLogP <- function() {
     r$plotLog <- NULL
     LogCommentP(c(
-      paste("# # TreeSearch plot log:", Sys.time(), "# # #"),
+      paste("# # TreeSearch plot log:", .DateTime(), "# # #"),
       "",
       systemInfo,
       "",
@@ -3393,7 +3393,7 @@ server <- function(input, output, session) {
     content = function(file) {
       if (isTRUE(getOption("shiny.testmode"))) {
         rCode <- RCode()
-        rCode <- sub("TreeSearch plot log: 2[\\d\\-]{9} [012][\\d:\\.]{7,}",
+        rCode <- sub("TreeSearch plot log: 2[\\d\\-]{9} [012][\\d:]{7}",
                      "TreeSearch plot log: <DATE-AND-TIME>", 
                      rCode, perl = TRUE)
         rCode[4] <- "# System: <SYS-INFO>"
