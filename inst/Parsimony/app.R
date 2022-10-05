@@ -3438,9 +3438,13 @@ server <- function(input, output, session) {
   output$savePdf <- downloadHandler(
     filename = function() paste0(saveDetails()$fileName, ".pdf"),
     content = function (file) {
-      pdf(file, title = saveDetails()$title,
-          width = 8L,
-          height = saveDetails()$asp * 8L)
+      width <- 8
+      pdf(
+        file,
+        title = saveDetails()$title,
+        width = width,
+        height = saveDetails()$asp * width
+      )
       MainPlot()
       dev.off()
     })
