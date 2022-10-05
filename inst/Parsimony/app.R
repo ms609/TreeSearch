@@ -3440,7 +3440,7 @@ server <- function(input, output, session) {
     content = function (file) {
       pdf(file, title = saveDetails()$title,
           width = 8L,
-          height = saveDetails()$asp * 10L)
+          height = saveDetails()$asp * 8L)
       MainPlot()
       dev.off()
     })
