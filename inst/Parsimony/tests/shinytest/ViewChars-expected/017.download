@@ -41,7 +41,7 @@ getwd() # Should match location of data / tree files
 setwd(".") # Replace . with desired/directory to change
 
 # Load data from file
-dataFile <- system.file("datasets/Agnarsson2004.nex", package = "TreeSearch") # Test mode
+dataFile <- system.file("datasets/Agnarsson2004.nex", package = "TreeSearch") # FALSE CODE for TEST MODE
 dataset <- ReadAsPhyDat(dataFile)
 
 # Load trees from file
