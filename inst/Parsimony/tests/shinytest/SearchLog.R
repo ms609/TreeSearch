@@ -32,7 +32,7 @@ downloads <- list.files("SearchLog-current", "*.download", full.names = TRUE)
 
 for (file in downloads) {
   lines <- readLines(file)
-  lines <- sub("TreeSearch session log: 2[\\d\\-]{9} [012][\\d:]{7}",
+  lines <- sub("TreeSearch session log: 2[\\d\\-]{9} [012][\\d:\\.]{7,}",
                "TreeSearch session log: <DATE-AND-TIME>", 
                lines, perl = TRUE)
   lines[2] <- sub("\\[R-package APE, .*\\]",
