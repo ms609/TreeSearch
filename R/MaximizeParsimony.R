@@ -521,8 +521,8 @@ MaximizeParsimony <- function (dataset, tree,
       #TODO Fixing this will require updating the counts table cleverly
       # Or we could use approximate info amounts, e.g. by treating "-" as 
       # an extra token
-      cli_alert_info(paste0("Inapplicable tokens "-" treated as ambiguous "?" ",
-                            "for profile parsimony"))
+      cli_alert_info(paste0("Inapplicable tokens \"-\" treated as ambiguous ",
+                            "\"?\" for profile parsimony"))
       cont <- attr(dataset, "contrast")
       cont[cont[, "-"] != 0, ] <- 1
       attr(dataset, "contrast") <- cont[, colnames(cont) != "-"]
