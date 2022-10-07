@@ -428,7 +428,7 @@ ui <- fluidPage(
                       list("Cluster membership" = "clust",
                            "Parsimony score" = "score",
                            "When first found" = "firstHit")),
-          selectInput("spacePch", "Plotting symbol:",
+          selectInput("spacePch", "Plotting symbols:",
                       selected = "relat",
                       list("Cluster membership" = "clust",
                            "Relationships" = "relat",
