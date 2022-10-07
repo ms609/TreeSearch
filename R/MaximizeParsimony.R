@@ -639,7 +639,7 @@ MaximizeParsimony <- function (dataset, tree,
     iter <- 0L
     while (iter < ratchIter) {
       iter <- iter + 1L
-      .Message(1L, "Ratchet iteration {iter} @ {.Time()}",
+      .Message(1L, "Ratchet iteration {iter} @ {(.Time())}",
                "; score to beat: {.strong {signif(bestScore)} }")
       verbosity <- verbosity - 1L
       eachChar <- seq_along(startWeights)
