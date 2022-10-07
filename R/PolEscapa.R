@@ -1,7 +1,7 @@
 #' Contribution of character to leaf instability
 #' 
 #' Would tree lengths change if a character was coded as ambiguous for each 
-#' leaf \insertRef{Pol2009}{TreeSearch}?
+#' leaf \insertCite{Pol2009}{TreeSearch}?
 #' 
 #' High values for a leaf indicate that its coding contributes to instability
 #' ("Roguish" behaviour -- see [\pkg{Rogue}](https://ms609.github.io/Rogue/)
