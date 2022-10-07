@@ -2113,6 +2113,7 @@ server <- function(input, output, session) {
                      whichTree(),
                      input$concordance,
                      r$outgroup,
+                     concavity(),
                      input$mapDisplay,
                      r$dataHash, r$treeHash), 
         "space" = list(r$treeHash, input$plotFormat,
