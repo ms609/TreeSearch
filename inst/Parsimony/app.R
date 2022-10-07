@@ -16,8 +16,8 @@ suppressPackageStartupMessages({
 if (logging) {
   logMsgFile <- file("log.lg", open = "w+")
   LogMsg <- function (...) {
-    message(Sys.time(), ": ", ...)
-    writeLines(as.character(Sys.time()), con = logMsgFile)
+    message(.DateTime(), ": ", ...)
+    writeLines(.DateTime(), con = logMsgFile)
     writeLines(paste0("  ", ...), con = logMsgFile)
   }
   Put <- function (..., file) {
@@ -111,7 +111,7 @@ Reference <- function (authors, year, title, journal = "",
   paste0("<p class=\"reference\">", authors, " (", year, "). &ldquo;", title,
          "&rdquo;. ",
          if (editors != "") paste0("In: ", editors, " (eds). ") else "",
-         if (journal != "") paste0("<i>", journal, "</i>. ") else "",
+         if (journal != "") paste0("<i>", journal, "</i> ") else "",
          if (is.null(volume)) "" else paste0("<b>", volume, "</b>:"),
          if (is.null(publisher)) "" else paste0(publisher, ". "),
          if (is.null(pages)) "" else paste0(paste0(pages, collapse = "&ndash;"), ". "),
@@ -154,11 +154,11 @@ Gower1969 <- Reference(
   title = "Minimum spanning trees and single linkage cluster analysis",
   authors = c("Gower, J.C.", "Ross, G.J.S."),
   year = 1969, volume = 18, pages = c(54, 64), doi = "10.2307/2346439",
-  journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)")
+  journal = "Journal of the Royal Statistical Society Series C (Applied Statistics)")
 Hartigan1979 <- Reference(
   title = "Algorithm AS 136: a <i>K</i>-means clustering algorithm",
   authors = c("Hartigan, J.A.", "Wong, M.A."),
-  journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)",
+  journal = "Journal of the Royal Statistical Society Series C (Applied Statistics)",
   year = 1979, volume = 28, pages = c(100, 108),
   doi = "10.2307/2346830")
 Kaski2003 <- Reference(
@@ -179,7 +179,7 @@ Maechler2019 <- Reference(
   journal = "Comprehensive R Archive Network")
 Morphy <- Reference(
   c("Brazeau, M.D.", "Smith, M.R.", "Guillerme, T."), 2017,
-  "MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability.",
+  "MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability",
   doi = "10.5281/zenodo.815371")
 Murtagh1983 <- Reference(
   title = "A survey of recent advances in hierarchical clustering algorithms",
@@ -194,33 +194,33 @@ Pol2009 <- Reference(
   title = "Unstable taxa in cladistic analysis: identification and the assessment of relevant characters",
   authors = c("Pol, D.", "Escapa, I.H."),
   journal = "Cladistics", 2009, 25, pages = c(515, 527), 
-  doi = "10.1111/j.1096-0031.2009.00258.x"
-)
+  doi = "10.1111/j.1096-0031.2009.00258.x")
 RCoreTeam <- Reference(
   authors = "R Core Team", year = 2020,
   title = "R: A language and environment for statistical computing",
   publisher = "R Foundation for Statistical Computing, Vienna, Austria")
 SmithDist <- Reference(
-  "Smith, M.R.", 2020, "TreeDist: distances between phylogenetic trees",
+  "Smith, M.R.", "2020a", "TreeDist: distances between phylogenetic trees",
   doi = "10.5281/zenodo.3528123", "Comprehensive R Archive Network")
 SmithQuartet <- Reference(
   "Smith, M.R.", 2019,
   "Quartet: comparison of phylogenetic trees using quartet and split measures",
   "Comprehensive R Archive Network", doi = "10.5281/zenodo.2536318")
 SmithSearch <- Reference(
-  "Smith, M.R.", 2021, " TreeSearch: morphological phylogenetic analysis in R",
-  "Preprint at bioRxiv.", doi = "10.1101/2021.11.08.467735")
+  "Smith, M.R.", 2022, "TreeSearch: morphological phylogenetic analysis in R",
+  "R Journal", pages = "Accepted manuscript",
+  doi = "10.1101/2021.11.08.467735")
 Smith2020 <- Reference(
-  "Smith, M.R.", 2020,
+  "Smith, M.R.", "2020b",
   "Information theoretic Generalized Robinson-Foulds metrics for comparing phylogenetic trees",
   "Bioinformatics", volume = 36, pages = "5007--5013",
   doi = "10.1093/bioinformatics/btaa614")
 SmithSpace <- Reference(
-  "Smith, M.R.", "2022b", "Robust analysis of phylogenetic tree space",
+  "Smith, M.R.", "2022a", "Robust analysis of phylogenetic tree space",
   "Systematic Biology", 71, pages = c("1255", "1270"),
   doi = "10.1093/sysbio/syab100")
 SmithRogue <- Reference(
-  "Smith, M.R.", "2022a",
+  "Smith, M.R.", "2022b",
   "Using information theory to detect rogue taxa and improve consensus trees",
   "Systematic Biology", 71, pages = c("1088", "1094"),
   doi = "10.1093/sysbio/syab099")
@@ -435,7 +435,7 @@ ui <- fluidPage(
                       list("Cluster membership" = "clust",
                            "Parsimony score" = "score",
                            "When first found" = "firstHit")),
-          selectInput("spacePch", "Plotting symbol:",
+          selectInput("spacePch", "Plotting symbols:",
                       selected = "relat",
                       list("Cluster membership" = "clust",
                            "Relationships" = "relat",
@@ -568,7 +568,7 @@ server <- function(input, output, session) {
   
   BeginLog <- function() {
     LogComment(c(
-      paste("# # TreeSearch session log:", Sys.time(), "# # #"),
+      paste("# # TreeSearch session log:", .DateTime(), "# # #"),
       "",
       systemInfo,
       "",
@@ -602,7 +602,7 @@ server <- function(input, output, session) {
   BeginLogP <- function() {
     r$plotLog <- NULL
     LogCommentP(c(
-      paste("# # TreeSearch plot log:", Sys.time(), "# # #"),
+      paste("# # TreeSearch plot log:", .DateTime(), "# # #"),
       "",
       systemInfo,
       "",
@@ -801,7 +801,7 @@ server <- function(input, output, session) {
       r$sortTrees <- FALSE # Trees loaded from dataset may be in sequence
       r$readDataFile <- NULL
       
-      if (grep("\\.xlsx?$", dataFile)) {
+      if (length(grep("\\.xlsx?$", dataFile))) {
         if (!requireNamespace("readxl", quietly = TRUE)) {
           install.packages("readxl")
         }
@@ -2119,6 +2119,7 @@ server <- function(input, output, session) {
                      whichTree(),
                      input$concordance,
                      r$outgroup,
+                     concavity(),
                      input$mapDisplay,
                      r$dataHash, r$treeHash), 
         "space" = list(r$treeHash, input$plotFormat,
@@ -2918,7 +2919,7 @@ server <- function(input, output, session) {
   }
   
   maxProjDim <- reactive({
-    min(12, length(r$trees) - 1L)
+    min(12, max(0L, length(r$trees) - 1L))
   })
   
   nProjDim <- reactive({
@@ -2988,8 +2989,7 @@ server <- function(input, output, session) {
                    updateSliderInput(inputId = "spaceDim",
                                      value = min(nDim, input$spaceDim),
                                      max = nDim)
-                   message("Can't map into more than ", nDim,
-                           " dimensions.")
+                   message("Max dimensions available for mapping: ", nDim, ".")
                    cmdscale(distances(), k = nDim)
                  })
       )
@@ -3409,7 +3409,7 @@ server <- function(input, output, session) {
         rCode <- sub("dataFile <- .*$",
                      paste0("dataFile <- system.file(\"datasets/",
                             input$dataSource,
-                            ".nex\", package = \"TreeSearch\") # Test mode"),
+                            ".nex\", package = \"TreeSearch\") # FALSE CODE for TEST MODE"),
                      rCode,
                      perl = TRUE)
         rCode <- sub("treeFile <- .*$",
@@ -3445,9 +3445,13 @@ server <- function(input, output, session) {
   output$savePdf <- downloadHandler(
     filename = function() paste0(saveDetails()$fileName, ".pdf"),
     content = function (file) {
-      pdf(file, title = saveDetails()$title,
-          width = 8L,
-          height = saveDetails()$asp * 10L)
+      width <- 8
+      pdf(
+        file,
+        title = saveDetails()$title,
+        width = width,
+        height = saveDetails()$asp * width
+      )
       MainPlot()
       dev.off()
     })

@@ -7,7 +7,7 @@
 -->
 [![Project Status: Active – – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
-"TreeSearch" (Smith 2021) is an R package that contains a "shiny" user interface for 
+"TreeSearch" (Smith 2022c) is an R package that contains a "shiny" user interface for 
 interactive tree search and exploration of results, including character
 visualization,
 [rogue taxon detection](https://ms609.github.io/Rogue) (Smith 2022a),
@@ -117,10 +117,6 @@ Goloboff, P. A., Torres, A., Arias, J. S. (2018).
   Weighted parsimony outperforms other methods of phylogenetic inference under 
   models appropriate for morphology.
   Cladistics, 34(4), 407–437. doi: [10.1111/cla.12205](https://doi.org/10.1111/cla.12205).
-  
-Smith, M. R. (2021).
-  TreeSearch: morphological phylogenetic analysis in R.
-  BioR&chi;iv. doi: [10.1101/2021.11.08.467735](https://www.biorxiv.org/content/10.1101/2021.11.08.467735.full.pdf).
 
 Smith, M. R. (2022a).
   Using information theory to detect rogue taxa and improve phylogenetic trees.
@@ -131,3 +127,7 @@ Smith, M. R. (2022b).
   Robust analysis of phylogenetic tree space.
   Systematic Biology, 71(5), 1255–1270.
   doi: [10.1093/sysbio/syab100](https://dx.doi.org/10.1093/sysbio/syab100)
+
+Smith, M. R. (2022c).
+  TreeSearch: morphological phylogenetic analysis in R.
+  R Journal, forthcoming. Preprint doi: [10.1101/2021.11.08.467735](https://www.biorxiv.org/content/10.1101/2021.11.08.467735.full.pdf).

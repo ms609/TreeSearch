@@ -41,7 +41,7 @@ of the second.
 
 NOTE: These functions are under development, and may be incompletely tested
 or change without notice.
-Complete documentation and discussion will follow soon.
+Complete documentation and discussion will follow in due course.
 }
 \examples{
 data("congreveLamsdellMatrices", package = "TreeSearch")
