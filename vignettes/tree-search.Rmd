@@ -39,7 +39,7 @@ View a consensus tree and explore the position of rogue taxa [@SmithCons]:
 ![Visualizing position of rogue taxon on search result consensus tree](gui_rogue.png){ width=100% }
 
 Explore the distribution of trees (whether found by search or loaded from file)
-in tree space [@SmithSpace]:
+in tree space [@SmithSpace], and evaluate search progress [@Whidden2015]:
 
 ![Evaluating search progress using tree space](gui_space.png){ width=100% }
 
