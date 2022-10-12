@@ -2516,11 +2516,11 @@ server <- function(input, output, session) {
       
       LogCommentP("Compute clusters of trees", 2)
       nK <- length(possibleClusters)
-      LogCommentP("Try K-means clustering (Hartigan & Wong 1979):")
+      LogCommentP("Try K-means++ clustering (Arthur & Vassilvitskii 2007):")
       LogCodeP(
         paste0(
           "kClusters <- lapply(", possibleClusters, ", ",
-          "function (k) kmeans(dists, k)", ")"
+          "function (k) KMeansPP(dists, k)", ")"
         ),
         "kSils <- vapply(kClusters, function (kCluster) {",
         "  mean(cluster::silhouette(kCluster$cluster, dists)[, 3])",
