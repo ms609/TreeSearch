@@ -5,6 +5,7 @@
 - New [vignette](https://ms609.github.io/TreeSearch/dev/articles/tree-space.html) on tree space mapping
 - Support reading characters from Excel spreadsheets in GUI
 - Allow retention of suboptimal trees in GUI
+- Use K-means++ clustering in GUI
   
 
 # TreeSearch 1.2.0

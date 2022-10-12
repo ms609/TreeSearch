@@ -122,6 +122,13 @@ Reference <- function (authors, year, title, journal = "",
 }
 
 
+Arthur2007 <- Reference(
+  c("Arthur, D.", "Vassilvitskii, S"),
+  title = "k-means++: the advantages of careful seeding",
+  year = 2007,
+  journal = "Proceedings of the Eighteenth Annual ACM-SIAM Symposium on Discrete Algorithms",
+  pages = c(1027, 1035)
+)
 Brazeau2019 <- Reference(c("Brazeau, M.D.", "Guillerme, T.", "Smith, M.R."), 2019,
                            title = "An algorithm for morphological phylogenetic analysis with inapplicable data",
                            journal = "Systematic Biology",
@@ -866,7 +873,6 @@ server <- function(input, output, session) {
           # Return:
           dat
         }, error = function(e) {
-          print (e) #TODO DELETE
           NULL
         })
       } else {
@@ -2439,7 +2445,8 @@ server <- function(input, output, session) {
       
       nK <- length(possibleClusters)
     
-      kClusters <- lapply(possibleClusters, function (k) kmeans(dists, k))
+      kClusters <- lapply(possibleClusters,
+                          function (k) TreeDist::KMeansPP(dists, k))
       kSils <- vapply(kClusters, function (kCluster) {
         mean(cluster::silhouette(kCluster$cluster, dists)[, 3])
       }, double(1))
@@ -3376,7 +3383,6 @@ server <- function(input, output, session) {
         on.exit(unlink(zipDir))
         rFile <- paste0(zipDir, "/TreeSearch-session.R")
         file.copy(cmdLogFile, rFile, overwrite = TRUE)
-        dput(ExcelFileName(seq_len(r$excelFiles)))
         zip(file, c(
           rFile,
           if (r$dataFiles)
@@ -3480,7 +3486,7 @@ server <- function(input, output, session) {
      tags$h3("Clustering"),
      HTML(paste("Cluster consensus trees:", Stockham2002)),
      HTML(paste0(
-       "k-means:", Hartigan1979,
+       "k-means++:", Arthur2007, Hartigan1979, 
        "Partitioning around medoids:", Maechler2019,
        "Hierarchical, minimax linkage:", Bien2011, Murtagh1983)),
      tags$h3("Rogue taxa"),
