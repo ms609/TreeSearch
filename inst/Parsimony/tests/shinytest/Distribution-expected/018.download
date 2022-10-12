@@ -90,8 +90,8 @@ threshold <- 0.5
 bestMethodId <- which.max(c(threshold, pamSil, hSil, kSil))
 bestCluster <- c("none", "pam", "hmm", "kmn")[bestMethodId]
 
-# Best clustering was part. around medoids:
-# Silhouette coefficient = 0.603201
+# Best clustering was k-means:
+# Silhouette coefficient = 0.610587
 
 # Store the cluster to which each tree is optimally assigned:
 clustering <- switch(bestCluster, pam = pamCluster, hmm = hCluster, kmn = kCluster, 1)
