@@ -8,7 +8,7 @@
   "codeRepository": "https://github.com/ms609/TreeSearch/",
   "issueTracker": "https://github.com/ms609/TreeSearch/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.2.0.9003",
+  "version": "1.2.0.9004",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -332,7 +332,7 @@
       "@type": "SoftwareApplication",
       "identifier": "TreeDist",
       "name": "TreeDist",
-      "version": ">= 2.3.0",
+      "version": ">= 2.5.0",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -356,7 +356,7 @@
     },
     "SystemRequirements": "C++14"
   },
-  "fileSize": "4420.057KB",
+  "fileSize": "4420.639KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -425,13 +425,13 @@
       ],
       "name": "{TreeSearch}: phylogenetic tree search using custom optimality criteria",
       "identifier": "10.5281/zenodo.1042590",
-      "description": "R package version 1.2.0.9003",
+      "description": "R package version 1.2.0.9004",
       "@id": "https://doi.org/10.5281/zenodo.1042590",
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
     },
     {
       "@type": "ScholarlyArticle",
-      "datePublished": "2021",
+      "datePublished": "2022",
       "author": [
         {
           "@type": "Person",
@@ -441,14 +441,15 @@
       ],
       "name": "{TreeSearch}: morphological phylogenetic analysis in {{R}}",
       "identifier": "10.1101/2021.11.08.467735",
+      "pagination": "Forthcoming",
       "@id": "https://doi.org/10.1101/2021.11.08.467735",
       "sameAs": "https://doi.org/10.1101/2021.11.08.467735",
       "isPartOf": {
         "@type": "PublicationIssue",
-        "datePublished": "2021",
+        "datePublished": "2022",
         "isPartOf": {
           "@type": ["PublicationVolume", "Periodical"],
-          "name": "bioR$\\chi$iv"
+          "name": "R journal"
         }
       }
     }
