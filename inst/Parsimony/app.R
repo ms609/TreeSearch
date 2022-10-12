@@ -2760,17 +2760,7 @@ server <- function(input, output, session) {
   spaceLwd <- reactive(2)
   
   FirstHit <- reactive({
-    if (is.null(attr(r$trees, "firstHit"))) {
-      treeNames <- names(r$trees)
-      pattern <- "(seed|start|ratch\\d+|final)_\\d+"
-      if (length(grep(pattern, treeNames, perl = TRUE)) ==
-          length(r$trees)) {
-        
-        whenHit <- gsub(pattern, "\\1", treeNames, perl = TRUE)
-        
-        attr(r$trees, "firstHit") <- table(whenHit)[unique(whenHit)]
-      }
-    }
+    r$trees <- WhenFirstHit(r$trees)
     
     # Return:
     attr(r$trees, "firstHit")
@@ -2858,7 +2848,10 @@ server <- function(input, output, session) {
         if (is.null(FirstHit())) {
           beige
         } else {
-          paste0("treeCols <- rep(", LogFirstHitCols(), ", attr(trees, \"firstHit\"))")
+          c("trees <- WhenFirstHit(trees)",
+            paste0("treeCols <- rep(", LogFirstHitCols(),
+                   ", attr(trees, \"firstHit\"))")
+          )
         }
       },
       "treeCols <- black"
