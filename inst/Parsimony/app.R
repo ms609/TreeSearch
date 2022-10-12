@@ -3323,7 +3323,7 @@ server <- function(input, output, session) {
         "  xpd = NA, # Display overflowing text",
         paste0("  col = ", LogFirstHitCols(), ","),
         paste0("  pt.cex = ", spaceCex(), ", # Point size"),
-        paste0("  ", Enquote(names(FirstHit())), ","),
+        paste0("  ", EnC(names(FirstHit())), ","),
         "  title = \"Iteration first hit\"",
         ")"
       )
