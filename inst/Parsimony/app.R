@@ -725,6 +725,11 @@ server <- function(input, output, session) {
     file.copy(fileName, paste0(tempdir(), "/", LastFile(type)),
               overwrite = TRUE)
   }
+  StashTrees <- function(trees) {
+    key <- paste0("treeFiles")
+    r[[key]] <- r[[key]] + 1
+    write.nexus(trees, file = paste0(tempdir(), "/", LastFile("tree")))
+  }
   
   if (!requireNamespace("TreeDist", quietly = TRUE)) {
     install.packages("TreeDist")
@@ -3402,6 +3407,8 @@ server <- function(input, output, session) {
   output$savePlotZip <- downloadHandler(
     filename = function() paste0(saveDetails()$fileName, ".zip"),
     content = function(file) {
+      StashTrees(r$allTrees)
+      
       if (isTRUE(getOption("shiny.testmode"))) {
         rCode <- RCode()
         rCode <- sub("TreeSearch plot log: 2[\\d\\-]{9} [012][\\d:]{7}",
