@@ -2784,7 +2784,7 @@ server <- function(input, output, session) {
     if (is.null(FirstHit())) {
       paste0(palettes[[1]], " # Arbitrarily")
     } else {
-      "hcl.colors(length(attr(trees, \"firstHit\")), \"viridis\")"
+      "hcl.colors(length(firstHit), \"viridis\")"
     }
   })
   
@@ -2849,8 +2849,8 @@ server <- function(input, output, session) {
           beige
         } else {
           c("trees <- WhenFirstHit(trees)",
-            paste0("treeCols <- rep(", LogFirstHitCols(),
-                   ", attr(trees, \"firstHit\"))")
+            "firstHit <- attr(trees, \"firstHit\")",
+            paste0("treeCols <- rep(", LogFirstHitCols(), ", firstHit))")
           )
         }
       },

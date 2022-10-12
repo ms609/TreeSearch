@@ -1,7 +1,8 @@
-# TreeSearch 1.2.0.9004
+# TreeSearch 1.2.0.9005
 
 - New function `LengthAdded()` tests which characters contribute to taxon
   instability, per Pol & Escapa (2009) <doi:10.1111/j.1096-0031.2009.00258.x>
+- `WhenFirstHit()` recovers tree search information from tree names
 - New [vignette](https://ms609.github.io/TreeSearch/dev/articles/tree-space.html) on tree space mapping
 - Support reading characters from Excel spreadsheets in GUI
 - Allow retention of suboptimal trees in GUI
