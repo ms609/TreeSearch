@@ -634,7 +634,7 @@ MaximizeParsimony <- function (dataset, tree,
              "TBR depth {ceiling(searchIter)}; ",
              "max. {ceiling(searchHits)} hits; ",
              "k = {concavity}.")
-    cli_alert("{Sys.time()}: Score to beat: {.strong {signif(bestScore)}}")
+    cli_alert("{ .DateTime()}: Score to beat: {.strong {signif(bestScore)}}")
     
     iter <- 0L
     while (iter < ratchIter) {
