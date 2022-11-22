@@ -923,11 +923,11 @@ server <- function(input, output, session) {
       ))
     }
     if (is.null(r$dataset)) {
-      Notification(type = "error", "Could not read data from file")
+      Notification(type = "error", "Failed to read data from file")
       
       updateNumericInput(session, "plottedChar", min = 0L,
                          max = 0L, value = 0L)
-      return ("Could not read data from file")
+      return ("Failed to read data from file")
     } else {
       Notification(type = "message", 
                        paste("Loaded", attr(r$dataset, "nr"), "characters and",
