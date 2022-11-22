@@ -880,8 +880,22 @@ server <- function(input, output, session) {
           # Return:
           ReadTntAsPhyDat(dataFile)
         }, error = function(e) tryCatch({
-          r$chars <- ReadCharacters(dataFile)
-          r$charNotes <- ReadNotes(dataFile)
+          r$chars <- tryCatch(
+            ReadCharacters(dataFile),
+            error = function(e) {
+              Notification(type = "error", "Error reading characters from file")
+              # Return:
+              NULL
+            })
+                              
+          r$charNotes <- tryCatch(
+            ReadNotes(dataFile),
+            error = function(e) {
+              Notification(type = "error", "Error reading character notes")
+              # Return:
+              NULL
+            })
+                                  
           r$readDataFile <- "ReadTntAsPhyDat(dataFile)"
           # Return:
           ReadAsPhyDat(dataFile)
