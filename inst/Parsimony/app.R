@@ -895,9 +895,24 @@ server <- function(input, output, session) {
           # Return:
           ReadTntAsPhyDat(dataFile)
         }, error = function(e) tryCatch({
-          r$chars <- ReadCharacters(dataFile)
-          r$charNotes <- ReadNotes(dataFile)
+          r$chars <- tryCatch(
+            ReadCharacters(dataFile),
+            error = function(e) {
+              Notification(type = "error", "Error reading characters from file")
+              # Return:
+              NULL
+            })
+          
+          r$charNotes <- tryCatch(
+            ReadNotes(dataFile),
+            error = function(e) {
+              Notification(type = "error", "Error reading character notes")
+              # Return:
+              NULL
+            })
+          
           r$readDataFile <- "ReadAsPhyDat(dataFile)"
+          
           # Return:
           ReadAsPhyDat(dataFile)
         }, error = function(e) {
@@ -1197,6 +1212,8 @@ server <- function(input, output, session) {
                           value = 0),
               sliderInput("ratchIter", "Ratchet iterations", min = 0L,
                           max = 50L, value = 6L, step = 1L),
+              sliderInput("timeout", "Maximum run duration", min = 1,
+                          max = 600, value = 30, post = "min", step = 1),
       )), column(6, 
              tagList(
               sliderInput("maxHits", "Maximum hits", min = 0L, max = 5L,
@@ -1540,6 +1557,7 @@ server <- function(input, output, session) {
         paste0("  ratchIter = ", input$ratchIter, ","), 
         paste0("  tbrIter = ", input$tbrIter, ","), 
         paste0("  maxHits = ", ceiling(10 ^ input$maxHits), ","), 
+        paste0("  maxTime = ", input$timeout, ","),
         paste0("  startIter = ", input$startIter, ","),
         paste0("  finalIter = ", input$finalIter, ","),
         if (input$epsilon > 0) paste0("  tolerance = ", tolerance(), ","),
@@ -1552,6 +1570,7 @@ server <- function(input, output, session) {
                           ratchIter = input$ratchIter,
                           tbrIter = input$tbrIter,
                           maxHits = ceiling(10 ^ input$maxHits),
+                          maxTime = input$timeout,
                           startIter = input$startIter,
                           finalIter = input$finalIter,
                           tolerance = tolerance(),
