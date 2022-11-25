@@ -1,7 +1,7 @@
 # options("TreeSearch.write.code" = TRUE) # Show code as it is written to log
 # options("TreeSearch.logging" = TRUE) # Log function entry and exit
 logging <- isTRUE(getOption("TreeSearch.logging"))
-options(shiny.maxRequestSize = 1024^3) # Allow max 1 GB files
+options(shiny.maxRequestSize = 1024 ^ 3) # Allow max 1 GB files
 
 
 library("methods", exclude = c("show", "removeClass"))

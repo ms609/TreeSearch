@@ -12,7 +12,8 @@
 #' @template MRS
 #' @return `AdditionTree()` returns a tree of class `phylo`, rooted on
 #' `sequence[1]`.
-#' @importFrom TreeTools AddUnconstrained AddTipEverywhere PectinateTree
+#' @importFrom TreeTools AddUnconstrained AddTipEverywhere MatrixToPhyDat
+#' PectinateTree
 #' @importFrom cli cli_progress_bar cli_progress_update
 #' @family tree generation functions
 #' @seealso 
@@ -63,6 +64,9 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
     }
     
     if (!missing(constraint)) {
+      if (!inherits(constraint, "phyDat")) {
+        constraint <- MatrixToPhyDat(as.matrix(constraint))
+      }
       thisConstr <- constraint[theseTaxa]
       morphyConstr <- PhyDat2Morphy(thisConstr)
       # Calculate constraint minimum score
