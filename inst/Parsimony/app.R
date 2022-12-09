@@ -759,7 +759,7 @@ server <- function(input, output, session) {
   
   nChars <- reactive({
     if (HaveData()) {
-      as.integer(attr(r$dataset, "nr"))
+      as.integer(length(attr(r$dataset, "index")))
     } else {
       0L
     }
@@ -960,7 +960,7 @@ server <- function(input, output, session) {
       return ("Could not read data from file")
     } else {
       Notification(type = "message", 
-                       paste("Loaded", attr(r$dataset, "nr"), "characters and",
+                       paste("Loaded", nChars(), "characters and",
                              length(r$dataset), "taxa"))
       
       updateNumericInput(session, "plottedChar", min = 0L,
