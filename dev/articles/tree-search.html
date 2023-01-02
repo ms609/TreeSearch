@@ -42,7 +42,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.2.0.9005</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.2.0.9006</span>
       </span>
     </div>
 
@@ -115,9 +115,10 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Getting started: Simple tree searches</h1>
-                        <h4 data-toc-skip class="author">Martin R. Smith</h4>
+                        <h4 data-toc-skip class="author">Martin R.
+Smith</h4>
             
-            <h4 data-toc-skip class="date">2022-10-12</h4>
+            <h4 data-toc-skip class="date">2023-01-02</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/tree-search.Rmd" class="external-link"><code>vignettes/tree-search.Rmd</code></a></small>
       <div class="hidden name"><code>tree-search.Rmd</code></div>
@@ -126,38 +127,61 @@
 
     
     
-<p>“TreeSearch” is an R package that allows, among other things, parsimony search on morphological datasets that contain inapplicable data, using the algorithm proposed by Brazeau, Guillerme and Smith <span class="citation">(2019)</span> and implemented in the ‘MorphyLib’ C library <span class="citation">(Brazeau, Smith, &amp; Guillerme, 2017)</span> (<a href="https://rawgit.com/TGuillerme/Inapp/c4d502fa4ae3702eb207b2da3a692e469ba3b6ab/inst/gitbook/_book/index.html" class="external-link">details</a>).</p>
+<p>“TreeSearch” is an R package that allows, among other things,
+parsimony search on morphological datasets that contain inapplicable
+data, using the algorithm proposed by Brazeau, Guillerme and Smith <span class="citation">(2019)</span> and implemented in the ‘MorphyLib’ C
+library <span class="citation">(Brazeau, Smith, &amp; Guillerme,
+2017)</span> (<a href="https://rawgit.com/TGuillerme/Inapp/c4d502fa4ae3702eb207b2da3a692e469ba3b6ab/inst/gitbook/_book/index.html" class="external-link">details</a>).</p>
 <div class="section level2">
 <h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
 </h2>
-<p><a href="getting-started.html">A companion vignette</a> gives details on installing the package and getting up and running.</p>
-<p>Launch an interactive ‘app’ in your browser by typing <code><a href="../reference/MaximizeParsimony.html">TreeSearch::EasyTrees()</a></code> at the R / RStudio command line.</p>
-<p>This will allow you to load data from a file, modify search settings, and explore the distribution of most parsimonious trees in tree space.</p>
+<p><a href="getting-started.html">A companion vignette</a> gives details
+on installing the package and getting up and running.</p>
+<p>Launch an interactive ‘app’ in your browser by typing
+<code><a href="../reference/MaximizeParsimony.html">TreeSearch::EasyTrees()</a></code> at the R / RStudio command
+line.</p>
+<p>This will allow you to load data from a file, modify search settings,
+and explore the distribution of most parsimonious trees in tree
+space.</p>
 <div class="figure">
 <img src="gui_start.png" style="width:100.0%" alt=""><p class="caption">Starting parsimony search</p>
 </div>
 <p>View a consensus tree and explore the position of rogue taxa <span class="citation">(Smith, 2022b)</span>:</p>
 <div class="figure">
-<img src="gui_rogue.png" style="width:100.0%" alt=""><p class="caption">Visualizing position of rogue taxon on search result consensus tree</p>
+<img src="gui_rogue.png" style="width:100.0%" alt=""><p class="caption">Visualizing position of rogue taxon on search result
+consensus tree</p>
 </div>
-<p>Explore the distribution of trees (whether found by search or loaded from file) in tree space <span class="citation">(Smith, 2022a)</span>, and evaluate search progress <span class="citation">(Whidden &amp; Matsen, 2015)</span>:</p>
+<p>Explore the distribution of trees (whether found by search or loaded
+from file) in tree space <span class="citation">(Smith, 2022a)</span>,
+and evaluate search progress <span class="citation">(Whidden &amp;
+Matsen, 2015)</span>:</p>
 <div class="figure">
 <img src="gui_space.png" style="width:100.0%" alt=""><p class="caption">Evaluating search progress using tree space</p>
 </div>
-<p>Map characters on a chosen tree, using character and taxon notes imported from a Nexus file, if present. (This is designed to be interoperable with <a href="https://morphobank.org" class="external-link">MorphoBank</a> matrices.)</p>
+<p>Map characters on a chosen tree, using character and taxon notes
+imported from a Nexus file, if present. (This is designed to be
+interoperable with <a href="https://morphobank.org" class="external-link">MorphoBank</a>
+matrices.)</p>
 <div class="figure">
 <img src="gui_char.png" style="width:100.0%" alt=""><p class="caption">Mapping character reconstructions</p>
 </div>
-<p>Trees can be saved as images, or in Nexus/Newick for further analysis.</p>
+<p>Trees can be saved as images, or in Nexus/Newick for further
+analysis.</p>
 </div>
 <div class="section level2">
 <h2 id="command-line-tree-search">Command line tree search<a class="anchor" aria-label="anchor" href="#command-line-tree-search"></a>
 </h2>
-<p>You can also run tree searches using the R command line. Once installed, load the “TreeSearch” package into R using</p>
+<p>You can also run tree searches using the R command line. Once
+installed, load the “TreeSearch” package into R using</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span></span></code></pre></div>
-<p>You can <a href="https://ms609.github.io/TreeTools/articles/load-data.html" class="external-link">load your own dataset</a>, but for now, we’ll use the Vinther <em>et al.</em> <span class="citation">(2008)</span> dataset that comes bundled with “TreeSearch”.</p>
-<p>This dataset is small enough that it runs reasonably quickly, but its phylogenetic signal is obscure enough that it can require Ratchet searches to escape from local optima.</p>
+<p>You can <a href="https://ms609.github.io/TreeTools/articles/load-data.html" class="external-link">load
+your own dataset</a>, but for now, we’ll use the Vinther <em>et al.</em>
+<span class="citation">(2008)</span> dataset that comes bundled with
+“TreeSearch”.</p>
+<p>This dataset is small enough that it runs reasonably quickly, but its
+phylogenetic signal is obscure enough that it can require Ratchet
+searches to escape from local optima.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vinther</span> <span class="op">&lt;-</span> <span class="fu">TreeSearch</span><span class="fu">::</span><span class="va"><a href="../reference/inapplicable.datasets.html">inapplicable.phyData</a></span><span class="op">[[</span><span class="st">"Vinther2008"</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -173,8 +197,12 @@
 <span><span class="va">firstHit</span></span></code></pre></div>
 <pre><code><span><span class="co">##   seed  start ratch1 ratch2 ratch3 ratch4 ratch5 ratch6 ratch7  final </span></span>
 <span><span class="co">##      0     27      0      0     15      2      6      0      1      0</span></span></code></pre>
-<p>Here, we can see that many of the earliest ratchet iterations were finding optimal trees that had not previously been visited. Later iterations found progressively fewer new trees, suggesting that the search is likely to have been effective.</p>
-<p>Advanced users might wish to visualize the progress of tree search by mapping tree space:</p>
+<p>Here, we can see that many of the earliest ratchet iterations were
+finding optimal trees that had not previously been visited. Later
+iterations found progressively fewer new trees, suggesting that the
+search is likely to have been effective.</p>
+<p>Advanced users might wish to visualize the progress of tree search by
+mapping tree space:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">distances</span> <span class="op">&lt;-</span> <span class="fu">TreeDist</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeDist/reference/TreeDistance.html" class="external-link">ClusteringInfoDistance</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">)</span></span>
 <span><span class="va">searchStages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">firstHit</span><span class="op">)</span></span>
@@ -189,16 +217,23 @@
 <span>                    col <span class="op">=</span> <span class="st">"#00000030"</span>, lty <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/legend.html" class="external-link">legend</a></span><span class="op">(</span><span class="st">"topright"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">firstHit</span><span class="op">)</span>, col <span class="op">=</span> <span class="va">cols</span>, pch <span class="op">=</span> <span class="fl">16</span>, bty <span class="op">=</span> <span class="st">"n"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="tree-search_files/figure-html/map-search-1.png" width="691.2"></p>
-<p>A quick glance suggests that early ratchet iterations captured a large part of the diversity of optimal trees, and that iterations aren’t getting stuck in local optima – though conscientious users will <a href="https://ms609.github.io/TreeDist/articles/treespace.html" class="external-link">ensure that the mapping of tree space is meaningful and adequate</a> to detect structure before making any firm conclusions <span class="citation">(Smith, 2022a)</span>.</p>
-<p>To be thorough, we might consider continuing the search for a little longer, fine-tuning the search parameters:</p>
+<p>A quick glance suggests that early ratchet iterations captured a
+large part of the diversity of optimal trees, and that iterations aren’t
+getting stuck in local optima – though conscientious users will <a href="https://ms609.github.io/TreeDist/articles/treespace.html" class="external-link">ensure
+that the mapping of tree space is meaningful and adequate</a> to detect
+structure before making any firm conclusions <span class="citation">(Smith, 2022a)</span>.</p>
+<p>To be thorough, we might consider continuing the search for a little
+longer, fine-tuning the search parameters:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bestTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">vinther</span>, tree <span class="op">=</span> <span class="va">bestTrees</span>,</span>
 <span>                               ratchIter <span class="op">=</span> <span class="fl">6L</span>,</span>
 <span>                               tbrIter <span class="op">=</span> <span class="fl">4L</span>, </span>
 <span>                               finalIter <span class="op">=</span> <span class="fl">3L</span>,</span>
 <span>                               maxHits <span class="op">=</span> <span class="fl">80L</span><span class="op">)</span></span></code></pre></div>
-<p>As it happens, the best tree for this dataset has a score of 79 under equal weights parsimony.</p>
-<p>We can plot the best tree(s) that we’ve found, and check its parsimony score (length):</p>
+<p>As it happens, the best tree for this dataset has a score of 79 under
+equal weights parsimony.</p>
+<p>We can plot the best tree(s) that we’ve found, and check its
+parsimony score (length):</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -209,7 +244,8 @@
 <div class="section level3">
 <h3 id="evaluating-clade-support">Evaluating clade support<a class="anchor" aria-label="anchor" href="#evaluating-clade-support"></a>
 </h3>
-<p>We might be interested in labelling clades with their frequency among the sampled most-parsimonious trees:</p>
+<p>We might be interested in labelling clades with their frequency among
+the sampled most-parsimonious trees:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
 <span><span class="va">majCons</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">bestTrees</span>, p <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
@@ -219,9 +255,28 @@
 <span>                       col <span class="op">=</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/SupportColour.html" class="external-link">SupportColor</a></span><span class="op">(</span><span class="va">splitFreqs</span><span class="op">)</span>,</span>
 <span>                       frame <span class="op">=</span> <span class="st">"none"</span>, pos <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span></span></code></pre></div>
 <p><img src="tree-search_files/figure-html/plot-label-nodes-1.png" width="691.2"></p>
-<p>This approach is a sensible way to analyse clade credibility when the frequency of a split corresponds to its probability, as is the case in a Bayesian posterior sample of trees. This is not the case, however, in sets of most parsimonious trees.</p>
-<p>Imagine if our set of most parsimonious trees was expanded to include a single additional tree in which <em>Halkieria</em> was sister to the brachiopod <em>Terebratulina</em> (close to the outgroup). We would then be in a situation in which <em>Halkieria</em> may be a brachiopod – in which case a single interpretation of molluscan relationships is most parsimonious – or may be a mollusc, in which case its mosaic of characters can be reconciled with molluscs in a number of equally-parsimonious ways. Neither interpretation should be considered more or less plausible, even if we observe more unique most parsimonious trees in which <em>Halkieria</em> is a mollusc simply because of the greater resultant uncertainty in the placement of taxa such as <em>Odontogriphus</em> and <em>Wiwaxia</em>.</p>
-<p>A more instructive measure of clade support can be generated using Jackknife resampling. The <code><a href="../reference/MaximizeParsimony.html">Resample()</a></code> <a href="https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html">manual page</a> has suggestions for appropriate numbers of replicates and search intensity, and instructions for calculating bootstrap support; the code here gives a quick-to-run jackknife framework that can be adapted to the requirements of a particular dataset.</p>
+<p>This approach is a sensible way to analyse clade credibility when the
+frequency of a split corresponds to its probability, as is the case in a
+Bayesian posterior sample of trees. This is not the case, however, in
+sets of most parsimonious trees.</p>
+<p>Imagine if our set of most parsimonious trees was expanded to include
+a single additional tree in which <em>Halkieria</em> was sister to the
+brachiopod <em>Terebratulina</em> (close to the outgroup). We would then
+be in a situation in which <em>Halkieria</em> may be a brachiopod – in
+which case a single interpretation of molluscan relationships is most
+parsimonious – or may be a mollusc, in which case its mosaic of
+characters can be reconciled with molluscs in a number of
+equally-parsimonious ways. Neither interpretation should be considered
+more or less plausible, even if we observe more unique most parsimonious
+trees in which <em>Halkieria</em> is a mollusc simply because of the
+greater resultant uncertainty in the placement of taxa such as
+<em>Odontogriphus</em> and <em>Wiwaxia</em>.</p>
+<p>A more instructive measure of clade support can be generated using
+Jackknife resampling. The <code><a href="../reference/MaximizeParsimony.html">Resample()</a></code> <a href="https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html">manual
+page</a> has suggestions for appropriate numbers of replicates and
+search intensity, and instructions for calculating bootstrap support;
+the code here gives a quick-to-run jackknife framework that can be
+adapted to the requirements of a particular dataset.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nReplicates</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
 <span><span class="va">jackTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a></span><span class="op">(</span><span class="va">nReplicates</span><span class="op">)</span>, <span class="kw">function</span> <span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
@@ -235,8 +290,15 @@
 <span><span class="co"># Take the strict consensus of all trees for each replicate</span></span>
 <span><span class="fu"><a href="../reference/JackLabels.html">JackLabels</a></span><span class="op">(</span><span class="va">strict</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">jackTrees</span>, <span class="fu">ape</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">)</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="va">XX</span></span></code></pre></div>
 <p><img src="tree-search_files/figure-html/Jackknife-annotations-1.png" width="691.2"></p>
-<p>Jackknife and bootstrap support values give an indication of the volume of data that supports each node, but don’t necessarily indicate whether the data are unanimous on the existence of a clade: a high bootstrap support value could indicate a large number of characters supporting a clade, and an only slightly smaller number of characters contradicting it.</p>
-<p>“TreeSearch” implements a number of concordance measures that aim to indicate whether a dataset is unanimous or divided in support of a grouping, independently of the method of tree reconstruction.</p>
+<p>Jackknife and bootstrap support values give an indication of the
+volume of data that supports each node, but don’t necessarily indicate
+whether the data are unanimous on the existence of a clade: a high
+bootstrap support value could indicate a large number of characters
+supporting a clade, and an only slightly smaller number of characters
+contradicting it.</p>
+<p>“TreeSearch” implements a number of concordance measures that aim to
+indicate whether a dataset is unanimous or divided in support of a
+grouping, independently of the method of tree reconstruction.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">concordance</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SiteConcordance.html">QuartetConcordance</a></span><span class="op">(</span><span class="va">strict</span>, <span class="va">vinther</span><span class="op">)</span></span>
 <span></span>
@@ -254,53 +316,89 @@
 <div class="section level3">
 <h3 id="exploring-taxon-stability">Exploring taxon stability<a class="anchor" aria-label="anchor" href="#exploring-taxon-stability"></a>
 </h3>
-<p>Measure of clade support can only captures one aspect of the uncertainty in a set of trees. Often one “rogue” taxon with an uncertain position can mask agreement in the relationships of other taxa <span class="citation">(Smith, 2022b)</span>. The potential impact of rogue taxa can be explored by colouring individual tips according to their stability in the tree set:</p>
+<p>Measure of clade support can only captures one aspect of the
+uncertainty in a set of trees. Often one “rogue” taxon with an uncertain
+position can mask agreement in the relationships of other taxa <span class="citation">(Smith, 2022b)</span>. The potential impact of rogue
+taxa can be explored by colouring individual tips according to their
+stability in the tree set:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">strict</span>, tip.color <span class="op">=</span> <span class="fu">Rogue</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rogue/man/TipInstability.html" class="external-link">ColByStability</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="tree-search_files/figure-html/stability-1.png" width="691.2"></p>
-<p>Would removing an unstable taxon reveal hidden support for relationships at the base of Mollusca? We can test to see whether the removal of a taxon from a summary tree is justified using:</p>
+<p>Would removing an unstable taxon reveal hidden support for
+relationships at the base of Mollusca? We can test to see whether the
+removal of a taxon from a summary tree is justified using:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">Rogue</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rogue/man/RogueTaxa.html" class="external-link">QuickRogue</a></span><span class="op">(</span><span class="va">bestTrees</span>, p <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   num taxNum   taxon rawImprovement       IC</span></span>
 <span><span class="co">## 1   0   &lt;NA&gt;    &lt;NA&gt;             NA 154.5491</span></span>
 <span><span class="co">## 2   1     21 Wiwaxia       14.32221 168.8713</span></span></code></pre>
-<p>In this case, dropping <em>Wiwaxia</em> would improve the resolution of the strict consensus by enough to justify the loss of the information regarding its own position (a net gain of 14.3 bits). The most informative single summary tree is thus provided by:</p>
+<p>In this case, dropping <em>Wiwaxia</em> would improve the resolution
+of the strict consensus by enough to justify the loss of the information
+regarding its own position (a net gain of 14.3 bits). The most
+informative single summary tree is thus provided by:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
 <span><span class="va">noWiwaxia</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">bestTrees</span>, <span class="fu">TreeTools</span><span class="fu">::</span><span class="va"><a href="https://ms609.github.io/TreeTools/reference/DropTip.html" class="external-link">DropTip</a></span>, <span class="st">"Wiwaxia"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">noWiwaxia</span><span class="op">)</span>, tip.color <span class="op">=</span> <span class="fu">Rogue</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rogue/man/TipInstability.html" class="external-link">ColByStability</a></span><span class="op">(</span><span class="va">noWiwaxia</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="tree-search_files/figure-html/cons-without-halk-1.png" width="691.2"></p>
-<p>This reveals that all trees agree that <em>Halkieria</em> and <em>Orthrozanclus</em> are closer to aculiferan molluscs than <em>Odontogriphus</em> and <em>Neopilina</em>, a fact masked in the strict consensus due to the uncertain position of <em>Wiwaxia</em>.</p>
+<p>This reveals that all trees agree that <em>Halkieria</em> and
+<em>Orthrozanclus</em> are closer to aculiferan molluscs than
+<em>Odontogriphus</em> and <em>Neopilina</em>, a fact masked in the
+strict consensus due to the uncertain position of <em>Wiwaxia</em>.</p>
 <p>We can see where <em>Wiwaxia</em> would plot on this tree using:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
 <span><span class="va">xx</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/RoguePlot.html" class="external-link">RoguePlot</a></span><span class="op">(</span><span class="va">bestTrees</span>, <span class="st">"Wiwaxia"</span>, p <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p><img src="tree-search_files/figure-html/restore-wiwaxia-1.png" width="691.2"></p>
-<p>Brighter greens indicate that more trees contained <em>Wiwaxia</em> in this position.</p>
-<p>More details on rogue taxon identification are available in the package <a href="https://ms609.github.io/Rogue/" class="external-link">“Rogue”</a>.</p>
+<p>Brighter greens indicate that more trees contained <em>Wiwaxia</em>
+in this position.</p>
+<p>More details on rogue taxon identification are available in the
+package <a href="https://ms609.github.io/Rogue/" class="external-link">“Rogue”</a>.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="implied-weighting">Implied weighting<a class="anchor" aria-label="anchor" href="#implied-weighting"></a>
 </h2>
-<p>Equal weights produces trees that are less accurate and less precise than implied weights <span class="citation">(Smith, 2019)</span>; equally weighted analysis should never be conducted without also considering the results of implied weights <span class="citation">(Goloboff, 1993, 1997)</span>, ideally under a range of concavity constants <span class="citation">(cf. Smith &amp; Ortega-Hernández, 2014)</span>.</p>
-<p>Implied weights can be activated by simply specifying a value of the concavity constant, <em>k</em>:</p>
+<p>Equal weights produces trees that are less accurate and less precise
+than implied weights <span class="citation">(Smith, 2019)</span>;
+equally weighted analysis should never be conducted without also
+considering the results of implied weights <span class="citation">(Goloboff, 1993, 1997)</span>, ideally under a range of
+concavity constants <span class="citation">(cf. Smith &amp;
+Ortega-Hernández, 2014)</span>.</p>
+<p>Implied weights can be activated by simply specifying a value of the
+concavity constant, <em>k</em>:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iwTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">vinther</span>, concavity <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">iwTrees</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="tree-search_files/figure-html/iw-search-1.png" width="691.2"></p>
-<p>Note that we recommend a default value of 10, somewhat higher than the default of 3 in TNT; this low default gives poorer results in many settings <span class="citation">(Goloboff, Torres, &amp; Arias, 2018; Smith, 2019)</span>. Better still is to use multiple values and compare the results, perhaps in <a href="https://ms609.github.io/TreeDist/articles/treespace.html" class="external-link">Tree space</a>. Even better (?) is to use <a href="https://ms609.github.io/TreeSearch/articles/profile.html">profile parsimony</a>.</p>
+<p>Note that we recommend a default value of 10, somewhat higher than
+the default of 3 in TNT; this low default gives poorer results in many
+settings <span class="citation">(Goloboff, Torres, &amp; Arias, 2018;
+Smith, 2019)</span>. Better still is to use multiple values and compare
+the results, perhaps in <a href="https://ms609.github.io/TreeDist/articles/treespace.html" class="external-link">Tree
+space</a>. Even better (?) is to use <a href="https://ms609.github.io/TreeSearch/articles/profile.html">profile
+parsimony</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="constraining-a-search">Constraining a search<a class="anchor" aria-label="anchor" href="#constraining-a-search"></a>
 </h2>
-<p>It is sometimes legitimate to insist that trees must contain a certain clade. Doing so reduces the number of tree rearrangements that are considered, and can this speed up tree search.</p>
-<p>“TreeSearch” supports soft constraints, which can be specified using a separate Nexus file, or by creating a <code>phyDat</code> object in R. Constraints are effectively phylogenetic characters; only trees on which each such character fits perfectly will be considered. The position of taxa not listed in a constraint will not be constrained.</p>
-<p><code><a href="../reference/MaximizeParsimony.html">MaximizeParsimony()</a></code> will attempt to find a starting tree that satisfies the constraints, but if it cannot, it may be necessary to specify one manually – perhaps after checking that no constraints are contradictory.</p>
-<p>Here’s a simple example on six taxa that enforces the bipartition ab | cdef:</p>
+<p>It is sometimes legitimate to insist that trees must contain a
+certain clade. Doing so reduces the number of tree rearrangements that
+are considered, and can this speed up tree search.</p>
+<p>“TreeSearch” supports soft constraints, which can be specified using
+a separate Nexus file, or by creating a <code>phyDat</code> object in R.
+Constraints are effectively phylogenetic characters; only trees on which
+each such character fits perfectly will be considered. The position of
+taxa not listed in a constraint will not be constrained.</p>
+<p><code><a href="../reference/MaximizeParsimony.html">MaximizeParsimony()</a></code> will attempt to find a starting tree
+that satisfies the constraints, but if it cannot, it may be necessary to
+specify one manually – perhaps after checking that no constraints are
+contradictory.</p>
+<p>Here’s a simple example on six taxa that enforces the bipartition ab
+| cdef:</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/" class="external-link">"TreeTools"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">constraint</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html" class="external-link">MatrixToPhyDat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">1</span>, b <span class="op">=</span> <span class="fl">1</span>, c <span class="op">=</span> <span class="fl">0</span>, d <span class="op">=</span> <span class="fl">0</span>, e <span class="op">=</span> <span class="fl">0</span>, f <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
@@ -311,7 +409,9 @@
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>,</span>
 <span>                       verbosity <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <p><img src="tree-search_files/figure-html/simple-constraints-1.png" width="384" style="display: block; margin: auto;"></p>
-<p>Here’s a more complex example that imposes the splits <code>ab | cef</code> and <code>abcd | ef</code>, whilst allowing <code>g</code> to plot anywhere on the tree:</p>
+<p>Here’s a more complex example that imposes the splits
+<code>ab | cef</code> and <code>abcd | ef</code>, whilst allowing
+<code>g</code> to plot anywhere on the tree:</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">characters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html" class="external-link">MatrixToPhyDat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>,</span>
@@ -324,44 +424,66 @@
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>,</span>
 <span>                       verbosity <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <p><img src="tree-search_files/figure-html/complex-constraints-1.png" width="384" style="display: block; margin: auto;"></p>
-<p>Constraints can also be loaded from a Nexus file with <code>constraint &lt;- TreeTools::ReadAsPhyDat("constraint_file.nex")</code>.</p>
+<p>Constraints can also be loaded from a Nexus file with
+<code>constraint &lt;- TreeTools::ReadAsPhyDat("constraint_file.nex")</code>.</p>
 </div>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
 <div id="ref-Brazeau2019" class="csl-entry">
-Brazeau, M. D., Guillerme, T., &amp; Smith, M. R. (2019). <span class="nocase">An algorithm for morphological phylogenetic analysis with inapplicable data</span>. <em>Systematic Biology</em>, <em>68</em>, 619–631. doi:<a href="https://doi.org/10.1093/sysbio/syy083" class="external-link">10.1093/sysbio/syy083</a>
+Brazeau, M. D., Guillerme, T., &amp; Smith, M. R. (2019). <span class="nocase">An algorithm for morphological phylogenetic analysis with
+inapplicable data</span>. <em>Systematic Biology</em>, <em>68</em>,
+619–631. doi:<a href="https://doi.org/10.1093/sysbio/syy083" class="external-link">10.1093/sysbio/syy083</a>
 </div>
 <div id="ref-Brazeau2017" class="csl-entry">
-Brazeau, M. D., Smith, M. R., &amp; Guillerme, T. (2017). <span>MorphyLib</span>: A library for phylogenetic analysis of categorical trait data with inapplicability. doi:<a href="https://doi.org/10.5281/zenodo.815372" class="external-link">10.5281/zenodo.815372</a>
+Brazeau, M. D., Smith, M. R., &amp; Guillerme, T. (2017).
+<span>MorphyLib</span>: A library for phylogenetic analysis of
+categorical trait data with inapplicability. doi:<a href="https://doi.org/10.5281/zenodo.815372" class="external-link">10.5281/zenodo.815372</a>
 </div>
 <div id="ref-Goloboff1993" class="csl-entry">
-Goloboff, P. A. (1993). Estimating character weights during tree search. <em>Cladistics</em>, <em>9</em>(1), 83–91. doi:<a href="https://doi.org/10.1111/j.1096-0031.1993.tb00209.x" class="external-link">10.1111/j.1096-0031.1993.tb00209.x</a>
+Goloboff, P. A. (1993). Estimating character weights during tree search.
+<em>Cladistics</em>, <em>9</em>(1), 83–91. doi:<a href="https://doi.org/10.1111/j.1096-0031.1993.tb00209.x" class="external-link">10.1111/j.1096-0031.1993.tb00209.x</a>
 </div>
 <div id="ref-Goloboff1997" class="csl-entry">
-Goloboff, P. A. (1997). <span class="nocase">Self-weighted optimization: tree searches and character state reconstructions under implied transformation costs</span>. <em>Cladistics</em>, <em>13</em>(3), 225–245. doi:<a href="https://doi.org/10.1111/j.1096-0031.1997.tb00317.x" class="external-link">10.1111/j.1096-0031.1997.tb00317.x</a>
+Goloboff, P. A. (1997). <span class="nocase">Self-weighted optimization:
+tree searches and character state reconstructions under implied
+transformation costs</span>. <em>Cladistics</em>, <em>13</em>(3),
+225–245. doi:<a href="https://doi.org/10.1111/j.1096-0031.1997.tb00317.x" class="external-link">10.1111/j.1096-0031.1997.tb00317.x</a>
 </div>
 <div id="ref-Goloboff2018" class="csl-entry">
-Goloboff, P. A., Torres, A., &amp; Arias, J. S. (2018). Weighted parsimony outperforms other methods of phylogenetic inference under models appropriate for morphology. <em>Cladistics</em>, <em>34</em>(4), 407–437. doi:<a href="https://doi.org/10.1111/cla.12205" class="external-link">10.1111/cla.12205</a>
+Goloboff, P. A., Torres, A., &amp; Arias, J. S. (2018). Weighted
+parsimony outperforms other methods of phylogenetic inference under
+models appropriate for morphology. <em>Cladistics</em>, <em>34</em>(4),
+407–437. doi:<a href="https://doi.org/10.1111/cla.12205" class="external-link">10.1111/cla.12205</a>
 </div>
 <div id="ref-Smith2019" class="csl-entry">
-Smith, M. R. (2019). Bayesian and parsimony approaches reconstruct informative trees from simulated morphological datasets. <em>Biology Letters</em>, <em>15</em>(2), 20180632. doi:<a href="https://doi.org/10.1098/rsbl.2018.0632" class="external-link">10.1098/rsbl.2018.0632</a>
+Smith, M. R. (2019). Bayesian and parsimony approaches reconstruct
+informative trees from simulated morphological datasets. <em>Biology
+Letters</em>, <em>15</em>(2), 20180632. doi:<a href="https://doi.org/10.1098/rsbl.2018.0632" class="external-link">10.1098/rsbl.2018.0632</a>
 </div>
 <div id="ref-SmithSpace" class="csl-entry">
-Smith, M. R. (2022a). Robust analysis of phylogenetic tree space. <em>Systematic Biology</em>, <em>71</em>(5), 1255–1270. doi:<a href="https://doi.org/10.1093/sysbio/syab100" class="external-link">10.1093/sysbio/syab100</a>
+Smith, M. R. (2022a). Robust analysis of phylogenetic tree space.
+<em>Systematic Biology</em>, <em>71</em>(5), 1255–1270. doi:<a href="https://doi.org/10.1093/sysbio/syab100" class="external-link">10.1093/sysbio/syab100</a>
 </div>
 <div id="ref-SmithCons" class="csl-entry">
-Smith, M. R. (2022b). Using information theory to detect rogue taxa and improve consensus trees. <em>Systematic Biology</em>, <em>71</em>(5), 1088–1094. doi:<a href="https://doi.org/10.1093/sysbio/syab099" class="external-link">10.1093/sysbio/syab099</a>
+Smith, M. R. (2022b). Using information theory to detect rogue taxa and
+improve consensus trees. <em>Systematic Biology</em>, <em>71</em>(5),
+1088–1094. doi:<a href="https://doi.org/10.1093/sysbio/syab099" class="external-link">10.1093/sysbio/syab099</a>
 </div>
 <div id="ref-Smith2014" class="csl-entry">
-Smith, M. R., &amp; Ortega-Hernández, J. (2014). <span class="nocase"><em>Hallucigenia</em>’s onychophoran-like claws and the case for Tactopoda</span>. <em>Nature</em>, <em>514</em>(7522), 363–366. doi:<a href="https://doi.org/10.1038/nature13576" class="external-link">10.1038/nature13576</a>
+Smith, M. R., &amp; Ortega-Hernández, J. (2014). <span class="nocase"><em>Hallucigenia</em>’s onychophoran-like claws and the
+case for Tactopoda</span>. <em>Nature</em>, <em>514</em>(7522), 363–366.
+doi:<a href="https://doi.org/10.1038/nature13576" class="external-link">10.1038/nature13576</a>
 </div>
 <div id="ref-Vinther2008" class="csl-entry">
-Vinther, J., Van Roy, P., &amp; Briggs, D. E. G. (2008). <span class="nocase">Machaeridians are Palaeozoic armoured annelids</span>. <em>Nature</em>, <em>451</em>(7175), 185–188. doi:<a href="https://doi.org/10.1038/nature06474" class="external-link">10.1038/nature06474</a>
+Vinther, J., Van Roy, P., &amp; Briggs, D. E. G. (2008). <span class="nocase">Machaeridians are Palaeozoic armoured annelids</span>.
+<em>Nature</em>, <em>451</em>(7175), 185–188. doi:<a href="https://doi.org/10.1038/nature06474" class="external-link">10.1038/nature06474</a>
 </div>
 <div id="ref-Whidden2015" class="csl-entry">
-Whidden, C., &amp; Matsen, F. A. (2015). Quantifying <span>MCMC</span> exploration of phylogenetic tree space. <em>Systematic Biology</em>, <em>64</em>(3), 472–491. doi:<a href="https://doi.org/10.1093/sysbio/syv006" class="external-link">10.1093/sysbio/syv006</a>
+Whidden, C., &amp; Matsen, F. A. (2015). Quantifying <span>MCMC</span>
+exploration of phylogenetic tree space. <em>Systematic Biology</em>,
+<em>64</em>(3), 472–491. doi:<a href="https://doi.org/10.1093/sysbio/syv006" class="external-link">10.1093/sysbio/syv006</a>
 </div>
 </div>
 </div>
@@ -384,7 +506,7 @@ Whidden, C., &amp; Matsen, F. A. (2015). Quantifying <span>MCMC</span> explorati
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>

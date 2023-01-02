@@ -42,7 +42,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.2.0.9005</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.2.0.9006</span>
       </span>
     </div>
 
@@ -115,9 +115,10 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Tree search with Profile parsimony</h1>
-                        <h4 data-toc-skip class="author">Martin R. Smith</h4>
+                        <h4 data-toc-skip class="author">Martin R.
+Smith</h4>
             
-            <h4 data-toc-skip class="date">2022-10-12</h4>
+            <h4 data-toc-skip class="date">2023-01-02</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/profile.Rmd" class="external-link"><code>vignettes/profile.Rmd</code></a></small>
       <div class="hidden name"><code>profile.Rmd</code></div>
@@ -126,13 +127,21 @@
 
     
     
-<p>Profile Parsimony <span class="citation">(Faith &amp; Trueman, 2001)</span> finds the tree that is most faithful to the information contained within a given dataset. It is the ‘exact solution’ that implied weights parsimony approximates. For more information on the philosophy and mathematics of profile parsimony, see the <a href="profile-scores.html">companion vignette</a>.</p>
-<p>Profile Parsimony is currently implemented in “TreeSearch” for characters with up to two parsimony-informative states. (Further states are treated as ambiguous, whilst retaining as much information as possible.)</p>
+<p>Profile Parsimony <span class="citation">(Faith &amp; Trueman,
+2001)</span> finds the tree that is most faithful to the information
+contained within a given dataset. It is the ‘exact solution’ that
+implied weights parsimony approximates. For more information on the
+philosophy and mathematics of profile parsimony, see the <a href="profile-scores.html">companion vignette</a>.</p>
+<p>Profile Parsimony is currently implemented in “TreeSearch” for
+characters with up to two parsimony-informative states. (Further states
+are treated as ambiguous, whilst retaining as much information as
+possible.)</p>
 <div class="section level2">
 <h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
 </h2>
 <!--Duplicated from inapplicable.Rmd-->
-<p><a href="getting-started.html">A companion vignette</a> gives details on installing the package and getting up and running.</p>
+<p><a href="getting-started.html">A companion vignette</a> gives details
+on installing the package and getting up and running.</p>
 <!--
 # message=FALSE will suppress message when loading TreeSearch
 # Temporary fix until R.oo is updated -- remove thereafter
@@ -141,7 +150,8 @@
 <p>Once installed, load the inapplicable package into R using</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span></span></code></pre></div>
-<p>In order to reproduce the random elements of this document, set a random seed:</p>
+<p>In order to reproduce the random elements of this document, set a
+random seed:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set a random seed so that random functions in this document are reproducible</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">RNGversion</a></span><span class="op">(</span><span class="st">"3.5.0"</span><span class="op">)</span><span class="op">)</span> <span class="co"># Until we can require R3.6.0</span></span>
@@ -150,11 +160,15 @@
 <div class="section level2">
 <h2 id="scoring-a-tree-and-conducting-a-tree-search">Scoring a tree, and conducting a tree search<a class="anchor" aria-label="anchor" href="#scoring-a-tree-and-conducting-a-tree-search"></a>
 </h2>
-<p>Here’s an example of using the package to conduct tree search with profile parsimony. You can <a href="https://ms609.github.io/TreeTools/articles/load-data.html" class="external-link">load your own dataset</a>, but for this example, we’ll use a simulated dataset that comes bundled with the <code>TreeSearch</code> package.</p>
+<p>Here’s an example of using the package to conduct tree search with
+profile parsimony. You can <a href="https://ms609.github.io/TreeTools/articles/load-data.html" class="external-link">load
+your own dataset</a>, but for this example, we’ll use a simulated
+dataset that comes bundled with the <code>TreeSearch</code> package.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">congreveLamsdellMatrices</span><span class="op">)</span></span>
 <span><span class="va">myMatrix</span> <span class="op">&lt;-</span> <span class="va">congreveLamsdellMatrices</span><span class="op">[[</span><span class="fl">10</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
-<p>Unless a starting tree is provided, tree search will from a random addition tree:</p>
+<p>Unless a starting tree is provided, tree search will from a random
+addition tree:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">additionTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/AdditionTree.html">AdditionTree</a></span><span class="op">(</span><span class="va">myMatrix</span>, concavity <span class="op">=</span> <span class="st">"profile"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">additionTree</span>, <span class="va">myMatrix</span>, <span class="st">"profile"</span><span class="op">)</span></span></code></pre></div>
@@ -172,11 +186,15 @@
 <code class="sourceCode R"><span><span class="va">njTree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">myMatrix</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">njTree</span>, <span class="va">myMatrix</span>, <span class="st">"profile"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 540.2259</span></span></code></pre>
-<p>We search for trees with a better score using TBR rearrangements and the parsimony ratchet <span class="citation">(Nixon, 1999)</span>:</p>
+<p>We search for trees with a better score using TBR rearrangements and
+the parsimony ratchet <span class="citation">(Nixon, 1999)</span>:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">betterTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">myMatrix</span>, <span class="va">additionTree</span>, concavity <span class="op">=</span> <span class="st">"profile"</span>,</span>
 <span>                                 ratchIter <span class="op">=</span> <span class="fl">3</span>, tbrIter <span class="op">=</span> <span class="fl">3</span>, maxHits <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></code></pre></div>
-<p>We’ve used very low values of <code>ratchIter</code>, <code>tbrIter</code> and <code>maxHits</code> for a rapid run, so this is not necessarily a thorough enough search to find a globally optimal tree. Nevertheless, let’s see the resultant tree, and its score:</p>
+<p>We’ve used very low values of <code>ratchIter</code>,
+<code>tbrIter</code> and <code>maxHits</code> for a rapid run, so this
+is not necessarily a thorough enough search to find a globally optimal
+tree. Nevertheless, let’s see the resultant tree, and its score:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">betterTrees</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">myMatrix</span>, <span class="st">"profile"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 512.1181</span></span></code></pre>
@@ -184,19 +202,31 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">betterTrees</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="profile_files/figure-html/Ratchet-search-results-1.png" width="700"></p>
-<p>The default parameters may not be enough to find the optimal tree; type <code><a href="../reference/MaximizeParsimony.html">?MaximizeParsimony</a></code> to view all search parameters – or keep repeating the search until tree score stops improving.</p>
+<p>The default parameters may not be enough to find the optimal tree;
+type <code><a href="../reference/MaximizeParsimony.html">?MaximizeParsimony</a></code> to view all search parameters – or
+keep repeating the search until tree score stops improving.</p>
 </div>
 <div class="section level2">
 <h2 id="view-the-results">View the results<a class="anchor" aria-label="anchor" href="#view-the-results"></a>
 </h2>
-<p>In parsimony search, it is good practice to consider trees that are slightly suboptimal <span class="citation">(Smith, 2019)</span>.</p>
-<p>Here, we’ll take a consensus that includes all trees that are suboptimal by up to 3 bits. To sample this region of tree space well, the trick is to use large values of <code>ratchHits</code> and <code>ratchIter</code>, and small values of <code>searchHits</code> and <code>searchiter</code>, so that many runs don’t quite hit the optimal tree. In a serious study, you would want to sample many more than the 3 Ratchet hits (<code>ratchHits</code>) we’ll settle for here, probably using many more Ratchet iterations.</p>
+<p>In parsimony search, it is good practice to consider trees that are
+slightly suboptimal <span class="citation">(Smith, 2019)</span>.</p>
+<p>Here, we’ll take a consensus that includes all trees that are
+suboptimal by up to 3 bits. To sample this region of tree space well,
+the trick is to use large values of <code>ratchHits</code> and
+<code>ratchIter</code>, and small values of <code>searchHits</code> and
+<code>searchiter</code>, so that many runs don’t quite hit the optimal
+tree. In a serious study, you would want to sample many more than the 3
+Ratchet hits (<code>ratchHits</code>) we’ll settle for here, probably
+using many more Ratchet iterations.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">suboptimals</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">myMatrix</span>, <span class="va">betterTrees</span>, tolerance <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>                                 ratchIter <span class="op">=</span> <span class="fl">2</span>, tbrIter <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>                                 maxHits <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>                                 concavity <span class="op">=</span> <span class="st">"profile"</span><span class="op">)</span></span></code></pre></div>
-<p>The consensus of these slightly suboptimal trees provides a less resolved, but typically more reliable, summary of the signal with the phylogenetic dataset <span class="citation">(Smith, 2019)</span>:</p>
+<p>The consensus of these slightly suboptimal trees provides a less
+resolved, but typically more reliable, summary of the signal with the
+phylogenetic dataset <span class="citation">(Smith, 2019)</span>:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">suboptimals</span>, <span class="va">myMatrix</span>, <span class="st">"profile"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -212,13 +242,19 @@
 </h2>
 <div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
 <div id="ref-Faith2001" class="csl-entry">
-Faith, D. P., &amp; Trueman, J. W. H. (2001). <span class="nocase">Towards an inclusive philosophy for phylogenetic inference</span>. <em>Systematic Biology</em>, <em>50</em>(3), 331–350. doi:<a href="https://doi.org/10.1080/10635150118627" class="external-link">10.1080/10635150118627</a>
+Faith, D. P., &amp; Trueman, J. W. H. (2001). <span class="nocase">Towards an inclusive philosophy for phylogenetic
+inference</span>. <em>Systematic Biology</em>, <em>50</em>(3), 331–350.
+doi:<a href="https://doi.org/10.1080/10635150118627" class="external-link">10.1080/10635150118627</a>
 </div>
 <div id="ref-Nixon1999" class="csl-entry">
-Nixon, K. C. (1999). <span class="nocase">The Parsimony Ratchet, a new method for rapid parsimony analysis</span>. <em>Cladistics</em>, <em>15</em>(4), 407–414. doi:<a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" class="external-link">10.1111/j.1096-0031.1999.tb00277.x</a>
+Nixon, K. C. (1999). <span class="nocase">The Parsimony Ratchet, a new
+method for rapid parsimony analysis</span>. <em>Cladistics</em>,
+<em>15</em>(4), 407–414. doi:<a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" class="external-link">10.1111/j.1096-0031.1999.tb00277.x</a>
 </div>
 <div id="ref-Smith2019" class="csl-entry">
-Smith, M. R. (2019). Bayesian and parsimony approaches reconstruct informative trees from simulated morphological datasets. <em>Biology Letters</em>, <em>15</em>(2), 20180632. doi:<a href="https://doi.org/10.1098/rsbl.2018.0632" class="external-link">10.1098/rsbl.2018.0632</a>
+Smith, M. R. (2019). Bayesian and parsimony approaches reconstruct
+informative trees from simulated morphological datasets. <em>Biology
+Letters</em>, <em>15</em>(2), 20180632. doi:<a href="https://doi.org/10.1098/rsbl.2018.0632" class="external-link">10.1098/rsbl.2018.0632</a>
 </div>
 </div>
 </div>
@@ -241,7 +277,7 @@ Smith, M. R. (2019). Bayesian and parsimony approaches reconstruct informative t
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>
