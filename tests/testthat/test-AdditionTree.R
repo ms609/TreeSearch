@@ -25,17 +25,26 @@ test_that("Addition tree obeys constraints", {
     c(0, 1, 1, 1, 0, 1,
       0, 1, 1, 0, 0, 1), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
-  constraint <- MatrixToPhyDat(c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
-  expect_true(as.Splits(c(F, F, F, F, T, T), letters[1:6]) %in% 
-              as.Splits(AdditionTree(dataset, constraint = constraint),
+  constraint <- c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1)
+  # as phyDat
+  expect_true(as.Splits(c(F, F, F, F, T, T), letters[1:6]) %in%
+              as.Splits(AdditionTree(dataset, constraint = 
+                                       MatrixToPhyDat(constraint)),
+                        letters[1:6]))
+  # as non-phyDat
+  expect_true(as.Splits(c(F, F, F, F, T, T), letters[1:6]) %in%
+              as.Splits(AdditionTree(dataset, constraint = cbind(constraint)),
                         letters[1:6]))
   
-  cdef <- letters[3:6]
-  subtree <- TreeTools::KeepTip(
-    AdditionTree(dataset, constraint = constraint[3:6], seq = letters[1:6]), 
-    cdef)
-  expect_equal(ape::read.tree(text = "(c, d, (e, f));"),
-               TreeTools::UnrootTree(subtree))
+  if (packageVersion("TreeTools") > "1.9.0") { # until v1.9+ required
+    # 1.9.0.9000+ is required to handle vector (non-matrix) constraints
+    cdef <- letters[3:6]
+    subtree <- TreeTools::KeepTip(
+      AdditionTree(dataset, constraint = constraint[3:6], seq = letters[1:6]), 
+      cdef)
+    expect_equal(ape::read.tree(text = "(c, d, (e, f));"),
+                 TreeTools::UnrootTree(subtree))
+  }
 })
 
 test_that("AdditionTree() handles edge cases", {

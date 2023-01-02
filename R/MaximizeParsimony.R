@@ -72,8 +72,10 @@
 #' Setting to larger values will include trees suboptimal by up to `tolerance`
 #' in search results, which may improve the accuracy of the consensus tree
 #' (at the expense of resolution) \insertCite{Smith2019}{TreeSearch}.
-#' @param constraint An object of class `phyDat`; returned trees will be
-#' perfectly compatible with each character in `constraint`.
+#' @param constraint Either an object of class `phyDat`, in which case
+#' returned trees will be perfectly compatible with each character in
+#' `constraint`; or a tree of class `phylo`, all of whose nodes will occur
+#' in any output tree.
 #' See [`ImposeConstraint()`] and 
 #' [vignette](https://ms609.github.io/TreeSearch/articles/tree-search.html)
 #' for further examples.
@@ -174,6 +176,7 @@
 #' DropTip
 #' ImposeConstraint
 #' MakeTreeBinary
+#' MatrixToPhyDat
 #' NTip
 #' @references
 #' \insertAllCited{}
@@ -442,16 +445,20 @@ MaximizeParsimony <- function (dataset, tree,
     dataset <- dataset[-fmatch(datOnly, taxa)]
   }
   if (constrained) {
-    consTaxa <- names(constraint)
+    if (!inherits(constraint, "phyDat")) {
+      constraint <- MatrixToPhyDat(t(as.matrix(constraint)))
+    }
+    consTaxa <- TipLabels(constraint)
     treeOnly <- setdiff(tree$tip.label, consTaxa)
     if (length(treeOnly)) {
       constraint <- AddUnconstrained(constraint, treeOnly)
     }
     consOnly <- setdiff(consTaxa, tree$tip.label)
     if (length(consOnly)) {
-      cli_alert_warning(paste0("Ignoring taxa in constraint missing on tree:\n>   ", 
-              paste0(consOnly, collapse = ", ")))
-      warning("Ignored taxa in constraint missing on tree:\n   ", 
+      cli_alert_warning(
+        paste0("Ignoring taxa in constraint missing on tree:\n>   ", 
+               paste0(consOnly, collapse = ", ")))
+      warning("Ignored taxa in constraint missing on tree:\n   ",
               paste0(consOnly, collapse = ", "))
       constraint <- constraint[-fmatch(consOnly, consTaxa)]
     }

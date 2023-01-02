@@ -1,6 +1,6 @@
 Package: TreeSearch
 Title: Phylogenetic Analysis with Discrete Character Data
-Version: 1.2.0.9005
+Version: 1.2.0.9006
 Authors@R: c(
     person(
       "Martin R.", 'Smith',
@@ -80,5 +80,5 @@ ByteCompile: true
 Encoding: UTF-8
 Language: en-GB
 VignetteBuilder: knitr
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)

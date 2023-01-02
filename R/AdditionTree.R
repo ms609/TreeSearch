@@ -65,7 +65,10 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
     
     if (!missing(constraint)) {
       if (!inherits(constraint, "phyDat")) {
-        constraint <- MatrixToPhyDat(as.matrix(constraint))
+        if (is.numeric(constraint) && is.null(dim(constraint))) {
+          constraint <- t(constraint)
+        }
+        constraint <- MatrixToPhyDat(t(as.matrix(constraint)))
       }
       thisConstr <- constraint[theseTaxa]
       morphyConstr <- PhyDat2Morphy(thisConstr)
