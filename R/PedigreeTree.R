@@ -1,7 +1,7 @@
 #' Reverse neighbour breeding tree
 #' 
 #' Generates a starting tree by pairing taxa and computing ancestors.
-#' # TODO explain properly.
+#' (#TODO explain properly.)
 #' 
 #' @inheritParams MaximizeParsimony
 #' @param sequence Character or numeric vector listing sequence in which to add
@@ -12,7 +12,7 @@
 #' @template MRS
 #' @return `PedigreeTree()` returns a tree of class `phylo`, rooted on
 #' `sequence[1]`.
-#' @importFrom TreeTools AddUnconstrained AddTipEverywhere Hamming MatrixToPhyDat
+#' @importFrom TreeTools AddUnconstrained Hamming RenumberEdges
 #' PectinateTree
 #' @importFrom cli cli_progress_bar cli_progress_update
 #' @family tree generation functions
@@ -43,16 +43,17 @@ PedigreeTree <- function (dataset, concavity = Inf, constraint, sequence) {
     constraint <- AddUnconstrained(constraint, taxa)
   }
   
-  nTaxa <- length(taxa)
   nEdge <- nTaxa + nTaxa - 2
   nNode <- nTaxa - 1
+  nVisits <- nNode - 1
   parent <- integer(nEdge)
   child <- integer(nEdge)
   dat <- dataset
   names(dat) <- seq_along(dat)
   
-  cli_progress_bar("Pedigree tree", total = nTaxa - 1)
-  for (node in nTaxa + seq_len(nNode - 1)) {
+  cli_progress_bar("Pedigree tree", total = nVisits)
+  for (node in nTaxa + seq_len(nVisits)) {
+    # TODO prohibit merges that violate constraint
     distances <- Hamming(dat, ratio = FALSE)
     minima <- which(as.matrix(distances) == min(distances), arr.ind = TRUE)
     unbreed <- minima[sample.int(nrow(minima), 1) ,]
@@ -72,7 +73,8 @@ PedigreeTree <- function (dataset, concavity = Inf, constraint, sequence) {
   parent[edgeI] <- nTaxa + nNode
   child[edgeI] <- as.numeric(names(dat))
   
-  unname(cbind(parent, child))
+  tree <- PectinateTree(taxa)
+  tree$edge <- do.call(cbind, RenumberEdges(parent, child))
   tree
 }
 

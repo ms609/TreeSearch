@@ -37,7 +37,7 @@ taxa. Randomized if not provided.}
 }
 \description{
 Generates a starting tree by pairing taxa and computing ancestors.
-# TODO explain properly.
+(#TODO explain properly.)
 }
 \examples{
 data("Lobo", package = "TreeTools")
