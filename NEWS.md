@@ -1,3 +1,8 @@
+# TreeSearch 1.2.0.9007
+
+- New function `PedigreeTree()` as an alternative to neighbour joining
+
+
 # TreeSearch 1.2.0.9006
 
 - New function `LengthAdded()` tests which characters contribute to taxon

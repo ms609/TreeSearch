@@ -24,6 +24,7 @@ Random postorder tree
 }
 \seealso{
 Other tree generation functions: 
-\code{\link{AdditionTree}()}
+\code{\link{AdditionTree}()},
+\code{\link{PedigreeTree}()}
 }
 \concept{tree generation functions}
