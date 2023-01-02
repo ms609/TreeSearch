@@ -6,7 +6,7 @@
 #' @inheritParams MaximizeParsimony
 #' @param sequence Character or numeric vector listing sequence in which to add
 #' taxa. Randomized if not provided.
-#' @examples 
+#' @examples
 #' data("Lobo", package = "TreeTools")
 #' PedigreeTree(Lobo.phy)
 #' @template MRS
@@ -85,7 +85,7 @@ PedigreeTree <- function (dataset, concavity = Inf, constraint, sequence) {
   for (i in seq_len(attr(children, "nr"))) {
     pair <- children[, i]
     union <- cont[, pair[[1]]] & cont[, pair[[2]]]
-    if(any(union)) {
+    if (any(union)) {
       token[i] <- match(data.frame(union), cont)
     } else {
       intersect <- data.frame(cont[, pair[[1]]] | cont[, pair[[2]]],

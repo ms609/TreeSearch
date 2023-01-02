@@ -47,7 +47,7 @@ Imports:
   shinyjs,
   stats,
   TreeDist (>= 2.5.0),
-  TreeTools (>= 1.9.0),
+  TreeTools (>= 1.9.0.9000),
 Suggests:
   knitr,
   phangorn (>= 2.2.1),

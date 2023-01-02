@@ -4,7 +4,7 @@ test_that("Pedigree tree is more parsimonious", {
   seq10 <- names(L10)
   Score <- function (tr, k) TreeLength(tr, Lobo.phy, concavity = k)
   
-  set.seed(1) # ensure consistent Pedigree sequence
+  set.seed(1) # ensure consistent sequence
   eq <- PedigreeTree(Lobo.phy)
   kx <- PedigreeTree(L10, sequence = seq10, concavity = 10)
   pr <- PedigreeTree(L10, sequence = 1:10, concavity = "pr")
@@ -36,15 +36,12 @@ test_that("Pedigree tree obeys constraints", {
                 as.Splits(PedigreeTree(dataset, constraint = cbind(constraint)),
                           letters[1:6]))
   
-  if (packageVersion("TreeTools") > "1.9.0") { # until v1.9+ required
-    # 1.9.0.9000+ is required to handle vector (non-matrix) constraints
-    cdef <- letters[3:6]
-    subtree <- TreeTools::KeepTip(
-      PedigreeTree(dataset, constraint = constraint[3:6], seq = letters[1:6]), 
-      cdef)
-    expect_equal(ape::read.tree(text = "(c, d, (e, f));"),
-                 TreeTools::UnrootTree(subtree))
-  }
+  cdef <- letters[3:6]
+  subtree <- TreeTools::KeepTip(
+    PedigreeTree(dataset, constraint = constraint[3:6], seq = letters[1:6]), 
+    cdef)
+  expect_equal(ape::read.tree(text = "(c, d, (e, f));"),
+               TreeTools::UnrootTree(subtree))
 })
 
 test_that("PedigreeTree() handles edge cases", {
