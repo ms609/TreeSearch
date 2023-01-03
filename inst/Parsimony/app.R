@@ -1542,8 +1542,10 @@ server <- function(input, output, session) {
         AdditionTree(r$dataset, concavity = concavity())
       } else {
         LogComment("Select starting tree")
-        LogCode("startTree <- trees[[1]]")
-        r$trees[[1]]
+        firstOptimal <- which.min(scores())
+        LogCode(paste0("startTree <- trees[[", firstOptimal, "]]",
+                       " # First tree with optimal score"))
+        r$trees[[firstOptimal]]
       }
       LogMsg("StartSearch()")
       PutData(r$dataset)
