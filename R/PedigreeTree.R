@@ -8,7 +8,7 @@
 #' taxa. Randomized if not provided.
 #' @examples
 #' data("Lobo", package = "TreeTools")
-#' PedigreeTree(Lobo.phy)
+#' tr <- PedigreeTree(Lobo.phy)
 #' @template MRS
 #' @return `PedigreeTree()` returns a tree of class `phylo`, rooted on
 #' `sequence[1]`.
@@ -17,13 +17,14 @@
 #' @importFrom cli cli_progress_bar cli_progress_update
 #' @family tree generation functions
 #' @seealso
-#' 
+#'
 #' Impose a constraint: [`TreeTools::ImposeConstraint()`](https://ms609.github.io/TreeTools/reference/ImposeConstraint)
-#' 
+#'
 #' Neighbour-joining trees: [`TreeTools::NJTree()`](https://ms609.github.io/TreeTools/reference/NJTree.html);
 #' [`TreeTools::ConstrainedNJ()`](https://ms609.github.io/TreeTools/reference/ConstrainedNJ)
 #' @export
 PedigreeTree <- function (dataset, concavity = Inf, constraint, sequence) {
+  
   # Initialize missing parameters
   taxa <- names(dataset)
   if (missing(sequence)) {
@@ -31,10 +32,12 @@ PedigreeTree <- function (dataset, concavity = Inf, constraint, sequence) {
   } else if (is.numeric(sequence)) {
     sequence <- taxa[sequence]
   }
+  
   nTaxa <- length(taxa)
   if (length(taxa) < 4) {
     return(PectinateTree(taxa))
   }
+  
   unlisted <- setdiff(taxa, sequence)
   if (length(unlisted) > 0) {
     sequence <- c(sequence, sample(unlisted))
@@ -55,8 +58,9 @@ PedigreeTree <- function (dataset, concavity = Inf, constraint, sequence) {
   for (node in nTaxa + seq_len(nVisits)) {
     cli_progress_update(1)
     # TODO prohibit merges that violate constraint
-    distances <- Hamming(dat, ratio = FALSE)
-    minima <- which(as.matrix(distances) == min(distances), arr.ind = TRUE)
+    distances <- as.matrix(Hamming(dat, ratio = FALSE))
+    diag(distances) <- Inf
+    minima <- which(distances == min(distances), arr.ind = TRUE)
     unbreed <- minima[sample.int(nrow(minima), 1) ,]
     
     edgeI <- (node - nTaxa) * 2 - 1:0
