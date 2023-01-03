@@ -54,8 +54,8 @@ dists <- TreeDist::ClusteringInfoDistance(trees)
 
 # Compute clusters of trees
 
-# Try K-means clustering (Hartigan & Wong 1979):
-kClusters <- lapply(2:15, function (k) kmeans(dists, k))
+# Try K-means++ clustering (Arthur & Vassilvitskii 2007):
+kClusters <- lapply(2:15, function (k) KMeansPP(dists, k))
 kSils <- vapply(kClusters, function (kCluster) {
   mean(cluster::silhouette(kCluster$cluster, dists)[, 3])
 }, double(1))
