@@ -53,6 +53,7 @@ PedigreeTree <- function (dataset, concavity = Inf, constraint, sequence) {
   
   cli_progress_bar("Pedigree tree", total = nVisits)
   for (node in nTaxa + seq_len(nVisits)) {
+    cli_progress_update(1)
     # TODO prohibit merges that violate constraint
     distances <- Hamming(dat, ratio = FALSE)
     minima <- which(as.matrix(distances) == min(distances), arr.ind = TRUE)
