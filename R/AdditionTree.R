@@ -24,6 +24,7 @@
 #' [`TreeTools::ConstrainedNJ()`](https://ms609.github.io/TreeTools/reference/ConstrainedNJ)
 #' @export
 AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
+  
   # Initialize missing parameters
   taxa <- names(dataset)
   if (missing(sequence)) {
@@ -31,10 +32,12 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
   } else if (is.numeric(sequence)) {
     sequence <- taxa[sequence]
   }
+  
   nTaxa <- length(taxa)
   if (length(taxa) < 4) {
     return(PectinateTree(taxa))
   }
+  
   unlisted <- setdiff(taxa, sequence)
   if (length(unlisted) > 0) {
     sequence <- c(sequence, sample(unlisted))
@@ -42,6 +45,7 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
   if (!missing(constraint)) {
     constraint <- AddUnconstrained(constraint, taxa)
   }
+  
   # PrepareDataXXX attributes only valid for full dataset
   attr(dataset, "info.amounts") <- NULL
   attr(dataset, "min.length") <- NULL
