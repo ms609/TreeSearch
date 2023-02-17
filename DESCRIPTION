@@ -74,7 +74,7 @@ RdMacros: Rdpack
 LinkingTo:
   Rcpp,
   TreeTools,
-SystemRequirements: C++14
+SystemRequirements: C++17
 LazyData: true
 ByteCompile: true
 Encoding: UTF-8
