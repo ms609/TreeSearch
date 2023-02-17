@@ -51,7 +51,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.3.0</span>
       </span>
     </div>
 
@@ -126,14 +126,14 @@
 <div class="section level1">
 <div class="page-header"><h1 id="treesearch">TreeSearch<a class="anchor" aria-label="anchor" href="#treesearch"></a>
 </h1></div>
-
-<p>“TreeSearch” (Smith 2021) is an R package that contains a “shiny” user interface for interactive tree search and exploration of results, including character visualization, <a href="https://ms609.github.io/Rogue" class="external-link">rogue taxon detection</a> (Smith 2022a), <a href="https://ms609.github.io/TreeDist/articles/treespace.html" class="external-link">tree space mapping</a> (Smith 2022b), and cluster consensus trees.</p>
+<p><a href="https://codecov.io/gh/ms609/TreeSearch" class="external-link"><img src="https://codecov.io/gh/ms609/TreeSearch/branch/master/graph/badge.svg" alt="codecov"></a> <a href="https://cran.r-project.org/package=TreeSearch" class="external-link"><img src="http://www.r-pkg.org/badges/version/TreeSearch" alt="CRAN Status Badge"></a> <a href="https://cran.r-project.org/package=TreeSearch" class="external-link"><img src="http://cranlogs.r-pkg.org/badges/grand-total/TreeSearch" alt="CRAN RStudio mirror downloads"></a> <a href="https://zenodo.org/badge/latestdoi/98171642" class="external-link"><img src="https://zenodo.org/badge/98171642.svg" alt="DOI"></a><!--[![Project Status: Inactive – The project has reached a stable, usable state but is no longer being actively developed; support/maintenance will be provided as time allows.](http://www.repostatus.org/badges/latest/inactive.svg)](http://www.repostatus.org/#inactive)
+--> <a href="http://www.repostatus.org/#active" class="external-link"><img src="http://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active – – The project has reached a stable, usable state and is being actively developed."></a></p>
+<p>“TreeSearch” (Smith 2022c) is an R package that contains a “shiny” user interface for interactive tree search and exploration of results, including character visualization, <a href="https://ms609.github.io/Rogue" class="external-link">rogue taxon detection</a> (Smith 2022a), <a href="https://ms609.github.io/TreeDist/articles/treespace.html" class="external-link">tree space mapping</a> (Smith 2022b), and cluster consensus trees.</p>
 <p>Inapplicable character states are handled using the algorithm of Brazeau, Guillerme and Smith (2019) using the “Morphy” C library (Brazeau <em>et al</em>. 2017). Implied weighting (Goloboff, 1993), Profile Parsimony (Faith and Trueman, 2001) and Successive Approximations (Farris, 1969) are implemented; <a href="https://ms609.github.io/TreeSearch/articles/custom.html">custom optimality criteria</a> and search approaches can also be defined.</p>
 </div>
 <div class="section level1">
-<h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+<h1 id="installing-in-r">Installing in R<a class="anchor" aria-label="anchor" href="#installing-in-r"></a>
 </h1>
-<p>The TreeSearch user interface can be run as a stand-alone application without installing R. <a href="https://github.com/ms609/TreeSearch/releases" class="external-link">Download</a> the latest release for your platform. If your preferred platform is not supported, please contact the maintainer.</p>
 <p>Full installation instructions, including notes on installing R, are available in a <a href="https://ms609.github.io/TreeSearch/articles/getting-started.html">vignette</a>.</p>
 <p>Install and load the stable version from CRAN as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -145,6 +145,18 @@
 <span><span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://remotes.r-lib.org" class="external-link">"remotes"</a></span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ms609/TreeSearch"</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level1">
+<h1 id="installing-stand-alone-application">Installing stand-alone application<a class="anchor" aria-label="anchor" href="#installing-stand-alone-application"></a>
+</h1>
+<p>The TreeSearch user interface can be run as a stand-alone application without installing R. <a href="https://github.com/ms609/TreeSearch/releases" class="external-link">Download</a> the latest release for your platform. If your preferred platform is not supported, please contact the maintainer.</p>
+<div class="section level2">
+<h2 id="installation-on-windows">Installation on Windows<a class="anchor" aria-label="anchor" href="#installation-on-windows"></a>
+</h2>
+<p>You may need to obtain the <a href="https://community.chocolatey.org/packages/ffmpeg" class="external-link">ffmpeg library</a> before you can run TreeSearch.</p>
+<p>This is best installed using <a href="https://chocolatey.org/" class="external-link">‘Chocolatey’</a>.</p>
+<p>Once chocolatey is installed, open a PowerShell window with administrative privileges, and type <code>choco install ffmpeg</code>; then restart your computer.</p>
+</div>
 </div>
 <div class="section level1">
 <h1 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
@@ -179,9 +191,9 @@
 <p>Farris, J. S. (1969). A successive approximations approach to character weighting. Systematic Biology, 18(4), 374–385. doi: <a href="https://dx.doi.org/10.2307/2412182" class="external-link">10.2307/2412182</a>.</p>
 <p>Goloboff, P. A. (1993). Estimating character weights during tree search. Cladistics, 9(1), 83–91. doi: <a href="https://doi.org/10.1111/j.1096-0031.1993.tb00209.x" class="external-link">10.1111/j.1096-0031.1993.tb00209.x</a>.</p>
 <p>Goloboff, P. A., Torres, A., Arias, J. S. (2018). Weighted parsimony outperforms other methods of phylogenetic inference under models appropriate for morphology. Cladistics, 34(4), 407–437. doi: <a href="https://doi.org/10.1111/cla.12205" class="external-link">10.1111/cla.12205</a>.</p>
-<p>Smith, M. R. (2021). TreeSearch: morphological phylogenetic analysis in R. BioRχiv. doi: <a href="https://www.biorxiv.org/content/10.1101/2021.11.08.467735.full.pdf" class="external-link">10.1101/2021.11.08.467735</a>.</p>
 <p>Smith, M. R. (2022a). Using information theory to detect rogue taxa and improve phylogenetic trees. Systematic Biology, 71(5), 1088–1094. doi: <a href="https://dx.doi.org/10.1093/sysbio/syab099" class="external-link">10.1093/sysbio/syab099</a></p>
 <p>Smith, M. R. (2022b). Robust analysis of phylogenetic tree space. Systematic Biology, 71(5), 1255–1270. doi: <a href="https://dx.doi.org/10.1093/sysbio/syab100" class="external-link">10.1093/sysbio/syab100</a></p>
+<p>Smith, M. R. (2022c). TreeSearch: morphological phylogenetic analysis in R. R Journal, forthcoming. Preprint doi: <a href="https://www.biorxiv.org/content/10.1101/2021.11.08.467735.full.pdf" class="external-link">10.1101/2021.11.08.467735</a>.</p>
 </div>
 
   </div>
@@ -240,7 +252,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>

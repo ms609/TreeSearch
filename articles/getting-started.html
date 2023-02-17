@@ -41,7 +41,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.3.0</span>
       </span>
     </div>
 
@@ -113,10 +113,12 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>Getting started: Installing R and TreeSearch</h1>
-                        <h4 data-toc-skip class="author">Martin R. Smith</h4>
+      <h1 data-toc-skip>Getting started: Installing R and
+TreeSearch</h1>
+                        <h4 data-toc-skip class="author">Martin R.
+Smith</h4>
             
-            <h4 data-toc-skip class="date">2022-08-15</h4>
+            <h4 data-toc-skip class="date">2023-02-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="hidden name"><code>getting-started.Rmd</code></div>
@@ -125,27 +127,36 @@
 
     
     
-<p>“TreeSearch” is an R package that allows parsimony search on morphological datasets.</p>
+<p>“TreeSearch” is an R package that allows parsimony search on
+morphological datasets.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="section level3">
 <h3 id="simple-installation">Simple installation<a class="anchor" aria-label="anchor" href="#simple-installation"></a>
 </h3>
-<p>To use “TreeSearch” you will first need to <a href="https://CRAN.R-project.org/" class="external-link">install R</a>. <a href="https://www.rstudio.com/" class="external-link">RStudio</a> (<a href="https://dss.princeton.edu/training/RStudio101.pdf" class="external-link">overview</a>) is a popular front-end that makes several of R’s features easier to use.</p>
-<p>The “TreeSearch” package can be installed as any other package. To get the latest stable version from CRAN, type</p>
+<p>To use “TreeSearch” you will first need to <a href="https://CRAN.R-project.org/" class="external-link">install R</a>. <a href="https://www.rstudio.com/" class="external-link">RStudio</a> (<a href="https://dss.princeton.edu/training/RStudio101.pdf" class="external-link">overview</a>)
+is a popular front-end that makes several of R’s features easier to
+use.</p>
+<p>The “TreeSearch” package can be installed as any other package. To
+get the latest stable version from CRAN, type</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"TreeSearch"</span><span class="op">)</span></span></code></pre></div>
 <p>into the R (or RStudio) command line.</p>
 <p>Once installed, load the “TreeSearch” package into R using</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeSearch/">"TreeSearch"</a></span><span class="op">)</span></span></code></pre></div>
-<p>Activate the graphical user interface by typing <code><a href="../reference/MaximizeParsimony.html">EasyTrees()</a></code>.</p>
-<p>In Jan 2022, some users are reporting issues after loading trees from Nexus files. These arise due to an issue in the underlying “ape” package. To install a patched version, close and re-launch R and run:</p>
+<p>Activate the graphical user interface by typing
+<code><a href="../reference/MaximizeParsimony.html">EasyTrees()</a></code>.</p>
+<p>In Jan 2022, some users are reporting issues after loading trees from
+Nexus files. These arise due to an issue in the underlying “ape”
+package. To install a patched version, close and re-launch R and
+run:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://remotes.r-lib.org" class="external-link">"remotes"</a></span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ms609/ape@patch-3"</span><span class="op">)</span></span></code></pre></div>
-<p>Windows users may need to install <a href="https://cran.r-project.org/bin/windows/Rtools/" class="external-link">Rtools</a> before installing from the GitHub source.</p>
+<p>Windows users may need to install <a href="https://cran.r-project.org/bin/windows/Rtools/" class="external-link">Rtools</a> before
+installing from the GitHub source.</p>
 </div>
 <div class="section level3">
 <h3 id="for-advanced-users">For advanced users<a class="anchor" aria-label="anchor" href="#for-advanced-users"></a>
@@ -161,9 +172,11 @@
 <p>You might want to:</p>
 <ul>
 <li>
-<a href="https://ms609.github.io/TreeTools/articles/load-data.html" class="external-link">Load data</a> from a Nexus file or spreadsheet</li>
+<a href="https://ms609.github.io/TreeTools/articles/load-data.html" class="external-link">Load
+data</a> from a Nexus file or spreadsheet</li>
 <li>Conduct parsimony search using Brazeau, Guillerme &amp; Smith’s <a href="tree-search.html">approach to inapplicable data</a>, or using <a href="profile.html">Profile parsimony</a>.</li>
-<li>Conduct parsimony search using <a href="custom.html">custom optimality criteria</a>.</li>
+<li>Conduct parsimony search using <a href="custom.html">custom
+optimality criteria</a>.</li>
 </ul>
 </div>
   </div>
@@ -185,7 +198,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>

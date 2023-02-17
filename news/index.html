@@ -23,7 +23,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.3.0</span>
       </span>
     </div>
 
@@ -88,11 +88,27 @@
     </div>
 
     <div class="section level2">
-<h2 class="page-header" data-toc-text="1.2.0.9000" id="treesearch-1209000">TreeSearch 1.2.0.9000<a class="anchor" aria-label="anchor" href="#treesearch-1209000"></a></h2>
-<ul><li>New vignette on tree space mapping</li></ul></div>
+<h2 class="page-header" data-toc-text="1.3.0" id="treesearch-130">TreeSearch 1.3.0<a class="anchor" aria-label="anchor" href="#treesearch-130"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-3-0">New features<a class="anchor" aria-label="anchor" href="#new-features-1-3-0"></a></h3>
+<ul><li>New function <code><a href="../reference/LengthAdded.html">LengthAdded()</a></code> tests which characters contribute to taxon instability, per Pol &amp; Escapa (2009) <a href="doi:10.1111/j.1096-0031.2009.00258.x" class="uri">doi:10.1111/j.1096-0031.2009.00258.x</a>
+</li>
+<li>
+<code><a href="../reference/WhenFirstHit.html">WhenFirstHit()</a></code> recovers tree search information from tree names</li>
+<li>New <a href="https://ms609.github.io/TreeSearch/dev/articles/tree-space.html">vignette</a> on tree space mapping</li>
+<li>Support <code>phylo</code> trees as constraints</li>
+</ul></div>
+<div class="section level3">
+<h3 id="gui-improvements-1-3-0">GUI improvements<a class="anchor" aria-label="anchor" href="#gui-improvements-1-3-0"></a></h3>
+<ul><li>Support reading characters from Excel spreadsheets</li>
+<li>Allow retention of suboptimal trees</li>
+<li>Use K-means++ clustering</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.2.0" id="treesearch-120">TreeSearch 1.2.0<small>2022-08-10</small><a class="anchor" aria-label="anchor" href="#treesearch-120"></a></h2>
-<ul><li>‘shiny’ GUI improvements:<ul><li>Export log of tree search commands</li>
+<ul><li>‘shiny’ GUI improvements:
+<ul><li>Export log of tree search commands</li>
 <li>Export R scripts to reproduce figures</li>
 <li>Simplify layout</li>
 <li>Misc bug fixes</li>
@@ -171,7 +187,8 @@
 <div class="section level3">
 <h3 id="deprecations-1-0-0">Deprecations<a class="anchor" aria-label="anchor" href="#deprecations-1-0-0"></a></h3>
 <ul><li>Remove redundant internal function <code>LogisticPoints()</code>
-</li></ul></div>
+</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.4.3" id="treesearch-043">TreeSearch 0.4.3<small>2020-07-09</small><a class="anchor" aria-label="anchor" href="#treesearch-043"></a></h2>
@@ -180,10 +197,12 @@
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.4.2" id="treesearch-042">TreeSearch 0.4.2<small>2020-07-07</small><a class="anchor" aria-label="anchor" href="#treesearch-042"></a></h2>
-<ul><li>Update tests for compatibility with ‘TreeTools’ v1.1.0</li></ul></div>
+<ul><li>Update tests for compatibility with ‘TreeTools’ v1.1.0</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.4.1" id="treesearch-041">TreeSearch 0.4.1<small>2020-06-09</small><a class="anchor" aria-label="anchor" href="#treesearch-041"></a></h2>
-<ul><li>Compatibility with ‘TreeTools’ v1.0.0</li></ul></div>
+<ul><li>Compatibility with ‘TreeTools’ v1.0.0</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.4.0" id="treesearch-040">TreeSearch 0.4.0<small>2020-02-06</small><a class="anchor" aria-label="anchor" href="#treesearch-040"></a></h2>
 <div class="section level3">
@@ -211,7 +230,8 @@
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.3.2" id="treesearch-032">TreeSearch 0.3.2<small>2019-06-03</small><a class="anchor" aria-label="anchor" href="#treesearch-032"></a></h2>
-<ul><li>Improve text, content and build speed of vignettes</li></ul></div>
+<ul><li>Improve text, content and build speed of vignettes</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.3.1" id="treesearch-031">TreeSearch 0.3.1<a class="anchor" aria-label="anchor" href="#treesearch-031"></a></h2>
 <div class="section level3">
@@ -223,7 +243,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-3-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-1"></a></h3>
-<ul><li>Check whether input tree is bifurcating before attempting rearrangements, to avoid crashes on unsupported input</li></ul></div>
+<ul><li>Check whether input tree is bifurcating before attempting rearrangements, to avoid crashes on unsupported input</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.3.0" id="treesearch-030">TreeSearch 0.3.0<small>2019-03-21</small><a class="anchor" aria-label="anchor" href="#treesearch-030"></a></h2>
@@ -234,14 +255,17 @@
 </ul></div>
 <div class="section level3">
 <h3 id="deprecations-0-3-0">Deprecations<a class="anchor" aria-label="anchor" href="#deprecations-0-3-0"></a></h3>
-<ul><li>Function <code><a href="https://ms609.github.io/TreeTools/reference/SplitFrequency.html" class="external-link">TreeSplits()</a></code> is deprecated; use <code><a href="https://ms609.github.io/TreeTools/reference/Splits.html" class="external-link">as.Splits()</a></code> instead</li></ul></div>
+<ul><li>Function <code><a href="https://ms609.github.io/TreeTools/reference/SplitFrequency.html" class="external-link">TreeSplits()</a></code> is deprecated; use <code><a href="https://ms609.github.io/TreeTools/reference/Splits.html" class="external-link">as.Splits()</a></code> instead</li>
+</ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-3-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-0"></a></h3>
-<ul><li>Correct some mistakes in the documentation</li></ul></div>
+<ul><li>Correct some mistakes in the documentation</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.2.2" id="treesearch-022">TreeSearch 0.2.2<small>2019-01-02</small><a class="anchor" aria-label="anchor" href="#treesearch-022"></a></h2>
-<ul><li>Correct vignette titles</li></ul></div>
+<ul><li>Correct vignette titles</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.2.1" id="treesearch-021">TreeSearch 0.2.1<small>2018-12-07</small><a class="anchor" aria-label="anchor" href="#treesearch-021"></a></h2>
 <div class="section level3">
@@ -259,7 +283,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-2-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-1"></a></h3>
-<ul><li>Export missing functions</li></ul></div>
+<ul><li>Export missing functions</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.2.0" id="treesearch-020">TreeSearch 0.2.0<small>2018-09-11</small><a class="anchor" aria-label="anchor" href="#treesearch-020"></a></h2>
@@ -298,7 +323,8 @@
 <div class="section level3">
 <h3 id="bug-fixes-0-2-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0"></a></h3>
 <ul><li>
-<code>[IW]MultiRatchet()</code> now considers trees identical even if they’ve been hit a different number of times</li></ul></div>
+<code>[IW]MultiRatchet()</code> now considers trees identical even if they’ve been hit a different number of times</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.1.2" id="treesearch-012">TreeSearch 0.1.2<small>2018-03-19</small><a class="anchor" aria-label="anchor" href="#treesearch-012"></a></h2>
@@ -317,7 +343,8 @@
 <div class="section level3">
 <h3 id="enhancements-0-1-0">Enhancements<a class="anchor" aria-label="anchor" href="#enhancements-0-1-0"></a></h3>
 <ul><li>Allow additional parameters to be passed to <code>consensus</code> via <code>ConsensusWithout</code>
-</li></ul></div>
+</li>
+</ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-1-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-1-0"></a></h3>
 <ul><li>C11 compliance</li>
@@ -364,7 +391,8 @@
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.0.6" id="treesearch-006">TreeSearch 0.0.6<small>2017-11-07</small><a class="anchor" aria-label="anchor" href="#treesearch-006"></a></h2>
-<ul><li>First CRAN submission</li></ul></div>
+<ul><li>First CRAN submission</li>
+</ul></div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -379,7 +407,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

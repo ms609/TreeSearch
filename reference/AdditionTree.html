@@ -24,7 +24,7 @@ parsimonious location."><!-- mathjax --><script src="https://cdnjs.cloudflare.co
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.3.0</span>
       </span>
     </div>
 
@@ -121,8 +121,10 @@ approaches
 
 
 <dt>constraint</dt>
-<dd><p>An object of class <code>phyDat</code>; returned trees will be
-perfectly compatible with each character in <code>constraint</code>.
+<dd><p>Either an object of class <code>phyDat</code>, in which case
+returned trees will be perfectly compatible with each character in
+<code>constraint</code>; or a tree of class <code>phylo</code>, all of whose nodes will occur
+in any output tree.
 See <code>ImposeConstraint()</code> and
 <a href="https://ms609.github.io/TreeSearch/articles/tree-search.html">vignette</a>
 for further examples.</p></dd>
@@ -156,16 +158,16 @@ taxa. Randomized if not provided.</p></dd>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">'Lobo'</span>, package <span class="op">=</span> <span class="st">'TreeTools'</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"Lobo"</span>, package <span class="op">=</span> <span class="st">"TreeTools"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">AdditionTree</span><span class="op">(</span><span class="va">Lobo.phy</span>, concavity <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Addition tree <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■              </span>  58% | ETA:  1s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Addition tree <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■    </span>  91% | ETA:  0s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Addition tree <span style="color: #00BB00;">■■■■■■■■                        </span>  23% | ETA:  3s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Addition tree <span style="color: #00BB00;">■■■■■■■■■■■■■■■                 </span>  45% | ETA:  2s</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Addition tree <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Phylogenetic tree with 48 tips and 47 internal nodes.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Tip labels:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Tubiluchus_Priapulida, Jianshanopodia, Kuamaia_lata, Paucipodia, Collinsium, Collins_monster_Burgess_Shale, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Tubiluchus_Priapulida, Collins_monster_Burgess_Shale, Cardiodictyon, Actinarctus_Heterotardigrada, Leanchoilia, Chengjiangocaris, ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Rooted; no branch lengths.</span>
 </code></pre></div>
@@ -182,7 +184,7 @@ taxa. Randomized if not provided.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

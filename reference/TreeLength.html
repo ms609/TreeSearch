@@ -32,7 +32,7 @@ Trees may be scored using equal weights, implied weights
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.3.0</span>
       </span>
     </div>
 
@@ -155,7 +155,7 @@ TNT sets a default of 3, but this is too low in some circumstances
 Better still explore the sensitivity of results under a range of
 concavity values, e.g. <code>k = 2 ^ (1:7)</code>.
 Specify <code>Inf</code> to weight each additional step equally.
-Specify <code>'profile'</code> to employ profile parsimony (Faith and Trueman 2001)
+Specify <code>"profile"</code> to employ profile parsimony (Faith and Trueman 2001)
 .</p></dd>
 
 
@@ -207,6 +207,7 @@ each tree in <code>tree</code>.</p>
 <li><p>See score for each character: <code><a href="CharacterLength.html">CharacterLength()</a></code>.</p></li>
 </ul><p>Other tree scoring: 
 <code><a href="CharacterLength.html">CharacterLength</a>()</code>,
+<code><a href="LengthAdded.html">LengthAdded</a>()</code>,
 <code><a href="MinimumLength.html">MinimumLength</a>()</code>,
 <code><a href="MorphyTreeLength.html">MorphyTreeLength</a>()</code></p></div>
     </div>
@@ -247,7 +248,7 @@ each tree in <code>tree</code>.</p>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Can handle max. 2 informative tokens. Dropping others.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3941.387</span>
 <span class="r-in"><span><span class="fu">TreeLength</span><span class="op">(</span><span class="fl">5</span>, <span class="va">inapplicable.phyData</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1937 1971 1909 2019 1960</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1988 1945 1923 1940 1954</span>
 </code></pre></div>
     </div>
   </div>
@@ -262,7 +263,7 @@ each tree in <code>tree</code>.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

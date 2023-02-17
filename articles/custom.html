@@ -41,7 +41,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.3.0</span>
       </span>
     </div>
 
@@ -114,9 +114,10 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Tree search with custom optimality criteria</h1>
-                        <h4 data-toc-skip class="author">Martin R. Smith</h4>
+                        <h4 data-toc-skip class="author">Martin R.
+Smith</h4>
             
-            <h4 data-toc-skip class="date">2022-08-15</h4>
+            <h4 data-toc-skip class="date">2023-02-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/custom.Rmd" class="external-link"><code>vignettes/custom.Rmd</code></a></small>
       <div class="hidden name"><code>custom.Rmd</code></div>
@@ -128,8 +129,11 @@
 <div class="section level2">
 <h2 id="using-custom-optimality-criteria">Using custom optimality criteria<a class="anchor" aria-label="anchor" href="#using-custom-optimality-criteria"></a>
 </h2>
-<p>“TreeSearch” can be used to search for trees that are optimal under user-specified criteria <span class="citation">(e.g. Hopkins &amp; St. John, 2021)</span>.</p>
-<p>All that is needed is to provide a function that will return a score for a given tree (and dataset).</p>
+<p>“TreeSearch” can be used to search for trees that are optimal under
+user-specified criteria <span class="citation">(e.g. Hopkins &amp; St.
+John, 2021)</span>.</p>
+<p>All that is needed is to provide a function that will return a score
+for a given tree (and dataset).</p>
 <p>First we’ll load the necessary R libraries:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/" class="external-link">"TreeTools"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span>, warn.conflict <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -145,9 +149,18 @@
 <div class="section level2">
 <h2 id="maximizing-tree-balance">Maximizing tree balance<a class="anchor" aria-label="anchor" href="#maximizing-tree-balance"></a>
 </h2>
-<p>We’ll start with a very simple case: aiming to minimise the total cophenetic index [TIC; <span class="citation">Mir, Rosselló, &amp; Rotger (2013)</span>] of a tree. The TCI is a measure of tree balance; it does not depend on an input dataset. All we need to do is to write a <code>TreeScorer</code> function.<br>
-This function will be sent the <code>parent</code> and <code>child</code> nodes for each edge in a tree, and a (here, empty) <code>dataset</code> parameter. The function should return a score to be minimized.<br>
-Here, we can use a copy of our starting tree as a template, to be populated with the rearranged <code>parent</code> and <code>child</code> vectors:</p>
+<p>We’ll start with a very simple case: aiming to minimise the total
+cophenetic index [TIC; <span class="citation">Mir, Rosselló, &amp;
+Rotger (2013)</span>] of a tree. The TCI is a measure of tree balance;
+it does not depend on an input dataset. All we need to do is to write a
+<code>TreeScorer</code> function.<br>
+This function will be sent the <code>parent</code> and
+<code>child</code> nodes for each edge in a tree, and a (here, empty)
+<code>dataset</code> parameter. The function should return a score to be
+minimized.<br>
+Here, we can use a copy of our starting tree as a template, to be
+populated with the rearranged <code>parent</code> and <code>child</code>
+vectors:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">PectinateTree</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span>
 <span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">tree</span><span class="op">)</span></span></code></pre></div>
@@ -160,7 +173,14 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 <span></span>
 <span><span class="fu">TCIScore</span><span class="op">(</span><span class="va">tree</span><span class="op">$</span><span class="va">edge</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">tree</span><span class="op">$</span><span class="va">edge</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, <span class="cn">NA</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 56</span></span></code></pre>
-<p>Now we can use our scorer for tree search. We need to initialize some parameters to <code><a href="../reference/TreeSearch.html">TreeSearch()</a></code> with null values: <code>dataset = EmptyPhyDat(tree)</code> sends a blank dataset (as our tree scorer doesn’t require any data); we set <code>InitializeData = DoNothing</code> and <code>CleanUpData = DoNothing</code> because we don’t need to do anything to <code>dataset</code> before it is sent to <code>TreeScorer()</code>.</p>
+<p>Now we can use our scorer for tree search. We need to initialize some
+parameters to <code><a href="../reference/TreeSearch.html">TreeSearch()</a></code> with null values:
+<code>dataset = EmptyPhyDat(tree)</code> sends a blank dataset (as our
+tree scorer doesn’t require any data); we set
+<code>InitializeData = DoNothing</code> and
+<code>CleanUpData = DoNothing</code> because we don’t need to do
+anything to <code>dataset</code> before it is sent to
+<code>TreeScorer()</code>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/TreeSearch.html">TreeSearch</a></span><span class="op">(</span><span class="va">tree</span>, dataset <span class="op">=</span> <span class="fu"><a href="../reference/TreeSearch.html">EmptyPhyDat</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span>,</span>
 <span>                     InitializeData <span class="op">=</span> <span class="va">DoNothing</span>, CleanUpData <span class="op">=</span> <span class="va">DoNothing</span>,</span>
@@ -168,7 +188,7 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 <span>                     maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, </span>
 <span>                     verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   - Performing tree search.  Initial score: 56</span></span></code></pre>
-<pre><code><span><span class="co">##   - Final score 33 found 4 times after 50 rearrangements.</span></span></code></pre>
+<pre><code><span><span class="co">##   - Final score 33 found 7 times after 50 rearrangements.</span></span></code></pre>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 <p><img src="custom_files/figure-html/tci-search-1.png" width="700"></p>
@@ -176,7 +196,11 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 <div class="section level2">
 <h2 id="maximizing-tree-distance">Maximizing tree distance<a class="anchor" aria-label="anchor" href="#maximizing-tree-distance"></a>
 </h2>
-<p>Let’s make things slightly more complex, and try to find the tree that is most different from a starting tree. Notice that <code>TreeSearch</code> aims to <em>minimize</em> the output of <code>TreeScorer()</code>, so we negate the tree <em>distance</em> (which we aim to maximize) before returning it.</p>
+<p>Let’s make things slightly more complex, and try to find the tree
+that is most different from a starting tree. Notice that
+<code>TreeSearch</code> aims to <em>minimize</em> the output of
+<code>TreeScorer()</code>, so we negate the tree <em>distance</em>
+(which we aim to maximize) before returning it.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">startTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">BalancedTree</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span>
 <span></span>
@@ -193,8 +217,8 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 <span>                     TreeScorer <span class="op">=</span> <span class="va">DistanceScore</span>,</span>
 <span>                     maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, </span>
 <span>                     verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   - Performing tree search.  Initial score: -5.229921134636</span></span></code></pre>
-<pre><code><span><span class="co">##   - Final score -7.87744375108174 found 3 times after 50 rearrangements.</span></span></code></pre>
+<pre><code><span><span class="co">##   - Performing tree search.  Initial score: -5.6323312532452</span></span></code></pre>
+<pre><code><span><span class="co">##   - Final score -7.87744375108174 found 2 times after 50 rearrangements.</span></span></code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">startTree</span><span class="op">)</span></span>
@@ -204,8 +228,13 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 <div class="section level2">
 <h2 id="searching-using-implied-weights">Searching using implied weights<a class="anchor" aria-label="anchor" href="#searching-using-implied-weights"></a>
 </h2>
-<p>Now we consider a more complex case in which a scorer must undergo a time-consuming initialization before tree search can begin, and must be safely destroyed once tree search has completed.</p>
-<p>We start by defining an initialization function, which will create a new Morphy object <span class="citation">(Brazeau, Smith, &amp; Guillerme, 2017)</span> for each character in a phylogenetic dataset:</p>
+<p>Now we consider a more complex case in which a scorer must undergo a
+time-consuming initialization before tree search can begin, and must be
+safely destroyed once tree search has completed.</p>
+<p>We start by defining an initialization function, which will create a
+new Morphy object <span class="citation">(Brazeau, Smith, &amp;
+Guillerme, 2017)</span> for each character in a phylogenetic
+dataset:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">IWInitMorphy</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">dataset</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">"morphyObjs"</span><span class="op">)</span> <span class="op">&lt;-</span> </span>
@@ -216,13 +245,22 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 <span>  <span class="co"># Return:</span></span>
 <span>  <span class="va">dataset</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>To release memory back to the operating system, we must destroy each Morphy object once we’re finished with it:</p>
+<p>To release memory back to the operating system, we must destroy each
+Morphy object once we’re finished with it:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">IWDestroyMorphy</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">dataset</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">"morphyObjs"</span><span class="op">)</span>, <span class="va">UnloadMorphy</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>Now we can write our tree scoring function, which will return the ‘fit’ under implied weights <span class="citation">(Goloboff, 1993)</span>.</p>
-<p>Note that we need to specify some extra parameters: <code>concavity</code> is the <em>k</em> value required by the implied weights formula (fit = <em>e / e + k</em>), and <code>minLength</code> is the minimum number of steps required by each character – which we need in order to convert the total number of steps (returned by <code><a href="../reference/MorphyTreeLength.html">MorphyLength()</a></code> to a number of excess steps (<em>e</em> in the implied weights formula)</p>
+<p>Now we can write our tree scoring function, which will return the
+‘fit’ under implied weights <span class="citation">(Goloboff,
+1993)</span>.</p>
+<p>Note that we need to specify some extra parameters:
+<code>concavity</code> is the <em>k</em> value required by the implied
+weights formula (fit = <em>e / e + k</em>), and <code>minLength</code>
+is the minimum number of steps required by each character – which we
+need in order to convert the total number of steps (returned by
+<code><a href="../reference/MorphyTreeLength.html">MorphyLength()</a></code> to a number of excess steps (<em>e</em> in
+the implied weights formula)</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">IWScoreMorphy</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">parent</span>, <span class="va">child</span>, <span class="va">dataset</span>, <span class="va">concavity</span> <span class="op">=</span> <span class="fl">10L</span>, </span>
 <span>                           <span class="va">minLength</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="st">"min.length"</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
@@ -246,8 +284,20 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 <span>                     TreeScorer <span class="op">=</span> <span class="va">IWScoreMorphy</span>,</span>
 <span>                     concavity <span class="op">=</span> <span class="fl">10</span>, <span class="co"># Will be sent to TreeScorer</span></span>
 <span>                     verbosity <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-<p>This quick search probably hasn’t found the globally optimal tree. Besides increasing the number of hits and rearrangements, the parsimony ratchet <span class="citation">(Nixon, 1999)</span> can help to escape local optima. This introduces an additional complication: we need to bootstrap the characters within <code>dataset</code>, and their accompanying Morphy objects.</p>
-<p>A <code>Bootstraper</code> function expects an <code>edgeList</code> (a list of the parent and child of each edge in a tree, in turn) and a <code>dataset</code> argument, and conducts a tree search, starting at <code>edgeList</code>, on a bootstrapped version of the dataset. It is also sent the arguments <code>maxIter = bootstrapIter</code> and <code>maxHits = bootstrapHits</code>, allowing ratchet search intensity to be controlled from parameters sent to the <code><a href="../reference/Ratchet.html">Ratchet()</a></code> function.</p>
+<p>This quick search probably hasn’t found the globally optimal tree.
+Besides increasing the number of hits and rearrangements, the parsimony
+ratchet <span class="citation">(Nixon, 1999)</span> can help to escape
+local optima. This introduces an additional complication: we need to
+bootstrap the characters within <code>dataset</code>, and their
+accompanying Morphy objects.</p>
+<p>A <code>Bootstraper</code> function expects an <code>edgeList</code>
+(a list of the parent and child of each edge in a tree, in turn) and a
+<code>dataset</code> argument, and conducts a tree search, starting at
+<code>edgeList</code>, on a bootstrapped version of the dataset. It is
+also sent the arguments <code>maxIter = bootstrapIter</code> and
+<code>maxHits = bootstrapHits</code>, allowing ratchet search intensity
+to be controlled from parameters sent to the <code><a href="../reference/Ratchet.html">Ratchet()</a></code>
+function.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">IWBootstrap</span> <span class="op">&lt;-</span> <span class="kw">function</span> <span class="op">(</span><span class="va">edgeList</span>, <span class="va">dataset</span>, <span class="va">concavity</span> <span class="op">=</span> <span class="fl">10L</span>, <span class="va">EdgeSwapper</span> <span class="op">=</span> <span class="va">NNISwap</span>, </span>
 <span>                         <span class="va">maxIter</span>, <span class="va">maxHits</span>, <span class="va">verbosity</span> <span class="op">=</span> <span class="fl">1L</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
@@ -278,7 +328,8 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 <span>  </span>
 <span>  <span class="va">res</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>Having defined the <code>Bootstrapper()</code> function we can now complete a Ratchet search with:</p>
+<p>Having defined the <code>Bootstrapper()</code> function we can now
+complete a Ratchet search with:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ratchetTree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Ratchet.html">Ratchet</a></span><span class="op">(</span>tree <span class="op">=</span> <span class="va">iwTree</span>, dataset <span class="op">=</span> <span class="va">dataset</span>,</span>
 <span>                       concavity <span class="op">=</span> <span class="fl">10</span>,</span>
@@ -289,8 +340,16 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 <span>                       ratchIter <span class="op">=</span> <span class="fl">2</span>, ratchHits <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>                       searchIter <span class="op">=</span> <span class="fl">20</span>, searchHits <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                       verbosity <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
-<p>It would be sensible to use much larger values of <code>ratchIter</code>, <code>ratchHits</code>, <code>searchIter</code> and <code>searchHits</code> to be confident of locating an optimal tree. And note that in this specific case, implied weights tree search with the parsimony ratchet is implemented much more efficiently with <code>MaximizeParsimony(concavity = k)</code>.</p>
-<p>Hopefully these examples give a template from which you are able to construct your own optimality criteria. The maintainer is happy to answer questions via e-mail, or you can file queries by opening a <a href="https://github.com/ms609/TreeDist/issues/new/" class="external-link">GitHub issue</a>.</p>
+<p>It would be sensible to use much larger values of
+<code>ratchIter</code>, <code>ratchHits</code>, <code>searchIter</code>
+and <code>searchHits</code> to be confident of locating an optimal tree.
+And note that in this specific case, implied weights tree search with
+the parsimony ratchet is implemented much more efficiently with
+<code>MaximizeParsimony(concavity = k)</code>.</p>
+<p>Hopefully these examples give a template from which you are able to
+construct your own optimality criteria. The maintainer is happy to
+answer questions via e-mail, or you can file queries by opening a <a href="https://github.com/ms609/TreeDist/issues/new/" class="external-link">GitHub
+issue</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="what-next">What next?<a class="anchor" aria-label="anchor" href="#what-next"></a>
@@ -298,7 +357,8 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 <p>You might want to:</p>
 <ul>
 <li>
-<a href="https://ms609.github.io/TreeTools/articles/load-data.html" class="external-link">Load data</a> from a Nexus file or spreadsheet</li>
+<a href="https://ms609.github.io/TreeTools/articles/load-data.html" class="external-link">Load
+data</a> from a Nexus file or spreadsheet</li>
 <li>Conduct parsimony search using Brazeau, Guillerme &amp; Smith’s <a href="tree-search.html">approach to inapplicable data</a>, or using <a href="profile.html">Profile parsimony</a>.</li>
 </ul>
 </div>
@@ -307,19 +367,28 @@ Here, we can use a copy of our starting tree as a template, to be populated with
 </h2>
 <div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
 <div id="ref-Brazeau2017" class="csl-entry">
-Brazeau, M. D., Smith, M. R., &amp; Guillerme, T. (2017). <span>MorphyLib</span>: A library for phylogenetic analysis of categorical trait data with inapplicability. doi:<a href="https://doi.org/10.5281/zenodo.815372" class="external-link">10.5281/zenodo.815372</a>
+Brazeau, M. D., Smith, M. R., &amp; Guillerme, T. (2017).
+<span>MorphyLib</span>: A library for phylogenetic analysis of
+categorical trait data with inapplicability. doi:<a href="https://doi.org/10.5281/zenodo.815372" class="external-link">10.5281/zenodo.815372</a>
 </div>
 <div id="ref-Goloboff1993" class="csl-entry">
-Goloboff, P. A. (1993). Estimating character weights during tree search. <em>Cladistics</em>, <em>9</em>(1), 83–91. doi:<a href="https://doi.org/10.1111/j.1096-0031.1993.tb00209.x" class="external-link">10.1111/j.1096-0031.1993.tb00209.x</a>
+Goloboff, P. A. (1993). Estimating character weights during tree search.
+<em>Cladistics</em>, <em>9</em>(1), 83–91. doi:<a href="https://doi.org/10.1111/j.1096-0031.1993.tb00209.x" class="external-link">10.1111/j.1096-0031.1993.tb00209.x</a>
 </div>
 <div id="ref-Hopkins2021" class="csl-entry">
-Hopkins, M. J., &amp; St. John, K. (2021). Incorporating hierarchical characters into phylogenetic analysis. <em>Systematic Biology</em>, syab005. doi:<a href="https://doi.org/10.1093/sysbio/syab005" class="external-link">10.1093/sysbio/syab005</a>
+Hopkins, M. J., &amp; St. John, K. (2021). Incorporating hierarchical
+characters into phylogenetic analysis. <em>Systematic Biology</em>,
+syab005. doi:<a href="https://doi.org/10.1093/sysbio/syab005" class="external-link">10.1093/sysbio/syab005</a>
 </div>
 <div id="ref-Mir2013" class="csl-entry">
-Mir, A., Rosselló, F., &amp; Rotger, L. A. (2013). A new balance index for phylogenetic trees. <em>Mathematical Biosciences</em>, <em>241</em>(1), 125–136. doi:<a href="https://doi.org/10.1016/j.mbs.2012.10.005" class="external-link">10.1016/j.mbs.2012.10.005</a>
+Mir, A., Rosselló, F., &amp; Rotger, L. A. (2013). A new balance index
+for phylogenetic trees. <em>Mathematical Biosciences</em>,
+<em>241</em>(1), 125–136. doi:<a href="https://doi.org/10.1016/j.mbs.2012.10.005" class="external-link">10.1016/j.mbs.2012.10.005</a>
 </div>
 <div id="ref-Nixon1999" class="csl-entry">
-Nixon, K. C. (1999). <span class="nocase">The Parsimony Ratchet, a new method for rapid parsimony analysis</span>. <em>Cladistics</em>, <em>15</em>(4), 407–414. doi:<a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" class="external-link">10.1111/j.1096-0031.1999.tb00277.x</a>
+Nixon, K. C. (1999). <span class="nocase">The Parsimony Ratchet, a new
+method for rapid parsimony analysis</span>. <em>Cladistics</em>,
+<em>15</em>(4), 407–414. doi:<a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" class="external-link">10.1111/j.1096-0031.1999.tb00277.x</a>
 </div>
 </div>
 </div>
@@ -342,7 +411,7 @@ Nixon, K. C. (1999). <span class="nocase">The Parsimony Ratchet, a new method fo
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>
