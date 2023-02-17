@@ -18,7 +18,7 @@ datasets.
 ### Simple installation
 
 To use "TreeSearch" you will first need to [install R](https://CRAN.R-project.org/). 
-[RStudio](https://www.rstudio.com/)
+[RStudio](https://posit.co/)
 ([overview](https://dss.princeton.edu/training/RStudio101.pdf)) is a popular
 front-end that makes several of R's features easier to use.
 
