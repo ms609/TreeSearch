@@ -118,7 +118,7 @@
                         <h4 data-toc-skip class="author">Martin R.
 Smith</h4>
             
-            <h4 data-toc-skip class="date">2023-01-02</h4>
+            <h4 data-toc-skip class="date">2023-02-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/custom.Rmd" class="external-link"><code>vignettes/custom.Rmd</code></a></small>
       <div class="hidden name"><code>custom.Rmd</code></div>
@@ -189,7 +189,7 @@ anything to <code>dataset</code> before it is sent to
 <span>                     maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, </span>
 <span>                     verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   - Performing tree search.  Initial score: 56</span></span></code></pre>
-<pre><code><span><span class="co">##   - Final score 33 found 3 times after 50 rearrangements.</span></span></code></pre>
+<pre><code><span><span class="co">##   - Final score 33 found 4 times after 50 rearrangements.</span></span></code></pre>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 <p><img src="custom_files/figure-html/tci-search-1.png" width="700"></p>
@@ -218,8 +218,8 @@ that is most different from a starting tree. Notice that
 <span>                     TreeScorer <span class="op">=</span> <span class="va">DistanceScore</span>,</span>
 <span>                     maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, </span>
 <span>                     verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   - Performing tree search.  Initial score: -5.9642090072519</span></span></code></pre>
-<pre><code><span><span class="co">##   - Final score -7.77985386969094 found 4 times after 50 rearrangements.</span></span></code></pre>
+<pre><code><span><span class="co">##   - Performing tree search.  Initial score: -6.48917537477937</span></span></code></pre>
+<pre><code><span><span class="co">##   - Final score -7.87744375108174 found 5 times after 50 rearrangements.</span></span></code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">startTree</span><span class="op">)</span></span>
