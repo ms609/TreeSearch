@@ -3,9 +3,9 @@ mrs <- person(c("Martin", "R."), "Smith", email = "martin.smith@durham.ac.uk")
 bibentry(
   mheader = paste0(
     "Please acknowledge your use of TreeSearch and MorphyLib in any article ",
-    "in which they are used, and cite Smith (2023) and Brazeau et al. (2019). ",
+    "in which they are used, and cite Smith (2022) and Brazeau et al. (2019). ",
     "For example, 'Phylogenetic search was performed using the R package ",
-    "TreeSearch v", meta$Version, " (Smith 2023), which uses MorphyLib ",
+    "TreeSearch v", meta$Version, " (Smith 2022), which uses MorphyLib ",
     "(Brazeau et al. 2017) to handle inapplicable data (Brazeau et al. 2019)'. ",
     "The GUI lists recommended citations for methods it employs."
   ),
@@ -74,16 +74,18 @@ bibentry(
               
 bibentry(
   bibtype = "Article",
-  key = "Smith2023",
+  key = "Smith2022",
   title = "{TreeSearch}: morphological phylogenetic analysis in {{R}}",
   author = mrs,
-  year = 2023,
+  year = 2022,
   journal = "R journal",
-  pages = "Forthcoming",
+  volume = 14,
+  number = 4,
+  pages = c(305, 315),
   doi = "10.1101/2021.11.08.467735",
      
   textVersion = paste0(
-    "Smith (2023). TreeSearch: morphological phylogenetic analysis in R. ",
-    "R journal, forthcoming. Preprint doi: 10.1101/2021.11.08.467735"
+    "Smith (2022). TreeSearch: morphological phylogenetic analysis in R. ",
+    "R journal 14:305-315. doi: 10.1101/2021.11.08.467735"
   )
 )
