@@ -130,4 +130,4 @@ Smith, M. R. (2022b).
 
 Smith, M. R. (2022c).
   TreeSearch: morphological phylogenetic analysis in R.
-  R Journal, forthcoming. Preprint doi: [10.1101/2021.11.08.467735](https://www.biorxiv.org/content/10.1101/2021.11.08.467735.full.pdf).
+  R Journal, 14(4), 305-315. doi: [10.32614/RJ-2023-019](https://doi.org/10.32614/RJ-2023-019)
