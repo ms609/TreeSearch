@@ -82,10 +82,11 @@ bibentry(
   volume = 14,
   number = 4,
   pages = c(305, 315),
-  doi = "10.1101/2021.11.08.467735",
+  doi = "10.32614/RJ-2023-019",
      
   textVersion = paste0(
     "Smith (2022). TreeSearch: morphological phylogenetic analysis in R. ",
-    "R journal 14:305-315. doi: 10.1101/2021.11.08.467735"
+    "R journal 14:305-315. doi:10.32614/RJ-2023-019
+.32614/RJ-2023-019"
   )
 )
