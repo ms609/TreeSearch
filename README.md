@@ -7,7 +7,7 @@
 -->
 [![Project Status: Active – – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
-"TreeSearch" (Smith 2022c) is an R package that contains a "shiny" user interface for 
+"TreeSearch" (Smith 2023) is an R package that contains a "shiny" user interface for 
 interactive tree search and exploration of results, including character
 visualization,
 [rogue taxon detection](https://ms609.github.io/Rogue) (Smith 2022a),
@@ -128,6 +128,6 @@ Smith, M. R. (2022b).
   Systematic Biology, 71(5), 1255–1270.
   doi: [10.1093/sysbio/syab100](https://dx.doi.org/10.1093/sysbio/syab100)
 
-Smith, M. R. (2022c).
+Smith, M. R. (2023).
   TreeSearch: morphological phylogenetic analysis in R.
   R Journal, 14(4), 305-315. doi: [10.32614/RJ-2023-019](https://doi.org/10.32614/RJ-2023-019)
