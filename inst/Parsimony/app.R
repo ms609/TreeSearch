@@ -2346,7 +2346,7 @@ server <- function(input, output, session) {
           }),
           if (!states[[1]] %in% c("", "''")
               && any(tokens == "-")) {
-            tags$p("Brazeau et al. (2019) advise that neomorphic (0/1) characters should not contain inapplicable tokens (-).")
+            tags$p(tags$em("Brazeau et al. (2019) advise that neomorphic (0/1) characters should not contain inapplicable tokens (-)."))
           }
         )
       }
