@@ -1,3 +1,7 @@
+# TreeSearch 1.3.0.9000
+
+- `PlotCharacter()` now returns invisibly
+
 # TreeSearch 1.3.0
 
 ## New features
