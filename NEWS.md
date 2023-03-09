@@ -1,6 +1,7 @@
 # TreeSearch 1.3.0.9000
 
 - `PlotCharacter()` now returns invisibly
+- Fix missing character in Wills 2012 dataset
 
 # TreeSearch 1.3.0
 
