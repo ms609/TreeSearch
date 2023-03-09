@@ -211,9 +211,9 @@ SmithQuartet <- Reference(
   "Quartet: comparison of phylogenetic trees using quartet and split measures",
   "Comprehensive R Archive Network", doi = "10.5281/zenodo.2536318")
 SmithSearch <- Reference(
-  "Smith, M.R.", 2022, "TreeSearch: morphological phylogenetic analysis in R",
-  "R Journal", pages = "Accepted manuscript",
-  doi = "10.1101/2021.11.08.467735")
+  "Smith, M.R.", 2023, "TreeSearch: morphological phylogenetic analysis in R",
+  "R Journal", volume = 14, pages = c(305, 315),
+  doi = "10.32614/RJ-2023-019")
 Smith2020 <- Reference(
   "Smith, M.R.", "2020b",
   "Information theoretic Generalized Robinson-Foulds metrics for comparing phylogenetic trees",
