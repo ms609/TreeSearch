@@ -377,13 +377,16 @@ ui <- fluidPage(
       plotOutput(outputId = "treePlot", height = "600px"),
       hidden(plotOutput("clustCons", height = "200px")),
       hidden(tags$div(id = "charChooser",
-        tags$div(numericInput("plottedChar", "Character to map:", value = 1L,
-                              min = 0L, max = 1L, step = 1L, width = 200),
-                 checkboxGroupInput("mapDisplay", "", list(
-                   "Align tips" = "tipsRight",
-                   "Infer tips" = "updateTips"
-                   )),
-                 style = "float: right; width: 200px; margin-left: 2em;"),
+        tags$div(
+          numericInput("plottedChar", "Character to map:", value = 1L,
+                       min = 0L, max = 1L, step = 1L, width = 200),
+          selectizeInput("searchChar", "Search characters:", multiple = FALSE,
+                         choices = list()),
+          checkboxGroupInput("mapDisplay", "", list(
+            "Align tips" = "tipsRight",
+            "Infer tips" = "updateTips"
+          )),
+          style = "float: right; width: 200px; margin-left: 2em;"),
         htmlOutput("charMapLegend"),
         htmlOutput("charNotes"),
       )),
@@ -957,6 +960,7 @@ server <- function(input, output, session) {
       
       updateNumericInput(session, "plottedChar", min = 0L,
                          max = 0L, value = 0L)
+      updateSelectizeInput(session, "searchChar", choices = NULL)
       return ("Could not read data from file")
     } else {
       Notification(type = "message", 
@@ -965,6 +969,12 @@ server <- function(input, output, session) {
       
       updateNumericInput(session, "plottedChar", min = 0L,
                          max = nChars(), value = 1L)
+      dput(colnames(r$chars))
+      updateSelectizeInput(session, "searchChar",
+                           choices = paste0(seq_len(nChars()), ": ", 
+                                            colnames(r$chars)),
+                           selected = "",
+                           server = TRUE)
     }
     
     tryCatch({
@@ -1646,6 +1656,13 @@ server <- function(input, output, session) {
       hideElement("mapDisplay")
     }
   }, ignoreInit = TRUE)
+  
+  observeEvent(input$searchChar, {
+    searchResult <- as.numeric(strsplit(input$searchChar, ": ")[[1]][1])
+    if (!is.na(searchResult)) {
+      updateNumericInput(session, "plottedChar", value = searchResult)
+    }
+  })
   
   whichTree <- debounce(reactive(input$whichTree), aJiffy)
   
