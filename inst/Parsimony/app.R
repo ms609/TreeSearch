@@ -969,7 +969,6 @@ server <- function(input, output, session) {
       
       updateNumericInput(session, "plottedChar", min = 0L,
                          max = nChars(), value = 1L)
-      dput(colnames(r$chars))
       updateSelectizeInput(session, "searchChar",
                            choices = paste0(seq_len(nChars()), ": ", 
                                             colnames(r$chars)),
