@@ -1,8 +1,10 @@
-# TreeSearch 1.3.0.9001
+# TreeSearch 1.3.0.9002
 
 - `PlotCharacter()` now returns invisibly
 - Fix missing character in Wills 2012 dataset
 - Search by character text in GUI
+- Call C functions using symbols
+
 
 # TreeSearch 1.3.0
 

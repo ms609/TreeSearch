@@ -361,7 +361,7 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
   rightChild <- child[fmatch(allNodes, parent)]
   
   # Return:
-  .Call("MORPHYLENGTH", as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
+  .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
                as.integer(rightChild - 1L), morphyObj)
 }
 
@@ -375,7 +375,7 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
 #' @export
 GetMorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
   # Return:
-  .Call("MORPHYLENGTH", as.integer(parentOf), as.integer(leftChild), 
+  .Call(`MORPHYLENGTH`, as.integer(parentOf), as.integer(leftChild), 
                as.integer(rightChild), morphyObj)
 }
 
@@ -388,6 +388,6 @@ GetMorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
 #' @keywords internal
 #' @export
 C_MorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
-  .Call("MORPHYLENGTH", as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
+  .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
                as.integer(rightChild - 1L), morphyObj)
 }
