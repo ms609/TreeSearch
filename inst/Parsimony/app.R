@@ -191,7 +191,7 @@ Murtagh1983 <- Reference(
   doi = "10.1093/comjnl/26.4.354", journal = "The Computer Journal")
 Nixon1999 <- Reference(
   "Nixon, K.C.", 1999,
-  journal = "Cladistics", volume = 15, pages = "407-414",
+  journal = "Cladistics", volume = 15, pages = c(407, 414),
   title = "The Parsimony Ratchet, a new method for rapid parsimony analysis",
   doi = "10.1111/j.1096-0031.1999.tb00277.x")
 Pol2009 <- Reference(
