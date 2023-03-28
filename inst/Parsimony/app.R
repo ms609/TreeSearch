@@ -137,7 +137,7 @@ Brazeau2019 <- Reference(c("Brazeau, M.D.", "Guillerme, T.", "Smith, M.R."), 201
                            title = "An algorithm for morphological phylogenetic analysis with inapplicable data",
                            journal = "Systematic Biology",
                            volume = 64,
-                           pages = "619-631",
+                           pages = c(619, 631),
                          doi = "10.1093/sysbio/syy083")
 Bien2011 <- Reference(
   c("Bien, J.", "Tibshirani, R."),
@@ -217,7 +217,7 @@ SmithSearch <- Reference(
 Smith2020 <- Reference(
   "Smith, M.R.", "2020b",
   "Information theoretic Generalized Robinson-Foulds metrics for comparing phylogenetic trees",
-  "Bioinformatics", volume = 36, pages = "5007--5013",
+  "Bioinformatics", volume = 36, pages = c("5007", "5013"),
   doi = "10.1093/bioinformatics/btaa614")
 SmithSpace <- Reference(
   "Smith, M.R.", "2022a", "Robust analysis of phylogenetic tree space",
