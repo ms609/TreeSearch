@@ -869,6 +869,7 @@ Resample <- function (dataset, tree, method = "jack",
 #' @rdname MaximizeParsimony
 #' @importFrom cluster pam silhouette
 #' @importFrom future future
+#' @importFrom PlotTools SpectrumLegend
 #' @importFrom promises future_promise
 #' @importFrom protoclust protoclust
 #' @importFrom Rogue ColByStability

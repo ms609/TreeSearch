@@ -1776,9 +1776,12 @@ server <- function(input, output, session) {
   TipCols <- reactive(stableCol()) # TODO allow user to choose how to colour
   
   TipColLegend <- function() {
-    SpectrumLegend(palette = hcl.colors(131, "inferno")[1:101],
-                   legend = c("Stable", "Unstable"),
-                   title = "Leaf stability")
+    PlotTools::SpectrumLegend(
+      "bottomleft", horiz = TRUE, inset = 0.01, bty = "n", xpd = NA,
+      palette = hcl.colors(131, "inferno")[1:101],
+      legend = c("Stable", "Unstable"),
+      title = "Leaf stability"
+    )
   }
   
   consP <- debounce(reactive(signif(input$consP)), 50)
@@ -2063,13 +2066,12 @@ server <- function(input, output, session) {
                       updateTips = "updateTips" %in% input$mapDisplay,
                       tip.color = roguishness)
         if (max(extraLen) > 0) {
-          SpectrumLegend(
+          PlotTools::SpectrumLegend(
+            "bottomleft", bty = "n",
             palette = hcl.colors(256, "inferno")[1:193],
             title = "Mean tree score\nimpact",
-            legend = c("No impact",
-                       signif(max(extraLen) / 2),
-                       signif(max(extraLen)))
-            )
+            legend = c(signif(4:1 * max(extraLen) / 4, 3), "No impact")
+          )
         }
       },
       error = function (cond) {

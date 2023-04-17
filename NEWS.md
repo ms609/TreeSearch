@@ -1,3 +1,8 @@
+# TreeSearch 1.3.1.9000
+
+- Use `PlotTools::SpectrumLegend()` for continuous scales in app
+
+
 # TreeSearch 1.3.1
 
 - `PlotCharacter()` now returns invisibly
