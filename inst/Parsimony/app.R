@@ -1343,7 +1343,11 @@ server <- function(input, output, session) {
     PutData(r$dataset)
     LogMsg("scores(): Recalculating scores with k = ", concavity())
     withProgress(tryCatch(
-      signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
+      signif(TreeLength(
+        RootTree(r$trees, 1),
+        r$dataset,
+        concavity = concavity()
+      )),
       error = function (x) {
         if (HaveData() && AnyTrees()) {
           cli::cli_alert(x[[2]])
