@@ -1780,7 +1780,8 @@ server <- function(input, output, session) {
       "bottomleft", horiz = TRUE, inset = 0.01, bty = "n", xpd = NA,
       palette = hcl.colors(131, "inferno")[1:101],
       legend = c("Stable", "Unstable"),
-      title = "Leaf stability"
+      title = "Leaf stability",
+      title.font = 2
     )
   }
   
@@ -2070,6 +2071,8 @@ server <- function(input, output, session) {
             "bottomleft", bty = "n",
             palette = hcl.colors(256, "inferno")[1:193],
             title = "Mean tree score\nimpact",
+            title.font = 2,
+            y.intersp = 1.42,
             legend = c(signif(4:1 * max(extraLen) / 4, 3), "No impact")
           )
         }
