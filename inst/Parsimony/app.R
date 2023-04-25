@@ -1257,15 +1257,18 @@ server <- function(input, output, session) {
     tmpFile <- input$treeFile$datapath
     newTrees <- tryCatch({
         r$readTreeFile <- "read.tree(treeFile)"
+        LogMsg("Trying read.tree()")
         read.tree(tmpFile)
       },
       error = function (x) tryCatch({
         r$readTreeFile <- "read.nexus(treeFile)"
+          LogMsg("Trying read.nexus()")
           read.nexus(tmpFile)
         },
         error = function (err) tryCatch(
           {
-            if (err == "NA/NaN argument") {
+            if (grepl("NA/NaN argument", err)) {
+              LogMsg("Terminating tree block")
               # Unterminated tree block, perhaps because a search is ongoing
               withEnd <- tempfile()
               on.exit(unlink(withEnd))
