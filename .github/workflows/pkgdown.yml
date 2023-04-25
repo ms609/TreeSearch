@@ -10,7 +10,7 @@ on:
       - 'inst/_pkgdown.yml'
       - 'inst/CITATION'
       - 'inst/*.bib'
-      - 'man/**'
+      - 'man/**.Rd'
       - 'vignettes/**'
 
 name: pkgdown
