@@ -18,10 +18,13 @@
 #' @family tree generation functions
 #' @seealso 
 #' 
-#' Impose a constraint: [`TreeTools::ImposeConstraint()`](https://ms609.github.io/TreeTools/reference/ImposeConstraint)
+#' Impose a constraint: [`TreeTools::ImposeConstraint()`](
+#' https://ms609.github.io/TreeTools/reference/ImposeConstraint)
 #' 
-#' Neighbour-joining trees: [`TreeTools::NJTree()`](https://ms609.github.io/TreeTools/reference/NJTree.html);
-#' [`TreeTools::ConstrainedNJ()`](https://ms609.github.io/TreeTools/reference/ConstrainedNJ)
+#' Neighbour-joining trees: [`TreeTools::NJTree()`](
+#' https://ms609.github.io/TreeTools/reference/NJTree.html);
+#' [`TreeTools::ConstrainedNJ()`](
+#' https://ms609.github.io/TreeTools/reference/ConstrainedNJ)
 #' @export
 AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
   
