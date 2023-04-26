@@ -40,8 +40,8 @@ Generates a starting tree by adding each taxon in turn to the most
 parsimonious location.
 }
 \examples{
-data("Lobo", package = "TreeTools")
-AdditionTree(Lobo.phy, concavity = 10)
+data("inapplicable.phyData", package = "TreeSearch")
+AdditionTree(inapplicable.phyData[["Longrich2010"]], concavity = 10)
 }
 \seealso{
 Impose a constraint: \href{https://ms609.github.io/TreeTools/reference/ImposeConstraint}{\code{TreeTools::ImposeConstraint()}}

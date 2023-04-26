@@ -6,9 +6,9 @@
 #' @inheritParams MaximizeParsimony
 #' @param sequence Character or numeric vector listing sequence in which to add
 #' taxa. Randomized if not provided.
-#' @examples 
-#' data("Lobo", package = "TreeTools")
-#' AdditionTree(Lobo.phy, concavity = 10)
+#' @examples
+#' data("inapplicable.phyData", package = "TreeSearch")
+#' AdditionTree(inapplicable.phyData[["Longrich2010"]], concavity = 10)
 #' @template MRS
 #' @return `AdditionTree()` returns a tree of class `phylo`, rooted on
 #' `sequence[1]`.
