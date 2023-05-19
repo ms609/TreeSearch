@@ -2295,7 +2295,9 @@ server <- function(input, output, session) {
         appTokens <- setdiff(tokens, "-")
         .State <- function (glyph, text = "Error?", col = "red") {
           if (is.numeric(glyph)) {
-            if (glyph > length(appTokens)) return (NULL)
+            if (glyph > length(appTokens)) {
+              return(NULL)
+            }
             nonBlank <- states != ""
             text <- states[nonBlank][glyph]
             col <- pal[glyph]
