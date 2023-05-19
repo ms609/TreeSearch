@@ -700,14 +700,22 @@ MaximizeParsimony <- function (dataset, tree,
           stop("Error applying tip data: ", mpl_translate_error(error))
         }
       }
-      if (.Timeout()) {
-        return(.ReturnValue(bestEdges))                                         # nocov
-      }
       
       verbosity <- verbosity + 1L
       ratchetStart <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
+      ratchStartScore <- .Score(ratchetStart)
       .Message(2L, "Obtained new starting tree @ {(.Time())}",
-               " with score: {signif(.Score(ratchetStart))}")
+               " with score: {signif(ratchStartScore)}")
+      
+      # nocov start
+      if (.Timeout()) {
+        if (ratchetScore + epsilon < bestScore) {
+          bestEdges <- .ReplaceResults(bestEdges, ratchetStart,
+                                       1 + tbrStart + iter)
+        }
+        return(.ReturnValue(bestEdges))                                         
+      }
+      # nocov end
       
       ratchetImproved <- .Search("TBR search", .edge = ratchetStart,
                                  .hits = maxHits)
