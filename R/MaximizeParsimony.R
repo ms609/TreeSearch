@@ -339,26 +339,27 @@ MaximizeParsimony <- function (dataset, tree,
 
   
   .Search <- function (name = "TBR search", .edge = edge, .hits = searchHits,
-                       .weight = startWeights) {
+                       .weight = startWeights, .forceEW = FALSE) {
     if (length(dim(.edge)) == 3L) {
       .edge <- .edge[, , 1]
     }
-    if (profile) {
     .Message(4L, paste("<<< Begin:", name))
     on.exit(.Message(4L, paste(">>> Complete:", name)))
+    if (profile && isFALSE(.forceEW)) {
       .TBRSearch(.ProfileScore, name, edge = .edge, morphyObjects, 
                  tbrIter = searchIter, maxHits = .hits,
                  weight = .weight, minLength = minLength, charSeq = charSeq,
                  concavity = profiles)
   
-    } else if (iw) {
+    } else if (iw && isFALSE(.forceEW)) {
       .TBRSearch(.IWScore, name, edge = .edge, morphyObjects, 
                  tbrIter = searchIter, maxHits = .hits,
                  weight = .weight, minLength = minLength, charSeq = charSeq,
                  concavity = concavity)
     } else {
       .TBRSearch(.EWScore, name, edge = .edge, morphyObj, 
-                 tbrIter = searchIter, maxHits = .hits)
+                 tbrIter = searchIter, maxHits = .hits,
+                 concavity = if(isTRUE(.forceEW)) Inf else concavity)
     }
   }
   
@@ -685,7 +686,11 @@ MaximizeParsimony <- function (dataset, tree,
           stop("Error applying tip data: ", mpl_translate_error(error))
         }                                                                       # nocov end
         
-        ratchetTrees <- .Search("Bootstrapped search")
+        ratchetTrees <- if (ratchEW) {
+          .Search("EW Bootstrapped search", .forceEW = TRUE)
+        } else {
+          .Search("Bootstrapped search")
+        }
         
         errors <- vapply(eachChar, function (i) 
           mpl_set_charac_weight(i, startWeights[i], morphyObj), integer(1))
