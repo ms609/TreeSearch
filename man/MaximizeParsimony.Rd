@@ -19,6 +19,7 @@ MaximizeParsimony(
   maxTime = 60,
   quickHits = 1/3,
   concavity = Inf,
+  ratchEW = TRUE,
   tolerance = sqrt(.Machine$double.eps),
   constraint,
   verbosity = 3L
@@ -92,6 +93,10 @@ The character string "profile" employs an approximation of profile parsimony
 Set as \code{Inf} for equal step weights, which underperforms step weighting
 approaches
 \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.}
+
+\item{ratchEW}{Logical specifying whether to use equal weighting during
+ratchet iterations, improving search speed whilst still facilitating
+escape from local optima.}
 
 \item{tolerance}{Numeric specifying degree of suboptimality to tolerate
 before rejecting a tree.  The default, \code{sqrt(.Machine$double.eps)}, retains

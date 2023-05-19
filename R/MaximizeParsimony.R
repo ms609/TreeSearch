@@ -66,6 +66,9 @@
 #' Set as `Inf` for equal step weights, which underperforms step weighting
 #' approaches
 #' \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.
+#' @param ratchEW Logical specifying whether to use equal weighting during
+#' ratchet iterations, improving search speed whilst still facilitating
+#' escape from local optima.
 #' @param tolerance Numeric specifying degree of suboptimality to tolerate
 #' before rejecting a tree.  The default, `sqrt(.Machine$double.eps)`, retains
 #' trees that may be equally parsimonious but for rounding errors.  
@@ -193,6 +196,7 @@ MaximizeParsimony <- function (dataset, tree,
                                maxTime = 60,
                                quickHits = 1 / 3,
                                concavity = Inf,
+                               ratchEW = TRUE,
                                tolerance = sqrt(.Machine$double.eps),
                                constraint,
                                verbosity = 3L) {
@@ -537,6 +541,14 @@ MaximizeParsimony <- function (dataset, tree,
     }
     profiles <- attr(dataset, "info.amounts")
   }
+  
+  if ((!iw && !profile) || # Required for equal weights search
+      (isTRUE(ratchEW) && ratchIter > 0) # For EW ratchet searches
+  ) {
+    morphyObj <- PhyDat2Morphy(dataset)
+    on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
+  }
+  
   if (iw || profile) {
     at <- attributes(dataset)
     characters <- PhyToString(dataset, ps = "", useIndex = FALSE,
@@ -569,8 +581,6 @@ MaximizeParsimony <- function (dataset, tree,
     # Will work from end of sequence to start.
     charSeq <- seq_along(charInfo)[informative][order(priority[informative])] - 1L
   } else {
-    morphyObj <- PhyDat2Morphy(dataset)
-    on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
     startWeights <- unlist(MorphyWeights(morphyObj)[1, ]) # exact == approx
   }
   
@@ -635,6 +645,10 @@ MaximizeParsimony <- function (dataset, tree,
   bestScore <- .Score(edge)
   bestPlusEps <- bestScore + epsilon
   
+  
+  
+  # Use Parsimony Ratchet to escape local optimum
+  
   if (ratchIter > 0L) {
     
     .Heading("Escape local optimum", "{ratchIter} ratchet iterations; ", 
@@ -653,7 +667,7 @@ MaximizeParsimony <- function (dataset, tree,
       deindexedChars <- rep.int(eachChar, startWeights)
       resampling <- tabulate(sample(deindexedChars, replace = TRUE),
                              length(startWeights))
-      if (profile || iw) {
+      if (!isTRUE(ratchEW) && (profile || iw)) {
         priority <- resampling * rawPriority
         sampled <- informative & resampling > 0
         ratchSeq <- seq_along(charInfo)[sampled][order(priority[sampled])] - 1L

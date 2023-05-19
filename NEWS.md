@@ -1,3 +1,7 @@
+# TreeSearch 1.3.2.9000 (development)
+
+- Default to use equal weighting during ratchet iterations
+
 # TreeSearch 1.3.2 (2023-04-27)
 
 - Use `PlotTools::SpectrumLegend()` for continuous scales in app
