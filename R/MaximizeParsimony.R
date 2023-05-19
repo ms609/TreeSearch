@@ -706,12 +706,12 @@ MaximizeParsimony <- function (dataset, tree,
       
       verbosity <- verbosity + 1L
       ratchetStart <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
+      .Message(2L, "Obtained new starting tree @ {(.Time())}",
+               " with score: {signif(.Score(ratchetStart))}")
       
       ratchetImproved <- .Search("TBR search", .edge = ratchetStart,
                                  .hits = maxHits)
       ratchetScore <- .Score(ratchetImproved[, , 1])
-      .Message(2L, "Obtained new starting tree @ {(.Time())}",
-               " with score: {.strong {signif(ratchetScore)} }")
       
       if (ratchetScore < bestPlusEps) {
         if (ratchetScore + epsilon < bestScore) {
