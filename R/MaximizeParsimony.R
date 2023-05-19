@@ -278,7 +278,7 @@ MaximizeParsimony <- function (dataset, tree,
     while (iter < tbrIter) {
       iter <- iter + 1L
       optTbr <- sample(3:(nTip * 2 - 2))
-      .Message(4L, "New TBR iteration (depth ", iter, 
+      .Message(4L, " New TBR iteration (depth ", iter, 
                ", score ", signif(bestScore), ")")
       cli_progress_update(set = 0, total = length(optTbr))
       
@@ -286,7 +286,7 @@ MaximizeParsimony <- function (dataset, tree,
         cli_progress_update(1, status = paste0("D", iter, ", score ",
                                                signif(bestScore), ", hit ",
                                                nHits, "."))
-        .Message(7L, "Break ", brk)
+        .Message(7L, "  Break ", brk)
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
         nMoves <- length(moves)
@@ -294,7 +294,7 @@ MaximizeParsimony <- function (dataset, tree,
         for (i in seq_along(moveList)) {
           move <- moves[[moveList[i]]]
           if (.Forbidden(move)) {
-            .Message(10L, "Skipping prohibited topology")
+            .Message(10L, "  Skipping prohibited topology")
             next
           }
           moveScore <- Score(move, morphyObjs, weight, charSeq, concavity, 
@@ -308,11 +308,11 @@ MaximizeParsimony <- function (dataset, tree,
               bestPlusEps <- bestScore + epsilon
               nHits <- 1L
               hold[, , 1] <- edge
-              .Message(5L, "New best score ", signif(bestScore),
+              .Message(5L, "  New best score ", signif(bestScore),
                        " at break ", fmatch(brk, optTbr), "/", length(optTbr))
               break
             } else {
-              .Message(6L, "Best score ", signif(bestScore),
+              .Message(6L, "  Best score ", signif(bestScore),
                        " hit again (", nHits, "/", ceiling(maxHits), ")")
               nHits <- nHits + 1L
               hold[, , nHits] <- edge
@@ -344,6 +344,8 @@ MaximizeParsimony <- function (dataset, tree,
       .edge <- .edge[, , 1]
     }
     if (profile) {
+    .Message(4L, paste("<<< Begin:", name))
+    on.exit(.Message(4L, paste(">>> Complete:", name)))
       .TBRSearch(.ProfileScore, name, edge = .edge, morphyObjects, 
                  tbrIter = searchIter, maxHits = .hits,
                  weight = .weight, minLength = minLength, charSeq = charSeq,
@@ -703,6 +705,8 @@ MaximizeParsimony <- function (dataset, tree,
       ratchetImproved <- .Search("TBR search", .edge = ratchetStart,
                                  .hits = maxHits)
       ratchetScore <- .Score(ratchetImproved[, , 1])
+      .Message(2L, "Obtained new starting tree @ {(.Time())}",
+               " with score: {.strong {signif(ratchetScore)} }")
       
       if (ratchetScore < bestPlusEps) {
         if (ratchetScore + epsilon < bestScore) {
