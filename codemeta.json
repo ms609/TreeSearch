@@ -14,7 +14,7 @@
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.3.0 (2023-04-21)",
+  "runtimePlatform": "R version 4.3.1 (2023-06-16)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -357,7 +357,7 @@
       "@type": "SoftwareApplication",
       "identifier": "TreeTools",
       "name": "TreeTools",
-      "version": ">= 1.9.0",
+      "version": ">= 1.9.2.9002",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -368,7 +368,7 @@
     },
     "SystemRequirements": "C++17"
   },
-  "fileSize": "4429.432KB",
+  "fileSize": "4430.01KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
