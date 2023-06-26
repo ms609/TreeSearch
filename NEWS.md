@@ -1,4 +1,4 @@
-# TreeSearch 1.3.2.9000 (development)
+# TreeSearch 1.3.2.9001 (development)
 
 - Default to use equal weighting during ratchet iterations
 - Support null constraints in `AdditionTree()`

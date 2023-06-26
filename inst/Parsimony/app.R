@@ -1564,10 +1564,16 @@ server <- function(input, output, session) {
         AdditionTree(r$dataset, concavity = concavity())
       } else {
         LogComment("Select starting tree")
-        firstOptimal <- which.min(scores())
-        LogCode(paste0("startTree <- trees[[", firstOptimal, "]]",
-                       " # First tree with optimal score"))
-        r$trees[[firstOptimal]]
+        if (all(TipLabels(r$dataset) %in% TipLabels(r$trees))) {
+          firstOptimal <- which.min(scores())
+          LogCode(paste0("startTree <- trees[[", firstOptimal, "]]",
+                         " # First tree with optimal score"))
+          r$trees[[firstOptimal]]
+        } else {
+          # TODO Could try fuzzy matching
+          AdditionTree(r$dataset, concavity = concavity(),
+                       constraint = KeepTip(r$trees[[1]], TipLabels(r$dataset)))
+        }
       }
       LogMsg("StartSearch()")
       PutData(r$dataset)
