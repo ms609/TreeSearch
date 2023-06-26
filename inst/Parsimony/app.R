@@ -1570,9 +1570,15 @@ server <- function(input, output, session) {
                          " # First tree with optimal score"))
           r$trees[[firstOptimal]]
         } else {
-          # TODO Could try fuzzy matching
+          # Fuzzy-match labels
+          oldTree <- r$trees[[1]]
+          oldLabels <- TipLabels(oldTree)
+          newLabels <- TipLabels(r$dataset)
+          matching <- TreeDist::LAPJV(adist(oldLabels, newLabels))$matching
+          scaffold <- KeepTip(oldTree, !is.na(matching))
+          scaffold[["tip.label"]] <- newLabels[matching[!is.na(matching)]]
           AdditionTree(r$dataset, concavity = concavity(),
-                       constraint = KeepTip(r$trees[[1]], TipLabels(r$dataset)))
+                       constraint = scaffold)
         }
       }
       LogMsg("StartSearch()")
