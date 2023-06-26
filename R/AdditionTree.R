@@ -78,19 +78,23 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
         constraint <- MatrixToPhyDat(t(as.matrix(constraint)))
       }
       thisConstr <- constraint[theseTaxa]
-      morphyConstr <- PhyDat2Morphy(thisConstr)
-      # Calculate constraint minimum score
-      constraintLength <- sum(MinimumLength(thisConstr, compress = TRUE) *
-                              attr(thisConstr, "weight"))
+      if (length(thisConstr[[1]]) && min(table(unlist(thisConstr))) > 1) {
+        # Constraint constrains theseTaxa
+        
+        morphyConstr <- PhyDat2Morphy(thisConstr)
+        # Calculate constraint minimum score
+        constraintLength <- sum(MinimumLength(thisConstr, compress = TRUE) *
+                                attr(thisConstr, "weight"))
+        
+        .Forbidden <- function (edges) {
+          preorder_morphy(edges, morphyConstr) != constraintLength
+        }
+        
       
-      .Forbidden <- function (edges) {
-        preorder_morphy(edges, morphyConstr) != constraintLength
+        candidates <- candidates[!vapply(lapply(candidates, `[[`, "edge"),
+                                         .Forbidden, logical(1))]
+        UnloadMorphy(morphyConstr)
       }
-      
-    
-      candidates <- candidates[!vapply(lapply(candidates, `[[`, "edge"),
-                                       .Forbidden, logical(1))]
-      UnloadMorphy(morphyConstr)
     }
     
     # Score remaining candidates

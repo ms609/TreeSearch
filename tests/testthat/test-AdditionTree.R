@@ -36,15 +36,29 @@ test_that("Addition tree obeys constraints", {
               as.Splits(AdditionTree(dataset, constraint = cbind(constraint)),
                         letters[1:6]))
   
-  if (packageVersion("TreeTools") > "1.9.0") { # until v1.9+ required
-    # 1.9.0.9000+ is required to handle vector (non-matrix) constraints
-    cdef <- letters[3:6]
-    subtree <- TreeTools::KeepTip(
-      AdditionTree(dataset, constraint = constraint[3:6], seq = letters[1:6]), 
-      cdef)
-    expect_equal(ape::read.tree(text = "(c, d, (e, f));"),
-                 TreeTools::UnrootTree(subtree))
+  constraintTree <- TreeTools::BalancedTree(constraint)
+  
+  set.seed(0)
+  unconstrained <- AdditionTree(dataset)
+  
+  CheckUnconstrained <- function(constraint) {
+    set.seed(0)
+    expect_equal(AdditionTree(dataset, constraint = constraint), unconstrained)
   }
+  
+  CheckUnconstrained(KeepTip(constraintTree, c("a", "b")))
+  CheckUnconstrained(c(a = 0))
+  CheckUnconstrained(KeepTip(constraintTree, "a"))
+  CheckUnconstrained(c())
+  CheckUnconstrained(KeepTip(constraintTree, character(0)))
+  CheckUnconstrained(NULL)
+  
+  cdef <- letters[3:6]
+  subtree <- TreeTools::KeepTip(
+    AdditionTree(dataset, constraint = constraint[3:6], seq = letters[1:6]), 
+    cdef)
+  expect_equal(ape::read.tree(text = "(c, d, (e, f));"),
+               TreeTools::UnrootTree(subtree))
 })
 
 test_that("AdditionTree() handles edge cases", {
