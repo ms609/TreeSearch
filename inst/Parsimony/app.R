@@ -1364,6 +1364,7 @@ server <- function(input, output, session) {
   }), r$treeHash, r$dataHash, concavity())
   
   DisplayTreeScores <- function () {
+    LogMsg("DisplayTreeScores()")
     treeScores <- scores()
     score <- if (is.null(treeScores)) {
       "; could not be scored from dataset"
@@ -1564,19 +1565,23 @@ server <- function(input, output, session) {
         AdditionTree(r$dataset, concavity = concavity())
       } else {
         LogComment("Select starting tree")
-        if (all(TipLabels(r$dataset) %in% TipLabels(r$trees))) {
-          firstOptimal <- which.min(scores())
-          LogCode(paste0("startTree <- trees[[", firstOptimal, "]]",
-                         " # First tree with optimal score"))
-          r$trees[[firstOptimal]]
+        dataLabels <- TipLabels(r$dataset) 
+        treeLabels <- TipLabels(r$trees[[1]])
+        if (all(dataLabels %in% treeLabels)) {
+          if (length(setdiff(treeLabels, dataLabels)) > 0) {
+            LogCode("startTree <- KeepTip(trees[[1]], TipLabels(dataset))")
+            KeepTip(r$trees[[1]], dataLabels)
+          } else {
+            firstOptimal <- which.min(scores())
+            LogCode(paste0("startTree <- trees[[", firstOptimal, "]]",
+                           " # First tree with optimal score"))
+            r$trees[[firstOptimal]]
+          }
         } else {
           # Fuzzy-match labels
-          oldTree <- r$trees[[1]]
-          oldLabels <- TipLabels(oldTree)
-          newLabels <- TipLabels(r$dataset)
-          matching <- TreeDist::LAPJV(adist(oldLabels, newLabels))$matching
-          scaffold <- KeepTip(oldTree, !is.na(matching))
-          scaffold[["tip.label"]] <- newLabels[matching[!is.na(matching)]]
+          matching <- TreeDist::LAPJV(adist(treeLabels, dataLabels))$matching
+          scaffold <- KeepTip(r$trees[[1]], !is.na(matching))
+          scaffold[["tip.label"]] <- dataLabels[matching[!is.na(matching)]]
           AdditionTree(r$dataset, concavity = concavity(),
                        constraint = scaffold)
         }
