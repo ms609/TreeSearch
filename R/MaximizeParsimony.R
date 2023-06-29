@@ -627,6 +627,7 @@ MaximizeParsimony <- function (dataset, tree,
              "; keeping max ", as.integer(searchHits),
              " trees; k = ", concavity, ".")
     .Info(1L, .DateTime(), ": Score to beat: ", signif(bestScore))
+    initialScore <- bestScore
 
     newEdges <- .Search("TBR search 1")
     
@@ -638,6 +639,8 @@ MaximizeParsimony <- function (dataset, tree,
       .CombineResults(bestEdges, newEdges, 2)
     }
     if (.Timeout()) {
+      .Info(1L, .DateTime(), ": Timed out with score ",
+            signif(min(bestScore, newBestScore)))
       return(.ReturnValue(bestEdges))                                           # nocov
     }
     edge <- bestEdges[, , 1L]
@@ -646,6 +649,8 @@ MaximizeParsimony <- function (dataset, tree,
   searchIter <- tbrIter
   searchHits <- maxHits * quickHits
   bestScore <- .Score(edge)
+  .Info(1L, .DateTime(), ": Best score so far: ",
+        "{.strong {signif(bestScore)} }")
   bestPlusEps <- bestScore + epsilon
   
   
