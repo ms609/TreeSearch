@@ -1,5 +1,5 @@
-# options("TreeSearch.write.code" = TRUE) # Show code as it is written to log
 # options("TreeSearch.logging" = TRUE) # Log function entry and exit
+# options("TreeSearch.write.code" = TRUE) # Show code as it is written to log
 logging <- isTRUE(getOption("TreeSearch.logging"))
 options(shiny.maxRequestSize = 1024 ^ 3) # Allow max 1 GB files
 
@@ -1239,6 +1239,8 @@ server <- function(input, output, session) {
                           max = 10L, value = 3L, pre = "\ud7"),
               sliderInput("finalIter", "Final iteration extra depth", min = 1L,
                           max = 10L, value = 1L, pre = "\ud7"),
+              selectizeInput("searchWithout", "Exclude taxa", DatasetTips(),
+                             r$searchWithout, multiple = TRUE)
              ))
       ),
       title = "Tree search settings",
@@ -1562,15 +1564,21 @@ server <- function(input, output, session) {
         LogComment("Select starting tree")
         LogCode(paste0("startTree <- AdditionTree(dataset, concavity = ",
                        Enquote(concavity()), ")"))
-        AdditionTree(r$dataset, concavity = concavity())
+        AdditionTree(r$dataset[SearchTips()], concavity = concavity())
       } else {
         LogComment("Select starting tree")
-        dataLabels <- TipLabels(r$dataset) 
         treeLabels <- TipLabels(r$trees[[1]])
-        if (all(dataLabels %in% treeLabels)) {
-          if (length(setdiff(treeLabels, dataLabels)) > 0) {
-            LogCode("startTree <- KeepTip(trees[[1]], TipLabels(dataset))")
-            KeepTip(r$trees[[1]], dataLabels)
+        if (all(SearchTips() %in% treeLabels)) {
+          if (length(setdiff(treeLabels, SearchTips())) > 0) {
+            if (length(r$searchWithout)) {
+              LogCode(paste0(
+                "searchTips <- setdiff(names(dataset), ", EnC(r$searchWithout),
+                ")"),
+                "startTree <- KeepTip(trees[[1]], searchTips)")
+            } else {
+              LogCode("startTree <- KeepTip(trees[[1]], names(dataset))")
+            }
+            KeepTip(r$trees[[1]], SearchTips())
           } else {
             firstOptimal <- which.min(scores())
             LogCode(paste0("startTree <- trees[[", firstOptimal, "]]",
@@ -1579,20 +1587,26 @@ server <- function(input, output, session) {
           }
         } else {
           # Fuzzy-match labels
-          matching <- TreeDist::LAPJV(adist(treeLabels, dataLabels))$matching
+          matching <- TreeDist::LAPJV(adist(treeLabels, SearchTips()))$matching
           scaffold <- KeepTip(r$trees[[1]], !is.na(matching))
-          scaffold[["tip.label"]] <- dataLabels[matching[!is.na(matching)]]
+          scaffold[["tip.label"]] <- SearchTips()[matching[!is.na(matching)]]
           AdditionTree(r$dataset, concavity = concavity(),
                        constraint = scaffold)
         }
       }
       LogMsg("StartSearch()")
-      PutData(r$dataset)
+      PutData(r$dataset[SearchTips()])
       PutTree(startTree)
       LogComment("Search for optimal trees", 1)
       LogCode(c(
         "newTrees <- MaximizeParsimony(",
-        "  dataset,",
+        if (length(r$searchWithout)) {
+          paste0(
+            "  dataset[setdiff(names(dataset), ", EnC(r$searchWithout), ")]"
+          )
+        } else {
+          "  dataset,"
+        },
         "  tree = startTree,",
         paste0("  concavity = ", Enquote(concavity()), ","),
         paste0("  ratchIter = ", input$ratchIter, ","), 
@@ -1605,7 +1619,7 @@ server <- function(input, output, session) {
         "  verbosity = 4",
         ")"))
       newTrees <- withProgress(
-        MaximizeParsimony(r$dataset,
+        MaximizeParsimony(r$dataset[SearchTips()],
                           tree = startTree,
                           concavity = concavity(),
                           ratchIter = input$ratchIter,
@@ -1642,6 +1656,10 @@ server <- function(input, output, session) {
       show("displayConfig")
     }
   }
+  
+  observeEvent(input$searchWithout, {
+    r$searchWithout <- input$searchWithout
+  }, ignoreInit = TRUE)
   
   observeEvent(input$go, StartSearch(), ignoreInit = TRUE)
   observeEvent(input$modalGo, {
@@ -1902,6 +1920,9 @@ server <- function(input, output, session) {
       r$outgroup <- input$outgroup
     }
   }, ignoreInit = TRUE)
+  
+  DatasetTips <- reactive(names(r$dataset))
+  SearchTips <- reactive(setdiff(DatasetTips(), r$searchWithout))
   
   KeptTips <- reactive({
     LogMsg("KeptTips()")

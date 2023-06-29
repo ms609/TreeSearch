@@ -2,6 +2,7 @@
 
 - Default to use equal weighting during ratchet iterations
 - Support null constraints in `AdditionTree()`
+- Exclude taxa from search in app
 - Allow search to continue when loading a new file with different taxon names
   into the app
 
