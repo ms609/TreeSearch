@@ -591,7 +591,6 @@ MaximizeParsimony <- function (dataset, tree,
   
   # Initialize variables and prepare search
   
-  .Heading(paste0("BEGIN TREE SEARCH (k = ", concavity, ")"))
   nHits <- 1L
   tbrStart <- startIter > 0
   tbrEnd <- finalIter > 0
@@ -614,8 +613,8 @@ MaximizeParsimony <- function (dataset, tree,
                if(ratchIter > 0) paste0("ratch", seq_len(ratchIter)),
                if(tbrEnd) "final")))
   
-  
-  
+  .Heading(paste0("BEGIN TREE SEARCH (k = ", concavity, ")"),
+           "Initial score: {.strong {signif(bestScore)} }")
   
   
   # Find a local optimum
@@ -628,7 +627,6 @@ MaximizeParsimony <- function (dataset, tree,
              " TBR depth ", as.integer(searchIter),
              "; keeping max ", as.integer(searchHits),
              " trees; k = ", concavity, ".")
-    .Info(1L, .DateTime(), ": Score to beat: ", signif(bestScore))
     initialScore <- bestScore
 
     newEdges <- .Search("TBR search 1")
@@ -646,13 +644,17 @@ MaximizeParsimony <- function (dataset, tree,
       return(.ReturnValue(bestEdges))                                           # nocov
     }
     edge <- bestEdges[, , 1L]
+    bestScore <- .Score(edge)
+    if (bestScore < initialScore) {
+      .Success(2L, "{.strong New best score: {signif(bestScore)} }")
+    } else {
+      .Info(1L, .DateTime(), ": Did not beat initial score: ",
+          "{signif(bestScore)}")
+    }
   }
   
   searchIter <- tbrIter
   searchHits <- maxHits * quickHits
-  bestScore <- .Score(edge)
-  .Info(1L, .DateTime(), ": Best score so far: ",
-        "{.strong {signif(bestScore)} }")
   bestPlusEps <- bestScore + epsilon
   
   
@@ -762,7 +764,7 @@ MaximizeParsimony <- function (dataset, tree,
     .Heading("Sample local optimum",
              "TBR depth {searchIter}; keeping {searchHits}",
              " trees; k = {concavity}")
-    .Info(1L, .Time(), ": Score: ", signif(bestScore))
+    .Info(1L, .DateTime(), ": Score: ", signif(bestScore))
     finalEdges <- .Search("Final search")
     newBestScore <- .Score(finalEdges[, , 1])
     improved <- newBestScore + epsilon < bestScore
