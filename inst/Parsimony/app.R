@@ -1529,8 +1529,12 @@ server <- function(input, output, session) {
         nchar(input$excludedTip) &&
         input$excludedTip %in% tipLabels()) {
       consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
-      plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
-                           plot = FALSE)
+      plotted <- TreeTools::RoguePlot(
+        trees = consTrees,
+        tip = input$excludedTip,
+        p = consP(),
+        plot = FALSE
+      )
       tagList(
         tags$span(class = "legendLeft", "1 tree"),
         tags$span(id = "blackToGreen", class = "legendBar", "\ua0"),
