@@ -210,7 +210,9 @@ MaximizeParsimony <- function (dataset, tree,
   .Heading <- function (text, ...) {
     if (0 < verbosity) {
       cli_h1(text)
-      cli_alert(paste0(...))
+      if (length(list(...))) {
+        cli_alert(paste0(...))
+      }
     }
   }
   .Info <- function (level, ...) {
