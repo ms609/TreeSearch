@@ -43,7 +43,8 @@
 #' TaxonInfluence(dataset, ratchIter = 0, startIter = 0, verb = 0)
 #'
 #' @family tree scoring
-#' @importFrom TreeDist ClusteringInfoDistance  
+#' @importFrom TreeDist ClusteringInfoDistance
+#' @importFrom cli cli_h1
 #' @export
 TaxonInfluence <- function(
     dataset,
@@ -65,6 +66,10 @@ TaxonInfluence <- function(
   
   # Return:
   vapply(names(dataset), function(leaf) {
+    if (is.missing(verbosity) || 
+        verbosity > 0) {
+      cli_h1(paste("Taxon influence:", leaf))
+    }
     result <- MaximizeParsimony(
       dataset = dataset[setdiff(names(dataset), leaf)],
       tree = DropTip(startTree, leaf),
