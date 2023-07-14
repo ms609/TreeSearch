@@ -4,7 +4,13 @@
 \alias{TaxonInfluence}
 \title{Rank taxa by their influence on phylogenetic results}
 \usage{
-TaxonInfluence(dataset, tree = NULL, Distance = ClusteringInfoDistance, ...)
+TaxonInfluence(
+  dataset,
+  tree = NULL,
+  Distance = ClusteringInfoDistance,
+  verbosity = 3L,
+  ...
+)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
@@ -18,7 +24,7 @@ the parameters provided in \dots.}
 \item{Distance}{Function to calculate tree distance; default:
 \code{\link[=ClusteringInfoDistance]{ClusteringInfoDistance()}}.}
 
-\item{\dots}{Parameters for \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}.
+\item{verbosity, \dots}{Parameters for \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}.
 Tree search will be conducted using \code{tree} as a starting tree.}
 }
 \value{

@@ -22,7 +22,7 @@
 #' @param Distance Function to calculate tree distance; default:
 #' [`ClusteringInfoDistance()`].
 #' 
-#' @param \dots Parameters for [`MaximizeParsimony()`].
+#' @param verbosity,\dots Parameters for [`MaximizeParsimony()`].
 #' Tree search will be conducted using `tree` as a starting tree.
 #' 
 #' @returns `TaxonInfluence()` returns a named vector, listing the phylogenetic
@@ -50,6 +50,7 @@ TaxonInfluence <- function(
     dataset,
     tree = NULL,
     Distance = ClusteringInfoDistance,
+    verbosity = 3L,
     ...
   ) {
   if (is.null(tree)) {
@@ -66,13 +67,13 @@ TaxonInfluence <- function(
   
   # Return:
   vapply(names(dataset), function(leaf) {
-    if (is.missing(verbosity) || 
-        verbosity > 0) {
+    if (verbosity > 0) {
       cli_h1(paste("Taxon influence:", leaf))
     }
     result <- MaximizeParsimony(
       dataset = dataset[setdiff(names(dataset), leaf)],
       tree = DropTip(startTree, leaf),
+      verbosity = verbosity,
       ...
     )
     max(Distance(tree, result))
