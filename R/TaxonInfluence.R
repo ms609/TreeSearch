@@ -46,12 +46,14 @@
 #' distance-weighted mean value.
 #' @param savePath Character giving prefix of path to which reduced trees will be
 #' saved (with [`write.nexus()`]). File names will follow the pattern
-#' `paste0(savePath, nameOfDroppedTaxon, ".nex")`; `savePath` should thus contain
+#' `paste0(savePath, droppedTaxonName, ".nex")`; `savePath` should thus contain
 #' a trailing `/` if writing to a directory, which will be created if it does
-#' not exist.  If `NULL`, computed trees will not be saved.
-#' @param useCache Logical vector; if `TRUE`, files created previously will be
-#' loaded from the location given by `savePath` if they exist, instead of running
-#' a fresh search.
+#' not exist.  Special characters will be removed from leaf labels when
+#' creating the file path (using [`path_sanitize()`]).
+#' If `NULL`, computed trees will not be saved.
+#' @param useCache Logical vector; if `TRUE`, previous tree search results will
+#' be loaded from the location given by `savePath`, instead of running a fresh
+#' search with the specified dataset and parameters.
 #' 
 #' @param verbosity,\dots Parameters for [`MaximizeParsimony()`].
 #' Tree search will be conducted using `tree` as a starting tree.
@@ -98,6 +100,7 @@
 #' @family tree scoring
 #' @importFrom ape read.nexus write.nexus
 #' @importFrom cli cli_alert_info cli_h1
+#' @importFrom fs path_sanitize
 #' @importFrom stats weighted.mean
 #' @importFrom TreeDist ClusteringInfoDistance
 #' @encoding UTF-8
@@ -144,7 +147,7 @@ TaxonInfluence <- function(
   # Return:
   vapply(names(dataset), function(leaf) {
     
-    leafFile <- paste0(savePath, leaf, ".nex")
+    leafFile <- paste0(savePath, path_sanitize(leaf), ".nex")
     
     result <- if (useCache && file.exists(leafFile)) {
       if (verbosity > 1) {

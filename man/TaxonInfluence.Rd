@@ -33,13 +33,15 @@ distance-weighted mean value.}
 
 \item{savePath}{Character giving prefix of path to which reduced trees will be
 saved (with \code{\link[=write.nexus]{write.nexus()}}). File names will follow the pattern
-\code{paste0(savePath, nameOfDroppedTaxon, ".nex")}; \code{savePath} should thus contain
+\code{paste0(savePath, droppedTaxonName, ".nex")}; \code{savePath} should thus contain
 a trailing \code{/} if writing to a directory, which will be created if it does
-not exist.  If \code{NULL}, computed trees will not be saved.}
+not exist.  Special characters will be removed from leaf labels when
+creating the file path (using \code{\link[=path_sanitize]{path_sanitize()}}).
+If \code{NULL}, computed trees will not be saved.}
 
-\item{useCache}{Logical vector; if \code{TRUE}, files created previously will be
-loaded from the location given by \code{savePath} if they exist, instead of running
-a fresh search.}
+\item{useCache}{Logical vector; if \code{TRUE}, previous tree search results will
+be loaded from the location given by \code{savePath}, instead of running a fresh
+search with the specified dataset and parameters.}
 
 \item{verbosity, \dots}{Parameters for \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}.
 Tree search will be conducted using \code{tree} as a starting tree.}
