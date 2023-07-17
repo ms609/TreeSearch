@@ -269,5 +269,10 @@ Data can be prepared for profile parsimony using [`PrepareDataProfile()`](https:
 
 - Conduct [tree search](profile.html) using profile parsimony
 
+See also:
+
+- [Guide to installation](getting-started.html)
+
+- [Documentation home](https://ms609.github.io/TreeSearch/)
 
 ## References
