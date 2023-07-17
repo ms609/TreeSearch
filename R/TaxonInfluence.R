@@ -31,7 +31,7 @@
 #' close neighbours contribute more to the weighted mean, thus reducing the
 #' influence of many trees that differ only in small details.
 #' This distance-weighted mean is thus less prone to bias than a simple mean
-#' — it is no more statistically valid, but potentially provides a less
+#' &ndash; it is no more statistically valid, but potentially provides a less
 #' misleading summary of comparisons between sets of trees.
 #' 
 #' 

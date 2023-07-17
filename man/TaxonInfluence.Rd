@@ -56,7 +56,7 @@ all taxa are included in phylogenetic inference.
 }
 \details{
 As \insertCite{Denton2018ee;textual}{TreeSearch} emphasize, the
-Robinson—Foulds distance is unsuitable for this purpose; this function
+Robinson–Foulds distance is unsuitable for this purpose; this function
 allows the user to specify a preferred tree distance measure, defaulting
 to the clustering information distance \insertCite{Smith2020}{TreeSearch}.
 Because optimal parsimony trees are not equiprobable, taxon influence is
@@ -80,7 +80,7 @@ after weighting for trees' distance from other trees.  Trees that have few
 close neighbours contribute more to the weighted mean, thus reducing the
 influence of many trees that differ only in small details.
 This distance-weighted mean is thus less prone to bias than a simple mean
-— it is no more statistically valid, but potentially provides a less
+– it is no more statistically valid, but potentially provides a less
 misleading summary of comparisons between sets of trees.
 }
 
