@@ -12,7 +12,28 @@
 #' allows the user to specify a preferred tree distance measure, defaulting
 #' to the clustering information distance \insertCite{Smith2020}{TreeSearch}.
 #' Because optimal parsimony trees are not equiprobable, taxon influence is
-#' ranked based on the maximum tree-to-tree distance between optimal trees.
+#' ranked based on the maximum and minimum tree-to-tree distances between
+#' optimal trees.
+#' 
+#' @section Distance-weighted mean:
+#' Sets of equally parsimonious trees are not statistical samples of tree space,
+#' but are biased towards areas of uncertainty.
+#' It is possible that a set of trees contains all possible resolutions of a
+#' particular clade, and a single other topology in which that clade does not
+#' exist -- essentially two distinct solutions, one (_a_) which could be
+#' summarised with a summary tree that contains a polytomy, and another (_b_) 
+#' which could be summarized by a perfectly resolved tree.
+#' Neither of these scenarios is preferable under the principles of parsimony;
+#' but summary statistics (e.g. mean, median) will be strongly influenced by the
+#' many trees in group _a_, thus underplaying the existence of solution _b_.
+#' `TaxonInfluence()` uses an _ad hoc_ method to produce summary statistics
+#' after weighting for trees' distance from other trees.  Trees that have few
+#' close neighbours contribute more to the weighted mean, thus reducing the
+#' influence of many trees that differ only in small details.
+#' This distance-weighted mean is thus less prone to bias than a simple mean
+#' — it is no more statistically valid, but potentially provides a less
+#' misleading summary of comparisons between sets of trees.
+#' 
 #' 
 #' @template datasetParam
 #' @param tree Optimal tree or summary tree (of class "phylo") or list of trees
@@ -21,13 +42,22 @@
 #' the parameters provided in \dots.
 #' @param Distance Function to calculate tree distance; default:
 #' [`ClusteringInfoDistance()`].
+#' @param calcWeighted Logical specifying whether to compute the
+#' distance-weighted mean value.
+#' @param saveTo Character giving prefix of path to which reduced trees will be
+#' saved (with [`write.nexus()`]). File names will follow the pattern
+#' `paste0(saveTo, nameOfDroppedTaxon, ".nex")`; `saveTo` should thus contain
+#' a trailing `/` if writing to a directory, which will be created if it does
+#' not exist.  If `NULL`, computed trees will not be saved.
 #' 
 #' @param verbosity,\dots Parameters for [`MaximizeParsimony()`].
 #' Tree search will be conducted using `tree` as a starting tree.
 #' 
-#' @returns `TaxonInfluence()` returns a named vector, listing the phylogenetic
+#' @returns `TaxonInfluence()` returns a matrix listing the phylogenetic
 #' influence of each taxon, measured in the units of the chosen tree distance
 #' metric (default = bits).
+#' Columns denote taxa; rows denote the maximum, distance-weighted mean,
+#' and minimum distance between optimal tree sets.
 #' 
 #' @references \insertAllCited{}
 #' 
@@ -39,22 +69,52 @@
 #' 
 #' # Small dataset for demonstration purposes
 #' dataset <- congreveLamsdellMatrices[[42]][1:8, ]
+#' bestTree <- MaximizeParsimony(dataset, verbosity = 0)[[1]]
 #' 
-#' TaxonInfluence(dataset, ratchIter = 0, startIter = 0, verb = 0)
-#'
+#' # Calculate tip influence
+#' influence <- TaxonInfluence(dataset, ratchIt = 0, startIt = 0, verbos = 0)
+#' 
+#' # Colour tip labels according to their influence
+#' upperBound <- ClusteringEntropy(PectinateTree(NTip(dataset) - 1)) * 2
+#' nBin <- 128
+#' bin <- cut(
+#'   influence["max", ],
+#'   breaks = seq(0, upperBound, length.out = nBin),
+#'   include.lowest = TRUE
+#' )
+#' palette <- hcl.colors(nBin, "inferno")
+#' 
+#' plot(bestTree, tip.color = palette[bin])
+#' PlotTools::SpectrumLegend(
+#'   "bottomleft",
+#'   palette = palette,
+#'   title = "Tip influence / bits",
+#'   legend = signif(seq(upperBound, 0, length.out = 4), 3),
+#'   bty = "n"
+#' )
 #' @family tree scoring
 #' @importFrom TreeDist ClusteringInfoDistance
 #' @importFrom cli cli_h1
+#' @encoding UTF-8
 #' @export
 TaxonInfluence <- function(
     dataset,
     tree = NULL,
     Distance = ClusteringInfoDistance,
+    saveTo = NULL,
+    calcWeighted = TRUE,
     verbosity = 3L,
     ...
   ) {
   if (is.null(tree)) {
     tree <- MaximizeParsimony(dataset, ...)
+  }
+  if (calcWeighted) {
+    refWeights <- if (inherits(tree, "phylo") || length(tree) == 1) {
+      1
+    } else {
+      rowSums(as.matrix(Distance(tree)))
+    }
   }
   startTree <- MakeTreeBinary(if (inherits(tree, "phylo")) {
     tree
@@ -65,17 +125,38 @@ TaxonInfluence <- function(
     stop("`tree` must be an object / list of objects of class \"phylo\"")
   }
   
+  if (!is.null(saveTo)) {
+    saveDir <- basename(dirname(saveTo))
+    if (!dir.exists(saveDir)) {
+      dir.create(saveDir, recursive = TRUE)
+    }
+  }
+  
   # Return:
   vapply(names(dataset), function(leaf) {
     if (verbosity > 0) {
       cli_h1(paste("Taxon influence:", leaf))
     }
-    result <- MaximizeParsimony(
+    result <- unique(MaximizeParsimony(
       dataset = dataset[setdiff(names(dataset), leaf)],
       tree = DropTip(startTree, leaf),
       verbosity = verbosity,
       ...
-    )
-    max(Distance(tree, result))
-  }, double(1))
+    ))
+    if (!is.null(saveTo)) {
+      write.nexus(result, file = paste0(saveTo, leaf, ".nex"))
+    }
+    d <- matrix(Distance(tree, result), length(result))
+    dwMean <- if (calcWeighted) {
+      resWeights <- if (length(result) > 1) {
+        colSums(as.matrix(Distance(result)))
+      } else {
+        1
+      }
+      weighted.mean(d, outer(resWeights, refWeights))
+    } else {
+      NA_real_
+    }
+    c(min(d), dwMean, max(d))
+  }, c(min = 0, dwMean = 0, max = 0))
 }
