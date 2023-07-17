@@ -44,11 +44,14 @@
 #' [`ClusteringInfoDistance()`].
 #' @param calcWeighted Logical specifying whether to compute the
 #' distance-weighted mean value.
-#' @param saveTo Character giving prefix of path to which reduced trees will be
+#' @param savePath Character giving prefix of path to which reduced trees will be
 #' saved (with [`write.nexus()`]). File names will follow the pattern
-#' `paste0(saveTo, nameOfDroppedTaxon, ".nex")`; `saveTo` should thus contain
+#' `paste0(savePath, nameOfDroppedTaxon, ".nex")`; `savePath` should thus contain
 #' a trailing `/` if writing to a directory, which will be created if it does
 #' not exist.  If `NULL`, computed trees will not be saved.
+#' @param useCache Logical vector; if `TRUE`, files created previously will be
+#' loaded from the location given by `savePath` if they exist, instead of running
+#' a fresh search.
 #' 
 #' @param verbosity,\dots Parameters for [`MaximizeParsimony()`].
 #' Tree search will be conducted using `tree` as a starting tree.
@@ -93,8 +96,8 @@
 #'   bty = "n"
 #' )
 #' @family tree scoring
-#' @importFrom ape write.nexus
-#' @importFrom cli cli_h1
+#' @importFrom ape read.nexus write.nexus
+#' @importFrom cli cli_alert_info cli_h1
 #' @importFrom stats weighted.mean
 #' @importFrom TreeDist ClusteringInfoDistance
 #' @encoding UTF-8
@@ -103,11 +106,21 @@ TaxonInfluence <- function(
     dataset,
     tree = NULL,
     Distance = ClusteringInfoDistance,
-    saveTo = NULL,
     calcWeighted = TRUE,
+    savePath = NULL,
+    useCache = FALSE,
     verbosity = 3L,
     ...
   ) {
+  if (!is.null(savePath)) {
+    saveDir <- basename(dirname(paste0(savePath, "taxon_name")))
+    if (!dir.exists(saveDir)) {
+      dir.create(saveDir, recursive = TRUE)
+    }
+  } else if (useCache) {
+    stop("Specify cache path using `savePath` parameter")
+  }
+  
   if (is.null(tree)) {
     tree <- MaximizeParsimony(dataset, ...)
   }
@@ -118,6 +131,7 @@ TaxonInfluence <- function(
       rowSums(as.matrix(Distance(tree)))
     }
   }
+  
   startTree <- MakeTreeBinary(if (inherits(tree, "phylo")) {
     tree
   } else {
@@ -127,26 +141,34 @@ TaxonInfluence <- function(
     stop("`tree` must be an object / list of objects of class \"phylo\"")
   }
   
-  if (!is.null(saveTo)) {
-    saveDir <- basename(dirname(paste0(saveTo, "taxon_name")))
-    if (!dir.exists(saveDir)) {
-      dir.create(saveDir, recursive = TRUE)
-    }
-  }
-  
   # Return:
   vapply(names(dataset), function(leaf) {
-    if (verbosity > 0) {
-      cli_h1(paste("Taxon influence:", leaf))
+    
+    leafFile <- paste0(savePath, leaf, ".nex")
+    
+    result <- if (useCache && file.exists(leafFile)) {
+      if (verbosity > 1) {
+        cli_alert_info(paste("Seeking cache: ", leafFile))
+      }
+      tryCatch(c(read.nexus(leafFile)),
+               error = function(e) NULL)
+    } else {
+      NULL
     }
-    result <- unique(MaximizeParsimony(
-      dataset = dataset[setdiff(names(dataset), leaf)],
-      tree = DropTip(startTree, leaf),
-      verbosity = verbosity,
-      ...
-    ))
-    if (!is.null(saveTo)) {
-      write.nexus(result, file = paste0(saveTo, leaf, ".nex"))
+    
+    if (is.null(result)) {
+      if (verbosity > 0) {
+        cli_h1(paste("Taxon influence search:", leaf))
+      }
+      result <- unique(MaximizeParsimony(
+        dataset = dataset[setdiff(names(dataset), leaf)],
+        tree = DropTip(startTree, leaf),
+        verbosity = verbosity,
+        ...
+      ))
+      if (!is.null(savePath)) {
+        write.nexus(result, file = leafFile)
+      }
     }
     d <- matrix(Distance(tree, result), length(result))
     dwMean <- if (calcWeighted) {

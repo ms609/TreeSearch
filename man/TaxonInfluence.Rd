@@ -9,8 +9,9 @@ TaxonInfluence(
   dataset,
   tree = NULL,
   Distance = ClusteringInfoDistance,
-  saveTo = NULL,
   calcWeighted = TRUE,
+  savePath = NULL,
+  useCache = FALSE,
   verbosity = 3L,
   ...
 )
@@ -27,14 +28,18 @@ the parameters provided in \dots.}
 \item{Distance}{Function to calculate tree distance; default:
 \code{\link[=ClusteringInfoDistance]{ClusteringInfoDistance()}}.}
 
-\item{saveTo}{Character giving prefix of path to which reduced trees will be
+\item{calcWeighted}{Logical specifying whether to compute the
+distance-weighted mean value.}
+
+\item{savePath}{Character giving prefix of path to which reduced trees will be
 saved (with \code{\link[=write.nexus]{write.nexus()}}). File names will follow the pattern
-\code{paste0(saveTo, nameOfDroppedTaxon, ".nex")}; \code{saveTo} should thus contain
+\code{paste0(savePath, nameOfDroppedTaxon, ".nex")}; \code{savePath} should thus contain
 a trailing \code{/} if writing to a directory, which will be created if it does
 not exist.  If \code{NULL}, computed trees will not be saved.}
 
-\item{calcWeighted}{Logical specifying whether to compute the
-distance-weighted mean value.}
+\item{useCache}{Logical vector; if \code{TRUE}, files created previously will be
+loaded from the location given by \code{savePath} if they exist, instead of running
+a fresh search.}
 
 \item{verbosity, \dots}{Parameters for \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}.
 Tree search will be conducted using \code{tree} as a starting tree.}
