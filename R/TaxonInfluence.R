@@ -128,7 +128,7 @@ TaxonInfluence <- function(
   }
   
   if (!is.null(saveTo)) {
-    saveDir <- basename(dirname(saveTo))
+    saveDir <- basename(dirname(paste0(saveTo, "taxon_name")))
     if (!dir.exists(saveDir)) {
       dir.create(saveDir, recursive = TRUE)
     }
