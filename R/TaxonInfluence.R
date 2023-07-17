@@ -93,8 +93,10 @@
 #'   bty = "n"
 #' )
 #' @family tree scoring
-#' @importFrom TreeDist ClusteringInfoDistance
+#' @importFrom ape write.nexus
 #' @importFrom cli cli_h1
+#' @importFrom stats weighted.mean
+#' @importFrom TreeDist ClusteringInfoDistance
 #' @encoding UTF-8
 #' @export
 TaxonInfluence <- function(
