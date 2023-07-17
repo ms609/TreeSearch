@@ -131,5 +131,17 @@ plot(ape::consensus(suboptimals))
 ```
 
 
+## Where next?
+
+- [Documentation home](https://ms609.github.io/TreeSearch/)
+
+- [Guide to installation](getting-started.html)
+
+- Search for trees using
+  - [standard parsimony](tree-search.html) (corrected for inapplicable data)
+  - [custom optimality criteria](custom.Rmd)
+  
+- Explore the distribution of optimal trees in [mappings](tree-space.html)
+
 ## References
 

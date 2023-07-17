@@ -345,4 +345,17 @@ plot(MaximizeParsimony(characters, constraint = constraint,
 Constraints can also be loaded from a Nexus file with
 `constraint <- TreeTools::ReadAsPhyDat("constraint_file.nex")`.
 
+## Where next?
+
+- [Documentation home](https://ms609.github.io/TreeSearch/)
+
+- [Guide to installation](getting-started.html)
+
+- Search for trees using
+  - [standard parsimony](tree-search.html) (corrected for inapplicable data)
+  - [profile parsimony](profile.html)
+  - [custom optimality criteria](custom.Rmd)
+  
+- Explore the distribution of optimal trees in [mappings](tree-space.html)
+
 ## References

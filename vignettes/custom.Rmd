@@ -253,7 +253,17 @@ e-mail, or you can file queries by opening a
 You might want to:
 
 - [Load data](https://ms609.github.io/TreeTools/articles/load-data.html) from a Nexus file or spreadsheet
+
 - Conduct parsimony search using Brazeau, Guillerme & Smith's [approach to inapplicable data](tree-search.html), or using [Profile parsimony](profile.html).
+
+
+See also: 
+
+- [Guide to installation](getting-started.html)
+
+- [Documentation home](https://ms609.github.io/TreeSearch/)
+
+- [Mapping the space of optimal trees](tree-space.html)
 
 
 ## References
