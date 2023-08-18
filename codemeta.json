@@ -344,7 +344,7 @@
       "@type": "SoftwareApplication",
       "identifier": "TreeDist",
       "name": "TreeDist",
-      "version": ">= 2.6.1.9000",
+      "version": ">= 2.6.2",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -364,11 +364,11 @@
         "name": "Comprehensive R Archive Network (CRAN)",
         "url": "https://cran.r-project.org"
       },
-      "sameAs": "https://CRAN.R-project.org/package=TreeTools"
+      "sameAs": "https://github.com/ms609/TreeTools"
     },
     "SystemRequirements": "C++17"
   },
-  "fileSize": "4433.744KB",
+  "fileSize": "4434.221KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
