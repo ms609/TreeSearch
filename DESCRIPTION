@@ -49,11 +49,10 @@ Imports:
   shiny (>= 1.6.0),
   shinyjs,
   stats,
-  TreeDist (>= 2.6.1.9000),
+  TreeDist (>= 2.6.2),
   TreeTools (>= 1.9.2.9002),
 Remotes:
   ms609/TreeTools,
-  ms609/TreeDist,
 Suggests:
   knitr,
   phangorn (>= 2.2.1),
