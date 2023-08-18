@@ -104,7 +104,8 @@ bestTree <- MaximizeParsimony(dataset, verbosity = 0)[[1]]
 influence <- TaxonInfluence(dataset, ratchIt = 0, startIt = 0, verbos = 0)
 
 # Colour tip labels according to their influence
-upperBound <- ClusteringEntropy(PectinateTree(NTip(dataset) - 1)) * 2
+upperBound <- 2 * TreeDist::ClusteringEntropy(
+  PectinateTree(NTip(dataset) - 1))
 nBin <- 128
 bin <- cut(
   influence["max", ],
