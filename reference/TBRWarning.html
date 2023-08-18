@@ -105,19 +105,25 @@ Print a warning and return given tree</p>
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>error</dt>
+    <dl><dt>parent</dt>
+<dd><p>Integer vector corresponding to the first column of the edge
+matrix of a tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>, i.e. <code>tree$edge[, 1]</code>.</p></dd>
+
+
+<dt>child</dt>
+<dd><p>Integer vector corresponding to the second column of the edge
+matrix of a tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>, i.e. <code>tree$edge[, 2]</code>.</p></dd>
+
+
+<dt>error</dt>
 <dd><p>error message to report</p></dd>
-
-
-<dt>tree</dt>
-<dd><p>tree to return</p></dd>
 
 </dl></div>
     <div id="value">
     <h2>Value</h2>
     
 
-<p>the tree specified in tree</p>
+<p>A list with the entries <code>parent</code>, <code>child</code>.</p>
     </div>
     <div id="functions">
     <h2>Functions</h2>
@@ -138,7 +144,6 @@ Print a warning and return given tree</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
