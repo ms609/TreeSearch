@@ -7,6 +7,7 @@
 - Exclude taxa from search in app
 - Allow search to continue when loading a new file with different taxon names
   into the app
+- Update calls to `DescendantEdges()` for compatibility with 'TreeTools' 1.10.0
 
 # TreeSearch 1.3.2 (2023-04-27)
 

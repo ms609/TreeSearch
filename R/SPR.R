@@ -40,7 +40,7 @@ SPRWarning <- function (parent, child, error) {
 #' @export
 .NonDuplicateRoot <- function(parent, child, nEdge = length(parent)) {
   notDuplicateRoot <- !logical(nEdge)
-  rightSide <- DescendantEdges(1, parent, child, nEdge)
+  rightSide <- DescendantEdges(edge = 1, parent, child, nEdge)
   nEdgeRight <- sum(rightSide)
   if (nEdgeRight == 1) {
     notDuplicateRoot[2] <- FALSE
@@ -188,7 +188,7 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
   brokenEdge.parentNode <- parent[edgeToBreak]
   brokenEdge.childNode  <-  child[edgeToBreak]
     
-  edgesCutAdrift <- DescendantEdges(edgeToBreak, parent, child, nEdge)
+  edgesCutAdrift <- DescendantEdges(edge = edgeToBreak, parent, child, nEdge)
   edgesOnAdriftSegment <- edgesCutAdrift | brokenEdge
   
   brokenEdgeParent <- child == brokenEdge.parentNode
@@ -207,7 +207,9 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
         return(SPRWarning(parent, child, paste0("mergeEdge value ", paste(mergeEdge, collapse="|"),  
                " invalid; must be NULL or a vector of length 1\n")))
     if(nearBrokenEdge[mergeEdge]) return(SPRWarning(parent, child, "Selected mergeEdge will not change tree topology."))
-    if(DescendantEdges(edgeToBreak, parent, child, nEdge)[mergeEdge]) stop("mergeEdge is within pruned subtree")
+    if(DescendantEdges(edge = edgeToBreak, parent, child, nEdge)[mergeEdge]) {
+      stop("mergeEdge is within pruned subtree")
+    }
   } else {
     mergeEdge <- which(!nearBrokenEdge & !edgesOnAdriftSegment & notDuplicateRoot)
     nCandidates <- length(mergeEdge)
@@ -282,7 +284,7 @@ AllSPR <- function (parent, child, nEdge, notDuplicateRoot, edgeToBreak) {
   brokenEdge.parentNode <- parent[edgeToBreak]
   brokenEdge.childNode  <-  child[edgeToBreak]
     
-  edgesCutAdrift <- DescendantEdges(edgeToBreak, parent, child, nEdge)
+  edgesCutAdrift <- DescendantEdges(edge = edgeToBreak, parent, child, nEdge)
   edgesOnAdriftSegment <- edgesCutAdrift | brokenEdge
   
   brokenEdgeParent <- child == brokenEdge.parentNode
@@ -362,15 +364,18 @@ RootedSPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge 
                          #      we're being inefficient here.
   }
   
-  rightSide <- DescendantEdges(1, parent, child, nEdge)
+  rightSide <- DescendantEdges(edge = 1, parent, child, nEdge)
   leftSide  <- !rightSide
   nEdgeRight <- which(rootEdges)[2] - 1
   nEdgeLeft <- nEdge - nEdgeRight
   if (nEdgeRight < 4) {
-    if (nEdgeLeft < 4) return(SPRWarning(parent, child, "No rearrangement possible with this root position."))
+    if (nEdgeLeft < 4) {
+      return(SPRWarning(parent, child, "No rearrangement possible with this root position."))
+    }
 
     breakable <- breakable & !rightSide
-    rightHalfOfLeftSide <- DescendantEdges(nEdgeRight + 2L, parent, child, nEdge)
+    rightHalfOfLeftSide <- DescendantEdges(edge = nEdgeRight + 2L, parent,
+                                           child, nEdge)
      leftHalfOfLeftSide <- leftSide & !rightHalfOfLeftSide & !rootEdges
       if (sum(rightHalfOfLeftSide) == 1) breakable[nEdgeRight + 3] <- FALSE
       if (sum( leftHalfOfLeftSide) == 1) breakable[nEdgeRight + 2] <- FALSE
@@ -378,12 +383,13 @@ RootedSPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge 
     if (nEdgeLeft < 4) {
       breakable <- breakable & rightSide
     } else {
-      rightHalfOfLeftSide <- DescendantEdges(nEdgeRight + 2L , parent, child, nEdge)
+      rightHalfOfLeftSide <- DescendantEdges(edge = nEdgeRight + 2L, parent,
+                                             child, nEdge)
        leftHalfOfLeftSide <- leftSide & !rightHalfOfLeftSide & !rootEdges
       if (sum(rightHalfOfLeftSide) == 1) breakable[nEdgeRight + 3] <- FALSE
       if (sum( leftHalfOfLeftSide) == 1) breakable[nEdgeRight + 2] <- FALSE
     }
-    rightHalfOfRightSide <- DescendantEdges(2L , parent, child, nEdge)
+    rightHalfOfRightSide <- DescendantEdges(edge = 2L, parent, child, nEdge)
      leftHalfOfRightSide <- rightSide & !rightHalfOfRightSide & !rootEdges
     if (sum(rightHalfOfRightSide) == 1) breakable[3] <- FALSE
     if (sum( leftHalfOfRightSide) == 1) breakable[2] <- FALSE
@@ -401,7 +407,7 @@ RootedSPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge 
   brokenEdge.parentNode <- parent[edgeToBreak]
   brokenEdge.childNode  <-  child[edgeToBreak]
   
-  edgesCutAdrift <- DescendantEdges(edgeToBreak, parent, child, nEdge)
+  edgesCutAdrift <- DescendantEdges(edge = edgeToBreak, parent, child, nEdge)
   edgesOnAdriftSegment <- edgesCutAdrift | brokenEdge
   
   brokenEdgeParent <- child == brokenEdge.parentNode
@@ -415,7 +421,9 @@ RootedSPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge 
         return(SPRWarning(parent, child, paste0("mergeEdge value ", paste(mergeEdge, collapse="|"),  
                " invalid; must be NULL or a vector of length 1\n")))
     if(nearBrokenEdge[mergeEdge]) return(SPRWarning(parent, child, "Selected mergeEdge will not change tree topology."))
-    if(DescendantEdges(edgeToBreak, parent, child, nEdge)[mergeEdge]) stop("mergeEdge is within pruned subtree")
+    if(DescendantEdges(edge = edgeToBreak, parent, child, nEdge)[mergeEdge]) {
+      stop("mergeEdge is within pruned subtree")
+    }
   } else {
     edgesOnThisSide <- if (rightSide[edgeToBreak]) rightSide else leftSide
     mergeEdge <- which(edgesOnThisSide & !nearBrokenEdge & !edgesOnAdriftSegment)
