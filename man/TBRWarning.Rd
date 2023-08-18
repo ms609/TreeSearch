@@ -11,12 +11,16 @@ SPRWarning(parent, child, error)
 TBRWarning(parent, child, error)
 }
 \arguments{
-\item{error}{error message to report}
+\item{parent}{Integer vector corresponding to the first column of the edge
+matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
 
-\item{tree}{tree to return}
+\item{child}{Integer vector corresponding to the second column of the edge
+matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
+
+\item{error}{error message to report}
 }
 \value{
-the tree specified in tree
+A list with the entries \code{parent}, \code{child}.
 }
 \description{
 TBR Warning
@@ -29,7 +33,6 @@ Print a warning and return given tree
 }}
 \examples{
 suppressWarnings(TBRWarning(0, 0, "Message text")) # will trigger warning
-
 
 }
 \author{

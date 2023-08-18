@@ -99,8 +99,8 @@ mpl_set_gaphandl <- function (handl, morphyobj) {
 #' constrain any input matrix supplied to Morphy.
 #' 
 #' @param morphyobj An instance of the Morphy object.
-#' @param ntax The number of taxa (or tips/terminals).
-#' @param nchar The number of characters (i.e. transformation series) in the
+#' @param numtaxa The number of taxa (or tips/terminals).
+#' @param numchars The number of characters (i.e. transformation series) in the
 #' data set.
 #' 
 #' @return Morphy error code.
@@ -214,7 +214,8 @@ mpl_attach_symbols <- function(symbols, morphyobj) {
 #' Nexus file or an `xread` table format.
 #' The matrix should contain no leaf labels.
 #'
-#' @param rawmatrix C-style string corresponding to the tip data for each taxon in turn.
+#' @param rawdata C-style string corresponding to the tip data for each taxon in
+#' turn.
 #' @param morphyobj An instance of the Morphy object.
 #' 
 #' @return Morphy error code.
@@ -274,7 +275,7 @@ mpl_set_parsim_t <- function(char_id, tname = "typename", morphyobj) {
 #' reconstruction sets need to be made. It is up to the caller to ensure the 
 #' correct number of nodes and the relationships between them.
 #'
-#' @param nnodes The desired number of internal nodes.
+#' @param numnodes The desired number of internal nodes.
 #' @param morphyobj An instance of the Morphy object.
 #' 
 #' @return A Morphy error code.
@@ -408,7 +409,6 @@ mpl_first_up_recon <- function(node_id, left_id, right_id, anc_id, morphyobj) {
 #' @param node_id The index of the node being reconstructed.
 #' @param left_id The index of the left descendant.
 #' @param right_id The index of the right descendant.
-#' @param anc_id The index of the immediate ancestor of the node. 
 #' @param morphyobj An instance of the Morphy object.
 #' 
 #' @return The integral parsimony length (right now)

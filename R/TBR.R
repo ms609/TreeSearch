@@ -1,14 +1,14 @@
 #' TBR Warning
 #' Print a warning and return given tree
 #'
-#' @param tree tree to return
+#' @template treeParent
+#' @template treeChild
 #' @param error error message to report
 #'
-#' @return the tree specified in tree
+#' @return A list with the entries `parent`, `child`.
 #' @examples
 #' suppressWarnings(TBRWarning(0, 0, "Message text")) # will trigger warning
 #' 
-#'
 #' @author Martin R. Smith
 #' @keywords internal
 #' @export
