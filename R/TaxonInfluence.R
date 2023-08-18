@@ -1,7 +1,9 @@
 #' Rank taxa by their influence on phylogenetic results
 #' 
-#' `TaxonInfluence()` ranks taxa according to their influence on the optimal
-#' topology.  This follows the approach of 
+#' `TaxonInfluence()` ranks taxa according to their influence on the most
+#' parsimonious topology.
+#' 
+#' `TaxonInfluence()` follows the approach of 
 #' \insertCite{Mariadassou2012sb;textual}{TreeSearch} in repeating tree search
 #' whilst leaving each taxon in turn out of the analysis, and measuring
 #' the distance of reconstructed trees from the optimal tree obtained when
@@ -20,26 +22,27 @@
 #' but are biased towards areas of uncertainty.
 #' It is possible that a set of trees contains all possible resolutions of a
 #' particular clade, and a single other topology in which that clade does not
-#' exist -- essentially two distinct solutions, one (_a_) which could be
+#' exist &ndash; essentially two distinct solutions, one (_a_) which could be
 #' summarised with a summary tree that contains a polytomy, and another (_b_) 
 #' which could be summarized by a perfectly resolved tree.
 #' Neither of these scenarios is preferable under the principles of parsimony;
 #' but summary statistics (e.g. mean, median) will be strongly influenced by the
 #' many trees in group _a_, thus underplaying the existence of solution _b_.
+#' 
 #' `TaxonInfluence()` uses an _ad hoc_ method to produce summary statistics
 #' after weighting for trees' distance from other trees.  Trees that have few
 #' close neighbours contribute more to the weighted mean, thus reducing the
 #' influence of many trees that differ only in small details.
 #' This distance-weighted mean is thus less prone to bias than a simple mean
-#' &ndash; it is no more statistically valid, but potentially provides a less
-#' misleading summary of comparisons between sets of trees.
+#' &ndash; it is no more statistically valid, but (potentially) provides a more
+#' representative summary of comparisons between sets of trees.
 #' 
 #' 
 #' @template datasetParam
 #' @param tree Optimal tree or summary tree (of class "phylo") or list of trees
 #' (of class "list" or "multiPhylo") against which results should be evaluated.
 #' If `NULL`, an optimal tree will be sought using parsimony search with 
-#' the parameters provided in \dots.
+#' the parameters provided in \code{\dots}.
 #' @param Distance Function to calculate tree distance; default:
 #' [`ClusteringInfoDistance()`].
 #' @param calcWeighted Logical specifying whether to compute the

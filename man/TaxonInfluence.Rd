@@ -23,7 +23,7 @@ TaxonInfluence(
 \item{tree}{Optimal tree or summary tree (of class "phylo") or list of trees
 (of class "list" or "multiPhylo") against which results should be evaluated.
 If \code{NULL}, an optimal tree will be sought using parsimony search with
-the parameters provided in \dots.}
+the parameters provided in \code{\dots}.}
 
 \item{Distance}{Function to calculate tree distance; default:
 \code{\link[=ClusteringInfoDistance]{ClusteringInfoDistance()}}.}
@@ -54,14 +54,16 @@ Columns denote taxa; rows denote the maximum, distance-weighted mean,
 and minimum distance between optimal tree sets.
 }
 \description{
-\code{TaxonInfluence()} ranks taxa according to their influence on the optimal
-topology.  This follows the approach of
+\code{TaxonInfluence()} ranks taxa according to their influence on the most
+parsimonious topology.
+}
+\details{
+\code{TaxonInfluence()} follows the approach of
 \insertCite{Mariadassou2012sb;textual}{TreeSearch} in repeating tree search
 whilst leaving each taxon in turn out of the analysis, and measuring
 the distance of reconstructed trees from the optimal tree obtained when
 all taxa are included in phylogenetic inference.
-}
-\details{
+
 As \insertCite{Denton2018ee;textual}{TreeSearch} emphasize, the
 Robinson–Foulds distance is unsuitable for this purpose; this function
 allows the user to specify a preferred tree distance measure, defaulting
@@ -76,19 +78,20 @@ Sets of equally parsimonious trees are not statistical samples of tree space,
 but are biased towards areas of uncertainty.
 It is possible that a set of trees contains all possible resolutions of a
 particular clade, and a single other topology in which that clade does not
-exist -- essentially two distinct solutions, one (\emph{a}) which could be
+exist – essentially two distinct solutions, one (\emph{a}) which could be
 summarised with a summary tree that contains a polytomy, and another (\emph{b})
 which could be summarized by a perfectly resolved tree.
 Neither of these scenarios is preferable under the principles of parsimony;
 but summary statistics (e.g. mean, median) will be strongly influenced by the
 many trees in group \emph{a}, thus underplaying the existence of solution \emph{b}.
+
 \code{TaxonInfluence()} uses an \emph{ad hoc} method to produce summary statistics
 after weighting for trees' distance from other trees.  Trees that have few
 close neighbours contribute more to the weighted mean, thus reducing the
 influence of many trees that differ only in small details.
 This distance-weighted mean is thus less prone to bias than a simple mean
-– it is no more statistically valid, but potentially provides a less
-misleading summary of comparisons between sets of trees.
+– it is no more statistically valid, but (potentially) provides a more
+representative summary of comparisons between sets of trees.
 }
 
 \examples{
