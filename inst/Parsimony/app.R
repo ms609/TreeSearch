@@ -1981,7 +1981,7 @@ server <- function(input, output, session) {
         consTrees <- r$trees
       }
       
-      plotted <- RoguePlot(
+      plotted <- TreeTools::RoguePlot(
         consTrees,
         input$excludedTip,
         p = consP(),

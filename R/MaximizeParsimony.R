@@ -173,7 +173,6 @@
 #' @importFrom stats runif
 #' @importFrom TreeTools
 #' AddUnconstrained 
-#' AllDescendantEdges
 #' CharacterInformation
 #' ConstrainedNJ 
 #' DropTip
@@ -498,7 +497,9 @@ MaximizeParsimony <- function (dataset, tree,
     # Check that starting tree is consistent with constraints 
     if (.Forbidden(edge)) {
       cli_alert_warning("Modifying `tree` to match `constraint`...")
-      outgroup <- edge[AllDescendantEdges(edge[, 1], edge[, 2])[1, ], 2]
+      outgroup <- edge[
+        DescendantEdges(parent = edge[, 1], child = edge[, 2])[1, ],
+        2]
       outgroup <- outgroup[outgroup <= nTip]
       tree <- RootTree(ImposeConstraint(tree, constraint), outgroup)
       # RootTree leaves `tree` in preorder
@@ -518,7 +519,9 @@ MaximizeParsimony <- function (dataset, tree,
   
   
   if (edge[1, 2] > nTip) {
-    outgroup <- edge[AllDescendantEdges(edge[, 1], edge[, 2])[1, ], 2]
+    outgroup <- edge[
+      DescendantEdges(parent = edge[, 1], child = edge[, 2])[1, ],
+      2]
     outgroup <- outgroup[outgroup <= nTip]
     if (length(outgroup) > nTip / 2L) {
       outgroup <- seq_len(nTip)[-outgroup]
