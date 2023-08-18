@@ -1,5 +1,7 @@
 # TreeSearch 1.3.2.9002 (development)
 
+- `TaxonInfluence()` calculates influence of individual taxa on 
+  phylogenetic inference
 - Default to use equal weighting during ratchet iterations
 - Support null constraints in `AdditionTree()`
 - Exclude taxa from search in app

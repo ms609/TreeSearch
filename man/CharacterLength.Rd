@@ -51,7 +51,8 @@ Other tree scoring:
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
 \code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()}
+\code{\link{MorphyTreeLength}()},
+\code{\link{TaxonInfluence}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

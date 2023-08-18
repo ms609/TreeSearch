@@ -81,7 +81,8 @@ Other tree scoring:
 \code{\link{CharacterLength}()},
 \code{\link{LengthAdded}()},
 \code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()}
+\code{\link{MorphyTreeLength}()},
+\code{\link{TaxonInfluence}()}
 }
 \author{
 Martin R. Smith (using Morphy C library, by Martin Brazeau)
