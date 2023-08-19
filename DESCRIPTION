@@ -53,7 +53,6 @@ Imports:
   TreeTools (>= 1.10.0),
 Remotes:
   ms609/TreeDist,
-  ms609/TreeTools,
 Suggests:
   knitr,
   phangorn (>= 2.2.1),
