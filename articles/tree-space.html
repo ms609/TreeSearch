@@ -117,7 +117,7 @@
                         <h4 data-toc-skip class="author">Martin R.
 Smith</h4>
             
-            <h4 data-toc-skip class="date">2023-08-18</h4>
+            <h4 data-toc-skip class="date">2023-08-19</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/tree-space.Rmd" class="external-link"><code>vignettes/tree-space.Rmd</code></a></small>
       <div class="hidden name"><code>tree-space.Rmd</code></div>
@@ -350,11 +350,11 @@ plot.</p>
 <span>  <span class="st">"Partitioning around medoids"</span>,</span>
 <span>  <span class="st">"Hierarchical-minimax"</span>,</span>
 <span>  <span class="st">"K-means"</span><span class="op">)</span><span class="op">[</span><span class="va">bestMethodId</span><span class="op">]</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "K-means"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "Hierarchical-minimax"</span></span></code></pre>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Best silhouette coefficient:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">threshold</span>, <span class="va">pamSil</span>, <span class="va">hSil</span>, <span class="va">kSil</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 0.601017</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 0.5849486</span></span></code></pre>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Store the cluster to which each tree is optimally assigned: </span></span>
 <span><span class="va">clustering</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/switch.html" class="external-link">switch</a></span><span class="op">(</span><span class="va">bestCluster</span>, pam <span class="op">=</span> <span class="va">pamCluster</span>, hmm <span class="op">=</span> <span class="va">hCluster</span>, kmn <span class="op">=</span> <span class="va">kCluster</span>, <span class="fl">1</span><span class="op">)</span> </span>
@@ -574,7 +574,7 @@ Maechler, M., Rousseeuw, P., Struyf, A., Hubert, M., &amp; Hornik, K.
 </div>
 <div id="ref-Smith2020" class="csl-entry">
 Smith, M. R. (2020). Information theoretic <span>Generalized
-Robinson</span> metrics for comparing phylogenetic trees.
+Robinson-Foulds</span> metrics for comparing phylogenetic trees.
 <em>Bioinformatics</em>, <em>36</em>(20), 5007–5013. doi:<a href="https://doi.org/10.1093/bioinformatics/btaa614" class="external-link">10.1093/bioinformatics/btaa614</a>
 </div>
 <div id="ref-SmithSpace" class="csl-entry">
