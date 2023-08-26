@@ -78,7 +78,7 @@ bibentry(
   title = "{TreeSearch}: morphological phylogenetic analysis in {{R}}",
   author = mrs,
   year = 2023,
-  journal = "R journal",
+  journal = "R Journal",
   volume = 14,
   number = 4,
   pages = "305-315",
