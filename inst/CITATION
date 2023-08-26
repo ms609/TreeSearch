@@ -7,7 +7,7 @@ bibentry(
     "For example, 'Phylogenetic search was performed using the R package ",
     "TreeSearch v", meta$Version, " (Smith 2023), which uses MorphyLib ",
     "(Brazeau et al. 2017) to handle inapplicable data (Brazeau et al. 2019)'. ",
-    "The GUI lists recommended citations for methods it employs."
+    "The GUI recommends further citations for each method it employs."
   ),
   bibtype = "Manual",
   key = "Brazeau2017",
@@ -81,7 +81,7 @@ bibentry(
   journal = "R journal",
   volume = 14,
   number = 4,
-  pages = c(305, 315),
+  pages = "305-315",
   doi = "10.32614/RJ-2023-019",
      
   textVersion = paste0(
