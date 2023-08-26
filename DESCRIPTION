@@ -51,8 +51,6 @@ Imports:
   stats,
   TreeDist (>= 2.6.3),
   TreeTools (>= 1.10.0),
-Remotes:
-  ms609/TreeDist,
 Suggests:
   knitr,
   phangorn (>= 2.2.1),
