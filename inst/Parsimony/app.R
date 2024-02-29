@@ -275,13 +275,17 @@ ui <- fluidPage(
   column(3,
     fluidRow(
       tags$h1("TreeSearch", style = "margin-top: 0.4em;"),
-      selectInput("dataSource", "Dataset",
-                  c("< Load from file >" = "file",
-                    "Agnarsson 2004" = "Agnarsson2004",
-                    "Sun et al. 2018" = "Sun2018",
-                    "Wills et al. 2012" = "Wills2012",
-                    if (logging) setNames(names(inapplicable.datasets),
-                                          names(inapplicable.datasets)))),
+      selectInput(
+        "dataSource",
+        "Dataset",
+        c("< Load from file >" = "file",
+          "Agnarsson 2004" = "Agnarsson2004",
+          "Sun et al. 2018" = "Sun2018",
+          "Wills et al. 2012" = "Wills2012",
+          if (logging) setNames(names(inapplicable.datasets),
+                                names(inapplicable.datasets))
+        )
+      ),
       fileInput("dataFile",
                 tags$span(
                   tags$i(class="fas fa-solid fa-table"),
