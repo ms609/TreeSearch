@@ -24,7 +24,7 @@ RandomTreeScore <- function (morphyObj) {
     0L
   } else {
     # Return:
-    .Call("RANDOM_TREE_SCORE", as.integer(nTip), morphyObj)
+    .Call(`RANDOM_TREE_SCORE`, as.integer(nTip), morphyObj)
   }
 }
 
@@ -49,5 +49,5 @@ RandomMorphyTree <- function (nTip) {
     stop("nTip < 2 not implemented: a tip is not a tree.")
   }
   # Return:
-  .Call("RANDOM_TREE", as.integer(nTip))
+  .Call(`RANDOM_TREE`, as.integer(nTip))
 }

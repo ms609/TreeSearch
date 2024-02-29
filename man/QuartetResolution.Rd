@@ -26,6 +26,7 @@ QuartetResolution(trees, tips)
 }
 \seealso{
 Other utility functions: 
-\code{\link{ClusterStrings}()}
+\code{\link{ClusterStrings}()},
+\code{\link{WhenFirstHit}()}
 }
 \concept{utility functions}

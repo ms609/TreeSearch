@@ -19,9 +19,9 @@
 #' @param unitEdge Logical: Should all edges be plotted with a unit length?
 #' @param \dots Further arguments to pass to `plot.phylo()`.
 #' 
-#' @return `PlotCharacter()` returns a matrix in which each row corresponds
-#' to a numbered tip or node of `tree`, and each column corresponds to a 
-#' token; the tokens that might parsimoniously be present at each point
+#' @return `PlotCharacter()` invisibly returns a matrix in which each row
+#' corresponds to a numbered tip or node of `tree`, and each column corresponds
+#' to a token; the tokens that might parsimoniously be present at each point
 #' on a tree are denoted with `TRUE`.
 #' 
 #' @references 
@@ -34,7 +34,8 @@
 #'   "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
 #' ## A character with inapplicable data
 #' dataset <- TreeTools::StringToPhyDat("23--1??--032", tips = tree)
-#' PlotCharacter(tree, dataset)
+#' plotted <- PlotCharacter(tree, dataset)
+#' plotted
 #' 
 #' # Character from a real dataset 
 #' data("Lobo", package = "TreeTools")
@@ -396,5 +397,5 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   }
   
   # Return:
-  slimState
+  invisible(slimState)
 }

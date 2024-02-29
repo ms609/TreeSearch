@@ -8,13 +8,13 @@
   "codeRepository": "https://github.com/ms609/TreeSearch/",
   "issueTracker": "https://github.com/ms609/TreeSearch/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.2.0.9002",
+  "version": "1.4.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.2.1 (2022-06-23)",
+  "runtimePlatform": "R version 4.3.1 (2023-06-16)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -226,6 +226,18 @@
     },
     "6": {
       "@type": "SoftwareApplication",
+      "identifier": "fs",
+      "name": "fs",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=fs"
+    },
+    "7": {
+      "@type": "SoftwareApplication",
       "identifier": "future",
       "name": "future",
       "provider": {
@@ -236,7 +248,19 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=future"
     },
-    "7": {
+    "8": {
+      "@type": "SoftwareApplication",
+      "identifier": "PlotTools",
+      "name": "PlotTools",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=PlotTools"
+    },
+    "9": {
       "@type": "SoftwareApplication",
       "identifier": "promises",
       "name": "promises",
@@ -248,7 +272,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=promises"
     },
-    "8": {
+    "10": {
       "@type": "SoftwareApplication",
       "identifier": "protoclust",
       "name": "protoclust",
@@ -260,7 +284,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=protoclust"
     },
-    "9": {
+    "11": {
       "@type": "SoftwareApplication",
       "identifier": "Rcpp",
       "name": "Rcpp",
@@ -272,7 +296,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=Rcpp"
     },
-    "10": {
+    "12": {
       "@type": "SoftwareApplication",
       "identifier": "Rdpack",
       "name": "Rdpack",
@@ -285,7 +309,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=Rdpack"
     },
-    "11": {
+    "13": {
       "@type": "SoftwareApplication",
       "identifier": "Rogue",
       "name": "Rogue",
@@ -298,7 +322,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=Rogue"
     },
-    "12": {
+    "14": {
       "@type": "SoftwareApplication",
       "identifier": "shiny",
       "name": "shiny",
@@ -311,7 +335,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=shiny"
     },
-    "13": {
+    "15": {
       "@type": "SoftwareApplication",
       "identifier": "shinyjs",
       "name": "shinyjs",
@@ -323,29 +347,29 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=shinyjs"
     },
-    "14": {
+    "16": {
       "@type": "SoftwareApplication",
       "identifier": "stats",
       "name": "stats"
     },
-    "15": {
+    "17": {
       "@type": "SoftwareApplication",
       "identifier": "TreeDist",
       "name": "TreeDist",
-      "version": ">= 2.3.0",
+      "version": ">= 2.6.3",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
         "name": "Comprehensive R Archive Network (CRAN)",
         "url": "https://cran.r-project.org"
       },
-      "sameAs": "https://CRAN.R-project.org/package=TreeDist"
+      "sameAs": "https://github.com/ms609/TreeDist"
     },
-    "16": {
+    "18": {
       "@type": "SoftwareApplication",
       "identifier": "TreeTools",
       "name": "TreeTools",
-      "version": ">= 1.7.0",
+      "version": ">= 1.10.0",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -354,9 +378,9 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=TreeTools"
     },
-    "SystemRequirements": "C++14"
+    "SystemRequirements": "C++17"
   },
-  "fileSize": "4417.709KB",
+  "fileSize": "4450.647KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -370,7 +394,8 @@
         {
           "@type": "Person",
           "givenName": ["Martin", "R."],
-          "familyName": "Smith"
+          "familyName": "Smith",
+          "email": "martin.smith@durham.ac.uk"
         },
         {
           "@type": "Person",
@@ -398,7 +423,8 @@
         {
           "@type": "Person",
           "givenName": ["Martin", "R."],
-          "familyName": "Smith"
+          "familyName": "Smith",
+          "email": "martin.smith@durham.ac.uk"
         }
       ],
       "name": "An algorithm for morphological phylogenetic analysis with inapplicable data",
@@ -420,35 +446,40 @@
         {
           "@type": "Person",
           "givenName": ["Martin", "R."],
-          "familyName": "Smith"
+          "familyName": "Smith",
+          "email": "martin.smith@durham.ac.uk"
         }
       ],
-      "name": "{TreeSearch}: phylogenetic tree search using custom optimality criteria",
+      "name": "{TreeSearch}: phylogenetic analysis with discrete character data",
       "identifier": "10.5281/zenodo.1042590",
-      "description": "R package version 1.2.0.9002",
+      "description": "R package version 1.4.0",
       "@id": "https://doi.org/10.5281/zenodo.1042590",
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
     },
     {
       "@type": "ScholarlyArticle",
-      "datePublished": "2021",
+      "datePublished": "2023",
       "author": [
         {
           "@type": "Person",
           "givenName": ["Martin", "R."],
-          "familyName": "Smith"
+          "familyName": "Smith",
+          "email": "martin.smith@durham.ac.uk"
         }
       ],
       "name": "{TreeSearch}: morphological phylogenetic analysis in {{R}}",
-      "identifier": "10.1101/2021.11.08.467735",
-      "@id": "https://doi.org/10.1101/2021.11.08.467735",
-      "sameAs": "https://doi.org/10.1101/2021.11.08.467735",
+      "identifier": "10.32614/RJ-2023-019",
+      "pagination": ["305", "315"],
+      "@id": "https://doi.org/10.32614/RJ-2023-019",
+      "sameAs": "https://doi.org/10.32614/RJ-2023-019",
       "isPartOf": {
         "@type": "PublicationIssue",
-        "datePublished": "2021",
+        "issueNumber": "4",
+        "datePublished": "2023",
         "isPartOf": {
           "@type": ["PublicationVolume", "Periodical"],
-          "name": "bioR$\\chi$iv"
+          "volumeNumber": "14",
+          "name": "R journal"
         }
       }
     }

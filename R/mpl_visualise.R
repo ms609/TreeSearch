@@ -76,7 +76,7 @@
 ###   if (any(is.na(char.dat[tip.label]))) stop("Tree's tip labels could not all be found in dataset matrix")
 ###   
 ###   plot.fun(tree)
-###   ret <- .Call("FITCHINAPP", char.dat[tip.label], as.integer(1), as.integer(parent), as.integer(child), as.integer(parentof), as.integer(childof), as.integer(nEdge), as.integer(nNode), as.double(1), as.integer(maxNode), as.integer(nTip), as.integer(inapp), PACKAGE="inapplicable")
+###   ret <- .Call(`FITCHINAPP`, char.dat[tip.label], as.integer(1), as.integer(parent), as.integer(child), as.integer(parentof), as.integer(childof), as.integer(nEdge), as.integer(nNode), as.double(1), as.integer(maxNode), as.integer(nTip), as.integer(inapp), PACKAGE="inapplicable")
 ###   downpass.states <- ret[[3]]
 ###   down.scorers <- ret[[4]]
 ###   inapp.nodes <- ret[[5]] > 0

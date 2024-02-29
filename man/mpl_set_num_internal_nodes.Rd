@@ -7,9 +7,9 @@
 mpl_set_num_internal_nodes(numnodes, morphyobj)
 }
 \arguments{
-\item{morphyobj}{An instance of the Morphy object.}
+\item{numnodes}{The desired number of internal nodes.}
 
-\item{nnodes}{The desired number of internal nodes.}
+\item{morphyobj}{An instance of the Morphy object.}
 }
 \value{
 A Morphy error code.

@@ -419,4 +419,15 @@ for (i in seq_len(nClusters)) {
 }
 ```
 
+## Where next?
+
+- [Documentation home](https://ms609.github.io/TreeSearch/)
+
+- [Guide to installation](getting-started.html)
+
+- Search for trees using
+  - [standard parsimony](tree-search.html) (corrected for inapplicable data)
+  - [profile parsimony](profile.html)
+  - [custom optimality criteria](custom.Rmd)
+
 # References

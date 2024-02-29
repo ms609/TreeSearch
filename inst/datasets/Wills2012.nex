@@ -84,8 +84,9 @@ BEGIN CHARACTERS;
     [18] Number of elements in first circlet of pharyngeal armature (base of zone III)
     [19] Number of proximal, pentagonal circlets in zone III of the proboscis
     [20] Width of zone III relative to zone II
-    [21] Width of the distal portion of zone Ill
-    [22] Eversibility of zone Ill
+    [21] Width of the distal portion of zone III
+    [22] Eversibility of zone III
+    [23] All zone III elements of approximately equal size
     [24] Armament of cervical region
     [25] Aspect ratio of body length to width in adult
     [26] Paired, lateral, locomotory appendages

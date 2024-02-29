@@ -7,9 +7,10 @@
 mpl_attach_rawdata(rawdata, morphyobj)
 }
 \arguments{
-\item{morphyobj}{An instance of the Morphy object.}
+\item{rawdata}{C-style string corresponding to the tip data for each taxon in
+turn.}
 
-\item{rawmatrix}{C-style string corresponding to the tip data for each taxon in turn.}
+\item{morphyobj}{An instance of the Morphy object.}
 }
 \value{
 Morphy error code.

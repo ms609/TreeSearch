@@ -20,8 +20,10 @@ Set as \code{Inf} for equal step weights, which underperforms step weighting
 approaches
 \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.}
 
-\item{constraint}{An object of class \code{phyDat}; returned trees will be
-perfectly compatible with each character in \code{constraint}.
+\item{constraint}{Either an object of class \code{phyDat}, in which case
+returned trees will be perfectly compatible with each character in
+\code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
+in any output tree.
 See \code{\link[=ImposeConstraint]{ImposeConstraint()}} and
 \href{https://ms609.github.io/TreeSearch/articles/tree-search.html}{vignette}
 for further examples.}
@@ -38,8 +40,8 @@ Generates a starting tree by adding each taxon in turn to the most
 parsimonious location.
 }
 \examples{
-data("Lobo", package = "TreeTools")
-AdditionTree(Lobo.phy, concavity = 10)
+data("inapplicable.phyData", package = "TreeSearch")
+AdditionTree(inapplicable.phyData[["Longrich2010"]], concavity = 10)
 }
 \seealso{
 Impose a constraint: \href{https://ms609.github.io/TreeTools/reference/ImposeConstraint}{\code{TreeTools::ImposeConstraint()}}

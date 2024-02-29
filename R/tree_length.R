@@ -42,26 +42,27 @@ TreeLength <- function (tree, dataset, concavity = Inf) UseMethod("TreeLength")
 #' @rdname TreeLength
 #' @export
 TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
-  tipLabels <- tree$tip.label
+  tipLabels <- tree[["tip.label"]]
   
   if (!TreeIsRooted(tree)) {
     stop("`tree` must be rooted; try RootTree(tree)")
   }
   
   nTip <- length(tipLabels)
-  edge <- tree$edge
+  edge <- tree[["edge"]]
   if (dim(edge)[1] != nTip + nTip - 2) {
     stop("`tree` must be binary")
   }
   
-  if (nTip < length(dataset)) {
-    if (!all(tipLabels %in% names(dataset))) {
+  if (length(setdiff(tipLabels, names(dataset)))) {
       stop("Missing in `dataset`: ",
            paste(setdiff(tipLabels, names(dataset)), collapse = ", "))
-    }
-    dataset <- .Recompress(dataset[tree$tip.label])
-    
   }
+  
+  if (nTip < length(dataset)) {
+    dataset <- .Recompress(dataset[tree$tip.label])
+  }
+    
   if (is.finite(concavity)) {
     if (!("min.length" %fin% names(attributes(dataset)))) {
       dataset <- PrepareDataIW(dataset)
@@ -361,7 +362,7 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
   rightChild <- child[fmatch(allNodes, parent)]
   
   # Return:
-  .Call("MORPHYLENGTH", as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
+  .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
                as.integer(rightChild - 1L), morphyObj)
 }
 
@@ -375,7 +376,7 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
 #' @export
 GetMorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
   # Return:
-  .Call("MORPHYLENGTH", as.integer(parentOf), as.integer(leftChild), 
+  .Call(`MORPHYLENGTH`, as.integer(parentOf), as.integer(leftChild), 
                as.integer(rightChild), morphyObj)
 }
 
@@ -388,6 +389,6 @@ GetMorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
 #' @keywords internal
 #' @export
 C_MorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
-  .Call("MORPHYLENGTH", as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
+  .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
                as.integer(rightChild - 1L), morphyObj)
 }

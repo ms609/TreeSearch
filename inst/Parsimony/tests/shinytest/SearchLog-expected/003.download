@@ -57,7 +57,7 @@ print(rogues) # Detailed results of rogue analysis
 print(rogues$taxon[-1]) # Sequence of taxa to drop
 
 # Select starting tree
-startTree <- trees[[1]]
+startTree <- trees[[20]] # First tree with optimal score
 
 # Search for optimal trees
 newTrees <- MaximizeParsimony(
@@ -67,8 +67,10 @@ newTrees <- MaximizeParsimony(
   ratchIter = 4,
   tbrIter = 2,
   maxHits = 20,
+  maxTime = 30,
   startIter = 1.6,
   finalIter = 1.4,
+  tolerance = 1,
   verbosity = 4
 )
 
@@ -79,7 +81,7 @@ if (inherits(newTrees, "phylo")) {
   attr(trees[[1]], "firstHit") <- NULL
 }
 allTrees <- newTrees
-trees <- allTrees[unique(as.integer(seq.int(1, 77, length.out = 48)))]
+trees <- allTrees[unique(as.integer(seq.int(1, 49, length.out = 48)))]
 
 
 # Check for rogue taxa
@@ -94,7 +96,7 @@ print(rogues) # Detailed results of rogue analysis
 print(rogues$taxon[-1]) # Sequence of taxa to drop
 
 # Select starting tree
-startTree <- trees[[1]]
+startTree <- trees[[21]] # First tree with optimal score
 
 # Search for optimal trees
 newTrees <- MaximizeParsimony(
@@ -104,6 +106,7 @@ newTrees <- MaximizeParsimony(
   ratchIter = 2,
   tbrIter = 1,
   maxHits = 10,
+  maxTime = 30,
   startIter = 1.2,
   finalIter = 1,
   verbosity = 4

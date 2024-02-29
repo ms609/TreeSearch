@@ -48,9 +48,9 @@ to apply to ambiguous, inapplicable and applicable tokens.  See the \code{lty}
 \item{\dots}{Further arguments to pass to \code{plot.phylo()}.}
 }
 \value{
-\code{PlotCharacter()} returns a matrix in which each row corresponds
-to a numbered tip or node of \code{tree}, and each column corresponds to a
-token; the tokens that might parsimoniously be present at each point
+\code{PlotCharacter()} invisibly returns a matrix in which each row
+corresponds to a numbered tip or node of \code{tree}, and each column corresponds
+to a token; the tokens that might parsimoniously be present at each point
 on a tree are denoted with \code{TRUE}.
 }
 \description{
@@ -66,7 +66,8 @@ tree <- ape::read.tree(text =
   "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
 ## A character with inapplicable data
 dataset <- TreeTools::StringToPhyDat("23--1??--032", tips = tree)
-PlotCharacter(tree, dataset)
+plotted <- PlotCharacter(tree, dataset)
+plotted
 
 # Character from a real dataset 
 data("Lobo", package = "TreeTools")

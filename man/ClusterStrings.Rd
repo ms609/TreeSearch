@@ -30,7 +30,8 @@ ClusterStrings(c(paste0("FirstCluster ", 1:5),
 }
 \seealso{
 Other utility functions: 
-\code{\link{QuartetResolution}()}
+\code{\link{QuartetResolution}()},
+\code{\link{WhenFirstHit}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

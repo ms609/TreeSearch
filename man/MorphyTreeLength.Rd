@@ -68,13 +68,15 @@ Other tree scoring:
 \code{\link{CharacterLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
-\code{\link{MinimumLength}()}
+\code{\link{MinimumLength}()},
+\code{\link{TaxonInfluence}()}
 
 Other tree scoring: 
 \code{\link{CharacterLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
-\code{\link{MinimumLength}()}
+\code{\link{MinimumLength}()},
+\code{\link{TaxonInfluence}()}
 }
 \author{
 Martin R. Smith

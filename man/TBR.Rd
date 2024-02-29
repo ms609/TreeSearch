@@ -59,7 +59,8 @@ matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
 \item{nEdge}{(optional) Number of edges.}
 }
 \value{
-This function returns a tree in \code{phyDat} format that has undergone one \acronym{TBR} iteration.
+\code{TBR()} returns a tree in \code{phyDat} format that has undergone one
+\acronym{TBR} iteration.
 
 \code{TBRMoves()} returns a \code{multiPhylo} object listing all trees one
 \acronym{TBR} move away from \code{tree}, with edges and nodes in preorder,
@@ -88,11 +89,9 @@ parameters
 
 }}
 \examples{
-{
 library("ape")
 tree <- rtree(20, br=NULL)
 TBR(tree)
-}
 }
 \references{
 The \acronym{TBR} algorithm is summarized in
@@ -106,6 +105,7 @@ Other tree rearrangement functions:
 \code{\link{SPR}()}
 }
 \author{
-Martin R. Smith
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{tree rearrangement functions}

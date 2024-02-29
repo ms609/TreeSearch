@@ -15,8 +15,6 @@ mpl_second_down_recon(node_id, left_id, right_id, morphyobj)
 \item{right_id}{The index of the right descendant.}
 
 \item{morphyobj}{An instance of the Morphy object.}
-
-\item{anc_id}{The index of the immediate ancestor of the node.}
 }
 \value{
 The integral parsimony length (right now)

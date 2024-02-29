@@ -1,12 +1,16 @@
-# options("TreeSearch.write.code" = TRUE) # Show code as it is written to log
 # options("TreeSearch.logging" = TRUE) # Log function entry and exit
+# options("TreeSearch.write.code" = TRUE) # Show code as it is written to log
 logging <- isTRUE(getOption("TreeSearch.logging"))
-options(shiny.maxRequestSize = 1024^3) # Allow max 1 GB files
+options(shiny.maxRequestSize = 1024 ^ 3) # Allow max 1 GB files
 
 
 library("methods", exclude = c("show", "removeClass"))
 library("cli")
 library("TreeSearch") # load now: inapplicable.datasets required within ui
+.DateTime <- function() { # Copy, because not exported
+  format(Sys.time(), "%Y-%m-%d %T")
+}
+
 suppressPackageStartupMessages({
   library("shiny", exclude = c("runExample"))
   library("shinyjs", exclude = c("runExample"))
@@ -16,8 +20,8 @@ suppressPackageStartupMessages({
 if (logging) {
   logMsgFile <- file("log.lg", open = "w+")
   LogMsg <- function (...) {
-    message(Sys.time(), ": ", ...)
-    writeLines(as.character(Sys.time()), con = logMsgFile)
+    message(.DateTime(), ": ", ...)
+    writeLines(.DateTime(), con = logMsgFile)
     writeLines(paste0("  ", ...), con = logMsgFile)
   }
   Put <- function (..., file) {
@@ -111,7 +115,7 @@ Reference <- function (authors, year, title, journal = "",
   paste0("<p class=\"reference\">", authors, " (", year, "). &ldquo;", title,
          "&rdquo;. ",
          if (editors != "") paste0("In: ", editors, " (eds). ") else "",
-         if (journal != "") paste0("<i>", journal, "</i>. ") else "",
+         if (journal != "") paste0("<i>", journal, "</i> ") else "",
          if (is.null(volume)) "" else paste0("<b>", volume, "</b>:"),
          if (is.null(publisher)) "" else paste0(publisher, ". "),
          if (is.null(pages)) "" else paste0(paste0(pages, collapse = "&ndash;"), ". "),
@@ -122,11 +126,18 @@ Reference <- function (authors, year, title, journal = "",
 }
 
 
+Arthur2007 <- Reference(
+  c("Arthur, D.", "Vassilvitskii, S"),
+  title = "k-means++: the advantages of careful seeding",
+  year = 2007,
+  journal = "Proceedings of the Eighteenth Annual ACM-SIAM Symposium on Discrete Algorithms",
+  pages = c(1027, 1035)
+)
 Brazeau2019 <- Reference(c("Brazeau, M.D.", "Guillerme, T.", "Smith, M.R."), 2019,
                            title = "An algorithm for morphological phylogenetic analysis with inapplicable data",
                            journal = "Systematic Biology",
                            volume = 64,
-                           pages = "619-631",
+                           pages = c(619, 631),
                          doi = "10.1093/sysbio/syy083")
 Bien2011 <- Reference(
   c("Bien, J.", "Tibshirani, R."),
@@ -147,11 +158,11 @@ Gower1969 <- Reference(
   title = "Minimum spanning trees and single linkage cluster analysis",
   authors = c("Gower, J.C.", "Ross, G.J.S."),
   year = 1969, volume = 18, pages = c(54, 64), doi = "10.2307/2346439",
-  journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)")
+  journal = "Journal of the Royal Statistical Society Series C (Applied Statistics)")
 Hartigan1979 <- Reference(
   title = "Algorithm AS 136: a <i>K</i>-means clustering algorithm",
   authors = c("Hartigan, J.A.", "Wong, M.A."),
-  journal = "Journal of the Royal Statistical Society. Series C (Applied Statistics)",
+  journal = "Journal of the Royal Statistical Society Series C (Applied Statistics)",
   year = 1979, volume = 28, pages = c(100, 108),
   doi = "10.2307/2346830")
 Kaski2003 <- Reference(
@@ -167,12 +178,12 @@ Klopfstein2019 <- Reference(
   doi = "10.1371/journal.pone.0212942"
 )
 Maechler2019 <- Reference(
-  title = "cluster: cluster analysis basics and extensions", year = 2019,
+  title = "cluster: cluster analysis basics and extensions", year = 2022,
   authors = c("Maechler, M.", "Rousseeuw, P.", "Struyf, A.", "Hubert, M.", "Hornik, K."),
   journal = "Comprehensive R Archive Network")
 Morphy <- Reference(
   c("Brazeau, M.D.", "Smith, M.R.", "Guillerme, T."), 2017,
-  "MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability.",
+  "MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability",
   doi = "10.5281/zenodo.815371")
 Murtagh1983 <- Reference(
   title = "A survey of recent advances in hierarchical clustering algorithms",
@@ -180,40 +191,46 @@ Murtagh1983 <- Reference(
   doi = "10.1093/comjnl/26.4.354", journal = "The Computer Journal")
 Nixon1999 <- Reference(
   "Nixon, K.C.", 1999,
-  journal = "Cladistics", volume = 15, pages = "407-414",
+  journal = "Cladistics", volume = 15, pages = c(407, 414),
   title = "The Parsimony Ratchet, a new method for rapid parsimony analysis",
   doi = "10.1111/j.1096-0031.1999.tb00277.x")
 Pol2009 <- Reference(
   title = "Unstable taxa in cladistic analysis: identification and the assessment of relevant characters",
   authors = c("Pol, D.", "Escapa, I.H."),
   journal = "Cladistics", 2009, 25, pages = c(515, 527), 
-  doi = "10.1111/j.1096-0031.2009.00258.x"
-)
+  doi = "10.1111/j.1096-0031.2009.00258.x")
 RCoreTeam <- Reference(
   authors = "R Core Team", year = 2020,
   title = "R: A language and environment for statistical computing",
   publisher = "R Foundation for Statistical Computing, Vienna, Austria")
+Rousseeuw1987 <- Reference(
+  title = "Silhouettes: a graphical aid to the interpretation and validation of cluster analysis",
+  author = "Rousseeuw, P.J.", year = 1987,
+  journal = "Journal of Computational and Applied Mathematics",
+  volume = 20, pages = c(53, 65), doi = "10.1016/0377-0427(87)90125-7"
+)
 SmithDist <- Reference(
-  "Smith, M.R.", 2020, "TreeDist: distances between phylogenetic trees",
+  "Smith, M.R.", "2020a", "TreeDist: distances between phylogenetic trees",
   doi = "10.5281/zenodo.3528123", "Comprehensive R Archive Network")
 SmithQuartet <- Reference(
   "Smith, M.R.", 2019,
   "Quartet: comparison of phylogenetic trees using quartet and split measures",
   "Comprehensive R Archive Network", doi = "10.5281/zenodo.2536318")
 SmithSearch <- Reference(
-  "Smith, M.R.", 2021, " TreeSearch: morphological phylogenetic analysis in R",
-  "Preprint at bioRxiv.", doi = "10.1101/2021.11.08.467735")
+  "Smith, M.R.", 2023, "TreeSearch: morphological phylogenetic analysis in R",
+  "R Journal", volume = 14, pages = c(305, 315),
+  doi = "10.32614/RJ-2023-019")
 Smith2020 <- Reference(
-  "Smith, M.R.", 2020,
+  "Smith, M.R.", "2020b",
   "Information theoretic Generalized Robinson-Foulds metrics for comparing phylogenetic trees",
-  "Bioinformatics", volume = 36, pages = "5007--5013",
+  "Bioinformatics", volume = 36, pages = c("5007", "5013"),
   doi = "10.1093/bioinformatics/btaa614")
 SmithSpace <- Reference(
-  "Smith, M.R.", "2022b", "Robust analysis of phylogenetic tree space",
+  "Smith, M.R.", "2022a", "Robust analysis of phylogenetic tree space",
   "Systematic Biology", 71, pages = c("1255", "1270"),
   doi = "10.1093/sysbio/syab100")
 SmithRogue <- Reference(
-  "Smith, M.R.", "2022a",
+  "Smith, M.R.", "2022b",
   "Using information theory to detect rogue taxa and improve consensus trees",
   "Systematic Biology", 71, pages = c("1088", "1094"),
   doi = "10.1093/sysbio/syab099")
@@ -321,13 +338,18 @@ ui <- fluidPage(
                  hidden(tags$div(id = "treePlotConfig",
                    selectizeInput("outgroup", "Root on:", multiple = TRUE,
                                   choices = list()),
-                   selectizeInput("concordance", "Split support:",
-                                  choices = list("None" = "none",
-                                                 "% trees containing" = "p",
-                                                 "Quartet concordance" = "qc",
-                                                 "Mutual Clustering conc." = "mcc",
-                                                 "Shared Phylog. conc." = "spc"
-                                                 ))
+                   selectizeInput(
+                     "concordance",
+                     "Split support:",
+                     choices = list(
+                       "None" = "none",
+                       "% trees containing" = "p",
+                       "Quartet concordance" = "qc",
+                       "Clustering concordance" = "clc",
+                       "Phylogenetic concordance" = "phc",
+                       "Mutual Clustering conc." = "mcc",
+                       "Shared Phylog. conc." = "spc"
+                     ))
                  )),
                  hidden(tags$div(id = "mapConfig",
                    checkboxGroupInput("mapLines", "Connect:",
@@ -361,13 +383,16 @@ ui <- fluidPage(
       plotOutput(outputId = "treePlot", height = "600px"),
       hidden(plotOutput("clustCons", height = "200px")),
       hidden(tags$div(id = "charChooser",
-        tags$div(numericInput("plottedChar", "Character to map:", value = 1L,
-                              min = 0L, max = 1L, step = 1L, width = 200),
-                 checkboxGroupInput("mapDisplay", "", list(
-                   "Align tips" = "tipsRight",
-                   "Infer tips" = "updateTips"
-                   )),
-                 style = "float: right; width: 200px; margin-left: 2em;"),
+        tags$div(
+          numericInput("plottedChar", "Character to map:", value = 1L,
+                       min = 0L, max = 1L, step = 1L, width = 200),
+          selectizeInput("searchChar", "Search characters:", multiple = FALSE,
+                         choices = list()),
+          checkboxGroupInput("mapDisplay", "", list(
+            "Align tips" = "tipsRight",
+            "Infer tips" = "updateTips"
+          )),
+          style = "float: right; width: 200px; margin-left: 2em;"),
         htmlOutput("charMapLegend"),
         htmlOutput("charNotes"),
       )),
@@ -423,7 +448,7 @@ ui <- fluidPage(
                       list("Cluster membership" = "clust",
                            "Parsimony score" = "score",
                            "When first found" = "firstHit")),
-          selectInput("spacePch", "Plotting symbol:",
+          selectInput("spacePch", "Plotting symbols:",
                       selected = "relat",
                       list("Cluster membership" = "clust",
                            "Relationships" = "relat",
@@ -556,7 +581,7 @@ server <- function(input, output, session) {
   
   BeginLog <- function() {
     LogComment(c(
-      paste("# # TreeSearch session log:", Sys.time(), "# # #"),
+      paste("# # TreeSearch session log:", .DateTime(), "# # #"),
       "",
       systemInfo,
       "",
@@ -590,7 +615,7 @@ server <- function(input, output, session) {
   BeginLogP <- function() {
     r$plotLog <- NULL
     LogCommentP(c(
-      paste("# # TreeSearch plot log:", Sys.time(), "# # #"),
+      paste("# # TreeSearch plot log:", .DateTime(), "# # #"),
       "",
       systemInfo,
       "",
@@ -709,6 +734,11 @@ server <- function(input, output, session) {
     file.copy(fileName, paste0(tempdir(), "/", LastFile(type)),
               overwrite = TRUE)
   }
+  StashTrees <- function(trees) {
+    key <- paste0("treeFiles")
+    r[[key]] <- r[[key]] + 1
+    write.nexus(trees, file = paste0(tempdir(), "/", LastFile("tree")))
+  }
   
   if (!requireNamespace("TreeDist", quietly = TRUE)) {
     install.packages("TreeDist")
@@ -738,7 +768,7 @@ server <- function(input, output, session) {
   
   nChars <- reactive({
     if (HaveData()) {
-      as.integer(attr(r$dataset, "nr"))
+      as.integer(length(attr(r$dataset, "index")))
     } else {
       0L
     }
@@ -789,7 +819,7 @@ server <- function(input, output, session) {
       r$sortTrees <- FALSE # Trees loaded from dataset may be in sequence
       r$readDataFile <- NULL
       
-      if (grep("\\.xlsx?$", dataFile)) {
+      if (length(grep("\\.xlsx?$", dataFile))) {
         if (!requireNamespace("readxl", quietly = TRUE)) {
           install.packages("readxl")
         }
@@ -861,7 +891,6 @@ server <- function(input, output, session) {
           # Return:
           dat
         }, error = function(e) {
-          print (e) #TODO DELETE
           NULL
         })
       } else {
@@ -875,9 +904,24 @@ server <- function(input, output, session) {
           # Return:
           ReadTntAsPhyDat(dataFile)
         }, error = function(e) tryCatch({
-          r$chars <- ReadCharacters(dataFile)
-          r$charNotes <- ReadNotes(dataFile)
-          r$readDataFile <- "ReadTntAsPhyDat(dataFile)"
+          r$chars <- tryCatch(
+            ReadCharacters(dataFile),
+            error = function(e) {
+              Notification(type = "error", "Error reading characters from file")
+              # Return:
+              NULL
+            })
+          
+          r$charNotes <- tryCatch(
+            ReadNotes(dataFile),
+            error = function(e) {
+              Notification(type = "error", "Error reading character notes")
+              # Return:
+              NULL
+            })
+          
+          r$readDataFile <- "ReadAsPhyDat(dataFile)"
+          
           # Return:
           ReadAsPhyDat(dataFile)
         }, error = function(e) {
@@ -922,14 +966,20 @@ server <- function(input, output, session) {
       
       updateNumericInput(session, "plottedChar", min = 0L,
                          max = 0L, value = 0L)
+      updateSelectizeInput(session, "searchChar", choices = NULL)
       return ("Could not read data from file")
     } else {
       Notification(type = "message", 
-                       paste("Loaded", attr(r$dataset, "nr"), "characters and",
+                       paste("Loaded", nChars(), "characters and",
                              length(r$dataset), "taxa"))
       
       updateNumericInput(session, "plottedChar", min = 0L,
                          max = nChars(), value = 1L)
+      updateSelectizeInput(session, "searchChar",
+                           choices = paste0(seq_len(nChars()), ": ", 
+                                            colnames(r$chars)),
+                           selected = "",
+                           server = TRUE)
     }
     
     tryCatch({
@@ -1156,6 +1206,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "implied.weights",
                       selected = input$implied.weights)
     updateSliderInput(session, "concavity", value = input$concavity)
+    updateNumericInput(session, "epsilon", value = input$epsilon)
     updateSliderInput(session, "ratchIter", value = input$ratchIter)
     updateSliderInput(session, "tbrIter", value = input$tbrIter)
     updateSliderInput(session, "maxHits", value = input$maxHits)
@@ -1172,18 +1223,24 @@ server <- function(input, output, session) {
                               "Equal" = "off"), "on"),
               sliderInput("concavity", "Step weight concavity constant", min = 0L,
                          max = 3L, pre = "10^", value = 1L),
+              numericInput("epsilon", "Keep if suboptimal by \u2264", min = 0,
+                          value = 0),
               sliderInput("ratchIter", "Ratchet iterations", min = 0L,
                           max = 50L, value = 6L, step = 1L),
-              sliderInput("maxHits", "Maximum hits", min = 0L, max = 5L,
-                          value = 2L, pre = "10^"),
+              sliderInput("timeout", "Maximum run duration", min = 1,
+                          max = 600, value = 30, post = "min", step = 1),
       )), column(6, 
              tagList(
+              sliderInput("maxHits", "Maximum hits", min = 0L, max = 5L,
+                         value = 2L, pre = "10^"),
               sliderInput("tbrIter", "TBR depth", min = 1L, max = 20L,
                           value = 1L, step = 1L),
               sliderInput("startIter", "First iteration extra depth", min = 1L,
                           max = 10L, value = 3L, pre = "\ud7"),
               sliderInput("finalIter", "Final iteration extra depth", min = 1L,
                           max = 10L, value = 1L, pre = "\ud7"),
+              selectizeInput("searchWithout", "Exclude taxa", DatasetTips(),
+                             r$searchWithout, multiple = TRUE)
              ))
       ),
       title = "Tree search settings",
@@ -1202,15 +1259,18 @@ server <- function(input, output, session) {
     tmpFile <- input$treeFile$datapath
     newTrees <- tryCatch({
         r$readTreeFile <- "read.tree(treeFile)"
+        LogMsg("Trying read.tree()")
         read.tree(tmpFile)
       },
       error = function (x) tryCatch({
         r$readTreeFile <- "read.nexus(treeFile)"
+          LogMsg("Trying read.nexus()")
           read.nexus(tmpFile)
         },
         error = function (err) tryCatch(
           {
-            if (err == "NA/NaN argument") {
+            if (grepl("NA/NaN argument", err)) {
+              LogMsg("Terminating tree block")
               # Unterminated tree block, perhaps because a search is ongoing
               withEnd <- tempfile()
               on.exit(unlink(withEnd))
@@ -1288,7 +1348,11 @@ server <- function(input, output, session) {
     PutData(r$dataset)
     LogMsg("scores(): Recalculating scores with k = ", concavity())
     withProgress(tryCatch(
-      signif(TreeLength(r$trees, r$dataset, concavity = concavity())),
+      signif(TreeLength(
+        RootTree(r$trees, 1),
+        r$dataset,
+        concavity = concavity()
+      )),
       error = function (x) {
         if (HaveData() && AnyTrees()) {
           cli::cli_alert(x[[2]])
@@ -1302,6 +1366,7 @@ server <- function(input, output, session) {
   }), r$treeHash, r$dataHash, concavity())
   
   DisplayTreeScores <- function () {
+    LogMsg("DisplayTreeScores()")
     treeScores <- scores()
     score <- if (is.null(treeScores)) {
       "; could not be scored from dataset"
@@ -1464,8 +1529,12 @@ server <- function(input, output, session) {
         nchar(input$excludedTip) &&
         input$excludedTip %in% tipLabels()) {
       consTrees <- lapply(r$trees, DropTip, setdiff(dropped, input$excludedTip))
-      plotted <- RoguePlot(consTrees, input$excludedTip, p = consP(),
-                           plot = FALSE)
+      plotted <- TreeTools::RoguePlot(
+        trees = consTrees,
+        tip = input$excludedTip,
+        p = consP(),
+        plot = FALSE
+      )
       tagList(
         tags$span(class = "legendLeft", "1 tree"),
         tags$span(id = "blackToGreen", class = "legendBar", "\ua0"),
@@ -1483,6 +1552,14 @@ server <- function(input, output, session) {
            "prof" = "Profile")
   })
   
+  tolerance <- reactive({
+    if (input$epsilon == 0) {
+      sqrt(.Machine$double.eps)
+    } else {
+      input$epsilon
+    }
+  })
+  
   StartSearch <- function () {
     if (!HaveData()) {
       Notification("No data loaded", type = "error")
@@ -1491,37 +1568,71 @@ server <- function(input, output, session) {
         LogComment("Select starting tree")
         LogCode(paste0("startTree <- AdditionTree(dataset, concavity = ",
                        Enquote(concavity()), ")"))
-        AdditionTree(r$dataset, concavity = concavity())
+        AdditionTree(r$dataset[SearchTips()], concavity = concavity())
       } else {
         LogComment("Select starting tree")
-        LogCode("startTree <- trees[[1]]")
-        r$trees[[1]]
+        treeLabels <- TipLabels(r$trees[[1]])
+        if (all(SearchTips() %in% treeLabels)) {
+          if (length(setdiff(treeLabels, SearchTips())) > 0) {
+            if (length(r$searchWithout)) {
+              LogCode(paste0(
+                "searchTips <- setdiff(names(dataset), ", EnC(r$searchWithout),
+                ")"),
+                "startTree <- KeepTip(trees[[1]], searchTips)")
+            } else {
+              LogCode("startTree <- KeepTip(trees[[1]], names(dataset))")
+            }
+            KeepTip(r$trees[[1]], SearchTips())
+          } else {
+            firstOptimal <- which.min(scores())
+            LogCode(paste0("startTree <- trees[[", firstOptimal, "]]",
+                           " # First tree with optimal score"))
+            r$trees[[firstOptimal]]
+          }
+        } else {
+          # Fuzzy-match labels
+          matching <- TreeDist::LAPJV(adist(treeLabels, SearchTips()))$matching
+          scaffold <- KeepTip(r$trees[[1]], !is.na(matching))
+          scaffold[["tip.label"]] <- SearchTips()[matching[!is.na(matching)]]
+          AdditionTree(r$dataset, concavity = concavity(),
+                       constraint = scaffold)
+        }
       }
       LogMsg("StartSearch()")
-      PutData(r$dataset)
+      PutData(r$dataset[SearchTips()])
       PutTree(startTree)
       LogComment("Search for optimal trees", 1)
       LogCode(c(
         "newTrees <- MaximizeParsimony(",
-        "  dataset,",
+        if (length(r$searchWithout)) {
+          paste0(
+            "  dataset[setdiff(names(dataset), ", EnC(r$searchWithout), ")]"
+          )
+        } else {
+          "  dataset,"
+        },
         "  tree = startTree,",
         paste0("  concavity = ", Enquote(concavity()), ","),
         paste0("  ratchIter = ", input$ratchIter, ","), 
         paste0("  tbrIter = ", input$tbrIter, ","), 
         paste0("  maxHits = ", ceiling(10 ^ input$maxHits), ","), 
-        paste0("  startIter = ", input$startIter, ","), 
-        paste0("  finalIter = ", input$finalIter, ","), 
+        paste0("  maxTime = ", input$timeout, ","),
+        paste0("  startIter = ", input$startIter, ","),
+        paste0("  finalIter = ", input$finalIter, ","),
+        if (input$epsilon > 0) paste0("  tolerance = ", tolerance(), ","),
         "  verbosity = 4",
         ")"))
       newTrees <- withProgress(
-        MaximizeParsimony(r$dataset,
+        MaximizeParsimony(r$dataset[SearchTips()],
                           tree = startTree,
                           concavity = concavity(),
                           ratchIter = input$ratchIter,
                           tbrIter = input$tbrIter,
                           maxHits = ceiling(10 ^ input$maxHits),
+                          maxTime = input$timeout,
                           startIter = input$startIter,
                           finalIter = input$finalIter,
+                          tolerance = tolerance(),
                           verbosity = 4L),
         value = 0.85, message = "Finding MPT",
         detail = paste0(ceiling(10^input$maxHits), " hits; ", wtType())
@@ -1549,6 +1660,10 @@ server <- function(input, output, session) {
       show("displayConfig")
     }
   }
+  
+  observeEvent(input$searchWithout, {
+    r$searchWithout <- input$searchWithout
+  }, ignoreInit = TRUE)
   
   observeEvent(input$go, StartSearch(), ignoreInit = TRUE)
   observeEvent(input$modalGo, {
@@ -1592,6 +1707,13 @@ server <- function(input, output, session) {
       hideElement("mapDisplay")
     }
   }, ignoreInit = TRUE)
+  
+  observeEvent(input$searchChar, {
+    searchResult <- as.numeric(strsplit(input$searchChar, ": ")[[1]][1])
+    if (!is.na(searchResult)) {
+      updateNumericInput(session, "plottedChar", value = searchResult)
+    }
+  })
   
   whichTree <- debounce(reactive(input$whichTree), aJiffy)
   
@@ -1700,9 +1822,13 @@ server <- function(input, output, session) {
   TipCols <- reactive(stableCol()) # TODO allow user to choose how to colour
   
   TipColLegend <- function() {
-    SpectrumLegend(palette = hcl.colors(131, "inferno")[1:101],
-                   legend = c("Stable", "Unstable"),
-                   title = "Leaf stability")
+    PlotTools::SpectrumLegend(
+      "bottomleft", horiz = TRUE, inset = 0.01, bty = "n", xpd = NA,
+      palette = hcl.colors(131, "inferno")[1:101],
+      legend = c("Stable", "Unstable"),
+      title = "Leaf stability",
+      title.font = 2
+    )
   }
   
   consP <- debounce(reactive(signif(input$consP)), 50)
@@ -1749,6 +1875,10 @@ server <- function(input, output, session) {
         "qc"  = paste0("QuartetConcordance(", plottedTree, ", dataset)"),
         "clc" = paste0("ClusteringConcordance(", plottedTree, ", dataset)"),
         "phc" = paste0("PhylogeneticConcordance(", plottedTree, ", dataset)"),
+        "mcc" = paste0("MutualClusteringConcordance(", plottedTree,
+                       ", dataset)"),
+        "spc" = paste0("SharedPhylogeneticConcordance(", plottedTree,
+                       ", dataset)"),
         NULL
       )
       LogCodeP(paste0("concordance <- ", concCode))
@@ -1794,6 +1924,9 @@ server <- function(input, output, session) {
       r$outgroup <- input$outgroup
     }
   }, ignoreInit = TRUE)
+  
+  DatasetTips <- reactive(names(r$dataset))
+  SearchTips <- reactive(setdiff(DatasetTips(), r$searchWithout))
   
   KeptTips <- reactive({
     LogMsg("KeptTips()")
@@ -1848,7 +1981,7 @@ server <- function(input, output, session) {
         consTrees <- r$trees
       }
       
-      plotted <- RoguePlot(
+      plotted <- TreeTools::RoguePlot(
         consTrees,
         input$excludedTip,
         p = consP(),
@@ -1983,13 +2116,14 @@ server <- function(input, output, session) {
                       updateTips = "updateTips" %in% input$mapDisplay,
                       tip.color = roguishness)
         if (max(extraLen) > 0) {
-          SpectrumLegend(
+          PlotTools::SpectrumLegend(
+            "bottomleft", bty = "n",
             palette = hcl.colors(256, "inferno")[1:193],
             title = "Mean tree score\nimpact",
-            legend = c("No impact",
-                       signif(max(extraLen) / 2),
-                       signif(max(extraLen)))
-            )
+            title.font = 2,
+            y.intersp = 1.42,
+            legend = c(signif(4:1 * max(extraLen) / 4, 3), "No impact")
+          )
         }
       },
       error = function (cond) {
@@ -2091,6 +2225,7 @@ server <- function(input, output, session) {
                      whichTree(),
                      input$concordance,
                      r$outgroup,
+                     concavity(),
                      input$mapDisplay,
                      r$dataHash, r$treeHash), 
         "space" = list(r$treeHash, input$plotFormat,
@@ -2202,7 +2337,9 @@ server <- function(input, output, session) {
         appTokens <- setdiff(tokens, "-")
         .State <- function (glyph, text = "Error?", col = "red") {
           if (is.numeric(glyph)) {
-            if (glyph > length(appTokens)) return (NULL)
+            if (glyph > length(appTokens)) {
+              return(NULL)
+            }
             nonBlank <- states != ""
             text <- states[nonBlank][glyph]
             col <- pal[glyph]
@@ -2287,7 +2424,7 @@ server <- function(input, output, session) {
           }),
           if (!states[[1]] %in% c("", "''")
               && any(tokens == "-")) {
-            tags$p("Brazeau et al. (2019) advise that neomorphic (0/1) characters should not contain inapplicable tokens (-).")
+            tags$p(tags$em("Brazeau et al. (2019) advise that neomorphic (0/1) characters should not contain inapplicable tokens (-)."))
           }
         )
       }
@@ -2416,7 +2553,8 @@ server <- function(input, output, session) {
       
       nK <- length(possibleClusters)
     
-      kClusters <- lapply(possibleClusters, function (k) kmeans(dists, k))
+      kClusters <- lapply(possibleClusters,
+                          function (k) TreeDist::KMeansPP(dists, k))
       kSils <- vapply(kClusters, function (kCluster) {
         mean(cluster::silhouette(kCluster$cluster, dists)[, 3])
       }, double(1))
@@ -2477,11 +2615,11 @@ server <- function(input, output, session) {
       
       LogCommentP("Compute clusters of trees", 2)
       nK <- length(possibleClusters)
-      LogCommentP("Try K-means clustering (Hartigan & Wong 1979):")
+      LogCommentP("Try K-means++ clustering (Arthur & Vassilvitskii 2007):")
       LogCodeP(
         paste0(
           "kClusters <- lapply(", possibleClusters, ", ",
-          "function (k) kmeans(dists, k)", ")"
+          "function (k) KMeansPP(dists, k)", ")"
         ),
         "kSils <- vapply(kClusters, function (kCluster) {",
         "  mean(cluster::silhouette(kCluster$cluster, dists)[, 3])",
@@ -2721,17 +2859,7 @@ server <- function(input, output, session) {
   spaceLwd <- reactive(2)
   
   FirstHit <- reactive({
-    if (is.null(attr(r$trees, "firstHit"))) {
-      treeNames <- names(r$trees)
-      pattern <- "(seed|start|ratch\\d+|final)_\\d+"
-      if (length(grep(pattern, treeNames, perl = TRUE)) ==
-          length(r$trees)) {
-        
-        whenHit <- gsub(pattern, "\\1", treeNames, perl = TRUE)
-        
-        attr(r$trees, "firstHit") <- table(whenHit)[unique(whenHit)]
-      }
-    }
+    r$trees <- WhenFirstHit(r$trees)
     
     # Return:
     attr(r$trees, "firstHit")
@@ -2755,7 +2883,7 @@ server <- function(input, output, session) {
     if (is.null(FirstHit())) {
       paste0(palettes[[1]], " # Arbitrarily")
     } else {
-      "hcl.colors(length(attr(trees, \"firstHit\")), \"viridis\")"
+      "hcl.colors(length(firstHit), \"viridis\")"
     }
   })
   
@@ -2819,7 +2947,10 @@ server <- function(input, output, session) {
         if (is.null(FirstHit())) {
           beige
         } else {
-          paste0("treeCols <- rep(", LogFirstHitCols(), ", attr(trees, \"firstHit\"))")
+          c("trees <- WhenFirstHit(trees)",
+            "firstHit <- attr(trees, \"firstHit\")",
+            paste0("treeCols <- rep(", LogFirstHitCols(), ", firstHit))")
+          )
         }
       },
       "treeCols <- black"
@@ -2889,7 +3020,7 @@ server <- function(input, output, session) {
   }
   
   maxProjDim <- reactive({
-    min(12, length(r$trees) - 1L)
+    min(12, max(0L, length(r$trees) - 1L))
   })
   
   nProjDim <- reactive({
@@ -2959,8 +3090,7 @@ server <- function(input, output, session) {
                    updateSliderInput(inputId = "spaceDim",
                                      value = min(nDim, input$spaceDim),
                                      max = nDim)
-                   message("Can't map into more than ", nDim,
-                           " dimensions.")
+                   message("Max dimensions available for mapping: ", nDim, ".")
                    cmdscale(distances(), k = nDim)
                  })
       )
@@ -3285,7 +3415,7 @@ server <- function(input, output, session) {
         "  xpd = NA, # Display overflowing text",
         paste0("  col = ", LogFirstHitCols(), ","),
         paste0("  pt.cex = ", spaceCex(), ", # Point size"),
-        paste0("  ", Enquote(names(FirstHit())), ","),
+        paste0("  ", EnC(names(FirstHit())), ","),
         "  title = \"Iteration first hit\"",
         ")"
       )
@@ -3354,7 +3484,6 @@ server <- function(input, output, session) {
         on.exit(unlink(zipDir))
         rFile <- paste0(zipDir, "/TreeSearch-session.R")
         file.copy(cmdLogFile, rFile, overwrite = TRUE)
-        dput(ExcelFileName(seq_len(r$excelFiles)))
         zip(file, c(
           rFile,
           if (r$dataFiles)
@@ -3370,6 +3499,8 @@ server <- function(input, output, session) {
   output$savePlotZip <- downloadHandler(
     filename = function() paste0(saveDetails()$fileName, ".zip"),
     content = function(file) {
+      StashTrees(r$allTrees)
+      
       if (isTRUE(getOption("shiny.testmode"))) {
         rCode <- RCode()
         rCode <- sub("TreeSearch plot log: 2[\\d\\-]{9} [012][\\d:]{7}",
@@ -3381,7 +3512,7 @@ server <- function(input, output, session) {
         rCode <- sub("dataFile <- .*$",
                      paste0("dataFile <- system.file(\"datasets/",
                             input$dataSource,
-                            ".nex\", package = \"TreeSearch\") # Test mode"),
+                            ".nex\", package = \"TreeSearch\") # FALSE CODE for TEST MODE"),
                      rCode,
                      perl = TRUE)
         rCode <- sub("treeFile <- .*$",
@@ -3417,9 +3548,13 @@ server <- function(input, output, session) {
   output$savePdf <- downloadHandler(
     filename = function() paste0(saveDetails()$fileName, ".pdf"),
     content = function (file) {
-      pdf(file, title = saveDetails()$title,
-          width = 8L,
-          height = saveDetails()$asp * 10L)
+      width <- 8
+      pdf(
+        file,
+        title = saveDetails()$title,
+        width = width,
+        height = saveDetails()$asp * width
+      )
       MainPlot()
       dev.off()
     })
@@ -3454,9 +3589,11 @@ server <- function(input, output, session) {
      tags$h3("Clustering"),
      HTML(paste("Cluster consensus trees:", Stockham2002)),
      HTML(paste0(
-       "k-means:", Hartigan1979,
+       "k-means++:", Arthur2007, Hartigan1979, 
        "Partitioning around medoids:", Maechler2019,
-       "Hierarchical, minimax linkage:", Bien2011, Murtagh1983)),
+       "Hierarchical, minimax linkage:", Bien2011, Murtagh1983,
+       "Clustering evaluation:", Rousseeuw1987
+       )),
      tags$h3("Rogue taxa"),
      HTML(paste("Detection:", SmithRogue)),
      HTML(paste("Plotting:", Klopfstein2019)),

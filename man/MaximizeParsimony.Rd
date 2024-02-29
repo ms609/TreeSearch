@@ -19,6 +19,7 @@ MaximizeParsimony(
   maxTime = 60,
   quickHits = 1/3,
   concavity = Inf,
+  ratchEW = TRUE,
   tolerance = sqrt(.Machine$double.eps),
   constraint,
   verbosity = 3L
@@ -93,6 +94,10 @@ Set as \code{Inf} for equal step weights, which underperforms step weighting
 approaches
 \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.}
 
+\item{ratchEW}{Logical specifying whether to use equal weighting during
+ratchet iterations, improving search speed whilst still facilitating
+escape from local optima.}
+
 \item{tolerance}{Numeric specifying degree of suboptimality to tolerate
 before rejecting a tree.  The default, \code{sqrt(.Machine$double.eps)}, retains
 trees that may be equally parsimonious but for rounding errors.
@@ -100,8 +105,10 @@ Setting to larger values will include trees suboptimal by up to \code{tolerance}
 in search results, which may improve the accuracy of the consensus tree
 (at the expense of resolution) \insertCite{Smith2019}{TreeSearch}.}
 
-\item{constraint}{An object of class \code{phyDat}; returned trees will be
-perfectly compatible with each character in \code{constraint}.
+\item{constraint}{Either an object of class \code{phyDat}, in which case
+returned trees will be perfectly compatible with each character in
+\code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
+in any output tree.
 See \code{\link[=ImposeConstraint]{ImposeConstraint()}} and
 \href{https://ms609.github.io/TreeSearch/articles/tree-search.html}{vignette}
 for further examples.}

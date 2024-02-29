@@ -7,6 +7,11 @@ test_that("Failures are graceful", {
   expect_error(TreeLength(CollapseNode(RandomTree(dat, root = TRUE), 77), mo),
                "must be binary")
   
+  # Same number of leaves, but different labels
+  bal <- BalancedTree(dat)
+  bal$tip.label[1:2] <- c("no1", "no2")
+  expect_error(TreeLength(bal, dat), "Missing in `dataset`: no1, no2")
+  
   mo <- PhyDat2Morphy(dat)
   on.exit(mo <- UnloadMorphy(mo))
   

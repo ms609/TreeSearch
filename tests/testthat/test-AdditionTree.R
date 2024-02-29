@@ -25,10 +25,33 @@ test_that("Addition tree obeys constraints", {
     c(0, 1, 1, 1, 0, 1,
       0, 1, 1, 0, 0, 1), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
-  constraint <- MatrixToPhyDat(c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
-  expect_true(as.Splits(c(F, F, F, F, T, T), letters[1:6]) %in% 
-              as.Splits(AdditionTree(dataset, constraint = constraint),
+  constraint <- c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1)
+  # as phyDat
+  expect_true(as.Splits(c(F, F, F, F, T, T), letters[1:6]) %in%
+              as.Splits(AdditionTree(dataset, constraint = 
+                                       MatrixToPhyDat(constraint)),
                         letters[1:6]))
+  # as non-phyDat
+  expect_true(as.Splits(c(F, F, F, F, T, T), letters[1:6]) %in%
+              as.Splits(AdditionTree(dataset, constraint = cbind(constraint)),
+                        letters[1:6]))
+  
+  constraintTree <- TreeTools::BalancedTree(constraint)
+  
+  set.seed(0)
+  unconstrained <- AdditionTree(dataset)
+  
+  CheckUnconstrained <- function(constraint) {
+    set.seed(0)
+    expect_equal(AdditionTree(dataset, constraint = constraint), unconstrained)
+  }
+  
+  CheckUnconstrained(KeepTip(constraintTree, c("a", "b")))
+  CheckUnconstrained(c(a = 0))
+  CheckUnconstrained(KeepTip(constraintTree, "a"))
+  CheckUnconstrained(c())
+  CheckUnconstrained(KeepTip(constraintTree, character(0)))
+  CheckUnconstrained(NULL)
   
   cdef <- letters[3:6]
   subtree <- TreeTools::KeepTip(

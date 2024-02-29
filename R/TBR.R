@@ -1,14 +1,14 @@
 #' TBR Warning
 #' Print a warning and return given tree
 #'
-#' @param tree tree to return
+#' @template treeParent
+#' @template treeChild
 #' @param error error message to report
 #'
-#' @return the tree specified in tree
+#' @return A list with the entries `parent`, `child`.
 #' @examples
 #' suppressWarnings(TBRWarning(0, 0, "Message text")) # will trigger warning
 #' 
-#'
 #' @author Martin R. Smith
 #' @keywords internal
 #' @export
@@ -27,26 +27,23 @@ TBRWarning <- function (parent, child, error) {
 #' All nodes in a tree must be bifurcating; [ape::collapse.singles] and
 #' [ape::multi2di] may help.
 #' 
-#'
 #' @param tree A bifurcating tree of class \code{\link{phylo}}, with all nodes resolved;
 #' @template edgeToBreakParam
 #' @template mergeEdgesParam
 #' 
-#' @return This function returns a tree in \code{phyDat} format that has undergone one \acronym{TBR} iteration.
+#' @return `TBR()` returns a tree in \code{phyDat} format that has undergone one
+#' \acronym{TBR} iteration.
 #' @references The \acronym{TBR} algorithm is summarized in
-#'  \insertRef{Felsenstein2004}{TreeSearch}
+#' \insertRef{Felsenstein2004}{TreeSearch}
 #' 
-#' 
-#' @author Martin R. Smith
-#' 
-#' @seealso [`RootedTBR()`]: useful when the position of the root node should be retained.
-#' @family tree rearrangement functions
-#' 
-#' @examples{
+#' @examples
 #' library("ape")
 #' tree <- rtree(20, br=NULL)
 #' TBR(tree)
-#' }
+#' @template MRS
+#' 
+#' @family tree rearrangement functions
+#' @seealso [`RootedTBR()`]: useful when the position of the root node should be retained.
 #' @importFrom ape root
 #' @importFrom TreeTools DescendantEdges Preorder
 #' @export
@@ -135,7 +132,7 @@ TBRSwap <- function(parent, child, nEdge = length(parent),
       return(TBRWarning(parent, child, "mergeEdges values must differ"))
   }
   
-  edgesCutAdrift <- DescendantEdges(edgeToBreak, parent, child, nEdge)
+  edgesCutAdrift <- DescendantEdges(edge = edgeToBreak, parent, child, nEdge)
   edgesRemaining <- !edgesCutAdrift & !brokenEdge
   
   brokenEdgeParent <- child == brokenEdge.parentNode
@@ -254,7 +251,7 @@ RootedTBRSwap <- function (parent, child, nEdge=length(parent),
   nTips <- (nEdge / 2L) + 1L
   rootNode <- parent[1]
   rootEdges <- parent == rootNode
-  rightTree <- DescendantEdges(1, parent, child, nEdge)
+  rightTree <- DescendantEdges(parent, child, edge = 1, nEdge)
   selectableEdges <- !rootEdges
   if (sum( rightTree) < 4) {
     selectableEdges[ rightTree] <- FALSE
@@ -290,8 +287,13 @@ RootedTBRSwap <- function (parent, child, nEdge=length(parent),
     edgeInRight <- rightTree[edgeToBreak]
     subtreeWithRoot <- if (edgeInRight) rightTree else !rightTree
     subtreeEdges <- !rootEdges & subtreeWithRoot
-    if (sum(edgesCutAdrift <- DescendantEdges(edgeToBreak, parent, child, nEdge)) > 2) break;
-    if (sum(subtreeEdges, -edgesCutAdrift) > 2) break; # the edge itself, and somewheres else
+    if (sum(edgesCutAdrift <- DescendantEdges(parent, child, edge = edgeToBreak,
+                                              nEdge)) > 2) {
+      break;
+    }
+    if (sum(subtreeEdges, -edgesCutAdrift) > 2) {
+      break; # the edge itself, and somewheres else
+    }
     # TODO check that all expected selections are valid
     selectableEdges[edgeToBreak] <- FALSE
     ###Assert(any(selectableEdges))

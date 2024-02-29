@@ -39,7 +39,7 @@ View a consensus tree and explore the position of rogue taxa [@SmithCons]:
 ![Visualizing position of rogue taxon on search result consensus tree](gui_rogue.png){ width=100% }
 
 Explore the distribution of trees (whether found by search or loaded from file)
-in tree space [@SmithSpace]:
+in tree space [@SmithSpace], and evaluate search progress [@Whidden2015]:
 
 ![Evaluating search progress using tree space](gui_space.png){ width=100% }
 
@@ -344,5 +344,18 @@ plot(MaximizeParsimony(characters, constraint = constraint,
 
 Constraints can also be loaded from a Nexus file with
 `constraint <- TreeTools::ReadAsPhyDat("constraint_file.nex")`.
+
+## Where next?
+
+- [Documentation home](https://ms609.github.io/TreeSearch/)
+
+- [Guide to installation](getting-started.html)
+
+- Search for trees using
+  - [standard parsimony](tree-search.html) (corrected for inapplicable data)
+  - [profile parsimony](profile.html)
+  - [custom optimality criteria](custom.Rmd)
+  
+- Explore the distribution of optimal trees in [mappings](tree-space.html)
 
 ## References

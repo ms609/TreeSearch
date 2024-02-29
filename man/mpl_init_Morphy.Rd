@@ -7,12 +7,12 @@
 mpl_init_Morphy(numtaxa, numchars, morphyobj)
 }
 \arguments{
-\item{morphyobj}{An instance of the Morphy object.}
+\item{numtaxa}{The number of taxa (or tips/terminals).}
 
-\item{ntax}{The number of taxa (or tips/terminals).}
-
-\item{nchar}{The number of characters (i.e. transformation series) in the
+\item{numchars}{The number of characters (i.e. transformation series) in the
 data set.}
+
+\item{morphyobj}{An instance of the Morphy object.}
 }
 \value{
 Morphy error code.

@@ -70,7 +70,7 @@ QuartetConcordance <- function (tree, dataset = NULL) {
   logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
                        logical(NTip(dataset)))
   
-  characters <- .TMP_PhyDatToMatrix(dataset, ambigNA = TRUE)
+  characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
   
   cli_progress_bar(name = "Quartet concordance", total = dim(logiSplits)[2])
   setNames(apply(logiSplits, 2, function (split) {
@@ -96,21 +96,6 @@ QuartetConcordance <- function (tree, dataset = NULL) {
     }))
     ifelse(is.nan(quarts[2]), NA_real_, quarts[1] / quarts[2])
   }), names(splits))
-}
-
-#TODO duplicates TreeTools v1.5.1+ PhyDatToMatrix; replace when can require
-.TMP_PhyDatToMatrix <- function (dataset, ambigNA = TRUE, inappNA = TRUE) {
-  at <- attributes(dataset)
-  allLevels <- as.character(at$allLevels)
-  if (inappNA) {
-    allLevels[allLevels == "-"] <- NA_character_
-  }
-  if (ambigNA) {
-    allLevels[rowSums(at$contrast) != 1L] <- NA_character_
-  }
-  matrix(allLevels[unlist(dataset, recursive = FALSE, use.names = FALSE)],
-         ncol = at$nr, byrow = TRUE, dimnames = list(at$names, NULL)
-  )[, at$index, drop = FALSE]
 }
 
 #' @importFrom TreeDist Entropy
