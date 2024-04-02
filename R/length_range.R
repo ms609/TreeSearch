@@ -60,7 +60,7 @@ MinimumLength.phyDat <- function (x, compress = FALSE) {
   
   # Treat {-, 1} as {1}
   unlisted <- unlist(x, use.names = FALSE)
-  tmp <- as.integer(cont[, colnames(cont) != "-"] %*% powersOf2)
+  tmp <- as.integer(cont[, colnames(cont) != "-", drop = FALSE] %*% powersOf2)
   ambigIsApp <- matrix(tmp[unlisted], nChar, nTip)
   
   if (any(inappLevel)) {
