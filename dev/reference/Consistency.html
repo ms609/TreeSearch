@@ -135,7 +135,7 @@ character, decompressed using the dataset's <code>index</code> attribute.</p></d
     <h2>Value</h2>
     
 
-<p><code>Consistency()</code> returns a named matrix with rows specifying the
+<p><code>Consistency()</code> returns a matrix with named columns specifying the
 consistency index (<code>ci</code>),
 retention index (<code>ri</code>), and
 rescaled consistency index (<code>rc</code>).</p>
@@ -169,134 +169,14 @@ from package = 'TreeSearch'. Possible cause - missing REFERENCES.bib in package 
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">inapplicable.datasets</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="va">inapplicable.phyData</span><span class="op">[[</span><span class="fl">4</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-in"><span><span class="fu">Consistency</span><span class="op">(</span><span class="va">dataset</span>, <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               ci        ri         rc</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1,] 0.2500000 0.6250000 0.15625000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [2,] 0.3333333 0.3333333 0.11111111</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [3,] 0.3333333 0.6000000 0.20000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [4,] 0.2500000 0.2500000 0.06250000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [5,] 0.5000000 0.8333333 0.41666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [6,] 0.2500000 0.2500000 0.06250000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [7,] 0.5000000 0.9000000 0.45000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [8,] 0.3333333 0.6000000 0.20000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [9,] 0.3333333 0.5000000 0.16666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [10,]       NaN       NaN        NaN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [11,] 0.3333333 0.7142857 0.23809524</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [12,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [13,] 0.3333333 0.0000000 0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [14,] 0.3333333 0.8181818 0.27272727</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [15,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [16,] 0.5000000 0.7500000 0.37500000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [17,] 0.5000000 0.0000000 0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [18,] 0.2000000 0.3333333 0.06666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [19,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [20,] 1.0000000       NaN        NaN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [21,] 0.5000000 0.8571429 0.42857143</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [22,] 0.2500000 0.5714286 0.14285714</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [23,] 0.3333333 0.7500000 0.25000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [24,] 0.2500000 0.6250000 0.15625000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [25,] 0.5000000 0.6000000 0.30000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [26,] 0.5000000 0.0000000 0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [27,] 0.5000000 0.5000000 0.25000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [28,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [29,] 0.5000000 0.6666667 0.33333333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [30,] 0.6666667 0.5000000 0.33333333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [31,] 0.2500000 0.5000000 0.12500000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [32,] 0.3333333 0.6666667 0.22222222</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [33,] 0.5000000 0.8888889 0.44444444</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [34,] 0.3333333 0.3333333 0.11111111</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [35,] 0.5000000 0.5000000 0.25000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [36,] 0.2500000 0.4000000 0.10000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [37,] 1.0000000       NaN        NaN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [38,] 0.1666667 0.2857143 0.04761905</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [39,] 0.5000000 0.6666667 0.33333333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [40,] 0.3333333 0.0000000 0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [41,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [42,] 0.5000000 0.6666667 0.33333333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [43,] 0.4000000 0.5000000 0.20000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [44,] 0.5000000 0.0000000 0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [45,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [46,] 0.5000000 0.7500000 0.37500000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [47,] 0.3333333 0.3333333 0.11111111</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [48,] 0.2500000 0.7500000 0.18750000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [49,] 0.3333333 0.6666667 0.22222222</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [50,] 1.0000000       NaN        NaN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [51,] 0.3333333 0.6000000 0.20000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [52,] 0.6666667 0.8571429 0.57142857</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [53,] 0.5000000 0.5000000 0.25000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [54,] 0.5000000 0.8888889 0.44444444</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [55,] 0.3333333 0.6666667 0.22222222</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [56,] 0.5000000 0.8333333 0.41666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [57,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [58,] 0.3333333 0.3333333 0.11111111</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [59,] 0.5000000 0.7500000 0.37500000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [60,] 0.2500000 0.7000000 0.17500000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [61,] 0.5000000 0.5000000 0.25000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [62,] 0.5000000 0.5000000 0.25000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [63,] 0.1428571 0.1428571 0.02040816</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [64,] 0.6666667 0.0000000 0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [65,] 0.5000000 0.0000000 0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [66,] 0.2500000 0.4000000 0.10000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [67,] 0.8000000 0.7500000 0.60000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [68,] 0.7500000 0.0000000 0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [69,] 0.2500000 0.4000000 0.10000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [70,] 0.1666667 0.4444444 0.07407407</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [71,] 0.5000000 0.5000000 0.25000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [72,] 1.0000000       NaN        NaN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [73,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [74,] 0.3333333 0.7777778 0.25925926</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [75,] 0.5000000 0.8571429 0.42857143</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [76,] 0.2500000 0.6666667 0.16666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [77,] 0.2000000 0.6000000 0.12000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [78,] 0.2500000 0.0000000 0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [79,] 0.5000000 0.6666667 0.33333333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [80,] 0.5000000 0.8750000 0.43750000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [81,] 0.2500000 0.4545455 0.11363636</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [82,] 0.6666667 0.7142857 0.47619048</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [83,] 0.2500000 0.2500000 0.06250000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [84,] 0.2500000 0.5000000 0.12500000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [85,] 0.5000000 0.8888889 0.44444444</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [86,] 1.0000000       NaN        NaN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [87,] 0.5000000 0.9000000 0.45000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [88,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [89,] 0.5000000 0.0000000 0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [90,] 0.4000000 0.7272727 0.29090909</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [91,] 0.4000000 0.5714286 0.22857143</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [92,] 0.2000000 0.5000000 0.10000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [93,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [94,] 0.3333333 0.7500000 0.25000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [95,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [96,] 0.2500000 0.6250000 0.15625000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [97,] 0.5000000 0.0000000 0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [98,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [99,] 0.3333333 0.5000000 0.16666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [100,] 0.5000000 0.6666667 0.33333333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [101,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [102,] 0.5000000 0.6666667 0.33333333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [103,] 0.5000000 0.8750000 0.43750000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [104,] 0.5000000 0.5000000 0.25000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [105,] 0.5000000 0.8571429 0.42857143</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [106,] 1.0000000       NaN        NaN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [107,] 0.3333333 0.6000000 0.20000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [108,] 0.3333333 0.5000000 0.16666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [109,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [110,] 0.2500000 0.4000000 0.10000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [111,] 1.0000000       NaN        NaN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [112,] 0.2500000 0.5714286 0.14285714</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [113,] 1.0000000       NaN        NaN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [114,] 0.5000000 0.5000000 0.25000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [115,] 0.5000000 0.7500000 0.37500000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [116,] 0.2000000 0.4285714 0.08571429</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [117,] 0.5000000 0.8333333 0.41666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [118,] 0.3333333 0.5000000 0.16666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [119,] 1.0000000 1.0000000 1.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [120,] 0.5000000 0.8000000 0.40000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [121,] 0.3333333 0.5000000 0.16666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [122,] 0.3333333 0.0000000 0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [123,] 0.2500000 0.6250000 0.15625000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [124,] 1.0000000       NaN        NaN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [125,] 0.5000000 0.6666667 0.33333333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [126,] 0.5000000 0.5000000 0.25000000</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">Consistency</span><span class="op">(</span><span class="va">dataset</span>, <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             ci        ri        rc</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,] 0.2500000 0.6250000 0.1562500</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] 0.3333333 0.3333333 0.1111111</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3,] 0.3333333 0.6000000 0.2000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4,] 0.2500000 0.2500000 0.0625000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [5,] 0.5000000 0.8333333 0.4166667</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [6,] 0.2500000 0.2500000 0.0625000</span>
 </code></pre></div>
     </div>
   </div>
