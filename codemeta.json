@@ -14,7 +14,7 @@
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.3.1 (2023-06-16)",
+  "runtimePlatform": "R version 4.3.3 (2024-02-29)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -363,7 +363,7 @@
         "name": "Comprehensive R Archive Network (CRAN)",
         "url": "https://cran.r-project.org"
       },
-      "sameAs": "https://github.com/ms609/TreeDist"
+      "sameAs": "https://CRAN.R-project.org/package=TreeDist"
     },
     "18": {
       "@type": "SoftwareApplication",
@@ -380,7 +380,7 @@
     },
     "SystemRequirements": "C++17"
   },
-  "fileSize": "4450.647KB",
+  "fileSize": "4450.596KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -469,7 +469,7 @@
       ],
       "name": "{TreeSearch}: morphological phylogenetic analysis in {{R}}",
       "identifier": "10.32614/RJ-2023-019",
-      "pagination": ["305", "315"],
+      "pagination": "305-315",
       "@id": "https://doi.org/10.32614/RJ-2023-019",
       "sameAs": "https://doi.org/10.32614/RJ-2023-019",
       "isPartOf": {
@@ -479,7 +479,7 @@
         "isPartOf": {
           "@type": ["PublicationVolume", "Periodical"],
           "volumeNumber": "14",
-          "name": "R journal"
+          "name": "R Journal"
         }
       }
     }
