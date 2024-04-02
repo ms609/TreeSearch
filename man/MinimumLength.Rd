@@ -5,8 +5,10 @@
 \alias{MinimumLength.phyDat}
 \alias{MinimumLength.numeric}
 \alias{MinimumLength.character}
+\alias{MaximumLength.character}
 \alias{MinimumSteps}
 \alias{MaximumLength}
+\alias{MaximumLength.numeric}
 \title{Minimum and Maximum lengths a character can attain}
 \usage{
 MinimumLength(x, compress = FALSE)
@@ -17,9 +19,13 @@ MinimumLength(x, compress = FALSE)
 
 \method{MinimumLength}{character}(x, compress = TRUE)
 
+\method{MaximumLength}{character}(x, compress = TRUE)
+
 MinimumSteps(x)
 
 MaximumLength(x, compress = TRUE)
+
+\method{MaximumLength}{numeric}(x, compress = NA)
 }
 \arguments{
 \item{x}{An object of class \code{phyDat};
