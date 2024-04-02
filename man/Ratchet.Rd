@@ -39,7 +39,7 @@ Ratchet(
   bootstrapIter = searchIter,
   bootstrapHits = searchHits,
   verbosity = 1L,
-  suboptimal = sqrt(.Machine$double.eps),
+  suboptimal = sqrt(.Machine[["double.eps"]]),
   ...
 )
 
