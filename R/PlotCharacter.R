@@ -66,7 +66,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   
   # Reconcile labels
   datasetTaxa <- names(dataset)
-  treeTaxa <- tree$tip.label
+  treeTaxa <- tree[["tip.label"]]
   if(!all(treeTaxa %fin% datasetTaxa)) {
     stop("Taxa in tree missing from dataset:\n  ",
          paste0(setdiff(treeTaxa, datasetTaxa), collapse = ", "))
@@ -75,13 +75,13 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   
   # Read tree
   postorder <- PostorderOrder(tree)
-  edgeLength <- tree$edge.length[postorder]
+  edgeLength <- tree[["edge.length"]][postorder]
   if (!is.null(edgeLength) && length(unique(edgeLength)) == 1) {
-    tree$edge.length <- edgeLength
+    tree[["edge.length"]] <- edgeLength
   }
-  nNode <- tree$Nnode
+  nNode <- tree[["Nnode"]]
   nTip <- NTip(tree)
-  edge <- tree$edge[postorder, ]
+  edge <- tree[["edge"]][postorder, ]
   parent <- edge[, 1]
   child <- edge[, 2]
   left <- integer(nNode + nTip)
@@ -376,7 +376,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
       }
     })
     if (unitEdge) {
-      tree$edge.length <- rep_len(1, dim(tree$edge)[1])
+      tree[["edge.length"]] <- rep_len(1, dim(tree[["edge"]])[1])
     }
     plot.phylo(tree,
                node.color = nodeStyle["col", , drop = FALSE],

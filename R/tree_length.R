@@ -320,7 +320,7 @@ MorphyTreeLength <- function (tree, morphyObj) {
   }
   treeOrder <- attr(tree, "order")
   inPostorder <- (!is.null(treeOrder) && treeOrder == "postorder")
-  treeEdge <- tree$edge
+  treeEdge <- tree[["edge"]]
 
   # Return:
   MorphyLength(treeEdge[, 1], treeEdge[, 2], morphyObj, inPostorder, nTaxa)

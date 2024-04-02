@@ -181,23 +181,25 @@ DoubleNNI <- function (parent, child, edgeToBreak) {
 #' @describeIn NNI Perform \acronym{NNI} rearrangement, retaining position of root
 #' @export
 RootedNNI <- function (tree, edgeToBreak=NULL) {
-  edge <- tree$edge
+  edge <- tree[["edge"]]
   if (!is.null(edgeToBreak) && edgeToBreak == -1) {
     parent <- edge[, 1]
     child  <- edge[, 2]
     nTips <- (length(parent) / 2L) + 1L
     rootNode <- nTips + 1L
     samplable <- parent != rootNode & child > nTips
+    # Quicker than vapply, surprisingly:
     newEdges <- unlist(lapply(which(samplable), DoubleNNI, 
                               parent = parent, child = child), 
-                       recursive = FALSE) # Quicker than vapply, surprisingly
-    newTrees <- lapply(newEdges, function (edges) {tree$edge <- edges; tree}) # Quicker than vapply, surprisingly
+                       recursive = FALSE)
+    # Quicker than vapply, surprisingly:
+    newTrees <- lapply(newEdges, function (edges) `[[<-`, tree, "edge", edges)
     
     # Return:
     newTrees
   } else {
     newEdge <- RootedNNISwap(edge[, 1], edge[, 2], edgeToBreak=edgeToBreak)
-    tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
+    tree[["edge"]] <- cbind(newEdge[[1]], newEdge[[2]])
     
     # Return:
     tree

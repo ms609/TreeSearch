@@ -157,11 +157,11 @@ TreeSearch <- function (tree, dataset,
                         stopAtPeak = FALSE, stopAtPlateau = 0L,
                         verbosity = 1L, ...) {
   # initialize tree and data
-  if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+  if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     stop("tree must be bifurcating; try rooting with ape::root")
   }
   tree <- RenumberTips(tree, names(dataset))
-  edgeList <- tree$edge
+  edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 
   initializedData <- InitializeData(dataset)
@@ -174,7 +174,7 @@ TreeSearch <- function (tree, dataset,
                              stopAtPlateau = stopAtPlateau,
                              verbosity = verbosity, ...)
   
-  tree$edge <- cbind(edgeList[[1]], edgeList[[2]])
+  tree[["edge"]] <- cbind(edgeList[[1]], edgeList[[2]])
   attr(tree, "score") <- edgeList[[3]]
   attr(tree, "hits") <- edgeList[[4]]
   

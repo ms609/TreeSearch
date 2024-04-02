@@ -34,8 +34,8 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
   attr(dataset, "sa.weights") <- rep.int(1, length(attr(dataset, "weight")))
   collectSuboptimal <- suboptimal > 0
   
-  max.node <- max(tree$edge[, 1])
-  n.tip <- length(tree$tip.label)
+  max.node <- max(tree[["edge"]][, 1])
+  n.tip <- length(tree[["tip.label"]])
   n.node <- max.node - n.tip
   bests <- vector("list", maxSuccIter + 1L)
   bestsConsensus <- vector("list", maxSuccIter + 1L)

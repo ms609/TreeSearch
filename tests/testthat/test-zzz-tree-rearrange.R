@@ -184,7 +184,7 @@ test_that("TBR works", {
   expect_equal(TBR(tree, 4, c(1, 8)),  read.tree(text = "(((a, (e, f)), (d, (b, c))), (g, h));"))
   
   tree <- tree11 
-  tree$edge.length = rep.int(1, 20) 
+  tree[["edge.length"]] = rep.int(1, 20) 
   expect_equal(TBR(tree11, 11, c(8, 17)), read.tree(text = '((j, k), (e, ((a, b), (c, (d, (i, (h, (g, f))))))));'))
   expect_equal(TBR(tree11, 11, c(2, 11)), read.tree(text = '((j, k), (e, (((a, b), (c, d)), (f, (g, (i, h))))));'))
   expect_warning(TBR(tree11, 10, c(2, 11)))
@@ -227,11 +227,11 @@ test_that("SPR is special case of TBR", {
   expect_error(SPR(tree11, 1, 6))
 })
 
-#' @author Martin R. Smith <martins@gmail.com>
+#' @template MRS
 CheckTreeSanity <- function (tree) {
-  nTip <- length(tree$tip.label)
-  nNode <- tree$Nnode
-  edge <- tree$edge
+  nTip <- length(tree[["tip.label"]])
+  nNode <- tree[["Nnode"]]
+  edge <- tree[["edge"]]
   parent <- edge[, 1]
   child <- edge[, 2]
   aok <- TRUE
