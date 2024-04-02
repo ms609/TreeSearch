@@ -17,12 +17,14 @@ Consistency(dataset, tree, compress = FALSE)
 character, decompressed using the dataset's \code{index} attribute.}
 }
 \value{
-\code{Consistency()} returns a named vector specifying the
+\code{Consistency()} returns a named matrix with rows specifying the
 consistency index (\code{ci}),
-retention index (\code{ri}), and rescaled consistency index (\code{rc}).
+retention index (\code{ri}), and
+rescaled consistency index (\code{rc}).
 }
 \description{
 \code{Consistency()} calculates the so-called consistency and retention "indices"
+\insertCite{Farris1989}{TreeSearch}
 for each character in a dataset, given a bifurcating tree.
 Although there is not a straightforward interpretation of these indices,
 they are sometimes taken as an indicator of the fit of a character to a
@@ -37,6 +39,9 @@ between characters in which these factors differ.
 data(inapplicable.datasets)
 dataset <- inapplicable.phyData[[4]]
 Consistency(dataset, TreeTools::NJTree(dataset))
+}
+\references{
+\insertAllCited{}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

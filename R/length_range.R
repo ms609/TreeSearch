@@ -1,7 +1,6 @@
-#' Minimum length
+#' Minimum and Maximum lengths a character can attain
 #' 
-#' The smallest length that a character can obtain on any tree.
-#' 
+#' The smallest and largest length that a character can attain on any tree.
 #' 
 #' @param x An object of class `phyDat`;
 #' or a string to be coerced to a `phyDat` object via 
@@ -143,4 +142,13 @@ MinimumSteps <- function(x) {
   .Deprecated("MinimumLength",
               msg = "Renamed to `MinimumLength()` and recoded to better support inapplicable tokens")
   MinimumLength(x, compress = TRUE)
+}
+
+#' @rdname MinimumLength
+#' @return `MaximumLength()` returns a vector of integers specifying the 
+#' maximum number of steps that each character can attain in a parsimonious
+#' reconstruction on a tree.  Inapplicable tokens are not yet supported.
+#' @export
+MaximumLength <- function(x, compress = TRUE) {
+  `length<-`(numeric(), attr(x, "nr"))
 }

@@ -6,7 +6,8 @@
 \alias{MinimumLength.numeric}
 \alias{MinimumLength.character}
 \alias{MinimumSteps}
-\title{Minimum length}
+\alias{MaximumLength}
+\title{Minimum and Maximum lengths a character can attain}
 \usage{
 MinimumLength(x, compress = FALSE)
 
@@ -17,6 +18,8 @@ MinimumLength(x, compress = FALSE)
 \method{MinimumLength}{character}(x, compress = TRUE)
 
 MinimumSteps(x)
+
+MaximumLength(x, compress = TRUE)
 }
 \arguments{
 \item{x}{An object of class \code{phyDat};
@@ -36,9 +39,13 @@ character, decompressed using the dataset's \code{index} attribute.}
 \value{
 \code{MinimumLength()} returns a vector of integers specifying the
 minimum number of steps that each character must contain.
+
+\code{MaximumLength()} returns a vector of integers specifying the
+maximum number of steps that each character can attain in a parsimonious
+reconstruction on a tree.  Inapplicable tokens are not yet supported.
 }
 \description{
-The smallest length that a character can obtain on any tree.
+The smallest and largest length that a character can attain on any tree.
 }
 \examples{
 data("inapplicable.datasets")
