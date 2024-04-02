@@ -132,17 +132,21 @@ test_that("MaximumLength() handles inapplicables", {
     PlotCharacter(tree, charDat) # Can support four distinct regions
   }
   expect_equal(MaximumLength("111--1---1"), 3)
-  expect_equal(MaximumLength("1--1---1"), 2)
-  expect_equal(MaximumLength("0111-----"), 2)
-  expect_equal(MaximumLength("1--1---0"), 1)
+  expect_equal(MaximumLength("111-----"), 2)
+  expect_equal(MinimumLength("011-----"), 1)
+  expect_equal(MaximumLength("011-----"), 2)
+  expect_equal(MaximumLength("0111-----"), 3)
+  expect_equal(MaximumLength("0011-----"), 3)
+  expect_equal(MaximumLength("1--1---0"), 2)
   expect_equal(MaximumLength("--1---1"), 1)
-  expect_equal(MaximumLength("--1---0"), 1)
+  expect_equal(MinimumLength("--1---0"), 1)
+  expect_equal(MinimumLength("--1---0"), 1)
   expect_equal(MaximumLength("--1---"), 0)
   expect_equal(MaximumLength("-----"), 0)
   
   
-  expect_equal(MaximumLength("001122{12}"), 4)
-  expect_equal(MaximumLength("0123 0123 0123 ????"), 3 * 3)
-  expect_equal(MaximumLength( "00112233{01}{23}{012}?"), 3 + 3 + 1)
+  expect_equal(MaximumLength("001122{12}---"), 4 + 1)
+  expect_equal(MaximumLength("0123 0123 0123 ----"), 3 * 3 + 2)
+  expect_equal(MaximumLength("00112233{01}{23}{012}----"), 3 + 3 + 1 + 2)
 })
 

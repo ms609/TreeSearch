@@ -229,7 +229,7 @@ MaximumLength.numeric <- function(x, compress = NA) {
     }
   }
   # Return:
-  steps + max(0, min(counts, regions) - 1)
+  steps + max(0, min(sum(counts), regions) - 1)
 }
 
 #' @export
