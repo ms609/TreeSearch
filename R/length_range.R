@@ -201,8 +201,9 @@ MaximumLength.numeric <- function(x, compress = NA) {
     # region whose ancestral state is {012....n}
     # 
     # If we have inapplicable tokens, we can then plant these regions in a sea
-    # of inapplicables just large enough to make each region denote a separate
-    # origin of each token, if we have enough (a) regions and (b) inapplicables.
+    # of inapplicable tokens just large enough to make each region denote a
+    # separate origin of each token, if we have enough (a) regions and (b)
+    # inapplicable tokens.
     
     # Start with the token denoting the most ambiguous states
     repeat {
@@ -212,8 +213,8 @@ MaximumLength.numeric <- function(x, compress = NA) {
       }
       loopCount <- loopCount + 1
       if (loopCount > 1e4) {
-        stop("MaximumLength() failed.",                                           # nocov
-             " Please report this bug to TreeSearch maintainer.")                 # nocov
+        stop("MaximumLength() failed.",                                         # nocov
+             " Please report this bug to TreeSearch maintainer.")               # nocov
       }
       escape <- FALSE
       
