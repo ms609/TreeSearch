@@ -51,7 +51,8 @@ test_that("Consistency() handles `-`", {
   expect_equal(MaximumLength(char, tree), g)
   r <- (g - s) / (g - m)
   expect_equal(
-    Consistency(StringToPhyDat(char, TipLabels(tree)), tree),
-    c(ci = m / s, ri = r, rc = r * m / s)
+    Consistency(StringToPhyDat(c(char, char), TipLabels(tree)), tree),
+    rbind(c(ci = m / s, ri = r, rc = r * m / s),
+          c(ci = m / s, ri = r, rc = r * m / s))
   )
 })

@@ -18,7 +18,7 @@
 #' @template treeParam
 #' @template compressParam
 #' 
-#' @return `Consistency()` returns a named matrix with rows specifying the 
+#' @return `Consistency()` returns a matrix with named columns specifying the 
 #' consistency index (`ci`),
 #' retention index (`ri`), and
 #' rescaled consistency index (`rc`).
@@ -26,7 +26,7 @@
 #' @examples 
 #' data(inapplicable.datasets)
 #' dataset <- inapplicable.phyData[[4]]
-#' Consistency(dataset, TreeTools::NJTree(dataset))
+#' head(Consistency(dataset, TreeTools::NJTree(dataset)))
 #' @references \insertAllCited{}
 #' @template MRS
 #' @export

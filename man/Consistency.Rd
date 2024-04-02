@@ -17,7 +17,7 @@ Consistency(dataset, tree, compress = FALSE)
 character, decompressed using the dataset's \code{index} attribute.}
 }
 \value{
-\code{Consistency()} returns a named matrix with rows specifying the
+\code{Consistency()} returns a matrix with named columns specifying the
 consistency index (\code{ci}),
 retention index (\code{ri}), and
 rescaled consistency index (\code{rc}).
@@ -41,7 +41,7 @@ in \code{\link[=TreeLength]{TreeLength()}}, following the treatment of
 \examples{
 data(inapplicable.datasets)
 dataset <- inapplicable.phyData[[4]]
-Consistency(dataset, TreeTools::NJTree(dataset))
+head(Consistency(dataset, TreeTools::NJTree(dataset)))
 }
 \references{
 \insertAllCited{}
