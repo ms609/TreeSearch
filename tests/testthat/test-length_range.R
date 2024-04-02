@@ -96,3 +96,53 @@ test_that("MaximumLength() edge cases are handled correctly", {
   expect_equal(MaximumLength( "00112233{01}{23}{012}?"), 3 + 3 + 1)
 })
 
+test_that("MaximumLength() handles inapplicables", {
+  # Number of regions = number of inapplicable tokens - 1
+  # One extra step allowable for each extra region
+  expect_equal(MaximumLength("11111--"), 0)
+  
+  if (interactive()) {
+    tree <- ape::read.tree(
+      text = ("(a, (b, (c, (i1, (i2, (i3, e))))));"))
+    char <- "1110001"
+    charDat <- StringToPhyDat(char, TipLabels(tree))
+    PlotCharacter(tree, charDat)
+  }
+  expect_equal(MaximumLength("111---1"), 1)
+  
+  if (interactive()) {
+    tree <- ape::read.tree(
+      text = ("(a, (b, (c, ((i1, (i2, d)), (i3, (i4, e))))));"))
+    char <- "111001001"
+    charDat <- StringToPhyDat(char, TipLabels(tree))
+    PlotCharacter(tree, charDat)
+  }
+  expect_equal(MaximumLength("111--1--1"), 2)
+  
+  if (interactive()) {
+    tree <- ape::read.tree(
+      text = ("(a, (b, (i0, (((i1, d), (i2, e)), ((i3, c), (i4, f))))));"))
+    char <- "11001010101"
+    charDat <- StringToPhyDat(char, TipLabels(tree))
+    PlotCharacter(tree, charDat) # Treated as independent losses
+    tree <- ape::read.tree(
+      text = ("(a, (b, (c, (i0, (((i1, d), (i2, e)), (i3, (i4, f)))))));"))
+    char <- "11100101001"
+    charDat <- StringToPhyDat(char, TipLabels(tree))
+    PlotCharacter(tree, charDat) # Can support four distinct regions
+  }
+  expect_equal(MaximumLength("111--1---1"), 3)
+  expect_equal(MaximumLength("1--1---1"), 2)
+  expect_equal(MaximumLength("0111-----"), 2)
+  expect_equal(MaximumLength("1--1---0"), 1)
+  expect_equal(MaximumLength("--1---1"), 1)
+  expect_equal(MaximumLength("--1---0"), 1)
+  expect_equal(MaximumLength("--1---"), 0)
+  expect_equal(MaximumLength("-----"), 0)
+  
+  
+  expect_equal(MaximumLength("001122{12}"), 4)
+  expect_equal(MaximumLength("0123 0123 0123 ????"), 3 * 3)
+  expect_equal(MaximumLength( "00112233{01}{23}{012}?"), 3 + 3 + 1)
+})
+

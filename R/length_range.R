@@ -170,66 +170,66 @@ MaximumLength <- function(x, compress = TRUE) {
 MaximumLength.numeric <- function(x, compress = NA) {
   
   counts <- tabulate(x[x > 0])
-  if (sum(counts > 0) < 2) {
-    return (0)
-  }
-  
-  nState <- floor(log2(length(counts))) + 1L
-  nToken <- 2 ^ nState - 1
-  counts <- c(counts, double(nToken - length(counts)))
-  
-  tokens <- vapply(seq_len(nToken), intToBits, raw(32)) != 00
-  tokens <- tokens[apply(tokens, 1, any), ]
-  ambiguities <- colSums(tokens)
-  active <- c(rep(TRUE, nToken - 1), FALSE)
-  
-  intersects <- apply(tokens, 2, function(i) apply(i & tokens, 2, any))
-  unions <- apply(tokens, 2, function(i) colSums(i | tokens, 2))
-  .Merge <- function(a, b) sum(2 ^ (which(tokens[, a] | tokens[, b]) - 1))
-  length <- 0
-  loopCount <- 0
-  
-  # Start with the token denoting the most ambiguous states
-  repeat {
-    amb <- max(-Inf, ambiguities[counts > 0 & active])
-    if (amb < 1) {
-      break
-    }
-    loopCount <- loopCount + 1
-    if (loopCount > 1e4) {
-      stop("MaximumLength() failed.",                                           # nocov
-           " Please report this bug to TreeSearch maintainer.")                 # nocov
-    }
-    escape <- FALSE
+  nInapp <- sum(x == 0)
+  regions <- max(1, nInapp - 1)
+  steps <- 0
+  if (sum(counts > 0) > 1) {
+    nState <- floor(log2(length(counts))) + 1L
+    nToken <- 2 ^ nState - 1
+    counts <- c(counts, double(nToken - length(counts)))
     
-    #  We should optimally pair ...+++ with +++... to yield ++++++
-    #  before considering ++.... for ++.+++
-    for (unionSize in nState:(amb + 1)) {
-      for (i in which(ambiguities == amb & counts > 0 & active)) {
-        options <- counts > 0 & !intersects[i, ] & active
-        candidates <- options & unions[i, ] == unionSize
-        if (any(options)) {
-          if (any(candidates)) {
-            chosen <- which(candidates)[which.max(counts[candidates])]
-            counts[c(i, chosen)] <- counts[c(i, chosen)] - 1
-            product <- .Merge(i, chosen)
-            counts[[product]] <- counts[[product]] + 1
-            length <- length + 1
-            escape <- TRUE
-            break
-          }
-        } else {
-          # There will never be a match for this ambiguity; disable 
-          active[[i]] <- FALSE
-        }
-      }
-      if (escape) {
+    tokens <- vapply(seq_len(nToken), intToBits, raw(32)) != 00
+    tokens <- tokens[apply(tokens, 1, any), ]
+    ambiguities <- colSums(tokens)
+    active <- c(rep(TRUE, nToken - 1), FALSE)
+    
+    intersects <- apply(tokens, 2, function(i) apply(i & tokens, 2, any))
+    unions <- apply(tokens, 2, function(i) colSums(i | tokens, 2))
+    .Merge <- function(a, b) sum(2 ^ (which(tokens[, a] | tokens[, b]) - 1))
+    loopCount <- 0
+    
+    # Start with the token denoting the most ambiguous states
+    repeat {
+      amb <- max(-Inf, ambiguities[counts > 0 & active])
+      if (amb < 1) {
         break
+      }
+      loopCount <- loopCount + 1
+      if (loopCount > 1e4) {
+        stop("MaximumLength() failed.",                                           # nocov
+             " Please report this bug to TreeSearch maintainer.")                 # nocov
+      }
+      escape <- FALSE
+      
+      #  We should optimally pair ...+++ with +++... to yield ++++++
+      #  before considering ++.... for ++.+++
+      for (unionSize in nState:(amb + 1)) {
+        for (i in which(ambiguities == amb & counts > 0 & active)) {
+          options <- counts > 0 & !intersects[i, ] & active
+          candidates <- options & unions[i, ] == unionSize
+          if (any(options)) {
+            if (any(candidates)) {
+              chosen <- which(candidates)[which.max(counts[candidates])]
+              counts[c(i, chosen)] <- counts[c(i, chosen)] - 1
+              product <- .Merge(i, chosen)
+              counts[[product]] <- counts[[product]] + 1
+              steps <- steps + 1
+              escape <- TRUE
+              break
+            }
+          } else {
+            # There will never be a match for this ambiguity; disable 
+            active[[i]] <- FALSE
+          }
+        }
+        if (escape) {
+          break
+        }
       }
     }
   }
   # Return:
-  length
+  steps + max(0, min(counts, regions) - 1)
 }
 
 #' @export
@@ -250,11 +250,10 @@ MaximumLength.phyDat <- function (x, compress = FALSE) {
   
   # Treat {-, 1} as {1}
   unlisted <- unlist(x, use.names = FALSE)
-  tmp <- as.integer(cont[, colnames(cont) != "-"] %*% powersOf2)
+  tmp <- as.integer(cont[, colnames(cont) != "-", drop = FALSE] %*% powersOf2)
   ambigIsApp <- matrix(tmp[unlisted], nChar, nTip)
   
   if (any(inappLevel)) {
-    warning("inapplicable tokens treated as `?`")
     # Treat {-, 1} as {-}
     tmp[cont[, "-"] == 1] <- 0
     ambigIsInapp <- matrix(tmp[unlisted], nChar, nTip)
