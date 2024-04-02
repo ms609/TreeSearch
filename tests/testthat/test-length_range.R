@@ -136,7 +136,9 @@ test_that("MaximumLength() handles inapplicables", {
   expect_equal(MinimumLength("011-----"), 1)
   expect_equal(MaximumLength("011-----"), 2)
   expect_equal(MaximumLength("0111-----"), 3)
-  expect_equal(MaximumLength("0011-----"), 3)
+  twoPair <- StringToPhyDat("0011-----", tips = letters[1:9])
+  colnames(attr(twoPair, "contrast")) <- NULL
+  expect_equal(MaximumLength(twoPair), 3)
   expect_equal(MaximumLength("1--1---0"), 2)
   expect_equal(MaximumLength("--1---1"), 1)
   expect_equal(MinimumLength("--1---0"), 1)
