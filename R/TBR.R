@@ -57,11 +57,11 @@ TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
     }
   }
   
-  edge <- tree$edge  
+  edge <- tree[["edge"]]  
   StopUnlessBifurcating(edge[, 1])
   newEdge <- TBRSwap(edge[, 1], edge[, 2], edgeToBreak = edgeToBreak,
                      mergeEdges = mergeEdges)
-  tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
+  tree[["edge"]] <- cbind(newEdge[[1]], newEdge[[2]])
   tree
 }
 
@@ -77,9 +77,9 @@ TBRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod("TBRMoves")
 #' @export
 TBRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   tree <- Preorder(RootTree(tree, 1))
-  edges <- unique(all_tbr(tree$edge, edgeToBreak))
+  edges <- unique(all_tbr(tree[["edge"]], edgeToBreak))
   structure(lapply(edges, function (edg) {
-    tree$edge <- edg
+    tree[["edge"]] <- edg
     tree
   }), class = "multiPhylo", tip.label = tree$tip.label)
 }
@@ -235,10 +235,10 @@ RootedTBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {
   if (is.null(treeOrder <- attr(tree, "order")) || treeOrder != "preorder") {
     tree <- Preorder(tree)
   }
-  edge   <- tree$edge
+  edge   <- tree[["edge"]]
   edgeList <- RootedTBRSwap(edge[, 1], edge[, 2], 
                             edgeToBreak=edgeToBreak, mergeEdges=mergeEdges)
-  tree$edge <- cbind(edgeList[[1]], edgeList[[2]])
+  tree[["edge"]] <- cbind(edgeList[[1]], edgeList[[2]])
   tree
 }
 

@@ -91,7 +91,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   if (is.null(treeOrder <- attr(tree, "order")) || treeOrder != "preorder") {
     tree <- Preorder(tree)
   }
-  edge <- tree$edge
+  edge <- tree[["edge"]]
   parent <- edge[, 1]
   StopUnlessBifurcating(parent)
   if (!is.null(edgeToBreak) && edgeToBreak == -1) {
@@ -107,7 +107,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   } else {
     newEdge <- SPRSwap(parent, edge[, 2], edgeToBreak = edgeToBreak,
                        mergeEdge = mergeEdge)
-    tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
+    tree[["edge"]] <- cbind(newEdge[[1]], newEdge[[2]])
     # Return:
     tree
   }
@@ -123,12 +123,12 @@ SPRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod("SPRMoves")
 #' @importFrom TreeTools Preorder RootTree
 #' @export
 SPRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
-  tree <- Preorder(RootTree(tree, tree$tip.label[1]))
-  edges <- unique(.all_spr(tree$edge, edgeToBreak))
+  tree <- Preorder(RootTree(tree, tree[["tip.label"]][1]))
+  edges <- unique(.all_spr(tree[["edge"]], edgeToBreak))
   structure(lapply(edges, function (edg) {
-    tree$edge <- edg
+    tree[["edge"]] <- edg
     tree
-  }), class = "multiPhylo", tip.label = tree$tip.label)
+  }), class = "multiPhylo", tip.label = tree[["tip.label"]])
 }
 
 # error checking for all_spr
@@ -253,9 +253,9 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
 #' @importFrom TreeTools NTip
 #' @export
 cSPR <- function (tree, whichMove = NULL) {
-  edge <- tree$edge
+  edge <- tree[["edge"]]
   if (is.null(whichMove)) whichMove <- sample.int(2147483647L, 1L)
-  tree$edge <- spr(edge, whichMove)
+  tree[["edge"]] <- spr(edge, whichMove)
   
   # Return:
   tree
@@ -324,7 +324,7 @@ AllSPR <- function (parent, child, nEdge, notDuplicateRoot, edgeToBreak) {
     }) # lapply faster than vapply
   }
   # Return:
-  lapply(newEdges, function (newEdge) {tree$edge <- newEdge; tree})
+  lapply(newEdges, function (newEdge) {tree[["edge"]] <- newEdge; tree})
 }
 
 #' Rooted SPR 
@@ -335,10 +335,10 @@ RootedSPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   if (is.null(treeOrder <- attr(tree, "order")) || treeOrder != "preorder") {
     tree <- Preorder(tree)
   }
-  edge <- tree$edge
+  edge <- tree[["edge"]]
   newEdge <- RootedSPRSwap(edge[, 1], edge[, 2], edgeToBreak = edgeToBreak,
                            mergeEdge = mergeEdge)
-  tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
+  tree[["edge"]] <- cbind(newEdge[[1]], newEdge[[2]])
   return (tree)
 }
 

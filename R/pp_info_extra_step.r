@@ -60,7 +60,7 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
   ret <- setNames(Log2Unrooted(sum(split[1:2]))
                   - (.LogCumSumExp(logProfile) / log(2)),
                   seq_len(split[2]) + sum(singletons))
-  ret[ret < sqrt(.Machine$double.eps)] <- 0 # Floating point error inevitable
+  ret[ret < sqrt(.Machine[["double.eps"]])] <- 0 # Floating point error inevitable
   
   # Return:
   ret

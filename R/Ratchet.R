@@ -80,11 +80,13 @@ Ratchet <- function (tree, dataset,
                      searchIter = 4000, searchHits = 42,
                      bootstrapIter = searchIter, bootstrapHits = searchHits,
                      verbosity = 1L, 
-                     suboptimal = sqrt(.Machine$double.eps), ...) {
+                     suboptimal = sqrt(.Machine[["double.eps"]]), ...) {
   epsilon <- 1e-08
   hits <- 0L
   # initialize tree and data
-  if (dim(tree$edge)[1] != 2 * tree$Nnode) stop("tree must be bifurcating; try rooting with ape::root")
+  if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
+    stop("tree must be bifurcating; try rooting with ape::root")
+  }
   tree <- RenumberTips(tree, names(dataset))
   edgeList <- tree$edge
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
@@ -228,10 +230,10 @@ Ratchet <- function (tree, dataset,
     # Return:
     ret
   } else {
-    tree$edge <- cbind(edgeList[[1]], edgeList[[2]])
+    tree[["edge"]] <- cbind(edgeList[[1]], edgeList[[2]])
     attr(tree, "score") <- bestScore
     # Return:
-    tree  
+    tree
   }
 }
 

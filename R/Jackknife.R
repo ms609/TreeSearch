@@ -80,7 +80,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
   
   jackTrees <- structure(apply(jackEdges, 2, function(edgeList) {
     ret <- tree
-    ret$edge <- cbind(edgeList[[1]], edgeList[[2]])
+    ret[["edge"]] <- cbind(edgeList[[1]], edgeList[[2]])
     ret
   }), class = "multiPhylo")
 }
@@ -137,7 +137,7 @@ JackLabels <- function (tree, jackTrees,
     # Return:
     jackSupport
   } else {
-    ret <- character(tree$Nnode)
+    ret <- character(tree[["Nnode"]])
     ret[as.integer(names(jackSupport)) - NTip(tree)] <- jackSupport
     
     # Return:

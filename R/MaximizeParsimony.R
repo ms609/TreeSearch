@@ -427,13 +427,13 @@ MaximizeParsimony <- function (dataset, tree,
       cli_alert_warning("Rooting `tree` on first leaf")
       tree <- RootTree(tree, 1)
     }
-    if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+    if (dim(tree$edge)[1] != 2 * tree[["Nnode"]]) {
       stop("Could not make `tree` binary.")
     }
   }
   
   # Check tree labels matches dataset
-  leaves <- tree$tip.label
+  leaves <- tree[["tip.label"]]
   taxa <- names(dataset)
   treeOnly <- setdiff(leaves, taxa) 
   datOnly <- setdiff(taxa, leaves) 
@@ -457,11 +457,11 @@ MaximizeParsimony <- function (dataset, tree,
       constraint <- MatrixToPhyDat(t(as.matrix(constraint)))
     }
     consTaxa <- TipLabels(constraint)
-    treeOnly <- setdiff(tree$tip.label, consTaxa)
+    treeOnly <- setdiff(tree[["tip.label"]], consTaxa)
     if (length(treeOnly)) {
       constraint <- AddUnconstrained(constraint, treeOnly)
     }
-    consOnly <- setdiff(consTaxa, tree$tip.label)
+    consOnly <- setdiff(consTaxa, tree[["tip.label"]])
     if (length(consOnly)) {
       cli_alert_warning(
         paste0("Ignoring taxa in constraint missing on tree:\n>   ", 
@@ -476,7 +476,7 @@ MaximizeParsimony <- function (dataset, tree,
   
   tree <- Preorder(RenumberTips(tree, names(dataset)))
   nTip <- NTip(tree)
-  edge <- tree$edge
+  edge <- tree[["edge"]]
   
   # Initialize constraints
   if (constrained) {
@@ -503,7 +503,7 @@ MaximizeParsimony <- function (dataset, tree,
       outgroup <- outgroup[outgroup <= nTip]
       tree <- RootTree(ImposeConstraint(tree, constraint), outgroup)
       # RootTree leaves `tree` in preorder
-      edge <- tree$edge
+      edge <- tree[["edge"]]
       if (.Forbidden(edge)) {
         stop("Could not reconcile starting tree with `constraint`. ",
              "Are all constraints compatible?")
@@ -527,7 +527,7 @@ MaximizeParsimony <- function (dataset, tree,
       outgroup <- seq_len(nTip)[-outgroup]
     }
     tree <- RootTree(tree, 1)
-    edge <- tree$edge
+    edge <- tree[["edge"]]
   } else {
     outgroup <- NA
   }
@@ -561,17 +561,17 @@ MaximizeParsimony <- function (dataset, tree,
     at <- attributes(dataset)
     characters <- PhyToString(dataset, ps = "", useIndex = FALSE,
                               byTaxon = FALSE, concatenate = FALSE)
-    startWeights <- at$weight
+    startWeights <- at[["weight"]]
     minLength <- MinimumLength(dataset, compress = TRUE)
     morphyObjects <- lapply(characters, SingleCharMorphy)
     on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
             add = TRUE)
     
-    nLevel <- length(at$level)
-    nChar <- at$nr
+    nLevel <- length(at[["level"]])
+    nChar <- at[["nr"]]
     nTip <- length(dataset)
-    cont <- at$contrast
-    if (is.null(colnames(cont))) colnames(cont) <- as.character(at$levels)
+    cont <- at[["contrast"]]
+    if (is.null(colnames(cont))) colnames(cont) <- as.character(at[["levels"]])
     simpleCont <- ifelse(rowSums(cont) == 1,
                          apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
                          "?")
@@ -603,7 +603,7 @@ MaximizeParsimony <- function (dataset, tree,
     bestScore <- .Score(edge)
   } else {
     starters <- RenumberTips(startTrees, names(dataset))
-    startEdges <- vapply(lapply(starters, Preorder), `[[`, startTrees[[1]]$edge,
+    startEdges <- vapply(lapply(starters, Preorder), `[[`, startTrees[[1]][["edge"]],
                         "edge")
     startScores <- apply(startEdges, 3, .Score)
     bestScore <- min(startScores)
@@ -868,7 +868,7 @@ Resample <- function (dataset, tree, method = "jack",
                       proportion = 2/3,
                       ratchIter = 1L, tbrIter = 8L, finalIter = 3L,
                       maxHits = 12L, concavity = Inf,
-                      tolerance = sqrt(.Machine$double.eps),
+                      tolerance = sqrt(.Machine[["double.eps"]]),
                       constraint,
                       verbosity = 2L,
                       ...) {
