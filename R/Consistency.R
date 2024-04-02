@@ -31,6 +31,16 @@
 #' @template MRS
 #' @export
 Consistency <- function (dataset, tree, compress = FALSE) {
+  dsTips <- TipLabels(dataset)
+  trTips <- TipLabels(tree)
+  if (!setequal(dsTips, trTips)) {
+    dsHas <- setdiff(dsTips, trTips)
+    trHas <- setdiff(trTips, dsTips)
+    stop("Tip label mismatch: ",
+         if (length(dsHas)) "\n   `dataset` has ", paste(dsHas, collapse = ", "),
+         if (length(trHas)) "\n   `tree` has ", paste(trHas, collapse = ", ")
+    )
+  }
   minLength <- MinimumLength(dataset, compress = TRUE) # Farris's m
   maxLength <- MaximumLength(dataset, compress = TRUE) # Farris's g
   obsLength <- CharacterLength(tree, dataset, compress = TRUE) # farris's s

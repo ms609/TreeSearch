@@ -238,30 +238,35 @@ CharacterLength <- function (tree, dataset, compress = FALSE) {
   if (!inherits(tree, "phylo")) {
     stop("Tree must be of class phylo, not ", class(tree), ".")
   }
-  if (is.null(tree$tip.label)) {
+  tipLabel <- tree[["tip.label"]]
+  if (is.null(tipLabel)) {
     stop("Tree has no labels")
   }
+  if (!TreeIsRooted(tree)) {
+    stop("`tree` must be rooted; try RootTree(tree)")
+  }
+  dataNames <- names(dataset)
 
-  if (length(tree$tip.label) < length(dataset)) {
-    if (all(tree$tip.label %in% names(dataset))) {
+  if (length(tipLabel) < length(dataNames)) {
+    if (all(tipLabel %in% dataNames)) {
       cli_alert(paste0(
-        paste0(setdiff(names(dataset), tree$tip.label), collapse = ", "),
+        paste0(setdiff(dataNames, tipLabel), collapse = ", "),
         " not in tree"))
-      dataset <- dataset[intersect(names(dataset), tree$tip.label)]
+      dataset <- dataset[intersect(dataNames, tipLabel)]
     } else {
       stop("Tree tips ", 
-           paste(setdiff(tree$tip.label, names(dataset)), collapse = ", "),
+           paste(setdiff(tipLabel, dataNames), collapse = ", "),
            " not found in dataset.")
     }
   }
-  if (length(tree$tip.label) > length(dataset)) {
+  if (length(tipLabel) > length(dataNames)) {
     cli_alert(paste0(
-      paste0(setdiff(tree$tip.label, names(dataset)), collapse = ", "),
+      paste0(setdiff(tipLabel, dataNames), collapse = ", "),
       " not in `dataset`"))
     
-    tree <- KeepTip(tree, names(dataset))
+    tree <- KeepTip(tree, dataNames)
   }
-  tree <- RenumberTips(Renumber(tree), names(dataset))
+  tree <- RenumberTips(Renumber(tree), dataNames)
   
   ret <- FastCharacterLength(tree, dataset)
   # Return:
@@ -270,7 +275,6 @@ CharacterLength <- function (tree, dataset, compress = FALSE) {
   } else {
     ret[attr(dataset, "index")]
   }
-  
 }
 
 #' @rdname CharacterLength

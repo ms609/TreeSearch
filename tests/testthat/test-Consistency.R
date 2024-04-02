@@ -1,3 +1,17 @@
+test_that("Consistency() fails gracefully with unrooted trees", {
+  tree <- TreeTools::RandomTree(8, root = FALSE)
+  char <- "00112222"
+  expect_error(Consistency(StringToPhyDat(char, TipLabels(tree)), tree),
+               "tree. must be rooted")
+})
+
+test_that("Consistency() notes tree-leaf mismatch", {
+  tree <- TreeTools::BalancedTree(10)
+  char <- "00112222"
+  expect_error(Consistency(StringToPhyDat(char, TipLabels(tree)[-c(1:2)]), tree),
+               "Tip label mismatch")
+})
+
 test_that("CI & RI calculated correctly", {
   tree <- ape::read.tree(
     text = ("((a1, a2), (((b1, b2), (c, d)), ((e1, e2), (f, g))));"))
