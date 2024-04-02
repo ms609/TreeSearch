@@ -25,7 +25,7 @@ to search for a more parsimonious tree using custom optimality criteria."><meta 
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">TreeSearch</a>
-        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.3.2.9002</span>
+        <span class="version label label-danger" data-toggle="tooltip" data-placement="bottom" title="In-development version">1.4.0.9000</span>
       </span>
     </div>
 
@@ -129,7 +129,7 @@ to search for a more parsimonious tree using custom optimality criteria.</p>
 <span>  bootstrapIter <span class="op">=</span> <span class="va">searchIter</span>,</span>
 <span>  bootstrapHits <span class="op">=</span> <span class="va">searchHits</span>,</span>
 <span>  verbosity <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  suboptimal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">.Machine</span><span class="op">$</span><span class="va">double.eps</span><span class="op">)</span>,</span>
+<span>  suboptimal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">.Machine</span><span class="op">[[</span><span class="st">"double.eps"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -369,7 +369,7 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-in"><span><span class="co"># Increase value of ratchIter and searchHits to do a proper search</span></span></span>
 <span class="r-in"><span><span class="va">quickResult</span> <span class="op">&lt;-</span> <span class="fu">Ratchet</span><span class="op">(</span><span class="va">njtree</span>, <span class="va">Lobo.phy</span>, ratchIter <span class="op">=</span> <span class="fl">2</span>, searchHits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> * Beginning Parsimony Ratchet, with initial score 231</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Completed parsimony ratchet after 2 iterations with score 221</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Completed parsimony ratchet after 2 iterations with score 217</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot result (legibly)</span></span></span>
 <span class="r-in"><span><span class="va">oldPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></span>
