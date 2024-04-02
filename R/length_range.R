@@ -1,6 +1,10 @@
-#' Minimum and Maximum lengths a character can attain
+#' Minimum and Maximum lengths possible for a character
 #' 
-#' The smallest and largest length that a character can attain on any tree.
+#' The smallest and largest length that a phylogenetic character can attain on
+#' any tree.
+#' 
+#' Ambiguous inapplicables (e.g. `{0, -}`) are currently replaced with the
+#' plain inapplicable token `-`, reflecting the current behaviour of Morphy.
 #' 
 #' @param x An object of class `phyDat`;
 #' or a string to be coerced to a `phyDat` object via 
@@ -36,6 +40,7 @@
 #' 
 #' # Calculate length of a single character from its textual representation
 #' MinimumLength("-{-1}{-2}{-3}2233")
+#' MaximumLength("----0011")
 #' @template MRS
 #' @family tree scoring
 #' @export
@@ -187,6 +192,17 @@ MaximumLength.numeric <- function(x, compress = NA) {
     unions <- apply(tokens, 2, function(i) colSums(i | tokens, 2))
     .Merge <- function(a, b) sum(2 ^ (which(tokens[, a] | tokens[, b]) - 1))
     loopCount <- 0
+    
+    
+    # Think of this algorithm as building up a tree by joining regions in a
+    # manner guaranteed to add a Fitch step, wherever possible.
+    # 
+    # The best we can do is include a leaf with each token 0..n to make a
+    # region whose ancestral state is {012....n}
+    # 
+    # If we have inapplicable tokens, we can then plant these regions in a sea
+    # of inapplicables just large enough to make each region denote a separate
+    # origin of each token, if we have enough (a) regions and (b) inapplicables.
     
     # Start with the token denoting the most ambiguous states
     repeat {
