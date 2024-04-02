@@ -187,7 +187,7 @@ MaximumLength.numeric <- function(x, compress = NA) {
   unions <- apply(tokens, 2, function(i) colSums(i | tokens, 2))
   .Merge <- function(a, b) sum(2 ^ (which(tokens[, a] | tokens[, b]) - 1))
   length <- 0
-  panic <- 0
+  loopCount <- 0
   
   # Start with the token denoting the most ambiguous states
   repeat {
@@ -195,8 +195,11 @@ MaximumLength.numeric <- function(x, compress = NA) {
     if (amb < 1) {
       break
     }
-    panic <- panic + 1
-    if (panic > 1000) stop("Stuck in repeat!")
+    loopCount <- loopCount + 1
+    if (loopCount > 1e4) {
+      stop("MaximumLength() failed.",                                           # nocov
+           " Please report this bug to TreeSearch maintainer.")                 # nocov
+    }
     escape <- FALSE
     
     #  We should optimally pair ...+++ with +++... to yield ++++++
