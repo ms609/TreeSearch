@@ -33,7 +33,7 @@ test_that("Consistency() handles `-`", {
   s <- 5
   expect_equal(TreeLength(tree, charDat), s)
   h <- s - m
-  g <- 7
+  g <- 7 + 1
   expect_equal(MaximumLength(char, tree), g)
   r <- (g - s) / (g - m)
   expect_equal(
