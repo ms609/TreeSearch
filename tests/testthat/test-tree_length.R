@@ -276,7 +276,7 @@ test_that("Character compression works", {
   expect_equal(dim(Consistency(dataset, tree)), c(137, 3))
   expect_equal(length(CharacterLength(tree, dataset, compress = TRUE)), 118)
   expect_equal(length(MinimumLength(dataset, compress = TRUE)), 118)
-  expect_equal(dim(Consistency(dataset, tree, compress = TRUE)), c(137, 3))
+  expect_equal(dim(Consistency(dataset, tree, compress = TRUE)), c(118, 3))
 })
 
 test_that("X_MorphyLength", {
