@@ -45,7 +45,7 @@ test_that("Tree can be found", {
   # Interestingly, a good example of a case with multiple optima that require
   # ratchet to move between
   iw <- MaximizeParsimony(phy11, random11, ratchIter = 1, tbrIter = 5,
-                         concavity = 10, verbosity = 0L)[[1]]
+                          concavity = 10, verbosity = 0L)[[1]]
   expect_equal(comb11, iw)
 #  TODO: Sectorial Search not working yet!
 #  expect_equal(SectorialSearch(RandomTree(phy11, "a"), phy11, verbosity = -1), comb11) 

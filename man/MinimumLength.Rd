@@ -5,8 +5,11 @@
 \alias{MinimumLength.phyDat}
 \alias{MinimumLength.numeric}
 \alias{MinimumLength.character}
+\alias{MaximumLength.character}
 \alias{MinimumSteps}
-\title{Minimum length}
+\alias{MaximumLength}
+\alias{MaximumLength.numeric}
+\title{Minimum and Maximum lengths possible for a character}
 \usage{
 MinimumLength(x, compress = FALSE)
 
@@ -16,7 +19,13 @@ MinimumLength(x, compress = FALSE)
 
 \method{MinimumLength}{character}(x, compress = TRUE)
 
+\method{MaximumLength}{character}(x, compress = TRUE)
+
 MinimumSteps(x)
+
+MaximumLength(x, compress = TRUE)
+
+\method{MaximumLength}{numeric}(x, compress = NA)
 }
 \arguments{
 \item{x}{An object of class \code{phyDat};
@@ -36,9 +45,18 @@ character, decompressed using the dataset's \code{index} attribute.}
 \value{
 \code{MinimumLength()} returns a vector of integers specifying the
 minimum number of steps that each character must contain.
+
+\code{MaximumLength()} returns a vector of integers specifying the
+maximum number of steps that each character can attain in a parsimonious
+reconstruction on a tree.  Inapplicable tokens are not yet supported.
 }
 \description{
-The smallest length that a character can obtain on any tree.
+The smallest and largest length that a phylogenetic character can attain on
+any tree.
+}
+\details{
+Ambiguous inapplicables (e.g. \verb{\{0, -\}}) are currently replaced with the
+plain inapplicable token \code{-}, reflecting the current behaviour of Morphy.
 }
 \examples{
 data("inapplicable.datasets")
@@ -59,6 +77,7 @@ MinimumLength(myPhyDat, compress = TRUE)
 
 # Calculate length of a single character from its textual representation
 MinimumLength("-{-1}{-2}{-3}2233")
+MaximumLength("----0011")
 }
 \seealso{
 Other tree scoring: 

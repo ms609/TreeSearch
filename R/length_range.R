@@ -1,7 +1,10 @@
-#' Minimum length
+#' Minimum and Maximum lengths possible for a character
 #' 
-#' The smallest length that a character can obtain on any tree.
+#' The smallest and largest length that a phylogenetic character can attain on
+#' any tree.
 #' 
+#' Ambiguous inapplicables (e.g. `{0, -}`) are currently replaced with the
+#' plain inapplicable token `-`, reflecting the current behaviour of Morphy.
 #' 
 #' @param x An object of class `phyDat`;
 #' or a string to be coerced to a `phyDat` object via 
@@ -37,6 +40,7 @@
 #' 
 #' # Calculate length of a single character from its textual representation
 #' MinimumLength("-{-1}{-2}{-3}2233")
+#' MaximumLength("----0011")
 #' @template MRS
 #' @family tree scoring
 #' @export
@@ -47,15 +51,16 @@ MinimumLength <- function (x, compress = FALSE) UseMethod("MinimumLength")
 MinimumLength.phyDat <- function (x, compress = FALSE) {
   
   at <- attributes(x)
-  nLevel <- length(at$level)
-  nChar <- at$nr
+  levels <- at[["levels"]]
+  nLevel <- length(levels)
+  nChar <- at[["nr"]]
   nTip <- length(x)
-  cont <- at$contrast
+  cont <- at[["contrast"]]
   if (is.null(colnames(cont))) {
-    colnames(cont) <- as.character(at$levels)
+    colnames(cont) <- as.character(levels)
   }
   
-  inappLevel <- at$levels == "-"
+  inappLevel <- levels == "-"
   powersOf2 <- 2L ^ (seq_len(nLevel - sum(inappLevel)) - 1L)
   
   # Treat {-, 1} as {1}
@@ -68,7 +73,7 @@ MinimumLength.phyDat <- function (x, compress = FALSE) {
     tmp[cont[, "-"] == 1] <- 0
     ambigIsInapp <- matrix(tmp[unlisted], nChar, nTip)
     
-    inappCount <- rowSums(matrix(unlisted %in% which(at$allLevels == "-"),
+    inappCount <- rowSums(matrix(unlisted %in% which(at[["allLevels"]] == "-"),
                                  nChar, nTip))
     binaryMatrix <- ambigIsApp
     binaryMatrix[inappCount > 1, ] <- ambigIsInapp[inappCount > 1, ]
@@ -76,7 +81,7 @@ MinimumLength.phyDat <- function (x, compress = FALSE) {
     binaryMatrix <- ambigIsApp
   }
   
-  ret <- apply(binaryMatrix, 1, MinimumLength)
+  ret <- apply(binaryMatrix, 1, MinimumLength.numeric)
   
   # Return:
   if (compress) {
@@ -91,7 +96,9 @@ MinimumLength.phyDat <- function (x, compress = FALSE) {
 MinimumLength.numeric <- function (x, compress = NA) {
   
   uniqueStates <- unique(x[x > 0])
-  if (length(uniqueStates) < 2) return (0)
+  if (length(uniqueStates) < 2) {
+    return (0)
+  }
   tokens <- vapply(uniqueStates, intToBits, raw(32)) != 00
   tokens <- tokens[apply(tokens, 1, any), ]
   
@@ -128,13 +135,22 @@ MinimumLength.numeric <- function (x, compress = NA) {
   }
 }
 
-#' @rdname MinimumLength
 #' @importFrom TreeTools NexusTokens StringToPhyDat
+.MumLength.character <- function (x, Func) {
+  nTip <- length(NexusTokens(x[[1]]))
+  vapply(x, function (x) Func(StringToPhyDat(x, nTip)), 1, USE.NAMES = FALSE)
+}
+
+#' @rdname MinimumLength
 #' @export
 MinimumLength.character <- function (x, compress = TRUE) {
-  nTip <- length(NexusTokens(x[1]))
-  vapply(x, function (x) MinimumLength(StringToPhyDat(x, nTip)),
-         1, USE.NAMES = FALSE)
+  .MumLength.character(x, MinimumLength.phyDat)
+}
+
+#' @rdname MinimumLength
+#' @export
+MaximumLength.character <- function (x, compress = TRUE) {
+  .MumLength.character(x, MaximumLength.phyDat)
 }
 
 
@@ -143,4 +159,136 @@ MinimumSteps <- function(x) {
   .Deprecated("MinimumLength",
               msg = "Renamed to `MinimumLength()` and recoded to better support inapplicable tokens")
   MinimumLength(x, compress = TRUE)
+}
+
+#' @rdname MinimumLength
+#' @return `MaximumLength()` returns a vector of integers specifying the 
+#' maximum number of steps that each character can attain in a parsimonious
+#' reconstruction on a tree.  Inapplicable tokens are not yet supported.
+#' @export
+MaximumLength <- function(x, compress = TRUE) {
+  UseMethod("MaximumLength")
+}
+
+#' @rdname MinimumLength
+#' @export
+MaximumLength.numeric <- function(x, compress = NA) {
+  
+  counts <- tabulate(x[x > 0])
+  nInapp <- sum(x == 0)
+  regions <- max(1, nInapp - 1)
+  steps <- 0
+  if (sum(counts > 0) > 1) {
+    nState <- floor(log2(length(counts))) + 1L
+    nToken <- 2 ^ nState - 1
+    counts <- c(counts, double(nToken - length(counts)))
+    
+    tokens <- vapply(seq_len(nToken), intToBits, raw(32)) != 00
+    tokens <- tokens[apply(tokens, 1, any), ]
+    ambiguities <- colSums(tokens)
+    active <- c(rep(TRUE, nToken - 1), FALSE)
+    
+    intersects <- apply(tokens, 2, function(i) apply(i & tokens, 2, any))
+    unions <- apply(tokens, 2, function(i) colSums(i | tokens, 2))
+    .Merge <- function(a, b) sum(2 ^ (which(tokens[, a] | tokens[, b]) - 1))
+    loopCount <- 0
+    
+    
+    # Think of this algorithm as building up a tree by joining regions in a
+    # manner guaranteed to add a Fitch step, wherever possible.
+    # 
+    # The best we can do is include a leaf with each token 0..n to make a
+    # region whose ancestral state is {012....n}
+    # 
+    # If we have inapplicable tokens, we can then plant these regions in a sea
+    # of inapplicable tokens just large enough to make each region denote a
+    # separate origin of each token, if we have enough (a) regions and (b)
+    # inapplicable tokens.
+    
+    # Start with the token denoting the most ambiguous states
+    repeat {
+      amb <- max(-Inf, ambiguities[counts > 0 & active])
+      if (amb < 1) {
+        break
+      }
+      loopCount <- loopCount + 1
+      if (loopCount > 1e4) {
+        stop("MaximumLength() failed.",                                         # nocov
+             " Please report this bug to TreeSearch maintainer.")               # nocov
+      }
+      escape <- FALSE
+      
+      #  We should optimally pair ...+++ with +++... to yield ++++++
+      #  before considering ++.... for ++.+++
+      for (unionSize in nState:(amb + 1)) {
+        for (i in which(ambiguities == amb & counts > 0 & active)) {
+          options <- counts > 0 & !intersects[i, ] & active
+          candidates <- options & unions[i, ] == unionSize
+          if (any(options)) {
+            if (any(candidates)) {
+              chosen <- which(candidates)[which.max(counts[candidates])]
+              counts[c(i, chosen)] <- counts[c(i, chosen)] - 1
+              product <- .Merge(i, chosen)
+              counts[[product]] <- counts[[product]] + 1
+              steps <- steps + 1
+              escape <- TRUE
+              break
+            }
+          } else {
+            # There will never be a match for this ambiguity; disable 
+            active[[i]] <- FALSE
+          }
+        }
+        if (escape) {
+          break
+        }
+      }
+    }
+  }
+  # Return:
+  steps + max(0, min(sum(counts), regions) - 1)
+}
+
+#' @export
+MaximumLength.phyDat <- function (x, compress = FALSE) {
+  
+  at <- attributes(x)
+  levels <- at[["levels"]]
+  nLevel <- length(levels)
+  nChar <- at[["nr"]]
+  nTip <- length(x)
+  cont <- at[["contrast"]]
+  if (is.null(colnames(cont))) {
+    colnames(cont) <- as.character(levels)
+  }
+  
+  inappLevel <- levels == "-"
+  powersOf2 <- 2L ^ (seq_len(nLevel - sum(inappLevel)) - 1L)
+  
+  # Treat {-, 1} as {1}
+  unlisted <- unlist(x, use.names = FALSE)
+  tmp <- as.integer(cont[, colnames(cont) != "-", drop = FALSE] %*% powersOf2)
+  ambigIsApp <- matrix(tmp[unlisted], nChar, nTip)
+  
+  if (any(inappLevel)) {
+    # Treat {-, 1} as {-}
+    tmp[cont[, "-"] == 1] <- 0
+    ambigIsInapp <- matrix(tmp[unlisted], nChar, nTip)
+    
+    inappCount <- rowSums(matrix(unlisted %in% which(at[["allLevels"]] == "-"),
+                                 nChar, nTip))
+    binaryMatrix <- ambigIsApp
+    binaryMatrix[inappCount > 1, ] <- ambigIsInapp[inappCount > 1, ]
+  } else {
+    binaryMatrix <- ambigIsApp
+  }
+  
+  ret <- apply(binaryMatrix, 1, MaximumLength.numeric)
+  
+  # Return:
+  if (compress) {
+    ret
+  } else {
+    ret[attr(x, "index")]
+  }
 }

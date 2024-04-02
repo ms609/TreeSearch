@@ -1,3 +1,10 @@
+# TreeSearch 1.4.0.9000 (development)
+
+- `MaximumLength()` calculates maximum possible length of characters, including
+  with inapplicable tokens
+- `Consistency()` now returns retention index and rescaled consistency index
+
+
 # TreeSearch 1.4.0 (2023-08-18)
 
 ## New features

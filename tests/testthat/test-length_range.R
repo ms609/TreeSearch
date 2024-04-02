@@ -2,12 +2,17 @@ test_that("Deprecation", {
   expect_equal(MinimumLength(1:3), expect_warning(MinimumSteps(1:3)))
 })
 
-test_that("Minimum step counts are correctly calculated", {
+test_that("Step counts are correctly calculated", {
   library("TreeTools")
-  expect_equal(1, MinimumLength(1:3))
-  expect_equal(1, MinimumLength(c(1:3, 5)))
-  expect_equal(0, MinimumLength(c(6, 7, 14)))
-  expect_equal(1, MinimumLength(0:3)) # 0 representing the inapplicable token
+  expect_equal(MinimumLength(rep(1, 3)), 0)
+  expect_equal(MaximumLength(rep(1, 3)), 0)
+  expect_equal(MinimumLength(1:3), 1)
+  expect_equal(MaximumLength(1:3), 1)
+  
+  # ..+, .+., .++, +.+ 
+  expect_equal(MinimumLength(c(1:3, 5)), 1)
+  expect_equal(MinimumLength(c(6, 7, 14)), 0)
+  expect_equal(MinimumLength(0:3), 1) # 0 representing the inapplicable token
   
   # ++++, .++., ..++
   expect_equal(0, MinimumLength(c(2046, 384, 1152)))
@@ -83,3 +88,66 @@ test_that("Minimum step counts are correctly calculated", {
                MinimumLength(inapplicable.phyData[[4]], compress = TRUE))
   
 })
+
+test_that("MaximumLength() edge cases are handled correctly", {
+  expect_equal(MaximumLength("00000000000111"), 3)
+  expect_equal(MaximumLength("001122{12}"), 4)
+  expect_equal(MaximumLength("0123 0123 0123 ????"), 3 * 3)
+  expect_equal(MaximumLength( "00112233{01}{23}{012}?"), 3 + 3 + 1)
+})
+
+test_that("MaximumLength() handles inapplicables", {
+  # Number of regions = number of inapplicable tokens - 1
+  # One extra step allowable for each extra region
+  expect_equal(MaximumLength("11111--"), 0)
+  
+  if (interactive()) {
+    tree <- ape::read.tree(
+      text = ("(a, (b, (c, (i1, (i2, (i3, e))))));"))
+    char <- "1110001"
+    charDat <- StringToPhyDat(char, TipLabels(tree))
+    PlotCharacter(tree, charDat)
+  }
+  expect_equal(MaximumLength("111---1"), 1)
+  
+  if (interactive()) {
+    tree <- ape::read.tree(
+      text = ("(a, (b, (c, ((i1, (i2, d)), (i3, (i4, e))))));"))
+    char <- "111001001"
+    charDat <- StringToPhyDat(char, TipLabels(tree))
+    PlotCharacter(tree, charDat)
+  }
+  expect_equal(MaximumLength("111--1--1"), 2)
+  
+  if (interactive()) {
+    tree <- ape::read.tree(
+      text = ("(a, (b, (i0, (((i1, d), (i2, e)), ((i3, c), (i4, f))))));"))
+    char <- "11001010101"
+    charDat <- StringToPhyDat(char, TipLabels(tree))
+    PlotCharacter(tree, charDat) # Treated as independent losses
+    tree <- ape::read.tree(
+      text = ("(a, (b, (c, (i0, (((i1, d), (i2, e)), (i3, (i4, f)))))));"))
+    char <- "11100101001"
+    charDat <- StringToPhyDat(char, TipLabels(tree))
+    PlotCharacter(tree, charDat) # Can support four distinct regions
+  }
+  expect_equal(MaximumLength("111--1---1"), 3)
+  expect_equal(MaximumLength("111-----"), 2)
+  expect_equal(MinimumLength("011-----"), 1)
+  expect_equal(MaximumLength("011-----"), 2)
+  expect_equal(MaximumLength("0111-----"), 3)
+  twoPair <- StringToPhyDat("0011-----", tips = letters[1:9])
+  colnames(attr(twoPair, "contrast")) <- NULL
+  expect_equal(MaximumLength(twoPair), 3)
+  expect_equal(MaximumLength("1--1---0"), 2)
+  expect_equal(MaximumLength("--1---1"), 1)
+  expect_equal(MinimumLength("--1---0"), 1)
+  expect_equal(MinimumLength("--1---0"), 1)
+  expect_equal(MaximumLength("--1---"), 0)
+  expect_equal(MaximumLength("-----"), 0)
+  
+  expect_equal(MaximumLength("001122{12}---"), 4 + 1)
+  expect_equal(MaximumLength("0123 0123 0123 ----"), 3 * 3 + 2)
+  expect_equal(MaximumLength("00112233{01}{23}{012}----"), 3 + 3 + 1 + 2)
+})
+
