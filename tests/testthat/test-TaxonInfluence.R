@@ -33,6 +33,7 @@ test_that("TaxonInfluence() saves intermediate trees", {
   on.exit(unlink(testDir))
   inf <- TaxonInfluence(dataset, tree, ratchIter = 0, startIter = 0, verb = 0,
                         savePath = paste0(testDir, "/tmp-"))
+  expect_false(file.exists(basename(testDir)))
   expect_true(file.exists(paste0(testDir, "/tmp-5.nex")))
   expect_error(TaxonInfluence(dataset, useCache = TRUE),
                "Specify cache path using `savePath` parameter")
