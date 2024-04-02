@@ -144,7 +144,6 @@ test_that("MaximumLength() handles inapplicables", {
   expect_equal(MaximumLength("--1---"), 0)
   expect_equal(MaximumLength("-----"), 0)
   
-  
   expect_equal(MaximumLength("001122{12}---"), 4 + 1)
   expect_equal(MaximumLength("0123 0123 0123 ----"), 3 * 3 + 2)
   expect_equal(MaximumLength("00112233{01}{23}{012}----"), 3 + 3 + 1 + 2)

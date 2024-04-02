@@ -292,8 +292,3 @@ MaximumLength.phyDat <- function (x, compress = FALSE) {
     ret[attr(x, "index")]
   }
 }
-
-#' @export
-MaximumLength.default  <- function(x, compress = TRUE) { 
-  `length<-`(numeric(), attr(x, "nr"))
-}
