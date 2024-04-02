@@ -23,17 +23,20 @@ retention index (\code{ri}), and
 rescaled consistency index (\code{rc}).
 }
 \description{
-\code{Consistency()} calculates the so-called consistency and retention "indices"
+\code{Consistency()} calculates the consistency "index" and retention index
 \insertCite{Farris1989}{TreeSearch}
 for each character in a dataset, given a bifurcating tree.
 Although there is not a straightforward interpretation of these indices,
 they are sometimes taken as an indicator of the fit of a character to a
-tree.  Values correlate with the number of species sampled and the
+tree.
+Values correlate with the number of species sampled and the
 distribution of taxa between character states, so are not strictly comparable
 between characters in which these factors differ.
 }
 \details{
-#TODO: Retention index not yet implemented.
+Inapplicable characters are treated according to their default treatment
+in \code{\link[=TreeLength]{TreeLength()}}, following the treatment of
+\insertCite{Brazeau2019;textual}{TreeSearch}.
 }
 \examples{
 data(inapplicable.datasets)
