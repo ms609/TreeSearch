@@ -183,13 +183,19 @@ MaximumLength.numeric <- function(x, compress = NA) {
     nToken <- 2 ^ nState - 1
     counts <- c(counts, double(nToken - length(counts)))
     
-    tokens <- vapply(seq_len(nToken), intToBits, raw(32)) != 00
-    tokens <- tokens[apply(tokens, 1, any), ]
-    ambiguities <- colSums(tokens)
+    rawTokens <- vapply(seq_len(nToken), intToBits, raw(32))[seq_len(nState), ]
+    tokens <- rawTokens != 00
+    tokenSums <- colSums(tokens)
     active <- c(rep(TRUE, nToken - 1), FALSE)
     
-    intersects <- apply(tokens, 2, function(i) colSums(i & tokens) > 0)
-    unions <- apply(tokens, 2, function(i) colSums(i | tokens, 2))
+    intersects <- apply(tokens, 2,
+                        function(i) colSums(tokens[i, , drop = FALSE]))
+    nonIntersect <- !intersects
+    unions <- vapply(
+      seq_len(nToken),
+      function(i) sum(tokens[, i]) + tokenSums - intersects[i, ],
+      double(nToken)
+    )
     .Merge <- function(a, b) sum(2 ^ (which(tokens[, a] | tokens[, b]) - 1))
     loopCount <- 0
     
@@ -207,7 +213,7 @@ MaximumLength.numeric <- function(x, compress = NA) {
     
     # Start with the token denoting the most ambiguous states
     repeat {
-      amb <- max(-Inf, ambiguities[counts > 0 & active])
+      amb <- max(-Inf, tokenSums[counts > 0 & active])
       if (amb < 1) {
         break
       }
@@ -221,8 +227,8 @@ MaximumLength.numeric <- function(x, compress = NA) {
       #  We should optimally pair ...+++ with +++... to yield ++++++
       #  before considering ++.... for ++.+++
       for (unionSize in nState:(amb + 1)) {
-        for (i in which(ambiguities == amb & counts > 0 & active)) {
-          options <- counts > 0 & !intersects[i, ] & active
+        for (i in which(tokenSums == amb & counts > 0 & active)) {
+          options <- counts > 0 & nonIntersect[i, ] & active
           candidates <- options & unions[i, ] == unionSize
           if (any(options)) {
             if (any(candidates)) {
