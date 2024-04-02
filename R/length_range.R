@@ -57,7 +57,7 @@ MinimumLength.phyDat <- function (x, compress = FALSE) {
   nTip <- length(x)
   cont <- at[["contrast"]]
   if (is.null(colnames(cont))) {
-    colnames(cont) <- as.character(levens)
+    colnames(cont) <- as.character(levels)
   }
   
   inappLevel <- levels == "-"
