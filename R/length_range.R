@@ -188,7 +188,7 @@ MaximumLength.numeric <- function(x, compress = NA) {
     ambiguities <- colSums(tokens)
     active <- c(rep(TRUE, nToken - 1), FALSE)
     
-    intersects <- apply(tokens, 2, function(i) apply(i & tokens, 2, any))
+    intersects <- apply(tokens, 2, function(i) colSums(i & tokens) > 0)
     unions <- apply(tokens, 2, function(i) colSums(i | tokens, 2))
     .Merge <- function(a, b) sum(2 ^ (which(tokens[, a] | tokens[, b]) - 1))
     loopCount <- 0
