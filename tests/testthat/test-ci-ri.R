@@ -1,18 +1,20 @@
 test_that("CI & RI calculated correctly", {
-  owch3 <- "0102220333"
-  tr3 <- ape::read.tree(text=("((a1, a2), (((b1, b2), (c, d)), ((e1, e2), (f, g))));"))
+  tree <- ape::read.tree(text=("((a1, a2), (((b1, b2), (c, d)), ((e1, e2), (f, g))));"))
+  char <- "0102220333"
+  charDat <- StringToPhyDat(char, TipLabels(tree))
   if (interactive()) {
-    PlotCharacter(tr3, StringToPhyDat(owch3, TipLabels(tr3)))
+    PlotCharacter(tree, charDat)
   }
-  .AsPhyDat <- function(string, tree) {
-    StringToPhyDat(string, TipLabels(tree))
-  }
+  m <- 3
+  expect_equal(MinimumLength(char, tree), m)
+  s <- 5
+  expect_equal(TreeLength(tree, charDat), s)
+  h <- s - m
+  g <- 7
+  expect_equal(MaximumLength(char, tree), g)
+  r <- (g - s) / (g - m)
   expect_equal(
-    Consistency(.AsPhyDat(owch3, tr3), tr3),
-    c(ci = 0.6, ri = NA, rc = NA)
-  )
-  expect_equal(
-    Consistency(.AsPhyDat(rep(owch3, 2), tr3), tr3),
-    rbind(c(ci = 0.6, ri = NA, rc = NA), c(ci = 0.6, ri = NA, rc = NA))
+    Consistency(StringToPhyDat(char, TipLabels(tree)), tree),
+    c(ci = m / s, ri = r, rc = r * m / s)
   )
 })
