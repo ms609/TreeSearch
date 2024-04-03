@@ -22,10 +22,10 @@
 #' number of steps in a parsimonious reconstruction on the longest possible tree
 #' for a character. 
 #' The **retention index** is the maximum length of a character minus the number
-#' of steps observed on a given tree; divided by the maxmimum length minus the
+#' of steps observed on a given tree; divided by the maximum length minus the
 #' minimum length.  It is interpreted as the ratio between the observed 
-#' homoplasy, and the maximum observed homoplasy, and scales from zero (perfect
-#' fit) to one (worst fit that can be reconstructed under parsimony).
+#' homoplasy, and the maximum observed homoplasy, and scales from zero
+#' (worst fit that can be reconstructed under parsimony) to one (perfect fit).
 #' 
 #' The **rescaled consistency index** is the product of the consistency and
 #' retention indices; it rescales the consistency index such that its range of
