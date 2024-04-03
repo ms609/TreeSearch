@@ -1,4 +1,4 @@
-# TreeSearch 1.4.0.9000 (development)
+# TreeSearch 1.4.1 (2024-04-03)
 
 - `MaximumLength()` calculates maximum possible length of characters, including
   with inapplicable tokens

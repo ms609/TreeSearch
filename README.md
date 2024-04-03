@@ -85,6 +85,7 @@ For more control over search settings, see [`?MaximizeParsimony()`](https://ms60
 - [Calculating concavity profiles](https://ms609.github.io/TreeSearch/articles/profile-scores.html) for Profile Parsimony
 - [Tree search with profile parsimony](https://ms609.github.io/TreeSearch/articles/profile.html)
 
+'TreeSearch' uses [semantic versioning](https://semver.org/).
 Please note that the 'TreeSearch' project is released with a
 [Contributor Code of Conduct](CODE_OF_CONDUCT.md).
 By contributing to this project, you agree to abide by its terms.
