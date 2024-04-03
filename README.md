@@ -36,6 +36,8 @@ Install and load the stable version from CRAN as follows:
 ```r
 install.packages("TreeSearch")
 library("TreeSearch")
+# Launch the Shiny App with:
+TreeSearch::EasyTrees()
 ```
 
 Install and load the development version of "TreeSearch" with:
