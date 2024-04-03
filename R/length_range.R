@@ -108,7 +108,7 @@ MinimumLength.numeric <- function (x, compress = NA) {
   repeat {
     tokens <- tokens[!duplicated(tokens), , drop = FALSE]
     unambiguous <- colSums(tokens) == 1
-    tokenNecessary <- apply(tokens[, unambiguous, drop = FALSE], 1, any)
+    tokenNecessary <- rowSums(tokens[, unambiguous, drop = FALSE]) > 0
     statesRemaining <- !unambiguous
     statesRemaining[statesRemaining] <- colSums(
       tokens[tokenNecessary, statesRemaining, drop = FALSE]) == 0
