@@ -43,7 +43,7 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
                             EdgeSwapper, 
                             scoreToBeat = TreeScorer(parent, child, dataset, ...),
                             iter = "?", hits = 0L, verbosity = 0L, ...) {
-  eps <- .Machine$double.eps ^ 0.5
+  eps <- .Machine[["double.eps"]] ^ 0.5
   rearrangedEdges <- EdgeSwapper(parent, child)
   if (is.list(rearrangedEdges[[1]])) {
     # Then we've been sent a list of possible trees

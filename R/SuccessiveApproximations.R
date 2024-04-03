@@ -108,8 +108,8 @@ SuccessiveWeights <- function(tree, dataset) {
     stop("Invalid data type; prepare data with PhyDat() or PrepareDataSA().")
   }
   at <- attributes(dataset)
-  weight <- at$weight
-  sa.weights <- at$sa.weights
+  weight <- at[["weight"]]
+  sa.weights <- at[["sa.weights"]]
   if (is.null(sa.weights)) sa.weights <- rep.int(1, length(weight))
   steps <- CharacterLength(tree, dataset, compress = TRUE)
   
@@ -120,13 +120,13 @@ SuccessiveWeights <- function(tree, dataset) {
 PrepareDataSA <- function (dataset) {
 # Written with reference to phangorn:::prepareDataFitch
   at <- attributes(dataset)
-  nam <- at$names
-  nLevel <- length(at$level)
-  nChar <- at$nr
+  nam <- at[["names"]]
+  nLevel <- length(at[["levels"]])
+  nChar <- at[["nr"]]
   cont <- attr(dataset, "contrast")
   nTip <- length(dataset)
   
-  at$names <- NULL
+  at[["names"]] <- NULL
   powers.of.2 <- 2L ^ c(0L:(nLevel - 1L))
   tmp <- cont %*% powers.of.2
   tmp <- as.integer(tmp)
@@ -134,7 +134,7 @@ PrepareDataSA <- function (dataset) {
   ret <- tmp[dataset] 
   ret <- as.integer(ret)
   attributes(ret) <- at
-  inappLevel <- which(at$levels == "-")
+  inappLevel <- which(at[["levels"]] == "-")
   attr(ret, "dim") <- c(nChar, nTip)  
   applicableTokens <- setdiff(powers.of.2, 2 ^ (inappLevel - 1))
   attr(ret, "split.sizes") <- t(apply(ret, 1, function(x) vapply(applicableTokens, function (y) sum(x == y), integer(1))))

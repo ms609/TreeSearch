@@ -59,7 +59,7 @@
 #' @family tree rearrangement functions
 #' @export
 NNI <- function (tree, edgeToBreak = NULL) {
-  edge <- tree$edge
+  edge <- tree[["edge"]]
   parent <- edge[, 1]
   StopUnlessBifurcating(parent)
   if (!is.null(edgeToBreak) && edgeToBreak == -1) {
@@ -69,13 +69,13 @@ NNI <- function (tree, edgeToBreak = NULL) {
     # newEdges <- vapply(which(samplable), DoubleNNI, parent=parent, child=child, list(matrix(0L, nEdge, 2), matrix(0L, nEdge, 2)))
     newEdges <- unlist(lapply(which(samplable), DoubleNNI,
                               parent = parent, child = child), recursive = FALSE) # Quicker than vapply, surprisingly
-    newTrees <- structure(lapply(newEdges, function (edges) {tree$edge <- edges; tree}), # Quicker than vapply, surprisingly
+    newTrees <- structure(lapply(newEdges, function (edges) {tree[["edge"]] <- edges; tree}), # Quicker than vapply, surprisingly
                           class = "multiPhylo")
     # Return:
     newTrees
   } else {
     newEdge <- NNISwap(parent, edge[, 2], edgeToBreak = edgeToBreak)
-    tree$edge <- cbind(newEdge[[1]], newEdge[[2]])
+    tree[["edge"]] <- cbind(newEdge[[1]], newEdge[[2]])
     
     # Return:
     tree
@@ -92,10 +92,10 @@ NNI <- function (tree, edgeToBreak = NULL) {
 #' @importFrom TreeTools NTip
 #' @export
 cNNI <- function (tree, edgeToBreak = NULL, whichSwitch = NULL) {
-  edge <- tree$edge
+  edge <- tree[["edge"]]
   if (is.null(edgeToBreak)) edgeToBreak <- sample.int(dim(edge)[1] - NTip(tree) - 1L, 1L)
   if (is.null(whichSwitch)) whichSwitch <- sample.int(2L, 1L)
-  tree$edge <- nni(edge, edgeToBreak, whichSwitch)
+  tree[["edge"]] <- nni(edge, edgeToBreak, whichSwitch)
   
   # Return:
   tree
@@ -145,7 +145,7 @@ NNISwap <- function (parent, child, nTips = (length(parent) / 2L) + 1L,
 #' @template treeChild
 #' @template edgeToBreakParam
 #'
-#' @return the \code{tree$edge} parameter of the two trees consistent with the specified rearrangement
+#' @return the \code{tree[["edge"]]} parameter of the two trees consistent with the specified rearrangement
 #'
 #' @keywords internal
 #' @importFrom TreeTools RenumberTree

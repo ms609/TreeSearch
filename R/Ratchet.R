@@ -88,7 +88,7 @@ Ratchet <- function (tree, dataset,
     stop("tree must be bifurcating; try rooting with ape::root")
   }
   tree <- RenumberTips(tree, names(dataset))
-  edgeList <- tree$edge
+  edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 
   initializedData <- InitializeData(dataset)
@@ -204,7 +204,7 @@ Ratchet <- function (tree, dataset,
     if (length(forest) > 1) {
       forest[] <- lapply(forest, function (phy) {
         x <- tree
-        x$edge <- cbind(phy[[1]], phy[[2]])
+        x[["edge"]] <- cbind(phy[[1]], phy[[2]])
         attr(x, "score") <- phy[[3]]
         # Return to lapply: 
         x})
@@ -216,7 +216,7 @@ Ratchet <- function (tree, dataset,
     } else if (length(forest) == 1) {
       ret <- tree
       newEdge <- forest[[1]]
-      ret$edge <- cbind(newEdge[[1]], newEdge[[2]])
+      ret[["edge"]] <- cbind(newEdge[[1]], newEdge[[2]])
       uniqueScores <- newEdge[[3]]
     } else {
       stop("\nNo trees!? Is suboptimal set to a sensible (positive) value?")

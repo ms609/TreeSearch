@@ -81,7 +81,7 @@ TBRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   structure(lapply(edges, function (edg) {
     tree[["edge"]] <- edg
     tree
-  }), class = "multiPhylo", tip.label = tree$tip.label)
+  }), class = "multiPhylo", tip.label = tree[["tip.label"]])
 }
 
 #' @rdname TBR

@@ -47,11 +47,11 @@ PrepareDataProfile <- function (dataset) {
     return(dataset)
   }
   at <- attributes(dataset)
-  nLevel <- length(at$level)
+  nLevel <- length(at[["levels"]])
   cont <- attr(dataset, "contrast")
   nTip <- length(dataset)
-  index <- at$index
-  allLevels <- as.character(at$allLevels)
+  index <- at[["index"]]
+  allLevels <- as.character(at[["allLevels"]])
   
   contSums <- rowSums(cont)
   qmLevel <- which(contSums == ncol(cont))
@@ -76,7 +76,7 @@ PrepareDataProfile <- function (dataset) {
   
   if (length(ambigs) != 0L) {
     # Message unnecessary until multiple informative states are supported
-    # message("Ambiguous tokens ", paste(at$allLevels[ambigs], collapse = ", "),
+    # message("Ambiguous tokens ", paste(at[["allLevels"]][ambigs], collapse = ", "),
     #         " converted to "?"")
     dataset[] <- lapply(dataset, function (i) {
         i[i %fin% ambigs] <- qmLevel

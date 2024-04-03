@@ -116,7 +116,7 @@ ClusteringConcordance <- function (tree, dataset) {
   splits <- as.logical(as.Splits(tree))
   
   at <- attributes(dataset)
-  cont <- at$contrast
+  cont <- at[["contrast"]]
   if ("-" %in% colnames(cont)) {
     cont[cont[, "-"] > 0, ] <- 1
   }
@@ -142,8 +142,8 @@ ClusteringConcordance <- function (tree, dataset) {
   })
   
   splitI <- seq_len(dim(splits)[1])
-  both <- rowSums(h[splitI, at$index])
-  joint <- rowSums(h[-splitI, at$index])
+  both <- rowSums(h[splitI, at[["index"]]])
+  joint <- rowSums(h[-splitI, at[["index"]]])
   mi <- both - joint
   
   # Return:
@@ -303,7 +303,7 @@ ConcordantInformation <- function (tree, dataset) {
     infoLosses[[i]][extraSteps[i] + 1L]
   }, double(1))
   noise <- ic - signal
-  noise[noise < sqrt(.Machine$double.eps)] <- 0
+  noise[noise < sqrt(.Machine[["double.eps"]])] <- 0
   
   
   index <- attr(dataset, "index")
@@ -342,7 +342,7 @@ ConcordantInformation <- function (tree, dataset) {
     infoNeeded <- Log2Unrooted(length(dataset))
     infoOverkill <- totalInfo / infoNeeded
     discarded <- originalInfo - totalInfo
-    if (discarded < sqrt(.Machine$double.eps)) discarded <- 0
+    if (discarded < sqrt(.Machine[["double.eps"]])) discarded <- 0
     
     message("dataset contains ",
             signif(totalInfo), " bits",

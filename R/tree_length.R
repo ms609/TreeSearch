@@ -60,7 +60,7 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
   }
   
   if (nTip < length(dataset)) {
-    dataset <- .Recompress(dataset[tree$tip.label])
+    dataset <- .Recompress(dataset[tree[["tip.label"]]])
   }
     
   if (is.finite(concavity)) {
@@ -68,11 +68,11 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
       dataset <- PrepareDataIW(dataset)
     }
     at <- attributes(dataset)
-    nChar  <- at$nr # strictly, transformation series patterns
+    nChar  <- at[["nr"]] # strictly, transformation series patterns
                     # these'll be upweighted later
-    weight <- at$weight
+    weight <- at[["weight"]]
     steps <- CharacterLength(tree, dataset, compress = TRUE)
-    minLength <- at$min.length
+    minLength <- at[["min.length"]]
     homoplasies <- steps - minLength
     
     # This check was once triggered - possibly fixed but remains
@@ -140,14 +140,14 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
     }
   })
   
-  nEdge <- unique(vapply(tree, function (tr) dim(tr$edge)[1], integer(1)))
+  nEdge <- unique(vapply(tree, function (tr) dim(tr[["edge"]])[1], integer(1)))
   if (length(nEdge) > 1L) {
     stop("Trees have different numbers of edges (",
            paste0(nEdge, collapse = ", "), 
            "); try collapsing polytomies?)")
   }
   
-  edges <- vapply(tree, `[[`, tree[[1]]$edge, "edge")
+  edges <- vapply(tree, `[[`, tree[[1]][["edge"]], "edge")
   
   # Initialize data
   if (profile) {
@@ -158,8 +158,8 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
     at <- attributes(dataset)
     characters <- PhyToString(dataset, ps = "", useIndex = FALSE,
                               byTaxon = FALSE, concatenate = FALSE)
-    weight <- at$weight
-    informative <- at$informative
+    weight <- at[["weight"]]
+    informative <- at[["informative"]]
     charSeq <- seq_along(characters) - 1L
     
     # Save time by dropping uninformative characters
@@ -175,7 +175,7 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
   
   # Return:
   if (iw) {
-    minLength <- at$min.length
+    minLength <- at[["min.length"]]
     if (is.null(minLength)) {
       minLength <- attr(PrepareDataIW(dataset), "min.length")
     }
@@ -318,7 +318,7 @@ MorphyTreeLength <- function (tree, morphyObj) {
     stop("`morphyObj` must be a valid Morphy pointer")
   }
   nTaxa <- mpl_get_numtaxa(morphyObj)
-  if (nTaxa != length(tree$tip.label)) {
+  if (nTaxa != length(tree[["tip.label"]])) {
     stop ("Number of taxa in Morphy object (", nTaxa,
           ") not equal to number of tips in tree")
   }

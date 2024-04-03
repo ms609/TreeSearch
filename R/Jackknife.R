@@ -31,11 +31,11 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
                        searchIter = 4000L, searchHits = 42L,
                        verbosity = 1L, ...) {
   # initialize tree and data
-  if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+  if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     stop("tree must be bifurcating; try rooting with ape::root")
   }
   tree <- RenumberTips(tree, names(dataset))
-  edgeList <- tree$edge
+  edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
   
   morphyObj <- InitializeData(dataset)

@@ -62,7 +62,7 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
     candidates <- AddTipEverywhere(tree, addition)
     nCands <- length(candidates)
     
-    theseTaxa <- candidates[[1]]$tip.label
+    theseTaxa <- candidates[[1]][["tip.label"]]
     theseData <- .Recompress(dataset[theseTaxa])
     if (is.finite(concavity)) {
       theseData <- PrepareDataIW(theseData)

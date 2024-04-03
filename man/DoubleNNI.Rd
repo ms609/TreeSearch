@@ -19,7 +19,7 @@ Alternatively, set to \code{-1} to return a complete list
 of all trees one step from the input tree.}
 }
 \value{
-the \code{tree$edge} parameter of the two trees consistent with the specified rearrangement
+the \code{tree[["edge"]]} parameter of the two trees consistent with the specified rearrangement
 }
 \description{
 Returns the edge parameter of the two trees consistent with the speficied \acronym{NNI} rearrangement

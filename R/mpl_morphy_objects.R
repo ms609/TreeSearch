@@ -11,19 +11,14 @@
 #' @importFrom Rcpp compileAttributes
 #' @export
 summary.morphyPtr <- function (object, ...) {
-  ans <- list()
-  class(ans) <- "summary.morphyPtr"
-  nTax <- mpl_get_numtaxa(object)
-  nChar <- mpl_get_num_charac(object)
-  charWeights <- MorphyWeights(object)
-
-  ans$nTax <- nTax 
-  ans$nChar <- nChar 
-  ans$nInternal <- mpl_get_num_internal_nodes(object)
-  ans$charWeights <- charWeights
-  ans$allStates <- mpl_get_symbols(object)
   # Return:
-  ans
+  structure(class = "summary.morphyPtr", list(
+    nTax = mpl_get_numtaxa(object),
+    nChar = mpl_get_num_charac(object),
+    nInternal = mpl_get_num_internal_nodes(object),
+    charWeights = MorphyWeights(object),
+    allStates = mpl_get_symbols(object)
+  ))
 }
 
 #' Set and get the character weightings associated with a Morphy object.

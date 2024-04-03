@@ -9,7 +9,7 @@
 ########  if (length(best.score) == 0) best.score <- TreeScorer(tree, dataset, ...)
 ########  sect <- DoSectorial(tree, dataset, verbosity=verbosity-1, maxit=30, 
 ########    maxIter=max(maxIter), maxHits=15, smallestSector=6, 
-########    largestSector=dim(tree$edge)[1]*0.25, Rearrangements=sectRearrangements)
+########    largestSector=dim(tree[["edge"]])[1]*0.25, Rearrangements=sectRearrangements)
 ########  for (i in seq_along(sectRearrangements)) {
 ########    iters <- if (length(maxIter) <= i) maxIter[[i]] else min(maxIter)
 ########    hits  <- if (length(maxHits) <= i) maxHits[[i]] else min(maxHits)
@@ -98,7 +98,7 @@
 ######    repeat {
 ######      sector <- sample(candidateNodes, 1)
 ######      candidate <- Subtree(tree, sector)
-######      crownTips <- candidate$tip.label
+######      crownTips <- candidate[["tip.label"]]
 ######      sectorSize <- length(crownTips)
 ######      message(sector, "size", sectorSize, "...")
 ######      
@@ -109,7 +109,7 @@
 ######    }
 ######    if (verbosity >= 0) message(" Sector OK.")
 ######    
-######    crown <- root(AddTip(crown, 0, "SECTOR_ROOT"), length(crown$tip.label) + 1, resolve.root=TRUE)
+######    crown <- root(AddTip(crown, 0, "SECTOR_ROOT"), length(crown[["tip.label"]]) + 1, resolve.root=TRUE)
 ######    initialScore <- TreeScorer(candidate, dataset, ...)
 ######    attr(candidate, "score") <- initialScore
 ######    
@@ -125,7 +125,7 @@
 ######      
 ######      subtree.labels <- crownTips
 ######      subtree.nTips <- sectorSize
-######      subtree.edge <- candidate$edge
+######      subtree.edge <- candidate[["edge"]]
 ######      subtree.parent <- subtree.edge[, 1]
 ######      subtree.child  <- subtree.edge[, 2]
 ######           
@@ -134,9 +134,9 @@
 ######      nodeAdjust <- sector - (subtree.nTips + 1)
 ######
 ######      subtree.child[!isTip] <- subtree.child[!isTip] + nodeAdjust
-######      edges <- which(tree$edge[, 2] == sector) + seq_along(subtree.parent)
-######      tree$edge[edges, 1] <- subtree.parent + nodeAdjust
-######      tree$edge[edges, 2] <- subtree.child
+######      edges <- which(tree[["edge"]][, 2] == sector) + seq_along(subtree.parent)
+######      tree[["edge"]][edges, 1] <- subtree.parent + nodeAdjust
+######      tree[["edge"]][edges, 2] <- subtree.child
 ######      
 ######      if (verbosity > 0) message(" : improved local pscore, updated tree")
 ######    } else if (verbosity > 0) message (" : no improvement to local pscore")
@@ -217,9 +217,9 @@
 ######  epsilon <- 1e-08
 ######  hits <- 0L
 ######  # initialize tree and data
-######  if (dim(tree$edge)[1] != 2 * tree$Nnode) stop("tree must be bifurcating; try rooting with ape::root")
+######  if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) stop("tree must be bifurcating; try rooting with ape::root")
 ######  tree <- RenumberTips(tree, names(dataset))
-######  edgeList <- tree$edge
+######  edgeList <- tree[["edge"]]
 ######  edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 ######  
 ######  initializedData <- InitializeData(dataset)
@@ -247,7 +247,7 @@
 ######                             maxHits = maxHits, verbosity = verbosity - 1L)
 ######  
 ######  if (edgeList[[3]] <= bestScore) {
-######    sect$edge <- cbind(edgeList[[1]], edgeList[[2]])
+######    sect[["edge"]] <- cbind(edgeList[[1]], edgeList[[2]])
 ######    attr(sect, "score") <- edgeList[[3]]
 ######    attr(sect, "hits") <- edgeList[[4]]
 ######    # Return:

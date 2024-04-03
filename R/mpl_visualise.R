@@ -56,19 +56,19 @@
 ###   if (class(dataset) != 'morphyDat') stop('Invalid dataset type in VizualizeCharacter.')
 ###   warning("#TODO: Update to use new morphyDat dataset objects")
 ###   at <- attributes(dataset)
-###   if (char.no > at$nr || char.no < 1) stop(paste0("char.no must be between 1 and ", at$nr, ' (', sum(at$weight), 'TS, ', at$nr, ' unique)'))
+###   if (char.no > at[["nr"]] || char.no < 1) stop(paste0("char.no must be between 1 and ", at[["nr"]], ' (', sum(at[["weight"]]), 'TS, ', at[["nr"]], ' unique)'))
 ###   char.dat <- dataset[char.no,]
-###   char.index <- at$index[char.no]
-###   if (is.null(at$order) || at$order != "postorder") tree <- Postorder(tree)
-###   tree.edge <- tree$edge
+###   char.index <- at[["index"]][char.no]
+###   if (is.null(at[["order"]]) || at[["order"]] != "postorder") tree <- Postorder(tree)
+###   tree.edge <- tree[["edge"]]
 ###   parent <- tree.edge[,1]
 ###   child <- tree.edge[,2]
-###   tip.label <- tree$tip.label
+###   tip.label <- tree[["tip.label"]]
 ###   nEdge <- length(parent)
 ###   nTip <- length(tip.label)
 ###   nNode <- nTip - 1
 ###   maxNode <- nNode + nTip
-###   inapp <- at$inapp.level
+###   inapp <- at[["inapp.level"]]
 ###   tips <- seq(nTip)
 ###   nodes <- nTip + seq(nNode)
 ###   parentof <- parent[match((nTip + 2L):maxNode, child )] # Exclude the root, which has no parent
@@ -85,7 +85,7 @@
 ###       children <- child[parent==n]
 ###       return (down.scorers[n] != down.scorers[children[1]] + down.scorers[children[2]])   
 ###     })
-###   text(1,1,paste0("Char ", char.no, " - TS", paste(which(at$index == char.no), collapse=", "), ": +", ret[[1]]), pos=4, cex=0.8)
+###   text(1,1,paste0("Char ", char.no, " - TS", paste(which(at[["index"]] == char.no), collapse=", "), ": +", ret[[1]]), pos=4, cex=0.8)
 ###   
 ###   
 ###   tipcols = c("#fafafa", "#fafafa", "#fafabb", "#ffbbbb", "#bbffbb", "#bbbbff", "#bbbbff", "#bbffbb", "#ffbbbb", "#bbddff", "#ffbbdd")
@@ -94,8 +94,8 @@
 ###   tipcols <- rev(tipcols)
 ###   bgcols <- tipcols[as.character(downpass.states[1,tips])]
 ###   bgcols[is.na(bgcols)] <- "#ffffbb"
-###   tiplabels(PossibleTokens(at$levels, downpass.states[1,tips]), adj=c(0.3,0.5), bg=bgcols, col="#000088", cex=0.85)
-###   nodelabels(PossibleTokens(at$levels, downpass.states[1,nodes]), adj=rep(1.25,2), bg=tipcols[as.character(downpass.states[1,nodes])], font=ifelse(down.change, 2, 1) , col=ifelse(down.change, "#cc3333", "#880000cc"), cex=ifelse(down.change,1,0.6))
+###   tiplabels(PossibleTokens(at[["levels"]], downpass.states[1,tips]), adj=c(0.3,0.5), bg=bgcols, col="#000088", cex=0.85)
+###   nodelabels(PossibleTokens(at[["levels"]], downpass.states[1,nodes]), adj=rep(1.25,2), bg=tipcols[as.character(downpass.states[1,nodes])], font=ifelse(down.change, 2, 1) , col=ifelse(down.change, "#cc3333", "#880000cc"), cex=ifelse(down.change,1,0.6))
 ###   
 ###   nodelabels(ifelse(inapp.nodes[nodes], "+", "-"), adj=c(1.25,-0.75), col=ifelse(inapp.nodes[nodes], "#008800", "#880000"), frame="none")
 ### }

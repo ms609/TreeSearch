@@ -196,7 +196,7 @@ MaximizeParsimony <- function (dataset, tree,
                                quickHits = 1 / 3,
                                concavity = Inf,
                                ratchEW = TRUE,
-                               tolerance = sqrt(.Machine$double.eps),
+                               tolerance = sqrt(.Machine[["double.eps"]]),
                                constraint,
                                verbosity = 3L) {
 
@@ -385,7 +385,7 @@ MaximizeParsimony <- function (dataset, tree,
     firstHit <- attr(bestEdges, "firstHit")
     structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
       tr <- tree
-      tr$edge <- bestEdges[, , i]
+      tr[["edge"]] <- bestEdges[, , i]
       if (any(is.na(outgroup))) {
         tr
       } else {
@@ -420,14 +420,14 @@ MaximizeParsimony <- function (dataset, tree,
   } else if (inherits(tree, "phylo")) {
     startTrees <- c(tree)
   }
-  if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+  if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     cli_alert_warning("`tree` is not bifurcating; collapsing polytomies at random")
     tree <- MakeTreeBinary(tree)
-    if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+    if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
       cli_alert_warning("Rooting `tree` on first leaf")
       tree <- RootTree(tree, 1)
     }
-    if (dim(tree$edge)[1] != 2 * tree[["Nnode"]]) {
+    if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
       stop("Could not make `tree` binary.")
     }
   }

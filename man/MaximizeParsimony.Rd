@@ -20,7 +20,7 @@ MaximizeParsimony(
   quickHits = 1/3,
   concavity = Inf,
   ratchEW = TRUE,
-  tolerance = sqrt(.Machine$double.eps),
+  tolerance = sqrt(.Machine[["double.eps"]]),
   constraint,
   verbosity = 3L
 )

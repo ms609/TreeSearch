@@ -49,7 +49,7 @@ ClusterStrings <- function (x, maxCluster = 12) {
     }, double(1))
     bestPam <- which.max(pamSils)
     pamSil <- pamSils[bestPam]
-    pamCluster <- pamClusters[[bestPam]]$cluster
+    pamCluster <- pamClusters[[bestPam]][["clustering"]]
     
     hTree <- protoclust(as.dist(dists))
     hClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
