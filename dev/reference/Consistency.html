@@ -142,10 +142,29 @@ rescaled consistency index (<code>rc</code>).</p>
     </div>
     <div id="details">
     <h2>Details</h2>
-    <p>Inapplicable characters are treated according to their default treatment
-in <code><a href="TreeLength.html">TreeLength()</a></code>, following the treatment of
-Brazeau et al. (2019)
-.</p>
+    <p>The <strong>consistency "index"</strong> (Kluge and Farris 1969)
+ is defined as the
+number of steps observed in the most parsimonious mapping of a character
+to a tree, divided by the number of steps observed on the shortest possible
+tree for that character. A value of one indicates that a character's fit to
+the tree is optimal.
+Note that as the possible values of the consistency index do not range from
+zero to one, it is not an index in the mathematical sense of the term.</p>
+<p>The maximum length of a character (see <code><a href="MinimumLength.html">MaximumLength()</a></code>) is the
+number of steps in a parsimonious reconstruction on the longest possible tree
+for a character.
+The <strong>retention index</strong> is the maximum length of a character minus the number
+of steps observed on a given tree; divided by the maxmimum length minus the
+minimum length.  It is interpreted as the ratio between the observed
+homoplasy, and the maximum observed homoplasy, and scales from zero (perfect
+fit) to one (worst fit that can be reconstructed under parsimony).</p>
+<p>The <strong>rescaled consistency index</strong> is the product of the consistency and
+retention indices; it rescales the consistency index such that its range of
+possible values runs from zero to one.</p>
+<p>The lengths of characters including inapplicable tokens are calculated
+following Brazeau et al. (2019)
+, matching their
+default treatment in <code><a href="TreeLength.html">TreeLength()</a></code>.</p>
     </div>
     <div id="references">
     <h2>References</h2>
@@ -157,6 +176,10 @@ Brazeau et al. (2019)
 “The Retention Index and the Rescaled Consistency Index.”
 <em>Cladistics</em>, <b>5</b>(4), 417--419.
 <a href="https://doi.org/10.1111/j.1096-0031.1989.tb00573.x" class="external-link">doi:10.1111/j.1096-0031.1989.tb00573.x</a>
+.<br><br> Kluge AG, Farris JS (1969).
+“Quantitative Phyletics and the Evolution of Anurans.”
+<em>Systematic Zoology</em>, <b>18</b>(1), 1--32.
+<a href="https://doi.org/10.1093/sysbio/18.1.1" class="external-link">doi:10.1093/sysbio/18.1.1</a>
 .</p>
     </div>
     <div id="author">
