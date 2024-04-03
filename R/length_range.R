@@ -100,7 +100,7 @@ MinimumLength.numeric <- function (x, compress = NA) {
     return (0)
   }
   tokens <- vapply(uniqueStates, intToBits, raw(32)) != 00
-  tokens <- tokens[apply(tokens, 1, any), ]
+  tokens <- tokens[rowSums(tokens) > 0, ]
   
   lastDim <- dim(tokens)
   tokensUsed <- 0
