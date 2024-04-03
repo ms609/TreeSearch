@@ -53,7 +53,8 @@ homoplasy, and the maximum observed homoplasy, and scales from zero
 
 The \strong{rescaled consistency index} is the product of the consistency and
 retention indices; it rescales the consistency index such that its range of
-possible values runs from zero to one.
+possible values runs from zero (least consistent) to one
+(perfectly consistent).
 
 The lengths of characters including inapplicable tokens are calculated
 following \insertCite{Brazeau2019;textual}{TreeSearch}, matching their
