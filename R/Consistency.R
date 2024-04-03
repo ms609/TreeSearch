@@ -10,9 +10,30 @@
 #' distribution of taxa between character states, so are not strictly comparable
 #' between characters in which these factors differ.
 #' 
-#' Inapplicable characters are treated according to their default treatment
-#' in [`TreeLength()`], following the treatment of
-#' \insertCite{Brazeau2019;textual}{TreeSearch}.
+#' The **consistency "index"** \insertCite{Kluge1969}{TreeSearch} is defined as the
+#' number of steps observed in the most parsimonious mapping of a character
+#' to a tree, divided by the number of steps observed on the shortest possible
+#' tree for that character. A value of one indicates that a character's fit to
+#' the tree is optimal.
+#' Note that as the possible values of the consistency index do not range from
+#' zero to one, it is not an index in the mathematical sense of the term.
+#' 
+#' The maximum length of a character (see [`MaximumLength()`]) is the
+#' number of steps in a parsimonious reconstruction on the longest possible tree
+#' for a character. 
+#' The **retention index** is the maximum length of a character minus the number
+#' of steps observed on a given tree; divided by the maxmimum length minus the
+#' minimum length.  It is interpreted as the ratio between the observed 
+#' homoplasy, and the maximum observed homoplasy, and scales from zero (perfect
+#' fit) to one (worst fit that can be reconstructed under parsimony).
+#' 
+#' The **rescaled consistency index** is the product of the consistency and
+#' retention indices; it rescales the consistency index such that its range of
+#' possible values runs from zero to one.
+#' 
+#' The lengths of characters including inapplicable tokens are calculated
+#' following \insertCite{Brazeau2019;textual}{TreeSearch}, matching their
+#' default treatment in [`TreeLength()`].
 #' 
 #' @template datasetParam
 #' @template treeParam
