@@ -188,14 +188,10 @@ MaximumLength.numeric <- function(x, compress = NA) {
     tokenSums <- colSums(tokens)
     active <- c(rep(TRUE, nToken - 1), FALSE)
     
-    intersects <- apply(tokens, 2,
-                        function(i) colSums(tokens[i, , drop = FALSE]))
-    nonIntersect <- !intersects
-    unions <- vapply(
-      seq_len(nToken),
-      function(i) sum(tokens[, i]) + tokenSums - intersects[i, ],
-      double(nToken)
-    )
+    bitTokens <- as.raw(seq_len(nToken))
+    nonIntersect <- outer(bitTokens, bitTokens, `&`) == 00
+    unions <- matrix(tokenSums[as.integer(outer(bitTokens, bitTokens, `|`))],
+                     nToken, nToken)
     .Merge <- function(a, b) sum(2 ^ (which(tokens[, a] | tokens[, b]) - 1))
     loopCount <- 0
     
