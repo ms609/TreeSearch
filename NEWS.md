@@ -289,7 +289,7 @@
 
 # TreeSearch 0.0.7
 
-## Inapplicables:
+## Inapplicable tokens:
 - Integrated with this package (previously in `inapplicable`)
 - Handle inapplicable data via API to Martin Brazeau's Morphy Phylogenetic Library
 

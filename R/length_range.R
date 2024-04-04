@@ -3,7 +3,7 @@
 #' The smallest and largest length that a phylogenetic character can attain on
 #' any tree.
 #' 
-#' Ambiguous inapplicables (e.g. `{0, -}`) are currently replaced with the
+#' Ambiguous inapplicable states (e.g. `{0, -}`) are currently replaced with the
 #' plain inapplicable token `-`, reflecting the current behaviour of Morphy.
 #' 
 #' @param x An object of class `phyDat`;

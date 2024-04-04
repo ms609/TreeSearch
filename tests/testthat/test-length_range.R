@@ -96,7 +96,7 @@ test_that("MaximumLength() edge cases are handled correctly", {
   expect_equal(MaximumLength( "00112233{01}{23}{012}?"), 3 + 3 + 1)
 })
 
-test_that("MaximumLength() handles inapplicables", {
+test_that("MaximumLength() handles inapplicable tokens", {
   # Number of regions = number of inapplicable tokens - 1
   # One extra step allowable for each extra region
   expect_equal(MaximumLength("11111--"), 0)

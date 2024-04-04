@@ -55,7 +55,7 @@ The smallest and largest length that a phylogenetic character can attain on
 any tree.
 }
 \details{
-Ambiguous inapplicables (e.g. \verb{\{0, -\}}) are currently replaced with the
+Ambiguous inapplicable states (e.g. \verb{\{0, -\}}) are currently replaced with the
 plain inapplicable token \code{-}, reflecting the current behaviour of Morphy.
 }
 \examples{
