@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tree search with custom optimality criteria • TreeSearch</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
@@ -118,7 +118,7 @@
                         <h4 data-toc-skip class="author">Martin R.
 Smith</h4>
             
-            <h4 data-toc-skip class="date">2024-04-05</h4>
+            <h4 data-toc-skip class="date">2024-05-23</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/HEAD/vignettes/custom.Rmd" class="external-link"><code>vignettes/custom.Rmd</code></a></small>
       <div class="hidden name"><code>custom.Rmd</code></div>
@@ -189,7 +189,7 @@ anything to <code>dataset</code> before it is sent to
 <span>                     maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, </span>
 <span>                     verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   - Performing tree search.  Initial score: 56</span></span></code></pre>
-<pre><code><span><span class="co">##   - Final score 33 found 2 times after 50 rearrangements.</span></span></code></pre>
+<pre><code><span><span class="co">##   - Final score 33 found 5 times after 50 rearrangements.</span></span></code></pre>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 <p><img src="custom_files/figure-html/tci-search-1.png" width="700"></p>
@@ -218,8 +218,8 @@ that is most different from a starting tree. Notice that
 <span>                     TreeScorer <span class="op">=</span> <span class="va">DistanceScore</span>,</span>
 <span>                     maxIter <span class="op">=</span> <span class="fl">50L</span>, maxHits <span class="op">=</span> <span class="fl">10L</span>, </span>
 <span>                     verbosity <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   - Performing tree search.  Initial score: -5.87744375108174</span></span></code></pre>
-<pre><code><span><span class="co">##   - Final score -7.87744375108174 found 1 times after 50 rearrangements.</span></span></code></pre>
+<pre><code><span><span class="co">##   - Performing tree search.  Initial score: -5.77985386969094</span></span></code></pre>
+<pre><code><span><span class="co">##   - Final score -7.87744375108174 found 4 times after 50 rearrangements.</span></span></code></pre>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">startTree</span><span class="op">)</span></span>
@@ -421,7 +421,7 @@ method for rapid parsimony analysis</span>. <em>Cladistics</em>,
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
 </div>
 
       </footer>
