@@ -151,7 +151,8 @@ TBRSwap <- function(parent, child, nEdge = length(parent),
     }
   }
   
-  edgesCutAdrift <- DescendantEdges(edge = edgeToBreak, parent, child, nEdge)
+  edgesCutAdrift <- DescendantEdges(edge = edgeToBreak, parent = parent,
+                                    child = child, nEdge = nEdge)
   edgesRemaining <- !edgesCutAdrift & !brokenEdge
   
   brokenEdgeParent <- child == brokenEdge.parentNode
@@ -310,7 +311,7 @@ RootedTBRSwap <- function (parent, child, nEdge=length(parent),
   nTips <- (nEdge / 2L) + 1L
   rootNode <- parent[1]
   rootEdges <- parent == rootNode
-  rightTree <- DescendantEdges(parent, child, edge = 1, nEdge)
+  rightTree <- DescendantEdges(parent, child, edge = 1, nEdge = nEdge)
   selectableEdges <- !rootEdges
   if (sum( rightTree) < 4) {
     selectableEdges[ rightTree] <- FALSE
@@ -346,8 +347,9 @@ RootedTBRSwap <- function (parent, child, nEdge=length(parent),
     edgeInRight <- rightTree[edgeToBreak]
     subtreeWithRoot <- if (edgeInRight) rightTree else !rightTree
     subtreeEdges <- !rootEdges & subtreeWithRoot
-    if (sum(edgesCutAdrift <- DescendantEdges(parent, child, edge = edgeToBreak,
-                                              nEdge)) > 2) {
+    edgesCutAdrift <- DescendantEdges(parent, child, edge = edgeToBreak,
+                                      nEdge = nEdge)
+    if (sum(edgesCutAdrift) > 2) {
       break;
     }
     if (sum(subtreeEdges, -edgesCutAdrift) > 2) {
