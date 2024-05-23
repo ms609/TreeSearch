@@ -64,7 +64,7 @@ test_that("SPR works", {
     test.tr <- testTree
     test.tr$edge <- spr(edge, m)
     
-    oldWay <- SortTree(root(SPR(testTree, p1, r1), 't1', resolve.root = TRUE))
+    oldWay <- SortTree(root(SPR(testTree, p1, r1), "t1", resolve.root = TRUE))
     expect_equal(oldWay, SortTree(test.tr))
   }
   Test(0, 1, 5)

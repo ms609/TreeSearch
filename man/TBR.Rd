@@ -66,8 +66,8 @@ matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
 \acronym{TBR} move away from \code{tree}, with edges and nodes in preorder,
 rooted on the first-labelled tip.
 
-a list containing two elements, corresponding in turn to the
-rearranged parent and child parameters
+\code{TBRSwap()} returns a list containing two elements corresponding
+to the rearranged \code{parent} and \code{child} parameters.
 }
 \description{
 \code{TBR} performs a single random \acronym{TBR} iteration.
