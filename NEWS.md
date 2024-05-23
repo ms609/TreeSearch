@@ -1,5 +1,6 @@
 # TreeSearch 1.5.0.9000 (development)
 
+- Fix calls to `DescendantEdges()`
 
 
 # TreeSearch 1.5.0 (2024-04-03)
