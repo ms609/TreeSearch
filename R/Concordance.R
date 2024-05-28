@@ -100,7 +100,7 @@ QuartetConcordance <- function (tree, dataset = NULL) {
 
 #' @importFrom TreeDist Entropy
 .Entropy <- function (...) {
-  Entropy (c(...) / sum(...))
+  Entropy(c(...) / sum(...))
 }
 
 #' @rdname SiteConcordance

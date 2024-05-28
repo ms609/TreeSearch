@@ -88,19 +88,19 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   right <- left
   parentOf <- integer(nNode + nTip)
   for (e in seq_len(dim(edge)[1])) {
-    pa <- parent[e]
-    ch <- child[e]
-    parentOf[ch] <- pa
-    if (right[pa]) {
-      left[pa] <- ch
+    pa <- parent[[e]]
+    ch <- child[[e]]
+    parentOf[[ch]] <- pa
+    if (right[[pa]]) {
+      left[[pa]] <- ch
     } else {
-      right[pa] <- ch
+      right[[pa]] <- ch
     }
   }
   preOrderNodes <- unique(rev(parent)) # Root guaranteed first
   postOrderNodes <- rev(preOrderNodes)
-  rootNode <- preOrderNodes[1]
-  parentOf[rootNode] <- rootNode
+  rootNode <- preOrderNodes[[1]]
+  parentOf[[rootNode]] <- rootNode
   tips <- seq_len(nTip)
   
   # Read states
