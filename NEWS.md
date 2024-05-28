@@ -1,3 +1,9 @@
+# TreeSearch 1.5.1.9000 (development)
+
+- Reconstruct character distribution under Acctran / Deltran 
+  (Fitch only, so far)
+
+
 # TreeSearch 1.5.1 (2024-05-23)
 
 - Fix calls to `DescendantEdges()`

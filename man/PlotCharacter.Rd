@@ -10,6 +10,7 @@ PlotCharacter(
   char = 1L,
   updateTips = FALSE,
   plot = TRUE,
+  method = "RETAIN",
   tokenCol = NULL,
   ambigCol = "grey",
   inappCol = "lightgrey",
@@ -33,6 +34,10 @@ PlotCharacter(
 original state in \code{dataset}.}
 
 \item{plot}{Logical specifying whether to plot the output.}
+
+\item{method}{Character specifying whether to optimize transformations using
+\code{ACCTRAN} or \code{DELTRAN}, or to leave ambiguous nodes showing all possible
+reconstructions (\code{RETAIN}, the default).}
 
 \item{tokenCol}{Palette specifying colours to associate with each token in
 turn, in the sequence listed in \code{attr(dataset, "levels")}.}

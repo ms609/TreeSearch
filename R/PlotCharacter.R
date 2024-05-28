@@ -10,6 +10,9 @@
 #' @param updateTips Logical; if `FALSE`, tips will be labelled with their
 #' original state in `dataset`.
 #' @param plot Logical specifying whether to plot the output.
+#' @param method Character specifying whether to optimize transformations using
+#' `ACCTRAN` or `DELTRAN`, or to leave ambiguous nodes showing all possible
+#' reconstructions (`RETAIN`, the default).
 #' @param tokenCol Palette specifying colours to associate with each token in
 #' turn, in the sequence listed in `attr(dataset, "levels")`.
 #' @param ambigCol,ambigLty,inappCol,inappLty,plainLty Colours and line types
@@ -51,6 +54,7 @@
 PlotCharacter <- function (tree, dataset, char = 1L,
                            updateTips = FALSE,
                            plot = TRUE,
+                           method = "RETAIN",
                            
                            tokenCol = NULL,
                            ambigCol = "grey",
@@ -112,6 +116,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   levels <- colnames(contrast)
   inputState <- contrast[as.integer(character), , drop = FALSE]
   state <- rbind(inputState, matrix(NA, nNode, dim(contrast)[2]))
+  tran <- match.arg(toupper(method), c("ACCTRAN", "DELTRAN", "RETAIN"))
   
   if (is.na(match("-", levels))) {
     # Standard Fitch
@@ -136,9 +141,19 @@ PlotCharacter <- function (tree, dataset, char = 1L,
       if (all(inherited == aState)) {
         state[n, ] <- inherited
       } else if (any(lState & rState)) {
-        state[n, ] <- nState | (aState & (lState | rState))
+        state[n, ] <- switch(
+          tran,
+          "RETAIN" = nState | (aState & (lState | rState)),
+          "ACCTRAN" = nState,
+          "DELTRAN" = if (any(aState & (lState | rState))) aState else lState | rState
+        )
       } else {
-        state[n, ] <- aState | nState
+        state[n, ] <- switch(
+          tran,
+          "RETAIN" = aState | nState,
+          "ACCTRAN" = nState,
+          "DELTRAN" = aState
+        )
       }
     }
     
