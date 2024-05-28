@@ -131,6 +131,12 @@ PlotCharacter <- function (tree, dataset, char = 1L,
         # Also add to score
       }
     }
+    if (tran != "RETAIN" && sum(state[rootNode, ]) > 1L) {
+      # Arbitrarily assign root node a non-ambiguous state corresponding to the
+      # first available token
+      state[rootNode, ][] <- as.logical(tabulate(which.min(state[rootNode, ]),
+                                                 length(state[rootNode, ])))
+    }
     
     for (n in preOrderNodes) {
       nState <- state[n, ]
