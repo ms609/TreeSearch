@@ -159,7 +159,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     
     for (n in tips) {
       nState <- state[n, ]
-      aState <- state[parentOf[n], ]
+      aState <- state[parentOf[[n]], ]
       common <- aState & nState
       if (any(common)) {
         state[n, ] <- common
