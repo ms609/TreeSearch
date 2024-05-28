@@ -129,9 +129,9 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     
     for (n in preOrderNodes) {
       nState <- state[n, ]
-      aState <- state[parentOf[n], ]
-      lState <- state[left[n], ]
-      rState <- state[right[n], ]
+      aState <- state[parentOf[[n]], ]
+      lState <- state[left[[n]], ]
+      rState <- state[right[[n]], ]
       inherited <- nState & aState
       if (all(inherited == aState)) {
         state[n, ] <- inherited
@@ -158,8 +158,8 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     
     # First downpass
     for (n in postOrderNodes) {
-      lState <- state[left[n], ]
-      rState <- state[right[n], ]
+      lState <- state[left[[n]], ]
+      rState <- state[right[[n]], ]
       common <- lState & rState
       if (any(common)) { # 2
         # If the token in common is only the inapplicable token, 
@@ -194,7 +194,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
       aState <- if (n == rootNode && !all(state[n, ] == inappLevel)) {
         state[n, ] & appLevels
       } else {
-        state[parentOf[n], ]
+        state[parentOf[[n]], ]
       }
       
       lState <- state[left[n], ]
@@ -232,7 +232,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     }
     for (n in tips) {
       nState <- state[n, ]
-      aState <- state[parentOf[n], ]
+      aState <- state[parentOf[[n]], ]
       # 6. If the unvisited tip includes both inapplicable and applicable tokens
       if (any(nState[inappLevel]) && any(nState[appLevels])) {
         # 7. If the current node has only the inapplicable token
@@ -250,8 +250,8 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     # Second downpass
     for (n in postOrderNodes) {
       nState <- state[n, ]
-      lState <- state[left[n], ]
-      rState <- state[right[n], ]
+      lState <- state[left[[n]], ]
+      rState <- state[right[[n]], ]
       # If the node had an applicable token in the first uppass
       if (any(nState[appLevels])) {
         # 3. If there is any token in common between both descendants
@@ -279,8 +279,8 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     for (n in preOrderNodes) {
       nState <- state[n, ]
       aState <- state[parentOf[n], ]
-      lState <- state[left[n], ]
-      rState <- state[right[n], ]
+      lState <- state[left[[n]], ]
+      rState <- state[right[[n]], ]
       # 1. If the node has any applicable token 
       if (any(nState[appLevels])) {
         # 2. If the node’s ancestor has any applicable token
@@ -326,7 +326,7 @@ PlotCharacter <- function (tree, dataset, char = 1L,
     
     for (n in tips) {
       nState <- state[n, ]
-      aState <- state[parentOf[n], ]
+      aState <- state[parentOf[[n]], ]
       common <- aState & nState
       if (any(common)) {
         state[n, ] <- common
