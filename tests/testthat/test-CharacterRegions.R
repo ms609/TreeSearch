@@ -7,4 +7,6 @@ library("TreeTools") #TODO DELETE
   tr$edge
   if (!interactive()) cr <- CharacterRegions(tr, mat)
   expect_equal(length(cr), ncol(tokens))
+  expect_equal(cr, list(6, c(5, 1), c(4, 2), c(3, 3), c(3, 2, 1), c(5, 1), c(4, 1, 1)))
+    
 })
