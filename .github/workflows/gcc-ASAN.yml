@@ -1,5 +1,6 @@
 # Address Sanitizer: Replicate CRAN's gcc-ASAN 'Additional Test'
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
