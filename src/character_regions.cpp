@@ -103,27 +103,28 @@ List character_regions(const List tree, const IntegerMatrix states,
     const IntegerVector left_state = state(left[node], _);
     const IntegerVector right_state = state(right[node], _);
     const IntegerVector common = AND(left_state, right_state);
-    state(node, _) = ifelse(common, common, OR(left_state, right_state));
+    const IntegerVector left_pipe_right = OR(left_state, right_state);
+    state(node, _) = ifelse(common != 0, common, left_pipe_right);
   }
   
   for (int i = n_patterns; i--; ) {
-    state[root_node, i] = first_bit(state[root_node, i]);
+    state(root_node, i) = first_bit(state(root_node, i));
   }
   
   for (int i = n_node; i--; ) {
     const int node = postorder_nodes[i];
-    const int node_state = state(node, _);
-    const int anc_state = state(parent_of[node], _);
-    const int left_state = state(left[node], _);
-    const int right_state = state(right[node], _);
-    const int left_pipe_right = OR(left_state, right_state);
-    const int inherited = AND(node_state, anc_state);
+    const IntegerVector node_state = state(node, _);
+    const IntegerVector anc_state = state(parent_of[node], _);
+    const IntegerVector left_state = state(left[node], _);
+    const IntegerVector right_state = state(right[node], _);
+    const IntegerVector left_pipe_right = OR(left_state, right_state);
+    const IntegerVector inherited = AND(node_state, anc_state);
     state(node, _) = ifelse(
       inherited == anc_state,
       inherited,
       acctran ? node_state : ifelse(
-        AND(left_state, right_state),
-        ifelse(AND(anc_state, left_pipe_right), anc_state, left_pipe_right),
+        AND(left_state, right_state) != 0,
+        ifelse(AND(anc_state, left_pipe_right) != 0, anc_state, left_pipe_right),
         anc_state
       )
     );
@@ -148,11 +149,11 @@ List character_regions(const List tree, const IntegerMatrix states,
     IntegerMatrix n_with_label(n_node);
     for (int i = n_tip; i--; ) {
       const int tip = i + 1; // C++ -> R
-      tip_state = state(tip, pat);
+      const int tip_state = state(tip, pat);
       // Only consider unambiguous leaf labels
       if (!multiple_bits(tip_state)) {
         const int anc = parent_of[tip];
-        const int anc_state = state(nodeParent, pat);
+        const int anc_state = state(anc, pat);
         const int this_label = anc_state == tip_state ? 
           true_label(anc, pat) : ++last_label;
         ++(n_with_label[this_label]);

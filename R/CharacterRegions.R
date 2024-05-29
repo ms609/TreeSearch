@@ -12,8 +12,6 @@ CharacterRegions <- function (tree, dataset, method = c("ACCTRAN", "DELTRAN")) {
     dataset <- MatrixToPhyDat(dataset)
   }
   
-  match(seq_len(attr(dataset, "nr")), attr(dataset, "index")),
-  
   # Reconcile labels
   datasetTaxa <- names(dataset)
   treeTaxa <- tree[["tip.label"]]
@@ -36,7 +34,7 @@ CharacterRegions <- function (tree, dataset, method = c("ACCTRAN", "DELTRAN")) {
   binaries <- apply(contrast == 1, 1, function(x) sum(2 ^ (which(x) - 1)))
   inputState <- matrix(binaries[phyMat], nrow(phyMat), ncol(phyMat))
   
-  
+  # Return:
   character_regions(
     tree, inputState, match.arg(method, c("ACCTRAN", "DELTRAN")) == "ACCTRAN"
   )[index]
