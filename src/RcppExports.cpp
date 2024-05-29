@@ -10,6 +10,19 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// character_regions
+List character_regions(const List tree, const IntegerMatrix states, const LogicalVector acctrans);
+RcppExport SEXP _TreeSearch_character_regions(SEXP treeSEXP, SEXP statesSEXP, SEXP acctransSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List >::type tree(treeSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type states(statesSEXP);
+    Rcpp::traits::input_parameter< const LogicalVector >::type acctrans(acctransSEXP);
+    rcpp_result_gen = Rcpp::wrap(character_regions(tree, states, acctrans));
+    return rcpp_result_gen;
+END_RCPP
+}
 // preorder_morphy
 int preorder_morphy(IntegerMatrix edge, SEXP MorphyHandl);
 RcppExport SEXP _TreeSearch_preorder_morphy(SEXP edgeSEXP, SEXP MorphyHandlSEXP) {
