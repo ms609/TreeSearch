@@ -37,5 +37,5 @@ CharacterRegions <- function (tree, dataset, method = c("ACCTRAN", "DELTRAN")) {
   # Return:
   lapply(character_regions(
     tree, inputState, match.arg(method, c("ACCTRAN", "DELTRAN")) == "ACCTRAN"
-  ), sort, descending = TRUE)[index]
+  ), sort, decreasing = TRUE)[index]
 }
