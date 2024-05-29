@@ -154,8 +154,8 @@ List character_regions(const List tree, const IntegerMatrix states,
   // true_label uses C++ node numbering so we need a -1
   IntegerMatrix true_label(n_node, n_pattern);
   for (int pat = n_pattern; pat--; ) {
-    int last_label = 1;
-    true_label[root_node] = last_label;
+    int last_label = 0;
+    true_label(root_node - 1, pat) = last_label;
     
     for (int i = n_node; i--; ) {
       const int node = postorder_nodes[i];
@@ -183,13 +183,13 @@ List character_regions(const List tree, const IntegerMatrix states,
         const int this_label = anc_state == tip_state ? 
           true_label(anc - 1, pat) : ++last_label;
         Rcout << " This label: " << this_label << "; last = " << last_label <<"\n";
-        ++(n_with_label[this_label]);
+        ++n_with_label[this_label];
       }
   Rcout << "   * 178 \n";
     }
   Rcout << "   * 180 \n";
     Rcout << "Last label = " << last_label << ".\n";
-    ret[pat] = IntegerVector(n_with_label.begin(), n_with_label.begin() + last_label);
+    ret[pat] = IntegerVector(n_with_label.begin(), n_with_label.begin() + last_label + 1);
   Rcout << "   * 181 \n";
   }
   return ret;

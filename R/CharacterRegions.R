@@ -35,7 +35,7 @@ CharacterRegions <- function (tree, dataset, method = c("ACCTRAN", "DELTRAN")) {
   inputState <- matrix(binaries[phyMat], nrow(phyMat), ncol(phyMat))
   
   # Return:
-  character_regions(
+  lapply(character_regions(
     tree, inputState, match.arg(method, c("ACCTRAN", "DELTRAN")) == "ACCTRAN"
-  )[index]
+  ), sort, descending = TRUE)[index]
 }
