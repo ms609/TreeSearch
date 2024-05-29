@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include <cassert>
 #include <TreeTools/renumber_tree.h>
 using namespace Rcpp;
 
@@ -23,6 +24,27 @@ inline int first_bit(int n) {
   }
   return 0;
 }
+
+inline IntegerVector AND(const IntegerVector a, const IntegerVector b) {
+  const int n = a.length();
+  assert(b.length() == n);
+  IntegerVector ret(n);
+  for (int i = n; i--; ) {
+    ret[i] = a[i] & b[i];
+  }
+  return ret;
+}
+
+inline IntegerVector OR(const IntegerVector a, const IntegerVector b) {
+  const int n = a.length();
+  assert(b.length() == n);
+  IntegerVector ret(n);
+  for (int i = n; i--; ) {
+    ret[i] = a[i] | b[i];
+  }
+  return ret;
+}
+
 
 // rows in states correspond to sequence of tree labels, columns to characters
 // each entry in `states` is a binary map of tokens present.
@@ -80,8 +102,8 @@ List character_regions(const List tree, const IntegerMatrix states,
     const int node = postorder_nodes[i];
     const IntegerVector left_state = state(left[node], _);
     const IntegerVector right_state = state(right[node], _);
-    const IntegerVector common = left_state & right_state;
-    state(node, _) = ifelse(common, common, left_state | right_state);
+    const IntegerVector common = AND(left_state, right_state);
+    state(node, _) = ifelse(common, common, OR(left_state, right_state));
   }
   
   for (int i = n_patterns; i--; ) {
@@ -94,14 +116,14 @@ List character_regions(const List tree, const IntegerMatrix states,
     const int anc_state = state(parent_of[node], _);
     const int left_state = state(left[node], _);
     const int right_state = state(right[node], _);
-    const int left_pipe_right = left_state | right_state;
-    const int inherited = node_state & anc_state;
+    const int left_pipe_right = OR(left_state, right_state);
+    const int inherited = AND(node_state, anc_state);
     state(node, _) = ifelse(
       inherited == anc_state,
       inherited,
       acctran ? node_state : ifelse(
-        left_state & right_state,
-        ifelse(anc_state & left_pipe_right, anc_state, left_pipe_right),
+        AND(left_state, right_state),
+        ifelse(AND(anc_state, left_pipe_right), anc_state, left_pipe_right),
         anc_state
       )
     );
