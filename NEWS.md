@@ -1,7 +1,13 @@
-# TreeSearch 1.5.1.9000 (development)
+# TreeSearch 1.5.1.9001 (development)
 
 - Reconstruct character distribution under Acctran / Deltran 
   (Fitch only, so far)
+
+
+# TreeSearch 1.5.1.9000 (2024-05-31, development)
+
+- `Consistency()` also returns the relative homoplasy index of Steell et al. 
+  2023.
 
 
 # TreeSearch 1.5.1 (2024-05-23)

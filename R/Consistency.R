@@ -32,27 +32,36 @@
 #' possible values runs from zero (least consistent) to one
 #' (perfectly consistent).
 #' 
+#' The **relative homoplasy index** \insertCite{Steell2023}{TreeSearch} is
+#' the ratio of the observed excess tree length to the excess tree length
+#' due to chance, taken as the median score of a character when the leaves
+#' of the given tree are randomly shuffled.
+#' 
 #' The lengths of characters including inapplicable tokens are calculated
 #' following \insertCite{Brazeau2019;textual}{TreeSearch}, matching their
 #' default treatment in [`TreeLength()`].
 #' 
 #' @template datasetParam
 #' @template treeParam
+#' @param nRelabel Integer specifying number of leaf relabellings to employ when
+#' calculating null tree length. If zero, the RHI will not be calculated.
+#' 
 #' @template compressParam
 #' 
 #' @return `Consistency()` returns a matrix with named columns specifying the 
 #' consistency index (`ci`),
-#' retention index (`ri`), and
-#' rescaled consistency index (`rc`).
+#' retention index (`ri`),
+#' rescaled consistency index (`rc`) and
+#' relative homoplasy index (`rhi`).
 #' 
 #' @examples 
 #' data(inapplicable.datasets)
 #' dataset <- inapplicable.phyData[[4]]
-#' head(Consistency(dataset, TreeTools::NJTree(dataset)))
+#' head(Consistency(dataset, TreeTools::NJTree(dataset), nRelabel = 10))
 #' @references \insertAllCited{}
 #' @template MRS
 #' @export
-Consistency <- function (dataset, tree, compress = FALSE) {
+Consistency <- function (dataset, tree, nRelabel = 1000, compress = FALSE) {
   dsTips <- TipLabels(dataset)
   trTips <- TipLabels(tree)
   if (!setequal(dsTips, trTips)) {
@@ -66,6 +75,7 @@ Consistency <- function (dataset, tree, compress = FALSE) {
   minLength <- MinimumLength(dataset, compress = TRUE) # Farris's m
   maxLength <- MaximumLength(dataset, compress = TRUE) # Farris's g
   obsLength <- CharacterLength(tree, dataset, compress = TRUE) # farris's s
+  
   extra <- obsLength - minLength # Farris's h
   maxHomoplasy <- (maxLength - minLength) # g - m
   
@@ -76,7 +86,15 @@ Consistency <- function (dataset, tree, compress = FALSE) {
   
   rc <- ri * minLength / obsLength
 
-  ret <- cbind(ci = ci, ri = ri, rc = rc)
+  if (nRelabel > 0) {
+    medLength <- ExpectedLength(dataset, tree, nRelabel, compress = TRUE)
+    expHomoplasy <- medLength - minLength
+    rhi <- extra / expHomoplasy
+  } else {
+    rhi <- NA
+  }
+  
+  ret <- cbind(ci = ci, ri = ri, rc = rc, rhi = rhi)
   
   # Return:
   if (compress) {
@@ -84,4 +102,88 @@ Consistency <- function (dataset, tree, compress = FALSE) {
   } else {
     ret[attr(dataset, "index"), ]
   }
+}
+
+
+#' Expected length
+#' 
+#' For a given dataset and tree topology, `ExpectedLength()` estimates the
+#' length expected if the states of each character are shuffled randomly
+#' across the leaves.
+#' 
+#' @references \insertAllCited{}
+#' @inheritParams Consistency
+#' 
+#' @return `ExpectedLength()` returns a numeric vector stating the median
+#' length of each character in `dataset` on `tree` after `nRelabel` random
+#' relabelling of leaves.
+#' 
+#' @importFrom memoise memoise
+#' @export
+#' @template MRS
+ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
+  mat <- do.call(rbind, dataset)
+  at <- attributes(dataset)
+  contrast <- at[["contrast"]]
+  
+  rewritten <- apply(mat, 2, .SortChar,
+                     cont = apply(contrast, 1, .Bin),
+                     inapp = match("-", at[["levels"]], nomatch = 0))
+  
+  .LengthForChar <- memoise(function(x) {
+    patterns <- apply(unname(unique(t(
+      as.data.frame(replicate(nRelabel, sample(rep(seq_along(x), x))))))),
+      2, I, simplify = FALSE)
+    nr <- length(patterns[[1]])
+    phy <- structure(
+      setNames(patterns, TipLabels(tree)),
+      "weight" = rep(1, nr),
+      nr = nr,
+      nc = dim(contrast)[[2]],
+      index = seq_len(nr),
+      levels = at[["levels"]],
+      allLevels = at[["allLevels"]],
+      type = "USER",
+      contrast = contrast,
+      class = "phyDat")
+    median(CharacterLength(tree, phy))
+  })
+  
+  exp <- apply(apply(rewritten, 2, tabulate, max(rewritten)), 2, .LengthForChar)
+  
+  # Return:
+  if (compress) {
+    exp
+  } else {
+    exp[at[["index"]]]
+  }
+}
+
+
+.Bin <- function(x) {
+  sum(2 ^ (seq_along(x)[as.logical(x)] - 1))
+}
+
+.SortChar <- function(char, cont, inapp) {
+  logCont <- log2(cont)
+  nWhole <- 2 ^ floor(max(logCont))
+  maxN <- nWhole + nWhole - 1
+  ambig <- logCont != floor(logCont)
+  swappableTokens <- cont[cont != ifelse(is.na(inapp), 0, inapp) & !ambig]
+  tab <- tabulate(char, maxN)
+  mapping <- integer(maxN)
+  if (!is.na(inapp) && inapp > 0) {
+    mapping[[inapp]] <- inapp
+  }
+  mapping[swappableTokens[order(tab[swappableTokens], decreasing = TRUE)]] <- 
+    sort.int(swappableTokens)
+  
+  nAssigned <- log2(nWhole) + 1
+  wholes <- c(mapping[2 ^ (seq_len(nAssigned) - 1)], integer(32 - nAssigned))
+  mapping[-swappableTokens] <- apply(matrix(as.logical(intToBits(
+    seq_len(maxN)[-swappableTokens])), 32), 2,
+    function(x) sum(wholes[x]))
+  
+  # Return:
+  mapping[char]
 }
