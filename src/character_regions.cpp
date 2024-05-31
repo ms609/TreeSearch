@@ -51,10 +51,13 @@ inline IntegerVector OR(const IntegerVector a, const IntegerVector b) {
 // [[Rcpp::export]]
 List character_regions(const List tree, const IntegerMatrix states,
                        const LogicalVector acctrans) {
-  IntegerMatrix edge = tree["edge"];
-  IntegerVector parent = edge(_, 0);
-  IntegerVector child = edge(_, 1);
-  const IntegerVector postorder = TreeTools::postorder_order(edge);
+  // Retain R numbering - needed for postorder_order
+  const IntegerMatrix edge = tree["edge"];
+  
+  // We'll number everything else from zero as soon as it lands in C++
+  const IntegerVector parent = edge(_, 0) - 1;
+  const IntegerVector child = edge(_, 1) - 1;
+  const IntegerVector postorder = TreeTools::postorder_order(edge) - 1;
 
   const int n_node = tree["Nnode"];
   const int n_tip = CharacterVector(tree["tip.label"]).length();
@@ -63,19 +66,17 @@ List character_regions(const List tree, const IntegerMatrix states,
   
   const bool acctran = acctrans[0];
   
-  // These will hold the properties of each node based on its R label, i.e.
-  // their 0th entry will be unused
-  IntegerVector left(n_vert + 1);
-  IntegerVector right(n_vert + 1);
-  IntegerVector parent_of(n_vert + 1);
+  IntegerVector left(n_vert);
+  IntegerVector right(n_vert);
+  IntegerVector parent_of(n_vert);
   IntegerVector postorder_nodes(n_node);
   
   int next_node = 0;
   
   // Read structure of tree
   for (int i = 0; i != n_edge; i++) {
-    int e = postorder[i] - 1;
-    // Rcout << "Edge " << (e + 1) <<": ";
+    int e = postorder[i];
+    // Rcout << "Edge " << e <<": ";
     int pa = parent[e];
     int ch = child[e];
     // Rcout << pa << " - " << ch <<"\n";
@@ -89,16 +90,16 @@ List character_regions(const List tree, const IntegerMatrix states,
       right[pa] = ch;
     }
   }
-  const int root_node = parent[postorder[n_edge - 1] - 1];
+  const int last_edge = n_edge - 1;
+  const int root_node = parent[postorder[last_edge]];
   // Rcout << "Root node = " << root_node <<  ".\n";
   parent_of[root_node] = root_node;
   postorder_nodes[next_node] = root_node;
   
-  const int n_patterns = states.ncol();
-  // state uses C++ numbering, i.e. subtract 1 to get the right row
-  IntegerMatrix state(n_vert, n_patterns);
+  const int n_pattern = states.ncol();
+  IntegerMatrix state(n_vert, n_pattern);
   for (int i = n_vert; i--; ) {
-    for (int j = n_patterns; j--; ) {
+    for (int j = n_pattern; j--; ) {
       state(i, j) = states(i, j);
     }
   }
@@ -106,68 +107,73 @@ List character_regions(const List tree, const IntegerMatrix states,
   // Fitch optimization
   for (int i = 0; i != n_node; i++) {
     const int node = postorder_nodes[i];
-    const IntegerVector left_state = state(left[node] - 1, _);
-    const IntegerVector right_state = state(right[node] - 1, _);
+    const IntegerVector left_state = state(left[node], _);
+    const IntegerVector right_state = state(right[node], _);
     const IntegerVector common = AND(left_state, right_state);
-    const IntegerVector left_pipe_right = OR(left_state, right_state);
-    state(node - 1, _) = ifelse(common != 0, common, left_pipe_right);
+    for (int pat = n_pattern; pat--; ) {
+      state(node, pat) = common[pat] ?
+        common[pat] : left_state[pat] | right_state[pat];
+    }
   }
   
-  for (int i = n_patterns; i--; ) {
-    state(root_node - 1, i) = first_bit(state(root_node - 1, i));
+  for (int i = n_pattern; i--; ) {
+    state(root_node, i) = first_bit(state(root_node, i));
   }
     
   for (int i = n_node; i--; ) {
     const int node = postorder_nodes[i];
-    const IntegerVector node_state = state(node - 1, _);
-    const IntegerVector anc_state = state(parent_of[node] - 1, _);
-    const IntegerVector left_state = state(left[node] - 1, _);
-    const IntegerVector right_state = state(right[node] - 1, _);
-    const IntegerVector left_pipe_right = OR(left_state, right_state);
+    const IntegerVector node_state = state(node, _);
+    const IntegerVector anc_state = state(parent_of[node], _);
+    const IntegerVector left_state = state(left[node], _);
+    const IntegerVector right_state = state(right[node], _);
     const IntegerVector inherited = AND(node_state, anc_state);
-    state(node - 1, _) = ifelse(
-      inherited == anc_state,
-      inherited,
-      acctran ? node_state : ifelse(
-        AND(left_state, right_state) != 0,
-        ifelse(AND(anc_state, left_pipe_right) != 0, anc_state, left_pipe_right),
-        anc_state
-      )
-    );
+    
+    for (int pat = n_pattern; pat--; ) {
+      const IntegerVector left_pipe_right = OR(left_state, right_state);
+      if (inherited[pat] == anc_state[pat]) {
+        state(node, pat) = inherited[pat];
+      } else if (acctran) {
+        state(node, pat) = node_state[pat];
+      } else if (left_state[pat] & right_state[pat]) {
+        const int left_pipe_right = left_state[pat] | right_state[pat];
+        state(node, pat) = anc_state[pat] & left_pipe_right ?
+          anc_state[pat] : left_pipe_right;
+      } else {
+        state(node, pat) = anc_state[pat];
+      }
+    }
   }
   
-  const int n_pattern = states.ncol();
   List ret(n_pattern);
-  // true_label uses C++ node numbering so we need a -1
   IntegerMatrix true_label(n_node, n_pattern);
   for (int pat = n_pattern; pat--; ) {
     int last_label = 0;
-    true_label(root_node - 1, pat) = last_label;
+    true_label(root_node, pat) = last_label;
     
     for (int i = n_node; i--; ) {
       const int node = postorder_nodes[i];
       const int anc = parent_of[node];
-      const int final_state = state(node - 1, pat);
-      const int anc_state = state(anc - 1, pat);
+      const int final_state = state(node, pat);
+      const int anc_state = state(anc, pat);
       // Rcout << "- Node " << node << " (state " << final_state << "), anc = "
       //       << anc << " (" << anc_state << ").\n";
-      true_label(node - 1, pat) = final_state == anc_state ? 
-        true_label(anc - 1, pat) : ++last_label;
-      // Rcout << "- Labelling true label(" << (node - 1) << ", " << pat <<") = "
-      //       << (final_state == anc_state ? "T" : "F") <<  true_label(node - 1, pat)
+      true_label(node, pat) = final_state == anc_state ? 
+        true_label(anc, pat) : ++last_label;
+      // Rcout << " - Labelling true label(" << node << ", " << pat <<") = "
+      //       << (final_state == anc_state ? "T" : "F") <<  true_label(node, pat)
       //       << "\n";
     }
     
     IntegerVector n_with_label(n_vert);
     for (int i = n_tip; i--; ) {
-      const int tip = i + 1; // C++ -> R
-      const int tip_state = state(tip - 1, pat);
+      const int tip = i;
+      const int tip_state = state(tip, pat);
       // Only consider unambiguous leaf labels
       if (!multiple_bits(tip_state)) {
         const int anc = parent_of[tip];
-        const int anc_state = state(anc - 1, pat);
+        const int anc_state = state(anc, pat);
         const int this_label = anc_state == tip_state ? 
-          true_label(anc - 1, pat) : ++last_label;
+          true_label(anc, pat) : ++last_label;
         // Rcout << " This label: " << this_label << "; last = " << last_label <<"\n";
         ++n_with_label[this_label];
       }
