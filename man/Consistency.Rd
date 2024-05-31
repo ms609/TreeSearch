@@ -4,13 +4,16 @@
 \alias{Consistency}
 \title{Consistency / retention "indices"}
 \usage{
-Consistency(dataset, tree, compress = FALSE)
+Consistency(dataset, tree, nRelabel = 1000, compress = FALSE)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{tree}{A tree of class \code{\link{phylo}}.}
+
+\item{nRelabel}{Integer specifying number of leaf relabellings to employ when
+calculating null tree length. If zero, the RHI will not be calculated.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
 \code{phyDat} object or to return a vector specifying to each individual
@@ -19,8 +22,9 @@ character, decompressed using the dataset's \code{index} attribute.}
 \value{
 \code{Consistency()} returns a matrix with named columns specifying the
 consistency index (\code{ci}),
-retention index (\code{ri}), and
-rescaled consistency index (\code{rc}).
+retention index (\code{ri}),
+rescaled consistency index (\code{rc}) and
+relative homoplasy index (\code{rhi}).
 }
 \description{
 \code{Consistency()} calculates the consistency "index" and retention index
@@ -56,6 +60,11 @@ retention indices; it rescales the consistency index such that its range of
 possible values runs from zero (least consistent) to one
 (perfectly consistent).
 
+The \strong{relative homoplasy index} \insertCite{Steell2023}{TreeSearch} is
+the ratio of the observed excess tree length to the excess tree length
+due to chance, taken as the median score of a character when the leaves
+of the given tree are randomly shuffled.
+
 The lengths of characters including inapplicable tokens are calculated
 following \insertCite{Brazeau2019;textual}{TreeSearch}, matching their
 default treatment in \code{\link[=TreeLength]{TreeLength()}}.
@@ -63,7 +72,7 @@ default treatment in \code{\link[=TreeLength]{TreeLength()}}.
 \examples{
 data(inapplicable.datasets)
 dataset <- inapplicable.phyData[[4]]
-head(Consistency(dataset, TreeTools::NJTree(dataset)))
+head(Consistency(dataset, TreeTools::NJTree(dataset), nRelabel = 10))
 }
 \references{
 \insertAllCited{}
