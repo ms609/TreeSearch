@@ -145,9 +145,9 @@ List character_regions(const List tree, const IntegerMatrix states,
   }
   
   List ret(n_pattern);
-  IntegerMatrix true_label(n_node, n_pattern);
   for (int pat = n_pattern; pat--; ) {
     int last_label = 0;
+    IntegerMatrix true_label(n_node, n_pattern);
     true_label(root_node, pat) = last_label;
     
     for (int i = n_node; i--; ) {
@@ -179,7 +179,8 @@ List character_regions(const List tree, const IntegerMatrix states,
       }
     }
     // Rcout << "Last label = " << last_label << ".\n";
-    ret[pat] = IntegerVector(n_with_label.begin(), n_with_label.begin() + last_label + 1);
+    ret[pat] = IntegerVector::import(n_with_label.begin(),
+                                     n_with_label.begin() + last_label + 1);
   }
   return ret;
 }
