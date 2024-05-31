@@ -43,7 +43,8 @@ jobs:
       _R_CHECK_FORCE_SUGGESTS_: false
       RSPM: https://packagemanager.rstudio.com/cran/__linux__/focal/latest
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      ASAN_OPTIONS: verify_asan_link_order=0
+      ASAN_OPTIONS: "verify_asan_link_order=0:detect_leaks=1:halt_on_error=0:abort_on_error=1:log_path=/tmp/asan.log"
+
 
     steps:
       - uses: actions/checkout@v4
@@ -54,7 +55,7 @@ jobs:
           
       - name: Create Makevars
         run: |
-          echo "PKG_CFLAGS = -fsanitize=address -fno-omit-frame-pointer" > src/Makevars
+          echo "PKG_CFLAGS = -g -O1 -fsanitize=address -fno-omit-frame-pointer" > src/Makevars
           echo "PKG_CXXFLAGS = -fsanitize=address -fno-omit-frame-pointer" >> src/Makevars
           
           mkdir ~/.R
@@ -104,3 +105,7 @@ jobs:
       - name: ASAN - memcheck ${{ matrix.config.test }}
         run: |
           Rscript memcheck/${{ matrix.config.test }}.R
+          
+      - name: Show ASAN log
+        if: failure()
+        run: cat /tmp/asan.log
