@@ -85,3 +85,27 @@ Consistency <- function (dataset, tree, compress = FALSE) {
     ret[attr(dataset, "index"), ]
   }
 }
+
+.Bin <- function(x) {
+  sum(2 ^ (seq_along(x)[as.logical(x)] - 1))
+}
+
+.SortChar <- function(char, cont, inapp) {
+  logCont <- log2(cont)
+  nWhole <- 2 ^ floor(max(logCont))
+  maxN <- nWhole + nWhole - 1
+  ambig <- logCont != floor(logCont)
+  swappableTokens <- cont[cont != ifelse(is.na(inapp), 0, inapp) & !ambig]
+  tab <- tabulate(char, maxN)
+  mapping <- integer(maxN)
+  if (!is.na(inapp) && inapp > 0) {
+    mapping[[inapp]] <- inapp
+  }
+  mapping[swappableTokens[order(tab[swappableTokens], decreasing = TRUE)]] <- 
+    sort.int(swappableTokens)
+  
+  wholes <- mapping[seq_len(nWhole)]
+  mapping[-swappableTokens] <- apply(matrix(as.logical(intToBits(
+    seq_len(maxN)[-swappableTokens])), 32), 2,
+    function(x) sum(wholes[x]))
+  
