@@ -146,8 +146,8 @@ List character_regions(const List tree, const IntegerMatrix states,
   
   List ret(n_pattern);
   for (int pat = n_pattern; pat--; ) {
-    int last_label = 0;
     IntegerMatrix true_label(n_node, n_pattern);
+    int last_label = 0;
     true_label(root_node, pat) = last_label;
     
     for (int i = n_node; i--; ) {
