@@ -57,7 +57,7 @@ test_that("Consistency() handles `-`", {
   )
 })
 
-test_that(".RenumberChar works", {
+test_that(".SortChar() works", {
   contrast <- structure(c(0, 0, 1, 1, 0, 0, 0,
                           1, 0, 1, 0, 0, 0, 0,
                           0, 1, 1, 0, 0, 0, 0,
@@ -85,5 +85,5 @@ test_that(".RenumberChar works", {
   
   # Ambiguity: 8->2; 2->4; 1->1
   expect_equal(.SortChar(c(8, 8, 8 + 2, 8 + 1, 8, 2 + 1, 2, 2, 1, 1, 1), cont, inapp = 1),
-                         c(2, 2, 2 + 4, 2 + 1, 2, 4 + 1, 4, 4, 1, 1, 1))
+               c(2, 2, 2 + 4, 2 + 1, 2, 4 + 1, 4, 4, 1, 1, 1))
 })

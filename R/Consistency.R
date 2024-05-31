@@ -104,8 +104,12 @@ Consistency <- function (dataset, tree, compress = FALSE) {
   mapping[swappableTokens[order(tab[swappableTokens], decreasing = TRUE)]] <- 
     sort.int(swappableTokens)
   
-  wholes <- mapping[seq_len(nWhole)]
+  nAssigned <- log2(nWhole) + 1
+  wholes <- c(mapping[2 ^ (seq_len(nAssigned) - 1)], integer(32 - nAssigned))
   mapping[-swappableTokens] <- apply(matrix(as.logical(intToBits(
     seq_len(maxN)[-swappableTokens])), 32), 2,
     function(x) sum(wholes[x]))
   
+  # Return:
+  mapping[char]
+}
