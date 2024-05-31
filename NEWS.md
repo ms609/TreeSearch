@@ -1,3 +1,9 @@
+# TreeSearch 1.5.1.9000 (2024-05-31, development)
+
+- `Consistency()` also returns the relative homoplasy index of Steell et al. 
+  2023.
+
+
 # TreeSearch 1.5.1 (2024-05-23)
 
 - Fix calls to `DescendantEdges()`
