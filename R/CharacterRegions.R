@@ -23,8 +23,7 @@ CharacterRegions <- function (tree, dataset, method = c("ACCTRAN", "DELTRAN")) {
   
   index <- attr(dataset, "index")
   phyMat <- do.call(rbind, 
-                    dataset[, match(seq_len(attr(dataset, "nr")),
-                                    attr(dataset, "index"))])
+                    dataset[, match(seq_len(attr(dataset, "nr")), index)])
   
   contrast <- attr(dataset, "contrast")
   if (ncol(contrast) > 30) {
