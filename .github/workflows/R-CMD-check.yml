@@ -87,6 +87,7 @@ jobs:
           extra-packages: |
             evaluate@0.23
             knitr@1.45
+            phangorn=?ignore-before-r=4.1.0
             rjson@0.2.20
             XML@3.99-0.3
           needs: |
