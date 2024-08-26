@@ -75,7 +75,6 @@ vinther <- TreeSearch::inapplicable.phyData[["Vinther2008"]]
 
 ```{R RNG-version}
 # Set a random seed so that random functions in this document are reproducible
-suppressWarnings(RNGversion("3.5.0")) # Until we require R v3.6.0
 set.seed(0)
 ```
 

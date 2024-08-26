@@ -46,7 +46,6 @@ test_that("NNI works", {
   Test(2, 0, 3, 9)
   Test(2, 1, 8, 9)
   
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(0)
   nniComb <- NNI(trComb)
   expect_equal(nniComb$tip.label, trComb$tip.label)
@@ -252,7 +251,6 @@ CheckTreeSanity <- function (tree) {
   expect_true(all(child[!tips] > parent[!tips]), info="Parent nodes must be > child nodes")
 }
 
-suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
 set.seed(0)
 small_tree <- rtree(8)
 large_tree <- rtree(80)  
