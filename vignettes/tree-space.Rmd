@@ -262,7 +262,11 @@ of trees:
 ```{r palette.colors, echo = FALSE}
 if (packageVersion("base") < "4.0.0") {
   # TODO delete when require R4.0
-  palette.colors <- function(x) paste0(palette()[2:(x - 1)], "CC")
+  palette.colors <- function(x, ...) {
+    c("#AA0DFECC", "#3283FECC", "#85660DCC", "#782AB6CC", "#565656CC", 
+"#1C8356CC", "#16FF32CC", "#F7E1A0CC", "#E2E2E2CC", "#1CBE4FCC", 
+"#C4451CCC", "#DEA0FDCC")[seq_len(x)]
+  }
 }
 ```
 
