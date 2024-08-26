@@ -38,7 +38,8 @@ test_that("four-tip trees are randomly distributed", {
 })
 
 test_that("four-tip trees are randomly scored", {
-  RNGversion("3.5.0")set.seed(0)
+  RNGversion("3.5.0")
+  set.seed(0)
   
   nTrees <- 6000
   stringency <- 0.005
