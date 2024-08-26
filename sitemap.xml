@@ -1,273 +1,93 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/404.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/CODE_OF_CONDUCT.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/CONTRIBUTING.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/articles/custom.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/articles/getting-started.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/articles/profile-scores.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/articles/profile.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/articles/tree-search.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/articles/tree-space.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/authors.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/index.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/news/index.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/AdditionTree.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/AllSPR.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/Carter1.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/CharacterLength.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/ClusterStrings.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/ConcordantInformation.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/Consistency.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/DoubleNNI.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/GapHandler.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/JackLabels.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/Jackknife.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/LengthAdded.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/MinimumLength.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/MorphyErrorCheck.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/MorphyTreeLength.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/MorphyWeights.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/NNI.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/PhyDat2Morphy.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/PlotCharacter.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/PrepareDataProfile.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/QuartetResolution.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/RandomMorphyTree.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/RandomTreeScore.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/Ratchet.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/RearrangeEdges.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/SPR.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/SingleCharMorphy.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/SiteConcordance.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/StepInformation.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/StopUnlessBifurcating.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/Suboptimality.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/SuccessiveApproximations.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/TBR.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/TBRWarning.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/TaxonInfluence.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/TreeLength.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/TreeSearch.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/UnloadMorphy.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/WhenFirstHit.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/WithOneExtraStep.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/cSPR.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/congreveLamsdellMatrices.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/dot-CombineResults.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/dot-GapHandler.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/dot-NonDuplicateRoot.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/dot-UniqueExceptHits.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/inapplicable.datasets.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/is.morphyPtr.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_apply_tipdata.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_attach_rawdata.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_attach_symbols.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_delete_Morphy.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_delete_rawdata.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_first_down_recon.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_first_up_recon.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_get_charac_weight.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_get_gaphandl.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_get_num_charac.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_get_num_internal_nodes.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_get_numtaxa.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_get_symbols.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_init_Morphy.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_new_Morphy.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_second_down_recon.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_second_up_recon.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_set_charac_weight.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_set_num_internal_nodes.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_set_parsim_t.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_translate_error.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_update_lower_root.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/mpl_update_tip.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/profiles.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/referenceTree.html</loc>
-  </url>
-  <url>
-    <loc>https://ms609.github.io/TreeSearch/reference/summary.morphyPtr.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://ms609.github.io/TreeSearch/404.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/CODE_OF_CONDUCT.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/CONTRIBUTING.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/LICENSE-text.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/articles/custom.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/articles/getting-started.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/articles/index.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/articles/profile-scores.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/articles/profile.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/articles/tree-search.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/articles/tree-space.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/authors.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/index.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/news/index.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/AdditionTree.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/AllSPR.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/Carter1.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/CharacterLength.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/ClusterStrings.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/ConcordantInformation.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/Consistency.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/DoubleNNI.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/GapHandler.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/JackLabels.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/Jackknife.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/LengthAdded.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/MinimumLength.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/MorphyErrorCheck.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/MorphyTreeLength.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/MorphyWeights.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/NNI.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/PhyDat2Morphy.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/PlotCharacter.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/PrepareDataProfile.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/QuartetResolution.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/RandomMorphyTree.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/RandomTreeScore.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/Ratchet.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/RearrangeEdges.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/SPR.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/SingleCharMorphy.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/SiteConcordance.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/StepInformation.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/StopUnlessBifurcating.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/Suboptimality.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/SuccessiveApproximations.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/TBR.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/TBRWarning.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/TaxonInfluence.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/TreeLength.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/TreeSearch.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/UnloadMorphy.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/WhenFirstHit.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/WithOneExtraStep.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/cSPR.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/congreveLamsdellMatrices.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/dot-CombineResults.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/dot-GapHandler.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/dot-NonDuplicateRoot.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/dot-UniqueExceptHits.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/inapplicable.datasets.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/index.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/is.morphyPtr.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_apply_tipdata.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_attach_rawdata.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_attach_symbols.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_delete_Morphy.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_delete_rawdata.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_first_down_recon.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_first_up_recon.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_get_charac_weight.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_get_gaphandl.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_get_num_charac.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_get_num_internal_nodes.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_get_numtaxa.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_get_symbols.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_init_Morphy.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_new_Morphy.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_second_down_recon.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_second_up_recon.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_set_charac_weight.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_set_num_internal_nodes.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_set_parsim_t.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_translate_error.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_update_lower_root.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/mpl_update_tip.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/profiles.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/referenceTree.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/summary.morphyPtr.html</loc></url>
 </urlset>
+
