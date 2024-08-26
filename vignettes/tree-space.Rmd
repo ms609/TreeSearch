@@ -259,6 +259,12 @@ nClusters <- length(unique(clustering))
 
 Now we can map tree space into a few dimensions and visualise the distribution
 of trees:
+```{r palette.colors, echo = FALSE}
+if (packageVersion("base") < "4.0.0") {
+  # TODO delete when require R4.0
+  palette.colors <- function(x) paste0(palette()[2:(x - 1)], "CC")
+}
+```
 
 ```{r map-space, fig.keep = "none"}
 nDim <- 3 # Number of dimensions to plot
