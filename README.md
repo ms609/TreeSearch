@@ -106,7 +106,7 @@ Brazeau, M. D., Guillerme, T. and Smith, M. R. (2019).
 Faith D. P., Trueman J. W. H. (2001).
   Towards an inclusive philosophy for phylogenetic inference.
   Systematic Biology, 50(3), 331–350. 
-  doi: [10.1080/10635150118627](https://doi.org/10.1080/10635150118627).
+  doi: [10.1080/10635150118627](https://dx.doi.org/10.1080/10635150118627).
 
 Farris, J. S. (1969). A successive approximations approach to character weighting. 
   Systematic Biology, 18(4), 374–385.
