@@ -93,8 +93,12 @@ NNI <- function (tree, edgeToBreak = NULL) {
 #' @export
 cNNI <- function (tree, edgeToBreak = NULL, whichSwitch = NULL) {
   edge <- tree[["edge"]]
-  if (is.null(edgeToBreak)) edgeToBreak <- sample.int(dim(edge)[1] - NTip(tree) - 1L, 1L)
-  if (is.null(whichSwitch)) whichSwitch <- sample.int(2L, 1L)
+  if (is.null(edgeToBreak)) {
+    edgeToBreak <- sample.int(dim(edge)[[1]] - NTip(tree) - 1L, 1L)
+  }
+  if (is.null(whichSwitch)) {
+    whichSwitch <- sample.int(2L, 1L)
+  }
   tree[["edge"]] <- nni(edge, edgeToBreak, whichSwitch)
   
   # Return:
