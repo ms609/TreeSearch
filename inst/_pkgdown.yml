@@ -76,8 +76,8 @@ articles:
     - custom
 
 template:
+  bootstrap: 5
+  bslib:
+    danger: "#A6081A" # Accessibility suggestion
   params:
-    docsearch:
-      api_key: 8422cbc6478f9d3278ad355b48435342
-      index_name: treesearch
     ganalytics: G-V9DV1LS35J
