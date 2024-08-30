@@ -31,7 +31,7 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
   # Initialize missing parameters
   taxa <- names(dataset)
   if (missing(sequence)) {
-    sequence <- taxa[1]
+    sequence <- taxa[[1]]
   } else if (is.numeric(sequence)) {
     sequence <- taxa[sequence]
   }
