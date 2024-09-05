@@ -11,7 +11,7 @@ test_that("Jackknife supports are correct", {
   expect_error(Jackknife(start_tree, dataset, resampleFreq = 0))
   expect_error(Jackknife(start_tree, dataset, resampleFreq = 9/10))
   
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
+  suppressWarnings(RNGversion("3.5.0"))
   set.seed(0)
   
   strict <- TreeSearch(start_tree, dataset, verbosity = 0)
