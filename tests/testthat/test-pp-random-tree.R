@@ -38,7 +38,6 @@ test_that("four-tip trees are randomly distributed", {
 })
 
 test_that("four-tip trees are randomly scored", {
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(0)
   
   nTrees <- 6000
@@ -57,7 +56,6 @@ test_that("four-tip trees are randomly scored", {
 })
 
 test_that("five-tip trees are randomly scored", {
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(0)
   nTrees <- 6000
   stringency <- 0.005
@@ -75,7 +73,6 @@ test_that("five-tip trees are randomly scored", {
 
 
 test_that("six-tip trees are randomly scored", {
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(0)
   
   nTrees <- 6000
