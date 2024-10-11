@@ -4,6 +4,11 @@
 - Require R 3.6 (to simplify maintenance)
 
 
+# TreeSearch 1.5.1.9000 (2024-10)
+
+- Fix display of state labels in app
+
+
 # TreeSearch 1.5.1 (2024-05-23)
 
 - Fix calls to `DescendantEdges()`
