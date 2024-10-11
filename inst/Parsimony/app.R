@@ -2314,7 +2314,7 @@ server <- function(input, output, session) {
   nonAmbigContrast <- reactive({
     cont <- attr(r$dataset, "contrast")
     applic <- cont[, setdiff(colnames(cont), "-")]
-    cont[rowSums(applic) == dim(applic)[2], ] <- 0
+    cont[rowSums(applic) == dim(applic)[[2]], ] <- 0
     
     # Return:
     cont
@@ -2322,7 +2322,11 @@ server <- function(input, output, session) {
   
   plottedTokens <- reactive({
     n <- PlottedChar()
-    tokens <- colSums(nonAmbigContrast()[unlist(r$dataset[, n]), ]) > 0L
+    # `phyDat[,]` returns a new phyDat object with a different "contrast"
+    # Hence we manually extract the compressed character tokens:
+    phyColumn <- vapply(r$dataset, `[[`, integer(1),
+                        attr(r$dataset, "index")[[n]], USE.NAMES = FALSE)
+    tokens <- colSums(nonAmbigContrast()[phyColumn, ]) > 0L
     names(tokens[tokens])
   })
   
