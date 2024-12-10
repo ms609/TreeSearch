@@ -43,11 +43,11 @@ SPRWarning <- function (parent, child, error) {
   rightSide <- DescendantEdges(edge = 1, parent, child, nEdge = nEdge)
   nEdgeRight <- sum(rightSide)
   if (nEdgeRight == 1) {
-    notDuplicateRoot[2] <- FALSE
+    notDuplicateRoot[[2]] <- FALSE
   } else if (nEdgeRight == 3) {
-    notDuplicateRoot[4] <- FALSE
+    notDuplicateRoot[[4]] <- FALSE
   } else {
-    notDuplicateRoot[1] <- FALSE
+    notDuplicateRoot[[1]] <- FALSE
   }
   notDuplicateRoot
 }
@@ -97,12 +97,13 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   if (!is.null(edgeToBreak) && edgeToBreak == -1) {
     child <- edge[, 2]
     nEdge <- length(parent)
-    stop("Negative edgeToBreak not yet supported; on TODO list for next release")
+    stop("Negative edgeToBreak not yet supported; please request on GitHub")
     notDuplicateRoot <- .NonDuplicateRoot(parent, child, nEdge)
     # Return:
     unique(unlist(lapply(which(notDuplicateRoot), AllSPR,
-      parent=parent, child=child, nEdge=nEdge, notDuplicateRoot=notDuplicateRoot),
-      recursive=FALSE)) # TODO the fact that we need to use `unique` indicates that 
+      parent = parent, child = child, nEdge = nEdge, 
+      notDuplicateRoot = notDuplicateRoot),
+      recursive = FALSE)) # TODO the fact that we need to use `unique` indicates that 
                          #      we're being inefficient here.
   } else {
     newEdge <- SPRSwap(parent, edge[, 2], edgeToBreak = edgeToBreak,
@@ -180,7 +181,7 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
   
   if (is.null(edgeToBreak)) {
     # Pick an edge at random
-    edgeToBreak <- SampleOne(which(notDuplicateRoot), len=nEdge - 1L)
+    edgeToBreak <- SampleOne(which(notDuplicateRoot), len = nEdge - 1L)
   } else if (edgeToBreak > nEdge) {
     return(SPRWarning(parent, child, "edgeToBreak > nEdge"))
   } else if (edgeToBreak < 1) {
@@ -199,10 +200,17 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
   brokenEdgeSister <- parent == brokenEdge.parentNode & !brokenEdge
   brokenEdgeDaughters <- parent == brokenEdge.childNode
   nearBrokenEdge <- brokenEdge | brokenEdgeSister | brokenEdgeParent | brokenEdgeDaughters
-  if (breakingRootEdge <- !any(brokenEdgeParent)) { 
+  breakingRootEdge <- !any(brokenEdgeParent)
+  if (breakingRootEdge) {
+    if (edgeToBreak != 1 && all(edgesCutAdrift[-1])) {
+      return(SPRWarning(parent, child, "No rearrangement possible with this root position."))
+    }
+    
     # Edge to break is the Root Node.
+    # These daughters are going to have the root as a parent.
     brokenRootDaughters <- parent == child[brokenEdgeSister]
-    nearBrokenEdge <- nearBrokenEdge | brokenRootDaughters
+    # Why did I do this?  Breaks SPR(BalancedTree(4), 1)
+    # nearBrokenEdge <- nearBrokenEdge | brokenRootDaughters
   }
   
   if (!is.null(mergeEdge)) { # Quick sanity checks
@@ -233,9 +241,9 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
   if (breakingRootEdge) {
     parent[brokenRootDaughters] <- brokenEdge.parentNode
     spareNode <- child[brokenEdgeSister]
-    child [brokenEdgeSister] <- child[mergeEdge]
+    child[brokenEdgeSister] <- child[[mergeEdge]]
     parent[brokenEdge | brokenEdgeSister] <- spareNode
-    child[mergeEdge] <- spareNode
+    child[[mergeEdge]] <- spareNode
   } else {
     parent[brokenEdgeSister] <- parent[brokenEdgeParent]
     parent[brokenEdgeParent] <- parent[[mergeEdge]]
