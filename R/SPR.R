@@ -79,11 +79,11 @@ SPRWarning <- function (parent, child, error) {
 #' If no branch on the path is selected, the pruned subtree is reattached to the
 #' final edge on that path, which is termed a **constrained** grafting point.
 #' 
-#' Edge lengths are retained. The length of the edge that linked the
-#' pruned subtree and its sister group to the rest of the tree is assigned
-#' to the new edge that links the regrafted clade and its sister group to the
-#' rest of the tree. (See fig. 6 in \insertRef{Lakner2008}{TreeSearch} for a
-#' detailed explanation.)
+#' When `mergeEdge` and `edgeToBreak` are unspecified, edge lengths are retained.
+#' The length of the edge that linked the pruned subtree and its sister group 
+#' to the rest of the tree is assigned to the new edge that links the regrafted
+#' clade and its sister group to the rest of the tree.
+#' (See fig. 6 in \insertRef{Lakner2008}{TreeSearch} for a detailed explanation.)
 #'
 #' @template treeParam
 #' @param extension Numeric specifying the extension probability for the
@@ -130,7 +130,9 @@ SPR <- function(tree, extension = NA_real_, requireChange = TRUE,
   edge <- tree[["edge"]]
   parent <- edge[, 1]
   StopUnlessBifurcating(parent)
-  if (!is.null(edgeToBreak) && edgeToBreak == -1) {
+  if (is.null(edgeToBreak) && is.null(mergeEdge)) {
+    
+  } else if (!is.null(edgeToBreak) && edgeToBreak == -1) {
     child <- edge[, 2]
     nEdge <- length(parent)
     stop("Negative edgeToBreak not yet supported; please request on GitHub")
@@ -142,6 +144,7 @@ SPR <- function(tree, extension = NA_real_, requireChange = TRUE,
       recursive = FALSE)) # TODO the fact that we need to use `unique` indicates that 
                          #      we're being inefficient here.
   } else {
+    # Retain v1.5.1 behaviour if edgeToBreak or mergeEdge is specified
     newEdge <- SPRSwap(parent, edge[, 2], edgeToBreak = edgeToBreak,
                        mergeEdge = mergeEdge)
     tree[["edge"]] <- cbind(newEdge[[1]], newEdge[[2]])

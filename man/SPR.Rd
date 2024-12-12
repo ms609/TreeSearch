@@ -114,11 +114,11 @@ the pruned subtree is reattached on that branch, which is termed an
 If no branch on the path is selected, the pruned subtree is reattached to the
 final edge on that path, which is termed a \strong{constrained} grafting point.
 
-Edge lengths are retained. The length of the edge that linked the
-pruned subtree and its sister group to the rest of the tree is assigned
-to the new edge that links the regrafted clade and its sister group to the
-rest of the tree. (See fig. 6 in \insertRef{Lakner2008}{TreeSearch} for a
-detailed explanation.)
+When \code{mergeEdge} and \code{edgeToBreak} are unspecified, edge lengths are retained.
+The length of the edge that linked the pruned subtree and its sister group
+to the rest of the tree is assigned to the new edge that links the regrafted
+clade and its sister group to the rest of the tree.
+(See fig. 6 in \insertRef{Lakner2008}{TreeSearch} for a detailed explanation.)
 }
 \section{Functions}{
 \itemize{
@@ -130,10 +130,10 @@ detailed explanation.)
 
 }}
 \examples{
-{
-tree <- TreeTools::BalancedTree(20)
-SPR(tree)
-}
+set.seed(1)
+tree <- TreeTools::BalancedTree(8)
+plot(SPR(tree))
+
 }
 \references{
 The \acronym{SPR} algorithm is summarized in

@@ -16,3 +16,13 @@ test_that("SPR handles root rearrangement", {
   expect_warning(SPR(PectinateTree(4), edgeToBreak = 2),
                  "No rearrangement possible with this root position")
 })
+
+
+test_that("SPR samples uniformly", {
+  set.seed(5)
+  t5 <- BalancedTree(5)
+  # ub(SPR(t5), times = 1000) = ~160 ms
+  expect_gt(chisq.test(
+    table(replicate(1000, as.integer(as.TreeNumber(SPR(t5))))),
+    p = rep(1, 13) / 13)$p.value, 0.001)
+})
