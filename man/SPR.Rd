@@ -10,7 +10,13 @@
 \alias{RootedSPRSwap}
 \title{Subtree pruning and rearrangement (SPR)}
 \usage{
-SPR(tree, edgeToBreak = NULL, mergeEdge = NULL)
+SPR(
+  tree,
+  extension = NA_real_,
+  requireChange = TRUE,
+  edgeToBreak = NULL,
+  mergeEdge = NULL
+)
 
 SPRMoves(tree, edgeToBreak = integer(0))
 
@@ -41,6 +47,17 @@ RootedSPRSwap(
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
+\item{extension}{Numeric specifying the extension probability for the
+SPR operation. If \code{NA} (the default), a random SPR operation is performed,
+which will uniformly sample the neighbourhood of trees one SPR move from
+\code{tree}, resulting in a Hastings Ratio of 1 \insertRef{Lakner2008}{TreeSearch}.}
+
+\item{requireChange}{Logical specifying whether to require that the tree
+topology changes.  If \code{FALSE}, a move may select the current branch as the
+regrafting point.  If \code{TRUE} (the default), only moves that change the tree
+topology will be returned.  If \code{NA}, moves that only change the position of
+the root will not be returned.}
+
 \item{edgeToBreak}{the index of an edge to bisect, generated randomly
 if not specified.}
 
@@ -56,19 +73,12 @@ matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
 class \code{\link{phylo}}, i.e. \code{dim(tree$edge)[1]}}
 
 \item{nNode}{(optional) Number of nodes.}
-
-\item{extension}{Numeric specifying the extension probability for the
-SPR operation. If \code{NA} (the default), a random SPR operation is performed,
-which will uniformly sample the neighbourhood of trees one SPR move from
-\code{tree}, resulting in a Hastings Ratio of 1 \insertRef{Lakner2008}{TreeSearch}.}
-
-\item{requireChange}{Logical specifying whether to require that the tree
-topology changes.  If \code{FALSE}, a move may select the current branch as the
-regrafting point.}
 }
 \value{
-This function returns a tree in \code{phyDat} format that has
-undergone one \acronym{SPR} iteration.
+\code{SPR()} returns a tree in \code{phyDat} format that has
+undergone one \acronym{SPR} iteration.  If extension SPR is used, the tree
+will have a logical attribute \code{constrained} specifying whether the grafting
+point was constrained (\code{TRUE}) or unconstrained (\code{FALSE}).
 
 \code{TBRMoves()} returns a list of all trees one SPR move away from
 \code{tree}, with edges and nodes in preorder, rooted on the first-labelled tip.
@@ -121,7 +131,7 @@ detailed explanation.)
 }}
 \examples{
 {
-tree <- ape::rtree(20, br=FALSE)
+tree <- TreeTools::BalancedTree(20)
 SPR(tree)
 }
 }

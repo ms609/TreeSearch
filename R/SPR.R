@@ -92,12 +92,16 @@ SPRWarning <- function (parent, child, error) {
 #' `tree`, resulting in a Hastings Ratio of 1 \insertRef{Lakner2008}{TreeSearch}.
 #' @param requireChange Logical specifying whether to require that the tree
 #' topology changes.  If `FALSE`, a move may select the current branch as the
-#' regrafting point.
+#' regrafting point.  If `TRUE` (the default), only moves that change the tree
+#' topology will be returned.  If `NA`, moves that only change the position of
+#' the root will not be returned.
 #' @param edgeToBreak the index of an edge to bisect, generated randomly
 #' if not specified.
 #' @param mergeEdge the index of an edge on which to merge the broken edge.
-#' @return This function returns a tree in \code{phyDat} format that has
-#' undergone one \acronym{SPR} iteration.
+#' @return `SPR()` returns a tree in \code{phyDat} format that has
+#' undergone one \acronym{SPR} iteration.  If extension SPR is used, the tree
+#' will have a logical attribute `constrained` specifying whether the grafting
+#' point was constrained (`TRUE`) or unconstrained (`FALSE`).
 #' 
 #' @references The \acronym{SPR} algorithm is summarized in
 #'  \insertRef{Felsenstein2004;textual}{TreeSearch}.
@@ -110,14 +114,16 @@ SPRWarning <- function (parent, child, error) {
 #' - [`RootedSPR()`]: useful when the position of the root node should be retained.
 #' @family tree rearrangement functions
 #' 
-#' @examples{
-#' tree <- ape::rtree(20, br=FALSE)
-#' SPR(tree)
-#' }
+#' @examples
+#' set.seed(1)
+#' tree <- TreeTools::BalancedTree(8)
+#' plot(SPR(tree))
+#' 
 #' @importFrom ape root
 #' @importFrom TreeTools Preorder
 #' @export
-SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
+SPR <- function(tree, extension = NA_real_, requireChange = TRUE,
+                edgeToBreak = NULL, mergeEdge = NULL) {
   if (is.null(treeOrder <- attr(tree, "order")) || treeOrder != "preorder") {
     tree <- Preorder(tree)
   }
