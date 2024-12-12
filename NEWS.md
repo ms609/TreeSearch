@@ -1,7 +1,24 @@
+# TreeSearch 1.5.1.9003 (2024-12)
+
+- Update `SPR` to:
+  - a faster C++ implementation
+  - retain edge lengths
+  - support extended SPR
+  - uniformly sample the SPR-1 neighbourhood
+    ([#164](https://github.com/ms609/TreeSearch/issues/164))
+
+# TreeSearch 1.5.1.9002 (2024-12)
+
+- Support for ordered (additive) characters
+- Require R 3.6 (to simplify maintenance)
+
 # TreeSearch 1.5.1.9001 (2024-12)
 
-- Fix display of state labels in app
 - Fix SPR behaviour when move is close to root
+
+# TreeSearch 1.5.1.9000 (2024-10)
+
+- Fix display of state labels in app
 
 
 # TreeSearch 1.5.1 (2024-05-23)

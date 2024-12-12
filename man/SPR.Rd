@@ -41,7 +41,8 @@ RootedSPRSwap(
 \arguments{
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
-\item{edgeToBreak}{the index of an edge to bisect, generated randomly if not specified.}
+\item{edgeToBreak}{the index of an edge to bisect, generated randomly
+if not specified.}
 
 \item{mergeEdge}{the index of an edge on which to merge the broken edge.}
 
@@ -55,9 +56,19 @@ matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
 class \code{\link{phylo}}, i.e. \code{dim(tree$edge)[1]}}
 
 \item{nNode}{(optional) Number of nodes.}
+
+\item{extension}{Numeric specifying the extension probability for the
+SPR operation. If \code{NA} (the default), a random SPR operation is performed,
+which will uniformly sample the neighbourhood of trees one SPR move from
+\code{tree}, resulting in a Hastings Ratio of 1 \insertRef{Lakner2008}{TreeSearch}.}
+
+\item{requireChange}{Logical specifying whether to require that the tree
+topology changes.  If \code{FALSE}, a move may select the current branch as the
+regrafting point.}
 }
 \value{
-This function returns a tree in \code{phyDat} format that has undergone one \acronym{SPR} iteration.
+This function returns a tree in \code{phyDat} format that has
+undergone one \acronym{SPR} iteration.
 
 \code{TBRMoves()} returns a list of all trees one SPR move away from
 \code{tree}, with edges and nodes in preorder, rooted on the first-labelled tip.
@@ -71,15 +82,33 @@ a list containing two elements, corresponding in turn to the rearranged parent a
 Perform one \acronym{SPR} rearrangement on a tree
 }
 \details{
-Equivalent to \code{kSPR()} in the \pkg{phangorn} package, but faster.
-Note that rearrangements that only change the position of the root WILL be returned by
-\code{SPR}.  If the position of the root is irrelevant (as in Fitch parsimony, for example)
+Note that rearrangements that only change the position of the root are
+considered valid and \strong{will} be returned by \code{SPR}.
+If the position of the root is irrelevant (as in Fitch parsimony, for example)
 then this function will occasionally return a functionally equivalent topology.
-\code{RootIrrelevantSPR} will search tree space more efficiently in these cases.
-Branch lengths are not (yet) supported.
 
 All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
 \link[ape:multi2di]{ape::multi2di} may help.
+
+The SPR operation begins by randomly selecting a branch in the tree.
+One of the two subtrees defined by this edge is randomly selected to be
+removed from the tree.
+Under random SPR (rSPR, \code{extension = NA}), this
+subtree is grafted onto a random branch in the remaining tree.
+Under extension SPR (eSPR, \code{extension > 0}), a path through the random tree
+is selected at random.
+Starting from the current branch, each branch is considered as a regrafting
+point with probability \code{1 - extension}. Once a branch is selected,
+the pruned subtree is reattached on that branch, which is termed an
+\emph{unconstrained} grafting point.
+If no branch on the path is selected, the pruned subtree is reattached to the
+final edge on that path, which is termed a \strong{constrained} grafting point.
+
+Edge lengths are retained. The length of the edge that linked the
+pruned subtree and its sister group to the rest of the tree is assigned
+to the new edge that links the regrafted clade and its sister group to the
+rest of the tree. (See fig. 6 in \insertRef{Lakner2008}{TreeSearch} for a
+detailed explanation.)
 }
 \section{Functions}{
 \itemize{
@@ -98,10 +127,12 @@ SPR(tree)
 }
 \references{
 The \acronym{SPR} algorithm is summarized in
-\insertRef{Felsenstein2004}{TreeSearch}
+\insertRef{Felsenstein2004;textual}{TreeSearch}.
+The eSPR implementation is based on \insertRef{Lakner2008;textual}{TreeSearch}.
 }
 \seealso{
 \itemize{
+\item \code{kSPR()}, a slower implementation in the \pkg{phangorn} package.
 \item \code{\link[=RootedSPR]{RootedSPR()}}: useful when the position of the root node should be retained.
 }
 

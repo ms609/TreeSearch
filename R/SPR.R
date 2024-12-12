@@ -56,27 +56,57 @@ SPRWarning <- function (parent, child, error) {
 #'
 #' Perform one \acronym{SPR} rearrangement on a tree
 #' 
-#' Equivalent to `kSPR()` in the \pkg{phangorn} package, but faster.
-#' Note that rearrangements that only change the position of the root WILL be returned by 
-#' \code{SPR}.  If the position of the root is irrelevant (as in Fitch parsimony, for example)
-#' then this function will occasionally return a functionally equivalent topology.  
-#' \code{RootIrrelevantSPR} will search tree space more efficiently in these cases.
-#' Branch lengths are not (yet) supported.
+#' Note that rearrangements that only change the position of the root are
+#' considered valid and **will** be returned by \code{SPR}.
+#' If the position of the root is irrelevant (as in Fitch parsimony, for example)
+#' then this function will occasionally return a functionally equivalent topology. 
 #'
 #' All nodes in a tree must be bifurcating; [ape::collapse.singles] and
 #' [ape::multi2di] may help.
+#' 
+#' 
+#' The SPR operation begins by randomly selecting a branch in the tree.
+#' One of the two subtrees defined by this edge is randomly selected to be
+#' removed from the tree.
+#' Under random SPR (rSPR, `extension = NA`), this
+#' subtree is grafted onto a random branch in the remaining tree.
+#' Under extension SPR (eSPR, `extension > 0`), a path through the random tree
+#' is selected at random.  
+#' Starting from the current branch, each branch is considered as a regrafting
+#' point with probability `1 - extension`. Once a branch is selected,
+#' the pruned subtree is reattached on that branch, which is termed an
+#' *unconstrained* grafting point.
+#' If no branch on the path is selected, the pruned subtree is reattached to the
+#' final edge on that path, which is termed a **constrained** grafting point.
+#' 
+#' Edge lengths are retained. The length of the edge that linked the
+#' pruned subtree and its sister group to the rest of the tree is assigned
+#' to the new edge that links the regrafted clade and its sister group to the
+#' rest of the tree. (See fig. 6 in \insertRef{Lakner2008}{TreeSearch} for a
+#' detailed explanation.)
 #'
 #' @template treeParam
-#' @param edgeToBreak the index of an edge to bisect, generated randomly if not specified.
+#' @param extension Numeric specifying the extension probability for the
+#' SPR operation. If `NA` (the default), a random SPR operation is performed,
+#' which will uniformly sample the neighbourhood of trees one SPR move from
+#' `tree`, resulting in a Hastings Ratio of 1 \insertRef{Lakner2008}{TreeSearch}.
+#' @param requireChange Logical specifying whether to require that the tree
+#' topology changes.  If `FALSE`, a move may select the current branch as the
+#' regrafting point.
+#' @param edgeToBreak the index of an edge to bisect, generated randomly
+#' if not specified.
 #' @param mergeEdge the index of an edge on which to merge the broken edge.
-#' @return This function returns a tree in \code{phyDat} format that has undergone one \acronym{SPR} iteration.
+#' @return This function returns a tree in \code{phyDat} format that has
+#' undergone one \acronym{SPR} iteration.
 #' 
 #' @references The \acronym{SPR} algorithm is summarized in
-#'  \insertRef{Felsenstein2004}{TreeSearch}
+#'  \insertRef{Felsenstein2004;textual}{TreeSearch}.
+#'  The eSPR implementation is based on \insertRef{Lakner2008;textual}{TreeSearch}.
 #' 
 #' @author Martin R. Smith
 #' 
 #' @seealso 
+#' - `kSPR()`, a slower implementation in the \pkg{phangorn} package.
 #' - [`RootedSPR()`]: useful when the position of the root node should be retained.
 #' @family tree rearrangement functions
 #' 
