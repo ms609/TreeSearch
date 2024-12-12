@@ -86,6 +86,9 @@ jobs:
         with:
           extra-packages: |
             waldo@0.5.3
+            vdiffr@1.0.7
+            cpp11@0.5.0
+            httr2@1.0.1
             testthat@3.2.1
             downlit@0.4.3
             pkgdown@2.0.9
