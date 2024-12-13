@@ -10,13 +10,132 @@ typedef int_fast16_t int16;
 const int16 UNDEFINED = -1;
 
 struct Tree {
+  public:
+    
+    Tree(const IntegerMatrix edge,
+         const IntegerVector lengths = Rcpp::NilValue) :
+    parent(edge(_, 0)),
+    child(edge(_, 1)),
+    n_edge(edge.nrow()),
+    n_node(edge.nrow() / 2),
+    left_below(IntegerVector(edge.nrow())),      // n_edge
+    right_below(IntegerVector(edge.nrow())),     // n_edge
+    left_child(IntegerVector(edge.nrow() / 2)),  // n_node
+    right_child(IntegerVector(edge.nrow() / 2)), // n_node
+    n_tip((edge.nrow() / 2) + 1),                // n_node + 1
+    n_vertex(edge.nrow() + 1),                   // n_node + n_tip
+    parent_of(IntegerVector(edge.nrow() + 1)),   // n_vertex
+    edge_above(IntegerVector(edge.nrow() + 1)),  // n_vertex
+    root_node((edge.nrow() / 2) + 1),            // n_tip
+    lengths(lengths),
+    hasLengths(lengths == Rcpp::NilValue),
+    internal(LogicalVector(edge.nrow() / 2 + 1, UNDEFINED)),
+    {
+      redraw_from_edges();
+    }
   
+  void redraw_from_edges() {
+    right_child.assign(n_node, 0); // Reset elements to zero
+    
+    for (int16 i = edge.nrow(); i--; ) {
+      const int16
+        par = parent(i) - 1,
+        chi = child(i) - 1
+      ;
+      parent_of[chi] = par;
+      edge_above[par] = i;
+      if (right_child[par - n_tip]) {
+        left_child[par - n_tip] = chi;
+      } else {
+        right_child[par - n_tip] = chi;
+      }
+      
+      internal[i] = (chi >= n_tip);
+      
+    }
+    parent_of[root_node] = root_node;
+    
+    for (int16 i = n_edge; i--; ) {
+      const int16 edge_child = child(i) - 1;
+      if (edge_child < n_tip) {
+        left_below[i] = 0;
+        right_below[i] = 0;
+      } else {
+        left_below[i] = edge_above[left_child[edge_child]];
+        right_below[i] = edge_above[right_child[edge_child]];
+      }
+    }
+  }
+  
+  void preorder_or_die() {
+    if (parent(0) != root_node) {
+      Rcpp::stop("edge[1, ] must connect root to leaf. Try Preorder(RootTree(tree, 1)).");
+    }
+    if (parent(1) != root_node) {
+      Rcpp::stop("edge[2, ] must connect to root. Try Preorder(RootTree(tree, 1)).");
+    }
+  }
+  
+  // Return TRUE if e1 is above (i.e. ancestral to) e2,
+  // FALSE otherwise
+  bool is_above(int16 e1, int16 e2) {
+    
+  }
+  
+  // Assumptions: 
+  //  * Tree is bifurcating, in preorder; first two edges have root as parent.
+  //  [[Rcpp::export]]
+  IntegerMatrix spr_move(const int prune_edge, const int graft_edge) {
+    if (n_edge < 5) {
+      Rcpp::stop("No SPR rearrangements possible on a tree with < 5 edges");
+    }
+    preorder_or_die();
+    
+    if (prune_edge < 0 || prune_edge > n_edge) {
+      Rcpp::stop("`move[1]` must correspond to an edge in the tree.");
+    }
+    if (graft_edge < 0 || graft_edge > n_edge) {
+      Rcpp::stop("`move[2]` must correspond to an edge in the tree.");
+    }
+    
+    if (prune_edge != graft_edge) {
+      
+      if (prune_edge) { // We are breaking a non-root edge
+        const int16
+          edge_above = move_list(move_id, 2),
+          edge_beside = move_list(move_id, 3)
+        ;
+        
+        ret(edge_beside, 0) = edge(edge_above, 0);
+        ret(edge_above, 0) = edge(graft_edge, 0);
+        ret(graft_edge, 0) = broken_edge_parent;
+      } else { // We are breaking the root edge
+        ret(2, 0) = broken_edge_parent;
+        ret(move_list(move_id, 3), 0) = broken_edge_parent;
+        
+        //child [brokenEdgeSister] <- child[mergeEdge]
+        ret(1, 1) = edge(graft_edge, 1);
+        //parent[brokenEdge | brokenEdgeSister] <- spareNode
+        const int spare_node = edge(1, 1);
+        ret(0, 0) = spare_node;
+        ret(1, 0) = spare_node;
+        // child[mergeEdge] <- spareNode
+        ret(graft_edge, 1) = spare_node;
+      }
+      ret = TreeTools::preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
+    }
+    return TreeTools::root_binary(ret, 1);
+  }
   private: 
     IntegerVector parent;      // Uses R numbering; i.e. 1 to n_tip
     IntegerVector child;       // Uses R numbering
     IntegerVector parent_of;   // Uses C numbering; i.e. 0 to n_tip - 1
     IntegerVector left_child;  // Uses C numbering
     IntegerVector right_child; // Uses C numbering
+    
+    IntegerVector left_below;  // Edge below X, left child, from 0
+    IntegerVector right_below; // Edge below X, right child, from 0
+    
     LogicalVector internal;
     int16 n_edge;
     int16 n_tip;
@@ -25,69 +144,7 @@ struct Tree {
     int16 root_node; // C numbering, hence = n_tip
     bool hasLengths;
     NumericVector lengths;
-    
-    IntegerVector edge_above;
-    IntegerVector edge_left;
-    IntegerVector edge_right;
   
-  Tree(const IntegerMatrix edge,
-       const IntegerVector lengths = Rcpp::NilValue) :
-    parent(edge(_, 0)),
-    child(edge(_, 1)),
-    n_edge(edge.nrow()),
-    n_node(edge.nrow() / 2),
-    left_child(IntegerVector(edge.nrow() / 2)),  // n_node
-    right_child(IntegerVector(edge.nrow() / 2)), // n_node
-    n_tip((edge.nrow() / 2) + 1),                // n_node + 1
-    n_vertex(edge.nrow() + 1),                   // n_node + n_tip
-    parent_of(IntegerVector(edge.nrow() + 1)),   // n_vertex
-    root_node((edge.nrow() / 2) + 1),            // n_tip
-    lengths(lengths),
-    hasLengths(lengths == Rcpp::NilValue),
-    internal(LogicalVector(edge.nrow() / 2 + 1, UNDEFINED)),
-  {
-    redraw_from_edges();
-  }
-  
-  void redraw_from_edges() {
-    right_child.assign(n_node, 0); // Reset elements to zero
-    
-    for (int16 i = edge.nrow(); i--; ) {
-      const int16
-        par = edge(i, 0) - 1,
-        chi = edge(i, 1) - 1
-      ;
-      parent_of[chi] = par;
-      if (right_child[par - n_tip]) {
-        left_child[par - n_tip] = chi;
-      } else {
-        right_child[par - n_tip] = chi;
-      }
-      
-      if (chi < n_tip) {
-        internal[par - n_tip] = false;
-      } else {
-        internal[i] = true;
-      }
-    }
-    parent_of[root_node] = root_node;
-    
-    
-    for (int16 i = n_edge; i--; ) {
-      const bool edge_is_internal = (child[i] > n_tip);
-      internal[i] = edge_is_internal;
-      const int16 parent_node = parent[i];
-      if (edge_is_internal) {
-        if (left[parent[i] - 1] == UNDEFINED) {
-          left[parent[i] - 1] = i;
-        } else {
-          right[parent[i] - 1] = i;
-        }
-      } else {
-        internal[i] = false;
-      }
-    
-  }
 }
 
 // Assumptions: 
@@ -156,8 +213,8 @@ IntegerMatrix spr_moves(const IntegerMatrix edge) {
     second_root_child = root_node + 1
   ;
   if (n_edge < 5) return IntegerMatrix(0, 0);
-  if (edge(0, 0) != root_node) Rcpp::stop("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
-  if (edge(1, 0) != root_node) Rcpp::stop("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+  if (edge(0, 0) != root_node) Rcpp::stop("edge[1, ] must connect root to leaf. Try Preorder(root(tree)).");
+  if (edge(1, 0) != root_node) Rcpp::stop("edge[2, ] must connect from root. Try Preorder(root(tree)).");
   
   
   std::unique_ptr<int16[]> 
@@ -303,67 +360,6 @@ IntegerMatrix spr(const IntegerMatrix edge,
   return TreeTools::root_binary(ret, 1);
 }
 
-// Assumptions: 
-//  * Tree is bifurcating, in preorder; first two edges have root as parent.
-//  [[Rcpp::export]]
-IntegerMatrix spr_move(const IntegerMatrix edge,
-                       const IntegerVector move) {
-  if (length(move) != 2) {
-    Rcpp::stop("`move` must list indices of the edges to break and regraft.");
-  }
-  const int16
-    n_edge = edge.nrow(),
-    n_node = n_edge / 2,
-    n_tip = n_node + 1,
-    root_node = n_tip + 1,
-    prune_edge = move[0],
-    graft_edge = move[1],
-    broken_edge_parent = edge(prune_edge, 0)
-  ;
-  
-  if (n_edge < 5) Rcpp::stop("No SPR rearrangements possible on a tree with < 5 edges");
-  if (edge(0, 0) != root_node) {
-    Rcpp::stop("edge[1, ] must connect root to leaf. Try Preorder(root(tree)).");
-  }
-  if (edge(1, 0) != root_node) {
-    Rcpp::stop("edge[2, ] must connect root to leaf. Try Preorder(root(tree)).");
-  }
-  
-  if (prune_edge < 0 || prune_edge > n_edge) {
-    Rcpp::stop("`move[1]` must correspond to an edge in the tree.");
-  }
-  if (graft_edge < 0 || graft_edge > n_edge) {
-    Rcpp::stop("`move[2]` must correspond to an edge in the tree.");
-  }
-  IntegerMatrix ret = clone(edge);
-  if (prune_edge != graft_edge) {
-    
-    if (prune_edge) { // We are breaking a non-root edge
-      const int16
-        edge_above = move_list(move_id, 2),
-        edge_beside = move_list(move_id, 3)
-      ;
-      
-      ret(edge_beside, 0) = edge(edge_above, 0);
-      ret(edge_above, 0) = edge(graft_edge, 0);
-      ret(graft_edge, 0) = broken_edge_parent;
-    } else { // We are breaking the root edge
-      ret(2, 0) = broken_edge_parent;
-      ret(move_list(move_id, 3), 0) = broken_edge_parent;
-      
-      //child [brokenEdgeSister] <- child[mergeEdge]
-      ret(1, 1) = edge(graft_edge, 1);
-      //parent[brokenEdge | brokenEdgeSister] <- spareNode
-      const int spare_node = edge(1, 1);
-      ret(0, 0) = spare_node;
-      ret(1, 0) = spare_node;
-      // child[mergeEdge] <- spareNode
-      ret(graft_edge, 1) = spare_node;
-    }
-    ret = TreeTools::preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
-  }
-  return TreeTools::root_binary(ret, 1);
-}
 
 // Assumptions: 
 //  * Tree is bifurcating, in preorder; first two edges have root as parent.
