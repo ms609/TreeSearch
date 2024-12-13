@@ -67,18 +67,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// spr_move
-Tree spr_move(const int e_prune, const int e_graft);
-RcppExport SEXP _TreeSearch_spr_move(SEXP e_pruneSEXP, SEXP e_graftSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const int >::type e_prune(e_pruneSEXP);
-    Rcpp::traits::input_parameter< const int >::type e_graft(e_graftSEXP);
-    rcpp_result_gen = Rcpp::wrap(spr_move(e_prune, e_graft));
-    return rcpp_result_gen;
-END_RCPP
-}
 // nni
 IntegerMatrix nni(const IntegerMatrix edge, const IntegerVector randomEdge, const IntegerVector whichSwitch);
 RcppExport SEXP _TreeSearch_nni(SEXP edgeSEXP, SEXP randomEdgeSEXP, SEXP whichSwitchSEXP) {

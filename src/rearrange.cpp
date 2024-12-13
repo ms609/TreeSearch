@@ -9,91 +9,103 @@ using namespace Rcpp;
 typedef int_fast16_t int16;
 const int16 UNDEFINED = -1;
 
+
 struct Tree {
   public:
     
+    // Return TRUE if e1 is above (i.e. ancestral to) e2,
+    // FALSE otherwise
+    bool is_above(const int16 e1, const int16 e2) {
+      if (!e_internal[e1]) {
+        return false;
+      }
+      if (e_left_child_e[e1] == e2 || e_right_child_e[e1] == e2) {
+        return true;
+      }
+      return is_above(e_left_child_e[e1], e2) || is_above(e_right_child_e[e1], e2);
+    }
+    
+    void setLengths(NumericVector lengths) {
+      if (lengths.length() != n_edge) {
+        Rcpp::stop("Lengths must be of the same length as the number of edges.");
+      }
+      this->hasLengths = true;
+      this->lengths = lengths;
+    }
+    
+    void redraw_from_edges() {
+      v_right_of_v.fill(0); // Reset elements to zero
+      
+      for (int16 i = n_edge; i--; ) {
+        const int16
+          par = v_parent_of_e(i) - 1,
+          chi = v_child_of_e(i) - 1
+        ;
+        v_parent_v[chi] = par;
+        e_above_v[chi] = i;
+        if (v_right_of_v[par - n_tip]) {
+          v_left_of_v[par - n_tip] = chi;
+        } else {
+          v_right_of_v[par - n_tip] = chi;
+        }
+        
+        e_internal[i] = (chi >= n_tip);
+        
+      }
+      v_parent_v[root_node] = root_node;
+      e_above_v[root_node] = UNDEFINED;
+      
+      for (int16 i = n_edge; i--; ) {
+        const int16 edge_child = v_child_of_e(i) - 1;
+        if (edge_child < n_tip) {
+          e_left_child_e[i] = 0;
+          e_right_child_e[i] = 0;
+        } else {
+          e_left_child_e[i] = e_above_v[v_left_of_v[edge_child]];
+          e_right_child_e[i] = e_above_v[v_right_of_v[edge_child]];
+        }
+      }
+    }
+    
+    void preorder_or_die() {
+      if (v_parent_of_e(0) != root_node) {
+        Rcpp::stop("edge[1, ] must connect root to leaf. Try Preorder(RootTree(tree, 1)).");
+      }
+      if (v_parent_of_e(1) != root_node) {
+        Rcpp::stop("edge[2, ] must connect to root. Try Preorder(RootTree(tree, 1)).");
+      }
+    }
+
     Tree(const IntegerMatrix edge,
-         const IntegerVector lengths = Rcpp::NilValue) :
-    v_parent_of_e(edge(_, 0)),
-    v_child_of_e(edge(_, 1)),
-    n_edge(edge.nrow()),
-    n_node(edge.nrow() / 2),
-    e_left_child_e(IntegerVector(edge.nrow())),      // n_edge
-    e_right_child_e(IntegerVector(edge.nrow())),     // n_edge
-    v_left_of_v(IntegerVector(edge.nrow() / 2)),  // n_node
-    v_right_of_v(IntegerVector(edge.nrow() / 2)), // n_node
-    n_tip((edge.nrow() / 2) + 1),                // n_node + 1
-    n_vertex(edge.nrow() + 1),                   // n_node + n_tip
-    v_parent_v(IntegerVector(edge.nrow() + 1)),   // n_vertex
-    e_above_v(IntegerVector(edge.nrow() + 1)),  // n_vertex
-    root_node((edge.nrow() / 2) + 1),            // n_tip
-    lengths(lengths),
-    hasLengths(lengths == Rcpp::NilValue),
-    internal(LogicalVector(edge.nrow() / 2 + 1, UNDEFINED)),
-    {
-      redraw_from_edges();
-    }
-  
-  void redraw_from_edges() {
-    v_right_of_v.assign(n_node, 0); // Reset elements to zero
-    
-    for (int16 i = edge.nrow(); i--; ) {
-      const int16
-        par = v_parent_of_e(i) - 1,
-        chi = v_child_of_e(i) - 1
-      ;
-      v_parent_v[chi] = par;
-      e_above_v[chi] = i;
-      if (v_right_of_v[par - n_tip]) {
-        v_left_of_v[par - n_tip] = chi;
-      } else {
-        v_right_of_v[par - n_tip] = chi;
-      }
+         const IntegerVector lengths = R_NilValue) :
+      n_edge(edge.nrow()),
+      n_tip((edge.nrow() / 2) + 1),                // n_node + 1
+      n_node(edge.nrow() / 2),
+      n_vertex(edge.nrow() + 1),                   // n_node + n_tip
+      root_node((edge.nrow() / 2) + 1),            // n_tip
+      hasLengths(lengths == R_NilValue),
+      lengths(lengths),
       
-      internal[i] = (chi >= n_tip);
+      v_parent_of_e(edge(_, 0)),
+      v_child_of_e(edge(_, 1)),
+      v_parent_v(IntegerVector(edge.nrow() + 1)),   // n_vertex
+      v_left_of_v(IntegerVector(edge.nrow() / 2)),  // n_node
+      v_right_of_v(IntegerVector(edge.nrow() / 2)), // n_node
       
-    }
-    v_parent_v[root_node] = root_node;
-    e_above_v[root_node] = UNDEFINED;
-    
-    for (int16 i = n_edge; i--; ) {
-      const int16 edge_child = v_child_of_e(i) - 1;
-      if (edge_child < n_tip) {
-        e_left_child_e[i] = 0;
-        e_right_child_e[i] = 0;
-      } else {
-        e_left_child_e[i] = e_above_v[v_left_of_v[edge_child]];
-        e_right_child_e[i] = e_above_v[v_right_of_v[edge_child]];
+      e_above_v(IntegerVector(edge.nrow() + 1)),  // n_vertex
+      e_left_child_e(IntegerVector(edge.nrow())),      // n_edge
+      e_right_child_e(IntegerVector(edge.nrow())),     // n_edge
+      
+      e_internal(LogicalVector(edge.nrow() / 2 + 1, UNDEFINED))
+      {
+        redraw_from_edges();
       }
-    }
-  }
   
-  void preorder_or_die() {
-    if (v_parent_of_e(0) != root_node) {
-      Rcpp::stop("edge[1, ] must connect root to leaf. Try Preorder(RootTree(tree, 1)).");
-    }
-    if (v_parent_of_e(1) != root_node) {
-      Rcpp::stop("edge[2, ] must connect to root. Try Preorder(RootTree(tree, 1)).");
-    }
-  }
-  
-  // Return TRUE if e1 is above (i.e. ancestral to) e2,
-  // FALSE otherwise
-  bool is_above(int16 e1, int16 e2) {
-    if (!internal[e1]) {
-      return false;
-    }
-    if (e_left_child_e[e1] == e2 || e_right_child_e[e1] == e2) {
-      return true;
-    }
-    return is_above(e_left_child_e[e1], e2) || is_above(e_right_child_e[e1], e2);
-  }
   
   // Assumptions: 
   //  * Tree is bifurcating, in preorder
   //  * e_prune and e_graft are meaningfully specified
-  //  [[Rcpp::export]]
-  Tree spr_move(const int e_prune, const int e_graft) {
+  Tree spr_move(const int16 e_prune, const int16 e_graft) {
     if (n_edge < 5) {
       Rcpp::stop("No SPR rearrangements possible on a tree with < 5 edges");
     }
@@ -108,7 +120,8 @@ struct Tree {
     
     if (e_prune != e_graft) {
       
-      IntegerMatrix new_p = v_parent_of_e.clone(), new_c = v_child_of_e.clone();
+      Rcpp::IntegerVector new_p = Rcpp::clone(v_parent_of_e);
+      Rcpp::IntegerVector new_c = Rcpp::clone(v_child_of_e);
       if (is_above(e_prune, e_graft)) {
         Rcpp::stop("Not yet implemented");
       } else {
@@ -140,34 +153,16 @@ struct Tree {
       
       if (hasLengths) {
         List ret = TreeTools::preorder_weighted(new_p, new_c, lengths);
-        ret_tree = new Tree(ret["tree"]);
-        ret_tree->setLengths(ret["lengths"]);
+        Tree ret_tree(ret["tree"]);
+        ret_tree.setLengths(ret["lengths"]);
         return ret_tree;
       } else {
-        return new Tree(TreeTools::preorder_edges_and_nodes(new_p, new_c));
+        return Tree(TreeTools::preorder_edges_and_nodes(new_p, new_c));
       }
     }
   }
   
-  void setLengths(NumericVector lengths) {
-    if (lengths.length() != n_edge) {
-      Rcpp::stop("Lengths must be of the same length as the number of edges.");
-    }
-    this->hasLengths = true;
-    this->lengths = lengths;
-  }
-    
   private: 
-    IntegerVector v_parent_of_e;      // Uses R numbering; i.e. 1 to n_tip
-    IntegerVector v_child_of_e;       // Uses R numbering
-    IntegerVector v_parent_v;   // Uses C numbering; i.e. 0 to n_tip - 1
-    IntegerVector v_left_of_v;  // Uses C numbering
-    IntegerVector v_right_of_v; // Uses C numbering
-    
-    IntegerVector e_left_child_e;  // Edge below X, left v_child_of_e, from 0
-    IntegerVector e_right_child_e; // Edge below X, right v_child_of_e, from 0
-    
-    LogicalVector internal;
     int16 n_edge;
     int16 n_tip;
     int16 n_node;
@@ -175,8 +170,19 @@ struct Tree {
     int16 root_node; // C numbering, hence = n_tip
     bool hasLengths;
     NumericVector lengths;
-  
-}
+    
+    IntegerVector v_parent_of_e;      // Uses R numbering; i.e. 1 to n_tip
+    IntegerVector v_child_of_e;       // Uses R numbering
+    IntegerVector v_parent_v;         // Uses C numbering; i.e. 0 to n_tip - 1
+    IntegerVector v_left_of_v;        // Uses C numbering
+    IntegerVector v_right_of_v;       // Uses C numbering
+    
+    IntegerVector e_above_v;
+    IntegerVector e_left_child_e;  // Edge below X, left v_child_of_e, from 0
+    IntegerVector e_right_child_e; // Edge below X, right v_child_of_e, from 0
+    
+    LogicalVector e_internal;
+};
 
 // Assumptions: 
 //  * Tree is bifurcating and rooted on a tip; root node is labelled with n_tip + 1
