@@ -14,18 +14,18 @@ struct Tree {
     
     Tree(const IntegerMatrix edge,
          const IntegerVector lengths = Rcpp::NilValue) :
-    parent(edge(_, 0)),
-    child(edge(_, 1)),
+    v_parent_of_e(edge(_, 0)),
+    v_child_of_e(edge(_, 1)),
     n_edge(edge.nrow()),
     n_node(edge.nrow() / 2),
-    left_below(IntegerVector(edge.nrow())),      // n_edge
-    right_below(IntegerVector(edge.nrow())),     // n_edge
-    left_child(IntegerVector(edge.nrow() / 2)),  // n_node
-    right_child(IntegerVector(edge.nrow() / 2)), // n_node
+    e_left_child_e(IntegerVector(edge.nrow())),      // n_edge
+    e_right_child_e(IntegerVector(edge.nrow())),     // n_edge
+    v_left_of_v(IntegerVector(edge.nrow() / 2)),  // n_node
+    v_right_of_v(IntegerVector(edge.nrow() / 2)), // n_node
     n_tip((edge.nrow() / 2) + 1),                // n_node + 1
     n_vertex(edge.nrow() + 1),                   // n_node + n_tip
-    parent_of(IntegerVector(edge.nrow() + 1)),   // n_vertex
-    edge_above(IntegerVector(edge.nrow() + 1)),  // n_vertex
+    v_parent_v(IntegerVector(edge.nrow() + 1)),   // n_vertex
+    e_above_v(IntegerVector(edge.nrow() + 1)),  // n_vertex
     root_node((edge.nrow() / 2) + 1),            // n_tip
     lengths(lengths),
     hasLengths(lengths == Rcpp::NilValue),
@@ -35,43 +35,44 @@ struct Tree {
     }
   
   void redraw_from_edges() {
-    right_child.assign(n_node, 0); // Reset elements to zero
+    v_right_of_v.assign(n_node, 0); // Reset elements to zero
     
     for (int16 i = edge.nrow(); i--; ) {
       const int16
-        par = parent(i) - 1,
-        chi = child(i) - 1
+        par = v_parent_of_e(i) - 1,
+        chi = v_child_of_e(i) - 1
       ;
-      parent_of[chi] = par;
-      edge_above[par] = i;
-      if (right_child[par - n_tip]) {
-        left_child[par - n_tip] = chi;
+      v_parent_v[chi] = par;
+      e_above_v[chi] = i;
+      if (v_right_of_v[par - n_tip]) {
+        v_left_of_v[par - n_tip] = chi;
       } else {
-        right_child[par - n_tip] = chi;
+        v_right_of_v[par - n_tip] = chi;
       }
       
       internal[i] = (chi >= n_tip);
       
     }
-    parent_of[root_node] = root_node;
+    v_parent_v[root_node] = root_node;
+    e_above_v[root_node] = UNDEFINED;
     
     for (int16 i = n_edge; i--; ) {
-      const int16 edge_child = child(i) - 1;
+      const int16 edge_child = v_child_of_e(i) - 1;
       if (edge_child < n_tip) {
-        left_below[i] = 0;
-        right_below[i] = 0;
+        e_left_child_e[i] = 0;
+        e_right_child_e[i] = 0;
       } else {
-        left_below[i] = edge_above[left_child[edge_child]];
-        right_below[i] = edge_above[right_child[edge_child]];
+        e_left_child_e[i] = e_above_v[v_left_of_v[edge_child]];
+        e_right_child_e[i] = e_above_v[v_right_of_v[edge_child]];
       }
     }
   }
   
   void preorder_or_die() {
-    if (parent(0) != root_node) {
+    if (v_parent_of_e(0) != root_node) {
       Rcpp::stop("edge[1, ] must connect root to leaf. Try Preorder(RootTree(tree, 1)).");
     }
-    if (parent(1) != root_node) {
+    if (v_parent_of_e(1) != root_node) {
       Rcpp::stop("edge[2, ] must connect to root. Try Preorder(RootTree(tree, 1)).");
     }
   }
@@ -82,65 +83,89 @@ struct Tree {
     if (!internal[e1]) {
       return false;
     }
-    if (left_below[e1] == e2 || right_below[e1] == e2) {
+    if (e_left_child_e[e1] == e2 || e_right_child_e[e1] == e2) {
       return true;
     }
-    return is_above(left_below[e1], e2) || is_above(right_below[e1], e2);
+    return is_above(e_left_child_e[e1], e2) || is_above(e_right_child_e[e1], e2);
   }
   
   // Assumptions: 
-  //  * Tree is bifurcating, in preorder; first two edges have root as parent.
+  //  * Tree is bifurcating, in preorder
+  //  * e_prune and e_graft are meaningfully specified
   //  [[Rcpp::export]]
-  IntegerMatrix spr_move(const int prune_edge, const int graft_edge) {
+  Tree spr_move(const int e_prune, const int e_graft) {
     if (n_edge < 5) {
       Rcpp::stop("No SPR rearrangements possible on a tree with < 5 edges");
     }
     preorder_or_die();
     
-    if (prune_edge < 0 || prune_edge > n_edge) {
+    if (e_prune < 0 || e_prune > n_edge) {
       Rcpp::stop("`move[1]` must correspond to an edge in the tree.");
     }
-    if (graft_edge < 0 || graft_edge > n_edge) {
+    if (e_graft < 0 || e_graft > n_edge) {
       Rcpp::stop("`move[2]` must correspond to an edge in the tree.");
     }
     
-    if (prune_edge != graft_edge) {
+    if (e_prune != e_graft) {
       
-      if (prune_edge) { // We are breaking a non-root edge
-        const int16
-          edge_above = move_list(move_id, 2),
-          edge_beside = move_list(move_id, 3)
-        ;
+      IntegerMatrix new_p = v_parent_of_e.clone(), new_c = v_child_of_e.clone();
+      if (is_above(e_prune, e_graft)) {
+        Rcpp::stop("Not yet implemented");
+      } else {
+        // pruned edge remains the same
+        const int16 e_prune_parent = e_above_v[v_parent_of_e(e_prune)];
+        const int16 e_prune_sister = e_left_child_e[e_prune_parent] == e_prune ?
+          e_right_child_e[e_prune_parent] :
+          e_left_child_e[e_prune_parent];
+        const bool at_root = e_prune_parent == UNDEFINED;
+        const int16 v_prune_parent = at_root ?
+          root_node : 
+          v_parent_of_e[e_prune_parent];
         
-        ret(edge_beside, 0) = edge(edge_above, 0);
-        ret(edge_above, 0) = edge(graft_edge, 0);
-        ret(graft_edge, 0) = broken_edge_parent;
-      } else { // We are breaking the root edge
-        ret(2, 0) = broken_edge_parent;
-        ret(move_list(move_id, 3), 0) = broken_edge_parent;
         
-        //child [brokenEdgeSister] <- child[mergeEdge]
-        ret(1, 1) = edge(graft_edge, 1);
-        //parent[brokenEdge | brokenEdgeSister] <- spareNode
-        const int spare_node = edge(1, 1);
-        ret(0, 0) = spare_node;
-        ret(1, 0) = spare_node;
-        // child[mergeEdge] <- spareNode
-        ret(graft_edge, 1) = spare_node;
+        // sister to pruned edge gets a new daughter: pruned parent
+        new_c[e_prune_sister] = v_parent_of_e[e_prune];
+        // sister to pruned edge gets a new parent: pruned grandparent
+        new_p[e_prune_sister] = v_prune_parent;
+        if (at_root) {
+          // new_root = v_child_of_e[e_prune_sister];
+        } else {
+          // parent of pruned edge gets a new daughter
+          new_c[e_prune_parent] = v_child_of_e[e_prune_sister];
+        }
+        // graft edge gets a new parent: pruned parent
+        new_p[e_graft] = v_parent_of_e[e_prune];
+        
       }
-      ret = TreeTools::preorder_edges_and_nodes(ret(_, 0), ret(_, 1));
+      
+      if (hasLengths) {
+        List ret = TreeTools::preorder_weighted(new_p, new_c, lengths);
+        ret_tree = new Tree(ret["tree"]);
+        ret_tree->setLengths(ret["lengths"]);
+        return ret_tree;
+      } else {
+        return new Tree(TreeTools::preorder_edges_and_nodes(new_p, new_c));
+      }
     }
-    return TreeTools::root_binary(ret, 1);
   }
-  private: 
-    IntegerVector parent;      // Uses R numbering; i.e. 1 to n_tip
-    IntegerVector child;       // Uses R numbering
-    IntegerVector parent_of;   // Uses C numbering; i.e. 0 to n_tip - 1
-    IntegerVector left_child;  // Uses C numbering
-    IntegerVector right_child; // Uses C numbering
+  
+  void setLengths(NumericVector lengths) {
+    if (lengths.length() != n_edge) {
+      Rcpp::stop("Lengths must be of the same length as the number of edges.");
+    }
+    this->hasLengths = true;
+    this->lengths = lengths;
+  }
     
-    IntegerVector left_below;  // Edge below X, left child, from 0
-    IntegerVector right_below; // Edge below X, right child, from 0
+  private: 
+    IntegerVector v_parent_of_e;      // Uses R numbering; i.e. 1 to n_tip
+    IntegerVector v_child_of_e;       // Uses R numbering
+    IntegerVector v_parent_v;   // Uses C numbering; i.e. 0 to n_tip - 1
+    IntegerVector v_left_of_v;  // Uses C numbering
+    IntegerVector v_right_of_v; // Uses C numbering
+    
+    IntegerVector e_left_child_e;  // Edge below X, left v_child_of_e, from 0
+    IntegerVector e_right_child_e; // Edge below X, right v_child_of_e, from 0
     
     LogicalVector internal;
     int16 n_edge;

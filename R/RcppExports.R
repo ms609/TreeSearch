@@ -17,6 +17,10 @@ morphy_profile <- function(edge, MorphyHandls, weight, sequence, profiles, targe
     .Call(`_TreeSearch_morphy_profile`, edge, MorphyHandls, weight, sequence, profiles, target)
 }
 
+spr_move <- function(e_prune, e_graft) {
+    .Call(`_TreeSearch_spr_move`, e_prune, e_graft)
+}
+
 nni <- function(edge, randomEdge, whichSwitch) {
     .Call(`_TreeSearch_nni`, edge, randomEdge, whichSwitch)
 }
