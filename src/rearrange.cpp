@@ -79,7 +79,13 @@ struct Tree {
   // Return TRUE if e1 is above (i.e. ancestral to) e2,
   // FALSE otherwise
   bool is_above(int16 e1, int16 e2) {
-    
+    if (!internal[e1]) {
+      return false;
+    }
+    if (left_below[e1] == e2 || right_below[e1] == e2) {
+      return true;
+    }
+    return is_above(left_below[e1], e2) || is_above(right_below[e1], e2);
   }
   
   // Assumptions: 
