@@ -71,10 +71,12 @@ RatchetConsensus(
 }
 \arguments{
 \item{edgeList}{a list containing the following:
-- vector of integers corresponding to the parent of each edge in turn
-- vector of integers corresponding to the child of each edge in turn
-- (optionally) score of the tree
-- (optionally, if score provided) number of times this score has been hit}
+\itemize{
+\item vector of integers corresponding to the parent of each edge in turn
+\item vector of integers corresponding to the child of each edge in turn
+\item (optionally) score of the tree
+\item (optionally, if score provided) number of times this score has been hit
+}}
 
 \item{morphyObj}{Object of class \code{morphy}, perhaps created with
 \code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}}.}
