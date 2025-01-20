@@ -381,6 +381,10 @@ ui <- fluidPage(
                downloadButton("savePlotZip", "R script", icon = Icon("download")),
                downloadButton("savePdf", "PDF", icon = Icon("download")),
                downloadButton("savePng", "PNG", icon = Icon("download"))
+      ),
+      tags$div(id = "savePlottedTrees",
+               downloadButton("savePlotNwk", "Newick", icon = Icon("download")),
+               downloadButton("savePlotNex", "Nexus", icon = Icon("download"))
       )
     ),
     fluidRow(
@@ -1497,7 +1501,7 @@ server <- function(input, output, session) {
                     "consConfig", "clusConfig",
                     "clusLegend", "branchLegend",
                     "spaceConfig", "treePlotConfig",
-                    "mapConfig",
+                    "mapConfig", "savePlottedTrees",
                     "droppedTips", "droppedList")
     r$visibleConfigs <- visible
     lapply(visible, show)
@@ -1509,8 +1513,10 @@ server <- function(input, output, session) {
                        "ind" = c("whichTree", "charChooser",
                                  "treePlotConfig"),
                        "cons" = c("consConfig", "droppedTips",
+                                  "savePlottedTrees",
                                   "treePlotConfig", "branchLegend"),
                        "clus" = c("clusConfig", "clusLegend",
+                                  "savePlottedTrees",
                                   "consConfig", "droppedList",
                                   "treePlotConfig"),
                        "space" = c("clusConfig", "clusLegend",
@@ -2721,6 +2727,7 @@ server <- function(input, output, session) {
     par(mar = c(0.2, 0, 0.2, 0), xpd = NA)
     if (cl$sil > silThreshold()) {
       nRow <- ceiling(cl$n / 3)
+      r$plottedTree <- vector("list", cl$n)
       par(mfrow = c(nRow, ceiling(cl$n / nRow)))
 
       for (i in seq_len(cl$n)) {
@@ -2734,7 +2741,7 @@ server <- function(input, output, session) {
           cons$edge.length <- rep.int(1, dim(cons$edge)[1])
         }
         cons <- SortEdges(cons)
-        r$plottedTree <- cons
+        r$plottedTree[[i]] <- cons
         plot(cons, edge.width = 2, font = 3, cex = 0.83,
              edge.color = col, tip.color = TipCols()[cons$tip.label])
         legend("topright", paste0("Cluster ", i), pch = 15, col = col,
@@ -3566,6 +3573,20 @@ server <- function(input, output, session) {
       MainPlot()
       dev.off()
     })
+  
+  output$savePlotNwk <- downloadHandler(
+    filename = "TreeSearch-consensus.nwk",
+    content = function(file) {
+      write.tree(r$plottedTree, file = file)
+    }
+  )
+  
+  output$savePlotNex <- downloadHandler(
+    filename = "TreeSearch-consensus.nex",
+    content = function(file) {
+      write.nexus(r$plottedTree, file = file)
+    }
+  )
   
   output$saveNwk <- downloadHandler(
     filename = "TreeSearch.nwk",
