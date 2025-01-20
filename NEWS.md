@@ -1,3 +1,8 @@
+# TreeSearch 1.5.1.9002 (2025-01)
+
+- Buttons to download consensus trees in app
+
+
 # TreeSearch 1.5.1.9001 (2024-12)
 
 - Fix display of state labels in app
