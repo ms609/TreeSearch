@@ -21,6 +21,7 @@ test_that("Addition tree is more parsimonious", {
 })
 
 test_that(".ConstraintConstrains() succeeds", {
+  expect_false(.ConstraintConstrains(NULL))
   expect_false(.ConstraintConstrains(
     structure(list(A = 1L, B = 2L, C = 1L, D = 1L, E = 3L), weight = 1L, nr = 1L,
               nc = 2L, index = 1L, levels = 0:1,
