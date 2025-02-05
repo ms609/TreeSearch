@@ -54,6 +54,9 @@ jobs:
           needs: |
             coverage
 
+      - name: Set up pandoc
+        uses: r-lib/actions/setup-pandoc@v2
+
       - name: Code coverage
         run: |
           covr::package_coverage(quiet = FALSE) # https://github.com/r-lib/covr/issues/252
