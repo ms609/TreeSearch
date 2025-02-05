@@ -1,7 +1,7 @@
 # TreeSearch 1.5.1.9003 (2025-02)
 
 - Improve support for constraints in `AdditionTree()`
-  (#173)[https://github.com/ms609/TreeSearch/issues/173]
+  [#173](https://github.com/ms609/TreeSearch/issues/173)
 
 # TreeSearch 1.5.1.9002 (2025-01)
 
