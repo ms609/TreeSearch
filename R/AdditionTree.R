@@ -125,8 +125,8 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
       colSums(apply(cont, 1, `&`, cont[i, ])) == 0
     }, logical(nLevel))
     
-    # TODO Not sure about this; passes tests but not proven to 
-    # work for all odd edge cases, e.g. 02 03 1 1
+    # TODO Validate; passes existing tests, but these do not include all 
+    # edge cases, e.g. 02 03 1 1
     splits <- exclude * tabulate(unlist(constraint), nLevel)
     any(splits[lower.tri(splits)] > 1 & t(splits)[lower.tri(splits)] > 1)
   }
