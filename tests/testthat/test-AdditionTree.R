@@ -20,6 +20,24 @@ test_that("Addition tree is more parsimonious", {
   expect_lt(Score(pr, "pr"), Score(nj10, "pr"))
 })
 
+test_that(".ConstraintConstrains() succeeds", {
+  expect_false(.ConstraintConstrains(
+    structure(list(A = 1L, B = 2L, C = 1L, D = 1L, E = 3L), weight = 1L, nr = 1L,
+              nc = 2L, index = 1L, levels = 0:1,
+              allLevels = c("0", "1", "?"), type = "USER",
+              contrast = structure(c(1, 0, 1, 0, 1, 1), dim = 3:2,
+                                   dimnames = list(NULL, 0:1)),
+              class = "phyDat")
+  ))
+  expect_true(.ConstraintConstrains(structure(
+    list(A = 1L, B = 2L, C = 1L, D = 1L, E = 3L, F = 2L), weight = 1L, nr = 1L,
+    nc = 2L, index = 1L, levels = 0:1, allLevels = c("0", "1", "?"),
+    type = "USER", contrast = structure(c(1, 0, 1, 0, 1, 1), dim = 3:2,
+                                        dimnames = list(NULL, 0:1)),
+    class = "phyDat")
+  ))
+})
+
 test_that("Addition tree obeys constraints", {
   dataset <- MatrixToPhyDat(matrix(
     c(0, 1, 1, 1, 0, 1,

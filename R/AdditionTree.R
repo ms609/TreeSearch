@@ -31,7 +31,7 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
   # Initialize missing parameters
   taxa <- names(dataset)
   if (missing(sequence)) {
-    sequence <- taxa[1]
+    sequence <- taxa[[1]]
   } else if (is.numeric(sequence)) {
     sequence <- taxa[sequence]
   }
@@ -78,7 +78,7 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
         constraint <- MatrixToPhyDat(t(as.matrix(constraint)))
       }
       thisConstr <- constraint[theseTaxa]
-      if (length(thisConstr[[1]]) && min(table(unlist(thisConstr))) > 1) {
+      if (.ConstraintConstrains(thisConstr)) {
         # Constraint constrains theseTaxa
         
         morphyConstr <- PhyDat2Morphy(thisConstr)
@@ -114,6 +114,10 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
   tree
 }
 
-.Recompress <- function (dataset) {
+.ConstraintConstrains <- function(constraint) {
+  length(constraint[[1]]) && min(table(unlist(constraint))) > 1
+}
+
+.Recompress <- function(dataset) {
   MatrixToPhyDat(PhyDatToMatrix(dataset))
 }
