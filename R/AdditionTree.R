@@ -115,7 +115,21 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
 }
 
 .ConstraintConstrains <- function(constraint) {
-  length(constraint[[1]]) && min(table(unlist(constraint))) > 1
+  if (length(constraint[[1]]) < 1) {
+    FALSE
+  } else {
+    cont <- `mode<-`(attr(constraint, "contrast"), "logical")
+    nLevel <- dim(cont)[[1]]
+    # Could be > 2× more efficient using lower.tri
+    exclude <- vapply(seq_len(nLevel), function(i) {
+      colSums(apply(cont, 1, `&`, cont[i, ])) == 0
+    }, logical(nLevel))
+    
+    # TODO Not sure about this; passes tests but not proven to 
+    # work for all odd edge cases, e.g. 02 03 1 1
+    splits <- exclude * tabulate(unlist(constraint), nLevel)
+    any(splits[lower.tri(splits)] > 1 & t(splits)[lower.tri(splits)] > 1)
+  }
 }
 
 .Recompress <- function(dataset) {

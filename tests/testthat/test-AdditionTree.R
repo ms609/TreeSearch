@@ -37,6 +37,21 @@ test_that(".ConstraintConstrains() succeeds", {
                                         dimnames = list(NULL, 0:1)),
     class = "phyDat")
   ))
+  expect_false(.ConstraintConstrains(structure(
+    list(A = 1L, B = 2L, C = 1L, D = 1L, E = 3L, F = 2L), weight = 1L, nr = 1L,
+    nc = 2L, index = 1L,
+    levels = 0:2, allLevels = c("0", "1", "2", "?"), type = "USER",
+    contrast = structure(c(1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1),
+                         dim = c(4, 3), dimnames = list(NULL, 0:2)),
+    class = "phyDat")
+  ))
+  expect_true(.ConstraintConstrains(structure(
+    list(A = 1L, B = 2L, C = 1L, D = 1L, E = 3L, F = 2L), weight = 1L, nr = 1L,
+    nc = 2L, index = 1L, levels = 0:2, allLevels = c("0", "1", "2", "?"),
+    type = "USER", contrast = structure(c(1, 0, 1, 1, 0, 1, 0, 1, 1),
+                                        dim = c(3, 3), dimnames = list(NULL, 0:2)),
+    class = "phyDat")
+  ))
 })
 
 test_that("Addition tree obeys constraints", {
