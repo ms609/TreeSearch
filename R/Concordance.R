@@ -12,6 +12,22 @@
 #' with any tree that groups the first two leaves together to the exclusion
 #' of the second.
 #' 
+#' By default, the reported value weights each site by the number of quartets
+#' it is decisive for.  This value can be interpreted as the proportion of
+#' all decisive quartets that are concordant with a split.
+#' If `weight = FALSE`, the reported value is the mean of the concordance
+#' value for each site.  
+#' Consider a split associated with two sites:
+#' one that is concordant with 25% of 96 decisive quartets, and
+#' a second that is concordant with 75% of 4 decisive quartets.
+#' If `weight = TRUE`, the split concordance will be 24 + 3 / 96 + 4 = 27%.
+#' If `weight = FALSE`, the split concordance will be mean(75%, 25%) = 50%.
+#' 
+#' `QuartetConcordance()` is computed exactly, using all quartets, where as
+#' other implementations (e.g. IQTREE) follow
+#' \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
+#'  of quartets for a faster, if potentially less accurate, computation.
+#' 
 # `ClusteringConcordance()` and `PhylogeneticConcordance()` respectively report
 # the proportion of clustering information and phylogenetic information 
 # \insertCite{@as defined in @Vinh2010, @SmithDist}{TreeDist} within a dataset
@@ -28,6 +44,8 @@
 #' 
 #' @template treeParam
 #' @template datasetParam
+#' @param weight Logical specifying whether to weight sites according to the
+#' number of quartets they are decisive for.
 #' 
 #' 
 #' 
@@ -60,7 +78,7 @@
 #' @name SiteConcordance
 #' @family split support functions
 #' @export
-QuartetConcordance <- function (tree, dataset = NULL) {
+QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
@@ -75,7 +93,7 @@ QuartetConcordance <- function (tree, dataset = NULL) {
   cli_progress_bar(name = "Quartet concordance", total = dim(logiSplits)[[2]])
   setNames(apply(logiSplits, 2, function (split) {
     cli_progress_update(1, .envir = parent.frame(2))
-    quarts <- rowSums(apply(characters, 2, function (char) {
+    quarts <- apply(characters, 2, function (char) {
       tab <- table(split, char)
       nCol <- dim(tab)[[2]]
       if (nCol > 1L) {
@@ -106,12 +124,21 @@ QuartetConcordance <- function (tree, dataset = NULL) {
         # Only quartets that include two T and two F can be decisive
         # Quartets must also include two pairs of characters
         decisive <- concordant + discordant
+        
+        # Return the numerator and denominatory of equation 2 in
+        # Minh et al. 2020
         c(concordant, decisive)
       } else {
         c(0L, 0L)
       }
-    }))
-    ifelse(is.nan(quarts[[2]]), NA_real_, quarts[[1]] / quarts[[2]])
+    })
+    if (isTRUE(weight)) {
+      quartSums <- rowSums(quarts)
+      ifelse(is.nan(quartSums[[2]]), NA_real_, quartSums[[1]] / quartSums[[2]])
+    } else {
+      mean(ifelse(is.nan(quarts[2, ]), NA_real_, quarts[1, ] / quarts[2, ]),
+           na.rm = TRUE)
+    }
   }), names(splits))
 }
 
