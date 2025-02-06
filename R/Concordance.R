@@ -22,8 +22,8 @@
 #' 
 #TODO Finally, `ProfileConcordance()` (to follow)
 #' 
-#' NOTE: These functions are under development, and may be incompletely tested
-#' or change without notice.
+#' **NOTE:** These functions are under development. They are incompletely
+#' tested, and may change without notice.
 #' Complete documentation and discussion will follow in due course.
 #' 
 #' @template treeParam
@@ -72,13 +72,22 @@ QuartetConcordance <- function (tree, dataset = NULL) {
   
   characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
   
-  cli_progress_bar(name = "Quartet concordance", total = dim(logiSplits)[2])
+  cli_progress_bar(name = "Quartet concordance", total = dim(logiSplits)[[2]])
   setNames(apply(logiSplits, 2, function (split) {
     cli_progress_update(1, .envir = parent.frame(2))
     quarts <- rowSums(apply(characters, 2, function (char) {
       tab <- table(split, char)
-      nCol <- dim(tab)[2]
+      nCol <- dim(tab)[[2]]
       if (nCol > 1L) {
+        # Consider the case
+        # split  0   1   2
+        # FALSE  2   3   0
+        #  TRUE  0   4   2
+        # 
+        # Concordant quartets with bin i = 1 (character 0) and bin j = 2
+        # (character 1) include any combination of the two taxa from 
+        # [FALSE, 0], and the two taxa chosen from the four in [TRUE, 1],
+        # i.e. choose(2, 2) * choose(4, 2)
         concordant <- sum(vapply(seq_len(nCol), function (i) {
           inBinI <- tab[1, i]
           iChoices <- choose(inBinI, 2)

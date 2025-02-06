@@ -39,8 +39,8 @@ But a quartet with characters \verb{0 0 1 1} is decisive, and is concordant
 with any tree that groups the first two leaves together to the exclusion
 of the second.
 
-NOTE: These functions are under development, and may be incompletely tested
-or change without notice.
+\strong{NOTE:} These functions are under development. They are incompletely
+tested, and may change without notice.
 Complete documentation and discussion will follow in due course.
 }
 \examples{
