@@ -62,14 +62,15 @@
 #' spc <- SharedPhylogeneticConcordance(tree, dataset)
 #' mcc <- MutualClusteringConcordance(tree, dataset)
 #' 
-#' oPar <- par(mar = rep(0, 4), cex = 0.8)
+#' oPar <- par(mar = rep(0, 4), cex = 0.8) # Set plotting parameters
 #' plot(tree)
-#' TreeTools::LabelSplits(tree, signif(qc, 3))
-#' TreeTools::LabelSplits(tree, signif(cc, 3))
-#' TreeTools::LabelSplits(tree, signif(pc, 3))
-#' par(oPar)
+#' TreeTools::LabelSplits(tree, signif(qc, 3), cex = 0.8)
+#' plot(tree)
+#' TreeTools::LabelSplits(tree, signif(cc, 3), cex = 0.8)
+#' par(oPar) # Restore plotting parameters
 #' 
-#' pairs(cbind(qc, cc, pc, spc, mcc))
+#' # Display correlation between concordance factors
+#' pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)
 #' @template MRS
 #' @importFrom ape keep.tip
 #' @importFrom cli cli_progress_bar cli_progress_update

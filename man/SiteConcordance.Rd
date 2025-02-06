@@ -9,7 +9,7 @@
 \alias{SharedPhylogeneticConcordance}
 \title{Calculate site concordance factor}
 \usage{
-QuartetConcordance(tree, dataset = NULL)
+QuartetConcordance(tree, dataset = NULL, weight = TRUE)
 
 ClusteringConcordance(tree, dataset)
 
@@ -24,6 +24,9 @@ SharedPhylogeneticConcordance(tree, dataset)
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.}
+
+\item{weight}{Logical specifying whether to weight sites according to the
+number of quartets they are decisive for.}
 }
 \description{
 The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure
@@ -39,6 +42,22 @@ But a quartet with characters \verb{0 0 1 1} is decisive, and is concordant
 with any tree that groups the first two leaves together to the exclusion
 of the second.
 
+By default, the reported value weights each site by the number of quartets
+it is decisive for.  This value can be interpreted as the proportion of
+all decisive quartets that are concordant with a split.
+If \code{weight = FALSE}, the reported value is the mean of the concordance
+value for each site.
+Consider a split associated with two sites:
+one that is concordant with 25\% of 96 decisive quartets, and
+a second that is concordant with 75\% of 4 decisive quartets.
+If \code{weight = TRUE}, the split concordance will be 24 + 3 / 96 + 4 = 27\%.
+If \code{weight = FALSE}, the split concordance will be mean(75\%, 25\%) = 50\%.
+
+\code{QuartetConcordance()} is computed exactly, using all quartets, where as
+other implementations (e.g. IQTREE) follow
+\insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
+of quartets for a faster, if potentially less accurate, computation.
+
 \strong{NOTE:} These functions are under development. They are incompletely
 tested, and may change without notice.
 Complete documentation and discussion will follow in due course.
@@ -53,14 +72,15 @@ pc <- PhylogeneticConcordance(tree, dataset)
 spc <- SharedPhylogeneticConcordance(tree, dataset)
 mcc <- MutualClusteringConcordance(tree, dataset)
 
-oPar <- par(mar = rep(0, 4), cex = 0.8)
+oPar <- par(mar = rep(0, 4), cex = 0.8) # Set plotting parameters
 plot(tree)
-TreeTools::LabelSplits(tree, signif(qc, 3))
-TreeTools::LabelSplits(tree, signif(cc, 3))
-TreeTools::LabelSplits(tree, signif(pc, 3))
-par(oPar)
+TreeTools::LabelSplits(tree, signif(qc, 3), cex = 0.8)
+plot(tree)
+TreeTools::LabelSplits(tree, signif(cc, 3), cex = 0.8)
+par(oPar) # Restore plotting parameters
 
-pairs(cbind(qc, cc, pc, spc, mcc))
+# Display correlation between concordance factors
+pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)
 }
 \references{
 \insertAllCited{}
