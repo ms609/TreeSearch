@@ -1,4 +1,4 @@
-# TreeSearch 1.5.1.9004 (2025-02)
+# TreeSearch 1.5.1.9005 (2025-02)
 
 - Support for ordered (additive) characters
 - Require R 3.6 (to simplify maintenance)
