@@ -24,7 +24,7 @@
 #' If `weight = FALSE`, the split concordance will be mean(75%, 25%) = 50%.
 #' 
 #' `QuartetConcordance()` is computed exactly, using all quartets, where as
-#' other implementations (e.g. IQTREE) follow
+#' other implementations (e.g. IQ-TREE) follow
 #' \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
 #'  of quartets for a faster, if potentially less accurate, computation.
 #' 

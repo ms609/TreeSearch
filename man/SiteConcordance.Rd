@@ -54,7 +54,7 @@ If \code{weight = TRUE}, the split concordance will be 24 + 3 / 96 + 4 = 27\%.
 If \code{weight = FALSE}, the split concordance will be mean(75\%, 25\%) = 50\%.
 
 \code{QuartetConcordance()} is computed exactly, using all quartets, where as
-other implementations (e.g. IQTREE) follow
+other implementations (e.g. IQ-TREE) follow
 \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
 of quartets for a faster, if potentially less accurate, computation.
 
