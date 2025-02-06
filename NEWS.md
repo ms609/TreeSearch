@@ -1,3 +1,8 @@
+# TreeSearch 1.5.1.9005 (2025-02)
+
+- Support for ordered (additive) characters
+- Require R 4.0 (to simplify maintenance)
+
 # TreeSearch 1.5.1.9003 (2025-02)
 
 - Improve support for constraints in `AdditionTree()`
@@ -7,11 +12,13 @@
 
 - Buttons to download consensus trees in app
 
-
 # TreeSearch 1.5.1.9001 (2024-12)
 
-- Fix display of state labels in app
 - Fix SPR behaviour when move is close to root
+
+# TreeSearch 1.5.1.9000 (2024-10)
+
+- Fix display of state labels in app
 
 
 # TreeSearch 1.5.1 (2024-05-23)
