@@ -96,14 +96,22 @@ QuartetConcordance <- function (tree, dataset = NULL) {
             iChoices * choose(inBinJ, 2)
             }, 1))
         }, 1))
+        
+        # To be discordant, we must select a pair of taxa from TT and from FF;
+        # and the character states must group each T with an F
+        # e.g. T0 T1  F0 F1
+        # T0 T1 F0 F2 would not be discordant - just uninformative
         discordant <- sum(apply(combn(nCol, 2), 2, function (ij) prod(tab[, ij])))
+        
+        # Only quartets that include two T and two F can be decisive
+        # Quartets must also include two pairs of characters
         decisive <- concordant + discordant
         c(concordant, decisive)
       } else {
         c(0L, 0L)
       }
     }))
-    ifelse(is.nan(quarts[2]), NA_real_, quarts[1] / quarts[2])
+    ifelse(is.nan(quarts[[2]]), NA_real_, quarts[[1]] / quarts[[2]])
   }), names(splits))
 }
 
