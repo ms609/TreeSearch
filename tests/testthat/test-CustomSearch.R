@@ -10,7 +10,7 @@ RootySwappers <- list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap)
 test_that("Tree can be found", {
   skip_if_not_installed("phangorn")
   phy11 <- phangorn::phyDat(data11, type = "USER", levels = c(FALSE, TRUE))
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
+  RNGkind("Mersenne-Twister")
   set.seed(1)
   random11 <- as.phylo(17905853L, 11, letters[1:11])
   expect_error(TreeSearch(unrooted11, dataset = phy11))
@@ -110,7 +110,7 @@ test_that("Profile parsimony works in tree search", {
   dataset <- TreeTools::PhyDat(sillyData)
   readyData <- PrepareDataProfile(dataset)
   
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
+  RNGkind("Mersenne-Twister")
   set.seed(0)
   
   rTree <- randomTree <- RandomTree(dataset, "1")

@@ -53,6 +53,7 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
   attr(dataset, "info.amounts") <- NULL
   attr(dataset, "min.length") <- NULL
   attr(dataset, "informative") <- NULL
+  attr(dataset, "originalIndex") <- NULL
   
   # Starting tree, rooted on first element in sequence
   tree <- PectinateTree(sequence[1:3])

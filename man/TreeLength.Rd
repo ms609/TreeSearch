@@ -30,7 +30,8 @@ Fitch(tree, dataset)
 uniformly sampled.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.
+Perhaps load into R using \code{\link[TreeTools]{ReadCharacters}}.}
 
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting

@@ -47,7 +47,8 @@ EasyTreesy()
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.
+Perhaps load into R using \code{\link[TreeTools]{ReadCharacters}}.}
 
 \item{tree}{(optional) A bifurcating tree of class \code{\link{phylo}},
 containing only the tips listed in \code{dataset}, from which the search
