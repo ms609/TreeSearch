@@ -62,7 +62,40 @@ test_that("QuartetConcordance(method = minh)", {
 })
   
 
-test_that("QuartetConcordance() works", {
+test_that("QuartetConcordance() calculates correct values - weighting", {
+  labels <- letters[1:5]
+  tr <- PectinateTree(labels)
+  # plot(tr)
+  # nodelabels(adj = c(4, 0.5))
+  
+  char <- MatrixToPhyDat(cbind(
+    c(a = 0, b = 0, c = 0, d = 1, e = 1),
+    c(0, 0, 1, 0, 1),
+    c(0, 1, 0, 0, 1)
+  ))
+  
+  # Is quartet concordant with character?
+  # Quartets labelled by omitted leaf
+  C <- 1    # Concordant
+  D <- 0    # Discordant
+  I <- NaN  # Irrelevant
+  expected_concordance <- cbind(
+    ch1 = c(a = C, b = C, c = C, d = I, e = I), 
+    ch2 = c(D, D, I, C, I),
+    ch3 = c(D, I, D, D, I))
+  
+  conc <- vapply(labels, function(lab) {
+    quartet <- DropTip(tr, lab)
+    vapply(1:3, function(i) QuartetConcordance(quartet, char[, i]), double(1))
+  }, c(ch1 = NaN, ch2 = NaN, ch3 = NaN))
+  expect_equal(conc, t(expected_concordance))
+  
+  
+  QuartetConcordance(tr, char, weight = FALSE)
+  
+})
+
+test_that("QuartetConcordance() calculates correct values", {
   tree <- BalancedTree(8)
   splits <- as.Splits(tree)
   mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1,  0,
