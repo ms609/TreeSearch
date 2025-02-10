@@ -84,7 +84,15 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[TipLabels(tree)]
+  if (!inherits(dataset, "phyDat")) {
+    stop("`dataset` must be a phyDat object.")
+  }
+  tipLabels <- intersect(TipLabels(tree), names(dataset))
+  if (!length(tipLabels)) {
+    warning("No overlap between tree labels and dataset.")
+    return(NULL)
+  }
+  dataset <- dataset[tipLabels, drop = FALSE]
   splits <- as.Splits(tree, dataset)
   logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
                        logical(NTip(dataset)))
