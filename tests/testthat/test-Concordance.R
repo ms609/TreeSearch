@@ -15,6 +15,46 @@ test_that("_Concordance() handles tip mismatch", {
                  "No overlap between tree labels and dataset.")
 })
 
+test_that("QuartetConcordance(method = minh)", {
+  tree <- ape::read.tree(text = "(a, (b, (c, (d, ((e, f), (g, h))))));")
+  mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1,  0,
+                      0, 1, 1, 0, 0, 0, 2, 2,  0,
+                      0, 0, 0, 1, 0, 1, 1, 1,  0,
+                      0, 0, 0, 0, 1, 1, 2, 2,  0,
+                      0, 0, 1, 1, 2, 2, 3, 3,  0,
+                      0, 1, 2, 3, 0, 1, 2, 3,  0), 9,
+                    dimnames = list(paste0("t", 1:9), NULL))
+  dat <- MatrixToPhyDat(mataset)
+  
+  # plot(tree); nodelabels();
+  minh10 <- rep(1:4, each = 2)
+  minh11 <- c(1, 2, 3, 3, rep(4, 4))
+  minh15 <- c(rep(1, 4), rep(2, 2), 3, 4)
+  
+  # We must pick one leaf per row
+  # To be parsimony informative, we must pick two leaves from each of two columns
+  # To be concordant, leaves 1 and 2 must come from the same column
+  table(minh10, PhyDatToMatrix(dat[, 1])[1:8, 1])
+  concordant10.1 <- 2*2*2*2
+  informative10.1 <- 2*2*2*2
+  
+  table(minh10, PhyDatToMatrix(dat[, 2])[1:8, 1])
+  concordant10.2 <- 0
+  informative10.2 <- 0
+  
+  
+  table(minh15, PhyDatToMatrix(dat[, 2])[1:8, 1])
+  concordant15.2 <- 2*2*1*1
+  informative15.2 <- 2*2*1*1
+
+  table(minh11, PhyDatToMatrix(dat[, 2])[1:8, 1])
+  concordant11.2 <- 0
+  informative11.2 <- 2
+  QuartetConcordance(tree, dat[, 1], method = "minh")
+  expect_equal(unname(QuartetConcordance(tree, dat[, 1])), rep(1, 5))
+})
+  
+
 test_that("QuartetConcordance() works", {
   tree <- BalancedTree(8)
   splits <- as.Splits(tree)
@@ -29,6 +69,7 @@ test_that("QuartetConcordance() works", {
                "`dataset` must be a phyDat object")
   dat <- MatrixToPhyDat(mataset)
   expect_equal(unname(QuartetConcordance(tree, dat[, 1])), rep(1, 5))
+
   # plot(tree); nodelabels();
   expect_equal(QuartetConcordance(tree, dat[, 2]),
                c("10" = 1/9, "11" = 0, "12" = 0,
