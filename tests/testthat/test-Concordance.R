@@ -65,14 +65,13 @@ test_that("QuartetConcordance(method = minh)", {
 test_that("QuartetConcordance() calculates correct values - weighting", {
   labels <- letters[1:5]
   tr <- PectinateTree(labels)
-  # plot(tr)
-  # nodelabels(adj = c(4, 0.5))
+  # plot(tr); nodelabels(adj = c(4, 0.5))
   
   char <- MatrixToPhyDat(cbind(
     c(a = 0, b = 0, c = 0, d = 1, e = 1),
     c(0, 0, 1, 0, 1),
     c(0, 1, 0, 0, 1)
-  ))
+  )[, c(1:3, 1)])
   
   # Is quartet concordant with character?
   # Quartets labelled by omitted leaf
@@ -80,19 +79,34 @@ test_that("QuartetConcordance() calculates correct values - weighting", {
   D <- 0    # Discordant
   I <- NaN  # Irrelevant
   expected_concordance <- cbind(
-    ch1 = c(a = C, b = C, c = C, d = I, e = I), 
+    ch1 = c(a = C, b = C, c = C, d = I, e = I),
     ch2 = c(D, D, I, C, I),
-    ch3 = c(D, I, D, D, I))
+    ch3 = c(D, I, D, D, I),
+    ch4 = c(a = C, b = C, c = C, d = I, e = I))
   
   conc <- vapply(labels, function(lab) {
     quartet <- DropTip(tr, lab)
-    vapply(1:3, function(i) QuartetConcordance(quartet, char[, i]), double(1))
-  }, c(ch1 = NaN, ch2 = NaN, ch3 = NaN))
+    vapply(1:4, function(i) QuartetConcordance(quartet, char[, i]), double(1))
+  }, c(ch1 = NaN, ch2 = NaN, ch3 = NaN, ch4 = NaN))
   expect_equal(conc, t(expected_concordance))
   
+  split_relevant <- list(
+    "8" = letters[3:5],
+    "9" = letters[1:3])
   
-  QuartetConcordance(tr, char, weight = FALSE)
+  expect_equal(
+    QuartetConcordance(tr, char, weight = FALSE), # 8 = 0.75; 9 = 0.5
+    vapply(split_relevant, function(splitQ) {
+      sum(expected_concordance[splitQ, ], na.rm = TRUE) /
+        sum(!is.nan(expected_concordance[splitQ, ]))
+    }, double(1))
+  )
   
+  # Same proportions, different number of chars -> weights
+  char10 <- char[, rep(1:4, each = 10)]
+  expect_equal(
+    QuartetConcordance(tr, char, weight = FALSE),
+    QuartetConcordance(tr, char10, weight = FALSE))
 })
 
 test_that("QuartetConcordance() calculates correct values", {
