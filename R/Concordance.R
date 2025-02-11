@@ -88,7 +88,7 @@
 #' @importFrom ape keep.tip
 #' @importFrom cli cli_progress_bar cli_progress_update
 #' @importFrom utils combn
-#' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
+#' @importFrom TreeTools as.Splits DescendantTips PhyDatToMatrix TipLabels
 #' @name SiteConcordance
 #' @family split support functions
 #' @export
