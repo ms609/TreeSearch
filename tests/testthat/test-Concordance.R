@@ -18,15 +18,22 @@ test_that("_Concordance() handles tip mismatch", {
 test_that("QuartetConcordance(method = minh)", {
   tree <- ape::read.tree(text = "(a, (b, (c, (d, ((e, f), (g, h))))));")
   mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1,  0,
-                      0, 1, 1, 0, 0, 0, 2, 2,  0,
-                      0, 0, 0, 1, 0, 1, 1, 1,  0,
+                      0, 0, 1, 1, 1, 1, 1, 1,  0,
+                      0, 0, 1, 1, 1, 1, 2, 2,  0,
+                      1, 0, 0, 0, 1, 1, 1, 1,  0,
+                      1, 0, 0, 0, 0, 1, 1, 1,  0,
                       0, 0, 0, 0, 1, 1, 2, 2,  0,
                       0, 0, 1, 1, 2, 2, 3, 3,  0,
                       0, 1, 2, 3, 0, 1, 2, 3,  0), 9,
-                    dimnames = list(paste0("t", 1:9), NULL))
+                    dimnames = list(letters[1:9], NULL))
   dat <- MatrixToPhyDat(mataset)
   
+  expect_error(QuartetConcordance(tree, dat, method = "minh"),
+               "must be in preorder")
+  tree <- Preorder(tree)
+  
   # plot(tree); nodelabels();
+  QuartetConcordance(tree, dat, method = "minh")
   minh10 <- rep(1:4, each = 2)
   minh11 <- c(1, 2, 3, 3, rep(4, 4))
   minh15 <- c(rep(1, 4), rep(2, 2), 3, 4)
