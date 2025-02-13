@@ -29,7 +29,8 @@
 #' `method = "sitemean"` returns mean(75%, 25%) = 50%.
 #' 
 #' `method = "minh"` uses the approach of
-#' \insertCite{Minh2020;textual}{TreeSearch}.
+#' \insertCite{Minh2020;textual}{TreeSearch} to compute the site concordance
+#' factor.
 #' Briefly, this interprets each edge as defining *four* clades, and counts
 #' the status of quartets that contain exactly one leaf from each of these
 #' clades.  This is a subset of the quartets considered by other methods.
@@ -49,6 +50,9 @@
 #TODO More thought / explanation needed.
 #' 
 #TODO Finally, `ProfileConcordance()` (to follow)
+#'
+#' For an overview of the use and interpretation of concordance factors,
+#' see \insertCite{Lanfear2024}{TreeSearch}.
 #' 
 #' **NOTE:** These functions are under development. They are incompletely
 #' tested, and may change without notice.
