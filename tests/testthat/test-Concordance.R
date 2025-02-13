@@ -24,7 +24,8 @@ test_that("QuartetConcordance(method = minh)", {
                       1, 0, 0, 0, 0, 1, 1, 1,  0,
                       0, 0, 0, 0, 1, 1, 2, 2,  0,
                       0, 0, 1, 1, 2, 2, 3, 3,  0,
-                      0, 1, 2, 3, 0, 1, 2, 3,  0), 9,
+                      0, 1, 2, 3, 0, 1, 2, 3,  0,
+                      0, 1, 2, 0, 0, 2, 2, 3,  0), 9,
                     dimnames = list(letters[1:9], NULL))
   dat <- MatrixToPhyDat(mataset)
   
@@ -33,34 +34,35 @@ test_that("QuartetConcordance(method = minh)", {
   tree <- Preorder(tree)
   
   # plot(tree); nodelabels();
-  QuartetConcordance(tree, dat, method = "minh")
-  minh10 <- rep(1:4, each = 2)
-  minh11 <- c(1, 2, 3, 3, rep(4, 4))
-  minh15 <- c(rep(1, 4), rep(2, 2), 3, 4)
+  expect_concordance <- function(i, expectation) {
+    expect_equal(QuartetConcordance(tree, dat[, i], method = "minh"),
+                 setNames(expectation, 11:15))
+  }
+  # Expectations computed by working through tables manually
+  expect_concordance(1, c(NaN, NaN, 1, NaN, NaN))
+  expect_concordance(2, c(1, NaN, NaN, NaN, NaN))
+  expect_concordance(3, c(1, NaN, NaN, NaN, 1))
+  expect_concordance(4, c(0, 0, 1, NaN, NaN))
+  expect_concordance(5, c(0, 0, 4 / 6, 0, 1))
+  expect_concordance(6, rep(NaN, 5))
+  expect_concordance(7, c(1, NaN, NaN, NaN, NaN))
+  expect_concordance(8, c(NaN, NaN, 0, NaN, NaN))
+  expect_concordance(9, c(NaN, 0, 1 / 2, 0, NaN))
   
-  # We must pick one leaf per row
-  # To be parsimony informative, we must pick two leaves from each of two columns
-  # To be concordant, leaves 1 and 2 must come from the same column
-  table(minh10, PhyDatToMatrix(dat[, 1])[1:8, 1])
-  concordant10.1 <- 2*2*2*2
-  informative10.1 <- 2*2*2*2
-  
-  table(minh10, PhyDatToMatrix(dat[, 2])[1:8, 1])
-  concordant10.2 <- 0
-  informative10.2 <- 0
-  
-  
-  table(minh15, PhyDatToMatrix(dat[, 2])[1:8, 1])
-  concordant15.2 <- 2*2*1*1
-  informative15.2 <- 2*2*1*1
-
-  table(minh11, PhyDatToMatrix(dat[, 2])[1:8, 1])
-  concordant11.2 <- 0
-  informative11.2 <- 2
-  QuartetConcordance(tree, dat[, 1], method = "minh")
-  expect_equal(unname(QuartetConcordance(tree, dat[, 1])), rep(1, 5))
+  # Values calculated from summing results above
+  expect_equal(unname(QuartetConcordance(tree, dat, method = "minh")), 
+               c(5 + 3 + 1,
+                 0,
+                 12 + 8 + 4 + 1,
+                 0,
+                 4 + 3) /
+                c(5 + 3 + 4 + 3 + 1,
+                  4 + 3 + 2,
+                  12 + 8 + 6 + 2 + 2,
+                  6 + 2,
+                  4 + 3),
+               tolerance = 0.1)
 })
-  
 
 test_that("QuartetConcordance() calculates correct values - weighting", {
   labels <- letters[1:5]
