@@ -95,7 +95,7 @@ test_that("QuartetConcordance() calculates correct values - weighting", {
     "9" = letters[1:3])
   
   expect_equal(
-    QuartetConcordance(tr, char, weight = FALSE), # 8 = 0.75; 9 = 0.5
+    QuartetConcordance(tr, char, method = "split"), # 8 = 0.75; 9 = 0.5
     vapply(split_relevant, function(splitQ) {
       sum(expected_concordance[splitQ, ], na.rm = TRUE) /
         sum(!is.nan(expected_concordance[splitQ, ]))
@@ -105,8 +105,8 @@ test_that("QuartetConcordance() calculates correct values - weighting", {
   # Same proportions, different number of chars -> weights
   char10 <- char[, rep(1:4, each = 10)]
   expect_equal(
-    QuartetConcordance(tr, char, weight = FALSE),
-    QuartetConcordance(tr, char10, weight = FALSE))
+    QuartetConcordance(tr, char, method = "split"),
+    QuartetConcordance(tr, char10, method = "split"))
 })
 
 test_that("QuartetConcordance() calculates correct values", {
