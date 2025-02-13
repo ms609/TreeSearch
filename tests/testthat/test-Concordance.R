@@ -65,17 +65,17 @@ test_that("QuartetConcordance(method = minh)", {
                   4 + 3))
   
   # Expectations computed by iq-tree
-  expect_concordance(iq = "iq", 1, c(NaN, NaN, 1, NaN, NaN))
-  expect_concordance(iq = "iq", 2, c(1, NaN, NaN, NaN, NaN))
-  expect_concordance(iq = "iq", 3, c(0.6, NaN, NaN, NaN, 0.5))
-  expect_concordance(iq = "iq", 4, c(0, 0, 2 / 3, NaN, NaN))
+  expect_concordance(iq = "iq", 1, c(0, 0, 1, 0, 0))
+  expect_concordance(iq = "iq", 2, c(1, 0, 0, 0, 0))
+  expect_concordance(iq = "iq", 3, c(0.6, 0, 0, 0, 0.5))
+  expect_concordance(iq = "iq", 4, c(0, 0, 2 / 3, 0, 0))
   expect_concordance(iq = "iq", 5, c(0, 0, 1 / 3, 0, 3 / 8))
-  expect_concordance(iq = "iq", 6, rep(NaN, 5))
-  expect_concordance(iq = "iq", 7, c(1 / 5, NaN, NaN, NaN, NaN))
-  expect_concordance(iq = "iq", 8, c(NaN, NaN, 0, NaN, NaN))
-  expect_concordance(iq = "iq", 9, c(NaN, 0, 8.29, 0, NaN))
+  expect_concordance(iq = "iq", 6, c(0, 0, 0, 0, 0))
+  expect_concordance(iq = "iq", 7, c(1 / 5, 0, 0, 0, 0))
+  expect_concordance(iq = "iq", 8, rep(0, 5))
+  expect_concordance(iq = "iq", 9, c(0, 0, 1 / 12, 0, 0))
   expect_equal(unname(QuartetConcordance(tree, dat, method = "iqtree")), 
-               c(56.7, 0, 85.4, 0, 62.5), tolerance = 0.01)
+               c(56.7, 0, 85.4, 0, 62.5) / 100, tolerance = 0.01)
   
 })
 
