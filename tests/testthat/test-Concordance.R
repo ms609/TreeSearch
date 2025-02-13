@@ -34,9 +34,11 @@ test_that("QuartetConcordance(method = minh)", {
   tree <- Preorder(tree)
   
   # plot(tree); nodelabels();
-  expect_concordance <- function(i, expectation) {
-    expect_equal(QuartetConcordance(tree, dat[, i], method = "minh"),
-                 setNames(expectation, 11:15))
+  expect_concordance <- function(i, expectation, iq = "minh") {
+    expect_equal(
+      QuartetConcordance(tree, dat[, i],
+                         method = ifelse(iq == "iq", "iqtree", "minh")),
+      setNames(expectation, 11:15))
   }
   # Expectations computed by working through tables manually
   expect_concordance(1, c(NaN, NaN, 1, NaN, NaN))
@@ -49,7 +51,6 @@ test_that("QuartetConcordance(method = minh)", {
   expect_concordance(8, c(NaN, NaN, 0, NaN, NaN))
   expect_concordance(9, c(NaN, 0, 1 / 2, 0, NaN))
   
-  expect_concordance(6, rep(NaN, 5))
   # Values calculated from summing results above
   expect_equal(unname(QuartetConcordance(tree, dat, method = "minh")), 
                c(5 + 3 + 1,
@@ -63,8 +64,19 @@ test_that("QuartetConcordance(method = minh)", {
                   6 + 2,
                   4 + 3))
   
-  expect_equal(unname(QuartetConcordance(tree, dat, method = "minh")), 
+  # Expectations computed by iq-tree
+  expect_concordance(iq = "iq", 1, c(NaN, NaN, 1, NaN, NaN))
+  expect_concordance(iq = "iq", 2, c(1, NaN, NaN, NaN, NaN))
+  expect_concordance(iq = "iq", 3, c(0.6, NaN, NaN, NaN, 0.5))
+  expect_concordance(iq = "iq", 4, c(0, 0, 2 / 3, NaN, NaN))
+  expect_concordance(iq = "iq", 5, c(0, 0, 1 / 3, 0, 3 / 8))
+  expect_concordance(iq = "iq", 6, rep(NaN, 5))
+  expect_concordance(iq = "iq", 7, c(1 / 5, NaN, NaN, NaN, NaN))
+  expect_concordance(iq = "iq", 8, c(NaN, NaN, 0, NaN, NaN))
+  expect_concordance(iq = "iq", 9, c(NaN, 0, 8.29, 0, NaN))
+  expect_equal(unname(QuartetConcordance(tree, dat, method = "iqtree")), 
                c(56.7, 0, 85.4, 0, 62.5), tolerance = 0.01)
+  
 })
 
 test_that("QuartetConcordance() calculates correct values - weighting", {

@@ -34,6 +34,9 @@
 #' Briefly, this interprets each edge as defining *four* clades, and counts
 #' the status of quartets that contain exactly one leaf from each of these
 #' clades.  This is a subset of the quartets considered by other methods.
+#' `method = "iqtree"` uses the \insertCite{Minh2020;textual}{TreeSearch}
+#' approach as [implemented in IQ-TREE](
+#' https://github.com/iqtree/iqtree2/issues/415).
 #' 
 #' 
 #' `QuartetConcordance()` is computed exactly, using all quartets.
@@ -113,7 +116,7 @@ QuartetConcordance <- function (tree, dataset = NULL, method = "split") {
   dataset <- dataset[tipLabels, drop = FALSE]
   characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
   
-  if (method == "minh") {
+  if (method %in% c("minh", "iqtree")) {
     if (attr(tree, "order") != "preorder") {
       stop("Tree must be in preorder; try `tree <- Preorder(tree)`")
     }
@@ -165,11 +168,9 @@ QuartetConcordance <- function (tree, dataset = NULL, method = "split") {
         tab <- table(q, char)
         nCol <- dim(tab)[[2]]
         if (nCol > 1L) {
-          
           # RULES:
           # We must pick one leaf per row
-          # To be parsimony informative, we must pick two leaves from each of
-          #   two columns
+          # Only parsimony informative are decisive
           # To be concordant, leaves 1 and 2 must come from the same column
           
           # Example table:
@@ -189,19 +190,54 @@ QuartetConcordance <- function (tree, dataset = NULL, method = "split") {
               prod(tab[1:2, j], tab[3:4, i])
           }))
           
-          decisive <- sum(apply(combn(seq_len(nCol), 2), 2, function(ij) {
-            # With three columns, we'll encounter i = 1, 1, 2; j = 2, 3, 3
-            i <- ij[[1]]
-            j <- ij[[2]]
-            sum(apply(combn(4, 2), 2, function(kl) {
-              # We can pick taxa AB, AC, AD, BC, BD, CD from column i,
-              # and the other pair from col j
-              pair1 <- kl
-              pair2 <- (1:4)[-kl]
-              prod(tab[pair1, i], tab[pair2, j])
+          if (method == "minh") {
+            # To be parsimony informative, we must pick two leaves from each of
+            #   two columns
+            
+            
+            decisive <- sum(apply(combn(seq_len(nCol), 2), 2, function(ij) {
+              # With three columns, we'll encounter i = 1, 1, 2; j = 2, 3, 3
+              i <- ij[[1]]
+              j <- ij[[2]]
+              sum(apply(combn(4, 2), 2, function(kl) {
+                # We can pick taxa AB, AC, AD, BC, BD, CD from column i,
+                # and the other pair from col j
+                pair1 <- kl
+                pair2 <- (1:4)[-kl]
+                prod(tab[pair1, i], tab[pair2, j])
+              }))
             }))
-          }))
-          
+          } else {
+            # Under the IQ-definition, to be parsimony informative,
+            # we must pick two leaves from one column.
+            # Hence 0012 is parsimony informative (!)
+            
+            parsInf <- sum(vapply(seq_len(nCol), function(i) {
+              sum(apply(combn(4, 2), 2, function(kl) {
+                # We can pick taxa AB, AC, AD, BC, BD, CD from column i,
+                # and the other pair from any other column
+                pair1 <- kl
+                prod(tab[pair1, i], rowSums(tab[-pair1, -i, drop = FALSE]))
+              }))
+            }, double(1)))
+            
+            # inclusion-exclusion principle:
+            countedTwice <- sum(apply(combn(seq_len(nCol), 2), 2, function(ij) {
+              # With three columns, we'll encounter i = 1, 1, 2; j = 2, 3, 3
+              i <- ij[[1]]
+              j <- ij[[2]]
+              sum(apply(combn(4, 2), 2, function(kl) {
+                # We can pick taxa AB, AC, AD, BC, BD, CD from column i,
+                # and the other pair from col j
+                pair1 <- kl
+                pair2 <- (1:4)[-kl]
+                prod(tab[pair1, i], tab[pair2, j])
+              }))
+            }))
+            
+            decisive <- parsInf - countedTwice
+            
+          }
           c(concordant, decisive)
         } else {
           c(0L, 0L)
