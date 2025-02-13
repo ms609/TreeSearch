@@ -49,6 +49,7 @@ test_that("QuartetConcordance(method = minh)", {
   expect_concordance(8, c(NaN, NaN, 0, NaN, NaN))
   expect_concordance(9, c(NaN, 0, 1 / 2, 0, NaN))
   
+  expect_concordance(6, rep(NaN, 5))
   # Values calculated from summing results above
   expect_equal(unname(QuartetConcordance(tree, dat, method = "minh")), 
                c(5 + 3 + 1,
@@ -60,8 +61,10 @@ test_that("QuartetConcordance(method = minh)", {
                   4 + 3 + 2,
                   12 + 8 + 6 + 2 + 2,
                   6 + 2,
-                  4 + 3),
-               tolerance = 0.1)
+                  4 + 3))
+  
+  expect_equal(unname(QuartetConcordance(tree, dat, method = "minh")), 
+               c(56.7, 0, 85.4, 0, 62.5), tolerance = 0.01)
 })
 
 test_that("QuartetConcordance() calculates correct values - weighting", {
