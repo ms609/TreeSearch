@@ -60,7 +60,8 @@ a second that is concordant with 75\% of 4 decisive quartets.
 \code{method = "sitemean"} returns mean(75\%, 25\%) = 50\%.
 
 \code{method = "minh"} uses the approach of
-\insertCite{Minh2020;textual}{TreeSearch}.
+\insertCite{Minh2020;textual}{TreeSearch} to compute the site concordance
+factor.
 Briefly, this interprets each edge as defining \emph{four} clades, and counts
 the status of quartets that contain exactly one leaf from each of these
 clades.  This is a subset of the quartets considered by other methods.
@@ -69,6 +70,9 @@ clades.  This is a subset of the quartets considered by other methods.
 Other implementations (e.g. IQ-TREE) follow
 \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
 of quartets for a faster computation, potentially at the expense of accuracy.
+
+For an overview of the use and interpretation of concordance factors,
+see \insertCite{Lanfear2024}{TreeSearch}.
 
 \strong{NOTE:} These functions are under development. They are incompletely
 tested, and may change without notice.
