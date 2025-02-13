@@ -65,6 +65,8 @@ factor.
 Briefly, this interprets each edge as defining \emph{four} clades, and counts
 the status of quartets that contain exactly one leaf from each of these
 clades.  This is a subset of the quartets considered by other methods.
+\code{method = "iqtree"} uses the \insertCite{Minh2020;textual}{TreeSearch}
+approach as \href{https://github.com/iqtree/iqtree2/issues/415}{implemented in IQ-TREE}.
 
 \code{QuartetConcordance()} is computed exactly, using all quartets.
 Other implementations (e.g. IQ-TREE) follow
