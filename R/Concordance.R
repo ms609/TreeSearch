@@ -100,7 +100,8 @@
 #' @family split support functions
 #' @export
 # TODO support `method = c("split", "sitemean", "minh")`
-QuartetConcordance <- function (tree, dataset = NULL, method = "split") {
+QuartetConcordance <- function (tree, dataset = NULL, method = "split",
+                                n = 250) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
@@ -116,7 +117,7 @@ QuartetConcordance <- function (tree, dataset = NULL, method = "split") {
   dataset <- dataset[tipLabels, drop = FALSE]
   characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
   
-  if (method %in% c("minh", "iqtree")) {
+  if (method %in% c("minh", "minhq", "iqtree")) {
     if (attr(tree, "order") != "preorder") {
       stop("Tree must be in preorder; try `tree <- Preorder(tree)`")
     }
@@ -162,68 +163,88 @@ QuartetConcordance <- function (tree, dataset = NULL, method = "split") {
     
     cli_progress_bar(name = "Quartet concordance", total = dim(quarters)[[2]])
     on.exit(cli_progress_done(.envir = parent.frame(2)))
-    concDeci <- apply(quarters, 2, function (q) {
-      #cli_progress_update(1, .envir = parent.frame(2))
-      quarts <- apply(characters, 2, function (char) {
-        tab <- table(q, char)
-        nCol <- dim(tab)[[2]]
-        if (nCol > 1L) {
-          # RULES:
-          # We must pick one leaf per row
-          # Only parsimony informative are decisive
-          # To be concordant, leaves 1 and 2 must come from the same column
-          
-          # Example table:
-          #   q  0   1   2
-          #   A  2   3   0
-          #   B  2   3   2
-          #   C  0   1   2
-          #   D  2   1   2
-          # 
-          
-          concordant <- sum(apply(combn(seq_len(nCol), 2), 2, function(ij) {
-            i <- ij[[1]]
-            j <- ij[[2]]
-            # Taxa from A and B from column i, C and D from j
-            prod(tab[1:2, i], tab[3:4, j]) +
-              # Taxa from A and B from column j, C and D from i
-              prod(tab[1:2, j], tab[3:4, i])
-          }))
-          
-          if (method == "minh") {
-            # To be parsimony informative, we must pick two leaves from each of
-            #   two columns
+    if (method == "minh") {
+      sCF <- apply(quarters, 2, function(abcd) {
+        resample <- function(x) x[sample.int(length(x), 1)]
+        leaves <- replicate(n, {
+          vapply(0:3, function(q) resample(which(abcd == q)), integer(1))
+        })
+        cfQ <- apply(leaves, 2, function(q) {
+          qCh <- `mode<-`(characters[q, , drop = FALSE], "numeric")
+          concordant <- sum(qCh[1, ] == qCh[2, ] &
+            qCh[2, ] != qCh[3, ] &
+            qCh[3, ] == qCh[4, ])
+          decisive <- dim(qCh)[[2]]
+          decisive <- sum(colSums(apply(qCh + 1, 2, tabulate, 4) >= 2) > 1)
+          decisive <- sum(colSums(apply(qCh + 1, 2, tabulate, 4) >= 2) > 0)
+          concordant / decisive
+        })
+        mean(cfQ, na.rm = TRUE)
+      })
+    } else {
+      concDeci <- apply(quarters, 2, function (q) {
+        #cli_progress_update(1, .envir = parent.frame(2))
+        quarts <- apply(characters, 2, function (char) {
+          tab <- table(q, char)
+          nCol <- dim(tab)[[2]]
+          if (nCol > 1L) {
+            # RULES:
+            # We must pick one leaf per row
+            # Only parsimony informative are decisive
+            # To be concordant, leaves 1 and 2 must come from the same column
             
+            # Example table:
+            #   q  0   1   2
+            #   A  2   3   0
+            #   B  2   3   2
+            #   C  0   1   2
+            #   D  2   1   2
+            # 
             
-            decisive <- sum(apply(combn(seq_len(nCol), 2), 2, function(ij) {
-              # With three columns, we'll encounter i = 1, 1, 2; j = 2, 3, 3
+            concordant <- sum(apply(combn(seq_len(nCol), 2), 2, function(ij) {
               i <- ij[[1]]
               j <- ij[[2]]
-              sum(apply(combn(4, 2), 2, function(kl) {
-                # We can pick taxa AB, AC, AD, BC, BD, CD from column i,
-                # and the other pair from col j
-                pair1 <- kl
-                pair2 <- (1:4)[-kl]
-                prod(tab[pair1, i], tab[pair2, j])
-              }))
+              # Taxa from A and B from column i, C and D from j
+              prod(tab[1:2, i], tab[3:4, j]) +
+                # Taxa from A and B from column j, C and D from i
+                prod(tab[1:2, j], tab[3:4, i])
             }))
+            
+            if (method == "minhq") {
+              # To be parsimony informative, we must pick two leaves from each of
+              #   two columns
+              
+              
+              decisive <- sum(apply(combn(seq_len(nCol), 2), 2, function(ij) {
+                # With three columns, we'll encounter i = 1, 1, 2; j = 2, 3, 3
+                i <- ij[[1]]
+                j <- ij[[2]]
+                sum(apply(combn(4, 2), 2, function(kl) {
+                  # We can pick taxa AB, AC, AD, BC, BD, CD from column i,
+                  # and the other pair from col j
+                  pair1 <- kl
+                  pair2 <- (1:4)[-kl]
+                  prod(tab[pair1, i], tab[pair2, j])
+                }))
+              }))
+            } else {
+              # IQ-TREE seems to use "variant" in place of "parsimony informative"
+              
+              nPatterns <- prod(rowSums(tab))
+              allSame <- sum(apply(tab, 2, prod))
+              
+              decisive <- nPatterns# - allSame
+              
+            }
+            c(concordant, decisive)
           } else {
-            # IQ-TREE seems to use "variant" in place of "parsimony informative"
-            
-            nPatterns <- prod(rowSums(tab))
-            allSame <- sum(apply(tab, 2, prod))
-            
-            decisive <- nPatterns# - allSame
-            
+            c(0L, 0L)
           }
-          c(concordant, decisive)
-        } else {
-          c(0L, 0L)
-        }
+        })
+        rowSums(quarts)
       })
-      rowSums(quarts)
-    })
-    concDeci[1, ] / concDeci[2, ]
+      concDeci[1, ] / concDeci[2, ]
+    }
   } else {
     splits <- as.Splits(tree, dataset)
     logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),

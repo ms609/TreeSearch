@@ -15,7 +15,7 @@ test_that("_Concordance() handles tip mismatch", {
                  "No overlap between tree labels and dataset.")
 })
 
-test_that("QuartetConcordance(method = minh)", {
+test_that("QuartetConcordance(method = minhq)", {
   tree <- ape::read.tree(text = "(a, (b, (c, (d, ((e, f), (g, h))))));")
   mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1,  0,
                       0, 0, 1, 1, 1, 1, 1, 1,  0,
@@ -29,15 +29,15 @@ test_that("QuartetConcordance(method = minh)", {
                     dimnames = list(letters[1:9], NULL))
   dat <- MatrixToPhyDat(mataset)
   
-  expect_error(QuartetConcordance(tree, dat, method = "minh"),
+  expect_error(QuartetConcordance(tree, dat, method = "minhq"),
                "must be in preorder")
   tree <- Preorder(tree)
   
   # plot(tree); nodelabels();
-  expect_concordance <- function(i, expectation, iq = "minh") {
+  expect_concordance <- function(i, expectation, iq = "minhq") {
     expect_equal(
       QuartetConcordance(tree, dat[, i],
-                         method = ifelse(iq == "iq", "iqtree", "minh")),
+                         method = ifelse(iq == "iq", "iqtree", "minhq")),
       setNames(expectation, 11:15))
   }
   # Expectations computed by working through tables manually
@@ -52,7 +52,7 @@ test_that("QuartetConcordance(method = minh)", {
   expect_concordance(9, c(NaN, 0, 1 / 2, 0, NaN))
   
   # Values calculated from summing results above
-  expect_equal(unname(QuartetConcordance(tree, dat, method = "minh")), 
+  expect_equal(unname(QuartetConcordance(tree, dat, method = "minhq")), 
                c(5 + 3 + 1,
                  0,
                  12 + 8 + 4 + 1,
@@ -76,6 +76,43 @@ test_that("QuartetConcordance(method = minh)", {
   expect_concordance(iq = "iq", 9, c(0, 0, 1 / 12, 0, 0))
   expect_equal(unname(QuartetConcordance(tree, dat, method = "iqtree")), 
                c(56.7, 0, 85.4, 0, 62.5) / 100, tolerance = 0.01)
+})
+
+test_that("QuartetConcordance(method = minh)", {
+  tree <- Preorder(
+    ape::read.tree(text = "(a, (b, (c, (d, ((e, f), (g, h))))));"))
+  mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1,  0,
+                      0, 0, 1, 1, 1, 1, 1, 1,  0,
+                      0, 0, 1, 1, 1, 1, 2, 2,  0,
+                      1, 0, 0, 0, 1, 1, 1, 1,  0,
+                      1, 0, 0, 0, 0, 1, 1, 1,  0,
+                      0, 0, 0, 0, 1, 1, 2, 2,  0,
+                      0, 0, 1, 1, 2, 2, 3, 3,  0,
+                      0, 1, 2, 3, 0, 1, 2, 3,  0,
+                      0, 1, 2, 0, 0, 2, 2, 3,  0), 9,
+                    dimnames = list(letters[1:9], NULL))
+  dat <- MatrixToPhyDat(mataset)
+  
+  # plot(tree); nodelabels();
+  expect_concordance <- function(i, expectation) {
+    expect_equal(
+      QuartetConcordance(tree, dat[, i], method = "minh", n = 1250),
+      setNames(expectation, 11:15), tolerance = 0.05)
+  }
+
+  # Expectations computed by iq-tree
+  expect_concordance(1, c(0, 0, 1, 0, 0))
+  expect_concordance(2, c(1, 0, 0, 0, 0))
+  expect_concordance(3, c(0.6, 0, 0, 0, 0.5))
+  expect_concordance(4, c(0, 0, 2 / 3, 0, 0))
+  expect_concordance(5, c(0, 0, 1 / 3, 0, 3 / 8))
+  expect_concordance(6, c(0, 0, 0, 0, 0))
+  expect_concordance(7, c(1 / 5, 0, 0, 0, 0))
+  expect_concordance(8, rep(0, 5))
+  expect_concordance(9, c(0, 0, 1 / 12, 0, 0))
+  expect_equal(tolerance = 0.05,
+    unname(QuartetConcordance(tree, dat, method = "minh", n = 1234)),
+    c(56.7, 0, 85.4, 0, 62.5) / 100)
   
 })
 
