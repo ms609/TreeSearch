@@ -208,34 +208,12 @@ QuartetConcordance <- function (tree, dataset = NULL, method = "split") {
               }))
             }))
           } else {
-            # Under the IQ-definition, to be parsimony informative,
-            # we must pick two leaves from one column.
-            # Hence 0012 is parsimony informative (!)
+            # IQ-TREE seems to use "variant" in place of "parsimony informative"
             
-            parsInf <- sum(vapply(seq_len(nCol), function(i) {
-              sum(apply(combn(4, 2), 2, function(kl) {
-                # We can pick taxa AB, AC, AD, BC, BD, CD from column i,
-                # and the other pair from any other column
-                pair1 <- kl
-                prod(tab[pair1, i], rowSums(tab[-pair1, -i, drop = FALSE]))
-              }))
-            }, double(1)))
+            nPatterns <- prod(rowSums(tab))
+            allSame <- sum(apply(tab, 2, prod))
             
-            # inclusion-exclusion principle:
-            countedTwice <- sum(apply(combn(seq_len(nCol), 2), 2, function(ij) {
-              # With three columns, we'll encounter i = 1, 1, 2; j = 2, 3, 3
-              i <- ij[[1]]
-              j <- ij[[2]]
-              sum(apply(combn(4, 2), 2, function(kl) {
-                # We can pick taxa AB, AC, AD, BC, BD, CD from column i,
-                # and the other pair from col j
-                pair1 <- kl
-                pair2 <- (1:4)[-kl]
-                prod(tab[pair1, i], tab[pair2, j])
-              }))
-            }))
-            
-            decisive <- parsInf - countedTwice
+            decisive <- nPatterns# - allSame
             
           }
           c(concordant, decisive)
