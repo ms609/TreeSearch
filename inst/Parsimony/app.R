@@ -2206,6 +2206,11 @@ server <- function(input, output, session) {
         "  dataset = dataset,",
         paste0("  char = ", n, ","),
         paste0("  updateTips = ", "updateTips" %in% input$mapDisplay, ","),
+        "  Display = function(tr) {",
+        paste0("    tr <- RootTree(tr, ", EnC(r$outgroup), ")"),
+        "    tr$edge.length <- rep.int(2, nrow(tr$edge))",
+        "    SortTree(tr)",
+        "  },",
         "  edge.width = 2.5",
         ")"
       )
