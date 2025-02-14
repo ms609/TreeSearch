@@ -2,6 +2,9 @@
 % Please edit documentation in R/PlotCharacter.R
 \name{PlotCharacter}
 \alias{PlotCharacter}
+\alias{PlotCharacter.phylo}
+\alias{PlotCharacter.multiPhylo}
+\alias{PlotCharacter.list}
 \title{Plot the distribution of a character on a tree}
 \usage{
 PlotCharacter(
@@ -18,6 +21,57 @@ PlotCharacter(
   plainLty = par("lty"),
   tipOffset = 1,
   unitEdge = FALSE,
+  ...
+)
+
+\method{PlotCharacter}{phylo}(
+  tree,
+  dataset,
+  char,
+  updateTips,
+  plot,
+  tokenCol,
+  ambigCol,
+  inappCol,
+  ambigLty,
+  inappLty,
+  plainLty,
+  tipOffset,
+  unitEdge,
+  ...
+)
+
+\method{PlotCharacter}{multiPhylo}(
+  tree,
+  dataset,
+  char,
+  updateTips,
+  plot,
+  tokenCol,
+  ambigCol,
+  inappCol,
+  ambigLty,
+  inappLty,
+  plainLty,
+  tipOffset,
+  unitEdge,
+  ...
+)
+
+\method{PlotCharacter}{list}(
+  tree,
+  dataset,
+  char,
+  updateTips,
+  plot,
+  tokenCol,
+  ambigCol,
+  inappCol,
+  ambigLty,
+  inappLty,
+  plainLty,
+  tipOffset,
+  unitEdge,
   ...
 )
 }

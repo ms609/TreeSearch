@@ -48,21 +48,31 @@
 #' @importFrom graphics par
 #' @importFrom TreeTools PostorderOrder
 #' @export
-PlotCharacter <- function (tree, dataset, char = 1L,
-                           updateTips = FALSE,
-                           plot = TRUE,
-                           
-                           tokenCol = NULL,
-                           ambigCol = "grey",
-                           inappCol = "lightgrey",
-                           
-                           ambigLty = "dotted",
-                           inappLty = "dashed",
-                           plainLty = par("lty"),
-                           
-                           tipOffset = 1,
-                           unitEdge = FALSE,
-                           ...) {
+PlotCharacter <- function(tree, dataset, char = 1L,
+                          updateTips = FALSE,
+                          plot = TRUE,
+                          
+                          tokenCol = NULL,
+                          ambigCol = "grey",
+                          inappCol = "lightgrey",
+                          
+                          ambigLty = "dotted",
+                          inappLty = "dashed",
+                          plainLty = par("lty"),
+                          
+                          tipOffset = 1,
+                          unitEdge = FALSE,
+                          ...
+) {
+  UseMethod("PlotCharacter")
+}
+
+#' @rdname PlotCharacter
+#' @export
+PlotCharacter.phylo <- function(tree, dataset, char, updateTips, plot,
+                                tokenCol, ambigCol, inappCol,
+                                ambigLty, inappLty, plainLty,
+                                tipOffset, unitEdge, ...) {
   
   # Reconcile labels
   datasetTaxa <- names(dataset)
@@ -398,4 +408,32 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   
   # Return:
   invisible(slimState)
+}
+
+
+#' @rdname PlotCharacter
+#' @export
+PlotCharacter.multiPhylo <- function(tree, dataset, char, updateTips, plot,
+                                tokenCol, ambigCol, inappCol,
+                                ambigLty, inappLty, plainLty,
+                                tipOffset, unitEdge, ...) {
+  reconstructions <- lapply(tree, PlotCharacter, dataset = dataset, char = char,
+                            updateTips = updateTips, plot = FALSE, ...)
+  
+}
+
+#' @rdname PlotCharacter
+#' @export
+PlotCharacter.list <- function(tree, dataset, char, updateTips, plot,
+                               tokenCol, ambigCol, inappCol,
+                               ambigLty, inappLty, plainLty,
+                               tipOffset, unitEdge, ...) {
+  if (all(vapply(tree, inherits, logical(1), "phylo"))) {
+    PlotCharacter.multiPhylo(tree, dataset, char, updateTips, plot,
+                             tokenCol, ambigCol, inappCol,
+                             ambigLty, inappLty, plainLty,
+                             tipOffset, unitEdge, ...)
+  } else {
+    stop("Elements of `tree` must be of class `phylo`")
+  }
 }

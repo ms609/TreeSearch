@@ -1,4 +1,4 @@
-test_that("PlotCharacter()", {
+test_that("PlotCharacter.phylo()", {
   
   dataset <- TreeTools::StringToPhyDat("1111 1111 0000", tips = 12)
   expect_error(PlotCharacter(TreeTools::BalancedTree(14), dataset),
@@ -130,4 +130,9 @@ test_that("Out-of-sequence works", {
                                             tips = c("a", "c", "d", "b"))
                   )}
   )
+})
+
+test_that("PlotCharacter.multi()", {
+  expect_error(PlotCharacter(list(BalancedTree(8), 9), "dataset"),
+               "class `phylo`")
 })
