@@ -15,7 +15,118 @@ test_that("_Concordance() handles tip mismatch", {
                  "No overlap between tree labels and dataset.")
 })
 
-test_that("QuartetConcordance() works", {
+test_that("QuartetConcordance(method = minh)", {
+  tree <- ape::read.tree(text = "(a, (b, (c, (d, ((e, f), (g, h))))));")
+  mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1,  0,
+                      0, 0, 1, 1, 1, 1, 1, 1,  0,
+                      0, 0, 1, 1, 1, 1, 2, 2,  0,
+                      1, 0, 0, 0, 1, 1, 1, 1,  0,
+                      1, 0, 0, 0, 0, 1, 1, 1,  0,
+                      0, 0, 0, 0, 1, 1, 2, 2,  0,
+                      0, 0, 1, 1, 2, 2, 3, 3,  0,
+                      0, 1, 2, 3, 0, 1, 2, 3,  0,
+                      0, 1, 2, 0, 0, 2, 2, 3,  0), 9,
+                    dimnames = list(letters[1:9], NULL))
+  dat <- MatrixToPhyDat(mataset)
+  
+  expect_error(QuartetConcordance(tree, dat, method = "minh"),
+               "must be in preorder")
+  tree <- Preorder(tree)
+  
+  # plot(tree); nodelabels();
+  expect_concordance <- function(i, expectation, iq = "minh") {
+    expect_equal(
+      QuartetConcordance(tree, dat[, i],
+                         method = ifelse(iq == "iq", "iqtree", "minh")),
+      setNames(expectation, 11:15))
+  }
+  # Expectations computed by working through tables manually
+  expect_concordance(1, c(NaN, NaN, 1, NaN, NaN))
+  expect_concordance(2, c(1, NaN, NaN, NaN, NaN))
+  expect_concordance(3, c(1, NaN, NaN, NaN, 1))
+  expect_concordance(4, c(0, 0, 1, NaN, NaN))
+  expect_concordance(5, c(0, 0, 4 / 6, 0, 1))
+  expect_concordance(6, rep(NaN, 5))
+  expect_concordance(7, c(1, NaN, NaN, NaN, NaN))
+  expect_concordance(8, c(NaN, NaN, 0, NaN, NaN))
+  expect_concordance(9, c(NaN, 0, 1 / 2, 0, NaN))
+  
+  # Values calculated from summing results above
+  expect_equal(unname(QuartetConcordance(tree, dat, method = "minh")), 
+               c(5 + 3 + 1,
+                 0,
+                 12 + 8 + 4 + 1,
+                 0,
+                 4 + 3) /
+                c(5 + 3 + 4 + 3 + 1,
+                  4 + 3 + 2,
+                  12 + 8 + 6 + 2 + 2,
+                  6 + 2,
+                  4 + 3))
+  
+  # Expectations computed by iq-tree
+  expect_concordance(iq = "iq", 1, c(0, 0, 1, 0, 0))
+  expect_concordance(iq = "iq", 2, c(1, 0, 0, 0, 0))
+  expect_concordance(iq = "iq", 3, c(0.6, 0, 0, 0, 0.5))
+  expect_concordance(iq = "iq", 4, c(0, 0, 2 / 3, 0, 0))
+  expect_concordance(iq = "iq", 5, c(0, 0, 1 / 3, 0, 3 / 8))
+  expect_concordance(iq = "iq", 6, c(0, 0, 0, 0, 0))
+  expect_concordance(iq = "iq", 7, c(1 / 5, 0, 0, 0, 0))
+  expect_concordance(iq = "iq", 8, rep(0, 5))
+  expect_concordance(iq = "iq", 9, c(0, 0, 1 / 12, 0, 0))
+  expect_equal(unname(QuartetConcordance(tree, dat, method = "iqtree")), 
+               c(56.7, 0, 85.4, 0, 62.5) / 100, tolerance = 0.01)
+  
+})
+
+test_that("QuartetConcordance() calculates correct values - weighting", {
+  labels <- letters[1:5]
+  tr <- PectinateTree(labels)
+  # plot(tr); nodelabels(adj = c(4, 0.5))
+  
+  char <- MatrixToPhyDat(cbind(
+    c(a = 0, b = 0, c = 0, d = 1, e = 1),
+    c(0, 0, 1, 0, 1),
+    c(0, 1, 0, 0, 1)
+  )[, c(1:3, 1)])
+  
+  # Is quartet concordant with character?
+  # Quartets labelled by omitted leaf
+  C <- 1    # Concordant
+  D <- 0    # Discordant
+  I <- NaN  # Irrelevant
+  expected_concordance <- cbind(
+    ch1 = c(a = C, b = C, c = C, d = I, e = I),
+    ch2 = c(D, D, I, C, I),
+    ch3 = c(D, I, D, D, I),
+    ch4 = c(a = C, b = C, c = C, d = I, e = I))
+  
+  conc <- vapply(labels, function(lab) {
+    quartet <- DropTip(tr, lab)
+    vapply(1:4, function(i) QuartetConcordance(quartet, char[, i]), double(1))
+  }, c(ch1 = NaN, ch2 = NaN, ch3 = NaN, ch4 = NaN))
+  expect_equal(conc, t(expected_concordance))
+  
+  split_relevant <- list(
+    "8" = letters[3:5],
+    "9" = letters[1:3])
+  
+  expect_equal(
+    QuartetConcordance(tr, char, method = "split"), # 8 = 0.75; 9 = 0.5
+    vapply(split_relevant, function(splitQ) {
+      sum(expected_concordance[splitQ, ], na.rm = TRUE) /
+        sum(!is.nan(expected_concordance[splitQ, ]))
+    }, double(1))
+  )
+  
+  # Same proportions, different number of chars -> weights
+  char10 <- char[, rep(1:4, each = 10)]
+  expect_equal(
+    QuartetConcordance(tr, char, method = "split"),
+    QuartetConcordance(tr, char10, method = "split"))
+})
+
+test_that("QuartetConcordance() calculates correct values", {
   tree <- BalancedTree(8)
   splits <- as.Splits(tree)
   mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1,  0,
@@ -29,6 +140,7 @@ test_that("QuartetConcordance() works", {
                "`dataset` must be a phyDat object")
   dat <- MatrixToPhyDat(mataset)
   expect_equal(unname(QuartetConcordance(tree, dat[, 1])), rep(1, 5))
+
   # plot(tree); nodelabels();
   expect_equal(QuartetConcordance(tree, dat[, 2]),
                c("10" = 1/9, "11" = 0, "12" = 0,

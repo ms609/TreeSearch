@@ -1,3 +1,7 @@
+# TreeSearch 1.5.1.9006 (2025-02)
+
+- `QuartetConcordance(method = "minh")` uses the approach of Minh et al. (2020)
+
 # TreeSearch 1.5.1.9005 (2025-02)
 
 - Support for ordered (additive) characters
