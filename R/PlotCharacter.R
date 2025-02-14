@@ -18,6 +18,8 @@
 #' [graphical parameter] for details of line styles.  Overrides `tokenCol`.
 #' @param tipOffset Numeric: how much to offset tips from their labels.
 #' @param unitEdge Logical: Should all edges be plotted with a unit length?
+#' @param Display Function that takes argument `tree` and returns a tree
+#' of class `phylo`, formatted as it will be plotted.
 #' @param \dots Further arguments to pass to `plot.phylo()`.
 #' 
 #' @return `PlotCharacter()` invisibly returns a matrix in which each row
@@ -66,6 +68,7 @@ PlotCharacter <- function(tree, dataset, char = 1L,
                           
                           tipOffset = 1,
                           unitEdge = FALSE,
+                          Display = function(tree) tree,
                           ...
 ) {
   UseMethod("PlotCharacter")
@@ -87,11 +90,13 @@ PlotCharacter.phylo <- function(tree, dataset, char = 1L,
                                 
                                 tipOffset = 1,
                                 unitEdge = FALSE,
+                                Display = function(tree) tree,
                                 ...
 ) {
   
   # Reconcile labels
   datasetTaxa <- names(dataset)
+  tree <- Display(tree)
   treeTaxa <- tree[["tip.label"]]
   if(!all(treeTaxa %fin% datasetTaxa)) {
     stop("Taxa in tree missing from dataset:\n  ",
@@ -465,13 +470,14 @@ PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
                                      
                                      tipOffset = 1,
                                      unitEdge = FALSE,
+                                     Display = function(tree) tree,
                                      ...) {
   
   if (length(tree) == 1) {
     return(PlotCharacter(tree[[1]], dataset, char, updateTips, plot,
                          tokenCol, ambigCol, inappCol,
                          ambigLty, inappLty, plainLty,
-                         tipOffset, unitEdge, ...))
+                         tipOffset, unitEdge, Display, ...))
   }
   
   tipLabels <- unique(lapply(lapply(tree, TipLabels), sort))
@@ -481,12 +487,12 @@ PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
   tipLabels <- tipLabels[[1]]
   nTip <- length(tipLabels)
   tokens <- attr(dataset, "levels")
-  reconstructions <- vapply(tree, PlotCharacter,
-                            matrix(FALSE, nTip * 2 - 1, length(tokens)),
+  reconstructions <- lapply(tree, PlotCharacter,
                             dataset = dataset, char = char,
-                            updateTips = updateTips, plot = FALSE, ...)
+                            updateTips = updateTips, plot = FALSE,
+                            Display = function(tree) tree, ...)
   # Check labels: definitely identical, possibly in different sequence
-  consTree <- Consensus(tree, p = 1, check.labels = TRUE)
+  consTree <- Display(Consensus(tree, p = 1, check.labels = TRUE))
   .TreeClades <- function(tr) {
     ed <- tr[["edge"]]
     lab <- TipLabels(tr)
@@ -498,11 +504,13 @@ PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
   }
   consClades <- .TreeClades(consTree)
   .Recon <- function(i) {
-    reconstructions[match(consClades, .TreeClades(tree[[i]])), , i]
+    reconstructions[[i]][match(consClades, .TreeClades(tree[[i]])), ]
   }
-  recon <- .Recon(1)
-  for (i in seq_along(tree)[-1]) {
-    recon <- recon | .Recon(i)
+  recon <- matrix(FALSE, nrow = length(consClades), ncol = length(tokens),
+                  dimnames = list(NULL, tokens))
+  for (i in seq_along(tree)) {
+    ri <- .Recon(i)
+    recon[, colnames(ri)] <- recon[, colnames(ri)] | ri
   }
   
   if (isTRUE(plot)) {
@@ -529,13 +537,14 @@ PlotCharacter.list <- function(tree, dataset, char = 1L,
                                
                                tipOffset = 1,
                                unitEdge = FALSE,
+                               Display = function(tree) tree,
                                ...
 ) {
   if (all(vapply(tree, inherits, logical(1), "phylo"))) {
     PlotCharacter.multiPhylo(tree, dataset, char, updateTips, plot,
                              tokenCol, ambigCol, inappCol,
                              ambigLty, inappLty, plainLty,
-                             tipOffset, unitEdge, ...)
+                             tipOffset, unitEdge, Display, ...)
   } else {
     stop("Elements of `tree` must be of class `phylo`")
   }

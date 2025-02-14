@@ -21,6 +21,7 @@ PlotCharacter(
   plainLty = par("lty"),
   tipOffset = 1,
   unitEdge = FALSE,
+  Display = function(tree) tree,
   ...
 )
 
@@ -38,6 +39,7 @@ PlotCharacter(
   plainLty = par("lty"),
   tipOffset = 1,
   unitEdge = FALSE,
+  Display = function(tree) tree,
   ...
 )
 
@@ -55,6 +57,7 @@ PlotCharacter(
   plainLty = par("lty"),
   tipOffset = 1,
   unitEdge = FALSE,
+  Display = function(tree) tree,
   ...
 )
 
@@ -72,6 +75,7 @@ PlotCharacter(
   plainLty = par("lty"),
   tipOffset = 1,
   unitEdge = FALSE,
+  Display = function(tree) tree,
   ...
 )
 }
@@ -100,6 +104,9 @@ to apply to ambiguous, inapplicable and applicable tokens.  See the \code{lty}
 \item{tipOffset}{Numeric: how much to offset tips from their labels.}
 
 \item{unitEdge}{Logical: Should all edges be plotted with a unit length?}
+
+\item{Display}{Function that takes argument \code{tree} and returns a tree
+of class \code{phylo}, formatted as it will be plotted.}
 
 \item{\dots}{Further arguments to pass to \code{plot.phylo()}.}
 }
