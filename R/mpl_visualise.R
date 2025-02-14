@@ -24,7 +24,7 @@
 ### #' @description Determine and depict the possible states for a character on a tree under the most parsimonious conditions
 ### #' @usage VisualiseCharacter(tree, dataset, char.no, plot.fun = plot)
 ### #' 
-### #' @param tree a fully-resolved tree in \code{\link{phylo}} format, with the desired outgroup; edge lengths are not supported and will be deleted;
+### #' @param tree a fully-resolved tree in \code{\link[ape]{phylo}} format, with the desired outgroup; edge lengths are not supported and will be deleted;
 ### #' @template datasetParam
 ### #' @param char.no number of the character to be displayed;
 ### #' @param plot.fun a function that plots a tree, \code{\link{plot}} by default.
