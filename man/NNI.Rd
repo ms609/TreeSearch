@@ -24,7 +24,7 @@ RootedNNISwap(
 )
 }
 \arguments{
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A tree of class \code{\link[ape]{phylo}}.}
 
 \item{edgeToBreak}{In (\code{Rooted})\code{NNI()}, an optional integer specifying the
 index of an edge to bisect/prune, generated randomly if not specified.

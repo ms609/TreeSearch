@@ -39,7 +39,7 @@ RootedSPRSwap(
 )
 }
 \arguments{
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A tree of class \code{\link[ape]{phylo}}.}
 
 \item{edgeToBreak}{the index of an edge to bisect, generated randomly if not specified.}
 
