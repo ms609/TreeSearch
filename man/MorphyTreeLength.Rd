@@ -30,10 +30,10 @@ in the corresponding Morphy object.}
 \code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}}.}
 
 \item{parent}{Integer vector corresponding to the first column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e. \code{tree$edge[, 1]}.}
 
 \item{child}{Integer vector corresponding to the second column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e. \code{tree$edge[, 2]}.}
 
 \item{parentOf}{For each node, numbered in postorder, the number of its parent node.}
 

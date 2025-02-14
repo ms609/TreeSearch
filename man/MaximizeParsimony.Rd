@@ -50,7 +50,7 @@ EasyTreesy()
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
 Perhaps load into R using \code{\link[TreeTools]{ReadCharacters}}.}
 
-\item{tree}{(optional) A bifurcating tree of class \code{\link{phylo}},
+\item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}},
 containing only the tips listed in \code{dataset}, from which the search
 should begin.
 If unspecified, an \link[=AdditionTree]{addition tree} will be generated from

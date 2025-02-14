@@ -30,7 +30,7 @@
 #' 
 #' 
 #' @template datasetParam
-#' @param tree (optional) A bifurcating tree of class \code{\link{phylo}},
+#' @param tree (optional) A bifurcating tree of class \code{\link[ape]{phylo}},
 #' containing only the tips listed in `dataset`, from which the search
 #' should begin.
 #' If unspecified, an [addition tree][AdditionTree()] will be generated from
