@@ -1,0 +1,84 @@
+2025-02-14 13:02:01
+  Started server
+2025-02-14 13:02:02
+  UpdateDroppedTaxaDisplay()
+2025-02-14 13:02:02
+  DroppedTips()
+2025-02-14 13:02:02
+  KeptTips()
+2025-02-14 13:02:02
+  dropSeq()
+2025-02-14 13:02:02
+  UpdateData(): from package
+2025-02-14 13:02:03
+  UpdateAllTrees()
+2025-02-14 13:02:03
+  UpdateTreeRange([1, 1] -> [1, 125])
+2025-02-14 13:02:03
+  UpdateNTree(0 -> 48)
+2025-02-14 13:02:03
+  UpdateActiveTrees()
+2025-02-14 13:02:03
+  DisplayTreeScores()
+2025-02-14 13:02:03
+  scores(): Recalculating scores with k = 10
+2025-02-14 13:02:03
+  UpdateKeepNTipsRange(0 -> 54)
+2025-02-14 13:02:03
+  nNonRogues()
+2025-02-14 13:02:03
+  nNonRogues: 49
+2025-02-14 13:02:03
+  UpdateDroppedTaxaDisplay()
+2025-02-14 13:02:03
+  DroppedTips()
+2025-02-14 13:02:03
+  KeptTips()
+2025-02-14 13:02:03
+  dropSeq()
+2025-02-14 13:02:03
+  UpdateExcludedTipsInput()
+2025-02-14 13:02:03
+  UpdateOutgroupInput()
+2025-02-14 13:02:03
+  /UpdateAllTrees()
+2025-02-14 13:02:03
+  DisplayTreeScores()
+2025-02-14 13:02:03
+  renderUI(branchLegend)
+2025-02-14 13:02:03
+  /renderUI(branchLegend)
+2025-02-14 13:02:03
+  MainPlot()
+2025-02-14 13:02:03
+  ConsensusPlot()
+2025-02-14 13:02:03
+  LabelConcordance()
+2025-02-14 13:02:03
+  /ConsensusPlot()
+2025-02-14 13:02:03
+  renderUI(branchLegend)
+2025-02-14 13:02:03
+  /renderUI(branchLegend)
+2025-02-14 13:02:03
+  MainPlot()
+2025-02-14 13:02:03
+  ConsensusPlot()
+2025-02-14 13:02:03
+  LabelConcordance()
+2025-02-14 13:02:03
+  /ConsensusPlot()
+2025-02-14 13:02:05
+  MainPlot()
+2025-02-14 13:02:06
+  LabelConcordance()
+2025-02-14 13:02:06
+  UpdateDroppedTaxaDisplay()
+2025-02-14 13:02:07
+  MainPlot()
+2025-02-14 13:02:07
+  Plotting PlottedTree(5, 1)
+2025-02-14 13:02:07
+  LabelConcordance()
+2025-02-14 13:02:13
+  Session has ended

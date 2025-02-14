@@ -1,8 +1,10 @@
-test_that("PlotCharacter()", {
+test_that("PlotCharacter.phylo()", {
   
   dataset <- TreeTools::StringToPhyDat("1111 1111 0000", tips = 12)
   expect_error(PlotCharacter(TreeTools::BalancedTree(14), dataset),
                "Taxa in tree missing from dataset:\\s*t13, t14$")
+  expect_error(PlotCharacter(TreeTools::StarTree(12), dataset),
+               "bifurcating")
   
   Character <- function (str, plot = FALSE, edges = FALSE, ...) {
     tree <- ape::read.tree(text = 
@@ -129,5 +131,37 @@ test_that("Out-of-sequence works", {
                   TreeTools::StringToPhyDat("1342",
                                             tips = c("a", "c", "d", "b"))
                   )}
+  )
+})
+
+test_that("PlotCharacter.multi()", {
+  Bal <- TreeTools::BalancedTree
+  expect_error(PlotCharacter(list(Bal(8), 9), "dataset"), "class `phylo`")
+  expect_error(PlotCharacter(list(Bal(8), Bal(9)), "dataset"),
+               "same tip labels")
+  expect_error(PlotCharacter(list(Bal(8), Bal(letters[1:8])), "dataset"),
+               "same tip labels")
+  
+  trees <- ape::read.tree(text = c("(a, (b, (c, (d, ((g, h), (e, f))))));",
+                                   "(a, (b, (c, ((d, e), (f, (g, h))))));"))
+  
+  
+  str <- "00011011"  
+  dat <-  TreeTools::StringToPhyDat(str, tips = letters[1:8])
+  expect_equal(PlotCharacter(trees[1], dat, plot = FALSE),
+               PlotCharacter(trees[[1]], dat, plot = FALSE))
+                             
+                             
+  state1 <- PlotCharacter(trees[[1]], dat, plot = FALSE)
+  state2 <- PlotCharacter(trees[[2]], dat, plot = FALSE)
+  stateCons <- PlotCharacter(trees, dat, plot = FALSE)
+  expect_equal(stateCons, state1[-c(13, 15), ] | 
+                 state2[c(match(TipLabels(trees[[1]]), TipLabels(trees[[2]])),
+                          9:12, 15), ])
+  
+  skip_if_not_installed("vdiffr")
+  vdiffr::expect_doppelganger("PlotChar_consensus", function () {
+    PlotCharacter(trees, dat)
+    }
   )
 })

@@ -337,8 +337,8 @@ ui <- fluidPage(
                         "Tree space" = "space"),
                    # "ind"),
                    "cons"),
-                 hidden(sliderInput("whichTree", "Tree to plot", value = 1L,
-                                    min = 1L, max = 1L, step = 1L)),
+                 hidden(sliderInput("whichTree", "Tree to plot", value = 0L,
+                                    min = 0L, max = 1L, step = 1L)),
                  hidden(tags$div(id = "treePlotConfig",
                    selectizeInput("outgroup", "Root on:", multiple = TRUE,
                                   choices = list()),
@@ -1127,8 +1127,8 @@ server <- function(input, output, session) {
       }
     }
     
-    updateSliderInput(session, "whichTree", min = 1L,
-                      max = length(r$trees), value = 1L)
+    updateSliderInput(session, "whichTree", min = 0L,
+                      max = length(r[["trees"]]), value = 0L)
     UpdateKeepNTipsRange() # Updates Rogues()
     UpdateDroppedTaxaDisplay()
     if (maxProjDim() > 0) {
@@ -1662,8 +1662,8 @@ server <- function(input, output, session) {
         attr(r$trees[[1]], "firstHit") <- NULL
       }
       
-      updateSliderInput(session, "whichTree", min = 1L,
-                        max = length(r$trees), value = 1L)
+      updateSliderInput(session, "whichTree", min = 0L,
+                        max = length(r[["trees"]]), value = 0L)
       
       updateActionButton(session, "go", "Continue")
       updateActionButton(session, "modalGo", "Continue search")
@@ -1684,7 +1684,7 @@ server <- function(input, output, session) {
   UserRoot <- function(tree) {
     outgroupTips <- intersect(r$outgroup, tree$tip.label)
     if (length(outgroupTips)) {
-      tr <- deparse(substitute(tree))
+      # DELETE? tr <- deparse(substitute(tree))
       RootTree(tree, outgroupTips)
     } else {
       tree
@@ -1729,18 +1729,25 @@ server <- function(input, output, session) {
   
   PlottedTree <- reactive({
     if (length(r$trees) > 0L) {
-      plottedTree <- r$trees[[whichTree()]]
+      plottedTree <- if (whichTree() > 0) {
+        r$trees[[whichTree()]]
+      } else {
+        Consensus(r$trees, p = 1)
+      }
       plottedTree <- UserRoot(plottedTree)
       plottedTree <- SortEdges(plottedTree)
-
       if (!("tipsRight" %in% input$mapDisplay)) {
-        plottedTree$edge.length <- rep_len(2, dim(plottedTree$edge)[1])
+        plottedTree$edge.length <- rep_len(2, dim(plottedTree[["edge"]])[[1]])
       }
       plottedTree
     }
   })
   LogPlottedTree <- function() {
-    LogCodeP(paste0("plottedTree <- trees[[", whichTree(), "]]"))
+    if (whichTree() > 0) {
+      LogCodeP(paste0("plottedTree <- trees[[", whichTree(), "]]"))
+    } else {
+      LogCodeP("plottedTree <- Consensus(trees, p = 1)")
+    }
     LogUserRoot("plottedTree")
     if (!("tipsRight" %in% input$mapDisplay)) {
       LogCommentP("Set uniform edge length", 0)
@@ -2109,7 +2116,9 @@ server <- function(input, output, session) {
   CharacterwisePlot <- function() {
     par(mar = rep(0, 4), cex = 0.9)
     n <- PlottedChar()
-    LogMsg("Plotting PlottedTree(", whichTree(), ", ", n, ")")
+    if (whichTree() > 0) {
+      LogMsg("Plotting PlottedTree(", whichTree(), ", ", n, ")")
+    }
     r$plottedTree <- PlottedTree()
     if (length(n) && n > 0L) {
       pc <- tryCatch({
@@ -2121,10 +2130,21 @@ server <- function(input, output, session) {
             (192 * extraLen[r$plottedTree$tip.label] / max(extraLen)) + 1
           ]
         }
-        PlotCharacter(r$plottedTree, r$dataset, n,
-                      edge.width = 2.5,
-                      updateTips = "updateTips" %in% input$mapDisplay,
-                      tip.color = roguishness)
+        PlotCharacter(
+          if (whichTree() > 0) r$plottedTree else lapply(r$trees, UserRoot),
+          r$dataset,
+          n,
+          edge.width = 2.5,
+          updateTips = "updateTips" %in% input$mapDisplay,
+          tip.color = roguishness,
+          Display = function(tr) {
+            tr <- UserRoot(tr)
+            if (unitEdge()) {
+              tr$edge.length <- rep.int(1, dim(tr$edge)[[1]])
+            }
+            SortEdges(tr)
+          }
+        )
         if (max(extraLen) > 0) {
           PlotTools::SpectrumLegend(
             "bottomleft", bty = "n",
@@ -2137,6 +2157,8 @@ server <- function(input, output, session) {
         }
       },
       error = function (cond) {
+        message("ASHOGAIH")
+        message(cond)
         cli::cli_alert_danger(cond)
         Notification(type = "error",
                      "Could not match dataset to taxa in trees")
@@ -2167,16 +2189,28 @@ server <- function(input, output, session) {
     BeginLogP()
     LogPar()
     n <- PlottedChar()
-    LogComment(paste("Select tree", whichTree(), "from tree set"))
+    if (whichTree() > 0) {
+      LogComment(paste("Select tree", whichTree(), "from tree set"))
+    }
     LogPlottedTree()
     if (length(n) && n > 0L) {
-      LogCommentP(paste("Map character", n, "onto tree", whichTree()))
+      if (whichTree() > 0) {
+        LogCommentP(paste("Map character", n, "onto tree", whichTree()))
+      } else {
+        LogCommentP(paste("Map character", n, "onto consensus tree"))
+      }
       LogCodeP(
         "PlotCharacter(",
-        "  tree = plottedTree,",
+        if (whichTree() > 0) "  tree = plottedTree," else 
+          paste0("  tree = RootTree(trees, ", EnC(r$outgroup), "),"),
         "  dataset = dataset,",
         paste0("  char = ", n, ","),
         paste0("  updateTips = ", "updateTips" %in% input$mapDisplay, ","),
+        "  Display = function(tr) {",
+        paste0("    tr <- RootTree(tr, ", EnC(r$outgroup), ")"),
+        "    tr$edge.length <- rep.int(2, nrow(tr$edge))",
+        "    SortTree(tr)",
+        "  },",
         "  edge.width = 2.5",
         ")"
       )
