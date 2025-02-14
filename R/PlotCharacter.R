@@ -501,7 +501,7 @@ PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
     reconstructions[match(consClades, .TreeClades(tree[[i]])), , i]
   }
   recon <- .Recon(1)
-  for (i in seq_along(trees)[-1]) {
+  for (i in seq_along(tree)[-1]) {
     recon <- recon | .Recon(i)
   }
   
