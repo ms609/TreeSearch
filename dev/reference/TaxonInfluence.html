@@ -106,7 +106,7 @@ saved (with <code><a href="https://rdrr.io/pkg/ape/man/write.nexus.html" class="
 <code>paste0(savePath, droppedTaxonName, ".nex")</code>; <code>savePath</code> should thus contain
 a trailing <code>/</code> if writing to a directory, which will be created if it does
 not exist.  Special characters will be removed from leaf labels when
-creating the file path (using <code>path_sanitize()</code>).
+creating the file path (using <a href="https://fs.r-lib.org/reference/path_sanitize.html" class="external-link"><code>path_sanitize()</code></a>).
 If <code>NULL</code>, computed trees will not be saved.</p></dd>
 
 
@@ -203,8 +203,8 @@ representative summary of comparisons between sets of trees.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Sample local optimum</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → TBR depth 2; keeping 14.4 trees; k = Inf</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-02-14 11:23:47: Score: 86</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-02-14 11:23:47: Tree search terminated with score <span style="font-weight: bold;">82</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-02-14 11:32:51: Score: 86</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-02-14 11:32:51: Tree search terminated with score <span style="font-weight: bold;">82</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Colour tip labels according to their influence</span></span></span>
 <span class="r-in"><span><span class="va">upperBound</span> <span class="op">&lt;-</span> <span class="fl">2</span> <span class="op">*</span> <span class="fu">TreeDist</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeDist/reference/TreeInfo.html" class="external-link">ClusteringEntropy</a></span><span class="op">(</span></span></span>
