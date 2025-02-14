@@ -79,7 +79,7 @@
 #' returned trees will be perfectly compatible with each character in
 #' `constraint`; or a tree of class `phylo`, all of whose nodes will occur
 #' in any output tree.
-#' See [`ImposeConstraint()`] and 
+#' See \link[TreeTools:ImposeConstraint]{`ImposeConstraint()`} and 
 #' [vignette](https://ms609.github.io/TreeSearch/articles/tree-search.html)
 #' for further examples.
 #' @param verbosity Integer specifying level of messaging; higher values give

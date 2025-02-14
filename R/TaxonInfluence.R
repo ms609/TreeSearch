@@ -52,7 +52,7 @@
 #' `paste0(savePath, droppedTaxonName, ".nex")`; `savePath` should thus contain
 #' a trailing `/` if writing to a directory, which will be created if it does
 #' not exist.  Special characters will be removed from leaf labels when
-#' creating the file path (using [`path_sanitize()`]).
+#' creating the file path (using \link[fs:path_sanitize]{`path_sanitize()`}).
 #' If `NULL`, computed trees will not be saved.
 #' @param useCache Logical vector; if `TRUE`, previous tree search results will
 #' be loaded from the location given by `savePath`, instead of running a fresh
