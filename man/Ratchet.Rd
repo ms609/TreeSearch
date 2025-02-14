@@ -105,7 +105,7 @@ by \code{attr(FunctionName, "stopAtPlateau") <- TRUE}.}
 
 \item{\dots}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
 
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A tree of class \code{\link[ape]{phylo}}.}
 
 \item{dataset}{a dataset in the format required by \code{TreeScorer()}.}
 

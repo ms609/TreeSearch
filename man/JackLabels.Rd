@@ -17,7 +17,7 @@ JackLabels(
 )
 }
 \arguments{
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A tree of class \code{\link[ape]{phylo}}.}
 
 \item{jackTrees}{A list or \code{multiPhylo} object containing trees generated
 by \code{\link[=Jackknife]{Jackknife()}}.}
