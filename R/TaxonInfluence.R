@@ -44,11 +44,12 @@
 #' If `NULL`, an optimal tree will be sought using parsimony search with 
 #' the parameters provided in \code{\dots}.
 #' @param Distance Function to calculate tree distance; default:
-#' [`ClusteringInfoDistance()`].
+#' \link[TreeDist::ClusteringInfoDistance]{`ClusteringInfoDistance()`}.
 #' @param calcWeighted Logical specifying whether to compute the
 #' distance-weighted mean value.
-#' @param savePath Character giving prefix of path to which reduced trees will be
-#' saved (with [`write.nexus()`]). File names will follow the pattern
+#' @param savePath Character giving prefix of path to which reduced trees will
+#' be saved (with \link[ape:write.nexus]{`write.nexus()`}).
+#' File names will follow the pattern
 #' `paste0(savePath, droppedTaxonName, ".nex")`; `savePath` should thus contain
 #' a trailing `/` if writing to a directory, which will be created if it does
 #' not exist.  Special characters will be removed from leaf labels when
