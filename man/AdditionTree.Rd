@@ -25,7 +25,7 @@ approaches
 returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
 in any output tree.
-See \code{\link[=ImposeConstraint]{ImposeConstraint()}} and
+See \link[TreeTools:ImposeConstraint]{\code{ImposeConstraint()}} and
 \href{https://ms609.github.io/TreeSearch/articles/tree-search.html}{vignette}
 for further examples.}
 
