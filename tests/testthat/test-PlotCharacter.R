@@ -152,9 +152,9 @@ test_that("PlotCharacter.multi()", {
                PlotCharacter(trees[[1]], dat, plot = FALSE))
                              
                              
-  state1 <- PlotCharacter(trees[[1]], dat)
-  state2 <- PlotCharacter(trees[[2]], dat)
-  stateCons <- PlotCharacter(trees, dat)
+  state1 <- PlotCharacter(trees[[1]], dat, plot = FALSE)
+  state2 <- PlotCharacter(trees[[2]], dat, plot = FALSE)
+  stateCons <- PlotCharacter(trees, dat, plot = FALSE)
   expect_equal(stateCons, state1[-c(13, 15), ] | 
                  state2[c(match(TipLabels(trees[[1]]), TipLabels(trees[[2]])),
                           9:12, 15), ])
