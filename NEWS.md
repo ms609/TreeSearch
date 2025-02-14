@@ -1,3 +1,8 @@
+# TreeSearch 1.5.1.9006 (2025-02)
+
+- `PlotCharacter()` performs ancestral state reconstruction on consensus trees
+  [#179](https://github.com/ms609/TreeSearch/issues/179)
+
 # TreeSearch 1.5.1.9005 (2025-02)
 
 - Support for ordered (additive) characters
