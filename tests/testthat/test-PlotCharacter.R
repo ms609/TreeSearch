@@ -135,6 +135,6 @@ test_that("Out-of-sequence works", {
 })
 
 test_that("PlotCharacter.multi()", {
-  expect_error(PlotCharacter(list(BalancedTree(8), 9), "dataset"),
+  expect_error(PlotCharacter(list(ape::rtree(8), 9), "dataset"),
                "class `phylo`")
 })

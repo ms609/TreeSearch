@@ -27,56 +27,57 @@ PlotCharacter(
 \method{PlotCharacter}{phylo}(
   tree,
   dataset,
-  char,
-  updateTips,
-  plot,
-  tokenCol,
-  ambigCol,
-  inappCol,
-  ambigLty,
-  inappLty,
-  plainLty,
-  tipOffset,
-  unitEdge,
+  char = 1L,
+  updateTips = FALSE,
+  plot = TRUE,
+  tokenCol = NULL,
+  ambigCol = "grey",
+  inappCol = "lightgrey",
+  ambigLty = "dotted",
+  inappLty = "dashed",
+  plainLty = par("lty"),
+  tipOffset = 1,
+  unitEdge = FALSE,
   ...
 )
 
 \method{PlotCharacter}{multiPhylo}(
   tree,
   dataset,
-  char,
-  updateTips,
-  plot,
-  tokenCol,
-  ambigCol,
-  inappCol,
-  ambigLty,
-  inappLty,
-  plainLty,
-  tipOffset,
-  unitEdge,
+  char = 1L,
+  updateTips = FALSE,
+  plot = TRUE,
+  tokenCol = NULL,
+  ambigCol = "grey",
+  inappCol = "lightgrey",
+  ambigLty = "dotted",
+  inappLty = "dashed",
+  plainLty = par("lty"),
+  tipOffset = 1,
+  unitEdge = FALSE,
   ...
 )
 
 \method{PlotCharacter}{list}(
   tree,
   dataset,
-  char,
-  updateTips,
-  plot,
-  tokenCol,
-  ambigCol,
-  inappCol,
-  ambigLty,
-  inappLty,
-  plainLty,
-  tipOffset,
-  unitEdge,
+  char = 1L,
+  updateTips = FALSE,
+  plot = TRUE,
+  tokenCol = NULL,
+  ambigCol = "grey",
+  inappCol = "lightgrey",
+  ambigLty = "dotted",
+  inappLty = "dashed",
+  plainLty = par("lty"),
+  tipOffset = 1,
+  unitEdge = FALSE,
   ...
 )
 }
 \arguments{
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A bifurcating tree of class \code{phylo}, or a list or \code{multiPhylo}
+object containing such trees.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
@@ -107,6 +108,9 @@ to apply to ambiguous, inapplicable and applicable tokens.  See the \code{lty}
 corresponds to a numbered tip or node of \code{tree}, and each column corresponds
 to a token; the tokens that might parsimoniously be present at each point
 on a tree are denoted with \code{TRUE}.
+If multiple trees are supplied, the strict consensus of all trees and
+reconstructions will be returned; i.e. if a node is reconstructed as $0$
+in one tree, and $2$ in another, it will be labelled $(02)$.
 }
 \description{
 Reconstructs the distribution of a character on a tree topology using the

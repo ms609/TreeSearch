@@ -107,7 +107,7 @@ PlotCharacter.phylo <- function(tree, dataset, char = 1L,
   }
   nNode <- tree[["Nnode"]]
   nTip <- NTip(tree)
-  if (nNode == 2 * nTip - 1) {
+  if (nNode != nTip - 1) {
     stop("`tree` must be bifurcating. Try TreeTools::MakeTreeBinary(tree).")
   }
   edge <- tree[["edge"]][postorder, ]
