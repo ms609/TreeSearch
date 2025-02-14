@@ -23,7 +23,8 @@ SharedPhylogeneticConcordance(tree, dataset)
 \item{tree}{A tree of class \code{\link{phylo}}.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.
+Perhaps load into R using \code{\link[TreeTools]{ReadCharacters}}.}
 
 \item{weight}{Logical specifying whether to weight sites according to the
 number of quartets they are decisive for.}
