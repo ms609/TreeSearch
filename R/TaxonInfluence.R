@@ -44,7 +44,7 @@
 #' If `NULL`, an optimal tree will be sought using parsimony search with 
 #' the parameters provided in \code{\dots}.
 #' @param Distance Function to calculate tree distance; default:
-#' \link[TreeDist::ClusteringInfoDistance]{`ClusteringInfoDistance()`}.
+#' \link[TreeDist:ClusteringInfoDistance]{`ClusteringInfoDistance()`}.
 #' @param calcWeighted Logical specifying whether to compute the
 #' distance-weighted mean value.
 #' @param savePath Character giving prefix of path to which reduced trees will
