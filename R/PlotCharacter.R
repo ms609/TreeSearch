@@ -485,7 +485,8 @@ PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
                             matrix(FALSE, nTip * 2 - 1, length(tokens)),
                             dataset = dataset, char = char,
                             updateTips = updateTips, plot = FALSE, ...)
-  consTree <- Consensus(tree, p = 1, check.labels = FALSE)
+  # Check labels: definitely identical, possibly in different sequence
+  consTree <- Consensus(tree, p = 1, check.labels = TRUE)
   .TreeClades <- function(tr) {
     ed <- tr[["edge"]]
     lab <- TipLabels(tr)
