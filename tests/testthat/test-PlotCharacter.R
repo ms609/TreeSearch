@@ -135,6 +135,25 @@ test_that("Out-of-sequence works", {
 })
 
 test_that("PlotCharacter.multi()", {
-  expect_error(PlotCharacter(list(ape::rtree(8), 9), "dataset"),
-               "class `phylo`")
+  Bal <- TreeTools::BalancedTree
+  expect_error(PlotCharacter(list(Bal(8), 9), "dataset"), "class `phylo`")
+  expect_error(PlotCharacter(list(Bal(8), Bal(9)), "dataset"),
+               "same tip labels")
+  expect_error(PlotCharacter(list(Bal(8), Bal(letters[1:8])), "dataset"),
+               "same tip labels")
+  
+  trees <- ape::read.tree(text = c("(a, (b, (c, (d, ((e, f), (g, h))))));",
+                                   "(a, (b, (c, ((d, e), (f, (g, h))))));"))
+  
+  
+  str <- "00011011"  
+  dat <-  TreeTools::StringToPhyDat(str, tips = letters[1:8])
+  expect_equal(PlotCharacter(trees[1], dat, plot = FALSE),
+               PlotCharacter(trees[[1]], dat, plot = FALSE))
+                             
+                             
+  PlotCharacter(trees[[1]], dat)
+  PlotCharacter(trees[[2]], dat)
+  PlotCharacter(trees, dat)
+  
 })
