@@ -3,6 +3,8 @@ test_that("PlotCharacter.phylo()", {
   dataset <- TreeTools::StringToPhyDat("1111 1111 0000", tips = 12)
   expect_error(PlotCharacter(TreeTools::BalancedTree(14), dataset),
                "Taxa in tree missing from dataset:\\s*t13, t14$")
+  expect_error(PlotCharacter(TreeTools::StarTree(12), dataset),
+               "bifurcating")
   
   Character <- function (str, plot = FALSE, edges = FALSE, ...) {
     tree <- ape::read.tree(text = 

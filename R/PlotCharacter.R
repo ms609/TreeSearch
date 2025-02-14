@@ -4,7 +4,8 @@
 #' modified Fitch algorithm presented in 
 #' \insertCite{Brazeau2019;textual}{TreeSearch}.
 #' 
-#' @template treeParam
+#' @param tree A bifurcating tree of class `phylo`, or a list or `multiPhylo`
+#' object containing such trees.
 #' @template datasetParam
 #' @param char Index of character to plot.
 #' @param updateTips Logical; if `FALSE`, tips will be labelled with their
@@ -23,6 +24,9 @@
 #' corresponds to a numbered tip or node of `tree`, and each column corresponds
 #' to a token; the tokens that might parsimoniously be present at each point
 #' on a tree are denoted with `TRUE`.
+#' If multiple trees are supplied, the strict consensus of all trees and
+#' reconstructions will be returned; i.e. if a node is reconstructed as $0$
+#' in one tree, and $2$ in another, it will be labelled $(02)$.
 #' 
 #' @references 
 #' \insertAllCited{}
@@ -69,10 +73,22 @@ PlotCharacter <- function(tree, dataset, char = 1L,
 
 #' @rdname PlotCharacter
 #' @export
-PlotCharacter.phylo <- function(tree, dataset, char, updateTips, plot,
-                                tokenCol, ambigCol, inappCol,
-                                ambigLty, inappLty, plainLty,
-                                tipOffset, unitEdge, ...) {
+PlotCharacter.phylo <- function(tree, dataset, char = 1L,
+                                updateTips = FALSE,
+                                plot = TRUE,
+                                
+                                tokenCol = NULL,
+                                ambigCol = "grey",
+                                inappCol = "lightgrey",
+                                
+                                ambigLty = "dotted",
+                                inappLty = "dashed",
+                                plainLty = par("lty"),
+                                
+                                tipOffset = 1,
+                                unitEdge = FALSE,
+                                ...
+) {
   
   # Reconcile labels
   datasetTaxa <- names(dataset)
@@ -91,6 +107,9 @@ PlotCharacter.phylo <- function(tree, dataset, char, updateTips, plot,
   }
   nNode <- tree[["Nnode"]]
   nTip <- NTip(tree)
+  if (nNode == 2 * nTip - 1) {
+    stop("`tree` must be bifurcating. Try TreeTools::MakeTreeBinary(tree).")
+  }
   edge <- tree[["edge"]][postorder, ]
   parent <- edge[, 1]
   child <- edge[, 2]
@@ -413,10 +432,22 @@ PlotCharacter.phylo <- function(tree, dataset, char, updateTips, plot,
 
 #' @rdname PlotCharacter
 #' @export
-PlotCharacter.multiPhylo <- function(tree, dataset, char, updateTips, plot,
-                                tokenCol, ambigCol, inappCol,
-                                ambigLty, inappLty, plainLty,
-                                tipOffset, unitEdge, ...) {
+PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
+                                                      updateTips = FALSE,
+                                                      plot = TRUE,
+                                                      
+                                                      tokenCol = NULL,
+                                                      ambigCol = "grey",
+                                                      inappCol = "lightgrey",
+                                                      
+                                                      ambigLty = "dotted",
+                                                      inappLty = "dashed",
+                                                      plainLty = par("lty"),
+                                                      
+                                                      tipOffset = 1,
+                                                      unitEdge = FALSE,
+                                                      ...
+) {
   reconstructions <- lapply(tree, PlotCharacter, dataset = dataset, char = char,
                             updateTips = updateTips, plot = FALSE, ...)
   
@@ -424,10 +455,22 @@ PlotCharacter.multiPhylo <- function(tree, dataset, char, updateTips, plot,
 
 #' @rdname PlotCharacter
 #' @export
-PlotCharacter.list <- function(tree, dataset, char, updateTips, plot,
-                               tokenCol, ambigCol, inappCol,
-                               ambigLty, inappLty, plainLty,
-                               tipOffset, unitEdge, ...) {
+PlotCharacter.list <- function(tree, dataset, char = 1L,
+                               updateTips = FALSE,
+                               plot = TRUE,
+                               
+                               tokenCol = NULL,
+                               ambigCol = "grey",
+                               inappCol = "lightgrey",
+                               
+                               ambigLty = "dotted",
+                               inappLty = "dashed",
+                               plainLty = par("lty"),
+                               
+                               tipOffset = 1,
+                               unitEdge = FALSE,
+                               ...
+) {
   if (all(vapply(tree, inherits, logical(1), "phylo"))) {
     PlotCharacter.multiPhylo(tree, dataset, char, updateTips, plot,
                              tokenCol, ambigCol, inappCol,
