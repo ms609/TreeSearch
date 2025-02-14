@@ -449,7 +449,7 @@ PlotCharacter.phylo <- function(tree, dataset, char = 1L,
 }
 
 #' @rdname PlotCharacter
-#' @importFrom TreeTools as.Splits Consensus
+#' @importFrom TreeTools as.Splits Consensus DescendantTips TipLabels
 #' @export
 PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
                                      updateTips = FALSE,
@@ -486,11 +486,18 @@ PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
                             dataset = dataset, char = char,
                             updateTips = updateTips, plot = FALSE, ...)
   consTree <- Consensus(tree, p = 1, check.labels = FALSE)
-  consSplits <- as.Splits(consTree)
-  splits <- as.Splits(trees)
+  .TreeClades <- function(tr) {
+    ed <- tr[["edge"]]
+    lab <- TipLabels(tr)
+    apply(DescendantTips(ed[, 1], ed[, 2],
+                         node = seq_len(nTip + tr[["Nnode"]])),
+          1, function (tips) {
+      paste0(sort(lab[tips]), collapse = " @||@ ")
+    })
+  }
+  consClades <- .TreeClades(consTree)
   .Recon <- function(i) {
-    reconstructions[
-      c(seq_len(nTip), nTip + match(consSplits, splits[[i]])), , 1]
+    reconstructions[match(consClades, .TreeClades(tree[[i]])), , i]
   }
   recon <- .Recon(1)
   for (i in seq_along(trees)[-1]) {

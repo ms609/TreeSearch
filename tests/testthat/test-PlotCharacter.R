@@ -142,7 +142,7 @@ test_that("PlotCharacter.multi()", {
   expect_error(PlotCharacter(list(Bal(8), Bal(letters[1:8])), "dataset"),
                "same tip labels")
   
-  trees <- ape::read.tree(text = c("(a, (b, (c, (d, ((e, f), (g, h))))));",
+  trees <- ape::read.tree(text = c("(a, (b, (c, (d, ((g, h), (e, f))))));",
                                    "(a, (b, (c, ((d, e), (f, (g, h))))));"))
   
   
@@ -152,8 +152,14 @@ test_that("PlotCharacter.multi()", {
                PlotCharacter(trees[[1]], dat, plot = FALSE))
                              
                              
-  PlotCharacter(trees[[1]], dat)
-  PlotCharacter(trees[[2]], dat)
-  PlotCharacter(trees, dat)
+  state1 <- PlotCharacter(trees[[1]], dat, plot = FALSE)
+  state2 <- PlotCharacter(trees[[2]], dat, plot = FALSE)
+  stateCons <- PlotCharacter(trees, dat, plot = FALSE)
+  expect_equal(stateCons, state1[-(13:14), ] | state2[-(13:14), ])
   
+  skip_if_not_installed("vdiffr")
+  vdiffr::expect_doppelganger("PlotChar_consensus", function () {
+    PlotCharacter(trees, dat, plot = FALSE)
+    }
+  )
 })
