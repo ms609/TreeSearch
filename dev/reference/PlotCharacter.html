@@ -17,7 +17,7 @@ Brazeau2019;textualTreeSearch."><meta name="robots" content="noindex"><!-- Globa
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.5.1.9005</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.5.1.9006</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,6 +78,64 @@ Brazeau2019;textualTreeSearch.</p>
 <span>  plainLty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="st">"lty"</span><span class="op">)</span>,</span>
 <span>  tipOffset <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  unitEdge <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  Display <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">tree</span><span class="op">)</span> <span class="va">tree</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'phylo'</span></span>
+<span><span class="fu">PlotCharacter</span><span class="op">(</span></span>
+<span>  <span class="va">tree</span>,</span>
+<span>  <span class="va">dataset</span>,</span>
+<span>  char <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  updateTips <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  tokenCol <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ambigCol <span class="op">=</span> <span class="st">"grey"</span>,</span>
+<span>  inappCol <span class="op">=</span> <span class="st">"lightgrey"</span>,</span>
+<span>  ambigLty <span class="op">=</span> <span class="st">"dotted"</span>,</span>
+<span>  inappLty <span class="op">=</span> <span class="st">"dashed"</span>,</span>
+<span>  plainLty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="st">"lty"</span><span class="op">)</span>,</span>
+<span>  tipOffset <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  unitEdge <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  Display <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">tree</span><span class="op">)</span> <span class="va">tree</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'multiPhylo'</span></span>
+<span><span class="fu">PlotCharacter</span><span class="op">(</span></span>
+<span>  <span class="va">tree</span>,</span>
+<span>  <span class="va">dataset</span>,</span>
+<span>  char <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  updateTips <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  tokenCol <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ambigCol <span class="op">=</span> <span class="st">"grey"</span>,</span>
+<span>  inappCol <span class="op">=</span> <span class="st">"lightgrey"</span>,</span>
+<span>  ambigLty <span class="op">=</span> <span class="st">"dotted"</span>,</span>
+<span>  inappLty <span class="op">=</span> <span class="st">"dashed"</span>,</span>
+<span>  plainLty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="st">"lty"</span><span class="op">)</span>,</span>
+<span>  tipOffset <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  unitEdge <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  Display <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">tree</span><span class="op">)</span> <span class="va">tree</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'list'</span></span>
+<span><span class="fu">PlotCharacter</span><span class="op">(</span></span>
+<span>  <span class="va">tree</span>,</span>
+<span>  <span class="va">dataset</span>,</span>
+<span>  char <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  updateTips <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  tokenCol <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ambigCol <span class="op">=</span> <span class="st">"grey"</span>,</span>
+<span>  inappCol <span class="op">=</span> <span class="st">"lightgrey"</span>,</span>
+<span>  ambigLty <span class="op">=</span> <span class="st">"dotted"</span>,</span>
+<span>  inappLty <span class="op">=</span> <span class="st">"dashed"</span>,</span>
+<span>  plainLty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="st">"lty"</span><span class="op">)</span>,</span>
+<span>  tipOffset <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  unitEdge <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  Display <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">tree</span><span class="op">)</span> <span class="va">tree</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -87,7 +145,8 @@ Brazeau2019;textualTreeSearch.</p>
 
 
 <dl><dt id="arg-tree">tree<a class="anchor" aria-label="anchor" href="#arg-tree"></a></dt>
-<dd><p>A tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.</p></dd>
+<dd><p>A bifurcating tree of class <code>phylo</code>, or a list or <code>multiPhylo</code>
+object containing such trees.</p></dd>
 
 
 <dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
@@ -128,6 +187,11 @@ to apply to ambiguous, inapplicable and applicable tokens.  See the <code>lty</c
 <dd><p>Logical: Should all edges be plotted with a unit length?</p></dd>
 
 
+<dt id="arg-display">Display<a class="anchor" aria-label="anchor" href="#arg-display"></a></dt>
+<dd><p>Function that takes argument <code>tree</code> and returns a tree
+of class <code>phylo</code>, formatted as it will be plotted.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Further arguments to pass to <code><a href="https://rdrr.io/pkg/ape/man/plot.phylo.html" class="external-link">plot.phylo()</a></code>.</p></dd>
 
@@ -137,7 +201,10 @@ to apply to ambiguous, inapplicable and applicable tokens.  See the <code>lty</c
     <p><code>PlotCharacter()</code> invisibly returns a matrix in which each row
 corresponds to a numbered tip or node of <code>tree</code>, and each column corresponds
 to a token; the tokens that might parsimoniously be present at each point
-on a tree are denoted with <code>TRUE</code>.</p>
+on a tree are denoted with <code>TRUE</code>.
+If multiple trees are supplied, the strict consensus of all trees and
+reconstructions will be returned; i.e. if a node is reconstructed as $0$
+in one tree, and $2$ in another, it will be labelled $(02)$.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
