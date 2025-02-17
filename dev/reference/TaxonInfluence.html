@@ -92,7 +92,7 @@ the parameters provided in <code>...</code>.</p></dd>
 
 <dt id="arg-distance">Distance<a class="anchor" aria-label="anchor" href="#arg-distance"></a></dt>
 <dd><p>Function to calculate tree distance; default:
-<code>ClusteringInfoDistance()</code>.</p></dd>
+<code><a href="https://ms609.github.io/TreeDist/reference/TreeDistance.html" class="external-link">ClusteringInfoDistance()</a></code>.</p></dd>
 
 
 <dt id="arg-calcweighted">calcWeighted<a class="anchor" aria-label="anchor" href="#arg-calcweighted"></a></dt>
@@ -102,7 +102,7 @@ distance-weighted mean value.</p></dd>
 
 <dt id="arg-savepath">savePath<a class="anchor" aria-label="anchor" href="#arg-savepath"></a></dt>
 <dd><p>Character giving prefix of path to which reduced trees will
-be saved (with <a href="https://rdrr.io/pkg/ape/man/write.nexus.html" class="external-link"><code><a href="https://rdrr.io/pkg/ape/man/write.nexus.html" class="external-link">write.nexus()</a></code></a>).
+be saved (with <code><a href="https://rdrr.io/pkg/ape/man/write.nexus.html" class="external-link">write.nexus()</a></code>).
 File names will follow the pattern
 <code>paste0(savePath, droppedTaxonName, ".nex")</code>; <code>savePath</code> should thus contain
 a trailing <code>/</code> if writing to a directory, which will be created if it does
@@ -204,8 +204,8 @@ representative summary of comparisons between sets of trees.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Sample local optimum</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → TBR depth 2; keeping 14.4 trees; k = Inf</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-02-14 11:39:49: Score: 86</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-02-14 11:39:49: Tree search terminated with score <span style="font-weight: bold;">82</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-02-17 12:20:05: Score: 86</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-02-17 12:20:05: Tree search terminated with score <span style="font-weight: bold;">82</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Colour tip labels according to their influence</span></span></span>
 <span class="r-in"><span><span class="va">upperBound</span> <span class="op">&lt;-</span> <span class="fl">2</span> <span class="op">*</span> <span class="fu">TreeDist</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeDist/reference/TreeInfo.html" class="external-link">ClusteringEntropy</a></span><span class="op">(</span></span></span>
