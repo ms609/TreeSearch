@@ -79,8 +79,8 @@ test_that("QuartetConcordance(method = minhq)", {
   
   collapsed <- CollapseNode(tree, c(12, 13))
   expect_equal(
-    QuartetConcordance(collapsed, dat, method = "iqtree"), 
-    QuartetConcordance(tree, dat, method = "iqtree")[-c(2, 3)]
+    unname(QuartetConcordance(collapsed, dat, method = "iqtree")),
+    unname(QuartetConcordance(tree, dat, method = "iqtree"))[-c(2, 3)]
   )
 })
 
