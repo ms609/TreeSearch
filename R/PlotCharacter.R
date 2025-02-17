@@ -504,7 +504,8 @@ PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
   }
   consClades <- .TreeClades(consTree)
   .Recon <- function(i) {
-    reconstructions[[i]][match(consClades, .TreeClades(tree[[i]])), ]
+    reconstructions[[i]][
+      match(consClades, .TreeClades(tree[[i]])), , drop = FALSE]
   }
   recon <- matrix(FALSE, nrow = length(consClades), ncol = length(tokens),
                   dimnames = list(NULL, tokens))
