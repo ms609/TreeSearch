@@ -125,13 +125,13 @@ QuartetConcordance <- function (tree, dataset = NULL, method = "split",
     parent <- edge[, 1]
     child <- edge[, 2]
     nTip <- NTip(tree)
-    nodes <- nTip + seq_len(nTip - 1)
+    nodes <- min(parent):max(parent)
     parentEdge <- match(nodes, child)
     descended <- DescendantTips(parent, child)
-    childEdges <- vapply(nodes, function(x)
-      which(parent == x), integer(2))
-    daughters <- matrix(child[childEdges], 2)
-    rootNode <- nTip + 1
+    childEdges <- lapply(nodes, function(x) which(parent == x))
+    daughters <- lapply(childEdges, function(e) child[e])
+    
+    rootNode <- nTip + which(is.na(parentEdge))
     rootChildren <- child[parent == rootNode]
     nonRootChildren <- setdiff(nodes, c(rootNode, rootChildren))
     
@@ -140,7 +140,7 @@ QuartetConcordance <- function (tree, dataset = NULL, method = "split",
     quarters <- cbind(
       if (all(rootChildren > nTip)) {
         ret <- integer(nTip)
-        groups <- as.numeric(childEdges[, rootChildren - nTip])
+        groups <- childEdges[[rootChildren - nTip]]
         for (i in 0:3) {
           ret[descended[groups[[i + 1]], ]] <- i
         }
@@ -149,11 +149,13 @@ QuartetConcordance <- function (tree, dataset = NULL, method = "split",
       `dimnames<-`(vapply(nonRootChildren, function(n) {
         ret <- integer(nTip)
         if (parent[[parentEdge[[n - nTip]]]] == rootNode) {
-          
+          stop("Ought something to be here?")
         }
-        ret[apply(descended[childEdges[, parent[parentEdge[n - nTip]] - nTip], ],
-                  2, any)] <- 1L
-        ce <- childEdges[, n - nTip]
+        ret[apply(
+          descended[childEdges[[parent[parentEdge[n - nTip]] - nTip]], ],
+          2,
+          any)] <- 1L
+        ce <- childEdges[[n - nTip]]
         # Overprint with own children
         ret[descended[ce[[1]], ]] <- 2L
         ret[descended[ce[[2]], ]] <- 3L
