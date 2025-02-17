@@ -15,8 +15,27 @@ test_that("_Concordance() handles tip mismatch", {
                  "No overlap between tree labels and dataset.")
 })
 
+test_that(".TreeQuarters() gives complete list", {
+  tree <- ape::read.tree(text = "(a, (b, (c, (d, ((e, f), (g, h))))));")
+  coll <- CollapseNode(Preorder(tree), 12:13)
+  expect_error(.TreeQuarters(tree), "must be in preorder")
+  tree <- Preorder(tree)
+  
+  expect_equal(
+    .TreeQuarters(tree),
+    cbind("11" = c(a = 0, b = 1, c = 2, d = 3, e = 3, f = 3, g = 3, h = 3),
+          "12" = c(0, 0, 1, 2, 3, 3, 3, 3),
+          "13" = c(0, 0, 0, 1, 2, 2, 3, 3),
+          "14" = c(rep(0, 4), 2, 3, 1, 1),
+          "15" = c(rep(0, 4), 1, 1, 2, 3))
+  )
+  expect_equal(unname(.TreeQuarters(coll)),
+               unname(.TreeQuarters(Preorder(tree))[, c(1, 4, 5)]))
+})
+
 test_that("QuartetConcordance(method = minhq)", {
   tree <- ape::read.tree(text = "(a, (b, (c, (d, ((e, f), (g, h))))));")
+  tree <- Preorder(tree)
   mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1,  0,
                       0, 0, 1, 1, 1, 1, 1, 1,  0,
                       0, 0, 1, 1, 1, 1, 2, 2,  0,
@@ -28,10 +47,6 @@ test_that("QuartetConcordance(method = minhq)", {
                       0, 1, 2, 0, 0, 2, 2, 3,  0), 9,
                     dimnames = list(letters[1:9], NULL))
   dat <- MatrixToPhyDat(mataset)
-  
-  expect_error(QuartetConcordance(tree, dat, method = "minhq"),
-               "must be in preorder")
-  tree <- Preorder(tree)
   
   # plot(tree); nodelabels();
   expect_concordance <- function(i, expectation, iq = "minhq") {
