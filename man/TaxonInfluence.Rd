@@ -33,7 +33,7 @@ the parameters provided in \code{\dots}.}
 distance-weighted mean value.}
 
 \item{savePath}{Character giving prefix of path to which reduced trees will
-be saved (with \link[ape:write.nexus]{\code{write.nexus()}}).
+be saved (with \code{\link[ape:write.nexus]{write.nexus()}}).
 File names will follow the pattern
 \code{paste0(savePath, droppedTaxonName, ".nex")}; \code{savePath} should thus contain
 a trailing \code{/} if writing to a directory, which will be created if it does
