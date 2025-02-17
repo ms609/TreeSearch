@@ -118,50 +118,7 @@ QuartetConcordance <- function (tree, dataset = NULL, method = "split",
   characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
   
   if (method %in% c("minh", "minhq", "iqtree")) {
-    if (attr(tree, "order") != "preorder") {
-      stop("Tree must be in preorder; try `tree <- Preorder(tree)`")
-    }
-    edge <- tree[["edge"]]
-    parent <- edge[, 1]
-    child <- edge[, 2]
-    nTip <- NTip(tree)
-    nodes <- min(parent):max(parent)
-    parentEdge <- match(nodes, child)
-    descended <- DescendantTips(parent, child)
-    childEdges <- lapply(nodes, function(x) which(parent == x))
-    daughters <- lapply(childEdges, function(e) child[e])
-    
-    rootNode <- nTip + which(is.na(parentEdge))
-    rootChildren <- child[parent == rootNode]
-    nonRootChildren <- setdiff(nodes, c(rootNode, rootChildren))
-    
-    # TODO pull out into a standalone function, perhaps in TreeTools
-    # nodes[-1] omits the root node, which defines no quartet
-    quarters <- cbind(
-      if (all(rootChildren > nTip)) {
-        ret <- integer(nTip)
-        groups <- childEdges[[rootChildren - nTip]]
-        for (i in 0:3) {
-          ret[descended[groups[[i + 1]], ]] <- i
-        }
-        `dimnames<-`(cbind(ret), list(TipLabels(tree), rootChildren[[1]]))
-      },
-      `dimnames<-`(vapply(nonRootChildren, function(n) {
-        ret <- integer(nTip)
-        if (parent[[parentEdge[[n - nTip]]]] == rootNode) {
-          stop("Ought something to be here?")
-        }
-        ret[apply(
-          descended[childEdges[[parent[parentEdge[n - nTip]] - nTip]], ],
-          2,
-          any)] <- 1L
-        ce <- childEdges[[n - nTip]]
-        # Overprint with own children
-        ret[descended[ce[[1]], ]] <- 2L
-        ret[descended[ce[[2]], ]] <- 3L
-        ret
-      }, integer(nTip)), list(TipLabels(tree), nonRootChildren))
-    )
+    quarters <- .TreeQuarters(tree)
     
     cli_progress_bar(name = "Quartet concordance", total = dim(quarters)[[2]])
     on.exit(cli_progress_done(.envir = parent.frame(2)))
@@ -395,6 +352,52 @@ PhylogeneticConcordance <- function (tree, dataset) {
   
   # Return:
   support[, 1] / support[, 2]
+}
+
+.TreeQuarters <- function(tree) {
+  if (attr(tree, "order") != "preorder") {
+    stop("Tree must be in preorder; try `tree <- Preorder(tree)`")
+  }
+  edge <- tree[["edge"]]
+  parent <- edge[, 1]
+  child <- edge[, 2]
+  nTip <- NTip(tree)
+  nodes <- min(parent):max(parent)
+  parentEdge <- match(nodes, child)
+  descended <- DescendantTips(parent, child)
+  childEdges <- lapply(nodes, function(x) which(parent == x))
+  daughters <- lapply(childEdges, function(e) child[e])
+  
+  rootNode <- nTip + which(is.na(parentEdge))
+  rootChildren <- child[parent == rootNode]
+  nonRootChildren <- setdiff(nodes, c(rootNode, rootChildren))
+  
+  # Return:
+  cbind(
+    if (all(rootChildren > nTip)) {
+      ret <- integer(nTip)
+      groups <- childEdges[[rootChildren - nTip]]
+      for (i in 0:3) {
+        ret[descended[groups[[i + 1]], ]] <- i
+      }
+      `dimnames<-`(cbind(ret), list(TipLabels(tree), rootChildren[[1]]))
+    },
+    `dimnames<-`(vapply(nonRootChildren, function(n) {
+      ret <- integer(nTip)
+      if (parent[[parentEdge[[n - nTip]]]] == rootNode) {
+        stop("Ought something to be here?")
+      }
+      ret[apply(
+        descended[childEdges[[parent[parentEdge[n - nTip]] - nTip]], ],
+        2,
+        any)] <- 1L
+      ce <- childEdges[[n - nTip]]
+      # Overprint with own children
+      ret[descended[ce[[1]], ]] <- 2L
+      ret[descended[ce[[2]], ]] <- 3L
+      ret
+    }, integer(nTip)), list(TipLabels(tree), nonRootChildren))
+  )
 }
 
 #' @rdname SiteConcordance
