@@ -76,6 +76,12 @@ test_that("QuartetConcordance(method = minhq)", {
   expect_concordance(iq = "iq", 9, c(0, 0, 1 / 12, 0, 0))
   expect_equal(unname(QuartetConcordance(tree, dat, method = "iqtree")), 
                c(56.7, 0, 85.4, 0, 62.5) / 100, tolerance = 0.01)
+  
+  collapsed <- CollapseNode(tree, c(12, 13))
+  expect_equal(
+    QuartetConcordance(collapsed, dat, method = "iqtree"), 
+    QuartetConcordance(tree, dat, method = "iqtree")[-c(2, 3)]
+  )
 })
 
 test_that("QuartetConcordance(method = minh)", {
@@ -114,6 +120,11 @@ test_that("QuartetConcordance(method = minh)", {
     unname(QuartetConcordance(tree, dat, method = "minh", n = 1234)),
     c(56.7, 0, 85.4, 0, 62.5) / 100)
   
+  collapsed <- CollapseNode(tree, c(12, 13))
+  expect_equal(tolerance = 0.05,
+    QuartetConcordance(collapsed, dat, method = "minh", n = 1234),
+    QuartetConcordance(tree, dat, method = "minh", n = 1234)[-(2:3)]
+  )
 })
 
 test_that("QuartetConcordance() calculates correct values - weighting", {
