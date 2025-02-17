@@ -27,7 +27,7 @@ If \code{NULL}, an optimal tree will be sought using parsimony search with
 the parameters provided in \code{\dots}.}
 
 \item{Distance}{Function to calculate tree distance; default:
-\link[TreeDist:ClusteringInfoDistance]{\code{ClusteringInfoDistance()}}.}
+\code{\link[TreeDist:ClusteringInfoDistance]{ClusteringInfoDistance()}}.}
 
 \item{calcWeighted}{Logical specifying whether to compute the
 distance-weighted mean value.}
