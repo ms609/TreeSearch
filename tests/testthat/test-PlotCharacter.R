@@ -161,10 +161,14 @@ test_that("PlotCharacter.multi()", {
   
   skip_if_not_installed("vdiffr")
   vdiffr::expect_doppelganger("PlotChar_consensus", function() {
-    par(mfrow = c(2, 2), mar = rep(0, 4))
     PlotCharacter(trees, dat)
+  })
+  vdiffr::expect_doppelganger("PlotChar_invariant", function() {
     inv <- TreeTools::StringToPhyDat("00000000", tips = a..h)
     PlotCharacter(trees, inv)
-    }
-  )
+  })
+  vdiffr::expect_doppelganger("PlotChar_invar_ambig", function() {
+    invq <- TreeTools::StringToPhyDat("000?00?{01}", tips = a..h)
+    PlotCharacter(trees, invq)
+  })
 })
