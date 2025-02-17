@@ -38,7 +38,8 @@ File names will follow the pattern
 \code{paste0(savePath, droppedTaxonName, ".nex")}; \code{savePath} should thus contain
 a trailing \code{/} if writing to a directory, which will be created if it does
 not exist.  Special characters will be removed from leaf labels when
-creating the file path (using \link[fs:path_sanitize]{\code{path_sanitize()}}).
+creating the file path (using
+\code{\link[fs:path_sanitize]{path_sanitize()}}).
 If \code{NULL}, computed trees will not be saved.}
 
 \item{useCache}{Logical vector; if \code{TRUE}, previous tree search results will
