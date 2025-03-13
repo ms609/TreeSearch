@@ -669,7 +669,7 @@ server <- function(input, output, session) {
       LogCommentP("Load trees from file")
       LogCodeP(c(
         paste0("treeFile <- ", Enquote(TreeFileName(r$treeFiles))),
-        paste0("trees <- ", r$readTreeFile),
+        "trees <- read.nexus(treeFile)",
         if (!identical(r$trees, r$allTrees)) {
           paste0(
             "trees <- trees[unique(as.integer(seq.int(",
