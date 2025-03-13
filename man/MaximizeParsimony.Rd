@@ -61,11 +61,11 @@ Edge lengths are not supported and will be deleted.}
 parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.}
 
 \item{tbrIter}{Numeric specifying the maximum number of \acronym{TBR}
-break points to evaluate before concluding each search.
-The counter is reset to zero each time tree score improves.
-The counter is reset to zero each time tree score improves.
-One "iteration" comprises breaking a single branch and evaluating all
-possible reconnections.}
+break points on a given tree to evaluate before terminating the search.
+One "iteration" comprises selecting a branch to break, and evaluating
+each possible reconnection point in turn until a new tree improves the
+score. If a better score is found, then the counter is reset to zero,
+and tree search continues from the improved tree.}
 
 \item{startIter}{Numeric: an initial round of tree search with
 \code{startIter} × \code{tbrIter} \acronym{TBR} break points is conducted in
@@ -173,6 +173,65 @@ is conducted to broaden the sampling of trees.
 
 This function can be called using the R command line / terminal, or through
 the "shiny" graphical user interface app (type \code{EasyTrees()} to launch).
+
+The optimal strategy for tree search depends in part on how close to optimal
+the starting tree is, the size of the search space (which increases
+super-exponentially with the number of leaves), and the complexity of the
+search space (e.g. the existence of multiple local optima).
+
+One possible approach is to employ four phases:
+\enumerate{
+\item Rapid search for local optimum: tree score is typically easy to improve
+early in a search, because the initial tree is often far from optimal.
+When many moves are likely to be accepted, running several rounds of search
+with a low value of \code{maxHits} and a high value of \code{tbrIter} allows many
+trees to be evaluated quickly, hopefully moving quickly to a more promising
+region of tree space.
+\item Identification of local optimum:
+Once close to a local optimum, a more extensive search
+with a higher value of \code{maxHits} allows a region to be explored in more
+detail.  Setting a high value of \code{tbrIter} will search a local
+neighbourhood more completely
+\item Search for nearby peaks:
+Ratchet iterations allow escape from local optima.
+Setting \code{ratchIter} to a high value searches the wider neighbourhood more
+extensively for other nearby peaks; \code{ratchEW = TRUE} accelerates these
+exploratory searches.
+\item Extensive search of final optimum.  As with step 2, it may be valuable to
+fully explore the optimum that is found after ratchet searches to be sure
+that the locally optimal score has been obtained.  Setting a high value of
+\code{finalIter} performs a thorough search that can give confidence that further
+searches would not find better (local) trees.
+}
+
+A search is unlikely to have found a global optimum if:
+\itemize{
+\item Tree score continues to improve on the final iteration.  If a local optimum
+has not yet been reached, it is unlikely that a global optimum has
+been reached.
+Try increasing \code{maxHits}.
+\item Successive ratchet iterations continue to improve tree scores.
+If a recent ratchet iteration improved the score, rather than finding
+a different region of tree space with the same optimal score, it is likely
+that still better global optima remain to be found.  Try increasing
+\code{ratchIter} (more iterations give more chance for improvement) and
+\code{maxHits} (to get closer to the local optimum after each ratchet iteration).
+\item Optimal areas of tree space are only visited by a single ratchet iteration.
+(See vignette: \href{https://ms609.github.io/TreeSearch/articles/tree-space.html}{Exploring tree space}.)
+If some areas of tree space are only found by one ratchet iteration, there
+may well be other, better areas that have not yet been visited.
+Try increasing \code{ratchIter}.
+}
+
+When continuing a tree search, it is usually best to start from an optimal
+tree found during the previous iteration – there is no need to start from
+scratch.
+
+A more time consuming way of checking that a global optimum has been reached
+is to repeat a search with the same parameters multiple times, starting
+from a different, entirely random tree each time. If all searches obtain the
+same optimal tree score despite their different starting points,
+this score is likely to correspond to the global optimum.
 
 For detailed documentation of the "TreeSearch" package, including full
 instructions for loading phylogenetic data into R and initiating and
