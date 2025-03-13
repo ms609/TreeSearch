@@ -149,11 +149,11 @@ parsimony ratchet Nixon1999TreeSearch to conduct.</p></dd>
 
 <dt id="arg-tbriter">tbrIter<a class="anchor" aria-label="anchor" href="#arg-tbriter"></a></dt>
 <dd><p>Numeric specifying the maximum number of <acronym>TBR</acronym>
-break points to evaluate before concluding each search.
-The counter is reset to zero each time tree score improves.
-The counter is reset to zero each time tree score improves.
-One "iteration" comprises breaking a single branch and evaluating all
-possible reconnections.</p></dd>
+break points on a given tree to evaluate before terminating the search.
+One "iteration" comprises selecting a branch to break, and evaluating
+each possible reconnection point in turn until a new tree improves the
+score. If a better score is found, then the counter is reset to zero,
+and tree search continues from the improved tree.</p></dd>
 
 
 <dt id="arg-startiter">startIter<a class="anchor" aria-label="anchor" href="#arg-startiter"></a></dt>
@@ -271,6 +271,54 @@ A final round of tree bisection and reconnection (<acronym>TBR</acronym>)
 is conducted to broaden the sampling of trees.</p>
 <p>This function can be called using the R command line / terminal, or through
 the "shiny" graphical user interface app (type <code>EasyTrees()</code> to launch).</p>
+<p>The optimal strategy for tree search depends in part on how close to optimal
+the starting tree is, the size of the search space (which increases
+super-exponentially with the number of leaves), and the complexity of the
+search space (e.g. the existence of multiple local optima).</p>
+<p>One possible approach is to employ four phases:</p><ol><li><p>Rapid search for local optimum: tree score is typically easy to improve
+early in a search, because the initial tree is often far from optimal.
+When many moves are likely to be accepted, running several rounds of search
+with a low value of <code>maxHits</code> and a high value of <code>tbrIter</code> allows many
+trees to be evaluated quickly, hopefully moving quickly to a more promising
+region of tree space.</p></li>
+<li><p>Identification of local optimum:
+Once close to a local optimum, a more extensive search
+with a higher value of <code>maxHits</code> allows a region to be explored in more
+detail.  Setting a high value of <code>tbrIter</code> will search a local
+neighbourhood more completely</p></li>
+<li><p>Search for nearby peaks:
+Ratchet iterations allow escape from local optima.
+Setting <code>ratchIter</code> to a high value searches the wider neighbourhood more
+extensively for other nearby peaks; <code>ratchEW = TRUE</code> accelerates these
+exploratory searches.</p></li>
+<li><p>Extensive search of final optimum.  As with step 2, it may be valuable to
+fully explore the optimum that is found after ratchet searches to be sure
+that the locally optimal score has been obtained.  Setting a high value of
+<code>finalIter</code> performs a thorough search that can give confidence that further
+searches would not find better (local) trees.</p></li>
+</ol><p>A search is unlikely to have found a global optimum if:</p><ul><li><p>Tree score continues to improve on the final iteration.  If a local optimum
+has not yet been reached, it is unlikely that a global optimum has
+been reached.
+Try increasing <code>maxHits</code>.</p></li>
+<li><p>Successive ratchet iterations continue to improve tree scores.
+If a recent ratchet iteration improved the score, rather than finding
+a different region of tree space with the same optimal score, it is likely
+that still better global optima remain to be found.  Try increasing
+<code>ratchIter</code> (more iterations give more chance for improvement) and
+<code>maxHits</code> (to get closer to the local optimum after each ratchet iteration).</p></li>
+<li><p>Optimal areas of tree space are only visited by a single ratchet iteration.
+(See vignette: <a href="https://ms609.github.io/TreeSearch/articles/tree-space.html">Exploring tree space</a>.)
+If some areas of tree space are only found by one ratchet iteration, there
+may well be other, better areas that have not yet been visited.
+Try increasing <code>ratchIter</code>.</p></li>
+</ul><p>When continuing a tree search, it is usually best to start from an optimal
+tree found during the previous iteration – there is no need to start from
+scratch.</p>
+<p>A more time consuming way of checking that a global optimum has been reached
+is to repeat a search with the same parameters multiple times, starting
+from a different, entirely random tree each time. If all searches obtain the
+same optimal tree score despite their different starting points,
+this score is likely to correspond to the global optimum.</p>
 <p>For detailed documentation of the "TreeSearch" package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
@@ -343,8 +391,8 @@ are necessary to find an optimal tree on each iteration).</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Sample local optimum</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → TBR depth 1; keeping 4 trees; k = 10</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-02-17 16:53:35: Score: 12.6384</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-02-17 16:53:36: Tree search terminated with score <span style="font-weight: bold;">12.1193</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-03-13 15:45:45: Score: 12.6384</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-03-13 15:45:46: Tree search terminated with score <span style="font-weight: bold;">12.1193</span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "final_1"</span>
 <span class="r-in"><span></span></span>
