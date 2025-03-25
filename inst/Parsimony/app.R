@@ -278,7 +278,7 @@ ui <- fluidPage(
       selectInput(
         "dataSource",
         "Dataset",
-        c("< Load from file >" = "file",
+        c("< Load from file below >" = "file",
           "Agnarsson 2004" = "Agnarsson2004",
           "Sun et al. 2018" = "Sun2018",
           "Wills et al. 2012" = "Wills2012",
