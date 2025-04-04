@@ -19,7 +19,7 @@ TaxonInfluence(
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadCharacters}}.}
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.}
 
 \item{tree}{Optimal tree or summary tree (of class "phylo") or list of trees
 (of class "list" or "multiPhylo") against which results should be evaluated.

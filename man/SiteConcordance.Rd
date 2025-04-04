@@ -9,7 +9,7 @@
 \alias{SharedPhylogeneticConcordance}
 \title{Calculate site concordance factor}
 \usage{
-QuartetConcordance(tree, dataset = NULL, method = "split")
+QuartetConcordance(tree, dataset = NULL, method = "split", n = 250)
 
 ClusteringConcordance(tree, dataset)
 
@@ -24,7 +24,7 @@ SharedPhylogeneticConcordance(tree, dataset)
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadCharacters}}.}
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.}
 
 \item{method}{Character vector specifying which concordance measures to
 calculate.  See details section for available options.}
