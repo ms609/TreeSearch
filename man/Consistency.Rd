@@ -9,7 +9,7 @@ Consistency(dataset, tree, compress = FALSE)
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadCharacters}}.}
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.}
 
 \item{tree}{A tree of class \code{\link[ape]{phylo}}.}
 

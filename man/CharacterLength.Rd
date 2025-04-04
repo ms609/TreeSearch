@@ -17,7 +17,7 @@ FastCharacterLength(tree, dataset)
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadCharacters}}.}
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
 \code{phyDat} object or to return a vector specifying to each individual
