@@ -5,9 +5,7 @@
 #' tree search.
 #' @param maxHits Numeric specifying maximum number of hits to accomplish in
 #' tree search.
-#' @template stopAtPeakParam
-#' @template stopAtPlateauParam
-#' @inheritParams TreeSearch
+#' @param stopAtScore stop search as soon as this score is hit or beaten.
 #' @param \dots further parameters to send to `TreeScorer()`
 #'
 #' @return `MorphyBootstrap()` returns a tree that is optimal under a random

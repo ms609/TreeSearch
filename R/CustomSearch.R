@@ -117,8 +117,14 @@ EdgeListSearch <- function (edgeList, dataset,
 #' before abandoning the search.
 #' @param maxHits Numeric specifying maximum times to hit the best pscore
 #' before abandoning the search.
-#' @template stopAtPeakParam
-#' @template stopAtPlateauParam
+#' @param stopAtPeak Logical specifying whether to terminate search once a 
+#' subsequent iteration recovers a sub-optimal score.
+#' Will be overridden if a passed function has an attribute `stopAtPeak` set by 
+#' `attr(FunctionName, "stopAtPeak") <- TRUE`.
+#' @param stopAtPlateau Integer. If > 0, tree search will terminate if the score
+#' has not improved after `stopAtPlateau` iterations.
+#' Will be overridden if a passed function has an attribute `stopAtPlateau` set
+#' by `attr(FunctionName, "stopAtPlateau") <- TRUE`.
 #'
 #' @param InitializeData Function that sets up data object to prepare for tree search. 
 #'        The function will be passed the `dataset` parameter.

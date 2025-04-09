@@ -9,6 +9,7 @@
 #' @template treeParam 
 #' @param dataset a dataset in the format required by `TreeScorer()`.
 #' @inheritParams TreeSearch
+#' @inheritParams Bootstrap
 #' @param Bootstrapper Function to perform bootstrapped rearrangements of tree.
 #' First arguments will be an `edgeList` and a dataset, initialized using 
 #' `InitializeData()`. Should return a rearranged `edgeList`.
@@ -37,9 +38,6 @@
 #'  iteration (default: `searchIter`).
 #' @param bootstrapHits Integer specifying maximum times to hit best score on each bootstrap 
 #' iteration (default: `searchHits`).
-#' @template stopAtScoreParam
-#' @template stopAtPeakParam
-#' @template stopAtPlateauParam
 #' @param suboptimal retain trees that are suboptimal by this score.
 #'  Defaults to a small value that will counter rounding errors.
 #' 
