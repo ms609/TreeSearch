@@ -114,7 +114,8 @@ GapHandler <- function (morphyObj) {
 #' 
 #'
 #' @param phy An object of \pkg{phangorn} class \code{phyDat}.
-#' @template gapParam
+#' @param gap An unambiguous abbreviation of `inapplicable`, `ambiguous` 
+#' (= `missing`), or `extra state`, specifying how gaps will be handled.
 #' @return `PhyDat2Morphy()` returns a pointer to an initialized Morphy object.
 #' 
 #' @examples
@@ -207,7 +208,7 @@ MorphyErrorCheck <- function (action) {
 #' 
 #' @param char State of each character at each tip in turn, in a format that will be converted
 #'             to a character string by \code{\link{paste0}(char, ";", collapse="")}.
-#' @template gapParam
+#' @inheritParams PhyDat2Morphy
 #'
 #' @return A pointer to an object of class `morphyObj`.
 #' Don't forget to unload it when you've finished with it.
