@@ -8,10 +8,10 @@ DoubleNNI(parent, child, edgeToBreak)
 }
 \arguments{
 \item{parent}{Integer vector corresponding to the first column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e. \code{tree$edge[, 1]}.}
 
 \item{child}{Integer vector corresponding to the second column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e. \code{tree$edge[, 2]}.}
 
 \item{edgeToBreak}{(optional) integer specifying the index of an edge to bisect/prune,
 generated randomly if not specified.

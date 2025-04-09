@@ -11,7 +11,7 @@ Consistency(dataset, tree, compress = FALSE)
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
 Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.}
 
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A tree of class \code{\link[ape]{phylo}}.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
 \code{phyDat} object or to return a vector specifying to each individual

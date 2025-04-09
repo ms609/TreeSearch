@@ -27,7 +27,7 @@ TBRWarning <- function (parent, child, error) {
 #' All nodes in a tree must be bifurcating; [ape::collapse.singles] and
 #' [ape::multi2di] may help.
 #' 
-#' @param tree A bifurcating tree of class \code{\link{phylo}}, with all nodes resolved;
+#' @param tree A bifurcating tree of class \code{\link[ape]{phylo}}, with all nodes resolved;
 #' @template edgeToBreakParam
 #' @template mergeEdgesParam
 #' 

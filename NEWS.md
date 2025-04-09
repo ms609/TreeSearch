@@ -1,6 +1,11 @@
-# TreeSearch 1.5.1.9006 (2025-02)
+# TreeSearch 1.5.1.9007 (2025-05)
 
 - `QuartetConcordance(method = "minh")` uses the approach of Minh et al. (2020)
+
+# TreeSearch 1.5.1.9006 (2025-02)
+
+- `PlotCharacter()` performs ancestral state reconstruction on consensus trees
+  [#179](https://github.com/ms609/TreeSearch/issues/179)
 
 # TreeSearch 1.5.1.9005 (2025-02)
 

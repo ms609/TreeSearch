@@ -22,7 +22,7 @@ SuccessiveApproximations(
 SuccessiveWeights(tree, dataset)
 }
 \arguments{
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A tree of class \code{\link[ape]{phylo}}.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
