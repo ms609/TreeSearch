@@ -286,6 +286,7 @@ cSPR <- function (tree, whichMove = NULL) {
 
 #' All SPR trees
 #'
+#' @inheritParams TBR
 #' @template treeParent
 #' @template treeChild
 #' @template treeNEdge
@@ -293,7 +294,6 @@ cSPR <- function (tree, whichMove = NULL) {
 #' edge whether it is the second edge leading to the root (in which case
 #' its breaking will be equivalent to breaking the other root edge... 
 #' except insofar as it moves the position of the root.)
-#' @template edgeToBreakParam
 #' 
 #' @return `AllSPR()` returns a list of edge matrices for all trees one SPR 
 #' rearrangement from the starting tree
