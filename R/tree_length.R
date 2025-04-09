@@ -373,8 +373,11 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
 
 #' @describeIn MorphyTreeLength Fastest function that requires internal tree parameters
 #' @template parentOfParam
-#' @template leftChildParam
-#' @template rightChildParam
+#' @param leftChild integer vector containing, for each node, starting at the 
+#' root and proceeding in sequential order, the integer corresponding to its
+#' left child.  Tip numbering begins at 0; the root node is numbered `nTip`.
+#' @param rightChild integer vector containing, for each node, the index
+#'                  of its right child.
 #' @family tree scoring
 #' @author Martin R. Smith
 #' @keywords internal
