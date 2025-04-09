@@ -1,6 +1,6 @@
 #' @describeIn TreeSearch Tree search from edge lists
 #' @template edgeListParam
-#' @template dataForFunction
+#' @param dataset Data in format required by \code{InitializeData}.
 #' @keywords internal
 #' @export
 EdgeListSearch <- function (edgeList, dataset,
