@@ -10,8 +10,7 @@
 #' @param tree A tree of class `phylo`, a list thereof (optionally of class
 #' `multiPhylo`), or an integer -- in which case `tree` random trees will be 
 #' uniformly sampled.
-#' @template datasetParam
-#' @template concavityParam
+#' @inheritParams MaximizeParsimony
 #' 
 #' @return `TreeLength()` returns a numeric vector containing the score for
 #' each tree in `tree`.
@@ -211,7 +210,7 @@ Fitch <- function (tree, dataset) {
 #' Homoplasy length of each character in a dataset on a specified tree.
 #' 
 #' @template treeParam
-#' @template datasetParam
+#' @inheritParams MaximizeParsimony
 #' @template compressParam
 #'
 #' @return `CharacterLength()` returns a vector listing the contribution of each

@@ -90,8 +90,11 @@
 #' [package documentation](https://ms609.github.io/TreeSearch/).
 #'  
 #' 
-#' 
-#' @template datasetParam
+#' @param dataset A phylogenetic data matrix of \pkg{phangorn} class
+#' \code{phyDat}, whose names correspond to the labels of any accompanying tree.
+#' Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+#' Additive (ordered) characters can be handled using
+#' \code{\link[TreeTools]{Decompose}}.
 #' @param tree (optional) A bifurcating tree of class \code{\link[ape]{phylo}},
 #' containing only the tips listed in `dataset`, from which the search
 #' should begin.
@@ -119,15 +122,19 @@
 #' next opportunity.
 #' @param quickHits Numeric: iterations on subsampled datasets
 #'  will retain `quickHits` &times; `maxHits` trees with the best score.
-#' @param concavity Numeric specifying concavity constant for implied step 
-#' weighting.
-#' The most appropriate value will depend on the dataset, but values around
-#' 10--15 often perform well \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
-#' The character string "profile" employs an approximation of profile parsimony
+#' @param concavity Determines the degree to which extra steps beyond the first
+#' are penalized.  Specify a numeric value to use implied weighting
+#' \insertCite{Goloboff1993}{TreeSearch}; `concavity` specifies _k_ in
+#'  _k_ / _e_ + _k_. A value of 10 is recommended;
+#' TNT sets a default of 3, but this is too low in some circumstances
+#' \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+#' Better still explore the sensitivity of results under a range of
+#' concavity values, e.g. `k = 2 ^ (1:7)`.
+#' Specify `Inf` to weight each additional step equally,
+#' (which underperforms step weighting approaches
+#' \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
+#' Specify `"profile"` to employ an approximation of profile parsimony
 #' \insertCite{Faith2001}{TreeSearch}.
-#' Set as `Inf` for equal step weights, which underperforms step weighting
-#' approaches
-#' \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.
 #' @param ratchEW Logical specifying whether to use equal weighting during
 #' ratchet iterations, improving search speed whilst still facilitating
 #' escape from local optima.

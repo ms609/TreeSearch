@@ -42,8 +42,8 @@
 #' tested, and may change without notice.
 #' Complete documentation and discussion will follow in due course.
 #' 
+#' @inheritParams MaximizeParsimony
 #' @template treeParam
-#' @template datasetParam
 #' @param weight Logical specifying whether to weight sites according to the
 #' number of quartets they are decisive for.
 #' 
@@ -323,7 +323,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' above.
 #' 
 #' @template treeParam
-#' @template datasetParam
+#' @inheritParams MaximizeParsimony
 #' @examples
 #' data(congreveLamsdellMatrices)
 #' myMatrix <- congreveLamsdellMatrices[[10]]

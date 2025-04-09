@@ -22,8 +22,11 @@ TNT sets a default of 3, but this is too low in some circumstances
 \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
 Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
-Specify \code{Inf} to weight each additional step equally.
-Specify \code{"profile"} to employ profile parsimony \insertCite{Faith2001}{TreeSearch}.}
+Specify \code{Inf} to weight each additional step equally,
+(which underperforms step weighting approaches
+\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
+Specify \code{"profile"} to employ an approximation of profile parsimony
+\insertCite{Faith2001}{TreeSearch}.}
 }
 \value{
 \code{LengthAdded()} returns a named numeric vector listing the mean

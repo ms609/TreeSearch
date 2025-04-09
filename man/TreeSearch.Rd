@@ -54,9 +54,7 @@ DoNothing(...)
 \item (optionally, if score provided) number of times this score has been hit
 }}
 
-\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.}
+\item{dataset}{Data in format required by \code{InitializeData}.}
 
 \item{TreeScorer}{function to score a given tree.
 The function will be passed three parameters, corresponding to the

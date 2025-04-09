@@ -18,7 +18,7 @@
 #' 
 #' @param trees List of trees of class `phylo`, or `multiPhylo` object.
 #' @param char `phyDat` object containing a single character.
-#' @template concavityParam
+#' @inheritParams MaximizeParsimony
 #' 
 #' @return `LengthAdded()` returns a named numeric vector listing the mean
 #' absolute change to tree length resulting if the character were coded

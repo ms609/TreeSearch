@@ -4,7 +4,7 @@
 #' criterion \insertCite{Farris1969}{TreeSearch}.
 #'
 #' @template treeParam
-#' @template datasetParam
+#' @inheritParams MaximizeParsimony
 #' @param outgroup if not NULL, taxa on which the tree should be rooted
 #' @param k Constant for successive approximations, see Farris 1969 p. 379
 #' @param maxSuccIter maximum iterations of successive approximation

@@ -36,7 +36,7 @@
 #' following \insertCite{Brazeau2019;textual}{TreeSearch}, matching their
 #' default treatment in [`TreeLength()`].
 #' 
-#' @template datasetParam
+#' @inheritParams MaximizeParsimony
 #' @template treeParam
 #' @template compressParam
 #' 
