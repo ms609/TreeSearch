@@ -16,7 +16,6 @@
 #' @inheritParams TreeSearch
 #' @param scoreToBeat Double giving score of input tree.
 #' @param hits Integer giving number of times the input tree has already been hit.
-#' @template EdgeSwapperParam
 ## @param  minScore trees longer than \code{minScore}, probably the score of the best previously known tree,
 ##     will be discarded;
 ## @param returnSingle returns all trees if `FALSE` or a randomly selected tree if `TRUE`.

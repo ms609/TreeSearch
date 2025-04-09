@@ -9,7 +9,6 @@
 #' or e-mail the maintainer.
 #' 
 #' @inheritParams Ratchet
-#' @template EdgeSwapperParam
 #' @param resampleFreq Double between 0 and 1 stating proportion of characters 
 #' to resample.
 #' @param jackIter Integer specifying number of jackknife iterations to conduct.

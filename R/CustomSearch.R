@@ -103,7 +103,8 @@ EdgeListSearch <- function (edgeList, dataset,
 #' with the desired outgroup.
 #' Edge lengths are not supported and will be removed.
 #' @inheritParams MaximizeParsimony
-#' @template EdgeSwapperParam
+#' @param EdgeSwapper a function that rearranges a parent and child vector,
+#' and returns a list with modified vectors; for example [`SPRSwap()`].
 #' @param maxIter Numeric specifying maximum number of iterations to perform
 #' before abandoning the search.
 #' @param maxHits Numeric specifying maximum times to hit the best pscore
