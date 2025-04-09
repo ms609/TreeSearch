@@ -8,8 +8,8 @@
 <title>Getting started: Simple tree searches • TreeSearch</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Getting started: Simple tree searches">
 <!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=G-V9DV1LS35J"></script><script>
   window.dataLayer = window.dataLayer || [];
@@ -27,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@
                         <h4 data-toc-skip class="author">Martin R.
 Smith</h4>
             
-            <h4 data-toc-skip class="date">2024-08-26</h4>
+            <h4 data-toc-skip class="date">2025-04-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/vignettes/tree-search.Rmd" class="external-link"><code>vignettes/tree-search.Rmd</code></a></small>
       <div class="d-none name"><code>tree-search.Rmd</code></div>
@@ -144,13 +144,16 @@ searches to escape from local optima.</p>
 <code class="sourceCode R"><span><span class="va">vinther</span> <span class="op">&lt;-</span> <span class="fu">TreeSearch</span><span class="fu">::</span><span class="va"><a href="../reference/inapplicable.datasets.html">inapplicable.phyData</a></span><span class="op">[[</span><span class="st">"Vinther2008"</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set a random seed so that random functions in this document are reproducible</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">RNGversion</a></span><span class="op">(</span><span class="st">"3.5.0"</span><span class="op">)</span><span class="op">)</span> <span class="co"># Until we require R v3.6.0</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">RNGversion</a></span><span class="op">(</span><span class="st">"3.5.0"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## Warning in RNGkind("Mersenne-Twister", "Inversion", "Rounding"): non-uniform</span></span>
+<span><span class="co">## 'Rounding' sampler used</span></span></code></pre>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span></code></pre></div>
 <p>We can conduct a basic parsimony search with:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bestTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">vinther</span><span class="op">)</span></span></code></pre></div>
 <p>It can be instructive to inspect the progress of tree search.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">firstHit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">bestTrees</span>, <span class="st">"firstHit"</span><span class="op">)</span></span>
 <span><span class="va">firstHit</span></span></code></pre></div>
 <pre><code><span><span class="co">##   seed  start ratch1 ratch2 ratch3 ratch4 ratch5 ratch6 ratch7  final </span></span>
@@ -161,7 +164,7 @@ iterations found progressively fewer new trees, suggesting that the
 search is likely to have been effective.</p>
 <p>Advanced users might wish to visualize the progress of tree search by
 mapping tree space:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">distances</span> <span class="op">&lt;-</span> <span class="fu">TreeDist</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeDist/reference/TreeDistance.html" class="external-link">ClusteringInfoDistance</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">)</span></span>
 <span><span class="va">searchStages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">firstHit</span><span class="op">)</span></span>
 <span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cmdscale.html" class="external-link">cmdscale</a></span><span class="op">(</span><span class="va">distances</span>, k <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
@@ -182,7 +185,7 @@ that the mapping of tree space is meaningful and adequate</a> to detect
 structure before making any firm conclusions <span class="citation">(Smith, 2022a)</span>.</p>
 <p>To be thorough, we might consider continuing the search for a little
 longer, fine-tuning the search parameters:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bestTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">vinther</span>, tree <span class="op">=</span> <span class="va">bestTrees</span>,</span>
 <span>                               ratchIter <span class="op">=</span> <span class="fl">6L</span>,</span>
 <span>                               tbrIter <span class="op">=</span> <span class="fl">4L</span>, </span>
@@ -192,11 +195,11 @@ longer, fine-tuning the search parameters:</p>
 equal weights parsimony.</p>
 <p>We can plot the best tree(s) that we’ve found, and check its
 parsimony score (length):</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="tree-search_files/figure-html/plot-tree-1.png" width="691.2"></p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">vinther</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 79</span></span></code></pre>
 <div class="section level3">
@@ -204,7 +207,7 @@ parsimony score (length):</p>
 </h3>
 <p>We might be interested in labelling clades with their frequency among
 the sampled most-parsimonious trees:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
 <span><span class="va">majCons</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">bestTrees</span>, p <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span><span class="va">splitFreqs</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/SplitFrequency.html" class="external-link">SplitFrequency</a></span><span class="op">(</span><span class="va">majCons</span>, <span class="va">bestTrees</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">)</span></span>
@@ -235,7 +238,7 @@ page</a> has suggestions for appropriate numbers of replicates and
 search intensity, and instructions for calculating bootstrap support;
 the code here gives a quick-to-run jackknife framework that can be
 adapted to the requirements of a particular dataset.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nReplicates</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
 <span><span class="va">jackTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a></span><span class="op">(</span><span class="va">nReplicates</span><span class="op">)</span>, <span class="kw">function</span> <span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="../reference/MaximizeParsimony.html">Resample</a></span><span class="op">(</span><span class="va">vinther</span>, <span class="va">bestTrees</span>, ratchIter <span class="op">=</span> <span class="fl">0</span>, tbrIter <span class="op">=</span> <span class="fl">1</span>, maxHits <span class="op">=</span> <span class="fl">4</span>,</span>
@@ -257,7 +260,7 @@ contradicting it.</p>
 <p>“TreeSearch” implements a number of concordance measures that aim to
 indicate whether a dataset is unanimous or divided in support of a
 grouping, independently of the method of tree reconstruction.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">concordance</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SiteConcordance.html">QuartetConcordance</a></span><span class="op">(</span><span class="va">strict</span>, <span class="va">vinther</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Alternative measures:</span></span>
@@ -279,7 +282,7 @@ uncertainty in a set of trees. Often one “rogue” taxon with an uncertain
 position can mask agreement in the relationships of other taxa <span class="citation">(Smith, 2022b)</span>. The potential impact of rogue
 taxa can be explored by colouring individual tips according to their
 stability in the tree set:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">strict</span>, tip.color <span class="op">=</span> <span class="fu">Rogue</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rogue/man/TipInstability.html" class="external-link">ColByStability</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -287,7 +290,7 @@ stability in the tree set:</p>
 <p>Would removing an unstable taxon reveal hidden support for
 relationships at the base of Mollusca? We can test to see whether the
 removal of a taxon from a summary tree is justified using:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">Rogue</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rogue/man/RogueTaxa.html" class="external-link">QuickRogue</a></span><span class="op">(</span><span class="va">bestTrees</span>, p <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   num taxNum   taxon rawImprovement       IC</span></span>
 <span><span class="co">## 1   0   &lt;NA&gt;    &lt;NA&gt;             NA 154.5491</span></span>
@@ -296,7 +299,7 @@ removal of a taxon from a summary tree is justified using:</p>
 of the strict consensus by enough to justify the loss of the information
 regarding its own position (a net gain of 14.3 bits). The most
 informative single summary tree is thus provided by:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
 <span><span class="va">noWiwaxia</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">bestTrees</span>, <span class="fu">TreeTools</span><span class="fu">::</span><span class="va"><a href="https://ms609.github.io/TreeTools/reference/DropTip.html" class="external-link">DropTip</a></span>, <span class="st">"Wiwaxia"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">noWiwaxia</span><span class="op">)</span>, tip.color <span class="op">=</span> <span class="fu">Rogue</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rogue/man/TipInstability.html" class="external-link">ColByStability</a></span><span class="op">(</span><span class="va">noWiwaxia</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -306,7 +309,7 @@ informative single summary tree is thus provided by:</p>
 <em>Odontogriphus</em> and <em>Neopilina</em>, a fact masked in the
 strict consensus due to the uncertain position of <em>Wiwaxia</em>.</p>
 <p>We can see where <em>Wiwaxia</em> would plot on this tree using:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
 <span><span class="va">xx</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/RoguePlot.html" class="external-link">RoguePlot</a></span><span class="op">(</span><span class="va">bestTrees</span>, <span class="st">"Wiwaxia"</span>, p <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p><img src="tree-search_files/figure-html/restore-wiwaxia-1.png" width="691.2"></p>
@@ -327,7 +330,7 @@ concavity constants <span class="citation">(cf. Smith &amp;
 Ortega-Hernández, 2014)</span>.</p>
 <p>Implied weights can be activated by simply specifying a value of the
 concavity constant, <em>k</em>:</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iwTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">vinther</span>, concavity <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">iwTrees</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -357,7 +360,7 @@ specify one manually – perhaps after checking that no constraints are
 contradictory.</p>
 <p>Here’s a simple example on six taxa that enforces the bipartition ab
 | cdef:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/" class="external-link">"TreeTools"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">constraint</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html" class="external-link">MatrixToPhyDat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">1</span>, b <span class="op">=</span> <span class="fl">1</span>, c <span class="op">=</span> <span class="fl">0</span>, d <span class="op">=</span> <span class="fl">0</span>, e <span class="op">=</span> <span class="fl">0</span>, f <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">characters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html" class="external-link">MatrixToPhyDat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
@@ -370,7 +373,7 @@ contradictory.</p>
 <p>Here’s a more complex example that imposes the splits
 <code>ab | cef</code> and <code>abcd | ef</code>, whilst allowing
 <code>g</code> to plot anywhere on the tree:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">characters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MatrixToPhyDat.html" class="external-link">MatrixToPhyDat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>,</span>
 <span>    <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">2</span>,</span>
@@ -412,56 +415,56 @@ inapplicable data)</li>
 <div id="ref-Brazeau2019" class="csl-entry">
 Brazeau, M. D., Guillerme, T., &amp; Smith, M. R. (2019). <span class="nocase">An algorithm for morphological phylogenetic analysis with
 inapplicable data</span>. <em>Systematic Biology</em>, <em>68</em>,
-619–631. doi:<a href="https://doi.org/10.1093/sysbio/syy083" class="external-link">10.1093/sysbio/syy083</a>
+619–631. doi: <a href="https://doi.org/10.1093/sysbio/syy083" class="external-link">10.1093/sysbio/syy083</a>
 </div>
 <div id="ref-Brazeau2017" class="csl-entry">
 Brazeau, M. D., Smith, M. R., &amp; Guillerme, T. (2017).
-<span>MorphyLib</span>: A library for phylogenetic analysis of
-categorical trait data with inapplicability. doi:<a href="https://doi.org/10.5281/zenodo.815372" class="external-link">10.5281/zenodo.815372</a>
+<em><span>MorphyLib</span>: A library for phylogenetic analysis of
+categorical trait data with inapplicability</em>. doi: <a href="https://doi.org/10.5281/zenodo.815372" class="external-link">10.5281/zenodo.815372</a>
 </div>
 <div id="ref-Goloboff1993" class="csl-entry">
 Goloboff, P. A. (1993). Estimating character weights during tree search.
-<em>Cladistics</em>, <em>9</em>(1), 83–91. doi:<a href="https://doi.org/10.1111/j.1096-0031.1993.tb00209.x" class="external-link">10.1111/j.1096-0031.1993.tb00209.x</a>
+<em>Cladistics</em>, <em>9</em>(1), 83–91. doi: <a href="https://doi.org/10.1111/j.1096-0031.1993.tb00209.x" class="external-link">10.1111/j.1096-0031.1993.tb00209.x</a>
 </div>
 <div id="ref-Goloboff1997" class="csl-entry">
 Goloboff, P. A. (1997). <span class="nocase">Self-weighted optimization:
 tree searches and character state reconstructions under implied
 transformation costs</span>. <em>Cladistics</em>, <em>13</em>(3),
-225–245. doi:<a href="https://doi.org/10.1111/j.1096-0031.1997.tb00317.x" class="external-link">10.1111/j.1096-0031.1997.tb00317.x</a>
+225–245. doi: <a href="https://doi.org/10.1111/j.1096-0031.1997.tb00317.x" class="external-link">10.1111/j.1096-0031.1997.tb00317.x</a>
 </div>
 <div id="ref-Goloboff2018" class="csl-entry">
 Goloboff, P. A., Torres, A., &amp; Arias, J. S. (2018). Weighted
 parsimony outperforms other methods of phylogenetic inference under
 models appropriate for morphology. <em>Cladistics</em>, <em>34</em>(4),
-407–437. doi:<a href="https://doi.org/10.1111/cla.12205" class="external-link">10.1111/cla.12205</a>
+407–437. doi: <a href="https://doi.org/10.1111/cla.12205" class="external-link">10.1111/cla.12205</a>
 </div>
 <div id="ref-Smith2019" class="csl-entry">
 Smith, M. R. (2019). Bayesian and parsimony approaches reconstruct
 informative trees from simulated morphological datasets. <em>Biology
-Letters</em>, <em>15</em>(2), 20180632. doi:<a href="https://doi.org/10.1098/rsbl.2018.0632" class="external-link">10.1098/rsbl.2018.0632</a>
+Letters</em>, <em>15</em>(2), 20180632. doi: <a href="https://doi.org/10.1098/rsbl.2018.0632" class="external-link">10.1098/rsbl.2018.0632</a>
 </div>
 <div id="ref-SmithSpace" class="csl-entry">
 Smith, M. R. (2022a). Robust analysis of phylogenetic tree space.
-<em>Systematic Biology</em>, <em>71</em>(5), 1255–1270. doi:<a href="https://doi.org/10.1093/sysbio/syab100" class="external-link">10.1093/sysbio/syab100</a>
+<em>Systematic Biology</em>, <em>71</em>(5), 1255–1270. doi: <a href="https://doi.org/10.1093/sysbio/syab100" class="external-link">10.1093/sysbio/syab100</a>
 </div>
 <div id="ref-SmithCons" class="csl-entry">
 Smith, M. R. (2022b). Using information theory to detect rogue taxa and
 improve consensus trees. <em>Systematic Biology</em>, <em>71</em>(5),
-1088–1094. doi:<a href="https://doi.org/10.1093/sysbio/syab099" class="external-link">10.1093/sysbio/syab099</a>
+1088–1094. doi: <a href="https://doi.org/10.1093/sysbio/syab099" class="external-link">10.1093/sysbio/syab099</a>
 </div>
 <div id="ref-Smith2014" class="csl-entry">
 Smith, M. R., &amp; Ortega-Hernández, J. (2014). <span class="nocase"><em>Hallucigenia</em>’s onychophoran-like claws and the
 case for Tactopoda</span>. <em>Nature</em>, <em>514</em>(7522), 363–366.
-doi:<a href="https://doi.org/10.1038/nature13576" class="external-link">10.1038/nature13576</a>
+doi: <a href="https://doi.org/10.1038/nature13576" class="external-link">10.1038/nature13576</a>
 </div>
 <div id="ref-Vinther2008" class="csl-entry">
 Vinther, J., Van Roy, P., &amp; Briggs, D. E. G. (2008). <span class="nocase">Machaeridians are Palaeozoic armoured annelids</span>.
-<em>Nature</em>, <em>451</em>(7175), 185–188. doi:<a href="https://doi.org/10.1038/nature06474" class="external-link">10.1038/nature06474</a>
+<em>Nature</em>, <em>451</em>(7175), 185–188. doi: <a href="https://doi.org/10.1038/nature06474" class="external-link">10.1038/nature06474</a>
 </div>
 <div id="ref-Whidden2015" class="csl-entry">
 Whidden, C., &amp; Matsen, F. A. (2015). Quantifying <span>MCMC</span>
 exploration of phylogenetic tree space. <em>Systematic Biology</em>,
-<em>64</em>(3), 472–491. doi:<a href="https://doi.org/10.1093/sysbio/syv006" class="external-link">10.1093/sysbio/syv006</a>
+<em>64</em>(3), 472–491. doi: <a href="https://doi.org/10.1093/sysbio/syv006" class="external-link">10.1093/sysbio/syv006</a>
 </div>
 </div>
 </div>
@@ -476,7 +479,7 @@ exploration of phylogenetic tree space. <em>Systematic Biology</em>,
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>
