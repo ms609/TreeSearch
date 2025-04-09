@@ -75,5 +75,6 @@ RearrangeEdges(parent, child, dataset, EdgeSwapper = RootedNNISwap)
 dataset <- UnloadMorphy(dataset)
 }
 \author{
-Martin R. Smith
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }

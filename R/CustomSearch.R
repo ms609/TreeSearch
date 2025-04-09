@@ -111,9 +111,14 @@ EdgeListSearch <- function (edgeList, dataset,
 #' @template stopAtPeakParam
 #' @template stopAtPlateauParam
 #'
-#' @template InitializeDataParam
-#' @template CleanUpDataParam
-#' @template treeScorerParam
+#' @param InitializeData Function that sets up data object to prepare for tree search. 
+#'        The function will be passed the `dataset` parameter.
+#'        Its return value will be passed to `TreeScorer()` and `CleanUpData()`.
+#' @param CleanUpData Function to destroy data object on function exit.
+#'        The function will be passed the value returned by `InitializeData()`.
+#' @param TreeScorer function to score a given tree.
+#'        The function will be passed three parameters, corresponding to the 
+#'        `parent` and `child` entries of a tree's edge list, and a dataset.
 #'
 #' @template verbosityParam
 #' @template treeScorerDots
