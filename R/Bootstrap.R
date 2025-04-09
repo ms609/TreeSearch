@@ -7,7 +7,7 @@
 #' tree search.
 #' @template stopAtPeakParam
 #' @template stopAtPlateauParam
-#' @template verbosityParam
+#' @inheritParams TreeSearch
 #' @param \dots further parameters to send to `TreeScorer()`
 #'
 #' @return `MorphyBootstrap()` returns a tree that is optimal under a random

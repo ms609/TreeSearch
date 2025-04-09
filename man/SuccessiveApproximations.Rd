@@ -44,8 +44,8 @@ Additive (ordered) characters can be handled using
 
 \item{ratchetIter}{maximum iterations of parsimony ratchet}
 
-\item{verbosity}{Numeric specifying level of detail to display in console:
-larger numbers provide more verbose feedback to the user.}
+\item{verbosity}{Integer specifying level of messaging; higher values give
+more detailed commentary on search progress. Set to \code{0} to run silently.}
 
 \item{suboptimal}{retain trees that are this proportion less optimal than the optimal tree}
 }

@@ -120,8 +120,9 @@ EdgeListSearch <- function (edgeList, dataset,
 #'        The function will be passed three parameters, corresponding to the 
 #'        `parent` and `child` entries of a tree's edge list, and a dataset.
 #'
-#' @template verbosityParam
-#' @template treeScorerDots
+#' @param verbosity Numeric specifying level of detail to display in console: 
+#' larger numbers provide more verbose feedback to the user.
+#' @param \dots further arguments to pass to `TreeScorer()`, e.g. `dataset = `.
 #' 
 #' @return
 #' `TreeSearch()` returns a tree, with an attribute `pscore` conveying its

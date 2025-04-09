@@ -21,8 +21,6 @@
 ##     will be discarded;
 ## @param returnSingle returns all trees if `FALSE` or a randomly selected tree if `TRUE`.
 #' @param iter iteration number of calling function, for reporting to user only.
-#' @template verbosityParam
-#' @template treeScorerDots
 #'
 #' @template MRS
 #'

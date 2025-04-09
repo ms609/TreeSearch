@@ -103,7 +103,7 @@ has not improved after \code{stopAtPlateau} iterations.
 Will be overridden if a passed function has an attribute \code{stopAtPlateau} set
 by \code{attr(FunctionName, "stopAtPlateau") <- TRUE}.}
 
-\item{\dots}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
+\item{\dots}{further parameters to send to \code{TreeScorer()}}
 
 \item{tree}{A tree of class \code{\link[ape]{phylo}}.}
 

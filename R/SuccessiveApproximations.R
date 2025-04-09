@@ -12,7 +12,6 @@
 #' @param searchHits maximum hits in tree search
 #' @param searchIter maximum iterations in tree search
 #' @param ratchetIter maximum iterations of parsimony ratchet
-#' @template verbosityParam
 #' @param suboptimal retain trees that are this proportion less optimal than the optimal tree
 #' 
 #' @return `SuccessiveApproximations()` returns a list of class `multiPhylo`
