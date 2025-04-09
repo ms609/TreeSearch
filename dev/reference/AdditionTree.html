@@ -71,25 +71,19 @@ parsimonious location.</p>
 <dl><dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
 <dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
 <code>phyDat</code>, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a></code>.
-Additive (ordered) characters can be handled using
-<code><a href="https://ms609.github.io/TreeTools/reference/Decompose.html" class="external-link">Decompose</a></code>.</p></dd>
+Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a></code>.</p></dd>
 
 
 <dt id="arg-concavity">concavity<a class="anchor" aria-label="anchor" href="#arg-concavity"></a></dt>
-<dd><p>Determines the degree to which extra steps beyond the first
-are penalized.  Specify a numeric value to use implied weighting
-Goloboff1993TreeSearch; <code>concavity</code> specifies <em>k</em> in
-<em>k</em> / <em>e</em> + <em>k</em>. A value of 10 is recommended;
-TNT sets a default of 3, but this is too low in some circumstances
-Goloboff2018,Smith2019TreeSearch.
-Better still explore the sensitivity of results under a range of
-concavity values, e.g. <code>k = 2 ^ (1:7)</code>.
-Specify <code>Inf</code> to weight each additional step equally,
-(which underperforms step weighting approaches
-Goloboff2008,Goloboff2018,Goloboff2019,Smith2019TreeSearch).
-Specify <code>"profile"</code> to employ an approximation of profile parsimony
-Faith2001TreeSearch.</p></dd>
+<dd><p>Numeric specifying concavity constant for implied step
+weighting.
+The most appropriate value will depend on the dataset, but values around
+10–15 often perform well Goloboff2018,Smith2019TreeSearch.
+The character string "profile" employs an approximation of profile parsimony
+Faith2001TreeSearch.
+Set as <code>Inf</code> for equal step weights, which underperforms step weighting
+approaches
+Goloboff2008,Goloboff2018,Goloboff2019,Smith2019TreeSearch.</p></dd>
 
 
 <dt id="arg-constraint">constraint<a class="anchor" aria-label="anchor" href="#arg-constraint"></a></dt>
