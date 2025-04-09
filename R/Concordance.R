@@ -73,7 +73,7 @@
 #' # Write concordance factors to file
 #' labels <- paste0(qc, "/", cc, "/", pc) # "/" is a valid delimiter
 #' # Identify the node that corresponds to each label
-#' whichNode <- match(NTip(tree) + 1:tree$Nnode, names(qc))
+#' whichNode <- match(TreeTools::NTip(tree) + 1:tree$Nnode, names(qc))
 #' 
 #' # The contents of tree$node.label will be written at each node
 #' tree$node.label <- labels[whichNode]
