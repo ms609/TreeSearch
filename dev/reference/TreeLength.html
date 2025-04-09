@@ -105,7 +105,9 @@ uniformly sampled.</p></dd>
 <dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
 <dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
 <code>phyDat</code>, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a></code>.</p></dd>
+Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a></code>.
+Additive (ordered) characters can be handled using
+<code><a href="https://ms609.github.io/TreeTools/reference/Decompose.html" class="external-link">Decompose</a></code>.</p></dd>
 
 
 <dt id="arg-concavity">concavity<a class="anchor" aria-label="anchor" href="#arg-concavity"></a></dt>
@@ -117,8 +119,11 @@ TNT sets a default of 3, but this is too low in some circumstances
 Goloboff2018,Smith2019TreeSearch.
 Better still explore the sensitivity of results under a range of
 concavity values, e.g. <code>k = 2 ^ (1:7)</code>.
-Specify <code>Inf</code> to weight each additional step equally.
-Specify <code>"profile"</code> to employ profile parsimony Faith2001TreeSearch.</p></dd>
+Specify <code>Inf</code> to weight each additional step equally,
+(which underperforms step weighting approaches
+Goloboff2008,Goloboff2018,Goloboff2019,Smith2019TreeSearch).
+Specify <code>"profile"</code> to employ an approximation of profile parsimony
+Faith2001TreeSearch.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
