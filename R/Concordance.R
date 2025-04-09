@@ -78,7 +78,7 @@
 #' # The contents of tree$node.label will be written at each node
 #' tree$node.label <- labels[whichNode]
 #' 
-#' write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
+#' ape::write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
 #' 
 #' # Display correlation between concordance factors
 #' pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)
