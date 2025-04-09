@@ -211,7 +211,9 @@ Fitch <- function (tree, dataset) {
 #' 
 #' @template treeParam
 #' @inheritParams MaximizeParsimony
-#' @template compressParam
+#' @param compress Logical specifying whether to retain the compression of a
+#' `phyDat` object or to return a vector specifying to each individual
+#' character, decompressed using the dataset's `index` attribute.
 #'
 #' @return `CharacterLength()` returns a vector listing the contribution of each
 #' character to tree score, according to the algorithm of
