@@ -1,6 +1,6 @@
 #' @inheritParams TreeSearch
 #' @inheritParams EdgeListSearch
-#' @template morphyObjParam
+#' @inheritParams MorphyTreeLength
 #' @param maxIter Numeric specifying maximum number of iterations to perform in
 #' tree search.
 #' @param maxHits Numeric specifying maximum number of hits to accomplish in

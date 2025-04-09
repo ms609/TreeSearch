@@ -303,7 +303,8 @@ FastCharacterLength <- function (tree, dataset) {
 #' For most users, the function [`TreeLength()`] will be more appropriate.
 #' 
 #' @template labelledTreeParam
-#' @template morphyObjParam
+#' @param morphyObj Object of class `morphy`, perhaps created with 
+#' [`PhyDat2Morphy()`].
 #'
 #' @return `MorphyTreeLength()` returns the length of the tree,
 #' after applying weighting.

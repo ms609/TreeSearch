@@ -1,6 +1,6 @@
 #' Parsimony score of random postorder tree
 #' 
-#' @template morphyObjParam
+#' @inheritParams MorphyTreeLength
 #'
 #' @return `RandomTreeScore()` returns the parsimony score of a random tree
 #'  for the given Morphy object.
