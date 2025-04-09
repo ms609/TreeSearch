@@ -97,7 +97,7 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
 
 #' Check that all nodes in a tree are bifurcating.
 #' 
-#' @template treeParent
+#' @inheritParams TreeTools::NeworderPhylo
 #' 
 #' @return Returns `NULL`, but will `stop` with an error message if a tree
 #' does not appear to be bifurcating.
