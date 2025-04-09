@@ -53,7 +53,7 @@ JackLabels(tree, jackTrees)
 tree$node.label <- JackLabels(tree, jackTrees, plot = FALSE)
 
 # Write the labelled tree to screen
-write.tree(tree)
+ape::write.tree(tree)
 
 # Write labelled trees to a nexus file:
 # write.nexus(tree, file = filename)
