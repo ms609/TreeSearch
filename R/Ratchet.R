@@ -6,7 +6,7 @@
 #' For usage pointers, see the 
 #' [vignette](https://ms609.github.io/TreeSearch/articles/custom.html).
 #'
-#' @template treeParam 
+#' @inheritParams TreeTools::Renumber
 #' @param dataset a dataset in the format required by `TreeScorer()`.
 #' @inheritParams TreeSearch
 #' @inheritParams Bootstrap

@@ -3,7 +3,7 @@
 #' Searches for a tree that is optimal under the Successive Approximations 
 #' criterion \insertCite{Farris1969}{TreeSearch}.
 #'
-#' @template treeParam
+#' @inheritParams TreeTools::Renumber
 #' @inheritParams MaximizeParsimony
 #' @param outgroup if not NULL, taxa on which the tree should be rooted
 #' @param k Constant for successive approximations, see Farris 1969 p. 379

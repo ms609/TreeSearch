@@ -42,8 +42,9 @@
 #' tested, and may change without notice.
 #' Complete documentation and discussion will follow in due course.
 #' 
+# # Renumber before MaximizeParsimony, for `tree`
+#' @inheritParams TreeTools::Renumber
 #' @inheritParams MaximizeParsimony
-#' @template treeParam
 #' @param weight Logical specifying whether to weight sites according to the
 #' number of quartets they are decisive for.
 #' 
@@ -322,7 +323,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' not be calculated (too many states) and so are not included in the totals
 #' above.
 #' 
-#' @template treeParam
+#' @inheritParams TreeTools::Renumber
 #' @inheritParams MaximizeParsimony
 #' @examples
 #' data(congreveLamsdellMatrices)

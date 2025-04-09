@@ -209,7 +209,7 @@ Fitch <- function (tree, dataset) {
 #' 
 #' Homoplasy length of each character in a dataset on a specified tree.
 #' 
-#' @template treeParam
+#' @inheritParams TreeTools::Renumber
 #' @inheritParams MaximizeParsimony
 #' @param compress Logical specifying whether to retain the compression of a
 #' `phyDat` object or to return a vector specifying to each individual
@@ -334,8 +334,7 @@ MorphyTreeLength <- function (tree, morphyObj) {
 
 #' @describeIn MorphyTreeLength Faster function that requires internal tree
 #'   parameters. Node numbering must increase monotonically away from root.
-#' @template treeParent
-#' @template treeChild
+#' @inheritParams RearrangeEdges
 #' @author Martin R. Smith
 #' @keywords internal
 #' @importFrom TreeTools PostorderOrder Preorder

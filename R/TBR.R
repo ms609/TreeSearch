@@ -1,8 +1,7 @@
 #' TBR Warning
 #' Print a warning and return given tree
 #'
-#' @template treeParent
-#' @template treeChild
+#' @inheritParams TBRSwap
 #' @param error error message to report
 #'
 #' @return A list with the entries `parent`, `child`.
@@ -106,8 +105,8 @@ TBRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
 ## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn TBR faster version that takes and returns parent and child
 #'  parameters
-#' @template treeParent
-#' @template treeChild
+#' @inheritParams TreeTools::NeworderPhylo
+#' @inheritParams RearrangeEdges
 #' @param nEdge (optional) Number of edges.
 #' @return `TBRSwap()` returns a list containing two elements corresponding
 #' to the rearranged `parent` and `child` parameters.

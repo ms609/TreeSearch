@@ -20,7 +20,9 @@ Jackknife(
 )
 }
 \arguments{
-\item{tree}{A tree of class \code{\link[ape]{phylo}}.}
+\item{tree}{A fully-resolved starting tree in \code{\link[ape]{phylo}} format,
+with the desired outgroup.
+Edge lengths are not supported and will be removed.}
 
 \item{dataset}{a dataset in the format required by \code{TreeScorer()}.}
 

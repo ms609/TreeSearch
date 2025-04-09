@@ -13,7 +13,7 @@ Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
 Additive (ordered) characters can be handled using
 \code{\link[TreeTools]{Decompose}}.}
 
-\item{tree}{A tree of class \code{\link[ape]{phylo}}.}
+\item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
 \code{phyDat} object or to return a vector specifying to each individual

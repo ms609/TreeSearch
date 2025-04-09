@@ -165,7 +165,7 @@
 #######' in which case the starting tree is returned.
 #######'
 #######''
-#######' @template treeParam 
+#######' @inheritParams TreeTools::Renumber
 #######' @param dataset a dataset in the format required by `TreeScorer()`.
 #######' @importParams TreeSearch
 #########' @param Bootstrapper Function to perform bootstrapped rearrangements of tree. 

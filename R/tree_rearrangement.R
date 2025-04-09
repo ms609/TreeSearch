@@ -10,10 +10,9 @@
 #'  It also reports the number of times that this score was hit in the 
 #'  current function call.
 #' 
-#' @template treeParent
-#' @template treeChild
 #' @param dataset Third argument to pass to \code{TreeScorer}.
 #' @inheritParams TreeSearch
+#' @inheritParams TreeTools::NeworderPhylo
 #' @param scoreToBeat Double giving score of input tree.
 #' @param hits Integer giving number of times the input tree has already been hit.
 ## @param  minScore trees longer than \code{minScore}, probably the score of the best previously known tree,
