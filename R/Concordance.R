@@ -69,6 +69,16 @@
 #' TreeTools::LabelSplits(tree, signif(cc, 3), cex = 0.8)
 #' par(oPar) # Restore plotting parameters
 #' 
+#' # Write concordance factors to file
+#' labels <- paste0(qc, "/", cc, "/", pc) # "/" is a valid delimiter
+#' # Identify the node that corresponds to each label
+#' whichNode <- match(NTip(tree) + 1:tree$Nnode, names(qc))
+#' 
+#' # The contents of tree$node.label will be written at each node
+#' tree$node.label <- labels[whichNode]
+#' 
+#' write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
+#' 
 #' # Display correlation between concordance factors
 #' pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)
 #' @template MRS
