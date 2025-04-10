@@ -38,7 +38,7 @@
 #' representative summary of comparisons between sets of trees.
 #' 
 #' 
-#' @template datasetParam
+#' @inheritParams MaximizeParsimony
 #' @param tree Optimal tree or summary tree (of class "phylo") or list of trees
 #' (of class "list" or "multiPhylo") against which results should be evaluated.
 #' If `NULL`, an optimal tree will be sought using parsimony search with 

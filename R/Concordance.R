@@ -61,11 +61,11 @@
 #' tested, and may change without notice.
 #' Complete documentation and discussion will follow in due course.
 #' 
-#' @template treeParam
-#' @template datasetParam
+# # Renumber before MaximizeParsimony, for `tree`
+#' @inheritParams TreeTools::Renumber
+#' @inheritParams MaximizeParsimony
 #' @param method Character vector specifying which concordance measures to
 #' calculate.  See details section for available options.
-#' 
 #' 
 #' 
 #' 
@@ -92,12 +92,12 @@
 #' # Write concordance factors to file
 #' labels <- paste0(qc, "/", cc, "/", pc) # "/" is a valid delimiter
 #' # Identify the node that corresponds to each label
-#' whichNode <- match(NTip(tree) + 1:tree$Nnode, names(qc))
+#' whichNode <- match(TreeTools::NTip(tree) + 1:tree$Nnode, names(qc))
 #' 
 #' # The contents of tree$node.label will be written at each node
 #' tree$node.label <- labels[whichNode]
 #' 
-#' write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
+#' ape::write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
 #' 
 #' # Display correlation between concordance factors
 #' pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)
@@ -481,8 +481,8 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' not be calculated (too many states) and so are not included in the totals
 #' above.
 #' 
-#' @template treeParam
-#' @template datasetParam
+#' @inheritParams TreeTools::Renumber
+#' @inheritParams MaximizeParsimony
 #' @examples
 #' data(congreveLamsdellMatrices)
 #' myMatrix <- congreveLamsdellMatrices[[10]]

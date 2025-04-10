@@ -20,11 +20,13 @@ MutualClusteringConcordance(tree, dataset)
 SharedPhylogeneticConcordance(tree, dataset)
 }
 \arguments{
-\item{tree}{A tree of class \code{\link[ape]{phylo}}.}
+\item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.}
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+Additive (ordered) characters can be handled using
+\code{\link[TreeTools]{Decompose}}.}
 
 \item{method}{Character vector specifying which concordance measures to
 calculate.  See details section for available options.}
@@ -100,12 +102,12 @@ par(oPar) # Restore plotting parameters
 # Write concordance factors to file
 labels <- paste0(qc, "/", cc, "/", pc) # "/" is a valid delimiter
 # Identify the node that corresponds to each label
-whichNode <- match(NTip(tree) + 1:tree$Nnode, names(qc))
+whichNode <- match(TreeTools::NTip(tree) + 1:tree$Nnode, names(qc))
 
 # The contents of tree$node.label will be written at each node
 tree$node.label <- labels[whichNode]
 
-write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
+ape::write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
 
 # Display correlation between concordance factors
 pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)

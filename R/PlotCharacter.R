@@ -6,7 +6,7 @@
 #' 
 #' @param tree A bifurcating tree of class `phylo`, or a list or `multiPhylo`
 #' object containing such trees.
-#' @template datasetParam
+#' @inheritParams MaximizeParsimony
 #' @param char Index of character to plot.
 #' @param updateTips Logical; if `FALSE`, tips will be labelled with their
 #' original state in `dataset`.

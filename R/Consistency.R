@@ -36,9 +36,7 @@
 #' following \insertCite{Brazeau2019;textual}{TreeSearch}, matching their
 #' default treatment in [`TreeLength()`].
 #' 
-#' @template datasetParam
-#' @template treeParam
-#' @template compressParam
+#' @inheritParams CharacterLength
 #' 
 #' @return `Consistency()` returns a matrix with named columns specifying the 
 #' consistency index (`ci`),

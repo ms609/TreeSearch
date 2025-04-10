@@ -3,8 +3,8 @@
 #' Searches for a tree that is optimal under the Successive Approximations 
 #' criterion \insertCite{Farris1969}{TreeSearch}.
 #'
-#' @template treeParam
-#' @template datasetParam
+#' @inheritParams TreeTools::Renumber
+#' @inheritParams MaximizeParsimony
 #' @param outgroup if not NULL, taxa on which the tree should be rooted
 #' @param k Constant for successive approximations, see Farris 1969 p. 379
 #' @param maxSuccIter maximum iterations of successive approximation
@@ -12,7 +12,6 @@
 #' @param searchHits maximum hits in tree search
 #' @param searchIter maximum iterations in tree search
 #' @param ratchetIter maximum iterations of parsimony ratchet
-#' @template verbosityParam
 #' @param suboptimal retain trees that are this proportion less optimal than the optimal tree
 #' 
 #' @return `SuccessiveApproximations()` returns a list of class `multiPhylo`

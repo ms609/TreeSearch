@@ -20,7 +20,9 @@ Jackknife(
 )
 }
 \arguments{
-\item{tree}{A tree of class \code{\link[ape]{phylo}}.}
+\item{tree}{A fully-resolved starting tree in \code{\link[ape]{phylo}} format,
+with the desired outgroup.
+Edge lengths are not supported and will be removed.}
 
 \item{dataset}{a dataset in the format required by \code{TreeScorer()}.}
 
@@ -56,7 +58,7 @@ To override this value for a single swapper function, set e.g.
 \item{verbosity}{Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.}
 
-\item{...}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
+\item{...}{further parameters to send to \code{TreeScorer()}}
 }
 \value{
 \code{Jackknife()} returns a list of trees recovered after jackknife

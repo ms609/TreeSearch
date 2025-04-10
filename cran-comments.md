@@ -10,7 +10,9 @@
   - Mac OS X 10.15.7, R release
   - Microsoft Windows Server 2019 10.0.17763, R release
   
-* R-hub, with `rhub::check_for_cran()` and `devtools::check_win_devel()`
+* [R-hub](https://github.com/ms609/TreeSearch/actions/workflows/rhub.yaml)
+
+* `devtools::check_win_devel()`
 
 
 ## R CMD check results

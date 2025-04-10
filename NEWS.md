@@ -1,33 +1,24 @@
-# TreeSearch 1.5.1.9007 (2025-05)
+# TreeSearch 1.6.0.9000 (2025-05)
 
 - `QuartetConcordance(method = "minh")` uses the approach of Minh et al. (2020)
 
-# TreeSearch 1.5.1.9006 (2025-02)
 
+# TreeSearch 1.6.0 (2025-04-09)
+
+## Improvements
 - `PlotCharacter()` performs ancestral state reconstruction on consensus trees
-  [#179](https://github.com/ms609/TreeSearch/issues/179)
-
-# TreeSearch 1.5.1.9005 (2025-02)
-
-- Support for ordered (additive) characters
-- Require R 4.0 (to simplify maintenance)
-
-# TreeSearch 1.5.1.9003 (2025-02)
-
+  ([#179](https://github.com/ms609/TreeSearch/issues/179))
 - Improve support for constraints in `AdditionTree()`
-  [#173](https://github.com/ms609/TreeSearch/issues/173)
-
-# TreeSearch 1.5.1.9002 (2025-01)
-
-- Buttons to download consensus trees in app
-
-# TreeSearch 1.5.1.9001 (2024-12)
-
+  ([#173](https://github.com/ms609/TreeSearch/issues/173))
+- Support for ordered (additive) characters via `TreeTools::Decompose()`
 - Fix SPR behaviour when move is close to root
 
-# TreeSearch 1.5.1.9000 (2024-10)
-
+## App improvements
+- Buttons to download consensus trees in app
 - Fix display of state labels in app
+
+## Housekeeping
+- Require R 4.0 (to simplify maintenance)
 
 
 # TreeSearch 1.5.1 (2024-05-23)

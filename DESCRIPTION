@@ -1,6 +1,6 @@
 Package: TreeSearch
 Title: Phylogenetic Analysis with Discrete Character Data
-Version: 1.5.1.9007
+Version: 1.6.0.9000
 Authors@R: c(
     person(
       "Martin R.", 'Smith',
@@ -18,7 +18,7 @@ License: GPL (>= 3)
 Copyright: Incorporates C/C++ code from
    Morphy Phylogenetic Library by Martin Brazeau 
    <https://github.com/mbrazeau/MorphyLib> (GPL3)
-Description: Reconstruct phylogenetic trees from discrete data.
+Description: Reconstruct phylogenetic trees from discrete/morphological data.
   Inapplicable character states are handled using the algorithm of Brazeau,
   Guillerme and Smith (2019) <doi:10.1093/sysbio/syy083> with the "Morphy"
   library, under equal or implied step weights.

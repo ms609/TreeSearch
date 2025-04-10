@@ -17,7 +17,7 @@ JackLabels(
 )
 }
 \arguments{
-\item{tree}{A tree of class \code{\link[ape]{phylo}}.}
+\item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{jackTrees}{A list or \code{multiPhylo} object containing trees generated
 by \code{\link[=Jackknife]{Jackknife()}}.}
@@ -53,7 +53,7 @@ JackLabels(tree, jackTrees)
 tree$node.label <- JackLabels(tree, jackTrees, plot = FALSE)
 
 # Write the labelled tree to screen
-write.tree(tree)
+ape::write.tree(tree)
 
 # Write labelled trees to a nexus file:
 # write.nexus(tree, file = filename)

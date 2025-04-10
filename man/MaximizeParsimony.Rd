@@ -48,7 +48,9 @@ EasyTreesy()
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.}
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+Additive (ordered) characters can be handled using
+\code{\link[TreeTools]{Decompose}}.}
 
 \item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}},
 containing only the tips listed in \code{dataset}, from which the search
@@ -85,15 +87,19 @@ next opportunity.}
 \item{quickHits}{Numeric: iterations on subsampled datasets
 will retain \code{quickHits} × \code{maxHits} trees with the best score.}
 
-\item{concavity}{Numeric specifying concavity constant for implied step
-weighting.
-The most appropriate value will depend on the dataset, but values around
-10--15 often perform well \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
-The character string "profile" employs an approximation of profile parsimony
-\insertCite{Faith2001}{TreeSearch}.
-Set as \code{Inf} for equal step weights, which underperforms step weighting
-approaches
-\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.}
+\item{concavity}{Determines the degree to which extra steps beyond the first
+are penalized.  Specify a numeric value to use implied weighting
+\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
+\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+TNT sets a default of 3, but this is too low in some circumstances
+\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+Better still explore the sensitivity of results under a range of
+concavity values, e.g. \code{k = 2 ^ (1:7)}.
+Specify \code{Inf} to weight each additional step equally,
+(which underperforms step weighting approaches
+\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
+Specify \code{"profile"} to employ an approximation of profile parsimony
+\insertCite{Faith2001}{TreeSearch}.}
 
 \item{ratchEW}{Logical specifying whether to use equal weighting during
 ratchet iterations, improving search speed whilst still facilitating

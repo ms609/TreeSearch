@@ -16,7 +16,7 @@
 #' 
 #' Inapplicable tokens should be denoted with the integer `0` (not 2^0).
 #' 
-#' @template compressParam
+#' @inheritParams CharacterLength
 #' 
 #' @return `MinimumLength()` returns a vector of integers specifying the 
 #' minimum number of steps that each character must contain.

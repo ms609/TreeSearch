@@ -6,15 +6,19 @@
 #' For usage pointers, see the 
 #' [vignette](https://ms609.github.io/TreeSearch/articles/custom.html).
 #'
-#' @template treeParam 
+#' @inheritParams TreeTools::Renumber
 #' @param dataset a dataset in the format required by `TreeScorer()`.
-#' @template InitializeDataParam
-#' @template CleanUpDataParam
-#' @template treeScorerParam
+#' @inheritParams TreeSearch
+#' @inheritParams Bootstrap
 #' @param Bootstrapper Function to perform bootstrapped rearrangements of tree.
 #' First arguments will be an `edgeList` and a dataset, initialized using 
 #' `InitializeData()`. Should return a rearranged `edgeList`.
-#' @template swappersParam
+#' @param swappers A list of functions to use to conduct edge rearrangement during tree search.
+#'                 Provide functions like \code{\link{NNISwap}} to shuffle root position,
+#'                 or \code{\link{RootedTBRSwap}} if the position of the root should be retained.
+#'                 You may wish to use extreme swappers (such as \acronym{TBR}) early in the list,
+#'                 and a more subtle rearranger (such as \acronym{NNI}) later in the list to make
+#'                 incremental tinkerings once an almost-optimal tree has been found.
 #' @param BootstrapSwapper Function such as \code{\link{RootedNNISwap}} to use 
 #' to rearrange trees within `Bootstrapper()`.
 #' @param returnAll Set to \code{TRUE} to report all MPTs encountered during the
@@ -34,13 +38,8 @@
 #'  iteration (default: `searchIter`).
 #' @param bootstrapHits Integer specifying maximum times to hit best score on each bootstrap 
 #' iteration (default: `searchHits`).
-#' @template stopAtScoreParam
-#' @template stopAtPeakParam
-#' @template stopAtPlateauParam
-#' @template verbosityParam
 #' @param suboptimal retain trees that are suboptimal by this score.
 #'  Defaults to a small value that will counter rounding errors.
-#' @template treeScorerDots
 #' 
 #' @return `Ratchet()` returns a tree modified by parsimony ratchet iterations.
 #'

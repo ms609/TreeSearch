@@ -9,7 +9,6 @@
 #' or e-mail the maintainer.
 #' 
 #' @inheritParams Ratchet
-#' @template EdgeSwapperParam
 #' @param resampleFreq Double between 0 and 1 stating proportion of characters 
 #' to resample.
 #' @param jackIter Integer specifying number of jackknife iterations to conduct.
@@ -88,7 +87,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 
 #' Label nodes with jackknife support values
 #' 
-#' @template treeParam
+#' @inheritParams TreeTools::Renumber
 #' @param jackTrees A list or `multiPhylo` object containing trees generated
 #' by [`Jackknife()`].
 #' @param add Logical specifying whether to add the labels to an existing
@@ -116,7 +115,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' tree$node.label <- JackLabels(tree, jackTrees, plot = FALSE)
 #' 
 #' # Write the labelled tree to screen
-#' write.tree(tree)
+#' ape::write.tree(tree)
 #'
 #' # Write labelled trees to a nexus file:
 #' # write.nexus(tree, file = filename)
