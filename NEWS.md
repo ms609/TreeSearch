@@ -1,3 +1,8 @@
+# TreeSearch 1.6.0.9000 (2025-05)
+
+- `QuartetConcordance(method = "minh")` uses the approach of Minh et al. (2020)
+
+
 # TreeSearch 1.6.0 (2025-04-09)
 
 ## Improvements
