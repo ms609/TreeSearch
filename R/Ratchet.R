@@ -67,22 +67,22 @@
 #' @family custom search functions
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @export
-Ratchet <- function (tree, dataset, 
-                     InitializeData = PhyDat2Morphy,
-                     CleanUpData    = UnloadMorphy,
-                     TreeScorer     = MorphyLength,
-                     Bootstrapper   = MorphyBootstrap,
-                     swappers = list(TBRSwap, SPRSwap, NNISwap),
-                     BootstrapSwapper = if (is.list(swappers))
-                      swappers[[length(swappers)]] else swappers,
-                     returnAll = FALSE, stopAtScore = NULL,
-                     stopAtPeak = FALSE, stopAtPlateau = 0L, 
-                     ratchIter = 100, ratchHits = 10,
-                     searchIter = 4000, searchHits = 42,
-                     bootstrapIter = searchIter, bootstrapHits = searchHits,
-                     verbosity = 1L, 
-                     suboptimal = sqrt(.Machine[["double.eps"]]), ...) {
-  epsilon <- 1e-08
+Ratchet <- function(tree, dataset, 
+                    InitializeData = PhyDat2Morphy,
+                    CleanUpData    = UnloadMorphy,
+                    TreeScorer     = MorphyLength,
+                    Bootstrapper   = MorphyBootstrap,
+                    swappers = list(TBRSwap, SPRSwap, NNISwap),
+                    BootstrapSwapper = if (is.list(swappers))
+                     swappers[[length(swappers)]] else swappers,
+                    returnAll = FALSE, stopAtScore = NULL,
+                    stopAtPeak = FALSE, stopAtPlateau = 0L, 
+                    ratchIter = 100, ratchHits = 10,
+                    searchIter = 4000, searchHits = 42,
+                    bootstrapIter = searchIter, bootstrapHits = searchHits,
+                    verbosity = 1L, 
+                    suboptimal = sqrt(.Machine[["double.eps"]]), ...) {
+  epsilon <- sqrt(.Machine[["double.eps"]])
   hits <- 0L
   # initialize tree and data
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
