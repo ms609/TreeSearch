@@ -45,13 +45,13 @@ and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRS
 
 \item{jackIter}{Integer specifying number of jackknife iterations to conduct.}
 
-\item{searchIter}{Integer specifying maximum rearrangements to perform on each bootstrap or
-ratchet iteration.
+\item{searchIter}{Integer specifying maximum rearrangements to perform on
+each bootstrap or ratchet iteration.
 To override this value for a single swapper function, set e.g.
 \code{attr(SwapperFunction, "searchIter") <- 99}}
 
-\item{searchHits}{Integer specifying maximum times to hit best score before terminating a tree
-search within a ratchet iteration.
+\item{searchHits}{Integer specifying maximum times to hit best score before
+terminating a tree search within a ratchet iteration.
 To override this value for a single swapper function, set e.g.
 \code{attr(SwapperFunction, "searchHits") <- 99}}
 
