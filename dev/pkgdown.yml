@@ -1,6 +1,6 @@
 pandoc: 3.1.11
-pkgdown: 2.1.1
-pkgdown_sha: ~
+pkgdown: 2.1.1.9000
+pkgdown_sha: 2f04495db2502e7a621ffcb38d823c30a952b84a
 articles:
   custom: custom.html
   getting-started: getting-started.html
@@ -8,7 +8,7 @@ articles:
   profile: profile.html
   tree-search: tree-search.html
   tree-space: tree-space.html
-last_built: 2025-04-28T07:44Z
+last_built: 2025-04-28T08:29Z
 urls:
   reference: https://ms609.github.io/TreeSearch/reference
   article: https://ms609.github.io/TreeSearch/articles
