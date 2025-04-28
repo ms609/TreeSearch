@@ -1,3 +1,7 @@
+# TreeSearch 1.6.0.9000 (development)
+- Tweak documentation
+
+
 # TreeSearch 1.6.0 (2025-04-09)
 
 ## Improvements
