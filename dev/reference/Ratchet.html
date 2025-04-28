@@ -15,7 +15,7 @@ to search for a more parsimonious tree using custom optimality criteria."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.5.1.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.6.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -176,11 +176,13 @@ by <code>attr(FunctionName, "stopAtPlateau") &lt;- TRUE</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>further arguments to pass to <code>TreeScorer()</code>, e.g. <code>dataset = </code>.</p></dd>
+<dd><p>further parameters to send to <code>TreeScorer()</code></p></dd>
 
 
 <dt id="arg-tree">tree<a class="anchor" aria-label="anchor" href="#arg-tree"></a></dt>
-<dd><p>A tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.</p></dd>
+<dd><p>A fully-resolved starting tree in <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code> format,
+with the desired outgroup.
+Edge lengths are not supported and will be removed.</p></dd>
 
 
 <dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
@@ -211,12 +213,14 @@ First arguments will be an <code>edgeList</code> and a dataset, initialized usin
 
 
 <dt id="arg-swappers">swappers<a class="anchor" aria-label="anchor" href="#arg-swappers"></a></dt>
-<dd><p>A list of functions to use to conduct edge rearrangement during tree search.
+<dd><p>A list of functions to use to conduct edge rearrangement
+during tree search.
 Provide functions like <code><a href="NNI.html">NNISwap</a></code> to shuffle root position,
-or <code><a href="TBR.html">RootedTBRSwap</a></code> if the position of the root should be retained.
-You may wish to use extreme swappers (such as <acronym>TBR</acronym>) early in the list,
-and a more subtle rearranger (such as <acronym>NNI</acronym>) later in the list to make
-incremental tinkerings once an almost-optimal tree has been found.</p></dd>
+or <code><a href="TBR.html">RootedTBRSwap</a></code> if the position of the root should be
+retained.
+You may wish to use extreme swappers (such as <acronym>TBR</acronym>) early in the
+list, and a more subtle rearranger (such as <acronym>NNI</acronym>) later in the list
+to make incremental tinkerings once an almost-optimal tree has been found.</p></dd>
 
 
 <dt id="arg-bootstrapswapper">BootstrapSwapper<a class="anchor" aria-label="anchor" href="#arg-bootstrapswapper"></a></dt>
@@ -243,27 +247,27 @@ best score.</p></dd>
 
 
 <dt id="arg-searchiter">searchIter<a class="anchor" aria-label="anchor" href="#arg-searchiter"></a></dt>
-<dd><p>Integer specifying maximum rearrangements to perform on each bootstrap or
-ratchet iteration.
+<dd><p>Integer specifying maximum rearrangements to perform on
+each bootstrap or ratchet iteration.
 To override this value for a single swapper function, set e.g.
 <code>attr(SwapperFunction, "searchIter") &lt;- 99</code></p></dd>
 
 
 <dt id="arg-searchhits">searchHits<a class="anchor" aria-label="anchor" href="#arg-searchhits"></a></dt>
-<dd><p>Integer specifying maximum times to hit best score before terminating a tree
-search within a ratchet iteration.
+<dd><p>Integer specifying maximum times to hit best score before
+terminating a tree search within a ratchet iteration.
 To override this value for a single swapper function, set e.g.
 <code>attr(SwapperFunction, "searchHits") &lt;- 99</code></p></dd>
 
 
 <dt id="arg-bootstrapiter">bootstrapIter<a class="anchor" aria-label="anchor" href="#arg-bootstrapiter"></a></dt>
-<dd><p>Integer specifying maximum rearrangements to perform on each bootstrap
-iteration (default: <code>searchIter</code>).</p></dd>
+<dd><p>Integer specifying maximum rearrangements to perform on
+each bootstrap iteration (default: <code>searchIter</code>).</p></dd>
 
 
 <dt id="arg-bootstraphits">bootstrapHits<a class="anchor" aria-label="anchor" href="#arg-bootstraphits"></a></dt>
-<dd><p>Integer specifying maximum times to hit best score on each bootstrap
-iteration (default: <code>searchHits</code>).</p></dd>
+<dd><p>Integer specifying maximum times to hit best score on
+each bootstrap iteration (default: <code>searchHits</code>).</p></dd>
 
 
 <dt id="arg-suboptimal">suboptimal<a class="anchor" aria-label="anchor" href="#arg-suboptimal"></a></dt>
@@ -282,9 +286,8 @@ Defaults to a small value that will counter rounding errors.</p></dd>
 sampling of the original characters.</p>
 <p><code>Ratchet()</code> returns a tree modified by parsimony ratchet iterations.</p>
 <p><code>MultiRatchet()</code> returns a list of optimal trees
-produced by <code>nSearch</code>
-ratchet searches, from which a consensus tree can be generated using
-<code><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">ape::consensus()</a></code> or <code><a href="https://ms609.github.io/TreeTools/reference/ConsensusWithout.html" class="external-link">TreeTools::ConsensusWithout()</a></code>.</p>
+produced by <code>nSearch</code> <code>Ratchet()</code> searches, from which a consensus tree can
+be generated using <code><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">ape::consensus()</a></code> or <code><a href="https://ms609.github.io/TreeTools/reference/ConsensusWithout.html" class="external-link">TreeTools::ConsensusWithout()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

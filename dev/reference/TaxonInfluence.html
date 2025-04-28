@@ -15,7 +15,7 @@ parsimonious topology."><meta name="robots" content="noindex"><!-- Global site t
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.5.1.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.6.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,7 +80,9 @@ parsimonious topology.</p>
 <dl><dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
 <dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
 <code>phyDat</code>, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a></code>.</p></dd>
+Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a></code>.
+Additive (ordered) characters can be handled using
+<code><a href="https://ms609.github.io/TreeTools/reference/Decompose.html" class="external-link">Decompose</a></code>.</p></dd>
 
 
 <dt id="arg-tree">tree<a class="anchor" aria-label="anchor" href="#arg-tree"></a></dt>
@@ -205,8 +207,8 @@ representative summary of comparisons between sets of trees.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Sample local optimum</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → TBR depth 2; keeping 14.4 trees; k = Inf</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-04-09 13:56:49: Score: 86</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-04-09 13:56:49: Tree search terminated with score <span style="font-weight: bold;">82</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-04-28 07:13:49: Score: 86</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-04-28 07:13:49: Tree search terminated with score <span style="font-weight: bold;">82</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Colour tip labels according to their influence</span></span></span>
 <span class="r-in"><span><span class="va">upperBound</span> <span class="op">&lt;-</span> <span class="fl">2</span> <span class="op">*</span> <span class="fu">TreeDist</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeDist/reference/TreeInfo.html" class="external-link">ClusteringEntropy</a></span><span class="op">(</span></span></span>

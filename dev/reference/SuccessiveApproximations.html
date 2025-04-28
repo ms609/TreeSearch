@@ -15,7 +15,7 @@ criterion Farris1969TreeSearch."><meta name="robots" content="noindex"><!-- Glob
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.5.1.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.6.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,7 +89,9 @@ criterion Farris1969TreeSearch.</p>
 <dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
 <dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
 <code>phyDat</code>, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a></code>.</p></dd>
+Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a></code>.
+Additive (ordered) characters can be handled using
+<code><a href="https://ms609.github.io/TreeTools/reference/Decompose.html" class="external-link">Decompose</a></code>.</p></dd>
 
 
 <dt id="arg-outgroup">outgroup<a class="anchor" aria-label="anchor" href="#arg-outgroup"></a></dt>
@@ -121,8 +123,8 @@ Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/refer
 
 
 <dt id="arg-verbosity">verbosity<a class="anchor" aria-label="anchor" href="#arg-verbosity"></a></dt>
-<dd><p>Numeric specifying level of detail to display in console:
-larger numbers provide more verbose feedback to the user.</p></dd>
+<dd><p>Integer specifying level of messaging; higher values give
+more detailed commentary on search progress. Set to <code>0</code> to run silently.</p></dd>
 
 
 <dt id="arg-suboptimal">suboptimal<a class="anchor" aria-label="anchor" href="#arg-suboptimal"></a></dt>

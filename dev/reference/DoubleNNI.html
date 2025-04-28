@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.5.1.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.6.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,19 +67,24 @@
 
 <dl><dt id="arg-parent">parent<a class="anchor" aria-label="anchor" href="#arg-parent"></a></dt>
 <dd><p>Integer vector corresponding to the first column of the edge
-matrix of a tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>, i.e. <code>tree$edge[, 1]</code>.</p></dd>
+matrix of a tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>, i.e.
+<code>tree[["edge"]][, 1]</code></p></dd>
 
 
 <dt id="arg-child">child<a class="anchor" aria-label="anchor" href="#arg-child"></a></dt>
 <dd><p>Integer vector corresponding to the second column of the edge
-matrix of a tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>, i.e. <code>tree$edge[, 2]</code>.</p></dd>
+matrix of a tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>, i.e.
+<code>tree[["edge"]][, 2]</code>.</p></dd>
 
 
 <dt id="arg-edgetobreak">edgeToBreak<a class="anchor" aria-label="anchor" href="#arg-edgetobreak"></a></dt>
-<dd><p>(optional) integer specifying the index of an edge to bisect/prune,
-generated randomly if not specified.
-Alternatively, set to <code>-1</code> to return a complete list
-of all trees one step from the input tree.</p></dd>
+<dd><p>In (<code>Rooted</code>/<code>Double</code>)<code><a href="NNI.html">NNI()</a></code>, an optional integer
+specifying the index of an edge to rearrange, generated randomly if not
+specified.
+If <code>-1</code>, a complete list of all trees one step from the input tree
+will be returned.
+In <code><a href="NNI.html">cNNI()</a></code>, an integer from zero to <code>nEdge(tree) - nTip(tree) - 2</code>,
+specifying which internal edge to break.</p></dd>
 
 </dl></div>
     <div class="section level2">
