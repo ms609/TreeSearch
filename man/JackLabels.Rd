@@ -20,7 +20,7 @@ JackLabels(
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{jackTrees}{A list or \code{multiPhylo} object containing trees generated
-by \code{\link[=Jackknife]{Jackknife()}}.}
+by \code{\link[=Resample]{Resample()}} or \code{\link[=Jackknife]{Jackknife()}}.}
 
 \item{plot}{Logical specifying whether to plot results; if \code{FALSE},
 returns blank labels for nodes near the root that do not correspond to a
@@ -44,7 +44,8 @@ Label nodes with jackknife support values
 \examples{
 library("TreeTools", quietly = TRUE) # for as.phylo
 
-# jackTrees will usually be generated with Jackknife(), but for simplicity:
+# jackTrees will usually be generated with Jackknife() or Resample(),
+# but for simplicity:
 jackTrees <- as.phylo(1:100, 8)
 
 tree <- as.phylo(0, 8)
@@ -59,7 +60,8 @@ ape::write.tree(tree)
 # write.nexus(tree, file = filename)
 }
 \seealso{
-\code{\link[=Jackknife]{Jackknife()}}: Generate trees by jackknife resampling
+Generate trees by jackknife resampling using \code{\link[=Resample]{Resample()}} for standard
+parsimony searches, or \code{\link[=Jackknife]{Jackknife()}} for custom search criteria.
 
 Other split support functions: 
 \code{\link{Jackknife}()},

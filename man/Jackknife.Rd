@@ -76,6 +76,8 @@ or e-mail the maintainer.
 }
 \seealso{
 \itemize{
+\item \code{\link[=Resample]{Resample()}}: Jackknife resampling for non-custom searches performed
+using \code{MaximizeParsimony()}.
 \item \code{\link[=JackLabels]{JackLabels()}}: Label nodes of a tree with jackknife supports.
 }
 

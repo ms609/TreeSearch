@@ -17,6 +17,8 @@
 #' @template MRS
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @seealso 
+#' - [`Resample()`]: Jackknife resampling for non-custom searches performed
+#'   using `MaximizeParsimony()`.
 #' - [`JackLabels()`]: Label nodes of a tree with jackknife supports.
 #' @family split support functions
 #' @family custom search functions
@@ -89,7 +91,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' 
 #' @inheritParams TreeTools::Renumber
 #' @param jackTrees A list or `multiPhylo` object containing trees generated
-#' by [`Jackknife()`].
+#' by [`Resample()`] or [`Jackknife()`].
 #' @param add Logical specifying whether to add the labels to an existing
 #' plot.
 #' @param adj,col,frame,pos,\dots Parameters to pass to `nodelabels()`.
@@ -106,7 +108,8 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' @examples
 #' library("TreeTools", quietly = TRUE) # for as.phylo
 #' 
-#' # jackTrees will usually be generated with Jackknife(), but for simplicity:
+#' # jackTrees will usually be generated with Jackknife() or Resample(),
+#' # but for simplicity:
 #' jackTrees <- as.phylo(1:100, 8)
 #' 
 #' tree <- as.phylo(0, 8)
@@ -122,7 +125,9 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' @template MRS
 #' @importFrom ape nodelabels
 #' @importFrom TreeTools SplitFrequency SupportColour
-#' @seealso [`Jackknife()`]: Generate trees by jackknife resampling
+#' @seealso
+#' Generate trees by jackknife resampling using [`Resample()`] for standard
+#' parsimony searches, or [`Jackknife()`] for custom search criteria.
 #' @family split support functions
 #' @export
 JackLabels <- function (tree, jackTrees,
