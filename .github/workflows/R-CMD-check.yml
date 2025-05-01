@@ -84,11 +84,19 @@ jobs:
 
       - name: Set up R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
+        if: runner.os != 'Windows'
         with:
           needs: |
             check
           extra-packages: |
             phangorn=?ignore-before-r=4.1.0
+
+      - name: Set up R dependencies (covr)
+        uses: r-lib/actions/setup-r-dependencies@v2
+        if: runner.os == 'Windows'
+        with:
+          needs: |
+            coverage
 
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
