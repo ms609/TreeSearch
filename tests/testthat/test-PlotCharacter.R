@@ -133,6 +133,17 @@ test_that("Edge cases work", {
   }
 })
 
+test_that("PlotCharacter() with wide rootings", {
+  trees <- c(
+    ape::read.tree(text = "((c, (a, d)), (e, (f, (g, (h, b)))));"),
+    ape::read.tree(text = "((c, (a, d)), (e, (f, (b, (h, g)))));")
+  )
+  rooted <- RootTree(trees, c("a", "b"))
+  PlotCharacter(rooted,
+                TreeTools::StringToPhyDat("00111111", tips = trees[[1]]),
+                plot = FALSE)
+})
+
 test_that("Out-of-sequence works", {
   skip_if_not_installed("vdiffr")
   vdiffr::expect_doppelganger("PlotChar_out-of-sequence", function () {
