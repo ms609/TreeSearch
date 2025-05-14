@@ -6,6 +6,15 @@ test_that("PlotCharacter.phylo()", {
   expect_error(PlotCharacter(TreeTools::StarTree(12), dataset),
                "bifurcating")
   
+  trs <- c(RootTree(TreeTools::PectinateTree(12), c("t9", "t12")),
+           RootTree(TreeTools::PectinateTree(12), c("t11", "t12")))
+  og <- paste0("t", c(1, 12))
+  Disp <- function(tr) {
+    TreeTools::SortTree(RootTree(tr, og))
+  }
+  expect_error(PlotCharacter(trs, dataset, Display = Disp),
+               "Clades from consensus tree not in tree 2:\n  t10, t11, t12, t9;\n  t10, t11, t12")
+  
   Character <- function (str, plot = FALSE, edges = FALSE, ...) {
     tree <- ape::read.tree(text = 
      "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
