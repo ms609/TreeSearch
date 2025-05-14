@@ -6,16 +6,7 @@ test_that("PlotCharacter.phylo()", {
   expect_error(PlotCharacter(TreeTools::StarTree(12), dataset),
                "bifurcating")
   
-  trs <- c(RootTree(TreeTools::PectinateTree(12), c("t9", "t12")),
-           RootTree(TreeTools::PectinateTree(12), c("t11", "t12")))
-  og <- paste0("t", c(1, 12))
-  Disp <- function(tr) {
-    TreeTools::SortTree(RootTree(tr, og))
-  }
-  expect_error(PlotCharacter(trs, dataset, Display = Disp),
-               "Clades from consensus tree not in tree 2:\n  t10, t11, t12, t9;\n  t10, t11, t12")
-  
-  Character <- function (str, plot = FALSE, edges = FALSE, ...) {
+  Character <- function(str, plot = FALSE, edges = FALSE, ...) {
     tree <- ape::read.tree(text = 
      "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
     if (edges) {
@@ -47,11 +38,11 @@ test_that("PlotCharacter.phylo()", {
   skip_if_not_installed("vdiffr")
 
   Test <- if (interactive()) {
-    function (str, edges = FALSE, ...) {
+    function(str, edges = FALSE, ...) {
       invisible(Character(str, plot = TRUE, edges = edges, ...))
     }
   } else {
-    function (str, edges = FALSE, ...) {
+    function(str, edges = FALSE, ...) {
       vdiffr::expect_doppelganger(
         paste0("PlotChar_",
                gsub("?", "Q",
@@ -135,18 +126,21 @@ test_that("Edge cases work", {
 
 test_that("PlotCharacter() with wide rootings", {
   trees <- c(
-    ape::read.tree(text = "((c, (a, d)), (e, (f, (g, (h, b)))));"),
-    ape::read.tree(text = "((c, (a, d)), (e, (f, (b, (h, g)))));")
+    ape::read.tree(text = "((c, (a, d)), (g, (h, b)));"),
+    ape::read.tree(text = "((c, (a, d)), (b, (h, g)));")
   )
   rooted <- RootTree(trees, c("a", "b"))
-  PlotCharacter(rooted,
-                TreeTools::StringToPhyDat("00111111", tips = trees[[1]]),
-                plot = FALSE)
+  expect_equal(
+    PlotCharacter(rooted,
+                  TreeTools::StringToPhyDat("001111", tips = trees[[1]]),
+                  plot = FALSE)[, "1"],
+    c(FALSE, FALSE, rep(TRUE, 8))
+  )
 })
 
 test_that("Out-of-sequence works", {
   skip_if_not_installed("vdiffr")
-  vdiffr::expect_doppelganger("PlotChar_out-of-sequence", function () {
+  vdiffr::expect_doppelganger("PlotChar_out-of-sequence", function() {
     PlotCharacter(ape::read.tree(text = "(a, (b, (c, d)));"),
                   TreeTools::StringToPhyDat("1342",
                                             tips = c("a", "c", "d", "b"))

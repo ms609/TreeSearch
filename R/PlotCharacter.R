@@ -493,6 +493,16 @@ PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
                             Display = function(tree) tree, ...)
   # Check labels: definitely identical, possibly in different sequence
   consTree <- Display(Consensus(tree, p = 1, check.labels = TRUE))
+  consOutgroup <- DescendantTips(consTree[["edge"]][, 1],
+                                 consTree[["edge"]][, 2],
+                                 node = nTip + consTree[["Nnode"]])
+  if (sum(consOutgroup) > nTip / 2) {
+    consOutgroup <- !consOutgroup
+  }
+  .MatchRooting <- function(tr) {
+    RootTree(tr, consOutgroup)
+  }
+  
   .TreeClades <- function(tr) {
     ed <- tr[["edge"]]
     lab <- TipLabels(tr)
@@ -504,7 +514,7 @@ PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
   }
   consClades <- .TreeClades(consTree)
   .Recon <- function(i) {
-    matches <- match(consClades, .TreeClades(tree[[i]]))
+    matches <- match(consClades, .TreeClades(.MatchRooting(tree[[i]])))
     if (any(is.na(matches))) {
       stop("Clades from consensus tree not in tree ", i, ":\n  ",
            paste0(gsub(fixed = TRUE, " @||@ ", ", ",
