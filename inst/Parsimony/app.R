@@ -2157,8 +2157,6 @@ server <- function(input, output, session) {
         }
       },
       error = function (cond) {
-        message("ASHOGAIH")
-        message(cond)
         cli::cli_alert_danger(cond)
         Notification(type = "error",
                      "Could not match dataset to taxa in trees")
