@@ -126,15 +126,15 @@ test_that("Edge cases work", {
 
 test_that("PlotCharacter() with wide rootings", {
   trees <- c(
-    ape::read.tree(text = "((c, (a, d)), (g, (h, b)));"),
-    ape::read.tree(text = "((c, (a, d)), (b, (h, g)));")
+    ape::read.tree(text = "((c, (a, d)), (e, (g, (f, b))));"),
+    ape::read.tree(text = "((c, (a, d)), (e, (b, (f, g))));")
   )
   rooted <- RootTree(trees, c("a", "b"))
   expect_equal(
     PlotCharacter(rooted,
-                  TreeTools::StringToPhyDat("001111", tips = trees[[1]]),
+                  TreeTools::StringToPhyDat("0011111", tips = letters[1:7]),
                   plot = FALSE)[, "1"],
-    c(FALSE, FALSE, rep(TRUE, 8))
+    !1:12 %in% c(2, 7)
   )
 })
 

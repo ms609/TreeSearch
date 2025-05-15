@@ -493,12 +493,12 @@ PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
                             Display = function(tree) tree, ...)
   # Check labels: definitely identical, possibly in different sequence
   consTree <- Display(Consensus(tree, p = 1, check.labels = TRUE))
-  consOutgroup <- DescendantTips(consTree[["edge"]][, 1],
-                                 consTree[["edge"]][, 2],
-                                 node = nTip + consTree[["Nnode"]])
+  consEdge <- Preorder(consTree[["edge"]])
+  consOutgroup <- DescendantTips(consEdge[, 1], consEdge[, 2], node = nTip + 2)
   if (sum(consOutgroup) > nTip / 2) {
     consOutgroup <- !consOutgroup
   }
+  consOutgroup <- TipLabels(consTree)[consOutgroup]
   .MatchRooting <- function(tr) {
     RootTree(tr, consOutgroup)
   }
