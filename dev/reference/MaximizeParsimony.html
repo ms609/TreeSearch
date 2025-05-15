@@ -312,7 +312,8 @@ neighbourhood more completely</p></li>
 Ratchet iterations allow escape from local optima.
 Setting <code>ratchIter</code> to a high value searches the wider neighbourhood more
 extensively for other nearby peaks; <code>ratchEW = TRUE</code> accelerates these
-exploratory searches.</p></li>
+exploratory searches.  Ratchet iterations can be ineffective when <code>maxHits</code>
+is too low for the search to escape its initial location.</p></li>
 <li><p>Extensive search of final optimum.  As with step 2, it may be valuable to
 fully explore the optimum that is found after ratchet searches to be sure
 that the locally optimal score has been obtained.  Setting a high value of
@@ -482,8 +483,8 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Sample local optimum</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → TBR depth 1; keeping 4 trees; k = 10</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-05-14 11:10:49: Score: 12.6384</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-05-14 11:10:50: Tree search terminated with score <span style="font-weight: bold;">12.1193</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-05-15 08:59:53: Score: 12.6384</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-05-15 08:59:54: Tree search terminated with score <span style="font-weight: bold;">12.1193</span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "final_1"</span>
 <span class="r-in"><span></span></span>
