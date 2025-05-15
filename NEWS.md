@@ -1,7 +1,7 @@
 # TreeSearch 1.6.0.9001 (development)
 - Tweak documentation
 - Handle invariant characters in `PolEscapa()`
-- Improve error reporting in `PlotCharacter()`
+- Handle challenging root positions in `PlotCharacter()`
 
 # TreeSearch 1.6.0 (2025-04-09)
 
