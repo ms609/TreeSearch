@@ -45,7 +45,8 @@
 #' Ratchet iterations allow escape from local optima.
 #' Setting `ratchIter` to a high value searches the wider neighbourhood more
 #' extensively for other nearby peaks; `ratchEW = TRUE` accelerates these
-#' exploratory searches.
+#' exploratory searches.  Ratchet iterations can be ineffective when `maxHits`
+#' is too low for the search to escape its initial location.
 #' 
 #' 4. Extensive search of final optimum.  As with step 2, it may be valuable to
 #' fully explore the optimum that is found after ratchet searches to be sure

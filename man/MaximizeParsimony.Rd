@@ -202,7 +202,8 @@ neighbourhood more completely
 Ratchet iterations allow escape from local optima.
 Setting \code{ratchIter} to a high value searches the wider neighbourhood more
 extensively for other nearby peaks; \code{ratchEW = TRUE} accelerates these
-exploratory searches.
+exploratory searches.  Ratchet iterations can be ineffective when \code{maxHits}
+is too low for the search to escape its initial location.
 \item Extensive search of final optimum.  As with step 2, it may be valuable to
 fully explore the optimum that is found after ratchet searches to be sure
 that the locally optimal score has been obtained.  Setting a high value of
