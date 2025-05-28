@@ -126,3 +126,50 @@ MatRec <- function(
   hAB <- .Entropy(table(oA, oB))
   2 * (hA + hB - hAB) / (hA + hB)
 }
+
+#' @importFrom TreeTools ReadAsPhyDat
+#' @importFrom ape read.tree read.nexus
+#' @importFrom utils menu
+ViewRec <- function(file1, file2, tree, matchTaxa,
+                    matching = MatRec(file1, file2, matchTaxa)) {
+  
+  pd1 <- ReadAsPhyDat(file1)
+  pd2 <- ReadAsPhyDat(file2)
+  ch1 <- ReadCharacters(file1)
+  ch2 <- ReadCharacters(file2)
+  
+  tax2 <- names(pd2)
+  tax2[match(matchTaxa, tax2)] <- names(matchTaxa)
+  names(pd2) <- tax2
+  rownames(ch2) <- tax2
+  
+  commonTaxa <- intersect(names(pd1), names(pd2))
+  if (is.character(tree)) {
+    tree <- tryCatch(read.tree(tree), error = function(e) {
+      read.nexus(tree)})# TODO trycatch read.tree too
+  }
+  tree <- KeepTip(tree, commonTaxa)
+  treeLabels <- TipLabels(tree)
+  
+  par(mfrow = c(1, 2), cex = 0.7, mar = rep(0, 4))
+  i <- 1
+  option <- 1
+  while (i <= length(matching)) {
+    if (option == 0) {
+      i <- i + 1
+      option <- 1
+    }
+    j <- matching[[i]][[option]]
+    pad <- paste0("ch %", ceiling(log10(max(ncol(ch1), ncol(ch2)))), "s: ")
+    message("Matching ", sprintf(pad, i), colnames(ch1)[[i]], "\n",
+            "- with - ", sprintf(pad, j), colnames(ch2)[[j]])
+    
+    sameState <- ch1[treeLabels, i] == ch2[treeLabels, j]
+    
+    PlotCharacter(tree, pd1, i, tip.col = 2 - sameState)
+    PlotCharacter(tree, pd2, j, direction = "l", tip.col = 2 - sameState)
+    option <- menu(colnames(ch2)[matching[[i]]],
+                   title = "Match a differrent character (0 for next character):",
+                   graphics = FALSE)
+  }
+}
