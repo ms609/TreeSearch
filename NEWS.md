@@ -1,3 +1,7 @@
+# TreeSearch 1.6.0.9002 (development)
+
+- Tool for matrix reconciliation
+
 # TreeSearch 1.6.0.9001 (development)
 - Tweak documentation
 - Handle invariant characters in `PolEscapa()`
