@@ -55,12 +55,6 @@ MatRec <- function(
   commonTaxa <- intersect(tax1, tax2)
   mat1 <- mat1[commonTaxa, , drop = FALSE]
   mat2 <- mat2[commonTaxa, , drop = FALSE]
- 
-  mutInf <- apply(mat1[, 1:4], 2, function(col1) {
-    apply(mat2[, 1:4], 2, function(col2) {
-      .TokenCompare(col1, col2)
-    })
-  })
   
   # Identical names = identical characters
   names1 <- colnames(mat1)
@@ -114,7 +108,11 @@ MatRec <- function(
   tokenWeight <- tokenWeighting * tokenSim
   tokenWeight[tokenSim < 0.85] <- 1
   
-  best <- LAPJV(nameDist * noteDist * stateDist / t(tokenWeight))[["matching"]]
+  ret <- charMatch
+  mode(ret) <- "list"
+  ret[.Unmatched1()] <- apply(nameDist * noteDist * stateDist / t(tokenWeight),
+                              1, order, simplify = FALSE)
+  ret
 }
 
 
@@ -122,8 +120,8 @@ MatRec <- function(
 .TokenCompare <- function(a, b) {
   ambig <- a == 0 | b == 0
   oA <- a[!ambig]
-  oB <- b[!ambig]
   hA <- .Entropy(tabulate(oA))
+  oB <- b[!ambig]
   hB <- .Entropy(tabulate(oB))
   hAB <- .Entropy(table(oA, oB))
   2 * (hA + hB - hAB) / (hA + hB)
