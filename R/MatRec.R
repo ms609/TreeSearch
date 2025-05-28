@@ -127,16 +127,20 @@ MatRec <- function(
   2 * (hA + hB - hAB) / (hA + hB)
 }
 
-#' @importFrom TreeTools ReadAsPhyDat
+#' @importFrom TreeTools ReadAsPhyDat ReadNotes
 #' @importFrom ape read.tree read.nexus
 #' @importFrom utils menu
 ViewRec <- function(file1, file2, tree, matchTaxa,
-                    matching = MatRec(file1, file2, matchTaxa)) {
+                    matching = MatRec(file1, file2, matchTaxa),
+                    startAt = 1
+                    ) {
   
   pd1 <- ReadAsPhyDat(file1)
   pd2 <- ReadAsPhyDat(file2)
-  ch1 <- ReadCharacters(file1)
-  ch2 <- ReadCharacters(file2)
+  ch1 <- gsub(",|\\(|\\)", "", ReadCharacters(file1))
+  ch2 <- gsub(",|\\(|\\)", "", ReadCharacters(file2))
+  note1 <- ReadNotes(file1)
+  note2 <- ReadNotes(file2)
   
   tax2 <- names(pd2)
   tax2[match(matchTaxa, tax2)] <- names(matchTaxa)
@@ -145,17 +149,20 @@ ViewRec <- function(file1, file2, tree, matchTaxa,
   
   commonTaxa <- intersect(names(pd1), names(pd2))
   if (is.character(tree)) {
-    tree <- tryCatch(read.tree(tree), error = function(e) {
-      read.nexus(tree)})# TODO trycatch read.tree too
+    tree <- tryCatch(read.tree(tree, keep.multi = TRUE)[[1]], error = function(e) {
+      read.nexus(tree, force.multi = TRUE)[[1]]})
   }
+  newTreeLabels <- TipLabels(tree)
+  newTreeLabels[match(matchTaxa, newTreeLabels)] <- names(matchTaxa)
+  tree[["tip.label"]] <- newTreeLabels
   tree <- KeepTip(tree, commonTaxa)
   treeLabels <- TipLabels(tree)
   
   par(mfrow = c(1, 2), cex = 0.7, mar = rep(0, 4))
-  i <- 1
+  i <- startAt
   option <- 1
   while (i <= length(matching)) {
-    if (option == 0) {
+    if (is.na(option) || option == 0) {
       i <- i + 1
       option <- 1
     }
@@ -166,10 +173,34 @@ ViewRec <- function(file1, file2, tree, matchTaxa,
     
     sameState <- ch1[treeLabels, i] == ch2[treeLabels, j]
     
-    PlotCharacter(tree, pd1, i, tip.col = 2 - sameState)
-    PlotCharacter(tree, pd2, j, direction = "l", tip.col = 2 - sameState)
-    option <- menu(colnames(ch2)[matching[[i]]],
+    if (any(!sameState)) {
+      message("States differ for ", sum(!sameState),
+              if(sum(!sameState) > 1) " taxa" else " taxon")
+      notesI <- substr(note1[[i]][[2]][treeLabels[!sameState]], 1, 24)
+      notesJ <- substr(note2[[j]][[2]][treeLabels[!sameState]], 1, 24)
+      notesI[is.na(notesI)] <- ""
+      notesJ[is.na(notesJ)] <- ""
+      
+      message(paste("\n  ", 
+                    treeLabels[!sameState], "=", 
+                    ch1[treeLabels[!sameState], i], notesI, "|",
+                    ch2[treeLabels[!sameState], j], notesJ))
+      PlotCharacter(tree, pd1, i, tip.col = 2 - sameState)
+      PlotCharacter(tree, pd2, j, direction = "l", tip.col = 2 - sameState)
+    } else {
+      plot.new()
+      text(1, 1, "Character codings are identical", xpd = NA, col = 3, font = 2)
+      plot.new()
+    }
+    optionsToShow <- 6
+    option <- menu(c(colnames(ch2)[head(matching[[i]], optionsToShow)],
+                     "[Show all options]"),
                    title = "Match a differrent character (0 for next character):",
                    graphics = FALSE)
+    if (option == optionsToShow + 1) {
+      option <- match(menu(colnames(ch2),
+                           title = "Match a differrent character (0 for next character):"),
+                      matching[[i]])
+    }
   }
 }
