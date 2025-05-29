@@ -192,7 +192,7 @@ ViewRec <- function(file1, file2, tree, matchTaxa,
       text(1, 1, "Character codings are identical", xpd = NA, col = 3, font = 2)
       plot.new()
     }
-    optionsToShow <- 6
+    optionsToShow <- min(length(matching[[i]]), 6)
     option <- menu(c(colnames(ch2)[head(matching[[i]], optionsToShow)],
                      "[Show all options]"),
                    title = "Match a differrent character (0 for next character):",
