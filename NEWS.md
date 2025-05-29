@@ -1,11 +1,12 @@
-# TreeSearch 1.6.0.9002 (development)
+# TreeSearch 1.6.0.9003 (development)
 
 - Tool for matrix reconciliation
 
-# TreeSearch 1.6.0.9001 (development)
+# TreeSearch 1.6.0.9002 (development)
 - Tweak documentation
 - Handle invariant characters in `PolEscapa()`
 - Handle challenging root positions in `PlotCharacter()`
+- Fix character state colours in app legend
 
 # TreeSearch 1.6.0 (2025-04-09)
 
