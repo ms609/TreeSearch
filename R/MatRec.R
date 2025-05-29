@@ -195,6 +195,7 @@ ViewRec <- function(file1, file2, tree, matchTaxa,
       plot.new()
     }
     optionsToShow <- min(length(matching[[i]]), 6)
+    lastOption <- option
     option <- menu(c(colnames(ch2)[head(matching[[i]], optionsToShow)],
                      "[Show all options]"),
                    title = "Match a differrent character (0 for next character):",
@@ -206,7 +207,7 @@ ViewRec <- function(file1, file2, tree, matchTaxa,
                            title = "Match a differrent character (0 for next character):"),
                       matching[[i]])
     } else {
-      chosen[[i]] <- matching[[i]][[option]]
+      chosen[[i]] <- matching[[i]][[lastOption]]
     }
   }
   # Return:
