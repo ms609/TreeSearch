@@ -163,10 +163,6 @@ ViewRec <- function(file1, file2, tree, matchTaxa,
   option <- 1
   chosen <- `length<-`(integer(0), length(matching))
   while (i <= length(matching)) {
-    if (is.na(option) || option == 0) {
-      i <- i + 1
-      option <- 1
-    }
     j <- matching[[i]][[option]]
     pad <- paste0("ch %", ceiling(log10(max(ncol(ch1), ncol(ch2)))), "s: ")
     message("Matching ", sprintf(pad, i), colnames(ch1)[[i]], "\n",
@@ -210,6 +206,11 @@ ViewRec <- function(file1, file2, tree, matchTaxa,
                       matching[[i]])
     } else {
       chosen[[i]] <- matching[[i]][[lastOption]]
+    }
+    
+    if (is.na(option) || option == 0) {
+      i <- i + 1
+      option <- 1
     }
   }
   # Return:
