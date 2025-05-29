@@ -190,8 +190,10 @@ ViewRec <- function(file1, file2, tree, matchTaxa,
       PlotCharacter(tree, pd2, j, direction = "l", tip.col = 2 - sameState)
     } else {
       plot.new()
-      text(1, 0.5, "Character codings are identical", xpd = NA, col = 3,
-           cex = 2.5, font = 2)
+      text(1, 0.5, paste("Character codings are identical", 
+                         switch(i %% 4 + 1, "\U1F44D", "\U263A", "\U1F389",
+                                "\U1F973")),
+           xpd = NA, col = 3, cex = 2.5, font = 2)
       plot.new()
     }
     optionsToShow <- min(length(matching[[i]]), 6)
