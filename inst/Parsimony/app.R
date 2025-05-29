@@ -2381,15 +2381,16 @@ server <- function(input, output, session) {
         states <- attr(r$chars, "state.labels")[[n]]
         tokens <- plottedTokens()
         appTokens <- setdiff(tokens, "-")
+        datApp <- setdiff(attr(r$dataset, "levels"), "-")
         .State <- function (glyph, text = "Error?", col = "red") {
           if (is.numeric(glyph)) {
             if (glyph > length(appTokens)) {
               return(NULL)
             }
             nonBlank <- states != ""
-            text <- states[nonBlank][glyph]
-            col <- pal[glyph]
-            glyph <- appTokens[glyph]
+            text <- states[nonBlank][[glyph]]
+            col <- pal[[match(appTokens[[glyph]], datApp)]]
+            glyph <- appTokens[[glyph]]
           }
           
           tags$li(style = "margin-bottom: 2px;",
