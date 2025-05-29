@@ -2387,9 +2387,9 @@ server <- function(input, output, session) {
             if (glyph > length(appTokens)) {
               return(NULL)
             }
-            nonBlank <- states != ""
-            text <- states[nonBlank][[glyph]]
-            col <- pal[[match(appTokens[[glyph]], datApp)]]
+            level <- match(appTokens[[glyph]], datApp)
+            text <- states[[level]]
+            col <- pal[[level]]
             glyph <- appTokens[[glyph]]
           }
           
