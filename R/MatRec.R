@@ -161,6 +161,7 @@ ViewRec <- function(file1, file2, tree, matchTaxa,
   par(mfrow = c(1, 2), cex = 0.7, mar = rep(0, 4))
   i <- startAt
   option <- 1
+  chosen <- `length<-`(integer(0), length(matching))
   while (i <= length(matching)) {
     if (is.na(option) || option == 0) {
       i <- i + 1
@@ -198,9 +199,15 @@ ViewRec <- function(file1, file2, tree, matchTaxa,
                    title = "Match a differrent character (0 for next character):",
                    graphics = FALSE)
     if (option == optionsToShow + 1) {
+      matching[[i]] <- c(matching[[i]], setdiff(seq_along(colnames(ch2)),
+                                                 matching[[i]]))
       option <- match(menu(colnames(ch2),
                            title = "Match a differrent character (0 for next character):"),
                       matching[[i]])
+    } else {
+      chosen[[i]] <- matching[[i]][[option]]
     }
   }
+  # Return:
+  chosen
 }
