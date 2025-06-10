@@ -1,8 +1,8 @@
-# TreeSearch 1.6.0.9002 (development)
-- Tweak documentation
+# TreeSearch 1.6.1 (2025-06-10)
 - Handle invariant characters in `PolEscapa()`
 - Handle challenging root positions in `PlotCharacter()`
 - Fix character state colours in app legend
+- Tweak documentation
 
 # TreeSearch 1.6.0 (2025-04-09)
 
