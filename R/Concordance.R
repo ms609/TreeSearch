@@ -206,8 +206,8 @@ ClusteringConcordance <- function (tree, dataset) {
   })
   
   splitI <- seq_len(dim(splits)[1])
-  both <- rowSums(h[splitI, at[["index"]]])
-  joint <- rowSums(h[-splitI, at[["index"]]])
+  both <- rowSums(h[splitI, at[["index"]], drop = FALSE])
+  joint <- rowSums(h[-splitI, at[["index"]], drop = FALSE])
   mi <- both - joint
   
   # Return:

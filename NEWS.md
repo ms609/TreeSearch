@@ -1,3 +1,6 @@
+# TreeSearch 1.6.1.9000 (development)
+- Support single-character matrices in `ClusteringConcordance()`
+
 # TreeSearch 1.6.1 (2025-06-10)
 - Handle invariant characters in `PolEscapa()`
 - Handle challenging root positions in `PlotCharacter()`
