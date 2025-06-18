@@ -174,9 +174,9 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 .RandomEntropy <- function(a, b, nSim) {
   if (nSim == 0) {
     0
-  } else if (length(a) == 1) {
+  } else if (length(a) < 2) {
     .Entropy(b)
-  } else if (length(b) == 1) {
+  } else if (length(b) < 2) {
     .Entropy(a)
   } else {
     key <- paste(paste0(sort(a), collapse = ","),
@@ -217,7 +217,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' `TRUE` is an alias for `10000`.
 #' @returns 
 #' `ClusteringConcordance(return = "all")` returns a 3D array where each
-#' slice corresponds to a node; each column to a site; and each row to a
+#' slice corresponds to a site; each row to a split; and each row to a
 #' measure of information: `normalized` gives the mutual information (`mi`)
 #' as a fraction of `hBest`, the lower of `hSplit`, the clustering information
 #' (entropy) of the split, and `hChar`, the clustering information of the
@@ -264,38 +264,32 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
   } else {
     as.integer(normalize)
   }
-  h <- apply(mat, 2, function(char) {
+  h <- simplify2array(apply(mat, 2, function(char) {
     aChar <- !is.na(char)
     ch <- char[aChar]
     chTable <- table(ch, exclude = NA_real_, dnn = NULL)
     hChar <- .Entropy(chTable)
     hh <- apply(splits[, aChar, drop = FALSE], 1, function (spl) {
-      spTable <- table(spl, exclude = NA_real_, dnn = NULL)
-      c(hSpl = .Entropy(spTable),
+      spTable <- tabulate(spl + 1, 2)
+      c(hSplit = .Entropy(spTable),
         hJoint = .Entropy(table(ch, spl, exclude = NA_real_, dnn = NULL)),
         hRand = .RandomEntropy(chTable, spTable, n = nSim))
     })
     
-    cbind(hChar = hChar,
-          hSplit = hh["hSpl", , drop = FALSE],
-          joint = hh["hJoint", , drop = FALSE],
-          hRand = hh["hRand", , drop = FALSE]
-          )
-  }, simplify = TRUE)
+    rbind(hChar = hChar, hh)
+  }, simplify = FALSE))
   
   if (length(dim(h)) == 2) {
     dim(h) <- c(dim(h), 1)
   }
   
   nSplits <- length(splits)
-  hh <- h[, at[["index"]], , drop = FALSE]
-  dimnames(hh)[[1]] <- c("hChar", "hSplit", "hJoint", "hRand")
-  dimnames(hh)[[3]] <- rownames(splits)
-  hBest <- unname(pmin(hh["hChar", , , drop = FALSE], hh["hSplit", , ]))
-  mi <- unname(hh["hChar", , , drop = FALSE] + hh["hSplit", , ] -
-                 hh["hJoint", , ])
-  miRand <- unname(hh["hChar", , , drop = FALSE] + hh["hSplit", , ] -
-                   hh["hRand", , ])
+  hh <- h[, , at[["index"]], drop = FALSE]
+  hBest <- unname(pmin(hh["hChar", , , drop = FALSE], hh["hSplit", , , drop = FALSE]))
+  mi <- unname(hh["hChar", , , drop = FALSE] + hh["hSplit", , , drop = FALSE] -
+                 hh["hJoint", , , drop = FALSE])
+  miRand <- unname(hh["hChar", , , drop = FALSE] + hh["hSplit", , , drop = FALSE] -
+                   hh["hRand", , , drop = FALSE])
   
   # Return:
   switch(pmatch(tolower(return), c("all", "mean"), nomatch = 1L),
@@ -303,15 +297,20 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
          abind(
            along = 1,
            normalized = ifelse(hBest == 0, NA,
-                               .Rezero(mi / hBest, hh["hRand", ,])),
+                               .Rezero(mi / hBest, miRand / hBest)),
            hh,
            hBest = hBest,
            mi = mi
          ),
          # mean
-         .Rezero(
-           rowSums(mi[1, , , drop = FALSE]) / rowSums(hBest[1, , , drop = FALSE]),
-           rowSums(miRand) / rowSums(hBest[1, , , drop = FALSE]))
+         ifelse(colSums(hBest[1, , , drop = FALSE]) == 0,
+                NA_real_,
+                .Rezero(
+                  colSums(mi[1, , , drop = FALSE]) / 
+                    colSums(hBest[1, , , drop = FALSE]),
+                  colSums(miRand) / 
+                    colSums(hBest[1, , , drop = FALSE]))
+         )
   )
 }
 

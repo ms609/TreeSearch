@@ -143,7 +143,7 @@ test_that("ClusteringConcordance() gives sensible values", {
                       rep("?", 8)), 8,
                     dimnames = list(letters[1:8], NULL))
   dat <- MatrixToPhyDat(mataset)
-  cc <- ClusteringConcordance(tree, dat, return = "all")[, , "10"]
+  cc <- ClusteringConcordance(tree, dat, return = "all")[, "10", ]
   expect_equal(cc["normalized", ],
                c(NA_real_, 1, 
                  (.Entropy(3, 5) + .Entropy(4, 4) - .Entropy(c(1, 3, 4))) / 
