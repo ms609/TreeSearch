@@ -267,12 +267,14 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
   h <- simplify2array(apply(mat, 2, function(char) {
     aChar <- !is.na(char)
     ch <- char[aChar]
-    chTable <- table(ch, exclude = NA_real_, dnn = NULL)
-    hChar <- .Entropy(chTable)
+    chMax <- max(1, ch)
+    chTable <- tabulate(ch, chMax)
+    n <- length(ch)
+    hChar <- Entropy(chTable / n)
     hh <- apply(splits[, aChar, drop = FALSE], 1, function (spl) {
       spTable <- tabulate(spl + 1, 2)
-      c(hSplit = .Entropy(spTable),
-        hJoint = .Entropy(table(ch, spl, exclude = NA_real_, dnn = NULL)),
+      c(hSplit = Entropy(spTable / n),
+        hJoint = Entropy(tabulate(ch + (spl * chMax), chMax + chMax) / n),
         hRand = .RandomEntropy(chTable, spTable, n = nSim))
     })
     
