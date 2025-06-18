@@ -44,11 +44,11 @@ information of a randomly drawn character with the same distribution of
 tokens, approximated by simulating \code{normalize} draws.
 If \code{0}, zero will correspond to zero mutual information,
 even if this is not possible to accomplish in practice.
-\code{TRUE} is an alias for \code{1000}.}
+\code{TRUE} is an alias for \code{10000}.}
 }
 \value{
 \code{ClusteringConcordance(return = "all")} returns a 3D array where each
-slice corresponds to a node; each column to a site; and each row to a
+slice corresponds to a site; each row to a split; and each row to a
 measure of information: \code{normalized} gives the mutual information (\code{mi})
 as a fraction of \code{hBest}, the lower of \code{hSplit}, the clustering information
 (entropy) of the split, and \code{hChar}, the clustering information of the
