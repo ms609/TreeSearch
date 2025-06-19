@@ -230,6 +230,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' held in common with the split.
 #' 
 #' @importFrom abind abind
+#' @importFrom pbapply pbapply
 #' @importFrom stats setNames
 #' @importFrom TreeTools Subsplit
 #' @export
@@ -264,7 +265,12 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
   } else {
     as.integer(normalize)
   }
-  h <- simplify2array(apply(mat, 2, function(char) {
+  Apply <- if (nSim > 0) {
+    pbapply
+  } else {
+    apply
+  }
+  h <- simplify2array(Apply(mat, 2, function(char) {
     aChar <- !is.na(char)
     ch <- char[aChar]
     chMax <- max(1, ch)
