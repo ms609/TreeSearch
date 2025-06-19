@@ -114,6 +114,55 @@ test_that("QuartetConcordance() handles incomplete data", {
   expect_equal(unname(QuartetConcordance(tree, dat)), rep(NA_real_, 5))
 })
 
+test_that(".Rezero() works", {
+  expect_equal(.Rezero(seq(0, 1, by = 0.1), 0.1), -1:9 / 9)
+})
+
+test_that("ClusteringConcordance() gives sensible values", {
+  tree <- BalancedTree(8)
+  splits <- as.Splits(tree)
+  # None of these characters are informative
+  mataset <- matrix(c(0, 0, 0, 0, 0, 0, 0, 1,
+                      rep("?", 8)), 8,
+                    dimnames = list(paste0("t", 1:8), NULL))
+  dat <- MatrixToPhyDat(mataset)
+  
+  expect_equal(unname(ClusteringConcordance(tree, dat)), rep(NA_real_, 5))
+  
+  tree <- ape::read.tree(text = "((a, b, c, d, e), (f, g, h));")
+  split <- as.Splits(tree)
+  
+  mataset <- matrix(c(0, 0, 0, 0, 0, 0, 0, 1,
+                      0, 0, 0, 0, 0, 1, 1, 1, # Matches split
+                      0, 0, 0, 0, 1, 1, 1, 1, # Consistent but not identical
+                      0, 0, 0, 1, 1, 1, 1, 1, # Consistent, more different
+                      0, 0, 0, 0, 0, 0, 1, 1, # Consistent other way
+                      0, 1, 0, 1, 0, 1, 0, 1, # Worst possible
+                      0, 0, 0, 0, rep("?", 4), # No information
+                      0, 0, 1, 1, rep("?", 4), # No relevant information
+                      rep("?", 8)), 8,
+                    dimnames = list(letters[1:8], NULL))
+  dat <- MatrixToPhyDat(mataset)
+  cc <- ClusteringConcordance(tree, dat, return = "all")[, "10", ]
+  expect_equal(cc["normalized", ],
+               c(NA_real_, 1, 
+                 (.Entropy(3, 5) + .Entropy(4, 4) - .Entropy(c(1, 3, 4))) / 
+                   .Entropy(3, 5),
+                 (.Entropy(3, 5) + .Entropy(3, 5) - .Entropy(c(2, 3, 3))) / 
+                   .Entropy(3, 5), 
+                 (.Entropy(3, 5) + .Entropy(2, 6) - .Entropy(c(2, 1, 5))) / 
+                   .Entropy(2, 6),
+                 (.Entropy(3, 5) + .Entropy(4, 4) - .Entropy(c(2, 1, 2, 3))) / 
+                   .Entropy(3, 5), 
+                 NA, NA, NA))
+  
+  randomset <- matrix(sample(0:1, 8 * 1000, replace = TRUE), 8,
+                      dimnames = list(letters[1:8], NULL))
+  rat <- MatrixToPhyDat(randomset)
+  expect_equal(ClusteringConcordance(tree, rat, normalize = TRUE), 0,
+               tolerance = 0.05)
+})
+
 dataset <- congreveLamsdellMatrices[[10]][, 1]
 tree <- TreeTools::NJTree(dataset)
 

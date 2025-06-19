@@ -163,15 +163,78 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 }
 
 #' @importFrom TreeDist Entropy
-.Entropy <- function (...) {
+.Entropy <- function(...) {
   Entropy(c(...) / sum(...))
 }
 
+#' @importFrom fastmap fastmap
+.RandomEntropyCache <- fastmap()
+
+#' @importFrom stats r2dtable
+.RandomEntropy <- function(a, b, nSim) {
+  if (nSim == 0) {
+    0
+  } else if (length(a) < 2) {
+    .Entropy(b)
+  } else if (length(b) < 2) {
+    .Entropy(a)
+  } else {
+    key <- paste(paste0(sort(a), collapse = ","),
+                 paste0(sort(b), collapse = ","), nSim,
+                 sep = "|")
+    if (.RandomEntropyCache$has(key)) {
+      .RandomEntropyCache$get(key)
+    } else {
+      n <- sum(a)
+      stopifnot(sum(b) == n)
+      ret <- sum(apply(matrix(unlist(r2dtable(nSim, a, b)) / n, 4), 1, Entropy)) / nSim
+      
+      # Cache:
+      .RandomEntropyCache$set(key, ret)
+      # Return:
+      ret
+    }
+  }
+}
+
+#' @param value value ranging from zero to one
+#' @param zero new value to set as zero
+.Rezero <- function(value, zero) {
+  (value - zero) / (1 - zero)
+}
+
 #' @rdname SiteConcordance
-#' @importFrom TreeTools Subsplit
+#' @param return Character specifying what to return.
+#' - `"mean"` returns the mean concordance index at each split across all sites.
+#' - `"all"` returns all values calculated during the working for each site at
+#'  each split.
+#' @param normalize Non-negative integer. If positive, the mutual information
+#' will be normalized such that zero corresponds to the expected mutual
+#' information of a randomly drawn character with the same distribution of
+#' tokens, approximated by simulating `normalize` draws.
+#' If `0`, zero will correspond to zero mutual information, 
+#' even if this is not possible to accomplish in practice.
+#' `TRUE` is an alias for `10000`.
+#' @returns 
+#' `ClusteringConcordance(return = "all")` returns a 3D array where each
+#' slice corresponds to a site; each row to a split; and each row to a
+#' measure of information: `normalized` gives the mutual information (`mi`)
+#' as a fraction of `hBest`, the lower of `hSplit`, the clustering information
+#' (entropy) of the split, and `hChar`, the clustering information of the
+#' site / character. `NA` is returned where $hBest = 0$.
+#' `hJoint` gives the joint entropy – the entropy of the
+#' confusion matrix of the split and character considered together.
+#' 
+#' `ClusteringConcordance(return = "mean")` returns a matrix or vector listing
+#' for each site the proportion of clustering information across all sites that
+#' held in common with the split.
+#' 
+#' @importFrom abind abind
 #' @importFrom stats setNames
+#' @importFrom TreeTools Subsplit
 #' @export
-ClusteringConcordance <- function (tree, dataset) {
+ClusteringConcordance <- function (tree, dataset, return = "mean",
+                                   normalize = 0) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
@@ -194,25 +257,65 @@ ClusteringConcordance <- function (tree, dataset) {
     x
   })
   
-  h <- apply(mat, 2, function (char) {
+  nSim <- if (isTRUE(normalize)) {
+    10000L
+  } else if (normalize < 0) {
+    0L
+  } else {
+    as.integer(normalize)
+  }
+  h <- simplify2array(apply(mat, 2, function(char) {
     aChar <- !is.na(char)
     ch <- char[aChar]
-    hChar <- .Entropy(table(ch))
-    h <- apply(splits[, aChar], 1, function (spl) {
-      c(hSpl = .Entropy(table(spl)), hJoint =  .Entropy(table(ch, spl)))
+    chMax <- max(1, ch)
+    chTable <- tabulate(ch, chMax)
+    n <- length(ch)
+    hChar <- Entropy(chTable / n)
+    hh <- apply(splits[, aChar, drop = FALSE], 1, function (spl) {
+      spTable <- tabulate(spl + 1, 2)
+      c(hSplit = Entropy(spTable / n),
+        hJoint = Entropy(tabulate(ch + (spl * chMax), chMax + chMax) / n),
+        hRand = .RandomEntropy(chTable, spTable, n = nSim))
     })
     
-    cbind(hSum = hChar + h["hSpl", ], joint = h["hJoint", ])
-  })
+    rbind(hChar = hChar, hh)
+  }, simplify = FALSE))
   
-  splitI <- seq_len(dim(splits)[1])
-  both <- rowSums(h[splitI, at[["index"]], drop = FALSE])
-  joint <- rowSums(h[-splitI, at[["index"]], drop = FALSE])
-  mi <- both - joint
+  if (length(dim(h)) == 2) {
+    dim(h) <- c(dim(h), 1)
+  }
+  
+  nSplits <- length(splits)
+  hh <- h[, , at[["index"]], drop = FALSE]
+  hBest <- unname(pmin(hh["hChar", , , drop = FALSE], hh["hSplit", , , drop = FALSE]))
+  mi <- unname(hh["hChar", , , drop = FALSE] + hh["hSplit", , , drop = FALSE] -
+                 hh["hJoint", , , drop = FALSE])
+  miRand <- unname(hh["hChar", , , drop = FALSE] + hh["hSplit", , , drop = FALSE] -
+                   hh["hRand", , , drop = FALSE])
   
   # Return:
-  setNames(mi / joint, rownames(splits))
+  switch(pmatch(tolower(return), c("all", "mean"), nomatch = 1L),
+         # all
+         abind(
+           along = 1,
+           normalized = ifelse(hBest == 0, NA,
+                               .Rezero(mi / hBest, miRand / hBest)),
+           hh,
+           hBest = hBest,
+           mi = mi
+         ),
+         # mean
+         ifelse(colSums(hBest[1, , , drop = FALSE]) == 0,
+                NA_real_,
+                .Rezero(
+                  colSums(mi[1, , , drop = FALSE]) / 
+                    colSums(hBest[1, , , drop = FALSE]),
+                  colSums(miRand) / 
+                    colSums(hBest[1, , , drop = FALSE]))
+         )
+  )
 }
+
 
 #' @rdname SiteConcordance
 #' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits

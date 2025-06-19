@@ -11,7 +11,7 @@
 \usage{
 QuartetConcordance(tree, dataset = NULL, weight = TRUE)
 
-ClusteringConcordance(tree, dataset)
+ClusteringConcordance(tree, dataset, return = "mean", normalize = 0)
 
 PhylogeneticConcordance(tree, dataset)
 
@@ -30,6 +30,35 @@ Additive (ordered) characters can be handled using
 
 \item{weight}{Logical specifying whether to weight sites according to the
 number of quartets they are decisive for.}
+
+\item{return}{Character specifying what to return.
+\itemize{
+\item \code{"mean"} returns the mean concordance index at each split across all sites.
+\item \code{"all"} returns all values calculated during the working for each site at
+each split.
+}}
+
+\item{normalize}{Non-negative integer. If positive, the mutual information
+will be normalized such that zero corresponds to the expected mutual
+information of a randomly drawn character with the same distribution of
+tokens, approximated by simulating \code{normalize} draws.
+If \code{0}, zero will correspond to zero mutual information,
+even if this is not possible to accomplish in practice.
+\code{TRUE} is an alias for \code{10000}.}
+}
+\value{
+\code{ClusteringConcordance(return = "all")} returns a 3D array where each
+slice corresponds to a site; each row to a split; and each row to a
+measure of information: \code{normalized} gives the mutual information (\code{mi})
+as a fraction of \code{hBest}, the lower of \code{hSplit}, the clustering information
+(entropy) of the split, and \code{hChar}, the clustering information of the
+site / character. \code{NA} is returned where $hBest = 0$.
+\code{hJoint} gives the joint entropy – the entropy of the
+confusion matrix of the split and character considered together.
+
+\code{ClusteringConcordance(return = "mean")} returns a matrix or vector listing
+for each site the proportion of clustering information across all sites that
+held in common with the split.
 }
 \description{
 The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure
