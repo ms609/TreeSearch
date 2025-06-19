@@ -240,12 +240,7 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  matchedTips <- match(TipLabels(tree), names(dataset))
-  if (any(is.na(matchedTips))) {
-    warning("Tips ", paste0(TipLabels(tree)[is.na(matchedTips)],
-                         collapse = ", "), " not in `dataset`.")
-    return(NULL)
-  }
+  MatchStrings(TipLabels(tree), names(dataset), warning)
   dataset <- dataset[matchedTips]
   splits <- as.logical(as.Splits(tree))
   
@@ -335,6 +330,29 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
 }
 
 
+if (packageVersion("TreeTools") < "1.14.0.9000") {
+  MatchStrings <- function(x, table, Fail = stop, max.distance = 0.5, ...) {
+    matches <- match(x, table)
+    missing <- is.na(matches)
+    if (any(missing)) {
+      nearMiss <- unlist(lapply(x[missing], agrep, table,
+                                max.distance = max.distance, ...),
+                         use.names = FALSE, recursive = FALSE)
+      message <- paste0("Could not find '", paste(x[missing], collapse = "', '"), 
+                        "' in ", deparse(substitute(table)), ".  ",
+                        if (length(nearMiss)) {
+                          paste0("Did you mean '", 
+                                 paste(table[nearMiss], collapse = "', '"), "'?")
+                        })
+      Fail(message)
+    }
+    table[matches[!missing]]
+  }
+} else {
+  MatchStrings <- TreeTools::MatchStrings
+}
+
+
 #' @rdname SiteConcordance
 #' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
 #' @export
@@ -343,7 +361,7 @@ PhylogeneticConcordance <- function (tree, dataset) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[TipLabels(tree)]
+  dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
   splits <- as.Splits(tree)
   if (is.null(names(splits))) {
     names(splits) <- paste0("sp", seq_along(splits))
@@ -382,12 +400,13 @@ MutualClusteringConcordance <- function (tree, dataset) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[TipLabels(tree)]
+  
+  dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
   
   support <- rowSums(vapply(characters, function (char) {
-    trimmed <- lapply(splits, keep.tip, TipLabels(char))
+    trimmed <- KeepTip(splits, TipLabels(char))
     cbind(mi = MutualClusteringInfo(char, trimmed),
           possible = ClusteringEntropy(trimmed))
   }, matrix(NA_real_, length(splits), 2)), dims = 2)
@@ -405,7 +424,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[TipLabels(tree)]
+  dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
   
@@ -454,7 +473,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' @importFrom TreeTools Log2UnrootedMult Log2Unrooted
 #' @export
 ConcordantInformation <- function (tree, dataset) {
-  dataset <- dataset[TipLabels(tree)]
+  dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
   originalInfo <- sum(apply(PhyDatToMatrix(dataset), 2, CharacterInformation))
   dataset <- PrepareDataProfile(dataset)
   

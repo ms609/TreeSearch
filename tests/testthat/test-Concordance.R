@@ -14,7 +14,7 @@ test_that("_Concordance() handles tip mismatch", {
   expect_warning(expect_null(QuartetConcordance(tree, char)),
                  "No overlap between tree labels and dataset.")
   expect_warning(expect_null(ClusteringConcordance(tree, char)),
-                 "Tips t1, .* not in .dataset.")
+                 "Could not find 't1', .* in names.dataset.")
 })
 
 test_that("QuartetConcordance() works", {
