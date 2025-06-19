@@ -8,23 +8,30 @@ AdditionTree(dataset, concavity = Inf, constraint, sequence)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+Additive (ordered) characters can be handled using
+\code{\link[TreeTools]{Decompose}}.}
 
-\item{concavity}{Numeric specifying concavity constant for implied step
-weighting.
-The most appropriate value will depend on the dataset, but values around
-10--15 often perform well \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
-The character string "profile" employs an approximation of profile parsimony
-\insertCite{Faith2001}{TreeSearch}.
-Set as \code{Inf} for equal step weights, which underperforms step weighting
-approaches
-\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.}
+\item{concavity}{Determines the degree to which extra steps beyond the first
+are penalized.  Specify a numeric value to use implied weighting
+\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
+\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+TNT sets a default of 3, but this is too low in some circumstances
+\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+Better still explore the sensitivity of results under a range of
+concavity values, e.g. \code{k = 2 ^ (1:7)}.
+Specify \code{Inf} to weight each additional step equally,
+(which underperforms step weighting approaches
+\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
+Specify \code{"profile"} to employ an approximation of profile parsimony
+\insertCite{Faith2001}{TreeSearch}.}
 
 \item{constraint}{Either an object of class \code{phyDat}, in which case
 returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
 in any output tree.
-See \code{\link[=ImposeConstraint]{ImposeConstraint()}} and
+See \code{\link[TreeTools:ImposeConstraint]{ImposeConstraint()}} and
 \href{https://ms609.github.io/TreeSearch/articles/tree-search.html}{vignette}
 for further examples.}
 

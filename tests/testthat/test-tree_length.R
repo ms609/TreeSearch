@@ -271,12 +271,12 @@ test_that("Character compression works", {
   data("inapplicable.datasets")
   dataset <- inapplicable.phyData[[12]]
   tree <- TreeTools::NJTree(dataset)
-  expect_equal(137, length(CharacterLength(tree, dataset)))
-  expect_equal(137, length(MinimumLength(dataset)))
-  expect_equal(137, length(Consistency(dataset, tree)))
-  expect_equal(118, length(CharacterLength(tree, dataset, compress = TRUE)))
-  expect_equal(118, length(MinimumLength(dataset, compress = TRUE)))
-  expect_equal(118, length(Consistency(dataset, tree, compress = TRUE)))
+  expect_equal(length(CharacterLength(tree, dataset)), 137)
+  expect_equal(length(MinimumLength(dataset)), 137)
+  expect_equal(dim(Consistency(dataset, tree)), c(137, 3))
+  expect_equal(length(CharacterLength(tree, dataset, compress = TRUE)), 118)
+  expect_equal(length(MinimumLength(dataset, compress = TRUE)), 118)
+  expect_equal(dim(Consistency(dataset, tree, compress = TRUE)), c(118, 3))
 })
 
 test_that("X_MorphyLength", {

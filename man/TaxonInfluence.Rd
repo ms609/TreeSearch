@@ -18,7 +18,10 @@ TaxonInfluence(
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+Additive (ordered) characters can be handled using
+\code{\link[TreeTools]{Decompose}}.}
 
 \item{tree}{Optimal tree or summary tree (of class "phylo") or list of trees
 (of class "list" or "multiPhylo") against which results should be evaluated.
@@ -26,17 +29,19 @@ If \code{NULL}, an optimal tree will be sought using parsimony search with
 the parameters provided in \code{\dots}.}
 
 \item{Distance}{Function to calculate tree distance; default:
-\code{\link[=ClusteringInfoDistance]{ClusteringInfoDistance()}}.}
+\code{\link[TreeDist:ClusteringInfoDistance]{ClusteringInfoDistance()}}.}
 
 \item{calcWeighted}{Logical specifying whether to compute the
 distance-weighted mean value.}
 
-\item{savePath}{Character giving prefix of path to which reduced trees will be
-saved (with \code{\link[=write.nexus]{write.nexus()}}). File names will follow the pattern
+\item{savePath}{Character giving prefix of path to which reduced trees will
+be saved (with \code{\link[ape:write.nexus]{write.nexus()}}).
+File names will follow the pattern
 \code{paste0(savePath, droppedTaxonName, ".nex")}; \code{savePath} should thus contain
 a trailing \code{/} if writing to a directory, which will be created if it does
 not exist.  Special characters will be removed from leaf labels when
-creating the file path (using \code{\link[=path_sanitize]{path_sanitize()}}).
+creating the file path (using
+\code{\link[fs:path_sanitize]{path_sanitize()}}).
 If \code{NULL}, computed trees will not be saved.}
 
 \item{useCache}{Logical vector; if \code{TRUE}, previous tree search results will

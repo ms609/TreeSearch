@@ -19,10 +19,12 @@ RearrangeEdges(
 }
 \arguments{
 \item{parent}{Integer vector corresponding to the first column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 1]}}
 
 \item{child}{Integer vector corresponding to the second column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 2]}.}
 
 \item{dataset}{Third argument to pass to \code{TreeScorer}.}
 
@@ -42,7 +44,7 @@ and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRS
 \item{verbosity}{Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.}
 
-\item{\dots}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
+\item{...}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
 }
 \value{
 This function returns a list with two to four elements, corresponding to a binary tree:
@@ -75,5 +77,6 @@ RearrangeEdges(parent, child, dataset, EdgeSwapper = RootedNNISwap)
 dataset <- UnloadMorphy(dataset)
 }
 \author{
-Martin R. Smith
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }

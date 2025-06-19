@@ -11,19 +11,14 @@
 #' @importFrom Rcpp compileAttributes
 #' @export
 summary.morphyPtr <- function (object, ...) {
-  ans <- list()
-  class(ans) <- "summary.morphyPtr"
-  nTax <- mpl_get_numtaxa(object)
-  nChar <- mpl_get_num_charac(object)
-  charWeights <- MorphyWeights(object)
-
-  ans$nTax <- nTax 
-  ans$nChar <- nChar 
-  ans$nInternal <- mpl_get_num_internal_nodes(object)
-  ans$charWeights <- charWeights
-  ans$allStates <- mpl_get_symbols(object)
   # Return:
-  ans
+  structure(class = "summary.morphyPtr", list(
+    nTax = mpl_get_numtaxa(object),
+    nChar = mpl_get_num_charac(object),
+    nInternal = mpl_get_num_internal_nodes(object),
+    charWeights = MorphyWeights(object),
+    allStates = mpl_get_symbols(object)
+  ))
 }
 
 #' Set and get the character weightings associated with a Morphy object.
@@ -31,7 +26,7 @@ summary.morphyPtr <- function (object, ...) {
 #' `MorphyWeights()` details the approximate and exact weights associated with
 #' characters in a `Morphy` object; `SetMorphyWeights()` edits them.
 #'
-#' @template morphyObjParam
+#' @inheritParams MorphyTreeLength
 #' @return `MorphyWeights()` returns a data frame with two named rows and 
 #' one column per character pattern:
 #' row 1, `approx`, is a list of integers specifying the approximate (integral)
@@ -85,7 +80,7 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 #' to other states such as `0` or `1`; or as "inapplicable data" using the 
 #' algorithm of Brazeau, Guillerme and Smith (2019).
 #' 
-#' @template morphyObjParam
+#' @inheritParams MorphyTreeLength
 #' 
 #' @return `GapHandler()` returns a character string stating how
 #' gaps are handled by `morphyObj`.
@@ -119,7 +114,8 @@ GapHandler <- function (morphyObj) {
 #' 
 #'
 #' @param phy An object of \pkg{phangorn} class \code{phyDat}.
-#' @template gapParam
+#' @param gap An unambiguous abbreviation of `inapplicable`, `ambiguous` 
+#' (= `missing`), or `extra state`, specifying how gaps will be handled.
 #' @return `PhyDat2Morphy()` returns a pointer to an initialized Morphy object.
 #' 
 #' @examples
@@ -212,7 +208,7 @@ MorphyErrorCheck <- function (action) {
 #' 
 #' @param char State of each character at each tip in turn, in a format that will be converted
 #'             to a character string by \code{\link{paste0}(char, ";", collapse="")}.
-#' @template gapParam
+#' @inheritParams PhyDat2Morphy
 #'
 #' @return A pointer to an object of class `morphyObj`.
 #' Don't forget to unload it when you've finished with it.
@@ -244,7 +240,7 @@ SingleCharMorphy <- function (char, gap = "inapp") {
 }
 
 #' Is an object a valid Morphy object?
-#' @template morphyObjParam
+#' @inheritParams MorphyTreeLength
 #' @return `is.morphyPtr()` returns `TRUE` if `morphyObj` is a valid morphy 
 #' pointer, `FALSE` otherwise.
 #' @template MRS
@@ -262,7 +258,7 @@ is.morphyPtr <- function (morphyObj) {
 #' Failure to do so will cause a crash if `UnloadMorphy()` is called on an
 #' object that  has already been destroyed
 #'
-#' @template morphyObjParam
+#' @inheritParams MorphyTreeLength
 #' @return Morphy error code, decipherable using \code{\link{mpl_translate_error}}
 #' @author Martin R. Smith
 #' @family Morphy API functions

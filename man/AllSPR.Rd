@@ -8,12 +8,14 @@ AllSPR(parent, child, nEdge, notDuplicateRoot, edgeToBreak)
 }
 \arguments{
 \item{parent}{Integer vector corresponding to the first column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 1]}}
 
 \item{child}{Integer vector corresponding to the second column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 2]}.}
 
-\item{nEdge}{integer specifying the number of edges of a tree of class \code{\link{phylo}}, i.e. \code{dim(tree$edge)[1]}}
+\item{nEdge}{integer specifying the number of edges of a tree of class \code{\link[ape]{phylo}}, i.e. \code{dim(tree$edge)[1]}}
 
 \item{notDuplicateRoot}{logical vector of length \code{nEdge}, specifying for each
 edge whether it is the second edge leading to the root (in which case

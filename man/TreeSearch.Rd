@@ -47,13 +47,14 @@ DoNothing(...)
 }
 \arguments{
 \item{edgeList}{a list containing the following:
-- vector of integers corresponding to the parent of each edge in turn
-- vector of integers corresponding to the child of each edge in turn
-- (optionally) score of the tree
-- (optionally, if score provided) number of times this score has been hit}
+\itemize{
+\item vector of integers corresponding to the parent of each edge in turn
+\item vector of integers corresponding to the child of each edge in turn
+\item (optionally) score of the tree
+\item (optionally, if score provided) number of times this score has been hit
+}}
 
-\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
+\item{dataset}{Data in format required by \code{InitializeData}.}
 
 \item{TreeScorer}{function to score a given tree.
 The function will be passed three parameters, corresponding to the
@@ -83,7 +84,7 @@ larger numbers provide more verbose feedback to the user.}
 
 \item{\dots}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
 
-\item{tree}{A fully-resolved starting tree in \code{\link{phylo}} format,
+\item{tree}{A fully-resolved starting tree in \code{\link[ape]{phylo}} format,
 with the desired outgroup.
 Edge lengths are not supported and will be removed.}
 

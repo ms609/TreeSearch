@@ -8,6 +8,13 @@ test_that("_Concordance() handles null input", {
   expect_warning(expect_null(SharedPhylogeneticConcordance(BalancedTree(8), NULL)))
 })
 
+test_that("_Concordance() handles tip mismatch", {
+  char <- MatrixToPhyDat(cbind(c(a = 0, b = 0, c = 0, d = 1, e = 1)))
+  tree <- BalancedTree(5)
+  expect_warning(expect_null(QuartetConcordance(tree, char)),
+                 "No overlap between tree labels and dataset.")
+})
+
 test_that("QuartetConcordance() works", {
   tree <- BalancedTree(8)
   splits <- as.Splits(tree)
@@ -18,6 +25,8 @@ test_that("QuartetConcordance() works", {
                       0, 0, 1, 1, 2, 2, 3, 3,  0,
                       0, 1, 2, 3, 0, 1, 2, 3,  0), 9,
                     dimnames = list(paste0("t", 1:9), NULL))
+  expect_error(QuartetConcordance(tree, mataset),
+               "`dataset` must be a phyDat object")
   dat <- MatrixToPhyDat(mataset)
   expect_equal(unname(QuartetConcordance(tree, dat[, 1])), rep(1, 5))
   # plot(tree); nodelabels();

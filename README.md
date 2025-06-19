@@ -36,6 +36,8 @@ Install and load the stable version from CRAN as follows:
 ```r
 install.packages("TreeSearch")
 library("TreeSearch")
+# Launch the Shiny App with:
+TreeSearch::EasyTrees()
 ```
 
 Install and load the development version of "TreeSearch" with:
@@ -85,6 +87,7 @@ For more control over search settings, see [`?MaximizeParsimony()`](https://ms60
 - [Calculating concavity profiles](https://ms609.github.io/TreeSearch/articles/profile-scores.html) for Profile Parsimony
 - [Tree search with profile parsimony](https://ms609.github.io/TreeSearch/articles/profile.html)
 
+'TreeSearch' uses [semantic versioning](https://semver.org/).
 Please note that the 'TreeSearch' project is released with a
 [Contributor Code of Conduct](CODE_OF_CONDUCT.md).
 By contributing to this project, you agree to abide by its terms.
@@ -103,7 +106,7 @@ Brazeau, M. D., Guillerme, T. and Smith, M. R. (2019).
 Faith D. P., Trueman J. W. H. (2001).
   Towards an inclusive philosophy for phylogenetic inference.
   Systematic Biology, 50(3), 331–350. 
-  doi: [10.1080/10635150118627](https://doi.org/10.1080/10635150118627).
+  doi: [10.1080/10635150118627](https://dx.doi.org/10.1080/10635150118627).
 
 Farris, J. S. (1969). A successive approximations approach to character weighting. 
   Systematic Biology, 18(4), 374–385.
