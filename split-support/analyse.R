@@ -22,7 +22,7 @@ iqStats <- c("alrt", "lbp", "abayes", "ufb") # .iqtree output file gives order
 iqStat <- matrix(0, 0, length(iqStats), dimnames = list(NULL, iqStats))
 
 for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
-  aln <- alns[i]
+  aln <- alns[[i]]
   
   # Load MrBayes partitions
   parts <- read.table(MBFile(aln, "parts"), skip = 2 + nTip)
@@ -130,7 +130,7 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   
   if (file.exists(ConcFile(aln))) {
     conc <- as.matrix(read.table(ConcFile(aln)))
-    if (dim(conc)[1] != dim(tntTags)[1]) {
+    if (dim(conc)[[1]] != dim(tntTags)[[1]]) {
       file.remove(ConcFile(aln))
       stop("Dimension mismatch; is concordance cache ", aln, " out of date?")
     }
@@ -152,8 +152,8 @@ for (i in cli::cli_progress_along(seq_len(nAln), "Analysing")) {
   tntStat <- rbind(tntStat, tntTags)
   iqStat <- rbind(iqStat, iqTags)
   
-  stopifnot(dim(concord)[1] == dim(tntStat)[1])
-  stopifnot(dim(concord)[1] == length(postProb))
+  stopifnot(dim(concord)[[1]] == dim(tntStat)[[1]])
+  stopifnot(dim(concord)[[1]] == length(postProb))
 }
 
 common <- rowSums(is.na(concord)) == 0 &
