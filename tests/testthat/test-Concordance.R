@@ -13,6 +13,8 @@ test_that("_Concordance() handles tip mismatch", {
   tree <- BalancedTree(5)
   expect_warning(expect_null(QuartetConcordance(tree, char)),
                  "No overlap between tree labels and dataset.")
+  expect_warning(expect_null(ClusteringConcordance(tree, char)),
+                 "Tips t1, .* not in .dataset.")
 })
 
 test_that("QuartetConcordance() works", {
@@ -159,7 +161,7 @@ test_that("ClusteringConcordance() gives sensible values", {
   randomset <- matrix(sample(0:1, 8 * 1000, replace = TRUE), 8,
                       dimnames = list(letters[1:8], NULL))
   rat <- MatrixToPhyDat(randomset)
-  expect_equal(ClusteringConcordance(tree, rat, normalize = TRUE), 0,
+  expect_equal(ClusteringConcordance(tree, rat, normalize = TRUE), c("10" = 0),
                tolerance = 0.05)
 })
 
