@@ -173,7 +173,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @importFrom stats r2dtable
 .RandomEntropy <- function(a, b, nSim) {
   if (nSim == 0) {
-    0
+    NA_real_
   } else if (length(a) < 2) {
     .Entropy(b)
   } else if (length(b) < 2) {
@@ -285,13 +285,19 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
     dim(h) <- c(dim(h), 1)
   }
   
-  nSplits <- length(splits)
   hh <- h[, , at[["index"]], drop = FALSE]
-  hBest <- unname(pmin(hh["hChar", , , drop = FALSE], hh["hSplit", , , drop = FALSE]))
-  mi <- unname(hh["hChar", , , drop = FALSE] + hh["hSplit", , , drop = FALSE] -
-                 hh["hJoint", , , drop = FALSE])
-  miRand <- unname(hh["hChar", , , drop = FALSE] + hh["hSplit", , , drop = FALSE] -
-                   hh["hRand", , , drop = FALSE])
+  hBest <- `rownames<-`(pmin(hh["hChar", , , drop = FALSE],
+                             hh["hSplit", , , drop = FALSE]), NULL)
+  mi <- `rownames<-`(hh["hChar", , , drop = FALSE] + 
+                       hh["hSplit", , , drop = FALSE] -
+                       hh["hJoint", , , drop = FALSE], NULL)
+  miRand <- if (nSim > 0) {
+    `rownames<-`(hh["hChar", , , drop = FALSE] + 
+                   hh["hSplit", , , drop = FALSE] -
+                   hh["hRand", , , drop = FALSE], NULL)
+  } else {
+    `rownames<-`(0 * hh["hChar", , , drop = FALSE], NULL)
+  }
   
   # Return:
   switch(pmatch(tolower(return), c("all", "mean"), nomatch = 1L),
@@ -305,14 +311,14 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
            mi = mi
          ),
          # mean
-         ifelse(colSums(hBest[1, , , drop = FALSE]) == 0,
+         setNames(ifelse(rowSums(hBest[1, , , drop = FALSE], dims = 2) == 0,
                 NA_real_,
                 .Rezero(
-                  colSums(mi[1, , , drop = FALSE]) / 
-                    colSums(hBest[1, , , drop = FALSE]),
-                  colSums(miRand) / 
-                    colSums(hBest[1, , , drop = FALSE]))
-         )
+                  rowSums(mi[1, , , drop = FALSE], dims = 2) / 
+                    rowSums(hBest[1, , , drop = FALSE], dims = 2),
+                  rowSums(miRand[1, , , drop = FALSE], dims = 2) / 
+                    rowSums(hBest[1, , , drop = FALSE], dims = 2))
+         )[1, ], rownames(splits))
   )
 }
 
