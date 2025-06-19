@@ -257,10 +257,10 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
   ambiguous <- rowSums(cont) != 1
   
   mat <- matrix(unlist(dataset), length(dataset), byrow = TRUE)
-  mat[mat %in% which(ambiguous)] <- NA
+  mat[mat %in% which(ambiguous)] <- NA_real_
   mat <- apply(mat, 2, function (x) {
     uniques <- table(x) == 1
-    x[x %in% names(uniques[uniques])] <- NA
+    x[x %in% names(uniques[uniques])] <- NA_real_
     x
   })
   
@@ -321,16 +321,16 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
            hh,
            hBest = hBest,
            mi = mi
-         ),
-         # mean
-         setNames(ifelse(rowSums(hBest[1, , , drop = FALSE], dims = 2) == 0,
-                NA_real_,
-                .Rezero(
-                  rowSums(mi[1, , , drop = FALSE], dims = 2) / 
-                    rowSums(hBest[1, , , drop = FALSE], dims = 2),
-                  rowSums(miRand[1, , , drop = FALSE], dims = 2) / 
-                    rowSums(hBest[1, , , drop = FALSE], dims = 2))
-         )[1, ], rownames(splits))
+         ), {
+           # mean
+           best <- rowSums(hBest[1, , , drop = FALSE], dims = 2)
+           ifelse(!is.na(best) & best == 0,
+                  NA_real_,
+                  .Rezero(
+                    rowSums(mi[1, , , drop = FALSE], dims = 2) / best,
+                    rowSums(miRand[1, , , drop = FALSE], dims = 2) / best
+                  ))[1, ]
+         }
   )
 }
 
