@@ -164,9 +164,10 @@ common <- rowSums(is.na(concord)) == 0 &
 model <- glm(partCorrect ~ postProb + concord + bremer + tntStat + iqStat,
              family = "binomial")
 
-Histy <- function(var, breaks = 12, even = TRUE) { # "Mosaic plot"
-  outcomes <- partCorrect[!is.na(var)]
-  var <- var[!is.na(var)]
+Histy <- function(var, breaks = 20, even = TRUE, cf = var) { # "Mosaic plot"
+  entries <- !is.na(var) & !is.na(cf)
+  outcomes <- partCorrect[entries]
+  var <- var[entries]
   if (even) {
     breaks <- quantile(var, seq(0, 1, length.out = breaks))
   }
@@ -177,17 +178,33 @@ Histy <- function(var, breaks = 12, even = TRUE) { # "Mosaic plot"
        xlab = "",
        ylab = ""
        )
-  axis(1, signif(breaks), at = seq_along(breaks) / 12)
+  axis(1, signif(breaks), at = seq_along(breaks) / breaks)
+  m <- glm(outcomes ~ var, family = "binomial")
+  smry <- summary(m)
+  legend("bottomright", bty = "n",
+         text.font = 2,
+         legend = c(paste("AIC:", round(smry$aic)),
+                    paste("r2", signif(1 - (smry$deviance / smry$null.deviance), 3))))
 }
 
-par(mfrow = c(4, 4), mar = rep(2, 4))
-Histy(postProb)
-Histy(concord[, "quartet"])
-Histy(concord[, "mutual"])
-Histy(concord[, "shared"])
-Histy(concord[, "phylo"])
-Histy(concord[, "cluster"])
+par(mfrow = c(4, 2), mar = rep(2, 4))
+Histy(postProb, cf = concord[, "quartet"])
+Histy(concord[, "quartet"], cf = postProb)
+Histy(concord[, "mutual"], cf = postProb)
+Histy(concord[, "shared"], cf = postProb)
+Histy(concord[, "phylo"], cf = postProb)
+Histy(concord[, "cluster"], cf = postProb)
+Histy(concord[, "clusterNorm"], cf = postProb)
+
+par(mfrow = c(4, 3), mar = rep(2, 4))
 Histy(bremer)
+Histy(concord[, "quartet"], cf = bremer)
+Histy(concord[, "mutual"], cf = bremer)
+Histy(concord[, "shared"], cf = bremer)
+Histy(concord[, "phylo"], cf = bremer)
+Histy(concord[, "cluster"], cf = bremer)
+Histy(concord[, "clusterNorm"], cf = bremer)
+
 Histy(tntStat[, "symFq"])
 Histy(tntStat[, "symGC"])
 Histy(tntStat[, "boot"])
@@ -209,8 +226,10 @@ Peek(postProb)
 Peek(bremer)
 Peek(concord[, "quartet"])
 Peek(concord[, "cluster"])
+Peek(concord[, "clusterNorm"])
 Peek(concord[, "mutual"])
-  
+Peek(iqStat[, "ufb"])
+
 m <- glm(partCorrect ~ concord[, "quartet"] + postProb, family = "binomial")
 AIC(m)
 m <- glm(partCorrect ~ concord[, "quartet"], family = "binomial")
@@ -221,6 +240,7 @@ model <- glm(family = "binomial",
                bremer[common] +
                concord[common, "quartet"] +
                concord[common, "cluster"] +
+               concord[common, "clusterNorm"] +
                concord[common, "phylo"] +
                concord[common, "mutual"] +
                concord[common, "shared"] +
