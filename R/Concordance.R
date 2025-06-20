@@ -240,8 +240,12 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  MatchStrings(TipLabels(tree), names(dataset), warning)
-  dataset <- dataset[matchedTips]
+  if (is.null(tree)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
+  
+  dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset), warning)]
   splits <- as.logical(as.Splits(tree))
   
   at <- attributes(dataset)
