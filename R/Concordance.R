@@ -290,9 +290,15 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
     hChar <- Entropy(chTable / n)
     hh <- apply(splits[, aChar, drop = FALSE], 1, function (spl) {
       spTable <- tabulate(spl + 1, 2)
-      c(hSplit = Entropy(spTable / n),
-        hJoint = Entropy(tabulate(ch + (spl * chMax), chMax + chMax) / n),
-        hRand = .RandomEntropy(chTable, spTable, n = nSim))
+      if (any(spTable < 2)) {
+        c(hSplit = 0,
+          hJoint = hChar,
+          hRand = hChar)
+      } else {
+        c(hSplit = Entropy(spTable / n),
+          hJoint = Entropy(tabulate(ch + (spl * chMax), chMax + chMax) / n),
+          hRand = .RandomEntropy(chTable, spTable, n = nSim))
+      }
     })
     
     rbind(hChar = hChar, hh)
