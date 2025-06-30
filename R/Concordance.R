@@ -245,7 +245,11 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
     return(NULL)
   }
   
-  dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset), warning)]
+  keep <- MatchStrings(TipLabels(tree), names(dataset), warning)
+  if (length(keep) == 0) {
+    return(NULL)
+  }
+  dataset <- dataset[keep]
   splits <- as.logical(as.Splits(tree))
   
   at <- attributes(dataset)
