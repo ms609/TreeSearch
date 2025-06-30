@@ -257,9 +257,11 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
   
   mat <- matrix(unlist(dataset), length(dataset), byrow = TRUE)
   mat[mat %in% which(ambiguous)] <- NA_real_
+  maxToken <- max(mat, na.rm = TRUE)
+  tokens <- as.character(seq_len(maxToken))
   mat <- apply(mat, 2, function (x) {
-    uniques <- table(x) == 1
-    x[x %in% names(uniques[uniques])] <- NA_real_
+    uniques <- tabulate(x, maxToken) == 1
+    x[x %in% tokens[uniques]] <- NA_real_
     x
   })
   
