@@ -325,7 +325,8 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
                                .Rezero(mi / hBest, miRand / hBest)),
            hh,
            hBest = hBest,
-           mi = mi
+           mi = mi,
+           miRand = miRand
          ), {
            # mean
            best <- rowSums(hBest[1, , , drop = FALSE], dims = 2)
