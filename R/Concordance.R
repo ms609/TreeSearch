@@ -168,11 +168,10 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 }
 
 #' @importFrom fastmap fastmap
-.RandomEntropyCache <- fastmap()
-
-#' @importFrom fastmap fastmap
 .ExpectedMICache <- fastmap()
 
+# @param a must be a vector of length <= 2
+# @param b may be longer
 #' @importFrom base64enc base64encode
 .ExpectedMI <- function(a, b) {
   if (length(a) < 2 || length(b) < 2) {
@@ -192,28 +191,9 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
   }
 }
 
-.RandomEntropy <- function(a, b) {
-  if (length(a) < 2) {
-    .Entropy(b)
-  } else if (length(b) < 2) {
-    .Entropy(a)
-  } else {
-    key <- base64enc::base64encode(mi_key(a, b))
-    if (.RandomEntropyCache$has(key)) {
-      .RandomEntropyCache$get(key)
-    } else {
-      ret <- .Entropy(a) + .Entropy(b) - expected_mi(a, b)
-      
-      # Cache:
-      .RandomEntropyCache$set(key, ret)
-      # Return:
-      ret
-    }
-  }
-}
 
-#' @param value value ranging from zero to one
-#' @param zero new value to set as zero
+# @param value value ranging from zero to one
+# @param zero new value to set as zero
 .Rezero <- function(value, zero) {
   (value - zero) / (1 - zero)
 }
@@ -298,7 +278,7 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
       } else {
         c(hSplit = Entropy(spTable / n),
           hJoint = Entropy(tabulate(ch + (spl * chMax), chMax + chMax) / n),
-          miRand = .ExpectedMI(chTable, spTable))
+          miRand = .ExpectedMI(spTable, chTable))
       }
     })
     
@@ -315,11 +295,7 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
   mi <- `rownames<-`(hh["hChar", , , drop = FALSE] + 
                        hh["hSplit", , , drop = FALSE] -
                        hh["hJoint", , , drop = FALSE], NULL)
-  miRand <- if (isTRUE(normalize)) {
-    `rownames<-`(hh["miRand", , , drop = FALSE], NULL)
-  } else {
-    `rownames<-`(0 * hh["miRand", , , drop = FALSE], NULL)
-  }
+  miRand <- `rownames<-`(hh["miRand", , , drop = FALSE], NULL)
   
   # Return:
   switch(pmatch(tolower(return), c("all", "mean"), nomatch = 1L),
@@ -339,7 +315,8 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
                   NA_real_,
                   .Rezero(
                     rowSums(mi[1, , , drop = FALSE], dims = 2) / best,
-                    rowSums(miRand[1, , , drop = FALSE], dims = 2) / best
+                    if (isTRUE(normalize))
+                        rowSums(miRand[1, , , drop = FALSE], dims = 2) / best else 0
                   ))[1, ]
          }
   )
