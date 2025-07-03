@@ -353,6 +353,112 @@ if (packageVersion("TreeTools") < "1.14.0.9000") {
   MatchStrings <- TreeTools::MatchStrings
 }
 
+#' Generate colour to depict the amount and quality of observations
+#' @param amount Numeric vector of values between 0 and 1, denoting the relative
+#' amount of information
+#' @param quality Numeric vector of values between -1 and 1, denoting the 
+#' quality of observations, where 0 is neutral.
+#' @param lMax Maximum lightness of the colour, between 0 and 100.
+#' @return `QACol()` returns a colour in HCL space, where darker colours
+#' correspond to entries with a higher `amount`; unsaturated colours denote
+#' a neutral `quality`; and redder/bluer colours denote low or high `quality`.
+#' @examples
+#' amount <- runif(80, 0, 1)
+#' quality <- runif(80, -1, 1)
+#' plot(amount, quality, col = QACol(amount, quality), pch = 15)
+#' abline(h = 0)
+#' @template MRS
+#' @export
+QACol <- function(amount, quality, lMax = 70) {
+  hcl(
+    h = 80 + (quality * 140),
+    c = abs(quality) * 100,
+    l = (100 - lMax) + ((1 - amount) * lMax)
+  )
+}
+
+#' @rdname QACol
+#' @param where Location of legend, passed to `par(fig = where)`
+#' @param n Integer vector giving number of cells to plot in swatch for 
+#' `quality` and `amount`.
+#' @inheritParams ConcordanceTable
+QALegend <- function(Col = QACol, where = c(0.1, 0.3, 0.1, 0.3),
+                     n = 5) {
+  oPar <- par(fig = where, new = TRUE, mar = rep(0, 4), xpd = NA)
+  on.exit(par(oPar))
+  n <- rep(n, length.out = 2)
+  nA <- n[[2]]
+  nQ <- n[[1]]
+  amount <- seq(0, 1, length.out = nA)
+  quality <- seq(-1, 1, length.out = nQ)
+  mat <- outer(amount, quality,
+               Vectorize(function (a, q) Col(a, q)))
+  image(x = amount, y = quality,
+        z = matrix(1:prod(n), nA, nQ),
+        col = mat, axes = FALSE)
+  mtext("Amount", side = 1, line = 1)
+  mtext("Quality", side = 2, line = 1)
+}
+
+#' Plot concordance table
+#' 
+#' @inheritParams ClusteringConcordance
+#' @param Col Function that takes vectors `amount` and `quality` and returns
+#' a vector of colours.
+#' @param largeClade Integer; if greater than 1, vertical lines will be drawn
+#' at edges whose descendants are both contain more than `largeClade` leaves.
+#' @param xlab Character giving a label for the x axis.
+#' @param ylab Character giving a label for the y axis.
+#' @param \dots Arguments to `abline`, to control the appearance of vertical
+#' lines marking important edges.
+#' @examples
+#' # Load data and tree
+#' data("congreveLamsdellMatrices", package = "TreeSearch")
+#' dataset <- congreveLamsdellMatrices[[1]][, 1:20]
+#' tree <- referenceTree
+#' 
+#' # Plot tree and identify nodes
+#' plot(tree)
+#' nodeID <- seq_len(tree$Nnode - 1)
+#' nodelabels(nodeID, NTip(tree) + 1 + nodeID, adj = c(2, 1),
+#'            frame = "none", bg = NULL)
+#' QALegend(where = c(0.1, 0.4, 0.1, 0.3))
+#' 
+#' # View information shared by characters and edges
+#' ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3)
+#' axis(1)
+#' axis(2)
+#' 
+#' # Visualize dataset
+#' image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
+#'       xlab = "Leaf", ylab = "Character")
+#' @importFrom TreeTools CladeSizes NTip
+#' @export
+ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
+                             xlab = "Edge", ylab = "Character", ...) {
+  cc <- ClusteringConcordance(tree, dataset, return = "all")
+  nodes <- seq_len(dim(cc)[[2]] - 1) # Omit root
+  amount <- cc["hBest", -1, ] / max(cc["hBest", -1, ], na.rm = TRUE)
+  amount[is.na(amount)] <- 0
+  quality <- cc["normalized", -1, ]
+  
+  col <- matrix(Col(amount, quality), dim(amount)[[1]], dim(amount)[[2]])
+  image(nodes, seq_len(dim(cc)[[3]]),
+        matrix(1:prod(dim(amount)), dim(amount)[[1]]),
+        frame.plot = FALSE, axes = FALSE,
+        col = col, xlab = xlab, ylab = ylab)
+  
+  if (largeClade > 1) {
+    cladeSize <- CladeSizes(tree)
+    edge <- tree[["edge"]]
+    parent <- edge[, 1]
+    child <- edge[, 2]
+    bigNode <- vapply(nodes + NTip(tree) + 1, function (node) {
+      all(cladeSize[child[parent == parent[child == node]]] >= largeClade)
+    }, logical(1))
+    abline(v = nodes[bigNode] - 0.5, ...)
+  }
+}
 
 #' @rdname SiteConcordance
 #' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
