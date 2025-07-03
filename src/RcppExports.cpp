@@ -10,6 +10,30 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// expected_mi
+double expected_mi(IntegerVector ni, IntegerVector nj);
+RcppExport SEXP _TreeSearch_expected_mi(SEXP niSEXP, SEXP njSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type ni(niSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type nj(njSEXP);
+    rcpp_result_gen = Rcpp::wrap(expected_mi(ni, nj));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mi_key
+RawVector mi_key(IntegerVector ni, IntegerVector nj);
+RcppExport SEXP _TreeSearch_mi_key(SEXP niSEXP, SEXP njSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type ni(niSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type nj(njSEXP);
+    rcpp_result_gen = Rcpp::wrap(mi_key(ni, nj));
+    return rcpp_result_gen;
+END_RCPP
+}
 // preorder_morphy
 int preorder_morphy(IntegerMatrix edge, SEXP MorphyHandl);
 RcppExport SEXP _TreeSearch_preorder_morphy(SEXP edgeSEXP, SEXP MorphyHandlSEXP) {

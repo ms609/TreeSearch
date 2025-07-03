@@ -12,12 +12,19 @@ Authors@R: c(
       given = "Martin", family = "Brazeau",
       role = c("cph"),
       comment = c(ORCID = "0000-0002-0650-1282")
+    ),
+    person(
+      given = "Julien", family = "Chiquet",
+      role = c("cph"),
+      email = "julien.chiquet@inrae.fr",
+      comment = c(ORCID = "0000-0002-3629-3429")
     )
   )
 License: GPL (>= 3)
 Copyright: Incorporates C/C++ code from
    Morphy Phylogenetic Library by Martin Brazeau 
-   <https://github.com/mbrazeau/MorphyLib> (GPL3)
+   <https://github.com/mbrazeau/MorphyLib> (GPL3) and
+   aricode <10.32614/CRAN.package.aricode> (GPL3)
 Description: Reconstruct phylogenetic trees from discrete data.
   Inapplicable character states are handled using the algorithm of Brazeau,
   Guillerme and Smith (2019) <doi:10.1093/sysbio/syy083> with the "Morphy"
@@ -36,6 +43,7 @@ Depends: R (>= 4.0)
 Imports:
   abind,
   ape (>= 5.6),
+  base64enc,
   cli (>= 3.0),
   cluster,
   fastmap,

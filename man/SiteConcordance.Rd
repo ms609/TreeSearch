@@ -38,13 +38,11 @@ number of quartets they are decisive for.}
 each split.
 }}
 
-\item{normalize}{Non-negative integer. If positive, the mutual information
-will be normalized such that zero corresponds to the expected mutual
-information of a randomly drawn character with the same distribution of
-tokens, approximated by simulating \code{normalize} draws.
-If \code{0}, zero will correspond to zero mutual information,
-even if this is not possible to accomplish in practice.
-\code{TRUE} is an alias for \code{10000}.}
+\item{normalize}{Logical; if \code{TRUE} the mutual information will be
+normalized such that zero corresponds to the expected mutual information of
+a randomly drawn character with the same distribution of tokens.
+If \code{FALSE}, zero will correspond to zero mutual information,
+even if this is not possible to accomplish in practice.}
 }
 \value{
 \code{ClusteringConcordance(return = "all")} returns a 3D array where each

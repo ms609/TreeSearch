@@ -170,24 +170,39 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @importFrom fastmap fastmap
 .RandomEntropyCache <- fastmap()
 
-#' @importFrom stats r2dtable
-.RandomEntropy <- function(a, b, nSim) {
-  if (nSim == 0) {
-    NA_real_
-  } else if (length(a) < 2) {
+#' @importFrom fastmap fastmap
+.ExpectedMICache <- fastmap()
+
+#' @importFrom base64enc base64encode
+.ExpectedMI <- function(a, b) {
+  if (length(a) < 2 || length(b) < 2) {
+    0
+  } else {
+    key <- base64enc::base64encode(mi_key(a, b))
+    if (.ExpectedMICache$has(key)) {
+      .ExpectedMICache$get(key)
+    } else {
+      ret <- expected_mi(a, b)
+      
+      # Cache:
+      .ExpectedMICache$set(key, ret)
+      # Return:
+      ret
+    }
+  }
+}
+
+.RandomEntropy <- function(a, b) {
+  if (length(a) < 2) {
     .Entropy(b)
   } else if (length(b) < 2) {
     .Entropy(a)
   } else {
-    key <- paste(paste0(sort(a), collapse = ","),
-                 paste0(sort(b), collapse = ","), nSim,
-                 sep = "|")
+    key <- base64enc::base64encode(mi_key(a, b))
     if (.RandomEntropyCache$has(key)) {
       .RandomEntropyCache$get(key)
     } else {
-      n <- sum(a)
-      stopifnot(sum(b) == n)
-      ret <- sum(apply(matrix(unlist(r2dtable(nSim, a, b)) / n, 4), 1, Entropy)) / nSim
+      ret <- .Entropy(a) + .Entropy(b) - expected_mi(a, b)
       
       # Cache:
       .RandomEntropyCache$set(key, ret)
@@ -208,13 +223,11 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' - `"mean"` returns the mean concordance index at each split across all sites.
 #' - `"all"` returns all values calculated during the working for each site at
 #'  each split.
-#' @param normalize Non-negative integer. If positive, the mutual information
-#' will be normalized such that zero corresponds to the expected mutual
-#' information of a randomly drawn character with the same distribution of
-#' tokens, approximated by simulating `normalize` draws.
-#' If `0`, zero will correspond to zero mutual information, 
+#' @param normalize Logical; if `TRUE` the mutual information will be
+#' normalized such that zero corresponds to the expected mutual information of
+#' a randomly drawn character with the same distribution of tokens.
+#' If `FALSE`, zero will correspond to zero mutual information, 
 #' even if this is not possible to accomplish in practice.
-#' `TRUE` is an alias for `10000`.
 #' @returns 
 #' `ClusteringConcordance(return = "all")` returns a 3D array where each
 #' slice corresponds to a site; each row to a split; and each row to a
@@ -269,19 +282,7 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
     x
   })
   
-  nSim <- if (isTRUE(normalize)) {
-    10000L
-  } else if (normalize < 0) {
-    0L
-  } else {
-    as.integer(normalize)
-  }
-  Apply <- if (nSim > 0) {
-    pbapply
-  } else {
-    apply
-  }
-  h <- simplify2array(Apply(mat, 2, function(char) {
+  h <- simplify2array(apply(mat, 2, function(char) {
     aChar <- !is.na(char)
     ch <- char[aChar]
     chMax <- max(1, ch)
@@ -293,11 +294,11 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
       if (any(spTable < 2)) {
         c(hSplit = 0,
           hJoint = hChar,
-          hRand = hChar)
+          miRand = 0)
       } else {
         c(hSplit = Entropy(spTable / n),
           hJoint = Entropy(tabulate(ch + (spl * chMax), chMax + chMax) / n),
-          hRand = .RandomEntropy(chTable, spTable, n = nSim))
+          miRand = .ExpectedMI(chTable, spTable))
       }
     })
     
@@ -314,12 +315,10 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
   mi <- `rownames<-`(hh["hChar", , , drop = FALSE] + 
                        hh["hSplit", , , drop = FALSE] -
                        hh["hJoint", , , drop = FALSE], NULL)
-  miRand <- if (nSim > 0) {
-    `rownames<-`(hh["hChar", , , drop = FALSE] + 
-                   hh["hSplit", , , drop = FALSE] -
-                   hh["hRand", , , drop = FALSE], NULL)
+  miRand <- if (isTRUE(normalize)) {
+    `rownames<-`(hh["miRand", , , drop = FALSE], NULL)
   } else {
-    `rownames<-`(0 * hh["hChar", , , drop = FALSE], NULL)
+    `rownames<-`(0 * hh["miRand", , , drop = FALSE], NULL)
   }
   
   # Return:
