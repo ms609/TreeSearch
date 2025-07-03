@@ -313,11 +313,14 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
            best <- rowSums(hBest[1, , , drop = FALSE], dims = 2)
            ifelse(!is.na(best) & best == 0,
                   NA_real_,
-                  .Rezero(
-                    rowSums(mi[1, , , drop = FALSE], dims = 2) / best,
-                    if (isTRUE(normalize))
-                        rowSums(miRand[1, , , drop = FALSE], dims = 2) / best else 0
-                  ))[1, ]
+                  if (isTRUE(normalize)) {
+                    .Rezero(
+                      rowSums(mi[1, , , drop = FALSE], dims = 2) / best,
+                      rowSums(miRand[1, , , drop = FALSE], dims = 2) / best
+                    )
+                  } else {
+                    rowSums(mi[1, , , drop = FALSE], dims = 2) / best
+                  })[1, ]
          }
   )
 }
