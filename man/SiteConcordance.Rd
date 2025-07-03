@@ -11,7 +11,7 @@
 \usage{
 QuartetConcordance(tree, dataset = NULL, weight = TRUE)
 
-ClusteringConcordance(tree, dataset, return = "mean", normalize = 0)
+ClusteringConcordance(tree, dataset, return = "mean", normalize = TRUE)
 
 PhylogeneticConcordance(tree, dataset)
 

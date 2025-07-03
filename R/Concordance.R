@@ -228,7 +228,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @importFrom TreeTools Subsplit
 #' @export
 ClusteringConcordance <- function (tree, dataset, return = "mean",
-                                   normalize = 0) {
+                                   normalize = TRUE) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
