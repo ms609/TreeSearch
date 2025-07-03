@@ -212,9 +212,14 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' `ClusteringConcordance(return = "all")` returns a 3D array where each
 #' slice corresponds to a site; each row to a split; and each row to a
 #' measure of information: `normalized` gives the mutual information (`mi`)
-#' as a fraction of `hBest`, the lower of `hSplit`, the clustering information
+#' normalized such that a value of one corresponds to `hBest`, 
+#' which is the lower of `hSplit`, the clustering information
 #' (entropy) of the split, and `hChar`, the clustering information of the
-#' site / character. `NA` is returned where $hBest = 0$.
+#' site / character; and zero corresponds to `miRand`, the expected mutual
+#' information of a randomly drawn character with the same distribution of
+#' tokens. Negative values denote that the observed tokens contain less mutual
+#' information than a random draw.
+#' `NA` is returned where $hBest = 0$.
 #' `hJoint` gives the joint entropy – the entropy of the
 #' confusion matrix of the split and character considered together.
 #' 
