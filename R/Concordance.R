@@ -398,11 +398,10 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
   quality <- seq(-1, 1, length.out = nQ)
   mat <- outer(amount, quality,
                Vectorize(function (a, q) Col(a, q)))
-  image(x = amount, y = quality,
-        z = matrix(1:prod(n), nA, nQ),
-        col = mat, axes = FALSE)
-  mtext("Amount", side = 1, line = 1)
-  mtext("Quality", side = 2, line = 1)
+  image(x = amount, y = quality, z = matrix(1:prod(n), nA, nQ),
+        col = mat, axes = FALSE, xlab = "", ylab = "")
+  mtext("Amount \U2192", side = 1, line = 1)
+  mtext("Quality \U2192", side = 2, line = 1)
 }
 
 #' Plot concordance table
