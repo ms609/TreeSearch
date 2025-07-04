@@ -388,8 +388,7 @@ QACol <- function(amount, quality, lMax = 70) {
 #' @param n Integer vector giving number of cells to plot in swatch for 
 #' `quality` and `amount`.
 #' @inheritParams ConcordanceTable
-QALegend <- function(Col = QACol, where = c(0.1, 0.3, 0.1, 0.3),
-                     n = 5) {
+QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
   oPar <- par(fig = where, new = TRUE, mar = rep(0, 4), xpd = NA)
   on.exit(par(oPar))
   n <- rep(n, length.out = 2)

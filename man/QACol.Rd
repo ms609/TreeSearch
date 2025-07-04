@@ -7,7 +7,7 @@
 \usage{
 QACol(amount, quality, lMax = 70)
 
-QALegend(Col = QACol, where = c(0.1, 0.3, 0.1, 0.3), n = 5)
+QALegend(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol)
 }
 \arguments{
 \item{amount}{Numeric vector of values between 0 and 1, denoting the relative
@@ -18,13 +18,13 @@ quality of observations, where 0 is neutral.}
 
 \item{lMax}{Maximum lightness of the colour, between 0 and 100.}
 
-\item{Col}{Function that takes vectors \code{amount} and \code{quality} and returns
-a vector of colours.}
-
 \item{where}{Location of legend, passed to \code{par(fig = where)}}
 
 \item{n}{Integer vector giving number of cells to plot in swatch for
 \code{quality} and \code{amount}.}
+
+\item{Col}{Function that takes vectors \code{amount} and \code{quality} and returns
+a vector of colours.}
 }
 \value{
 \code{QACol()} returns a colour in HCL space, where darker colours
