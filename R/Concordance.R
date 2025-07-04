@@ -219,7 +219,8 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' site / character; and zero corresponds to `miRand`, the expected mutual
 #' information of a randomly drawn character with the same distribution of
 #' tokens. Negative values denote that the observed tokens contain less mutual
-#' information than a random draw.
+#' information than a random draw. `n` records the number of relevant
+#' observations.
 #' `NA` is returned where $hBest = 0$.
 #' `hJoint` gives the joint entropy – the entropy of the
 #' confusion matrix of the split and character considered together.
@@ -285,11 +286,13 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
       if (any(spTable < 2)) {
         c(hSplit = 0,
           hJoint = hChar,
-          miRand = 0)
+          miRand = 0,
+          n = n)
       } else {
         c(hSplit = Entropy(spTable / n),
           hJoint = Entropy(tabulate(ch + (spl * chMax), chMax + chMax) / n),
-          miRand = .ExpectedMI(spTable, chTable))
+          miRand = .ExpectedMI(spTable, chTable),
+          n = n)
       }
     })
     
