@@ -191,9 +191,10 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
   }
 }
 
-
-# @param value value ranging from zero to one
-# @param zero new value to set as zero
+#' Re-zero a value by normalization
+#' @param value value ranging from zero to one
+#' @param zero new value to set as zero
+#' @keywords internal
 .Rezero <- function(value, zero) {
   (value - zero) / (1 - zero)
 }
@@ -227,6 +228,11 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' for each site the proportion of clustering information across all sites that
 #' held in common with the split.
 #' 
+#' @examples
+#' data(congreveLamsdellMatrices)
+#' myMatrix <- congreveLamsdellMatrices[[10]]
+#' ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
+#' @template MRS
 #' @importFrom abind abind
 #' @importFrom pbapply pbapply
 #' @importFrom stats setNames

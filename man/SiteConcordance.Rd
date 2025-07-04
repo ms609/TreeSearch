@@ -126,6 +126,9 @@ ape::write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
 
 # Display correlation between concordance factors
 pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)
+data(congreveLamsdellMatrices)
+myMatrix <- congreveLamsdellMatrices[[10]]
+ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
 }
 \references{
 \insertAllCited{}
