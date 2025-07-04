@@ -448,7 +448,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
   info <- cc["hBest", , ] * cc["n", , ]
   amount <- info / max(info, na.rm = TRUE)
   amount[is.na(amount)] <- 0
-  quality <- cc["normalized", -1, ]
+  quality <- cc["normalized", , ]
   
   col <- matrix(Col(amount, quality), dim(amount)[[1]], dim(amount)[[2]])
   image(nodes, seq_len(dim(cc)[[3]]),
