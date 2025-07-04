@@ -54,7 +54,8 @@ which is the lower of \code{hSplit}, the clustering information
 site / character; and zero corresponds to \code{miRand}, the expected mutual
 information of a randomly drawn character with the same distribution of
 tokens. Negative values denote that the observed tokens contain less mutual
-information than a random draw.
+information than a random draw. \code{n} records the number of relevant
+observations.
 \code{NA} is returned where $hBest = 0$.
 \code{hJoint} gives the joint entropy – the entropy of the
 confusion matrix of the split and character considered together.

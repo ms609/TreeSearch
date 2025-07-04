@@ -426,8 +426,8 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 #' 
 #' # Plot tree and identify nodes
 #' plot(tree)
-#' nodeID <- seq_len(tree$Nnode - 1)
-#' nodelabels(nodeID, NTip(tree) + 1 + nodeID, adj = c(2, 1),
+#' nodeIndex <- as.integer(rownames(as.Splits(tree)))
+#' nodelabels(seq_along(nodeIndex), nodeIndex, adj = c(2, 1),
 #'            frame = "none", bg = NULL)
 #' QALegend(where = c(0.1, 0.4, 0.1, 0.3))
 #' 
@@ -444,8 +444,9 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
                              xlab = "Edge", ylab = "Character", ...) {
   cc <- ClusteringConcordance(tree, dataset, return = "all")
-  nodes <- seq_len(dim(cc)[[2]] - 1) # Omit root
-  amount <- cc["hBest", -1, ] / max(cc["hBest", -1, ], na.rm = TRUE)
+  nodes <- seq_len(dim(cc)[[2]])
+  info <- cc["hBest", , ] * cc["n", , ]
+  amount <- info / max(info, na.rm = TRUE)
   amount[is.na(amount)] <- 0
   quality <- cc["normalized", -1, ]
   
@@ -460,7 +461,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
     edge <- tree[["edge"]]
     parent <- edge[, 1]
     child <- edge[, 2]
-    bigNode <- vapply(nodes + NTip(tree) + 1, function (node) {
+    bigNode <- vapply(as.integer(colnames(cc)), function (node) {
       all(cladeSize[child[parent == parent[child == node]]] >= largeClade)
     }, logical(1))
     abline(v = nodes[bigNode] - 0.5, ...)

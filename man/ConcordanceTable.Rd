@@ -47,8 +47,8 @@ tree <- referenceTree
 
 # Plot tree and identify nodes
 plot(tree)
-nodeID <- seq_len(tree$Nnode - 1)
-nodelabels(nodeID, NTip(tree) + 1 + nodeID, adj = c(2, 1),
+nodeIndex <- as.integer(rownames(as.Splits(tree)))
+nodelabels(seq_along(nodeIndex), nodeIndex, adj = c(2, 1),
            frame = "none", bg = NULL)
 QALegend(where = c(0.1, 0.4, 0.1, 0.3))
 
