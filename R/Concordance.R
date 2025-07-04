@@ -367,7 +367,6 @@ if (packageVersion("TreeTools") < "1.14.0.9000") {
 #' amount of information
 #' @param quality Numeric vector of values between -1 and 1, denoting the 
 #' quality of observations, where 0 is neutral.
-#' @param lMax Maximum lightness of the colour, between 0 and 100.
 #' @return `QACol()` returns a colour in HCL space, where darker colours
 #' correspond to entries with a higher `amount`; unsaturated colours denote
 #' a neutral `quality`; and redder/bluer colours denote low or high `quality`.
@@ -378,11 +377,11 @@ if (packageVersion("TreeTools") < "1.14.0.9000") {
 #' abline(h = 0)
 #' @template MRS
 #' @export
-QACol <- function(amount, quality, lMax = 70) {
+QACol <- function(amount, quality) {
   hcl(
     h = 80 + (quality * 140),
     c = abs(quality) * 100,
-    l = (100 - lMax) + ((1 - amount) * lMax)
+    l = amount * 100
   )
 }
 
@@ -425,6 +424,7 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 #' tree <- referenceTree
 #' 
 #' # Plot tree and identify nodes
+#' library("TreeTools", quietly = TRUE)
 #' plot(tree)
 #' nodeIndex <- as.integer(rownames(as.Splits(tree)))
 #' nodelabels(seq_along(nodeIndex), nodeIndex, adj = c(2, 1),
@@ -449,6 +449,9 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
   amount <- info / max(info, na.rm = TRUE)
   amount[is.na(amount)] <- 0
   quality <- cc["normalized", , ]
+  # Plot points with incalculable quality as black, not transparent.
+  amount[is.na(quality)] <- 0
+  quality[is.na(quality)] <- 0
   
   col <- matrix(Col(amount, quality), dim(amount)[[1]], dim(amount)[[2]])
   image(nodes, seq_len(dim(cc)[[3]]),
@@ -507,7 +510,8 @@ PhylogeneticConcordance <- function (tree, dataset) {
 }
 
 #' @rdname SiteConcordance
-# Mutual clustering information of each split with the split implied by each character
+# Mutual clustering information of each split with the split implied by each
+# character
 #' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
 #' @export
 MutualClusteringConcordance <- function (tree, dataset) {
