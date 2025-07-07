@@ -105,15 +105,15 @@ PlotCharacter.phylo <- function(tree, dataset, char = 1L,
   dataset <- dataset[treeTaxa]
   
   # Read tree
-  postorder <- PostorderOrder(tree)
-  edgeLength <- tree[["edge.length"]][postorder]
-  if (!is.null(edgeLength) && length(unique(edgeLength)) == 1) {
-    tree[["edge.length"]] <- edgeLength
-  }
   nNode <- tree[["Nnode"]]
   nTip <- NTip(tree)
   if (nNode != nTip - 1) {
     stop("`tree` must be bifurcating. Try TreeTools::MakeTreeBinary(tree).")
+  }
+  postorder <- PostorderOrder(tree)
+  edgeLength <- tree[["edge.length"]][postorder]
+  if (!is.null(edgeLength) && length(unique(edgeLength)) == 1) {
+    tree[["edge.length"]] <- edgeLength
   }
   edge <- tree[["edge"]][postorder, ]
   parent <- edge[, 1]
@@ -121,7 +121,7 @@ PlotCharacter.phylo <- function(tree, dataset, char = 1L,
   left <- integer(nNode + nTip)
   right <- left
   parentOf <- integer(nNode + nTip)
-  for (e in seq_len(dim(edge)[1])) {
+  for (e in seq_len(dim(edge)[[1]])) {
     pa <- parent[[e]]
     ch <- child[[e]]
     parentOf[[ch]] <- pa
@@ -145,7 +145,7 @@ PlotCharacter.phylo <- function(tree, dataset, char = 1L,
   contrast <- attr(character, "contrast") == 1
   levels <- colnames(contrast)
   inputState <- contrast[as.integer(character), , drop = FALSE]
-  state <- rbind(inputState, matrix(NA, nNode, dim(contrast)[2]))
+  state <- rbind(inputState, matrix(NA, nNode, dim(contrast)[[2]]))
   
   if (is.na(match("-", levels))) {
     # Standard Fitch
