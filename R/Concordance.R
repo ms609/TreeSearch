@@ -367,22 +367,32 @@ if (packageVersion("TreeTools") < "1.14.0.9000") {
 #' amount of information
 #' @param quality Numeric vector of values between -1 and 1, denoting the 
 #' quality of observations, where 0 is neutral.
-#' @return `QACol()` returns a colour in HCL space, where darker colours
+#' @return `QACol()` returns an RGB hex code for a colour, where lighter colours
 #' correspond to entries with a higher `amount`; unsaturated colours denote
-#' a neutral `quality`; and redder/bluer colours denote low or high `quality`.
+#' a neutral `quality`; and red/cyan colours denote low/high `quality`.
 #' @examples
 #' amount <- runif(80, 0, 1)
 #' quality <- runif(80, -1, 1)
 #' plot(amount, quality, col = QACol(amount, quality), pch = 15)
 #' abline(h = 0)
 #' @template MRS
+#' @importFrom colorspace hex max_chroma polarLUV
 #' @export
 QACol <- function(amount, quality) {
-  hcl(
-    h = 80 + (quality * 140),
-    c = abs(quality) * 100,
-    l = amount * 100
-  )
+  h <- 80 + (quality * 140)
+  l <- amount * 100
+  c <- abs(quality) * max_chroma(h, l)
+  # Saturation higher than 1 risks overflowing the colour space
+  # Small overflows are caught via `fixup = TRUE`; large overflows will produce
+  # bright red errors
+  saturation <- 0.999 # Safe if max_chroma(floor = FALSE) slightly overestimates
+  saturation <- 1.16 
+  
+  hex(polarLUV(
+    H = as.numeric(h),
+    C = as.numeric(c) * saturation,
+    L = as.numeric(l)
+  ), fixup = TRUE)
 }
 
 #' @rdname QACol

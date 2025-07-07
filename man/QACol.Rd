@@ -5,7 +5,7 @@
 \alias{QALegend}
 \title{Generate colour to depict the amount and quality of observations}
 \usage{
-QACol(amount, quality, lMax = 70)
+QACol(amount, quality)
 
 QALegend(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol)
 }
@@ -16,8 +16,6 @@ amount of information}
 \item{quality}{Numeric vector of values between -1 and 1, denoting the
 quality of observations, where 0 is neutral.}
 
-\item{lMax}{Maximum lightness of the colour, between 0 and 100.}
-
 \item{where}{Location of legend, passed to \code{par(fig = where)}}
 
 \item{n}{Integer vector giving number of cells to plot in swatch for
@@ -27,9 +25,9 @@ quality of observations, where 0 is neutral.}
 a vector of colours.}
 }
 \value{
-\code{QACol()} returns a colour in HCL space, where darker colours
+\code{QACol()} returns an RGB hex code for a colour, where lighter colours
 correspond to entries with a higher \code{amount}; unsaturated colours denote
-a neutral \code{quality}; and redder/bluer colours denote low or high \code{quality}.
+a neutral \code{quality}; and red/cyan colours denote low/high \code{quality}.
 }
 \description{
 Generate colour to depict the amount and quality of observations

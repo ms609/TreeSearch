@@ -46,6 +46,7 @@ dataset <- congreveLamsdellMatrices[[1]][, 1:20]
 tree <- referenceTree
 
 # Plot tree and identify nodes
+library("TreeTools", quietly = TRUE)
 plot(tree)
 nodeIndex <- as.integer(rownames(as.Splits(tree)))
 nodelabels(seq_along(nodeIndex), nodeIndex, adj = c(2, 1),
