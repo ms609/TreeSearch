@@ -380,14 +380,13 @@ if (packageVersion("TreeTools") < "1.14.0.9000") {
 #' @export
 QACol <- function(amount, quality) {
   h <- 80 + (quality * 140)
-  l <- amount * 100
-  # pmin(78) means that high amount can still display a hue
-  c <- abs(quality) * max_chroma(h, pmin(l, 78))
+  l <- amount * 88 # < 100: white can take no hue
+  c <- abs(quality) * max_chroma(h, l)
   # Saturation higher than 1 risks overflowing the colour space
   # Small overflows are caught via `fixup = TRUE`; large overflows will produce
   # bright red errors
   saturation <- 0.999 # Safe if max_chroma(floor = FALSE) slightly overestimates
-  saturation <- 1.16 
+  saturation <- 1.16
   
   hex(polarLUV(
     H = as.numeric(h),
@@ -407,7 +406,7 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
   n <- rep(n, length.out = 2)
   nA <- n[[2]]
   nQ <- n[[1]]
-  amount <- seq(0.01, 0.99, length.out = nA)
+  amount <- seq(0, 1, length.out = nA)
   quality <- seq(-1, 1, length.out = nQ)
   mat <- outer(amount, quality,
                Vectorize(function (a, q) Col(a, q)))
