@@ -46,6 +46,7 @@ Imports:
   base64enc,
   cli (>= 3.0),
   cluster,
+  colorspace,
   fastmap,
   fastmatch (>= 1.1.3),
   fs,
