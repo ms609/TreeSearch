@@ -2407,7 +2407,7 @@ server <- function(input, output, session) {
         }
         
         tagList(
-          tags$h3(colnames(r$chars)[n]),
+          tags$h3(colnames(r$chars)[[n]]),
           tags$ul(style = "list-style: none;",
                   .State(1), .State(2), .State(3), .State(4), .State(5),
                   .State(6), .State(7), .State(8), .State(9),
