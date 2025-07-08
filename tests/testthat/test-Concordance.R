@@ -147,7 +147,7 @@ test_that("ClusteringConcordance() gives sensible values", {
   dat <- MatrixToPhyDat(mataset)
   cc <- ClusteringConcordance(tree, dat, return = "all")[, "10", ]
   .Entropy <- function(...) {
-    Entropy(c(...) / sum(...))
+    TreeDist::Entropy(c(...) / sum(...))
   }
   .NormExp <- function(a, b, ab) {
     .Rezero(
