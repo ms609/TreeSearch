@@ -391,6 +391,27 @@ QACol <- function(amount, quality) {
 }
 
 #' @rdname QACol
+#' @return `QCol()` returns an RGB hex code for a colour, where darker,
+#' unsaturated colours denote a neutral `quality`;
+#' and red/cyan colours denote low/high `quality`. `amount` is ignored.
+#' @export
+QCol <- function(amount, quality) {
+  h <- 80 + (quality * 140)
+  l <- abs(quality) * 88 # < 100: white can take no hue
+  c <- abs(quality) * max_chroma(h, l)
+  # Saturation higher than 1 risks overflowing the colour space
+  # Small overflows are caught via `fixup = TRUE`; large overflows will produce
+  # bright red errors
+  saturation <- 0.999 # Safe if max_chroma(floor = FALSE) slightly overestimates
+  
+  hex(polarLUV(
+    H = as.numeric(h),
+    C = as.numeric(c) * saturation,
+    L = as.numeric(l)
+  ), fixup = TRUE)
+}
+
+#' @rdname QACol
 #' @param where Location of legend, passed to `par(fig = where)`
 #' @param n Integer vector giving number of cells to plot in swatch for 
 #' `quality` and `amount`.
@@ -422,6 +443,12 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 #' @param ylab Character giving a label for the y axis.
 #' @param \dots Arguments to `abline`, to control the appearance of vertical
 #' lines marking important edges.
+#' @returns `ConcordanceTable()` invisibly returns an named list containing:
+#' - `"info"`: The amount of information in each character-edge pair, in bits;
+#' - `"relInfo"`: The information, normalized to the most information-rich pair;
+#' - `"quality"`: The normalized mutual information of the pair;
+#' - `"col"`: The colours used to plot the table.
+#'  
 #' @examples
 #' # Load data and tree
 #' data("congreveLamsdellMatrices", package = "TreeSearch")
@@ -474,6 +501,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
     }, logical(1))
     abline(v = nodes[bigNode] - 0.5, ...)
   }
+  invisible(list(info = info, amount = amount, quality = quality, col = col))
 }
 
 #' @rdname SiteConcordance

@@ -2,10 +2,13 @@
 % Please edit documentation in R/Concordance.R
 \name{QACol}
 \alias{QACol}
+\alias{QCol}
 \alias{QALegend}
 \title{Generate colour to depict the amount and quality of observations}
 \usage{
 QACol(amount, quality)
+
+QCol(amount, quality)
 
 QALegend(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol)
 }
@@ -28,6 +31,10 @@ a vector of colours.}
 \code{QACol()} returns an RGB hex code for a colour, where lighter colours
 correspond to entries with a higher \code{amount}; unsaturated colours denote
 a neutral \code{quality}; and red/cyan colours denote low/high \code{quality}.
+
+\code{QCol()} returns an RGB hex code for a colour, where darker,
+unsaturated colours denote a neutral \code{quality};
+and red/cyan colours denote low/high \code{quality}. \code{amount} is ignored.
 }
 \description{
 Generate colour to depict the amount and quality of observations

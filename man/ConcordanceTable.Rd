@@ -36,6 +36,15 @@ at edges whose descendants are both contain more than \code{largeClade} leaves.}
 \item{\dots}{Arguments to \code{abline}, to control the appearance of vertical
 lines marking important edges.}
 }
+\value{
+\code{ConcordanceTable()} invisibly returns an named list containing:
+\itemize{
+\item \code{"info"}: The amount of information in each character-edge pair, in bits;
+\item \code{"relInfo"}: The information, normalized to the most information-rich pair;
+\item \code{"quality"}: The normalized mutual information of the pair;
+\item \code{"col"}: The colours used to plot the table.
+}
+}
 \description{
 Plot concordance table
 }
