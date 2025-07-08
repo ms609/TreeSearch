@@ -232,6 +232,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @importFrom abind abind
 #' @importFrom pbapply pbapply
 #' @importFrom stats setNames
+#' @importFrom TreeDist Entropy
 #' @importFrom TreeTools Subsplit
 #' @export
 ClusteringConcordance <- function (tree, dataset, return = "mean",
