@@ -162,11 +162,6 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
   }), names(splits))
 }
 
-#' @importFrom TreeDist Entropy
-.Entropy <- function(...) {
-  Entropy(c(...) / sum(...))
-}
-
 #' @importFrom fastmap fastmap
 .ExpectedMICache <- fastmap()
 
