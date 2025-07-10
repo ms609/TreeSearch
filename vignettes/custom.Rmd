@@ -36,7 +36,7 @@ PlotTree <- function(tree, ...) {
 ## Maximizing tree balance
 
 We'll start with a very simple case: aiming to minimise the 
-total cophenetic index [TIC; @Mir2013] of a tree. 
+total cophenetic index (TCI) [@Mir2013] of a tree. 
 The TCI is a measure of tree balance; it does not depend on an input dataset.
 All we need to do is to write a `TreeScorer` function.  
 This function will be sent the `parent` and `child` nodes for each edge in a
