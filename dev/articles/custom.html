@@ -109,9 +109,9 @@ for a given tree (and dataset).</p>
 <h2 id="maximizing-tree-balance">Maximizing tree balance<a class="anchor" aria-label="anchor" href="#maximizing-tree-balance"></a>
 </h2>
 <p>We’ll start with a very simple case: aiming to minimise the total
-cophenetic index [TIC; <span class="citation">Mir, Rosselló, &amp;
-Rotger (2013)</span>] of a tree. The TCI is a measure of tree balance;
-it does not depend on an input dataset. All we need to do is to write a
+cophenetic index (TCI) <span class="citation">(Mir, Rosselló, &amp;
+Rotger, 2013)</span> of a tree. The TCI is a measure of tree balance; it
+does not depend on an input dataset. All we need to do is to write a
 <code>TreeScorer</code> function.<br>
 This function will be sent the <code>parent</code> and
 <code>child</code> nodes for each edge in a tree, and a (here, empty)
