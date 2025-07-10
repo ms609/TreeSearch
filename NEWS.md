@@ -1,5 +1,6 @@
-# TreeSearch 1.6.1.9000 (development)
+# TreeSearch 1.6.1.9001 (development)
 - Support single-character matrices in `ClusteringConcordance()`
+- Fix `DoNothing(x)` to return `x` (not `NULL`)
 
 # TreeSearch 1.6.1 (2025-06-10)
 - Handle invariant characters in `PolEscapa()`
