@@ -139,7 +139,7 @@ plot(ape::consensus(suboptimals))
 
 - Search for trees using
   - [standard parsimony](tree-search.html) (corrected for inapplicable data)
-  - [custom optimality criteria](custom.Rmd)
+  - [custom optimality criteria](custom.html)
   
 - Explore the distribution of optimal trees in [mappings](tree-space.html)
 
