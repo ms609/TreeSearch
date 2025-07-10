@@ -46,7 +46,7 @@ test_that("NNI works", {
   Test(2, 0, 3, 9)
   Test(2, 1, 8, 9)
   
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
+  suppressWarnings(RNGversion("3.5.0"))
   set.seed(0)
   nniComb <- NNI(trComb)
   expect_equal(nniComb$tip.label, trComb$tip.label)
@@ -57,7 +57,7 @@ test_that("NNI works", {
 
 test_that("SPR works", {
   testTree <- Preorder(root(BalancedTree(7), 1, resolve.root = TRUE))
-  edge <- testTree$edge
+  edge <- testTree[["edge"]]
   expect_equal(spr(edge, 66), cSPR(testTree, 66)$edge)
   
   Test <- function (m, p1, r1) {
@@ -243,7 +243,7 @@ CheckTreeSanity <- function (tree) {
                info=paste0("Root is numbered ", min(parent), "; expecting ", nTip + 1)
   )
   expect_false(min(parent) %in% child, 
-               info=paste0("Root node (", min(parent), ") is child of edge ", paste0(which(min(parent) == child), collapse=', '))
+               info=paste0("Root node (", min(parent), ") is child of edge ", paste0(which(min(parent) == child), collapse = ", "))
   )
   expect_true(all(seq_len(nTip) %in% child)) # No missing tips
   expect_equal(max(parent), nTip + nNode)
@@ -252,7 +252,7 @@ CheckTreeSanity <- function (tree) {
   expect_true(all(child[!tips] > parent[!tips]), info="Parent nodes must be > child nodes")
 }
 
-suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(0)
 small_tree <- rtree(8)
 large_tree <- rtree(80)  

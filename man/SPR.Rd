@@ -39,20 +39,22 @@ RootedSPRSwap(
 )
 }
 \arguments{
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A bifurcating tree of class \code{\link[ape]{phylo}}, with all nodes resolved;}
 
 \item{edgeToBreak}{the index of an edge to bisect, generated randomly if not specified.}
 
 \item{mergeEdge}{the index of an edge on which to merge the broken edge.}
 
 \item{parent}{Integer vector corresponding to the first column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 1]}}
 
 \item{child}{Integer vector corresponding to the second column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 2]}.}
 
 \item{nEdge}{(optional) integer specifying the number of edges of a tree of
-class \code{\link{phylo}}, i.e. \code{dim(tree$edge)[1]}}
+class \code{\link[ape]{phylo}}, i.e. \code{dim(tree$edge)[1]}}
 
 \item{nNode}{(optional) Number of nodes.}
 }

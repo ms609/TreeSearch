@@ -9,7 +9,6 @@
 #' or e-mail the maintainer.
 #' 
 #' @inheritParams Ratchet
-#' @template EdgeSwapperParam
 #' @param resampleFreq Double between 0 and 1 stating proportion of characters 
 #' to resample.
 #' @param jackIter Integer specifying number of jackknife iterations to conduct.
@@ -18,6 +17,8 @@
 #' @template MRS
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @seealso 
+#' - [`Resample()`]: Jackknife resampling for non-custom searches performed
+#'   using `MaximizeParsimony()`.
 #' - [`JackLabels()`]: Label nodes of a tree with jackknife supports.
 #' @family split support functions
 #' @family custom search functions
@@ -88,9 +89,9 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 
 #' Label nodes with jackknife support values
 #' 
-#' @template treeParam
+#' @inheritParams TreeTools::Renumber
 #' @param jackTrees A list or `multiPhylo` object containing trees generated
-#' by [`Jackknife()`].
+#' by [`Resample()`] or [`Jackknife()`].
 #' @param add Logical specifying whether to add the labels to an existing
 #' plot.
 #' @param adj,col,frame,pos,\dots Parameters to pass to `nodelabels()`.
@@ -107,17 +108,26 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' @examples
 #' library("TreeTools", quietly = TRUE) # for as.phylo
 #' 
-#' # jackTrees will usually be generated with Jackknife(), but for simplicity:
+#' # jackTrees will usually be generated with Jackknife() or Resample(),
+#' # but for simplicity:
 #' jackTrees <- as.phylo(1:100, 8)
 #' 
 #' tree <- as.phylo(0, 8)
 #' JackLabels(tree, jackTrees)
 #' 
 #' tree$node.label <- JackLabels(tree, jackTrees, plot = FALSE)
+#' 
+#' # Write the labelled tree to screen
+#' ape::write.tree(tree)
+#'
+#' # Write labelled trees to a nexus file:
+#' # write.nexus(tree, file = filename)
 #' @template MRS
 #' @importFrom ape nodelabels
 #' @importFrom TreeTools SplitFrequency SupportColour
-#' @seealso [`Jackknife()`]: Generate trees by jackknife resampling
+#' @seealso
+#' Generate trees by jackknife resampling using [`Resample()`] for standard
+#' parsimony searches, or [`Jackknife()`] for custom search criteria.
 #' @family split support functions
 #' @export
 JackLabels <- function (tree, jackTrees,

@@ -31,7 +31,7 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
   # Initialize missing parameters
   taxa <- names(dataset)
   if (missing(sequence)) {
-    sequence <- taxa[1]
+    sequence <- taxa[[1]]
   } else if (is.numeric(sequence)) {
     sequence <- taxa[sequence]
   }
@@ -53,6 +53,7 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
   attr(dataset, "info.amounts") <- NULL
   attr(dataset, "min.length") <- NULL
   attr(dataset, "informative") <- NULL
+  attr(dataset, "originalIndex") <- NULL
   
   # Starting tree, rooted on first element in sequence
   tree <- PectinateTree(sequence[1:3])
@@ -78,7 +79,7 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
         constraint <- MatrixToPhyDat(t(as.matrix(constraint)))
       }
       thisConstr <- constraint[theseTaxa]
-      if (length(thisConstr[[1]]) && min(table(unlist(thisConstr))) > 1) {
+      if (.ConstraintConstrains(thisConstr)) {
         # Constraint constrains theseTaxa
         
         morphyConstr <- PhyDat2Morphy(thisConstr)
@@ -114,6 +115,31 @@ AdditionTree <- function (dataset, concavity = Inf, constraint, sequence) {
   tree
 }
 
-.Recompress <- function (dataset) {
+
+.ConstraintConstrains <- function(constraint) {
+  if (length(constraint[[1]]) < 1) {
+    FALSE
+  } else {
+    contrast <- attr(constraint, "contrast")
+    if (dim(contrast)[[2]] < 2) {
+      FALSE
+    } else {
+      cont <- `mode<-`(contrast, "logical")
+      nLevel <- dim(contrast)[[1]]
+      # Could be > 2× more efficient using lower.tri
+      exclude <- vapply(seq_len(nLevel), function(i) {
+        colSums(apply(cont, 1, `&`, cont[i, ])) == 0
+      }, logical(nLevel))
+      
+      # TODO Validate; passes existing tests, but these do not include all 
+      # edge cases, e.g. 02 03 1 1
+      splits <- exclude * tabulate(unlist(constraint), nLevel)
+      any(splits[lower.tri(splits)] > 1 & t(splits)[lower.tri(splits)] > 1)
+    }
+  }
+}
+
+
+.Recompress <- function(dataset) {
   MatrixToPhyDat(PhyDatToMatrix(dataset))
 }

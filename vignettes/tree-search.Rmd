@@ -73,9 +73,9 @@ escape from local optima.
 vinther <- TreeSearch::inapplicable.phyData[["Vinther2008"]]
 ```
 
-```{R RNG-version}
+```{R RNG-version, warn = FALSE}
 # Set a random seed so that random functions in this document are reproducible
-suppressWarnings(RNGversion("3.5.0")) # Until we require R v3.6.0
+RNGversion("3.5.0")
 set.seed(0)
 ```
 
@@ -354,7 +354,7 @@ Constraints can also be loaded from a Nexus file with
 - Search for trees using
   - [standard parsimony](tree-search.html) (corrected for inapplicable data)
   - [profile parsimony](profile.html)
-  - [custom optimality criteria](custom.Rmd)
+  - [custom optimality criteria](custom.html)
   
 - Explore the distribution of optimal trees in [mappings](tree-space.html)
 

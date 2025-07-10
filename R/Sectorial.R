@@ -165,15 +165,12 @@
 #######' in which case the starting tree is returned.
 #######'
 #######''
-#######' @template treeParam 
+#######' @inheritParams TreeTools::Renumber
 #######' @param dataset a dataset in the format required by `TreeScorer()`.
-#######' @template InitializeDataParam
-#######' @template CleanUpDataParam
-#######' @template treeScorerParam
+#######' @importParams TreeSearch
 #########' @param Bootstrapper Function to perform bootstrapped rearrangements of tree. 
 #########'                     First arguments will be an edgeList and a dataset, initialized using \code{InitializeData}
 #########'                     Should return a rearranged edgeList.
-#######' @template swappersParam
 #######' @param SectorialSwapper Function such as \code{\link{RootedNNISwap}} to use 
 #######'                         to rearrange sector.
 #######' @param sectIter stop sectorial search when this many rearrangements have been performed.

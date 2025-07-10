@@ -1,8 +1,7 @@
 #' TBR Warning
 #' Print a warning and return given tree
 #'
-#' @template treeParent
-#' @template treeChild
+#' @inheritParams TBRSwap
 #' @param error error message to report
 #'
 #' @return A list with the entries `parent`, `child`.
@@ -27,9 +26,16 @@ TBRWarning <- function (parent, child, error) {
 #' All nodes in a tree must be bifurcating; [ape::collapse.singles] and
 #' [ape::multi2di] may help.
 #' 
-#' @param tree A bifurcating tree of class \code{\link{phylo}}, with all nodes resolved;
-#' @template edgeToBreakParam
-#' @template mergeEdgesParam
+#' @param tree A bifurcating tree of class \code{\link[ape]{phylo}}, with all nodes resolved;
+#' @param edgeToBreak (optional) integer specifying the index of an edge to bisect/prune,
+#' generated randomly if not specified.  
+#' Alternatively, set to \code{-1} to return a complete list
+#' of all trees one step from the input tree.
+#' @param mergeEdges (optional) vector of length 1 or 2, listing edge(s) to be joined:
+#'                   In SPR, this is where the pruned subtree will be reconnected.
+#'                   In TBR, these edges will be reconnected (so must be on opposite
+#'                   sides of \code{edgeToBreak}); if only a single edge is specified,
+#'                   the second will be chosen at random
 #' 
 #' @return `TBR()` returns a tree in \code{phyDat} format that has undergone one
 #' \acronym{TBR} iteration.
@@ -99,8 +105,8 @@ TBRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
 ## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn TBR faster version that takes and returns parent and child
 #'  parameters
-#' @template treeParent
-#' @template treeChild
+#' @inheritParams TreeTools::NeworderPhylo
+#' @inheritParams RearrangeEdges
 #' @param nEdge (optional) Number of edges.
 #' @return `TBRSwap()` returns a list containing two elements corresponding
 #' to the rearranged `parent` and `child` parameters.

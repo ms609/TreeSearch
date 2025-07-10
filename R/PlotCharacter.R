@@ -4,8 +4,9 @@
 #' modified Fitch algorithm presented in 
 #' \insertCite{Brazeau2019;textual}{TreeSearch}.
 #' 
-#' @template treeParam
-#' @template datasetParam
+#' @param tree A bifurcating tree of class `phylo`, or a list or `multiPhylo`
+#' object containing such trees.
+#' @inheritParams MaximizeParsimony
 #' @param char Index of character to plot.
 #' @param updateTips Logical; if `FALSE`, tips will be labelled with their
 #' original state in `dataset`.
@@ -17,12 +18,17 @@
 #' [graphical parameter] for details of line styles.  Overrides `tokenCol`.
 #' @param tipOffset Numeric: how much to offset tips from their labels.
 #' @param unitEdge Logical: Should all edges be plotted with a unit length?
+#' @param Display Function that takes argument `tree` and returns a tree
+#' of class `phylo`, formatted as it will be plotted.
 #' @param \dots Further arguments to pass to `plot.phylo()`.
 #' 
 #' @return `PlotCharacter()` invisibly returns a matrix in which each row
 #' corresponds to a numbered tip or node of `tree`, and each column corresponds
 #' to a token; the tokens that might parsimoniously be present at each point
 #' on a tree are denoted with `TRUE`.
+#' If multiple trees are supplied, the strict consensus of all trees and
+#' reconstructions will be returned; i.e. if a node is reconstructed as $0$
+#' in one tree, and $2$ in another, it will be labelled $(02)$.
 #' 
 #' @references 
 #' \insertAllCited{}
@@ -48,24 +54,49 @@
 #' @importFrom graphics par
 #' @importFrom TreeTools PostorderOrder
 #' @export
-PlotCharacter <- function (tree, dataset, char = 1L,
-                           updateTips = FALSE,
-                           plot = TRUE,
-                           
-                           tokenCol = NULL,
-                           ambigCol = "grey",
-                           inappCol = "lightgrey",
-                           
-                           ambigLty = "dotted",
-                           inappLty = "dashed",
-                           plainLty = par("lty"),
-                           
-                           tipOffset = 1,
-                           unitEdge = FALSE,
-                           ...) {
+PlotCharacter <- function(tree, dataset, char = 1L,
+                          updateTips = FALSE,
+                          plot = TRUE,
+                          
+                          tokenCol = NULL,
+                          ambigCol = "grey",
+                          inappCol = "lightgrey",
+                          
+                          ambigLty = "dotted",
+                          inappLty = "dashed",
+                          plainLty = par("lty"),
+                          
+                          tipOffset = 1,
+                          unitEdge = FALSE,
+                          Display = function(tree) tree,
+                          ...
+) {
+  UseMethod("PlotCharacter")
+}
+
+#' @rdname PlotCharacter
+#' @export
+PlotCharacter.phylo <- function(tree, dataset, char = 1L,
+                                updateTips = FALSE,
+                                plot = TRUE,
+                                
+                                tokenCol = NULL,
+                                ambigCol = "grey",
+                                inappCol = "lightgrey",
+                                
+                                ambigLty = "dotted",
+                                inappLty = "dashed",
+                                plainLty = par("lty"),
+                                
+                                tipOffset = 1,
+                                unitEdge = FALSE,
+                                Display = function(tree) tree,
+                                ...
+) {
   
   # Reconcile labels
   datasetTaxa <- names(dataset)
+  tree <- Display(tree)
   treeTaxa <- tree[["tip.label"]]
   if(!all(treeTaxa %fin% datasetTaxa)) {
     stop("Taxa in tree missing from dataset:\n  ",
@@ -81,6 +112,9 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   }
   nNode <- tree[["Nnode"]]
   nTip <- NTip(tree)
+  if (nNode != nTip - 1) {
+    stop("`tree` must be bifurcating. Try TreeTools::MakeTreeBinary(tree).")
+  }
   edge <- tree[["edge"]][postorder, ]
   parent <- edge[, 1]
   child <- edge[, 2]
@@ -346,56 +380,188 @@ PlotCharacter <- function (tree, dataset, char = 1L,
   }
   anywhere <- as.logical(colSums(state[hasToken, , drop = FALSE]))
   slimState <- state[, anywhere, drop = FALSE]
-  if (plot) {
-    tokens <- colnames(slimState)
-    if (is.null(tokenCol)) {
-      tokenCol <- tokens
-      tokenCol[tokens != "-"] <- c("#00bfc6",
-                                   "#ffd46f",
-                                   "#ffbcc5",
-                                   "#c8a500",
-                                   "#ffcaf5",
-                                   "#d5fb8d",
-                                   "#e082b4",
-                                   "#25ffd3",
-                                   "#a6aaff",
-                                   "#e6f3cc",
-                                   "#67c4ff",
-                                   "#9ba75c",
-                                   "#60b17f")[seq_along(setdiff(tokens, "-"))]
-      tokenCol[tokens == "-"] <- inappCol
-    }
-    nodeStyle <- apply(slimState, 1, function (tkn) {
-      if (length(tkn) == 0) {
-        c(col = ambigCol, lty = ambigLty)
-      } else if (sum(tkn) > 1L) {
-        c(col = ambigCol, lty = ambigLty)
-      } else {
-        c(col = tokenCol[tkn],
-          lty = ifelse(tokens[tkn] == "-", inappLty, plainLty))
-      }
-    })
-    if (unitEdge) {
-      tree[["edge.length"]] <- rep_len(1, dim(tree[["edge"]])[1])
-    }
-    plot.phylo(tree,
-               node.color = nodeStyle["col", , drop = FALSE],
-               node.lty = nodeStyle["lty", , drop = FALSE],
-               label.offset = tipOffset,
-               ...)
-    
-    NodeText <- function (n) {
-      if (length(n) == 0 || (
-        sum(n) > 1L && all(n[anywhere & names(n) != "-"]))) {
-        "?"
-      } else {
-        paste0(levels[n], collapse = "")
-      }
-    }
-    nodelabels(apply(state, 1, NodeText),
-               seq_len(nTip + nNode), bg = nodeStyle["col", , drop = FALSE])
+  
+  if (isTRUE(plot)) {
+    .PlotCharacter(tree, nTip, state, levels, tokenCol, ambigCol, inappCol,
+                   ambigLty, inappLty, plainLty, tipOffset, unitEdge, ...)
   }
   
   # Return:
   invisible(slimState)
+}
+
+.PlotCharacter <- function(tree, nTip, state, tokens,
+                           tokenCol, ambigCol, inappCol,
+                           ambigLty, inappLty, plainLty,
+                           tipOffset, unitEdge, ...) {
+  tokens <- colnames(state)
+  
+  hasToken <- if (length(setdiff(colnames(state), "-")) > 1L) {
+    as.logical(rowSums(!state[, colnames(state) != "-", drop = FALSE]))
+  } else {
+    !logical(nrow(state))
+  }
+  anywhere <- as.logical(colSums(state[hasToken, , drop = FALSE]))
+  slimState <- state[, anywhere, drop = FALSE]
+  
+  if (is.null(tokenCol)) {
+    tokenCol <- tokens
+    tokenCol[tokens != "-"] <- c("#00bfc6",
+                                 "#ffd46f",
+                                 "#ffbcc5",
+                                 "#c8a500",
+                                 "#ffcaf5",
+                                 "#d5fb8d",
+                                 "#e082b4",
+                                 "#25ffd3",
+                                 "#a6aaff",
+                                 "#e6f3cc",
+                                 "#67c4ff",
+                                 "#9ba75c",
+                                 "#60b17f")[seq_along(setdiff(tokens, "-"))]
+    tokenCol[tokens == "-"] <- inappCol
+  }
+  nodeStyle <- apply(state, 1, function (tkn) {
+    if (length(tkn) == 0) {
+      c(col = ambigCol, lty = ambigLty)
+    } else if (sum(tkn) > 1L) {
+      c(col = ambigCol, lty = ambigLty)
+    } else {
+      c(col = tokenCol[tkn],
+        lty = ifelse(tokens[tkn] == "-", inappLty, plainLty))
+    }
+  })
+  if (unitEdge) {
+    tree[["edge.length"]] <- rep_len(1, dim(tree[["edge"]])[1])
+  }
+  plot.phylo(tree,
+             node.color = nodeStyle["col", , drop = FALSE],
+             node.lty = nodeStyle["lty", , drop = FALSE],
+             label.offset = tipOffset,
+             ...)
+  
+  .NodeText <- function (n) {
+    if (length(n) == 0 || (
+      sum(n) > 1L && all(n[anywhere & names(n) != "-"]))) {
+      "?"
+    } else {
+      paste0(tokens[n], collapse = "")
+    }
+  }
+  nodelabels(apply(state, 1, .NodeText),
+             seq_len(nTip + tree[["Nnode"]]),
+             bg = nodeStyle["col", , drop = FALSE])
+}
+
+#' @rdname PlotCharacter
+#' @importFrom TreeTools as.Splits Consensus DescendantTips TipLabels
+#' @export
+PlotCharacter.multiPhylo <- function(tree, dataset, char = 1L,
+                                     updateTips = FALSE,
+                                     plot = TRUE,
+                                     
+                                     tokenCol = NULL,
+                                     ambigCol = "grey",
+                                     inappCol = "lightgrey",
+                                     
+                                     ambigLty = "dotted",
+                                     inappLty = "dashed",
+                                     plainLty = par("lty"),
+                                     
+                                     tipOffset = 1,
+                                     unitEdge = FALSE,
+                                     Display = function(tree) tree,
+                                     ...) {
+  
+  if (length(tree) == 1) {
+    return(PlotCharacter(tree[[1]], dataset, char, updateTips, plot,
+                         tokenCol, ambigCol, inappCol,
+                         ambigLty, inappLty, plainLty,
+                         tipOffset, unitEdge, Display, ...))
+  }
+  
+  tipLabels <- unique(lapply(lapply(tree, TipLabels), sort))
+  if (length(tipLabels) != 1) {
+    stop("All trees must have the same tip labels")
+  }
+  tipLabels <- tipLabels[[1]]
+  nTip <- length(tipLabels)
+  tokens <- attr(dataset, "levels")
+  reconstructions <- lapply(tree, PlotCharacter,
+                            dataset = dataset, char = char,
+                            updateTips = updateTips, plot = FALSE,
+                            Display = function(tree) tree, ...)
+  # Check labels: definitely identical, possibly in different sequence
+  consTree <- Display(Consensus(tree, p = 1, check.labels = TRUE))
+  consEdge <- Preorder(consTree[["edge"]])
+  consOutgroup <- DescendantTips(consEdge[, 1], consEdge[, 2], node = nTip + 2)
+  if (sum(consOutgroup) > nTip / 2) {
+    consOutgroup <- !consOutgroup
+  }
+  consOutgroup <- TipLabels(consTree)[consOutgroup]
+  .MatchRooting <- function(tr) {
+    RootTree(tr, consOutgroup)
+  }
+  
+  .TreeClades <- function(tr) {
+    ed <- tr[["edge"]]
+    lab <- TipLabels(tr)
+    apply(DescendantTips(ed[, 1], ed[, 2],
+                         node = seq_len(nTip + tr[["Nnode"]])),
+          1, function (tips) {
+      paste0(sort(lab[tips]), collapse = " @||@ ")
+    })
+  }
+  consClades <- .TreeClades(consTree)
+  .Recon <- function(i) {
+    matches <- match(consClades, .TreeClades(.MatchRooting(tree[[i]])))
+    if (any(is.na(matches))) {
+      stop("Clades from consensus tree not in tree ", i, ":\n  ",
+           paste0(gsub(fixed = TRUE, " @||@ ", ", ",
+                         consClades[is.na(matches)]), collapse = ";\n  "))
+    }
+    reconstructions[[i]][matches, , drop = FALSE]
+  }
+  recon <- matrix(FALSE, nrow = length(consClades), ncol = length(tokens),
+                  dimnames = list(NULL, tokens))
+  for (i in seq_along(tree)) {
+    ri <- .Recon(i)
+    recon[, colnames(ri)] <- recon[, colnames(ri)] | ri
+  }
+  
+  if (isTRUE(plot)) {
+    .PlotCharacter(consTree, nTip, recon, tokens, tokenCol, ambigCol, inappCol,
+                   ambigLty, inappLty, plainLty, tipOffset, unitEdge, ...)
+  }
+  
+  invisible(recon)
+}
+
+#' @rdname PlotCharacter
+#' @export
+PlotCharacter.list <- function(tree, dataset, char = 1L,
+                               updateTips = FALSE,
+                               plot = TRUE,
+                               
+                               tokenCol = NULL,
+                               ambigCol = "grey",
+                               inappCol = "lightgrey",
+                               
+                               ambigLty = "dotted",
+                               inappLty = "dashed",
+                               plainLty = par("lty"),
+                               
+                               tipOffset = 1,
+                               unitEdge = FALSE,
+                               Display = function(tree) tree,
+                               ...
+) {
+  if (all(vapply(tree, inherits, logical(1), "phylo"))) {
+    PlotCharacter.multiPhylo(tree, dataset, char, updateTips, plot,
+                             tokenCol, ambigCol, inappCol,
+                             ambigLty, inappLty, plainLty,
+                             tipOffset, unitEdge, Display, ...)
+  } else {
+    stop("Elements of `tree` must be of class `phylo`")
+  }
 }

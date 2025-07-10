@@ -10,8 +10,7 @@
 #' @param tree A tree of class `phylo`, a list thereof (optionally of class
 #' `multiPhylo`), or an integer -- in which case `tree` random trees will be 
 #' uniformly sampled.
-#' @template datasetParam
-#' @template concavityParam
+#' @inheritParams MaximizeParsimony
 #' 
 #' @return `TreeLength()` returns a numeric vector containing the score for
 #' each tree in `tree`.
@@ -210,9 +209,11 @@ Fitch <- function (tree, dataset) {
 #' 
 #' Homoplasy length of each character in a dataset on a specified tree.
 #' 
-#' @template treeParam
-#' @template datasetParam
-#' @template compressParam
+#' @inheritParams TreeTools::Renumber
+#' @inheritParams MaximizeParsimony
+#' @param compress Logical specifying whether to retain the compression of a
+#' `phyDat` object or to return a vector specifying to each individual
+#' character, decompressed using the dataset's `index` attribute.
 #'
 #' @return `CharacterLength()` returns a vector listing the contribution of each
 #' character to tree score, according to the algorithm of
@@ -302,7 +303,8 @@ FastCharacterLength <- function (tree, dataset) {
 #' For most users, the function [`TreeLength()`] will be more appropriate.
 #' 
 #' @template labelledTreeParam
-#' @template morphyObjParam
+#' @param morphyObj Object of class `morphy`, perhaps created with 
+#' [`PhyDat2Morphy()`].
 #'
 #' @return `MorphyTreeLength()` returns the length of the tree,
 #' after applying weighting.
@@ -332,8 +334,7 @@ MorphyTreeLength <- function (tree, morphyObj) {
 
 #' @describeIn MorphyTreeLength Faster function that requires internal tree
 #'   parameters. Node numbering must increase monotonically away from root.
-#' @template treeParent
-#' @template treeChild
+#' @inheritParams RearrangeEdges
 #' @author Martin R. Smith
 #' @keywords internal
 #' @importFrom TreeTools PostorderOrder Preorder
@@ -371,9 +372,14 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
 }
 
 #' @describeIn MorphyTreeLength Fastest function that requires internal tree parameters
-#' @template parentOfParam
-#' @template leftChildParam
-#' @template rightChildParam
+#' @param parentOf Integer vector containing, for each tip and each node in 
+#' sequential order, the integer index its parent node.  
+#' The root node should be its own parent.
+#' @param leftChild integer vector containing, for each node, starting at the 
+#' root and proceeding in sequential order, the integer corresponding to its
+#' left child.  Tip numbering begins at 0; the root node is numbered `nTip`.
+#' @param rightChild integer vector containing, for each node, the index
+#'                  of its right child.
 #' @family tree scoring
 #' @author Martin R. Smith
 #' @keywords internal

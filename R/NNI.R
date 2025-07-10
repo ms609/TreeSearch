@@ -15,9 +15,10 @@
 #' @param tree A tree of class `phylo`. 
 #' For `cNNI()`, this must be a binary tree rooted on a single leaf, whose root
 #' node is the lowest numbered internal node.
-#' @template treeParam
-#' @param edgeToBreak In (`Rooted`)`NNI()`, an optional integer specifying the
-#' index of an edge to bisect/prune, generated randomly if not specified.
+#' @inheritParams TreeTools::Renumber
+#' @param edgeToBreak In (`Rooted`/`Double`)`NNI()`, an optional integer
+#' specifying the index of an edge to rearrange, generated randomly if not
+#' specified.
 #' If \code{-1}, a complete list of all trees one step from the input tree
 #' will be returned.
 #' In `cNNI()`, an integer from zero to `nEdge(tree) - nTip(tree) - 2`,
@@ -93,8 +94,12 @@ NNI <- function (tree, edgeToBreak = NULL) {
 #' @export
 cNNI <- function (tree, edgeToBreak = NULL, whichSwitch = NULL) {
   edge <- tree[["edge"]]
-  if (is.null(edgeToBreak)) edgeToBreak <- sample.int(dim(edge)[1] - NTip(tree) - 1L, 1L)
-  if (is.null(whichSwitch)) whichSwitch <- sample.int(2L, 1L)
+  if (is.null(edgeToBreak)) {
+    edgeToBreak <- sample.int(dim(edge)[[1]] - NTip(tree) - 1L, 1L)
+  }
+  if (is.null(whichSwitch)) {
+    whichSwitch <- sample.int(2L, 1L)
+  }
   tree[["edge"]] <- nni(edge, edgeToBreak, whichSwitch)
   
   # Return:
@@ -102,8 +107,7 @@ cNNI <- function (tree, edgeToBreak = NULL, whichSwitch = NULL) {
 }
   
 #' @describeIn NNI faster version that takes and returns parent and child parameters
-#' @template treeParent
-#' @template treeChild
+#' @inheritParams TBRSwap
 #' @param nTips (optional) Number of tips.
 #' @return `NNISwap()` returns a list containing two elements, corresponding in
 #' turn to the  rearranged parent and child parameters.
@@ -141,9 +145,7 @@ NNISwap <- function (parent, child, nTips = (length(parent) / 2L) + 1L,
 #' 
 #' Returns the edge parameter of the two trees consistent with the speficied \acronym{NNI} rearrangement
 #'
-#' @template treeParent
-#' @template treeChild
-#' @template edgeToBreakParam
+#' @inheritParams NNISwap
 #'
 #' @return the \code{tree[["edge"]]} parameter of the two trees consistent with the specified rearrangement
 #'

@@ -22,10 +22,13 @@ SuccessiveApproximations(
 SuccessiveWeights(tree, dataset)
 }
 \arguments{
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+Additive (ordered) characters can be handled using
+\code{\link[TreeTools]{Decompose}}.}
 
 \item{outgroup}{if not NULL, taxa on which the tree should be rooted}
 
@@ -41,8 +44,8 @@ SuccessiveWeights(tree, dataset)
 
 \item{ratchetIter}{maximum iterations of parsimony ratchet}
 
-\item{verbosity}{Numeric specifying level of detail to display in console:
-larger numbers provide more verbose feedback to the user.}
+\item{verbosity}{Integer specifying level of messaging; higher values give
+more detailed commentary on search progress. Set to \code{0} to run silently.}
 
 \item{suboptimal}{retain trees that are this proportion less optimal than the optimal tree}
 }

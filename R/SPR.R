@@ -19,9 +19,10 @@ SPRWarning <- function (parent, child, error) {
 #' This function is a copy of a deprecated ancestor in TreeTools; see 
 #' [#32](https://github.com/ms609/TreeTools/issues/32).
 #'
-#' @template treeParent
-#' @template treeChild
-#' @template treeNEdgeOptional
+#' @inheritParams TBR
+#' @inheritParams TBR
+#' @param nEdge (optional) integer specifying the number of edges of a tree of
+#' class \code{\link[ape]{phylo}}, i.e. \code{dim(tree$edge)[1]}
 #'
 #' @return `.NonDuplicateRoot()` returns a logical vector of length `nEdge`,
 #' specifying `TRUE` unless an edge identifies the same partition as
@@ -43,11 +44,11 @@ SPRWarning <- function (parent, child, error) {
   rightSide <- DescendantEdges(edge = 1, parent, child, nEdge = nEdge)
   nEdgeRight <- sum(rightSide)
   if (nEdgeRight == 1) {
-    notDuplicateRoot[2] <- FALSE
+    notDuplicateRoot[[2]] <- FALSE
   } else if (nEdgeRight == 3) {
-    notDuplicateRoot[4] <- FALSE
+    notDuplicateRoot[[4]] <- FALSE
   } else {
-    notDuplicateRoot[1] <- FALSE
+    notDuplicateRoot[[1]] <- FALSE
   }
   notDuplicateRoot
 }
@@ -66,7 +67,7 @@ SPRWarning <- function (parent, child, error) {
 #' All nodes in a tree must be bifurcating; [ape::collapse.singles] and
 #' [ape::multi2di] may help.
 #'
-#' @template treeParam
+#' @inheritParams TBR
 #' @param edgeToBreak the index of an edge to bisect, generated randomly if not specified.
 #' @param mergeEdge the index of an edge on which to merge the broken edge.
 #' @return This function returns a tree in \code{phyDat} format that has undergone one \acronym{SPR} iteration.
@@ -97,12 +98,13 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   if (!is.null(edgeToBreak) && edgeToBreak == -1) {
     child <- edge[, 2]
     nEdge <- length(parent)
-    stop("Negative edgeToBreak not yet supported; on TODO list for next release")
+    stop("Negative edgeToBreak not yet supported; please request on GitHub")
     notDuplicateRoot <- .NonDuplicateRoot(parent, child, nEdge)
     # Return:
     unique(unlist(lapply(which(notDuplicateRoot), AllSPR,
-      parent=parent, child=child, nEdge=nEdge, notDuplicateRoot=notDuplicateRoot),
-      recursive=FALSE)) # TODO the fact that we need to use `unique` indicates that 
+      parent = parent, child = child, nEdge = nEdge, 
+      notDuplicateRoot = notDuplicateRoot),
+      recursive = FALSE)) # TODO the fact that we need to use `unique` indicates that 
                          #      we're being inefficient here.
   } else {
     newEdge <- SPRSwap(parent, edge[, 2], edgeToBreak = edgeToBreak,
@@ -160,9 +162,9 @@ SPRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
 
 ## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn SPR faster version that takes and returns parent and child parameters
-#' @template treeParent
-#' @template treeChild
-#' @template treeNEdgeOptional
+#' @inheritParams RearrangeEdges
+#' @param nEdge (optional) integer specifying the number of edges of a tree of
+#' class \code{\link[ape]{phylo}}, i.e. \code{dim(tree$edge)[1]}
 #' @param nNode (optional) Number of nodes.
 #' @return a list containing two elements, corresponding in turn to the
 #'  rearranged parent and child parameters
@@ -180,7 +182,7 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
   
   if (is.null(edgeToBreak)) {
     # Pick an edge at random
-    edgeToBreak <- SampleOne(which(notDuplicateRoot), len=nEdge - 1L)
+    edgeToBreak <- SampleOne(which(notDuplicateRoot), len = nEdge - 1L)
   } else if (edgeToBreak > nEdge) {
     return(SPRWarning(parent, child, "edgeToBreak > nEdge"))
   } else if (edgeToBreak < 1) {
@@ -199,10 +201,17 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
   brokenEdgeSister <- parent == brokenEdge.parentNode & !brokenEdge
   brokenEdgeDaughters <- parent == brokenEdge.childNode
   nearBrokenEdge <- brokenEdge | brokenEdgeSister | brokenEdgeParent | brokenEdgeDaughters
-  if (breakingRootEdge <- !any(brokenEdgeParent)) { 
+  breakingRootEdge <- !any(brokenEdgeParent)
+  if (breakingRootEdge) {
+    if (edgeToBreak != 1 && all(edgesCutAdrift[-1])) {
+      return(SPRWarning(parent, child, "No rearrangement possible with this root position."))
+    }
+    
     # Edge to break is the Root Node.
+    # These daughters are going to have the root as a parent.
     brokenRootDaughters <- parent == child[brokenEdgeSister]
-    nearBrokenEdge <- nearBrokenEdge | brokenRootDaughters
+    # Why did I do this?  Breaks SPR(BalancedTree(4), 1)
+    # nearBrokenEdge <- nearBrokenEdge | brokenRootDaughters
   }
   
   if (!is.null(mergeEdge)) { # Quick sanity checks
@@ -233,9 +242,9 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
   if (breakingRootEdge) {
     parent[brokenRootDaughters] <- brokenEdge.parentNode
     spareNode <- child[brokenEdgeSister]
-    child [brokenEdgeSister] <- child[mergeEdge]
+    child[brokenEdgeSister] <- child[[mergeEdge]]
     parent[brokenEdge | brokenEdgeSister] <- spareNode
-    child[mergeEdge] <- spareNode
+    child[[mergeEdge]] <- spareNode
   } else {
     parent[brokenEdgeSister] <- parent[brokenEdgeParent]
     parent[brokenEdgeParent] <- parent[[mergeEdge]]
@@ -250,7 +259,7 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
 
 
 #' `cSPR()` expects a tree rooted on a single tip. 
-#' @template treeParam
+#' @inheritParams TreeTools::Renumber
 #' @param whichMove Integer specifying which SPR move index to perform.
 #' @examples 
 #' tree <- TreeTools::BalancedTree(8)
@@ -278,14 +287,12 @@ cSPR <- function (tree, whichMove = NULL) {
 
 #' All SPR trees
 #'
-#' @template treeParent
-#' @template treeChild
-#' @template treeNEdge
+#' @inheritParams TBR
+#' @param nEdge integer specifying the number of edges of a tree of class \code{\link[ape]{phylo}}, i.e. \code{dim(tree$edge)[1]}
 #' @param notDuplicateRoot logical vector of length `nEdge`, specifying for each
 #' edge whether it is the second edge leading to the root (in which case
 #' its breaking will be equivalent to breaking the other root edge... 
 #' except insofar as it moves the position of the root.)
-#' @template edgeToBreakParam
 #' 
 #' @return `AllSPR()` returns a list of edge matrices for all trees one SPR 
 #' rearrangement from the starting tree

@@ -37,7 +37,7 @@ RootedTBRSwap(
 )
 }
 \arguments{
-\item{tree}{A bifurcating tree of class \code{\link{phylo}}, with all nodes resolved;}
+\item{tree}{A bifurcating tree of class \code{\link[ape]{phylo}}, with all nodes resolved;}
 
 \item{edgeToBreak}{(optional) integer specifying the index of an edge to bisect/prune,
 generated randomly if not specified.
@@ -51,10 +51,12 @@ sides of \code{edgeToBreak}); if only a single edge is specified,
 the second will be chosen at random}
 
 \item{parent}{Integer vector corresponding to the first column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 1]}}
 
 \item{child}{Integer vector corresponding to the second column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 2]}.}
 
 \item{nEdge}{(optional) Number of edges.}
 }

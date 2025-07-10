@@ -21,16 +21,82 @@
 #' This function can be called using the R command line / terminal, or through
 #' the "shiny" graphical user interface app (type `EasyTrees()` to launch).
 #' 
+#' The optimal strategy for tree search depends in part on how close to optimal
+#' the starting tree is, the size of the search space (which increases
+#' super-exponentially with the number of leaves), and the complexity of the
+#' search space (e.g. the existence of multiple local optima).
+#' 
+#' One possible approach is to employ four phases:
+#' 
+#' 1. Rapid search for local optimum: tree score is typically easy to improve
+#'  early in a search, because the initial tree is often far from optimal.
+#'  When many moves are likely to be accepted, running several rounds of search
+#' with a low value of `maxHits` and a high value of `tbrIter` allows many
+#' trees to be evaluated quickly, hopefully moving quickly to a more promising
+#' region of tree space.
+#' 
+#' 2. Identification of local optimum:
+#' Once close to a local optimum, a more extensive search
+#' with a higher value of `maxHits` allows a region to be explored in more
+#' detail.  Setting a high value of `tbrIter` will search a local
+#' neighbourhood more completely
+#' 
+#' 3. Search for nearby peaks:
+#' Ratchet iterations allow escape from local optima.
+#' Setting `ratchIter` to a high value searches the wider neighbourhood more
+#' extensively for other nearby peaks; `ratchEW = TRUE` accelerates these
+#' exploratory searches.  Ratchet iterations can be ineffective when `maxHits`
+#' is too low for the search to escape its initial location.
+#' 
+#' 4. Extensive search of final optimum.  As with step 2, it may be valuable to
+#' fully explore the optimum that is found after ratchet searches to be sure
+#' that the locally optimal score has been obtained.  Setting a high value of
+#' `finalIter` performs a thorough search that can give confidence that further
+#' searches would not find better (local) trees.
+#' 
+#' A search is unlikely to have found a global optimum if:
+#'   
+#' - Tree score continues to improve on the final iteration.  If a local optimum
+#'   has not yet been reached, it is unlikely that a global optimum has
+#'   been reached.
+#'   Try increasing `maxHits`.
+#'   
+#' - Successive ratchet iterations continue to improve tree scores.
+#'   If a recent ratchet iteration improved the score, rather than finding
+#'   a different region of tree space with the same optimal score, it is likely
+#'   that still better global optima remain to be found.  Try increasing
+#'   `ratchIter` (more iterations give more chance for improvement) and
+#'   `maxHits` (to get closer to the local optimum after each ratchet iteration).
+#' 
+#' - Optimal areas of tree space are only visited by a single ratchet iteration.
+#'   (See vignette: [Exploring tree space](
+#'   https://ms609.github.io/TreeSearch/articles/tree-space.html).)
+#'   If some areas of tree space are only found by one ratchet iteration, there
+#'   may well be other, better areas that have not yet been visited.
+#'   Try increasing `ratchIter`.
 #'  
-#' For detailed documentation of the "TreeSearch" package, including full 
+#' When continuing a tree search, it is usually best to start from an optimal
+#' tree found during the previous iteration – there is no need to start from
+#' scratch.
+#' 
+#' A more time consuming way of checking that a global optimum has been reached
+#' is to repeat a search with the same parameters multiple times, starting
+#' from a different, entirely random tree each time. If all searches obtain the
+#' same optimal tree score despite their different starting points,
+#' this score is likely to correspond to the global optimum.
+#'  
+#' For detailed documentation of the "TreeSearch" package, including full
 #' instructions for loading phylogenetic data into R and initiating and 
 #' configuring tree search, see the 
 #' [package documentation](https://ms609.github.io/TreeSearch/).
 #'  
 #' 
-#' 
-#' @template datasetParam
-#' @param tree (optional) A bifurcating tree of class \code{\link{phylo}},
+#' @param dataset A phylogenetic data matrix of \pkg{phangorn} class
+#' \code{phyDat}, whose names correspond to the labels of any accompanying tree.
+#' Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+#' Additive (ordered) characters can be handled using
+#' \code{\link[TreeTools]{Decompose}}.
+#' @param tree (optional) A bifurcating tree of class \code{\link[ape]{phylo}},
 #' containing only the tips listed in `dataset`, from which the search
 #' should begin.
 #' If unspecified, an [addition tree][AdditionTree()] will be generated from
@@ -39,11 +105,11 @@
 #' @param ratchIter Numeric specifying number of iterations of the 
 #' parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.
 #' @param tbrIter Numeric specifying the maximum number of \acronym{TBR}
-#' break points to evaluate before concluding each search.
-#' The counter is reset to zero each time tree score improves.
-#' The counter is reset to zero each time tree score improves.
-#' One "iteration" comprises breaking a single branch and evaluating all 
-#' possible reconnections.
+#' break points on a given tree to evaluate before terminating the search.
+#' One "iteration" comprises selecting a branch to break, and evaluating
+#' each possible reconnection point in turn until a new tree improves the
+#' score. If a better score is found, then the counter is reset to zero,
+#' and tree search continues from the improved tree.
 #' @param startIter Numeric: an initial round of tree search with
 #' `startIter` &times; `tbrIter` \acronym{TBR} break points is conducted in
 #' order to locate a local optimum before beginning ratchet searches. 
@@ -57,15 +123,19 @@
 #' next opportunity.
 #' @param quickHits Numeric: iterations on subsampled datasets
 #'  will retain `quickHits` &times; `maxHits` trees with the best score.
-#' @param concavity Numeric specifying concavity constant for implied step 
-#' weighting.
-#' The most appropriate value will depend on the dataset, but values around
-#' 10--15 often perform well \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
-#' The character string "profile" employs an approximation of profile parsimony
+#' @param concavity Determines the degree to which extra steps beyond the first
+#' are penalized.  Specify a numeric value to use implied weighting
+#' \insertCite{Goloboff1993}{TreeSearch}; `concavity` specifies _k_ in
+#'  _k_ / _e_ + _k_. A value of 10 is recommended;
+#' TNT sets a default of 3, but this is too low in some circumstances
+#' \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+#' Better still explore the sensitivity of results under a range of
+#' concavity values, e.g. `k = 2 ^ (1:7)`.
+#' Specify `Inf` to weight each additional step equally,
+#' (which underperforms step weighting approaches
+#' \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
+#' Specify `"profile"` to employ an approximation of profile parsimony
 #' \insertCite{Faith2001}{TreeSearch}.
-#' Set as `Inf` for equal step weights, which underperforms step weighting
-#' approaches
-#' \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.
 #' @param ratchEW Logical specifying whether to use equal weighting during
 #' ratchet iterations, improving search speed whilst still facilitating
 #' escape from local optima.
@@ -79,7 +149,7 @@
 #' returned trees will be perfectly compatible with each character in
 #' `constraint`; or a tree of class `phylo`, all of whose nodes will occur
 #' in any output tree.
-#' See [`ImposeConstraint()`] and 
+#' See \code{\link[TreeTools:ImposeConstraint]{ImposeConstraint()}} and 
 #' [vignette](https://ms609.github.io/TreeSearch/articles/tree-search.html)
 #' for further examples.
 #' @param verbosity Integer specifying level of messaging; higher values give
@@ -278,12 +348,12 @@ MaximizeParsimony <- function (dataset, tree,
     
     while (iter < tbrIter) {
       iter <- iter + 1L
-      optTbr <- sample(3:(nTip * 2 - 2))
+      brkOptions <- sample(3:(nTip * 2 - 2))
       .Message(4L, " New TBR iteration (depth ", iter, 
                ", score ", signif(bestScore), ")")
-      cli_progress_update(set = 0, total = length(optTbr))
+      cli_progress_update(set = 0, total = length(brkOptions))
       
-      for (brk in optTbr) {
+      for (brk in brkOptions) {
         cli_progress_update(1, status = paste0("D", iter, ", score ",
                                                signif(bestScore), ", hit ",
                                                nHits, "."))
@@ -310,7 +380,7 @@ MaximizeParsimony <- function (dataset, tree,
               nHits <- 1L
               hold[, , 1] <- edge
               .Message(5L, "  New best score ", signif(bestScore),
-                       " at break ", fmatch(brk, optTbr), "/", length(optTbr))
+                       " at break ", fmatch(brk, brkOptions), "/", length(brkOptions))
               break
             } else {
               .Message(6L, "  Best score ", signif(bestScore),
@@ -326,7 +396,7 @@ MaximizeParsimony <- function (dataset, tree,
           if (improvedScore && runif(1) < (i / nMoves) ^ 2) break
         }
         if (nHits >= maxHits) break
-        pNextTbr <- (fmatch(brk, optTbr) / length(optTbr)) ^ 2
+        pNextTbr <- (fmatch(brk, brkOptions) / length(brkOptions)) ^ 2
         if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break

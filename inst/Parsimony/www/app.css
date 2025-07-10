@@ -105,11 +105,11 @@ li.state-note {
   border-color: #F0F921;
 }
 
-div#plotSizer, div#saveAs, div#exportAs {
+div#plotSizer, div#saveAs, div#exportAs, div#savePlottedTrees {
   float: left;
 }
 
-div#saveAs, div#exportAs {
+div#saveAs, div#exportAs,  div#savePlottedTrees {
   padding: 0.8em;
 }
 

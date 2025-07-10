@@ -428,6 +428,6 @@ for (i in seq_len(nClusters)) {
 - Search for trees using
   - [standard parsimony](tree-search.html) (corrected for inapplicable data)
   - [profile parsimony](profile.html)
-  - [custom optimality criteria](custom.Rmd)
+  - [custom optimality criteria](custom.html)
 
 # References

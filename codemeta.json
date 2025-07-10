@@ -8,13 +8,13 @@
   "codeRepository": "https://github.com/ms609/TreeSearch/",
   "issueTracker": "https://github.com/ms609/TreeSearch/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.5.1",
+  "version": "1.6.1.9001",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.4.0 (2024-04-24)",
+  "runtimePlatform": "R version 4.5.1 (2025-06-13)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -171,7 +171,7 @@
       "@type": "SoftwareApplication",
       "identifier": "R",
       "name": "R",
-      "version": ">= 3.5.0"
+      "version": ">= 4.0"
     },
     "2": {
       "@type": "SoftwareApplication",
@@ -380,7 +380,7 @@
     },
     "SystemRequirements": "C++17"
   },
-  "fileSize": "4467.376KB",
+  "fileSize": "4555.997KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -452,7 +452,7 @@
       ],
       "name": "{TreeSearch}: phylogenetic analysis with discrete character data",
       "identifier": "10.5281/zenodo.1042590",
-      "description": "R package version 1.5.1",
+      "description": "R package version 1.6.1.9001",
       "@id": "https://doi.org/10.5281/zenodo.1042590",
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
     },
