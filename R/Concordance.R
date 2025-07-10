@@ -273,10 +273,16 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
   h <- simplify2array(apply(mat, 2, function(char) {
     aChar <- !is.na(char)
     ch <- char[aChar]
-    chMax <- max(1, ch)
-    chTable <- tabulate(ch, chMax)
-    n <- length(ch)
-    hChar <- Entropy(chTable / n)
+    if (length(ch) == 0) {
+      # All ambiguous
+      n <- 0
+      hChar <- 0
+    } else {
+      chMax <- max(1, ch)
+      chTable <- tabulate(ch, chMax)
+      n <- length(ch)
+      hChar <- Entropy(chTable / n)
+    }
     hh <- apply(splits[, aChar, drop = FALSE], 1, function (spl) {
       spTable <- tabulate(spl + 1, 2)
       if (any(spTable < 2)) {
