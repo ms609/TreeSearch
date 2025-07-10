@@ -202,8 +202,9 @@ IWBootstrap <- function (edgeList, dataset, concavity = 10L, EdgeSwapper = NNISw
   sampled <- resampling != 0
   sampledData <- lapply(dataset, function (x) x[sampled])
   sampledAtt <- att
-  sampledAtt[["weight"]] <- resampling[sampled]
   sampledAtt[["index"]] <- rep.int(seq_len(sum(sampled)), resampling[sampled])
+  sampledAtt[["weight"]] <- resampling[sampled]
+  sampledAtt[["nr"]] <- length(sampledAtt[["weight"]])
   sampledAtt[["min.length"]] <- minLength <- att[["min.length"]][sampled]
   sampledAtt[["morphyObjs"]] <- att[["morphyObjs"]][sampled]
   attributes(sampledData) <- sampledAtt
