@@ -42,7 +42,10 @@
 #' default treatment in [`TreeLength()`].
 #' 
 #' @param nRelabel Integer specifying number of leaf relabellings to employ when
-#' calculating null tree length. If zero, the RHI will not be calculated.
+#' calculating null tree length.
+#' \insertCite{Steell2023;textual}{TreeSearch} recommend 1000, but suggest that
+#' 100 may suffice.
+#' If zero, the RHI will not be calculated.
 #' @inheritParams CharacterLength
 #' 
 #' @return `Consistency()` returns a matrix with named columns specifying the 
@@ -124,7 +127,7 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   contrast <- at[["contrast"]]
   
   rewritten <- apply(mat, 2, .SortChar,
-                     cont = apply(contrast, 1, .Bin),
+                     contr = apply(contrast, 1, .Bin),
                      inapp = match("-", at[["levels"]], nomatch = 0))
   
   .LengthForChar <- memoise(function(x) {
@@ -161,12 +164,13 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   sum(2 ^ (seq_along(x)[as.logical(x)] - 1))
 }
 
-.SortChar <- function(char, cont, inapp) {
-  logCont <- log2(cont)
+#' @importFrom fastmatch fmatch
+.SortChar <- function(char, contr, inapp) {
+  logCont <- log2(contr)
   nWhole <- 2 ^ floor(max(logCont))
   maxN <- nWhole + nWhole - 1
   ambig <- logCont != floor(logCont)
-  swappableTokens <- cont[cont != ifelse(is.na(inapp), 0, inapp) & !ambig]
+  swappableTokens <- contr[contr != ifelse(is.na(inapp), 0, inapp) & !ambig]
   tab <- tabulate(char, maxN)
   mapping <- integer(maxN)
   if (!is.na(inapp) && inapp > 0) {
@@ -182,5 +186,5 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
     function(x) sum(wholes[x]))
   
   # Return:
-  mapping[char]
+  fmatch(mapping[contr[char]], contr)
 }
