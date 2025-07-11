@@ -4,7 +4,7 @@
 \alias{Consistency}
 \title{Consistency / retention "indices"}
 \usage{
-Consistency(dataset, tree, nRelabel = 1000, compress = FALSE)
+Consistency(dataset, tree, nRelabel = 0, compress = FALSE)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
@@ -19,7 +19,7 @@ Additive (ordered) characters can be handled using
 calculating null tree length.
 \insertCite{Steell2023;textual}{TreeSearch} recommend 1000, but suggest that
 100 may suffice.
-If zero, the RHI will not be calculated.}
+If zero (the default), the \acronym{RHI} will not be calculated.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
 \code{phyDat} object or to return a vector specifying to each individual
