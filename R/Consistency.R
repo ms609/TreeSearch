@@ -74,6 +74,7 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
   }
   minLength <- MinimumLength(dataset, compress = TRUE) # Farris's m
   maxLength <- MaximumLength(dataset, compress = TRUE) # Farris's g
+  tree <- Postorder(tree)
   obsLength <- CharacterLength(tree, dataset, compress = TRUE) # farris's s
   
   extra <- obsLength - minLength # Farris's h
@@ -122,6 +123,7 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
 #' relabelling of leaves.
 #' 
 #' @export
+#' @importFrom stringi stri_paste
 #' @template MRS
 ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   .CheckDataCharLen(dataset)
@@ -144,7 +146,7 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   }, integer(nLevels)))
   
   .LengthForChar <- function(x) {
-    key <- paste(c(nRelabel, x), collapse = ",")
+    key <- stri_paste(c(nRelabel, x), collapse = ",")
     if (.CharLengthCache$has(key)) {
       .CharLengthCache$get(key)
     } else {
