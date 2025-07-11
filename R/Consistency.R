@@ -123,6 +123,7 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
 #' relabelling of leaves.
 #' 
 #' @export
+#' @importFrom stats median
 #' @importFrom stringi stri_paste
 #' @template MRS
 ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
