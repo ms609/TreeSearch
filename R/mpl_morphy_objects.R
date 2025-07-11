@@ -161,7 +161,7 @@ PhyDat2Morphy <- function(phy, gap = "inapplicable",
   if (mpl_set_num_internal_nodes(nTax - 1L, morphyObj) -> error) { # One is the "dummy root"
     stop("Error ", mpl_translate_error(error), " in mpl_set_num_internal_nodes")
   }
-  if (any(vapply(seq_len(nChar), 
+  if (any(vapply(seq_len(nChar),
                  function (i) mpl_set_parsim_t(i, "FITCH", morphyObj),
                  NA_integer_) -> error)) {
       stop("Error ", mpl_translate_error(min(error)), "in mpl_set_parsim_t")    #nocov
