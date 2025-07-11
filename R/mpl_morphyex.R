@@ -156,8 +156,8 @@ mpl_set_charac_weight <- function (charID, weight, morphyobj) {
 #' @param charID    Number of the character (i.e. first character is number 1)
 #' @param morphyobj An instance of the Morphy object.
 #' 
-#' @return A list, detailing (item 1) the exact weight of the character; (item 2) the integer
-#'         approximation used by Morphy.
+#' @return A list, detailing (item 1) the exact weight of the character;
+#'  (item 2) the integer approximation used by Morphy.
 #' 
 #' @template MRS
 #' @family Morphy API functions

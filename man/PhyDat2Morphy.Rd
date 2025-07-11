@@ -4,13 +4,16 @@
 \alias{PhyDat2Morphy}
 \title{Initialize a Morphy object from a \code{phyDat} object}
 \usage{
-PhyDat2Morphy(phy, gap = "inapplicable")
+PhyDat2Morphy(phy, gap = "inapplicable", weight = attr(phy, "weight"))
 }
 \arguments{
 \item{phy}{An object of \pkg{phangorn} class \code{phyDat}.}
 
 \item{gap}{An unambiguous abbreviation of \code{inapplicable}, \code{ambiguous}
 (= \code{missing}), or \verb{extra state}, specifying how gaps will be handled.}
+
+\item{weight}{Numeric giving weight to apply to each character.
+Will be recycled.}
 }
 \value{
 \code{PhyDat2Morphy()} returns a pointer to an initialized Morphy object.

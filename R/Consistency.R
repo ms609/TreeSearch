@@ -124,6 +124,11 @@ Consistency <- function (dataset, tree, nRelabel = 1000, compress = FALSE) {
 #' @export
 #' @template MRS
 ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
+  .CheckDataCharLen(dataset)
+  .CheckTreeCharLen(tree)
+  tipLabel <- tree[["tip.label"]]
+  tree <- .TreeForTaxa(tree, names(dataset))
+  
   mat <- do.call(rbind, dataset)
   at <- attributes(dataset)
   contrast <- at[["contrast"]]
@@ -157,7 +162,7 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
         type = "USER",
         contrast = rwContrast,
         class = "phyDat")
-      ret <- median(CharacterLength(tree, phy))
+      ret <- median(FastCharacterLength(tree, phy))
       .CharLengthCache$set(key, ret)
       ret
     }

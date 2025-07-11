@@ -12,8 +12,8 @@ mpl_get_charac_weight(charID, morphyobj)
 \item{morphyobj}{An instance of the Morphy object.}
 }
 \value{
-A list, detailing (item 1) the exact weight of the character; (item 2) the integer
-approximation used by Morphy.
+A list, detailing (item 1) the exact weight of the character;
+(item 2) the integer approximation used by Morphy.
 }
 \description{
 Gets the weights of a character in the dataset.
