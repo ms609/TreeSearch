@@ -126,9 +126,15 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   at <- attributes(dataset)
   contrast <- at[["contrast"]]
   
-  rewritten <- apply(mat, 2, .SortChar,
+  rewritten <- apply(mat, 2, .SortTokens,
                      contr = apply(contrast, 1, .Bin),
-                     inapp = match("-", at[["levels"]], nomatch = 0))
+                     inapp = match("-", at[["levels"]], nomatch = NA_integer_))
+  rwMax <- max(rewritten)
+  rwLevels <- c("-", seq_len(log2(rwMax)))
+  nLevels <- length(rwLevels)
+  rwContrast <- t(vapply(seq_len(rwMax), function(x) {
+    as.integer(intToBits(x)[1:nLevels])
+  }, integer(nLevels)))
   
   .LengthForChar <- memoise(function(x) {
     patterns <- apply(unname(unique(t(
@@ -139,12 +145,11 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
       setNames(patterns, TipLabels(tree)),
       "weight" = rep(1, nr),
       nr = nr,
-      nc = dim(contrast)[[2]],
+      nc = nLevels,
       index = seq_len(nr),
-      levels = at[["levels"]],
-      allLevels = at[["allLevels"]],
+      levels = rwLevels,
       type = "USER",
-      contrast = contrast,
+      contrast = rwContrast,
       class = "phyDat")
     median(CharacterLength(tree, phy))
   })
@@ -164,27 +169,45 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   sum(2 ^ (seq_along(x)[as.logical(x)] - 1))
 }
 
-#' @importFrom fastmatch fmatch
-.SortChar <- function(char, contr, inapp) {
-  logCont <- log2(contr)
-  nWhole <- 2 ^ floor(max(logCont))
-  maxN <- nWhole + nWhole - 1
-  ambig <- logCont != floor(logCont)
-  swappableTokens <- contr[contr != ifelse(is.na(inapp), 0, inapp) & !ambig]
-  tab <- tabulate(char, maxN)
-  mapping <- integer(maxN)
-  if (!is.na(inapp) && inapp > 0) {
-    mapping[[inapp]] <- inapp
+
+# Relabel a character such that 1 is the most common; then 2, etc.
+# @param char integer vector: row of contrast matrix that applies to each taxon
+# @param contr binary representation of contrast matrix
+# @param inapp which level corresponds to the inapplicable state?
+# @value `char` relabelled according to a binary contrast matrix in which the 
+# first state corresponds to the inapplicable token
+#' @importFrom fastmatch %fin% fmatch
+.SortTokens <- function(char, contr, inapp = NA_integer_) {
+  if (is.na(inapp)) {
+    # Add a dummy inapplicable token
+    inapp <- 2 ^ (floor(max(log2(contr[char]))) + 1)
+    contr <- c(contr, inapp)
   }
-  mapping[swappableTokens[order(tab[swappableTokens], decreasing = TRUE)]] <- 
-    sort.int(swappableTokens)
+  logCont <- log2(contr)
+  maxToken <- floor(max(logCont))
+  if (maxToken > 32) {
+    # Too big for intToBits
+    stop("This many tokens are not supported; contact the maintainer for help")
+  }
+  nWhole <- 2 ^ maxToken
+  maxN <- nWhole + nWhole - 1 # Token that is completely ambiguous
+  ambig <- logCont != floor(logCont) # Is contrast entry (partly) ambiguous?
+  inappToken <- contr == inapp
+  tokensToSort <- contr[!inappToken & !ambig]
+  tab <- tabulate(contr[char], maxN)
+  # mapping maps each token or set of tokens to its new label
+  mapping <- integer(maxN)
+  mapping[[inapp]] <- 1
+  mapping[tokensToSort[order(tab[tokensToSort], decreasing = TRUE)]] <- 
+    2 ^ seq_along(tokensToSort)
   
   nAssigned <- log2(nWhole) + 1
-  wholes <- c(mapping[2 ^ (seq_len(nAssigned) - 1)], integer(32 - nAssigned))
-  mapping[-swappableTokens] <- apply(matrix(as.logical(intToBits(
-    seq_len(maxN)[-swappableTokens])), 32), 2,
-    function(x) sum(wholes[x]))
+  wholes <- mapping[2 ^ (seq_len(nAssigned) - 1)]
+  
+  ambigTokens <- contr[ambig & seq_along(contr) %fin% char]
+  mapping[ambigTokens] <- apply(matrix(as.logical(intToBits(contr[ambig])), 32),
+                                2, function(x) sum(wholes[x]))
   
   # Return:
-  fmatch(mapping[contr[char]], contr)
+  mapping[contr[char]]
 }

@@ -92,33 +92,35 @@ test_that("Consistency() handles `-`", {
   )
 })
 
-test_that(".SortChar() works", {
-  contrast <- structure(c(0, 0, 1, 1, 0, 0, 0,
-                          1, 0, 1, 0, 0, 0, 0,
-                          0, 1, 1, 0, 0, 0, 0,
-                          0, 0, 1, 0, 1, 0, 0,
-                          0, 0, 1, 0, 0, 1, 0,
-                          0, 0, 1, 0, 0, 0, 1), dim = 7:6, 
+test_that(".SortTokens() works", {
+  contrast <- structure(c(0, 0, 1, 1, 0, 0, 0, 1, 0,
+                          1, 0, 1, 0, 0, 0, 0, 0, 1, 
+                          0, 1, 1, 0, 0, 0, 0, 1, 1, 
+                          0, 0, 1, 0, 1, 0, 0, 0, 0,
+                          0, 0, 1, 0, 0, 1, 0, 0, 0,
+                          0, 0, 1, 0, 0, 0, 1, 0, 0), dim = c(9, 6), 
                         dimnames = list(NULL, c("-", "0", "1", "2", "3", "4")))
   cont <- apply(contrast, 1, .Bin)
   # Simplest
-  expect_equal(.SortChar(rep(1:2, 5:4), 1:2, NA), rep(1:2, 5:4))
-  expect_equal(.SortChar(rep(1:2, 4:5), 1:2, NA), rep(2:1, 4:5))
-  expect_equal(.SortChar(rep(1:3, 4:6), 1:2, NA), rep(c(2, 1, 3), 4:6))
+  expect_equal(.SortTokens(rep(1:2, 5:4), 1:2, NA), rep(c(2, 4), 5:4))
+  expect_equal(.SortTokens(rep(1:2, 4:5), 1:2, NA), rep(c(4, 2), 4:5))
+  expect_equal(.SortTokens(rep(1:3, 4:6), 1:3, NA), rep(c(4, 2, 6), 4:6))
   
   # Straightforward, no inapp
-  expect_equal(.SortChar(rep(2 ^ c(1, 2, 4), c(4, 2, 3)), cont, inapp = NA),
-               rep(2 ^ c(0, 2, 1), c(4, 2, 3)))
+  expect_equal(.SortTokens(rep(c(1, 2, 4), c(4, 2, 3)), cont, inapp = NA),
+               rep(c(2, 8, 4), c(4, 2, 3)))
   
   # Straightforward
-  expect_equal(.SortChar(rep(2^c(1, 2, 4), c(4, 2, 3)), cont, inapp = 1),
-               rep(2 ^ c(1, 3, 2), c(4, 2, 3)))
+  expect_equal(.SortTokens(rep(c(1, 2, 4), c(4, 2, 3)), cont, inapp = 2),
+               rep(c(1, 4, 2), c(4, 2, 3)))
+  expect_equal(.SortTokens(rep(c(1, 2, 4), c(4, 2, 3)), cont, inapp = 4),
+               rep(c(2, 1, 4), c(4, 2, 3)))
   
-  # Inapplicable
-  expect_equal(.SortChar(rep(2^c(1, 2, 0, 4), c(4, 2, 3, 3)), cont, inapp = 1),
-               rep(2^c(1, 3, 0, 2), c(4, 2, 3, 3)))
+  # Inapplicables with ambiguity
+  # TODO it would be nice to return 7 in place of 63, but
+  # unnecessarily complex to implement at the moment
+  expect_equal(.SortTokens(rep(c(1, 2, 3, 4, 8, 9), 
+                               c(2, 3, 4, 5, 1, 1)), cont, inapp = 1),
+               rep(c(4, 2, 63, 1, 3, 6), c(2, 3, 4, 5, 1, 1)))
   
-  # Ambiguity: 8->2; 2->4; 1->1
-  expect_equal(.SortChar(c(8, 8, 8 + 2, 8 + 1, 8, 2 + 1, 2, 2, 1, 1, 1), cont, inapp = 1),
-               c(2, 2, 2 + 4, 2 + 1, 2, 4 + 1, 4, 4, 1, 1, 1))
 })
