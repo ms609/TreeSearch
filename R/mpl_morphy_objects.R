@@ -153,7 +153,7 @@ PhyDat2Morphy <- function(phy, gap = "inapplicable",
   if (mpl_set_gaphandl(.GapHandler(gap), morphyObj) -> error) {
     stop("Error ", mpl_translate_error(error), " in mpl_set_gaphandl")          #nocov
   }
-  if (mpl_attach_rawdata(PhyToString(phy, ps=";", useIndex = FALSE,
+  if (mpl_attach_rawdata(PhyToString(phy, ps = ";", useIndex = FALSE,
                                      byTaxon = TRUE, concatenate = TRUE),
                           morphyObj) -> error) {
     stop("Error ", mpl_translate_error(error), " in mpl_attach_rawdata")        #nocov
