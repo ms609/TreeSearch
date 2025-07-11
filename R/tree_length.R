@@ -310,9 +310,6 @@ FitchSteps <- function (tree, dataset) {
 FastCharacterLength <- function (tree, dataset) {
   nTip <- NTip(tree)
   levels <- attr(dataset, "levels")
-  characters <- PhyToString(dataset, ps = ";", useIndex = FALSE, byTaxon = TRUE,
-                            concatenate = TRUE)
-  
   morphyObj <- PhyDat2Morphy(dataset, weight = 0)
   on.exit(morphyObj <- UnloadMorphy(morphyObj))
   
