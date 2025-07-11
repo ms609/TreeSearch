@@ -105,6 +105,9 @@ Consistency <- function (dataset, tree, nRelabel = 1000, compress = FALSE) {
 }
 
 
+#' @importFrom fastmap fastmap
+.CharLengthCache <- fastmap()
+
 #' Expected length
 #' 
 #' For a given dataset and tree topology, `ExpectedLength()` estimates the
@@ -118,7 +121,6 @@ Consistency <- function (dataset, tree, nRelabel = 1000, compress = FALSE) {
 #' length of each character in `dataset` on `tree` after `nRelabel` random
 #' relabelling of leaves.
 #' 
-#' @importFrom memoise memoise
 #' @export
 #' @template MRS
 ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
@@ -136,23 +138,30 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
     as.integer(intToBits(x)[1:nLevels])
   }, integer(nLevels)))
   
-  .LengthForChar <- memoise(function(x) {
-    patterns <- apply(unname(unique(t(
-      as.data.frame(replicate(nRelabel, sample(rep(seq_along(x), x))))))),
-      2, I, simplify = FALSE)
-    nr <- length(patterns[[1]])
-    phy <- structure(
-      setNames(patterns, TipLabels(tree)),
-      "weight" = rep(1, nr),
-      nr = nr,
-      nc = nLevels,
-      index = seq_len(nr),
-      levels = rwLevels,
-      type = "USER",
-      contrast = rwContrast,
-      class = "phyDat")
-    median(CharacterLength(tree, phy))
-  })
+  .LengthForChar <- function(x) {
+    key <- paste(c(nRelabel, x), collapse = ",")
+    if (.CharLengthCache$has(key)) {
+      .CharLengthCache$get(key)
+    } else {
+      patterns <- apply(unname(unique(t(
+        as.data.frame(replicate(nRelabel, sample(rep(seq_along(x), x))))))),
+        2, I, simplify = FALSE)
+      nr <- length(patterns[[1]])
+      phy <- structure(
+        setNames(patterns, TipLabels(tree)),
+        "weight" = rep(1, nr),
+        nr = nr,
+        nc = nLevels,
+        index = seq_len(nr),
+        levels = rwLevels,
+        type = "USER",
+        contrast = rwContrast,
+        class = "phyDat")
+      ret <- median(CharacterLength(tree, phy))
+      .CharLengthCache$set(key, ret)
+      ret
+    }
+  }
   
   exp <- apply(apply(rewritten, 2, tabulate, max(rewritten)), 2, .LengthForChar)
   
