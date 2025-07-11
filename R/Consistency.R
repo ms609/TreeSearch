@@ -45,7 +45,7 @@
 #' calculating null tree length.
 #' \insertCite{Steell2023;textual}{TreeSearch} recommend 1000, but suggest that
 #' 100 may suffice.
-#' If zero, the RHI will not be calculated.
+#' If zero (the default), the RHI will not be calculated.
 #' @inheritParams CharacterLength
 #' 
 #' @return `Consistency()` returns a matrix with named columns specifying the 
@@ -61,7 +61,7 @@
 #' @references \insertAllCited{}
 #' @template MRS
 #' @export
-Consistency <- function (dataset, tree, nRelabel = 1000, compress = FALSE) {
+Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
   dsTips <- TipLabels(dataset)
   trTips <- TipLabels(tree)
   if (!setequal(dsTips, trTips)) {
