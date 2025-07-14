@@ -15,11 +15,11 @@ Additive (ordered) characters can be handled using
 
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
-\item{nRelabel}{Integer specifying number of leaf relabellings to employ when
-calculating null tree length.
+\item{nRelabel}{Integer specifying how many times to relabel leaves when
+estimating null tree length for \acronym{RHI} calculation.
 \insertCite{Steell2023;textual}{TreeSearch} recommend 1000, but suggest that
 100 may suffice.
-If zero (the default), the \acronym{RHI} will not be calculated.}
+If zero (the default), the \acronym{RHI} is not calculated.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
 \code{phyDat} object or to return a vector specifying to each individual

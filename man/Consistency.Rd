@@ -15,11 +15,11 @@ Additive (ordered) characters can be handled using
 
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
-\item{nRelabel}{Integer specifying number of leaf relabellings to employ when
-calculating null tree length.
+\item{nRelabel}{Integer specifying how many times to relabel leaves when
+estimating null tree length for \acronym{RHI} calculation.
 \insertCite{Steell2023;textual}{TreeSearch} recommend 1000, but suggest that
 100 may suffice.
-If zero (the default), the \acronym{RHI} will not be calculated.}
+If zero (the default), the \acronym{RHI} is not calculated.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
 \code{phyDat} object or to return a vector specifying to each individual
@@ -41,7 +41,8 @@ they are sometimes taken as an indicator of the fit of a character to a
 tree.
 Values correlate with the number of species sampled and the
 distribution of taxa between character states, so are not strictly comparable
-between characters in which these factors differ.
+between characters in which these factors differ; and values cannot be
+compared between datasets \insertCite{Speed2017}{TreeSearch}.
 }
 \details{
 The \strong{consistency "index"} \insertCite{Kluge1969}{TreeSearch} is defined as the
@@ -51,6 +52,8 @@ tree for that character. A value of one indicates that a character's fit to
 the tree is optimal.
 Note that as the possible values of the consistency index do not range from
 zero to one, it is not an index in the mathematical sense of the term.
+Shortcomings of this measure are widely documented
+\insertCite{Archie1989; Brooks1986; Steell2023}{TreeSearch}.
 
 The maximum length of a character (see \code{\link[=MaximumLength]{MaximumLength()}}) is the
 number of steps in a parsimonious reconstruction on the longest possible tree
