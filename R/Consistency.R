@@ -19,7 +19,7 @@
 #' Note that as the possible values of the consistency index do not range from
 #' zero to one, it is not an index in the mathematical sense of the term.
 #' Shortcomings of this measure are widely documented 
-#' \insertCite{Archie1989; Brooks1986; Steell2023}{TreeSearch}.
+#' \insertCite{Archie1989, Brooks1986, Steell2023}{TreeSearch}.
 #' 
 #' The maximum length of a character (see [`MaximumLength()`]) is the
 #' number of steps in a parsimonious reconstruction on the longest possible tree
