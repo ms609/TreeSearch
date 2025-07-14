@@ -96,6 +96,7 @@ jobs:
         if: runner.os == 'Windows'
         with:
           needs: |
+            check
             coverage
 
       - name: Check package
