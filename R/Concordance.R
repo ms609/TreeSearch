@@ -220,10 +220,18 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' `hJoint` gives the joint entropy – the entropy of the
 #' confusion matrix of the split and character considered together.
 #' 
-#' `ClusteringConcordance(return = "mean")` returns a matrix or vector listing
-#' for each site the proportion of clustering information across all sites that
+#' `ClusteringConcordance(return = "edge")` returns a matrix or vector listing
+#' for each split the proportion of clustering information across all sites
 #' held in common with the split.
+#' `ClusteringConcordance(return = "char")` returns a vector listing for each
+#' site (character) the proportion of clustering information across all edges
+#' held in common with the site.
+#' `ClusteringConcordance(return = "tree")` returns the mean of the
+#' normalized site-wise concordance scores; this single value gives a measure
+#' analogous to the consistency index.
 #' 
+#' @seealso
+#' - [Consistency()]
 #' @examples
 #' data(congreveLamsdellMatrices)
 #' myMatrix <- congreveLamsdellMatrices[[10]]
@@ -235,7 +243,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @importFrom TreeDist Entropy
 #' @importFrom TreeTools Subsplit
 #' @export
-ClusteringConcordance <- function (tree, dataset, return = "mean",
+ClusteringConcordance <- function (tree, dataset, return = "edge",
                                    normalize = TRUE) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
@@ -312,20 +320,21 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
                        hh["hSplit", , , drop = FALSE] -
                        hh["hJoint", , , drop = FALSE], NULL)
   miRand <- `rownames<-`(hh["miRand", , , drop = FALSE], NULL)
+  norm <- ifelse(hBest == 0, NA, .Rezero(mi / hBest, miRand / hBest))
   
   # Return:
-  switch(pmatch(tolower(return), c("all", "mean"), nomatch = 1L),
+  switch(pmatch(tolower(return), c("all", "edge", "character", "tree"),
+                nomatch = 1L),
          # all
          abind(
            along = 1,
-           normalized = ifelse(hBest == 0, NA,
-                               .Rezero(mi / hBest, miRand / hBest)),
+           normalized = norm,
            hh,
            hBest = hBest,
            mi = mi,
            miRand = miRand
          ), {
-           # mean
+           # edge
            best <- rowSums(hBest[1, , , drop = FALSE], dims = 2)
            ifelse(!is.na(best) & best == 0,
                   NA_real_,
@@ -337,6 +346,12 @@ ClusteringConcordance <- function (tree, dataset, return = "mean",
                   } else {
                     rowSums(mi[1, , , drop = FALSE], dims = 2) / best
                   })[1, ]
+         }, {
+           # char: site-wise 'CI'
+           colMeans(norm, na.rm = TRUE, dims = 2)
+         }, {
+           # tree: Mean character 'CI'
+           mean(colMeans(norm, na.rm = TRUE, dims = 2), na.rm = TRUE)
          }
   )
 }
