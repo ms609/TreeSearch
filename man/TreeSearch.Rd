@@ -43,7 +43,7 @@ IWTreeSearch(...)
 
 EmptyPhyDat(tree)
 
-DoNothing(...)
+DoNothing(x = NULL)
 }
 \arguments{
 \item{edgeList}{a list containing the following:

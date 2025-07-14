@@ -204,6 +204,56 @@ Fitch <- function (tree, dataset) {
 }
 
 
+.CheckDataCharLen <- function(dataset) {
+  if (!inherits(dataset, "phyDat")) {
+    stop("Dataset must be of class phyDat, not ", class(dataset), ".")
+  }
+}
+
+.CheckTreeCharLen <- function(tree) {
+  if (!inherits(tree, "phylo")) {
+    stop("Tree must be of class phylo, not ", class(tree), ".")
+  }
+  if (is.null(TipLabels(tree))) {
+    stop("Tree has no labels")
+  }
+  if (!TreeIsRooted(tree)) {
+    stop("`tree` must be rooted; try RootTree(tree)")
+  }
+}
+
+#' @importFrom cli cli_alert
+.DataForTaxa <- function(dataset, tipLabel) {
+  dataNames <- names(dataset)
+  
+  if (length(tipLabel) < length(dataNames)) {
+    if (all(tipLabel %in% dataNames)) {
+      cli_alert(paste0(
+        paste0(setdiff(dataNames, tipLabel), collapse = ", "),
+        " not in tree"))
+      dataset <- dataset[intersect(dataNames, tipLabel)]
+    } else {
+      stop("Tree tips ", 
+           paste(setdiff(tipLabel, dataNames), collapse = ", "),
+           " not found in dataset.")
+    }
+  }
+  dataset
+}
+
+#' @importFrom TreeTools TipLabels KeepTip Postorder RenumberTips
+.TreeForTaxa <- function(tree, dataNames) {
+  tipLabel <- TipLabels(tree)
+  if (length(tipLabel) > length(dataNames)) {
+    cli_alert(paste0(
+      paste0(setdiff(tipLabel, dataNames), collapse = ", "),
+      " not in `dataset`"))
+    
+    tree <- KeepTip(tree, dataNames)
+  }
+  # Morphy requires that the tree is in postorder
+  tree <- RenumberTips(Postorder(tree), dataNames)
+}
 
 #' Character length
 #' 
@@ -229,46 +279,14 @@ Fitch <- function (tree, dataset) {
 #' @family tree scoring
 #' @references
 #' \insertAllCited{}
-#' @importFrom cli cli_alert
-#' @importFrom TreeTools KeepTip Renumber RenumberTips
 #' @export
 CharacterLength <- function (tree, dataset, compress = FALSE) {
-  if (!inherits(dataset, "phyDat")) {
-    stop("Dataset must be of class phyDat, not ", class(dataset), ".")
-  }
-  if (!inherits(tree, "phylo")) {
-    stop("Tree must be of class phylo, not ", class(tree), ".")
-  }
+  .CheckDataCharLen(dataset)
+  .CheckTreeCharLen(tree)
   tipLabel <- tree[["tip.label"]]
-  if (is.null(tipLabel)) {
-    stop("Tree has no labels")
-  }
-  if (!TreeIsRooted(tree)) {
-    stop("`tree` must be rooted; try RootTree(tree)")
-  }
-  dataNames <- names(dataset)
+  dataset <- .DataForTaxa(dataset, tipLabel)
+  tree <- .TreeForTaxa(tree, names(dataset))
 
-  if (length(tipLabel) < length(dataNames)) {
-    if (all(tipLabel %in% dataNames)) {
-      cli_alert(paste0(
-        paste0(setdiff(dataNames, tipLabel), collapse = ", "),
-        " not in tree"))
-      dataset <- dataset[intersect(dataNames, tipLabel)]
-    } else {
-      stop("Tree tips ", 
-           paste(setdiff(tipLabel, dataNames), collapse = ", "),
-           " not found in dataset.")
-    }
-  }
-  if (length(tipLabel) > length(dataNames)) {
-    cli_alert(paste0(
-      paste0(setdiff(tipLabel, dataNames), collapse = ", "),
-      " not in `dataset`"))
-    
-    tree <- KeepTip(tree, dataNames)
-  }
-  tree <- RenumberTips(Renumber(tree), dataNames)
-  
   ret <- FastCharacterLength(tree, dataset)
   # Return:
   if (compress) {
@@ -287,14 +305,43 @@ FitchSteps <- function (tree, dataset) {
 
 #' @describeIn CharacterLength Do not perform checks.  Use with care: may cause
 #' erroneous results or software crash if variables are in the incorrect format.
+#' @importFrom fastmatch fmatch
+#' @importFrom TreeTools Postorder
 FastCharacterLength <- function (tree, dataset) {
-  characters <- PhyToString(dataset, ps = "", useIndex = FALSE, byTaxon = FALSE,
-                            concatenate = FALSE)
-  morphyObjects <- lapply(characters, SingleCharMorphy)
-  on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)))
+  nTip <- NTip(tree)
+  levels <- attr(dataset, "levels")
+  morphyObj <- PhyDat2Morphy(dataset, weight = 0)
+  on.exit(morphyObj <- UnloadMorphy(morphyObj))
   
-  # Return:
-  vapply(morphyObjects, MorphyTreeLength, tree = tree, integer(1))
+  maxNode <- nTip + mpl_get_num_internal_nodes(morphyObj)
+  rootNode <- nTip + 1L
+  allNodes <- rootNode:maxNode
+  
+  edge <- Postorder(tree)[["edge"]]
+  parent <- edge[, 1]
+  child <- edge[, 2]
+  
+  parentOf <- parent[fmatch(seq_len(maxNode), child)]
+  parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
+  leftChild <- child[length(parent) + 1L - fmatch(allNodes, rev(parent))]
+  rightChild <- child[fmatch(allNodes, parent)]
+  
+    if (nTip < 1L) {
+    # Run this test after we're sure that morphyObj is a morphyPtr, or lazy
+    # evaluation of nTaxa will cause a crash.
+    stop("Error: ", mpl_translate_error(nTip))
+  }
+  
+  vapply(seq_len(attr(dataset, "nr")), function(i) {
+    MorphyErrorCheck(mpl_set_charac_weight(i, 1, morphyObj))
+    on.exit(MorphyErrorCheck(mpl_set_charac_weight(i, 0, morphyObj)))
+    MorphyErrorCheck(mpl_apply_tipdata(morphyObj))
+    
+    # Return:
+    .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L),
+                 as.integer(leftChild - 1L), as.integer(rightChild - 1L),
+                 morphyObj)
+  }, integer(1))
 }
 
 #' Calculate parsimony score from Morphy object
