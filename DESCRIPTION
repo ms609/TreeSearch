@@ -1,6 +1,6 @@
 Package: TreeSearch
 Title: Phylogenetic Analysis with Discrete Character Data
-Version: 1.6.1.9002
+Version: 1.6.1.9004
 Authors@R: c(
     person(
       "Martin R.", 'Smith',
@@ -61,6 +61,7 @@ Imports:
   shiny (>= 1.6.0),
   shinyjs,
   stats,
+  stringi,
   TreeDist (>= 2.6.3),
   TreeTools (>= 1.10.0),
 Suggests:

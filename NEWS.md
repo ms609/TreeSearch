@@ -1,7 +1,9 @@
-# TreeSearch 1.6.1.9002 (development)
+# TreeSearch 1.6.1.9004 (development)
 - Support single-character matrices in `ClusteringConcordance()`
 - `ConcordanceTable()` and support functions `QACol()`, `QALegend()`
 - Fix `DoNothing(x)` to return `x` (not `NULL`)
+- `Consistency()` also returns the relative homoplasy index of Steell et al. 
+  2023.
 
 # TreeSearch 1.6.1 (2025-06-10)
 - Handle invariant characters in `PolEscapa()`
