@@ -114,19 +114,6 @@ SEXP _R_wrap_mpl_attach_rawdata(SEXP Rmatrix, SEXP MorphyHandl) {
     return Rret;
 }
 
-SEXP _R_wrap_mpl_delete_rawdata(SEXP MorphyHandl) {
-	SEXP Rret = PROTECT(allocVector(INTSXP, 1));
-	Morphy handl = R_ExternalPtrAddr(MorphyHandl);
-    int ret = 0;
-
-    ret = mpl_delete_rawdata(handl);
-    
-    INTEGER(Rret)[0] = ret;
-    UNPROTECT(1);
-
-    return Rret;
-}
-
 SEXP _R_wrap_mpl_set_parsim_t(SEXP RcharID, SEXP Rchtype, SEXP MorphyHandl) {
     SEXP Rret = PROTECT(allocVector(INTSXP, 1));
     MPLchtype chtype;

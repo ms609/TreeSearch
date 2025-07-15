@@ -1,6 +1,6 @@
 Package: TreeSearch
 Title: Phylogenetic Analysis with Discrete Character Data
-Version: 1.6.1.9003
+Version: 1.6.1.9004
 Authors@R: c(
     person(
       "Martin R.", 'Smith',
