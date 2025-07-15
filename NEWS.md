@@ -1,4 +1,4 @@
-# TreeSearch 1.6.1.9004 (development)
+# TreeSearch 1.6.1.9005 (development)
 - Support single-character matrices in `ClusteringConcordance()`
 - `ConcordanceTable()` and support functions `QACol()`, `QALegend()`
 - Fix `DoNothing(x)` to return `x` (not `NULL`)
