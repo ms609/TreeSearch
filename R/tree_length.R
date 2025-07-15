@@ -326,7 +326,7 @@ FastCharacterLength <- function (tree, dataset) {
   leftChild <- child[length(parent) + 1L - fmatch(allNodes, rev(parent))]
   rightChild <- child[fmatch(allNodes, parent)]
   
-    if (nTip < 1L) {
+  if (nTip < 1L) {
     # Run this test after we're sure that morphyObj is a morphyPtr, or lazy
     # evaluation of nTaxa will cause a crash.
     stop("Error: ", mpl_translate_error(nTip))
