@@ -3,7 +3,8 @@
 - `ConcordanceTable()` and support functions `QACol()`, `QALegend()`
 - Fix `DoNothing(x)` to return `x` (not `NULL`)
 - `Consistency()` also returns the relative homoplasy index of Steell et al. 
-  2023.
+  (2023).
+- Remove unused `delete_rawdata()` due to implementation issues.
 
 # TreeSearch 1.6.1 (2025-06-10)
 - Handle invariant characters in `PolEscapa()`
