@@ -11,7 +11,7 @@
 \usage{
 QuartetConcordance(tree, dataset = NULL, weight = TRUE)
 
-ClusteringConcordance(tree, dataset, return = "mean", normalize = TRUE)
+ClusteringConcordance(tree, dataset, return = "edge", normalize = TRUE)
 
 PhylogeneticConcordance(tree, dataset)
 
@@ -60,9 +60,15 @@ observations.
 \code{hJoint} gives the joint entropy – the entropy of the
 confusion matrix of the split and character considered together.
 
-\code{ClusteringConcordance(return = "mean")} returns a matrix or vector listing
-for each site the proportion of clustering information across all sites that
+\code{ClusteringConcordance(return = "edge")} returns a matrix or vector listing
+for each split the proportion of clustering information across all sites
 held in common with the split.
+\code{ClusteringConcordance(return = "char")} returns a vector listing for each
+site (character) the proportion of clustering information across all edges
+held in common with the site.
+\code{ClusteringConcordance(return = "tree")} returns the mean of the
+normalized site-wise concordance scores; this single value gives a measure
+analogous to the consistency index.
 }
 \description{
 The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure
@@ -135,6 +141,10 @@ ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
 \insertAllCited{}
 }
 \seealso{
+\itemize{
+\item \code{\link[=Consistency]{Consistency()}}
+}
+
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
