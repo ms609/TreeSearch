@@ -174,7 +174,8 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
     }
   }
   
-  exp <- apply(apply(rewritten, 2, tabulate, max(rewritten)), 2, .LengthForChar)
+  rwTab <- apply(rewritten, 2, tabulate, max(rewritten))
+  exp <- apply(rwTab, 2, .LengthForChar)
   
   # Return:
   if (compress) {
@@ -223,6 +224,8 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   
   nAssigned <- log2(nWhole) + 1
   wholes <- mapping[2 ^ (seq_len(nAssigned) - 1)]
+  holes <- wholes == 0
+  wholes[holes] <- max(wholes) * 2 ^ seq_len(sum(holes))
   
   ambigTokens <- contr[ambig & seq_along(contr) %fin% char]
   mapping[ambigTokens] <- apply(matrix(as.logical(intToBits(ambigTokens)), 32),

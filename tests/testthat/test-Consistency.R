@@ -18,6 +18,13 @@ test_that(".SortTokens() handles edge cases", {
     c(7, 1, 2, 4, 3)),
     c(14, 14, 2, 2, 2, 2, 2, 2, 2, 4, 4, 14)
   )
+  
+  expect_equal(.SortTokens(
+    c(1, 2, 3, 4, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8),
+    c(1, 2, 192, # 192 gives ambiguity between two unobserved tokens
+      16, 8, 32, 255, 4, 12, 5)),
+    c(8, 16, 192 * 2, 32, 4, 4, 64, rep(510, 7), rep(2, 5))
+  )
 })
 
 test_that("CI & RI calculated correctly", {
