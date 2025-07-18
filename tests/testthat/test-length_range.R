@@ -94,6 +94,7 @@ test_that("MaximumLength() edge cases are handled correctly", {
   expect_equal(MaximumLength("001122{12}"), 4)
   expect_equal(MaximumLength("0123 0123 0123 ????"), 3 * 3)
   expect_equal(MaximumLength( "00112233{01}{23}{012}?"), 3 + 3 + 1)
+  nineBit <- c(2L, 8L, 511L, 32L, 128L, 8L, 8L, 128L, 128L, 4L, 32L, 128L, 
 })
 
 test_that("MaximumLength() handles inapplicable tokens", {

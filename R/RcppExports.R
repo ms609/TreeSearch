@@ -9,6 +9,10 @@ mi_key <- function(ni, nj) {
     .Call(`_TreeSearch_mi_key`, ni, nj)
 }
 
+maximum_length <- function(x) {
+    .Call(`_TreeSearch_maximum_length`, x)
+}
+
 preorder_morphy <- function(edge, MorphyHandl) {
     .Call(`_TreeSearch_preorder_morphy`, edge, MorphyHandl)
 }
