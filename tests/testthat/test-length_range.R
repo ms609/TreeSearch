@@ -106,6 +106,7 @@ test_that("MaximumLength() edge cases are handled correctly", {
                 128)
   expect_equal(MaximumLength(nineBit), MaximumLength(eightBit))
   # Large numbers should succeed and remain performant
+  expect_equal(MaximumLength(as.integer(2 ^ c(28:30))), 2)
 })
 
 test_that("MaximumLength() handles inapplicable tokens", {
@@ -162,4 +163,3 @@ test_that("MaximumLength() handles inapplicable tokens", {
   expect_equal(MaximumLength("0123 0123 0123 ----"), 3 * 3 + 2)
   expect_equal(MaximumLength("00112233{01}{23}{012}----"), 3 + 3 + 1 + 2)
 })
-
