@@ -47,6 +47,13 @@ test_that("CI & RI calculated correctly", {
     Consistency(StringToPhyDat(char, TipLabels(tree)), tree, nRelabel = 0),
     c(ci = m / s, ri = r, rc = r * m / s, rhi = NA)
   )
+  set.seed(1)
+  byChar <- Consistency(StringToPhyDat(char, TipLabels(tree)), tree,
+                        nRelabel = 10, byChar = TRUE)
+  set.seed(1)
+  byTree <- Consistency(StringToPhyDat(char, TipLabels(tree)), tree,
+                        nRelabel = 10, byChar = FALSE)
+  expect_equal(byChar, byTree)
 })
 
 test_that("RHI calculated okay", {

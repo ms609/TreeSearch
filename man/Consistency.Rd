@@ -2,9 +2,9 @@
 % Please edit documentation in R/Consistency.R
 \name{Consistency}
 \alias{Consistency}
-\title{Consistency / retention "indices"}
+\title{Consistency and retention "indices"}
 \usage{
-Consistency(dataset, tree, nRelabel = 0, compress = FALSE)
+Consistency(dataset, tree, byChar = TRUE, nRelabel = 0, compress = FALSE)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
@@ -14,6 +14,9 @@ Additive (ordered) characters can be handled using
 \code{\link[TreeTools]{Decompose}}.}
 
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
+
+\item{byChar}{Logical; if \code{TRUE}, return indices for each character;
+if \code{FALSE}, calculate the indices for the dataset as a whole.}
 
 \item{nRelabel}{Integer specifying how many times to relabel leaves when
 estimating null tree length for \acronym{RHI} calculation.

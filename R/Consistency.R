@@ -1,4 +1,4 @@
-#' Consistency / retention "indices"
+#' Consistency and retention "indices"
 #' 
 #' `Consistency()` calculates the consistency "index" and retention index
 #' \insertCite{Farris1989}{TreeSearch}
@@ -49,6 +49,8 @@
 #' \insertCite{Steell2025;textual}{TreeSearch} recommend 1000, but suggest that
 #' 100 may suffice.
 #' If zero (the default), the \acronym{RHI} is not calculated.
+#' @param byChar Logical; if `TRUE`, return indices for each character;
+#'  if `FALSE`, calculate the indices for the dataset as a whole.
 #' @inheritParams CharacterLength
 #' 
 #' @return `Consistency()` returns a matrix with named columns specifying the 
@@ -64,7 +66,8 @@
 #' @references \insertAllCited{}
 #' @template MRS
 #' @export
-Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
+Consistency <- function (dataset, tree, byChar = TRUE, nRelabel = 0,
+                         compress = FALSE) {
   dsTips <- TipLabels(dataset)
   trTips <- TipLabels(tree)
   if (!setequal(dsTips, trTips)) {
@@ -80,6 +83,12 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
   tree <- Postorder(tree)
   obsLength <- CharacterLength(tree, dataset, compress = TRUE) # farris's s
   
+  if (!byChar) {
+    minLength <- sum(minLength)
+    maxLength <- sum(maxLength)
+    obsLength <- sum(obsLength)
+  }
+  
   extra <- obsLength - minLength # Farris's h
   maxHomoplasy <- (maxLength - minLength) # g - m
   
@@ -92,19 +101,26 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
 
   if (nRelabel > 0) {
     medLength <- ExpectedLength(dataset, tree, nRelabel, compress = TRUE)
+    if (!byChar) {
+      medLength <- sum(medLength)
+    }
     expHomoplasy <- medLength - minLength
     rhi <- extra / expHomoplasy
   } else {
     rhi <- NA
   }
   
-  ret <- cbind(ci = ci, ri = ri, rc = rc, rhi = rhi)
-  
-  # Return:
-  if (compress) {
-    ret
+  if (byChar) {
+    ret <- cbind(ci = ci, ri = ri, rc = rc, rhi = rhi)
+    
+    # Return:
+    if (compress) {
+      ret
+    } else {
+      ret[attr(dataset, "index"), ]
+    }
   } else {
-    ret[attr(dataset, "index"), ]
+    c(ci = ci, ri = ri, rc = rc, rhi = rhi)
   }
 }
 
