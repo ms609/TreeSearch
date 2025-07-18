@@ -65,6 +65,27 @@ struct Counts {
   }
 };
 
+struct Token {
+  static inline uint64_t token(int i) {
+    return static_cast<uint64_t>(i + 1);
+  }
+  
+  static inline int sum(int i) {
+    return __builtin_popcountll(token(i));
+  }
+  
+  static inline bool intersect(int i, int j) {
+    return token(i) & token(j);
+  }
+  
+  static inline int union_size(int i, int j) {
+    return __builtin_popcountll(token(i) | token(j));
+  }
+  
+  static inline int merge(int i, int j) {
+    return static_cast<int>(token(i) | token(j)) - 1;
+  }
+};
 
 // Draft by ChatGPT
 // [[Rcpp::export]]
@@ -110,34 +131,8 @@ int maximum_length(const Rcpp::IntegerVector& x) {
   
   // Step 3: Generate tokens
   const int nToken = (1 << nState) - 1;
-  std::vector<uint64_t> tokens(nToken);
-  std::vector<int> tokenSums(nToken);
-  
-  for (int i = 0; i < nToken; ++i) {
-    uint64_t token = static_cast<uint64_t>(i + 1);  // tokens 1..n map directly to bits
-    tokens[i] = token;
-    tokenSums[i] = __builtin_popcountll(token);
-  }
-  
   std::vector<bool> active(nToken, true);
   active[nToken - 1] = false;  // Final token (all bits) is ambiguity
-  
-  auto Merge = [&](const int a, const int b) -> int {
-    uint64_t merged = tokens[a] | tokens[b];
-    // Bit trick: token i has value i + 1
-    int merged_index = static_cast<int>(merged) - 1;
-    if (merged_index < 0 || merged_index >= nToken) {
-      Rcpp::stop("Internal error: merged token index out of bounds.");
-    }
-    return merged_index;
-  };
-  auto intersect = [&](int i, int j) -> bool {
-    return tokens[i] & tokens[j];
-  };
-  
-  auto union_size = [&](int i, int j) -> int {
-    return __builtin_popcountll(tokens[i] | tokens[j]);
-  };
   
   int loopCount = 0;
   bool escape = false;
@@ -146,7 +141,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     int amb = -1;
     for (int i = 0; i < nToken; ++i) {
       if (counts.get(i) > 0 && active[i]) {
-        amb = std::max(amb, tokenSums[i]);
+        amb = std::max(amb, Token::sum(i));
       }
     }
     
@@ -165,7 +160,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     //            before considering ++.... for ++.+++
     for (int unionSize = nState; unionSize >= amb + 1; --unionSize) {
       for (int i = 0; i < nToken; ++i) {
-        if (tokenSums[i] != amb || counts.get(i) == 0 || !active[i]) {
+        if (Token::sum(i) != amb || counts.get(i) == 0 || !active[i]) {
           continue;
         }
         // Compute options: tokens that are active, counts > 0,
@@ -175,11 +170,11 @@ int maximum_length(const Rcpp::IntegerVector& x) {
         for (int j = 0; j < nToken; ++j) {
           if (active[j] &&
               counts.get(j) > 0 &&
-              !intersect(i, j)) {
+              !Token::intersect(i, j)) {
             // We have an option for the future, though other options
             // potentially yield a larger union.
             optionIndices.push_back(j);
-            if (union_size(i, j) == unionSize) {
+            if (Token::union_size(i, j) == unionSize) {
               // No options yield a larger union, so consider this candidate now
               candidateIndices.push_back(j);
             }
@@ -203,7 +198,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
           // Update counts: decrement i and chosen, increment merged token
           counts.decrement(i);
           counts.decrement(chosen);
-          const int product = Merge(i, chosen);
+          const int product = Token::merge(i, chosen);
           counts.increment(product);
           ++steps;
           
