@@ -8,33 +8,35 @@
 constexpr int max_token_bits = 64;
 
 struct ActiveTokenLog {
+private:
   const int totally_ambiguous;
   std::unordered_set<int> active_set;
   
+public:
   // Initialize with all tokens active except ambiguity token
-  ActiveTokenLog(int nToken) : totally_ambiguous(nToken - 1) {}
+  explicit ActiveTokenLog(int nToken) : totally_ambiguous(nToken - 1) {}
   
-  bool isActive(int i) const {
+  [[nodiscard]] bool isActive(int i) const noexcept {
     if (i == totally_ambiguous) return false;
     return active_set.find(i) != active_set.end();
   }
   
-  void deactivate(int i) {
+  void deactivate(int i) noexcept {
     active_set.erase(i);
   }
   
-  void activate(int i) {
+  void activate(int i) noexcept {
     if (i != totally_ambiguous) active_set.insert(i);
   }
   
-  bool empty() const {
+  [[nodiscard]] bool empty() const noexcept {
     return active_set.empty();
   }
   
   template <typename Func>
   void forEachActive(Func f) const {
     // Iterate over each element in the set *now* without updating.
-    std::vector<int> snapshot(active_set.begin(), active_set.end());
+    const std::vector<int> snapshot(active_set.begin(), active_set.end());
     for (int i : snapshot) {
       f(i);
     }
@@ -42,30 +44,33 @@ struct ActiveTokenLog {
 };
 
 struct Counts {
+private:
   ActiveTokenLog& token_log;
   std::unordered_map<int, int> data;
   
-  Counts(ActiveTokenLog& log) : token_log(log) {}
+public:
+  explicit Counts(ActiveTokenLog& log) : token_log(log) {}
   
   // Get count at index
-  int get(int index) const {
-    auto it = data.find(index);
-    return (it != data.end()) ? it->second : 0;
+  [[nodiscard]] int get(int index) const noexcept {
+    if (auto it = data.find(index); it != data.end()) {
+      return it->second;
+    }
+    return 0;
   }
   
   // Increment by one
-  void increment(int index) {
+  void increment(int index) noexcept {
     token_log.activate(index);
     ++data[index];
   }
   
   // Decrement by one, with safety check
-  void decrement(int index) {
-    auto it = data.find(index);
-    if (it != data.end() && it->second > 0) {
+  void decrement(int index) noexcept {
+    if (auto it = data.find(index); it != data.end() && it->second > 0) {
       --(it->second);
       if (it->second == 0) {
-        data.erase(it);  // optional: reduce memory
+        data.erase(it);
       }
     }
   }
@@ -82,7 +87,7 @@ struct Counts {
   // Total remaining tokens
   int total() const {
     int sum = 0;
-    for (const auto& kv : data) sum += kv.second;
+    for (const auto& [key, value] : data) sum += value;
     return sum;
   }
   
@@ -94,7 +99,7 @@ struct Counts {
   std::vector<int> indices() const {
     std::vector<int> result;
     result.reserve(data.size());
-    for (const auto& kv : data) result.push_back(kv.first);
+    for (const auto& [key, value] : data) result.push_back(key);
     return result;
   }
   
