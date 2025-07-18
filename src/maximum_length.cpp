@@ -186,7 +186,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     return steps + std::max(0, std::min(counts.total(), regions) - 1);
   }
   
-  
+  constexpr int MAX_ITERATIONS = 9999;
   int loopCount = 0;
   
   while (true) {
@@ -201,7 +201,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     if (amb < 1) break;
     
     ++loopCount;
-    if (loopCount > 10000) {
+    if (loopCount > MAX_ITERATIONS) {
       Rcpp::stop("maximum_length() failed. Please report this bug.");
     }
     
@@ -212,6 +212,8 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     //            before considering ++.... for ++.+++
     for (int unionSize = nState; unionSize >= amb + 1; --unionSize) {
       token.forEachActive([&](int i) {
+        if (escape) return; // early exit if merge already happened
+        
         assert(token.isActive(i));
         if (counts.get(i) == 0 || Token::sum(i) != amb) {
           return;
