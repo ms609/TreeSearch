@@ -105,6 +105,7 @@ test_that("MaximumLength() edge cases are handled correctly", {
   eightBit <- c(1, 4, 255, 16, 64, 4, 4, 64, 64, 2, 16, 64, 255, 16, 64, 128, 
                 128)
   expect_equal(MaximumLength(nineBit), MaximumLength(eightBit))
+  # Large numbers should succeed and remain performant
 })
 
 test_that("MaximumLength() handles inapplicable tokens", {
