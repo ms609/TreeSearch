@@ -225,7 +225,7 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   wholes <- mapping[2 ^ (seq_len(nAssigned) - 1)]
   
   ambigTokens <- contr[ambig & seq_along(contr) %fin% char]
-  mapping[ambigTokens] <- apply(matrix(as.logical(intToBits(contr[ambig])), 32),
+  mapping[ambigTokens] <- apply(matrix(as.logical(intToBits(ambigTokens)), 32),
                                 2, function(x) sum(wholes[x]))
   
   # Return:
