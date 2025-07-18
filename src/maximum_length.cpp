@@ -146,7 +146,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
           // Find candidate with maximum count
           int chosen = candidateIndices[0];
           int maxCount = counts[chosen];
-          for (int idx = 1; idx < (int)candidateIndices.size(); ++idx) {
+          for (size_t idx = 1; idx < candidateIndices.size(); ++idx) {
             if (counts[candidateIndices[idx]] > maxCount) {
               chosen = candidateIndices[idx];
               maxCount = counts[chosen];
