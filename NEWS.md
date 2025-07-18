@@ -5,6 +5,7 @@
 - `Consistency()` also returns the relative homoplasy index of Steell et al. 
   (2023).
 - Remove unused `delete_rawdata()` due to implementation issues.
+- Port `MaximumLength()` to C++ to handle more characters, more efficiently.
 
 # TreeSearch 1.6.1 (2025-06-10)
 - Handle invariant characters in `PolEscapa()`
