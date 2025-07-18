@@ -90,11 +90,21 @@ test_that("Step counts are correctly calculated", {
 })
 
 test_that("MaximumLength() edge cases are handled correctly", {
+  expect_error(MaximumLength(-1:-2), "must contain positive integers")
+  expect_error(MaximumLength(integer(0)), "must not be empty")
+  expect_error(MaximumLength(-1:1), "out of range: -1")
+  expect_error(MaximumLength(c(NA_integer_, 2)), "out of range")
+  
+  
   expect_equal(MaximumLength("00000000000111"), 3)
   expect_equal(MaximumLength("001122{12}"), 4)
   expect_equal(MaximumLength("0123 0123 0123 ????"), 3 * 3)
   expect_equal(MaximumLength( "00112233{01}{23}{012}?"), 3 + 3 + 1)
   nineBit <- c(2L, 8L, 511L, 32L, 128L, 8L, 8L, 128L, 128L, 4L, 32L, 128L, 
+               511L, 32L, 128L, 256L, 256L)
+  eightBit <- c(1, 4, 255, 16, 64, 4, 4, 64, 64, 2, 16, 64, 255, 16, 64, 128, 
+                128)
+  expect_equal(MaximumLength(nineBit), MaximumLength(eightBit))
 })
 
 test_that("MaximumLength() handles inapplicable tokens", {
