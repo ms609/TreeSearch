@@ -11,6 +11,12 @@ constexpr int max_token_bits = 64;
 int maximum_length(const Rcpp::IntegerVector& x) {
   
   // Step 1: Preprocessing
+  if (x.length() < 1) {
+    Rcpp::stop("Input vector must not be empty.");
+  }
+  if (x.length() == 1) {
+    return 0;
+  }
   int max_val = *std::max_element(x.begin(), x.end());
   if (max_val <= 0) {
     Rcpp::stop("Input vector must contain positive integers.");
