@@ -60,13 +60,13 @@ public:
   }
   
   // Increment by one
-  void increment(int index) noexcept {
+  void increment(int index) {
     token_log.activate(index);
     ++data[index];
   }
   
   // Decrement by one, with safety check
-  void decrement(int index) noexcept {
+  void decrement(int index) {
     if (auto it = data.find(index); it != data.end() && it->second > 0) {
       --(it->second);
       if (it->second == 0) {
@@ -85,70 +85,80 @@ public:
   }
   
   // Total remaining tokens
-  int total() const {
+  [[nodiscard]] int total() const noexcept {
     int sum = 0;
     for (const auto& [key, value] : data) sum += value;
     return sum;
   }
   
-  int num_positive() const {
+  [[nodiscard]] int num_positive() const noexcept {
     return static_cast<int>(data.size());
   }
   
   // Return all active indices
+  [[nodiscard]]
   std::vector<int> indices() const {
     std::vector<int> result;
     result.reserve(data.size());
-    for (const auto& [key, value] : data) result.push_back(key);
+    for (const auto& [key, value] : data) {
+      result.push_back(key);
+    }
     return result;
   }
   
   // Check if index exists with positive count
-  bool has(int index) const {
+  [[nodiscard]]
+  bool has(int index) const noexcept {
     return get(index) > 0;
   }
 };
 
 struct Token {
-  static inline uint64_t token(int i) {
+  [[nodiscard]] static constexpr uint64_t token(int i) noexcept {
     return static_cast<uint64_t>(i + 1);
   }
   
-  static inline int sum(int i) {
+  [[nodiscard]] static constexpr int sum(int i) noexcept {
     return __builtin_popcountll(token(i));
   }
   
-  static inline bool intersect(int i, int j) {
+  [[nodiscard]] static constexpr bool intersect(int i, int j) {
     return token(i) & token(j);
   }
   
-  static inline int union_size(int i, int j) {
+  [[nodiscard]] static constexpr int union_size(int i, int j) {
     return __builtin_popcountll(token(i) | token(j));
   }
   
-  static inline int merge(int i, int j) {
+  [[nodiscard]] static constexpr int merge(int i, int j) {
     return static_cast<int>(token(i) | token(j)) - 1;
   }
 };
 
-// Draft by ChatGPT
 // [[Rcpp::export]]
 int maximum_length(const Rcpp::IntegerVector& x) {
   
   // Step 1: Preprocessing
   if (x.length() < 1) {
     Rcpp::stop("Input vector must not be empty.");
-  } else if (x.length() == 1) {
+  }
+  
+  if (x.length() == 1) {
     return 0;
   }
-  int max_val = *std::max_element(x.begin(), x.end());
+  
+  const auto max_it = std::max_element(x.begin(), x.end());
+  const int max_val = *max_it;
+  
   if (max_val < 0) {
     Rcpp::stop("Input vector must contain positive integers.");
-  } else if (max_val == 0) {
+  }
+  
+  if (max_val == 0) {
     return 0; // Inapplicables only
   }
   
-  const int nState = std::floor(std::log2(max_val)) + 1;
+  const int nState = static_cast<int>(std::floor(std::log2(max_val))) + 1;
   if (nState > max_token_bits) {
     Rcpp::stop("maximum_length(): too many states (nState > 64) for uint64_t representation.");
   }
@@ -168,7 +178,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     }
   }
   
-  int regions = std::max(1, nInapp - 1);
+  const int regions = std::max(1, nInapp - 1);
   int steps = 0;
   
   // Step 2: Proceed only if more than one state observed
@@ -178,7 +188,6 @@ int maximum_length(const Rcpp::IntegerVector& x) {
   
   
   int loopCount = 0;
-  bool escape = false;
   
   while (true) {
     int amb = -1;
@@ -196,7 +205,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
       Rcpp::stop("maximum_length() failed. Please report this bug.");
     }
     
-    escape = false;
+    bool escape = false;
     
     // Outer for loop: descending union sizes from nState down to amb + 1
     // Objective: pair ...+++ with +++... to yield ++++++
