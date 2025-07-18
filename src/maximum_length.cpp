@@ -197,10 +197,12 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     // Objective: pair ...+++ with +++... to yield ++++++
     //            before considering ++.... for ++.+++
     for (int unionSize = nState; unionSize >= amb + 1; --unionSize) {
-      for (int i = 0; i < nToken; ++i) {
-        if (Token::sum(i) != amb || counts.get(i) == 0 || !token.isActive(i)) {
-          continue;
+      token.forEachActive([&](int i) {
+        assert(token.isActive(i));
+        if (counts.get(i) == 0 || Token::sum(i) != amb) {
+          return;
         }
+        
         // Compute options: tokens that are active, counts > 0,
         // and non-intersecting with token i
         std::vector<int> optionIndices;
@@ -240,9 +242,9 @@ int maximum_length(const Rcpp::IntegerVector& x) {
           ++steps;
           
           escape = true;   // Mark a successful merge
-          break;           // Break out of inner i-loop
+          return;           // Break out of inner i-loop
         }
-      }
+      });
       
       if (escape) break;  // Break out of unionSize loop if a merge happened
     }
