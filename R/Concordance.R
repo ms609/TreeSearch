@@ -278,6 +278,7 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
     x
   })
   
+  #' @importFrom utils packageVersion
   .Ntropy <- if (packageVersion("TreeDist") > "2.9.2") {
     function (x, n) {
       TreeDist::entropy_int(x)
@@ -504,6 +505,7 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 #' # Visualize dataset
 #' image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
 #'       xlab = "Leaf", ylab = "Character")
+#' @importFrom graphics abline image mtext
 #' @importFrom TreeTools CladeSizes NTip
 #' @export
 ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
