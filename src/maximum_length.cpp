@@ -241,14 +241,12 @@ int maximum_length(const Rcpp::IntegerVector& x) {
           token.deactivate(i);
         } else if (!candidateIndices.empty()) {
           // Find candidate with maximum count
-          int chosen = candidateIndices[0];
-          int maxCount = counts.get(chosen);
-          for (size_t idx = 1; idx < candidateIndices.size(); ++idx) {
-            if (counts.get(candidateIndices[idx]) > maxCount) {
-              chosen = candidateIndices[idx];
-              maxCount = counts.get(chosen);
-            }
-          }
+          const auto max_element = std::max_element(
+            candidateIndices.begin(),
+            candidateIndices.end(),
+            [&](int a, int b) { return counts.get(a) < counts.get(b);
+          });
+          const int chosen = *max_element;
           
           // Update counts: decrement i and chosen, increment merged token
           counts.decrement(i);
@@ -257,7 +255,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
           counts.increment(product);
           ++steps;
           
-          escape = true;   // Mark a successful merge
+          escape = true;    // Mark a successful merge
           return;           // Break out of inner i-loop
         }
       });
