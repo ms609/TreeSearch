@@ -41,7 +41,6 @@ int maximum_length(const Rcpp::IntegerVector& x) {
   // Step 2: Proceed only if more than one state observed
   int nPositiveStates = std::count_if(counts.begin(), counts.end(),
                                       [](int c) {return c > 0; });
-  
   if (nPositiveStates <= 1) {
     return steps + std::max(0, std::min(std::accumulate(counts.begin(), counts.end(), 0), regions) - 1);
   }
@@ -54,7 +53,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
   const int nToken = (1 << nState) - 1;
   counts.resize(nToken, 0);
   
-  // Step 2: Generate tokens
+  // Step 3: Generate tokens
   std::vector<uint64_t> tokens(nToken);
   std::vector<int> tokenSums(nToken);
   
@@ -64,11 +63,10 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     tokenSums[i] = __builtin_popcountll(token);
   }
   
-  
   std::vector<bool> active(nToken, true);
   active[nToken - 1] = false;  // Final token (all bits) is ambiguity
   
-  // Step 3: Precompute intersections and unions
+  // Step 4: Precompute intersections and unions
   std::vector<std::vector<bool>> nonIntersect(nToken, std::vector<bool>(nToken));
   std::vector<std::vector<int>> unions(nToken, std::vector<int>(nToken));
   for (int i = 0; i < nToken; ++i) {
@@ -80,18 +78,17 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     }
   }
   
-  // Step 4: Define Merge()
+  // Step 5: Define Merge()
   auto Merge = [&](const int a, const int b) -> int {
     uint64_t merged = tokens[a] | tokens[b];
     // Bit trick: token i has value i + 1
     int merged_index = static_cast<int>(merged) - 1;
-    
     if (merged_index < 0 || merged_index >= nToken) {
       Rcpp::stop("Internal error: merged token index out of bounds.");
     }
     return merged_index;
   };
-    
+  
   int loopCount = 0;
   bool escape = false;
   
@@ -167,8 +164,6 @@ int maximum_length(const Rcpp::IntegerVector& x) {
       
       if (escape) break;  // Break out of unionSize loop if a merge happened
     }
-    
-    // if (!escape) break;  // Exit repeat loop if no merges happened this iteration
   }
   
   int remaining = std::accumulate(counts.begin(), counts.end(), 0);
