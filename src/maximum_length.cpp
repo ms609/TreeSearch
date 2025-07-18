@@ -122,19 +122,6 @@ int maximum_length(const Rcpp::IntegerVector& x) {
   std::vector<bool> active(nToken, true);
   active[nToken - 1] = false;  // Final token (all bits) is ambiguity
   
-  // Step 4: Precompute intersections and unions
-  std::vector<std::vector<bool>> nonIntersect(nToken, std::vector<bool>(nToken));
-  std::vector<std::vector<int>> unions(nToken, std::vector<int>(nToken));
-  for (int i = 0; i < nToken; ++i) {
-    for (int j = 0; j < nToken; ++j) {
-      uint64_t a = tokens[i];
-      uint64_t b = tokens[j];
-      nonIntersect[i][j] = !(a & b);
-      unions[i][j] = __builtin_popcountll(a | b);
-    }
-  }
-  
-  // Step 5: Define Merge()
   auto Merge = [&](const int a, const int b) -> int {
     uint64_t merged = tokens[a] | tokens[b];
     // Bit trick: token i has value i + 1
@@ -143,6 +130,13 @@ int maximum_length(const Rcpp::IntegerVector& x) {
       Rcpp::stop("Internal error: merged token index out of bounds.");
     }
     return merged_index;
+  };
+  auto intersect = [&](int i, int j) -> bool {
+    return tokens[i] & tokens[j];
+  };
+  
+  auto union_size = [&](int i, int j) -> int {
+    return __builtin_popcountll(tokens[i] | tokens[j]);
   };
   
   int loopCount = 0;
@@ -181,11 +175,11 @@ int maximum_length(const Rcpp::IntegerVector& x) {
         for (int j = 0; j < nToken; ++j) {
           if (active[j] &&
               counts.get(j) > 0 &&
-              nonIntersect[i][j]) {
+              !intersect(i, j)) {
             // We have an option for the future, though other options
             // potentially yield a larger union.
             optionIndices.push_back(j);
-            if (unions[i][j] == unionSize) {
+            if (union_size(i, j) == unionSize) {
               // No options yield a larger union, so consider this candidate now
               candidateIndices.push_back(j);
             }
