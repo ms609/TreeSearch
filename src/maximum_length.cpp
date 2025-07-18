@@ -39,13 +39,13 @@ int maximum_length(const Rcpp::IntegerVector& x) {
   int steps = 0;
   
   // Step 2: Proceed only if more than one state observed
-  int nPositiveStates = std::count_if(counts.begin(), counts.end(),
-                                      [](int c) {return c > 0; });
+  const int nPositiveStates = std::count_if(counts.begin(), counts.end(),
+                                            [](int c) {return c > 0; });
   if (nPositiveStates <= 1) {
     return steps + std::max(0, std::min(std::accumulate(counts.begin(), counts.end(), 0), regions) - 1);
   }
   
-  int nState = std::floor(std::log2(counts.size())) + 1;
+  const int nState = std::floor(std::log2(max_val)) + 1;
   if (nState > max_token_bits) {
     Rcpp::stop("maximum_length(): too many states (nState > 64) for uint64_t representation.");
   }
