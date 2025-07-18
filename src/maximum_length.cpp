@@ -65,6 +65,36 @@ struct Counts {
   }
 };
 
+struct ActiveTokenLog {
+  const int totally_ambiguous;
+  std::unordered_set<int> active_set;
+  
+  // Initialize with all tokens active except ambiguity token
+  ActiveTokenLog(int nToken) : totally_ambiguous(nToken - 1) {}
+  
+  bool isActive(int i) const {
+    if (i == totally_ambiguous) return false;
+    return active_set.find(i) != active_set.end();
+  }
+  
+  void deactivate(int i) {
+    active_set.erase(i);
+  }
+  
+  void activate(int i) {
+    if (i != totally_ambiguous) active_set.insert(i);
+  }
+  
+  bool empty() const {
+    return active_set.empty();
+  }
+  
+  template <typename Func>
+  void forEachActive(Func f) const {
+    for (auto i : active_set) f(i);
+  }
+};
+
 struct Token {
   static inline uint64_t token(int i) {
     return static_cast<uint64_t>(i + 1);
@@ -131,19 +161,23 @@ int maximum_length(const Rcpp::IntegerVector& x) {
   
   // Step 3: Generate tokens
   const int nToken = (1 << nState) - 1;
-  std::vector<bool> active(nToken, true);
-  active[nToken - 1] = false;  // Final token (all bits) is ambiguity
+  ActiveTokenLog token(nToken);
+  for (int i = 0; i < nToken; ++i) {
+    if (counts.get(i) > 0) {
+      token.activate(i);
+    }
+  }
   
   int loopCount = 0;
   bool escape = false;
   
   while (true) {
     int amb = -1;
-    for (int i = 0; i < nToken; ++i) {
-      if (counts.get(i) > 0 && active[i]) {
+    token.forEachActive([&](int i) {
+      if (counts.get(i) > 0) {
         amb = std::max(amb, Token::sum(i));
       }
-    }
+    });
     
     // Break if no ambiguous tokens remain
     if (amb < 1) break;
@@ -160,7 +194,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     //            before considering ++.... for ++.+++
     for (int unionSize = nState; unionSize >= amb + 1; --unionSize) {
       for (int i = 0; i < nToken; ++i) {
-        if (Token::sum(i) != amb || counts.get(i) == 0 || !active[i]) {
+        if (Token::sum(i) != amb || counts.get(i) == 0 || !token.isActive(i)) {
           continue;
         }
         // Compute options: tokens that are active, counts > 0,
@@ -168,7 +202,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
         std::vector<int> optionIndices;
         std::vector<int> candidateIndices;
         for (int j = 0; j < nToken; ++j) {
-          if (active[j] &&
+          if (token.isActive(j) &&
               counts.get(j) > 0 &&
               !Token::intersect(i, j)) {
             // We have an option for the future, though other options
@@ -183,7 +217,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
         
         if (optionIndices.empty()) {
           // No options: disable token i
-          active[i] = false;
+          token.deactivate(i);
         } else if (!candidateIndices.empty()) {
           // Find candidate with maximum count
           int chosen = candidateIndices[0];
@@ -199,6 +233,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
           counts.decrement(i);
           counts.decrement(chosen);
           const int product = Token::merge(i, chosen);
+          token.activate(product);
           counts.increment(product);
           ++steps;
           
