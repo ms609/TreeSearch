@@ -278,6 +278,16 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
     x
   })
   
+  .Ntropy <- if (packageVersion("TreeDist") > "2.9.2") {
+    function (x, n) {
+      TreeDist::entropy_int(x)
+    }
+  } else {
+    function (x, n) {
+      Entropy(x / n)
+    }
+  }
+  
   h <- simplify2array(apply(mat, 2, function(char) {
     aChar <- !is.na(char)
     ch <- char[aChar]
@@ -289,8 +299,9 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
       chMax <- max(1, ch)
       chTable <- tabulate(ch, chMax)
       n <- length(ch)
-      hChar <- Entropy(chTable / n)
+      hChar <- .Ntropy(chTable, n)
     }
+
     hh <- apply(splits[, aChar, drop = FALSE], 1, function (spl) {
       spTable <- tabulate(spl + 1, 2)
       if (any(spTable < 2)) {
@@ -299,8 +310,8 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
           miRand = 0,
           n = n)
       } else {
-        c(hSplit = Entropy(spTable / n),
-          hJoint = Entropy(tabulate(ch + (spl * chMax), chMax + chMax) / n),
+        c(hSplit = .Ntropy(spTable, n),
+          hJoint = .Ntropy(tabulate(ch + (spl * chMax), chMax + chMax), n),
           miRand = .ExpectedMI(spTable, chTable),
           n = n)
       }
