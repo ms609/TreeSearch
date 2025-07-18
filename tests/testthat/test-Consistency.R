@@ -12,6 +12,14 @@ test_that("Consistency() notes tree-leaf mismatch", {
                "Tip label mismatch")
 })
 
+test_that(".SortTokens() handles edge cases", {
+  expect_equal(.SortTokens(
+    c(1, 1, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1),
+    c(7, 1, 2, 4, 3)),
+    c(14, 14, 2, 2, 2, 2, 2, 2, 2, 4, 4, 14)
+  )
+})
+
 test_that("CI & RI calculated correctly", {
   tree <- ape::read.tree(
     text = ("((a1, a2), (((b1, b2), (c, d)), ((e1, e2), (f, g))));"))
