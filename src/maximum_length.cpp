@@ -6,6 +6,66 @@
 
 constexpr int max_token_bits = 64;
 
+struct Counts {
+  std::unordered_map<int, int> data;
+  
+  // Get count at index
+  int get(int index) const {
+    auto it = data.find(index);
+    return (it != data.end()) ? it->second : 0;
+  }
+  
+  // Increment by one
+  void increment(int index) {
+    ++data[index];
+  }
+  
+  // Decrement by one, with safety check
+  void decrement(int index) {
+    auto it = data.find(index);
+    if (it != data.end() && it->second > 0) {
+      --(it->second);
+      if (it->second == 0) {
+        data.erase(it);  // optional: reduce memory
+      }
+    }
+  }
+  
+  // Set a count explicitly
+  void set(int index, int value) {
+    if (value <= 0) {
+      data.erase(index);
+    } else {
+      data[index] = value;
+    }
+  }
+  
+  // Total remaining tokens
+  int total() const {
+    int sum = 0;
+    for (const auto& kv : data) sum += kv.second;
+    return sum;
+  }
+  
+  int num_positive() const {
+    return static_cast<int>(data.size());
+  }
+  
+  // Return all active indices
+  std::vector<int> indices() const {
+    std::vector<int> result;
+    result.reserve(data.size());
+    for (const auto& kv : data) result.push_back(kv.first);
+    return result;
+  }
+  
+  // Check if index exists with positive count
+  bool has(int index) const {
+    return get(index) > 0;
+  }
+};
+
+
 // Draft by ChatGPT
 // [[Rcpp::export]]
 int maximum_length(const Rcpp::IntegerVector& x) {
@@ -22,14 +82,14 @@ int maximum_length(const Rcpp::IntegerVector& x) {
   } else if (max_val == 0) {
     return 0; // Inapplicables only
   }
-  std::vector<int> counts(max_val, 0);
+  Counts counts;
   int nInapp = 0;
   
   for (int xi : x) {
     if (xi == 0) {
       ++nInapp;
     } else if (xi > 0 && xi <= max_val) {
-      counts[xi - 1]++;
+      counts.increment(xi - 1);
     } else {
       Rcpp::stop("Input out of range: " + std::to_string(xi));
     }
@@ -39,10 +99,8 @@ int maximum_length(const Rcpp::IntegerVector& x) {
   int steps = 0;
   
   // Step 2: Proceed only if more than one state observed
-  const int nPositiveStates = std::count_if(counts.begin(), counts.end(),
-                                            [](int c) {return c > 0; });
-  if (nPositiveStates <= 1) {
-    return steps + std::max(0, std::min(std::accumulate(counts.begin(), counts.end(), 0), regions) - 1);
+  if (counts.num_positive() <= 1) {
+    return steps + std::max(0, std::min(counts.total(), regions) - 1);
   }
   
   const int nState = std::floor(std::log2(max_val)) + 1;
@@ -50,10 +108,8 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     Rcpp::stop("maximum_length(): too many states (nState > 64) for uint64_t representation.");
   }
   
-  const int nToken = (1 << nState) - 1;
-  counts.resize(nToken, 0);
-  
   // Step 3: Generate tokens
+  const int nToken = (1 << nState) - 1;
   std::vector<uint64_t> tokens(nToken);
   std::vector<int> tokenSums(nToken);
   
@@ -95,7 +151,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
   while (true) {
     int amb = -1;
     for (int i = 0; i < nToken; ++i) {
-      if (counts[i] > 0 && active[i]) {
+      if (counts.get(i) > 0 && active[i]) {
         amb = std::max(amb, tokenSums[i]);
       }
     }
@@ -115,7 +171,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     //            before considering ++.... for ++.+++
     for (int unionSize = nState; unionSize >= amb + 1; --unionSize) {
       for (int i = 0; i < nToken; ++i) {
-        if (tokenSums[i] != amb || counts[i] == 0 || !active[i]) {
+        if (tokenSums[i] != amb || counts.get(i) == 0 || !active[i]) {
           continue;
         }
         // Compute options: tokens that are active, counts > 0,
@@ -124,7 +180,7 @@ int maximum_length(const Rcpp::IntegerVector& x) {
         std::vector<int> candidateIndices;
         for (int j = 0; j < nToken; ++j) {
           if (active[j] &&
-              counts[j] > 0 &&
+              counts.get(j) > 0 &&
               nonIntersect[i][j]) {
             // We have an option for the future, though other options
             // potentially yield a larger union.
@@ -142,19 +198,19 @@ int maximum_length(const Rcpp::IntegerVector& x) {
         } else if (!candidateIndices.empty()) {
           // Find candidate with maximum count
           int chosen = candidateIndices[0];
-          int maxCount = counts[chosen];
+          int maxCount = counts.get(chosen);
           for (size_t idx = 1; idx < candidateIndices.size(); ++idx) {
-            if (counts[candidateIndices[idx]] > maxCount) {
+            if (counts.get(candidateIndices[idx]) > maxCount) {
               chosen = candidateIndices[idx];
-              maxCount = counts[chosen];
+              maxCount = counts.get(chosen);
             }
           }
           
           // Update counts: decrement i and chosen, increment merged token
-          counts[i]--;
-          counts[chosen]--;
+          counts.decrement(i);
+          counts.decrement(chosen);
           const int product = Merge(i, chosen);
-          counts[product]++;
+          counts.increment(product);
           ++steps;
           
           escape = true;   // Mark a successful merge
@@ -166,6 +222,5 @@ int maximum_length(const Rcpp::IntegerVector& x) {
     }
   }
   
-  int remaining = std::accumulate(counts.begin(), counts.end(), 0);
-  return steps + std::max(0, std::min(remaining, regions) - 1);
+  return steps + std::max(0, std::min(counts.total(), regions) - 1);
 }
