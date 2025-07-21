@@ -1,4 +1,3 @@
-context("TreeSearch.R")
 library("TreeTools", quietly = TRUE)
 comb11 <- PectinateTree(letters[1:11])
 unrooted11 <- UnrootTree(comb11)
@@ -29,10 +28,9 @@ test_that("Tree can be found", {
                                             maxIter = 1000,
                                             stopAtPlateau = 1, verbosity = 0)))
   
-  expect_true(all.equal(
-    MaximizeParsimony(phy11, tree = CollapseNode(random11, 13))[[1]],
-    comb11
-  ))
+  mp1 <- RootTree(MaximizeParsimony(phy11, tree = 
+                                      CollapseNode(random11, 13))[[1]], "a")
+  expect_true(all.equal(mp1, comb11))
   expect_true(all.equal(
     MaximizeParsimony(phy11, tree = random11, verbosity = 0L)[[1]],
     comb11
