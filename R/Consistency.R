@@ -74,8 +74,10 @@ Consistency <- function (dataset, tree, byChar = TRUE, nRelabel = 0,
     dsHas <- setdiff(dsTips, trTips)
     trHas <- setdiff(trTips, dsTips)
     stop("Tip label mismatch: ",
-         if (length(dsHas)) "\n   `dataset` has ", paste(dsHas, collapse = ", "),
-         if (length(trHas)) "\n   `tree` has ", paste(trHas, collapse = ", ")
+         if (length(dsHas)) "\n   `dataset` has ", 
+         .Truncate(paste(dsHas, collapse = ", "), 240),
+         if (length(trHas)) "\n   `tree` has ", 
+         .Truncate(paste(trHas, collapse = ", "), 240)
     )
   }
   minLength <- MinimumLength(dataset, compress = TRUE) # Farris's m
@@ -121,6 +123,14 @@ Consistency <- function (dataset, tree, byChar = TRUE, nRelabel = 0,
     }
   } else {
     c(ci = ci, ri = ri, rc = rc, rhi = rhi)
+  }
+}
+
+.Truncate <- function(string, maxLength = 100) {
+  if (nchar(string) > maxLength) {
+    paste0(substr(string, 1, maxLength - 3), "...")
+  } else {
+    string
   }
 }
 
