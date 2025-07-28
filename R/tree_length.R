@@ -162,7 +162,9 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
     charSeq <- seq_along(characters) - 1L
     
     # Save time by dropping uninformative characters
-    if (!is.null(informative)) charSeq <- charSeq[informative]
+    if (!is.null(informative)) {
+      charSeq <- charSeq[informative]
+    }
     morphyObjects <- lapply(characters, SingleCharMorphy)
     on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
             add = TRUE)
