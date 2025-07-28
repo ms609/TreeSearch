@@ -102,7 +102,8 @@ pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
-\code{\link{MaximizeParsimony}()}
+\code{\link{MaximizeParsimony}()},
+\code{\link{PresCont}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

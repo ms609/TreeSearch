@@ -139,10 +139,12 @@ JackLabels <- function (tree, jackTrees,
   
   if (plot) {
     if (!add) plot(tree)
-    if (is.null(col)) col <- SupportColour(jackSupport)
-    ape::nodelabels(paste("\n\n", signif(jackSupport, 2)), 
-                    node = as.integer(names(jackSupport)),
-                    adj = adj, col = col, pos = pos, frame = frame, ...)
+    if (is.null(col)) {
+      col <- SupportColour(jackSupport)
+    }
+    nodelabels(paste("\n\n", signif(jackSupport, 2)),
+               node = as.integer(names(jackSupport)),
+               adj = adj, col = col, pos = pos, frame = frame, ...)
     
     # Return:
     jackSupport
