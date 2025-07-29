@@ -96,25 +96,25 @@ IntegerVector preorder_morphy_by_char(IntegerMatrix edge, List MorphyHandls) {
   return ret;
 }
 
+// ~20x faster to pass list of morphyObjs than to use a single object and
+// set weights / apply tipdata one character at a time.
 // [[Rcpp::export]]
-double morphy_iw(IntegerMatrix edge,
-                 List MorphyHandls,
-                 NumericVector weight,
-                 IntegerVector minScore,
-                 IntegerVector sequence,
-                 NumericVector concavity,
-                 NumericVector target) {
-  const double
-    k = concavity[0],
-    target_score = target[0]
-  ;
+double morphy_iw(
+    IntegerMatrix edge,
+    List MorphyHandls,
+    NumericVector weight,
+    IntegerVector minScore,
+    IntegerVector sequence,
+    NumericVector concavity,
+    NumericVector target
+) {
+  const double k = concavity[0];
+  const double target_score = target[0];
   Morphy handl = R_ExternalPtrAddr(MorphyHandls[0]);
-  const int
-    n_tip = mpl_get_numtaxa(handl),
-    n_internal = mpl_get_num_internal_nodes(handl),
-    n_vertex = n_tip + n_internal,
-    root_node = n_tip
-  ;
+  const int n_tip = mpl_get_numtaxa(handl);
+  const int n_internal = mpl_get_num_internal_nodes(handl);
+  const int n_vertex = n_tip + n_internal;
+  const int root_node = n_tip;
   
   IntegerVector parent_of(n_vertex);
   IntegerVector left_child(n_internal);
@@ -134,20 +134,14 @@ double morphy_iw(IntegerMatrix edge,
   }
   parent_of[root_node] = root_node;
   
-  const int 
-    /* INTEGER gives pointer to first element of an R vector */
-    *ancestor = parent_of.begin(),
-    *left = left_child.begin(),
-    *right = right_child.begin()
-  ; 
-  
+  const int *ancestor = parent_of.begin();
+  const int *left = left_child.begin();
+  const int *right = right_child.begin();
   
   double ret = 0;
   for (int index = sequence.length(); index--; ) {
-    const int
-      i = sequence[index],
-      weight_i = weight[i]
-    ;
+    const int i = sequence[index];
+    const int weight_i = weight[i];
     if (weight_i) {
       Morphy handl = R_ExternalPtrAddr(MorphyHandls[i]);
       int e = -minScore[i];
@@ -158,7 +152,6 @@ double morphy_iw(IntegerMatrix edge,
   }
   return ret;
 }
-
 
 // NOTE: All characters must be informative.
 // [[Rcpp::export]]
@@ -209,10 +202,8 @@ double morphy_profile(IntegerMatrix edge,
   
   double ret = 0;
   for (int index = sequence.length(); index--; ) {
-    const int
-      i = sequence[index],
-      weight_i = weight[i]
-    ;
+    const int i = sequence[index];
+    const int weight_i = weight[i];
     if (weight_i) {
       Morphy handl = R_ExternalPtrAddr(MorphyHandls[i]);
       int e = -1;

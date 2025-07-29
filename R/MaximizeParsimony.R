@@ -673,7 +673,8 @@ MaximizeParsimony <- function (dataset, tree,
     bestScore <- .Score(edge)
   } else {
     starters <- RenumberTips(startTrees, names(dataset))
-    startEdges <- vapply(lapply(starters, Preorder), `[[`, startTrees[[1]][["edge"]],
+    startEdges <- vapply(lapply(starters, Preorder),
+                         `[[`, startTrees[[1]][["edge"]],
                         "edge")
     startScores <- apply(startEdges, 3, .Score)
     bestScore <- min(startScores)
