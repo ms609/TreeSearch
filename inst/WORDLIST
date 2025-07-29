@@ -51,6 +51,7 @@ Felsenstein
 Foulds
 GABBOTT
 GAITROS
+GC
 GEISLER
 GIRIBET
 Giaro
@@ -65,6 +66,7 @@ HODKINSON
 HOFREITER
 Halkieria
 IW
+Homoplasy
 Insecta
 JIA
 Jamoytius
@@ -76,7 +78,7 @@ LONGRICH
 Lamsdell
 Lanfear
 Lellingeria
-Levenshtein 
+Levenshtein
 Linnean
 MPTs
 Machaeridians
@@ -94,7 +96,7 @@ Morphy
 MorphyLib
 NNI
 Necrolestes
-Neopilina       
+Neopilina
 Novitates
 O'MEARA
 Odontogriphus
@@ -219,8 +221,8 @@ phyllostomid
 phylo
 phylogenetics
 pkgdown
-polytomy
 polytomies
+polytomy
 postorder
 preorder
 pscore
