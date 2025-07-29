@@ -24,6 +24,10 @@
 #' # Write labelled trees to a nexus file:
 #' # write.nexus(tree, file = filename)
 #' 
+#' # Compute the measure for further analysis
+#' gpc <- (SplitFrequency(tree, jackTrees) -
+#'   MostContradictedFreq(tree, jackTrees)) / length(jackTrees)
+#' gpc
 #' @inheritParams JackLabels
 #' @inheritParams MostContradictedFreq
 #' @template MRS
@@ -70,6 +74,7 @@ PresCont <- function(tree, forest,
 #' @returns `MostContradictedFreq()` returns, for each split in `tree`,
 #' the number of times that its most common contradictory split occurs in
 #' `forest`.
+#' @seealso `PresCont()` calculates the Groups present / contradicted measure.
 #' @importFrom TreeTools SplitConflicts
 #' @export
 MostContradictedFreq <- function(tree, forest) {

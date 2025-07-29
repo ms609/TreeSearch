@@ -20,3 +20,6 @@ the number of times that its most common contradictory split occurs in
 of a split in a resampled population with the frequency of the most common
 contradictory split.
 }
+\seealso{
+\code{PresCont()} calculates the Groups present / contradicted measure.
+}

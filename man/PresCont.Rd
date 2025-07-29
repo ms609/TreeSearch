@@ -51,6 +51,10 @@ ape::write.tree(tree)
 # Write labelled trees to a nexus file:
 # write.nexus(tree, file = filename)
 
+# Compute the measure for further analysis
+gpc <- (SplitFrequency(tree, jackTrees) -
+  MostContradictedFreq(tree, jackTrees)) / length(jackTrees)
+gpc
 }
 \references{
 \insertAllCited{}
