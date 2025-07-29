@@ -28,6 +28,8 @@ unique split.}
 
 \item{add}{Logical specifying whether to add the labels to an existing
 plot.}
+
+\item{adj, col, frame, pos, \dots}{Parameters to pass to \code{nodelabels()}.}
 }
 \value{
 \code{PresCont()} returns \dots{}

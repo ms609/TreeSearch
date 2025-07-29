@@ -9,6 +9,9 @@
 #' @inheritParams JackLabels
 #' @param forest a list of trees of class `phylo`, or a `multiPhylo` object;
 #'  or a `Splits` object.
+# When https://github.com/r-lib/roxygen2/issues/1718 is closed, replace with
+# @inheritParams JackLabels
+#' @param adj,col,frame,pos,\dots Parameters to pass to `nodelabels()`.
 #' 
 #' @references \insertAllCited{}
 #' @examples
