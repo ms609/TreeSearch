@@ -2,7 +2,7 @@
 % Please edit documentation in R/PresentContra.R
 \name{PresCont}
 \alias{PresCont}
-\title{Group present or contradicted}
+\title{Group present or contradicted score}
 \usage{
 PresCont(
   tree,
@@ -32,11 +32,44 @@ plot.}
 \item{adj, col, frame, pos, \dots}{Parameters to pass to \code{nodelabels()}.}
 }
 \value{
-\code{PresCont()} returns \dots{}
+\code{PresCont()}  returns a character vector that labels the nodes
+in \code{tree} in sequence, suitable for passing to \code{nodelabels()} or
+\code{tree$node.label}.
+If \code{plot = TRUE}, it also plots \code{tree}, with splits labelled by their
+groups present / contradicted score.
 }
 \description{
 Implements the Groups Present / Contradicted (\acronym{GC}) measure
 \insertCite{Goloboff2003}{TreeSearch}.
+
+This function was written during a code sprint: its documentation and test
+cases have not yet been carefully scrutinized, and its implementation may
+change without notice.
+Please alert the maintainer to any issues you encounter.
+}
+\details{
+The GC score ranges from −1 to 1, and is intended as an alternative
+to bootstrap or jackknife support values.
+
+The GC score counts the number of trees in \code{forest} that include a given
+split, and subtracts the number of times that the \emph{most frequent}
+contradictory split occurs.  This value is then divided by the number of
+trees in \code{forest}.
+
+A score of 1 denotes that every tree in a forest (typically of bootstrap
+or jackknife replicates) contains the split in question.
+A score of −1 denotes that a specific contradictory split occurs in
+every tree in \code{forest}.
+A score of zero indicates no support: i.e. that the split exhibits no more
+support than its most common contradictory split.
+
+The most frequent contradictory split is used to discriminate between
+a scenario where a given split enjoys much more support than any other
+alternative (even if many alternatives exist, each with low support),
+and a scenario where the chosen split is scarcely any better supported than
+a competing alternative.  The split is considered better supported than
+the latter, where the runner-up may become preferred with a modest change to
+the underlying dataset.
 }
 \examples{
 library("TreeTools", quietly = TRUE) # for as.phylo
@@ -65,6 +98,10 @@ gpc
 \insertAllCited{}
 }
 \seealso{
+\code{\link[=SplitFrequency]{SplitFrequency()}} and \code{\link[=MostContradictedFreq]{MostContradictedFreq()}} will compute the number
+of trees that contain the split, and the frequency of the most contradicted
+split, respectively.
+
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},

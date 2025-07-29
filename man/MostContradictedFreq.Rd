@@ -18,10 +18,20 @@ the number of times that its most common contradictory split occurs in
 \code{forest}.
 }
 \description{
+\code{MostContradictedFreq()} counts the occurrences of the single split that most
+frequently contradicts each split in \code{tree}.
+
+This function was written during a code sprint: its documentation and test
+cases have not yet been carefully scrutinized, and its implementation may
+change without notice.
+Please alert the maintainer to any issues you encounter.
+}
+\details{
 \insertCite{Goloboff2003;textual}{TreeSearch} propose comparing the frequency
 of a split in a resampled population with the frequency of the most common
-contradictory split.
+contradictory split.  This measure contributes to the "groups present /
+contradicted" score.
 }
 \seealso{
-\code{PresCont()} calculates the Groups present / contradicted measure.
+\code{PresCont()} calculates the "groups present / contradicted" score.
 }
