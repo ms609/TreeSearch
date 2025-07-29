@@ -33,6 +33,7 @@ URL: https://ms609.github.io/TreeSearch/ (doc),
   https://github.com/ms609/TreeSearch/ (devel)
 BugReports: https://github.com/ms609/TreeSearch/issues/
 Depends: R (>= 4.0)
+Remotes: ms609/TreeTools
 Imports: 
   ape (>= 5.6),
   cli (>= 3.0),
@@ -52,7 +53,7 @@ Imports:
   stats,
   stringi,
   TreeDist (>= 2.6.3),
-  TreeTools (>= 1.10.0),
+  TreeTools (>= 1.15.0.9004),
 Suggests:
   knitr,
   phangorn (>= 2.2.1),

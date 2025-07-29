@@ -337,6 +337,7 @@ Tree search \emph{via} graphical user interface: \code{\link[=EasyTrees]{EasyTre
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
+\code{\link{PresCont}()},
 \code{\link{SiteConcordance}}
 }
 \author{
