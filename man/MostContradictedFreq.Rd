@@ -7,6 +7,8 @@
 MostContradictedFreq(tree, forest)
 }
 \arguments{
+\item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
+
 \item{forest}{a list of trees of class \code{phylo}, or a \code{multiPhylo} object;
 or a \code{Splits} object.}
 }

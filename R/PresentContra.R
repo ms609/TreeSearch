@@ -1,9 +1,14 @@
 #' Group present or contradicted
 #' 
-#' Implements the Groups Present / Contradicted (GC) measure
+#' Implements the Groups Present / Contradicted (\acronym{GC}) measure
 #' \insertCite{Goloboff2003}{TreeSearch}.
 #' 
 #' @template sprint
+#' @returns `PresCont()` returns \dots{}
+#' 
+#' @inheritParams JackLabels
+#' @param forest a list of trees of class `phylo`, or a `multiPhylo` object;
+#'  or a `Splits` object.
 #' 
 #' @references \insertAllCited{}
 #' @examples
@@ -28,8 +33,6 @@
 #' gpc <- (SplitFrequency(tree, jackTrees) -
 #'   MostContradictedFreq(tree, jackTrees)) / length(jackTrees)
 #' gpc
-#' @inheritParams JackLabels
-#' @inheritParams MostContradictedFreq
 #' @template MRS
 #' @family split support functions
 #' @importFrom ape nodelabels
@@ -68,9 +71,8 @@ PresCont <- function(tree, forest,
 #' \insertCite{Goloboff2003;textual}{TreeSearch} propose comparing the frequency
 #' of a split in a resampled population with the frequency of the most common
 #' contradictory split.
-#' @param forest a list of trees of class `phylo`, or a `multiPhylo` object;
-#'  or a `Splits` object.
 #' 
+#' @inheritParams PresCont
 #' @returns `MostContradictedFreq()` returns, for each split in `tree`,
 #' the number of times that its most common contradictory split occurs in
 #' `forest`.

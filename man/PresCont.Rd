@@ -29,8 +29,11 @@ unique split.}
 \item{add}{Logical specifying whether to add the labels to an existing
 plot.}
 }
+\value{
+\code{PresCont()} returns \dots{}
+}
 \description{
-Implements the Groups Present / Contradicted (GC) measure
+Implements the Groups Present / Contradicted (\acronym{GC}) measure
 \insertCite{Goloboff2003}{TreeSearch}.
 }
 \examples{
