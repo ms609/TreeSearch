@@ -51,7 +51,7 @@ PresCont <- function(tree, forest,
     gc
   } else {
     ret <- character(tree[["Nnode"]])
-    ret[as.integer(names(gc)) - NTip(tree)] <- jackSupport
+    ret[as.integer(names(gc)) - NTip(tree)] <- gc
     
     # Return:
     ret
