@@ -1,7 +1,9 @@
 #' Group present or contradicted
 #' 
 #' Implements the Groups Present / Contradicted (GC) measure
-#' \insertCite{Goloboff2003}{TreeSearch}
+#' \insertCite{Goloboff2003}{TreeSearch}.
+#' 
+#' @template sprint
 #' 
 #' @references \insertAllCited{}
 #' @examples
@@ -33,8 +35,8 @@ PresCont <- function(tree, forest,
                      add = FALSE,
                      adj = 0, col = NULL, frame = "none", pos = 2L,
                      ...) {
-  gc <- (SplitFrequency(reference, forest) -
-           MostContradictedFreq(reference, forest)) / length(forest)
+  gc <- (SplitFrequency(tree, forest) -
+           MostContradictedFreq(tree, forest)) / length(forest)
   
   if (plot) {
     if (!add) plot(tree)

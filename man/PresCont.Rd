@@ -31,7 +31,7 @@ plot.}
 }
 \description{
 Implements the Groups Present / Contradicted (GC) measure
-\insertCite{Goloboff2003}{TreeSearch}
+\insertCite{Goloboff2003}{TreeSearch}.
 }
 \examples{
 library("TreeTools", quietly = TRUE) # for as.phylo
