@@ -169,15 +169,17 @@ double morphy_profile(IntegerMatrix edge,
                       NumericMatrix profiles,
                       NumericVector target) {
   Morphy handl = R_ExternalPtrAddr(MorphyHandls[0]);
-  const int
-    n_tip = mpl_get_numtaxa(handl),
-    n_internal = mpl_get_num_internal_nodes(handl),
-    n_vertex = n_tip + n_internal,
-    root_node = n_tip
-  ;
-  const double
-    target_score = target[0]
-  ;
+  const int n_tip = mpl_get_numtaxa(handl);
+  const int n_internal = mpl_get_num_internal_nodes(handl);
+  const int n_vertex = n_tip + n_internal;
+  const int root_node = n_tip;
+  const double target_score = target[0];
+  
+  // Basic dimensions check - protect against segfaults
+  if (edge.nrow() != n_tip + n_internal - 1) {
+    Rcpp::Rcout << n_tip << " + " << n_internal << " != " << edge.nrow() << "\n";
+    Rcpp::stop("Number of edges does not match Morphy object dimensions.");
+  }
   
   IntegerVector parent_of(n_vertex);
   IntegerVector left_child(n_internal);

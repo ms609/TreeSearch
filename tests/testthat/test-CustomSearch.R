@@ -28,8 +28,10 @@ test_that("Tree can be found", {
                                             maxIter = 1000,
                                             stopAtPlateau = 1, verbosity = 0)))
   
-  mp1 <- RootTree(MaximizeParsimony(phy11, tree = 
-                                      CollapseNode(random11, 13))[[1]], "a")
+  mp1 <- RootTree(
+    MaximizeParsimony(phy11, tree = CollapseNode(random11, 13),
+                      ratchIter = 1)[[1]],
+    "a")
   expect_true(all.equal(mp1, comb11))
   expect_true(all.equal(
     MaximizeParsimony(phy11, tree = random11, verbosity = 0L)[[1]],

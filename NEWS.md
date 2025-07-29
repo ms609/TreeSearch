@@ -1,4 +1,6 @@
-# TreeSearch 1.6.1.9005 (development)
+# TreeSearch 1.6.1.9006 (development)
+- `PresCont()` implements the Group Present / Contradicted measure of
+  Goloboff et al. (2003).
 - Support single-character matrices in `ClusteringConcordance()`
 - `ConcordanceTable()` and support functions `QACol()`, `QALegend()`
 - Fix `DoNothing(x)` to return `x` (not `NULL`)
@@ -7,7 +9,9 @@
 - Remove unused `delete_rawdata()` due to implementation issues.
 - Port `MaximumLength()` to C++ to handle more characters, more efficiently.
 
+
 # TreeSearch 1.6.1 (2025-06-10)
+
 - Handle invariant characters in `PolEscapa()`
 - Handle challenging root positions in `PlotCharacter()`
 - Fix character state colours in app legend

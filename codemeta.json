@@ -393,18 +393,18 @@
       "@type": "SoftwareApplication",
       "identifier": "TreeTools",
       "name": "TreeTools",
-      "version": ">= 1.10.0",
+      "version": ">= 1.15.0.9004",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
         "name": "Comprehensive R Archive Network (CRAN)",
         "url": "https://cran.r-project.org"
       },
-      "sameAs": "https://CRAN.R-project.org/package=TreeTools"
+      "sameAs": "https://github.com/ms609/TreeTools"
     },
     "SystemRequirements": "C++17"
   },
-  "fileSize": "4565.948KB",
+  "fileSize": "4577.944KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",

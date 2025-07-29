@@ -84,6 +84,7 @@ using \code{MaximizeParsimony()}.
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{MaximizeParsimony}()},
+\code{\link{PresCont}()},
 \code{\link{SiteConcordance}}
 
 Other custom search functions: 
