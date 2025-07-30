@@ -58,5 +58,800 @@ begin data;
     Xiaoheiqingella_peculiaris     ?02?110120010?011??????010130?0000000001?00?1020000?????????????????????????????112?????
     Xystoscolex_boreogyrus         ?0?110?1??0?0?011????0001014001?0000000000?000-000??????????????????????????????112???1?
     Yunnanpriapulus_halteroformis  ?02?110?200????????????0101?010000000001?00?1000000?????????????????????????????112?????
-  ; 
+  ;
 end;
+
+
+BEGIN CHARACTERS;
+  CHARLABELS
+    [1]  Degree to which the introvert can be invaginated
+    [2]  Anterior branched frontal appendages
+    [3]  Scalids (nonspecific and sensu lato, including both scalids and presumed scalid derivatives)
+    [4]  Mouth cone
+    [5]  Zone I
+    [6]  Arrangement of zone I armature
+    [7]  Radial arrangement of armature
+    [8]  Morphology of zone I armature
+    [9]  Number of elements comprising the first three circlets and, hence, defining the number of longitudinal rows of elements on the introvert
+    [10] Sequence of zone I elements
+    [11] Basal circlet of zone I armature separated from more anterior by a constriction (as in loriciferans) or by insertion of longitudinal or circular muscles (kinorhynchs)
+    [12] Number of elements in the proximal circlet of zone II
+    [13] Elongate spines at the base of Zone II
+    [14] Number of circlets of zone III armature
+    [15] Morphology of proximal circlets of zone III armature ("teeth")
+    [16] Morphology of middle circlets of zone III armature (teeth)
+    [17] Morphology of the distal circlets of zone III armature (teeth)
+    [18] Number of elements in first circlet of pharyngeal armature (base of zone III)
+    [19] Number of proximal, pentagonal circlets in zone III of the proboscis
+    [20] Width of zone III relative to zone II
+    [21] Width of the distal portion of zone Ill
+    [22] Eversibility of zone Ill
+    [24] Armament of cervical region
+    [25] Aspect ratio of body length to width in adult
+    [26] Paired, lateral, locomotory appendages
+    [27] Annulation
+    [28] Number of trunk annuli
+    [29] Trunk spines, fine spines, or setae in adult
+    [30] Trunk papillae in adult
+    [31] Trunk sclerites in adult
+    [32] Trunk sclerites
+    [33] Trunk tumuli
+    [34] Trunk tubuli
+    [35] Trunk tubercles of soft, coriaceous consistency
+    [36] Flosculi, N-flosculi or sensory spots
+    [37] Clavulae
+    [38] Tube: Absent (0), tube composed of plant debris
+    [39] Arc or ring of posterior spines or hooks (distinct from the bilaterally symmetrical structures present in Markuelia and many palaeoscolecids)
+    [40] Posterior ring papillae
+    [41] Eversible bursa
+    [42] Posterior abdomen greatly extensible
+    [43] Position of the anus
+    [44] Posterior tubulae or setae
+    [45] Caudal appendage(s)
+    [46] Division of caudal appendage(s) or tail
+    [47] Caudal appendage(s)
+    [48] Surface of caudal appendage
+    [49] Terminally posterior spines, hooks or cones of basal diameter >20% trunk diameter
+    [50] Posterior warts
+    [51] Polythyridium
+    [52] Ventral nerve cord unpaired throughout its length
+    [53] Ventral nerve cords merge caudally
+    [54] Dorsal nerve cord unpaired
+    [55] Circumpharyngeal brain
+    [56] Brain with anterior posterior sequence of perikarya-neuropil-perikarya
+    [57] Apical part of the brain composed of perikarya
+    [58] Pharyngeal nervous system composed of numerous tooth ganglia connected by a diagonal nerve net
+    [59] Two rings of introvert retractors attached through the collar-shaped brain
+    [60] Developmental mode
+    [61] Loricate stage
+    [62] Cuticle of the larva/juvenile dorso-ventrally flattened (at least in older stages), with six lateral plates in-folded and accordion like. Cuticle of the lorica thickened in dorsal and ventral plates (at least) with sculpture of four to six longitudinal rows of narrow, rectangular fields
+    [63] Larvae/juveniles with six long pharynx retractor muscles
+    [64] Teeth of second circle of the larvae/juveniles with very small median denticle
+    [65] Division of the body into a distinct proboscis and abdomen in larva/juvenile
+    [66] Cloaca in both sexes
+    [67] Protonephridia
+    [68] Urogenital system attached to the body wall by a ligament
+    [69] Spermatozoa with a flagellum
+    [70] Genital field extremely simplified
+    [71] Copulatory organs
+    [72] Perigenital setae
+    [73] Cuticle predominantly containing collagen
+    [74] Distribution of chitin in the cuticle
+    [75] Cuticle with homogeneous layer at surface/beneath epicuticle
+    [76] Cuticle with middle layer of distinct composition
+    [77] Cuticle with radially striated/vertical canal middle layer
+    [78] Cross-wise fibres in cuticle
+    [79] Large helical fibres in the cuticle
+    [80] Cuticle surface with ornament of tessellating polygons
+    [81] Division of the body into a distinct proboscis and abdomen in adult
+    [82] Terminal mouth
+    [83] Percentage of animal length taken up by the introvert
+    [84] Voluminous primary body cavity
+    [85] Movement by peristaltic movement of the pharynx/introvert
+    [86] Pharyngeal lumina
+    [87] Circular body musculature
+    [88] Nucleation of "peritoneal" membrane
+  ;
+
+
+  STATELABELS
+  1
+ "no introvert, or introvert not invaginable at all"
+  "partially invaginable (i.e., part of zone I)"
+  "completely invaginable into the trunk (i.e., to the base of zone I)"
+,
+  2
+ "absent"
+  "present"
+,
+  3
+ "absent"
+  "present and composed exclusively of cuticle"
+  " present and with cuticle limited to a thin outer covering"
+,
+  4
+ "absent"
+  "present but non-inversible"
+  " present and inversible"
+,
+  5
+ "unarmed"
+  "armed"
+,
+  6
+ "not in rows"
+  "discrete parallel longitudinal rows"
+  " rows aligned diagonal to the anterior-posterior axis of the animal" 
+,
+  7
+ "pentaradial"
+  "hexaradial" 
+,
+  8
+  "papillae"
+  "simple spines"
+  " hooks or spinose hooks"
+  " conical scalids"
+  " telescopiform scalids"
+  " curved scalids and dentoscalids"
+  " complex scalids"
+  " glandular scalids, trifid spines, sensory spines, and double, tentaculite scalids"
+  " scalids with pectinate hood"
+  " spinoscalids and clavoscalids (kinorhynchs and lorificerans)"
+,
+  9
+ "none"
+  "< 20"
+  " 25"
+  " > 25"
+,
+  10
+ "elements as a single series (all elements identical or with differing morphologies)"
+  "elements organized into two or more transverse bands or series, possibly with different element morphologies within each series, but the sequence of morphologies being comparable between subsequent series"
+,
+  11
+ "absent"
+  "present"
+,
+  12
+ "none or zone unarmed"
+  "eight"
+  " more than eight" 
+,
+  13
+ "absent"
+  "present"
+,
+  14
+ "none or unarmed"
+  "one to four"
+  " six to fourteen"
+  " sixteen or more"
+,
+  15
+ "spines or papillae"
+  "multispinose"
+  " multispinose but massively reduced"
+  "hooks"
+  "conical with a fringe of spines"
+  "sclerotized trabeculae"
+  "pectinate"
+  "conical papillae terminating in a long spine (prickle)"
+  "oral stylets"
+,
+  16
+ "absent"
+  "spines (of any length) or papillae"
+  " multispinose (reduced or otherwise)"
+  " pectinate"
+,
+  17
+ "absent"
+  "spines (of any length)"
+  " multispinose (reduced or otherwise)"
+  " pectinate"
+,
+  18
+ "elements absent"
+  "first circlet of 5 elements"
+  " first circlet of 8-10 elements"
+  " first circlet of numerous elements (more than 10)"
+,
+  19
+ "none"
+  "five"
+  " six"
+  " seven"
+,
+  20
+ "zone III less than twice the width of zone II"
+  "zone III equal to or greater than twice the width of zone II"
+,
+  21
+ "distal zone III parallel to proximal zone III or tapering gradually"
+  "distal zone III expanded into a bulb"
+,
+  22
+ "zone III completely eversible"
+  "zone III incompletely eversible, but eversible beyond the proximal teeth"
+  " zone III normally eversible only as far as the proximal teeth"
+,
+  23
+  "All zone III elements of approximately equal size"
+  "zone III elements decreasing regularly in size from the posterior to the anterior (anteriormost elements less than half the size of the posteriormost)"
+,
+  24
+ "none"
+  "cuticular plates (as in larvae/juveniles)"
+,
+  25
+ "<10"
+  "10-20"
+  " >20"
+,
+  26
+ "absent"
+  "present"
+,
+  27
+ "absent"
+  "homonomous"
+  "heteronomous"
+,
+  28
+ "<7"
+  "7-11"
+  " 30-60"
+  " 61-120"
+  " 140 or more"
+,
+  29
+ "absent"
+  "present"
+,
+  30
+ "absent"
+  "present and simple"
+  " extremely long and arranged into two discrete, longitudinal rows"
+,
+  31
+ "absent"
+  "present and small to medium in size"
+  " present and greatly enlarged" 
+,
+  32
+ "absent"
+  "in two longitudinal rows"
+  " in annular rings"
+,
+  33
+ "absent"
+  "present"
+,
+  34
+ "absent"
+  "present"
+,
+  35
+ "absent"
+  "present" 
+,
+  36
+ "absent"
+  "flosculi present with between 7 and 11 petals"
+  " flosculi present and invariably with 8 petals"
+,
+  37
+ "absent"
+  "present" 
+,
+  38
+ "Absent"
+  "tube composed of plant debris: absent"
+  " tube flattened, annulated, tapering and chitinous" 
+,
+  39
+ "absent"
+  "present"
+,
+  40
+ "absent"
+  "present"
+,
+  41
+ "absent"
+  "present"
+,
+  42
+ "no"
+  "yes"
+,
+  43
+ "anus terminal, whether within bursa or otherwise"
+  "anus in posterolateral or posteroventral surface of the abdomen"
+,
+  44
+ "absent"
+  "present" 
+,
+  45
+ "absent"
+  "present but less than the length of the body"
+  " present and up to three times the lenth of the body"
+,
+  46
+ "undivided"
+  "pseudosegmented"
+,
+  47
+ "single and positioned terminally"
+  "single and positioned dorso-medially"
+  " bicaudal as in some species of Priapulopsis and Paratubiluchus" 
+,
+  48
+ "smooth"
+  "vesiculae"
+  " large warts"
+,
+  49
+ "absent"
+  "present and arranged in pairs about the sagittal plane" 
+,
+  50
+ "absent"
+  "small (as in Halicryptus)"
+  " large (as in Priapulus)" 
+,
+  51
+ "absent"
+  "present"
+,
+  52
+ "absent"
+  "present"
+,
+  53
+ "absent"
+  "present"
+,
+  54
+ "absent"
+  "present"
+,
+  55
+ "absent"
+  "present"
+,
+  56
+ "absent"
+  "present"
+,
+  57
+ "absent"
+  "present"
+,
+  58
+ "absent"
+  "present"
+,
+  59
+ "absent"
+  "present"
+,
+  60
+ "direct"
+  "biphasic"
+,
+  61
+ "absent"
+  "present" 
+,
+  62
+ "absent"
+  "present"
+,
+  63
+ "absent"
+  "present"
+,
+  64
+ "absent"
+  "present" 
+,
+  65
+ "absent"
+  "present"
+,
+  66
+ "absent"
+  "present"
+,
+  67
+ "absent"
+  "present but do not flow into the gonoduct and are not integrated into the gonad"
+  " present and flow into the gonoduct and/or are integrated into the gonad" 
+,
+  68
+ "absent"
+  "present"
+,
+  69
+  "absent"
+  "present"
+,
+  70
+  "no"
+  "yes"
+,
+  71
+ "absent"
+  "present"
+,
+  72
+ "absent or reduced"
+  "prominent"
+,
+  73
+ "absent"
+  "present" 
+,
+  74
+ "none"
+ "predominantly within the middle cuticle layer (exocuticle)"
+  " predominantly within the lowermost cuticle layer (endocuticle)" 
+,
+  75
+ "absent"
+  "present" 
+,
+  76
+ "absent"
+  "present"
+,
+  77
+ "absent"
+  "present"
+,
+  78
+ "absent"
+  "present"
+,
+  79
+ "absent"
+  "present and composed of platy subunits"
+  " present and composed of unpaired fibrils"
+  " present and composed of paired, wound fibrils" 
+,
+  80
+ "absent"
+  "present"
+,
+  81
+ "absent"
+  "present"
+,
+  82
+ "absent"
+  "present"
+,
+  83
+ "None (no introvert)"
+  "2% (as in Halicryptus higginsi)"
+  "between 2% and 30%"
+  " 30 to 50%" 
+,
+  84
+ "absent"
+  "present"
+,
+  85
+ "absent"
+  "present"
+,
+  86
+ "round"
+  "triradiate"
+,
+  87
+ "absent"
+  "present"
+,
+  88
+ "membrane without nuclei or simply with amoebocytes in association with the surface"
+  "membrane containing scattered nuclei"
+;
+END;
+
+BEGIN NOTES;
+  TEXT CHARACTER=27 TEXT="Budd (2003) has drawn comparison between the patterns of cuticular ornament in association with the trunk annulae in lobopods and palacoscolecids. However, although palaeoscolecids exhibit an alternating pattern of cuticular ornament (Conway Morris 1997) and although this varies from one body region to another, adjacent annulae are identical; they exhibit homomous annulation. This contrasts with the condition in lobopods where adjacent annulae vary both in terms of their axial length and their cuticular ornamentation.";
+  TEXT CHARACTER=3 TEXT="Schmidt-Rhaesa (1998) has demonstrated that, in comparison to the scalids of Scalidophora (Kinorhyncha +Loricifera+Priapulida), the scalids of nematoids (Nematoda+Nematomorpha) are composed exclusively of cuticle. The collapse and folding of the scalids in Markuelia indicates that they are hollow structures and, thus, not wholly composed of cuticle.";
+  TEXT CHARACTER=4 TEXT="The mouth cone is the eversible (though not necessarily inversible) upstanding anterior limit of the pharynx.";
+  TEXT CHARACTER=9 TEXT="In all extant priapulids there are eight elements in the most proximal circlet of the introvert, their number and position corresponding to innervation derived from the circumpharyngeal brain. ";
+  TEXT CHARACTER=45 TEXT=" Harvey et al. (2010) coded a caudal appendage as present in Kerygmachela. However, other characters contingent on the presence of a caudal appendage are coded as inapplicable for Kerygmachela by these authors (as for taxa lacking a caudal appendage). We therefore code an appendage as absent in Kerygmachela. ";
+  TEXT CHARACTER=67 TEXT="Protonephridia are considered an apomorphy of the Bilateria (Ax, 1996) and are present in gastrotrichs, kinorhynchs, loriciferans and extant priapulids, but absent, presumably secondarily, from onychophorans, nematodes and nematomorphs. Lemburg (1999) recognized state 2 as a synapomorphy of lorciferans and extant priapulids.";
+  TEXT CHARACTER=83 TEXT="Lemburg (1999) recognizes a very large introvert (state 3) as a synapomorphy of Megaintroverta (Priapulopsis + Acanthopriapulus + Priapulus).";
+  TEXT CHARACTER=84 TEXT=" Lemburg (1999) recognizes the presence of this character as a synapomorphy of (extant) Priapulida.";
+  TEXT CHARACTER=87 TEXT=" Circular body musculature is present in all taxa of nemathelminth grade except nematodes and nematomorphs, and its absence has been considered both secondary and a synapomorphy of Nematoida (Schmidt-Rhaesa 1998).";
+  TEXT CHARACTER=78 TAXON=27 TEXT="Reported in Meiopriapulus by Storch et al. 1989";
+  TEXT CHARACTER=68 TEXT="Lemburg (1999) recognized this as a synapomorphy of lorciferans and extant priapulids.";
+  TEXT CHARACTER=69 TEXT=" The presence of a flagellum in spermatozoa is a metazoan symplesiomorphy, but a flagellum is lacking from the spermatozoa of nematodes and nematomorphs (Schmidt-Rhaesa 1998).";
+  TEXT CHARACTER=64 TEXT="Lemburg (1999) recognizes the presence of this character as a synapomorphy of Megaintroverta (Priapulopsis + Acanthopriapulus + Priapulus).";
+  TEXT CHARACTER=63 TEXT="Lemburg (1999) recognised the presence of this character as a synapomorphy of (extant) Priapulida. However, it has since been demonstrated that the larvae of nematomorphs also possess six pharyngeal retractor muscles (Kristensen, 2003; Muller et al., 2004). ";
+  
+  TEXT CHARACTER=56 TEXT="Lemburg (1999) recognized this as a synapomorphy of Introverta (Nematoda + Nematomorpha + Kinorhyncha + Loricifera + Priapulida).";
+  TEXT CHARACTER=58 TEXT="Lemburg (1999) recognizes the presence of this character as a synapomorphy of (extant) Priapulida.";
+  TEXT CHARACTER=59 TEXT="Proposed by Nielsen (2001) as a synapomorphy of kinorhynchs, loriciferans and extant priapulids.";
+  TEXT CHARACTER=52 TEXT=" Living priapulids possess unpaired ventral nerve cords, whereas gastrotrichs, onychophorans and loriciferans possess ventral nerve cords that are paired throughout their length, and the ventral nerve cords of nematomorphs and nematodes divide at points along their length (Schmidt-Rhaesa, 1998); the situation in kinorhynchs is unresolved (paired according to Kristensen and Higgins, 1991; unpaired according to Neuhaus 1994). The condition in Ottoia is common to extant priapulids (Conway Morris, 1977).";
+  TEXT CHARACTER=49 TEXT="This definition of 'spines, hooks or cones' excludes the posterior body bifurcations of Aysheaia, Kerygmachela, tardigrades, some nematomorphs, some kinorhynchs and gastrotrichs. The paired, peri-anal structures in Halicryptus and Maccabeus are much smaller relative to body width. ";
+  
+END;
+
+BEGIN TAXA;
+	DIMENSIONS NTAX = 55;
+	TAXLABELS
+		Gastrotricha
+		Kinorhyncha
+		Loricifera
+		Nematomorpha
+		Nematoda
+		Aysheaia
+		Peripatus
+		Kerygmachela
+		Microdictyon
+		Tardigrada
+		Acanthopriapulus_horridus
+		Ancalagon_minor
+		Anningvermis_multispinosus
+		Chalazoscolex_pharkus
+		Corynetis_brevis
+		Cricocosmia_jinningensis
+		Fieldia_lanceolata
+		Guanduscolex_minor
+		Halicryptus_higginsi
+		Halicryptus_spinulosus
+		Laojieella_thecata
+		Louisella_pedunculata
+		Maccabeus_cirratus
+		Maccabeus_tentaculatus
+		Maotianshania_cylindrica
+		Markuelia
+		Meiopriapulus_fijiensis
+		Ottoia_prolifica
+		Palaeopriapulites_parvus
+		Palaeoscolex_piscatorum
+		Paraselkirkia_jinningensis
+		Paratubiluchus_bicaudatus
+		Priapulites_konecniorum
+		Priapulopsis_australis
+		Priapulopsis_bicaudatus
+		Priapulopsis_cnidephorus
+		Priapulus_abyssorum
+		Priapulus_caudatus
+		Priapulus_tuberculatospinosus
+		Scolecofurca_rara
+		Selkirkia_columbia
+		Sicyophorus_rarus
+		Tabelliscolex_hexagonus
+		Tabelliscolex_maanshanensis
+		Tubiluchus_arcticus
+		Tubiluchus_australensis
+		Tubiluchus_corallicola
+		Tubiluchus_philippinensis
+		Tubiluchus_remanei
+		Tubiluchus_troglodytes
+		Tubiluchus_vanuatensis
+		Tylotites_petiolaris
+		Xiaoheiqingella_peculiaris
+		Xystoscolex_boreogyrus
+		Yunnanpriapulus_halteroformis
+	;
+END;
+BEGIN TREES;
+	TRANSLATE
+		1	Gastrotricha,
+		2	Kinorhyncha,
+		3	Loricifera,
+		4	Nematomorpha,
+		5	Nematoda,
+		6	Aysheaia,
+		7	Peripatus,
+		8	Kerygmachela,
+		9	Microdictyon,
+		10	Tardigrada,
+		11	Acanthopriapulus_horridus,
+		12	Ancalagon_minor,
+		13	Anningvermis_multispinosus,
+		14	Chalazoscolex_pharkus,
+		15	Corynetis_brevis,
+		16	Cricocosmia_jinningensis,
+		17	Fieldia_lanceolata,
+		18	Guanduscolex_minor,
+		19	Halicryptus_higginsi,
+		20	Halicryptus_spinulosus,
+		21	Laojieella_thecata,
+		22	Louisella_pedunculata,
+		23	Maccabeus_cirratus,
+		24	Maccabeus_tentaculatus,
+		25	Maotianshania_cylindrica,
+		26	Markuelia,
+		27	Meiopriapulus_fijiensis,
+		28	Ottoia_prolifica,
+		29	Palaeopriapulites_parvus,
+		30	Palaeoscolex_piscatorum,
+		31	Paraselkirkia_jinningensis,
+		32	Paratubiluchus_bicaudatus,
+		33	Priapulites_konecniorum,
+		34	Priapulopsis_australis,
+		35	Priapulopsis_bicaudatus,
+		36	Priapulopsis_cnidephorus,
+		37	Priapulus_abyssorum,
+		38	Priapulus_caudatus,
+		39	Priapulus_tuberculatospinosus,
+		40	Scolecofurca_rara,
+		41	Selkirkia_columbia,
+		42	Sicyophorus_rarus,
+		43	Tabelliscolex_hexagonus,
+		44	Tabelliscolex_maanshanensis,
+		45	Tubiluchus_arcticus,
+		46	Tubiluchus_australensis,
+		47	Tubiluchus_corallicola,
+		48	Tubiluchus_philippinensis,
+		49	Tubiluchus_remanei,
+		50	Tubiluchus_troglodytes,
+		51	Tubiluchus_vanuatensis,
+		52	Tylotites_petiolaris,
+		53	Xiaoheiqingella_peculiaris,
+		54	Xystoscolex_boreogyrus,
+		55	Yunnanpriapulus_halteroformis
+	;
+	TREE * ambiguous = [&R] (1,(((54,(26,(18,((21,(((2,3),(32,(29,42))),(12,17))),((((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),((27,(50,(49,(46,((45,51),(47,48)))))),(31,41))),(53,55)),(25,((40,(28,(22,(13,15)))),(14,(52,(43,(16,44))))))))))),(5,(4,30))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,(((((12,(17,(2,3))),(54,((18,((((((33,((11,(37,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((49,(45,51)),(46,(47,48)))))),(31,41)))),(25,26))),((40,(28,(22,(13,15)))),(14,(52,(44,(16,43)))))))),(5,(4,30))),(9,10)),(7,(6,8))));
+	TREE * ambiguous = [&R] (1,((((12,(17,(2,3))),(54,((18,((((((33,(((11,37),(38,39)),(34,(35,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((49,(45,51)),(47,(46,48)))))),(31,41)))),(25,26))),(14,(40,(28,(22,(13,15)))))))),(5,(4,(30,(52,(44,(16,43))))))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,((((54,(26,((21,(((2,3),(32,(29,42))),(12,17))),((((((33,((11,(37,(38,39))),(34,(35,36)))),(19,20)),(23,24)),((27,(50,(49,(45,(51,(46,(47,48))))))),(31,41))),(53,55)),(25,(18,((40,(28,(22,(13,15)))),(14,(52,(16,(43,44))))))))))),(5,(4,30))),(9,10)),(7,(6,8))));
+	TREE * ambiguous = [&R] (1,((((12,(17,(2,3))),(54,((26,(((((33,(((11,37),(38,39)),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,(49,((45,51),(46,(47,48))))))),(31,41))))),(18,(25,(14,(40,(28,(22,(13,15)))))))))),(5,(4,(30,(52,(44,(16,43))))))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,(((54,((((21,(((2,3),(42,(29,32))),(12,17))),(14,(52,(44,(16,43))))),((((((33,(((11,37),(38,39)),(34,(35,36)))),(19,20)),(23,24)),((27,(50,((45,49),(51,(46,(47,48)))))),(31,41))),(53,55)),(18,(40,(28,(22,(13,15))))))),(25,26))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,((((54,(26,(25,((18,(21,(((2,3),(32,(29,42))),(12,17)))),((((((33,(((11,37),(38,39)),(36,(34,35)))),(19,20)),(23,24)),((27,(50,((49,(45,51)),(46,(47,48))))),(31,41))),(53,55)),((40,(28,(22,(13,15)))),(14,(52,(43,(16,44)))))))))),(5,(4,30))),(9,10)),(7,(6,8))));
+	TREE * ambiguous = [&R] (1,((((12,(17,(2,3))),(((((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,(49,(45,(51,(46,(47,48)))))))),(31,41)))),(25,26)),(((40,(28,(22,(13,15)))),(14,(52,(44,(16,43))))),(18,54)))),(5,(4,30))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,(((54,((12,(17,(2,3))),(((((((33,(((11,37),(38,39)),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((49,(45,51)),(47,(46,48)))))),(31,41)))),(25,26)),(18,(14,(40,(28,(22,(13,15))))))))),(5,(4,(30,(52,(43,(16,44))))))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,((((12,(17,(2,3))),(54,((26,(((((33,(((11,37),(38,39)),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((45,51),(49,(47,(46,48))))))),(31,41))))),((25,(18,(40,(28,(22,(13,15)))))),(14,(52,(43,(16,44)))))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(((54,(((12,(17,(2,3))),(14,(52,(43,(16,44))))),((18,((((((33,(((11,37),(38,39)),(36,(34,35)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((45,51),(49,(47,(46,48))))))),(31,41)))),(25,26))),(40,(28,(22,(13,15))))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(7,(((54,(26,(((21,(((2,3),(42,(29,32))),(12,17))),(14,(52,(16,(43,44))))),(18,((25,(((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),((27,(50,(45,(49,(47,(51,(46,48))))))),(31,41))),(53,55))),(40,(28,(22,(13,15))))))))),(5,(4,30))),((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(7,((((12,(17,(2,3))),(54,(18,(((((((33,((11,(37,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((49,(45,51)),(46,(47,48)))))),(31,41)))),(25,26)),(14,(40,(28,(22,(13,15))))))))),(5,(4,(30,(52,(43,(16,44))))))),((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(((((12,(17,(2,3))),((54,(18,(((((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,(49,((45,51),(47,(46,48))))))),(31,41)))),(25,26)),(40,(28,(22,(13,15))))))),(14,(52,(44,(16,43)))))),(5,(4,30))),(9,10)),(7,(6,8))));
+	TREE * ambiguous = [&R] (1,(((((12,(17,(2,3))),(54,((18,(((((((33,(((11,37),(38,39)),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((45,49),(51,(47,(46,48))))))),(31,41)))),(25,26)),(40,(28,(22,(13,15)))))),(14,(52,(44,(16,43))))))),(5,(4,30))),(9,10)),(7,(6,8))));
+	TREE * ambiguous = [&R] (1,((((12,(17,(2,3))),((18,(((((((33,((11,(37,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,(45,(49,(51,(46,(47,48)))))))),(31,41)))),(25,26)),(40,(28,(22,(13,15)))))),((14,54),(52,(44,(16,43)))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(((54,(26,(18,((21,(((2,3),(42,(29,32))),(12,17))),((((((33,(((11,37),(38,39)),(35,(34,36)))),(19,20)),(23,24)),((27,(50,((49,(45,51)),(46,(47,48))))),(31,41))),(53,55)),(25,((40,(28,(22,(13,15)))),(14,(52,(44,(16,43))))))))))),(5,(4,30))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,(7,(((54,(26,(25,((21,(((2,3),(42,(29,32))),(12,17))),((((((33,((11,(37,(38,39))),(35,(34,36)))),(19,20)),(23,24)),((27,(50,(45,(49,((46,48),(47,51)))))),(31,41))),(53,55)),(18,((40,(28,(22,(13,15)))),(14,(52,(44,(16,43))))))))))),(5,(4,30))),((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(((54,(26,(((21,(((2,3),(32,(29,42))),(12,17))),(14,(52,(44,(16,43))))),((((((33,((37,(11,(38,39))),(34,(35,36)))),(19,20)),(23,24)),((27,(50,((49,(45,51)),(46,(47,48))))),(31,41))),(53,55)),(18,(25,(40,(28,(22,(13,15)))))))))),(5,(4,30))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,(((54,((12,(17,(2,3))),((18,((((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,(49,(45,(51,(46,(47,48)))))))),(31,41)))),(25,26))),((40,(28,(22,(13,15)))),(14,(52,(44,(16,43)))))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(((54,(26,(((21,(((2,3),(32,(29,42))),(12,17))),(14,(52,(44,(16,43))))),((((((33,((11,(37,(38,39))),(35,(34,36)))),(19,20)),(23,24)),((27,(50,((49,(45,51)),(47,(46,48))))),(31,41))),(53,55)),(25,(18,(40,(28,(22,(13,15)))))))))),(5,(4,30))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,(((54,(26,(25,(((21,(((2,3),(29,(32,42))),(12,17))),(14,(52,(44,(16,43))))),((18,(((((33,(((11,37),(38,39)),(36,(34,35)))),(19,20)),(23,24)),((27,(50,(49,(45,(51,(47,(46,48))))))),(31,41))),(53,55))),(40,(28,(22,(13,15))))))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(((54,(26,((25,(18,((21,(((2,3),(42,(29,32))),(12,17))),(14,(52,(44,(16,43))))))),((((((33,((11,(37,(38,39))),(35,(34,36)))),(19,20)),(23,24)),((27,(50,(49,(45,(46,(51,(47,48))))))),(31,41))),(53,55)),(40,(28,(22,(13,15)))))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,((((12,(17,(2,3))),(54,((26,(((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((49,(45,51)),(46,(47,48)))))),(31,41))))),(((40,(28,(22,(13,15)))),(18,25)),(14,(52,(44,(16,43)))))))),(5,(4,30))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,((((54,(26,((21,(((2,3),(42,(29,32))),(12,17))),(25,(18,((((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),((27,(50,(49,((45,51),(47,(46,48)))))),(31,41))),(53,55)),(14,(40,(28,(22,(13,15))))))))))),(5,(4,(30,(52,(44,(16,43))))))),(9,10)),(7,(6,8))));
+	TREE * ambiguous = [&R] (1,(7,((((12,(17,(2,3))),((54,(18,(((((((33,((11,(37,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((45,51),(49,(47,(46,48))))))),(31,41)))),(25,26)),(40,(28,(22,(13,15))))))),(14,(52,(44,(16,43)))))),(5,(4,30))),((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(((54,(26,(18,((21,(((2,3),(42,(29,32))),(12,17))),((((((33,(((11,37),(38,39)),(35,(34,36)))),(19,20)),(23,24)),((27,(50,(49,((45,51),(47,(46,48)))))),(31,41))),(53,55)),(25,((40,(28,(22,(13,15)))),(14,(52,(16,(43,44))))))))))),(5,(4,30))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,(((54,(26,((25,(18,(21,(((2,3),(42,(29,32))),(12,17))))),((((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),((27,(50,(49,((45,51),(46,(47,48)))))),(31,41))),(53,55)),((40,(28,(22,(13,15)))),(14,(52,(16,(43,44))))))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(((54,(26,((21,(((2,3),(42,(29,32))),(12,17))),((18,(((((33,((37,(11,(38,39))),(34,(35,36)))),(19,20)),(23,24)),((27,(50,((45,49),((46,51),(47,48))))),(31,41))),(53,55))),(25,((40,(28,(22,(13,15)))),(14,(52,(44,(16,43)))))))))),(5,(4,30))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,((((12,(17,(2,3))),((18,(((((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((45,51),(49,(46,(47,48))))))),(31,41)))),(25,26)),(40,(28,(22,(13,15)))))),(14,(54,(52,(16,(43,44))))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,((((54,(26,((21,(((2,3),(32,(29,42))),(12,17))),((25,(18,(((((33,(((11,37),(38,39)),(36,(34,35)))),(19,20)),(23,24)),((27,(50,(49,(45,((46,48),(47,51)))))),(31,41))),(53,55)))),((40,(28,(22,(13,15)))),(14,(52,(43,(16,44))))))))),(5,(4,30))),(9,10)),(7,(6,8))));
+	TREE * ambiguous = [&R] (1,(7,((((12,(17,(2,3))),(18,(((((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,(49,(45,((46,48),(47,51))))))),(31,41)))),(25,26)),((40,(28,(22,(13,15)))),((14,54),(52,(44,(16,43)))))))),(5,(4,30))),((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,((((12,(17,(2,3))),(54,((26,(((((33,(((11,37),(38,39)),(36,(34,35)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,(49,((47,(45,51)),(46,48)))))),(31,41))))),(((40,(28,(22,(13,15)))),(18,25)),(14,(52,(43,(16,44)))))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(((54,(26,(((21,(((2,3),(32,(29,42))),(12,17))),(14,(52,(44,(16,43))))),((((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),((27,(50,((45,51),(49,(46,(47,48)))))),(31,41))),(53,55)),(25,(18,(40,(28,(22,(13,15)))))))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(7,((((12,(17,(2,3))),(54,((26,(((((33,(((11,37),(38,39)),(36,(34,35)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((45,51),(49,(47,(46,48))))))),(31,41))))),((18,(25,(40,(28,(22,(13,15)))))),(14,(52,(44,(16,43)))))))),(5,(4,30))),((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,((((12,(17,(2,3))),((18,((((((33,((11,(37,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,(49,(45,(47,(51,(46,48)))))))),(31,41)))),(25,26))),((40,(28,(22,(13,15)))),((14,54),(52,(16,(43,44))))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(((54,(26,((21,(((2,3),(42,(29,32))),(12,17))),((((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),((27,(50,((45,49),(51,(47,(46,48)))))),(31,41))),(53,55)),(25,(18,(14,(40,(28,(22,(13,15))))))))))),(5,(4,(30,(52,(43,(16,44))))))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,(((((12,(17,(2,3))),(54,(((((((33,((37,(11,(38,39))),(34,(35,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,(49,(45,(47,(51,(46,48)))))))),(31,41)))),(25,26)),(18,((40,(28,(22,(13,15)))),(14,(52,(16,(43,44))))))))),(5,(4,30))),(9,10)),(7,(6,8))));
+	TREE * ambiguous = [&R] (1,((((12,(17,(2,3))),(54,((18,((((((33,(((11,37),(38,39)),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,(49,(45,(46,(51,(47,48)))))))),(31,41)))),(25,26))),(14,(40,(28,(22,(13,15)))))))),(5,(4,(30,(52,(44,(16,43))))))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(((54,(26,((21,(((2,3),(42,(29,32))),(12,17))),((((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),((27,(50,(49,(45,(51,(46,(47,48))))))),(31,41))),(53,55)),(25,(18,(14,(40,(28,(22,(13,15))))))))))),(5,(4,(30,(52,(43,(16,44))))))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,(7,((((12,(17,(2,3))),(((((((33,((37,(11,(38,39))),(34,(35,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((49,(45,51)),(47,(46,48)))))),(31,41)))),(25,26)),(18,((40,(28,(22,(13,15)))),((14,54),(52,(16,(43,44)))))))),(5,(4,30))),((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(((54,(26,(25,((21,(((2,3),(32,(29,42))),(12,17))),((18,(((((33,((11,(37,(38,39))),(36,(34,35)))),(19,20)),(23,24)),((27,(50,(49,((45,51),(46,(47,48)))))),(31,41))),(53,55))),((40,(28,(22,(13,15)))),(14,(52,(44,(16,43)))))))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,(7,((((12,(17,(2,3))),(54,((26,(((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((45,49),(51,(46,(47,48))))))),(31,41))))),((18,(25,(40,(28,(22,(13,15)))))),(14,(52,(44,(16,43)))))))),(5,(4,30))),((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,((((54,((12,(17,(2,3))),(((18,((((((33,(((11,37),(38,39)),(36,(34,35)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,((45,49),(51,(47,(46,48))))))),(31,41)))),(25,26))),(40,(28,(22,(13,15))))),(14,(52,(44,(16,43))))))),(5,(4,30))),(9,10)),(7,(6,8))));
+	TREE * ambiguous = [&R] (1,((((54,((12,(17,(2,3))),(((18,((((((33,(((11,37),(38,39)),(34,(35,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,(49,((45,51),(47,(46,48))))))),(31,41)))),(25,26))),(40,(28,(22,(13,15))))),(14,(52,(44,(16,43))))))),(5,(4,30))),(9,10)),(7,(6,8))));
+	TREE * ambiguous = [&R] (1,(((54,((21,(((2,3),(32,(29,42))),(12,17))),(((((((33,((11,(37,(38,39))),(34,(35,36)))),(19,20)),(23,24)),((27,(50,(49,((46,(45,51)),(47,48))))),(31,41))),(53,55)),(25,26)),(18,((40,(28,(22,(13,15)))),(14,(52,(43,(16,44))))))))),(5,(4,30))),((7,(6,8)),(9,10))));
+	TREE * ambiguous = [&R] (1,(7,((((12,(17,(2,3))),(54,(26,(((((((33,(((11,37),(38,39)),(35,(34,36)))),(19,20)),(23,24)),((27,(50,(45,(49,(51,(46,(47,48))))))),(31,41))),(53,55)),(25,(18,((40,(28,(22,(13,15)))),(14,(52,(16,(43,44)))))))),(21,(32,(29,42))))))),(5,(4,30))),((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,((((54,(26,(((21,(((2,3),(29,(32,42))),(12,17))),(14,(52,(44,(16,43))))),((25,(((((33,((37,(11,(38,39))),(34,(35,36)))),(19,20)),(23,24)),((27,(50,(49,(45,(47,(51,(46,48))))))),(31,41))),(53,55))),(18,(40,(28,(22,(13,15))))))))),(5,(4,30))),(9,10)),(7,(6,8))));
+	TREE * ambiguous = [&R] (1,(((54,(26,((21,((32,((2,3),(12,17))),(29,42))),((((((33,(((11,37),(38,39)),(35,(34,36)))),(19,20)),(23,24)),((27,(50,(45,(49,(51,(47,(46,48))))))),(31,41))),(53,55)),(((40,(28,(22,(13,15)))),(14,(52,(44,(16,43))))),(18,25)))))),(5,(4,30))),(7,((6,8),(9,10)))));
+	TREE * ambiguous = [&R] (1,((((12,(17,(2,3))),(54,((26,(((((33,((37,(11,(38,39))),(34,(35,36)))),(19,20)),(23,24)),(53,55)),((21,(29,42)),((32,(27,(50,(49,(45,(46,(51,(47,48)))))))),(31,41))))),(((40,(28,(22,(13,15)))),(14,(52,(43,(16,44))))),(18,25))))),(5,(4,30))),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),(((((((33,((11,(37,(38,39))),(34,(35,36)))),(53,55)),(19,20)),(23,24)),(32,(27,(50,(49,(45,((46,51),(47,48)))))))),((21,(25,((40,(28,(22,(13,15)))),(18,(54,(14,(52,(30,(44,(16,43)))))))))),(31,41))),(29,42)))))),(4,5)),(7,((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,((2,3),(((((((33,(((11,37),(38,39)),(34,(35,36)))),(53,55)),(19,20)),(23,24)),(32,(27,(50,(49,(47,((45,51),(46,48)))))))),((21,(18,(25,((40,(28,(22,(13,15)))),((14,54),(52,(30,(44,(16,43))))))))),(31,41))),(29,42)))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),(((21,((((((33,((11,(37,(38,39))),(34,(35,36)))),(19,20)),(23,24)),(53,55)),(((40,(28,(22,(13,15)))),(14,(54,(52,(30,(43,(16,44))))))),(18,25))),(31,41))),(29,42)),(32,(27,(50,((45,49),(51,(47,(46,48)))))))))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,(7,(((26,(12,(17,((2,3),(((21,((((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(53,55)),(18,(25,((40,(28,(22,(13,15)))),(14,(54,(52,(30,(44,(16,43)))))))))),(31,41))),(29,42)),(32,(27,(50,(49,((47,(45,51)),(46,48))))))))))),(4,5)),((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(7,(((26,(12,(17,((2,3),(((21,((((((33,(((11,37),(38,39)),(34,(35,36)))),(19,20)),(23,24)),(53,55)),(((14,(40,(28,(22,(13,15))))),(18,54)),(25,(30,(52,(16,(43,44))))))),(31,41))),(29,42)),(32,(27,(50,(45,(49,((46,51),(47,48)))))))))))),(4,5)),((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,(2,(3,((((21,(((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),(((40,(28,(22,(13,15)))),((30,(14,54)),(52,(44,(16,43))))),(18,25)))),(31,41)),(32,(27,(50,(49,(47,((45,51),(46,48)))))))),(29,42))))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,((2,3),((((21,(((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),((40,(28,(22,(13,15)))),(25,(18,(54,(14,(52,(30,(16,(43,44))))))))))),(31,41)),(29,42)),(32,(27,(50,(49,((45,51),(47,(46,48)))))))))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((21,(((((33,(((11,37),(38,39)),(35,(34,36)))),(19,20)),(23,24)),(53,55)),(((40,(28,(22,(13,15)))),(54,(14,(52,(30,(43,(16,44))))))),(18,25)))),(31,41)),(29,42)),(32,(27,(50,(49,(46,((45,51),(47,48)))))))))))),(4,5)),(7,((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,((2,3),(((21,((((((33,(((11,37),(38,39)),(34,(35,36)))),(19,20)),(23,24)),(53,55)),(((14,(40,(28,(22,(13,15))))),(18,54)),(25,(30,(52,(16,(43,44))))))),(31,41))),(29,42)),(32,(27,(50,(45,(49,((46,51),(47,48)))))))))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,(7,(((26,(12,(17,((2,3),((((21,(((((33,((37,(11,(38,39))),(34,(35,36)))),(19,20)),(23,24)),(53,55)),(18,((40,(28,(22,(13,15)))),(25,((30,(14,54)),(52,(43,(16,44))))))))),(31,41)),(32,(27,(50,(49,(45,(46,(51,(47,48))))))))),(29,42)))))),(4,5)),((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(7,(((26,(12,(17,((2,3),(((((((33,((37,(11,(38,39))),(34,(35,36)))),(19,20)),(23,24)),(53,55)),(32,(27,(50,(49,(45,(46,(51,(47,48))))))))),((21,(18,((40,(28,(22,(13,15)))),(25,((30,(14,54)),(52,(43,(16,44)))))))),(31,41))),(29,42)))))),(4,5)),((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((((33,((37,(11,(38,39))),(36,(34,35)))),(53,55)),(19,20)),(23,24)),(((21,(((40,(28,(22,(13,15)))),((30,(14,54)),(52,(16,(43,44))))),(18,25))),(31,41)),(32,(27,(50,(49,(45,(51,(47,(46,48)))))))))),(29,42)))))),(4,5)),(7,((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,((2,3),((((21,(((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),((14,(40,(28,(22,(13,15))))),((25,(30,(52,(16,(43,44))))),(18,54))))),(31,41)),(29,42)),(32,(27,(50,(49,((45,51),(47,(46,48)))))))))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),(((21,((((((33,((11,(37,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(31,41)),(53,55)),(18,(25,((40,(28,(22,(13,15)))),((14,54),(52,(30,(44,(16,43)))))))))),(29,42)),(32,(27,(50,(49,((45,51),(46,(47,48)))))))))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,(7,(((26,(12,(17,((2,3),(((21,((((((33,((11,(37,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(31,41)),(53,55)),(((40,(28,(22,(13,15)))),((54,(14,30)),(52,(16,(43,44))))),(18,25)))),(29,42)),(32,(27,(50,((45,51),(49,(47,(46,48)))))))))))),(4,5)),((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((((33,(((11,37),(38,39)),(34,(35,36)))),(53,55)),(19,20)),(23,24)),(((21,(((40,(28,(22,(13,15)))),(14,(52,((16,(43,44)),(25,30))))),(18,54))),(31,41)),(32,(27,(50,((49,(45,51)),(47,(46,48)))))))),(29,42)))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,((2,3),((((21,(((((33,(((11,37),(38,39)),(36,(34,35)))),(19,20)),(23,24)),(53,55)),((25,((40,(28,(22,(13,15)))),(18,54))),(14,(52,(30,(44,(16,43)))))))),(31,41)),(29,42)),(32,(27,(50,(49,((47,(45,51)),(46,48))))))))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),(((((((33,((37,(11,(38,39))),(35,(34,36)))),(53,55)),(19,20)),(23,24)),(32,(27,(50,((45,49),(51,(47,(46,48)))))))),((21,(18,(25,((40,(28,(22,(13,15)))),((14,54),(52,(30,(43,(16,44))))))))),(31,41))),(29,42)))))),(4,5)),(7,((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,((2,3),((((((33,((11,(37,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(53,55)),(21,((25,(18,((40,(28,(22,(13,15)))),(54,(14,(52,(30,(44,(16,43))))))))),((32,(27,(50,(49,(46,((45,51),(47,48))))))),(31,41))))),(29,42)))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((21,(((((33,((11,(37,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),(((40,(28,(22,(13,15)))),(14,(52,((43,(16,44)),(25,30))))),(18,54)))),(31,41)),(29,42)),(32,(27,(50,(49,(45,(51,(46,(47,48))))))))))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),(((((((33,(((11,37),(38,39)),(34,(35,36)))),(53,55)),(19,20)),(23,24)),(32,(27,(50,(49,(47,((45,51),(46,48)))))))),((21,(18,(25,((40,(28,(22,(13,15)))),((14,54),(52,(30,(44,(16,43))))))))),(31,41))),(29,42)))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,(2,(3,((((21,(((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),(((40,(28,(22,(13,15)))),((54,(14,30)),(52,(43,(16,44))))),(18,25)))),(31,41)),(32,(27,(50,(45,(49,((46,51),(47,48)))))))),(29,42))))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),(((((((33,(37,(11,(38,39)))),(36,(34,35))),(53,55)),(19,20)),(23,24)),(21,(((40,(28,(22,(13,15)))),(18,(25,((30,(14,54)),(52,(44,(16,43))))))),((32,(27,(50,((49,(45,51)),(47,(46,48)))))),(31,41))))),(29,42)))))),(4,5)),(7,((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((((33,(((11,37),(38,39)),(35,(34,36)))),(53,55)),(19,20)),(23,24)),(((21,(25,((40,(28,(22,(13,15)))),(18,(54,(14,(52,(30,(16,(43,44)))))))))),(31,41)),(32,(27,(50,(45,(49,((46,51),(47,48))))))))),(29,42)))))),(4,5)),(7,((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,((2,3),((((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),(21,((((40,(28,(22,(13,15)))),((30,(14,54)),(52,(43,(16,44))))),(18,25)),((32,(27,(50,(49,((45,51),(46,(47,48))))))),(31,41))))),(29,42)))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((21,(((((33,((37,(11,(38,39))),(34,(35,36)))),(19,20)),(23,24)),(53,55)),(((40,(28,(22,(13,15)))),((14,54),(52,(30,(44,(16,43)))))),(18,25)))),(31,41)),(29,42)),(32,(27,(50,(49,((45,51),(46,(47,48)))))))))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),(((21,(25,(18,((40,(28,(22,(13,15)))),((54,(14,30)),(52,(16,(43,44)))))))),(31,41)),(32,(27,(50,((45,49),(51,(46,(47,48))))))))),(29,42)))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,(7,(((26,(12,(17,((2,3),((((21,(((((33,((11,(37,(38,39))),(34,(35,36)))),(19,20)),(23,24)),(53,55)),(18,((40,(28,(22,(13,15)))),(25,((30,(14,54)),(52,(16,(43,44))))))))),(31,41)),(29,42)),(32,(27,(50,((45,51),(49,(46,(47,48)))))))))))),(4,5)),((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((((((33,(37,(11,(38,39)))),(36,(34,35))),(53,55)),(19,20)),(23,24)),(32,(27,(50,(45,(49,(51,(47,(46,48))))))))),((21,(25,(18,((40,(28,(22,(13,15)))),(54,(14,(52,(30,(44,(16,43)))))))))),(31,41))),(29,42)))))),(4,5)),(7,((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((((33,(((11,37),(38,39)),(34,(35,36)))),(19,20)),(23,24)),(53,55)),(21,((((40,(28,(22,(13,15)))),(14,(52,((44,(16,43)),(25,30))))),(18,54)),((32,(27,(50,((45,49),(51,(47,(46,48))))))),(31,41))))),(29,42)))))),(4,5)),(7,((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),(((((((33,(11,(37,(38,39)))),(34,(35,36))),(53,55)),(19,20)),(23,24)),(21,(((40,(28,(22,(13,15)))),(18,(25,((30,(14,54)),(52,(43,(16,44))))))),((32,(27,(50,(45,(49,(47,(51,(46,48)))))))),(31,41))))),(29,42)))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,((2,3),(((((((36,(33,(((11,37),(38,39)),(34,35)))),(53,55)),(19,20)),(23,24)),(32,(27,(50,(45,(49,((46,51),(47,48)))))))),((21,((25,((40,(28,(22,(13,15)))),(14,(52,(30,(43,(16,44))))))),(18,54))),(31,41))),(29,42)))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),(((((((33,((11,(37,(38,39))),(34,(35,36)))),(53,55)),(19,20)),(23,24)),(32,(27,(50,(49,((45,51),(47,(46,48)))))))),((21,(25,(18,((40,(28,(22,(13,15)))),(14,(54,(52,(30,(16,(43,44)))))))))),(31,41))),(29,42)))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,((2,3),((((((33,(((11,37),(38,39)),(35,(34,36)))),(53,55)),(19,20)),(23,24)),(((21,(((40,(28,(22,(13,15)))),(14,(52,(30,(44,(16,43)))))),(25,(18,54)))),(31,41)),(32,(27,(50,(45,(49,((46,51),(47,48))))))))),(29,42)))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((((33,((11,(37,(38,39))),(35,(34,36)))),(53,55)),(19,20)),(23,24)),(((21,(((40,(28,(22,(13,15)))),(14,(52,(30,(16,(43,44)))))),(25,(18,54)))),(31,41)),(32,(27,(50,(49,((46,(45,51)),(47,48)))))))),(29,42)))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,((2,3),((((((36,(33,(((11,37),(38,39)),(34,35)))),(53,55)),(19,20)),(23,24)),(((21,(18,(25,((40,(28,(22,(13,15)))),(54,(14,(52,(30,(44,(16,43)))))))))),(31,41)),(32,(27,(50,(45,(49,(47,(51,(46,48)))))))))),(29,42)))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((((33,(((11,37),(38,39)),(34,(35,36)))),(53,55)),(19,20)),(23,24)),(((21,(((14,(40,(28,(22,(13,15))))),(25,(30,(52,(16,(43,44)))))),(18,54))),(31,41)),(32,(27,(50,(49,(45,((46,51),(47,48))))))))),(29,42)))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((21,(((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(53,55)),(25,(18,((40,(28,(22,(13,15)))),(54,(14,(52,(30,(16,(43,44))))))))))),(31,41)),(29,42)),(32,(27,(50,(49,(47,((45,51),(46,48)))))))))))),(4,5)),(7,((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(7,(((26,(12,(17,((2,3),(((21,((((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(53,55)),(((40,(28,(22,(13,15)))),(14,(52,((44,(16,43)),(25,30))))),(18,54))),(31,41))),(29,42)),(32,(27,(50,(45,(49,((46,48),(47,51)))))))))))),(4,5)),((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(7,(((26,(12,(17,((2,3),((((((33,((37,(11,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(53,55)),(21,((((40,(28,(22,(13,15)))),((14,(30,54)),(52,(44,(16,43))))),(18,25)),((32,(27,(50,(45,(49,(51,(47,(46,48)))))))),(31,41))))),(29,42)))))),(4,5)),((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((21,(((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),(25,(18,((40,(28,(22,(13,15)))),(54,(14,(52,(30,(43,(16,44))))))))))),(31,41)),(29,42)),(32,(27,(50,(49,(45,(47,(51,(46,48))))))))))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,(7,(((26,(12,(17,((2,3),((((21,(((((33,((37,(11,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),(25,(18,((40,(28,(22,(13,15)))),((14,54),(52,(30,(43,(16,44)))))))))),(31,41)),(32,(27,(50,(49,((45,51),(46,(47,48)))))))),(29,42)))))),(4,5)),((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(7,(((26,(12,(17,((2,3),(((((((36,(33,(((11,37),(38,39)),(34,35)))),(53,55)),(19,20)),(23,24)),(32,(27,(50,(45,(49,(51,(47,(46,48))))))))),((21,(18,((40,(28,(22,(13,15)))),((14,54),(52,((44,(16,43)),(25,30))))))),(31,41))),(29,42)))))),(4,5)),((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((((36,((33,(37,(11,(38,39)))),(34,35))),(53,55)),(19,20)),(23,24)),(((21,(((40,(28,(22,(13,15)))),(14,(54,(52,(30,(16,(43,44))))))),(18,25))),(31,41)),(32,(27,(50,(49,(45,((46,48),(47,51))))))))),(29,42)))))),(4,5)),(7,((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,((2,3),(((((((33,((11,37),(38,39))),(34,(35,36))),(53,55)),(19,20)),(23,24)),(((21,(18,(25,((40,(28,(22,(13,15)))),(14,(54,(52,(30,(43,(16,44)))))))))),(31,41)),(32,(27,(50,((45,51),(49,(46,(47,48))))))))),(29,42)))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),(((((((33,((11,(37,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),(32,(27,(50,((45,49),((46,48),(47,51))))))),((21,(((14,(40,(28,(22,(13,15))))),(25,(30,(52,(16,(43,44)))))),(18,54))),(31,41))),(29,42)))))),(4,5)),(7,((6,8),(9,10)))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,(2,(3,((((21,(((((33,(((11,37),(38,39)),(35,(34,36)))),(19,20)),(23,24)),(53,55)),(18,(25,((40,(28,(22,(13,15)))),((14,54),(52,(30,(16,(43,44)))))))))),(31,41)),(32,(27,(50,(49,(47,((45,51),(46,48)))))))),(29,42))))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,((((26,(12,(17,((2,3),((((21,(((((33,((11,(37,(38,39))),(36,(34,35)))),(19,20)),(23,24)),(53,55)),(25,(18,((40,(28,(22,(13,15)))),((14,(30,54)),(52,(16,(43,44))))))))),(31,41)),(29,42)),(32,(27,(50,(49,((45,51),(47,(46,48)))))))))))),(4,5)),(9,10)),(7,(6,8))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),((((21,(((((33,(((11,37),(38,39)),(35,(34,36)))),(19,20)),(23,24)),(53,55)),((25,(18,(40,(28,(22,(13,15)))))),(14,(54,(52,(30,(16,(43,44))))))))),(31,41)),(29,42)),(32,(27,(50,((45,49),(47,(51,(46,48)))))))))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * extraState = [&R] (1,(((26,(12,(17,((2,3),(((((((33,((11,37),(38,39))),(36,(34,35))),(53,55)),(19,20)),(23,24)),(21,((((14,(40,(28,(22,(13,15))))),(18,54)),(25,(30,(52,(16,(43,44)))))),((32,(27,(50,(49,((45,51),(46,(47,48))))))),(31,41))))),(29,42)))))),(4,5)),((7,(6,8)),(9,10))));
+	TREE * inapplicable = [&R] (1,(7,(((8,6),(9,10)),((26,(12,(17,((3,2),(((42,29),(21,(((32,(27,(50,(49,(45,((51,47),(48,46))))))),((53,55),(14,(30,54)))),((((19,20),(33,(((11,37),(38,39)),(35,(34,36))))),(23,24)),(41,31))))),(25,(18,(40,((52,(43,(44,16))),(28,(22,(15,13)))))))))))),(5,4)))));
+	TREE * inapplicable = [&R] (1,((7,((9,10),(6,8))),((26,(12,(17,((2,3),(((42,29),(((40,(28,(22,(13,15)))),(18,25)),(52,(43,(44,16))))),(21,(((32,(27,(50,(49,(45,((46,51),(47,48))))))),((41,31),(54,(30,14)))),((55,53),((24,23),((33,((36,(34,35)),(37,(11,(38,39))))),(19,20))))))))))),(5,4))));
+	TREE * inapplicable = [&R] (1,(((9,10),(7,(8,6))),((26,(12,(17,((((29,42),(21,((((41,31),(((20,19),(33,((37,(11,(39,38))),(36,(35,34))))),(23,24))),(55,53)),(32,(27,(50,(47,((49,(48,46)),(51,45))))))))),(18,(25,(40,((28,(22,(15,13))),(52,((30,(14,54)),(44,(43,16))))))))),(2,3))))),(5,4))));
+	TREE * inapplicable = [&R] (1,(((10,9),((26,(12,(17,((2,3),(((29,42),(((18,25),(28,(40,(22,(15,13))))),((52,(16,(43,44))),(54,(30,14))))),(21,(((55,53),((((20,19),(33,((34,(36,35)),(11,(37,(39,38)))))),(23,24)),(41,31))),(32,(51,((47,(46,48)),(45,(49,(27,50))))))))))))),(5,4))),(7,(8,6))));
+	TREE * inapplicable = [&R] (1,(((7,(8,6)),(9,10)),((26,(12,(17,((2,3),(((42,29),(21,((((41,31),(55,53)),(32,(27,(50,(49,((45,51),(47,(46,48)))))))),(25,((40,(28,(22,(15,13)))),(18,(54,(14,(52,(30,(44,(43,16)))))))))))),(((33,(((11,37),(39,38)),(36,(35,34)))),(20,19)),(23,24))))))),(5,4))));
+	TREE * inapplicable = [&R] (1,(((9,10),(7,(8,6))),((26,(12,(17,((3,2),(((32,(27,(50,(45,(49,(46,(51,(47,48)))))))),((21,((53,(55,(((19,20),(33,(((11,37),(38,39)),(35,(34,36))))),(23,24)))),((25,18),(((14,54),(52,(30,(16,(43,44))))),(40,(28,(22,(15,13)))))))),(41,31))),(42,29)))))),(5,4))));
+	TREE * inapplicable = [&R] (1,(((10,9),((26,(12,(17,((2,3),(((29,42),(21,((((55,53),(((20,19),(33,((37,(11,(38,39))),(36,(35,34))))),(24,23))),(32,(27,(50,(49,(47,((45,51),(48,46)))))))),(31,41)))),((25,18),(40,((28,(22,(13,15))),(52,((30,(14,54)),(43,(16,44)))))))))))),(5,4))),(7,(8,6))));
+	TREE * inapplicable = [&R] (1,(7,(((6,8),(9,10)),((26,(12,(17,((2,3),(((21,((((((33,(((37,11),(38,39)),(36,(35,34)))),(19,20)),(23,24)),(41,31)),(32,(27,(47,((51,(50,(49,45))),(46,48)))))),(55,53))),(29,42)),((18,(25,(40,(28,(22,(15,13)))))),(52,((30,(14,54)),(43,(44,16)))))))))),(4,5)))));
+	TREE * inapplicable = [&R] (1,(((7,(8,6)),(10,9)),((26,(12,(17,((3,2),((((21,((55,53),((25,((14,(52,(30,(44,(43,16))))),(40,(28,(22,(15,13)))))),(18,54)))),(32,(27,(46,(51,((49,(50,45)),(48,47))))))),((((33,((35,(34,36)),(11,(37,(39,38))))),(19,20)),(23,24)),(41,31))),(42,29)))))),(5,4))));
+	TREE * inapplicable = [&R] (1,((7,((10,9),(8,6))),((26,(12,(17,(2,(3,((((21,((18,(25,((40,(22,28)),((14,(30,54)),(52,(16,(44,43))))))),(53,((55,(13,15)),(((20,19),(24,23)),(33,(((11,37),(38,39)),(36,(35,34))))))))),(31,41)),(32,(27,(50,(49,(45,(51,(47,(48,46))))))))),(29,42))))))),(5,4))));
+	TREE * inapplicable = [&R] (1,(((10,9),(7,(6,8))),((26,(12,(17,((3,2),(((29,42),(21,(((32,(27,(50,(49,((47,(48,46)),(51,45)))))),((31,41),(54,(14,30)))),((53,55),(((19,20),(33,((11,(37,(39,38))),(35,(34,36))))),(24,23)))))),((18,(25,(52,(43,(16,44))))),(28,(40,(22,(13,15)))))))))),(5,4))));
+	TREE * inapplicable = [&R] (1,(((9,10),((26,(12,(17,((2,3),((((21,((53,((((19,20),(23,24)),(33,(((11,37),(38,39)),(36,(34,35))))),(55,(15,13)))),((18,25),(((52,(44,(43,16))),(30,(14,54))),(40,(28,22)))))),(41,31)),(32,(27,(50,(49,(45,(51,(46,(48,47))))))))),(42,29)))))),(5,4))),(7,(6,8))));
+	TREE * inapplicable = [&R] (1,(((10,9),(7,(8,6))),((26,(12,(17,((2,3),(((29,42),(21,((((((33,((36,(34,35)),((37,11),(39,38)))),(20,19)),(23,24)),(41,31)),(32,(51,((47,((49,45),(50,27))),(48,46))))),(53,55)))),((25,18),((40,(52,((30,(14,54)),(43,(44,16))))),(28,(22,(15,13)))))))))),(5,4))));
+	TREE * inapplicable = [&R] (1,(((7,(8,6)),(9,10)),((26,(12,(17,((2,3),(((29,42),(21,(((32,(27,(50,(45,(49,(51,(47,(46,48)))))))),((31,41),(14,(30,54)))),((55,53),(((20,19),(33,((11,(37,(38,39))),(35,(34,36))))),(23,24)))))),((18,(52,(43,(44,16)))),(25,(40,(28,(22,(15,13))))))))))),(4,5))));
+	TREE * inapplicable = [&R] (1,(7,(((6,8),(10,9)),((26,(12,(17,((3,2),((42,29),(((21,((53,55),(25,(18,((40,(28,(22,(15,13)))),((54,(14,30)),(52,(44,(16,43))))))))),(32,(27,(((51,46),(45,(49,50))),(48,47))))),((31,41),(((20,19),(33,((11,(37,(38,39))),(36,(34,35))))),(23,24))))))))),(5,4)))));
+	TREE * inapplicable = [&R] (1,((7,((10,9),(6,8))),((26,(12,(17,((((42,29),(21,(((53,55),((31,41),(((19,20),(33,((37,(11,(38,39))),(36,(35,34))))),(24,23)))),(32,(27,(50,(51,(46,((48,47),(45,49)))))))))),(18,(25,((28,(40,(22,(13,15)))),(52,((16,(44,43)),(30,(54,14)))))))),(3,2))))),(4,5))));
+	TREE * inapplicable = [&R] (1,(7,(((8,6),(10,9)),((26,(12,(17,((2,3),(((42,29),(21,(((53,55),(41,31)),((32,(27,(50,(49,((47,(46,48)),(45,51)))))),(((20,19),(33,((37,(11,(38,39))),(36,(35,34))))),(23,24)))))),(((18,25),(28,(40,(22,(15,13))))),((52,(44,(16,43))),(54,(14,30))))))))),(5,4)))));
+	TREE * inapplicable = [&R] (1,(((10,9),(7,(6,8))),((26,(12,(17,(((42,29),(21,(((((31,41),(((33,((11,(37,(38,39))),(34,(35,36)))),(20,19)),(23,24))),(53,55)),(25,(18,((40,(28,(22,(15,13)))),(54,(14,(52,(30,(43,(44,16)))))))))),(32,(27,(50,(49,(46,((51,45),(47,48)))))))))),(3,2))))),(5,4))));
+	TREE * inapplicable = [&R] (1,(((9,10),((26,(12,(17,((3,2),((((21,((18,((25,((30,(54,14)),(52,(16,(43,44))))),(40,(28,22)))),(53,((55,(15,13)),(((19,20),(33,((11,(37,(39,38))),(36,(35,34))))),(23,24)))))),(41,31)),(32,(27,(50,(49,(45,(46,(51,(48,47))))))))),(42,29)))))),(4,5))),(7,(6,8))));
+	TREE * inapplicable = [&R] (1,(7,(((10,9),(6,8)),((26,(12,(17,((3,2),(((21,((((31,41),(((19,20),(33,((37,(11,(39,38))),(34,(35,36))))),(24,23))),(53,55)),(32,(27,(50,(47,((49,(45,51)),(48,46)))))))),(42,29)),(18,(25,((40,(28,(22,(13,15)))),(52,((30,(14,54)),(43,(16,44)))))))))))),(4,5)))));
+	TREE * inapplicable = [&R] (1,(((9,10),(7,(8,6))),((26,(12,(17,((((29,42),(21,(((53,55),(32,(27,(50,(47,((49,(45,51)),(46,48))))))),((((19,20),(33,((37,(11,(39,38))),(34,(35,36))))),(24,23)),(31,41))))),(18,(25,((40,((52,(44,(16,43))),(54,(14,30)))),(28,(22,(13,15))))))),(3,2))))),(5,4))));
+	TREE * inapplicable = [&R] (1,(7,(((8,6),(10,9)),((26,(12,(17,((((42,29),(21,(((55,53),((31,41),(((20,19),(33,((37,(11,(38,39))),(34,(35,36))))),(23,24)))),(32,(27,(50,(51,((49,45),(47,(48,46)))))))))),(((25,18),(28,(40,(22,(15,13))))),((52,(30,(54,14))),(16,(43,44))))),(3,2))))),(5,4)))));
+	TREE * inapplicable = [&R] (1,(7,(((6,8),(10,9)),((26,(12,(17,((3,2),(((21,(((53,55),((25,(18,54)),((40,(28,(22,(13,15)))),(14,(52,(30,(16,(44,43)))))))),((31,41),(32,(27,(50,(49,((47,(46,48)),(45,51))))))))),(42,29)),(((19,20),(33,((37,(11,(38,39))),(36,(35,34))))),(24,23))))))),(4,5)))));
+	TREE * inapplicable = [&R] (1,(((7,(6,8)),(9,10)),((26,(12,(17,((2,3),(((21,(((32,(27,(((45,51),(46,(50,49))),(47,48)))),(55,53)),((((33,((11,(37,(39,38))),(35,(36,34)))),(19,20)),(23,24)),(41,31)))),(42,29)),(18,(25,(40,(((52,(16,(43,44))),(14,54)),(28,(22,(15,13)))))))))))),(5,(30,4)))));
+	TREE * inapplicable = [&R] (1,(((7,(6,8)),(10,9)),((26,(12,(17,(((42,29),(21,(((((31,41),(((33,((37,(11,(38,39))),(35,(36,34)))),(20,19)),(23,24))),(53,55)),(32,(27,(50,((45,49),(46,(51,(47,48)))))))),(25,(18,((40,(28,(22,(15,13)))),(14,(54,(52,(30,(44,(43,16)))))))))))),(3,2))))),(5,4))));
+	TREE * inapplicable = [&R] (1,((7,((8,6),(9,10))),((26,(12,(17,((3,2),((21,((((31,41),(((20,19),(33,((36,(34,35)),((37,11),(39,38))))),(23,24))),(55,53)),(32,(27,(50,(49,(46,((45,51),(47,48))))))))),((29,42),(((28,(40,(22,(15,13)))),(25,18)),((52,(44,(43,16))),(14,(30,54)))))))))),(4,5))));
+	TREE * inapplicable = [&R] (1,(((9,10),((26,(12,(17,((3,2),(((42,29),(21,(((32,(51,((47,(48,46)),(49,(45,(27,50)))))),(((33,((34,(36,35)),(11,(37,(38,39))))),(19,20)),(24,23))),((31,41),(55,53))))),(18,(25,((40,((52,(44,(43,16))),(30,(54,14)))),(28,(22,(13,15))))))))))),(4,5))),(7,(6,8))));
+	TREE * inapplicable = [&R] (1,((7,((9,10),(6,8))),((26,(12,(17,((2,3),(((29,42),(21,(((32,(27,((51,(50,(45,49))),(46,(48,47))))),(55,53)),((((33,((11,(37,(38,39))),(35,(34,36)))),(19,20)),(23,24)),(41,31))))),((25,(18,(40,(28,(22,(15,13)))))),((52,(43,(44,16))),(54,(30,14))))))))),(4,5))));
+	TREE * inapplicable = [&R] (1,(((26,(12,(17,((((29,42),(21,((((((33,(((11,37),(39,38)),(34,(36,35)))),(19,20)),(23,24)),(41,31)),(55,53)),(32,(27,(50,((46,(51,(45,49))),(48,47)))))))),(25,(18,(((52,(44,(16,43))),(54,(14,30))),(28,(40,(22,(15,13)))))))),(3,2))))),(5,4)),(7,((9,10),(6,8)))));
+	TREE * inapplicable = [&R] (1,(((9,10),((26,(12,(17,((2,3),((29,42),((21,(((41,31),(32,(27,(50,((49,45),(47,(51,(48,46)))))))),(25,(((14,(52,(30,(16,(44,43))))),(40,(28,(22,(15,13))))),(18,54))))),(53,(55,(((20,19),(33,((37,(11,(38,39))),(35,(36,34))))),(23,24)))))))))),(4,5))),(7,(8,6))));
+	TREE * inapplicable = [&R] (1,(((9,10),((26,(12,(17,(2,(3,(((32,(27,(50,(45,(49,(46,(51,(47,48)))))))),((21,((53,(55,(((19,20),(33,((11,(37,(38,39))),(35,(36,34))))),(23,24)))),(25,(18,(((14,54),(52,(30,(44,(16,43))))),(40,(28,(22,(15,13))))))))),(41,31))),(42,29))))))),(5,4))),(7,(8,6))));
+	TREE * inapplicable = [&R] (1,(7,(((9,10),(8,6)),((26,(12,(17,((((21,(((32,(27,(50,(49,(45,(51,(47,(46,48)))))))),((31,41),(54,(14,30)))),((53,55),((23,24),((33,((34,(36,35)),((37,11),(39,38)))),(20,19)))))),(29,42)),(18,(25,(52,(40,((28,(22,(15,13))),(44,(16,43)))))))),(2,3))))),(4,5)))));
+	TREE * inapplicable = [&R] (1,((7,((6,8),(10,9))),((26,(12,(17,(((42,29),(21,(((((31,41),(((20,19),(33,((37,(11,(38,39))),(36,(35,34))))),(23,24))),(53,55)),(32,(27,(50,(45,(49,((51,46),(48,47)))))))),(25,(((40,(28,(22,(15,13)))),(14,(52,(30,(44,(16,43)))))),(54,18)))))),(3,2))))),(5,4))));
+	TREE * inapplicable = [&R] (1,((7,((6,8),(10,9))),((5,4),(26,(12,(17,((2,3),((((31,41),(((33,(((11,37),(38,39)),(35,(36,34)))),(20,19)),(23,24))),((21,((53,55),(25,(18,((40,(28,(22,(15,13)))),(14,(54,(52,(30,(16,(43,44))))))))))),(32,(27,(50,(((49,46),(47,48)),(51,45))))))),(42,29)))))))));
+	TREE * inapplicable = [&R] (1,(((7,(8,6)),(10,9)),((26,(12,(17,((2,3),(((29,42),(21,(((53,55),(32,(27,(((49,50),(46,48)),(47,(51,45)))))),((41,31),(((33,(((37,11),(38,39)),(36,(34,35)))),(20,19)),(23,24)))))),(25,(18,(((52,(43,(44,16))),(30,(54,14))),(28,(40,(22,(15,13)))))))))))),(5,4))));
+	TREE * inapplicable = [&R] (1,(((9,10),((26,(12,(17,((3,2),(((42,29),(21,(((32,(27,(50,((49,(46,(51,45))),(47,48))))),(53,55)),((31,41),(((20,19),(33,(((11,37),(39,38)),(34,(36,35))))),(23,24)))))),(((30,(14,54)),(52,(43,(16,44)))),((25,18),(40,(28,(22,(15,13))))))))))),(4,5))),(7,(6,8))));
+	TREE * inapplicable = [&R] (1,(((9,10),((26,(12,(17,((3,2),((29,42),(((21,((53,((((19,20),(33,((11,(37,(38,39))),(34,(35,36))))),(23,24)),(55,(15,13)))),((18,25),(((54,14),(52,(30,(44,(43,16))))),(40,(22,28)))))),(41,31)),(32,(27,(50,(45,(49,((46,51),(47,48))))))))))))),(5,4))),(7,(8,6))));
+	TREE * inapplicable = [&R] (1,(((10,9),((26,(12,(17,((((29,42),(21,((((((19,20),(33,((11,(37,(38,39))),(36,(35,34))))),(23,24)),(41,31)),(53,55)),(32,(27,(50,(46,((49,(51,45)),(48,47))))))))),((25,(18,(28,(40,(22,(15,13)))))),((52,(30,(54,14))),(44,(16,43))))),(2,3))))),(5,4))),(7,(8,6))));
+	TREE * inapplicable = [&R] (1,(7,(((8,6),(9,10)),((26,(12,(17,((3,2),(((42,29),(21,(((32,(27,(50,(49,(45,((51,47),(48,46))))))),((53,55),(14,(30,54)))),((((19,20),(33,((11,(37,(38,39))),(36,(34,35))))),(23,24)),(41,31))))),(18,((28,(40,(22,(15,13)))),(52,(25,(43,(44,16))))))))))),(5,4)))));
+	TREE * inapplicable = [&R] (1,(((7,(6,8)),(9,10)),((26,(12,(17,((3,2),(((42,29),(21,(((32,(27,(50,(((49,46),(48,47)),(51,45))))),((((33,((11,(37,(39,38))),(35,(34,36)))),(19,20)),(23,24)),(41,31))),(55,53)))),((25,(18,(40,(28,(22,(15,13)))))),((52,(44,(16,43))),(14,54)))))))),(5,(30,4)))));
+	TREE * inapplicable = [&R] (1,((7,((8,6),(10,9))),((26,(12,(17,((3,2),((29,42),(((32,(27,(50,(49,(46,((45,51),(47,48))))))),(21,(((18,(40,(28,(22,(15,13))))),(25,((30,(14,54)),(52,(16,(43,44)))))),(41,31)))),(((23,24),((19,20),(33,((11,(37,(39,38))),(34,(35,36)))))),(55,53)))))))),(5,4))));
+	TREE * inapplicable = [&R] (1,(7,(((8,6),(9,10)),((26,(12,(17,(((((21,((53,55),(((18,54),(25,(30,(52,(43,(44,16)))))),(14,(40,(28,(22,(13,15)))))))),(32,(27,(50,((46,(49,(48,47))),(51,45)))))),((((19,20),(33,((11,(37,(39,38))),(36,(35,34))))),(24,23)),(41,31))),(29,42)),(2,3))))),(4,5)))));
+	TREE * inapplicable = [&R] (1,(7,(((8,6),(9,10)),((26,(12,(17,((3,2),((21,(((((33,(((37,11),(38,39)),(34,(36,35)))),(20,19)),(24,23)),(31,41)),((32,(27,(50,(49,(45,(51,(46,(47,48)))))))),((55,53),((25,((14,(52,(30,(44,(16,43))))),(40,(28,(22,(13,15)))))),(18,54)))))),(29,42)))))),(4,5)))));
+	TREE * inapplicable = [&R] (1,(7,(((8,6),(9,10)),((26,(12,(17,((((21,(((53,55),(32,(51,((46,(47,48)),(45,(49,(50,27))))))),((((19,20),(33,((11,(37,(38,39))),(35,(34,36))))),(24,23)),(31,41)))),(29,42)),((25,18),(40,((28,(22,(13,15))),((52,(30,(43,(16,44)))),(54,14)))))),(3,2))))),(5,4)))));
+	TREE * inapplicable = [&R] (1,(((10,9),(7,(6,8))),((26,(12,(17,((((42,29),(21,((((31,41),(((19,20),(33,(((11,37),(38,39)),(35,(34,36))))),(24,23))),(32,(27,(50,(46,((49,(45,51)),(47,48))))))),(53,55)))),((25,(18,(28,(40,(22,(13,15)))))),((14,54),(52,(44,(43,16)))))),(3,2))))),(5,(4,30)))));
+	TREE * inapplicable = [&R] (1,(7,(((8,6),(10,9)),((26,(12,(17,((2,3),(((21,(((32,(27,(((47,(46,48)),(51,45)),(50,49)))),(53,55)),((((19,20),(33,((37,(11,(38,39))),(34,(35,36))))),(23,24)),(41,31)))),(29,42)),(18,((28,(40,(22,(15,13)))),(25,(30,((52,(54,14)),(43,(44,16)))))))))))),(5,4)))));
+	TREE * inapplicable = [&R] (1,(((9,10),((26,(12,(17,((3,2),((29,42),(21,(((18,(25,((40,(22,28)),((14,(30,54)),(52,(44,(16,43))))))),(53,((((19,20),(33,(((37,11),(39,38)),(34,(35,36))))),(23,24)),(55,(15,13))))),((32,(27,(50,((45,49),((47,51),(46,48)))))),(41,31))))))))),(4,5))),(7,(6,8))));
+	TREE * inapplicable = [&R] (1,((7,((10,9),(8,6))),((4,5),(26,(12,(17,((2,3),((29,42),(21,(((32,(27,(50,(49,((46,(51,45)),(47,48)))))),(31,41)),((53,((((33,((11,(37,(38,39))),(36,(35,34)))),(20,19)),(24,23)),(55,(13,15)))),((25,18),((14,(54,(52,(30,(43,(16,44)))))),(40,(28,22)))))))))))))));
+	TREE * inapplicable = [&R] (1,(((7,(6,8)),(9,10)),((26,(12,(17,((3,2),(((42,29),(21,(((32,(27,(50,((49,(47,(51,45))),(46,48))))),((41,31),(((19,20),(33,((37,(11,(39,38))),(34,(35,36))))),(23,24)))),(53,55)))),(18,(25,((40,((52,(30,(54,14))),(43,(44,16)))),(28,(22,(15,13))))))))))),(4,5))));
+	TREE * inapplicable = [&R] (1,(((9,10),(7,(6,8))),((26,(12,(17,((3,2),(((42,29),(21,(((32,(27,((46,(51,(45,(49,50)))),(47,48)))),(53,55)),((31,41),(((20,19),(33,((37,(11,(39,38))),(35,(36,34))))),(23,24)))))),(((14,(54,30)),(52,(16,(44,43)))),(18,(25,(28,(40,(22,(15,13)))))))))))),(4,5))));
+END;

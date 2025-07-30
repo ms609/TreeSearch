@@ -6,15 +6,21 @@
 #' For usage pointers, see the 
 #' [vignette](https://ms609.github.io/TreeSearch/articles/custom.html).
 #'
-#' @template treeParam 
+#' @inheritParams TreeTools::Renumber
 #' @param dataset a dataset in the format required by `TreeScorer()`.
-#' @template InitializeDataParam
-#' @template CleanUpDataParam
-#' @template treeScorerParam
+#' @inheritParams TreeSearch
+#' @inheritParams Bootstrap
 #' @param Bootstrapper Function to perform bootstrapped rearrangements of tree.
-#' First arguments will be an `edgeList` and a dataset, initialized using 
-#' `InitializeData()`. Should return a rearranged `edgeList`.
-#' @template swappersParam
+#'  First arguments will be an `edgeList` and a dataset, initialized using 
+#'  `InitializeData()`. Should return a rearranged `edgeList`.
+#' @param swappers A list of functions to use to conduct edge rearrangement
+#'  during tree search.
+#'  Provide functions like \code{\link{NNISwap}} to shuffle root position,
+#'  or \code{\link{RootedTBRSwap}} if the position of the root should be
+#'  retained.
+#'  You may wish to use extreme swappers (such as \acronym{TBR}) early in the
+#'  list, and a more subtle rearranger (such as \acronym{NNI}) later in the list
+#'  to make incremental tinkerings once an almost-optimal tree has been found.
 #' @param BootstrapSwapper Function such as \code{\link{RootedNNISwap}} to use 
 #' to rearrange trees within `Bootstrapper()`.
 #' @param returnAll Set to \code{TRUE} to report all MPTs encountered during the
@@ -22,25 +28,20 @@
 #' @param ratchIter Stop when this many ratchet iterations have been performed.
 #' @param ratchHits Stop when this many ratchet iterations have found the same
 #' best score.
-#' @param searchIter Integer specifying maximum rearrangements to perform on each bootstrap or 
-#' ratchet iteration.  
-#' To override this value for a single swapper function, set e.g. 
-#' `attr(SwapperFunction, 'searchIter') <- 99`
-#' @param searchHits Integer specifying maximum times to hit best score before terminating a tree
-#' search within a ratchet iteration.
-#' To override this value for a single swapper function, set e.g. 
-#' `attr(SwapperFunction, 'searchHits') <- 99`
-#' @param bootstrapIter Integer specifying maximum rearrangements to perform on each bootstrap
-#'  iteration (default: `searchIter`).
-#' @param bootstrapHits Integer specifying maximum times to hit best score on each bootstrap 
-#' iteration (default: `searchHits`).
-#' @template stopAtScoreParam
-#' @template stopAtPeakParam
-#' @template stopAtPlateauParam
-#' @template verbosityParam
+#' @param searchIter Integer specifying maximum rearrangements to perform on
+#'  each bootstrap or ratchet iteration.  
+#'  To override this value for a single swapper function, set e.g. 
+#'  `attr(SwapperFunction, "searchIter") <- 99`
+#' @param searchHits Integer specifying maximum times to hit best score before
+#'  terminating a tree search within a ratchet iteration.
+#'  To override this value for a single swapper function, set e.g. 
+#'  `attr(SwapperFunction, "searchHits") <- 99`
+#' @param bootstrapIter Integer specifying maximum rearrangements to perform on
+#'  each bootstrap iteration (default: `searchIter`).
+#' @param bootstrapHits Integer specifying maximum times to hit best score on
+#'  each bootstrap iteration (default: `searchHits`).
 #' @param suboptimal retain trees that are suboptimal by this score.
 #'  Defaults to a small value that will counter rounding errors.
-#' @template treeScorerDots
 #' 
 #' @return `Ratchet()` returns a tree modified by parsimony ratchet iterations.
 #'
@@ -48,7 +49,7 @@
 #' \insertAllCited{}
 #'
 #' @examples
-#' data('Lobo', package = 'TreeTools')
+#' data("Lobo", package = "TreeTools")
 #' njtree <- TreeTools::NJTree(Lobo.phy)
 #' # Increase value of ratchIter and searchHits to do a proper search
 #' quickResult <- Ratchet(njtree, Lobo.phy, ratchIter = 2, searchHits = 3)
@@ -66,27 +67,29 @@
 #' @family custom search functions
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @export
-Ratchet <- function (tree, dataset, 
-                     InitializeData = PhyDat2Morphy,
-                     CleanUpData    = UnloadMorphy,
-                     TreeScorer     = MorphyLength,
-                     Bootstrapper   = MorphyBootstrap,
-                     swappers = list(TBRSwap, SPRSwap, NNISwap),
-                     BootstrapSwapper = if (is.list(swappers))
-                      swappers[[length(swappers)]] else swappers,
-                     returnAll = FALSE, stopAtScore = NULL,
-                     stopAtPeak = FALSE, stopAtPlateau = 0L, 
-                     ratchIter = 100, ratchHits = 10,
-                     searchIter = 4000, searchHits = 42,
-                     bootstrapIter = searchIter, bootstrapHits = searchHits,
-                     verbosity = 1L, 
-                     suboptimal = sqrt(.Machine$double.eps), ...) {
-  epsilon <- 1e-08
+Ratchet <- function(tree, dataset, 
+                    InitializeData = PhyDat2Morphy,
+                    CleanUpData    = UnloadMorphy,
+                    TreeScorer     = MorphyLength,
+                    Bootstrapper   = MorphyBootstrap,
+                    swappers = list(TBRSwap, SPRSwap, NNISwap),
+                    BootstrapSwapper = if (is.list(swappers))
+                     swappers[[length(swappers)]] else swappers,
+                    returnAll = FALSE, stopAtScore = NULL,
+                    stopAtPeak = FALSE, stopAtPlateau = 0L, 
+                    ratchIter = 100, ratchHits = 10,
+                    searchIter = 4000, searchHits = 42,
+                    bootstrapIter = searchIter, bootstrapHits = searchHits,
+                    verbosity = 1L, 
+                    suboptimal = sqrt(.Machine[["double.eps"]]), ...) {
+  epsilon <- sqrt(.Machine[["double.eps"]])
   hits <- 0L
   # initialize tree and data
-  if (dim(tree$edge)[1] != 2 * tree$Nnode) stop("tree must be bifurcating; try rooting with ape::root")
+  if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
+    stop("tree must be bifurcating; try rooting with ape::root")
+  }
   tree <- RenumberTips(tree, names(dataset))
-  edgeList <- tree$edge
+  edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 
   initializedData <- InitializeData(dataset)
@@ -104,19 +107,21 @@ Ratchet <- function (tree, dataset,
     }
     return(tree)
   }
-  if (class(swappers) == 'function') swappers <- list(swappers)
+  if (is.function(swappers)){
+    swappers <- list(swappers)
+  }
   
   if (returnAll) {
-    nullForest <- vector('list', ratchIter)
+    nullForest <- vector("list", ratchIter)
     forest <- nullForest
     forestScores <- rep.int(NA, ratchIter)
   }
 
   iterationsWithBestScore <- 0
   BREAK <- FALSE
-  for (i in 1:ratchIter) {
+  for (i in seq_len(ratchIter)) {
     if (verbosity > 1L) {                                                       # nocov start
-      message("\n* Ratchet iteration ", i, '.')
+      message("\n* Ratchet iteration ", i, ".")
       if (verbosity > 2L) {
         message(" - Generating new candidate tree by bootstrapping dataset.")   
       }
@@ -165,7 +170,7 @@ Ratchet <- function (tree, dataset,
       forestScores[i] <- candScore
     }
     if ((candScore + epsilon) < bestScore) {
-      # New 'best' tree
+      # New "best" tree
       edgeList <- candidate
       bestScore <- candScore
       iterationsWithBestScore <- 1L
@@ -200,75 +205,74 @@ Ratchet <- function (tree, dataset,
     if (length(forest) > 1) {
       forest[] <- lapply(forest, function (phy) {
         x <- tree
-        x$edge <- cbind(phy[[1]], phy[[2]])
-        attr(x, 'score') <- phy[[3]]
+        x[["edge"]] <- cbind(phy[[1]], phy[[2]])
+        attr(x, "score") <- phy[[3]]
         # Return to lapply: 
         x})
       ret <- unique(forest)
       if (verbosity > 1L) {
         message(" - Removing duplicates leaves ", length(ret), " unique trees")
       }
-      uniqueScores <- vapply(ret, attr, double(1), 'score')
+      uniqueScores <- vapply(ret, attr, double(1), "score")
     } else if (length(forest) == 1) {
       ret <- tree
       newEdge <- forest[[1]]
-      ret$edge <- cbind(newEdge[[1]], newEdge[[2]])
+      ret[["edge"]] <- cbind(newEdge[[1]], newEdge[[2]])
       uniqueScores <- newEdge[[3]]
     } else {
       stop("\nNo trees!? Is suboptimal set to a sensible (positive) value?")
     }
     if (verbosity > 0L) {                                                       # nocov start
-      message('\nFound ', sum(uniqueScores == min(uniqueScores)),
-              ' unique MPTs and ',
+      message("\nFound ", sum(uniqueScores == min(uniqueScores)),
+              " unique MPTs and ",
               length(ret) - sum(uniqueScores == min(uniqueScores)), 
-              ' suboptimal trees.\n')
+              " suboptimal trees.\n")
     }                                                                           # nocov end
     # Return:
     ret
   } else {
-    tree$edge <- cbind(edgeList[[1]], edgeList[[2]])
-    attr(tree, 'score') <- bestScore
+    tree[["edge"]] <- cbind(edgeList[[1]], edgeList[[2]])
+    attr(tree, "score") <- bestScore
     # Return:
-    tree  
+    tree
   }
 }
 
-#' Unique trees (ignoring 'hits' attribute)
+#' Unique trees (ignoring "hits" attribute)
 #' @author Martin R. Smith
 #' @keywords internal
 #' @export
 .UniqueExceptHits <- function (trees) {
   unique(lapply(trees, function(tree) {
-    attr(tree, 'hits') <- NULL
+    attr(tree, "hits") <- NULL
     tree
   }))
 }
 
 #' @rdname Ratchet 
 #' @return `MultiRatchet()` returns a list of optimal trees 
-#' produced by `nSearch` 
-#' ratchet searches, from which a consensus tree can be generated using 
-#'  [`ape::consensus()`] or [`TreeTools::ConsensusWithout()`].
+#' produced by `nSearch` `Ratchet()` searches, from which a consensus tree can
+#' be generated using [`ape::consensus()`] or [`TreeTools::ConsensusWithout()`].
 #' @param nSearch Number of Ratchet searches to conduct
 #' (for `RatchetConsensus()`)
 #' @export
-MultiRatchet <- function (tree, dataset, ratchHits=10, 
-                              searchIter=500, searchHits=20, verbosity=0L, 
-                              swappers=list(RootedNNISwap), nSearch=10, 
-                              stopAtScore=NULL, ...) {
+MultiRatchet <- function (tree, dataset, ratchHits = 10, 
+                          searchIter = 500, searchHits = 20, verbosity = 0L,
+                          swappers = list(RootedNNISwap), nSearch = 10,
+                          stopAtScore = NULL, ...) {
   trees <- lapply(seq_len(nSearch), function (i) {
-    if (verbosity > 1L) message("\nRatchet search ", i, '/', nSearch, ':')
+    if (verbosity > 1L) message("\nRatchet search ", i, "/", nSearch, ":")
     Ratchet(tree, dataset, ratchIter = 1, ratchHits = 0L, 
             searchIter = searchIter, searchHits = searchHits, 
             verbosity = verbosity, swappers = swappers, 
             stopAtScore = stopAtScore, ...)
   })
-  scores <- vapply(trees, function (x) attr(x, 'score'), double(1))
+  scores <- vapply(trees, function (x) attr(x, "score"), double(1))
   trees <- .UniqueExceptHits(trees[scores == min(scores)])
-  message("Found ", length(trees), ' unique trees from ', nSearch, ' searches.')
+  message("Found ", length(trees), " unique trees from ", nSearch, " searches.")
   
   # Return:
-  structure(trees, class = 'multiPhylo')
+  structure(trees, class = "multiPhylo")
 }
 
 #' @describeIn Ratchet deprecated alias for `MultiRatchet()`

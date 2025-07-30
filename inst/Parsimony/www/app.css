@@ -13,6 +13,7 @@ body {
 
 #shiny-notification-panel {
   top: 0;
+  pointer-events: none;
 }
 
 .message {
@@ -102,4 +103,26 @@ li.state-note {
 #clThresh-label.strong + span>span.irs-bar.irs-bar--single {
   background: #F0F921;
   border-color: #F0F921;
+}
+
+div#plotSizer, div#saveAs, div#exportAs, div#savePlottedTrees {
+  float: left;
+}
+
+div#saveAs, div#exportAs,  div#savePlottedTrees {
+  padding: 0.8em;
+}
+
+label#treeRange-label {
+  display: none;
+}
+
+div.progress {
+  margin-bottom: 0;
+}
+
+input#readxlSkip, input#readxlSkipCols {
+  width: 40%;
+  float: left;
+  margin-right: 2%;
 }

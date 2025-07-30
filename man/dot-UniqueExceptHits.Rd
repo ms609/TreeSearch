@@ -2,12 +2,12 @@
 % Please edit documentation in R/Ratchet.R
 \name{.UniqueExceptHits}
 \alias{.UniqueExceptHits}
-\title{Unique trees (ignoring 'hits' attribute)}
+\title{Unique trees (ignoring "hits" attribute)}
 \usage{
 .UniqueExceptHits(trees)
 }
 \description{
-Unique trees (ignoring 'hits' attribute)
+Unique trees (ignoring "hits" attribute)
 }
 \author{
 Martin R. Smith

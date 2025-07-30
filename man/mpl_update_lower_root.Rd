@@ -2,7 +2,7 @@
 % Please edit documentation in R/mpl_morphyex.R
 \name{mpl_update_lower_root}
 \alias{mpl_update_lower_root}
-\title{Updates the nodal sets for a lower ('dummy') root node}
+\title{Updates the nodal sets for a lower ("dummy") root node}
 \usage{
 mpl_update_lower_root(l_root_id, root_id, morphyobj)
 }
@@ -18,7 +18,7 @@ A Morphy error code.
 }
 \description{
 If trees are rooted, then Morphy uppass functions
-require a lower or 'dummy' root in order to function properly. This
+require a lower or "dummy" root in order to function properly. This
 function should be called to set the nodal state sets to the dummy
 root. The nodal set will be equal to the set of the root node, unless
 there is an ambiguous union of applicable and gap tokens when gaps are
@@ -38,7 +38,6 @@ Other Morphy API functions:
 \code{\link{mpl_attach_rawdata}()},
 \code{\link{mpl_attach_symbols}()},
 \code{\link{mpl_delete_Morphy}()},
-\code{\link{mpl_delete_rawdata}()},
 \code{\link{mpl_first_down_recon}()},
 \code{\link{mpl_first_up_recon}()},
 \code{\link{mpl_get_charac_weight}()},

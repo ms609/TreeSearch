@@ -13,10 +13,13 @@ FitchSteps(tree, dataset)
 FastCharacterLength(tree, dataset)
 }
 \arguments{
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+Additive (ordered) characters can be handled using
+\code{\link[TreeTools]{Decompose}}.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
 \code{phyDat} object or to return a vector specifying to each individual
@@ -32,12 +35,12 @@ Homoplasy length of each character in a dataset on a specified tree.
 }
 \section{Functions}{
 \itemize{
-\item \code{FastCharacterLength}: Do not perform checks.  Use with care: may cause
-erroneous results or  software crash if variables are in the incorrect format.
-}}
+\item \code{FastCharacterLength()}: Do not perform checks.  Use with care: may cause
+erroneous results or software crash if variables are in the incorrect format.
 
+}}
 \examples{
-data('inapplicable.datasets')
+data("inapplicable.datasets")
 dataset <- inapplicable.phyData[[12]]
 tree <- TreeTools::NJTree(dataset)
 CharacterLength(tree, dataset)
@@ -49,8 +52,10 @@ CharacterLength(tree, dataset, compress = TRUE)
 \seealso{
 Other tree scoring: 
 \code{\link{IWScore}()},
+\code{\link{LengthAdded}()},
 \code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()}
+\code{\link{MorphyTreeLength}()},
+\code{\link{TaxonInfluence}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

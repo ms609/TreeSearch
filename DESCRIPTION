@@ -1,74 +1,90 @@
 Package: TreeSearch
-Title: Phylogenetic Tree Search Using Custom Optimality Criteria
-Version: 1.0.1.9000
-Authors@R: c(person("Martin R.", 'Smith',
-                  email="martin.smith@durham.ac.uk", 
-                  role=c("aut", "cre", "cph"), 
-                  comment=c(ORCID = "0000-0001-5660-1727")),
-               person(given = "Martin", family="Brazeau", role = c("cph"), 
-                  comment = c(ORCID = "0000-0002-0650-1282"))
-            )
+Title: Phylogenetic Analysis with Discrete Character Data
+Version: 1.6.1.9004
+Authors@R: c(
+    person(
+      "Martin R.", 'Smith',
+      email = "martin.smith@durham.ac.uk", 
+      role = c("aut", "cre", "cph"), 
+      comment = c(ORCID = "0000-0001-5660-1727")
+    ),
+    person(
+      given = "Martin", family = "Brazeau",
+      role = c("cph"),
+      comment = c(ORCID = "0000-0002-0650-1282")
+    )
+  )
 License: GPL (>= 3)
 Copyright: Incorporates C/C++ code from
    Morphy Phylogenetic Library by Martin Brazeau 
    <https://github.com/mbrazeau/MorphyLib> (GPL3)
-Description: Search for phylogenetic trees that are optimal using a
-  user-defined criterion.
+Description: Reconstruct phylogenetic trees from discrete data.
+  Inapplicable character states are handled using the algorithm of Brazeau,
+  Guillerme and Smith (2019) <doi:10.1093/sysbio/syy083> with the "Morphy"
+  library, under equal or implied step weights.
   Contains a "shiny" user interface for interactive tree search and exploration
   of results, including character visualization, rogue taxon detection,
-  tree space mapping, and cluster consensus trees.
-  Handles inapplicable data using the algorithm of Brazeau, Guillerme and
-  Smith (2019) <doi:10.1093/sysbio/syy083> using the "Morphy" library.
-  Implements Profile Parsimony (Faith and Trueman, 2001) 
-  <doi:10.1080/10635150118627>, and Successive Approximations (Farris, 1969) 
-  <doi:10.2307/2412182>.
-URL: https://ms609.github.io/TreeSearch/, https://github.com/ms609/TreeSearch/
+  tree space mapping, and cluster consensus trees (Smith 2022a, b)
+  <doi:10.1093/sysbio/syab099>, <doi:10.1093/sysbio/syab100>.
+  Profile Parsimony (Faith and Trueman, 2001) <doi:10.1080/10635150118627>, 
+  Successive Approximations (Farris, 1969) <doi:10.2307/2412182>
+  and custom optimality criteria are implemented.
+URL: https://ms609.github.io/TreeSearch/ (doc),
+  https://github.com/ms609/TreeSearch/ (devel)
 BugReports: https://github.com/ms609/TreeSearch/issues/
-Depends: R (>= 3.5.0)
+Depends: R (>= 4.0)
+Remotes: ms609/TreeTools
 Imports: 
-    ape (>= 5.1.2),
-    cli (>= 3.0),
-    cluster,
-    fastmatch (>= 1.1.3),
-    future,
-    phangorn (>= 2.2.1),
-    promises,
-    protoclust,
-    Rcpp,
-    Rdpack (>= 0.7),
-    Rogue (> 1.0.0),
-    shiny,
-    shinyjs,
-    stats,
-    TreeDist (> 2.0.3),
-    TreeTools (>= 1.5.0),
+  ape (>= 5.6),
+  cli (>= 3.0),
+  cluster,
+  fastmap,
+  fastmatch (>= 1.1.3),
+  fs,
+  future,
+  PlotTools,
+  promises,
+  protoclust,
+  Rcpp,
+  Rdpack (>= 0.7),
+  Rogue (> 2.0.0),
+  shiny (>= 1.6.0),
+  shinyjs,
+  stats,
+  stringi,
+  TreeDist (>= 2.6.3),
+  TreeTools (>= 1.15.0.9004),
 Suggests:
-    knitr,
-    rmarkdown,
-    Quartet,
-    testthat,
-    vdiffr (>= 1.0.0),
-Config/Needs/coverage: covr
-Config/Needs/github-actions:
-    callr,
-    pkgbuild,
-    rcmdcheck
+  knitr,
+  phangorn (>= 2.2.1),
+  Quartet,
+  readxl,
+  rmarkdown,
+  shinytest,
+  spelling,
+  testthat,
+  vdiffr (>= 1.0.0),
+Config/Needs/check:
+  callr,
+  pkgbuild,
+  rcmdcheck,
+Config/Needs/coverage: covr, spelling
 Config/Needs/memcheck: devtools
-Config/Needs/metadata: codemetar
+Config/Needs/metadata: codemeta
 Config/Needs/revdeps: revdepcheck
 Config/Needs/website: 
-    curl,
-    igraph,
-    pkgdown
+  curl,
+  igraph,
+  pkgdown,
 RdMacros: Rdpack
 LinkingTo:
-    Rcpp,
-    TreeTools
-SystemRequirements: C++14
+  Rcpp,
+  TreeTools,
+SystemRequirements: C++17
 LazyData: true
 ByteCompile: true
 Encoding: UTF-8
 Language: en-GB
 VignetteBuilder: knitr
-RoxygenNote: 7.1.2
+RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)

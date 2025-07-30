@@ -10,26 +10,22 @@
 #'  It also reports the number of times that this score was hit in the 
 #'  current function call.
 #' 
-#' @template treeParent
-#' @template treeChild
 #' @param dataset Third argument to pass to \code{TreeScorer}.
-#' @template treeScorerParam
+#' @inheritParams TreeSearch
+#' @inheritParams TreeTools::NeworderPhylo
 #' @param scoreToBeat Double giving score of input tree.
 #' @param hits Integer giving number of times the input tree has already been hit.
-#' @template EdgeSwapperParam
 ## @param  minScore trees longer than \code{minScore}, probably the score of the best previously known tree,
 ##     will be discarded;
 ## @param returnSingle returns all trees if `FALSE` or a randomly selected tree if `TRUE`.
 #' @param iter iteration number of calling function, for reporting to user only.
-#' @template verbosityParam
-#' @template treeScorerDots
 #'
-#' @author Martin R. Smith
+#' @template MRS
 #'
 #' @template returnEdgeList
 #' 
 #' @examples
-#' data('Lobo', package='TreeTools')
+#' data("Lobo", package="TreeTools")
 #' tree <- TreeTools::NJTree(Lobo.phy)
 #' edge <- tree$edge
 #' parent <- edge[, 1]
@@ -42,8 +38,8 @@
 RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
                             EdgeSwapper, 
                             scoreToBeat = TreeScorer(parent, child, dataset, ...),
-                            iter = '?', hits = 0L, verbosity = 0L, ...) {
-  eps <- .Machine$double.eps ^ 0.5
+                            iter = "?", hits = 0L, verbosity = 0L, ...) {
+  eps <- .Machine[["double.eps"]] ^ 0.5
   rearrangedEdges <- EdgeSwapper(parent, child)
   if (is.list(rearrangedEdges[[1]])) {
     # Then we've been sent a list of possible trees
@@ -56,7 +52,7 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
     if (candidateScore > (scoreToBeat + eps)) {
       if (verbosity > 3L) {                                                     # nocov start
         message("    . Iteration ", iter, 
-                                  ' - Rearranged tree score ', candidateScore, 
+                                  " - Rearranged tree score ", candidateScore, 
                               " > target ", scoreToBeat)
       }                                                                         # nocov end
     } else if (candidateScore + eps > scoreToBeat) { # i.e. scores are equal
@@ -77,7 +73,7 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
     candidateScore <- TreeScorer(rearrangedEdges[[1]], rearrangedEdges[[2]], dataset, ...)
     if (candidateScore > (scoreToBeat + eps)) {
       if (verbosity > 3L) {                                                     # nocov start
-        message("    . Iteration ", iter, ' - Rearranged tree score ',
+        message("    . Iteration ", iter, " - Rearranged tree score ",
                 signif(candidateScore, 6), " > target ", signif(scoreToBeat, 6))
       }                                                                         # nocov end
     } else if (candidateScore + eps > scoreToBeat) { # i.e. scores are equal
@@ -101,7 +97,7 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
 
 #' Check that all nodes in a tree are bifurcating.
 #' 
-#' @template treeParent
+#' @inheritParams TreeTools::NeworderPhylo
 #' 
 #' @return Returns `NULL`, but will `stop` with an error message if a tree
 #' does not appear to be bifurcating.

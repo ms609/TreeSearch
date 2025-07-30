@@ -37,7 +37,7 @@ RootedTBRSwap(
 )
 }
 \arguments{
-\item{tree}{A bifurcating tree of class \code{\link{phylo}}, with all nodes resolved;}
+\item{tree}{A bifurcating tree of class \code{\link[ape]{phylo}}, with all nodes resolved;}
 
 \item{edgeToBreak}{(optional) integer specifying the index of an edge to bisect/prune,
 generated randomly if not specified.
@@ -51,22 +51,25 @@ sides of \code{edgeToBreak}); if only a single edge is specified,
 the second will be chosen at random}
 
 \item{parent}{Integer vector corresponding to the first column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 1]}}
 
 \item{child}{Integer vector corresponding to the second column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 2]}.}
 
 \item{nEdge}{(optional) Number of edges.}
 }
 \value{
-This function returns a tree in \code{phyDat} format that has undergone one \acronym{TBR} iteration.
+\code{TBR()} returns a tree in \code{phyDat} format that has undergone one
+\acronym{TBR} iteration.
 
 \code{TBRMoves()} returns a \code{multiPhylo} object listing all trees one
 \acronym{TBR} move away from \code{tree}, with edges and nodes in preorder,
 rooted on the first-labelled tip.
 
-a list containing two elements, corresponding in turn to the
-rearranged parent and child parameters
+\code{TBRSwap()} returns a list containing two elements corresponding
+to the rearranged \code{parent} and \code{child} parameters.
 }
 \description{
 \code{TBR} performs a single random \acronym{TBR} iteration.
@@ -79,20 +82,18 @@ All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collap
 }
 \section{Functions}{
 \itemize{
-\item \code{TBRSwap}: faster version that takes and returns parent and child
+\item \code{TBRSwap()}: faster version that takes and returns parent and child
 parameters
 
-\item \code{RootedTBR}: Perform \acronym{TBR} rearrangement, retaining position of root
+\item \code{RootedTBR()}: Perform \acronym{TBR} rearrangement, retaining position of root
 
-\item \code{RootedTBRSwap}: faster version that takes and returns parent and child parameters
+\item \code{RootedTBRSwap()}: faster version that takes and returns parent and child parameters
+
 }}
-
 \examples{
-{
-library('ape')
+library("ape")
 tree <- rtree(20, br=NULL)
 TBR(tree)
-}
 }
 \references{
 The \acronym{TBR} algorithm is summarized in
@@ -106,6 +107,7 @@ Other tree rearrangement functions:
 \code{\link{SPR}()}
 }
 \author{
-Martin R. Smith
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{tree rearrangement functions}

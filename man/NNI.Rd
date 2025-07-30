@@ -24,10 +24,13 @@ RootedNNISwap(
 )
 }
 \arguments{
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A tree of class \code{phylo}.
+For \code{cNNI()}, this must be a binary tree rooted on a single leaf, whose root
+node is the lowest numbered internal node.}
 
-\item{edgeToBreak}{In (\code{Rooted})\code{NNI()}, an optional integer specifying the
-index of an edge to bisect/prune, generated randomly if not specified.
+\item{edgeToBreak}{In (\code{Rooted}/\code{Double})\code{NNI()}, an optional integer
+specifying the index of an edge to rearrange, generated randomly if not
+specified.
 If \code{-1}, a complete list of all trees one step from the input tree
 will be returned.
 In \code{cNNI()}, an integer from zero to \code{nEdge(tree) - nTip(tree) - 2},
@@ -37,10 +40,12 @@ specifying which internal edge to break.}
 the broken internal edge.}
 
 \item{parent}{Integer vector corresponding to the first column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 1]}}
 
 \item{child}{Integer vector corresponding to the second column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 2]}.}
 
 \item{nTips}{(optional) Number of tips.}
 }
@@ -59,7 +64,7 @@ a list containing two elements, corresponding in turn to the rearranged parent a
 \description{
 \code{NNI()}performs a single iteration of the nearest-neighbour interchange
 algorithm; \code{RootedNNI()} retains the position of the root.
-These functions are based on equivalents in the '\pkg{phangorn}' package.
+These functions are based on equivalents in the \pkg{phangorn} package.
 \code{cNNI()} is an equivalent function coded in C, that runs much faster.
 }
 \details{
@@ -70,13 +75,13 @@ All nodes in a tree must be bifurcating; \code{\link[ape:collapse.singles]{ape::
 }
 \section{Functions}{
 \itemize{
-\item \code{NNISwap}: faster version that takes and returns parent and child parameters
+\item \code{NNISwap()}: faster version that takes and returns parent and child parameters
 
-\item \code{RootedNNI}: Perform \acronym{NNI} rearrangement, retaining position of root
+\item \code{RootedNNI()}: Perform \acronym{NNI} rearrangement, retaining position of root
 
-\item \code{RootedNNISwap}: faster version that takes and returns parent and child parameters
+\item \code{RootedNNISwap()}: faster version that takes and returns parent and child parameters
+
 }}
-
 \examples{
 tree <- TreeTools::BalancedTree(8)
 # A random rearrangement

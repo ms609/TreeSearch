@@ -4,7 +4,7 @@
 \alias{Carter1}
 \alias{Log2Carter1}
 \alias{LogCarter1}
-\title{Number of trees with \emph{m} additional steps}
+\title{Number of trees with \emph{m} steps}
 \usage{
 Carter1(m, a, b)
 
@@ -13,17 +13,29 @@ Log2Carter1(m, a, b)
 LogCarter1(m, a, b)
 }
 \arguments{
-\item{m}{Number of steps}
+\item{m}{Number of steps.}
 
 \item{a, b}{Number of leaves labelled \code{0} and \code{1}.}
 }
 \description{
-Calculate the number of trees with \emph{m} extra steps under Fitch parsimony
-where \emph{a} leaves are labelled with one state, and \emph{b} leaves labelled with
-a second state.
+Calculate the number of trees in which Fitch parsimony will reconstruct
+\emph{m} steps, where \emph{a} leaves are labelled with one state, and \emph{b} leaves are
+labelled with a second state.
 }
 \details{
 Implementation of theorem 1 from \insertCite{Carter1990;textual}{TreeTools}
+}
+\examples{
+# The character `0 0 0 1 1 1`
+Carter1(1, 3, 3) # Exactly one step
+Carter1(2, 3, 3) # Two steps (one extra step)
+
+# Number of trees that the character can map onto with exactly _m_ steps
+# if non-parsimonious reconstructions are permitted:
+cumsum(sapply(1:3, Carter1, 3, 3))
+
+# Three steps allow the character to map onto any of the 105 six-leaf trees.
+
 }
 \references{
 \insertAllCited{}
@@ -40,6 +52,11 @@ See also:
 Other profile parsimony functions: 
 \code{\link{PrepareDataProfile}()},
 \code{\link{StepInformation}()},
+\code{\link{WithOneExtraStep}()},
 \code{\link{profiles}}
+}
+\author{
+\href{https://smithlabdurham.github.io/}{Martin R. Smith}
+(\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
 \concept{profile parsimony functions}

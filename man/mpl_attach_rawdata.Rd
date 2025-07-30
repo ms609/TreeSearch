@@ -7,9 +7,10 @@
 mpl_attach_rawdata(rawdata, morphyobj)
 }
 \arguments{
-\item{morphyobj}{An instance of the Morphy object.}
+\item{rawdata}{C-style string corresponding to the tip data for each taxon in
+turn.}
 
-\item{rawmatrix}{C-style string corresponding to the tip data for each taxon in turn.}
+\item{morphyobj}{An instance of the Morphy object.}
 }
 \value{
 Morphy error code.
@@ -32,7 +33,6 @@ Other Morphy API functions:
 \code{\link{mpl_apply_tipdata}()},
 \code{\link{mpl_attach_symbols}()},
 \code{\link{mpl_delete_Morphy}()},
-\code{\link{mpl_delete_rawdata}()},
 \code{\link{mpl_first_down_recon}()},
 \code{\link{mpl_first_up_recon}()},
 \code{\link{mpl_get_charac_weight}()},

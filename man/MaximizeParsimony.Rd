@@ -11,7 +11,7 @@
 MaximizeParsimony(
   dataset,
   tree,
-  ratchIter = 6L,
+  ratchIter = 7L,
   tbrIter = 2L,
   startIter = 2L,
   finalIter = 1L,
@@ -19,7 +19,8 @@ MaximizeParsimony(
   maxTime = 60,
   quickHits = 1/3,
   concavity = Inf,
-  tolerance = sqrt(.Machine$double.eps),
+  ratchEW = TRUE,
+  tolerance = sqrt(.Machine[["double.eps"]]),
   constraint,
   verbosity = 3L
 )
@@ -34,7 +35,7 @@ Resample(
   finalIter = 3L,
   maxHits = 12L,
   concavity = Inf,
-  tolerance = sqrt(.Machine$double.eps),
+  tolerance = sqrt(.Machine[["double.eps"]]),
   constraint,
   verbosity = 2L,
   ...
@@ -45,10 +46,13 @@ EasyTrees()
 EasyTreesy()
 }
 \arguments{
-\item{dataset}{A phylogenetic data matrix of class \code{\link[phangorn]{phyDat}},
-whose names correspond to the labels of any accompanying tree.}
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+Additive (ordered) characters can be handled using
+\code{\link[TreeTools]{Decompose}}.}
 
-\item{tree}{(optional) A bifurcating tree of class \code{\link{phylo}},
+\item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}},
 containing only the tips listed in \code{dataset}, from which the search
 should begin.
 If unspecified, an \link[=AdditionTree]{addition tree} will be generated from
@@ -59,11 +63,11 @@ Edge lengths are not supported and will be deleted.}
 parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.}
 
 \item{tbrIter}{Numeric specifying the maximum number of \acronym{TBR}
-break points to evaluate before concluding each search.
-The counter is reset to zero each time tree score improves.
-The counter is reset to zero each time tree score improves.
-One 'iteration' comprises breaking a single branch and evaluating all
-possible reconnections.}
+break points on a given tree to evaluate before terminating the search.
+One "iteration" comprises selecting a branch to break, and evaluating
+each possible reconnection point in turn until a new tree improves the
+score. If a better score is found, then the counter is reset to zero,
+and tree search continues from the improved tree.}
 
 \item{startIter}{Numeric: an initial round of tree search with
 \code{startIter} × \code{tbrIter} \acronym{TBR} break points is conducted in
@@ -83,15 +87,23 @@ next opportunity.}
 \item{quickHits}{Numeric: iterations on subsampled datasets
 will retain \code{quickHits} × \code{maxHits} trees with the best score.}
 
-\item{concavity}{Numeric specifying concavity constant for implied step
-weighting.
-The most appropriate value will depend on the dataset, but values around
-10--15 often perform well \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
-The character string "profile" employs an approximation of profile parsimony
-\insertCite{Faith2001}{TreeSearch}.
-Set as \code{Inf} for equal step weights, which underperforms step weighting
-approaches
-\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.}
+\item{concavity}{Determines the degree to which extra steps beyond the first
+are penalized.  Specify a numeric value to use implied weighting
+\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
+\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+TNT sets a default of 3, but this is too low in some circumstances
+\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+Better still explore the sensitivity of results under a range of
+concavity values, e.g. \code{k = 2 ^ (1:7)}.
+Specify \code{Inf} to weight each additional step equally,
+(which underperforms step weighting approaches
+\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
+Specify \code{"profile"} to employ an approximation of profile parsimony
+\insertCite{Faith2001}{TreeSearch}.}
+
+\item{ratchEW}{Logical specifying whether to use equal weighting during
+ratchet iterations, improving search speed whilst still facilitating
+escape from local optima.}
 
 \item{tolerance}{Numeric specifying degree of suboptimality to tolerate
 before rejecting a tree.  The default, \code{sqrt(.Machine$double.eps)}, retains
@@ -100,10 +112,12 @@ Setting to larger values will include trees suboptimal by up to \code{tolerance}
 in search results, which may improve the accuracy of the consensus tree
 (at the expense of resolution) \insertCite{Smith2019}{TreeSearch}.}
 
-\item{constraint}{An object of class \code{phyDat}; returned trees will be
-perfectly compatible with each character in \code{constraint}.
-See \code{\link[=ImposeConstraint]{ImposeConstraint()}} and
-\href{https://ms609.github.io/TreeSearch/articles/inapplicable.html}{vignette}
+\item{constraint}{Either an object of class \code{phyDat}, in which case
+returned trees will be perfectly compatible with each character in
+\code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
+in any output tree.
+See \code{\link[TreeTools:ImposeConstraint]{ImposeConstraint()}} and
+\href{https://ms609.github.io/TreeSearch/articles/tree-search.html}{vignette}
 for further examples.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
@@ -122,14 +136,23 @@ characters to retain under jackknife resampling.}
 \code{MaximizeParsimony()} returns a list of trees with class
 \code{multiPhylo}. This lists all trees found during each search step that
 are within \code{tolerance} of the optimal score, listed in the sequence that
-they were first visited; it may contain more than \code{maxHits} elements.
+they were first visited, and named according to the step in which they were
+first found; it may contain more than \code{maxHits} elements.
 Note that the default search parameters may need to be increased in order for
 these trees to be the globally optimal trees; examine the messages printed
 during tree search to evaluate whether the optimal score has stabilized.
 
-The return value has the attribute \code{newTrees}, a named integer vector listing
+The return value has the attribute \code{firstHit}, a named integer vector listing
 the number of optimal trees visited for the first time in each stage of
-the tree search.
+the tree search. Stages are named:
+\itemize{
+\item \code{seed}: starting trees;
+\item \code{start}: Initial TBR search;
+\item \code{ratchN}: Ratchet iteration \code{N};
+\item \code{final}: Final TBR search.
+The first tree hit for the first time in ratchet iteration three is named
+\code{ratch3_1}.
+}
 
 \code{Resample()} returns a \code{multiPhylo} object containing a list of
 trees obtained by tree search using a resampled version of \code{dataset}.
@@ -155,9 +178,69 @@ A final round of tree bisection and reconnection (\acronym{TBR})
 is conducted to broaden the sampling of trees.
 
 This function can be called using the R command line / terminal, or through
-the 'shiny' graphical user interface app (type \code{EasyTrees()} to launch).
+the "shiny" graphical user interface app (type \code{EasyTrees()} to launch).
 
-For detailed documentation of the 'TreeSearch' package, including full
+The optimal strategy for tree search depends in part on how close to optimal
+the starting tree is, the size of the search space (which increases
+super-exponentially with the number of leaves), and the complexity of the
+search space (e.g. the existence of multiple local optima).
+
+One possible approach is to employ four phases:
+\enumerate{
+\item Rapid search for local optimum: tree score is typically easy to improve
+early in a search, because the initial tree is often far from optimal.
+When many moves are likely to be accepted, running several rounds of search
+with a low value of \code{maxHits} and a high value of \code{tbrIter} allows many
+trees to be evaluated quickly, hopefully moving quickly to a more promising
+region of tree space.
+\item Identification of local optimum:
+Once close to a local optimum, a more extensive search
+with a higher value of \code{maxHits} allows a region to be explored in more
+detail.  Setting a high value of \code{tbrIter} will search a local
+neighbourhood more completely
+\item Search for nearby peaks:
+Ratchet iterations allow escape from local optima.
+Setting \code{ratchIter} to a high value searches the wider neighbourhood more
+extensively for other nearby peaks; \code{ratchEW = TRUE} accelerates these
+exploratory searches.  Ratchet iterations can be ineffective when \code{maxHits}
+is too low for the search to escape its initial location.
+\item Extensive search of final optimum.  As with step 2, it may be valuable to
+fully explore the optimum that is found after ratchet searches to be sure
+that the locally optimal score has been obtained.  Setting a high value of
+\code{finalIter} performs a thorough search that can give confidence that further
+searches would not find better (local) trees.
+}
+
+A search is unlikely to have found a global optimum if:
+\itemize{
+\item Tree score continues to improve on the final iteration.  If a local optimum
+has not yet been reached, it is unlikely that a global optimum has
+been reached.
+Try increasing \code{maxHits}.
+\item Successive ratchet iterations continue to improve tree scores.
+If a recent ratchet iteration improved the score, rather than finding
+a different region of tree space with the same optimal score, it is likely
+that still better global optima remain to be found.  Try increasing
+\code{ratchIter} (more iterations give more chance for improvement) and
+\code{maxHits} (to get closer to the local optimum after each ratchet iteration).
+\item Optimal areas of tree space are only visited by a single ratchet iteration.
+(See vignette: \href{https://ms609.github.io/TreeSearch/articles/tree-space.html}{Exploring tree space}.)
+If some areas of tree space are only found by one ratchet iteration, there
+may well be other, better areas that have not yet been visited.
+Try increasing \code{ratchIter}.
+}
+
+When continuing a tree search, it is usually best to start from an optimal
+tree found during the previous iteration – there is no need to start from
+scratch.
+
+A more time consuming way of checking that a global optimum has been reached
+is to repeat a search with the same parameters multiple times, starting
+from a different, entirely random tree each time. If all searches obtain the
+same optimal tree score despite their different starting points,
+this score is likely to correspond to the global optimum.
+
+For detailed documentation of the "TreeSearch" package, including full
 instructions for loading phylogenetic data into R and initiating and
 configuring tree search, see the
 \href{https://ms609.github.io/TreeSearch/}{package documentation}.
@@ -188,7 +271,7 @@ For other ways to estimate clade concordance, see \code{\link[=SiteConcordance]{
 \examples{
 ## Only run examples in interactive R sessions
 if (interactive()) {
-  # launch 'shiny' point-and-click interface
+  # launch "shiny" point-and-click interface
   EasyTrees()
   
   # Here too, use the "continue search" function to ensure that tree score
@@ -197,14 +280,15 @@ if (interactive()) {
 
 
 # Load data for analysis in R
-library('TreeTools')
-data('congreveLamsdellMatrices', package = 'TreeSearch')
+library("TreeTools")
+data("congreveLamsdellMatrices", package = "TreeSearch")
 dataset <- congreveLamsdellMatrices[[42]]
 
 # A very quick run for demonstration purposes
 trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
                            tbrIter = 1, maxHits = 4, maxTime = 1/100,
                            concavity = 10, verbosity = 4)
+names(trees)
 
 # In actual use, be sure to check that the score has converged on a global
 # optimum, conducting additional iterations and runs as necessary.
@@ -253,6 +337,7 @@ Tree search \emph{via} graphical user interface: \code{\link[=EasyTrees]{EasyTre
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
+\code{\link{PresCont}()},
 \code{\link{SiteConcordance}}
 }
 \author{

@@ -15,8 +15,6 @@ mpl_second_down_recon(node_id, left_id, right_id, morphyobj)
 \item{right_id}{The index of the right descendant.}
 
 \item{morphyobj}{An instance of the Morphy object.}
-
-\item{anc_id}{The index of the immediate ancestor of the node.}
 }
 \value{
 The integral parsimony length (right now)
@@ -43,7 +41,6 @@ Other Morphy API functions:
 \code{\link{mpl_attach_rawdata}()},
 \code{\link{mpl_attach_symbols}()},
 \code{\link{mpl_delete_Morphy}()},
-\code{\link{mpl_delete_rawdata}()},
 \code{\link{mpl_first_down_recon}()},
 \code{\link{mpl_first_up_recon}()},
 \code{\link{mpl_get_charac_weight}()},

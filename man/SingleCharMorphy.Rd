@@ -8,7 +8,7 @@ SingleCharMorphy(char, gap = "inapp")
 }
 \arguments{
 \item{char}{State of each character at each tip in turn, in a format that will be converted
-to a character string by \code{\link{paste0}(char, ';', collapse='')}.}
+to a character string by \code{\link{paste0}(char, ";", collapse="")}.}
 
 \item{gap}{An unambiguous abbreviation of \code{inapplicable}, \code{ambiguous}
 (= \code{missing}), or \verb{extra state}, specifying how gaps will be handled.}
@@ -21,11 +21,13 @@ Don't forget to unload it when you've finished with it.
 Morphy object from single character
 }
 \examples{
-morphyObj <- SingleCharMorphy('-0-0', gap = 'Extra')
+morphyObj <- SingleCharMorphy("-0-0", gap = "Extra")
 RandomTreeScore(morphyObj)
 morphyObj <- UnloadMorphy(morphyObj)
 }
 \seealso{
+Score a tree: \code{\link[=MorphyTreeLength]{MorphyTreeLength()}}
+
 Other Morphy API functions: 
 \code{\link{GapHandler}()},
 \code{\link{MorphyErrorCheck}()},
@@ -37,7 +39,6 @@ Other Morphy API functions:
 \code{\link{mpl_attach_rawdata}()},
 \code{\link{mpl_attach_symbols}()},
 \code{\link{mpl_delete_Morphy}()},
-\code{\link{mpl_delete_rawdata}()},
 \code{\link{mpl_first_down_recon}()},
 \code{\link{mpl_first_up_recon}()},
 \code{\link{mpl_get_charac_weight}()},

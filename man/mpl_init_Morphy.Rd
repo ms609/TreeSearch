@@ -7,12 +7,12 @@
 mpl_init_Morphy(numtaxa, numchars, morphyobj)
 }
 \arguments{
-\item{morphyobj}{An instance of the Morphy object.}
+\item{numtaxa}{The number of taxa (or tips/terminals).}
 
-\item{ntax}{The number of taxa (or tips/terminals).}
-
-\item{nchar}{The number of characters (i.e. transformation series) in the
+\item{numchars}{The number of characters (i.e. transformation series) in the
 data set.}
+
+\item{morphyobj}{An instance of the Morphy object.}
 }
 \value{
 Morphy error code.
@@ -34,7 +34,6 @@ Other Morphy API functions:
 \code{\link{mpl_attach_rawdata}()},
 \code{\link{mpl_attach_symbols}()},
 \code{\link{mpl_delete_Morphy}()},
-\code{\link{mpl_delete_rawdata}()},
 \code{\link{mpl_first_down_recon}()},
 \code{\link{mpl_first_up_recon}()},
 \code{\link{mpl_get_charac_weight}()},

@@ -39,20 +39,22 @@ RootedSPRSwap(
 )
 }
 \arguments{
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A bifurcating tree of class \code{\link[ape]{phylo}}, with all nodes resolved;}
 
 \item{edgeToBreak}{the index of an edge to bisect, generated randomly if not specified.}
 
 \item{mergeEdge}{the index of an edge on which to merge the broken edge.}
 
 \item{parent}{Integer vector corresponding to the first column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 1]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 1]}}
 
 \item{child}{Integer vector corresponding to the second column of the edge
-matrix of a tree of class \code{\link{phylo}}, i.e. \code{tree$edge[, 2]}.}
+matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
+\code{tree[["edge"]][, 2]}.}
 
 \item{nEdge}{(optional) integer specifying the number of edges of a tree of
-class \code{\link{phylo}}, i.e. \code{dim(tree$edge)[1]}}
+class \code{\link[ape]{phylo}}, i.e. \code{dim(tree$edge)[1]}}
 
 \item{nNode}{(optional) Number of nodes.}
 }
@@ -71,7 +73,7 @@ a list containing two elements, corresponding in turn to the rearranged parent a
 Perform one \acronym{SPR} rearrangement on a tree
 }
 \details{
-Equivalent to \code{kSPR} in the \code{phangorn} package, but faster.
+Equivalent to \code{kSPR()} in the \pkg{phangorn} package, but faster.
 Note that rearrangements that only change the position of the root WILL be returned by
 \code{SPR}.  If the position of the root is irrelevant (as in Fitch parsimony, for example)
 then this function will occasionally return a functionally equivalent topology.
@@ -83,13 +85,13 @@ All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collap
 }
 \section{Functions}{
 \itemize{
-\item \code{SPRSwap}: faster version that takes and returns parent and child parameters
+\item \code{SPRSwap()}: faster version that takes and returns parent and child parameters
 
-\item \code{RootedSPR}: Perform \acronym{SPR} rearrangement, retaining position of root
+\item \code{RootedSPR()}: Perform \acronym{SPR} rearrangement, retaining position of root
 
-\item \code{RootedSPRSwap}: faster version that takes and returns parent and child parameters
+\item \code{RootedSPRSwap()}: faster version that takes and returns parent and child parameters
+
 }}
-
 \examples{
 {
 tree <- ape::rtree(20, br=FALSE)

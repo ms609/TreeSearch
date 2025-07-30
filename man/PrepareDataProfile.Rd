@@ -22,7 +22,7 @@ character when subject to N additional steps.
 \item \code{informative}: logical specifying which characters contain any
 phylogenetic information.
 \item \code{bootstrap}: The character vector
-\code{c('info.amounts', 'split.sizes')}, indicating attributes to sample
+\code{c("info.amounts", "split.sizes")}, indicating attributes to sample
 when bootstrapping the dataset (e.g. in Ratchet searches).
 }
 
@@ -42,17 +42,17 @@ implementation of profile parsimony:
 \item Ambiguous tokens will be treated as fully ambiguous
 (i.e. \code{{02}} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?})
 \item Where more than two states are informative (i.e. unambiguously present in
-more than two taxa), states beyond the two most informative will be
+more than one taxon), states beyond the two most informative will be
 ignored.
 }
 }
 \section{Functions}{
 \itemize{
-\item \code{PrepareDataIW}: Prepare data for implied weighting
-}}
+\item \code{PrepareDataIW()}: Prepare data for implied weighting
 
+}}
 \examples{
-data('congreveLamsdellMatrices')
+data("congreveLamsdellMatrices")
 dataset <- congreveLamsdellMatrices[[42]]
 PrepareDataProfile(dataset)
 }
@@ -60,6 +60,7 @@ PrepareDataProfile(dataset)
 Other profile parsimony functions: 
 \code{\link{Carter1}()},
 \code{\link{StepInformation}()},
+\code{\link{WithOneExtraStep}()},
 \code{\link{profiles}}
 }
 \author{

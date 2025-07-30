@@ -9,15 +9,16 @@
 #' or e-mail the maintainer.
 #' 
 #' @inheritParams Ratchet
-#' @template EdgeSwapperParam
 #' @param resampleFreq Double between 0 and 1 stating proportion of characters 
 #' to resample.
 #' @param jackIter Integer specifying number of jackknife iterations to conduct.
 #' @return `Jackknife()` returns a list of trees recovered after jackknife
 #' iterations.
-#' @author Martin R. Smith
+#' @template MRS
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @seealso 
+#' - [`Resample()`]: Jackknife resampling for non-custom searches performed
+#'   using `MaximizeParsimony()`.
 #' - [`JackLabels()`]: Label nodes of a tree with jackknife supports.
 #' @family split support functions
 #' @family custom search functions
@@ -31,17 +32,17 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
                        searchIter = 4000L, searchHits = 42L,
                        verbosity = 1L, ...) {
   # initialize tree and data
-  if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+  if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     stop("tree must be bifurcating; try rooting with ape::root")
   }
   tree <- RenumberTips(tree, names(dataset))
-  edgeList <- tree$edge
+  edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
   
   morphyObj <- InitializeData(dataset)
   on.exit(morphyObj <- CleanUpData(morphyObj))
   
-  startWeights <- MorphyWeights(morphyObj)['exact', ]
+  startWeights <- MorphyWeights(morphyObj)["exact", ]
   eachChar <- seq_along(startWeights)
   deindexedChars <- rep.int(eachChar, startWeights)
   charsToKeep <- ceiling(resampleFreq * length(deindexedChars))
@@ -80,17 +81,17 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
   
   jackTrees <- structure(apply(jackEdges, 2, function(edgeList) {
     ret <- tree
-    ret$edge <- cbind(edgeList[[1]], edgeList[[2]])
+    ret[["edge"]] <- cbind(edgeList[[1]], edgeList[[2]])
     ret
-  }), class = 'multiPhylo')
+  }), class = "multiPhylo")
 }
 
 
 #' Label nodes with jackknife support values
 #' 
-#' @template treeParam
+#' @inheritParams TreeTools::Renumber
 #' @param jackTrees A list or `multiPhylo` object containing trees generated
-#' by [`Jackknife()`].
+#' by [`Resample()`] or [`Jackknife()`].
 #' @param add Logical specifying whether to add the labels to an existing
 #' plot.
 #' @param adj,col,frame,pos,\dots Parameters to pass to `nodelabels()`.
@@ -105,39 +106,50 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
 #' by `phylo$node.label`.
 #' 
 #' @examples
-#' library('TreeTools', quietly = TRUE) # for as.phylo
+#' library("TreeTools", quietly = TRUE) # for as.phylo
 #' 
-#' # jackTrees will usually be generated with Jackknife(), but for simplicity:
+#' # jackTrees will usually be generated with Jackknife() or Resample(),
+#' # but for simplicity:
 #' jackTrees <- as.phylo(1:100, 8)
 #' 
 #' tree <- as.phylo(0, 8)
 #' JackLabels(tree, jackTrees)
 #' 
 #' tree$node.label <- JackLabels(tree, jackTrees, plot = FALSE)
+#' 
+#' # Write the labelled tree to screen
+#' ape::write.tree(tree)
+#'
+#' # Write labelled trees to a nexus file:
+#' # write.nexus(tree, file = filename)
 #' @template MRS
 #' @importFrom ape nodelabels
 #' @importFrom TreeTools SplitFrequency SupportColour
-#' @seealso [`Jackknife()`]: Generate trees by jackknife resampling
+#' @seealso
+#' Generate trees by jackknife resampling using [`Resample()`] for standard
+#' parsimony searches, or [`Jackknife()`] for custom search criteria.
 #' @family split support functions
 #' @export
 JackLabels <- function (tree, jackTrees,
                         plot = TRUE,
                         add = FALSE,
-                        adj = 0, col = NULL, frame = 'none', pos = 2L,
+                        adj = 0, col = NULL, frame = "none", pos = 2L,
                         ...) {
   jackSupport <- SplitFrequency(tree, jackTrees) / length(jackTrees)
   
   if (plot) {
     if (!add) plot(tree)
-    if (is.null(col)) col <- SupportColour(jackSupport)
-    ape::nodelabels(paste('\n\n', signif(jackSupport, 2)), 
-                    node = as.integer(names(jackSupport)),
-                    adj = adj, col = col, pos = pos, frame = frame, ...)
+    if (is.null(col)) {
+      col <- SupportColour(jackSupport)
+    }
+    nodelabels(paste("\n\n", signif(jackSupport, 2)),
+               node = as.integer(names(jackSupport)),
+               adj = adj, col = col, pos = pos, frame = frame, ...)
     
     # Return:
     jackSupport
   } else {
-    ret <- character(tree$Nnode)
+    ret <- character(tree[["Nnode"]])
     ret[as.integer(names(jackSupport)) - NTip(tree)] <- jackSupport
     
     # Return:

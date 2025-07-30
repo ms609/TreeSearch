@@ -9,10 +9,12 @@ Suboptimality(trees, proportional = FALSE)
 \arguments{
 \item{trees}{list of trees, to include an optimal tree}
 
-\item{proprtional}{logical stating whether to normalise results to lowest score}
+\item{proportional}{logical stating whether to normalise results to lowest
+score}
 }
 \value{
-a vector listing, for each tree, how much their score differs from the optimal (lowest) score.
+\code{Suboptimality()} returns a vector listing, for each tree, how much
+its score differs from the optimal (lowest) score.
 }
 \description{
 How suboptimal is a tree?

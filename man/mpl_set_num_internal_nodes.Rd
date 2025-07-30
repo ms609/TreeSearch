@@ -7,9 +7,9 @@
 mpl_set_num_internal_nodes(numnodes, morphyobj)
 }
 \arguments{
-\item{morphyobj}{An instance of the Morphy object.}
+\item{numnodes}{The desired number of internal nodes.}
 
-\item{nnodes}{The desired number of internal nodes.}
+\item{morphyobj}{An instance of the Morphy object.}
 }
 \value{
 A Morphy error code.
@@ -32,7 +32,6 @@ Other Morphy API functions:
 \code{\link{mpl_attach_rawdata}()},
 \code{\link{mpl_attach_symbols}()},
 \code{\link{mpl_delete_Morphy}()},
-\code{\link{mpl_delete_rawdata}()},
 \code{\link{mpl_first_down_recon}()},
 \code{\link{mpl_first_up_recon}()},
 \code{\link{mpl_get_charac_weight}()},

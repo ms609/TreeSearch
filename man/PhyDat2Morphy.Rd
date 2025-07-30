@@ -4,13 +4,16 @@
 \alias{PhyDat2Morphy}
 \title{Initialize a Morphy object from a \code{phyDat} object}
 \usage{
-PhyDat2Morphy(phy, gap = "inapplicable")
+PhyDat2Morphy(phy, gap = "inapplicable", weight = attr(phy, "weight"))
 }
 \arguments{
-\item{phy}{An object of class \code{\link{phyDat}}.}
+\item{phy}{An object of \pkg{phangorn} class \code{phyDat}.}
 
 \item{gap}{An unambiguous abbreviation of \code{inapplicable}, \code{ambiguous}
 (= \code{missing}), or \verb{extra state}, specifying how gaps will be handled.}
+
+\item{weight}{Numeric giving weight to apply to each character.
+Will be recycled.}
 }
 \value{
 \code{PhyDat2Morphy()} returns a pointer to an initialized Morphy object.
@@ -22,7 +25,7 @@ Once finished with the object, it should be destroyed using
 \code{\link[=UnloadMorphy]{UnloadMorphy()}} to free the allocated memory.
 }
 \examples{
-data('Lobo', package='TreeTools')
+data("Lobo", package="TreeTools")
 morphyObj <- PhyDat2Morphy(Lobo.phy)
 # Set object to be destroyed at end of session or closure of function
 # on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
@@ -45,7 +48,6 @@ Other Morphy API functions:
 \code{\link{mpl_attach_rawdata}()},
 \code{\link{mpl_attach_symbols}()},
 \code{\link{mpl_delete_Morphy}()},
-\code{\link{mpl_delete_rawdata}()},
 \code{\link{mpl_first_down_recon}()},
 \code{\link{mpl_first_up_recon}()},
 \code{\link{mpl_get_charac_weight}()},

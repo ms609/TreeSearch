@@ -1,0 +1,96 @@
+
+# # # TreeSearch session log: <DATE-AND-TIME> # # #
+# 
+# System: <SYS-INFO>
+# - R <VERSION>
+# - TreeSearch <VERSION>
+# - TreeTools <VERSION>
+# - TreeDist <VERSION>
+# - ape <VERSION>
+# 
+# This log was generated procedurally to facilitate the reproduction of
+# results obtained during an interactive Shiny session.
+# It is provided without guarantee of completeness or accuracy.
+# In particular, code will not be logged when previously computed values
+# are retrieved from cache.
+# 
+# Before running, check that the script and any data files are in the
+# R working directory, which can be read with getwd() and set with setwd().
+# 
+# Please validate the code before reproducing in a manuscript, reporting
+# any errors at https://github.com/ms609/treesearch/issues or by e-mail to
+# the package maintainer.
+# 
+# # # # # #
+
+
+# Load required libraries
+library("TreeTools", quietly = TRUE)
+library("TreeDist")
+library("TreeSearch")
+
+# View recommended citations
+citation("TreeTools")
+citation("TreeDist")
+citation("TreeSearch")
+citation("Rogue")
+
+# Load dataset file from TreeSearch package
+dataFile <- system.file("datasets/Wills2012.nex", package = "TreeSearch")
+dataset <- ReadAsPhyDat(dataFile)
+
+# Read trees from dataset file
+newTrees <- read.nexus(dataFile)
+allTrees <- newTrees
+trees <- allTrees[unique(as.integer(seq.int(1, 150, length.out = 48)))]
+
+
+# Check for rogue taxa
+
+# Use RogueTaxa() in place of QuickRogue() for a more complete analysis
+rogues <- Rogue::QuickRogue(
+  trees,
+  fullSeq = TRUE,
+  p = 1
+)
+print(rogues) # Detailed results of rogue analysis
+print(rogues$taxon[-1]) # Sequence of taxa to drop
+
+# Select starting tree
+startTree <- trees[[20]] # First tree with optimal score
+
+# Search for optimal trees
+newTrees <- MaximizeParsimony(
+  dataset,
+  tree = startTree,
+  concavity = Inf,
+  ratchIter = 4,
+  tbrIter = 2,
+  maxHits = 20,
+  maxTime = 30,
+  startIter = 1.6,
+  finalIter = 1.4,
+  tolerance = 1,
+  verbosity = 4
+)
+
+# Overwrite any previous trees with results
+if (inherits(newTrees, "phylo")) {
+  trees <- list(newTrees)
+  attr(trees, "firstHit") <- attr(newTrees, "firstHit")
+  attr(trees[[1]], "firstHit") <- NULL
+}
+allTrees <- newTrees
+trees <- allTrees[unique(as.integer(seq.int(1, 49, length.out = 48)))]
+
+
+# Check for rogue taxa
+
+# Use RogueTaxa() in place of QuickRogue() for a more complete analysis
+rogues <- Rogue::QuickRogue(
+  trees,
+  fullSeq = TRUE,
+  p = 1
+)
+print(rogues) # Detailed results of rogue analysis
+print(rogues$taxon[-1]) # Sequence of taxa to drop

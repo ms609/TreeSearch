@@ -3,6 +3,7 @@
 /docs/
 gen-*
 src-*
+src/*.gcda
 src/*.o
 src/*.so
 src/*.dll
@@ -27,7 +28,9 @@ vignettes/*_files
 vignettes/*_cache*
 *.Rproj*
 .Rproj.user
+!TreeSearch.Rproj
 *.site
 gen-*tip/*
 results-*
 inst/DELETE*
+*.bak

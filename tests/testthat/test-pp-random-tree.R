@@ -6,10 +6,10 @@ MorphyWith <- function (char) {
   MorphyAction(mpl_init_Morphy(nTip, 1, morphyObj)) 
   MorphyAction(mpl_attach_rawdata(char, morphyObj)) 
   MorphyAction(mpl_set_num_internal_nodes(nTip - 1L, morphyObj)) 
-  MorphyAction(mpl_set_parsim_t(1, 'FITCH', morphyObj))
+  MorphyAction(mpl_set_parsim_t(1, "FITCH", morphyObj))
   MorphyAction(mpl_set_charac_weight(1, 1, morphyObj)) 
   MorphyAction(mpl_apply_tipdata(morphyObj))
-  class(morphyObj) <- 'morphyPtr'
+  class(morphyObj) <- "morphyPtr"
   morphyObj
 }
 
@@ -38,14 +38,13 @@ test_that("four-tip trees are randomly distributed", {
 })
 
 test_that("four-tip trees are randomly scored", {
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(0)
   
   nTrees <- 6000
   stringency <- 0.005
   nTip <- 4
   
-  morphyObj <- MorphyWith('0011;')
+  morphyObj <- MorphyWith("0011;")
   on.exit(morphyObj <- UnloadMorphy(morphyObj))
   
   expectedBounds <- qbinom(c(stringency, 1 - stringency), nTrees,
@@ -57,12 +56,11 @@ test_that("four-tip trees are randomly scored", {
 })
 
 test_that("five-tip trees are randomly scored", {
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(0)
   nTrees <- 6000
   stringency <- 0.005
   nTip <- 5
-  morphyObj <- MorphyWith('00011;')
+  morphyObj <- MorphyWith("00011;")
   on.exit(morphyObj <- UnloadMorphy(morphyObj))
   expectedBounds <- qbinom(c(stringency, 1-stringency), nTrees,
                            NUnrooted(nTip - 1) / NUnrooted(nTip))
@@ -75,14 +73,13 @@ test_that("five-tip trees are randomly scored", {
 
 
 test_that("six-tip trees are randomly scored", {
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
   set.seed(0)
   
   nTrees <- 6000
   stringency <- 0.005
   nTip <- 6
   
-  morphyObj <- MorphyWith('000011;')
+  morphyObj <- MorphyWith("000011;")
   on.exit(morphyObj <- UnloadMorphy(morphyObj))
   expectedBounds <- qbinom(c(stringency, 1-stringency), nTrees,
                            NUnrooted(5) / NUnrooted(6))
@@ -94,7 +91,7 @@ test_that("six-tip trees are randomly scored", {
   expect_lt(expectedBounds[1], sum(scores==1))
   expect_gt(expectedBounds[2], sum(scores==1))
   
-  morphyObj <- MorphyWith('001122;')
+  morphyObj <- MorphyWith("001122;")
   expectedBounds <- qbinom(c(stringency, 1 - stringency), nTrees,
                            7 / NUnrooted(nTip))
   scores <- vapply(logical(nTrees), 
@@ -106,7 +103,7 @@ test_that("six-tip trees are randomly scored", {
   expect_lt(expectedBounds[1], sum(scores == 2))
   expect_gt(expectedBounds[2], sum(scores == 2))
   
-  morphyObj <- MorphyWith('000111;')
+  morphyObj <- MorphyWith("000111;")
   expectedBounds <- qbinom(c(stringency, 1-stringency), nTrees,
                            3 * 3 / NUnrooted(nTip))
   scores <- vapply(logical(nTrees),
@@ -123,7 +120,7 @@ test_that("twelve-tip trees are randomly scored", {
   nTrees <- 12000 # 12000 seems to throw false +ve too often?
   stringency <- 0.01 #  increased from 0.005 to avoid false +ves
   nTip <- 12
-  morphyObj <- MorphyWith('000000011111;')
+  morphyObj <- MorphyWith("000000011111;")
   on.exit(morphyObj <- UnloadMorphy(morphyObj))
   expectedBounds <- qbinom(c(stringency, 1 - stringency), nTrees, 
                            NUnrooted(7) * (2 * 7 - 3) *

@@ -21,9 +21,9 @@ generated from the \link{referenceTree} topology, with
 all branches sharing an equal length.
 }
 \examples{
-data('referenceTree')
-data('congreveLamsdellMatrices')
-TreeLength(referenceTree, congreveLamsdellMatrices[[17]], 'profile')
+data("referenceTree")
+data("congreveLamsdellMatrices")
+TreeLength(referenceTree, congreveLamsdellMatrices[[17]], "profile")
 
 }
 \references{

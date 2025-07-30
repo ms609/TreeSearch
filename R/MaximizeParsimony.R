@@ -19,18 +19,84 @@
 #' is conducted to broaden the sampling of trees.
 #' 
 #' This function can be called using the R command line / terminal, or through
-#' the 'shiny' graphical user interface app (type `EasyTrees()` to launch).
+#' the "shiny" graphical user interface app (type `EasyTrees()` to launch).
 #' 
+#' The optimal strategy for tree search depends in part on how close to optimal
+#' the starting tree is, the size of the search space (which increases
+#' super-exponentially with the number of leaves), and the complexity of the
+#' search space (e.g. the existence of multiple local optima).
+#' 
+#' One possible approach is to employ four phases:
+#' 
+#' 1. Rapid search for local optimum: tree score is typically easy to improve
+#'  early in a search, because the initial tree is often far from optimal.
+#'  When many moves are likely to be accepted, running several rounds of search
+#' with a low value of `maxHits` and a high value of `tbrIter` allows many
+#' trees to be evaluated quickly, hopefully moving quickly to a more promising
+#' region of tree space.
+#' 
+#' 2. Identification of local optimum:
+#' Once close to a local optimum, a more extensive search
+#' with a higher value of `maxHits` allows a region to be explored in more
+#' detail.  Setting a high value of `tbrIter` will search a local
+#' neighbourhood more completely
+#' 
+#' 3. Search for nearby peaks:
+#' Ratchet iterations allow escape from local optima.
+#' Setting `ratchIter` to a high value searches the wider neighbourhood more
+#' extensively for other nearby peaks; `ratchEW = TRUE` accelerates these
+#' exploratory searches.  Ratchet iterations can be ineffective when `maxHits`
+#' is too low for the search to escape its initial location.
+#' 
+#' 4. Extensive search of final optimum.  As with step 2, it may be valuable to
+#' fully explore the optimum that is found after ratchet searches to be sure
+#' that the locally optimal score has been obtained.  Setting a high value of
+#' `finalIter` performs a thorough search that can give confidence that further
+#' searches would not find better (local) trees.
+#' 
+#' A search is unlikely to have found a global optimum if:
+#'   
+#' - Tree score continues to improve on the final iteration.  If a local optimum
+#'   has not yet been reached, it is unlikely that a global optimum has
+#'   been reached.
+#'   Try increasing `maxHits`.
+#'   
+#' - Successive ratchet iterations continue to improve tree scores.
+#'   If a recent ratchet iteration improved the score, rather than finding
+#'   a different region of tree space with the same optimal score, it is likely
+#'   that still better global optima remain to be found.  Try increasing
+#'   `ratchIter` (more iterations give more chance for improvement) and
+#'   `maxHits` (to get closer to the local optimum after each ratchet iteration).
+#' 
+#' - Optimal areas of tree space are only visited by a single ratchet iteration.
+#'   (See vignette: [Exploring tree space](
+#'   https://ms609.github.io/TreeSearch/articles/tree-space.html).)
+#'   If some areas of tree space are only found by one ratchet iteration, there
+#'   may well be other, better areas that have not yet been visited.
+#'   Try increasing `ratchIter`.
 #'  
-#' For detailed documentation of the 'TreeSearch' package, including full 
+#' When continuing a tree search, it is usually best to start from an optimal
+#' tree found during the previous iteration – there is no need to start from
+#' scratch.
+#' 
+#' A more time consuming way of checking that a global optimum has been reached
+#' is to repeat a search with the same parameters multiple times, starting
+#' from a different, entirely random tree each time. If all searches obtain the
+#' same optimal tree score despite their different starting points,
+#' this score is likely to correspond to the global optimum.
+#'  
+#' For detailed documentation of the "TreeSearch" package, including full
 #' instructions for loading phylogenetic data into R and initiating and 
 #' configuring tree search, see the 
 #' [package documentation](https://ms609.github.io/TreeSearch/).
 #'  
 #' 
-#' 
-#' @template datasetParam
-#' @param tree (optional) A bifurcating tree of class \code{\link{phylo}},
+#' @param dataset A phylogenetic data matrix of \pkg{phangorn} class
+#' \code{phyDat}, whose names correspond to the labels of any accompanying tree.
+#' Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+#' Additive (ordered) characters can be handled using
+#' \code{\link[TreeTools]{Decompose}}.
+#' @param tree (optional) A bifurcating tree of class \code{\link[ape]{phylo}},
 #' containing only the tips listed in `dataset`, from which the search
 #' should begin.
 #' If unspecified, an [addition tree][AdditionTree()] will be generated from
@@ -39,11 +105,11 @@
 #' @param ratchIter Numeric specifying number of iterations of the 
 #' parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.
 #' @param tbrIter Numeric specifying the maximum number of \acronym{TBR}
-#' break points to evaluate before concluding each search.
-#' The counter is reset to zero each time tree score improves.
-#' The counter is reset to zero each time tree score improves.
-#' One 'iteration' comprises breaking a single branch and evaluating all 
-#' possible reconnections.
+#' break points on a given tree to evaluate before terminating the search.
+#' One "iteration" comprises selecting a branch to break, and evaluating
+#' each possible reconnection point in turn until a new tree improves the
+#' score. If a better score is found, then the counter is reset to zero,
+#' and tree search continues from the improved tree.
 #' @param startIter Numeric: an initial round of tree search with
 #' `startIter` &times; `tbrIter` \acronym{TBR} break points is conducted in
 #' order to locate a local optimum before beginning ratchet searches. 
@@ -57,25 +123,34 @@
 #' next opportunity.
 #' @param quickHits Numeric: iterations on subsampled datasets
 #'  will retain `quickHits` &times; `maxHits` trees with the best score.
-#' @param concavity Numeric specifying concavity constant for implied step 
-#' weighting.
-#' The most appropriate value will depend on the dataset, but values around
-#' 10--15 often perform well \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
-#' The character string "profile" employs an approximation of profile parsimony
+#' @param concavity Determines the degree to which extra steps beyond the first
+#' are penalized.  Specify a numeric value to use implied weighting
+#' \insertCite{Goloboff1993}{TreeSearch}; `concavity` specifies _k_ in
+#'  _k_ / _e_ + _k_. A value of 10 is recommended;
+#' TNT sets a default of 3, but this is too low in some circumstances
+#' \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+#' Better still explore the sensitivity of results under a range of
+#' concavity values, e.g. `k = 2 ^ (1:7)`.
+#' Specify `Inf` to weight each additional step equally,
+#' (which underperforms step weighting approaches
+#' \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
+#' Specify `"profile"` to employ an approximation of profile parsimony
 #' \insertCite{Faith2001}{TreeSearch}.
-#' Set as `Inf` for equal step weights, which underperforms step weighting
-#' approaches
-#' \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}.
+#' @param ratchEW Logical specifying whether to use equal weighting during
+#' ratchet iterations, improving search speed whilst still facilitating
+#' escape from local optima.
 #' @param tolerance Numeric specifying degree of suboptimality to tolerate
 #' before rejecting a tree.  The default, `sqrt(.Machine$double.eps)`, retains
 #' trees that may be equally parsimonious but for rounding errors.  
 #' Setting to larger values will include trees suboptimal by up to `tolerance`
 #' in search results, which may improve the accuracy of the consensus tree
 #' (at the expense of resolution) \insertCite{Smith2019}{TreeSearch}.
-#' @param constraint An object of class `phyDat`; returned trees will be
-#' perfectly compatible with each character in `constraint`.
-#' See [`ImposeConstraint()`] and 
-#' [vignette](https://ms609.github.io/TreeSearch/articles/inapplicable.html)
+#' @param constraint Either an object of class `phyDat`, in which case
+#' returned trees will be perfectly compatible with each character in
+#' `constraint`; or a tree of class `phylo`, all of whose nodes will occur
+#' in any output tree.
+#' See \code{\link[TreeTools:ImposeConstraint]{ImposeConstraint()}} and 
+#' [vignette](https://ms609.github.io/TreeSearch/articles/tree-search.html)
 #' for further examples.
 #' @param verbosity Integer specifying level of messaging; higher values give
 #' more detailed commentary on search progress. Set to `0` to run silently.
@@ -84,19 +159,26 @@
 #' @return `MaximizeParsimony()` returns a list of trees with class
 #' `multiPhylo`. This lists all trees found during each search step that
 #' are within `tolerance` of the optimal score, listed in the sequence that
-#' they were first visited; it may contain more than `maxHits` elements.
+#' they were first visited, and named according to the step in which they were
+#' first found; it may contain more than `maxHits` elements.
 #' Note that the default search parameters may need to be increased in order for
 #' these trees to be the globally optimal trees; examine the messages printed
 #' during tree search to evaluate whether the optimal score has stabilized.
 #' 
-#' The return value has the attribute `newTrees`, a named integer vector listing
+#' The return value has the attribute `firstHit`, a named integer vector listing
 #' the number of optimal trees visited for the first time in each stage of
-#' the tree search.
+#' the tree search. Stages are named:
+#' - `seed`: starting trees;
+#' - `start`: Initial TBR search;
+#' - `ratchN`: Ratchet iteration `N`;
+#' - `final`: Final TBR search.
+#' The first tree hit for the first time in ratchet iteration three is named
+#' `ratch3_1`.
 #' 
 #' @examples
 #' ## Only run examples in interactive R sessions
 #' if (interactive()) {
-#'   # launch 'shiny' point-and-click interface
+#'   # launch "shiny" point-and-click interface
 #'   EasyTrees()
 #'   
 #'   # Here too, use the "continue search" function to ensure that tree score
@@ -105,14 +187,15 @@
 #' 
 #' 
 #' # Load data for analysis in R
-#' library('TreeTools')
-#' data('congreveLamsdellMatrices', package = 'TreeSearch')
+#' library("TreeTools")
+#' data("congreveLamsdellMatrices", package = "TreeSearch")
 #' dataset <- congreveLamsdellMatrices[[42]]
 #' 
 #' # A very quick run for demonstration purposes
 #' trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
 #'                            tbrIter = 1, maxHits = 4, maxTime = 1/100,
 #'                            concavity = 10, verbosity = 4)
+#' names(trees)
 #'
 #' # In actual use, be sure to check that the score has converged on a global
 #' # optimum, conducting additional iterations and runs as necessary.
@@ -153,11 +236,10 @@
 #' 
 #' @template MRS
 #' 
-#' @importFrom cli cli_alert cli_alert_danger cli_alert_info cli_alert_success cli_alert_warning
-#' cli_h1 
+#' @importFrom cli cli_alert cli_alert_danger cli_alert_info cli_alert_success
+#' cli_alert_warning cli_h1 
 #' cli_progress_bar cli_progress_done cli_progress_update
 #' @importFrom fastmatch fmatch
-#' @importFrom phangorn Descendants
 #' @importFrom stats runif
 #' @importFrom TreeTools
 #' AddUnconstrained 
@@ -166,6 +248,7 @@
 #' DropTip
 #' ImposeConstraint
 #' MakeTreeBinary
+#' MatrixToPhyDat
 #' NTip
 #' @references
 #' \insertAllCited{}
@@ -175,14 +258,15 @@
 #' @encoding UTF-8
 #' @export
 MaximizeParsimony <- function (dataset, tree,
-                               ratchIter = 6L,
+                               ratchIter = 7L,
                                tbrIter = 2L,
                                startIter = 2L, finalIter = 1L,
                                maxHits = NTip(dataset) * 1.8,
                                maxTime = 60,
                                quickHits = 1 / 3,
                                concavity = Inf,
-                               tolerance = sqrt(.Machine$double.eps),
+                               ratchEW = TRUE,
+                               tolerance = sqrt(.Machine[["double.eps"]]),
                                constraint,
                                verbosity = 3L) {
 
@@ -195,7 +279,9 @@ MaximizeParsimony <- function (dataset, tree,
   .Heading <- function (text, ...) {
     if (0 < verbosity) {
       cli_h1(text)
-      cli_alert(paste0(...))
+      if (length(list(...))) {
+        cli_alert(paste0(...))
+      }
     }
   }
   .Info <- function (level, ...) {
@@ -262,16 +348,16 @@ MaximizeParsimony <- function (dataset, tree,
     
     while (iter < tbrIter) {
       iter <- iter + 1L
-      optTbr <- sample(3:(nTip * 2 - 2))
-      .Message(4L, "New TBR iteration (depth ", iter, 
+      brkOptions <- sample(3:(nTip * 2 - 2))
+      .Message(4L, " New TBR iteration (depth ", iter, 
                ", score ", signif(bestScore), ")")
-      cli_progress_update(set = 0, total = length(optTbr))
+      cli_progress_update(set = 0, total = length(brkOptions))
       
-      for (brk in optTbr) {
-        cli_progress_update(1, status = paste0('D', iter, ", score ",
+      for (brk in brkOptions) {
+        cli_progress_update(1, status = paste0("D", iter, ", score ",
                                                signif(bestScore), ", hit ",
                                                nHits, "."))
-        .Message(7L, "Break ", brk)
+        .Message(7L, "  Break ", brk)
         moves <- TBRMoves(edge, brk)
         improvedScore <- FALSE
         nMoves <- length(moves)
@@ -279,7 +365,7 @@ MaximizeParsimony <- function (dataset, tree,
         for (i in seq_along(moveList)) {
           move <- moves[[moveList[i]]]
           if (.Forbidden(move)) {
-            .Message(10L, "Skipping prohibited topology")
+            .Message(10L, "  Skipping prohibited topology")
             next
           }
           moveScore <- Score(move, morphyObjs, weight, charSeq, concavity, 
@@ -293,21 +379,24 @@ MaximizeParsimony <- function (dataset, tree,
               bestPlusEps <- bestScore + epsilon
               nHits <- 1L
               hold[, , 1] <- edge
-              .Message(5L, "New best score ", signif(bestScore),
-                       " at break ", fmatch(brk, optTbr), "/", length(optTbr))
+              .Message(5L, "  New best score ", signif(bestScore),
+                       " at break ", fmatch(brk, brkOptions), "/", length(brkOptions))
               break
             } else {
-              .Message(6L, "Best score ", signif(bestScore),
+              .Message(6L, "  Best score ", signif(bestScore),
                        " hit again (", nHits, "/", ceiling(maxHits), ")")
               nHits <- nHits + 1L
               hold[, , nHits] <- edge
               if (nHits >= maxHits) break
             }
           }
+          # If an early iteration improves the score, a later iteration will
+          # probably improve it even more; we may as well keep working through
+          # the list instead of calculating a new one (which takes time)
           if (improvedScore && runif(1) < (i / nMoves) ^ 2) break
         }
         if (nHits >= maxHits) break
-        pNextTbr <- (fmatch(brk, optTbr) / length(optTbr)) ^ 2
+        pNextTbr <- (fmatch(brk, brkOptions) / length(brkOptions)) ^ 2
         if (improvedScore && runif(1) < pNextTbr) break
       }
       if (nHits >= maxHits) break
@@ -320,33 +409,36 @@ MaximizeParsimony <- function (dataset, tree,
   }
 
   
-  .Search <- function (name = 'TBR search', .edge = edge, .hits = searchHits,
-                       .weight = startWeights) {
+  .Search <- function (name = "TBR search", .edge = edge, .hits = searchHits,
+                       .weight = startWeights, .forceEW = FALSE) {
     if (length(dim(.edge)) == 3L) {
       .edge <- .edge[, , 1]
     }
-    if (profile) {
+    .Message(4L, paste("<<< Begin:", name))
+    on.exit(.Message(4L, paste(">>> Complete:", name)))
+    if (profile && isFALSE(.forceEW)) {
       .TBRSearch(.ProfileScore, name, edge = .edge, morphyObjects, 
                  tbrIter = searchIter, maxHits = .hits,
                  weight = .weight, minLength = minLength, charSeq = charSeq,
                  concavity = profiles)
   
-    } else if (iw) {
+    } else if (iw && isFALSE(.forceEW)) {
       .TBRSearch(.IWScore, name, edge = .edge, morphyObjects, 
                  tbrIter = searchIter, maxHits = .hits,
                  weight = .weight, minLength = minLength, charSeq = charSeq,
                  concavity = concavity)
     } else {
       .TBRSearch(.EWScore, name, edge = .edge, morphyObj, 
-                 tbrIter = searchIter, maxHits = .hits)
+                 tbrIter = searchIter, maxHits = .hits,
+                 concavity = if(isTRUE(.forceEW)) Inf else concavity)
     }
   }
   
-  .Timeout <- function () {
+  .Timeout <- function() {
     if (Sys.time() > stopTime) {
-      .Info(1L, "Stopping search at ", Sys.time(), ": ", maxTime,
+      .Info(1L, "Stopping search at ", .DateTime(), ": ", maxTime,
             " minutes have elapsed.",
-            "  Best score was ", signif(.Score(bestEdges[, , 1])), '.',
+            "  Best score was ", signif(.Score(bestEdges[, , 1])), ".",
             if (maxTime == 60) "\nIncrease `maxTime` for longer runs.")
       return (TRUE)
     }
@@ -354,23 +446,25 @@ MaximizeParsimony <- function (dataset, tree,
     FALSE
   }
   
-  .ReturnValue <- function (bestEdges) {
+  .ReturnValue <- function(bestEdges) {
     if (verbosity > 0L) {
-      cli_alert_success(paste0(Sys.time(), 
+      cli_alert_success(paste0(.DateTime(),
                                ": Tree search terminated with score {.strong ",
                                "{signif(.Score(bestEdges[, , 1]))}}"))
     }
+    firstHit <- attr(bestEdges, "firstHit")
     structure(lapply(seq_len(dim(bestEdges)[3]), function (i) {
       tr <- tree
-      tr$edge <- bestEdges[, , i]
+      tr[["edge"]] <- bestEdges[, , i]
       if (any(is.na(outgroup))) {
         tr
       } else {
         RootTree(tr, outgroup)
       }
     }),
-    firstHit = attr(bestEdges, 'firstHit'),
-    class = 'multiPhylo')
+    firstHit = firstHit,
+    names = paste0(rep(names(firstHit), firstHit), "_", unlist(lapply(firstHit, seq_len))),
+    class = "multiPhylo")
   }
   
   
@@ -381,59 +475,69 @@ MaximizeParsimony <- function (dataset, tree,
   iw <- is.finite(concavity)
   constrained <- !missing(constraint)
   startTime <- Sys.time()
-  stopTime <- startTime + as.difftime(maxTime, units = 'mins')
+  stopTime <- startTime + as.difftime(maxTime, units = "mins")
   
   # Initialize tree
+  startTrees <- NULL
   if (missing(tree)) {
     tree <- AdditionTree(dataset, constraint = constraint,
                          concavity = concavity)
-  } else if (inherits(tree, 'multiPhylo')) {
-    .Info(2L, "Starting search from {.var tree[[1]]}")
-    tree <- tree[[1]]
+  } else if (inherits(tree, "multiPhylo")) {
+    startTrees <- unique(tree)
+    sampledTree <- sample.int(length(tree), 1)
+    .Info(2L, paste0("Starting search from {.var tree[[", sampledTree, "]]}"))
+    tree <- tree[[sampledTree]]
+  } else if (inherits(tree, "phylo")) {
+    startTrees <- c(tree)
   }
-  if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+  if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     cli_alert_warning("`tree` is not bifurcating; collapsing polytomies at random")
     tree <- MakeTreeBinary(tree)
-    if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+    if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
       cli_alert_warning("Rooting `tree` on first leaf")
       tree <- RootTree(tree, 1)
     }
-    if (dim(tree$edge)[1] != 2 * tree$Nnode) {
+    if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
       stop("Could not make `tree` binary.")
     }
   }
   
   # Check tree labels matches dataset
-  leaves <- tree$tip.label
+  leaves <- tree[["tip.label"]]
   taxa <- names(dataset)
   treeOnly <- setdiff(leaves, taxa) 
   datOnly <- setdiff(taxa, leaves) 
   if (length(treeOnly)) {
-    cli_alert_warning("Ignoring taxa on tree missing in dataset:\n   ",
-                      paste0(treeOnly, collapse = ', '), "\n")
+    cli_alert_warning(paste0("Ignoring taxa on tree missing in dataset:\n>   ",
+                      paste0(treeOnly, collapse = ", ")))
     warning("Ignored taxa on tree missing in dataset:\n   ",
-             paste0(treeOnly, collapse = ', '))
+             paste0(treeOnly, collapse = ", "))
     tree <- DropTip(tree, treeOnly)
+    startTrees <- DropTip(startTrees, treeOnly)
   }
   if (length(datOnly)) {
-    cli_alert_warning("Ignoring taxa in dataset missing on tree:\n   ",
-                      paste0(datOnly, collapse = ', '), "\n")
-    warning("Ignored taxa in dataset missing on tree:\n   ",
-            paste0(datOnly, collapse = ', '))
+    cli_alert_warning(paste0("Ignoring taxa in dataset missing on tree:\n>   ",
+                      paste0(datOnly, collapse = ", ")))
+    warning("Ignored taxa in dataset missing on tree:\n>   ",
+            paste0(datOnly, collapse = ", "))
     dataset <- dataset[-fmatch(datOnly, taxa)]
   }
   if (constrained) {
-    consTaxa <- names(constraint)
-    treeOnly <- setdiff(tree$tip.label, consTaxa)
+    if (!inherits(constraint, "phyDat")) {
+      constraint <- MatrixToPhyDat(t(as.matrix(constraint)))
+    }
+    consTaxa <- TipLabels(constraint)
+    treeOnly <- setdiff(tree[["tip.label"]], consTaxa)
     if (length(treeOnly)) {
       constraint <- AddUnconstrained(constraint, treeOnly)
     }
-    consOnly <- setdiff(consTaxa, tree$tip.label)
+    consOnly <- setdiff(consTaxa, tree[["tip.label"]])
     if (length(consOnly)) {
-      cli_alert_warning("Ignoring taxa in constraint missing on tree:\n   ", 
-              paste0(consOnly, collapse = ', '), "\n")
-      warning("Ignored taxa in constraint missing on tree:\n   ", 
-              paste0(consOnly, collapse = ', '))
+      cli_alert_warning(
+        paste0("Ignoring taxa in constraint missing on tree:\n>   ", 
+               paste0(consOnly, collapse = ", ")))
+      warning("Ignored taxa in constraint missing on tree:\n   ",
+              paste0(consOnly, collapse = ", "))
       constraint <- constraint[-fmatch(consOnly, consTaxa)]
     }
     constraint <- constraint[names(dataset)]
@@ -442,13 +546,13 @@ MaximizeParsimony <- function (dataset, tree,
   
   tree <- Preorder(RenumberTips(tree, names(dataset)))
   nTip <- NTip(tree)
-  edge <- tree$edge
+  edge <- tree[["edge"]]
   
   # Initialize constraints
   if (constrained) {
     morphyConstr <- PhyDat2Morphy(constraint)
     on.exit(morphyConstr <- UnloadMorphy(morphyConstr), add = TRUE)
-    constraintWeight <- attr(constraint, 'weight')
+    constraintWeight <- attr(constraint, "weight")
     if (any(constraintWeight > 1)) {
       cli_alert_warning("Some constraints are exact duplicates.")
     }
@@ -463,10 +567,13 @@ MaximizeParsimony <- function (dataset, tree,
     # Check that starting tree is consistent with constraints 
     if (.Forbidden(edge)) {
       cli_alert_warning("Modifying `tree` to match `constraint`...")
-      outgroup <- Descendants(tree, edge[1, 2], type = 'tips')[[1]]
+      outgroup <- edge[
+        DescendantEdges(parent = edge[, 1], child = edge[, 2])[1, ],
+        2]
+      outgroup <- outgroup[outgroup <= nTip]
       tree <- RootTree(ImposeConstraint(tree, constraint), outgroup)
       # RootTree leaves `tree` in preorder
-      edge <- tree$edge
+      edge <- tree[["edge"]]
       if (.Forbidden(edge)) {
         stop("Could not reconcile starting tree with `constraint`. ",
              "Are all constraints compatible?")
@@ -482,12 +589,15 @@ MaximizeParsimony <- function (dataset, tree,
   
   
   if (edge[1, 2] > nTip) {
-    outgroup <- Descendants(tree, edge[1, 2], type = 'tips')[[1]]
+    outgroup <- edge[
+      DescendantEdges(parent = edge[, 1], child = edge[, 2])[1, ],
+      2]
+    outgroup <- outgroup[outgroup <= nTip]
     if (length(outgroup) > nTip / 2L) {
       outgroup <- seq_len(nTip)[-outgroup]
     }
     tree <- RootTree(tree, 1)
-    edge <- tree$edge
+    edge <- tree[["edge"]]
   } else {
     outgroup <- NA
   }
@@ -495,63 +605,52 @@ MaximizeParsimony <- function (dataset, tree,
   # Initialize data
   if (profile) {
     dataset <- PrepareDataProfile(dataset)
-    originalLevels <- attr(dataset, 'levels')
-    if ('-' %fin% originalLevels) {
+    originalLevels <- attr(dataset, "levels")
+    if ("-" %fin% originalLevels) {
       #TODO Fixing this will require updating the counts table cleverly
-      # Or we could use approximate info amounts, e.g. by treating '-' as 
+      # Or we could use approximate info amounts, e.g. by treating "-" as 
       # an extra token
-      cli_alert_info(paste0("Inapplicable tokens '-' treated as ambiguous '?' ",
-                            "for profile parsimony"))
-      cont <- attr(dataset, 'contrast')
-      cont[cont[, '-'] != 0, ] <- 1
-      attr(dataset, 'contrast') <- cont[, colnames(cont) != '-']
-      attr(dataset, 'levels') <- originalLevels[originalLevels != '-']
+      cli_alert_info(paste0("Inapplicable tokens \"-\" treated as ambiguous ",
+                            "\"?\" for profile parsimony"))
+      cont <- attr(dataset, "contrast")
+      cont[cont[, "-"] != 0, ] <- 1
+      attr(dataset, "contrast") <- cont[, colnames(cont) != "-"]
+      attr(dataset, "levels") <- originalLevels[originalLevels != "-"]
     }
-    profiles <- attr(dataset, 'info.amounts')
+    profiles <- attr(dataset, "info.amounts")
   }
+  
+  if ((!iw && !profile) || # Required for equal weights search
+      (isTRUE(ratchEW) && ratchIter > 0) # For EW ratchet searches
+  ) {
+    morphyObj <- PhyDat2Morphy(dataset)
+    on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
+  }
+  
   if (iw || profile) {
     at <- attributes(dataset)
-    characters <- PhyToString(dataset, ps = '', useIndex = FALSE,
+    characters <- PhyToString(dataset, ps = "", useIndex = FALSE,
                               byTaxon = FALSE, concatenate = FALSE)
-    startWeights <- at$weight
+    startWeights <- at[["weight"]]
+    minLength <- MinimumLength(dataset, compress = TRUE)
     morphyObjects <- lapply(characters, SingleCharMorphy)
     on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
             add = TRUE)
     
-    nLevel <- length(at$level)
-    nChar <- at$nr
+    nLevel <- length(at[["level"]])
+    nChar <- at[["nr"]]
     nTip <- length(dataset)
-    cont <- at$contrast
-    if (is.null(colnames(cont))) colnames(cont) <- as.character(at$levels)
+    cont <- at[["contrast"]]
+    if (is.null(colnames(cont))) colnames(cont) <- as.character(at[["levels"]])
     simpleCont <- ifelse(rowSums(cont) == 1,
                          apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
-                         '?')
-  }
-  if (iw) {
-    inappLevel <- at$levels == '-'
-    
-    if (any(inappLevel)) {
-      # TODO this is a workaround until MinimumLength can handle {-, 1}
-      cont[cont[, inappLevel] > 0, ] <- 0
-      ambiguousToken <- at$allLevels == '?'
-      cont[ambiguousToken, ] <- colSums(cont[!ambiguousToken, ]) > 0
-    }
-    
-    # Perhaps replace with previous code:
-    # inappLevel <- which(at$levels == "-")
-    # cont[, inappLevel] <- 0
-  }
+                         "?")
   
-  if (iw || profile) {
-    powersOf2 <- 2L ^ c(0L, seq_len(nLevel - 1L))
-    tmp <- as.integer(cont %*% powersOf2)
-    unlisted <- unlist(dataset, use.names = FALSE)
-    binaryMatrix <- matrix(tmp[unlisted], nChar, nTip, byrow = FALSE)
-    minLength <- apply(binaryMatrix, 1, MinimumLength)
     
-    tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip, byrow = FALSE)
+    unlisted <- unlist(dataset, use.names = FALSE)
+    tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip)
     charInfo <- apply(tokenMatrix, 1, CharacterInformation)
-    needsInapp <- rowSums(tokenMatrix == '-') > 2
+    needsInapp <- rowSums(tokenMatrix == "-") > 2
     inappSlowdown <- 3L # A guess
     # Crude estimate of score added per unit processing time
     rawPriority <- charInfo / ifelse(needsInapp, inappSlowdown, 1)
@@ -560,8 +659,6 @@ MaximizeParsimony <- function (dataset, tree,
     # Will work from end of sequence to start.
     charSeq <- seq_along(charInfo)[informative][order(priority[informative])] - 1L
   } else {
-    morphyObj <- PhyDat2Morphy(dataset)
-    on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
     startWeights <- unlist(MorphyWeights(morphyObj)[1, ]) # exact == approx
   }
   
@@ -570,18 +667,28 @@ MaximizeParsimony <- function (dataset, tree,
   nHits <- 1L
   tbrStart <- startIter > 0
   tbrEnd <- finalIter > 0
-  bestEdges <- edge
-  bestScore <- .Score(edge)
-  dim(bestEdges) <- c(dim(bestEdges), 1)
+  if (is.null(startTrees)) {
+    bestEdges <- edge
+    dim(bestEdges) <- c(dim(bestEdges), 1)
+    bestScore <- .Score(edge)
+  } else {
+    starters <- RenumberTips(startTrees, names(dataset))
+    startEdges <- vapply(lapply(starters, Preorder),
+                         `[[`, startTrees[[1]][["edge"]],
+                        "edge")
+    startScores <- apply(startEdges, 3, .Score)
+    bestScore <- min(startScores)
+    bestEdges <- startEdges[, , startScores == bestScore, drop = FALSE]
+  }
   nStages <- sum(tbrStart, ratchIter, tbrEnd)
-  attr(bestEdges, 'firstHit') <- c('seed' = 1,
+  attr(bestEdges, "firstHit") <- c("seed" = dim(bestEdges)[3],
     setNames(double(nStages),
-             c(if(tbrStart) 'start',
-               if (ratchIter > 0) paste0('ratch', seq_len(ratchIter)),
-               if(tbrEnd) 'final')))
+             c(if(tbrStart) "start",
+               if(ratchIter > 0) paste0("ratch", seq_len(ratchIter)),
+               if(tbrEnd) "final")))
   
-  
-  
+  .Heading(paste0("BEGIN TREE SEARCH (k = ", concavity, ")"),
+           "Initial score: {.strong {signif(bestScore)} }")
   
   
   # Find a local optimum
@@ -594,9 +701,9 @@ MaximizeParsimony <- function (dataset, tree,
              " TBR depth ", as.integer(searchIter),
              "; keeping max ", as.integer(searchHits),
              " trees; k = ", concavity, ".")
-    .Info(1L, Sys.time(), ": Score to beat: ", signif(bestScore))
+    initialScore <- bestScore
 
-    newEdges <- .Search('TBR search 1')
+    newEdges <- .Search("TBR search 1")
     
     newBestScore <- .Score(newEdges)
     scoreImproved <- newBestScore + epsilon < bestScore
@@ -606,15 +713,27 @@ MaximizeParsimony <- function (dataset, tree,
       .CombineResults(bestEdges, newEdges, 2)
     }
     if (.Timeout()) {
+      .Info(1L, .DateTime(), ": Timed out with score ",
+            signif(min(bestScore, newBestScore)))
       return(.ReturnValue(bestEdges))                                           # nocov
     }
     edge <- bestEdges[, , 1L]
+    bestScore <- .Score(edge)
+    if (bestScore < initialScore) {
+      .Success(2L, "{.strong New best score: {signif(bestScore)} }")
+    } else {
+      .Info(1L, .DateTime(), ": Did not beat initial score: ",
+          "{signif(bestScore)}")
+    }
   }
   
   searchIter <- tbrIter
   searchHits <- maxHits * quickHits
-  bestScore <- .Score(edge)
   bestPlusEps <- bestScore + epsilon
+  
+  
+  
+  # Use Parsimony Ratchet to escape local optimum
   
   if (ratchIter > 0L) {
     
@@ -622,24 +741,23 @@ MaximizeParsimony <- function (dataset, tree,
              "TBR depth {ceiling(searchIter)}; ",
              "max. {ceiling(searchHits)} hits; ",
              "k = {concavity}.")
-    cli_alert("{Sys.time()}: Score to beat: {.strong {signif(bestScore)}}")
+    .Info(1L, "{ .DateTime()}: Score to beat: {.strong {signif(bestScore)}}")
     
     iter <- 0L
     while (iter < ratchIter) {
       iter <- iter + 1L
-      .Message(1L, "Ratchet iteration {iter} @ ",
-               "{format(Sys.time(), '%H:%M:%S')}",
+      .Message(1L, "Ratchet iteration {iter} @ {(.Time())}",
                "; score to beat: {.strong {signif(bestScore)} }")
       verbosity <- verbosity - 1L
       eachChar <- seq_along(startWeights)
       deindexedChars <- rep.int(eachChar, startWeights)
       resampling <- tabulate(sample(deindexedChars, replace = TRUE),
                              length(startWeights))
-      if (profile || iw) {
+      if (!isTRUE(ratchEW) && (profile || iw)) {
         priority <- resampling * rawPriority
         sampled <- informative & resampling > 0
         ratchSeq <- seq_along(charInfo)[sampled][order(priority[sampled])] - 1L
-        ratchetTrees <- .Search('Bootstrapped search', .weight = resampling)
+        ratchetTrees <- .Search("Bootstrapped search", .weight = resampling)
       } else {
         errors <- vapply(eachChar, function (i) 
           mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
@@ -651,7 +769,11 @@ MaximizeParsimony <- function (dataset, tree,
           stop("Error applying tip data: ", mpl_translate_error(error))
         }                                                                       # nocov end
         
-        ratchetTrees <- .Search('Bootstrapped search')
+        ratchetTrees <- if (ratchEW) {
+          .Search("EW Bootstrapped search", .forceEW = TRUE)
+        } else {
+          .Search("Bootstrapped search")
+        }
         
         errors <- vapply(eachChar, function (i) 
           mpl_set_charac_weight(i, startWeights[i], morphyObj), integer(1))
@@ -661,14 +783,24 @@ MaximizeParsimony <- function (dataset, tree,
           stop("Error applying tip data: ", mpl_translate_error(error))
         }
       }
-      if (.Timeout()) {
-        return(.ReturnValue(bestEdges))                                         # nocov
-      }
       
       verbosity <- verbosity + 1L
       ratchetStart <- ratchetTrees[, , sample.int(dim(ratchetTrees)[3], 1)]
+      ratchStartScore <- .Score(ratchetStart)
+      .Message(2L, "Obtained new starting tree @ {(.Time())}",
+               " with score: {signif(ratchStartScore)}")
       
-      ratchetImproved <- .Search('TBR search', .edge = ratchetStart,
+      # nocov start
+      if (.Timeout()) {
+        if (ratchetScore + epsilon < bestScore) {
+          bestEdges <- .ReplaceResults(bestEdges, ratchetStart,
+                                       1 + tbrStart + iter)
+        }
+        return(.ReturnValue(bestEdges))                                         
+      }
+      # nocov end
+      
+      ratchetImproved <- .Search("TBR search", .edge = ratchetStart,
                                  .hits = maxHits)
       ratchetScore <- .Score(ratchetImproved[, , 1])
       
@@ -706,8 +838,8 @@ MaximizeParsimony <- function (dataset, tree,
     .Heading("Sample local optimum",
              "TBR depth {searchIter}; keeping {searchHits}",
              " trees; k = {concavity}")
-    .Info(1L, Sys.time(), ": Score: ", signif(bestScore))
-    finalEdges <- .Search('Final search')
+    .Info(1L, .DateTime(), ": Score: ", signif(bestScore))
+    finalEdges <- .Search("Final search")
     newBestScore <- .Score(finalEdges[, , 1])
     improved <- newBestScore + epsilon < bestScore
     bestEdges <- if (improved) {
@@ -724,7 +856,7 @@ MaximizeParsimony <- function (dataset, tree,
 #' Combine two edge matrices
 #' 
 #' @param x,y 3D arrays, each slice containing an edge matrix from a tree
-#' of class `phylo`.
+#' of class `phylo`.  `x` should not contain duplicates.
 #' @return A single 3D array containing each unique edge matrix from (`x` and)
 #' `y`, with a `firstHit` attribute as documented in [`MaximizeParsimony()`].
 #' @template MRS
@@ -734,11 +866,14 @@ MaximizeParsimony <- function (dataset, tree,
   if (length(xDim) == 2L) {
     xDim <- c(xDim, 1L)
   }
+  if (any(duplicated(x, MARGIN = 3L))) {
+    warning(".CombineResults(x) should not contain duplicates.")
+  }
   
   res <- unique(array(c(x, y), dim = xDim + c(0, 0, dim(y)[3])), MARGIN = 3L)
-  firstHit <- attr(x, 'firstHit')
+  firstHit <- attr(x, "firstHit")
   firstHit[stage] <- dim(res)[3] - xDim[3]
-  attr(res, 'firstHit') <- firstHit
+  attr(res, "firstHit") <- firstHit
   
   # Return:
   res
@@ -751,10 +886,18 @@ MaximizeParsimony <- function (dataset, tree,
 #' should be recorded.
 #' @keywords internal
 .ReplaceResults <- function (old, new, stage) {
-  hit <- attr(old, 'firstHit')
+  hit <- attr(old, "firstHit")
   hit[] <- 0
   hit[stage] <- dim(new)[3]
-  structure(new, 'firstHit' = hit)
+  structure(new, "firstHit" = hit)
+}
+
+.Time <- function() {
+  format(Sys.time(), "%H:%M:%S")
+}
+
+.DateTime <- function() {
+  format(Sys.time(), "%Y-%m-%d %T")
 }
 
 #' @rdname MaximizeParsimony
@@ -792,19 +935,19 @@ MaximizeParsimony <- function (dataset, tree,
 #' @family split support functions
 #' @encoding UTF-8
 #' @export
-Resample <- function (dataset, tree, method = 'jack',
+Resample <- function (dataset, tree, method = "jack",
                       proportion = 2/3,
                       ratchIter = 1L, tbrIter = 8L, finalIter = 3L,
                       maxHits = 12L, concavity = Inf,
-                      tolerance = sqrt(.Machine$double.eps),
+                      tolerance = sqrt(.Machine[["double.eps"]]),
                       constraint,
                       verbosity = 2L,
                       ...) {
-  if (!inherits(dataset, 'phyDat')) {
+  if (!inherits(dataset, "phyDat")) {
     stop("`dataset` must be of class `phyDat`.")
   }
-  index <- attr(dataset, 'index')
-  kept <- switch(pmatch(tolower(method), c('jackknife', 'bootstrap')),
+  index <- attr(dataset, "index")
+  kept <- switch(pmatch(tolower(method), c("jackknife", "bootstrap")),
          {
            nKept <- ceiling(proportion * length(index))
            if (nKept < 1L) {
@@ -818,11 +961,11 @@ Resample <- function (dataset, tree, method = 'jack',
            sample(index, length(index), replace = TRUE)
          })
   if (is.null(kept)) {
-    stop("`method` must be either 'jackknife' or 'bootstrap'.")
+    stop("`method` must be either \"jackknife\" or \"bootstrap\".")
   }
   
-  attr(dataset, 'index') <- kept
-  attr(dataset, 'weight') <- vapply(seq_len(attr(dataset, 'nr')),
+  attr(dataset, "index") <- kept
+  attr(dataset, "weight") <- vapply(seq_len(attr(dataset, "nr")),
                                     function (x) sum(kept == x),
                                     integer(1))
   
@@ -840,6 +983,7 @@ Resample <- function (dataset, tree, method = 'jack',
 #' @rdname MaximizeParsimony
 #' @importFrom cluster pam silhouette
 #' @importFrom future future
+#' @importFrom PlotTools SpectrumLegend
 #' @importFrom promises future_promise
 #' @importFrom protoclust protoclust
 #' @importFrom Rogue ColByStability
@@ -848,7 +992,7 @@ Resample <- function (dataset, tree, method = 'jack',
 #' @importFrom TreeDist ClusteringInfoDistance
 #' @export
 EasyTrees <- function () {#nocov start
-  shiny::runApp(system.file('Parsimony', package = 'TreeSearch'))
+  shiny::runApp(system.file("Parsimony", package = "TreeSearch"))
 }
 
 #' @rdname MaximizeParsimony

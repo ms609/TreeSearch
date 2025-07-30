@@ -46,7 +46,7 @@ test_that("NNI works", {
   Test(2, 0, 3, 9)
   Test(2, 1, 8, 9)
   
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
+  suppressWarnings(RNGversion("3.5.0"))
   set.seed(0)
   nniComb <- NNI(trComb)
   expect_equal(nniComb$tip.label, trComb$tip.label)
@@ -57,14 +57,14 @@ test_that("NNI works", {
 
 test_that("SPR works", {
   testTree <- Preorder(root(BalancedTree(7), 1, resolve.root = TRUE))
-  edge <- testTree$edge
+  edge <- testTree[["edge"]]
   expect_equal(spr(edge, 66), cSPR(testTree, 66)$edge)
   
   Test <- function (m, p1, r1) {
     test.tr <- testTree
     test.tr$edge <- spr(edge, m)
     
-    oldWay <- SortTree(root(SPR(testTree, p1, r1), 't1', resolve.root = TRUE))
+    oldWay <- SortTree(root(SPR(testTree, p1, r1), "t1", resolve.root = TRUE))
     expect_equal(oldWay, SortTree(test.tr))
   }
   Test(0, 1, 5)
@@ -184,7 +184,7 @@ test_that("TBR works", {
   expect_equal(TBR(tree, 4, c(1, 8)),  read.tree(text = "(((a, (e, f)), (d, (b, c))), (g, h));"))
   
   tree <- tree11 
-  tree$edge.length = rep.int(1, 20) 
+  tree[["edge.length"]] = rep.int(1, 20) 
   expect_equal(TBR(tree11, 11, c(8, 17)), read.tree(text = '((j, k), (e, ((a, b), (c, (d, (i, (h, (g, f))))))));'))
   expect_equal(TBR(tree11, 11, c(2, 11)), read.tree(text = '((j, k), (e, (((a, b), (c, d)), (f, (g, (i, h))))));'))
   expect_warning(TBR(tree11, 10, c(2, 11)))
@@ -227,11 +227,11 @@ test_that("SPR is special case of TBR", {
   expect_error(SPR(tree11, 1, 6))
 })
 
-#' @author Martin R. Smith <martins@gmail.com>
+#' @template MRS
 CheckTreeSanity <- function (tree) {
-  nTip <- length(tree$tip.label)
-  nNode <- tree$Nnode
-  edge <- tree$edge
+  nTip <- length(tree[["tip.label"]])
+  nNode <- tree[["Nnode"]]
+  edge <- tree[["edge"]]
   parent <- edge[, 1]
   child <- edge[, 2]
   aok <- TRUE
@@ -243,7 +243,7 @@ CheckTreeSanity <- function (tree) {
                info=paste0("Root is numbered ", min(parent), "; expecting ", nTip + 1)
   )
   expect_false(min(parent) %in% child, 
-               info=paste0("Root node (", min(parent), ") is child of edge ", paste0(which(min(parent) == child), collapse=', '))
+               info=paste0("Root node (", min(parent), ") is child of edge ", paste0(which(min(parent) == child), collapse = ", "))
   )
   expect_true(all(seq_len(nTip) %in% child)) # No missing tips
   expect_equal(max(parent), nTip + nNode)
@@ -252,7 +252,7 @@ CheckTreeSanity <- function (tree) {
   expect_true(all(child[!tips] > parent[!tips]), info="Parent nodes must be > child nodes")
 }
 
-suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(0)
 small_tree <- rtree(8)
 large_tree <- rtree(80)  

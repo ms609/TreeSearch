@@ -1,0 +1,103 @@
+{
+  "input": {
+    "clThresh": 1,
+    "concordance": "clc",
+    "consP": 0.5,
+    "dataFile": null,
+    "dataSource": "Sun2018",
+    "distMeth": "cid",
+    "excludedTip": "Paterimitra",
+    "go": 0,
+    "keepNTips": 47,
+    "mapDisplay": null,
+    "mapLines": [
+      "hull",
+      "mst"
+    ],
+    "neverDrop": null,
+    "nTree": 125,
+    "outgroup": "Namacalathus",
+    "plotFormat": "space",
+    "plotSize": 600,
+    "plottedChar": 1,
+    "readxl.sheet": "Sheet 1",
+    "readxlSkip": 2,
+    "readxlSkipCols": 2,
+    "relators": null,
+    "searchChar": "",
+    "searchConfig": 0,
+    "spaceCol": "clust",
+    "spaceDim": 5,
+    "spacePch": "relat",
+    "treeFile": null,
+    "treeRange": [
+      1,
+      125
+    ],
+    "whichTree": 1
+  },
+  "output": {
+    "branchLegend": {
+      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">19 trees<\/span>",
+      "deps": [
+
+      ]
+    },
+    "charMapLegend": {
+      "html": "<h3>Brephic shell: Embryonic shell<\/h3>\n<ul style=\"list-style: none;\">\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #00bfc6 ;\">0<\/span>\n    <span>Absent<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: #ffd46f ;\">1<\/span>\n    <span>Present<\/span>\n  <\/li>\n  <li style=\"margin-bottom: 2px;\">\n    <span style=\"display: inline-block; border: 1px solid; width: 1em; text-align: center; line-height: 1em; margin-right: 0.5em; background-color: grey ;\">?<\/span>\n    <span>Ambiguous<\/span>\n  <\/li>\n<\/ul>",
+      "deps": [
+
+      ]
+    },
+    "charNotes": {
+      "html": "<div id=\"char-description\">\n  <p>The embryonic shell or protegulum is secreted by the embryo immediately before hatching.<\/p>\n<\/div>\n<ul class=\"state-notes\">\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Amathia<\/span>\n    <span class=\"state-note-detail\">@Reed1982.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Clupeafumosus socialis<\/span>\n    <span class=\"state-note-detail\">Described by Topper et al. (2013R).<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Conotheca<\/span>\n    <span class=\"state-note-detail\">[@Wrona2003].<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Dentalium<\/span>\n    <span class=\"state-note-detail\">The shell does not form until the trochophore larval stage, which has been exquisitely described in Antalis [@Wanninger2001].  \nThis shell field is initially disc-like, subsequently expanding to fuse ventrally and produce the cylindrical protoconch. The prototroch is clearly delineated fro the telotroch in post-metamorphic juveniles [@Wanninger2001].<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Gasconsia<\/span>\n    <span class=\"state-note-detail\">The earliest shell is not described by @Hanken1985Thetaxonomy or @Watkins2002Newrecord.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Loxosomella<\/span>\n    <span class=\"state-note-detail\">Absent, with no possible equivalent [@Nielsen1966].<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Namacalathus<\/span>\n    <span class=\"state-note-detail\">Inapplicable insofar as reproduction occurs by budding; there is no evidence for a free-living larval stage.  Nevertheless, the presence of a sexual reproductive phase in addition to asexual reproduction cannot be discounted.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Novocrania<\/span>\n    <span class=\"state-note-detail\">Shell not secreted until after metamorphosis (Popov et al. 2010).   Freeman &amp; Lundelius (1999) report a Craniops-like larval shell in fossil \"Crania\", but observe that Quaternary [Novo]crania no longer exhibit a larval shell.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Paramicrocornus<\/span>\n    <span class=\"state-note-detail\">\"The initial part of the conch appears to be a simple apex without clearly delineated protoconch\" [@Zhang2018Ahyolithid], though it is not clear from illustrated figures whether an embryonic shell contiguous with the adult shell was present.<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Pauxillites<\/span>\n    <span class=\"state-note-detail\">Coded following Recilites [@Dzik1978], a fellow member of Pauxillitidae [@Marek1967].<\/span>\n  <\/li>\n  <li class=\"state-note\">\n    <span class=\"state-note-label\">Tonicella<\/span>\n    <span class=\"state-note-detail\">On hatching, the polyplacophoran larva lacks a shell field.    \n  \nShell fields develop during the trochophore larva stage. The larva of the chiton Mopalia has two distinct shell fields: that anterior to the prototroch will develop into the first shell plate; the one posterior to the prototroch becomes the subsequent plates [@Wanninger2002C].  \n  \nThis disc-shaped posterior plate, whose position corresponds to the conchiferan shell field, bears a polygonal ornament and is subdivided by a series of grooves that prefigure the adult shell plates [@Wanninger2002C].<\/span>\n  <\/li>\n<\/ul>",
+      "deps": [
+
+      ]
+    },
+    "references": {
+      "html": "<h2>References for methods used<\/h2>\n<h3>Tree search<\/h3>\n<p class=\"reference\">Brazeau, M.D., Guillerme, T. &amp; Smith, M.R. (2019). &ldquo;An algorithm for morphological phylogenetic analysis with inapplicable data&rdquo;. <i>Systematic Biology<\/i> <b>64<\/b>:619&ndash;631. doi:<a href=\"https://doi.org/10.1093/sysbio/syy083\" title=\"CrossRef\">10.1093/sysbio/syy083<\/a>. <\/p> <p class=\"reference\">Brazeau, M.D., Smith, M.R. &amp; Guillerme, T. (2017). &ldquo;MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability&rdquo;. doi:<a href=\"https://doi.org/10.5281/zenodo.815371\" title=\"CrossRef\">10.5281/zenodo.815371<\/a>. <\/p> <p class=\"reference\">Nixon, K.C. (1999). &ldquo;The Parsimony Ratchet, a new method for rapid parsimony analysis&rdquo;. <i>Cladistics<\/i> <b>15<\/b>:407&ndash;414. doi:<a href=\"https://doi.org/10.1111/j.1096-0031.1999.tb00277.x\" title=\"CrossRef\">10.1111/j.1096-0031.1999.tb00277.x<\/a>. <\/p> <p class=\"reference\">Smith, M.R. (2023). &ldquo;TreeSearch: morphological phylogenetic analysis in R&rdquo;. <i>R Journal<\/i> <b>14<\/b>:305&ndash;315. doi:<a href=\"https://doi.org/10.32614/RJ-2023-019\" title=\"CrossRef\">10.32614/RJ-2023-019<\/a>. <\/p>\n<h3>Tree space mapping<\/h3>\n<p class=\"reference\">Gower, J.C. (1966). &ldquo;Some distance properties of latent root and vector methods used in multivariate analysis&rdquo;. <i>Biometrika<\/i> <b>53<\/b>:325&ndash;338. doi:<a href=\"https://doi.org/10.2307/2333639\" title=\"CrossRef\">10.2307/2333639<\/a>. <\/p><p class=\"reference\">Gower, J.C. &amp; Ross, G.J.S. (1969). &ldquo;Minimum spanning trees and single linkage cluster analysis&rdquo;. <i>Journal of the Royal Statistical Society Series C (Applied Statistics)<\/i> <b>18<\/b>:54&ndash;64. doi:<a href=\"https://doi.org/10.2307/2346439\" title=\"CrossRef\">10.2307/2346439<\/a>. <\/p><p class=\"reference\">Kaski, S., Nikkil&auml;, J., Oja, M., Venna, J., T&ouml;r&ouml;nen, P. &amp; Castr&eacute;n, E. (2003). &ldquo;Trustworthiness and metrics in visualizing similarity of gene expression&rdquo;. <i>BMC Bioinformatics<\/i> <b>4<\/b>:48. doi:<a href=\"https://doi.org/10.1186/1471-2105-4-48\" title=\"CrossRef\">10.1186/1471-2105-4-48<\/a>. <\/p><p class=\"reference\">R Core Team (2020). &ldquo;R: A language and environment for statistical computing&rdquo;. R Foundation for Statistical Computing, Vienna, Austria. <\/p><p class=\"reference\">Smith, M.R. (2020a). &ldquo;TreeDist: distances between phylogenetic trees&rdquo;. <i>Comprehensive R Archive Network<\/i> doi:<a href=\"https://doi.org/10.5281/zenodo.3528123\" title=\"CrossRef\">10.5281/zenodo.3528123<\/a>. <\/p><p class=\"reference\">Smith, M.R. (2020b). &ldquo;Information theoretic Generalized Robinson-Foulds metrics for comparing phylogenetic trees&rdquo;. <i>Bioinformatics<\/i> <b>36<\/b>:5007&ndash;5013. doi:<a href=\"https://doi.org/10.1093/bioinformatics/btaa614\" title=\"CrossRef\">10.1093/bioinformatics/btaa614<\/a>. <\/p><p class=\"reference\">Smith, M.R. (2022a). &ldquo;Robust analysis of phylogenetic tree space&rdquo;. <i>Systematic Biology<\/i> <b>71<\/b>:1255&ndash;1270. doi:<a href=\"https://doi.org/10.1093/sysbio/syab100\" title=\"CrossRef\">10.1093/sysbio/syab100<\/a>. <\/p><p class=\"reference\">Venna, J. &amp; Kaski, S. (2001). &ldquo;Neighborhood preservation in nonlinear projection methods: an experimental study&rdquo;. In: Dorffner, G., Bischof, H. &amp; Hornik, K. (eds). <i>Lecture Notes in Computer Science: Artificial Neural Networks&mdash;ICANN 2001<\/i> Springer, Berlin. 485&ndash;491. doi:<a href=\"https://doi.org/10.1007/3-540-44668-0_68\" title=\"CrossRef\">10.1007/3-540-44668-0_68<\/a>. <\/p>\n<h3>Clustering<\/h3>\nCluster consensus trees: <p class=\"reference\">Stockham, C., Wang, L.-S. &amp; Warnow, T. (2002). &ldquo;Statistically based postprocessing of phylogenetic analysis by clustering&rdquo;. <i>Bioinformatics<\/i> <b>18<\/b>:S285&ndash;S293. doi:<a href=\"https://doi.org/10.1093/bioinformatics/18.suppl_1.S285\" title=\"CrossRef\">10.1093/bioinformatics/18.suppl_1.S285<\/a>. <\/p>\nk-means++:<p class=\"reference\">Arthur, D. &amp; Vassilvitskii, S (2007). &ldquo;k-means++: the advantages of careful seeding&rdquo;. <i>Proceedings of the Eighteenth Annual ACM-SIAM Symposium on Discrete Algorithms<\/i> 1027&ndash;1035. <\/p><p class=\"reference\">Hartigan, J.A. &amp; Wong, M.A. (1979). &ldquo;Algorithm AS 136: a <i>K<\/i>-means clustering algorithm&rdquo;. <i>Journal of the Royal Statistical Society Series C (Applied Statistics)<\/i> <b>28<\/b>:100&ndash;108. doi:<a href=\"https://doi.org/10.2307/2346830\" title=\"CrossRef\">10.2307/2346830<\/a>. <\/p>Partitioning around medoids:<p class=\"reference\">Maechler, M., Rousseeuw, P., Struyf, A., Hubert, M. &amp; Hornik, K. (2022). &ldquo;cluster: cluster analysis basics and extensions&rdquo;. <i>Comprehensive R Archive Network<\/i> <\/p>Hierarchical, minimax linkage:<p class=\"reference\">Bien, J. &amp; Tibshirani, R. (2011). &ldquo;Hierarchical clustering with prototypes via minimax linkage&rdquo;. <i>Journal of the American Statistical Association<\/i> <b>106<\/b>:1075&ndash;1084. doi:<a href=\"https://doi.org/10.1198/jasa.2011.tm10183\" title=\"CrossRef\">10.1198/jasa.2011.tm10183<\/a>. <\/p><p class=\"reference\">Murtagh, F. (1983). &ldquo;A survey of recent advances in hierarchical clustering algorithms&rdquo;. <i>The Computer Journal<\/i> <b>26<\/b>:354&ndash;359. doi:<a href=\"https://doi.org/10.1093/comjnl/26.4.354\" title=\"CrossRef\">10.1093/comjnl/26.4.354<\/a>. <\/p>Clustering evaluation:<p class=\"reference\">Rousseeuw, P.J. (1987). &ldquo;Silhouettes: a graphical aid to the interpretation and validation of cluster analysis&rdquo;. <i>Journal of Computational and Applied Mathematics<\/i> <b>20<\/b>:53&ndash;65. doi:<a href=\"https://doi.org/10.1016/0377-0427(87)90125-7\" title=\"CrossRef\">10.1016/0377-0427(87)90125-7<\/a>. <\/p>\n<h3>Rogue taxa<\/h3>\nDetection: <p class=\"reference\">Smith, M.R. (2022b). &ldquo;Using information theory to detect rogue taxa and improve consensus trees&rdquo;. <i>Systematic Biology<\/i> <b>71<\/b>:1088&ndash;1094. doi:<a href=\"https://doi.org/10.1093/sysbio/syab099\" title=\"CrossRef\">10.1093/sysbio/syab099<\/a>. <\/p>\nPlotting: <p class=\"reference\">Klopfstein, S. &amp; Spasojevic, T. (2019). &ldquo;Illustrating phylogenetic placement of fossils using RoguePlots: An example from ichneumonid parasitoid wasps (Hymenoptera, Ichneumonidae) and an extensive morphological matrix.&rdquo;. <i>PLoS ONE<\/i> <b>14<\/b>:e0212942. doi:<a href=\"https://doi.org/10.1371/journal.pone.0212942\" title=\"CrossRef\">10.1371/journal.pone.0212942<\/a>. <\/p>\nCharacter analysis: <p class=\"reference\">Pol, D. &amp; Escapa, I.H. (2009). &ldquo;Unstable taxa in cladistic analysis: identification and the assessment of relevant characters&rdquo;. <i>Cladistics<\/i> <b>25<\/b>:515&ndash;527. doi:<a href=\"https://doi.org/10.1111/j.1096-0031.2009.00258.x\" title=\"CrossRef\">10.1111/j.1096-0031.2009.00258.x<\/a>. <\/p>",
+      "deps": [
+
+      ]
+    },
+    "results": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
+    "treePlot": {
+      "src": "[image data sha1: 045a821990406233fba0bc89d4fd8be9b8f1dc69]",
+      "alt": "Plot object",
+      "coordmap": {
+        "panels": [
+          {
+            "domain": {
+              "left": -0.04,
+              "right": 1.04,
+              "bottom": -0.04,
+              "top": 1.04
+            },
+            "range": {
+              "left": 451.9008,
+              "right": 598.0992,
+              "bottom": 147.0992,
+              "top": 0.900800000000036
+            },
+            "log": {
+              "x": null,
+              "y": null
+            },
+            "mapping": {
+
+            }
+          }
+        ],
+        "dims": {
+          "width": 600,
+          "height": 600
+        }
+      },
+      "class": "shiny-scalable"
+    }
+  },
+  "export": {
+
+  }
+}

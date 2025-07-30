@@ -20,7 +20,7 @@
 #' entry (zero extra steps) is named `2` (two steps observed).
 #' 
 #' @examples
-#' character <- rep(c(0:3, '?', '-'), c(8, 5, 1, 1, 2, 2))
+#' character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))
 #' StepInformation(character)
 #' @template MRS
 #' @importFrom fastmatch %fin%
@@ -28,8 +28,8 @@
 #' @importFrom TreeTools Log2Unrooted
 #' @family profile parsimony functions
 #' @export
-StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
-  NIL <- c('0' = 0)
+StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
+  NIL <- c("0" = 0)
   char <- char[!char %fin% ambiguousTokens]
   if (length(char) == 0) {
     return(NIL)
@@ -60,7 +60,7 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
   ret <- setNames(Log2Unrooted(sum(split[1:2]))
                   - (.LogCumSumExp(logProfile) / log(2)),
                   seq_len(split[2]) + sum(singletons))
-  ret[ret < sqrt(.Machine$double.eps)] <- 0 # Floating point error inevitable
+  ret[ret < sqrt(.Machine[["double.eps"]])] <- 0 # Floating point error inevitable
   
   # Return:
   ret
@@ -79,15 +79,15 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
   Lk
 }
 
-#' Number of trees with _m_ additional steps
+#' Number of trees with _m_ steps
 #' 
-#' Calculate the number of trees with _m_ extra steps under Fitch parsimony
-#' where _a_ leaves are labelled with one state, and _b_ leaves labelled with
-#' a second state.
+#' Calculate the number of trees in which Fitch parsimony will reconstruct
+#' _m_ steps, where _a_ leaves are labelled with one state, and _b_ leaves are
+#' labelled with a second state.
 #' 
 #' Implementation of theorem 1 from \insertCite{Carter1990;textual}{TreeTools}
 #' 
-#' @param m Number of steps
+#' @param m Number of steps.
 #' @param a,b Number of leaves labelled `0` and `1`.
 #' 
 #' @references 
@@ -101,6 +101,18 @@ StepInformation <- function (char, ambiguousTokens = c('-', '?')) {
 #' 
 #' (\insertRef{Steel1996}{TreeSearch})
 #' @importFrom TreeTools LogDoubleFactorial
+#' @examples 
+#' # The character `0 0 0 1 1 1`
+#' Carter1(1, 3, 3) # Exactly one step
+#' Carter1(2, 3, 3) # Two steps (one extra step)
+#' 
+#' # Number of trees that the character can map onto with exactly _m_ steps
+#' # if non-parsimonious reconstructions are permitted:
+#' cumsum(sapply(1:3, Carter1, 3, 3))
+#' 
+#' # Three steps allow the character to map onto any of the 105 six-leaf trees.
+#' 
+#' @template MRS
 #' @family profile parsimony functions
 #' @export
 Carter1 <- function (m, a, b) {
@@ -108,7 +120,9 @@ Carter1 <- function (m, a, b) {
   twoN <- n + n
   twoM <- m + m
   N <- function (n, m) {
-    if (n < m) 0 else {
+    if (n < m) {
+      0
+    } else {
       nMinusM <- n - m
       factorial(n + nMinusM - 1L) / prod(
         factorial(nMinusM),
@@ -192,12 +206,12 @@ LogCarter1 <- function (m, a, b) {
 #   analyticP <- 2 ^ -analyticIC[2]
 #   
 #   if (warn) {
-#     message('  Token count ', split, " = ",
+#     message("  Token count ", split, " = ",
 #             signif(analyticIc0, ceiling(log10(maxIter))),
-#             ' bits @ 0 extra steps. \n  Simulating ', nIter, 
-#             ' trees to estimate cost of further steps.')
-#     # message(c(round(analyticIc0, 3), 'bits @ 0 extra steps;', round(analyticIc1, 3),
-#     #    '@ 1; attempting', nIter, 'iterations.\n'))
+#             " bits @ 0 extra steps. \n  Simulating ", nIter, 
+#             " trees to estimate cost of further steps.")
+#     # message(c(round(analyticIc0, 3), "bits @ 0 extra steps;", round(analyticIc1, 3),
+#     #    "@ 1; attempting", nIter, "iterations.\n"))
 #   }
 #   
 #   morphyObj <- SingleCharMorphy(rep(seq_along(split) - 1L, split))
@@ -227,6 +241,7 @@ LogCarter1 <- function (m, a, b) {
 #' @examples
 #' WithOneExtraStep(1, 2, 3)
 #' @importFrom TreeTools NUnrootedMult DoubleFactorial
+#' @family profile parsimony functions
 #' @export
 WithOneExtraStep <- function (...) {
   splits <- c(...)

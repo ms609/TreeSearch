@@ -15,7 +15,7 @@ reference:
       
   - title: "Tree scoring"
     desc: "Functions that provide tree scores, for optimization."
-    contents: 
+    contents:
       - has_concept("tree scoring")
       - ConcordantInformation
       - Consistency
@@ -52,11 +52,32 @@ reference:
   - title: "Datasets"
     desc: "Data that accompanies the package."
     contents:
-      - has_keyword('datasets')
+      - has_keyword("datasets")
+      
+  - title: "Utility functions"
+    desc: "Miscellaneous functions used within the package."
+    contents:
+      - has_concept("utility functions")
+
+articles:
+  - title: Getting started
+    navbar: Getting started
+    contents:
+    - getting-started
+    - tree-search
+    - tree-space
+  
+  - title: Advanced use
+    navbar: Advanced use
+    desc: Changing optimality criteria for tree search
+    contents:
+    - profile-scores
+    - profile
+    - custom
 
 template:
+  bootstrap: 5
+  bslib:
+    danger: "#A6081A" # Accessibility suggestion
   params:
-    docsearch:
-      api_key: 8422cbc6478f9d3278ad355b48435342
-      index_name: treesearch
-    ganalytics: UA-156666971-5
+    ganalytics: G-V9DV1LS35J

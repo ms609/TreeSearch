@@ -1,19 +1,21 @@
 ---
-title: "Tree Search with Profile Parsimony"
+title: "Tree search with Profile parsimony"
 author: "Martin R. Smith"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: ../inst/REFERENCES.bib
 csl: ../inst/apa-old-doi-prefix.csl
 vignette: >
-  %\VignetteIndexEntry{Tree Search with Profile Parsimony}
+  %\VignetteIndexEntry{Tree search with Profile parsimony}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 Profile Parsimony [@Faith2001] finds the tree that is most faithful 
-to the information contained within a given dataset. 
+to the information contained within a given dataset.
 It is the 'exact solution' that implied weights parsimony approximates.
+For more information on the philosophy and mathematics of profile parsimony,
+see the [companion vignette](profile-scores.html).
 
 Profile Parsimony is currently implemented in "TreeSearch" for characters with
 up to two parsimony-informative states.
@@ -32,15 +34,15 @@ the package and getting up and running.
 -->
 
 Once installed, load the inapplicable package into R using
-```{r Load-library, message=FALSE}
-library('TreeSearch')
+```{r load-library, message=FALSE}
+library("TreeSearch")
 ```
 
 In order to reproduce the random elements of this document, set a random seed:
 
-```{R RNG-version}
+```{R rng-version, warn = FALSE}
 # Set a random seed so that random functions in this document are reproducible
-suppressWarnings(RNGversion('3.5.0')) # Until we can require R3.6.0
+RNGversion("3.5.0")
 set.seed(888)
 ```
 
@@ -49,10 +51,11 @@ set.seed(888)
 
 Here's an example of using the package to conduct tree search with profile 
 parsimony.
-You can [load your own dataset](https://ms609.github.io/TreeTools/articles/load-data.html), but for this example,
+You can [load your own dataset](https://ms609.github.io/TreeTools/articles/load-data.html),
+but for this example,
 we'll use a simulated dataset that comes bundled with the `TreeSearch` package.
 
-```{r Load Longrich data}
+```{r load-longrich-data}
 data(congreveLamsdellMatrices)
 myMatrix <- congreveLamsdellMatrices[[10]]
 ```
@@ -60,27 +63,27 @@ myMatrix <- congreveLamsdellMatrices[[10]]
 Unless a starting tree is provided, tree search will from a random addition
 tree:
 
-```{r Addition tree}
-additionTree <- AdditionTree(myMatrix, concavity = 'profile')
-TreeLength(additionTree, myMatrix, 'profile')
+```{r addition-tree}
+additionTree <- AdditionTree(myMatrix, concavity = "profile")
+TreeLength(additionTree, myMatrix, "profile")
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(additionTree)
 ```
 
 We could alternatively use a random or neighbour-joining tree:
 
-```{r Random tree}
+```{r random-tree}
 randomTree <- TreeTools::RandomTree(myMatrix, root = TRUE)
-TreeLength(randomTree, myMatrix, 'profile')
+TreeLength(randomTree, myMatrix, "profile")
 njTree <- TreeTools::NJTree(myMatrix)
-TreeLength(njTree, myMatrix, 'profile')
+TreeLength(njTree, myMatrix, "profile")
 ```
 
 We search for trees with a better score using TBR rearrangements and the 
 parsimony ratchet [@Nixon1999]:
 
-```{R Starting score, message = FALSE}
-betterTrees <- MaximizeParsimony(myMatrix, additionTree, concavity = 'profile',
+```{R starting-score, message = FALSE}
+betterTrees <- MaximizeParsimony(myMatrix, additionTree, concavity = "profile",
                                  ratchIter = 3, tbrIter = 3, maxHits = 8)
 ```
 
@@ -89,8 +92,8 @@ run, so this is not necessarily a thorough enough search to find a globally
 optimal tree.
 Nevertheless, let's see the resultant tree, and its score:
 
-```{r Ratchet-search-results}
-TreeLength(betterTrees[[1]], myMatrix, 'profile')
+```{r ratchet-search-results}
+TreeLength(betterTrees[[1]], myMatrix, "profile")
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(ape::consensus(betterTrees))
 ```
@@ -110,23 +113,35 @@ To sample this region of tree space well, the trick is to use large values of
 `searchiter`, so that many runs don't quite hit the optimal tree.
 In a serious study, you would want to sample many more than the 3 Ratchet hits (`ratchHits`) we'll settle for here, probably using many more Ratchet iterations.
 
-```{R Suboptimal sampling, message = FALSE}
+```{R suboptimal-sampling, message = FALSE}
 suboptimals <- MaximizeParsimony(myMatrix, betterTrees, tolerance = 3,
                                  ratchIter = 2, tbrIter = 3,
                                  maxHits = 25,
-                                 concavity = 'profile')
+                                 concavity = "profile")
 ```
 
 The consensus of these slightly suboptimal trees provides a less resolved, but
 typically more reliable, summary of the signal with the phylogenetic dataset
 [@Smith2019]:
 
-```{r Plot suboptimal consensus}
+```{r plot-suboptimal-consensus}
 par(mar = rep(0.25, 4), cex = 0.75)
-table(signif(TreeLength(suboptimals, myMatrix, 'profile')))
+table(signif(TreeLength(suboptimals, myMatrix, "profile")))
 plot(ape::consensus(suboptimals))
 ```
 
+
+## Where next?
+
+- [Documentation home](https://ms609.github.io/TreeSearch/)
+
+- [Guide to installation](getting-started.html)
+
+- Search for trees using
+  - [standard parsimony](tree-search.html) (corrected for inapplicable data)
+  - [custom optimality criteria](custom.html)
+  
+- Explore the distribution of optimal trees in [mappings](tree-space.html)
 
 ## References
 
