@@ -99,12 +99,23 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
 #' @param plot Logical specifying whether to plot results; if `FALSE`,
 #' returns blank labels for nodes near the root that do not correspond to a
 #' unique split.
+#' @param showFraction Logical specifying whether to also annotate nodes
+#' with the fraction of replicates that were decisive for the split.
 #' 
-#' @return A named vector specifying the proportion of jackknife trees 
+#' If an element of `jackTrees` contains multiple trees, then the iteration is
+#' counted as supporting a split if all trees contain the split, and as
+#' contradicting the split if no trees contain it.  If a split is only present
+#' in a subset of trees, that iteration is considered not to be decisive, and
+#' is ignored when calculating the support for that split.
+#' 
+#' @return A named vector specifying the proportion of jackknife iterations 
 #' consistent with each node in `tree`, as plotted.
-#' If `plot = FALSE`, blank entries are included corresponding to nodes
-#' that do not require labelling; the return value is in the format required
-#' by `phylo$node.label`.
+#' If `plot = FALSE`, `NA` entries are included corresponding to nodes
+#' that do not require labels, such that the return value is in the format
+#' required by `phylo$node.label`.
+#' If multiple trees are specified per iteration, the return value has an
+#' attribute `decisive` listing, for each entry in the return value, how many
+#' iterations were decisive for that split.
 #' 
 #' @examples
 #' library("TreeTools", quietly = TRUE) # for as.phylo
@@ -135,15 +146,39 @@ JackLabels <- function (tree, jackTrees,
                         plot = TRUE,
                         add = FALSE,
                         adj = 0, col = NULL, frame = "none", pos = 2L,
+                        showFraction = FALSE,
                         ...) {
-  jackSupport <- SplitFrequency(tree, jackTrees) / length(jackTrees)
+  nJack <- length(jackTrees)
+  multi <- vapply(jackTrees, inherits, TRUE, "multiPhylo")
+  if (any(multi)) {
+    jackTrees[!multi] <- lapply(jackTrees[!multi], c)
+    supports <- vapply(jackTrees, function(trees) {
+      freq <- SplitFrequency(tree, trees)
+      ifelse(freq == 0, FALSE, ifelse(freq == length(trees), TRUE, NA))
+      }, logical(NSplits(tree)))
+    numerator <- rowSums(supports, na.rm = TRUE)
+    denominator <- rowSums(!is.na(supports))
+    jackSupport <- structure(numerator / denominator, decisive = denominator)
+  } else {
+    jackSupport <- SplitFrequency(tree, jackTrees) / nJack
+  }
+  
   
   if (plot) {
     if (!add) plot(tree)
     if (is.null(col)) {
       col <- SupportColour(jackSupport)
     }
-    nodelabels(paste("\n\n", signif(jackSupport, 2)),
+    fracText <- if(isTRUE(showFraction)) {
+      if (!any(multi)) {
+        numerator <- jackSupport * nJack
+        denominator <- nJack
+      }
+      paste0("(", numerator, " / ", denominator, ")")
+    } else {
+      character(0)
+    }
+    nodelabels(paste("\n\n", signif(jackSupport, 2), fracText),
                node = as.integer(names(jackSupport)),
                adj = adj, col = col, pos = pos, frame = frame, ...)
     
@@ -153,6 +188,11 @@ JackLabels <- function (tree, jackTrees,
     ret <- `length<-`(double(0), tree[["Nnode"]])
     idx <- as.integer(names(jackSupport)) - NTip(tree)
     ret[idx] <- jackSupport
+    if (!is.null(attr(jackSupport, "decisive"))) {
+      decisive <- `length<-`(integer(0), tree[["Nnode"]])
+      decisive[idx] <- attr(jackSupport, "decisive")
+      attr(ret, "decisive") <- decisive
+    }
     
     # Return:
     ret

@@ -229,6 +229,17 @@
 #' # Take a single tree from each replicate (the first; order's irrelevant)
 #' JackLabels(cons, lapply(jackTrees, `[[`, 1))
 #' 
+#' # Count support if all most parsimonious trees support a split;
+#' # contradiction if all trees contradict it; don't include replicates where
+#' # not all trees agree on the resolution of a split.
+#' labels <- JackLabels(cons, jackTrees)
+#' 
+#' # How many iterations were decisive for each node?
+#' attr(labels, "decisive")
+#' 
+#' # Show as proportion
+#' JackLabels(cons, jackTrees, showFrac = TRUE)
+#' 
 #' # Restore graphical parameters
 #' par(oPar)
 #' }
