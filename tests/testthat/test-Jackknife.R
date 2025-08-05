@@ -44,3 +44,22 @@ test_that("Jackknife ouputs good for node.labels", {
                  unname(JackLabels(tree, jackTrees)))
   })
 })
+
+test_that("JackLabels() handles multiple trees per iteration", {
+  tree <- BalancedTree(5)
+  plot(tree)
+  nodelabels()
+  dispute8 <- ape::read.tree(text = "(((t1, t3), t2), (t4, t5));")
+  disagree <- ape::read.tree(text = "(((t5, t2), t3), (t4, t1));")
+  jackTrees <- list(
+    c(dispute8, dispute8),
+    c(tree, tree),
+    c(dispute8, tree),
+    c(disagree, disagree, disagree),
+    BalancedTree(5)
+  )
+  expect_equal(
+    JackLabels(tree, jackTrees),
+    structure(c("7" = 4 / 5, "8" = 2 / 4), decisive = c("7" = 5, "8" = 4))
+  )
+})
