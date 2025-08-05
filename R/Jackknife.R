@@ -150,8 +150,9 @@ JackLabels <- function (tree, jackTrees,
     # Return:
     jackSupport
   } else {
-    ret <- character(tree[["Nnode"]])
-    ret[as.integer(names(jackSupport)) - NTip(tree)] <- jackSupport
+    ret <- `length<-`(double(0), tree[["Nnode"]])
+    idx <- as.integer(names(jackSupport)) - NTip(tree)
+    ret[idx] <- jackSupport
     
     # Return:
     ret
