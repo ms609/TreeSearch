@@ -103,7 +103,7 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
 #' @return A named vector specifying the proportion of jackknife trees 
 #' consistent with each node in `tree`, as plotted.
 #' If `plot = FALSE`, blank entries are included corresponding to nodes
-#' that do not require labelling; the return value is in the value required
+#' that do not require labelling; the return value is in the format required
 #' by `phylo$node.label`.
 #' 
 #' @examples

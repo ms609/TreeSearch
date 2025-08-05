@@ -35,7 +35,7 @@ plot.}
 A named vector specifying the proportion of jackknife trees
 consistent with each node in \code{tree}, as plotted.
 If \code{plot = FALSE}, blank entries are included corresponding to nodes
-that do not require labelling; the return value is in the value required
+that do not require labelling; the return value is in the format required
 by \code{phylo$node.label}.
 }
 \description{
