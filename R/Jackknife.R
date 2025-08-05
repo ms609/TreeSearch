@@ -27,7 +27,7 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
                       CleanUpData    = UnloadMorphy,
                       TreeScorer     = MorphyLength,
                       EdgeSwapper    = TBRSwap,
-                      jackIter   = 5000L, searchIter = 4000L, searchHits = 42L,
+                      jackIter = 5000L, searchIter = 4000L, searchHits = 42L,
                       verbosity = 1L, ...) {
   # Initialize tree and data
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
@@ -101,6 +101,10 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
 #' unique split.
 #' @param showFraction Logical specifying whether to also annotate nodes
 #' with the fraction of replicates that were decisive for the split.
+#' @param format Character specifying return format.
+#' `"character"` returns a character string suitable to add to the `node.labels`
+#' attribute of a tree; 
+#' "numeric" returns numeric values suitable for further analysis.
 #' 
 #' If an element of `jackTrees` contains multiple trees, then the iteration is
 #' counted as supporting a split if all trees contain the split, and as
@@ -110,7 +114,7 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
 #' 
 #' @return A named vector specifying the proportion of jackknife iterations 
 #' consistent with each node in `tree`, as plotted.
-#' If `plot = FALSE`, `NA` entries are included corresponding to nodes
+#' If `format = "character"`, blank entries are included corresponding to nodes
 #' that do not require labels, such that the return value is in the format
 #' required by `phylo$node.label`.
 #' If multiple trees are specified per iteration, the return value has an
@@ -146,7 +150,7 @@ JackLabels <- function (tree, jackTrees,
                         plot = TRUE,
                         add = FALSE,
                         adj = 0, col = NULL, frame = "none", pos = 2L,
-                        showFraction = FALSE,
+                        showFraction = FALSE, format = "character",
                         ...) {
   nJack <- length(jackTrees)
   multi <- vapply(jackTrees, inherits, TRUE, "multiPhylo")
@@ -163,38 +167,47 @@ JackLabels <- function (tree, jackTrees,
     jackSupport <- SplitFrequency(tree, jackTrees) / nJack
   }
   
+  fracText <- if(isTRUE(showFraction)) {
+    if (!any(multi)) {
+      numerator <- jackSupport * nJack
+      denominator <- nJack
+    }
+    paste0("{", numerator, " / ", denominator, "}")
+  } else {
+    character(0)
+  }
   
   if (plot) {
     if (!add) plot(tree)
     if (is.null(col)) {
       col <- SupportColour(jackSupport)
     }
-    fracText <- if(isTRUE(showFraction)) {
-      if (!any(multi)) {
-        numerator <- jackSupport * nJack
-        denominator <- nJack
-      }
-      paste0("(", numerator, " / ", denominator, ")")
-    } else {
-      character(0)
-    }
-    nodelabels(paste("\n\n", signif(jackSupport, 2), fracText),
+    nodelabels(paste("\n\n", signif(jackSupport, 2),
+                     gsub("{", "(", fixed = TRUE,
+                          gsub("}", ")", fixed = TRUE, fracText))),
                node = as.integer(names(jackSupport)),
                adj = adj, col = col, pos = pos, frame = frame, ...)
-    
-    # Return:
-    jackSupport
-  } else {
-    ret <- `length<-`(double(0), tree[["Nnode"]])
-    idx <- as.integer(names(jackSupport)) - NTip(tree)
-    ret[idx] <- jackSupport
-    if (!is.null(attr(jackSupport, "decisive"))) {
-      decisive <- `length<-`(integer(0), tree[["Nnode"]])
-      decisive[idx] <- attr(jackSupport, "decisive")
-      attr(ret, "decisive") <- decisive
-    }
-    
-    # Return:
-    ret
   }
+
+  numeric <- c("numeric", "number", "double")
+  character <- c("character", "text")
+  returnMode <- c(rep("numeric", length(numeric)),
+                  rep("character", length(character)))[
+    pmatch(tolower(format), c(numeric, character), duplicates.ok = TRUE)]
+  
+  # Return:
+  switch(
+    returnMode,
+    "character" = {
+      ret <- character(tree[["Nnode"]])
+      idx <- as.integer(names(jackSupport)) - NTip(tree)
+      
+      ret[idx] <- if (isTRUE(showFraction)) {
+        paste(jackSupport, fracText)
+      } else {
+        jackSupport
+      }
+      ret
+    }, jackSupport
+  )
 }

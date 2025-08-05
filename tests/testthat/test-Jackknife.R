@@ -31,12 +31,14 @@ test_that("Jackknife ouputs good for node.labels", {
   jackTrees <- as.phylo(1:100, 8)
   
   tree <- as.phylo(0, 8)
-  expect_equal(JackLabels(tree, jackTrees, plot = FALSE),
-               c(NA_real_, NA_real_, 0.13, 0.08, 0.14, 1, 1))
+  expect_equal(JackLabels(tree, jackTrees, plot = FALSE, format = "char"),
+               c("", "", 0.13, 0.08, 0.14, 1, 1))
   
   tree <- RootTree(as.phylo(0, 8), c("t1", "t4"))
-  expect_equal(JackLabels(tree, jackTrees, plot = FALSE),
-               c(NA_real_, 0.08, 0.13, NA_real_, 0.14, 1, 1))
+  expect_equal(JackLabels(tree, jackTrees, plot = FALSE, format = "text"),
+               c("", 0.08, 0.13, "", 0.14, 1, 1))
+  expect_equal(JackLabels(tree, jackTrees, plot = FALSE, format = "num"),
+               setNames(c(0.08, 0.13, 0.14, 1, 1), c(10, 11, 13:15)))
   
   skip_if_not_installed("vdiffr")
   vdiffr::expect_doppelganger("plot-jackknife", function() {
@@ -59,7 +61,15 @@ test_that("JackLabels() handles multiple trees per iteration", {
     BalancedTree(5)
   )
   expect_equal(
-    JackLabels(tree, jackTrees),
+    JackLabels(tree, jackTrees, plot = FALSE),
     structure(c("7" = 4 / 5, "8" = 2 / 4), decisive = c("7" = 5, "8" = 4))
   )
+  
+  lab <- JackLabels(tree, jackTrees, format = "character", showFraction = TRUE,
+                    plot = FALSE)
+  tree[["node.label"]] <- lab
+  expect_equal(gsub("_", " ", fixed = TRUE,
+                    ape::read.tree(text = ape::write.tree(tree)
+                                   )[["node.label"]]),
+               lab)
 })
