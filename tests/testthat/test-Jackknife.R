@@ -42,15 +42,13 @@ test_that("Jackknife ouputs good for node.labels", {
   
   skip_if_not_installed("vdiffr")
   vdiffr::expect_doppelganger("plot-jackknife", function() {
-    expect_equal(as.double(JackLabels(tree, jackTrees, plot = FALSE)[-c(1, 4)]),
+    expect_equal(JackLabels(tree, jackTrees, plot = FALSE),
                  unname(JackLabels(tree, jackTrees)))
   })
 })
 
 test_that("JackLabels() handles multiple trees per iteration", {
   tree <- BalancedTree(5)
-  plot(tree)
-  nodelabels()
   dispute8 <- ape::read.tree(text = "(((t1, t3), t2), (t4, t5));")
   disagree <- ape::read.tree(text = "(((t5, t2), t3), (t4, t1));")
   jackTrees <- list(
@@ -61,7 +59,7 @@ test_that("JackLabels() handles multiple trees per iteration", {
     BalancedTree(5)
   )
   expect_equal(
-    JackLabels(tree, jackTrees, plot = FALSE),
+    JackLabels(tree, jackTrees, plot = FALSE, format = "Double"),
     structure(c("7" = 4 / 5, "8" = 2 / 4), decisive = c("7" = 5, "8" = 4))
   )
   

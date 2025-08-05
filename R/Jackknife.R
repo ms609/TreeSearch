@@ -90,6 +90,15 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
 
 #' Label nodes with jackknife support values
 #' 
+#' `JackLabels()` produces a list of node labels denoting split support from
+#' a set of resampled trees, optionally printing them on a tree.
+#' 
+#' If an element of `jackTrees` contains multiple trees, then the iteration is
+#' counted as supporting a split if all trees contain the split, and as
+#' contradicting the split if no trees contain it.  If a split is only present
+#' in a subset of trees, that iteration is considered not to be decisive, and
+#' is ignored when calculating the support for that split.
+#' 
 #' @inheritParams TreeTools::Renumber
 #' @param jackTrees A list or `multiPhylo` object containing trees generated
 #' by [`Resample()`] or [`Jackknife()`].
@@ -105,12 +114,6 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
 #' `"character"` returns a character string suitable to add to the `node.labels`
 #' attribute of a tree; 
 #' "numeric" returns numeric values suitable for further analysis.
-#' 
-#' If an element of `jackTrees` contains multiple trees, then the iteration is
-#' counted as supporting a split if all trees contain the split, and as
-#' contradicting the split if no trees contain it.  If a split is only present
-#' in a subset of trees, that iteration is considered not to be decisive, and
-#' is ignored when calculating the support for that split.
 #' 
 #' @return A named vector specifying the proportion of jackknife iterations 
 #' consistent with each node in `tree`, as plotted.
