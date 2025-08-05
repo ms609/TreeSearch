@@ -220,24 +220,23 @@
 #' # Set graphical parameters for plotting
 #' oPar <- par(mar = rep(0, 4), cex = 0.9)
 #' 
-#' # Treat each tree as a separate replicate (problematic)
-#' JackLabels(cons, unlist(jackTrees, recursive = FALSE))
-#' 
 #' # Take the strict consensus of all trees for each replicate
+#' # (May underestimate support)
 #' JackLabels(cons, lapply(jackTrees, ape::consensus))
 #' 
-#' # Take a single tree from each replicate (the first; order's irrelevant)
+#' # Take a single tree from each replicate (here, the first)
+#' # Potentially problematic if chosen tree is not representative
 #' JackLabels(cons, lapply(jackTrees, `[[`, 1))
 #' 
-#' # Count support if all most parsimonious trees support a split;
-#' # contradiction if all trees contradict it; don't include replicates where
+#' # Count iteration as support if all most parsimonious trees support a split;
+#' # as contradiction if all trees contradict it; don't include replicates where
 #' # not all trees agree on the resolution of a split.
 #' labels <- JackLabels(cons, jackTrees)
 #' 
 #' # How many iterations were decisive for each node?
 #' attr(labels, "decisive")
 #' 
-#' # Show as proportion
+#' # Show as proportion of decisive iterations
 #' JackLabels(cons, jackTrees, showFrac = TRUE)
 #' 
 #' # Restore graphical parameters
@@ -275,18 +274,18 @@
 #' 
 #' @encoding UTF-8
 #' @export
-MaximizeParsimony <- function (dataset, tree,
-                               ratchIter = 7L,
-                               tbrIter = 2L,
-                               startIter = 2L, finalIter = 1L,
-                               maxHits = NTip(dataset) * 1.8,
-                               maxTime = 60,
-                               quickHits = 1 / 3,
-                               concavity = Inf,
-                               ratchEW = TRUE,
-                               tolerance = sqrt(.Machine[["double.eps"]]),
-                               constraint,
-                               verbosity = 3L) {
+MaximizeParsimony <- function(dataset, tree,
+                              ratchIter = 7L,
+                              tbrIter = 2L,
+                              startIter = 2L, finalIter = 1L,
+                              maxHits = NTip(dataset) * 1.8,
+                              maxTime = 60,
+                              quickHits = 1 / 3,
+                              concavity = Inf,
+                              ratchEW = TRUE,
+                              tolerance = sqrt(.Machine[["double.eps"]]),
+                              constraint,
+                              verbosity = 3L) {
 
   ### User messaging functions ###
   .Message <- function (level, ...) {
