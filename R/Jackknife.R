@@ -149,14 +149,13 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
 #' parsimony searches, or [`Jackknife()`] for custom search criteria.
 #' @family split support functions
 #' @export
-JackLabels <- function (tree, jackTrees,
-                        plot = TRUE,
-                        add = FALSE,
-                        adj = 0, col = NULL, frame = "none", pos = 2L,
-                        showFraction = FALSE, format = "character",
-                        ...) {
+JackLabels <- function(tree, jackTrees, plot = TRUE, add = FALSE, adj = 0,
+                       col = NULL, frame = "none", pos = 2L,
+                       showFraction = FALSE, format = "character", ...) {
+  
   nJack <- length(jackTrees)
   multi <- vapply(jackTrees, inherits, TRUE, "multiPhylo")
+  
   if (any(multi)) {
     jackTrees[!multi] <- lapply(jackTrees[!multi], c)
     supports <- vapply(jackTrees, function(trees) {
