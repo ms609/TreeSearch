@@ -41,9 +41,9 @@
 #' @param adj,col,frame,pos,\dots Parameters to pass to `nodelabels()`.
 #' 
 #' @seealso 
-#' [`SplitFrequency()`] and [`MostContradictedFreq()`] will compute the number
-#' of trees that contain the split, and the frequency of the most contradicted
-#' split, respectively.
+#' \code{\link[TreeTools]{SplitFrequency}()} and [`MostContradictedFreq()`] will
+#' compute the number of trees that contain the split, and the frequency of the
+#' most contradicted split, respectively.
 #' @references \insertAllCited{}
 #' @examples
 #' library("TreeTools", quietly = TRUE) # for as.phylo
