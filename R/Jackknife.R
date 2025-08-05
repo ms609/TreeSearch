@@ -3,10 +3,9 @@
 #' Resample trees using Jackknife resampling, i.e. removing a subset of
 #' characters.
 #' 
-#' The function assumes 
-#' that `InitializeData()` will return a morphy object; if this doesn't hold 
-#' for you, post a [GitHub issue](https://github.com/ms609/TreeSearch/issues/new/)
-#' or e-mail the maintainer.
+#' The function assumes  that `InitializeData()` will return a morphy object;
+#' if this doesn't hold for you, post a [GitHub issue](
+#' https://github.com/ms609/TreeSearch/issues/new/) or e-mail the maintainer.
 #' 
 #' @inheritParams Ratchet
 #' @param resampleFreq Double between 0 and 1 stating proportion of characters 
@@ -23,18 +22,18 @@
 #' @family split support functions
 #' @family custom search functions
 #' @export
-Jackknife <- function (tree, dataset, resampleFreq = 2/3,
-                       InitializeData = PhyDat2Morphy,
-                       CleanUpData    = UnloadMorphy,
-                       TreeScorer     = MorphyLength,
-                       EdgeSwapper    = TBRSwap,
-                       jackIter   = 5000L,
-                       searchIter = 4000L, searchHits = 42L,
-                       verbosity = 1L, ...) {
-  # initialize tree and data
+Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
+                      InitializeData = PhyDat2Morphy,
+                      CleanUpData    = UnloadMorphy,
+                      TreeScorer     = MorphyLength,
+                      EdgeSwapper    = TBRSwap,
+                      jackIter   = 5000L, searchIter = 4000L, searchHits = 42L,
+                      verbosity = 1L, ...) {
+  # Initialize tree and data
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     stop("tree must be bifurcating; try rooting with ape::root")
   }
+  
   tree <- RenumberTips(tree, names(dataset))
   edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
@@ -46,6 +45,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
   eachChar <- seq_along(startWeights)
   deindexedChars <- rep.int(eachChar, startWeights)
   charsToKeep <- ceiling(resampleFreq * length(deindexedChars))
+  
   if (charsToKeep < 1L) {
     stop("resampleFreq of ", resampleFreq, " is too low; can't keep 0 of ",
          length(deindexedChars), " characters.")
@@ -53,6 +53,7 @@ Jackknife <- function (tree, dataset, resampleFreq = 2/3,
     stop("resampleFreq of ", resampleFreq, " is too high; can't keep all ",
          length(deindexedChars), " characters.")
   }
+  
   if (verbosity > 10L) { #nocov start
     message(" * Beginning search:")
   } #nocov end
