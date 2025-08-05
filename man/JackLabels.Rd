@@ -13,6 +13,8 @@ JackLabels(
   col = NULL,
   frame = "none",
   pos = 2L,
+  showFraction = FALSE,
+  format = "character",
   ...
 )
 }
@@ -30,16 +32,35 @@ unique split.}
 plot.}
 
 \item{adj, col, frame, pos, \dots}{Parameters to pass to \code{nodelabels()}.}
+
+\item{showFraction}{Logical specifying whether to also annotate nodes
+with the fraction of replicates that were decisive for the split.}
+
+\item{format}{Character specifying return format.
+\code{"character"} returns a character string suitable to add to the \code{node.labels}
+attribute of a tree;
+"numeric" returns numeric values suitable for further analysis.}
 }
 \value{
-A named vector specifying the proportion of jackknife trees
+A named vector specifying the proportion of jackknife iterations
 consistent with each node in \code{tree}, as plotted.
-If \code{plot = FALSE}, blank entries are included corresponding to nodes
-that do not require labelling; the return value is in the value required
-by \code{phylo$node.label}.
+If \code{format = "character"}, blank entries are included corresponding to nodes
+that do not require labels, such that the return value is in the format
+required by \code{phylo$node.label}.
+If multiple trees are specified per iteration, the return value has an
+attribute \code{decisive} listing, for each entry in the return value, how many
+iterations were decisive for that split.
 }
 \description{
-Label nodes with jackknife support values
+\code{JackLabels()} produces a list of node labels denoting split support from
+a set of resampled trees, optionally printing them on a tree.
+}
+\details{
+If an element of \code{jackTrees} contains multiple trees, then the iteration is
+counted as supporting a split if all trees contain the split, and as
+contradicting the split if no trees contain it.  If a split is only present
+in a subset of trees, that iteration is considered not to be decisive, and
+is ignored when calculating the support for that split.
 }
 \examples{
 library("TreeTools", quietly = TRUE) # for as.phylo

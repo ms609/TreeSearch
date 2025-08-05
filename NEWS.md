@@ -1,4 +1,7 @@
-# TreeSearch 1.6.1.9004 (development)
+# TreeSearch 1.6.1.9005 (development)
+
+- `JackLabels()` supports multiple trees per iteration
+  (#197)[https://github.com/ms609/TreeSearch/discussions/197]
 - `PresCont()` implements the Group Present / Contradicted measure of
   Goloboff et al. (2003).
 - Support single-character matrices in `ClusteringConcordance()`
