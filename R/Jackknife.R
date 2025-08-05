@@ -143,7 +143,7 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
 #' # write.nexus(tree, file = filename)
 #' @template MRS
 #' @importFrom ape nodelabels
-#' @importFrom TreeTools SplitFrequency SupportColour
+#' @importFrom TreeTools NSplits SplitFrequency SupportColour
 #' @seealso
 #' Generate trees by jackknife resampling using [`Resample()`] for standard
 #' parsimony searches, or [`Jackknife()`] for custom search criteria.
