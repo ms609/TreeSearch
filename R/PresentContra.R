@@ -3,7 +3,7 @@
 #' Implements the Groups Present / Contradicted (\acronym{GC}) measure
 #' \insertCite{Goloboff2003}{TreeSearch}.
 #' 
-#' The GC score ranges from &#x2212;1 to 1, and is intended as an alternative
+#' The GC score ranges from -1 to 1, and is intended as an alternative
 #' to bootstrap or jackknife support values.
 #' 
 #' The GC score counts the number of trees in `forest` that include a given
@@ -13,7 +13,7 @@
 #' 
 #' A score of 1 denotes that every tree in a forest (typically of bootstrap
 #' or jackknife replicates) contains the split in question.
-#' A score of &#x2212;1 denotes that a specific contradictory split occurs in
+#' A score of -1 denotes that a specific contradictory split occurs in
 #' every tree in `forest`.
 #' A score of zero indicates no support: i.e. that the split exhibits no more
 #' support than its most common contradictory split.
@@ -41,9 +41,9 @@
 #' @param adj,col,frame,pos,\dots Parameters to pass to `nodelabels()`.
 #' 
 #' @seealso 
-#' \code{\link[TreeTools]{SplitFrequency}()} and [`MostContradictedFreq()`] will
-#' compute the number of trees that contain the split, and the frequency of the
-#' most contradicted split, respectively.
+#' [`SplitFrequency()`] and [`MostContradictedFreq()`] will compute the number
+#' of trees that contain the split, and the frequency of the most contradicted
+#' split, respectively.
 #' @references \insertAllCited{}
 #' @examples
 #' library("TreeTools", quietly = TRUE) # for as.phylo
