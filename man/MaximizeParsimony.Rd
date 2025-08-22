@@ -231,7 +231,7 @@ Try increasing \code{ratchIter}.
 }
 
 When continuing a tree search, it is usually best to start from an optimal
-tree found during the previous iteration – there is no need to start from
+tree found during the previous iteration - there is no need to start from
 scratch.
 
 A more time consuming way of checking that a global optimum has been reached
