@@ -1,13 +1,13 @@
-# TreeSearch 1.6.1.9005 (development)
+# TreeSearch 1.7.0 (2025-08-22)
 
-- `JackLabels()` supports multiple trees per iteration
-  (#197)[https://github.com/ms609/TreeSearch/discussions/197]
 - `PresCont()` implements the Group Present / Contradicted measure of
   Goloboff et al. (2003).
-- Support single-character matrices in `ClusteringConcordance()`
-- Fix `DoNothing(x)` to return `x` (not `NULL`)
 - `Consistency()` also returns the relative homoplasy index of Steell et al. 
   (2023).
+- `JackLabels()` supports multiple trees per iteration
+  (#197)[https://github.com/ms609/TreeSearch/discussions/197]
+- Support single-character matrices in `ClusteringConcordance()`
+- Fix `DoNothing(x)` to return `x` (not `NULL`)
 - Remove unused `delete_rawdata()` due to implementation issues.
 
 
