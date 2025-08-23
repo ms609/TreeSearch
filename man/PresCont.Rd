@@ -98,7 +98,7 @@ gpc
 \insertAllCited{}
 }
 \seealso{
-\code{\link[=SplitFrequency]{SplitFrequency()}} and \code{\link[=MostContradictedFreq]{MostContradictedFreq()}} will compute the number
+\code{\link[TreeTools]{SplitFrequency}()} and \code{\link[=MostContradictedFreq]{MostContradictedFreq()}} will compute the number
 of trees that contain the split, and the frequency of the most contradicted
 split, respectively.
 
