@@ -1,3 +1,8 @@
+# TreeSearch 1.7.0.9000 (development)
+
+No changes yet.
+
+
 # TreeSearch 1.7.0 (2025-08-22)
 
 - `PresCont()` implements the Group Present / Contradicted measure of
