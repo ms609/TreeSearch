@@ -113,7 +113,7 @@ Additive (ordered) characters can be handled using
 <dt id="arg-nrelabel">nRelabel<a class="anchor" aria-label="anchor" href="#arg-nrelabel"></a></dt>
 <dd><p>Integer specifying how many times to relabel leaves when
 estimating null tree length for <acronym>RHI</acronym> calculation.
-
+Steell et al. (2025-05)
  recommend 1000, but suggest that
 100 may suffice.
 If zero (the default), the <acronym>RHI</acronym> is not calculated.</p></dd>
@@ -144,7 +144,7 @@ the tree is optimal.
 Note that as the possible values of the consistency index do not range from
 zero to one, it is not an index in the mathematical sense of the term.
 Shortcomings of this measure are widely documented
-(Archie 1989-09; Brooks et al. 1986)
+(Archie 1989-09; Brooks et al. 1986; Steell et al. 2025-05)
 .</p>
 <p>The maximum length of a character (see <code><a href="MinimumLength.html">MaximumLength()</a></code>) is the
 number of steps in a parsimonious reconstruction on the longest possible tree
@@ -158,7 +158,7 @@ homoplasy, and the maximum observed homoplasy, and scales from zero
 retention indices; it rescales the consistency index such that its range of
 possible values runs from zero (least consistent) to one
 (perfectly consistent).</p>
-<p>The <strong>relative homoplasy index</strong>
+<p>The <strong>relative homoplasy index</strong> (Steell et al. 2025-05)
  is
 the ratio of the observed excess tree length to the excess tree length
 due to chance, taken as the median score of a character when the leaves
@@ -170,11 +170,7 @@ default treatment in <code><a href="TreeLength.html">TreeLength()</a></code>.</p
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Adummy A (2025).
-“Some keys from package TreeSearch are not avalable.”
-Failed to insert reference with keys:
-    Farris1989, Speed2017, Steell2023, Kluge1969, Archie1989, Brooks1986, Brazeau2019
-from package = 'TreeSearch'. Possible cause - missing REFERENCES.bib in package 'TreeSearch' or 'TreeSearch' not installed.<br><br> Archie JW (1989-09).
+    <p>Archie JW (1989-09).
 “Homoplasy Excess Ratios: New Indices for Measuring Levels of Homoplasy in Phylogenetic Systematics and a Critique of the Consistency Index.”
 <em>Systematic Zoology</em>, <b>38</b>(3), 253.
 <a href="https://doi.org/10.2307/2992286" class="external-link">doi:10.2307/2992286</a>
@@ -198,6 +194,10 @@ from package = 'TreeSearch'. Possible cause - missing REFERENCES.bib in package 
 “Quantification Provides a Conceptual Basis for Convergent Evolution.”
 <em>Biological Reviews</em>, <b>92</b>(2), 815–829.
 <a href="https://doi.org/10.1111/brv.12257" class="external-link">doi:10.1111/brv.12257</a>
+.<br><br> Steell EM, Hsiang AY, Field DJ (2025-05).
+“Revealing Patterns of Homoplasy in Discrete Phylogenetic Datasets with a Cross-Comparable Index.”
+<em>Zoological Journal of the Linnean Society</em>, <b>204</b>(1), zlaf024.
+<a href="https://doi.org/10.1093/zoolinnean/zlaf024" class="external-link">doi:10.1093/zoolinnean/zlaf024</a>
 .</p>
     </div>
     <div class="section level2">
