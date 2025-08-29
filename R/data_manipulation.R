@@ -22,7 +22,7 @@
 #'   
 #'   - `informative`: logical specifying which characters contain any
 #'     phylogenetic information.
-#'   
+#'
 #'   - `bootstrap`: The character vector 
 #'     \code{c("info.amounts", "split.sizes")}, indicating attributes to sample
 #'      when bootstrapping the dataset (e.g. in Ratchet searches).
