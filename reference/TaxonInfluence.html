@@ -15,7 +15,7 @@ parsimonious topology."><!-- Global site tag (gtag.js) - Google Analytics --><sc
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.6.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,7 @@ parsimonious topology."><!-- Global site tag (gtag.js) - Google Analytics --><sc
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Rank taxa by their influence on phylogenetic results</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/1.6.1/R/TaxonInfluence.R" class="external-link"><code>R/TaxonInfluence.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/main/R/TaxonInfluence.R" class="external-link"><code>R/TaxonInfluence.R</code></a></small>
       <div class="d-none name"><code>TaxonInfluence.Rd</code></div>
     </div>
 
@@ -193,6 +193,7 @@ representative summary of comparisons between sets of trees.</p>
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Other tree scoring:
 <code><a href="CharacterLength.html">CharacterLength</a>()</code>,
+<code><a href="ExpectedLength.html">ExpectedLength</a>()</code>,
 <code><a href="TreeLength.html">IWScore</a>()</code>,
 <code><a href="LengthAdded.html">LengthAdded</a>()</code>,
 <code><a href="MinimumLength.html">MinimumLength</a>()</code>,
@@ -218,12 +219,12 @@ representative summary of comparisons between sets of trees.</p>
 <span class="r-in"><span><span class="va">influence</span> <span class="op">&lt;-</span> <span class="fu">TaxonInfluence</span><span class="op">(</span><span class="va">dataset</span>, ratchIt <span class="op">=</span> <span class="fl">0</span>, startIt <span class="op">=</span> <span class="fl">0</span>, verbos <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">BEGIN TREE SEARCH (k = Inf)</span> <span style="color: #00BBBB;">─────────────────────────────────────────────────</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> → Initial score: <span style="font-weight: bold;">86 </span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> → Initial score: <span style="font-weight: bold;">82 </span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Sample local optimum</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → TBR depth 2; keeping 14.4 trees; k = Inf</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-06-10 12:51:48: Score: 86</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-06-10 12:51:48: Tree search terminated with score <span style="font-weight: bold;">82</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-08-29 13:02:11: Score: 82</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-08-29 13:02:11: Tree search terminated with score <span style="font-weight: bold;">82</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Colour tip labels according to their influence</span></span></span>
 <span class="r-in"><span><span class="va">upperBound</span> <span class="op">&lt;-</span> <span class="fl">2</span> <span class="op">*</span> <span class="fu">TreeDist</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeDist/reference/TreeInfo.html" class="external-link">ClusteringEntropy</a></span><span class="op">(</span></span></span>
