@@ -26,9 +26,9 @@ SuccessiveWeights(tree, dataset)
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
 Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}}.}
+\code{\link[TreeTools]{Decompose}()}.}
 
 \item{outgroup}{if not NULL, taxa on which the tree should be rooted}
 

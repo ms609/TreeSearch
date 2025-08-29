@@ -24,9 +24,9 @@ SharedPhylogeneticConcordance(tree, dataset)
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
 Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}}.}
+\code{\link[TreeTools]{Decompose}()}.}
 
 \item{weight}{Logical specifying whether to weight sites according to the
 number of quartets they are decisive for.}
