@@ -103,6 +103,7 @@ Other split support functions:
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
 \code{\link{MaximizeParsimony}()},
+\code{\link{MostContradictedFreq}()},
 \code{\link{PresCont}()}
 }
 \author{

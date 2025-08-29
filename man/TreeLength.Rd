@@ -85,6 +85,7 @@ TreeLength(5, inapplicable.phyData[[1]])
 
 Other tree scoring: 
 \code{\link{CharacterLength}()},
+\code{\link{ExpectedLength}()},
 \code{\link{LengthAdded}()},
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()},

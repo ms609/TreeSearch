@@ -116,6 +116,7 @@ PresCont <- function(tree, forest,
 #' the number of times that its most common contradictory split occurs in
 #' `forest`.
 #' @seealso `PresCont()` calculates the "groups present / contradicted" score.
+#' @family split support functions
 #' @importFrom TreeTools SplitConflicts
 #' @export
 MostContradictedFreq <- function(tree, forest) {

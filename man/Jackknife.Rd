@@ -82,6 +82,7 @@ using \code{MaximizeParsimony()}.
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{MaximizeParsimony}()},
+\code{\link{MostContradictedFreq}()},
 \code{\link{PresCont}()},
 \code{\link{SiteConcordance}}
 

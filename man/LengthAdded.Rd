@@ -70,6 +70,7 @@ PlotCharacter(
 \seealso{
 Other tree scoring: 
 \code{\link{CharacterLength}()},
+\code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()},

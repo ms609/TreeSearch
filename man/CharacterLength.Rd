@@ -51,6 +51,7 @@ CharacterLength(tree, dataset, compress = TRUE)
 }
 \seealso{
 Other tree scoring: 
+\code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
 \code{\link{MinimumLength}()},

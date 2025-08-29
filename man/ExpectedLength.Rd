@@ -38,7 +38,17 @@ across the leaves.
 \references{
 \insertAllCited{}
 }
+\seealso{
+Other tree scoring: 
+\code{\link{CharacterLength}()},
+\code{\link{IWScore}()},
+\code{\link{LengthAdded}()},
+\code{\link{MinimumLength}()},
+\code{\link{MorphyTreeLength}()},
+\code{\link{TaxonInfluence}()}
+}
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
+\concept{tree scoring}
