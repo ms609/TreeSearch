@@ -126,12 +126,14 @@ The function will be passed three parameters, corresponding to the
 First arguments will be an \code{edgeList} and a dataset, initialized using
 \code{InitializeData()}. Should return a rearranged \code{edgeList}.}
 
-\item{swappers}{A list of functions to use to conduct edge rearrangement during tree search.
+\item{swappers}{A list of functions to use to conduct edge rearrangement
+during tree search.
 Provide functions like \code{\link{NNISwap}} to shuffle root position,
-or \code{\link{RootedTBRSwap}} if the position of the root should be retained.
-You may wish to use extreme swappers (such as \acronym{TBR}) early in the list,
-and a more subtle rearranger (such as \acronym{NNI}) later in the list to make
-incremental tinkerings once an almost-optimal tree has been found.}
+or \code{\link{RootedTBRSwap}} if the position of the root should be
+retained.
+You may wish to use extreme swappers (such as \acronym{TBR}) early in the
+list, and a more subtle rearranger (such as \acronym{NNI}) later in the list
+to make incremental tinkerings once an almost-optimal tree has been found.}
 
 \item{BootstrapSwapper}{Function such as \code{\link{RootedNNISwap}} to use
 to rearrange trees within \code{Bootstrapper()}.}
@@ -146,21 +148,21 @@ search, perhaps to analyse consensus.}
 \item{ratchHits}{Stop when this many ratchet iterations have found the same
 best score.}
 
-\item{searchIter}{Integer specifying maximum rearrangements to perform on each bootstrap or
-ratchet iteration.
+\item{searchIter}{Integer specifying maximum rearrangements to perform on
+each bootstrap or ratchet iteration.
 To override this value for a single swapper function, set e.g.
 \code{attr(SwapperFunction, "searchIter") <- 99}}
 
-\item{searchHits}{Integer specifying maximum times to hit best score before terminating a tree
-search within a ratchet iteration.
+\item{searchHits}{Integer specifying maximum times to hit best score before
+terminating a tree search within a ratchet iteration.
 To override this value for a single swapper function, set e.g.
 \code{attr(SwapperFunction, "searchHits") <- 99}}
 
-\item{bootstrapIter}{Integer specifying maximum rearrangements to perform on each bootstrap
-iteration (default: \code{searchIter}).}
+\item{bootstrapIter}{Integer specifying maximum rearrangements to perform on
+each bootstrap iteration (default: \code{searchIter}).}
 
-\item{bootstrapHits}{Integer specifying maximum times to hit best score on each bootstrap
-iteration (default: \code{searchHits}).}
+\item{bootstrapHits}{Integer specifying maximum times to hit best score on
+each bootstrap iteration (default: \code{searchHits}).}
 
 \item{suboptimal}{retain trees that are suboptimal by this score.
 Defaults to a small value that will counter rounding errors.}
@@ -175,9 +177,8 @@ sampling of the original characters.
 \code{Ratchet()} returns a tree modified by parsimony ratchet iterations.
 
 \code{MultiRatchet()} returns a list of optimal trees
-produced by \code{nSearch}
-ratchet searches, from which a consensus tree can be generated using
-\code{\link[ape:consensus]{ape::consensus()}} or \code{\link[TreeTools:ConsensusWithout]{TreeTools::ConsensusWithout()}}.
+produced by \code{nSearch} \code{Ratchet()} searches, from which a consensus tree can
+be generated using \code{\link[ape:consensus]{ape::consensus()}} or \code{\link[TreeTools:ConsensusWithout]{TreeTools::ConsensusWithout()}}.
 }
 \description{
 \code{Ratchet()} uses the parsimony ratchet \insertCite{Nixon1999}{TreeSearch}

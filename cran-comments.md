@@ -3,7 +3,7 @@
 * local Windows 10 install, R devel
 
 * [Github Actions](https://github.com/ms609/TreeSearch/actions):
-  - Ubuntu 20.04
+  - Ubuntu 24.04
     - R 4.1
     - R release (tests, examples & vignettes run with valgrind & ASan)
     - R devel

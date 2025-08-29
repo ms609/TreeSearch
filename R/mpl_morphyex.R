@@ -156,8 +156,8 @@ mpl_set_charac_weight <- function (charID, weight, morphyobj) {
 #' @param charID    Number of the character (i.e. first character is number 1)
 #' @param morphyobj An instance of the Morphy object.
 #' 
-#' @return A list, detailing (item 1) the exact weight of the character; (item 2) the integer
-#'         approximation used by Morphy.
+#' @return A list, detailing (item 1) the exact weight of the character;
+#'  (item 2) the integer approximation used by Morphy.
 #' 
 #' @template MRS
 #' @family Morphy API functions
@@ -349,23 +349,6 @@ mpl_apply_tipdata <- function(morphyobj) {
 #' @export
 mpl_first_down_recon <- function(node_id, left_id, right_id, morphyobj) {
     .Call(`_R_wrap_mpl_first_down_recon`, as.integer(node_id), as.integer(left_id), as.integer(right_id), morphyobj)
-}
-
-#' Deletes the caller-input data.
-#'
-#' Deletes all of the user-input data and restores all parameters
-#' to their original values, except for the dimensions of the matrix.
-#' 
-#' @param morphyobj An instance of the Morphy object.
-#' 
-#' @return Morphy error code.
-#' 
-#' @author Thomas Guillerme
-#' @family Morphy API functions
-#' @keywords internal
-#' @export
-mpl_delete_rawdata <- function(morphyobj) {
-    .Call(`_R_wrap_mpl_delete_rawdata`, morphyobj)
 }
 
 #' Reconstructs the second (uppass) nodal reconstructions.

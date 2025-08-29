@@ -45,7 +45,8 @@
 #' Ratchet iterations allow escape from local optima.
 #' Setting `ratchIter` to a high value searches the wider neighbourhood more
 #' extensively for other nearby peaks; `ratchEW = TRUE` accelerates these
-#' exploratory searches.
+#' exploratory searches.  Ratchet iterations can be ineffective when `maxHits`
+#' is too low for the search to escape its initial location.
 #' 
 #' 4. Extensive search of final optimum.  As with step 2, it may be valuable to
 #' fully explore the optimum that is found after ratchet searches to be sure
@@ -75,7 +76,7 @@
 #'   Try increasing `ratchIter`.
 #'  
 #' When continuing a tree search, it is usually best to start from an optimal
-#' tree found during the previous iteration – there is no need to start from
+#' tree found during the previous iteration - there is no need to start from
 #' scratch.
 #' 
 #' A more time consuming way of checking that a global optimum has been reached
@@ -187,14 +188,15 @@
 #' 
 #' # Load data for analysis in R
 #' library("TreeTools")
-#' data("congreveLamsdellMatrices", package = "TreeSearch")
-#' dataset <- congreveLamsdellMatrices[[42]]
+#' data("inapplicable.phyData", package = "TreeSearch")
+#' dataset <- inapplicable.phyData[["Asher2005"]]
 #' 
 #' # A very quick run for demonstration purposes
 #' trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
 #'                            tbrIter = 1, maxHits = 4, maxTime = 1/100,
 #'                            concavity = 10, verbosity = 4)
 #' names(trees)
+#' cons <- Consensus(trees)
 #'
 #' # In actual use, be sure to check that the score has converged on a global
 #' # optimum, conducting additional iterations and runs as necessary.
@@ -215,14 +217,30 @@
 #' # Now we must decide what to do with the multiple optimal trees from
 #' # each replicate.
 #' 
-#' # Treat each tree equally
-#' JackLabels(ape::consensus(trees), unlist(jackTrees, recursive = FALSE))
+#' # Set graphical parameters for plotting
+#' oPar <- par(mar = rep(0, 4), cex = 0.9)
 #' 
 #' # Take the strict consensus of all trees for each replicate
-#' JackLabels(ape::consensus(trees), lapply(jackTrees, ape::consensus))
+#' # (May underestimate support)
+#' JackLabels(cons, lapply(jackTrees, ape::consensus))
 #' 
-#' # Take a single tree from each replicate (the first; order's irrelevant)
-#' JackLabels(ape::consensus(trees), lapply(jackTrees, `[[`, 1))
+#' # Take a single tree from each replicate (here, the first)
+#' # Potentially problematic if chosen tree is not representative
+#' JackLabels(cons, lapply(jackTrees, `[[`, 1))
+#' 
+#' # Count iteration as support if all most parsimonious trees support a split;
+#' # as contradiction if all trees contradict it; don't include replicates where
+#' # not all trees agree on the resolution of a split.
+#' labels <- JackLabels(cons, jackTrees)
+#' 
+#' # How many iterations were decisive for each node?
+#' attr(labels, "decisive")
+#' 
+#' # Show as proportion of decisive iterations
+#' JackLabels(cons, jackTrees, showFrac = TRUE)
+#' 
+#' # Restore graphical parameters
+#' par(oPar)
 #' }
 #' 
 #' # Tree search with a constraint
@@ -256,18 +274,18 @@
 #' 
 #' @encoding UTF-8
 #' @export
-MaximizeParsimony <- function (dataset, tree,
-                               ratchIter = 7L,
-                               tbrIter = 2L,
-                               startIter = 2L, finalIter = 1L,
-                               maxHits = NTip(dataset) * 1.8,
-                               maxTime = 60,
-                               quickHits = 1 / 3,
-                               concavity = Inf,
-                               ratchEW = TRUE,
-                               tolerance = sqrt(.Machine[["double.eps"]]),
-                               constraint,
-                               verbosity = 3L) {
+MaximizeParsimony <- function(dataset, tree,
+                              ratchIter = 7L,
+                              tbrIter = 2L,
+                              startIter = 2L, finalIter = 1L,
+                              maxHits = NTip(dataset) * 1.8,
+                              maxTime = 60,
+                              quickHits = 1 / 3,
+                              concavity = Inf,
+                              ratchEW = TRUE,
+                              tolerance = sqrt(.Machine[["double.eps"]]),
+                              constraint,
+                              verbosity = 3L) {
 
   ### User messaging functions ###
   .Message <- function (level, ...) {
@@ -672,7 +690,8 @@ MaximizeParsimony <- function (dataset, tree,
     bestScore <- .Score(edge)
   } else {
     starters <- RenumberTips(startTrees, names(dataset))
-    startEdges <- vapply(lapply(starters, Preorder), `[[`, startTrees[[1]][["edge"]],
+    startEdges <- vapply(lapply(starters, Preorder),
+                         `[[`, startTrees[[1]][["edge"]],
                         "edge")
     startScores <- apply(startEdges, 3, .Score)
     bestScore <- min(startScores)
@@ -933,17 +952,17 @@ MaximizeParsimony <- function (dataset, tree,
 #' @family split support functions
 #' @encoding UTF-8
 #' @export
-Resample <- function (dataset, tree, method = "jack",
-                      proportion = 2/3,
-                      ratchIter = 1L, tbrIter = 8L, finalIter = 3L,
-                      maxHits = 12L, concavity = Inf,
-                      tolerance = sqrt(.Machine[["double.eps"]]),
-                      constraint,
-                      verbosity = 2L,
-                      ...) {
+Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
+                     ratchIter = 1L, tbrIter = 8L, finalIter = 3L,
+                     maxHits = 12L, concavity = Inf,
+                     tolerance = sqrt(.Machine[["double.eps"]]),
+                     constraint, verbosity = 2L,
+                     ...) {
+  
   if (!inherits(dataset, "phyDat")) {
     stop("`dataset` must be of class `phyDat`.")
   }
+  
   index <- attr(dataset, "index")
   kept <- switch(pmatch(tolower(method), c("jackknife", "bootstrap")),
          {
@@ -958,6 +977,7 @@ Resample <- function (dataset, tree, method = "jack",
          }, {
            sample(index, length(index), replace = TRUE)
          })
+  
   if (is.null(kept)) {
     stop("`method` must be either \"jackknife\" or \"bootstrap\".")
   }

@@ -58,7 +58,7 @@ LengthAdded <- function(trees, char, concavity = Inf) {
   
   trees <- RootTree(trees, 1) # Avoid warnings in TreeLength()
   start <- TreeLength(trees, char, concavity)
-  contApp <- cont[, setdiff(colnames(cont), "-")]
+  contApp <- cont[, setdiff(colnames(cont), "-"), drop = FALSE]
   
   if (is.finite(concavity)) {
     # minLength attribute must be fixed.

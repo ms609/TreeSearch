@@ -2157,8 +2157,6 @@ server <- function(input, output, session) {
         }
       },
       error = function (cond) {
-        message("ASHOGAIH")
-        message(cond)
         cli::cli_alert_danger(cond)
         Notification(type = "error",
                      "Could not match dataset to taxa in trees")
@@ -2383,15 +2381,16 @@ server <- function(input, output, session) {
         states <- attr(r$chars, "state.labels")[[n]]
         tokens <- plottedTokens()
         appTokens <- setdiff(tokens, "-")
+        datApp <- setdiff(attr(r$dataset, "levels"), "-")
         .State <- function (glyph, text = "Error?", col = "red") {
           if (is.numeric(glyph)) {
             if (glyph > length(appTokens)) {
               return(NULL)
             }
-            nonBlank <- states != ""
-            text <- states[nonBlank][glyph]
-            col <- pal[glyph]
-            glyph <- appTokens[glyph]
+            level <- match(appTokens[[glyph]], datApp)
+            text <- states[[level]]
+            col <- pal[[level]]
+            glyph <- appTokens[[glyph]]
           }
           
           tags$li(style = "margin-bottom: 2px;",
