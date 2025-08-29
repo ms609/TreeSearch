@@ -12,8 +12,8 @@ mpl_get_charac_weight(charID, morphyobj)
 \item{morphyobj}{An instance of the Morphy object.}
 }
 \value{
-A list, detailing (item 1) the exact weight of the character; (item 2) the integer
-approximation used by Morphy.
+A list, detailing (item 1) the exact weight of the character;
+(item 2) the integer approximation used by Morphy.
 }
 \description{
 Gets the weights of a character in the dataset.
@@ -31,7 +31,6 @@ Other Morphy API functions:
 \code{\link{mpl_attach_rawdata}()},
 \code{\link{mpl_attach_symbols}()},
 \code{\link{mpl_delete_Morphy}()},
-\code{\link{mpl_delete_rawdata}()},
 \code{\link{mpl_first_down_recon}()},
 \code{\link{mpl_first_up_recon}()},
 \code{\link{mpl_get_gaphandl}()},

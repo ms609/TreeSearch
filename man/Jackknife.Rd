@@ -69,10 +69,8 @@ Resample trees using Jackknife resampling, i.e. removing a subset of
 characters.
 }
 \details{
-The function assumes
-that \code{InitializeData()} will return a morphy object; if this doesn't hold
-for you, post a \href{https://github.com/ms609/TreeSearch/issues/new/}{GitHub issue}
-or e-mail the maintainer.
+The function assumes  that \code{InitializeData()} will return a morphy object;
+if this doesn't hold for you, post a \href{https://github.com/ms609/TreeSearch/issues/new/}{GitHub issue} or e-mail the maintainer.
 }
 \seealso{
 \itemize{
@@ -84,6 +82,8 @@ using \code{MaximizeParsimony()}.
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{MaximizeParsimony}()},
+\code{\link{MostContradictedFreq}()},
+\code{\link{PresCont}()},
 \code{\link{SiteConcordance}}
 
 Other custom search functions: 

@@ -48,9 +48,9 @@ EasyTreesy()
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}}.
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
 Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}}.}
+\code{\link[TreeTools]{Decompose}()}.}
 
 \item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}},
 containing only the tips listed in \code{dataset}, from which the search
@@ -231,7 +231,7 @@ Try increasing \code{ratchIter}.
 }
 
 When continuing a tree search, it is usually best to start from an optimal
-tree found during the previous iteration – there is no need to start from
+tree found during the previous iteration - there is no need to start from
 scratch.
 
 A more time consuming way of checking that a global optimum has been reached
@@ -281,14 +281,15 @@ if (interactive()) {
 
 # Load data for analysis in R
 library("TreeTools")
-data("congreveLamsdellMatrices", package = "TreeSearch")
-dataset <- congreveLamsdellMatrices[[42]]
+data("inapplicable.phyData", package = "TreeSearch")
+dataset <- inapplicable.phyData[["Asher2005"]]
 
 # A very quick run for demonstration purposes
 trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
                            tbrIter = 1, maxHits = 4, maxTime = 1/100,
                            concavity = 10, verbosity = 4)
 names(trees)
+cons <- Consensus(trees)
 
 # In actual use, be sure to check that the score has converged on a global
 # optimum, conducting additional iterations and runs as necessary.
@@ -309,14 +310,30 @@ jackTrees <- replicate(nReplicates,
 # Now we must decide what to do with the multiple optimal trees from
 # each replicate.
 
-# Treat each tree equally
-JackLabels(ape::consensus(trees), unlist(jackTrees, recursive = FALSE))
+# Set graphical parameters for plotting
+oPar <- par(mar = rep(0, 4), cex = 0.9)
 
 # Take the strict consensus of all trees for each replicate
-JackLabels(ape::consensus(trees), lapply(jackTrees, ape::consensus))
+# (May underestimate support)
+JackLabels(cons, lapply(jackTrees, ape::consensus))
 
-# Take a single tree from each replicate (the first; order's irrelevant)
-JackLabels(ape::consensus(trees), lapply(jackTrees, `[[`, 1))
+# Take a single tree from each replicate (here, the first)
+# Potentially problematic if chosen tree is not representative
+JackLabels(cons, lapply(jackTrees, `[[`, 1))
+
+# Count iteration as support if all most parsimonious trees support a split;
+# as contradiction if all trees contradict it; don't include replicates where
+# not all trees agree on the resolution of a split.
+labels <- JackLabels(cons, jackTrees)
+
+# How many iterations were decisive for each node?
+attr(labels, "decisive")
+
+# Show as proportion of decisive iterations
+JackLabels(cons, jackTrees, showFrac = TRUE)
+
+# Restore graphical parameters
+par(oPar)
 }
 
 # Tree search with a constraint
@@ -337,6 +354,8 @@ Tree search \emph{via} graphical user interface: \code{\link[=EasyTrees]{EasyTre
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
+\code{\link{MostContradictedFreq}()},
+\code{\link{PresCont}()},
 \code{\link{SiteConcordance}}
 }
 \author{

@@ -31,16 +31,43 @@ test_that("Jackknife ouputs good for node.labels", {
   jackTrees <- as.phylo(1:100, 8)
   
   tree <- as.phylo(0, 8)
-  expect_equal(c("", "", "0.13", "0.08", "0.14", "1", "1"),
-               JackLabels(tree, jackTrees, plot = FALSE))
+  expect_equal(JackLabels(tree, jackTrees, plot = FALSE, format = "char"),
+               c("", "", 0.13, 0.08, 0.14, 1, 1))
   
   tree <- RootTree(as.phylo(0, 8), c("t1", "t4"))
-  expect_equal(c("", "0.08", "0.13", "", "0.14", "1", "1"),
-               JackLabels(tree, jackTrees, plot = FALSE))
+  expect_equal(JackLabels(tree, jackTrees, plot = FALSE, format = "text"),
+               c("", 0.08, 0.13, "", 0.14, 1, 1))
+  expect_equal(JackLabels(tree, jackTrees, plot = FALSE, format = "num"),
+               setNames(c(0.08, 0.13, 0.14, 1, 1), c(10, 11, 13:15)))
   
   skip_if_not_installed("vdiffr")
   vdiffr::expect_doppelganger("plot-jackknife", function() {
-    expect_equal(as.double(JackLabels(tree, jackTrees, plot = FALSE)[-c(1, 4)]),
+    expect_equal(JackLabels(tree, jackTrees, plot = FALSE),
                  unname(JackLabels(tree, jackTrees)))
   })
+})
+
+test_that("JackLabels() handles multiple trees per iteration", {
+  tree <- BalancedTree(5)
+  dispute8 <- ape::read.tree(text = "(((t1, t3), t2), (t4, t5));")
+  disagree <- ape::read.tree(text = "(((t5, t2), t3), (t4, t1));")
+  jackTrees <- list(
+    c(dispute8, dispute8),
+    c(tree, tree),
+    c(dispute8, tree),
+    c(disagree, disagree, disagree),
+    BalancedTree(5)
+  )
+  expect_equal(
+    JackLabels(tree, jackTrees, plot = FALSE, format = "Double"),
+    structure(c("7" = 4 / 5, "8" = 2 / 4), decisive = c("7" = 5, "8" = 4))
+  )
+  
+  lab <- JackLabels(tree, jackTrees, format = "character", showFraction = TRUE,
+                    plot = FALSE)
+  tree[["node.label"]] <- lab
+  expect_equal(gsub("_", " ", fixed = TRUE,
+                    ape::read.tree(text = ape::write.tree(tree)
+                                   )[["node.label"]]),
+               lab)
 })
