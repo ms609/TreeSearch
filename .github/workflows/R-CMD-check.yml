@@ -69,7 +69,7 @@ jobs:
         
       - name: Temporarily bump package version
         run: |
-          old_version=$(grep -oP '(?<=Version: ).*' DESCRIPTION)
+          old_version=$(grep "Version:" DESCRIPTION | awk '{print $2}')
           # Check if the version has three components
           if [[ $(echo "$old_version" | tr -cd '.' | wc -c) -eq 2 ]]; then
             new_version="${old_version}.9999"
