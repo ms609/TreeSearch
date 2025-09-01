@@ -8,7 +8,9 @@ they are sometimes taken as an indicator of the fit of a character to a
 tree.
 Values correlate with the number of species sampled and the
 distribution of taxa between character states, so are not strictly comparable
-between characters in which these factors differ.'><meta property="og:description" content='Consistency() calculates the consistency "index" and retention index
+between characters in which these factors differ; and values cannot be
+compared between datasets (Speed and Arbuckle 2017)
+.'><meta property="og:description" content='Consistency() calculates the consistency "index" and retention index
 (Farris 1989)
 
 for each character in a dataset, given a bifurcating tree.
@@ -17,7 +19,9 @@ they are sometimes taken as an indicator of the fit of a character to a
 tree.
 Values correlate with the number of species sampled and the
 distribution of taxa between character states, so are not strictly comparable
-between characters in which these factors differ.'><meta name="robots" content="noindex"><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=G-V9DV1LS35J"></script><script>
+between characters in which these factors differ; and values cannot be
+compared between datasets (Speed and Arbuckle 2017)
+.'><meta name="robots" content="noindex"><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=G-V9DV1LS35J"></script><script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
@@ -31,7 +35,7 @@ between characters in which these factors differ.'><meta name="robots" content="
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.6.1.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.7.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +70,7 @@ between characters in which these factors differ.'><meta name="robots" content="
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Consistency / retention "indices"</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/R/Consistency.R" class="external-link"><code>R/Consistency.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/main/R/Consistency.R" class="external-link"><code>R/Consistency.R</code></a></small>
       <div class="d-none name"><code>Consistency.Rd</code></div>
     </div>
 
@@ -80,12 +84,14 @@ they are sometimes taken as an indicator of the fit of a character to a
 tree.
 Values correlate with the number of species sampled and the
 distribution of taxa between character states, so are not strictly comparable
-between characters in which these factors differ.</p>
+between characters in which these factors differ; and values cannot be
+compared between datasets (Speed and Arbuckle 2017)
+.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">Consistency</span><span class="op">(</span><span class="va">dataset</span>, <span class="va">tree</span>, compress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">Consistency</span><span class="op">(</span><span class="va">dataset</span>, <span class="va">tree</span>, nRelabel <span class="op">=</span> <span class="fl">0</span>, compress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -95,13 +101,22 @@ between characters in which these factors differ.</p>
 <dl><dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
 <dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
 <code>phyDat</code>, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a></code>.
+Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a>()</code>.
 Additive (ordered) characters can be handled using
-<code><a href="https://ms609.github.io/TreeTools/reference/Decompose.html" class="external-link">Decompose</a></code>.</p></dd>
+<code><a href="https://ms609.github.io/TreeTools/reference/Decompose.html" class="external-link">Decompose</a>()</code>.</p></dd>
 
 
 <dt id="arg-tree">tree<a class="anchor" aria-label="anchor" href="#arg-tree"></a></dt>
 <dd><p>A tree of class <code><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">phylo</a></code>.</p></dd>
+
+
+<dt id="arg-nrelabel">nRelabel<a class="anchor" aria-label="anchor" href="#arg-nrelabel"></a></dt>
+<dd><p>Integer specifying how many times to relabel leaves when
+estimating null tree length for <acronym>RHI</acronym> calculation.
+Steell et al. (2025)
+ recommend 1000, but suggest that
+100 may suffice.
+If zero (the default), the <acronym>RHI</acronym> is not calculated.</p></dd>
 
 
 <dt id="arg-compress">compress<a class="anchor" aria-label="anchor" href="#arg-compress"></a></dt>
@@ -114,8 +129,9 @@ character, decompressed using the dataset's <code>index</code> attribute.</p></d
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>Consistency()</code> returns a matrix with named columns specifying the
 consistency index (<code>ci</code>),
-retention index (<code>ri</code>), and
-rescaled consistency index (<code>rc</code>).</p>
+retention index (<code>ri</code>),
+rescaled consistency index (<code>rc</code>) and
+relative homoplasy index (<code>rhi</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -126,7 +142,10 @@ to a tree, divided by the number of steps observed on the shortest possible
 tree for that character. A value of one indicates that a character's fit to
 the tree is optimal.
 Note that as the possible values of the consistency index do not range from
-zero to one, it is not an index in the mathematical sense of the term.</p>
+zero to one, it is not an index in the mathematical sense of the term.
+Shortcomings of this measure are widely documented
+(Archie 1989-09; Brooks et al. 1986; Steell et al. 2025)
+.</p>
 <p>The maximum length of a character (see <code><a href="MinimumLength.html">MaximumLength()</a></code>) is the
 number of steps in a parsimonious reconstruction on the longest possible tree
 for a character.
@@ -139,6 +158,11 @@ homoplasy, and the maximum observed homoplasy, and scales from zero
 retention indices; it rescales the consistency index such that its range of
 possible values runs from zero (least consistent) to one
 (perfectly consistent).</p>
+<p>The <strong>relative homoplasy index</strong> (Steell et al. 2025)
+ is
+the ratio of the observed excess tree length to the excess tree length
+due to chance, taken as the median score of a character when the leaves
+of the given tree are randomly shuffled.</p>
 <p>The lengths of characters including inapplicable tokens are calculated
 following Brazeau et al. (2019)
 , matching their
@@ -146,10 +170,18 @@ default treatment in <code><a href="TreeLength.html">TreeLength()</a></code>.</p
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Brazeau MD, Guillerme T, Smith MR (2019).
+    <p>Archie JW (1989-09).
+“Homoplasy Excess Ratios: New Indices for Measuring Levels of Homoplasy in Phylogenetic Systematics and a Critique of the Consistency Index.”
+<em>Systematic Zoology</em>, <b>38</b>(3), 253.
+<a href="https://doi.org/10.2307/2992286" class="external-link">doi:10.2307/2992286</a>
+.<br><br> Brazeau MD, Guillerme T, Smith MR (2019).
 “An algorithm for morphological phylogenetic analysis with inapplicable data.”
 <em>Systematic Biology</em>, <b>68</b>(4), 619–631.
 <a href="https://doi.org/10.1093/sysbio/syy083" class="external-link">doi:10.1093/sysbio/syy083</a>
+.<br><br> Brooks DR, O'Grady RT, Wiley EO (1986).
+“A Measure of the Information Content of Phylogenetic Trees, and Its Use as an Optimality Criterion.”
+<em>Systematic Biology</em>, <b>35</b>(4), 571–581.
+<a href="https://doi.org/10.2307/2413116" class="external-link">doi:10.2307/2413116</a>
 .<br><br> Farris JS (1989).
 “The Retention Index and the Rescaled Consistency Index.”
 <em>Cladistics</em>, <b>5</b>(4), 417–419.
@@ -158,6 +190,14 @@ default treatment in <code><a href="TreeLength.html">TreeLength()</a></code>.</p
 “Quantitative Phyletics and the Evolution of Anurans.”
 <em>Systematic Zoology</em>, <b>18</b>(1), 1–32.
 <a href="https://doi.org/10.1093/sysbio/18.1.1" class="external-link">doi:10.1093/sysbio/18.1.1</a>
+.<br><br> Speed MP, Arbuckle K (2017).
+“Quantification Provides a Conceptual Basis for Convergent Evolution.”
+<em>Biological Reviews</em>, <b>92</b>(2), 815–829.
+<a href="https://doi.org/10.1111/brv.12257" class="external-link">doi:10.1111/brv.12257</a>
+.<br><br> Steell EM, Hsiang AY, Field DJ (2025).
+“Revealing Patterns of Homoplasy in Discrete Phylogenetic Datasets with a Cross-Comparable Index.”
+<em>Zoological Journal of the Linnean Society</em>, <b>204</b>(1), zlaf024.
+<a href="https://doi.org/10.1093/zoolinnean/zlaf024" class="external-link">doi:10.1093/zoolinnean/zlaf024</a>
 .</p>
     </div>
     <div class="section level2">
@@ -170,14 +210,14 @@ default treatment in <code><a href="TreeLength.html">TreeLength()</a></code>.</p
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">inapplicable.datasets</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="va">inapplicable.phyData</span><span class="op">[[</span><span class="fl">4</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">Consistency</span><span class="op">(</span><span class="va">dataset</span>, <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             ci        ri        rc</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1,] 0.2500000 0.6250000 0.1562500</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] 0.3333333 0.3333333 0.1111111</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3,] 0.3333333 0.6000000 0.2000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [4,] 0.2500000 0.2500000 0.0625000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [5,] 0.5000000 0.8333333 0.4166667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [6,] 0.2500000 0.2500000 0.0625000</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">Consistency</span><span class="op">(</span><span class="va">dataset</span>, <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/NJTree.html" class="external-link">NJTree</a></span><span class="op">(</span><span class="va">dataset</span><span class="op">)</span>, nRelabel <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             ci        ri        rc       rhi</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,] 0.2500000 0.6250000 0.1562500 0.6000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] 0.3333333 0.3333333 0.1111111 0.6666667</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3,] 0.3333333 0.6000000 0.2000000 0.5000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4,] 0.2500000 0.2500000 0.0625000 1.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [5,] 0.5000000 0.8333333 0.4166667 0.2000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [6,] 0.2500000 0.2500000 0.0625000 0.7500000</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

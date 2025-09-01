@@ -37,7 +37,7 @@ Tree length is calculated using the MorphyLib C library
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.6.1.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.7.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,7 @@ Tree length is calculated using the MorphyLib C library
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Find most parsimonious trees</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/master/R/MaximizeParsimony.R" class="external-link"><code>R/MaximizeParsimony.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/main/R/MaximizeParsimony.R" class="external-link"><code>R/MaximizeParsimony.R</code></a></small>
       <div class="d-none name"><code>MaximizeParsimony.Rd</code></div>
     </div>
 
@@ -139,9 +139,9 @@ Tree length is calculated using the MorphyLib C library
 <dl><dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
 <dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
 <code>phyDat</code>, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a></code>.
+Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a>()</code>.
 Additive (ordered) characters can be handled using
-<code><a href="https://ms609.github.io/TreeTools/reference/Decompose.html" class="external-link">Decompose</a></code>.</p></dd>
+<code><a href="https://ms609.github.io/TreeTools/reference/Decompose.html" class="external-link">Decompose</a>()</code>.</p></dd>
 
 
 <dt id="arg-tree">tree<a class="anchor" aria-label="anchor" href="#arg-tree"></a></dt>
@@ -335,7 +335,7 @@ If some areas of tree space are only found by one ratchet iteration, there
 may well be other, better areas that have not yet been visited.
 Try increasing <code>ratchIter</code>.</p></li>
 </ul><p>When continuing a tree search, it is usually best to start from an optimal
-tree found during the previous iteration – there is no need to start from
+tree found during the previous iteration - there is no need to start from
 scratch.</p>
 <p>A more time consuming way of checking that a global optimum has been reached
 is to repeat a search with the same parameters multiple times, starting
@@ -448,6 +448,8 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <p>Other split support functions:
 <code><a href="JackLabels.html">JackLabels</a>()</code>,
 <code><a href="Jackknife.html">Jackknife</a>()</code>,
+<code><a href="MostContradictedFreq.html">MostContradictedFreq</a>()</code>,
+<code><a href="PresCont.html">PresCont</a>()</code>,
 <code><a href="SiteConcordance.html">SiteConcordance</a></code></p></div>
     </div>
     <div class="section level2">
@@ -470,8 +472,8 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load data for analysis in R</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://ms609.github.io/TreeTools/" class="external-link">"TreeTools"</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"congreveLamsdellMatrices"</span>, package <span class="op">=</span> <span class="st">"TreeSearch"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="va">congreveLamsdellMatrices</span><span class="op">[[</span><span class="fl">42</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"inapplicable.phyData"</span>, package <span class="op">=</span> <span class="st">"TreeSearch"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dataset</span> <span class="op">&lt;-</span> <span class="va">inapplicable.phyData</span><span class="op">[[</span><span class="st">"Asher2005"</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A very quick run for demonstration purposes</span></span></span>
 <span class="r-in"><span><span class="va">trees</span> <span class="op">&lt;-</span> <span class="fu">MaximizeParsimony</span><span class="op">(</span><span class="va">dataset</span>, ratchIter <span class="op">=</span> <span class="fl">0</span>, startIter <span class="op">=</span> <span class="fl">0</span>,</span></span>
@@ -479,14 +481,15 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-in"><span>                           concavity <span class="op">=</span> <span class="fl">10</span>, verbosity <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">BEGIN TREE SEARCH (k = 10)</span> <span style="color: #00BBBB;">──────────────────────────────────────────────────</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> → Initial score: <span style="font-weight: bold;">12.2689 </span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> → Initial score: <span style="font-weight: bold;">16.3264 </span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Sample local optimum</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → TBR depth 1; keeping 4 trees; k = 10</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-07-10 12:12:54: Score: 12.2689</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-07-10 12:12:55: Tree search terminated with score <span style="font-weight: bold;">12.0294</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-09-01 08:28:37: Score: 16.3264</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-09-01 08:28:37: Tree search terminated with score <span style="font-weight: bold;">15.969</span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "final_1"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "final_1" "final_2" "final_3"</span>
+<span class="r-in"><span><span class="va">cons</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/Consensus.html" class="external-link">Consensus</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># In actual use, be sure to check that the score has converged on a global</span></span></span>
 <span class="r-in"><span><span class="co"># optimum, conducting additional iterations and runs as necessary.</span></span></span>
@@ -507,14 +510,30 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-in"><span><span class="co"># Now we must decide what to do with the multiple optimal trees from</span></span></span>
 <span class="r-in"><span><span class="co"># each replicate.</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Treat each tree equally</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="JackLabels.html">JackLabels</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">jackTrees</span>, recursive <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Set graphical parameters for plotting</span></span></span>
+<span class="r-in"><span><span class="va">oPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Take the strict consensus of all trees for each replicate</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="JackLabels.html">JackLabels</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">jackTrees</span>, <span class="fu">ape</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># (May underestimate support)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="JackLabels.html">JackLabels</a></span><span class="op">(</span><span class="va">cons</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">jackTrees</span>, <span class="fu">ape</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Take a single tree from each replicate (the first; order's irrelevant)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="JackLabels.html">JackLabels</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">jackTrees</span>, <span class="va">`[[`</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Take a single tree from each replicate (here, the first)</span></span></span>
+<span class="r-in"><span><span class="co"># Potentially problematic if chosen tree is not representative</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="JackLabels.html">JackLabels</a></span><span class="op">(</span><span class="va">cons</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">jackTrees</span>, <span class="va">`[[`</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Count iteration as support if all most parsimonious trees support a split;</span></span></span>
+<span class="r-in"><span><span class="co"># as contradiction if all trees contradict it; don't include replicates where</span></span></span>
+<span class="r-in"><span><span class="co"># not all trees agree on the resolution of a split.</span></span></span>
+<span class="r-in"><span><span class="va">labels</span> <span class="op">&lt;-</span> <span class="fu"><a href="JackLabels.html">JackLabels</a></span><span class="op">(</span><span class="va">cons</span>, <span class="va">jackTrees</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># How many iterations were decisive for each node?</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">labels</span>, <span class="st">"decisive"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Show as proportion of decisive iterations</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="JackLabels.html">JackLabels</a></span><span class="op">(</span><span class="va">cons</span>, <span class="va">jackTrees</span>, showFrac <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Restore graphical parameters</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">oPar</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Tree search with a constraint</span></span></span>

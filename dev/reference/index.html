@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.6.1.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.7.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,6 +92,12 @@
         <dd>Character length</dd>
       </dl><dl><dt>
 
+          <code><a href="ExpectedLength.html">ExpectedLength()</a></code>
+
+        </dt>
+        <dd>Expected length</dd>
+      </dl><dl><dt>
+
           <code><a href="LengthAdded.html">LengthAdded()</a></code> <code><a href="LengthAdded.html">PolEscapa()</a></code>
 
         </dt>
@@ -138,41 +144,6 @@
 
         </dt>
         <dd>Parsimony score of random postorder tree</dd>
-      </dl></div><div class="section level2">
-      <h2 id="split-support">Split support<a class="anchor" aria-label="anchor" href="#split-support"></a></h2>
-
-      <div class="section-desc"><p>Functions that calculate node support.</p></div>
-
-
-    </div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="JackLabels.html">JackLabels()</a></code>
-
-        </dt>
-        <dd>Label nodes with jackknife support values</dd>
-      </dl><dl><dt>
-
-          <code><a href="Jackknife.html">Jackknife()</a></code>
-
-        </dt>
-        <dd>Jackknife resampling</dd>
-      </dl><dl><dt>
-
-          <code><a href="MaximizeParsimony.html">MaximizeParsimony()</a></code> <code><a href="MaximizeParsimony.html">Resample()</a></code> <code><a href="MaximizeParsimony.html">EasyTrees()</a></code> <code><a href="MaximizeParsimony.html">EasyTreesy()</a></code>
-
-        </dt>
-        <dd>Find most parsimonious trees</dd>
-      </dl><dl><dt>
-
-          <code><a href="SiteConcordance.html">QuartetConcordance()</a></code> <code><a href="SiteConcordance.html">ClusteringConcordance()</a></code> <code><a href="SiteConcordance.html">PhylogeneticConcordance()</a></code> <code><a href="SiteConcordance.html">MutualClusteringConcordance()</a></code> <code><a href="SiteConcordance.html">SharedPhylogeneticConcordance()</a></code>
-
-        </dt>
-        <dd>Calculate site concordance factor</dd>
       </dl></div><div class="section level2">
       <h2 id="tree-re-construction">Tree (re)construction<a class="anchor" aria-label="anchor" href="#tree-re-construction"></a></h2>
 
@@ -232,6 +203,53 @@
 
         </dt>
         <dd>Rearrange edges of a phylogenetic tree</dd>
+      </dl></div><div class="section level2">
+      <h2 id="tree-properties">Tree properties<a class="anchor" aria-label="anchor" href="#tree-properties"></a></h2>
+
+      <div class="section-desc"><p>Functions that calculate support for edges.</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="JackLabels.html">JackLabels()</a></code>
+
+        </dt>
+        <dd>Label nodes with jackknife support values</dd>
+      </dl><dl><dt>
+
+          <code><a href="Jackknife.html">Jackknife()</a></code>
+
+        </dt>
+        <dd>Jackknife resampling</dd>
+      </dl><dl><dt>
+
+          <code><a href="MaximizeParsimony.html">MaximizeParsimony()</a></code> <code><a href="MaximizeParsimony.html">Resample()</a></code> <code><a href="MaximizeParsimony.html">EasyTrees()</a></code> <code><a href="MaximizeParsimony.html">EasyTreesy()</a></code>
+
+        </dt>
+        <dd>Find most parsimonious trees</dd>
+      </dl><dl><dt>
+
+          <code><a href="MostContradictedFreq.html">MostContradictedFreq()</a></code>
+
+        </dt>
+        <dd>Frequency of most common contradictory split</dd>
+      </dl><dl><dt>
+
+          <code><a href="PresCont.html">PresCont()</a></code>
+
+        </dt>
+        <dd>Group present or contradicted score</dd>
+      </dl><dl><dt>
+
+          <code><a href="SiteConcordance.html">QuartetConcordance()</a></code> <code><a href="SiteConcordance.html">ClusteringConcordance()</a></code> <code><a href="SiteConcordance.html">PhylogeneticConcordance()</a></code> <code><a href="SiteConcordance.html">MutualClusteringConcordance()</a></code> <code><a href="SiteConcordance.html">SharedPhylogeneticConcordance()</a></code>
+
+        </dt>
+        <dd>Calculate site concordance factor</dd>
       </dl></div><div class="section level2">
       <h2 id="profile-parsimony">Profile parsimony<a class="anchor" aria-label="anchor" href="#profile-parsimony"></a></h2>
 

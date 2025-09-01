@@ -20,6 +20,7 @@
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/ConcordantInformation.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/Consistency.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/DoubleNNI.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/dev/reference/ExpectedLength.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/GapHandler.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/JackLabels.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/Jackknife.html</loc></url>
@@ -29,10 +30,12 @@
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/MorphyErrorCheck.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/MorphyTreeLength.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/MorphyWeights.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/dev/reference/MostContradictedFreq.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/NNI.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/PhyDat2Morphy.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/PlotCharacter.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/PrepareDataProfile.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/dev/reference/PresCont.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/QuartetResolution.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/RandomMorphyTree.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/RandomTreeScore.html</loc></url>
@@ -66,7 +69,6 @@
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/mpl_attach_rawdata.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/mpl_attach_symbols.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/mpl_delete_Morphy.html</loc></url>
-<url><loc>https://ms609.github.io/TreeSearch/dev/reference/mpl_delete_rawdata.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/mpl_first_down_recon.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/mpl_first_up_recon.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/dev/reference/mpl_get_charac_weight.html</loc></url>
