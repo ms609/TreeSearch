@@ -224,11 +224,11 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' for each split the proportion of clustering information across all sites
 #' held in common with the split.
 #' `ClusteringConcordance(return = "char")` returns a vector listing for each
-#' site (character) the proportion of clustering information across all edges
-#' held in common with the site.
-#' `ClusteringConcordance(return = "tree")` returns the mean of the
-#' normalized site-wise concordance scores; this single value gives a measure
-#' analogous to the consistency index.
+#' site (character) the entropy-weighted proportion of clustering information
+#' across all edges held in common with the site.
+#' `ClusteringConcordance(return = "tree")` returns the entropy-weighted mean
+#' of the each split-character pair; this single value gives a measure analogous
+#' to the consistency index.
 #' 
 #' @seealso
 #' - [Consistency()]
@@ -354,10 +354,30 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
                   })[1, ]
          }, {
            # char: site-wise 'CI'
-           colMeans(norm, na.rm = TRUE, dims = 2)
+           # Weighted mean across splits per character
+           weights <- t(t(hBest[1, , ]) / colSums(hBest[1, , ]))
+           norm2d <- norm[1, , ]
+           vapply(seq_len(dim(norm)[[3]]), function(i) {
+             w <- weights[, i]
+             v <- norm2d[, i]
+             valid <- !is.na(v) & !is.na(w) & w > 0
+             if (!any(valid)) {
+               NA_real_
+             } else {
+               sum(w[valid] * v[valid]) / sum(w[valid])
+             }
+           }, double(1))
          }, {
-           # tree: Mean character 'CI'
-           mean(colMeans(norm, na.rm = TRUE, dims = 2), na.rm = TRUE)
+           # tree: Entropy-weighted mean across all split-character pairs
+           weights <- as.vector(hBest[1, , ])
+           norm1D <- as.vector(norm[1, , ])
+           valid <- !is.na(norm1D) & !is.na(weights) & weights > 0
+           
+           if (any(valid)) {
+             sum(weights[valid] * norm1D[valid]) / sum(weights[valid])
+           } else {
+             NA_real_
+           }
          }
   )
 }
