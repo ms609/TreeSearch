@@ -2,8 +2,8 @@
 
   [![codecov](https://codecov.io/gh/ms609/TreeSearch/branch/master/graph/badge.svg)](https://codecov.io/gh/ms609/TreeSearch)
 [![CRAN Status Badge](http://www.r-pkg.org/badges/version/TreeSearch)](https://cran.r-project.org/package=TreeSearch)
-[![CRAN RStudio mirror downloads](http://cranlogs.r-pkg.org/badges/TreeSearch)](https://cran.r-project.org/package=TreeSearch)
-[![CRAN RStudio mirror downloads](http://cranlogs.r-pkg.org/badges/grand-total/TreeSearch)](https://cran.r-project.org/package=TreeSearch)
+[![CRAN RStudio mirror downloads](http://cranlogs.r-pkg.org/badges/TreeSearch)](https://ms609.github.io/usage/#treesearch)
+[![CRAN RStudio mirror downloads](http://cranlogs.r-pkg.org/badges/grand-total/TreeSearch)](https://ms609.github.io/usage/#treesearch)
 [![DOI](https://zenodo.org/badge/98171642.svg)](https://zenodo.org/badge/latestdoi/98171642)<!--[![Project Status: Inactive – The project has reached a stable, usable state but is no longer being actively developed; support/maintenance will be provided as time allows.](http://www.repostatus.org/badges/latest/inactive.svg)](http://www.repostatus.org/#inactive)
 -->
 [![Project Status: Active – – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
