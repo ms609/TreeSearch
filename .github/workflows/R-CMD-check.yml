@@ -70,12 +70,15 @@ jobs:
       - name: Temporarily bump package version
         run: |
           old_version=$(grep "Version:" DESCRIPTION | awk '{print $2}')
-          # Check if the version has three components
           if [[ $(echo "$old_version" | tr -cd '.' | wc -c) -eq 2 ]]; then
             new_version="${old_version}.9999"
-            sed -i "s/Version: .*/Version: ${new_version}/" DESCRIPTION
+            if [[ "$RUNNER_OS" == "macOS" ]]; then
+              sed -i "" "s/Version: .*/Version: ${new_version}/" DESCRIPTION
+            else
+              sed -i "s/Version: .*/Version: ${new_version}/" DESCRIPTION
+            fi
           fi
-          echo "Current package version is now: $(grep -oP '(?<=Version: ).*' DESCRIPTION)"
+          echo "Current package version is now: $(grep "Version:" DESCRIPTION | awk '{print $2}')"
         shell: bash
 
       - name: Set up R
