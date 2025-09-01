@@ -55,12 +55,12 @@ double expected_mi(IntegerVector ni, IntegerVector nj) {
   std::vector<double> log2_ni(ni_size);
   std::vector<double> log2_nj(nj_size);
   
-  for (int i = 0; i != ni_size; i++) {
+  for (int i = 0; i < ni_size; ++i) {
     ni_f[i] = l2factorial(ni[i]);
     Nmni_f[i] = l2factorial(N - ni[i]);
     log2_ni[i] = (ni[i] > 0) ? std::log2(ni[i]) : -INFINITY;
   }
-  for (int j = 0; j != nj_size; j++) {
+  for (int j = 0; j < nj_size; ++j) {
     nj_f[j] = l2factorial(nj[j]);
     Nmnj_f[j] = l2factorial(N - nj[j]);
     log2_nj[j] = (nj[j] > 0) ? std::log2(nj[j]) : -INFINITY;
@@ -70,10 +70,10 @@ double expected_mi(IntegerVector ni, IntegerVector nj) {
   double log2_N = std::log2(N);
   double inv_N = 1.0 / N;
   
-  for (int i = 0; i != ni_size; i++) {
+  for (int i = 0; i < ni_size; ++i) {
     if (ni[i] == 0) continue;
     
-    for (int j = 0; j != nj_size; j++) {
+    for (int j = 0; j < nj_size; ++j) {
       if (nj[j] == 0) continue;
       
       int start_nij = std::max(1, ni[i] + nj[j] - N);
@@ -84,7 +84,7 @@ double expected_mi(IntegerVector ni, IntegerVector nj) {
       double log2_ni_nj = log2_ni[i] + log2_nj[j];
       double base_log_prob = ni_f[i] + nj_f[j] + Nmni_f[i] + Nmnj_f[j] - N_f;
       
-      for (int nij = start_nij; nij <= end_nij; nij++) {
+      for (int nij = start_nij; nij <= end_nij; ++nij) {
         double log2_nij = std::log2(nij);
         double mi_term = (log2_nij + log2_N - log2_ni_nj);
         
