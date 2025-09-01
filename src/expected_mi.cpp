@@ -41,6 +41,7 @@ double expected_mi(IntegerVector ni, IntegerVector nj) {
   // Basic assertions that should always hold
   assert(ni.size() >= 2 && "ni_ must have at least 2 elements");
   assert(nj.size() >= 2 && "n_j must have at least 2 elements");
+  assert(sum(nj) == sum(ni));
   
   // Since we know sizes are >= 2, we can use more aggressive optimizations
   int ni_size = ni.size();
