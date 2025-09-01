@@ -12,12 +12,6 @@ Authors@R: c(
       given = "Martin", family = "Brazeau",
       role = c("cph"),
       comment = c(ORCID = "0000-0002-0650-1282")
-    ),
-    person(
-      given = "Julien", family = "Chiquet",
-      role = c("cph"),
-      email = "julien.chiquet@inrae.fr",
-      comment = c(ORCID = "0000-0002-3629-3429")
     )
   )
 License: GPL (>= 3)

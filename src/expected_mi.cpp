@@ -27,79 +27,61 @@ inline double l2factorial(int n) {
   }
 }
 
-
-// Originally sourced from expected_MI in aricode v1.0.3 under the GPL3 license.
-// doi:10.32614/CRAN.package.aricode
-// Optimized and converted to base 2 by Martin R. Smith 2025-07-03
 // ni and nj are vectors listing the number of entitites in each cluster
 // [[Rcpp::export]]
-double expected_mi(IntegerVector ni, IntegerVector nj) {
+double expected_mi(const IntegerVector &ni, const IntegerVector &nj) {
+  // ni = {a, N-a}; nj = counts of character states
+  const int a = ni[0];
+  const int N = ni[0] + ni[1];
+  if (a <= 0 || a >= N) return 0.0; // trivial split
   
-  int N = sum(ni);
+  const double invN = 1.0 / static_cast<double>(N);
+  const double log2N = std::log2(static_cast<double>(N));
+  const double log2a  = std::log2(static_cast<double>(a));
+  const double log2Na = std::log2(static_cast<double>(N - a));
+  const double log2_denom = l2factorial(N) - l2factorial(a) - l2factorial(N - a);
+  
   double emi = 0.0;
   
-  // Basic assertions that should always hold
-  assert(ni.size() >= 2 && "ni_ must have at least 2 elements");
-  assert(nj.size() >= 2 && "n_j must have at least 2 elements");
-  assert(sum(nj) == sum(ni));
-  
-  // Since we know sizes are >= 2, we can use more aggressive optimizations
-  int ni_size = ni.size();
-  int nj_size = nj.size();
-  
-  // Pre-allocate and compute all factorials at once
-  std::vector<double> ni_f(ni_size);
-  std::vector<double> nj_f(nj_size);
-  std::vector<double> Nmni_f(ni_size);
-  std::vector<double> Nmnj_f(nj_size);
-  std::vector<double> log2_ni(ni_size);
-  std::vector<double> log2_nj(nj_size);
-  
-  for (int i = 0; i < ni_size; ++i) {
-    ni_f[i] = l2factorial(ni[i]);
-    Nmni_f[i] = l2factorial(N - ni[i]);
-    log2_ni[i] = (ni[i] > 0) ? std::log2(ni[i]) : -INFINITY;
-  }
-  for (int j = 0; j < nj_size; ++j) {
-    nj_f[j] = l2factorial(nj[j]);
-    Nmnj_f[j] = l2factorial(N - nj[j]);
-    log2_nj[j] = (nj[j] > 0) ? std::log2(nj[j]) : -INFINITY;
-  }
-  
-  double N_f = l2factorial(N);
-  double log2_N = std::log2(N);
-  double inv_N = 1.0 / N;
-  
-  for (int i = 0; i < ni_size; ++i) {
-    if (ni[i] == 0) continue;
+  for (int j = 0; j < nj.size(); ++j) {
+    int mj = nj[j];
+    if (mj <= 0) continue;
     
-    for (int j = 0; j < nj_size; ++j) {
-      if (nj[j] == 0) continue;
+    int kmin = std::max(0, a + mj - N);
+    int kmax = std::min(a, mj);
+    if (kmin > kmax) continue;
+    
+    const double log2mj = std::log2(static_cast<double>(mj));
+    
+    // compute P(K=kmin)
+    double log2P = (l2factorial(mj) - l2factorial(kmin) - l2factorial(mj - kmin))
+      + (l2factorial(N - mj) - l2factorial(a - kmin) - l2factorial(N - mj - (a - kmin)))
+      - log2_denom;
+      double Pk = std::pow(2.0, log2P);
       
-      int start_nij = std::max(1, ni[i] + nj[j] - N);
-      int end_nij = std::min(ni[i], nj[j]);
-      
-      if (start_nij > end_nij) continue;
-      
-      double log2_ni_nj = log2_ni[i] + log2_nj[j];
-      double base_log_prob = ni_f[i] + nj_f[j] + Nmni_f[i] + Nmnj_f[j] - N_f;
-      
-      for (int nij = start_nij; nij <= end_nij; ++nij) {
-        double log2_nij = std::log2(nij);
-        double mi_term = (log2_nij + log2_N - log2_ni_nj);
-        
-        double log_prob = base_log_prob -
-          l2factorial(nij) - 
-          l2factorial(ni[i] - nij) -
-          l2factorial(nj[j] - nij) -
-          l2factorial(N - ni[i] - nj[j] + nij);
-        
-        double prob = std::pow(2.0, log_prob);
-        
-        emi += nij * inv_N * mi_term * prob;
+      for (int k = kmin; k <= kmax; ++k) {
+        if (Pk > 0.0) {
+          // contribution from inside the split
+          if (k > 0) {
+            double mi_in = std::log2(static_cast<double>(k)) + log2N - (log2a + log2mj);
+            emi += (static_cast<double>(k) * invN) * mi_in * Pk;
+          }
+          // contribution from outside the split
+          int kout = mj - k;
+          if (kout > 0) {
+            double mi_out = std::log2(static_cast<double>(kout)) + log2N - (log2Na + log2mj);
+            emi += (static_cast<double>(kout) * invN) * mi_out * Pk;
+          }
+        }
+        // Update P(k) → P(k+1)
+        if (k < kmax) {
+          double numer = static_cast<double>((mj - k) * (a - k));
+          double denom = static_cast<double>((k + 1) * (N - mj - a + k + 1));
+          Pk *= numer / denom;
+        }
       }
-    }
   }
+  
   return emi;
 }
 

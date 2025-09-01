@@ -11,13 +11,13 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // expected_mi
-double expected_mi(IntegerVector ni, IntegerVector nj);
+double expected_mi(const IntegerVector& ni, const IntegerVector& nj);
 RcppExport SEXP _TreeSearch_expected_mi(SEXP niSEXP, SEXP njSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type ni(niSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type nj(njSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type ni(niSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type nj(njSEXP);
     rcpp_result_gen = Rcpp::wrap(expected_mi(ni, nj));
     return rcpp_result_gen;
 END_RCPP
