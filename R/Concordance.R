@@ -379,13 +379,29 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
          }, {
            # tree: Entropy-weighted mean across all split-character pairs
            weights <- as.vector(hBest[1, , ])
-           norm1D <- as.vector(norm[1, , ])
-           valid <- !is.na(norm1D) & !is.na(weights) & weights > 0
-           
-           if (any(valid)) {
-             sum(weights[valid] * norm1D[valid]) / sum(weights[valid])
+           if (is.logical(normalize)) {
+             value <- as.vector(if (isTRUE(normalize)) norm[1, , ] else 
+               mi[1, , ])
+             valid <- !is.na(value) & !is.na(weights) & weights > 0
+             
+             if (any(valid)) {
+               sum(weights[valid] * value[valid]) / sum(weights[valid])
+             } else {
+               NA_real_
+             }
+           } else if (!is.numeric(normalize) || normalize < 1) {
+             stop("`normalize` must be `TRUE`, `FALSE`, or a number > 0")
            } else {
-             NA_real_
+             # Inefficient pilot
+             randoms <- replicate(normalize, {
+               tr <- tree
+               tr$tip.label <- sample(tr$tip.label)
+               ClusteringConcordance(tr, dataset, return = "tree",
+                                     normalize = FALSE)
+             })
+             .Rezero(ClusteringConcordance(tree, dataset, return = "tree",
+                                           normalize = FALSE),
+                     mean(randoms))
            }
          }
   )
