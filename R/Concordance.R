@@ -240,7 +240,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @importFrom abind abind
 #' @importFrom pbapply pbapply
 #' @importFrom stats setNames
-#' @importFrom TreeDist Entropy
+#' @importFrom TreeDist Entropy entropy_int
 #' @importFrom TreeTools Subsplit
 #' @export
 ClusteringConcordance <- function (tree, dataset, return = "edge",
@@ -278,17 +278,6 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
     x
   })
   
-  #' @importFrom utils packageVersion
-  .Ntropy <- if (packageVersion("TreeDist") > "2.9.2") {
-    function (x, n) {
-      TreeDist::entropy_int(x)
-    }
-  } else {
-    function (x, n) {
-      Entropy(x / n)
-    }
-  }
-  
   h <- simplify2array(apply(mat, 2, function(char) {
     aChar <- !is.na(char)
     ch <- char[aChar]
@@ -300,7 +289,7 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
       chMax <- max(1, ch)
       chTable <- tabulate(ch, chMax)
       n <- length(ch)
-      hChar <- .Ntropy(chTable, n)
+      hChar <- entropy_int(chTable)
     }
 
     hh <- apply(splits[, aChar, drop = FALSE], 1, function (spl) {
@@ -311,8 +300,8 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
           miRand = 0,
           n = n)
       } else {
-        c(hSplit = .Ntropy(spTable, n),
-          hJoint = .Ntropy(tabulate(ch + (spl * chMax), chMax + chMax), n),
+        c(hSplit = entropy_int(spTable),
+          hJoint = entropy_int(tabulate(ch + (spl * chMax), chMax + chMax)),
           miRand = .ExpectedMI(spTable, chTable),
           n = n)
       }

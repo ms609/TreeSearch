@@ -62,7 +62,7 @@ Imports:
   shinyjs,
   stats,
   stringi,
-  TreeDist (>= 2.6.3),
+  TreeDist (> 2.9.2),
   TreeTools (>= 1.16),
 Suggests:
   knitr,
