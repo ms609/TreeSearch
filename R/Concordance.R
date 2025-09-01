@@ -241,7 +241,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @importFrom pbapply pbapply
 #' @importFrom stats setNames
 #' @importFrom TreeDist Entropy entropy_int
-#' @importFrom TreeTools Subsplit
+#' @importFrom TreeTools MatchStrings Subsplit
 #' @export
 ClusteringConcordance <- function (tree, dataset, return = "edge",
                                    normalize = TRUE) {
@@ -355,29 +355,6 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
            mean(colMeans(norm, na.rm = TRUE, dims = 2), na.rm = TRUE)
          }
   )
-}
-
-
-if (packageVersion("TreeTools") < "1.14.0.9000") {
-  MatchStrings <- function(x, table, Fail = stop, max.distance = 0.5, ...) {
-    matches <- match(x, table)
-    missing <- is.na(matches)
-    if (any(missing)) {
-      nearMiss <- unlist(lapply(x[missing], agrep, table,
-                                max.distance = max.distance, ...),
-                         use.names = FALSE, recursive = FALSE)
-      message <- paste0("Could not find '", paste(x[missing], collapse = "', '"), 
-                        "' in ", deparse(substitute(table)), ".  ",
-                        if (length(nearMiss)) {
-                          paste0("Did you mean '", 
-                                 paste(table[nearMiss], collapse = "', '"), "'?")
-                        })
-      Fail(message)
-    }
-    table[matches[!missing]]
-  }
-} else {
-  MatchStrings <- TreeTools::MatchStrings
 }
 
 #' Generate colour to depict the amount and quality of observations
@@ -530,7 +507,8 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
 }
 
 #' @rdname SiteConcordance
-#' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
+#' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits 
+#' MatchStrings
 #' @export
 PhylogeneticConcordance <- function (tree, dataset) {
   if (is.null(dataset)) {
@@ -570,6 +548,7 @@ PhylogeneticConcordance <- function (tree, dataset) {
 #' @rdname SiteConcordance
 # Mutual clustering information of each split with the split implied by each
 # character
+#' @importFrom TreeTools MatchStrings
 #' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
 #' @export
 MutualClusteringConcordance <- function (tree, dataset) {
@@ -593,7 +572,7 @@ MutualClusteringConcordance <- function (tree, dataset) {
 }
 
 #' @rdname SiteConcordance
-#' @importFrom TreeTools as.multiPhylo
+#' @importFrom TreeTools as.multiPhylo MatchStrings
 #' @importFrom TreeDist ClusteringInfo SharedPhylogeneticInfo
 #' @export
 SharedPhylogeneticConcordance <- function (tree, dataset) {
@@ -647,7 +626,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' myMatrix <- congreveLamsdellMatrices[[10]]
 #' ConcordantInformation(TreeTools::NJTree(myMatrix), myMatrix)
 #' @template MRS
-#' @importFrom TreeTools Log2UnrootedMult Log2Unrooted
+#' @importFrom TreeTools Log2UnrootedMult Log2Unrooted MatchStrings
 #' @export
 ConcordantInformation <- function (tree, dataset) {
   dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
