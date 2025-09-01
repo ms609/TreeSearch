@@ -206,7 +206,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' even if this is not possible to accomplish in practice.
 #' @returns 
 #' `ClusteringConcordance(return = "all")` returns a 3D array where each
-#' slice corresponds to a site; each row to a split; and each row to a
+#' slice corresponds to a site; each column to a split; and each row to a
 #' measure of information: `normalized` gives the mutual information (`mi`)
 #' normalized such that a value of one corresponds to `hBest`, 
 #' which is the lower of `hSplit`, the clustering information
@@ -245,6 +245,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @export
 ClusteringConcordance <- function (tree, dataset, return = "edge",
                                    normalize = TRUE) {
+  # Check inputs
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
@@ -259,6 +260,8 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
     return(NULL)
   }
   dataset <- dataset[keep]
+  
+  # Prepare data
   splits <- as.logical(as.Splits(tree))
   
   at <- attributes(dataset)
@@ -278,6 +281,7 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
     x
   })
   
+  # Calculate entropy
   h <- simplify2array(apply(mat, 2, function(char) {
     aChar <- !is.na(char)
     ch <- char[aChar]
@@ -311,6 +315,7 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
   }, simplify = FALSE))
   
   if (length(dim(h)) == 2) {
+    # Matrix to 3D array
     dim(h) <- c(dim(h), 1)
   }
   

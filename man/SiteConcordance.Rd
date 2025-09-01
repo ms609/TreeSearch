@@ -46,7 +46,7 @@ even if this is not possible to accomplish in practice.}
 }
 \value{
 \code{ClusteringConcordance(return = "all")} returns a 3D array where each
-slice corresponds to a site; each row to a split; and each row to a
+slice corresponds to a site; each column to a split; and each row to a
 measure of information: \code{normalized} gives the mutual information (\code{mi})
 normalized such that a value of one corresponds to \code{hBest},
 which is the lower of \code{hSplit}, the clustering information
