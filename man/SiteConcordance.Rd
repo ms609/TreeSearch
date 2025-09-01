@@ -46,29 +46,38 @@ even if this is not possible to accomplish in practice.}
 }
 \value{
 \code{ClusteringConcordance(return = "all")} returns a 3D array where each
-slice corresponds to a site; each column to a split; and each row to a
-measure of information: \code{normalized} gives the mutual information (\code{mi})
-normalized such that a value of one corresponds to \code{hBest},
-which is the lower of \code{hSplit}, the clustering information
-(entropy) of the split, and \code{hChar}, the clustering information of the
-site / character; and zero corresponds to \code{miRand}, the expected mutual
-information of a randomly drawn character with the same distribution of
-tokens. Negative values denote that the observed tokens contain less mutual
-information than a random draw. \code{n} records the number of relevant
-observations.
-\code{NA} is returned where $hBest = 0$.
-\code{hJoint} gives the joint entropy – the entropy of the
-confusion matrix of the split and character considered together.
+slice corresponds to a character (site), each column to a tree split, and
+each row to a different information measure. The \code{normalized} row gives the
+normalized mutual information between each split-character pair, scaled so
+that 1.0 corresponds to \code{hBest} (the theoretical maximum mutual information,
+being the minimum of \code{hSplit} and \code{hChar}) and 0.0 corresponds to \code{miRand}
+(the expected mutual information under random association). \code{hSplit} gives
+the entropy (information content) of each split's bipartition; \code{hChar} gives
+the entropy of each character's state distribution; \code{hJoint} gives the joint
+entropy of the split-character confusion matrix; \code{mi} gives the raw mutual
+information; and \code{n} records the number of informative observations.
+Negative normalized values indicate observed mutual information below random
+expectation. \code{NA} is returned when \code{hBest = 0} (no information potential).
 
-\code{ClusteringConcordance(return = "edge")} returns a matrix or vector listing
-for each split the proportion of clustering information across all sites
-held in common with the split.
-\code{ClusteringConcordance(return = "char")} returns a vector listing for each
-site (character) the proportion of clustering information across all edges
-held in common with the site.
-\code{ClusteringConcordance(return = "tree")} returns the mean of the
-normalized site-wise concordance scores; this single value gives a measure
-analogous to the consistency index.
+\code{ClusteringConcordance(return = "edge")} returns a vector where each element
+corresponds to a tree split (edge) and gives the normalized mutual information
+between that split and the character data, averaged across all characters.
+When \code{normalize = TRUE} (default), values are scaled relative to random
+expectation; when \code{FALSE}, raw mutual information normalized by \code{hBest} is
+returned.
+
+\code{ClusteringConcordance(return = "char")} returns a vector where each element
+corresponds to a character (site) and gives the entropy-weighted average
+normalized mutual information between that character and all tree splits.
+Characters with higher information content receive proportionally more weight
+from splits that can potentially convey more information about them.
+
+\code{ClusteringConcordance(return = "tree")} returns a single value representing
+the overall concordance between the tree topology and the character data.
+This is calculated as the entropy-weighted average of normalized mutual
+information across all split-character pairs, where each pair contributes
+proportionally to its potential information content.
+This single value gives a measure analogous to the consistency index.
 }
 \description{
 The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure

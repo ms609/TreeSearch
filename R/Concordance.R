@@ -206,29 +206,38 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' even if this is not possible to accomplish in practice.
 #' @returns 
 #' `ClusteringConcordance(return = "all")` returns a 3D array where each
-#' slice corresponds to a site; each column to a split; and each row to a
-#' measure of information: `normalized` gives the mutual information (`mi`)
-#' normalized such that a value of one corresponds to `hBest`, 
-#' which is the lower of `hSplit`, the clustering information
-#' (entropy) of the split, and `hChar`, the clustering information of the
-#' site / character; and zero corresponds to `miRand`, the expected mutual
-#' information of a randomly drawn character with the same distribution of
-#' tokens. Negative values denote that the observed tokens contain less mutual
-#' information than a random draw. `n` records the number of relevant
-#' observations.
-#' `NA` is returned where $hBest = 0$.
-#' `hJoint` gives the joint entropy – the entropy of the
-#' confusion matrix of the split and character considered together.
+#' slice corresponds to a character (site), each column to a tree split, and 
+#' each row to a different information measure. The `normalized` row gives the 
+#' normalized mutual information between each split-character pair, scaled so 
+#' that 1.0 corresponds to `hBest` (the theoretical maximum mutual information, 
+#' being the minimum of `hSplit` and `hChar`) and 0.0 corresponds to `miRand` 
+#' (the expected mutual information under random association). `hSplit` gives 
+#' the entropy (information content) of each split's bipartition; `hChar` gives 
+#' the entropy of each character's state distribution; `hJoint` gives the joint 
+#' entropy of the split-character confusion matrix; `mi` gives the raw mutual 
+#' information; and `n` records the number of informative observations. 
+#' Negative normalized values indicate observed mutual information below random 
+#' expectation. `NA` is returned when `hBest = 0` (no information potential).
 #' 
-#' `ClusteringConcordance(return = "edge")` returns a matrix or vector listing
-#' for each split the proportion of clustering information across all sites
-#' held in common with the split.
-#' `ClusteringConcordance(return = "char")` returns a vector listing for each
-#' site (character) the entropy-weighted proportion of clustering information
-#' across all edges held in common with the site.
-#' `ClusteringConcordance(return = "tree")` returns the entropy-weighted mean
-#' of the each split-character pair; this single value gives a measure analogous
-#' to the consistency index.
+#' `ClusteringConcordance(return = "edge")` returns a vector where each element 
+#' corresponds to a tree split (edge) and gives the normalized mutual information 
+#' between that split and the character data, averaged across all characters. 
+#' When `normalize = TRUE` (default), values are scaled relative to random 
+#' expectation; when `FALSE`, raw mutual information normalized by `hBest` is 
+#' returned.
+#' 
+#' `ClusteringConcordance(return = "char")` returns a vector where each element 
+#' corresponds to a character (site) and gives the entropy-weighted average 
+#' normalized mutual information between that character and all tree splits. 
+#' Characters with higher information content receive proportionally more weight 
+#' from splits that can potentially convey more information about them.
+#'
+#' `ClusteringConcordance(return = "tree")` returns a single value representing 
+#' the overall concordance between the tree topology and the character data. 
+#' This is calculated as the entropy-weighted average of normalized mutual 
+#' information across all split-character pairs, where each pair contributes 
+#' proportionally to its potential information content.
+#' This single value gives a measure analogous to the consistency index.
 #' 
 #' @seealso
 #' - [Consistency()]
