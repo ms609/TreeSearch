@@ -1,11 +1,23 @@
-# TreeSearch 1.6.1.9006 (development)
+# Branch `rejig-concordance` (development)
+
+- `ConcordanceTable()` and support functions `QACol()`, `QALegend()`
+
+
+# TreeSearch 1.7.0.9000 (development)
+
+No changes yet.
+
+
+# TreeSearch 1.7.0 (2025-08-22)
+
 - `PresCont()` implements the Group Present / Contradicted measure of
   Goloboff et al. (2003).
-- Support single-character matrices in `ClusteringConcordance()`
-- `ConcordanceTable()` and support functions `QACol()`, `QALegend()`
-- Fix `DoNothing(x)` to return `x` (not `NULL`)
 - `Consistency()` also returns the relative homoplasy index of Steell et al. 
   (2023).
+- `JackLabels()` supports multiple trees per iteration
+  (#197)[https://github.com/ms609/TreeSearch/discussions/197]
+- Support single-character matrices in `ClusteringConcordance()`
+- Fix `DoNothing(x)` to return `x` (not `NULL`)
 - Remove unused `delete_rawdata()` due to implementation issues.
 - Port `MaximumLength()` to C++ to handle more characters, more efficiently.
 

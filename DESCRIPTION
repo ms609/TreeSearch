@@ -1,6 +1,6 @@
 Package: TreeSearch
 Title: Phylogenetic Analysis with Discrete Character Data
-Version: 1.6.1.9006
+Version: 1.7.0
 Authors@R: c(
     person(
       "Martin R.", 'Smith',
@@ -40,7 +40,6 @@ URL: https://ms609.github.io/TreeSearch/ (doc),
   https://github.com/ms609/TreeSearch/ (devel)
 BugReports: https://github.com/ms609/TreeSearch/issues/
 Depends: R (>= 4.0)
-Remotes: ms609/TreeTools
 Imports: 
   abind,
   ape (>= 5.6),
@@ -64,7 +63,7 @@ Imports:
   stats,
   stringi,
   TreeDist (>= 2.6.3),
-  TreeTools (>= 1.15.0.9004),
+  TreeTools (>= 1.16),
 Suggests:
   knitr,
   phangorn (>= 2.2.1),

@@ -154,6 +154,7 @@ Consistency <- function (dataset, tree, byChar = TRUE, nRelabel = 0,
 #' @export
 #' @importFrom stats median
 #' @importFrom stringi stri_paste
+#' @family tree scoring
 #' @template MRS
 ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   .CheckDataCharLen(dataset)

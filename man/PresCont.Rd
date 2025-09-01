@@ -48,7 +48,7 @@ change without notice.
 Please alert the maintainer to any issues you encounter.
 }
 \details{
-The GC score ranges from −1 to 1, and is intended as an alternative
+The GC score ranges from -1 to 1, and is intended as an alternative
 to bootstrap or jackknife support values.
 
 The GC score counts the number of trees in \code{forest} that include a given
@@ -58,7 +58,7 @@ trees in \code{forest}.
 
 A score of 1 denotes that every tree in a forest (typically of bootstrap
 or jackknife replicates) contains the split in question.
-A score of −1 denotes that a specific contradictory split occurs in
+A score of -1 denotes that a specific contradictory split occurs in
 every tree in \code{forest}.
 A score of zero indicates no support: i.e. that the split exhibits no more
 support than its most common contradictory split.
@@ -98,7 +98,7 @@ gpc
 \insertAllCited{}
 }
 \seealso{
-\code{\link[=SplitFrequency]{SplitFrequency()}} and \code{\link[=MostContradictedFreq]{MostContradictedFreq()}} will compute the number
+\code{\link[TreeTools]{SplitFrequency}()} and \code{\link[=MostContradictedFreq]{MostContradictedFreq()}} will compute the number
 of trees that contain the split, and the frequency of the most contradicted
 split, respectively.
 
@@ -106,6 +106,7 @@ Other split support functions:
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
 \code{\link{MaximizeParsimony}()},
+\code{\link{MostContradictedFreq}()},
 \code{\link{SiteConcordance}}
 }
 \author{

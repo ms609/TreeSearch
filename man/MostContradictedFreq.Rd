@@ -34,4 +34,12 @@ contradicted" score.
 }
 \seealso{
 \code{PresCont()} calculates the "groups present / contradicted" score.
+
+Other split support functions: 
+\code{\link{JackLabels}()},
+\code{\link{Jackknife}()},
+\code{\link{MaximizeParsimony}()},
+\code{\link{PresCont}()},
+\code{\link{SiteConcordance}}
 }
+\concept{split support functions}
