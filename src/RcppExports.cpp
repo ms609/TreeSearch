@@ -10,6 +10,19 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// cc_tree_normalized_cpp
+double cc_tree_normalized_cpp(const IntegerMatrix& mat, const RawMatrix& splitsRaw, int nSamples);
+RcppExport SEXP _TreeSearch_cc_tree_normalized_cpp(SEXP matSEXP, SEXP splitsRawSEXP, SEXP nSamplesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< const RawMatrix& >::type splitsRaw(splitsRawSEXP);
+    Rcpp::traits::input_parameter< int >::type nSamples(nSamplesSEXP);
+    rcpp_result_gen = Rcpp::wrap(cc_tree_normalized_cpp(mat, splitsRaw, nSamples));
+    return rcpp_result_gen;
+END_RCPP
+}
 // expected_mi
 double expected_mi(const IntegerVector& ni, const IntegerVector& nj);
 RcppExport SEXP _TreeSearch_expected_mi(SEXP niSEXP, SEXP njSEXP) {

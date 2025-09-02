@@ -259,7 +259,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @importFrom TreeTools MatchStrings Subsplit
 #' @export
 ClusteringConcordance <- function (tree, dataset, return = "edge",
-                                   normalize = TRUE) {
+                                   normalize = TRUE, slowcoach = FALSE) {
   # Check inputs
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
@@ -398,16 +398,24 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
            } else if (!is.numeric(normalize) || normalize < 1) {
              stop("`normalize` must be `TRUE`, `FALSE`, or a number > 0")
            } else {
-             # Inefficient pilot
-             randoms <- replicate(normalize, {
-               tr <- tree
-               tr$tip.label <- sample(tr$tip.label)
-               ClusteringConcordance(tr, dataset, return = "tree",
-                                     normalize = FALSE)
-             })
-             .Rezero(ClusteringConcordance(tree, dataset, return = "tree",
-                                           normalize = FALSE),
-                     mean(randoms))
+             if (slowcoach) {
+               # Inefficient pilot
+               randoms <- replicate(normalize, {
+                 tr <- tree
+                 tr$tip.label <- sample(tr$tip.label)
+                 ClusteringConcordance(tr, dataset, return = "tree",
+                                       normalize = FALSE)
+               })
+               .Rezero(ClusteringConcordance(tree, dataset, return = "tree",
+                                             normalize = FALSE),
+                       mean(randoms))
+             } else {
+               splits_raw <- TreeTools::as.Splits(tree, asSplits = FALSE)
+               
+               nSamples <- as.integer(normalize)
+               # This calls the C++ function and returns a single scalar on [0,1]
+               cc_tree_normalized_cpp(mat, splits_raw, nSamples)
+             }
            }
          }
   )
