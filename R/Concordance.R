@@ -286,13 +286,13 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
   }
   ambiguous <- rowSums(cont) != 1
   
-  mat <- matrix(unlist(dataset), length(dataset), byrow = TRUE)
-  mat[mat %in% which(ambiguous)] <- NA_real_
+  mat <- matrix(as.integer(unlist(dataset)), length(dataset), byrow = TRUE)
+  mat[mat %in% which(ambiguous)] <- NA_integer_
   maxToken <- max(mat, na.rm = TRUE)
   tokens <- as.character(seq_len(maxToken))
   mat <- apply(mat, 2, function (x) {
     uniques <- tabulate(x, maxToken) == 1
-    x[x %in% tokens[uniques]] <- NA_real_
+    x[x %in% tokens[uniques]] <- NA_integer_
     x
   })
   
