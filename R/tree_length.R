@@ -298,7 +298,8 @@ CharacterLength <- function (tree, dataset, compress = FALSE) {
   }
 }
 
-#' @rdname CharacterLength
+#' Deprecated function
+#' @keywords internal
 #' @export
 FitchSteps <- function (tree, dataset) {
   .Deprecated("CharacterLength")
