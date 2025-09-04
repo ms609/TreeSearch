@@ -2,13 +2,10 @@
 % Please edit documentation in R/tree_length.R
 \name{CharacterLength}
 \alias{CharacterLength}
-\alias{FitchSteps}
 \alias{FastCharacterLength}
 \title{Character length}
 \usage{
 CharacterLength(tree, dataset, compress = FALSE)
-
-FitchSteps(tree, dataset)
 
 FastCharacterLength(tree, dataset)
 }
