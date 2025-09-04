@@ -210,6 +210,12 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' value for random trees can be estimated by resampling relabelled trees.
 #' To conduct _n_ resamplings, set `normalize = n`.
 #' 
+#' For `return = "char"`, `"tree"`, values will be normalized such that 1
+#' corresponds to the maximum possible value, and 0 to the expected value.
+#' If `normalize = TRUE`, this will be the expected value for a random
+#' character on the given tree. If `normalize` is numeric, the expected value
+#' will be estimated by fitting the character to `n` uniformly random trees.
+#' 
 #' @returns 
 #' `ClusteringConcordance(return = "all")` returns a 3D array where each
 #' slice corresponds to a character (site), each column to a tree split, and 
@@ -255,11 +261,11 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @importFrom abind abind
 #' @importFrom pbapply pbapply
 #' @importFrom stats setNames
-#' @importFrom TreeDist Entropy entropy_int
+#' @importFrom TreeDist ClusteringInfoDistance Entropy entropy_int
 #' @importFrom TreeTools MatchStrings Subsplit
 #' @export
 ClusteringConcordance <- function (tree, dataset, return = "edge",
-                                   normalize = TRUE, slowcoach = FALSE) {
+                                   normalize = TRUE) {
   # Check inputs
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
@@ -295,7 +301,7 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
     x[x %in% tokens[uniques]] <- NA_integer_
     x
   })
-  
+
   # Calculate entropy
   h <- simplify2array(apply(mat, 2, function(char) {
     aChar <- !is.na(char)
@@ -342,10 +348,27 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
                        hh["hJoint", , , drop = FALSE], NULL)
   miRand <- `rownames<-`(hh["miRand", , , drop = FALSE], NULL)
   norm <- ifelse(hBest == 0, NA, .Rezero(mi / hBest, miRand / hBest))
+
+  returnType <- pmatch(tolower(return), c("all", "edge", "character", "tree"),
+                       nomatch = 1L)
+  if (returnType %in% 3:4) { # character / tree
+    charSplits <- apply(mat, 2, as.Splits, simplify = FALSE, tipLabels = keep)
+    charInfo <- MutualClusteringInfo(tree, charSplits)[attr(dataset, "index")]
+    if (is.numeric(normalize)) {
+      rTrees <- replicate(normalize, RandomTree(tree), simplify = FALSE)
+      randInfo <- MutualClusteringInfo(rTrees, charSplits)[, attr(dataset, "index")]
+      randMean <- colMeans(randInfo)
+      var <- rowSums((t(randInfo) - randMean) ^ 2) / (normalize - 1)
+      mcse <- sqrt(var / normalize)
+      randTreeInfo <- rowSums(randInfo)
+      randTreeMean <- mean(randTreeInfo)
+      treeVar <- var(randTreeInfo)
+      mcseTree <- sqrt(treeVar / normalize)
+    }
+  }
   
   # Return:
-  switch(pmatch(tolower(return), c("all", "edge", "character", "tree"),
-                nomatch = 1L),
+  switch(returnType,
          # all
          abind(
            along = 1,
@@ -368,53 +391,43 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
                     rowSums(mi[1, , , drop = FALSE], dims = 2) / best
                   })[1, ]
          }, {
-           # char: site-wise 'CI'
-           # Weighted mean across splits per character
-           weights <- t(t(hBest[1, , ]) / colSums(hBest[1, , ]))
-           norm2d <- norm[1, , ]
-           vapply(seq_len(dim(norm)[[3]]), function(i) {
-             w <- weights[, i]
-             v <- norm2d[, i]
-             valid <- !is.na(v) & !is.na(w) & w > 0
-             if (!any(valid)) {
-               NA_real_
+           # char
+           if (isFALSE(normalize)) {
+             charInfo
+           } else {
+             one <- hh["hChar", 1, ]
+             zero <- if (isTRUE(normalize)) {
+               apply(hh["miRand", , ], 2, max)
              } else {
-               sum(w[valid] * v[valid]) / sum(w[valid])
+               randMean
              }
-           }, double(1))
+             ret <- (charInfo - zero) / (one - zero)
+             if (is.numeric(normalize)) {
+               mcseInfo <- ((one - charInfo) / (one - zero) ^ 2) * mcse
+               mcseInfo[mcseInfo < sqrt(.Machine$double.eps)] <- 0
+               structure(ret, mcse = mcseInfo)
+             } else {
+               ret
+             }
+           }
          }, {
            # tree: Entropy-weighted mean across all split-character pairs
-           weights <- as.vector(hBest[1, , ])
-           if (is.logical(normalize)) {
-             value <- as.vector(if (isTRUE(normalize)) norm[1, , ] else 
-               mi[1, , ])
-             valid <- !is.na(value) & !is.na(weights) & weights > 0
-             
-             if (any(valid)) {
-               sum(weights[valid] * value[valid]) / sum(weights[valid])
-             } else {
-               NA_real_
-             }
-           } else if (!is.numeric(normalize) || normalize < 1) {
-             stop("`normalize` must be `TRUE`, `FALSE`, or a number > 0")
+           if (isFALSE(normalize)) {
+             sum(charInfo)
            } else {
-             if (slowcoach) {
-               # Inefficient pilot
-               randoms <- replicate(normalize, {
-                 tr <- tree
-                 tr$tip.label <- sample(tr$tip.label)
-                 ClusteringConcordance(tr, dataset, return = "tree",
-                                       normalize = FALSE)
-               })
-               .Rezero(ClusteringConcordance(tree, dataset, return = "tree",
-                                             normalize = FALSE),
-                       mean(randoms))
+             one <- sum(hh["hChar", 1, ])
+             zero <- if (isTRUE(normalize)) {
+               sum(apply(hh["miRand", , ], 2, max))
              } else {
-               splits_raw <- TreeTools::as.Splits(tree, asSplits = FALSE)
-               
-               nSamples <- as.integer(normalize)
-               # This calls the C++ function and returns a single scalar on [0,1]
-               cc_tree_normalized_cpp(mat, splits_raw, nSamples)
+               randTreeMean
+             }
+             ret <- (sum(charInfo) - zero) / (one - zero)
+             if (is.numeric(normalize)) {
+               mcseInfo <- ((one - sum(charInfo)) / (one - zero) ^ 2) * mcseTree
+               mcseInfo[mcseInfo < sqrt(.Machine$double.eps)] <- 0
+               structure(ret, mcse = mcseInfo)
+             } else {
+               ret
              }
            }
          }

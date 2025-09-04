@@ -57,7 +57,7 @@ Imports:
   stats,
   stringi,
   TreeDist (> 2.9.2),
-  TreeTools (>= 1.16),
+  TreeTools (>= 1.16.1.9001),
 Suggests:
   knitr,
   phangorn (>= 2.2.1),

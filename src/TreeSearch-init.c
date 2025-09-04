@@ -25,7 +25,6 @@ extern SEXP _TreeSearch_morphy_profile(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 extern SEXP _TreeSearch_maximum_length(SEXP);
 
-extern SEXP _TreeSearch_cc_tree_normalized_cpp(SEXP);
 extern SEXP _TreeSearch_expected_mi(SEXP, SEXP);
 extern SEXP _TreeSearch_mi_key(SEXP, SEXP);
 
@@ -64,7 +63,6 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_morphy_iw",         (DL_FUNC) &_TreeSearch_morphy_iw, 7},
   {"_TreeSearch_morphy_profile",    (DL_FUNC) &_TreeSearch_morphy_profile, 6},
   {"_TreeSearch_maximum_length",    (DL_FUNC) &_TreeSearch_maximum_length, 1},
-  {"_TreeSearch_cc_tree_normalized_cpp",       (DL_FUNC) &_TreeSearch_cc_tree_normalized_cpp, 3},
   {"_TreeSearch_expected_mi",       (DL_FUNC) &_TreeSearch_expected_mi, 2},
   {"_TreeSearch_mi_key",            (DL_FUNC) &_TreeSearch_mi_key, 2},
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
