@@ -47,6 +47,11 @@ FitchInfo <- function(tree, dataset) {
     # Prune tree to fit, and process
     tr <- KeepTip(tree, !is.na(char))
     char <- char[!is.na(char)]
+    
+    tr <- TreeTools::BalancedTree(4)
+    char <- c(0, 0, 1, 1)
+    plot(tr); nodelabels(); tiplabels(char)
+    
     edge <- tr[["edge"]]
     nodes <- unique(edge[, 1]) # in preorder
     desc <- lapply(seq_len(max(nodes)), function (node) edge[edge[, 1] == node, 2])
@@ -69,62 +74,99 @@ FitchInfo <- function(tree, dataset) {
     dpState[2 ^ (seq_len(nState) - 1), 1:nTip] <- stateP
     solution <- 2 ^ char
     
-    for (node in rev(nodes)) { # Postorder traversal
-      childP <- dpState[, desc[[node]]]
-      nodeP <- outer(childP[, 1], childP[, 2])
-      dpState[, node] <- tapply(outer(childP[, 1], childP[, 2]), dp, sum)
+    if (dpOnly <- FALSE) {
+      for (node in rev(nodes)) { # Postorder traversal
+        childP <- dpState[, desc[[node]]]
+        nodeP <- outer(childP[, 1], childP[, 2])
+        dpState[, node] <- tapply(outer(childP[, 1], childP[, 2]), dp, sum)
+        
+        childSol <- solution[desc[[node]]]
+        solution[node] <- dp[childSol[[1]], childSol[[2]]]
+      }
       
-      childSol <- solution[desc[[node]]]
-      solution[node] <- dp[childSol[[1]], childSol[[2]]]
+      info <- `length<-`(double(0), nVert)
+      
+      for (node in nodes) { # Preorder traversal
+        nodeSol <- solution[[node]]
+        info[[node]] <- -log2(dpState[nodeSol, node])
+        descs <- desc[[node]]
+        isTip <- descs <= nTip
+        
+        childPMat <- outer(childP[, 1], childP[, 2])
+        condP <- childPMat * (dp == nodeSol)
+        if (isTip[[1]]) {
+          condP[!(seq_len(2 ^ nState - 1) %in% 2 ^ (seq_len(nState) - 1)), ] <- 0
+        }
+        if (isTip[[2]]) {
+          condP[, !(seq_len(2 ^ nState - 1) %in% 2 ^ (seq_len(nState) - 1))] <- 0
+        }
+        condP <- condP / sum(condP)
+        
+        left <- descs[[1]]
+        right <- descs[[2]]
+        dpState[, left] <- rowSums(condP)
+        
+        condP <- condP[solution[[left]], ]
+        condP <- condP / sum(condP)
+        dpState[, right] <- condP
+      }
+      
+      for (tip in seq_len(nTip)) {
+        info[[tip]] <- -log2(dpState[2 ^ char[tip], tip])
+      }
+      info
+    } else {
+      
+      for (node in nodes) { # Preorder traversal
+        # Populate solution with standard Fitch algorithm
+        childSol <- solution[desc[[node]]]
+        ancSol <- solution[[parent[[node]]]]
+        solution[node] <- up[childSol[[1]], childSol[[2]], ancSol]
+      }
+      
+      upState <- dpState # Can probably avoid a copy here and overwrite dpState
+      
+      for (node in nodes) { # Preorder traversal
+        # Prior probabilities at node
+        descs <- desc[[node]]
+        isTip <- descs <= nTip
+        childP <- dpState[, descs]
+        ancSol <- solution[[parent[[node]]]]
+        nodeSol <- solution[[node]]
+        
+        # Now we can provide some information
+        info[[node]] <- -log2(upState[nodeSol, node])
+        childPMat <- outer(childP[, 1], childP[, 2])
+        condP <- childPMat * (up[, , ancSol] == nodeSol)
+        if (isTip[[1]]) {
+          condP[!(seq_len(2 ^ nState - 1) %in% 2 ^ (seq_len(nState) - 1)), ] <- 0
+        }
+        if (isTip[[2]]) {
+          condP[, !(seq_len(2 ^ nState - 1) %in% 2 ^ (seq_len(nState) - 1))] <- 0
+        }
+        condP <- condP / sum(condP)
+        
+        # Update the probabilities of the left child conditional on this node's
+        # state, which we know now:
+        left <- descs[[1]]
+        upState[, left] <- rowSums(condP)
+        
+        
+        # By the time we get to the right child, we will also know the left
+        # child's state, so we must condition on that too:
+        condP <- condP[solution[[left]], ]
+        condP <- condP / sum(condP)
+        
+        right <- descs[[2]]
+        upState[, right] <- condP
+      }
+      
+      
+      for (tip in seq_len(nTip)) {
+        info[[tip]] <- -log2(upState[2 ^ char[tip], tip])
+      }
+      info
     }
-    
-    for (node in nodes) { # Preorder traversal
-      # Populate solution with standard Fitch algorithm
-      childSol <- solution[desc[[node]]]
-      ancSol <- solution[[parent[[node]]]]
-      solution[[node]] <- up[childSol[[1]], childSol[[2]], ancSol]
-    }
-    
-    upState <- dpState # Can probably avoid a copy here and overwrite dpState
-    info <- `length<-`(double(0), nVert)
-    
-    for (node in nodes) { # Preorder traversal
-      # Prior probabilities at node
-      descs <- desc[[node]]
-      childP <- dpState[, descs]
-      childPMat <- outer(childP[, 1], childP[, 2])
-      ancSol <- solution[[parent[[node]]]]
-      nodeSol <- solution[[node]]
-      
-      # Now we can provide some information
-      info[[node]] <- -log2(upState[nodeSol, node])
-      
-      condP <- childPMat * (up[, , ancSol] == nodeSol)
-      condP <- condP / sum(condP)
-      
-      # Update the probabilities of the left child conditional on this node's
-      # state, which we know now:
-      left <- descs[[1]]
-      upState[, left] <- rowSums(condP)
-      
-      cp <- childP[, 2] * (up[solution[[left]], , ancSol] == nodeSol)
-      
-      # By the time we get to the right child, we will also know the left
-      # child's state, so we must condition on that too:
-      condP <- condP[solution[[left]], ]
-      condP <- condP / sum(condP)
-      stopifnot(abs(cp / sum(cp) - condP) < sqrt(.Machine$double.eps))
-      
-      right <- descs[[2]]
-      upState[, right] <- condP
-    }
-    
-    
-    for (tip in seq_len(nTip)) {
-      info[[tip]] <- -log2(upState[2 ^ char[tip], tip])
-    }
-    info
-    
   })
   
 }
