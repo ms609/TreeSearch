@@ -47,7 +47,13 @@ The exact analytical solution, whilst quick, does not account for
 non-independence between splits. This is a less important factor for larger
 trees, and is negligible above ~200 leaves. For small trees, the expected
 value for random trees can be estimated by resampling relabelled trees.
-To conduct \emph{n} resamplings, set \code{normalize = n}.}
+To conduct \emph{n} resamplings, set \code{normalize = n}.
+
+For \code{return = "char"}, \code{"tree"}, values will be normalized such that 1
+corresponds to the maximum possible value, and 0 to the expected value.
+If \code{normalize = TRUE}, this will be the expected value for a random
+character on the given tree. If \code{normalize} is numeric, the expected value
+will be estimated by fitting the character to \code{n} uniformly random trees.}
 }
 \value{
 \code{ClusteringConcordance(return = "all")} returns a 3D array where each
