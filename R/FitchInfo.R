@@ -112,3 +112,50 @@ FitchInfo <- function(tree, dataset) {
   }
   
 }
+
+.DownpassOutcome <- function(nStates) {
+  # Assume we have 3 states.  Number them from zero.
+  # Encode each state as 2^(0, 1, 2)
+  # Each node must exhibit a state: cannot be all FALSE
+  stateSpace <- as.raw(seq_len(2 ^ nStates - 1))
+  intersect <- outer(stateSpace, stateSpace, `&`)
+  union <- outer(stateSpace, stateSpace, `|`)
+  ret <- intersect
+  ret[intersect == as.raw(0)] <- union[intersect == as.raw(0)]
+  ret
+}
+
+
+### Pseudocode from Fitch (1971)
+# 
+# if intersect(ancestor, node) == ancestor: # I: node contains all states in ancestor
+#   node <- ancestor # II: Eliminate states not in ancestor
+# else: # III
+#   if descendants have no nodes in common:
+#   node <- union(node, ancestor) # IV
+# else:
+#   node <- union(node, intersect(ancestor, union(descendants)) # V
+.UppassOutcome <- function(nStates) {
+  spaceSize <- 2 ^ nStates - 1
+  stateSpace <- as.raw(seq_len(spaceSize))
+  node1 <- .DownpassOutcome(nStates)
+  node <- vapply(stateSpace, function(x) node1, node1)
+  ancestor <- vapply(stateSpace, matrix, node1, spaceSize, spaceSize)
+  descUnion <- vapply(stateSpace, function(x) outer(stateSpace, stateSpace, `|`),
+                      node1)
+  descIntersect <- vapply(stateSpace,
+                          function(x) outer(stateSpace, stateSpace, `&`), node1)
+  descCommon <- descIntersect != as.raw(0)
+  
+  # Unfamiliar logic here: we start with the 'else', then work our way through
+  # the 'if' cases to overwrite any 'elses' that shouldn't have been triggered.
+  
+  ret <- node | (ancestor & descUnion)
+  
+  caseIII <- !descCommon
+  ret[caseIII] <- (node | ancestor)[caseIII]
+  
+  caseI <- (ancestor & node) == ancestor
+  ret[caseI] <- ancestor[caseI]
+  ret
+}
