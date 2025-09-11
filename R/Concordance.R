@@ -497,7 +497,7 @@ HierarchicalConcordance <- function (tree, dataset, normalize = TRUE,
   naPattern <- fmatch(df, df)
   naPatterns <- unique(naPattern)
   
-  trees <- apply(mat[, naPatterns], 2, function(x) {
+  trees <- apply(mat[, naPatterns, drop = FALSE], 2, function(x) {
     tr <- as.HPart(DropTip(tree, is.na(x)))
     attr(tr, "tip.label") <- seq_along(attr(tr, "tip.label"))
     tr

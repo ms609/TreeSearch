@@ -22,6 +22,10 @@ test_that("HierarchicalConcordance() works", {
   tree <- inapplicable.trees[["Vinther2008"]][[8]]
   dataset <- inapplicable.phyData[["Vinther2008"]]
   expect_no_error(HierarchicalConcordance(tree, dataset))
+  
+  data(congreveLamsdellMatrices)
+  myMatrix <- congreveLamsdellMatrices[[10]]
+  expect_no_error(HierarchicalConcordance(NJTree(myMatrix), myMatrix))
 })
 
 test_that("QuartetConcordance() works", {
