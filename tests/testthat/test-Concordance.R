@@ -19,6 +19,51 @@ test_that("_Concordance() handles tip mismatch", {
 
 test_that("HierarchicalConcordance() works", {
   skip_if_not_installed("TreeDist", "2.10.1.9000")
+  
+  flatP <- as.HPart(list(as.list(1:5), as.list(6:9)))
+  hp9 <- as.HPart(BalancedTree(1:9))
+  
+  hmi <- TreeDist::HMI(flatP, hp9)
+  expect_equal(hmi, 0.99107606)
+  
+  h1 <- SelfHMI(flatP)
+  expect_equal(h1, 0.99107606)
+  
+  h2 <- SelfHMI(hp9)
+  expect_gt(h2, 0.99107606)
+  
+  ehmi <- EHMI(flatP, hp9)[[1]]
+  expect_lt(ehmi, 0.99)
+  
+  
+  ahmi <- AHMI(flatP, hp9, Mean = min)
+  expect_equal(ahmi[[1]], (hmi - ehmi) / (min(h1, h2) - ehmi))
+  expect_equal((hmi - ehmi) / (min(h1, h2) - ehmi), 1)
+  
+  bal9 <- BalancedTree(9)
+  
+  bestFit <- HierarchicalConcordance(bal9, StringToPhyDat("000001111"))
+  fairFit <- HierarchicalConcordance(bal9, StringToPhyDat("000000111"))
+  worstFit <- HierarchicalConcordance(bal9, StringToPhyDat("010101010"))
+  
+  expect_equal(bestFit[[1]], 1)
+  expect_equal(fairFit[[1]], 0.5, tolerance = 0.2) # Approximate only
+  expect_equal(worstFit[[1]], 0)
+  
+  all3 <- StringToPhyDat("000001111000000111010101010", tips = 9, byTaxon = FALSE)
+  hc3 <- HierarchicalConcordance(bal9, all3)
+  
+  expect_equal(attr(hc3, "hChar"),
+               c(attr(bestFit, "hChar"), attr(fairFit, "hChar"),
+                 attr(worstFit, "hChar")))
+  
+  expect_equal(attr(hc3, "ahmi"), c(bestFit[[1]], fairFit[[1]], worstFit[[1]]),
+               tolerance = 2 * 0.01) # double `precision`
+  
+  expect_equal(hc3[[1]],
+               sum(attr(hc3, "ahmi") * attr(hc3, "hChar")) /
+                 sum(attr(hc3, "hChar")))
+  
   tree <- inapplicable.trees[["Vinther2008"]][[8]]
   dataset <- inapplicable.phyData[["Vinther2008"]]
   expect_no_error(HierarchicalConcordance(tree, dataset))
@@ -26,6 +71,11 @@ test_that("HierarchicalConcordance() works", {
   data(congreveLamsdellMatrices)
   myMatrix <- congreveLamsdellMatrices[[10]]
   expect_no_error(HierarchicalConcordance(NJTree(myMatrix), myMatrix))
+  
+  bal10 <- BalancedTree(10)
+  expect_equal(bal9$edge, DropTip(bal10, 8)$edge)
+  withNA <- HierarchicalConcordance(bal10, StringToPhyDat("0000001?11"))
+  expect_equal(withNA, fairFit, tolerance = 2 * 0.01)
 })
 
 test_that("QuartetConcordance() works", {

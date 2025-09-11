@@ -507,7 +507,8 @@ HierarchicalConcordance <- function (tree, dataset, normalize = TRUE,
   charHH <- vapply(characters, SelfHMI, 1)
   
   ahmi <- vapply(seq_along(characters), function(i) {
-    AHMI(characters[[i]], trees[[charTree[[i]]]], precision = precision)
+    AHMI(characters[[i]], trees[[charTree[[i]]]], Mean = min,
+         precision = precision)
   }, double(1))
   
   structure(
