@@ -262,7 +262,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @importFrom pbapply pbapply
 #' @importFrom stats setNames
 #' @importFrom TreeDist ClusteringInfoDistance Entropy entropy_int
-#' @importFrom TreeTools MatchStrings Subsplit
+#' @importFrom TreeTools as.Splits MatchStrings Subsplit TipLabels
 #' @export
 ClusteringConcordance <- function (tree, dataset, return = "edge",
                                    normalize = TRUE) {
@@ -431,6 +431,89 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
              }
            }
          }
+  )
+}
+
+#' Hierarchical concordance
+#' 
+#' A concordance metric derived from the hierarchical mutual information
+#' \insertCite{Perotti2015,Perotti2020}{TreeDist} between a character and a
+#' tree.
+#' 
+#' @examples
+#' data(congreveLamsdellMatrices)
+#' myMatrix <- congreveLamsdellMatrices[[10]]
+#' HierarchicalConcordance(TreeTools::NJTree(myMatrix), myMatrix)
+#' 
+#' tree <- inapplicable.trees[["Vinther2008"]][[8]] # TODO DELETE
+#' dataset <- inapplicable.phyData[["Vinther2008"]] # TODO DELETE
+#' HierarchicalConcordance(tree, dataset) # TODO DELETE
+#' @template MRS
+#' @inheritParams TreeDist::EHMI
+#' @importFrom fastmatch fmatch
+#' @importFrom TreeDist as.HPart AHMI EHMI SelfHMI
+#' @importFrom TreeTools as.Splits DropTip MatchStrings Subsplit TipLabels
+#' @export
+HierarchicalConcordance <- function (tree, dataset, normalize = TRUE,
+                                     precision = 0.01) {
+  # Check inputs
+  if (is.null(dataset)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
+  if (is.null(tree)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
+  
+  keep <- MatchStrings(TipLabels(tree), names(dataset), warning)
+  if (length(keep) == 0) {
+    return(NULL)
+  }
+  dataset <- dataset[keep]
+  
+  # Prepare data
+  splits <- as.logical(as.Splits(tree))
+  
+  at <- attributes(dataset)
+  cont <- at[["contrast"]]
+  if ("-" %in% colnames(cont)) {
+    cont[cont[, "-"] > 0, ] <- 1
+  }
+  ambiguous <- rowSums(cont) != 1
+  
+  mat <- matrix(as.integer(unlist(dataset)), length(dataset), byrow = TRUE)
+  mat[mat %in% which(ambiguous)] <- NA_integer_
+  maxToken <- max(mat, na.rm = TRUE)
+  tokens <- as.character(seq_len(maxToken))
+  mat <- apply(mat, 2, function (x) {
+    uniques <- tabulate(x, maxToken) == 1
+    x[x %in% tokens[uniques]] <- NA_integer_
+    x
+  })
+  
+  characters <- apply(mat, 2, function(x) as.HPart(x[!is.na(x)]))
+  df <- as.data.frame(is.na(mat))
+  naPattern <- fmatch(df, df)
+  naPatterns <- unique(naPattern)
+  
+  trees <- apply(mat[, naPatterns], 2, function(x) {
+    tr <- as.HPart(DropTip(tree, is.na(x)))
+    attr(tr, "tip.label") <- seq_along(attr(tr, "tip.label"))
+    tr
+  }, simplify = FALSE)
+  charTree <- fmatch(naPattern, naPatterns)
+  
+  charHH <- vapply(characters, SelfHMI, 1)
+  
+  ahmi <- vapply(seq_along(characters), function(i) {
+    AHMI(characters[[i]], trees[[charTree[[i]]]], precision = precision)
+  }, double(1))
+  
+  structure(
+    sum(charHH * ahmi) / sum(charHH),
+    ahmi = ahmi,
+    hChar = charHH
   )
 }
 

@@ -17,6 +17,13 @@ test_that("_Concordance() handles tip mismatch", {
                  "Could not find 't1', .* in names.dataset.")
 })
 
+test_that("HierarchicalConcordance() works", {
+  skip_if_not_installed("TreeDist", "2.10.1.9000")
+  tree <- inapplicable.trees[["Vinther2008"]][[8]]
+  dataset <- inapplicable.phyData[["Vinther2008"]]
+  expect_no_error(HierarchicalConcordance(tree, dataset))
+})
+
 test_that("QuartetConcordance() works", {
   tree <- BalancedTree(8)
   splits <- as.Splits(tree)
