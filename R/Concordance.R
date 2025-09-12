@@ -449,9 +449,9 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
 #' dataset <- inapplicable.phyData[["Vinther2008"]] # TODO DELETE
 #' HierarchicalConcordance(tree, dataset) # TODO DELETE
 #' @template MRS
-#' @inheritParams TreeDist::EHMI
+#' @inheritParams TreeDist::CharAMI
 #' @importFrom fastmatch fmatch
-#' @importFrom TreeDist as.HPart AHMI EHMI SelfHMI
+#' @importFrom TreeDist as.HPart H_xptr JH_xptr
 #' @importFrom TreeTools as.Splits DropTip MatchStrings Subsplit TipLabels
 #' @export
 HierarchicalConcordance <- function (tree, dataset, normalize = TRUE,
@@ -504,17 +504,18 @@ HierarchicalConcordance <- function (tree, dataset, normalize = TRUE,
   }, simplify = FALSE)
   charTree <- fmatch(naPattern, naPatterns)
   
-  charHH <- vapply(characters, SelfHMI, 1)
+  charH <- vapply(characters, H_xptr, 1)
   
-  ahmi <- vapply(seq_along(characters), function(i) {
-    AHMI(characters[[i]], trees[[charTree[[i]]]], Mean = min,
-         precision = precision)
-  }, double(1))
+  ami <- vapply(seq_along(characters), function(i) {
+    x <- CharAMI(characters[[i]], trees[[charTree[[i]]]], precision = precision)
+    c(x, attr(x, "sem"))
+  }, double(2))
   
   structure(
-    sum(charHH * ahmi) / sum(charHH),
-    ahmi = ahmi,
-    hChar = charHH
+    sum(charH * ami[1, ]) / sum(charH),
+    ami = ami[1, ],
+    sem = ami[2, ],
+    hChar = charH
   )
 }
 

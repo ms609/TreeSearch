@@ -6,15 +6,6 @@
 \usage{
 HierarchicalConcordance(tree, dataset, normalize = TRUE, precision = 0.01)
 }
-\arguments{
-\item{normalize}{If \code{FALSE}, return the raw \acronym{HMI}, in bits.
-If \code{TRUE}, normalize to range [0,1] by dividing by
-\code{max(SelfHMI(tree1), SelfHMI(tree2))}.
-If a function, divide by \code{normalize(SelfHMI(tree1), SelfHMI(tree2))}.}
-
-\item{precision}{Numeric; Monte Carlo sampling will terminate once the
-relative standard error falls below this value.}
-}
 \description{
 A concordance metric derived from the hierarchical mutual information
 \insertCite{Perotti2015,Perotti2020}{TreeDist} between a character and a
@@ -23,10 +14,11 @@ tree.
 \examples{
 data(congreveLamsdellMatrices)
 myMatrix <- congreveLamsdellMatrices[[10]]
-tree <- TreeTools::NJTree(myMatrix) # TODO DELETE
-tree <- inapplicable.trees[["Vinther2008"]][[8]]
-dataset <- inapplicable.phyData[["Vinther2008"]]
 HierarchicalConcordance(TreeTools::NJTree(myMatrix), myMatrix)
+
+tree <- inapplicable.trees[["Vinther2008"]][[8]] # TODO DELETE
+dataset <- inapplicable.phyData[["Vinther2008"]] # TODO DELETE
+HierarchicalConcordance(tree, dataset) # TODO DELETE
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
