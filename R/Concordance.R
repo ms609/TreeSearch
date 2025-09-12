@@ -451,7 +451,7 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
 #' @template MRS
 #' @inheritParams TreeDist::CharAMI
 #' @importFrom fastmatch fmatch
-#' @importFrom TreeDist as.HPart CharAMI H_xptr JH_xptr
+#' @importFrom TreeDist as.HPart CharAMI EJH_xptr H_xptr JH_xptr
 #' @importFrom TreeTools as.Splits DropTip MatchStrings Subsplit TipLabels
 #' @export
 HierarchicalConcordance <- function(tree, dataset, normalize = TRUE,
@@ -507,9 +507,39 @@ HierarchicalConcordance <- function(tree, dataset, normalize = TRUE,
   
   charH <- vapply(characters, H_xptr, 1)[idx]
   
+  .AHMISEM <- function(mi, M, emi, emi_sem) {
+    eps <- sqrt(.Machine[["double.eps"]])
+    if (emi_sem > eps) {
+      deriv <- (mi - M) / (M - emi)^2
+      ret <- abs(deriv) * emi_sem
+      if (ret < eps) 0 else ret
+    } else {
+      0
+    }
+  }
+  
+  
   ami <- vapply(seq_along(characters), function(i) {
-    x <- CharAMI(characters[[i]], trees[[charTree[[i]]]], precision = precision)
-    c(x, attr(x, "sem"))
+    
+    ch <- characters[[i]]
+    tr <- trees[[charTree[[i]]]]
+    
+    eh12 <- EJH_xptr(ch, tr, as.numeric(precision), 36L)
+    
+    h1 <- H_xptr(ch)
+    h2 <- charH[[charTree[[i]]]]
+    h12 <- JH_xptr(ch, tr)
+    
+    M <- h1
+    
+    mi <- h1 + h2 - h12
+    emi <- h1 + h2 - eh12
+    
+    num <- mi - emi[[1]]
+    denom <- M - emi[[1]]
+    
+    c(if (abs(num) < sqrt(.Machine$double.eps)) 0 else num / denom,
+      .AHMISEM(mi, M, emi[[1]], attr(emi, "sem")))
   }, double(2))
   
   structure(
