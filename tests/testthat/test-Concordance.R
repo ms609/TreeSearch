@@ -20,8 +20,6 @@ test_that("_Concordance() handles tip mismatch", {
 test_that("HierarchicalConcordance() works", {
   skip_if_not_installed("TreeDist", "2.10.1.9001")
   
-  library("TreeDist")
-
   bal9 <- BalancedTree(9)
   
   bestFit <- HierarchicalConcordance(bal9, StringToPhyDat("000001111"))
@@ -31,20 +29,23 @@ test_that("HierarchicalConcordance() works", {
   
   expect_equal(bestFit[[1]], 1)
   expect_equal(fairFit[[1]], 0.5, tolerance = 0.1) # Approximate only
-  expect_equal(worstFit[[1]], 0)
+  expect_lt(worstFit[[1]], 0)
   
-  all3 <- StringToPhyDat("000001111000000111010101010", 9, byTaxon = FALSE)
+  all3 <- StringToPhyDat("000001111000000111000000111010101010", 9,
+                         byTaxon = FALSE)
   hc3 <- HierarchicalConcordance(bal9, all3, precision = 0.005)
   
   expect_equal(attr(hc3, "hChar"),
                c(attr(bestFit, "hChar"), attr(fairFit, "hChar"),
-                 attr(worstFit, "hChar")))
+                 attr(fairFit, "hChar"), attr(worstFit, "hChar")))
   
   individual <- attr(hc3, "ami")
   sem <- attr(hc3, "sem")
   expect_equal(individual[[1]], bestFit[[1]], tolerance = sem[[1]])
   expect_equal(individual[[2]], fairFit[[1]], tolerance = sem[[2]] * 2)
-  expect_equal(individual[[3]], worstFit[[1]], tolerance = sem[[3]] * 2)
+  expect_equal(individual[[2]], individual[[3]])
+  expect_equal(sem[[2]], sem[[3]])
+  expect_equal(individual[[4]], worstFit[[1]], tolerance = sem[[4]] * 2)
   
   expect_equal(hc3[[1]],
                sum(attr(hc3, "ami") * attr(hc3, "hChar")) /
@@ -62,6 +63,20 @@ test_that("HierarchicalConcordance() works", {
   expect_equal(bal9$edge, DropTip(bal10, 8)$edge)
   withNA <- HierarchicalConcordance(bal10, StringToPhyDat("0000001?11"))
   expect_equal(withNA[[1]], fairFit[[1]], tolerance = 2 * attr(withNA, "sem"))
+  
+  
+  data(congreveLamsdellMatrices)
+  set.seed(1)
+  myMatrix <- congreveLamsdellMatrices[[10]]
+  njTree <- HierarchicalConcordance(TreeTools::NJTree(myMatrix), myMatrix)
+  
+  samples <- replicate(21, HierarchicalConcordance(
+    TreeTools::RandomTree(myMatrix), myMatrix))
+  expect_gt(njTree, mean(samples))
+  
+  ci <- t.test(samples, mu = 0, conf.level = 0.997)$conf.int
+  expect_lt(ci[[1]], 0)
+  expect_gt(ci[[2]], 0)
 })
 
 test_that("QuartetConcordance() works", {

@@ -6,6 +6,13 @@
 \usage{
 HierarchicalConcordance(tree, dataset, normalize = TRUE, precision = 0.01)
 }
+\arguments{
+\item{tree}{Phylogenetic tree in a format that can be coerced to an \code{\link[TreeDist]{HPart}}
+object.}
+
+\item{precision}{Numeric; Monte Carlo sampling will terminate once the
+relative standard error falls below this value.}
+}
 \description{
 A concordance metric derived from the hierarchical mutual information
 \insertCite{Perotti2015,Perotti2020}{TreeDist} between a character and a

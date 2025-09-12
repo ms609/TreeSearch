@@ -451,11 +451,11 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
 #' @template MRS
 #' @inheritParams TreeDist::CharAMI
 #' @importFrom fastmatch fmatch
-#' @importFrom TreeDist as.HPart H_xptr JH_xptr
+#' @importFrom TreeDist as.HPart CharAMI H_xptr JH_xptr
 #' @importFrom TreeTools as.Splits DropTip MatchStrings Subsplit TipLabels
 #' @export
-HierarchicalConcordance <- function (tree, dataset, normalize = TRUE,
-                                     precision = 0.01) {
+HierarchicalConcordance <- function(tree, dataset, normalize = TRUE,
+                                    precision = 0.01) {
   # Check inputs
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
@@ -477,6 +477,7 @@ HierarchicalConcordance <- function (tree, dataset, normalize = TRUE,
   
   at <- attributes(dataset)
   cont <- at[["contrast"]]
+  idx <- at[["index"]]
   if ("-" %in% colnames(cont)) {
     cont[cont[, "-"] > 0, ] <- 1
   }
@@ -504,7 +505,7 @@ HierarchicalConcordance <- function (tree, dataset, normalize = TRUE,
   }, simplify = FALSE)
   charTree <- fmatch(naPattern, naPatterns)
   
-  charH <- vapply(characters, H_xptr, 1)
+  charH <- vapply(characters, H_xptr, 1)[idx]
   
   ami <- vapply(seq_along(characters), function(i) {
     x <- CharAMI(characters[[i]], trees[[charTree[[i]]]], precision = precision)
@@ -512,9 +513,9 @@ HierarchicalConcordance <- function (tree, dataset, normalize = TRUE,
   }, double(2))
   
   structure(
-    sum(charH * ami[1, ]) / sum(charH),
-    ami = ami[1, ],
-    sem = ami[2, ],
+    sum(charH * ami[1, idx]) / sum(charH),
+    ami = ami[1, idx],
+    sem = ami[2, idx],
     hChar = charH
   )
 }
