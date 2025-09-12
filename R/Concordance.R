@@ -263,6 +263,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @importFrom stats setNames
 #' @importFrom TreeDist ClusteringInfoDistance Entropy entropy_int
 #' @importFrom TreeTools as.Splits MatchStrings Subsplit TipLabels
+#' @family split support functions
 #' @export
 ClusteringConcordance <- function (tree, dataset, return = "edge",
                                    normalize = TRUE) {
@@ -449,10 +450,12 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
 #' dataset <- inapplicable.phyData[["Vinther2008"]] # TODO DELETE
 #' HierarchicalConcordance(tree, dataset) # TODO DELETE
 #' @template MRS
+#' @inheritParams SiteConcordance
 #' @inheritParams TreeDist::CharAMI
 #' @importFrom fastmatch fmatch
 #' @importFrom TreeDist as.HPart CharAMI EJH_xptr H_xptr JH_xptr
 #' @importFrom TreeTools as.Splits DropTip MatchStrings Subsplit TipLabels
+#' @family split support functions
 #' @export
 HierarchicalConcordance <- function(tree, dataset, normalize = TRUE,
                                     precision = 0.01) {

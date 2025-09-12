@@ -7,8 +7,30 @@
 HierarchicalConcordance(tree, dataset, normalize = TRUE, precision = 0.01)
 }
 \arguments{
-\item{tree}{Phylogenetic tree in a format that can be coerced to an \code{\link[TreeDist]{HPart}}
-object.}
+\item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
+
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.
+Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
+Additive (ordered) characters can be handled using
+\code{\link[TreeTools]{Decompose}()}.}
+
+\item{normalize}{Logical or numeric; if \code{TRUE} the mutual information will be
+normalized such that zero corresponds to the expected mutual information of
+a randomly drawn character with the same distribution of tokens.
+If \code{FALSE}, zero will correspond to zero mutual information,
+even if this is not possible to accomplish in practice.
+The exact analytical solution, whilst quick, does not account for
+non-independence between splits. This is a less important factor for larger
+trees, and is negligible above ~200 leaves. For small trees, the expected
+value for random trees can be estimated by resampling relabelled trees.
+To conduct \emph{n} resamplings, set \code{normalize = n}.
+
+For \code{return = "char"}, \code{"tree"}, values will be normalized such that 1
+corresponds to the maximum possible value, and 0 to the expected value.
+If \code{normalize = TRUE}, this will be the expected value for a random
+character on the given tree. If \code{normalize} is numeric, the expected value
+will be estimated by fitting the character to \code{n} uniformly random trees.}
 
 \item{precision}{Numeric; Monte Carlo sampling will terminate once the
 relative standard error falls below this value.}
@@ -27,7 +49,17 @@ tree <- inapplicable.trees[["Vinther2008"]][[8]] # TODO DELETE
 dataset <- inapplicable.phyData[["Vinther2008"]] # TODO DELETE
 HierarchicalConcordance(tree, dataset) # TODO DELETE
 }
+\seealso{
+Other split support functions: 
+\code{\link{JackLabels}()},
+\code{\link{Jackknife}()},
+\code{\link{MaximizeParsimony}()},
+\code{\link{MostContradictedFreq}()},
+\code{\link{PresCont}()},
+\code{\link{SiteConcordance}}
+}
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
+\concept{split support functions}
