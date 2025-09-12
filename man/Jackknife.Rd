@@ -80,6 +80,7 @@ using \code{MaximizeParsimony()}.
 }
 
 Other split support functions: 
+\code{\link{HierarchicalConcordance}()},
 \code{\link{JackLabels}()},
 \code{\link{MaximizeParsimony}()},
 \code{\link{MostContradictedFreq}()},

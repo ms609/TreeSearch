@@ -166,6 +166,15 @@ ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
 }
 
 Other split support functions: 
+\code{\link{HierarchicalConcordance}()},
+\code{\link{JackLabels}()},
+\code{\link{Jackknife}()},
+\code{\link{MaximizeParsimony}()},
+\code{\link{MostContradictedFreq}()},
+\code{\link{PresCont}()}
+
+Other split support functions: 
+\code{\link{HierarchicalConcordance}()},
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
 \code{\link{MaximizeParsimony}()},

@@ -85,6 +85,7 @@ Generate trees by jackknife resampling using \code{\link[=Resample]{Resample()}}
 parsimony searches, or \code{\link[=Jackknife]{Jackknife()}} for custom search criteria.
 
 Other split support functions: 
+\code{\link{HierarchicalConcordance}()},
 \code{\link{Jackknife}()},
 \code{\link{MaximizeParsimony}()},
 \code{\link{MostContradictedFreq}()},
