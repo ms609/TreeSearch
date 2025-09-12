@@ -529,8 +529,8 @@ HierarchicalConcordance <- function(tree, dataset, normalize = TRUE,
     
     eh12 <- EJH_xptr(ch, tr, as.numeric(precision), 36L)
     
-    h1 <- H_xptr(ch)
-    h2 <- charH[[charTree[[i]]]]
+    h1 <- charH[[charTree[[i]]]]
+    h2 <- H_xptr(tr)
     h12 <- JH_xptr(ch, tr)
     
     M <- h1
