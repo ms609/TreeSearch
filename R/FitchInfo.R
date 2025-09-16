@@ -1,8 +1,31 @@
 #' Information required to encode a character using a Fitch-like algorithm
 #' 
+#' Given a tree, the amount of information required to encode a character is
+#' determined by the number of extra steps the character implies on a tree.
+#' 
+#' If there are \eqn{n} ways to produce the observed distribution of tokens with
+#' \eqn{s} extra steps, then the minimum encoding length of the observed
+#' distribution (given the number of states observed, the number of steps, and
+#' the tree) is \eqn{n\log{n}}.
+#' 
+#' This encoding captures how closely a character constrains a tree, which is
+#' not quite what we are interested in: there are many more trees on which
+#' a character fits rather poorly than on which it fits maximally poorly.
+#' 
+#' Hence we use a cumulative information measure, asking instead how many trees
+#' require _at least_ as many steps as the number that are observed.
+#' This fits with the observation that a parsimonious distribution may in fact
+#' arise through multiple steps, even if such steps would not be distinguished
+#' by a parsimonious reconstruction.
+#' 
+#' This value is most readily interpreted when normalized against the expected
+#' entropy of a random shuffling of states 
+#' 
+#' 
 #' @examples
 #' dataset <- inapplicable.phyData[["Vinther2008"]]
 #' tree <- TreeTools::NJTree(dataset)
+#' @importFrom TreeTools LnUnrooted
 #' @importFrom TreeDist Entropy
 #' @template MRS
 #' @export
@@ -43,14 +66,45 @@ FitchInfo <- function(tree, dataset) {
     newLabel[x]
   }) # retains compression
   
+  .TwoStateH <- function(char, tree) {
+    # Prune tree to fit, and process
+    tr <- KeepTip(tree, !is.na(char))
+    char <- char[!is.na(char)]
+    tab <- table(char, deparse.level = 0)
+    if (length(tab) != 2) stop("More than two states")
+    logP <- vapply(seq_len(min(tab)), LogCarter1, 1.0, tab[[1]], tab[[2]]) - 
+      LnUnrooted(sum(tab))
+    cumH <- .LogCumSumExp(logP) / -log(2)
+    cumH[abs(cumH) < sqrt(.Machine$double.eps)] <- 0
+    steps <- CharacterLength(tr, StringToPhyDat(paste0(char), tr))
+    h <- cumH[[steps]]
+    expH <- sum(cumH * exp(logP))
+    c(norm = (h - expH) / (cumH[[1]] - expH),
+      h = h,
+      hMax = cumH[[1]],
+      expH = expH)
+  }
+  
+  apply(mat, 2, function(char) {
+    obs <- table(char, deparse.level = 0)
+    pursue <- names(obs[obs > 1])
+    if (length(pursue) < 2) {
+      0
+    } else {
+      h <- apply(combn(length(pursue), 2), 2, function(i) {
+        chX <- char
+        chX[!(char %in% pursue[i])] <- NA
+        .TwoStateH(chX, tree)
+      })
+      weightedH <- sum(h["norm", ] * h["h", ] / sum(h["h", ]))
+      weightedH
+    }
+  })
+    
   apply(mat, 2, function(char) {
     # Prune tree to fit, and process
     tr <- KeepTip(tree, !is.na(char))
     char <- char[!is.na(char)]
-    
-    tr <- TreeTools::BalancedTree(4)
-    char <- c(0, 0, 1, 1)
-    plot(tr); nodelabels(); tiplabels(char)
     
     edge <- tr[["edge"]]
     nodes <- unique(edge[, 1]) # in preorder
