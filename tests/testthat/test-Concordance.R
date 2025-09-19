@@ -266,3 +266,9 @@ test_that("ConcordantInformation() works", {
                    log2(3) - log2(3)), ci["ignored"])
   
 })
+
+test_that("QACol() handles input", {
+  expect_equal(is.na(QACol(c(0, 1, NA, 0, NA), c(0, 1, NA, NA, 0))),
+               c(FALSE, FALSE, TRUE, TRUE, TRUE))
+  expect_equal(is.na(QCol(NA, c(0, 1, NA, NA))), c(FALSE, FALSE, TRUE, TRUE))
+})

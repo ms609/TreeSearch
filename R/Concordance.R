@@ -567,12 +567,12 @@ HierarchicalConcordance <- function(tree, dataset, normalize = TRUE,
 #' plot(amount, quality, col = QACol(amount, quality), pch = 15)
 #' abline(h = 0)
 #' @template MRS
-#' @importFrom colorspace hex max_chroma polarLUV
+#' @importFrom colorspace hex polarLUV
 #' @export
 QACol <- function(amount, quality) {
   h <- 80 + (quality * 140)
   l <- amount * 88 # < 100: white can take no hue
-  c <- abs(quality) * max_chroma(h, l)
+  c <- abs(quality) * .MaxChroma(h, l)
   # Saturation higher than 1 risks overflowing the colour space
   # Small overflows are caught via `fixup = TRUE`; large overflows will produce
   # bright red errors
@@ -586,6 +586,14 @@ QACol <- function(amount, quality) {
   ), fixup = TRUE)
 }
 
+#' @importFrom colorspace max_chroma
+.MaxChroma <- function(h, l) {
+  ret <- `length<-`(double(0), length(h))
+  applicable <- !is.na(h) & !is.na(l)
+  ret[applicable] <- max_chroma(h[applicable], l[applicable])
+  ret
+}
+
 #' @rdname QACol
 #' @return `QCol()` returns an RGB hex code for a colour, where darker,
 #' unsaturated colours denote a neutral `quality`;
@@ -594,7 +602,7 @@ QACol <- function(amount, quality) {
 QCol <- function(amount, quality) {
   h <- 80 + (quality * 140)
   l <- abs(quality) * 88 # < 100: white can take no hue
-  c <- abs(quality) * max_chroma(h, l)
+  c <- abs(quality) * .MaxChroma(h, l)
   # Saturation higher than 1 risks overflowing the colour space
   # Small overflows are caught via `fixup = TRUE`; large overflows will produce
   # bright red errors
