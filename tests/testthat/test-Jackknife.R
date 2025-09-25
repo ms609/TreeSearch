@@ -41,6 +41,7 @@ test_that("Jackknife ouputs good for node.labels", {
                setNames(c(0.08, 0.13, 0.14, 1, 1), c(10, 11, 13:15)))
   
   skip_if_not_installed("vdiffr")
+  skip_if_not_installed("TreeTools", "2")
   vdiffr::expect_doppelganger("plot-jackknife", function() {
     expect_equal(JackLabels(tree, jackTrees, plot = FALSE),
                  unname(JackLabels(tree, jackTrees)))
