@@ -72,7 +72,7 @@ Tree length is calculated using the MorphyLib C library
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Find most parsimonious trees</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/main/R/MaximizeParsimony.R" class="external-link"><code>R/MaximizeParsimony.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/1.7.0/R/MaximizeParsimony.R" class="external-link"><code>R/MaximizeParsimony.R</code></a></small>
       <div class="d-none name"><code>MaximizeParsimony.Rd</code></div>
     </div>
 
@@ -139,9 +139,9 @@ Tree length is calculated using the MorphyLib C library
 <dl><dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
 <dd><p>A phylogenetic data matrix of <span class="pkg">phangorn</span> class
 <code>phyDat</code>, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat</a>()</code>.
+Perhaps load into R using <code><a href="https://ms609.github.io/TreeTools/reference/ReadCharacters.html" class="external-link">ReadAsPhyDat()</a></code>.
 Additive (ordered) characters can be handled using
-<code><a href="https://ms609.github.io/TreeTools/reference/Decompose.html" class="external-link">Decompose</a>()</code>.</p></dd>
+<code><a href="https://ms609.github.io/TreeTools/reference/Decompose.html" class="external-link">Decompose()</a></code>.</p></dd>
 
 
 <dt id="arg-tree">tree<a class="anchor" aria-label="anchor" href="#arg-tree"></a></dt>
@@ -446,10 +446,10 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Tree search <em>via</em> graphical user interface: <code>EasyTrees()</code></p>
 <p>Other split support functions:
-<code><a href="JackLabels.html">JackLabels</a>()</code>,
-<code><a href="Jackknife.html">Jackknife</a>()</code>,
-<code><a href="MostContradictedFreq.html">MostContradictedFreq</a>()</code>,
-<code><a href="PresCont.html">PresCont</a>()</code>,
+<code><a href="JackLabels.html">JackLabels()</a></code>,
+<code><a href="Jackknife.html">Jackknife()</a></code>,
+<code><a href="MostContradictedFreq.html">MostContradictedFreq()</a></code>,
+<code><a href="PresCont.html">PresCont()</a></code>,
 <code><a href="SiteConcordance.html">SiteConcordance</a></code></p></div>
     </div>
     <div class="section level2">
@@ -485,8 +485,8 @@ ISSN 0748-3007, <a href="https://doi.org/10.1111/j.1096-0031.1999.tb00277.x" cla
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Sample local optimum</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> → TBR depth 1; keeping 4 trees; k = 10</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-09-11 06:54:14: Score: 16.3264</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-09-11 06:54:14: Tree search terminated with score <span style="font-weight: bold;">15.969</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> 2025-10-25 15:49:11: Score: 16.3264</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 2025-10-25 15:49:11: Tree search terminated with score <span style="font-weight: bold;">15.969</span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "final_1" "final_2" "final_3"</span>
 <span class="r-in"><span><span class="va">cons</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/Consensus.html" class="external-link">Consensus</a></span><span class="op">(</span><span class="va">trees</span><span class="op">)</span></span></span>
