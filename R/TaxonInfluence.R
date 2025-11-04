@@ -106,7 +106,6 @@
 #' @family tree scoring
 #' @importFrom ape read.nexus write.nexus
 #' @importFrom cli cli_alert_info cli_h1
-#' @importFrom fs path_sanitize
 #' @importFrom stats weighted.mean
 #' @importFrom TreeDist ClusteringInfoDistance
 #' @encoding UTF-8
@@ -122,6 +121,11 @@ TaxonInfluence <- function(
     ...
   ) {
   if (!is.null(savePath)) {
+    if (!requireNamespace("fs", quietly = TRUE)) {
+      stop("Package 'fs' is required when using savePath. ",
+           "Install it with: install.packages('fs')",
+           call. = FALSE)
+    }
     saveDir <- dirname(paste0(savePath, "taxon_name"))
     if (!dir.exists(saveDir)) {
       dir.create(saveDir, recursive = TRUE)
@@ -153,9 +157,13 @@ TaxonInfluence <- function(
   # Return:
   vapply(names(dataset), function(leaf) {
     
-    leafFile <- paste0(savePath, path_sanitize(leaf), ".nex")
+    leafFile <- if (!is.null(savePath)) {
+      paste0(savePath, fs::path_sanitize(leaf), ".nex")
+    } else {
+      NULL
+    }
     
-    result <- if (useCache && file.exists(leafFile)) {
+    result <- if (useCache && !is.null(leafFile) && file.exists(leafFile)) {
       if (verbosity > 1) {
         cli_alert_info(paste("Seeking cache: ", leafFile))
       }

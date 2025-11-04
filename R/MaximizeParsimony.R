@@ -999,17 +999,13 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
 #' Launch tree search graphical user interface
 #' 
 #' @rdname MaximizeParsimony
-#' @importFrom cluster pam silhouette
-#' @importFrom future future
-#' @importFrom PlotTools SpectrumLegend
-#' @importFrom promises future_promise
-#' @importFrom protoclust protoclust
-#' @importFrom Rogue ColByStability
-#' @importFrom shiny runApp
-#' @importFrom shinyjs useShinyjs
-#' @importFrom TreeDist ClusteringInfoDistance
 #' @export
 EasyTrees <- function () {#nocov start
+  if (!requireNamespace("shiny", quietly = TRUE)) {
+    stop("Package 'shiny' is required for EasyTrees(). ",
+         "Install it with: install.packages('shiny')",
+         call. = FALSE)
+  }
   shiny::runApp(system.file("Parsimony", package = "TreeSearch"))
 }
 

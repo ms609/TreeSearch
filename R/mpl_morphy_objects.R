@@ -225,10 +225,9 @@ MorphyErrorCheck <- function(action) {
 #' Score a tree: [`MorphyTreeLength()`]
 #' 
 #' @family Morphy API functions
-#' @importFrom stringi stri_paste
 #' @export
 SingleCharMorphy <- function (char, gap = "inapp") {
-  char <- stri_paste(c(char, ";"), collapse = "")
+  char <- paste(c(char, ";"), collapse = "")
   entries <- gregexpr("\\{[^\\{]+\\}|\\([^\\()]+\\)|[^;]", char)
   nTip <- length(entries[[1]])
   morphyObj <- mpl_new_Morphy()
