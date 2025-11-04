@@ -109,6 +109,7 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
 }
 
 
+# Cache for character length calculations (replaces previous fastmap implementation)
 .CharLengthCache <- new.env(parent = emptyenv())
 
 #' Expected length
