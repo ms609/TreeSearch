@@ -1001,11 +1001,7 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
 #' @rdname MaximizeParsimony
 #' @export
 EasyTrees <- function () {#nocov start
-  if (!requireNamespace("shiny", quietly = TRUE)) {
-    stop("Package 'shiny' is required for EasyTrees(). ",
-         "Install it with: install.packages('shiny')",
-         call. = FALSE)
-  }
+  .InstallSuggestedPackage("shinyjs")
   shiny::runApp(system.file("Parsimony", package = "TreeSearch"))
 }
 

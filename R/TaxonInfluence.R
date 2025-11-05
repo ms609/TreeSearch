@@ -121,11 +121,7 @@ TaxonInfluence <- function(
     ...
   ) {
   if (!is.null(savePath)) {
-    if (!requireNamespace("fs", quietly = TRUE)) {
-      stop("Package 'fs' is required when using savePath. ",
-           "Install it with: install.packages('fs')",
-           call. = FALSE)
-    }
+    .InstallSuggestedPackage("fs")
     saveDir <- dirname(paste0(savePath, "taxon_name"))
     if (!dir.exists(saveDir)) {
       dir.create(saveDir, recursive = TRUE)
