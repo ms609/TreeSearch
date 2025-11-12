@@ -7,7 +7,27 @@
 FitchInfo(tree, dataset)
 }
 \description{
-Information required to encode a character using a Fitch-like algorithm
+Given a tree, the amount of information required to encode a character is
+determined by the number of extra steps the character implies on a tree.
+}
+\details{
+If there are \eqn{n} ways to produce the observed distribution of tokens with
+\eqn{s} extra steps, then the minimum encoding length of the observed
+distribution (given the number of states observed, the number of steps, and
+the tree) is \eqn{n\log{n}}.
+
+This encoding captures how closely a character constrains a tree, which is
+not quite what we are interested in: there are many more trees on which
+a character fits rather poorly than on which it fits maximally poorly.
+
+Hence we use a cumulative information measure, asking instead how many trees
+require \emph{at least} as many steps as the number that are observed.
+This fits with the observation that a parsimonious distribution may in fact
+arise through multiple steps, even if such steps would not be distinguished
+by a parsimonious reconstruction.
+
+This value is most readily interpreted when normalized against the expected
+entropy of a random shuffling of states
 }
 \examples{
 dataset <- inapplicable.phyData[["Vinther2008"]]

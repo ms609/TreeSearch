@@ -451,9 +451,10 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
 #' HierarchicalConcordance(tree, dataset) # TODO DELETE
 #' @template MRS
 #' @inheritParams SiteConcordance
-#' @inheritParams TreeDist::CharAMI
+#' @param precision Numeric; Monte Carlo sampling will terminate once the
+#' relative standard error falls below this value.
 #' @importFrom fastmatch fmatch
-#' @importFrom TreeDist as.HPart CharAMI EJH_xptr H_xptr JH_xptr
+#' @importFrom TreeDist as.HPart
 #' @importFrom TreeTools as.Splits DropTip MatchStrings Subsplit TipLabels
 #' @family split support functions
 #' @export
@@ -508,7 +509,7 @@ HierarchicalConcordance <- function(tree, dataset, normalize = TRUE,
   }, simplify = FALSE)
   charTree <- fmatch(naPattern, naPatterns)
   
-  charH <- vapply(characters, H_xptr, 1)[idx]
+  charH <- vapply(characters, TreeDist:::HH_xptr, 1)[idx]
   
   .AHMISEM <- function(mi, M, emi, emi_sem) {
     eps <- sqrt(.Machine[["double.eps"]])
@@ -527,16 +528,10 @@ HierarchicalConcordance <- function(tree, dataset, normalize = TRUE,
     ch <- characters[[i]]
     tr <- trees[[charTree[[i]]]]
     
-    eh12 <- EJH_xptr(ch, tr, as.numeric(precision), 36L)
+    M <- charH[[charTree[[i]]]]
     
-    h1 <- charH[[charTree[[i]]]]
-    h2 <- H_xptr(tr)
-    h12 <- JH_xptr(ch, tr)
-    
-    M <- h1
-    
-    mi <- h1 + h2 - h12
-    emi <- h1 + h2 - eh12
+    mi <- TreeDist:::HMI_xptr(ch, tr)
+    emi <- TreeDist:::EHMI_xptr(ch, tr, as.numeric(precision), 36L)
     
     num <- mi - emi[[1]]
     denom <- M - emi[[1]]
