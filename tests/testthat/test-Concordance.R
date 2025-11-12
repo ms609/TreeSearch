@@ -20,7 +20,7 @@ test_that("_Concordance() handles tip mismatch", {
 })
 
 test_that("HierarchicalConcordance() works", {
-  skip_if_not_installed("TreeDist", "2.11.0")
+  skip_if_not_installed("TreeDist", "2.11.1.9000")
   
   bal9 <- BalancedTree(9)
   
