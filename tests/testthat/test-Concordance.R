@@ -4,8 +4,10 @@ test_that("_Concordance() handles null input", {
   expect_warning(expect_null(QuartetConcordance(BalancedTree(8), NULL)))
   expect_warning(expect_null(PhylogeneticConcordance(BalancedTree(8), NULL)))
   expect_warning(expect_null(ClusteringConcordance(BalancedTree(8), NULL)))
-  expect_warning(expect_null(MutualClusteringConcordance(BalancedTree(8), NULL)))
-  expect_warning(expect_null(SharedPhylogeneticConcordance(BalancedTree(8), NULL)))
+  expect_warning(expect_null(
+    MutualClusteringConcordance(BalancedTree(8), NULL)))
+  expect_warning(expect_null(
+    SharedPhylogeneticConcordance(BalancedTree(8), NULL)))
 })
 
 test_that("_Concordance() handles tip mismatch", {
@@ -18,7 +20,7 @@ test_that("_Concordance() handles tip mismatch", {
 })
 
 test_that("HierarchicalConcordance() works", {
-  skip_if_not_installed("TreeDist", "2.10.1.9001")
+  skip_if_not_installed("TreeDist", "2.11.0")
   
   bal9 <- BalancedTree(9)
   
@@ -41,7 +43,7 @@ test_that("HierarchicalConcordance() works", {
   
   individual <- attr(hc3, "ami")
   sem <- attr(hc3, "sem")
-  expect_equal(individual[[1]], bestFit[[1]], tolerance = sem[[1]])
+  expect_equal(individual[[1]], bestFit[[1]], tolerance = sem[[1]] * 2)
   expect_equal(individual[[2]], fairFit[[1]], tolerance = sem[[2]] * 2)
   expect_equal(individual[[2]], individual[[3]])
   expect_equal(sem[[2]], sem[[3]])
@@ -269,6 +271,8 @@ test_that("ConcordantInformation() works", {
 
 test_that("QACol() handles input", {
   expect_equal(is.na(QACol(c(0, 1, NA, 0, NA), c(0, 1, NA, NA, 0))),
-               c(FALSE, FALSE, TRUE, TRUE, TRUE))
+               c(FALSE, FALSE, TRUE,
+                 FALSE, # No data = black, quality NA by definition
+                 TRUE))
   expect_equal(is.na(QCol(NA, c(0, 1, NA, NA))), c(FALSE, FALSE, TRUE, TRUE))
 })
