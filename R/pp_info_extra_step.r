@@ -250,7 +250,7 @@ MaddisonSlatkin <- function(steps, states) {
     duplicated <- evenSplits[apply(grid[evenSplits, ], 1, function(drawn) {
       undrawn <- leaves - drawn
       cmp <- NA_integer_
-      for (idx in seq_along(drawn)) {
+      for (i in seq_along(drawn)) {
         if (drawn[[i]] < undrawn[[i]]) {cmp <- -1L; break }
         if (drawn[[i]] > undrawn[[i]]) {cmp <- +1L; break }
       }
@@ -312,7 +312,7 @@ MaddisonSlatkin <- function(steps, states) {
     duplicated <- evenSplits[apply(grid[evenSplits, ], 1, function(drawn) {
       undrawn <- leaves - drawn
       cmp <- NA_integer_
-      for (idx in seq_along(drawn)) {
+      for (i in seq_along(drawn)) {
         if (drawn[[i]] < undrawn[[i]]) {cmp <- -1L; break }
         if (drawn[[i]] > undrawn[[i]]) {cmp <- +1L; break }
       }
