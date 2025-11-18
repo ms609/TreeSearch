@@ -107,7 +107,68 @@ FitchInfo <- function(tree, dataset) {
       c(h = if(abs(weightedH) < sqrt(.Machine$double.eps)) 0 else weightedH,
         hMax = sum(h["hMax", ]))
     }
-    
+  })[, attr(dataset, "index"), drop = FALSE]
+  
+  totalHMax <- sum(charH["hMax", ])
+  # Return:
+  structure(
+    if(totalHMax == 0) 1 else
+      sum(charH["h", , drop = FALSE] * charH["hMax", , drop = FALSE] / totalHMax),
+    byChar = charH
+    )
+}
+
+#' Here we take an approach that is perhaps closer to our original intent.
+#' 
+#' Here we take as input a tree topology, a distribution of states, and a
+#' number of steps.
+#' 
+#' We ask "how many ways are there to produce the observed state frequencies by
+#' placing at most the observed number of steps on the observed tree".
+#' 
+FitchInfo2 <- function(tree, dataset) {
+  # Check inputs
+  if (is.null(dataset)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
+  if (is.null(tree)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
+  
+  keep <- MatchStrings(TipLabels(tree), names(dataset), warning)
+  if (length(keep) == 0) {
+    return(NULL)
+  }
+  dataset <- dataset[keep]
+  
+  at <- attributes(dataset)
+  cont <- at[["contrast"]]
+  if ("-" %in% colnames(cont)) {
+    cont[cont[, "-"] > 0, ] <- 1
+  }
+  ambiguous <- rowSums(cont) != 1
+  
+  mat <- matrix(as.integer(unlist(dataset)), length(dataset), byrow = TRUE)
+  mat[mat %in% which(ambiguous)] <- NA_integer_
+  maxToken <- max(mat, na.rm = TRUE)
+  tokens <- as.character(seq_len(maxToken))
+  mat <- apply(mat, 2, function (x) {
+    uniques <- tabulate(x, maxToken) == 1
+    x[x %in% tokens[uniques]] <- NA_integer_
+    tokens <- sort(unique(x[!is.na(x)]))
+    newLabel <- tabulate(tokens)
+    newLabel[newLabel > 0] <- seq_len(sum(newLabel > 0)) - 1
+    newLabel[x]
+  }) # retains phyDat character compression
+  
+  # Work down the tree counting, for each node,
+  # for each reconstruction (i.e. 0, 1, 02, ...)
+  # (i) the number of leaves above it in each state; (ii) the number of steps
+  # encountered thus far.  Then the root should enumerate all combinations
+  # and number of steps.
+
   apply(mat, 2, function(char) {
     # Prune tree to fit, and process
     tr <- KeepTip(tree, !is.na(char))
