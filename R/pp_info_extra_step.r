@@ -218,9 +218,24 @@ MaddisonSlatkin <- function(steps, states) {
   states[is.na(states)] <- 0
   dp <- `mode<-`(.DownpassOutcome(nLevels), "integer")
 
-  .LogP <- function(s, n, i, token) {
+  .LogP <- function(s, leaves, token) {
+    n <- sum(leaves)
+    if (n == 1) {
+      # If the one leaf we're looking at bears the token, p = 1; else p = 0
+      return(log(leaves[[token]] == 1))
+    }
+    if (n == 2) {
+      result <- if (any(leaves) == 2) {
+        which.max(leaves)
+      } else {
+        dp[rbind(which(leaves > 0))]
+      }
+      return(log(if (token == result) 1 else 0))
+    }
+    
     LogSumExp(vapply(1:(n / 2), function(m) {
       .LogR(m, n) - .LogB(token, n, i) + LogSumExp(vapply(1:i, function(j) {
+        # TODO: 0:(s - 1) where the conjunction adds a step
         .LogD(j, i, m, n) + LogSumExp(vapply(0:s, function(r) {
           LogSumExp(apply(which(dp == token, arr.ind = TRUE), 1, function(pair) {
             .LogP(r, m, j, pair[[1]]) + .LogB(pair[[1]], m, j) +
@@ -237,17 +252,18 @@ MaddisonSlatkin <- function(steps, states) {
       LnUnrooted(m) + LnUnrooted(n - m) - LnUnrooted(n)
   }
   
-  .LogD <- function(j, i, m, n) {
+  .LogD <- function(j, leaves, m, n) {
     lchoose(i, j) + lchoose(n - i, m - j) - lchoose(n, m)
   }
   
-  .LogB <- function(token, n, leaves) {
+  .LogB <- function(token, leaves) {
+    n <- sum(leaves)
     if (n == 1) {
       # If the one leaf we're looking at bears the token, p = 1; else p = 0
       return(log(leaves[[token]] == 1))
     }
     if (n == 2) {
-      result <- if (any(leaves) == 2) {
+      result <- if (any(leaves == 2)) {
         which.max(leaves)
       } else {
         dp[rbind(which(leaves > 0))]
