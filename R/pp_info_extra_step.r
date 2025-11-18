@@ -252,8 +252,8 @@ MaddisonSlatkin <- function(steps, states) {
       LnUnrooted(m) + LnUnrooted(n - m) - LnUnrooted(n)
   }
   
-  .LogD <- function(j, leaves, m, n) {
-    lchoose(i, j) + lchoose(n - i, m - j) - lchoose(n, m)
+  .LogD <- function(drawn, leaves) {
+    sum(lchoose(leaves, drawn))
   }
   
   .LogB <- function(token, leaves) {
@@ -287,14 +287,16 @@ MaddisonSlatkin <- function(steps, states) {
     })]
     validDraws <- setdiff(which(nDrawn > 0 & nDrawn <= floor(n / 2)), duplicated)
     
-    LogSumExp(vapply(validDraws, function(i) {
-      .LogR(m, n) + LogSumExp(vapply(1:i, function(j) {
-        .LogD(j, i, m, n) + LogSumExp(apply(
+    LogSumExp(apply(grid[validDraws, ], 1, function(drawn) {
+      m <- sum(drawn)
+      undrawn <- leaves - drawn
+      .LogR(m, n) +
+        .LogD(drawn, leaves) +
+        LogSumExp(apply(
           which(dp == token, arr.ind = TRUE), 1, function(pair) {
-            .LogB(pair[[1]], m, j) + .LogB(pair[[2]], n - m, i - j)
+            .LogB(pair[[1]], drawn) + .LogB(pair[[2]], undrawn)
             }))
-      }, double(1)))
-    }, double(1)))
+      }))
   }
   
   p <- 0
