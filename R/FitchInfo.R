@@ -13,18 +13,19 @@
 #' a character fits rather poorly than on which it fits maximally poorly.
 #' 
 #' Hence we use a cumulative information measure, asking instead how many trees
-#' require _at least_ as many steps as the number that are observed.
+#' require _at most_ as many steps as the number that are observed.
 #' This fits with the observation that a parsimonious distribution may in fact
 #' arise through multiple steps, even if such steps would not be distinguished
 #' by a parsimonious reconstruction.
 #' 
 #' This value is most readily interpreted when normalized against the expected
-#' entropy of a random shuffling of states 
+#' entropy of a random shuffling of states.
 #' 
 #' 
 #' @examples
 #' dataset <- inapplicable.phyData[["Vinther2008"]]
 #' tree <- TreeTools::NJTree(dataset)
+#' FitchInfo(tree, dataset)
 #' @importFrom TreeTools LnUnrooted
 #' @importFrom TreeDist Entropy
 #' @template MRS
