@@ -92,6 +92,7 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
 #' 
 #' @param m Number of steps.
 #' @param a,b Number of leaves labelled `0` and `1`.
+#' @param states Number of leaves with each state.
 #' 
 #' 
 #' @seealso [TreeTools::NUnrooted()]: number of unrooted trees with _n_ leaves.
@@ -198,18 +199,32 @@ LogCarter1 <- function (m, a, b) {
 #' @rdname Carter1
 #' @export
 MaddisonSlatkin <- function(m, states) {
-  nNodeLabels <- 2 ^ states - 1
+  n <- sum(states)
+  nStates <- length(states)
+  nNodeLabels <- 2 ^ nStates - 1
   nodeLabels <- 1:nNodeLabels
+  dp <- `mode<-`(.DownpassOutcome(nStates), "integer")
   .Psni <- function(nodeLabels) {
     p <- 0
-    .PsniBase <- function(i) {
+    .PsniBase <- function(i, token) {
       
     }
-    .Bni <- function(i) {
-      
+    .D <- function(j, i, m, n) {
+      stop("#TODO")
     }
-    for (i in seq_along(nodeLabels)) {
-      p <- LogAdd(p, .PsniBase(i) * .Bni(i))
+    .B <- function(token, n, i) {
+      sum(vapply(1:(n / 2), function(m) {
+        .Rmn(m, n) * sum(vapply(1:i, function(j) {
+          .D(j, i, m, n) * sum(apply(
+            which(dp == token, arr.ind = TRUE), 1, function(pair) {
+              .B(pair[[1]], m, j) * B(pair[[2]], n - m, i - j)
+              }))
+            
+          )
+      }, double(1))
+    }
+    for (token in seq_along(nodeLabels)) {
+      p <- LogAdd(p, .PsniBase(token) * .B(token, n, i = states[[token]]))
     }
   }
 }
