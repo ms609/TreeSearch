@@ -98,7 +98,8 @@ FitchInfo <- function(tree, dataset) {
         .TwoStateH(chX, tree)
       })
       weightedH <- sum(h["norm", ] * h["hMax", ] / sum(h["hMax", ]))
-      c(h = weightedH, hMax = sum(h["hMax", ]))
+      c(h = if(abs(weightedH) < sqrt(.Machine$double.eps)) 0 else weightedH,
+        hMax = sum(h["hMax", ]))
     }
     
   apply(mat, 2, function(char) {
