@@ -22,6 +22,12 @@
 #' entropy of a random shuffling of states.
 #' 
 #' 
+#' @section Quirks
+#' Characters that are not parsimony informative (i.e. singletons) contain no
+#' phylogenetic information, so contribute zero to both numerator
+#' and denominator.  If no character is parsimony informative, we define the
+#' return value as 1.
+#' 
 #' @examples
 #' dataset <- inapplicable.phyData[["Vinther2008"]]
 #' tree <- TreeTools::NJTree(dataset)
@@ -227,8 +233,8 @@ FitchInfo <- function(tree, dataset) {
   totalHMax <- sum(charH["hMax", ])
   # Return:
   structure(
-    if(sum(charH["hMax", ]) == 0) 1 else
-      sum(charH["h", ] * charH["hMax", ] / totalHMax),
+    if(totalHMax == 0) 1 else
+      sum(charH["h", , drop = FALSE] * charH["hMax", , drop = FALSE] / totalHMax),
     byChar = charH
     )
 }
