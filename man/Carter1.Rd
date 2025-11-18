@@ -4,7 +4,7 @@
 \alias{Carter1}
 \alias{Log2Carter1}
 \alias{LogCarter1}
-\alias{MaddisonSlakey}
+\alias{MaddisonSlatkin}
 \title{Number of trees with \emph{m} steps}
 \usage{
 Carter1(m, a, b)
@@ -13,7 +13,7 @@ Log2Carter1(m, a, b)
 
 LogCarter1(m, a, b)
 
-MaddisonSlakey(m, states)
+MaddisonSlatkin(m, states)
 }
 \arguments{
 \item{m}{Number of steps.}
