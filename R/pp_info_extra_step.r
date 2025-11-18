@@ -206,6 +206,7 @@ LogCarter1 <- function (m, a, b) {
 #' LogCarter1(1, 8, 24)
 #' LogCarter1(2, 8, 24)
 #' LogCarter1(3, 8, 24)
+#' 
 #' MaddisonSlatkin(1, c(2, 2))
 #' 
 #' @importFrom TreeTools LnUnrooted
@@ -233,17 +234,43 @@ MaddisonSlatkin <- function(steps, states) {
       return(log(if (token == result) 1 else 0))
     }
     
-    LogSumExp(vapply(1:(n / 2), function(m) {
-      .LogR(m, n) - .LogB(token, n, i) + LogSumExp(vapply(1:i, function(j) {
-        # TODO: 0:(s - 1) where the conjunction adds a step
-        .LogD(j, i, m, n) + LogSumExp(vapply(0:s, function(r) {
-          LogSumExp(apply(which(dp == token, arr.ind = TRUE), 1, function(pair) {
-            .LogP(r, m, j, pair[[1]]) + .LogB(pair[[1]], m, j) +
-              .LogP(s - r, n - m, i - j, pair[[2]]) + .LogB(pair[[2]], n - m, i - j)
-            }))
-          }, double(1)))
-        }, double(1)))
-      }, double(1)))
+    ## Duplicated from .LogB.
+    # TODO functionalize
+    grid <- do.call(expand.grid, lapply(leaves, function(mc) seq.int(0, mc))) |>
+      as.matrix()
+    nDrawn <- rowSums(grid)
+    evenSplits <- which(nDrawn == n / 2)
+    duplicated <- evenSplits[apply(grid[evenSplits, ], 1, function(drawn) {
+      undrawn <- leaves - drawn
+      cmp <- NA_integer_
+      for (idx in seq_along(drawn)) {
+        if (drawn[[i]] < undrawn[[i]]) {cmp <- -1L; break }
+        if (drawn[[i]] > undrawn[[i]]) {cmp <- +1L; break }
+      }
+      # Return:
+      !is.na(cmp) && cmp == +1L
+    })]
+    validDraws <- setdiff(which(nDrawn > 0 & nDrawn <= floor(n / 2)), duplicated)
+    
+    LogSumExp(apply(grid[validDraws, ], 1, function(drawn) {
+      m <- sum(drawn)
+      undrawn <- leaves - drawn
+      .LogR(m, n) +
+        .LogD(drawn, leaves) +
+        # 0:(s - 1) where the conjunction adds a step
+        LogSumExp(vapply(0:(s - 1), function(r) {
+          LogSumExp(apply(which(dp == token, arr.ind = TRUE), 1, function(pair)
+            .LogP(r, drawn, pair[[1]]) + .LogB(pair[[1]], drawn) +
+              .LogP(s - r, undrawn, pair[[2]]) + .LogB(pair[[2]], undrawn)
+            ))}, double(1)),
+          # and s where it doesn't  
+          LogSumExp(apply(which(dp == token & !attr(dp, "step"), arr.ind = TRUE),
+                          1, function(pair)
+                            .LogP(r, drawn, pair[[1]]) +
+                            .LogB(pair[[1]], drawn) +
+                            .LogP(s - r, undrawn, pair[[2]]) +
+                            .LogB(pair[[2]], undrawn))))
+    }))
   }
   
   .LogR <- function(m, n) {
@@ -301,8 +328,7 @@ MaddisonSlatkin <- function(steps, states) {
   
   p <- 0
   for (state in seq_len(nStates)) {
-    p <- LogSumExp(p, .LogP(m, nTaxa, states[[state]], state) +
-                     .LogB(state, nTaxa, i = states[[state]]))
+    p <- LogSumExp(p, .LogP(steps, leaves, state) + .LogB(state, leaves))
   }
   p
 }
