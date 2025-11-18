@@ -280,10 +280,15 @@ MaddisonSlatkin <- function(steps, states) {
     }))
   }
   
+  # This seems to be one of those probabilities that can exceed 1,
+  # at least in the case of R(1 | 3) = 2 * 4 * 1 * 3 / 15, using T = NRooted.
+  # (Note the misplaced brackets in Maddison & Slatkin 1991's definition of T(n))
+  # 
+  # I suspect that the 2 should not really be there: trees are symmetrical.
   .LogR <- function(m, n) {
     log(if (n == m + m) 1 else 2) +
       lchoose(n, m) +
-      LnUnrooted(m) + LnUnrooted(n - m) - LnUnrooted(n)
+      LnRooted(m) + LnRooted(n - m) - LnRooted(n)
   }
   
   .LogD <- function(drawn, leaves) {
