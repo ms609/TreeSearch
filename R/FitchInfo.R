@@ -14,8 +14,8 @@
 #' 
 #' Hence we use a cumulative information measure, asking instead how many trees
 #' require _at most_ as many steps as the number that are observed.
-#' This fits with the observation that a parsimonious distribution may in fact
-#' arise through multiple steps, even if such steps would not be distinguished
+#' This fits with the possibility that a parsimonious distribution may arise
+#' through multiple steps, even if such steps would not be distinguished
 #' by a parsimonious reconstruction.
 #' 
 #' This value is most readily interpreted when normalized against the expected
@@ -65,7 +65,7 @@ FitchInfo <- function(tree, dataset) {
     newLabel <- tabulate(tokens)
     newLabel[newLabel > 0] <- seq_len(sum(newLabel > 0)) - 1
     newLabel[x]
-  }) # retains compression
+  }) # retains phyDat character compression
   
   .TwoStateH <- function(char, tree) {
     # Prune tree to fit, and process
@@ -86,21 +86,20 @@ FitchInfo <- function(tree, dataset) {
       expH = expH)
   }
   
-  apply(mat, 2, function(char) {
+  charH <- apply(mat, 2, function(char) {
     obs <- table(char, deparse.level = 0)
     pursue <- names(obs[obs > 1])
     if (length(pursue) < 2) {
-      0
+      c(h = 0, hMax = 0)
     } else {
       h <- apply(combn(length(pursue), 2), 2, function(i) {
         chX <- char
         chX[!(char %in% pursue[i])] <- NA
         .TwoStateH(chX, tree)
       })
-      weightedH <- sum(h["norm", ] * h["h", ] / sum(h["h", ]))
-      weightedH
+      weightedH <- sum(h["norm", ] * h["hMax", ] / sum(h["hMax", ]))
+      c(h = weightedH, hMax = sum(h["hMax", ]))
     }
-  })
     
   apply(mat, 2, function(char) {
     # Prune tree to fit, and process
@@ -224,6 +223,13 @@ FitchInfo <- function(tree, dataset) {
     }
   })
   
+  totalHMax <- sum(charH["hMax", ])
+  # Return:
+  structure(
+    if(sum(charH["hMax", ]) == 0) 1 else
+      sum(charH["h", ] * charH["hMax", ] / totalHMax),
+    byChar = charH
+    )
 }
 
 .DownpassOutcome <- function(nStates) {
