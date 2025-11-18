@@ -126,6 +126,15 @@ FitchInfo <- function(tree, dataset) {
 #' We ask "how many ways are there to produce the observed state frequencies by
 #' placing at most the observed number of steps on the observed tree".
 #' 
+#' Well, actually, we are asking "what is the probability of seeing at most
+#' the observed number of steps, given the entropy of the observed state
+#' frequencies".
+#' 
+#' @examples
+#' tree <- as.phylo(0, 6)
+#' dataset <- MatrixToPhyDat(`rownames<-`(rbind(1, 1, 2, 2, 3, 3), TipLabels(6)))
+#' FitchInfo2(tree, dataset)
+#' @export
 FitchInfo2 <- function(tree, dataset) {
   # Check inputs
   if (is.null(dataset)) {
@@ -166,7 +175,7 @@ FitchInfo2 <- function(tree, dataset) {
   # Work down the tree counting, for each node,
   # for each reconstruction (i.e. 0, 1, 02, ...)
   # (i) the number of leaves above it in each state; (ii) the number of steps
-  # encountered thus far.  Then the root should enumerate all combinations
+  # encountered thus far.  Then the root will enumerate all combinations
   # and number of steps.
 
   apply(mat, 2, function(char) {
@@ -183,6 +192,7 @@ FitchInfo2 <- function(tree, dataset) {
     nTip <- NTip(tr)
     nEdge <- nTip + nTip - 2
     nVert <- length(nodes) + nTip
+    rootNode <- nTip + 1
     
     # Calculate entropy of character
     stateFreq <- tabulate(char + 1)
@@ -190,105 +200,47 @@ FitchInfo2 <- function(tree, dataset) {
     rawInfo <- Entropy(stateP) * nTip
     nState <- length(stateFreq)
     dp <- `mode<-`(.DownpassOutcome(nState), "integer") # for tapply
-    up <- `mode<-`(.UppassOutcome(nState), "integer")
+    dpStep <- attr(dp, "step")
+    dpUp <- dpFlat <- dp
+    dpUp[!dpStep] <- 0
+    dpFlat[dpStep] <- 0
     
-    dpState <- matrix(0, 2 ^ nState - 1, nVert)
-    dpState[2 ^ (seq_len(nState) - 1), 1:nTip] <- stateP
+    dpState <- array(0, dim = c( # 3D array with dimensions:
+      2 ^ nState - 1,            # 1. Binary encoding of possible tokens
+      nVert,                     # 2. Vertices of tree
+      nTip - 1                   # 3. Number of steps observed
+      ))
+    dpState[2 ^ (seq_len(nState) - 1), 1:nTip, ] <- stateP
+    levels <- as.character(seq_len(2 ^ nState - 1))
+    maxSteps <- 0
+    obsSteps <- 0
+    
     solution <- 2 ^ char
     
-    if (dpOnly <- FALSE) {
-      for (node in rev(nodes)) { # Postorder traversal
-        childP <- dpState[, desc[[node]]]
+  
+    for (node in rev(nodes)) { # Postorder traversal
+      for (i in 1 + (maxSteps:0)) {
+        childP <- dpState[, desc[[node]], i]
         nodeP <- outer(childP[, 1], childP[, 2])
-        dpState[, node] <- tapply(outer(childP[, 1], childP[, 2]), dp, sum)
-        
-        childSol <- solution[desc[[node]]]
-        solution[node] <- dp[childSol[[1]], childSol[[2]]]
-      }
-      
-      info <- `length<-`(double(0), nVert)
-      
-      for (node in nodes) { # Preorder traversal
-        nodeSol <- solution[[node]]
-        info[[node]] <- -log2(dpState[nodeSol, node])
-        descs <- desc[[node]]
-        isTip <- descs <= nTip
-        
-        childPMat <- outer(childP[, 1], childP[, 2])
-        condP <- childPMat * (dp == nodeSol)
-        if (isTip[[1]]) {
-          condP[!(seq_len(2 ^ nState - 1) %in% 2 ^ (seq_len(nState) - 1)), ] <- 0
+        noNewStep <- tapply(outer(childP[, 1], childP[, 2]), dpFlat, sum)[levels]
+        dpState[, node, i] <- noNewStep
+        if (i < (nTip - 1)) {
+          newStep <- tapply(outer(childP[, 1], childP[, 2]), dpUp, sum)[levels]
+          newStep[is.na(newStep)] <- 0
+          dpState[, node, i + 1] <- dpState[, node, i + 1] + newStep
         }
-        if (isTip[[2]]) {
-          condP[, !(seq_len(2 ^ nState - 1) %in% 2 ^ (seq_len(nState) - 1))] <- 0
-        }
-        condP <- condP / sum(condP)
-        
-        left <- descs[[1]]
-        right <- descs[[2]]
-        dpState[, left] <- rowSums(condP)
-        
-        condP <- condP[solution[[left]], ]
-        condP <- condP / sum(condP)
-        dpState[, right] <- condP
       }
       
-      for (tip in seq_len(nTip)) {
-        info[[tip]] <- -log2(dpState[2 ^ char[tip], tip])
-      }
-      info
-    } else {
-      
-      for (node in nodes) { # Preorder traversal
-        # Populate solution with standard Fitch algorithm
-        childSol <- solution[desc[[node]]]
-        ancSol <- solution[[parent[[node]]]]
-        solution[node] <- up[childSol[[1]], childSol[[2]], ancSol]
-      }
-      
-      upState <- dpState # Can probably avoid a copy here and overwrite dpState
-      
-      for (node in nodes) { # Preorder traversal
-        # Prior probabilities at node
-        descs <- desc[[node]]
-        isTip <- descs <= nTip
-        childP <- dpState[, descs]
-        ancSol <- solution[[parent[[node]]]]
-        nodeSol <- solution[[node]]
-        
-        # Now we can provide some information
-        info[[node]] <- -log2(upState[nodeSol, node])
-        childPMat <- outer(childP[, 1], childP[, 2])
-        condP <- childPMat * (up[, , ancSol] == nodeSol)
-        if (isTip[[1]]) {
-          condP[!(seq_len(2 ^ nState - 1) %in% 2 ^ (seq_len(nState) - 1)), ] <- 0
-        }
-        if (isTip[[2]]) {
-          condP[, !(seq_len(2 ^ nState - 1) %in% 2 ^ (seq_len(nState) - 1))] <- 0
-        }
-        condP <- condP / sum(condP)
-        
-        # Update the probabilities of the left child conditional on this node's
-        # state, which we know now:
-        left <- descs[[1]]
-        upState[, left] <- rowSums(condP)
-        
-        
-        # By the time we get to the right child, we will also know the left
-        # child's state, so we must condition on that too:
-        condP <- condP[solution[[left]], ]
-        condP <- condP / sum(condP)
-        
-        right <- descs[[2]]
-        upState[, right] <- condP
-      }
-      
-      
-      for (tip in seq_len(nTip)) {
-        info[[tip]] <- -log2(upState[2 ^ char[tip], tip])
-      }
-      info
+      childSol <- rbind(solution[desc[[node]]])
+      obsSteps <- obsSteps + dpStep[childSol]
+      solution[node] <- dp[childSol]
+      maxSteps <- maxSteps + 1
     }
+    stopifnot(isTRUE(all.equal(sum(dpState[, rootNode, ]), 1)))
+    # + 1 because dpState[, , 1] corresponds to zero steps
+    finalP <- colSums(dpState[, rootNode, ])
+    c("hObs" = -log2(sum(finalP[1:(obsSteps + 1)])),
+      "hMax" = -log2(sum(finalP[1:nState])))
   })
   
   totalHMax <- sum(charH["hMax", ])
@@ -308,8 +260,9 @@ FitchInfo2 <- function(tree, dataset) {
   intersect <- outer(stateSpace, stateSpace, `&`)
   union <- outer(stateSpace, stateSpace, `|`)
   ret <- intersect
-  ret[intersect == as.raw(0)] <- union[intersect == as.raw(0)]
-  ret
+  newStep <- intersect == as.raw(0)
+  ret[newStep] <- union[newStep]
+  structure(ret, step = newStep)
 }
 
 
