@@ -4,11 +4,19 @@
 \alias{LogSumExp}
 \title{Add log probabilities}
 \usage{
-LogSumExp(x, y, z = NULL)
+LogSumExp(...)
 }
 \arguments{
-\item{x, y, z}{Numeric; log-probabilities to add}
+\item{x}{Numeric vector giving log-probabilities to add}
 }
 \description{
 Add log probabilities whilst retaining precision
+}
+\examples{
+exp(LogSumExp(log(1:3)))
+exp(sum(log(1:3)))
+
+# Intended for large-scale numbers, e.g.
+choose(2345, 456) # Overflows
+LogSumExp(lchoose(2345, 456), lchoose(2345, 456))
 }

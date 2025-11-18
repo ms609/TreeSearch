@@ -271,7 +271,23 @@ MaddisonSlatkin <- function(steps, states) {
       return(log(if (token == result) 1 else 0))
     }
     
-    LogSumExp(vapply(1:(n / 2), function(m) {
+    grid <- do.call(expand.grid, lapply(leaves, function(mc) seq.int(0, mc))) |>
+      as.matrix()
+    nDrawn <- rowSums(grid)
+    evenSplits <- which(nDrawn == n / 2)
+    duplicated <- evenSplits[apply(grid[evenSplits, ], 1, function(drawn) {
+      undrawn <- leaves - drawn
+      cmp <- NA_integer_
+      for (idx in seq_along(drawn)) {
+        if (drawn[[i]] < undrawn[[i]]) {cmp <- -1L; break }
+        if (drawn[[i]] > undrawn[[i]]) {cmp <- +1L; break }
+      }
+      # Return:
+      !is.na(cmp) && cmp == +1L
+    })]
+    validDraws <- setdiff(which(nDrawn > 0 & nDrawn <= floor(n / 2)), duplicated)
+    
+    LogSumExp(vapply(validDraws, function(i) {
       .LogR(m, n) + LogSumExp(vapply(1:i, function(j) {
         .LogD(j, i, m, n) + LogSumExp(apply(
           which(dp == token, arr.ind = TRUE), 1, function(pair) {
