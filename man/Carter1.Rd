@@ -4,6 +4,7 @@
 \alias{Carter1}
 \alias{Log2Carter1}
 \alias{LogCarter1}
+\alias{MaddisonSlakey}
 \title{Number of trees with \emph{m} steps}
 \usage{
 Carter1(m, a, b)
@@ -11,6 +12,8 @@ Carter1(m, a, b)
 Log2Carter1(m, a, b)
 
 LogCarter1(m, a, b)
+
+MaddisonSlakey(m, states)
 }
 \arguments{
 \item{m}{Number of steps.}
@@ -18,12 +21,15 @@ LogCarter1(m, a, b)
 \item{a, b}{Number of leaves labelled \code{0} and \code{1}.}
 }
 \description{
-Calculate the number of trees in which Fitch parsimony will reconstruct
-\emph{m} steps, where \emph{a} leaves are labelled with one state, and \emph{b} leaves are
-labelled with a second state.
+\code{Carter1()} calculates the number of trees in which Fitch parsimony will
+reconstruct  \emph{m} steps, where \emph{a} leaves are labelled with one state,
+and \emph{b} leaves are labelled with a second state, using theorem 1 of
+\insertCite{Carter1990;textual}{TreeTools}
 }
 \details{
-Implementation of theorem 1 from \insertCite{Carter1990;textual}{TreeTools}
+\code{MaddisonSlatkin()} generalises this result to characters with multiple
+steps using the recursive approach of
+\insertCite{Maddison1991;textual}{TreeSearch}.
 }
 \examples{
 # The character `0 0 0 1 1 1`

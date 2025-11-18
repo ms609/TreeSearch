@@ -22,7 +22,7 @@
 #' entropy of a random shuffling of states.
 #' 
 #' 
-#' @section Quirks
+#' @section Quirks:
 #' Characters that are not parsimony informative (i.e. singletons) contain no
 #' phylogenetic information, so contribute zero to both numerator
 #' and denominator.  If no character is parsimony informative, we define the
@@ -177,6 +177,8 @@ FitchInfo2 <- function(tree, dataset) {
   # (i) the number of leaves above it in each state; (ii) the number of steps
   # encountered thus far.  Then the root will enumerate all combinations
   # and number of steps.
+  # This has something in common with the recursive formula of
+  # Maddison & Slater 1991
 
   charH <- apply(mat, 2, function(char) {
     # Prune tree to fit, and process

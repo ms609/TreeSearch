@@ -81,11 +81,14 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
 
 #' Number of trees with _m_ steps
 #' 
-#' Calculate the number of trees in which Fitch parsimony will reconstruct
-#' _m_ steps, where _a_ leaves are labelled with one state, and _b_ leaves are
-#' labelled with a second state.
+#' `Carter1()` calculates the number of trees in which Fitch parsimony will
+#' reconstruct  _m_ steps, where _a_ leaves are labelled with one state,
+#' and _b_ leaves are labelled with a second state, using theorem 1 of
+#' \insertCite{Carter1990;textual}{TreeTools}
 #' 
-#' Implementation of theorem 1 from \insertCite{Carter1990;textual}{TreeTools}
+#' `MaddisonSlatkin()` generalises this result to characters with multiple
+#' steps using the recursive approach of
+#' \insertCite{Maddison1991;textual}{TreeSearch}.
 #' 
 #' @param m Number of steps.
 #' @param a,b Number of leaves labelled `0` and `1`.
@@ -190,6 +193,25 @@ LogCarter1 <- function (m, a, b) {
     LogN(a, m),
     LogN(b, m)
   ) - LogDoubleFactorial(twoN - twoM - 1L)
+}
+
+#' @rdname Carter1
+#' @export
+MaddisonSlatkin <- function(m, states) {
+  nNodeLabels <- 2 ^ states - 1
+  nodeLabels <- 1:nNodeLabels
+  .Psni <- function(nodeLabels) {
+    p <- 0
+    .PsniBase <- function(i) {
+      
+    }
+    .Bni <- function(i) {
+      
+    }
+    for (i in seq_along(nodeLabels)) {
+      p <- LogAdd(p, .PsniBase(i) * .Bni(i))
+    }
+  }
 }
 
 # TODO: Replace the below with an advanced version of Maddison & Slakey 1991, 
