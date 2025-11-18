@@ -90,6 +90,8 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
 #' @param m Number of steps.
 #' @param a,b Number of leaves labelled `0` and `1`.
 #' 
+#' 
+#' @seealso [TreeTools::NUnrooted()]: number of unrooted trees with _n_ leaves.
 #' @references 
 #' \insertAllCited{}
 #' 
@@ -111,6 +113,8 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
 #' cumsum(sapply(1:3, Carter1, 3, 3))
 #' 
 #' # Three steps allow the character to map onto any of the 105 six-leaf trees.
+#' Carter1(3, 3, 3)
+#' NUnrooted(3 + 3)
 #' 
 #' @template MRS
 #' @family profile parsimony functions

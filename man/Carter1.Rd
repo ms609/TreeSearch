@@ -35,6 +35,8 @@ Carter1(2, 3, 3) # Two steps (one extra step)
 cumsum(sapply(1:3, Carter1, 3, 3))
 
 # Three steps allow the character to map onto any of the 105 six-leaf trees.
+Carter1(3, 3, 3)
+NUnrooted(3 + 3)
 
 }
 \references{
@@ -49,6 +51,8 @@ See also:
 (\insertRef{Steel1996}{TreeSearch})
 }
 \seealso{
+\code{\link[TreeTools:NRooted]{TreeTools::NUnrooted()}}: number of unrooted trees with \emph{n} leaves.
+
 Other profile parsimony functions: 
 \code{\link{PrepareDataProfile}()},
 \code{\link{StepInformation}()},
