@@ -178,7 +178,7 @@ FitchInfo2 <- function(tree, dataset) {
   # encountered thus far.  Then the root will enumerate all combinations
   # and number of steps.
 
-  apply(mat, 2, function(char) {
+  charH <- apply(mat, 2, function(char) {
     # Prune tree to fit, and process
     tr <- KeepTip(tree, !is.na(char))
     char <- char[!is.na(char)]
@@ -199,6 +199,9 @@ FitchInfo2 <- function(tree, dataset) {
     stateP <- stateFreq / nTip
     rawInfo <- Entropy(stateP) * nTip
     nState <- length(stateFreq)
+    if (nState < 2) {
+      return(c("h" = 1, "hObs" = 0, "hMax" = 0))
+    }
     dp <- `mode<-`(.DownpassOutcome(nState), "integer") # for tapply
     dpStep <- attr(dp, "step")
     dpUp <- dpFlat <- dp
@@ -210,38 +213,43 @@ FitchInfo2 <- function(tree, dataset) {
       nVert,                     # 2. Vertices of tree
       nTip - 1                   # 3. Number of steps observed
       ))
-    dpState[2 ^ (seq_len(nState) - 1), 1:nTip, ] <- stateP
+    dpState[2 ^ (seq_len(nState) - 1), 1:nTip, 1] <- stateP
     levels <- as.character(seq_len(2 ^ nState - 1))
-    maxSteps <- 0
     obsSteps <- 0
+    maxSteps <- rep(0, nTip)
     
     solution <- 2 ^ char
     
   
     for (node in rev(nodes)) { # Postorder traversal
-      for (i in 1 + (maxSteps:0)) {
-        childP <- dpState[, desc[[node]], i]
-        nodeP <- outer(childP[, 1], childP[, 2])
-        noNewStep <- tapply(outer(childP[, 1], childP[, 2]), dpFlat, sum)[levels]
-        dpState[, node, i] <- noNewStep
-        if (i < (nTip - 1)) {
-          newStep <- tapply(outer(childP[, 1], childP[, 2]), dpUp, sum)[levels]
-          newStep[is.na(newStep)] <- 0
-          dpState[, node, i + 1] <- dpState[, node, i + 1] + newStep
+      maxSteps[node] <- sum(1, maxSteps[desc[[node]]])
+      for (priorSteps in ((maxSteps[node] - 1):0)) {
+        for (i in 0:priorSteps) {
+          j <- priorSteps - i
+          childPI <- dpState[, desc[[node]][[1]], i + 1]
+          childPJ <- dpState[, desc[[node]][[2]], j + 1]
+          nodeP <- outer(childPI, childPJ)
+          noNewStep <- tapply(outer(childPI, childPJ), dpFlat, sum)[levels]
+          dpState[, node, priorSteps + 1] <- dpState[, node, priorSteps + 1] + noNewStep
+          if (priorSteps < (nTip - 2)) {
+            newStep <- tapply(outer(childPI, childPJ), dpUp, sum)[levels]
+            newStep[is.na(newStep)] <- 0
+            dpState[, node, priorSteps + 1 + 1] <- dpState[, node, priorSteps + 1 + 1] + newStep
+          }
         }
       }
       
       childSol <- rbind(solution[desc[[node]]])
       obsSteps <- obsSteps + dpStep[childSol]
       solution[node] <- dp[childSol]
-      maxSteps <- maxSteps + 1
     }
     stopifnot(isTRUE(all.equal(sum(dpState[, rootNode, ]), 1)))
     # + 1 because dpState[, , 1] corresponds to zero steps
     finalP <- colSums(dpState[, rootNode, ])
-    c("hObs" = -log2(sum(finalP[1:(obsSteps + 1)])),
+    c("h" = log2(sum(finalP[1:(obsSteps + 1)])) / log2(sum(finalP[1:nState])),
+      "hObs" = -log2(sum(finalP[1:(obsSteps + 1)])),
       "hMax" = -log2(sum(finalP[1:nState])))
-  })
+  })[, attr(dataset, "index"), drop = FALSE]
   
   totalHMax <- sum(charH["hMax", ])
   # Return:
