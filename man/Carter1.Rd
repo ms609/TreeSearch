@@ -19,6 +19,8 @@ MaddisonSlatkin(m, states)
 \item{m}{Number of steps.}
 
 \item{a, b}{Number of leaves labelled \code{0} and \code{1}.}
+
+\item{states}{Number of leaves with each state.}
 }
 \description{
 \code{Carter1()} calculates the number of trees in which Fitch parsimony will
@@ -43,6 +45,8 @@ cumsum(sapply(1:3, Carter1, 3, 3))
 # Three steps allow the character to map onto any of the 105 six-leaf trees.
 Carter1(3, 3, 3)
 NUnrooted(3 + 3)
+
+MaddisonSlatkin(1, c(2, 2))
 
 }
 \references{

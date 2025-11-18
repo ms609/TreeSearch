@@ -197,6 +197,10 @@ LogCarter1 <- function (m, a, b) {
 }
 
 #' @rdname Carter1
+#' @examples
+#' MaddisonSlatkin(1, c(2, 2))
+#' 
+#' @importFrom TreeTools LnUnrooted
 #' @export
 MaddisonSlatkin <- function(m, states) {
   n <- sum(states)
@@ -204,29 +208,44 @@ MaddisonSlatkin <- function(m, states) {
   nNodeLabels <- 2 ^ nStates - 1
   nodeLabels <- 1:nNodeLabels
   dp <- `mode<-`(.DownpassOutcome(nStates), "integer")
-  .Psni <- function(nodeLabels) {
-    p <- 0
-    .PsniBase <- function(i, token) {
-      
-    }
-    .D <- function(j, i, m, n) {
-      stop("#TODO")
-    }
-    .B <- function(token, n, i) {
-      sum(vapply(1:(n / 2), function(m) {
-        .Rmn(m, n) * sum(vapply(1:i, function(j) {
-          .D(j, i, m, n) * sum(apply(
-            which(dp == token, arr.ind = TRUE), 1, function(pair) {
-              .B(pair[[1]], m, j) * B(pair[[2]], n - m, i - j)
-              }))
-            
-          )
-      }, double(1))
-    }
-    for (token in seq_along(nodeLabels)) {
-      p <- LogAdd(p, .PsniBase(token) * .B(token, n, i = states[[token]]))
-    }
+
+  .LogP <- function(s, n, i, token) {
+    LogSumExp(vapply(1:(n / 2), function(m) {
+      .LogR(m, n) - .LogB(token, n, i) + LogSumExp(vapply(1:i, function(j) {
+        .LogD(j, i, m, n) + LogSumExp(vapply(0:s, function(r) {
+          LogSumExp(apply(which(dp == token, arr.ind = TRUE), 1, function(pair) {
+            .LogP(r, m, j, pair[[1]]) + .LogB(pair[[1]], m, j) +
+              .LogP(s - r, n - m, i - j, pair[[2]]) + .LogB(pair[[2]], n - m, i - j)
+            }))
+          }, double(1)))
+        }, double(1)))
+      }, double(1)))
   }
+  .LogR <- function(m, n) {
+    log(if (n == m + m) 1 else 2) +
+      lchoose(n, m) +
+      LnUnrooted(m) + LnUnrooted(n - m) - LnUnrooted(n)
+  }
+  .LogD <- function(j, i, m, n) {
+    lchoose(i, j) + lchoose(n - i, m - j) - lchoose(n, m)
+  }
+  .LogB <- function(token, n, i) {
+    LogSumExp(vapply(1:(n / 2), function(m) {
+      .LogR(m, n) + LogSumExp(vapply(1:i, function(j) {
+        .LogD(j, i, m, n) + LogSumExp(apply(
+          which(dp == token, arr.ind = TRUE), 1, function(pair) {
+            .LogB(pair[[1]], m, j) + .LogB(pair[[2]], n - m, i - j)
+            }))
+      }, double(1)))
+    }, double(1)))
+  }
+  
+  p <- 0
+  for (token in seq_along(nodeLabels)) {
+    p <- LogSumExp(p, .LogP(m, n, states[[token]], token) +
+                     .LogB(token, n, i = states[[token]]))
+  }
+  p
 }
 
 # TODO: Replace the below with an advanced version of Maddison & Slakey 1991, 
