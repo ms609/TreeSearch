@@ -202,6 +202,10 @@ LogCarter1 <- function (m, a, b) {
 
 #' @rdname Carter1
 #' @examples
+#' 
+#' LogCarter1(1, 8, 24)
+#' LogCarter1(2, 8, 24)
+#' LogCarter1(3, 8, 24)
 #' MaddisonSlatkin(1, c(2, 2))
 #' 
 #' @importFrom TreeTools LnUnrooted
@@ -237,7 +241,20 @@ MaddisonSlatkin <- function(steps, states) {
     lchoose(i, j) + lchoose(n - i, m - j) - lchoose(n, m)
   }
   
-  .LogB <- function(token, n, i) {
+  .LogB <- function(token, n, leaves) {
+    if (n == 1) {
+      # If the one leaf we're looking at bears the token, p = 1; else p = 0
+      return(log(leaves[[token]] == 1))
+    }
+    if (n == 2) {
+      result <- if (any(leaves) == 2) {
+        which.max(leaves)
+      } else {
+        dp[rbind(which(leaves > 0))]
+      }
+      return(log(if (token == result) 1 else 0))
+    }
+    
     LogSumExp(vapply(1:(n / 2), function(m) {
       .LogR(m, n) + LogSumExp(vapply(1:i, function(j) {
         .LogD(j, i, m, n) + LogSumExp(apply(

@@ -13,14 +13,18 @@ Log2Carter1(m, a, b)
 
 LogCarter1(m, a, b)
 
-MaddisonSlatkin(m, states)
+MaddisonSlatkin(steps, states)
 }
 \arguments{
-\item{m}{Number of steps.}
+\item{m, steps}{Number of steps.}
 
 \item{a, b}{Number of leaves labelled \code{0} and \code{1}.}
 
-\item{states}{Number of leaves with each state.}
+\item{states}{Number of leaves labelled with each possible state.
+States are presented in binary fashion.  The first entry of the vector
+corresponds to state \code{1} (binary \code{001}),
+the second to state \code{2} (binary \code{010}),
+and the third to the ambiguous state \code{01} (binary \code{011}).}
 }
 \description{
 \code{Carter1()} calculates the number of trees in which Fitch parsimony will
