@@ -90,9 +90,13 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
 #' steps using the recursive approach of
 #' \insertCite{Maddison1991;textual}{TreeSearch}.
 #' 
-#' @param m Number of steps.
+#' @param m,steps Number of steps.
 #' @param a,b Number of leaves labelled `0` and `1`.
-#' @param states Number of leaves with each state.
+#' @param states Number of leaves labelled with each possible state.
+#' States are presented in binary fashion.  The first entry of the vector
+#' corresponds to state `1` (binary `001`),
+#' the second to state `2` (binary `010`),
+#' and the third to the ambiguous state `01` (binary `011`).
 #' 
 #' 
 #' @seealso [TreeTools::NUnrooted()]: number of unrooted trees with _n_ leaves.
@@ -202,12 +206,13 @@ LogCarter1 <- function (m, a, b) {
 #' 
 #' @importFrom TreeTools LnUnrooted
 #' @export
-MaddisonSlatkin <- function(m, states) {
-  n <- sum(states)
-  nStates <- length(states)
-  nNodeLabels <- 2 ^ nStates - 1
-  nodeLabels <- 1:nNodeLabels
-  dp <- `mode<-`(.DownpassOutcome(nStates), "integer")
+MaddisonSlatkin <- function(steps, states) {
+  nTaxa <- sum(states)
+  nLevels <- floor(log2(length(states))) + 1
+  nStates <- 2 ^ nLevels - 1
+  length(states) <- nStates
+  states[is.na(states)] <- 0
+  dp <- `mode<-`(.DownpassOutcome(nLevels), "integer")
 
   .LogP <- function(s, n, i, token) {
     LogSumExp(vapply(1:(n / 2), function(m) {
@@ -221,14 +226,17 @@ MaddisonSlatkin <- function(m, states) {
         }, double(1)))
       }, double(1)))
   }
+  
   .LogR <- function(m, n) {
     log(if (n == m + m) 1 else 2) +
       lchoose(n, m) +
       LnUnrooted(m) + LnUnrooted(n - m) - LnUnrooted(n)
   }
+  
   .LogD <- function(j, i, m, n) {
     lchoose(i, j) + lchoose(n - i, m - j) - lchoose(n, m)
   }
+  
   .LogB <- function(token, n, i) {
     LogSumExp(vapply(1:(n / 2), function(m) {
       .LogR(m, n) + LogSumExp(vapply(1:i, function(j) {
@@ -241,9 +249,9 @@ MaddisonSlatkin <- function(m, states) {
   }
   
   p <- 0
-  for (token in seq_along(nodeLabels)) {
-    p <- LogSumExp(p, .LogP(m, n, states[[token]], token) +
-                     .LogB(token, n, i = states[[token]]))
+  for (state in seq_len(nStates)) {
+    p <- LogSumExp(p, .LogP(m, nTaxa, states[[state]], state) +
+                     .LogB(state, nTaxa, i = states[[state]]))
   }
   p
 }
