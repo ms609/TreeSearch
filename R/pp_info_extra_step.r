@@ -167,13 +167,16 @@ Log2Carter1 <- function (m, a, b) {
        lfactorial(m - 1L)) / log(2) - nMinusM
     }
   }
-  sum(
+  ret <- sum(
     log2(twoN - twoM - m),
     (lfactorial(m - 1L) / log(2)),
     Log2DoubleFactorial(twoN - 5L),
     Log2N(a, m),
     Log2N(b, m)
   ) - Log2DoubleFactorial(twoN - twoM - 1L)
+  
+  # Return:
+  if (abs(ret) < sqrt(.Machine$double.eps)) 0 else ret
 }
 
 #' @rdname Carter1
@@ -191,13 +194,16 @@ LogCarter1 <- function (m, a, b) {
        lfactorial(m - 1L)) - (nMinusM * log(2))
     }
   }
-  sum(
+  ret <- sum(
     log(twoN - twoM - m),
     lfactorial(m - 1L),
     LogDoubleFactorial(twoN - 5L),
     LogN(a, m),
     LogN(b, m)
   ) - LogDoubleFactorial(twoN - twoM - 1L)
+  
+  # Return:
+  if (abs(ret) < sqrt(.Machine$double.eps)) 0 else ret
 }
 
 #' @rdname Carter1
@@ -208,6 +214,7 @@ LogCarter1 <- function (m, a, b) {
 #' LogCarter1(3, 8, 24)
 #' 
 #' MaddisonSlatkin(1, c(2, 2))
+#' LogCarter1(1,2,2)
 #' 
 #' @importFrom TreeTools LnUnrooted
 #' @export
@@ -226,7 +233,7 @@ MaddisonSlatkin <- function(steps, states) {
       return(log(leaves[[token]] == 1))
     }
     if (n == 2) {
-      result <- if (any(leaves) == 2) {
+      result <- if (any(leaves == 2)) {
         which.max(leaves)
       } else {
         dp[rbind(which(leaves > 0))]
@@ -266,9 +273,9 @@ MaddisonSlatkin <- function(steps, states) {
           # and s where it doesn't  
           LogSumExp(apply(which(dp == token & !attr(dp, "step"), arr.ind = TRUE),
                           1, function(pair)
-                            .LogP(r, drawn, pair[[1]]) +
+                            .LogP(s, drawn, pair[[1]]) +
                             .LogB(pair[[1]], drawn) +
-                            .LogP(s - r, undrawn, pair[[2]]) +
+                            .LogP(0, undrawn, pair[[2]]) +
                             .LogB(pair[[2]], undrawn))))
     }))
   }
@@ -328,7 +335,7 @@ MaddisonSlatkin <- function(steps, states) {
   
   p <- 0
   for (state in seq_len(nStates)) {
-    p <- LogSumExp(p, .LogP(steps, leaves, state) + .LogB(state, leaves))
+    p <- LogSumExp(p, .LogP(steps, states, state) + .LogB(state, states))
   }
   p
 }
