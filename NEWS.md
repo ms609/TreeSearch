@@ -1,6 +1,7 @@
 # Branch `rejig-concordance` (development)
 
 - `ConcordanceTable()` and support functions `QACol()`, `QALegend()`
+- `MaddisonSlatkin()` ...
 
 
 # TreeSearch 1.7.0.9000 (development)

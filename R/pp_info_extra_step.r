@@ -229,16 +229,16 @@ MaddisonSlatkin <- function(steps, states) {
   .LogP <- function(s, leaves, token) {
     n <- sum(leaves)
     if (n == 1) {
-      # If the one leaf we're looking at bears the token, p = 1; else p = 0
-      return(log(leaves[[token]] == 1))
+      # The one leaf we're looking at bears the token, as |i, `token` at base
+      stopifnot(leaves[[token]] == 1)
+      return(log(s == 0))
     }
     if (n == 2) {
-      result <- if (any(leaves == 2)) {
-        which.max(leaves)
+      return(log(if (any(leaves == 2)) {
+        s == 0
       } else {
-        dp[rbind(which(leaves > 0))]
-      }
-      return(log(if (token == result) 1 else 0))
+        s == attr(dp, "step")[rbind(which(leaves > 0))]
+      }))
     }
     
     ## Duplicated from .LogB.
@@ -269,7 +269,7 @@ MaddisonSlatkin <- function(steps, states) {
           LogSumExp(apply(which(dp == token, arr.ind = TRUE), 1, function(pair)
             .LogP(r, drawn, pair[[1]]) + .LogB(pair[[1]], drawn) +
               .LogP(s - r, undrawn, pair[[2]]) + .LogB(pair[[2]], undrawn)
-            ))}, double(1)),
+          ))}, double(1)),
           # and s where it doesn't  
           LogSumExp(apply(which(dp == token & !attr(dp, "step"), arr.ind = TRUE),
                           1, function(pair)
@@ -334,11 +334,11 @@ MaddisonSlatkin <- function(steps, states) {
         LogSumExp(apply(
           which(dp == token, arr.ind = TRUE), 1, function(pair) {
             .LogB(pair[[1]], drawn) + .LogB(pair[[2]], undrawn)
-            }))
-      }))
+          }))
+    }))
   }
   
-  p <- 0
+  p <- log(0)
   for (state in seq_len(nStates)) {
     p <- LogSumExp(p, .LogP(steps, states, state) + .LogB(state, states))
   }
