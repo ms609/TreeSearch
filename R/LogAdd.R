@@ -17,3 +17,19 @@ LogSumExp <- function(...) {
   m <- max(x)
   m + log(sum(exp(x - m)))
 }
+
+#' Multiply log probabilities
+#' @param x List of expressions to log-multiply. If any expressions evaluate to
+#' `-Inf`, `log(0)` will be returned, without evaluating further expressions.
+#' @export
+LogProdExp <- function(x) {
+  result <- 0
+  for (i in seq_along(x)) {
+    step <- x[[i]]
+    if (step == -Inf) {
+      return(-Inf)
+    }
+    result <- result + step
+  }
+  result
+}

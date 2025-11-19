@@ -206,6 +206,31 @@ LogCarter1 <- function (m, a, b) {
   if (abs(ret) < sqrt(.Machine$double.eps)) 0 else ret
 }
 
+
+
+# R is the probability that in a randomly selected tree of _n_ taxa, the
+# smaller of the two basal subclades will have _m_ taxa.
+# 
+# This seems to be one of those probabilities that can exceed 1,
+# at least in the case of R(1 | 3) = 2 * 4 * 1 * 3 / 15, using T = NRooted.
+# (Note the misplaced brackets in Maddison & Slatkin 1991's definition of T(n))
+# I'm guessing this reflects the (n,m) term, which cancels the one in .LogD
+# I've removed these terms for simplicity.
+# 
+# I suspect that the 2 should not really be there: trees are symmetrical.
+.LogR <- function(m, n) {
+  log(if (n == m + m) 1 else 2) +
+    lchoose(n, m) +
+    LnRooted(m) + LnRooted(n - m) - LnRooted(n)
+}
+
+# D is the probability that, in a randomly selected tree on `leaves`, the
+# smaller subclade of taxa will receive taxa with labels `drawn`
+.LogD <- function(drawn, leaves) {
+  sum(lchoose(leaves, drawn), lchoose(leaves, leaves - drawn))
+}
+
+
 #' @rdname Carter1
 #' @examples
 #' 
@@ -214,9 +239,10 @@ LogCarter1 <- function (m, a, b) {
 #' LogCarter1(3, 8, 24)
 #' 
 #' MaddisonSlatkin(1, c(2, 2))
+#' MaddisonSlatkin(1, c(1, 1))
 #' LogCarter1(1,2,2)
 #' 
-#' @importFrom TreeTools LnUnrooted
+#' @importFrom TreeTools LnRooted
 #' @export
 MaddisonSlatkin <- function(steps, states) {
   nTaxa <- sum(states)
@@ -225,12 +251,14 @@ MaddisonSlatkin <- function(steps, states) {
   length(states) <- nStates
   states[is.na(states)] <- 0
   dp <- `mode<-`(.DownpassOutcome(nLevels), "integer")
-
+  
   .LogP <- function(s, leaves, token) {
     n <- sum(leaves)
     if (n == 1) {
-      # The one leaf we're looking at bears the token, as |i, `token` at base
-      stopifnot(leaves[[token]] == 1)
+      if(leaves[[token]] != 1) {
+        # Impossible to have `token` at base given `leaves`
+        return(log(0))
+      }
       return(log(s == 0))
     }
     if (n == 2) {
@@ -247,7 +275,8 @@ MaddisonSlatkin <- function(steps, states) {
       as.matrix()
     nDrawn <- rowSums(grid)
     evenSplits <- which(nDrawn == n / 2)
-    duplicated <- evenSplits[apply(grid[evenSplits, ], 1, function(drawn) {
+    duplicated <- evenSplits[apply(grid[evenSplits, , drop = FALSE], 1,
+                                   function(drawn) {
       undrawn <- leaves - drawn
       cmp <- NA_integer_
       for (i in seq_along(drawn)) {
@@ -259,7 +288,7 @@ MaddisonSlatkin <- function(steps, states) {
     })]
     validDraws <- setdiff(which(nDrawn > 0 & nDrawn <= floor(n / 2)), duplicated)
     
-    LogSumExp(apply(grid[validDraws, ], 1, function(drawn) {
+    LogSumExp(apply(grid[validDraws, , drop = FALSE], 1, function(drawn) {
       m <- sum(drawn)
       undrawn <- leaves - drawn
       .LogR(m, n) +
@@ -267,32 +296,23 @@ MaddisonSlatkin <- function(steps, states) {
         # 0:(s - 1) where the conjunction adds a step
         LogSumExp(vapply(0:(s - 1), function(r) {
           LogSumExp(apply(which(dp == token, arr.ind = TRUE), 1, function(pair)
-            .LogP(r, drawn, pair[[1]]) + .LogB(pair[[1]], drawn) +
-              .LogP(s - r, undrawn, pair[[2]]) + .LogB(pair[[2]], undrawn)
+            LogProdExp(list(
+              .LogP(r, drawn, pair[[1]]),
+              .LogB(pair[[1]], drawn),
+              .LogP(s - r, undrawn, pair[[2]]),
+              .LogB(pair[[2]], undrawn)
+              ))
           ))}, double(1)),
           # and s where it doesn't  
           LogSumExp(apply(which(dp == token & !attr(dp, "step"), arr.ind = TRUE),
-                          1, function(pair)
-                            .LogP(s, drawn, pair[[1]]) +
-                            .LogB(pair[[1]], drawn) +
-                            .LogP(0, undrawn, pair[[2]]) +
-                            .LogB(pair[[2]], undrawn))))
+                          1, function(pair) LogProdExp(list(
+                            .LogP(s, drawn, pair[[1]]),
+                            .LogB(pair[[1]], drawn),
+                            .LogP(0, undrawn, pair[[2]]),
+                            .LogB(pair[[2]], undrawn)
+                            ))
+                          )))
     }))
-  }
-  
-  # This seems to be one of those probabilities that can exceed 1,
-  # at least in the case of R(1 | 3) = 2 * 4 * 1 * 3 / 15, using T = NRooted.
-  # (Note the misplaced brackets in Maddison & Slatkin 1991's definition of T(n))
-  # 
-  # I suspect that the 2 should not really be there: trees are symmetrical.
-  .LogR <- function(m, n) {
-    log(if (n == m + m) 1 else 2) +
-      lchoose(n, m) +
-      LnRooted(m) + LnRooted(n - m) - LnRooted(n)
-  }
-  
-  .LogD <- function(drawn, leaves) {
-    sum(lchoose(leaves, drawn))
   }
   
   .LogB <- function(token, leaves) {
@@ -326,21 +346,28 @@ MaddisonSlatkin <- function(steps, states) {
     })]
     validDraws <- setdiff(which(nDrawn > 0 & nDrawn <= floor(n / 2)), duplicated)
     
-    LogSumExp(apply(grid[validDraws, ], 1, function(drawn) {
+    LogSumExp(apply(grid[validDraws, , drop = FALSE], 1, function(drawn) {
       m <- sum(drawn)
       undrawn <- leaves - drawn
       .LogR(m, n) +
         .LogD(drawn, leaves) +
         LogSumExp(apply(
           which(dp == token, arr.ind = TRUE), 1, function(pair) {
-            .LogB(pair[[1]], drawn) + .LogB(pair[[2]], undrawn)
+            LogProdExp(list(.LogB(pair[[1]], drawn), .LogB(pair[[2]], undrawn)))
           }))
     }))
   }
   
   p <- log(0)
+  debugonce(.LogB)
+  debugonce(.LogP)
   for (state in seq_len(nStates)) {
-    p <- LogSumExp(p, .LogP(steps, states, state) + .LogB(state, states))
+    message(state, ": ", exp(.LogP(steps, states, state)), ", ",
+            exp(.LogB(state, states)))
+    p <- LogSumExp(p, LogProdExp(list(
+      .LogB(state, states),
+      .LogP(steps, states, state))
+      ))
   }
   p
 }
