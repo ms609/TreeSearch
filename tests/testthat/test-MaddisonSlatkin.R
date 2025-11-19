@@ -12,14 +12,31 @@ test_that(".LogR() matches empirical observation", {
     }, double(1)) |>
     table() |>
     as.numeric()
-  expect_equal(exp(c(.LogR(1, 6), .LogR(2, 6), .LogR(3, 6))) * NRooted(n),
+  expect_equal(exp(c(.LogR(1, n), .LogR(2, n), .LogR(3, n))) * NRooted(n),
+               counts)
+  
+  n <- 7
+  # All trees are rooted on t1, which we'll therefore use as the root
+  trees <- as.phylo(1:NUnrooted(n + 1) - 1, n + 1)
+  counts <- vapply(trees, function(tree) {
+    ed <- tree$edge
+    min(CladeSizes(tree, nodes = ed[ed[, 1] == n + 3, 2]))
+    }, double(1)) |>
+    table() |>
+    as.numeric()
+  expect_equal(exp(c(.LogR(1, n), .LogR(2, n), .LogR(3, n))) * NRooted(n),
                counts)
 })
 
 test_that(".LogD() succeeds", {
   # D is the probability that, in a randomly selected tree on `leaves`, the
-  # smaller subclade of taxa will receive taxa with labels `drawn`
-  
+  # smaller subclade of m taxa will receive taxa with labels `drawn`
+  expect_equal(.LogD(c(4, 2), c(4, 2)), 0)
+  expect_equal(.LogD(c(4, 0), c(4, 2)), 0 - lchoose(6, 4))
+  expect_equal(.LogD(c(2, 2), c(4, 2)), lchoose(4, 2) - lchoose(6, 4))
+  expect_equal(.LogD(c(2, 2, 2), c(4, 2, 2)), lchoose(4, 2) - lchoose(8, 6))
+  expect_equal(.LogD(c(2, 2, 1), c(4, 2, 2)),
+               lchoose(4, 2) + lchoose(2, 1) - lchoose(8, 5))
 })
 
 

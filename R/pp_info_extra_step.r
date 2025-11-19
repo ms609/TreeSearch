@@ -221,13 +221,14 @@ LogCarter1 <- function (m, a, b) {
 .LogR <- function(m, n) {
   log(if (n == m + m) 1 else 2) +
     lchoose(n, m) +
-    LnRooted(m) + LnRooted(n - m) - LnRooted(n)
+    LnRooted(m) + LnRooted(n - m) - LnRooted(n) -
+    log(2) # TODO understand why this correction is necessary
 }
 
 # D is the probability that, in a randomly selected tree on `leaves`, the
 # smaller subclade of taxa will receive taxa with labels `drawn`
 .LogD <- function(drawn, leaves) {
-  sum(lchoose(leaves, drawn), lchoose(leaves, leaves - drawn))
+  sum(lchoose(leaves, drawn)) - lchoose(sum(leaves), sum(drawn))
 }
 
 
