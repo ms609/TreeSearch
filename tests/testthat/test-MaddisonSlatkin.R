@@ -60,6 +60,15 @@ test_that(".LogD() succeeds", {
                lchoose(4, 2) + lchoose(2, 1) - lchoose(8, 5))
 })
 
+test_that(".ValidDraws() succeeds", {
+  # Drawing the contents of the smallest clade.
+  expect_equal(unname(.ValidDraws(c(0, 4, 0))), cbind(c(0, 0), 1:2, c(0, 0)))
+  
+  # As 2, 0, 0 == 0, 2, 0, only one of these combinations should be listed
+  expect_equal(unname(.ValidDraws(c(2, 2, 0))),
+               cbind(c(1, 0, 1, 0), c(0, 1, 1, 2), rep(0, 4)))
+})
+
 test_that(".LogB() succeeds", {
   # B(b | tokens) is the probability that state b is reconstructed at the base
   # of a clade with leaves labelled `tokens`
@@ -83,8 +92,6 @@ test_that(".LogB() succeeds", {
   expect_equal(.LogB(1, c(0, 10, 0)), log(0))
   expect_equal(.LogB(2, c(0, 10, 0)), log(1))
   expect_equal(.LogB(3, c(0, 10, 0)), log(0))
-  
-  
 })
 
 

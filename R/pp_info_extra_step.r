@@ -234,6 +234,67 @@ LogCarter1 <- function (m, a, b) {
 }
 
 
+# B(b | tokens) is the probability that state b is reconstructed at the base
+# of a clade with leaves labelled `tokens`
+.LogB <- function(token, leaves, dp) {
+  if (missing("dp")) {
+    nLevels <- floor(log2(length(leaves))) + 1
+    nStates <- 2 ^ nLevels - 1
+    dp <- `mode<-`(.DownpassOutcome(nLevels), "integer")
+  }
+  if (token < 1 || token > length(leaves)) {
+    stop("`token` must be 1 .. length(leaves)")
+  }
+  n <- sum(leaves)
+  if (n == 1) {
+    # If the one leaf we're looking at bears the token, p = 1; else p = 0
+    return(log(leaves[[token]] == 1))
+  }
+  if (n == 2) {
+    result <- if (any(leaves == 2)) {
+      which.max(leaves)
+    } else {
+      dp[rbind(which(leaves > 0))]
+    }
+    return(log(if (token == result) 1 else 0))
+  }
+  
+  LogSumExp(apply(.ValidDraws(leaves), 1, function(drawn) {
+    m <- sum(drawn)
+    undrawn <- leaves - drawn
+    .LogR(m, n) +
+      .LogD(drawn, leaves) +
+      LogSumExp(apply(
+        which(dp == token, arr.ind = TRUE), 1, function(pair) {
+          LogProdExp(list(.LogB(pair[[1]], drawn, dp),
+                          .LogB(pair[[2]], undrawn, dp)))
+        }))
+  }))
+}
+
+
+.ValidDraws <- function(leaves) {
+  grid <- do.call(expand.grid, lapply(leaves, function(mc) seq.int(0, mc))) |>
+    as.matrix()
+  nDrawn <- rowSums(grid)
+  n <- sum(leaves)
+  evenSplits <- which(nDrawn == n / 2)
+  duplicated <- evenSplits[
+    apply(grid[evenSplits, , drop = FALSE], 1,
+          function(drawn) {
+            undrawn <- leaves - drawn
+            cmp <- NA_integer_
+            for (i in seq_along(drawn)) {
+              if (drawn[[i]] < undrawn[[i]]) {cmp <- -1L; break }
+              if (drawn[[i]] > undrawn[[i]]) {cmp <- +1L; break }
+            }
+            # Return:
+            !is.na(cmp) && cmp == +1L
+          })]
+  validDraws <- setdiff(which(nDrawn > 0 & nDrawn <= floor(n / 2)), duplicated)
+  grid[validDraws, , drop = FALSE]
+}
+
 #' @rdname Carter1
 #' @examples
 #' 
@@ -272,26 +333,7 @@ MaddisonSlatkin <- function(steps, states) {
       }))
     }
     
-    ## Duplicated from .LogB.
-    # TODO functionalize
-    grid <- do.call(expand.grid, lapply(leaves, function(mc) seq.int(0, mc))) |>
-      as.matrix()
-    nDrawn <- rowSums(grid)
-    evenSplits <- which(nDrawn == n / 2)
-    duplicated <- evenSplits[apply(grid[evenSplits, , drop = FALSE], 1,
-                                   function(drawn) {
-      undrawn <- leaves - drawn
-      cmp <- NA_integer_
-      for (i in seq_along(drawn)) {
-        if (drawn[[i]] < undrawn[[i]]) {cmp <- -1L; break }
-        if (drawn[[i]] > undrawn[[i]]) {cmp <- +1L; break }
-      }
-      # Return:
-      !is.na(cmp) && cmp == +1L
-    })]
-    validDraws <- setdiff(which(nDrawn > 0 & nDrawn <= floor(n / 2)), duplicated)
-    
-    LogSumExp(apply(grid[validDraws, , drop = FALSE], 1, function(drawn) {
+    LogSumExp(apply(.ValidDraws(leaves), 1, function(drawn) {
       m <- sum(drawn)
       undrawn <- leaves - drawn
       .LogR(m, n) +
@@ -301,74 +343,32 @@ MaddisonSlatkin <- function(steps, states) {
           LogSumExp(apply(which(dp == token, arr.ind = TRUE), 1, function(pair)
             LogProdExp(list(
               .LogP(r, drawn, pair[[1]]),
-              .LogB(pair[[1]], drawn),
+              .LogB(pair[[1]], drawn, dp),
               .LogP(s - r, undrawn, pair[[2]]),
-              .LogB(pair[[2]], undrawn)
+              .LogB(pair[[2]], undrawn, dp)
               ))
           ))}, double(1)),
           # and s where it doesn't  
           LogSumExp(apply(which(dp == token & !attr(dp, "step"), arr.ind = TRUE),
                           1, function(pair) LogProdExp(list(
                             .LogP(s, drawn, pair[[1]]),
-                            .LogB(pair[[1]], drawn),
+                            .LogB(pair[[1]], drawn), dp,
                             .LogP(0, undrawn, pair[[2]]),
-                            .LogB(pair[[2]], undrawn)
+                            .LogB(pair[[2]], undrawn, dp)
                             ))
                           )))
     }))
   }
   
-  .LogB <- function(token, leaves) {
-    n <- sum(leaves)
-    if (n == 1) {
-      # If the one leaf we're looking at bears the token, p = 1; else p = 0
-      return(log(leaves[[token]] == 1))
-    }
-    if (n == 2) {
-      result <- if (any(leaves == 2)) {
-        which.max(leaves)
-      } else {
-        dp[rbind(which(leaves > 0))]
-      }
-      return(log(if (token == result) 1 else 0))
-    }
-    
-    grid <- do.call(expand.grid, lapply(leaves, function(mc) seq.int(0, mc))) |>
-      as.matrix()
-    nDrawn <- rowSums(grid)
-    evenSplits <- which(nDrawn == n / 2)
-    duplicated <- evenSplits[apply(grid[evenSplits, ], 1, function(drawn) {
-      undrawn <- leaves - drawn
-      cmp <- NA_integer_
-      for (i in seq_along(drawn)) {
-        if (drawn[[i]] < undrawn[[i]]) {cmp <- -1L; break }
-        if (drawn[[i]] > undrawn[[i]]) {cmp <- +1L; break }
-      }
-      # Return:
-      !is.na(cmp) && cmp == +1L
-    })]
-    validDraws <- setdiff(which(nDrawn > 0 & nDrawn <= floor(n / 2)), duplicated)
-    
-    LogSumExp(apply(grid[validDraws, , drop = FALSE], 1, function(drawn) {
-      m <- sum(drawn)
-      undrawn <- leaves - drawn
-      .LogR(m, n) +
-        .LogD(drawn, leaves) +
-        LogSumExp(apply(
-          which(dp == token, arr.ind = TRUE), 1, function(pair) {
-            LogProdExp(list(.LogB(pair[[1]], drawn), .LogB(pair[[2]], undrawn)))
-          }))
-    }))
-  }
   
   p <- log(0)
   debugonce(.LogB)
   debugonce(.LogP)
   for (state in seq_len(nStates)) {
     message(state, ": ", exp(.LogP(steps, states, state)), ", ",
-            exp(.LogB(state, states)))
+            exp(.LogB(state, states, dp)))
     p <- LogSumExp(p, LogProdExp(list(
-      .LogB(state, states),
+      .LogB(state, states, dp),
       .LogP(steps, states, state))
       ))
   }
