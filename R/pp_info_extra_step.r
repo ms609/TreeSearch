@@ -228,7 +228,9 @@ LogCarter1 <- function (m, a, b) {
 }
 
 # D is the probability that, in a randomly selected tree on `leaves`, the
-# smaller subclade of taxa will receive taxa with labels `drawn`
+# smaller subclade of taxa will receive taxa with labels `drawn`.
+# If both subclades are the same size, the 'smaller' subclade is drawn at
+# random
 .LogD <- function(drawn, leaves) {
   sum(lchoose(leaves, drawn)) - lchoose(sum(leaves), sum(drawn))
 }
@@ -279,7 +281,16 @@ LogCarter1 <- function (m, a, b) {
     LogSumExp(apply(.ValidDraws(leaves), 1, function(drawn) {
       m <- sum(drawn)
       undrawn <- leaves - drawn
-      .LogR(m, n) +
+      # if both subtrees are equal size, D will give half the probability we want.
+      balancedCorrection <- if (m + m == n) log(2) else log(1)
+      if (all(drawn == undrawn)) {
+        # Double counting in symmetrical case
+        balancedCorrection <- balancedCorrection - log(2)
+      }
+      
+      # Return:
+      balancedCorrection + 
+        .LogR(m, n) +
         .LogD(drawn, leaves) +
         LogSumExp(apply(
           which(dp == token, arr.ind = TRUE), 1, function(pair) {

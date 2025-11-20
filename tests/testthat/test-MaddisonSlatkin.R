@@ -60,6 +60,13 @@ test_that(".LogD() succeeds", {
                lchoose(4, 2) + lchoose(2, 1) - lchoose(8, 5))
 })
 
+test_that(".LogD() succeeds - balanced trees", {
+  # As defined, the 'smaller' subclade is drawn at random if both are the same
+  # size
+  expect_equal(.LogD(c(1, 0), c(1, 1)), log(1 / 2))
+  expect_equal(.LogD(c(2, 0), c(2, 2)), log(1/3 / 2))
+})
+
 test_that(".ValidDraws() succeeds", {
   # Drawing the contents of the smallest clade.
   expect_equal(unname(.ValidDraws(c(0, 4, 0))), cbind(c(0, 0), 1:2, c(0, 0)))
@@ -100,15 +107,20 @@ test_that(".LogB() arithmetic is correct", {
                              .LogB(3, c(2, 1, 0)))), 1)
   # 15 rooted four-leaf trees
   trees <- as.phylo(0:14, 5)
+  if (interactive()) {
+    dev.new()
+    par(mfrow = c(5, 3), cex = 0.9, mar = rep(0.4, 4), xpd = NA)
+    on.exit(dev.off())
+  }
   rootState <- (vapply(trees, PlotCharacter, matrix(NA, 9, 2),
-                       StringToPhyDat("?1122"), 1, plot = FALSE)[6, , ] *
+                       StringToPhyDat("?1122"), 1, plot = interactive())[6, , ] *
                   1:2) |>
     colSums() |> 
     table()
 
-  expect_equal(.LogB(1, c(2, 2, 0)), log(rootState[[1]] / 15))
-  expect_equal(.LogB(2, c(2, 2, 0)), log(rootState[[2]] / 15))
-  expect_equal(.LogB(3, c(2, 2, 0)), log(rootState[[3]] / 15))
+  expect_equal(exp(.LogB(1, c(2, 2, 0))) * 15, rootState[[1]]) # 2
+  expect_equal(exp(.LogB(2, c(2, 2, 0))) * 15, rootState[[2]]) # 2
+  expect_equal(exp(.LogB(3, c(2, 2, 0))) * 15, rootState[[3]]) # 11
   
   
   expect_equal(exp(LogSumExp(.LogB(1, c(6, 3, 0)),
