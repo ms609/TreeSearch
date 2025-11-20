@@ -16,7 +16,6 @@ test_that(".LogR() matches empirical observation", {
                counts)
   
   n <- 7
-  # All trees are rooted on t1, which we'll therefore use as the root
   trees <- as.phylo(1:NUnrooted(n + 1) - 1, n + 1)
   counts <- vapply(trees, function(tree) {
     ed <- tree$edge
@@ -26,6 +25,28 @@ test_that(".LogR() matches empirical observation", {
     as.numeric()
   expect_equal(exp(c(.LogR(1, n), .LogR(2, n), .LogR(3, n))) * NRooted(n),
                counts)
+  
+  # Edge cases
+  n <- 2
+  trees <- c(as.phylo(1:NUnrooted(n + 1) - 1, n + 1))
+  counts <- vapply(trees, function(tree) {
+    ed <- tree$edge
+    min(CladeSizes(tree, nodes = ed[ed[, 1] == n + 3, 2]))
+  }, double(1)) |>
+    table() |>
+    as.numeric()
+  expect_equal(exp(c(.LogR(1, n))) * NRooted(n), counts)
+  
+  n <- 3
+  trees <- as.phylo(1:NUnrooted(n + 1) - 1, n + 1)
+  counts <- vapply(trees, function(tree) {
+    ed <- tree$edge
+    min(CladeSizes(tree, nodes = ed[ed[, 1] == n + 3, 2]))
+  }, double(1)) |>
+    table() |>
+    as.numeric()
+  expect_equal(exp(c(.LogR(1, n))) * NRooted(n), counts)
+  
 })
 
 test_that(".LogD() succeeds", {
@@ -39,6 +60,33 @@ test_that(".LogD() succeeds", {
                lchoose(4, 2) + lchoose(2, 1) - lchoose(8, 5))
 })
 
+test_that(".LogB() succeeds", {
+  # B(b | tokens) is the probability that state b is reconstructed at the base
+  # of a clade with leaves labelled `tokens`
+  expect_error(.LogB(0, c(0, 1, 0)), "token. must be 1..")
+  
+  # Singletons - special cases
+  expect_equal(.LogB(1, c(0, 1, 0)), log(0))
+  expect_equal(.LogB(2, c(0, 1, 0)), log(1))
+  expect_equal(.LogB(3, c(0, 1, 0)), log(0))
+  
+  # Pairs - special cases
+  expect_equal(.LogB(1, c(0, 2, 0)), log(0))
+  expect_equal(.LogB(2, c(0, 2, 0)), log(1))
+  expect_equal(.LogB(3, c(0, 2, 0)), log(0))
+  
+  expect_equal(.LogB(1, c(1, 1, 0)), log(0))
+  expect_equal(.LogB(2, c(1, 1, 0)), log(0))
+  expect_equal(.LogB(3, c(1, 1, 0)), log(1))
+  
+  # Simpletons
+  expect_equal(.LogB(1, c(0, 10, 0)), log(0))
+  expect_equal(.LogB(2, c(0, 10, 0)), log(1))
+  expect_equal(.LogB(3, c(0, 10, 0)), log(0))
+  
+  
+})
+
 
 
 test_that("MaddisonSlatkin() recursion bottoms", {
@@ -48,6 +96,7 @@ test_that("MaddisonSlatkin() recursion bottoms", {
   expect_equal(MaddisonSlatkin(0, c(2, 0)), log(1))
   expect_equal(MaddisonSlatkin(1, c(1, 0, 0, 1)), log(1))
   expect_equal(MaddisonSlatkin(0, c(0, 0, 0, 2)), log(1))
+})
   
   
 test_that("MaddisonSlatkin is numerically correct", {
