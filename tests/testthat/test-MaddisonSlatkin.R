@@ -153,9 +153,8 @@ test_that("MaddisonSlatkin() is numerically correct", {
   expect_equal(MaddisonSlatkin(1, c(2, 1)), log(1))
   expect_equal(MaddisonSlatkin(2, c(2, 1)), log(0))
   
-  ch <- c(1, 1, 2, 2)
   expect_slatkin <- function(tokens) {
-    ch <- rep(seq_along(tokens), each = tokens)
+    ch <- rep(seq_along(tokens), tokens)
     nTaxa <- length(ch)
     phyChar <- StringToPhyDat(paste0(ch, collapse = ""))
     trees <- as.phylo(1:NUnrooted(nTaxa) - 1, nTaxa)
@@ -166,6 +165,8 @@ test_that("MaddisonSlatkin() is numerically correct", {
     expect_equal(out, counts)
   }
   expect_slatkin(c(2, 2))
+  expect_slatkin(c(2, 3))
+  expect_slatkin(c(2, 4))
   
   exp(MaddisonSlatkin(2, c(2, 2)))
   exp(MaddisonSlatkin(1, c(2, 2)))

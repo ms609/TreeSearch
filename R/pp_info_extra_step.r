@@ -245,8 +245,8 @@ LogCarter1 <- function (m, a, b) {
   stri_paste(v, collapse = ",")
 }
 
-# B(b | tokens) is the probability that state b is reconstructed at the base
-# of a clade with leaves labelled `tokens`
+# B(b | tokens) is the probability that `token` is reconstructed at the base
+# of a clade with leaves labelled `leaves`
 .LogB <- function(token, leaves, dp) {
   if (token < 1 || token > length(leaves)) {
     stop("`token` must be 1 .. length(leaves)")
@@ -280,7 +280,7 @@ LogCarter1 <- function (m, a, b) {
     }
     log(if (token == result) 1 else 0)
   } else {
-    LogSumExp(apply(.ValidDraws(leaves), 1, function(drawn) {
+    apply(.ValidDraws(leaves), 1, function(drawn) {
       m <- sum(drawn)
       undrawn <- leaves - drawn
       # if both subtrees are equal size, D will give half the probability we want.
@@ -299,7 +299,8 @@ LogCarter1 <- function (m, a, b) {
             LogProdExp(list(.LogB(pair[[1]], drawn, dp),
                             .LogB(pair[[2]], undrawn, dp)))
           }))
-    }))
+    }) |>
+      LogSumExp()
   }
   sub[[as.character(token)]] <- result
   result
@@ -364,44 +365,51 @@ MaddisonSlatkin <- function(steps, states) {
     denominator <- .LogB(token, leaves, dp)
     if (is.finite(denominator)) {
       
-      apply(.ValidDraws(leaves), 1, function(drawn) {
-        m <- sum(drawn)
-        undrawn <- leaves - drawn
-        
-        # Return:
-        .LogR(m, n) +
-          .LogD(drawn, leaves) +
-          LogSumExp(
-            
-            
-            # 0:s where the conjunction doesn't add a step
-            vapply(0:s, function(r) {
-              apply(which(dp == token & !attr(dp, "step"), arr.ind = TRUE), 1, function(pair)
-                LogProdExp(list(
-                  .LogP(r, drawn, pair[[1]]),
-                  .LogB(pair[[1]], drawn, dp),
-                  .LogP(s - r, undrawn, pair[[2]]),
-                  .LogB(pair[[2]], undrawn, dp)
-                ))
-              ) |> LogSumExp()
-            }, double(1)),
-            
-            # 0:(s - 1) where the conjunction adds a step
-            vapply(seq_len(s) - 1, function(r) {
-              which(dp == token & attr(dp, "step"), arr.ind = TRUE) |>
-                # Empty call to which will deliver pair = c(0, 0)
-                apply(1, function(pair) if (pair[[1]] == 0) -Inf else {
+      LogSumExp(
+        apply(.ValidDraws(leaves), 1, function(drawn) {
+          m <- sum(drawn)
+          undrawn <- leaves - drawn
+          
+          # Return:
+          .LogR(m, n) +
+            # If the two subtrees are the same size, we don't care whether the
+            # "smaller" or "larger" corresponds to our draw, as we have filtered
+            # the symmetrical duplicate out of .ValidDraws()
+            # But if the draw is its own mirror, we don't want to count twice!
+            log(if (sum(drawn) == sum(undrawn) && !all(drawn == undrawn)) 2 else 1) +
+            .LogD(drawn, leaves) +
+            LogSumExp(
+              
+              
+              # 0:s where the conjunction doesn't add a step
+              vapply(0:s, function(r) {
+                apply(which(dp == token & !attr(dp, "step"), arr.ind = TRUE), 1, function(pair)
                   LogProdExp(list(
                     .LogP(r, drawn, pair[[1]]),
                     .LogB(pair[[1]], drawn, dp),
-                    # s - r - 1 because we're adding a step here
-                    .LogP(s - r - 1, undrawn, pair[[2]]),
+                    .LogP(s - r, undrawn, pair[[2]]),
                     .LogB(pair[[2]], undrawn, dp)
                   ))
-                }) |> LogSumExp()
-              }, double(1))
-          )
-      }) |> LogSumExp() - denominator
+                ) |> LogSumExp()
+              }, double(1)),
+              
+              # 0:(s - 1) where the conjunction adds a step
+              vapply(seq_len(s) - 1, function(r) {
+                which(dp == token & attr(dp, "step"), arr.ind = TRUE) |>
+                  # Empty call to which will deliver pair = c(0, 0)
+                  apply(1, function(pair) if (pair[[1]] == 0) -Inf else {
+                    LogProdExp(list(
+                      .LogP(r, drawn, pair[[1]]),
+                      .LogB(pair[[1]], drawn, dp),
+                      # s - r - 1 because we're adding a step here
+                      .LogP(s - r - 1, undrawn, pair[[2]]),
+                      .LogB(pair[[2]], undrawn, dp)
+                    ))
+                  }) |> LogSumExp()
+                }, double(1))
+            )
+        })
+      ) - denominator
     } else {
       denominator
     }
@@ -410,6 +418,10 @@ MaddisonSlatkin <- function(steps, states) {
   
   p <- log(0)
   for (state in seq_len(nStates)) {
+    message("State ", state, ": ", NRooted(nTaxa) * exp(.LogB(state, states, dp)), " x ",
+            signif(exp(.LogP(steps, states, state)), 6), " = " ,
+            NRooted(nTaxa) * exp(  .LogB(state, states, dp)) * 
+              exp(.LogP(steps, states, state)))
     p <- LogSumExp(p, LogProdExp(list(
       .LogB(state, states, dp),
       .LogP(steps, states, state))
