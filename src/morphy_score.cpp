@@ -1,10 +1,8 @@
 #include <Rcpp.h>
 #include <cassert> // for assert
 
-extern "C" {
 #include "mpl.h"
 #include "RMorphy.h"
-}
 
 using namespace Rcpp;
 

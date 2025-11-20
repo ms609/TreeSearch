@@ -6,6 +6,9 @@
 *  Copyright © 2017 brazeaulab. All rights reserved.
 */
 
+#include <Rcpp.h>
+using namespace Rcpp;
+
 #include "mpl.h"
 #include "morphydefs.h"
 #include "morphy.h"

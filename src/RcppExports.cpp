@@ -10,6 +10,313 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// R_wrap_mpl_new_Morphy
+SEXP R_wrap_mpl_new_Morphy();
+RcppExport SEXP _TreeSearch_R_wrap_mpl_new_Morphy() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_new_Morphy());
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_delete_Morphy
+SEXP R_wrap_mpl_delete_Morphy(SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_delete_Morphy(SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_delete_Morphy(MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_init_Morphy
+SEXP R_wrap_mpl_init_Morphy(SEXP Rntax, SEXP Rnchar, SEXP MorphHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_init_Morphy(SEXP RntaxSEXP, SEXP RncharSEXP, SEXP MorphHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rntax(RntaxSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Rnchar(RncharSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphHandl(MorphHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_init_Morphy(Rntax, Rnchar, MorphHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_get_numtaxa
+SEXP R_wrap_mpl_get_numtaxa(SEXP MorphHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_get_numtaxa(SEXP MorphHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type MorphHandl(MorphHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_get_numtaxa(MorphHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_get_num_charac
+SEXP R_wrap_mpl_get_num_charac(SEXP MorphHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_get_num_charac(SEXP MorphHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type MorphHandl(MorphHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_get_num_charac(MorphHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_attach_symbols
+SEXP R_wrap_mpl_attach_symbols(SEXP Rsymbols, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_attach_symbols(SEXP RsymbolsSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rsymbols(RsymbolsSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_attach_symbols(Rsymbols, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_get_symbols
+SEXP R_wrap_mpl_get_symbols(SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_get_symbols(SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_get_symbols(MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_attach_rawdata
+SEXP R_wrap_mpl_attach_rawdata(SEXP Rmatrix, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_attach_rawdata(SEXP RmatrixSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rmatrix(RmatrixSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_attach_rawdata(Rmatrix, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_set_parsim_t
+SEXP R_wrap_mpl_set_parsim_t(SEXP RcharID, SEXP Rchtype, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_set_parsim_t(SEXP RcharIDSEXP, SEXP RchtypeSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type RcharID(RcharIDSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Rchtype(RchtypeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_set_parsim_t(RcharID, Rchtype, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_set_gaphandl
+SEXP R_wrap_mpl_set_gaphandl(SEXP Rgaptype, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_set_gaphandl(SEXP RgaptypeSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rgaptype(RgaptypeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_set_gaphandl(Rgaptype, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_get_gaphandl
+SEXP R_wrap_mpl_get_gaphandl(SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_get_gaphandl(SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_get_gaphandl(MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_set_num_internal_nodes
+SEXP R_wrap_mpl_set_num_internal_nodes(SEXP Rnnodes, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_set_num_internal_nodes(SEXP RnnodesSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rnnodes(RnnodesSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_set_num_internal_nodes(Rnnodes, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_get_num_internal_nodes
+SEXP R_wrap_mpl_get_num_internal_nodes(SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_get_num_internal_nodes(SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_get_num_internal_nodes(MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_apply_tipdata
+SEXP R_wrap_mpl_apply_tipdata(SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_apply_tipdata(SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_apply_tipdata(MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_set_charac_weight
+SEXP R_wrap_mpl_set_charac_weight(SEXP RcharID, SEXP Rweight, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_set_charac_weight(SEXP RcharIDSEXP, SEXP RweightSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type RcharID(RcharIDSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Rweight(RweightSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_set_charac_weight(RcharID, Rweight, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_get_charac_weight
+SEXP R_wrap_mpl_get_charac_weight(SEXP RcharID, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_get_charac_weight(SEXP RcharIDSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type RcharID(RcharIDSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_get_charac_weight(RcharID, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_first_down_recon
+SEXP R_wrap_mpl_first_down_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_first_down_recon(SEXP Rnode_idSEXP, SEXP Rleft_idSEXP, SEXP Rright_idSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rnode_id(Rnode_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Rleft_id(Rleft_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Rright_id(Rright_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_first_down_recon(Rnode_id, Rleft_id, Rright_id, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_first_up_recon
+SEXP R_wrap_mpl_first_up_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id, SEXP Ranc_id, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_first_up_recon(SEXP Rnode_idSEXP, SEXP Rleft_idSEXP, SEXP Rright_idSEXP, SEXP Ranc_idSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rnode_id(Rnode_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Rleft_id(Rleft_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Rright_id(Rright_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Ranc_id(Ranc_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_first_up_recon(Rnode_id, Rleft_id, Rright_id, Ranc_id, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_second_down_recon
+SEXP R_wrap_mpl_second_down_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_second_down_recon(SEXP Rnode_idSEXP, SEXP Rleft_idSEXP, SEXP Rright_idSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rnode_id(Rnode_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Rleft_id(Rleft_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Rright_id(Rright_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_second_down_recon(Rnode_id, Rleft_id, Rright_id, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_second_up_recon
+SEXP R_wrap_mpl_second_up_recon(SEXP Rnode_id, SEXP Rleft_id, SEXP Rright_id, SEXP Ranc_id, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_second_up_recon(SEXP Rnode_idSEXP, SEXP Rleft_idSEXP, SEXP Rright_idSEXP, SEXP Ranc_idSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rnode_id(Rnode_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Rleft_id(Rleft_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Rright_id(Rright_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Ranc_id(Ranc_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_second_up_recon(Rnode_id, Rleft_id, Rright_id, Ranc_id, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_update_tip
+SEXP R_wrap_mpl_update_tip(SEXP tip_id, SEXP anc_id, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_update_tip(SEXP tip_idSEXP, SEXP anc_idSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type tip_id(tip_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type anc_id(anc_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_update_tip(tip_id, anc_id, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// R_wrap_mpl_update_lower_root
+SEXP R_wrap_mpl_update_lower_root(SEXP lower_id, SEXP upper_id, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_R_wrap_mpl_update_lower_root(SEXP lower_idSEXP, SEXP upper_idSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type lower_id(lower_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type upper_id(upper_idSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_wrap_mpl_update_lower_root(lower_id, upper_id, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// MORPHYLENGTH
+SEXP MORPHYLENGTH(SEXP R_ancestors, SEXP R_left, SEXP R_right, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_MORPHYLENGTH(SEXP R_ancestorsSEXP, SEXP R_leftSEXP, SEXP R_rightSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type R_ancestors(R_ancestorsSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type R_left(R_leftSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type R_right(R_rightSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(MORPHYLENGTH(R_ancestors, R_left, R_right, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
+// RANDOM_TREE
+extern SEXP RANDOM_TREE(SEXP ntip);
+RcppExport SEXP _TreeSearch_RANDOM_TREE(SEXP ntipSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ntip(ntipSEXP);
+    rcpp_result_gen = Rcpp::wrap(RANDOM_TREE(ntip));
+    return rcpp_result_gen;
+END_RCPP
+}
+// RANDOM_TREE_SCORE
+extern SEXP RANDOM_TREE_SCORE(SEXP ntip, SEXP MorphyHandl);
+RcppExport SEXP _TreeSearch_RANDOM_TREE_SCORE(SEXP ntipSEXP, SEXP MorphyHandlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ntip(ntipSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
+    rcpp_result_gen = Rcpp::wrap(RANDOM_TREE_SCORE(ntip, MorphyHandl));
+    return rcpp_result_gen;
+END_RCPP
+}
 // preorder_morphy
 int preorder_morphy(IntegerMatrix edge, SEXP MorphyHandl);
 RcppExport SEXP _TreeSearch_preorder_morphy(SEXP edgeSEXP, SEXP MorphyHandlSEXP) {
@@ -138,4 +445,99 @@ BEGIN_RCPP
     rcpp_result_gen = Rcpp::wrap(all_tbr(edge, break_order));
     return rcpp_result_gen;
 END_RCPP
+}
+
+RcppExport SEXP MORPHYLENGTH(SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_apply_tipdata(SEXP);
+RcppExport SEXP R_wrap_mpl_attach_rawdata(SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_attach_symbols(SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_delete_Morphy(SEXP);
+RcppExport SEXP R_wrap_mpl_first_down_recon(SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_first_up_recon(SEXP, SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_get_charac_weight(SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_get_gaphandl(SEXP);
+RcppExport SEXP R_wrap_mpl_get_num_charac(SEXP);
+RcppExport SEXP R_wrap_mpl_get_num_internal_nodes(SEXP);
+RcppExport SEXP R_wrap_mpl_get_numtaxa(SEXP);
+RcppExport SEXP R_wrap_mpl_get_symbols(SEXP);
+RcppExport SEXP R_wrap_mpl_init_Morphy(SEXP, SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_new_Morphy(void);
+RcppExport SEXP R_wrap_mpl_second_down_recon(SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_second_up_recon(SEXP, SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_set_charac_weight(SEXP, SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_set_gaphandl(SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_set_num_internal_nodes(SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_set_parsim_t(SEXP, SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_update_lower_root(SEXP, SEXP, SEXP);
+RcppExport SEXP R_wrap_mpl_update_tip(SEXP, SEXP, SEXP);
+RcppExport SEXP RANDOM_TREE(SEXP);
+RcppExport SEXP RANDOM_TREE_SCORE(SEXP, SEXP);
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_TreeSearch_R_wrap_mpl_new_Morphy", (DL_FUNC) &_TreeSearch_R_wrap_mpl_new_Morphy, 0},
+    {"_TreeSearch_R_wrap_mpl_delete_Morphy", (DL_FUNC) &_TreeSearch_R_wrap_mpl_delete_Morphy, 1},
+    {"_TreeSearch_R_wrap_mpl_init_Morphy", (DL_FUNC) &_TreeSearch_R_wrap_mpl_init_Morphy, 3},
+    {"_TreeSearch_R_wrap_mpl_get_numtaxa", (DL_FUNC) &_TreeSearch_R_wrap_mpl_get_numtaxa, 1},
+    {"_TreeSearch_R_wrap_mpl_get_num_charac", (DL_FUNC) &_TreeSearch_R_wrap_mpl_get_num_charac, 1},
+    {"_TreeSearch_R_wrap_mpl_attach_symbols", (DL_FUNC) &_TreeSearch_R_wrap_mpl_attach_symbols, 2},
+    {"_TreeSearch_R_wrap_mpl_get_symbols", (DL_FUNC) &_TreeSearch_R_wrap_mpl_get_symbols, 1},
+    {"_TreeSearch_R_wrap_mpl_attach_rawdata", (DL_FUNC) &_TreeSearch_R_wrap_mpl_attach_rawdata, 2},
+    {"_TreeSearch_R_wrap_mpl_set_parsim_t", (DL_FUNC) &_TreeSearch_R_wrap_mpl_set_parsim_t, 3},
+    {"_TreeSearch_R_wrap_mpl_set_gaphandl", (DL_FUNC) &_TreeSearch_R_wrap_mpl_set_gaphandl, 2},
+    {"_TreeSearch_R_wrap_mpl_get_gaphandl", (DL_FUNC) &_TreeSearch_R_wrap_mpl_get_gaphandl, 1},
+    {"_TreeSearch_R_wrap_mpl_set_num_internal_nodes", (DL_FUNC) &_TreeSearch_R_wrap_mpl_set_num_internal_nodes, 2},
+    {"_TreeSearch_R_wrap_mpl_get_num_internal_nodes", (DL_FUNC) &_TreeSearch_R_wrap_mpl_get_num_internal_nodes, 1},
+    {"_TreeSearch_R_wrap_mpl_apply_tipdata", (DL_FUNC) &_TreeSearch_R_wrap_mpl_apply_tipdata, 1},
+    {"_TreeSearch_R_wrap_mpl_set_charac_weight", (DL_FUNC) &_TreeSearch_R_wrap_mpl_set_charac_weight, 3},
+    {"_TreeSearch_R_wrap_mpl_get_charac_weight", (DL_FUNC) &_TreeSearch_R_wrap_mpl_get_charac_weight, 2},
+    {"_TreeSearch_R_wrap_mpl_first_down_recon", (DL_FUNC) &_TreeSearch_R_wrap_mpl_first_down_recon, 4},
+    {"_TreeSearch_R_wrap_mpl_first_up_recon", (DL_FUNC) &_TreeSearch_R_wrap_mpl_first_up_recon, 5},
+    {"_TreeSearch_R_wrap_mpl_second_down_recon", (DL_FUNC) &_TreeSearch_R_wrap_mpl_second_down_recon, 4},
+    {"_TreeSearch_R_wrap_mpl_second_up_recon", (DL_FUNC) &_TreeSearch_R_wrap_mpl_second_up_recon, 5},
+    {"_TreeSearch_R_wrap_mpl_update_tip", (DL_FUNC) &_TreeSearch_R_wrap_mpl_update_tip, 3},
+    {"_TreeSearch_R_wrap_mpl_update_lower_root", (DL_FUNC) &_TreeSearch_R_wrap_mpl_update_lower_root, 3},
+    {"_TreeSearch_MORPHYLENGTH", (DL_FUNC) &_TreeSearch_MORPHYLENGTH, 4},
+    {"_TreeSearch_RANDOM_TREE", (DL_FUNC) &_TreeSearch_RANDOM_TREE, 1},
+    {"_TreeSearch_RANDOM_TREE_SCORE", (DL_FUNC) &_TreeSearch_RANDOM_TREE_SCORE, 2},
+    {"_TreeSearch_preorder_morphy", (DL_FUNC) &_TreeSearch_preorder_morphy, 2},
+    {"_TreeSearch_preorder_morphy_by_char", (DL_FUNC) &_TreeSearch_preorder_morphy_by_char, 2},
+    {"_TreeSearch_morphy_iw", (DL_FUNC) &_TreeSearch_morphy_iw, 7},
+    {"_TreeSearch_morphy_profile", (DL_FUNC) &_TreeSearch_morphy_profile, 6},
+    {"_TreeSearch_nni", (DL_FUNC) &_TreeSearch_nni, 3},
+    {"_TreeSearch_spr_moves", (DL_FUNC) &_TreeSearch_spr_moves, 1},
+    {"_TreeSearch_spr", (DL_FUNC) &_TreeSearch_spr, 2},
+    {"_TreeSearch_tbr", (DL_FUNC) &_TreeSearch_tbr, 2},
+    {"_TreeSearch_all_spr", (DL_FUNC) &_TreeSearch_all_spr, 2},
+    {"_TreeSearch_all_tbr", (DL_FUNC) &_TreeSearch_all_tbr, 2},
+    {"MORPHYLENGTH",                      (DL_FUNC) &MORPHYLENGTH,                      4},
+    {"R_wrap_mpl_apply_tipdata",          (DL_FUNC) &R_wrap_mpl_apply_tipdata,          1},
+    {"R_wrap_mpl_attach_rawdata",         (DL_FUNC) &R_wrap_mpl_attach_rawdata,         2},
+    {"R_wrap_mpl_attach_symbols",         (DL_FUNC) &R_wrap_mpl_attach_symbols,         2},
+    {"R_wrap_mpl_delete_Morphy",          (DL_FUNC) &R_wrap_mpl_delete_Morphy,          1},
+    {"R_wrap_mpl_first_down_recon",       (DL_FUNC) &R_wrap_mpl_first_down_recon,       4},
+    {"R_wrap_mpl_first_up_recon",         (DL_FUNC) &R_wrap_mpl_first_up_recon,         5},
+    {"R_wrap_mpl_get_charac_weight",      (DL_FUNC) &R_wrap_mpl_get_charac_weight,      2},
+    {"R_wrap_mpl_get_gaphandl",           (DL_FUNC) &R_wrap_mpl_get_gaphandl,           1},
+    {"R_wrap_mpl_get_num_charac",         (DL_FUNC) &R_wrap_mpl_get_num_charac,         1},
+    {"R_wrap_mpl_get_num_internal_nodes", (DL_FUNC) &R_wrap_mpl_get_num_internal_nodes, 1},
+    {"R_wrap_mpl_get_numtaxa",            (DL_FUNC) &R_wrap_mpl_get_numtaxa,            1},
+    {"R_wrap_mpl_get_symbols",            (DL_FUNC) &R_wrap_mpl_get_symbols,            1},
+    {"R_wrap_mpl_init_Morphy",            (DL_FUNC) &R_wrap_mpl_init_Morphy,            3},
+    {"R_wrap_mpl_new_Morphy",             (DL_FUNC) &R_wrap_mpl_new_Morphy,             0},
+    {"R_wrap_mpl_second_down_recon",      (DL_FUNC) &R_wrap_mpl_second_down_recon,      4},
+    {"R_wrap_mpl_second_up_recon",        (DL_FUNC) &R_wrap_mpl_second_up_recon,        5},
+    {"R_wrap_mpl_set_charac_weight",      (DL_FUNC) &R_wrap_mpl_set_charac_weight,      3},
+    {"R_wrap_mpl_set_gaphandl",           (DL_FUNC) &R_wrap_mpl_set_gaphandl,           2},
+    {"R_wrap_mpl_set_num_internal_nodes", (DL_FUNC) &R_wrap_mpl_set_num_internal_nodes, 2},
+    {"R_wrap_mpl_set_parsim_t",           (DL_FUNC) &R_wrap_mpl_set_parsim_t,           3},
+    {"R_wrap_mpl_update_lower_root",      (DL_FUNC) &R_wrap_mpl_update_lower_root,      3},
+    {"R_wrap_mpl_update_tip",             (DL_FUNC) &R_wrap_mpl_update_tip,             3},
+    {"RANDOM_TREE",                       (DL_FUNC) &RANDOM_TREE,                       1},
+    {"RANDOM_TREE_SCORE",                 (DL_FUNC) &RANDOM_TREE_SCORE,                 2},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_TreeSearch(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

@@ -1,6 +1,6 @@
 # TreeSearch 1.7.0.9000 (development)
 
-No changes yet.
+- Avoid manual registration of Morphylib.
 
 
 # TreeSearch 1.7.0 (2025-08-22)

@@ -50,7 +50,7 @@ mpl_translate_error <- function (errorCode) {
 #' @family Morphy API functions
 #' @export
 mpl_new_Morphy <- function() {
-    .Call(`_R_wrap_mpl_new_Morphy`)
+    .Call(`R_wrap_mpl_new_Morphy`)
 }
 
 #' Destroys an instance of a Morphy object.
@@ -67,7 +67,7 @@ mpl_new_Morphy <- function() {
 #' @keywords internal
 #' @export
 mpl_delete_Morphy <- function(morphyobj) {
-    .Call(`_R_wrap_mpl_delete_Morphy`, morphyobj)
+    .Call(`R_wrap_mpl_delete_Morphy`, morphyobj)
 }
 
 
@@ -83,14 +83,14 @@ mpl_delete_Morphy <- function(morphyobj) {
 #' @keywords internal
 #' @export
 mpl_get_gaphandl <- function (morphyobj) {
-  .Call(`_R_wrap_mpl_get_gaphandl`, morphyobj)
+  .Call(`R_wrap_mpl_get_gaphandl`, morphyobj)
 }
 #' @rdname mpl_get_gaphandl
 #' @keywords internal
 #' @return `mpl_set_gaphandl()` returns a Morphy error code.
 #' @export
 mpl_set_gaphandl <- function (handl, morphyobj) {
-  .Call(`_R_wrap_mpl_set_gaphandl`, handl, morphyobj)
+  .Call(`R_wrap_mpl_set_gaphandl`, handl, morphyobj)
 }
 
 #' Sets up the dimensions of the dataset.
@@ -110,7 +110,7 @@ mpl_set_gaphandl <- function (handl, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_init_Morphy <- function(numtaxa, numchars, morphyobj) {
-    .Call(`_R_wrap_mpl_init_Morphy`, as.integer(numtaxa), as.integer(numchars),
+    .Call(`R_wrap_mpl_init_Morphy`, as.integer(numtaxa), as.integer(numchars),
           morphyobj)
 }
 
@@ -127,7 +127,7 @@ mpl_init_Morphy <- function(numtaxa, numchars, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_get_numtaxa <- function(morphyobj) {
-    .Call(`_R_wrap_mpl_get_numtaxa`, morphyobj)
+    .Call(`R_wrap_mpl_get_numtaxa`, morphyobj)
 }
 
 #' Set the weight of a character in the dataset
@@ -145,7 +145,7 @@ mpl_get_numtaxa <- function(morphyobj) {
 #' @keywords internal
 #' @export
 mpl_set_charac_weight <- function (charID, weight, morphyobj) {
-  .Call(`_R_wrap_mpl_set_charac_weight`, as.integer(charID - 1L),
+  .Call(`R_wrap_mpl_set_charac_weight`, as.integer(charID - 1L),
         as.numeric(weight), morphyobj)
 }
 
@@ -164,7 +164,7 @@ mpl_set_charac_weight <- function (charID, weight, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_get_charac_weight <- function (charID, morphyobj) {
-  .Call(`_R_wrap_mpl_get_charac_weight`, as.integer(charID) - 1L, morphyobj)
+  .Call(`R_wrap_mpl_get_charac_weight`, as.integer(charID) - 1L, morphyobj)
 }
 
 #' Retrieve the number of character (columns) in the dataset.
@@ -180,7 +180,7 @@ mpl_get_charac_weight <- function (charID, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_get_num_charac <- function(morphyobj) {
-  .Call(`_R_wrap_mpl_get_num_charac`, morphyobj)
+  .Call(`R_wrap_mpl_get_num_charac`, morphyobj)
 }
 
 #' Attach a caller-specified list of symbols.
@@ -204,7 +204,7 @@ mpl_get_num_charac <- function(morphyobj) {
 #' @keywords internal
 #' @export
 mpl_attach_symbols <- function(symbols, morphyobj) {
-    .Call(`_R_wrap_mpl_attach_symbols`, symbols, morphyobj)
+    .Call(`R_wrap_mpl_attach_symbols`, symbols, morphyobj)
 }
 
 #' Attach raw character state data (i.e. tip data).
@@ -225,7 +225,7 @@ mpl_attach_symbols <- function(symbols, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_attach_rawdata <- function(rawdata, morphyobj) {
-    .Call(`_R_wrap_mpl_attach_rawdata`, rawdata, morphyobj)
+    .Call(`R_wrap_mpl_attach_rawdata`, rawdata, morphyobj)
 }
 
 #' Retrieves the current list of symbols.
@@ -245,7 +245,7 @@ mpl_attach_rawdata <- function(rawdata, morphyobj) {
 #' @export
 
 mpl_get_symbols <- function(morphyobj) {
-  .Call(`_R_wrap_mpl_get_symbols`, morphyobj)  
+  .Call(`R_wrap_mpl_get_symbols`, morphyobj)  
 }
 
 #' Sets a character's parsimony function type
@@ -266,7 +266,7 @@ mpl_get_symbols <- function(morphyobj) {
 #' @keywords internal
 #' @export
 mpl_set_parsim_t <- function(char_id, tname = "typename", morphyobj) {
-    .Call(`_R_wrap_mpl_set_parsim_t`, as.integer(char_id - 1L), tname, morphyobj)
+    .Call(`R_wrap_mpl_set_parsim_t`, as.integer(char_id - 1L), tname, morphyobj)
 }
 
 #' Sets the number of internal nodes in the dataset
@@ -285,7 +285,7 @@ mpl_set_parsim_t <- function(char_id, tname = "typename", morphyobj) {
 #' @keywords internal
 #' @export
 mpl_set_num_internal_nodes <- function(numnodes, morphyobj) {
-    .Call(`_R_wrap_mpl_set_num_internal_nodes`, as.integer(numnodes), morphyobj)
+    .Call(`R_wrap_mpl_set_num_internal_nodes`, as.integer(numnodes), morphyobj)
 }
 
 #' Gets the number of internal nodal reconstruction sets being used by
@@ -304,7 +304,7 @@ mpl_set_num_internal_nodes <- function(numnodes, morphyobj) {
 #' @export
 
 mpl_get_num_internal_nodes <- function(morphyobj) {
-    .Call(`_R_wrap_mpl_get_num_internal_nodes`, morphyobj)
+    .Call(`R_wrap_mpl_get_num_internal_nodes`, morphyobj)
 }
 
 #' Commits parameters prior to nodal set calculations.
@@ -323,7 +323,7 @@ mpl_get_num_internal_nodes <- function(morphyobj) {
 #' @keywords internal
 #' @export
 mpl_apply_tipdata <- function(morphyobj) {
-    .Call(`_R_wrap_mpl_apply_tipdata`, morphyobj)
+    .Call(`R_wrap_mpl_apply_tipdata`, morphyobj)
 }
 
 #' Reconstructs the first (downpass) nodal reconstructions
@@ -348,7 +348,7 @@ mpl_apply_tipdata <- function(morphyobj) {
 #' @keywords internal
 #' @export
 mpl_first_down_recon <- function(node_id, left_id, right_id, morphyobj) {
-    .Call(`_R_wrap_mpl_first_down_recon`, as.integer(node_id), as.integer(left_id), as.integer(right_id), morphyobj)
+    .Call(`R_wrap_mpl_first_down_recon`, as.integer(node_id), as.integer(left_id), as.integer(right_id), morphyobj)
 }
 
 #' Reconstructs the second (uppass) nodal reconstructions.
@@ -374,7 +374,7 @@ mpl_first_down_recon <- function(node_id, left_id, right_id, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_first_up_recon <- function(node_id, left_id, right_id, anc_id, morphyobj) {
-    .Call(`_R_wrap_mpl_first_up_recon`, as.integer(node_id), as.integer(left_id), 
+    .Call(`R_wrap_mpl_first_up_recon`, as.integer(node_id), as.integer(left_id), 
                  as.integer(right_id), as.integer(anc_id), morphyobj)
 }
 
@@ -401,7 +401,7 @@ mpl_first_up_recon <- function(node_id, left_id, right_id, anc_id, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_second_down_recon <- function(node_id, left_id, right_id, morphyobj) {
-    .Call(`_R_wrap_mpl_second_down_recon`, as.integer(node_id), as.integer(left_id),
+    .Call(`R_wrap_mpl_second_down_recon`, as.integer(node_id), as.integer(left_id),
                  as.integer(right_id), morphyobj)
 }
 
@@ -429,7 +429,7 @@ mpl_second_down_recon <- function(node_id, left_id, right_id, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_second_up_recon <- function(node_id, left_id, right_id, anc_id, morphyobj) {
-    .Call(`_R_wrap_mpl_second_up_recon`, as.integer(node_id), as.integer(left_id), 
+    .Call(`R_wrap_mpl_second_up_recon`, as.integer(node_id), as.integer(left_id), 
                  as.integer(right_id), as.integer(anc_id), morphyobj)
 }
 
@@ -459,7 +459,7 @@ mpl_second_up_recon <- function(node_id, left_id, right_id, anc_id, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_update_tip <- function(tip_id, anc_id, morphyobj) {
-    .Call(`_R_wrap_mpl_update_tip`, as.integer(tip_id), as.integer(anc_id), morphyobj)
+    .Call(`R_wrap_mpl_update_tip`, as.integer(tip_id), as.integer(anc_id), morphyobj)
 }
 
 #' Updates the nodal sets for a lower ("dummy") root node
@@ -483,6 +483,6 @@ mpl_update_tip <- function(tip_id, anc_id, morphyobj) {
 #' @keywords internal
 #' @export
 mpl_update_lower_root <- function(l_root_id, root_id, morphyobj) {
-    .Call(`_R_wrap_mpl_update_lower_root`, as.integer(l_root_id), as.integer(root_id),
+    .Call(`R_wrap_mpl_update_lower_root`, as.integer(l_root_id), as.integer(root_id),
                  morphyobj)
 }

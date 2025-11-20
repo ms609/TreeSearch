@@ -128,7 +128,7 @@ void random_tree(int *parent_of, int *left, int *right, const int *n_tip) {
   }
 }
 
-
+// [[Rcpp::export]]
 extern SEXP RANDOM_TREE(SEXP ntip) {
   const int n_tip = INTEGER(ntip)[0];
   if (n_tip < 2) {
@@ -152,6 +152,7 @@ extern SEXP RANDOM_TREE(SEXP ntip) {
   return(RESULT);
 }
 
+// [[Rcpp::export]]
 extern SEXP RANDOM_TREE_SCORE(SEXP ntip, SEXP MorphyHandl) {
   const int n_tip = INTEGER(ntip)[0];
   if (n_tip < 2) {

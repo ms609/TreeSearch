@@ -5,5 +5,5 @@
 #define strcasecmp _stricmp
 #endif
 
-MPLchtype _R_mpl_str2chtype(const char *chtypename);
-MPLgap_t _R_mpl_str2gaptype(const char *chtypename);
+MPLchtype R_mpl_str2chtype(const char *chtypename);
+MPLgap_t R_mpl_str2gaptype(const char *chtypename);

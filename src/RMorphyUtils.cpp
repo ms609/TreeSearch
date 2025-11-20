@@ -1,7 +1,9 @@
-#include "mpl.h"
+#include <Rcpp.h>
+using namespace Rcpp;
+
 #include "RMorphyUtils.h"
 
-MPLchtype _R_mpl_str2chtype(const char *chtypename)
+MPLchtype R_mpl_str2chtype(const char *chtypename)
 {
 
 	if(!strcasecmp(chtypename, "fitch")){
@@ -23,7 +25,7 @@ MPLchtype _R_mpl_str2chtype(const char *chtypename)
 	return MAX_CTYPE;
 }
 
-MPLgap_t _R_mpl_str2gaptype(const char *chtypename)
+MPLgap_t R_mpl_str2gaptype(const char *chtypename)
 {
 
 	if(!strcasecmp(chtypename, "inapplicable")){

@@ -1,4 +1,6 @@
-/*
+#include <Rcpp.h>
+using namespace Rcpp;
+ /*
 //  morphy.c
 //  MorPhy2
 //
