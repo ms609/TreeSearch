@@ -92,6 +92,17 @@ test_that(".LogB() succeeds", {
   expect_equal(.LogB(1, c(0, 10, 0)), log(0))
   expect_equal(.LogB(2, c(0, 10, 0)), log(1))
   expect_equal(.LogB(3, c(0, 10, 0)), log(0))
+  
+  # Trickier cases
+  expect_equal(exp(LogSumExp(.LogB(1, c(2, 1, 0)),
+                             .LogB(2, c(2, 1, 0)),
+                             .LogB(3, c(2, 1, 0)))), 1)
+  expect_equal(exp(LogSumExp(.LogB(1, c(6, 3, 0)),
+                             .LogB(2, c(6, 3, 0)),
+                             .LogB(3, c(6, 3, 0)))), 1)
+  expect_equal(exp(LogSumExp(.LogB(1, c(4, 3, 2)),
+                             .LogB(2, c(4, 3, 2)),
+                             .LogB(3, c(4, 3, 2)))), 1)
 })
 
 

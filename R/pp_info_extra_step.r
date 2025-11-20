@@ -233,43 +233,63 @@ LogCarter1 <- function (m, a, b) {
   sum(lchoose(leaves, drawn)) - lchoose(sum(leaves), sum(drawn))
 }
 
+#' @importFrom fastmap fastmap
+.LogB_cache <- new.env(parent = emptyenv())
+
+#' @importFrom stringi stri_paste
+.HashLeaves <- function(v) {
+  stri_paste(v, collapse = ",")
+}
 
 # B(b | tokens) is the probability that state b is reconstructed at the base
 # of a clade with leaves labelled `tokens`
 .LogB <- function(token, leaves, dp) {
-  if (missing("dp")) {
+  if (token < 1 || token > length(leaves)) {
+    stop("`token` must be 1 .. length(leaves)")
+  }
+  
+  leafHash <- .HashLeaves(leaves)
+  sub <- .LogB_cache[[leafHash]]
+  if (is.null(sub)) {
+    sub <- new.env(parent = emptyenv())
+    .LogB_cache[[leafHash]] <- sub
+  }
+  val <- sub[[as.character(token)]]
+  if (!is.null(val)) {
+    return(val)
+  }
+  
+  if (missing(dp)) {
     nLevels <- floor(log2(length(leaves))) + 1
     nStates <- 2 ^ nLevels - 1
     dp <- `mode<-`(.DownpassOutcome(nLevels), "integer")
   }
-  if (token < 1 || token > length(leaves)) {
-    stop("`token` must be 1 .. length(leaves)")
-  }
   n <- sum(leaves)
-  if (n == 1) {
+  result <- if (n == 1) {
     # If the one leaf we're looking at bears the token, p = 1; else p = 0
-    return(log(leaves[[token]] == 1))
-  }
-  if (n == 2) {
+    log(leaves[[token]] == 1)
+  } else if (n == 2) {
     result <- if (any(leaves == 2)) {
       which.max(leaves)
     } else {
       dp[rbind(which(leaves > 0))]
     }
-    return(log(if (token == result) 1 else 0))
+    log(if (token == result) 1 else 0)
+  } else {
+    LogSumExp(apply(.ValidDraws(leaves), 1, function(drawn) {
+      m <- sum(drawn)
+      undrawn <- leaves - drawn
+      .LogR(m, n) +
+        .LogD(drawn, leaves) +
+        LogSumExp(apply(
+          which(dp == token, arr.ind = TRUE), 1, function(pair) {
+            LogProdExp(list(.LogB(pair[[1]], drawn, dp),
+                            .LogB(pair[[2]], undrawn, dp)))
+          }))
+    }))
   }
-  
-  LogSumExp(apply(.ValidDraws(leaves), 1, function(drawn) {
-    m <- sum(drawn)
-    undrawn <- leaves - drawn
-    .LogR(m, n) +
-      .LogD(drawn, leaves) +
-      LogSumExp(apply(
-        which(dp == token, arr.ind = TRUE), 1, function(pair) {
-          LogProdExp(list(.LogB(pair[[1]], drawn, dp),
-                          .LogB(pair[[2]], undrawn, dp)))
-        }))
-  }))
+  sub[[as.character(token)]] <- result
+  result
 }
 
 
