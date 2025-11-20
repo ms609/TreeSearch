@@ -50,7 +50,14 @@ cumsum(sapply(1:3, Carter1, 3, 3))
 Carter1(3, 3, 3)
 NUnrooted(3 + 3)
 
+
+LogCarter1(1, 8, 24)
+LogCarter1(2, 8, 24)
+LogCarter1(3, 8, 24)
+
 MaddisonSlatkin(1, c(2, 2))
+MaddisonSlatkin(1, c(1, 1))
+LogCarter1(1,2,2)
 
 }
 \references{
