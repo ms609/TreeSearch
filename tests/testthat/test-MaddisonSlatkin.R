@@ -148,8 +148,33 @@ test_that("MaddisonSlatkin() recursion bottoms", {
 })
   
   
-test_that("MaddisonSlatkin is numerically correct", {
+test_that("MaddisonSlatkin() is numerically correct", {
   expect_equal(MaddisonSlatkin(0, c(2, 1)), log(0))
   expect_equal(MaddisonSlatkin(1, c(2, 1)), log(1))
   expect_equal(MaddisonSlatkin(2, c(2, 1)), log(0))
+  
+  ch <- c(1, 1, 2, 2)
+  expect_slatkin <- function(tokens) {
+    ch <- rep(seq_along(tokens), each = tokens)
+    nTaxa <- length(ch)
+    phyChar <- StringToPhyDat(paste0(ch, collapse = ""))
+    trees <- as.phylo(1:NUnrooted(nTaxa) - 1, nTaxa)
+    counts <- vapply(trees, TreeLength, double(1), phyChar) |>
+      tabulate()
+    out <- vapply(seq_along(counts), MaddisonSlatkin, double(1), tabulate(ch)) |>
+      exp() * length(trees)
+    expect_equal(out, counts)
+  }
+  expect_slatkin(c(2, 2))
+  
+  exp(MaddisonSlatkin(2, c(2, 2)))
+  exp(MaddisonSlatkin(1, c(2, 2)))
+  LogCarter1(1,2,2)
+  LogCarter1(2,2,2)
+  
+  
+  expect_equal(MaddisonSlatkin(1, c(8, 24)) - LnRooted(32),
+               LogCarter1(1, 8, 24))
+  LogCarter1(2, 8, 24)
+  LogCarter1(3, 8, 24)
 })

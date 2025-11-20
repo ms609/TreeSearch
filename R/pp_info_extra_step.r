@@ -330,14 +330,8 @@ LogCarter1 <- function (m, a, b) {
 
 #' @rdname Carter1
 #' @examples
-#' 
-#' LogCarter1(1, 8, 24)
-#' LogCarter1(2, 8, 24)
-#' LogCarter1(3, 8, 24)
-#' 
-#' MaddisonSlatkin(1, c(2, 2))
-#' MaddisonSlatkin(1, c(1, 1))
-#' LogCarter1(1,2,2)
+#' # Number of trees with 2 steps for character 0011122
+#' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
 #' 
 #' @importFrom TreeTools LnRooted
 #' @export
