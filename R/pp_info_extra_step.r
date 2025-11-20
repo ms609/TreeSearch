@@ -372,7 +372,7 @@ MaddisonSlatkin <- function(steps, states) {
       .LogR(m, n) +
         .LogD(drawn, leaves) +
         # 0:(s - 1) where the conjunction adds a step
-        LogSumExp(vapply(0:(s - 1), function(r) {
+        LogSumExp(vapply(seq_len(s) - 1, function(r) {
           LogSumExp(apply(which(dp == token, arr.ind = TRUE), 1, function(pair)
             LogProdExp(list(
               .LogP(r, drawn, pair[[1]]),
