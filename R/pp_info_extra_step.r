@@ -352,7 +352,7 @@ MaddisonSlatkin <- function(steps, states) {
           LogSumExp(apply(which(dp == token & !attr(dp, "step"), arr.ind = TRUE),
                           1, function(pair) LogProdExp(list(
                             .LogP(s, drawn, pair[[1]]),
-                            .LogB(pair[[1]], drawn), dp,
+                            .LogB(pair[[1]], drawn, dp),
                             .LogP(0, undrawn, pair[[2]]),
                             .LogB(pair[[2]], undrawn, dp)
                             ))
