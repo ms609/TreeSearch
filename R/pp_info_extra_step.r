@@ -237,7 +237,6 @@ LogCarter1 <- function (m, a, b) {
   sum(lchoose(leaves, drawn)) - lchoose(sum(leaves), sum(drawn))
 }
 
-#' @importFrom fastmap fastmap
 .LogB_cache <- new.env(parent = emptyenv())
 
 #' @importFrom stringi stri_paste
@@ -329,6 +328,8 @@ LogCarter1 <- function (m, a, b) {
   grid[validDraws, , drop = FALSE]
 }
 
+.LogP_cache <- new.env(parent = emptyenv())
+
 #' @rdname Carter1
 #' @examples
 #' # Number of trees with 2 steps for character 0011122
@@ -362,8 +363,21 @@ MaddisonSlatkin <- function(steps, states) {
       }))
     }
     
+    
+    leafHash <- .HashLeaves(leaves)
+    sub <- .LogP_cache[[leafHash]]
+    if (is.null(sub)) {
+      sub <- new.env(parent = emptyenv())
+      .LogP_cache[[leafHash]] <- sub
+    }
+    outHash <- paste(s, token, collapse = ",")
+    val <- sub[[outHash]]
+    if (!is.null(val)) {
+      return(val)
+    }
+    
     denominator <- .LogB(token, leaves, dp)
-    if (is.finite(denominator)) {
+    result <- if (is.finite(denominator)) {
       
       LogSumExp(
         apply(.ValidDraws(leaves), 1, function(drawn) {
@@ -413,15 +427,18 @@ MaddisonSlatkin <- function(steps, states) {
     } else {
       denominator
     }
+    
+    sub[[outHash]] <- result
+    result
   }
   
   
   p <- log(0)
   for (state in seq_len(nStates)) {
-    message("State ", state, ": ", NRooted(nTaxa) * exp(.LogB(state, states, dp)), " x ",
+    message("State ", state, ": ", round(NRooted(nTaxa) * exp(.LogB(state, states, dp))), " x ",
             signif(exp(.LogP(steps, states, state)), 6), " = " ,
-            NRooted(nTaxa) * exp(  .LogB(state, states, dp)) * 
-              exp(.LogP(steps, states, state)))
+            round(NRooted(nTaxa) * exp(  .LogB(state, states, dp)) *
+              exp(.LogP(steps, states, state))))
     p <- LogSumExp(p, LogProdExp(list(
       .LogB(state, states, dp),
       .LogP(steps, states, state))
@@ -429,51 +446,6 @@ MaddisonSlatkin <- function(steps, states) {
   }
   p
 }
-
-# TODO: Replace the below with an advanced version of Maddison & Slakey 1991, 
-# or use the results of Carter et al. 1990; Steel 1993 to estimate +0 & +1 steps,
-# and approximate the rest.
-
-## @importFrom TreeTools Log2UnrootedMult
-# Old_IC_Approx <- function() {
-#   
-#   nIter <- min(maxIter, round(iter))
-#   if (nIter == maxIter) {
-#     warning ("Will truncate number of iterations at maxIter = ", maxIter)
-#   }
-#   n01ExtraSteps <- nOneExtraStep + nNoExtraSteps
-#   analyticIC <- Log2Unrooted(sum(split)) -  setNames(c(
-#     Log2UnrootedMult(split), log2(n01ExtraSteps)),
-#     minSteps + 0:1)
-#   analyticP <- 2 ^ -analyticIC[2]
-#   
-#   if (warn) {
-#     message("  Token count ", split, " = ",
-#             signif(analyticIc0, ceiling(log10(maxIter))),
-#             " bits @ 0 extra steps. \n  Simulating ", nIter, 
-#             " trees to estimate cost of further steps.")
-#     # message(c(round(analyticIc0, 3), "bits @ 0 extra steps;", round(analyticIc1, 3),
-#     #    "@ 1; attempting", nIter, "iterations.\n"))
-#   }
-#   
-#   morphyObj <- SingleCharMorphy(rep(seq_along(split) - 1L, split))
-#   on.exit(morphyObj <- UnloadMorphy(morphyObj))
-#   steps <- vapply(rep(nInformative, nIter), RandomTreeScore,
-#                   integer(1), morphyObj) + nSingletons
-#   
-#   tabSteps <- table(steps[steps > (minSteps - nSingletons + 1)]) # Quicker than table(steps)[-1]
-#   
-#   approxP <- tabSteps / sum(tabSteps) * (1 - analyticP)
-#   approxSE <- sqrt(approxP * (1 - approxP) / nIter)
-#   cumP <- cumsum(c(analyticP, approxP))[-1]
-# 
-#   approxIC <- -log2(cumP)
-#   icLB <- -log2(cumP - approxSE)
-#   icError <- icLB - approxIC
-#   if (warn || max(icError) > tolerance) {
-#     message("  Approx. std. error < ", signif(max(icError) * 1.01, 2))
-#   }
-# }
 
 
 #' Number of trees with one extra step
