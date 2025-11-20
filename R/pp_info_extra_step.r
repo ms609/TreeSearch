@@ -369,27 +369,41 @@ MaddisonSlatkin <- function(steps, states) {
     LogSumExp(apply(.ValidDraws(leaves), 1, function(drawn) {
       m <- sum(drawn)
       undrawn <- leaves - drawn
-      .LogR(m, n) +
-        .LogD(drawn, leaves) +
-        # 0:(s - 1) where the conjunction adds a step
-        LogSumExp(vapply(seq_len(s) - 1, function(r) {
-          LogSumExp(apply(which(dp == token, arr.ind = TRUE), 1, function(pair)
+      
+      # Return:
+      LogSumExp(
+        
+        .LogR(m, n),
+        
+        .LogD(drawn, leaves),
+        
+        # 0:s where the conjunction doesn't add a step
+        vapply(0:s, function(r) {
+          apply(which(dp == token & !attr(dp, "step"), arr.ind = TRUE), 1, function(pair)
             LogProdExp(list(
               .LogP(r, drawn, pair[[1]]),
               .LogB(pair[[1]], drawn, dp),
               .LogP(s - r, undrawn, pair[[2]]),
               .LogB(pair[[2]], undrawn, dp)
+            ))
+          ) |> LogSumExp()
+        }, double(1)),
+        
+        # 0:(s - 1) where the conjunction adds a step
+        vapply(seq_len(s) - 1, function(r) {
+          which(dp == token & attr(dp, "step"), arr.ind = TRUE) |>
+            # Empty call to which will deliver pair = c(0, 0)
+            apply(1, function(pair) if (pair[[1]] == 0) -Inf else {
+              LogProdExp(list(
+                .LogP(r, drawn, pair[[1]]),
+                .LogB(pair[[1]], drawn, dp),
+                # s - r - 1 because we're adding a step here
+                .LogP(s - r - 1, undrawn, pair[[2]]),
+                .LogB(pair[[2]], undrawn, dp)
               ))
-          ))}, double(1)),
-          # and s where it doesn't  
-          LogSumExp(apply(which(dp == token & !attr(dp, "step"), arr.ind = TRUE),
-                          1, function(pair) LogProdExp(list(
-                            .LogP(s, drawn, pair[[1]]),
-                            .LogB(pair[[1]], drawn, dp),
-                            .LogP(0, undrawn, pair[[2]]),
-                            .LogB(pair[[2]], undrawn, dp)
-                            ))
-                          )))
+            }) |> LogSumExp()
+          }, double(1))
+      )
     }))
   }
   
