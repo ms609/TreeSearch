@@ -158,27 +158,7 @@ Carter1 <- function (m, a, b) {
 #' @export
 #' @importFrom TreeTools Log2DoubleFactorial
 Log2Carter1 <- function (m, a, b) {
-  n <- a + b
-  twoN <- n + n
-  twoM <- m + m
-  Log2N <- function (n, m) {
-    if (n < m) -Inf else {
-      nMinusM <- n - m
-      (lfactorial(n + nMinusM - 1L) - 
-       lfactorial(nMinusM) -
-       lfactorial(m - 1L)) / log(2) - nMinusM
-    }
-  }
-  ret <- sum(
-    log2(twoN - twoM - m),
-    (lfactorial(m - 1L) / log(2)),
-    Log2DoubleFactorial(twoN - 5L),
-    Log2N(a, m),
-    Log2N(b, m)
-  ) - Log2DoubleFactorial(twoN - twoM - 1L)
-  
-  # Return:
-  if (abs(ret) < sqrt(.Machine$double.eps)) 0 else ret
+  Log2Carter1_cpp(m, a, b)
 }
 
 #' @rdname Carter1
