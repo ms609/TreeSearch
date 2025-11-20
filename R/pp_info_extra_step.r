@@ -211,18 +211,20 @@ LogCarter1 <- function (m, a, b) {
 # R is the probability that in a randomly selected tree of _n_ taxa, the
 # smaller of the two basal subclades will have _m_ taxa.
 # 
-# This seems to be one of those probabilities that can exceed 1,
-# at least in the case of R(1 | 3) = 2 * 4 * 1 * 3 / 15, using T = NRooted.
-# (Note the misplaced brackets in Maddison & Slatkin 1991's definition of T(n))
-# I'm guessing this reflects the (n,m) term, which cancels the one in .LogD
-# I've removed these terms for simplicity.
+# The formula in Maddison & Slatkin 1991 overcounts by a factor of 2; rather
+# than doubling the count where n != 2m (why?), we should halve the count
+# where n == 2m: because choosing A B : C D gives the same trees as C D : A B,
+# choose(2m, m) counts each tree twice.
 # 
-# I suspect that the 2 should not really be there: trees are symmetrical.
+# Without this correction, we can see that R can exceed 1,
+# e.g. R(1 | 3) = 2 * 4 * 1 * 3 / 15, using T = NRooted.
+# (Note the misplaced brackets in Maddison & Slatkin 1991's definition of T(n))
+# 
+# TODO simplify by cancelling the choose(n,m) term with the one in .LogD
 .LogR <- function(m, n) {
-  log(if (n == m + m) 1 else 2) +
+  log(if (n == m + m) 1 / 2 else 1) + 
     lchoose(n, m) +
-    LnRooted(m) + LnRooted(n - m) - LnRooted(n) -
-    log(2) # TODO understand why this correction is necessary
+    LnRooted(m) + LnRooted(n - m) - LnRooted(n)
 }
 
 # D is the probability that, in a randomly selected tree on `leaves`, the
