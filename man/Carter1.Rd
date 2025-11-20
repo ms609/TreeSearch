@@ -27,12 +27,14 @@ the second to state \code{2} (binary \code{010}),
 and the third to the ambiguous state \code{01} (binary \code{011}).}
 }
 \description{
+Functions to compute the number of trees with a given parsimony score.
+}
+\details{
 \code{Carter1()} calculates the number of trees in which Fitch parsimony will
 reconstruct  \emph{m} steps, where \emph{a} leaves are labelled with one state,
 and \emph{b} leaves are labelled with a second state, using theorem 1 of
 \insertCite{Carter1990;textual}{TreeTools}
-}
-\details{
+
 \code{MaddisonSlatkin()} generalises this result to characters with multiple
 steps using the recursive approach of
 \insertCite{Maddison1991;textual}{TreeSearch}.

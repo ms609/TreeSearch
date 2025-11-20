@@ -81,6 +81,8 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
 
 #' Number of trees with _m_ steps
 #' 
+#' Functions to compute the number of trees with a given parsimony score.
+#' 
 #' `Carter1()` calculates the number of trees in which Fitch parsimony will
 #' reconstruct  _m_ steps, where _a_ leaves are labelled with one state,
 #' and _b_ leaves are labelled with a second state, using theorem 1 of
@@ -393,8 +395,6 @@ MaddisonSlatkin <- function(steps, states) {
   
   
   p <- log(0)
-  debugonce(.LogB)
-  debugonce(.LogP)
   for (state in seq_len(nStates)) {
     message(state, ": ", exp(.LogP(steps, states, state)), ", ",
             exp(.LogB(state, states, dp)))

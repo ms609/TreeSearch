@@ -105,6 +105,11 @@ test_that(".LogB() arithmetic is correct", {
   expect_equal(exp(LogSumExp(.LogB(1, c(2, 1, 0)),
                              .LogB(2, c(2, 1, 0)),
                              .LogB(3, c(2, 1, 0)))), 1)
+  
+  expect_equal(exp(.LogB(1, c(1, 2, 0))) * 3, 0)
+  expect_equal(exp(.LogB(2, c(1, 2, 0))) * 3, 2) # (2a, (2b, 1)), (2b, (2a, 1))
+  expect_equal(exp(.LogB(3, c(1, 2, 0))) * 3, 1) # (1, (2, 2))
+  
   # 15 rooted four-leaf trees
   trees <- as.phylo(0:14, 5)
   if (interactive()) {
