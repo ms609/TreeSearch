@@ -2,30 +2,31 @@
 #include <cmath>
 #include <vector>
 #include <unordered_map>
-#include <cstdint> // For uint64_t
+#include <cstdint> 
 
 using namespace Rcpp;
 
-const double LN2 = M_LN2;
-const double INV_LN2 = 1.0 / std::log(2.0);
+// --- CONSTANTS ---
+const double INV_LN2 = 1.0 / M_LN2; 
 const int CACHE_SIZE = 50000;
 
 // --- STATIC STORAGE ---
-// 1. The Factorial Cache (Vector)
 static std::vector<double> memoized_log2_df;
-
-// 2. The Result Memoization (Hash Map)
-// Key: uint64_t packed representation of (m, min(a,b), max(a,b))
-// Value: The calculated result
 static std::unordered_map<uint64_t, double> memoized_results;
 
 // --- HELPERS ---
 
+// Portable integer log2 (Handles MSVC vs GCC/Clang if needed, though Rtools uses GCC)
 inline int ilog2_u64(uint64_t x) {
+#if defined(_MSC_VER)
+  unsigned long index;
+  _BitScanReverse64(&index, x);
+  return index;
+#else
   return 63 - __builtin_clzll(x);
+#endif
 }
 
-// Internal helper to compute the factorial table once
 void build_factorial_cache() {
   memoized_log2_df.reserve(CACHE_SIZE + 1);
   memoized_log2_df.push_back(0.0); 
@@ -52,7 +53,7 @@ inline double get_log2_df(int n) {
     if (memoized_log2_df.empty()) build_factorial_cache();
     return memoized_log2_df[n];
   }
-  // Fallback logic for huge n (omitted for brevity, same as previous step)
+  // Fallback
   if (n & 1) {
     double oddN = (double)n;
     double nPlusOneOverTwo = (oddN + 1.0) / 2.0;
@@ -70,37 +71,17 @@ inline double log2_n_calc(int n, int m) {
   return (std::lgamma(n + n_minus_m) - std::lgamma(n_minus_m + 1.0) - std::lgamma(m)) * INV_LN2 - n_minus_m;
 }
 
-// --- EXPORTED FUNCTIONS ---
-// [[Rcpp::export]]
-void ClearCarterCache() {
-  memoized_results.clear();
-  // We generally don't clear the factorial cache as it's small and constant
-}
-
-// [[Rcpp::export]]
-int CarterCacheSize() {
-  return memoized_results.size();
-}
-
-// [[Rcpp::export]]
-double Log2Carter1_cpp(int m, int a, int b) {
-  // 1. Symmetry Optimization: a and b are interchangeable in the formula
-  int min_ab, max_ab;
-  if (a < b) { min_ab = a; max_ab = b; } else { min_ab = b; max_ab = a; }
+// --- CORE LOGIC (Scalar, Cached) ---
+// This function does ONLY the calculation. No Rcpp loops.
+inline double calculate_core(int m, int a, int b) {
+  int min_ab = (a < b) ? a : b;
+  int max_ab = (a < b) ? b : a;
   
-  // 2. Generate Key
-  // We assume inputs < 2,097,151 (21 bits). 
-  // Layout: [m (22 bits)] [min_ab (21 bits)] [max_ab (21 bits)]
-  // This fits in a 64-bit integer.
   uint64_t key = ((uint64_t)m << 42) | ((uint64_t)min_ab << 21) | (uint64_t)max_ab;
   
-  // 3. Check Memoization Map
   auto it = memoized_results.find(key);
-  if (it != memoized_results.end()) {
-    return it->second;
-  }
+  if (it != memoized_results.end()) return it->second;
   
-  // 4. Perform Calculation (if not found)
   int n = a + b;
   int twoN = n + n;
   int twoM = m + m;
@@ -114,12 +95,107 @@ double Log2Carter1_cpp(int m, int a, int b) {
   
   double ret = (term1 + term2 + term3 + term4 + term5) - sub;
   
-  if (std::abs(ret) < std::sqrt(std::numeric_limits<double>::epsilon())) {
-    ret = 0.0;
-  }
+  if (std::abs(ret) < 1e-14) ret = 0.0;
   
-  // 5. Store Result
   memoized_results[key] = ret;
-  
   return ret;
+}
+
+// --- TEMPLATE DISPATCHER ---
+// 0 = Log2, 1 = Natural Log, 2 = Raw (2^x)
+template <int MODE>
+NumericVector CarterRunner(IntegerVector m, IntegerVector a, IntegerVector b) {
+  int n_size = m.size();
+  NumericVector results(n_size);
+  
+  for(int i = 0; i < n_size; ++i) {
+    double log2_val = calculate_core(m[i], a[i], b[i]);
+    
+    if (MODE == 0) {
+      results[i] = log2_val;
+    } else if (MODE == 1) {
+      results[i] = log2_val * M_LN2; 
+    } else if (MODE == 2) {
+      results[i] = std::exp2(log2_val); // More precise than pow(2, val)
+    }
+  }
+  return results;
+}
+
+// --- EXPORTED FUNCTIONS ---
+
+// [[Rcpp::export]]
+void ClearCarterCache() {
+  memoized_results.clear();
+}
+
+// [[Rcpp::export]]
+int CarterCacheSize() {
+  return memoized_results.size();
+}
+
+// [[Rcpp::export]]
+NumericVector Log2Carter1(IntegerVector m, IntegerVector a, IntegerVector b) {
+  return CarterRunner<0>(m, a, b);
+}
+
+// [[Rcpp::export]]
+NumericVector LogCarter1(IntegerVector m, IntegerVector a, IntegerVector b) {
+  return CarterRunner<1>(m, a, b);
+}
+
+
+//' Number of trees with _m_ steps
+//' 
+//' Functions to compute the number of trees with a given parsimony score.
+//' 
+//' `Carter1()` calculates the number of trees in which Fitch parsimony will
+//' reconstruct  _m_ steps, where _a_ leaves are labelled with one state,
+//' and _b_ leaves are labelled with a second state, using theorem 1 of
+//' \insertCite{Carter1990;textual}{TreeTools}
+//' 
+//' `MaddisonSlatkin()` generalises this result to characters with multiple
+//' steps using the recursive approach of
+//' \insertCite{Maddison1991;textual}{TreeSearch}.
+//' 
+//' @param m,steps Number of steps.
+//' @param a,b Number of leaves labelled `0` and `1`.
+//' @param states Number of leaves labelled with each possible state.
+//' States are presented in binary fashion.  The first entry of the vector
+//' corresponds to state `1` (binary `001`),
+//' the second to state `2` (binary `010`),
+//' and the third to the ambiguous state `01` (binary `011`).
+//' 
+//' 
+//' @seealso [TreeTools::NUnrooted()]: number of unrooted trees with _n_ leaves.
+//' @references 
+//' \insertAllCited{}
+//' 
+//' See also:
+//' 
+//' \insertRef{Steel1993}{TreeSearch}
+//' 
+//' \insertRef{Steel1995}{TreeSearch}
+//' 
+//' (\insertRef{Steel1996}{TreeSearch})
+//' @importFrom TreeTools LogDoubleFactorial
+//' @examples 
+//' # The character `0 0 0 1 1 1`
+//' Carter1(1, 3, 3) # Exactly one step
+//' Carter1(2, 3, 3) # Two steps (one extra step)
+//' 
+//' # Number of trees that the character can map onto with exactly _m_ steps
+//' # if non-parsimonious reconstructions are permitted:
+//' cumsum(sapply(1:3, Carter1, 3, 3))
+//' 
+//' # Three steps allow the character to map onto any of the 105 six-leaf trees.
+//' Carter1(3, 3, 3)
+//' NUnrooted(3 + 3)
+//' 
+//' @template MRS
+//' @family profile parsimony functions
+//' @export
+// [[Rcpp::export]]
+NumericVector Carter1(IntegerVector m, IntegerVector a, IntegerVector b) {
+  return CarterRunner<2>(m, a, b);
 }

@@ -29,16 +29,42 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// Log2Carter1_cpp
-double Log2Carter1_cpp(int m, int a, int b);
-RcppExport SEXP _TreeSearch_Log2Carter1_cpp(SEXP mSEXP, SEXP aSEXP, SEXP bSEXP) {
+// Log2Carter1
+NumericVector Log2Carter1(IntegerVector m, IntegerVector a, IntegerVector b);
+RcppExport SEXP _TreeSearch_Log2Carter1(SEXP mSEXP, SEXP aSEXP, SEXP bSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type m(mSEXP);
-    Rcpp::traits::input_parameter< int >::type a(aSEXP);
-    Rcpp::traits::input_parameter< int >::type b(bSEXP);
-    rcpp_result_gen = Rcpp::wrap(Log2Carter1_cpp(m, a, b));
+    Rcpp::traits::input_parameter< IntegerVector >::type m(mSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type a(aSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type b(bSEXP);
+    rcpp_result_gen = Rcpp::wrap(Log2Carter1(m, a, b));
+    return rcpp_result_gen;
+END_RCPP
+}
+// LogCarter1
+NumericVector LogCarter1(IntegerVector m, IntegerVector a, IntegerVector b);
+RcppExport SEXP _TreeSearch_LogCarter1(SEXP mSEXP, SEXP aSEXP, SEXP bSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type m(mSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type a(aSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type b(bSEXP);
+    rcpp_result_gen = Rcpp::wrap(LogCarter1(m, a, b));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Carter1
+NumericVector Carter1(IntegerVector m, IntegerVector a, IntegerVector b);
+RcppExport SEXP _TreeSearch_Carter1(SEXP mSEXP, SEXP aSEXP, SEXP bSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type m(mSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type a(aSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type b(bSEXP);
+    rcpp_result_gen = Rcpp::wrap(Carter1(m, a, b));
     return rcpp_result_gen;
 END_RCPP
 }

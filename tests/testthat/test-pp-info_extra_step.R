@@ -57,16 +57,16 @@ test_that("Carter() caches", {
   ClearCarterCache()
   expect_equal(CarterCacheSize(), 0)
   
-  v1 <- Log2Carter1_cpp(10, 20, 30)
+  v1 <- Log2Carter1(10, 20, 30)
   expect_equal(CarterCacheSize(), 1)
   
   # Test that result is identical on cache hit
-  v2 <- Log2Carter1_cpp(10, 20, 30)
+  v2 <- Log2Carter1(10, 20, 30)
   expect_equal(v1, v2)
   expect_equal(CarterCacheSize(), 1)
   
   # Test symmetry optimization
-  v3 <- Log2Carter1_cpp(10, 30, 20) 
+  v3 <- Log2Carter1(10, 30, 20) 
   expect_equal(v1, v3)
   expect_equal(CarterCacheSize(), 1)
 })

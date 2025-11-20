@@ -30,7 +30,9 @@ extern SEXP _TreeSearch_mi_key(SEXP, SEXP);
 
 extern SEXP _TreeSearch_ClearCarterCache();
 extern SEXP _TreeSearch_CarterCacheSize();
-extern SEXP _TreeSearch_Log2Carter1_cpp(SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_Carter1(SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_LogCarter1(SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_Log2Carter1(SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
@@ -72,9 +74,11 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_expected_mi",       (DL_FUNC) &_TreeSearch_expected_mi, 2},
   {"_TreeSearch_mi_key",            (DL_FUNC) &_TreeSearch_mi_key, 2},
   
-  {"_TreeSearch_ClearCarterCache",   (DL_FUNC) &_TreeSearch_ClearCarterCache, 0},
+  {"_TreeSearch_ClearCarterCache",  (DL_FUNC) &_TreeSearch_ClearCarterCache, 0},
   {"_TreeSearch_CarterCacheSize",   (DL_FUNC) &_TreeSearch_CarterCacheSize, 0},
-  {"_TreeSearch_Log2Carter1_cpp",   (DL_FUNC) &_TreeSearch_Log2Carter1_cpp, 3},
+  {"_TreeSearch_Carter1",           (DL_FUNC) &_TreeSearch_Carter1, 3},
+  {"_TreeSearch_LogCarter1",        (DL_FUNC) &_TreeSearch_LogCarter1, 3},
+  {"_TreeSearch_Log2Carter1",       (DL_FUNC) &_TreeSearch_Log2Carter1, 3},
   
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
   {"RANDOM_TREE",                   (DL_FUNC) &RANDOM_TREE, 1},

@@ -1,6 +1,7 @@
 # Branch `rejig-concordance` (development)
 
 - `ConcordanceTable()` and support functions `QACol()`, `QALegend()`
+- Faster C++ implementation of `Carter1`
 - `MaddisonSlatkin()` ...
 
 
