@@ -69,7 +69,7 @@ test_that(".ValidDraws() succeeds", {
                cbind(c(1, 0, 1, 0), c(0, 1, 1, 2), rep(0, 4)))
 })
 
-test_that(".LogB() succeeds", {
+test_that(".LogB() solves simple cases", {
   # B(b | tokens) is the probability that state b is reconstructed at the base
   # of a clade with leaves labelled `tokens`
   expect_error(.LogB(0, c(0, 1, 0)), "token. must be 1..")
@@ -92,11 +92,25 @@ test_that(".LogB() succeeds", {
   expect_equal(.LogB(1, c(0, 10, 0)), log(0))
   expect_equal(.LogB(2, c(0, 10, 0)), log(1))
   expect_equal(.LogB(3, c(0, 10, 0)), log(0))
-  
-  # Trickier cases
+})
+
+test_that(".LogB() arithmetic is correct", {
   expect_equal(exp(LogSumExp(.LogB(1, c(2, 1, 0)),
                              .LogB(2, c(2, 1, 0)),
                              .LogB(3, c(2, 1, 0)))), 1)
+  # 15 rooted four-leaf trees
+  trees <- as.phylo(0:14, 5)
+  rootState <- (vapply(trees, PlotCharacter, matrix(NA, 9, 2),
+                       StringToPhyDat("?1122"), 1, plot = FALSE)[6, , ] *
+                  1:2) |>
+    colSums() |> 
+    table()
+
+  expect_equal(.LogB(1, c(2, 2, 0)), log(rootState[[1]] / 15))
+  expect_equal(.LogB(2, c(2, 2, 0)), log(rootState[[2]] / 15))
+  expect_equal(.LogB(3, c(2, 2, 0)), log(rootState[[3]] / 15))
+  
+  
   expect_equal(exp(LogSumExp(.LogB(1, c(6, 3, 0)),
                              .LogB(2, c(6, 3, 0)),
                              .LogB(3, c(6, 3, 0)))), 1)
