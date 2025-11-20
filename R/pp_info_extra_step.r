@@ -349,6 +349,7 @@ MaddisonSlatkin <- function(steps, states) {
   states[is.na(states)] <- 0
   dp <- `mode<-`(.DownpassOutcome(nLevels), "integer")
   
+  # Probability of seeing s steps given tokens at leaves, and `token` at root
   .LogP <- function(s, leaves, token) {
     n <- sum(leaves)
     if (n == 1) {
@@ -366,52 +367,55 @@ MaddisonSlatkin <- function(steps, states) {
       }))
     }
     
-    LogSumExp(apply(.ValidDraws(leaves), 1, function(drawn) {
-      m <- sum(drawn)
-      undrawn <- leaves - drawn
+    denominator <- .LogB(token, leaves, dp)
+    if (is.finite(denominator)) {
       
-      # Return:
-      LogSumExp(
+      apply(.ValidDraws(leaves), 1, function(drawn) {
+        m <- sum(drawn)
+        undrawn <- leaves - drawn
         
-        .LogR(m, n),
-        
-        .LogD(drawn, leaves),
-        
-        # 0:s where the conjunction doesn't add a step
-        vapply(0:s, function(r) {
-          apply(which(dp == token & !attr(dp, "step"), arr.ind = TRUE), 1, function(pair)
-            LogProdExp(list(
-              .LogP(r, drawn, pair[[1]]),
-              .LogB(pair[[1]], drawn, dp),
-              .LogP(s - r, undrawn, pair[[2]]),
-              .LogB(pair[[2]], undrawn, dp)
-            ))
-          ) |> LogSumExp()
-        }, double(1)),
-        
-        # 0:(s - 1) where the conjunction adds a step
-        vapply(seq_len(s) - 1, function(r) {
-          which(dp == token & attr(dp, "step"), arr.ind = TRUE) |>
-            # Empty call to which will deliver pair = c(0, 0)
-            apply(1, function(pair) if (pair[[1]] == 0) -Inf else {
-              LogProdExp(list(
-                .LogP(r, drawn, pair[[1]]),
-                .LogB(pair[[1]], drawn, dp),
-                # s - r - 1 because we're adding a step here
-                .LogP(s - r - 1, undrawn, pair[[2]]),
-                .LogB(pair[[2]], undrawn, dp)
-              ))
-            }) |> LogSumExp()
-          }, double(1))
-      )
-    }))
+        # Return:
+        .LogR(m, n) +
+          .LogD(drawn, leaves) +
+          LogSumExp(
+            
+            
+            # 0:s where the conjunction doesn't add a step
+            vapply(0:s, function(r) {
+              apply(which(dp == token & !attr(dp, "step"), arr.ind = TRUE), 1, function(pair)
+                LogProdExp(list(
+                  .LogP(r, drawn, pair[[1]]),
+                  .LogB(pair[[1]], drawn, dp),
+                  .LogP(s - r, undrawn, pair[[2]]),
+                  .LogB(pair[[2]], undrawn, dp)
+                ))
+              ) |> LogSumExp()
+            }, double(1)),
+            
+            # 0:(s - 1) where the conjunction adds a step
+            vapply(seq_len(s) - 1, function(r) {
+              which(dp == token & attr(dp, "step"), arr.ind = TRUE) |>
+                # Empty call to which will deliver pair = c(0, 0)
+                apply(1, function(pair) if (pair[[1]] == 0) -Inf else {
+                  LogProdExp(list(
+                    .LogP(r, drawn, pair[[1]]),
+                    .LogB(pair[[1]], drawn, dp),
+                    # s - r - 1 because we're adding a step here
+                    .LogP(s - r - 1, undrawn, pair[[2]]),
+                    .LogB(pair[[2]], undrawn, dp)
+                  ))
+                }) |> LogSumExp()
+              }, double(1))
+          )
+      }) |> LogSumExp() - denominator
+    } else {
+      denominator
+    }
   }
   
   
   p <- log(0)
   for (state in seq_len(nStates)) {
-    message(state, ": ", exp(.LogP(steps, states, state)), ", ",
-            exp(.LogB(state, states, dp)))
     p <- LogSumExp(p, LogProdExp(list(
       .LogB(state, states, dp),
       .LogP(steps, states, state))

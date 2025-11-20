@@ -150,6 +150,6 @@ test_that("MaddisonSlatkin() recursion bottoms", {
   
 test_that("MaddisonSlatkin is numerically correct", {
   expect_equal(MaddisonSlatkin(0, c(2, 1)), log(0))
-  expect_equal(MaddisonSlatkin(1, c(2, 1)), TreeTools::LnRooted(3))
+  expect_equal(MaddisonSlatkin(1, c(2, 1)), log(1))
   expect_equal(MaddisonSlatkin(2, c(2, 1)), log(0))
 })

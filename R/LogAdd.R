@@ -15,7 +15,8 @@ LogSumExp <- function(...) {
   x <- as.numeric(c(...))
   if (all(is.infinite(x) & x == -Inf)) return(-Inf)
   m <- max(x)
-  m + log(sum(exp(x - m)))
+  ret <- m + log(sum(exp(x - m)))
+  if (abs(ret) < sqrt(.Machine$double.eps)) 0 else ret
 }
 
 #' Multiply log probabilities
