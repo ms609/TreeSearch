@@ -237,6 +237,15 @@ LogCarter1 <- function (m, a, b) {
   sum(lchoose(leaves, drawn)) - lchoose(sum(leaves), sum(drawn))
 }
 
+.LogRD <- function(drawn, leaves) {
+  n <- sum(leaves)
+  m <- sum(drawn)
+  
+  log(if (n == m + m) 1 / 2 else 1) + 
+    LnRooted(m) + LnRooted(n - m) - LnRooted(n) +
+    sum(lchoose(leaves, drawn))
+}
+
 .LogB_cache <- new.env(parent = emptyenv())
 
 #' @importFrom stringi stri_paste
@@ -291,8 +300,7 @@ LogCarter1 <- function (m, a, b) {
       
       # Return:
       balancedCorrection + 
-        .LogR(m, n) +
-        .LogD(drawn, leaves) +
+        .LogRD(drawn, leaves) +
         LogSumExp(apply(
           which(dp == token, arr.ind = TRUE), 1, function(pair) {
             LogProdExp(list(.LogB(pair[[1]], drawn, dp),
@@ -385,13 +393,12 @@ MaddisonSlatkin <- function(steps, states) {
           undrawn <- leaves - drawn
           
           # Return:
-          .LogR(m, n) +
+          .LogRD(drawn, leaves) +
             # If the two subtrees are the same size, we don't care whether the
             # "smaller" or "larger" corresponds to our draw, as we have filtered
             # the symmetrical duplicate out of .ValidDraws()
             # But if the draw is its own mirror, we don't want to count twice!
             log(if (sum(drawn) == sum(undrawn) && !all(drawn == undrawn)) 2 else 1) +
-            .LogD(drawn, leaves) +
             LogSumExp(
               
               
@@ -435,10 +442,6 @@ MaddisonSlatkin <- function(steps, states) {
   
   p <- log(0)
   for (state in seq_len(nStates)) {
-    message("State ", state, ": ", round(NRooted(nTaxa) * exp(.LogB(state, states, dp))), " x ",
-            signif(exp(.LogP(steps, states, state)), 6), " = " ,
-            round(NRooted(nTaxa) * exp(  .LogB(state, states, dp)) *
-              exp(.LogP(steps, states, state))))
     p <- LogSumExp(p, LogProdExp(list(
       .LogB(state, states, dp),
       .LogP(steps, states, state))

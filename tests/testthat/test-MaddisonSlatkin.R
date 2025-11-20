@@ -175,8 +175,13 @@ test_that("MaddisonSlatkin() is numerically correct", {
   LogCarter1(2,2,2)
   
   
-  expect_equal(MaddisonSlatkin(1, c(8, 24)) - LnRooted(32),
+  # Maddison & Slatkin's tests
+  expect_equal(MaddisonSlatkin(1, c(8, 24)) + LnUnrooted(32),
                LogCarter1(1, 8, 24))
-  LogCarter1(2, 8, 24)
-  LogCarter1(3, 8, 24)
-})
+  expect_equal(MaddisonSlatkin(2, c(8, 24)) + LnUnrooted(32),
+               LogCarter1(2, 8, 24))
+  
+  # And a less even one
+  expect_equal(MaddisonSlatkin(3, c(7, 18)) + LnUnrooted(25),
+               LogCarter1(3, 7, 18))
+}
