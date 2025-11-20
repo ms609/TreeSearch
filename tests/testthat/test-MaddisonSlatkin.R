@@ -167,6 +167,7 @@ test_that("MaddisonSlatkin() is numerically correct", {
   expect_slatkin(c(2, 2))
   expect_slatkin(c(2, 3))
   expect_slatkin(c(2, 4))
+  expect_slatkin(c(2, 3, 2))
   
   exp(MaddisonSlatkin(2, c(2, 2)))
   exp(MaddisonSlatkin(1, c(2, 2)))
