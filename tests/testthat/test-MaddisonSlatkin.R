@@ -184,4 +184,4 @@ test_that("MaddisonSlatkin() is numerically correct", {
   # And a less even one
   expect_equal(MaddisonSlatkin(3, c(7, 18)) + LnUnrooted(25),
                LogCarter1(3, 7, 18))
-}
+})

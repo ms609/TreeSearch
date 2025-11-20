@@ -10,6 +10,25 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// ClearCarterCache
+void ClearCarterCache();
+RcppExport SEXP _TreeSearch_ClearCarterCache() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    ClearCarterCache();
+    return R_NilValue;
+END_RCPP
+}
+// CarterCacheSize
+int CarterCacheSize();
+RcppExport SEXP _TreeSearch_CarterCacheSize() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(CarterCacheSize());
+    return rcpp_result_gen;
+END_RCPP
+}
 // Log2Carter1_cpp
 double Log2Carter1_cpp(int m, int a, int b);
 RcppExport SEXP _TreeSearch_Log2Carter1_cpp(SEXP mSEXP, SEXP aSEXP, SEXP bSEXP) {

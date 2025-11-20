@@ -53,6 +53,24 @@ test_that("Carter1() matches profile counts", {
   
 })
 
+test_that("Carter() caches", {
+  ClearCarterCache()
+  expect_equal(CarterCacheSize(), 0)
+  
+  v1 <- Log2Carter1_cpp(10, 20, 30)
+  expect_equal(CarterCacheSize(), 1)
+  
+  # Test that result is identical on cache hit
+  v2 <- Log2Carter1_cpp(10, 20, 30)
+  expect_equal(v1, v2)
+  expect_equal(CarterCacheSize(), 1)
+  
+  # Test symmetry optimization
+  v3 <- Log2Carter1_cpp(10, 30, 20) 
+  expect_equal(v1, v3)
+  expect_equal(CarterCacheSize(), 1)
+})
+
 test_that("WithOneExtraStep() input format", {
   expect_equal(WithOneExtraStep(7, 5), WithOneExtraStep(c(5, 7)))
 })

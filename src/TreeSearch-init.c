@@ -28,6 +28,8 @@ extern SEXP _TreeSearch_maximum_length(SEXP);
 extern SEXP _TreeSearch_expected_mi(SEXP, SEXP);
 extern SEXP _TreeSearch_mi_key(SEXP, SEXP);
 
+extern SEXP _TreeSearch_ClearCarterCache();
+extern SEXP _TreeSearch_CarterCacheSize();
 extern SEXP _TreeSearch_Log2Carter1_cpp(SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
@@ -70,6 +72,8 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_expected_mi",       (DL_FUNC) &_TreeSearch_expected_mi, 2},
   {"_TreeSearch_mi_key",            (DL_FUNC) &_TreeSearch_mi_key, 2},
   
+  {"_TreeSearch_ClearCarterCache",   (DL_FUNC) &_TreeSearch_ClearCarterCache, 0},
+  {"_TreeSearch_CarterCacheSize",   (DL_FUNC) &_TreeSearch_CarterCacheSize, 0},
   {"_TreeSearch_Log2Carter1_cpp",   (DL_FUNC) &_TreeSearch_Log2Carter1_cpp, 3},
   
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
