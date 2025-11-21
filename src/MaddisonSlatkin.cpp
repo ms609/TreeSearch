@@ -5,12 +5,11 @@
 #include <limits>
 #include <cmath>
 #include <algorithm>
-
 using namespace Rcpp;
 
 static const double NEG_INF = -std::numeric_limits<double>::infinity();
 
-// ----- Custom hash for std::vector<int>
+// ----- Custom hash for std::vector<int> with cached hash
 struct vec_int_hash {
   std::size_t operator()(const std::vector<int>& v) const noexcept {
     std::size_t h = 0;
@@ -171,69 +170,95 @@ public:
     return ins.first->second;
   }
 };
-// ----- LogRD using pair of vectors as key
+
+// ----- LogRD using pair of vectors as key (with cached hash)
 struct LogRDKey {
   std::vector<int> drawn;
   std::vector<int> leaves;
-
+  mutable size_t cached_hash;
+  mutable bool hash_computed;
+  
+  LogRDKey() : cached_hash(0), hash_computed(false) {}
+  LogRDKey(const std::vector<int>& d, const std::vector<int>& l) 
+    : drawn(d), leaves(l), cached_hash(0), hash_computed(false) {}
+  
   bool operator==(const LogRDKey& other) const {
     return drawn == other.drawn && leaves == other.leaves;
+  }
+  
+  size_t hash() const {
+    if (!hash_computed) {
+      cached_hash = 0;
+      for (int x : drawn) cached_hash ^= std::hash<int>{}(x) + 0x9e3779b9 + (cached_hash << 6) + (cached_hash >> 2);
+      for (int x : leaves) cached_hash ^= std::hash<int>{}(x) + 0x9e3779b9 + (cached_hash << 6) + (cached_hash >> 2);
+      hash_computed = true;
+    }
+    return cached_hash;
   }
 };
 
 struct LogRDKeyHash {
   size_t operator()(const LogRDKey& k) const noexcept {
-    size_t h = 0;
-    for (int x : k.drawn) h ^= std::hash<int>{}(x) + 0x9e3779b9 + (h << 6) + (h >> 2);
-    for (int x : k.leaves) h ^= std::hash<int>{}(x) + 0x9e3779b9 + (h << 6) + (h >> 2);
-    return h;
+    return k.hash();
   }
 };
 
 class LogRDCache {
   LnRootedCache& lnRooted;
   std::unordered_map<LogRDKey, double, LogRDKeyHash> cache;
-
 public:
-  explicit LogRDCache(LnRootedCache& lnr) : lnRooted(lnr) {}
-
+  explicit LogRDCache(LnRootedCache& lnr) : lnRooted(lnr) {
+    cache.reserve(1024);
+  }
+  
   double compute(const std::vector<int>& drawn, const std::vector<int>& leaves) {
-    LogRDKey key{drawn, leaves};
+    LogRDKey key(drawn, leaves);
     auto it = cache.find(key);
     if (it != cache.end()) return it->second;
-
+    
     const int m = sum_int(drawn);
     const int n = sum_int(leaves);
     double bal = (n == 2*m) ? std::log(0.5) : 0.0;
-
     long double lc = 0.0L;
     for (size_t i = 0; i < leaves.size(); ++i) lc += lchoose_log(leaves[i], drawn[i]);
     double val = bal + lnRooted(m) + lnRooted(n - m) - lnRooted(n) + (double)lc;
-
     cache.emplace(std::move(key), val);
     return val;
   }
 };
 
-// ----- LogPKey
+// ----- LogPKey (with cached hash)
 struct LogPKey {
   int s;
   int token;
   std::vector<int> leaves;
+  mutable size_t cached_hash;
+  mutable bool hash_computed;
+  
+  LogPKey() : s(0), token(0), cached_hash(0), hash_computed(false) {}
+  LogPKey(int s_, int t_, const std::vector<int>& l_) 
+    : s(s_), token(t_), leaves(l_), cached_hash(0), hash_computed(false) {}
   
   bool operator==(const LogPKey& other) const {
     return s == other.s && token == other.token && leaves == other.leaves;
+  }
+  
+  size_t hash() const {
+    if (!hash_computed) {
+      cached_hash = std::hash<int>{}(s);
+      cached_hash ^= std::hash<int>{}(token) + 0x9e3779b9 + (cached_hash << 6) + (cached_hash >> 2);
+      for (int x : leaves) {
+        cached_hash ^= std::hash<int>{}(x) + 0x9e3779b9 + (cached_hash << 6) + (cached_hash >> 2);
+      }
+      hash_computed = true;
+    }
+    return cached_hash;
   }
 };
 
 struct LogPKeyHash {
   size_t operator()(const LogPKey& k) const noexcept {
-    size_t h = std::hash<int>{}(k.s);
-    h ^= std::hash<int>{}(k.token) + 0x9e3779b9 + (h << 6) + (h >> 2);
-    for (int x : k.leaves) {
-      h ^= std::hash<int>{}(x) + 0x9e3779b9 + (h << 6) + (h >> 2);
-    }
-    return h;
+    return k.hash();
   }
 };
 
@@ -255,6 +280,7 @@ class Solver {
   
   double LogB(int token0, const std::vector<int>& leaves) {
     if ((token_mask(token0) & ~presentBits) != 0) return NEG_INF;
+    
     auto it = logB_cache.find(leaves);
     if (it == logB_cache.end()) {
       std::vector<double> v(D.nStates, std::numeric_limits<double>::quiet_NaN());
@@ -284,10 +310,15 @@ class Solver {
     const auto& draws = validDraws.get(leaves);
     std::vector<double> terms;
     terms.reserve(draws.size());
+    
     for (const auto& drawn : draws) {
       int m = sum_int(drawn);
+      
+      // Compute undrawn locally (cannot reuse buffer due to recursion)
       std::vector<int> undrawn(leaves.size());
-      for (size_t i = 0; i < leaves.size(); ++i) undrawn[i] = leaves[i] - drawn[i];
+      for (size_t i = 0; i < leaves.size(); ++i) {
+        undrawn[i] = leaves[i] - drawn[i];
+      }
       
       double balancedCorrection = (2*m == n) ? std::log(2.0) : 0.0;
       if (all_equal(drawn, undrawn)) balancedCorrection -= std::log(2.0);
@@ -308,7 +339,7 @@ class Solver {
   }
   
   double LogP(int s, const std::vector<int>& leaves, int token0) {
-    LogPKey key{s, token0, leaves};
+    LogPKey key(s, token0, leaves);
     auto it = logP_cache.find(key);
     if (it != logP_cache.end()) return it->second;
     
@@ -347,10 +378,15 @@ class Solver {
     const auto& draws = validDraws.get(leaves);
     std::vector<double> outerTerms;
     outerTerms.reserve(draws.size());
+    
     for (const auto& drawn : draws) {
       const int m = sum_int(drawn);
+      
+      // Compute undrawn locally
       std::vector<int> undrawn(leaves.size());
-      for (size_t i = 0; i < leaves.size(); ++i) undrawn[i] = leaves[i] - drawn[i];
+      for (size_t i = 0; i < leaves.size(); ++i) {
+        undrawn[i] = leaves[i] - drawn[i];
+      }
       
       double sizeCorrection = ((m + m == n) && !all_equal(drawn, undrawn)) ? std::log(2.0) : 0.0;
       
@@ -405,7 +441,10 @@ class Solver {
   
 public:
   Solver(const Downpass& D_, const TokenPairs& p, ValidDrawsCache& vd, LogRDCache& rd, int presentBits_)
-    : D(D_), pairs(p), validDraws(vd), logRD(rd), presentBits(presentBits_) {}
+    : D(D_), pairs(p), validDraws(vd), logRD(rd), presentBits(presentBits_) {
+    logB_cache.reserve(256);
+    logP_cache.reserve(1024);
+  }
   
   double run(int steps, const std::vector<int>& states) {
     std::vector<double> terms;
