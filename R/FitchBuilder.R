@@ -6,6 +6,13 @@
 #' @importFrom TreeTools LnRooted
 #' @export
 FitchBuilder <- function(steps, tokenCount) {
+  
+  # Pay attention now, this is subtle.
+  # We don't really care about the position of the root: (a, (b, (c, d))) is 
+  # not distinct from (b, (a, (c, d))) or ((a, b), (c, d)).
+  # What we'll do therefore is arbitrarily define the position of the root as
+  # alongside our first clade of token 1s.
+  
   nTaxa <- sum(tokenCount)
   nLevels <- length(tokenCount)
   nStates <- 2 ^ nLevels - 1
@@ -21,6 +28,7 @@ FitchBuilder <- function(steps, tokenCount) {
   .Recurse <- function(rootState, tokensAvailable, stepsAvailable) {
     
     if (stepsAvailable < 1) return(rootState)
+    if (any(tokensAvailable[.BR(rootState)] < 1)) return(rootState)
     
     ret <- apply(which(dp == rootState, arr.ind = TRUE), 1, function(childStates) {
       lState <- childStates[[1]]
@@ -36,14 +44,14 @@ FitchBuilder <- function(steps, tokenCount) {
       rTokens <- .BR(rState)
       
       tokensNeeded <- lTokens + rTokens
-      if (any(tokensNeeded > tokensAvailable)) return(NULL)
+      if (any(tokensNeeded > tokensAvailable)) return(c('steps0' = NA_integer_))
       
       lStepsNeeded <- sum(lTokens) - 1L
       rStepsNeeded <- sum(rTokens) - 1L
       if (addsStep) {
         stepsAvailable <- stepsAvailable - 1L
       }
-      if (lStepsNeeded + rStepsNeeded > stepsAvailable) return(NULL)
+      if (lStepsNeeded + rStepsNeeded > stepsAvailable) return(c('steps0' = NA_integer_))
       
       result <- lapply(lStepsNeeded:(stepsAvailable - rStepsNeeded), function(lSteps) {
         rSteps <- stepsAvailable - lSteps
@@ -56,16 +64,24 @@ FitchBuilder <- function(steps, tokenCount) {
       unlist(recursive = FALSE)
   }
   
-  vapply(
-    lapply(seq_len(nStates), .Recurse,
-                      tokensAvailable = tokenCount,
-                      stepsAvailable = steps) |> .ExpandChoices(),
-    function(x) tabulate(unlist(x, use.names = FALSE, nLevels)),
+  # We root next to, not within, the 1-clade.
+  skeleta <- lapply(which(dpStep[1, ]), function(rState) {
+    list("L" = 1,
+         "R" = .Recurse(
+           rState,
+           c(tokensAvailable[1] - 1, tokensAvailable[-1]),
+           steps - 1)
+    )
+  }) |>
+    .ExpandChoices()
+  
+  message(paste(names(skeleta), sapply(skeleta, .AsNewick), collapse = "\n"))
+  vapply(skeleta, function(x) tabulate(unlist(x, use.names = FALSE), nLevels),
     integer(nLevels)
   )
 }
 
-BuildCounter <- function(...) {
+BuildCountuh <- function(...) {
   apply(FitchBuilder(...), 2, AssignLeavesToRegions, tokenCount) |> sum()
 }
 
@@ -186,7 +202,8 @@ AssignLeavesToRegions <- function(regions, leaves) {
   # 3. Choice set
   if (is_choice_set(x)) {
     # Union of all possibilities
-    return(unlist(lapply(x, .ExpandChoices), recursive = FALSE))
+    possibilities <- unlist(lapply(x, .ExpandChoices), recursive = FALSE)
+    return(possibilities[!vapply(possibilities, function(x) any(is.na(x)), logical(1))])
   }
   
   stop("Unreachable: unexpected structure")
