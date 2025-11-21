@@ -37,6 +37,10 @@ static inline int sum_int(const std::vector<int>& v) {
   return s;
 }
 
+// Helper: 0-based token index -> bitmask (1..(2^nLevels-1))
+static inline int token_mask(int tokenIdx) { return tokenIdx + 1; }
+
+
 // ----- Compare two int vectors lexicographically
 static inline int lex_compare(const std::vector<int>& a, const std::vector<int>& b) {
   for (size_t i = 0; i < a.size(); ++i) {
@@ -129,7 +133,7 @@ struct TokenPairs {
   std::vector< std::vector<Pair> > noStep;
   std::vector< std::vector<Pair> > yesStep;
   
-  TokenPairs(const Downpass& D) {
+  TokenPairs(const Downpass& D, int presentBits) {
     int nStates = D.nStates;
     noStep.assign(nStates, {});
     yesStep.assign(nStates, {});
@@ -137,15 +141,15 @@ struct TokenPairs {
       for (int j = 0; j < nStates; ++j) {
         int tok = D.dp_at(i, j);       // 1..nStates
         int outIdx = tok - 1;          // 0-based
-        if (D.step_at(i, j)) {
-          yesStep[outIdx].push_back({i, j});
-        } else {
-          noStep[outIdx].push_back({i, j});
-        }
+        // If output token introduces bits not present among leaves, skip
+        if ((tok & ~presentBits) != 0) continue;
+        if (D.step_at(i, j)) yesStep[outIdx].push_back({i, j});
+        else                 noStep[outIdx].push_back({i, j});
       }
     }
   }
 };
+
 
 // ValidDraws(leaves): generate all 0<=drawn[i]<=leaves[i] with
 // 1 <= sum(drawn) <= floor(n/2), and for even splits (sum==n/2) drop
@@ -221,6 +225,7 @@ class Solver {
   const TokenPairs& pairs;
   ValidDrawsCache& validDraws;
   LogRDCache& logRD;
+  int presentBits;
   
   std::unordered_map<std::string, std::vector<double> > logB_cache; // leaf_key -> vector[token]
   std::unordered_map<std::string, double> logP_cache;               // "s,token|leaves" -> double
@@ -232,6 +237,9 @@ class Solver {
   
   // Compute LogB(token0, leaves)  token0 is 0-based index of token
   double LogB(int token0, const std::vector<int>& leaves) {
+    
+    if ((token_mask(token0) & ~presentBits) != 0) return NEG_INF;
+    
     const std::string L = leaf_key(leaves);
     auto it = logB_cache.find(L);
     if (it == logB_cache.end()) {
@@ -386,8 +394,9 @@ class Solver {
   }
   
 public:
-  Solver(const Downpass& D_, const TokenPairs& p, ValidDrawsCache& vd, LogRDCache& rd)
-    : D(D_), pairs(p), validDraws(vd), logRD(rd) { }
+  Solver(const Downpass& D_, const TokenPairs& p, ValidDrawsCache& vd, LogRDCache& rd, int presentBits_)
+    : D(D_), pairs(p), validDraws(vd), logRD(rd), presentBits(presentBits_) { }
+  
   
   double run(int steps, const std::vector<int>& states) {
     std::vector<double> terms;
@@ -429,9 +438,46 @@ double MaddisonSlatkin(int steps, IntegerVector states) {
   ValidDrawsCache validDraws;
   
   Downpass D(nLevels);       // builds dp + step attribute
-  TokenPairs pairs(D);
   
-  Solver solver(D, pairs, validDraws, logRD);
+  int presentBits = 0;
+  for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
+  TokenPairs pairs(D, presentBits);
+  
+  Solver solver(D, pairs, validDraws, logRD, presentBits);
   double ans = solver.run(steps, leaves);
   return ans; // log-probability
+}
+
+// [[Rcpp::export]]
+NumericVector MaddisonSlatkin_steps(int s_min, int s_max, IntegerVector states) {
+  if (s_min < 0 || s_max < s_min) stop("Invalid steps range.");
+  // -- Same initialization as MaddisonSlatkin() --
+  int len = states.size();
+  int nLevels = (int)std::floor(std::log2((double)len)) + 1;
+  int nStates = (1 << nLevels) - 1;
+  
+  std::vector<int> leaves(nStates, 0);
+  for (int i = 0; i < std::min(len, nStates); ++i) {
+    int v = states[i];
+    if (IntegerVector::is_na(v)) v = 0;
+    if (v < 0) stop("`states` must be non-negative counts.");
+    leaves[i] = v;
+  }
+  
+  int nTaxa = 0; for (int v : leaves) nTaxa += v;
+  LnRootedCache lnRooted(nTaxa);
+  LogRDCache logRD(lnRooted);
+  ValidDrawsCache validDraws;
+  Downpass D(nLevels);
+  int presentBits = 0;
+  for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
+  TokenPairs pairs(D, presentBits);
+  Solver solver(D, pairs, validDraws, logRD, presentBits);
+  
+  int K = s_max - s_min + 1;
+  NumericVector out(K);
+  for (int k = 0; k < K; ++k) {
+    out[k] = solver.run(s_min + k, leaves);
+  }
+  return out;
 }

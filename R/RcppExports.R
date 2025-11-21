@@ -11,6 +11,10 @@ MaddisonSlatkin <- function(steps, states) {
     .Call(`_TreeSearch_MaddisonSlatkin`, steps, states)
 }
 
+MaddisonSlatkin_steps <- function(s_min, s_max, states) {
+    .Call(`_TreeSearch_MaddisonSlatkin_steps`, s_min, s_max, states)
+}
+
 ClearCarterCache <- function() {
     invisible(.Call(`_TreeSearch_ClearCarterCache`))
 }
