@@ -1,7 +1,6 @@
 // MaddisonSlatkin.cpp
 #include <Rcpp.h>
 #include <unordered_map>
-#include <string>
 #include <vector>
 #include <limits>
 #include <cmath>
@@ -54,22 +53,6 @@ static inline int lex_compare(const std::vector<int>& a, const std::vector<int>&
     if (a[i] > b[i]) return 1;
   }
   return 0;
-}
-
-static inline std::string leaf_key(const std::vector<int>& v) {
-  std::string out;
-  out.reserve(v.size() * 3);
-  for (size_t i = 0; i < v.size(); ++i) {
-    if (i) out.push_back(',');
-    out += std::to_string(v[i]);
-  }
-  return out;
-}
-
-static inline std::string logp_key(int s, int token, const std::vector<int>& leaves) {
-  std::string out = std::to_string(s) + "," + std::to_string(token) + "|";
-  out += leaf_key(leaves);
-  return out;
 }
 
 // ----- LnRooted(n)
@@ -192,12 +175,13 @@ public:
 // ----- LogRD
 class LogRDCache {
   LnRootedCache& lnRooted;
-  std::unordered_map<std::string, double> cache;
+  std::unordered_map<std::vector<int>, double, vec_int_hash> cache;
 public:
   explicit LogRDCache(LnRootedCache& lnr) : lnRooted(lnr) {}
   
   double compute(const std::vector<int>& drawn, const std::vector<int>& leaves) {
-    std::string key = leaf_key(drawn) + "|" + leaf_key(leaves);
+    std::vector<int> key = drawn;
+    key.insert(key.end(), leaves.begin(), leaves.end());
     auto it = cache.find(key);
     if (it != cache.end()) return it->second;
     
@@ -213,6 +197,28 @@ public:
   }
 };
 
+// ----- LogPKey
+struct LogPKey {
+  int s;
+  int token;
+  std::vector<int> leaves;
+  
+  bool operator==(const LogPKey& other) const {
+    return s == other.s && token == other.token && leaves == other.leaves;
+  }
+};
+
+struct LogPKeyHash {
+  size_t operator()(const LogPKey& k) const noexcept {
+    size_t h = std::hash<int>{}(k.s);
+    h ^= std::hash<int>{}(k.token) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    for (int x : k.leaves) {
+      h ^= std::hash<int>{}(x) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    }
+    return h;
+  }
+};
+
 // ----- Solver
 class Solver {
   const Downpass& D;
@@ -221,8 +227,8 @@ class Solver {
   LogRDCache& logRD;
   int presentBits;
   
-  std::unordered_map<std::string, std::vector<double> > logB_cache;
-  std::unordered_map<std::string, double> logP_cache;
+  std::unordered_map<std::vector<int>, std::vector<double>, vec_int_hash> logB_cache;
+  std::unordered_map<LogPKey, double, LogPKeyHash> logP_cache;
   
   inline bool all_equal(const std::vector<int>& a, const std::vector<int>& b) const {
     for (size_t i = 0; i < a.size(); ++i) if (a[i] != b[i]) return false;
@@ -231,11 +237,10 @@ class Solver {
   
   double LogB(int token0, const std::vector<int>& leaves) {
     if ((token_mask(token0) & ~presentBits) != 0) return NEG_INF;
-    std::string L = leaf_key(leaves);
-    auto it = logB_cache.find(L);
+    auto it = logB_cache.find(leaves);
     if (it == logB_cache.end()) {
       std::vector<double> v(D.nStates, std::numeric_limits<double>::quiet_NaN());
-      it = logB_cache.emplace(L, std::move(v)).first;
+      it = logB_cache.emplace(leaves, std::move(v)).first;
     }
     std::vector<double>& row = it->second;
     double& slot = row[token0];
@@ -284,9 +289,8 @@ class Solver {
     return slot;
   }
   
-  // Compute LogP(s, leaves, token0)
   double LogP(int s, const std::vector<int>& leaves, int token0) {
-    std::string key = logp_key(s, token0, leaves);
+    LogPKey key{s, token0, leaves};
     auto it = logP_cache.find(key);
     if (it != logP_cache.end()) return it->second;
     
@@ -332,7 +336,6 @@ class Solver {
       
       double sizeCorrection = ((m + m == n) && !all_equal(drawn, undrawn)) ? std::log(2.0) : 0.0;
       
-      // Non-step conjunctions
       std::vector<double> by_r_noStep;
       by_r_noStep.reserve(s + 1);
       for (int r = 0; r <= s; ++r) {
@@ -352,7 +355,6 @@ class Solver {
       }
       double noStepSum = log_sum_exp(by_r_noStep);
       
-      // Step-adding conjunctions
       std::vector<double> by_r_yesStep;
       if (!pairs.yesStep[token0].empty() && s >= 1) {
         by_r_yesStep.reserve(s);
@@ -400,71 +402,73 @@ public:
 };
 
 //' @rdname Carter1
-//' @examples
-//' # Number of trees with 2 steps for character 0011122
-//' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
-//' 
-//' @export
-// [[Rcpp::export]]
-double MaddisonSlatkin(int steps, IntegerVector states) {
-  int len = states.size();
-  if (len <= 0) stop("`states` must have positive length.");
-  int nLevels = (int)std::floor(std::log2((double)len)) + 1;
-  int nStates = (1 << nLevels) - 1;
-  
-  std::vector<int> leaves(nStates, 0);
-  for (int i = 0; i < std::min(len, nStates); ++i) {
-    int v = states[i];
-    if (IntegerVector::is_na(v)) v = 0;
-    if (v < 0) stop("`states` must be non-negative counts.");
-    leaves[i] = v;
-  }
-  
-  int nTaxa = sum_int(leaves);
-  LnRootedCache lnRooted(nTaxa);
-  LogRDCache logRD(lnRooted);
-  ValidDrawsCache validDraws;
-  Downpass D(nLevels);
-  
-  int presentBits = 0;
-  for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
-  TokenPairs pairs(D, presentBits);
-  
-  Solver solver(D, pairs, validDraws, logRD, presentBits);
-  return solver.run(steps, leaves);
-}
+ //' @examples
+ //' # Number of trees with 2 steps for character 0011122
+ //' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
+ //' 
+ //' @export
+ // [[Rcpp::export]]
+ double MaddisonSlatkin(int steps, IntegerVector states) {
+   int len = states.size();
+   if (len <= 0) stop("`states` must have positive length.");
+   int nLevels = (int)std::floor(std::log2((double)len)) + 1;
+   int nStates = (1 << nLevels) - 1;
+   
+   std::vector<int> leaves(nStates, 0);
+   for (int i = 0; i < std::min(len, nStates); ++i) {
+     int v = states[i];
+     if (IntegerVector::is_na(v)) v = 0;
+     if (v < 0) stop("`states` must be non-negative counts.");
+     leaves[i] = v;
+   }
+   
+   int nTaxa = sum_int(leaves);
+   LnRootedCache lnRooted(nTaxa);
+   LogRDCache logRD(lnRooted);
+   ValidDrawsCache validDraws;
+   Downpass D(nLevels);
+   
+   int presentBits = 0;
+   for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
+   TokenPairs pairs(D, presentBits);
+   
+   Solver solver(D, pairs, validDraws, logRD, presentBits);
+   return solver.run(steps, leaves);
+ }
 
-// [[Rcpp::export]]
-NumericVector MaddisonSlatkin_steps(int s_min, int s_max, IntegerVector states) {
-  if (s_min < 0 || s_max < s_min) stop("Invalid steps range.");
-  
-  int len = states.size();
-  int nLevels = (int)std::floor(std::log2((double)len)) + 1;
-  int nStates = (1 << nLevels) - 1;
-  
-  std::vector<int> leaves(nStates, 0);
-  for (int i = 0; i < std::min(len, nStates); ++i) {
-    int v = states[i];
-    if (IntegerVector::is_na(v)) v = 0;
-    if (v < 0) stop("`states` must be non-negative counts.");
-    leaves[i] = v;
-  }
-  
-  int nTaxa = sum_int(leaves);
-  LnRootedCache lnRooted(nTaxa);
-  LogRDCache logRD(lnRooted);
-  ValidDrawsCache validDraws;
-  Downpass D(nLevels);
-  int presentBits = 0;
-  for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
-  TokenPairs pairs(D, presentBits);
-  
-  Solver solver(D, pairs, validDraws, logRD, presentBits);
-  
-  int K = s_max - s_min + 1;
-  NumericVector out(K);
-  for (int k = 0; k < K; ++k) {
-    out[k] = solver.run(s_min + k, leaves);
-  }
-  return out;
-}
+//' @export
+ //' @keywords internal
+ // [[Rcpp::export]]
+ NumericVector MaddisonSlatkin_steps(int s_min, int s_max, IntegerVector states) {
+   if (s_min < 0 || s_max < s_min) stop("Invalid steps range.");
+   
+   int len = states.size();
+   int nLevels = (int)std::floor(std::log2((double)len)) + 1;
+   int nStates = (1 << nLevels) - 1;
+   
+   std::vector<int> leaves(nStates, 0);
+   for (int i = 0; i < std::min(len, nStates); ++i) {
+     int v = states[i];
+     if (IntegerVector::is_na(v)) v = 0;
+     if (v < 0) stop("`states` must be non-negative counts.");
+     leaves[i] = v;
+   }
+   
+   int nTaxa = sum_int(leaves);
+   LnRootedCache lnRooted(nTaxa);
+   LogRDCache logRD(lnRooted);
+   ValidDrawsCache validDraws;
+   Downpass D(nLevels);
+   int presentBits = 0;
+   for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
+   TokenPairs pairs(D, presentBits);
+   
+   Solver solver(D, pairs, validDraws, logRD, presentBits);
+   
+   int K = s_max - s_min + 1;
+   NumericVector out(K);
+   for (int k = 0; k < K; ++k) {
+     out[k] = solver.run(s_min + k, leaves);
+   }
+   return out;
+ }
