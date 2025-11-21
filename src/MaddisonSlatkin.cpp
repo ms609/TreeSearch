@@ -171,27 +171,45 @@ public:
     return ins.first->second;
   }
 };
+// ----- LogRD using pair of vectors as key
+struct LogRDKey {
+  std::vector<int> drawn;
+  std::vector<int> leaves;
 
-// ----- LogRD
+  bool operator==(const LogRDKey& other) const {
+    return drawn == other.drawn && leaves == other.leaves;
+  }
+};
+
+struct LogRDKeyHash {
+  size_t operator()(const LogRDKey& k) const noexcept {
+    size_t h = 0;
+    for (int x : k.drawn) h ^= std::hash<int>{}(x) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    for (int x : k.leaves) h ^= std::hash<int>{}(x) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    return h;
+  }
+};
+
 class LogRDCache {
   LnRootedCache& lnRooted;
-  std::unordered_map<std::vector<int>, double, vec_int_hash> cache;
+  std::unordered_map<LogRDKey, double, LogRDKeyHash> cache;
+
 public:
   explicit LogRDCache(LnRootedCache& lnr) : lnRooted(lnr) {}
-  
+
   double compute(const std::vector<int>& drawn, const std::vector<int>& leaves) {
-    std::vector<int> key = drawn;
-    key.insert(key.end(), leaves.begin(), leaves.end());
+    LogRDKey key{drawn, leaves};
     auto it = cache.find(key);
     if (it != cache.end()) return it->second;
-    
+
     const int m = sum_int(drawn);
     const int n = sum_int(leaves);
     double bal = (n == 2*m) ? std::log(0.5) : 0.0;
-    
+
     long double lc = 0.0L;
     for (size_t i = 0; i < leaves.size(); ++i) lc += lchoose_log(leaves[i], drawn[i]);
     double val = bal + lnRooted(m) + lnRooted(n - m) - lnRooted(n) + (double)lc;
+
     cache.emplace(std::move(key), val);
     return val;
   }
