@@ -22,7 +22,7 @@ FitchBuilder <- function(steps, tokenCount) {
     
     if (stepsAvailable < 1) return(rootState)
     
-    apply(which(dp == rootState, arr.ind = TRUE), 1, function(childStates) {
+    ret <- apply(which(dp == rootState, arr.ind = TRUE), 1, function(childStates) {
       lState <- childStates[[1]]
       rState <- childStates[[2]]
       
@@ -45,27 +45,163 @@ FitchBuilder <- function(steps, tokenCount) {
       }
       if (lStepsNeeded + rStepsNeeded > stepsAvailable) return(NULL)
       
-      lapply(lStepsNeeded:(stepsAvailable - rStepsNeeded), function(lSteps) {
+      result <- lapply(lStepsNeeded:(stepsAvailable - rStepsNeeded), function(lSteps) {
         rSteps <- stepsAvailable - lSteps
         list("L" = .Recurse(lState, tokensAvailable - rTokens, lSteps),
              "R" = .Recurse(rState, tokensAvailable - lTokens, rSteps))
       })
+      `names<-`(result, paste0("steps", seq_along(result)))
     })
+    `names<-`(ret, paste0("rt", seq_along(ret))) |>
+      unlist(recursive = FALSE)
   }
   
-  lapply(seq_len(nStates), .Recurse,
-         tokensAvailable = tokenCount,
-         stepsAvailable = steps)
+  vapply(
+    lapply(seq_len(nStates), .Recurse,
+                      tokensAvailable = tokenCount,
+                      stepsAvailable = steps) |> .ExpandChoices(),
+    function(x) tabulate(unlist(x, use.names = FALSE, nLevels)),
+    integer(nLevels)
+  )
 }
+
+BuildCounter <- function(...) {
+  apply(FitchBuilder(...), 2, AssignLeavesToRegions, tokenCount) |> sum()
+}
+
+#' Count the number of labelled rooted binary trees with leaves in specified regions
+#'
+#' `AssignLeavesToRegions()` computes the total number of **labelled rooted binary trees**
+#' in which a specified number of leaves are assigned to distinct regions (edges) of a
+#' starting tree. Each region receives at least one leaf, and leaves are considered
+#' distinct (labelled).
+#'
+#' For a single region with `e` chosen edges and `n` labelled leaves, the number of
+#' trees is computed as:
+#'
+#' \deqn{
+#' \text{LeafAssignment}(e, n) = \sum_{k_1 + \dots + k_e = n, k_i \ge 1}
+#' \binom{n}{k_1, \dots, k_e} \prod_{i=1}^e NRooted(k_i),
+#' }
+#'
+#' where
+#'
+#' \eqn{NRooted(k) = (2k - 3)!!} 
+#' is the number of **labelled rooted binary trees** with `k` leaves, and
+#' \eqn{\binom{n}{k_1, \dots, k_e}} is the multinomial coefficient giving the number
+#' of ways to assign `n` distinct leaves to the `e` edges according to the
+#' composition `(k_1, ..., k_e)`.
+#'
+#' The total number of trees across multiple regions is obtained by taking the product
+#' over each region:
+#'
+#' \deqn{
+#' \text{TotalTrees} = \prod_{i} \text{LeafAssignment}(regions[[i]], leaves[[i]])
+#' }
+#'
+#' @param regions A vector of integers, where `regions[[i]]` is the number of chosen edges
+#'   in region `i` that must receive at least one leaf.
+#' @param leaves A vector of integers, where `leaves[[i]]` is the total number of labelled
+#'   leaves to be added to region `i`.
+#'
+#' @return `AssignLeavesToRegions()` returns a numeric scalar giving the total number
+#'   of labelled rooted binary trees consistent with the allocation of leaves to regions.
+#'
+#' @examples
+#' # One region with 1 chosen edge, 3 leaves
+#' .AssignLeavesToRegions(list(1), list(3))
+#'
+#' # Two regions: 1 edge with 2 leaves, 2 edges with 4 leaves
+#' .AssignLeavesToRegions(list(1, 2), list(2, 4))
+#'
+#' @seealso [NRooted()] for the double factorial formula counting labelled rooted trees.
+#' @export
+AssignLeavesToRegions <- function(regions, leaves) {
+  vapply(seq_along(regions), function(i) {
+    .LeafAssignment(regions[[i]], leaves[[i]])
+    }, double(1)) |> prod()
+}
+  
+.LeafAssignment <- function(e, n) {
+  if (n < e) return(0L)   # impossible to assign ≥1 leaf to each edge
+  comps <- .CompositionsPos(n, e)
+  total <- 0
+  for (kvec in comps) {
+    # Multinomial coefficient: ways to assign labels to the chosen edges
+    multinom <- factorial(n) / prod(factorial(kvec))
+    # Product of NRooted for each edge
+    total <- total + multinom * prod(vapply(kvec, NRooted, double(1)))
+  }
+  total
+}
+
+# Compositions of n into e positive integers
+.CompositionsPos <- function(n, e) {
+  if (e == 1) return(list(c(n)))
+  res <- list()
+  k <- 1L
+  for (first in 1:(n - e + 1)) {
+    tails <- .CompositionsPos(n - first, e - 1)
+    for (t in tails) {
+      res[[k]] <- c(first, t)
+      k <- k + 1L
+    }
+  }
+  res
+}
+
+
+.ExpandChoices <- function(x) {
+  
+  is_leaf <- function(x) !is.list(x)
+  
+  is_binary_subtree <- function(x) {
+    is.list(x) &&
+      length(x) == 2 &&
+      identical(sort(names(x)), c("L", "R"))
+  }
+  
+  is_choice_set <- function(x) {
+    is.list(x) &&
+      !is_binary_subtree(x)
+  }
+  
+  # 1. Leaf
+  if (is_leaf(x)) return(list(x))
+  
+  # 2. Binary subtree: recurse on L and R
+  if (is_binary_subtree(x)) {
+    left_exp  <- .ExpandChoices(x$L)
+    right_exp <- .ExpandChoices(x$R)
+    
+    out <- vector("list", length(left_exp) * length(right_exp))
+    k <- 1L
+    for (l in left_exp) for (r in right_exp) {
+      out[[k]] <- list(L = l, R = r)
+      k <- k + 1
+    }
+    return(out)
+  }
+  
+  # 3. Choice set
+  if (is_choice_set(x)) {
+    # Union of all possibilities
+    return(unlist(lapply(x, .ExpandChoices), recursive = FALSE))
+  }
+  
+  stop("Unreachable: unexpected structure")
+}
+
 
 .AsNewick <- function(x) {
   if (!is.list(x)) {
     # atomic: just return as character
     return(as.character(x))
   }
-  # recursive case
-  children <- vapply(x, to_newick, FUN.VALUE = character(1))
-  paste0("(", paste(children, collapse = ", "), ")")
+    # recursive case
+  children <- vapply(x, .AsNewick, FUN.VALUE = character(1))
+  brackets <- if (any(c("L", "R") %in% names(children))) c("(", ")") else c("[", "]")
+  paste0(brackets[[1]], paste(children, collapse = ", "), brackets[[2]])
 }
 
 .BinaryRepresentation <- function(x, digits = 32) {
