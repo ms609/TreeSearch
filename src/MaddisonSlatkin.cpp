@@ -1,0 +1,437 @@
+// src/MaddisonSlatkin.cpp
+#include <Rcpp.h>
+#include <unordered_map>
+#include <string>
+#include <vector>
+#include <limits>
+#include <cmath>
+#include <algorithm>
+
+using namespace Rcpp;
+
+static const double NEG_INF = -std::numeric_limits<double>::infinity();
+
+// ----- Utility: stable log-sum-exp over a vector of log-values
+static inline double log_sum_exp(const std::vector<double>& xs) {
+  if (xs.empty()) return NEG_INF;
+  double m = -std::numeric_limits<double>::infinity();
+  for (double v : xs) if (v > m) m = v;
+  if (!R_finite(m)) return m; // all -Inf
+  long double acc = 0.0L;
+  for (double v : xs) acc += std::exp((long double)(v - m));
+  return m + std::log((double)acc);
+}
+
+// ----- Utility: product in log-space; returns -Inf if any term is -Inf
+static inline double log_prod_sum(const std::vector<double>& xs) {
+  for (double v : xs) if (!R_finite(v)) return NEG_INF;
+  long double s = 0.0L;
+  for (double v : xs) s += v;
+  return (double)s;
+}
+
+// ----- Helper to sum integer vector
+static inline int sum_int(const std::vector<int>& v) {
+  int s = 0;
+  for (int x: v) s += x;
+  return s;
+}
+
+// ----- Compare two int vectors lexicographically
+static inline int lex_compare(const std::vector<int>& a, const std::vector<int>& b) {
+  for (size_t i = 0; i < a.size(); ++i) {
+    if (a[i] < b[i]) return -1;
+    if (a[i] > b[i]) return +1;
+  }
+  return 0;
+}
+
+// ----- Join leaves into a hashable key
+static inline std::string leaf_key(const std::vector<int>& v) {
+  std::string out;
+  out.reserve(v.size() * 3);
+  for (size_t i = 0; i < v.size(); ++i) {
+    if (i) out.push_back(',');
+    out += std::to_string(v[i]);
+  }
+  return out;
+}
+
+// ----- Key for LogP cache: "s,token|leafs"
+static inline std::string logp_key(int s, int token, const std::vector<int>& leaves) {
+  std::string out = std::to_string(s) + "," + std::to_string(token) + "|";
+  out += leaf_key(leaves);
+  return out;
+}
+
+// ----- LnRooted(n) = log((2n-3)!!) with LnRooted(0)=0, LnRooted(1)=0
+struct LnRootedCache {
+  std::vector<double> lnR;
+  
+  explicit LnRootedCache(int n_max) {
+    lnR.assign(std::max(2, n_max + 1), 0.0);
+    for (int n = 2; n <= n_max; ++n) {
+      lnR[n] = lnR[n-1] + std::log((double)(2*n - 3));
+    }
+  }
+  inline double operator()(int n) const {
+    if (n < 0) return NEG_INF;
+    if (n < (int)lnR.size()) return lnR[n];
+    double acc = lnR.back();
+    for (int i = (int)lnR.size(); i <= n; ++i) {
+      acc += std::log((double)(2*i - 3));
+    }
+    return acc;
+  }
+};
+
+// ----- lchoose(n, k) in log domain
+static inline double lchoose_log(int n, int k) {
+  if (k < 0 || k > n) return NEG_INF;
+  return R::lgammafn(n + 1.0) - R::lgammafn(k + 1.0) - R::lgammafn(n - k + 1.0);
+}
+
+// ----- Build DownpassOutcome(nLevels) in C++
+// States indexed 1..nStates; their bitmasks are values 1..(2^nLevels - 1).
+struct Downpass {
+  int nStates;
+  std::vector<int> dp;      // flattened nStates x nStates, entries in 1..nStates
+  std::vector<uint8_t> step; // flattened logical: 0/1
+  
+  explicit Downpass(int nLevels) {
+    nStates = (1 << nLevels) - 1; // 2^nLevels - 1
+    dp.resize(nStates * nStates);
+    step.resize(nStates * nStates);
+    
+    // token i corresponds to bitmask value (i), since i in 1..nStates == 1..(2^nLevels-1)
+    for (int i = 0; i < nStates; ++i) {
+      int a = i + 1; // bitmask
+      for (int j = 0; j < nStates; ++j) {
+        int b = j + 1;
+        int inter = (a & b);
+        bool newStep = (inter == 0);
+        int outMask = newStep ? (a | b) : inter;
+        // outMask lies in 1..(2^nLevels - 1) == 1..nStates
+        dp[i * nStates + j] = outMask;
+        step[i * nStates + j] = newStep ? 1u : 0u;
+      }
+    }
+  }
+  
+  inline int dp_at(int i, int j) const { return dp[i * nStates + j]; }
+  inline bool step_at(int i, int j) const { return step[i * nStates + j] != 0u; }
+};
+
+// Precompute pair lists that yield a given token, partitioned by whether they add a step
+struct Pair { int a; int b; }; // 0-based token indices
+
+struct TokenPairs {
+  std::vector< std::vector<Pair> > noStep;
+  std::vector< std::vector<Pair> > yesStep;
+  
+  TokenPairs(const Downpass& D) {
+    int nStates = D.nStates;
+    noStep.assign(nStates, {});
+    yesStep.assign(nStates, {});
+    for (int i = 0; i < nStates; ++i) {
+      for (int j = 0; j < nStates; ++j) {
+        int tok = D.dp_at(i, j);       // 1..nStates
+        int outIdx = tok - 1;          // 0-based
+        if (D.step_at(i, j)) {
+          yesStep[outIdx].push_back({i, j});
+        } else {
+          noStep[outIdx].push_back({i, j});
+        }
+      }
+    }
+  }
+};
+
+// ValidDraws(leaves): generate all 0<=drawn[i]<=leaves[i] with
+// 1 <= sum(drawn) <= floor(n/2), and for even splits (sum==n/2) drop
+// lexicographically "greater" duplicates; keep exact midpoints.
+class ValidDrawsCache {
+  std::unordered_map<std::string, std::vector< std::vector<int> > > cache;
+  
+  void rec(const std::vector<int>& leaves, std::vector<int>& drawn, int idx,
+           int n, int half, int curSum, std::vector< std::vector<int> >& out) {
+    if (idx == (int)leaves.size()) {
+      if (curSum == 0 || curSum > half) return;
+      if (curSum * 2 == n) {
+        std::vector<int> undrawn(leaves.size());
+        for (size_t i = 0; i < leaves.size(); ++i) undrawn[i] = leaves[i] - drawn[i];
+        int cmp = lex_compare(drawn, undrawn);
+        if (cmp > 0) return; // drop duplicates
+      }
+      out.push_back(drawn);
+      return;
+    }
+    int maxTake = std::min(leaves[idx], half - curSum);
+    for (int k = 0; k <= maxTake; ++k) {
+      drawn[idx] = k;
+      rec(leaves, drawn, idx + 1, n, half, curSum + k, out);
+    }
+    drawn[idx] = 0;
+  }
+  
+public:
+  const std::vector< std::vector<int> >& get(const std::vector<int>& leaves) {
+    std::string key = leaf_key(leaves);
+    auto it = cache.find(key);
+    if (it != cache.end()) return it->second;
+    int n = sum_int(leaves);
+    int half = n / 2;
+    std::vector< std::vector<int> > out;
+    std::vector<int> drawn(leaves.size(), 0);
+    rec(leaves, drawn, 0, n, half, 0, out);
+    auto ins = cache.emplace(key, std::move(out));
+    return ins.first->second;
+  }
+};
+
+// Compute .LogRD(drawn, leaves)
+class LogRDCache {
+  LnRootedCache& lnRooted;
+  std::unordered_map<std::string, double> cache;
+public:
+  explicit LogRDCache(LnRootedCache& lnr) : lnRooted(lnr) {}
+  
+  double compute(const std::vector<int>& drawn, const std::vector<int>& leaves) {
+    std::string key = leaf_key(drawn) + "|" + leaf_key(leaves);
+    auto it = cache.find(key);
+    if (it != cache.end()) return it->second;
+    
+    const int m = sum_int(drawn);
+    const int n = sum_int(leaves);
+    double bal = (n == 2*m) ? std::log(0.5) : 0.0;
+    
+    long double lc = 0.0L;
+    for (size_t i = 0; i < leaves.size(); ++i) {
+      lc += lchoose_log(leaves[i], drawn[i]);
+    }
+    double val = bal + lnRooted(m) + lnRooted(n - m) - lnRooted(n) + (double)lc;
+    cache.emplace(std::move(key), val);
+    return val;
+  }
+};
+
+// LogB and LogP with memoization
+class Solver {
+  const Downpass& D;
+  const TokenPairs& pairs;
+  ValidDrawsCache& validDraws;
+  LogRDCache& logRD;
+  
+  std::unordered_map<std::string, std::vector<double> > logB_cache; // leaf_key -> vector[token]
+  std::unordered_map<std::string, double> logP_cache;               // "s,token|leaves" -> double
+  
+  inline bool all_equal(const std::vector<int>& a, const std::vector<int>& b) const {
+    for (size_t i = 0; i < a.size(); ++i) if (a[i] != b[i]) return false;
+    return true;
+  }
+  
+  // Compute LogB(token0, leaves)  token0 is 0-based index of token
+  double LogB(int token0, const std::vector<int>& leaves) {
+    const std::string L = leaf_key(leaves);
+    auto it = logB_cache.find(L);
+    if (it == logB_cache.end()) {
+      std::vector<double> v(D.nStates, std::numeric_limits<double>::quiet_NaN());
+      it = logB_cache.emplace(L, std::move(v)).first;
+    }
+    std::vector<double>& row = it->second;
+    double& slot = row[token0];
+    if (R_finite(slot)) return slot;
+    if (ISNAN(slot) == false && !R_finite(slot)) return slot;
+    
+    const int n = sum_int(leaves);
+    if (n == 1) {
+      slot = (leaves[token0] == 1) ? 0.0 : NEG_INF;
+      return slot;
+    }
+    if (n == 2) {
+      int twice = -1;
+      int a = -1, b = -1;
+      for (int i = 0; i < (int)leaves.size(); ++i) {
+        if (leaves[i] == 2) twice = i;
+        else if (leaves[i] == 1) { if (a < 0) a = i; else b = i; }
+      }
+      int resultTok = (twice >= 0) ? twice : (D.dp_at(a, b) - 1);
+      slot = (token0 == resultTok) ? 0.0 : NEG_INF;
+      return slot;
+    }
+    
+    const auto& draws = validDraws.get(leaves);
+    std::vector<double> terms;
+    terms.reserve(draws.size());
+    for (const auto& drawn : draws) {
+      int m = sum_int(drawn);
+      std::vector<int> undrawn(leaves.size());
+      for (size_t i = 0; i < leaves.size(); ++i) undrawn[i] = leaves[i] - drawn[i];
+      
+      double balancedCorrection = (2*m == n) ? std::log(2.0) : 0.0;
+      if (all_equal(drawn, undrawn)) balancedCorrection -= std::log(2.0);
+      
+      std::vector<double> inner;
+      inner.reserve(pairs.noStep[token0].size() + pairs.yesStep[token0].size());
+      for (const auto& pr : pairs.noStep[token0]) {
+        inner.push_back(LogB(pr.a, drawn) + LogB(pr.b, undrawn));
+      }
+      for (const auto& pr : pairs.yesStep[token0]) {
+        inner.push_back(LogB(pr.a, drawn) + LogB(pr.b, undrawn));
+      }
+      double acc = balancedCorrection + logRD.compute(drawn, leaves) + log_sum_exp(inner);
+      terms.push_back(acc);
+    }
+    slot = log_sum_exp(terms);
+    return slot;
+  }
+  
+  // Compute LogP(s, leaves, token0)
+  double LogP(int s, const std::vector<int>& leaves, int token0) {
+    std::string key = logp_key(s, token0, leaves);
+    auto it = logP_cache.find(key);
+    if (it != logP_cache.end()) return it->second;
+    
+    const int n = sum_int(leaves);
+    
+    if (n == 1) {
+      double out = (leaves[token0] == 1) ? ((s == 0) ? 0.0 : NEG_INF) : NEG_INF;
+      logP_cache.emplace(std::move(key), out);
+      return out;
+    }
+    if (n == 2) {
+      int twice = -1;
+      int a = -1, b = -1;
+      for (int i = 0; i < (int)leaves.size(); ++i) {
+        if (leaves[i] == 2) twice = i;
+        else if (leaves[i] == 1) { if (a < 0) a = i; else b = i; }
+      }
+      double out;
+      if (twice >= 0) {
+        out = (s == 0) ? 0.0 : NEG_INF;
+      } else {
+        bool stepAdds = D.step_at(a, b);
+        int needed = stepAdds ? 1 : 0;
+        out = (s == needed) ? 0.0 : NEG_INF;
+      }
+      logP_cache.emplace(std::move(key), out);
+      return out;
+    }
+    
+    double denom = LogB(token0, leaves);
+    if (!R_finite(denom)) {
+      logP_cache.emplace(std::move(key), denom);
+      return denom;
+    }
+    
+    const auto& draws = validDraws.get(leaves);
+    std::vector<double> outerTerms;
+    outerTerms.reserve(draws.size());
+    for (const auto& drawn : draws) {
+      const int m = sum_int(drawn);
+      std::vector<int> undrawn(leaves.size());
+      for (size_t i = 0; i < leaves.size(); ++i) undrawn[i] = leaves[i] - drawn[i];
+      
+      double sizeCorrection = ((m + m == n) && !all_equal(drawn, undrawn)) ? std::log(2.0) : 0.0;
+      
+      // Non-step conjunctions
+      std::vector<double> by_r_noStep;
+      by_r_noStep.reserve(s + 1);
+      for (int r = 0; r <= s; ++r) {
+        std::vector<double> pairTerms;
+        const auto& L = pairs.noStep[token0];
+        pairTerms.reserve(L.size());
+        for (const auto& pr : L) {
+          double t = log_prod_sum({
+            LogP(r, drawn, pr.a),
+            LogB(pr.a, drawn),
+            LogP(s - r, undrawn, pr.b),
+            LogB(pr.b, undrawn)
+          });
+          pairTerms.push_back(t);
+        }
+        by_r_noStep.push_back(log_sum_exp(pairTerms));
+      }
+      double noStepSum = log_sum_exp(by_r_noStep);
+      
+      // Step-adding conjunctions
+      std::vector<double> by_r_yesStep;
+      if (!pairs.yesStep[token0].empty() && s >= 1) {
+        by_r_yesStep.reserve(s);
+        for (int r = 0; r <= s - 1; ++r) {
+          std::vector<double> pairTerms;
+          const auto& L2 = pairs.yesStep[token0];
+          pairTerms.reserve(L2.size());
+          for (const auto& pr : L2) {
+            double t = log_prod_sum({
+              LogP(r, drawn, pr.a),
+              LogB(pr.a, drawn),
+              LogP(s - r - 1, undrawn, pr.b),
+              LogB(pr.b, undrawn)
+            });
+            pairTerms.push_back(t);
+          }
+          by_r_yesStep.push_back(log_sum_exp(pairTerms));
+        }
+      }
+      double yesStepSum = log_sum_exp(by_r_yesStep);
+      
+      double inner = logRD.compute(drawn, leaves) + sizeCorrection + log_sum_exp({noStepSum, yesStepSum});
+      outerTerms.push_back(inner);
+    }
+    
+    double result = log_sum_exp(outerTerms) - denom;
+    logP_cache.emplace(std::move(key), result);
+    return result;
+  }
+  
+public:
+  Solver(const Downpass& D_, const TokenPairs& p, ValidDrawsCache& vd, LogRDCache& rd)
+    : D(D_), pairs(p), validDraws(vd), logRD(rd) { }
+  
+  double run(int steps, const std::vector<int>& states) {
+    std::vector<double> terms;
+    terms.reserve(D.nStates);
+    for (int token0 = 0; token0 < D.nStates; ++token0) {
+      double b = LogB(token0, states);
+      double p = LogP(steps, states, token0);
+      terms.push_back(log_prod_sum({b, p}));
+    }
+    return log_sum_exp(terms);
+  }
+};
+
+//' @rdname Carter1
+//' @examples
+//' # Number of trees with 2 steps for character 0011122
+//' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
+//' 
+//' @export
+// [[Rcpp::export]]
+double MaddisonSlatkin(int steps, IntegerVector states) {
+  // Compute nLevels and pad states to nStates = 2^nLevels - 1
+  int len = states.size();
+  if (len <= 0) stop("`states` must have positive length.");
+  int nLevels = (int)std::floor(std::log2((double)len)) + 1;
+  int nStates = (1 << nLevels) - 1;
+  
+  std::vector<int> leaves(nStates, 0);
+  for (int i = 0; i < std::min(len, nStates); ++i) {
+    int v = states[i];
+    if (IntegerVector::is_na(v)) v = 0;
+    if (v < 0) stop("`states` must be non-negative counts.");
+    leaves[i] = v;
+  }
+  
+  int nTaxa = sum_int(leaves);
+  LnRootedCache lnRooted(nTaxa);
+  LogRDCache logRD(lnRooted);
+  ValidDrawsCache validDraws;
+  
+  Downpass D(nLevels);       // builds dp + step attribute
+  TokenPairs pairs(D);
+  
+  Solver solver(D, pairs, validDraws, logRD);
+  double ans = solver.run(steps, leaves);
+  return ans; // log-probability
+}

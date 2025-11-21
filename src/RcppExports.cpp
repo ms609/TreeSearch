@@ -10,6 +10,18 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// MaddisonSlatkin
+double MaddisonSlatkin(int steps, IntegerVector states);
+RcppExport SEXP _TreeSearch_MaddisonSlatkin(SEXP stepsSEXP, SEXP statesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type steps(stepsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type states(statesSEXP);
+    rcpp_result_gen = Rcpp::wrap(MaddisonSlatkin(steps, states));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ClearCarterCache
 void ClearCarterCache();
 RcppExport SEXP _TreeSearch_ClearCarterCache() {
