@@ -459,39 +459,50 @@ public:
 };
 
 //' @rdname Carter1
- //' @examples
- //' # Number of trees with 2 steps for character 0011122
- //' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
- //' 
- //' @export
- // [[Rcpp::export]]
- double MaddisonSlatkin(int steps, IntegerVector states) {
-   int len = states.size();
-   if (len <= 0) stop("`states` must have positive length.");
-   int nLevels = (int)std::floor(std::log2((double)len)) + 1;
-   int nStates = (1 << nLevels) - 1;
-   
-   std::vector<int> leaves(nStates, 0);
-   for (int i = 0; i < std::min(len, nStates); ++i) {
-     int v = states[i];
-     if (IntegerVector::is_na(v)) v = 0;
-     if (v < 0) stop("`states` must be non-negative counts.");
-     leaves[i] = v;
-   }
-   
-   int nTaxa = sum_int(leaves);
-   LnRootedCache lnRooted(nTaxa);
-   LogRDCache logRD(lnRooted);
-   ValidDrawsCache validDraws;
-   Downpass D(nLevels);
-   
-   int presentBits = 0;
-   for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
-   TokenPairs pairs(D, presentBits);
-   
-   Solver solver(D, pairs, validDraws, logRD, presentBits);
-   return solver.run(steps, leaves);
- }
+//' @examples
+//' # Number of trees with 2 steps for character 0011122
+//' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
+//' 
+//' @export
+// [[Rcpp::export]]
+NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
+  int len = states.size();
+  if (len <= 0) stop("`states` must have positive length.");
+  int nLevels = (int)std::floor(std::log2((double)len)) + 1;
+  int nStates = (1 << nLevels) - 1;
+  
+  std::vector<int> leaves(nStates, 0);
+  for (int i = 0; i < std::min(len, nStates); ++i) {
+   int v = states[i];
+   if (IntegerVector::is_na(v)) v = 0;
+   if (v < 0) stop("`states` must be non-negative counts.");
+   leaves[i] = v;
+  }
+  
+  int nTaxa = sum_int(leaves);
+  LnRootedCache lnRooted(nTaxa);
+  LogRDCache logRD(lnRooted);
+  ValidDrawsCache validDraws;
+  Downpass D(nLevels);
+  
+  int presentBits = 0;
+  for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
+  TokenPairs pairs(D, presentBits);
+  
+  Solver solver(D, pairs, validDraws, logRD, presentBits);
+  
+  int k = steps.size();
+  NumericVector out(k);
+  for (int i = 0; i < k; ++i) {
+    int s = steps[i];
+    if (IntegerVector::is_na(s))
+      out[i] = NA_REAL;
+    else
+      out[i] = solver.run(s, leaves);
+  }
+  
+  return out;
+}
 
 //' @export
  //' @keywords internal

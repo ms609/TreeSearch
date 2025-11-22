@@ -58,25 +58,12 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
   logProfile <- vapply(seq_len(split[2]), LogCarter1, double(1),
                        split[1], split[2])
   ret <- setNames(Log2Unrooted(sum(split[1:2]))
-                  - (.LogCumSumExp(logProfile) / log(2)),
+                  - (LogCumSumExp(logProfile) / log(2)),
                   seq_len(split[2]) + sum(singletons))
   ret[ret < sqrt(.Machine[["double.eps"]])] <- 0 # Floating point error inevitable
   
   # Return:
   ret
-}
-
-# Adapted from https://rpubs.com/FJRubio/LSE
-.LogCumSumExp <- function (x) { 
-  n <- length(x)
-  Lk <- c(x[1], double(n - 1L))
-  for (k in 1L + seq_len(n - 1L)) {
-    Lk[k] <- Lk[k - 1]
-    Lk[k] <- max(x[k], Lk[k]) + log1p(exp(-abs(x[k] - Lk[k])))
-  }
-  
-  # Return:
-  Lk
 }
 
 #' Number of trees with one extra step

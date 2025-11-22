@@ -7,10 +7,10 @@
 AssignLeavesToRegions(regions, leaves)
 }
 \arguments{
-\item{regions}{A list of integers, where \code{regions[[i]]} is the number of chosen edges
+\item{regions}{A vector of integers, where \code{regions[[i]]} is the number of chosen edges
 in region \code{i} that must receive at least one leaf.}
 
-\item{leaves}{A list of integers, where \code{leaves[[i]]} is the total number of labelled
+\item{leaves}{A vector of integers, where \code{leaves[[i]]} is the total number of labelled
 leaves to be added to region \code{i}.}
 }
 \value{
@@ -54,7 +54,4 @@ over each region:
 # Two regions: 1 edge with 2 leaves, 2 edges with 4 leaves
 .AssignLeavesToRegions(list(1, 2), list(2, 4))
 
-}
-\seealso{
-\code{\link[TreeTools:NRooted]{TreeTools::NRooted()}} for the double factorial formula counting labelled rooted trees.
 }

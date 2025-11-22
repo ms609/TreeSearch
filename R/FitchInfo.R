@@ -98,14 +98,28 @@ FitchInfo <- function(tree, dataset) {
     if (length(pursue) < 2) {
       c(h = 0, hMax = 0)
     } else {
-      h <- apply(combn(length(pursue), 2), 2, function(i) {
-        chX <- char
-        chX[!(char %in% pursue[i])] <- NA
-        .TwoStateH(chX, tree)
-      })
-      weightedH <- sum(h["norm", ] * h["hMax", ] / sum(h["hMax", ]))
-      c(h = if(abs(weightedH) < sqrt(.Machine$double.eps)) 0 else weightedH,
-        hMax = sum(h["hMax", ]))
+      # Prune tree to fit, and process
+      tr <- KeepTip(tree, !is.na(char))
+      char <- char[!is.na(char)]
+      tab <- table(char, deparse.level = 0)
+      steps <- CharacterLength(tr, StringToPhyDat(paste0(char), tr))
+      
+      nLevels <- length(tab)
+      logP <- if (nLevels > 2) {
+        bTab <- double(2 ^ nLevels - 1)
+        bTab[2 ^ (seq_along(tab) - 1)] <- tab
+        MaddisonSlatkin((nLevels - 1):steps, bTab)
+      } else {
+        LogCarter1(seq_len(steps), rep(tab[[1]], steps), rep(tab[[2]], steps)) -
+          LnUnrooted(sum(tab))
+      }
+      cumH <- LogCumSumExp(logP) / -log(2)
+      h <- cumH[[steps - (nLevels - 2)]]
+      expH <- sum(cumH * exp(logP))
+      c(norm = (h - expH) / (cumH[[1]] - expH),
+        h = h,
+        hMax = cumH[[1]],
+        expH = expH)
     }
   })[, attr(dataset, "index"), drop = FALSE]
   

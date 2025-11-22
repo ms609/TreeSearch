@@ -29,3 +29,16 @@ test_that("Uppass covers all cases", {
   # Ancestor irrelevant
   expect_equal(up[1, 1, 8], as.raw(1)) # {A}, {A}, ancestor {D}
 })
+
+test_that("Multi-state characters calculated correctly", {
+  library("TreeTools", quietly = TRUE)
+  tree <- BalancedTree(6)
+  character <- MatrixToPhyDat(`rownames<-`(rbind(1, 1, 2, 2, 3, 3), TipLabels(6)))
+  all6 <- as.phylo(0:104, 6)
+  tl1 <- table(vapply(all6, TreeLength, 1, character))
+  fi <- table(vapply(all6, FitchInfo, 0, character))
+  expect_equal(unname(fi), unname(rev(tl1)))
+  expect_equal(as.numeric(names(fi)),
+               unname(rev(-log2(cumsum(tl1 / NUnrooted(6))))))
+  
+})
