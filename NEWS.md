@@ -1,3 +1,8 @@
+# Branch 175-concordance
+
+- `QuartetConcordance(method = "minh")` uses the approach of Minh et al. (2020)
+
+
 # TreeSearch 1.7.0.9000 (development)
 
 No changes yet.
@@ -22,6 +27,7 @@ No changes yet.
 - Handle challenging root positions in `PlotCharacter()`
 - Fix character state colours in app legend
 - Tweak documentation
+
 
 # TreeSearch 1.6.0 (2025-04-09)
 

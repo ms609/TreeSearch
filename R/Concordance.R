@@ -1,6 +1,6 @@
 #' Calculate site concordance factor
 #' 
-#' The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure 
+#' The site concordance factor is a measure 
 #' of the strength of support that the dataset presents for a given split in a
 #' tree.
 #' 
@@ -12,21 +12,37 @@
 #' with any tree that groups the first two leaves together to the exclusion
 #' of the second.
 #' 
-#' By default, the reported value weights each site by the number of quartets
-#' it is decisive for.  This value can be interpreted as the proportion of
-#' all decisive quartets that are concordant with a split.
-#' If `weight = FALSE`, the reported value is the mean of the concordance
-#' value for each site.  
+#' The `methods` argument selects from different methods for quantifying the
+#' concordance associated with a given edge of a tree.
+#' 
+#' If `method = "split"` (the default), the concordance is calculated by
+#' counting all quartets that are decisive for a split, i.e. for the split
+#' $A|B$, any quartet that contains two leaves from set $A$ and two from set $B$.
+#' This value can be interpreted as the proportion of all decisive quartets
+#' that are concordant with a split.
+#' If `method = "sitemean"`, the reported value is the mean of the concordance
+#' value for each site.
 #' Consider a split associated with two sites:
 #' one that is concordant with 25% of 96 decisive quartets, and
 #' a second that is concordant with 75% of 4 decisive quartets.
-#' If `weight = TRUE`, the split concordance will be 24 + 3 / 96 + 4 = 27%.
-#' If `weight = FALSE`, the split concordance will be mean(75%, 25%) = 50%.
+#' `method = "split"` returns a value of 24 + 3 / 96 + 4 = 27%.
+#' `method = "sitemean"` returns mean(75%, 25%) = 50%.
 #' 
-#' `QuartetConcordance()` is computed exactly, using all quartets, where as
-#' other implementations (e.g. IQ-TREE) follow
+#' `method = "minh"` uses the approach of
+#' \insertCite{Minh2020;textual}{TreeSearch} to compute the site concordance
+#' factor.
+#' Briefly, this interprets each edge as defining *four* clades, and counts
+#' the status of quartets that contain exactly one leaf from each of these
+#' clades.  This is a subset of the quartets considered by other methods.
+#' `method = "iqtree"` uses the \insertCite{Minh2020;textual}{TreeSearch}
+#' approach as [implemented in IQ-TREE](
+#' https://github.com/iqtree/iqtree2/issues/415).
+#' 
+#' 
+#' `QuartetConcordance()` is computed exactly, using all quartets.
+#' Other implementations (e.g. IQ-TREE) follow
 #' \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
-#'  of quartets for a faster, if potentially less accurate, computation.
+#' of quartets for a faster computation, potentially at the expense of accuracy.
 #' 
 # `ClusteringConcordance()` and `PhylogeneticConcordance()` respectively report
 # the proportion of clustering information and phylogenetic information 
@@ -37,6 +53,9 @@
 #TODO More thought / explanation needed.
 #' 
 #TODO Finally, `ProfileConcordance()` (to follow)
+#'
+#' For an overview of the use and interpretation of concordance factors,
+#' see \insertCite{Lanfear2024}{TreeSearch}.
 #' 
 #' **NOTE:** These functions are under development. They are incompletely
 #' tested, and may change without notice.
@@ -45,8 +64,8 @@
 # # Renumber before MaximizeParsimony, for `tree`
 #' @inheritParams TreeTools::Renumber
 #' @inheritParams MaximizeParsimony
-#' @param weight Logical specifying whether to weight sites according to the
-#' number of quartets they are decisive for.
+#' @param method Character vector specifying which concordance measures to
+#' calculate.  See details section for available options.
 #' 
 #' 
 #' 
@@ -86,11 +105,13 @@
 #' @importFrom ape keep.tip
 #' @importFrom cli cli_progress_bar cli_progress_update
 #' @importFrom utils combn
-#' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
+#' @importFrom TreeTools as.Splits DescendantTips PhyDatToMatrix TipLabels
 #' @name SiteConcordance
 #' @family split support functions
 #' @export
-QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
+# TODO support `method = c("split", "sitemean", "minh")`
+QuartetConcordance <- function (tree, dataset = NULL, method = "split",
+                                n = 250) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
@@ -104,62 +125,153 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
     return(NULL)
   }
   dataset <- dataset[tipLabels, drop = FALSE]
-  splits <- as.Splits(tree, dataset)
-  logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
-                       logical(NTip(dataset)))
-  
   characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
   
-  cli_progress_bar(name = "Quartet concordance", total = dim(logiSplits)[[2]])
-  setNames(apply(logiSplits, 2, function (split) {
-    cli_progress_update(1, .envir = parent.frame(2))
-    quarts <- apply(characters, 2, function (char) {
-      tab <- table(split, char)
-      nCol <- dim(tab)[[2]]
-      if (nCol > 1L) {
-        # Consider the case
-        # split  0   1   2
-        # FALSE  2   3   0
-        #  TRUE  0   4   2
-        # 
-        # Concordant quartets with bin i = 1 (character 0) and bin j = 2
-        # (character 1) include any combination of the two taxa from 
-        # [FALSE, 0], and the two taxa chosen from the four in [TRUE, 1],
-        # i.e. choose(2, 2) * choose(4, 2)
-        concordant <- sum(vapply(seq_len(nCol), function (i) {
-          inBinI <- tab[1, i]
-          iChoices <- choose(inBinI, 2)
-          sum(vapply(seq_len(nCol)[-i], function (j) {
-            inBinJ <- tab[2, j]
-            iChoices * choose(inBinJ, 2)
-            }, 1))
-        }, 1))
-        
-        # To be discordant, we must select a pair of taxa from TT and from FF;
-        # and the character states must group each T with an F
-        # e.g. T0 T1  F0 F1
-        # T0 T1 F0 F2 would not be discordant - just uninformative
-        discordant <- sum(apply(combn(nCol, 2), 2, function (ij) prod(tab[, ij])))
-        
-        # Only quartets that include two T and two F can be decisive
-        # Quartets must also include two pairs of characters
-        decisive <- concordant + discordant
-        
-        # Return the numerator and denominatory of equation 2 in
-        # Minh et al. 2020
-        c(concordant, decisive)
-      } else {
-        c(0L, 0L)
-      }
-    })
-    if (isTRUE(weight)) {
-      quartSums <- rowSums(quarts)
-      ifelse(is.nan(quartSums[[2]]), NA_real_, quartSums[[1]] / quartSums[[2]])
+  if (method %in% c("minh", "minhq", "iqtree")) {
+    quarters <- .TreeQuarters(tree)
+    
+    cli_progress_bar(name = "Quartet concordance", total = dim(quarters)[[2]])
+    on.exit(cli_progress_done(.envir = parent.frame(2)))
+    if (method == "minh") {
+      sCF <- apply(quarters, 2, function(abcd) {
+        resample <- function(x) x[sample.int(length(x), 1)]
+        leaves <- replicate(n, {
+          vapply(0:3, function(q) resample(which(abcd == q)), integer(1))
+        })
+        cfQ <- apply(leaves, 2, function(q) {
+          qCh <- `mode<-`(characters[q, , drop = FALSE], "numeric")
+          concordant <- sum(qCh[1, ] == qCh[2, ] &
+            qCh[2, ] != qCh[3, ] &
+            qCh[3, ] == qCh[4, ])
+          decisive <- dim(qCh)[[2]]
+          decisive <- sum(colSums(apply(qCh + 1, 2, tabulate, 4) >= 2) > 1)
+          decisive <- sum(colSums(apply(qCh + 1, 2, tabulate, 4) >= 2) > 0)
+          concordant / decisive
+        })
+        mean(cfQ, na.rm = TRUE)
+      })
     } else {
-      mean(ifelse(is.nan(quarts[2, ]), NA_real_, quarts[1, ] / quarts[2, ]),
-           na.rm = TRUE)
+      concDeci <- apply(quarters, 2, function (q) {
+        #cli_progress_update(1, .envir = parent.frame(2))
+        quarts <- apply(characters, 2, function (char) {
+          tab <- table(q, char)
+          nCol <- dim(tab)[[2]]
+          if (nCol > 1L) {
+            # RULES:
+            # We must pick one leaf per row
+            # Only parsimony informative are decisive
+            # To be concordant, leaves 1 and 2 must come from the same column
+            
+            # Example table:
+            #   q  0   1   2
+            #   A  2   3   0
+            #   B  2   3   2
+            #   C  0   1   2
+            #   D  2   1   2
+            # 
+            
+            concordant <- sum(apply(combn(seq_len(nCol), 2), 2, function(ij) {
+              i <- ij[[1]]
+              j <- ij[[2]]
+              # Taxa from A and B from column i, C and D from j
+              prod(tab[1:2, i], tab[3:4, j]) +
+                # Taxa from A and B from column j, C and D from i
+                prod(tab[1:2, j], tab[3:4, i])
+            }))
+            
+            if (method == "minhq") {
+              # To be parsimony informative, we must pick two leaves from each of
+              #   two columns
+              
+              
+              decisive <- sum(apply(combn(seq_len(nCol), 2), 2, function(ij) {
+                # With three columns, we'll encounter i = 1, 1, 2; j = 2, 3, 3
+                i <- ij[[1]]
+                j <- ij[[2]]
+                sum(apply(combn(4, 2), 2, function(kl) {
+                  # We can pick taxa AB, AC, AD, BC, BD, CD from column i,
+                  # and the other pair from col j
+                  pair1 <- kl
+                  pair2 <- (1:4)[-kl]
+                  prod(tab[pair1, i], tab[pair2, j])
+                }))
+              }))
+            } else {
+              # IQ-TREE seems to use "variant" in place of "parsimony informative"
+              
+              nPatterns <- prod(rowSums(tab))
+              allSame <- sum(apply(tab, 2, prod))
+              
+              decisive <- nPatterns# - allSame
+              
+            }
+            c(concordant, decisive)
+          } else {
+            c(0L, 0L)
+          }
+        })
+        rowSums(quarts)
+      })
+      concDeci[1, ] / concDeci[2, ]
     }
-  }), names(splits))
+  } else {
+    splits <- as.Splits(tree, dataset)
+    logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
+                         logical(NTip(dataset)))
+    cli_progress_bar(name = "Quartet concordance", total = dim(logiSplits)[[2]])
+    on.exit(cli_progress_done(.envir = parent.frame(2)))
+    setNames(apply(logiSplits, 2, function (split) {
+      cli_progress_update(1, .envir = parent.frame(2))
+      quarts <- apply(characters, 2, function (char) {
+        tab <- table(split, char)
+        nCol <- dim(tab)[[2]]
+        if (nCol > 1L) {
+          # Consider the case
+          # split  0   1   2
+          # FALSE  2   3   0
+          #  TRUE  0   4   2
+          # 
+          # Concordant quartets with bin i = 1 (character 0) and bin j = 2
+          # (character 1) include any combination of the two taxa from 
+          # [FALSE, 0], and the two taxa chosen from the four in [TRUE, 1],
+          # i.e. choose(2, 2) * choose(4, 2)
+          concordant <- sum(vapply(seq_len(nCol), function (i) {
+            inBinI <- tab[1, i]
+            iChoices <- choose(inBinI, 2)
+            sum(vapply(seq_len(nCol)[-i], function (j) {
+              inBinJ <- tab[2, j]
+              iChoices * choose(inBinJ, 2)
+              }, 1))
+          }, 1))
+          
+          # To be discordant, we must select a pair of taxa from TT and from FF;
+          # and the character states must group each T with an F
+          # e.g. T0 T1  F0 F1
+          # T0 T1 F0 F2 would not be discordant - just uninformative
+          discordant <- sum(apply(combn(nCol, 2), 2, function (ij) prod(tab[, ij])))
+          
+          # Only quartets that include two T and two F can be decisive
+          # Quartets must also include two pairs of characters
+          decisive <- concordant + discordant
+          
+          # Return the numerator and denominatory of equation 2 in
+          # Minh et al. 2020
+          c(concordant, decisive)
+        } else {
+          c(0L, 0L)
+        }
+      })
+      if (method == "split") {
+        quartSums <- rowSums(quarts)
+        ifelse(is.nan(quartSums[[2]]), NA_real_, quartSums[[1]] / quartSums[[2]])
+      } else if (method == "sitemean") {
+        mean(ifelse(is.nan(quarts[2, ]), NA_real_, quarts[1, ] / quarts[2, ]),
+             na.rm = TRUE)
+      } else {
+        stop("Unrecognized method: ", method)
+      }
+    }), names(splits))
+  }
 }
 
 #' @importFrom TreeDist Entropy
@@ -250,6 +362,52 @@ PhylogeneticConcordance <- function (tree, dataset) {
   
   # Return:
   support[, 1] / support[, 2]
+}
+
+.TreeQuarters <- function(tree) {
+  if (attr(tree, "order") != "preorder") {
+    stop("Tree must be in preorder; try `tree <- Preorder(tree)`")
+  }
+  edge <- tree[["edge"]]
+  parent <- edge[, 1]
+  child <- edge[, 2]
+  nTip <- NTip(tree)
+  nodes <- min(parent):max(parent)
+  parentEdge <- match(nodes, child)
+  descended <- DescendantTips(parent, child)
+  childEdges <- lapply(nodes, function(x) which(parent == x))
+  daughters <- lapply(childEdges, function(e) child[e])
+  
+  rootNode <- nTip + which(is.na(parentEdge))
+  rootChildren <- child[parent == rootNode]
+  nonRootChildren <- setdiff(nodes, c(rootNode, rootChildren))
+  
+  # Return:
+  cbind(
+    if (all(rootChildren > nTip)) {
+      ret <- integer(nTip)
+      groups <- childEdges[[rootChildren - nTip]]
+      for (i in 0:3) {
+        ret[descended[groups[[i + 1]], ]] <- i
+      }
+      `dimnames<-`(cbind(ret), list(TipLabels(tree), rootChildren[[1]]))
+    },
+    `dimnames<-`(vapply(nonRootChildren, function(n) {
+      ret <- integer(nTip)
+      if (parent[[parentEdge[[n - nTip]]]] == rootNode) {
+        stop("Ought something to be here?")
+      }
+      ret[apply(
+        descended[childEdges[[parent[parentEdge[n - nTip]] - nTip]], ],
+        2,
+        any)] <- 1L
+      ce <- childEdges[[n - nTip]]
+      # Overprint with own children
+      ret[descended[ce[[1]], ]] <- 2L
+      ret[descended[ce[[2]], ]] <- 3L
+      ret
+    }, integer(nTip)), list(TipLabels(tree), nonRootChildren))
+  )
 }
 
 #' @rdname SiteConcordance

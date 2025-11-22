@@ -9,7 +9,7 @@
 \alias{SharedPhylogeneticConcordance}
 \title{Calculate site concordance factor}
 \usage{
-QuartetConcordance(tree, dataset = NULL, weight = TRUE)
+QuartetConcordance(tree, dataset = NULL, method = "split", n = 250)
 
 ClusteringConcordance(tree, dataset)
 
@@ -28,11 +28,11 @@ Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
 Additive (ordered) characters can be handled using
 \code{\link[TreeTools]{Decompose}()}.}
 
-\item{weight}{Logical specifying whether to weight sites according to the
-number of quartets they are decisive for.}
+\item{method}{Character vector specifying which concordance measures to
+calculate.  See details section for available options.}
 }
 \description{
-The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure
+The site concordance factor is a measure
 of the strength of support that the dataset presents for a given split in a
 tree.
 }
@@ -45,21 +45,38 @@ But a quartet with characters \verb{0 0 1 1} is decisive, and is concordant
 with any tree that groups the first two leaves together to the exclusion
 of the second.
 
-By default, the reported value weights each site by the number of quartets
-it is decisive for.  This value can be interpreted as the proportion of
-all decisive quartets that are concordant with a split.
-If \code{weight = FALSE}, the reported value is the mean of the concordance
+The \code{methods} argument selects from different methods for quantifying the
+concordance associated with a given edge of a tree.
+
+If \code{method = "split"} (the default), the concordance is calculated by
+counting all quartets that are decisive for a split, i.e. for the split
+$A|B$, any quartet that contains two leaves from set $A$ and two from set $B$.
+This value can be interpreted as the proportion of all decisive quartets
+that are concordant with a split.
+If \code{method = "sitemean"}, the reported value is the mean of the concordance
 value for each site.
 Consider a split associated with two sites:
 one that is concordant with 25\% of 96 decisive quartets, and
 a second that is concordant with 75\% of 4 decisive quartets.
-If \code{weight = TRUE}, the split concordance will be 24 + 3 / 96 + 4 = 27\%.
-If \code{weight = FALSE}, the split concordance will be mean(75\%, 25\%) = 50\%.
+\code{method = "split"} returns a value of 24 + 3 / 96 + 4 = 27\%.
+\code{method = "sitemean"} returns mean(75\%, 25\%) = 50\%.
 
-\code{QuartetConcordance()} is computed exactly, using all quartets, where as
-other implementations (e.g. IQ-TREE) follow
+\code{method = "minh"} uses the approach of
+\insertCite{Minh2020;textual}{TreeSearch} to compute the site concordance
+factor.
+Briefly, this interprets each edge as defining \emph{four} clades, and counts
+the status of quartets that contain exactly one leaf from each of these
+clades.  This is a subset of the quartets considered by other methods.
+\code{method = "iqtree"} uses the \insertCite{Minh2020;textual}{TreeSearch}
+approach as \href{https://github.com/iqtree/iqtree2/issues/415}{implemented in IQ-TREE}.
+
+\code{QuartetConcordance()} is computed exactly, using all quartets.
+Other implementations (e.g. IQ-TREE) follow
 \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
-of quartets for a faster, if potentially less accurate, computation.
+of quartets for a faster computation, potentially at the expense of accuracy.
+
+For an overview of the use and interpretation of concordance factors,
+see \insertCite{Lanfear2024}{TreeSearch}.
 
 \strong{NOTE:} These functions are under development. They are incompletely
 tested, and may change without notice.
