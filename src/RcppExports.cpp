@@ -48,6 +48,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// parsimony_moments
+List parsimony_moments(List tree, NumericVector state_probs);
+RcppExport SEXP _TreeSearch_parsimony_moments(SEXP treeSEXP, SEXP state_probsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tree(treeSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type state_probs(state_probsSEXP);
+    rcpp_result_gen = Rcpp::wrap(parsimony_moments(tree, state_probs));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ClearCarterCache
 void ClearCarterCache();
 RcppExport SEXP _TreeSearch_ClearCarterCache() {
