@@ -4,6 +4,7 @@
 \alias{FitchBuilder}
 \alias{MaddisonSlatkin}
 \alias{Carter1}
+\alias{Steel19}
 \title{Number of trees with \emph{m} steps}
 \usage{
 FitchBuilder(steps, tokenCount)
@@ -12,6 +13,7 @@ MaddisonSlatkin(steps, states)
 
 Carter1(m, a, b)
 
+Steel19(steps, states)
 }
 \arguments{
 \item{states}{Number of leaves labelled with each possible state.
@@ -36,6 +38,10 @@ and \emph{b} leaves are labelled with a second state, using theorem 1 of
 \code{MaddisonSlatkin()} generalises this result to characters with multiple
 steps using the recursive approach of
 \insertCite{Maddison1991;textual}{TreeSearch}.
+
+\code{Steel19()} implements the $O(n^2 4^c)$ recursive formula for computing the
+probability that a tree with states \code{c} has length \code{L} given as equation 19
+in \insertCite{Steel1996;textual}{TreeSearch}.
 }
 \examples{
 # Number of trees with 2 steps for character 0011122
