@@ -259,7 +259,6 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
 #' @template MRS
 #' @importFrom abind abind
-#' @importFrom pbapply pbapply
 #' @importFrom stats setNames
 #' @importFrom TreeDist ClusteringInfoDistance Entropy entropy_int
 #' @importFrom TreeTools as.Splits MatchStrings Subsplit TipLabels
