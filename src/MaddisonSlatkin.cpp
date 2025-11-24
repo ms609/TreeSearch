@@ -21,6 +21,43 @@ struct vec_int_hash {
 };
 
 // ----- Utilities
+// Streaming log-sum-exp accumulator: identical semantics to log_sum_exp on a container,
+// but avoids allocating vectors when accumulating many terms incrementally.
+struct LSEAccumulator {
+  long double maxv;
+  long double acc; // accumulates sum of exp(v - maxv)
+  bool empty;
+  
+  LSEAccumulator() : maxv(-std::numeric_limits<long double>::infinity()), acc(0.0L), empty(true) {}
+  
+  inline void add(long double v) {
+    // ignore non-finite terms (same semantics as log_sum_exp on a container
+    // which effectively ignores -Inf unless all terms are -Inf).
+    if (!std::isfinite((double)v)) return;
+    
+    if (empty) {
+      maxv = v;
+      acc = 1.0L;        // exp(v - maxv) = exp(0) = 1
+      empty = false;
+    } else {
+      if (v > maxv) {
+        // bring old accumulator to the scale of the new max
+        acc = acc * expl(maxv - v);
+        maxv = v;
+      }
+      acc += expl(v - maxv);
+    }
+  }
+  
+  inline double result() const {
+    if (empty) return NEG_INF;
+    long double res = maxv + logl(acc);
+    return (double)res;
+  }
+  
+  inline bool is_empty() const { return empty; }
+};
+
 static inline double log_sum_exp(const std::vector<double>& xs) {
   if (xs.empty()) return NEG_INF;
   double m = -std::numeric_limits<double>::infinity();
@@ -133,20 +170,30 @@ struct TokenPairs {
 };
 
 // ----- ValidDraws
+struct DrawPair {
+  std::vector<int> drawn;
+  std::vector<int> undrawn;
+};
+
 class ValidDrawsCache {
-  std::unordered_map<std::vector<int>, std::vector< std::vector<int> >, vec_int_hash> cache;
+  std::unordered_map<std::vector<int>, std::vector<DrawPair>, vec_int_hash> cache;
   
   void rec(const std::vector<int>& leaves, std::vector<int>& drawn, int idx,
-           int n, int half, int curSum, std::vector< std::vector<int> >& out) {
+           int n, int half, int curSum, std::vector<DrawPair>& out) {
     if (idx == (int)leaves.size()) {
       if (curSum == 0 || curSum > half) return;
       if (curSum * 2 == n) {
-        std::vector<int> undrawn(leaves.size());
-        for (size_t i = 0; i < leaves.size(); ++i) undrawn[i] = leaves[i] - drawn[i];
-        int cmp = lex_compare(drawn, undrawn);
+        std::vector<int> undrawn_local(leaves.size());
+        for (size_t i = 0; i < leaves.size(); ++i) undrawn_local[i] = leaves[i] - drawn[i];
+        int cmp = lex_compare(drawn, undrawn_local);
         if (cmp > 0) return;
       }
-      out.push_back(drawn);
+      // compute undrawn once and push both
+      DrawPair dp;
+      dp.drawn = drawn;
+      dp.undrawn.resize(leaves.size());
+      for (size_t i = 0; i < leaves.size(); ++i) dp.undrawn[i] = leaves[i] - drawn[i];
+      out.push_back(std::move(dp));
       return;
     }
     int maxTake = std::min(leaves[idx], half - curSum);
@@ -158,18 +205,20 @@ class ValidDrawsCache {
   }
   
 public:
-  const std::vector< std::vector<int> >& get(const std::vector<int>& leaves) {
+  // Now returns a vector of DrawPair (drawn + undrawn), precomputed
+  const std::vector<DrawPair>& get(const std::vector<int>& leaves) {
     auto it = cache.find(leaves);
     if (it != cache.end()) return it->second;
     int n = sum_int(leaves);
     int half = n / 2;
-    std::vector< std::vector<int> > out;
+    std::vector<DrawPair> out;
     std::vector<int> drawn(leaves.size(), 0);
     rec(leaves, drawn, 0, n, half, 0, out);
     auto ins = cache.emplace(leaves, std::move(out));
     return ins.first->second;
   }
 };
+
 
 // ----- LogRD using pair of vectors as key (with cached hash)
 struct LogRDKey {
@@ -307,35 +356,36 @@ class Solver {
       return slot;
     }
     
-    const auto& draws = validDraws.get(leaves);
+    const auto& drawpairs = validDraws.get(leaves);
     std::vector<double> terms;
-    terms.reserve(draws.size());
+    terms.reserve(drawpairs.size());
     
-    for (const auto& drawn : draws) {
+    for (const auto& dp : drawpairs) {
+      const std::vector<int>& drawn = dp.drawn;
+      const std::vector<int>& undrawn = dp.undrawn;
       int m = sum_int(drawn);
-      
-      // Compute undrawn locally (cannot reuse buffer due to recursion)
-      std::vector<int> undrawn(leaves.size());
-      for (size_t i = 0; i < leaves.size(); ++i) {
-        undrawn[i] = leaves[i] - drawn[i];
-      }
       
       double balancedCorrection = (2*m == n) ? std::log(2.0) : 0.0;
       if (all_equal(drawn, undrawn)) balancedCorrection -= std::log(2.0);
       
-      std::vector<double> inner;
-      inner.reserve(pairs.noStep[token0].size() + pairs.yesStep[token0].size());
+      // accumulate inner log-sum-exp without allocating an inner vector
+      LSEAccumulator innerAcc;
       for (const auto& pr : pairs.noStep[token0]) {
-        inner.push_back(LogB(pr.a, drawn) + LogB(pr.b, undrawn));
+        double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
+        innerAcc.add((long double)val);
       }
       for (const auto& pr : pairs.yesStep[token0]) {
-        inner.push_back(LogB(pr.a, drawn) + LogB(pr.b, undrawn));
+        double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
+        innerAcc.add((long double)val);
       }
-      double acc = balancedCorrection + logRD.compute(drawn, leaves) + log_sum_exp(inner);
+      double innerSum = innerAcc.result();
+      
+      double acc = balancedCorrection + logRD.compute(drawn, leaves) + innerSum;
       terms.push_back(acc);
     }
     slot = log_sum_exp(terms);
     return slot;
+    
   }
   
   double LogP(int s, const std::vector<int>& leaves, int token0) {
@@ -375,27 +425,23 @@ class Solver {
       return denom;
     }
     
-    const auto& draws = validDraws.get(leaves);
+    const auto& drawpairs = validDraws.get(leaves);
     std::vector<double> outerTerms;
-    outerTerms.reserve(draws.size());
+    outerTerms.reserve(drawpairs.size());
     
-    for (const auto& drawn : draws) {
+    for (const auto& dp : drawpairs) {
+      const std::vector<int>& drawn = dp.drawn;
+      const std::vector<int>& undrawn = dp.undrawn;
       const int m = sum_int(drawn);
-      
-      // Compute undrawn locally
-      std::vector<int> undrawn(leaves.size());
-      for (size_t i = 0; i < leaves.size(); ++i) {
-        undrawn[i] = leaves[i] - drawn[i];
-      }
       
       double sizeCorrection = ((m + m == n) && !all_equal(drawn, undrawn)) ? std::log(2.0) : 0.0;
       
-      std::vector<double> by_r_noStep;
-      by_r_noStep.reserve(s + 1);
+      // noStep: accumulate over r (0..s)
+      LSEAccumulator noStepAcc; // accumulates log-sum-exp over r of (log_sum_exp over pairs)
       for (int r = 0; r <= s; ++r) {
-        std::vector<double> pairTerms;
+        // for this r, compute log-sum-exp across pairs (L)
+        LSEAccumulator pairAcc;
         const auto& L = pairs.noStep[token0];
-        pairTerms.reserve(L.size());
         for (const auto& pr : L) {
           double t = log_prod_sum({
             LogP(r, drawn, pr.a),
@@ -403,19 +449,20 @@ class Solver {
             LogP(s - r, undrawn, pr.b),
             LogB(pr.b, undrawn)
           });
-          pairTerms.push_back(t);
+          pairAcc.add((long double)t);
         }
-        by_r_noStep.push_back(log_sum_exp(pairTerms));
+        double val_r = pairAcc.result();
+        noStepAcc.add((long double)val_r);
       }
-      double noStepSum = log_sum_exp(by_r_noStep);
+      double noStepSum = noStepAcc.result();
       
-      std::vector<double> by_r_yesStep;
+      // yesStep: accumulate over r (0..s-1) if applicable
+      double yesStepSum = NEG_INF;
       if (!pairs.yesStep[token0].empty() && s >= 1) {
-        by_r_yesStep.reserve(s);
+        LSEAccumulator yesStepAcc;
         for (int r = 0; r <= s - 1; ++r) {
-          std::vector<double> pairTerms;
+          LSEAccumulator pairAcc;
           const auto& L2 = pairs.yesStep[token0];
-          pairTerms.reserve(L2.size());
           for (const auto& pr : L2) {
             double t = log_prod_sum({
               LogP(r, drawn, pr.a),
@@ -423,20 +470,28 @@ class Solver {
               LogP(s - r - 1, undrawn, pr.b),
               LogB(pr.b, undrawn)
             });
-            pairTerms.push_back(t);
+            pairAcc.add((long double)t);
           }
-          by_r_yesStep.push_back(log_sum_exp(pairTerms));
+          double val_r = pairAcc.result();
+          yesStepAcc.add((long double)val_r);
         }
+        yesStepSum = yesStepAcc.result();
       }
-      double yesStepSum = log_sum_exp(by_r_yesStep);
       
-      double inner = logRD.compute(drawn, leaves) + sizeCorrection + log_sum_exp({noStepSum, yesStepSum});
+      // combine noStepSum and yesStepSum (log-sum-exp of the two)
+      LSEAccumulator bothAcc;
+      bothAcc.add((long double)noStepSum);
+      bothAcc.add((long double)yesStepSum);
+      double combined = bothAcc.result();
+      
+      double inner = logRD.compute(drawn, leaves) + sizeCorrection + combined;
       outerTerms.push_back(inner);
     }
     
     double result = log_sum_exp(outerTerms) - denom;
     logP_cache.emplace(std::move(key), result);
     return result;
+    
   }
   
 public:
