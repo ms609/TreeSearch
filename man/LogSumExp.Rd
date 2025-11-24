@@ -2,12 +2,20 @@
 % Please edit documentation in R/LogAdd.R
 \name{LogSumExp}
 \alias{LogSumExp}
+\alias{LogCumSumExp}
 \title{Add log probabilities}
 \usage{
 LogSumExp(...)
+
+LogCumSumExp(x)
 }
 \arguments{
 \item{x}{Numeric vector giving log-probabilities to add}
+}
+\value{
+\code{LogSumExp()} returns the sum of \code{x}, log-transformed.
+
+\code{LogCumSumExp()} returns the cumulative sum of \code{x}, log-transformed.
 }
 \description{
 Add log probabilities whilst retaining precision
