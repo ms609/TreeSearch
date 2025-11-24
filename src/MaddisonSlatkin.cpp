@@ -219,6 +219,13 @@ public:
   }
 };
 
+class GlobalValidDraws {
+public:
+  static ValidDrawsCache& get() {
+    static ValidDrawsCache instance;   // constructed once per R session
+    return instance;
+  }
+};
 
 // ----- LogRD using pair of vectors as key (with cached hash)
 struct LogRDKey {
@@ -315,7 +322,6 @@ struct LogPKeyHash {
 class Solver {
   const Downpass& D;
   const TokenPairs& pairs;
-  ValidDrawsCache& validDraws;
   LogRDCache& logRD;
   int presentBits;
   
@@ -356,6 +362,7 @@ class Solver {
       return slot;
     }
     
+    auto &validDraws = GlobalValidDraws::get();
     const auto& drawpairs = validDraws.get(leaves);
     std::vector<double> terms;
     terms.reserve(drawpairs.size());
@@ -425,6 +432,7 @@ class Solver {
       return denom;
     }
     
+    auto &validDraws = GlobalValidDraws::get();
     const auto& drawpairs = validDraws.get(leaves);
     std::vector<double> outerTerms;
     outerTerms.reserve(drawpairs.size());
@@ -495,8 +503,8 @@ class Solver {
   }
   
 public:
-  Solver(const Downpass& D_, const TokenPairs& p, ValidDrawsCache& vd, LogRDCache& rd, int presentBits_)
-    : D(D_), pairs(p), validDraws(vd), logRD(rd), presentBits(presentBits_) {
+  Solver(const Downpass& D_, const TokenPairs& p, LogRDCache& rd, int presentBits_)
+    : D(D_), pairs(p), logRD(rd), presentBits(presentBits_) {
     logB_cache.reserve(256);
     logP_cache.reserve(1024);
   }
@@ -537,14 +545,13 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
   int nTaxa = sum_int(leaves);
   LnRootedCache lnRooted(nTaxa);
   LogRDCache logRD(lnRooted);
-  ValidDrawsCache validDraws;
   Downpass D(nLevels);
   
   int presentBits = 0;
   for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
   TokenPairs pairs(D, presentBits);
   
-  Solver solver(D, pairs, validDraws, logRD, presentBits);
+  Solver solver(D, pairs, logRD, presentBits);
   
   int k = steps.size();
   NumericVector out(k);
@@ -580,13 +587,12 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
    int nTaxa = sum_int(leaves);
    LnRootedCache lnRooted(nTaxa);
    LogRDCache logRD(lnRooted);
-   ValidDrawsCache validDraws;
    Downpass D(nLevels);
    int presentBits = 0;
    for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
    TokenPairs pairs(D, presentBits);
    
-   Solver solver(D, pairs, validDraws, logRD, presentBits);
+   Solver solver(D, pairs, logRD, presentBits);
    
    int K = s_max - s_min + 1;
    NumericVector out(K);
