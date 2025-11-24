@@ -28,6 +28,11 @@ test_that("Steel 1996 formulae are useful", {
   expect_gt(chi2$p.value, 0.001) # i.e. NSD
   
   expMean <- sum(as.numeric(names(calcProbs)) * calcProbs)
+  quickExpMean <- parsimony_moments(tree, dist)
+  expect_equal(expMean, quickExpMean[["expectation"]])
+  expect_equal(var(rep(as.numeric(names(simTable)), simTable)),
+               quickExpMean[["variance"]], tolerance = 0.1)
+  
   simMean <- sum(as.numeric(names(simTable)) * simTable) / sum(simTable)
   expect_equal(simMean, expMean, tolerance = 0.1)
 })

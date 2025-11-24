@@ -36,6 +36,7 @@ extern SEXP _TreeSearch_Log2Carter1(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_MaddisonSlatkin(SEXP, SEXP);
 extern SEXP _TreeSearch_MaddisonSlatkin_steps(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_active_parsimony_dist(SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_parsimony_moments(SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
@@ -85,6 +86,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_MaddisonSlatkin",   (DL_FUNC) &_TreeSearch_MaddisonSlatkin, 2},
   {"_TreeSearch_MaddisonSlatkin_steps",   (DL_FUNC) &_TreeSearch_MaddisonSlatkin_steps, 3},
   {"_TreeSearch_active_parsimony_dist",   (DL_FUNC) &_TreeSearch_active_parsimony_dist, 3},
+  {"_TreeSearch_parsimony_moments",   (DL_FUNC) &_TreeSearch_parsimony_moments, 2},
   
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
   {"RANDOM_TREE",                   (DL_FUNC) &RANDOM_TREE, 1},

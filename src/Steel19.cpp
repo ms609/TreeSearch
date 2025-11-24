@@ -3,7 +3,7 @@
 #include <cmath>
 #include <limits>
 #include <algorithm>
-#include <map>
+#include <string>
 
 using namespace Rcpp;
 
@@ -11,25 +11,26 @@ using namespace Rcpp;
 const int MAX_R = 8; // Hard limit for safety (2^8 = 256 states)
 const double NEG_INF = -std::numeric_limits<double>::infinity();
 
-// --- User-Provided LSE Accumulator ---
+// ============================================================================
+// PART 1: Helpers & Structures
+// ============================================================================
+
+// --- LSE Accumulator for Log-Space (Used in Distribution) ---
 struct LSEAccumulator {
   long double maxv;
-  long double acc; // accumulates sum of exp(v - maxv)
+  long double acc; 
   bool empty;
   
   LSEAccumulator() : maxv(-std::numeric_limits<long double>::infinity()), acc(0.0L), empty(true) {}
   
   inline void add(long double v) {
-    // ignore non-finite terms
     if (!std::isfinite((double)v)) return;
-    
     if (empty) {
       maxv = v;
-      acc = 1.0L;        // exp(v - maxv) = exp(0) = 1
+      acc = 1.0L;
       empty = false;
     } else {
       if (v > maxv) {
-        // bring old accumulator to the scale of the new max
         acc = acc * expl(maxv - v);
         maxv = v;
       }
@@ -39,130 +40,147 @@ struct LSEAccumulator {
   
   inline double result() const {
     if (empty) return NEG_INF;
-    long double res = maxv + logl(acc);
-    return (double)res;
+    return (double)(maxv + logl(acc));
   }
-  
-  inline bool is_empty() const { return empty; }
 };
 
-// --- Internal Data Structures ---
-
-// Represents the distribution at a node:
-// dp[mask][cost] = log_probability
-// We use a flattened vector for cache locality + a list of active masks to skip zeros.
-struct NodeProfile {
-  // Table dimensions: (1 << r) rows, (k + 1) cols
-  // Indexing: flat_table[mask * (max_k + 1) + cost]
-  std::vector<double> flat_table; 
-  std::vector<int> active_masks; // Only indices with finite probs
-  int max_k;
-  int num_states_r;
-  int num_masks;
+// --- Moments Accumulator (Linear Space) ---
+// Used to aggregate conditional expectations for a specific Fitch mask
+struct MomentAccumulator {
+  double prob_sum;
+  double w_len_sum;    // Weighted sum of lengths: Sum(P * L)
+  double w_len_sq_sum; // Weighted sum of squared lengths: Sum(P * L^2)
   
-  NodeProfile(int r, int k) : max_k(k), num_states_r(r) {
+  MomentAccumulator() : prob_sum(0.0), w_len_sum(0.0), w_len_sq_sum(0.0) {}
+  
+  // Add a contribution from a child-pair combination
+  // p_pair: Probability of this specific Left/Right state combo
+  // e1_pair: E[L] for this combo
+  // e2_pair: E[L^2] for this combo
+  void add(double p_pair, double e1_pair, double e2_pair) {
+    prob_sum += p_pair;
+    w_len_sum += p_pair * e1_pair;
+    w_len_sq_sum += p_pair * e2_pair;
+  }
+};
+
+// --- Tree Traversal Helper ---
+// Returns post-order node indices and children map
+struct TreeTopo {
+  int root;
+  int max_node;
+  std::vector<int> post_order;
+  std::vector<std::vector<int>> children;
+};
+
+TreeTopo process_tree(const IntegerMatrix& edge) {
+  TreeTopo topo;
+  int n_edge = edge.nrow();
+  topo.max_node = 0;
+  
+  for(int i=0; i < n_edge * 2; ++i) {
+    if(edge[i] > topo.max_node) topo.max_node = edge[i];
+  }
+  
+  topo.children.resize(topo.max_node + 1);
+  std::vector<bool> is_child(topo.max_node + 1, false);
+  
+  for (int i = 0; i < n_edge; ++i) {
+    int u = edge(i, 0); 
+    int v = edge(i, 1); 
+    topo.children[u].push_back(v);
+    is_child[v] = true;
+  }
+  
+  topo.root = -1;
+  for (int i = 1; i <= topo.max_node; ++i) {
+    if (!is_child[i] && !topo.children[i].empty()) {
+      topo.root = i; break;
+    }
+  }
+  if (topo.root == -1) stop("Invalid tree: could not find root.");
+  
+  std::vector<int> stack;
+  stack.push_back(topo.root);
+  while(!stack.empty()) {
+    int u = stack.back();
+    stack.pop_back();
+    topo.post_order.push_back(u); 
+    for(int child : topo.children[u]) stack.push_back(child);
+  }
+  std::reverse(topo.post_order.begin(), topo.post_order.end());
+  
+  return topo;
+}
+
+// ============================================================================
+// PART 2: Full Distribution (Log-Space DP)
+// ============================================================================
+
+struct DistNodeProfile {
+  std::vector<double> flat_table; 
+  std::vector<int> active_masks;
+  int max_k, num_masks;
+  
+  DistNodeProfile(int r, int k) : max_k(k) {
     num_masks = 1 << r;
     flat_table.assign(num_masks * (max_k + 1), NEG_INF);
   }
   
-  // Helper to access the table
-  inline double get(int mask, int cost) const {
-    return flat_table[mask * (max_k + 1) + cost];
-  }
+  inline double get(int mask, int cost) const { return flat_table[mask * (max_k + 1) + cost]; }
   
-  // Helper to set (only used during initialization really)
   inline void set(int mask, int cost, double val) {
     if (flat_table[mask * (max_k + 1) + cost] == NEG_INF) {
-      // If this is the first time we touch this mask, add to active list
-      bool mask_exists = false;
-      // Check if mask is already active (simple linear scan is fine for small r)
-      // Note: For r=6, max 64 masks. 
-      for(int m : active_masks) if(m == mask) { mask_exists = true; break; }
-      if(!mask_exists) active_masks.push_back(mask);
+      // Check if mask exists in active list (linear scan ok for small r)
+      bool exists = false;
+      for(int m : active_masks) if(m == mask) { exists = true; break; }
+      if(!exists) active_masks.push_back(mask);
     }
     flat_table[mask * (max_k + 1) + cost] = val;
   }
 };
 
-// --- Core Recursive Logic ---
-
-// Computes the profile for a parent node based on two children
-// This implements the Fitch operation logic in Log-Probability space
-NodeProfile combine_nodes(const NodeProfile& left, const NodeProfile& right, int max_k, int r) {
-  NodeProfile parent(r, max_k);
+DistNodeProfile combine_dist(const DistNodeProfile& L, const DistNodeProfile& R, int max_k, int r) {
+  DistNodeProfile P(r, max_k);
+  std::vector<LSEAccumulator> accs(P.num_masks * (max_k + 1));
+  std::vector<bool> touched(P.num_masks, false);
   
-  // We need to accumulate probabilities into the parent table.
-  // Since we are adding probabilities (log-sum-exp), we need LSE accumulators.
-  // However, creating a full grid of LSEAccumulators is expensive.
-  // We will iterate children, compute target indices, and push to a temp map or direct update?
-  // Better: Use a flat vector of LSEAccumulators for the parent.
-  std::vector<LSEAccumulator> accumulators(parent.num_masks * (max_k + 1));
-  std::vector<bool> accum_touched(parent.num_masks, false); // Track which masks got hit
-  
-  // Iterate over ACTIVE masks of children only (Sparse Optimization)
-  for (int mask_L : left.active_masks) {
-    for (int mask_R : right.active_masks) {
+  for (int mL : L.active_masks) {
+    for (int mR : R.active_masks) {
+      int intersection = mL & mR;
+      int mNew = (intersection != 0) ? intersection : (mL | mR);
+      int cost_inc = (intersection == 0) ? 1 : 0;
       
-      // Fitch Operation Logic
-      int intersection = mask_L & mask_R;
-      int mask_new;
-      int cost_inc;
-      
-      if (intersection != 0) {
-        mask_new = intersection;
-        cost_inc = 0;
-      } else {
-        mask_new = mask_L | mask_R;
-        cost_inc = 1;
-      }
-      
-      // Convolution of Costs
-      // We need: cost_L + cost_R + cost_inc <= max_k
-      // Iterate valid costs for Left
       for (int cL = 0; cL <= max_k; ++cL) {
-        double pL = left.get(mask_L, cL);
+        double pL = L.get(mL, cL);
         if (!std::isfinite(pL)) continue;
         
-        // Iterate valid costs for Right
-        // cR <= max_k - cL - cost_inc
         int max_cR = max_k - cL - cost_inc;
-        
         for (int cR = 0; cR <= max_cR; ++cR) {
-          double pR = right.get(mask_R, cR);
+          double pR = R.get(mR, cR);
           if (!std::isfinite(pR)) continue;
           
-          int total_cost = cL + cR + cost_inc;
-          
-          // Add log_prob to accumulator
-          // P(new) += P(L) * P(R)  =>  logP(new) = LSE(logP(new), logP(L) + logP(R))
-          accumulators[mask_new * (max_k + 1) + total_cost].add(pL + pR);
-          accum_touched[mask_new] = true;
+          accs[mNew * (max_k + 1) + (cL + cR + cost_inc)].add(pL + pR);
+          touched[mNew] = true;
         }
       }
     }
   }
   
-  // Finalize parent profile
-  for (int m = 0; m < parent.num_masks; ++m) {
-    if (accum_touched[m]) {
-      parent.active_masks.push_back(m);
-      for (int c = 0; c <= max_k; ++c) {
-        parent.flat_table[m * (max_k + 1) + c] = accumulators[m * (max_k + 1) + c].result();
-      }
+  for (int m = 0; m < P.num_masks; ++m) {
+    if (touched[m]) {
+      P.active_masks.push_back(m);
+      for (int c = 0; c <= max_k; ++c) P.flat_table[m * (max_k + 1) + c] = accs[m * (max_k + 1) + c].result();
     }
   }
-  
-  return parent;
+  return P;
 }
 
-
-// --- Main Exported Function ---
-
 //' Exact Distribution of Parsimony Score on a Tree (I.I.D. Model)
-//' 
-//' Computes the log-probability that a character generated by independent 
+//'
+//' `active_parsimony_dist()` computes the log-probability that a character generated by independent 
 //' resampling of leaf states has a parsimony length L(T) = k.
-//' 
+//'
 //' @param tree A phylo object (list with edge matrix).
 //' @param state_probs A numeric vector of probabilities for each state (0..r-1).
 //'        Must sum to 1. Length determines r.
@@ -172,145 +190,163 @@ NodeProfile combine_nodes(const NodeProfile& left, const NodeProfile& right, int
 //' @export
 // [[Rcpp::export]]
 NumericVector active_parsimony_dist(List tree, NumericVector state_probs, int steps) {
-  
-  // 1. Validate Inputs
   int r = state_probs.size();
-  if (r > MAX_R) {
-    stop("Number of states (r) exceeds maximum supported limit of 8.");
-  }
-  if (std::abs(sum(state_probs) - 1.0) > 1e-6) {
-    warning("State probabilities do not sum to 1.0; results may be unnormalized.");
-  }
+  if (r > MAX_R) stop("r exceeds max limit");
+  TreeTopo topo = process_tree(tree["edge"]);
   
-  IntegerMatrix edge = tree["edge"];
-  int n_edge = edge.nrow();
+  std::vector<DistNodeProfile> profiles;
+  profiles.reserve(topo.max_node + 1);
+  for(int i=0; i<=topo.max_node; ++i) profiles.emplace_back(r, steps);
   
-  // Determine N_tips and N_nodes
-  // In ape, tips are 1..Ntip. Internal are Ntip+1..
-  // We scan edge matrix to be safe.
-  int max_id = 0;
-  for(int i=0; i < n_edge * 2; ++i) {
-    if(edge[i] > max_id) max_id = edge[i];
-  }
-  
-  // Build Adjacency (Children map)
-  // children[u] = {child1, child2}
-  // Note: R indices are 1-based. We will shift to 0-based for C++ logic if needed, 
-  // but keeping 1-based for node IDs is less confusing relative to R.
-  std::vector<std::vector<int>> children(max_id + 1);
-  std::vector<bool> is_child(max_id + 1, false);
-  
-  for (int i = 0; i < n_edge; ++i) {
-    int u = edge(i, 0); // Parent
-    int v = edge(i, 1); // Child
-    children[u].push_back(v);
-    is_child[v] = true;
-  }
-  
-  // Identify Root and Tips
-  int root = -1;
-  for (int i = 1; i <= max_id; ++i) {
-    if (!is_child[i] && !children[i].empty()) {
-      root = i; 
-      break;
-    }
-    if (children[i].empty()) {
-      // It's a tip (assuming connected tree)
-    }
-  }
-  
-  if (root == -1) stop("Could not identify root node.");
-  
-  // 2. Post-Order Traversal Strategy
-  // We need to process children before parents.
-  // A simple DFS post-order.
-  std::vector<int> post_order;
-  std::vector<int> stack;
-  stack.push_back(root);
-  
-  // Iterative Post-Order Generation
-  // We'll use a 2-stack approach or simple recursive helper. Recursive is fine for tree depth < 10k.
-  // Let's use an explicit stack for safety.
-  // Actually, ape "edge" matrix is usually already sorted or easily sortable.
-  // But let's do a topological sort to be robust.
-  std::vector<int> visit_stack;
-  visit_stack.push_back(root);
-  while(!visit_stack.empty()) {
-    int u = visit_stack.back();
-    visit_stack.pop_back();
-    post_order.push_back(u); // Pre-order push
-    
-    // Push children
-    for(int child : children[u]) {
-      visit_stack.push_back(child);
-    }
-  }
-  // Reverse to get post-order (children first)
-  std::reverse(post_order.begin(), post_order.end());
-  
-  // 3. DP Execution
-  // We store calculated profiles in a map or vector. 
-  // Since node IDs are dense 1..max_id, vector is fine.
-  // We use pointers to NodeProfile to avoid copying huge vectors, 
-  // but since we process bottom-up, we can construct/move.
-  
-  // Store *active* profiles. Once a parent is computed, children can be discarded.
-  // However, `max_id` isn't huge, keeping them is easier for implementation unless RAM is tight.
-  // Let's use a vector of unique_ptrs or just objects.
-  std::vector<NodeProfile> profiles; 
-  profiles.reserve(max_id + 1);
-  
-  // Initialize with dummy
-  for(int i=0; i<=max_id; ++i) profiles.emplace_back(r, steps);
-  
-  for (int u : post_order) {
-    if (children[u].empty()) {
-      // --- LEAF NODE ---
-      // Initialize based on I.I.D. probabilities
-      // For a random character, the leaf has probability state_probs[s] of being in state s.
-      // Fitch state is exactly {s}, i.e., mask (1 << s). Cost is 0.
-      
+  for (int u : topo.post_order) {
+    if (topo.children[u].empty()) { // Leaf
       for (int s = 0; s < r; ++s) {
-        double log_prob = std::log(state_probs[s]);
-        int mask = (1 << s);
-        profiles[u].set(mask, 0, log_prob);
+        profiles[u].set(1 << s, 0, std::log(state_probs[s]));
       }
-      
-    } else {
-      // --- INTERNAL NODE ---
-      // Assume binary tree for Fitch (standard).
-      if (children[u].size() != 2) {
-        stop("Tree must be binary (internal nodes must have 2 children). Node %d has %d children.", u, children[u].size());
-      }
-      
-      int child1 = children[u][0];
-      int child2 = children[u][1];
-      
-      profiles[u] = combine_nodes(profiles[child1], profiles[child2], steps, r);
-      
-      // Optional: Free memory of children to save RAM? 
-      // profiles[child1] = NodeProfile(0,0); 
+    } else { // Internal
+      profiles[u] = combine_dist(profiles[topo.children[u][0]], profiles[topo.children[u][1]], steps, r);
     }
   }
   
-  // 4. Aggregate Results at Root
-  // Result is sum over all Fitch States for each length
-  NodeProfile& root_prof = profiles[root];
-  
-  NumericVector results(steps + 1);
-  
+  NumericVector res(steps + 1);
   for (int k = 0; k <= steps; ++k) {
-    LSEAccumulator final_acc;
-    for (int mask : root_prof.active_masks) {
-      final_acc.add(root_prof.get(mask, k));
-    }
-    results[k] = final_acc.result();
+    LSEAccumulator final;
+    for (int m : profiles[topo.root].active_masks) final.add(profiles[topo.root].get(m, k));
+    res[k] = final.result();
   }
-  
-  // Assign names 0..k
   CharacterVector names(steps + 1);
   for(int i=0; i<=steps; ++i) names[i] = std::to_string(i);
-  results.names() = names;
+  res.names() = names;
+  return res;
+}
+
+// ============================================================================
+// PART 3: Moments (Expectation & Variance) (Linear Space)
+// ============================================================================
+
+struct MomentNodeProfile {
+  std::vector<double> prob; // P(S=mask)
+  std::vector<double> e1;   // E[L | S=mask]
+  std::vector<double> e2;   // E[L^2 | S=mask]
+  std::vector<int> active_masks;
+  int num_masks;
   
-  return results;
- }
+  MomentNodeProfile(int r) {
+    num_masks = 1 << r;
+    prob.assign(num_masks, 0.0);
+    e1.assign(num_masks, 0.0);
+    e2.assign(num_masks, 0.0);
+  }
+  
+  void set_leaf(int mask, double p) {
+    active_masks.push_back(mask);
+    prob[mask] = p;
+    e1[mask] = 0.0;
+    e2[mask] = 0.0;
+  }
+};
+
+MomentNodeProfile combine_moments(const MomentNodeProfile& L, const MomentNodeProfile& R, int r) {
+  MomentNodeProfile P(r);
+  std::vector<MomentAccumulator> accs(P.num_masks);
+  std::vector<bool> touched(P.num_masks, false);
+  
+  for (int mL : L.active_masks) {
+    for (int mR : R.active_masks) {
+      double p_joint = L.prob[mL] * R.prob[mR];
+      if (p_joint <= 0.0) continue; // Skip unlikely branches
+      
+      int intersection = mL & mR;
+      int mNew = (intersection != 0) ? intersection : (mL | mR);
+      double cost_inc = (intersection == 0) ? 1.0 : 0.0;
+      
+      // Values from children
+      double E_L = L.e1[mL];
+      double E_R = R.e1[mR];
+      double E2_L = L.e2[mL];
+      double E2_R = R.e2[mR];
+      
+      // Formulae for sums of independent random variables (+ constant cost_inc)
+      // New Length Y = L + R + c
+      // E[Y] = E[L] + E[R] + c
+      double E_new = E_L + E_R + cost_inc;
+      
+      // E[Y^2] = E[(L + R + c)^2]
+      //        = E[L^2 + R^2 + c^2 + 2LR + 2Lc + 2Rc]
+      //        = E[L^2] + E[R^2] + c^2 + 2E[L]E[R] + 2c(E[L] + E[R])
+      double E2_new = E2_L + E2_R + (cost_inc * cost_inc) 
+        + 2.0 * E_L * E_R 
+      + 2.0 * cost_inc * (E_L + E_R);
+      
+      accs[mNew].add(p_joint, E_new, E2_new);
+      touched[mNew] = true;
+    }
+  }
+  
+  // Normalize Accumulators to get Conditional Expectations
+  for(int m=0; m < P.num_masks; ++m) {
+    if(touched[m]) {
+      P.active_masks.push_back(m);
+      P.prob[m] = accs[m].prob_sum;
+      if (P.prob[m] > 0) {
+        P.e1[m] = accs[m].w_len_sum / P.prob[m];
+        P.e2[m] = accs[m].w_len_sq_sum / P.prob[m];
+      }
+    }
+  }
+  return P;
+}
+
+//' Expectation and Variance of Parsimony Score
+//'
+//' `parsimony_moments()` efficiently computes the Expected value (E) and Variance (V) of the parsimony 
+//' length L(T) under the I.I.D. model.
+//'
+//' @rdname active_parsimony_dist
+//' @return `parsimony_moments` returns a list with components `expectation` and `variance`.
+//' @export
+// [[Rcpp::export]]
+List parsimony_moments(List tree, NumericVector state_probs) {
+  int r = state_probs.size();
+  if (r > MAX_R) stop("r exceeds max limit");
+  if (std::abs(sum(state_probs) - 1.0) > 1e-6) warning("Probs do not sum to 1");
+  
+  TreeTopo topo = process_tree(tree["edge"]);
+  
+  std::vector<MomentNodeProfile> profiles;
+  profiles.reserve(topo.max_node + 1);
+  for(int i=0; i<=topo.max_node; ++i) profiles.emplace_back(r);
+  
+  for (int u : topo.post_order) {
+    if (topo.children[u].empty()) {
+      for (int s = 0; s < r; ++s) {
+        profiles[u].set_leaf(1 << s, state_probs[s]);
+      }
+    } else {
+      profiles[u] = combine_moments(profiles[topo.children[u][0]], profiles[topo.children[u][1]], r);
+    }
+  }
+  
+  // Aggregate at Root
+  double grand_E1 = 0.0;
+  double grand_E2 = 0.0;
+  double total_prob = 0.0;
+  
+  MomentNodeProfile& root = profiles[topo.root];
+  for (int m : root.active_masks) {
+    grand_E1 += root.prob[m] * root.e1[m];
+    grand_E2 += root.prob[m] * root.e2[m];
+    total_prob += root.prob[m];
+  }
+  
+  // Normalize (in case total_prob drifted slightly from 1.0 due to float math, though unlikely)
+  grand_E1 /= total_prob;
+  grand_E2 /= total_prob;
+  
+  double variance = grand_E2 - (grand_E1 * grand_E1);
+  
+  return List::create(
+    Named("expectation") = grand_E1,
+    Named("variance") = variance
+  );
+}
