@@ -35,6 +35,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// active_parsimony_dist
+NumericVector active_parsimony_dist(List tree, NumericVector state_probs, int steps);
+RcppExport SEXP _TreeSearch_active_parsimony_dist(SEXP treeSEXP, SEXP state_probsSEXP, SEXP stepsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tree(treeSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type state_probs(state_probsSEXP);
+    Rcpp::traits::input_parameter< int >::type steps(stepsSEXP);
+    rcpp_result_gen = Rcpp::wrap(active_parsimony_dist(tree, state_probs, steps));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ClearCarterCache
 void ClearCarterCache();
 RcppExport SEXP _TreeSearch_ClearCarterCache() {
