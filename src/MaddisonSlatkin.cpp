@@ -76,26 +76,34 @@ struct StateKey {
 struct StateKeyHash {
   std::size_t operator()(const StateKey& k) const noexcept {
     uint64_t hash = 14695981039346656037ULL; // FNV_OFFSET_BASIS
-    const uint64_t FNV_PRIME = 1099511628211ULL;
+    constexpr uint64_t FNV_PRIME = 1099511628211ULL;
     
-    // 1. FAST DATA HASH:
-    // Interpret the 32-byte data array (16 x uint16_t) as 4 x uint64_t.
-    // This reduces the loop overhead by factor of 4.
-    const uint64_t* data64 = reinterpret_cast<const uint64_t*>(k.data);
+    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(k.data);
+    const int used_bytes = k.len * sizeof(uint16_t);
+    const int blocks = used_bytes / 8;
+    const int tail   = used_bytes % 8;
     
-    hash = (hash ^ data64[0]) * FNV_PRIME;
-    hash = (hash ^ data64[1]) * FNV_PRIME;
-    hash = (hash ^ data64[2]) * FNV_PRIME;
-    hash = (hash ^ data64[3]) * FNV_PRIME;
+    // 1. Hash all full 64-bit blocks
+    const uint64_t* blocks64 = reinterpret_cast<const uint64_t*>(bytes);
+    for (int i = 0; i < blocks; ++i) {
+      hash = (hash ^ blocks64[i]) * FNV_PRIME;
+    }
     
-    // 2. Mix Metadata
-    // We strictly DO NOT hash the 'padding' array to avoid garbage data issues.
+    // 2. Hash tail bytes (at most 7)
+    if (tail) {
+      uint64_t tail_word = 0;
+      std::memcpy(&tail_word, bytes + blocks*8, tail);
+      hash = (hash ^ tail_word) * FNV_PRIME;
+    }
+    
+    // 3. Mix metadata
     hash = (hash ^ (uint64_t)k.cached_sum) * FNV_PRIME;
     hash = (hash ^ (uint64_t)k.len) * FNV_PRIME;
     
     return (std::size_t)hash;
   }
 };
+
 // ============================================================================
 // Template-specialized StateKey for different token counts
 // ============================================================================
