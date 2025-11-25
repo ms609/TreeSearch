@@ -23,6 +23,8 @@ test_that("TaxonInfluence() works", {
 })
 
 test_that("TaxonInfluence() saves intermediate trees", {
+  skip_if_not_installed("fs")
+  
   library("TreeTools") # for phyDat manipulation
   data("congreveLamsdellMatrices", package = "TreeSearch")
   set.seed(0)
