@@ -591,8 +591,11 @@ public:
          SolverCaches& SC)
     : D(D_), pairs(p), validDraws(vd), logRD(rd), presentBits(presentBits_),
       logB_cache(SC.logB_cache), logP_cache(SC.logP_cache) {
-    logB_cache.reserve(256);
-    logP_cache.reserve(1024);
+    logB_cache.reserve(512);
+    logB_cache.max_load_factor(0.5f);
+    
+    logP_cache.reserve(4096);
+    logP_cache.max_load_factor(0.5f);
   }
   
   double run(int steps, const StateKey& states) {
@@ -827,6 +830,7 @@ NumericVector MaddisonSlatkin_steps(int s_min, int s_max, IntegerVector states) 
   
   return out;
 }
+
 //' @export
 //' @keywords internal
 // [[Rcpp::export]]
