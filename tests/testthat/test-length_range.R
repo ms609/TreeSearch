@@ -168,7 +168,7 @@ test_that("MaximumLength() handles many states (>8) without overflow", {
   expect_equal(result, 9)  # 9 steps + 0 extra for inapplicable regions
   
   # Test with large combined token value (all 10 states present in one tip)
-  # This is the scenario that triggers the crash with Vinther2008 dataset
+  # This is the scenario that triggered #203
   # 1 = only state 0, 1023 = all states 0-9 combined (2^10 - 1)
   largeToken <- c(1, 1023)
   expect_silent(result <- MaximumLength.numeric(largeToken))
@@ -176,13 +176,9 @@ test_that("MaximumLength() handles many states (>8) without overflow", {
 })
 
 test_that("MaximumLength() works with Vinther2008 dataset", {
-  # Regression test for the original crash report
   # This dataset has 10 states (0-9) which caused overflow
   data("inapplicable.datasets")
   expect_silent(result <- MaximumLength(inapplicable.phyData[["Vinther2008"]]))
   expect_true(is.numeric(result))
   expect_true(all(result >= 0))
 })
-
-
-
