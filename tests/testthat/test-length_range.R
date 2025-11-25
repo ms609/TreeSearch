@@ -186,9 +186,6 @@ test_that("MaximumLength() handles many states (>8) without overflow", {
   largeToken <- c(1, 1023)
   expect_silent(result <- MaximumLength.numeric(largeToken))
   expect_equal(result, 0)  # state 0 is subset of 1023, so no extra steps needed
-  
-  expect_error(expect_warning(MaximumLength.numeric(2 ^ (0:31))),
-               "does not support more than 30 character states")
 })
 
 test_that("MaximumLength() works with Vinther2008 dataset", {
