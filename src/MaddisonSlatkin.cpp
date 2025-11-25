@@ -5,6 +5,7 @@
 #include <limits>
 #include <cmath>
 #include <algorithm>
+#include <memory>
 using namespace Rcpp;
 
 static const double NEG_INF = -std::numeric_limits<double>::infinity();
@@ -19,6 +20,18 @@ struct vec_int_hash {
     return h;
   }
 };
+
+inline uint64_t pack_leaves(const std::vector<int> &v) {
+  uint64_t h = 146527;       // random offset basis
+  for (int x : v) {
+    uint64_t z = (uint64_t)x;
+    z ^= z >> 33; z *= 0xff51afd7ed558ccdULL;
+    z ^= z >> 33; z *= 0xc4ceb9fe1a85ec53ULL;
+    z ^= z >> 33;
+    h ^= z + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+  }
+  return h;
+}
 
 // ----- Utilities
 // Streaming log-sum-exp accumulator: identical semantics to log_sum_exp on a container,
@@ -318,10 +331,37 @@ struct LogPKeyHash {
   }
 };
 
+// ===== Persistent global caches =====
+
+// Cache for Downpass indexed by nLevels
+static std::unordered_map<int, std::shared_ptr<Downpass>> DP_CACHE;
+
+// Cache for TokenPairs indexed by (nLevels << 20 | presentBits)
+static std::unordered_map<long long, std::shared_ptr<TokenPairs>> TP_CACHE;
+
+// Cache LnRootedCache indexed by maximum nTaxa
+static std::unordered_map<int, std::shared_ptr<LnRootedCache>> LNROOT_CACHE;
+
+// Persistent ValidDrawsCache
+static ValidDrawsCache VALID_DRAWS_GLOBAL;
+
+// Cache LogRDCache indexed by nTaxa (each needs its own LnRootedCache)
+static std::unordered_map<int, std::shared_ptr<LogRDCache>> LOGRD_CACHE;
+
+// Solver-level caches indexed by vector<int> leaves
+struct SolverCaches {
+  std::unordered_map<std::vector<int>, std::vector<double>, vec_int_hash> logB_cache;
+  std::unordered_map<LogPKey, double, LogPKeyHash> logP_cache;
+};
+
+static std::unordered_map<uint64_t, std::shared_ptr<SolverCaches>> SOLVER_CACHE;
+
+
 // ----- Solver
 class Solver {
   const Downpass& D;
   const TokenPairs& pairs;
+  ValidDrawsCache& validDraws;
   LogRDCache& logRD;
   int presentBits;
   
@@ -503,8 +543,11 @@ class Solver {
   }
   
 public:
-  Solver(const Downpass& D_, const TokenPairs& p, LogRDCache& rd, int presentBits_)
-    : D(D_), pairs(p), logRD(rd), presentBits(presentBits_) {
+  Solver(const Downpass& D_, const TokenPairs& p,
+         ValidDrawsCache& vd, LogRDCache& rd, int presentBits_,
+         SolverCaches& SC)
+    : D(D_), pairs(p), validDraws(vd), logRD(rd), presentBits(presentBits_),
+      logB_cache(SC.logB_cache), logP_cache(SC.logP_cache) {
     logB_cache.reserve(256);
     logP_cache.reserve(1024);
   }
@@ -543,15 +586,75 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
   }
   
   int nTaxa = sum_int(leaves);
-  LnRootedCache lnRooted(nTaxa);
-  LogRDCache logRD(lnRooted);
-  Downpass D(nLevels);
+  // --- Downpass (persistent)
+  std::shared_ptr<Downpass> Dptr;
+  {
+    auto it = DP_CACHE.find(nLevels);
+    if (it != DP_CACHE.end()) Dptr = it->second;
+    else {
+      Dptr = std::make_shared<Downpass>(nLevels);
+      DP_CACHE[nLevels] = Dptr;
+    }
+  }
+  Downpass& D = *Dptr;
   
   int presentBits = 0;
   for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
-  TokenPairs pairs(D, presentBits);
+  // --- TokenPairs (persistent)
+  long long tp_key = ((long long)nLevels << 20) | presentBits;
+  std::shared_ptr<TokenPairs> Tpptr;
+  {
+    auto it = TP_CACHE.find(tp_key);
+    if (it != TP_CACHE.end()) Tpptr = it->second;
+    else {
+      Tpptr = std::make_shared<TokenPairs>(D, presentBits);
+      TP_CACHE[tp_key] = Tpptr;
+    }
+  }
+  TokenPairs& pairs = *Tpptr;
   
-  Solver solver(D, pairs, logRD, presentBits);
+  // --- LnRootedCache (persistent)
+  std::shared_ptr<LnRootedCache> LNRptr;
+  {
+    auto it = LNROOT_CACHE.find(nTaxa);
+    if (it != LNROOT_CACHE.end()) LNRptr = it->second;
+    else {
+      LNRptr = std::make_shared<LnRootedCache>(nTaxa);
+      LNROOT_CACHE[nTaxa] = LNRptr;
+    }
+  }
+  LnRootedCache& lnRooted = *LNRptr;
+  
+  
+  // --- LogRDCache (persistent per nTaxa)
+  std::shared_ptr<LogRDCache> LRptr;
+  {
+    auto it = LOGRD_CACHE.find(nTaxa);
+    if (it != LOGRD_CACHE.end()) LRptr = it->second;
+    else {
+      LRptr = std::make_shared<LogRDCache>(lnRooted);
+      LOGRD_CACHE[nTaxa] = LRptr;
+    }
+  }
+  LogRDCache& logRD = *LRptr;
+  
+  // --- ValidDrawsCache is global
+  ValidDrawsCache& validDraws = VALID_DRAWS_GLOBAL;
+  
+  // --- Solver-level caches per leaves
+  std::shared_ptr<SolverCaches> sc;
+  uint64_t key = pack_leaves(leaves);
+  
+  {
+    auto it = SOLVER_CACHE.find(key);
+    if (it != SOLVER_CACHE.end()) sc = it->second;
+    else {
+      sc = std::make_shared<SolverCaches>();
+      SOLVER_CACHE[key] = sc;
+    }
+  }
+  
+  Solver solver(D, pairs, validDraws, logRD, presentBits, *sc);
   
   int k = steps.size();
   NumericVector out(k);
@@ -567,37 +670,98 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
 }
 
 //' @export
- //' @keywords internal
- // [[Rcpp::export]]
- NumericVector MaddisonSlatkin_steps(int s_min, int s_max, IntegerVector states) {
-   if (s_min < 0 || s_max < s_min) stop("Invalid steps range.");
-   
-   int len = states.size();
-   int nLevels = (int)std::floor(std::log2((double)len)) + 1;
-   int nStates = (1 << nLevels) - 1;
-   
-   std::vector<int> leaves(nStates, 0);
-   for (int i = 0; i < std::min(len, nStates); ++i) {
-     int v = states[i];
-     if (IntegerVector::is_na(v)) v = 0;
-     if (v < 0) stop("`states` must be non-negative counts.");
-     leaves[i] = v;
-   }
-   
-   int nTaxa = sum_int(leaves);
-   LnRootedCache lnRooted(nTaxa);
-   LogRDCache logRD(lnRooted);
-   Downpass D(nLevels);
-   int presentBits = 0;
-   for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
-   TokenPairs pairs(D, presentBits);
-   
-   Solver solver(D, pairs, logRD, presentBits);
-   
-   int K = s_max - s_min + 1;
-   NumericVector out(K);
-   for (int k = 0; k < K; ++k) {
-     out[k] = solver.run(s_min + k, leaves);
+//' @keywords internal
+// [[Rcpp::export]]
+NumericVector MaddisonSlatkin_steps(int s_min, int s_max, IntegerVector states) {
+  if (s_min < 0 || s_max < s_min) stop("Invalid steps range.");
+  
+  int len = states.size();
+  int nLevels = (int)std::floor(std::log2((double)len)) + 1;
+  int nStates = (1 << nLevels) - 1;
+  
+  std::vector<int> leaves(nStates, 0);
+  for (int i = 0; i < std::min(len, nStates); ++i) {
+    int v = states[i];
+    if (IntegerVector::is_na(v)) v = 0;
+    if (v < 0) stop("`states` must be non-negative counts.");
+    leaves[i] = v;
+  }
+  
+  int nTaxa = sum_int(leaves);
+  // --- Downpass (persistent)
+  std::shared_ptr<Downpass> Dptr;
+  {
+    auto it = DP_CACHE.find(nLevels);
+    if (it != DP_CACHE.end()) Dptr = it->second;
+    else {
+      Dptr = std::make_shared<Downpass>(nLevels);
+      DP_CACHE[nLevels] = Dptr;
+    }
+  }
+  Downpass& D = *Dptr;
+  
+  int presentBits = 0;
+  for (int t = 0; t < nStates; ++t) if (leaves[t] > 0) presentBits |= token_mask(t);
+  // --- TokenPairs (persistent)
+  long long tp_key = ((long long)nLevels << 20) | presentBits;
+  std::shared_ptr<TokenPairs> Tpptr;
+  {
+    auto it = TP_CACHE.find(tp_key);
+    if (it != TP_CACHE.end()) Tpptr = it->second;
+    else {
+      Tpptr = std::make_shared<TokenPairs>(D, presentBits);
+      TP_CACHE[tp_key] = Tpptr;
+    }
+  }
+  TokenPairs& pairs = *Tpptr;
+  
+  // --- LnRootedCache (persistent)
+  std::shared_ptr<LnRootedCache> LNRptr;
+  {
+    auto it = LNROOT_CACHE.find(nTaxa);
+    if (it != LNROOT_CACHE.end()) LNRptr = it->second;
+    else {
+      LNRptr = std::make_shared<LnRootedCache>(nTaxa);
+      LNROOT_CACHE[nTaxa] = LNRptr;
+    }
+  }
+  LnRootedCache& lnRooted = *LNRptr;
+  
+  
+  // --- LogRDCache (persistent per nTaxa)
+  std::shared_ptr<LogRDCache> LRptr;
+  {
+    auto it = LOGRD_CACHE.find(nTaxa);
+    if (it != LOGRD_CACHE.end()) LRptr = it->second;
+    else {
+      LRptr = std::make_shared<LogRDCache>(lnRooted);
+      LOGRD_CACHE[nTaxa] = LRptr;
+    }
+  }
+  LogRDCache& logRD = *LRptr;
+  
+  // --- ValidDrawsCache is global
+  ValidDrawsCache& validDraws = VALID_DRAWS_GLOBAL;
+  
+  // --- Solver-level caches per leaves
+  std::shared_ptr<SolverCaches> sc;
+  uint64_t key = pack_leaves(leaves);
+  
+  {
+    auto it = SOLVER_CACHE.find(key);
+    if (it != SOLVER_CACHE.end()) sc = it->second;
+    else {
+      sc = std::make_shared<SolverCaches>();
+      SOLVER_CACHE[key] = sc;
+    }
+  }
+  
+  Solver solver(D, pairs, validDraws, logRD, presentBits, *sc);
+  
+  int K = s_max - s_min + 1;
+  NumericVector out(K);
+  for (int k = 0; k < K; ++k) {
+    out[k] = solver.run(s_min + k, leaves);
    }
    return out;
  }
