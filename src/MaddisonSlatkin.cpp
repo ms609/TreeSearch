@@ -73,36 +73,49 @@ struct StateKey {
   }
 };
 
+alignas(8)
+  static const uint64_t MS_MASKS_64[17][4] = {
+    // len = 0
+    {0, 0, 0, 0},
+    // len = 1..16
+    {0xFFFFULL, 0, 0, 0},
+    {0xFFFFFFFFULL, 0, 0, 0},
+    {0xFFFFFFFFFFFFULL, 0, 0, 0},
+    {0xFFFFFFFFFFFFFFFFULL, 0, 0, 0},              // 4 entries → 1 full 64-bit word
+    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFULL, 0, 0},
+    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFULL, 0, 0},
+    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFULL, 0, 0},
+    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0, 0}, // 8 entries → 2 full words
+    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFULL, 0},
+    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFULL, 0},
+    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFULL, 0},
+    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0},
+    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFULL},
+    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFULL},
+    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFULL},
+    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL}
+  };
+
 struct StateKeyHash {
   std::size_t operator()(const StateKey& k) const noexcept {
-    uint64_t hash = 14695981039346656037ULL; // FNV_OFFSET_BASIS
+    uint64_t hash = 14695981039346656037ULL;
     constexpr uint64_t FNV_PRIME = 1099511628211ULL;
     
-    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(k.data);
-    const int used_bytes = k.len * sizeof(uint16_t);
-    const int blocks = used_bytes / 8;
-    const int tail   = used_bytes % 8;
+    const uint64_t* d = reinterpret_cast<const uint64_t*>(k.data);
+    const uint64_t* m = MS_MASKS_64[k.len];
     
-    // 1. Hash all full 64-bit blocks
-    const uint64_t* blocks64 = reinterpret_cast<const uint64_t*>(bytes);
-    for (int i = 0; i < blocks; ++i) {
-      hash = (hash ^ blocks64[i]) * FNV_PRIME;
-    }
+    hash = (hash ^ (d[0] & m[0])) * FNV_PRIME;
+    hash = (hash ^ (d[1] & m[1])) * FNV_PRIME;
+    hash = (hash ^ (d[2] & m[2])) * FNV_PRIME;
+    hash = (hash ^ (d[3] & m[3])) * FNV_PRIME;
     
-    // 2. Hash tail bytes (at most 7)
-    if (tail) {
-      uint64_t tail_word = 0;
-      std::memcpy(&tail_word, bytes + blocks*8, tail);
-      hash = (hash ^ tail_word) * FNV_PRIME;
-    }
-    
-    // 3. Mix metadata
     hash = (hash ^ (uint64_t)k.cached_sum) * FNV_PRIME;
     hash = (hash ^ (uint64_t)k.len) * FNV_PRIME;
     
     return (std::size_t)hash;
   }
 };
+
 
 // ============================================================================
 // Template-specialized StateKey for different token counts
