@@ -72,24 +72,36 @@ struct StateKey {
   }
 };
 
-// StateKeyHash remains the same, relying on sizeof(StateKey)
 struct StateKeyHash {
   std::size_t operator()(const StateKey& k) const noexcept {
-    uint64_t hash = 0;
+    uint64_t hash = 14695981039346656037ULL; // FNV_OFFSET_BASIS
     const uint64_t FNV_PRIME = 1099511628211ULL;
     
-    // Hash the actual data array. len is max 16.
-    for (int i = 0; i < k.len; ++i) {
-      // Combine current hash with the data element using FNV-style multiply/xor
-      hash = (hash ^ k.data[i]) * FNV_PRIME;
+    // 1. Hash the uint16_t data array (32 bytes) by treating it as four 64-bit words.
+    // This processes 8 elements (16 bytes) at a time, speeding up the core loop by 4x.
+    const uint64_t* data64 = reinterpret_cast<const uint64_t*>(k.data);
+    
+    // Since k.data is 32 bytes (16 * uint16_t), it is 4 x uint64_t.
+    for (size_t i = 0; i < 4; ++i) { 
+      hash ^= data64[i];
+      hash *= FNV_PRIME;
     }
     
-    // Incorporate the cached sum and length to differentiate keys with the same counts
-    // but different indices (though the loop handles indices, this is a final stir)
-    hash = (hash ^ k.cached_sum) * FNV_PRIME;
-    hash = (hash ^ k.len) * FNV_PRIME;
+    // 2. Incorporate the cached sum
+    uint64_t sum64 = (uint64_t)k.cached_sum;
+    hash ^= sum64;
+    hash *= FNV_PRIME;
     
-    // Return only the lower 64 bits (size_t)
+    // 3. Incorporate the length
+    uint64_t len64 = (uint64_t)k.len;
+    hash ^= len64;
+    hash *= FNV_PRIME;
+    
+    // Final avalanche mix for better distribution
+    hash ^= hash >> 33;
+    hash *= 0xff51afd7ed558ccdULL;
+    hash ^= hash >> 33;
+    
     return (std::size_t)hash;
   }
 };
