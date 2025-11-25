@@ -58,7 +58,7 @@ PrepareDataProfile(dataset)
 }
 \seealso{
 Other profile parsimony functions: 
-\code{\link{FitchBuilder}()},
+\code{\link{MaddisonSlatkin}()},
 \code{\link{StepInformation}()},
 \code{\link{WithOneExtraStep}()},
 \code{\link{profiles}}

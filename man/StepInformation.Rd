@@ -36,7 +36,7 @@ StepInformation(character)
 }
 \seealso{
 Other profile parsimony functions: 
-\code{\link{FitchBuilder}()},
+\code{\link{MaddisonSlatkin}()},
 \code{\link{PrepareDataProfile}()},
 \code{\link{WithOneExtraStep}()},
 \code{\link{profiles}}
