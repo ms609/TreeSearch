@@ -20,23 +20,22 @@ static const double NEG_INF = -std::numeric_limits<double>::infinity();
 // ============================================================================
 constexpr int MAX_STATES_OPT = 16;
 struct StateKey {
-  // Total size required for 16 states (32 bytes) + len (1 byte) = 33 bytes.
-  // We aim for 32 or 40 bytes (multiple of 8/32).
+  // 1. Data (32 bytes)
+  uint16_t data[MAX_STATES_OPT]; 
+  // 2. Cached Sum (4 bytes) - Move up for better alignment
+  int cached_sum;                
+  // 3. Length (1 byte)
+  uint8_t len;                   
+  // 4. Padding (3 bytes) - To bring total to 40 bytes (32 + 4 + 1 + 3)
+  uint8_t padding[3];            
   
-  uint16_t data[MAX_STATES_OPT]; // 32 bytes
-  int cached_sum; // 4 bytes
-  uint8_t len;// 1 byte
-  uint8_t padding[3]; // 3 bytes: 32 + 4 + 1 + 3 = 40, a multiple of 4.
-  
-  StateKey() {
-    std::memset(this, 0, sizeof(StateKey));
-    len = 0; // Explicitly initialize len
+  StateKey() : cached_sum(0), len(0) {
+    std::memset(data, 0, sizeof(data));
   }
   
   // Fast construction from vector
-  explicit StateKey(const std::vector<int>& v) {
-    // We memset 0 to ensure padding bytes are 0 for hashing
-    std::memset(this, 0, sizeof(StateKey));
+  explicit StateKey(const std::vector<int>& v) : cached_sum(0) {
+    std::memset(data, 0, sizeof(data));
     len = (uint8_t)v.size();
     for(size_t i=0; i<v.size(); ++i) {
       data[i] = (uint16_t)v[i];
@@ -45,8 +44,8 @@ struct StateKey {
   }
   
   // Construct from two StateKeys (subtraction)
-  StateKey(const StateKey& total, const StateKey& drawn) {
-    std::memset(this, 0, sizeof(StateKey));
+  StateKey(const StateKey& total, const StateKey& drawn) : cached_sum(0) {
+    std::memset(data, 0, sizeof(data));
     len = total.len;
     for(int i=0; i<len; ++i) {
       data[i] = total.data[i] - drawn.data[i];
@@ -55,13 +54,10 @@ struct StateKey {
   }
   
   bool operator==(const StateKey& other) const {
-    // Total size is now 40 bytes
     return std::memcmp(this, &other, sizeof(StateKey)) == 0;
   }
   
-  inline int sum() const {
-    return cached_sum;
-  }
+  inline int sum() const { return cached_sum; }
   
   inline int get(int idx) const { return data[idx]; }
   
@@ -155,7 +151,7 @@ struct LSEAccumulator {
 static inline double log_prod_sum(const std::vector<double>& xs) {
   long double s = 0.0L;
   for (double v : xs) {
-    if (!R_finite(v)) return NEG_INF;
+    if (!std::isfinite(v)) return NEG_INF;
     s += v;
   }
   return (double)s;
@@ -443,8 +439,8 @@ class Solver {
     }
     
     double& slot = it->second[token0];
-    if (R_finite(slot)) return slot;
-    if (ISNAN(slot) == false && !R_finite(slot)) return slot;
+    if (std::isfinite(slot)) return slot;
+    if (std::isnan(slot) == false && !std::isfinite(slot)) return slot;
     
     const auto& drawpairs = validDraws.get(leaves);
     
@@ -506,7 +502,7 @@ class Solver {
     if (it != logP_cache.end()) return it->second;
     
     double denom = LogB(token0, leaves);
-    if (!R_finite(denom)) {
+    if (!std::isfinite(denom)) {
       logP_cache.emplace(std::move(key), denom);
       return denom;
     }
