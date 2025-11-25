@@ -12,7 +12,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/ms609/TreeSearch/blob/1.7.0/inst/CITATION)
+[`inst/CITATION`](https://github.com/ms609/TreeSearch/blob/main/inst/CITATION)
 
 Brazeau, M.D., Smith, M.R. & Guillerme, T. (2017). MorphyLib: a library
 for phylogenetic analysis of categorical trait data with

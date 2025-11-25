@@ -2,7 +2,8 @@
 
 ## TreeSearch 1.7.0.9000 (development)
 
-No changes yet.
+- Fix regression in
+  [`MaximumLength()`](https://ms609.github.io/TreeSearch/reference/MinimumLength.md).
 
 ## TreeSearch 1.7.0 (2025-08-22)
 
