@@ -155,7 +155,7 @@ struct LSEAccumulator {
 static inline double log_prod_sum(const std::vector<double>& xs) {
   long double s = 0.0L;
   for (double v : xs) {
-    if (!R_finite(v)) return NEG_INF;
+    if (!std::isfinite(v)) return NEG_INF;
     s += v;
   }
   return (double)s;
@@ -443,8 +443,8 @@ class Solver {
     }
     
     double& slot = it->second[token0];
-    if (R_finite(slot)) return slot;
-    if (ISNAN(slot) == false && !R_finite(slot)) return slot;
+    if (std::isfinite(slot)) return slot;
+    if (std::isnan(slot) == false && !std::isfinite(slot)) return slot;
     
     const auto& drawpairs = validDraws.get(leaves);
     
@@ -506,7 +506,7 @@ class Solver {
     if (it != logP_cache.end()) return it->second;
     
     double denom = LogB(token0, leaves);
-    if (!R_finite(denom)) {
+    if (!std::isfinite(denom)) {
       logP_cache.emplace(std::move(key), denom);
       return denom;
     }
