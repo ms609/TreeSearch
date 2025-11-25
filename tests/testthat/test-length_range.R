@@ -157,7 +157,8 @@ test_that("MaximumLength() handles many states (>8) without overflow", {
   
   # Test with 10 states (nToken = 1023)
   # This should complete without error (the specific result is secondary)
-  manyStates <- c(1, 2, 4, 8, 16, 32, 64, 128, 256, 512)  # 10 distinct states
+  # 10 distinct character states (powers of 2 for bit representation)
+  manyStates <- c(1, 2, 4, 8, 16, 32, 64, 128, 256, 512)
   expect_silent(result <- MaximumLength.numeric(manyStates))
   expect_equal(result, 9)  # max steps for 10 distinct tokens
   
@@ -168,7 +169,8 @@ test_that("MaximumLength() handles many states (>8) without overflow", {
   
   # Test with large combined token value (all 10 states present in one tip)
   # This is the scenario that triggers the crash with Vinther2008 dataset
-  largeToken <- c(1, 1023)  # 1 = state 0, 1023 = all states 0-9
+  # 1 = only state 0, 1023 = all states 0-9 combined (2^10 - 1)
+  largeToken <- c(1, 1023)
   expect_silent(result <- MaximumLength.numeric(largeToken))
   expect_equal(result, 0)  # state 0 is subset of 1023, so no extra steps needed
 })
