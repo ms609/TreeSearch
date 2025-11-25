@@ -23,19 +23,10 @@ struct StateKey {
   // Total size required for 16 states (32 bytes) + len (1 byte) = 33 bytes.
   // We aim for 32 or 40 bytes (multiple of 8/32).
   
-  // Data (32 bytes)
-  uint16_t data[MAX_STATES_OPT];
-  
-  // Length (1 byte)
-  uint8_t len;
-  
-  // Padding to ensure consistent size/hash: 
-  // (We need at least 7 bytes of padding if we want 40 bytes total, 
-  // or rely on implicit padding for 32 bytes if len is moved to the start).
-  // Let's rely on memsetting to zero for hashing consistency and define explicit padding for 40 bytes.
-  // Size = 16*2 + 1 = 33 bytes. Padding 7 bytes to get 40 bytes.
-  uint8_t padding[7];
-  int cached_sum; // <-- New field
+  uint16_t data[MAX_STATES_OPT]; // 32 bytes
+  int cached_sum; // 4 bytes
+  uint8_t len;// 1 byte
+  uint8_t padding[3]; // 3 bytes: 32 + 4 + 1 + 3 = 40, a multiple of 4.
   
   StateKey() {
     std::memset(this, 0, sizeof(StateKey));
