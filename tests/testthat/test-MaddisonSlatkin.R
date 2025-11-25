@@ -8,9 +8,11 @@ test_that("MaddisonSlatkin() recursion bottoms", {
   expect_equal(MaddisonSlatkin(1, c(1, 0, 0, 1)), log(1))
   expect_equal(MaddisonSlatkin(0, c(0, 0, 0, 2)), log(1))
 })
-  
-  
+
+
 test_that("MaddisonSlatkin() is numerically correct", {
+  library("TreeTools", quietly = TRUE)
+  
   expect_equal(MaddisonSlatkin(0, c(2, 1)), log(0))
   expect_equal(MaddisonSlatkin(1, c(2, 1)), log(1))
   expect_equal(MaddisonSlatkin(2, c(2, 1)), log(0))
@@ -46,4 +48,9 @@ test_that("MaddisonSlatkin() is numerically correct", {
   # And a less even one
   expect_equal(MaddisonSlatkin(3, c(7, 18)) + LnUnrooted(25),
                LogCarter1(3, 7, 18))
+})
+
+test_that("MaddisonSlatkin() handles 5 states", {
+  expect_equal(MaddisonSlatkin(4, c(2, 2, 0, 2, 0, 0, 0, 2, rep(0, 7), 2)),
+               -6.851185) # by observation, not calculation
 })

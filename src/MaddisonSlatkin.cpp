@@ -12,8 +12,7 @@
 using namespace Rcpp;
 
 static const double NEG_INF = -std::numeric_limits<double>::infinity();
-
-constexpr int MAX_STATES_OPT = 16;
+constexpr int MAX_STATES_OPT = 32;
 
 struct StateKey {
   // Layout optimized for alignment and hashing:
@@ -61,7 +60,7 @@ struct StateKey {
     
     // 2. Fallback to optimized whole-struct comparison (memcmp is fast)
     // This is only run when cached_sum and len match.
-    return std::memcmp(this, &other, sizeof(StateKey)) == 0;
+    return std::memcmp(this, &other, sizeof(uint16_t) * len) == 0;
   }
   
   inline int sum() const { return cached_sum; }
@@ -84,7 +83,6 @@ struct StateKeyHash {
     // This reduces the loop overhead by factor of 4.
     const uint64_t* data64 = reinterpret_cast<const uint64_t*>(k.data);
     
-    // Unroll the loop for the 4 chunks (safe because MAX_STATES_OPT is fixed)
     hash = (hash ^ data64[0]) * FNV_PRIME;
     hash = (hash ^ data64[1]) * FNV_PRIME;
     hash = (hash ^ data64[2]) * FNV_PRIME;
@@ -98,7 +96,298 @@ struct StateKeyHash {
     return (std::size_t)hash;
   }
 };
+// ============================================================================
+// Template-specialized StateKey for different token counts
+// ============================================================================
 
+template<int nTokens>
+struct StateKeyT;
+// Specialization for 2 tokens (nStates = 3)
+template<>
+struct StateKeyT<2> {
+  uint16_t data[3];     // 6 bytes
+  int cached_sum;       // 4 bytes
+  uint8_t len;          // 1 byte
+  uint8_t padding;      // 1 byte (total: 12 bytes)
+  
+  StateKeyT() : cached_sum(0), len(0), padding(0) {
+    std::memset(data, 0, sizeof(data));
+  }
+  
+  explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0) {
+    std::memset(data, 0, sizeof(data));
+    len = (uint8_t)v.size();
+    for(size_t i=0; i<v.size(); ++i) {
+      data[i] = (uint16_t)v[i];
+      cached_sum += v[i];
+    }
+  }
+  
+  StateKeyT(const StateKeyT& total, const StateKeyT& drawn) : cached_sum(0), padding(0) {
+    std::memset(data, 0, sizeof(data));
+    len = total.len;
+    for(int i=0; i<len; ++i) {
+      data[i] = total.data[i] - drawn.data[i];
+      cached_sum += data[i];
+    }
+  }
+  
+  bool operator==(const StateKeyT& other) const {
+    if (cached_sum != other.cached_sum) return false;
+    if (len != other.len) return false;
+    return std::memcmp(this, &other, sizeof(uint16_t) * len) == 0;
+  }
+  
+  inline int sum() const { return cached_sum; }
+  inline int get(int idx) const { return data[idx]; }
+  
+  bool matches_vec(const std::vector<int>& v) const {
+    if (v.size() != len) return false;
+    for(size_t i=0; i<v.size(); ++i) if(v[i] != data[i]) return false;
+    return true;
+  }
+};
+
+// Specialization for 3 tokens (nStates = 7)
+template<>
+struct StateKeyT<3> {
+  uint16_t data[7];     // 14 bytes
+  int cached_sum;       // 4 bytes
+  uint8_t len;          // 1 byte
+  uint8_t padding;      // 1 byte (total: 20 bytes)
+  
+  StateKeyT() : cached_sum(0), len(0), padding(0) {
+    std::memset(data, 0, sizeof(data));
+  }
+  
+  explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0) {
+    std::memset(data, 0, sizeof(data));
+    len = (uint8_t)v.size();
+    for(size_t i=0; i<v.size(); ++i) {
+      data[i] = (uint16_t)v[i];
+      cached_sum += v[i];
+    }
+  }
+  
+  StateKeyT(const StateKeyT& total, const StateKeyT& drawn) : cached_sum(0), padding(0) {
+    std::memset(data, 0, sizeof(data));
+    len = total.len;
+    for(int i=0; i<len; ++i) {
+      data[i] = total.data[i] - drawn.data[i];
+      cached_sum += data[i];
+    }
+  }
+  
+  bool operator==(const StateKeyT& other) const {
+    if (cached_sum != other.cached_sum) return false;
+    if (len != other.len) return false;
+    return std::memcmp(this, &other, sizeof(uint16_t) * len) == 0;
+  }
+  
+  inline int sum() const { return cached_sum; }
+  inline int get(int idx) const { return data[idx]; }
+  
+  bool matches_vec(const std::vector<int>& v) const {
+    if (v.size() != len) return false;
+    for(size_t i=0; i<v.size(); ++i) if(v[i] != data[i]) return false;
+    return true;
+  }
+};
+
+// Specialization for 4 tokens (nStates = 15)
+template<>
+struct StateKeyT<4> {
+  uint16_t data[15];    // 30 bytes
+  int cached_sum;       // 4 bytes
+  uint8_t len;          // 1 byte
+  uint8_t padding;      // 1 byte (total: 36 bytes)
+  
+  StateKeyT() : cached_sum(0), len(0), padding(0) {
+    std::memset(data, 0, sizeof(data));
+  }
+  
+  explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0) {
+    std::memset(data, 0, sizeof(data));
+    len = (uint8_t)v.size();
+    for(size_t i=0; i<v.size(); ++i) {
+      data[i] = (uint16_t)v[i];
+      cached_sum += v[i];
+    }
+  }
+  
+  StateKeyT(const StateKeyT& total, const StateKeyT& drawn) : cached_sum(0), padding(0) {
+    std::memset(data, 0, sizeof(data));
+    len = total.len;
+    for(int i=0; i<len; ++i) {
+      data[i] = total.data[i] - drawn.data[i];
+      cached_sum += data[i];
+    }
+  }
+  
+  bool operator==(const StateKeyT& other) const {
+    if (cached_sum != other.cached_sum) return false;
+    if (len != other.len) return false;
+    return std::memcmp(this, &other, sizeof(uint16_t) * len) == 0;
+  }
+  
+  inline int sum() const { return cached_sum; }
+  inline int get(int idx) const { return data[idx]; }
+  
+  bool matches_vec(const std::vector<int>& v) const {
+    if (v.size() != len) return false;
+    for(size_t i=0; i<v.size(); ++i) if(v[i] != data[i]) return false;
+    return true;
+  }
+};
+
+// Specialization for 5 tokens (nStates = 31)
+template<>
+struct StateKeyT<5> {
+  uint16_t data[31];    // 62 bytes
+  int cached_sum;       // 4 bytes
+  uint8_t len;          // 1 byte
+  uint8_t padding;      // 1 byte (total: 68 bytes)
+  
+  StateKeyT() : cached_sum(0), len(0), padding(0) {
+    std::memset(data, 0, sizeof(data));
+  }
+  
+  explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0) {
+    std::memset(data, 0, sizeof(data));
+    len = (uint8_t)v.size();
+    for(size_t i=0; i<v.size(); ++i) {
+      data[i] = (uint16_t)v[i];
+      cached_sum += v[i];
+    }
+  }
+  
+  StateKeyT(const StateKeyT& total, const StateKeyT& drawn) : cached_sum(0), padding(0) {
+    std::memset(data, 0, sizeof(data));
+    len = total.len;
+    for(int i=0; i<len; ++i) {
+      data[i] = total.data[i] - drawn.data[i];
+      cached_sum += data[i];
+    }
+  }
+  
+  bool operator==(const StateKeyT& other) const {
+    if (cached_sum != other.cached_sum) return false;
+    if (len != other.len) return false;
+    return std::memcmp(this, &other, sizeof(uint16_t) * len) == 0;
+  }
+  
+  inline int sum() const { return cached_sum; }
+  inline int get(int idx) const { return data[idx]; }
+  
+  bool matches_vec(const std::vector<int>& v) const {
+    if (v.size() != len) return false;
+    for(size_t i=0; i<v.size(); ++i) if(v[i] != data[i]) return false;
+    return true;
+  }
+};
+
+// Hash functions optimized for each size
+template<int nTokens>
+struct StateKeyHashT;
+
+template<>
+struct StateKeyHashT<2> {
+  std::size_t operator()(const StateKeyT<2>& k) const noexcept {
+    // For 3 states (6 bytes), super-fast hash
+    // Treat as single 64-bit value (with padding)
+    uint64_t hash = 14695981039346656037ULL;
+    const uint32_t FNV_PRIME = 16777619U;
+    
+    // Pack all 3 uint16_t into one operation
+    uint64_t packed = ((uint64_t)k.data[0] << 32) | 
+      ((uint64_t)k.data[1] << 16) | 
+      ((uint64_t)k.data[2]);
+    hash = (hash ^ packed) * FNV_PRIME;
+    
+    hash = (hash ^ (uint64_t)k.cached_sum) * FNV_PRIME;
+    hash = (hash ^ (uint64_t)k.len) * FNV_PRIME;
+    
+    return (std::size_t)hash;
+  }
+};
+
+template<>
+struct StateKeyHashT<3> {
+  std::size_t operator()(const StateKeyT<3>& k) const noexcept {
+    // For 7 states (14 bytes), use 32-bit chunks
+    uint64_t hash = 14695981039346656037ULL;
+    const uint32_t FNV_PRIME = 16777619U;
+    
+    const uint32_t* data32 = reinterpret_cast<const uint32_t*>(k.data);
+    // 14 bytes = 3 complete uint32_t + 1 uint16_t
+    hash = (hash ^ data32[0]) * FNV_PRIME;
+    hash = (hash ^ data32[1]) * FNV_PRIME;
+    hash = (hash ^ data32[2]) * FNV_PRIME;
+    hash = (hash ^ k.data[6]) * FNV_PRIME; // Last uint16_t
+    
+    hash = (hash ^ (uint64_t)k.cached_sum) * FNV_PRIME;
+    hash = (hash ^ (uint64_t)k.len) * FNV_PRIME;
+    
+    return (std::size_t)hash;
+  }
+};
+
+template<>
+struct StateKeyHashT<4> {
+  std::size_t operator()(const StateKeyT<4>& k) const noexcept {
+    // For 15 states (30 bytes), use 64-bit chunks
+    uint64_t hash = 14695981039346656037ULL;
+    const uint64_t FNV_PRIME = 1099511628211ULL;
+    
+    const uint64_t* data64 = reinterpret_cast<const uint64_t*>(k.data);
+    // 30 bytes = 3 complete uint64_t + 3 uint16_t
+    hash = (hash ^ data64[0]) * FNV_PRIME;
+    hash = (hash ^ data64[1]) * FNV_PRIME;
+    hash = (hash ^ data64[2]) * FNV_PRIME;
+    
+    // Hash remaining 3 uint16_t as a single operation
+    uint64_t tail = ((uint64_t)k.data[12] << 32) | 
+      ((uint64_t)k.data[13] << 16) | 
+      ((uint64_t)k.data[14]);
+    hash = (hash ^ tail) * FNV_PRIME;
+    
+    hash = (hash ^ (uint64_t)k.cached_sum) * FNV_PRIME;
+    hash = (hash ^ (uint64_t)k.len) * FNV_PRIME;
+    
+    return (std::size_t)hash;
+  }
+};
+
+template<>
+struct StateKeyHashT<5> {
+  std::size_t operator()(const StateKeyT<5>& k) const noexcept {
+    // For 31 states (62 bytes), use 64-bit chunks
+    uint64_t hash = 14695981039346656037ULL;
+    const uint64_t FNV_PRIME = 1099511628211ULL;
+    
+    const uint64_t* data64 = reinterpret_cast<const uint64_t*>(k.data);
+    // 62 bytes = 7 complete uint64_t + 3 uint16_t
+    // Unroll for better performance
+    hash = (hash ^ data64[0]) * FNV_PRIME;
+    hash = (hash ^ data64[1]) * FNV_PRIME;
+    hash = (hash ^ data64[2]) * FNV_PRIME;
+    hash = (hash ^ data64[3]) * FNV_PRIME;
+    hash = (hash ^ data64[4]) * FNV_PRIME;
+    hash = (hash ^ data64[5]) * FNV_PRIME;
+    hash = (hash ^ data64[6]) * FNV_PRIME;
+    
+    // Hash remaining 3 uint16_t
+    uint64_t tail = ((uint64_t)k.data[28] << 32) | 
+      ((uint64_t)k.data[29] << 16) | 
+      ((uint64_t)k.data[30]);
+    hash = (hash ^ tail) * FNV_PRIME;
+    
+    hash = (hash ^ (uint64_t)k.cached_sum) * FNV_PRIME;
+    hash = (hash ^ (uint64_t)k.len) * FNV_PRIME;
+    
+    return (std::size_t)hash;
+  }
+};
 // ============================================================================
 // Fixed-size probability array instead of vector allocations
 // Max states for 16 leaves = (1<<5)-1 = 31. We round to 32.
@@ -534,7 +823,346 @@ inline uint64_t pack_leaves(const std::vector<int> &v) {
   }
   return h;
 }
+// ============================================================================
+// Template wrapper to dispatch to specialized implementations
+// ============================================================================
 
+template<int nTokens>
+class SolverT {
+  using KeyType = StateKeyT<nTokens>;
+  using HashType = StateKeyHashT<nTokens>;
+  
+  const Downpass& D;
+  const TokenPairs& pairs;
+  int presentBits;
+  
+  // Specialized caches
+  std::unordered_map<KeyType, FixedProbList, HashType> logB_cache;
+  
+  struct LogPKeyOpt {
+    KeyType leaves;
+    int s;
+    int token;
+    
+    LogPKeyOpt(int s_, int t_, const KeyType& l_) : leaves(l_), s(s_), token(t_) {}
+    
+    bool operator==(const LogPKeyOpt& other) const {
+      if (s != other.s) return false;
+      if (token != other.token) return false;
+      return leaves == other.leaves;
+    }
+  };
+  
+  struct LogPKeyOptHash {
+    std::size_t operator()(const LogPKeyOpt& k) const noexcept {
+      uint64_t hash = HashType{}(k.leaves);
+      hash = (hash ^ (uint64_t)k.s) * 3935559000370003845ULL;
+      hash = (hash ^ (uint64_t)k.token) * 4488902095908611103ULL;
+      return (std::size_t)hash;
+    }
+  };
+  
+  using LogPMapType = std::unordered_map<
+  LogPKeyOpt, 
+  double, 
+  LogPKeyOptHash, 
+  std::equal_to<LogPKeyOpt>, 
+  MallocPoolAllocator<std::pair<const LogPKeyOpt, double>>
+    >;
+    
+    LogPMapType logP_cache;
+    
+    // Specialized ValidDraws cache
+    struct DrawPairT {
+      KeyType drawn;
+      KeyType undrawn;
+      int m;
+    };
+    
+    struct FixedDrawsT {
+      DrawPairT draws[256];
+      uint8_t count = 0;
+    };
+    
+    std::unordered_map<KeyType, FixedDrawsT, HashType> validDraws_cache;
+    
+    // LogRD cache
+    struct LogRDKeyOpt {
+      KeyType drawn;
+      KeyType leaves;
+      bool operator==(const LogRDKeyOpt& o) const { 
+        return drawn == o.drawn && leaves == o.leaves; 
+      }
+    };
+    
+    struct LogRDKeyOptHash {
+      size_t operator()(const LogRDKeyOpt& k) const {
+        return HashType{}(k.drawn) ^ (HashType{}(k.leaves) << 1);
+      }
+    };
+    
+    std::unordered_map<LogRDKeyOpt, double, LogRDKeyOptHash> logRD_cache;
+    LnRootedCache& lnRooted;
+    
+    // Helper methods (same logic as before, but with KeyType)
+    void generateValidDraws(const KeyType& leavesKey, FixedDrawsT& out) {
+      std::vector<int> leaves(leavesKey.len);
+      for(int i=0; i<leavesKey.len; ++i) leaves[i] = leavesKey.data[i];
+      
+      int n = leavesKey.sum();
+      int half = n / 2;
+      std::vector<int> drawn(leaves.size(), 0);
+      
+      recDraws(leaves, drawn, 0, n, half, 0, out);
+    }
+    
+    void recDraws(const std::vector<int>& leaves, std::vector<int>& drawn, 
+                  int idx, int n, int half, int curSum, FixedDrawsT& out) {
+      if (idx == (int)leaves.size()) {
+        if (curSum == 0 || curSum > half) return;
+        if (curSum * 2 == n) {
+          std::vector<int> undrawn_local(leaves.size());
+          for (size_t i = 0; i < leaves.size(); ++i) 
+            undrawn_local[i] = leaves[i] - drawn[i];
+          
+          int cmp = lex_compare(drawn, undrawn_local);
+          if (cmp > 0) return;
+        }
+        
+        if (out.count >= 256) 
+          throw std::runtime_error("FixedDraws array capacity exceeded.");
+        
+        DrawPairT dp;
+        dp.drawn = KeyType(drawn);
+        KeyType total(leaves);
+        dp.undrawn = KeyType(total, dp.drawn);
+        dp.m = curSum;
+        
+        out.draws[out.count++] = dp;
+        return;
+      }
+      
+      int maxTake = std::min(leaves[idx], half - curSum);
+      for (int k = 0; k <= maxTake; ++k) {
+        drawn[idx] = k;
+        recDraws(leaves, drawn, idx + 1, n, half, curSum + k, out);
+      }
+      drawn[idx] = 0;
+    }
+    
+    const FixedDrawsT& getValidDraws(const KeyType& leavesKey) {
+      auto it = validDraws_cache.find(leavesKey);
+      if (it != validDraws_cache.end()) return it->second;
+      
+      FixedDrawsT out;
+      generateValidDraws(leavesKey, out);
+      auto ins = validDraws_cache.emplace(leavesKey, std::move(out));
+      return ins.first->second;
+    }
+    
+    double computeLogRD(const KeyType& drawn, const KeyType& leaves) {
+      LogRDKeyOpt key{drawn, leaves};
+      auto it = logRD_cache.find(key);
+      if (it != logRD_cache.end()) return it->second;
+      
+      const int m = drawn.sum();
+      const int n = leaves.sum();
+      
+      double bal = (n == 2*m) ? std::log(0.5) : 0.0;
+      long double lc = 0.0L;
+      for (int i = 0; i < leaves.len; ++i) {
+        lc += lchoose_log(leaves.data[i], drawn.data[i]);
+      }
+      double val = bal + lnRooted(m) + lnRooted(n - m) - lnRooted(n) + (double)lc;
+      logRD_cache.emplace(std::move(key), val);
+      return val;
+    }
+    
+    double LogB(int token0, const KeyType& leaves) {
+      const int n = leaves.sum();
+      
+      if (n == 1) {
+        return (leaves.get(token0) == 1) ? 0.0 : NEG_INF;
+      }
+      
+      if (n == 2) {
+        int twice = -1, a = -1, b = -1;
+        for (int i = 0; i < leaves.len; ++i) {
+          int count = leaves.get(i);
+          if (count == 2) { twice = i; break; }
+          else if (count == 1) { if (a < 0) a = i; else b = i; }
+        }
+        int resultTok = (twice >= 0) ? twice : (D.dp_at(a, b) - 1);
+        return (token0 == resultTok) ? 0.0 : NEG_INF;
+      }
+      
+      if ((token_mask(token0) & ~presentBits) != 0) return NEG_INF;
+      
+      auto it = logB_cache.find(leaves);
+      if (it == logB_cache.end()) {
+        it = logB_cache.emplace(leaves, FixedProbList{}).first;
+      }
+      
+      double& slot = it->second[token0];
+      if (std::isfinite(slot)) return slot;
+      if (std::isnan(slot) == false && !std::isfinite(slot)) return slot;
+      
+      const auto& drawpairs = getValidDraws(leaves);
+      LSEAccumulator outerAcc;
+      
+      for (uint8_t i = 0; i < drawpairs.count; ++i) {
+        const auto& dp = drawpairs.draws[i];
+        const KeyType& drawn = dp.drawn;
+        const KeyType& undrawn = dp.undrawn;
+        int m = dp.m;
+        
+        double balancedCorrection = (2*m == n) ? std::log(2.0) : 0.0;
+        if (drawn == undrawn) balancedCorrection -= std::log(2.0);
+        
+        LSEAccumulator innerAcc;
+        for (const auto& pr : pairs.noStep[token0]) {
+          double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
+          innerAcc.add((long double)val);
+        }
+        for (const auto& pr : pairs.yesStep[token0]) {
+          double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
+          innerAcc.add((long double)val);
+        }
+        double innerSum = innerAcc.result();
+        
+        double acc = balancedCorrection + computeLogRD(drawn, leaves) + innerSum;
+        outerAcc.add((long double)acc);
+      }
+      slot = outerAcc.result();
+      return slot;
+    }
+    
+    double LogP(int s, const KeyType& leaves, int token0) {
+      const int n = leaves.sum();
+      
+      if (n == 1) {
+        return (leaves.get(token0) == 1) ? ((s == 0) ? 0.0 : NEG_INF) : NEG_INF;
+      }
+      
+      if (n == 2) {
+        int twice = -1, a = -1, b = -1;
+        for (int i = 0; i < leaves.len; ++i) {
+          int count = leaves.get(i);
+          if (count == 2) { twice = i; break; }
+          else if (count == 1) { if (a < 0) a = i; else b = i; }
+        }
+        if (twice >= 0) {
+          return (s == 0) ? 0.0 : NEG_INF;
+        } else {
+          bool stepAdds = D.step_at(a, b);
+          int needed = stepAdds ? 1 : 0;
+          return (s == needed) ? 0.0 : NEG_INF;
+        }
+      }
+      
+      LogPKeyOpt key(s, token0, leaves);
+      auto it = logP_cache.find(key);
+      if (it != logP_cache.end()) return it->second;
+      
+      double denom = LogB(token0, leaves);
+      if (!std::isfinite(denom)) {
+        logP_cache.emplace(std::move(key), denom);
+        return denom;
+      }
+      
+      const auto& drawpairs = getValidDraws(leaves);
+      LSEAccumulator outerAcc;
+      
+      for (uint8_t i = 0; i < drawpairs.count; ++i) {
+        const auto& dp = drawpairs.draws[i];
+        const KeyType& drawn = dp.drawn;
+        const KeyType& undrawn = dp.undrawn;
+        const int m = dp.m;
+        
+        double sizeCorrection = ((m + m == n) && !(drawn == undrawn)) ? std::log(2.0) : 0.0;
+        
+        LSEAccumulator noStepAcc;
+        for (int r = 0; r <= s; ++r) {
+          LSEAccumulator pairAcc;
+          const auto& L = pairs.noStep[token0];
+          for (const auto& pr : L) {
+            double t = log_prod_sum_4(
+              LogP(r, drawn, pr.a),
+              LogB(pr.a, drawn),
+              LogP(s - r, undrawn, pr.b),
+              LogB(pr.b, undrawn)
+            );
+            pairAcc.add((long double)t);
+          }
+          noStepAcc.add((long double)pairAcc.result());
+        }
+        double noStepSum = noStepAcc.result();
+        
+        double yesStepSum = NEG_INF;
+        if (!pairs.yesStep[token0].empty() && s >= 1) {
+          LSEAccumulator yesStepAcc;
+          for (int r = 0; r <= s - 1; ++r) {
+            LSEAccumulator pairAcc;
+            const auto& L2 = pairs.yesStep[token0];
+            for (const auto& pr : L2) {
+              double t = log_prod_sum_4(
+                LogP(r, drawn, pr.a),
+                LogB(pr.a, drawn),
+                LogP(s - r - 1, undrawn, pr.b),
+                LogB(pr.b, undrawn)
+              );
+              pairAcc.add((long double)t);
+            }
+            yesStepAcc.add((long double)pairAcc.result());
+          }
+          yesStepSum = yesStepAcc.result();
+        }
+        
+        LSEAccumulator bothAcc;
+        bothAcc.add((long double)noStepSum);
+        bothAcc.add((long double)yesStepSum);
+        double combined = bothAcc.result();
+        
+        double inner = computeLogRD(drawn, leaves) + sizeCorrection + combined;
+        outerAcc.add((long double)inner);
+      }
+      
+      double result = outerAcc.result() - denom;
+      logP_cache.emplace(std::move(key), result);
+      return result;
+    }
+    
+public:
+  SolverT(const Downpass& D_, const TokenPairs& p, int presentBits_,
+          LnRootedCache& lnr)
+    : D(D_), pairs(p), presentBits(presentBits_), lnRooted(lnr) {
+    
+    logB_cache.reserve(16384);
+    logB_cache.max_load_factor(0.7f);
+    
+    logP_cache.reserve(65536);
+    logP_cache.max_load_factor(0.7f);
+    
+    logRD_cache.reserve(1024);
+    validDraws_cache.reserve(256);
+  }
+  
+  double run(int steps, const KeyType& states) {
+    LSEAccumulator acc;
+    for (int token0 = 0; token0 < D.nStates; ++token0) {
+      double b = LogB(token0, states);
+      double p = LogP(steps, states, token0);
+      double val;
+      if (!std::isfinite(b) || !std::isfinite(p)) {
+        val = NEG_INF;
+      } else {
+        val = b + p;
+      }
+      acc.add((long double)val);
+    }
+    return acc.result();
+  }
+};
 // ----- Solver
 class Solver {
   const Downpass& D;
@@ -740,7 +1368,6 @@ public:
     return acc.result();
   }
 };
-
 //' @rdname Carter1
 //' @examples
 //' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
@@ -751,12 +1378,14 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
   int len = states.size();
   if (len <= 0) stop("`states` must have positive length.");
   
-  // Performance Guard:
-  if (len > MAX_STATES_OPT) {
-    stop("MaddisonSlatkin() supports at most 4 distinct states.");
+  // Determine nTokens from length
+  int nTokens = (int)std::floor(std::log2((double)len)) + 1;
+  
+  if (nTokens < 2 || nTokens > 5) {
+    stop("MaddisonSlatkin() supports 2-5 tokens (3-31 states).");
   }
   
-  int nLevels = (int)std::floor(std::log2((double)len)) + 1;
+  int nLevels = nTokens;
   int nStates = (1 << nLevels) - 1;
   
   std::vector<int> leavesVec(nStates, 0);
@@ -767,12 +1396,9 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
     leavesVec[i] = v;
   }
   
-  // Create optimized key structure
-  StateKey rootKey(leavesVec);
+  int nTaxa = sum_int(leavesVec);
   
-  int nTaxa = rootKey.sum();
-  
-  // --- Setup Shared Pointers (Same as before) ---
+  // Setup shared structures
   std::shared_ptr<Downpass> Dptr;
   {
     auto it = DP_CACHE.find(nLevels);
@@ -785,8 +1411,10 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
   Downpass& D = *Dptr;
   
   int presentBits = 0;
-  for (int t = 0; t < nStates; ++t) if (leavesVec[t] > 0) presentBits |= token_mask(t);
-  
+  for (int t = 0; t < nStates; ++t) {
+    if (leavesVec[t] > 0) presentBits |= token_mask(t);
+  }
+    
   long long tp_key = ((long long)nLevels << 20) | presentBits;
   std::shared_ptr<TokenPairs> Tpptr;
   {
@@ -810,45 +1438,55 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
   }
   LnRootedCache& lnRooted = *LNRptr;
   
-  std::shared_ptr<LogRDCache> LRptr;
-  {
-    auto it = LOGRD_CACHE.find(nTaxa);
-    if (it != LOGRD_CACHE.end()) LRptr = it->second;
-    else {
-      LRptr = std::make_shared<LogRDCache>(lnRooted);
-      LOGRD_CACHE[nTaxa] = LRptr;
-    }
-  }
-  LogRDCache& logRD = *LRptr;
-  
-  ValidDrawsCache& validDraws = VALID_DRAWS_GLOBAL;
-  
-  std::shared_ptr<SolverCaches> sc;
-  uint64_t key = pack_leaves(leavesVec);
-  
-  {
-    auto it = SOLVER_CACHE.find(key);
-    if (it != SOLVER_CACHE.end()) sc = it->second;
-    else {
-      sc = std::make_shared<SolverCaches>();
-      SOLVER_CACHE[key] = sc;
-    }
-  }
-  
-  Solver solver(D, pairs, validDraws, logRD, presentBits, *sc);
-  
   int k = steps.size();
   NumericVector out(k);
-  for (int i = 0; i < k; ++i) {
-    int s = steps[i];
-    if (IntegerVector::is_na(s))
-      out[i] = NA_REAL;
-    else
-      out[i] = solver.run(s, rootKey);
+  
+  // DISPATCH based on nTokens
+  if (nTokens == 2) {
+    StateKeyT<2> rootKey(leavesVec);
+    SolverT<2> solver(D, pairs, presentBits, lnRooted);
+    for (int i = 0; i < k; ++i) {
+      int s = steps[i];
+      if (IntegerVector::is_na(s))
+        out[i] = NA_REAL;
+      else
+        out[i] = solver.run(s, rootKey);
+    }
+  } else if (nTokens == 3) {
+    StateKeyT<3> rootKey(leavesVec);
+    SolverT<3> solver(D, pairs, presentBits, lnRooted);
+    for (int i = 0; i < k; ++i) {
+      int s = steps[i];
+      if (IntegerVector::is_na(s))
+        out[i] = NA_REAL;
+      else
+        out[i] = solver.run(s, rootKey);
+    }
+  } else if (nTokens == 4) {
+    StateKeyT<4> rootKey(leavesVec);
+    SolverT<4> solver(D, pairs, presentBits, lnRooted);
+    for (int i = 0; i < k; ++i) {
+      int s = steps[i];
+      if (IntegerVector::is_na(s))
+        out[i] = NA_REAL;
+      else
+        out[i] = solver.run(s, rootKey);
+    }
+  } else { // nTokens == 5
+    StateKeyT<5> rootKey(leavesVec);
+    SolverT<5> solver(D, pairs, presentBits, lnRooted);
+    for (int i = 0; i < k; ++i) {
+      int s = steps[i];
+      if (IntegerVector::is_na(s))
+        out[i] = NA_REAL;
+      else
+        out[i] = solver.run(s, rootKey);
+    }
   }
   
   return out;
 }
+
 
 //' @export
 //' @keywords internal
