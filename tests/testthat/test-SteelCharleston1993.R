@@ -1,8 +1,8 @@
 test_that("SteelCharleston results stack up", {
-  expect_warning(expect_equal(SteCha1("10", 4), 0), "numeric")
-  raw <- SteCha1(10, 4)
-  expect_equal(exp(SteCha1(10, 4, TRUE)), raw)
-  expect_equal(2 ^ (SteCha1(TreeTools::StarTree(10), 4, 2)), raw)
+  expect_warning(expect_equal(BinaryLabellings("10", 4), 0), "numeric")
+  raw <- BinaryLabellings(10, 4)
+  expect_equal(exp(BinaryLabellings(10, 4, TRUE)), raw)
+  expect_equal(2 ^ (BinaryLabellings(TreeTools::StarTree(10), 4, 2)), raw)
   
   nTip <- 8
   char <- R.utils::intToBin(0:(2 ^ nTip - 1)) |>
@@ -15,6 +15,6 @@ test_that("SteelCharleston results stack up", {
   )
   
   for (i in seq_along(expected)) {
-    expect_equal(SteCha1(nTip, i - 1), expected[[i]])
+    expect_equal(BinaryLabellings(nTip, i - 1), expected[[i]])
   }
 })

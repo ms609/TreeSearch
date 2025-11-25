@@ -4,6 +4,8 @@
 - Faster C++ implementation of `Carter1`
 - `SteelInfo()` ...
 - `MaddisonSlatkin()` ...
+- `BinaryLabellings()` counts the number of ways to label a tree, given a
+  parsimony score.
 
 
 # TreeSearch 1.7.0.9000 (development)
