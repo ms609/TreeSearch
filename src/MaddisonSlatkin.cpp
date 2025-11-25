@@ -13,30 +13,26 @@ using namespace Rcpp;
 
 static const double NEG_INF = -std::numeric_limits<double>::infinity();
 
-// ============================================================================
-// Fixed-size Key to avoid malloc in Map lookups
-// Supports up to 16 states and 65535 taxa per state.
-// Fits in 32 bytes (friendly to CPU cache lines).
-// ============================================================================
 constexpr int MAX_STATES_OPT = 16;
+
 struct StateKey {
-  // Total size required for 16 states (32 bytes) + len (1 byte) = 33 bytes.
-  // We aim for 32 or 40 bytes (multiple of 8/32).
+  // Layout optimized for alignment and hashing:
+  // data (32 bytes) + cached_sum (4) + len (1) + padding (3) = 40 bytes.
   
   uint16_t data[MAX_STATES_OPT]; // 32 bytes
-  int cached_sum; // 4 bytes
-  uint8_t len;// 1 byte
-  uint8_t padding[3]; // 3 bytes: 32 + 4 + 1 + 3 = 40, a multiple of 4.
+  int cached_sum;                // 4 bytes
+  uint8_t len;                   // 1 byte
+  uint8_t padding[3];            // 3 bytes padding
   
-  StateKey() {
-    std::memset(this, 0, sizeof(StateKey));
-    len = 0; // Explicitly initialize len
+  StateKey() : cached_sum(0), len(0) {
+    std::memset(data, 0, sizeof(data));
+    std::memset(padding, 0, sizeof(padding));
   }
   
-  // Fast construction from vector
-  explicit StateKey(const std::vector<int>& v) {
-    // We memset 0 to ensure padding bytes are 0 for hashing
-    std::memset(this, 0, sizeof(StateKey));
+  explicit StateKey(const std::vector<int>& v) : cached_sum(0) {
+    std::memset(data, 0, sizeof(data));
+    // Explicitly zero padding to be safe, though we won't hash it.
+    std::memset(padding, 0, sizeof(padding)); 
     len = (uint8_t)v.size();
     for(size_t i=0; i<v.size(); ++i) {
       data[i] = (uint16_t)v[i];
@@ -44,9 +40,9 @@ struct StateKey {
     }
   }
   
-  // Construct from two StateKeys (subtraction)
-  StateKey(const StateKey& total, const StateKey& drawn) {
-    std::memset(this, 0, sizeof(StateKey));
+  StateKey(const StateKey& total, const StateKey& drawn) : cached_sum(0) {
+    std::memset(data, 0, sizeof(data));
+    std::memset(padding, 0, sizeof(padding));
     len = total.len;
     for(int i=0; i<len; ++i) {
       data[i] = total.data[i] - drawn.data[i];
@@ -54,15 +50,15 @@ struct StateKey {
     }
   }
   
+  // Equality must be robust. Since we zero padding, memcmp is usually safe,
+  // but to be absolutely paranoid about the numerical failure, we check fields.
+  // However, memcmp is much faster. Let's stick to memcmp but rely on the 
+  // constructors zeroing the padding.
   bool operator==(const StateKey& other) const {
-    // Total size is now 40 bytes
     return std::memcmp(this, &other, sizeof(StateKey)) == 0;
   }
   
-  inline int sum() const {
-    return cached_sum;
-  }
-  
+  inline int sum() const { return cached_sum; }
   inline int get(int idx) const { return data[idx]; }
   
   bool matches_vec(const std::vector<int>& v) const {
@@ -77,30 +73,21 @@ struct StateKeyHash {
     uint64_t hash = 14695981039346656037ULL; // FNV_OFFSET_BASIS
     const uint64_t FNV_PRIME = 1099511628211ULL;
     
-    // 1. Hash the uint16_t data array (32 bytes) by treating it as four 64-bit words.
-    // This processes 8 elements (16 bytes) at a time, speeding up the core loop by 4x.
+    // 1. FAST DATA HASH:
+    // Interpret the 32-byte data array (16 x uint16_t) as 4 x uint64_t.
+    // This reduces the loop overhead by factor of 4.
     const uint64_t* data64 = reinterpret_cast<const uint64_t*>(k.data);
     
-    // Since k.data is 32 bytes (16 * uint16_t), it is 4 x uint64_t.
-    for (size_t i = 0; i < 4; ++i) { 
-      hash ^= data64[i];
-      hash *= FNV_PRIME;
-    }
+    // Unroll the loop for the 4 chunks (safe because MAX_STATES_OPT is fixed)
+    hash = (hash ^ data64[0]) * FNV_PRIME;
+    hash = (hash ^ data64[1]) * FNV_PRIME;
+    hash = (hash ^ data64[2]) * FNV_PRIME;
+    hash = (hash ^ data64[3]) * FNV_PRIME;
     
-    // 2. Incorporate the cached sum
-    uint64_t sum64 = (uint64_t)k.cached_sum;
-    hash ^= sum64;
-    hash *= FNV_PRIME;
-    
-    // 3. Incorporate the length
-    uint64_t len64 = (uint64_t)k.len;
-    hash ^= len64;
-    hash *= FNV_PRIME;
-    
-    // Final avalanche mix for better distribution
-    hash ^= hash >> 33;
-    hash *= 0xff51afd7ed558ccdULL;
-    hash ^= hash >> 33;
+    // 2. Mix Metadata
+    // We strictly DO NOT hash the 'padding' array to avoid garbage data issues.
+    hash = (hash ^ (uint64_t)k.cached_sum) * FNV_PRIME;
+    hash = (hash ^ (uint64_t)k.len) * FNV_PRIME;
     
     return (std::size_t)hash;
   }
@@ -332,6 +319,8 @@ public:
     int half = n / 2;
     
     std::vector<DrawPair> out;
+    out.reserve(128); 
+    
     std::vector<int> drawn(leaves.size(), 0);
     rec(leaves, drawn, 0, n, half, 0, out);
     
@@ -591,11 +580,11 @@ public:
          SolverCaches& SC)
     : D(D_), pairs(p), validDraws(vd), logRD(rd), presentBits(presentBits_),
       logB_cache(SC.logB_cache), logP_cache(SC.logP_cache) {
-    logB_cache.reserve(512);
-    logB_cache.max_load_factor(0.5f);
+    logB_cache.reserve(16384);
+    logB_cache.max_load_factor(0.7f);
     
-    logP_cache.reserve(4096);
-    logP_cache.max_load_factor(0.5f);
+    logP_cache.reserve(65536);
+    logP_cache.max_load_factor(0.7f);
   }
   
   double run(int steps, const StateKey& states) {
