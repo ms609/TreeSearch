@@ -34,7 +34,8 @@ struct StateKey {
   // or rely on implicit padding for 32 bytes if len is moved to the start).
   // Let's rely on memsetting to zero for hashing consistency and define explicit padding for 40 bytes.
   // Size = 16*2 + 1 = 33 bytes. Padding 7 bytes to get 40 bytes.
-  uint8_t padding[7]; 
+  uint8_t padding[7];
+  int cached_sum; // <-- New field
   
   StateKey() {
     std::memset(this, 0, sizeof(StateKey));
@@ -48,6 +49,7 @@ struct StateKey {
     len = (uint8_t)v.size();
     for(size_t i=0; i<v.size(); ++i) {
       data[i] = (uint16_t)v[i];
+      cached_sum += v[i];
     }
   }
   
@@ -57,6 +59,7 @@ struct StateKey {
     len = total.len;
     for(int i=0; i<len; ++i) {
       data[i] = total.data[i] - drawn.data[i];
+      cached_sum += data[i];
     }
   }
   
@@ -66,9 +69,7 @@ struct StateKey {
   }
   
   inline int sum() const {
-    int s = 0;
-    for(int i=0; i<len; ++i) s += data[i];
-    return s;
+    return cached_sum;
   }
   
   inline int get(int idx) const { return data[idx]; }
@@ -83,13 +84,21 @@ struct StateKey {
 // StateKeyHash remains the same, relying on sizeof(StateKey)
 struct StateKeyHash {
   std::size_t operator()(const StateKey& k) const noexcept {
-    uint64_t hash = 14695981039346656037ULL;
-    const unsigned char* p = reinterpret_cast<const unsigned char*>(&k);
-    // Hash the bytes of the entire struct (now 40 bytes)
-    for (size_t i = 0; i < sizeof(StateKey); ++i) {
-      hash ^= p[i];
-      hash *= 1099511628211ULL;
+    uint64_t hash = 0;
+    const uint64_t FNV_PRIME = 1099511628211ULL;
+    
+    // Hash the actual data array. len is max 16.
+    for (int i = 0; i < k.len; ++i) {
+      // Combine current hash with the data element using FNV-style multiply/xor
+      hash = (hash ^ k.data[i]) * FNV_PRIME;
     }
+    
+    // Incorporate the cached sum and length to differentiate keys with the same counts
+    // but different indices (though the loop handles indices, this is a final stir)
+    hash = (hash ^ k.cached_sum) * FNV_PRIME;
+    hash = (hash ^ k.len) * FNV_PRIME;
+    
+    // Return only the lower 64 bits (size_t)
     return (std::size_t)hash;
   }
 };
@@ -103,7 +112,7 @@ struct LogPKeyOpt {
   LogPKeyOpt(int s_, int t_, const StateKey& l_) : leaves(l_), s(s_), token(t_) {}
   
   bool operator==(const LogPKeyOpt& other) const {
-    return s == other.s && token == other.token && leaves == other.leaves;
+    return std::memcmp(this, &other, sizeof(LogPKeyOpt)) == 0;
   }
 };
 

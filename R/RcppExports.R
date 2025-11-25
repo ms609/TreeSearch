@@ -3,7 +3,6 @@
 
 #' @rdname Carter1
 #' @examples
-#' # Number of trees with 2 steps for character 0011122
 #' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
 #' 
 #' @export
@@ -15,6 +14,12 @@ MaddisonSlatkin <- function(steps, states) {
 #' @keywords internal
 MaddisonSlatkin_steps <- function(s_min, s_max, states) {
     .Call(`_TreeSearch_MaddisonSlatkin_steps`, s_min, s_max, states)
+}
+
+#' @export
+#' @keywords internal
+MaddisonSlatkin_clear_cache <- function() {
+    invisible(.Call(`_TreeSearch_MaddisonSlatkin_clear_cache`))
 }
 
 #' Exact Distribution of Parsimony Score on a Tree (I.I.D. Model)
