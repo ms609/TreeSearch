@@ -262,13 +262,10 @@ struct LSEAccumulator {
   }
 };
 
-static inline double log_prod_sum(const std::vector<double>& xs) {
-  long double s = 0.0L;
-  for (double v : xs) {
-    if (!std::isfinite(v)) return NEG_INF;
-    s += v;
-  }
-  return (double)s;
+static inline double log_prod_sum_4(double v1, double v2, double v3, double v4) {
+  if (!std::isfinite(v1) || !std::isfinite(v2) || 
+      !std::isfinite(v3) || !std::isfinite(v4)) return NEG_INF;
+      return (double)((long double)v1 + (long double)v2 + (long double)v3 + (long double)v4);
 }
 
 static inline int sum_int(const std::vector<int>& v) {
@@ -660,12 +657,12 @@ class Solver {
         LSEAccumulator pairAcc;
         const auto& L = pairs.noStep[token0];
         for (const auto& pr : L) {
-          double t = log_prod_sum({
+          double t = log_prod_sum_4(
             LogP(r, drawn, pr.a),
             LogB(pr.a, drawn),
             LogP(s - r, undrawn, pr.b),
             LogB(pr.b, undrawn)
-          });
+          );
           pairAcc.add((long double)t);
         }
         noStepAcc.add((long double)pairAcc.result());
@@ -679,12 +676,12 @@ class Solver {
           LSEAccumulator pairAcc;
           const auto& L2 = pairs.yesStep[token0];
           for (const auto& pr : L2) {
-            double t = log_prod_sum({
+            double t = log_prod_sum_4(
               LogP(r, drawn, pr.a),
               LogB(pr.a, drawn),
               LogP(s - r - 1, undrawn, pr.b),
               LogB(pr.b, undrawn)
-            });
+            );
             pairAcc.add((long double)t);
           }
           yesStepAcc.add((long double)pairAcc.result());
@@ -725,7 +722,13 @@ public:
     for (int token0 = 0; token0 < D.nStates; ++token0) {
       double b = LogB(token0, states);
       double p = LogP(steps, states, token0);
-      acc.add((long double)log_prod_sum({b, p}));
+      double val;
+      if (!std::isfinite(p) || !std::isfinite(p)) {
+        val = NEG_INF;
+      } else {
+        val = b + p;
+      }
+      acc.add((long double)val);
     }
     return acc.result();
   }
