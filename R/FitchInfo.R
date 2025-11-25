@@ -106,6 +106,14 @@ FitchInfo <- function(tree, dataset) {
       
       nLevels <- length(tab)
       logP <- if (nLevels > 2) {
+        if (nLevels > 5) {
+          warning(nLevels, " levels not yet supported: ",
+                  paste0(tab, collapse = ", "))
+          return(c(norm = NA_real_,
+                   h = NA,
+                   hMax = NA,
+                   expH = NA))
+        }
         bTab <- double(2 ^ nLevels - 1)
         bTab[2 ^ (seq_along(tab) - 1)] <- tab
         MaddisonSlatkin((nLevels - 1):steps, bTab)
