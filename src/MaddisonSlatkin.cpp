@@ -102,7 +102,10 @@ struct LogPKeyOpt {
   LogPKeyOpt(int s_, int t_, const StateKey& l_) : leaves(l_), s(s_), token(t_) {}
   
   bool operator==(const LogPKeyOpt& other) const {
-    return std::memcmp(this, &other, sizeof(LogPKeyOpt)) == 0;
+    // Fast check on integers first
+    if (s != other.s || token != other.token) return false;
+    // Then delegate to StateKey's optimized comparison
+    return leaves == other.leaves;
   }
 };
 
