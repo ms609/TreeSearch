@@ -2,10 +2,8 @@ library("TreeSearch")
 states <- c(2, 3, 0, 4, 0, 0, 0, 2)
 
 bench::mark(
-  setup = MaddisonSlatkin_clear_cache(),
-  control = 1 + 1,
-  single = MaddisonSlatkin(3L, states),
-  multi  = MaddisonSlatkin_steps(0L, 6L, states),
+  single = {MaddisonSlatkin_clear_cache(); MaddisonSlatkin(3L, states)},
+  multi  = {MaddisonSlatkin_clear_cache(); MaddisonSlatkin_steps(0L, 4L, states)},
   max_iterations = 12,
   check = FALSE
 )
