@@ -1,4 +1,4 @@
-library("TreeSearch")
+library("TreeSearch", quietly = TRUE)
 states <- c(2, 3, 0, 4, 0, 0, 0, 2)
 
 bench::mark(
