@@ -11,10 +11,11 @@
 #' @export
 SteelInfo <- function(tree, dataset) {
   lengths <- CharacterLength(tree, dataset, compress = TRUE)
+  allLengths <- 0:max(lengths)
   minLengths <- MinimumLength(dataset, compress = TRUE)
   # nTokens <- lengths(apply(PhyDatToMatrix(dataset), 2, intersect, 0:9))
   
-  lengthTab <- table(lengths, minLengths)
+  lengthTab <- table(factor(lengths, levels = allLengths), minLengths)
 
   pTab <- vapply(colnames(lengthTab), function(steps) {
     nTokens <- as.numeric(steps) + 1
