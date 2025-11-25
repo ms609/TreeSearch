@@ -22,19 +22,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// MaddisonSlatkin_steps
-NumericVector MaddisonSlatkin_steps(int s_min, int s_max, IntegerVector states);
-RcppExport SEXP _TreeSearch_MaddisonSlatkin_steps(SEXP s_minSEXP, SEXP s_maxSEXP, SEXP statesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type s_min(s_minSEXP);
-    Rcpp::traits::input_parameter< int >::type s_max(s_maxSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type states(statesSEXP);
-    rcpp_result_gen = Rcpp::wrap(MaddisonSlatkin_steps(s_min, s_max, states));
-    return rcpp_result_gen;
-END_RCPP
-}
 // MaddisonSlatkin_clear_cache
 void MaddisonSlatkin_clear_cache();
 RcppExport SEXP _TreeSearch_MaddisonSlatkin_clear_cache() {

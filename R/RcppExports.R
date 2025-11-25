@@ -12,12 +12,6 @@ MaddisonSlatkin <- function(steps, states) {
 
 #' @export
 #' @keywords internal
-MaddisonSlatkin_steps <- function(s_min, s_max, states) {
-    .Call(`_TreeSearch_MaddisonSlatkin_steps`, s_min, s_max, states)
-}
-
-#' @export
-#' @keywords internal
 MaddisonSlatkin_clear_cache <- function() {
     invisible(.Call(`_TreeSearch_MaddisonSlatkin_clear_cache`))
 }
