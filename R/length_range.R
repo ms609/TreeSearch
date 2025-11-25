@@ -128,7 +128,7 @@ MinimumLength.numeric <- function (x, compress = NA) {
       } else {
         squish <- which.max(occurrences)
         tokensUsed <- tokensUsed + 1L
-        tokens <- tokens[, tokens[!squish], drop = FALSE]
+        tokens <- tokens[, !tokens[squish, ], drop = FALSE]
       }
     }
     lastDim <- dim(tokens)
