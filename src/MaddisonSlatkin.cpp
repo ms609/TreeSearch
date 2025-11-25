@@ -93,6 +93,106 @@ struct StateKeyHash {
   }
 };
 
+// ============================================================================
+// Fixed-size probability array instead of vector allocations
+// Max states for 16 leaves = (1<<5)-1 = 31. We round to 32.
+// ============================================================================
+struct FixedProbList {
+  double val[32]; // Fixed size, no malloc needed
+  
+  FixedProbList() {
+    // Initialize with quiet_NaN to match original logic
+    double nan = std::numeric_limits<double>::quiet_NaN();
+    for(int i=0; i<32; ++i) val[i] = nan;
+  }
+  
+  // Array access operator for convenience
+  inline double& operator[](int idx) { return val[idx]; }
+  inline const double& operator[](int idx) const { return val[idx]; }
+};
+
+// ============================================================================
+// Custom Pool Allocator to kill malloc/free overhead
+// This allocator is for the largest map (logP_cache)
+// ============================================================================
+template <typename T>
+class MallocPoolAllocator {
+private:
+  static constexpr size_t BLOCK_SIZE = 1024 * 1024; // 1MB block size
+  char* current_block = nullptr;
+  char* current_pos = nullptr;
+  char* end_pos = nullptr;
+  std::vector<char*> blocks; // Stores pointers to all allocated blocks
+  std::allocator<T> fallback_allocator;
+  
+  void allocate_new_block() {
+    // Use standard C malloc/free for the large blocks
+    current_block = (char*)std::malloc(BLOCK_SIZE);
+    if (!current_block) throw std::bad_alloc();
+    current_pos = current_block;
+    end_pos = current_block + BLOCK_SIZE;
+    blocks.push_back(current_block);
+  }
+  
+public:
+  using value_type = T;
+  // Standard required typedefs and constructors
+  MallocPoolAllocator() noexcept { allocate_new_block(); }
+  template <class U> MallocPoolAllocator(const MallocPoolAllocator<U>&) noexcept : MallocPoolAllocator() {}
+  
+  // Destructor frees all memory blocks in one go
+  ~MallocPoolAllocator() noexcept {
+    for (char* block : blocks) {
+      std::free(block);
+    }
+  }
+  
+  // Allocate method: Check n. Use pool for n=1, fallback for n > 1.
+  T* allocate(size_t n) {
+    if (n == 1) {
+      // POOL ALLOCATION (for single node)
+      size_t size = sizeof(T);
+      
+      // Ensure alignment:
+      size_t alignment = alignof(T);
+      size_t aligned_pos = (size_t)current_pos;
+      size_t padding = (alignment - (aligned_pos % alignment)) % alignment;
+      char* next_pos = current_pos + padding;
+      
+      if (next_pos + size > end_pos) {
+        allocate_new_block();
+        // Re-calculate alignment for the new block
+        aligned_pos = (size_t)current_pos;
+        padding = (alignment - (aligned_pos % alignment)) % alignment;
+        next_pos = current_pos + padding;
+      }
+      
+      current_pos = next_pos + size;
+      return (T*)next_pos;
+    } else {
+      // FALLBACK ALLOCATION (for bucket arrays, etc.)
+      // Delegates the large allocation to the standard C++ allocator
+      return fallback_allocator.allocate(n);
+    }
+  }
+  
+  // Deallocate method: must delegate to the correct method
+  void deallocate(T* p, size_t n) noexcept {
+    if (n > 1) {
+      // Deallocate memory allocated by the fallback allocator
+      fallback_allocator.deallocate(p, n);
+    } 
+    // else n == 1: NO-OP, memory is pool-allocated and freed in the destructor.
+  }
+  
+  // Required for C++ standard containers
+  template <class U> struct rebind {
+    using other = MallocPoolAllocator<U>;
+  };
+  bool operator!=(const MallocPoolAllocator& other) const noexcept { return this != &other; }
+  bool operator==(const MallocPoolAllocator& other) const noexcept { return this == &other; }
+};
+
 // Key for LogP cache
 struct LogPKeyOpt {
   StateKey leaves;
@@ -111,14 +211,22 @@ struct LogPKeyOpt {
 
 struct LogPKeyOptHash {
   std::size_t operator()(const LogPKeyOpt& k) const noexcept {
-    // Combine hash of StateKey with s and token
-    size_t h = StateKeyHash{}(k.leaves);
-    h ^= std::hash<int>{}(k.s) + 0x9e3779b9 + (h << 6) + (h >> 2);
-    h ^= std::hash<int>{}(k.token) + 0x9e3779b9 + (h << 6) + (h >> 2);
-    return h;
+    // 1. Get the fast StateKey hash
+    uint64_t hash = StateKeyHash{}(k.leaves);
+    
+    // 2. Simple, fast incorporation of s and token using known mixing primes.
+    // This is significantly faster than re-running the full FNV algorithm.
+    
+    // Hash for s: XOR and multiply with a good prime
+    hash = (hash ^ (uint64_t)k.s) * 3935559000370003845ULL;
+    
+    // Hash for token: XOR and multiply with a different prime
+    hash = (hash ^ (uint64_t)k.token) * 4488902095908611103ULL;
+    
+    // Final size_t cast is all that's needed.
+    return (std::size_t)hash;
   }
 };
-
 
 // ============================================================================
 // Utilities
@@ -255,21 +363,23 @@ struct TokenPairs {
       }
     }
   }
-};
+};// ============================================================================
+// Optimization 3: Fixed-Size DrawPairs to eliminate vector allocation
+// ============================================================================
 
-// ----- ValidDraws
-// Note: ValidDraws still returns vectors to be compatible with recursion logic,
-// but the cache key is now StateKey.
 struct DrawPair {
   StateKey drawn;
   StateKey undrawn;
-  // We keep basic int counts for logic checks if needed, but primarily use keys
-  // Storing pre-calculated info helps avoid lookups
   int m; 
 };
 
-class ValidDrawsCache {
-  std::unordered_map<StateKey, std::vector<DrawPair>, StateKeyHash> cache;
+struct FixedDraws {
+  DrawPair draws[256];
+  uint8_t count = 0; // Tracks the actual number of elements used
+};
+
+struct ValidDrawsCache {
+  std::unordered_map<StateKey, FixedDraws, StateKeyHash> cache;
   
   // Helper to convert StateKey back to vector for generation (only done once per key)
   std::vector<int> keyToVec(const StateKey& k) {
@@ -279,15 +389,21 @@ class ValidDrawsCache {
   }
   
   void rec(const std::vector<int>& leaves, std::vector<int>& drawn, int idx,
-           int n, int half, int curSum, std::vector<DrawPair>& out) {
+           int n, int half, int curSum, FixedDraws& out) {
+    
     if (idx == (int)leaves.size()) {
       if (curSum == 0 || curSum > half) return;
       if (curSum * 2 == n) {
         std::vector<int> undrawn_local(leaves.size());
         for (size_t i = 0; i < leaves.size(); ++i) undrawn_local[i] = leaves[i] - drawn[i];
-        int cmp = lex_compare(drawn, undrawn_local);
+        
+        // Assuming lex_compare is defined elsewhere and handles symmetry breaking
+        int cmp = lex_compare(drawn, undrawn_local); 
         if (cmp > 0) return;
       }
+      
+      // Safety check for the fixed array size (unlikely to be hit)
+      if (out.count >= 256) throw std::runtime_error("FixedDraws array capacity exceeded.");
       
       DrawPair dp;
       dp.drawn = StateKey(drawn);
@@ -297,9 +413,10 @@ class ValidDrawsCache {
       dp.undrawn = StateKey(total, dp.drawn);
       dp.m = curSum;
       
-      out.push_back(dp);
+      out.draws[out.count++] = dp; 
       return;
     }
+    
     int maxTake = std::min(leaves[idx], half - curSum);
     for (int k = 0; k <= maxTake; ++k) {
       drawn[idx] = k;
@@ -313,7 +430,7 @@ public:
     cache.clear();
   }
   
-  const std::vector<DrawPair>& get(const StateKey& leavesKey) {
+  const FixedDraws& get(const StateKey& leavesKey) {
     auto it = cache.find(leavesKey);
     if (it != cache.end()) return it->second;
     
@@ -321,12 +438,12 @@ public:
     int n = sum_int(leaves);
     int half = n / 2;
     
-    std::vector<DrawPair> out;
-    out.reserve(128); 
+    FixedDraws out;
     
     std::vector<int> drawn(leaves.size(), 0);
     rec(leaves, drawn, 0, n, half, 0, out);
     
+    // Use std::move to efficiently place 'out' into the cache
     auto ins = cache.emplace(leavesKey, std::move(out));
     return ins.first->second;
   }
@@ -384,8 +501,19 @@ static std::unordered_map<long long, std::shared_ptr<TokenPairs>> TP_CACHE;
 
 // Solver caches using Optimized Keys
 struct SolverCaches {
-  std::unordered_map<StateKey, std::vector<double>, StateKeyHash> logB_cache;
-  std::unordered_map<LogPKeyOpt, double, LogPKeyOptHash> logP_cache;
+  // We kept FixedProbList for logB_cache from the last step
+  std::unordered_map<StateKey, FixedProbList, StateKeyHash> logB_cache;
+  
+  // CHANGED: logP_cache now uses the custom pool allocator
+  using LogPMapType = std::unordered_map<
+    LogPKeyOpt, 
+    double, 
+    LogPKeyOptHash, 
+    std::equal_to<LogPKeyOpt>, 
+    MallocPoolAllocator<std::pair<const LogPKeyOpt, double>> 
+  >;
+  
+  LogPMapType logP_cache;
 };
 
 // Key to solver cache is still the root config (packed leaves)
@@ -411,13 +539,11 @@ class Solver {
   LogRDCache& logRD;
   int presentBits;
   
-  std::unordered_map<StateKey, std::vector<double>, StateKeyHash>& logB_cache;
-  std::unordered_map<LogPKeyOpt, double, LogPKeyOptHash>& logP_cache;
+  std::unordered_map<StateKey, FixedProbList, StateKeyHash>& logB_cache;
+  SolverCaches::LogPMapType& logP_cache;
   
   double LogB(int token0, const StateKey& leaves) {
-    // Check Trivial Cases BEFORE HashMap Lookup.
-    
-    // n is computed fast via StateKey
+    // 1. Trivial Case Checks (Logic Inversion)
     const int n = leaves.sum(); 
     
     if (n == 1) {
@@ -425,11 +551,10 @@ class Solver {
     }
     
     if (n == 2) {
-      // Unroll logic for n=2 without vector iterators
       int twice = -1, a = -1, b = -1;
       for (int i = 0; i < leaves.len; ++i) {
         int count = leaves.get(i);
-        if (count == 2) { twice = i; break; } // Optimization: break early
+        if (count == 2) { twice = i; break; }
         else if (count == 1) { if (a < 0) a = i; else b = i; }
       }
       int resultTok = (twice >= 0) ? twice : (D.dp_at(a, b) - 1);
@@ -439,22 +564,25 @@ class Solver {
     // Check if token allowed
     if ((token_mask(token0) & ~presentBits) != 0) return NEG_INF;
     
-    // Only NOW do we check the cache
+    // 2. Cache Lookup
+    // Note: emplace creates the FixedProbList (and its NaNs) automatically
     auto it = logB_cache.find(leaves);
     if (it == logB_cache.end()) {
-      std::vector<double> v(D.nStates, std::numeric_limits<double>::quiet_NaN());
-      it = logB_cache.emplace(leaves, std::move(v)).first;
+      it = logB_cache.emplace(leaves, FixedProbList{}).first;
     }
     
-    double& slot = it->second[token0];
+    // 3. Check for computed value
+    // Use operator[] on our new struct
+    double& slot = it->second[token0]; 
     if (std::isfinite(slot)) return slot;
     if (std::isnan(slot) == false && !std::isfinite(slot)) return slot;
     
+    // 4. Compute
     const auto& drawpairs = validDraws.get(leaves);
-    
     LSEAccumulator outerAcc;
     
-    for (const auto& dp : drawpairs) {
+    for (uint8_t i = 0; i < drawpairs.count; ++i) { 
+      const auto& dp = drawpairs.draws[i];
       const StateKey& drawn = dp.drawn;
       const StateKey& undrawn = dp.undrawn;
       int m = dp.m;
@@ -519,7 +647,8 @@ class Solver {
     
     LSEAccumulator outerAcc;
     
-    for (const auto& dp : drawpairs) {
+    for (uint8_t i = 0; i < drawpairs.count; ++i) { 
+      const auto& dp = drawpairs.draws[i];
       const StateKey& drawn = dp.drawn;
       const StateKey& undrawn = dp.undrawn;
       const int m = dp.m;
@@ -583,6 +712,7 @@ public:
          SolverCaches& SC)
     : D(D_), pairs(p), validDraws(vd), logRD(rd), presentBits(presentBits_),
       logB_cache(SC.logB_cache), logP_cache(SC.logP_cache) {
+    
     logB_cache.reserve(16384);
     logB_cache.max_load_factor(0.7f);
     
