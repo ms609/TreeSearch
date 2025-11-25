@@ -753,7 +753,7 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
   
   // Performance Guard:
   if (len > MAX_STATES_OPT) {
-    stop("This implementation supports a maximum of 16 distinct state tokens.");
+    stop("MaddisonSlatkin() supports at most 4 distinct states.");
   }
   
   int nLevels = (int)std::floor(std::log2((double)len)) + 1;
@@ -859,7 +859,7 @@ NumericVector MaddisonSlatkin_steps(int s_min, int s_max, IntegerVector states) 
   
   // Performance Guard
   if (len > MAX_STATES_OPT) {
-    stop("This implementation supports a maximum of 16 distinct state tokens.");
+    stop("MaddisonSlatkin() supports at most 4 distinct states.");
   }
   
   int nLevels = (int)std::floor(std::log2((double)len)) + 1;
