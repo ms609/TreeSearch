@@ -307,6 +307,10 @@ class ValidDrawsCache {
   }
   
 public:
+  void clear() {
+    cache.clear();
+  }
+  
   const std::vector<DrawPair>& get(const StateKey& leavesKey) {
     auto it = cache.find(leavesKey);
     if (it != cache.end()) return it->second;
@@ -810,4 +814,15 @@ NumericVector MaddisonSlatkin_steps(int s_min, int s_max, IntegerVector states) 
   }
   
   return out;
+}
+//' @export
+//' @keywords internal
+// [[Rcpp::export]]
+void MaddisonSlatkin_clear_cache() {
+  SOLVER_CACHE.clear();
+  LNROOT_CACHE.clear();
+  LOGRD_CACHE.clear();
+  DP_CACHE.clear();
+  TP_CACHE.clear();
+  VALID_DRAWS_GLOBAL.clear();
 }

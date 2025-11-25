@@ -35,6 +35,8 @@ extern SEXP _TreeSearch_LogCarter1(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_Log2Carter1(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_MaddisonSlatkin(SEXP, SEXP);
 extern SEXP _TreeSearch_MaddisonSlatkin_steps(SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_MaddisonSlatkin_clear_cache();
+
 extern SEXP _TreeSearch_active_parsimony_dist(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_parsimony_moments(SEXP, SEXP);
 
@@ -85,6 +87,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_Log2Carter1",       (DL_FUNC) &_TreeSearch_Log2Carter1, 3},
   {"_TreeSearch_MaddisonSlatkin",   (DL_FUNC) &_TreeSearch_MaddisonSlatkin, 2},
   {"_TreeSearch_MaddisonSlatkin_steps",   (DL_FUNC) &_TreeSearch_MaddisonSlatkin_steps, 3},
+  {"_TreeSearch_MaddisonSlatkin_clear_cache",   (DL_FUNC) &_TreeSearch_MaddisonSlatkin_clear_cache, 0},
   {"_TreeSearch_active_parsimony_dist",   (DL_FUNC) &_TreeSearch_active_parsimony_dist, 3},
   {"_TreeSearch_parsimony_moments",   (DL_FUNC) &_TreeSearch_parsimony_moments, 2},
   

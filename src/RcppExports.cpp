@@ -35,6 +35,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// MaddisonSlatkin_clear_cache
+void MaddisonSlatkin_clear_cache();
+RcppExport SEXP _TreeSearch_MaddisonSlatkin_clear_cache() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    MaddisonSlatkin_clear_cache();
+    return R_NilValue;
+END_RCPP
+}
 // active_parsimony_dist
 NumericVector active_parsimony_dist(List tree, NumericVector state_probs, int steps);
 RcppExport SEXP _TreeSearch_active_parsimony_dist(SEXP treeSEXP, SEXP state_probsSEXP, SEXP stepsSEXP) {
