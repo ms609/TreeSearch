@@ -7,7 +7,8 @@
 SteelInfo(tree, dataset)
 }
 \description{
-Steel-inspired consistency index
+Doesn't yet account for missing data.
+Unintelligent accommodation of "only k' of k states observed"
 }
 \examples{
 dataset <- inapplicable.phyData[["Vinther2008"]]

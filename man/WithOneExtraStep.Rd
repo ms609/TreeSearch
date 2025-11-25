@@ -18,7 +18,7 @@ WithOneExtraStep(1, 2, 3)
 }
 \seealso{
 Other profile parsimony functions: 
-\code{\link{MaddisonSlatkin}()},
+\code{\link{FitchBuilder}()},
 \code{\link{PrepareDataProfile}()},
 \code{\link{StepInformation}()},
 \code{\link{profiles}}
