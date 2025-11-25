@@ -55,6 +55,12 @@ struct StateKey {
   // However, memcmp is much faster. Let's stick to memcmp but rely on the 
   // constructors zeroing the padding.
   bool operator==(const StateKey& other) const {
+    // 1. Check cheapest/most-filtering fields first (short-circuiting)
+    if (cached_sum != other.cached_sum) return false;
+    if (len != other.len) return false;
+    
+    // 2. Fallback to optimized whole-struct comparison (memcmp is fast)
+    // This is only run when cached_sum and len match.
     return std::memcmp(this, &other, sizeof(StateKey)) == 0;
   }
   
@@ -203,7 +209,8 @@ struct LogPKeyOpt {
   
   bool operator==(const LogPKeyOpt& other) const {
     // Fast check on integers first
-    if (s != other.s || token != other.token) return false;
+    if (s != other.s) return false;
+    if (token != other.token) return false;
     // Then delegate to StateKey's optimized comparison
     return leaves == other.leaves;
   }
