@@ -13,106 +13,77 @@ using namespace Rcpp;
 
 static const double NEG_INF = -std::numeric_limits<double>::infinity();
 constexpr int MAX_STATES_OPT = 32;
-
+// ---------- replace existing StateKey definition ----------
 struct StateKey {
-  // Layout optimized for alignment and hashing:
-  // data (32 bytes) + cached_sum (4) + len (1) + padding (3) = 40 bytes.
+  uint16_t data[MAX_STATES_OPT];
+  int cached_sum;
+  uint8_t len;
+  uint8_t padding[3];
   
-  uint16_t data[MAX_STATES_OPT]; // 32 bytes
-  int cached_sum;                // 4 bytes
-  uint8_t len;                   // 1 byte
-  uint8_t padding[3];            // 3 bytes padding
+  // cached 64-bit fingerprint (FNV-like). Mutable so maps can read it
+  // even when keys are stored as const in std::unordered_map.
+  mutable uint64_t cached_hash;
   
-  StateKey() : cached_sum(0), len(0) {
+  StateKey() : cached_sum(0), len(0), cached_hash(0) {
     std::memset(data, 0, sizeof(data));
     std::memset(padding, 0, sizeof(padding));
   }
   
-  explicit StateKey(const std::vector<int>& v) : cached_sum(0) {
+  explicit StateKey(const std::vector<int>& v) : cached_sum(0), cached_hash(0) {
     std::memset(data, 0, sizeof(data));
-    // Explicitly zero padding to be safe, though we won't hash it.
-    std::memset(padding, 0, sizeof(padding)); 
+    std::memset(padding, 0, sizeof(padding));
     len = (uint8_t)v.size();
-    for(size_t i=0; i<v.size(); ++i) {
+    for (size_t i = 0; i < v.size(); ++i) {
       data[i] = (uint16_t)v[i];
       cached_sum += v[i];
     }
+    // compute cached_hash once
+    cached_hash = compute_hash_prefix();
   }
   
-  StateKey(const StateKey& total, const StateKey& drawn) : cached_sum(0) {
+  StateKey(const StateKey& total, const StateKey& drawn) : cached_sum(0), cached_hash(0) {
     std::memset(data, 0, sizeof(data));
     std::memset(padding, 0, sizeof(padding));
     len = total.len;
-    for(int i=0; i<len; ++i) {
+    for (int i = 0; i < len; ++i) {
       data[i] = total.data[i] - drawn.data[i];
       cached_sum += data[i];
     }
-  }
-  
-  // Equality must be robust. Since we zero padding, memcmp is usually safe,
-  // but to be absolutely paranoid about the numerical failure, we check fields.
-  // However, memcmp is much faster. Let's stick to memcmp but rely on the 
-  // constructors zeroing the padding.
-  bool operator==(const StateKey& other) const {
-    // 1. Check cheapest/most-filtering fields first (short-circuiting)
-    if (cached_sum != other.cached_sum) return false;
-    if (len != other.len) return false;
-    
-    // 2. Fallback to optimized whole-struct comparison (memcmp is fast)
-    // This is only run when cached_sum and len match.
-    return std::memcmp(this, &other, sizeof(uint16_t) * len) == 0;
+    cached_hash = compute_hash_prefix();
   }
   
   inline int sum() const { return cached_sum; }
   inline int get(int idx) const { return data[idx]; }
   
-  bool matches_vec(const std::vector<int>& v) const {
-    if (v.size() != len) return false;
-    for(size_t i=0; i<v.size(); ++i) if(v[i] != data[i]) return false;
-    return true;
+  bool operator==(const StateKey& other) const {
+    if (cached_sum != other.cached_sum) return false;
+    if (len != other.len) return false;
+    return std::memcmp(data, other.data, sizeof(uint16_t) * len) == 0;
+  }
+  
+private:
+  // FNV-1a-like over exactly the meaningful bytes (2*len bytes)
+  uint64_t compute_hash_prefix() const noexcept {
+    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(data);
+    const int used_bytes = len * sizeof(uint16_t);
+    uint64_t h = 14695981039346656037ULL;
+    constexpr uint64_t P = 1099511628211ULL;
+    // simple byte loop (len <= 16 so this is tiny)
+    for (int i = 0; i < used_bytes; ++i) {
+      h ^= (uint64_t)bytes[i];
+      h *= P;
+    }
+    // mix in metadata
+    h = (h ^ (uint64_t)cached_sum) * P;
+    h = (h ^ (uint64_t)len) * P;
+    return h;
   }
 };
 
-alignas(8)
-  static const uint64_t MS_MASKS_64[17][4] = {
-    // len = 0
-    {0, 0, 0, 0},
-    // len = 1..16
-    {0xFFFFULL, 0, 0, 0},
-    {0xFFFFFFFFULL, 0, 0, 0},
-    {0xFFFFFFFFFFFFULL, 0, 0, 0},
-    {0xFFFFFFFFFFFFFFFFULL, 0, 0, 0},              // 4 entries → 1 full 64-bit word
-    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFULL, 0, 0},
-    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFULL, 0, 0},
-    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFULL, 0, 0},
-    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0, 0}, // 8 entries → 2 full words
-    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFULL, 0},
-    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFULL, 0},
-    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFULL, 0},
-    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0},
-    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFULL},
-    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFULL},
-    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFULL},
-    {0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL}
-  };
-
 struct StateKeyHash {
   std::size_t operator()(const StateKey& k) const noexcept {
-    uint64_t hash = 14695981039346656037ULL;
-    constexpr uint64_t FNV_PRIME = 1099511628211ULL;
-    
-    const uint64_t* d = reinterpret_cast<const uint64_t*>(k.data);
-    const uint64_t* m = MS_MASKS_64[k.len];
-    
-    hash = (hash ^ (d[0] & m[0])) * FNV_PRIME;
-    hash = (hash ^ (d[1] & m[1])) * FNV_PRIME;
-    hash = (hash ^ (d[2] & m[2])) * FNV_PRIME;
-    hash = (hash ^ (d[3] & m[3])) * FNV_PRIME;
-    
-    hash = (hash ^ (uint64_t)k.cached_sum) * FNV_PRIME;
-    hash = (hash ^ (uint64_t)k.len) * FNV_PRIME;
-    
-    return (std::size_t)hash;
+    // Return the cached fingerprint (already mixed with sum/len).
+    return (std::size_t)k.cached_hash;
   }
 };
 
@@ -121,294 +92,198 @@ struct StateKeyHash {
 // Template-specialized StateKey for different token counts
 // ============================================================================
 
+
+// helper: core FNV compute over bytes (len*2 bytes) - repeated but tiny (len small)
+static inline uint64_t compute_key_hash_from_bytes(const uint8_t* bytes, int used_bytes, int cached_sum, int len) noexcept {
+  uint64_t h = 14695981039346656037ULL;
+  constexpr uint64_t P = 1099511628211ULL;
+  for (int i = 0; i < used_bytes; ++i) {
+    h ^= (uint64_t)bytes[i];
+    h *= P;
+  }
+  h = (h ^ (uint64_t)cached_sum) * P;
+  h = (h ^ (uint64_t)len) * P;
+  return h;
+}
 template<int nTokens>
 struct StateKeyT;
-// Specialization for 2 tokens (nStates = 3)
+
+// 2 tokens -> 3 states
 template<>
 struct StateKeyT<2> {
-  uint16_t data[3];     // 6 bytes
-  int cached_sum;       // 4 bytes
-  uint8_t len;          // 1 byte
-  uint8_t padding;      // 1 byte (total: 12 bytes)
+  uint16_t data[3];
+  int cached_sum;
+  uint8_t len;
+  uint8_t padding;
+  mutable uint64_t cached_hash;
   
-  StateKeyT() : cached_sum(0), len(0), padding(0) {
+  StateKeyT() : cached_sum(0), len(0), padding(0), cached_hash(0) {
     std::memset(data, 0, sizeof(data));
+    cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), 0, cached_sum, len);
   }
   
-  explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0) {
+  explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0), cached_hash(0) {
     std::memset(data, 0, sizeof(data));
     len = (uint8_t)v.size();
-    for(size_t i=0; i<v.size(); ++i) {
-      data[i] = (uint16_t)v[i];
-      cached_sum += v[i];
-    }
+    for (size_t i = 0; i < v.size(); ++i) { data[i] = (uint16_t)v[i]; cached_sum += v[i]; }
+    cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), len * sizeof(uint16_t), cached_sum, len);
   }
   
-  StateKeyT(const StateKeyT& total, const StateKeyT& drawn) : cached_sum(0), padding(0) {
+  StateKeyT(const StateKeyT& total, const StateKeyT& drawn) : cached_sum(0), padding(0), cached_hash(0) {
     std::memset(data, 0, sizeof(data));
     len = total.len;
-    for(int i=0; i<len; ++i) {
-      data[i] = total.data[i] - drawn.data[i];
-      cached_sum += data[i];
-    }
-  }
-  
-  bool operator==(const StateKeyT& other) const {
-    if (cached_sum != other.cached_sum) return false;
-    if (len != other.len) return false;
-    return std::memcmp(this, &other, sizeof(uint16_t) * len) == 0;
+    for (int i = 0; i < len; ++i) { data[i] = total.data[i] - drawn.data[i]; cached_sum += data[i]; }
+    cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), len * sizeof(uint16_t), cached_sum, len);
   }
   
   inline int sum() const { return cached_sum; }
   inline int get(int idx) const { return data[idx]; }
   
+  bool operator==(const StateKeyT& other) const {
+    if (cached_hash != other.cached_hash) return false;             // fast reject
+    if (cached_sum != other.cached_sum) return false;
+    if (len != other.len) return false;
+    return std::memcmp(data, other.data, sizeof(uint16_t) * len) == 0; // compare meaningful bytes only
+  }
+  
   bool matches_vec(const std::vector<int>& v) const {
-    if (v.size() != len) return false;
-    for(size_t i=0; i<v.size(); ++i) if(v[i] != data[i]) return false;
+    if ((int)v.size() != (int)len) return false;
+    for (size_t i = 0; i < v.size(); ++i) if (v[i] != data[i]) return false;
     return true;
   }
 };
 
-// Specialization for 3 tokens (nStates = 7)
+// 3 tokens -> 7 states
 template<>
 struct StateKeyT<3> {
-  uint16_t data[7];     // 14 bytes
-  int cached_sum;       // 4 bytes
-  uint8_t len;          // 1 byte
-  uint8_t padding;      // 1 byte (total: 20 bytes)
+  uint16_t data[7];
+  int cached_sum;
+  uint8_t len;
+  uint8_t padding;
+  mutable uint64_t cached_hash;
   
-  StateKeyT() : cached_sum(0), len(0), padding(0) {
-    std::memset(data, 0, sizeof(data));
-  }
-  
-  explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0) {
-    std::memset(data, 0, sizeof(data));
+  StateKeyT() : cached_sum(0), len(0), padding(0), cached_hash(0) { std::memset(data,0,sizeof(data)); cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), 0, cached_sum, len); }
+  explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0), cached_hash(0) {
+    std::memset(data,0,sizeof(data));
     len = (uint8_t)v.size();
-    for(size_t i=0; i<v.size(); ++i) {
-      data[i] = (uint16_t)v[i];
-      cached_sum += v[i];
-    }
+    for (size_t i=0;i<v.size();++i){ data[i]=(uint16_t)v[i]; cached_sum += v[i]; }
+    cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), len * sizeof(uint16_t), cached_sum, len);
   }
-  
-  StateKeyT(const StateKeyT& total, const StateKeyT& drawn) : cached_sum(0), padding(0) {
-    std::memset(data, 0, sizeof(data));
+  StateKeyT(const StateKeyT& total, const StateKeyT& drawn) : cached_sum(0), padding(0), cached_hash(0) {
+    std::memset(data,0,sizeof(data));
     len = total.len;
-    for(int i=0; i<len; ++i) {
-      data[i] = total.data[i] - drawn.data[i];
-      cached_sum += data[i];
-    }
+    for (int i=0;i<len;++i){ data[i] = total.data[i] - drawn.data[i]; cached_sum += data[i]; }
+    cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), len * sizeof(uint16_t), cached_sum, len);
   }
-  
-  bool operator==(const StateKeyT& other) const {
-    if (cached_sum != other.cached_sum) return false;
-    if (len != other.len) return false;
-    return std::memcmp(this, &other, sizeof(uint16_t) * len) == 0;
-  }
-  
   inline int sum() const { return cached_sum; }
   inline int get(int idx) const { return data[idx]; }
-  
+  bool operator==(const StateKeyT& other) const {
+    if (cached_hash != other.cached_hash) return false;
+    if (cached_sum != other.cached_sum) return false;
+    if (len != other.len) return false;
+    return std::memcmp(data, other.data, sizeof(uint16_t) * len) == 0;
+  }
   bool matches_vec(const std::vector<int>& v) const {
-    if (v.size() != len) return false;
-    for(size_t i=0; i<v.size(); ++i) if(v[i] != data[i]) return false;
+    if ((int)v.size() != (int)len) return false;
+    for (size_t i=0;i<v.size();++i) if (v[i] != data[i]) return false;
     return true;
   }
 };
 
-// Specialization for 4 tokens (nStates = 15)
+// 4 tokens -> 15 states
 template<>
 struct StateKeyT<4> {
-  uint16_t data[15];    // 30 bytes
-  int cached_sum;       // 4 bytes
-  uint8_t len;          // 1 byte
-  uint8_t padding;      // 1 byte (total: 36 bytes)
+  uint16_t data[15];
+  int cached_sum;
+  uint8_t len;
+  uint8_t padding;
+  mutable uint64_t cached_hash;
   
-  StateKeyT() : cached_sum(0), len(0), padding(0) {
-    std::memset(data, 0, sizeof(data));
-  }
-  
-  explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0) {
-    std::memset(data, 0, sizeof(data));
+  StateKeyT() : cached_sum(0), len(0), padding(0), cached_hash(0) { std::memset(data,0,sizeof(data)); cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), 0, cached_sum, len); }
+  explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0), cached_hash(0) {
+    std::memset(data,0,sizeof(data));
     len = (uint8_t)v.size();
-    for(size_t i=0; i<v.size(); ++i) {
-      data[i] = (uint16_t)v[i];
-      cached_sum += v[i];
-    }
+    for (size_t i=0;i<v.size();++i){ data[i] = (uint16_t)v[i]; cached_sum += v[i]; }
+    cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), len * sizeof(uint16_t), cached_sum, len);
   }
-  
-  StateKeyT(const StateKeyT& total, const StateKeyT& drawn) : cached_sum(0), padding(0) {
-    std::memset(data, 0, sizeof(data));
+  StateKeyT(const StateKeyT& total, const StateKeyT& drawn) : cached_sum(0), padding(0), cached_hash(0) {
+    std::memset(data,0,sizeof(data));
     len = total.len;
-    for(int i=0; i<len; ++i) {
-      data[i] = total.data[i] - drawn.data[i];
-      cached_sum += data[i];
-    }
+    for (int i=0;i<len;++i){ data[i] = total.data[i] - drawn.data[i]; cached_sum += data[i]; }
+    cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), len * sizeof(uint16_t), cached_sum, len);
   }
-  
-  bool operator==(const StateKeyT& other) const {
-    if (cached_sum != other.cached_sum) return false;
-    if (len != other.len) return false;
-    return std::memcmp(this, &other, sizeof(uint16_t) * len) == 0;
-  }
-  
   inline int sum() const { return cached_sum; }
   inline int get(int idx) const { return data[idx]; }
-  
+  bool operator==(const StateKeyT& other) const {
+    if (cached_hash != other.cached_hash) return false;
+    if (cached_sum != other.cached_sum) return false;
+    if (len != other.len) return false;
+    return std::memcmp(data, other.data, sizeof(uint16_t) * len) == 0;
+  }
   bool matches_vec(const std::vector<int>& v) const {
-    if (v.size() != len) return false;
-    for(size_t i=0; i<v.size(); ++i) if(v[i] != data[i]) return false;
+    if ((int)v.size() != (int)len) return false;
+    for (size_t i=0;i<v.size();++i) if (v[i] != data[i]) return false;
     return true;
   }
 };
 
-// Specialization for 5 tokens (nStates = 31)
+// 5 tokens -> 31 states
 template<>
 struct StateKeyT<5> {
-  uint16_t data[31];    // 62 bytes
-  int cached_sum;       // 4 bytes
-  uint8_t len;          // 1 byte
-  uint8_t padding;      // 1 byte (total: 68 bytes)
+  uint16_t data[31];
+  int cached_sum;
+  uint8_t len;
+  uint8_t padding;
+  mutable uint64_t cached_hash;
   
-  StateKeyT() : cached_sum(0), len(0), padding(0) {
-    std::memset(data, 0, sizeof(data));
-  }
-  
-  explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0) {
-    std::memset(data, 0, sizeof(data));
+  StateKeyT() : cached_sum(0), len(0), padding(0), cached_hash(0) { std::memset(data,0,sizeof(data)); cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), 0, cached_sum, len); }
+  explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0), cached_hash(0) {
+    std::memset(data,0,sizeof(data));
     len = (uint8_t)v.size();
-    for(size_t i=0; i<v.size(); ++i) {
-      data[i] = (uint16_t)v[i];
-      cached_sum += v[i];
-    }
+    for (size_t i=0;i<v.size();++i){ data[i] = (uint16_t)v[i]; cached_sum += v[i]; }
+    cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), len * sizeof(uint16_t), cached_sum, len);
   }
-  
-  StateKeyT(const StateKeyT& total, const StateKeyT& drawn) : cached_sum(0), padding(0) {
-    std::memset(data, 0, sizeof(data));
+  StateKeyT(const StateKeyT& total, const StateKeyT& drawn) : cached_sum(0), padding(0), cached_hash(0) {
+    std::memset(data,0,sizeof(data));
     len = total.len;
-    for(int i=0; i<len; ++i) {
-      data[i] = total.data[i] - drawn.data[i];
-      cached_sum += data[i];
-    }
+    for (int i=0;i<len;++i){ data[i] = total.data[i] - drawn.data[i]; cached_sum += data[i]; }
+    cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), len * sizeof(uint16_t), cached_sum, len);
   }
-  
-  bool operator==(const StateKeyT& other) const {
-    if (cached_sum != other.cached_sum) return false;
-    if (len != other.len) return false;
-    return std::memcmp(this, &other, sizeof(uint16_t) * len) == 0;
-  }
-  
   inline int sum() const { return cached_sum; }
   inline int get(int idx) const { return data[idx]; }
-  
+  bool operator==(const StateKeyT& other) const {
+    if (cached_hash != other.cached_hash) return false;
+    if (cached_sum != other.cached_sum) return false;
+    if (len != other.len) return false;
+    return std::memcmp(data, other.data, sizeof(uint16_t) * len) == 0;
+  }
   bool matches_vec(const std::vector<int>& v) const {
-    if (v.size() != len) return false;
-    for(size_t i=0; i<v.size(); ++i) if(v[i] != data[i]) return false;
+    if ((int)v.size() != (int)len) return false;
+    for (size_t i=0;i<v.size();++i) if (v[i] != data[i]) return false;
     return true;
   }
 };
 
-// Hash functions optimized for each size
 template<int nTokens>
 struct StateKeyHashT;
 
 template<>
 struct StateKeyHashT<2> {
-  std::size_t operator()(const StateKeyT<2>& k) const noexcept {
-    // For 3 states (6 bytes), super-fast hash
-    // Treat as single 64-bit value (with padding)
-    uint64_t hash = 14695981039346656037ULL;
-    const uint32_t FNV_PRIME = 16777619U;
-    
-    // Pack all 3 uint16_t into one operation
-    uint64_t packed = ((uint64_t)k.data[0] << 32) | 
-      ((uint64_t)k.data[1] << 16) | 
-      ((uint64_t)k.data[2]);
-    hash = (hash ^ packed) * FNV_PRIME;
-    
-    hash = (hash ^ (uint64_t)k.cached_sum) * FNV_PRIME;
-    hash = (hash ^ (uint64_t)k.len) * FNV_PRIME;
-    
-    return (std::size_t)hash;
-  }
+  std::size_t operator()(const StateKeyT<2>& k) const noexcept { return (std::size_t)k.cached_hash; }
 };
-
 template<>
 struct StateKeyHashT<3> {
-  std::size_t operator()(const StateKeyT<3>& k) const noexcept {
-    // For 7 states (14 bytes), use 32-bit chunks
-    uint64_t hash = 14695981039346656037ULL;
-    const uint32_t FNV_PRIME = 16777619U;
-    
-    const uint32_t* data32 = reinterpret_cast<const uint32_t*>(k.data);
-    // 14 bytes = 3 complete uint32_t + 1 uint16_t
-    hash = (hash ^ data32[0]) * FNV_PRIME;
-    hash = (hash ^ data32[1]) * FNV_PRIME;
-    hash = (hash ^ data32[2]) * FNV_PRIME;
-    hash = (hash ^ k.data[6]) * FNV_PRIME; // Last uint16_t
-    
-    hash = (hash ^ (uint64_t)k.cached_sum) * FNV_PRIME;
-    hash = (hash ^ (uint64_t)k.len) * FNV_PRIME;
-    
-    return (std::size_t)hash;
-  }
+  std::size_t operator()(const StateKeyT<3>& k) const noexcept { return (std::size_t)k.cached_hash; }
 };
-
 template<>
 struct StateKeyHashT<4> {
-  std::size_t operator()(const StateKeyT<4>& k) const noexcept {
-    // For 15 states (30 bytes), use 64-bit chunks
-    uint64_t hash = 14695981039346656037ULL;
-    const uint64_t FNV_PRIME = 1099511628211ULL;
-    
-    const uint64_t* data64 = reinterpret_cast<const uint64_t*>(k.data);
-    // 30 bytes = 3 complete uint64_t + 3 uint16_t
-    hash = (hash ^ data64[0]) * FNV_PRIME;
-    hash = (hash ^ data64[1]) * FNV_PRIME;
-    hash = (hash ^ data64[2]) * FNV_PRIME;
-    
-    // Hash remaining 3 uint16_t as a single operation
-    uint64_t tail = ((uint64_t)k.data[12] << 32) | 
-      ((uint64_t)k.data[13] << 16) | 
-      ((uint64_t)k.data[14]);
-    hash = (hash ^ tail) * FNV_PRIME;
-    
-    hash = (hash ^ (uint64_t)k.cached_sum) * FNV_PRIME;
-    hash = (hash ^ (uint64_t)k.len) * FNV_PRIME;
-    
-    return (std::size_t)hash;
-  }
+  std::size_t operator()(const StateKeyT<4>& k) const noexcept { return (std::size_t)k.cached_hash; }
 };
-
 template<>
 struct StateKeyHashT<5> {
-  std::size_t operator()(const StateKeyT<5>& k) const noexcept {
-    // For 31 states (62 bytes), use 64-bit chunks
-    uint64_t hash = 14695981039346656037ULL;
-    const uint64_t FNV_PRIME = 1099511628211ULL;
-    
-    const uint64_t* data64 = reinterpret_cast<const uint64_t*>(k.data);
-    // 62 bytes = 7 complete uint64_t + 3 uint16_t
-    // Unroll for better performance
-    hash = (hash ^ data64[0]) * FNV_PRIME;
-    hash = (hash ^ data64[1]) * FNV_PRIME;
-    hash = (hash ^ data64[2]) * FNV_PRIME;
-    hash = (hash ^ data64[3]) * FNV_PRIME;
-    hash = (hash ^ data64[4]) * FNV_PRIME;
-    hash = (hash ^ data64[5]) * FNV_PRIME;
-    hash = (hash ^ data64[6]) * FNV_PRIME;
-    
-    // Hash remaining 3 uint16_t
-    uint64_t tail = ((uint64_t)k.data[28] << 32) | 
-      ((uint64_t)k.data[29] << 16) | 
-      ((uint64_t)k.data[30]);
-    hash = (hash ^ tail) * FNV_PRIME;
-    
-    hash = (hash ^ (uint64_t)k.cached_sum) * FNV_PRIME;
-    hash = (hash ^ (uint64_t)k.len) * FNV_PRIME;
-    
-    return (std::size_t)hash;
-  }
+  std::size_t operator()(const StateKeyT<5>& k) const noexcept { return (std::size_t)k.cached_hash; }
 };
+
 // ============================================================================
 // Fixed-size probability array instead of vector allocations
 // Max states for 16 leaves = (1<<5)-1 = 31. We round to 32.
