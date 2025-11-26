@@ -1752,7 +1752,7 @@ public:
     // 1. Base Case: Tip
     if (node.isTip) {
       // If we are at a tip, the 'leaves' key must have exactly count 1.
-      if (leaves.sum() != 1) return NEG_INF; // Should not happen if logic is correct
+      assert(leaves.sum() == 1);
       return (leaves.get(token0) == 1) ? 0.0 : NEG_INF;
     }
     

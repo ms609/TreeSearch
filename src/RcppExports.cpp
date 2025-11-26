@@ -31,6 +31,42 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// FixedTree_Preprocess
+SEXP FixedTree_Preprocess(IntegerMatrix edge, int nTips);
+RcppExport SEXP _TreeSearch_FixedTree_Preprocess(SEXP edgeSEXP, SEXP nTipsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< int >::type nTips(nTipsSEXP);
+    rcpp_result_gen = Rcpp::wrap(FixedTree_Preprocess(edge, nTips));
+    return rcpp_result_gen;
+END_RCPP
+}
+// FixedTree_Count
+NumericVector FixedTree_Count(SEXP treePtr, IntegerVector steps, IntegerVector states);
+RcppExport SEXP _TreeSearch_FixedTree_Count(SEXP treePtrSEXP, SEXP stepsSEXP, SEXP statesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type treePtr(treePtrSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type steps(stepsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type states(statesSEXP);
+    rcpp_result_gen = Rcpp::wrap(FixedTree_Count(treePtr, steps, states));
+    return rcpp_result_gen;
+END_RCPP
+}
+// LogMultinomial
+double LogMultinomial(IntegerVector states);
+RcppExport SEXP _TreeSearch_LogMultinomial(SEXP statesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type states(statesSEXP);
+    rcpp_result_gen = Rcpp::wrap(LogMultinomial(states));
+    return rcpp_result_gen;
+END_RCPP
+}
 // active_parsimony_dist
 NumericVector active_parsimony_dist(List tree, NumericVector state_probs, int steps);
 RcppExport SEXP _TreeSearch_active_parsimony_dist(SEXP treeSEXP, SEXP state_probsSEXP, SEXP stepsSEXP) {
