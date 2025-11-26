@@ -92,8 +92,6 @@ FixedTreeCount <- function(tree, tokens, steps = Inf) {
     
     for (tokensL in splits) {
       tokensR <- currentTokens - tokensL
-      multiplier <- prod(choose(currentTokens, tokensL))
-      if (multiplier == 0) next
       
       matL <- .Recurse(leftNode, tokensL)
       matR <- .Recurse(rightNode, tokensR)
@@ -122,7 +120,7 @@ FixedTreeCount <- function(tree, tokens, steps = Inf) {
             # Map to 1-based row index
             colIdx <- totalSteps + 1 
             
-            addedCount <- countL * countR * multiplier
+            addedCount <- countL * countR
             resMat[rowIdx, colIdx] <- resMat[rowIdx, colIdx] + addedCount
           }
         }
@@ -146,5 +144,5 @@ FixedTreeCount <- function(tree, tokens, steps = Inf) {
     totalPerStep[seq_len(maxSteps + 1)]
   } else {
     totalPerStep
-  } / factorial(nTip)
+  }
 }

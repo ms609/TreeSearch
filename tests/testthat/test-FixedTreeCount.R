@@ -19,13 +19,13 @@ test_that("All labellings counted", {
     unlist() |>
     paste0(collapse = "") |>
     StringToPhyDat(tips = nTip, byTaxon = FALSE)
-  expect <- table(CharacterLength(tree, allComb, compress = TRUE)) / nComb
-    
+  expect <- table(CharacterLength(tree, allComb, compress = TRUE))
+  
   FixedTreeCount(tree, c(2, 3, 2), 5) / 24
   expect_equal(FixedTreeCount(tree, c(7), 2),
                c("0" = 1, "1" = 0, "2" = 0))
   expect_equal(FixedTreeCount(tree, c(1, 6), 2),
-               c("0" = 0, "1" = 1, "2" = 0))
+               c("0" = 0, "1" = 7, "2" = 0))
                
   expect_equal(FixedTreeCount(tree, c(2, 3, 2), 5),
                c("0" = 0, "1" = 0, expect, "5" = 0))
