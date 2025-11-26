@@ -8,6 +8,10 @@ test_that("All labellings counted", {
     unlist() |>
     paste0(collapse = "") |>
     StringToPhyDat(tips = nTip, byTaxon = FALSE)
+  expect <- table(CharacterLength(tree, allComb, compress = TRUE))
+  
+  expect_equal(as.numeric(FixedTreeSteps(tr, 4, c(2, 3, 2))[3:5]),
+               as.numeric(expect))
   
   
 })
