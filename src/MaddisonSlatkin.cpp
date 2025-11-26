@@ -15,14 +15,14 @@ static const double NEG_INF = -std::numeric_limits<double>::infinity();
 constexpr int MAX_STATES_OPT = 32;
 // ---------- replace existing StateKey definition ----------
 struct StateKey {
-  uint16_t data[MAX_STATES_OPT];
-  int cached_sum;
-  uint8_t len;
-  uint8_t padding[3];
   
   // cached 64-bit fingerprint (FNV-like). Mutable so maps can read it
   // even when keys are stored as const in std::unordered_map.
   mutable uint64_t cached_hash;
+  uint16_t data[MAX_STATES_OPT];
+  int cached_sum;
+  uint8_t len;
+  uint8_t padding[3];
   
   StateKey() : cached_sum(0), len(0), cached_hash(0) {
     std::memset(data, 0, sizeof(data));
@@ -111,11 +111,11 @@ struct StateKeyT;
 // 2 tokens -> 3 states
 template<>
 struct StateKeyT<2> {
+  mutable uint64_t cached_hash;
   uint16_t data[3];
   int cached_sum;
   uint8_t len;
   uint8_t padding;
-  mutable uint64_t cached_hash;
   
   StateKeyT() : cached_sum(0), len(0), padding(0), cached_hash(0) {
     std::memset(data, 0, sizeof(data));
@@ -156,11 +156,11 @@ struct StateKeyT<2> {
 // 3 tokens -> 7 states
 template<>
 struct StateKeyT<3> {
+  mutable uint64_t cached_hash;
   uint16_t data[7];
   int cached_sum;
   uint8_t len;
   uint8_t padding;
-  mutable uint64_t cached_hash;
   
   StateKeyT() : cached_sum(0), len(0), padding(0), cached_hash(0) { std::memset(data,0,sizeof(data)); cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), 0, cached_sum, len); }
   explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0), cached_hash(0) {
@@ -193,11 +193,11 @@ struct StateKeyT<3> {
 // 4 tokens -> 15 states
 template<>
 struct StateKeyT<4> {
+  mutable uint64_t cached_hash;
   uint16_t data[15];
   int cached_sum;
   uint8_t len;
   uint8_t padding;
-  mutable uint64_t cached_hash;
   
   StateKeyT() : cached_sum(0), len(0), padding(0), cached_hash(0) { std::memset(data,0,sizeof(data)); cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), 0, cached_sum, len); }
   explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0), cached_hash(0) {
@@ -230,11 +230,11 @@ struct StateKeyT<4> {
 // 5 tokens -> 31 states
 template<>
 struct StateKeyT<5> {
+  mutable uint64_t cached_hash;
   uint16_t data[31];
   int cached_sum;
   uint8_t len;
   uint8_t padding;
-  mutable uint64_t cached_hash;
   
   StateKeyT() : cached_sum(0), len(0), padding(0), cached_hash(0) { std::memset(data,0,sizeof(data)); cached_hash = compute_key_hash_from_bytes(reinterpret_cast<const uint8_t*>(data), 0, cached_sum, len); }
   explicit StateKeyT(const std::vector<int>& v) : cached_sum(0), padding(0), cached_hash(0) {
@@ -1034,10 +1034,10 @@ public:
     : D(D_), pairs(p), presentBits(presentBits_), lnRooted(lnr) {
     
     logB_cache.reserve(16384);
-    logB_cache.max_load_factor(0.7f);
+    logB_cache.max_load_factor(0.5f);
     
-    logP_cache.reserve(65536);
-    logP_cache.max_load_factor(0.7f);
+    logP_cache.reserve(1 << 17);
+    logP_cache.max_load_factor(0.5f);
     
     logRD_cache.reserve(1024);
     validDraws_cache.reserve(256);
