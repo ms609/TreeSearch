@@ -41,18 +41,43 @@ inline FitchResult fitchOp(int mask1, int mask2) {
 }
 
 // -----------------------------------------------------------------------------
-// Custom hash function for pair<int, vector<int>> keys
+// Efficient cache key using a single 64-bit hash for small token vectors
+// For larger vectors, store them but use a precomputed hash
 // -----------------------------------------------------------------------------
-struct PairVectorHash {
-  std::size_t operator()(const std::pair<int, std::vector<int>>& p) const {
-    std::size_t seed = std::hash<int>()(p.first);
-    seed ^= p.second.size() + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-    for(auto& i : p.second) {
-      seed ^= std::hash<int>()(i) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-    }
-    return seed;
+struct CacheKey {
+  int node;
+  size_t tokenHash; // Precomputed hash of tokens
+  const std::vector<int>* tokens; // Pointer to avoid copying
+  
+  CacheKey(int n, const std::vector<int>& t, size_t h) 
+    : node(n), tokenHash(h), tokens(&t) {}
+  
+  bool operator==(const CacheKey& other) const {
+    return node == other.node && 
+      tokenHash == other.tokenHash &&
+      *tokens == *other.tokens;
   }
 };
+
+struct CacheKeyHash {
+  std::size_t operator()(const CacheKey& k) const {
+    // Combine node and precomputed token hash
+    size_t h = std::hash<int>()(k.node);
+    h ^= k.tokenHash + 0x9e3779b9 + (h << 6) + (h >> 2);
+    return h;
+  }
+};
+
+// -----------------------------------------------------------------------------
+// Helper to compute token vector hash once
+// -----------------------------------------------------------------------------
+inline size_t hashTokens(const std::vector<int>& tokens) {
+  size_t h = tokens.size();
+  for(int v : tokens) {
+    h ^= std::hash<int>()(v) + 0x9e3779b9 + (h << 6) + (h >> 2);
+  }
+  return h;
+}
 
 // -----------------------------------------------------------------------------
 // Class to encapsulate the recursion and cache
@@ -64,16 +89,22 @@ public:
   const int nTip;
   const int maxSteps;
   const int nRows;
-  const int matrixSize; // nRows * (maxSteps + 1)
+  const int matrixSize;
   
   // Computed Node Sizes
   std::vector<int> nodeSizes;
   
-  // Memoization Cache - using unordered_map for better performance
-  std::unordered_map<std::pair<int, std::vector<int>>, double*, 
-                     PairVectorHash> cache;
+  // Precomputed child lookup
+  std::vector<std::pair<int, int>> children;
   
-  // Memory pool for result matrices to avoid repeated allocations
+  // Memoization Cache - now keyed by hash for faster lookup
+  // Store actual token vectors separately to handle hash collisions
+  std::unordered_map<CacheKey, double*, CacheKeyHash> cache;
+  
+  // Store token vectors to keep them alive for cache keys
+  std::vector<std::vector<int>> storedTokens;
+  
+  // Memory pool for result matrices
   std::vector<double*> memoryPool;
   
   TreeCounter(IntegerMatrix edge_, int nTip_, int maxSteps_, int nStates_) 
@@ -83,14 +114,28 @@ public:
     
     int maxNode = nTip + edge.nrow();
     nodeSizes.resize(maxNode + 1, 0);
+    children.resize(maxNode + 1, {-1, -1});
     
     for(int i = 1; i <= nTip; ++i) nodeSizes[i] = 1;
     
+    // Precompute children
+    for(int i = 0; i < edge.nrow(); ++i) {
+      int parent = edge(i, 0);
+      int child = edge(i, 1);
+      if (children[parent].first == -1) {
+        children[parent].first = child;
+      } else {
+        children[parent].second = child;
+      }
+    }
+    
     computeNodeSizes(nTip + 1);
+    
+    cache.reserve(2000);
+    storedTokens.reserve(2000);
   }
   
   ~TreeCounter() {
-    // Clean up memory pool
     for(auto ptr : memoryPool) {
       delete[] ptr;
     }
@@ -101,29 +146,28 @@ public:
     if (nodeSizes[node] > 0) return nodeSizes[node];
     
     int size = 0;
-    for(int i = 0; i < edge.nrow(); ++i) {
-      if (edge(i, 0) == node) {
-        size += computeNodeSizes(edge(i, 1));
+    if (children[node].first != -1) {
+      size += computeNodeSizes(children[node].first);
+      if (children[node].second != -1) {
+        size += computeNodeSizes(children[node].second);
       }
     }
     nodeSizes[node] = size;
     return size;
   }
   
-  // Allocate a new matrix from pool
   double* allocateMatrix() {
     double* mat = new double[matrixSize];
     memoryPool.push_back(mat);
     return mat;
   }
   
-  // Initialize matrix to LOG_ZERO
   inline void initMatrix(double* mat) {
     std::fill(mat, mat + matrixSize, LOG_ZERO);
   }
   
   // ---------------------------------------------------------------------------
-  // Recursively generate splits of tokens
+  // Generate splits - optimized to reduce allocations
   // ---------------------------------------------------------------------------
   void generateSplits(size_t tokenTypeIdx, int currentLeftSize, int targetLeftSize,
                       const std::vector<int>& totalTokens,
@@ -157,12 +201,12 @@ public:
   }
   
   // ---------------------------------------------------------------------------
-  // Core Recursive Function - now returns pointer instead of copying
+  // Core Recursive Function
   // ---------------------------------------------------------------------------
-  double* recurse(int node, const std::vector<int>& currentTokens) {
+  double* recurse(int node, const std::vector<int>& currentTokens, size_t tokenHash) {
     
     // 1. Check Cache
-    std::pair<int, std::vector<int>> key = {node, currentTokens};
+    CacheKey key(node, currentTokens, tokenHash);
     auto it = cache.find(key);
     if (it != cache.end()) {
       return it->second;
@@ -184,65 +228,77 @@ public:
       
       if (tokenIndex != -1) {
         int stateMask = 1 << tokenIndex;
-        int idx = stateMask + nRows * 0;
-        resMat[idx] = 0.0;
+        resMat[stateMask] = 0.0;
       }
       
-      cache[key] = resMat;
+      // Store token vector for cache key
+      storedTokens.push_back(currentTokens);
+      CacheKey storedKey(node, storedTokens.back(), tokenHash);
+      cache.emplace(storedKey, resMat);
       return resMat;
     }
     
     // 3. Recursive Step: Internal Node
-    int leftNode = -1, rightNode = -1;
-    for(int i = 0; i < edge.nrow(); ++i) {
-      if (edge(i, 0) == node) {
-        if (leftNode == -1) leftNode = edge(i, 1);
-        else rightNode = edge(i, 1);
-      }
-    }
-    
+    int leftNode = children[node].first;
+    int rightNode = children[node].second;
     int leftSize = nodeSizes[leftNode];
     
     // Generate Splits
     std::vector<std::vector<int>> splits;
+    splits.reserve(100);
     std::vector<int> buffer(currentTokens.size());
     generateSplits(0, 0, leftSize, currentTokens, buffer, splits);
     
-    // Preallocate tokensR to avoid repeated allocations
+    // Preallocate vectors to avoid repeated allocation
     std::vector<int> tokensR(currentTokens.size());
     
     // Process Splits
     for (const auto& tokensL : splits) {
-      // Calculate tokensR
+      // Calculate tokensR inline
       for(size_t i = 0; i < tokensR.size(); ++i) 
         tokensR[i] = currentTokens[i] - tokensL[i];
       
-      double* matL = recurse(leftNode, tokensL);
-      double* matR = recurse(rightNode, tokensR);
+      // Precompute hashes to avoid recomputing in recursive calls
+      size_t hashL = hashTokens(tokensL);
+      size_t hashR = hashTokens(tokensR);
       
-      // Convolve - optimized inner loops
-      for (int stepL = 0; stepL <= maxSteps; ++stepL) {
-        int offsetL = nRows * stepL;
+      double* matL = recurse(leftNode, tokensL, hashL);
+      double* matR = recurse(rightNode, tokensR, hashR);
+      
+      // Convolve - unroll step loop for better performance
+      for (int maskL = 1; maskL < nRows; ++maskL) {
+        // Check if this mask has any non-zero values
+        bool hasNonZero = false;
+        for (int stepL = 0; stepL <= maxSteps; ++stepL) {
+          if (matL[maskL + nRows * stepL] != LOG_ZERO) {
+            hasNonZero = true;
+            break;
+          }
+        }
+        if (!hasNonZero) continue;
         
-        for (int maskL = 1; maskL < nRows; ++maskL) {
-          double valL = matL[maskL + offsetL];
+        for (int stepL = 0; stepL <= maxSteps; ++stepL) {
+          double valL = matL[maskL + nRows * stepL];
           if (valL == LOG_ZERO) continue;
           
           int maxStepR = maxSteps - stepL;
-          for (int stepR = 0; stepR <= maxStepR; ++stepR) {
-            int offsetR = nRows * stepR;
+          
+          for (int maskR = 1; maskR < nRows; ++maskR) {
+            // Precompute Fitch operation outside step loop
+            FitchResult fitch = fitchOp(maskL, maskR);
+            int baseCost = stepL + fitch.cost;
             
-            for (int maskR = 1; maskR < nRows; ++maskR) {
-              double valR = matR[maskR + offsetR];
+            if (baseCost > maxSteps) continue;
+            
+            for (int stepR = 0; stepR <= maxStepR; ++stepR) {
+              double valR = matR[maskR + nRows * stepR];
               if (valR == LOG_ZERO) continue;
               
-              FitchResult fitch = fitchOp(maskL, maskR);
-              int totalSteps = stepL + stepR + fitch.cost;
+              int totalSteps = baseCost + stepR;
               
               if (totalSteps <= maxSteps) {
                 int targetIdx = fitch.state + nRows * totalSteps;
-                double combinedProb = valL + valR;
-                resMat[targetIdx] = logAdd(resMat[targetIdx], combinedProb);
+                resMat[targetIdx] = logAdd(resMat[targetIdx], valL + valR);
               }
             }
           }
@@ -250,7 +306,10 @@ public:
       }
     }
     
-    cache[key] = resMat;
+    // Store token vector for cache key
+    storedTokens.push_back(currentTokens);
+    CacheKey storedKey(node, storedTokens.back(), tokenHash);
+    cache.emplace(storedKey, resMat);
     return resMat;
   }
 };
@@ -289,7 +348,6 @@ public:
 NumericVector FixedTreeCount(List tree, std::vector<int> tokens,
                              double steps = -1.0) {
   
-  // 1. Setup
   IntegerMatrix edge = tree["edge"];
   int nTip = 0;
   
@@ -301,7 +359,6 @@ NumericVector FixedTreeCount(List tree, std::vector<int> tokens,
       if(edge[i] > nTip) nTip = edge[i];
   }
   
-  // Clean tokens
   std::vector<int> activeTokens;
   for(int t : tokens) {
     if (t > 0) activeTokens.push_back(t);
@@ -315,19 +372,16 @@ NumericVector FixedTreeCount(List tree, std::vector<int> tokens,
     stop("Number of leaves does not match total tokens.");
   }
   
-  // Calculate Max Steps
   int calcMaxSteps = nTip - activeTokens.size() + 1;
   int limitSteps = (steps < 0) ? calcMaxSteps : (int)steps;
   int actualMaxSteps = std::min(limitSteps, calcMaxSteps);
   
-  // 2. Instantiate Logic
   TreeCounter solver(edge, nTip, actualMaxSteps, activeTokens.size());
   
-  // 3. Run
   int rootNode = nTip + 1;
-  double* finalMat = solver.recurse(rootNode, activeTokens);
+  size_t rootHash = hashTokens(activeTokens);
+  double* finalMat = solver.recurse(rootNode, activeTokens, rootHash);
   
-  // 4. Summarize Results
   NumericVector results(actualMaxSteps + 1);
   
   for (int s = 0; s <= actualMaxSteps; ++s) {
@@ -339,7 +393,6 @@ NumericVector FixedTreeCount(List tree, std::vector<int> tokens,
     results[s] = stepTotal;
   }
   
-  // Assign names
   CharacterVector names(actualMaxSteps + 1);
   for(int i=0; i<=actualMaxSteps; ++i) 
     names[i] = std::to_string(i);
@@ -347,4 +400,3 @@ NumericVector FixedTreeCount(List tree, std::vector<int> tokens,
   
   return results;
 }
- 
