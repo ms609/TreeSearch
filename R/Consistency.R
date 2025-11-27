@@ -102,19 +102,25 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
   
   rc <- ri * minLength / obsLength
 
-  if (nRelabel > 0) {
-    medLength <- ExpectedLength(dataset, tree, nRelabel, compress = TRUE)
+  if (is.null(nRelabel) || nRelabel > 0) {
+    expLength <- ExpectedLength(dataset, tree, nRelabel, compress = TRUE)
     if (!byChar) {
-      medLength <- sum(medLength)
+      meanLength <- sum(expLength["mean", ])
+      medLength <- sum(expLength["median", ])
+    } else {
+      meanLength <- expLength["mean", ]
+      medLength <- expLength["median", ]
     }
     expHomoplasy <- medLength - minLength
     rhi <- extra / expHomoplasy
+    rhiBar <- extra / (meanLength - minLength)
   } else {
     rhi <- NA
+    rhiBar <- NA
   }
   
   if (byChar) {
-    ret <- cbind(ci = ci, ri = ri, rc = rc, rhi = rhi)
+    ret <- cbind(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar)
     
     # Return:
     if (compress) {
@@ -123,7 +129,7 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
       ret[attr(dataset, "index"), ]
     }
   } else {
-    c(ci = ci, ri = ri, rc = rc, rhi = rhi)
+    c(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar)
   }
 }
 
@@ -145,12 +151,17 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
 #' length expected if the states of each character are shuffled randomly
 #' across the leaves.
 #' 
+#' If `nRelabel` is NULL, an exact score will be provided using Fitch counting,
+#' treating inapplicables as ambiguities.
+#' If `nRelabel` is numeric, a score will be estimated by resampling, using
+#' the \insertCite{Brazeau2019;textual}{TreeSearch} correction for
+#' inapplicable tokens.
+#' 
 #' @references \insertAllCited{}
 #' @inheritParams Consistency
 #' 
-#' @return `ExpectedLength()` returns a numeric vector stating the median
-#' length of each character in `dataset` on `tree` after `nRelabel` random
-#' relabelling of leaves.
+#' @return `ExpectedLength()` returns a two-row matrix listing the mean and
+#'  median length of each character in `dataset` on `tree`.
 #' 
 #' @export
 #' @importFrom stats median
@@ -177,28 +188,40 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
     as.integer(intToBits(x)[1:nLevels])
   }, integer(nLevels)))
   
-  .LengthForChar <- function(x) {
-    key <- stri_paste(c(nRelabel, x), collapse = ",")
-    if (.CharLengthCache$has(key)) {
-      .CharLengthCache$get(key)
-    } else {
-      patterns <- apply(unname(unique(t(
-        as.data.frame(replicate(nRelabel, sample(rep(seq_along(x), x))))))),
-        2, I, simplify = FALSE)
-      nr <- length(patterns[[1]])
-      phy <- structure(
-        setNames(patterns, TipLabels(tree)),
-        "weight" = rep(1, nr),
-        nr = nr,
-        nc = nLevels,
-        index = seq_len(nr),
-        levels = rwLevels,
-        type = "USER",
-        contrast = rwContrast,
-        class = "phyDat")
-      ret <- median(FastCharacterLength(tree, phy))
-      .CharLengthCache$set(key, ret)
-      ret
+  .LengthForChar <- if (is.null(nRelabel)) {
+    function(x) {
+      count <- exp(FixedTreeCount(tree, x))
+      medianPos <- sum(count, 1) / 2
+      cum <- cumsum(count)
+      mdn <- unname(which.max(cum >= medianPos) - 1) # as entry 1 is 0
+      c(mean = sum((as.numeric(names(count)) * count) / sum(count)),
+        median = mdn)
+    }
+  } else {
+    function(x) {
+      key <- stri_paste(c(nRelabel, x), collapse = ",")
+      if (.CharLengthCache$has(key)) {
+        .CharLengthCache$get(key)
+      } else {
+        patterns <- apply(unname(unique(t(
+          as.data.frame(replicate(nRelabel, sample(rep(seq_along(x), x))))))),
+          2, I, simplify = FALSE)
+        nr <- length(patterns[[1]])
+        phy <- structure(
+          setNames(patterns, TipLabels(tree)),
+          "weight" = rep(1, nr),
+          nr = nr,
+          nc = nLevels,
+          index = seq_len(nr),
+          levels = rwLevels,
+          type = "USER",
+          contrast = rwContrast,
+          class = "phyDat")
+        fcl <- FastCharacterLength(tree, phy)
+        ret <- c(mean = mean(fcl), median = median(fcl))
+        .CharLengthCache$set(key, ret)
+        ret
+      }
     }
   }
   

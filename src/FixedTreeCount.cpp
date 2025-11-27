@@ -246,6 +246,33 @@ public:
 // -----------------------------------------------------------------------------
 // Main Exported Function
 // -----------------------------------------------------------------------------
+//' Number of leaf labellings producing given tree lengths
+//' 
+//' @param tree A binary tree of class phylo
+//' @param tokens Integer vector: Occurrences of each token
+//' @param steps Integer vector: maximum number of steps to compute.
+//' A negative value computes all possible step counts.
+//' 
+//' Given a tree, how many distinct leaf labellings produce a tree length of
+//' $k$ under Fitch parsimony?  
+//' The number of leaves exhibiting each character state is given by `tokens`.
+//' 
+//' 
+//' @examples
+//' tree <- TreeTools::BalancedTree(7)
+//' tokens <- c(2, 3, 2) # e.g. 0 0 1 1 1 2 2
+//' FixedTreeCount(tree, 2:4, tokens)
+//' 
+//' Note: setting `Inf` for steps will give all possible outcomes.
+//' Setting a lower value will allow some recursions to terminate early,
+//' potentially improving runtime - but probably not by much.
+//' 
+//' @returns `FixedTreeCount()` returns a vector of names `0`...`maxSteps`,
+//' where each entry lists the natural logarithm of the number of distinct
+//' labellings that produce that Fitch length.
+//' 
+//' @importFrom TreeTools CladeSizes
+//' @export
 // [[Rcpp::export]]
 NumericVector FixedTreeCount(List tree, std::vector<int> tokens,
                              double steps = -1.0) {

@@ -19,9 +19,10 @@ Additive (ordered) characters can be handled using
 if \code{FALSE}, calculate the indices for the dataset as a whole.}
 
 \item{nRelabel}{Integer specifying how many times to relabel leaves when
-estimating null tree length for \acronym{RHI} calculation.
+computing MCMC estimate of null tree length for \acronym{RHI} calculation.
 \insertCite{Steell2025;textual}{TreeSearch} recommend 1000, but suggest that
 100 may suffice.
+If \code{NULL}, the exact value is calculated.
 If zero (the default), the \acronym{RHI} is not calculated.}
 
 \item{compress}{Logical specifying whether to retain the compression of a

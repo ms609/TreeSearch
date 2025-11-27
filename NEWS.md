@@ -4,6 +4,9 @@
 - Faster C++ implementation of `Carter1`
 - `SteelInfo()` ...
 - `MaddisonSlatkin()` ...
+- `FixedTreeLength()` allows exact solution for RHI calculation in
+  `ExpectedLength()`
+- Option to use mean instead of median when computing RHI in `Consistency()`.
 - `BinaryLabellings()` counts the number of ways to label a tree, given a
   parsimony score.
 

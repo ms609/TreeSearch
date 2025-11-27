@@ -73,14 +73,34 @@ test_that("RHI calculated okay", {
   expect_equal(MaximumLength(char, tree), g)
   r <- (g - s) / (g - m)
   
-  null <- 6
+  nullLengths <- if (calculate <- FALSE) {
+    chars <- replicate(10000, sample(strsplit(char, "")[[1]]), simplify = FALSE) |>
+      unlist() |>
+      paste0(collapse = "") |>
+      StringToPhyDat(tips = TipLabels(tree), byTaxon = FALSE)
+    lengths <- CharacterLength(tree, chars)
+    c(mean = mean(lengths), median = median(lengths))
+  } else {
+    c(mean = 5.8207, median = 6)
+  }
   # calculated slightly cheekily using
   # median(replicate(10000,
   #                  TreeLength(RandomTree(tree, root = TRUE), charDat)))
   # RHI uses leaf rearrangement, not randomization
   expect_equal(
     Consistency(StringToPhyDat(char, TipLabels(tree)), tree, nRelabel = 100),
-    c(ci = m / s, ri = r, rc = r * m / s, rhi = h / (null - m))
+    c(ci = m / s, ri = r, rc = r * m / s,
+      rhi = h / (nullLengths[["median"]] - m),
+      rhiBar = h / (nullLengths[["mean"]] - m)),
+    tolerance = 0.01
+  )
+  
+  expect_equal(
+    Consistency(StringToPhyDat(char, TipLabels(tree)), tree, nRelabel = NULL),
+    c(ci = m / s, ri = r, rc = r * m / s,
+      rhi = h / (nullLengths[["median"]] - m),
+      rhiBar = h / (nullLengths[["mean"]] - m)),
+    tolerance = 0.01
   )
 })
 

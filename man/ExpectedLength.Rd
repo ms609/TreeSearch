@@ -16,9 +16,10 @@ Additive (ordered) characters can be handled using
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{nRelabel}{Integer specifying how many times to relabel leaves when
-estimating null tree length for \acronym{RHI} calculation.
+computing MCMC estimate of null tree length for \acronym{RHI} calculation.
 \insertCite{Steell2025;textual}{TreeSearch} recommend 1000, but suggest that
 100 may suffice.
+If \code{NULL}, the exact value is calculated.
 If zero (the default), the \acronym{RHI} is not calculated.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
@@ -26,14 +27,20 @@ If zero (the default), the \acronym{RHI} is not calculated.}
 character, decompressed using the dataset's \code{index} attribute.}
 }
 \value{
-\code{ExpectedLength()} returns a numeric vector stating the median
-length of each character in \code{dataset} on \code{tree} after \code{nRelabel} random
-relabelling of leaves.
+\code{ExpectedLength()} returns a two-row matrix listing the mean and
+median length of each character in \code{dataset} on \code{tree}.
 }
 \description{
 For a given dataset and tree topology, \code{ExpectedLength()} estimates the
 length expected if the states of each character are shuffled randomly
 across the leaves.
+}
+\details{
+If \code{nRelabel} is NULL, an exact score will be provided using Fitch counting,
+treating inapplicables as ambiguities.
+If \code{nRelabel} is numeric, a score will be estimated by resampling, using
+the \insertCite{Brazeau2019;textual}{TreeSearch} correction for
+inapplicable tokens.
 }
 \references{
 \insertAllCited{}
