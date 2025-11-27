@@ -103,7 +103,57 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
   rc <- ri * minLength / obsLength
 
   if (is.null(nRelabel) || nRelabel > 0) {
-    expLength <- ExpectedLength(dataset, tree, nRelabel, compress = TRUE)
+    if (is.null(nRelabel)) {
+      .CheckDataCharLen(dataset)
+      .CheckTreeCharLen(tree)
+      tipLabel <- tree[["tip.label"]]
+      tree <- .TreeForTaxa(tree, names(dataset))
+      
+      mat <- do.call(rbind, dataset)
+      at <- attributes(dataset)
+      contrast <- at[["contrast"]]
+      
+      rewritten <- apply(mat, 2, .SortTokens,
+                         contr = apply(contrast, 1, .Bin),
+                         inapp = match("-", at[["levels"]], nomatch = NA_integer_))
+      rwMax <- max(rewritten)
+      rewritten[!rewritten %in% 2 ^ (0:log2(rwMax))] <- NA
+      
+      rwTab <- apply(log2(rewritten), 2, tabulate, log2(rwMax))
+      noAmb <- colSums(rwTab) == NTip(tree)
+      logCounts <- FixedTreeCountBatch(tree, rwTab[, noAmb])
+      counts <- exp(logCounts)
+      
+      medianPos <- sum(counts[, 1], 1) / 2
+      expLength <- apply(counts, 2, function(count) {
+        cum <- cumsum(count)
+        mdn <- unname(which.max(cum >= medianPos) - 1) # as entry 1 is 0
+        c(mean = sum((as.numeric(names(count)) * count) / sum(count)),
+          median = mdn)
+      })
+      
+      ithriOK <- vapply(seq_len(dim(logCounts)[[2]]), function(i) {
+        count <- logCounts[, i]
+        steps <- as.numeric(names(count))
+        weights <- exp(count - max(count))
+        mean <- sum(steps * weights) / sum(weights)
+        
+        cum <- LogCumSumExp(count)
+        fin <- is.finite(count)
+        zero <- spline(steps[fin], cum[fin], xout = mean)[["y"]]
+        one <- count[fin][[1]]
+        obs <- cum[[obsLength[noAmb][[i]] + 1]] # +1 as first entry is zero
+        c(norm = if (zero == one) 1 else 1 - ((obs - one) / (zero - one)),
+          hMax = zero - one)
+      }, double(2))
+      
+      ithri <- matrix(NA_real_, 2, length(noAmb))
+      ithri[, noAmb] <- ithriOK
+      
+    } else if (nRelabel > 0) {
+      expLength <- ExpectedLength(dataset, tree, nRelabel, compress = TRUE)
+      itrhi <- NA
+    }
     if (!byChar) {
       meanLength <- sum(expLength["mean", ])
       medLength <- sum(expLength["median", ])
@@ -117,10 +167,12 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
   } else {
     rhi <- NA
     rhiBar <- NA
+    itrhi <- NA
   }
   
   if (byChar) {
-    ret <- cbind(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar)
+    ret <- cbind(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar,
+                 ithri = ithri)
     
     # Return:
     if (compress) {
@@ -129,7 +181,7 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
       ret[attr(dataset, "index"), ]
     }
   } else {
-    c(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar)
+    c(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar, ithri = ithri)
   }
 }
 
