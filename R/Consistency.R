@@ -132,7 +132,7 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
           median = mdn)
       })
       
-      ithriOK <- vapply(seq_len(dim(logCounts)[[2]]), function(i) {
+      itrhiOK <- vapply(seq_len(dim(logCounts)[[2]]), function(i) {
         count <- logCounts[, i]
         steps <- as.numeric(names(count))
         weights <- exp(count - max(count))
@@ -147,8 +147,8 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
           hMax = zero - one)
       }, double(2))
       
-      ithri <- matrix(NA_real_, 2, length(noAmb))
-      ithri[, noAmb] <- ithriOK
+      itrhi <- matrix(NA_real_, 2, length(noAmb))
+      itrhi[, noAmb] <- itrhiOK
       
     } else if (nRelabel > 0) {
       expLength <- ExpectedLength(dataset, tree, nRelabel, compress = TRUE)
@@ -172,7 +172,7 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
   
   if (byChar) {
     ret <- cbind(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar,
-                 ithri = ithri)
+                 itrhi = itrhi)
     
     # Return:
     if (compress) {
@@ -181,7 +181,7 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
       ret[attr(dataset, "index"), ]
     }
   } else {
-    c(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar, ithri = ithri)
+    c(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar, itrhi = itrhi)
   }
 }
 

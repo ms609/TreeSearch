@@ -45,7 +45,7 @@ test_that("CI & RI calculated correctly", {
   r <- (g - s) / (g - m)
   expect_equal(
     Consistency(StringToPhyDat(char, TipLabels(tree)), tree, nRelabel = 0),
-    c(ci = m / s, ri = r, rc = r * m / s, rhi = NA, rhiBar = NA)
+    c(ci = m / s, ri = r, rc = r * m / s, rhi = NA, rhiBar = NA, itrhi = NA)
   )
   set.seed(1)
   byChar <- Consistency(StringToPhyDat(char, TipLabels(tree)), tree,
@@ -83,15 +83,16 @@ test_that("RHI calculated okay", {
   } else {
     c(mean = 5.8207, median = 6)
   }
-  # calculated slightly cheekily using
-  # median(replicate(10000,
-  #                  TreeLength(RandomTree(tree, root = TRUE), charDat)))
-  # RHI uses leaf rearrangement, not randomization
+  ftc <- FixedTreeCount(tree, table(strsplit(char, "")[[1]]))
+  
+  ftcBar <- sum(4:7 * exp(ftc)) / sum(exp(ftc))
+  
   expect_equal(
     Consistency(StringToPhyDat(char, TipLabels(tree)), tree, nRelabel = 100),
     c(ci = m / s, ri = r, rc = r * m / s,
       rhi = h / (nullLengths[["median"]] - m),
-      rhiBar = h / (nullLengths[["mean"]] - m)),
+      rhiBar = h / (nullLengths[["mean"]] - m),
+      itrhi = NA,
     tolerance = sqrt(1/100)
   )
   
@@ -99,7 +100,9 @@ test_that("RHI calculated okay", {
     Consistency(StringToPhyDat(char, TipLabels(tree)), tree, nRelabel = NULL),
     c(ci = m / s, ri = r, rc = r * m / s,
       rhi = h / (nullLengths[["median"]] - m),
-      rhiBar = h / (nullLengths[["mean"]] - m)),
+      rhiBar = h / (nullLengths[["mean"]] - m),
+      itrhi = ftc[[5 + 1]] - ftc[[4 + 1]] /
+        (spline(4:7, LogCumSumExp(ftc[5:8]), xout = ftcBar)[["y"]] - ftc[[4 + 1]])),
     tolerance = 0.01
   )
 })
