@@ -45,7 +45,8 @@ test_that("CI & RI calculated correctly", {
   r <- (g - s) / (g - m)
   expect_equal(
     Consistency(StringToPhyDat(char, TipLabels(tree)), tree, nRelabel = 0),
-    c(ci = m / s, ri = r, rc = r * m / s, rhi = NA, rhiBar = NA, itrhi = NA)
+    c(ci = m / s, ri = r, rc = r * m / s, rhi = NA, rhiBar = NA, itrhi = NA,
+      itrhiH = NA)
   )
   set.seed(1)
   byChar <- Consistency(StringToPhyDat(char, TipLabels(tree)), tree,
@@ -86,13 +87,15 @@ test_that("RHI calculated okay", {
   ftc <- FixedTreeCount(tree, table(strsplit(char, "")[[1]]))
   
   ftcBar <- sum(4:7 * exp(ftc)) / sum(exp(ftc))
+  ftcCum <- LogCumSumExp(ftc[5:8])
+  ftcZero <- spline(4:7, ftcCum, xout = ftcBar)[["y"]]
   
   expect_equal(
     Consistency(StringToPhyDat(char, TipLabels(tree)), tree, nRelabel = 100),
     c(ci = m / s, ri = r, rc = r * m / s,
       rhi = h / (nullLengths[["median"]] - m),
       rhiBar = h / (nullLengths[["mean"]] - m),
-      itrhi = NA,
+      itrhi = NA, itrhiH = NA),
     tolerance = sqrt(1/100)
   )
   
@@ -101,9 +104,9 @@ test_that("RHI calculated okay", {
     c(ci = m / s, ri = r, rc = r * m / s,
       rhi = h / (nullLengths[["median"]] - m),
       rhiBar = h / (nullLengths[["mean"]] - m),
-      itrhi = ftc[[5 + 1]] - ftc[[4 + 1]] /
-        (spline(4:7, LogCumSumExp(ftc[5:8]), xout = ftcBar)[["y"]] - ftc[[4 + 1]])),
-    tolerance = 0.01
+      itrhi = 1 - ((ftcCum[[2]] - ftc[[4 + 1]]) / (ftcZero - ftc[[4 + 1]])),
+      itrhiH = ftcZero - ftc[[4 + 1]]),
+    tolerance = 0.02
   )
 })
 
@@ -128,7 +131,8 @@ test_that("Consistency() handles `-`", {
   
   exp <- c(ci = m / s, ri = r, rc = r * m / s,
            rhi = h / unname(null[["median"]] - m),
-           rhiBar = h / unname(null[["mean"]] - m))
+           rhiBar = h / unname(null[["mean"]] - m),
+           itrhi = NA, itrhiH = NA)
   expect_equal(
     Consistency(StringToPhyDat(c(char, char), TipLabels(tree)), tree,
                 nRelabel = 42),

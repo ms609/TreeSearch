@@ -121,7 +121,7 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
       
       rwTab <- apply(log2(rewritten), 2, tabulate, log2(rwMax))
       noAmb <- colSums(rwTab) == NTip(tree)
-      logCounts <- FixedTreeCountBatch(tree, rwTab[, noAmb])
+      logCounts <- FixedTreeCountBatch(tree, rwTab[, noAmb, drop = FALSE])
       counts <- exp(logCounts)
       
       medianPos <- sum(counts[, 1], 1) / 2
@@ -152,7 +152,7 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
       
     } else if (nRelabel > 0) {
       expLength <- ExpectedLength(dataset, tree, nRelabel, compress = TRUE)
-      itrhi <- NA
+      itrhi <- rbind(NA_real_, NA)
     }
     if (!byChar) {
       meanLength <- sum(expLength["mean", ])
@@ -167,12 +167,12 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
   } else {
     rhi <- NA
     rhiBar <- NA
-    itrhi <- NA
+    itrhi <- rbind(NA_real_, NA)
   }
   
   if (byChar) {
     ret <- cbind(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar,
-                 itrhi = itrhi)
+                 itrhi = itrhi[1, ], itrhiH = itrhi[2, ])
     
     # Return:
     if (compress) {
@@ -181,7 +181,8 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
       ret[attr(dataset, "index"), ]
     }
   } else {
-    c(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar, itrhi = itrhi)
+    c(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar, itrhi = itrhi[1, ],
+      itrhiH = itrhi[2, ])
   }
 }
 
