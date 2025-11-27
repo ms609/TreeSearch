@@ -45,9 +45,10 @@
 #' default treatment in [`TreeLength()`].
 #' 
 #' @param nRelabel Integer specifying how many times to relabel leaves when
-#' estimating null tree length for \acronym{RHI} calculation.
+#' computing MCMC estimate of null tree length for \acronym{RHI} calculation.
 #' \insertCite{Steell2025;textual}{TreeSearch} recommend 1000, but suggest that
 #' 100 may suffice.
+#' If `NULL`, the exact value is calculated.
 #' If zero (the default), the \acronym{RHI} is not calculated.
 #' @param byChar Logical; if `TRUE`, return indices for each character;
 #'  if `FALSE`, calculate the indices for the dataset as a whole.

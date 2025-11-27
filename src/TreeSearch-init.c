@@ -36,6 +36,7 @@ extern SEXP _TreeSearch_Log2Carter1(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_MaddisonSlatkin(SEXP, SEXP);
 extern SEXP _TreeSearch_MaddisonSlatkin_clear_cache();
 extern SEXP _TreeSearch_FixedTree_Count(SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_FixedTreeCount(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_FixedTree_Preprocess(SEXP, SEXP);
 extern SEXP _TreeSearch_LogMultinomial(SEXP);
 
@@ -90,6 +91,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_MaddisonSlatkin",   (DL_FUNC) &_TreeSearch_MaddisonSlatkin, 2},
   {"_TreeSearch_MaddisonSlatkin_clear_cache",   (DL_FUNC) &_TreeSearch_MaddisonSlatkin_clear_cache, 0},
   {"_TreeSearch_FixedTree_Preprocess",   (DL_FUNC) &_TreeSearch_FixedTree_Preprocess, 2},
+  {"_TreeSearch_FixedTreeCount",    (DL_FUNC) &_TreeSearch_FixedTreeCount, 3},
   {"_TreeSearch_FixedTree_Count",   (DL_FUNC) &_TreeSearch_FixedTree_Count, 3},
   {"_TreeSearch_LogMultinomial",    (DL_FUNC) &_TreeSearch_LogMultinomial, 1},
   

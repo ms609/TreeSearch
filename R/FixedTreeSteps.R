@@ -1,6 +1,14 @@
+#' Number of leaf labellings producing given tree lengths
+#' 
 #' @param tree A binary tree of class phylo
 #' @param steps Integer vector: maximum number of steps to compute
 #' @param tokens Integer vector: Occurrences of each token
+#' 
+#' Given a tree, how many distinct leaf labellings produce a tree length of
+#' $k$ under Fitch parsimony?  
+#' The number of leaves exhibiting each character state is given by `tokens`.
+#' 
+#' 
 #' @examples
 #' tree <- TreeTools::BalancedTree(7)
 #' tokens <- c(2, 3, 2) # e.g. 0 0 1 1 1 2 2
@@ -10,9 +18,13 @@
 #' Setting a lower value will allow some recursions to terminate early,
 #' potentially improving runtime - but probably not by much.
 #' 
+#' @returns `FixedTreeCount()` returns a vector of names `0`...`maxSteps`,
+#' where each entry lists the natural logarithm of the number of distinct
+#' labellings that produce that Fitch length.
+#' 
 #' @importFrom TreeTools CladeSizes
 #' @export
-FixedTreeCount <- function(tree, tokens, steps = Inf) {
+FixedTreeCountR <- function(tree, tokens, steps = Inf) {
   
   # 1. Setup and Pre-processing
   nTip <- length(tree$tip.label)
@@ -24,7 +36,8 @@ FixedTreeCount <- function(tree, tokens, steps = Inf) {
   nodeSizes <- TreeTools::CladeSizes(tree, internal = FALSE)
   edge <- tree$edge
   
-  tokens <- tokens[tokens > 0]
+  # Sort to improve cache hit rate
+  tokens <- sort(tokens[tokens > 0])
   nStates <- length(tokens)
   nRows <- 2 ^ nStates - 1 # e.g., 7 rows for 3 states (Masks 1 through 7)
   
@@ -140,9 +153,9 @@ FixedTreeCount <- function(tree, tokens, steps = Inf) {
   step_labels <- 0:maxSteps
   names(totalPerStep) <- step_labels
   
-  if (maxSteps < length(totalPerStep) - 1) {
+  log(if (maxSteps < length(totalPerStep) - 1) {
     totalPerStep[seq_len(maxSteps + 1)]
   } else {
     totalPerStep
-  }
+  })
 }

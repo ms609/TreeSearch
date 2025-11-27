@@ -10,6 +10,19 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// FixedTreeCount
+NumericVector FixedTreeCount(List tree, std::vector<int> tokens, double steps);
+RcppExport SEXP _TreeSearch_FixedTreeCount(SEXP treeSEXP, SEXP tokensSEXP, SEXP stepsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tree(treeSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type tokens(tokensSEXP);
+    Rcpp::traits::input_parameter< double >::type steps(stepsSEXP);
+    rcpp_result_gen = Rcpp::wrap(FixedTreeCount(tree, tokens, steps));
+    return rcpp_result_gen;
+END_RCPP
+}
 // MaddisonSlatkin
 NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states);
 RcppExport SEXP _TreeSearch_MaddisonSlatkin(SEXP stepsSEXP, SEXP statesSEXP) {
