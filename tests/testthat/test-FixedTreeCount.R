@@ -29,6 +29,13 @@ test_that("All labellings counted (3 tokens)", {
   expect_equal(FixedTreeCount(tree, c(2, 3, 2), 5),
                log(c("0" = 0, "1" = 0, expect, "5" = 0)))
   
+  expect_equal(
+    FixedTreeCountBatch(tree, cbind(c(nTip, 0, 0), c(nTip - 1, 0, 1), labels)) |>
+      exp(),
+    cbind(c(1, rep(0, 5)),
+          c(0, 7, rep(0, 4)),
+          c("0" = 0, "1" = 0, expect, "5" = 0))
+  )
 })
 
 test_that("All labellings counted - 4 tokens", {

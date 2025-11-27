@@ -32,6 +32,13 @@ FixedTreeCount <- function(tree, tokens, steps = -1.0) {
     .Call(`_TreeSearch_FixedTreeCount`, tree, tokens, steps)
 }
 
+#' @describeIn FixedTreeCount
+#' @param tokenMatrix Integer matrix in which each column corresponds to a
+#' character.
+FixedTreeCountBatch <- function(tree, tokenMatrix, steps = -1.0) {
+    .Call(`_TreeSearch_FixedTreeCountBatch`, tree, tokenMatrix, steps)
+}
+
 #' @rdname Carter1
 #' @examples
 #' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
@@ -45,33 +52,6 @@ MaddisonSlatkin <- function(steps, states) {
 #' @keywords internal
 MaddisonSlatkin_clear_cache <- function() {
     invisible(.Call(`_TreeSearch_MaddisonSlatkin_clear_cache`))
-}
-
-#' Pre-process a tree for Fixed-Tree Maddison Slatkin
-#' 
-#' @param edge The edge matrix (1-based, Nedges x 2)
-#' @param nTips Number of tips
-#' @export
-FixedTree_Preprocess <- function(edge, nTips) {
-    .Call(`_TreeSearch_FixedTree_Preprocess`, edge, nTips)
-}
-
-#' Calculate Log-Number of labelings with score k on a Fixed Tree
-#' 
-#' @param treePtr External pointer to pre-processed tree
-#' @param steps vector of steps
-#' @param states vector of states (raw counts)
-#' @export
-FixedTree_Count <- function(treePtr, steps, states) {
-    .Call(`_TreeSearch_FixedTree_Count`, treePtr, steps, states)
-}
-
-#' Total Number of Unique Labelings (Log Scale)
-#' 
-#' @param states Integer vector of counts for each state
-#' @export
-LogMultinomial <- function(states) {
-    .Call(`_TreeSearch_LogMultinomial`, states)
 }
 
 #' Exact Distribution of Parsimony Score on a Tree (I.I.D. Model)

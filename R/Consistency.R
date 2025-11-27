@@ -112,8 +112,8 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
       medLength <- expLength["median", ]
     }
     expHomoplasy <- medLength - minLength
-    rhi <- extra / expHomoplasy
-    rhiBar <- extra / (meanLength - minLength)
+    rhi <- extra / unname(expHomoplasy)
+    rhiBar <- extra / unname(meanLength - minLength)
   } else {
     rhi <- NA
     rhiBar <- NA
@@ -182,51 +182,53 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
                      contr = apply(contrast, 1, .Bin),
                      inapp = match("-", at[["levels"]], nomatch = NA_integer_))
   rwMax <- max(rewritten)
-  rwLevels <- c("-", seq_len(log2(rwMax)))
-  nLevels <- length(rwLevels)
-  rwContrast <- t(vapply(seq_len(rwMax), function(x) {
-    as.integer(intToBits(x)[1:nLevels])
-  }, integer(nLevels)))
+
+  .LengthForChar <- function(x) {
+    key <- stri_paste(c(nRelabel, x), collapse = ",")
+    if (.CharLengthCache$has(key)) {
+      .CharLengthCache$get(key)
+    } else {
+      patterns <- apply(unname(unique(t(
+        as.data.frame(replicate(nRelabel, sample(rep(seq_along(x), x))))))),
+        2, I, simplify = FALSE)
+      nr <- length(patterns[[1]])
+      phy <- structure(
+        setNames(patterns, TipLabels(tree)),
+        "weight" = rep(1, nr),
+        nr = nr,
+        nc = nLevels,
+        index = seq_len(nr),
+        levels = rwLevels,
+        type = "USER",
+        contrast = rwContrast,
+        class = "phyDat")
+      fcl <- FastCharacterLength(tree, phy)
+      ret <- c(mean = mean(fcl), median = median(fcl))
+      .CharLengthCache$set(key, ret)
+      ret
+    }
+  }
   
-  .LengthForChar <- if (is.null(nRelabel)) {
-    function(x) {
-      count <- exp(FixedTreeCount(tree, x))
-      medianPos <- sum(count, 1) / 2
+  exp <- if (is.null(nRelabel)) {
+    rwTab <- apply(log2(rewritten), 2, tabulate, log2(rwMax))
+    counts <- exp(FixedTreeCountBatch(tree, rwTab))
+    medianPos <- sum(counts[, 1], 1) / 2
+    apply(counts, 2, function(count) {
       cum <- cumsum(count)
       mdn <- unname(which.max(cum >= medianPos) - 1) # as entry 1 is 0
       c(mean = sum((as.numeric(names(count)) * count) / sum(count)),
         median = mdn)
-    }
+    })
   } else {
-    function(x) {
-      key <- stri_paste(c(nRelabel, x), collapse = ",")
-      if (.CharLengthCache$has(key)) {
-        .CharLengthCache$get(key)
-      } else {
-        patterns <- apply(unname(unique(t(
-          as.data.frame(replicate(nRelabel, sample(rep(seq_along(x), x))))))),
-          2, I, simplify = FALSE)
-        nr <- length(patterns[[1]])
-        phy <- structure(
-          setNames(patterns, TipLabels(tree)),
-          "weight" = rep(1, nr),
-          nr = nr,
-          nc = nLevels,
-          index = seq_len(nr),
-          levels = rwLevels,
-          type = "USER",
-          contrast = rwContrast,
-          class = "phyDat")
-        fcl <- FastCharacterLength(tree, phy)
-        ret <- c(mean = mean(fcl), median = median(fcl))
-        .CharLengthCache$set(key, ret)
-        ret
-      }
-    }
+    rwLevels <- c("-", seq_len(log2(rwMax)))
+    nLevels <- length(rwLevels)
+    rwContrast <- t(vapply(seq_len(rwMax), function(x) {
+      as.integer(intToBits(x)[1:nLevels])
+    }, integer(nLevels)))
+    
+    rwTab <- apply(rewritten, 2, tabulate, max(rewritten))
+    apply(rwTab, 2, .LengthForChar)
   }
-  
-  rwTab <- apply(rewritten, 2, tabulate, max(rewritten))
-  exp <- apply(rwTab, 2, .LengthForChar)
   
   # Return:
   if (compress) {

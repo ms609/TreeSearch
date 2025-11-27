@@ -12,7 +12,7 @@
 #' @examples
 #' tree <- TreeTools::BalancedTree(7)
 #' tokens <- c(2, 3, 2) # e.g. 0 0 1 1 1 2 2
-#' FixedTreeCount(tree, 2:4, tokens)
+#' FixedTreeCount(tree, tokens)
 #' 
 #' Note: setting `Inf` for steps will give all possible outcomes.
 #' Setting a lower value will allow some recursions to terminate early,

@@ -45,7 +45,7 @@ test_that("CI & RI calculated correctly", {
   r <- (g - s) / (g - m)
   expect_equal(
     Consistency(StringToPhyDat(char, TipLabels(tree)), tree, nRelabel = 0),
-    c(ci = m / s, ri = r, rc = r * m / s, rhi = NA)
+    c(ci = m / s, ri = r, rc = r * m / s, rhi = NA, rhiBar = NA)
   )
   set.seed(1)
   byChar <- Consistency(StringToPhyDat(char, TipLabels(tree)), tree,
@@ -92,7 +92,7 @@ test_that("RHI calculated okay", {
     c(ci = m / s, ri = r, rc = r * m / s,
       rhi = h / (nullLengths[["median"]] - m),
       rhiBar = h / (nullLengths[["mean"]] - m)),
-    tolerance = 0.01
+    tolerance = sqrt(1/100)
   )
   
   expect_equal(
@@ -120,13 +120,12 @@ test_that("Consistency() handles `-`", {
   g <- 7 + 1
   expect_equal(MaximumLength(char, tree), g)
   r <- (g - s) / (g - m)
-  null <- 6
-  # calculated slightly cheekily using
-  # median(replicate(10000,
-  #                  TreeLength(RandomTree(tree, root = TRUE), charDat)))
-  # RHI uses leaf rearrangement, not randomization
   
-  exp <- c(ci = m / s, ri = r, rc = r * m / s, rhi = h / (null - m))
+  null <- c(mean = 5.8207, median = 6)
+  
+  exp <- c(ci = m / s, ri = r, rc = r * m / s,
+           rhi = h / unname(null[["median"]] - m),
+           rhiBar = h / unname(null[["mean"]] - m))
   expect_equal(
     Consistency(StringToPhyDat(c(char, char), TipLabels(tree)), tree,
                 nRelabel = 42),

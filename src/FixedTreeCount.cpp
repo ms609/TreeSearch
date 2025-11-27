@@ -6,6 +6,8 @@
 #include <limits>
 #include <cstring>
 
+#include <TreeTools/renumber_tree.h> /* for preorder_edges_and_nodes */
+
 using namespace Rcpp;
 
 // constant for log(0)
@@ -349,24 +351,37 @@ NumericVector FixedTreeCount(List tree, std::vector<int> tokens,
                              double steps = -1.0) {
   
   IntegerMatrix edge = tree["edge"];
+  bool in_preorder = false;
+  if (tree.containsElementNamed("order")) {
+    const CharacterVector order = tree["order"];
+    in_preorder = (order[0] == "Preorder");
+  }
+  
+  if (!in_preorder) {
+    edge = TreeTools::preorder_edges_and_nodes(edge(_, 0), edge(_, 1));
+  }
+  
   int nTip = 0;
   
   if (tree.containsElementNamed("tip.label")) {
     CharacterVector tips = tree["tip.label"];
     nTip = tips.size();
   } else {
-    for(int i=0; i<edge.length(); ++i) 
-      if(edge[i] > nTip) nTip = edge[i];
+    stop("Tree lacks tip.label");
   }
   
   std::vector<int> activeTokens;
+  int sumTokens = 0;
   for(int t : tokens) {
-    if (t > 0) activeTokens.push_back(t);
+    if (t > 0) {
+      activeTokens.push_back(t);
+      sumTokens += t;
+    }
+    if (t < 0) {
+      stop("`tokens` may not be negative");
+    }
   }
   std::sort(activeTokens.begin(), activeTokens.end());
-  
-  int sumTokens = 0;
-  for(int t : activeTokens) sumTokens += t;
   
   if (sumTokens != nTip) {
     stop("Number of leaves does not match total tokens.");
@@ -397,6 +412,90 @@ NumericVector FixedTreeCount(List tree, std::vector<int> tokens,
   for(int i=0; i<=actualMaxSteps; ++i) 
     names[i] = std::to_string(i);
   results.attr("names") = names;
+  
+  return results;
+}
+
+//' @describeIn FixedTreeCount
+//' @param tokenMatrix Integer matrix in which each column corresponds to a
+//' character.
+// [[Rcpp::export]]
+NumericMatrix FixedTreeCountBatch(List tree, IntegerMatrix tokenMatrix,
+                                  double steps = -1.0) {
+  // Extract tree edge matrix
+  IntegerMatrix edge = tree["edge"];
+  bool in_preorder = false;
+  if (tree.containsElementNamed("order")) {
+    const CharacterVector order = tree["order"];
+    in_preorder = (order[0] == "Preorder");
+  }
+  if (!in_preorder) {
+    edge = TreeTools::preorder_edges_and_nodes(edge(_, 0), edge(_, 1));
+  }
+  
+  // Get number of tips
+  int nTip = 0;
+  if (tree.containsElementNamed("tip.label")) {
+    CharacterVector tips = tree["tip.label"];
+    nTip = tips.size();
+  } else {
+    stop("Tree lacks tip.label");
+  }
+  
+  // Dimensions
+  int nStates = tokenMatrix.nrow();
+  int nChars = tokenMatrix.ncol();
+  
+  // Compute max steps
+  int calcMaxSteps = nTip - nStates + 1;
+  int limitSteps = (steps < 0) ? calcMaxSteps : (int)steps;
+  int actualMaxSteps = std::min(limitSteps, calcMaxSteps);
+  
+  // Initialize solver once
+  TreeCounter solver(edge, nTip, actualMaxSteps, nStates);
+  int rootNode = nTip + 1;
+  
+  // Prepare output matrix: rows = steps, cols = characters
+  NumericMatrix results(actualMaxSteps + 1, nChars);
+  
+  // Loop over characters
+  for (int c = 0; c < nChars; ++c) {
+    std::vector<int> tokens(nStates);
+    int sumTokens = 0;
+    for (int r = 0; r < nStates; ++r) {
+      int val = tokenMatrix(r, c);
+      if (val < 0) stop("`tokens` may not be negative");
+      tokens[r] = val;
+      sumTokens += val;
+    }
+    if (sumTokens != nTip) {
+      stop("Number of leaves does not match total tokens for character " + std::to_string(c + 1));
+    }
+    
+    // Sort tokens for consistency
+    std::sort(tokens.begin(), tokens.end());
+    
+    // Compute hash and recurse
+    size_t rootHash = hashTokens(tokens);
+    double* finalMat = solver.recurse(rootNode, tokens, rootHash);
+    
+    // Aggregate results for this character
+    for (int s = 0; s <= actualMaxSteps; ++s) {
+      double stepTotal = LOG_ZERO;
+      int offset = solver.nRows * s;
+      for (int m = 1; m < solver.nRows; ++m) {
+        stepTotal = logAdd(stepTotal, finalMat[m + offset]);
+      }
+      results(s, c) = stepTotal; // log counts
+    }
+  }
+  
+  // Assign row names (steps)
+  CharacterVector rowNames(actualMaxSteps + 1);
+  for (int i = 0; i <= actualMaxSteps; ++i) {
+    rowNames[i] = std::to_string(i);
+  }
+  results.attr("dimnames") = List::create(rowNames, R_NilValue);
   
   return results;
 }
