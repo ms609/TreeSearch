@@ -129,7 +129,8 @@ test_that("Consistency() handles `-`", {
   expect_equal(
     Consistency(StringToPhyDat(c(char, char), TipLabels(tree)), tree,
                 nRelabel = 42),
-    rbind(exp, exp, deparse.level = 0)
+    rbind(exp, exp, deparse.level = 0),
+    tolerance = sqrt(1 / 42) / 2
   )
 })
 
