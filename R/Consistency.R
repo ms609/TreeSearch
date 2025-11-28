@@ -124,10 +124,15 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
       logCounts <- FixedTreeCountBatch(tree, rwTab[, noAmb, drop = FALSE])
       counts <- exp(logCounts)
       
-      medianPos <- sum(counts[, 1], 1) / 2
       expLength <- apply(counts, 2, function(count) {
         cum <- cumsum(count)
-        mdn <- unname(which.max(cum >= medianPos) - 1) # as entry 1 is 0
+        medianPos <- cum[length(count)] / 2
+        mdnIdx <- unname(which.max(cum >= medianPos))
+        mdn <- if (count[mdnIdx] == medianPos) {
+          mdnIdx - 0.5 # break tie
+        } else {
+          mdnIdx - 1   # as entry 1 is 0
+        }
         c(mean = sum((as.numeric(names(count)) * count) / sum(count)),
           median = mdn)
       })
