@@ -175,6 +175,40 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// logLik_equal_t
+double logLik_equal_t(IntegerMatrix edge, int Ntip, IntegerMatrix tip_states, NumericVector weights, int k, double t);
+RcppExport SEXP _TreeSearch_logLik_equal_t(SEXP edgeSEXP, SEXP NtipSEXP, SEXP tip_statesSEXP, SEXP weightsSEXP, SEXP kSEXP, SEXP tSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< int >::type Ntip(NtipSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_states(tip_statesSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type t(tSEXP);
+    rcpp_result_gen = Rcpp::wrap(logLik_equal_t(edge, Ntip, tip_states, weights, k, t));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mle_t
+List mle_t(IntegerMatrix edge, int Ntip, IntegerMatrix tip_states, NumericVector weights, int k, double lower, double upper, double tol);
+RcppExport SEXP _TreeSearch_mle_t(SEXP edgeSEXP, SEXP NtipSEXP, SEXP tip_statesSEXP, SEXP weightsSEXP, SEXP kSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< int >::type Ntip(NtipSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_states(tip_statesSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(mle_t(edge, Ntip, tip_states, weights, k, lower, upper, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
 // preorder_morphy
 int preorder_morphy(IntegerMatrix edge, SEXP MorphyHandl);
 RcppExport SEXP _TreeSearch_preorder_morphy(SEXP edgeSEXP, SEXP MorphyHandlSEXP) {

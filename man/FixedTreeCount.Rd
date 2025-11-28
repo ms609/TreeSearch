@@ -2,9 +2,12 @@
 % Please edit documentation in R/RcppExports.R
 \name{FixedTreeCount}
 \alias{FixedTreeCount}
+\alias{FixedTreeCountBatch}
 \title{Number of leaf labellings producing given tree lengths}
 \usage{
 FixedTreeCount(tree, tokens, steps = -1)
+
+FixedTreeCountBatch(tree, tokenMatrix, steps = -1)
 }
 \arguments{
 \item{tree}{A binary tree of class phylo}
@@ -17,6 +20,9 @@ A negative value computes all possible step counts.
 Given a tree, how many distinct leaf labellings produce a tree length of
 $k$ under Fitch parsimony?
 The number of leaves exhibiting each character state is given by \code{tokens}.}
+
+\item{tokenMatrix}{Integer matrix in which each column corresponds to a
+character.}
 }
 \value{
 \code{FixedTreeCount()} returns a vector of names \code{0}...\code{maxSteps},
@@ -26,6 +32,11 @@ labellings that produce that Fitch length.
 \description{
 Number of leaf labellings producing given tree lengths
 }
+\section{Functions}{
+\itemize{
+\item \code{FixedTreeCountBatch()}: Process a bunch of characters at once
+
+}}
 \examples{
 tree <- TreeTools::BalancedTree(7)
 tokens <- c(2, 3, 2) # e.g. 0 0 1 1 1 2 2

@@ -37,6 +37,8 @@ extern SEXP _TreeSearch_MaddisonSlatkin(SEXP, SEXP);
 extern SEXP _TreeSearch_MaddisonSlatkin_clear_cache();
 extern SEXP _TreeSearch_FixedTreeCount(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_FixedTreeCountBatch(SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_logLik_equal_t(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_mle_t(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 extern SEXP _TreeSearch_active_parsimony_dist(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_parsimony_moments(SEXP, SEXP);
@@ -90,6 +92,9 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_MaddisonSlatkin_clear_cache",   (DL_FUNC) &_TreeSearch_MaddisonSlatkin_clear_cache, 0},
   {"_TreeSearch_FixedTreeCount",    (DL_FUNC) &_TreeSearch_FixedTreeCount, 3},
   {"_TreeSearch_FixedTreeCountBatch",    (DL_FUNC) &_TreeSearch_FixedTreeCountBatch, 3},
+  
+  {"_TreeSearch_logLik_equal_t",    (DL_FUNC) &_TreeSearch_logLik_equal_t, 5},
+  {"_TreeSearch_mle_t",             (DL_FUNC) &_TreeSearch_mle_t, 8},
 
   {"_TreeSearch_active_parsimony_dist",   (DL_FUNC) &_TreeSearch_active_parsimony_dist, 3},
   {"_TreeSearch_parsimony_moments",   (DL_FUNC) &_TreeSearch_parsimony_moments, 2},

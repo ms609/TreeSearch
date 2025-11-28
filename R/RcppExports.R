@@ -164,6 +164,14 @@ maximum_length <- function(x) {
     .Call(`_TreeSearch_maximum_length`, x)
 }
 
+logLik_equal_t <- function(edge, Ntip, tip_states, weights, k, t) {
+    .Call(`_TreeSearch_logLik_equal_t`, edge, Ntip, tip_states, weights, k, t)
+}
+
+mle_t <- function(edge, Ntip, tip_states, weights, k, lower = 1e-8, upper = 10.0, tol = 1e-6) {
+    .Call(`_TreeSearch_mle_t`, edge, Ntip, tip_states, weights, k, lower, upper, tol)
+}
+
 preorder_morphy <- function(edge, MorphyHandl) {
     .Call(`_TreeSearch_preorder_morphy`, edge, MorphyHandl)
 }

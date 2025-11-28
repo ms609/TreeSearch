@@ -85,7 +85,7 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
   maxLength <- MaximumLength(dataset, compress = TRUE) # Farris's g
   tree <- Postorder(tree)
   obsLength <- CharacterLength(tree, dataset, compress = TRUE) # farris's s
-  
+
   if (!byChar) {
     minLength <- sum(minLength)
     maxLength <- sum(maxLength)
@@ -101,6 +101,13 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
   ri <- (maxLength - obsLength) / maxHomoplasy
   
   rc <- ri * minLength / obsLength
+  
+  nTip <- length(trTips)
+  nTokens <- minLength + 1
+  adjCI <- StepsToLength(nTip, obsLength, nTokens)
+  adjC1 <- StepsToLength(nTip, minLength, nTokens)
+  adjC0 <- StepsToLength(nTip, maxLength, nTokens)
+  cci <- (adjCI - adjC0) / (adjC1 - adjC0)
 
   if (is.null(nRelabel) || nRelabel > 0) {
     if (is.null(nRelabel)) {
@@ -108,6 +115,8 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
       .CheckTreeCharLen(tree)
       tipLabel <- tree[["tip.label"]]
       tree <- .TreeForTaxa(tree, names(dataset))
+      nTip <- length(tipLabel)
+      nEdge <- nTip + nTip - 2
       
       mat <- do.call(rbind, dataset)
       at <- attributes(dataset)
@@ -171,14 +180,21 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
     expHomoplasy <- medLength - minLength
     rhi <- extra / unname(expHomoplasy)
     rhiBar <- extra / unname(meanLength - minLength)
+    
+    nTokens <- minLength + 1
+    adjC0 <- rep(NA_real_, length(minLength))
+    adjC0[noAmb] <- StepsToLength(nTip, expLength["mean", ], nTokens[noAmb])
+    rci <- (adjCI - adjC0) / (adjC1 - adjC0)
   } else {
     rhi <- NA
     rhiBar <- NA
+    rci <- NA
     itrhi <- rbind(NA_real_, NA, NA)
   }
   
   if (byChar) {
-    ret <- cbind(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar,
+    ret <- cbind(ci = ci, cci = cci, ri = ri, rc = rc,
+                 rhi = rhi, rhiBar = rhiBar, rci = rci,
                  itrhi = itrhi[1, ], itrhiExp = itrhi[2, ], itrhiMax = itrhi[3, ])
     
     # Return:
@@ -188,7 +204,8 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
       ret[attr(dataset, "index"), ]
     }
   } else {
-    c(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar,
+    c(ci = ci, cci = cci, ri = ri, rc = rc,
+      rhi = rhi, rhiBar = rhiBar, rci = rci,
       itrhi = itrhi[1, ], itrhiExp = itrhi[2, ], itrhiMax = itrhi[3, ])
   }
 }
