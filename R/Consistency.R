@@ -139,25 +139,27 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
       
       itrhiOK <- vapply(seq_len(dim(logCounts)[[2]]), function(i) {
         count <- logCounts[, i]
+        
         steps <- as.numeric(names(count))
         weights <- exp(count - max(count))
         mean <- sum(steps * weights) / sum(weights)
         
         cum <- LogCumSumExp(count)
         fin <- is.finite(count)
-        zero <- spline(steps[fin], cum[fin], xout = mean)[["y"]]
+        zero <- sum(cum[fin] * weights[fin]) / sum(weights[fin])
         one <- count[fin][[1]]
         obs <- cum[[obsLength[noAmb][[i]] + 1]] # +1 as first entry is zero
         c(norm = if (zero == one) 1 else 1 - ((obs - one) / (zero - one)),
-          hMax = zero - one)
-      }, double(2))
+          hExp = zero - one,
+          hMax = cum[length(cum)])
+      }, double(3))
       
-      itrhi <- matrix(NA_real_, 2, length(noAmb))
+      itrhi <- matrix(NA_real_, 3, length(noAmb))
       itrhi[, noAmb] <- itrhiOK
       
     } else if (nRelabel > 0) {
       expLength <- ExpectedLength(dataset, tree, nRelabel, compress = TRUE)
-      itrhi <- rbind(NA_real_, NA)
+      itrhi <- rbind(NA_real_, NA, NA)
     }
     if (!byChar) {
       meanLength <- sum(expLength["mean", ])
@@ -172,12 +174,12 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
   } else {
     rhi <- NA
     rhiBar <- NA
-    itrhi <- rbind(NA_real_, NA)
+    itrhi <- rbind(NA_real_, NA, NA)
   }
   
   if (byChar) {
     ret <- cbind(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar,
-                 itrhi = itrhi[1, ], itrhiH = itrhi[2, ])
+                 itrhi = itrhi[1, ], itrhiExp = itrhi[2, ], itrhiMax = itrhi[3, ])
     
     # Return:
     if (compress) {
@@ -186,8 +188,8 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
       ret[attr(dataset, "index"), ]
     }
   } else {
-    c(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar, itrhi = itrhi[1, ],
-      itrhiH = itrhi[2, ])
+    c(ci = ci, ri = ri, rc = rc, rhi = rhi, rhiBar = rhiBar,
+      itrhi = itrhi[1, ], itrhiExp = itrhi[2, ], itrhiMax = itrhi[3, ])
   }
 }
 
