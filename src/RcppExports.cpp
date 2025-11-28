@@ -209,6 +209,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// mlci_resample
+List mlci_resample(IntegerMatrix edge, int Ntip, IntegerVector obs_states, IntegerVector best_split, double precision, int maxResample, double lower, double upper, double tol);
+RcppExport SEXP _TreeSearch_mlci_resample(SEXP edgeSEXP, SEXP NtipSEXP, SEXP obs_statesSEXP, SEXP best_splitSEXP, SEXP precisionSEXP, SEXP maxResampleSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< int >::type Ntip(NtipSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type obs_states(obs_statesSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type best_split(best_splitSEXP);
+    Rcpp::traits::input_parameter< double >::type precision(precisionSEXP);
+    Rcpp::traits::input_parameter< int >::type maxResample(maxResampleSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(mlci_resample(edge, Ntip, obs_states, best_split, precision, maxResample, lower, upper, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
 // preorder_morphy
 int preorder_morphy(IntegerMatrix edge, SEXP MorphyHandl);
 RcppExport SEXP _TreeSearch_preorder_morphy(SEXP edgeSEXP, SEXP MorphyHandlSEXP) {

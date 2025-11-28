@@ -172,6 +172,10 @@ mle_t <- function(edge, Ntip, tip_states, weights, k, lower = 1e-8, upper = 10.0
     .Call(`_TreeSearch_mle_t`, edge, Ntip, tip_states, weights, k, lower, upper, tol)
 }
 
+mlci_resample <- function(edge, Ntip, obs_states, best_split, precision = 1e-3, maxResample = 10000L, lower = 1e-8, upper = 10.0, tol = 1e-6) {
+    .Call(`_TreeSearch_mlci_resample`, edge, Ntip, obs_states, best_split, precision, maxResample, lower, upper, tol)
+}
+
 preorder_morphy <- function(edge, MorphyHandl) {
     .Call(`_TreeSearch_preorder_morphy`, edge, MorphyHandl)
 }
