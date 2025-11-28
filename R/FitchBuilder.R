@@ -70,7 +70,18 @@ FitchBuilder <- function(steps, tokenCount) {
   
   .Recurse <- function(rootState, tokensAvailable, stepsAvailable) {
     
-    if (stepsAvailable < 1) return(rootState)
+    if (stepsAvailable < 1) {
+      # As we have no more steps to expend, all our descendant leaves must be
+      # identical.  As no leaves are ambiguous, we must be in a region with a
+      # single state.
+      stopifnot(sum(.BR(rootState)) == 1)
+      return(rootState)
+    }
+    
+    # Because our leaves are unambiguous, a compound state requires at least
+    # one of each of its leaves 'spare' to deploy later. For example,
+    # [2, 3] can only be present at this node if there is at least
+    # one 2 and at least one 3 among its children
     if (any(tokensAvailable[.BR(rootState)] < 1)) return(rootState)
     
     ret <- apply(which(dp == rootState, arr.ind = TRUE), 1, function(childStates) {

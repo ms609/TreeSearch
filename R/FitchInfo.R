@@ -135,7 +135,7 @@ FitchInfo <- function(tree, dataset) {
   # Return:
   structure(
     if(totalHMax == 0) 1 else
-      sum(charH["h", , drop = FALSE] * charH["hMax", , drop = FALSE] / totalHMax),
+      sum(charH["norm", , drop = FALSE] * charH["hMax", , drop = FALSE]) / totalHMax,
     byChar = charH
     )
 }
