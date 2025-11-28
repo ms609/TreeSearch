@@ -1,46 +1,39 @@
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
-#include <R.h>        // for GetRNGstate / PutRNGstate / unif_rand
-#include <Rmath.h>    // sometimes helps; safe to include
+#include <cstring> // for memset
 using namespace Rcpp;
 
-// ---------- low-level ER log-likelihood (same as earlier) --------------
-// P(t) closed form used. tip_states: Ntip x nPatterns, values 0..k-1
+// ---------- Prepare tree metadata (call once from R) ---------------------
+// Input: edge matrix (parent, child) 1-based
+// Output: list with nNodes, root, postorder (IntegerVector), children_flat, child_offsets, child_counts
 
-double logLik_equal_t_internal(const IntegerMatrix &edge, int Ntip,
-                               const IntegerMatrix &tip_states,
-                               const NumericVector &weights, int k, double t) {
+// [[Rcpp::export]]
+List mlci_prepare_tree(const IntegerMatrix edge) {
   int nEdge = edge.nrow();
   int nNodes = 0;
   for (int i = 0; i < nEdge; ++i) {
     nNodes = std::max(nNodes, (int)edge(i,0));
     nNodes = std::max(nNodes, (int)edge(i,1));
   }
-  int nPatterns = tip_states.ncol();
-  
-  if (k <= 0) stop("k must be > 0");
-  if (Ntip <= 0) stop("Ntip must be > 0");
-  if (tip_states.nrow() != Ntip) stop("tip_states must have Ntip rows");
-  if ((int)weights.size() != nPatterns) stop("weights length must equal number of patterns");
-  
+  // Build children lists (temporary)
   std::vector< std::vector<int> > children(nNodes + 1);
   std::vector<int> isChild(nNodes + 1, 0);
   for (int i = 0; i < nEdge; ++i) {
-    int parent = edge(i,0);
-    int child  = edge(i,1);
-    if (parent < 1 || child < 1 || parent > nNodes || child > nNodes) stop("edge matrix contains invalid node indices");
-    children[parent].push_back(child);
-    isChild[child] = 1;
+    int p = edge(i,0), c = edge(i,1);
+    children[p].push_back(c);
+    isChild[c] = 1;
   }
-  
+  // find root
   int root = -1;
   for (int v = 1; v <= nNodes; ++v) if (!isChild[v]) { root = v; break; }
-  if (root == -1) stop("could not determine root from edge matrix");
+  if (root == -1) stop("could not determine root");
   
-  // postorder
-  std::vector<int> postorder; postorder.reserve(nNodes);
+  // postorder using iterative stack
+  std::vector<int> postorder;
+  postorder.reserve(nNodes);
   {
-    std::vector<int> stack; stack.reserve(nNodes);
+    std::vector<int> stack;
+    stack.reserve(nNodes);
     std::vector<int> state(nNodes + 1, 0);
     stack.push_back(root);
     while (!stack.empty()) {
@@ -55,42 +48,108 @@ double logLik_equal_t_internal(const IntegerMatrix &edge, int Ntip,
     }
   }
   
-  // allocate cond buffers once
-  std::vector< std::vector<double> > cond(nNodes + 1, std::vector<double>(k));
+  // Flatten children into single array and offsets
+  std::vector<int> child_counts(nNodes + 1, 0);
+  size_t total_children = 0;
+  for (int v = 1; v <= nNodes; ++v) {
+    child_counts[v] = (int)children[v].size();
+    total_children += children[v].size();
+  }
+  std::vector<int> child_offsets(nNodes + 1, 0);
+  int offset = 0;
+  for (int v = 1; v <= nNodes; ++v) {
+    child_offsets[v] = offset;
+    offset += child_counts[v];
+  }
+  std::vector<int> children_flat; children_flat.resize(total_children);
+  // fill flat array
+  for (int v = 1; v <= nNodes; ++v) {
+    int pos = child_offsets[v];
+    for (size_t i = 0; i < children[v].size(); ++i) children_flat[pos + i] = children[v][i];
+  }
+  
+  // Convert vectors to Rcpp objects for returning
+  IntegerVector r_post(postorder.size());
+  for (size_t i = 0; i < postorder.size(); ++i) r_post[i] = postorder[i];
+  IntegerVector r_children_flat(children_flat.size());
+  for (size_t i = 0; i < children_flat.size(); ++i) r_children_flat[i] = children_flat[i];
+  IntegerVector r_child_offsets(child_offsets.size());
+  for (size_t i = 0; i < child_offsets.size(); ++i) r_child_offsets[i] = child_offsets[i];
+  IntegerVector r_child_counts(child_counts.size());
+  for (size_t i = 0; i < child_counts.size(); ++i) r_child_counts[i] = child_counts[i];
+  
+  return List::create(
+    Named("nNodes") = nNodes,
+    Named("root") = root,
+    Named("postorder") = r_post,
+    Named("children_flat") = r_children_flat,
+    Named("child_offsets") = r_child_offsets,
+    Named("child_counts") = r_child_counts
+  );
+}
+
+// ---------- logLik using prepared tree (flat buffers) --------------------
+static double logLik_prepared_internal(
+    const IntegerMatrix &tip_states,        // Ntip x nPatterns
+    const NumericVector &weights, int k,
+    const IntegerVector &postorder, const IntegerVector &children_flat,
+    const IntegerVector &child_offsets, const IntegerVector &child_counts,
+    int root, int Ntip, int nNodes,
+    double t
+) {
+  int nPatterns = tip_states.ncol();
   const double e = std::exp(- (double)k * t);
   const double invk = 1.0 / (double)k;
+  
+  // cond buffer: (nNodes+1) * k, index (node * k + s)
+  std::vector<double> cond_buf((size_t)(nNodes + 1) * (size_t)k);
+  // zero with memset (fast)
+  std::memset(cond_buf.data(), 0, cond_buf.size() * sizeof(double));
+  
+  // temp accum vector reused
+  std::vector<double> accum((size_t)k);
+  
   double totalLogLik = 0.0;
   
   for (int p = 0; p < nPatterns; ++p) {
-    // zero
-    for (int i = 1; i <= nNodes; ++i) std::fill(cond[i].begin(), cond[i].end(), 0.0);
-    // set tips
+    // zero only the buffer (we already zeroed above, but we need to zero per pattern)
+    std::memset(cond_buf.data(), 0, cond_buf.size() * sizeof(double));
+    // set tips: tips are nodes 1..Ntip
     for (int tip = 0; tip < Ntip; ++tip) {
       int state = tip_states(tip, p);
       if (state < 0 || state >= k) stop("tip state out of range");
-      cond[ tip + 1 ][ state ] = 1.0;
+      cond_buf[(size_t)(tip + 1) * k + state] = 1.0;
     }
     // postorder combine
-    for (int idx = 0; idx < (int)postorder.size(); ++idx) {
+    for (int idx = 0; idx < postorder.size(); ++idx) {
       int node = postorder[idx];
       if (node <= Ntip) continue;
-      std::vector<double> accum(k, 1.0);
-      for (int child : children[node]) {
+      // reset accum to 1
+      for (int s = 0; s < k; ++s) accum[s] = 1.0;
+      int offs = child_offsets[node];
+      int cnt  = child_counts[node];
+      for (int ci = 0; ci < cnt; ++ci) {
+        int child = children_flat[offs + ci];
+        // compute meanChild quickly
         double sumChild = 0.0;
-        for (int s = 0; s < k; ++s) sumChild += cond[child][s];
+        double *child_ptr = &cond_buf[(size_t)child * k];
+        for (int s = 0; s < k; ++s) sumChild += child_ptr[s];
         double meanChild = sumChild * invk;
         for (int s = 0; s < k; ++s) {
-          double pts = meanChild + e * (cond[child][s] - meanChild);
+          double pts = meanChild + e * (child_ptr[s] - meanChild);
           accum[s] *= pts;
         }
       }
-      for (int s = 0; s < k; ++s) cond[node][s] = accum[s];
+      // write accum into cond_buf for node
+      double *node_ptr = &cond_buf[(size_t)node * k];
+      for (int s = 0; s < k; ++s) node_ptr[s] = accum[s];
     }
-    // root
+    // root site likelihood
     double sumRoot = 0.0;
-    for (int s = 0; s < k; ++s) sumRoot += cond[root][s];
+    double *root_ptr = &cond_buf[(size_t)root * k];
+    for (int s = 0; s < k; ++s) sumRoot += root_ptr[s];
     double siteLik = sumRoot * invk;
-    if (siteLik <= 0) {
+    if (siteLik <= 0.0) {
       totalLogLik += weights[p] * log(std::numeric_limits<double>::min());
     } else {
       totalLogLik += weights[p] * log(siteLik);
@@ -99,28 +158,43 @@ double logLik_equal_t_internal(const IntegerMatrix &edge, int Ntip,
   return totalLogLik;
 }
 
-// Exported convenience wrapper, identical behaviour as earlier function name
+// R-exported wrapper for convenience
 // [[Rcpp::export]]
-double logLik_equal_t(IntegerMatrix edge, int Ntip, IntegerMatrix tip_states, NumericVector weights, int k, double t) {
-  return logLik_equal_t_internal(edge, Ntip, tip_states, weights, k, t);
+double logLik_equal_t_prepared(const IntegerMatrix tip_states, const NumericVector weights, int k,
+                               const List &tree_prep, int Ntip, double t) {
+  IntegerVector postorder = tree_prep["postorder"];
+  IntegerVector children_flat = tree_prep["children_flat"];
+  IntegerVector child_offsets = tree_prep["child_offsets"];
+  IntegerVector child_counts = tree_prep["child_counts"];
+  int root = as<int>(tree_prep["root"]);
+  int nNodes = as<int>(tree_prep["nNodes"]);
+  return logLik_prepared_internal(tip_states, weights, k, postorder, children_flat, child_offsets, child_counts, root, Ntip, nNodes, t);
 }
 
-// ---------- internal golden-section maximiser for logLik (maximises logLik) -----------
-static double mle_t_internal(IntegerMatrix &edge, int Ntip, IntegerMatrix &tip_states, NumericVector &weights, int k, double lower, double upper, double tol) {
+// ---------- MLE (prepared) using golden-section calling logLik_prepared_internal ---
+static double mle_t_prepared_internal(const IntegerMatrix &tip_states, const NumericVector &weights, int k,
+                                      const List &tree_prep, int Ntip, double lower, double upper, double tol) {
   if (lower <= 0) lower = 1e-12;
   if (upper <= lower) stop("upper must be > lower");
+  IntegerVector postorder = tree_prep["postorder"];
+  IntegerVector children_flat = tree_prep["children_flat"];
+  IntegerVector child_offsets = tree_prep["child_offsets"];
+  IntegerVector child_counts = tree_prep["child_counts"];
+  int root = as<int>(tree_prep["root"]);
+  int nNodes = as<int>(tree_prep["nNodes"]);
+  
   const double gr = (sqrt(5.0) + 1.0) / 2.0;
   double a = lower, b = upper;
   double c = b - (b - a) / gr;
   double d = a + (b - a) / gr;
-  double fc = logLik_equal_t_internal(edge, Ntip, tip_states, weights, k, c);
-  double fd = logLik_equal_t_internal(edge, Ntip, tip_states, weights, k, d);
+  double fc = logLik_prepared_internal(tip_states, weights, k, postorder, children_flat, child_offsets, child_counts, root, Ntip, nNodes, c);
+  double fd = logLik_prepared_internal(tip_states, weights, k, postorder, children_flat, child_offsets, child_counts, root, Ntip, nNodes, d);
   int iter = 0, maxiter = 200;
   while (fabs(b - a) > tol * (fabs(c) + fabs(d)) && iter < maxiter) {
     if (fc > fd) {
-      b = d; d = c; fd = fc; c = b - (b - a) / gr; fc = logLik_equal_t_internal(edge, Ntip, tip_states, weights, k, c);
+      b = d; d = c; fd = fc; c = b - (b - a) / gr; fc = logLik_prepared_internal(tip_states, weights, k, postorder, children_flat, child_offsets, child_counts, root, Ntip, nNodes, c);
     } else {
-      a = c; c = d; fc = fd; d = a + (b - a) / gr; fd = logLik_equal_t_internal(edge, Ntip, tip_states, weights, k, d);
+      a = c; c = d; fc = fd; d = a + (b - a) / gr; fd = logLik_prepared_internal(tip_states, weights, k, postorder, children_flat, child_offsets, child_counts, root, Ntip, nNodes, d);
     }
     iter++;
   }
@@ -128,163 +202,119 @@ static double mle_t_internal(IntegerMatrix &edge, int Ntip, IntegerMatrix &tip_s
   return t_hat;
 }
 
-// exported small wrapper to match earlier name (optional)
 // [[Rcpp::export]]
-List mle_t(IntegerMatrix edge, int Ntip, IntegerMatrix tip_states, NumericVector weights, int k, double lower = 1e-8, double upper = 10.0, double tol = 1e-6) {
-  double t_hat = mle_t_internal(edge, Ntip, tip_states, weights, k, lower, upper, tol);
-  double logL = logLik_equal_t_internal(edge, Ntip, tip_states, weights, k, t_hat);
+List mle_t_prepared(const IntegerMatrix tip_states, const NumericVector weights, int k,
+                    const List &tree_prep, int Ntip, double lower = 1e-8, double upper = 10.0, double tol = 1e-6) {
+  double t_hat = mle_t_prepared_internal(tip_states, weights, k, tree_prep, Ntip, lower, upper, tol);
+  // compute logLik at t_hat
+  IntegerVector postorder = tree_prep["postorder"];
+  IntegerVector children_flat = tree_prep["children_flat"];
+  IntegerVector child_offsets = tree_prep["child_offsets"];
+  IntegerVector child_counts = tree_prep["child_counts"];
+  int root = as<int>(tree_prep["root"]);
+  int nNodes = as<int>(tree_prep["nNodes"]);
+  double logL = logLik_prepared_internal(tip_states, weights, k, postorder, children_flat, child_offsets, child_counts, root, Ntip, nNodes, t_hat);
   return List::create(Named("t_hat") = t_hat, Named("logLik") = logL);
 }
 
-// ---------- C++ resampling MLCI routine -------------------------------------
-// obs_states: IntegerVector length Ntip with values 0..k-1 (observed tokens coded as integers)
-// best_split: IntegerVector length Ntip with values 0 or 1 (TRUE state -> 1, FALSE -> 0)
-// precision: desired SE on MLCI, maxResample: cap
-//
-// Returns a list with t_hat_obs, score, t_hat_best, bestScore,
-// rmMean (mean rmScore), rmSE (SE of rmMean), mlci, mlciSE, nResample
-
+// ---------- Resampler using prepared tree ---------------------------------
 // [[Rcpp::export]]
-List mlci_resample(IntegerMatrix edge, int Ntip,
-                   IntegerVector obs_states, IntegerVector best_split,
-                   double precision = 1e-3, int maxResample = 10000,
-                   double lower = 1e-8, double upper = 10.0, double tol = 1e-6) {
-  
-  constexpr int minResample = 3;
-  
-  if ((int)obs_states.size() != Ntip) stop("obs_states must have length Ntip");
-  if ((int)best_split.size() != Ntip) stop("best_split must have length Ntip");
-  
+List mlci_resample(
+    const List &tree_prep,
+    const IntegerMatrix edge, // kept for compatibility when calling mle_t_prepared
+    int Ntip,
+    const IntegerVector &obs_states, // length Ntip, integers 0..k-1
+    const IntegerVector &best_states, // length Ntip, 0/1
+    
+    double precision = 1e-3,
+    int maxResample = 10000,
+    double lower = 1e-8,
+    double upper = 10.0,
+    double tol = 1e-6
+) {
   int nEdge = edge.nrow();
-  
-  // infer k from obs_states unique values
-  std::vector<int> present; // map values -> seen
-  int maxval = -1;
-  for (int i = 0; i < Ntip; ++i) if (obs_states[i] > maxval) maxval = obs_states[i];
-  if (maxval < 0) stop("obs_states must be non-negative integers");
-  int possible_k = maxval + 1;
-  // build a boolean seen array
-  std::vector<char> seen(possible_k, 0);
-  int k = 0;
-  for (int i = 0; i < Ntip; ++i) {
-    int v = obs_states[i];
-    if (v < 0) stop("obs_states must be non-negative integers");
-    if (v >= (int)seen.size()) seen.resize(v+1, 0);
-    if (!seen[v]) { seen[v] = 1; ++k; }
-  }
-  
-  if (k <= 0) stop("no states found");
-  
-  // Build tip_states matrix Ntip x 1 for observed
+  // observed tip matrix
   IntegerMatrix tip_obs(Ntip, 1);
   for (int i = 0; i < Ntip; ++i) tip_obs(i,0) = obs_states[i];
   NumericVector w1(1); w1[0] = 1.0;
-  
+  // infer k_obs
+  int maxv = -1;
+  for (int i=0;i<Ntip;++i) if (obs_states[i] > maxv) maxv = obs_states[i];
+  int k_obs = maxv + 1;
   // observed MLE
-  double t_hat_obs = mle_t_internal(edge, Ntip, tip_obs, w1, k, lower, upper, tol);
+  double t_hat_obs = mle_t_prepared_internal(tip_obs, w1, k_obs, tree_prep, Ntip, lower, upper, tol);
   double score = t_hat_obs * nEdge;
-  
-  // best character: create tip_states with 0/1 states per best_split.
+  // best
   IntegerMatrix tip_best(Ntip, 1);
-  for (int i = 0; i < Ntip; ++i) tip_best(i,0) = best_split[i] ? 1 : 0;
-  NumericVector w2(1); w2[0] = 1.0;
-  double t_hat_best = mle_t_internal(edge, Ntip, tip_best, w2, 2, lower, upper, tol);
+  for (int i = 0; i < Ntip; ++i) tip_best(i,0) = best_states[i];
+  double t_hat_best = mle_t_prepared_internal(tip_best, w1, 2, tree_prep, Ntip, lower, upper, tol);
   double bestScore = t_hat_best * nEdge;
   
-  // Pre-allocated buffers for use inside loop
-  IntegerVector perm(Ntip);
-  for (int i = 0; i < Ntip; ++i) perm[i] = obs_states[i];
+  // setup permutation vector (copy obs_states)
+  std::vector<int> perm((size_t)Ntip);
+  for (int i=0;i<Ntip;++i) perm[i] = obs_states[i];
   
-  // Welford accumulators
   long long n = 0;
-  double mean = 0.0;
-  double M2 = 0.0;
+  double mean_rm = 0.0, M2 = 0.0;
   
-  // prepare a tip_states matrix reused
+  // allocate integer matrix for permuted tip states reused
   IntegerMatrix tip_r(Ntip, 1);
   NumericVector wr(1); wr[0] = 1.0;
   
-  // RNG state
   GetRNGstate();
-  
-  // Fisher-Yates shuffle function inline
-  auto shuffle_inplace = [&](IntegerVector &v) {
-    int m = v.size();
-    for (int i = m - 1; i > 0; --i) {
-      double u = unif_rand(); // in [0,1)
-      int j = (int)(u * (i + 1)); // 0..i
-      if (j != i) {
-        int tmp = v[i];
-        v[i] = v[j];
-        v[j] = tmp;
-      }
+  // Fisher-Yates in-place shuffle using R's RNG
+  auto shuffle_inplace = [&](std::vector<int> &v) {
+    for (int i = (int)v.size() - 1; i > 0; --i) {
+      double u = unif_rand();
+      int j = (int)(u * (i + 1));
+      int tmp = v[i];
+      v[i] = v[j];
+      v[j] = tmp;
     }
   };
   
   double rmScore = 0.0;
-  double rmMean = NA_REAL;
-  double rmSE = NA_REAL;
-  double mlci = NA_REAL;
-  double mlciSE = NA_REAL;
-  
-  // If denom zero edge-case: bestScore == score, then mlci is NaN/infinite; handle later.
-  // Loop
+  double rmMean = NA_REAL, rmSE = NA_REAL, mlci = NA_REAL, mlciSE = NA_REAL;
   while (true) {
-    // shuffle perm (it contains integer states)
     shuffle_inplace(perm);
-    // build tip_r from perm
-    for (int i = 0; i < Ntip; ++i) tip_r(i,0) = perm[i];
-    // compute mle t for this resampled character
-    // infer k_r for this permutation (some states may vanish) -> compute unique count quickly
-    int maxv = -1;
-    for (int i=0;i<Ntip;++i) if (perm[i] > maxv) maxv = perm[i];
-    std::vector<char> seen_r(maxv+1, 0);
-    int k_r = 0;
-    for (int i=0;i<Ntip;++i) {
-      int v = perm[i];
-      if (v >= (int)seen_r.size()) seen_r.resize(v+1,0);
-      if (!seen_r[v]) { seen_r[v] = 1; ++k_r; }
-    }
-    if (k_r <= 0) k_r = 1; // unlikely
+    for (int i=0;i<Ntip;++i) tip_r(i,0) = perm[i];
+    // infer k_r quickly
+    int maxvv = -1;
+    for (int i=0;i<Ntip;++i) if (perm[i] > maxvv) maxvv = perm[i];
+    int k_r = maxvv + 1;
+    if (k_r < 1) k_r = 1;
     
-    double t_hat_r = mle_t_internal(edge, Ntip, tip_r, wr, k_r, lower, upper, tol);
+    double t_hat_r = mle_t_prepared_internal(tip_r, wr, k_r, tree_prep, Ntip, lower, upper, tol);
     rmScore = t_hat_r * nEdge;
     
-    // update Welford
-    n += 1;
-    double delta = rmScore - mean;
-    mean += delta / (double)n;
-    double delta2 = rmScore - mean;
+    n++;
+    double delta = rmScore - mean_rm;
+    mean_rm += delta / (double)n;
+    double delta2 = rmScore - mean_rm;
     M2 += delta * delta2;
     
-    if (n >= minResample) {
-      double var = M2 / (double)(n - 1);           // sample variance of rmScores
-      double se_mean = std::sqrt(var) / std::sqrt((double)n); // SE of mean
-      // propagate to SE of mlci via delta method
-      double denom = (bestScore - mean);
-      if (denom == 0.0) {
-        mlciSE = R_PosInf;
-      } else {
+    if (n >= 2) {
+      double var = M2 / (double)(n - 1);
+      double se_mean = std::sqrt(var) / std::sqrt((double)n);
+      double denom = (bestScore - mean_rm);
+      if (denom == 0.0) mlciSE = R_PosInf;
+      else {
         double gprime = (score - bestScore) / (denom * denom);
         mlciSE = std::fabs(gprime) * se_mean;
       }
-      // current mlci estimate
-      mlci = (score - mean) / (bestScore - mean);
-      rmMean = mean;
+      mlci = (bestScore - mean_rm == 0.0) ? NA_REAL : (score - mean_rm) / denom;
+      rmMean = mean_rm;
       rmSE = se_mean;
-      // stopping condition:
       if (mlciSE <= precision) break;
       if (n >= maxResample) break;
-    } // else need at least 2 samples to compute SE
+    }
   }
-  
   PutRNGstate();
   
-  // If only 1 sample: compute current rmMean = mean, rmSE = NA, mlciSE = NA
   if (n < 2) {
-    rmMean = mean;
+    rmMean = mean_rm;
     rmSE = NA_REAL;
-    mlci = (bestScore - mean == 0.0) ? NA_REAL : (score - mean) / (bestScore - mean);
+    mlci = (bestScore - mean_rm == 0.0) ? NA_REAL : (score - mean_rm) / (bestScore - mean_rm);
     mlciSE = NA_REAL;
   }
   

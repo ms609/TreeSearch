@@ -164,16 +164,36 @@ maximum_length <- function(x) {
     .Call(`_TreeSearch_maximum_length`, x)
 }
 
-logLik_equal_t <- function(edge, Ntip, tip_states, weights, k, t) {
-    .Call(`_TreeSearch_logLik_equal_t`, edge, Ntip, tip_states, weights, k, t)
+mlci_prepare_tree <- function(edge) {
+    .Call(`_TreeSearch_mlci_prepare_tree`, edge)
 }
 
-mle_t <- function(edge, Ntip, tip_states, weights, k, lower = 1e-8, upper = 10.0, tol = 1e-6) {
-    .Call(`_TreeSearch_mle_t`, edge, Ntip, tip_states, weights, k, lower, upper, tol)
+logLik_equal_t_prepared <- function(tip_states, weights, k, tree_prep, Ntip, t) {
+    .Call(`_TreeSearch_logLik_equal_t_prepared`, tip_states, weights, k, tree_prep, Ntip, t)
 }
 
-mlci_resample <- function(edge, Ntip, obs_states, best_split, precision = 1e-3, maxResample = 10000L, lower = 1e-8, upper = 10.0, tol = 1e-6) {
-    .Call(`_TreeSearch_mlci_resample`, edge, Ntip, obs_states, best_split, precision, maxResample, lower, upper, tol)
+mle_t_prepared <- function(tip_states, weights, k, tree_prep, Ntip, lower = 1e-8, upper = 10.0, tol = 1e-6) {
+    .Call(`_TreeSearch_mle_t_prepared`, tip_states, weights, k, tree_prep, Ntip, lower, upper, tol)
+}
+
+mlci_resample <- function(tree_prep, edge, Ntip, obs_states, best_states, precision = 1e-3, maxResample = 10000L, lower = 1e-8, upper = 10.0, tol = 1e-6) {
+    .Call(`_TreeSearch_mlci_resample`, tree_prep, edge, Ntip, obs_states, best_states, precision, maxResample, lower, upper, tol)
+}
+
+mlci_make_engine <- function(edge, Ntip, maxK = 10L) {
+    .Call(`_TreeSearch_mlci_make_engine`, edge, Ntip, maxK)
+}
+
+cpp_engine_logLik <- function(eng_xptr, tip_states, weights, k, t) {
+    .Call(`_TreeSearch_cpp_engine_logLik`, eng_xptr, tip_states, weights, k, t)
+}
+
+cpp_engine_mle <- function(eng_xptr, tip_states, weights, k, lower = 1e-8, upper = 10.0, tol = 1e-6) {
+    .Call(`_TreeSearch_cpp_engine_mle`, eng_xptr, tip_states, weights, k, lower, upper, tol)
+}
+
+mlci_resample_engine <- function(eng_xptr, obs_states, best_states, precision = 1e-3, maxResample = 10000L, lower = 1e-8, upper = 10.0, tol = 1e-6) {
+    .Call(`_TreeSearch_mlci_resample_engine`, eng_xptr, obs_states, best_states, precision, maxResample, lower, upper, tol)
 }
 
 preorder_morphy <- function(edge, MorphyHandl) {

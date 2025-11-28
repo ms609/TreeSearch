@@ -175,56 +175,131 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// logLik_equal_t
-double logLik_equal_t(IntegerMatrix edge, int Ntip, IntegerMatrix tip_states, NumericVector weights, int k, double t);
-RcppExport SEXP _TreeSearch_logLik_equal_t(SEXP edgeSEXP, SEXP NtipSEXP, SEXP tip_statesSEXP, SEXP weightsSEXP, SEXP kSEXP, SEXP tSEXP) {
+// mlci_prepare_tree
+List mlci_prepare_tree(const IntegerMatrix edge);
+RcppExport SEXP _TreeSearch_mlci_prepare_tree(SEXP edgeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< int >::type Ntip(NtipSEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_states(tip_statesSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type weights(weightsSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< double >::type t(tSEXP);
-    rcpp_result_gen = Rcpp::wrap(logLik_equal_t(edge, Ntip, tip_states, weights, k, t));
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
+    rcpp_result_gen = Rcpp::wrap(mlci_prepare_tree(edge));
     return rcpp_result_gen;
 END_RCPP
 }
-// mle_t
-List mle_t(IntegerMatrix edge, int Ntip, IntegerMatrix tip_states, NumericVector weights, int k, double lower, double upper, double tol);
-RcppExport SEXP _TreeSearch_mle_t(SEXP edgeSEXP, SEXP NtipSEXP, SEXP tip_statesSEXP, SEXP weightsSEXP, SEXP kSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP tolSEXP) {
+// logLik_equal_t_prepared
+double logLik_equal_t_prepared(const IntegerMatrix tip_states, const NumericVector weights, int k, const List& tree_prep, int Ntip, double t);
+RcppExport SEXP _TreeSearch_logLik_equal_t_prepared(SEXP tip_statesSEXP, SEXP weightsSEXP, SEXP kSEXP, SEXP tree_prepSEXP, SEXP NtipSEXP, SEXP tSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< int >::type Ntip(NtipSEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_states(tip_statesSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type tip_states(tip_statesSEXP);
+    Rcpp::traits::input_parameter< const NumericVector >::type weights(weightsSEXP);
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< const List& >::type tree_prep(tree_prepSEXP);
+    Rcpp::traits::input_parameter< int >::type Ntip(NtipSEXP);
+    Rcpp::traits::input_parameter< double >::type t(tSEXP);
+    rcpp_result_gen = Rcpp::wrap(logLik_equal_t_prepared(tip_states, weights, k, tree_prep, Ntip, t));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mle_t_prepared
+List mle_t_prepared(const IntegerMatrix tip_states, const NumericVector weights, int k, const List& tree_prep, int Ntip, double lower, double upper, double tol);
+RcppExport SEXP _TreeSearch_mle_t_prepared(SEXP tip_statesSEXP, SEXP weightsSEXP, SEXP kSEXP, SEXP tree_prepSEXP, SEXP NtipSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type tip_states(tip_statesSEXP);
+    Rcpp::traits::input_parameter< const NumericVector >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< const List& >::type tree_prep(tree_prepSEXP);
+    Rcpp::traits::input_parameter< int >::type Ntip(NtipSEXP);
     Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
     Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(mle_t(edge, Ntip, tip_states, weights, k, lower, upper, tol));
+    rcpp_result_gen = Rcpp::wrap(mle_t_prepared(tip_states, weights, k, tree_prep, Ntip, lower, upper, tol));
     return rcpp_result_gen;
 END_RCPP
 }
 // mlci_resample
-List mlci_resample(IntegerMatrix edge, int Ntip, IntegerVector obs_states, IntegerVector best_split, double precision, int maxResample, double lower, double upper, double tol);
-RcppExport SEXP _TreeSearch_mlci_resample(SEXP edgeSEXP, SEXP NtipSEXP, SEXP obs_statesSEXP, SEXP best_splitSEXP, SEXP precisionSEXP, SEXP maxResampleSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP tolSEXP) {
+List mlci_resample(const List& tree_prep, const IntegerMatrix edge, int Ntip, const IntegerVector& obs_states, const IntegerVector& best_states, double precision, int maxResample, double lower, double upper, double tol);
+RcppExport SEXP _TreeSearch_mlci_resample(SEXP tree_prepSEXP, SEXP edgeSEXP, SEXP NtipSEXP, SEXP obs_statesSEXP, SEXP best_statesSEXP, SEXP precisionSEXP, SEXP maxResampleSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< const List& >::type tree_prep(tree_prepSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type edge(edgeSEXP);
     Rcpp::traits::input_parameter< int >::type Ntip(NtipSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type obs_states(obs_statesSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type best_split(best_splitSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type obs_states(obs_statesSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type best_states(best_statesSEXP);
     Rcpp::traits::input_parameter< double >::type precision(precisionSEXP);
     Rcpp::traits::input_parameter< int >::type maxResample(maxResampleSEXP);
     Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
     Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(mlci_resample(edge, Ntip, obs_states, best_split, precision, maxResample, lower, upper, tol));
+    rcpp_result_gen = Rcpp::wrap(mlci_resample(tree_prep, edge, Ntip, obs_states, best_states, precision, maxResample, lower, upper, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mlci_make_engine
+SEXP mlci_make_engine(const IntegerMatrix& edge, int Ntip, int maxK);
+RcppExport SEXP _TreeSearch_mlci_make_engine(SEXP edgeSEXP, SEXP NtipSEXP, SEXP maxKSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< int >::type Ntip(NtipSEXP);
+    Rcpp::traits::input_parameter< int >::type maxK(maxKSEXP);
+    rcpp_result_gen = Rcpp::wrap(mlci_make_engine(edge, Ntip, maxK));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_engine_logLik
+double cpp_engine_logLik(SEXP eng_xptr, const IntegerMatrix& tip_states, const NumericVector& weights, int k, double t);
+RcppExport SEXP _TreeSearch_cpp_engine_logLik(SEXP eng_xptrSEXP, SEXP tip_statesSEXP, SEXP weightsSEXP, SEXP kSEXP, SEXP tSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type eng_xptr(eng_xptrSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type tip_states(tip_statesSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type t(tSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_engine_logLik(eng_xptr, tip_states, weights, k, t));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_engine_mle
+List cpp_engine_mle(SEXP eng_xptr, const IntegerMatrix& tip_states, const NumericVector& weights, int k, double lower, double upper, double tol);
+RcppExport SEXP _TreeSearch_cpp_engine_mle(SEXP eng_xptrSEXP, SEXP tip_statesSEXP, SEXP weightsSEXP, SEXP kSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type eng_xptr(eng_xptrSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type tip_states(tip_statesSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_engine_mle(eng_xptr, tip_states, weights, k, lower, upper, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mlci_resample_engine
+List mlci_resample_engine(SEXP eng_xptr, const IntegerVector& obs_states, const IntegerVector& best_states, double precision, int maxResample, double lower, double upper, double tol);
+RcppExport SEXP _TreeSearch_mlci_resample_engine(SEXP eng_xptrSEXP, SEXP obs_statesSEXP, SEXP best_statesSEXP, SEXP precisionSEXP, SEXP maxResampleSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type eng_xptr(eng_xptrSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type obs_states(obs_statesSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type best_states(best_statesSEXP);
+    Rcpp::traits::input_parameter< double >::type precision(precisionSEXP);
+    Rcpp::traits::input_parameter< int >::type maxResample(maxResampleSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(mlci_resample_engine(eng_xptr, obs_states, best_states, precision, maxResample, lower, upper, tol));
     return rcpp_result_gen;
 END_RCPP
 }
