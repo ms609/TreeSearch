@@ -416,7 +416,7 @@ NumericVector FixedTreeCount(List tree, std::vector<int> tokens,
   return results;
 }
 
-//' @describeIn FixedTreeCount
+//' @describeIn FixedTreeCount Process a bunch of characters at once
 //' @param tokenMatrix Integer matrix in which each column corresponds to a
 //' character.
 // [[Rcpp::export]]

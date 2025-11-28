@@ -4,7 +4,7 @@
 \alias{Consistency}
 \title{Consistency and retention "indices"}
 \usage{
-Consistency(dataset, tree, byChar = TRUE, nRelabel = 0, compress = FALSE)
+Consistency(dataset, tree, byChar = TRUE, nRelabel = NULL, compress = FALSE)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class

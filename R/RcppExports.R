@@ -32,7 +32,7 @@ FixedTreeCount <- function(tree, tokens, steps = -1.0) {
     .Call(`_TreeSearch_FixedTreeCount`, tree, tokens, steps)
 }
 
-#' @describeIn FixedTreeCount
+#' @describeIn FixedTreeCount Process a bunch of characters at once
 #' @param tokenMatrix Integer matrix in which each column corresponds to a
 #' character.
 FixedTreeCountBatch <- function(tree, tokenMatrix, steps = -1.0) {

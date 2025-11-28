@@ -67,7 +67,7 @@
 #' @references \insertAllCited{}
 #' @template MRS
 #' @export
-Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = 0,
+Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
                         compress = FALSE) {
   dsTips <- TipLabels(dataset)
   trTips <- TipLabels(tree)
