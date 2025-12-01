@@ -36,9 +36,17 @@ test_that("Multi-state characters calculated correctly", {
   character <- MatrixToPhyDat(`rownames<-`(rbind(1, 1, 2, 2, 3, 3), TipLabels(6)))
   all6 <- as.phylo(0:104, 6)
   tl1 <- table(vapply(all6, TreeLength, 1, character))
-  fi <- table(vapply(all6, FitchInfo, 0, character))
-  expect_equal(unname(fi), unname(rev(tl1)))
-  expect_equal(as.numeric(names(fi)),
+  fi <- vapply(all6, function(tr) {
+    x <- FitchInfo(tr, character)
+    c(x[[1]], attr(x, "expH"), attr(x, "byChar")["hMax", ])
+  }, double(3))
+  fiExp <- table(fi[1, ])
+  expect_equal(as.numeric(names(table(fi[1, ]))) * fi["hMax", 1],
                unname(rev(-log2(cumsum(tl1 / NUnrooted(6))))))
   
+  expect_equal(min(fi[1, ]), 0)
+  expect_equal(max(fi[1, ]), 1)
+  
+  expect_lt(min(fi[2, ]), 0)
+  expect_equal(max(fi[2, ]), 1)
 })

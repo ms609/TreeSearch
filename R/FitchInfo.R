@@ -18,15 +18,25 @@
 #' through multiple steps, even if such steps would not be distinguished
 #' by a parsimonious reconstruction.
 #' 
-#' This value is most readily interpreted when normalized against the expected
-#' entropy of a random shuffling of states.
-#' 
+#' The overall score for a dataset is computed by taking a mean of the scores
+#' of each character, weighted by the maximum information content of that
+#' character.
 #' 
 #' @section Quirks:
 #' Characters that are not parsimony informative (i.e. singletons) contain no
 #' phylogenetic information, so contribute zero to both numerator
 #' and denominator.  If no character is parsimony informative, we define the
 #' return value as 1.
+#' 
+#' @returns `FitchInfo()` returns the normalized score for the full matrix.
+#' Attributes detail:
+#' - `expH`: the expected score when no phylogenetic information is present
+#' - `byChar`: A matrix listing the scores associated with each character.
+#'   Rows correspond to:
+#'    - `norm`: Normalized score;
+#'    - `h`: Unnormalized score;
+#'    - `expH`: Expected score;
+#'    - `hMax`: Maximum score possible for observed tokens.
 #' 
 #' @examples
 #' dataset <- inapplicable.phyData[["Vinther2008"]]
@@ -36,7 +46,7 @@
 #' @importFrom TreeDist Entropy
 #' @template MRS
 #' @export
-FitchInfo <- function(tree, dataset) {
+FitchInfo <- function(tree, dataset, expNorm = FALSE) {
   # Check inputs
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
@@ -123,19 +133,19 @@ FitchInfo <- function(tree, dataset) {
       }
       cumH <- LogCumSumExp(logP) / -log(2)
       h <- cumH[[steps - (nLevels - 2)]]
-      expH <- sum(cumH * exp(logP))
-      c(norm = (h - expH) / (cumH[[1]] - expH),
-        h = h,
-        hMax = cumH[[1]],
-        expH = expH)
+      hMax <- cumH[[1]]
+      c(norm = h / hMax, h = h, expH = sum(cumH * exp(logP)), hMax = hMax)
     }
   })[, attr(dataset, "index"), drop = FALSE]
   
-  totalHMax <- sum(charH["hMax", ])
+  hMax <- charH["hMax", , drop = FALSE]
+  expH <- (charH["h", , drop = FALSE] - charH["expH", , drop = FALSE]) /
+    (charH["hMax", , drop = FALSE] - charH["expH", , drop = FALSE])
   # Return:
   structure(
-    if(totalHMax == 0) 1 else
-      sum(charH["norm", , drop = FALSE] * charH["hMax", , drop = FALSE]) / totalHMax,
+    if(sum(hMax) == 0) 1 else
+      weighted.mean(charH["norm", , drop = FALSE], hMax),
+    expH = weighted.mean(expH, hMax),
     byChar = charH
     )
 }

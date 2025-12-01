@@ -6,6 +6,21 @@
 \usage{
 FitchInfo(tree, dataset)
 }
+\value{
+\code{FitchInfo()} returns the normalized score for the full matrix.
+Attributes detail:
+\itemize{
+\item \code{expH}: the expected score when no phylogenetic information is present
+\item \code{byChar}: A matrix listing the scores associated with each character.
+Rows correspond to:
+\itemize{
+\item \code{norm}: Normalized score;
+\item \code{h}: Unnormalized score;
+\item \code{expH}: Expected score;
+\item \code{hMax}: Maximum score possible for observed tokens.
+}
+}
+}
 \description{
 Given a tree, the amount of information required to encode a character is
 determined by the number of extra steps the character implies on a tree.
@@ -26,8 +41,9 @@ This fits with the possibility that a parsimonious distribution may arise
 through multiple steps, even if such steps would not be distinguished
 by a parsimonious reconstruction.
 
-This value is most readily interpreted when normalized against the expected
-entropy of a random shuffling of states.
+The overall score for a dataset is computed by taking a mean of the scores
+of each character, weighted by the maximum information content of that
+character.
 }
 \section{Quirks}{
 
