@@ -133,7 +133,9 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
       logCounts <- FixedTreeCountBatch(tree, rwTab[, noAmb, drop = FALSE])
       counts <- exp(logCounts)
       
-      expLength <- apply(counts, 2, function(count) {
+      expLength <- matrix(NA_real_, 2, length(minLength), dimnames = list(
+        c("mean", "median"), NULL))
+      expLength[, noAmb] <- apply(counts, 2, function(count) {
         cum <- cumsum(count)
         medianPos <- cum[length(count)] / 2
         mdnIdx <- unname(which.max(cum >= medianPos))
@@ -155,15 +157,22 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
         
         cum <- LogCumSumExp(count)
         fin <- is.finite(count)
-        zero <- sum(cum[fin] * weights[fin]) / sum(weights[fin])
+        expZero <- weighted.mean(cum[fin], weights[fin])
+        maxZero <- tail(cum, 1)
         one <- count[fin][[1]]
         obs <- cum[[obsLength[noAmb][[i]] + 1]] # +1 as first entry is zero
-        c(norm = if (zero == one) 1 else 1 - ((obs - one) / (zero - one)),
-          hExp = zero - one,
+        beforeBin <- cum[[obsLength[noAmb][[i]]]]
+        binCount <- count[[obsLength[noAmb][[i]] + 1]]
+        halfBin <- .LogAddExp(binCount, 0) - log(2)
+        binMid <- .LogAddExp(beforeBin, halfBin)
+        c(midNorm = 1 - (binMid / maxZero),
+          maxNorm = if (maxZero == one) 1 else 1 - ((obs - one) / (maxZero - one)),
+          expNorm = if (expZero == one) 1 else 1 - ((obs - one) / (expZero - one)),
+          hExp = expZero - one,
           hMax = cum[length(cum)])
-      }, double(3))
+      }, double(5))
       
-      itrhi <- matrix(NA_real_, 3, length(noAmb))
+      itrhi <- matrix(NA_real_, 5, length(noAmb), dimnames = dimnames(itrhiOK))
       itrhi[, noAmb] <- itrhiOK
       
     } else if (nRelabel > 0) {
@@ -183,19 +192,21 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
     
     nTokens <- minLength + 1
     adjC0 <- rep(NA_real_, length(minLength))
-    adjC0[noAmb] <- StepsToLength(nTip, expLength["mean", ], nTokens[noAmb])
+    adjC0[noAmb] <- StepsToLength(nTip, expLength["mean", noAmb], nTokens[noAmb])
     rci <- (adjCI - adjC0) / (adjC1 - adjC0)
   } else {
     rhi <- NA
     rhiBar <- NA
     rci <- NA
-    itrhi <- rbind(NA_real_, NA, NA)
+    itrhi <- rbind(rep(NA_real_, 5))
   }
   
   if (byChar) {
     ret <- cbind(ci = ci, cci = cci, ri = ri, rc = rc,
                  rhi = rhi, rhiBar = rhiBar, rci = rci,
-                 itrhi = itrhi[1, ], itrhiExp = itrhi[2, ], itrhiMax = itrhi[3, ])
+                 itrhiMid = itrhi["midNorm", ], itrhiMax = itrhi["maxNorm", ],
+                 itrhiExp = itrhi["expNorm", ], expItrhi = itrhi["hExp", ],
+                 maxItrhi = itrhi["hMax", ])
     
     # Return:
     if (compress) {
@@ -206,7 +217,9 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
   } else {
     c(ci = ci, cci = cci, ri = ri, rc = rc,
       rhi = rhi, rhiBar = rhiBar, rci = rci,
-      itrhi = itrhi[1, ], itrhiExp = itrhi[2, ], itrhiMax = itrhi[3, ])
+      itrhiMid = itrhi["midNorm", ], itrhiMax = itrhi["maxNorm", ],
+      itrhiExp = itrhi["expNorm", ], expItrhi = itrhi["hExp", ],
+      maxItrhi = itrhi["hMax", ])
   }
 }
 
