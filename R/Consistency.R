@@ -148,6 +148,7 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
           median = mdn)
       })
       
+      nIt <- 7
       itrhiOK <- vapply(seq_len(dim(logCounts)[[2]]), function(i) {
         count <- logCounts[, i]
         
@@ -161,23 +162,32 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
         maxZero <- tail(cum, 1)
         one <- count[fin][[1]]
         obs <- cum[[obsLength[noAmb][[i]] + 1]] # +1 as first entry is zero
-        beforeBin <- cum[[obsLength[noAmb][[i]]]]
-        binCount <- count[[obsLength[noAmb][[i]] + 1]]
-        halfBin <- .LogAddExp(binCount, 0) - log(2)
-        binMid <- .LogAddExp(beforeBin, halfBin)
-        c(midNorm = 1 - (binMid / maxZero),
+        .BinMid <- function(steps) {
+          beforeBin <- cum[[steps]]
+          binCount <- count[[steps + 1]]
+          halfBin <- .LogAddExp(binCount, 0) - log(2)
+          binMid <- .LogAddExp(beforeBin, halfBin)
+        }
+        binMids <- sapply(steps[fin], .BinMid)
+        obsMid <- binMids[[which((as.numeric(names(fin)) == obsLength[noAmb][[i]])[fin])]]
+        oneMid <- binMids[[1]]
+        mixZero <- weighted.mean(binMids, weights[fin])
+        
+        c(midNorm = 1 - (obsMid / maxZero),
+          mixNorm = 1 - (obsMid / mixZero),
+          m1xNorm = if (mixZero == oneMid) 1 else 1 - ((obsMid - oneMid) / (mixZero - oneMid)),
           maxNorm = if (maxZero == one) 1 else 1 - ((obs - one) / (maxZero - one)),
           expNorm = if (expZero == one) 1 else 1 - ((obs - one) / (expZero - one)),
           hExp = expZero - one,
           hMax = cum[length(cum)])
-      }, double(5))
+      }, double(nIt))
       
-      itrhi <- matrix(NA_real_, 5, length(noAmb), dimnames = dimnames(itrhiOK))
+      itrhi <- matrix(NA_real_, nIt, length(noAmb), dimnames = dimnames(itrhiOK))
       itrhi[, noAmb] <- itrhiOK
       
     } else if (nRelabel > 0) {
       expLength <- ExpectedLength(dataset, tree, nRelabel, compress = TRUE)
-      itrhi <- rbind(NA_real_, NA, NA)
+      itrhi <- rbind(rep(NA_real_, nIt))
     }
     if (!byChar) {
       meanLength <- sum(expLength["mean", ])
@@ -198,13 +208,14 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
     rhi <- NA
     rhiBar <- NA
     rci <- NA
-    itrhi <- rbind(rep(NA_real_, 5))
+    itrhi <- rbind(rep(NA_real_, nIt))
   }
   
   if (byChar) {
     ret <- cbind(ci = ci, cci = cci, ri = ri, rc = rc,
                  rhi = rhi, rhiBar = rhiBar, rci = rci,
-                 itrhiMid = itrhi["midNorm", ], itrhiMax = itrhi["maxNorm", ],
+                 itrhiMid = itrhi["midNorm", ], itrhiMix = itrhi["mixNorm", ],
+                 itrhiM1x = itrhi["m1xNorm", ], itrhiMax = itrhi["maxNorm", ],
                  itrhiExp = itrhi["expNorm", ], expItrhi = itrhi["hExp", ],
                  maxItrhi = itrhi["hMax", ])
     
@@ -217,7 +228,8 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
   } else {
     c(ci = ci, cci = cci, ri = ri, rc = rc,
       rhi = rhi, rhiBar = rhiBar, rci = rci,
-      itrhiMid = itrhi["midNorm", ], itrhiMax = itrhi["maxNorm", ],
+      itrhiMid = itrhi["midNorm", ], itrhiMix = itrhi["mixNorm", ],
+      itrhiM1x = itrhi["m1xNorm", ], itrhiMax = itrhi["maxNorm", ],
       itrhiExp = itrhi["expNorm", ], expItrhi = itrhi["hExp", ],
       maxItrhi = itrhi["hMax", ])
   }
