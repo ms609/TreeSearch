@@ -25,9 +25,17 @@ Functions to compute the number of trees with a given parsimony score.
 }
 \details{
 \code{Carter1()} calculates the number of trees in which Fitch parsimony will
-reconstruct  \emph{m} steps, where \emph{a} leaves are labelled with one state,
-and \emph{b} leaves are labelled with a second state, using theorem 1 of
-\insertCite{Carter1990;textual}{TreeTools}
+reconstruct  \eqn{m} steps, where \eqn{a} leaves are labelled with one state,
+and \eqn{b} leaves are labelled with a second state, using theorem 1 of
+\insertCite{Carter1990;textual}{TreeTools}:
+
+\deqn{f_m(a,b) = \dfrac{(m-1)!(2n-3m)(2n-5)!!N(a,m)N(b,m)}{(2n-2m-1)!!}}
+
+where \eqn{f_m(a,b)} is the number of unrooted trees with the specified
+leaf count; \eqn{n} is the number of leaves; and
+\eqn{N(n,m) = \dfrac{(2n-m-1)!}{(n-m)!(m-1)!2^{n - m}}} (or \eqn{0} if
+\eqn{n<m}): the number of forests of \eqn{m} binary rooted trees with
+\eqn{n} leaves.
 
 \code{MaddisonSlatkin()} generalises this result to characters with multiple
 steps using the recursive approach of
