@@ -113,9 +113,10 @@ FitchInfo <- function(tree, dataset, expNorm = FALSE) {
       char <- char[!is.na(char)]
       tab <- table(char, deparse.level = 0)
       steps <- CharacterLength(tr, StringToPhyDat(paste0(char), tr))
+      maxSteps <- MaximumLength(StringToPhyDat(paste0(char), tr))
       
       nLevels <- length(tab)
-      logP <- if (nLevels > 2) {
+      if (nLevels > 2) {
         if (nLevels > 5) {
           warning(nLevels, " levels not yet supported: ",
                   paste0(tab, collapse = ", "))
@@ -126,12 +127,15 @@ FitchInfo <- function(tree, dataset, expNorm = FALSE) {
         }
         bTab <- double(2 ^ nLevels - 1)
         bTab[2 ^ (seq_along(tab) - 1)] <- tab
-        MaddisonSlatkin((nLevels - 1):steps, bTab)
+        logP <- MaddisonSlatkin((nLevels - 1):maxSteps, bTab)
+        logN <- logP + LnUnrooted(sum(tab))
       } else {
-        LogCarter1(seq_len(steps), rep(tab[[1]], steps), rep(tab[[2]], steps)) -
-          LnUnrooted(sum(tab))
+        logN <- LogCarter1(seq_len(maxSteps), rep(tab[[1]], maxSteps),
+                           rep(tab[[2]], maxSteps))
+        logP <- logN - LnUnrooted(sum(tab))
       }
       cumH <- LogCumSumExp(logP) / -log(2)
+      cumN <- LogCumSumExp(logN)
       h <- cumH[[steps - (nLevels - 2)]]
       hMax <- cumH[[1]]
       c(norm = h / hMax, h = h, expH = sum(cumH * exp(logP)), hMax = hMax)
