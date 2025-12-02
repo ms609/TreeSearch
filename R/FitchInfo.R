@@ -106,7 +106,7 @@ FitchInfo <- function(tree, dataset, expNorm = FALSE) {
     obs <- table(char, deparse.level = 0)
     pursue <- names(obs[obs > 1])
     if (length(pursue) < 2) {
-      c(norm = 1, h = 0, hMax = 0, expH = 0)
+      c(norm = 1, h = 0, expH = 0, hMax = 0)
     } else {
       # Prune tree to fit, and process
       tr <- KeepTip(tree, !is.na(char))
