@@ -148,7 +148,7 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
           median = mdn)
       })
       
-      nIt <- 7
+      nIt <- 9
       itrhiOK <- vapply(seq_len(dim(logCounts)[[2]]), function(i) {
         count <- logCounts[, i]
         
@@ -167,19 +167,34 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
           binCount <- count[[steps + 1]]
           halfBin <- .LogAddExp(binCount, 0) - log(2)
           binMid <- .LogAddExp(beforeBin, halfBin)
+          binMid
+        }
+        .LogMid <- function(steps) {
+          beforeBin <- cum[[steps]]
+          binEnd <- cum[[steps + 1]]
+          binMid <- mean(c(.LogAddExp(beforeBin, 0), binEnd))
         }
         binMids <- rep(NA_real_, length(fin))
+        lnMids <- binMids
         binMids[fin] <- sapply(steps[fin], .BinMid)
+        lnMids[fin] <- sapply(steps[fin], .LogMid)
         
         obsMid <- binMids[[obsLength[noAmb][[i]] + 1]]
         oneMid <- binMids[fin][[1]]
         mixZero <- weighted.mean(binMids[fin], weights[fin])
+        
+        obsLnx <- lnMids[[obsLength[noAmb][[i]] + 1]]
+        oneLnx <- lnMids[fin][[1]]
+        lnxZero <- weighted.mean(lnMids[fin], weights[fin])
         
         c(1 - c(
           midNorm = obsMid / maxZero,
           mixNorm = obsMid / mixZero,
           m1xNorm = if (mixZero == oneMid) 0 else
             (obsMid - oneMid) / (mixZero - oneMid),
+          lnxNorm = obsLnx / lnxZero,
+          ln1Norm = if (lnxZero == oneLnx) 0 else
+            (obsLnx - oneLnx) / (lnxZero - oneLnx),
           maxNorm = if (maxZero == one) 0 else
             (obs - one) / (maxZero - one),
           expNorm = if (expZero == one) 0 else
@@ -223,6 +238,7 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
                  rhi = rhi, rhiBar = rhiBar, rci = rci,
                  itrhiMid = itrhi["midNorm", ], itrhiMix = itrhi["mixNorm", ],
                  itrhiM1x = itrhi["m1xNorm", ], itrhiMax = itrhi["maxNorm", ],
+                 itrhiLnx = itrhi["lnxNorm", ], itrhiLn1 = itrhi["ln1Norm", ],
                  itrhiExp = itrhi["expNorm", ], expItrhi = itrhi["hExp", ],
                  maxItrhi = itrhi["hMax", ])
     
@@ -237,6 +253,7 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
       rhi = rhi, rhiBar = rhiBar, rci = rci,
       itrhiMid = itrhi["midNorm", ], itrhiMix = itrhi["mixNorm", ],
       itrhiM1x = itrhi["m1xNorm", ], itrhiMax = itrhi["maxNorm", ],
+      itrhiLnx = itrhi["lnxNorm", ], itrhiLn1 = itrhi["ln1Norm", ],
       itrhiExp = itrhi["expNorm", ], expItrhi = itrhi["hExp", ],
       maxItrhi = itrhi["hMax", ])
   }
