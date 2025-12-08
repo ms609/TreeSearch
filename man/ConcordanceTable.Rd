@@ -24,7 +24,8 @@ Additive (ordered) characters can be handled using
 \code{\link[TreeTools]{Decompose}()}.}
 
 \item{Col}{Function that takes vectors \code{amount} and \code{quality} and returns
-a vector of colours.}
+a vector of colours. \link{QCol} colours by data quality (concordance);
+\link{QACol} by quality and amount of information.}
 
 \item{largeClade}{Integer; if greater than 1, vertical lines will be drawn
 at edges whose descendants are both contain more than \code{largeClade} leaves.}
@@ -46,7 +47,8 @@ lines marking important edges.}
 }
 }
 \description{
-Plot concordance table
+\code{ConcordanceTable()} plots a concordance table
+\insertCite{SmithConc}{TreeSearch}.
 }
 \examples{
 # Load data and tree
@@ -70,4 +72,7 @@ axis(2)
 # Visualize dataset
 image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
       xlab = "Leaf", ylab = "Character")
+}
+\references{
+\insertAllCited{}
 }

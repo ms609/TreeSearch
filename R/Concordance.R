@@ -609,9 +609,13 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 
 #' Plot concordance table
 #' 
+#' `ConcordanceTable()` plots a concordance table
+#' \insertCite{SmithConc}{TreeSearch}.
+#' 
 #' @inheritParams ClusteringConcordance
 #' @param Col Function that takes vectors `amount` and `quality` and returns
-#' a vector of colours.
+#' a vector of colours. [QCol] colours by data quality (concordance);
+#' [QACol] by quality and amount of information.
 #' @param largeClade Integer; if greater than 1, vertical lines will be drawn
 #' at edges whose descendants are both contain more than `largeClade` leaves.
 #' @param xlab Character giving a label for the x axis.
@@ -623,7 +627,8 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 #' - `"relInfo"`: The information, normalized to the most information-rich pair;
 #' - `"quality"`: The normalized mutual information of the pair;
 #' - `"col"`: The colours used to plot the table.
-#'  
+#' 
+#' @references \insertAllCited{} 
 #' @examples
 #' # Load data and tree
 #' data("congreveLamsdellMatrices", package = "TreeSearch")
