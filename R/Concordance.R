@@ -828,6 +828,8 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' data(congreveLamsdellMatrices)
 #' myMatrix <- congreveLamsdellMatrices[[10]]
 #' ConcordantInformation(TreeTools::NJTree(myMatrix), myMatrix)
+#TODO: Identify and remove redundancy
+#' @seealso ?Redundant to [FitchInfo()]?
 #' @template MRS
 #' @importFrom TreeTools Log2UnrootedMult Log2Unrooted MatchStrings
 #' @export
