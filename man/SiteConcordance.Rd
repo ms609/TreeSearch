@@ -94,9 +94,18 @@ from splits that can potentially convey more information about them.
 
 \code{ClusteringConcordance(return = "tree")} returns a single value representing
 the overall concordance between the tree topology and the character data.
-This is calculated as the entropy-weighted average of normalized mutual
+This averages the fit of the best-matching split for each character.
+This is probably biased. I have not identified a circumstance in which it
+produces meaningful results.  Let me know if you find one.
+
+I had previously considered calculating
+the entropy-weighted average of normalized mutual
 information across all split-character pairs, where each pair contributes
 proportionally to its potential information content.
+The problem here is that imperfect matches between compatible splits
+come to dominate, resulting in a small score that gets smaller as trees get
+larger, even with a perfect fit.
+
 This single value gives a measure analogous to the consistency index.
 }
 \description{
