@@ -245,10 +245,20 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' from splits that can potentially convey more information about them.
 #'
 #' `ClusteringConcordance(return = "tree")` returns a single value representing 
-#' the overall concordance between the tree topology and the character data. 
-#' This is calculated as the entropy-weighted average of normalized mutual 
+#' the overall concordance between the tree topology and the character data.
+#' This averages the fit of the best-matching split for each character.
+#' This is probably biased. I have not identified a circumstance in which it
+#' produces meaningful results.  Let me know if you find one.
+#' 
+#' I had previously considered calculating
+#' the entropy-weighted average of normalized mutual 
 #' information across all split-character pairs, where each pair contributes 
 #' proportionally to its potential information content.
+#' The problem here is that imperfect matches between compatible splits
+#' come to dominate, resulting in a small score that gets smaller as trees get
+#' larger, even with a perfect fit.
+#' 
+#' 
 #' This single value gives a measure analogous to the consistency index.
 #' 
 #' @seealso
@@ -347,7 +357,11 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
                        hh["hSplit", , , drop = FALSE] -
                        hh["hJoint", , , drop = FALSE], NULL)
   miRand <- `rownames<-`(hh["miRand", , , drop = FALSE], NULL)
-  norm <- ifelse(hBest == 0, NA, .Rezero(mi / hBest, miRand / hBest))
+  norm <- if(isFALSE(normalize)) {
+      ifelse(hBest == 0, NA, mi / hBest)
+    } else {
+      ifelse(hBest == 0, NA, .Rezero(mi / hBest, miRand / hBest))
+    }
 
   returnType <- pmatch(tolower(return), c("all", "edge", "character", "tree"),
                        nomatch = 1L)
@@ -411,13 +425,18 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
              }
            }
          }, {
-           # tree: Entropy-weighted mean across all split-character pairs
+           # tree: Entropy-weighted mean across best character-split pairs
+           warning("I'm not aware of a situation in which this is a useful measure.")
+           # Random normalization doesn't work if we pick the best matching
+           # split; one will be randomly better than another, even in the
+           # absence of signal.
+           norm[is.na(norm)] <- 0
+           bestMatch <- apply(norm, 3, which.max)
+           idx <- cbind(1, bestMatch, seq_along(bestMatch))
+           return(weighted.mean(norm[idx], hBest[idx]))
+          
            if (isFALSE(normalize)) {
-             return(weighted.mean(mi / hBest, hBest))
            } else {
-             one <- hBest - miRand
-             obs <- mi - miRand
-             return(weighted.mean(obs / one, hBest))
              one <- sum(hh["hChar", 1, ])
              zero <- if (isTRUE(normalize)) {
                sum(apply(hh["miRand", , ], 2, max))
