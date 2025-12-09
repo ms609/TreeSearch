@@ -348,7 +348,9 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
     dim(h) <- c(dim(h), 1)
   }
   
+  h[abs(h) < sqrt(.Machine$double.eps)] <- 0
   hh <- h[, , at[["index"]], drop = FALSE]
+  
   hBest <- `rownames<-`(pmin(hh["hChar", , , drop = FALSE],
                              hh["hSplit", , , drop = FALSE]), NULL)
   mi <- `rownames<-`(hh["hChar", , , drop = FALSE] + 
