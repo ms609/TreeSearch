@@ -413,8 +413,11 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
          }, {
            # tree: Entropy-weighted mean across all split-character pairs
            if (isFALSE(normalize)) {
-             sum(charInfo)
+             return(weighted.mean(mi / hBest, hBest))
            } else {
+             one <- hBest - miRand
+             obs <- mi - miRand
+             return(weighted.mean(obs / one, hBest))
              one <- sum(hh["hChar", 1, ])
              zero <- if (isTRUE(normalize)) {
                sum(apply(hh["miRand", , ], 2, max))

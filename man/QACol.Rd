@@ -25,7 +25,8 @@ quality of observations, where 0 is neutral.}
 \code{quality} and \code{amount}.}
 
 \item{Col}{Function that takes vectors \code{amount} and \code{quality} and returns
-a vector of colours.}
+a vector of colours. \link{QCol} colours by data quality (concordance);
+\link{QACol} by quality and amount of information.}
 }
 \value{
 \code{QACol()} returns an RGB hex code for a colour, where lighter colours

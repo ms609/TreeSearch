@@ -53,6 +53,9 @@ data(congreveLamsdellMatrices)
 myMatrix <- congreveLamsdellMatrices[[10]]
 ConcordantInformation(TreeTools::NJTree(myMatrix), myMatrix)
 }
+\seealso{
+?Redundant to \code{\link[=FitchInfo]{FitchInfo()}}?
+}
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
