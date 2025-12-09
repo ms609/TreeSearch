@@ -259,8 +259,6 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' larger, even with a perfect fit.
 #' 
 #' 
-#' This single value gives a measure analogous to the consistency index.
-#' 
 #' @seealso
 #' - [Consistency()]
 #' @examples
@@ -270,7 +268,7 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @template MRS
 #' @importFrom abind abind
 #' @importFrom stats setNames
-#' @importFrom TreeDist ClusteringInfoDistance Entropy entropy_int
+#' @importFrom TreeDist Entropy entropy_int MutualClusteringInfo
 #' @importFrom TreeTools as.Splits MatchStrings Subsplit TipLabels
 #' @family split support functions
 #' @export
@@ -366,8 +364,10 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
   returnType <- pmatch(tolower(return), c("all", "edge", "character", "tree"),
                        nomatch = 1L)
   if (returnType %in% 3:4) { # character / tree
-    charSplits <- apply(mat, 2, as.Splits, simplify = FALSE, tipLabels = keep)
-    charInfo <- MutualClusteringInfo(tree, charSplits)[attr(dataset, "index")]
+    charSplits <- apply(mat, 2, simplify = FALSE, function(x)
+      as.Splits(x[!is.na(x)], tipLabels = keep[!is.na(x)])
+                        )
+    charInfo <- MutualClusteringInfo(tree, charSplits)[at[["index"]]]
     if (is.numeric(normalize)) {
       rTrees <- replicate(normalize, RandomTree(tree), simplify = FALSE)
       randInfo <- MutualClusteringInfo(rTrees, charSplits)[, attr(dataset, "index")]
@@ -409,7 +409,7 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
            if (isFALSE(normalize)) {
              charInfo
            } else {
-             one <- hh["hChar", 1, ]
+             one <- hh["hChar", 1, , drop = TRUE] # All rows equal
              zero <- if (isTRUE(normalize)) {
                apply(hh["miRand", , ], 2, max)
              } else {
