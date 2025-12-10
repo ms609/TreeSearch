@@ -7,38 +7,31 @@
 MLCI(
   tree,
   charmat,
-  precision = 0.001,
+  precision = 0.01,
   maxResample = 10000,
   lower = 1e-08,
   upper = 10,
-  tol = 1e-06
+  tol = 1e-06,
+  maxK = 10
 )
 }
 \arguments{
 \item{tree}{an ape::phylo tree}
 
-\item{charmat}{matrix-like with columns = characters, rows = tips (tokens)}
+\item{charmat}{matrix with rows = tips, columns = characters}
 
-\item{precision}{desired standard error for the mean of rmScore (stop criterion)}
+\item{precision}{stopping criterion on SE(MLCI)}
 
-\item{maxResample}{maximum number of resamples to attempt}
+\item{maxResample}{maximum number of resamples}
 
-\item{lower, upper}{search bounds for t in MLE}
+\item{lower, upper}{bounds for t_ML}
 
-\item{tol}{optimizer tolerance}
+\item{tol}{tolerance for t_ML optimizer}
 }
 \value{
-data.frame with columns: t_hat, score, rmMean, rmSE, bestScore, mlci
+data.frame with columns:
+t_hat, score, rmMean, rmSE, bestScore, mlci, nResample
 }
 \description{
-Compute MLCI for a matrix of characters
-}
-\examples{
-tree <- TreeTools::BalancedTree(8)
-chars <- cbind(c(0, 0, 0, 0, 1, 1, 1, 1),
-               c(0, 0, 0, 0, 1, 0, 0, 0),
-               c(0, 0, 0, 0, 0, 1, 1, 1),
-               c(0, 1, 0, 1, 0, 1, 0, 1))
- MLCI(tree, chars)
-
+Compute MLCI for all columns of a character matrix.
 }

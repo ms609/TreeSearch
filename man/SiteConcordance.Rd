@@ -4,9 +4,6 @@
 \alias{SiteConcordance}
 \alias{QuartetConcordance}
 \alias{ClusteringConcordance}
-\alias{MCIConcordance}
-\alias{InfoDropped}
-\alias{HMCIConcordance}
 \alias{PhylogeneticConcordance}
 \alias{MutualClusteringConcordance}
 \alias{SharedPhylogeneticConcordance}
@@ -15,12 +12,6 @@
 QuartetConcordance(tree, dataset = NULL, weight = TRUE)
 
 ClusteringConcordance(tree, dataset, return = "edge", normalize = TRUE)
-
-MCIConcordance(tree, dataset, normalize = TRUE)
-
-InfoDropped(tree, dataset, normalize = TRUE)
-
-HMCIConcordance(tree, dataset, normalize = TRUE)
 
 PhylogeneticConcordance(tree, dataset)
 
@@ -106,29 +97,20 @@ The problem here is that imperfect matches between compatible splits
 come to dominate, resulting in a small score that gets smaller as trees get
 larger, even with a perfect fit.
 
-This single value gives a measure analogous to the consistency index.
+\code{MutualClusteringConcordance()} returns the mutual clustering
+concordance of each character in \code{dataset} with \code{tree}.
+The attribute \code{weighted.mean} gives the mean value, weighted by the
+information content of each character.
+
+\code{SharedPhylogeneticConcordance()} returns the shared phylogenetic
+concordance of each character in \code{dataset} with \code{tree}.
+The attribute \code{weighted.mean} gives the mean value, weighted by the
+information content of each character
 }
 \description{
 The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure
 of the strength of support that the dataset presents for a given split in a
 tree.
-
-The \code{MCIConcordance()} is derived based on the mutual clustering
-information between each character in \code{dataset} and its best-matching split
-in \code{tree}.
-It is not a very useful measure, as it is highly dependent on tree shape, as
-is the consistency index.
-
-\code{InfoDropped()} considers how much of the information present
-in \code{tree} would be retained if \code{dataset} represented the true grouping;
-and vice versa.  This is not directly related to H(A | B), but seems like an
-interesting quantity to calculate nonetheless.
-
-The \code{HMCIConcordance()} is a hierarchical measure built on
-the mutual clustering information between each character in \code{dataset} and its
-best-matching split in \code{tree}.  After the best-matching split is selected,
-the best-matching split in each subtree is selected, until no more matches
-are available.
 }
 \details{
 \code{QuartetConcordance()} is the proportion of quartets (sets of four leaves)
@@ -158,6 +140,19 @@ of quartets for a faster, if potentially less accurate, computation.
 \strong{NOTE:} These functions are under development. They are incompletely
 tested, and may change without notice.
 Complete documentation and discussion will follow in due course.
+
+\code{MutualClusteringConcordance()} treats each character as a star tree.
+Each token in the character corresponds to a split that divides taxa with
+that token from taxa without it.
+The Mutual Clustering Concordance is then the Mutual Clustering Information
+\insertCite{Smith2020}{TreeSearch} of the star tree thus defined with \code{tree}.
+
+\code{SharedPhylogeneticConcordance()} treats each character as a star tree.
+Each token in the character corresponds to a split that divides taxa with
+that token from taxa without it.
+The Shared Phylogenetic Concordance for each character in \code{dataset} is then
+the Shared Phylogenetic Information \insertCite{Smith2020}{TreeSearch} of
+this star tree and \code{tree}.
 }
 \examples{
 data("congreveLamsdellMatrices", package = "TreeSearch")
@@ -191,12 +186,6 @@ pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)
 data(congreveLamsdellMatrices)
 myMatrix <- congreveLamsdellMatrices[[10]]
 ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
-dataset <- congreveLamsdellMatrices[[10]]
-tree <- TreeTools::NJTree(dataset)
-InfoDropped(tree, dataset)
-dataset <- congreveLamsdellMatrices[[10]]
-tree <- TreeTools::NJTree(dataset)
-HMCIConcordance(tree, dataset)
 }
 \references{
 \insertAllCited{}
@@ -205,30 +194,6 @@ HMCIConcordance(tree, dataset)
 \itemize{
 \item \code{\link[=Consistency]{Consistency()}}
 }
-
-Other split support functions: 
-\code{\link{HierarchicalConcordance}()},
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()}
-
-Other split support functions: 
-\code{\link{HierarchicalConcordance}()},
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()}
-
-Other split support functions: 
-\code{\link{HierarchicalConcordance}()},
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()}
 
 Other split support functions: 
 \code{\link{HierarchicalConcordance}()},

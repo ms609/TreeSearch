@@ -55,3 +55,6 @@ over each region:
 .AssignLeavesToRegions(list(1, 2), list(2, 4))
 
 }
+\seealso{
+\code{\link[TreeTools:NRooted]{TreeTools::NRooted()}} for the double factorial formula counting labelled rooted trees.
+}

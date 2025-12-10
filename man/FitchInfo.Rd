@@ -4,7 +4,7 @@
 \alias{FitchInfo}
 \title{Information required to encode a character using a Fitch-like algorithm}
 \usage{
-FitchInfo(tree, dataset)
+FitchInfo(tree, dataset, expNorm = FALSE)
 }
 \value{
 \code{FitchInfo()} returns the normalized score for the full matrix.

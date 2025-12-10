@@ -188,10 +188,6 @@ mlci_resample <- function(tree_prep, edge, Ntip, obs_states, best_states, precis
     .Call(`_TreeSearch_mlci_resample`, tree_prep, edge, Ntip, obs_states, best_states, precision, maxResample, lower, upper, tol)
 }
 
-MLCI_rcpp <- function(edge, tipStates, bestSplitInt, precision = 1e-2, maxResample = 10000L) {
-    .Call(`_TreeSearch_MLCI_rcpp`, edge, tipStates, bestSplitInt, precision, maxResample)
-}
-
 mlci_make_engine <- function(edge, Ntip, maxK = 10L) {
     .Call(`_TreeSearch_mlci_make_engine`, edge, Ntip, maxK)
 }

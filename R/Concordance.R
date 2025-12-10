@@ -749,13 +749,14 @@ PhylogeneticConcordance <- function (tree, dataset) {
 }
 
 #' @rdname SiteConcordance
+#' @details
 #' `MutualClusteringConcordance()` treats each character as a star tree.
 #' Each token in the character corresponds to a split that divides taxa with
 #' that token from taxa without it.
 #' The Mutual Clustering Concordance is then the Mutual Clustering Information
 #' \insertCite{Smith2020}{TreeSearch} of the star tree thus defined with `tree`.
 #' 
-#' @return `MutualClusteringConcordance()` reutrns the mutual clustering
+#' @return `MutualClusteringConcordance()` returns the mutual clustering
 #' concordance of each character in `dataset` with `tree`.
 #' The attribute `weighted.mean` gives the mean value, weighted by the
 #' information content of each character.
@@ -784,14 +785,14 @@ MutualClusteringConcordance <- function (tree, dataset) {
 }
 
 #' @rdname SiteConcordance
-#' 
+#' @details
 #' `SharedPhylogeneticConcordance()` treats each character as a star tree.
 #' Each token in the character corresponds to a split that divides taxa with
 #' that token from taxa without it.
 #' The Shared Phylogenetic Concordance for each character in `dataset` is then
 #' the Shared Phylogenetic Information \insertCite{Smith2020}{TreeSearch} of
 #' this star tree and `tree`.
-#' @return `SharedPhylogeneticConcordance()` reutrns the shared phylogenetic
+#' @return `SharedPhylogeneticConcordance()` returns the shared phylogenetic
 #' concordance of each character in `dataset` with `tree`.
 #' The attribute `weighted.mean` gives the mean value, weighted by the
 #' information content of each character
