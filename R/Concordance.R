@@ -30,7 +30,7 @@
 #' 
 # `ClusteringConcordance()` and `PhylogeneticConcordance()` respectively report
 # the proportion of clustering information and phylogenetic information 
-# \insertCite{@as defined in @Vinh2010, @SmithDist}{TreeDist} within a dataset
+# \insertCite{@as defined in @Vinh2010, @Smith2020}{TreeDist} within a dataset
 # that is reflected in each split.
 # These give smaller values because a split may be compatible with a character
 # without being identical to it.
@@ -749,8 +749,16 @@ PhylogeneticConcordance <- function (tree, dataset) {
 }
 
 #' @rdname SiteConcordance
-# Mutual clustering information of each split with the split implied by each
-# character
+#' `MutualClusteringConcordance()` treats each character as a star tree.
+#' Each token in the character corresponds to a split that divides taxa with
+#' that token from taxa without it.
+#' The Mutual Clustering Concordance is then the Mutual Clustering Information
+#' \insertCite{Smith2020}{TreeSearch} of the star tree thus defined with `tree`.
+#' 
+#' @return `MutualClusteringConcordance()` reutrns the mutual clustering
+#' concordance of each character in `dataset` with `tree`.
+#' The attribute `weighted.mean` gives the mean value, weighted by the
+#' information content of each character.
 #' @importFrom TreeTools MatchStrings
 #' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
 #' @export
@@ -770,11 +778,23 @@ MutualClusteringConcordance <- function (tree, dataset) {
           possible = ClusteringEntropy(trimmed))
   }, matrix(NA_real_, length(splits), 2)), dims = 2)
   
+  ret <- support[, 1] / support[, 2]
   # Return:
-  support[, 1] / support[, 2]
+  structure(ret, weighted.mean = weighted.mean(ret, support[, 2]))
 }
 
 #' @rdname SiteConcordance
+#' 
+#' `SharedPhylogeneticConcordance()` treats each character as a star tree.
+#' Each token in the character corresponds to a split that divides taxa with
+#' that token from taxa without it.
+#' The Shared Phylogenetic Concordance for each character in `dataset` is then
+#' the Shared Phylogenetic Information \insertCite{Smith2020}{TreeSearch} of
+#' this star tree and `tree`.
+#' @return `SharedPhylogeneticConcordance()` reutrns the shared phylogenetic
+#' concordance of each character in `dataset` with `tree`.
+#' The attribute `weighted.mean` gives the mean value, weighted by the
+#' information content of each character
 #' @importFrom TreeTools as.multiPhylo MatchStrings
 #' @importFrom TreeDist ClusteringInfo SharedPhylogeneticInfo
 #' @export
@@ -793,8 +813,9 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
           possible = ClusteringInfo(trimmed))
   }, matrix(NA_real_, length(splits), 2)), dims = 2)
   
+  ret <- support[, 1] / support[, 2]
   # Return:
-  support[, 1] / support[, 2]
+  structure(ret, weighted.mean = weighted.mean(ret, support[, 2]))
 }
 
 #' Evaluate the concordance of information between a tree and a dataset
