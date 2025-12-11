@@ -268,7 +268,8 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
 #' @template MRS
 #' @importFrom abind abind
 #' @importFrom stats setNames
-#' @importFrom TreeDist Entropy entropy_int MutualClusteringInfo
+#' @importFrom TreeDist ClusteringEntropy Entropy entropy_int
+#' MutualClusteringInfo
 #' @importFrom TreeTools as.Splits MatchStrings Subsplit TipLabels
 #' @family split support functions
 #' @export
@@ -380,6 +381,9 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
       randTreeMean <- mean(randTreeInfo)
       treeVar <- var(randTreeInfo)
       mcseTree <- sqrt(treeVar / normalize)
+    } else if (isFALSE(normalize)) {
+      charMax <- vapply(charSplits, ClusteringEntropy, double(1))[
+        attr(dataset, "index")]
     }
   }
   
@@ -409,7 +413,7 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
          }, {
            # char
            if (isFALSE(normalize)) {
-             charInfo
+             structure(charInfo / charMax, hMax = charMax)
            } else {
              one <- hh["hChar", 1, , drop = TRUE] # All rows equal
              zero <- if (isTRUE(normalize)) {
