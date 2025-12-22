@@ -758,6 +758,9 @@ PhylogeneticConcordance <- function (tree, dataset) {
 #' The Mutual Clustering Concordance is then the Mutual Clustering Information
 #' \insertCite{Smith2020}{TreeSearch} of the star tree thus defined with `tree`.
 #' 
+#' Note that this is identical to `ClusteringConcordance(normalize = FALSE)`
+#TODO remove redundancy between these functions.
+#' 
 #' @return `MutualClusteringConcordance()` returns the mutual clustering
 #' concordance of each character in `dataset` with `tree`.
 #' The attribute `weighted.mean` gives the mean value, weighted by the
