@@ -108,8 +108,22 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
   adjC1 <- StepsToLength(nTip, minLength, nTokens)
   adjC0 <- StepsToLength(nTip, maxLength, nTokens)
   cci <- (adjCI - adjC0) / (adjC1 - adjC0)
+  nIt <- 9
 
   if (is.null(nRelabel) || nRelabel > 0) {
+    mat <- do.call(rbind, dataset)
+    at <- attributes(dataset)
+    contrast <- at[["contrast"]]
+    
+    rewritten <- apply(mat, 2, .SortTokens,
+                       contr = apply(contrast, 1, .Bin),
+                       inapp = match("-", at[["levels"]], nomatch = NA_integer_))
+    rwMax <- max(rewritten)
+    rewritten[!rewritten %in% 2 ^ (0:log2(rwMax))] <- NA
+    
+    rwTab <- apply(log2(rewritten), 2, tabulate, log2(rwMax))
+    noAmb <- colSums(rwTab) == NTip(tree)
+    
     if (is.null(nRelabel)) {
       .CheckDataCharLen(dataset)
       .CheckTreeCharLen(tree)
@@ -118,18 +132,6 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
       nTip <- length(tipLabel)
       nEdge <- nTip + nTip - 2
       
-      mat <- do.call(rbind, dataset)
-      at <- attributes(dataset)
-      contrast <- at[["contrast"]]
-      
-      rewritten <- apply(mat, 2, .SortTokens,
-                         contr = apply(contrast, 1, .Bin),
-                         inapp = match("-", at[["levels"]], nomatch = NA_integer_))
-      rwMax <- max(rewritten)
-      rewritten[!rewritten %in% 2 ^ (0:log2(rwMax))] <- NA
-      
-      rwTab <- apply(log2(rewritten), 2, tabulate, log2(rwMax))
-      noAmb <- colSums(rwTab) == NTip(tree)
       logCounts <- FixedTreeCountBatch(tree, rwTab[, noAmb, drop = FALSE])
       counts <- exp(logCounts)
       
@@ -148,7 +150,6 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
           median = mdn)
       })
       
-      nIt <- 9
       itrhiOK <- vapply(seq_len(dim(logCounts)[[2]]), function(i) {
         count <- logCounts[, i]
         
@@ -235,12 +236,15 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
   
   if (byChar) {
     ret <- cbind(ci = ci, cci = cci, ri = ri, rc = rc,
-                 rhi = rhi, rhiBar = rhiBar, rci = rci,
-                 itrhiMid = itrhi["midNorm", ], itrhiMix = itrhi["mixNorm", ],
-                 itrhiM1x = itrhi["m1xNorm", ], itrhiMax = itrhi["maxNorm", ],
-                 itrhiLnx = itrhi["lnxNorm", ], itrhiLn1 = itrhi["ln1Norm", ],
-                 itrhiExp = itrhi["expNorm", ], expItrhi = itrhi["hExp", ],
-                 maxItrhi = itrhi["hMax", ])
+                 rhi = rhi, rhiBar = rhiBar, rci = rci)
+    if (!is.null(dimnames(itrhi))) {
+      ret <- cbind(ret,
+                   itrhiMid = itrhi["midNorm", ], itrhiMix = itrhi["mixNorm", ],
+                   itrhiM1x = itrhi["m1xNorm", ], itrhiMax = itrhi["maxNorm", ],
+                   itrhiLnx = itrhi["lnxNorm", ], itrhiLn1 = itrhi["ln1Norm", ],
+                   itrhiExp = itrhi["expNorm", ], expItrhi = itrhi["hExp", ],
+                   maxItrhi = itrhi["hMax", ])
+    }
     
     # Return:
     if (compress) {
@@ -249,13 +253,17 @@ Consistency <- function(dataset, tree, byChar = TRUE, nRelabel = NULL,
       ret[attr(dataset, "index"), ]
     }
   } else {
-    c(ci = ci, cci = cci, ri = ri, rc = rc,
-      rhi = rhi, rhiBar = rhiBar, rci = rci,
-      itrhiMid = itrhi["midNorm", ], itrhiMix = itrhi["mixNorm", ],
-      itrhiM1x = itrhi["m1xNorm", ], itrhiMax = itrhi["maxNorm", ],
-      itrhiLnx = itrhi["lnxNorm", ], itrhiLn1 = itrhi["ln1Norm", ],
-      itrhiExp = itrhi["expNorm", ], expItrhi = itrhi["hExp", ],
-      maxItrhi = itrhi["hMax", ])
+    ret <- cbind(ci = ci, cci = cci, ri = ri, rc = rc,
+                 rhi = rhi, rhiBar = rhiBar, rci = rci)
+    if (!is.null(dimnames(itrhi))) {
+      ret <- cbind(ret,
+                   itrhiMid = itrhi["midNorm", ], itrhiMix = itrhi["mixNorm", ],
+                   itrhiM1x = itrhi["m1xNorm", ], itrhiMax = itrhi["maxNorm", ],
+                   itrhiLnx = itrhi["lnxNorm", ], itrhiLn1 = itrhi["ln1Norm", ],
+                   itrhiExp = itrhi["expNorm", ], expItrhi = itrhi["hExp", ],
+                   maxItrhi = itrhi["hMax", ])
+    }
+    ret
   }
 }
 
