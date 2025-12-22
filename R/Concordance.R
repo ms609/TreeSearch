@@ -368,8 +368,9 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
                        nomatch = 1L)
   if (returnType %in% 3:4) { # character / tree
     charSplits <- apply(mat, 2, simplify = FALSE, function(x)
-      as.Splits(x[!is.na(x)], tipLabels = keep[!is.na(x)])
-                        )
+      as.Splits(x[!is.na(x)], tipLabels = keep[!is.na(x)]))
+    charMax <- vapply(charSplits, ClusteringEntropy, double(1))[
+      attr(dataset, "index")]
     charInfo <- MutualClusteringInfo(tree, charSplits)[at[["index"]]]
     if (is.numeric(normalize)) {
       rTrees <- replicate(normalize, RandomTree(tree), simplify = FALSE)
@@ -381,9 +382,6 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
       randTreeMean <- mean(randTreeInfo)
       treeVar <- var(randTreeInfo)
       mcseTree <- sqrt(treeVar / normalize)
-    } else if (isFALSE(normalize)) {
-      charMax <- vapply(charSplits, ClusteringEntropy, double(1))[
-        attr(dataset, "index")]
     }
   }
   
@@ -412,23 +410,23 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
                   })[1, ]
          }, {
            # char
-           if (isFALSE(normalize)) {
-             structure(charInfo / charMax, hMax = charMax)
+         
+           # one <- hh["hChar", 1, , drop = TRUE] # All rows equal
+           one <- charMax
+           zero <- if (isFALSE(normalize)) {
+             0
+           } else if (isTRUE(normalize)) {
+             apply(hh["miRand", , ], 2, max)
            } else {
-             one <- hh["hChar", 1, , drop = TRUE] # All rows equal
-             zero <- if (isTRUE(normalize)) {
-               apply(hh["miRand", , ], 2, max)
-             } else {
-               randMean
-             }
-             ret <- (charInfo - zero) / (one - zero)
-             if (is.numeric(normalize)) {
-               mcseInfo <- ((one - charInfo) / (one - zero) ^ 2) * mcse
-               mcseInfo[mcseInfo < sqrt(.Machine$double.eps)] <- 0
-               structure(ret, mcse = mcseInfo)
-             } else {
-               ret
-             }
+             randMean
+           }
+           ret <- (charInfo - zero) / (one - zero)
+           if (is.numeric(normalize)) {
+             mcseInfo <- ((one - charInfo) / (one - zero) ^ 2) * mcse
+             mcseInfo[mcseInfo < sqrt(.Machine$double.eps)] <- 0
+             structure(ret, hMax = charMax, mcse = mcseInfo)
+           } else {
+             structure(charInfo / charMax, hMax = charMax)
            }
          }, {
            # tree: Entropy-weighted mean across best character-split pairs
