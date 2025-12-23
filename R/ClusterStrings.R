@@ -18,8 +18,6 @@
 #'                  paste0("AnotherCluster_", letters[1:6])))
 #' @template MRS
 #' @importFrom utils adist
-#' @importFrom cluster pam silhouette
-#' @importFrom protoclust protoclust
 #' @importFrom stats as.dist cutree
 #' @family utility functions
 #' @export
@@ -27,6 +25,9 @@ ClusterStrings <- function (x, maxCluster = 12) {
   if (maxCluster < 2L) {
     stop("`maxCluster` must be at least two.")
   }
+  
+  .InstallSuggestedPackage("cluster")
+  .InstallSuggestedPackage("protoclust")
   
   if (length(unique(x)) < maxCluster) {
     nom <- unique(x)
@@ -42,19 +43,19 @@ ClusterStrings <- function (x, maxCluster = 12) {
     kInc <- 1 / (nMethodsChecked * nK)
     
     pamClusters <- lapply(possibleClusters, function (k) {
-      pam(dists, k = k)
+      cluster::pam(dists, k = k)
     })
     pamSils <- vapply(pamClusters, function (pamCluster) {
-      mean(silhouette(pamCluster)[, 3])
+      mean(cluster::silhouette(pamCluster)[, 3])
     }, double(1))
     bestPam <- which.max(pamSils)
     pamSil <- pamSils[bestPam]
     pamCluster <- pamClusters[[bestPam]][["clustering"]]
     
-    hTree <- protoclust(as.dist(dists))
+    hTree <- protoclust::protoclust(as.dist(dists))
     hClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
     hSils <- vapply(hClusters, function (hCluster) {
-      mean(silhouette(hCluster, dists)[, 3])
+      mean(cluster::silhouette(hCluster, dists)[, 3])
     }, double(1))
     bestH <- which.max(hSils)
     hSil <- hSils[bestH]
