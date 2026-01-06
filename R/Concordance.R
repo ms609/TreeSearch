@@ -92,8 +92,8 @@
 #' @name SiteConcordance
 #' @family split support functions
 #' @export
-QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE,
-                                return = "mean") {
+QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
+                               return = "mean") {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
@@ -144,16 +144,14 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE,
     
     setNames(ret, names(splits))
   } else {
-    num <- ret[seq_len(nrow(ret)) %% 2 == 1, ]
-    den <- ret[seq_len(nrow(ret)) %% 2 == 0, ]
     p <- num / den
     if (isTRUE(weight)) {
-      vapply(seq_len(dim(num)[[1]]), function(i) {
-        weighted.mean(num[i, ] / den[i, ], den[i, ])
+      vapply(seq_len(dim(num)[[2]]), function(i) {
+        weighted.mean(num[, i] / den[, i], den[, i])
       }, double(1))
     } else {
-      vapply(seq_len(dim(num)[[1]]), function(i) {
-        mean(num[i, den[i, ] > 0] / den[i, den[i, ] > 0])
+      vapply(seq_len(dim(num)[[2]]), function(i) {
+        mean(num[den[, i] > 0, i] / den[den[, i] > 0, i])
       }, double(1))
     }
   }
