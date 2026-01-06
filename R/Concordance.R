@@ -27,8 +27,9 @@
 #' other implementations (e.g. IQ-TREE) follow
 #' \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
 #'  of quartets for a faster, if potentially less accurate, computation.
-#'  
-#'  `QuartetConcordance()` does not yet support ambiguous character states.
+#TODO
+#' `QuartetConcordance()` in principle supports ambiguous character states,
+#' but this has not yet been tested.
 #' 
 # `ClusteringConcordance()` and `PhylogeneticConcordance()` respectively report
 # the proportion of clustering information and phylogenetic information 
@@ -58,7 +59,7 @@
 #' @examples 
 #' data("congreveLamsdellMatrices", package = "TreeSearch")
 #' dataset <- congreveLamsdellMatrices[[1]][, 1:20]
-#' tree <- referenceTree
+#' tree <- TreeSearch::referenceTree
 #' qc <- QuartetConcordance(tree, dataset)
 #' cc <- ClusteringConcordance(tree, dataset)
 #' pc <- PhylogeneticConcordance(tree, dataset)
@@ -113,18 +114,20 @@ QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
   
   characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
   charLevels <- attr(dataset, "allLevels")
+  charLevels[rowSums(attr(dataset, "contrast")) > 1] <- NA
+  charLevels <- setdiff(charLevels, "-")
+  
   charInt <- matrix(match(characters, charLevels),
                     nrow = nrow(characters),
                     dimnames = dimnames(characters))
-  
-  options <- c("char", "default")
-  return <- options[[pmatch(tolower(trimws(return)), options,
-                            nomatch = length(options))]]
-  
   raw_counts <- quartet_concordance(logiSplits, charInt)
   
   num <- raw_counts$concordant
   den <- raw_counts$decisive
+  
+  options <- c("char", "default")
+  return <- options[[pmatch(tolower(trimws(return)), options,
+                            nomatch = length(options))]]
   
   if (return == "default") {
     if (isTRUE(weight)) {
