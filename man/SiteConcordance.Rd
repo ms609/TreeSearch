@@ -12,7 +12,7 @@
 \alias{SharedPhylogeneticConcordance}
 \title{Calculate site concordance factor}
 \usage{
-QuartetConcordance(tree, dataset = NULL, weight = TRUE)
+QuartetConcordance(tree, dataset = NULL, weight = TRUE, return = "mean")
 
 ClusteringConcordance(tree, dataset, return = "edge", normalize = TRUE)
 
@@ -162,6 +162,8 @@ If \code{weight = FALSE}, the split concordance will be mean(75\%, 25\%) = 50\%.
 other implementations (e.g. IQ-TREE) follow
 \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
 of quartets for a faster, if potentially less accurate, computation.
+
+\code{QuartetConcordance()} does not yet support ambiguous character states.
 
 \strong{NOTE:} These functions are under development. They are incompletely
 tested, and may change without notice.
