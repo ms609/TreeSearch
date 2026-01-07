@@ -4,9 +4,6 @@
 \alias{SiteConcordance}
 \alias{QuartetConcordance}
 \alias{ClusteringConcordance}
-\alias{MCIConcordance}
-\alias{InfoDropped}
-\alias{HMCIConcordance}
 \alias{PhylogeneticConcordance}
 \alias{MutualClusteringConcordance}
 \alias{SharedPhylogeneticConcordance}
@@ -15,12 +12,6 @@
 QuartetConcordance(tree, dataset = NULL, weight = TRUE, return = "mean")
 
 ClusteringConcordance(tree, dataset, return = "edge", normalize = TRUE)
-
-MCIConcordance(tree, dataset, normalize = TRUE)
-
-InfoDropped(tree, dataset, normalize = TRUE)
-
-HMCIConcordance(tree, dataset, normalize = TRUE)
 
 PhylogeneticConcordance(tree, dataset)
 
@@ -120,23 +111,6 @@ information content of each character
 The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure
 of the strength of support that the dataset presents for a given split in a
 tree.
-
-The \code{MCIConcordance()} is derived based on the mutual clustering
-information between each character in \code{dataset} and its best-matching split
-in \code{tree}.
-It is not a very useful measure, as it is highly dependent on tree shape, as
-is the consistency index.
-
-\code{InfoDropped()} considers how much of the information present
-in \code{tree} would be retained if \code{dataset} represented the true grouping;
-and vice versa.  This is not directly related to H(A | B), but seems like an
-interesting quantity to calculate nonetheless.
-
-The \code{HMCIConcordance()} is a hierarchical measure built on
-the mutual clustering information between each character in \code{dataset} and its
-best-matching split in \code{tree}.  After the best-matching split is selected,
-the best-matching split in each subtree is selected, until no more matches
-are available.
 }
 \details{
 \code{QuartetConcordance()} is the proportion of quartets (sets of four leaves)
@@ -162,8 +136,8 @@ If \code{weight = FALSE}, the split concordance will be mean(75\%, 25\%) = 50\%.
 other implementations (e.g. IQ-TREE) follow
 \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
 of quartets for a faster, if potentially less accurate, computation.
-
-\code{QuartetConcordance()} does not yet support ambiguous character states.
+\code{QuartetConcordance()} in principle supports ambiguous character states,
+but this has not yet been tested.
 
 \strong{NOTE:} These functions are under development. They are incompletely
 tested, and may change without notice.
@@ -187,7 +161,7 @@ this star tree and \code{tree}.
 \examples{
 data("congreveLamsdellMatrices", package = "TreeSearch")
 dataset <- congreveLamsdellMatrices[[1]][, 1:20]
-tree <- referenceTree
+tree <- TreeSearch::referenceTree
 qc <- QuartetConcordance(tree, dataset)
 cc <- ClusteringConcordance(tree, dataset)
 pc <- PhylogeneticConcordance(tree, dataset)
@@ -216,12 +190,6 @@ pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)
 data(congreveLamsdellMatrices)
 myMatrix <- congreveLamsdellMatrices[[10]]
 ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
-dataset <- congreveLamsdellMatrices[[10]]
-tree <- TreeTools::NJTree(dataset)
-InfoDropped(tree, dataset)
-dataset <- congreveLamsdellMatrices[[10]]
-tree <- TreeTools::NJTree(dataset)
-HMCIConcordance(tree, dataset)
 }
 \references{
 \insertAllCited{}
@@ -230,30 +198,6 @@ HMCIConcordance(tree, dataset)
 \itemize{
 \item \code{\link[=Consistency]{Consistency()}}
 }
-
-Other split support functions: 
-\code{\link{HierarchicalConcordance}()},
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()}
-
-Other split support functions: 
-\code{\link{HierarchicalConcordance}()},
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()}
-
-Other split support functions: 
-\code{\link{HierarchicalConcordance}()},
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()}
 
 Other split support functions: 
 \code{\link{HierarchicalConcordance}()},

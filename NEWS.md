@@ -9,6 +9,7 @@
 - Option to use mean instead of median when computing RHI in `Consistency()`.
 - `BinaryLabellings()` counts the number of ways to label a tree, given a
   parsimony score.
+- `QuartetConcordance()` gains `return` parameter and fast C++ implementation.
 
 
 # TreeSearch 1.7.0.9000 (development)

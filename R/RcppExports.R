@@ -220,6 +220,10 @@ morphy_profile <- function(edge, MorphyHandls, weight, sequence, profiles, targe
     .Call(`_TreeSearch_morphy_profile`, edge, MorphyHandls, weight, sequence, profiles, target)
 }
 
+quartet_concordance <- function(splits, characters) {
+    .Call(`_TreeSearch_quartet_concordance`, splits, characters)
+}
+
 nni <- function(edge, randomEdge, whichSwitch) {
     .Call(`_TreeSearch_nni`, edge, randomEdge, whichSwitch)
 }
