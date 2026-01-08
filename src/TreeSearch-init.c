@@ -38,6 +38,8 @@ extern SEXP _TreeSearch_MaddisonSlatkin_clear_cache();
 extern SEXP _TreeSearch_FixedTreeCount(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_FixedTreeCountBatch(SEXP, SEXP, SEXP);
 
+extern SEXP _TreeSearch_quartet_concordance(SEXP, SEXP);
+
 extern SEXP _TreeSearch_mlci_prepare_tree(SEXP);
 extern SEXP _TreeSearch_mlci_make_engine(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_mlci_resample_engine(SEXP, SEXP, SEXP, SEXP,
@@ -87,6 +89,8 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_maximum_length",    (DL_FUNC) &_TreeSearch_maximum_length, 1},
   {"_TreeSearch_expected_mi",       (DL_FUNC) &_TreeSearch_expected_mi, 2},
   {"_TreeSearch_mi_key",            (DL_FUNC) &_TreeSearch_mi_key, 2},
+
+  {"_TreeSearch_quartet_concordance",(DL_FUNC) &_TreeSearch_quartet_concordance, 2},
   
   {"_TreeSearch_ClearCarterCache",  (DL_FUNC) &_TreeSearch_ClearCarterCache, 0},
   {"_TreeSearch_CarterCacheSize",   (DL_FUNC) &_TreeSearch_CarterCacheSize, 0},
