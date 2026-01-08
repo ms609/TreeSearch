@@ -106,50 +106,63 @@ FitchInfo <- function(tree, dataset, expNorm = FALSE) {
     obs <- table(char, deparse.level = 0)
     pursue <- names(obs[obs > 1])
     if (length(pursue) < 2) {
-      c(norm = 1, h = 0, expH = 0, hMax = 0, midH = 0, midHMin = 0,
-        midHMax = 0, midHExp = 0)
-    } else {
-      # Prune tree to fit, and process
-      tr <- KeepTip(tree, !is.na(char))
-      char <- char[!is.na(char)]
-      tab <- table(char, deparse.level = 0)
-      steps <- CharacterLength(tr, StringToPhyDat(paste0(char), tr))
-      maxSteps <- MaximumLength(StringToPhyDat(paste0(char), tr))
-      
-      nLevels <- length(tab)
-      if (nLevels > 2) {
-        if (nLevels > 5) {
-          warning(nLevels, " levels not yet supported: ",
-                  paste0(tab, collapse = ", "))
-          return(c(norm = NA_real_, h = NA, expH = NA, hMax = NA,
-                   midH = NA, midHMin = NA, midHMax = NA, midHExp = NA))
-        }
-        bTab <- double(2 ^ nLevels - 1)
-        bTab[2 ^ (seq_along(tab) - 1)] <- tab
-        logP <- MaddisonSlatkin((nLevels - 1):maxSteps, bTab)
-        logN <- logP + LnUnrooted(sum(tab))
-      } else {
-        toEval <- maxSteps - 1
-        logN <- LogCarter1(seq_len(toEval), rep(tab[[1]], toEval),
-                           rep(tab[[2]], toEval))
-        logN <- c(logN, .LogSubtractExp(LnUnrooted(sum(tab)), LogSumExp(logN)))
-        logP <- logN - LnUnrooted(sum(tab))
-      }
-      cumH <- LogCumSumExp(logP) / -log(2)
-      cumN <- LogCumSumExp(logN)
-      midN <- vapply(seq_along(cumN), function(steps) {
-        beforeBin <- c(-Inf, cumN)[[steps]]
-        binEnd <- cumN[[steps]]
-        binMid <- mean(c(.LogAddExp(beforeBin, 0), binEnd))
-      }, double(1))
-      midH <- (midN - LnUnrooted(sum(tab))) / -log(2)
-      idx <- steps - (nLevels - 2)
-      h <- cumH[[idx]]
-      hMax <- cumH[[1]]
-      c(norm = h / hMax, h = h, expH = sum(cumH * exp(logP)), hMax = hMax,
-        midH = midH[[idx]], midHMin = midH[[length(midH)]],
-        midHMax = midH[[1]], midHExp = weighted.mean(midH, exp(logP)))
+      return(c(norm = 1, h = 0, expH = 0, hMax = 0, midH = 0, midHMin = 0,
+               midHMax = 0, midHExp = 0,
+               midN = NA, midNMin = NA, midNMax = NA, midNExp = NA))
     }
+    # Prune tree to fit, and process
+    tr <- KeepTip(tree, !is.na(char))
+    char <- char[!is.na(char)]
+    tab <- table(char, deparse.level = 0)
+    steps <- CharacterLength(tr, StringToPhyDat(paste0(char), tr))
+    maxSteps <- MaximumLength(StringToPhyDat(paste0(char), tr))
+    
+    nLevels <- length(tab)
+    if (nLevels > 2) {
+      if (nLevels > 5) {
+        warning(nLevels, " levels not yet supported: ",
+                paste0(tab, collapse = ", "))
+        return(c(norm = NA_real_, h = NA, expH = NA, hMax = NA,
+                 midH = NA, midHMin = NA, midHMax = NA, midHExp = NA,
+                 midN = NA, midNMin = NA, midNMax = NA, midNExp = NA))
+      }
+      bTab <- double(2 ^ nLevels - 1)
+      bTab[2 ^ (seq_along(tab) - 1)] <- tab
+      logP <- MaddisonSlatkin((nLevels - 1):maxSteps, bTab)
+      logN <- logP + LnUnrooted(sum(tab))
+    } else {
+      toEval <- maxSteps - 1
+      logN <- LogCarter1(seq_len(toEval), rep(tab[[1]], toEval),
+                         rep(tab[[2]], toEval))
+      logN <- c(logN, .LogSubtractExp(LnUnrooted(sum(tab)), LogSumExp(logN)))
+      logP <- logN - LnUnrooted(sum(tab))
+    }
+    cumH <- LogCumSumExp(logP) / -log(2)
+    cumN <- LogCumSumExp(logN)
+    midN <- vapply(seq_along(cumN), function(steps) {
+      # Log midpoint
+      # beforeBin <- c(-Inf, cumN)[[steps]]
+      # binEnd <- cumN[[steps]]
+      # binMid <- mean(c(.LogAddExp(beforeBin, 0), binEnd))
+      
+      beforeBin <- c(-Inf, cumN)[[steps]]
+      binCount <- logN[[steps]]
+      halfBin <- .LogAddExp(binCount, 0) - log(2)
+      binMid <- .LogAddExp(beforeBin, halfBin)
+      binMid
+      
+    }, double(1))
+    midH <- (midN - LnUnrooted(sum(tab))) / -log(2)
+    midN2 <- midN / log(2)
+    idx <- steps - (nLevels - 2)
+    h <- cumH[[idx]]
+    hMax <- cumH[[1]]
+    c(norm = h / hMax, h = h, expH = sum(cumH * exp(logP)), hMax = hMax,
+      midH = midH[[idx]], midHMin = midH[[length(midH)]],
+      midHMax = midH[[1]], midHExp = weighted.mean(midH, exp(logP)),
+      midN = midN2[[idx]], midNMin = midN2[[1]], midNMax = midN2[[length(midN2)]],
+      midNExp = weighted.mean(midN2, exp(logP))
+    )
   })[, attr(dataset, "index"), drop = FALSE]
   
   hMax <- charH["hMax", , drop = FALSE]
@@ -157,7 +170,10 @@ FitchInfo <- function(tree, dataset, expNorm = FALSE) {
     (charH["hMax", , drop = FALSE] - charH["expH", , drop = FALSE])
   midH <- (charH["midH", , drop = FALSE] - charH["midHExp", , drop = FALSE]) /
     (charH["midHMax", , drop = FALSE] - charH["midHExp", , drop = FALSE])
-  
+  midN <- (charH["midN", , drop = FALSE] - charH["midNExp", , drop = FALSE]) /
+    (charH["midNMin", , drop = FALSE] - charH["midNExp", , drop = FALSE])
+  plot(midH~midN)
+  charH[c("midN", "midNMax", "midNMin", "midNExp"), , drop = FALSE]
   # Return:
   structure(
     if(sum(hMax, na.rm = TRUE) == 0) 1 else

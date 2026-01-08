@@ -56,6 +56,7 @@ FitchBuilder <- function(steps, tokenCount) {
   # What we'll do therefore is arbitrarily define the position of the root as
   # alongside our first clade of token 1s.
   
+  tokenCount <- tokenCount[tokenCount > 0]
   nTaxa <- sum(tokenCount)
   nLevels <- length(tokenCount)
   nStates <- 2 ^ nLevels - 1
@@ -68,6 +69,10 @@ FitchBuilder <- function(steps, tokenCount) {
   
   .BR <- function(x) .BinaryRepresentation(x, digits = nLevels)
   
+  
+  # .Recurse returns either an integer (leaf state),
+  #  or a list with L and R (internal node),
+  #  or NA_integer_ for an impossible outcome.
   .Recurse <- function(rootState, tokensAvailable, stepsAvailable) {
     
     if (stepsAvailable < 1) {
@@ -103,6 +108,7 @@ FitchBuilder <- function(steps, tokenCount) {
       lStepsNeeded <- sum(lTokens) - 1L
       rStepsNeeded <- sum(rTokens) - 1L
       if (addsStep) {
+        # A step occurs at this node, so is no longer available for either subtree
         stepsAvailable <- stepsAvailable - 1L
       }
       if (lStepsNeeded + rStepsNeeded > stepsAvailable) return(c('steps0' = NA_integer_))
@@ -123,7 +129,7 @@ FitchBuilder <- function(steps, tokenCount) {
     list("L" = 1,
          "R" = .Recurse(
            rState,
-           c(tokensAvailable[1] - 1, tokensAvailable[-1]),
+           c(tokenCount[1] - 1, tokenCount[-1]),
            steps - 1)
     )
   }) |>
@@ -184,7 +190,7 @@ BuildCountuh <- function(...) {
 #' # Two regions: 1 edge with 2 leaves, 2 edges with 4 leaves
 #' .AssignLeavesToRegions(list(1, 2), list(2, 4))
 #'
-#' @seealso [NRooted()] for the double factorial formula counting labelled rooted trees.
+#' @importFrom TreeTools NRooted
 #' @export
 AssignLeavesToRegions <- function(regions, leaves) {
   vapply(seq_along(regions), function(i) {

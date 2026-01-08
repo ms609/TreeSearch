@@ -27,6 +27,17 @@ LogSumExp <- function(...) {
   m + log1p(exp(-abs(a - b)))
 }
 
+.LogSubtractExp <- function(a, b) {
+  if (a == b) {
+    return(-Inf)
+  }
+  if (a < b) {
+    stop("a must be greater than b for log(exp(a) - exp(b))")
+  }
+  # Since a > b, max is a
+  a + log1p(-exp(b - a))
+}
+
 #' @rdname LogSumExp
 #' @returns `LogCumSumExp()` returns the cumulative sum of `x`, log-transformed.
 LogCumSumExp <- function(x) {
