@@ -44,6 +44,7 @@ extern SEXP _TreeSearch_mlci_resample_engine(SEXP, SEXP, SEXP, SEXP,
                                              SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_mlci_resample(SEXP, SEXP, SEXP, SEXP, SEXP,
                                       SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_MLCI_rcpp(SEXP, SEXP, SEXP, SEXP, SEXP);
 
 extern SEXP _TreeSearch_active_parsimony_dist(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_parsimony_moments(SEXP, SEXP);
@@ -102,6 +103,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_mlci_resample_engine",(DL_FUNC) &_TreeSearch_mlci_resample_engine, 8},
   {"_TreeSearch_mlci_prepare_tree",   (DL_FUNC) &_TreeSearch_mlci_prepare_tree, 1},
   {"_TreeSearch_mlci_make_engine",   (DL_FUNC) &_TreeSearch_mlci_make_engine, 3},
+  {"_TreeSearch_MLCI_rcpp", (DL_FUNC) &_TreeSearch_MLCI_rcpp, 5},
 
   {"_TreeSearch_active_parsimony_dist",   (DL_FUNC) &_TreeSearch_active_parsimony_dist, 3},
   {"_TreeSearch_parsimony_moments",   (DL_FUNC) &_TreeSearch_parsimony_moments, 2},

@@ -12,45 +12,37 @@
 #' @return data.frame with columns:
 #'   t_hat, score, rmMean, rmSE, bestScore, mlci, nResample
 #' @export
-MLCI <- function(tree, charmat, precision = 1e-2, maxResample = 10000, lower = 1e-8, upper = 10, tol = 1e-6, maxK = 10) {
+MLCI <- function(tree, charmat, precision = 1e-2, maxResample = 10000) {
   requireNamespace("TreeTools")
+  
   if (!inherits(tree, "phylo")) stop("tree must be 'phylo'")
   edge <- tree$edge
   Ntip <- length(tree$tip.label)
-  nChars <- ncol(charmat)
   
-  # prepare engine once
-  eng <- mlci_make_engine(edge, Ntip, maxK)
-  
-  # compute best split once
+  # Compute best split once
   splits <- TreeTools::as.Splits(tree)
-  im <- TreeTools::SplitImbalance(splits)
-  best_split <- splits[[which.min(im)]]
-  best_states <- as.integer(as.logical(best_split)) # 0/1
+  splitImb <- TreeTools::SplitImbalance(splits)
+  bestSplitIdx <- which.min(splitImb)
+  bestSplit <- as.integer(as.logical(splits[[bestSplitIdx]]))
   
-  # result container
-  res <- data.frame(t_hat = numeric(nChars), score = numeric(nChars), rmMean = numeric(nChars),
-                    rmSE = numeric(nChars), bestScore = numeric(nChars), mlci = numeric(nChars),
-                    mlciSE = numeric(nChars), nResample = integer(nChars))
-  
-  for (j in seq_len(nChars)) {
-    col <- as.character(charmat[, j])
+  # Helper: map tip states of a character column to 0..k-1 integer
+  prep_tip_states_single <- function(col) {
+    col <- as.character(col)
     lvl <- sort(unique(col))
     k <- length(lvl)
-    map <- setNames(seq_len(k) - 1L, lvl)
-    obs_states <- as.integer(map[col])
-    
-    out <- mlci_resample_engine(eng, obs_states, best_states, precision, maxResample, lower, upper, tol)
-    
-    res$t_hat[j] <- out$t_hat_obs
-    res$score[j] <- out$score
-    res$rmMean[j] <- out$rmMean
-    res$rmSE[j] <- out$rmSE
-    res$bestScore[j] <- out$bestScore
-    res$mlci[j] <- out$mlci
-    res$mlciSE[j] <- out$mlciSE
-    res$nResample[j] <- out$nResample
+    map <- setNames(seq_len(k)-1L, lvl)
+    tip_states <- matrix(as.integer(map[col]), nrow = Ntip, ncol = 1)
+    list(tip_states = tip_states, k = k)
   }
+  
+  # Call C++ engine
+  res <- MLCI_rcpp(
+    edge = edge,
+    tipStates = charmat,
+    bestSplit = bestSplit,
+    precision = precision,
+    maxResample = maxResample
+  )
   
   res
 }

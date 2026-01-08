@@ -4,16 +4,7 @@
 \alias{MLCI}
 \title{Maximum likelihood estimate of consistency}
 \usage{
-MLCI(
-  tree,
-  charmat,
-  precision = 0.01,
-  maxResample = 10000,
-  lower = 1e-08,
-  upper = 10,
-  tol = 1e-06,
-  maxK = 10
-)
+MLCI(tree, charmat, precision = 0.01, maxResample = 10000)
 }
 \arguments{
 \item{tree}{an ape::phylo tree}

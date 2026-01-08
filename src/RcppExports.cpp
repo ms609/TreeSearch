@@ -240,6 +240,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// MLCI_rcpp
+DataFrame MLCI_rcpp(IntegerMatrix edge, IntegerMatrix tipStates, IntegerVector bestSplitInt, double precision, int maxResample);
+RcppExport SEXP _TreeSearch_MLCI_rcpp(SEXP edgeSEXP, SEXP tipStatesSEXP, SEXP bestSplitIntSEXP, SEXP precisionSEXP, SEXP maxResampleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tipStates(tipStatesSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type bestSplitInt(bestSplitIntSEXP);
+    Rcpp::traits::input_parameter< double >::type precision(precisionSEXP);
+    Rcpp::traits::input_parameter< int >::type maxResample(maxResampleSEXP);
+    rcpp_result_gen = Rcpp::wrap(MLCI_rcpp(edge, tipStates, bestSplitInt, precision, maxResample));
+    return rcpp_result_gen;
+END_RCPP
+}
 // mlci_make_engine
 SEXP mlci_make_engine(const IntegerMatrix& edge, int Ntip, int maxK);
 RcppExport SEXP _TreeSearch_mlci_make_engine(SEXP edgeSEXP, SEXP NtipSEXP, SEXP maxKSEXP) {

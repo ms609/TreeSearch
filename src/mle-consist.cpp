@@ -1,5 +1,8 @@
 // [[Rcpp::depends(Rcpp)]]
 #include <Rcpp.h>
+#include <algorithm>
+#include <random>
+#include <cmath>
 #include <cstring> // for memset
 using namespace Rcpp;
 
@@ -328,5 +331,97 @@ List mlci_resample(
     Named("mlci") = mlci,
     Named("mlciSE") = mlciSE,
     Named("nResample") = (int)n
+  );
+}
+
+
+// [[Rcpp::export]]
+DataFrame MLCI_rcpp(IntegerMatrix edge,
+                    IntegerMatrix tipStates,
+                    IntegerVector bestSplitInt,
+                    double precision = 1e-2,
+                    int maxResample = 10000) {
+  
+  int nEdge = edge.nrow();
+  int nTip  = tipStates.nrow();
+  int nChar = tipStates.ncol();
+  
+  // Prepare tree once
+  List treePrep = mlci_prepare_tree(edge);
+  
+  // Result vectors
+  NumericVector t_hat(nChar), score(nChar), rmMean(nChar),
+  rmSE(nChar), bestScore(nChar), mlci(nChar);
+  IntegerVector nResampleVec(nChar);
+  
+  for(int j=0; j<nChar; j++) {
+    IntegerVector col = tipStates(_, j);
+    int k = *std::max_element(col.begin(), col.end()) + 1;
+    
+    // Observed character MLE
+    IntegerMatrix tip_col(nTip, 1);
+    for (int i = 0; i < nTip; ++i) tip_col(i, 0) = col[i];
+    double tObs = mle_t_prepared_internal(tip_col, NumericVector::create(1.0), k, treePrep, nTip, 1e-8, 10.0, 1e-6);
+    double scoreObs = tObs * nEdge;
+    
+    // Best split MLE
+    int kBest = std::max(2, *std::max_element(bestSplitInt.begin(), bestSplitInt.end()) + 1);
+    IntegerMatrix tip_best(nTip, 1);
+    for (int i = 0; i < nTip; ++i) tip_best(i, 0) = bestSplitInt[i];
+    double tBest = mle_t_prepared_internal(tip_best, NumericVector::create(1.0), kBest, treePrep, nTip, 1e-8, 10.0, 1e-6);
+    double scoreBest = tBest * nEdge;
+    
+    // Resampling
+    std::vector<int> tokenVec(col.begin(), col.end());
+    std::vector<double> rmScores;
+    int nResample = 0;
+    std::random_device rd;
+    std::mt19937 g(rd());
+    IntegerMatrix tip_r(nTip, 1);
+    
+    while(true) {
+      std::shuffle(tokenVec.begin(), tokenVec.end(), g);
+      for(int i=0;i<nTip;++i) tip_r(i,0) = tokenVec[i];
+      
+      int kPerm = *std::max_element(tokenVec.begin(), tokenVec.end()) + 1;
+      double tPerm = mle_t_prepared_internal(tip_r, NumericVector::create(1.0), kPerm, treePrep, nTip, 1e-8, 10.0, 1e-6);
+      double rmScore = tPerm * nEdge;
+      
+      rmScores.push_back(rmScore);
+      nResample++;
+      
+      if(nResample >= 2) {
+        double mean_rm = std::accumulate(rmScores.begin(), rmScores.end(), 0.0) / nResample;
+        double var = 0.0;
+        for(double x : rmScores) var += (x - mean_rm) * (x - mean_rm);
+        var /= (nResample - 1);
+        double se_rm = std::sqrt(var) / std::sqrt(nResample);
+        if(se_rm <= precision || nResample >= maxResample) break;
+      }
+    }
+    
+    // Compute RM mean/SE
+    double rm_mean = std::accumulate(rmScores.begin(), rmScores.end(), 0.0) / rmScores.size();
+    double rm_se = (rmScores.size() >= 2) ? std::sqrt(std::accumulate(rmScores.begin(), rmScores.end(), 0.0,
+                                  [rm_mean](double acc, double x){ return acc + (x - rm_mean)*(x - rm_mean); }) / rmScores.size()) : NA_REAL;
+    
+    // Fill result vectors
+    t_hat[j] = tObs;
+    score[j] = scoreObs;
+    rmMean[j] = rm_mean;
+    rmSE[j] = rm_se;
+    bestScore[j] = scoreBest;
+    mlci[j] = (scoreBest - rm_mean == 0.0) ? NA_REAL : (scoreObs - rm_mean) / (scoreBest - rm_mean);
+    nResampleVec[j] = nResample;
+  }
+  
+  return DataFrame::create(
+    Named("t_hat") = t_hat,
+    Named("score") = score,
+    Named("rmMean") = rmMean,
+    Named("rmSE") = rmSE,
+    Named("bestScore") = bestScore,
+    Named("mlci") = mlci,
+    Named("nResample") = nResampleVec
   );
 }
