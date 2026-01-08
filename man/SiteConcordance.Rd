@@ -71,8 +71,9 @@ Negative normalized values indicate observed mutual information below random
 expectation. \code{NA} is returned when \code{hBest = 0} (no information potential).
 
 \code{ClusteringConcordance(return = "edge")} returns a vector where each element
-corresponds to a tree split (edge) and gives the normalized mutual information
-between that split and the character data, averaged across all characters.
+corresponds to a split (an edge of the tree) and gives the normalized mutual
+information between that split and the character data, averaged across all
+characters.
 When \code{normalize = TRUE} (default), values are scaled relative to random
 expectation; when \code{FALSE}, raw mutual information normalized by \code{hBest} is
 returned.
@@ -143,13 +144,11 @@ but this has not yet been tested.
 tested, and may change without notice.
 Complete documentation and discussion will follow in due course.
 
-\code{MutualClusteringConcordance()} treats each character as a star tree.
-Each token in the character corresponds to a split that divides taxa with
-that token from taxa without it.
+\code{MutualClusteringConcordance()} treats each character as a tree that contains
+a single node for each distinct token; all taxa bearing that token are
+direct descendants of that node.
 The Mutual Clustering Concordance is then the Mutual Clustering Information
-\insertCite{Smith2020}{TreeSearch} of the star tree thus defined with \code{tree}.
-
-Note that this is identical to \code{ClusteringConcordance(normalize = FALSE)}
+\insertCite{Smith2020}{TreeSearch} of the tree thus defined with \code{tree}.
 
 \code{SharedPhylogeneticConcordance()} treats each character as a star tree.
 Each token in the character corresponds to a split that divides taxa with
@@ -198,14 +197,6 @@ ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
 \itemize{
 \item \code{\link[=Consistency]{Consistency()}}
 }
-
-Other split support functions: 
-\code{\link{HierarchicalConcordance}()},
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()}
 
 Other split support functions: 
 \code{\link{HierarchicalConcordance}()},

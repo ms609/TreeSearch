@@ -230,8 +230,9 @@ QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
 #' expectation. `NA` is returned when `hBest = 0` (no information potential).
 #' 
 #' `ClusteringConcordance(return = "edge")` returns a vector where each element 
-#' corresponds to a tree split (edge) and gives the normalized mutual information 
-#' between that split and the character data, averaged across all characters. 
+#' corresponds to a split (an edge of the tree) and gives the normalized mutual
+#' information between that split and the character data, averaged across all
+#' characters.
 #' When `normalize = TRUE` (default), values are scaled relative to random 
 #' expectation; when `FALSE`, raw mutual information normalized by `hBest` is 
 #' returned.
@@ -269,7 +270,6 @@ QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
 #' @importFrom TreeDist ClusteringEntropy Entropy entropy_int
 #' MutualClusteringInfo
 #' @importFrom TreeTools as.Splits MatchStrings Subsplit TipLabels
-#' @family split support functions
 #' @export
 ClusteringConcordance <- function (tree, dataset, return = "edge",
                                    normalize = TRUE) {
