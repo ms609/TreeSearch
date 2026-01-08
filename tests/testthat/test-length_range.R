@@ -195,3 +195,12 @@ test_that("MaximumLength() works with Vinther2008 dataset", {
   expect_true(is.numeric(result))
   expect_true(all(result >= 0))
 })
+
+test_that("MaximumLength() can be found with 4 states", {
+  skip_on_cran()
+  set.seed(1)
+  char <- StringToPhyDat("0001112233")
+  obs <- replicate(100, CharacterLength(RandomTree(10, root = TRUE), char))
+  
+  expect_equal(MaximumLength(char), max(obs)) # Crashes...
+})
