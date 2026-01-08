@@ -269,6 +269,20 @@ test_that("ConcordantInformation() works", {
   
 })
 
+test_that("Second-best alignment calculated", {
+  expect_equal(.SecondBest(c(10, 10), c(10, 10)), c(10, 10))
+  
+  expect_equal(sort(.SecondBest(c(2, 8), c(8, 2))), c(2, 2, 6))
+  expect_equal(sort(.SecondBest(c(2, 8), c(2, 8))), c(2, 2, 6))
+  expect_equal(sort(.SecondBest(c(8, 2), c(2, 8))), c(2, 2, 6))
+  
+  expect_equal(.SecondBest(c(7, 93), c(6, 94)), c(1, 6, 93))
+  expect_equal(sort(.SecondBest(c(7, 93), c(6, 94))), c(6, 7, 87))
+  
+  expect_equal(sort(.SecondBest(c(20, 10), c(10, 20))), c(10, 10, 10))
+  expect_equal(sort(.SecondBest(c(20, 10), c(8, 12, 10))), c(2, 8, 10, 10))
+})
+
 test_that("QACol() handles input", {
   expect_equal(is.na(QACol(c(0, 1, NA, 0, NA), c(0, 1, NA, NA, 0))),
                c(FALSE, FALSE, TRUE,
