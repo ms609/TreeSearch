@@ -660,7 +660,18 @@ PhylogeneticConcordance <- function (tree, dataset) {
 }
 
 #' @rdname SiteConcordance
-# Mutual clustering information of each split with the split implied by each character
+#' @details
+#' `MutualClusteringConcordance()` treats each character as a tree.
+#' Each token in the character corresponds to a node in the tree whose pendant
+#' edges are the taxa with that token.
+#' The Mutual Clustering Concordance is then the Mutual Clustering Information
+#' \insertCite{Smith2020}{TreeSearch} of the tree thus defined with `tree`.
+#' 
+#' @return `MutualClusteringConcordance()` returns the mutual clustering
+#' concordance of each character in `dataset` with `tree`.
+#' The attribute `weighted.mean` gives the mean value, weighted by the
+#' information content of each character.
+#' @importFrom TreeTools MatchStrings
 #' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
 #' @export
 MutualClusteringConcordance <- function (tree, dataset) {
@@ -668,22 +679,35 @@ MutualClusteringConcordance <- function (tree, dataset) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[TipLabels(tree)]
+  
+  dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
   
   support <- rowSums(vapply(characters, function (char) {
-    trimmed <- lapply(splits, keep.tip, TipLabels(char))
+    trimmed <- KeepTip(splits, TipLabels(char))
     cbind(mi = MutualClusteringInfo(char, trimmed),
           possible = ClusteringEntropy(trimmed))
   }, matrix(NA_real_, length(splits), 2)), dims = 2)
   
+  ret <- support[, 1] / support[, 2]
   # Return:
-  support[, 1] / support[, 2]
+  structure(ret, weighted.mean = weighted.mean(ret, support[, 2]))
 }
 
 #' @rdname SiteConcordance
-#' @importFrom TreeTools as.multiPhylo
+#' @details
+#' `SharedPhylogeneticConcordance()` treats each character as a simple tree.
+#' Each token in the character corresponds to a node whose pendant edges are the
+#' taxa with that token.
+#' The Shared Phylogenetic Concordance for each character in `dataset` is then
+#' the Shared Phylogenetic Information \insertCite{Smith2020}{TreeSearch} of
+#' this tree and `tree`.
+#' @return `SharedPhylogeneticConcordance()` returns the shared phylogenetic
+#' concordance of each character in `dataset` with `tree`.
+#' The attribute `weighted.mean` gives the mean value, weighted by the
+#' information content of each character.
+#' @importFrom TreeTools as.multiPhylo MatchStrings
 #' @importFrom TreeDist ClusteringInfo SharedPhylogeneticInfo
 #' @export
 SharedPhylogeneticConcordance <- function (tree, dataset) {
@@ -691,7 +715,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[TipLabels(tree)]
+  dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
   
@@ -701,8 +725,9 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
           possible = ClusteringInfo(trimmed))
   }, matrix(NA_real_, length(splits), 2)), dims = 2)
   
+  ret <- support[, 1] / support[, 2]
   # Return:
-  support[, 1] / support[, 2]
+  structure(ret, weighted.mean = weighted.mean(ret, support[, 2]))
 }
 
 #' Evaluate the concordance of information between a tree and a dataset
@@ -737,10 +762,10 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' myMatrix <- congreveLamsdellMatrices[[10]]
 #' ConcordantInformation(TreeTools::NJTree(myMatrix), myMatrix)
 #' @template MRS
-#' @importFrom TreeTools Log2UnrootedMult Log2Unrooted
+#' @importFrom TreeTools Log2UnrootedMult Log2Unrooted MatchStrings
 #' @export
 ConcordantInformation <- function (tree, dataset) {
-  dataset <- dataset[TipLabels(tree)]
+  dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
   originalInfo <- sum(apply(PhyDatToMatrix(dataset), 2, CharacterInformation))
   dataset <- PrepareDataProfile(dataset)
   
