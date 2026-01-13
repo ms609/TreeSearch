@@ -190,15 +190,103 @@ QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
 }
 
 #' @rdname SiteConcordance
-#' @importFrom TreeTools Subsplit
+#' @param return Character specifying what to return.
+#' - `"mean"` returns the mean concordance index at each split across all sites.
+#' - `"all"` returns all values calculated during the working for each site at
+#'  each split.
+#' @param normalize Logical or numeric; if `TRUE` the mutual information will be
+#' normalized such that zero corresponds to the expected mutual information of
+#' a randomly drawn character with the same distribution of tokens.
+#' If `FALSE`, zero will correspond to zero mutual information, 
+#' even if this is not possible to accomplish in practice.
+#' The exact analytical solution, whilst quick, does not account for
+#' non-independence between splits. This is a less important factor for larger
+#' trees, and is negligible above ~200 leaves. For small trees, the expected
+#' value for random trees can be estimated by resampling relabelled trees.
+#' To conduct _n_ resamplings, set `normalize = n`.
+#' 
+#' For `return = "char"`, `"tree"`, values will be normalized such that 1
+#' corresponds to the maximum possible value, and 0 to the expected value.
+#' If `normalize = TRUE`, this will be the expected value for a random
+#' character on the given tree. If `normalize` is numeric, the expected value
+#' will be estimated by fitting the character to `n` uniformly random trees.
+#' 
+#' @returns 
+#' `ClusteringConcordance(return = "all")` returns a 3D array where each
+#' slice corresponds to a character (site), each column to a tree split, and 
+#' each row to a different information measure. The `normalized` row gives the 
+#' normalized mutual information between each split-character pair, scaled so 
+#' that 1.0 corresponds to `hBest` (the theoretical maximum mutual information, 
+#' being the minimum of `hSplit` and `hChar`) and 0.0 corresponds to `miRand` 
+#' (the expected mutual information under random association). `hSplit` gives 
+#' the entropy (information content) of each split's bipartition; `hChar` gives 
+#' the entropy of each character's state distribution; `hJoint` gives the joint 
+#' entropy of the split-character confusion matrix; `mi` gives the raw mutual 
+#' information; and `n` records the number of informative observations. 
+#' Negative normalized values indicate observed mutual information below random 
+#' expectation. `NA` is returned when `hBest = 0` (no information potential).
+#' 
+#' `ClusteringConcordance(return = "edge")` returns a vector where each element 
+#' corresponds to a split (an edge of the tree) and gives the normalized mutual
+#' information between that split and the character data, averaged across all
+#' characters.
+#' When `normalize = TRUE` (default), values are scaled relative to random 
+#' expectation; when `FALSE`, raw mutual information normalized by `hBest` is 
+#' returned.
+#' 
+#' `ClusteringConcordance(return = "char")` returns a vector where each element 
+#' corresponds to a character (site) and gives the entropy-weighted average 
+#' normalized mutual information between that character and all tree splits. 
+#' Characters with higher information content receive proportionally more weight 
+#' from splits that can potentially convey more information about them.
+#'
+#' `ClusteringConcordance(return = "tree")` returns a single value representing 
+#' the overall concordance between the tree topology and the character data.
+#' This averages the fit of the best-matching split for each character.
+#' This is probably biased. I have not identified a circumstance in which it
+#' produces meaningful results.  Let me know if you find one.
+#' 
+#' I had previously considered calculating
+#' the entropy-weighted average of normalized mutual 
+#' information across all split-character pairs, where each pair contributes 
+#' proportionally to its potential information content.
+#' The problem here is that imperfect matches between compatible splits
+#' come to dominate, resulting in a small score that gets smaller as trees get
+#' larger, even with a perfect fit.
+#' 
+#' 
+#' @seealso
+#' - [Consistency()]
+#' @examples
+#' data(congreveLamsdellMatrices)
+#' myMatrix <- congreveLamsdellMatrices[[10]]
+#' ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
+#' @template MRS
+#' @importFrom abind abind
 #' @importFrom stats setNames
+#' @importFrom TreeDist ClusteringEntropy Entropy entropy_int
+#' MutualClusteringInfo
+#' @importFrom TreeTools as.Splits MatchStrings Subsplit TipLabels
 #' @export
-ClusteringConcordance <- function (tree, dataset) {
+ClusteringConcordance <- function (tree, dataset, return = "edge",
+                                   normalize = TRUE) {
+  # Check inputs
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[TipLabels(tree)]
+  if (is.null(tree)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
+  
+  keep <- MatchStrings(TipLabels(tree), names(dataset), warning)
+  if (length(keep) == 0) {
+    return(NULL)
+  }
+  dataset <- dataset[keep]
+  
+  # Prepare data
   splits <- as.logical(as.Splits(tree))
   
   at <- attributes(dataset)
@@ -208,32 +296,165 @@ ClusteringConcordance <- function (tree, dataset) {
   }
   ambiguous <- rowSums(cont) != 1
   
-  mat <- matrix(unlist(dataset), length(dataset), byrow = TRUE)
-  mat[mat %in% which(ambiguous)] <- NA
+  mat <- matrix(as.integer(unlist(dataset)), length(dataset), byrow = TRUE)
+  mat[mat %in% which(ambiguous)] <- NA_integer_
+  maxToken <- max(mat, na.rm = TRUE)
+  tokens <- as.character(seq_len(maxToken))
   mat <- apply(mat, 2, function (x) {
-    uniques <- table(x) == 1
-    x[x %in% names(uniques[uniques])] <- NA
+    uniques <- tabulate(x, maxToken) == 1
+    x[x %in% tokens[uniques]] <- NA_integer_
     x
   })
-  
-  h <- apply(mat, 2, function (char) {
+
+  # Calculate entropy
+  h <- simplify2array(apply(mat, 2, function(char) {
     aChar <- !is.na(char)
     ch <- char[aChar]
-    hChar <- .Entropy(table(ch))
-    h <- apply(splits[, aChar], 1, function (spl) {
-      c(hSpl = .Entropy(table(spl)), hJoint =  .Entropy(table(ch, spl)))
+    if (length(ch) == 0) {
+      # All ambiguous
+      n <- 0
+      hChar <- 0
+    } else {
+      chMax <- max(1, ch)
+      chTable <- tabulate(ch, chMax)
+      n <- length(ch)
+      hChar <- entropy_int(chTable)
+    }
+
+    hh <- apply(splits[, aChar, drop = FALSE], 1, function (spl) {
+      spTable <- tabulate(spl + 1, 2)
+      if (any(spTable < 2)) {
+        c(hSplit = 0,
+          hJoint = hChar,
+          miRand = 0,
+          n = n)
+      } else {
+        c(hSplit = entropy_int(spTable),
+          hJoint = entropy_int(tabulate(ch + (spl * chMax), chMax + chMax)),
+          miRand = .ExpectedMI(spTable, chTable),
+          n = n)
+      }
     })
     
-    cbind(hSum = hChar + h["hSpl", ], joint = h["hJoint", ])
-  })
+    rbind(hChar = hChar, hh)
+  }, simplify = FALSE))
   
-  splitI <- seq_len(dim(splits)[1])
-  both <- rowSums(h[splitI, at[["index"]], drop = FALSE])
-  joint <- rowSums(h[-splitI, at[["index"]], drop = FALSE])
-  mi <- both - joint
+  if (length(dim(h)) == 2) {
+    # Matrix to 3D array
+    dim(h) <- c(dim(h), 1)
+  }
+  
+  h[abs(h) < sqrt(.Machine$double.eps)] <- 0
+  hh <- h[, , at[["index"]], drop = FALSE]
+  
+  hBest <- `rownames<-`(pmin(hh["hChar", , , drop = FALSE],
+                             hh["hSplit", , , drop = FALSE]), NULL)
+  mi <- `rownames<-`(hh["hChar", , , drop = FALSE] + 
+                       hh["hSplit", , , drop = FALSE] -
+                       hh["hJoint", , , drop = FALSE], NULL)
+  miRand <- `rownames<-`(hh["miRand", , , drop = FALSE], NULL)
+  norm <- if(isFALSE(normalize)) {
+      ifelse(hBest == 0, NA, mi / hBest)
+    } else {
+      ifelse(hBest == 0, NA, .Rezero(mi / hBest, miRand / hBest))
+    }
+
+  returnType <- pmatch(tolower(return), c("all", "edge", "character", "tree"),
+                       nomatch = 1L)
+  if (returnType %in% 3:4) { # character / tree
+    charSplits <- apply(mat, 2, simplify = FALSE, function(x)
+      as.Splits(x[!is.na(x)], tipLabels = keep[!is.na(x)]))
+    charMax <- vapply(charSplits, ClusteringEntropy, double(1))[
+      attr(dataset, "index")]
+    charInfo <- MutualClusteringInfo(tree, charSplits)[at[["index"]]]
+    if (is.numeric(normalize)) {
+      rTrees <- replicate(normalize, RandomTree(tree), simplify = FALSE)
+      randInfo <- MutualClusteringInfo(rTrees, charSplits)[, attr(dataset, "index")]
+      randMean <- colMeans(randInfo)
+      var <- rowSums((t(randInfo) - randMean) ^ 2) / (normalize - 1)
+      mcse <- sqrt(var / normalize)
+      randTreeInfo <- rowSums(randInfo)
+      randTreeMean <- mean(randTreeInfo)
+      treeVar <- var(randTreeInfo)
+      mcseTree <- sqrt(treeVar / normalize)
+    }
+  }
   
   # Return:
-  setNames(mi / joint, rownames(splits))
+  switch(returnType,
+         # all
+         abind(
+           along = 1,
+           normalized = norm,
+           hh,
+           hBest = hBest,
+           mi = mi,
+           miRand = miRand
+         ), {
+           # edge
+           best <- rowSums(hBest[1, , , drop = FALSE], dims = 2)
+           ifelse(!is.na(best) & best == 0,
+                  NA_real_,
+                  if (isTRUE(normalize)) {
+                    .Rezero(
+                      rowSums(mi[1, , , drop = FALSE], dims = 2) / best,
+                      rowSums(miRand[1, , , drop = FALSE], dims = 2) / best
+                    )
+                  } else {
+                    rowSums(mi[1, , , drop = FALSE], dims = 2) / best
+                  })[1, ]
+         }, {
+           # char
+         
+           # one <- hh["hChar", 1, , drop = TRUE] # All rows equal
+           one <- charMax
+           zero <- if (isFALSE(normalize)) {
+             0
+           } else if (isTRUE(normalize)) {
+             apply(hh["miRand", , ], 2, max)
+           } else {
+             randMean
+           }
+           ret <- (charInfo - zero) / (one - zero)
+           if (is.numeric(normalize)) {
+             mcseInfo <- ((one - charInfo) / (one - zero) ^ 2) * mcse
+             mcseInfo[mcseInfo < sqrt(.Machine$double.eps)] <- 0
+             structure(ret, hMax = charMax, mcse = mcseInfo)
+           } else {
+             structure(charInfo / charMax, hMax = charMax)
+           }
+         }, {
+           # tree: Entropy-weighted mean across best character-split pairs
+           warning("I'm not aware of a situation in which this is a useful measure.")
+           # Random normalization doesn't work if we pick the best matching
+           # split; one will be randomly better than another, even in the
+           # absence of signal.
+           norm[is.na(norm)] <- 0
+           bestMatch <- apply(norm, 3, which.max)
+           idx <- cbind(1, bestMatch, seq_along(bestMatch))
+           return(weighted.mean(norm[idx], hBest[idx]))
+          
+           if (isFALSE(normalize)) {
+           } else {
+             one <- sum(hh["hChar", 1, ])
+             zero <- if (isTRUE(normalize)) {
+               sum(apply(hh["miRand", , ], 2, max))
+             } else {
+               randTreeMean
+             }
+             ret <- (sum(charInfo) - zero) / (one - zero)
+             if (is.numeric(normalize)) {
+               mcseInfo <- ((one - sum(charInfo)) / (one - zero) ^ 2) * mcseTree
+               mcseInfo[mcseInfo < sqrt(.Machine$double.eps)] <- 0
+               structure(ret, mcse = mcseInfo)
+             } else {
+               ret
+             }
+           }
+         }
+  )
+}
+
 }
 
 #' @rdname SiteConcordance
