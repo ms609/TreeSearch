@@ -2,7 +2,7 @@
 % Please edit documentation in R/Consistency.R
 \name{Consistency}
 \alias{Consistency}
-\title{Consistency / retention "indices"}
+\title{Consistency and retention "indices"}
 \usage{
 Consistency(dataset, tree, nRelabel = 0, compress = FALSE)
 }
@@ -16,8 +16,8 @@ Additive (ordered) characters can be handled using
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{nRelabel}{Integer specifying how many times to relabel leaves when
-estimating null tree length for \acronym{RHI} calculation.
-\insertCite{Steell2023;textual}{TreeSearch} recommend 1000, but suggest that
+computing MCMC estimate of null tree length for \acronym{RHI} calculation.
+\insertCite{Steell2025;textual}{TreeSearch} recommend 1000, but suggest that
 100 may suffice.
 If zero (the default), the \acronym{RHI} is not calculated.}
 
@@ -53,7 +53,7 @@ the tree is optimal.
 Note that as the possible values of the consistency index do not range from
 zero to one, it is not an index in the mathematical sense of the term.
 Shortcomings of this measure are widely documented
-\insertCite{Archie1989,Brooks1986,Steell2023}{TreeSearch}.
+\insertCite{Archie1989,Brooks1986,Steell2025}{TreeSearch}.
 
 The maximum length of a character (see \code{\link[=MaximumLength]{MaximumLength()}}) is the
 number of steps in a parsimonious reconstruction on the longest possible tree
@@ -69,7 +69,7 @@ retention indices; it rescales the consistency index such that its range of
 possible values runs from zero (least consistent) to one
 (perfectly consistent).
 
-The \strong{relative homoplasy index} \insertCite{Steell2023}{TreeSearch} is
+The \strong{relative homoplasy index} \insertCite{Steell2025}{TreeSearch} is
 the ratio of the observed excess tree length to the excess tree length
 due to chance, taken as the median score of a character when the leaves
 of the given tree are randomly shuffled.
