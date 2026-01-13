@@ -27,6 +27,9 @@
 #' other implementations (e.g. IQ-TREE) follow
 #' \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
 #'  of quartets for a faster, if potentially less accurate, computation.
+#TODO
+#' `QuartetConcordance()` in principle supports ambiguous character states,
+#' but this has not yet been tested.
 #' 
 # `ClusteringConcordance()` and `PhylogeneticConcordance()` respectively report
 # the proportion of clustering information and phylogenetic information 
@@ -56,7 +59,7 @@
 #' @examples 
 #' data("congreveLamsdellMatrices", package = "TreeSearch")
 #' dataset <- congreveLamsdellMatrices[[1]][, 1:20]
-#' tree <- referenceTree
+#' tree <- TreeSearch::referenceTree
 #' qc <- QuartetConcordance(tree, dataset)
 #' cc <- ClusteringConcordance(tree, dataset)
 #' pc <- PhylogeneticConcordance(tree, dataset)
@@ -90,7 +93,8 @@
 #' @name SiteConcordance
 #' @family split support functions
 #' @export
-QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
+QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
+                               return = "mean") {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
@@ -109,57 +113,75 @@ QuartetConcordance <- function (tree, dataset = NULL, weight = TRUE) {
                        logical(NTip(dataset)))
   
   characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
+  charLevels <- attr(dataset, "allLevels")
+  charLevels[rowSums(attr(dataset, "contrast")) > 1] <- NA
+  charLevels <- setdiff(charLevels, "-")
   
-  cli_progress_bar(name = "Quartet concordance", total = dim(logiSplits)[[2]])
-  setNames(apply(logiSplits, 2, function (split) {
-    cli_progress_update(1, .envir = parent.frame(2))
-    quarts <- apply(characters, 2, function (char) {
-      tab <- table(split, char)
-      nCol <- dim(tab)[[2]]
-      if (nCol > 1L) {
-        # Consider the case
-        # split  0   1   2
-        # FALSE  2   3   0
-        #  TRUE  0   4   2
-        # 
-        # Concordant quartets with bin i = 1 (character 0) and bin j = 2
-        # (character 1) include any combination of the two taxa from 
-        # [FALSE, 0], and the two taxa chosen from the four in [TRUE, 1],
-        # i.e. choose(2, 2) * choose(4, 2)
-        concordant <- sum(vapply(seq_len(nCol), function (i) {
-          inBinI <- tab[1, i]
-          iChoices <- choose(inBinI, 2)
-          sum(vapply(seq_len(nCol)[-i], function (j) {
-            inBinJ <- tab[2, j]
-            iChoices * choose(inBinJ, 2)
-            }, 1))
-        }, 1))
-        
-        # To be discordant, we must select a pair of taxa from TT and from FF;
-        # and the character states must group each T with an F
-        # e.g. T0 T1  F0 F1
-        # T0 T1 F0 F2 would not be discordant - just uninformative
-        discordant <- sum(apply(combn(nCol, 2), 2, function (ij) prod(tab[, ij])))
-        
-        # Only quartets that include two T and two F can be decisive
-        # Quartets must also include two pairs of characters
-        decisive <- concordant + discordant
-        
-        # Return the numerator and denominatory of equation 2 in
-        # Minh et al. 2020
-        c(concordant, decisive)
-      } else {
-        c(0L, 0L)
-      }
-    })
+  charInt <- matrix(match(characters, charLevels),
+                    nrow = nrow(characters),
+                    dimnames = dimnames(characters))
+  raw_counts <- quartet_concordance(logiSplits, charInt)
+  
+  num <- raw_counts$concordant
+  den <- raw_counts$decisive
+  
+  options <- c("char", "default")
+  return <- options[[pmatch(tolower(trimws(return)), options,
+                            nomatch = length(options))]]
+  
+  if (return == "default") {
     if (isTRUE(weight)) {
-      quartSums <- rowSums(quarts)
-      ifelse(is.nan(quartSums[[2]]), NA_real_, quartSums[[1]] / quartSums[[2]])
+      # Sum numerator and denominator across sites (columns), then divide
+      # This matches weighted.mean(num/den, den) == sum(num) / sum(den)
+      split_sums_num <- rowSums(num)
+      split_sums_den <- rowSums(den)
+      ret <- ifelse(split_sums_den == 0, NA_real_, split_sums_num / split_sums_den)
     } else {
-      mean(ifelse(is.nan(quarts[2, ]), NA_real_, quarts[1, ] / quarts[2, ]),
-           na.rm = TRUE)
+      # Mean of ratios per site
+      # Avoid division by zero (0/0 -> NaN -> NA handled by na.rm)
+      ratios <- num / den
+      # Replace NaN/Inf with NA for rowMeans calculation
+      ratios[!is.finite(ratios)] <- NA
+      ret <- rowMeans(ratios, na.rm = TRUE)
     }
-  }), names(splits))
+    
+    setNames(ret, names(splits))
+  } else {
+    p <- num / den
+    if (isTRUE(weight)) {
+      vapply(seq_len(dim(num)[[2]]), function(i) {
+        weighted.mean(num[, i] / den[, i], den[, i])
+      }, double(1))
+    } else {
+      vapply(seq_len(dim(num)[[2]]), function(i) {
+        mean(num[den[, i] > 0, i] / den[den[, i] > 0, i])
+      }, double(1))
+    }
+  }
+}
+
+#' @importFrom fastmap fastmap
+.ExpectedMICache <- fastmap()
+
+# @param a must be a vector of length <= 2
+# @param b may be longer
+#' @importFrom base64enc base64encode
+.ExpectedMI <- function(a, b) {
+  if (length(a) < 2 || length(b) < 2) {
+    0
+  } else {
+    key <- base64enc::base64encode(mi_key(a, b))
+    if (.ExpectedMICache$has(key)) {
+      .ExpectedMICache$get(key)
+    } else {
+      ret <- expected_mi(a, b)
+      
+      # Cache:
+      .ExpectedMICache$set(key, ret)
+      # Return:
+      ret
+    }
+  }
 }
 
 #' @importFrom TreeDist Entropy

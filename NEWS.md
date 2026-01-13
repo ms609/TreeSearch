@@ -1,3 +1,6 @@
+- `QuartetConcordance()` gains `return` parameter and fast C++ implementation.
+
+
 # TreeSearch 1.7.0.9000 (development)
 
 - Fix regression in `MaximumLength()`.

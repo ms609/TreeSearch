@@ -67,6 +67,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// quartet_concordance
+List quartet_concordance(const LogicalMatrix splits, const IntegerMatrix characters);
+RcppExport SEXP _TreeSearch_quartet_concordance(SEXP splitsSEXP, SEXP charactersSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const LogicalMatrix >::type splits(splitsSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type characters(charactersSEXP);
+    rcpp_result_gen = Rcpp::wrap(quartet_concordance(splits, characters));
+    return rcpp_result_gen;
+END_RCPP
+}
 // nni
 IntegerMatrix nni(const IntegerMatrix edge, const IntegerVector randomEdge, const IntegerVector whichSwitch);
 RcppExport SEXP _TreeSearch_nni(SEXP edgeSEXP, SEXP randomEdgeSEXP, SEXP whichSwitchSEXP) {
