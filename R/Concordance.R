@@ -237,14 +237,15 @@ ClusteringConcordance <- function (tree, dataset) {
 }
 
 #' @rdname SiteConcordance
-#' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
+#' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits 
+#' MatchStrings
 #' @export
 PhylogeneticConcordance <- function (tree, dataset) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  dataset <- dataset[TipLabels(tree)]
+  dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
   splits <- as.Splits(tree)
   if (is.null(names(splits))) {
     names(splits) <- paste0("sp", seq_along(splits))
