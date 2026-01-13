@@ -21,6 +21,7 @@
 - Support single-character matrices in `ClusteringConcordance()`
 - Fix `DoNothing(x)` to return `x` (not `NULL`)
 - Remove unused `delete_rawdata()` due to implementation issues.
+- Port `MaximumLength()` to C++ to handle more characters, more efficiently.
 
 
 # TreeSearch 1.6.1 (2025-06-10)
