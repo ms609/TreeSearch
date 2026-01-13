@@ -1,4 +1,4 @@
-#' Consistency / retention "indices"
+#' Consistency and retention "indices"
 #' 
 #' `Consistency()` calculates the consistency "index" and retention index
 #' \insertCite{Farris1989}{TreeSearch}
@@ -19,7 +19,7 @@
 #' Note that as the possible values of the consistency index do not range from
 #' zero to one, it is not an index in the mathematical sense of the term.
 #' Shortcomings of this measure are widely documented 
-#' \insertCite{Archie1989,Brooks1986,Steell2023}{TreeSearch}.
+#' \insertCite{Archie1989,Brooks1986,Steell2025}{TreeSearch}.
 #' 
 #' The maximum length of a character (see [`MaximumLength()`]) is the
 #' number of steps in a parsimonious reconstruction on the longest possible tree
@@ -35,7 +35,7 @@
 #' possible values runs from zero (least consistent) to one
 #' (perfectly consistent).
 #' 
-#' The **relative homoplasy index** \insertCite{Steell2023}{TreeSearch} is
+#' The **relative homoplasy index** \insertCite{Steell2025}{TreeSearch} is
 #' the ratio of the observed excess tree length to the excess tree length
 #' due to chance, taken as the median score of a character when the leaves
 #' of the given tree are randomly shuffled.
@@ -45,8 +45,8 @@
 #' default treatment in [`TreeLength()`].
 #' 
 #' @param nRelabel Integer specifying how many times to relabel leaves when
-#' estimating null tree length for \acronym{RHI} calculation.
-#' \insertCite{Steell2023;textual}{TreeSearch} recommend 1000, but suggest that
+#' computing MCMC estimate of null tree length for \acronym{RHI} calculation.
+#' \insertCite{Steell2025;textual}{TreeSearch} recommend 1000, but suggest that
 #' 100 may suffice.
 #' If zero (the default), the \acronym{RHI} is not calculated.
 #' @inheritParams CharacterLength
