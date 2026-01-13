@@ -4,8 +4,10 @@ test_that("_Concordance() handles null input", {
   expect_warning(expect_null(QuartetConcordance(BalancedTree(8), NULL)))
   expect_warning(expect_null(PhylogeneticConcordance(BalancedTree(8), NULL)))
   expect_warning(expect_null(ClusteringConcordance(BalancedTree(8), NULL)))
-  expect_warning(expect_null(MutualClusteringConcordance(BalancedTree(8), NULL)))
-  expect_warning(expect_null(SharedPhylogeneticConcordance(BalancedTree(8), NULL)))
+  expect_warning(expect_null(
+    MutualClusteringConcordance(BalancedTree(8), NULL)))
+  expect_warning(expect_null(
+    SharedPhylogeneticConcordance(BalancedTree(8), NULL)))
 })
 
 test_that("_Concordance() handles tip mismatch", {
@@ -13,6 +15,8 @@ test_that("_Concordance() handles tip mismatch", {
   tree <- BalancedTree(5)
   expect_warning(expect_null(QuartetConcordance(tree, char)),
                  "No overlap between tree labels and dataset.")
+  expect_warning(expect_null(ClusteringConcordance(tree, char)),
+                 "Could not find 't1', .* in names.dataset.")
 })
 
 test_that("QuartetConcordance() works", {
@@ -114,6 +118,60 @@ test_that("QuartetConcordance() handles incomplete data", {
   expect_equal(unname(QuartetConcordance(tree, dat)), rep(NA_real_, 5))
 })
 
+test_that(".Rezero() works", {
+  expect_equal(.Rezero(seq(0, 1, by = 0.1), 0.1), -1:9 / 9)
+})
+
+test_that("ClusteringConcordance() gives sensible values", {
+  tree <- BalancedTree(8)
+  splits <- as.Splits(tree)
+  # None of these characters are informative
+  mataset <- matrix(c(0, 0, 0, 0, 0, 0, 0, 1,
+                      rep("?", 8)), 8,
+                    dimnames = list(paste0("t", 1:8), NULL))
+  dat <- MatrixToPhyDat(mataset)
+  
+  expect_equal(unname(ClusteringConcordance(tree, dat)), rep(NA_real_, 5))
+  
+  tree <- ape::read.tree(text = "((a, b, c, d, e), (f, g, h));")
+  split <- as.Splits(tree)
+  
+  mataset <- matrix(c(0, 0, 0, 0, 0, 0, 0, 1,
+                      0, 0, 0, 0, 0, 1, 1, 1, # Matches split
+                      0, 0, 0, 0, 1, 1, 1, 1, # Consistent but not identical
+                      0, 0, 0, 1, 1, 1, 1, 1, # Consistent, more different
+                      0, 0, 0, 0, 0, 0, 1, 1, # Consistent other way
+                      0, 1, 0, 1, 0, 1, 0, 1, # Worst possible
+                      0, 0, 0, 0, rep("?", 4), # No information
+                      0, 0, 1, 1, rep("?", 4), # No relevant information
+                      rep("?", 8)), 8,
+                    dimnames = list(letters[1:8], NULL))
+  dat <- MatrixToPhyDat(mataset)
+  cc <- ClusteringConcordance(tree, dat, return = "all")[, "10", ]
+  .Entropy <- function(...) {
+    TreeDist::Entropy(c(...) / sum(...))
+  }
+  .NormExp <- function(a, b, ab) {
+    .Rezero(
+      (.Entropy(a) + .Entropy(b) - .Entropy(ab)) / .Entropy(a),
+      .ExpectedMI(a, b) / .Entropy(a)
+    )
+  }
+  expect_equal(cc["normalized", ],
+               c(NA_real_, 1, 
+                 .NormExp(c(3, 5), c(4, 4), c(1, 3, 4)),
+                 .NormExp(c(3, 5), c(3, 5), c(2, 3, 3)),
+                 .NormExp(c(2, 6), c(3, 5), c(2, 1, 5)),
+                 .NormExp(c(3, 5), c(4, 4), c(2, 1, 2, 3)), 
+                 NA, NA, NA))
+  
+  randomset <- matrix(sample(0:1, 8 * 1000, replace = TRUE), 8,
+                      dimnames = list(letters[1:8], NULL))
+  rat <- MatrixToPhyDat(randomset)
+  expect_equal(ClusteringConcordance(tree, rat, normalize = TRUE), c("10" = 0),
+               tolerance = 0.05)
+})
+
 dataset <- congreveLamsdellMatrices[[10]][, 1]
 tree <- TreeTools::NJTree(dataset)
 
@@ -147,4 +205,12 @@ test_that("ConcordantInformation() works", {
   expect_equal(c(ignored = CharacterInformation(c(0,0,1,1,2,2)) - 
                    log2(3) - log2(3)), ci["ignored"])
   
+})
+
+test_that("QACol() handles input", {
+  expect_equal(is.na(QACol(c(0, 1, NA, 0, NA), c(0, 1, NA, NA, 0))),
+               c(FALSE, FALSE, TRUE,
+                 FALSE, # No data = black, quality NA by definition
+                 TRUE))
+  expect_equal(is.na(QCol(NA, c(0, 1, NA, NA))), c(FALSE, FALSE, TRUE, TRUE))
 })

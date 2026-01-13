@@ -184,9 +184,12 @@ QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
   }
 }
 
-#' @importFrom TreeDist Entropy
-.Entropy <- function (...) {
-  Entropy(c(...) / sum(...))
+#' Re-zero a value by normalization
+#' @param value value ranging from zero to one
+#' @param zero new value to set as zero
+#' @keywords internal
+.Rezero <- function(value, zero) {
+  (value - zero) / (1 - zero)
 }
 
 #' @rdname SiteConcordance
@@ -455,6 +458,166 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
   )
 }
 
+#' Generate colour to depict the amount and quality of observations
+#' @param amount Numeric vector of values between 0 and 1, denoting the relative
+#' amount of information
+#' @param quality Numeric vector of values between -1 and 1, denoting the 
+#' quality of observations, where 0 is neutral.
+#' @return `QACol()` returns an RGB hex code for a colour, where lighter colours
+#' correspond to entries with a higher `amount`; unsaturated colours denote
+#' a neutral `quality`; and red/cyan colours denote low/high `quality`.
+#' @examples
+#' amount <- runif(80, 0, 1)
+#' quality <- runif(80, -1, 1)
+#' plot(amount, quality, col = QACol(amount, quality), pch = 15)
+#' abline(h = 0)
+#' @template MRS
+#' @importFrom colorspace hex polarLUV
+#' @export
+QACol <- function(amount, quality) {
+  h <- 80 + (quality * 140)
+  l <- amount * 88 # < 100: white can take no hue
+  c <- abs(quality) * .MaxChroma(h, l)
+  # Saturation higher than 1 risks overflowing the colour space
+  # Small overflows are caught via `fixup = TRUE`; large overflows will produce
+  # bright red errors
+  saturation <- 0.999 # Safe if max_chroma(floor = FALSE) slightly overestimates
+  saturation <- 1.16
+  
+  hex(polarLUV(
+    H = as.numeric(h),
+    C = as.numeric(c) * saturation,
+    L = as.numeric(l)
+  ), fixup = TRUE)
+}
+
+#' @importFrom colorspace max_chroma
+.MaxChroma <- function(h, l) {
+  ret <- `length<-`(double(0), length(h))
+  applicable <- !is.na(h) & !is.na(l)
+  ret[applicable] <- max_chroma(h[applicable], l[applicable])
+  ret
+}
+
+#' @rdname QACol
+#' @return `QCol()` returns an RGB hex code for a colour, where darker,
+#' unsaturated colours denote a neutral `quality`;
+#' and red/cyan colours denote low/high `quality`. `amount` is ignored.
+#' @export
+QCol <- function(amount, quality) {
+  h <- 80 + (quality * 140)
+  l <- abs(quality) * 88 # < 100: white can take no hue
+  c <- abs(quality) * .MaxChroma(h, l)
+  # Saturation higher than 1 risks overflowing the colour space
+  # Small overflows are caught via `fixup = TRUE`; large overflows will produce
+  # bright red errors
+  saturation <- 0.999 # Safe if max_chroma(floor = FALSE) slightly overestimates
+  
+  hex(polarLUV(
+    H = as.numeric(h),
+    C = as.numeric(c) * saturation,
+    L = as.numeric(l)
+  ), fixup = TRUE)
+}
+
+#' @rdname QACol
+#' @param where Location of legend, passed to `par(fig = where)`
+#' @param n Integer vector giving number of cells to plot in swatch for 
+#' `quality` and `amount`.
+#' @inheritParams ConcordanceTable
+#' @export
+QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
+  oPar <- par(fig = where, new = TRUE, mar = rep(0, 4), xpd = NA)
+  on.exit(par(oPar))
+  n <- rep(n, length.out = 2)
+  nA <- n[[2]]
+  nQ <- n[[1]]
+  amount <- seq(0, 1, length.out = nA)
+  quality <- seq(-1, 1, length.out = nQ)
+  mat <- outer(amount, quality,
+               Vectorize(function (a, q) Col(a, q)))
+  image(x = amount, y = quality, z = matrix(1:prod(n), nA, nQ),
+        col = mat, axes = FALSE, xlab = "", ylab = "")
+  mtext("Amount \U2192", side = 1, line = 1)
+  mtext("Quality \U2192", side = 2, line = 1)
+}
+
+#' Plot concordance table
+#' 
+#' `ConcordanceTable()` plots a concordance table
+#' \insertCite{SmithConc}{TreeSearch}.
+#' 
+#' @inheritParams ClusteringConcordance
+#' @param Col Function that takes vectors `amount` and `quality` and returns
+#' a vector of colours. [QCol] colours by data quality (concordance);
+#' [QACol] by quality and amount of information.
+#' @param largeClade Integer; if greater than 1, vertical lines will be drawn
+#' at edges whose descendants are both contain more than `largeClade` leaves.
+#' @param xlab Character giving a label for the x axis.
+#' @param ylab Character giving a label for the y axis.
+#' @param \dots Arguments to `abline`, to control the appearance of vertical
+#' lines marking important edges.
+#' @returns `ConcordanceTable()` invisibly returns an named list containing:
+#' - `"info"`: The amount of information in each character-edge pair, in bits;
+#' - `"relInfo"`: The information, normalized to the most information-rich pair;
+#' - `"quality"`: The normalized mutual information of the pair;
+#' - `"col"`: The colours used to plot the table.
+#' 
+#' @references \insertAllCited{} 
+#' @examples
+#' # Load data and tree
+#' data("congreveLamsdellMatrices", package = "TreeSearch")
+#' dataset <- congreveLamsdellMatrices[[1]][, 1:20]
+#' tree <- referenceTree
+#' 
+#' # Plot tree and identify nodes
+#' library("TreeTools", quietly = TRUE)
+#' plot(tree)
+#' nodeIndex <- as.integer(rownames(as.Splits(tree)))
+#' nodelabels(seq_along(nodeIndex), nodeIndex, adj = c(2, 1),
+#'            frame = "none", bg = NULL)
+#' QALegend(where = c(0.1, 0.4, 0.1, 0.3))
+#' 
+#' # View information shared by characters and edges
+#' ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3)
+#' axis(1)
+#' axis(2)
+#' 
+#' # Visualize dataset
+#' image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
+#'       xlab = "Leaf", ylab = "Character")
+#' @importFrom graphics abline image mtext
+#' @importFrom TreeTools CladeSizes NTip
+#' @export
+ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
+                             xlab = "Edge", ylab = "Character", ...) {
+  cc <- ClusteringConcordance(tree, dataset, return = "all")
+  nodes <- seq_len(dim(cc)[[2]])
+  info <- cc["hBest", , ] * cc["n", , ]
+  amount <- info / max(info, na.rm = TRUE)
+  amount[is.na(amount)] <- 0
+  quality <- cc["normalized", , ]
+  # Plot points with incalculable quality as black, not transparent.
+  amount[is.na(quality)] <- 0
+  quality[is.na(quality)] <- 0
+  
+  col <- matrix(Col(amount, quality), dim(amount)[[1]], dim(amount)[[2]])
+  image(nodes, seq_len(dim(cc)[[3]]),
+        matrix(1:prod(dim(amount)), dim(amount)[[1]]),
+        frame.plot = FALSE, axes = FALSE,
+        col = col, xlab = xlab, ylab = ylab)
+  
+  if (largeClade > 1) {
+    cladeSize <- CladeSizes(tree)
+    edge <- tree[["edge"]]
+    parent <- edge[, 1]
+    child <- edge[, 2]
+    bigNode <- vapply(as.integer(colnames(cc)), function (node) {
+      all(cladeSize[child[parent == parent[child == node]]] >= largeClade)
+    }, logical(1))
+    abline(v = nodes[bigNode] - 0.5, ...)
+  }
+  invisible(list(info = info, amount = amount, quality = quality, col = col))
 }
 
 #' @rdname SiteConcordance

@@ -1,3 +1,7 @@
+# Branch `char-concord` (development)
+
+- Implements the methods of Smith (forthcoming) via `ClusteringConcordance()`,
+  visualized with `ConcordanceTable()` and support functions `QACol()`, `QALegend()`
 - `QuartetConcordance()` gains `return` parameter and fast C++ implementation.
 
 
