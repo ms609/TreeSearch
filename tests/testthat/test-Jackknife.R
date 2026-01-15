@@ -1,25 +1,33 @@
-context("Jackknife.R")
-
 test_that("Jackknife supports are correct", {
-  true_tree <-  ape::read.tree(text = "((((((A,B),C),D),E),F),out);")
+  true_tree <- ape::read.tree(text = "((((((A,B),C),D),E),F),out);")
   start_tree <- ape::read.tree(text = "(((((A,D),B),E),(C,F)),out);")
-  dataset <- TreeTools::StringToPhyDat("1100000 1110000 1111000 1111100 1100000 1110000 1111000 1111100 1001000",
-                            1:7, byTaxon = FALSE)
+  dataset <- TreeTools::StringToPhyDat(
+    "1100000 1110000 1111000 1111100 1100000 1110000 1111000 1111100 1001000",
+    1:7,
+    byTaxon = FALSE
+  )
   names(dataset) <- c(LETTERS[1:6], "out")
-  
+
   expect_error(Jackknife(unroot(true_tree), dataset))
   expect_error(Jackknife(start_tree, dataset, resampleFreq = 0))
-  expect_error(Jackknife(start_tree, dataset, resampleFreq = 9/10))
-  
+  expect_error(Jackknife(start_tree, dataset, resampleFreq = 9 / 10))
+
   suppressWarnings(RNGversion("3.5.0"))
   set.seed(0)
-  
+
   strict <- TreeSearch(start_tree, dataset, verbosity = 0)
   expect_equal(1, length(unique(list(true_tree), list(start_tree)))) # Right tree found
-  jackTrees <- Jackknife(strict, dataset, resampleFreq = 4/7, searchIter = 24L,
-                         searchHits = 7L, EdgeSwapper=RootedTBRSwap, 
-                         jackIter = 20L, verbosity = 0L)
-  
+  jackTrees <- Jackknife(
+    strict,
+    dataset,
+    resampleFreq = 4 / 7,
+    searchIter = 24L,
+    searchHits = 7L,
+    EdgeSwapper = RootedTBRSwap,
+    jackIter = 20L,
+    verbosity = 0L
+  )
+
   # Note: one cause of failure could be a change in characters sampled, due to randomness
   expect_true(length(unique(jackTrees)) > 2L)
 })
