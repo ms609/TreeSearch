@@ -410,10 +410,10 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 }
 
 #' Plot concordance table
-#' 
+#'
 #' `ConcordanceTable()` plots a concordance table
 #' \insertCite{SmithConc}{TreeSearch}.
-#' 
+#'
 #' @inheritParams ClusteringConcordance
 #' @param Col Function that takes vectors `amount` and `quality` and returns
 #' a vector of colours. [QCol] colours by data quality (concordance);
@@ -429,14 +429,14 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 #' - `"relInfo"`: The information, normalized to the most information-rich pair;
 #' - `"quality"`: The normalized mutual information of the pair;
 #' - `"col"`: The colours used to plot the table.
-#' 
-#' @references \insertAllCited{} 
+#'
+#' @references \insertAllCited{}
 #' @examples
 #' # Load data and tree
 #' data("congreveLamsdellMatrices", package = "TreeSearch")
 #' dataset <- congreveLamsdellMatrices[[1]][, 1:20]
 #' tree <- referenceTree
-#' 
+#'
 #' # Plot tree and identify nodes
 #' library("TreeTools", quietly = TRUE)
 #' plot(tree)
@@ -444,12 +444,12 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 #' nodelabels(seq_along(nodeIndex), nodeIndex, adj = c(2, 1),
 #'            frame = "none", bg = NULL)
 #' QALegend(where = c(0.1, 0.4, 0.1, 0.3))
-#' 
+#'
 #' # View information shared by characters and edges
 #' ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3)
 #' axis(1)
 #' axis(2)
-#' 
+#'
 #' # Visualize dataset
 #' image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
 #'       xlab = "Leaf", ylab = "Character")
@@ -467,7 +467,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
   # Plot points with incalculable quality as black, not transparent.
   amount[is.na(quality)] <- 0
   quality[is.na(quality)] <- 0
-  
+
   col <- matrix(Col(amount, quality), dim(amount)[[1]], dim(amount)[[2]])
   image(nodes, seq_len(dim(cc)[[3]]),
         matrix(1:prod(dim(amount)), dim(amount)[[1]]),
@@ -495,7 +495,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
 #' character‑tree and the supplied phylogeny. High values identify characters
 #' whose signal is well represented anywhere in the tree, even if concentrated
 #' on a single edge.
-#' 
+#'
 #' @return `MutualClusteringConcordance()` returns the mutual clustering
 #' concordance of each character in `dataset` with `tree`.
 #' The attribute `weighted.mean` gives the mean value, weighted by the
@@ -508,7 +508,7 @@ MutualClusteringConcordance <- function (tree, dataset) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  
+
   dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
   splits <- as.multiPhylo(as.Splits(tree))
   characters <- as.multiPhylo(dataset)
@@ -529,29 +529,37 @@ MutualClusteringConcordance <- function (tree, dataset) {
 #' `QuartetConcordance()` is the proportion of quartets (sets of four leaves)
 #' that are decisive for a split which are also concordant with it
 #' (the site concordance factor \insertCite{Minh2020}{TreeSearch}).
-#' For example, a quartet with the characters `0 0 0 1` is not decisive, as 
+#' For example, a quartet with the characters `0 0 0 1` is not decisive, as
 #' all relationships between those leaves are equally parsimonious.
 #' But a quartet with characters `0 0 1 1` is decisive, and is concordant
 #' with any tree that groups the first two leaves together to the exclusion
 #' of the second.
-#' 
+#'
 #' By default, the reported value weights each site by the number of quartets
 #' it is decisive for.  This value can be interpreted as the proportion of
 #' all decisive quartets that are concordant with a split.
 #' If `weight = FALSE`, the reported value is the mean of the concordance
-#' value for each site.  
+#' value for each site.
 #' Consider a split associated with two sites:
 #' one that is concordant with 25% of 96 decisive quartets, and
 #' a second that is concordant with 75% of 4 decisive quartets.
 #' If `weight = TRUE`, the split concordance will be 24 + 3 / 96 + 4 = 27%.
 #' If `weight = FALSE`, the split concordance will be mean(75%, 25%) = 50%.
-#' 
+#'
 #' `QuartetConcordance()` is computed exactly, using all quartets, where as
 #' other implementations (e.g. IQ-TREE) follow
 #' \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
 #'  of quartets for a faster, if potentially less accurate, computation.
-#' Ambiguous and inapplicable tokens are treated as containing no grouping information
-#' (i.e. `(02)` or `-` are each treated as `?`).
+#' Ambiguous and inapplicable tokens are treated as containing no grouping
+#' information (i.e. `(02)` or `-` are each treated as `?`).
+#' @return
+#' `QuartetConcordance(return = "edge")` returns a numeric vector giving the
+#' concordance index at each split across all sites; names specify the number of
+#' each corresponding split in `tree`.
+#'
+#' `QuartetConcordance(return = "char")` returns a numeric vector giving the
+#' concordance index calculated at each site, averaged across all splits.
+#'
 #' @param weight Logical specifying whether to weight sites according to the
 #' number of quartets they are decisive for.
 #' @importFrom ape keep.tip
@@ -584,10 +592,10 @@ QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
   isInapp <- charLevels == "-"
   nonGroupingLevels <- charLevels[isAmbig | isInapp]
   characters[characters %in% nonGroupingLevels] <- NA
-  
+
   charInt <- `mode<-`(characters, "integer")
   raw_counts <- quartet_concordance(logiSplits, charInt)
-  
+
   num <- raw_counts$concordant
   den <- raw_counts$decisive
   

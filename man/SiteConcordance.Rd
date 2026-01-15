@@ -13,7 +13,7 @@ ClusteringConcordance(tree, dataset, return = "edge", normalize = TRUE)
 
 MutualClusteringConcordance(tree, dataset)
 
-QuartetConcordance(tree, dataset = NULL, weight = TRUE, return = "mean")
+QuartetConcordance(tree, dataset = NULL, weight = TRUE, return = "edge")
 
 PhylogeneticConcordance(tree, dataset)
 
@@ -28,12 +28,8 @@ Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
 Additive (ordered) characters can be handled using
 \code{\link[TreeTools]{Decompose}()}.}
 
-\item{return}{Character specifying what to return.
-\itemize{
-\item \code{"mean"} returns the mean concordance index at each split across all sites.
-\item \code{"all"} returns all values calculated during the working for each site at
-each split.
-}}
+\item{return}{Character specifying whether to summarize support per
+character (\code{"char"}) or per edge (\code{"edge"}). See below for details.}
 
 \item{normalize}{Logical or numeric; if \code{TRUE} the mutual information will be
 normalized such that zero corresponds to the expected mutual information of
@@ -96,6 +92,13 @@ concordance of each character in \code{dataset} with \code{tree}.
 The attribute \code{weighted.mean} gives the mean value, weighted by the
 information content of each character.
 
+\code{QuartetConcordance(return = "edge")} returns a numeric vector giving the
+concordance index at each split across all sites; names specify the number of
+each corresponding split in \code{tree}.
+
+\code{QuartetConcordance(return = "char")} returns a numeric vector giving the
+concordance index calculated at each site, averaged across all splits.
+
 \code{SharedPhylogeneticConcordance()} returns the shared phylogenetic
 concordance of each character in \code{dataset} with \code{tree}.
 The attribute \code{weighted.mean} gives the mean value, weighted by the
@@ -148,8 +151,8 @@ If \code{weight = FALSE}, the split concordance will be mean(75\%, 25\%) = 50\%.
 other implementations (e.g. IQ-TREE) follow
 \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
 of quartets for a faster, if potentially less accurate, computation.
-Ambiguous and inapplicable tokens are treated as containing no grouping information
-(i.e. \code{(02)} or \code{-} are each treated as \verb{?}).
+Ambiguous and inapplicable tokens are treated as containing no grouping
+information (i.e. \code{(02)} or \code{-} are each treated as \verb{?}).
 
 \code{SharedPhylogeneticConcordance()} treats each character as a simple tree.
 Each token in the character corresponds to a node whose pendant edges are the
