@@ -57,11 +57,10 @@ SharedPhylogeneticConcordance(tree, dataset)
 
   - `FALSE`: no chance correction; MI is scaled only by its maximum.
 
-  - `TRUE`: subtract the **analytical** expected MI for random
-    association.
+  - `TRUE`: subtract the analytical expected MI for random association.
 
-  - `<integer>`: subtract an **empirical** expected MI estimated from
-    that number of random trees.
+  - `<integer>`: subtract an empirical expected MI estimated from that
+    number of random trees.
 
   In all cases, 1 corresponds to the maximal attainable MI for the pair
   (`hBest`), and 0 corresponds to the chosen expectation.
