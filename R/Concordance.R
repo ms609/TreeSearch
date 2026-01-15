@@ -634,19 +634,21 @@ QuartetConcordance <- function(
     # return = "char"
     p <- num / den
     if (isTRUE(weight)) {
-      vapply(seq_len(dim(num)[[2]]), function(i) {
-        weighted.mean(num[, i] / den[, i], den[, i])
-      }, double(1))
-        function(i) {
-          weighted.mean(num[, i] / den[, i], den[, i])
-    } else {
-      vapply(seq_len(dim(num)[[2]]), function(i) {
-        mean(num[den[, i] > 0, i] / den[den[, i] > 0, i])
-      }, double(1))
       vapply(
         seq_len(dim(num)[[2]]),
+        function(i) {
+          weighted.mean(num[, i] / den[, i], den[, i])
         },
         double(1)
+      )
+    } else {
+      vapply(
+        seq_len(dim(num)[[2]]),
+        function(i) {
+          mean(num[den[, i] > 0, i] / den[den[, i] > 0, i])
+        },
+        double(1)
+      )
     }
   }
 }
