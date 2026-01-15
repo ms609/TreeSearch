@@ -1,4 +1,10 @@
 library("TreeTools")
+
+tmp_lib <- tempfile(pattern = "lib")
+dir.create(tmp_lib)
+devtools::install(args = paste0("--library=", tmp_lib))
+library("TreeSearch", lib.loc = tmp_lib)
+
 data("congreveLamsdellMatrices", package = "TreeSearch")
 dataset <- congreveLamsdellMatrices[[42]]
 tree <- AdditionTree(dataset) |> RenumberTips(names(dataset)) |> RootTree(1)
