@@ -1,8 +1,8 @@
-#' Calculate site concordance factor
+#' Concordance factors
 #' 
-#' The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure 
-#' of the strength of support that the dataset presents for a given split in a
-#' tree.
+#' Concordance measures the strength of support that characters in a dataset
+#' present for each split (=edge/branch) in a tree
+#' \insertCite{Minh2020;SmithConc}{TreeSearch}.
 #' 
 #' `QuartetConcordance()` is the proportion of quartets (sets of four leaves)
 #' that are decisive for a split which are also concordant with it.
@@ -36,21 +36,12 @@
 # that is reflected in each split.
 # These give smaller values because a split may be compatible with a character
 # without being identical to it.
-#TODO More thought / explanation needed.
 #' 
 #TODO Finally, `ProfileConcordance()` (to follow)
-#' 
-#' **NOTE:** These functions are under development. They are incompletely
-#' tested, and may change without notice.
-#' Complete documentation and discussion will follow in due course.
 #' 
 # # Renumber before MaximizeParsimony, for `tree`
 #' @inheritParams TreeTools::Renumber
 #' @inheritParams MaximizeParsimony
-#' @param weight Logical specifying whether to weight sites according to the
-#' number of quartets they are decisive for.
-#' 
-#' 
 #' 
 #' @references 
 #' \insertAllCited{}
@@ -59,11 +50,14 @@
 #' data("congreveLamsdellMatrices", package = "TreeSearch")
 #' dataset <- congreveLamsdellMatrices[[1]][, 1:20]
 #' tree <- TreeSearch::referenceTree
-#' qc <- QuartetConcordance(tree, dataset)
+#' 
 #' cc <- ClusteringConcordance(tree, dataset)
+#' mcc <- MutualClusteringConcordance(tree, dataset)
+#' 
+#' qc <- QuartetConcordance(tree, dataset)
+#' 
 #' pc <- PhylogeneticConcordance(tree, dataset)
 #' spc <- SharedPhylogeneticConcordance(tree, dataset)
-#' mcc <- MutualClusteringConcordance(tree, dataset)
 #' 
 #' oPar <- par(mar = rep(0, 4), cex = 0.8) # Set plotting parameters
 #' plot(tree)
@@ -73,7 +67,7 @@
 #' par(oPar) # Restore plotting parameters
 #' 
 #' # Write concordance factors to file
-#' labels <- paste0(qc, "/", cc, "/", pc) # "/" is a valid delimiter
+#' labels <- paste0(cc, "/", qc, "/", pc) # "/" is a valid delimiter
 #' # Identify the node that corresponds to each label
 #' whichNode <- match(TreeTools::NTip(tree) + 1:tree$Nnode, names(qc))
 #' 
@@ -83,14 +77,19 @@
 #' ape::write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
 #' 
 #' # Display correlation between concordance factors
-#' pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)
+#' pairs(cbind(cc, mcc, qc, pc, spc), asp = 1)
 #' @template MRS
+#' @family split support functions
+#' @name SiteConcordance
+NULL
+
+#' @param weight Logical specifying whether to weight sites according to the
+#' number of quartets they are decisive for.
 #' @importFrom ape keep.tip
 #' @importFrom cli cli_progress_bar cli_progress_update
 #' @importFrom utils combn
 #' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
-#' @name SiteConcordance
-#' @family split support functions
+#' @rdname SiteConcordance
 #' @export
 QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
                                return = "mean") {

@@ -7,7 +7,7 @@
 \alias{PhylogeneticConcordance}
 \alias{MutualClusteringConcordance}
 \alias{SharedPhylogeneticConcordance}
-\title{Calculate site concordance factor}
+\title{Concordance factors}
 \usage{
 QuartetConcordance(tree, dataset = NULL, weight = TRUE, return = "mean")
 
@@ -110,9 +110,9 @@ The attribute \code{weighted.mean} gives the mean value, weighted by the
 information content of each character.
 }
 \description{
-The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure
-of the strength of support that the dataset presents for a given split in a
-tree.
+Concordance measures the strength of support that characters in a dataset
+present for each split (=edge/branch) in a tree
+\insertCite{Minh2020;SmithConc}{TreeSearch}.
 }
 \details{
 \code{QuartetConcordance()} is the proportion of quartets (sets of four leaves)
@@ -141,10 +141,6 @@ of quartets for a faster, if potentially less accurate, computation.
 Ambiguous and inapplicable tokens are treated as containing no grouping information
 (i.e. \code{(02)} or \code{-} are each treated as \verb{?}).
 
-\strong{NOTE:} These functions are under development. They are incompletely
-tested, and may change without notice.
-Complete documentation and discussion will follow in due course.
-
 \code{MutualClusteringConcordance()} treats each character as a tree.
 Each token in the character corresponds to a node in the tree whose pendant
 edges are the taxa with that token.
@@ -162,11 +158,14 @@ this tree and \code{tree}.
 data("congreveLamsdellMatrices", package = "TreeSearch")
 dataset <- congreveLamsdellMatrices[[1]][, 1:20]
 tree <- TreeSearch::referenceTree
-qc <- QuartetConcordance(tree, dataset)
+
 cc <- ClusteringConcordance(tree, dataset)
+mcc <- MutualClusteringConcordance(tree, dataset)
+
+qc <- QuartetConcordance(tree, dataset)
+
 pc <- PhylogeneticConcordance(tree, dataset)
 spc <- SharedPhylogeneticConcordance(tree, dataset)
-mcc <- MutualClusteringConcordance(tree, dataset)
 
 oPar <- par(mar = rep(0, 4), cex = 0.8) # Set plotting parameters
 plot(tree)
@@ -176,7 +175,7 @@ TreeTools::LabelSplits(tree, signif(cc, 3), cex = 0.8)
 par(oPar) # Restore plotting parameters
 
 # Write concordance factors to file
-labels <- paste0(qc, "/", cc, "/", pc) # "/" is a valid delimiter
+labels <- paste0(cc, "/", qc, "/", pc) # "/" is a valid delimiter
 # Identify the node that corresponds to each label
 whichNode <- match(TreeTools::NTip(tree) + 1:tree$Nnode, names(qc))
 
@@ -186,7 +185,7 @@ tree$node.label <- labels[whichNode]
 ape::write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
 
 # Display correlation between concordance factors
-pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)
+pairs(cbind(cc, mcc, qc, pc, spc), asp = 1)
 data(congreveLamsdellMatrices)
 myMatrix <- congreveLamsdellMatrices[[10]]
 ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
