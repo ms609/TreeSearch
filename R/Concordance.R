@@ -1,46 +1,46 @@
 #' Concordance factors
-#' 
+#'
 #' Concordance measures the strength of support that characters in a dataset
 #' present for each split (=edge/branch) in a tree
 #' \insertCite{Minh2020;SmithConc}{TreeSearch}.
-#' 
+#'
 # # Renumber before MaximizeParsimony, for `tree`
 #' @inheritParams TreeTools::Renumber
 #' @inheritParams MaximizeParsimony
-#' 
-#' @references 
+#'
+#' @references
 #' \insertAllCited{}
-#' 
-#' @examples 
+#'
+#' @examples
 #' data("congreveLamsdellMatrices", package = "TreeSearch")
 #' dataset <- congreveLamsdellMatrices[[1]][, 1:20]
 #' tree <- TreeSearch::referenceTree
-#' 
+#'
 #' cc <- ClusteringConcordance(tree, dataset)
 #' mcc <- MutualClusteringConcordance(tree, dataset)
-#' 
+#'
 #' qc <- QuartetConcordance(tree, dataset)
-#' 
+#'
 #' pc <- PhylogeneticConcordance(tree, dataset)
 #' spc <- SharedPhylogeneticConcordance(tree, dataset)
-#' 
+#'
 #' oPar <- par(mar = rep(0, 4), cex = 0.8) # Set plotting parameters
 #' plot(tree)
 #' TreeTools::LabelSplits(tree, signif(qc, 3), cex = 0.8)
 #' plot(tree)
 #' TreeTools::LabelSplits(tree, signif(cc, 3), cex = 0.8)
 #' par(oPar) # Restore plotting parameters
-#' 
+#'
 #' # Write concordance factors to file
 #' labels <- paste0(cc, "/", qc, "/", pc) # "/" is a valid delimiter
 #' # Identify the node that corresponds to each label
 #' whichNode <- match(TreeTools::NTip(tree) + 1:tree$Nnode, names(qc))
-#' 
+#'
 #' # The contents of tree$node.label will be written at each node
 #' tree$node.label <- labels[whichNode]
-#' 
+#'
 #' ape::write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
-#' 
+#'
 #' # Display correlation between concordance factors
 #' pairs(cbind(cc, mcc, qc, pc, spc), asp = 1)
 #' @template MRS
@@ -59,15 +59,13 @@ NULL
 #' than expected. Summaries returned by `return = "edge"` or `"char"` report,
 #' respectively, how well each split is supported by all characters, or how
 #' well each character is reflected across all splits.
-#' 
-#' @param return Character specifying what to return.
-#' - `"mean"` returns the mean concordance index at each split across all sites.
-#' - `"all"` returns all values calculated during the working for each site at
-#'  each split.
+#'
+#' @param return Character specifying whether to summarize support per
+#' character (`"char"`) or per edge (`"edge"`). See below for details.
 #' @param normalize Logical or numeric; if `TRUE` the mutual information will be
 #' normalized such that zero corresponds to the expected mutual information of
 #' a randomly drawn character with the same distribution of tokens.
-#' If `FALSE`, zero will correspond to zero mutual information, 
+#' If `FALSE`, zero will correspond to zero mutual information,
 #' even if this is not achievable in practice.
 #' The exact analytical solution, though fast, does not account for
 #' non-independence between splits. This limitation is minor for larger
@@ -75,56 +73,56 @@ NULL
 #' For smaller trees, the expected value for random trees can be approximated
 #' by resampling relabelled trees. Setting `normalize = n` will approximate the
 #' expected value based on _n_ samples.
-#' 
+#'
 #' For `return = "char"`, `"tree"`, values will be normalized such that 1
 #' corresponds to the maximum possible value, and 0 to the expected value.
 #' If `normalize = TRUE`, this will be the expected value for a random
 #' character on the given tree. If `normalize` is numeric, the expected value
 #' will be estimated by fitting the character to `n` uniformly random trees.
-#' 
-#' @returns 
+#'
+#' @returns
 #' `ClusteringConcordance(return = "all")` returns a 3D array where each
-#' slice corresponds to a character (site), each column to a tree split, and 
-#' each row to a different information measure. The `normalized` row gives the 
-#' normalized mutual information between each split-character pair, scaled so 
-#' that 1.0 corresponds to `hBest` (the theoretical maximum mutual information, 
-#' being the minimum of `hSplit` and `hChar`) and 0.0 corresponds to `miRand` 
-#' (the expected mutual information under random association). `hSplit` gives 
-#' the entropy (information content) of each split's bipartition; `hChar` gives 
-#' the entropy of each character's state distribution; `hJoint` gives the joint 
-#' entropy of the split-character confusion matrix; `mi` gives the raw mutual 
-#' information; and `n` records the number of informative observations. 
-#' Negative normalized values indicate observed mutual information below random 
+#' slice corresponds to a character (site), each column to a tree split, and
+#' each row to a different information measure. The `normalized` row gives the
+#' normalized mutual information between each split-character pair, scaled so
+#' that 1.0 corresponds to `hBest` (the theoretical maximum mutual information,
+#' being the minimum of `hSplit` and `hChar`) and 0.0 corresponds to `miRand`
+#' (the expected mutual information under random association). `hSplit` gives
+#' the entropy (information content) of each split's bipartition; `hChar` gives
+#' the entropy of each character's state distribution; `hJoint` gives the joint
+#' entropy of the split-character confusion matrix; `mi` gives the raw mutual
+#' information; and `n` records the number of informative observations.
+#' Negative normalized values indicate observed mutual information below random
 #' expectation. `NA` is returned when `hBest = 0` (no information potential).
-#' 
-#' `ClusteringConcordance(return = "edge")` returns a vector where each element 
+#'
+#' `ClusteringConcordance(return = "edge")` returns a vector where each element
 #' corresponds to a split (an edge of the tree) and gives the normalized mutual
 #' information between that split and the character data, averaged across all
 #' characters.
-#' When `normalize = TRUE` (default), values are scaled relative to random 
-#' expectation; when `FALSE`, raw mutual information normalized by `hBest` is 
+#' When `normalize = TRUE` (default), values are scaled relative to random
+#' expectation; when `FALSE`, raw mutual information normalized by `hBest` is
 #' returned.
-#' 
-#' `ClusteringConcordance(return = "char")` returns a vector where each element 
-#' corresponds to a character (site) and gives the entropy-weighted average 
-#' normalized mutual information between that character and all tree splits. 
-#' Characters with higher information content receive proportionally more weight 
+#'
+#' `ClusteringConcordance(return = "char")` returns a vector where each element
+#' corresponds to a character (site) and gives the entropy-weighted average
+#' normalized mutual information between that character and all tree splits.
+#' Characters with higher information content receive proportionally more weight
 #' from splits that can potentially convey more information about them.
 #'
-#' `ClusteringConcordance(return = "tree")` returns a single value representing 
+#' `ClusteringConcordance(return = "tree")` returns a single value representing
 #' the overall concordance between the tree topology and the character data.
 #' This averages the fit of the best-matching split for each character.
 #' This is included for completeness, though it is not clear that this is a useful
 #' or meaningful measure.
-# 
+#
 # I had previously considered calculating the entropy-weighted average of normalized
-# mutual information across all split-character pairs, where each pair contributes 
+# mutual information across all split-character pairs, where each pair contributes
 # proportionally to its potential information content.
 # The problem here is that imperfect matches between compatible splits
 # come to dominate, resulting in a small score that gets smaller as trees get
 # larger, even with a perfect fit.
-#' 
-#' 
+#'
+#'
 #' @seealso
 #' - [Consistency()]
 #' @examples
@@ -138,8 +136,12 @@ NULL
 #' MutualClusteringInfo
 #' @importFrom TreeTools as.Splits MatchStrings Subsplit TipLabels
 #' @export
-ClusteringConcordance <- function (tree, dataset, return = "edge",
-                                   normalize = TRUE) {
+ClusteringConcordance <- function(
+  tree,
+  dataset,
+  return = "edge",
+  normalize = TRUE
+) {
   # Check inputs
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
@@ -149,28 +151,28 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
   }
-  
+
   keep <- MatchStrings(TipLabels(tree), names(dataset), warning)
   if (length(keep) == 0) {
     return(NULL)
   }
   dataset <- dataset[keep]
-  
+
   # Prepare data
   splits <- as.logical(as.Splits(tree))
-  
+
   at <- attributes(dataset)
   cont <- at[["contrast"]]
   if ("-" %in% colnames(cont)) {
     cont[cont[, "-"] > 0, ] <- 1
   }
   ambiguous <- rowSums(cont) != 1
-  
+
   mat <- matrix(as.integer(unlist(dataset)), length(dataset), byrow = TRUE)
   mat[mat %in% which(ambiguous)] <- NA_integer_
   maxToken <- max(mat, na.rm = TRUE)
   tokens <- as.character(seq_len(maxToken))
-  mat <- apply(mat, 2, function (x) {
+  mat <- apply(mat, 2, function(x) {
     uniques <- tabulate(x, maxToken) == 1
     x[x %in% tokens[uniques]] <- NA_integer_
     x
@@ -213,7 +215,7 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
     # Matrix to 3D array
     dim(h) <- c(dim(h), 1)
   }
-  
+
   h[abs(h) < sqrt(.Machine$double.eps)] <- 0
   hh <- h[, , at[["index"]], drop = FALSE]
   
@@ -223,11 +225,11 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
                        hh["hSplit", , , drop = FALSE] -
                        hh["hJoint", , , drop = FALSE], NULL)
   miRand <- `rownames<-`(hh["miRand", , , drop = FALSE], NULL)
-  norm <- if(isFALSE(normalize)) {
-      ifelse(hBest == 0, NA, mi / hBest)
-    } else {
-      ifelse(hBest == 0, NA, .Rezero(mi / hBest, miRand / hBest))
-    }
+  norm <- if (isFALSE(normalize)) {
+    ifelse(hBest == 0, NA, mi / hBest)
+  } else {
+    ifelse(hBest == 0, NA, .Rezero(mi / hBest, miRand / hBest))
+  }
 
   returnType <- pmatch(tolower(return), c("all", "edge", "character", "tree"),
                        nomatch = 1L)
@@ -249,7 +251,7 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
       mcseTree <- sqrt(treeVar / normalize)
     }
   }
-  
+
   # Return:
   switch(returnType,
          # all
@@ -328,7 +330,7 @@ ClusteringConcordance <- function (tree, dataset, return = "edge",
 #' Generate colour to depict the amount and quality of observations
 #' @param amount Numeric vector of values between 0 and 1, denoting the relative
 #' amount of information
-#' @param quality Numeric vector of values between -1 and 1, denoting the 
+#' @param quality Numeric vector of values between -1 and 1, denoting the
 #' quality of observations, where 0 is neutral.
 #' @return `QACol()` returns an RGB hex code for a colour, where lighter colours
 #' correspond to entries with a higher `amount`; unsaturated colours denote
@@ -389,7 +391,7 @@ QCol <- function(amount, quality) {
 
 #' @rdname QACol
 #' @param where Location of legend, passed to `par(fig = where)`
-#' @param n Integer vector giving number of cells to plot in swatch for 
+#' @param n Integer vector giving number of cells to plot in swatch for
 #' `quality` and `amount`.
 #' @inheritParams ConcordanceTable
 #' @export
@@ -503,7 +505,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
 #' @importFrom TreeTools MatchStrings
 #' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
 #' @export
-MutualClusteringConcordance <- function (tree, dataset) {
+MutualClusteringConcordance <- function(tree, dataset) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
@@ -567,8 +569,12 @@ MutualClusteringConcordance <- function (tree, dataset) {
 #' @importFrom utils combn
 #' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
 #' @export
-QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
-                               return = "mean") {
+QuartetConcordance <- function(
+  tree,
+  dataset = NULL,
+  weight = TRUE,
+  return = "edge"
+) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
@@ -660,7 +666,7 @@ QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
       .ExpectedMICache$get(key)
     } else {
       ret <- expected_mi(a, b)
-      
+
       # Cache:
       .ExpectedMICache$set(key, ret)
       # Return:
@@ -678,10 +684,10 @@ QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
 }
 
 #' @rdname SiteConcordance
-#' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits 
+#' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
 #' MatchStrings
 #' @export
-PhylogeneticConcordance <- function (tree, dataset) {
+PhylogeneticConcordance <- function(tree, dataset) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
@@ -731,7 +737,7 @@ PhylogeneticConcordance <- function (tree, dataset) {
 #' @importFrom TreeTools as.multiPhylo MatchStrings
 #' @importFrom TreeDist ClusteringInfo SharedPhylogeneticInfo
 #' @export
-SharedPhylogeneticConcordance <- function (tree, dataset) {
+SharedPhylogeneticConcordance <- function(tree, dataset) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
     return(NULL)
@@ -752,18 +758,18 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 }
 
 #' Evaluate the concordance of information between a tree and a dataset
-#' 
+#'
 #' Details the amount of information in a phylogenetic dataset that is
 #' consistent with a specified phylogenetic tree, and the signal:noise
 #' ratio of the character matrix implied if the tree is true.
-#' 
+#'
 #' Presently restricted to datasets whose characters contain a maximum of
 #' two parsimony-informative states.
-#' 
+#'
 #' @return `ConcordantInformation()` returns a named vector with elements:
-#' 
+#'
 #' - `informationContent`: cladistic information content of `dataset`
-#' - `signal`, `noise`: amount of cladistic information that represents 
+#' - `signal`, `noise`: amount of cladistic information that represents
 #' phylogenetic signal and noise, according to `tree`
 #' - `signalToNoise`: the implied signal:noise ratio of `dataset`
 #' - `treeInformation`: the cladistic information content of a bifurcating tree
@@ -775,7 +781,7 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' - `ignored`: information content of characters whose signal and noise could
 #' not be calculated (too many states) and so are not included in the totals
 #' above.
-#' 
+#'
 #' @inheritParams TreeTools::Renumber
 #' @inheritParams MaximizeParsimony
 #' @examples
@@ -785,16 +791,16 @@ SharedPhylogeneticConcordance <- function (tree, dataset) {
 #' @template MRS
 #' @importFrom TreeTools Log2UnrootedMult Log2Unrooted MatchStrings
 #' @export
-ConcordantInformation <- function (tree, dataset) {
+ConcordantInformation <- function(tree, dataset) {
   dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
   originalInfo <- sum(apply(PhyDatToMatrix(dataset), 2, CharacterInformation))
   dataset <- PrepareDataProfile(dataset)
-  
+
   extraSteps <- CharacterLength(tree, dataset, compress = TRUE) -
     MinimumLength(dataset, compress = TRUE)
   chars <- matrix(unlist(dataset), attr(dataset, "nr"))
   ambiguousToken <- which(attr(dataset, "allLevels") == "?")
-  asSplits <- apply(chars, 1, function (x) {
+  asSplits <- apply(chars, 1, function(x) {
     ret <- table(x)
     if (length(ambiguousToken) != 0) {
       ret[names(ret) != ambiguousToken]
@@ -821,8 +827,7 @@ ConcordantInformation <- function (tree, dataset) {
   }, double(1))
   noise <- ic - signal
   noise[noise < sqrt(.Machine[["double.eps"]])] <- 0
-  
-  
+
   index <- attr(dataset, "index")
   if (any(is.na(signal))) {
     na <- is.na(signal)
@@ -837,7 +842,7 @@ ConcordantInformation <- function (tree, dataset) {
     totalNoise <- sum(noise[index], na.rm = TRUE)
     totalSignal <- sum(signal[index], na.rm = TRUE)
     signalNoise <- totalSignal / totalNoise
-    
+
     infoNeeded <- Log2Unrooted(length(dataset))
     infoOverkill <- totalInfo / infoNeeded
     
@@ -855,7 +860,7 @@ ConcordantInformation <- function (tree, dataset) {
     totalSignal <- sum(signal[index])
     signalNoise <- totalSignal / totalNoise
     discarded = 0
-    
+
     infoNeeded <- Log2Unrooted(length(dataset))
     infoOverkill <- totalInfo / infoNeeded
     discarded <- originalInfo - totalInfo
@@ -872,22 +877,23 @@ ConcordantInformation <- function (tree, dataset) {
             signif(infoNeeded), " needed.  ",
             "S:N = ", signif(signalNoise), "\n")
   }
-  
+
   # Return:
-  c(informationContent = totalInfo,
+  c(
+    informationContent = totalInfo,
     signal = totalSignal,
     noise = totalNoise,
-    signalToNoise = signalNoise, 
-    
+    signalToNoise = signalNoise,
+
     treeInformation = infoNeeded,
     matrixToTree = infoOverkill,
     ignored = discarded
-    )
+  )
 }
 
 #' @rdname ConcordantInformation
 #' @export
-Evaluate <- function (tree, dataset) {
+Evaluate <- function(tree, dataset) {
   .Deprecated("ConcordantInformation()")
   ConcordantInformation(tree, dataset)
 }
