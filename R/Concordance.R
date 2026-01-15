@@ -4,32 +4,6 @@
 #' present for each split (=edge/branch) in a tree
 #' \insertCite{Minh2020;SmithConc}{TreeSearch}.
 #' 
-#' `QuartetConcordance()` is the proportion of quartets (sets of four leaves)
-#' that are decisive for a split which are also concordant with it.
-#' For example, a quartet with the characters `0 0 0 1` is not decisive, as 
-#' all relationships between those leaves are equally parsimonious.
-#' But a quartet with characters `0 0 1 1` is decisive, and is concordant
-#' with any tree that groups the first two leaves together to the exclusion
-#' of the second.
-#' 
-#' By default, the reported value weights each site by the number of quartets
-#' it is decisive for.  This value can be interpreted as the proportion of
-#' all decisive quartets that are concordant with a split.
-#' If `weight = FALSE`, the reported value is the mean of the concordance
-#' value for each site.  
-#' Consider a split associated with two sites:
-#' one that is concordant with 25% of 96 decisive quartets, and
-#' a second that is concordant with 75% of 4 decisive quartets.
-#' If `weight = TRUE`, the split concordance will be 24 + 3 / 96 + 4 = 27%.
-#' If `weight = FALSE`, the split concordance will be mean(75%, 25%) = 50%.
-#' 
-#' `QuartetConcordance()` is computed exactly, using all quartets, where as
-#' other implementations (e.g. IQ-TREE) follow
-#' \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
-#'  of quartets for a faster, if potentially less accurate, computation.
-#' Ambiguous and inapplicable tokens are treated as containing no grouping information
-#' (i.e. `(02)` or `-` are each treated as `?`).
-#' 
 # # Renumber before MaximizeParsimony, for `tree`
 #' @inheritParams TreeTools::Renumber
 #' @inheritParams MaximizeParsimony
@@ -75,6 +49,17 @@
 NULL
 
 #' @rdname SiteConcordance
+#' @details
+#' `ClusteringConcordance()` measures how well each split reflects the
+#' grouping information present in each character
+#' \insertCite{SmithConc}{TreeSearch}. It treats characters and
+#' splits as clusterings of taxa, quantifying their agreement using normalized
+#' mutual information. Values range from 1 (perfect agreement) to 0 (no more
+#' agreement than expected by chance); negative values indicate less agreement
+#' than expected. Summaries returned by `return = "edge"` or `"char"` report,
+#' respectively, how well each split is supported by all characters, or how
+#' well each character is reflected across all splits.
+#' 
 #' @param return Character specifying what to return.
 #' - `"mean"` returns the mean concordance index at each split across all sites.
 #' - `"all"` returns all values calculated during the working for each site at
@@ -129,16 +114,15 @@ NULL
 #' `ClusteringConcordance(return = "tree")` returns a single value representing 
 #' the overall concordance between the tree topology and the character data.
 #' This averages the fit of the best-matching split for each character.
-#' This is probably biased. I have not identified a circumstance in which it
-#' produces meaningful results.  Let me know if you find one.
-#' 
-#' I had previously considered calculating
-#' the entropy-weighted average of normalized mutual 
-#' information across all split-character pairs, where each pair contributes 
-#' proportionally to its potential information content.
-#' The problem here is that imperfect matches between compatible splits
-#' come to dominate, resulting in a small score that gets smaller as trees get
-#' larger, even with a perfect fit.
+#' This is included for completeness, though it is not clear that this is a useful
+#' or meaningful measure.
+# 
+# I had previously considered calculating the entropy-weighted average of normalized
+# mutual information across all split-character pairs, where each pair contributes 
+# proportionally to its potential information content.
+# The problem here is that imperfect matches between compatible splits
+# come to dominate, resulting in a small score that gets smaller as trees get
+# larger, even with a perfect fit.
 #' 
 #' 
 #' @seealso
@@ -505,11 +489,12 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
 
 #' @rdname SiteConcordance
 #' @details
-#' `MutualClusteringConcordance()` treats each character as a tree.
-#' Each token in the character corresponds to a node in the tree whose pendant
-#' edges are the taxa with that token.
-#' The Mutual Clustering Concordance is then the Mutual Clustering Information
-#' \insertCite{Smith2020}{TreeSearch} of the tree thus defined with `tree`.
+#' `MutualClusteringConcordance()` provides a character‑wise summary that
+#' emphasises each character’s best‑matching split(s). It treats each character
+#' as a simple tree and computes the mutual clustering information between this
+#' character‑tree and the supplied phylogeny. High values identify characters
+#' whose signal is well represented anywhere in the tree, even if concentrated
+#' on a single edge.
 #' 
 #' @return `MutualClusteringConcordance()` returns the mutual clustering
 #' concordance of each character in `dataset` with `tree`.
@@ -539,13 +524,40 @@ MutualClusteringConcordance <- function (tree, dataset) {
   structure(ret, weighted.mean = weighted.mean(ret, support[, 2]))
 }
 
+#' @rdname SiteConcordance
+#' @details
+#' `QuartetConcordance()` is the proportion of quartets (sets of four leaves)
+#' that are decisive for a split which are also concordant with it
+#' (the site concordance factor \insertCite{Minh2020}{TreeSearch}).
+#' For example, a quartet with the characters `0 0 0 1` is not decisive, as 
+#' all relationships between those leaves are equally parsimonious.
+#' But a quartet with characters `0 0 1 1` is decisive, and is concordant
+#' with any tree that groups the first two leaves together to the exclusion
+#' of the second.
+#' 
+#' By default, the reported value weights each site by the number of quartets
+#' it is decisive for.  This value can be interpreted as the proportion of
+#' all decisive quartets that are concordant with a split.
+#' If `weight = FALSE`, the reported value is the mean of the concordance
+#' value for each site.  
+#' Consider a split associated with two sites:
+#' one that is concordant with 25% of 96 decisive quartets, and
+#' a second that is concordant with 75% of 4 decisive quartets.
+#' If `weight = TRUE`, the split concordance will be 24 + 3 / 96 + 4 = 27%.
+#' If `weight = FALSE`, the split concordance will be mean(75%, 25%) = 50%.
+#' 
+#' `QuartetConcordance()` is computed exactly, using all quartets, where as
+#' other implementations (e.g. IQ-TREE) follow
+#' \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
+#'  of quartets for a faster, if potentially less accurate, computation.
+#' Ambiguous and inapplicable tokens are treated as containing no grouping information
+#' (i.e. `(02)` or `-` are each treated as `?`).
 #' @param weight Logical specifying whether to weight sites according to the
 #' number of quartets they are decisive for.
 #' @importFrom ape keep.tip
 #' @importFrom cli cli_progress_bar cli_progress_update
 #' @importFrom utils combn
 #' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
-#' @rdname SiteConcordance
 #' @export
 QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
                                return = "mean") {

@@ -2,20 +2,20 @@
 % Please edit documentation in R/Concordance.R
 \name{SiteConcordance}
 \alias{SiteConcordance}
-\alias{QuartetConcordance}
 \alias{ClusteringConcordance}
-\alias{PhylogeneticConcordance}
 \alias{MutualClusteringConcordance}
+\alias{QuartetConcordance}
+\alias{PhylogeneticConcordance}
 \alias{SharedPhylogeneticConcordance}
 \title{Concordance factors}
 \usage{
-QuartetConcordance(tree, dataset = NULL, weight = TRUE, return = "mean")
-
 ClusteringConcordance(tree, dataset, return = "edge", normalize = TRUE)
 
-PhylogeneticConcordance(tree, dataset)
-
 MutualClusteringConcordance(tree, dataset)
+
+QuartetConcordance(tree, dataset = NULL, weight = TRUE, return = "mean")
+
+PhylogeneticConcordance(tree, dataset)
 
 SharedPhylogeneticConcordance(tree, dataset)
 }
@@ -27,9 +27,6 @@ SharedPhylogeneticConcordance(tree, dataset)
 Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
 Additive (ordered) characters can be handled using
 \code{\link[TreeTools]{Decompose}()}.}
-
-\item{weight}{Logical specifying whether to weight sites according to the
-number of quartets they are decisive for.}
 
 \item{return}{Character specifying what to return.
 \itemize{
@@ -55,6 +52,9 @@ corresponds to the maximum possible value, and 0 to the expected value.
 If \code{normalize = TRUE}, this will be the expected value for a random
 character on the given tree. If \code{normalize} is numeric, the expected value
 will be estimated by fitting the character to \code{n} uniformly random trees.}
+
+\item{weight}{Logical specifying whether to weight sites according to the
+number of quartets they are decisive for.}
 }
 \value{
 \code{ClusteringConcordance(return = "all")} returns a 3D array where each
@@ -88,16 +88,8 @@ from splits that can potentially convey more information about them.
 \code{ClusteringConcordance(return = "tree")} returns a single value representing
 the overall concordance between the tree topology and the character data.
 This averages the fit of the best-matching split for each character.
-This is probably biased. I have not identified a circumstance in which it
-produces meaningful results.  Let me know if you find one.
-
-I had previously considered calculating
-the entropy-weighted average of normalized mutual
-information across all split-character pairs, where each pair contributes
-proportionally to its potential information content.
-The problem here is that imperfect matches between compatible splits
-come to dominate, resulting in a small score that gets smaller as trees get
-larger, even with a perfect fit.
+This is included for completeness, though it is not clear that this is a useful
+or meaningful measure.
 
 \code{MutualClusteringConcordance()} returns the mutual clustering
 concordance of each character in \code{dataset} with \code{tree}.
@@ -115,8 +107,26 @@ present for each split (=edge/branch) in a tree
 \insertCite{Minh2020;SmithConc}{TreeSearch}.
 }
 \details{
+\code{ClusteringConcordance()} measures how well each split reflects the
+grouping information present in each character
+\insertCite{SmithConc}{TreeSearch}. It treats characters and
+splits as clusterings of taxa, quantifying their agreement using normalized
+mutual information. Values range from 1 (perfect agreement) to 0 (no more
+agreement than expected by chance); negative values indicate less agreement
+than expected. Summaries returned by \code{return = "edge"} or \code{"char"} report,
+respectively, how well each split is supported by all characters, or how
+well each character is reflected across all splits.
+
+\code{MutualClusteringConcordance()} provides a character‑wise summary that
+emphasises each character’s best‑matching split(s). It treats each character
+as a simple tree and computes the mutual clustering information between this
+character‑tree and the supplied phylogeny. High values identify characters
+whose signal is well represented anywhere in the tree, even if concentrated
+on a single edge.
+
 \code{QuartetConcordance()} is the proportion of quartets (sets of four leaves)
-that are decisive for a split which are also concordant with it.
+that are decisive for a split which are also concordant with it
+(the site concordance factor \insertCite{Minh2020}{TreeSearch}).
 For example, a quartet with the characters \verb{0 0 0 1} is not decisive, as
 all relationships between those leaves are equally parsimonious.
 But a quartet with characters \verb{0 0 1 1} is decisive, and is concordant
@@ -140,12 +150,6 @@ other implementations (e.g. IQ-TREE) follow
 of quartets for a faster, if potentially less accurate, computation.
 Ambiguous and inapplicable tokens are treated as containing no grouping information
 (i.e. \code{(02)} or \code{-} are each treated as \verb{?}).
-
-\code{MutualClusteringConcordance()} treats each character as a tree.
-Each token in the character corresponds to a node in the tree whose pendant
-edges are the taxa with that token.
-The Mutual Clustering Concordance is then the Mutual Clustering Information
-\insertCite{Smith2020}{TreeSearch} of the tree thus defined with \code{tree}.
 
 \code{SharedPhylogeneticConcordance()} treats each character as a simple tree.
 Each token in the character corresponds to a node whose pendant edges are the
