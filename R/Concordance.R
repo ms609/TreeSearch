@@ -30,15 +30,6 @@
 #' Ambiguous and inapplicable tokens are treated as containing no grouping information
 #' (i.e. `(02)` or `-` are each treated as `?`).
 #' 
-# `ClusteringConcordance()` and `PhylogeneticConcordance()` respectively report
-# the proportion of clustering information and phylogenetic information 
-# \insertCite{@as defined in @Vinh2010, @SmithDist}{TreeDist} within a dataset
-# that is reflected in each split.
-# These give smaller values because a split may be compatible with a character
-# without being identical to it.
-#' 
-#TODO Finally, `ProfileConcordance()` (to follow)
-#' 
 # # Renumber before MaximizeParsimony, for `tree`
 #' @inheritParams TreeTools::Renumber
 #' @inheritParams MaximizeParsimony
@@ -82,113 +73,6 @@
 #' @family split support functions
 #' @name SiteConcordance
 NULL
-
-#' @param weight Logical specifying whether to weight sites according to the
-#' number of quartets they are decisive for.
-#' @importFrom ape keep.tip
-#' @importFrom cli cli_progress_bar cli_progress_update
-#' @importFrom utils combn
-#' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
-#' @rdname SiteConcordance
-#' @export
-QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
-                               return = "mean") {
-  if (is.null(dataset)) {
-    warning("Cannot calculate concordance without `dataset`.")
-    return(NULL)
-  }
-  if (!inherits(dataset, "phyDat")) {
-    stop("`dataset` must be a phyDat object.")
-  }
-  tipLabels <- intersect(TipLabels(tree), names(dataset))
-  if (!length(tipLabels)) {
-    warning("No overlap between tree labels and dataset.")
-    return(NULL)
-  }
-  dataset <- dataset[tipLabels, drop = FALSE]
-  splits <- as.Splits(tree, dataset)
-  logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
-                       logical(NTip(dataset)))
-  
-  characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
-  charLevels <- attr(dataset, "allLevels")
-  isAmbig <- rowSums(attr(dataset, "contrast")) > 1
-  isInapp <- charLevels == "-"
-  nonGroupingLevels <- charLevels[isAmbig | isInapp]
-  characters[characters %in% nonGroupingLevels] <- NA
-  
-  charInt <- `mode<-`(characters, "integer")
-  raw_counts <- quartet_concordance(logiSplits, charInt)
-  
-  num <- raw_counts$concordant
-  den <- raw_counts$decisive
-  
-  options <- c("char", "default")
-  return <- options[[pmatch(tolower(trimws(return)), options,
-                            nomatch = length(options))]]
-  
-  if (return == "default") {
-    if (isTRUE(weight)) {
-      # Sum numerator and denominator across sites (columns), then divide
-      # This matches weighted.mean(num/den, den) == sum(num) / sum(den)
-      split_sums_num <- rowSums(num)
-      split_sums_den <- rowSums(den)
-      ret <- ifelse(split_sums_den == 0, NA_real_, split_sums_num / split_sums_den)
-    } else {
-      # Mean of ratios per site
-      # Avoid division by zero (0/0 -> NaN -> NA handled by na.rm)
-      ratios <- num / den
-      # Replace NaN/Inf with NA for rowMeans calculation
-      ratios[!is.finite(ratios)] <- NA
-      ret <- rowMeans(ratios, na.rm = TRUE)
-    }
-    
-    setNames(ret, names(splits))
-  } else {
-    p <- num / den
-    if (isTRUE(weight)) {
-      vapply(seq_len(dim(num)[[2]]), function(i) {
-        weighted.mean(num[, i] / den[, i], den[, i])
-      }, double(1))
-    } else {
-      vapply(seq_len(dim(num)[[2]]), function(i) {
-        mean(num[den[, i] > 0, i] / den[den[, i] > 0, i])
-      }, double(1))
-    }
-  }
-}
-
-#' @importFrom fastmap fastmap
-.ExpectedMICache <- fastmap()
-
-# @param a must be a vector of length <= 2
-# @param b may be longer
-#' @importFrom base64enc base64encode
-.ExpectedMI <- function(a, b) {
-  if (length(a) < 2 || length(b) < 2) {
-    0
-  } else {
-    key <- base64enc::base64encode(mi_key(a, b))
-    if (.ExpectedMICache$has(key)) {
-      .ExpectedMICache$get(key)
-    } else {
-      ret <- expected_mi(a, b)
-      
-      # Cache:
-      .ExpectedMICache$set(key, ret)
-      # Return:
-      ret
-    }
-  }
-}
-
-#' Re-zero a value by normalization
-#' @param value value ranging from zero to one
-#' @param zero new value to set as zero
-#' @keywords internal
-.Rezero <- function(value, zero) {
-  (value - zero) / (1 - zero)
-}
 
 #' @rdname SiteConcordance
 #' @param return Character specifying what to return.
@@ -620,6 +504,149 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
 }
 
 #' @rdname SiteConcordance
+#' @details
+#' `MutualClusteringConcordance()` treats each character as a tree.
+#' Each token in the character corresponds to a node in the tree whose pendant
+#' edges are the taxa with that token.
+#' The Mutual Clustering Concordance is then the Mutual Clustering Information
+#' \insertCite{Smith2020}{TreeSearch} of the tree thus defined with `tree`.
+#' 
+#' @return `MutualClusteringConcordance()` returns the mutual clustering
+#' concordance of each character in `dataset` with `tree`.
+#' The attribute `weighted.mean` gives the mean value, weighted by the
+#' information content of each character.
+#' @importFrom TreeTools MatchStrings
+#' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
+#' @export
+MutualClusteringConcordance <- function (tree, dataset) {
+  if (is.null(dataset)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
+  
+  dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
+  splits <- as.multiPhylo(as.Splits(tree))
+  characters <- as.multiPhylo(dataset)
+  
+  support <- rowSums(vapply(characters, function (char) {
+    trimmed <- KeepTip(splits, TipLabels(char))
+    cbind(mi = MutualClusteringInfo(char, trimmed),
+          possible = ClusteringEntropy(trimmed))
+  }, matrix(NA_real_, length(splits), 2)), dims = 2)
+  
+  ret <- support[, 1] / support[, 2]
+  # Return:
+  structure(ret, weighted.mean = weighted.mean(ret, support[, 2]))
+}
+
+#' @param weight Logical specifying whether to weight sites according to the
+#' number of quartets they are decisive for.
+#' @importFrom ape keep.tip
+#' @importFrom cli cli_progress_bar cli_progress_update
+#' @importFrom utils combn
+#' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
+#' @rdname SiteConcordance
+#' @export
+QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
+                               return = "mean") {
+  if (is.null(dataset)) {
+    warning("Cannot calculate concordance without `dataset`.")
+    return(NULL)
+  }
+  if (!inherits(dataset, "phyDat")) {
+    stop("`dataset` must be a phyDat object.")
+  }
+  tipLabels <- intersect(TipLabels(tree), names(dataset))
+  if (!length(tipLabels)) {
+    warning("No overlap between tree labels and dataset.")
+    return(NULL)
+  }
+  dataset <- dataset[tipLabels, drop = FALSE]
+  splits <- as.Splits(tree, dataset)
+  logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
+                       logical(NTip(dataset)))
+  
+  characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
+  charLevels <- attr(dataset, "allLevels")
+  isAmbig <- rowSums(attr(dataset, "contrast")) > 1
+  isInapp <- charLevels == "-"
+  nonGroupingLevels <- charLevels[isAmbig | isInapp]
+  characters[characters %in% nonGroupingLevels] <- NA
+  
+  charInt <- `mode<-`(characters, "integer")
+  raw_counts <- quartet_concordance(logiSplits, charInt)
+  
+  num <- raw_counts$concordant
+  den <- raw_counts$decisive
+  
+  options <- c("char", "default")
+  return <- options[[pmatch(tolower(trimws(return)), options,
+                            nomatch = length(options))]]
+  
+  if (return == "default") {
+    if (isTRUE(weight)) {
+      # Sum numerator and denominator across sites (columns), then divide
+      # This matches weighted.mean(num/den, den) == sum(num) / sum(den)
+      split_sums_num <- rowSums(num)
+      split_sums_den <- rowSums(den)
+      ret <- ifelse(split_sums_den == 0, NA_real_, split_sums_num / split_sums_den)
+    } else {
+      # Mean of ratios per site
+      # Avoid division by zero (0/0 -> NaN -> NA handled by na.rm)
+      ratios <- num / den
+      # Replace NaN/Inf with NA for rowMeans calculation
+      ratios[!is.finite(ratios)] <- NA
+      ret <- rowMeans(ratios, na.rm = TRUE)
+    }
+    
+    setNames(ret, names(splits))
+  } else {
+    p <- num / den
+    if (isTRUE(weight)) {
+      vapply(seq_len(dim(num)[[2]]), function(i) {
+        weighted.mean(num[, i] / den[, i], den[, i])
+      }, double(1))
+    } else {
+      vapply(seq_len(dim(num)[[2]]), function(i) {
+        mean(num[den[, i] > 0, i] / den[den[, i] > 0, i])
+      }, double(1))
+    }
+  }
+}
+
+#' @importFrom fastmap fastmap
+.ExpectedMICache <- fastmap()
+
+# @param a must be a vector of length <= 2
+# @param b may be longer
+#' @importFrom base64enc base64encode
+.ExpectedMI <- function(a, b) {
+  if (length(a) < 2 || length(b) < 2) {
+    0
+  } else {
+    key <- base64enc::base64encode(mi_key(a, b))
+    if (.ExpectedMICache$has(key)) {
+      .ExpectedMICache$get(key)
+    } else {
+      ret <- expected_mi(a, b)
+      
+      # Cache:
+      .ExpectedMICache$set(key, ret)
+      # Return:
+      ret
+    }
+  }
+}
+
+#' Re-zero a value by normalization
+#' @param value value ranging from zero to one
+#' @param zero new value to set as zero
+#' @keywords internal
+.Rezero <- function(value, zero) {
+  (value - zero) / (1 - zero)
+}
+
+#' @rdname SiteConcordance
 #' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits 
 #' MatchStrings
 #' @export
@@ -656,42 +683,6 @@ PhylogeneticConcordance <- function (tree, dataset) {
   
   # Return:
   support[, 1] / support[, 2]
-}
-
-#' @rdname SiteConcordance
-#' @details
-#' `MutualClusteringConcordance()` treats each character as a tree.
-#' Each token in the character corresponds to a node in the tree whose pendant
-#' edges are the taxa with that token.
-#' The Mutual Clustering Concordance is then the Mutual Clustering Information
-#' \insertCite{Smith2020}{TreeSearch} of the tree thus defined with `tree`.
-#' 
-#' @return `MutualClusteringConcordance()` returns the mutual clustering
-#' concordance of each character in `dataset` with `tree`.
-#' The attribute `weighted.mean` gives the mean value, weighted by the
-#' information content of each character.
-#' @importFrom TreeTools MatchStrings
-#' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
-#' @export
-MutualClusteringConcordance <- function (tree, dataset) {
-  if (is.null(dataset)) {
-    warning("Cannot calculate concordance without `dataset`.")
-    return(NULL)
-  }
-  
-  dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
-  splits <- as.multiPhylo(as.Splits(tree))
-  characters <- as.multiPhylo(dataset)
-  
-  support <- rowSums(vapply(characters, function (char) {
-    trimmed <- KeepTip(splits, TipLabels(char))
-    cbind(mi = MutualClusteringInfo(char, trimmed),
-          possible = ClusteringEntropy(trimmed))
-  }, matrix(NA_real_, length(splits), 2)), dims = 2)
-  
-  ret <- support[, 1] / support[, 2]
-  # Return:
-  structure(ret, weighted.mean = weighted.mean(ret, support[, 2]))
 }
 
 #' @rdname SiteConcordance
