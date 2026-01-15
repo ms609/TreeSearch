@@ -50,36 +50,51 @@ NULL
 
 #' @rdname SiteConcordance
 #' @details
-#' `ClusteringConcordance()` measures how well each split reflects the
-#' grouping information present in each character
-#' \insertCite{SmithConc}{TreeSearch}. It treats characters and
-#' splits as clusterings of taxa, quantifying their agreement using normalized
-#' mutual information. Values range from 1 (perfect agreement) to 0 (no more
-#' agreement than expected by chance); negative values indicate less agreement
-#' than expected. Summaries returned by `return = "edge"` or `"char"` report,
-#' respectively, how well each split is supported by all characters, or how
-#' well each character is reflected across all splits.
+#' `ClusteringConcordance()` measures how well each tree split reflects the
+#' grouping structure implied by each character
+#' \insertCite{SmithConc}{TreeSearch}.
+#' Characters and splits are treated as clusterings of taxa, and their agreement
+#' is quantified using mutual information (MI). All reported values are scaled 
+#' so that 1 corresponds to the maximum possible mutual information for each
+#' split–character pair (`hBest`).
 #'
-#' @param return Character specifying whether to summarize support per
-#' character (`"char"`) or per edge (`"edge"`). See below for details.
-#' @param normalize Logical or numeric; if `TRUE` the mutual information will be
-#' normalized such that zero corresponds to the expected mutual information of
-#' a randomly drawn character with the same distribution of tokens.
-#' If `FALSE`, zero will correspond to zero mutual information,
-#' even if this is not achievable in practice.
-#' The exact analytical solution, though fast, does not account for
-#' non-independence between splits. This limitation is minor for larger
-#' trees, and becomes negligible for trees with more than ~200 leaves.
-#' For smaller trees, the expected value for random trees can be approximated
-#' by resampling relabelled trees. Setting `normalize = n` will approximate the
-#' expected value based on _n_ samples.
+#' The `normalize` argument specifies how the zero point is defined.
 #'
-#' For `return = "char"`, `"tree"`, values will be normalized such that 1
-#' corresponds to the maximum possible value, and 0 to the expected value.
-#' If `normalize = TRUE`, this will be the expected value for a random
-#' character on the given tree. If `normalize` is numeric, the expected value
-#' will be estimated by fitting the character to `n` uniformly random trees.
+#' - If `normalize = FALSE`, zero corresponds to *zero* MI, without correcting
+#'   for the positive bias that arises because MI is rarely exactly zero in
+#'   finite samples.
 #'
+#' - If `normalize = TRUE`, the expected MI is computed using an analytical
+#'   approximation based on the distribution of character tokens. This is fast
+#'   and generally accurate for large trees (≈200+ taxa), but does not account 
+#'   for correlation between splits.
+#'
+#' - If `normalize` is a positive integer `n`, the expected MI is estimated
+#'   empirically by fitting each character to `n` uniformly random trees and
+#'   averaging the resulting MI values. This Monte Carlo approach provides a
+#'   more accurate baseline for small trees, for which the analytical
+#'   approximation is biased. Monte Carlo standard errors are returned.
+#'
+#' @param return Character specifying the summary to return. Options are:
+#'   - `"edge"`: average concordance of each tree split across all characters;
+#'   - `"char"`: concordance of each character averaged over all splits, weighted
+#'     by each character's information content;
+#'   - `"tree"`: an overall tree‑level concordance score;
+#'   - `"all"`: a full array of MI components and normalized values for every
+#'     split–character pair.
+#' 
+#'   Matching is case‑insensitive and partial.
+#'
+#' @param normalize Controls how the *expected* mutual information (the zero
+#' point of the scale) is determined.  
+#'   - `FALSE`: no chance correction; MI is scaled only by its maximum.  
+#'   - `TRUE`: subtract the **analytical** expected MI for random association.  
+#'   - `<integer>`: subtract an **empirical** expected MI estimated from that
+#'     number of random trees.
+#' 
+#'   In all cases, 1 corresponds to the maximal attainable MI for the pair
+#'   (`hBest`), and 0 corresponds to the chosen expectation.
+#' 
 #' @returns
 #' `ClusteringConcordance(return = "all")` returns a 3D array where each
 #' slice corresponds to a character (site), each column to a tree split, and
@@ -686,6 +701,29 @@ QuartetConcordance <- function(
 }
 
 #' @rdname SiteConcordance
+#' 
+#' @details
+#' `PhylogeneticConcordance()` treats each character in `dataset` as a
+#' phylogenetic hypothesis and measures the extent to which it supports the
+#' splits of `tree`. Each character is first interpreted as a tree (or set of
+#' trees) in which taxa sharing the same token form a clade. Only splits for
+#' which the character contains at least four relevant taxa can contribute
+#' information.
+#'
+#' For each split, the function identifies which characters could potentially
+#' support that split (i.e. those for which the induced subtrees contain
+#' informative structure), and among these, which characters are actually
+#' compatible with the split. The concordance value for each split is the
+#' proportion of informative characters that support it.
+#' A value of 1 indicates that all characters informative for that subset of
+#' taxa support the split; a value of 0 indicates that none do. Characters that
+#' contain only ambiguous or uninformative states for the relevant taxa do not
+#' affect the result.
+#' 
+#' @return `PhylogeneticConcordance()` returns a numeric vector giving the
+#' phylogenetic information of each split in `tree`, named according to the
+#' split's internal numbering.
+#'
 #' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
 #' MatchStrings
 #' @export

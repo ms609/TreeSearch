@@ -28,26 +28,29 @@ Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
 Additive (ordered) characters can be handled using
 \code{\link[TreeTools]{Decompose}()}.}
 
-\item{return}{Character specifying whether to summarize support per
-character (\code{"char"}) or per edge (\code{"edge"}). See below for details.}
+\item{return}{Character specifying the summary to return. Options are:
+\itemize{
+\item \code{"edge"}: average concordance of each tree split across all characters;
+\item \code{"char"}: concordance of each character averaged over all splits, weighted
+by each character's information content;
+\item \code{"tree"}: an overall tree‑level concordance score;
+\item \code{"all"}: a full array of MI components and normalized values for every
+split–character pair.
+}
 
-\item{normalize}{Logical or numeric; if \code{TRUE} the mutual information will be
-normalized such that zero corresponds to the expected mutual information of
-a randomly drawn character with the same distribution of tokens.
-If \code{FALSE}, zero will correspond to zero mutual information,
-even if this is not achievable in practice.
-The exact analytical solution, though fast, does not account for
-non-independence between splits. This limitation is minor for larger
-trees, and becomes negligible for trees with more than ~200 leaves.
-For smaller trees, the expected value for random trees can be approximated
-by resampling relabelled trees. Setting \code{normalize = n} will approximate the
-expected value based on \emph{n} samples.
+Matching is case‑insensitive and partial.}
 
-For \code{return = "char"}, \code{"tree"}, values will be normalized such that 1
-corresponds to the maximum possible value, and 0 to the expected value.
-If \code{normalize = TRUE}, this will be the expected value for a random
-character on the given tree. If \code{normalize} is numeric, the expected value
-will be estimated by fitting the character to \code{n} uniformly random trees.}
+\item{normalize}{Controls how the \emph{expected} mutual information (the zero
+point of the scale) is determined.
+\itemize{
+\item \code{FALSE}: no chance correction; MI is scaled only by its maximum.
+\item \code{TRUE}: subtract the \strong{analytical} expected MI for random association.
+\item \verb{<integer>}: subtract an \strong{empirical} expected MI estimated from that
+number of random trees.
+}
+
+In all cases, 1 corresponds to the maximal attainable MI for the pair
+(\code{hBest}), and 0 corresponds to the chosen expectation.}
 
 \item{weight}{Logical specifying whether to weight sites according to the
 number of quartets they are decisive for.}
@@ -99,6 +102,10 @@ each corresponding split in \code{tree}.
 \code{QuartetConcordance(return = "char")} returns a numeric vector giving the
 concordance index calculated at each site, averaged across all splits.
 
+\code{PhylogeneticConcordance()} returns a numeric vector giving the
+phylogenetic information of each split in \code{tree}, named according to the
+split's internal numbering.
+
 \code{SharedPhylogeneticConcordance()} returns the shared phylogenetic
 concordance of each character in \code{dataset} with \code{tree}.
 The attribute \code{weighted.mean} gives the mean value, weighted by the
@@ -107,18 +114,32 @@ information content of each character.
 \description{
 Concordance measures the strength of support that characters in a dataset
 present for each split (=edge/branch) in a tree
-\insertCite{Minh2020;SmithConc}{TreeSearch}.
+\insertCite{Minh2020,SmithConc}{TreeSearch}.
 }
 \details{
-\code{ClusteringConcordance()} measures how well each split reflects the
-grouping information present in each character
-\insertCite{SmithConc}{TreeSearch}. It treats characters and
-splits as clusterings of taxa, quantifying their agreement using normalized
-mutual information. Values range from 1 (perfect agreement) to 0 (no more
-agreement than expected by chance); negative values indicate less agreement
-than expected. Summaries returned by \code{return = "edge"} or \code{"char"} report,
-respectively, how well each split is supported by all characters, or how
-well each character is reflected across all splits.
+\code{ClusteringConcordance()} measures how well each tree split reflects the
+grouping structure implied by each character
+\insertCite{SmithConc}{TreeSearch}.
+Characters and splits are treated as clusterings of taxa, and their agreement
+is quantified using mutual information (MI). All reported values are scaled
+so that 1 corresponds to the maximum possible mutual information for each
+split–character pair (\code{hBest}).
+
+The \code{normalize} argument specifies how the zero point is defined.
+\itemize{
+\item If \code{normalize = FALSE}, zero corresponds to \emph{zero} MI, without correcting
+for the positive bias that arises because MI is rarely exactly zero in
+finite samples.
+\item If \code{normalize = TRUE}, the expected MI is computed using an analytical
+approximation based on the distribution of character tokens. This is fast
+and generally accurate for large trees (≈200+ taxa), but does not account
+for correlation between splits.
+\item If \code{normalize} is a positive integer \code{n}, the expected MI is estimated
+empirically by fitting each character to \code{n} uniformly random trees and
+averaging the resulting MI values. This Monte Carlo approach provides a
+more accurate baseline for small trees, for which the analytical
+approximation is biased. Monte Carlo standard errors are returned.
+}
 
 \code{MutualClusteringConcordance()} provides a character‑wise summary that
 emphasises each character’s best‑matching split(s). It treats each character
@@ -153,6 +174,23 @@ other implementations (e.g. IQ-TREE) follow
 of quartets for a faster, if potentially less accurate, computation.
 Ambiguous and inapplicable tokens are treated as containing no grouping
 information (i.e. \code{(02)} or \code{-} are each treated as \verb{?}).
+
+\code{PhylogeneticConcordance()} treats each character in \code{dataset} as a
+phylogenetic hypothesis and measures the extent to which it supports the
+splits of \code{tree}. Each character is first interpreted as a tree (or set of
+trees) in which taxa sharing the same token form a clade. Only splits for
+which the character contains at least four relevant taxa can contribute
+information.
+
+For each split, the function identifies which characters could potentially
+support that split (i.e. those for which the induced subtrees contain
+informative structure), and among these, which characters are actually
+compatible with the split. The concordance value for each split is the
+proportion of informative characters that support it.
+A value of 1 indicates that all characters informative for that subset of
+taxa support the split; a value of 0 indicates that none do. Characters that
+contain only ambiguous or uninformative states for the relevant taxa do not
+affect the result.
 
 \code{SharedPhylogeneticConcordance()} treats each character as a simple tree.
 Each token in the character corresponds to a node whose pendant edges are the
