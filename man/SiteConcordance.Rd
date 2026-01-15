@@ -42,12 +42,13 @@ each split.
 normalized such that zero corresponds to the expected mutual information of
 a randomly drawn character with the same distribution of tokens.
 If \code{FALSE}, zero will correspond to zero mutual information,
-even if this is not possible to accomplish in practice.
-The exact analytical solution, whilst quick, does not account for
-non-independence between splits. This is a less important factor for larger
-trees, and is negligible above ~200 leaves. For small trees, the expected
-value for random trees can be estimated by resampling relabelled trees.
-To conduct \emph{n} resamplings, set \code{normalize = n}.
+even if this is not achievable in practice.
+The exact analytical solution, though fast, does not account for
+non-independence between splits. This limitation is minor for larger
+trees, and becomes negligible for trees with more than ~200 leaves.
+For smaller trees, the expected value for random trees can be approximated
+by resampling relabelled trees. Setting \code{normalize = n} will approximate the
+expected value based on \emph{n} samples.
 
 For \code{return = "char"}, \code{"tree"}, values will be normalized such that 1
 corresponds to the maximum possible value, and 0 to the expected value.
