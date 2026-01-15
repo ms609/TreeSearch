@@ -44,8 +44,8 @@ Matching is case‑insensitive and partial.}
 point of the scale) is determined.
 \itemize{
 \item \code{FALSE}: no chance correction; MI is scaled only by its maximum.
-\item \code{TRUE}: subtract the \strong{analytical} expected MI for random association.
-\item \verb{<integer>}: subtract an \strong{empirical} expected MI estimated from that
+\item \code{TRUE}: subtract the analytical expected MI for random association.
+\item \verb{<integer>}: subtract an empirical expected MI estimated from that
 number of random trees.
 }
 

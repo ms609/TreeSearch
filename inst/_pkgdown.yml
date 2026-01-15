@@ -75,6 +75,12 @@ articles:
     - profile
     - custom
 
+topics:
+  - name: SiteConcordance
+    examples:
+      fig_width: 6
+      fig_height: 6
+
 template:
   bootstrap: 5
   bslib:
