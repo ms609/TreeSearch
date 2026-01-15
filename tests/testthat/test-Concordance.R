@@ -173,12 +173,6 @@ test_that("ClusteringConcordance() gives sensible values", {
                tolerance = 0.05)
 })
 
-dataset <- congreveLamsdellMatrices[[10]][, 1]
-tree <- TreeTools::NJTree(dataset)
-
-ConcordantInformation(tree, dataset)["noise"]
-TreeLength(tree, dataset, concavity = "prof")
-
 test_that("ConcordantInformation() works", {
   data(congreveLamsdellMatrices)
   dat <- congreveLamsdellMatrices[[10]]
