@@ -103,6 +103,7 @@ of trees that contain the split, and the frequency of the most contradicted
 split, respectively.
 
 Other split support functions: 
+\code{\link{ConcordanceTable}()},
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
 \code{\link{MaximizeParsimony}()},

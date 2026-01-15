@@ -357,6 +357,7 @@ ClusteringConcordance <- function(
 #' abline(h = 0)
 #' @template MRS
 #' @importFrom colorspace hex polarLUV
+#' @family utility functions
 #' @export
 QACol <- function(amount, quality) {
   h <- 80 + (quality * 140)
@@ -472,6 +473,7 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 #'       xlab = "Leaf", ylab = "Character")
 #' @importFrom graphics abline image mtext
 #' @importFrom TreeTools CladeSizes NTip
+#' @family split support functions
 #' @export
 ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
                              xlab = "Edge", ylab = "Character", ...) {

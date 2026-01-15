@@ -244,6 +244,7 @@ ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
 }
 
 Other split support functions: 
+\code{\link{ConcordanceTable}()},
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
 \code{\link{MaximizeParsimony}()},

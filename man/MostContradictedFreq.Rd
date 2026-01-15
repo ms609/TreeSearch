@@ -36,6 +36,7 @@ contradicted" score.
 \code{PresCont()} calculates the "groups present / contradicted" score.
 
 Other split support functions: 
+\code{\link{ConcordanceTable}()},
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
 \code{\link{MaximizeParsimony}()},

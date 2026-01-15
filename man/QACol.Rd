@@ -46,7 +46,14 @@ quality <- runif(80, -1, 1)
 plot(amount, quality, col = QACol(amount, quality), pch = 15)
 abline(h = 0)
 }
+\seealso{
+Other utility functions: 
+\code{\link{ClusterStrings}()},
+\code{\link{QuartetResolution}()},
+\code{\link{WhenFirstHit}()}
+}
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
+\concept{utility functions}

@@ -30,6 +30,7 @@ ClusterStrings(c(paste0("FirstCluster ", 1:5),
 }
 \seealso{
 Other utility functions: 
+\code{\link{QACol}()},
 \code{\link{QuartetResolution}()},
 \code{\link{WhenFirstHit}()}
 }

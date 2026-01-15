@@ -76,3 +76,13 @@ image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
 \references{
 \insertAllCited{}
 }
+\seealso{
+Other split support functions: 
+\code{\link{JackLabels}()},
+\code{\link{Jackknife}()},
+\code{\link{MaximizeParsimony}()},
+\code{\link{MostContradictedFreq}()},
+\code{\link{PresCont}()},
+\code{\link{SiteConcordance}}
+}
+\concept{split support functions}

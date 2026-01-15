@@ -352,6 +352,7 @@ MaximizeParsimony(characters, constraint = constraint, verbosity = 0)
 Tree search \emph{via} graphical user interface: \code{\link[=EasyTrees]{EasyTrees()}}
 
 Other split support functions: 
+\code{\link{ConcordanceTable}()},
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
 \code{\link{MostContradictedFreq}()},
