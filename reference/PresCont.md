@@ -99,6 +99,7 @@ will compute the number of trees that contain the split, and the
 frequency of the most contradicted split, respectively.
 
 Other split support functions:
+[`ConcordanceTable()`](https://ms609.github.io/TreeSearch/reference/ConcordanceTable.md),
 [`JackLabels()`](https://ms609.github.io/TreeSearch/reference/JackLabels.md),
 [`Jackknife()`](https://ms609.github.io/TreeSearch/reference/Jackknife.md),
 [`MaximizeParsimony()`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.md),

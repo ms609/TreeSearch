@@ -392,6 +392,7 @@ in Zoology*, **6**(1), 12–29.
 Tree search *via* graphical user interface: `EasyTrees()`
 
 Other split support functions:
+[`ConcordanceTable()`](https://ms609.github.io/TreeSearch/reference/ConcordanceTable.md),
 [`JackLabels()`](https://ms609.github.io/TreeSearch/reference/JackLabels.md),
 [`Jackknife()`](https://ms609.github.io/TreeSearch/reference/Jackknife.md),
 [`MostContradictedFreq()`](https://ms609.github.io/TreeSearch/reference/MostContradictedFreq.md),
@@ -431,8 +432,8 @@ trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
 #> 
 #> ── Sample local optimum ────────────────────────────────────────────────────────
 #> → TBR depth 1; keeping 4 trees; k = 10
-#> ℹ 2025-11-25 12:05:35: Score: 16.3264
-#> ✔ 2025-11-25 12:05:36: Tree search terminated with score 15.969
+#> ℹ 2026-01-15 13:45:25: Score: 16.3264
+#> ✔ 2026-01-15 13:45:26: Tree search terminated with score 15.969
 names(trees)
 #> [1] "final_1" "final_2" "final_3"
 cons <- Consensus(trees)

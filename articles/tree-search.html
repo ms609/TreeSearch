@@ -27,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@
                         <h4 data-toc-skip class="author">Martin R.
 Smith</h4>
             
-            <h4 data-toc-skip class="date">2025-11-25</h4>
+            <h4 data-toc-skip class="date">2026-01-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/main/vignettes/tree-search.Rmd" class="external-link"><code>vignettes/tree-search.Rmd</code></a></small>
       <div class="d-none name"><code>tree-search.Rmd</code></div>
@@ -177,7 +177,7 @@ mapping tree space:</p>
 <span><span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/MSTEdges.html" class="external-link">MSTEdges</a></span><span class="op">(</span><span class="va">distances</span>, plot <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">map</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">map</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>,</span>
 <span>                    col <span class="op">=</span> <span class="st">"#00000030"</span>, lty <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/legend.html" class="external-link">legend</a></span><span class="op">(</span><span class="st">"topright"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">firstHit</span><span class="op">)</span>, col <span class="op">=</span> <span class="va">cols</span>, pch <span class="op">=</span> <span class="fl">16</span>, bty <span class="op">=</span> <span class="st">"n"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="tree-search_files/figure-html/map-search-1.png" class="r-plt" width="691.2"></p>
+<p><img src="tree-search_files/figure-html/map-search-1.png" class="r-plt" alt="" width="691.2"></p>
 <p>A quick glance suggests that early ratchet iterations captured a
 large part of the diversity of optimal trees, and that iterations aren’t
 getting stuck in local optima – though conscientious users will <a href="https://ms609.github.io/TreeDist/articles/treespace.html" class="external-link">ensure
@@ -198,7 +198,7 @@ parsimony score (length):</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="tree-search_files/figure-html/plot-tree-1.png" class="r-plt" width="691.2"></p>
+<p><img src="tree-search_files/figure-html/plot-tree-1.png" class="r-plt" alt="" width="691.2"></p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/TreeLength.html">TreeLength</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">vinther</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 79</span></span></code></pre>
@@ -215,7 +215,7 @@ the sampled most-parsimonious trees:</p>
 <span><span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/LabelSplits.html" class="external-link">LabelSplits</a></span><span class="op">(</span><span class="va">majCons</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">splitFreqs</span> <span class="op">*</span> <span class="fl">100</span><span class="op">)</span>, unit <span class="op">=</span> <span class="st">"%"</span>,</span>
 <span>                       col <span class="op">=</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/SupportColour.html" class="external-link">SupportColor</a></span><span class="op">(</span><span class="va">splitFreqs</span><span class="op">)</span>,</span>
 <span>                       frame <span class="op">=</span> <span class="st">"none"</span>, pos <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span></span></code></pre></div>
-<p><img src="tree-search_files/figure-html/plot-label-nodes-1.png" class="r-plt" width="691.2"></p>
+<p><img src="tree-search_files/figure-html/plot-label-nodes-1.png" class="r-plt" alt="" width="691.2"></p>
 <p>This approach is a sensible way to analyse clade credibility when the
 frequency of a split corresponds to its probability, as is the case in a
 Bayesian posterior sample of trees. This is not the case, however, in
@@ -250,7 +250,7 @@ adapted to the requirements of a particular dataset.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
 <span><span class="co"># Take the strict consensus of all trees for each replicate</span></span>
 <span><span class="fu"><a href="../reference/JackLabels.html">JackLabels</a></span><span class="op">(</span><span class="va">strict</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">jackTrees</span>, <span class="fu">ape</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">)</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="va">XX</span></span></code></pre></div>
-<p><img src="tree-search_files/figure-html/Jackknife-annotations-1.png" class="r-plt" width="691.2"></p>
+<p><img src="tree-search_files/figure-html/Jackknife-annotations-1.png" class="r-plt" alt="" width="691.2"></p>
 <p>Jackknife and bootstrap support values give an indication of the
 volume of data that supports each node, but don’t necessarily indicate
 whether the data are unanimous on the existence of a clade: a high
@@ -272,7 +272,7 @@ grouping, independently of the method of tree reconstruction.</p>
 <span><span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/LabelSplits.html" class="external-link">LabelSplits</a></span><span class="op">(</span><span class="va">strict</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">concordance</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>                       col <span class="op">=</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/SupportColour.html" class="external-link">SupportColor</a></span><span class="op">(</span><span class="va">concordance</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">concordance</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                       frame <span class="op">=</span> <span class="st">"none"</span>, pos <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span></span></code></pre></div>
-<p><img src="tree-search_files/figure-html/concordance-1.png" class="r-plt" width="691.2"></p>
+<p><img src="tree-search_files/figure-html/concordance-1.png" class="r-plt" alt="" width="691.2"></p>
 </div>
 <div class="section level3">
 <h3 id="exploring-taxon-stability">Exploring taxon stability<a class="anchor" aria-label="anchor" href="#exploring-taxon-stability"></a>
@@ -286,7 +286,7 @@ stability in the tree set:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">strict</span>, tip.color <span class="op">=</span> <span class="fu">Rogue</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rogue/man/TipInstability.html" class="external-link">ColByStability</a></span><span class="op">(</span><span class="va">bestTrees</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="tree-search_files/figure-html/stability-1.png" class="r-plt" width="691.2"></p>
+<p><img src="tree-search_files/figure-html/stability-1.png" class="r-plt" alt="" width="691.2"></p>
 <p>Would removing an unstable taxon reveal hidden support for
 relationships at the base of Mollusca? We can test to see whether the
 removal of a taxon from a summary tree is justified using:</p>
@@ -303,7 +303,7 @@ informative single summary tree is thus provided by:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
 <span><span class="va">noWiwaxia</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">bestTrees</span>, <span class="fu">TreeTools</span><span class="fu">::</span><span class="va"><a href="https://ms609.github.io/TreeTools/reference/DropTip.html" class="external-link">DropTip</a></span>, <span class="st">"Wiwaxia"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">noWiwaxia</span><span class="op">)</span>, tip.color <span class="op">=</span> <span class="fu">Rogue</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Rogue/man/TipInstability.html" class="external-link">ColByStability</a></span><span class="op">(</span><span class="va">noWiwaxia</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="tree-search_files/figure-html/cons-without-halk-1.png" class="r-plt" width="691.2"></p>
+<p><img src="tree-search_files/figure-html/cons-without-halk-1.png" class="r-plt" alt="" width="691.2"></p>
 <p>This reveals that all trees agree that <em>Halkieria</em> and
 <em>Orthrozanclus</em> are closer to aculiferan molluscs than
 <em>Odontogriphus</em> and <em>Neopilina</em>, a fact masked in the
@@ -312,7 +312,7 @@ strict consensus due to the uncertain position of <em>Wiwaxia</em>.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
 <span><span class="va">xx</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/RoguePlot.html" class="external-link">RoguePlot</a></span><span class="op">(</span><span class="va">bestTrees</span>, <span class="st">"Wiwaxia"</span>, p <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-<p><img src="tree-search_files/figure-html/restore-wiwaxia-1.png" class="r-plt" width="691.2"></p>
+<p><img src="tree-search_files/figure-html/restore-wiwaxia-1.png" class="r-plt" alt="" width="691.2"></p>
 <p>Brighter greens indicate that more trees contained <em>Wiwaxia</em>
 in this position.</p>
 <p>More details on rogue taxon identification are available in the
@@ -334,7 +334,7 @@ concavity constant, <em>k</em>:</p>
 <code class="sourceCode R"><span><span class="va">iwTrees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">vinther</span>, concavity <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">iwTrees</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="tree-search_files/figure-html/iw-search-1.png" class="r-plt" width="691.2"></p>
+<p><img src="tree-search_files/figure-html/iw-search-1.png" class="r-plt" alt="" width="691.2"></p>
 <p>Note that we recommend a default value of 10, somewhat higher than
 the default of 3 in TNT; this low default gives poorer results in many
 settings <span class="citation">(Goloboff, Torres, &amp; Arias, 2018;
@@ -369,7 +369,7 @@ contradictory.</p>
 <span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>,</span>
 <span>                       verbosity <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<p><img src="tree-search_files/figure-html/simple-constraints-1.png" class="r-plt" width="384" style="display: block; margin: auto;"></p>
+<p><img src="tree-search_files/figure-html/simple-constraints-1.png" class="r-plt" alt="" width="384" style="display: block; margin: auto;"></p>
 <p>Here’s a more complex example that imposes the splits
 <code>ab | cef</code> and <code>abcd | ef</code>, whilst allowing
 <code>g</code> to plot anywhere on the tree:</p>
@@ -384,7 +384,7 @@ contradictory.</p>
 <span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/MaximizeParsimony.html">MaximizeParsimony</a></span><span class="op">(</span><span class="va">characters</span>, constraint <span class="op">=</span> <span class="va">constraint</span>,</span>
 <span>                       verbosity <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<p><img src="tree-search_files/figure-html/complex-constraints-1.png" class="r-plt" width="384" style="display: block; margin: auto;"></p>
+<p><img src="tree-search_files/figure-html/complex-constraints-1.png" class="r-plt" alt="" width="384" style="display: block; margin: auto;"></p>
 <p>Constraints can also be loaded from a Nexus file with
 <code>constraint &lt;- TreeTools::ReadAsPhyDat("constraint_file.nex")</code>.</p>
 </div>

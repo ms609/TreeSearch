@@ -32,6 +32,7 @@ individual cluster.
 ## See also
 
 Other utility functions:
+[`QACol()`](https://ms609.github.io/TreeSearch/reference/QACol.md),
 [`QuartetResolution()`](https://ms609.github.io/TreeSearch/reference/QuartetResolution.md),
 [`WhenFirstHit()`](https://ms609.github.io/TreeSearch/reference/WhenFirstHit.md)
 

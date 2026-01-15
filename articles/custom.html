@@ -27,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@
                         <h4 data-toc-skip class="author">Martin R.
 Smith</h4>
             
-            <h4 data-toc-skip class="date">2025-11-25</h4>
+            <h4 data-toc-skip class="date">2026-01-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/main/vignettes/custom.Rmd" class="external-link"><code>vignettes/custom.Rmd</code></a></small>
       <div class="d-none name"><code>custom.Rmd</code></div>
@@ -122,7 +122,7 @@ vectors:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">PectinateTree</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span>
 <span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">tree</span><span class="op">)</span></span></code></pre></div>
-<p><img src="custom_files/figure-html/tci-setup-1.png" class="r-plt" width="700"></p>
+<p><img src="custom_files/figure-html/tci-setup-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">TCIScore</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">parent</span>, <span class="va">child</span>, <span class="va">dataset</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">tree</span><span class="op">$</span><span class="va">edge</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">parent</span>, <span class="va">child</span><span class="op">)</span></span>
@@ -149,7 +149,7 @@ anything to <code>dataset</code> before it is sent to
 <pre><code><span><span class="co">##   - Final score 33 found 5 times after 50 rearrangements.</span></span></code></pre>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
-<p><img src="custom_files/figure-html/tci-search-1.png" class="r-plt" width="700"></p>
+<p><img src="custom_files/figure-html/tci-search-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="maximizing-tree-distance">Maximizing tree distance<a class="anchor" aria-label="anchor" href="#maximizing-tree-distance"></a>
@@ -181,7 +181,7 @@ that is most different from a starting tree. Notice that
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">startTree</span><span class="op">)</span></span>
 <span><span class="fu">PlotTree</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
-<p><img src="custom_files/figure-html/cid-1.png" class="r-plt" width="700"></p>
+<p><img src="custom_files/figure-html/cid-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="searching-using-implied-weights">Searching using implied weights<a class="anchor" aria-label="anchor" href="#searching-using-implied-weights"></a>

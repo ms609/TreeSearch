@@ -1,7 +1,15 @@
 # Changelog
 
-## TreeSearch 1.7.0.9000 (development)
+## TreeSearch 1.8.0 (2025-01-15)
 
+- Implements the methods of Smith (forthcoming) via
+  [`ClusteringConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md),
+  with visualization functions
+  [`ConcordanceTable()`](https://ms609.github.io/TreeSearch/reference/ConcordanceTable.md),
+  [`QACol()`](https://ms609.github.io/TreeSearch/reference/QACol.md) and
+  [`QALegend()`](https://ms609.github.io/TreeSearch/reference/QACol.md).
+- [`QuartetConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md)
+  gains `return` parameter and fast C++ implementation.
 - Fix regression in
   [`MaximumLength()`](https://ms609.github.io/TreeSearch/reference/MinimumLength.md).
 
@@ -21,6 +29,9 @@ CRAN release: 2025-08-23
   [`ClusteringConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md)
 - Fix `DoNothing(x)` to return `x` (not `NULL`)
 - Remove unused `delete_rawdata()` due to implementation issues.
+- Port
+  [`MaximumLength()`](https://ms609.github.io/TreeSearch/reference/MinimumLength.md)
+  to C++ to handle more characters, more efficiently.
 
 ## TreeSearch 1.6.1 (2025-06-10)
 

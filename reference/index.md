@@ -39,7 +39,7 @@ Functions that provide tree scores, for optimization.
   [`ConcordantInfo()`](https://ms609.github.io/TreeSearch/reference/ConcordantInformation.md)
   : Evaluate the concordance of information between a tree and a dataset
 - [`Consistency()`](https://ms609.github.io/TreeSearch/reference/Consistency.md)
-  : Consistency / retention "indices"
+  : Consistency and retention "indices"
 - [`PlotCharacter()`](https://ms609.github.io/TreeSearch/reference/PlotCharacter.md)
   : Plot the distribution of a character on a tree
 - [`RandomTreeScore()`](https://ms609.github.io/TreeSearch/reference/RandomTreeScore.md)
@@ -91,6 +91,8 @@ Tree generation and rearrangement functions.
 
 Functions that calculate support for edges.
 
+- [`ConcordanceTable()`](https://ms609.github.io/TreeSearch/reference/ConcordanceTable.md)
+  : Plot concordance table
 - [`JackLabels()`](https://ms609.github.io/TreeSearch/reference/JackLabels.md)
   : Label nodes with jackknife support values
 - [`Jackknife()`](https://ms609.github.io/TreeSearch/reference/Jackknife.md)
@@ -104,12 +106,12 @@ Functions that calculate support for edges.
   : Frequency of most common contradictory split
 - [`PresCont()`](https://ms609.github.io/TreeSearch/reference/PresCont.md)
   : Group present or contradicted score
-- [`QuartetConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md)
-  [`ClusteringConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md)
-  [`PhylogeneticConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md)
+- [`ClusteringConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md)
   [`MutualClusteringConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md)
+  [`QuartetConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md)
+  [`PhylogeneticConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md)
   [`SharedPhylogeneticConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md)
-  : Calculate site concordance factor
+  : Concordance factors
 
 ## Profile parsimony
 
@@ -188,6 +190,10 @@ Miscellaneous functions used within the package.
 
 - [`ClusterStrings()`](https://ms609.github.io/TreeSearch/reference/ClusterStrings.md)
   : Cluster similar strings
+- [`QACol()`](https://ms609.github.io/TreeSearch/reference/QACol.md)
+  [`QCol()`](https://ms609.github.io/TreeSearch/reference/QACol.md)
+  [`QALegend()`](https://ms609.github.io/TreeSearch/reference/QACol.md)
+  : Generate colour to depict the amount and quality of observations
 - [`QuartetResolution()`](https://ms609.github.io/TreeSearch/reference/QuartetResolution.md)
   : Relationship between four taxa
 - [`WhenFirstHit()`](https://ms609.github.io/TreeSearch/reference/WhenFirstHit.md)

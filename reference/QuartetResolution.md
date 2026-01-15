@@ -29,6 +29,7 @@ most closely related to `tips[1]`.
 
 Other utility functions:
 [`ClusterStrings()`](https://ms609.github.io/TreeSearch/reference/ClusterStrings.md),
+[`QACol()`](https://ms609.github.io/TreeSearch/reference/QACol.md),
 [`WhenFirstHit()`](https://ms609.github.io/TreeSearch/reference/WhenFirstHit.md)
 
 ## Examples

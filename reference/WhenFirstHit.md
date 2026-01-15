@@ -31,6 +31,7 @@ the first time in each search iteration.
 
 Other utility functions:
 [`ClusterStrings()`](https://ms609.github.io/TreeSearch/reference/ClusterStrings.md),
+[`QACol()`](https://ms609.github.io/TreeSearch/reference/QACol.md),
 [`QuartetResolution()`](https://ms609.github.io/TreeSearch/reference/QuartetResolution.md)
 
 ## Author

@@ -109,6 +109,7 @@ maintainer.
   Label nodes of a tree with jackknife supports.
 
 Other split support functions:
+[`ConcordanceTable()`](https://ms609.github.io/TreeSearch/reference/ConcordanceTable.md),
 [`JackLabels()`](https://ms609.github.io/TreeSearch/reference/JackLabels.md),
 [`MaximizeParsimony()`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.md),
 [`MostContradictedFreq()`](https://ms609.github.io/TreeSearch/reference/MostContradictedFreq.md),

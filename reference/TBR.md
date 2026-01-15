@@ -132,7 +132,7 @@ TBR(tree)
 #> Phylogenetic tree with 20 tips and 19 internal nodes.
 #> 
 #> Tip labels:
-#>   t13, t19, t7, t18, t1, t20, ...
+#>   t7, t5, t20, t15, t3, t17, ...
 #> 
 #> Rooted; no branch length.
 ```

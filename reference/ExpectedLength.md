@@ -27,10 +27,10 @@ ExpectedLength(dataset, tree, nRelabel = 1000, compress = FALSE)
 
 - nRelabel:
 
-  Integer specifying how many times to relabel leaves when estimating
-  null tree length for RHI calculation. Steell et al. (2025) recommend
-  1000, but suggest that 100 may suffice. If zero (the default), the RHI
-  is not calculated.
+  Integer specifying how many times to relabel leaves when computing
+  MCMC estimate of null tree length for RHI calculation. Steell et
+  al. (2025) recommend 1000, but suggest that 100 may suffice. If zero
+  (the default), the RHI is not calculated.
 
 - compress:
 

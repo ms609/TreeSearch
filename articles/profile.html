@@ -27,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@
                         <h4 data-toc-skip class="author">Martin R.
 Smith</h4>
             
-            <h4 data-toc-skip class="date">2025-11-25</h4>
+            <h4 data-toc-skip class="date">2026-01-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ms609/TreeSearch/blob/main/vignettes/profile.Rmd" class="external-link"><code>vignettes/profile.Rmd</code></a></small>
       <div class="d-none name"><code>profile.Rmd</code></div>
@@ -136,7 +136,7 @@ addition tree:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">additionTree</span><span class="op">)</span></span></code></pre></div>
-<p><img src="profile_files/figure-html/addition-tree-1.png" class="r-plt" width="700"></p>
+<p><img src="profile_files/figure-html/addition-tree-1.png" class="r-plt" alt="" width="700"></p>
 <p>We could alternatively use a random or neighbour-joining tree:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">randomTree</span> <span class="op">&lt;-</span> <span class="fu">TreeTools</span><span class="fu">::</span><span class="fu"><a href="https://ms609.github.io/TreeTools/reference/GenerateTree.html" class="external-link">RandomTree</a></span><span class="op">(</span><span class="va">myMatrix</span>, root <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -161,7 +161,7 @@ tree. Nevertheless, let’s see the resultant tree, and its score:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">4</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span> <span class="co"># make plot easier to read</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">betterTrees</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="profile_files/figure-html/ratchet-search-results-1.png" class="r-plt" width="700"></p>
+<p><img src="profile_files/figure-html/ratchet-search-results-1.png" class="r-plt" alt="" width="700"></p>
 <p>The default parameters may not be enough to find the optimal tree;
 type <code><a href="../reference/MaximizeParsimony.html">?MaximizeParsimony</a></code> to view all search parameters – or
 keep repeating the search until tree score stops improving.</p>
@@ -195,7 +195,7 @@ phylogenetic dataset <span class="citation">(Smith, 2019)</span>:</p>
 <span><span class="co">##       2       1       1       3       1       1</span></span></code></pre>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/consensus.html" class="external-link">consensus</a></span><span class="op">(</span><span class="va">suboptimals</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="profile_files/figure-html/plot-suboptimal-consensus-1.png" class="r-plt" width="700"></p>
+<p><img src="profile_files/figure-html/plot-suboptimal-consensus-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="where-next">Where next?<a class="anchor" aria-label="anchor" href="#where-next"></a>

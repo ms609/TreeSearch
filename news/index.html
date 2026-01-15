@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">TreeSearch</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,8 +52,11 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.7.0.9000" id="treesearch-1709000-development">TreeSearch 1.7.0.9000 (development)<a class="anchor" aria-label="anchor" href="#treesearch-1709000-development"></a></h2>
-<ul><li>Fix regression in <code><a href="../reference/MinimumLength.html">MaximumLength()</a></code>.</li>
+<h2 class="pkg-version" data-toc-text="1.8.0" id="treesearch-180-2025-01-15">TreeSearch 1.8.0 (2025-01-15)<a class="anchor" aria-label="anchor" href="#treesearch-180-2025-01-15"></a></h2>
+<ul><li>Implements the methods of Smith (forthcoming) via <code><a href="../reference/SiteConcordance.html">ClusteringConcordance()</a></code>, with visualization functions <code><a href="../reference/ConcordanceTable.html">ConcordanceTable()</a></code>, <code><a href="../reference/QACol.html">QACol()</a></code> and <code><a href="../reference/QACol.html">QALegend()</a></code>.</li>
+<li>
+<code><a href="../reference/SiteConcordance.html">QuartetConcordance()</a></code> gains <code>return</code> parameter and fast C++ implementation.</li>
+<li>Fix regression in <code><a href="../reference/MinimumLength.html">MaximumLength()</a></code>.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.7.0" id="treesearch-170-2025-08-22">TreeSearch 1.7.0 (2025-08-22)<a class="anchor" aria-label="anchor" href="#treesearch-170-2025-08-22"></a></h2><p class="text-muted">CRAN release: 2025-08-23</p>
@@ -67,6 +70,7 @@
 </li>
 <li>Fix <code>DoNothing(x)</code> to return <code>x</code> (not <code>NULL</code>)</li>
 <li>Remove unused <code>delete_rawdata()</code> due to implementation issues.</li>
+<li>Port <code><a href="../reference/MinimumLength.html">MaximumLength()</a></code> to C++ to handle more characters, more efficiently.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.6.1" id="treesearch-161-2025-06-10">TreeSearch 1.6.1 (2025-06-10)<a class="anchor" aria-label="anchor" href="#treesearch-161-2025-06-10"></a></h2><p class="text-muted">CRAN release: 2025-06-10</p>

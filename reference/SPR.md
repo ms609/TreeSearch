@@ -143,7 +143,7 @@ SPR(tree)
 #> Phylogenetic tree with 20 tips and 19 internal nodes.
 #> 
 #> Tip labels:
-#>   t5, t19, t3, t4, t11, t16, ...
+#>   t17, t9, t2, t12, t5, t6, ...
 #> 
 #> Rooted; includes branch length(s).
 ```

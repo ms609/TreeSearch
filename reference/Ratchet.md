@@ -280,7 +280,7 @@ njtree <- TreeTools::NJTree(Lobo.phy)
 # Increase value of ratchIter and searchHits to do a proper search
 quickResult <- Ratchet(njtree, Lobo.phy, ratchIter = 2, searchHits = 3)
 #> * Beginning Parsimony Ratchet, with initial score 231
-#> Completed parsimony ratchet after 2 iterations with score 214
+#> Completed parsimony ratchet after 2 iterations with score 212
 
 # Plot result (legibly)
 oldPar <- par(mar = rep(0, 4), cex = 0.75)

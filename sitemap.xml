@@ -18,6 +18,7 @@
 <url><loc>https://ms609.github.io/TreeSearch/reference/Carter1.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/CharacterLength.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/ClusterStrings.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/ConcordanceTable.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/ConcordantInformation.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/Consistency.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/DoubleNNI.html</loc></url>
@@ -38,6 +39,7 @@
 <url><loc>https://ms609.github.io/TreeSearch/reference/PlotCharacter.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/PrepareDataProfile.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/PresCont.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/QACol.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/QuartetResolution.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/RandomMorphyTree.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/RandomTreeScore.html</loc></url>
@@ -63,6 +65,7 @@
 <url><loc>https://ms609.github.io/TreeSearch/reference/dot-CombineResults.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/dot-GapHandler.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/dot-NonDuplicateRoot.html</loc></url>
+<url><loc>https://ms609.github.io/TreeSearch/reference/dot-Rezero.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/dot-UniqueExceptHits.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/inapplicable.datasets.html</loc></url>
 <url><loc>https://ms609.github.io/TreeSearch/reference/index.html</loc></url>

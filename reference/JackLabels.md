@@ -88,6 +88,7 @@ for standard parsimony searches, or
 for custom search criteria.
 
 Other split support functions:
+[`ConcordanceTable()`](https://ms609.github.io/TreeSearch/reference/ConcordanceTable.md),
 [`Jackknife()`](https://ms609.github.io/TreeSearch/reference/Jackknife.md),
 [`MaximizeParsimony()`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.md),
 [`MostContradictedFreq()`](https://ms609.github.io/TreeSearch/reference/MostContradictedFreq.md),
