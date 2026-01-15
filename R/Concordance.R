@@ -604,11 +604,11 @@ QuartetConcordance <- function(
 
   num <- raw_counts$concordant
   den <- raw_counts$decisive
+  options <- c("character", "site", "default")
   return <- options[[pmatch(tolower(trimws(return)), options,
                             nomatch = length(options))]]
   
 
-  options <- c("character", "site", "default")
   if (return == "default") {
     if (isTRUE(weight)) {
       # Sum numerator and denominator across sites (columns), then divide
