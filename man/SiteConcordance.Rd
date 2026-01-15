@@ -231,6 +231,7 @@ ape::write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
 
 # Display correlation between concordance factors
 pairs(cbind(cc, mcc, qc, pc, spc), asp = 1)
+\dontshow{knitr::opts_chunk$set(fig.width = 6, fig.height = 6)}
 data(congreveLamsdellMatrices)
 myMatrix <- congreveLamsdellMatrices[[10]]
 ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)

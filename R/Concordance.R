@@ -141,6 +141,7 @@ NULL
 #' @seealso
 #' - [Consistency()]
 #' @examples
+#' \dontshow{knitr::opts_chunk$set(fig.width = 6, fig.height = 6)}
 #' data(congreveLamsdellMatrices)
 #' myMatrix <- congreveLamsdellMatrices[[10]]
 #' ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
