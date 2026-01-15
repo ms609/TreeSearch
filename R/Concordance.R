@@ -12,7 +12,10 @@
 #' \insertAllCited{}
 #'
 #' @examples
-#' data("congreveLamsdellMatrices", package = "TreeSearch")
+#' \dontshow{
+#'   knitr::opts_chunk$set(fig.width = 6, fig.height = 6)
+#'   oPar <- par(mar = rep(0, 4), cex = 0.8)
+#' }data("congreveLamsdellMatrices", package = "TreeSearch")
 #' dataset <- congreveLamsdellMatrices[[1]][, 1:20]
 #' tree <- TreeSearch::referenceTree
 #'
@@ -24,13 +27,11 @@
 #' pc <- PhylogeneticConcordance(tree, dataset)
 #' spc <- SharedPhylogeneticConcordance(tree, dataset)
 #'
-#' oPar <- par(mar = rep(0, 4), cex = 0.8) # Set plotting parameters
 #' plot(tree)
 #' TreeTools::LabelSplits(tree, signif(qc, 3), cex = 0.8)
 #' plot(tree)
 #' TreeTools::LabelSplits(tree, signif(cc, 3), cex = 0.8)
-#' par(oPar) # Restore plotting parameters
-#'
+#' 
 #' # Write concordance factors to file
 #' labels <- paste0(cc, "/", qc, "/", pc) # "/" is a valid delimiter
 #' # Identify the node that corresponds to each label
@@ -41,7 +42,8 @@
 #'
 #' ape::write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
 #'
-#' # Display correlation between concordance factors
+#' \dontshow{par(oPar)
+#' }#' # Display correlation between concordance factors
 #' pairs(cbind(cc, mcc, qc, pc, spc), asp = 1)
 #' @template MRS
 #' @family split support functions
@@ -141,7 +143,6 @@ NULL
 #' @seealso
 #' - [Consistency()]
 #' @examples
-#' \dontshow{knitr::opts_chunk$set(fig.width = 6, fig.height = 6)}
 #' data(congreveLamsdellMatrices)
 #' myMatrix <- congreveLamsdellMatrices[[10]]
 #' ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
