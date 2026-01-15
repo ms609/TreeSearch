@@ -137,8 +137,8 @@ If \code{weight = FALSE}, the split concordance will be mean(75\%, 25\%) = 50\%.
 other implementations (e.g. IQ-TREE) follow
 \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
 of quartets for a faster, if potentially less accurate, computation.
-\code{QuartetConcordance()} in principle supports ambiguous character states,
-but this has not yet been tested.
+Ambiguous and inapplicable tokens are treated as containing no grouping information
+(i.e. \code{(02)} or \code{-} are each treated as \verb{?}).
 
 \strong{NOTE:} These functions are under development. They are incompletely
 tested, and may change without notice.

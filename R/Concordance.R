@@ -27,9 +27,8 @@
 #' other implementations (e.g. IQ-TREE) follow
 #' \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
 #'  of quartets for a faster, if potentially less accurate, computation.
-#TODO
-#' `QuartetConcordance()` in principle supports ambiguous character states,
-#' but this has not yet been tested.
+#' Ambiguous and inapplicable tokens are treated as containing no grouping information
+#' (i.e. `(02)` or `-` are each treated as `?`).
 #' 
 # `ClusteringConcordance()` and `PhylogeneticConcordance()` respectively report
 # the proportion of clustering information and phylogenetic information 
@@ -114,12 +113,12 @@ QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
   
   characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
   charLevels <- attr(dataset, "allLevels")
-  charLevels[rowSums(attr(dataset, "contrast")) > 1] <- NA
-  charLevels <- setdiff(charLevels, "-")
+  isAmbig <- rowSums(attr(dataset, "contrast")) > 1
+  isInapp <- charLevels == "-"
+  nonGroupingLevels <- charLevels[isAmbig | isInapp]
+  characters[characters %in% nonGroupingLevels] <- NA
   
-  charInt <- matrix(match(characters, charLevels),
-                    nrow = nrow(characters),
-                    dimnames = dimnames(characters))
+  charInt <- `mode<-`(characters, "integer")
   raw_counts <- quartet_concordance(logiSplits, charInt)
   
   num <- raw_counts$concordant
