@@ -2,7 +2,7 @@
 #'
 #' Concordance measures the strength of support that characters in a dataset
 #' present for each split (=edge/branch) in a tree
-#' \insertCite{Minh2020;SmithConc}{TreeSearch}.
+#' \insertCite{Minh2020,SmithConc}{TreeSearch}.
 #'
 # # Renumber before MaximizeParsimony, for `tree`
 #' @inheritParams TreeTools::Renumber
