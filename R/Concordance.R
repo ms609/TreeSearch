@@ -88,8 +88,8 @@ NULL
 #' @param normalize Controls how the *expected* mutual information (the zero
 #' point of the scale) is determined.  
 #'   - `FALSE`: no chance correction; MI is scaled only by its maximum.  
-#'   - `TRUE`: subtract the **analytical** expected MI for random association.  
-#'   - `<integer>`: subtract an **empirical** expected MI estimated from that
+#'   - `TRUE`: subtract the analytical expected MI for random association.  
+#'   - `<integer>`: subtract an empirical expected MI estimated from that
 #'     number of random trees.
 #' 
 #'   In all cases, 1 corresponds to the maximal attainable MI for the pair
