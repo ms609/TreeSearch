@@ -80,6 +80,7 @@ test_that("QuartetConcordance() works", {
 })
 
 test_that("QuartetConcordance() handles ambiguity", {
+  library("TreeTools", quietly = TRUE)
   tree <- BalancedTree(12)
   splits <- as.Splits(tree)
   mataset <- matrix(c(0, 0, "{01}", 0, 0, "{01}", 1, 1, "-", 1, 1, "-",
