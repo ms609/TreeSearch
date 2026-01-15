@@ -598,18 +598,22 @@ QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
 
   num <- raw_counts$concordant
   den <- raw_counts$decisive
-  
-  options <- c("char", "default")
   return <- options[[pmatch(tolower(trimws(return)), options,
                             nomatch = length(options))]]
   
+
+  options <- c("character", "site", "default")
   if (return == "default") {
     if (isTRUE(weight)) {
       # Sum numerator and denominator across sites (columns), then divide
       # This matches weighted.mean(num/den, den) == sum(num) / sum(den)
       split_sums_num <- rowSums(num)
       split_sums_den <- rowSums(den)
-      ret <- ifelse(split_sums_den == 0, NA_real_, split_sums_num / split_sums_den)
+      ret <- ifelse(
+        split_sums_den == 0,
+        NA_real_,
+        split_sums_num / split_sums_den
+      )
     } else {
       # Mean of ratios per site
       # Avoid division by zero (0/0 -> NaN -> NA handled by na.rm)
@@ -618,18 +622,25 @@ QuartetConcordance <- function(tree, dataset = NULL, weight = TRUE,
       ratios[!is.finite(ratios)] <- NA
       ret <- rowMeans(ratios, na.rm = TRUE)
     }
-    
+
     setNames(ret, names(splits))
   } else {
+    # return = "char"
     p <- num / den
     if (isTRUE(weight)) {
       vapply(seq_len(dim(num)[[2]]), function(i) {
         weighted.mean(num[, i] / den[, i], den[, i])
       }, double(1))
+        function(i) {
+          weighted.mean(num[, i] / den[, i], den[, i])
     } else {
       vapply(seq_len(dim(num)[[2]]), function(i) {
         mean(num[den[, i] > 0, i] / den[den[, i] > 0, i])
       }, double(1))
+      vapply(
+        seq_len(dim(num)[[2]]),
+        },
+        double(1)
     }
   }
 }
