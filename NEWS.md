@@ -1,5 +1,8 @@
-# TreeSearch 1.7.0.9000 (development)
+# TreeSearch 1.8.0 (2025-01-15)
 
+- Implements the methods of Smith (forthcoming) via `ClusteringConcordance()`,
+  with visualization functions `ConcordanceTable()`, `QACol()` and `QALegend()`.
+- `QuartetConcordance()` gains `return` parameter and fast C++ implementation.
 - Fix regression in `MaximumLength()`.
 
 
@@ -14,6 +17,7 @@
 - Support single-character matrices in `ClusteringConcordance()`
 - Fix `DoNothing(x)` to return `x` (not `NULL`)
 - Remove unused `delete_rawdata()` due to implementation issues.
+- Port `MaximumLength()` to C++ to handle more characters, more efficiently.
 
 
 # TreeSearch 1.6.1 (2025-06-10)

@@ -2,20 +2,20 @@
 % Please edit documentation in R/Concordance.R
 \name{SiteConcordance}
 \alias{SiteConcordance}
-\alias{QuartetConcordance}
 \alias{ClusteringConcordance}
-\alias{PhylogeneticConcordance}
 \alias{MutualClusteringConcordance}
+\alias{QuartetConcordance}
+\alias{PhylogeneticConcordance}
 \alias{SharedPhylogeneticConcordance}
-\title{Calculate site concordance factor}
+\title{Concordance factors}
 \usage{
-QuartetConcordance(tree, dataset = NULL, weight = TRUE)
-
-ClusteringConcordance(tree, dataset)
-
-PhylogeneticConcordance(tree, dataset)
+ClusteringConcordance(tree, dataset, return = "edge", normalize = TRUE)
 
 MutualClusteringConcordance(tree, dataset)
+
+QuartetConcordance(tree, dataset = NULL, weight = TRUE, return = "edge")
+
+PhylogeneticConcordance(tree, dataset)
 
 SharedPhylogeneticConcordance(tree, dataset)
 }
@@ -28,17 +28,129 @@ Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
 Additive (ordered) characters can be handled using
 \code{\link[TreeTools]{Decompose}()}.}
 
+\item{return}{Character specifying the summary to return. Options are:
+\itemize{
+\item \code{"edge"}: average concordance of each tree split across all characters;
+\item \code{"char"}: concordance of each character averaged over all splits, weighted
+by each character's information content;
+\item \code{"tree"}: an overall tree‑level concordance score;
+\item \code{"all"}: a full array of MI components and normalized values for every
+split–character pair.
+}
+
+Matching is case‑insensitive and partial.}
+
+\item{normalize}{Controls how the \emph{expected} mutual information (the zero
+point of the scale) is determined.
+\itemize{
+\item \code{FALSE}: no chance correction; MI is scaled only by its maximum.
+\item \code{TRUE}: subtract the \strong{analytical} expected MI for random association.
+\item \verb{<integer>}: subtract an \strong{empirical} expected MI estimated from that
+number of random trees.
+}
+
+In all cases, 1 corresponds to the maximal attainable MI for the pair
+(\code{hBest}), and 0 corresponds to the chosen expectation.}
+
 \item{weight}{Logical specifying whether to weight sites according to the
 number of quartets they are decisive for.}
 }
+\value{
+\code{ClusteringConcordance(return = "all")} returns a 3D array where each
+slice corresponds to a character (site), each column to a tree split, and
+each row to a different information measure. The \code{normalized} row gives the
+normalized mutual information between each split-character pair, scaled so
+that 1.0 corresponds to \code{hBest} (the theoretical maximum mutual information,
+being the minimum of \code{hSplit} and \code{hChar}) and 0.0 corresponds to \code{miRand}
+(the expected mutual information under random association). \code{hSplit} gives
+the entropy (information content) of each split's bipartition; \code{hChar} gives
+the entropy of each character's state distribution; \code{hJoint} gives the joint
+entropy of the split-character confusion matrix; \code{mi} gives the raw mutual
+information; and \code{n} records the number of informative observations.
+Negative normalized values indicate observed mutual information below random
+expectation. \code{NA} is returned when \code{hBest = 0} (no information potential).
+
+\code{ClusteringConcordance(return = "edge")} returns a vector where each element
+corresponds to a split (an edge of the tree) and gives the normalized mutual
+information between that split and the character data, averaged across all
+characters.
+When \code{normalize = TRUE} (default), values are scaled relative to random
+expectation; when \code{FALSE}, raw mutual information normalized by \code{hBest} is
+returned.
+
+\code{ClusteringConcordance(return = "char")} returns a vector where each element
+corresponds to a character (site) and gives the entropy-weighted average
+normalized mutual information between that character and all tree splits.
+Characters with higher information content receive proportionally more weight
+from splits that can potentially convey more information about them.
+
+\code{ClusteringConcordance(return = "tree")} returns a single value representing
+the overall concordance between the tree topology and the character data.
+This averages the fit of the best-matching split for each character.
+This is included for completeness, though it is not clear that this is a useful
+or meaningful measure.
+
+\code{MutualClusteringConcordance()} returns the mutual clustering
+concordance of each character in \code{dataset} with \code{tree}.
+The attribute \code{weighted.mean} gives the mean value, weighted by the
+information content of each character.
+
+\code{QuartetConcordance(return = "edge")} returns a numeric vector giving the
+concordance index at each split across all sites; names specify the number of
+each corresponding split in \code{tree}.
+
+\code{QuartetConcordance(return = "char")} returns a numeric vector giving the
+concordance index calculated at each site, averaged across all splits.
+
+\code{PhylogeneticConcordance()} returns a numeric vector giving the
+phylogenetic information of each split in \code{tree}, named according to the
+split's internal numbering.
+
+\code{SharedPhylogeneticConcordance()} returns the shared phylogenetic
+concordance of each character in \code{dataset} with \code{tree}.
+The attribute \code{weighted.mean} gives the mean value, weighted by the
+information content of each character.
+}
 \description{
-The site concordance factor \insertCite{Minh2020}{TreeSearch} is a measure
-of the strength of support that the dataset presents for a given split in a
-tree.
+Concordance measures the strength of support that characters in a dataset
+present for each split (=edge/branch) in a tree
+\insertCite{Minh2020,SmithConc}{TreeSearch}.
 }
 \details{
+\code{ClusteringConcordance()} measures how well each tree split reflects the
+grouping structure implied by each character
+\insertCite{SmithConc}{TreeSearch}.
+Characters and splits are treated as clusterings of taxa, and their agreement
+is quantified using mutual information (MI). All reported values are scaled
+so that 1 corresponds to the maximum possible mutual information for each
+split–character pair (\code{hBest}).
+
+The \code{normalize} argument specifies how the zero point is defined.
+\itemize{
+\item If \code{normalize = FALSE}, zero corresponds to \emph{zero} MI, without correcting
+for the positive bias that arises because MI is rarely exactly zero in
+finite samples.
+\item If \code{normalize = TRUE}, the expected MI is computed using an analytical
+approximation based on the distribution of character tokens. This is fast
+and generally accurate for large trees (≈200+ taxa), but does not account
+for correlation between splits.
+\item If \code{normalize} is a positive integer \code{n}, the expected MI is estimated
+empirically by fitting each character to \code{n} uniformly random trees and
+averaging the resulting MI values. This Monte Carlo approach provides a
+more accurate baseline for small trees, for which the analytical
+approximation is biased. Monte Carlo standard errors are returned.
+}
+
+\code{MutualClusteringConcordance()} provides a character‑wise summary that
+emphasises each character’s best‑matching split(s). It treats each character
+as a simple tree and computes the mutual clustering information between this
+character‑tree and the supplied phylogeny. High values identify characters
+whose signal is well represented anywhere in the tree, even if concentrated
+on a single edge.
+
 \code{QuartetConcordance()} is the proportion of quartets (sets of four leaves)
-that are decisive for a split which are also concordant with it.
+that are decisive for a split which are also concordant with it
+(the site concordance factor \insertCite{Minh2020}{TreeSearch}).
 For example, a quartet with the characters \verb{0 0 0 1} is not decisive, as
 all relationships between those leaves are equally parsimonious.
 But a quartet with characters \verb{0 0 1 1} is decisive, and is concordant
@@ -60,20 +172,45 @@ If \code{weight = FALSE}, the split concordance will be mean(75\%, 25\%) = 50\%.
 other implementations (e.g. IQ-TREE) follow
 \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
 of quartets for a faster, if potentially less accurate, computation.
+Ambiguous and inapplicable tokens are treated as containing no grouping
+information (i.e. \code{(02)} or \code{-} are each treated as \verb{?}).
 
-\strong{NOTE:} These functions are under development. They are incompletely
-tested, and may change without notice.
-Complete documentation and discussion will follow in due course.
+\code{PhylogeneticConcordance()} treats each character in \code{dataset} as a
+phylogenetic hypothesis and measures the extent to which it supports the
+splits of \code{tree}. Each character is first interpreted as a tree (or set of
+trees) in which taxa sharing the same token form a clade. Only splits for
+which the character contains at least four relevant taxa can contribute
+information.
+
+For each split, the function identifies which characters could potentially
+support that split (i.e. those for which the induced subtrees contain
+informative structure), and among these, which characters are actually
+compatible with the split. The concordance value for each split is the
+proportion of informative characters that support it.
+A value of 1 indicates that all characters informative for that subset of
+taxa support the split; a value of 0 indicates that none do. Characters that
+contain only ambiguous or uninformative states for the relevant taxa do not
+affect the result.
+
+\code{SharedPhylogeneticConcordance()} treats each character as a simple tree.
+Each token in the character corresponds to a node whose pendant edges are the
+taxa with that token.
+The Shared Phylogenetic Concordance for each character in \code{dataset} is then
+the Shared Phylogenetic Information \insertCite{Smith2020}{TreeSearch} of
+this tree and \code{tree}.
 }
 \examples{
 data("congreveLamsdellMatrices", package = "TreeSearch")
 dataset <- congreveLamsdellMatrices[[1]][, 1:20]
-tree <- referenceTree
-qc <- QuartetConcordance(tree, dataset)
+tree <- TreeSearch::referenceTree
+
 cc <- ClusteringConcordance(tree, dataset)
+mcc <- MutualClusteringConcordance(tree, dataset)
+
+qc <- QuartetConcordance(tree, dataset)
+
 pc <- PhylogeneticConcordance(tree, dataset)
 spc <- SharedPhylogeneticConcordance(tree, dataset)
-mcc <- MutualClusteringConcordance(tree, dataset)
 
 oPar <- par(mar = rep(0, 4), cex = 0.8) # Set plotting parameters
 plot(tree)
@@ -83,7 +220,7 @@ TreeTools::LabelSplits(tree, signif(cc, 3), cex = 0.8)
 par(oPar) # Restore plotting parameters
 
 # Write concordance factors to file
-labels <- paste0(qc, "/", cc, "/", pc) # "/" is a valid delimiter
+labels <- paste0(cc, "/", qc, "/", pc) # "/" is a valid delimiter
 # Identify the node that corresponds to each label
 whichNode <- match(TreeTools::NTip(tree) + 1:tree$Nnode, names(qc))
 
@@ -93,12 +230,19 @@ tree$node.label <- labels[whichNode]
 ape::write.tree(tree) # or write.nexus(tree, file = "mytree.nex")
 
 # Display correlation between concordance factors
-pairs(cbind(qc, cc, pc, spc, mcc), asp = 1)
+pairs(cbind(cc, mcc, qc, pc, spc), asp = 1)
+data(congreveLamsdellMatrices)
+myMatrix <- congreveLamsdellMatrices[[10]]
+ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
 }
 \references{
 \insertAllCited{}
 }
 \seealso{
+\itemize{
+\item \code{\link[=Consistency]{Consistency()}}
+}
+
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},

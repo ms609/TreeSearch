@@ -10,6 +10,30 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// expected_mi
+double expected_mi(const IntegerVector& ni, const IntegerVector& nj);
+RcppExport SEXP _TreeSearch_expected_mi(SEXP niSEXP, SEXP njSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerVector& >::type ni(niSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type nj(njSEXP);
+    rcpp_result_gen = Rcpp::wrap(expected_mi(ni, nj));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mi_key
+RawVector mi_key(IntegerVector ni, IntegerVector nj);
+RcppExport SEXP _TreeSearch_mi_key(SEXP niSEXP, SEXP njSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type ni(niSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type nj(njSEXP);
+    rcpp_result_gen = Rcpp::wrap(mi_key(ni, nj));
+    return rcpp_result_gen;
+END_RCPP
+}
 // preorder_morphy
 int preorder_morphy(IntegerMatrix edge, SEXP MorphyHandl);
 RcppExport SEXP _TreeSearch_preorder_morphy(SEXP edgeSEXP, SEXP MorphyHandlSEXP) {
@@ -64,6 +88,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type profiles(profilesSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type target(targetSEXP);
     rcpp_result_gen = Rcpp::wrap(morphy_profile(edge, MorphyHandls, weight, sequence, profiles, target));
+    return rcpp_result_gen;
+END_RCPP
+}
+// quartet_concordance
+List quartet_concordance(const LogicalMatrix splits, const IntegerMatrix characters);
+RcppExport SEXP _TreeSearch_quartet_concordance(SEXP splitsSEXP, SEXP charactersSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const LogicalMatrix >::type splits(splitsSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type characters(charactersSEXP);
+    rcpp_result_gen = Rcpp::wrap(quartet_concordance(splits, characters));
     return rcpp_result_gen;
 END_RCPP
 }

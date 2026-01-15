@@ -16,8 +16,8 @@ Additive (ordered) characters can be handled using
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{nRelabel}{Integer specifying how many times to relabel leaves when
-estimating null tree length for \acronym{RHI} calculation.
-\insertCite{Steell2023;textual}{TreeSearch} recommend 1000, but suggest that
+computing MCMC estimate of null tree length for \acronym{RHI} calculation.
+\insertCite{Steell2025;textual}{TreeSearch} recommend 1000, but suggest that
 100 may suffice.
 If zero (the default), the \acronym{RHI} is not calculated.}
 
