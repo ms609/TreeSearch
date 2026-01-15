@@ -1,12 +1,8 @@
-# Branch `char-concord` (development)
+# TreeSearch 1.8.0 (2025-01-15)
 
 - Implements the methods of Smith (forthcoming) via `ClusteringConcordance()`,
-  visualized with `ConcordanceTable()` and support functions `QACol()`, `QALegend()`
+  with visualization functions `ConcordanceTable()`, `QACol()` and `QALegend()`.
 - `QuartetConcordance()` gains `return` parameter and fast C++ implementation.
-
-
-# TreeSearch 1.7.0.9000 (development)
-
 - Fix regression in `MaximumLength()`.
 
 

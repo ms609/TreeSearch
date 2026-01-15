@@ -8,13 +8,13 @@
   "codeRepository": "https://github.com/ms609/TreeSearch/",
   "issueTracker": "https://github.com/ms609/TreeSearch/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.5.1 (2025-06-13)",
+  "runtimePlatform": "R version 4.5.2 (2025-10-31 ucrt)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -175,6 +175,18 @@
     },
     "2": {
       "@type": "SoftwareApplication",
+      "identifier": "abind",
+      "name": "abind",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=abind"
+    },
+    "3": {
+      "@type": "SoftwareApplication",
       "identifier": "ape",
       "name": "ape",
       "version": ">= 5.6",
@@ -186,7 +198,19 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=ape"
     },
-    "3": {
+    "4": {
+      "@type": "SoftwareApplication",
+      "identifier": "base64enc",
+      "name": "base64enc",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=base64enc"
+    },
+    "5": {
       "@type": "SoftwareApplication",
       "identifier": "cli",
       "name": "cli",
@@ -199,7 +223,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=cli"
     },
-    "4": {
+    "6": {
       "@type": "SoftwareApplication",
       "identifier": "cluster",
       "name": "cluster",
@@ -211,7 +235,19 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=cluster"
     },
-    "5": {
+    "7": {
+      "@type": "SoftwareApplication",
+      "identifier": "colorspace",
+      "name": "colorspace",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=colorspace"
+    },
+    "8": {
       "@type": "SoftwareApplication",
       "identifier": "fastmap",
       "name": "fastmap",
@@ -223,7 +259,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=fastmap"
     },
-    "6": {
+    "9": {
       "@type": "SoftwareApplication",
       "identifier": "fastmatch",
       "name": "fastmatch",
@@ -236,7 +272,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=fastmatch"
     },
-    "7": {
+    "10": {
       "@type": "SoftwareApplication",
       "identifier": "fs",
       "name": "fs",
@@ -248,7 +284,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=fs"
     },
-    "8": {
+    "11": {
       "@type": "SoftwareApplication",
       "identifier": "future",
       "name": "future",
@@ -260,7 +296,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=future"
     },
-    "9": {
+    "12": {
       "@type": "SoftwareApplication",
       "identifier": "PlotTools",
       "name": "PlotTools",
@@ -272,7 +308,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=PlotTools"
     },
-    "10": {
+    "13": {
       "@type": "SoftwareApplication",
       "identifier": "promises",
       "name": "promises",
@@ -284,7 +320,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=promises"
     },
-    "11": {
+    "14": {
       "@type": "SoftwareApplication",
       "identifier": "protoclust",
       "name": "protoclust",
@@ -296,7 +332,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=protoclust"
     },
-    "12": {
+    "15": {
       "@type": "SoftwareApplication",
       "identifier": "Rcpp",
       "name": "Rcpp",
@@ -308,7 +344,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=Rcpp"
     },
-    "13": {
+    "16": {
       "@type": "SoftwareApplication",
       "identifier": "Rdpack",
       "name": "Rdpack",
@@ -321,7 +357,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=Rdpack"
     },
-    "14": {
+    "17": {
       "@type": "SoftwareApplication",
       "identifier": "Rogue",
       "name": "Rogue",
@@ -334,7 +370,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=Rogue"
     },
-    "15": {
+    "18": {
       "@type": "SoftwareApplication",
       "identifier": "shiny",
       "name": "shiny",
@@ -347,7 +383,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=shiny"
     },
-    "16": {
+    "19": {
       "@type": "SoftwareApplication",
       "identifier": "shinyjs",
       "name": "shinyjs",
@@ -359,12 +395,12 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=shinyjs"
     },
-    "17": {
+    "20": {
       "@type": "SoftwareApplication",
       "identifier": "stats",
       "name": "stats"
     },
-    "18": {
+    "21": {
       "@type": "SoftwareApplication",
       "identifier": "stringi",
       "name": "stringi",
@@ -376,7 +412,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=stringi"
     },
-    "19": {
+    "22": {
       "@type": "SoftwareApplication",
       "identifier": "TreeDist",
       "name": "TreeDist",
@@ -389,7 +425,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=TreeDist"
     },
-    "20": {
+    "23": {
       "@type": "SoftwareApplication",
       "identifier": "TreeTools",
       "name": "TreeTools",
@@ -404,7 +440,7 @@
     },
     "SystemRequirements": "C++17"
   },
-  "fileSize": "4584.9KB",
+  "fileSize": "4632.484KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -476,7 +512,7 @@
       ],
       "name": "{TreeSearch}: phylogenetic analysis with discrete character data",
       "identifier": "10.5281/zenodo.1042590",
-      "description": "R package version 1.7.0",
+      "description": "R package version 1.8.0",
       "@id": "https://doi.org/10.5281/zenodo.1042590",
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
     },
