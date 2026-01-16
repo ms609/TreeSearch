@@ -146,7 +146,7 @@ The `normalize` argument specifies how the zero point is defined.
 
 - If `normalize = TRUE`, the expected MI is computed using an analytical
   approximation based on the distribution of character tokens. This is
-  fast and generally accurate for large trees (≈200+ taxa), but does not
+  fast and generally accurate for large trees (~200+ taxa), but does not
   account for correlation between splits.
 
 - If `normalize` is a positive integer `n`, the expected MI is estimated

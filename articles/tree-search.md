@@ -5,7 +5,7 @@ search on morphological datasets that contain inapplicable data, using
 the algorithm proposed by Brazeau, Guillerme and Smith (2019) and
 implemented in the ‘MorphyLib’ C library (Brazeau, Smith, & Guillerme,
 2017)
-([details](https://rawgit.com/TGuillerme/Inapp/c4d502fa4ae3702eb207b2da3a692e469ba3b6ab/inst/gitbook/_book/index.html)).
+([details](https://web.archive.org/web/20181112153144/https://cdn.rawgit.com/TGuillerme/Inapp/master/inst/gitbook/_book/index.html)).
 
 ## Getting started
 
