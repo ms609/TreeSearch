@@ -132,7 +132,7 @@ for the positive bias that arises because MI is rarely exactly zero in
 finite samples.
 \item If \code{normalize = TRUE}, the expected MI is computed using an analytical
 approximation based on the distribution of character tokens. This is fast
-and generally accurate for large trees (≈200+ taxa), but does not account
+and generally accurate for large trees (~200+ taxa), but does not account
 for correlation between splits.
 \item If \code{normalize} is a positive integer \code{n}, the expected MI is estimated
 empirically by fitting each character to \code{n} uniformly random trees and
