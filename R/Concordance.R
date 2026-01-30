@@ -481,8 +481,10 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 #' - [SiteConcordance()]: compute underlying concordance values.
 #' @export
 ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
-                             xlab = "Edge", ylab = "Character", ...) {
-  cc <- ClusteringConcordance(tree, dataset, return = "all")
+                             xlab = "Edge", ylab = "Character", 
+                             normalize = TRUE, ...) {
+  cc <- ClusteringConcordance(tree, dataset, return = "all",
+                              normalize = normalize)
   nodes <- seq_len(dim(cc)[[2]])
   info <- cc["hBest", , ] * cc["n", , ]
   amount <- info / max(info, na.rm = TRUE)

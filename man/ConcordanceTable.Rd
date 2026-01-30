@@ -11,6 +11,7 @@ ConcordanceTable(
   largeClade = 0,
   xlab = "Edge",
   ylab = "Character",
+  normalize = TRUE,
   ...
 )
 }
@@ -33,6 +34,18 @@ at edges whose descendants are both contain more than \code{largeClade} leaves.}
 \item{xlab}{Character giving a label for the x axis.}
 
 \item{ylab}{Character giving a label for the y axis.}
+
+\item{normalize}{Controls how the \emph{expected} mutual information (the zero
+point of the scale) is determined.
+\itemize{
+\item \code{FALSE}: no chance correction; MI is scaled only by its maximum.
+\item \code{TRUE}: subtract the analytical expected MI for random association.
+\item \verb{<integer>}: subtract an empirical expected MI estimated from that
+number of random trees.
+}
+
+In all cases, 1 corresponds to the maximal attainable MI for the pair
+(\code{hBest}), and 0 corresponds to the chosen expectation.}
 
 \item{\dots}{Arguments to \code{abline}, to control the appearance of vertical
 lines marking important edges.}
