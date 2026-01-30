@@ -13,7 +13,7 @@
 - `Consistency()` also returns the relative homoplasy index of Steell et al. 
   (2023).
 - `JackLabels()` supports multiple trees per iteration
-  (#197)[https://github.com/ms609/TreeSearch/discussions/197]
+  ([#197](https://github.com/ms609/TreeSearch/discussions/197))
 - Support single-character matrices in `ClusteringConcordance()`
 - Fix `DoNothing(x)` to return `x` (not `NULL`)
 - Remove unused `delete_rawdata()` due to implementation issues.
