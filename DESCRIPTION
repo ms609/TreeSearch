@@ -11,7 +11,7 @@ Authors@R: c(
     person(
       given = "Martin", family = "Brazeau",
       role = c("cph"),
-      comment = c(ORCID = "0000-0002-0650-1282")
+      comment = c(ORCID = "0000-0002-0650-1282", "Morphy library")
     )
   )
 License: GPL (>= 3)
