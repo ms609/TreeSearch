@@ -242,7 +242,8 @@ ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
 }
 \seealso{
 \itemize{
-\item \code{\link[=Consistency]{Consistency()}}
+\item \code{\link[=ConcordanceTable]{ConcordanceTable()}}: Visualize concordance.
+\item \code{\link[=Consistency]{Consistency()}}: Measure consistency of characters with dataset.
 }
 
 Other split support functions: 

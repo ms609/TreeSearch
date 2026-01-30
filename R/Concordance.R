@@ -141,7 +141,8 @@ NULL
 #'
 #'
 #' @seealso
-#' - [Consistency()]
+#' - [ConcordanceTable()]: Visualize concordance.
+#' - [Consistency()]: Measure consistency of characters with dataset.
 #' @examples
 #' data(congreveLamsdellMatrices)
 #' myMatrix <- congreveLamsdellMatrices[[10]]
@@ -476,6 +477,8 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 #' @importFrom graphics abline image mtext
 #' @importFrom TreeTools CladeSizes NTip
 #' @family split support functions
+#' @seealso
+#' - [SiteConcordance()]: compute underlying concordance values.
 #' @export
 ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
                              xlab = "Edge", ylab = "Character", ...) {

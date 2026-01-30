@@ -77,6 +77,10 @@ image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
 \insertAllCited{}
 }
 \seealso{
+\itemize{
+\item \code{\link[=SiteConcordance]{SiteConcordance()}}: compute underlying concordance values.
+}
+
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
