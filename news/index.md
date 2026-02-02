@@ -24,7 +24,7 @@ CRAN release: 2025-08-23
   also returns the relative homoplasy index of Steell et al.  (2023).
 - [`JackLabels()`](https://ms609.github.io/TreeSearch/reference/JackLabels.md)
   supports multiple trees per iteration
-  ([\#197](https://github.com/ms609/TreeSearch/issues/197))\[<https://github.com/ms609/TreeSearch/discussions/197>\]
+  ([\#197](https://github.com/ms609/TreeSearch/discussions/197))
 - Support single-character matrices in
   [`ClusteringConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md)
 - Fix `DoNothing(x)` to return `x` (not `NULL`)

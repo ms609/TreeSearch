@@ -12,6 +12,7 @@ ConcordanceTable(
   largeClade = 0,
   xlab = "Edge",
   ylab = "Character",
+  normalize = TRUE,
   ...
 )
 ```
@@ -53,6 +54,21 @@ ConcordanceTable(
 
   Character giving a label for the y axis.
 
+- normalize:
+
+  Controls how the *expected* mutual information (the zero point of the
+  scale) is determined.
+
+  - `FALSE`: no chance correction; MI is scaled only by its maximum.
+
+  - `TRUE`: subtract the analytical expected MI for random association.
+
+  - `<integer>`: subtract an empirical expected MI estimated from that
+    number of random trees.
+
+  In all cases, 1 corresponds to the maximal attainable MI for the pair
+  (`hBest`), and 0 corresponds to the chosen expectation.
+
 - ...:
 
   Arguments to `abline`, to control the appearance of vertical lines
@@ -79,6 +95,9 @@ distribution of phylogenetic signal using concordant information.”
 *Forthcoming*.
 
 ## See also
+
+- [`SiteConcordance()`](https://ms609.github.io/TreeSearch/reference/SiteConcordance.md):
+  compute underlying concordance values.
 
 Other split support functions:
 [`JackLabels()`](https://ms609.github.io/TreeSearch/reference/JackLabels.md),

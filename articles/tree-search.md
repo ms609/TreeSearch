@@ -3,8 +3,7 @@
 “TreeSearch” is an R package that allows, among other things, parsimony
 search on morphological datasets that contain inapplicable data, using
 the algorithm proposed by Brazeau, Guillerme and Smith (2019) and
-implemented in the ‘MorphyLib’ C library (Brazeau, Smith, & Guillerme,
-2017)
+implemented in the ‘MorphyLib’ C library (Brazeau et al., 2017)
 ([details](https://web.archive.org/web/20181112153144/https://cdn.rawgit.com/TGuillerme/Inapp/master/inst/gitbook/_book/index.html)).
 
 ## Getting started
@@ -331,8 +330,8 @@ plot(ape::consensus(iwTrees))
 
 Note that we recommend a default value of 10, somewhat higher than the
 default of 3 in TNT; this low default gives poorer results in many
-settings (Goloboff, Torres, & Arias, 2018; Smith, 2019). Better still is
-to use multiple values and compare the results, perhaps in [Tree
+settings (Goloboff et al., 2018; Smith, 2019). Better still is to use
+multiple values and compare the results, perhaps in [Tree
 space](https://ms609.github.io/TreeDist/articles/treespace.html). Even
 better (?) is to use [profile
 parsimony](https://ms609.github.io/TreeSearch/articles/profile.html).
@@ -415,50 +414,46 @@ Constraints can also be loaded from a Nexus file with
 
 Brazeau, M. D., Guillerme, T., & Smith, M. R. (2019). An algorithm for
 morphological phylogenetic analysis with inapplicable data. *Systematic
-Biology*, *68*, 619–631. doi:
-[10.1093/sysbio/syy083](https://doi.org/10.1093/sysbio/syy083)
+Biology*, *68*, 619–631. <https://doi.org/10.1093/sysbio/syy083>
 
 Brazeau, M. D., Smith, M. R., & Guillerme, T. (2017). *MorphyLib: A
 library for phylogenetic analysis of categorical trait data with
-inapplicability*. doi:
-[10.5281/zenodo.815372](https://doi.org/10.5281/zenodo.815372)
+inapplicability*. <https://doi.org/10.5281/zenodo.815372>
 
 Goloboff, P. A. (1993). Estimating character weights during tree search.
-*Cladistics*, *9*(1), 83–91. doi:
-[10.1111/j.1096-0031.1993.tb00209.x](https://doi.org/10.1111/j.1096-0031.1993.tb00209.x)
+*Cladistics*, *9*(1), 83–91.
+<https://doi.org/10.1111/j.1096-0031.1993.tb00209.x>
 
 Goloboff, P. A. (1997). Self-weighted optimization: tree searches and
 character state reconstructions under implied transformation costs.
-*Cladistics*, *13*(3), 225–245. doi:
-[10.1111/j.1096-0031.1997.tb00317.x](https://doi.org/10.1111/j.1096-0031.1997.tb00317.x)
+*Cladistics*, *13*(3), 225–245.
+<https://doi.org/10.1111/j.1096-0031.1997.tb00317.x>
 
 Goloboff, P. A., Torres, A., & Arias, J. S. (2018). Weighted parsimony
 outperforms other methods of phylogenetic inference under models
-appropriate for morphology. *Cladistics*, *34*(4), 407–437. doi:
-[10.1111/cla.12205](https://doi.org/10.1111/cla.12205)
+appropriate for morphology. *Cladistics*, *34*(4), 407–437.
+<https://doi.org/10.1111/cla.12205>
 
 Smith, M. R. (2019). Bayesian and parsimony approaches reconstruct
 informative trees from simulated morphological datasets. *Biology
-Letters*, *15*(2), 20180632. doi:
-[10.1098/rsbl.2018.0632](https://doi.org/10.1098/rsbl.2018.0632)
+Letters*, *15*(2), 20180632. <https://doi.org/10.1098/rsbl.2018.0632>
 
 Smith, M. R. (2022a). Robust analysis of phylogenetic tree space.
-*Systematic Biology*, *71*(5), 1255–1270. doi:
-[10.1093/sysbio/syab100](https://doi.org/10.1093/sysbio/syab100)
+*Systematic Biology*, *71*(5), 1255–1270.
+<https://doi.org/10.1093/sysbio/syab100>
 
 Smith, M. R. (2022b). Using information theory to detect rogue taxa and
-improve consensus trees. *Systematic Biology*, *71*(5), 1088–1094. doi:
-[10.1093/sysbio/syab099](https://doi.org/10.1093/sysbio/syab099)
+improve consensus trees. *Systematic Biology*, *71*(5), 1088–1094.
+<https://doi.org/10.1093/sysbio/syab099>
 
 Smith, M. R., & Ortega-Hernández, J. (2014). *Hallucigenia*’s
 onychophoran-like claws and the case for Tactopoda. *Nature*,
-*514*(7522), 363–366. doi:
-[10.1038/nature13576](https://doi.org/10.1038/nature13576)
+*514*(7522), 363–366. <https://doi.org/10.1038/nature13576>
 
 Vinther, J., Van Roy, P., & Briggs, D. E. G. (2008). Machaeridians are
-Palaeozoic armoured annelids. *Nature*, *451*(7175), 185–188. doi:
-[10.1038/nature06474](https://doi.org/10.1038/nature06474)
+Palaeozoic armoured annelids. *Nature*, *451*(7175), 185–188.
+<https://doi.org/10.1038/nature06474>
 
 Whidden, C., & Matsen, F. A. (2015). Quantifying MCMC exploration of
-phylogenetic tree space. *Systematic Biology*, *64*(3), 472–491. doi:
-[10.1093/sysbio/syv006](https://doi.org/10.1093/sysbio/syv006)
+phylogenetic tree space. *Systematic Biology*, *64*(3), 472–491.
+<https://doi.org/10.1093/sysbio/syv006>

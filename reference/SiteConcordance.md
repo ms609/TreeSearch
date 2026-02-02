@@ -230,7 +230,11 @@ distribution of phylogenetic signal using concordant information.”
 
 ## See also
 
-- [`Consistency()`](https://ms609.github.io/TreeSearch/reference/Consistency.md)
+- [`ConcordanceTable()`](https://ms609.github.io/TreeSearch/reference/ConcordanceTable.md):
+  Visualize concordance.
+
+- [`Consistency()`](https://ms609.github.io/TreeSearch/reference/Consistency.md):
+  Measure consistency of characters with dataset.
 
 Other split support functions:
 [`ConcordanceTable()`](https://ms609.github.io/TreeSearch/reference/ConcordanceTable.md),

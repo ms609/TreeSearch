@@ -7,7 +7,8 @@
   [](https://orcid.org/0000-0001-5660-1727)
 
 - **Martin Brazeau**. Copyright holder.
-  [](https://orcid.org/0000-0002-0650-1282)
+  [](https://orcid.org/0000-0002-0650-1282)  
+  Morphy library
 
 ## Citation
 

@@ -164,8 +164,8 @@ coefficient is greater than the threshold, whose interpretation is
 marked above the slider (here, 0.68 is “good”). As it happens, the
 clusters largely correspond to the tree reconstruction method used:
 Fitch (1971) parsimony (TNT_EW) trees form one distinct cluster; trees
-under “BGS” inapplicable-corrected parsimony (Brazeau, Guillerme, &
-Smith, 2019) another; and Bayesian trees a final, more diffuse cluster.
+under “BGS” inapplicable-corrected parsimony (Brazeau et al., 2019)
+another; and Bayesian trees a final, more diffuse cluster.
 
 ### Tree space analysis in R
 
@@ -198,9 +198,9 @@ dists <- as.dist(Quartet::QuartetDivergence(
 ### Identify clustering structure
 
 Here we compute clusters of trees using a selection of clustering
-methods (Bien & Tibshirani, 2011; Hartigan & Wong, 1979; Maechler,
-Rousseeuw, Struyf, Hubert, & Hornik, 2019), allowing the optimal
-clustering to be highlighted on the plot.
+methods (Bien & Tibshirani, 2011; Hartigan & Wong, 1979; Maechler et
+al., 2019), allowing the optimal clustering to be highlighted on the
+plot.
 
 ``` r
 # Try K-means clustering (Hartigan & Wong 1979):
@@ -348,7 +348,7 @@ Plotting the consensus of trees within a specific cluster can give more
 insight into the underlying relationships within a tree set than viewing
 a single strict consensus, particularly where the data do not decisively
 distinguish between a small number of well-defined but conflicting
-phylogenetic hypotheses (Stockham, Wang, & Warnow, 2002).
+phylogenetic hypotheses (Stockham et al., 2002).
 
 Visualising the consensus of each cluster can reveal this “hidden”
 agreement between trees and allow more detailed and thoughtful analysis
@@ -451,23 +451,21 @@ for (i in seq_len(nClusters)) {
 
 Bien, J., & Tibshirani, R. (2011). Hierarchical clustering with
 prototypes via minimax linkage. *Journal of the American Statistical
-Association*, *106*(495), 1075–1084. doi:
-[10.1198/jasa.2011.tm10183](https://doi.org/10.1198/jasa.2011.tm10183)
+Association*, *106*(495), 1075–1084.
+<https://doi.org/10.1198/jasa.2011.tm10183>
 
 Brazeau, M. D., Guillerme, T., & Smith, M. R. (2019). An algorithm for
 morphological phylogenetic analysis with inapplicable data. *Systematic
-Biology*, *68*, 619–631. doi:
-[10.1093/sysbio/syy083](https://doi.org/10.1093/sysbio/syy083)
+Biology*, *68*, 619–631. <https://doi.org/10.1093/sysbio/syy083>
 
 Fitch, W. M. (1971). Toward defining the course of evolution: Minimum
 change for a specific tree topology. *Systematic Biology*, *20*(4),
-406–416. doi:
-[10.1093/sysbio/20.4.406](https://doi.org/10.1093/sysbio/20.4.406)
+406–416. <https://doi.org/10.1093/sysbio/20.4.406>
 
 Hartigan, J. A., & Wong, M. A. (1979). Algorithm AS 136: A *K*-means
 clustering algorithm. *Journal of the Royal Statistical Society. Series
-C (Applied Statistics)*, *28*(1), 100–108. doi:
-[10.2307/2346830](https://doi.org/10.2307/2346830)
+C (Applied Statistics)*, *28*(1), 100–108.
+<https://doi.org/10.2307/2346830>
 
 Maechler, M., Rousseeuw, P., Struyf, A., Hubert, M., & Hornik, K.
 (2019). Cluster: Cluster Analysis Basics and Extensions. *Comprehensive
@@ -475,23 +473,22 @@ R Archive Network*, *2.1.0*.
 
 Smith, M. R. (2020). Information theoretic Generalized Robinson-Foulds
 metrics for comparing phylogenetic trees. *Bioinformatics*, *36*(20),
-5007–5013. doi:
-[10.1093/bioinformatics/btaa614](https://doi.org/10.1093/bioinformatics/btaa614)
+5007–5013. <https://doi.org/10.1093/bioinformatics/btaa614>
 
 Smith, M. R. (2022a). Robust analysis of phylogenetic tree space.
-*Systematic Biology*, *71*(5), 1255–1270. doi:
-[10.1093/sysbio/syab100](https://doi.org/10.1093/sysbio/syab100)
+*Systematic Biology*, *71*(5), 1255–1270.
+<https://doi.org/10.1093/sysbio/syab100>
 
 Smith, M. R. (2022b). Using information theory to detect rogue taxa and
-improve consensus trees. *Systematic Biology*, *71*(5), 1088–1094. doi:
-[10.1093/sysbio/syab099](https://doi.org/10.1093/sysbio/syab099)
+improve consensus trees. *Systematic Biology*, *71*(5), 1088–1094.
+<https://doi.org/10.1093/sysbio/syab099>
 
 Stockham, C., Wang, L.-S., & Warnow, T. (2002). Statistically based
 postprocessing of phylogenetic analysis by clustering. *Bioinformatics*,
-*18*(Suppl 1), S285–S293. doi:
-[10.1093/bioinformatics/18.suppl_1.S285](https://doi.org/10.1093/bioinformatics/18.suppl_1.S285)
+*18*(Suppl 1), S285–S293.
+<https://doi.org/10.1093/bioinformatics/18.suppl_1.S285>
 
 Sun, H.-J., Smith, M. R., Zeng, H., Zhao, F.-C., Li, G.-X., & Zhu, M.-Y.
 (2018). Hyoliths with pedicles illuminate the origin of the brachiopod
 body plan. *Proceedings of the Royal Society B*, *285*(1887), 20181780.
-doi: [10.1098/rspb.2018.1780](https://doi.org/10.1098/rspb.2018.1780)
+<https://doi.org/10.1098/rspb.2018.1780>

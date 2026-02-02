@@ -25,9 +25,9 @@ PlotTree <- function(tree, ...) {
 ## Maximizing tree balance
 
 We’ll start with a very simple case: aiming to minimise the total
-cophenetic index (TCI) (Mir, Rosselló, & Rotger, 2013) of a tree. The
-TCI is a measure of tree balance; it does not depend on an input
-dataset. All we need to do is to write a `TreeScorer` function.  
+cophenetic index (TCI) (Mir et al., 2013) of a tree. The TCI is a
+measure of tree balance; it does not depend on an input dataset. All we
+need to do is to write a `TreeScorer` function.  
 This function will be sent the `parent` and `child` nodes for each edge
 in a tree, and a (here, empty) `dataset` parameter. The function should
 return a score to be minimized.  
@@ -123,8 +123,8 @@ time-consuming initialization before tree search can begin, and must be
 safely destroyed once tree search has completed.
 
 We start by defining an initialization function, which will create a new
-Morphy object (Brazeau, Smith, & Guillerme, 2017) for each character in
-a phylogenetic dataset:
+Morphy object (Brazeau et al., 2017) for each character in a
+phylogenetic dataset:
 
 ``` r
 IWInitMorphy <- function (dataset) {
@@ -287,21 +287,20 @@ See also:
 
 Brazeau, M. D., Smith, M. R., & Guillerme, T. (2017). *MorphyLib: A
 library for phylogenetic analysis of categorical trait data with
-inapplicability*. doi:
-[10.5281/zenodo.815372](https://doi.org/10.5281/zenodo.815372)
+inapplicability*. <https://doi.org/10.5281/zenodo.815372>
 
 Goloboff, P. A. (1993). Estimating character weights during tree search.
-*Cladistics*, *9*(1), 83–91. doi:
-[10.1111/j.1096-0031.1993.tb00209.x](https://doi.org/10.1111/j.1096-0031.1993.tb00209.x)
+*Cladistics*, *9*(1), 83–91.
+<https://doi.org/10.1111/j.1096-0031.1993.tb00209.x>
 
 Hopkins, M. J., & St. John, K. (2021). Incorporating hierarchical
 characters into phylogenetic analysis. *Systematic Biology*, syab005.
-doi: [10.1093/sysbio/syab005](https://doi.org/10.1093/sysbio/syab005)
+<https://doi.org/10.1093/sysbio/syab005>
 
 Mir, A., Rosselló, F., & Rotger, L. A. (2013). A new balance index for
-phylogenetic trees. *Mathematical Biosciences*, *241*(1), 125–136. doi:
-[10.1016/j.mbs.2012.10.005](https://doi.org/10.1016/j.mbs.2012.10.005)
+phylogenetic trees. *Mathematical Biosciences*, *241*(1), 125–136.
+<https://doi.org/10.1016/j.mbs.2012.10.005>
 
 Nixon, K. C. (1999). The Parsimony Ratchet, a new method for rapid
-parsimony analysis. *Cladistics*, *15*(4), 407–414. doi:
-[10.1111/j.1096-0031.1999.tb00277.x](https://doi.org/10.1111/j.1096-0031.1999.tb00277.x)
+parsimony analysis. *Cladistics*, *15*(4), 407–414.
+<https://doi.org/10.1111/j.1096-0031.1999.tb00277.x>

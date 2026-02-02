@@ -71,6 +71,7 @@
 <span>  largeClade <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  xlab <span class="op">=</span> <span class="st">"Edge"</span>,</span>
 <span>  ylab <span class="op">=</span> <span class="st">"Character"</span>,</span>
+<span>  normalize <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -110,6 +111,16 @@ at edges whose descendants are both contain more than <code>largeClade</code> le
 <dd><p>Character giving a label for the y axis.</p></dd>
 
 
+<dt id="arg-normalize">normalize<a class="anchor" aria-label="anchor" href="#arg-normalize"></a></dt>
+<dd><p>Controls how the <em>expected</em> mutual information (the zero
+point of the scale) is determined.</p><ul><li><p><code>FALSE</code>: no chance correction; MI is scaled only by its maximum.</p></li>
+<li><p><code>TRUE</code>: subtract the analytical expected MI for random association.</p></li>
+<li><p><code>&lt;integer&gt;</code>: subtract an empirical expected MI estimated from that
+number of random trees.</p></li>
+</ul><p>In all cases, 1 corresponds to the maximal attainable MI for the pair
+(<code>hBest</code>), and 0 corresponds to the chosen expectation.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Arguments to <code>abline</code>, to control the appearance of vertical
 lines marking important edges.</p></dd>
@@ -130,7 +141,9 @@ lines marking important edges.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p>Other split support functions:
+    <div class="dont-index">
+<ul><li><p><code><a href="SiteConcordance.html">SiteConcordance()</a></code>: compute underlying concordance values.</p></li>
+</ul><p>Other split support functions:
 <code><a href="JackLabels.html">JackLabels()</a></code>,
 <code><a href="Jackknife.html">Jackknife()</a></code>,
 <code><a href="MaximizeParsimony.html">MaximizeParsimony()</a></code>,

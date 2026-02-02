@@ -177,14 +177,12 @@ plot(ape::consensus(suboptimals))
 
 Faith, D. P., & Trueman, J. W. H. (2001). Towards an inclusive
 philosophy for phylogenetic inference. *Systematic Biology*, *50*(3),
-331–350. doi:
-[10.1080/10635150118627](https://doi.org/10.1080/10635150118627)
+331–350. <https://doi.org/10.1080/10635150118627>
 
 Nixon, K. C. (1999). The Parsimony Ratchet, a new method for rapid
-parsimony analysis. *Cladistics*, *15*(4), 407–414. doi:
-[10.1111/j.1096-0031.1999.tb00277.x](https://doi.org/10.1111/j.1096-0031.1999.tb00277.x)
+parsimony analysis. *Cladistics*, *15*(4), 407–414.
+<https://doi.org/10.1111/j.1096-0031.1999.tb00277.x>
 
 Smith, M. R. (2019). Bayesian and parsimony approaches reconstruct
 informative trees from simulated morphological datasets. *Biology
-Letters*, *15*(2), 20180632. doi:
-[10.1098/rsbl.2018.0632](https://doi.org/10.1098/rsbl.2018.0632)
+Letters*, *15*(2), 20180632. <https://doi.org/10.1098/rsbl.2018.0632>

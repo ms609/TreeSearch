@@ -99,15 +99,14 @@ constant. As *e* tends to infinity, this approach tends to equal
 weights; as *k* tends to zero, it tends to clique analysis (in which a
 character is either homologous or ignored) (Farris, 1983). The most
 appropriate value for *k* may depend on the number of taxa, the number
-and distribution of observed states, and other factors (Goloboff,
-Carpenter, Arias, & Esquivel, 2008; Goloboff, Torres, & Arias, 2018) (a
-more detailed treatment will be provided in a revision of this
-document). Moreover, some adjustment must be made for ‘missing’ data,
-i.e. ambiguous tokens, which reduce the opportunity to observe homoplasy
-(Goloboff, 2014). Implied weighting is described as an approximation
-(Goloboff, 1993), and I am not aware of a straightforward interpretation
-of the ‘fit’ score, or a principled definition of the nature of the
-quantity that is being approximated.
+and distribution of observed states, and other factors (Goloboff et al.,
+2008; Goloboff et al., 2018) (a more detailed treatment will be provided
+in a revision of this document). Moreover, some adjustment must be made
+for ‘missing’ data, i.e. ambiguous tokens, which reduce the opportunity
+to observe homoplasy (Goloboff, 2014). Implied weighting is described as
+an approximation (Goloboff, 1993), and I am not aware of a
+straightforward interpretation of the ‘fit’ score, or a principled
+definition of the nature of the quantity that is being approximated.
 
 ### An information theoretic basis
 
@@ -157,8 +156,7 @@ information. If we are told that the character contains exactly two
 steps, it can occur on 63 trees, so yields
 $- log_{2}\frac{63}{105} = 0.74{\mspace{6mu}\text{bits}}$. (The number
 of trees with *m* extra steps can be calculated using theorem 1 of
-Carter, Hendy, Penny, Székely, & Wormald (1990), implemented in the
-function
+Carter et al. (1990), implemented in the function
 [`Carter1()`](https://ms609.github.io/TreeSearch/reference/Carter1.html).)
 Learning that a second step occurred meant that 3.54 − 0.74 = 2.81 bits
 of information we had previously attributed to common ancestry instead
@@ -247,52 +245,48 @@ See also:
 
 Arias, J. S., & Miranda-Esquivel, D. R. (2004). Profile parsimony (PP):
 An analysis under implied weights (IW). *Cladistics*, *20*(1), 56–63.
-doi:
-[10.1111/j.1096-0031.2003.00001.x](https://doi.org/10.1111/j.1096-0031.2003.00001.x)
+<https://doi.org/10.1111/j.1096-0031.2003.00001.x>
 
 Carter, M., Hendy, M., Penny, D., Székely, L. A., & Wormald, N. C.
 (1990). On the distribution of lengths of evolutionary trees. *SIAM
-Journal on Discrete Mathematics*, *3*(1), 38–47. doi:
-[10.1137/0403005](https://doi.org/10.1137/0403005)
+Journal on Discrete Mathematics*, *3*(1), 38–47.
+<https://doi.org/10.1137/0403005>
 
 Cotton, J., & Wilkinson, M. (2008). Quantifying the potential utility of
 phylogenetic characters. *Taxon*, *57*(1), 131–136.
 
 Faith, D. P., & Trueman, J. W. H. (2001). Towards an inclusive
 philosophy for phylogenetic inference. *Systematic Biology*, *50*(3),
-331–350. doi:
-[10.1080/10635150118627](https://doi.org/10.1080/10635150118627)
+331–350. <https://doi.org/10.1080/10635150118627>
 
 Farris, J. S. (1969). A successive approximations approach to character
-weighting. *Systematic Biology*, *18*(4), 374–385. doi:
-[10.2307/2412182](https://doi.org/10.2307/2412182)
+weighting. *Systematic Biology*, *18*(4), 374–385.
+<https://doi.org/10.2307/2412182>
 
 Farris, J. S. (1983). The logical basis of phylogenetic analysis. In N.
 Platnick & V. A. Funk (Eds.), *Advances in Cladistics, Vol. 2* (pp.
-7–36). New York: Columbia University Press.
+7–36). Columbia University Press.
 
 Goloboff, P. A. (1993). Estimating character weights during tree search.
-*Cladistics*, *9*(1), 83–91. doi:
-[10.1111/j.1096-0031.1993.tb00209.x](https://doi.org/10.1111/j.1096-0031.1993.tb00209.x)
+*Cladistics*, *9*(1), 83–91.
+<https://doi.org/10.1111/j.1096-0031.1993.tb00209.x>
 
 Goloboff, P. A. (2014). Extended implied weighting. *Cladistics*,
-*30*(3), 260–272. doi:
-[10.1111/cla.12047](https://doi.org/10.1111/cla.12047)
+*30*(3), 260–272. <https://doi.org/10.1111/cla.12047>
 
 Goloboff, P. A., Carpenter, J. M., Arias, J. S., & Esquivel, D. R. M.
 (2008). Weighting against homoplasy improves phylogenetic analysis of
-morphological data sets. *Cladistics*, *24*(5), 758–773. doi:
-[10.1111/j.1096-0031.2008.00209.x](https://doi.org/10.1111/j.1096-0031.2008.00209.x)
+morphological data sets. *Cladistics*, *24*(5), 758–773.
+<https://doi.org/10.1111/j.1096-0031.2008.00209.x>
 
 Goloboff, P. A., Torres, A., & Arias, J. S. (2018). Weighted parsimony
 outperforms other methods of phylogenetic inference under models
-appropriate for morphology. *Cladistics*, *34*(4), 407–437. doi:
-[10.1111/cla.12205](https://doi.org/10.1111/cla.12205)
+appropriate for morphology. *Cladistics*, *34*(4), 407–437.
+<https://doi.org/10.1111/cla.12205>
 
 Shannon, C. E. (1948). A mathematical theory of communication. *Bell
 System Technical Journal*, *27*, 379–423, 623–656.
 
 Smith, M. R. (2019). Bayesian and parsimony approaches reconstruct
 informative trees from simulated morphological datasets. *Biology
-Letters*, *15*(2), 20180632. doi:
-[10.1098/rsbl.2018.0632](https://doi.org/10.1098/rsbl.2018.0632)
+Letters*, *15*(2), 20180632. <https://doi.org/10.1098/rsbl.2018.0632>
