@@ -1,0 +1,68 @@
+# Getting started: Installing R and TreeSearch
+
+“TreeSearch” is an R package that allows parsimony search on
+morphological datasets.
+
+## Installation
+
+### Simple installation
+
+To use “TreeSearch” you will first need to [install
+R](https://CRAN.R-project.org/). [RStudio](https://posit.co/) is a
+popular front-end that makes several of R’s features easier to use.
+
+The “TreeSearch” package can be installed as any other package. To get
+the latest stable version from CRAN, type
+
+``` r
+install.packages("TreeSearch")
+```
+
+into the R (or RStudio) command line.
+
+Once installed, load the “TreeSearch” package into R using
+
+``` r
+library("TreeSearch")
+```
+
+Activate the graphical user interface by typing
+[`EasyTrees()`](https://ms609.github.io/TreeSearch/dev/reference/MaximizeParsimony.md).
+
+In Jan 2022, some users are reporting issues after loading trees from
+Nexus files. These arise due to an issue in the underlying “ape”
+package. To install a patched version, close and re-launch R and run:
+
+``` r
+if (!require("remotes")) install.packages("remotes")
+remotes::install_github("ms609/ape@patch-3")
+```
+
+Windows users may need to install
+[Rtools](https://cran.r-project.org/bin/windows/Rtools/) before
+installing from the GitHub source.
+
+### For advanced users
+
+To get the latest development version from
+[GitHub](https://github.com/ms609/TreeSearch/), type
+
+``` r
+remotes::install_github("ms609/TreeSearch")
+```
+
+## What next?
+
+You might want to:
+
+- [Load data](https://ms609.github.io/TreeTools/articles/load-data.html)
+  from a Nexus file or spreadsheet
+
+- Conduct parsimony search using Brazeau, Guillerme & Smith’s [approach
+  to inapplicable
+  data](https://ms609.github.io/TreeSearch/dev/articles/tree-search.md),
+  or using [Profile
+  parsimony](https://ms609.github.io/TreeSearch/dev/articles/profile.md).
+
+- Conduct parsimony search using [custom optimality
+  criteria](https://ms609.github.io/TreeSearch/dev/articles/custom.md).
