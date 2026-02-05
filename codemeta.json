@@ -8,7 +8,7 @@
   "codeRepository": "https://github.com/ms609/TreeSearch/",
   "issueTracker": "https://github.com/ms609/TreeSearch/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.8.0",
+  "version": "1.8.0.9000",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -440,7 +440,7 @@
     },
     "SystemRequirements": "C++17"
   },
-  "fileSize": "4573.073KB",
+  "fileSize": "4659.704KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -512,7 +512,7 @@
       ],
       "name": "{TreeSearch}: phylogenetic analysis with discrete character data",
       "identifier": "10.5281/zenodo.1042590",
-      "description": "R package version 1.8.0",
+      "description": "R package version 1.8.0.9000",
       "@id": "https://doi.org/10.5281/zenodo.1042590",
       "sameAs": "https://doi.org/10.5281/zenodo.1042590"
     },
