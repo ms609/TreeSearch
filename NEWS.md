@@ -1,4 +1,9 @@
-# TreeSearch 1.8.0 (2025-01-15)
+# TreeSearch 1.8.0.9000 (2026-02-05)
+
+- New parameters for flexible plotting of `QALegend()`.
+- `ConcordanceTable()` gains `plot` parameter.
+
+# TreeSearch 1.8.0 (2026-01-15)
 
 - Implements the methods of Smith (forthcoming) via `ClusteringConcordance()`,
   with visualization functions `ConcordanceTable()`, `QACol()` and `QALegend()`.

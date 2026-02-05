@@ -412,9 +412,11 @@ QCol <- function(amount, quality) {
 #' @param where Location of legend, passed to `par(fig = where)`
 #' @param n Integer vector giving number of cells to plot in swatch for
 #' `quality` and `amount`.
+#' @param \dots Additional parameters to [mtext()].
 #' @inheritParams ConcordanceTable
 #' @export
-QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
+QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
+                     xlab = "Amount \U2192", ylab = "Quality \U2192", ...) {
   oPar <- par(fig = where, new = TRUE, mar = rep(0, 4), xpd = NA)
   on.exit(par(oPar))
   n <- rep(n, length.out = 2)
@@ -426,8 +428,8 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
                Vectorize(function (a, q) Col(a, q)))
   image(x = amount, y = quality, z = matrix(1:prod(n), nA, nQ),
         col = mat, axes = FALSE, xlab = "", ylab = "")
-  mtext("Amount \U2192", side = 1, line = 1)
-  mtext("Quality \U2192", side = 2, line = 1)
+  mtext(xlab, side = 1, line = 1, ...)
+  mtext(ylab, side = 2, line = 1, ...)
 }
 
 #' Plot concordance table
@@ -443,6 +445,7 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 #' at edges whose descendants are both contain more than `largeClade` leaves.
 #' @param xlab Character giving a label for the x axis.
 #' @param ylab Character giving a label for the y axis.
+#' @param plot Logical specifying whether to draw the plot.
 #' @param \dots Arguments to `abline`, to control the appearance of vertical
 #' lines marking important edges.
 #' @returns `ConcordanceTable()` invisibly returns an named list containing:
@@ -482,7 +485,7 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol) {
 #' @export
 ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
                              xlab = "Edge", ylab = "Character", 
-                             normalize = TRUE, ...) {
+                             normalize = TRUE, plot = TRUE, ...) {
   cc <- ClusteringConcordance(tree, dataset, return = "all",
                               normalize = normalize)
   nodes <- seq_len(dim(cc)[[2]])
@@ -510,7 +513,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
     }, logical(1))
     abline(v = nodes[bigNode] - 0.5, ...)
   }
-  invisible(list(info = info, amount = amount, quality = quality, col = col))
+  invisible(list(info = info, relInfo = amount, quality = quality, col = col))
 }
 
 #' @rdname SiteConcordance

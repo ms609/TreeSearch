@@ -12,6 +12,7 @@ ConcordanceTable(
   xlab = "Edge",
   ylab = "Character",
   normalize = TRUE,
+  plot = TRUE,
   ...
 )
 }
@@ -46,6 +47,8 @@ number of random trees.
 
 In all cases, 1 corresponds to the maximal attainable MI for the pair
 (\code{hBest}), and 0 corresponds to the chosen expectation.}
+
+\item{plot}{Logical specifying whether to draw the plot.}
 
 \item{\dots}{Arguments to \code{abline}, to control the appearance of vertical
 lines marking important edges.}

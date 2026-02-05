@@ -10,7 +10,14 @@ QACol(amount, quality)
 
 QCol(amount, quality)
 
-QALegend(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol)
+QALegend(
+  where = c(0.1, 0.3, 0.1, 0.3),
+  n = 5,
+  Col = QACol,
+  xlab = "Amount →",
+  ylab = "Quality →",
+  ...
+)
 }
 \arguments{
 \item{amount}{Numeric vector of values between 0 and 1, denoting the relative
@@ -27,6 +34,12 @@ quality of observations, where 0 is neutral.}
 \item{Col}{Function that takes vectors \code{amount} and \code{quality} and returns
 a vector of colours. \link{QCol} colours by data quality (concordance);
 \link{QACol} by quality and amount of information.}
+
+\item{xlab}{Character giving a label for the x axis.}
+
+\item{ylab}{Character giving a label for the y axis.}
+
+\item{\dots}{Additional parameters to \code{\link[=mtext]{mtext()}}.}
 }
 \value{
 \code{QACol()} returns an RGB hex code for a colour, where lighter colours
