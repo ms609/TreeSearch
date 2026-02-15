@@ -40,7 +40,7 @@ leaf \insertCite{Pol2009}{TreeSearch}?
 \details{
 High values for a leaf indicate that its coding contributes to instability
 ("wildcard" or "roguish" behaviour; see
-\href{https://ms609.github.io/Rogue/}{\pkg{Rogue}}for further details).
+\href{https://ms609.github.io/Rogue/}{\pkg{Rogue}} for further details).
 The coding is in tension with other data, which may indicate that the
 assumptions of homology that underlie the character's construction and
 scoring require careful scrutiny – or that the taxon in question has

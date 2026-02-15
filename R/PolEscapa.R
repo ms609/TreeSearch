@@ -5,7 +5,7 @@
 #' 
 #' High values for a leaf indicate that its coding contributes to instability
 #' ("wildcard" or "roguish" behaviour; see
-#' [\pkg{Rogue}](https://ms609.github.io/Rogue/)for further details).
+#' [\pkg{Rogue}](https://ms609.github.io/Rogue/) for further details).
 #' The coding is in tension with other data, which may indicate that the
 #' assumptions of homology that underlie the character's construction and
 #' scoring require careful scrutiny &ndash; or that the taxon in question has
