@@ -82,6 +82,7 @@ MaximumLength("----0011")
 \seealso{
 Other tree scoring: 
 \code{\link{CharacterLength}()},
+\code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
 \code{\link{MorphyTreeLength}()},

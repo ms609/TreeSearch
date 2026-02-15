@@ -10,21 +10,17 @@
 #'  It also reports the number of times that this score was hit in the 
 #'  current function call.
 #' 
-#' @template treeParent
-#' @template treeChild
 #' @param dataset Third argument to pass to \code{TreeScorer}.
-#' @template treeScorerParam
+#' @inheritParams TreeSearch
+#' @inheritParams TreeTools::NeworderPhylo
 #' @param scoreToBeat Double giving score of input tree.
 #' @param hits Integer giving number of times the input tree has already been hit.
-#' @template EdgeSwapperParam
 ## @param  minScore trees longer than \code{minScore}, probably the score of the best previously known tree,
 ##     will be discarded;
 ## @param returnSingle returns all trees if `FALSE` or a randomly selected tree if `TRUE`.
 #' @param iter iteration number of calling function, for reporting to user only.
-#' @template verbosityParam
-#' @template treeScorerDots
 #'
-#' @author Martin R. Smith
+#' @template MRS
 #'
 #' @template returnEdgeList
 #' 
@@ -101,7 +97,7 @@ RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
 
 #' Check that all nodes in a tree are bifurcating.
 #' 
-#' @template treeParent
+#' @inheritParams TreeTools::NeworderPhylo
 #' 
 #' @return Returns `NULL`, but will `stop` with an error message if a tree
 #' does not appear to be bifurcating.

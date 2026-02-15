@@ -5,7 +5,7 @@
 #' 
 #' High values for a leaf indicate that its coding contributes to instability
 #' ("wildcard" or "roguish" behaviour; see
-#' [\pkg{Rogue}](https://ms609.github.io/Rogue/)for further details).
+#' [\pkg{Rogue}](https://ms609.github.io/Rogue/) for further details).
 #' The coding is in tension with other data, which may indicate that the
 #' assumptions of homology that underlie the character's construction and
 #' scoring require careful scrutiny &ndash; or that the taxon in question has
@@ -18,7 +18,7 @@
 #' 
 #' @param trees List of trees of class `phylo`, or `multiPhylo` object.
 #' @param char `phyDat` object containing a single character.
-#' @template concavityParam
+#' @inheritParams MaximizeParsimony
 #' 
 #' @return `LengthAdded()` returns a named numeric vector listing the mean
 #' absolute change to tree length resulting if the character were coded
@@ -58,7 +58,7 @@ LengthAdded <- function(trees, char, concavity = Inf) {
   
   trees <- RootTree(trees, 1) # Avoid warnings in TreeLength()
   start <- TreeLength(trees, char, concavity)
-  contApp <- cont[, setdiff(colnames(cont), "-")]
+  contApp <- cont[, setdiff(colnames(cont), "-"), drop = FALSE]
   
   if (is.finite(concavity)) {
     # minLength attribute must be fixed.

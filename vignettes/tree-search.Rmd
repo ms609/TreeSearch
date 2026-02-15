@@ -19,7 +19,7 @@ knitr::opts_chunk$set(fig.width = 7.2, fig.asp = 0.7)
 parsimony search on morphological datasets that contain inapplicable data,
 using the algorithm proposed by Brazeau, Guillerme and Smith [-@Brazeau2019]
 and implemented in the 'MorphyLib' C library [@Brazeau2017]
-([details](https://rawgit.com/TGuillerme/Inapp/c4d502fa4ae3702eb207b2da3a692e469ba3b6ab/inst/gitbook/_book/index.html)).
+([details](https://web.archive.org/web/20181112153144/https://cdn.rawgit.com/TGuillerme/Inapp/master/inst/gitbook/_book/index.html)).
 
 ## Getting started
 
@@ -73,9 +73,9 @@ escape from local optima.
 vinther <- TreeSearch::inapplicable.phyData[["Vinther2008"]]
 ```
 
-```{R RNG-version}
+```{R RNG-version, warn = FALSE}
 # Set a random seed so that random functions in this document are reproducible
-suppressWarnings(RNGversion("3.5.0")) # Until we require R v3.6.0
+RNGversion("3.5.0")
 set.seed(0)
 ```
 
@@ -354,7 +354,7 @@ Constraints can also be loaded from a Nexus file with
 - Search for trees using
   - [standard parsimony](tree-search.html) (corrected for inapplicable data)
   - [profile parsimony](profile.html)
-  - [custom optimality criteria](custom.Rmd)
+  - [custom optimality criteria](custom.html)
   
 - Explore the distribution of optimal trees in [mappings](tree-space.html)
 

@@ -26,7 +26,7 @@ summary.morphyPtr <- function (object, ...) {
 #' `MorphyWeights()` details the approximate and exact weights associated with
 #' characters in a `Morphy` object; `SetMorphyWeights()` edits them.
 #'
-#' @template morphyObjParam
+#' @inheritParams MorphyTreeLength
 #' @return `MorphyWeights()` returns a data frame with two named rows and 
 #' one column per character pattern:
 #' row 1, `approx`, is a list of integers specifying the approximate (integral)
@@ -80,7 +80,7 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 #' to other states such as `0` or `1`; or as "inapplicable data" using the 
 #' algorithm of Brazeau, Guillerme and Smith (2019).
 #' 
-#' @template morphyObjParam
+#' @inheritParams MorphyTreeLength
 #' 
 #' @return `GapHandler()` returns a character string stating how
 #' gaps are handled by `morphyObj`.
@@ -114,7 +114,10 @@ GapHandler <- function (morphyObj) {
 #' 
 #'
 #' @param phy An object of \pkg{phangorn} class \code{phyDat}.
-#' @template gapParam
+#' @param gap An unambiguous abbreviation of `inapplicable`, `ambiguous` 
+#' (= `missing`), or `extra state`, specifying how gaps will be handled.
+#' @param weight Numeric giving weight to apply to each character.
+#' Will be recycled.
 #' @return `PhyDat2Morphy()` returns a pointer to an initialized Morphy object.
 #' 
 #' @examples
@@ -132,7 +135,8 @@ GapHandler <- function (morphyObj) {
 #' @family Morphy API functions
 #' @importFrom TreeTools PhyToString
 #' @export
-PhyDat2Morphy <- function (phy, gap = "inapplicable") {
+PhyDat2Morphy <- function(phy, gap = "inapplicable",
+                          weight = attr(phy, "weight")) {
   
   if (!inherits(phy, "phyDat")) {
     stop("Invalid data type ", class(phy), "; should be phyDat.")
@@ -140,8 +144,8 @@ PhyDat2Morphy <- function (phy, gap = "inapplicable") {
   
   morphyObj <- structure(mpl_new_Morphy(), class = "morphyPtr")
   nTax <- length(phy)
-  weight <- attr(phy, "weight")
   nChar <- attr(phy, "nr")
+  weight <- rep_len(weight, nChar)
   
   if (mpl_init_Morphy(nTax, nChar, morphyObj) -> error) {
     stop("Error ", mpl_translate_error(error), " in mpl_init_Morphy")           #nocov
@@ -149,7 +153,7 @@ PhyDat2Morphy <- function (phy, gap = "inapplicable") {
   if (mpl_set_gaphandl(.GapHandler(gap), morphyObj) -> error) {
     stop("Error ", mpl_translate_error(error), " in mpl_set_gaphandl")          #nocov
   }
-  if (mpl_attach_rawdata(PhyToString(phy, ps=";", useIndex = FALSE,
+  if (mpl_attach_rawdata(PhyToString(phy, ps = ";", useIndex = FALSE,
                                      byTaxon = TRUE, concatenate = TRUE),
                           morphyObj) -> error) {
     stop("Error ", mpl_translate_error(error), " in mpl_attach_rawdata")        #nocov
@@ -157,13 +161,13 @@ PhyDat2Morphy <- function (phy, gap = "inapplicable") {
   if (mpl_set_num_internal_nodes(nTax - 1L, morphyObj) -> error) { # One is the "dummy root"
     stop("Error ", mpl_translate_error(error), " in mpl_set_num_internal_nodes")
   }
-  if (any(vapply(seq_len(nChar), 
+  if (any(vapply(seq_len(nChar),
                  function (i) mpl_set_parsim_t(i, "FITCH", morphyObj),
                  NA_integer_) -> error)) {
       stop("Error ", mpl_translate_error(min(error)), "in mpl_set_parsim_t")    #nocov
   }
   if (any(vapply(seq_len(nChar),
-                 function (i) mpl_set_charac_weight(i, weight[i], morphyObj),
+                 function (i) mpl_set_charac_weight(i, weight[[i]], morphyObj),
                  NA_integer_) -> error)) {
     stop("Error ", mpl_translate_error(min(error)), "in mpl_set_charac_weight") #nocov
   }
@@ -179,7 +183,7 @@ PhyDat2Morphy <- function (phy, gap = "inapplicable") {
 #' @return Character string that can be translated into a gap handling strategy
 #' by Morphy.
 #' @keywords internal
-.GapHandler <- function (gap) {
+.GapHandler <- function(gap) {
   handler <- pmatch(tolower(gap),
                     c("inapplicable", "missing", "ambiguous", "extra state"))
   if (is.na(handler)) {
@@ -197,9 +201,9 @@ PhyDat2Morphy <- function (phy, gap = "inapplicable") {
 #' @family Morphy API functions
 #' @keywords internal
 #' @export
-MorphyErrorCheck <- function (action) {
-  if (action -> error) {
-    stop("Morphy object encountered error ", mpl_translate_error(error), "\n")
+MorphyErrorCheck <- function(action) {
+  if (action) {
+    stop("Morphy object encountered error ", mpl_translate_error(action), "\n")
   }
 }
 
@@ -207,7 +211,7 @@ MorphyErrorCheck <- function (action) {
 #' 
 #' @param char State of each character at each tip in turn, in a format that will be converted
 #'             to a character string by \code{\link{paste0}(char, ";", collapse="")}.
-#' @template gapParam
+#' @inheritParams PhyDat2Morphy
 #'
 #' @return A pointer to an object of class `morphyObj`.
 #' Don't forget to unload it when you've finished with it.
@@ -221,9 +225,10 @@ MorphyErrorCheck <- function (action) {
 #' Score a tree: [`MorphyTreeLength()`]
 #' 
 #' @family Morphy API functions
+#' @importFrom stringi stri_paste
 #' @export
 SingleCharMorphy <- function (char, gap = "inapp") {
-  char <- paste0(c(char, ";"), collapse = "")
+  char <- stri_paste(c(char, ";"), collapse = "")
   entries <- gregexpr("\\{[^\\{]+\\}|\\([^\\()]+\\)|[^;]", char)
   nTip <- length(entries[[1]])
   morphyObj <- mpl_new_Morphy()
@@ -239,7 +244,7 @@ SingleCharMorphy <- function (char, gap = "inapp") {
 }
 
 #' Is an object a valid Morphy object?
-#' @template morphyObjParam
+#' @inheritParams MorphyTreeLength
 #' @return `is.morphyPtr()` returns `TRUE` if `morphyObj` is a valid morphy 
 #' pointer, `FALSE` otherwise.
 #' @template MRS
@@ -257,7 +262,7 @@ is.morphyPtr <- function (morphyObj) {
 #' Failure to do so will cause a crash if `UnloadMorphy()` is called on an
 #' object that  has already been destroyed
 #'
-#' @template morphyObjParam
+#' @inheritParams MorphyTreeLength
 #' @return Morphy error code, decipherable using \code{\link{mpl_translate_error}}
 #' @author Martin R. Smith
 #' @family Morphy API functions

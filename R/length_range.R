@@ -16,7 +16,7 @@
 #' 
 #' Inapplicable tokens should be denoted with the integer `0` (not 2^0).
 #' 
-#' @template compressParam
+#' @inheritParams CharacterLength
 #' 
 #' @return `MinimumLength()` returns a vector of integers specifying the 
 #' minimum number of steps that each character must contain.
@@ -128,7 +128,7 @@ MinimumLength.numeric <- function (x, compress = NA) {
       } else {
         squish <- which.max(occurrences)
         tokensUsed <- tokensUsed + 1L
-        tokens <- tokens[, tokens[!squish], drop = FALSE]
+        tokens <- tokens[, !tokens[squish, ], drop = FALSE]
       }
     }
     lastDim <- dim(tokens)
@@ -178,8 +178,13 @@ MaximumLength.numeric <- function(x, compress = NA) {
   nInapp <- sum(x == 0)
   regions <- max(1, nInapp - 1)
   steps <- 0
-  if (sum(counts > 0) > 1) {
+  if (length(counts) > 0 && sum(counts > 0) > 1) {
     nState <- floor(log2(length(counts))) + 1L
+    # Guard against overflow: nState > 30 would cause nToken to overflow
+    # integer capacity and create prohibitively large matrices
+    if (nState > 30L) {
+      stop("MaximumLength() does not support more than 30 character states.")
+    }
     nToken <- 2 ^ nState - 1
     counts <- c(counts, double(nToken - length(counts)))
     
@@ -188,9 +193,10 @@ MaximumLength.numeric <- function(x, compress = NA) {
     tokenSums <- colSums(tokens)
     active <- c(rep(TRUE, nToken - 1), FALSE)
     
-    bitTokens <- as.raw(seq_len(nToken))
-    nonIntersect <- outer(bitTokens, bitTokens, `&`) == 00
-    unions <- matrix(tokenSums[as.integer(outer(bitTokens, bitTokens, `|`))],
+    # Use integer bitwise operations to avoid raw overflow when nToken > 255
+    bitTokens <- seq_len(nToken)
+    nonIntersect <- outer(bitTokens, bitTokens, bitwAnd) == 0L
+    unions <- matrix(tokenSums[outer(bitTokens, bitTokens, bitwOr)],
                      nToken, nToken)
     .Merge <- function(a, b) sum(2 ^ (which(tokens[, a] | tokens[, b]) - 1))
     loopCount <- 0

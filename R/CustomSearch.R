@@ -1,6 +1,14 @@
 #' @describeIn TreeSearch Tree search from edge lists
-#' @template edgeListParam
-#' @template dataForFunction
+#' @param edgeList a list containing the following:
+#' 
+#' - vector of integers corresponding to the parent of each edge in turn
+#' 
+#' - vector of integers corresponding to the child of each edge in turn
+#' 
+#' - (optionally) score of the tree
+#' 
+#' - (optionally, if score provided) number of times this score has been hit
+#' @param dataset Data in format required by \code{InitializeData}.
 #' @keywords internal
 #' @export
 EdgeListSearch <- function (edgeList, dataset,
@@ -99,24 +107,37 @@ EdgeListSearch <- function (edgeList, dataset,
 #' configuring tree search, see the
 #' [package documentation](https://ms609.github.io/TreeSearch/).
 #'  
-#' @param tree A fully-resolved starting tree in \code{\link{phylo}} format, 
+#' @param tree A fully-resolved starting tree in \code{\link[ape]{phylo}} format, 
 #' with the desired outgroup.
 #' Edge lengths are not supported and will be removed.
-#' @template datasetParam
-#' @template EdgeSwapperParam
+#' @inheritParams MaximizeParsimony
+#' @param EdgeSwapper a function that rearranges a parent and child vector,
+#' and returns a list with modified vectors; for example [`SPRSwap()`].
 #' @param maxIter Numeric specifying maximum number of iterations to perform
 #' before abandoning the search.
 #' @param maxHits Numeric specifying maximum times to hit the best pscore
 #' before abandoning the search.
-#' @template stopAtPeakParam
-#' @template stopAtPlateauParam
+#' @param stopAtPeak Logical specifying whether to terminate search once a 
+#' subsequent iteration recovers a sub-optimal score.
+#' Will be overridden if a passed function has an attribute `stopAtPeak` set by 
+#' `attr(FunctionName, "stopAtPeak") <- TRUE`.
+#' @param stopAtPlateau Integer. If > 0, tree search will terminate if the score
+#' has not improved after `stopAtPlateau` iterations.
+#' Will be overridden if a passed function has an attribute `stopAtPlateau` set
+#' by `attr(FunctionName, "stopAtPlateau") <- TRUE`.
 #'
-#' @template InitializeDataParam
-#' @template CleanUpDataParam
-#' @template treeScorerParam
+#' @param InitializeData Function that sets up data object to prepare for tree search. 
+#'        The function will be passed the `dataset` parameter.
+#'        Its return value will be passed to `TreeScorer()` and `CleanUpData()`.
+#' @param CleanUpData Function to destroy data object on function exit.
+#'        The function will be passed the value returned by `InitializeData()`.
+#' @param TreeScorer function to score a given tree.
+#'        The function will be passed three parameters, corresponding to the 
+#'        `parent` and `child` entries of a tree's edge list, and a dataset.
 #'
-#' @template verbosityParam
-#' @template treeScorerDots
+#' @param verbosity Numeric specifying level of detail to display in console: 
+#' larger numbers provide more verbose feedback to the user.
+#' @param \dots further arguments to pass to `TreeScorer()`, e.g. `dataset = `.
 #' 
 #' @return
 #' `TreeSearch()` returns a tree, with an attribute `pscore` conveying its

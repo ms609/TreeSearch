@@ -10,8 +10,7 @@
 #' @param tree A tree of class `phylo`, a list thereof (optionally of class
 #' `multiPhylo`), or an integer -- in which case `tree` random trees will be 
 #' uniformly sampled.
-#' @template datasetParam
-#' @template concavityParam
+#' @inheritParams MaximizeParsimony
 #' 
 #' @return `TreeLength()` returns a numeric vector containing the score for
 #' each tree in `tree`.
@@ -37,11 +36,11 @@
 #' @importFrom fastmatch %fin%
 #' @importFrom TreeTools Renumber RenumberTips TreeIsRooted
 #' @export
-TreeLength <- function (tree, dataset, concavity = Inf) UseMethod("TreeLength")
+TreeLength <- function(tree, dataset, concavity = Inf) UseMethod("TreeLength")
 
 #' @rdname TreeLength
 #' @export
-TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
+TreeLength.phylo <- function(tree, dataset, concavity = Inf) {
   tipLabels <- tree[["tip.label"]]
   
   if (!TreeIsRooted(tree)) {
@@ -93,7 +92,7 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
     info <- attr(dataset, "info.amounts")
     
     # Return:
-    sum(vapply(which(steps > 0), function (i) info[steps[i], i],
+    sum(vapply(which(steps > 0), function(i) info[steps[i], i],
                double(1)) * attr(dataset, "weight")[steps > 0])
   } else {
     tree <- RenumberTips(Renumber(tree), names(dataset))
@@ -108,14 +107,14 @@ TreeLength.phylo <- function (tree, dataset, concavity = Inf) {
 #' @importFrom TreeTools RandomTree
 #' @export
 #TODO could be cleverer still and allow TreeLength.edge
-TreeLength.numeric <- function (tree, dataset, concavity = Inf) {
+TreeLength.numeric <- function(tree, dataset, concavity = Inf) {
   TreeLength(lapply(!logical(tree), RandomTree, tips = dataset), 
              dataset = dataset, concavity = concavity)
 }
 
 #' @rdname TreeLength
 #' @export
-TreeLength.list <- function (tree, dataset, concavity = Inf) {
+TreeLength.list <- function(tree, dataset, concavity = Inf) {
   # Define constants
   iw <- is.finite(concavity)
   profile <- .UseProfile(concavity)
@@ -131,7 +130,7 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
   
   tree[] <- RenumberTips(tree, dataset)
   tree <- Preorder(tree)
-  tree[] <- lapply(tree, function (tr) {
+  tree[] <- lapply(tree, function(tr) {
     if (TreeIsRooted(tr)) {
       tr
     } else {
@@ -140,7 +139,7 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
     }
   })
   
-  nEdge <- unique(vapply(tree, function (tr) dim(tr[["edge"]])[1], integer(1)))
+  nEdge <- unique(vapply(tree, function(tr) dim(tr[["edge"]])[1], integer(1)))
   if (length(nEdge) > 1L) {
     stop("Trees have different numbers of edges (",
            paste0(nEdge, collapse = ", "), 
@@ -163,7 +162,9 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
     charSeq <- seq_along(characters) - 1L
     
     # Save time by dropping uninformative characters
-    if (!is.null(informative)) charSeq <- charSeq[informative]
+    if (!is.null(informative)) {
+      charSeq <- charSeq[informative]
+    }
     morphyObjects <- lapply(characters, SingleCharMorphy)
     on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
             add = TRUE)
@@ -195,24 +196,76 @@ TreeLength.list <- function (tree, dataset, concavity = Inf) {
 TreeLength.multiPhylo <- TreeLength.list
 
 #' @export
-TreeLength.NULL <- function (tree, dataset, concavity = Inf) NULL
+TreeLength.NULL <- function(tree, dataset, concavity = Inf) NULL
 
 #' @rdname TreeLength
 #' @export
-Fitch <- function (tree, dataset) {
+Fitch <- function(tree, dataset) {
   .Deprecated("TreeLength")
   TreeLength(tree, dataset, Inf)
 }
 
 
+.CheckDataCharLen <- function(dataset) {
+  if (!inherits(dataset, "phyDat")) {
+    stop("Dataset must be of class phyDat, not ", class(dataset), ".")
+  }
+}
+
+.CheckTreeCharLen <- function(tree) {
+  if (!inherits(tree, "phylo")) {
+    stop("Tree must be of class phylo, not ", class(tree), ".")
+  }
+  if (is.null(TipLabels(tree))) {
+    stop("Tree has no labels")
+  }
+  if (!TreeIsRooted(tree)) {
+    stop("`tree` must be rooted; try RootTree(tree)")
+  }
+}
+
+#' @importFrom cli cli_alert
+.DataForTaxa <- function(dataset, tipLabel) {
+  dataNames <- names(dataset)
+  
+  if (length(tipLabel) < length(dataNames)) {
+    if (all(tipLabel %in% dataNames)) {
+      cli_alert(paste0(
+        paste0(setdiff(dataNames, tipLabel), collapse = ", "),
+        " not in tree"))
+      dataset <- dataset[intersect(dataNames, tipLabel)]
+    } else {
+      stop("Tree tips ", 
+           paste(setdiff(tipLabel, dataNames), collapse = ", "),
+           " not found in dataset.")
+    }
+  }
+  dataset
+}
+
+#' @importFrom TreeTools TipLabels KeepTip Postorder RenumberTips
+.TreeForTaxa <- function(tree, dataNames) {
+  tipLabel <- TipLabels(tree)
+  if (length(tipLabel) > length(dataNames)) {
+    cli_alert(paste0(
+      paste0(setdiff(tipLabel, dataNames), collapse = ", "),
+      " not in `dataset`"))
+    
+    tree <- KeepTip(tree, dataNames)
+  }
+  # Morphy requires that the tree is in postorder
+  tree <- RenumberTips(Postorder(tree), dataNames)
+}
 
 #' Character length
 #' 
 #' Homoplasy length of each character in a dataset on a specified tree.
 #' 
-#' @template treeParam
-#' @template datasetParam
-#' @template compressParam
+#' @inheritParams TreeTools::Renumber
+#' @inheritParams MaximizeParsimony
+#' @param compress Logical specifying whether to retain the compression of a
+#' `phyDat` object or to return a vector specifying to each individual
+#' character, decompressed using the dataset's `index` attribute.
 #'
 #' @return `CharacterLength()` returns a vector listing the contribution of each
 #' character to tree score, according to the algorithm of
@@ -228,46 +281,14 @@ Fitch <- function (tree, dataset) {
 #' @family tree scoring
 #' @references
 #' \insertAllCited{}
-#' @importFrom cli cli_alert
-#' @importFrom TreeTools KeepTip Renumber RenumberTips
 #' @export
-CharacterLength <- function (tree, dataset, compress = FALSE) {
-  if (!inherits(dataset, "phyDat")) {
-    stop("Dataset must be of class phyDat, not ", class(dataset), ".")
-  }
-  if (!inherits(tree, "phylo")) {
-    stop("Tree must be of class phylo, not ", class(tree), ".")
-  }
+CharacterLength <- function(tree, dataset, compress = FALSE) {
+  .CheckDataCharLen(dataset)
+  .CheckTreeCharLen(tree)
   tipLabel <- tree[["tip.label"]]
-  if (is.null(tipLabel)) {
-    stop("Tree has no labels")
-  }
-  if (!TreeIsRooted(tree)) {
-    stop("`tree` must be rooted; try RootTree(tree)")
-  }
-  dataNames <- names(dataset)
+  dataset <- .DataForTaxa(dataset, tipLabel)
+  tree <- .TreeForTaxa(tree, names(dataset))
 
-  if (length(tipLabel) < length(dataNames)) {
-    if (all(tipLabel %in% dataNames)) {
-      cli_alert(paste0(
-        paste0(setdiff(dataNames, tipLabel), collapse = ", "),
-        " not in tree"))
-      dataset <- dataset[intersect(dataNames, tipLabel)]
-    } else {
-      stop("Tree tips ", 
-           paste(setdiff(tipLabel, dataNames), collapse = ", "),
-           " not found in dataset.")
-    }
-  }
-  if (length(tipLabel) > length(dataNames)) {
-    cli_alert(paste0(
-      paste0(setdiff(tipLabel, dataNames), collapse = ", "),
-      " not in `dataset`"))
-    
-    tree <- KeepTip(tree, dataNames)
-  }
-  tree <- RenumberTips(Renumber(tree), dataNames)
-  
   ret <- FastCharacterLength(tree, dataset)
   # Return:
   if (compress) {
@@ -277,23 +298,53 @@ CharacterLength <- function (tree, dataset, compress = FALSE) {
   }
 }
 
-#' @rdname CharacterLength
+#' Deprecated function
+#' @keywords internal
 #' @export
-FitchSteps <- function (tree, dataset) {
+FitchSteps <- function(tree, dataset) {
   .Deprecated("CharacterLength")
   CharacterLength(tree, dataset, compress = TRUE)
 }
 
 #' @describeIn CharacterLength Do not perform checks.  Use with care: may cause
 #' erroneous results or software crash if variables are in the incorrect format.
-FastCharacterLength <- function (tree, dataset) {
-  characters <- PhyToString(dataset, ps = "", useIndex = FALSE, byTaxon = FALSE,
-                            concatenate = FALSE)
-  morphyObjects <- lapply(characters, SingleCharMorphy)
-  on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)))
+#' @importFrom fastmatch fmatch
+#' @importFrom TreeTools Postorder
+FastCharacterLength <- function(tree, dataset) {
+  nTip <- NTip(tree)
+  levels <- attr(dataset, "levels")
+  morphyObj <- PhyDat2Morphy(dataset, weight = 0)
+  on.exit(morphyObj <- UnloadMorphy(morphyObj))
   
-  # Return:
-  vapply(morphyObjects, MorphyTreeLength, tree = tree, integer(1))
+  maxNode <- nTip + mpl_get_num_internal_nodes(morphyObj)
+  rootNode <- nTip + 1L
+  allNodes <- rootNode:maxNode
+  
+  edge <- Postorder(tree)[["edge"]]
+  parent <- edge[, 1]
+  child <- edge[, 2]
+  
+  parentOf <- parent[fmatch(seq_len(maxNode), child)]
+  parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
+  leftChild <- child[length(parent) + 1L - fmatch(allNodes, rev(parent))]
+  rightChild <- child[fmatch(allNodes, parent)]
+  
+    if (nTip < 1L) {
+    # Run this test after we're sure that morphyObj is a morphyPtr, or lazy
+    # evaluation of nTaxa will cause a crash.
+    stop("Error: ", mpl_translate_error(nTip))
+  }
+  
+  vapply(seq_len(attr(dataset, "nr")), function(i) {
+    MorphyErrorCheck(mpl_set_charac_weight(i, 1, morphyObj))
+    on.exit(MorphyErrorCheck(mpl_set_charac_weight(i, 0, morphyObj)))
+    MorphyErrorCheck(mpl_apply_tipdata(morphyObj))
+    
+    # Return:
+    .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L),
+                 as.integer(leftChild - 1L), as.integer(rightChild - 1L),
+                 morphyObj)
+  }, integer(1))
 }
 
 #' Calculate parsimony score from Morphy object
@@ -302,7 +353,8 @@ FastCharacterLength <- function (tree, dataset) {
 #' For most users, the function [`TreeLength()`] will be more appropriate.
 #' 
 #' @template labelledTreeParam
-#' @template morphyObjParam
+#' @param morphyObj Object of class `morphy`, perhaps created with 
+#' [`PhyDat2Morphy()`].
 #'
 #' @return `MorphyTreeLength()` returns the length of the tree,
 #' after applying weighting.
@@ -313,7 +365,7 @@ FastCharacterLength <- function (tree, dataset) {
 #' @author Martin R. Smith
 #' @keywords internal
 #' @export
-MorphyTreeLength <- function (tree, morphyObj) {
+MorphyTreeLength <- function(tree, morphyObj) {
   if (!is.morphyPtr(morphyObj)) {
     stop("`morphyObj` must be a valid Morphy pointer")
   }
@@ -332,15 +384,14 @@ MorphyTreeLength <- function (tree, morphyObj) {
 
 #' @describeIn MorphyTreeLength Faster function that requires internal tree
 #'   parameters. Node numbering must increase monotonically away from root.
-#' @template treeParent
-#' @template treeChild
+#' @inheritParams RearrangeEdges
 #' @author Martin R. Smith
 #' @keywords internal
 #' @importFrom TreeTools PostorderOrder Preorder
 #' @importFrom fastmatch fmatch
 #' @export
-MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
-                          nTaxa = mpl_get_numtaxa(morphyObj)) {
+MorphyLength <- function(parent, child, morphyObj, inPostorder = FALSE,
+                         nTaxa = mpl_get_numtaxa(morphyObj)) {
   if (!inPostorder) {
     edgeList <- Preorder(cbind(parent, child))
     edgeList <- edgeList[PostorderOrder(edgeList), ]
@@ -371,14 +422,19 @@ MorphyLength <- function (parent, child, morphyObj, inPostorder = FALSE,
 }
 
 #' @describeIn MorphyTreeLength Fastest function that requires internal tree parameters
-#' @template parentOfParam
-#' @template leftChildParam
-#' @template rightChildParam
+#' @param parentOf Integer vector containing, for each tip and each node in 
+#' sequential order, the integer index its parent node.  
+#' The root node should be its own parent.
+#' @param leftChild integer vector containing, for each node, starting at the 
+#' root and proceeding in sequential order, the integer corresponding to its
+#' left child.  Tip numbering begins at 0; the root node is numbered `nTip`.
+#' @param rightChild integer vector containing, for each node, the index
+#'                  of its right child.
 #' @family tree scoring
 #' @author Martin R. Smith
 #' @keywords internal
 #' @export
-GetMorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
+GetMorphyLength <- function(parentOf, leftChild, rightChild, morphyObj) {
   # Return:
   .Call(`MORPHYLENGTH`, as.integer(parentOf), as.integer(leftChild), 
                as.integer(rightChild), morphyObj)
@@ -392,7 +448,7 @@ GetMorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
 #'                   child node or tip.
 #' @keywords internal
 #' @export
-C_MorphyLength <- function (parentOf, leftChild, rightChild, morphyObj) {
+C_MorphyLength <- function(parentOf, leftChild, rightChild, morphyObj) {
   .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
                as.integer(rightChild - 1L), morphyObj)
 }

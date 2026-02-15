@@ -29,8 +29,36 @@ test_that("CI & RI calculated correctly", {
   expect_equal(MaximumLength(char, tree), g)
   r <- (g - s) / (g - m)
   expect_equal(
-    Consistency(StringToPhyDat(char, TipLabels(tree)), tree),
-    c(ci = m / s, ri = r, rc = r * m / s)
+    Consistency(StringToPhyDat(char, TipLabels(tree)), tree, nRelabel = 0),
+    c(ci = m / s, ri = r, rc = r * m / s, rhi = NA)
+  )
+})
+
+test_that("RHI calculated okay", {
+  tree <- ape::read.tree(
+    text = ("((a1, a2), (((b1, b2), (c, d)), ((e1, e2), (f, g))));"))
+  char <- "0102220333"
+  charDat <- StringToPhyDat(char, TipLabels(tree))
+  if (interactive()) {
+    PlotCharacter(tree, charDat)
+  }
+  m <- 3
+  expect_equal(MinimumLength(char, tree), m)
+  s <- 5
+  expect_equal(TreeLength(tree, charDat), s)
+  h <- s - m
+  g <- 7
+  expect_equal(MaximumLength(char, tree), g)
+  r <- (g - s) / (g - m)
+  
+  null <- 6
+  # calculated slightly cheekily using
+  # median(replicate(10000,
+  #                  TreeLength(RandomTree(tree, root = TRUE), charDat)))
+  # RHI uses leaf rearrangement, not randomization
+  expect_equal(
+    Consistency(StringToPhyDat(char, TipLabels(tree)), tree, nRelabel = 100),
+    c(ci = m / s, ri = r, rc = r * m / s, rhi = h / (null - m))
   )
 })
 
@@ -50,9 +78,49 @@ test_that("Consistency() handles `-`", {
   g <- 7 + 1
   expect_equal(MaximumLength(char, tree), g)
   r <- (g - s) / (g - m)
+  null <- 6
+  # calculated slightly cheekily using
+  # median(replicate(10000,
+  #                  TreeLength(RandomTree(tree, root = TRUE), charDat)))
+  # RHI uses leaf rearrangement, not randomization
+  
+  exp <- c(ci = m / s, ri = r, rc = r * m / s, rhi = h / (null - m))
   expect_equal(
-    Consistency(StringToPhyDat(c(char, char), TipLabels(tree)), tree),
-    rbind(c(ci = m / s, ri = r, rc = r * m / s),
-          c(ci = m / s, ri = r, rc = r * m / s))
+    Consistency(StringToPhyDat(c(char, char), TipLabels(tree)), tree,
+                nRelabel = 42),
+    rbind(exp, exp, deparse.level = 0)
   )
+})
+
+test_that(".SortTokens() works", {
+  contrast <- structure(c(0, 0, 1, 1, 0, 0, 0, 1, 0,
+                          1, 0, 1, 0, 0, 0, 0, 0, 1, 
+                          0, 1, 1, 0, 0, 0, 0, 1, 1, 
+                          0, 0, 1, 0, 1, 0, 0, 0, 0,
+                          0, 0, 1, 0, 0, 1, 0, 0, 0,
+                          0, 0, 1, 0, 0, 0, 1, 0, 0), dim = c(9, 6), 
+                        dimnames = list(NULL, c("-", "0", "1", "2", "3", "4")))
+  cont <- apply(contrast, 1, .Bin)
+  # Simplest
+  expect_equal(.SortTokens(rep(1:2, 5:4), 1:2, NA), rep(c(2, 4), 5:4))
+  expect_equal(.SortTokens(rep(1:2, 4:5), 1:2, NA), rep(c(4, 2), 4:5))
+  expect_equal(.SortTokens(rep(1:3, 4:6), 1:3, NA), rep(c(4, 2, 6), 4:6))
+  
+  # Straightforward, no inapp
+  expect_equal(.SortTokens(rep(c(1, 2, 4), c(4, 2, 3)), cont, inapp = NA),
+               rep(c(2, 8, 4), c(4, 2, 3)))
+  
+  # Straightforward
+  expect_equal(.SortTokens(rep(c(1, 2, 4), c(4, 2, 3)), cont, inapp = 2),
+               rep(c(1, 4, 2), c(4, 2, 3)))
+  expect_equal(.SortTokens(rep(c(1, 2, 4), c(4, 2, 3)), cont, inapp = 4),
+               rep(c(2, 1, 4), c(4, 2, 3)))
+  
+  # Inapplicables with ambiguity
+  # TODO it would be nice to return 7 in place of 63, but
+  # unnecessarily complex to implement at the moment
+  expect_equal(.SortTokens(rep(c(1, 2, 3, 4, 8, 9), 
+                               c(2, 3, 4, 5, 1, 1)), cont, inapp = 1),
+               rep(c(4, 2, 63, 1, 3, 6), c(2, 3, 4, 5, 1, 1)))
+  
 })

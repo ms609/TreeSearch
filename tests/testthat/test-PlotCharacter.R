@@ -1,10 +1,12 @@
-test_that("PlotCharacter()", {
+test_that("PlotCharacter.phylo()", {
   
   dataset <- TreeTools::StringToPhyDat("1111 1111 0000", tips = 12)
   expect_error(PlotCharacter(TreeTools::BalancedTree(14), dataset),
                "Taxa in tree missing from dataset:\\s*t13, t14$")
+  expect_error(PlotCharacter(TreeTools::StarTree(12), dataset),
+               "bifurcating")
   
-  Character <- function (str, plot = FALSE, edges = FALSE, ...) {
+  Character <- function(str, plot = FALSE, edges = FALSE, ...) {
     tree <- ape::read.tree(text = 
      "((((((a, b), c), d), e), f), (g, (h, (i, (j, (k, l))))));")
     if (edges) {
@@ -36,11 +38,11 @@ test_that("PlotCharacter()", {
   skip_if_not_installed("vdiffr")
 
   Test <- if (interactive()) {
-    function (str, edges = FALSE, ...) {
+    function(str, edges = FALSE, ...) {
       invisible(Character(str, plot = TRUE, edges = edges, ...))
     }
   } else {
-    function (str, edges = FALSE, ...) {
+    function(str, edges = FALSE, ...) {
       vdiffr::expect_doppelganger(
         paste0("PlotChar_",
                gsub("?", "Q",
@@ -122,12 +124,65 @@ test_that("Edge cases work", {
   }
 })
 
+test_that("PlotCharacter() with wide rootings", {
+  trees <- c(
+    ape::read.tree(text = "((c, (a, d)), (e, (g, (f, b))));"),
+    ape::read.tree(text = "((c, (a, d)), (e, (b, (f, g))));")
+  )
+  rooted <- RootTree(trees, c("a", "b"))
+  expect_equal(
+    PlotCharacter(rooted,
+                  TreeTools::StringToPhyDat("0011111", tips = letters[1:7]),
+                  plot = FALSE)[, "1"],
+    !1:12 %in% c(2, 7)
+  )
+})
+
 test_that("Out-of-sequence works", {
   skip_if_not_installed("vdiffr")
-  vdiffr::expect_doppelganger("PlotChar_out-of-sequence", function () {
+  vdiffr::expect_doppelganger("PlotChar_out-of-sequence", function() {
     PlotCharacter(ape::read.tree(text = "(a, (b, (c, d)));"),
                   TreeTools::StringToPhyDat("1342",
                                             tips = c("a", "c", "d", "b"))
                   )}
   )
+})
+
+test_that("PlotCharacter.multi()", {
+  Bal <- TreeTools::BalancedTree
+  a..h <- letters[1:8]
+  expect_error(PlotCharacter(list(Bal(8), 9), "dataset"), "class `phylo`")
+  expect_error(PlotCharacter(list(Bal(8), Bal(9)), "dataset"),
+               "same tip labels")
+  expect_error(PlotCharacter(list(Bal(8), Bal(a..h)), "dataset"),
+               "same tip labels")
+  
+  trees <- ape::read.tree(text = c("(a, (b, (c, (d, ((g, h), (e, f))))));",
+                                   "(a, (b, (c, ((d, e), (f, (g, h))))));"))
+  
+  dat <-  TreeTools::StringToPhyDat("00011011", tips = a..h)
+  expect_equal(PlotCharacter(trees[1], dat, plot = FALSE),
+               PlotCharacter(trees[[1]], dat, plot = FALSE))
+                             
+                             
+  state1 <- PlotCharacter(trees[[1]], dat, plot = FALSE)
+  state2 <- PlotCharacter(trees[[2]], dat, plot = FALSE)
+  stateCons <- PlotCharacter(trees, dat, plot = FALSE)
+  expect_equal(stateCons, state1[-c(13, 15), ] | 
+                 state2[c(match(TipLabels(trees[[1]]), TipLabels(trees[[2]])),
+                          9:12, 15), ])
+  
+  
+  skip_if_not_installed("vdiffr")
+  vdiffr::expect_doppelganger("PlotChar_consensus", function() {
+    PlotCharacter(trees, dat)
+  })
+  vdiffr::expect_doppelganger("PlotChar_invariant", function() {
+    inv <- TreeTools::StringToPhyDat("00000000", tips = a..h)
+    PlotCharacter(trees, inv)
+  })
+  vdiffr::expect_doppelganger("PlotChar_invar_ambig", function() {
+    invq <- TreeTools::StringToPhyDat("000?00?{01}", tips = a..h)
+    PlotCharacter(trees, invq)
+  })
 })

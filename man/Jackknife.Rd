@@ -20,7 +20,9 @@ Jackknife(
 )
 }
 \arguments{
-\item{tree}{A tree of class \code{\link{phylo}}.}
+\item{tree}{A fully-resolved starting tree in \code{\link[ape]{phylo}} format,
+with the desired outgroup.
+Edge lengths are not supported and will be removed.}
 
 \item{dataset}{a dataset in the format required by \code{TreeScorer()}.}
 
@@ -43,20 +45,20 @@ and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRS
 
 \item{jackIter}{Integer specifying number of jackknife iterations to conduct.}
 
-\item{searchIter}{Integer specifying maximum rearrangements to perform on each bootstrap or
-ratchet iteration.
+\item{searchIter}{Integer specifying maximum rearrangements to perform on
+each bootstrap or ratchet iteration.
 To override this value for a single swapper function, set e.g.
 \code{attr(SwapperFunction, "searchIter") <- 99}}
 
-\item{searchHits}{Integer specifying maximum times to hit best score before terminating a tree
-search within a ratchet iteration.
+\item{searchHits}{Integer specifying maximum times to hit best score before
+terminating a tree search within a ratchet iteration.
 To override this value for a single swapper function, set e.g.
 \code{attr(SwapperFunction, "searchHits") <- 99}}
 
 \item{verbosity}{Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.}
 
-\item{...}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
+\item{...}{further parameters to send to \code{TreeScorer()}}
 }
 \value{
 \code{Jackknife()} returns a list of trees recovered after jackknife
@@ -67,19 +69,22 @@ Resample trees using Jackknife resampling, i.e. removing a subset of
 characters.
 }
 \details{
-The function assumes
-that \code{InitializeData()} will return a morphy object; if this doesn't hold
-for you, post a \href{https://github.com/ms609/TreeSearch/issues/new/}{GitHub issue}
-or e-mail the maintainer.
+The function assumes  that \code{InitializeData()} will return a morphy object;
+if this doesn't hold for you, post a \href{https://github.com/ms609/TreeSearch/issues/new/}{GitHub issue} or e-mail the maintainer.
 }
 \seealso{
 \itemize{
+\item \code{\link[=Resample]{Resample()}}: Jackknife resampling for non-custom searches performed
+using \code{MaximizeParsimony()}.
 \item \code{\link[=JackLabels]{JackLabels()}}: Label nodes of a tree with jackknife supports.
 }
 
 Other split support functions: 
+\code{\link{ConcordanceTable}()},
 \code{\link{JackLabels}()},
 \code{\link{MaximizeParsimony}()},
+\code{\link{MostContradictedFreq}()},
+\code{\link{PresCont}()},
 \code{\link{SiteConcordance}}
 
 Other custom search functions: 

@@ -151,3 +151,37 @@ test_that("MaximumLength() handles inapplicable tokens", {
   expect_equal(MaximumLength("00112233{01}{23}{012}----"), 3 + 3 + 1 + 2)
 })
 
+test_that("MaximumLength() handles many states (>8) without overflow", {
+  # Regression test for crash with datasets having more than 8 character states
+  # When nToken > 255, as.raw() would overflow; now uses bitwAnd/bitwOr instead
+  
+  # Test with 10 states (nToken = 1023)
+  # This should complete without error (the specific result is secondary)
+  # 10 distinct character states (powers of 2 for bit representation)
+  manyStates <- c(1, 2, 4, 8, 16, 32, 64, 128, 256, 512)
+  expect_silent(result <- MaximumLength.numeric(manyStates))
+  expect_equal(result, 9)  # max steps for 10 distinct tokens
+  
+  # Test with combination of states including inapplicable (0)
+  manyStatesWithInapp <- c(0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 0)
+  expect_silent(result <- MaximumLength.numeric(manyStatesWithInapp))
+  expect_equal(result, 9)  # 9 steps + 0 extra for inapplicable regions
+  
+  # Test with large combined token value (all 10 states present in one tip)
+  # This is the scenario that triggered #203
+  # 1 = only state 0, 1023 = all states 0-9 combined (2^10 - 1)
+  largeToken <- c(1, 1023)
+  expect_silent(result <- MaximumLength.numeric(largeToken))
+  expect_equal(result, 0)  # state 0 is subset of 1023, so no extra steps needed
+  
+  expect_error(expect_warning(MaximumLength.numeric(2 ^ (0:31))),
+               "does not support more than 30 character states")
+})
+
+test_that("MaximumLength() works with Vinther2008 dataset", {
+  # This dataset has 10 states (0-9) which caused overflow
+  data("inapplicable.datasets")
+  expect_silent(result <- MaximumLength(inapplicable.phyData[["Vinther2008"]]))
+  expect_true(is.numeric(result))
+  expect_true(all(result >= 0))
+})

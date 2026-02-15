@@ -1,4 +1,3 @@
-context("TreeSearch.R")
 library("TreeTools", quietly = TRUE)
 comb11 <- PectinateTree(letters[1:11])
 unrooted11 <- UnrootTree(comb11)
@@ -10,7 +9,7 @@ RootySwappers <- list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap)
 test_that("Tree can be found", {
   skip_if_not_installed("phangorn")
   phy11 <- phangorn::phyDat(data11, type = "USER", levels = c(FALSE, TRUE))
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
+  RNGkind("Mersenne-Twister")
   set.seed(1)
   random11 <- as.phylo(17905853L, 11, letters[1:11])
   expect_error(TreeSearch(unrooted11, dataset = phy11))
@@ -29,10 +28,11 @@ test_that("Tree can be found", {
                                             maxIter = 1000,
                                             stopAtPlateau = 1, verbosity = 0)))
   
-  expect_true(all.equal(
-    MaximizeParsimony(phy11, tree = CollapseNode(random11, 13))[[1]],
-    comb11
-  ))
+  mp1 <- RootTree(
+    MaximizeParsimony(phy11, tree = CollapseNode(random11, 13),
+                      ratchIter = 1)[[1]],
+    "a")
+  expect_true(all.equal(mp1, comb11))
   expect_true(all.equal(
     MaximizeParsimony(phy11, tree = random11, verbosity = 0L)[[1]],
     comb11
@@ -110,7 +110,7 @@ test_that("Profile parsimony works in tree search", {
   dataset <- TreeTools::PhyDat(sillyData)
   readyData <- PrepareDataProfile(dataset)
   
-  suppressWarnings(RNGversion("3.5.0")) # Until we can require R3.6.0
+  RNGkind("Mersenne-Twister")
   set.seed(0)
   
   rTree <- randomTree <- RandomTree(dataset, "1")

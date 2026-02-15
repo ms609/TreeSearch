@@ -38,6 +38,7 @@ attr(WhenFirstHit(trees), "firstHit")
 
 Other utility functions: 
 \code{\link{ClusterStrings}()},
+\code{\link{QACol}()},
 \code{\link{QuartetResolution}()}
 }
 \author{

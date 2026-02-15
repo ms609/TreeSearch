@@ -19,9 +19,10 @@ SPRWarning <- function (parent, child, error) {
 #' This function is a copy of a deprecated ancestor in TreeTools; see 
 #' [#32](https://github.com/ms609/TreeTools/issues/32).
 #'
-#' @template treeParent
-#' @template treeChild
-#' @template treeNEdgeOptional
+#' @inheritParams TBR
+#' @inheritParams TBR
+#' @param nEdge (optional) integer specifying the number of edges of a tree of
+#' class \code{\link[ape]{phylo}}, i.e. \code{dim(tree$edge)[1]}
 #'
 #' @return `.NonDuplicateRoot()` returns a logical vector of length `nEdge`,
 #' specifying `TRUE` unless an edge identifies the same partition as
@@ -85,18 +86,8 @@ SPRWarning <- function (parent, child, error) {
 #' clade and its sister group to the rest of the tree.
 #' (See fig. 6 in \insertRef{Lakner2008}{TreeSearch} for a detailed explanation.)
 #'
-#' @template treeParam
-#' @param extension Numeric specifying the extension probability for the
-#' SPR operation. If `NA` (the default), a random SPR operation is performed,
-#' which will uniformly sample the neighbourhood of trees one SPR move from
-#' `tree`, resulting in a Hastings Ratio of 1 \insertRef{Lakner2008}{TreeSearch}.
-#' @param requireChange Logical specifying whether to require that the tree
-#' topology changes.  If `FALSE`, a move may select the current branch as the
-#' regrafting point.  If `TRUE` (the default), only moves that change the tree
-#' topology will be returned.  If `NA`, moves that only change the position of
-#' the root will not be returned.
-#' @param edgeToBreak the index of an edge to bisect, generated randomly
-#' if not specified.
+#' @inheritParams TBR
+#' @param edgeToBreak the index of an edge to bisect, generated randomly if not specified.
 #' @param mergeEdge the index of an edge on which to merge the broken edge.
 #' @return `SPR()` returns a tree in \code{phyDat} format that has
 #' undergone one \acronym{SPR} iteration.  If extension SPR is used, the tree
@@ -200,9 +191,9 @@ SPRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
 
 ## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn SPR faster version that takes and returns parent and child parameters
-#' @template treeParent
-#' @template treeChild
-#' @template treeNEdgeOptional
+#' @inheritParams RearrangeEdges
+#' @param nEdge (optional) integer specifying the number of edges of a tree of
+#' class \code{\link[ape]{phylo}}, i.e. \code{dim(tree$edge)[1]}
 #' @param nNode (optional) Number of nodes.
 #' @return a list containing two elements, corresponding in turn to the
 #'  rearranged parent and child parameters
@@ -297,7 +288,7 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
 
 
 #' `cSPR()` expects a tree rooted on a single tip. 
-#' @template treeParam
+#' @inheritParams TreeTools::Renumber
 #' @param whichMove Integer specifying which SPR move index to perform.
 #' @examples 
 #' tree <- TreeTools::BalancedTree(8)
@@ -325,14 +316,12 @@ cSPR <- function (tree, whichMove = NULL) {
 
 #' All SPR trees
 #'
-#' @template treeParent
-#' @template treeChild
-#' @template treeNEdge
+#' @inheritParams TBR
+#' @param nEdge integer specifying the number of edges of a tree of class \code{\link[ape]{phylo}}, i.e. \code{dim(tree$edge)[1]}
 #' @param notDuplicateRoot logical vector of length `nEdge`, specifying for each
 #' edge whether it is the second edge leading to the root (in which case
 #' its breaking will be equivalent to breaking the other root edge... 
 #' except insofar as it moves the position of the root.)
-#' @template edgeToBreakParam
 #' 
 #' @return `AllSPR()` returns a list of edge matrices for all trees one SPR 
 #' rearrangement from the starting tree

@@ -22,11 +22,6 @@ reference:
       - PlotCharacter
       - RandomTreeScore
       
-  - title: "Split support"
-    desc: "Functions that calculate node support."
-    contents: 
-      - has_concept("split support functions")
-      
   - title: "Tree (re)construction"
     desc: > 
       Tree generation and rearrangement functions.
@@ -36,6 +31,11 @@ reference:
       - matches("SPR")
       - matches("TBR")
       - RearrangeEdges
+      
+  - title: "Tree properties"
+    desc: "Functions that calculate support for edges."
+    contents: 
+      - has_concept("split support functions")
       
   - title: "Profile parsimony"
     desc: >
@@ -75,9 +75,16 @@ articles:
     - profile
     - custom
 
+topics:
+  - name: SiteConcordance
+    examples:
+      fig_width: 6
+      fig_height: 6
+
 template:
   bootstrap: 5
   bslib:
     danger: "#A6081A" # Accessibility suggestion
   params:
+    bootswatch: simplex
     ganalytics: G-V9DV1LS35J

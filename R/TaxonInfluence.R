@@ -38,21 +38,23 @@
 #' representative summary of comparisons between sets of trees.
 #' 
 #' 
-#' @template datasetParam
+#' @inheritParams MaximizeParsimony
 #' @param tree Optimal tree or summary tree (of class "phylo") or list of trees
 #' (of class "list" or "multiPhylo") against which results should be evaluated.
 #' If `NULL`, an optimal tree will be sought using parsimony search with 
 #' the parameters provided in \code{\dots}.
 #' @param Distance Function to calculate tree distance; default:
-#' [`ClusteringInfoDistance()`].
+#' \code{\link[TreeDist:ClusteringInfoDistance]{ClusteringInfoDistance()}}.
 #' @param calcWeighted Logical specifying whether to compute the
 #' distance-weighted mean value.
-#' @param savePath Character giving prefix of path to which reduced trees will be
-#' saved (with [`write.nexus()`]). File names will follow the pattern
+#' @param savePath Character giving prefix of path to which reduced trees will
+#' be saved (with \code{\link[ape:write.nexus]{write.nexus()}}).
+#' File names will follow the pattern
 #' `paste0(savePath, droppedTaxonName, ".nex")`; `savePath` should thus contain
 #' a trailing `/` if writing to a directory, which will be created if it does
 #' not exist.  Special characters will be removed from leaf labels when
-#' creating the file path (using [`path_sanitize()`]).
+#' creating the file path (using 
+#' \code{\link[fs:path_sanitize]{path_sanitize()}}).
 #' If `NULL`, computed trees will not be saved.
 #' @param useCache Logical vector; if `TRUE`, previous tree search results will
 #' be loaded from the location given by `savePath`, instead of running a fresh

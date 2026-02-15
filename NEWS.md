@@ -1,4 +1,4 @@
-# TreeSearch 1.5.1.9003 (2024-12)
+# TreeSearch 1.8.1.9003 (2024-12)
 
 - Update `SPR` to:
   - a faster C++ implementation
@@ -19,6 +19,58 @@
 # TreeSearch 1.5.1.9000 (2024-10)
 
 - Fix display of state labels in app
+
+
+# TreeSearch 1.8.0.9000 (2026-02-05)
+
+- New parameters for flexible plotting of `QALegend()`.
+- `ConcordanceTable()` gains `plot` parameter.
+
+# TreeSearch 1.8.0 (2026-01-15)
+
+- Implements the methods of Smith (forthcoming) via `ClusteringConcordance()`,
+  with visualization functions `ConcordanceTable()`, `QACol()` and `QALegend()`.
+- `QuartetConcordance()` gains `return` parameter and fast C++ implementation.
+- Fix regression in `MaximumLength()`.
+
+
+# TreeSearch 1.7.0 (2025-08-22)
+
+- `PresCont()` implements the Group Present / Contradicted measure of
+  Goloboff et al. (2003).
+- `Consistency()` also returns the relative homoplasy index of Steell et al. 
+  (2023).
+- `JackLabels()` supports multiple trees per iteration
+  ([#197](https://github.com/ms609/TreeSearch/discussions/197))
+- Support single-character matrices in `ClusteringConcordance()`
+- Fix `DoNothing(x)` to return `x` (not `NULL`)
+- Remove unused `delete_rawdata()` due to implementation issues.
+- Port `MaximumLength()` to C++ to handle more characters, more efficiently.
+
+
+# TreeSearch 1.6.1 (2025-06-10)
+
+- Handle invariant characters in `PolEscapa()`
+- Handle challenging root positions in `PlotCharacter()`
+- Fix character state colours in app legend
+- Tweak documentation
+
+# TreeSearch 1.6.0 (2025-04-09)
+
+## Improvements
+- `PlotCharacter()` performs ancestral state reconstruction on consensus trees
+  ([#179](https://github.com/ms609/TreeSearch/issues/179))
+- Improve support for constraints in `AdditionTree()`
+  ([#173](https://github.com/ms609/TreeSearch/issues/173))
+- Support for ordered (additive) characters via `TreeTools::Decompose()`
+- Fix SPR behaviour when move is close to root
+
+## App improvements
+- Buttons to download consensus trees in app
+- Fix display of state labels in app
+
+## Housekeeping
+- Require R 4.0 (to simplify maintenance)
 
 
 # TreeSearch 1.5.1 (2024-05-23)

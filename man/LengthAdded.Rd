@@ -22,8 +22,11 @@ TNT sets a default of 3, but this is too low in some circumstances
 \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
 Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
-Specify \code{Inf} to weight each additional step equally.
-Specify \code{"profile"} to employ profile parsimony \insertCite{Faith2001}{TreeSearch}.}
+Specify \code{Inf} to weight each additional step equally,
+(which underperforms step weighting approaches
+\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
+Specify \code{"profile"} to employ an approximation of profile parsimony
+\insertCite{Faith2001}{TreeSearch}.}
 }
 \value{
 \code{LengthAdded()} returns a named numeric vector listing the mean
@@ -37,7 +40,7 @@ leaf \insertCite{Pol2009}{TreeSearch}?
 \details{
 High values for a leaf indicate that its coding contributes to instability
 ("wildcard" or "roguish" behaviour; see
-\href{https://ms609.github.io/Rogue/}{\pkg{Rogue}}for further details).
+\href{https://ms609.github.io/Rogue/}{\pkg{Rogue}} for further details).
 The coding is in tension with other data, which may indicate that the
 assumptions of homology that underlie the character's construction and
 scoring require careful scrutiny – or that the taxon in question has
@@ -67,6 +70,7 @@ PlotCharacter(
 \seealso{
 Other tree scoring: 
 \code{\link{CharacterLength}()},
+\code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()},
