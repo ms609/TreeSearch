@@ -45,7 +45,7 @@ for each leaf in turn, under the specified concavity constant.
 
 High values for a leaf indicate that its coding contributes to
 instability ("wildcard" or "roguish" behaviour; see
-[Rogue](https://ms609.github.io/Rogue/)for further details). The coding
+[Rogue](https://ms609.github.io/Rogue/) for further details). The coding
 is in tension with other data, which may indicate that the assumptions
 of homology that underlie the character's construction and scoring
 require careful scrutiny – or that the taxon in question has been
