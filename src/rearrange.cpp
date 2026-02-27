@@ -337,13 +337,13 @@ List all_spr (const IntegerMatrix edge,
   // So we test for these exceptions in R.
   // # nocov begin
   if (n_edge < 5) {
-    Rf_error("No SPR rearrangements possible on a tree with < 5 edges");
+    Rcpp::stop("No SPR rearrangements possible on a tree with < 5 edges");
   }
   if (edge(0, 0) != root_node) {
-    Rf_error("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+    Rcpp::stop("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
   }
   if (edge(1, 0) != root_node) {
-    Rf_error("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+    Rcpp::stop("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
   }
   // # nocov end
   
