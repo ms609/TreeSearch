@@ -35,6 +35,8 @@ void TreeState::init_from_edge(
   size_t state_size = static_cast<size_t>(n_node) * total_words;
   prelim.assign(state_size, 0ULL);
   final_.assign(state_size, 0ULL);
+  down2.assign(state_size, 0ULL);
+  subtree_actives.assign(state_size, 0ULL);
 
   // Local cost: one uint64_t per block per node (only internal meaningful)
   local_cost.assign(static_cast<size_t>(n_node) * n_blocks, 0ULL);
@@ -50,6 +52,19 @@ void TreeState::load_tip_states(const DataSet& ds) {
       prelim[base + w] = ds.tip_states[base + w];
       // Tips: final = preliminary (observed states, unchanged by uppass)
       final_[base + w] = ds.tip_states[base + w];
+    }
+  }
+  // Initialise tip subtree_actives: applicable states only (NA word = 0)
+  for (int tip = 0; tip < n_tip; ++tip) {
+    size_t base = static_cast<size_t>(tip) * total_words;
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      int offset = ds.block_word_offset[b];
+      if (ds.blocks[b].has_inapplicable) {
+        subtree_actives[base + offset] = 0;  // state 0 (NA) always 0
+        for (int s = 1; s < ds.blocks[b].n_states; ++s) {
+          subtree_actives[base + offset + s] = ds.tip_states[base + offset + s];
+        }
+      }
     }
   }
 }
@@ -171,6 +186,8 @@ void TreeState::restore_saved_states() {
 void TreeState::reset_states(const DataSet& ds) {
   std::fill(prelim.begin(), prelim.end(), 0ULL);
   std::fill(final_.begin(), final_.end(), 0ULL);
+  std::fill(down2.begin(), down2.end(), 0ULL);
+  std::fill(subtree_actives.begin(), subtree_actives.end(), 0ULL);
   std::fill(local_cost.begin(), local_cost.end(), 0ULL);
   load_tip_states(ds);
 }

@@ -57,6 +57,14 @@ ts_fitch_score <- function(edge, contrast, tip_data, weight, levels) {
     .Call(`_TreeSearch_ts_fitch_score`, edge, contrast, tip_data, weight, levels)
 }
 
+ts_na_debug_char <- function(edge, contrast, tip_data, weight, levels, target_pattern) {
+    .Call(`_TreeSearch_ts_na_debug_char`, edge, contrast, tip_data, weight, levels, target_pattern)
+}
+
+ts_na_char_steps <- function(edge, contrast, tip_data, weight, levels) {
+    .Call(`_TreeSearch_ts_na_char_steps`, edge, contrast, tip_data, weight, levels)
+}
+
 ts_debug_clip <- function(edge, contrast, tip_data, weight, levels, clip_node_1based) {
     .Call(`_TreeSearch_ts_debug_clip`, edge, contrast, tip_data, weight, levels, clip_node_1based)
 }
@@ -103,5 +111,21 @@ ts_pool_test <- function(edges, scores, n_tip, max_size = 100L, suboptimal = 0.0
 
 ts_nni_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 20L) {
     .Call(`_TreeSearch_ts_nni_search`, edge, contrast, tip_data, weight, levels, maxHits)
+}
+
+ts_tree_fuse <- function(edge, contrast, tip_data, weight, levels, pool_edges, pool_scores, accept_equal = FALSE, max_rounds = 10L) {
+    .Call(`_TreeSearch_ts_tree_fuse`, edge, contrast, tip_data, weight, levels, pool_edges, pool_scores, accept_equal, max_rounds)
+}
+
+ts_sector_diag <- function(edge, contrast, tip_data, weight, levels, sector_root_1based) {
+    .Call(`_TreeSearch_ts_sector_diag`, edge, contrast, tip_data, weight, levels, sector_root_1based)
+}
+
+ts_rss_search <- function(edge, contrast, tip_data, weight, levels, minSectorSize = 6L, maxSectorSize = 50L, acceptEqual = FALSE, rssPicks = 0L, ratchetCycles = 6L, maxHits = 1L) {
+    .Call(`_TreeSearch_ts_rss_search`, edge, contrast, tip_data, weight, levels, minSectorSize, maxSectorSize, acceptEqual, rssPicks, ratchetCycles, maxHits)
+}
+
+ts_xss_search <- function(edge, contrast, tip_data, weight, levels, nPartitions = 4L, xssRounds = 3L, acceptEqual = FALSE, ratchetCycles = 6L, maxHits = 1L) {
+    .Call(`_TreeSearch_ts_xss_search`, edge, contrast, tip_data, weight, levels, nPartitions, xssRounds, acceptEqual, ratchetCycles, maxHits)
 }
 

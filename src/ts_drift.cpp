@@ -9,6 +9,7 @@
 
 #include <Rcpp.h>
 #include <R.h>
+#include <Rmath.h>
 #include <Rinternals.h>
 
 namespace ts {
@@ -472,7 +473,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
           size_t idx = static_cast<size_t>(node) * tree.n_blocks + b;
           int old_steps = popcount64(old_local_cost[idx]);
           int new_steps = popcount64(new_local_cost[idx]);
-          int d = new_steps - old_steps;
+          int d = (new_steps - old_steps) * ds.blocks[b].weight;
           if (d > 0) F += d;
           if (d < 0) C += (-d);
         }
@@ -515,7 +516,10 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
   int total_drift_moves = 0;
   int total_tbr_moves = 0;
 
-  std::mt19937 rng(std::random_device{}());
+  // Seed from R's RNG for reproducibility with set.seed()
+  GetRNGstate();
+  std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
+  PutRNGstate();
 
   // Save the best tree topology
   DriftTopoSnapshot best_snap;

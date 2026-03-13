@@ -75,7 +75,9 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
   perturb_params.max_hits = 1;
 
   // Seed from R's RNG for reproducibility with set.seed()
+  GetRNGstate();
   std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
+  PutRNGstate();
 
   int cycles_completed = 0;
   for (int cycle = 0; cycle < params.n_cycles; ++cycle) {

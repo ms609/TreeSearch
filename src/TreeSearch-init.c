@@ -29,6 +29,8 @@ extern SEXP _TreeSearch_mi_key(SEXP, SEXP);
 // extern SEXP _TreeSearch_astar_search_r(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_quartet_concordance(SEXP, SEXP);
 extern SEXP _TreeSearch_ts_fitch_score(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_na_char_steps(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_na_debug_char(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_nni_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_debug_clip(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_spr_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -41,6 +43,10 @@ extern SEXP _TreeSearch_ts_trees_equal(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_pool_test(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_wagner_tree(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_random_wagner_tree(SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_tree_fuse(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_sector_diag(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_rss_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_xss_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
@@ -83,6 +89,8 @@ static const R_CallMethodDef callMethods[] = {
   // {"_TreeSearch_astar_search_r",    (DL_FUNC) &_TreeSearch_astar_search_r, 3},
   {"_TreeSearch_quartet_concordance",(DL_FUNC) &_TreeSearch_quartet_concordance, 2},
   {"_TreeSearch_ts_fitch_score",    (DL_FUNC) &_TreeSearch_ts_fitch_score, 5},
+  {"_TreeSearch_ts_na_char_steps", (DL_FUNC) &_TreeSearch_ts_na_char_steps, 5},
+  {"_TreeSearch_ts_na_debug_char", (DL_FUNC) &_TreeSearch_ts_na_debug_char, 6},
   {"_TreeSearch_ts_nni_search",    (DL_FUNC) &_TreeSearch_ts_nni_search, 6},
   {"_TreeSearch_ts_debug_clip",    (DL_FUNC) &_TreeSearch_ts_debug_clip, 6},
   {"_TreeSearch_ts_spr_search",    (DL_FUNC) &_TreeSearch_ts_spr_search, 6},
@@ -95,7 +103,11 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_ts_pool_test",     (DL_FUNC) &_TreeSearch_ts_pool_test, 5},
   {"_TreeSearch_ts_wagner_tree",   (DL_FUNC) &_TreeSearch_ts_wagner_tree, 5},
   {"_TreeSearch_ts_random_wagner_tree", (DL_FUNC) &_TreeSearch_ts_random_wagner_tree, 4},
-  
+  {"_TreeSearch_ts_sector_diag", (DL_FUNC) &_TreeSearch_ts_sector_diag, 6},
+  {"_TreeSearch_ts_rss_search",  (DL_FUNC) &_TreeSearch_ts_rss_search, 11},
+  {"_TreeSearch_ts_xss_search",  (DL_FUNC) &_TreeSearch_ts_xss_search, 10},
+  {"_TreeSearch_ts_tree_fuse",   (DL_FUNC) &_TreeSearch_ts_tree_fuse, 9},
+
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
   {"RANDOM_TREE",                   (DL_FUNC) &RANDOM_TREE, 1},
   {"RANDOM_TREE_SCORE",             (DL_FUNC) &RANDOM_TREE_SCORE, 2},

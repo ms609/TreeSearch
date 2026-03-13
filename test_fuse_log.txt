@@ -1,0 +1,6 @@
+start
+loaded
+tools loaded
+Pool scores: 9 10 9
+About to fuse
+Fuse done! Score: 13

@@ -1,4 +1,5 @@
 #include "ts_splits.h"
+#include "ts_data.h"
 #include <algorithm>
 #include <cstring>
 
@@ -107,7 +108,7 @@ SplitSet compute_splits(const TreeState& tree) {
     const uint64_t* bits = &tip_bits[static_cast<size_t>(node) * wps];
     int count = 0;
     for (int w = 0; w < wps; ++w) {
-      count += __builtin_popcountll(bits[w]);
+      count += ts::popcount64(bits[w]);
     }
     if (count <= 1 || count >= n_tip - 1) continue;
     ++n_splits;
@@ -127,7 +128,7 @@ SplitSet compute_splits(const TreeState& tree) {
     const uint64_t* bits = &tip_bits[static_cast<size_t>(node) * wps];
     int count = 0;
     for (int w = 0; w < wps; ++w) {
-      count += __builtin_popcountll(bits[w]);
+      count += ts::popcount64(bits[w]);
     }
     if (count <= 1 || count >= n_tip - 1) continue;
 

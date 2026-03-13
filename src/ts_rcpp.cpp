@@ -9,6 +9,8 @@
 #include "ts_splits.h"
 #include "ts_pool.h"
 #include "ts_wagner.h"
+#include "ts_sector.h"
+#include "ts_fuse.h"
 
 using namespace Rcpp;
 
@@ -74,7 +76,195 @@ int ts_fitch_score(
       &edge(0, 0), &edge(0, 1),
       edge.nrow(), ds);
 
-  return ts::fitch_score(tree, ds);
+  return ts::fitch_na_score(tree, ds);
+}
+
+// [[Rcpp::export]]
+List ts_na_debug_char(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    int target_pattern)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::TreeState tree;
+  tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
+  int total_score = ts::fitch_na_score(tree, ds);
+
+  // Find which block/bit contains target_pattern (0-based)
+  int tgt = target_pattern - 1;  // R 1-based to C 0-based
+  int tgt_block = -1, tgt_bit = -1;
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    for (int c = 0; c < ds.blocks[b].n_chars; ++c) {
+      if (ds.blocks[b].pattern_index[c] == tgt) {
+        tgt_block = b;
+        tgt_bit = c;
+      }
+    }
+  }
+  if (tgt_block < 0) return List::create(Named("error") = "pattern not found");
+
+  const ts::CharBlock& blk = ds.blocks[tgt_block];
+  int off = ds.block_word_offset[tgt_block];
+  int k = blk.n_states;
+  uint64_t mask = 1ULL << tgt_bit;
+
+  // Per-node info
+  int n_node = tree.n_node;
+  IntegerVector node_id(n_node);
+  CharacterVector prelim_str(n_node), final_str(n_node), down2_str(n_node);
+  IntegerVector is_step(n_node);
+
+  auto state_str = [&](const uint64_t* base) -> std::string {
+    std::string s;
+    for (int st = 0; st < k; ++st) {
+      if (base[st] & mask) {
+        if (!s.empty()) s += "/";
+        if (blk.has_inapplicable && st == 0) s += "-";
+        else s += std::to_string(st - (blk.has_inapplicable ? 1 : 0));
+      }
+    }
+    return s.empty() ? "." : s;
+  };
+
+  for (int nd = 0; nd < n_node; ++nd) {
+    node_id[nd] = nd + 1;
+    size_t base = static_cast<size_t>(nd) * tree.total_words + off;
+    prelim_str[nd] = state_str(&tree.prelim[base]);
+    final_str[nd] = state_str(&tree.final_[base]);
+    down2_str[nd] = state_str(&tree.down2[base]);
+    is_step[nd] = 0;
+  }
+
+  // Determine which nodes had steps in Pass 3
+  for (int node : tree.postorder) {
+    if (!blk.has_inapplicable) continue;
+    int ni = node - tree.n_tip;
+    int lc = tree.left[ni];
+    int rc = tree.right[ni];
+    size_t lb = static_cast<size_t>(lc) * tree.total_words + off;
+    size_t rb = static_cast<size_t>(rc) * tree.total_words + off;
+    const uint64_t* L2 = &tree.down2[lb];
+    const uint64_t* R2 = &tree.down2[rb];
+    uint64_t I_app = 0;
+    for (int s = 1; s < k; ++s) I_app |= (L2[s] & R2[s]);
+    uint64_t l2_app = 0, r2_app = 0;
+    for (int s = 1; s < k; ++s) { l2_app |= L2[s]; r2_app |= R2[s]; }
+    uint64_t needs_step = ~I_app & l2_app & r2_app & blk.active_mask;
+    if (needs_step & mask) is_step[node] = 1;
+  }
+
+  // Parent info
+  IntegerVector parent_id(n_node);
+  IntegerVector left_child(tree.n_internal), right_child(tree.n_internal);
+  for (int nd = 0; nd < n_node; ++nd) parent_id[nd] = tree.parent[nd] + 1;
+  for (int ni = 0; ni < tree.n_internal; ++ni) {
+    left_child[ni] = tree.left[ni] + 1;
+    right_child[ni] = tree.right[ni] + 1;
+  }
+
+  return List::create(
+    Named("total_score") = total_score,
+    Named("block") = tgt_block + 1,
+    Named("bit") = tgt_bit,
+    Named("has_inapp") = blk.has_inapplicable,
+    Named("n_states") = k,
+    Named("node") = node_id,
+    Named("parent") = parent_id,
+    Named("left") = left_child,
+    Named("right") = right_child,
+    Named("prelim") = prelim_str,
+    Named("final_state") = final_str,
+    Named("down2") = down2_str,
+    Named("is_step") = is_step,
+    Named("n_tip") = tree.n_tip
+  );
+}
+
+// [[Rcpp::export]]
+List ts_na_char_steps(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+
+  ts::TreeState tree;
+  tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
+
+  // Run the three-pass scoring
+  int total_score = ts::fitch_na_score(tree, ds);
+
+  int n_pat = tip_data.ncol();
+  IntegerVector steps(n_pat, 0);
+  int debug_std_total = 0, debug_na_total = 0;
+
+  // Standard blocks: count from local_cost
+  for (int node : tree.postorder) {
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const ts::CharBlock& blk = ds.blocks[b];
+      if (blk.has_inapplicable) continue;
+      uint64_t mask = tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
+      debug_std_total += blk.weight * ts::popcount64(mask);
+      for (int c = 0; c < blk.n_chars; ++c) {
+        if (mask & (1ULL << c)) {
+          steps[blk.pattern_index[c]] += 1;
+        }
+      }
+    }
+  }
+
+  // NA blocks: re-derive from down2 states
+  for (int node : tree.postorder) {
+    int ni = node - tree.n_tip;
+    int lc = tree.left[ni];
+    int rc = tree.right[ni];
+    size_t lb = static_cast<size_t>(lc) * tree.total_words;
+    size_t rb = static_cast<size_t>(rc) * tree.total_words;
+
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      if (!ds.blocks[b].has_inapplicable) continue;
+      const ts::CharBlock& blk = ds.blocks[b];
+      int off = ds.block_word_offset[b];
+      int k = blk.n_states;
+
+      const uint64_t* L2 = &tree.down2[lb + off];
+      const uint64_t* R2 = &tree.down2[rb + off];
+
+      uint64_t I_app = 0;
+      for (int s = 1; s < k; ++s) I_app |= (L2[s] & R2[s]);
+      uint64_t l2_app = 0, r2_app = 0;
+      for (int s = 1; s < k; ++s) { l2_app |= L2[s]; r2_app |= R2[s]; }
+      uint64_t needs_step = ~I_app & l2_app & r2_app & blk.active_mask;
+      debug_na_total += blk.weight * ts::popcount64(needs_step);
+
+      for (int c = 0; c < blk.n_chars; ++c) {
+        if (needs_step & (1ULL << c)) {
+          steps[blk.pattern_index[c]] += 1;
+        }
+      }
+    }
+  }
+
+  // Block info
+  int n_std = 0, n_na = 0;
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    if (ds.blocks[b].has_inapplicable) ++n_na; else ++n_std;
+  }
+
+  return List::create(
+    Named("steps") = steps,
+    Named("total_score") = total_score,
+    Named("std_total") = debug_std_total,
+    Named("na_total") = debug_na_total,
+    Named("debug_sum") = debug_std_total + debug_na_total,
+    Named("n_std_blocks") = n_std,
+    Named("n_na_blocks") = n_na
+  );
 }
 
 // [[Rcpp::export]]
@@ -90,7 +280,7 @@ List ts_debug_clip(
   ts::TreeState tree;
   tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
 
-  int whole_score = ts::fitch_score(tree, ds);
+  int whole_score = ts::fitch_na_score(tree, ds);
   int clip_node = clip_node_1based - 1;  // 0-based
 
   tree.spr_clip(clip_node);
@@ -133,7 +323,7 @@ List ts_test_indirect(
   ts::TreeState tree;
   tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
 
-  int whole_score = ts::fitch_score(tree, ds);
+  int whole_score = ts::fitch_na_score(tree, ds);
   int clip_node = clip_node_1based - 1;
   int above = above_1based - 1;
   int below = below_1based - 1;
@@ -186,7 +376,7 @@ List ts_test_indirect(
   tree.spr_regraft(above, below);
   tree.build_postorder();
   tree.reset_states(ds);
-  int actual = ts::fitch_score(tree, ds);
+  int actual = ts::fitch_na_score(tree, ds);
 
   return List::create(
     Named("whole_score") = whole_score,
@@ -581,5 +771,164 @@ List ts_nni_search(
     Named("score") = result.score,
     Named("n_moves") = result.n_moves,
     Named("n_iterations") = result.n_iterations
+  );
+}
+
+// [[Rcpp::export]]
+List ts_tree_fuse(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    List pool_edges,
+    NumericVector pool_scores,
+    bool accept_equal = false,
+    int max_rounds = 10)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+
+  // Build recipient tree
+  ts::TreeState recipient;
+  recipient.init_from_edge(
+      &edge(0, 0), &edge(0, 1),
+      edge.nrow(), ds);
+
+  // Build pool from R-side inputs
+  ts::TreePool pool(static_cast<int>(pool_edges.size()), 1e18);
+  for (int i = 0; i < pool_edges.size(); ++i) {
+    IntegerMatrix pe = as<IntegerMatrix>(pool_edges[i]);
+    ts::TreeState t;
+    t.init_from_edge(&pe(0, 0), &pe(0, 1), pe.nrow(), ds);
+    double sc = pool_scores[i];
+    pool.add(t, sc);
+  }
+
+  ts::FuseParams params;
+  params.accept_equal = accept_equal;
+  params.max_rounds = max_rounds;
+
+  ts::FuseResult result = ts::tree_fuse(recipient, ds, pool, params);
+
+  return List::create(
+    Named("edge") = tree_to_edge(recipient),
+    Named("score") = result.best_score,
+    Named("n_exchanges") = result.n_exchanges,
+    Named("n_rounds") = result.n_rounds
+  );
+}
+
+// [[Rcpp::export]]
+List ts_sector_diag(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    int sector_root_1based)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+
+  ts::TreeState tree;
+  tree.init_from_edge(
+      &edge(0, 0), &edge(0, 1),
+      edge.nrow(), ds);
+
+  int full_score = ts::fitch_na_score(tree, ds);
+
+  int sector_root = sector_root_1based - 1;
+  int clade_size = ts::count_clade_tips(tree, sector_root);
+
+  ts::ReducedDataset rd = ts::build_reduced_dataset(tree, ds, sector_root);
+
+  int sector_score = ts::fitch_score(rd.subtree, rd.data);
+
+  return List::create(
+    Named("full_score") = full_score,
+    Named("sector_root") = sector_root,
+    Named("clade_size") = clade_size,
+    Named("n_sector_tips") = rd.subtree.n_tip,
+    Named("n_sector_nodes") = rd.subtree.n_node,
+    Named("sector_score") = sector_score,
+    Named("sector_total_words") = rd.data.total_words,
+    Named("sector_n_blocks") = rd.data.n_blocks
+  );
+}
+
+// [[Rcpp::export]]
+List ts_rss_search(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    int minSectorSize = 6,
+    int maxSectorSize = 50,
+    bool acceptEqual = false,
+    int rssPicks = 0,
+    int ratchetCycles = 6,
+    int maxHits = 1)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+
+  ts::TreeState tree;
+  tree.init_from_edge(
+      &edge(0, 0), &edge(0, 1),
+      edge.nrow(), ds);
+
+  ts::SectorParams params;
+  params.min_sector_size = minSectorSize;
+  params.max_sector_size = maxSectorSize;
+  params.accept_equal = acceptEqual;
+  params.rss_picks_per_round = rssPicks;
+  params.internal_ratchet_cycles = ratchetCycles;
+  params.internal_max_hits = maxHits;
+
+  ts::SectorResult result = ts::rss_search(tree, ds, params);
+
+  return List::create(
+    Named("edge") = tree_to_edge(tree),
+    Named("score") = result.best_score,
+    Named("n_sectors_searched") = result.n_sectors_searched,
+    Named("n_sectors_improved") = result.n_sectors_improved,
+    Named("total_steps_saved") = result.total_steps_saved
+  );
+}
+
+// [[Rcpp::export]]
+List ts_xss_search(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    int nPartitions = 4,
+    int xssRounds = 3,
+    bool acceptEqual = false,
+    int ratchetCycles = 6,
+    int maxHits = 1)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+
+  ts::TreeState tree;
+  tree.init_from_edge(
+      &edge(0, 0), &edge(0, 1),
+      edge.nrow(), ds);
+
+  ts::SectorParams params;
+  params.n_partitions = nPartitions;
+  params.xss_rounds = xssRounds;
+  params.accept_equal = acceptEqual;
+  params.internal_ratchet_cycles = ratchetCycles;
+  params.internal_max_hits = maxHits;
+
+  ts::SectorResult result = ts::xss_search(tree, ds, params);
+
+  return List::create(
+    Named("edge") = tree_to_edge(tree),
+    Named("score") = result.best_score,
+    Named("n_sectors_searched") = result.n_sectors_searched,
+    Named("n_sectors_improved") = result.n_sectors_improved,
+    Named("total_steps_saved") = result.total_steps_saved
   );
 }

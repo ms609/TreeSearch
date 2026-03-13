@@ -48,6 +48,15 @@ struct TreeState {
   //   final_[node * total_words + word_offset]
   std::vector<uint64_t> final_;
 
+  // Second downpass state sets (inapplicable three-pass algorithm).
+  //   down2[node * total_words + word_offset]
+  std::vector<uint64_t> down2;
+
+  // Subtree actives: applicable states present anywhere in the subtree below.
+  // Only applicable state words (s > 0) are meaningful; state 0 (NA) is always 0.
+  //   subtree_actives[node * total_words + word_offset]
+  std::vector<uint64_t> subtree_actives;
+
   // Per-node per-block local cost: the needs_union mask from the downpass.
   //   local_cost[node * n_blocks + b]
   // Only meaningful for internal nodes; tip entries are unused.

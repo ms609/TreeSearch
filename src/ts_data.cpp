@@ -71,15 +71,17 @@ DataSet build_dataset(
       return a.weight < b.weight;
     });
 
-  // Find the max n_applicable for each partition type
-  int max_app_standard = 0, max_app_inapp = 0;
-  for (const auto& pi : patterns) {
-    if (pi.has_inapp) {
-      if (pi.n_applicable > max_app_inapp) max_app_inapp = pi.n_applicable;
-    } else {
-      if (pi.n_applicable > max_app_standard) max_app_standard = pi.n_applicable;
-    }
+  // Count total applicable states in the dataset.
+  // All blocks must use the same number of applicable state words because
+  // the state_remap assigns globally consecutive indices. A pattern using
+  // state index k needs state word k, regardless of how many states that
+  // individual pattern uses.
+  int total_app_states = 0;
+  for (int s = 0; s < n_states; ++s) {
+    if (s != inapp_state) ++total_app_states;
   }
+  int max_app_standard = total_app_states;
+  int max_app_inapp = total_app_states;
 
   // Group into blocks: same has_inapp AND same weight, up to 64 per block.
   ds.n_blocks = 0;

@@ -99,7 +99,7 @@ static void collect_destination_edges(
 // Score the tree from scratch: reset states, run full two-pass.
 static int full_rescore(TreeState& tree, const DataSet& ds) {
   tree.reset_states(ds);
-  return fitch_score(tree, ds);
+  return fitch_na_score(tree, ds);
 }
 
 SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
@@ -132,7 +132,7 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
       tree.build_postorder();
 
       tree.reset_states(ds);
-      int main_score = fitch_score(tree, ds);
+      int main_score = fitch_na_score(tree, ds);
 
       // Score clipped subtree separately
       int clip_score = 0;

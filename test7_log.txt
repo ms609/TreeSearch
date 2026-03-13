@@ -1,0 +1,8 @@
+Test 7: Fuse result tree has valid topology
+Building pool...
+Pool scores: 16 16 15
+Fusing...
+Fuse done. Score: 6 Edges: 26
+n_tip: 14 expected edges: 26 actual: 26
+Tips: 2,3,4,5,5,6,7,8,10,10,11,11,12,12,13,14
+ALL DONE

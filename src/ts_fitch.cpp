@@ -289,4 +289,11 @@ int fitch_indirect_length(const uint64_t* clip_prelim,
   return extra_steps;
 }
 
+
+// =========================================================================
+// Inapplicable (NA) three-pass scoring (Brazeau et al. 2019)
+// =========================================================================
+
+#include "ts_fitch_na.inc"
+
 } // namespace ts

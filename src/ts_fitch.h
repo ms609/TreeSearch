@@ -58,6 +58,13 @@ int fitch_indirect_length(const uint64_t* clip_prelim,
                           const DataSet& ds,
                           int node_a, int node_d);
 
+// --- Inapplicable (NA) three-pass scoring ---
+
+// Full three-pass score for datasets with inapplicable characters.
+// Handles both standard blocks (one-pass Fitch) and inapplicable blocks
+// (Brazeau et al. three-pass algorithm). Returns the total EW score.
+int fitch_na_score(TreeState& tree, const DataSet& ds);
+
 } // namespace ts
 
 #endif // TS_FITCH_H
