@@ -106,6 +106,7 @@ Other split support functions:
 \code{\link{ConcordanceTable}()},
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
+\code{\link{LocalConcordance}()},
 \code{\link{MaximizeParsimony}()},
 \code{\link{MostContradictedFreq}()},
 \code{\link{SiteConcordance}}

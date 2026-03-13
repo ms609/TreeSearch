@@ -32,3 +32,5 @@ vignettes/\.RData
 ^_pkgdown\.yml$
 ^codemeta\.json$
 ^LICENSE$
+^\.positai$
+^\.claude$

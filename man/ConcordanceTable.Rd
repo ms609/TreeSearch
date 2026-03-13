@@ -100,6 +100,7 @@ image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
+\code{\link{LocalConcordance}()},
 \code{\link{MaximizeParsimony}()},
 \code{\link{MostContradictedFreq}()},
 \code{\link{PresCont}()},
