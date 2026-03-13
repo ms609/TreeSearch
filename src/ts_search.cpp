@@ -24,7 +24,10 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
   std::vector<int> edges = tree.nni_edges();
   int n_edges = static_cast<int>(edges.size());
 
-  std::mt19937 rng(std::random_device{}());
+  // Seed from R's RNG for reproducibility with set.seed()
+  GetRNGstate();
+  std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
+  PutRNGstate();
 
   bool keep_going = true;
   while (keep_going) {
@@ -109,7 +112,10 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
   int n_iterations = 0;
   int hits = 1;
 
-  std::mt19937 rng(std::random_device{}());
+  // Seed from R's RNG for reproducibility with set.seed()
+  GetRNGstate();
+  std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
+  PutRNGstate();
 
   std::vector<int> clip_candidates;
   for (int node = 0; node < tree.n_node; ++node) {

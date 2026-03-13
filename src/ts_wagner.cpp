@@ -8,6 +8,13 @@
 
 namespace ts {
 
+// Guard: Wagner tree construction requires at least 3 taxa
+static void check_wagner_precondition(int n_tip) {
+  if (n_tip < 3) {
+    Rf_error("Wagner tree requires at least 3 taxa (got %d)", n_tip);
+  }
+}
+
 namespace {
 
 // Initialize a full-sized TreeState for Wagner construction.
@@ -89,6 +96,7 @@ void insert_tip_at_edge(TreeState& tree, int tip, int new_internal,
 WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
                          const std::vector<int>& addition_order) {
   int n_tip = ds.n_tips;
+  check_wagner_precondition(n_tip);
 
   // Validate or create addition order
   std::vector<int> order;

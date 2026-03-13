@@ -383,7 +383,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
 
     int nx_cost = 0;
     for (int b = 0; b < ds.n_blocks; ++b) {
-      nx_cost += popcount64(
+      nx_cost += ds.blocks[b].weight * popcount64(
           tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b]);
     }
     double divided_length = score + delta - nx_cost;

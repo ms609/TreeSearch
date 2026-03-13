@@ -5,6 +5,7 @@
 #include "ts_wagner.h"
 
 #include <algorithm>
+#include <random>
 #include <vector>
 #include <R.h>
 #include <Rmath.h>
@@ -422,7 +423,11 @@ static std::vector<int> xss_partition(const TreeState& tree, int n_partitions) {
 
 SectorResult rss_search(TreeState& tree, DataSet& ds,
                         const SectorParams& params) {
+  // Seed from R's RNG for reproducibility — one-shot to avoid nesting
+  // with tbr_search()'s own GetRNGstate()/PutRNGstate().
   GetRNGstate();
+  std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
+  PutRNGstate();
 
   // Ensure full tree has current state sets
   double current_score = score_tree(tree, ds);

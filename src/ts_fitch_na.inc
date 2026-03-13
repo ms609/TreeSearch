@@ -142,10 +142,10 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
           F[s] = (Np[s] & (case_pass | case_strip)) | (child_union & case_children);
         }
 
-        // For tips in postorder: also set down2 = final
+        // Postorder only contains internal nodes; tip down2 is set below
+        // (kept as assertion to catch postorder-generation bugs)
         if (node < tree.n_tip) {
-          uint64_t* D2 = &tree.down2[nb + off];
-          for (int s = 0; s < k; ++s) D2[s] = F[s];
+          Rf_error("internal error: tip %d in postorder", node);
         }
       }
     }

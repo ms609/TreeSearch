@@ -348,7 +348,7 @@ void extract_char_steps(const TreeState& tree, const DataSet& ds,
                           & ~(ss_app & any_d2_isect) & blk.active_mask;
 
       while (needs_step) {
-        int c = __builtin_ctzll(needs_step);
+        int c = ctz64(needs_step);
         char_steps[blk.pattern_index[c]] += 1;
         needs_step &= needs_step - 1;
       }
