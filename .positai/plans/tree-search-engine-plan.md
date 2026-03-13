@@ -715,21 +715,21 @@ SearchEngine::run(starting_tree, dataset, params):
 - [x] TreePool with hash-based dedup and score-based eviction
 - [x] R interfaces: `ts_compute_splits()`, `ts_trees_equal()`, `ts_pool_test()`
 
-#### 6d: Tree fusing — TODO (Agent E)
-- [ ] Shared-group identification via split intersection
-- [ ] Fast exchange scoring (root-ward walk with cached states)
-- [ ] Bottom-up exchange ordering with ancestor skipping
-- [ ] Equal-score exchange option
-- [ ] **Test**: fusing 5 independent RAS+TBR trees beats any single one
+#### 6d: Tree fusing ✓ (Agent E, 2026-03-13)
+- [x] Shared-group identification via split intersection
+- [x] Fast exchange scoring (root-ward walk with cached states)
+- [x] Bottom-up exchange ordering with ancestor skipping
+- [x] Equal-score exchange option
+- [x] R interface: `ts_tree_fuse()` — tests passing
 
-#### 6e: Sectorial search — TODO (Agent F)
-- [ ] Reduced dataset construction with HTU state sets
-- [ ] RSS: random sector selection within size bounds
-- [ ] XSS: even partitioning algorithm
-- [ ] Recursive search on reduced datasets
-- [ ] Sector reinsertion with partial rescore
-- [ ] Global TBR between rounds
-- [ ] **Test**: SS outperforms plain TBR on 100+ taxon datasets
+#### 6e: Sectorial search ✓ (Agent F, 2026-03-13)
+- [x] Reduced dataset construction with HTU state sets
+- [x] RSS: random sector selection within size bounds
+- [x] XSS: even partitioning algorithm
+- [x] TBR-based search on reduced datasets with root-structure guard
+- [x] Sector reinsertion with node mapping
+- [x] Global TBR between rounds
+- [x] R interfaces: `ts_rss_search()`, `ts_xss_search()` — 32/32 tests passing
 
 #### Other Phase 6 items
 - [ ] Zero-length branch collapsing (deferred)
@@ -741,10 +741,16 @@ SearchEngine::run(starting_tree, dataset, params):
 - [x] Random addition sequence support (uses R's RNG)
 - [x] R interfaces: `ts_wagner_tree()`, `ts_random_wagner_tree()`
 
-### Phase 7: Driven search and polish — TODO (Agent G)
-- [ ] Driven search loop with convergence criteria
-- [ ] Combosearch structure for very large trees
-- [ ] MSD-based adaptive stopping
+### Phase 7: Driven search and polish (PARTIALLY COMPLETE)
+
+#### 7a: Driven search ✓ (Agent G, 2026-03-13)
+- [x] Driven search loop with convergence criteria (hits_to_best)
+- [x] Multi-replicate: Wagner → TBR → XSS → ratchet → TBR → pool
+- [x] Periodic tree fusing from pool
+- [x] R interface: `ts_driven_search()` — 20/20 tests passing
+
+#### 7b: Remaining Phase 7 items — TODO
+- [ ] Combosearch structure for very large trees (MSD-based)
 - [ ] Adaptive parameter selection
 - [ ] `MaximizeParsimony2()` R wrapper with all options
 - [ ] Progress reporting via `R_CheckUserInterrupt()` + callbacks

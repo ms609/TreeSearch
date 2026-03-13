@@ -43,6 +43,7 @@ merge conflicts:
 | D | Wagner tree | `ts_wagner.h/.cpp`, `test-ts-wagner.R` | `ts_rcpp.cpp`, `TreeSearch-init.c` |
 | E | Tree fusing | `ts_fuse.h/.cpp`, `test-ts-fuse.R` | `ts_rcpp.cpp`, `TreeSearch-init.c` |
 | F | Sectorial search | `ts_sector.h/.cpp`, `test-ts-sector.R` | `ts_rcpp.cpp`, `TreeSearch-init.c` |
+| G | Driven search | `ts_driven.h/.cpp`, `test-ts-driven.R` | `ts_rcpp.cpp`, `TreeSearch-init.c` |
 
 ## Inapplicable character scoring (Phase 4)
 
@@ -124,9 +125,88 @@ All registered in `ts_rcpp.cpp` and `TreeSearch-init.c`:
 | `ts_sector_diag` | ts_sector | Diagnostic info for sectorial search |
 | `ts_rss_search` | ts_sector | Random Sectorial Search |
 | `ts_xss_search` | ts_sector | Exclusive Sectorial Search |
+| `ts_driven_search` | ts_driven | Full driven search (multi-replicate) |
 
-## Upcoming agents
+## Driven search (Agent G, Step 8)
 
-| Agent | Step | New files | Notes |
-|-------|------|-----------|-------|
-| G | Driven search (Step 8) | `ts_driven.h/.cpp`, `test-ts-driven.R` | Orchestrates everything: Wagner start → TBR → ratchet/drift/sector/fuse loop |
+Implemented in `ts_driven.h/.cpp`. Orchestrates all search components into a
+single multi-replicate driven search strategy.
+
+### Search pipeline per replicate:
+1. Random Wagner tree → TBR to local optimum
+2. XSS sectorial search (if tree large enough)
+3. Ratchet perturbation to escape local optima
+4. Final TBR polish
+5. Add to pool
+
+### Additional features:
+- **Tree fusing**: Every `fuse_interval` replicates, fuses best tree against pool
+- **Convergence**: Stops when `hits_to_best >= target_hits`
+- **Pool management**: Dedup via split hashing, score-based eviction
+
+### Files created/modified:
+- Created: `ts_driven.h`, `ts_driven.cpp`, `test-ts-driven.R`
+- Modified: `ts_rcpp.cpp`, `TreeSearch-init.c` (Rcpp bridge: `ts_driven_search`)
+
+### Test status: 20/20 passing (stable across repeated runs)
+
+### Exported function:
+
+| Function | Source module | Purpose |
+|----------|-------------|---------|
+| `ts_driven_search` | ts_driven | Full driven search (Wagner+TBR+XSS+ratchet+fuse) |
+
+## Red-team bug fixes (Agent E, cross-agent review)
+
+All fixes applied and verified (build succeeds, fuse 16/16 and sector 32/32 tests pass).
+
+| Agent | File | Bug | Fix applied |
+|-------|------|-----|-------------|
+| A (Ratchet) | `ts_ratchet.cpp` | Missing `GetRNGstate()`/`PutRNGstate()` around `unif_rand()` | Wrapped seed call |
+| B (Drift) | `ts_drift.cpp` | `std::random_device{}()` ignores `set.seed()` | Seed from `unif_rand()` with RNG state management |
+| B (Drift) | `ts_drift.cpp` | RFD computation ignores `CharBlock.weight` | Multiply popcount by `ds.blocks[b].weight` |
+| C (Splits) | `ts_splits.cpp` | `__builtin_popcountll` (GCC-only) | Replaced with `popcount64()` from `ts_data.h` |
+| D (Wagner) | `ts_wagner.cpp` | `init_wagner_state` missing `down2`/`subtree_actives` | Added allocation |
+| F (Sector) | `ts_sector.cpp` | Missing `GetRNGstate()`/`PutRNGstate()` in RSS/XSS | Wrapped both functions |
+| F (Sector) | `ts_sector.cpp` | No revert when reinsertion worsens full-tree score | Save/restore topology on worse score |
+| F (Sector) | `ts_sector.cpp` | `internal_ratchet_cycles` param unused | Documented as reserved; commented out param name |
+| F (Sector) | `ts_sector.cpp` | Dead `ensure_na_arrays` + redundant if/else in reinsertion | Removed dead code, simplified |
+| — | `ts_rcpp.cpp` | Junk `RCPP_APPEND 2>&1` line at EOF | Removed |
+| — | `RcppExports.cpp` | Missing `ts_driven_search` wrapper | Regenerated with `Rcpp::compileAttributes()` |
+
+## Red-team Agent G (Driven search) — bug fixes applied
+
+| Issue | File | Bug | Fix applied |
+|-------|------|-----|-------------|
+| G1 | `ts_driven.cpp` | `max_replicates=0` → crash on empty pool | Guard: return early with default result |
+| G2 | `ts_driven.cpp` | Fused trees inflate `hits_to_best` convergence counter | Save/restore counter around fuse; reset to 0 if fusing found new best |
+| G3 | `ts_driven.h`, `ts_rcpp.cpp` | Dead `rss_picks` parameter | Removed from `DrivenParams` and Rcpp bridge |
+| G4 | `ts_driven.h/.cpp` | Misleading `ts_drift.h` include + header comment | Removed include; updated comment |
+| — | `ts_pool.h` | No `set_hits_to_best()` accessor | Added for G2 fix |
+| — | `TreeSearch-init.c` | Arg count mismatch after G3 | Updated 18→17 |
+| — | `R/RcppExports.R`, `src/RcppExports.cpp` | Stale after param removal | Regenerated via `Rcpp::compileAttributes()` |
+
+### Test status: fuse 16/16, sector 32/32, driven 20/20
+
+## Cross-module integration fixes (Agent E, integration review)
+
+| Issue | Files | Bug | Fix applied |
+|-------|-------|-----|-------------|
+| I1 | `ts_tbr.cpp` | `std::random_device{}()` seeding — root cause of non-deterministic TBR | Seed from `unif_rand()` with RNG state management |
+| I2 | ts_tbr/drift/fitch/search.cpp | `__builtin_ctzll` GCC-only (7 occurrences) | Added portable `ctz64()` wrapper in `ts_data.h` |
+| I3 | `ts_data.h` | `__builtin_huge_val()` GCC-only | Replaced with `HUGE_VAL` from `<cmath>` |
+| I4 | `ts_tree.cpp` | `init_from_edge` assigns first child→right (opposite of `tree_to_edge` output) | Changed to first child→left; R↔C++ round-trips now idempotent |
+
+### TBR non-determinism: RESOLVED
+Previous observation of non-deterministic TBR topologies was caused by two bugs:
+1. `std::random_device` seeding in TBR's `std::shuffle` (I1, primary cause)
+2. `init_from_edge` left-right swap (I4, secondary cause via R round-trips)
+
+Both are now fixed. `set.seed()` produces identical results across runs.
+
+### Design notes (not fixed — documented):
+- **TBR incremental pass ignores NA**: Uses standard Fitch heuristic for move
+  evaluation; `full_rescore` with `score_tree()` → `fitch_na_score()` for exact
+  verification. May miss some moves on heavily-inapplicable datasets.
+- **Ratchet `active_mask` not RAII-protected**: Interrupt during perturbation
+  could leave masks corrupted. Low risk — DataSet rebuilt from scratch per R call.

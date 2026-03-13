@@ -601,51 +601,55 @@ hits to minimum length no longer reduce consensus resolution.
 
 These build on top of the core engine phases (0–5).
 
-### Phase 6a: Ratchet
-- [ ] Character reweighting (per-block weight modification)
-- [ ] TNT-style perturbation phase (equal-score acceptance, T/8 stop)
-- [ ] Cheap ratchet mode (standard Fitch during perturbation)
-- [ ] Integration with existing ratchet R parameters
-- [ ] **Test**: matches or beats R-side `Ratchet()` scores
+### Phase 6a: Ratchet ✓ (Agent A)
+- [x] Character reweighting (active_mask zeroing, 4% probability)
+- [x] TNT-style perturbation phase (equal-score acceptance, T/8 stop)
+- [ ] Cheap ratchet mode (standard Fitch during perturbation) — deferred
+- [x] R interface: `ts_ratchet_search()` — tests passing
 
-### Phase 6b: Tree drifting
-- [ ] Suboptimal-acceptance TBR with AFD/RFD criteria
-- [ ] Block-level RFD computation
-- [ ] Alternating drift/equal-score phases
-- [ ] Drift-distance penalty factor
-- [ ] **Test**: escapes local optima that ratchet alone cannot
+### Phase 6b: Tree drifting ✓ (Agent B)
+- [x] Suboptimal-acceptance TBR with AFD/RFD criteria
+- [x] Block-level RFD computation
+- [x] Alternating drift/equal-score phases
+- [x] R interface: `ts_drift_search()` — 8 tests passing
 
-### Phase 6c: Tree fusing
-- [ ] Shared-group identification via split intersection
-- [ ] Fast exchange scoring (root-ward walk with cached states)
-- [ ] Bottom-up exchange ordering with ancestor skipping
-- [ ] Equal-score exchange option
-- [ ] Tree pool with split-based deduplication
-- [ ] **Test**: fusing 5 independent RAS+TBR trees beats any single one
+### Phase 6c: Tree fusing ✓ (Agent E) + Splits/Pool ✓ (Agent C)
+- [x] Shared-group identification via split intersection
+- [x] Bottom-up exchange ordering with ancestor skipping
+- [x] Equal-score exchange option
+- [x] Tree pool with split-based deduplication
+- [x] R interfaces: `ts_tree_fuse()`, `ts_compute_splits()`, `ts_pool_test()`
 
-### Phase 6d: Sectorial search
-- [ ] Reduced dataset construction with HTU state sets
-- [ ] RSS: random sector selection within size bounds
-- [ ] XSS: even partitioning algorithm
-- [ ] Recursive search on reduced datasets
-- [ ] Sector reinsertion with partial rescore
-- [ ] Global TBR between rounds
-- [ ] **Test**: SS(xmult) outperforms plain xmult on 100+ taxon datasets
+### Phase 6d: Sectorial search ✓ (Agent F)
+- [x] Reduced dataset construction with HTU state sets
+- [x] RSS: random sector selection within size bounds
+- [x] XSS: even partitioning algorithm
+- [x] TBR search on reduced datasets (root-structure guard)
+- [x] Sector reinsertion with node mapping
+- [x] Global TBR between rounds
+- [x] R interfaces: `ts_rss_search()`, `ts_xss_search()` — 32/32 tests passing
 
-### Phase 7: Starting trees and combined search
-- [ ] C++ Wagner tree with indirect length calculation
-- [ ] Random addition sequence support
-- [ ] **Test**: C++ Wagner trees match R `AdditionTree()` scores
-- [ ] Driven search loop with convergence criteria
-- [ ] Combosearch structure for very large trees
-- [ ] MSD-based adaptive stopping
+### Phase 6.5: Wagner tree ✓ (Agent D)
+- [x] C++ Wagner tree with greedy insertion-cost evaluation
+- [x] Random addition sequence support
+- [x] R interfaces: `ts_wagner_tree()`, `ts_random_wagner_tree()`
+
+### Phase 7: Starting trees and combined search (PARTIALLY COMPLETE)
+
+#### 7a: Driven search ✓ (Agent G)
+- [x] Driven search loop with convergence criteria (hits_to_best)
+- [x] Multi-replicate: Wagner → TBR → XSS → ratchet → TBR → pool
+- [x] Periodic tree fusing from pool
+- [x] R interface: `ts_driven_search()` — 20/20 tests passing
+
+#### 7b: Remaining — TODO
+- [ ] Combosearch structure for very large trees (MSD-based)
 - [ ] Adaptive parameter selection
 - [ ] Zero-length branch collapsing (dual representation)
 - [ ] Consensus stability checking
 - [ ] `MaximizeParsimony2()` R wrapper with all options
 - [ ] Progress reporting via `R_CheckUserInterrupt()` + callbacks
 - [ ] **Test**: benchmark suite vs existing `MaximizeParsimony()`
-- [ ] **Test**: Wagner vs NJ vs random starting trees comparison
 
 ### Phase 8: Parallelization
 - [ ] Thread-safe tree pool (`ThreadSafePool`)

@@ -8,15 +8,37 @@
 
 #include <Rcpp.h>
 #include <R.h>
+#include <Rmath.h>
 #include <Rinternals.h>
 
 namespace ts {
 
 // --- Helpers (file-local) ---
 
-static int full_rescore(TreeState& tree, const DataSet& ds) {
+static double full_rescore(TreeState& tree, const DataSet& ds) {
   tree.reset_states(ds);
-  return fitch_score(tree, ds);
+  return score_tree(tree, ds);
+}
+
+// Extract per-character step counts using standard Fitch local_cost only.
+// For NA blocks this gives standard (not three-pass) steps — acceptable
+// as a heuristic for indirect IW evaluation; full rescore verifies.
+static void extract_divided_steps(
+    const TreeState& tree, const DataSet& ds,
+    std::vector<int>& char_steps) {
+  std::fill(char_steps.begin(), char_steps.end(), 0);
+  for (int node : tree.postorder) {
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      uint64_t mask =
+          tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
+      while (mask) {
+        int c = ts::ctz64(mask);
+        char_steps[blk.pattern_index[c]] += 1;
+        mask &= mask - 1;
+      }
+    }
+  }
 }
 
 // Collect (parent, child) edge pairs reachable from root of main tree.
@@ -337,8 +359,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   int n_accepted = 0;
   int n_evaluated = 0;
   int hits = 1;
+  const bool use_iw = std::isfinite(ds.concavity);
+  // Floating-point tolerance for score equality
+  const double eps = use_iw ? 1e-10 : 0.0;
 
-  std::mt19937 rng(std::random_device{}());
+  // Seed from R's RNG for reproducibility with set.seed()
+  GetRNGstate();
+  std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
+  PutRNGstate();
 
   // Candidate clip nodes: all non-root nodes
   std::vector<int> clip_candidates;
@@ -354,6 +382,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   std::vector<uint64_t> from_above(
       static_cast<size_t>(tree.n_node) * tree.total_words, 0);
   std::vector<uint64_t> virtual_prelim(tree.total_words);
+
+  // IW buffers (allocated once, reused per clip)
+  std::vector<int> divided_steps;
+  std::vector<double> iw_delta;
+  if (use_iw) {
+    divided_steps.resize(ds.n_patterns, 0);
+    iw_delta.resize(ds.n_patterns, 0.0);
+  }
 
   TopoSnapshot snap;
   bool keep_going = true;
@@ -371,7 +407,6 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
       int ns = tree.clip_state.clip_sibling;
       int nz = tree.clip_state.clip_grandpar;
-      // Start at nz (grandparent), not ns — ns may be a tip.
       int nx = tree.clip_state.clip_parent;
       int delta = fitch_incremental_downpass(tree, ds, nz);
       fitch_incremental_uppass(tree, ds, nz);
@@ -383,12 +418,22 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         nx_cost += ds.blocks[b].weight * popcount64(
             tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b]);
       }
+
+      // For EW: divided_length for additive candidate scoring
       double divided_length = best_score + delta - nx_cost;
+
+      // For IW: precompute base IW score and per-pattern marginal deltas
+      double base_iw = 0.0;
+      if (use_iw) {
+        extract_divided_steps(tree, ds, divided_steps);
+        base_iw = compute_iw(ds, divided_steps);
+        precompute_iw_delta(ds, divided_steps, iw_delta);
+      }
 
       collect_main_edges(tree, main_edges);
 
       // Find best (reroot, regraft) combination
-      int best_extra = INT_MAX;
+      double best_candidate = HUGE_VAL;
       int best_above = -1, best_below = -1;
       int best_reroot_parent = -1, best_reroot_child = -1;
 
@@ -398,11 +443,17 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
       for (auto& [above, below] : main_edges) {
         if (above == nz && below == ns) continue;
-        int extra = fitch_indirect_length(clip_prelim, tree, ds,
-                                          above, below);
+        double candidate;
+        if (use_iw) {
+          candidate = indirect_iw_length(clip_prelim, tree, ds,
+                                         above, below, base_iw, iw_delta);
+        } else {
+          candidate = divided_length +
+              fitch_indirect_length(clip_prelim, tree, ds, above, below);
+        }
         ++n_evaluated;
-        if (extra < best_extra) {
-          best_extra = extra;
+        if (candidate < best_candidate) {
+          best_candidate = candidate;
           best_above = above;
           best_below = below;
           best_reroot_parent = -1;
@@ -425,11 +476,18 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
           for (auto& [above, below] : main_edges) {
             if (above == nz && below == ns) continue;
-            int extra = fitch_indirect_length(virtual_prelim.data(), tree,
-                                              ds, above, below);
+            double candidate;
+            if (use_iw) {
+              candidate = indirect_iw_length(virtual_prelim.data(), tree, ds,
+                                             above, below, base_iw, iw_delta);
+            } else {
+              candidate = divided_length +
+                  fitch_indirect_length(virtual_prelim.data(), tree, ds,
+                                        above, below);
+            }
             ++n_evaluated;
-            if (extra < best_extra) {
-              best_extra = extra;
+            if (candidate < best_candidate) {
+              best_candidate = candidate;
               best_above = above;
               best_below = below;
               best_reroot_parent = sp;
@@ -443,10 +501,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       tree.spr_unclip();
       tree.build_postorder();
 
-      double candidate_score = (best_extra == INT_MAX)
-                              ? HUGE_VAL : divided_length + best_extra;
-      bool dominated = (candidate_score > best_score) ||
-                        (candidate_score == best_score && !params.accept_equal);
+      bool dominated = (best_candidate > best_score + eps) ||
+                        (best_candidate > best_score - eps && !params.accept_equal);
 
       bool accepted = false;
 
@@ -466,13 +522,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         tree.build_postorder();
         double actual = full_rescore(tree, ds);
 
-        if (actual < best_score) {
+        if (actual < best_score - eps) {
           best_score = actual;
           ++n_accepted;
           hits = 1;
           accepted = true;
           keep_going = true;
-        } else if (actual == best_score && params.accept_equal
+        } else if (std::fabs(actual - best_score) <= eps
+                   && params.accept_equal
                    && hits <= params.max_hits) {
           ++hits;
           ++n_accepted;

@@ -10,6 +10,7 @@
 // Characters with the same weight are grouped into the same blocks.
 // Block score = weight * popcount(needs_union), avoiding redundant expansion.
 
+#include <cmath>
 #include <cstdint>
 #include <vector>
 
@@ -27,6 +28,26 @@ inline int popcount64(uint64_t x) {
   x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
   return static_cast<int>(
     (((x + (x >> 4)) & 0x0F0F0F0F0F0F0F0FULL) * 0x0101010101010101ULL) >> 56);
+#endif
+}
+
+// Portable count-trailing-zeros for uint64_t (undefined for x == 0)
+inline int ctz64(uint64_t x) {
+#if defined(__GNUC__) || defined(__clang__)
+  return __builtin_ctzll(x);
+#elif defined(_MSC_VER)
+  unsigned long idx;
+  _BitScanForward64(&idx, x);
+  return static_cast<int>(idx);
+#else
+  // Fallback: de Bruijn sequence
+  static const int debruijn[64] = {
+     0,  1,  2, 53,  3,  7, 54, 27,  4, 38, 41,  8, 34, 55, 48, 28,
+    62,  5, 39, 46, 44, 42, 22,  9, 24, 35, 59, 56, 49, 18, 29, 11,
+    63, 52,  6, 26, 37, 40, 33, 47, 61, 45, 43, 21, 23, 58, 17, 10,
+    51, 25, 36, 32, 60, 20, 57, 16, 50, 31, 19, 15, 30, 14, 13, 12
+  };
+  return debruijn[((x & -x) * 0x022FDD63CC95386DULL) >> 58];
 #endif
 }
 
@@ -62,6 +83,7 @@ struct DataSet {
   int n_patterns;                      // number of unique patterns
   std::vector<int> min_steps;          // minimum steps per pattern
   std::vector<int> pattern_freq;       // original weight (for reporting)
+  double concavity;                    // IW concavity constant k; HUGE_VAL = EW
 };
 
 // Build a DataSet from R-side data.
@@ -76,7 +98,9 @@ DataSet build_dataset(
     const double* contrast_r, int n_tokens, int n_states,
     const int* tip_data_r, int n_tips, int n_patterns,
     const int* weight_r,
-    const char** levels_r);
+    const char** levels_r,
+    const int* min_steps_r = nullptr,
+    double concavity = HUGE_VAL);
 
 } // namespace ts
 

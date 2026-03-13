@@ -332,7 +332,7 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
   reroot_at_tip0(recipient);
 
   // Initial score
-  double score = static_cast<double>(fitch_score(recipient, ds));
+  double score = score_tree(recipient, ds);
 
   const auto& entries = pool.all();
   int wps = (recipient.n_tip + 63) / 64;
@@ -424,7 +424,7 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
         // Copy donor's tip prelim states for the tips in the clade
         // (tips haven't changed, so prelim for tips should still be correct
         //  from the recipient copy — they are the same tips)
-        double new_score = static_cast<double>(fitch_score(trial, ds));
+        double new_score = score_tree(trial, ds);
 
         bool accept = false;
         if (new_score < score) {

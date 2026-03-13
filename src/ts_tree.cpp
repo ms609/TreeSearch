@@ -23,10 +23,12 @@ void TreeState::init_from_edge(
     int c = edge_child[i] - 1;
     parent[c] = p;
     int pi = p - n_tip;
-    if (right[pi] == -1) {
-      right[pi] = c;
-    } else {
+    // Assign first child to left, second to right — matches tree_to_edge
+    // output order, so R↔C++ round-trips preserve left/right assignment.
+    if (left[pi] == -1) {
       left[pi] = c;
+    } else {
+      right[pi] = c;
     }
   }
   parent[n_tip] = n_tip;  // root is its own parent

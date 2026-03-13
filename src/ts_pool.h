@@ -47,6 +47,9 @@ public:
   // Number of times the current best score has been independently found.
   int hits_to_best() const { return hits_to_best_; }
 
+  // Override hits_to_best (used to undo inflation from non-independent hits).
+  void set_hits_to_best(int n) { hits_to_best_ = n; }
+
   // Current best score.
   double best_score() const { return best_score_; }
 

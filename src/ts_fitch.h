@@ -8,6 +8,8 @@
 
 #include "ts_data.h"
 #include "ts_tree.h"
+#include <cmath>
+#include <vector>
 
 namespace ts {
 
@@ -64,6 +66,43 @@ int fitch_indirect_length(const uint64_t* clip_prelim,
 // Handles both standard blocks (one-pass Fitch) and inapplicable blocks
 // (Brazeau et al. three-pass algorithm). Returns the total EW score.
 int fitch_na_score(TreeState& tree, const DataSet& ds);
+
+// --- Per-character step extraction ---
+
+// Extract per-pattern step counts from local_cost masks (standard blocks)
+// and down2 states (NA blocks) after a full scoring pass.
+// char_steps must be pre-sized to ds.n_patterns and zero-initialized.
+void extract_char_steps(const TreeState& tree, const DataSet& ds,
+                        std::vector<int>& char_steps);
+
+// --- Unified scoring ---
+
+// Score the tree using either EW or IW depending on ds.concavity.
+// Performs full downpass+uppass (or NA three-pass if needed).
+// Returns EW score as double when concavity is infinite; IW score otherwise.
+double score_tree(TreeState& tree, const DataSet& ds);
+
+// Compute IW score from per-character step counts.
+double compute_iw(const DataSet& ds, const std::vector<int>& char_steps);
+
+// --- IW indirect calculation ---
+
+// Evaluate a regraft candidate under IW.
+// base_iw: precomputed IW of the divided tree (without reconnection cost).
+// iw_delta: precomputed marginal IW cost if pattern p gains one more step.
+// Returns the total IW score of the candidate tree.
+double indirect_iw_length(
+    const uint64_t* clip_prelim,
+    const TreeState& tree, const DataSet& ds,
+    int node_a, int node_d,
+    double base_iw,
+    const std::vector<double>& iw_delta);
+
+// Precompute iw_delta[p] = marginal cost of one additional step for pattern p.
+// divided_steps: per-pattern step counts of the divided tree.
+void precompute_iw_delta(const DataSet& ds,
+                         const std::vector<int>& divided_steps,
+                         std::vector<double>& iw_delta);
 
 } // namespace ts
 

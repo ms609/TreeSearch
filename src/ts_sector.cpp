@@ -216,6 +216,7 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
   rd.data.n_patterns = ds.n_patterns;
   rd.data.min_steps = ds.min_steps;
   rd.data.pattern_freq = ds.pattern_freq;
+  rd.data.concavity = ds.concavity;
 
   // Build tip states for the sector
   size_t tip_state_size = static_cast<size_t>(n_sector_tips) * ds.total_words;
@@ -259,35 +260,16 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
 
 // ---- Sector search ----
 
-// Ensure a TreeState has down2 and subtree_actives allocated.
-// Wagner-built trees lack these; fitch_na_score needs them.
-static void ensure_na_arrays(TreeState& tree, const DataSet& ds) {
-  size_t state_size = static_cast<size_t>(tree.n_node) * tree.total_words;
-  if (tree.down2.size() != state_size) {
-    tree.down2.assign(state_size, 0ULL);
-  }
-  if (tree.subtree_actives.size() != state_size) {
-    tree.subtree_actives.assign(state_size, 0ULL);
-    // Re-init tip subtree_actives
-    for (int tip = 0; tip < tree.n_tip; ++tip) {
-      size_t base = static_cast<size_t>(tip) * tree.total_words;
-      for (int b = 0; b < ds.n_blocks; ++b) {
-        int offset = ds.block_word_offset[b];
-        if (ds.blocks[b].has_inapplicable) {
-          tree.subtree_actives[base + offset] = 0;
-          for (int s = 1; s < ds.blocks[b].n_states; ++s) {
-            tree.subtree_actives[base + offset + s] =
-                ds.tip_states[base + offset + s];
-          }
-        }
-      }
-    }
-  }
-}
+// Note: Sector trees use score_tree() which dispatches appropriately.
+// For sectors with NA characters, the HTU subtree_actives approximation
+// means the sector score is inexact, but the full-tree rescore after
+// reinsertion catches any discrepancies.
 
 // Search the reduced dataset and return the best score found.
 // Modifies rd.subtree in place.
-static double search_sector(ReducedDataset& rd, int internal_ratchet_cycles,
+// Search the sector with TBR. The internal_ratchet_cycles parameter is
+// reserved for future use (ratchet perturbation within sectors).
+static double search_sector(ReducedDataset& rd, int /*internal_ratchet_cycles*/,
                             int max_hits) {
   int htu_idx = rd.n_real_tips;
   int root = rd.subtree.n_tip;
@@ -298,7 +280,7 @@ static double search_sector(ReducedDataset& rd, int internal_ratchet_cycles,
   auto save_right = rd.subtree.right;
   auto save_parent = rd.subtree.parent;
 
-  double original_score = static_cast<double>(fitch_score(rd.subtree, rd.data));
+  double original_score = score_tree(rd.subtree, rd.data);
 
   TBRParams tp;
   tp.max_hits = max_hits;
@@ -356,20 +338,8 @@ static void reinsert_sector(TreeState& tree, const ReducedDataset& rd) {
     int sec_rc = rd.subtree.right[sec_ni];
 
     // Map sector children to full tree nodes
-    int full_lc, full_rc;
-
-    if (sec_lc < n_sector_tips) {
-      // It's a sector tip
-      full_lc = rd.sector_to_full[sec_lc];
-    } else {
-      full_lc = rd.sector_to_full[sec_lc];
-    }
-
-    if (sec_rc < n_sector_tips) {
-      full_rc = rd.sector_to_full[sec_rc];
-    } else {
-      full_rc = rd.sector_to_full[sec_rc];
-    }
+    int full_lc = rd.sector_to_full[sec_lc];
+    int full_rc = rd.sector_to_full[sec_rc];
 
     // Update full tree topology
     int full_ni = full_nd - tree.n_tip;
@@ -452,8 +422,10 @@ static std::vector<int> xss_partition(const TreeState& tree, int n_partitions) {
 
 SectorResult rss_search(TreeState& tree, DataSet& ds,
                         const SectorParams& params) {
+  GetRNGstate();
+
   // Ensure full tree has current state sets
-  double current_score = static_cast<double>(fitch_na_score(tree, ds));
+  double current_score = score_tree(tree, ds);
 
   SectorResult result;
   result.best_score = current_score;
@@ -504,14 +476,13 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     int sector_root = eligible[idx];
 
     // Ensure current state sets are up to date
-    fitch_na_score(tree, ds);
+    score_tree(tree, ds);
 
     // Build reduced dataset
     ReducedDataset rd = build_reduced_dataset(tree, ds, sector_root);
 
     // Score the current sector topology
-    double sector_current = static_cast<double>(
-        fitch_score(rd.subtree, rd.data));
+    double sector_current = score_tree(rd.subtree, rd.data);
 
     // Search the sector
     double sector_best = search_sector(rd, params.internal_ratchet_cycles,
@@ -523,9 +494,14 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
                   (params.accept_equal && sector_best == sector_current);
 
     if (accept && sector_best <= sector_current) {
+      // Save topology in case reinsertion worsens full-tree score
+      auto save_left = tree.left;
+      auto save_right = tree.right;
+      auto save_parent = tree.parent;
+
       reinsert_sector(tree, rd);
       tree.build_postorder();
-      double new_score = static_cast<double>(fitch_na_score(tree, ds));
+      double new_score = score_tree(tree, ds);
 
       if (new_score < result.best_score) {
         result.total_steps_saved +=
@@ -552,9 +528,12 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
       } else if (new_score == result.best_score && params.accept_equal) {
         // Equal score accepted — topology changed but score didn't
       } else {
-        // Reinsertion made things worse (shouldn't happen if sector
-        // search found improvement, but HTU approximation can cause this)
-        // Revert would be complex; just accept the current state
+        // HTU approximation caused full-tree score to worsen; revert
+        tree.left = save_left;
+        tree.right = save_right;
+        tree.parent = save_parent;
+        tree.build_postorder();
+        score_tree(tree, ds);
       }
     }
 
@@ -573,6 +552,7 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     }
   }
 
+  PutRNGstate();
   return result;
 }
 
@@ -580,7 +560,9 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
 
 SectorResult xss_search(TreeState& tree, DataSet& ds,
                         const SectorParams& params) {
-  double current_score = static_cast<double>(fitch_na_score(tree, ds));
+  GetRNGstate();
+
+  double current_score = score_tree(tree, ds);
 
   SectorResult result;
   result.best_score = current_score;
@@ -607,12 +589,11 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
       if (sz < 4) continue; // too small to be useful
 
       // Ensure state sets are current
-      fitch_na_score(tree, ds);
+      score_tree(tree, ds);
 
       ReducedDataset rd = build_reduced_dataset(tree, ds, sector_root);
 
-      double sector_current = static_cast<double>(
-          fitch_score(rd.subtree, rd.data));
+      double sector_current = score_tree(rd.subtree, rd.data);
       double sector_best = search_sector(
           rd, params.internal_ratchet_cycles, params.internal_max_hits);
       ++result.n_sectors_searched;
@@ -622,15 +603,29 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
                     (params.accept_equal && sector_best == sector_current);
 
       if (accept && sector_best <= sector_current) {
+        // Save topology in case reinsertion worsens full-tree score
+        auto save_left = tree.left;
+        auto save_right = tree.right;
+        auto save_parent = tree.parent;
+
         reinsert_sector(tree, rd);
         tree.build_postorder();
-        double new_score = static_cast<double>(fitch_na_score(tree, ds));
+        double new_score = score_tree(tree, ds);
 
         if (new_score < result.best_score) {
           result.total_steps_saved +=
               static_cast<int>(result.best_score - new_score);
           result.best_score = new_score;
           ++result.n_sectors_improved;
+        } else if (new_score == result.best_score && params.accept_equal) {
+          // Equal score accepted
+        } else {
+          // HTU approximation caused full-tree score to worsen; revert
+          tree.left = save_left;
+          tree.right = save_right;
+          tree.parent = save_parent;
+          tree.build_postorder();
+          score_tree(tree, ds);
         }
       }
 
@@ -652,6 +647,7 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
     R_CheckUserInterrupt();
   }
 
+  PutRNGstate();
   return result;
 }
 

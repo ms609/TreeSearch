@@ -1,6 +1,7 @@
 #include "ts_search.h"
 #include "ts_fitch.h"
 #include <algorithm>
+#include <cmath>
 #include <random>
 #include <vector>
 
@@ -15,7 +16,7 @@ namespace ts {
 // ---- NNI search (Phase 1) ----
 
 SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
-  double best_score = fitch_score(tree, ds);
+  double best_score = score_tree(tree, ds);
   int n_moves = 0;
   int n_iterations = 0;
   int hits = 1;
@@ -36,7 +37,7 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
       for (int which = 0; which < 2; ++which) {
         auto undo = tree.nni_apply(c, which);
         tree.build_postorder();
-        double new_score = fitch_score(tree, ds);
+        double new_score = score_tree(tree, ds);
         ++n_iterations;
 
         if (new_score < best_score) {
@@ -97,13 +98,13 @@ static void collect_destination_edges(
 }
 
 // Score the tree from scratch: reset states, run full two-pass.
-static int full_rescore(TreeState& tree, const DataSet& ds) {
+static double full_rescore(TreeState& tree, const DataSet& ds) {
   tree.reset_states(ds);
-  return fitch_na_score(tree, ds);
+  return score_tree(tree, ds);
 }
 
 SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
-  int best_score = full_rescore(tree, ds);
+  double best_score = full_rescore(tree, ds);
   int n_moves = 0;
   int n_iterations = 0;
   int hits = 1;
@@ -132,7 +133,7 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
       tree.build_postorder();
 
       tree.reset_states(ds);
-      int main_score = fitch_na_score(tree, ds);
+      double main_score = score_tree(tree, ds);
 
       // Score clipped subtree separately
       int clip_score = 0;
@@ -166,10 +167,66 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
         }
       }
 
-      int divided_length = main_score + clip_score;
+      double divided_length = main_score + clip_score;
 
       const uint64_t* clip_prelim =
           &tree.prelim[static_cast<size_t>(clip_node) * tree.total_words];
+
+      // IW: precompute base IW score and marginal deltas
+      const bool use_iw = std::isfinite(ds.concavity);
+      double base_iw = 0.0;
+      std::vector<int> div_steps;
+      std::vector<double> iw_del;
+      if (use_iw) {
+        div_steps.assign(ds.n_patterns, 0);
+        iw_del.resize(ds.n_patterns, 0.0);
+        // Main tree steps from local_cost
+        for (int nd : tree.postorder) {
+          for (int b = 0; b < ds.n_blocks; ++b) {
+            uint64_t mask = tree.local_cost[
+                static_cast<size_t>(nd) * tree.n_blocks + b];
+            while (mask) {
+              int c = ts::ctz64(mask);
+              div_steps[ds.blocks[b].pattern_index[c]] += 1;
+              mask &= mask - 1;
+            }
+          }
+        }
+        // Clip subtree steps (from prelim computed by fitch_downpass_node)
+        {
+          std::vector<int> cstack;
+          cstack.push_back(clip_node);
+          while (!cstack.empty()) {
+            int nd = cstack.back();
+            cstack.pop_back();
+            if (nd < tree.n_tip) continue;
+            int ni = nd - tree.n_tip;
+            int lc = tree.left[ni];
+            int rc = tree.right[ni];
+            for (int b = 0; b < ds.n_blocks; ++b) {
+              const CharBlock& blk = ds.blocks[b];
+              int offset = ds.block_word_offset[b];
+              const uint64_t* ls =
+                  &tree.prelim[static_cast<size_t>(lc) * tree.total_words + offset];
+              const uint64_t* rs =
+                  &tree.prelim[static_cast<size_t>(rc) * tree.total_words + offset];
+              uint64_t any_isect = 0;
+              for (int s = 0; s < blk.n_states; ++s)
+                any_isect |= (ls[s] & rs[s]);
+              uint64_t nu = ~any_isect & blk.active_mask;
+              while (nu) {
+                int c = ts::ctz64(nu);
+                div_steps[blk.pattern_index[c]] += 1;
+                nu &= nu - 1;
+              }
+            }
+            cstack.push_back(lc);
+            cstack.push_back(rc);
+          }
+        }
+        base_iw = compute_iw(ds, div_steps);
+        precompute_iw_delta(ds, div_steps, iw_del);
+      }
 
       // --- Rearrangement phase: screen with indirect calc, verify accepts ---
       collect_destination_edges(tree, destinations);
@@ -181,9 +238,14 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
       for (auto& [above, below] : destinations) {
         if (above == nz && below == ns) continue;
 
-        // Conservative indirect screen (union-based, may overcount slightly)
-        int extra = fitch_indirect_length(clip_prelim, tree, ds, above, below);
-        int candidate_score = divided_length + extra;
+        double candidate_score;
+        if (use_iw) {
+          candidate_score = indirect_iw_length(clip_prelim, tree, ds,
+                                               above, below, base_iw, iw_del);
+        } else {
+          int extra = fitch_indirect_length(clip_prelim, tree, ds, above, below);
+          candidate_score = divided_length + extra;
+        }
         ++n_iterations;
 
         bool dominated = (candidate_score > best_score) ||
@@ -193,7 +255,7 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
         // Candidate passes screen — regraft and verify with full rescore
         tree.spr_regraft(above, below);
         tree.build_postorder();
-        int actual = full_rescore(tree, ds);
+        double actual = full_rescore(tree, ds);
 
         if (actual < best_score) {
           best_score = actual;

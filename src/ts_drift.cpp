@@ -16,9 +16,29 @@ namespace ts {
 
 // --- Helpers (file-local, mirrored from ts_tbr.cpp) ---
 
-static int drift_full_rescore(TreeState& tree, const DataSet& ds) {
+static double drift_full_rescore(TreeState& tree, const DataSet& ds) {
   tree.reset_states(ds);
-  return fitch_score(tree, ds);
+  return score_tree(tree, ds);
+}
+
+// Extract per-character step counts from local_cost only (standard Fitch).
+// Same as TBR's extract_divided_steps helper.
+static void drift_extract_divided_steps(
+    const TreeState& tree, const DataSet& ds,
+    std::vector<int>& char_steps) {
+  std::fill(char_steps.begin(), char_steps.end(), 0);
+  for (int node : tree.postorder) {
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      uint64_t mask =
+          tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
+      while (mask) {
+        int c = ts::ctz64(mask);
+        char_steps[blk.pattern_index[c]] += 1;
+        mask &= mask - 1;
+      }
+    }
+  }
 }
 
 static void drift_collect_main_edges(
@@ -319,6 +339,8 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
                        int max_changes, std::mt19937& rng) {
   double score = drift_full_rescore(tree, ds);
   int n_accepted = 0;
+  const bool use_iw = std::isfinite(ds.concavity);
+  const double eps = use_iw ? 1e-10 : 0.0;
 
   std::vector<int> clip_candidates;
   for (int node = 0; node < tree.n_node; ++node) {
@@ -332,6 +354,14 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
   std::vector<uint64_t> from_above(
       static_cast<size_t>(tree.n_node) * tree.total_words, 0);
   std::vector<uint64_t> virtual_prelim(tree.total_words);
+
+  // IW buffers
+  std::vector<int> divided_steps;
+  std::vector<double> iw_delta;
+  if (use_iw) {
+    divided_steps.resize(ds.n_patterns, 0);
+    iw_delta.resize(ds.n_patterns, 0.0);
+  }
 
   DriftTopoSnapshot snap;
   std::vector<uint64_t> old_local_cost;
@@ -358,10 +388,18 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     }
     double divided_length = score + delta - nx_cost;
 
+    // IW: precompute base IW and marginal deltas
+    double base_iw = 0.0;
+    if (use_iw) {
+      drift_extract_divided_steps(tree, ds, divided_steps);
+      base_iw = compute_iw(ds, divided_steps);
+      precompute_iw_delta(ds, divided_steps, iw_delta);
+    }
+
     drift_collect_main_edges(tree, main_edges);
 
     // Find best candidate via indirect evaluation
-    int best_extra = INT_MAX;
+    double best_candidate = HUGE_VAL;
     int best_above = -1, best_below = -1;
     int best_reroot_parent = -1, best_reroot_child = -1;
 
@@ -371,10 +409,16 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     // SPR candidates
     for (auto& [above, below] : main_edges) {
       if (above == nz && below == ns) continue;
-      int extra = fitch_indirect_length(clip_prelim, tree, ds,
-                                        above, below);
-      if (extra < best_extra) {
-        best_extra = extra;
+      double candidate;
+      if (use_iw) {
+        candidate = indirect_iw_length(clip_prelim, tree, ds,
+                                       above, below, base_iw, iw_delta);
+      } else {
+        candidate = divided_length +
+            fitch_indirect_length(clip_prelim, tree, ds, above, below);
+      }
+      if (candidate < best_candidate) {
+        best_candidate = candidate;
         best_above = above;
         best_below = below;
         best_reroot_parent = -1;
@@ -397,10 +441,17 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
 
         for (auto& [above, below] : main_edges) {
           if (above == nz && below == ns) continue;
-          int extra = fitch_indirect_length(virtual_prelim.data(), tree,
-                                            ds, above, below);
-          if (extra < best_extra) {
-            best_extra = extra;
+          double candidate;
+          if (use_iw) {
+            candidate = indirect_iw_length(virtual_prelim.data(), tree, ds,
+                                           above, below, base_iw, iw_delta);
+          } else {
+            candidate = divided_length +
+                fitch_indirect_length(virtual_prelim.data(), tree, ds,
+                                      above, below);
+          }
+          if (candidate < best_candidate) {
+            best_candidate = candidate;
             best_above = above;
             best_below = below;
             best_reroot_parent = sp;
@@ -414,17 +465,15 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     tree.spr_unclip();
     tree.build_postorder();
 
-    if (best_extra == INT_MAX || best_above < 0) continue;
+    if (best_candidate >= HUGE_VAL || best_above < 0) continue;
 
-    double candidate_score = divided_length + best_extra;
-    double delta_score = candidate_score - score;
+    double delta_score = best_candidate - score;
 
-    if (delta_score > afd_limit) {
-      // Beyond AFD limit: reject without trying
+    if (delta_score > afd_limit + eps) {
       continue;
     }
 
-    // Save topology and local_cost for potential undo / RFD
+    // Save topology for potential undo / RFD
     drift_save_topology(tree, snap);
 
     bool ok = drift_apply_tbr_move(tree, clip_node,
@@ -438,65 +487,72 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
       continue;
     }
 
-    if (delta_score < 0) {
+    if (delta_score < -eps) {
       // Improvement: always accept
       tree.build_postorder();
       score = drift_full_rescore(tree, ds);
       ++n_accepted;
-    } else if (delta_score == 0) {
+    } else if (std::fabs(delta_score) <= eps) {
       // Equal: always accept
       tree.build_postorder();
       score = drift_full_rescore(tree, ds);
       ++n_accepted;
     } else {
       // Suboptimal but within AFD limit: check RFD
-      // Save old local_cost before rescore
-      // We need clean pre-move local_cost for RFD comparison.
-      // Restore, rescore, then re-apply and rescore.
-      // Save post-move local_cost first.
       tree.build_postorder();
-      drift_full_rescore(tree, ds);
-      std::vector<uint64_t> new_local_cost = tree.local_cost;
+      double new_score = drift_full_rescore(tree, ds);
 
-      // Restore to pre-move state
-      drift_restore_topology(tree, snap);
-      tree.build_postorder();
-      drift_full_rescore(tree, ds);
-      old_local_cost = tree.local_cost;
+      if (use_iw) {
+        // Under IW, use score-based RFD: (worsening - improving) / worsening
+        // Simplify to score delta ratio
+        double rfd = (new_score > score && score > 0.0)
+            ? (new_score - score) / new_score : 0.0;
 
-      // Compute RFD using old and new local_cost
-      // We need to compute it without the tree state matching new_local_cost,
-      // so use a manual version:
-      double F = 0, C = 0;
-      for (int node = tree.n_tip; node < tree.n_node; ++node) {
-        for (int b = 0; b < ds.n_blocks; ++b) {
-          size_t idx = static_cast<size_t>(node) * tree.n_blocks + b;
-          int old_steps = popcount64(old_local_cost[idx]);
-          int new_steps = popcount64(new_local_cost[idx]);
-          int d = (new_steps - old_steps) * ds.blocks[b].weight;
-          if (d > 0) F += d;
-          if (d < 0) C += (-d);
-        }
-      }
-      double rfd = (F == 0.0) ? 0.0 : (F - C) / F;
-
-      if (rfd <= rfd_limit) {
-        // Accept: re-apply the move
-        ok = drift_apply_tbr_move(tree, clip_node,
-                                   best_reroot_parent, best_reroot_child,
-                                   best_above, best_below);
-        if (!ok || !drift_validate_topology(tree)) {
-          // Failed to re-apply — topology may have changed. Stay restored.
+        if (rfd <= rfd_limit) {
+          score = new_score;
+          ++n_accepted;
+        } else {
+          drift_restore_topology(tree, snap);
           tree.build_postorder();
-          drift_full_rescore(tree, ds);
-          continue;
+          score = drift_full_rescore(tree, ds);
         }
-        tree.build_postorder();
-        score = drift_full_rescore(tree, ds);
-        ++n_accepted;
       } else {
-        // Reject: already restored
-        score = drift_full_rescore(tree, ds);
+        // EW: original local_cost-based RFD
+        std::vector<uint64_t> new_local_cost = tree.local_cost;
+
+        drift_restore_topology(tree, snap);
+        tree.build_postorder();
+        drift_full_rescore(tree, ds);
+        old_local_cost = tree.local_cost;
+
+        double F = 0, C = 0;
+        for (int node = tree.n_tip; node < tree.n_node; ++node) {
+          for (int b = 0; b < ds.n_blocks; ++b) {
+            size_t idx = static_cast<size_t>(node) * tree.n_blocks + b;
+            int old_steps = popcount64(old_local_cost[idx]);
+            int new_steps = popcount64(new_local_cost[idx]);
+            int d = (new_steps - old_steps) * ds.blocks[b].weight;
+            if (d > 0) F += d;
+            if (d < 0) C += (-d);
+          }
+        }
+        double rfd = (F == 0.0) ? 0.0 : (F - C) / F;
+
+        if (rfd <= rfd_limit) {
+          ok = drift_apply_tbr_move(tree, clip_node,
+                                     best_reroot_parent, best_reroot_child,
+                                     best_above, best_below);
+          if (!ok || !drift_validate_topology(tree)) {
+            tree.build_postorder();
+            drift_full_rescore(tree, ds);
+            continue;
+          }
+          tree.build_postorder();
+          score = drift_full_rescore(tree, ds);
+          ++n_accepted;
+        } else {
+          score = drift_full_rescore(tree, ds);
+        }
       }
     }
 

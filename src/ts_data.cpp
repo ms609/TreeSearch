@@ -9,7 +9,9 @@ DataSet build_dataset(
     const double* contrast_r, int n_tokens, int n_states,
     const int* tip_data_r, int n_tips, int n_patterns,
     const int* weight_r,
-    const char** levels_r)
+    const char** levels_r,
+    const int* min_steps_r,
+    double concavity)
 {
   DataSet ds;
   ds.n_tips = n_tips;
@@ -184,8 +186,12 @@ DataSet build_dataset(
   // IW metadata
   ds.min_steps.resize(n_patterns, 0);
   ds.pattern_freq.resize(n_patterns, 0);
+  ds.concavity = concavity;
   for (int p = 0; p < n_patterns; ++p) {
     ds.pattern_freq[p] = weight_r[p];
+    if (min_steps_r) {
+      ds.min_steps[p] = min_steps_r[p];
+    }
   }
 
   return ds;

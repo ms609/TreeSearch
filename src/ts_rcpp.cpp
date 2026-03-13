@@ -11,6 +11,7 @@
 #include "ts_wagner.h"
 #include "ts_sector.h"
 #include "ts_fuse.h"
+#include "ts_driven.h"
 
 using namespace Rcpp;
 
@@ -20,7 +21,9 @@ ts::DataSet make_dataset(
     NumericMatrix contrast,
     IntegerMatrix tip_data,
     IntegerVector weight,
-    CharacterVector levels)
+    CharacterVector levels,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
   int n_tips = tip_data.nrow();
   int n_patterns = tip_data.ncol();
@@ -34,11 +37,16 @@ ts::DataSet make_dataset(
     level_ptrs[i] = level_strs[i].c_str();
   }
 
+  const int* min_steps_ptr = (min_steps.size() > 0) ? INTEGER(min_steps)
+                                                     : nullptr;
+
   return ts::build_dataset(
       REAL(contrast), n_tokens, n_states,
       INTEGER(tip_data), n_tips, n_patterns,
       INTEGER(weight),
-      level_ptrs.data());
+      level_ptrs.data(),
+      min_steps_ptr,
+      concavity);
 }
 
 // Convert TreeState topology back to R edge matrix (2-column, 1-based)
@@ -62,21 +70,24 @@ IntegerMatrix tree_to_edge(const ts::TreeState& tree) {
 } // anonymous namespace
 
 // [[Rcpp::export]]
-int ts_fitch_score(
+double ts_fitch_score(
     IntegerMatrix edge,
     NumericMatrix contrast,
     IntegerMatrix tip_data,
     IntegerVector weight,
-    CharacterVector levels)
+    CharacterVector levels,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
 
   ts::TreeState tree;
   tree.init_from_edge(
       &edge(0, 0), &edge(0, 1),
       edge.nrow(), ds);
 
-  return ts::fitch_na_score(tree, ds);
+  return ts::score_tree(tree, ds);
 }
 
 // [[Rcpp::export]]
@@ -218,11 +229,12 @@ List ts_na_char_steps(
     }
   }
 
-  // NA blocks: re-derive from down2 states
+  // NA blocks: use same formula as Pass 3 (needs subtree_actives)
   for (int node : tree.postorder) {
     int ni = node - tree.n_tip;
     int lc = tree.left[ni];
     int rc = tree.right[ni];
+    size_t nb = static_cast<size_t>(node) * tree.total_words;
     size_t lb = static_cast<size_t>(lc) * tree.total_words;
     size_t rb = static_cast<size_t>(rc) * tree.total_words;
 
@@ -234,12 +246,21 @@ List ts_na_char_steps(
 
       const uint64_t* L2 = &tree.down2[lb + off];
       const uint64_t* R2 = &tree.down2[rb + off];
+      const uint64_t* D2 = &tree.down2[nb + off];
 
-      uint64_t I_app = 0;
-      for (int s = 1; s < k; ++s) I_app |= (L2[s] & R2[s]);
-      uint64_t l2_app = 0, r2_app = 0;
-      for (int s = 1; s < k; ++s) { l2_app |= L2[s]; r2_app |= R2[s]; }
-      uint64_t needs_step = ~I_app & l2_app & r2_app & blk.active_mask;
+      uint64_t ss_app = 0;
+      for (int s = 1; s < k; ++s) ss_app |= D2[s];
+
+      uint64_t any_d2_isect = 0;
+      for (int s = 0; s < k; ++s) any_d2_isect |= (L2[s] & R2[s]);
+
+      const uint64_t* la = &tree.subtree_actives[lb + off];
+      const uint64_t* ra = &tree.subtree_actives[rb + off];
+      uint64_t l_act = 0, r_act = 0;
+      for (int s = 1; s < k; ++s) { l_act |= la[s]; r_act |= ra[s]; }
+
+      uint64_t needs_step = l_act & r_act
+                          & ~(ss_app & any_d2_isect) & blk.active_mask;
       debug_na_total += blk.weight * ts::popcount64(needs_step);
 
       for (int c = 0; c < blk.n_chars; ++c) {
@@ -397,9 +418,12 @@ List ts_spr_search(
     IntegerMatrix tip_data,
     IntegerVector weight,
     CharacterVector levels,
-    int maxHits = 20)
+    int maxHits = 20,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
 
   ts::TreeState tree;
   tree.init_from_edge(
@@ -425,9 +449,12 @@ List ts_tbr_search(
     CharacterVector levels,
     int maxHits = 1,
     bool acceptEqual = false,
-    int maxChanges = 0)
+    int maxChanges = 0,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
 
   ts::TreeState tree;
   tree.init_from_edge(
@@ -459,9 +486,12 @@ List ts_ratchet_search(
     CharacterVector levels,
     int nCycles = 10,
     double perturbProb = 0.04,
-    int maxHits = 1)
+    int maxHits = 1,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
 
   ts::TreeState tree;
   tree.init_from_edge(
@@ -493,9 +523,12 @@ List ts_drift_search(
     int nCycles = 10,
     int afdLimit = 3,
     double rfdLimit = 0.1,
-    int maxHits = 1)
+    int maxHits = 1,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
 
   ts::TreeState tree;
   tree.init_from_edge(
@@ -525,9 +558,12 @@ List ts_wagner_tree(
     IntegerMatrix tip_data,
     IntegerVector weight,
     CharacterVector levels,
-    IntegerVector addition_order = IntegerVector())
+    IntegerVector addition_order = IntegerVector(),
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
 
   std::vector<int> order;
   if (addition_order.size() > 0) {
@@ -552,9 +588,12 @@ List ts_random_wagner_tree(
     NumericMatrix contrast,
     IntegerMatrix tip_data,
     IntegerVector weight,
-    CharacterVector levels)
+    CharacterVector levels,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
 
   ts::TreeState tree;
   ts::WagnerResult result = ts::random_wagner_tree(tree, ds);
@@ -755,9 +794,12 @@ List ts_nni_search(
     IntegerMatrix tip_data,
     IntegerVector weight,
     CharacterVector levels,
-    int maxHits = 20)
+    int maxHits = 20,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
 
   ts::TreeState tree;
   tree.init_from_edge(
@@ -784,9 +826,12 @@ List ts_tree_fuse(
     List pool_edges,
     NumericVector pool_scores,
     bool accept_equal = false,
-    int max_rounds = 10)
+    int max_rounds = 10,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
 
   // Build recipient tree
   ts::TreeState recipient;
@@ -867,9 +912,12 @@ List ts_rss_search(
     bool acceptEqual = false,
     int rssPicks = 0,
     int ratchetCycles = 6,
-    int maxHits = 1)
+    int maxHits = 1,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
 
   ts::TreeState tree;
   tree.init_from_edge(
@@ -906,9 +954,12 @@ List ts_xss_search(
     int xssRounds = 3,
     bool acceptEqual = false,
     int ratchetCycles = 6,
-    int maxHits = 1)
+    int maxHits = 1,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
 
   ts::TreeState tree;
   tree.init_from_edge(
@@ -930,5 +981,54 @@ List ts_xss_search(
     Named("n_sectors_searched") = result.n_sectors_searched,
     Named("n_sectors_improved") = result.n_sectors_improved,
     Named("total_steps_saved") = result.total_steps_saved
+  );
+}
+
+// [[Rcpp::export]]
+List ts_driven_search(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    int maxReplicates = 100,
+    int targetHits = 10,
+    int tbrMaxHits = 20,
+    int ratchetCycles = 10,
+    double ratchetPerturbProb = 0.04,
+    int xssRounds = 3,
+    int xssPartitions = 4,
+    int sectorMinSize = 6,
+    int sectorMaxSize = 50,
+    int fuseInterval = 3,
+    bool fuseAcceptEqual = false,
+    int poolMaxSize = 100,
+    double poolSuboptimal = 0.0)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+
+  ts::DrivenParams params;
+  params.max_replicates = maxReplicates;
+  params.target_hits = targetHits;
+  params.tbr_max_hits = tbrMaxHits;
+  params.ratchet_cycles = ratchetCycles;
+  params.ratchet_perturb_prob = ratchetPerturbProb;
+  params.xss_rounds = xssRounds;
+  params.xss_partitions = xssPartitions;
+  params.sector_min_size = sectorMinSize;
+  params.sector_max_size = sectorMaxSize;
+  params.fuse_interval = fuseInterval;
+  params.fuse_accept_equal = fuseAcceptEqual;
+  params.pool_max_size = poolMaxSize;
+  params.pool_suboptimal = poolSuboptimal;
+
+  ts::TreeState best_tree;
+  ts::DrivenResult result = ts::driven_search(best_tree, ds, params);
+
+  return List::create(
+    Named("edge") = tree_to_edge(best_tree),
+    Named("score") = result.best_score,
+    Named("replicates") = result.replicates_completed,
+    Named("hits_to_best") = result.hits_to_best,
+    Named("pool_size") = result.pool_size
   );
 }

@@ -26,6 +26,8 @@ void init_wagner_state(TreeState& tree, const DataSet& ds) {
   size_t state_size = static_cast<size_t>(tree.n_node) * tree.total_words;
   tree.prelim.assign(state_size, 0ULL);
   tree.final_.assign(state_size, 0ULL);
+  tree.down2.assign(state_size, 0ULL);
+  tree.subtree_actives.assign(state_size, 0ULL);
   tree.local_cost.assign(
       static_cast<size_t>(tree.n_node) * tree.n_blocks, 0ULL);
 
@@ -103,7 +105,7 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
   // Build initial 3-taxon tree
   build_three_taxon_tree(tree, order[0], order[1], order[2]);
   tree.build_postorder();
-  double score = static_cast<double>(fitch_score(tree, ds));
+  double score = score_tree(tree, ds);
 
   // Add remaining taxa one at a time
   for (int i = 3; i < n_tip; ++i) {
@@ -155,7 +157,7 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
 
     // Rebuild postorder and rescore
     tree.build_postorder();
-    score = static_cast<double>(fitch_score(tree, ds));
+    score = score_tree(tree, ds);
   }
 
   WagnerResult result;

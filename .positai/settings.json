@@ -1,7 +1,8 @@
 {
   "model": {
     "id": "claude-opus-4-6",
-    "provider": "positai"
+    "provider": "positai",
+    "thinkingEffort": "high"
   },
   "permission": {
     "edit": {
@@ -9,7 +10,8 @@
       "*.h": "allow",
       "*.cpp": "allow",
       "*.R": "allow",
-      "*.c": "allow"
+      "*.c": "allow",
+      "*/NAMESPACE": "allow"
     },
     "bash": {
       "cd C:/Users/pjjg18/GitHub/TreeSearch": "allow",
