@@ -167,7 +167,7 @@ List ts_test_indirect(
       for (int b = 0; b < ds.n_blocks; ++b) {
         const ts::CharBlock& blk = ds.blocks[b];
         int offset = ds.block_word_offset[b];
-        clip_score += ts::fitch_downpass_node(
+        clip_score += blk.weight * ts::fitch_downpass_node(
             &tree.prelim[static_cast<size_t>(lc) * tree.total_words + offset],
             &tree.prelim[static_cast<size_t>(rc) * tree.total_words + offset],
             &tree.prelim[static_cast<size_t>(nd) * tree.total_words + offset],

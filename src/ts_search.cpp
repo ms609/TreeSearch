@@ -103,14 +103,13 @@ static int full_rescore(TreeState& tree, const DataSet& ds) {
 }
 
 SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
-  double best_score = full_rescore(tree, ds);
+  int best_score = full_rescore(tree, ds);
   int n_moves = 0;
   int n_iterations = 0;
   int hits = 1;
 
   std::mt19937 rng(std::random_device{}());
 
-  // Enumerate candidate clip nodes: any non-root node.
   std::vector<int> clip_candidates;
   for (int node = 0; node < tree.n_node; ++node) {
     if (node == tree.n_tip) continue;  // root
@@ -132,11 +131,10 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
       tree.spr_clip(clip_node);
       tree.build_postorder();
 
-      // Score the divided tree (main + clipped parts)
       tree.reset_states(ds);
       int main_score = fitch_score(tree, ds);
 
-      // Score the clipped subtree separately via postorder DFS
+      // Score clipped subtree separately
       int clip_score = 0;
       {
         std::vector<int> clip_stack;
@@ -159,7 +157,7 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
           for (int b = 0; b < ds.n_blocks; ++b) {
             const CharBlock& blk = ds.blocks[b];
             int offset = ds.block_word_offset[b];
-            clip_score += fitch_downpass_node(
+            clip_score += blk.weight * fitch_downpass_node(
                 &tree.prelim[static_cast<size_t>(lc) * tree.total_words + offset],
                 &tree.prelim[static_cast<size_t>(rc) * tree.total_words + offset],
                 &tree.prelim[static_cast<size_t>(nd) * tree.total_words + offset],
@@ -168,13 +166,12 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
         }
       }
 
-      double divided_length = main_score + clip_score;
+      int divided_length = main_score + clip_score;
 
-      // Pointer to clipped subtree's basal prelim states
       const uint64_t* clip_prelim =
           &tree.prelim[static_cast<size_t>(clip_node) * tree.total_words];
 
-      // --- Rearrangement phase: exact indirect calculation ---
+      // --- Rearrangement phase: screen with indirect calc, verify accepts ---
       collect_destination_edges(tree, destinations);
 
       int ns = tree.clip_state.clip_sibling;
@@ -182,34 +179,39 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
 
       bool accepted = false;
       for (auto& [above, below] : destinations) {
-        if (above == nz && below == ns) continue;  // skip original position
+        if (above == nz && below == ns) continue;
 
-        // Exact indirect calculation (Goloboff 1996): union-based virtual root
+        // Conservative indirect screen (union-based, may overcount slightly)
         int extra = fitch_indirect_length(clip_prelim, tree, ds, above, below);
-        double candidate_score = divided_length + extra;
+        int candidate_score = divided_length + extra;
         ++n_iterations;
 
-        if (candidate_score < best_score) {
-          // Strict improvement: regraft and update states
-          tree.spr_regraft(above, below);
-          tree.build_postorder();
-          best_score = full_rescore(tree, ds);
+        bool dominated = (candidate_score > best_score) ||
+                         (candidate_score == best_score && hits > maxHits);
+        if (dominated) continue;
+
+        // Candidate passes screen — regraft and verify with full rescore
+        tree.spr_regraft(above, below);
+        tree.build_postorder();
+        int actual = full_rescore(tree, ds);
+
+        if (actual < best_score) {
+          best_score = actual;
           ++n_moves;
           hits = 1;
           accepted = true;
           keep_going = true;
           break;
-        } else if (candidate_score == best_score && hits <= maxHits) {
-          // Plateau move
-          tree.spr_regraft(above, below);
-          tree.build_postorder();
-          best_score = full_rescore(tree, ds);
+        } else if (actual == best_score && hits <= maxHits) {
           ++hits;
           ++n_moves;
           accepted = true;
           keep_going = true;
           break;
         }
+
+        // Not accepted — undo regraft
+        tree.spr_unregraft(above, below);
       }
 
       if (!accepted) {
@@ -224,7 +226,6 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
     R_CheckUserInterrupt();
   }
 
-  // Final rescore for safety
   best_score = full_rescore(tree, ds);
 
   return SearchResult{best_score, n_moves, n_iterations};

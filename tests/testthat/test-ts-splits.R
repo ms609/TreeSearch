@@ -42,29 +42,26 @@ test_that("Different topologies give splits_equal = FALSE", {
   expect_false(ts_trees_equal(tree1$edge, tree2$edge, 10))
 })
 
-test_that("NNI changes exactly one split", {
-  tree <- as.phylo(42, 8)
-  splits_before <- ts_compute_splits(tree$edge, 8)
+test_that("NNI can produce a different topology", {
+  tree <- TreeTools::Preorder(as.phylo(42, 10))
+  n_tip <- 10L
 
-  # Apply an NNI manually: swap children across an internal edge
-  tree2 <- TreeTools::NNI(tree, 1)
-  tree2 <- TreeTools::Preorder(tree2)
-  splits_after <- ts_compute_splits(tree2$edge, 8)
-
-  expect_equal(length(splits_before), length(splits_after))
-
-  # Count differing splits
-  # Convert to sorted character representations for comparison
-  to_str <- function(split_list) {
-    sort(vapply(split_list, function(s) paste(sort(s), collapse = ","),
-                character(1)))
+  # Try NNI on each internal edge until we find one that changes the topology
+  internal_edges <- which(tree$edge[, 2] > n_tip)
+  found_different <- FALSE
+  for (ie in internal_edges) {
+    tree2 <- NNI(tree, ie)
+    tree2 <- TreeTools::Preorder(tree2)
+    if (!ts_trees_equal(tree$edge, tree2$edge, n_tip)) {
+      found_different <- TRUE
+      # Both should have the same number of splits
+      s1 <- ts_compute_splits(tree$edge, n_tip)
+      s2 <- ts_compute_splits(tree2$edge, n_tip)
+      expect_equal(length(s1), length(s2))
+      break
+    }
   }
-  s1 <- to_str(splits_before)
-  s2 <- to_str(splits_after)
-
-  n_diff <- sum(!(s1 %in% s2))
-  # NNI changes exactly 1 split (unless the NNI happens to be degenerate)
-  expect_true(n_diff >= 0 && n_diff <= 2)
+  expect_true(found_different, info = "At least one NNI should change topology")
 })
 
 test_that("Various tree sizes work", {

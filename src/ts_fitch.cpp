@@ -91,7 +91,7 @@ int fitch_downpass(TreeState& tree, const DataSet& ds) {
       }
 
       uint64_t needs_union = ~any_intersect & blk.active_mask;
-      total_steps += popcount64(needs_union);
+      total_steps += blk.weight * popcount64(needs_union);
 
       // Store local cost
       tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b] =
@@ -160,7 +160,7 @@ int fitch_incremental_downpass(TreeState& tree, const DataSet& ds,
 
       // Subtract old local cost
       size_t cost_idx = static_cast<size_t>(node) * tree.n_blocks + b;
-      length_delta -= popcount64(tree.local_cost[cost_idx]);
+      length_delta -= blk.weight * popcount64(tree.local_cost[cost_idx]);
 
       // Compute new prelim
       uint64_t any_intersect = 0;
@@ -170,7 +170,7 @@ int fitch_incremental_downpass(TreeState& tree, const DataSet& ds,
       }
 
       uint64_t needs_union = ~any_intersect & blk.active_mask;
-      length_delta += popcount64(needs_union);
+      length_delta += blk.weight * popcount64(needs_union);
 
       // Store new local cost
       tree.local_cost[cost_idx] = needs_union;
@@ -283,7 +283,7 @@ int fitch_indirect_length(const uint64_t* clip_prelim,
     }
 
     uint64_t needs_step = ~any_hit & blk.active_mask;
-    extra_steps += popcount64(needs_step);
+    extra_steps += blk.weight * popcount64(needs_step);
   }
 
   return extra_steps;

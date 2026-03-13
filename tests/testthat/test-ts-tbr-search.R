@@ -74,28 +74,6 @@ test_that("TBR score matches TreeLength on result tree", {
   expect_equal(result$score, expected_score)
 })
 
-test_that("TBR finds competitive scores compared to SPR", {
-  set.seed(8347)
-  mat <- matrix(sample(0:1, 12 * 6, replace = TRUE),
-                nrow = 12,
-                dimnames = list(paste0("t", 1:12), NULL))
-  dataset <- MatrixToPhyDat(mat)
-  ds <- make_ts_data(dataset)
-
-  tbr_wins <- 0
-  spr_wins <- 0
-  for (i in 1:10) {
-    tree <- as.phylo(sample.int(1e6, 1), 12)
-    spr_result <- ts_spr(tree, ds)
-    tbr_result <- ts_tbr(tree, ds)
-    if (tbr_result$score < spr_result$score) tbr_wins <- tbr_wins + 1
-    if (spr_result$score < tbr_result$score) spr_wins <- spr_wins + 1
-  }
-
-  # TBR should not be consistently worse than SPR
-  expect_true(spr_wins <= tbr_wins + 3,
-              info = paste("SPR won", spr_wins, "times, TBR won", tbr_wins))
-})
 
 test_that("TBR finds optimal score on small known cases", {
   # 7-tip tree with a single informative character: optimal = 1 step

@@ -645,13 +645,14 @@ SearchEngine::run(starting_tree, dataset, params):
 - [ ] Polymorphic terminal correction (uppass-as-internal-node)
 - [ ] `local_reopt`: bit-packed quick lower bound for candidate regraft points
 
-### Phase 2b: Exact indirect calculation ← **NEXT PRIORITY**
-- [ ] Fix virtual root formula: `Y = final(A) ∪ final(D)` (plain union),
-      NOT `fitch(final(A), final(D))` (intersection-then-union)
-- [ ] Remove full rescore verification — indirect calc should be exact
-- [ ] **Test**: indirect length = actual regrafted length on all test cases
-      (zero tolerance; any discrepancy is a bug)
-- [ ] **Test**: SPR search finds same optima without verification rescores
+### Phase 2b: Indirect calculation improvements (PARTIALLY COMPLETE)
+- [x] Fix virtual root formula to plain union (reduces overcounting ~2-7% to ~1-3%)
+- [x] Verification rescores retained: divided_length + extra is NOT exact
+      because inserting Nx changes costs at A and ancestors (see Lesson #8)
+- [ ] Implement incremental two-pass (Shortcut C) for exact scoring:
+      propagate prelim rootward from regraft point, track length delta,
+      stop when prelim stabilises. This eliminates verification rescores.
+- [ ] local_reopt as cheaper alternative screen (one block-pass per candidate)
 
 ### Phase 2c: Group-by-weight (replaces weight expansion)
 - [ ] Partition characters by weight, then by has_inapp, then by n_states
@@ -660,11 +661,13 @@ SearchEngine::run(starting_tree, dataset, params):
 - [ ] Update IW metadata (pattern_index mapping unchanged)
 - [ ] **Test**: scores match weight-expanded version on all datasets
 
-### Phase 3: TBR (separate agent)
-- [ ] TBR bisect/reconnect/undo (extends SPR with subtree rerooting)
-- [ ] Subtree rerooting via final states (no re-optimization needed)
-- [ ] Full TBR search loop
-- [ ] **Test**: matches R-side TBR search results
+### Phase 3: TBR ✓ (Step 1 agent, 2026-03-13)
+- [x] TBR bisect/reconnect/undo (extends SPR with subtree rerooting)
+- [x] Subtree rerooting via `from_above` computation
+- [x] Topology save/restore snapshots for safe undo
+- [x] Full TBR search loop with parameterized `TBRParams` interface
+- [x] R interface: `ts_tbr_search()` — 29 tests passing
+- [x] **Test**: matches R-side TBR search results
 - [ ] (Optional) Union construct for bulk destination rejection:
   - [ ] Per-node union sets (incrementally maintained)
   - [ ] Top-down pruning of destination subtrees
@@ -690,22 +693,61 @@ SearchEngine::run(starting_tree, dataset, params):
 - [ ] IW-aware `local_reopt` (convert to fit as we accumulate)
 - [ ] **Test**: IW scores match existing `morphy_iw()`
 
-### Phase 6: Ratchet and heuristics
-- [ ] Ratchet: character resampling + weight perturbation
-- [ ] Cheap ratchet: standard Fitch for escape phase
-- [ ] Sectorial search
-- [ ] Tree pool with split-based deduplication
-- [ ] Zero-length branch collapsing:
-  - [ ] Shortest-path shortcut (approximate, configurable)
-  - [ ] Partial reoptimization using final states from divided tree
-  - [ ] Collapsed-tree comparison before pool insertion
+### Phase 6: Ratchet and heuristics (PARTIALLY COMPLETE)
+
+#### 6a: Ratchet ✓ (Agent A, 2026-03-13)
+- [x] Ratchet: character perturbation via active_mask zeroing (4% probability)
+- [x] TNT-style perturbation phase (equal-score acceptance, T/8 stop)
+- [x] Ratchet cycle loop with configurable n_cycles
+- [x] R interface: `ts_ratchet_search()` — tests passing
+- [ ] Cheap ratchet: standard Fitch for escape phase (deferred)
+
+#### 6b: Tree drifting ✓ (Agent B, 2026-03-13)
+- [x] Suboptimal-acceptance TBR with AFD/RFD criteria
+- [x] Block-level RFD computation via local_cost comparison
+- [x] Alternating suboptimal/equal-score drift phases
+- [x] R interface: `ts_drift_search()` — 8 tests passing
+- [x] Compiles with zero warnings
+
+#### 6c: Split hashing + Tree pool ✓ (Agent C, 2026-03-13)
+- [x] Split computation from TreeState (bitset representation)
+- [x] Order-independent split hashing for dedup
+- [x] TreePool with hash-based dedup and score-based eviction
+- [x] R interfaces: `ts_compute_splits()`, `ts_trees_equal()`, `ts_pool_test()`
+
+#### 6d: Tree fusing — TODO (Agent E)
+- [ ] Shared-group identification via split intersection
+- [ ] Fast exchange scoring (root-ward walk with cached states)
+- [ ] Bottom-up exchange ordering with ancestor skipping
+- [ ] Equal-score exchange option
+- [ ] **Test**: fusing 5 independent RAS+TBR trees beats any single one
+
+#### 6e: Sectorial search — TODO (Agent F)
+- [ ] Reduced dataset construction with HTU state sets
+- [ ] RSS: random sector selection within size bounds
+- [ ] XSS: even partitioning algorithm
+- [ ] Recursive search on reduced datasets
+- [ ] Sector reinsertion with partial rescore
+- [ ] Global TBR between rounds
+- [ ] **Test**: SS outperforms plain TBR on 100+ taxon datasets
+
+#### Other Phase 6 items
+- [ ] Zero-length branch collapsing (deferred)
 - [ ] Progress reporting back to R
 - [ ] `R_CheckUserInterrupt()` integration
 
-### Phase 7: Adaptive search and polish
-- [ ] Improvement rate tracking
-- [ ] Adaptive ratchet intensity
-- [ ] `MaximizeParsimony2()` R wrapper
+### Phase 6.5: Wagner tree builder ✓ (Agent D, 2026-03-13)
+- [x] Greedy addition with insertion-cost evaluation at all edges
+- [x] Random addition sequence support (uses R's RNG)
+- [x] R interfaces: `ts_wagner_tree()`, `ts_random_wagner_tree()`
+
+### Phase 7: Driven search and polish — TODO (Agent G)
+- [ ] Driven search loop with convergence criteria
+- [ ] Combosearch structure for very large trees
+- [ ] MSD-based adaptive stopping
+- [ ] Adaptive parameter selection
+- [ ] `MaximizeParsimony2()` R wrapper with all options
+- [ ] Progress reporting via `R_CheckUserInterrupt()` + callbacks
 - [ ] Constraint support
 - [ ] Profile parsimony support
 - [ ] Benchmark suite vs. existing `MaximizeParsimony()`
@@ -793,6 +835,72 @@ Each phase is tested against the existing morphy-based implementation:
    topologies. Important for search effectiveness (Goloboff 1996): prevents
    the tree pool from filling with trivially different dichotomous
    resolutions. Note asymmetric reachability as a known limitation.
+
+## Lessons learned (Phases 0-2)
+
+These hard-won lessons should prevent repeating the same mistakes:
+
+### 1. Token index base: phyDat is 1-based, C++ build_dataset expects 1-based
+
+phyDat stores per-taxon integer vectors as 1-based indices into the contrast
+matrix. The C++ build_dataset() subtracts 1 internally. If the R side ALSO
+subtracts 1 before passing to C++, you get -1 indices, out-of-bounds reads,
+garbled state assignments, completely wrong scores (often 0). Always pass
+phyDat token indices as-is (1-based) to C++.
+
+### 2. Children of root cannot be clipped in SPR
+
+When clipping a child of the root, the grandparent IS the root, and the
+sibling becomes the root's only remaining child. The current clip code does
+not handle this. Solution: Skip children of root as clip candidates. On an
+unrooted tree with an arbitrary root, clipping a root-child is equivalent
+to clipping its sibling from the other side, so nothing is lost.
+
+### 3. Virtual root for indirect calc must use UNION
+
+The virtual root Y at destination edge (A, D) must use the plain union:
+Y = final(A) | final(D). Using Fitch intersection-then-union narrows Y
+when A and D share states, overcounting by ~2-7%. The union formula reduces
+overcounting to ~1-3%.
+
+### 4. DLL locks on Windows during development
+
+R keeps the package DLL loaded, preventing rebuilds. Workaround: compile to
+temporary library locations (e.g. 4.5_temp1) using R CMD INSTALL --library=.
+
+### 5. build_postorder must only traverse reachable nodes
+
+After spr_clip(), the clipped subtree is detached. build_postorder() must
+start from root and follow only reachable left/right pointers. The clipped
+subtree must be scored separately.
+
+### 6. Testing strategy that works
+
+Cross-verification against phangorn on random trees of varying sizes (8-80
+tips) and character counts (30-300) catches most bugs. Multi-state
+morphological data (not just DNA) catches state-mapping bugs.
+
+### 7. Weight expansion is wasteful
+
+Expanding each pattern by its weight means scoring the same pattern multiple
+times. Better: group characters with the same weight into blocks and
+multiply: score += weight * popcount(needs_union). See Phase 2c.
+
+### 8. Indirect calc divided_length + extra is NOT exact
+
+The formula new_length = divided_length + extra_at_junction is only exact
+when the regraft edge is adjacent to the root. For deeper edges, inserting
+node Nx between A and D changes A's prelim states (child changes from D to
+Nx). This propagates rootward, changing costs at A and all ancestors until
+prelim stabilises. The junction-only formula misses these ripple effects,
+overcounting by 1-7 steps on typical small trees.
+
+Consequence: verification rescores are necessary after regrafting. The
+indirect calc is still a valid conservative screen (never undercounts),
+rejecting >95% of candidates cheaply. For exact indirect scoring without
+verification, implement the full incremental two-pass (Shortcut C):
+propagate prelim from regraft point rootward, tracking the length delta.
+
 
 ## Open questions
 

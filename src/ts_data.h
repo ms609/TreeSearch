@@ -7,8 +7,8 @@
 // means "character i can be in state j". State 0 is the inapplicable (NA)
 // state when has_inapplicable is true.
 //
-// Pattern weights are eliminated by expanding each pattern by its frequency,
-// so all characters have weight 1 and popcount gives the score directly.
+// Characters with the same weight are grouped into the same blocks.
+// Block score = weight * popcount(needs_union), avoiding redundant expansion.
 
 #include <cstdint>
 #include <vector>
@@ -36,6 +36,7 @@ static constexpr int MAX_STATES = 32;  // practical limit for morphological data
 struct CharBlock {
   int n_chars;             // characters in this block (1..64)
   int n_states;            // number of states (including NA if has_inapplicable)
+  int weight;              // block weight (all chars in block share same weight)
   bool has_inapplicable;   // state 0 is inapplicable → use NA-aware algorithm
   uint64_t active_mask;    // bits 0..n_chars-1 set, rest clear
 
