@@ -1,0 +1,23 @@
+{
+  "model": {
+    "id": "claude-opus-4-6",
+    "provider": "positai"
+  },
+  "permission": {
+    "edit": {
+      "*.md": "allow",
+      "*.h": "allow",
+      "*.cpp": "allow",
+      "*.R": "allow",
+      "*.c": "allow"
+    },
+    "bash": {
+      "cd C:/Users/pjjg18/GitHub/TreeSearch": "allow",
+      "Rscript -e \"pkgbuild::compile_dll()\" 2>&1": "allow",
+      "grep *": "allow",
+      "head *": "allow",
+      "cd \"C:/Users/pjjg18/GitHub/TreeSearch\"": "allow",
+      "Rscript --vanilla -e \"pkgbuild::compile_dll(debug=FALSE)\" 2>&1": "allow"
+    }
+  }
+}
