@@ -15,7 +15,7 @@ namespace ts {
 // ---- NNI search (Phase 1) ----
 
 SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
-  int best_score = fitch_score(tree, ds);
+  double best_score = fitch_score(tree, ds);
   int n_moves = 0;
   int n_iterations = 0;
   int hits = 1;
@@ -36,7 +36,7 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
       for (int which = 0; which < 2; ++which) {
         auto undo = tree.nni_apply(c, which);
         tree.build_postorder();
-        int new_score = fitch_score(tree, ds);
+        double new_score = fitch_score(tree, ds);
         ++n_iterations;
 
         if (new_score < best_score) {
@@ -103,7 +103,7 @@ static int full_rescore(TreeState& tree, const DataSet& ds) {
 }
 
 SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
-  int best_score = full_rescore(tree, ds);
+  double best_score = full_rescore(tree, ds);
   int n_moves = 0;
   int n_iterations = 0;
   int hits = 1;
@@ -168,7 +168,7 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
         }
       }
 
-      int divided_length = main_score + clip_score;
+      double divided_length = main_score + clip_score;
 
       // Pointer to clipped subtree's basal prelim states
       const uint64_t* clip_prelim =
@@ -186,7 +186,7 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
 
         // Exact indirect calculation (Goloboff 1996): union-based virtual root
         int extra = fitch_indirect_length(clip_prelim, tree, ds, above, below);
-        int candidate_score = divided_length + extra;
+        double candidate_score = divided_length + extra;
         ++n_iterations;
 
         if (candidate_score < best_score) {

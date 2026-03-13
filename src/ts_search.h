@@ -13,7 +13,7 @@
 namespace ts {
 
 struct SearchResult {
-  int score;           // best score found
+  double score;        // best score found (double for IW forward-compat)
   int n_moves;         // total improving moves accepted
   int n_iterations;    // total NNI candidates evaluated
 };

@@ -22,7 +22,7 @@ struct TBRParams {
 };
 
 struct TBRResult {
-  int best_score;
+  double best_score;  // double for forward-compatibility with implied weights
   int n_accepted;
   int n_evaluated;
   bool converged;  // true if stopped due to no improvement

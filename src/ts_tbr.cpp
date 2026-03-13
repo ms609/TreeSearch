@@ -4,6 +4,7 @@
 #include <random>
 #include <vector>
 #include <climits>
+#include <cmath>
 
 #include <Rcpp.h>
 #include <R.h>
@@ -332,7 +333,7 @@ static bool apply_tbr_move(
 
 TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      const TBRParams& params) {
-  int best_score = full_rescore(tree, ds);
+  double best_score = full_rescore(tree, ds);
   int n_accepted = 0;
   int n_evaluated = 0;
   int hits = 1;
@@ -382,7 +383,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         nx_cost += popcount64(
             tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b]);
       }
-      int divided_length = best_score + delta - nx_cost;
+      double divided_length = best_score + delta - nx_cost;
 
       collect_main_edges(tree, main_edges);
 
@@ -442,8 +443,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       tree.spr_unclip();
       tree.build_postorder();
 
-      int candidate_score = (best_extra == INT_MAX)
-                            ? INT_MAX : divided_length + best_extra;
+      double candidate_score = (best_extra == INT_MAX)
+                              ? HUGE_VAL : divided_length + best_extra;
       bool dominated = (candidate_score > best_score) ||
                         (candidate_score == best_score && !params.accept_equal);
 
@@ -463,7 +464,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         }
 
         tree.build_postorder();
-        int actual = full_rescore(tree, ds);
+        double actual = full_rescore(tree, ds);
 
         if (actual < best_score) {
           best_score = actual;

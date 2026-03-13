@@ -4,6 +4,11 @@
 #include "ts_fitch.h"
 #include "ts_search.h"
 #include "ts_tbr.h"
+#include "ts_drift.h"
+#include "ts_ratchet.h"
+#include "ts_splits.h"
+#include "ts_pool.h"
+#include "ts_wagner.h"
 
 using namespace Rcpp;
 
@@ -252,6 +257,304 @@ List ts_tbr_search(
     Named("n_accepted") = result.n_accepted,
     Named("n_evaluated") = result.n_evaluated,
     Named("converged") = result.converged
+  );
+}
+
+// [[Rcpp::export]]
+List ts_ratchet_search(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    int nCycles = 10,
+    double perturbProb = 0.04,
+    int maxHits = 1)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+
+  ts::TreeState tree;
+  tree.init_from_edge(
+      &edge(0, 0), &edge(0, 1),
+      edge.nrow(), ds);
+
+  ts::RatchetParams params;
+  params.n_cycles = nCycles;
+  params.perturb_prob = perturbProb;
+  params.max_hits = maxHits;
+
+  ts::RatchetResult result = ts::ratchet_search(tree, ds, params);
+
+  return List::create(
+    Named("edge") = tree_to_edge(tree),
+    Named("score") = result.best_score,
+    Named("n_cycles") = result.n_cycles_completed,
+    Named("total_tbr_moves") = result.total_tbr_moves
+  );
+}
+
+// [[Rcpp::export]]
+List ts_drift_search(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    int nCycles = 10,
+    int afdLimit = 3,
+    double rfdLimit = 0.1,
+    int maxHits = 1)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+
+  ts::TreeState tree;
+  tree.init_from_edge(
+      &edge(0, 0), &edge(0, 1),
+      edge.nrow(), ds);
+
+  ts::DriftParams params;
+  params.n_cycles = nCycles;
+  params.afd_limit = afdLimit;
+  params.rfd_limit = rfdLimit;
+  params.max_hits = maxHits;
+
+  ts::DriftResult result = ts::drift_search(tree, ds, params);
+
+  return List::create(
+    Named("edge") = tree_to_edge(tree),
+    Named("score") = result.best_score,
+    Named("n_cycles_completed") = result.n_cycles_completed,
+    Named("total_drift_moves") = result.total_drift_moves,
+    Named("total_tbr_moves") = result.total_tbr_moves
+  );
+}
+
+// [[Rcpp::export]]
+List ts_wagner_tree(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    IntegerVector addition_order = IntegerVector())
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+
+  std::vector<int> order;
+  if (addition_order.size() > 0) {
+    // Convert from 1-based R indices to 0-based
+    order.resize(addition_order.size());
+    for (int i = 0; i < addition_order.size(); ++i) {
+      order[i] = addition_order[i] - 1;
+    }
+  }
+
+  ts::TreeState tree;
+  ts::WagnerResult result = ts::wagner_tree(tree, ds, order);
+
+  return List::create(
+    Named("edge") = tree_to_edge(tree),
+    Named("score") = result.score
+  );
+}
+
+// [[Rcpp::export]]
+List ts_random_wagner_tree(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+
+  ts::TreeState tree;
+  ts::WagnerResult result = ts::random_wagner_tree(tree, ds);
+
+  return List::create(
+    Named("edge") = tree_to_edge(tree),
+    Named("score") = result.score
+  );
+}
+
+// [[Rcpp::export]]
+List ts_compute_splits(
+    IntegerMatrix edge,
+    int n_tip)
+{
+  // Build a minimal TreeState from the edge matrix (no character data needed).
+  ts::TreeState tree;
+  // We need a dummy DataSet just for init_from_edge dimensions.
+  // Instead, manually initialize the tree topology.
+  tree.n_tip = n_tip;
+  tree.n_internal = n_tip - 1;
+  tree.n_node = 2 * n_tip - 1;
+  tree.total_words = 0;
+  tree.n_blocks = 0;
+
+  tree.parent.assign(tree.n_node, 0);
+  tree.left.assign(tree.n_internal, 0);
+  tree.right.assign(tree.n_internal, 0);
+
+  // Parse edge matrix (R is 1-based)
+  int n_edge = edge.nrow();
+  for (int i = 0; i < n_edge; ++i) {
+    int par = edge(i, 0) - 1;
+    int child = edge(i, 1) - 1;
+    tree.parent[child] = par;
+    int ni = par - n_tip;
+    if (tree.left[ni] == 0 && par != child) {
+      // Check if left is unset (0 could be tip 0, but root's self-reference
+      // won't use this path). We need a cleaner approach.
+      // Actually: first child encountered goes left, second goes right.
+      // Use a flag: if left == 0 and we haven't set it yet...
+      // Simpler: track how many children we've seen per node.
+      tree.left[ni] = child;
+    } else {
+      tree.right[ni] = child;
+    }
+  }
+  // Fix: root's parent is itself
+  tree.parent[n_tip] = n_tip;
+
+  // Fix left/right assignment: re-parse properly
+  // Reset and use a counter
+  std::vector<int> child_count(tree.n_internal, 0);
+  tree.left.assign(tree.n_internal, -1);
+  tree.right.assign(tree.n_internal, -1);
+  for (int i = 0; i < n_edge; ++i) {
+    int par = edge(i, 0) - 1;
+    int child = edge(i, 1) - 1;
+    tree.parent[child] = par;
+    int ni = par - n_tip;
+    if (child_count[ni] == 0) {
+      tree.left[ni] = child;
+    } else {
+      tree.right[ni] = child;
+    }
+    ++child_count[ni];
+  }
+  tree.parent[n_tip] = n_tip;
+
+  tree.build_postorder();
+
+  ts::SplitSet ss = ts::compute_splits(tree);
+
+  // Return as a list of raw vectors (one per split)
+  List result(ss.n_splits);
+  for (int i = 0; i < ss.n_splits; ++i) {
+    const uint64_t* s = ss.split(i);
+    // Convert to an integer vector of tip indices in the split
+    IntegerVector tips;
+    for (int t = 0; t < n_tip; ++t) {
+      int w = t / 64;
+      int b = t % 64;
+      if (s[w] & (1ULL << b)) {
+        tips.push_back(t + 1);  // 1-based for R
+      }
+    }
+    result[i] = tips;
+  }
+
+  return result;
+}
+
+// [[Rcpp::export]]
+bool ts_trees_equal(
+    IntegerMatrix edge1,
+    IntegerMatrix edge2,
+    int n_tip)
+{
+  auto build_tree = [&](IntegerMatrix edge) -> ts::TreeState {
+    ts::TreeState tree;
+    tree.n_tip = n_tip;
+    tree.n_internal = n_tip - 1;
+    tree.n_node = 2 * n_tip - 1;
+    tree.total_words = 0;
+    tree.n_blocks = 0;
+    tree.parent.assign(tree.n_node, 0);
+    tree.left.assign(tree.n_internal, -1);
+    tree.right.assign(tree.n_internal, -1);
+
+    int n_edge = edge.nrow();
+    std::vector<int> child_count(tree.n_internal, 0);
+    for (int i = 0; i < n_edge; ++i) {
+      int par = edge(i, 0) - 1;
+      int child = edge(i, 1) - 1;
+      tree.parent[child] = par;
+      int ni = par - n_tip;
+      if (child_count[ni] == 0) {
+        tree.left[ni] = child;
+      } else {
+        tree.right[ni] = child;
+      }
+      ++child_count[ni];
+    }
+    tree.parent[n_tip] = n_tip;
+    tree.build_postorder();
+    return tree;
+  };
+
+  ts::TreeState t1 = build_tree(edge1);
+  ts::TreeState t2 = build_tree(edge2);
+
+  ts::SplitSet s1 = ts::compute_splits(t1);
+  ts::SplitSet s2 = ts::compute_splits(t2);
+
+  return ts::splits_equal(s1, s2);
+}
+
+// [[Rcpp::export]]
+List ts_pool_test(
+    List edges,        // list of edge matrices
+    NumericVector scores,
+    int n_tip,
+    int max_size = 100,
+    double suboptimal = 0.0)
+{
+  auto build_tree = [&](IntegerMatrix edge) -> ts::TreeState {
+    ts::TreeState tree;
+    tree.n_tip = n_tip;
+    tree.n_internal = n_tip - 1;
+    tree.n_node = 2 * n_tip - 1;
+    tree.total_words = 0;
+    tree.n_blocks = 0;
+    tree.parent.assign(tree.n_node, 0);
+    tree.left.assign(tree.n_internal, -1);
+    tree.right.assign(tree.n_internal, -1);
+
+    int n_edge = edge.nrow();
+    std::vector<int> child_count(tree.n_internal, 0);
+    for (int i = 0; i < n_edge; ++i) {
+      int par = edge(i, 0) - 1;
+      int child = edge(i, 1) - 1;
+      tree.parent[child] = par;
+      int ni = par - n_tip;
+      if (child_count[ni] == 0) {
+        tree.left[ni] = child;
+      } else {
+        tree.right[ni] = child;
+      }
+      ++child_count[ni];
+    }
+    tree.parent[n_tip] = n_tip;
+    tree.build_postorder();
+    return tree;
+  };
+
+  ts::TreePool pool(max_size, suboptimal);
+
+  int n_trees = edges.size();
+  LogicalVector added(n_trees);
+  for (int i = 0; i < n_trees; ++i) {
+    IntegerMatrix e = as<IntegerMatrix>(edges[i]);
+    ts::TreeState t = build_tree(e);
+    added[i] = pool.add(t, scores[i]);
+  }
+
+  return List::create(
+    Named("added") = added,
+    Named("pool_size") = pool.size(),
+    Named("best_score") = pool.best_score(),
+    Named("hits_to_best") = pool.hits_to_best()
   );
 }
 

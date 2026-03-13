@@ -73,6 +73,34 @@ ts_tbr_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 1L
     .Call(`_TreeSearch_ts_tbr_search`, edge, contrast, tip_data, weight, levels, maxHits, acceptEqual, maxChanges)
 }
 
+ts_ratchet_search <- function(edge, contrast, tip_data, weight, levels, nCycles = 10L, perturbProb = 0.04, maxHits = 1L) {
+    .Call(`_TreeSearch_ts_ratchet_search`, edge, contrast, tip_data, weight, levels, nCycles, perturbProb, maxHits)
+}
+
+ts_drift_search <- function(edge, contrast, tip_data, weight, levels, nCycles = 10L, afdLimit = 3L, rfdLimit = 0.1, maxHits = 1L) {
+    .Call(`_TreeSearch_ts_drift_search`, edge, contrast, tip_data, weight, levels, nCycles, afdLimit, rfdLimit, maxHits)
+}
+
+ts_wagner_tree <- function(contrast, tip_data, weight, levels, addition_order = integer()) {
+    .Call(`_TreeSearch_ts_wagner_tree`, contrast, tip_data, weight, levels, addition_order)
+}
+
+ts_random_wagner_tree <- function(contrast, tip_data, weight, levels) {
+    .Call(`_TreeSearch_ts_random_wagner_tree`, contrast, tip_data, weight, levels)
+}
+
+ts_compute_splits <- function(edge, n_tip) {
+    .Call(`_TreeSearch_ts_compute_splits`, edge, n_tip)
+}
+
+ts_trees_equal <- function(edge1, edge2, n_tip) {
+    .Call(`_TreeSearch_ts_trees_equal`, edge1, edge2, n_tip)
+}
+
+ts_pool_test <- function(edges, scores, n_tip, max_size = 100L, suboptimal = 0.0) {
+    .Call(`_TreeSearch_ts_pool_test`, edges, scores, n_tip, max_size, suboptimal)
+}
+
 ts_nni_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 20L) {
     .Call(`_TreeSearch_ts_nni_search`, edge, contrast, tip_data, weight, levels, maxHits)
 }
