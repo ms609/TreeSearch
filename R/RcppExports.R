@@ -53,3 +53,27 @@ all_tbr <- function(edge, break_order) {
     .Call(`_TreeSearch_all_tbr`, edge, break_order)
 }
 
+ts_fitch_score <- function(edge, contrast, tip_data, weight, levels) {
+    .Call(`_TreeSearch_ts_fitch_score`, edge, contrast, tip_data, weight, levels)
+}
+
+ts_debug_clip <- function(edge, contrast, tip_data, weight, levels, clip_node_1based) {
+    .Call(`_TreeSearch_ts_debug_clip`, edge, contrast, tip_data, weight, levels, clip_node_1based)
+}
+
+ts_test_indirect <- function(edge, contrast, tip_data, weight, levels, clip_node_1based, above_1based, below_1based) {
+    .Call(`_TreeSearch_ts_test_indirect`, edge, contrast, tip_data, weight, levels, clip_node_1based, above_1based, below_1based)
+}
+
+ts_spr_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 20L) {
+    .Call(`_TreeSearch_ts_spr_search`, edge, contrast, tip_data, weight, levels, maxHits)
+}
+
+ts_tbr_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 1L, acceptEqual = FALSE, maxChanges = 0L) {
+    .Call(`_TreeSearch_ts_tbr_search`, edge, contrast, tip_data, weight, levels, maxHits, acceptEqual, maxChanges)
+}
+
+ts_nni_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 20L) {
+    .Call(`_TreeSearch_ts_nni_search`, edge, contrast, tip_data, weight, levels, maxHits)
+}
+

@@ -615,38 +615,52 @@ SearchEngine::run(starting_tree, dataset, params):
 
 ## Implementation Phases
 
-### Phase 0: Data structures and scoring engine
-- [ ] `DataSet`: Load from phyDat, bit-pack into blocks by state count
-- [ ] `TreeState`: Flat topology arrays + contiguous per-node state storage
-- [ ] Standard Fitch downpass (bit-packed, EW, no inapplicables)
-- [ ] R interface: `fitch_score(tree, dataset)` for testing
-- [ ] **Test**: scores match `preorder_morphy()` on datasets without
+### Phase 0: Data structures and scoring engine ✓
+- [x] `DataSet`: Load from phyDat, bit-pack into blocks by state count
+- [x] `TreeState`: Flat topology arrays + contiguous per-node state storage
+- [x] Standard Fitch downpass (bit-packed, EW, no inapplicables)
+- [x] R interface: `fitch_score(tree, dataset)` for testing
+- [x] **Test**: scores match `preorder_morphy()` on datasets without
       inapplicable characters
 
-### Phase 1: NNI search loop
-- [ ] NNI rearrangement on `TreeState` (apply + undo)
-- [ ] Hill-climbing search loop (first-improvement)
-- [ ] R interface: `nni_search(starting_tree, dataset)` → edge list
-- [ ] **Test**: finds same or better scores than R-side NNI search
+### Phase 1: NNI search loop ✓
+- [x] NNI rearrangement on `TreeState` (apply + undo)
+- [x] Hill-climbing search loop (first-improvement)
+- [x] R interface: `nni_search(starting_tree, dataset)` → edge list
+- [x] **Test**: 20/20 random trees exact match with phangorn
 
-### Phase 2: SPR with indirect calculation
-- [ ] SPR prune/regraft/undo on `TreeState`
+### Phase 2: SPR with indirect calculation (partially complete)
+- [x] SPR prune/regraft/undo on `TreeState`
+- [x] Full two-pass after clip (not yet incremental Shortcut C)
+- [x] Indirect tree length screening for rearrangement phase
+- [x] SPR hill-climbing search with first-improvement
+- [x] **Test**: 20 random DNA trees + multi-state morphological data match phangorn
+- [ ] **FIX**: Exact indirect calculation (use union, not Fitch downpass —
+      see "Lessons learned" §3)
 - [ ] Incremental two-pass optimization (Shortcut C) for clipping phase:
   - [ ] Incremental downpass (rootward propagation with early stop)
   - [ ] Incremental uppass (propagate final state changes downward)
-  - [ ] Buffer/restore infrastructure for unclipping
-  - [ ] Per-character local cost storage
-- [ ] Indirect tree length calculation for rearrangement phase:
-  - [ ] Virtual root state derivation from final states of (A, D)
-  - [ ] 3-node-per-character length check with early bailout
-  - [ ] Polymorphic terminal correction (uppass-as-internal-node)
+  - [x] Buffer/restore infrastructure for unclipping
+  - [x] Per-character local cost storage
+- [ ] Polymorphic terminal correction (uppass-as-internal-node)
 - [ ] `local_reopt`: bit-packed quick lower bound for candidate regraft points
-- [ ] SPR hill-climbing search
-- [ ] **Test**: scores match full rescore; search finds same optima
-- [ ] **Test**: incremental two-pass produces identical final states to
-      full two-pass (verified by periodic full rescore in debug mode)
 
-### Phase 3: TBR
+### Phase 2b: Exact indirect calculation ← **NEXT PRIORITY**
+- [ ] Fix virtual root formula: `Y = final(A) ∪ final(D)` (plain union),
+      NOT `fitch(final(A), final(D))` (intersection-then-union)
+- [ ] Remove full rescore verification — indirect calc should be exact
+- [ ] **Test**: indirect length = actual regrafted length on all test cases
+      (zero tolerance; any discrepancy is a bug)
+- [ ] **Test**: SPR search finds same optima without verification rescores
+
+### Phase 2c: Group-by-weight (replaces weight expansion)
+- [ ] Partition characters by weight, then by has_inapp, then by n_states
+- [ ] Store per-block weight (uniform within block)
+- [ ] Score: `total += block_weight * popcount(needs_union)`
+- [ ] Update IW metadata (pattern_index mapping unchanged)
+- [ ] **Test**: scores match weight-expanded version on all datasets
+
+### Phase 3: TBR (separate agent)
 - [ ] TBR bisect/reconnect/undo (extends SPR with subtree rerooting)
 - [ ] Subtree rerooting via final states (no re-optimization needed)
 - [ ] Full TBR search loop
@@ -656,14 +670,18 @@ SearchEngine::run(starting_tree, dataset, params):
   - [ ] Top-down pruning of destination subtrees
   - [ ] Profile to confirm rearrangement phase is bottleneck before investing
 
-### Phase 4: Inapplicable characters
+### Phase 4: Inapplicable characters ← **PRIORITY after 2b/2c**
 - [ ] Bit-packed NA-aware first downpass with mask-based case selection
 - [ ] First uppass (applicability propagation)
 - [ ] Second downpass (corrected scoring)
-- [ ] NA-aware `local_reopt`
-- [ ] NA-aware partial update passes
+- [ ] NA-aware indirect calculation (virtual root with union, adapted for
+      three-pass final states)
+- [ ] Integrate into SPR search loop (inapplicable blocks scored with
+      three-pass; standard blocks with one-pass)
 - [ ] **Test**: exact match with `morphy_length()` on all
       `inapplicable.phyData` datasets
+- [ ] **Test**: SPR search on inapplicable data finds same optima as
+      existing R-side search
 
 ### Phase 5: Implied weights
 - [ ] Per-character step extraction via scatter-add from bit-packed downpass

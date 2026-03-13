@@ -26,7 +26,14 @@ extern SEXP _TreeSearch_morphy_profile(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_expected_mi(SEXP, SEXP);
 extern SEXP _TreeSearch_mi_key(SEXP, SEXP);
 
+// extern SEXP _TreeSearch_astar_search_r(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_quartet_concordance(SEXP, SEXP);
+extern SEXP _TreeSearch_ts_fitch_score(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_nni_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_debug_clip(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_spr_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_tbr_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_test_indirect(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
@@ -66,7 +73,14 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_expected_mi",       (DL_FUNC) &_TreeSearch_expected_mi, 2},
   {"_TreeSearch_mi_key",            (DL_FUNC) &_TreeSearch_mi_key, 2},
 
+  // {"_TreeSearch_astar_search_r",    (DL_FUNC) &_TreeSearch_astar_search_r, 3},
   {"_TreeSearch_quartet_concordance",(DL_FUNC) &_TreeSearch_quartet_concordance, 2},
+  {"_TreeSearch_ts_fitch_score",    (DL_FUNC) &_TreeSearch_ts_fitch_score, 5},
+  {"_TreeSearch_ts_nni_search",    (DL_FUNC) &_TreeSearch_ts_nni_search, 6},
+  {"_TreeSearch_ts_debug_clip",    (DL_FUNC) &_TreeSearch_ts_debug_clip, 6},
+  {"_TreeSearch_ts_spr_search",    (DL_FUNC) &_TreeSearch_ts_spr_search, 6},
+  {"_TreeSearch_ts_tbr_search",    (DL_FUNC) &_TreeSearch_ts_tbr_search, 8},
+  {"_TreeSearch_ts_test_indirect", (DL_FUNC) &_TreeSearch_ts_test_indirect, 8},
   
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
   {"RANDOM_TREE",                   (DL_FUNC) &RANDOM_TREE, 1},

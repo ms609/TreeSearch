@@ -175,3 +175,102 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_fitch_score
+int ts_fitch_score(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels);
+RcppExport SEXP _TreeSearch_ts_fitch_score(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_fitch_score(edge, contrast, tip_data, weight, levels));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ts_debug_clip
+List ts_debug_clip(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int clip_node_1based);
+RcppExport SEXP _TreeSearch_ts_debug_clip(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP clip_node_1basedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< int >::type clip_node_1based(clip_node_1basedSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_debug_clip(edge, contrast, tip_data, weight, levels, clip_node_1based));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ts_test_indirect
+List ts_test_indirect(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int clip_node_1based, int above_1based, int below_1based);
+RcppExport SEXP _TreeSearch_ts_test_indirect(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP clip_node_1basedSEXP, SEXP above_1basedSEXP, SEXP below_1basedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< int >::type clip_node_1based(clip_node_1basedSEXP);
+    Rcpp::traits::input_parameter< int >::type above_1based(above_1basedSEXP);
+    Rcpp::traits::input_parameter< int >::type below_1based(below_1basedSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_test_indirect(edge, contrast, tip_data, weight, levels, clip_node_1based, above_1based, below_1based));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ts_spr_search
+List ts_spr_search(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int maxHits);
+RcppExport SEXP _TreeSearch_ts_spr_search(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP maxHitsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< int >::type maxHits(maxHitsSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_spr_search(edge, contrast, tip_data, weight, levels, maxHits));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ts_tbr_search
+List ts_tbr_search(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int maxHits, bool acceptEqual, int maxChanges);
+RcppExport SEXP _TreeSearch_ts_tbr_search(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP maxHitsSEXP, SEXP acceptEqualSEXP, SEXP maxChangesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< int >::type maxHits(maxHitsSEXP);
+    Rcpp::traits::input_parameter< bool >::type acceptEqual(acceptEqualSEXP);
+    Rcpp::traits::input_parameter< int >::type maxChanges(maxChangesSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_tbr_search(edge, contrast, tip_data, weight, levels, maxHits, acceptEqual, maxChanges));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ts_nni_search
+List ts_nni_search(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int maxHits);
+RcppExport SEXP _TreeSearch_ts_nni_search(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP maxHitsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< int >::type maxHits(maxHitsSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_nni_search(edge, contrast, tip_data, weight, levels, maxHits));
+    return rcpp_result_gen;
+END_RCPP
+}
