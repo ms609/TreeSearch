@@ -475,9 +475,8 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
 
   for (int pick = 0; pick < n_picks; ++pick) {
     // Pick a random eligible node
-    int idx = static_cast<int>(unif_rand() * eligible.size());
-    if (idx >= static_cast<int>(eligible.size()))
-      idx = static_cast<int>(eligible.size()) - 1;
+    int idx = std::uniform_int_distribution<int>(
+        0, static_cast<int>(eligible.size()) - 1)(rng);
     int sector_root = eligible[idx];
 
     // Ensure current state sets are up to date
@@ -557,7 +556,6 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     }
   }
 
-  PutRNGstate();
   return result;
 }
 
@@ -565,7 +563,10 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
 
 SectorResult xss_search(TreeState& tree, DataSet& ds,
                         const SectorParams& params) {
+  // Seed from R's RNG — one-shot to avoid nesting with tbr_search()
   GetRNGstate();
+  std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
+  PutRNGstate();
 
   double current_score = score_tree(tree, ds);
 
@@ -580,7 +581,7 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
     int n_parts = params.n_partitions;
     // Add some randomness: ±1
     if (params.n_partitions > 2) {
-      int delta = static_cast<int>(unif_rand() * 3.0) - 1; // -1, 0, or 1
+      int delta = std::uniform_int_distribution<int>(-1, 1)(rng);
       n_parts = std::max(2, params.n_partitions + delta);
     }
 
@@ -652,7 +653,6 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
     R_CheckUserInterrupt();
   }
 
-  PutRNGstate();
   return result;
 }
 

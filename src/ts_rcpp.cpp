@@ -150,20 +150,32 @@ List ts_na_debug_char(
   }
 
   // Determine which nodes had steps in Pass 3
+  // Must match fitch_na_score: l_act & r_act & ~(ss_app & any_d2_isect)
   for (int node : tree.postorder) {
     if (!blk.has_inapplicable) continue;
     int ni = node - tree.n_tip;
     int lc = tree.left[ni];
     int rc = tree.right[ni];
+    size_t nb = static_cast<size_t>(node) * tree.total_words + off;
     size_t lb = static_cast<size_t>(lc) * tree.total_words + off;
     size_t rb = static_cast<size_t>(rc) * tree.total_words + off;
+    const uint64_t* F = &tree.final_[nb];
     const uint64_t* L2 = &tree.down2[lb];
     const uint64_t* R2 = &tree.down2[rb];
-    uint64_t I_app = 0;
-    for (int s = 1; s < k; ++s) I_app |= (L2[s] & R2[s]);
-    uint64_t l2_app = 0, r2_app = 0;
-    for (int s = 1; s < k; ++s) { l2_app |= L2[s]; r2_app |= R2[s]; }
-    uint64_t needs_step = ~I_app & l2_app & r2_app & blk.active_mask;
+
+    uint64_t ss_app = 0;
+    for (int s = 1; s < k; ++s) ss_app |= F[s];
+
+    uint64_t any_d2_isect = 0;
+    for (int s = 0; s < k; ++s) any_d2_isect |= (L2[s] & R2[s]);
+
+    const uint64_t* la = &tree.subtree_actives[lb];
+    const uint64_t* ra = &tree.subtree_actives[rb];
+    uint64_t l_act = 0, r_act = 0;
+    for (int s = 1; s < k; ++s) { l_act |= la[s]; r_act |= ra[s]; }
+
+    uint64_t needs_step = l_act & r_act
+                        & ~(ss_app & any_d2_isect) & blk.active_mask;
     if (needs_step & mask) is_step[node] = 1;
   }
 
@@ -992,9 +1004,12 @@ List ts_driven_search(
     CharacterVector levels,
     int maxReplicates = 100,
     int targetHits = 10,
-    int tbrMaxHits = 20,
+    int tbrMaxHits = 1,
     int ratchetCycles = 10,
     double ratchetPerturbProb = 0.04,
+    int driftCycles = 6,
+    int driftAfdLimit = 3,
+    double driftRfdLimit = 0.1,
     int xssRounds = 3,
     int xssPartitions = 4,
     int sectorMinSize = 6,
@@ -1002,9 +1017,12 @@ List ts_driven_search(
     int fuseInterval = 3,
     bool fuseAcceptEqual = false,
     int poolMaxSize = 100,
-    double poolSuboptimal = 0.0)
+    double poolSuboptimal = 0.0,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = R_PosInf)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
 
   ts::DrivenParams params;
   params.max_replicates = maxReplicates;
@@ -1012,6 +1030,9 @@ List ts_driven_search(
   params.tbr_max_hits = tbrMaxHits;
   params.ratchet_cycles = ratchetCycles;
   params.ratchet_perturb_prob = ratchetPerturbProb;
+  params.drift_cycles = driftCycles;
+  params.drift_afd_limit = driftAfdLimit;
+  params.drift_rfd_limit = driftRfdLimit;
   params.xss_rounds = xssRounds;
   params.xss_partitions = xssPartitions;
   params.sector_min_size = sectorMinSize;
@@ -1023,6 +1044,17 @@ List ts_driven_search(
 
   ts::TreeState best_tree;
   ts::DrivenResult result = ts::driven_search(best_tree, ds, params);
+
+  if (result.pool_size == 0) {
+    // No replicates completed (e.g. max_replicates=0) — no valid tree
+    return List::create(
+      Named("edge") = IntegerMatrix(0, 2),
+      Named("score") = result.best_score,
+      Named("replicates") = result.replicates_completed,
+      Named("hits_to_best") = result.hits_to_best,
+      Named("pool_size") = result.pool_size
+    );
+  }
 
   return List::create(
     Named("edge") = tree_to_edge(best_tree),

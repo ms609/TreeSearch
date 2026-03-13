@@ -17,12 +17,17 @@ struct DrivenParams {
   int max_replicates = 20;       // max RAS+search replicates
   int target_hits = 5;           // stop after N independent hits to best
 
-  // TBR: equal-score plateau exploration (requires accept_equal = true)
-  int tbr_max_hits = 20;
+  // TBR
+  int tbr_max_hits = 1;
 
   // Ratchet
   int ratchet_cycles = 10;
   double ratchet_perturb_prob = 0.04;
+
+  // Drifting
+  int drift_cycles = 6;
+  int drift_afd_limit = 3;
+  double drift_rfd_limit = 0.1;
 
   // Sectorial search (XSS only; RSS not currently wired)
   int xss_rounds = 3;

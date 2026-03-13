@@ -1,5 +1,6 @@
 #include "ts_fitch.h"
 #include <vector>
+#include <R.h>
 
 namespace ts {
 

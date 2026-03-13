@@ -510,8 +510,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ts_driven_search
-List ts_driven_search(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int xssRounds, int xssPartitions, int sectorMinSize, int sectorMaxSize, int fuseInterval, bool fuseAcceptEqual, int poolMaxSize, double poolSuboptimal);
-RcppExport SEXP _TreeSearch_ts_driven_search(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP xssRoundsSEXP, SEXP xssPartitionsSEXP, SEXP sectorMinSizeSEXP, SEXP sectorMaxSizeSEXP, SEXP fuseIntervalSEXP, SEXP fuseAcceptEqualSEXP, SEXP poolMaxSizeSEXP, SEXP poolSuboptimalSEXP) {
+List ts_driven_search(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int driftCycles, int driftAfdLimit, double driftRfdLimit, int xssRounds, int xssPartitions, int sectorMinSize, int sectorMaxSize, int fuseInterval, bool fuseAcceptEqual, int poolMaxSize, double poolSuboptimal, IntegerVector min_steps, double concavity);
+RcppExport SEXP _TreeSearch_ts_driven_search(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP driftCyclesSEXP, SEXP driftAfdLimitSEXP, SEXP driftRfdLimitSEXP, SEXP xssRoundsSEXP, SEXP xssPartitionsSEXP, SEXP sectorMinSizeSEXP, SEXP sectorMaxSizeSEXP, SEXP fuseIntervalSEXP, SEXP fuseAcceptEqualSEXP, SEXP poolMaxSizeSEXP, SEXP poolSuboptimalSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -524,6 +524,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type tbrMaxHits(tbrMaxHitsSEXP);
     Rcpp::traits::input_parameter< int >::type ratchetCycles(ratchetCyclesSEXP);
     Rcpp::traits::input_parameter< double >::type ratchetPerturbProb(ratchetPerturbProbSEXP);
+    Rcpp::traits::input_parameter< int >::type driftCycles(driftCyclesSEXP);
+    Rcpp::traits::input_parameter< int >::type driftAfdLimit(driftAfdLimitSEXP);
+    Rcpp::traits::input_parameter< double >::type driftRfdLimit(driftRfdLimitSEXP);
     Rcpp::traits::input_parameter< int >::type xssRounds(xssRoundsSEXP);
     Rcpp::traits::input_parameter< int >::type xssPartitions(xssPartitionsSEXP);
     Rcpp::traits::input_parameter< int >::type sectorMinSize(sectorMinSizeSEXP);
@@ -532,7 +535,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type fuseAcceptEqual(fuseAcceptEqualSEXP);
     Rcpp::traits::input_parameter< int >::type poolMaxSize(poolMaxSizeSEXP);
     Rcpp::traits::input_parameter< double >::type poolSuboptimal(poolSuboptimalSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_driven_search(contrast, tip_data, weight, levels, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, xssRounds, xssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal));
+    Rcpp::traits::input_parameter< IntegerVector >::type min_steps(min_stepsSEXP);
+    Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_driven_search(contrast, tip_data, weight, levels, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, min_steps, concavity));
     return rcpp_result_gen;
 END_RCPP
 }

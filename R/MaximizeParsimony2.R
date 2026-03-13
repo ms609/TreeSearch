@@ -17,13 +17,18 @@
 #'   replicates (default: 100).
 #' @param targetHits Integer: stop when the best score has been found
 #'   independently this many times (default: `max(10, NTip / 5)`).
-#' @param tbrMaxHits Integer: within each TBR phase, the number of
-#'   equal-score trees to explore on the plateau before stopping
-#'   (default: `max(20, NTip)`).
+#' @param tbrMaxHits Integer: within ratchet/drift TBR phases, the number
+#'   of equal-score trees to accept before stopping.
 #' @param ratchetCycles Integer: number of ratchet perturbation cycles
 #'   per replicate.
 #' @param ratchetPerturbProb Numeric: probability of zeroing each
 #'   character's weight during ratchet perturbation.
+#' @param driftCycles Integer: number of drift cycles per replicate
+#'   (alternating suboptimal and equal-score phases).
+#' @param driftAfdLimit Integer: maximum absolute fit difference (steps)
+#'   for accepting suboptimal drift moves.
+#' @param driftRfdLimit Numeric: maximum relative fit difference for
+#'   accepting suboptimal drift moves.
 #' @param xssRounds Integer: number of exclusive sectorial search rounds.
 #' @param xssPartitions Integer: number of partitions for XSS.
 #' @param sectorMinSize,sectorMaxSize Integer: minimum and maximum clade
@@ -60,9 +65,12 @@ MaximizeParsimony2 <- function(
     tree,
     maxReplicates = 100L,
     targetHits = max(10L, as.integer(NTip(dataset) / 5)),
-    tbrMaxHits = max(20L, NTip(dataset)),
+    tbrMaxHits = 1L,
     ratchetCycles = 10L,
     ratchetPerturbProb = 0.04,
+    driftCycles = 6L,
+    driftAfdLimit = 3L,
+    driftRfdLimit = 0.1,
     xssRounds = 3L,
     xssPartitions = 4L,
     sectorMinSize = 6L,
@@ -148,6 +156,9 @@ MaximizeParsimony2 <- function(
     tbrMaxHits = as.integer(tbrMaxHits),
     ratchetCycles = as.integer(ratchetCycles),
     ratchetPerturbProb = as.double(ratchetPerturbProb),
+    driftCycles = as.integer(driftCycles),
+    driftAfdLimit = as.integer(driftAfdLimit),
+    driftRfdLimit = as.double(driftRfdLimit),
     xssRounds = as.integer(xssRounds),
     xssPartitions = as.integer(xssPartitions),
     sectorMinSize = as.integer(sectorMinSize),
@@ -155,7 +166,8 @@ MaximizeParsimony2 <- function(
     fuseInterval = as.integer(fuseInterval),
     fuseAcceptEqual = as.logical(fuseAcceptEqual),
     poolMaxSize = as.integer(poolMaxSize),
-    poolSuboptimal = as.double(poolSuboptimal)
+    poolSuboptimal = as.double(poolSuboptimal),
+    concavity = Inf
   )
 
   # --- Reconstruct phylo from edge matrix ---

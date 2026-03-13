@@ -2,6 +2,7 @@
 #include "ts_fitch.h"
 #include "ts_tbr.h"
 #include "ts_ratchet.h"
+#include "ts_drift.h"
 #include "ts_sector.h"
 #include "ts_fuse.h"
 #include "ts_wagner.h"
@@ -30,11 +31,9 @@ DrivenResult driven_search(TreeState& best_tree, DataSet& ds,
     TreeState tree;
     random_wagner_tree(tree, ds);
 
-    // 2. TBR to local optimum (with plateau exploration)
+    // 2. TBR to local optimum
     {
       TBRParams tp;
-      tp.accept_equal = true;
-      tp.max_hits = params.tbr_max_hits;
       tbr_search(tree, ds, tp);
     }
 
@@ -59,21 +58,29 @@ DrivenResult driven_search(TreeState& best_tree, DataSet& ds,
       ratchet_search(tree, ds, rp);
     }
 
-    // 5. Final TBR polish (with plateau exploration)
+    // 5. Drifting (suboptimal + equal-score exploration)
+    if (params.drift_cycles > 0) {
+      DriftParams dp;
+      dp.n_cycles = params.drift_cycles;
+      dp.afd_limit = params.drift_afd_limit;
+      dp.rfd_limit = params.drift_rfd_limit;
+      dp.max_hits = params.tbr_max_hits;
+      drift_search(tree, ds, dp);
+    }
+
+    // 6. Final TBR polish
     {
       TBRParams tp;
-      tp.accept_equal = true;
-      tp.max_hits = params.tbr_max_hits;
       tbr_search(tree, ds, tp);
     }
 
-    // 6. Score and add to pool
+    // 7. Score and add to pool
     double score = score_tree(tree, ds);
     pool.add(tree, score);
 
     ++result.replicates_completed;
 
-    // 7. Periodic tree fusing
+    // 8. Periodic tree fusing
     // Fused trees are derived from pool entries, not independent discoveries.
     // Don't let them inflate the convergence counter (hits_to_best).
     if ((rep + 1) % params.fuse_interval == 0 && pool.size() >= 2) {
@@ -98,7 +105,7 @@ DrivenResult driven_search(TreeState& best_tree, DataSet& ds,
       }
     }
 
-    // 8. Convergence check
+    // 9. Convergence check
     if (pool.hits_to_best() >= params.target_hits) {
       break;
     }

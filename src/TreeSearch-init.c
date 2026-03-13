@@ -47,7 +47,7 @@ extern SEXP _TreeSearch_ts_tree_fuse(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, S
 extern SEXP _TreeSearch_ts_sector_diag(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_rss_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_xss_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_driven_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_driven_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
@@ -108,7 +108,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_ts_rss_search",  (DL_FUNC) &_TreeSearch_ts_rss_search, 13},
   {"_TreeSearch_ts_xss_search",  (DL_FUNC) &_TreeSearch_ts_xss_search, 12},
   {"_TreeSearch_ts_tree_fuse",   (DL_FUNC) &_TreeSearch_ts_tree_fuse, 11},
-  {"_TreeSearch_ts_driven_search", (DL_FUNC) &_TreeSearch_ts_driven_search, 17},
+  {"_TreeSearch_ts_driven_search", (DL_FUNC) &_TreeSearch_ts_driven_search, 22},
 
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
   {"RANDOM_TREE",                   (DL_FUNC) &RANDOM_TREE, 1},
