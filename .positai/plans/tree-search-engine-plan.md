@@ -351,6 +351,148 @@ for (int i : char_order) {  // sorted by decreasing expected contribution
 
 ---
 
+## Indirect calculation and incremental optimization
+
+*Reference: Goloboff (1996), "Methods for faster parsimony analysis."*
+
+The core idea behind efficient TBR/SPR is **indirect tree length calculation**
+(Goloboff 1994, 1996; independently used in Hennig86). When a subtree rooted
+at Nm is clipped:
+
+1. Compute final (uppass) state sets for both parts of the divided tree.
+2. For each candidate regraft edge (A, D), derive the state set of a virtual
+   root Y = union of final states of A and D. For non-additive characters
+   this is `SA ∪ SD`; for additive characters, the smallest closed interval
+   containing both.
+3. Compute the length increase from joining the clipped subtree's basal node
+   X to Y using the standard downpass rule — checking only 3 nodes (X, A, D)
+   per character.
+
+This is exact (proved in Goloboff 1996). For TBR, rerooting the clipped
+subtree changes only the basal node's state set, which can be derived from
+final states without re-optimizing the subtree.
+
+### Incremental two-pass optimization (Shortcut C)
+
+The bottleneck in indirect calculation is computing final states for the
+divided tree after each clip. A naive two-pass over all characters at every
+clip is expensive. Goloboff (1996) describes three shortcuts of increasing
+sophistication; the third (**incremental two-pass**, Shortcut C) is the target:
+
+1. **Incremental downpass**: Starting from Nz (ancestor of the clip point),
+   walk rootward recomputing preliminary states. Stop when the new preliminary
+   set equals the old one — changes cannot propagate further. Track the
+   length delta by subtracting old local costs and adding new ones.
+
+2. **Incremental uppass**: Reassign final states for all nodes visited in
+   step (1), then propagate downward through any node whose ancestor's final
+   states changed (compared to the whole tree). Also reassign the sister of
+   the clip point (Ns) if the final states of its new ancestor (Nz) differ
+   from those of its old ancestor (Nx). For the clipped subtree, the root
+   node's preliminary states become its final states; propagate downward
+   similarly.
+
+3. **Short-circuit**: If the preliminary states of Ns equal those of Nm,
+   skip steps (1) and (2) entirely — no states change.
+
+Performance: Goloboff reports 0.15–0.20 o/t/c (optimizations per tree per
+character), with search times ~45% of full two-pass reoptimization. The
+clipping phase drops to 5–15% of total TBR time, making the rearrangement
+phase (destination scoring) the dominant cost.
+
+**Implementation target**: Use Shortcut C for Phases 2–3. Requires storing,
+per node per character: (a) final state sets for the whole tree (buffered for
+restoration on unclip), (b) preliminary state sets (shared storage for whole
+and clipped tree, with the changed nodes buffered in a single variable during
+the incremental downpass), and (c) per-character local costs for the whole
+tree (for length delta during incremental downpass).
+
+### Union construct — bulk rejection of destinations
+
+Once the clipping phase is fast, the rearrangement phase (checking each
+candidate destination) dominates. The **union construct** (Goloboff 1996)
+provides a top-down pruning strategy:
+
+- Precompute a **union set** at each internal node: the union of all states
+  present in any descendant.
+- For a candidate node N in the main subtree, form a "union construct" =
+  union set of N's descendant + final states of N's ancestor.
+- Check the clipped subtree's basal states against this union construct,
+  exactly as in indirect calculation.
+- If this produces a suboptimal length, **all** descendants of N can be
+  skipped — they can only be worse.
+
+Goloboff reports 45–57% of internal nodes rejected this way, with ~50% time
+savings on congruent data. Less effective for highly incongruent data or very
+suboptimal trees (e.g. early Wagner tree swapping).
+
+An extension: check a union construct of the entire clipped subtree against
+a destination node's union construct. If suboptimal, skip that destination
+for all rerootings of the clipped subtree (TBR only).
+
+**Implementation target**: Phase 3 or later; profile first to confirm the
+rearrangement phase is the bottleneck before investing in union construct
+infrastructure. Requires per-node union sets (incrementally maintainable
+via an incremental downpass analogous to Shortcut C).
+
+### Polymorphic terminal handling
+
+Polymorphic terminals (multiple observed states for a character) need special
+treatment during indirect calculation. The final state set of a polymorphic
+terminal is its observed set (unmodified by the uppass). However, using those
+raw states for destination scoring can under-count steps — the states
+responsible for minimum length in the main subtree may differ from those
+shared with the clipped subtree (Goloboff 1996, Fig. 2).
+
+**Correction**: Treat a polymorphic terminal as if it were an internal node
+whose two children both have the terminal's observed state set, then apply
+the uppass rule. This need only be done when the polymorphic terminal is the
+descendant node of a destination branch *and* it shares no states with the
+ancestral node's final set — a rare case.
+
+For missing-data terminals (`?`): treat their state set as identical to
+their ancestor's final set for indirect calculation purposes.
+
+---
+
+## Zero-length branch collapsing
+
+*Reference: Goloboff (1996), §"Collapsing The Trees."*
+
+When zero-length branches are to be collapsed (critical for search
+effectiveness — avoids filling the tree buffer with trivially different
+dichotomous resolutions), final states from the divided tree enable fast
+collapsing:
+
+1. **Shortest-path shortcut** (approximate): If no node is supported by
+   character change along the shortest path between the original and
+   destination positions of the clipped subtree, assume the rearranged tree
+   collapses to the same polytomy as the original. Skip the tree without
+   further work. This shortcut is not exact — it can miss rare cases where
+   ambiguous optimizations differ — but in practice it rarely causes errors.
+   Note: this creates **asymmetric reachability**: swapping on tree A may
+   find tree B, but swapping on B may not find A (Goloboff 1996, §"Collapsing
+   and Islands"). This is a known limitation of heuristic search and does not
+   affect correctness of accepted trees.
+
+2. **Partial reoptimization for collapsing**: For characters where the
+   clipped subtree's basal state set is identical to one of the destination
+   branch's node state sets, the state assignments are unchanged and no
+   reoptimization is needed. Only characters where the basal set differs from
+   *both* destination nodes need reoptimization — typically 10–20% of
+   characters (fewer for more taxa). This makes collapsing up to 10× faster
+   than full reoptimization.
+
+3. With incremental two-pass (Shortcut C) providing exact final states, the
+   collapsed trees are guaranteed correct, with no need for a post-hoc
+   verification pass.
+
+**Implementation target**: Phase 6 (tree pool), as collapsing is needed for
+effective pool management and deduplication. Consider making it optional
+(configurable) since not all search modes require collapsed trees.
+
+---
+
 ## Rearrangement operations
 
 All operations work on `TreeState` in-place with undo support.
@@ -361,28 +503,57 @@ All operations work on `TreeState` in-place with undo support.
 prune(subtree_root):
     save parent/sibling linkage + state sets of affected nodes
     detach subtree, connect sibling to grandparent
-    partial rescore along affected path
+    incremental two-pass (Shortcut C) on main subtree → final states for
+        divided tree + length of divided tree
+    if length_divided == best_length and not saving multiple trees:
+        skip rearrangement phase entirely (no improvement possible)
 
-    for each candidate regraft edge:
-        local_reopt → if promising:
-            regraft tentatively
-            full/partial rescore
-            if improved: accept; else undo regraft
+    for each candidate regraft edge (A, D):
+        indirect length calculation: check 3 nodes (X, A, D) per character
+            → bail out as soon as accumulated length exceeds best_length
+        if equal or better:
+            accept; update state sets + topology
 
 undo_prune():
-    restore saved linkage and state sets
+    restore saved linkage and state sets (buffered during incremental pass)
 ```
+
+The incremental two-pass (see "Indirect calculation" section above) makes
+the clipping phase fast (~5–15% of TBR time). The rearrangement phase
+(destination scoring) dominates and benefits from early length-check bailout
+and, optionally, the union construct for bulk destination rejection.
 
 ### TBR
 
 Like SPR, but after bisection, also considers rerooting the pruned subtree
 at each internal edge before regrafting. Each rerooting changes the subtree's
-root state set, giving a different `src_downpass1` for `local_reopt`.
+root state set, derivable from final states without re-optimizing the
+subtree (Goloboff 1994, 1996). This means TBR examines more rearrangements
+per (expensive) clipping, making TBR more efficient *per clip* than SPR.
+
+The union construct extension (checking clipped-subtree union against
+destination union) can skip entire destination subtrees for *all* rerootings
+at once.
 
 ### NNI
 
-Swap two subtrees adjacent to an internal edge. Cheapest operation, useful
-for fine-tuning and cheap ratchet phases.
+Swap two subtrees adjacent to an internal edge. Implemented for completeness
+but **not used as a search strategy**. See note below on TBR dominance.
+
+### Why TBR dominates SPR and NNI
+
+With indirect calculation (Goloboff 1994, 1996) and union construct bounding,
+TBR evaluates individual rearrangements *faster* than SPR, and SPR faster
+than NNI. This is because more reinsertions per (expensive) clipping amortizes
+the clipping cost. For large structured datasets, TBR completes full swap
+cycles faster than SPR in absolute wall-clock time (Goloboff 2015). With
+bounding, the advantage grows with dataset size.
+
+Consequence: **TBR is the only rearrangement used during search.** SPR and
+NNI are implemented (SPR as an intermediate step to TBR; NNI for testing)
+but not exposed as search-time options. "Variable neighbourhood" strategies
+(NNI→SPR→TBR escalation) are counterproductive in an efficient
+implementation and are not implemented.
 
 ---
 
@@ -401,7 +572,7 @@ SearchEngine::run(starting_tree, dataset, params):
     // Phase 2: Ratchet iterations
     for i in 1..ratchIter:
         perturbed_weights = perturb(dataset)
-        local_search(tree, SPR/NNI, perturbed_weights)
+        local_search(tree, TBR, perturbed_weights)  // TBR even for escape phase
         restore_weights()
         local_search(tree, TBR, original_weights)
         record_if_best(tree)
@@ -437,8 +608,6 @@ SearchEngine::run(starting_tree, dataset, params):
 
 - Track improvement rate (improvements per rearrangement evaluated)
 - **When to ratchet**: When improvement rate drops below threshold
-- **SPR vs NNI ratio**: Near a local optimum, NNI is cheaper; far away,
-  SPR/TBR finds improvements faster
 - **Ratchet intensity**: Start mild (resample 25% of characters); increase
   if consecutive iterations fail to find new basins
 
@@ -460,17 +629,32 @@ SearchEngine::run(starting_tree, dataset, params):
 - [ ] R interface: `nni_search(starting_tree, dataset)` → edge list
 - [ ] **Test**: finds same or better scores than R-side NNI search
 
-### Phase 2: SPR with local_reopt
+### Phase 2: SPR with indirect calculation
 - [ ] SPR prune/regraft/undo on `TreeState`
-- [ ] Partial rescore: after prune, update affected path only
+- [ ] Incremental two-pass optimization (Shortcut C) for clipping phase:
+  - [ ] Incremental downpass (rootward propagation with early stop)
+  - [ ] Incremental uppass (propagate final state changes downward)
+  - [ ] Buffer/restore infrastructure for unclipping
+  - [ ] Per-character local cost storage
+- [ ] Indirect tree length calculation for rearrangement phase:
+  - [ ] Virtual root state derivation from final states of (A, D)
+  - [ ] 3-node-per-character length check with early bailout
+  - [ ] Polymorphic terminal correction (uppass-as-internal-node)
 - [ ] `local_reopt`: bit-packed quick lower bound for candidate regraft points
 - [ ] SPR hill-climbing search
 - [ ] **Test**: scores match full rescore; search finds same optima
+- [ ] **Test**: incremental two-pass produces identical final states to
+      full two-pass (verified by periodic full rescore in debug mode)
 
 ### Phase 3: TBR
 - [ ] TBR bisect/reconnect/undo (extends SPR with subtree rerooting)
+- [ ] Subtree rerooting via final states (no re-optimization needed)
 - [ ] Full TBR search loop
 - [ ] **Test**: matches R-side TBR search results
+- [ ] (Optional) Union construct for bulk destination rejection:
+  - [ ] Per-node union sets (incrementally maintained)
+  - [ ] Top-down pruning of destination subtrees
+  - [ ] Profile to confirm rearrangement phase is bottleneck before investing
 
 ### Phase 4: Inapplicable characters
 - [ ] Bit-packed NA-aware first downpass with mask-based case selection
@@ -493,12 +677,15 @@ SearchEngine::run(starting_tree, dataset, params):
 - [ ] Cheap ratchet: standard Fitch for escape phase
 - [ ] Sectorial search
 - [ ] Tree pool with split-based deduplication
+- [ ] Zero-length branch collapsing:
+  - [ ] Shortest-path shortcut (approximate, configurable)
+  - [ ] Partial reoptimization using final states from divided tree
+  - [ ] Collapsed-tree comparison before pool insertion
 - [ ] Progress reporting back to R
 - [ ] `R_CheckUserInterrupt()` integration
 
 ### Phase 7: Adaptive search and polish
 - [ ] Improvement rate tracking
-- [ ] Adaptive NNI/SPR/TBR switching
 - [ ] Adaptive ratchet intensity
 - [ ] `MaximizeParsimony2()` R wrapper
 - [ ] Constraint support
@@ -521,6 +708,9 @@ SearchEngine::run(starting_tree, dataset, params):
 | `src/ts_score.h` | Scoring interface: EW, IW, profile |
 | `src/ts_score.cpp` | IW scoring with early termination |
 | `src/ts_search.h` | `SearchEngine`, `SearchParams` |
+| `src/ts_indirect.h` | Indirect calculation, incremental two-pass, union construct |
+| `src/ts_indirect.cpp` | Incremental downpass/uppass, polymorphic correction |
+| `src/ts_collapse.h` | Zero-length branch collapsing with partial reoptimization |
 | `src/ts_search.cpp` | Main search loop, ratchet, sectorial, adaptive |
 | `src/ts_splits.h` | Split-based topology hashing and deduplication |
 | `src/ts_rcpp.cpp` | Rcpp exports: R ↔ C++ bridge |
@@ -571,6 +761,20 @@ Each phase is tested against the existing morphy-based implementation:
    sets per token; index + weight give pattern expansion; levels identify
    the inapplicable state (`"-"`). Typical datasets: 7–65% of patterns have
    inapplicable data; the rest go into standard Fitch blocks.
+
+5. **Indirect calculation algorithm** (Goloboff 1996): Use incremental
+   two-pass optimization (Shortcut C) for the clipping phase of SPR/TBR.
+   This is exact, fast (0.15–0.20 o/t/c), and provides the final state sets
+   needed for both destination scoring and zero-length branch collapsing.
+   Gladstein's (1996) incremental downpass-only method is 2.5–5× slower
+   because it lacks final states and requires more work per destination.
+
+6. **Zero-length branch collapsing**: Use final states from the divided tree
+   to collapse with only 10–20% of characters needing reoptimization.
+   Shortest-path shortcut for fast rejection of duplicate collapsed
+   topologies. Important for search effectiveness (Goloboff 1996): prevents
+   the tree pool from filling with trivially different dichotomous
+   resolutions. Note asymmetric reachability as a known limitation.
 
 ## Open questions
 

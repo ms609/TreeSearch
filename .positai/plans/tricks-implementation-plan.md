@@ -632,7 +632,10 @@ These build on top of the core engine phases (0–5).
 - [ ] Global TBR between rounds
 - [ ] **Test**: SS(xmult) outperforms plain xmult on 100+ taxon datasets
 
-### Phase 7: Combined search and R interface
+### Phase 7: Starting trees and combined search
+- [ ] C++ Wagner tree with indirect length calculation
+- [ ] Random addition sequence support
+- [ ] **Test**: C++ Wagner trees match R `AdditionTree()` scores
 - [ ] Driven search loop with convergence criteria
 - [ ] Combosearch structure for very large trees
 - [ ] MSD-based adaptive stopping
@@ -642,6 +645,17 @@ These build on top of the core engine phases (0–5).
 - [ ] `MaximizeParsimony2()` R wrapper with all options
 - [ ] Progress reporting via `R_CheckUserInterrupt()` + callbacks
 - [ ] **Test**: benchmark suite vs existing `MaximizeParsimony()`
+- [ ] **Test**: Wagner vs NJ vs random starting trees comparison
+
+### Phase 8: Parallelization
+- [ ] Thread-safe tree pool (`ThreadSafePool`)
+- [ ] Replicate-level parallelism with `std::thread` or `RcppThread`
+- [ ] Atomic progress counter + main-thread interrupt checking
+- [ ] `n_threads` parameter in R interface
+- [ ] **Test**: verify deterministic results with fixed seeds per thread
+- [ ] **Test**: scaling benchmarks (1, 2, 4, 8 threads)
+- [ ] (Optional) Sector-level parallelism for XSS
+- [ ] (Optional) Async TF background thread
 
 ### Phase ordering rationale
 
@@ -664,12 +678,215 @@ available for sector analysis.
 | `src/ts_sector.h/.cpp` | Sectorial search: sector selection, reduced datasets |
 | `src/ts_pool.h/.cpp` | Tree pool: storage, dedup, eviction policy |
 | `src/ts_driven.h/.cpp` | Driven/combined search: main loop, adaptive params |
+| `src/ts_wagner.h/.cpp` | Wagner tree (greedy addition) with indirect scoring |
+| `src/ts_parallel.h/.cpp` | Thread pool, thread-safe pool, parallel replicate runner |
 
 ---
 
-## 10. Design decisions and non-goals
+## 10. Starting tree generation
+
+### 10.1 Current implementation
+
+`AdditionTree()` in R is already a Wagner tree (greedy addition): it
+adds each taxon to the most parsimonious available position, with
+randomized addition sequence by default. It supports IW scoring and
+topology constraints. This is exactly what Goloboff Ch. 5 §5.3.1
+describes as the standard approach for generating starting points.
+
+### 10.2 C++ reimplementation
+
+The C++ engine needs its own Wagner tree builder because the R version
+uses `AddTipEverywhere()` + `TreeLength()` per taxon — O(T) candidate
+trees scored from scratch at each step. A C++ version can use indirect
+length calculation: at each step, evaluate all 2i−3 insertion positions
+using the downpass state sets of the growing tree, scoring each insertion
+in O(C) via `local_reopt`-style comparison rather than a full O(TC)
+downpass. This reduces per-taxon cost from O(T×C) to O(C) per position
+× O(T) positions = O(TC) total, but with much smaller constants.
+
+```cpp
+TreeState wagner_tree(const DataSet& data, std::vector<int> sequence) {
+    // Start with 3-taxon pectinate tree
+    TreeState tree = three_taxon_tree(data, sequence[0..2]);
+    full_score(tree, data);
+
+    for (int i = 3; i < n_tips; ++i) {
+        int best_edge = -1;
+        int best_delta = INT_MAX;
+        // Try all insertion positions
+        for (int e = 0; e < tree.n_edges(); ++e) {
+            int delta = insertion_cost(tree, data, sequence[i], e);
+            if (delta < best_delta) {
+                best_delta = delta;
+                best_edge = e;
+            }
+        }
+        insert_tip(tree, sequence[i], best_edge);
+        update_downpass(tree, data, best_edge);  // incremental
+    }
+    return tree;
+}
+```
+
+### 10.3 Alternative starting trees to test
+
+| Method | Description | When useful |
+|---|---|---|
+| **Wagner (RAS)** | Current approach; different random addition sequences | Default; well-understood |
+| **NJ starting tree** | `TreeTools::NJTree()` already available | Fast; good for molecular-like data with branch-length signal |
+| **Random tree** | Uniform random topology | Baseline; much further from optimal, wastes TBR time |
+| **Informative addition** | Goloboff (2014a): add taxa in order of informativeness | May help in specific datasets; not widely tested |
+
+Goloboff Ch. 5 §5.4.1 notes that random trees are generally worse
+starting points than Wagner trees (further from optimal → more TBR time
+wasted on initial descent). NJ trees could be useful as one starting
+point in a pool but should not replace RAS Wagner trees as the primary
+strategy.
+
+**Testing plan:** Compare, for a suite of empirical datasets:
+1. Time to reach best-known score from Wagner (RAS) vs NJ vs random
+   starting trees, each followed by TBR.
+2. Whether mixing starting tree types (e.g. 8 Wagner + 2 NJ) in the
+   pool for TF improves convergence.
+
+---
+
+## 11. Parallelization
+
+### 11.1 Where parallelism fits
+
+The driven search (§6) is naturally parallel at the **replicate level**.
+Each replicate (RAS + TBR + SS + ratchet/drift) is independent until
+the TF step. This is the simplest and most effective parallelization
+strategy.
+
+```
+parallel_driven_search(dataset, params, n_threads):
+    pool = shared TreePool (thread-safe)
+
+    parallel for rep in 1..max_replicates (n_threads workers):
+        tree = wagner_tree(dataset, random_sequence)
+        tree = tbr_search(tree)
+        tree = xss_search(tree, dataset)
+        tree = ratchet(tree)
+        pool.add(tree)  // lock-free or mutex-protected
+
+    // TF is sequential (reads from pool, modifies recipient)
+    best = tree_fuse(pool)
+    return best
+```
+
+### 11.2 Levels of parallelism
+
+| Level | What's parallel | Complexity | Payoff |
+|---|---|---|---|
+| **Replicate-level** | Independent RAS+TBR+SS runs | Low (shared-nothing except pool) | High: linear speedup up to ~8–16 threads |
+| **Sector-level** | XSS sectors analyzed concurrently | Medium (sectors share full-tree state) | Moderate: useful for very large trees where sectors are expensive |
+| **Move-level** | TBR rearrangements evaluated in parallel | High (fine-grained, synchronization overhead) | Low: individual moves are cheap; overhead may dominate |
+| **Block-level (SIMD)** | 64 characters via popcount, already implicit | Zero (compiler auto-vectorizes) | Already captured by bit-packing design |
+
+**Replicate-level parallelism is the clear first target.** It requires
+almost no synchronization: each thread owns its own `TreeState` and
+`DataSet` copy (the dataset is read-only and can be shared). The only
+shared mutable state is the tree pool, which needs a mutex for
+`add()`/`evict()` but these are infrequent operations.
+
+### 11.3 Implementation plan
+
+#### Phase 1: Thread-safe pool + replicate parallelism
+
+```cpp
+struct ThreadSafePool {
+    std::mutex mtx;
+    TreePool pool;
+
+    void add(TreeState&& tree, double score) {
+        std::lock_guard<std::mutex> lock(mtx);
+        pool.add(std::move(tree), score);
+    }
+
+    double best_score() const {
+        std::lock_guard<std::mutex> lock(mtx);
+        return pool.best_score();
+    }
+};
+```
+
+Each worker thread:
+1. Copies `DataSet` (or shares read-only reference).
+2. Allocates its own `TreeState` + temp buffers.
+3. Runs the full replicate pipeline.
+4. Pushes result to the shared pool.
+
+TF runs periodically on a single thread (or a designated "fuser"
+thread), pulling trees from the pool.
+
+Use `std::thread` or a simple thread pool. R integration via
+`RcppParallel` or `RcppThread` (the latter is simpler and avoids
+TBB dependency). **Must not call any R API from worker threads** —
+all R interaction happens on the main thread.
+
+#### Phase 2: Sector-level parallelism (optional)
+
+Within a single XSS round, non-overlapping sectors are independent.
+They can be farmed out to a thread pool. Each sector analysis needs
+its own `ReducedDataset` + `TreeState`, which are independent once
+constructed. The only shared state is the full tree, which is read-only
+during sector analysis (sector results are applied sequentially after
+all sectors complete).
+
+This is useful for very large trees (500+ taxa) where individual sector
+analysis takes seconds to minutes. For typical morphological datasets
+(50–200 taxa), replicate-level parallelism is sufficient.
+
+#### Phase 3: Async TF (optional)
+
+A background "fuser" thread continuously:
+1. Waits for new trees in the pool.
+2. Runs TF on the current pool.
+3. If TF finds an improvement, broadcasts the new best score to worker
+   threads so they can update their `stopAtScore` targets.
+
+This overlaps TF with ongoing replicates, reducing idle time.
+
+### 11.4 R integration considerations
+
+- `R_CheckUserInterrupt()` must be called from the main thread only.
+  Worker threads signal a shared atomic flag; main thread checks it
+  periodically.
+- Progress reporting: workers increment an atomic counter; main thread
+  reads it for progress callbacks to R.
+- `n_threads` parameter exposed in R, defaulting to
+  `parallel::detectCores() - 1` or 1 for sequential mode.
+- All morphy objects are per-thread (morphy is not thread-safe).
+  In the new C++ engine, the bit-packed `DataSet` is read-only and
+  safely shared.
+
+### 11.5 Expected speedup
+
+For replicate-level parallelism with k threads:
+- Near-linear speedup (0.85–0.95 × k) for the search phase.
+- TF is sequential but fast (typically <1% of total time).
+- Pool synchronization overhead is negligible.
+- Memory scales linearly: each thread needs ~100 KB for a 100-taxon
+  dataset's `TreeState` + temp buffers.
+
+On a typical 8-core desktop, expect 6–7× speedup for the driven search.
+This compounds with the algorithmic improvements from SS/TF/ratchet.
+
+---
+
+## 12. Design decisions and non-goals
 
 ### Decisions
+
+- **Wagner tree in C++.** Reimplement `AdditionTree()` with indirect
+  length calculation for speed. Keep the R version as correctness
+  reference.
+
+- **Replicate-level parallelism first.** Simplest, highest payoff,
+  minimal synchronization. Sector-level and async TF are optional
+  extensions for very large datasets.
 
 - **No Rec-I-DCM3.** Goloboff & Pol (2007) convincingly showed it's
   inferior to SS for the same search effort, and after a few iterations
@@ -689,12 +906,90 @@ available for sector analysis.
 
 ### Non-goals (for now)
 
-- **Tree hybridization** (Goloboff 2015): useful for very poorly
-  structured data but complex. Defer.
+- **Tree hybridization** (Goloboff 2015): For poorly structured datasets
+  where tree fusing fails (near-optimal trees share few groups). Takes
+  two trees, identifies two evenly-sized partitions with similar taxon
+  composition, exchanges halves (A1A2 + B1B2 → A1B2 + A2B1), reinserts
+  missing taxa by random addition + TBR. More effective than standard GA
+  crossover because even-sized partition exchange preserves relative
+  distances. Combined with cyclic taxon pruning/reinsertion in TNT
+  scripts, outperforms Sampars/Hydra on random datasets by 16–30×
+  (Goloboff 2015). Defer: mainly useful for random/unstructured data,
+  not our primary use case.
+- **Piñón fijo (pfijo)** (Goloboff 2015): Cyclic perturbation method
+  borrowing from Rec-I-DCM3. Creates reduced datasets from tree sectors,
+  but instead of true HTU downpass states (which give exact evaluations),
+  uses states of one descendant of the HTU with probability depending on
+  constant K. Lower K = stronger perturbation (states further from root).
+  After searching reduced datasets (4 rounds RAS+TBR + tree-fusing with
+  original resolution), does full TBR + drifting. Repeat. Best for
+  random/poorly structured datasets where true SS doesn't help. Defer:
+  lower priority than SS/TF/ratchet/drifting for structured morphological
+  data.
 - **Tree rebuilding** (Goloboff 2015): prune + reinsert random taxa.
-  Simpler but lower priority than SS/TF.
-- **Piñón fijo** (Goloboff 2015): Rec-I-DCM3-inspired perturbation.
-  Low priority given SS superiority.
+  Simpler but lower priority than SS/TF. Can be combined with
+  hybridization for a powerful cyclic perturbation on unstructured data.
 - **Parallel search**: multiple threads running independent replicates.
   The architecture supports this (independent `TreeState` per thread)
   but thread management is deferred.
+
+## Future experiments
+
+Ideas worth testing once the core tricks are working. These are not
+commitments — they're hypotheses to evaluate empirically.
+
+### Split-novelty bonus during drifting
+
+**Idea:** During tree drifting phases, bias move acceptance toward
+rearrangements that introduce splits not yet seen in the tree pool.
+
+**Motivation:** Barker et al. 2025 (larch) found that scoring SPR moves
+by `parsimony_change − number_of_novel_splits` outperformed pure
+parsimony scoring for exploring the space of optimal trees. Their
+implementation requires a full DAG of all optimal histories, but a
+lightweight version may be feasible using our split-hash infrastructure.
+
+**Why it might be cheap for us:** The tree pool already maintains a set
+of split hashes for deduplication. During drifting, when we're already
+accepting some suboptimal moves, we could check whether a proposed
+rearrangement introduces splits absent from the pool's hash set. If so,
+give the move a small acceptance bonus (e.g., treat it as if it were
+`bonus` steps better than it actually is). This requires only hash
+lookups against the existing pool structure — no DAG, no RF distance
+computation.
+
+**Concrete test:** Compare driven search (ratchet + drift + TF + SS)
+with and without the novelty bonus on a handful of morphological
+datasets (varying size and homoplasy). Measure: (a) number of distinct
+optimal topologies found, (b) best score found, (c) time to best score.
+
+**Risk:** On morphological data with implied weights or inapplicable
+characters, the parsimony landscape may be structured differently from
+the molecular DNA datasets where larch was tested. The bonus could
+waste time exploring genuinely bad regions rather than crossing
+meaningful valleys. The experiment should include a control where
+drifting uses the standard RFD-based acceptance criterion.
+
+**When to try:** After Phase 6 (combined driven search) is working and
+benchmarked. The drifting infrastructure and pool split-hash tracking
+must both be in place.
+
+---
+
+## Papers reviewed
+
+Papers consulted during plan development, with notes on influence:
+
+| Paper | Influence |
+|---|---|
+| Goloboff 1996, "Methods for faster parsimony analysis" | **Major** — indirect calculation, Shortcut C, union construct, zero-length collapsing. All added to core engine plan. |
+| Goloboff & Pol 2007, "On divide-and-conquer strategies…" | **Major** — established SS with HTU state sets as superior to Rec-I-DCM3. Shaped sectorial search design. |
+| Goloboff 2015, Chapter 5 (textbook) | **Major** — comprehensive reference for ratchet, drifting, tree fusing, sectorial search, combined strategies. |
+| Nixon 1999, parsimony ratchet | **Moderate** — original ratchet paper; TNT's refinements (4% reweight, equal-score acceptance) supersede the original parameters. |
+| Moilanen 1999, "Searching for Most Parsimonious Trees with Simulated Evolutionary Optimization" | **None** — GA + local search hybrid (PARSIGAL). Conceptually superseded by TNT's targeted strategies. Bit-packing idea already standard. |
+| Andreatta & Ribeiro 2002, "Heuristics for the Phylogeny Problem" | **None** — Wagner construction variants, NNI/SPR local search, VND, GRASP, VNS. All standard or superseded by TNT-class strategies (ratchet, SS, TF). VND (escalate NNI→SPR on stagnation) is a weaker version of the intuition behind sectorial search. Small instances, not competitive. |
+| Komusiewicz et al. 2023, "On the Complexity of Parameterized Local Search for Maximum Parsimony" | **None (theoretical validation)** — Shows searching k-NNI/SPR/TBR/ECR neighborhoods is W[1]-hard (brute-force essentially optimal). But k-sECR (contracted edges form a connected subtree) is FPT: k^O(k)·\|I\|^O(1). Paper explicitly identifies sECR = sectorial search (Goloboff 1999). Confirms our focus on SS is theoretically well-founded, but offers no new implementation strategies. |
+| Barker et al. 2025, "larch: mapping the parsimony-optimal landscape of trees for directed exploration" (bioRxiv) | **None (interesting future idea)** — MADAG (mutation-annotated DAG) compactly stores large families of equally parsimonious trees for molecular/viral data. Key innovation: novelty-directed search — accept SPR moves introducing new splits even at slight parsimony cost; preferentially optimize topologically distant trees from the ensemble. Claims to outperform TNT via matOptimize, but tested only on molecular DNA data (standard Fitch), not morphological data with inapplicables/implied weights. MADAG structure exploits densely-sampled molecular regime (1–2 mutations per edge), not applicable to morphological data. Novelty-directed valley-crossing is conceptually interesting as a future refinement of our flat landscape / drifting strategies, but ratchet + drifting + TF already cover local optima escape. Could revisit if split-hash pool tracking makes novelty scoring cheap. |
+| Charleston 2001, "Hitch-Hiking: A Parallel Heuristic Search Strategy" | **None** — Parallel search where "driver" solutions share accepted perturbations with "hitcher" solutions. NNI re-coded as "Short Path Shift" (3-leaf identifier) for cross-tree transferability. Tested on 10-taxon simulated data with Great Deluge; marginal improvement over independent runs. A less targeted predecessor of the idea behind tree fusing (cross-pollination between parallel searches). Our replicate-level parallelism + TF already covers this more effectively. |
+| Goloboff 2015, "Computer science and parsimony: a reappraisal" | **Moderate** — Demonstrates TNT outperforms all CS parsimony methods (Hydra, Sampars, GA+PR+LS) by 1–3 orders of magnitude. Key technical insight: with indirect calculation + union construct, TBR completes full swap cycles faster than SPR in absolute wall-clock time, making "variable neighbourhood" strategies (NNI→SPR escalation) counterproductive. Led to removing SPR/NNI as search strategies from core engine plan (TBR only). Also provides concrete details on pfijo (degraded sectorial search as cyclic perturbation) and tree hybridization (even-partition exchange between trees) for poorly structured datasets — enriched non-goals entries. |
+| Gladstein 1997, "Efficient Incremental Character Optimization" | **None** — Formalizes incremental downpass evaluation using attribute evaluation theory (Hudson 1991). After topology change, walk from modified node to root, recomputing preliminary state sets per character, stopping when state set is unchanged. Averages < 3 node visits per character per tree. This is the "incremental downpass only" approach already noted in the core engine plan as inferior to Goloboff 1996's Shortcut C (incremental two-pass: 0.15–0.20 o/t/c, 2.5–5× faster). Clean formalization but no new algorithmic content. |
