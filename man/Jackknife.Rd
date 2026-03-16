@@ -75,14 +75,14 @@ if this doesn't hold for you, post a \href{https://github.com/ms609/TreeSearch/i
 \seealso{
 \itemize{
 \item \code{\link[=Resample]{Resample()}}: Jackknife resampling for non-custom searches performed
-using \code{MaximizeParsimony()}.
+using \code{Morphy()}.
 \item \code{\link[=JackLabels]{JackLabels()}}: Label nodes of a tree with jackknife supports.
 }
 
 Other split support functions: 
 \code{\link{ConcordanceTable}()},
 \code{\link{JackLabels}()},
-\code{\link{MaximizeParsimony}()},
+\code{\link{Morphy}()},
 \code{\link{MostContradictedFreq}()},
 \code{\link{PresCont}()},
 \code{\link{SiteConcordance}}

@@ -13,10 +13,7 @@ FastCharacterLength(tree, dataset)
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
 \code{phyDat} object or to return a vector specifying to each individual
@@ -51,6 +48,7 @@ Other tree scoring:
 \code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
+\code{\link{MaximizeParsimony}()},
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()},
 \code{\link{TaxonInfluence}()}

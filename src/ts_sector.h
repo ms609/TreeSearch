@@ -10,6 +10,7 @@
 
 #include "ts_data.h"
 #include "ts_tree.h"
+#include "ts_constraint.h"
 #include <vector>
 
 namespace ts {
@@ -55,12 +56,23 @@ int count_clade_tips(const TreeState& tree, int node);
 // Random Sectorial Search: pick random sectors, search, reinsert.
 // Modifies `tree` in place.
 SectorResult rss_search(TreeState& tree, DataSet& ds,
-                        const SectorParams& params);
+                        const SectorParams& params,
+                        ConstraintData* cd = nullptr);
 
 // Exclusive Sectorial Search: partition tree into non-overlapping sectors.
 // Modifies `tree` in place.
 SectorResult xss_search(TreeState& tree, DataSet& ds,
-                        const SectorParams& params);
+                        const SectorParams& params,
+                        ConstraintData* cd = nullptr);
+
+// Constrained Sectorial Search: sector-restricted TBR on the full tree.
+// Unlike RSS/XSS, does not build a reduced dataset with an HTU pseudo-tip.
+// Instead, restricts TBR clips and regrafts to within each sector, scoring
+// against the full tree for exact evaluation. Eliminates HTU approximation
+// errors at the cost of higher per-candidate evaluation.
+SectorResult css_search(TreeState& tree, DataSet& ds,
+                        const SectorParams& params,
+                        ConstraintData* cd = nullptr);
 
 } // namespace ts
 

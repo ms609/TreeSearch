@@ -13,20 +13,40 @@ int fitch_downpass_node(
     int n_states,
     uint64_t active_mask)
 {
-  uint64_t any_intersect = 0;
-  for (int s = 0; s < n_states; ++s) {
-    uint64_t isect = left_state[s] & right_state[s];
-    any_intersect |= isect;
-  }
+  if (active_mask == 0) return 0;
+
+  // Pass 1: compute any_intersect = OR( left[s] & right[s] )
+  uint64_t any_intersect = simd::any_hit_reduce(left_state, right_state,
+                                                 n_states);
 
   uint64_t needs_union = ~any_intersect & active_mask;
   int steps = popcount64(needs_union);
 
+  // Pass 2: compute output states with broadcast masks
+#if defined(TS_SIMD_SSE2) || defined(TS_SIMD_NEON)
+  simd::v128 ai = simd::set1_64(any_intersect);
+  simd::v128 nu = simd::set1_64(needs_union);
+  int s = 0;
+  for (; s + 2 <= n_states; s += 2) {
+    simd::v128 l = simd::loadu128(&left_state[s]);
+    simd::v128 r = simd::loadu128(&right_state[s]);
+    simd::v128 isect = simd::and128(l, r);
+    simd::v128 uni = simd::or128(l, r);
+    simd::storeu128(&node_state[s],
+        simd::or128(simd::and128(isect, ai), simd::and128(uni, nu)));
+  }
+  for (; s < n_states; ++s) {
+    uint64_t isect = left_state[s] & right_state[s];
+    uint64_t uni = left_state[s] | right_state[s];
+    node_state[s] = (isect & any_intersect) | (uni & needs_union);
+  }
+#else
   for (int s = 0; s < n_states; ++s) {
     uint64_t isect = left_state[s] & right_state[s];
     uint64_t uni = left_state[s] | right_state[s];
     node_state[s] = (isect & any_intersect) | (uni & needs_union);
   }
+#endif
 
   return steps;
 }
@@ -41,13 +61,13 @@ static bool uppass_node(TreeState& tree, const DataSet& ds, int node) {
 
   for (int b = 0; b < ds.n_blocks; ++b) {
     const CharBlock& blk = ds.blocks[b];
+    if (blk.active_mask == 0) continue;
     int offset = ds.block_word_offset[b];
 
-    uint64_t any_intersect = 0;
-    for (int s = 0; s < blk.n_states; ++s) {
-      any_intersect |= (tree.final_[anc_base + offset + s]
-                      & tree.prelim[node_base + offset + s]);
-    }
+    uint64_t any_intersect = simd::any_hit_reduce(
+        &tree.final_[anc_base + offset],
+        &tree.prelim[node_base + offset],
+        blk.n_states);
     uint64_t has_isect = any_intersect;
     uint64_t no_isect = ~any_intersect & blk.active_mask;
 
@@ -76,6 +96,7 @@ int fitch_downpass(TreeState& tree, const DataSet& ds) {
 
     for (int b = 0; b < ds.n_blocks; ++b) {
       const CharBlock& blk = ds.blocks[b];
+      if (blk.active_mask == 0) continue;
       int offset = ds.block_word_offset[b];
 
       const uint64_t* left_state =
@@ -85,24 +106,45 @@ int fitch_downpass(TreeState& tree, const DataSet& ds) {
       uint64_t* node_state =
           &tree.prelim[static_cast<size_t>(node) * tree.total_words + offset];
 
-      uint64_t any_intersect = 0;
-      for (int s = 0; s < blk.n_states; ++s) {
-        uint64_t isect = left_state[s] & right_state[s];
-        any_intersect |= isect;
-      }
+      uint64_t any_intersect = simd::any_hit_reduce(
+          left_state, right_state, blk.n_states);
 
       uint64_t needs_union = ~any_intersect & blk.active_mask;
-      total_steps += blk.weight * popcount64(needs_union);
+      int nu = popcount64(needs_union);
+      if (blk.upweight_mask) nu += popcount64(needs_union & blk.upweight_mask);
+      total_steps += blk.weight * nu;
 
       // Store local cost
       tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b] =
           needs_union;
 
+      // Compute output states with broadcast masks
+#if defined(TS_SIMD_SSE2) || defined(TS_SIMD_NEON)
+      {
+        simd::v128 ai = simd::set1_64(any_intersect);
+        simd::v128 nuvec = simd::set1_64(needs_union);
+        int s = 0;
+        for (; s + 2 <= blk.n_states; s += 2) {
+          simd::v128 l = simd::loadu128(&left_state[s]);
+          simd::v128 r = simd::loadu128(&right_state[s]);
+          simd::v128 isect = simd::and128(l, r);
+          simd::v128 uni = simd::or128(l, r);
+          simd::storeu128(&node_state[s],
+              simd::or128(simd::and128(isect, ai), simd::and128(uni, nuvec)));
+        }
+        for (; s < blk.n_states; ++s) {
+          uint64_t isect = left_state[s] & right_state[s];
+          uint64_t uni = left_state[s] | right_state[s];
+          node_state[s] = (isect & any_intersect) | (uni & needs_union);
+        }
+      }
+#else
       for (int s = 0; s < blk.n_states; ++s) {
         uint64_t isect = left_state[s] & right_state[s];
         uint64_t uni = left_state[s] | right_state[s];
         node_state[s] = (isect & any_intersect) | (uni & needs_union);
       }
+#endif
     }
   }
 
@@ -150,6 +192,7 @@ int fitch_incremental_downpass(TreeState& tree, const DataSet& ds,
 
     for (int b = 0; b < ds.n_blocks; ++b) {
       const CharBlock& blk = ds.blocks[b];
+      if (blk.active_mask == 0) continue;
       int offset = ds.block_word_offset[b];
 
       const uint64_t* left_state =
@@ -161,17 +204,19 @@ int fitch_incremental_downpass(TreeState& tree, const DataSet& ds,
 
       // Subtract old local cost
       size_t cost_idx = static_cast<size_t>(node) * tree.n_blocks + b;
-      length_delta -= blk.weight * popcount64(tree.local_cost[cost_idx]);
+      uint64_t old_cost = tree.local_cost[cost_idx];
+      int old_nu = popcount64(old_cost);
+      if (blk.upweight_mask) old_nu += popcount64(old_cost & blk.upweight_mask);
+      length_delta -= blk.weight * old_nu;
 
       // Compute new prelim
-      uint64_t any_intersect = 0;
-      for (int s = 0; s < blk.n_states; ++s) {
-        uint64_t isect = left_state[s] & right_state[s];
-        any_intersect |= isect;
-      }
+      uint64_t any_intersect = simd::any_hit_reduce(
+          left_state, right_state, blk.n_states);
 
       uint64_t needs_union = ~any_intersect & blk.active_mask;
-      length_delta += blk.weight * popcount64(needs_union);
+      int new_nu = popcount64(needs_union);
+      if (blk.upweight_mask) new_nu += popcount64(needs_union & blk.upweight_mask);
+      length_delta += blk.weight * new_nu;
 
       // Store new local cost
       tree.local_cost[cost_idx] = needs_union;
@@ -274,17 +319,73 @@ int fitch_indirect_length(const uint64_t* clip_prelim,
 
   for (int b = 0; b < ds.n_blocks; ++b) {
     const CharBlock& blk = ds.blocks[b];
+    if (blk.active_mask == 0) continue;
     int offset = ds.block_word_offset[b];
 
-    uint64_t any_hit = 0;
-    for (int s = 0; s < blk.n_states; ++s) {
-      uint64_t vroot = tree.final_[a_base + offset + s]
-                     | tree.final_[d_base + offset + s];
-      any_hit |= (clip_prelim[offset + s] & vroot);
-    }
+    uint64_t any_hit = simd::any_hit_reduce3(
+        &clip_prelim[offset],
+        &tree.final_[a_base + offset],
+        &tree.final_[d_base + offset],
+        blk.n_states);
+
+    uint64_t needs_step = ~any_hit & blk.active_mask;
+    int ns = popcount64(needs_step);
+    if (blk.upweight_mask) ns += popcount64(needs_step & blk.upweight_mask);
+    extra_steps += blk.weight * ns;
+  }
+
+  return extra_steps;
+}
+
+
+// Early-termination variant of fitch_indirect_length.
+int fitch_indirect_length_bounded(const uint64_t* clip_prelim,
+                                  const TreeState& tree,
+                                  const DataSet& ds,
+                                  int node_a, int node_d,
+                                  int cutoff) {
+  int extra_steps = 0;
+
+  size_t a_base = static_cast<size_t>(node_a) * tree.total_words;
+  size_t d_base = static_cast<size_t>(node_d) * tree.total_words;
+
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    const CharBlock& blk = ds.blocks[b];
+    if (blk.active_mask == 0) continue;
+    int offset = ds.block_word_offset[b];
+
+    uint64_t any_hit = simd::any_hit_reduce3(
+        &clip_prelim[offset],
+        &tree.final_[a_base + offset],
+        &tree.final_[d_base + offset],
+        blk.n_states);
 
     uint64_t needs_step = ~any_hit & blk.active_mask;
     extra_steps += blk.weight * popcount64(needs_step);
+    if (extra_steps >= cutoff) return extra_steps;
+  }
+
+  return extra_steps;
+}
+
+// Precomputed-vroot variant with early termination.
+int fitch_indirect_length_cached(const uint64_t* clip_prelim,
+                                 const uint64_t* vroot,
+                                 const DataSet& ds,
+                                 int cutoff) {
+  int extra_steps = 0;
+
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    const CharBlock& blk = ds.blocks[b];
+    if (blk.active_mask == 0) continue;
+    int offset = ds.block_word_offset[b];
+
+    uint64_t any_hit = simd::any_hit_reduce(
+        &clip_prelim[offset], &vroot[offset], blk.n_states);
+
+    uint64_t needs_step = ~any_hit & blk.active_mask;
+    extra_steps += blk.weight * popcount64(needs_step);
+    if (extra_steps >= cutoff) return extra_steps;
   }
 
   return extra_steps;
@@ -299,7 +400,7 @@ void extract_char_steps(const TreeState& tree, const DataSet& ds,
   for (int node : tree.postorder) {
     for (int b = 0; b < ds.n_blocks; ++b) {
       const CharBlock& blk = ds.blocks[b];
-      if (blk.has_inapplicable) continue;
+      if (blk.has_inapplicable || blk.active_mask == 0) continue;
       uint64_t mask =
           tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
       while (mask) {
@@ -321,7 +422,8 @@ void extract_char_steps(const TreeState& tree, const DataSet& ds,
     size_t rb = static_cast<size_t>(rc) * tree.total_words;
 
     for (int b = 0; b < ds.n_blocks; ++b) {
-      if (!ds.blocks[b].has_inapplicable) continue;
+      if (!ds.blocks[b].has_inapplicable || ds.blocks[b].active_mask == 0)
+        continue;
       const CharBlock& blk = ds.blocks[b];
       int off = ds.block_word_offset[b];
       int k = blk.n_states;
@@ -398,14 +500,14 @@ double indirect_iw_length(
 
   for (int b = 0; b < ds.n_blocks; ++b) {
     const CharBlock& blk = ds.blocks[b];
+    if (blk.active_mask == 0) continue;
     int offset = ds.block_word_offset[b];
 
-    uint64_t any_hit = 0;
-    for (int s = 0; s < blk.n_states; ++s) {
-      uint64_t vroot = tree.final_[a_base + offset + s]
-                     | tree.final_[d_base + offset + s];
-      any_hit |= (clip_prelim[offset + s] & vroot);
-    }
+    uint64_t any_hit = simd::any_hit_reduce3(
+        &clip_prelim[offset],
+        &tree.final_[a_base + offset],
+        &tree.final_[d_base + offset],
+        blk.n_states);
 
     uint64_t needs_step = ~any_hit & blk.active_mask;
     while (needs_step) {
@@ -418,6 +520,142 @@ double indirect_iw_length(
   return candidate_iw;
 }
 
+// Early-termination IW variant.
+double indirect_iw_length_bounded(
+    const uint64_t* clip_prelim,
+    const TreeState& tree, const DataSet& ds,
+    int node_a, int node_d,
+    double base_iw,
+    const std::vector<double>& iw_delta,
+    double cutoff) {
+
+  double candidate_iw = base_iw;
+
+  size_t a_base = static_cast<size_t>(node_a) * tree.total_words;
+  size_t d_base = static_cast<size_t>(node_d) * tree.total_words;
+
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    const CharBlock& blk = ds.blocks[b];
+    if (blk.active_mask == 0) continue;
+    int offset = ds.block_word_offset[b];
+
+    uint64_t any_hit = simd::any_hit_reduce3(
+        &clip_prelim[offset],
+        &tree.final_[a_base + offset],
+        &tree.final_[d_base + offset],
+        blk.n_states);
+
+    uint64_t needs_step = ~any_hit & blk.active_mask;
+    while (needs_step) {
+      int c = ctz64(needs_step);
+      candidate_iw += iw_delta[blk.pattern_index[c]];
+      needs_step &= needs_step - 1;
+    }
+    if (candidate_iw >= cutoff) return candidate_iw;
+  }
+
+  return candidate_iw;
+}
+
+// Precomputed-vroot IW variant with early termination.
+double indirect_iw_length_cached(
+    const uint64_t* clip_prelim,
+    const uint64_t* vroot,
+    const DataSet& ds,
+    double base_iw,
+    const std::vector<double>& iw_delta,
+    double cutoff) {
+
+  double candidate_iw = base_iw;
+
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    const CharBlock& blk = ds.blocks[b];
+    if (blk.active_mask == 0) continue;
+    int offset = ds.block_word_offset[b];
+
+    uint64_t any_hit = simd::any_hit_reduce(
+        &clip_prelim[offset], &vroot[offset], blk.n_states);
+
+    uint64_t needs_step = ~any_hit & blk.active_mask;
+    while (needs_step) {
+      int c = ctz64(needs_step);
+      candidate_iw += iw_delta[blk.pattern_index[c]];
+      needs_step &= needs_step - 1;
+    }
+    if (candidate_iw >= cutoff) return candidate_iw;
+  }
+
+  return candidate_iw;
+}
+
+// --- Profile parsimony scoring ---
+
+double compute_profile(const DataSet& ds, const std::vector<int>& char_steps) {
+  double score = 0.0;
+  for (int p = 0; p < ds.n_patterns; ++p) {
+    // Add back precomputed_steps to get the original total step count,
+    // since info_amounts is indexed by the full (unsimplified) step count.
+    int s = char_steps[p];
+    if (!ds.precomputed_steps.empty()) s += ds.precomputed_steps[p];
+    // info_amounts is column-major: [(s-1) + info_max_steps * p]
+    // s is total step count (1-based); row 0 = 1 total step
+    int idx = s - 1;
+    if (idx >= 0 && idx < ds.info_max_steps) {
+      score += ds.pattern_freq[p] * ds.info_amounts[idx + ds.info_max_steps * p];
+    }
+    // s == 0: invariant character → 0 cost
+    // s > info_max_steps: beyond table → treat as max cost
+    else if (s > ds.info_max_steps && ds.info_max_steps > 0) {
+      score += ds.pattern_freq[p] *
+               ds.info_amounts[(ds.info_max_steps - 1) + ds.info_max_steps * p];
+    }
+  }
+  return score;
+}
+
+void precompute_profile_delta(const DataSet& ds,
+                               const std::vector<int>& divided_steps,
+                               std::vector<double>& delta) {
+  for (int p = 0; p < ds.n_patterns; ++p) {
+    int s = divided_steps[p];  // total steps in divided tree
+    int idx_old = s - 1;       // 0-based row for current step count
+    int idx_new = s;           // 0-based row for step count + 1
+
+    double old_cost = (idx_old >= 0 && idx_old < ds.info_max_steps)
+        ? ds.info_amounts[idx_old + ds.info_max_steps * p] : 0.0;
+
+    double new_cost;
+    if (idx_new >= 0 && idx_new < ds.info_max_steps) {
+      new_cost = ds.info_amounts[idx_new + ds.info_max_steps * p];
+    } else if (idx_new >= ds.info_max_steps && ds.info_max_steps > 0) {
+      // Beyond table: cap at maximum cost (delta = 0 from this point)
+      new_cost = ds.info_amounts[(ds.info_max_steps - 1) + ds.info_max_steps * p];
+    } else {
+      new_cost = 0.0;
+    }
+
+    delta[p] = ds.pattern_freq[p] * (new_cost - old_cost);
+  }
+}
+
+// --- Weighted scoring dispatch (IW or profile) ---
+
+double compute_weighted_score(const DataSet& ds,
+                               const std::vector<int>& char_steps) {
+  if (ds.scoring_mode == ScoringMode::PROFILE)
+    return compute_profile(ds, char_steps);
+  return compute_iw(ds, char_steps);
+}
+
+void precompute_weighted_delta(const DataSet& ds,
+                                const std::vector<int>& divided_steps,
+                                std::vector<double>& delta) {
+  if (ds.scoring_mode == ScoringMode::PROFILE)
+    precompute_profile_delta(ds, divided_steps, delta);
+  else
+    precompute_iw_delta(ds, divided_steps, delta);
+}
+
 // --- Unified scoring ---
 
 double score_tree(TreeState& tree, const DataSet& ds) {
@@ -427,16 +665,16 @@ double score_tree(TreeState& tree, const DataSet& ds) {
     if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
   }
 
-  if (std::isinf(ds.concavity)) {
-    // Equal weights
+  if (ds.scoring_mode == ScoringMode::EW) {
+    // Equal weights — add back precomputed topology-independent steps
     if (has_na) {
-      return static_cast<double>(fitch_na_score(tree, ds));
+      return static_cast<double>(fitch_na_score(tree, ds)) + ds.ew_offset;
     } else {
-      return static_cast<double>(fitch_score(tree, ds));
+      return static_cast<double>(fitch_score(tree, ds)) + ds.ew_offset;
     }
   }
 
-  // Implied weights: run appropriate scoring pass, then extract per-char steps
+  // Weighted scoring (IW or profile): run Fitch, extract steps, transform
   if (has_na) {
     fitch_na_score(tree, ds);
   } else {
@@ -445,7 +683,7 @@ double score_tree(TreeState& tree, const DataSet& ds) {
 
   std::vector<int> char_steps(ds.n_patterns, 0);
   extract_char_steps(tree, ds, char_steps);
-  return compute_iw(ds, char_steps);
+  return compute_weighted_score(ds, char_steps);
 }
 
 
@@ -454,5 +692,11 @@ double score_tree(TreeState& tree, const DataSet& ds) {
 // =========================================================================
 
 #include "ts_fitch_na.inc"
+
+// =========================================================================
+// Incremental NA-aware scoring for SPR/TBR candidate evaluation
+// =========================================================================
+
+#include "ts_fitch_na_incr.inc"
 
 } // namespace ts

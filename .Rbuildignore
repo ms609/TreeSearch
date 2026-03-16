@@ -34,3 +34,4 @@ vignettes/\.RData
 ^LICENSE$
 ^\.positai$
 ^\.claude$
+^\.agent-

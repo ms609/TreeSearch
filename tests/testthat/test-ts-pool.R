@@ -5,7 +5,7 @@ test_that("Pool deduplication: same tree added twice → pool size 1", {
   edges <- list(tree$edge, tree$edge)
   scores <- c(10, 10)
 
-  result <- ts_pool_test(edges, scores, 8L)
+  result <- TreeSearch:::ts_pool_test(edges, scores, 8L)
 
   expect_true(result$added[1])
   expect_false(result$added[2])
@@ -18,7 +18,7 @@ test_that("Pool stores different trees", {
   edges <- list(tree1$edge, tree2$edge)
   scores <- c(10, 10)
 
-  result <- ts_pool_test(edges, scores, 8L)
+  result <- TreeSearch:::ts_pool_test(edges, scores, 8L)
 
   expect_true(result$added[1])
   expect_true(result$added[2])
@@ -31,7 +31,7 @@ test_that("Pool tracks best score", {
   edges <- list(tree1$edge, tree2$edge)
   scores <- c(15, 10)
 
-  result <- ts_pool_test(edges, scores, 8L)
+  result <- TreeSearch:::ts_pool_test(edges, scores, 8L)
 
   expect_equal(result$best_score, 10)
 })
@@ -45,7 +45,7 @@ test_that("Pool evicts trees beyond suboptimal threshold", {
   # With suboptimal = 2, tree1 (15 > 10+2 = 12) should be evicted
   scores <- c(15, 10, 10)
 
-  result <- ts_pool_test(edges, scores, 8L, max_size = 100L,
+  result <- TreeSearch:::ts_pool_test(edges, scores, 8L, max_size = 100L,
                          suboptimal = 2.0)
 
   # tree1 added first (best so far), tree2 triggers eviction of tree1
@@ -60,7 +60,7 @@ test_that("hits_to_best counts rediscoveries", {
   edges <- list(tree1$edge, tree2$edge, tree1$edge)
   scores <- c(10, 10, 10)
 
-  result <- ts_pool_test(edges, scores, 8L)
+  result <- TreeSearch:::ts_pool_test(edges, scores, 8L)
 
   # tree1: added, hits=1
   # tree2: added (different topology, same score), hits=2
@@ -74,7 +74,7 @@ test_that("Pool respects max_size", {
   edges <- lapply(trees, `[[`, "edge")
   scores <- rep(10, n_trees)
 
-  result <- ts_pool_test(edges, scores, 8L, max_size = 3L)
+  result <- TreeSearch:::ts_pool_test(edges, scores, 8L, max_size = 3L)
 
   expect_true(result$pool_size <= 3)
 })
@@ -87,7 +87,7 @@ test_that("Pool rejects trees worse than threshold", {
   # tree2 (20 > 10+5=15) should be rejected
   scores <- c(10, 20)
 
-  result <- ts_pool_test(edges, scores, 8L, max_size = 100L,
+  result <- TreeSearch:::ts_pool_test(edges, scores, 8L, max_size = 100L,
                          suboptimal = 5.0)
 
   expect_equal(result$pool_size, 1)
@@ -106,9 +106,9 @@ test_that("Deep copy: modifying original doesn't corrupt pool", {
   # If the pool stored shallow copies, both entries would point to the same
 
   # data, and adding tree2 would overwrite tree1's topology.
-  result <- ts_pool_test(list(tree1$edge, tree2$edge), c(10, 10), 8L)
+  result <- TreeSearch:::ts_pool_test(list(tree1$edge, tree2$edge), c(10, 10), 8L)
   expect_equal(result$pool_size, 2)
 
   # Verify they're actually different by checking ts_trees_equal
-  expect_false(ts_trees_equal(tree1$edge, tree2$edge, 8))
+  expect_false(TreeSearch:::ts_trees_equal(tree1$edge, tree2$edge, 8))
 })

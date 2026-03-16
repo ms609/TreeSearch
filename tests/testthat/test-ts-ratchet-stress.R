@@ -16,19 +16,19 @@ make_ts_data <- function(dataset) {
 }
 
 ts_score <- function(tree, ds) {
-  ts_fitch_score(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels)
+  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels)
 }
 
 ts_ratchet <- function(tree, ds, nCycles = 10L, perturbProb = 0.04,
                        maxHits = 1L) {
-  ts_ratchet_search(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+  TreeSearch:::ts_ratchet_search(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
                     nCycles = nCycles, perturbProb = perturbProb,
                     maxHits = maxHits)
 }
 
 ts_tbr <- function(tree, ds, maxHits = 1L, acceptEqual = FALSE,
                    maxChanges = 0L) {
-  ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+  TreeSearch:::ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
                 maxHits = maxHits, acceptEqual = acceptEqual,
                 maxChanges = maxChanges)
 }
@@ -75,7 +75,7 @@ test_that("Ratchet output is a TBR local optimum", {
     ratchet_result <- ts_ratchet(tree, ds, nCycles = 5L)
 
     # Run TBR on the ratchet's output — should not improve
-    tbr_on_output <- ts_tbr_search(
+    tbr_on_output <- TreeSearch:::ts_tbr_search(
       ratchet_result$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels)
 
     expect_equal(tbr_on_output$score, ratchet_result$score,

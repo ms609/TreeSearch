@@ -70,9 +70,11 @@ struct TreeState {
   // Snapshot of one node's state during incremental pass.
   struct NodeSnapshot {
     int node;
-    std::vector<uint64_t> prelim_words;   // total_words entries
-    std::vector<uint64_t> final_words;    // total_words entries
-    std::vector<uint64_t> local_costs;    // n_blocks entries
+    std::vector<uint64_t> prelim_words;           // total_words entries
+    std::vector<uint64_t> final_words;            // total_words entries
+    std::vector<uint64_t> local_costs;            // n_blocks entries
+    std::vector<uint64_t> down2_words;            // total_words entries (NA)
+    std::vector<uint64_t> subtree_actives_words;  // total_words entries (NA)
   };
 
   // Stack of snapshots saved during clip; restored on unclip.

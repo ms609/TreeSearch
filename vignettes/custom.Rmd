@@ -242,7 +242,8 @@ It would be sensible to use much larger values of `ratchIter`, `ratchHits`,
 `searchIter` and `searchHits` to be confident of locating an optimal tree.
 And note that in this specific case, 
 implied weights tree search with the parsimony ratchet is implemented
-much more efficiently with `MaximizeParsimony(concavity = k)`.
+much more efficiently with `MaximizeParsimony(concavity = k)`,
+which uses the C++ search engine.
 
 Hopefully these examples give a template from which you are able to construct
 your own optimality criteria.  The maintainer is happy to answer questions via

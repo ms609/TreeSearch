@@ -48,7 +48,7 @@ If \code{NULL}, computed trees will not be saved.}
 be loaded from the location given by \code{savePath}, instead of running a fresh
 search with the specified dataset and parameters.}
 
-\item{verbosity, \dots}{Parameters for \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}.
+\item{verbosity, \dots}{Parameters for \code{\link[=Morphy]{Morphy()}}.
 Tree search will be conducted using \code{tree} as a starting tree.}
 }
 \value{
@@ -106,7 +106,7 @@ data("congreveLamsdellMatrices", package = "TreeSearch")
 
 # Small dataset for demonstration purposes
 dataset <- congreveLamsdellMatrices[[42]][1:8, ]
-bestTree <- MaximizeParsimony(dataset, verbosity = 0)[[1]]
+bestTree <- Morphy(dataset, verbosity = 0)[[1]]
 
 # Calculate tip influence
 influence <- TaxonInfluence(dataset, ratchIt = 0, startIt = 0, verbos = 0)
@@ -140,6 +140,7 @@ Other tree scoring:
 \code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
+\code{\link{MaximizeParsimony}()},
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()}
 }

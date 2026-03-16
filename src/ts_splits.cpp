@@ -195,4 +195,56 @@ bool splits_equal(const SplitSet& a, const SplitSet& b) {
   return true;
 }
 
+uint64_t hash_tree(const TreeState& tree) {
+  int n_tip = tree.n_tip;
+  int wps = (n_tip + 63) / 64;
+
+  size_t total = static_cast<size_t>(tree.n_node) * wps;
+  std::vector<uint64_t> tip_bits(total, 0);
+
+  for (int t = 0; t < n_tip; ++t) {
+    tip_bits[static_cast<size_t>(t) * wps + t / 64] = 1ULL << (t % 64);
+  }
+
+  int root = n_tip;
+  int root_right = tree.right[0];
+  uint64_t h = 0;
+
+  // Mask for trailing bits in the last word
+  int trailing = n_tip % 64;
+  uint64_t trail_mask = (trailing != 0) ? ((1ULL << trailing) - 1) : ~0ULL;
+
+  for (int pi = 0; pi < static_cast<int>(tree.postorder.size()); ++pi) {
+    int node = tree.postorder[pi];
+    int ni = node - n_tip;
+    int lc = tree.left[ni];
+    int rc = tree.right[ni];
+    uint64_t* dst = &tip_bits[static_cast<size_t>(node) * wps];
+    const uint64_t* lbits = &tip_bits[static_cast<size_t>(lc) * wps];
+    const uint64_t* rbits = &tip_bits[static_cast<size_t>(rc) * wps];
+    for (int w = 0; w < wps; ++w) {
+      dst[w] = lbits[w] | rbits[w];
+    }
+
+    if (node == root || node == root_right) continue;
+
+    int count = 0;
+    for (int w = 0; w < wps; ++w) {
+      count += ts::popcount64(dst[w]);
+    }
+    if (count <= 1 || count >= n_tip - 1) continue;
+
+    // Canonicalize on-the-fly and hash this split
+    bool flip = (dst[0] & 1ULL) != 0;
+    uint64_t sh = 0;
+    for (int w = 0; w < wps; ++w) {
+      uint64_t val = flip ? ~dst[w] : dst[w];
+      if (w == wps - 1) val &= trail_mask;
+      sh ^= val * prime_for_word(w);
+    }
+    h ^= mix(sh);
+  }
+  return h;
+}
+
 } // namespace ts

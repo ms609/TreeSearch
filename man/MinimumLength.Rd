@@ -85,6 +85,7 @@ Other tree scoring:
 \code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
+\code{\link{MaximizeParsimony}()},
 \code{\link{MorphyTreeLength}()},
 \code{\link{TaxonInfluence}()}
 }

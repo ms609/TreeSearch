@@ -17,7 +17,7 @@
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @seealso 
 #' - [`Resample()`]: Jackknife resampling for non-custom searches performed
-#'   using `MaximizeParsimony()`.
+#'   using `Morphy()`.
 #' - [`JackLabels()`]: Label nodes of a tree with jackknife supports.
 #' @family split support functions
 #' @family custom search functions

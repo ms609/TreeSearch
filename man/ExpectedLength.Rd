@@ -8,10 +8,7 @@ ExpectedLength(dataset, tree, nRelabel = 1000, compress = FALSE)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
@@ -43,6 +40,7 @@ Other tree scoring:
 \code{\link{CharacterLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
+\code{\link{MaximizeParsimony}()},
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()},
 \code{\link{TaxonInfluence}()}

@@ -1,17 +1,34 @@
 #include "ts_tbr.h"
 #include "ts_fitch.h"
+#include "ts_rng.h"
+#include "ts_tabu.h"
+#include "ts_splits.h"
 #include <algorithm>
 #include <random>
 #include <vector>
+#include <unordered_set>
 #include <climits>
 #include <cmath>
+#include <cstring>
 
 #include <Rcpp.h>
 #include <R.h>
-#include <Rmath.h>
 #include <Rinternals.h>
 
 namespace ts {
+
+// --- FNV-1a hash for virtual_prelim deduplication (Phase 3A) ---
+
+static uint64_t fnv1a_hash(const uint64_t* data, int n_words) {
+  uint64_t hash = 14695981039346656037ULL;  // FNV offset basis
+  const uint8_t* bytes = reinterpret_cast<const uint8_t*>(data);
+  int n_bytes = n_words * static_cast<int>(sizeof(uint64_t));
+  for (int i = 0; i < n_bytes; ++i) {
+    hash ^= bytes[i];
+    hash *= 1099511628211ULL;  // FNV prime
+  }
+  return hash;
+}
 
 // --- Helpers (file-local) ---
 
@@ -192,6 +209,62 @@ static void restore_topology(TreeState& tree, const TopoSnapshot& snap) {
   tree.right = snap.right;
 }
 
+// --- Full state snapshot for undo without rescore ---
+
+struct StateSnapshot {
+  std::vector<uint64_t> prelim;
+  std::vector<uint64_t> final_;
+  std::vector<uint64_t> local_cost;
+  std::vector<uint64_t> down2;
+  std::vector<uint64_t> subtree_actives;
+  std::vector<int> postorder;
+  bool has_na_arrays;
+
+  void allocate(const TreeState& tree, bool has_na) {
+    size_t state_sz = static_cast<size_t>(tree.n_node) * tree.total_words;
+    size_t cost_sz = static_cast<size_t>(tree.n_node) * tree.n_blocks;
+    prelim.resize(state_sz);
+    final_.resize(state_sz);
+    local_cost.resize(cost_sz);
+    has_na_arrays = has_na;
+    if (has_na) {
+      down2.resize(state_sz);
+      subtree_actives.resize(state_sz);
+    }
+    postorder.resize(tree.postorder.size());
+  }
+
+  void save(const TreeState& tree) {
+    size_t state_bytes = prelim.size() * sizeof(uint64_t);
+    size_t cost_bytes = local_cost.size() * sizeof(uint64_t);
+    std::memcpy(prelim.data(), tree.prelim.data(), state_bytes);
+    std::memcpy(final_.data(), tree.final_.data(), state_bytes);
+    std::memcpy(local_cost.data(), tree.local_cost.data(), cost_bytes);
+    if (has_na_arrays) {
+      std::memcpy(down2.data(), tree.down2.data(), state_bytes);
+      std::memcpy(subtree_actives.data(), tree.subtree_actives.data(),
+                   state_bytes);
+    }
+    std::memcpy(postorder.data(), tree.postorder.data(),
+                 tree.postorder.size() * sizeof(int));
+  }
+
+  void restore(TreeState& tree) const {
+    size_t state_bytes = prelim.size() * sizeof(uint64_t);
+    size_t cost_bytes = local_cost.size() * sizeof(uint64_t);
+    std::memcpy(tree.prelim.data(), prelim.data(), state_bytes);
+    std::memcpy(tree.final_.data(), final_.data(), state_bytes);
+    std::memcpy(tree.local_cost.data(), local_cost.data(), cost_bytes);
+    if (has_na_arrays) {
+      std::memcpy(tree.down2.data(), down2.data(), state_bytes);
+      std::memcpy(tree.subtree_actives.data(), subtree_actives.data(),
+                   state_bytes);
+    }
+    std::memcpy(tree.postorder.data(), postorder.data(),
+                 postorder.size() * sizeof(int));
+  }
+};
+
 // --- Topology validation (debug, catches bugs before they crash R) ---
 
 static bool validate_topology(const TreeState& tree) {
@@ -350,12 +423,60 @@ static bool apply_tbr_move(
   return true;
 }
 
+// --- Subtree size computation ---
+
+// Compute the number of tips in the subtree below each node.
+// Result indexed by node id. Tips have size 1.
+static void compute_subtree_sizes(const TreeState& tree,
+                                  std::vector<int>& sizes) {
+  sizes.assign(tree.n_node, 0);
+  for (int i = 0; i < tree.n_tip; ++i) sizes[i] = 1;
+  for (int node : tree.postorder) {
+    int ni = node - tree.n_tip;
+    sizes[node] = sizes[tree.left[ni]] + sizes[tree.right[ni]];
+  }
+}
+
+// --- Precompute vroot cache for main edges ---
+
+// For each main edge (A, D), compute vroot[s] = final_[A][s] | final_[D][s].
+// vroot_cache layout: vroot_cache[edge_idx * total_words + s]
+static void precompute_vroot_cache(
+    const TreeState& tree,
+    const std::vector<std::pair<int,int>>& main_edges,
+    std::vector<uint64_t>& vroot_cache) {
+  int tw = tree.total_words;
+  size_t n_edges = main_edges.size();
+  vroot_cache.resize(n_edges * tw);
+
+  for (size_t ei = 0; ei < n_edges; ++ei) {
+    int a = main_edges[ei].first;
+    int d = main_edges[ei].second;
+    size_t a_base = static_cast<size_t>(a) * tw;
+    size_t d_base = static_cast<size_t>(d) * tw;
+    size_t out_base = ei * tw;
+
+    for (int s = 0; s < tw; ++s) {
+      vroot_cache[out_base + s] = tree.final_[a_base + s]
+                                | tree.final_[d_base + s];
+    }
+  }
+}
+
 
 // --- Main TBR search ---
 
 TBRResult tbr_search(TreeState& tree, const DataSet& ds,
-                     const TBRParams& params) {
+                     const TBRParams& params,
+                     ConstraintData* cd,
+                     const std::vector<bool>* sector_mask) {
   double best_score = full_rescore(tree, ds);
+
+  // Initialize constraint mapping if active
+  bool constrained = cd && cd->active;
+  if (constrained) {
+    update_constraint(tree, *cd);
+  }
   int n_accepted = 0;
   int n_evaluated = 0;
   int hits = 1;
@@ -363,10 +484,20 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // Floating-point tolerance for score equality
   const double eps = use_iw ? 1e-10 : 0.0;
 
-  // Seed from R's RNG for reproducibility with set.seed()
-  GetRNGstate();
-  std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
-  PutRNGstate();
+  // Check if any block has inapplicable characters (for state snapshot)
+  bool has_na = false;
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
+  }
+
+  // Seed RNG (from R in serial mode, from thread-local in parallel mode)
+  std::mt19937 rng = ts::make_rng();
+
+  // Tabu list: prevent cycling during plateau exploration
+  TabuList tabu(params.tabu_size);
+  if (tabu.active()) {
+    tabu.insert(hash_tree(tree));
+  }
 
   // Candidate clip nodes: all non-root nodes
   std::vector<int> clip_candidates;
@@ -391,65 +522,150 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     iw_delta.resize(ds.n_patterns, 0.0);
   }
 
+  // Subtree sizes for smaller-subtree filtering
+  std::vector<int> subtree_sizes(tree.n_node, 0);
+
+  // Vroot cache for TBR rerooting (precomputed per clip)
+  std::vector<uint64_t> vroot_cache;
+
+  // State snapshot for rejection without full_rescore (optimization #3)
+  StateSnapshot state_snap;
+  state_snap.allocate(tree, has_na);
+
+  // Pre-allocate postorder save buffer for clip/unclip cycle.
+  // After spr_unclip(), the topology is identical to before spr_clip(),
+  // so the postorder is the same. Restoring from saved copy avoids an
+  // O(n) rebuild per clip (Phase 3D optimization).
+  std::vector<int> saved_postorder;
+  saved_postorder.reserve(tree.postorder.size());
+
   TopoSnapshot snap;
   bool keep_going = true;
+  bool states_valid = true;  // track whether state arrays are current
+  bool need_shuffle = true;  // optimization #6: defer reshuffle
 
   while (keep_going) {
     keep_going = false;
-    std::shuffle(clip_candidates.begin(), clip_candidates.end(), rng);
+
+    // Optimization #6: only reshuffle when the previous pass found no
+    // improvement. After an accepted move, retry with the same ordering
+    // (the topology changed, so previously-failing clips may now succeed).
+    if (need_shuffle) {
+      std::shuffle(clip_candidates.begin(), clip_candidates.end(), rng);
+    }
+    need_shuffle = true;  // default: reshuffle next time (unless we accept)
+
+    // Recompute subtree sizes for smaller-subtree filtering
+    compute_subtree_sizes(tree, subtree_sizes);
 
     for (int clip_node : clip_candidates) {
       if (tree.parent[clip_node] == tree.n_tip) continue;
 
+      // CSS: skip clips outside the sector
+      if (sector_mask && !(*sector_mask)[clip_node]) continue;
+
+      // Optimization #2: skip clips of the larger subtree.
+      // For each edge, only clip the side with fewer tips.
+      int clip_size = subtree_sizes[clip_node];
+      if (clip_size > tree.n_tip / 2) continue;
+
       // --- Phase 1: Clip + indirect evaluation ---
+
+      // Save clip subtree's actives before clipping (needed for NA indirect)
+      size_t clip_sa_base =
+          static_cast<size_t>(clip_node) * tree.total_words;
+      const uint64_t* clip_actives = nullptr;
+      std::vector<uint64_t> clip_actives_buf;
+      if (has_na) {
+        clip_actives_buf.assign(
+            tree.subtree_actives.begin() + clip_sa_base,
+            tree.subtree_actives.begin() + clip_sa_base + tree.total_words);
+        clip_actives = clip_actives_buf.data();
+      }
+
+      // Save postorder before clip (restored after unclip instead of rebuild)
+      saved_postorder.assign(tree.postorder.begin(), tree.postorder.end());
+
       tree.spr_clip(clip_node);
       tree.build_postorder();
 
       int ns = tree.clip_state.clip_sibling;
       int nz = tree.clip_state.clip_grandpar;
       int nx = tree.clip_state.clip_parent;
-      int delta = fitch_incremental_downpass(tree, ds, nz);
-      fitch_incremental_uppass(tree, ds, nz);
 
-      // nx was removed from the tree. Its local_cost (untouched by the
-      // incremental pass, since nx is disconnected) must be subtracted.
-      int nx_cost = 0;
-      for (int b = 0; b < ds.n_blocks; ++b) {
-        nx_cost += ds.blocks[b].weight * popcount64(
-            tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b]);
+      double divided_length;
+      if (has_na) {
+        // NA-aware incremental three-pass: correct prelim, final_,
+        // subtree_actives, down2, and exact divided-tree score.
+        fitch_na_incremental_downpass(tree, ds, nz);
+        fitch_na_incremental_uppass(tree, ds, nz);
+        divided_length = static_cast<double>(fitch_na_pass3_score(tree, ds));
+      } else {
+        int delta = fitch_incremental_downpass(tree, ds, nz);
+        fitch_incremental_uppass(tree, ds, nz);
+
+        int nx_cost = 0;
+        for (int b = 0; b < ds.n_blocks; ++b) {
+          nx_cost += ds.blocks[b].weight * popcount64(
+              tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b]);
+        }
+        divided_length = best_score + delta - nx_cost;
       }
 
-      // For EW: divided_length for additive candidate scoring
-      double divided_length = best_score + delta - nx_cost;
-
-      // For IW: precompute base IW score and per-pattern marginal deltas
+      // For weighted scoring (IW or profile): precompute base score and deltas
       double base_iw = 0.0;
       if (use_iw) {
         extract_divided_steps(tree, ds, divided_steps);
-        base_iw = compute_iw(ds, divided_steps);
-        precompute_iw_delta(ds, divided_steps, iw_delta);
+        base_iw = compute_weighted_score(ds, divided_steps);
+        precompute_weighted_delta(ds, divided_steps, iw_delta);
       }
 
       collect_main_edges(tree, main_edges);
+
+      // Constraint: classify this clip against each constraint split
+      if (constrained) {
+        classify_clip_constraints(tree, clip_node, *cd);
+      }
 
       // Find best (reroot, regraft) combination
       double best_candidate = HUGE_VAL;
       int best_above = -1, best_below = -1;
       int best_reroot_parent = -1, best_reroot_child = -1;
 
-      // SPR candidates
+      // SPR candidates — with early termination (optimization #1)
       size_t clip_base = static_cast<size_t>(clip_node) * tree.total_words;
       const uint64_t* clip_prelim = &tree.prelim[clip_base];
 
       for (auto& [above, below] : main_edges) {
         if (above == nz && below == ns) continue;
+        if (sector_mask && !(*sector_mask)[below]) continue;
+        if (constrained && regraft_violates_constraint(below, *cd)) continue;
         double candidate;
-        if (use_iw) {
-          candidate = indirect_iw_length(clip_prelim, tree, ds,
-                                         above, below, base_iw, iw_delta);
+        if (has_na) {
+          // NA-aware indirect with early termination
+          if (use_iw) {
+            candidate = indirect_na_iw_length_bounded(clip_prelim,
+                clip_actives, tree, ds, above, below, base_iw, iw_delta,
+                best_candidate);
+          } else {
+            int cutoff = (best_candidate < HUGE_VAL)
+                ? static_cast<int>(best_candidate - divided_length + 1)
+                : INT_MAX;
+            int extra = fitch_na_indirect_length_bounded(clip_prelim,
+                clip_actives, tree, ds, above, below, cutoff);
+            candidate = divided_length + extra;
+          }
+        } else if (use_iw) {
+          candidate = indirect_iw_length_bounded(
+              clip_prelim, tree, ds, above, below, base_iw, iw_delta,
+              best_candidate);
         } else {
-          candidate = divided_length +
-              fitch_indirect_length(clip_prelim, tree, ds, above, below);
+          int cutoff = (best_candidate < HUGE_VAL)
+              ? static_cast<int>(best_candidate - divided_length + 1)
+              : INT_MAX;
+          int extra = fitch_indirect_length_bounded(
+              clip_prelim, tree, ds, above, below, cutoff);
+          candidate = divided_length + extra;
         }
         ++n_evaluated;
         if (candidate < best_candidate) {
@@ -461,10 +677,46 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         }
       }
 
-      // TBR candidates (rerooting)
+      // TBR candidates (rerooting) — with vroot cache (optimization #4)
       if (clip_node >= tree.n_tip) {
         compute_from_above(tree, ds, clip_node, from_above);
         collect_subtree_edges(tree, clip_node, sub_edges);
+
+        // Precompute vroot for all main edges (optimization #4)
+        precompute_vroot_cache(tree, main_edges, vroot_cache);
+        int n_main = static_cast<int>(main_edges.size());
+
+        // For NA: precompute per-edge below_actives (OR of applicable
+        // subtree_actives words for node_d of each edge)
+        std::vector<uint64_t> below_actives_cache;
+        if (has_na) {
+          below_actives_cache.resize(
+              static_cast<size_t>(n_main) * ds.n_blocks);
+          for (int ei = 0; ei < n_main; ++ei) {
+            int d = main_edges[ei].second;
+            size_t d_base = static_cast<size_t>(d) * tree.total_words;
+            for (int b_i = 0; b_i < ds.n_blocks; ++b_i) {
+              if (!ds.blocks[b_i].has_inapplicable) {
+                below_actives_cache[
+                    static_cast<size_t>(ei) * ds.n_blocks + b_i] = 0;
+                continue;
+              }
+              int off = ds.block_word_offset[b_i];
+              int k = ds.blocks[b_i].n_states;
+              uint64_t ba = 0;
+              for (int s = 1; s < k; ++s) {
+                ba |= tree.subtree_actives[d_base + off + s];
+              }
+              below_actives_cache[
+                  static_cast<size_t>(ei) * ds.n_blocks + b_i] = ba;
+            }
+          }
+        }
+
+        // Phase 3A: Symmetry-breaking — deduplicate equivalent rerootings.
+        // Seed with clip_prelim hash (SPR case already evaluated above).
+        std::unordered_set<uint64_t> seen_vp_hashes;
+        seen_vp_hashes.insert(fnv1a_hash(clip_prelim, tree.total_words));
 
         for (auto& [sp, sc] : sub_edges) {
           if (sp == clip_node) continue;
@@ -474,16 +726,61 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
               &tree.prelim[static_cast<size_t>(sc) * tree.total_words],
               virtual_prelim.data(), ds);
 
-          for (auto& [above, below] : main_edges) {
+          // Fast path: skip if virtual_prelim matches SPR case exactly
+          if (std::memcmp(virtual_prelim.data(), clip_prelim,
+                          tree.total_words * sizeof(uint64_t)) == 0) {
+            continue;
+          }
+
+          // Hash-based dedup: skip if we've seen this virtual_prelim before
+          uint64_t vp_hash = fnv1a_hash(virtual_prelim.data(),
+                                         tree.total_words);
+          if (!seen_vp_hashes.insert(vp_hash).second) {
+            continue;  // Already evaluated an equivalent rerooting
+          }
+
+          for (int ei = 0; ei < n_main; ++ei) {
+            auto& [above, below] = main_edges[ei];
             if (above == nz && below == ns) continue;
+            if (sector_mask && !(*sector_mask)[below]) continue;
+            if (constrained && regraft_violates_constraint(below, *cd))
+              continue;
             double candidate;
-            if (use_iw) {
-              candidate = indirect_iw_length(virtual_prelim.data(), tree, ds,
-                                             above, below, base_iw, iw_delta);
+            if (has_na) {
+              if (use_iw) {
+                candidate = indirect_na_iw_length_cached(
+                    virtual_prelim.data(), clip_actives,
+                    &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
+                    &below_actives_cache[
+                        static_cast<size_t>(ei) * ds.n_blocks],
+                    ds, base_iw, iw_delta, best_candidate);
+              } else {
+                int cutoff = (best_candidate < HUGE_VAL)
+                    ? static_cast<int>(best_candidate - divided_length + 1)
+                    : INT_MAX;
+                int extra = fitch_na_indirect_length_cached(
+                    virtual_prelim.data(), clip_actives,
+                    &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
+                    &below_actives_cache[
+                        static_cast<size_t>(ei) * ds.n_blocks],
+                    ds, cutoff);
+                candidate = divided_length + extra;
+              }
+            } else if (use_iw) {
+              double iw_cutoff = best_candidate;
+              candidate = indirect_iw_length_cached(
+                  virtual_prelim.data(),
+                  &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
+                  ds, base_iw, iw_delta, iw_cutoff);
             } else {
-              candidate = divided_length +
-                  fitch_indirect_length(virtual_prelim.data(), tree, ds,
-                                        above, below);
+              int cutoff = (best_candidate < HUGE_VAL)
+                  ? static_cast<int>(best_candidate - divided_length + 1)
+                  : INT_MAX;
+              int extra = fitch_indirect_length_cached(
+                  virtual_prelim.data(),
+                  &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
+                  ds, cutoff);
+              candidate = divided_length + extra;
             }
             ++n_evaluated;
             if (candidate < best_candidate) {
@@ -499,7 +796,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
       // --- Phase 2: Restore original tree, verify best candidate ---
       tree.spr_unclip();
-      tree.build_postorder();
+      // Restore saved postorder (topology identical to pre-clip state)
+      tree.postorder.assign(saved_postorder.begin(), saved_postorder.end());
 
       bool dominated = (best_candidate > best_score + eps) ||
                         (best_candidate > best_score - eps && !params.accept_equal);
@@ -508,6 +806,9 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
       if (!dominated && best_above >= 0) {
         save_topology(tree, snap);
+        // Save full state arrays so we can restore without full_rescore
+        state_snap.save(tree);
+        states_valid = true;
 
         bool ok = apply_tbr_move(tree, clip_node,
                                   best_reroot_parent, best_reroot_child,
@@ -515,36 +816,62 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
         if (!ok || !validate_topology(tree)) {
           restore_topology(tree, snap);
-          tree.build_postorder();
+          state_snap.restore(tree);
+          // state_snap.restore() already restored postorder via memcpy
           continue;
         }
 
         tree.build_postorder();
         double actual = full_rescore(tree, ds);
 
+        // Compute topology hash for tabu checking
+        uint64_t tree_hash = 0;
+        if (tabu.active()) {
+          tree_hash = hash_tree(tree);
+        }
+
         if (actual < best_score - eps) {
+          // Always accept strict improvements (but record in tabu)
+          if (tabu.active()) tabu.insert(tree_hash);
           best_score = actual;
           ++n_accepted;
           hits = 1;
           accepted = true;
           keep_going = true;
+          states_valid = true;
+          if (constrained) update_constraint(tree, *cd);
         } else if (std::fabs(actual - best_score) <= eps
                    && params.accept_equal
                    && hits <= params.max_hits) {
+          // Equal-score move: reject if tabu
+          if (tabu.active() && tabu.contains(tree_hash)) {
+            // Topology already visited — restore and skip
+            restore_topology(tree, snap);
+            state_snap.restore(tree);
+            continue;
+          }
+          if (tabu.active()) tabu.insert(tree_hash);
           ++hits;
           ++n_accepted;
           accepted = true;
           keep_going = true;
+          states_valid = true;
+          if (constrained) update_constraint(tree, *cd);
         }
 
         if (!accepted) {
+          // Optimization #3: restore topology + states without full_rescore
           restore_topology(tree, snap);
-          tree.build_postorder();
-          full_rescore(tree, ds);
+          state_snap.restore(tree);
+          // state_snap.restore() already restored postorder via memcpy
         }
       }
 
       if (keep_going) {
+        // Optimization #6: don't reshuffle after acceptance — the topology
+        // changed near this clip, so re-trying the same ordering focuses
+        // on the productive region.
+        need_shuffle = false;
         if (params.max_accepted_changes > 0
             && n_accepted >= params.max_accepted_changes) {
           keep_going = false;
@@ -552,7 +879,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         break;
       }
 
-      R_CheckUserInterrupt();
+      if (ts::check_interrupt()) break;
     }
 
     if (params.max_accepted_changes > 0
@@ -561,7 +888,12 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     }
   }
 
-  best_score = full_rescore(tree, ds);
+  // Ensure state arrays match the final tree
+  if (!states_valid) {
+    full_rescore(tree, ds);
+  } else {
+    best_score = full_rescore(tree, ds);
+  }
 
   bool converged = !(params.max_accepted_changes > 0
                      && n_accepted >= params.max_accepted_changes);

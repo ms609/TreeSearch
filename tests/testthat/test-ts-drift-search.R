@@ -14,13 +14,13 @@ make_ts_data <- function(dataset) {
 
 # Helper: score a tree with ts engine
 ts_score <- function(tree, ds) {
-  ts_fitch_score(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels)
+  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels)
 }
 
 # Helper: run drift search
 ts_drift <- function(tree, ds, nCycles = 10L, afdLimit = 3L,
                      rfdLimit = 0.1, maxHits = 1L) {
-  ts_drift_search(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+  TreeSearch:::ts_drift_search(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
                   nCycles = nCycles, afdLimit = afdLimit,
                   rfdLimit = rfdLimit, maxHits = maxHits)
 }
@@ -28,7 +28,7 @@ ts_drift <- function(tree, ds, nCycles = 10L, afdLimit = 3L,
 # Helper: run TBR search
 ts_tbr <- function(tree, ds, maxHits = 1L, acceptEqual = FALSE,
                    maxChanges = 0L) {
-  ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+  TreeSearch:::ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
                 maxHits = maxHits, acceptEqual = acceptEqual,
                 maxChanges = maxChanges)
 }

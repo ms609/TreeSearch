@@ -1,19 +1,57 @@
 #include "ts_search.h"
 #include "ts_fitch.h"
+#include "ts_rng.h"
 #include <algorithm>
+#include <climits>
 #include <cmath>
 #include <random>
 #include <vector>
 
 #include <Rcpp.h>
 
-// R API for interrupt checking
 #include <R.h>
 #include <Rinternals.h>
 
 namespace ts {
 
-// ---- NNI search (Phase 1) ----
+// ---- Helpers (file-local) ----
+
+static double full_rescore(TreeState& tree, const DataSet& ds) {
+  tree.reset_states(ds);
+  return score_tree(tree, ds);
+}
+
+// Compute the number of tips in the subtree below each node.
+static void compute_subtree_sizes(const TreeState& tree,
+                                  std::vector<int>& sizes) {
+  sizes.assign(tree.n_node, 0);
+  for (int i = 0; i < tree.n_tip; ++i) sizes[i] = 1;
+  for (int node : tree.postorder) {
+    int ni = node - tree.n_tip;
+    sizes[node] = sizes[tree.left[ni]] + sizes[tree.right[ni]];
+  }
+}
+
+// Extract per-pattern step counts from local_cost (standard Fitch only).
+static void extract_divided_steps(
+    const TreeState& tree, const DataSet& ds,
+    std::vector<int>& char_steps) {
+  std::fill(char_steps.begin(), char_steps.end(), 0);
+  for (int node : tree.postorder) {
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      uint64_t mask =
+          tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
+      while (mask) {
+        int c = ts::ctz64(mask);
+        char_steps[blk.pattern_index[c]] += 1;
+        mask &= mask - 1;
+      }
+    }
+  }
+}
+
+// ---- NNI search ----
 
 SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
   double best_score = score_tree(tree, ds);
@@ -24,10 +62,14 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
   std::vector<int> edges = tree.nni_edges();
   int n_edges = static_cast<int>(edges.size());
 
-  // Seed from R's RNG for reproducibility with set.seed()
-  GetRNGstate();
-  std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
-  PutRNGstate();
+  // Detect inapplicable characters
+  bool has_na = false;
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
+  }
+
+  // Seed RNG (from R in serial mode, from thread-local in parallel mode)
+  std::mt19937 rng = ts::make_rng();
 
   bool keep_going = true;
   while (keep_going) {
@@ -39,12 +81,26 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
 
       for (int which = 0; which < 2; ++which) {
         auto undo = tree.nni_apply(c, which);
-        tree.build_postorder();
-        double new_score = score_tree(tree, ds);
         ++n_iterations;
+
+        double new_score;
+        if (has_na) {
+          // NA datasets: fall back to full rescore (three-pass needed)
+          tree.build_postorder();
+          new_score = score_tree(tree, ds);
+        } else {
+          // Incremental downpass: O(depth Ã— C) instead of O(n Ã— C)
+          tree.clip_undo_stack.clear();
+          int delta = fitch_incremental_downpass(tree, ds, c);
+          new_score = best_score + delta;
+        }
 
         if (new_score < best_score) {
           best_score = new_score;
+          // Update postorder + final_ arrays for subsequent iterations
+          tree.build_postorder();
+          tree.clip_undo_stack.clear();
+          fitch_uppass(tree, ds);
           ++n_moves;
           hits = 1;
           keep_going = true;
@@ -52,6 +108,9 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
         } else if (new_score == best_score) {
           ++hits;
           if (hits <= maxHits) {
+            tree.build_postorder();
+            tree.clip_undo_stack.clear();
+            fitch_uppass(tree, ds);
             ++n_moves;
             keep_going = true;
             goto nni_next_pass;
@@ -59,18 +118,29 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
         }
 
         tree.nni_undo(undo);
-        tree.build_postorder();
+        if (!has_na) {
+          // Restore prelim/local_cost by re-scoring the original topology
+          tree.clip_undo_stack.clear();
+          fitch_incremental_downpass(tree, ds, c);
+          tree.clip_undo_stack.clear();
+        } else {
+          tree.build_postorder();
+        }
       }
     }
 
     nni_next_pass:
-    R_CheckUserInterrupt();
+    if (ts::check_interrupt()) break;
   }
+
+  // Authoritative final score
+  tree.build_postorder();
+  best_score = full_rescore(tree, ds);
 
   return SearchResult{best_score, n_moves, n_iterations};
 }
 
-// ---- SPR search (Phase 2) ----
+// ---- SPR search ----
 
 // Collect edges in the main (divided) tree reachable from root.
 static void collect_destination_edges(
@@ -100,22 +170,23 @@ static void collect_destination_edges(
   }
 }
 
-// Score the tree from scratch: reset states, run full two-pass.
-static double full_rescore(TreeState& tree, const DataSet& ds) {
-  tree.reset_states(ds);
-  return score_tree(tree, ds);
-}
-
 SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
   double best_score = full_rescore(tree, ds);
   int n_moves = 0;
   int n_iterations = 0;
   int hits = 1;
 
-  // Seed from R's RNG for reproducibility with set.seed()
-  GetRNGstate();
-  std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
-  PutRNGstate();
+  const bool use_iw = std::isfinite(ds.concavity);
+  const double eps = use_iw ? 1e-10 : 0.0;
+
+  // Detect inapplicable characters
+  bool has_na = false;
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
+  }
+
+  // Seed RNG (from R in serial mode, from thread-local in parallel mode)
+  std::mt19937 rng = ts::make_rng();
 
   std::vector<int> clip_candidates;
   for (int node = 0; node < tree.n_node; ++node) {
@@ -124,162 +195,160 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
   }
 
   std::vector<std::pair<int,int>> destinations;
+
+  // Pre-allocate IW buffers
+  std::vector<int> div_steps;
+  std::vector<double> iw_del;
+  if (use_iw) {
+    div_steps.resize(ds.n_patterns, 0);
+    iw_del.resize(ds.n_patterns, 0.0);
+  }
+
+  // Subtree sizes for smaller-subtree filtering
+  std::vector<int> subtree_sizes;
+
   bool keep_going = true;
+  bool need_shuffle = true;
 
   while (keep_going) {
     keep_going = false;
-    std::shuffle(clip_candidates.begin(), clip_candidates.end(), rng);
+
+    // Deferred reshuffling: only reshuffle when previous pass found nothing
+    if (need_shuffle) {
+      std::shuffle(clip_candidates.begin(), clip_candidates.end(), rng);
+    }
+    need_shuffle = true;
+
+    // Recompute subtree sizes for smaller-subtree filtering
+    compute_subtree_sizes(tree, subtree_sizes);
 
     for (int clip_node : clip_candidates) {
-      // Skip children of root (see Lessons learned #2)
       if (tree.parent[clip_node] == tree.n_tip) continue;
 
-      // --- Clip phase ---
+      // Smaller-subtree filtering: skip clips of the larger half
+      if (subtree_sizes[clip_node] > tree.n_tip / 2) continue;
+
+      // Save clip subtree's actives before clipping (for NA indirect)
+      const uint64_t* clip_actives = nullptr;
+      std::vector<uint64_t> clip_actives_buf;
+      if (has_na) {
+        size_t clip_sa_base =
+            static_cast<size_t>(clip_node) * tree.total_words;
+        clip_actives_buf.assign(
+            tree.subtree_actives.begin() + clip_sa_base,
+            tree.subtree_actives.begin() + clip_sa_base + tree.total_words);
+        clip_actives = clip_actives_buf.data();
+      }
+
+      // --- Clip phase: incremental scoring (matches TBR pattern) ---
       tree.spr_clip(clip_node);
       tree.build_postorder();
 
-      tree.reset_states(ds);
-      double main_score = score_tree(tree, ds);
+      int ns = tree.clip_state.clip_sibling;
+      int nz = tree.clip_state.clip_grandpar;
+      int nx = tree.clip_state.clip_parent;
 
-      // Score clipped subtree separately
-      int clip_score = 0;
-      {
-        std::vector<int> clip_stack;
-        clip_stack.push_back(clip_node);
-        std::vector<int> clip_preorder;
-        while (!clip_stack.empty()) {
-          int nd = clip_stack.back();
-          clip_stack.pop_back();
-          if (nd < tree.n_tip) continue;
-          clip_preorder.push_back(nd);
-          int ni = nd - tree.n_tip;
-          clip_stack.push_back(tree.right[ni]);
-          clip_stack.push_back(tree.left[ni]);
+      double divided_length;
+      if (has_na) {
+        fitch_na_incremental_downpass(tree, ds, nz);
+        fitch_na_incremental_uppass(tree, ds, nz);
+        divided_length = static_cast<double>(fitch_na_pass3_score(tree, ds));
+      } else {
+        int delta = fitch_incremental_downpass(tree, ds, nz);
+        fitch_incremental_uppass(tree, ds, nz);
+
+        int nx_cost = 0;
+        for (int b = 0; b < ds.n_blocks; ++b) {
+          nx_cost += ds.blocks[b].weight * popcount64(
+              tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b]);
         }
-        for (int j = static_cast<int>(clip_preorder.size()) - 1; j >= 0; --j) {
-          int nd = clip_preorder[j];
-          int ni = nd - tree.n_tip;
-          int lc = tree.left[ni];
-          int rc = tree.right[ni];
-          for (int b = 0; b < ds.n_blocks; ++b) {
-            const CharBlock& blk = ds.blocks[b];
-            int offset = ds.block_word_offset[b];
-            clip_score += blk.weight * fitch_downpass_node(
-                &tree.prelim[static_cast<size_t>(lc) * tree.total_words + offset],
-                &tree.prelim[static_cast<size_t>(rc) * tree.total_words + offset],
-                &tree.prelim[static_cast<size_t>(nd) * tree.total_words + offset],
-                blk.n_states, blk.active_mask);
-          }
-        }
+        divided_length = best_score + delta - nx_cost;
       }
-
-      double divided_length = main_score + clip_score;
 
       const uint64_t* clip_prelim =
           &tree.prelim[static_cast<size_t>(clip_node) * tree.total_words];
 
-      // IW: precompute base IW score and marginal deltas
-      const bool use_iw = std::isfinite(ds.concavity);
+      // IW: precompute base score and marginal deltas
       double base_iw = 0.0;
-      std::vector<int> div_steps;
-      std::vector<double> iw_del;
       if (use_iw) {
-        div_steps.assign(ds.n_patterns, 0);
-        iw_del.resize(ds.n_patterns, 0.0);
-        // Main tree steps from local_cost
-        for (int nd : tree.postorder) {
-          for (int b = 0; b < ds.n_blocks; ++b) {
-            uint64_t mask = tree.local_cost[
-                static_cast<size_t>(nd) * tree.n_blocks + b];
-            while (mask) {
-              int c = ts::ctz64(mask);
-              div_steps[ds.blocks[b].pattern_index[c]] += 1;
-              mask &= mask - 1;
-            }
-          }
-        }
-        // Clip subtree steps (from prelim computed by fitch_downpass_node)
-        {
-          std::vector<int> cstack;
-          cstack.push_back(clip_node);
-          while (!cstack.empty()) {
-            int nd = cstack.back();
-            cstack.pop_back();
-            if (nd < tree.n_tip) continue;
-            int ni = nd - tree.n_tip;
-            int lc = tree.left[ni];
-            int rc = tree.right[ni];
-            for (int b = 0; b < ds.n_blocks; ++b) {
-              const CharBlock& blk = ds.blocks[b];
-              int offset = ds.block_word_offset[b];
-              const uint64_t* ls =
-                  &tree.prelim[static_cast<size_t>(lc) * tree.total_words + offset];
-              const uint64_t* rs =
-                  &tree.prelim[static_cast<size_t>(rc) * tree.total_words + offset];
-              uint64_t any_isect = 0;
-              for (int s = 0; s < blk.n_states; ++s)
-                any_isect |= (ls[s] & rs[s]);
-              uint64_t nu = ~any_isect & blk.active_mask;
-              while (nu) {
-                int c = ts::ctz64(nu);
-                div_steps[blk.pattern_index[c]] += 1;
-                nu &= nu - 1;
-              }
-            }
-            cstack.push_back(lc);
-            cstack.push_back(rc);
-          }
-        }
-        base_iw = compute_iw(ds, div_steps);
-        precompute_iw_delta(ds, div_steps, iw_del);
+        extract_divided_steps(tree, ds, div_steps);
+        base_iw = compute_weighted_score(ds, div_steps);
+        precompute_weighted_delta(ds, div_steps, iw_del);
       }
 
-      // --- Rearrangement phase: screen with indirect calc, verify accepts ---
+      // --- Rearrangement phase: screen with bounded indirect calc ---
       collect_destination_edges(tree, destinations);
 
-      int ns = tree.clip_state.clip_sibling;
-      int nz = tree.clip_state.clip_grandpar;
+      double best_candidate = HUGE_VAL;
+      int best_above = -1, best_below = -1;
 
-      bool accepted = false;
       for (auto& [above, below] : destinations) {
         if (above == nz && below == ns) continue;
 
         double candidate_score;
-        if (use_iw) {
-          candidate_score = indirect_iw_length(clip_prelim, tree, ds,
-                                               above, below, base_iw, iw_del);
+        if (has_na) {
+          if (use_iw) {
+            candidate_score = indirect_na_iw_length_bounded(
+                clip_prelim, clip_actives, tree, ds, above, below,
+                base_iw, iw_del, best_candidate);
+          } else {
+            int cutoff = (best_candidate < HUGE_VAL)
+                ? static_cast<int>(best_candidate - divided_length + 1)
+                : INT_MAX;
+            int extra = fitch_na_indirect_length_bounded(
+                clip_prelim, clip_actives, tree, ds, above, below, cutoff);
+            candidate_score = divided_length + extra;
+          }
+        } else if (use_iw) {
+          candidate_score = indirect_iw_length_bounded(
+              clip_prelim, tree, ds, above, below, base_iw, iw_del,
+              best_candidate);
         } else {
-          int extra = fitch_indirect_length(clip_prelim, tree, ds, above, below);
+          int cutoff = (best_candidate < HUGE_VAL)
+              ? static_cast<int>(best_candidate - divided_length + 1)
+              : INT_MAX;
+          int extra = fitch_indirect_length_bounded(
+              clip_prelim, tree, ds, above, below, cutoff);
           candidate_score = divided_length + extra;
         }
         ++n_iterations;
 
-        bool dominated = (candidate_score > best_score) ||
-                         (candidate_score == best_score && hits > maxHits);
-        if (dominated) continue;
+        if (candidate_score < best_candidate) {
+          best_candidate = candidate_score;
+          best_above = above;
+          best_below = below;
+        }
+      }
 
-        // Candidate passes screen — regraft and verify with full rescore
-        tree.spr_regraft(above, below);
+      // --- Verify best candidate with full rescore ---
+      bool dominated = (best_candidate > best_score + eps) ||
+                       (best_candidate > best_score - eps
+                        && hits > maxHits);
+
+      bool accepted = false;
+
+      if (!dominated && best_above >= 0) {
+        tree.spr_regraft(best_above, best_below);
         tree.build_postorder();
         double actual = full_rescore(tree, ds);
 
-        if (actual < best_score) {
+        if (actual < best_score - eps) {
           best_score = actual;
           ++n_moves;
           hits = 1;
           accepted = true;
           keep_going = true;
-          break;
-        } else if (actual == best_score && hits <= maxHits) {
+        } else if (std::fabs(actual - best_score) <= eps
+                   && hits <= maxHits) {
           ++hits;
           ++n_moves;
           accepted = true;
           keep_going = true;
-          break;
         }
 
-        // Not accepted — undo regraft
-        tree.spr_unregraft(above, below);
+        if (!accepted) {
+          tree.spr_unregraft(best_above, best_below);
+        }
       }
 
       if (!accepted) {
@@ -288,10 +357,16 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
 
       tree.build_postorder();
 
-      if (keep_going) break;
+      if (keep_going) {
+        // Deferred reshuffling: don't reshuffle after acceptance
+        need_shuffle = false;
+        break;
+      }
+
+      if (ts::check_interrupt()) { keep_going = false; break; }
     }
 
-    R_CheckUserInterrupt();
+    if (ts::check_interrupt()) break;
   }
 
   best_score = full_rescore(tree, ds);

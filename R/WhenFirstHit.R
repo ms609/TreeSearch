@@ -4,7 +4,7 @@
 #' This information is read from the `firstHit` attribute if present.
 #' If not, trees are taken to be listed in the order in which they were found,
 #' and named according to the search iteration in which they were first hit - 
-#' the situation when trees found by [`MaximizeParsimony()`] are saved to file.
+#' the situation when trees found by [`Morphy()`] are saved to file.
 #' 
 #' @param trees A list of trees, or a `multiPhylo` object.
 #' @return `trees`, with a `firstHit` attribute listing the number of trees hit
@@ -23,7 +23,7 @@
 #' attr(WhenFirstHit(trees), "firstHit")
 #' @family utility functions
 #' @seealso
-#' - [`MaximizeParsimony()`]
+#' - [`Morphy()`]
 #' @export
 WhenFirstHit <- function(trees) {
   if (is.null(attr(trees, "firstHit"))) {

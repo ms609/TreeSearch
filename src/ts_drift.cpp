@@ -1,6 +1,8 @@
 #include "ts_drift.h"
+#include "ts_constraint.h"
 #include "ts_fitch.h"
 #include "ts_tbr.h"
+#include "ts_rng.h"
 #include <algorithm>
 #include <random>
 #include <vector>
@@ -9,7 +11,6 @@
 
 #include <Rcpp.h>
 #include <R.h>
-#include <Rmath.h>
 #include <Rinternals.h>
 
 namespace ts {
@@ -336,11 +337,19 @@ static bool drift_apply_tbr_move(
 // Returns the number of accepted moves.
 static int drift_phase(TreeState& tree, const DataSet& ds,
                        int afd_limit, double rfd_limit,
-                       int max_changes, std::mt19937& rng) {
+                       int max_changes, std::mt19937& rng,
+                       ConstraintData* cd = nullptr) {
+  bool constrained = cd && cd->active;
+  if (constrained) update_constraint(tree, *cd);
   double score = drift_full_rescore(tree, ds);
   int n_accepted = 0;
   const bool use_iw = std::isfinite(ds.concavity);
   const double eps = use_iw ? 1e-10 : 0.0;
+
+  bool has_na = false;
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
+  }
 
   std::vector<int> clip_candidates;
   for (int node = 0; node < tree.n_node; ++node) {
@@ -363,6 +372,9 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     iw_delta.resize(ds.n_patterns, 0.0);
   }
 
+  // Buffer for clip subtree's actives (NA indirect length)
+  std::vector<uint64_t> clip_actives_buf(has_na ? tree.total_words : 0);
+
   DriftTopoSnapshot snap;
   std::vector<uint64_t> old_local_cost;
 
@@ -372,31 +384,54 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     if (tree.parent[clip_node] == tree.n_tip) continue;
 
     // --- Phase 1: Clip + indirect evaluation ---
+
+    // Save clip subtree actives before clipping
+    const uint64_t* clip_actives = nullptr;
+    if (has_na) {
+      size_t clip_sa_base =
+          static_cast<size_t>(clip_node) * tree.total_words;
+      std::copy(tree.subtree_actives.begin() + clip_sa_base,
+                tree.subtree_actives.begin() + clip_sa_base + tree.total_words,
+                clip_actives_buf.begin());
+      clip_actives = clip_actives_buf.data();
+    }
+
     tree.spr_clip(clip_node);
     tree.build_postorder();
 
     int ns = tree.clip_state.clip_sibling;
     int nz = tree.clip_state.clip_grandpar;
     int nx = tree.clip_state.clip_parent;
-    int delta = fitch_incremental_downpass(tree, ds, nz);
-    fitch_incremental_uppass(tree, ds, nz);
 
-    int nx_cost = 0;
-    for (int b = 0; b < ds.n_blocks; ++b) {
-      nx_cost += ds.blocks[b].weight * popcount64(
-          tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b]);
+    double divided_length;
+    if (has_na) {
+      fitch_na_incremental_downpass(tree, ds, nz);
+      fitch_na_incremental_uppass(tree, ds, nz);
+      divided_length = static_cast<double>(fitch_na_pass3_score(tree, ds));
+    } else {
+      int delta = fitch_incremental_downpass(tree, ds, nz);
+      fitch_incremental_uppass(tree, ds, nz);
+
+      int nx_cost = 0;
+      for (int b = 0; b < ds.n_blocks; ++b) {
+        nx_cost += ds.blocks[b].weight * popcount64(
+            tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b]);
+      }
+      divided_length = score + delta - nx_cost;
     }
-    double divided_length = score + delta - nx_cost;
 
-    // IW: precompute base IW and marginal deltas
+    // Weighted scoring (IW or profile): precompute base score and deltas
     double base_iw = 0.0;
     if (use_iw) {
       drift_extract_divided_steps(tree, ds, divided_steps);
-      base_iw = compute_iw(ds, divided_steps);
-      precompute_iw_delta(ds, divided_steps, iw_delta);
+      base_iw = compute_weighted_score(ds, divided_steps);
+      precompute_weighted_delta(ds, divided_steps, iw_delta);
     }
 
     drift_collect_main_edges(tree, main_edges);
+
+    // Constraint: classify this clip
+    if (constrained) classify_clip_constraints(tree, clip_node, *cd);
 
     // Find best candidate via indirect evaluation
     double best_candidate = HUGE_VAL;
@@ -406,16 +441,32 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     size_t clip_base = static_cast<size_t>(clip_node) * tree.total_words;
     const uint64_t* clip_prelim = &tree.prelim[clip_base];
 
-    // SPR candidates
+    // SPR candidates (bounded to skip losing positions early)
     for (auto& [above, below] : main_edges) {
       if (above == nz && below == ns) continue;
+      if (constrained && regraft_violates_constraint(below, *cd)) continue;
       double candidate;
-      if (use_iw) {
-        candidate = indirect_iw_length(clip_prelim, tree, ds,
-                                       above, below, base_iw, iw_delta);
+      if (has_na) {
+        if (use_iw) {
+          candidate = indirect_na_iw_length_bounded(clip_prelim, clip_actives,
+              tree, ds, above, below, base_iw, iw_delta, best_candidate);
+        } else {
+          int ew_cutoff = (best_candidate < HUGE_VAL)
+              ? static_cast<int>(best_candidate - divided_length) : INT_MAX;
+          candidate = divided_length +
+              fitch_na_indirect_length_bounded(clip_prelim, clip_actives,
+                  tree, ds, above, below, ew_cutoff);
+        }
+      } else if (use_iw) {
+        candidate = indirect_iw_length_bounded(clip_prelim, tree, ds,
+                                       above, below, base_iw, iw_delta,
+                                       best_candidate);
       } else {
+        int ew_cutoff = (best_candidate < HUGE_VAL)
+            ? static_cast<int>(best_candidate - divided_length) : INT_MAX;
         candidate = divided_length +
-            fitch_indirect_length(clip_prelim, tree, ds, above, below);
+            fitch_indirect_length_bounded(clip_prelim, tree, ds,
+                                          above, below, ew_cutoff);
       }
       if (candidate < best_candidate) {
         best_candidate = candidate;
@@ -441,14 +492,34 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
 
         for (auto& [above, below] : main_edges) {
           if (above == nz && below == ns) continue;
+          if (constrained && regraft_violates_constraint(below, *cd))
+            continue;
           double candidate;
-          if (use_iw) {
-            candidate = indirect_iw_length(virtual_prelim.data(), tree, ds,
-                                           above, below, base_iw, iw_delta);
+          if (has_na) {
+            if (use_iw) {
+              candidate = indirect_na_iw_length_bounded(
+                  virtual_prelim.data(),
+                  clip_actives, tree, ds, above, below,
+                  base_iw, iw_delta, best_candidate);
+            } else {
+              int ew_cutoff = (best_candidate < HUGE_VAL)
+                  ? static_cast<int>(best_candidate - divided_length)
+                  : INT_MAX;
+              candidate = divided_length +
+                  fitch_na_indirect_length_bounded(virtual_prelim.data(),
+                      clip_actives, tree, ds, above, below, ew_cutoff);
+            }
+          } else if (use_iw) {
+            candidate = indirect_iw_length_bounded(
+                virtual_prelim.data(), tree, ds,
+                above, below, base_iw, iw_delta, best_candidate);
           } else {
+            int ew_cutoff = (best_candidate < HUGE_VAL)
+                ? static_cast<int>(best_candidate - divided_length)
+                : INT_MAX;
             candidate = divided_length +
-                fitch_indirect_length(virtual_prelim.data(), tree, ds,
-                                      above, below);
+                fitch_indirect_length_bounded(virtual_prelim.data(), tree, ds,
+                                              above, below, ew_cutoff);
           }
           if (candidate < best_candidate) {
             best_candidate = candidate;
@@ -492,11 +563,13 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
       tree.build_postorder();
       score = drift_full_rescore(tree, ds);
       ++n_accepted;
+      if (constrained) update_constraint(tree, *cd);
     } else if (std::fabs(delta_score) <= eps) {
       // Equal: always accept
       tree.build_postorder();
       score = drift_full_rescore(tree, ds);
       ++n_accepted;
+      if (constrained) update_constraint(tree, *cd);
     } else {
       // Suboptimal but within AFD limit: check RFD
       tree.build_postorder();
@@ -511,6 +584,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
         if (rfd <= rfd_limit) {
           score = new_score;
           ++n_accepted;
+          if (constrained) update_constraint(tree, *cd);
         } else {
           drift_restore_topology(tree, snap);
           tree.build_postorder();
@@ -550,6 +624,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
           tree.build_postorder();
           score = drift_full_rescore(tree, ds);
           ++n_accepted;
+          if (constrained) update_constraint(tree, *cd);
         } else {
           score = drift_full_rescore(tree, ds);
         }
@@ -558,7 +633,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
 
     if (n_accepted >= max_changes) break;
 
-    R_CheckUserInterrupt();
+    if (ts::check_interrupt()) break;
   }
 
   return n_accepted;
@@ -567,15 +642,14 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
 // --- Main drift search ---
 
 DriftResult drift_search(TreeState& tree, const DataSet& ds,
-                         const DriftParams& params) {
+                         const DriftParams& params,
+                         ConstraintData* cd) {
   double best_score = drift_full_rescore(tree, ds);
   int total_drift_moves = 0;
   int total_tbr_moves = 0;
 
-  // Seed from R's RNG for reproducibility with set.seed()
-  GetRNGstate();
-  std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
-  PutRNGstate();
+  // Seed RNG (from R in serial mode, from thread-local in parallel mode)
+  std::mt19937 rng = ts::make_rng();
 
   // Save the best tree topology
   DriftTopoSnapshot best_snap;
@@ -591,7 +665,7 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
       // Suboptimal drift phase
       int drift_moves = drift_phase(tree, ds,
                                      params.afd_limit, params.rfd_limit,
-                                     max_drift_changes, rng);
+                                     max_drift_changes, rng, cd);
       total_drift_moves += drift_moves;
     } else {
       // Equal-score drift phase
@@ -599,8 +673,9 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
       eq_params.accept_equal = true;
       eq_params.max_accepted_changes = tree.n_tip / 8;
       eq_params.max_hits = 100;  // generous for equal-score exploration
+      eq_params.tabu_size = params.tabu_size;
 
-      TBRResult eq_result = tbr_search(tree, ds, eq_params);
+      TBRResult eq_result = tbr_search(tree, ds, eq_params, cd);
       total_drift_moves += eq_result.n_accepted;
     }
 
@@ -609,8 +684,9 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
     search_params.accept_equal = false;
     search_params.max_accepted_changes = 0;  // run to convergence
     search_params.max_hits = params.max_hits;
+    search_params.tabu_size = params.tabu_size;
 
-    TBRResult search_result = tbr_search(tree, ds, search_params);
+    TBRResult search_result = tbr_search(tree, ds, search_params, cd);
     total_tbr_moves += search_result.n_accepted;
 
     // Update best if improved
@@ -623,7 +699,7 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
       tree.build_postorder();
     }
 
-    R_CheckUserInterrupt();
+    if (ts::check_interrupt()) break;
   }
 
   // Ensure tree is the best found

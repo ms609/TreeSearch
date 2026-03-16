@@ -1,4 +1,5 @@
 #include "ts_data.h"
+#include "ts_simplify.h"
 #include <algorithm>
 #include <cstring>
 #include <map>
@@ -11,7 +12,9 @@ DataSet build_dataset(
     const int* weight_r,
     const char** levels_r,
     const int* min_steps_r,
-    double concavity)
+    double concavity,
+    const double* info_amounts_r,
+    int info_max_steps)
 {
   DataSet ds;
   ds.n_tips = n_tips;
@@ -36,7 +39,21 @@ DataSet build_dataset(
     }
   }
 
+  // --- Character simplification ---
+  SimplificationResult simpl = simplify_patterns(
+      token_states, tip_data_r, n_tips, n_patterns,
+      weight_r, n_states, inapp_state);
+
+  // Store per-pattern precomputed_steps and compute ew_offset
+  ds.precomputed_steps.resize(n_patterns, 0);
+  ds.ew_offset = 0;
+  for (int p = 0; p < n_patterns; ++p) {
+    ds.precomputed_steps[p] = simpl.patterns[p].precomputed_steps;
+    ds.ew_offset += simpl.patterns[p].precomputed_steps * weight_r[p];
+  }
+
   // Classify each pattern: has_inapp + number of applicable states + weight
+  // Use simplified tokens to determine has_inapp and n_applicable.
   struct PatternInfo {
     int pattern_idx;
     bool has_inapp;
@@ -46,14 +63,22 @@ DataSet build_dataset(
 
   std::vector<PatternInfo> patterns(n_patterns);
   for (int p = 0; p < n_patterns; ++p) {
+    const auto& sp = simpl.patterns[p];
     patterns[p].pattern_idx = p;
     patterns[p].weight = weight_r[p];
     patterns[p].has_inapp = false;
+
+    // Skip uninformative patterns (they're fully accounted for by ew_offset)
+    if (!sp.informative) {
+      patterns[p].weight = 0;  // will be removed below
+      patterns[p].n_applicable = 0;
+      continue;
+    }
+
     uint32_t all_states = 0;
     for (int tip = 0; tip < n_tips; ++tip) {
-      int token = tip_data_r[tip + n_tips * p] - 1;
-      all_states |= token_states[token];
-      if (inapp_state >= 0 && (token_states[token] & (1u << inapp_state))) {
+      all_states |= sp.tip_tokens[tip];
+      if (inapp_state >= 0 && (sp.tip_tokens[tip] & (1u << inapp_state))) {
         patterns[p].has_inapp = true;
       }
     }
@@ -64,13 +89,21 @@ DataSet build_dataset(
     patterns[p].n_applicable = n_app;
   }
 
-  // Sort by (has_inapp, weight) so characters with the same weight
+  // Remove zero-weight patterns before sorting — they contribute nothing
+  // to scoring and would waste block space (especially after resampling).
+  patterns.erase(
+    std::remove_if(patterns.begin(), patterns.end(),
+      [](const PatternInfo& p) { return p.weight == 0; }),
+    patterns.end());
+
+  // Sort by (has_inapp, weight desc) so characters with the same weight
   // and inapplicability status end up in the same blocks.
-  // No weight expansion: each pattern appears exactly once.
+  // Descending weight puts expensive blocks first, improving early
+  // termination in bounded indirect-length functions.
   std::stable_sort(patterns.begin(), patterns.end(),
     [](const PatternInfo& a, const PatternInfo& b) {
       if (a.has_inapp != b.has_inapp) return a.has_inapp < b.has_inapp;
-      return a.weight < b.weight;
+      return a.weight > b.weight;
     });
 
   // Count total applicable states in the dataset.
@@ -90,15 +123,15 @@ DataSet build_dataset(
   ds.blocks.clear();
 
   int i_pat = 0;
-  int total_patterns = static_cast<int>(patterns.size());
-  while (i_pat < total_patterns) {
+  int total_patterns_active = static_cast<int>(patterns.size());
+  while (i_pat < total_patterns_active) {
     bool block_inapp = patterns[i_pat].has_inapp;
     int block_weight = patterns[i_pat].weight;
     int max_app = block_inapp ? max_app_inapp : max_app_standard;
 
     int block_size = 0;
     int start = i_pat;
-    while (i_pat < total_patterns && block_size < MAX_CHARS_PER_BLOCK &&
+    while (i_pat < total_patterns_active && block_size < MAX_CHARS_PER_BLOCK &&
            patterns[i_pat].has_inapp == block_inapp &&
            patterns[i_pat].weight == block_weight) {
       ++block_size;
@@ -130,6 +163,12 @@ DataSet build_dataset(
     ds.total_words += ds.blocks[b].n_states;
   }
 
+  // Pad total_words to even count for SIMD safety (SSE2 loads 2 × uint64_t).
+  // Padding words are zero-initialized and don't affect scoring.
+  if (ds.total_words % 2 != 0) {
+    ds.total_words += 1;
+  }
+
   // Build state-to-word mapping (applicable states only, excluding inapp)
   std::vector<int> state_remap(n_states, -1);
   {
@@ -141,7 +180,7 @@ DataSet build_dataset(
     }
   }
 
-  // Build tip state data
+  // Build tip state data — use simplified tokens where available
   ds.tip_states.assign(
     static_cast<size_t>(n_tips) * ds.total_words, 0ULL);
 
@@ -153,9 +192,11 @@ DataSet build_dataset(
       int pat = blk.pattern_index[c];
       uint64_t bit = 1ULL << c;
 
+      const auto& sp = simpl.patterns[pat];
+
       for (int tip = 0; tip < n_tips; ++tip) {
-        int token = tip_data_r[tip + n_tips * pat] - 1;
-        uint32_t tstates = token_states[token];
+        // Use simplified tip tokens
+        uint32_t tstates = sp.tip_tokens[tip];
 
         size_t tip_base = static_cast<size_t>(tip) * ds.total_words;
 
@@ -183,15 +224,32 @@ DataSet build_dataset(
     }
   }
 
-  // IW metadata
+  // IW metadata — adjust min_steps by precomputed_steps offset
   ds.min_steps.resize(n_patterns, 0);
   ds.pattern_freq.resize(n_patterns, 0);
   ds.concavity = concavity;
   for (int p = 0; p < n_patterns; ++p) {
     ds.pattern_freq[p] = weight_r[p];
     if (min_steps_r) {
-      ds.min_steps[p] = min_steps_r[p];
+      ds.min_steps[p] = min_steps_r[p] - ds.precomputed_steps[p];
+      if (ds.min_steps[p] < 0) ds.min_steps[p] = 0;
     }
+  }
+
+  // Profile parsimony: copy info_amounts table and set scoring mode.
+  // info_amounts_r is column-major from R: [max_steps × n_patterns].
+  if (info_amounts_r && info_max_steps > 0) {
+    size_t table_size = static_cast<size_t>(info_max_steps) * n_patterns;
+    ds.info_amounts.assign(info_amounts_r, info_amounts_r + table_size);
+    ds.info_max_steps = info_max_steps;
+    ds.scoring_mode = ScoringMode::PROFILE;
+    // Set concavity to a finite value so isfinite() checks in search
+    // modules activate the weighted (indirect IW) pipeline.
+    ds.concavity = 1.0;
+  } else if (std::isfinite(concavity)) {
+    ds.scoring_mode = ScoringMode::IW;
+  } else {
+    ds.scoring_mode = ScoringMode::EW;
   }
 
   return ds;

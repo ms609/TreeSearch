@@ -21,6 +21,7 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
 
     for (int b = 0; b < ds.n_blocks; ++b) {
       const CharBlock& blk = ds.blocks[b];
+      if (blk.active_mask == 0) continue;
       int off = ds.block_word_offset[b];
       int k = blk.n_states;
       const uint64_t* L = &tree.prelim[lb + off];
@@ -29,10 +30,11 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
 
       if (!blk.has_inapplicable) {
         // Standard Fitch
-        uint64_t any_isect = 0;
-        for (int s = 0; s < k; ++s) any_isect |= (L[s] & R[s]);
+        uint64_t any_isect = simd::any_hit_reduce(L, R, k);
         uint64_t needs_union = ~any_isect & blk.active_mask;
-        total_steps += blk.weight * popcount64(needs_union);
+        int nu = popcount64(needs_union);
+        if (blk.upweight_mask) nu += popcount64(needs_union & blk.upweight_mask);
+        total_steps += blk.weight * nu;
         tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b] = needs_union;
         for (int s = 0; s < k; ++s) {
           uint64_t isect = L[s] & R[s];
@@ -41,12 +43,9 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
       } else {
         // NA-aware first downpass (Brazeau et al. 2019)
         // Matches morphy's mpl_NA_fitch_first_downpass exactly.
-        uint64_t I_app = 0, L_app = 0, R_app = 0;
-        for (int s = 1; s < k; ++s) {
-          I_app |= (L[s] & R[s]);
-          L_app |= L[s];
-          R_app |= R[s];
-        }
+        uint64_t I_app = simd::any_hit_reduce_from1(L, R, k);
+        uint64_t L_app = simd::or_reduce(L, k, 1);
+        uint64_t R_app = simd::or_reduce(R, k, 1);
         uint64_t I0 = L[0] & R[0];
         uint64_t both_app = L_app & R_app;
         // case_keep: use intersection (applicable states intersect,
@@ -88,6 +87,7 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
 
     for (int b = 0; b < ds.n_blocks; ++b) {
       const CharBlock& blk = ds.blocks[b];
+      if (blk.active_mask == 0) continue;
       int off = ds.block_word_offset[b];
       int k = blk.n_states;
 
@@ -159,6 +159,7 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
 
     for (int b = 0; b < ds.n_blocks; ++b) {
       const CharBlock& blk = ds.blocks[b];
+      if (blk.active_mask == 0) continue;
       int off = ds.block_word_offset[b];
       int k = blk.n_states;
 
@@ -231,7 +232,8 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
     size_t rb = static_cast<size_t>(rc) * tree.total_words;
 
     for (int b = 0; b < ds.n_blocks; ++b) {
-      if (!ds.blocks[b].has_inapplicable) continue;
+      if (!ds.blocks[b].has_inapplicable || ds.blocks[b].active_mask == 0)
+        continue;
       const CharBlock& blk = ds.blocks[b];
       int off = ds.block_word_offset[b];
       int k = blk.n_states;
@@ -245,25 +247,21 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
       uint64_t ss_app = 0;
       for (int s = 1; s < k; ++s) ss_app |= F[s];
 
-      // Any intersection in children's D2 (including NA bit)
-      uint64_t any_isect = 0;
-      for (int s = 0; s < k; ++s) any_isect |= (L2[s] & R2[s]);
+      uint64_t any_isect = simd::any_hit_reduce(L2, R2, k);
+      uint64_t I_app = simd::any_hit_reduce_from1(L2, R2, k);
 
-      // Applicable intersection
-      uint64_t I_app = 0;
-      for (int s = 1; s < k; ++s) I_app |= (L2[s] & R2[s]);
-
-      // Children's subtree_actives: applicable tips anywhere below
       const uint64_t* la = &tree.subtree_actives[lb + off];
       const uint64_t* ra = &tree.subtree_actives[rb + off];
-      uint64_t l_act = 0, r_act = 0;
-      for (int s = 1; s < k; ++s) { l_act |= la[s]; r_act |= ra[s]; }
+      uint64_t l_act = simd::or_reduce(la, k, 1);
+      uint64_t r_act = simd::or_reduce(ra, k, 1);
 
       // Step: both subtrees have applicable tips, AND NOT (node is
       //       applicable with some D2 intersection).
       uint64_t needs_step = l_act & r_act
                           & ~(ss_app & any_isect) & blk.active_mask;
-      total_steps += blk.weight * popcount64(needs_step);
+      int ns_p3 = popcount64(needs_step);
+      if (blk.upweight_mask) ns_p3 += popcount64(needs_step & blk.upweight_mask);
+      total_steps += blk.weight * ns_p3;
 
       // Compute down2 for this node (matches morphy exactly):
       // Applicable node with any intersection:

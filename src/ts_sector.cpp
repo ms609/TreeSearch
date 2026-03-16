@@ -3,14 +3,61 @@
 #include "ts_tbr.h"
 #include "ts_ratchet.h"
 #include "ts_wagner.h"
+#include "ts_rng.h"
 
 #include <algorithm>
 #include <random>
 #include <vector>
 #include <R.h>
-#include <Rmath.h>
 
 namespace ts {
+
+// ---- Clade topology snapshot ----
+// Saves only the internal nodes within a clade (sector) for fast undo.
+// Much cheaper than copying the full tree's left/right/parent vectors.
+
+struct CladeSnapshot {
+  std::vector<int> internals;  // full-tree internal node indices
+  std::vector<int> left;       // saved left[ni] for each
+  std::vector<int> right;      // saved right[ni] for each
+  // Parent links for all children (tips and internals) are restored
+  // from left/right during restore.
+};
+
+static void save_clade(const TreeState& tree, int clade_root,
+                        CladeSnapshot& snap) {
+  snap.internals.clear();
+  // DFS to collect internal nodes in the clade
+  std::vector<int> stk;
+  stk.push_back(clade_root);
+  while (!stk.empty()) {
+    int nd = stk.back();
+    stk.pop_back();
+    if (nd < tree.n_tip) continue;
+    snap.internals.push_back(nd);
+    int ni = nd - tree.n_tip;
+    stk.push_back(tree.left[ni]);
+    stk.push_back(tree.right[ni]);
+  }
+  // Save left/right for each internal node
+  snap.left.resize(snap.internals.size());
+  snap.right.resize(snap.internals.size());
+  for (size_t i = 0; i < snap.internals.size(); ++i) {
+    int ni = snap.internals[i] - tree.n_tip;
+    snap.left[i] = tree.left[ni];
+    snap.right[i] = tree.right[ni];
+  }
+}
+
+static void restore_clade(TreeState& tree, const CladeSnapshot& snap) {
+  for (size_t i = 0; i < snap.internals.size(); ++i) {
+    int ni = snap.internals[i] - tree.n_tip;
+    tree.left[ni] = snap.left[i];
+    tree.right[ni] = snap.right[i];
+    tree.parent[snap.left[i]] = snap.internals[i];
+    tree.parent[snap.right[i]] = snap.internals[i];
+  }
+}
 
 // ---- Clade helpers ----
 
@@ -358,8 +405,12 @@ static void reinsert_sector(TreeState& tree, const ReducedDataset& rd) {
 
 // Partition the tree into approximately equal-sized non-overlapping sectors.
 // Returns a vector of sector root node indices.
+//
+// O(n) algorithm: maintain unclaimed_below[] counts; when a sector is
+// claimed, subtract from ancestors via a rootward walk. Each node is
+// visited O(1) times in the main loop; rootward walks are O(height)
+// each and there are at most n_partitions of them.
 static std::vector<int> xss_partition(const TreeState& tree, int n_partitions) {
-  // Compute subtree tip counts bottom-up
   std::vector<int> subtree_size(tree.n_node, 0);
   for (int i = 0; i < tree.n_tip; ++i) {
     subtree_size[i] = 1;
@@ -373,46 +424,26 @@ static std::vector<int> xss_partition(const TreeState& tree, int n_partitions) {
   int target = tree.n_tip / n_partitions;
   if (target < 4) target = 4;
 
+  // unclaimed_below[node] = number of unclaimed tips in node's subtree.
+  // Starts equal to subtree_size; reduced when descendant sectors are claimed.
+  std::vector<int> unclaimed_below = subtree_size;
+
+  int root = tree.n_tip;
   std::vector<int> sectors;
-  std::vector<bool> claimed(tree.n_node, false);
 
-  // Walk postorder (bottom-up). When a subtree reaches ~target size
-  // and hasn't been claimed by a descendant sector, mark it.
   for (int node : tree.postorder) {
-    if (node == tree.n_tip) continue; // skip root
+    if (node == root) continue;
 
-    // Count unclaimed tips below this node
-    int unclaimed_tips = 0;
-    std::vector<int> tip_stack;
-    tip_stack.push_back(node);
-    while (!tip_stack.empty()) {
-      int nd = tip_stack.back();
-      tip_stack.pop_back();
-      if (claimed[nd]) continue;
-      if (nd < tree.n_tip) {
-        ++unclaimed_tips;
-      } else {
-        int ni = nd - tree.n_tip;
-        tip_stack.push_back(tree.left[ni]);
-        tip_stack.push_back(tree.right[ni]);
-      }
-    }
-
-    if (unclaimed_tips >= target) {
+    if (unclaimed_below[node] >= target) {
       sectors.push_back(node);
-      // Mark all nodes in this clade as claimed
-      std::vector<int> mark_stack;
-      mark_stack.push_back(node);
-      while (!mark_stack.empty()) {
-        int nd = mark_stack.back();
-        mark_stack.pop_back();
-        claimed[nd] = true;
-        if (nd >= tree.n_tip) {
-          int ni = nd - tree.n_tip;
-          mark_stack.push_back(tree.left[ni]);
-          mark_stack.push_back(tree.right[ni]);
-        }
+
+      // Subtract claimed tips from all ancestors up to and including root
+      int tips_claimed = unclaimed_below[node];
+      for (int cur = tree.parent[node]; ; cur = tree.parent[cur]) {
+        unclaimed_below[cur] -= tips_claimed;
+        if (cur == root) break;
       }
+      unclaimed_below[node] = 0;
     }
   }
 
@@ -422,12 +453,11 @@ static std::vector<int> xss_partition(const TreeState& tree, int n_partitions) {
 // ---- RSS ----
 
 SectorResult rss_search(TreeState& tree, DataSet& ds,
-                        const SectorParams& params) {
-  // Seed from R's RNG for reproducibility — one-shot to avoid nesting
-  // with tbr_search()'s own GetRNGstate()/PutRNGstate().
-  GetRNGstate();
-  std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
-  PutRNGstate();
+                        const SectorParams& params,
+                        ConstraintData* cd) {
+  bool constrained = cd && cd->active && cd->has_posthoc;
+  // Seed RNG (from R in serial mode, from thread-local in parallel mode)
+  std::mt19937 rng = ts::make_rng();
 
   // Ensure full tree has current state sets
   double current_score = score_tree(tree, ds);
@@ -479,8 +509,9 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
         0, static_cast<int>(eligible.size()) - 1)(rng);
     int sector_root = eligible[idx];
 
-    // Ensure current state sets are up to date
-    score_tree(tree, ds);
+    // State arrays are guaranteed valid: either from the initial
+    // score_tree above, or from the previous iteration's acceptance
+    // (which calls score_tree) or rejection (which also rescores).
 
     // Build reduced dataset
     ReducedDataset rd = build_reduced_dataset(tree, ds, sector_root);
@@ -498,14 +529,21 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
                   (params.accept_equal && sector_best == sector_current);
 
     if (accept && sector_best <= sector_current) {
-      // Save topology in case reinsertion worsens full-tree score
-      auto save_left = tree.left;
-      auto save_right = tree.right;
-      auto save_parent = tree.parent;
+      // Save only the sector clade's topology for potential undo
+      CladeSnapshot snap;
+      save_clade(tree, sector_root, snap);
 
       reinsert_sector(tree, rd);
       tree.build_postorder();
       double new_score = score_tree(tree, ds);
+
+      // Post-hoc constraint check
+      if (constrained && violates_constraint_posthoc(tree, *cd)) {
+        restore_clade(tree, snap);
+        tree.build_postorder();
+        score_tree(tree, ds);
+        continue;
+      }
 
       if (new_score < result.best_score) {
         result.total_steps_saved +=
@@ -533,22 +571,20 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
         // Equal score accepted — topology changed but score didn't
       } else {
         // HTU approximation caused full-tree score to worsen; revert
-        tree.left = save_left;
-        tree.right = save_right;
-        tree.parent = save_parent;
+        restore_clade(tree, snap);
         tree.build_postorder();
         score_tree(tree, ds);
       }
     }
 
-    R_CheckUserInterrupt();
+    if (ts::check_interrupt()) break;
   }
 
   // Global TBR after all sector picks
   {
     TBRParams tp;
     tp.max_hits = params.internal_max_hits;
-    TBRResult tr = tbr_search(tree, ds, tp);
+    TBRResult tr = tbr_search(tree, ds, tp, cd);
     if (tr.best_score < result.best_score) {
       result.total_steps_saved +=
           static_cast<int>(result.best_score - tr.best_score);
@@ -562,11 +598,10 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
 // ---- XSS ----
 
 SectorResult xss_search(TreeState& tree, DataSet& ds,
-                        const SectorParams& params) {
-  // Seed from R's RNG — one-shot to avoid nesting with tbr_search()
-  GetRNGstate();
-  std::mt19937 rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
-  PutRNGstate();
+                        const SectorParams& params,
+                        ConstraintData* cd) {
+  // Seed RNG (from R in serial mode, from thread-local in parallel mode)
+  std::mt19937 rng = ts::make_rng();
 
   double current_score = score_tree(tree, ds);
 
@@ -575,6 +610,8 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
   result.n_sectors_searched = 0;
   result.n_sectors_improved = 0;
   result.total_steps_saved = 0;
+
+  bool constrained = cd && cd->active && cd->has_posthoc;
 
   for (int round = 0; round < params.xss_rounds; ++round) {
     // Pick a random number of partitions around the target
@@ -594,8 +631,9 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
       int sz = count_clade_tips(tree, sector_root);
       if (sz < 4) continue; // too small to be useful
 
-      // Ensure state sets are current
-      score_tree(tree, ds);
+      // State arrays are guaranteed valid: either from the initial
+      // score_tree above, or from the previous sector's acceptance/
+      // rejection (both paths call score_tree before continuing).
 
       ReducedDataset rd = build_reduced_dataset(tree, ds, sector_root);
 
@@ -609,14 +647,21 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
                     (params.accept_equal && sector_best == sector_current);
 
       if (accept && sector_best <= sector_current) {
-        // Save topology in case reinsertion worsens full-tree score
-        auto save_left = tree.left;
-        auto save_right = tree.right;
-        auto save_parent = tree.parent;
+        // Save only the sector clade's topology for potential undo
+        CladeSnapshot snap;
+        save_clade(tree, sector_root, snap);
 
         reinsert_sector(tree, rd);
         tree.build_postorder();
         double new_score = score_tree(tree, ds);
+
+        // Post-hoc constraint check
+        if (constrained && violates_constraint_posthoc(tree, *cd)) {
+          restore_clade(tree, snap);
+          tree.build_postorder();
+          score_tree(tree, ds);
+          continue;
+        }
 
         if (new_score < result.best_score) {
           result.total_steps_saved +=
@@ -627,22 +672,20 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
           // Equal score accepted
         } else {
           // HTU approximation caused full-tree score to worsen; revert
-          tree.left = save_left;
-          tree.right = save_right;
-          tree.parent = save_parent;
+          restore_clade(tree, snap);
           tree.build_postorder();
           score_tree(tree, ds);
         }
       }
 
-      R_CheckUserInterrupt();
+      if (ts::check_interrupt()) break;
     }
 
     // Global TBR after each round of sectors
     {
       TBRParams tp;
       tp.max_hits = params.internal_max_hits;
-      TBRResult tr = tbr_search(tree, ds, tp);
+      TBRResult tr = tbr_search(tree, ds, tp, cd);
       if (tr.best_score < result.best_score) {
         result.total_steps_saved +=
             static_cast<int>(result.best_score - tr.best_score);
@@ -650,7 +693,89 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
       }
     }
 
-    R_CheckUserInterrupt();
+    if (ts::check_interrupt()) break;
+  }
+
+  return result;
+}
+
+// ---- CSS (Constrained Sectorial Search) ----
+//
+// Sector-restricted TBR on the full tree. No HTU approximation —
+// scoring is exact against the full dataset.
+
+// Build a sector mask: true for all nodes in the clade rooted at sector_root.
+static void build_sector_mask(const TreeState& tree, int sector_root,
+                               std::vector<bool>& mask) {
+  mask.assign(tree.n_node, false);
+  std::vector<int> stk;
+  stk.push_back(sector_root);
+  while (!stk.empty()) {
+    int nd = stk.back();
+    stk.pop_back();
+    mask[nd] = true;
+    if (nd >= tree.n_tip) {
+      int ni = nd - tree.n_tip;
+      stk.push_back(tree.left[ni]);
+      stk.push_back(tree.right[ni]);
+    }
+  }
+}
+
+SectorResult css_search(TreeState& tree, DataSet& ds,
+                        const SectorParams& params,
+                        ConstraintData* cd) {
+  double current_score = score_tree(tree, ds);
+
+  SectorResult result;
+  result.best_score = current_score;
+  result.n_sectors_searched = 0;
+  result.n_sectors_improved = 0;
+  result.total_steps_saved = 0;
+
+  int n_rounds = params.xss_rounds;
+  if (n_rounds <= 0) n_rounds = 1;
+
+  std::vector<bool> sector_mask;
+
+  for (int round = 0; round < n_rounds; ++round) {
+    std::vector<int> sectors = xss_partition(tree, params.n_partitions);
+
+    for (int sector_root : sectors) {
+      int sz = count_clade_tips(tree, sector_root);
+      if (sz < 4) continue;
+
+      build_sector_mask(tree, sector_root, sector_mask);
+
+      TBRParams tp;
+      tp.max_hits = params.internal_max_hits;
+
+      TBRResult tr = tbr_search(tree, ds, tp, cd, &sector_mask);
+      ++result.n_sectors_searched;
+
+      if (tr.best_score < result.best_score) {
+        result.total_steps_saved +=
+            static_cast<int>(result.best_score - tr.best_score);
+        result.best_score = tr.best_score;
+        ++result.n_sectors_improved;
+      }
+
+      if (ts::check_interrupt()) break;
+    }
+
+    // Global TBR after each round
+    {
+      TBRParams tp;
+      tp.max_hits = params.internal_max_hits;
+      TBRResult tr = tbr_search(tree, ds, tp, cd);
+      if (tr.best_score < result.best_score) {
+        result.total_steps_saved +=
+            static_cast<int>(result.best_score - tr.best_score);
+        result.best_score = tr.best_score;
+      }
+    }
+
+    if (ts::check_interrupt()) break;
   }
 
   return result;

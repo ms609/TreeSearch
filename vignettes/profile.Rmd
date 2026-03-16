@@ -83,8 +83,8 @@ We search for trees with a better score using TBR rearrangements and the
 parsimony ratchet [@Nixon1999]:
 
 ```{R starting-score, message = FALSE}
-betterTrees <- MaximizeParsimony(myMatrix, additionTree, concavity = "profile",
-                                 ratchIter = 3, tbrIter = 3, maxHits = 8)
+betterTrees <- Morphy(myMatrix, additionTree, concavity = "profile",
+                      ratchIter = 3, tbrIter = 3, maxHits = 8)
 ```
 
 We've used very low values of `ratchIter`, `tbrIter` and `maxHits` for a rapid
@@ -99,7 +99,7 @@ plot(ape::consensus(betterTrees))
 ```
 
 The default parameters may not be enough to find the optimal tree; type 
-`?MaximizeParsimony` to view all search parameters --
+`?Morphy` to view all search parameters --
 or keep repeating the search until tree score stops improving.
 
 ## View the results
@@ -114,10 +114,10 @@ To sample this region of tree space well, the trick is to use large values of
 In a serious study, you would want to sample many more than the 3 Ratchet hits (`ratchHits`) we'll settle for here, probably using many more Ratchet iterations.
 
 ```{R suboptimal-sampling, message = FALSE}
-suboptimals <- MaximizeParsimony(myMatrix, betterTrees, tolerance = 3,
-                                 ratchIter = 2, tbrIter = 3,
-                                 maxHits = 25,
-                                 concavity = "profile")
+suboptimals <- Morphy(myMatrix, betterTrees, tolerance = 3,
+                      ratchIter = 2, tbrIter = 3,
+                      maxHits = 25,
+                      concavity = "profile")
 ```
 
 The consensus of these slightly suboptimal trees provides a less resolved, but

@@ -20,10 +20,7 @@ ConcordanceTable(
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{Col}{Function that takes vectors \code{amount} and \code{quality} and returns
 a vector of colours. \link{QCol} colours by data quality (concordance);
@@ -100,7 +97,7 @@ image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
 Other split support functions: 
 \code{\link{JackLabels}()},
 \code{\link{Jackknife}()},
-\code{\link{MaximizeParsimony}()},
+\code{\link{Morphy}()},
 \code{\link{MostContradictedFreq}()},
 \code{\link{PresCont}()},
 \code{\link{SiteConcordance}}

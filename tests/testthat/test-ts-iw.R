@@ -16,7 +16,7 @@ make_ts_data <- function(pd) {
 }
 
 ts_iw <- function(tree, ds, min_steps, k) {
-  ts_fitch_score(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
                  min_steps = min_steps, concavity = k)
 }
 
@@ -26,11 +26,11 @@ morphy_iw_ref <- function(tree, dataset, k) {
   characters <- TreeTools::PhyToString(dataset, ps = "", useIndex = FALSE,
                                       byTaxon = FALSE, concatenate = FALSE)
   morphyObjs <- lapply(characters, SingleCharMorphy)
-  on.exit(vapply(morphyObjs, UnloadMorphy, integer(1)), add = TRUE)
+  on.exit(vapply(morphyObjs, TreeSearch:::UnloadMorphy, integer(1)), add = TRUE)
   weight <- attr(dataset, "weight")
   minLength <- MinimumLength(dataset, compress = TRUE)
   charSeq <- seq_along(characters) - 1L
-  morphy_iw(tree$edge, morphyObjs, weight, minLength, charSeq,
+  TreeSearch:::morphy_iw(tree$edge, morphyObjs, weight, minLength, charSeq,
             k, target = Inf)
 }
 
@@ -84,7 +84,7 @@ test_that("IW score with k=Inf equals EW score for all datasets", {
     ds <- make_ts_data(dataset)
     minSteps <- MinimumLength(dataset, compress = TRUE)
 
-    ew_score <- ts_fitch_score(tree$edge, ds$contrast, ds$tip_data,
+    ew_score <- TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data,
                                ds$weight, ds$levels)
     iw_inf <- ts_iw(tree, ds, minSteps, Inf)
     expect_equal(iw_inf, ew_score, label = paste(ds_name, "k=Inf vs EW"))
@@ -170,12 +170,12 @@ test_that("Per-pattern step counts match morphy across all datasets", {
     for (ti in seq_along(trees)) {
       tree <- trees[[ti]]
 
-      info <- ts_na_char_steps(tree$edge, contrast, tip_data, wt, lvls)
+      info <- TreeSearch:::ts_na_char_steps(tree$edge, contrast, tip_data, wt, lvls)
       ts_steps <- info$steps
 
       morphyObjs <- lapply(characters, SingleCharMorphy)
       morphy_steps <- preorder_morphy_by_char(tree$edge, morphyObjs)
-      vapply(morphyObjs, UnloadMorphy, integer(1))
+      vapply(morphyObjs, TreeSearch:::UnloadMorphy, integer(1))
 
       expect_identical(
         ts_steps, morphy_steps,
@@ -244,7 +244,7 @@ test_that("IW TBR search improves score", {
   tree <- TreeTools::PectinateTree(dataset)
   initial_iw <- ts_iw(tree, ds, minSteps, 10)
 
-  result <- ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight,
+  result <- TreeSearch:::ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight,
                           ds$levels, maxHits = 1L,
                           min_steps = minSteps, concavity = 10)
 
@@ -263,7 +263,7 @@ test_that("IW TBR result score matches morphy_iw", {
   minSteps <- MinimumLength(dataset, compress = TRUE)
 
   tree <- TreeTools::PectinateTree(dataset)
-  result <- ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight,
+  result <- TreeSearch:::ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight,
                           ds$levels, maxHits = 1L,
                           min_steps = minSteps, concavity = 10)
 
@@ -281,7 +281,7 @@ test_that("IW ratchet search works", {
   tree <- TreeTools::PectinateTree(dataset)
   initial_iw <- ts_iw(tree, ds, minSteps, 10)
 
-  result <- ts_ratchet_search(tree$edge, ds$contrast, ds$tip_data, ds$weight,
+  result <- TreeSearch:::ts_ratchet_search(tree$edge, ds$contrast, ds$tip_data, ds$weight,
                               ds$levels, nCycles = 3L,
                               min_steps = minSteps, concavity = 10)
 
@@ -304,13 +304,13 @@ test_that("IW search results rescore correctly across datasets and methods", {
 
     for (method in c("TBR", "Ratchet", "Drift")) {
       result <- switch(method,
-        TBR = ts_tbr_search(start_tree$edge, ds$contrast, ds$tip_data,
+        TBR = TreeSearch:::ts_tbr_search(start_tree$edge, ds$contrast, ds$tip_data,
                             ds$weight, ds$levels, maxHits = 1L,
                             min_steps = minSteps, concavity = 10),
-        Ratchet = ts_ratchet_search(start_tree$edge, ds$contrast, ds$tip_data,
+        Ratchet = TreeSearch:::ts_ratchet_search(start_tree$edge, ds$contrast, ds$tip_data,
                                     ds$weight, ds$levels, nCycles = 2L,
                                     min_steps = minSteps, concavity = 10),
-        Drift = ts_drift_search(start_tree$edge, ds$contrast, ds$tip_data,
+        Drift = TreeSearch:::ts_drift_search(start_tree$edge, ds$contrast, ds$tip_data,
                                 ds$weight, ds$levels, nCycles = 2L,
                                 min_steps = minSteps, concavity = 10)
       )
@@ -344,7 +344,7 @@ test_that("IW TBR never worsens starting score", {
       tree <- TreeTools::Preorder(TreeTools::RandomTree(dataset, root = TRUE))
       init_score <- ts_iw(tree, ds, minSteps, 10)
 
-      result <- ts_tbr_search(tree$edge, ds$contrast, ds$tip_data,
+      result <- TreeSearch:::ts_tbr_search(tree$edge, ds$contrast, ds$tip_data,
                               ds$weight, ds$levels, maxHits = 1L,
                               min_steps = minSteps, concavity = 10)
 

@@ -6,12 +6,31 @@
 //
 // Based on TNT's xmult / combosearch model (Goloboff 1999; Goloboff
 // & Pol 2007; Goloboff Ch. 5).
+//
+// Agent C additions: all-pool return, timeout, interrupt checks,
+// verbosity.
 
 #include "ts_data.h"
 #include "ts_tree.h"
 #include "ts_pool.h"
+#include "ts_constraint.h"
+#include <functional>
 
 namespace ts {
+
+// Progress information passed to the callback at each reporting point.
+struct ProgressInfo {
+  int replicate;          // 1-based current replicate
+  int max_replicates;     // configured maximum
+  double best_score;      // pool's current best (1e18 if pool empty)
+  int hits_to_best;       // independent discoveries of best
+  int target_hits;        // convergence target
+  int pool_size;          // trees in pool
+  const char* phase;      // "wagner", "tbr", "xss", "rss", "ratchet",
+                          // "drift", "final_tbr", "fuse", "replicate", "done"
+  double elapsed_seconds; // wall-clock since search start
+  double phase_score;     // score after this phase (-1 if N/A)
+};
 
 struct DrivenParams {
   int max_replicates = 20;       // max RAS+search replicates
@@ -23,15 +42,21 @@ struct DrivenParams {
   // Ratchet
   int ratchet_cycles = 10;
   double ratchet_perturb_prob = 0.04;
+  int ratchet_perturb_mode = 0;       // 0=zero, 1=upweight, 2=mixed
+  int ratchet_perturb_max_moves = 0;  // 0=auto
+  bool ratchet_adaptive = false;
 
   // Drifting
   int drift_cycles = 6;
   int drift_afd_limit = 3;
   double drift_rfd_limit = 0.1;
 
-  // Sectorial search (XSS only; RSS not currently wired)
+  // Sectorial search
   int xss_rounds = 3;
   int xss_partitions = 4;
+  int rss_rounds = 1;           // RSS rounds after XSS; 0 = skip
+  int css_rounds = 1;           // CSS rounds after RSS; 0 = skip
+  int css_partitions = 4;       // partitions for CSS
   int sector_min_size = 6;
   int sector_max_size = 50;
 
@@ -42,6 +67,22 @@ struct DrivenParams {
   // Pool
   int pool_max_size = 100;
   double pool_suboptimal = 0.0;  // 0 = keep only optimal
+
+  // Timeout (seconds). 0 or negative = no timeout.
+  double max_seconds = 0.0;
+
+  // Verbosity: 0 = silent, 1 = per-replicate summary, 2 = per-phase detail
+  int verbosity = 0;
+
+  // Progress callback. When set, invoked instead of Rprintf for progress
+  // reporting. When empty, falls back to Rprintf.
+  std::function<void(const ProgressInfo&)> progress_callback;
+
+  // Tabu list size for TBR plateau exploration (0 = disabled)
+  int tabu_size = 100;
+
+  // Number of random Wagner trees per replicate (keep best-scoring)
+  int wagner_starts = 1;
 };
 
 struct DrivenResult {
@@ -49,12 +90,33 @@ struct DrivenResult {
   int replicates_completed;
   int hits_to_best;
   int pool_size;
+  bool timed_out;                // true if search ended due to timeout
 };
 
-// Run the full driven search. Returns the best tree found (written
-// into `best_tree`) and search statistics.
-DrivenResult driven_search(TreeState& best_tree, DataSet& ds,
-                           const DrivenParams& params);
+// Result of a single replicate (tree + score, no pool interaction).
+struct ReplicateResult {
+  TreeState tree;
+  double score;
+  bool interrupted;  // true if stopped by interrupt or timeout
+};
+
+// Run one replicate: Wagner → TBR → XSS → RSS → ratchet → drift → TBR.
+// Does NOT interact with the pool — caller handles that.
+// `check_timeout` should return true when time limit is exceeded.
+// Verbosity is the effective verbosity for this replicate (0 in parallel).
+ReplicateResult run_single_replicate(
+    DataSet& ds,
+    const DrivenParams& params,
+    ConstraintData* cd,
+    std::function<bool()> check_timeout,
+    int verbosity);
+
+// Run the full driven search. Returns search statistics.
+// The pool contents (all retained trees) are accessible via the pool
+// reference stored in `pool_out`. Caller should extract edge matrices.
+DrivenResult driven_search(TreePool& pool_out, DataSet& ds,
+                           const DrivenParams& params,
+                           ConstraintData* cd = nullptr);
 
 } // namespace ts
 

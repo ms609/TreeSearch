@@ -18,7 +18,7 @@ Reports when each tree in a list was first found by tree search.
 This information is read from the \code{firstHit} attribute if present.
 If not, trees are taken to be listed in the order in which they were found,
 and named according to the search iteration in which they were first hit -
-the situation when trees found by \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} are saved to file.
+the situation when trees found by \code{\link[=Morphy]{Morphy()}} are saved to file.
 }
 \examples{
 library("TreeTools", quietly = TRUE)
@@ -33,7 +33,7 @@ attr(WhenFirstHit(trees), "firstHit")
 }
 \seealso{
 \itemize{
-\item \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}
+\item \code{\link[=Morphy]{Morphy()}}
 }
 
 Other utility functions: 

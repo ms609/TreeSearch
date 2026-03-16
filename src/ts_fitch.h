@@ -7,6 +7,7 @@
 // processes 64 characters per block using bitwise AND/OR + popcount.
 
 #include "ts_data.h"
+#include "ts_simd.h"
 #include "ts_tree.h"
 #include <cmath>
 #include <vector>
@@ -60,12 +61,110 @@ int fitch_indirect_length(const uint64_t* clip_prelim,
                           const DataSet& ds,
                           int node_a, int node_d);
 
+// Early-termination variant: returns as soon as extra_steps >= cutoff.
+// Returns exact result if below cutoff, or a value >= cutoff otherwise.
+int fitch_indirect_length_bounded(const uint64_t* clip_prelim,
+                                  const TreeState& tree,
+                                  const DataSet& ds,
+                                  int node_a, int node_d,
+                                  int cutoff);
+
+// Precomputed-vroot variant: uses pre-computed virtual root states instead
+// of reading final_ from tree. vroot points to total_words entries.
+// Supports early termination via cutoff (INT_MAX = no cutoff).
+int fitch_indirect_length_cached(const uint64_t* clip_prelim,
+                                 const uint64_t* vroot,
+                                 const DataSet& ds,
+                                 int cutoff);
+
 // --- Inapplicable (NA) three-pass scoring ---
 
 // Full three-pass score for datasets with inapplicable characters.
 // Handles both standard blocks (one-pass Fitch) and inapplicable blocks
 // (Brazeau et al. three-pass algorithm). Returns the total EW score.
 int fitch_na_score(TreeState& tree, const DataSet& ds);
+
+// --- Incremental NA-aware scoring for SPR/TBR ---
+
+// NA-aware incremental first downpass. Walks rootward from start_node,
+// computing prelim with NA-aware logic for inapplicable blocks and
+// standard Fitch for standard blocks. Also maintains subtree_actives.
+// Returns the length delta for standard blocks. NA blocks require
+// fitch_na_pass3_score() for exact step counts.
+int fitch_na_incremental_downpass(TreeState& tree, const DataSet& ds,
+                                   int start_node);
+
+// NA-aware incremental first uppass. Recomputes final_ for nodes in
+// the dirty region, using NA-aware uppass logic for inapplicable blocks.
+// Also updates tip down2 and subtree_actives for affected tips.
+void fitch_na_incremental_uppass(TreeState& tree, const DataSet& ds,
+                                  int clip_ancestor);
+
+// Full Pass 3 (second downpass) on a divided tree. Computes down2 for
+// all internal nodes, counts steps for both standard and NA blocks.
+// Requires Passes 1+2 to be current (from full or incremental scoring).
+// Returns the total EW score.
+int fitch_na_pass3_score(TreeState& tree, const DataSet& ds);
+
+// NA-aware indirect length calculation. For standard blocks, identical to
+// fitch_indirect_length. For NA blocks, suppresses steps where either the
+// clip subtree or the edge-below subtree has no applicable tips.
+// clip_actives: subtree_actives for the clip subtree (total_words entries).
+int fitch_na_indirect_length(
+    const uint64_t* clip_prelim,
+    const uint64_t* clip_actives,
+    const TreeState& tree,
+    const DataSet& ds,
+    int node_a, int node_d);
+
+// NA-aware bounded indirect length (early termination at cutoff).
+int fitch_na_indirect_length_bounded(
+    const uint64_t* clip_prelim,
+    const uint64_t* clip_actives,
+    const TreeState& tree,
+    const DataSet& ds,
+    int node_a, int node_d,
+    int cutoff);
+
+// NA-aware cached indirect length (pre-computed vroot + below_actives).
+// below_actives: per-edge OR of applicable subtree_actives[D] (1 uint64 per block).
+int fitch_na_indirect_length_cached(
+    const uint64_t* clip_prelim,
+    const uint64_t* clip_actives,
+    const uint64_t* vroot,
+    const uint64_t* below_actives,
+    const DataSet& ds,
+    int cutoff);
+
+// NA-aware indirect IW length. Same NA-suppression as above, for IW scoring.
+double indirect_na_iw_length(
+    const uint64_t* clip_prelim,
+    const uint64_t* clip_actives,
+    const TreeState& tree, const DataSet& ds,
+    int node_a, int node_d,
+    double base_iw,
+    const std::vector<double>& iw_delta);
+
+// NA-aware bounded IW indirect length.
+double indirect_na_iw_length_bounded(
+    const uint64_t* clip_prelim,
+    const uint64_t* clip_actives,
+    const TreeState& tree, const DataSet& ds,
+    int node_a, int node_d,
+    double base_iw,
+    const std::vector<double>& iw_delta,
+    double cutoff);
+
+// NA-aware cached IW indirect length.
+double indirect_na_iw_length_cached(
+    const uint64_t* clip_prelim,
+    const uint64_t* clip_actives,
+    const uint64_t* vroot,
+    const uint64_t* below_actives,
+    const DataSet& ds,
+    double base_iw,
+    const std::vector<double>& iw_delta,
+    double cutoff);
 
 // --- Per-character step extraction ---
 
@@ -98,11 +197,51 @@ double indirect_iw_length(
     double base_iw,
     const std::vector<double>& iw_delta);
 
+// Early-termination IW variant: returns as soon as candidate >= cutoff.
+double indirect_iw_length_bounded(
+    const uint64_t* clip_prelim,
+    const TreeState& tree, const DataSet& ds,
+    int node_a, int node_d,
+    double base_iw,
+    const std::vector<double>& iw_delta,
+    double cutoff);
+
+// Precomputed-vroot IW variant with early termination.
+double indirect_iw_length_cached(
+    const uint64_t* clip_prelim,
+    const uint64_t* vroot,
+    const DataSet& ds,
+    double base_iw,
+    const std::vector<double>& iw_delta,
+    double cutoff);
+
 // Precompute iw_delta[p] = marginal cost of one additional step for pattern p.
 // divided_steps: per-pattern step counts of the divided tree.
 void precompute_iw_delta(const DataSet& ds,
                          const std::vector<int>& divided_steps,
                          std::vector<double>& iw_delta);
+
+// --- Profile parsimony scoring ---
+
+// Compute profile parsimony score from per-character step counts.
+// Looks up info_amounts[total_steps, pattern] for each pattern.
+double compute_profile(const DataSet& ds, const std::vector<int>& char_steps);
+
+// Precompute marginal profile cost of one additional step per pattern.
+void precompute_profile_delta(const DataSet& ds,
+                               const std::vector<int>& divided_steps,
+                               std::vector<double>& delta);
+
+// --- Weighted scoring dispatch (IW or profile) ---
+
+// Dispatch to compute_iw or compute_profile based on ds.scoring_mode.
+double compute_weighted_score(const DataSet& ds,
+                               const std::vector<int>& char_steps);
+
+// Dispatch to precompute_iw_delta or precompute_profile_delta.
+void precompute_weighted_delta(const DataSet& ds,
+                                const std::vector<int>& divided_steps,
+                                std::vector<double>& delta);
 
 } // namespace ts
 

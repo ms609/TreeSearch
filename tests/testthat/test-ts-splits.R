@@ -3,7 +3,7 @@ library("TreeTools")
 test_that("Split count is T-3 for resolved tree", {
   for (n_tip in c(5, 8, 10, 20)) {
     tree <- as.phylo(1, n_tip)
-    splits <- ts_compute_splits(tree$edge, n_tip)
+    splits <- TreeSearch:::ts_compute_splits(tree$edge, n_tip)
     expect_equal(length(splits), n_tip - 3,
                  label = paste0("n_tip=", n_tip))
   }
@@ -15,14 +15,14 @@ test_that("Same topology rooted differently produces same splits", {
   tree2 <- TreeTools::Preorder(tree2)
 
   expect_true(
-    ts_trees_equal(tree1$edge, tree2$edge, 8)
+    TreeSearch:::ts_trees_equal(tree1$edge, tree2$edge, 8)
   )
 })
 
 test_that("Known splits for a small tree", {
   # 5-tip tree: should have exactly 2 non-trivial splits
   tree <- as.phylo(1, 5)
-  splits <- ts_compute_splits(tree$edge, 5)
+  splits <- TreeSearch:::ts_compute_splits(tree$edge, 5)
   expect_equal(length(splits), 2)
 
   # Each split should contain at least 2 and at most 3 tips
@@ -33,13 +33,13 @@ test_that("Known splits for a small tree", {
 
 test_that("Identical trees have same hash / splits_equal = TRUE", {
   tree <- as.phylo(42, 10)
-  expect_true(ts_trees_equal(tree$edge, tree$edge, 10))
+  expect_true(TreeSearch:::ts_trees_equal(tree$edge, tree$edge, 10))
 })
 
 test_that("Different topologies give splits_equal = FALSE", {
   tree1 <- as.phylo(1, 10)
   tree2 <- as.phylo(2, 10)
-  expect_false(ts_trees_equal(tree1$edge, tree2$edge, 10))
+  expect_false(TreeSearch:::ts_trees_equal(tree1$edge, tree2$edge, 10))
 })
 
 test_that("NNI can produce a different topology", {
@@ -52,11 +52,11 @@ test_that("NNI can produce a different topology", {
   for (ie in internal_edges) {
     tree2 <- NNI(tree, ie)
     tree2 <- TreeTools::Preorder(tree2)
-    if (!ts_trees_equal(tree$edge, tree2$edge, n_tip)) {
+    if (!TreeSearch:::ts_trees_equal(tree$edge, tree2$edge, n_tip)) {
       found_different <- TRUE
       # Both should have the same number of splits
-      s1 <- ts_compute_splits(tree$edge, n_tip)
-      s2 <- ts_compute_splits(tree2$edge, n_tip)
+      s1 <- TreeSearch:::ts_compute_splits(tree$edge, n_tip)
+      s2 <- TreeSearch:::ts_compute_splits(tree2$edge, n_tip)
       expect_equal(length(s1), length(s2))
       break
     }
@@ -67,7 +67,7 @@ test_that("NNI can produce a different topology", {
 test_that("Various tree sizes work", {
   for (n_tip in c(5, 10, 20, 50)) {
     tree <- as.phylo(1, n_tip)
-    splits <- ts_compute_splits(tree$edge, n_tip)
+    splits <- TreeSearch:::ts_compute_splits(tree$edge, n_tip)
     expect_equal(length(splits), n_tip - 3,
                  label = paste0("n_tip=", n_tip))
   }
@@ -79,14 +79,14 @@ test_that("Multi-word splits work (65+ tips)", {
   for (n_tip in c(65, 100)) {
     tree <- TreeTools::RandomTree(n_tip, root = TRUE)
     tree <- TreeTools::Preorder(tree)
-    splits <- ts_compute_splits(tree$edge, n_tip)
+    splits <- TreeSearch:::ts_compute_splits(tree$edge, n_tip)
     expect_equal(length(splits), n_tip - 3,
                  label = paste0("n_tip=", n_tip, " multi-word"))
 
     # Same tree re-rooted should be equal
     tree2 <- TreeTools::RootTree(tree, 3)
     tree2 <- TreeTools::Preorder(tree2)
-    expect_true(ts_trees_equal(tree$edge, tree2$edge, n_tip),
+    expect_true(TreeSearch:::ts_trees_equal(tree$edge, tree2$edge, n_tip),
                 label = paste0("n_tip=", n_tip, " reroot equality"))
   }
 })
@@ -94,7 +94,7 @@ test_that("Multi-word splits work (65+ tips)", {
 test_that("Splits are canonical (tip 0 always in 0 partition)", {
 
   tree <- as.phylo(42, 10)
-  splits <- ts_compute_splits(tree$edge, 10)
+  splits <- TreeSearch:::ts_compute_splits(tree$edge, 10)
   # Tip 1 (R 1-based = C++ tip 0) should NOT be in any split
 
   # (because canonical form ensures tip 0 is in the "0" = unset partition)
@@ -108,7 +108,7 @@ test_that("Cross-validate with TreeTools::as.Splits", {
   skip_if_not_installed("TreeTools")
 
   tree <- as.phylo(42, 10)
-  our_splits <- ts_compute_splits(tree$edge, 10)
+  our_splits <- TreeSearch:::ts_compute_splits(tree$edge, 10)
 
   # TreeTools gives splits as logical matrix rows
   tt_splits <- as.Splits(tree)

@@ -158,6 +158,10 @@ void TreeState::save_node_state(int node) {
                            prelim.begin() + state_base + total_words);
   snap.final_words.assign(final_.begin() + state_base,
                           final_.begin() + state_base + total_words);
+  snap.down2_words.assign(down2.begin() + state_base,
+                          down2.begin() + state_base + total_words);
+  snap.subtree_actives_words.assign(subtree_actives.begin() + state_base,
+                                    subtree_actives.begin() + state_base + total_words);
 
   size_t cost_base = static_cast<size_t>(node) * n_blocks;
   snap.local_costs.assign(local_cost.begin() + cost_base,
@@ -176,6 +180,11 @@ void TreeState::restore_saved_states() {
               prelim.begin() + state_base);
     std::copy(snap.final_words.begin(), snap.final_words.end(),
               final_.begin() + state_base);
+    std::copy(snap.down2_words.begin(), snap.down2_words.end(),
+              down2.begin() + state_base);
+    std::copy(snap.subtree_actives_words.begin(),
+              snap.subtree_actives_words.end(),
+              subtree_actives.begin() + state_base);
 
     size_t cost_base = static_cast<size_t>(node) * n_blocks;
     std::copy(snap.local_costs.begin(), snap.local_costs.end(),

@@ -15,13 +15,14 @@ make_ts_data <- function(dataset) {
 # Helper: score a tree with ts engine
 ts_score <- function(tree, ds) {
   TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data,
-                               ds$weight, ds$levels)
+                               ds$weight, ds$levels, concavity = Inf)
 }
 
 # Helper: run driven search
 ts_driven <- function(ds, maxReplicates = 5L, targetHits = 2L,
                       ratchetCycles = 3L, xssRounds = 1L,
-                      xssPartitions = 2L, fuseInterval = 2L, ...) {
+                      xssPartitions = 2L, fuseInterval = 2L,
+                      maxSeconds = 0, verbosity = 0L, ...) {
   TreeSearch:::ts_driven_search(
     ds$contrast, ds$tip_data, ds$weight, ds$levels,
     maxReplicates = maxReplicates,
@@ -30,6 +31,8 @@ ts_driven <- function(ds, maxReplicates = 5L, targetHits = 2L,
     xssRounds = xssRounds,
     xssPartitions = xssPartitions,
     fuseInterval = fuseInterval,
+    maxSeconds = maxSeconds,
+    verbosity = verbosity,
     ...
   )
 }
@@ -69,22 +72,43 @@ test_that("Driven search returns valid structure", {
                       ratchetCycles = 1L)
 
   expect_true(is.list(result))
-  expect_true("edge" %in% names(result))
-  expect_true("score" %in% names(result))
+  expect_true("trees" %in% names(result))
+  expect_true("scores" %in% names(result))
+  expect_true("best_score" %in% names(result))
   expect_true("replicates" %in% names(result))
   expect_true("hits_to_best" %in% names(result))
   expect_true("pool_size" %in% names(result))
+  expect_true("timed_out" %in% names(result))
+
+  # trees is a list of edge matrices
+ expect_true(is.list(result$trees))
+  expect_true(length(result$trees) >= 1)
+  expect_true(is.matrix(result$trees[[1]]))
+  expect_equal(ncol(result$trees[[1]]), 2L)
+
+  # scores vector matches trees length
+  expect_equal(length(result$scores), length(result$trees))
 })
 
 test_that("Driven search score matches independent verification", {
   result <- ts_driven(small_ds, maxReplicates = 3L, targetHits = 1L,
                       ratchetCycles = 1L)
 
-  result_tree <- list(edge = result$edge, Nnode = nrow(result$edge) / 2L,
+  # Verify best tree score
+  best_edge <- result$trees[[1]]
+  result_tree <- list(edge = best_edge, Nnode = nrow(best_edge) / 2L,
                       tip.label = paste0("t", 1:10))
   class(result_tree) <- "phylo"
   expected_score <- ts_score(result_tree, small_ds)
-  expect_equal(result$score, expected_score)
+  expect_equal(result$best_score, expected_score)
+
+  # All reported scores should be verifiable
+  for (i in seq_along(result$trees)) {
+    tr <- list(edge = result$trees[[i]], Nnode = nrow(result$trees[[i]]) / 2L,
+               tip.label = paste0("t", 1:10))
+    class(tr) <- "phylo"
+    expect_equal(result$scores[i], ts_score(tr, small_ds))
+  }
 })
 
 test_that("Driven search converges with targetHits=1", {
@@ -96,23 +120,23 @@ test_that("Driven search converges with targetHits=1", {
 })
 
 test_that("Driven search improves over random Wagner tree", {
-  # A random Wagner tree should be suboptimal; driven search should improve
   set.seed(4291)
   wagner <- TreeSearch:::ts_random_wagner_tree(
-    small_ds$contrast, small_ds$tip_data, small_ds$weight, small_ds$levels
+    small_ds$contrast, small_ds$tip_data, small_ds$weight, small_ds$levels,
+    concavity = Inf
   )
 
   result <- ts_driven(small_ds, maxReplicates = 3L, targetHits = 1L,
                       ratchetCycles = 2L)
 
-  expect_true(result$score <= wagner$score)
+  expect_true(result$best_score <= wagner$score)
 })
 
 test_that("Driven search works on tiny dataset", {
   result <- ts_driven(tiny_ds, maxReplicates = 2L, targetHits = 1L,
                       ratchetCycles = 1L, xssRounds = 0L)
 
-  expect_true(result$score > 0)
+  expect_true(result$best_score > 0)
   expect_true(result$pool_size >= 1)
 })
 
@@ -120,50 +144,152 @@ test_that("Driven search works on medium dataset", {
   result <- ts_driven(med_ds, maxReplicates = 3L, targetHits = 1L,
                       ratchetCycles = 2L)
 
-  expect_true(result$score > 0)
+  expect_true(result$best_score > 0)
   expect_true(result$replicates >= 1)
 
-  # Verify score
-  result_tree <- list(edge = result$edge, Nnode = nrow(result$edge) / 2L,
+  # Verify best tree score
+  best_edge <- result$trees[[1]]
+  result_tree <- list(edge = best_edge, Nnode = nrow(best_edge) / 2L,
                       tip.label = paste0("t", 1:20))
   class(result_tree) <- "phylo"
-  expect_equal(result$score, ts_score(result_tree, med_ds))
+  expect_equal(result$best_score, ts_score(result_tree, med_ds))
 })
 
 test_that("Multiple replicates improve search quality", {
-  # Single replicate
   r1 <- ts_driven(med_ds, maxReplicates = 1L, targetHits = 1L,
                    ratchetCycles = 1L, fuseInterval = 100L)
 
-  # Multiple replicates with fusing
   scores <- numeric(5)
   for (i in seq_along(scores)) {
     r <- ts_driven(med_ds, maxReplicates = 5L, targetHits = 3L,
                    ratchetCycles = 3L, fuseInterval = 2L)
-    scores[i] <- r$score
+    scores[i] <- r$best_score
   }
 
-  # Best of multiple runs should be <= single replicate (usually)
-  expect_true(min(scores) <= r1$score)
+  expect_true(min(scores) <= r1$best_score)
 })
 
 test_that("Pool accumulates trees", {
   result <- ts_driven(small_ds, maxReplicates = 5L, targetHits = 10L,
                       ratchetCycles = 1L, fuseInterval = 100L)
 
-  # With targetHits=10 and maxReplicates=5, pool should have some trees
   expect_true(result$pool_size >= 1)
   expect_true(result$replicates == 5L)
+  # Pool returns all trees
+  expect_equal(length(result$trees), result$pool_size)
 })
 
 test_that("Driven search handles edge case parameters", {
   # Zero ratchet cycles
   r <- ts_driven(small_ds, maxReplicates = 2L, targetHits = 1L,
                  ratchetCycles = 0L)
-  expect_true(r$score > 0)
+  expect_true(r$best_score > 0)
 
   # Large targetHits forces all replicates
   r2 <- ts_driven(small_ds, maxReplicates = 3L, targetHits = 100L,
                   ratchetCycles = 1L)
   expect_equal(r2$replicates, 3L)
+})
+
+# ---------- New feature tests (Agent C) ----------
+
+test_that("All pool trees are returned", {
+  # Force enough replicates to accumulate pool entries
+  result <- ts_driven(small_ds, maxReplicates = 5L, targetHits = 100L,
+                      ratchetCycles = 1L, fuseInterval = 100L,
+                      poolSuboptimal = 0.0)
+
+  expect_equal(length(result$trees), result$pool_size)
+  expect_equal(length(result$scores), result$pool_size)
+  # All scores should be the best (suboptimal = 0)
+  expect_true(all(result$scores == result$best_score))
+})
+
+test_that("Suboptimal tree collection works", {
+  # Allow suboptimal trees within 2 steps
+  result <- ts_driven(med_ds, maxReplicates = 10L, targetHits = 100L,
+                      ratchetCycles = 2L, fuseInterval = 100L,
+                      poolSuboptimal = 2.0)
+
+  # With suboptimal > 0, we may have trees at different scores
+  expect_true(length(result$trees) >= 1)
+  # All scores should be within tolerance of best
+  expect_true(all(result$scores <= result$best_score + 2.0 + 1e-9))
+})
+
+test_that("Timeout stops search early", {
+  # Set a very short timeout
+  result <- ts_driven(med_ds, maxReplicates = 1000L, targetHits = 1000L,
+                      ratchetCycles = 5L, maxSeconds = 0.5)
+
+  # Should not have completed all 1000 replicates
+  expect_true(result$replicates < 1000L)
+  expect_true(result$timed_out)
+
+  # Should still have valid results
+  if (result$pool_size > 0) {
+    expect_true(result$best_score > 0)
+    expect_equal(length(result$trees), result$pool_size)
+  }
+})
+
+test_that("Timeout of 0 means no timeout", {
+  result <- ts_driven(small_ds, maxReplicates = 3L, targetHits = 1L,
+                      ratchetCycles = 1L, maxSeconds = 0)
+
+  expect_false(result$timed_out)
+})
+
+test_that("Verbosity does not break search", {
+  # verbosity=1 and verbosity=2 should work without error
+  expect_no_error({
+    r1 <- ts_driven(small_ds, maxReplicates = 2L, targetHits = 1L,
+                    ratchetCycles = 1L, verbosity = 1L)
+  })
+  expect_true(r1$best_score > 0)
+
+  expect_no_error({
+    r2 <- ts_driven(tiny_ds, maxReplicates = 2L, targetHits = 1L,
+                    ratchetCycles = 1L, xssRounds = 0L, verbosity = 2L)
+  })
+  expect_true(r2$best_score > 0)
+})
+
+test_that("Zero replicates returns empty result", {
+  result <- ts_driven(small_ds, maxReplicates = 0L)
+
+  expect_equal(length(result$trees), 0)
+  expect_equal(length(result$scores), 0)
+  expect_equal(result$pool_size, 0)
+  expect_false(result$timed_out)
+})
+
+test_that("MaximizeParsimony() uses C++ engine", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  dataset <- inapplicable.phyData[["Vinther2008"]]
+  result <- MaximizeParsimony(dataset, maxReplicates = 2L, targetHits = 1L,
+                              verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(!is.null(attr(result, "score")))
+  expect_true(attr(result, "score") > 0)
+})
+
+test_that("MaximizeParsimony() supports IW natively", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  dataset <- inapplicable.phyData[["Vinther2008"]]
+  result <- MaximizeParsimony(dataset, concavity = 10,
+                              maxReplicates = 2L, targetHits = 1L,
+                              verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(attr(result, "score") > 0)
+})
+
+test_that("MaximizeParsimony2() is deprecated alias", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  dataset <- inapplicable.phyData[["Vinther2008"]]
+  expect_warning(
+    MaximizeParsimony2(dataset, maxReplicates = 2L, targetHits = 1L,
+                       verbosity = 0L),
+    "deprecated"
+  )
 })

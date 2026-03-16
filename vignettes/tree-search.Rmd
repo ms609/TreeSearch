@@ -81,7 +81,7 @@ set.seed(0)
 
 We can conduct a basic parsimony search with:
 ```{r first-pass, message = FALSE}
-bestTrees <- MaximizeParsimony(vinther)
+bestTrees <- Morphy(vinther)
 ```
 
 It can be instructive to inspect the progress of tree search.
@@ -125,11 +125,11 @@ To be thorough, we might consider continuing the search for a little longer,
 fine-tuning the search parameters:
 
 ```{r second-pass, message = FALSE}
-bestTrees <- MaximizeParsimony(vinther, tree = bestTrees,
-                               ratchIter = 6L,
-                               tbrIter = 4L, 
-                               finalIter = 3L,
-                               maxHits = 80L)
+bestTrees <- Morphy(vinther, tree = bestTrees,
+                    ratchIter = 6L,
+                    tbrIter = 4L,
+                    finalIter = 3L,
+                    maxHits = 80L)
 ```
 
 As it happens, the best tree for this dataset has a score of 79 under
@@ -179,7 +179,7 @@ such as _Odontogriphus_ and _Wiwaxia_.
 A more instructive measure of clade support can be generated using
 Jackknife resampling.
 The `Resample()` [manual page](
-https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html)
+https://ms609.github.io/TreeSearch/reference/Morphy.html)
 has suggestions for appropriate numbers of replicates and search intensity, 
 and instructions for calculating bootstrap support;
 the code here gives a quick-to-run jackknife framework that can be adapted to
@@ -309,8 +309,9 @@ Constraints are effectively phylogenetic characters; only trees on which each
 such character fits perfectly will be considered.
 The position of taxa not listed in a constraint will not be constrained.
 
-`MaximizeParsimony()` will attempt to find a starting tree that satisfies the
-constraints, but if it cannot, it may be necessary to specify one manually
+`MaximizeParsimony()` (which delegates constraint searches to `Morphy()`) will
+attempt to find a starting tree that satisfies the constraints, but if it
+cannot, it may be necessary to specify one manually
 -- perhaps after checking that no constraints are contradictory.
 
 Here's a simple example on six taxa that enforces the bipartition ab | cdef:

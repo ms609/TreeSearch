@@ -14,20 +14,20 @@ make_ts_data <- function(dataset) {
 
 # Helper: score a tree with ts engine
 ts_score <- function(tree, ds) {
-  ts_fitch_score(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels)
+  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels)
 }
 
 # Helper: run ratchet search
 ts_ratchet <- function(tree, ds, nCycles = 10L, perturbProb = 0.04,
                        maxHits = 1L) {
-  ts_ratchet_search(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+  TreeSearch:::ts_ratchet_search(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
                     nCycles = nCycles, perturbProb = perturbProb,
                     maxHits = maxHits)
 }
 
 # Helper: run TBR search
 ts_tbr <- function(tree, ds, maxHits = 1L) {
-  ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+  TreeSearch:::ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
                 maxHits = maxHits)
 }
 

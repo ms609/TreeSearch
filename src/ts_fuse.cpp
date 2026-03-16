@@ -335,19 +335,23 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
   double score = score_tree(recipient, ds);
 
   const auto& entries = pool.all();
-  int wps = (recipient.n_tip + 63) / 64;
+  int n_tip = recipient.n_tip;
+  int wps = (n_tip + 63) / 64;
 
-  // Create tip-0-rooted copies of donor trees.
-  // We need the re-rooted topology both for split computation (node → split
-  // mapping) and for replace_subtree (clade topology extraction).
-  std::vector<TreeState> donor_trees(entries.size());
-  std::vector<std::vector<SplitInfo>> donor_splits(entries.size());
-  for (int di = 0; di < static_cast<int>(entries.size()); ++di) {
-    donor_trees[di] = copy_topology(entries[di].tree, ds);
-    reroot_at_tip0(donor_trees[di]);
-    std::vector<uint64_t> d_tip_bits = compute_tip_bits(donor_trees[di]);
-    donor_splits[di] = build_split_info(donor_trees[di], d_tip_bits);
-  }
+  // Lazy donor processing: prepare donor trees on first access and cache.
+  // Donors don't change across rounds, so their splits are computed once.
+  int n_donors = static_cast<int>(entries.size());
+  std::vector<TreeState> donor_trees(n_donors);
+  std::vector<std::vector<SplitInfo>> donor_splits(n_donors);
+  std::vector<bool> donor_ready(n_donors, false);
+
+  // Pre-allocate buffers for in-place clade save/restore (reused per trial)
+  std::vector<int> snap_internals;
+  std::vector<int> snap_left;
+  std::vector<int> snap_right;
+  snap_internals.reserve(recipient.n_internal);
+  snap_left.reserve(recipient.n_internal);
+  snap_right.reserve(recipient.n_internal);
 
   bool improved = true;
   while (improved && result.n_rounds < params.max_rounds) {
@@ -364,7 +368,15 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
       r_split_map.emplace(r_splits[i].hash, i);
     }
 
-    for (int di = 0; di < static_cast<int>(entries.size()); ++di) {
+    for (int di = 0; di < n_donors; ++di) {
+      // Lazy initialization: prepare donor on first access
+      if (!donor_ready[di]) {
+        donor_trees[di] = copy_topology(entries[di].tree, ds);
+        reroot_at_tip0(donor_trees[di]);
+        std::vector<uint64_t> d_tip_bits = compute_tip_bits(donor_trees[di]);
+        donor_splits[di] = build_split_info(donor_trees[di], d_tip_bits);
+        donor_ready[di] = true;
+      }
       const TreeState& donor = donor_trees[di];
       const std::vector<SplitInfo>& d_splits = donor_splits[di];
 
@@ -385,10 +397,6 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
           int ri = it->second;
           if (split_eq(ds_info.canonical.data(),
                        r_splits[ri].canonical.data(), wps)) {
-            // Both trees are re-rooted at tip 0, so all non-trivial
-            // splits have was_flipped=false (tip 0 is always outside
-            // the subtree). No flip-status filtering needed.
-
             SharedSplit ss;
             ss.r_node = r_splits[ri].node;
             ss.d_node = ds_info.node;
@@ -416,38 +424,42 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
 
         const SharedSplit& ss = shared[si];
 
-        // Trial: lightweight topology copy, replace subtree, rescore
-        TreeState trial = copy_topology(recipient, ds);
-        replace_subtree(trial, donor, ss.r_node, ss.d_node);
-        trial.build_postorder();
+        // Save the clade's internal topology for potential undo.
+        // Only the internal nodes within the clade are affected by
+        // replace_subtree — much cheaper than a full-tree copy.
+        snap_internals.clear();
+        collect_clade(recipient, ss.r_node, snap_internals);
+        snap_left.resize(snap_internals.size());
+        snap_right.resize(snap_internals.size());
+        for (size_t k = 0; k < snap_internals.size(); ++k) {
+          int ni = snap_internals[k] - n_tip;
+          snap_left[k] = recipient.left[ni];
+          snap_right[k] = recipient.right[ni];
+        }
 
-        // Copy donor's tip prelim states for the tips in the clade
-        // (tips haven't changed, so prelim for tips should still be correct
-        //  from the recipient copy — they are the same tips)
-        double new_score = score_tree(trial, ds);
+        // Apply exchange in-place and rescore
+        replace_subtree(recipient, donor, ss.r_node, ss.d_node);
+        recipient.build_postorder();
+        double new_score = score_tree(recipient, ds);
 
         bool accept = false;
         if (new_score < score) {
           accept = true;
         } else if (params.accept_equal && new_score == score) {
-          // Check that the topology actually changed within the clade
-          // (avoid infinite loops on identical clades).
-          // Cheap check: compare left/right arrays — if any entry differs,
-          // the topology changed.
+          // Check that topology actually changed within the clade
           bool changed = false;
-          for (int ni = 0; ni < recipient.n_internal && !changed; ++ni) {
-            if (trial.left[ni] != recipient.left[ni] ||
-                trial.right[ni] != recipient.right[ni]) {
+          for (size_t k = 0; k < snap_internals.size() && !changed; ++k) {
+            int ni = snap_internals[k] - n_tip;
+            if (recipient.left[ni] != snap_left[k] ||
+                recipient.right[ni] != snap_right[k]) {
               changed = true;
             }
           }
-          if (changed) {
-            accept = true;
-          }
+          if (changed) accept = true;
         }
 
         if (accept) {
-          recipient = trial;
+          // Exchange already applied in-place; state arrays are valid
           score = new_score;
           ++result.n_exchanges;
           improved = true;
@@ -467,10 +479,23 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
             }
           }
 
-          // After modifying the recipient, the r_splits and r_split_map
-          // are stale for this donor. Break out and move to TBR cleanup.
-          // (We'll recompute everything in the next round.)
+          // r_splits and r_split_map are stale now. Break to TBR cleanup.
           break;
+        } else {
+          // Undo: restore clade topology. State arrays become stale but
+          // score_tree (full recomputation) on the next trial or TBR
+          // entry will recompute them from scratch.
+          for (size_t k = 0; k < snap_internals.size(); ++k) {
+            int ni = snap_internals[k] - n_tip;
+            recipient.left[ni] = snap_left[k];
+            recipient.right[ni] = snap_right[k];
+            recipient.parent[snap_left[k]] = snap_internals[k];
+            recipient.parent[snap_right[k]] = snap_internals[k];
+          }
+          recipient.build_postorder();
+          // No rescore needed: score_tree is a full recomputation and
+          // will produce correct results on the next call regardless
+          // of stale internal state arrays.
         }
       }
 

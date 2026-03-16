@@ -1,10 +1,11 @@
 #include "ts_wagner.h"
 #include "ts_fitch.h"
+#include "ts_rng.h"
 #include <algorithm>
 #include <numeric>
 #include <climits>
 #include <vector>
-#include <R.h>  // GetRNGstate, PutRNGstate, unif_rand
+#include <R.h>
 
 namespace ts {
 
@@ -91,12 +92,241 @@ void insert_tip_at_edge(TreeState& tree, int tip, int new_internal,
   }
 }
 
+// Incremental two-pass Fitch scoring after Wagner insertion.
+//
+// After inserting a tip at edge (above, below) with new_internal between them,
+// recompute downpass states from new_internal to root, then uppass from root
+// back down through changed nodes. Returns the score delta (positive = score
+// increased, which it always will during Wagner construction).
+//
+// Downpass: O(depth×C) — walk from new_internal to root, stop when prelim
+// stabilizes.
+// Uppass: DFS from root with early termination — O(affected_region × C),
+// typically much less than a full uppass.
+int wagner_incremental_rescore(TreeState& tree, const DataSet& ds,
+                               int new_internal) {
+  int n_tip = tree.n_tip;
+  int tw = tree.total_words;
+  int nb = tree.n_blocks;
+  int root = n_tip;
+  int score_delta = 0;
+
+  // --- Phase 1: Incremental downpass (new_internal → root) ---
+  // new_internal's children are the inserted tip and `below` (which already
+  // has valid prelim states). Compute prelim at new_internal, then walk
+  // upward recomputing ancestors whose children changed.
+
+  int node = new_internal;
+  while (true) {
+    int ni = node - n_tip;
+    int lc = tree.left[ni];
+    int rc = tree.right[ni];
+    size_t node_base = static_cast<size_t>(node) * tw;
+    size_t lb = static_cast<size_t>(lc) * tw;
+    size_t rb = static_cast<size_t>(rc) * tw;
+    bool changed = false;
+
+    for (int b = 0; b < nb; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      int offset = ds.block_word_offset[b];
+
+      const uint64_t* left_state = &tree.prelim[lb + offset];
+      const uint64_t* right_state = &tree.prelim[rb + offset];
+      uint64_t* node_state = &tree.prelim[node_base + offset];
+
+      // Subtract old local cost for this node (0 for newly created nodes)
+      size_t cost_idx = static_cast<size_t>(node) * nb + b;
+      uint64_t old_cost = tree.local_cost[cost_idx];
+      int old_nu = popcount64(old_cost);
+      if (blk.upweight_mask) old_nu += popcount64(old_cost & blk.upweight_mask);
+      score_delta -= blk.weight * old_nu;
+
+      // Fitch downpass: intersection/union
+      uint64_t any_intersect = 0;
+      for (int s = 0; s < blk.n_states; ++s) {
+        any_intersect |= (left_state[s] & right_state[s]);
+      }
+      uint64_t needs_union = ~any_intersect & blk.active_mask;
+
+      int new_nu = popcount64(needs_union);
+      if (blk.upweight_mask) new_nu += popcount64(needs_union & blk.upweight_mask);
+      score_delta += blk.weight * new_nu;
+
+      tree.local_cost[cost_idx] = needs_union;
+
+      for (int s = 0; s < blk.n_states; ++s) {
+        uint64_t isect = left_state[s] & right_state[s];
+        uint64_t uni = left_state[s] | right_state[s];
+        uint64_t new_val = (isect & any_intersect) | (uni & needs_union);
+        if (new_val != node_state[s]) changed = true;
+        node_state[s] = new_val;
+      }
+    }
+
+    if (node == root) break;
+    // Early termination: if prelim didn't change, ancestors are unaffected
+    if (!changed) break;
+    node = tree.parent[node];
+  }
+
+  // --- Phase 2: Uppass from root with early termination ---
+  // Set root final = prelim, then DFS through internal nodes, computing
+  // final from parent's final + own prelim. Skip subtrees where final
+  // didn't change.
+
+  size_t root_base = static_cast<size_t>(root) * tw;
+  for (int w = 0; w < tw; ++w) {
+    tree.final_[root_base + w] = tree.prelim[root_base + w];
+  }
+
+  // DFS from root's children. Each internal node whose final_ changes
+  // has its children pushed for processing.
+  std::vector<int> up_stack;
+  {
+    int ri = root - n_tip;
+    int lc = tree.left[ri];
+    int rc = tree.right[ri];
+    if (lc >= 0) up_stack.push_back(lc);
+    if (rc >= 0) up_stack.push_back(rc);
+  }
+
+  while (!up_stack.empty()) {
+    int n = up_stack.back();
+    up_stack.pop_back();
+    if (n < n_tip) continue;  // tip: final = prelim, already correct
+
+    int anc = tree.parent[n];
+    size_t n_base = static_cast<size_t>(n) * tw;
+    size_t a_base = static_cast<size_t>(anc) * tw;
+    bool changed = false;
+
+    for (int b = 0; b < nb; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      int offset = ds.block_word_offset[b];
+
+      uint64_t any_isect = 0;
+      for (int s = 0; s < blk.n_states; ++s) {
+        any_isect |= (tree.final_[a_base + offset + s]
+                    & tree.prelim[n_base + offset + s]);
+      }
+      uint64_t no_isect = ~any_isect & blk.active_mask;
+
+      for (int s = 0; s < blk.n_states; ++s) {
+        uint64_t isect = tree.final_[a_base + offset + s]
+                       & tree.prelim[n_base + offset + s];
+        uint64_t new_val = (isect & any_isect)
+                         | (tree.prelim[n_base + offset + s] & no_isect);
+        if (new_val != tree.final_[n_base + offset + s]) changed = true;
+        tree.final_[n_base + offset + s] = new_val;
+      }
+    }
+
+    // Propagate to children only if final changed
+    if (changed) {
+      int ni_idx = n - n_tip;
+      int lc = tree.left[ni_idx];
+      int rc = tree.right[ni_idx];
+      if (lc >= 0) up_stack.push_back(lc);
+      if (rc >= 0) up_stack.push_back(rc);
+    }
+  }
+
+  return score_delta;
+}
+
 } // anonymous namespace
 
+// Expose the is_ancestor_or_equal helper for constraint checking.
+static inline bool is_ancestor_or_equal(
+    int u, int v,
+    const std::vector<int>& entry, const std::vector<int>& exit)
+{
+  return entry[u] <= entry[v] && exit[u] >= exit[v];
+}
+
+// Check if an edge (above, below) is legal under the constraint.
+// `added_tips`: bitmask of tips already in the tree.
+// `n_added`: number of tips added so far (including the one being added).
+// For each constraint split where all tips have been added:
+//   - If the new tip is "inside" the split, the insertion must be inside
+//     the split's current clade.
+//   - If the new tip is "outside", the insertion must be outside.
+// Uses a simple subtree membership check: walk from `below` to root,
+// checking if we pass through the constraint node.
+static bool wagner_edge_violates_constraint(
+    const TreeState& tree, int below, int tip,
+    const ConstraintData& cd,
+    const std::vector<uint64_t>& added_tips, int n_added)
+{
+  for (int s = 0; s < cd.n_splits; ++s) {
+    const uint64_t* split =
+        &cd.split_tips[static_cast<size_t>(s) * cd.n_words];
+
+    // Is the new tip inside or outside this split?
+    int tw = tip / 64;
+    int tb = tip % 64;
+    bool tip_inside = (split[tw] >> tb) & 1;
+
+    // Check: are all tips in this split accounted for?
+    // Count tips in each side that have been added (including `tip`).
+    bool all_inside_added = true;
+    bool all_outside_added = true;
+    for (int w = 0; w < cd.n_words; ++w) {
+      uint64_t inside_needed = split[w];
+      uint64_t outside_needed = ~split[w];
+      // Mask to valid tips only
+      if (w == cd.n_words - 1) {
+        int rem = tree.n_tip % 64;
+        if (rem > 0) outside_needed &= (1ULL << rem) - 1;
+      }
+      // added_tips already includes all previously-added tips.
+      // The new `tip` is being added now — add it to the mask.
+      uint64_t added_plus_tip = added_tips[w];
+      if (w == tw) added_plus_tip |= (1ULL << tb);
+
+      if (inside_needed & ~added_plus_tip) all_inside_added = false;
+      if (outside_needed & ~added_plus_tip) all_outside_added = false;
+    }
+
+    // Split is active only if at least 2 tips on each side have been added
+    // and at least one tip on each side was added BEFORE this step.
+    // Simpler: a split constrains placement iff both sides have at least
+    // one previously-added tip. Otherwise the split isn't meaningful yet.
+    bool has_prev_inside = false, has_prev_outside = false;
+    for (int w = 0; w < cd.n_words; ++w) {
+      uint64_t prev = added_tips[w];  // before adding `tip`
+      if (prev & cd.split_tips[static_cast<size_t>(s) * cd.n_words + w])
+        has_prev_inside = true;
+      uint64_t outside_mask = ~cd.split_tips[static_cast<size_t>(s) * cd.n_words + w];
+      if (w == cd.n_words - 1) {
+        int rem = tree.n_tip % 64;
+        if (rem > 0) outside_mask &= (1ULL << rem) - 1;
+      }
+      if (prev & outside_mask) has_prev_outside = true;
+    }
+    if (!has_prev_inside || !has_prev_outside) continue;
+
+    // The constraint is active. Find the constraint node in the current tree.
+    // We need to know: is `below` inside the constraint clade?
+    int cn = cd.constraint_node[s];
+    if (cn < 0) continue;  // not mapped yet
+
+    bool below_inside =
+        is_ancestor_or_equal(cn, below, cd.dfs_entry, cd.dfs_exit);
+
+    if (tip_inside && !below_inside) return true;
+    if (!tip_inside && below_inside) return true;
+  }
+  return false;
+}
+
 WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
-                         const std::vector<int>& addition_order) {
+                         const std::vector<int>& addition_order,
+                         ConstraintData* cd) {
   int n_tip = ds.n_tips;
   check_wagner_precondition(n_tip);
+
+  bool constrained = cd && cd->active;
 
   // Validate or create addition order
   std::vector<int> order;
@@ -110,10 +340,23 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
   // Initialize full-sized TreeState
   init_wagner_state(tree, ds);
 
-  // Build initial 3-taxon tree
+  // Build initial 3-taxon tree and do full two-pass scoring.
+  // This sets up prelim/final_ for indirect length evaluation of the first
+  // insertion candidate. Subsequent insertions use incremental scoring.
   build_three_taxon_tree(tree, order[0], order[1], order[2]);
   tree.build_postorder();
-  double score = score_tree(tree, ds);
+  int ew_score = fitch_score(tree, ds);
+
+  // Track which tips have been added (bitmask)
+  int n_words = constrained ? cd->n_words : 0;
+  std::vector<uint64_t> added_tips(n_words, 0ULL);
+  if (constrained) {
+    for (int j = 0; j < 3; ++j) {
+      int t = order[j];
+      added_tips[t / 64] |= (1ULL << (t % 64));
+    }
+    update_constraint(tree, *cd);
+  }
 
   // Add remaining taxa one at a time
   for (int i = 3; i < n_tip; ++i) {
@@ -141,19 +384,29 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
       int rc = tree.right[ni];
 
       // Evaluate edge (node, lc)
-      int extra = fitch_indirect_length(tip_prelim, tree, ds, node, lc);
-      if (extra < best_extra) {
-        best_extra = extra;
-        best_above = node;
-        best_below = lc;
+      if (!constrained ||
+          !wagner_edge_violates_constraint(tree, lc, tip, *cd,
+                                            added_tips, i)) {
+        int extra = fitch_indirect_length_bounded(
+            tip_prelim, tree, ds, node, lc, best_extra);
+        if (extra < best_extra) {
+          best_extra = extra;
+          best_above = node;
+          best_below = lc;
+        }
       }
 
       // Evaluate edge (node, rc)
-      extra = fitch_indirect_length(tip_prelim, tree, ds, node, rc);
-      if (extra < best_extra) {
-        best_extra = extra;
-        best_above = node;
-        best_below = rc;
+      if (!constrained ||
+          !wagner_edge_violates_constraint(tree, rc, tip, *cd,
+                                            added_tips, i)) {
+        int extra = fitch_indirect_length_bounded(
+            tip_prelim, tree, ds, node, rc, best_extra);
+        if (extra < best_extra) {
+          best_extra = extra;
+          best_above = node;
+          best_below = rc;
+        }
       }
 
       stack.push_back(lc);
@@ -163,31 +416,43 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
     // Insert tip at the best edge
     insert_tip_at_edge(tree, tip, new_internal, best_above, best_below);
 
-    // Rebuild postorder and rescore
-    tree.build_postorder();
-    score = score_tree(tree, ds);
+    // Incremental rescore: update only the insertion-to-root path
+    int delta = wagner_incremental_rescore(tree, ds, new_internal);
+    ew_score += delta;
+
+    if (constrained) {
+      added_tips[tip / 64] |= (1ULL << (tip % 64));
+      update_constraint(tree, *cd);
+    }
   }
+
+  // Build postorder (needed by subsequent TBR search) and compute final score.
+  // The incremental EW score tracked during construction is exact for standard
+  // Fitch; for NA datasets or IW, score_tree gives the authoritative result.
+  tree.build_postorder();
+  double score = score_tree(tree, ds);
 
   WagnerResult result;
   result.score = score;
   return result;
 }
 
-WagnerResult random_wagner_tree(TreeState& tree, const DataSet& ds) {
+WagnerResult random_wagner_tree(TreeState& tree, const DataSet& ds,
+                                ConstraintData* cd) {
   int n_tips = ds.n_tips;
   std::vector<int> order(n_tips);
   std::iota(order.begin(), order.end(), 0);
 
-  // Fisher-Yates shuffle using R's RNG
-  GetRNGstate();
+  // Fisher-Yates shuffle using thread-safe RNG
+  ts::rng_state_begin();
   for (int i = n_tips - 1; i > 0; --i) {
-    int j = static_cast<int>(unif_rand() * (i + 1));
+    int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
     if (j > i) j = i;  // guard against floating-point edge case
     std::swap(order[i], order[j]);
   }
-  PutRNGstate();
+  ts::rng_state_end();
 
-  return wagner_tree(tree, ds, order);
+  return wagner_tree(tree, ds, order, cd);
 }
 
 } // namespace ts

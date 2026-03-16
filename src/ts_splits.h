@@ -43,6 +43,11 @@ uint64_t hash_splits(const SplitSet& ss);
 // iff they contain the same set of splits.
 bool splits_equal(const SplitSet& a, const SplitSet& b);
 
+// Lightweight topology hash computed in a single postorder pass.
+// Equivalent to hash_splits(compute_splits(tree)) but avoids allocating
+// a SplitSet. Requires tree.postorder to be valid.
+uint64_t hash_tree(const TreeState& tree);
+
 } // namespace ts
 
 #endif // TS_SPLITS_H

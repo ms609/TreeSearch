@@ -53,8 +53,8 @@ all_tbr <- function(edge, break_order) {
     .Call(`_TreeSearch_all_tbr`, edge, break_order)
 }
 
-ts_fitch_score <- function(edge, contrast, tip_data, weight, levels, min_steps = integer(), concavity) {
-    .Call(`_TreeSearch_ts_fitch_score`, edge, contrast, tip_data, weight, levels, min_steps, concavity)
+ts_fitch_score <- function(edge, contrast, tip_data, weight, levels, min_steps = integer(), concavity = -1.0, infoAmounts = NULL) {
+    .Call(`_TreeSearch_ts_fitch_score`, edge, contrast, tip_data, weight, levels, min_steps, concavity, infoAmounts)
 }
 
 ts_na_debug_char <- function(edge, contrast, tip_data, weight, levels, target_pattern) {
@@ -73,27 +73,27 @@ ts_test_indirect <- function(edge, contrast, tip_data, weight, levels, clip_node
     .Call(`_TreeSearch_ts_test_indirect`, edge, contrast, tip_data, weight, levels, clip_node_1based, above_1based, below_1based)
 }
 
-ts_spr_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 20L, min_steps = integer(), concavity) {
+ts_spr_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 20L, min_steps = integer(), concavity = -1.0) {
     .Call(`_TreeSearch_ts_spr_search`, edge, contrast, tip_data, weight, levels, maxHits, min_steps, concavity)
 }
 
-ts_tbr_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 1L, acceptEqual = FALSE, maxChanges = 0L, min_steps = integer(), concavity) {
+ts_tbr_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 1L, acceptEqual = FALSE, maxChanges = 0L, min_steps = integer(), concavity = -1.0) {
     .Call(`_TreeSearch_ts_tbr_search`, edge, contrast, tip_data, weight, levels, maxHits, acceptEqual, maxChanges, min_steps, concavity)
 }
 
-ts_ratchet_search <- function(edge, contrast, tip_data, weight, levels, nCycles = 10L, perturbProb = 0.04, maxHits = 1L, min_steps = integer(), concavity) {
-    .Call(`_TreeSearch_ts_ratchet_search`, edge, contrast, tip_data, weight, levels, nCycles, perturbProb, maxHits, min_steps, concavity)
+ts_ratchet_search <- function(edge, contrast, tip_data, weight, levels, nCycles = 10L, perturbProb = 0.04, maxHits = 1L, min_steps = integer(), concavity = -1.0, perturbMode = 0L, perturbMaxMoves = 0L, adaptive = FALSE, targetEscapeRate = 0.3) {
+    .Call(`_TreeSearch_ts_ratchet_search`, edge, contrast, tip_data, weight, levels, nCycles, perturbProb, maxHits, min_steps, concavity, perturbMode, perturbMaxMoves, adaptive, targetEscapeRate)
 }
 
-ts_drift_search <- function(edge, contrast, tip_data, weight, levels, nCycles = 10L, afdLimit = 3L, rfdLimit = 0.1, maxHits = 1L, min_steps = integer(), concavity) {
+ts_drift_search <- function(edge, contrast, tip_data, weight, levels, nCycles = 10L, afdLimit = 3L, rfdLimit = 0.1, maxHits = 1L, min_steps = integer(), concavity = -1.0) {
     .Call(`_TreeSearch_ts_drift_search`, edge, contrast, tip_data, weight, levels, nCycles, afdLimit, rfdLimit, maxHits, min_steps, concavity)
 }
 
-ts_wagner_tree <- function(contrast, tip_data, weight, levels, addition_order = integer(), min_steps = integer(), concavity) {
+ts_wagner_tree <- function(contrast, tip_data, weight, levels, addition_order = integer(), min_steps = integer(), concavity = -1.0) {
     .Call(`_TreeSearch_ts_wagner_tree`, contrast, tip_data, weight, levels, addition_order, min_steps, concavity)
 }
 
-ts_random_wagner_tree <- function(contrast, tip_data, weight, levels, min_steps = integer(), concavity) {
+ts_random_wagner_tree <- function(contrast, tip_data, weight, levels, min_steps = integer(), concavity = -1.0) {
     .Call(`_TreeSearch_ts_random_wagner_tree`, contrast, tip_data, weight, levels, min_steps, concavity)
 }
 
@@ -109,11 +109,11 @@ ts_pool_test <- function(edges, scores, n_tip, max_size = 100L, suboptimal = 0.0
     .Call(`_TreeSearch_ts_pool_test`, edges, scores, n_tip, max_size, suboptimal)
 }
 
-ts_nni_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 20L, min_steps = integer(), concavity) {
+ts_nni_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 20L, min_steps = integer(), concavity = -1.0) {
     .Call(`_TreeSearch_ts_nni_search`, edge, contrast, tip_data, weight, levels, maxHits, min_steps, concavity)
 }
 
-ts_tree_fuse <- function(edge, contrast, tip_data, weight, levels, pool_edges, pool_scores, accept_equal = FALSE, max_rounds = 10L, min_steps = integer(), concavity) {
+ts_tree_fuse <- function(edge, contrast, tip_data, weight, levels, pool_edges, pool_scores, accept_equal = FALSE, max_rounds = 10L, min_steps = integer(), concavity = -1.0) {
     .Call(`_TreeSearch_ts_tree_fuse`, edge, contrast, tip_data, weight, levels, pool_edges, pool_scores, accept_equal, max_rounds, min_steps, concavity)
 }
 
@@ -121,15 +121,31 @@ ts_sector_diag <- function(edge, contrast, tip_data, weight, levels, sector_root
     .Call(`_TreeSearch_ts_sector_diag`, edge, contrast, tip_data, weight, levels, sector_root_1based)
 }
 
-ts_rss_search <- function(edge, contrast, tip_data, weight, levels, minSectorSize = 6L, maxSectorSize = 50L, acceptEqual = FALSE, rssPicks = 0L, ratchetCycles = 6L, maxHits = 1L, min_steps = integer(), concavity) {
+ts_rss_search <- function(edge, contrast, tip_data, weight, levels, minSectorSize = 6L, maxSectorSize = 50L, acceptEqual = FALSE, rssPicks = 0L, ratchetCycles = 6L, maxHits = 1L, min_steps = integer(), concavity = -1.0) {
     .Call(`_TreeSearch_ts_rss_search`, edge, contrast, tip_data, weight, levels, minSectorSize, maxSectorSize, acceptEqual, rssPicks, ratchetCycles, maxHits, min_steps, concavity)
 }
 
-ts_xss_search <- function(edge, contrast, tip_data, weight, levels, nPartitions = 4L, xssRounds = 3L, acceptEqual = FALSE, ratchetCycles = 6L, maxHits = 1L, min_steps = integer(), concavity) {
+ts_xss_search <- function(edge, contrast, tip_data, weight, levels, nPartitions = 4L, xssRounds = 3L, acceptEqual = FALSE, ratchetCycles = 6L, maxHits = 1L, min_steps = integer(), concavity = -1.0) {
     .Call(`_TreeSearch_ts_xss_search`, edge, contrast, tip_data, weight, levels, nPartitions, xssRounds, acceptEqual, ratchetCycles, maxHits, min_steps, concavity)
 }
 
-ts_driven_search <- function(contrast, tip_data, weight, levels, maxReplicates = 100L, targetHits = 10L, tbrMaxHits = 1L, ratchetCycles = 10L, ratchetPerturbProb = 0.04, driftCycles = 6L, driftAfdLimit = 3L, driftRfdLimit = 0.1, xssRounds = 3L, xssPartitions = 4L, sectorMinSize = 6L, sectorMaxSize = 50L, fuseInterval = 3L, fuseAcceptEqual = FALSE, poolMaxSize = 100L, poolSuboptimal = 0.0, min_steps = integer(), concavity) {
-    .Call(`_TreeSearch_ts_driven_search`, contrast, tip_data, weight, levels, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, min_steps, concavity)
+ts_driven_search <- function(contrast, tip_data, weight, levels, maxReplicates = 100L, targetHits = 10L, tbrMaxHits = 1L, ratchetCycles = 10L, ratchetPerturbProb = 0.04, ratchetPerturbMode = 0L, ratchetPerturbMaxMoves = 0L, ratchetAdaptive = FALSE, driftCycles = 6L, driftAfdLimit = 3L, driftRfdLimit = 0.1, xssRounds = 3L, xssPartitions = 4L, rssRounds = 1L, cssRounds = 1L, cssPartitions = 4L, sectorMinSize = 6L, sectorMaxSize = 50L, fuseInterval = 3L, fuseAcceptEqual = FALSE, poolMaxSize = 100L, poolSuboptimal = 0.0, maxSeconds = 0.0, verbosity = 0L, min_steps = integer(), concavity = -1.0, consSplitMatrix = NULL, consContrast = NULL, consTipData = NULL, consWeight = NULL, consLevels = NULL, consExpectedScore = 0L, infoAmounts = NULL, tabuSize = 100L, wagnerStarts = 1L, progressCallback = NULL, nThreads = 1L) {
+    .Call(`_TreeSearch_ts_driven_search`, contrast, tip_data, weight, levels, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, ratchetPerturbMode, ratchetPerturbMaxMoves, ratchetAdaptive, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, rssRounds, cssRounds, cssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, maxSeconds, verbosity, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts, tabuSize, wagnerStarts, progressCallback, nThreads)
+}
+
+ts_resample_search <- function(contrast, tip_data, weight, levels, bootstrap = FALSE, jackProportion = 2.0 / 3.0, maxReplicates = 5L, targetHits = 2L, tbrMaxHits = 1L, ratchetCycles = 3L, ratchetPerturbProb = 0.04, driftCycles = 0L, min_steps = integer(), concavity = -1.0, consSplitMatrix = NULL, consContrast = NULL, consTipData = NULL, consWeight = NULL, consLevels = NULL, consExpectedScore = 0L, infoAmounts = NULL) {
+    .Call(`_TreeSearch_ts_resample_search`, contrast, tip_data, weight, levels, bootstrap, jackProportion, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, driftCycles, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts)
+}
+
+ts_successive_approx <- function(contrast, tip_data, weight, levels, saK = 3.0, maxSAIter = 20L, maxReplicates = 10L, targetHits = 3L, tbrMaxHits = 1L, ratchetCycles = 5L, ratchetPerturbProb = 0.04, driftCycles = 0L, min_steps = integer(), concavity = -1.0, consSplitMatrix = NULL, consContrast = NULL, consTipData = NULL, consWeight = NULL, consLevels = NULL, consExpectedScore = 0L, infoAmounts = NULL) {
+    .Call(`_TreeSearch_ts_successive_approx`, contrast, tip_data, weight, levels, saK, maxSAIter, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, driftCycles, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts)
+}
+
+ts_bench_tbr_phases <- function(edge, contrast, tip_data, weight, levels, min_steps = integer(), concavity = -1.0) {
+    .Call(`_TreeSearch_ts_bench_tbr_phases`, edge, contrast, tip_data, weight, levels, min_steps, concavity)
+}
+
+ts_simplify_diag <- function(contrast, tip_data, weight, levels) {
+    .Call(`_TreeSearch_ts_simplify_diag`, contrast, tip_data, weight, levels)
 }
 

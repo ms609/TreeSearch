@@ -10,6 +10,7 @@
 
 #include "ts_data.h"
 #include "ts_tree.h"
+#include "ts_constraint.h"
 
 namespace ts {
 
@@ -18,6 +19,7 @@ struct DriftParams {
   int afd_limit = 3;       // max absolute fit difference (steps)
   double rfd_limit = 0.1;  // max relative fit difference
   int max_hits = 1;        // for search-phase TBR
+  int tabu_size = 0;       // Tabu list size for TBR calls (0 = disabled)
 };
 
 struct DriftResult {
@@ -30,7 +32,8 @@ struct DriftResult {
 // Run drift search on `tree` with dataset `ds`.
 // Modifies `tree` in place to the best tree found across all cycles.
 DriftResult drift_search(TreeState& tree, const DataSet& ds,
-                         const DriftParams& params);
+                         const DriftParams& params,
+                         ConstraintData* cd = nullptr);
 
 } // namespace ts
 

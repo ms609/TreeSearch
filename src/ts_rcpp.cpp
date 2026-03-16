@@ -1,4 +1,6 @@
 #include <Rcpp.h>
+#include <chrono>
+#include <random>
 #include "ts_data.h"
 #include "ts_tree.h"
 #include "ts_fitch.h"
@@ -12,19 +14,29 @@
 #include "ts_sector.h"
 #include "ts_fuse.h"
 #include "ts_driven.h"
+#include "ts_constraint.h"
+#include "ts_resample.h"
+#include "ts_rng.h"
+#include "ts_parallel.h"
+#include "ts_simplify.h"
 
 using namespace Rcpp;
 
 namespace {
 
+// Sentinel: concavity = -1 means equal weights (Inf).
+// Rcpp can't auto-generate R_PosInf as an R default, so we use -1
+// and convert here at the single gateway into the C++ engine.
 ts::DataSet make_dataset(
     NumericMatrix contrast,
     IntegerMatrix tip_data,
     IntegerVector weight,
     CharacterVector levels,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0,
+    Nullable<NumericMatrix> infoAmounts = R_NilValue)
 {
+  if (concavity < 0) concavity = HUGE_VAL;
   int n_tips = tip_data.nrow();
   int n_patterns = tip_data.ncol();
   int n_tokens = contrast.nrow();
@@ -40,13 +52,24 @@ ts::DataSet make_dataset(
   const int* min_steps_ptr = (min_steps.size() > 0) ? INTEGER(min_steps)
                                                      : nullptr;
 
+  // Profile parsimony: extract info_amounts table if provided
+  const double* info_amounts_ptr = nullptr;
+  int info_max_steps = 0;
+  if (infoAmounts.isNotNull()) {
+    NumericMatrix ia(infoAmounts.get());
+    info_amounts_ptr = REAL(ia);
+    info_max_steps = ia.nrow();
+  }
+
   return ts::build_dataset(
       REAL(contrast), n_tokens, n_states,
       INTEGER(tip_data), n_tips, n_patterns,
       INTEGER(weight),
       level_ptrs.data(),
       min_steps_ptr,
-      concavity);
+      concavity,
+      info_amounts_ptr,
+      info_max_steps);
 }
 
 // Convert TreeState topology back to R edge matrix (2-column, 1-based)
@@ -77,10 +100,11 @@ double ts_fitch_score(
     IntegerVector weight,
     CharacterVector levels,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0,
+    Nullable<NumericMatrix> infoAmounts = R_NilValue)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
-                                min_steps, concavity);
+                                min_steps, concavity, infoAmounts);
 
   ts::TreeState tree;
   tree.init_from_edge(
@@ -432,7 +456,7 @@ List ts_spr_search(
     CharacterVector levels,
     int maxHits = 20,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -463,7 +487,7 @@ List ts_tbr_search(
     bool acceptEqual = false,
     int maxChanges = 0,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -500,7 +524,11 @@ List ts_ratchet_search(
     double perturbProb = 0.04,
     int maxHits = 1,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0,
+    int perturbMode = 0,
+    int perturbMaxMoves = 0,
+    bool adaptive = false,
+    double targetEscapeRate = 0.3)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -514,6 +542,10 @@ List ts_ratchet_search(
   params.n_cycles = nCycles;
   params.perturb_prob = perturbProb;
   params.max_hits = maxHits;
+  params.perturb_mode = static_cast<ts::PerturbMode>(perturbMode);
+  params.perturb_max_moves = perturbMaxMoves;
+  params.adaptive = adaptive;
+  params.target_escape_rate = targetEscapeRate;
 
   ts::RatchetResult result = ts::ratchet_search(tree, ds, params);
 
@@ -521,7 +553,9 @@ List ts_ratchet_search(
     Named("edge") = tree_to_edge(tree),
     Named("score") = result.best_score,
     Named("n_cycles") = result.n_cycles_completed,
-    Named("total_tbr_moves") = result.total_tbr_moves
+    Named("total_tbr_moves") = result.total_tbr_moves,
+    Named("n_escapes") = result.n_escapes,
+    Named("final_perturb_prob") = result.final_perturb_prob
   );
 }
 
@@ -537,7 +571,7 @@ List ts_drift_search(
     double rfdLimit = 0.1,
     int maxHits = 1,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -572,7 +606,7 @@ List ts_wagner_tree(
     CharacterVector levels,
     IntegerVector addition_order = IntegerVector(),
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -602,7 +636,7 @@ List ts_random_wagner_tree(
     IntegerVector weight,
     CharacterVector levels,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -808,7 +842,7 @@ List ts_nni_search(
     CharacterVector levels,
     int maxHits = 20,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -840,7 +874,7 @@ List ts_tree_fuse(
     bool accept_equal = false,
     int max_rounds = 10,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -926,7 +960,7 @@ List ts_rss_search(
     int ratchetCycles = 6,
     int maxHits = 1,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -968,7 +1002,7 @@ List ts_xss_search(
     int ratchetCycles = 6,
     int maxHits = 1,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -996,6 +1030,70 @@ List ts_xss_search(
   );
 }
 
+// Helper: build ConstraintData from Nullable R objects.
+// Returns cd with cd.active == false if no constraint provided.
+static ts::ConstraintData build_constraint_from_r(
+    int n_tips,
+    Nullable<IntegerMatrix> consSplitMatrix,
+    Nullable<NumericMatrix> consContrast,
+    Nullable<IntegerMatrix> consTipData,
+    Nullable<IntegerVector> consWeight,
+    Nullable<CharacterVector> consLevels,
+    int consExpectedScore)
+{
+  ts::ConstraintData cd;
+  if (consSplitMatrix.isNotNull()) {
+    IntegerMatrix csm(consSplitMatrix.get());
+    int n_cons_splits = csm.nrow();
+    if (n_cons_splits > 0 && csm.ncol() == n_tips) {
+      cd = ts::build_constraint(INTEGER(csm), n_cons_splits, n_tips);
+
+      if (consContrast.isNotNull() && consTipData.isNotNull() &&
+          consWeight.isNotNull() && consLevels.isNotNull()) {
+        NumericMatrix cc(consContrast.get());
+        IntegerMatrix ctd(consTipData.get());
+        IntegerVector cw(consWeight.get());
+        CharacterVector cl(consLevels.get());
+
+        int n_cons_tokens = cc.nrow();
+        int n_cons_states = cc.ncol();
+        int n_cons_patterns = ctd.ncol();
+
+        std::vector<std::string> cons_level_strs(n_cons_states);
+        std::vector<const char*> cons_level_ptrs(n_cons_states);
+        for (int i = 0; i < n_cons_states; ++i) {
+          cons_level_strs[i] = as<std::string>(cl[i]);
+          cons_level_ptrs[i] = cons_level_strs[i].c_str();
+        }
+
+        ts::build_constraint_posthoc(
+            cd,
+            REAL(cc), n_cons_tokens, n_cons_states,
+            INTEGER(ctd), n_tips, n_cons_patterns,
+            INTEGER(cw),
+            cons_level_ptrs.data(),
+            consExpectedScore);
+      }
+    }
+  }
+  return cd;
+}
+
+// Helper: extract profile info_amounts pointer and max_steps from Nullable.
+static void extract_info_amounts(
+    Nullable<NumericMatrix> infoAmounts,
+    const double*& info_amounts_ptr,
+    int& info_max_steps)
+{
+  info_amounts_ptr = nullptr;
+  info_max_steps = 0;
+  if (infoAmounts.isNotNull()) {
+    NumericMatrix ia(infoAmounts.get());
+    info_amounts_ptr = REAL(ia);
+    info_max_steps = ia.nrow();
+  }
+}
+
 // [[Rcpp::export]]
 List ts_driven_search(
     NumericMatrix contrast,
@@ -1007,22 +1105,48 @@ List ts_driven_search(
     int tbrMaxHits = 1,
     int ratchetCycles = 10,
     double ratchetPerturbProb = 0.04,
+    int ratchetPerturbMode = 0,
+    int ratchetPerturbMaxMoves = 0,
+    bool ratchetAdaptive = false,
     int driftCycles = 6,
     int driftAfdLimit = 3,
     double driftRfdLimit = 0.1,
     int xssRounds = 3,
     int xssPartitions = 4,
+    int rssRounds = 1,
+    int cssRounds = 1,
+    int cssPartitions = 4,
     int sectorMinSize = 6,
     int sectorMaxSize = 50,
     int fuseInterval = 3,
     bool fuseAcceptEqual = false,
     int poolMaxSize = 100,
     double poolSuboptimal = 0.0,
+    double maxSeconds = 0.0,
+    int verbosity = 0,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = R_PosInf)
+    double concavity = -1.0,
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue,
+    Nullable<NumericMatrix> consContrast = R_NilValue,
+    Nullable<IntegerMatrix> consTipData = R_NilValue,
+    Nullable<IntegerVector> consWeight = R_NilValue,
+    Nullable<CharacterVector> consLevels = R_NilValue,
+    int consExpectedScore = 0,
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    int tabuSize = 100,
+    int wagnerStarts = 1,
+    Nullable<Function> progressCallback = R_NilValue,
+    int nThreads = 1)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
-                                min_steps, concavity);
+                                min_steps, concavity, infoAmounts);
+
+  // Build constraint if provided
+  int n_tips = tip_data.nrow();
+  ts::ConstraintData cd = build_constraint_from_r(
+      n_tips, consSplitMatrix, consContrast, consTipData,
+      consWeight, consLevels, consExpectedScore);
+  ts::ConstraintData* cd_ptr = cd.active ? &cd : nullptr;
 
   ts::DrivenParams params;
   params.max_replicates = maxReplicates;
@@ -1030,37 +1154,684 @@ List ts_driven_search(
   params.tbr_max_hits = tbrMaxHits;
   params.ratchet_cycles = ratchetCycles;
   params.ratchet_perturb_prob = ratchetPerturbProb;
+  params.ratchet_perturb_mode = ratchetPerturbMode;
+  params.ratchet_perturb_max_moves = ratchetPerturbMaxMoves;
+  params.ratchet_adaptive = ratchetAdaptive;
   params.drift_cycles = driftCycles;
   params.drift_afd_limit = driftAfdLimit;
   params.drift_rfd_limit = driftRfdLimit;
   params.xss_rounds = xssRounds;
   params.xss_partitions = xssPartitions;
+  params.rss_rounds = rssRounds;
+  params.css_rounds = cssRounds;
+  params.css_partitions = cssPartitions;
   params.sector_min_size = sectorMinSize;
   params.sector_max_size = sectorMaxSize;
   params.fuse_interval = fuseInterval;
   params.fuse_accept_equal = fuseAcceptEqual;
   params.pool_max_size = poolMaxSize;
   params.pool_suboptimal = poolSuboptimal;
+  params.max_seconds = maxSeconds;
+  params.verbosity = verbosity;
+  params.tabu_size = tabuSize;
+  params.wagner_starts = wagnerStarts;
 
-  ts::TreeState best_tree;
-  ts::DrivenResult result = ts::driven_search(best_tree, ds, params);
+  // Wire up progress callback if provided
+  if (progressCallback.isNotNull()) {
+    Rcpp::Function r_cb(progressCallback.get());
+    params.progress_callback = [&r_cb](const ts::ProgressInfo& pi) {
+      r_cb(Rcpp::List::create(
+        Rcpp::Named("replicate") = pi.replicate,
+        Rcpp::Named("max_replicates") = pi.max_replicates,
+        Rcpp::Named("best_score") = pi.best_score,
+        Rcpp::Named("hits_to_best") = pi.hits_to_best,
+        Rcpp::Named("target_hits") = pi.target_hits,
+        Rcpp::Named("pool_size") = pi.pool_size,
+        Rcpp::Named("phase") = std::string(pi.phase),
+        Rcpp::Named("elapsed") = pi.elapsed_seconds,
+        Rcpp::Named("phase_score") = pi.phase_score
+      ));
+    };
+  }
+
+  ts::TreePool pool(params.pool_max_size, params.pool_suboptimal);
+  ts::DrivenResult result;
+  if (nThreads > 1) {
+    result = ts::parallel_driven_search(pool, ds, params, cd_ptr, nThreads);
+  } else {
+    result = ts::driven_search(pool, ds, params, cd_ptr);
+  }
 
   if (result.pool_size == 0) {
-    // No replicates completed (e.g. max_replicates=0) — no valid tree
     return List::create(
-      Named("edge") = IntegerMatrix(0, 2),
-      Named("score") = result.best_score,
+      Named("trees") = List::create(),
+      Named("scores") = NumericVector::create(),
+      Named("best_score") = result.best_score,
       Named("replicates") = result.replicates_completed,
       Named("hits_to_best") = result.hits_to_best,
-      Named("pool_size") = result.pool_size
+      Named("pool_size") = 0,
+      Named("timed_out") = result.timed_out
     );
   }
 
+  // Return all pool trees as a list of edge matrices
+  const auto& entries = pool.all();
+  List tree_list(entries.size());
+  NumericVector score_vec(entries.size());
+  for (size_t i = 0; i < entries.size(); ++i) {
+    tree_list[i] = tree_to_edge(entries[i].tree);
+    score_vec[i] = entries[i].score;
+  }
+
   return List::create(
-    Named("edge") = tree_to_edge(best_tree),
-    Named("score") = result.best_score,
+    Named("trees") = tree_list,
+    Named("scores") = score_vec,
+    Named("best_score") = result.best_score,
     Named("replicates") = result.replicates_completed,
     Named("hits_to_best") = result.hits_to_best,
-    Named("pool_size") = result.pool_size
+    Named("pool_size") = result.pool_size,
+    Named("timed_out") = result.timed_out
+  );
+}
+
+// [[Rcpp::export]]
+List ts_resample_search(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    bool bootstrap = false,
+    double jackProportion = 2.0 / 3.0,
+    int maxReplicates = 5,
+    int targetHits = 2,
+    int tbrMaxHits = 1,
+    int ratchetCycles = 3,
+    double ratchetPerturbProb = 0.04,
+    int driftCycles = 0,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = -1.0,
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue,
+    Nullable<NumericMatrix> consContrast = R_NilValue,
+    Nullable<IntegerMatrix> consTipData = R_NilValue,
+    Nullable<IntegerVector> consWeight = R_NilValue,
+    Nullable<CharacterVector> consLevels = R_NilValue,
+    int consExpectedScore = 0,
+    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+{
+  if (concavity < 0) concavity = HUGE_VAL;
+  int n_tips = tip_data.nrow();
+  int n_patterns = tip_data.ncol();
+  int n_tokens = contrast.nrow();
+  int n_states = contrast.ncol();
+
+  std::vector<std::string> level_strs(n_states);
+  std::vector<const char*> level_ptrs(n_states);
+  for (int i = 0; i < n_states; ++i) {
+    level_strs[i] = as<std::string>(levels[i]);
+    level_ptrs[i] = level_strs[i].c_str();
+  }
+
+  const int* min_steps_ptr = (min_steps.size() > 0) ? INTEGER(min_steps)
+                                                     : nullptr;
+
+  // Profile parsimony
+  const double* info_amounts_ptr;
+  int info_max_steps;
+  extract_info_amounts(infoAmounts, info_amounts_ptr, info_max_steps);
+
+  // Constraints
+  ts::ConstraintData cd = build_constraint_from_r(
+      n_tips, consSplitMatrix, consContrast, consTipData,
+      consWeight, consLevels, consExpectedScore);
+  ts::ConstraintData* cd_ptr = cd.active ? &cd : nullptr;
+
+  ts::ResampleParams params;
+  params.bootstrap = bootstrap;
+  params.jack_proportion = jackProportion;
+  params.search.max_replicates = maxReplicates;
+  params.search.target_hits = targetHits;
+  params.search.tbr_max_hits = tbrMaxHits;
+  params.search.ratchet_cycles = ratchetCycles;
+  params.search.ratchet_perturb_prob = ratchetPerturbProb;
+  params.search.drift_cycles = driftCycles;
+
+  ts::ResampleResult result = ts::resample_search(
+      REAL(contrast), n_tokens, n_states,
+      INTEGER(tip_data), n_tips, n_patterns,
+      INTEGER(weight),
+      level_ptrs.data(),
+      min_steps_ptr,
+      concavity,
+      params,
+      info_amounts_ptr,
+      info_max_steps,
+      cd_ptr);
+
+  if (result.edge_parent.empty()) {
+    return List::create(
+      Named("edge") = IntegerMatrix(0, 2),
+      Named("score") = result.score
+    );
+  }
+
+  int n_edge = static_cast<int>(result.edge_parent.size());
+  IntegerMatrix edge(n_edge, 2);
+  for (int i = 0; i < n_edge; ++i) {
+    edge(i, 0) = result.edge_parent[i];
+    edge(i, 1) = result.edge_child[i];
+  }
+
+  return List::create(
+    Named("edge") = edge,
+    Named("score") = result.score
+  );
+}
+
+// [[Rcpp::export]]
+List ts_successive_approx(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    double saK = 3.0,
+    int maxSAIter = 20,
+    int maxReplicates = 10,
+    int targetHits = 3,
+    int tbrMaxHits = 1,
+    int ratchetCycles = 5,
+    double ratchetPerturbProb = 0.04,
+    int driftCycles = 0,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = -1.0,
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue,
+    Nullable<NumericMatrix> consContrast = R_NilValue,
+    Nullable<IntegerMatrix> consTipData = R_NilValue,
+    Nullable<IntegerVector> consWeight = R_NilValue,
+    Nullable<CharacterVector> consLevels = R_NilValue,
+    int consExpectedScore = 0,
+    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+{
+  if (concavity < 0) concavity = HUGE_VAL;
+  int n_tips = tip_data.nrow();
+  int n_patterns = tip_data.ncol();
+  int n_tokens = contrast.nrow();
+  int n_states = contrast.ncol();
+
+  std::vector<std::string> level_strs(n_states);
+  std::vector<const char*> level_ptrs(n_states);
+  for (int i = 0; i < n_states; ++i) {
+    level_strs[i] = as<std::string>(levels[i]);
+    level_ptrs[i] = level_strs[i].c_str();
+  }
+
+  const int* min_steps_ptr = (min_steps.size() > 0) ? INTEGER(min_steps)
+                                                     : nullptr;
+
+  // Profile parsimony
+  const double* info_amounts_ptr;
+  int info_max_steps;
+  extract_info_amounts(infoAmounts, info_amounts_ptr, info_max_steps);
+
+  // Constraints
+  ts::ConstraintData cd = build_constraint_from_r(
+      n_tips, consSplitMatrix, consContrast, consTipData,
+      consWeight, consLevels, consExpectedScore);
+  ts::ConstraintData* cd_ptr = cd.active ? &cd : nullptr;
+
+  ts::SAParams params;
+  params.k = saK;
+  params.max_sa_iter = maxSAIter;
+  params.search.max_replicates = maxReplicates;
+  params.search.target_hits = targetHits;
+  params.search.tbr_max_hits = tbrMaxHits;
+  params.search.ratchet_cycles = ratchetCycles;
+  params.search.ratchet_perturb_prob = ratchetPerturbProb;
+  params.search.drift_cycles = driftCycles;
+
+  ts::SAResult result = ts::successive_approximations(
+      REAL(contrast), n_tokens, n_states,
+      INTEGER(tip_data), n_tips, n_patterns,
+      INTEGER(weight),
+      level_ptrs.data(),
+      min_steps_ptr,
+      concavity,
+      params,
+      info_amounts_ptr,
+      info_max_steps,
+      cd_ptr);
+
+  if (result.edge_parent.empty()) {
+    return List::create(
+      Named("edge") = IntegerMatrix(0, 2),
+      Named("score") = result.score,
+      Named("sa_iterations") = result.sa_iterations,
+      Named("converged") = result.converged
+    );
+  }
+
+  int n_edge = static_cast<int>(result.edge_parent.size());
+  IntegerMatrix edge(n_edge, 2);
+  for (int i = 0; i < n_edge; ++i) {
+    edge(i, 0) = result.edge_parent[i];
+    edge(i, 1) = result.edge_child[i];
+  }
+
+  return List::create(
+    Named("edge") = edge,
+    Named("score") = result.score,
+    Named("sa_iterations") = result.sa_iterations,
+    Named("converged") = result.converged
+  );
+}
+
+// --- Phase 3D: Benchmarking diagnostics ---
+
+// [[Rcpp::export]]
+List ts_bench_tbr_phases(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = -1.0)
+{
+  using Clock = std::chrono::high_resolution_clock;
+  using Us = std::chrono::microseconds;
+
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
+
+  ts::TreeState tree;
+  tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
+
+  // --- Phase A: Full rescore (baseline) ---
+  auto t0 = Clock::now();
+  tree.reset_states(ds);
+  double score = ts::score_tree(tree, ds);
+  auto t1 = Clock::now();
+  double time_full_rescore_us =
+      std::chrono::duration_cast<Us>(t1 - t0).count();
+
+  // Check for NA blocks
+  bool has_na = false;
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
+  }
+  bool use_iw = std::isfinite(ds.concavity);
+
+  // Seed RNG
+  std::mt19937 rng = ts::make_rng();
+
+  // Build clip candidates (non-root)
+  std::vector<int> clip_candidates;
+  for (int node = 0; node < tree.n_node; ++node) {
+    if (node == tree.n_tip) continue;
+    clip_candidates.push_back(node);
+  }
+  std::shuffle(clip_candidates.begin(), clip_candidates.end(), rng);
+
+  // Subtree sizes for filtering
+  std::vector<int> subtree_sizes(tree.n_node, 0);
+  {
+    // Compute subtree sizes (same as TBR search)
+    for (int i = 0; i < tree.n_tip; ++i) subtree_sizes[i] = 1;
+    for (int node : tree.postorder) {
+      int ni = node - tree.n_tip;
+      subtree_sizes[node] = subtree_sizes[tree.left[ni]]
+                           + subtree_sizes[tree.right[ni]];
+    }
+  }
+
+  // Timing accumulators (microseconds)
+  double time_clip_incr_us = 0;
+  double time_indirect_us = 0;
+  double time_unclip_us = 0;
+  int n_clips = 0;
+  int n_candidates_total = 0;
+
+  // Snapshot timing
+  double time_snapshot_save_us = 0;
+  double time_snapshot_restore_us = 0;
+  int n_snapshot_ops = 0;
+
+  // IW buffers
+  std::vector<int> divided_steps;
+  std::vector<double> iw_delta;
+  if (use_iw) {
+    divided_steps.resize(ds.n_patterns, 0);
+    iw_delta.resize(ds.n_patterns, 0.0);
+  }
+
+  // Process all clip candidates (one pass, no moves applied)
+  std::vector<std::pair<int,int>> main_edges;
+  std::vector<std::pair<int,int>> sub_edges;
+  std::vector<uint64_t> from_above(
+      static_cast<size_t>(tree.n_node) * tree.total_words, 0);
+  std::vector<uint64_t> virtual_prelim(tree.total_words);
+  std::vector<uint64_t> vroot_cache;
+
+  for (int clip_node : clip_candidates) {
+    if (tree.parent[clip_node] == tree.n_tip) continue;
+    int clip_size = subtree_sizes[clip_node];
+    if (clip_size > tree.n_tip / 2) continue;
+
+    // Save clip actives for NA
+    std::vector<uint64_t> clip_actives_buf;
+    const uint64_t* clip_actives = nullptr;
+    if (has_na) {
+      size_t clip_sa_base =
+          static_cast<size_t>(clip_node) * tree.total_words;
+      clip_actives_buf.assign(
+          tree.subtree_actives.begin() + clip_sa_base,
+          tree.subtree_actives.begin() + clip_sa_base + tree.total_words);
+      clip_actives = clip_actives_buf.data();
+    }
+
+    // --- Time clip + incremental scoring ---
+    auto tc0 = Clock::now();
+
+    tree.spr_clip(clip_node);
+    tree.build_postorder();
+
+    int nz = tree.clip_state.clip_grandpar;
+
+    double divided_length;
+    if (has_na) {
+      ts::fitch_na_incremental_downpass(tree, ds, nz);
+      ts::fitch_na_incremental_uppass(tree, ds, nz);
+      divided_length = static_cast<double>(ts::fitch_na_pass3_score(tree, ds));
+    } else {
+      int delta = ts::fitch_incremental_downpass(tree, ds, nz);
+      ts::fitch_incremental_uppass(tree, ds, nz);
+      int nx = tree.clip_state.clip_parent;
+      int nx_cost = 0;
+      for (int b = 0; b < ds.n_blocks; ++b) {
+        nx_cost += ds.blocks[b].weight * ts::popcount64(
+            tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b]);
+      }
+      divided_length = score + delta - nx_cost;
+    }
+
+    // IW base
+    double base_iw = 0.0;
+    if (use_iw) {
+      ts::extract_char_steps(tree, ds, divided_steps);
+      base_iw = ts::compute_weighted_score(ds, divided_steps);
+      ts::precompute_weighted_delta(ds, divided_steps, iw_delta);
+    }
+
+    auto tc1 = Clock::now();
+    time_clip_incr_us +=
+        std::chrono::duration_cast<Us>(tc1 - tc0).count();
+
+    // --- Time indirect evaluation ---
+    auto ti0 = Clock::now();
+
+    // Collect main edges
+    main_edges.clear();
+    for (int node : tree.postorder) {
+      int ni = node - tree.n_tip;
+      main_edges.push_back({node, tree.left[ni]});
+      main_edges.push_back({node, tree.right[ni]});
+    }
+
+    int ns = tree.clip_state.clip_sibling;
+    size_t clip_base = static_cast<size_t>(clip_node) * tree.total_words;
+    const uint64_t* clip_prelim = &tree.prelim[clip_base];
+    int n_spr_candidates = 0;
+
+    // SPR candidates (unbounded for timing)
+    for (auto& [above, below] : main_edges) {
+      if (above == nz && below == ns) continue;
+      if (has_na) {
+        if (use_iw) {
+          ts::indirect_na_iw_length_bounded(clip_prelim, clip_actives,
+              tree, ds, above, below, base_iw, iw_delta, HUGE_VAL);
+        } else {
+          ts::fitch_na_indirect_length_bounded(clip_prelim, clip_actives,
+              tree, ds, above, below, INT_MAX);
+        }
+      } else if (use_iw) {
+        ts::indirect_iw_length_bounded(clip_prelim, tree, ds, above, below,
+            base_iw, iw_delta, HUGE_VAL);
+      } else {
+        ts::fitch_indirect_length_bounded(clip_prelim, tree, ds,
+            above, below, INT_MAX);
+      }
+      ++n_spr_candidates;
+    }
+
+    // TBR candidates (with vroot cache)
+    int n_tbr_candidates = 0;
+    if (clip_node >= tree.n_tip) {
+      // Precompute vroot cache
+      int n_main = static_cast<int>(main_edges.size());
+      vroot_cache.resize(static_cast<size_t>(n_main) * tree.total_words);
+      for (int ei = 0; ei < n_main; ++ei) {
+        int a = main_edges[ei].first;
+        int d = main_edges[ei].second;
+        size_t a_base = static_cast<size_t>(a) * tree.total_words;
+        size_t d_base = static_cast<size_t>(d) * tree.total_words;
+        size_t out_base = static_cast<size_t>(ei) * tree.total_words;
+        for (int s = 0; s < tree.total_words; ++s) {
+          vroot_cache[out_base + s] = tree.final_[a_base + s]
+                                    | tree.final_[d_base + s];
+        }
+      }
+
+      // Collect subtree edges
+      sub_edges.clear();
+      std::vector<int> sub_stack;
+      sub_stack.push_back(clip_node);
+      while (!sub_stack.empty()) {
+        int nd = sub_stack.back();
+        sub_stack.pop_back();
+        if (nd >= tree.n_tip) {
+          int ni = nd - tree.n_tip;
+          int lc = tree.left[ni], rc = tree.right[ni];
+          if (lc >= 0) { sub_edges.push_back({nd, lc}); sub_stack.push_back(lc); }
+          if (rc >= 0) { sub_edges.push_back({nd, rc}); sub_stack.push_back(rc); }
+        }
+      }
+
+      // Compute from_above for subtree
+      // (simplified: use final_ of clip_node's parent as pseudo-above)
+      // For correct timing we don't need exact from_above, just measure
+      // the iteration cost. Use clip_prelim as virtual_prelim placeholder.
+      for (auto& [sp, sc] : sub_edges) {
+        if (sp == clip_node) continue;
+        // Quick virtual prelim (just use prelim as-is for timing)
+        size_t sc_base = static_cast<size_t>(sc) * tree.total_words;
+        const uint64_t* vp = &tree.prelim[sc_base];
+
+        for (int ei = 0; ei < n_main; ++ei) {
+          auto& [above, below] = main_edges[ei];
+          if (above == nz && below == ns) continue;
+          if (use_iw) {
+            ts::indirect_iw_length_cached(
+                vp, &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
+                ds, base_iw, iw_delta, HUGE_VAL);
+          } else {
+            ts::fitch_indirect_length_cached(
+                vp, &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
+                ds, INT_MAX);
+          }
+          ++n_tbr_candidates;
+        }
+      }
+    }
+
+    auto ti1 = Clock::now();
+    time_indirect_us +=
+        std::chrono::duration_cast<Us>(ti1 - ti0).count();
+    n_candidates_total += n_spr_candidates + n_tbr_candidates;
+
+    // --- Time unclip ---
+    auto tu0 = Clock::now();
+    tree.spr_unclip();
+    tree.build_postorder();
+    auto tu1 = Clock::now();
+    time_unclip_us +=
+        std::chrono::duration_cast<Us>(tu1 - tu0).count();
+
+    ++n_clips;
+
+    ts::check_interrupt();
+  }
+
+  // --- Time snapshot save/restore (separate measurement) ---
+  {
+    // Allocate snapshot
+    struct SnapBench {
+      std::vector<uint64_t> prelim, final_, local_cost, down2, sub_act;
+      void alloc(const ts::TreeState& t, bool na) {
+        size_t ssz = static_cast<size_t>(t.n_node) * t.total_words;
+        size_t csz = static_cast<size_t>(t.n_node) * t.n_blocks;
+        prelim.resize(ssz); final_.resize(ssz); local_cost.resize(csz);
+        if (na) { down2.resize(ssz); sub_act.resize(ssz); }
+      }
+    } snap_bench;
+    snap_bench.alloc(tree, has_na);
+
+    size_t state_bytes = snap_bench.prelim.size() * sizeof(uint64_t);
+    size_t cost_bytes = snap_bench.local_cost.size() * sizeof(uint64_t);
+
+    // Warm up
+    std::memcpy(snap_bench.prelim.data(), tree.prelim.data(), state_bytes);
+    std::memcpy(snap_bench.final_.data(), tree.final_.data(), state_bytes);
+
+    int n_snap_iters = std::max(100, 10000 / std::max(1, tree.n_node));
+    auto ts0 = Clock::now();
+    for (int i = 0; i < n_snap_iters; ++i) {
+      std::memcpy(snap_bench.prelim.data(), tree.prelim.data(), state_bytes);
+      std::memcpy(snap_bench.final_.data(), tree.final_.data(), state_bytes);
+      std::memcpy(snap_bench.local_cost.data(), tree.local_cost.data(), cost_bytes);
+      if (has_na) {
+        std::memcpy(snap_bench.down2.data(), tree.down2.data(), state_bytes);
+        std::memcpy(snap_bench.sub_act.data(), tree.subtree_actives.data(), state_bytes);
+      }
+    }
+    auto ts1 = Clock::now();
+    time_snapshot_save_us =
+        static_cast<double>(std::chrono::duration_cast<Us>(ts1 - ts0).count())
+        / n_snap_iters;
+
+    auto tr0 = Clock::now();
+    for (int i = 0; i < n_snap_iters; ++i) {
+      std::memcpy(tree.prelim.data(), snap_bench.prelim.data(), state_bytes);
+      std::memcpy(tree.final_.data(), snap_bench.final_.data(), state_bytes);
+      std::memcpy(tree.local_cost.data(), snap_bench.local_cost.data(), cost_bytes);
+      if (has_na) {
+        std::memcpy(tree.down2.data(), snap_bench.down2.data(), state_bytes);
+        std::memcpy(tree.subtree_actives.data(), snap_bench.sub_act.data(), state_bytes);
+      }
+    }
+    auto tr1 = Clock::now();
+    time_snapshot_restore_us =
+        static_cast<double>(std::chrono::duration_cast<Us>(tr1 - tr0).count())
+        / n_snap_iters;
+    n_snapshot_ops = n_snap_iters;
+  }
+
+  // Dataset info
+  int total_chars = 0;
+  std::vector<int> block_n_states(ds.n_blocks);
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    total_chars += ds.blocks[b].n_chars;
+    block_n_states[b] = ds.blocks[b].n_states;
+  }
+
+  // Snapshot size in bytes
+  size_t snap_bytes = static_cast<size_t>(tree.n_node) * tree.total_words
+                    * sizeof(uint64_t);
+  size_t snap_total = snap_bytes * 2 + // prelim + final_
+      static_cast<size_t>(tree.n_node) * tree.n_blocks * sizeof(uint64_t);
+  if (has_na) snap_total += snap_bytes * 2; // down2 + subtree_actives
+
+  return List::create(
+    Named("n_tips") = tree.n_tip,
+    Named("n_node") = tree.n_node,
+    Named("n_blocks") = ds.n_blocks,
+    Named("total_words") = tree.total_words,
+    Named("total_chars") = total_chars,
+    Named("block_n_states") = wrap(block_n_states),
+    Named("has_na") = has_na,
+    Named("use_iw") = use_iw,
+    Named("score") = score,
+    // Timing (microseconds)
+    Named("time_full_rescore_us") = time_full_rescore_us,
+    Named("time_clip_incr_us") = time_clip_incr_us,
+    Named("time_indirect_us") = time_indirect_us,
+    Named("time_unclip_us") = time_unclip_us,
+    Named("time_snapshot_save_us") = time_snapshot_save_us,
+    Named("time_snapshot_restore_us") = time_snapshot_restore_us,
+    Named("snapshot_bytes") = static_cast<double>(snap_total),
+    // Counts
+    Named("n_clips") = n_clips,
+    Named("n_candidates") = n_candidates_total,
+    Named("n_snapshot_iters") = n_snapshot_ops
+  );
+}
+
+// [[Rcpp::export]]
+List ts_simplify_diag(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels)
+{
+  int n_tokens = contrast.nrow();
+  int n_states = contrast.ncol();
+  int n_tips = tip_data.nrow();
+  int n_patterns = tip_data.ncol();
+
+  // Identify inapp_state
+  int inapp_state = -1;
+  for (int s = 0; s < n_states; ++s) {
+    if (std::string(levels[s]) == "-") {
+      inapp_state = s;
+      break;
+    }
+  }
+
+  // Build token_states
+  std::vector<uint32_t> token_states(n_tokens, 0);
+  for (int t = 0; t < n_tokens; ++t) {
+    for (int s = 0; s < n_states; ++s) {
+      if (contrast(t, s) > 0.5) {
+        token_states[t] |= (1u << s);
+      }
+    }
+  }
+
+  ts::SimplificationResult simpl = ts::simplify_patterns(
+      token_states, &tip_data(0, 0), n_tips, n_patterns,
+      &weight[0], n_states, inapp_state);
+
+  // Build return: per-pattern info
+  IntegerVector precomputed(n_patterns);
+  LogicalVector informative(n_patterns);
+  IntegerVector n_states_remaining(n_patterns);
+  for (int p = 0; p < n_patterns; ++p) {
+    precomputed[p] = simpl.patterns[p].precomputed_steps;
+    informative[p] = simpl.patterns[p].informative;
+    n_states_remaining[p] = simpl.patterns[p].n_states_remaining;
+  }
+
+  // Compute ew_offset
+  int ew_offset = 0;
+  for (int p = 0; p < n_patterns; ++p) {
+    ew_offset += simpl.patterns[p].precomputed_steps * weight[p];
+  }
+
+  return List::create(
+    Named("n_patterns_removed") = simpl.n_patterns_removed,
+    Named("n_states_reduced") = simpl.n_states_reduced,
+    Named("total_offset_steps") = simpl.total_offset_steps,
+    Named("ew_offset") = ew_offset,
+    Named("precomputed_steps") = precomputed,
+    Named("informative") = informative,
+    Named("n_states_remaining") = n_states_remaining
   );
 }

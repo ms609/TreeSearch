@@ -9,6 +9,7 @@
 
 #include "ts_data.h"
 #include "ts_tree.h"
+#include "ts_constraint.h"
 #include <vector>
 
 namespace ts {
@@ -22,11 +23,13 @@ struct WagnerResult {
 // `addition_order`: tip indices in insertion order (size n_tips).
 //   If empty, uses sequential order 0..n_tips-1.
 WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
-                         const std::vector<int>& addition_order);
+                         const std::vector<int>& addition_order,
+                         ConstraintData* cd = nullptr);
 
 // Build a random-addition-sequence Wagner tree.
 // Uses R's RNG (respects set.seed).
-WagnerResult random_wagner_tree(TreeState& tree, const DataSet& ds);
+WagnerResult random_wagner_tree(TreeState& tree, const DataSet& ds,
+                                ConstraintData* cd = nullptr);
 
 } // namespace ts
 

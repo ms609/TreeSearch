@@ -71,6 +71,7 @@ Other tree scoring:
 \code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
+\code{\link{MaximizeParsimony}()},
 \code{\link{MinimumLength}()},
 \code{\link{TaxonInfluence}()}
 
@@ -79,6 +80,7 @@ Other tree scoring:
 \code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
+\code{\link{MaximizeParsimony}()},
 \code{\link{MinimumLength}()},
 \code{\link{TaxonInfluence}()}
 }

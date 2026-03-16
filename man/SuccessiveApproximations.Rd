@@ -25,10 +25,7 @@ SuccessiveWeights(tree, dataset)
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{outgroup}{if not NULL, taxa on which the tree should be rooted}
 
@@ -45,7 +42,7 @@ Additive (ordered) characters can be handled using
 \item{ratchetIter}{maximum iterations of parsimony ratchet}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
-more detailed commentary on search progress. Set to \code{0} to run silently.}
+more detail. Set to \code{0} to run silently.}
 
 \item{suboptimal}{retain trees that are this proportion less optimal than the optimal tree}
 }

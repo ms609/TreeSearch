@@ -54,12 +54,18 @@ inline int ctz64(uint64_t x) {
 static constexpr int MAX_CHARS_PER_BLOCK = 64;
 static constexpr int MAX_STATES = 32;  // practical limit for morphological data
 
+enum class ScoringMode { EW, IW, PROFILE };
+
 struct CharBlock {
   int n_chars;             // characters in this block (1..64)
   int n_states;            // number of states (including NA if has_inapplicable)
   int weight;              // block weight (all chars in block share same weight)
   bool has_inapplicable;   // state 0 is inapplicable → use NA-aware algorithm
   uint64_t active_mask;    // bits 0..n_chars-1 set, rest clear
+
+  // Ratchet upweighting: bits set here count double during perturbed scoring.
+  // Must be a subset of active_mask. Default 0 (no upweighting).
+  uint64_t upweight_mask = 0;
 
   // For IW: map each character back to its original pattern index
   // (multiple characters may share the same pattern after weight expansion)
@@ -84,6 +90,25 @@ struct DataSet {
   std::vector<int> min_steps;          // minimum steps per pattern
   std::vector<int> pattern_freq;       // original weight (for reporting)
   double concavity;                    // IW concavity constant k; HUGE_VAL = EW
+
+  // Scoring mode (derived from concavity / info_amounts at build time)
+  ScoringMode scoring_mode = ScoringMode::EW;
+
+  // Profile parsimony lookup table (populated only when scoring_mode == PROFILE).
+  // Column-major layout matching R: info_amounts[(step-1) + info_max_steps * pattern]
+  // where step is the total step count (1-based) for that character.
+  // Row 0 (= 1 total step = min steps for binary chars) has cost 0.
+  std::vector<double> info_amounts;
+  int info_max_steps = 0;              // number of rows in info_amounts
+
+  // Character simplification metadata (populated by simplify_patterns).
+  // ew_offset: sum of (precomputed_steps * weight) for all patterns,
+  //   including removed uninformative ones. Added to EW score in score_tree().
+  int ew_offset = 0;
+  // Per-pattern step offset: topology-independent steps removed during
+  //   simplification. Used by profile scoring to restore correct total steps,
+  //   and by IW to adjust min_steps. Index by original pattern index.
+  std::vector<int> precomputed_steps;
 };
 
 // Build a DataSet from R-side data.
@@ -100,7 +125,9 @@ DataSet build_dataset(
     const int* weight_r,
     const char** levels_r,
     const int* min_steps_r = nullptr,
-    double concavity = HUGE_VAL);
+    double concavity = HUGE_VAL,
+    const double* info_amounts_r = nullptr,
+    int info_max_steps = 0);
 
 } // namespace ts
 
