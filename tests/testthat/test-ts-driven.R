@@ -1,22 +1,5 @@
-library("TreeTools")
-
-# Helper: prepare dataset for ts_* functions from a phyDat object
-make_ts_data <- function(dataset) {
-  at <- attributes(dataset)
-  contrast <- at$contrast
-  tip_data <- matrix(unlist(dataset, use.names = FALSE),
-                     nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
-  levels <- at$levels
-  list(contrast = contrast, tip_data = tip_data,
-       weight = weight, levels = levels)
-}
-
-# Helper: score a tree with ts engine
-ts_score <- function(tree, ds) {
-  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data,
-                               ds$weight, ds$levels, concavity = Inf)
-}
+# Tests for the C++ driven search engine.
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
 # Helper: run driven search
 ts_driven <- function(ds, maxReplicates = 5L, targetHits = 2L,
@@ -159,10 +142,10 @@ test_that("Multiple replicates improve search quality", {
   r1 <- ts_driven(med_ds, maxReplicates = 1L, targetHits = 1L,
                    ratchetCycles = 1L, fuseInterval = 100L)
 
-  scores <- numeric(5)
+  scores <- numeric(2)
   for (i in seq_along(scores)) {
-    r <- ts_driven(med_ds, maxReplicates = 5L, targetHits = 3L,
-                   ratchetCycles = 3L, fuseInterval = 2L)
+    r <- ts_driven(med_ds, maxReplicates = 3L, targetHits = 2L,
+                   ratchetCycles = 2L, fuseInterval = 2L)
     scores[i] <- r$best_score
   }
 

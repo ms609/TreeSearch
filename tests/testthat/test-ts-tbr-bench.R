@@ -2,24 +2,8 @@
 # Tests correctness: optimized TBR must find scores equal to or better than
 # the baseline, and result topologies must be valid.
 
-library("TreeTools")
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
-# Helper: prepare dataset for ts_* functions from a phyDat object
-make_ts_data <- function(dataset) {
-  at <- attributes(dataset)
-  contrast <- at$contrast
-  tip_data <- matrix(unlist(dataset, use.names = FALSE),
-                     nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
-  levels <- at$levels
-  list(contrast = contrast, tip_data = tip_data,
-       weight = weight, levels = levels)
-}
-
-ts_score <- function(tree, ds) {
-  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data,
-                              ds$weight, ds$levels)
-}
 
 ts_tbr <- function(tree, ds, maxHits = 1L, acceptEqual = FALSE,
                    maxChanges = 0L, concavity = Inf) {

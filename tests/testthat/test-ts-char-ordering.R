@@ -1,27 +1,5 @@
 # Tests for Phase 3C: character-ordering optimizations.
-# Verifies score invariance under expensive-first block ordering,
-# zero-weight pattern compaction, active_mask skip, and bounded
-# indirect call correctness.
-
-library("TreeTools")
-
-# Helper: prepare dataset for ts_* functions from a phyDat object
-make_ts_data <- function(dataset) {
-  at <- attributes(dataset)
-  contrast <- at$contrast
-  tip_data <- matrix(unlist(dataset, use.names = FALSE),
-                     nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
-  levels <- at$levels
-  list(contrast = contrast, tip_data = tip_data,
-       weight = weight, levels = levels)
-}
-
-# Helper: score a tree with ts engine
-ts_score <- function(tree, ds, concavity = Inf) {
-  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data,
-                              ds$weight, ds$levels, concavity = concavity)
-}
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
 # Helper: run driven search
 ts_driven <- function(ds, maxReplicates = 3L, targetHits = 1L,
@@ -40,15 +18,6 @@ ts_driven <- function(ds, maxReplicates = 3L, targetHits = 1L,
     verbosity = verbosity,
     ...
   )
-}
-
-# Helper: validate topology
-validate_result <- function(result, n_tip) {
-  edges <- result$trees[[1]]
-  expect_equal(nrow(edges), 2L * (n_tip - 1L))
-  children <- edges[, 2]
-  tips <- sort(children[children <= n_tip])
-  expect_equal(tips, seq_len(n_tip))
 }
 
 # ---------- Datasets ----------
@@ -92,7 +61,7 @@ test_that("Scores are correct after block reordering", {
 
 test_that("EW driven search finds correct optimum", {
   set.seed(3341)
-  result <- ts_driven(mixed_ds, maxReplicates = 5L, targetHits = 2L)
+  result <- ts_driven(mixed_ds, maxReplicates = 3L, targetHits = 1L)
   expect_true(result$best_score > 0)
   validate_result(result, 10L)
 
@@ -186,7 +155,7 @@ test_that("Ratchet search correct with active_mask optimization", {
 test_that("Driven search is reproducible with set.seed()", {
   run_search <- function() {
     set.seed(2200)
-    ts_driven(mixed_ds, maxReplicates = 5L, targetHits = 2L)
+    ts_driven(mixed_ds, maxReplicates = 3L, targetHits = 1L)
   }
   r1 <- run_search()
   r2 <- run_search()

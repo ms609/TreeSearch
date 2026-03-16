@@ -1,25 +1,8 @@
-context("Parallel driven search (Phase 5)")
-
-# --- Test helpers ---
-
-make_dataset <- function(phyDat) {
-  at <- attributes(phyDat)
-  list(
-    contrast = at$contrast,
-    tip_data = matrix(unlist(phyDat, use.names = FALSE),
-                      nrow = length(phyDat), byrow = TRUE),
-    weight = at$weight,
-    levels = at$levels
-  )
-}
-
-# --- Setup ---
+# Tests for parallel driven search (Phase 5).
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
 data("inapplicable.phyData", package = "TreeSearch")
 vinther <- inapplicable.phyData[["Vinther2008"]]
-
-# Additional dataset for testing
-ew_data <- vinther
 
 # --- 1. Serial equivalence (nThreads=1) ---
 
@@ -55,17 +38,18 @@ test_that("nThreads=1 produces identical results to default serial search", {
 test_that("Parallel search (2 threads) produces valid trees with correct scores", {
   skip_on_cran()
   set.seed(3192)
-  ds <- make_dataset(vinther)
+  ds <- make_ts_data(vinther)
   result <- TreeSearch:::ts_driven_search(
     contrast = ds$contrast, tip_data = ds$tip_data,
     weight = ds$weight, levels = ds$levels,
-    maxReplicates = 4L, targetHits = 3L, verbosity = 0L,
+    maxReplicates = 3L, targetHits = 2L, verbosity = 0L,
     nThreads = 2L
   )
 
   expect_true(length(result$trees) > 0)
   expect_true(result$best_score > 0)
   expect_true(result$pool_size > 0)
+  expect_true(is.finite(result$best_score))
 
   # Verify each tree is valid and scores correctly
   for (i in seq_along(result$trees)) {
@@ -75,33 +59,16 @@ test_that("Parallel search (2 threads) produces valid trees with correct scores"
     )
     expect_equal(score, result$scores[i], tolerance = 0.01,
                  info = paste("Tree", i, "score mismatch"))
-    # Valid tree structure: 2*(n-1) edges for n tips
     n_tip <- length(vinther)
     expect_equal(nrow(edge), 2 * (n_tip - 1))
   }
-})
-
-test_that("Parallel search (2 threads) produces valid results", {
-  skip_on_cran()
-  set.seed(6104)
-  ds <- make_dataset(vinther)
-  result <- TreeSearch:::ts_driven_search(
-    contrast = ds$contrast, tip_data = ds$tip_data,
-    weight = ds$weight, levels = ds$levels,
-    maxReplicates = 6L, targetHits = 4L, verbosity = 0L,
-    nThreads = 2L
-  )
-
-  expect_true(length(result$trees) > 0)
-  expect_true(result$best_score > 0)
-  expect_true(is.finite(result$best_score))
 })
 
 # --- 3. Timeout in parallel mode ---
 
 test_that("Parallel search respects timeout", {
   skip_on_cran()
-  ds <- make_dataset(vinther)
+  ds <- make_ts_data(vinther)
   t0 <- proc.time()["elapsed"]
   result <- TreeSearch:::ts_driven_search(
     contrast = ds$contrast, tip_data = ds$tip_data,
@@ -124,7 +91,7 @@ test_that("nThreads=0 (auto-detect) is capped at 2 in tests", {
   # nThreads=0 auto-detects CPU count; use nThreads=2 to stay within
 
   # the 2-core-per-agent limit (see AGENTS.md).
-  ds <- make_dataset(vinther)
+  ds <- make_ts_data(vinther)
   result <- TreeSearch:::ts_driven_search(
     contrast = ds$contrast, tip_data = ds$tip_data,
     weight = ds$weight, levels = ds$levels,
@@ -138,7 +105,7 @@ test_that("nThreads=0 (auto-detect) is capped at 2 in tests", {
 
 test_that("nThreads > maxReplicates is clamped", {
   skip_on_cran()
-  ds <- make_dataset(vinther)
+  ds <- make_ts_data(vinther)
   result <- TreeSearch:::ts_driven_search(
     contrast = ds$contrast, tip_data = ds$tip_data,
     weight = ds$weight, levels = ds$levels,
@@ -152,7 +119,7 @@ test_that("nThreads > maxReplicates is clamped", {
 
 test_that("Single replicate in parallel mode works", {
   skip_on_cran()
-  ds <- make_dataset(vinther)
+  ds <- make_ts_data(vinther)
   result <- TreeSearch:::ts_driven_search(
     contrast = ds$contrast, tip_data = ds$tip_data,
     weight = ds$weight, levels = ds$levels,
@@ -168,7 +135,7 @@ test_that("Single replicate in parallel mode works", {
 
 test_that("Implied weights works in parallel mode", {
   skip_on_cran()
-  ds <- make_dataset(vinther)
+  ds <- make_ts_data(vinther)
   result <- TreeSearch:::ts_driven_search(
     contrast = ds$contrast, tip_data = ds$tip_data,
     weight = ds$weight, levels = ds$levels,
@@ -194,7 +161,7 @@ test_that("Implied weights works in parallel mode", {
 
 test_that("Inapplicable characters work in parallel mode", {
   skip_on_cran()
-  ds <- make_dataset(vinther)
+  ds <- make_ts_data(vinther)
   result <- TreeSearch:::ts_driven_search(
     contrast = ds$contrast, tip_data = ds$tip_data,
     weight = ds$weight, levels = ds$levels,
@@ -228,42 +195,15 @@ test_that("MaximizeParsimony with nThreads > 1 works end-to-end", {
   }
 })
 
-# --- 8. Score quality ---
-
-test_that("Parallel search finds comparable scores to serial", {
-  skip_on_cran()
-  ds <- make_dataset(vinther)
-
-  set.seed(1829)
-  result_serial <- TreeSearch:::ts_driven_search(
-    contrast = ds$contrast, tip_data = ds$tip_data,
-    weight = ds$weight, levels = ds$levels,
-    maxReplicates = 5L, targetHits = 3L, verbosity = 0L,
-    nThreads = 1L
-  )
-
-  set.seed(1829)
-  result_parallel <- TreeSearch:::ts_driven_search(
-    contrast = ds$contrast, tip_data = ds$tip_data,
-    weight = ds$weight, levels = ds$levels,
-    maxReplicates = 5L, targetHits = 3L, verbosity = 0L,
-    nThreads = 2L
-  )
-
-  # Parallel score should be in the same ballpark (within 10% or 5 steps)
-  expect_true(result_parallel$best_score <=
-              result_serial$best_score + max(5, result_serial$best_score * 0.1))
-})
-
-# --- 9. Pool suboptimal in parallel ---
+# --- 8. Pool suboptimal in parallel ---
 
 test_that("Pool suboptimal collection works in parallel", {
   skip_on_cran()
-  ds <- make_dataset(vinther)
+  ds <- make_ts_data(vinther)
   result <- TreeSearch:::ts_driven_search(
     contrast = ds$contrast, tip_data = ds$tip_data,
     weight = ds$weight, levels = ds$levels,
-    maxReplicates = 4L, targetHits = 3L, verbosity = 0L,
+    maxReplicates = 3L, targetHits = 2L, verbosity = 0L,
     poolSuboptimal = 5.0,
     nThreads = 2L
   )

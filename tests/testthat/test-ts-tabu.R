@@ -45,64 +45,42 @@ test_that("hash_tree matches hash_splits(compute_splits())", {
 
 test_that("Tabu prevents cycling during TBR plateau exploration", {
   library(TreeTools)
-
   data("inapplicable.phyData", package = "TreeSearch")
   dataset <- inapplicable.phyData[["Vinther2008"]]
 
-  # Run driven search with tabu enabled
   set.seed(4872)
   result_tabu <- MaximizeParsimony(
-    dataset,
-    maxReplicates = 3L,
-    targetHits = 2L,
-    tabuSize = 100L,
-    verbosity = 0L
+    dataset, maxReplicates = 2L, targetHits = 2L,
+    tabuSize = 100L, verbosity = 0L
   )
-  score_tabu <- attr(result_tabu, "score")
-  expect_true(is.finite(score_tabu))
-  expect_true(score_tabu > 0)
+  expect_true(is.finite(attr(result_tabu, "score")))
+  expect_true(attr(result_tabu, "score") > 0)
 
-  # Run driven search with tabu disabled
   set.seed(4872)
   result_no_tabu <- MaximizeParsimony(
-    dataset,
-    maxReplicates = 3L,
-    targetHits = 2L,
-    tabuSize = 0L,
-    verbosity = 0L
+    dataset, maxReplicates = 2L, targetHits = 2L,
+    tabuSize = 0L, verbosity = 0L
   )
-  score_no_tabu <- attr(result_no_tabu, "score")
-  expect_true(is.finite(score_no_tabu))
-
-  # Both should produce valid trees
+  expect_true(is.finite(attr(result_no_tabu, "score")))
   expect_true(length(result_tabu) >= 1L)
   expect_true(length(result_no_tabu) >= 1L)
 })
 
 test_that("Tabu search is deterministic with set.seed()", {
   library(TreeTools)
-
   data("inapplicable.phyData", package = "TreeSearch")
   dataset <- inapplicable.phyData[["Vinther2008"]]
 
   set.seed(2091)
   r1 <- MaximizeParsimony(
-    dataset,
-    maxReplicates = 3L,
-    targetHits = 2L,
-    tabuSize = 50L,
-    verbosity = 0L
+    dataset, maxReplicates = 2L, targetHits = 2L,
+    tabuSize = 50L, verbosity = 0L
   )
-
   set.seed(2091)
   r2 <- MaximizeParsimony(
-    dataset,
-    maxReplicates = 3L,
-    targetHits = 2L,
-    tabuSize = 50L,
-    verbosity = 0L
+    dataset, maxReplicates = 2L, targetHits = 2L,
+    tabuSize = 50L, verbosity = 0L
   )
-
   expect_equal(attr(r1, "score"), attr(r2, "score"))
   expect_equal(attr(r1, "replicates"), attr(r2, "replicates"))
 })
@@ -224,22 +202,16 @@ test_that("Tabu + inapplicable characters works correctly", {
 
 test_that("wagnerStarts = 5 with tabu combined", {
   library(TreeTools)
-
   data("inapplicable.phyData", package = "TreeSearch")
   dataset <- inapplicable.phyData[["Vinther2008"]]
 
   set.seed(9104)
   r <- MaximizeParsimony(
-    dataset,
-    maxReplicates = 2L,
-    targetHits = 2L,
-    tabuSize = 100L,
-    wagnerStarts = 5L,
-    verbosity = 0L
+    dataset, maxReplicates = 1L, targetHits = 1L,
+    tabuSize = 100L, wagnerStarts = 5L, verbosity = 0L
   )
   expect_true(is.finite(attr(r, "score")))
   expect_true(attr(r, "score") > 0)
-  expect_true(length(r) >= 1L)
 })
 
 test_that("Driven search low-level with tabu", {

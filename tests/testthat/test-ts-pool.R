@@ -1,4 +1,3 @@
-library("TreeTools")
 
 test_that("Pool deduplication: same tree added twice → pool size 1", {
   tree <- as.phylo(42, 8)

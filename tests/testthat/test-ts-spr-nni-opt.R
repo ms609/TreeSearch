@@ -3,24 +3,7 @@
 # clip, deferred reshuffling) and NNI (incremental scoring) produce correct
 # results across EW, IW, and NA datasets.
 
-library("TreeTools")
-
-# Helper: prepare dataset for ts_* functions from a phyDat object
-make_ts_data <- function(dataset) {
-  at <- attributes(dataset)
-  contrast <- at$contrast
-  tip_data <- matrix(unlist(dataset, use.names = FALSE),
-                     nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
-  levels <- at$levels
-  list(contrast = contrast, tip_data = tip_data,
-       weight = weight, levels = levels)
-}
-
-ts_score <- function(tree, ds) {
-  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data,
-                              ds$weight, ds$levels)
-}
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
 ts_spr <- function(tree, ds, maxHits = 20L, concavity = Inf) {
   TreeSearch:::ts_spr_search(tree$edge, ds$contrast, ds$tip_data,
@@ -32,14 +15,6 @@ ts_nni <- function(tree, ds, maxHits = 20L, concavity = Inf) {
   TreeSearch:::ts_nni_search(tree$edge, ds$contrast, ds$tip_data,
                              ds$weight, ds$levels,
                              maxHits = maxHits, concavity = concavity)
-}
-
-validate_result <- function(result, n_tip) {
-  edge <- result$edge
-  expect_equal(nrow(edge), 2L * (n_tip - 1L))
-  children <- edge[, 2]
-  tips <- sort(children[children <= n_tip])
-  expect_equal(tips, seq_len(n_tip))
 }
 
 # ---- SPR correctness tests ----

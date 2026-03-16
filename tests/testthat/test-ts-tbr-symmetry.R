@@ -4,27 +4,7 @@
 # produces identical results to what would be obtained without it,
 # across various dataset types and scoring modes.
 
-library("TreeTools")
-
-# Helper: prepare dataset for ts_* functions from a phyDat object
-make_ts_data <- function(dataset) {
-  at <- attributes(dataset)
-  contrast <- at$contrast
-  tip_data <- matrix(unlist(dataset, use.names = FALSE),
-                     nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
-  levels <- at$levels
-  list(contrast = contrast, tip_data = tip_data,
-       weight = weight, levels = levels)
-}
-
-# Helper: score a tree with ts engine
-ts_score <- function(tree, ds, concavity = Inf) {
-  TreeSearch:::ts_fitch_score(
-    tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
-    concavity = concavity
-  )
-}
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
 # Helper: run TBR search
 ts_tbr <- function(tree, ds, maxHits = 1L, acceptEqual = FALSE,

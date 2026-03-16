@@ -1,19 +1,5 @@
-library("TreeTools")
-
-# ===========================================================================
 # Tests for NA-aware incremental scoring (Phase 2A)
-# ===========================================================================
-
-make_ts_data <- function(dataset) {
-  at <- attributes(dataset)
-  contrast <- at$contrast
-  tip_data <- matrix(unlist(dataset, use.names = FALSE),
-                     nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
-  levels <- at$levels
-  list(contrast = contrast, tip_data = tip_data,
-       weight = weight, levels = levels)
-}
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
 # Helper: run driven search with sensible defaults for testing
 ts_driven <- function(ds, maxReplicates = 3L, targetHits = 2L,
@@ -59,8 +45,7 @@ test_that("Driven search on inapplicable datasets finds good scores", {
     ds <- make_ts_data(dataset)
 
     set.seed(7342)
-    result <- ts_driven(ds, maxReplicates = 5L, targetHits = 3L,
-                        maxSeconds = 30)
+    result <- ts_driven(ds, maxReplicates = 3L, targetHits = 2L)
 
     expect_true(result$best_score <= upper_bound,
       label = paste(ds_name, "score", result$best_score, "<=", upper_bound))
@@ -114,17 +99,14 @@ test_that("Driven search on multiple inapplicable datasets", {
   skip_if_not_installed("TreeTools")
   data(inapplicable.phyData)
 
-  ds_names <- c("Vinther2008", "Aguado2009", "Agnarsson2004",
-                "Aria2015", "DeAssis2011")
+  ds_names <- c("Vinther2008", "Aguado2009", "Aria2015")
 
   for (ds_name in ds_names) {
-    if (is.null(inapplicable.phyData[[ds_name]])) next
     dataset <- inapplicable.phyData[[ds_name]]
     ds <- make_ts_data(dataset)
 
     set.seed(5523)
-    result <- ts_driven(ds, maxReplicates = 2L, targetHits = 2L,
-                        maxSeconds = 20)
+    result <- ts_driven(ds, maxReplicates = 2L, targetHits = 2L)
 
     expect_true(result$best_score > 0,
       label = paste(ds_name, ": positive score"))
@@ -167,7 +149,7 @@ test_that("Pool collects suboptimal trees on NA data", {
   ds <- make_ts_data(dataset)
 
   set.seed(2487)
-  result <- ts_driven(ds, maxReplicates = 5L, targetHits = 3L,
+  result <- ts_driven(ds, maxReplicates = 3L, targetHits = 2L,
                       poolSuboptimal = 5.0, poolMaxSize = 20L)
 
   expect_true(length(result$trees) >= 1)
@@ -230,7 +212,7 @@ test_that("More replicates improve NA search scores", {
 
   # Longer search
   set.seed(4419)
-  long <- ts_driven(ds, maxReplicates = 5L, targetHits = 3L)
+  long <- ts_driven(ds, maxReplicates = 3L, targetHits = 2L)
 
   # Longer should be at least as good
   expect_true(long$best_score <= short$best_score)

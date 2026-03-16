@@ -1,20 +1,8 @@
-library("TreeTools")
-
-# Helper: prepare dataset for ts_* functions from a phyDat object
-make_ts_data <- function(dataset) {
-  at <- attributes(dataset)
-  contrast <- at$contrast
-  tip_data <- matrix(unlist(dataset, use.names = FALSE),
-                     nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
-  levels <- at$levels
-  list(contrast = contrast, tip_data = tip_data,
-       weight = weight, levels = levels)
-}
-
 # ---------- Test datasets ----------
 
 # 10 tips, informative characters
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
+
 small_mat <- matrix(c(
   0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
   0, 0, 1, 1, 1, 0, 0, 1, 1, 1,

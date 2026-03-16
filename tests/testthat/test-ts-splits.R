@@ -1,4 +1,3 @@
-library("TreeTools")
 
 test_that("Split count is T-3 for resolved tree", {
   for (n_tip in c(5, 8, 10, 20)) {

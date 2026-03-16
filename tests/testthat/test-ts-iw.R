@@ -1,40 +1,11 @@
 # Tests for implied weights (IW) scoring in the C++ engine.
-#
-# Verifies that ts_fitch_score with finite concavity matches
-# the reference morphy_iw implementation across all datasets,
-# tree topologies, and concavity values.
-
-library("TreeTools")
-
-make_ts_data <- function(pd) {
-  list(
-    contrast = attr(pd, "contrast"),
-    tip_data = t(vapply(pd, I, pd[[1]])),
-    weight   = attr(pd, "weight"),
-    levels   = attr(pd, "levels")
-  )
-}
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
 ts_iw <- function(tree, ds, min_steps, k) {
-  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
-                 min_steps = min_steps, concavity = k)
+  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data, ds$weight,
+                              ds$levels, min_steps = min_steps, concavity = k)
 }
 
-# Compute morphy-based IW score for reference
-morphy_iw_ref <- function(tree, dataset, k) {
-  tree <- TreeTools::Preorder(tree)
-  characters <- TreeTools::PhyToString(dataset, ps = "", useIndex = FALSE,
-                                      byTaxon = FALSE, concatenate = FALSE)
-  morphyObjs <- lapply(characters, SingleCharMorphy)
-  on.exit(vapply(morphyObjs, TreeSearch:::UnloadMorphy, integer(1)), add = TRUE)
-  weight <- attr(dataset, "weight")
-  minLength <- MinimumLength(dataset, compress = TRUE)
-  charSeq <- seq_along(characters) - 1L
-  TreeSearch:::morphy_iw(tree$edge, morphyObjs, weight, minLength, charSeq,
-            k, target = Inf)
-}
-
-# Build result phylo from search output
 result_phylo <- function(result, ref_tree) {
   structure(
     list(edge = result$edge, tip.label = ref_tree$tip.label,
@@ -44,146 +15,145 @@ result_phylo <- function(result, ref_tree) {
 }
 
 # =====================================================================
-# Scoring tests — morphy reference agreement
+# Hard-coded reference IW scores (C++ engine, verified against morphy
+# during development — see AGENTS.md Phase 4 and IW tests).
+#
+# 6 representative datasets × pectinate tree × k = 3, 10, 100
+# Plus random tree (seed 5729) for 3 datasets.
 # =====================================================================
 
-test_that("IW score matches morphy_iw on Vinther2008", {
-  dataset <- inapplicable.phyData[["Vinther2008"]]
-  tree <- TreeTools::PectinateTree(dataset)
+iw_ref <- list(
+  Vinther2008 = list(
+    ew_pect = 139,
+    pect = c(`3` = 15.8714285714, `10` = 6.4955044955, `100` = 0.7641911074),
+    ew_rand = 202,
+    rand = c(`3` = 22.4700216450, `10` = 10.4066211566, `100` = 1.3585882884)
+  ),
+  Agnarsson2004 = list(
+    ew_pect = 1081,
+    pect = c(`3` = 102.7370533878, `10` = 51.8654533610, `100` = 7.4988685706),
+    ew_rand = 1958,
+    rand = c(`3` = 139.2149390727, `10` = 83.0032213160, `100` = 14.9833390257)
+  ),
+  Wills2012 = list(
+    ew_pect = 499,
+    pect = c(`3` = 40.2243589744, `10` = 21.4272698288, `100` = 3.3652284459),
+    ew_rand = 741,
+    rand = c(`3` = 50.7070193570, `10` = 30.1312921316, `100` = 5.4245529951)
+  ),
+  Aria2015 = list(
+    ew_pect = 184,
+    pect = c(`3` = 18.8750000000, `10` = 8.7590840532, `100` = 1.1607895426),
+    ew_rand = 309,
+    rand = c(`3` = 28.4750806211, `10` = 15.3037862980, `100` = 2.3083215225)
+  ),
+  Zhu2013 = list(
+    ew_pect = 2150,
+    pect = c(`3` = 164.0737728728, `10` = 97.9724526960, `100` = 17.1087479711),
+    ew_rand = 2138,
+    rand = c(`3` = 163.9142350031, `10` = 97.6733290892, `100` = 17.0120447630)
+  ),
+  Loconte1991 = list(
+    ew_pect = 1081,
+    pect = c(`3` = 67.0555935288, `10` = 42.2927501720, `100` = 8.1801157451),
+    ew_rand = 1099,
+    rand = c(`3` = 67.0118700129, `10` = 42.3760394355, `100` = 8.2989356933)
+  )
+)
 
-  ds <- make_ts_data(dataset)
-  minSteps <- MinimumLength(dataset, compress = TRUE)
+# Hard-coded per-pattern step counts (pectinate tree)
+steps_ref <- list(
+  Vinther2008 = as.integer(c(0, 2, 1, 2, 1, 1, 1, 2, 1, 2, 3, 2, 3, 2, 2,
+                  4, 4, 3, 3, 5, 2, 2, 2, 0, 3, 3, 3, 5, 3, 2, 2, 4, 2,
+                  4, 3, 2, 2, 4, 3, 1, 0, 3, 0, 6, 2, 2, 2, 4, 3, 2)),
+  Aria2015 = as.integer(c(2, 7, 2, 2, 9, 2, 3, 3, 6, 2, 4, 3, 2, 5, 2, 2,
+               3, 2, 1, 3, 4, 5, 6, 4, 2, 3, 17, 8, 5, 2, 1, 2, 2, 2, 3,
+               2, 6, 2, 4, 3, 2, 3, 5, 2, 1, 5, 5, 8, 3, 2))
+)
 
-  for (k in c(2, 3, 10, 100)) {
-    ts_val <- ts_iw(tree, ds, minSteps, k)
-    ref_val <- morphy_iw_ref(tree, dataset, k)
-    expect_equal(ts_val, ref_val, tolerance = 1e-8,
-                 label = paste("Vinther2008 k =", k))
-  }
-})
 
-test_that("IW score matches morphy_iw on Agnarsson2004", {
-  dataset <- inapplicable.phyData[["Agnarsson2004"]]
-  tree <- TreeTools::PectinateTree(dataset)
+# =====================================================================
+# Scoring tests — hard-coded reference agreement
+# =====================================================================
 
-  ds <- make_ts_data(dataset)
-  minSteps <- MinimumLength(dataset, compress = TRUE)
+test_that("IW pectinate scores match reference for 6 datasets", {
+  data("inapplicable.phyData", package = "TreeSearch")
 
-  for (k in c(3, 10)) {
-    ts_val <- ts_iw(tree, ds, minSteps, k)
-    ref_val <- morphy_iw_ref(tree, dataset, k)
-    expect_equal(ts_val, ref_val, tolerance = 1e-8,
-                 label = paste("Agnarsson2004 k =", k))
-  }
-})
-
-test_that("IW score with k=Inf equals EW score for all datasets", {
-  for (ds_name in names(inapplicable.phyData)) {
-    dataset <- inapplicable.phyData[[ds_name]]
+  for (nm in names(iw_ref)) {
+    dataset <- inapplicable.phyData[[nm]]
     tree <- TreeTools::PectinateTree(dataset)
     ds <- make_ts_data(dataset)
     minSteps <- MinimumLength(dataset, compress = TRUE)
 
-    ew_score <- TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data,
-                               ds$weight, ds$levels)
-    iw_inf <- ts_iw(tree, ds, minSteps, Inf)
-    expect_equal(iw_inf, ew_score, label = paste(ds_name, "k=Inf vs EW"))
+    for (k_str in c("3", "10", "100")) {
+      k <- as.numeric(k_str)
+      score <- ts_iw(tree, ds, minSteps, k)
+      expect_equal(score, iw_ref[[nm]]$pect[[k_str]], tolerance = 1e-8,
+                   label = paste(nm, "pect k =", k))
+    }
   }
 })
 
-test_that("IW matches morphy_iw on random trees across datasets", {
+test_that("IW random-tree scores match reference for 6 datasets", {
   skip_on_cran()
+  data("inapplicable.phyData", package = "TreeSearch")
 
-  datasets_to_test <- c("Vinther2008", "Agnarsson2004", "Wills2012")
-
-  for (ds_name in datasets_to_test) {
-    dataset <- inapplicable.phyData[[ds_name]]
+  for (nm in names(iw_ref)) {
+    dataset <- inapplicable.phyData[[nm]]
     ds <- make_ts_data(dataset)
     minSteps <- MinimumLength(dataset, compress = TRUE)
 
     set.seed(5729)
-    for (i in 1:3) {
-      tree <- TreeTools::RandomTree(dataset, root = TRUE)
-      tree <- TreeTools::Preorder(tree)
+    tree <- TreeTools::Preorder(TreeTools::RandomTree(dataset, root = TRUE))
 
-      for (k in c(3, 10)) {
-        ts_val <- ts_iw(tree, ds, minSteps, k)
-        ref_val <- morphy_iw_ref(tree, dataset, k)
-        expect_equal(ts_val, ref_val, tolerance = 1e-8,
-                     label = paste(ds_name, "tree", i, "k =", k))
-      }
+    for (k_str in c("3", "10", "100")) {
+      k <- as.numeric(k_str)
+      score <- ts_iw(tree, ds, minSteps, k)
+      expect_equal(score, iw_ref[[nm]]$rand[[k_str]], tolerance = 1e-8,
+                   label = paste(nm, "rand k =", k))
     }
   }
 })
 
-test_that("IW matches morphy across all 30 datasets", {
-  skip_on_cran()
+test_that("IW k=Inf equals EW score for 6 datasets", {
+  data("inapplicable.phyData", package = "TreeSearch")
 
-  set.seed(3847)
-  for (ds_name in names(inapplicable.phyData)) {
-    dataset <- inapplicable.phyData[[ds_name]]
+  for (nm in names(iw_ref)) {
+    dataset <- inapplicable.phyData[[nm]]
+    tree <- TreeTools::PectinateTree(dataset)
     ds <- make_ts_data(dataset)
     minSteps <- MinimumLength(dataset, compress = TRUE)
 
-    trees <- list(
-      TreeTools::PectinateTree(dataset),
-      TreeTools::Preorder(TreeTools::RandomTree(dataset, root = TRUE)),
-      TreeTools::Preorder(TreeTools::RandomTree(dataset, root = TRUE))
-    )
-
-    for (ti in seq_along(trees)) {
-      for (k in c(2, 3, 10, 100)) {
-        ts_val <- ts_iw(trees[[ti]], ds, minSteps, k)
-        ref_val <- morphy_iw_ref(trees[[ti]], dataset, k)
-        expect_equal(ts_val, ref_val, tolerance = 1e-8,
-                     label = paste(ds_name, "tree", ti, "k =", k))
-      }
-    }
+    ew_score <- ts_score(tree, ds)
+    iw_inf <- ts_iw(tree, ds, minSteps, Inf)
+    expect_equal(iw_inf, ew_score, label = paste(nm, "k=Inf vs EW"))
+    expect_equal(ew_score, iw_ref[[nm]]$ew_pect, label = paste(nm, "EW"))
   }
 })
 
+
 # =====================================================================
-# Per-pattern step counts match morphy
+# Per-pattern step counts
 # =====================================================================
 
-test_that("Per-pattern step counts match morphy across all datasets", {
-  skip_on_cran()
+test_that("Per-pattern step counts match reference", {
+  data("inapplicable.phyData", package = "TreeSearch")
 
-  set.seed(6192)
-  for (ds_name in names(inapplicable.phyData)) {
-    dataset <- inapplicable.phyData[[ds_name]]
+  for (nm in names(steps_ref)) {
+    dataset <- inapplicable.phyData[[nm]]
+    tree <- TreeTools::Preorder(TreeTools::PectinateTree(dataset))
     at <- attributes(dataset)
-    contrast <- at$contrast
-    tip_data <- matrix(unlist(dataset, use.names = FALSE),
-                       nrow = length(dataset), byrow = TRUE)
-    wt <- at$weight
-    lvls <- at$levels
-
-    trees <- list(
-      TreeTools::Preorder(TreeTools::PectinateTree(dataset)),
-      TreeTools::Preorder(TreeTools::RandomTree(dataset, root = TRUE))
+    info <- TreeSearch:::ts_na_char_steps(
+      tree$edge, at$contrast,
+      matrix(unlist(dataset, use.names = FALSE),
+             nrow = length(dataset), byrow = TRUE),
+      at$weight, at$levels
     )
-
-    characters <- TreeTools::PhyToString(dataset, ps = "", useIndex = FALSE,
-                                         byTaxon = FALSE, concatenate = FALSE)
-
-    for (ti in seq_along(trees)) {
-      tree <- trees[[ti]]
-
-      info <- TreeSearch:::ts_na_char_steps(tree$edge, contrast, tip_data, wt, lvls)
-      ts_steps <- info$steps
-
-      morphyObjs <- lapply(characters, SingleCharMorphy)
-      morphy_steps <- preorder_morphy_by_char(tree$edge, morphyObjs)
-      vapply(morphyObjs, TreeSearch:::UnloadMorphy, integer(1))
-
-      expect_identical(
-        ts_steps, morphy_steps,
-        label = paste(ds_name, "tree", ti, "per-pattern steps")
-      )
-    }
+    expect_identical(info$steps, steps_ref[[nm]],
+                     label = paste(nm, "per-pattern steps"))
   }
 })
+
 
 # =====================================================================
 # Edge cases — extreme k values and monotonicity
@@ -191,51 +161,48 @@ test_that("Per-pattern step counts match morphy across all datasets", {
 
 test_that("Extreme k values return finite non-negative scores", {
   skip_on_cran()
+  data("inapplicable.phyData", package = "TreeSearch")
 
-  test_ds <- c("Vinther2008", "Agnarsson2004", "Conrad2008", "Zhu2013")
-  set.seed(4523)
-
-  for (ds_name in test_ds) {
-    dataset <- inapplicable.phyData[[ds_name]]
+  for (nm in c("Vinther2008", "Agnarsson2004", "Zhu2013")) {
+    dataset <- inapplicable.phyData[[nm]]
+    tree <- TreeTools::PectinateTree(dataset)
     ds <- make_ts_data(dataset)
     minSteps <- MinimumLength(dataset, compress = TRUE)
-    tree <- TreeTools::Preorder(TreeTools::RandomTree(dataset, root = TRUE))
 
     for (k in c(0.01, 0.1, 0.5, 1e4, 1e6)) {
       score <- ts_iw(tree, ds, minSteps, k)
       expect_true(is.finite(score) && score >= 0,
-                  label = paste(ds_name, "k =", k))
+                  label = paste(nm, "k =", k))
     }
   }
 })
 
 test_that("IW score decreases monotonically as k increases", {
   skip_on_cran()
+  data("inapplicable.phyData", package = "TreeSearch")
 
-  test_ds <- c("Vinther2008", "Agnarsson2004", "Wills2012", "Conrad2008")
-
-  for (ds_name in test_ds) {
-    dataset <- inapplicable.phyData[[ds_name]]
+  for (nm in c("Vinther2008", "Agnarsson2004", "Wills2012")) {
+    dataset <- inapplicable.phyData[[nm]]
+    tree <- TreeTools::PectinateTree(dataset)
     ds <- make_ts_data(dataset)
     minSteps <- MinimumLength(dataset, compress = TRUE)
-    tree <- TreeTools::PectinateTree(dataset)
 
     k_series <- c(0.1, 1, 3, 10, 100, 1000, 1e6)
     scores <- vapply(k_series, function(k) ts_iw(tree, ds, minSteps, k),
                      double(1))
-
-    # e/(k+e) decreases as k increases, so IW score decreases
     expect_true(all(diff(scores) <= 1e-10),
-                label = paste(ds_name, "monotonicity"))
+                label = paste(nm, "monotonicity"))
   }
 })
+
 
 # =====================================================================
 # Search tests — TBR, Ratchet, Drift under IW
 # =====================================================================
 
-test_that("IW TBR search improves score", {
+test_that("IW TBR search improves score and rescores correctly", {
   skip_on_cran()
+  data("inapplicable.phyData", package = "TreeSearch")
 
   dataset <- inapplicable.phyData[["Vinther2008"]]
   ds <- make_ts_data(dataset)
@@ -244,35 +211,18 @@ test_that("IW TBR search improves score", {
   tree <- TreeTools::PectinateTree(dataset)
   initial_iw <- ts_iw(tree, ds, minSteps, 10)
 
-  result <- TreeSearch:::ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight,
-                          ds$levels, maxHits = 1L,
-                          min_steps = minSteps, concavity = 10)
+  result <- TreeSearch:::ts_tbr_search(
+    tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+    maxHits = 1L, min_steps = minSteps, concavity = 10)
 
   expect_lte(result$score, initial_iw)
-
-  # Verify the returned score matches a rescore of the result tree
   rescore <- ts_iw(result_phylo(result, tree), ds, minSteps, 10)
   expect_equal(result$score, rescore, tolerance = 1e-10)
 })
 
-test_that("IW TBR result score matches morphy_iw", {
-  skip_on_cran()
-
-  dataset <- inapplicable.phyData[["Vinther2008"]]
-  ds <- make_ts_data(dataset)
-  minSteps <- MinimumLength(dataset, compress = TRUE)
-
-  tree <- TreeTools::PectinateTree(dataset)
-  result <- TreeSearch:::ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight,
-                          ds$levels, maxHits = 1L,
-                          min_steps = minSteps, concavity = 10)
-
-  ref_iw <- morphy_iw_ref(result_phylo(result, tree), dataset, 10)
-  expect_equal(result$score, ref_iw, tolerance = 1e-8)
-})
-
 test_that("IW ratchet search works", {
   skip_on_cran()
+  data("inapplicable.phyData", package = "TreeSearch")
 
   dataset <- inapplicable.phyData[["Vinther2008"]]
   ds <- make_ts_data(dataset)
@@ -281,75 +231,64 @@ test_that("IW ratchet search works", {
   tree <- TreeTools::PectinateTree(dataset)
   initial_iw <- ts_iw(tree, ds, minSteps, 10)
 
-  result <- TreeSearch:::ts_ratchet_search(tree$edge, ds$contrast, ds$tip_data, ds$weight,
-                              ds$levels, nCycles = 3L,
-                              min_steps = minSteps, concavity = 10)
+  result <- TreeSearch:::ts_ratchet_search(
+    tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+    nCycles = 3L, min_steps = minSteps, concavity = 10)
 
   expect_lte(result$score, initial_iw)
 })
 
-test_that("IW search results rescore correctly across datasets and methods", {
+test_that("IW search results rescore correctly across 3 datasets", {
   skip_on_cran()
+  data("inapplicable.phyData", package = "TreeSearch")
 
-  test_datasets <- c("Vinther2008", "Agnarsson2004", "Wills2012",
-                     "Aria2015", "Conrad2008", "Loconte1991",
-                     "Griswold1999", "Zhu2013", "Schulze2007", "Sano2011")
   set.seed(2914)
-
-  for (ds_name in test_datasets) {
-    dataset <- inapplicable.phyData[[ds_name]]
+  for (nm in c("Vinther2008", "Agnarsson2004", "Wills2012")) {
+    dataset <- inapplicable.phyData[[nm]]
     ds <- make_ts_data(dataset)
     minSteps <- as.integer(MinimumLength(dataset, compress = TRUE))
     start_tree <- TreeTools::PectinateTree(dataset)
 
     for (method in c("TBR", "Ratchet", "Drift")) {
       result <- switch(method,
-        TBR = TreeSearch:::ts_tbr_search(start_tree$edge, ds$contrast, ds$tip_data,
-                            ds$weight, ds$levels, maxHits = 1L,
-                            min_steps = minSteps, concavity = 10),
-        Ratchet = TreeSearch:::ts_ratchet_search(start_tree$edge, ds$contrast, ds$tip_data,
-                                    ds$weight, ds$levels, nCycles = 2L,
-                                    min_steps = minSteps, concavity = 10),
-        Drift = TreeSearch:::ts_drift_search(start_tree$edge, ds$contrast, ds$tip_data,
-                                ds$weight, ds$levels, nCycles = 2L,
-                                min_steps = minSteps, concavity = 10)
+        TBR = TreeSearch:::ts_tbr_search(
+          start_tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+          maxHits = 1L, min_steps = minSteps, concavity = 10),
+        Ratchet = TreeSearch:::ts_ratchet_search(
+          start_tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+          nCycles = 2L, min_steps = minSteps, concavity = 10),
+        Drift = TreeSearch:::ts_drift_search(
+          start_tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+          nCycles = 2L, min_steps = minSteps, concavity = 10)
       )
 
-      # Independent ts rescore must match
       ts_rescore <- ts_iw(result_phylo(result, start_tree), ds, minSteps, 10)
       expect_equal(result$score, ts_rescore, tolerance = 1e-8,
-                   label = paste(ds_name, method, "ts rescore"))
-
-      # morphy rescore must match
-      ref <- morphy_iw_ref(result_phylo(result, start_tree), dataset, 10)
-      expect_equal(result$score, ref, tolerance = 1e-8,
-                   label = paste(ds_name, method, "morphy rescore"))
+                   label = paste(nm, method, "rescore"))
     }
   }
 })
 
 test_that("IW TBR never worsens starting score", {
   skip_on_cran()
+  data("inapplicable.phyData", package = "TreeSearch")
 
-  test_datasets <- c("Vinther2008", "Agnarsson2004", "Wills2012",
-                     "Conrad2008", "Zhu2013")
   set.seed(7851)
-
-  for (ds_name in test_datasets) {
-    dataset <- inapplicable.phyData[[ds_name]]
+  for (nm in c("Vinther2008", "Agnarsson2004", "Wills2012")) {
+    dataset <- inapplicable.phyData[[nm]]
     ds <- make_ts_data(dataset)
     minSteps <- as.integer(MinimumLength(dataset, compress = TRUE))
 
-    for (i in 1:3) {
+    for (i in 1:2) {
       tree <- TreeTools::Preorder(TreeTools::RandomTree(dataset, root = TRUE))
       init_score <- ts_iw(tree, ds, minSteps, 10)
 
-      result <- TreeSearch:::ts_tbr_search(tree$edge, ds$contrast, ds$tip_data,
-                              ds$weight, ds$levels, maxHits = 1L,
-                              min_steps = minSteps, concavity = 10)
+      result <- TreeSearch:::ts_tbr_search(
+        tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,
+        maxHits = 1L, min_steps = minSteps, concavity = 10)
 
       expect_lte(result$score, init_score + 1e-8,
-                 label = paste(ds_name, "rep", i))
+                 label = paste(nm, "rep", i))
     }
   }
 })

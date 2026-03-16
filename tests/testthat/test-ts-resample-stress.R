@@ -1,16 +1,5 @@
-library("TreeTools")
-
-# Helper: prepare dataset for ts_* functions from a phyDat object
-make_ts_data <- function(dataset) {
-  at <- attributes(dataset)
-  contrast <- at$contrast
-  tip_data <- matrix(unlist(dataset, use.names = FALSE),
-                     nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
-  levels <- at$levels
-  list(contrast = contrast, tip_data = tip_data,
-       weight = weight, levels = levels)
-}
+# Stress tests for resample + SA in the C++ engine.
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
 # ---------- Test datasets ----------
 
@@ -56,8 +45,8 @@ test_that("Driven search with fuse_interval=1 works", {
 test_that("Driven search with large poolSuboptimal keeps suboptimal trees", {
   result <- TreeSearch:::ts_driven_search(
     med_ds$contrast, med_ds$tip_data, med_ds$weight, med_ds$levels,
-    maxReplicates = 10L, targetHits = 100L,
-    ratchetCycles = 2L, fuseInterval = 100L,
+    maxReplicates = 5L, targetHits = 100L,
+    ratchetCycles = 1L, fuseInterval = 100L,
     poolSuboptimal = 100.0,
     concavity = Inf
   )

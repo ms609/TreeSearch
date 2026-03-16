@@ -38,7 +38,7 @@
 #' representative summary of comparisons between sets of trees.
 #' 
 #' 
-#' @inheritParams Morphy
+#' @inheritParams MaximizeParsimony
 #' @param tree Optimal tree or summary tree (of class "phylo") or list of trees
 #' (of class "list" or "multiPhylo") against which results should be evaluated.
 #' If `NULL`, an optimal tree will be sought using parsimony search with 
@@ -60,7 +60,7 @@
 #' be loaded from the location given by `savePath`, instead of running a fresh
 #' search with the specified dataset and parameters.
 #' 
-#' @param verbosity,\dots Parameters for [`Morphy()`].
+#' @param verbosity,\dots Parameters for [`MaximizeParsimony()`].
 #' Tree search will be conducted using `tree` as a starting tree.
 #' 
 #' @returns `TaxonInfluence()` returns a matrix listing the phylogenetic
@@ -79,10 +79,10 @@
 #' 
 #' # Small dataset for demonstration purposes
 #' dataset <- congreveLamsdellMatrices[[42]][1:8, ]
-#' bestTree <- Morphy(dataset, verbosity = 0)[[1]]
+#' bestTree <- MaximizeParsimony(dataset, verbosity = 0)[[1]]
 #' 
 #' # Calculate tip influence
-#' influence <- TaxonInfluence(dataset, ratchIt = 0, startIt = 0, verbos = 0)
+#' influence <- TaxonInfluence(dataset, maxReplicates = 2, verbosity = 0)
 #' 
 #' # Colour tip labels according to their influence
 #' upperBound <- 2 * TreeDist::ClusteringEntropy(
@@ -131,7 +131,7 @@ TaxonInfluence <- function(
   }
   
   if (is.null(tree)) {
-    tree <- Morphy(dataset, ...)
+    tree <- MaximizeParsimony(dataset, ...)
   }
   if (calcWeighted) {
     refWeights <- if (inherits(tree, "phylo") || length(tree) == 1) {
@@ -141,12 +141,8 @@ TaxonInfluence <- function(
     }
   }
   
-  startTree <- MakeTreeBinary(if (inherits(tree, "phylo")) {
-    tree
-  } else {
-    tree[[1]]
-  })
-  if (!inherits(startTree, "phylo")) {
+  refTree <- if (inherits(tree, "phylo")) tree else tree[[1]]
+  if (!inherits(refTree, "phylo")) {
     stop("`tree` must be an object / list of objects of class \"phylo\"")
   }
   
@@ -169,9 +165,8 @@ TaxonInfluence <- function(
       if (verbosity > 0) {
         cli_h1(paste("Taxon influence search:", leaf))
       }
-      result <- unique(Morphy(
+      result <- unique(MaximizeParsimony(
         dataset = dataset[setdiff(names(dataset), leaf)],
-        tree = DropTip(startTree, leaf),
         verbosity = verbosity,
         ...
       ))

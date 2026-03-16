@@ -1,26 +1,9 @@
-library("TreeTools")
-
 # Access unexported functions from the TreeSearch namespace
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
+
 ts_fitch_score <- TreeSearch:::ts_fitch_score
 ts_tbr_search <- TreeSearch:::ts_tbr_search
 ts_tree_fuse <- TreeSearch:::ts_tree_fuse
-
-# Helper: prepare dataset for ts_* functions from a phyDat object
-make_ts_data <- function(dataset) {
-  at <- attributes(dataset)
-  contrast <- at$contrast
-  tip_data <- matrix(unlist(dataset, use.names = FALSE),
-                     nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
-  levels <- at$levels
-  list(contrast = contrast, tip_data = tip_data,
-       weight = weight, levels = levels)
-}
-
-# Helper: score a tree with ts engine
-ts_score <- function(tree, ds) {
-  ts_fitch_score(tree$edge, ds$contrast, ds$tip_data, ds$weight, ds$levels)
-}
 
 # Helper: run TBR search
 ts_tbr <- function(tree, ds, maxHits = 1L) {

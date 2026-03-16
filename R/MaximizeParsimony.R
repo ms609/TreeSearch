@@ -203,6 +203,7 @@
 #' @template MRS
 #' @family tree scoring
 #' @seealso [`Morphy()`] for fine-grained control over the R-level search loop.
+#' [`Resample()`] for jackknife and bootstrap resampling.
 #' @references
 #' \insertAllCited{}
 #' @importFrom TreeTools NTip RenumberTips RootTree MakeTreeBinary Preorder
@@ -415,6 +416,8 @@ MaximizeParsimony <- function(
   outTrees <- lapply(resultTrees, function(edgeMat) {
     tr <- treeTpl
     tr[["edge"]] <- edgeMat
+    # C++ edge order may differ from template; drop stale order attribute
+    attr(tr, "order") <- NULL
     tr
   })
   if (length(outTrees) == 0L) {

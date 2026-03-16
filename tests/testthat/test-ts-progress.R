@@ -1,16 +1,4 @@
-library("TreeTools")
-
-# Helper: prepare dataset for ts_* functions
-make_ts_data <- function(dataset) {
-  at <- attributes(dataset)
-  contrast <- at$contrast
-  tip_data <- matrix(unlist(dataset, use.names = FALSE),
-                     nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
-  levels <- at$levels
-  list(contrast = contrast, tip_data = tip_data,
-       weight = weight, levels = levels)
-}
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
 # Helper: run driven search with callback
 ts_driven_cb <- function(ds, callback, ...) {
@@ -19,9 +7,9 @@ ts_driven_cb <- function(ds, callback, ...) {
     tip_data = ds$tip_data,
     weight = ds$weight,
     levels = ds$levels,
-    maxReplicates = 5L,
+    maxReplicates = 3L,
     targetHits = 2L,
-    ratchetCycles = 3L,
+    ratchetCycles = 2L,
     xssRounds = 1L,
     xssPartitions = 2L,
     fuseInterval = 2L,
@@ -33,13 +21,20 @@ ts_driven_cb <- function(ds, callback, ...) {
   do.call(TreeSearch:::ts_driven_search, args)
 }
 
+# Small dataset for callback tests (search quality doesn't matter here)
+small_mat <- matrix(c(
+  0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+  0, 0, 1, 1, 1, 0, 0, 1, 1, 1,
+  0, 1, 0, 1, 1, 0, 1, 0, 1, 1,
+  1, 0, 0, 0, 1, 1, 1, 1, 0, 0
+), nrow = 10, dimnames = list(paste0("t", 1:10), NULL))
+small_ds <- make_ts_data(MatrixToPhyDat(small_mat))
+
 
 # ===== Callback is invoked =====
 
 test_that("Callback receives expected phases", {
-  data("inapplicable.phyData", package = "TreeSearch")
-  dataset <- inapplicable.phyData[["Vinther2008"]]
-  ds <- make_ts_data(dataset)
+  ds <- small_ds
 
   log <- list()
   recorder <- function(info) {
@@ -86,9 +81,7 @@ test_that("Replicate numbers increment correctly", {
 })
 
 test_that("Done event has consistent best_score", {
-  data("inapplicable.phyData", package = "TreeSearch")
-  dataset <- inapplicable.phyData[["Vinther2008"]]
-  ds <- make_ts_data(dataset)
+  ds <- small_ds
 
   log <- list()
   recorder <- function(info) {
@@ -111,9 +104,7 @@ test_that("Done event has consistent best_score", {
 # ===== NULL callback (regression) =====
 
 test_that("Search works with NULL callback", {
-  data("inapplicable.phyData", package = "TreeSearch")
-  dataset <- inapplicable.phyData[["Vinther2008"]]
-  ds <- make_ts_data(dataset)
+  ds <- small_ds
 
   set.seed(5614)
   result <- ts_driven_cb(ds, NULL, verbosity = 0L)
@@ -127,9 +118,7 @@ test_that("Search works with NULL callback", {
 # ===== Verbosity 0 suppresses callback =====
 
 test_that("Callback NOT invoked when verbosity = 0", {
-  data("inapplicable.phyData", package = "TreeSearch")
-  dataset <- inapplicable.phyData[["Vinther2008"]]
-  ds <- make_ts_data(dataset)
+  ds <- small_ds
 
   log <- list()
   recorder <- function(info) {
@@ -146,9 +135,7 @@ test_that("Callback NOT invoked when verbosity = 0", {
 # ===== Callback info structure =====
 
 test_that("Callback info has all expected fields", {
-  data("inapplicable.phyData", package = "TreeSearch")
-  dataset <- inapplicable.phyData[["Vinther2008"]]
-  ds <- make_ts_data(dataset)
+  ds <- small_ds
 
   log <- list()
   recorder <- function(info) {
@@ -174,9 +161,7 @@ test_that("Callback info has all expected fields", {
 # ===== Elapsed time increases =====
 
 test_that("Elapsed time is non-decreasing across callbacks", {
-  data("inapplicable.phyData", package = "TreeSearch")
-  dataset <- inapplicable.phyData[["Vinther2008"]]
-  ds <- make_ts_data(dataset)
+  ds <- small_ds
 
   log <- list()
   recorder <- function(info) {
@@ -233,9 +218,7 @@ test_that("MaximizeParsimony silent with verbosity = 0 and no callback", {
 # ===== Fuse events =====
 
 test_that("Fuse events appear when fusing triggers", {
-  data("inapplicable.phyData", package = "TreeSearch")
-  dataset <- inapplicable.phyData[["Vinther2008"]]
-  ds <- make_ts_data(dataset)
+  ds <- small_ds
 
   log <- list()
   recorder <- function(info) {

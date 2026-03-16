@@ -1,24 +1,4 @@
-library("TreeTools")
-
-# ---- Helpers ----
-
-make_ts_data <- function(dataset) {
-  at <- attributes(dataset)
-  list(
-    contrast = at$contrast,
-    tip_data = matrix(unlist(dataset, use.names = FALSE),
-                      nrow = length(dataset), byrow = TRUE),
-    weight = at$weight,
-    levels = at$levels
-  )
-}
-
-ts_score <- function(tree, ds, concavity = Inf, min_steps = integer(0)) {
-  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data,
-                               ds$weight, ds$levels,
-                               min_steps = min_steps,
-                               concavity = concavity)
-}
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
 ts_diag <- function(ds) {
   TreeSearch:::ts_simplify_diag(ds$contrast, ds$tip_data,
@@ -176,7 +156,7 @@ test_that("IW scores are consistent across simplifiable datasets", {
                          min_steps = autap_ds$weight * 0L)
     # IW score should be finite and non-negative
     expect_true(is.finite(iw_score), info = paste("Tree", i, "finite"))
-    expect_gte(iw_score, 0, info = paste("Tree", i, "non-negative"))
+    expect_gte(iw_score, 0, label = paste("Tree", i, "non-negative"))
   }
 })
 
@@ -215,12 +195,12 @@ test_that("Driven search finds correct best score with singletons", {
 
 test_that("Inapplicable dataset scores match morphy (simplification skipped)", {
   skip_if_not_installed("TreeSearch")
-  dataset <- TreeSearch::inapplicable.datasets$Vinther2008
+  dataset <- TreeSearch::inapplicable.phyData$Vinther2008
   ds <- make_ts_data(dataset)
   tree <- TreeTools::PectinateTree(dataset)
 
   score <- ts_score(tree, ds)
-  morphy_score <- phangorn::parsimony(tree, dataset)
+  morphy_score <- suppressWarnings(TreeSearch::Fitch(tree, dataset))
   expect_equal(score, morphy_score)
 })
 
@@ -229,9 +209,9 @@ test_that("Inapplicable dataset scores match morphy (simplification skipped)", {
 
 test_that("Driven search is reproducible with simplification", {
   set.seed(3390)
-  r1 <- ts_driven(autap_ds, maxReplicates = 2L)
+  r1 <- ts_driven(autap_ds)
   set.seed(3390)
-  r2 <- ts_driven(autap_ds, maxReplicates = 2L)
+  r2 <- ts_driven(autap_ds)
   expect_equal(r1$best_score, r2$best_score)
   expect_equal(r1$trees, r2$trees)
 })
@@ -272,7 +252,7 @@ test_that("Driven search on 4-state dataset with autapomorphies", {
 
   expect_gte(diag$n_patterns_removed, 1L)
 
-  result <- ts_driven(ds4_data, maxReplicates = 3L)
+  result <- ts_driven(ds4_data)
   # Verify best score matches re-scoring
   best_tree <- structure(
     list(edge = result$trees[[1]],

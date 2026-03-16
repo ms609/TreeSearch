@@ -1,22 +1,5 @@
-library("TreeTools")
-
-# Helper: prepare dataset for ts_* functions from a phyDat object
-make_ts_data <- function(dataset) {
-  at <- attributes(dataset)
-  contrast <- at$contrast
-  tip_data <- matrix(unlist(dataset, use.names = FALSE),
-                     nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
-  levels <- at$levels
-  list(contrast = contrast, tip_data = tip_data,
-       weight = weight, levels = levels)
-}
-
-# Helper: score a tree with ts engine
-ts_score <- function(tree, ds) {
-  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, ds$tip_data,
-                               ds$weight, ds$levels, concavity = Inf)
-}
+# Tests for constrained sectorial search (CSS).
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
 # Helper: run driven search with CSS control
 ts_driven <- function(ds, maxReplicates = 5L, targetHits = 2L,
@@ -110,26 +93,16 @@ test_that("CSS rounds = 0 disables CSS", {
 })
 
 test_that("CSS produces competitive results vs no-CSS", {
-  # CSS changes RNG consumption, so per-seed comparison is not meaningful.
-  # Instead verify that CSS produces results in the same quality range.
-  scores_with <- numeric(3)
-  scores_without <- numeric(3)
-  seeds <- c(1234, 5678, 9012)
-  for (i in seq_along(seeds)) {
-    set.seed(seeds[i])
-    r_with <- ts_driven(large_ds, maxReplicates = 3L, targetHits = 2L,
-                        cssRounds = 2L, cssPartitions = 3L)
-    set.seed(seeds[i])
-    r_without <- ts_driven(large_ds, maxReplicates = 3L, targetHits = 2L,
-                           cssRounds = 0L)
-    scores_with[i] <- r_with$best_score
-    scores_without[i] <- r_without$best_score
-  }
-  # Both approaches should find similar-quality trees
-  # (within a few steps of each other on average)
-  expect_true(abs(mean(scores_with) - mean(scores_without)) < 5,
-              info = paste("CSS mean:", mean(scores_with),
-                           "no-CSS mean:", mean(scores_without)))
+  set.seed(1234)
+  r_with <- ts_driven(large_ds, maxReplicates = 3L, targetHits = 2L,
+                      cssRounds = 2L, cssPartitions = 3L)
+  set.seed(1234)
+  r_without <- ts_driven(large_ds, maxReplicates = 3L, targetHits = 2L,
+                         cssRounds = 0L)
+  # Both should find similar-quality trees
+  expect_true(abs(r_with$best_score - r_without$best_score) < 5,
+              info = paste("CSS:", r_with$best_score,
+                           "no-CSS:", r_without$best_score))
 })
 
 test_that("CSS works with implied weights", {
