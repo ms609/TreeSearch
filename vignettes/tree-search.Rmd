@@ -17,11 +17,15 @@ knitr::opts_chunk$set(fig.width = 7.2, fig.asp = 0.7)
 
 "TreeSearch" is an R package that allows, among other things, 
 parsimony search on morphological datasets that contain inapplicable data,
-using the algorithm proposed by Brazeau, Guillerme and Smith [-@Brazeau2019].
-Tree search uses a purpose-built C++ engine that combines TBR rearrangements,
-the parsimony ratchet, tree drifting, sectorial search, and tree fusing into
-an efficient driven search pipeline, supporting equal weights, implied weights,
-and profile parsimony.
+using the algorithm proposed by @Brazeau2019.
+Tree search uses a purpose-built C++ engine that combines
+tree bisection and reconnection (TBR),
+the parsimony ratchet [@Nixon1999],
+tree drifting, sectorial search, and tree fusing
+[@Goloboff1999]
+into an efficient "new technology" driven search pipeline
+[cf. @Goloboff2016],
+supporting equal weights, implied weights, and profile parsimony.
 
 ## Getting started
 

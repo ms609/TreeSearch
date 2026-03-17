@@ -1643,7 +1643,7 @@ server <- function(input, output, session) {
         if (searchMaxSeconds > 0)
           paste0("  maxSeconds = ", searchMaxSeconds, ","),
         if (searchPoolSub > 0)
-          paste0("  poolSuboptimal = ", searchPoolSub, ","),
+          paste0("  control = SearchControl(poolSuboptimal = ", searchPoolSub, "),"),
         "  verbosity = 0",
         ")"))
       newTrees <- withProgress(
@@ -1654,7 +1654,9 @@ server <- function(input, output, session) {
                           maxReplicates = searchMaxRep,
                           targetHits = searchTargetHits,
                           maxSeconds = searchMaxSeconds,
-                          poolSuboptimal = searchPoolSub,
+                          control = SearchControl(
+                            poolSuboptimal = searchPoolSub
+                          ),
                           verbosity = 0L),
         value = 0.85, message = "Finding MPT",
         detail = paste0(searchMaxRep, " replicates; ", wtType())

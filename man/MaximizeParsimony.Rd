@@ -14,33 +14,12 @@ MaximizeParsimony(
   strategy = "auto",
   maxReplicates = 100L,
   targetHits = max(10L, as.integer(NTip(dataset)/5)),
-  tbrMaxHits = 1L,
-  ratchetCycles = 5L,
-  ratchetPerturbProb = 0.04,
-  ratchetPerturbMode = 0L,
-  ratchetPerturbMaxMoves = 0L,
-  ratchetAdaptive = FALSE,
-  driftCycles = 2L,
-  driftAfdLimit = 3L,
-  driftRfdLimit = 0.1,
-  xssRounds = 3L,
-  xssPartitions = 4L,
-  rssRounds = 1L,
-  cssRounds = 0L,
-  cssPartitions = 4L,
-  sectorMinSize = 6L,
-  sectorMaxSize = 50L,
-  fuseInterval = 3L,
-  fuseAcceptEqual = FALSE,
-  poolMaxSize = 100L,
-  poolSuboptimal = 0,
   maxSeconds = 0,
-  tabuSize = 100L,
-  wagnerStarts = 1L,
-  sprFirst = FALSE,
   nThreads = 1L,
   verbosity = 1L,
-  progressCallback = NULL
+  progressCallback = NULL,
+  control = SearchControl(),
+  ...
 )
 
 MaximizeParsimony2(...)
@@ -90,9 +69,9 @@ perturbation, extra sectorial rounds. Best for large (60+ tips)
 datasets where sprint/default may miss the global optimum.}
 \item{\code{"none"}}{Use only the explicitly supplied parameter values.}
 }
-Explicit parameter values always override the preset; for example,
-\verb{strategy = "sprint", ratchetCycles = 10L} uses sprint defaults for
-everything except \code{ratchetCycles}.}
+Explicit \code{control} fields always override the preset; for example,
+\verb{strategy = "sprint", control = SearchControl(ratchetCycles = 10L)} uses
+sprint defaults for everything except \code{ratchetCycles}.}
 
 \item{maxReplicates}{Integer: maximum number of independent search
 replicates (default: 100).}
@@ -100,75 +79,9 @@ replicates (default: 100).}
 \item{targetHits}{Integer: stop when the best score has been found
 independently this many times (default: \code{max(10, NTip / 5)}).}
 
-\item{tbrMaxHits}{Integer: within ratchet/drift TBR phases, the number
-of equal-score trees to accept before stopping.}
-
-\item{ratchetCycles}{Integer: number of ratchet perturbation cycles
-per replicate.}
-
-\item{ratchetPerturbProb}{Numeric: probability of zeroing each
-character's weight during ratchet perturbation.}
-
-\item{ratchetPerturbMode}{Integer: perturbation mode. \code{0} = zero only
-(default), \code{1} = upweight only (double selected characters), \code{2} = mixed
-(zero some, double others).}
-
-\item{ratchetPerturbMaxMoves}{Integer: maximum TBR moves during the
-perturbed search phase. \code{0} = automatic (default).}
-
-\item{ratchetAdaptive}{Logical: if \code{TRUE}, automatically adjust
-perturbation probability based on escape rate.}
-
-\item{driftCycles}{Integer: number of drift cycles per replicate
-(alternating suboptimal and equal-score phases).}
-
-\item{driftAfdLimit}{Integer: maximum absolute fit difference (steps)
-for accepting suboptimal drift moves.}
-
-\item{driftRfdLimit}{Numeric: maximum relative fit difference for
-accepting suboptimal drift moves.}
-
-\item{xssRounds}{Integer: number of exclusive sectorial search rounds.}
-
-\item{xssPartitions}{Integer: number of partitions for XSS.}
-
-\item{rssRounds}{Integer: number of random sectorial search rounds after
-XSS. Set to \code{0} to disable RSS.}
-
-\item{cssRounds}{Integer: number of constrained sectorial search (CSS)
-rounds. CSS runs sector-restricted TBR on the full tree (no HTU
-approximation), polishing improvements from XSS/RSS.
-Set to \code{0} to disable CSS.}
-
-\item{cssPartitions}{Integer: number of partitions for CSS.}
-
-\item{sectorMinSize, sectorMaxSize}{Integer: minimum and maximum clade
-sizes for sectorial search.}
-
-\item{fuseInterval}{Integer: fuse pool trees every this many replicates.}
-
-\item{fuseAcceptEqual}{Logical: accept equally-scoring fused trees?}
-
-\item{poolMaxSize}{Integer: maximum number of trees retained in pool.}
-
-\item{poolSuboptimal}{Numeric: retain trees within this many steps of
-the best score (0 = optimal only).}
-
 \item{maxSeconds}{Numeric: maximum wall-clock time in seconds for the
 search. When reached, the current replicate finishes and the search
 stops. \code{0} (default) means no time limit.}
-
-\item{tabuSize}{Integer: size of the tabu list for TBR plateau exploration.
-Prevents cycling through recently visited topologies when accepting
-equal-score moves. Set to \code{0} to disable. Default 100.}
-
-\item{wagnerStarts}{Integer: number of random Wagner starting trees per
-replicate. The best-scoring tree is kept before proceeding to TBR.
-Default 1.}
-
-\item{sprFirst}{Logical: if \code{TRUE}, run an SPR search before TBR in each
-replicate. SPR is faster per move and may reach a good starting point
-for TBR more efficiently. Default \code{FALSE}.}
 
 \item{nThreads}{Integer: number of parallel threads for search replicates.
 \describe{
@@ -195,7 +108,17 @@ a \code{cli} progress bar is created automatically.
 Supply a custom function (e.g. using \code{\link[shiny:withProgress]{shiny::setProgress()}})
 to control progress display.}
 
-\item{...}{Arguments passed to \code{MaximizeParsimony()}.}
+\item{control}{A \code{\link{SearchControl}} object (or a named list) of low-level
+search parameters.  Most users can rely on the \code{strategy} presets and
+ignore this argument; see \code{\link[=SearchControl]{SearchControl()}} for full documentation
+of individual fields.}
+
+\item{...}{Backward compatibility: individual control parameters (e.g.
+\code{ratchetCycles = 10L}) may still be passed as named arguments.
+These override the corresponding \code{control} fields and the strategy
+preset.
+Legacy \code{Morphy()}-style parameters (e.g. \code{ratchIter}, \code{tbrIter}) are
+detected and forwarded to \code{\link[=Morphy]{Morphy()}} with a deprecation warning.}
 }
 \value{
 A \code{multiPhylo} object containing the best tree(s) found, with
@@ -220,9 +143,18 @@ rearrangement, exclusive sectorial search (XSS), ratchet perturbation,
 drift, and tree fusing -- all in compiled C++.
 }
 \details{
-Each replicate builds a random Wagner tree, optimizes it with TBR,
-applies sectorial search and ratchet escape, then adds the result to a
-pool of unique topologies.
+The search pipeline follows the "new technology search" approach of
+\insertCite{Goloboff1999;textual}{TreeSearch}, as implemented in TNT
+\insertCite{Goloboff2016}{TreeSearch}.
+Parsimony scoring uses the Fitch
+\insertCite{Fitch1971}{TreeSearch} algorithm; inapplicable characters
+are handled with the algorithm of
+\insertCite{Brazeau2019;textual}{TreeSearch}.
+Each replicate builds a random addition sequence (Wagner) tree
+\insertCite{Kluge1969}{TreeSearch}, optimizes it with TBR,
+applies sectorial search and the parsimony ratchet
+\insertCite{Nixon1999}{TreeSearch} to escape local optima, then adds
+the result to a pool of unique topologies.
 Periodically, tree fusing recombines the best trees in the pool.
 The search stops when the best score has been independently discovered
 \code{targetHits} times, or \code{maxReplicates} replicates have been completed.
@@ -254,6 +186,7 @@ attr(result, "score")
 \seealso{
 \code{\link[=Morphy]{Morphy()}} for fine-grained control over the R-level search loop.
 \code{\link[=Resample]{Resample()}} for jackknife and bootstrap resampling.
+\code{\link[=SearchControl]{SearchControl()}} for expert-level tuning of the search heuristics.
 
 Other tree scoring: 
 \code{\link{CharacterLength}()},

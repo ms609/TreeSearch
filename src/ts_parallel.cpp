@@ -2,6 +2,7 @@
 #include "ts_rng.h"
 #include "ts_fitch.h"
 #include "ts_fuse.h"
+#include "ts_tbr.h"
 
 #include <R.h>
 #include <Rmath.h>
@@ -11,6 +12,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <memory>
 
 namespace ts {
 
@@ -289,6 +291,27 @@ DrivenResult parallel_driven_search(
 
   // Extract results
   shared_pool.extract_into(pool_out);
+
+  // MPT enumeration: TBR plateau walk from each pool tree (serial, main thread)
+  if (pool_out.size() > 0 && pool_out.size() < pool_out.max_size
+      && !result.timed_out) {
+    TBRParams tp;
+    tp.accept_equal = true;
+    tp.tabu_size = 100;
+    std::unique_ptr<ConstraintData> cd_local;
+    ConstraintData* cd_ptr = nullptr;
+    if (cd && cd->active) {
+      cd_local = std::make_unique<ConstraintData>(*cd);
+      cd_ptr = cd_local.get();
+    }
+    int seed_idx = 0;
+    while (seed_idx < pool_out.size() && pool_out.size() < pool_out.max_size) {
+      TreeState enum_tree = pool_out.all()[seed_idx].tree;
+      tp.max_hits = std::max(10, (pool_out.max_size - pool_out.size()) * 2);
+      tbr_search(enum_tree, ds_prototype, tp, cd_ptr, nullptr, &pool_out);
+      ++seed_idx;
+    }
+  }
 
   result.replicates_completed = replicates_done.load();
   result.hits_to_best = pool_out.hits_to_best();

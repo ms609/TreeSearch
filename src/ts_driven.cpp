@@ -11,6 +11,7 @@
 #include "ts_rng.h"
 
 #include <R.h>
+#include <algorithm>
 #include <chrono>
 #include <functional>
 
@@ -405,16 +406,26 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
 finish:
 
-  // 7. MPT enumeration: TBR plateau walk from the best tree to discover
-  //    additional equal-score topologies.  This is essential because each
-  //    replicate only contributes one tree to the pool.
-  if (pool.size() > 0 && !result.timed_out) {
-    TreeState enum_tree = pool.best().tree;
+  // 7. MPT enumeration: TBR plateau walk from each pool tree to discover
+  //    additional equal-score topologies.  Each replicate contributes only
+  //    one tree, so different TBR-connected islands are only discovered if
+  //    different replicates landed on them.  We enumerate from each seed
+  //    tree to explore its island, stopping when the pool is full.
+  if (pool.size() > 0 && pool.size() < pool.max_size && !result.timed_out) {
     TBRParams tp;
     tp.accept_equal = true;
-    tp.max_hits = std::max(100, pool.max_size);
     tp.tabu_size = params.tabu_size > 0 ? params.tabu_size : 100;
-    tbr_search(enum_tree, ds, tp, cd, nullptr, &pool);
+
+    // Snapshot current pool entries as seeds (new trees discovered during
+    // enumeration of seed i become additional seeds for later iterations).
+    int seed_idx = 0;
+    while (seed_idx < pool.size() && pool.size() < pool.max_size) {
+      TreeState enum_tree = pool.all()[seed_idx].tree;
+      // Budget remaining capacity across remaining seeds
+      tp.max_hits = std::max(10, (pool.max_size - pool.size()) * 2);
+      tbr_search(enum_tree, ds, tp, cd, nullptr, &pool);
+      ++seed_idx;
+    }
     if (params.verbosity >= 2) {
       Rprintf("MPT enumeration: %d trees in pool\n", pool.size());
     }

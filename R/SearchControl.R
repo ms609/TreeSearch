@@ -5,6 +5,13 @@
 #' `strategy` presets (`"sprint"`, `"default"`, `"thorough"`); `SearchControl`
 #' is provided for expert tuning.
 #'
+#' The parameters correspond to heuristics described by
+#' \insertCite{Goloboff1999;textual}{TreeSearch}
+#' (sectorial search, tree drifting, tree fusing) and
+#' \insertCite{Nixon1999;textual}{TreeSearch}
+#' (parsimony ratchet), as implemented in TNT
+#' \insertCite{Goloboff2016}{TreeSearch}.
+#'
 #' @param tbrMaxHits Integer; number of equally-scoring trees to accept
 #'   before stopping a TBR pass.
 #' @param sprFirst Logical; run an SPR pass before TBR in each replicate?
@@ -49,6 +56,8 @@
 #'
 #' @family tree search functions
 #' @seealso [MaximizeParsimony()]
+#' @references
+#' \insertAllCited{}
 #' @export
 SearchControl <- function(
     # TBR

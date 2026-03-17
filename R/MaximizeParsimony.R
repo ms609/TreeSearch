@@ -71,8 +71,8 @@
 }
 
 # Strategy presets for adaptive search (Phase 6E).
-# Each is a SearchControl object.
-.StrategyPresets <- list(
+# Wrapped in a function to avoid load-order dependency on SearchControl().
+.StrategyPresets <- function() list(
   sprint = SearchControl(
     tbrMaxHits = 1L, ratchetCycles = 3L, ratchetPerturbProb = 0.04,
     ratchetPerturbMode = 0L, ratchetAdaptive = FALSE,
@@ -112,9 +112,6 @@
   else "thorough"
 }
 
-# Names of all SearchControl fields
-.controlFields <- names(SearchControl())
-
 #' Find most parsimonious trees
 #'
 #' Performs a multi-replicate driven search for most-parsimonious trees,
@@ -122,9 +119,18 @@
 #' rearrangement, exclusive sectorial search (XSS), ratchet perturbation,
 #' drift, and tree fusing -- all in compiled C++.
 #'
-#' Each replicate builds a random Wagner tree, optimizes it with TBR,
-#' applies sectorial search and ratchet escape, then adds the result to a
-#' pool of unique topologies.
+#' The search pipeline follows the "new technology search" approach of
+#' \insertCite{Goloboff1999;textual}{TreeSearch}, as implemented in TNT
+#' \insertCite{Goloboff2016}{TreeSearch}.
+#' Parsimony scoring uses the Fitch
+#' \insertCite{Fitch1971}{TreeSearch} algorithm; inapplicable characters
+#' are handled with the algorithm of
+#' \insertCite{Brazeau2019;textual}{TreeSearch}.
+#' Each replicate builds a random addition sequence (Wagner) tree
+#' \insertCite{Kluge1969}{TreeSearch}, optimizes it with TBR,
+#' applies sectorial search and the parsimony ratchet
+#' \insertCite{Nixon1999}{TreeSearch} to escape local optima, then adds
+#' the result to a pool of unique topologies.
 #' Periodically, tree fusing recombines the best trees in the pool.
 #' The search stops when the best score has been independently discovered
 #' `targetHits` times, or `maxReplicates` replicates have been completed.
@@ -306,8 +312,9 @@ MaximizeParsimony <- function(
   }
 
   # Named ... args that match SearchControl fields override `control`
-  controlDots <- dots[intersect(names(dots), .controlFields)]
-  otherDots <- dots[setdiff(names(dots), .controlFields)]
+  controlFields <- names(SearchControl())
+  controlDots <- dots[intersect(names(dots), controlFields)]
+  otherDots <- dots[setdiff(names(dots), controlFields)]
   if (length(controlDots)) {
     for (nm in names(controlDots)) {
       control[[nm]] <- controlDots[[nm]]
@@ -323,7 +330,7 @@ MaximizeParsimony <- function(
     if (identical(strategy, "auto")) {
       strategy <- .AutoStrategy(NTip(dataset))
     }
-    preset <- .StrategyPresets[[strategy]]
+    preset <- .StrategyPresets()[[strategy]]
     if (!is.null(preset)) {
       # Determine which control fields the user explicitly set.
       # Fields are "explicit" if:

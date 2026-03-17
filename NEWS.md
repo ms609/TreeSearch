@@ -38,6 +38,11 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 - **Topological constraints** enforced natively in C++ (including during
   Wagner tree construction and sectorial search).
 - **Per-phase timing** returned as a `timings` attribute on the result.
+- **MPT enumeration**: after the main search converges, a TBR plateau walk
+  from each pool tree discovers additional most-parsimonious topologies on the
+  same and neighbouring score plateaus, up to `poolMaxSize`.
+  This addresses a common complaint that the previous implementation returned
+  only one tree when multiple MPTs exist.
 
 ### New parameters for `MaximizeParsimony()`
 
