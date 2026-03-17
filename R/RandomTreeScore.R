@@ -1,9 +1,12 @@
-#' Parsimony score of random postorder tree
+#' Parsimony score of random tree
 #' 
-#' @inheritParams MorphyTreeLength
+#' Generates a random tree topology and returns its parsimony score under
+#' equal weights.
+#' 
+#' @param dataset A phyDat object (recommended) or a Morphy object created
+#'   with [`PhyDat2Morphy()`] (legacy; deprecated).
 #'
-#' @return `RandomTreeScore()` returns the parsimony score of a random tree
-#'  for the given Morphy object.
+#' @return `RandomTreeScore()` returns a numeric parsimony score.
 #' @examples 
 #' tokens <- matrix(c(
 #'   0, "-", "-", 1, 1, 2,
@@ -11,21 +14,24 @@
 #'   0, "-", "-", 0, 0, 0), byrow = TRUE, nrow = 3L,
 #'   dimnames = list(letters[1:3], NULL))
 #' pd <- TreeTools::MatrixToPhyDat(tokens)
-#' morphyObj <- PhyDat2Morphy(pd)
-#'
-#' RandomTreeScore(morphyObj)
-#' 
-#' morphyObj <- UnloadMorphy(morphyObj)
+#' RandomTreeScore(pd)
+#' @importFrom TreeTools RandomTree
 #' @export
-RandomTreeScore <- function (morphyObj) {
-  nTip <- mpl_get_numtaxa(morphyObj)
-  if (nTip < 2) {
-    # Return:
-    0L
-  } else {
-    # Return:
-    .Call(`RANDOM_TREE_SCORE`, as.integer(nTip), morphyObj)
+RandomTreeScore <- function(dataset) {
+  if (inherits(dataset, "morphyPtr")) {
+    nTip <- mpl_get_numtaxa(dataset)
+    if (nTip < 2) {
+      return(0L)
+    }
+    return(.Call(`RANDOM_TREE_SCORE`, as.integer(nTip), dataset))
   }
+  
+  nTip <- length(dataset)
+  if (nTip < 2) {
+    return(0)
+  }
+  tree <- RandomTree(dataset, root = TRUE)
+  TreeLength(tree, dataset)
 }
 
 #' Random postorder tree

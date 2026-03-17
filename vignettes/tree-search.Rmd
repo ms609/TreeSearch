@@ -309,9 +309,9 @@ Constraints are effectively phylogenetic characters; only trees on which each
 such character fits perfectly will be considered.
 The position of taxa not listed in a constraint will not be constrained.
 
-`MaximizeParsimony()` (which delegates constraint searches to `Morphy()`) will
-attempt to find a starting tree that satisfies the constraints, but if it
-cannot, it may be necessary to specify one manually
+`MaximizeParsimony()` handles constraint searches natively in C++.
+It will attempt to find a starting tree that satisfies the constraints,
+but if it cannot, it may be necessary to specify one manually
 -- perhaps after checking that no constraints are contradictory.
 
 Here's a simple example on six taxa that enforces the bipartition ab | cdef:

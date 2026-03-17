@@ -16,7 +16,9 @@ SuccessiveApproximations(
   searchIter = 500,
   ratchetIter = 5000,
   verbosity = 0,
-  suboptimal = 0.1
+  suboptimal = 0.1,
+  concavity = Inf,
+  constraint = NULL
 )
 
 SuccessiveWeights(tree, dataset)
@@ -45,6 +47,25 @@ SuccessiveWeights(tree, dataset)
 more detail. Set to \code{0} to run silently.}
 
 \item{suboptimal}{retain trees that are this proportion less optimal than the optimal tree}
+
+\item{concavity}{Determines the degree to which extra steps beyond the first
+are penalized.  Specify a numeric value to use implied weighting
+\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
+\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+TNT sets a default of 3, but this is too low in some circumstances
+\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+Better still explore the sensitivity of results under a range of
+concavity values, e.g. \code{k = 2 ^ (1:7)}.
+Specify \code{Inf} to weight each additional step equally.
+Specify \code{"profile"} to employ profile parsimony
+\insertCite{Faith2001}{TreeSearch}.}
+
+\item{constraint}{Either an object of class \code{phyDat}, in which case
+returned trees will be perfectly compatible with each character in
+\code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
+in any output tree.
+Constraint searches are supported natively: all tree rearrangements
+are filtered to respect the constraint topology.}
 }
 \value{
 \code{SuccessiveApproximations()} returns a list of class \code{multiPhylo}

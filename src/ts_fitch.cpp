@@ -694,12 +694,12 @@ double score_tree(TreeState& tree, const DataSet& ds) {
 // Inapplicable (NA) three-pass scoring (Brazeau et al. 2019)
 // =========================================================================
 
-#include "ts_fitch_na.inc"
+#include "ts_fitch_na.h"
 
 // =========================================================================
 // Incremental NA-aware scoring for SPR/TBR candidate evaluation
 // =========================================================================
 
-#include "ts_fitch_na_incr.inc"
+#include "ts_fitch_na_incr.h"
 
 } // namespace ts

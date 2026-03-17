@@ -18,10 +18,7 @@ TaxonInfluence(
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{tree}{Optimal tree or summary tree (of class "phylo") or list of trees
 (of class "list" or "multiPhylo") against which results should be evaluated.
@@ -48,7 +45,7 @@ If \code{NULL}, computed trees will not be saved.}
 be loaded from the location given by \code{savePath}, instead of running a fresh
 search with the specified dataset and parameters.}
 
-\item{verbosity, \dots}{Parameters for \code{\link[=Morphy]{Morphy()}}.
+\item{verbosity, \dots}{Parameters for \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}.
 Tree search will be conducted using \code{tree} as a starting tree.}
 }
 \value{
@@ -106,10 +103,10 @@ data("congreveLamsdellMatrices", package = "TreeSearch")
 
 # Small dataset for demonstration purposes
 dataset <- congreveLamsdellMatrices[[42]][1:8, ]
-bestTree <- Morphy(dataset, verbosity = 0)[[1]]
+bestTree <- MaximizeParsimony(dataset, verbosity = 0)[[1]]
 
 # Calculate tip influence
-influence <- TaxonInfluence(dataset, ratchIt = 0, startIt = 0, verbos = 0)
+influence <- TaxonInfluence(dataset, maxReplicates = 2, verbosity = 0)
 
 # Colour tip labels according to their influence
 upperBound <- 2 * TreeDist::ClusteringEntropy(

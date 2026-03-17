@@ -235,8 +235,8 @@ test_that("Profile scoring is reported correctly", {
   expect_equal(TreeLength(tree, dataset, "profile"),
                TreeLength(tree, prepDataset, "profile"))
   expect_equal(TreeLength(tree, dataset, "profile"),
-               morphy_profile(edge, morphyObjects, startWeights, charSeq, 
-                              profiles, Inf))
+               TreeSearch:::morphy_profile(edge, morphyObjects, startWeights,
+                                          charSeq, profiles, Inf))
 })
 
 test_that("CharacterLength() fails gracefully", {

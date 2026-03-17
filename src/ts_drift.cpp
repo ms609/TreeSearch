@@ -392,7 +392,8 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
 
   // Pre-allocated undo stack (eliminates heap allocs in save_node_state)
   TreeState::PreallocUndo fast_undo;
-  fast_undo.init(tree.n_internal, tree.total_words, tree.n_blocks, has_na);
+  // Capacity must cover downpass + uppass + tips: up to 3 * n_node saves per clip
+  fast_undo.init(3 * tree.n_node, tree.total_words, tree.n_blocks, has_na);
   tree.prealloc_undo = &fast_undo;
 
   // Pre-allocated work buffer for build_postorder_prealloc

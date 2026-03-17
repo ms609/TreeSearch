@@ -1,8 +1,8 @@
 #' Calculate the parsimony score of a tree given a dataset
 #'
-#' `TreeLength()` uses the Morphy library \insertCite{Brazeau2017}{TreeSearch}
-#' to calculate a parsimony score for a tree, handling inapplicable data 
-#' according to the algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
+#' `TreeLength()` calculates a parsimony score for a tree, handling
+#' inapplicable data according to the algorithm of
+#' \insertCite{Brazeau2019;textual}{TreeSearch}.
 #' Trees may be scored using equal weights, implied weights
 #' \insertCite{Goloboff1993}{TreeSearch}, or profile parsimony
 #' \insertCite{Faith2001}{TreeSearch}.
@@ -32,7 +32,7 @@
 #' 
 #' @references
 #' \insertAllCited{}
-#' @author Martin R. Smith (using Morphy C library, by Martin Brazeau)
+#' @author Martin R. Smith
 #' @importFrom fastmatch %fin%
 #' @importFrom TreeTools Renumber RenumberTips TreeIsRooted
 #' @export
@@ -96,9 +96,12 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf) {
                double(1)) * attr(dataset, "weight")[steps > 0])
   } else {
     tree <- RenumberTips(Renumber(tree), names(dataset))
-    morphyObj <- PhyDat2Morphy(dataset)
-    on.exit(morphyObj <- UnloadMorphy(morphyObj))
-    MorphyTreeLength(tree, morphyObj)
+    at <- attributes(dataset)
+    contrast <- at$contrast
+    tip_data <- matrix(unlist(dataset, use.names = FALSE),
+                       nrow = length(dataset), byrow = TRUE)
+    ts_fitch_score(tree[["edge"]], contrast, tip_data,
+                   at$weight, at$levels)
   }
 }
 
@@ -114,10 +117,9 @@ TreeLength.numeric <- function(tree, dataset, concavity = Inf) {
 #' @rdname TreeLength
 #' @export
 TreeLength.list <- function(tree, dataset, concavity = Inf) {
-  # Define constants
   iw <- is.finite(concavity)
-  profile <- .UseProfile(concavity)
-  
+  useProfile <- .UseProfile(concavity)
+
   nTip <- NTip(tree)
   if (length(unique(nTip)) > 1L) {
     stop("All trees must bear the same leaves.")
@@ -126,9 +128,8 @@ TreeLength.list <- function(tree, dataset, concavity = Inf) {
   if (nTip < length(dataset)) {
     dataset <- .Recompress(dataset[TipLabels(tree[[1]])])
   }
-  
+
   tree[] <- RenumberTips(tree, dataset)
-  tree <- Preorder(tree)
   tree[] <- lapply(tree, function(tr) {
     if (TreeIsRooted(tr)) {
       tr
@@ -137,56 +138,39 @@ TreeLength.list <- function(tree, dataset, concavity = Inf) {
       RootTree(tr, 1)
     }
   })
-  
+
   nEdge <- unique(vapply(tree, function(tr) dim(tr[["edge"]])[1], integer(1)))
   if (length(nEdge) > 1L) {
     stop("Trees have different numbers of edges (",
-           paste0(nEdge, collapse = ", "), 
+           paste0(nEdge, collapse = ", "),
            "); try collapsing polytomies?)")
   }
-  
-  edges <- vapply(tree, `[[`, tree[[1]][["edge"]], "edge")
-  
-  # Initialize data
-  if (profile) {
+
+  # Prepare dataset for C++ engine
+  if (useProfile) {
     dataset <- PrepareDataProfile(dataset)
-    profiles <- attr(dataset, "info.amounts")
-  }
-  if (iw || profile) {
-    at <- attributes(dataset)
-    characters <- PhyToString(dataset, ps = "", useIndex = FALSE,
-                              byTaxon = FALSE, concatenate = FALSE)
-    weight <- at[["weight"]]
-    informative <- at[["informative"]]
-    charSeq <- seq_along(characters) - 1L
-    
-    # Save time by dropping uninformative characters
-    if (!is.null(informative)) {
-      charSeq <- charSeq[informative]
+  } else if (iw) {
+    if (!("min.length" %fin% names(attributes(dataset)))) {
+      dataset <- PrepareDataIW(dataset)
     }
-    morphyObjects <- lapply(characters, SingleCharMorphy)
-    on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
-            add = TRUE)
-  } else {
-    morphyObj <- PhyDat2Morphy(dataset)
-    on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
-    weight <- unlist(MorphyWeights(morphyObj)[1, ]) # exact == approx
   }
-  
-  # Return:
-  if (iw) {
-    minLength <- at[["min.length"]]
-    if (is.null(minLength)) {
-      minLength <- attr(PrepareDataIW(dataset), "min.length")
-    }
-    apply(edges, 3, morphy_iw, morphyObjects, weight, minLength, charSeq,
-          concavity, Inf)
-  } else if (profile) {
-    apply(edges, 3, morphy_profile, morphyObjects, weight, charSeq, profiles,
-          Inf)
-  } else {
-    apply(edges, 3, preorder_morphy, morphyObj)
-  }
+
+  at <- attributes(dataset)
+  contrast <- at$contrast
+  tip_data <- matrix(unlist(dataset, use.names = FALSE),
+                     nrow = length(dataset), byrow = TRUE)
+  weight <- at$weight
+  levels <- at$levels
+
+  min_steps <- if (iw) as.integer(at[["min.length"]]) else integer(0)
+  concavity_val <- if (iw) concavity else Inf
+  infoAmounts <- if (useProfile) at$info.amounts else NULL
+
+  vapply(tree, function(tr) {
+    ts_fitch_score(tr[["edge"]], contrast, tip_data, weight, levels,
+                   min_steps = min_steps, concavity = concavity_val,
+                   infoAmounts = infoAmounts)
+  }, double(1))
 }
 
 
@@ -307,43 +291,11 @@ FitchSteps <- function(tree, dataset) {
 
 #' @describeIn CharacterLength Do not perform checks.  Use with care: may cause
 #' erroneous results or software crash if variables are in the incorrect format.
-#' @importFrom fastmatch fmatch
-#' @importFrom TreeTools Postorder
 FastCharacterLength <- function(tree, dataset) {
-  nTip <- NTip(tree)
-  levels <- attr(dataset, "levels")
-  morphyObj <- PhyDat2Morphy(dataset, weight = 0)
-  on.exit(morphyObj <- UnloadMorphy(morphyObj))
-  
-  maxNode <- nTip + mpl_get_num_internal_nodes(morphyObj)
-  rootNode <- nTip + 1L
-  allNodes <- rootNode:maxNode
-  
-  edge <- Postorder(tree)[["edge"]]
-  parent <- edge[, 1]
-  child <- edge[, 2]
-  
-  parentOf <- parent[fmatch(seq_len(maxNode), child)]
-  parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
-  leftChild <- child[length(parent) + 1L - fmatch(allNodes, rev(parent))]
-  rightChild <- child[fmatch(allNodes, parent)]
-  
-    if (nTip < 1L) {
-    # Run this test after we're sure that morphyObj is a morphyPtr, or lazy
-    # evaluation of nTaxa will cause a crash.
-    stop("Error: ", mpl_translate_error(nTip))
-  }
-  
-  vapply(seq_len(attr(dataset, "nr")), function(i) {
-    MorphyErrorCheck(mpl_set_charac_weight(i, 1, morphyObj))
-    on.exit(MorphyErrorCheck(mpl_set_charac_weight(i, 0, morphyObj)))
-    MorphyErrorCheck(mpl_apply_tipdata(morphyObj))
-    
-    # Return:
-    .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L),
-                 as.integer(leftChild - 1L), as.integer(rightChild - 1L),
-                 morphyObj)
-  }, integer(1))
+  at <- attributes(dataset)
+  tip_data <- matrix(unlist(dataset, use.names = FALSE),
+                     nrow = length(dataset), byrow = TRUE)
+  ts_char_steps(tree[["edge"]], at$contrast, tip_data, at$weight, at$levels)
 }
 
 #' Calculate parsimony score from Morphy object

@@ -1,5 +1,6 @@
 #include "ts_driven.h"
 #include "ts_fitch.h"
+#include "ts_search.h"
 #include "ts_tbr.h"
 #include "ts_ratchet.h"
 #include "ts_drift.h"
@@ -93,7 +94,10 @@ ReplicateResult run_single_replicate(
     }
   }
 
-  // 2. TBR to local optimum
+  // 2. Hill-climbing to local optimum (SPR→TBR escalation)
+  if (params.spr_first) {
+    spr_search(result.tree, ds, 1);
+  }
   {
     TBRParams tp;
     tp.tabu_size = params.tabu_size;

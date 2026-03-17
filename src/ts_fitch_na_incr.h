@@ -1,4 +1,4 @@
-// This file is #included at the end of ts_fitch.cpp, after ts_fitch_na.inc.
+// This file is #included at the end of ts_fitch.cpp, after ts_fitch_na.h.
 // Incremental NA-aware scoring for SPR/TBR candidate evaluation.
 //
 // Provides:

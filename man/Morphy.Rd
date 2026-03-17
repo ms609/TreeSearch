@@ -36,6 +36,8 @@ Resample(
   tolerance = sqrt(.Machine[["double.eps"]]),
   constraint,
   verbosity = 2L,
+  nReplicates = 1L,
+  nThreads = 1L,
   ...
 )
 }
@@ -124,6 +126,14 @@ to give more meaningful results.}
 \item{proportion}{Numeric between 0 and 1 specifying what proportion of
 characters to retain under jackknife resampling.}
 
+\item{nReplicates}{Integer specifying how many resample replicates to run.
+Default \code{1L} runs a single replicate (original behavior).
+When \verb{> 1}, all replicates are run in a single call, optionally in parallel.}
+
+\item{nThreads}{Integer specifying the number of threads for parallel
+resampling. Default \code{1L} runs serially.  Use \code{0L} for auto-detect.
+Only effective when \code{nReplicates > 1}.}
+
 \item{\dots}{Additional parameters to \code{Morphy()}.}
 }
 \value{
@@ -148,8 +158,8 @@ The first tree hit for the first time in ratchet iteration three is named
 \code{ratch3_1}.
 }
 
-\code{Resample()} returns a \code{multiPhylo} object containing a list of
-trees obtained by tree search using a resampled version of \code{dataset}.
+\code{Resample()} returns a \code{multiPhylo} object containing one best tree
+per resample replicate.
 }
 \description{
 Search for most parsimonious trees using the parsimony ratchet and
@@ -161,10 +171,11 @@ Treats inapplicable data using the algorithm of
 }
 \details{
 For most users, \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} provides a faster search using the
-C++ engine.
-\code{Morphy()} is retained for users who need profile parsimony,
-constraint-based search, or fine-grained control over the R-level search
-loop.
+C++ engine, with native support for equal weights, implied weights, profile
+parsimony, and topological constraints.
+\code{Morphy()} is retained for users who need fine-grained control over the
+R-level search loop (e.g.\sspace{}custom stopping criteria, per-iteration
+callbacks, or direct access to MorphyLib scoring).
 
 Tree search commences with \code{ratchIter} iterations of the parsimony ratchet
 \insertCite{Nixon1999}{TreeSearch}, which bootstraps the input dataset
@@ -279,12 +290,14 @@ library("TreeTools")
 data("inapplicable.phyData", package = "TreeSearch")
 dataset <- inapplicable.phyData[["Asher2005"]]
 
+\donttest{
 # A very quick run for demonstration purposes
 trees <- Morphy(dataset, ratchIter = 0, startIter = 0,
                 tbrIter = 1, maxHits = 4, maxTime = 1/100,
                 concavity = 10, verbosity = 4)
 names(trees)
 cons <- Consensus(trees)
+}
 
 # In actual use, be sure to check that the score has converged on a global
 # optimum, conducting additional iterations and runs as necessary.
@@ -344,7 +357,8 @@ Morphy(characters, constraint = constraint, verbosity = 0)
 \insertAllCited{}
 }
 \seealso{
-\code{\link[=MaximizeParsimony]{MaximizeParsimony()}} for the faster C++ driven search engine.
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}} for the faster C++ driven search engine
+(recommended for most analyses).
 
 Tree search \emph{via} graphical user interface: \code{\link[=EasyTrees]{EasyTrees()}}
 

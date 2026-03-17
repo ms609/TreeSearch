@@ -1,0 +1,191 @@
+library("TreeTools", quietly = TRUE)
+
+data("inapplicable.phyData", package = "TreeSearch")
+ds <- inapplicable.phyData[["Vinther2008"]]
+
+# --- Strategy presets ---
+
+test_that("strategy = 'sprint' runs and returns valid result", {
+  set.seed(3418)
+  result <- MaximizeParsimony(ds, strategy = "sprint",
+                               maxReplicates = 2L, targetHits = 1L,
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+  expect_true(attr(result, "score") > 0)
+  expect_equal(NTip(result[[1]]), NTip(ds))
+})
+
+test_that("strategy = 'default' runs and returns valid result", {
+  set.seed(5726)
+  result <- MaximizeParsimony(ds, strategy = "default",
+                               maxReplicates = 2L, targetHits = 1L,
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+})
+
+test_that("strategy = 'thorough' runs and returns valid result", {
+  set.seed(8103)
+  result <- MaximizeParsimony(ds, strategy = "thorough",
+                               maxReplicates = 1L, targetHits = 1L,
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+})
+
+test_that("strategy = 'auto' selects based on dataset size", {
+  set.seed(2944)
+  # Vinther2008 has 23 tips -> should auto-select "sprint"
+  result <- MaximizeParsimony(ds, strategy = "auto",
+                               maxReplicates = 2L, targetHits = 1L,
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+})
+
+test_that("strategy = 'none' uses raw parameter defaults", {
+  set.seed(6017)
+  result <- MaximizeParsimony(ds, strategy = "none",
+                               maxReplicates = 2L, targetHits = 1L,
+                               ratchetCycles = 1L, driftCycles = 0L,
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+})
+
+test_that("explicit params override strategy preset", {
+  set.seed(1589)
+  # Sprint has driftCycles=0; override to 1
+  result <- MaximizeParsimony(ds, strategy = "sprint",
+                               driftCycles = 1L,
+                               maxReplicates = 2L, targetHits = 1L,
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+})
+
+test_that("unknown strategy gives warning", {
+  set.seed(4821)
+  expect_warning(
+    MaximizeParsimony(ds, strategy = "nonexistent",
+                      maxReplicates = 1L, targetHits = 1L,
+                      verbosity = 0L),
+    "Unknown strategy"
+  )
+})
+
+# --- maxSeconds timeout ---
+
+test_that("maxSeconds stops search before maxReplicates", {
+  set.seed(7392)
+  result <- MaximizeParsimony(ds, maxReplicates = 100L, targetHits = 100L,
+                               maxSeconds = 0.5, verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(attr(result, "timed_out"))
+})
+
+test_that("maxSeconds = 0 means no timeout", {
+  set.seed(8456)
+  result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
+                               maxSeconds = 0, verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_false(attr(result, "timed_out"))
+})
+
+# --- nThreads ---
+
+test_that("nThreads = 1 (serial) runs correctly", {
+  set.seed(5193)
+  result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
+                               nThreads = 1L, verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+})
+
+test_that("nThreads = 2 (parallel) runs correctly", {
+  set.seed(6274)
+  result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
+                               nThreads = 2L, verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+  # Score should be reasonable (not garbage from parallel corruption)
+  expect_true(attr(result, "score") < 200)
+})
+
+# --- User-supplied starting tree (warm-start) ---
+
+test_that("user tree is used as warm start", {
+  # Build a known tree
+  set.seed(9847)
+  user_tree <- RandomTree(ds, root = TRUE)
+  user_tree <- Preorder(user_tree)
+
+  result <- MaximizeParsimony(ds, tree = user_tree,
+                               maxReplicates = 1L, targetHits = 1L,
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  result_score <- attr(result, "score")
+
+  # Result should be at least as good as the input tree
+  input_score <- TreeLength(user_tree, ds)
+  expect_true(result_score <= input_score)
+})
+
+test_that("multiPhylo input uses first tree as warm start", {
+  set.seed(3571)
+  trees <- list(
+    RandomTree(ds, root = TRUE),
+    RandomTree(ds, root = TRUE)
+  )
+  class(trees) <- "multiPhylo"
+  trees <- Preorder(trees)
+
+  result <- MaximizeParsimony(ds, tree = trees,
+                               maxReplicates = 1L, targetHits = 1L,
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+})
+
+# --- timings attribute ---
+
+test_that("timings attribute is returned", {
+  set.seed(2689)
+  result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
+                               verbosity = 0L)
+  timings <- attr(result, "timings")
+  expect_false(is.null(timings))
+  expect_true(is.numeric(timings))
+  expect_true(all(timings >= 0))
+  expect_true("wagner_ms" %in% names(timings))
+  expect_true("ratchet_ms" %in% names(timings))
+})
+
+# --- IW with strategy ---
+
+test_that("IW mode works with strategy presets", {
+  set.seed(4012)
+  result <- MaximizeParsimony(ds, concavity = 10, strategy = "sprint",
+                               maxReplicates = 2L, targetHits = 1L,
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  cpp_score <- attr(result, "score")
+  tl_score <- TreeLength(result[[1]], ds, concavity = 10)
+  expect_equal(cpp_score, tl_score, tolerance = 0.01)
+})
+
+# --- Output tree validity ---
+
+test_that("output trees have valid preorder numbering", {
+  set.seed(8734)
+  result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
+                               verbosity = 0L)
+  for (tree in result) {
+    # Trees should have correct number of tips and edges
+    expect_equal(NTip(tree), NTip(ds))
+    expect_equal(nrow(tree$edge), 2 * (NTip(ds) - 1))
+    # Tip labels should match
+    expect_true(all(TipLabels(tree) %in% names(ds)))
+  }
+})

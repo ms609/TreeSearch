@@ -182,11 +182,12 @@ test_that("Multiple datasets produce verified scores", {
 
 # --- New tests for incremental scoring correctness ---
 
-test_that("Wagner on inapplicable dataset matches fitch_score", {
+test_that("Wagner on inapplicable datasets matches fitch_score", {
   data("inapplicable.phyData", package = "TreeSearch")
-  for (ds_name in c("Vinther2008", "Longrich2010")) {
+  na_datasets <- c("Vinther2008", "Longrich2010", "Sansom2010")
+  for (ds_name in na_datasets) {
     pd <- inapplicable.phyData[[ds_name]]
-    d <- prep_pd(pd)
+    d <- make_ts_data(pd)
 
     set.seed(4217)
     result <- TreeSearch:::ts_random_wagner_tree(
@@ -198,6 +199,60 @@ test_that("Wagner on inapplicable dataset matches fitch_score", {
     )
     expect_equal(result$score, fitch_check, info = ds_name)
   }
+})
+
+test_that("Wagner on NA datasets is deterministic", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  pd <- inapplicable.phyData[["Vinther2008"]]
+  d <- make_ts_data(pd)
+
+  set.seed(6193)
+  r1 <- TreeSearch:::ts_random_wagner_tree(
+    d$contrast, d$tip_data, d$weight, d$levels
+  )
+  set.seed(6193)
+  r2 <- TreeSearch:::ts_random_wagner_tree(
+    d$contrast, d$tip_data, d$weight, d$levels
+  )
+  expect_equal(r1$score, r2$score)
+  expect_equal(r1$edge, r2$edge)
+})
+
+test_that("Wagner on NA + IW matches fitch_score", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  pd <- inapplicable.phyData[["Vinther2008"]]
+  d <- make_ts_data(pd)
+
+  for (k in c(3, 10)) {
+    set.seed(8514)
+    result <- TreeSearch:::ts_random_wagner_tree(
+      d$contrast, d$tip_data, d$weight, d$levels,
+      concavity = k
+    )
+
+    fitch_check <- TreeSearch:::ts_fitch_score(
+      result$edge, d$contrast, d$tip_data, d$weight, d$levels,
+      concavity = k
+    )
+    expect_equal(result$score, fitch_check, tolerance = 1e-6,
+                 info = paste("IW k =", k))
+  }
+})
+
+test_that("Wagner NA tree has valid topology", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  pd <- inapplicable.phyData[["Vinther2008"]]
+  d <- make_ts_data(pd)
+  n_tip <- length(pd)
+
+  set.seed(2917)
+  result <- TreeSearch:::ts_random_wagner_tree(
+    d$contrast, d$tip_data, d$weight, d$levels
+  )
+
+  expect_equal(nrow(result$edge), 2L * (n_tip - 1L))
+  tips <- sort(result$edge[result$edge[, 2] <= n_tip, 2])
+  expect_equal(tips, seq_len(n_tip))
 })
 
 test_that("Wagner with many addition orders all verify", {

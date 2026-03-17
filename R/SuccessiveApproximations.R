@@ -77,6 +77,8 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
     targetHits = as.integer(min(searchHits, 10L)),
     tbrMaxHits = 1L,
     ratchetCycles = as.integer(min(ceiling(ratchetIter / 500), 10L)),
+    min_steps = if (is.finite(concavity))
+      as.integer(MinimumLength(dataset, compress = TRUE)) else integer(0),
     concavity = as.double(concavity)
   )
   result <- do.call(ts_successive_approx, c(searchArgs, consArgs, profileArgs))
@@ -92,7 +94,7 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
   # Reconstruct phylo from C++ edge matrix
   if (nrow(result$edge) == 0L) {
     tr <- if (!missing(tree) && inherits(tree, "phylo")) tree
-          else TreeTools::AdditionTree(dataset)
+          else AdditionTree(dataset)
     attr(tr, "score") <- result$score
   } else {
     tr <- structure(

@@ -65,6 +65,10 @@ ts_na_char_steps <- function(edge, contrast, tip_data, weight, levels) {
     .Call(`_TreeSearch_ts_na_char_steps`, edge, contrast, tip_data, weight, levels)
 }
 
+ts_char_steps <- function(edge, contrast, tip_data, weight, levels) {
+    .Call(`_TreeSearch_ts_char_steps`, edge, contrast, tip_data, weight, levels)
+}
+
 ts_debug_clip <- function(edge, contrast, tip_data, weight, levels, clip_node_1based) {
     .Call(`_TreeSearch_ts_debug_clip`, edge, contrast, tip_data, weight, levels, clip_node_1based)
 }
@@ -129,12 +133,16 @@ ts_xss_search <- function(edge, contrast, tip_data, weight, levels, nPartitions 
     .Call(`_TreeSearch_ts_xss_search`, edge, contrast, tip_data, weight, levels, nPartitions, xssRounds, acceptEqual, ratchetCycles, maxHits, min_steps, concavity)
 }
 
-ts_driven_search <- function(contrast, tip_data, weight, levels, maxReplicates = 100L, targetHits = 10L, tbrMaxHits = 1L, ratchetCycles = 10L, ratchetPerturbProb = 0.04, ratchetPerturbMode = 0L, ratchetPerturbMaxMoves = 0L, ratchetAdaptive = FALSE, driftCycles = 6L, driftAfdLimit = 3L, driftRfdLimit = 0.1, xssRounds = 3L, xssPartitions = 4L, rssRounds = 1L, cssRounds = 1L, cssPartitions = 4L, sectorMinSize = 6L, sectorMaxSize = 50L, fuseInterval = 3L, fuseAcceptEqual = FALSE, poolMaxSize = 100L, poolSuboptimal = 0.0, maxSeconds = 0.0, verbosity = 0L, min_steps = integer(), concavity = -1.0, consSplitMatrix = NULL, consContrast = NULL, consTipData = NULL, consWeight = NULL, consLevels = NULL, consExpectedScore = 0L, infoAmounts = NULL, tabuSize = 100L, wagnerStarts = 1L, progressCallback = NULL, nThreads = 1L, startEdge = NULL) {
-    .Call(`_TreeSearch_ts_driven_search`, contrast, tip_data, weight, levels, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, ratchetPerturbMode, ratchetPerturbMaxMoves, ratchetAdaptive, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, rssRounds, cssRounds, cssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, maxSeconds, verbosity, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts, tabuSize, wagnerStarts, progressCallback, nThreads, startEdge)
+ts_driven_search <- function(contrast, tip_data, weight, levels, maxReplicates = 100L, targetHits = 10L, tbrMaxHits = 1L, ratchetCycles = 10L, ratchetPerturbProb = 0.04, ratchetPerturbMode = 0L, ratchetPerturbMaxMoves = 0L, ratchetAdaptive = FALSE, driftCycles = 6L, driftAfdLimit = 3L, driftRfdLimit = 0.1, xssRounds = 3L, xssPartitions = 4L, rssRounds = 1L, cssRounds = 1L, cssPartitions = 4L, sectorMinSize = 6L, sectorMaxSize = 50L, fuseInterval = 3L, fuseAcceptEqual = FALSE, poolMaxSize = 100L, poolSuboptimal = 0.0, maxSeconds = 0.0, verbosity = 0L, min_steps = integer(), concavity = -1.0, consSplitMatrix = NULL, consContrast = NULL, consTipData = NULL, consWeight = NULL, consLevels = NULL, consExpectedScore = 0L, infoAmounts = NULL, tabuSize = 100L, wagnerStarts = 1L, progressCallback = NULL, nThreads = 1L, startEdge = NULL, sprFirst = FALSE) {
+    .Call(`_TreeSearch_ts_driven_search`, contrast, tip_data, weight, levels, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, ratchetPerturbMode, ratchetPerturbMaxMoves, ratchetAdaptive, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, rssRounds, cssRounds, cssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, maxSeconds, verbosity, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts, tabuSize, wagnerStarts, progressCallback, nThreads, startEdge, sprFirst)
 }
 
 ts_resample_search <- function(contrast, tip_data, weight, levels, bootstrap = FALSE, jackProportion = 2.0 / 3.0, maxReplicates = 5L, targetHits = 2L, tbrMaxHits = 1L, ratchetCycles = 3L, ratchetPerturbProb = 0.04, driftCycles = 0L, min_steps = integer(), concavity = -1.0, consSplitMatrix = NULL, consContrast = NULL, consTipData = NULL, consWeight = NULL, consLevels = NULL, consExpectedScore = 0L, infoAmounts = NULL) {
     .Call(`_TreeSearch_ts_resample_search`, contrast, tip_data, weight, levels, bootstrap, jackProportion, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, driftCycles, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts)
+}
+
+ts_parallel_resample <- function(contrast, tip_data, weight, levels, nReplicates = 1L, nThreads = 1L, bootstrap = FALSE, jackProportion = 2.0 / 3.0, maxReplicates = 5L, targetHits = 2L, tbrMaxHits = 1L, ratchetCycles = 3L, ratchetPerturbProb = 0.04, driftCycles = 0L, min_steps = integer(), concavity = -1.0, consSplitMatrix = NULL, consContrast = NULL, consTipData = NULL, consWeight = NULL, consLevels = NULL, consExpectedScore = 0L, infoAmounts = NULL) {
+    .Call(`_TreeSearch_ts_parallel_resample`, contrast, tip_data, weight, levels, nReplicates, nThreads, bootstrap, jackProportion, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, driftCycles, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts)
 }
 
 ts_successive_approx <- function(contrast, tip_data, weight, levels, saK = 3.0, maxSAIter = 20L, maxReplicates = 10L, targetHits = 3L, tbrMaxHits = 1L, ratchetCycles = 5L, ratchetPerturbProb = 0.04, driftCycles = 0L, min_steps = integer(), concavity = -1.0, consSplitMatrix = NULL, consContrast = NULL, consTipData = NULL, consWeight = NULL, consLevels = NULL, consExpectedScore = 0L, infoAmounts = NULL) {

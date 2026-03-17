@@ -335,6 +335,38 @@ List ts_na_char_steps(
 }
 
 // [[Rcpp::export]]
+IntegerVector ts_char_steps(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+
+  ts::TreeState tree;
+  tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
+
+  // Score tree (handles both standard and NA-aware scoring)
+  ts::score_tree(tree, ds);
+
+  // Extract per-pattern step counts
+  int n_pat = tip_data.ncol();
+  std::vector<int> char_steps(n_pat, 0);
+  ts::extract_char_steps(tree, ds, char_steps);
+
+  // Add precomputed steps from simplification
+  IntegerVector result(n_pat);
+  for (int p = 0; p < n_pat; ++p) {
+    result[p] = char_steps[p];
+    if (!ds.precomputed_steps.empty()) {
+      result[p] += ds.precomputed_steps[p];
+    }
+  }
+  return result;
+}
+
+// [[Rcpp::export]]
 List ts_debug_clip(
     IntegerMatrix edge,
     NumericMatrix contrast,
@@ -1173,7 +1205,8 @@ List ts_driven_search(
     int wagnerStarts = 1,
     Nullable<Function> progressCallback = R_NilValue,
     int nThreads = 1,
-    Nullable<IntegerMatrix> startEdge = R_NilValue)
+    Nullable<IntegerMatrix> startEdge = R_NilValue,
+    bool sprFirst = false)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity, infoAmounts);
@@ -1211,6 +1244,7 @@ List ts_driven_search(
   params.max_seconds = maxSeconds;
   params.verbosity = verbosity;
   params.tabu_size = tabuSize;
+  params.spr_first = sprFirst;
   params.wagner_starts = wagnerStarts;
 
   // Starting tree edge matrix (optional)
@@ -1228,7 +1262,7 @@ List ts_driven_search(
   // Wire up progress callback if provided
   if (progressCallback.isNotNull()) {
     Rcpp::Function r_cb(progressCallback.get());
-    params.progress_callback = [&r_cb](const ts::ProgressInfo& pi) {
+    params.progress_callback = [r_cb](const ts::ProgressInfo& pi) {
       r_cb(Rcpp::List::create(
         Rcpp::Named("replicate") = pi.replicate,
         Rcpp::Named("max_replicates") = pi.max_replicates,
@@ -1388,6 +1422,116 @@ List ts_resample_search(
   return List::create(
     Named("edge") = edge,
     Named("score") = result.score
+  );
+}
+
+// [[Rcpp::export]]
+List ts_parallel_resample(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    int nReplicates = 1,
+    int nThreads = 1,
+    bool bootstrap = false,
+    double jackProportion = 2.0 / 3.0,
+    int maxReplicates = 5,
+    int targetHits = 2,
+    int tbrMaxHits = 1,
+    int ratchetCycles = 3,
+    double ratchetPerturbProb = 0.04,
+    int driftCycles = 0,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = -1.0,
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue,
+    Nullable<NumericMatrix> consContrast = R_NilValue,
+    Nullable<IntegerMatrix> consTipData = R_NilValue,
+    Nullable<IntegerVector> consWeight = R_NilValue,
+    Nullable<CharacterVector> consLevels = R_NilValue,
+    int consExpectedScore = 0,
+    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+{
+  if (concavity < 0) concavity = HUGE_VAL;
+  int n_tips = tip_data.nrow();
+  int n_patterns = tip_data.ncol();
+  int n_tokens = contrast.nrow();
+  int n_states = contrast.ncol();
+
+  std::vector<std::string> level_strs(n_states);
+  std::vector<const char*> level_ptrs(n_states);
+  for (int i = 0; i < n_states; ++i) {
+    level_strs[i] = as<std::string>(levels[i]);
+    level_ptrs[i] = level_strs[i].c_str();
+  }
+
+  const int* min_steps_ptr = (min_steps.size() > 0) ? INTEGER(min_steps)
+                                                     : nullptr;
+
+  const double* info_amounts_ptr;
+  int info_max_steps;
+  extract_info_amounts(infoAmounts, info_amounts_ptr, info_max_steps);
+
+  ts::ConstraintData cd = build_constraint_from_r(
+      n_tips, consSplitMatrix, consContrast, consTipData,
+      consWeight, consLevels, consExpectedScore);
+  ts::ConstraintData* cd_ptr = cd.active ? &cd : nullptr;
+
+  ts::ResampleParams params;
+  params.bootstrap = bootstrap;
+  params.jack_proportion = jackProportion;
+  params.search.max_replicates = maxReplicates;
+  params.search.target_hits = targetHits;
+  params.search.tbr_max_hits = tbrMaxHits;
+  params.search.ratchet_cycles = ratchetCycles;
+  params.search.ratchet_perturb_prob = ratchetPerturbProb;
+  params.search.drift_cycles = driftCycles;
+
+  if (nReplicates < 1) nReplicates = 1;
+
+  std::vector<ts::ResampleResult> results;
+  if (nThreads > 1 && nReplicates > 1) {
+    results = ts::parallel_resample(
+        REAL(contrast), n_tokens, n_states,
+        INTEGER(tip_data), n_tips, n_patterns,
+        INTEGER(weight), level_ptrs.data(), min_steps_ptr,
+        concavity, params, nReplicates, nThreads,
+        info_amounts_ptr, info_max_steps, cd_ptr);
+  } else {
+    // Serial path: run each replicate sequentially
+    results.resize(nReplicates);
+    for (int r = 0; r < nReplicates; ++r) {
+      results[r] = ts::resample_search(
+          REAL(contrast), n_tokens, n_states,
+          INTEGER(tip_data), n_tips, n_patterns,
+          INTEGER(weight), level_ptrs.data(), min_steps_ptr,
+          concavity, params,
+          info_amounts_ptr, info_max_steps, cd_ptr);
+    }
+  }
+
+  // Package results as list of edge matrices + score vector
+  List edges(nReplicates);
+  NumericVector scores(nReplicates);
+  for (int r = 0; r < nReplicates; ++r) {
+    const auto& res = results[r];
+    scores[r] = res.score;
+    if (res.edge_parent.empty()) {
+      edges[r] = IntegerMatrix(0, 2);
+    } else {
+      int n_edge = static_cast<int>(res.edge_parent.size());
+      IntegerMatrix em(n_edge, 2);
+      for (int i = 0; i < n_edge; ++i) {
+        em(i, 0) = res.edge_parent[i];
+        em(i, 1) = res.edge_child[i];
+      }
+      edges[r] = em;
+    }
+  }
+
+  return List::create(
+    Named("edges") = edges,
+    Named("scores") = scores,
+    Named("n_replicates") = nReplicates
   );
 }
 
@@ -1600,21 +1744,13 @@ List ts_bench_tbr_phases(
 
     int nz = tree.clip_state.clip_grandpar;
 
-    double divided_length;
     if (has_na) {
       ts::fitch_na_incremental_downpass(tree, ds, nz);
       ts::fitch_na_incremental_uppass(tree, ds, nz);
-      divided_length = static_cast<double>(ts::fitch_na_pass3_score(tree, ds));
+      (void)ts::fitch_na_pass3_score(tree, ds);
     } else {
-      int delta = ts::fitch_incremental_downpass(tree, ds, nz);
+      ts::fitch_incremental_downpass(tree, ds, nz);
       ts::fitch_incremental_uppass(tree, ds, nz);
-      int nx = tree.clip_state.clip_parent;
-      int nx_cost = 0;
-      for (int b = 0; b < ds.n_blocks; ++b) {
-        nx_cost += ds.blocks[b].weight * ts::popcount64(
-            tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b]);
-      }
-      divided_length = score + delta - nx_cost;
     }
 
     // IW base

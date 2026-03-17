@@ -200,7 +200,7 @@ void TreeState::save_node_state(int node) {
   // Fast path: use pre-allocated flat buffers (no heap allocation)
   if (prealloc_undo) {
     auto& u = *prealloc_undo;
-    if (u.count >= u.capacity) return;
+    if (u.count >= u.capacity) u.grow();
     u.nodes[u.count] = node;
     size_t sb = static_cast<size_t>(node) * u.tw;
     size_t cb = static_cast<size_t>(node) * u.nb;

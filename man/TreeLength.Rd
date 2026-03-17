@@ -42,7 +42,7 @@ Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
 Specify \code{Inf} to weight each additional step equally.
 Specify \code{"profile"} to employ profile parsimony
-\insertCite{Faith2001}{TreeSearch}; this delegates to \code{\link[=Morphy]{Morphy()}}.}
+\insertCite{Faith2001}{TreeSearch}.}
 
 \item{\dots}{unused; allows additional parameters specified within \dots to be
 received by the function without throwing an error.}
@@ -52,9 +52,9 @@ received by the function without throwing an error.}
 each tree in \code{tree}.
 }
 \description{
-\code{TreeLength()} uses the Morphy library \insertCite{Brazeau2017}{TreeSearch}
-to calculate a parsimony score for a tree, handling inapplicable data
-according to the algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
+\code{TreeLength()} calculates a parsimony score for a tree, handling
+inapplicable data according to the algorithm of
+\insertCite{Brazeau2019;textual}{TreeSearch}.
 Trees may be scored using equal weights, implied weights
 \insertCite{Goloboff1993}{TreeSearch}, or profile parsimony
 \insertCite{Faith2001}{TreeSearch}.
@@ -88,6 +88,6 @@ Other tree scoring:
 \code{\link{TaxonInfluence}()}
 }
 \author{
-Martin R. Smith (using Morphy C library, by Martin Brazeau)
+Martin R. Smith
 }
 \concept{tree scoring}

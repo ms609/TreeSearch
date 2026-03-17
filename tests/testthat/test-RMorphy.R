@@ -21,5 +21,5 @@ test_that("preorder_morphy()", {
   morphyObj <- PhyDat2Morphy(dat)
   on.exit(morphyObj <- UnloadMorphy(morphyObj))
   tree$edge - 1
-  expect_equal(4L, preorder_morphy(tree$edge, morphyObj))
+  expect_equal(4L, TreeSearch:::preorder_morphy(tree$edge, morphyObj))
 })

@@ -70,6 +70,48 @@
   )
 }
 
+# Strategy presets for adaptive search (Phase 6E).
+# Used by .ApplyStrategy() when the user sets strategy = "auto" or a named preset.
+.StrategyPresets <- list(
+  sprint = list(
+    tbrMaxHits = 1L, ratchetCycles = 3L, ratchetPerturbProb = 0.04,
+    ratchetPerturbMode = 0L, ratchetAdaptive = FALSE,
+    driftCycles = 0L, xssRounds = 1L, xssPartitions = 4L,
+    rssRounds = 0L, cssRounds = 0L, cssPartitions = 4L,
+    sectorMinSize = 6L, sectorMaxSize = 50L,
+    fuseInterval = 5L, fuseAcceptEqual = FALSE,
+    tabuSize = 0L, wagnerStarts = 1L
+  ),
+  default = list(
+    tbrMaxHits = 1L, ratchetCycles = 5L, ratchetPerturbProb = 0.04,
+    ratchetPerturbMode = 0L, ratchetAdaptive = FALSE,
+    driftCycles = 2L, xssRounds = 3L, xssPartitions = 4L,
+    rssRounds = 1L, cssRounds = 0L, cssPartitions = 4L,
+    sectorMinSize = 6L, sectorMaxSize = 50L,
+    fuseInterval = 3L, fuseAcceptEqual = FALSE,
+    tabuSize = 100L, wagnerStarts = 1L
+  ),
+  thorough = list(
+    tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.04,
+    ratchetPerturbMode = 2L, ratchetAdaptive = TRUE,
+    driftCycles = 12L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+    xssRounds = 5L, xssPartitions = 6L,
+    rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
+    sectorMinSize = 6L, sectorMaxSize = 80L,
+    fuseInterval = 2L, fuseAcceptEqual = TRUE,
+    tabuSize = 200L, wagnerStarts = 3L
+  )
+)
+
+# Select strategy preset based on dataset size.
+# @param nTip Integer number of taxa
+# @return Character name of the strategy preset
+.AutoStrategy <- function(nTip) {
+  if (nTip <= 30L) "sprint"
+  else if (nTip <= 60L) "default"
+  else "thorough"
+}
+
 #' Find most parsimonious trees
 #'
 #' Performs a multi-replicate driven search for most-parsimonious trees,
@@ -95,10 +137,12 @@
 #' @param dataset A phylogenetic data matrix of \pkg{phangorn} class
 #' \code{phyDat}, whose names correspond to the labels of any accompanying tree.
 #' @param tree (optional) A bifurcating tree of class \code{\link[ape]{phylo}},
-#'   containing only the tips listed in `dataset`, from which the search
-#'   should begin.
-#'   If unspecified, a random tree will be used as a template (the C++
-#'   engine builds its own starting trees internally).
+#'   or a `multiPhylo` (first tree used).
+#'   When supplied, the first replicate uses this topology as its starting
+#'   point (warm-start), skipping the random Wagner tree construction.
+#'   Subsequent replicates still begin from random Wagner trees.
+#'   This is useful for continuing a search from a previously found optimum.
+#'   If unspecified, all replicates start from random Wagner trees.
 #'   Edge lengths are not supported and will be deleted.
 #' @param concavity Determines the degree to which extra steps beyond the first
 #' are penalized.  Specify a numeric value to use implied weighting
@@ -117,6 +161,22 @@
 #' in any output tree.
 #' Constraint searches are supported natively: all tree rearrangements
 #' are filtered to respect the constraint topology.
+#' @param strategy Character: named strategy preset controlling the search
+#'   heuristic parameters. Presets:
+#'   \describe{
+#'     \item{`"auto"` (default)}{Selects automatically based on dataset size:
+#'       `"sprint"` for <=30 taxa, `"default"` for 31--60, `"thorough"` for 61+.}
+#'     \item{`"sprint"`}{Fast search: 3 ratchet cycles, no drift, minimal
+#'       sectorial. Good for small datasets or quick surveys.}
+#'     \item{`"default"`}{Balanced: 5 ratchet + 2 drift + sectorial + fusing.}
+#'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, 12 drift, adaptive
+#'       perturbation, extra sectorial rounds. Best for large (60+ tips)
+#'       datasets where sprint/default may miss the global optimum.}
+#'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
+#'   }
+#'   Explicit parameter values always override the preset; for example,
+#'   `strategy = "sprint", ratchetCycles = 10L` uses sprint defaults for
+#'   everything except `ratchetCycles`.
 #' @param maxReplicates Integer: maximum number of independent search
 #'   replicates (default: 100).
 #' @param targetHits Integer: stop when the best score has been found
@@ -156,12 +216,18 @@
 #' @param poolMaxSize Integer: maximum number of trees retained in pool.
 #' @param poolSuboptimal Numeric: retain trees within this many steps of
 #'   the best score (0 = optimal only).
+#' @param maxSeconds Numeric: maximum wall-clock time in seconds for the
+#'   search. When reached, the current replicate finishes and the search
+#'   stops. `0` (default) means no time limit.
 #' @param tabuSize Integer: size of the tabu list for TBR plateau exploration.
 #'   Prevents cycling through recently visited topologies when accepting
 #'   equal-score moves. Set to `0` to disable. Default 100.
 #' @param wagnerStarts Integer: number of random Wagner starting trees per
 #'   replicate. The best-scoring tree is kept before proceeding to TBR.
 #'   Default 1.
+#' @param sprFirst Logical: if `TRUE`, run an SPR search before TBR in each
+#'   replicate. SPR is faster per move and may reach a good starting point
+#'   for TBR more efficiently. Default `FALSE`.
 #' @param nThreads Integer: number of parallel threads for search replicates.
 #'   \describe{
 #'     \item{`1` (default)}{Serial execution -- identical to previous behavior.}
@@ -192,6 +258,8 @@
 #'     \item{`replicates`}{Number of replicates completed.}
 #'     \item{`hits_to_best`}{Number of independent discoveries of the best
 #'       score.}
+#'     \item{`timed_out`}{Logical: `TRUE` if the search stopped because
+#'       `maxSeconds` was exceeded.}
 #'     \item{`timings`}{Named numeric vector of cumulative wall-clock time
 #'       (in milliseconds) spent in each search phase across all replicates:
 #'       `wagner_ms`, `tbr_ms`, `xss_ms`, `rss_ms`, `css_ms`, `ratchet_ms`,
@@ -211,7 +279,7 @@
 #' [`Resample()`] for jackknife and bootstrap resampling.
 #' @references
 #' \insertAllCited{}
-#' @importFrom TreeTools NTip RandomTree RenumberTips RootTree MakeTreeBinary
+#' @importFrom TreeTools NTip RandomTree Renumber RenumberTips RootTree MakeTreeBinary
 #'   Preorder
 #' @importFrom cli cli_alert_success cli_alert_info cli_alert_warning
 #' @encoding UTF-8
@@ -221,21 +289,22 @@ MaximizeParsimony <- function(
     tree,
     concavity = Inf,
     constraint,
+    strategy = "auto",
     maxReplicates = 100L,
     targetHits = max(10L, as.integer(NTip(dataset) / 5)),
     tbrMaxHits = 1L,
-    ratchetCycles = 10L,
+    ratchetCycles = 5L,
     ratchetPerturbProb = 0.04,
     ratchetPerturbMode = 0L,
     ratchetPerturbMaxMoves = 0L,
     ratchetAdaptive = FALSE,
-    driftCycles = 6L,
+    driftCycles = 2L,
     driftAfdLimit = 3L,
     driftRfdLimit = 0.1,
     xssRounds = 3L,
     xssPartitions = 4L,
     rssRounds = 1L,
-    cssRounds = 1L,
+    cssRounds = 0L,
     cssPartitions = 4L,
     sectorMinSize = 6L,
     sectorMaxSize = 50L,
@@ -243,12 +312,37 @@ MaximizeParsimony <- function(
     fuseAcceptEqual = FALSE,
     poolMaxSize = 100L,
     poolSuboptimal = 0.0,
+    maxSeconds = 0,
     tabuSize = 100L,
     wagnerStarts = 1L,
+    sprFirst = FALSE,
     nThreads = 1L,
     verbosity = 1L,
     progressCallback = NULL
 ) {
+
+  # --- Apply strategy preset ---
+  if (!is.null(strategy) && !identical(strategy, "none")) {
+    if (identical(strategy, "auto")) {
+      strategy <- .AutoStrategy(NTip(dataset))
+    }
+    preset <- .StrategyPresets[[strategy]]
+    if (!is.null(preset)) {
+      # Apply preset values for any parameter the user didn't explicitly set.
+      # sys.call() tells us which args were explicitly passed.
+      explicit <- names(match.call())
+      for (nm in names(preset)) {
+        if (!(nm %in% explicit)) {
+          assign(nm, preset[[nm]])
+        }
+      }
+      if (verbosity >= 1L) {
+        cli::cli_alert_info("Strategy: {.strong {strategy}}")
+      }
+    } else if (!identical(strategy, "auto")) {
+      warning("Unknown strategy '", strategy, "'; using default parameters.")
+    }
+  }
 
   # --- Progress callback: build default cli bar if needed ---
   if (is.null(progressCallback) && verbosity >= 1L && interactive()) {
@@ -382,6 +476,11 @@ MaximizeParsimony <- function(
     }
   }
 
+  # --- IW: compute minimum step counts per character ---
+  if (is.finite(concavity)) {
+    minSteps <- as.integer(MinimumLength(dataset, compress = TRUE))
+  }
+
   # --- Run C++ driven search ---
   searchArgs <- list(
     contrast = contrast,
@@ -410,13 +509,16 @@ MaximizeParsimony <- function(
     fuseAcceptEqual = as.logical(fuseAcceptEqual),
     poolMaxSize = as.integer(poolMaxSize),
     poolSuboptimal = as.double(poolSuboptimal),
+    maxSeconds = as.double(maxSeconds),
     tabuSize = as.integer(tabuSize),
     wagnerStarts = as.integer(wagnerStarts),
     verbosity = as.integer(verbosity),
+    min_steps = if (is.finite(concavity)) minSteps else integer(0),
     concavity = as.double(concavity),
     progressCallback = progressCallback,
     nThreads = as.integer(nThreads),
-    startEdge = if (userTree) tree[["edge"]] else NULL
+    startEdge = if (userTree) tree[["edge"]] else NULL,
+    sprFirst = as.logical(sprFirst)
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs))
 
@@ -430,9 +532,8 @@ MaximizeParsimony <- function(
   outTrees <- lapply(resultTrees, function(edgeMat) {
     tr <- treeTpl
     tr[["edge"]] <- edgeMat
-    # C++ edge order may differ from template; drop stale order attribute
-    attr(tr, "order") <- NULL
-    tr
+    # C++ edge order may differ from template; renumber to valid preorder
+    Renumber(tr)
   })
   if (length(outTrees) == 0L) {
     outTrees <- list(treeTpl)
@@ -452,6 +553,7 @@ MaximizeParsimony <- function(
     score = result$best_score,
     replicates = result$replicates,
     hits_to_best = result$hits_to_best,
+    timed_out = isTRUE(result$timed_out),
     timings = unlist(result$timings),
     class = "multiPhylo"
   )
@@ -460,6 +562,7 @@ MaximizeParsimony <- function(
 
 #' @rdname MaximizeParsimony
 #' @usage MaximizeParsimony2(...)
+#' @param ... Arguments passed to `MaximizeParsimony()`.
 #' @section Deprecated:
 #' `MaximizeParsimony2()` is a deprecated alias for `MaximizeParsimony()`.
 #' @export

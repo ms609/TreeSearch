@@ -84,9 +84,9 @@ test_that(".LogCumSumExp()", {
   Test <- function (x) {
     naive <- log(cumsum(exp(x)))
     if (all(is.finite(naive))) {
-      expect_equal(naive, .LogCumSumExp(x))
+      expect_equal(naive, TreeSearch:::.LogCumSumExp(x))
     } else {
-      expect_true(all(is.finite(.LogCumSumExp(x))))
+      expect_true(all(is.finite(TreeSearch:::.LogCumSumExp(x))))
     }
   }
   Test(log(c(1:5, 5:1)))

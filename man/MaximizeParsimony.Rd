@@ -11,23 +11,36 @@ MaximizeParsimony(
   tree,
   concavity = Inf,
   constraint,
+  strategy = "auto",
   maxReplicates = 100L,
   targetHits = max(10L, as.integer(NTip(dataset)/5)),
   tbrMaxHits = 1L,
-  ratchetCycles = 10L,
+  ratchetCycles = 5L,
   ratchetPerturbProb = 0.04,
-  driftCycles = 6L,
+  ratchetPerturbMode = 0L,
+  ratchetPerturbMaxMoves = 0L,
+  ratchetAdaptive = FALSE,
+  driftCycles = 2L,
   driftAfdLimit = 3L,
   driftRfdLimit = 0.1,
   xssRounds = 3L,
   xssPartitions = 4L,
+  rssRounds = 1L,
+  cssRounds = 0L,
+  cssPartitions = 4L,
   sectorMinSize = 6L,
   sectorMaxSize = 50L,
   fuseInterval = 3L,
   fuseAcceptEqual = FALSE,
   poolMaxSize = 100L,
   poolSuboptimal = 0,
-  verbosity = 1L
+  maxSeconds = 0,
+  tabuSize = 100L,
+  wagnerStarts = 1L,
+  sprFirst = FALSE,
+  nThreads = 1L,
+  verbosity = 1L,
+  progressCallback = NULL
 )
 
 MaximizeParsimony2(...)
@@ -37,9 +50,12 @@ MaximizeParsimony2(...)
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}},
-containing only the tips listed in \code{dataset}, from which the search
-should begin.
-If unspecified, an \link[=AdditionTree]{addition tree} will be generated.
+or a \code{multiPhylo} (first tree used).
+When supplied, the first replicate uses this topology as its starting
+point (warm-start), skipping the random Wagner tree construction.
+Subsequent replicates still begin from random Wagner trees.
+This is useful for continuing a search from a previously found optimum.
+If unspecified, all replicates start from random Wagner trees.
 Edge lengths are not supported and will be deleted.}
 
 \item{concavity}{Determines the degree to which extra steps beyond the first
@@ -52,14 +68,31 @@ Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
 Specify \code{Inf} to weight each additional step equally.
 Specify \code{"profile"} to employ profile parsimony
-\insertCite{Faith2001}{TreeSearch}; this delegates to \code{\link[=Morphy]{Morphy()}}.}
+\insertCite{Faith2001}{TreeSearch}.}
 
 \item{constraint}{Either an object of class \code{phyDat}, in which case
 returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
 in any output tree.
-Constraint searches are not yet supported by the C++ engine and will
-delegate to \code{\link[=Morphy]{Morphy()}}.}
+Constraint searches are supported natively: all tree rearrangements
+are filtered to respect the constraint topology.}
+
+\item{strategy}{Character: named strategy preset controlling the search
+heuristic parameters. Presets:
+\describe{
+\item{\code{"auto"} (default)}{Selects automatically based on dataset size:
+\code{"sprint"} for <=30 taxa, \code{"default"} for 31--60, \code{"thorough"} for 61+.}
+\item{\code{"sprint"}}{Fast search: 3 ratchet cycles, no drift, minimal
+sectorial. Good for small datasets or quick surveys.}
+\item{\code{"default"}}{Balanced: 5 ratchet + 2 drift + sectorial + fusing.}
+\item{\code{"thorough"}}{Intensive: 20 ratchet cycles, 12 drift, adaptive
+perturbation, extra sectorial rounds. Best for large (60+ tips)
+datasets where sprint/default may miss the global optimum.}
+\item{\code{"none"}}{Use only the explicitly supplied parameter values.}
+}
+Explicit parameter values always override the preset; for example,
+\verb{strategy = "sprint", ratchetCycles = 10L} uses sprint defaults for
+everything except \code{ratchetCycles}.}
 
 \item{maxReplicates}{Integer: maximum number of independent search
 replicates (default: 100).}
@@ -76,6 +109,16 @@ per replicate.}
 \item{ratchetPerturbProb}{Numeric: probability of zeroing each
 character's weight during ratchet perturbation.}
 
+\item{ratchetPerturbMode}{Integer: perturbation mode. \code{0} = zero only
+(default), \code{1} = upweight only (double selected characters), \code{2} = mixed
+(zero some, double others).}
+
+\item{ratchetPerturbMaxMoves}{Integer: maximum TBR moves during the
+perturbed search phase. \code{0} = automatic (default).}
+
+\item{ratchetAdaptive}{Logical: if \code{TRUE}, automatically adjust
+perturbation probability based on escape rate.}
+
 \item{driftCycles}{Integer: number of drift cycles per replicate
 (alternating suboptimal and equal-score phases).}
 
@@ -89,6 +132,16 @@ accepting suboptimal drift moves.}
 
 \item{xssPartitions}{Integer: number of partitions for XSS.}
 
+\item{rssRounds}{Integer: number of random sectorial search rounds after
+XSS. Set to \code{0} to disable RSS.}
+
+\item{cssRounds}{Integer: number of constrained sectorial search (CSS)
+rounds. CSS runs sector-restricted TBR on the full tree (no HTU
+approximation), polishing improvements from XSS/RSS.
+Set to \code{0} to disable CSS.}
+
+\item{cssPartitions}{Integer: number of partitions for CSS.}
+
 \item{sectorMinSize, sectorMaxSize}{Integer: minimum and maximum clade
 sizes for sectorial search.}
 
@@ -101,8 +154,48 @@ sizes for sectorial search.}
 \item{poolSuboptimal}{Numeric: retain trees within this many steps of
 the best score (0 = optimal only).}
 
+\item{maxSeconds}{Numeric: maximum wall-clock time in seconds for the
+search. When reached, the current replicate finishes and the search
+stops. \code{0} (default) means no time limit.}
+
+\item{tabuSize}{Integer: size of the tabu list for TBR plateau exploration.
+Prevents cycling through recently visited topologies when accepting
+equal-score moves. Set to \code{0} to disable. Default 100.}
+
+\item{wagnerStarts}{Integer: number of random Wagner starting trees per
+replicate. The best-scoring tree is kept before proceeding to TBR.
+Default 1.}
+
+\item{sprFirst}{Logical: if \code{TRUE}, run an SPR search before TBR in each
+replicate. SPR is faster per move and may reach a good starting point
+for TBR more efficiently. Default \code{FALSE}.}
+
+\item{nThreads}{Integer: number of parallel threads for search replicates.
+\describe{
+\item{\code{1} (default)}{Serial execution -- identical to previous behavior.}
+\item{\code{0}}{Auto-detect: use one fewer thread than the number of CPU
+cores.}
+\item{\verb{> 1}}{Use the specified number of worker threads.}
+}
+In parallel mode, each replicate runs independently with a shared tree
+pool. Results may vary across runs with the same \code{set.seed()} due to
+thread scheduling nondeterminism. Use \code{nThreads = 1} for reproducible
+results.}
+
 \item{verbosity}{Integer specifying level of messaging; higher values give
 more detail. Set to \code{0} to run silently.}
+
+\item{progressCallback}{Optional function called with a single list
+argument containing search progress information.
+The list includes elements: \code{replicate}, \code{max_replicates},
+\code{best_score}, \code{hits_to_best}, \code{target_hits}, \code{pool_size},
+\code{phase} (character), \code{elapsed} (seconds), and \code{phase_score}.
+When \code{NULL} (default) and \code{verbosity >= 1} in an interactive session,
+a \code{cli} progress bar is created automatically.
+Supply a custom function (e.g. using \code{\link[shiny:withProgress]{shiny::setProgress()}})
+to control progress display.}
+
+\item{...}{Arguments passed to \code{MaximizeParsimony()}.}
 }
 \value{
 A \code{multiPhylo} object containing the best tree(s) found, with
@@ -112,6 +205,12 @@ attributes:
 \item{\code{replicates}}{Number of replicates completed.}
 \item{\code{hits_to_best}}{Number of independent discoveries of the best
 score.}
+\item{\code{timed_out}}{Logical: \code{TRUE} if the search stopped because
+\code{maxSeconds} was exceeded.}
+\item{\code{timings}}{Named numeric vector of cumulative wall-clock time
+(in milliseconds) spent in each search phase across all replicates:
+\code{wagner_ms}, \code{tbr_ms}, \code{xss_ms}, \code{rss_ms}, \code{css_ms}, \code{ratchet_ms},
+\code{drift_ms}, \code{final_tbr_ms}, \code{fuse_ms}.}
 }
 }
 \description{
@@ -130,9 +229,11 @@ The search stops when the best score has been independently discovered
 
 Implied weighting is supported natively: set \code{concavity} to a numeric
 value (e.g.\sspace{}10).
-Profile parsimony (\code{concavity = "profile"}) and constraint-based search
-are not yet implemented in the C++ engine; when these are requested,
-\code{MaximizeParsimony()} automatically delegates to \code{\link[=Morphy]{Morphy()}}.
+Profile parsimony (\code{concavity = "profile"}) is supported natively:
+characters are simplified to binary (max 2 informative states),
+inapplicable tokens are treated as ambiguous, and per-character
+information profiles are used for scoring
+\insertCite{Faith2001}{TreeSearch}.
 }
 \section{Deprecated}{
 
@@ -151,8 +252,8 @@ attr(result, "score")
 \insertAllCited{}
 }
 \seealso{
-\code{\link[=Morphy]{Morphy()}} for profile parsimony, constraint search, and
-fine-grained control over the R-level search loop.
+\code{\link[=Morphy]{Morphy()}} for fine-grained control over the R-level search loop.
+\code{\link[=Resample]{Resample()}} for jackknife and bootstrap resampling.
 
 Other tree scoring: 
 \code{\link{CharacterLength}()},

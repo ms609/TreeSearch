@@ -107,6 +107,18 @@ struct TreeState {
         subtree_actives.resize(static_cast<size_t>(cap) * tw);
       }
     }
+    void grow() {
+      int new_cap = capacity * 2;
+      nodes.resize(new_cap);
+      prelim.resize(static_cast<size_t>(new_cap) * tw);
+      final_.resize(static_cast<size_t>(new_cap) * tw);
+      local_cost.resize(static_cast<size_t>(new_cap) * nb);
+      if (has_na) {
+        down2.resize(static_cast<size_t>(new_cap) * tw);
+        subtree_actives.resize(static_cast<size_t>(new_cap) * tw);
+      }
+      capacity = new_cap;
+    }
     void clear() { count = 0; }
   };
 

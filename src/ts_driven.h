@@ -40,14 +40,14 @@ struct DrivenParams {
   int tbr_max_hits = 1;
 
   // Ratchet
-  int ratchet_cycles = 10;
+  int ratchet_cycles = 5;
   double ratchet_perturb_prob = 0.04;
   int ratchet_perturb_mode = 0;       // 0=zero, 1=upweight, 2=mixed
   int ratchet_perturb_max_moves = 0;  // 0=auto
   bool ratchet_adaptive = false;
 
   // Drifting
-  int drift_cycles = 6;
+  int drift_cycles = 2;
   int drift_afd_limit = 3;
   double drift_rfd_limit = 0.1;
 
@@ -55,7 +55,7 @@ struct DrivenParams {
   int xss_rounds = 3;
   int xss_partitions = 4;
   int rss_rounds = 1;           // RSS rounds after XSS; 0 = skip
-  int css_rounds = 1;           // CSS rounds after RSS; 0 = skip
+  int css_rounds = 0;           // CSS rounds after RSS; 0 = skip
   int css_partitions = 4;       // partitions for CSS
   int sector_min_size = 6;
   int sector_max_size = 50;
@@ -80,6 +80,13 @@ struct DrivenParams {
 
   // Tabu list size for TBR plateau exploration (0 = disabled)
   int tabu_size = 100;
+
+  // SPR→TBR escalation: run SPR first (cheaper per move), then TBR.
+  // When true, initial hill-climbing is SPR followed by TBR to escape
+  // moves that SPR cannot find. When false, goes straight to TBR.
+  // Default false: TBR-only often gives better final scores because
+  // the shallower initial optimum gives ratchet/drift more room to explore.
+  bool spr_first = false;
 
   // Number of random Wagner trees per replicate (keep best-scoring)
   int wagner_starts = 1;

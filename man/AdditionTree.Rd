@@ -20,14 +20,14 @@ Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
 Specify \code{Inf} to weight each additional step equally.
 Specify \code{"profile"} to employ profile parsimony
-\insertCite{Faith2001}{TreeSearch}; this delegates to \code{\link[=Morphy]{Morphy()}}.}
+\insertCite{Faith2001}{TreeSearch}.}
 
 \item{constraint}{Either an object of class \code{phyDat}, in which case
 returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
 in any output tree.
-Constraint searches are not yet supported by the C++ engine and will
-delegate to \code{\link[=Morphy]{Morphy()}}.}
+Constraint searches are supported natively: all tree rearrangements
+are filtered to respect the constraint topology.}
 
 \item{sequence}{Character or numeric vector listing sequence in which to add
 taxa. Randomized if not provided.}

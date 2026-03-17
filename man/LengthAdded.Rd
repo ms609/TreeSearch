@@ -24,7 +24,7 @@ Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
 Specify \code{Inf} to weight each additional step equally.
 Specify \code{"profile"} to employ profile parsimony
-\insertCite{Faith2001}{TreeSearch}; this delegates to \code{\link[=Morphy]{Morphy()}}.}
+\insertCite{Faith2001}{TreeSearch}.}
 }
 \value{
 \code{LengthAdded()} returns a named numeric vector listing the mean

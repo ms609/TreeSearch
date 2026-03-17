@@ -8,10 +8,11 @@
 #' \insertCite{Brazeau2019;textual}{TreeSearch}.
 #'
 #' For most users, [`MaximizeParsimony()`] provides a faster search using the
-#' C++ engine.
-#' `Morphy()` is retained for users who need profile parsimony,
-#' constraint-based search, or fine-grained control over the R-level search
-#' loop.
+#' C++ engine, with native support for equal weights, implied weights, profile
+#' parsimony, and topological constraints.
+#' `Morphy()` is retained for users who need fine-grained control over the
+#' R-level search loop (e.g.\sspace{}custom stopping criteria, per-iteration
+#' callbacks, or direct access to MorphyLib scoring).
 #'
 #' Tree search commences with `ratchIter` iterations of the parsimony ratchet
 #' \insertCite{Nixon1999}{TreeSearch}, which bootstraps the input dataset
@@ -192,12 +193,14 @@
 #' data("inapplicable.phyData", package = "TreeSearch")
 #' dataset <- inapplicable.phyData[["Asher2005"]]
 #' 
+#' \donttest{
 #' # A very quick run for demonstration purposes
 #' trees <- Morphy(dataset, ratchIter = 0, startIter = 0,
 #'                 tbrIter = 1, maxHits = 4, maxTime = 1/100,
 #'                 concavity = 10, verbosity = 4)
 #' names(trees)
 #' cons <- Consensus(trees)
+#' }
 #'
 #' # In actual use, be sure to check that the score has converged on a global
 #' # optimum, conducting additional iterations and runs as necessary.
@@ -271,7 +274,8 @@
 #' @references
 #' \insertAllCited{}
 #' @seealso
-#' [`MaximizeParsimony()`] for the faster C++ driven search engine.
+#' [`MaximizeParsimony()`] for the faster C++ driven search engine
+#' (recommended for most analyses).
 #'
 #' Tree search _via_ graphical user interface: [`EasyTrees()`]
 #'
@@ -950,8 +954,15 @@ Morphy <- function(dataset, tree,
 #' 
 #' For other ways to estimate clade concordance, see [`SiteConcordance()`].
 #' 
-#' @return `Resample()` returns a `multiPhylo` object containing a list of
-#' trees obtained by tree search using a resampled version of `dataset`.
+#' @param nReplicates Integer specifying how many resample replicates to run.
+#' Default `1L` runs a single replicate (original behavior).
+#' When `> 1`, all replicates are run in a single call, optionally in parallel.
+#' @param nThreads Integer specifying the number of threads for parallel
+#' resampling. Default `1L` runs serially.  Use `0L` for auto-detect.
+#' Only effective when `nReplicates > 1`.
+#'
+#' @return `Resample()` returns a `multiPhylo` object containing one best tree
+#' per resample replicate.
 #' @family split support functions
 #' @encoding UTF-8
 #' @export
@@ -960,6 +971,7 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
                      maxHits = 12L, concavity = Inf,
                      tolerance = sqrt(.Machine[["double.eps"]]),
                      constraint, verbosity = 2L,
+                     nReplicates = 1L, nThreads = 1L,
                      ...) {
 
   if (!inherits(dataset, "phyDat")) {
@@ -970,6 +982,9 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   if (is.na(method_idx)) {
     stop("`method` must be either \"jackknife\" or \"bootstrap\".")
   }
+
+  nReplicates <- as.integer(max(nReplicates, 1L))
+  nThreads <- as.integer(max(nThreads, 1L))
 
   # Validate proportion for jackknife
   index <- attr(dataset, "index")
@@ -1024,15 +1039,46 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
     targetHits = 2L,
     tbrMaxHits = as.integer(max(tbrIter, 1L)),
     ratchetCycles = as.integer(max(ratchIter, 3L)),
+    min_steps = if (is.finite(concavity))
+      as.integer(MinimumLength(dataset, compress = TRUE)) else integer(0),
     concavity = as.double(concavity)
   )
+
+  nTip <- length(dataset)
+
+  if (nReplicates > 1L) {
+    # Batch mode: run all replicates at once (optionally in parallel)
+    batchArgs <- c(searchArgs,
+                   list(nReplicates = nReplicates, nThreads = nThreads),
+                   consArgs, profileArgs)
+    result <- do.call(ts_parallel_resample, batchArgs)
+
+    trees <- vector("list", nReplicates)
+    for (r in seq_len(nReplicates)) {
+      em <- result$edges[[r]]
+      if (nrow(em) == 0L) {
+        tr <- if (!missing(tree) && inherits(tree, "phylo")) tree
+              else AdditionTree(dataset)
+      } else {
+        tr <- structure(
+          list(edge = em,
+               tip.label = names(dataset),
+               Nnode = nTip - 1L),
+          class = "phylo"
+        )
+      }
+      attr(tr, "score") <- result$scores[r]
+      trees[[r]] <- tr
+    }
+    return(structure(trees, class = "multiPhylo"))
+  }
+
+  # Single-replicate path (original behavior)
   result <- do.call(ts_resample_search, c(searchArgs, consArgs, profileArgs))
 
-  # Reconstruct phylo from C++ edge matrix
-  nTip <- length(dataset)
   if (nrow(result$edge) == 0L) {
     tr <- if (!missing(tree) && inherits(tree, "phylo")) tree
-          else TreeTools::AdditionTree(dataset)
+          else AdditionTree(dataset)
     attr(tr, "score") <- result$score
     return(structure(list(tr), class = "multiPhylo"))
   }
