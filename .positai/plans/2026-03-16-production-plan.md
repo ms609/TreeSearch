@@ -332,12 +332,28 @@ confirming no cache pressure issue. State arrays fit in L2 (162 KB at 200 tips).
 **Tests:** memory-layout 32/32, driven 53/53, tbr-bench 26/26, fuse 16/16 (1 skip),
 sector 32/32.
 
-### 3E. SIMD vectorization
+### 3E. SIMD vectorization — COMPLETE
 
-- The Fitch inner loop (`intersection |= left[s] & right[s]`) over state words is a prime SIMD target.
-- Implement SSE2/AVX2 specializations for the most common `n_states` values (1, 2, 4).
-- Use `#ifdef` or runtime dispatch.
-- **Careful:** MSVC and GCC have different intrinsic support. Use portable wrappers.
+SSE2/NEON vectorization of all Fitch scoring inner loops. Created `ts_simd.h`
+portability layer with `v128` type alias and inline helpers (`any_hit_reduce`,
+`any_hit_reduce3`, `or_reduce` + `_from1` variants for NA). Padded `total_words`
+to even count for safe 128-bit loads.
+
+SIMD applied to 15+ loop sites: 6 indirect length variants, `fitch_downpass_node`,
+`fitch_downpass`, `fitch_incremental_downpass`, `uppass_node`, NA Pass 1/3 downpass,
+and all 6 NA indirect variants. Scalar fallback via `#ifdef` for non-SIMD platforms.
+
+**Performance:** SSE2 gives modest improvement (~10% on clip+incremental phase for
+small datasets). Per-candidate indirect cost similar to pre-SIMD baseline — GCC `-O2`
+was already auto-vectorizing simple loops. Primary value is establishing vectorization
+infrastructure for future AVX2 work (4-wide) and ensuring correct SIMD code structure.
+
+**Tests:** simd 49/49, all existing suites pass unchanged (700+ tests total).
+
+**Files created:** `src/ts_simd.h`, `tests/testthat/test-ts-simd.R`,
+`inst/benchmarks/bench_simd.R`.
+**Files modified:** `src/ts_data.cpp` (padding), `src/ts_fitch.h` (include),
+`src/ts_fitch.cpp`, `src/ts_fitch_na.inc`, `src/ts_fitch_na_incr.inc`.
 
 ---
 
@@ -346,9 +362,9 @@ sector 32/32.
 ### 4A. What's missing from the list above
 
 1. **Profile parsimony optimization:** If profile parsimony turns out to be popular, it deserves the same incremental optimization as IW.
-2. **Tabu search:** TNT implements a tabu list to avoid revisiting recently explored topologies. This is a simple addition: maintain a hash set of recent tree hashes and skip moves that would produce a tree in the set.
+2. ~~**Tabu search:**~~ ✅ DONE (Agent G). Fixed-size circular buffer of topology hashes in TBR. Prevents cycling during plateau exploration. Wired through ratchet, drift, and driven search. Default `tabuSize = 100`.
 3. **Tree bisection reconnection with subtree pruning (SPR+TBR hybrid):** TNT's "combo" search alternates SPR and TBR. The idea is that SPR is faster per move, so use it for easy improvements and switch to TBR when SPR plateaus. Currently the driven search goes straight to TBR. Consider an SPR→TBR escalation.
-4. **Multiple random addition sequences per replicate:** TNT's `xmult` can try multiple Wagner trees and keep the best before proceeding to TBR. Low cost, potentially better starting points.
+4. ~~**Multiple random addition sequences per replicate:**~~ ✅ DONE (Agent G). `wagnerStarts` parameter (default 1) tries N Wagner trees per replicate, keeps the best.
 5. ~~**Consensus-driven convergence:**~~ Axed. Strict consensus stabilizes trivially when conflicting trees collapse resolution, making it a poor indicator of adequate tree-space sampling. Hits-to-best is simpler and well-understood.
 
 ---
@@ -477,7 +493,7 @@ Define the tunable parameters of the driven search as a strategy vector:
 | — | 3A Symmetry breaking | ✅ Complete | Phase 2 complete |
 | — | 3C Character ordering | ✅ Complete | Phase 2 complete |
 | — | 3D Memory/cache optimization | ✅ Complete | Phase 2 complete |
-| — | 3E SIMD vectorization | Pending | Phase 3D profiling complete ✅ |
+| — | 3E SIMD vectorization | **Complete** | SSE2/NEON portability layer + 15+ loop sites vectorized |
 | G | 3B New technology components (CSS) | ✅ Complete | Phase 2 complete |
 
 ### Phase 4 (missing items) — integrated with Phase 3
@@ -486,6 +502,10 @@ Define the tunable parameters of the driven search as a strategy vector:
 | Agent | Task | Dependencies |
 |-------|------|-------------|
 | H | Thread-parallel replicates + parallel resample | Phase 2 complete ✅ | ✅ COMPLETE |
+
+### Progress callback (Agent B) — ✅ COMPLETE
+Structured `ProgressInfo` callback for `driven_search()`. Default cli progress bar
+in interactive R; Shiny-compatible custom callback support. 48/48 tests passing.
 
 ### Phase 6 (Adaptive strategy) — 1-2 agents, after Phase 5:
 | Agent | Task | Dependencies |
@@ -499,7 +519,7 @@ Define the tunable parameters of the driven search as a strategy vector:
 
 1. **Testing infrastructure:** Each optimization must be accompanied by regression tests that verify correctness against known-good scores (the 30 inapplicable datasets, the DNA datasets). A CI benchmark suite that detects performance regressions would be valuable.
 
-2. **Profile-guided optimization (PGO):** After the code stabilizes, build with PGO. This is free performance.
+2. **Profile-guided optimization (PGO):** ✅ Tested. Modest 5–7% speedup on medium datasets; no benefit on small datasets. Not worth shipping (requires machine-specific two-pass build). Recipe in `inst/benchmarks/pgo_recipe.md`.
 
 3. **Windows DLL considerations:** The AGENTS.md notes about DLL locking are important. The parallelization work (Phase 5) needs careful testing on Windows.
 
@@ -519,5 +539,6 @@ Updated priority reflecting completed work:
 
 1. **Phase 3E (SIMD)** — potentially large constant-factor improvement (Phase 3D profiling confirms indirect scoring inner loop is the target: 72% of TBR time at 200 tips)
 All Phase 1–2 items ✅ DONE. Phase 3A, 3B, 3C, 3D ✅ DONE.
+Character simplification (precompute topology-independent steps) ✅ DONE (Agent E).
 ~~Phase 5A-B (parallelization)~~ ✅ DONE (Agent H).
 R-side wrappers for `Resample()` / `SuccessiveApproximations()` ✅ DONE.
