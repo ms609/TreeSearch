@@ -97,10 +97,12 @@ EdgeListSearch <- function (edgeList, dataset,
   edgeList
 }
 
-#' Search for most parsimonious trees
+#' Search for most parsimonious trees (deprecated)
 #'
 #' Run standard search algorithms (\acronym{NNI}, \acronym{SPR} or \acronym{TBR})
 #' to search for a more parsimonious tree.
+#' **Deprecated**: use [`MaximizeParsimony()`] instead for faster searches
+#' using the C++ engine.
 #'  
 #' For detailed documentation of the "TreeSearch" package, including full
 #' instructions for loading phylogenetic data into R and initiating and
@@ -177,7 +179,7 @@ TreeSearch <- function (tree, dataset,
                         maxIter = 100L, maxHits = 20L,
                         stopAtPeak = FALSE, stopAtPlateau = 0L,
                         verbosity = 1L, ...) {
-  # initialize tree and data
+  .Deprecated("MaximizeParsimony")
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     stop("tree must be bifurcating; try rooting with ape::root")
   }

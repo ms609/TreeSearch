@@ -1,11 +1,8 @@
-#' Jackknife resampling
+#' Jackknife resampling (deprecated)
 #' 
 #' Resample trees using Jackknife resampling, i.e. removing a subset of
-#' characters.
-#' 
-#' The function assumes  that `InitializeData()` will return a morphy object;
-#' if this doesn't hold for you, post a [GitHub issue](
-#' https://github.com/ms609/TreeSearch/issues/new/) or e-mail the maintainer.
+#' characters. **Deprecated**: use [`Resample()`] instead for faster searches
+#' using the C++ engine.
 #' 
 #' @inheritParams Ratchet
 #' @param resampleFreq Double between 0 and 1 stating proportion of characters 
@@ -29,7 +26,7 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
                       EdgeSwapper    = TBRSwap,
                       jackIter = 5000L, searchIter = 4000L, searchHits = 42L,
                       verbosity = 1L, ...) {
-  # Initialize tree and data
+  .Deprecated("Resample")
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     stop("tree must be bifurcating; try rooting with ape::root")
   }

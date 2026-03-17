@@ -1,7 +1,9 @@
-#' Parsimony Ratchet
+#' Parsimony Ratchet (deprecated)
 #'
 #' `Ratchet()` uses the parsimony ratchet \insertCite{Nixon1999}{TreeSearch} 
 #' to search for a more parsimonious tree using custom optimality criteria.
+#' **Deprecated**: use [`MaximizeParsimony()`] instead for faster searches
+#' using the C++ engine.
 #' 
 #' For usage pointers, see the 
 #' [vignette](https://ms609.github.io/TreeSearch/articles/custom.html).
@@ -82,9 +84,9 @@ Ratchet <- function(tree, dataset,
                     bootstrapIter = searchIter, bootstrapHits = searchHits,
                     verbosity = 1L, 
                     suboptimal = sqrt(.Machine[["double.eps"]]), ...) {
+  .Deprecated("MaximizeParsimony")
   epsilon <- sqrt(.Machine[["double.eps"]])
   hits <- 0L
-  # initialize tree and data
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     stop("tree must be bifurcating; try rooting with ape::root")
   }
@@ -260,6 +262,7 @@ MultiRatchet <- function (tree, dataset, ratchHits = 10,
                           searchIter = 500, searchHits = 20, verbosity = 0L,
                           swappers = list(RootedNNISwap), nSearch = 10,
                           stopAtScore = NULL, ...) {
+  .Deprecated("MaximizeParsimony")
   trees <- lapply(seq_len(nSearch), function (i) {
     if (verbosity > 1L) message("\nRatchet search ", i, "/", nSearch, ":")
     Ratchet(tree, dataset, ratchIter = 1, ratchHits = 0L, 
