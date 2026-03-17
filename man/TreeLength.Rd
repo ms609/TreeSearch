@@ -72,9 +72,8 @@ TreeLength(5, inapplicable.phyData[[1]])
 }
 \seealso{
 \itemize{
-\item Conduct tree search using \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} (command line),
-\code{\link[=EasyTrees]{EasyTrees()}} (graphical user interface), or \code{\link[=TreeSearch]{TreeSearch()}}
-(custom optimality criteria).
+\item Conduct tree search using \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} (command line) or
+\code{\link[=EasyTrees]{EasyTrees()}} (graphical user interface).
 \item See score for each character: \code{\link[=CharacterLength]{CharacterLength()}}.
 }
 

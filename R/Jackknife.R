@@ -13,8 +13,8 @@
 #' @template MRS
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @seealso 
-#' - [`Resample()`]: Jackknife resampling for non-custom searches performed
-#'   using `Morphy()`.
+#' - [`Resample()`]: Jackknife and bootstrap resampling using the C++ search
+#'   engine.
 #' - [`JackLabels()`]: Label nodes of a tree with jackknife supports.
 #' @family split support functions
 #' @family custom search functions

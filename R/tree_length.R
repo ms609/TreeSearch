@@ -23,9 +23,8 @@
 #' TreeLength(tree, inapplicable.phyData[[1]], concavity = "profile")
 #' TreeLength(5, inapplicable.phyData[[1]])
 #' @seealso 
-#' - Conduct tree search using [`MaximizeParsimony()`] (command line), 
-#' [`EasyTrees()`] (graphical user interface), or [`TreeSearch()`]
-#' (custom optimality criteria).
+#' - Conduct tree search using [`MaximizeParsimony()`] (command line) or
+#' [`EasyTrees()`] (graphical user interface).
 #' 
 #' - See score for each character: [`CharacterLength()`].
 #' @family tree scoring 
@@ -58,6 +57,10 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf) {
            paste(setdiff(tipLabels, names(dataset)), collapse = ", "))
   }
   
+  if (is.null(attr(dataset, "levels")) || ncol(attr(dataset, "contrast")) == 0L) {
+    return(0L)
+  }
+
   if (nTip < length(dataset)) {
     dataset <- .Recompress(dataset[tree[["tip.label"]]])
   }
@@ -144,6 +147,10 @@ TreeLength.list <- function(tree, dataset, concavity = Inf) {
     stop("Trees have different numbers of edges (",
            paste0(nEdge, collapse = ", "),
            "); try collapsing polytomies?)")
+  }
+
+  if (is.null(attr(dataset, "levels")) || ncol(attr(dataset, "contrast")) == 0L) {
+    return(rep(0L, length(tree)))
   }
 
   # Prepare dataset for C++ engine
@@ -293,6 +300,9 @@ FitchSteps <- function(tree, dataset) {
 #' erroneous results or software crash if variables are in the incorrect format.
 FastCharacterLength <- function(tree, dataset) {
   at <- attributes(dataset)
+  if (is.null(at$levels) || ncol(at$contrast) == 0L) {
+    return(rep(0L, at$nr))
+  }
   tip_data <- matrix(unlist(dataset, use.names = FALSE),
                      nrow = length(dataset), byrow = TRUE)
   ts_char_steps(tree[["edge"]], at$contrast, tip_data, at$weight, at$levels)

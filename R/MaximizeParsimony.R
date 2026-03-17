@@ -318,8 +318,47 @@ MaximizeParsimony <- function(
     sprFirst = FALSE,
     nThreads = 1L,
     verbosity = 1L,
-    progressCallback = NULL
+    progressCallback = NULL,
+    ...
 ) {
+
+  # --- Backward compatibility: detect Morphy()-style parameters ---
+  # Prior to v2.0, MaximizeParsimony() was the function now called Morphy().
+  # If a user passes Morphy-specific parameters, delegate to Morphy() with a
+
+  # deprecation warning. This shim is scheduled for removal in 2028.
+  dots <- list(...)
+  .morphyParams <- c("ratchIter", "tbrIter", "startIter", "finalIter",
+                      "maxHits", "maxTime", "quickHits", "ratchEW",
+                      "tolerance")
+  legacyHits <- intersect(names(dots), .morphyParams)
+  if (length(legacyHits)) {
+    .Deprecated(
+      "Morphy",
+      msg = paste0(
+        "Parameter", if (length(legacyHits) > 1L) "s", " ",
+        paste0(sQuote(legacyHits), collapse = ", "),
+        " belong", if (length(legacyHits) == 1L) "s", " to `Morphy()`,",
+        " not the new `MaximizeParsimony()`.\n",
+        "  Delegating to `Morphy()`. ",
+        "Please update your code to call `Morphy()` directly ",
+        "or use the new MaximizeParsimony() parameters.\n",
+        "  See ?Morphy and ?MaximizeParsimony for details."
+      )
+    )
+    # Build Morphy() call: forward shared + legacy params
+    morphyArgs <- dots
+    morphyArgs$dataset <- dataset
+    if (!missing(tree)) morphyArgs$tree <- tree
+    if (!missing(concavity)) morphyArgs$concavity <- concavity
+    if (!missing(constraint)) morphyArgs$constraint <- constraint
+    if (!missing(verbosity)) morphyArgs$verbosity <- verbosity
+    return(do.call(Morphy, morphyArgs))
+  }
+  if (length(dots)) {
+    warning("Unknown arguments ignored: ",
+            paste0(sQuote(names(dots)), collapse = ", "))
+  }
 
   # --- Apply strategy preset ---
   if (!is.null(strategy) && !identical(strategy, "none")) {
@@ -396,6 +435,9 @@ MaximizeParsimony <- function(
   nTip <- length(dataset)
   if (nTip < 4L) {
     stop("Need at least 4 taxa for tree search.")
+  }
+  if (is.null(attr(dataset, "levels")) || ncol(attr(dataset, "contrast")) == 0L) {
+    stop("Dataset contains no informative character states.")
   }
 
   # --- Starting tree ---
@@ -562,7 +604,10 @@ MaximizeParsimony <- function(
 
 #' @rdname MaximizeParsimony
 #' @usage MaximizeParsimony2(...)
-#' @param ... Arguments passed to `MaximizeParsimony()`.
+#' @param ... For `MaximizeParsimony()`: legacy parameters from the
+#'   pre-2.0 interface (e.g.\sspace{}`ratchIter`, `tbrIter`) are detected and
+#'   forwarded to [`Morphy()`] with a deprecation warning.
+#'   For `MaximizeParsimony2()`: arguments passed to `MaximizeParsimony()`.
 #' @section Deprecated:
 #' `MaximizeParsimony2()` is a deprecated alias for `MaximizeParsimony()`.
 #' @export

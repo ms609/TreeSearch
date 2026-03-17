@@ -1,4 +1,16 @@
-# TreeSearch 1.8.0.9000 (2026-02-05)
+# TreeSearch 2.0.0
+
+## Breaking changes
+
+- `MaximizeParsimony()` has an entirely new parameter interface.
+  The previous `MaximizeParsimony()` (R-loop search using MorphyLib) has been
+  renamed to `Morphy()`.
+  Code that passes Morphy-style parameters (e.g. `ratchIter`, `tbrIter`,
+  `maxHits`) to `MaximizeParsimony()` will be automatically forwarded to
+  `Morphy()` with a deprecation warning.
+  Update your code to call `Morphy()` directly, or adopt the new
+  `MaximizeParsimony()` parameters.
+  This compatibility shim will be removed in a future release.
 
 ## C++ search engine
 
@@ -59,10 +71,6 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 
 ## Function rename
 
-- The previous `MaximizeParsimony()` (R-loop search using MorphyLib) has
-  been renamed to `Morphy()`.
-- `MaximizeParsimony()` now refers to the C++ driven search.
-- `MaximizeParsimony2()` is a deprecated alias for `MaximizeParsimony()`.
 - `TaxonInfluence()` now uses `MaximizeParsimony()` internally.
 - `AdditionTree()` now uses the C++ Wagner tree engine, with native support
   for implied weights, profile parsimony, and constraints.
@@ -76,6 +84,14 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
   uninformative.
 - Fix `compute_fixed_steps()` undercount for all-ambiguous characters.
 - Fix IW scoring with missing `min_steps` offset.
+- Fix crash when dataset contains only ambiguous (`?`) tokens.
+
+## Deprecations
+
+- `Ratchet()`, `MultiRatchet()`, and `RatchetConsensus()` are deprecated in
+  favour of `MaximizeParsimony()`.
+- `Jackknife()` is deprecated in favour of `Resample()`.
+- `TreeSearch()` is deprecated in favour of `MaximizeParsimony()`.
 
 ## Other improvements
 

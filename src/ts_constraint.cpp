@@ -24,11 +24,13 @@ ConstraintData build_constraint(
       static_cast<size_t>(n_splits) * cd.n_words, 0ULL);
   cd.constraint_node.assign(n_splits, -1);
 
-  // Pack split_matrix rows into bitmasks
+  // Pack split_matrix rows into bitmasks.
+  // split_matrix is column-major (from R): element [s, t] is at
+  // index s + n_splits * t.
   for (int s = 0; s < n_splits; ++s) {
     uint64_t* mask = &cd.split_tips[static_cast<size_t>(s) * cd.n_words];
     for (int t = 0; t < n_tips; ++t) {
-      if (split_matrix[s * n_tips + t]) {
+      if (split_matrix[s + n_splits * t]) {
         int w = t / 64;
         int b = t % 64;
         mask[w] |= (1ULL << b);

@@ -35,18 +35,24 @@ SuccessiveWeights(tree, dataset)
 
 \item{maxSuccIter}{maximum iterations of successive approximation}
 
-\item{ratchetHits}{maximum hits for parsimony ratchet}
+\item{ratchetHits}{Number of replicates.
+Internally capped at 100 and passed to the C++ engine as \code{maxReplicates}.}
 
-\item{searchHits}{maximum hits in tree search}
+\item{searchHits}{Convergence criterion: stop after finding this many
+trees with the best score.
+Internally capped at 10 and passed to the C++ engine as \code{targetHits}.}
 
-\item{searchIter}{maximum iterations in tree search}
+\item{searchIter}{Unused (retained for backward compatibility).}
 
-\item{ratchetIter}{maximum iterations of parsimony ratchet}
+\item{ratchetIter}{Controls ratchet intensity within each replicate.
+Converted to \code{ratchetCycles} (approximately \code{ratchetIter / 500},
+capped at 10).}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
 more detail. Set to \code{0} to run silently.}
 
-\item{suboptimal}{retain trees that are this proportion less optimal than the optimal tree}
+\item{suboptimal}{Retain trees that are this proportion less optimal
+than the optimal tree.}
 
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting

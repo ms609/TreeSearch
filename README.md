@@ -16,14 +16,16 @@ visualization,
 (Smith 2022b),
 and cluster consensus trees.
 
-Inapplicable character states are handled using the algorithm of Brazeau,
-Guillerme and Smith (2019) using the "Morphy" C library (Brazeau _et al_. 2017).
+Tree search uses a compiled C++ engine combining TBR rearrangement, the
+parsimony ratchet, tree drifting, sectorial search, and tree fusing.
+Inapplicable character states are handled using the algorithm of
+Brazeau, Guillerme and Smith (2019).
 Implied weighting (Goloboff, 1993),
-Profile Parsimony (Faith and Trueman, 2001)
-and Successive Approximations (Farris, 1969)
-are implemented; 
+Profile Parsimony (Faith and Trueman, 2001),
+Successive Approximations (Farris, 1969),
+and topological constraints are supported natively;
 [custom optimality criteria](https://ms609.github.io/TreeSearch/articles/custom.html)
-and search approaches can also be defined.
+can also be defined.
 
 
 # Installing in R

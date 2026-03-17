@@ -7,7 +7,7 @@
 \alias{IWTreeSearch}
 \alias{EmptyPhyDat}
 \alias{DoNothing}
-\title{Search for most parsimonious trees}
+\title{Search for most parsimonious trees (deprecated)}
 \usage{
 EdgeListSearch(
   edgeList,
@@ -108,6 +108,8 @@ null character, coded with state zero for every leaf in \code{tree}.
 \description{
 Run standard search algorithms (\acronym{NNI}, \acronym{SPR} or \acronym{TBR})
 to search for a more parsimonious tree.
+\strong{Deprecated}: use \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} instead for faster searches
+using the C++ engine.
 
 For detailed documentation of the "TreeSearch" package, including full
 instructions for loading phylogenetic data into R and initiating and

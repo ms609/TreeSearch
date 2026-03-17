@@ -2,7 +2,7 @@
 % Please edit documentation in R/Jackknife.R
 \name{Jackknife}
 \alias{Jackknife}
-\title{Jackknife resampling}
+\title{Jackknife resampling (deprecated)}
 \usage{
 Jackknife(
   tree,
@@ -66,16 +66,13 @@ iterations.
 }
 \description{
 Resample trees using Jackknife resampling, i.e. removing a subset of
-characters.
-}
-\details{
-The function assumes  that \code{InitializeData()} will return a morphy object;
-if this doesn't hold for you, post a \href{https://github.com/ms609/TreeSearch/issues/new/}{GitHub issue} or e-mail the maintainer.
+characters. \strong{Deprecated}: use \code{\link[=Resample]{Resample()}} instead for faster searches
+using the C++ engine.
 }
 \seealso{
 \itemize{
-\item \code{\link[=Resample]{Resample()}}: Jackknife resampling for non-custom searches performed
-using \code{Morphy()}.
+\item \code{\link[=Resample]{Resample()}}: Jackknife and bootstrap resampling using the C++ search
+engine.
 \item \code{\link[=JackLabels]{JackLabels()}}: Label nodes of a tree with jackknife supports.
 }
 

@@ -1,4 +1,5 @@
 #include "ts_wagner.h"
+#include "ts_constraint.h"
 #include "ts_fitch.h"
 #include "ts_rng.h"
 #include <algorithm>
@@ -383,8 +384,9 @@ static bool wagner_edge_violates_constraint(
     int tb = tip % 64;
     bool tip_inside = (split[tw] >> tb) & 1;
 
-    // Split constrains placement iff both sides have at least one
-    // previously-added tip.
+    // Split constrains placement when the opposite side of the new tip
+    // has at least one previously-added tip.  An inside tip is only
+    // constrained when outside tips already exist (and vice versa).
     bool has_prev_inside = false, has_prev_outside = false;
     for (int w = 0; w < cd.n_words; ++w) {
       uint64_t prev = added_tips[w];
@@ -396,12 +398,18 @@ static bool wagner_edge_violates_constraint(
       }
       if (prev & outside_mask) has_prev_outside = true;
     }
-    if (!has_prev_inside || !has_prev_outside) continue;
+    if (tip_inside && !has_prev_outside) continue;
+    if (!tip_inside && !has_prev_inside) continue;
 
     // The constraint is active. constraint_node[s] is the LCA of
     // added inside tips (set by wagner_map_constraint_nodes).
     int cn = cd.constraint_node[s];
     if (cn < 0) continue;
+
+    // If the LCA is the root, inside tips span both sides of the root.
+    // The inside/outside distinction is meaningless (every node is a
+    // "descendant" of root), so skip this constraint for this insertion.
+    if (cn == tree.n_tip) continue;
 
     bool below_inside =
         is_ancestor_or_equal(cn, below, cd.dfs_entry, cd.dfs_exit);
@@ -505,6 +513,14 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
       stack.push_back(rc);
     }
 
+    // Guard: if constraint filtered every edge, fall back to root edge.
+    // This should not happen after the cn==root fix, but protects against
+    // any remaining edge case in constraint logic.
+    if (best_above < 0 || best_below < 0) {
+      best_above = n_tip;
+      best_below = tree.left[0];
+    }
+
     // Insert tip at the best edge
     insert_tip_at_edge(tree, tip, new_internal, best_above, best_below);
 
@@ -514,6 +530,9 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
 
     if (constrained) {
       added_tips[tip / 64] |= (1ULL << (tip % 64));
+      // Rebuild postorder before updating constraint mapping — the previous
+      // postorder is stale (doesn't include newly created internal nodes).
+      tree.build_postorder();
       wagner_update_constraint(tree, *cd, added_tips);
     }
   }
@@ -535,16 +554,39 @@ WagnerResult random_wagner_tree(TreeState& tree, const DataSet& ds,
   std::vector<int> order(n_tips);
   std::iota(order.begin(), order.end(), 0);
 
-  // Fisher-Yates shuffle using thread-safe RNG
+  bool constrained = cd && cd->active && cd->has_posthoc;
+
+  // Fisher-Yates shuffle
   ts::rng_state_begin();
   for (int i = n_tips - 1; i > 0; --i) {
     int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
-    if (j > i) j = i;  // guard against floating-point edge case
+    if (j > i) j = i;
     std::swap(order[i], order[j]);
   }
   ts::rng_state_end();
 
-  return wagner_tree(tree, ds, order, cd);
+  WagnerResult result = wagner_tree(tree, ds, order, cd);
+
+  // For constrained search: verify the Wagner tree satisfies the constraint.
+  // If not, retry with different random orders. The constraint-aware edge
+  // filter in wagner_tree makes violation increasingly unlikely, but can't
+  // guarantee satisfaction for all split configurations.
+  if (constrained) {
+    for (int attempt = 1; attempt < 100; ++attempt) {
+      if (!violates_constraint_posthoc(tree, *cd)) break;
+      // Reshuffle and rebuild
+      ts::rng_state_begin();
+      for (int i = n_tips - 1; i > 0; --i) {
+        int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
+        if (j > i) j = i;
+        std::swap(order[i], order[j]);
+      }
+      ts::rng_state_end();
+      result = wagner_tree(tree, ds, order, cd);
+    }
+  }
+
+  return result;
 }
 
 } // namespace ts

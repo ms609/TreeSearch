@@ -8,11 +8,17 @@
 #' @param outgroup if not NULL, taxa on which the tree should be rooted
 #' @param k Constant for successive approximations, see Farris 1969 p. 379
 #' @param maxSuccIter maximum iterations of successive approximation
-#' @param ratchetHits maximum hits for parsimony ratchet 
-#' @param searchHits maximum hits in tree search
-#' @param searchIter maximum iterations in tree search
-#' @param ratchetIter maximum iterations of parsimony ratchet
-#' @param suboptimal retain trees that are this proportion less optimal than the optimal tree
+#' @param ratchetHits Number of replicates.
+#'   Internally capped at 100 and passed to the C++ engine as `maxReplicates`.
+#' @param searchHits Convergence criterion: stop after finding this many
+#'   trees with the best score.
+#'   Internally capped at 10 and passed to the C++ engine as `targetHits`.
+#' @param searchIter Unused (retained for backward compatibility).
+#' @param ratchetIter Controls ratchet intensity within each replicate.
+#'   Converted to `ratchetCycles` (approximately `ratchetIter / 500`,
+#'   capped at 10).
+#' @param suboptimal Retain trees that are this proportion less optimal
+#'   than the optimal tree.
 #' 
 #' @return `SuccessiveApproximations()` returns a list of class `multiPhylo`
 #' containing optimal (and slightly suboptimal, if suboptimal > 0) trees.
