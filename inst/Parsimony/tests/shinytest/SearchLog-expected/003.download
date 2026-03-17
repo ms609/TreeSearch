@@ -64,22 +64,14 @@ newTrees <- MaximizeParsimony(
   dataset,
   tree = startTree,
   concavity = Inf,
-  ratchIter = 4,
-  tbrIter = 2,
-  maxHits = 20,
-  maxTime = 30,
-  startIter = 1.6,
-  finalIter = 1.4,
-  tolerance = 1,
-  verbosity = 4
+  strategy = "sprint",
+  maxReplicates = 5,
+  targetHits = 3,
+  poolSuboptimal = 1,
+  verbosity = 0
 )
 
 # Overwrite any previous trees with results
-if (inherits(newTrees, "phylo")) {
-  trees <- list(newTrees)
-  attr(trees, "firstHit") <- attr(newTrees, "firstHit")
-  attr(trees[[1]], "firstHit") <- NULL
-}
 allTrees <- newTrees
 trees <- allTrees[unique(as.integer(seq.int(1, 49, length.out = 48)))]
 
@@ -103,21 +95,13 @@ newTrees <- MaximizeParsimony(
   dataset,
   tree = startTree,
   concavity = 12.5893,
-  ratchIter = 2,
-  tbrIter = 1,
-  maxHits = 10,
-  maxTime = 30,
-  startIter = 1.2,
-  finalIter = 1,
-  verbosity = 4
+  strategy = "default",
+  maxReplicates = 3,
+  targetHits = 2,
+  verbosity = 0
 )
 
 # Overwrite any previous trees with results
-if (inherits(newTrees, "phylo")) {
-  trees <- list(newTrees)
-  attr(trees, "firstHit") <- attr(newTrees, "firstHit")
-  attr(trees[[1]], "firstHit") <- NULL
-}
 allTrees <- newTrees
 trees <- allTrees
 

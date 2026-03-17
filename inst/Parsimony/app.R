@@ -1209,53 +1209,46 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$searchConfig, {
-    #updateSelectInput(session, "character.weight",
-    #                  selected = input$character.weight)
     updateSelectInput(session, "implied.weights",
                       selected = input$implied.weights)
     updateSliderInput(session, "concavity", value = input$concavity)
     updateNumericInput(session, "epsilon", value = input$epsilon)
-    updateSliderInput(session, "ratchIter", value = input$ratchIter)
-    updateSliderInput(session, "tbrIter", value = input$tbrIter)
-    updateSliderInput(session, "maxHits", value = input$maxHits)
-    updateSliderInput(session, "startIter", value = input$startIter)
-    updateSliderInput(session, "finalIter", value = input$finalIter)
+    updateSelectInput(session, "strategy", selected = input$strategy)
+    updateSliderInput(session, "maxReplicates", value = input$maxReplicates)
+    updateSliderInput(session, "targetHits", value = input$targetHits)
+    updateSliderInput(session, "timeout", value = input$timeout)
     showModal(modalDialog(
       easyClose = TRUE,
       fluidPage(column(6,
       tagList(
-        #selectInput("character.weight", "Character weighting",
-        #                  list("Equal" = "equal"), "equal"),
-              selectInput("implied.weights", "Step weighting", 
+              selectInput("implied.weights", "Step weighting",
                          list("Implied" = "on", "Profile" = "prof",
                               "Equal" = "off"), "on"),
               sliderInput("concavity", "Step weight concavity constant", min = 0L,
                          max = 3L, pre = "10^", value = 1L),
               numericInput("epsilon", "Keep if suboptimal by \u2264", min = 0,
                           value = 0),
-              sliderInput("ratchIter", "Ratchet iterations", min = 0L,
-                          max = 50L, value = 6L, step = 1L),
+              selectInput("strategy", "Search strategy",
+                         list("Auto" = "auto", "Sprint" = "sprint",
+                              "Default" = "default", "Thorough" = "thorough"),
+                         "auto"),
               sliderInput("timeout", "Maximum run duration", min = 1,
                           max = 600, value = 30, post = "min", step = 1),
-      )), column(6, 
+      )), column(6,
              tagList(
-              sliderInput("maxHits", "Maximum hits", min = 0L, max = 5L,
-                         value = 2L, pre = "10^"),
-              sliderInput("tbrIter", "TBR depth", min = 1L, max = 20L,
-                          value = 1L, step = 1L),
-              sliderInput("startIter", "First iteration extra depth", min = 1L,
-                          max = 10L, value = 3L, pre = "\ud7"),
-              sliderInput("finalIter", "Final iteration extra depth", min = 1L,
-                          max = 10L, value = 1L, pre = "\ud7"),
+              sliderInput("maxReplicates", "Maximum replicates", min = 1L,
+                          max = 500L, value = 100L, step = 1L),
+              sliderInput("targetHits", "Stop after N hits to best score",
+                          min = 1L, max = 50L, value = 10L, step = 1L),
               selectizeInput("searchWithout", "Exclude taxa", DatasetTips(),
                              r$searchWithout, multiple = TRUE)
              ))
       ),
       title = "Tree search settings",
       footer = tagList(modalButton("Close", icon = Icon("rectangle-xmark")),
-                       actionButton("modalGo", icon = Icon("magnifying-glass"), 
+                       actionButton("modalGo", icon = Icon("magnifying-glass"),
                                     if(length(r$trees)) {
-                                      "Continue search" 
+                                      "Continue search"
                                     } else {
                                       "Start search"
                                     }))
@@ -1559,7 +1552,7 @@ server <- function(input, output, session) {
     switch(weighting(),
            "on" = 10 ^ kExp,
            "off" = Inf,
-           "prof" = "Profile")
+           "prof" = "profile")
   })
   
   tolerance <- reactive({
@@ -1612,55 +1605,63 @@ server <- function(input, output, session) {
       PutData(r$dataset[SearchTips()])
       PutTree(startTree)
       LogComment("Search for optimal trees", 1)
+      searchStrategy <- if (length(input$strategy)) input$strategy else "auto"
+      searchMaxRep <- if (length(input$maxReplicates)) {
+        as.integer(input$maxReplicates)
+      } else {
+        100L
+      }
+      searchTargetHits <- if (length(input$targetHits)) {
+        as.integer(input$targetHits)
+      } else {
+        10L
+      }
+      searchMaxSeconds <- if (length(input$timeout)) {
+        as.double(input$timeout) * 60
+      } else {
+        0
+      }
+      searchPoolSub <- if (length(input$epsilon) && input$epsilon > 0) {
+        tolerance()
+      } else {
+        0
+      }
       LogCode(c(
         "newTrees <- MaximizeParsimony(",
         if (length(r$searchWithout)) {
           paste0(
-            "  dataset[setdiff(names(dataset), ", EnC(r$searchWithout), ")]"
+            "  dataset[setdiff(names(dataset), ", EnC(r$searchWithout), ")],"
           )
         } else {
           "  dataset,"
         },
         "  tree = startTree,",
         paste0("  concavity = ", Enquote(concavity()), ","),
-        paste0("  ratchIter = ", input$ratchIter, ","), 
-        paste0("  tbrIter = ", input$tbrIter, ","), 
-        paste0("  maxHits = ", ceiling(10 ^ input$maxHits), ","), 
-        paste0("  maxTime = ", input$timeout, ","),
-        paste0("  startIter = ", input$startIter, ","),
-        paste0("  finalIter = ", input$finalIter, ","),
-        if (input$epsilon > 0) paste0("  tolerance = ", tolerance(), ","),
-        "  verbosity = 4",
+        paste0("  strategy = \"", searchStrategy, "\","),
+        paste0("  maxReplicates = ", searchMaxRep, ","),
+        paste0("  targetHits = ", searchTargetHits, ","),
+        if (searchMaxSeconds > 0)
+          paste0("  maxSeconds = ", searchMaxSeconds, ","),
+        if (searchPoolSub > 0)
+          paste0("  poolSuboptimal = ", searchPoolSub, ","),
+        "  verbosity = 0",
         ")"))
       newTrees <- withProgress(
         MaximizeParsimony(r$dataset[SearchTips()],
                           tree = startTree,
                           concavity = concavity(),
-                          ratchIter = input$ratchIter,
-                          tbrIter = input$tbrIter,
-                          maxHits = ceiling(10 ^ input$maxHits),
-                          maxTime = input$timeout,
-                          startIter = input$startIter,
-                          finalIter = input$finalIter,
-                          tolerance = tolerance(),
-                          verbosity = 4L),
+                          strategy = searchStrategy,
+                          maxReplicates = searchMaxRep,
+                          targetHits = searchTargetHits,
+                          maxSeconds = searchMaxSeconds,
+                          poolSuboptimal = searchPoolSub,
+                          verbosity = 0L),
         value = 0.85, message = "Finding MPT",
-        detail = paste0(ceiling(10^input$maxHits), " hits; ", wtType())
+        detail = paste0(searchMaxRep, " replicates; ", wtType())
       )
       r$sortTrees <- TRUE # No meaning in order; display nicely
       LogComment("Overwrite any previous trees with results")
-      LogCode(c(
-        "if (inherits(newTrees, \"phylo\")) {",
-        "  trees <- list(newTrees)",
-        "  attr(trees, \"firstHit\") <- attr(newTrees, \"firstHit\")",
-        "  attr(trees[[1]], \"firstHit\") <- NULL",
-        "}"
-      ))
       UpdateAllTrees(newTrees)
-      if (inherits(newTrees, "phylo")) {
-        attr(r$trees, "firstHit") <- attr(newTrees, "firstHit")
-        attr(r$trees[[1]], "firstHit") <- NULL
-      }
       
       updateSliderInput(session, "whichTree", min = 0L,
                         max = length(r[["trees"]]), value = 0L)
