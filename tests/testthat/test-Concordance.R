@@ -120,7 +120,7 @@ test_that("QuartetConcordance() handles incomplete data", {
 })
 
 test_that(".Rezero() works", {
-  expect_equal(.Rezero(seq(0, 1, by = 0.1), 0.1), -1:9 / 9)
+  expect_equal(TreeSearch:::.Rezero(seq(0, 1, by = 0.1), 0.1), -1:9 / 9)
 })
 
 test_that("ClusteringConcordance() gives sensible values", {
@@ -153,9 +153,9 @@ test_that("ClusteringConcordance() gives sensible values", {
     TreeDist::Entropy(c(...) / sum(...))
   }
   .NormExp <- function(a, b, ab) {
-    .Rezero(
+    TreeSearch:::.Rezero(
       (.Entropy(a) + .Entropy(b) - .Entropy(ab)) / .Entropy(a),
-      .ExpectedMI(a, b) / .Entropy(a)
+      TreeSearch:::.ExpectedMI(a, b) / .Entropy(a)
     )
   }
   expect_equal(cc["normalized", ],

@@ -6,7 +6,7 @@ test_that("IW Scoring", {
   
   
   .IWScore <- function (edge, morphyObjs, weight, minLength, concavity) {
-    steps <- preorder_morphy_by_char(edge, morphyObjs)
+    steps <- TreeSearch:::preorder_morphy_by_char(edge, morphyObjs)
     homoplasies <- steps - minLength
     fit <- homoplasies / (homoplasies + concavity)
     sum(fit * weight)
@@ -51,10 +51,10 @@ test_that("IW Scoring", {
   minLength <- MinimumLength(dataset, compress = TRUE)
   
   expect_equal(.IWScore(edge, morphyObjects, weight, minLength, concavity),
-               morphy_iw(edge, morphyObjects, weight, minLength, charSeq, 
+               TreeSearch:::morphy_iw(edge, morphyObjects, weight, minLength, charSeq, 
                          concavity, Inf))
   
-  expect_equal(Inf, morphy_iw(edge, morphyObjects, weight, minLength, charSeq,
+  expect_equal(Inf, TreeSearch:::morphy_iw(edge, morphyObjects, weight, minLength, charSeq,
                               concavity, 0))
   
 })

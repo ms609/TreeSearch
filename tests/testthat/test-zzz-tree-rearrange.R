@@ -35,7 +35,7 @@ test_that("NNI works", {
     edge1 <- edge
     edge1[c(e1, e2), 2] <- edge1[c(e2, e1), 2]
     edge1 <- do.call(cbind, RenumberEdges(edge1[, 1], edge1[, 2]))
-    expect_equal(edge1, nni(trComb$edge, e, r))
+    expect_equal(edge1, TreeSearch:::nni(trComb$edge, e, r))
   }
   Test(0, 0, 5, 7)
   Test(0, 2, 5, 7)
@@ -58,11 +58,11 @@ test_that("NNI works", {
 test_that("SPR works", {
   testTree <- Preorder(root(BalancedTree(7), 1, resolve.root = TRUE))
   edge <- testTree[["edge"]]
-  expect_equal(spr(edge, 66), cSPR(testTree, 66)$edge)
+  expect_equal(TreeSearch:::spr(edge, 66), cSPR(testTree, 66)$edge)
   
   Test <- function (m, p1, r1) {
     test.tr <- testTree
-    test.tr$edge <- spr(edge, m)
+    test.tr$edge <- TreeSearch:::spr(edge, m)
     
     oldWay <- SortTree(root(SPR(testTree, p1, r1), "t1", resolve.root = TRUE))
     expect_equal(oldWay, SortTree(test.tr))

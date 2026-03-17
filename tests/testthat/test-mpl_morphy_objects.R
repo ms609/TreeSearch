@@ -39,7 +39,7 @@ test_that("GapHandler()", {
 test_that("morphy_profile fails nicely", {
   morphyObj <- SingleCharMorphy("1")
   on.exit(UnloadMorphy(morphyObj))
-  expect_error(morphy_profile(matrix(NA, 10, 2), list(morphyObj),
+  expect_error(TreeSearch:::morphy_profile(matrix(NA, 10, 2), list(morphyObj),
                               1, 1L, matrix(1), 1),
                "Number of edges does not match Morphy object dimensions")
 })

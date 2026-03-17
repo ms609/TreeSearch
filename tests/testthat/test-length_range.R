@@ -1,5 +1,5 @@
 test_that("Deprecation", {
-  expect_equal(MinimumLength(1:3), expect_warning(MinimumSteps(1:3)))
+  expect_equal(MinimumLength(1:3), expect_warning(TreeSearch:::MinimumSteps(1:3)))
 })
 
 test_that("Step counts are correctly calculated", {
@@ -159,22 +159,22 @@ test_that("MaximumLength() handles many states (>8) without overflow", {
   # This should complete without error (the specific result is secondary)
   # 10 distinct character states (powers of 2 for bit representation)
   manyStates <- c(1, 2, 4, 8, 16, 32, 64, 128, 256, 512)
-  expect_silent(result <- MaximumLength.numeric(manyStates))
+  expect_silent(result <- TreeSearch:::MaximumLength.numeric(manyStates))
   expect_equal(result, 9)  # max steps for 10 distinct tokens
   
   # Test with combination of states including inapplicable (0)
   manyStatesWithInapp <- c(0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 0)
-  expect_silent(result <- MaximumLength.numeric(manyStatesWithInapp))
+  expect_silent(result <- TreeSearch:::MaximumLength.numeric(manyStatesWithInapp))
   expect_equal(result, 9)  # 9 steps + 0 extra for inapplicable regions
   
   # Test with large combined token value (all 10 states present in one tip)
   # This is the scenario that triggered #203
   # 1 = only state 0, 1023 = all states 0-9 combined (2^10 - 1)
   largeToken <- c(1, 1023)
-  expect_silent(result <- MaximumLength.numeric(largeToken))
+  expect_silent(result <- TreeSearch:::MaximumLength.numeric(largeToken))
   expect_equal(result, 0)  # state 0 is subset of 1023, so no extra steps needed
   
-  expect_error(expect_warning(MaximumLength.numeric(2 ^ (0:31))),
+  expect_error(expect_warning(TreeSearch:::MaximumLength.numeric(2 ^ (0:31))),
                "does not support more than 30 character states")
 })
 

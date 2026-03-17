@@ -189,3 +189,56 @@ test_that("output trees have valid preorder numbering", {
     expect_true(all(TipLabels(tree) %in% names(ds)))
   }
 })
+
+# --- T-039 regression: constraint on small fully-resolved trees ---
+
+test_that("Fully-resolving constraint on 5-tip tree does not crash", {
+  ds5 <- phangorn::phyDat(
+    matrix(c("0","0","0","1","1","0","1","0","1","0"),
+           nrow = 5, dimnames = list(paste0("t", 1:5), NULL)),
+    type = "USER", levels = c("0", "1"))
+  cons <- ape::read.tree(text = "((t1,t2),(t3,(t4,t5)));")
+
+  set.seed(4172)
+  result <- MaximizeParsimony(ds5, constraint = cons,
+                               maxReplicates = 1L, targetHits = 1L,
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+  expect_equal(NTip(result[[1]]), 5L)
+})
+
+test_that("AdditionTree with fully-resolving constraint works", {
+  ds5 <- phangorn::phyDat(
+    matrix(c("0","0","0","1","1","0","1","0","1","0"),
+           nrow = 5, dimnames = list(paste0("t", 1:5), NULL)),
+    type = "USER", levels = c("0", "1"))
+  cons <- ape::read.tree(text = "((t1,t2),(t3,(t4,t5)));")
+
+  set.seed(6091)
+  wt <- AdditionTree(ds5, constraint = cons)
+  expect_s3_class(wt, "phylo")
+  expect_equal(NTip(wt), 5L)
+  expect_equal(nrow(wt$edge), 8L)
+})
+
+test_that("Constrained Wagner tree works with multiple seeds", {
+  ds5 <- phangorn::phyDat(
+    matrix(c("0","0","0","1","1","0","1","0","1","0"),
+           nrow = 5, dimnames = list(paste0("t", 1:5), NULL)),
+    type = "USER", levels = c("0", "1"))
+  cons <- ape::read.tree(text = "((t1,t2),(t3,(t4,t5)));")
+  at <- attributes(ds5)
+  consArgs <- TreeSearch:::.PrepareConstraint(cons, ds5)
+
+  for (s in c(1, 6, 42)) {
+    set.seed(s)
+    result <- do.call(TreeSearch:::ts_random_wagner_tree, c(
+      list(contrast = at$contrast,
+           tip_data = matrix(unlist(ds5, use.names = FALSE), nrow = 5, byrow = TRUE),
+           weight = at$weight, levels = at$levels),
+      consArgs))
+    expect_true(is.finite(result$score), info = paste("seed", s))
+    expect_equal(nrow(result$edge), 8L, info = paste("seed", s))
+  }
+})
