@@ -58,48 +58,49 @@ Rprof(NULL)
 summaryRprof("profile.out")
 ```
 
-## Known Baselines (as of 2026-03-17, post all Phase 2-3 optimizations)
+## Known Baselines (as of 2026-03-17, post T-025 fix + d2_r5 tuning + CSS disabled)
 
-### Per-phase breakdown (EW, default params, 5 replicates, 3-run medians):
+### Per-phase breakdown (EW, strategy='none', 5 replicates, 3-run medians):
 
-| Dataset | Tips | Wagner% | TBR% | Sect% | Ratch% | Drift% | Other% | Total ms |
-|---------|------|---------|------|-------|--------|--------|--------|----------|
-| Vinther2008 | 23 | 0.2 | 9.4 | 14.0 | 33.5 | 39.8 | 3.2 | 255 |
-| Agnarsson2004 | 62 | 0.1 | 14.4 | 10.2 | 27.9 | 45.6 | 1.9 | 2482 |
-| Zhu2013 | 75 | 0.0 | 25.0 | 6.8 | 17.8 | 49.4 | 1.1 | 5100 |
-| Dikow2009 | 88 | 0.1 | 16.5 | 8.7 | 27.4 | 45.7 | 1.7 | 8141 |
+| Dataset | Tips | TBR% | XSS% | RSS% | CSS% | Ratch% | Drift% | Other% | Total ms |
+|---------|------|------|------|------|------|--------|--------|--------|----------|
+| Vinther2008 | 23 | 11.0 | 21.9 | 4.3 | 0.0 | 39.8 | 19.6 | 3.4 | 233 |
+| Agnarsson2004 | 62 | 18.0 | 13.5 | 4.2 | 0.0 | 37.9 | 24.0 | 2.4 | 3141 |
+| Zhu2013 | 75 | 33.2 | 9.8 | 2.8 | 0.0 | 24.7 | 27.8 | 1.7 | 3995 |
+| Dikow2009 | 88 | 20.5 | 12.4 | 2.6 | 0.0 | 37.5 | 24.7 | 2.3 | 6666 |
 
-### Per-replicate cost (ms/rep, default params):
+Note: Current defaults are driftCycles=2, ratchetCycles=5, cssRounds=0.
+Previous baselines (d6_r10) showed drift dominating at 40-50%; with d2_r5,
+ratchet (25-40%) and TBR (11-33%) are now the largest phases.
 
-| Dataset | Tips | Wagner | TBR | Sect | Ratch | Drift | Total |
-|---------|------|--------|-----|------|-------|-------|-------|
-| Vinther2008 | 23 | 0.1 | 9.3 | 12.9 | 33.1 | 39.6 | 98 |
-| Agnarsson2004 | 62 | 0.8 | 127 | 96 | 238 | 472 | 957 |
-| Zhu2013 | 75 | 0.5 | 275 | 69 | 180 | 503 | 1040 |
-| Dikow2009 | 88 | 0.9 | 292 | 147 | 449 | 785 | 1703 |
-
-### End-to-end benchmarks (3-run medians, 5 reps, default params):
+### End-to-end benchmarks (3-run medians, 5 reps, strategy='none'):
 
 | Dataset | Tips | EW (s) | IW k=10 (s) |
 |---------|------|--------|-------------|
-| Vinther2008 | 23 | 0.250 | 0.310 |
-| Agnarsson2004 | 62 | 2.510 | — |
-| Zhu2013 | 75 | 5.320 | 7.930 |
-| Dikow2009 | 88 | 8.270 | — |
+| Vinther2008 | 23 | 0.230 | 0.360 |
+| Agnarsson2004 | 62 | 3.250 | 4.730 |
+| Zhu2013 | 75 | 4.080 | 5.920 |
+| Dikow2009 | 88 | 6.630 | — |
+
+Speedup vs old defaults (d6_r10): 41-52% faster with equivalent score quality.
+
+### Auto strategy benchmarks (3-run medians, 5 reps):
+
+| Dataset | Tips | Preset | EW (s) | Score |
+|---------|------|--------|--------|-------|
+| Vinther2008 | 23 | sprint | 0.110 | 79-80 |
+| Agnarsson2004 | 62 | thorough | 13.670 | 778 |
+| Zhu2013 | 75 | thorough | 16.390 | 647-648 |
+
+Note: "thorough" preset is 4× slower than raw defaults for 62-tip datasets
+with zero score improvement. Threshold at 61 tips may be too aggressive.
 
 ### R overhead: <0.5% of wall time (confirmed via Rprof)
 
-### Parallel scaling:
-- 2 threads: 1.86× speedup (93% efficiency) on Zhu2013
-
-### Wagner + TBR only (single replicate, no perturbation):
-
-| Dataset | Tips | Wagner (ms) | TBR (ms) |
-|---------|------|-------------|----------|
-| Vinther2008 | 23 | 0.1 | 6.8 |
-| Agnarsson2004 | 62 | 0.7 | 92.0 |
-| Zhu2013 | 75 | 0.3 | 226.9 |
-| Dikow2009 | 88 | 1.0 | 300.3 |
+### Parallel scaling (Zhu2013, 5 reps):
+- 2 threads: 1.24× speedup (62% efficiency)
+- Note: degraded from previous 1.86× due to shorter per-replicate time with
+  d2_r5 defaults. Thread overhead is proportionally larger.
 
 ### Scaling (TBR pass time vs tips):
 

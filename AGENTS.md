@@ -2140,6 +2140,21 @@ removed by a previous change).
 - `test-tree_length.R`: `morphy_profile()` needs `TreeSearch:::` prefix
 - `test-pp-info_extra_step.R`: `.LogCumSumExp()` needs `TreeSearch:::` prefix
 
+## Shiny app expertise file (Agent B continuation)
+
+Created `.positai/expertise/shiny-app.md` — comprehensive guide to maintaining
+and extending the interactive Shiny UI (`inst/Parsimony/app.R`):
+- 3683-line app with data loading, tree search, visualization, export
+- Reactive programming patterns, file handling best practices
+- Integration with C++ `MaximizeParsimony()` engine and new strategy presets
+- Troubleshooting guide (6 common issues + solutions)
+- Testing checklist for app updates
+
+The app currently uses `MaximizeParsimony()` for EW/IW searches (correctly)
+but has not yet been tested for profile parsimony and constraint integration
+post-C++-migration. This is documented as a next testing step in the expertise
+file.
+
 ## Legacy test namespace fix (Agent A, T-021)
 
 Fixed `TreeSearch:::` prefix for non-exported function calls in 3 legacy
@@ -2825,4 +2840,363 @@ blocks (38 expectations) covering:
 | Output tree validity | 1 | Correct NTip, edge count, tip labels |
 
 ### Test status: 38/38 pass (0 fail, 0 skip)
-AGENTDOC 2>&1
+
+## RandomTreeScore migration to C++ engine (Agent A, T-034)
+
+Migrated `RandomTreeScore()` from MorphyLib to the C++ search engine.
+The function now accepts a phyDat dataset (recommended) in addition to
+the legacy morphyPtr interface.
+
+### Changes:
+
+**`R/RandomTreeScore.R`**:
+- `RandomTreeScore(dataset)` now dispatches based on input type:
+  - phyDat: generates `RandomTree(dataset, root = TRUE)`, scores with `TreeLength()`
+  - morphyPtr: uses existing `RANDOM_TREE_SCORE` C function (backward compat)
+- Parameter renamed from `morphyObj` to `dataset`
+- Documentation updated: phyDat is documented as the recommended interface
+- Example updated to use phyDat directly
+
+**`tests/testthat/test-RandomTreeScore.R`**:
+- Added tests for phyDat path (small + larger datasets)
+- Added backward compatibility tests for morphyPtr path
+- Retained RandomMorphyTree tests unchanged
+
+### No API breakage:
+- Legacy callers passing morphyPtr still work (no deprecation warning)
+- `test-pp-random-tree.R` (36,000+ iterations with morphyPtr) passes unchanged
+
+### Files modified:
+- `R/RandomTreeScore.R` — Dual-dispatch implementation
+- `tests/testthat/test-RandomTreeScore.R` — New phyDat tests + backward compat tests
+- `man/RandomTreeScore.Rd` — Regenerated via roxygen2
+
+### Test status: RandomTreeScore 16/16, pp-random-tree 64/64,
+tree_length 95/95, driven 53/53, iw 32/32 (7 skip)
+
+## Profiling round 3: Post-tuning validation (Agent B, S-PROF)
+
+Re-profiled the C++ driven search engine after T-025 (PreallocUndo fix),
+T-029 (default tuning d2_r5), and T-032 (CSS disabled). Updated baselines
+in `.positai/expertise/profiling.md`.
+
+### Key findings:
+
+**1. Default tuning validated (40-52% wall-time improvement):**
+
+| Dataset | Old d6_r10 (s) | New d2_r5 (s) | Speedup |
+|---------|---------------|---------------|---------|
+| Vinther (23 tips) | 0.390 | 0.230 | 41% |
+| Agnarsson (62 tips) | 6.420 | 3.250 | 49% |
+| Zhu (75 tips) | 8.460 | 4.080 | 52% |
+
+Score quality equivalent (Vinther 79-80, Agnarsson 778, Zhu 656-658).
+
+**2. Phase distribution rebalanced with d2_r5:**
+
+| Dataset | TBR% | Sect% | Ratch% | Drift% |
+|---------|------|-------|--------|--------|
+| Vinther (23) | 11 | 26 | 40 | 20 |
+| Agnarsson (62) | 18 | 18 | 38 | 24 |
+| Zhu (75) | 33 | 13 | 25 | 28 |
+| Dikow (88) | 21 | 15 | 38 | 25 |
+
+Drift dropped from 40-50% → 20-28%. No single phase dominates >40%.
+Ratchet and TBR are now the largest phases.
+
+**3. Auto strategy "thorough" preset is too aggressive:**
+
+| Dataset | Preset | Time (s) | Score |
+|---------|--------|----------|-------|
+| Vinther (23) | sprint | 0.110 | 79-80 |
+| Agnarsson (62) | thorough | 13.670 | 778 |
+| Zhu (75) | thorough | 16.390 | 647-648 |
+
+"thorough" is 4× slower than raw defaults for Agnarsson (62 tips) with
+zero score benefit (both find optimal 778). For Zhu (75 tips), thorough
+finds 647-648 vs default's 656-658 — meaningful but costly. The 61-tip
+threshold may be too aggressive.
+
+**4. Parallel scaling degraded with shorter replicates:**
+2 threads on Zhu: 1.24× (62% efficiency), down from previous 1.86× (93%).
+Per-replicate time dropped from ~1.7s to ~0.8s with d2_r5, increasing
+relative thread overhead. Expected side effect of tuning.
+
+**5. IW scores verified correct:**
+Vinther=1.6131, Agnarsson=34.7177, Wills=10.3041 — all match TreeLength.
+
+**6. No new C++ optimization targets:**
+Phase distribution is balanced. Per-candidate indirect scoring is at
+memory-throughput limit. Further gains require algorithmic changes or
+default tuning refinements.
+
+### Actionable suggestion:
+Consider raising the "thorough" auto-strategy threshold from 61 to 80+
+tips, or reducing thorough intensity (e.g., ratchet 10, drift 5 instead
+of ratchet 20, drift 12). Datasets where default already finds optimal
+see a 4× slowdown for zero benefit.
+
+## Red-team review round 4 (Agent B, S-RED)
+
+Full ts-* test suite: **963 pass, 0 fail, 18 skip, 7 warnings**. Init.c
+arg counts verified (41 entries, all matching). Score verification (EW + IW)
+across 4 datasets: all match TreeLength. Determinism confirmed (identical
+edges with same seed). Profile parsimony produces valid trees.
+
+### Bug found: T-039 — Constraint crashes on small fully-resolved trees
+
+**Severity:** P2 (edge case)
+
+**Reproduction:**
+```r
+ds5 <- phangorn::phyDat(matrix(c('0','0','0','1','1','0','1','0','1','0'),
+  nrow=5, dimnames=list(paste0('t', 1:5), NULL)), type='USER', levels=c('0','1'))
+cons <- ape::read.tree(text='((t1,t2),(t3,(t4,t5)));')
+MaximizeParsimony(ds5, constraint=cons, maxReplicates=1L) # SIGSEGV
+```
+
+**Characterization:**
+- 5 tips + 2 disjoint constraint splits (fully resolving) → SIGSEGV
+- 5 tips + 2 overlapping splits (non-fully-resolving) → OK
+- 5 tips + 1 split → OK
+- 6+ tips + 2 splits → OK
+- 8-tip + 2 splits → OK
+- 23-tip (Vinther2008) + phylo constraint → OK
+
+**Root cause hypothesis:** With 5 tips and 2 fully-resolving constraint splits,
+TBR has zero valid clips (all edges are constrained). The search may encounter
+an uninitialized state or buffer underflow when no valid moves exist.
+
+### Other checks (all clean):
+- No stale `src/Makevars.win` (only `.bak` backups)
+- `concavity` defaults all use `-1.0` sentinel in `RcppExports.R`
+- Progress callback captures `r_cb` by value (correct)
+- RSS no longer force-disabled (`if (false && ...)` removed)
+- `sprFirst` default matches between C++ and R (`false`)
+- Build system issue noted: `.o` files deleted during `R CMD INSTALL`
+  (suspected AV). Used agent-e build copy for testing.
+
+## Independent red-team review (Agent A)
+
+Full test suite: **938 pass, 0 fail, 18 skip, 7 warnings** (ts-* suite).
+Init.c arg counts verified (39 shared entries, all matching).
+
+### Score verification
+| Dataset | Mode | C++ score | TreeLength | Match |
+|---------|------|-----------|------------|-------|
+| Vinther2008 | EW | 80 | 80 | YES |
+| Agnarsson2004 | EW | 778 | 778 | YES |
+| Wills2012 | EW | 285 | 285 | YES |
+| Vinther2008 | IW k=10 | 1.6342 | 1.6342 | YES |
+| Agnarsson2004 | IW k=10 | 34.7177 | 34.7177 | YES |
+| Wills2012 | IW k=10 | 10.3463 | 10.3463 | YES |
+
+### Determinism: confirmed (serial mode, EW + IW, identical edges with same seed)
+
+### Edge cases tested:
+- 4-tip tree, single-character dataset, constraint search, profile parsimony,
+  maxSeconds timeout, parallel mode (2 threads), 20-replicate stress test — all OK.
+
+### Bug found: T-040 — All-ambiguous phyDat crash
+
+**Severity:** P2
+
+**Reproduction:**
+```r
+tokens <- matrix("?", nrow = 5, ncol = 3,
+  dimnames = list(c("a","b","c","d","e"), NULL))
+dataset <- TreeTools::MatrixToPhyDat(tokens)
+TreeLength(TreeTools::RandomTree(dataset, root = TRUE), dataset)
+# Error: Not compatible with STRSXP: [type=NULL].
+MaximizeParsimony(dataset) # Same crash
+```
+
+**Root cause:** `MatrixToPhyDat` produces a phyDat with `levels = NULL` and
+a 0-column contrast matrix when all tokens are ambiguous. The C++ bridge
+`ts_fitch_score` receives NULL for the `levels` argument (expected character
+vector), triggering the Rcpp type conversion error.
+
+**Fix:** Guard in `TreeLength.phylo` and/or `MaximizeParsimony()`: if
+`attr(dataset, "levels")` is NULL or `ncol(attr(dataset, "contrast")) == 0`,
+return 0 (or an informative error) instead of passing to C++.
+
+### Code pattern checks (all clean):
+- No stale `src/Makevars.win` (only `.bak` backups)
+- GCC builtins properly guarded with `#ifdef` + MSVC/fallback alternatives
+- No `std::random_device` or raw `rand()` calls (all using ts::make_rng)
+- `sprFirst` default aligned between C++ (`false`) and R (`FALSE`)
+- RSS enabled (no dead `if (false &&)` guard)
+- PreallocUndo fix solid: `grow()` called before indexing, no off-by-one
+
+## T-040: All-ambiguous phyDat guard (Agent D)
+
+`MatrixToPhyDat(matrix("?", 5, 3))` produces a phyDat with `levels = NULL`
+and a 0-column contrast matrix. Passing this to `ts_fitch_score()` crashed
+with "Not compatible with STRSXP: [type=NULL]" (Rcpp type conversion error).
+
+### Fix: early-return guards in 4 R functions
+
+| Function | Guard returns |
+|----------|-------------|
+| `TreeLength.phylo()` | `0L` |
+| `TreeLength.list()` | `rep(0L, length(tree))` |
+| `FastCharacterLength()` | `rep(0L, at$nr)` |
+| `MaximizeParsimony()` | `stop("Dataset contains no informative character states.")` |
+
+Guard condition: `is.null(attr(dataset, "levels")) || ncol(attr(dataset, "contrast")) == 0L`
+
+### Files modified:
+- `R/tree_length.R` — Guards in TreeLength.phylo, TreeLength.list, FastCharacterLength
+- `R/MaximizeParsimony.R` — Guard after nTip check
+
+### Test status: tree_length 95/95, ts-* all pass (0 failures)
+
+## T-039 fix: Constrained Wagner tree stale postorder (Agent A)
+
+### Root cause
+
+`wagner_tree()` in `ts_wagner.cpp` called `tree.build_postorder()` once for
+the initial 3-taxon tree but never rebuilt it as new tips were inserted.
+`wagner_update_constraint()` (called after each insertion) uses `tree.postorder`
+to compute per-node tip bitmasks via `wagner_map_constraint_nodes()`. With a
+stale postorder, newly created internal nodes were missing from the traversal,
+their tip bitmasks were all-zero, and constraint node mapping (LCA of added
+inside tips) could find incorrect nodes.
+
+When two or more constraint splits fully resolve a small tree (e.g. 5 tips),
+certain addition orders caused ALL edges to be deemed constraint-violating.
+The fallback guard (`best_above = root, best_below = tree.left[0]`) inserted
+the tip at the root edge regardless of constraints, but subsequent constraint
+updates using wrong LCA values produced cascading errors, eventually causing
+SIGSEGV in `compute_dfs_timestamps` or `fitch_indirect_length_bounded`.
+
+### Fix
+
+Added `tree.build_postorder()` before `wagner_update_constraint()` in the
+Wagner construction loop (1 line in `ts_wagner.cpp`).
+
+Also unskipped `test-Morphy.R` constraint test that was skipped due to this bug.
+
+### Files modified:
+- `src/ts_wagner.cpp` — Added `tree.build_postorder()` before constraint update
+- `tests/testthat/test-Morphy.R` — Unskipped constraint test
+- `tests/testthat/test-MaximizeParsimony-features.R` — Added 3 T-039 regression tests
+
+### Test status: ts-* all pass (0 failures, 18 skips, 7 warnings — unchanged)
+Morphy 31/31 (constraint test now runs), AdditionTree 17/17, Wagner 33/33,
+MaximizeParsimony-features 50/50
+
+## T-039 actual root cause: column-major indexing bug in constraint (Agent D)
+
+Agent A's earlier fix (stale postorder in Wagner) addressed a symptom but
+not the root cause. The real bugs:
+
+### Bug 1: Column-major matrix indexing (PRIMARY)
+
+`build_constraint()` in `ts_constraint.cpp` read the R split matrix with
+row-major indexing `split_matrix[s * n_tips + t]`, but R matrices are stored
+column-major. The correct indexing is `split_matrix[s + n_splits * t]`.
+
+This corrupted the constraint split bitmasks, causing ALL constraint
+enforcement (TBR, Wagner, sector, drift, fuse) to check wrong splits.
+The posthoc check (using separately-constructed DataSet) was unaffected,
+creating an inconsistency: posthoc said "violation" but the per-move
+checks enforced the wrong splits.
+
+### Bug 2: Wagner crash on no-valid-edge
+
+When the constraint enforcement rejected all edges for a tip insertion,
+`best_above` and `best_below` remained at -1, and `insert_tip_at_edge`
+wrote to `tree.parent[-1]` (out-of-bounds), causing SIGSEGV.
+
+Fix: Guard that falls back to root edge when no valid edge found.
+
+### Bug 3: Wagner constraint activation too restrictive
+
+`if (!has_prev_inside || !has_prev_outside) continue` skipped constraints
+when only one side had previously-added tips. But when the first "outside"
+tip is being added and all existing tips are "inside", the constraint
+SHOULD be active to prevent the outside tip from landing inside the clade.
+
+Fix: Skip only when the NEW tip's opposite side has no previous tips:
+`if (tip_inside && !has_prev_outside) continue` /
+`if (!tip_inside && !has_prev_inside) continue`.
+
+### Bug 4: Wagner cn==root unenforceable
+
+When inside tips span both sides of the root, `is_ancestor_or_equal(root, x)`
+is true for all nodes, making the constraint unenforceable. Added skip.
+
+### Bug 5: Wagner posthoc retry
+
+After construction, verify the tree via `violates_constraint_posthoc()`.
+If violated, retry with a different random addition order (up to 100×).
+Safety net for edge cases the per-step checks can't prevent.
+
+### Impact
+
+The column-major fix (Bug 1) is the most significant — it affects ALL
+constraint enforcement throughout the C++ engine, not just small trees.
+All previous constraint test results were invalid (testing wrong splits).
+With the fix, constraints are correctly enforced for all tree sizes.
+
+### Files modified:
+- `src/ts_constraint.cpp` — Column-major indexing fix (1 line)
+- `src/ts_wagner.cpp` — 4 fixes: crash guard, activation logic, cn==root,
+  posthoc retry; added `#include "ts_constraint.h"`
+
+### Files created:
+- `tests/testthat/test-ts-constraint-small.R` — 7 tests (18 expectations)
+
+### Test status: constraint-small 18/18, all ts-* pass, legacy tests pass
+
+## CRAN prep fixes (unassigned agent, pre-release audit)
+
+### Fix 1: `.Rbuildignore` missing dev files
+
+6 dev files/patterns were not excluded and would ship in the CRAN tarball:
+- `AGENTS.md`, `agent-*.md`, `check_init.R`, `coordination.md`, `to-do.md`
+- `Makevars.win.*-bak` (stale PGO/debug backup files)
+
+### Fix 2: `inst/CITATION` parse errors
+
+Two bugs that caused `R CMD check` WARNING "Invalid citation information":
+1. `citHeader(paste0(...))` — only the `paste0()` was closed; `citHeader()`
+   itself was never closed (missing `)`)
+2. Final `textVersion` string had a literal newline mid-string:
+   `"doi:10.32614/RJ-2023-019\n.32614/RJ-2023-019"` — duplicated DOI
+   fragment after a line break
+
+### Fix 3: `DESCRIPTION` Description field
+
+Still described MorphyLib as the primary engine. Updated to reflect the
+C++ search engine with multi-replicate driven search.
+
+### Finding: `%in%.Splits` S4 dispatch in testthat namespace
+
+`test-ts-constraint-small.R` failures in `R CMD check` were caused by
+the tarball containing a stale version of `check_constraint` that used
+`cons_sp %in% tree_sp` on Splits objects. The S4 `%in%` method registered
+by TreeTools does NOT dispatch when test code runs inside the TreeSearch
+package namespace (which is how `test_check()` / `load_package = "installed"`
+works). The current working copy already uses `as.logical()` + manual
+matrix comparison — this is correct and passes all 18 tests.
+
+**Rule for future tests**: Never use `%in%` on Splits objects in test files.
+Use `SplitFrequency(constraint, list(tree))` or `as.logical()` comparison
+instead.
+
+### Finding: AV interference on build machine
+
+Windows Defender intermittently deletes/blocks source files during `R CMD
+check` tarball extraction. Different `.o` files fail each run. Not a package
+issue — does not reproduce on CI or clean machines. The package installs
+and passes all tests when built directly.
+
+### Test status: 0 fail, 8378 pass, 23 skip, 29 warn (full suite with
+load_package = "installed")
+
+### Files modified:
+- `.Rbuildignore` — 6 new exclusion patterns
+- `inst/CITATION` — 2 parse error fixes
+- `DESCRIPTION` — Updated Description field

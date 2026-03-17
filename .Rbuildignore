@@ -35,3 +35,10 @@ vignettes/\.RData
 ^\.positai$
 ^\.claude$
 ^\.agent-
+^AGENTS\.md$
+^agent-.*\.md$
+^check_init\.R$
+^coordination\.md$
+^to-do\.md$
+Makevars\.win\..*-bak$
+^.*\.Rcheck$
