@@ -15,6 +15,10 @@ suppressPackageStartupMessages({
   library("shiny", exclude = c("runExample"))
   library("shinyjs", exclude = c("runExample"))
 })
+library("TreeTools", quietly = TRUE)
+library("TreeDist", quietly = TRUE)
+library("future")
+library("promises")
 
 
 if (logging) {
@@ -511,10 +515,12 @@ server <- function(input, output, session) {
     ignoreNTree = TRUE,
     nTree = 0L,
     oldOutgroup = NO_OUTGROUP,
+    searchCount = 0L,
     sortTrees = FALSE, # May be arranged nicely in input files
     treeRange = c(1L, 1L),
     updatingTrees = FALSE # TODO DELETE?
   )
+  exportTestValues(searchCount = { r$searchCount })
   
   serverEnv <- environment()
   logIndent <- 0
@@ -748,19 +754,34 @@ server <- function(input, output, session) {
     write.nexus(trees, file = paste0(tempdir(), "/", LastFile("tree")))
   }
   
-  if (!requireNamespace("TreeDist", quietly = TRUE)) {
-    install.packages("TreeDist")
-  }
-  
-  library("TreeTools", quietly = TRUE)
-  library("TreeDist")
-  library("TreeSearch")
-  
   BeginLog()
   
-  library("future")
-  library("promises")
   plan(multisession)
+  
+  searchTask <- ExtendedTask$new(
+    function(dataset, tree, concavity, strategy, maxReplicates,
+             targetHits, maxSeconds, poolSuboptimal) {
+      future::future({
+        args <- list(
+          dataset,
+          tree = tree,
+          concavity = concavity,
+          strategy = strategy,
+          maxReplicates = maxReplicates,
+          targetHits = targetHits,
+          maxSeconds = maxSeconds,
+          verbosity = 0L
+        )
+        # Only pass control when non-default, so strategy presets apply
+        if (poolSuboptimal > 0) {
+          args$control <- TreeSearch::SearchControl(
+            poolSuboptimal = poolSuboptimal
+          )
+        }
+        do.call(TreeSearch::MaximizeParsimony, args)
+      }, seed = TRUE)
+    }
+  )
   
   startOpt <- options("cli.progress_show_after" = 0.1)
   
@@ -857,12 +878,12 @@ server <- function(input, output, session) {
           taxNames <- gsub(" ", "_", trimws(unlist(tibble[, firstCol])))
           output$readxl.taxa <- renderUI(HTML(paste(
             "<em>Taxon names</em>:",
-            paste(taxNames[1:3], collapse = ", "),
+            paste(head(taxNames, 3), collapse = ", "),
             "...\n")))
           output$readxl.chars <- renderUI(HTML(paste(
             "<em>Character names</em>:",
             # not r$chars, which may be modified before output updated
-            paste(chars[1:3], collapse = ", "),
+            paste(head(chars, 3), collapse = ", "),
             "..."
           )))
           r$chars <- chars
@@ -1156,6 +1177,7 @@ server <- function(input, output, session) {
       LogMsg("   <Trees unchanged; returning>")
       return()
     }
+    r$newTrees <- newTrees
     
     oldNTrees <- length(r$allTrees)
     
@@ -1587,7 +1609,8 @@ server <- function(input, output, session) {
             }
             KeepTip(r$trees[[1]], SearchTips())
           } else {
-            firstOptimal <- which.min(scores())
+            sc <- scores()
+            firstOptimal <- if (length(sc)) which.min(sc) else 1L
             LogCode(paste0("startTree <- trees[[", firstOptimal, "]]",
                            " # First tree with optimal score"))
             r$trees[[firstOptimal]]
@@ -1646,31 +1669,28 @@ server <- function(input, output, session) {
           paste0("  control = SearchControl(poolSuboptimal = ", searchPoolSub, "),"),
         "  verbosity = 0",
         ")"))
-      newTrees <- withProgress(
-        MaximizeParsimony(r$dataset[SearchTips()],
-                          tree = startTree,
-                          concavity = concavity(),
-                          strategy = searchStrategy,
-                          maxReplicates = searchMaxRep,
-                          targetHits = searchTargetHits,
-                          maxSeconds = searchMaxSeconds,
-                          control = SearchControl(
-                            poolSuboptimal = searchPoolSub
-                          ),
-                          verbosity = 0L),
-        value = 0.85, message = "Finding MPT",
-        detail = paste0(searchMaxRep, " replicates; ", wtType())
+      # Snapshot reactive values for the async task
+      searchDataset <- r$dataset[SearchTips()]
+      searchConcavity <- concavity()
+      
+      disable("go")
+      disable("modalGo")
+      disable("searchConfig")
+      r$searchNotification <- showNotification(
+        paste0("Searching (", searchMaxRep, " replicates, ", wtType(),
+               ")\u2026"),
+        duration = NULL, type = "message", closeButton = FALSE
       )
-      r$sortTrees <- TRUE # No meaning in order; display nicely
-      LogComment("Overwrite any previous trees with results")
-      UpdateAllTrees(newTrees)
+      r$searchDataHash <- r$dataHash
+      output$results <- renderText(paste0(
+        "Searching (", searchMaxRep, " replicates, ", wtType(), ")\u2026"
+      ))
       
-      updateSliderInput(session, "whichTree", min = 0L,
-                        max = length(r[["trees"]]), value = 0L)
-      
-      updateActionButton(session, "go", "Continue")
-      updateActionButton(session, "modalGo", "Continue search")
-      show("displayConfig")
+      searchTask$invoke(
+        searchDataset, startTree, searchConcavity,
+        searchStrategy, searchMaxRep, searchTargetHits,
+        searchMaxSeconds, searchPoolSub
+      )
     }
   }
   
@@ -1683,6 +1703,58 @@ server <- function(input, output, session) {
     removeModal()
     StartSearch()
   }, ignoreInit = TRUE)
+  
+  # Handle async search completion.
+  # Only searchTask$result() should be a reactive dependency;
+  # isolate everything else to prevent reactive cascade re-runs.
+  observe({
+    newTrees <- tryCatch(
+      searchTask$result(),
+      validation = function(e) {
+        # ExtendedTask signals validation when initial/running; not a real error
+        req(FALSE)
+      },
+      error = function(e) {
+        msg <- conditionMessage(e)
+        if (nzchar(msg)) {
+          Notification(paste("Search error:", msg), type = "error")
+        }
+        NULL
+      }
+    )
+    isolate({
+      # Clean up search-in-progress UI state
+      if (!is.null(r$searchNotification)) {
+        removeNotification(r$searchNotification)
+        r$searchNotification <- NULL
+        enable("go")
+        enable("modalGo")
+        enable("searchConfig")
+      }
+
+      if (is.null(newTrees)) {
+        DisplayTreeScores()
+        return()
+      }
+      if (!identical(r$dataHash, r$searchDataHash)) {
+        Notification("Dataset changed during search; results discarded.",
+                     type = "warning")
+        DisplayTreeScores()
+        return()
+      }
+
+      r$sortTrees <- TRUE
+      LogComment("Overwrite any previous trees with results")
+      UpdateAllTrees(newTrees)
+      updateSliderInput(session, "whichTree", min = 0L,
+                        max = length(r[["trees"]]), value = 0L)
+      updateActionButton(session, "go", "Continue")
+      updateActionButton(session, "modalGo", "Continue search")
+      show("displayConfig")
+      Notification("Search complete", type = "message", duration = 5)
+      r$searchCount <- r$searchCount + 1L
+    })
+  })
   
   UserRoot <- function(tree) {
     outgroupTips <- intersect(r$outgroup, tree$tip.label)
@@ -2259,8 +2331,7 @@ server <- function(input, output, session) {
                       input$neverDrop, r$outgroup,
                       input$distMeth,
                       input$concordance,
-                      silThreshold(),
-                      input$consP, input$concordance),
+                      silThreshold()),
         "cons" = list(r$treeHash, input$plotFormat,
                       r$keepNTips, input$excludedTip,
                       consP(),
@@ -2319,8 +2390,7 @@ server <- function(input, output, session) {
                     input$neverDrop, r$outgroup,
                     input$distMeth,
                     input$concordance,
-                    silThreshold(),
-                    input$consP, input$concordance),
+                    silThreshold()),
       "cons" = list(r$treeHash, input$plotFormat,
                     r$keepNTips, input$excludedTip,
                     consP(),
@@ -2330,6 +2400,7 @@ server <- function(input, output, session) {
                    whichTree(),
                    input$concordance,
                    r$outgroup,
+                   concavity(),
                    input$mapDisplay,
                    r$dataHash, r$treeHash), 
       "space" = list(r$treeHash, input$plotFormat,
@@ -2536,7 +2607,7 @@ server <- function(input, output, session) {
     neighbs <- min(10L, length(r$trees) / 2)
     future_promise(
       TreeDist::MappingQuality(dstnc, dist(mppng), neighbs),
-      seed = NULL) %...>% QualityPlot
+      seed = TRUE) %...>% QualityPlot
   }, cacheKeyExpr = {
     list(r$treeHash, input$distMeth, dims())
   },
@@ -3671,8 +3742,9 @@ server <- function(input, output, session) {
     if (file.exists(cmdLogFile)) {
       unlink(cmdLogFile)
     }
-    unlink(DataFileName("*"))
-    unlink(TreeFileName("*"))
+    # Clean cached input files from tempdir (data, tree, and excel)
+    unlink(list.files(tempdir(), pattern = "^(data|tree|excel)File-",
+                      full.names = TRUE))
     if (logging) {
       LogMsg("Session has ended")
       on.exit(close(logMsgFile))
