@@ -35,3 +35,7 @@ results-*
 inst/DELETE*
 *.bak
 /.agent*
+/agent-*.md
+/to-do.md
+/coordination.md
+/.pgo-data

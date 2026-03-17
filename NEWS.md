@@ -1,5 +1,84 @@
 # TreeSearch 1.8.0.9000 (2026-02-05)
 
+## C++ search engine
+
+`MaximizeParsimony()` is rewritten from the ground up with a native C++ search
+engine, replacing the R-loop/MorphyLib backend for equal weights, implied
+weights, and profile parsimony.  Typical searches are an order of magnitude
+faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
+
+### New features
+
+- **Multi-replicate driven search** pipeline: random Wagner tree → TBR →
+  sectorial search (XSS, RSS, CSS) → ratchet → drift → tree fusing →
+  final TBR.
+- **Parallel search** via `nThreads`: replicates run on independent threads
+  with a shared tree pool.
+- **Timeout** via `maxSeconds`.
+- **User-supplied starting tree**: when a `tree` argument is provided, the
+  first replicate begins from that topology; subsequent replicates use
+  random Wagner trees.
+- **Adaptive strategy presets** via `strategy`: `"auto"` (default) selects
+  `"sprint"`, `"default"`, or `"thorough"` based on the number of tips.
+  Explicit parameters always override preset values.
+- **Profile parsimony** runs natively in C++; no longer delegates to
+  `Morphy()`.
+- **Topological constraints** enforced natively in C++ (including during
+  Wagner tree construction and sectorial search).
+- **Per-phase timing** returned as a `timings` attribute on the result.
+
+### New parameters for `MaximizeParsimony()`
+
+- `strategy` — `"auto"` (default), `"sprint"`, `"default"`, `"thorough"`,
+  or `"none"`.
+- `nThreads` — number of parallel worker threads (default 1).
+- `maxSeconds` — wall-clock timeout (0 = no limit).
+- `sprFirst` — run SPR before TBR in each replicate.
+- `ratchetPerturbMode`, `ratchetPerturbMaxMoves`, `ratchetAdaptive` —
+  configure ratchet perturbation (zero-weight, upweight, mixed, adaptive).
+- `driftCycles`, `driftAfdLimit`, `driftRfdLimit` — drift search parameters.
+- `xssRounds`, `xssPartitions`, `rssRounds`, `cssRounds`, `cssPartitions`,
+  `sectorMinSize`, `sectorMaxSize` — sectorial search parameters.
+- `fuseInterval`, `fuseAcceptEqual` — tree fusing parameters.
+- `poolMaxSize`, `poolSuboptimal` — tree pool management.
+- `tbrMaxHits`, `wagnerStarts`, `tabuSize`.
+- `progressCallback` — R function called after each replicate (for custom
+  progress reporting).
+
+### Batch resampling
+
+- `Resample()` gains `nReplicates` and `nThreads` parameters for batch and
+  parallel jackknife/bootstrap resampling via a single C++ call.
+- `SuccessiveApproximations()` gains `concavity` and `constraint` parameters.
+
+## Scoring
+
+- `TreeLength()` and `CharacterLength()` / `FastCharacterLength()` use the
+  C++ engine for all scoring modes (equal weights, implied weights, profile
+  parsimony).
+
+## Function rename
+
+- The previous `MaximizeParsimony()` (R-loop search using MorphyLib) has
+  been renamed to `Morphy()`.
+- `MaximizeParsimony()` now refers to the C++ driven search.
+- `MaximizeParsimony2()` is a deprecated alias for `MaximizeParsimony()`.
+- `TaxonInfluence()` now uses `MaximizeParsimony()` internally.
+- `AdditionTree()` now uses the C++ Wagner tree engine, with native support
+  for implied weights, profile parsimony, and constraints.
+
+## Bug fixes
+
+- Fix output trees from `MaximizeParsimony()` having invalid preorder
+  numbering (affected `DropTip()`, distance calculations, and plotting).
+- Fix `fuseInterval = 0` causing a crash (division by zero).
+- Fix `is_uninformative()` misclassifying ambiguous characters as
+  uninformative.
+- Fix `compute_fixed_steps()` undercount for all-ambiguous characters.
+- Fix IW scoring with missing `min_steps` offset.
+
+## Other improvements
+
 - New parameters for flexible plotting of `QALegend()`.
 - `ConcordanceTable()` gains `plot` parameter.
 
