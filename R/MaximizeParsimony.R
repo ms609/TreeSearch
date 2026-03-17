@@ -71,9 +71,9 @@
 }
 
 # Strategy presets for adaptive search (Phase 6E).
-# Used by .ApplyStrategy() when the user sets strategy = "auto" or a named preset.
+# Each is a SearchControl object.
 .StrategyPresets <- list(
-  sprint = list(
+  sprint = SearchControl(
     tbrMaxHits = 1L, ratchetCycles = 3L, ratchetPerturbProb = 0.04,
     ratchetPerturbMode = 0L, ratchetAdaptive = FALSE,
     driftCycles = 0L, xssRounds = 1L, xssPartitions = 4L,
@@ -82,7 +82,7 @@
     fuseInterval = 5L, fuseAcceptEqual = FALSE,
     tabuSize = 0L, wagnerStarts = 1L
   ),
-  default = list(
+  default = SearchControl(
     tbrMaxHits = 1L, ratchetCycles = 5L, ratchetPerturbProb = 0.04,
     ratchetPerturbMode = 0L, ratchetAdaptive = FALSE,
     driftCycles = 2L, xssRounds = 3L, xssPartitions = 4L,
@@ -91,7 +91,7 @@
     fuseInterval = 3L, fuseAcceptEqual = FALSE,
     tabuSize = 100L, wagnerStarts = 1L
   ),
-  thorough = list(
+  thorough = SearchControl(
     tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.04,
     ratchetPerturbMode = 2L, ratchetAdaptive = TRUE,
     driftCycles = 12L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
@@ -111,6 +111,9 @@
   else if (nTip <= 60L) "default"
   else "thorough"
 }
+
+# Names of all SearchControl fields
+.controlFields <- names(SearchControl())
 
 #' Find most parsimonious trees
 #'
@@ -174,60 +177,16 @@
 #'       datasets where sprint/default may miss the global optimum.}
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }
-#'   Explicit parameter values always override the preset; for example,
-#'   `strategy = "sprint", ratchetCycles = 10L` uses sprint defaults for
-#'   everything except `ratchetCycles`.
+#'   Explicit `control` fields always override the preset; for example,
+#'   `strategy = "sprint", control = SearchControl(ratchetCycles = 10L)` uses
+#'   sprint defaults for everything except `ratchetCycles`.
 #' @param maxReplicates Integer: maximum number of independent search
 #'   replicates (default: 100).
 #' @param targetHits Integer: stop when the best score has been found
 #'   independently this many times (default: `max(10, NTip / 5)`).
-#' @param tbrMaxHits Integer: within ratchet/drift TBR phases, the number
-#'   of equal-score trees to accept before stopping.
-#' @param ratchetCycles Integer: number of ratchet perturbation cycles
-#'   per replicate.
-#' @param ratchetPerturbProb Numeric: probability of zeroing each
-#'   character's weight during ratchet perturbation.
-#' @param ratchetPerturbMode Integer: perturbation mode. `0` = zero only
-#'   (default), `1` = upweight only (double selected characters), `2` = mixed
-#'   (zero some, double others).
-#' @param ratchetPerturbMaxMoves Integer: maximum TBR moves during the
-#'   perturbed search phase. `0` = automatic (default).
-#' @param ratchetAdaptive Logical: if `TRUE`, automatically adjust
-#'   perturbation probability based on escape rate.
-#' @param driftCycles Integer: number of drift cycles per replicate
-#'   (alternating suboptimal and equal-score phases).
-#' @param driftAfdLimit Integer: maximum absolute fit difference (steps)
-#'   for accepting suboptimal drift moves.
-#' @param driftRfdLimit Numeric: maximum relative fit difference for
-#'   accepting suboptimal drift moves.
-#' @param xssRounds Integer: number of exclusive sectorial search rounds.
-#' @param xssPartitions Integer: number of partitions for XSS.
-#' @param rssRounds Integer: number of random sectorial search rounds after
-#'   XSS. Set to `0` to disable RSS.
-#' @param cssRounds Integer: number of constrained sectorial search (CSS)
-#'   rounds. CSS runs sector-restricted TBR on the full tree (no HTU
-#'   approximation), polishing improvements from XSS/RSS.
-#'   Set to `0` to disable CSS.
-#' @param cssPartitions Integer: number of partitions for CSS.
-#' @param sectorMinSize,sectorMaxSize Integer: minimum and maximum clade
-#'   sizes for sectorial search.
-#' @param fuseInterval Integer: fuse pool trees every this many replicates.
-#' @param fuseAcceptEqual Logical: accept equally-scoring fused trees?
-#' @param poolMaxSize Integer: maximum number of trees retained in pool.
-#' @param poolSuboptimal Numeric: retain trees within this many steps of
-#'   the best score (0 = optimal only).
 #' @param maxSeconds Numeric: maximum wall-clock time in seconds for the
 #'   search. When reached, the current replicate finishes and the search
 #'   stops. `0` (default) means no time limit.
-#' @param tabuSize Integer: size of the tabu list for TBR plateau exploration.
-#'   Prevents cycling through recently visited topologies when accepting
-#'   equal-score moves. Set to `0` to disable. Default 100.
-#' @param wagnerStarts Integer: number of random Wagner starting trees per
-#'   replicate. The best-scoring tree is kept before proceeding to TBR.
-#'   Default 1.
-#' @param sprFirst Logical: if `TRUE`, run an SPR search before TBR in each
-#'   replicate. SPR is faster per move and may reach a good starting point
-#'   for TBR more efficiently. Default `FALSE`.
 #' @param nThreads Integer: number of parallel threads for search replicates.
 #'   \describe{
 #'     \item{`1` (default)}{Serial execution -- identical to previous behavior.}
@@ -250,6 +209,16 @@
 #'   a `cli` progress bar is created automatically.
 #'   Supply a custom function (e.g. using [shiny::setProgress()])
 #'   to control progress display.
+#' @param control A [`SearchControl`] object (or a named list) of low-level
+#'   search parameters.  Most users can rely on the `strategy` presets and
+#'   ignore this argument; see [`SearchControl()`] for full documentation
+#'   of individual fields.
+#' @param ... Backward compatibility: individual control parameters (e.g.
+#'   `ratchetCycles = 10L`) may still be passed as named arguments.
+#'   These override the corresponding `control` fields and the strategy
+#'   preset.
+#'   Legacy `Morphy()`-style parameters (e.g. `ratchIter`, `tbrIter`) are
+#'   detected and forwarded to [`Morphy()`] with a deprecation warning.
 #'
 #' @return A `multiPhylo` object containing the best tree(s) found, with
 #'   attributes:
@@ -277,6 +246,7 @@
 #' @family tree scoring
 #' @seealso [`Morphy()`] for fine-grained control over the R-level search loop.
 #' [`Resample()`] for jackknife and bootstrap resampling.
+#' [`SearchControl()`] for expert-level tuning of the search heuristics.
 #' @references
 #' \insertAllCited{}
 #' @importFrom TreeTools NTip RandomTree Renumber RenumberTips RootTree MakeTreeBinary
@@ -292,41 +262,15 @@ MaximizeParsimony <- function(
     strategy = "auto",
     maxReplicates = 100L,
     targetHits = max(10L, as.integer(NTip(dataset) / 5)),
-    tbrMaxHits = 1L,
-    ratchetCycles = 5L,
-    ratchetPerturbProb = 0.04,
-    ratchetPerturbMode = 0L,
-    ratchetPerturbMaxMoves = 0L,
-    ratchetAdaptive = FALSE,
-    driftCycles = 2L,
-    driftAfdLimit = 3L,
-    driftRfdLimit = 0.1,
-    xssRounds = 3L,
-    xssPartitions = 4L,
-    rssRounds = 1L,
-    cssRounds = 0L,
-    cssPartitions = 4L,
-    sectorMinSize = 6L,
-    sectorMaxSize = 50L,
-    fuseInterval = 3L,
-    fuseAcceptEqual = FALSE,
-    poolMaxSize = 100L,
-    poolSuboptimal = 0.0,
     maxSeconds = 0,
-    tabuSize = 100L,
-    wagnerStarts = 1L,
-    sprFirst = FALSE,
     nThreads = 1L,
     verbosity = 1L,
     progressCallback = NULL,
+    control = SearchControl(),
     ...
 ) {
 
   # --- Backward compatibility: detect Morphy()-style parameters ---
-  # Prior to v2.0, MaximizeParsimony() was the function now called Morphy().
-  # If a user passes Morphy-specific parameters, delegate to Morphy() with a
-
-  # deprecation warning. This shim is scheduled for removal in 2028.
   dots <- list(...)
   .morphyParams <- c("ratchIter", "tbrIter", "startIter", "finalIter",
                       "maxHits", "maxTime", "quickHits", "ratchEW",
@@ -346,7 +290,6 @@ MaximizeParsimony <- function(
         "  See ?Morphy and ?MaximizeParsimony for details."
       )
     )
-    # Build Morphy() call: forward shared + legacy params
     morphyArgs <- dots
     morphyArgs$dataset <- dataset
     if (!missing(tree)) morphyArgs$tree <- tree
@@ -355,9 +298,24 @@ MaximizeParsimony <- function(
     if (!missing(verbosity)) morphyArgs$verbosity <- verbosity
     return(do.call(Morphy, morphyArgs))
   }
-  if (length(dots)) {
+
+  # --- Resolve control: merge control + ... overrides ---
+  # Coerce a plain list to SearchControl
+  if (!inherits(control, "SearchControl")) {
+    control <- do.call(SearchControl, control)
+  }
+
+  # Named ... args that match SearchControl fields override `control`
+  controlDots <- dots[intersect(names(dots), .controlFields)]
+  otherDots <- dots[setdiff(names(dots), .controlFields)]
+  if (length(controlDots)) {
+    for (nm in names(controlDots)) {
+      control[[nm]] <- controlDots[[nm]]
+    }
+  }
+  if (length(otherDots)) {
     warning("Unknown arguments ignored: ",
-            paste0(sQuote(names(dots)), collapse = ", "))
+            paste0(sQuote(names(otherDots)), collapse = ", "))
   }
 
   # --- Apply strategy preset ---
@@ -367,12 +325,24 @@ MaximizeParsimony <- function(
     }
     preset <- .StrategyPresets[[strategy]]
     if (!is.null(preset)) {
-      # Apply preset values for any parameter the user didn't explicitly set.
-      # sys.call() tells us which args were explicitly passed.
-      explicit <- names(match.call())
+      # Determine which control fields the user explicitly set.
+      # Fields are "explicit" if:
+      #   (a) passed via ... (already merged into control above), OR
+      #   (b) control was explicitly supplied and differs from SearchControl()
+      defaults <- SearchControl()
+      explicit_via_dots <- names(controlDots)
+      explicit_via_control <- if ("control" %in% names(match.call())) {
+        # User passed control = SearchControl(...) — honour all fields in it
+        names(control)
+      } else {
+        character(0)
+      }
+      explicit <- union(explicit_via_dots, explicit_via_control)
+
+      # Apply preset values for any field the user didn't explicitly set
       for (nm in names(preset)) {
         if (!(nm %in% explicit)) {
-          assign(nm, preset[[nm]])
+          control[[nm]] <- preset[[nm]]
         }
       }
       if (verbosity >= 1L) {
@@ -441,11 +411,6 @@ MaximizeParsimony <- function(
   }
 
   # --- Starting tree ---
-  # When the user supplies a tree, it is used as the starting topology for
-
-  # the first replicate (warm-start).  Subsequent replicates use random
-  # Wagner trees as usual.  When no tree is supplied, all replicates start
-  # from Wagner trees.
   userTree <- !missing(tree)
   if (!userTree) {
     tree <- TreeTools::RandomTree(nTip, root = TRUE)
@@ -524,6 +489,8 @@ MaximizeParsimony <- function(
   }
 
   # --- Run C++ driven search ---
+  # Read all control fields from the resolved control object
+  ctrl <- control
   searchArgs <- list(
     contrast = contrast,
     tip_data = tip_data,
@@ -531,36 +498,36 @@ MaximizeParsimony <- function(
     levels = levels,
     maxReplicates = as.integer(maxReplicates),
     targetHits = as.integer(targetHits),
-    tbrMaxHits = as.integer(tbrMaxHits),
-    ratchetCycles = as.integer(ratchetCycles),
-    ratchetPerturbProb = as.double(ratchetPerturbProb),
-    ratchetPerturbMode = as.integer(ratchetPerturbMode),
-    ratchetPerturbMaxMoves = as.integer(ratchetPerturbMaxMoves),
-    ratchetAdaptive = as.logical(ratchetAdaptive),
-    driftCycles = as.integer(driftCycles),
-    driftAfdLimit = as.integer(driftAfdLimit),
-    driftRfdLimit = as.double(driftRfdLimit),
-    xssRounds = as.integer(xssRounds),
-    xssPartitions = as.integer(xssPartitions),
-    rssRounds = as.integer(rssRounds),
-    cssRounds = as.integer(cssRounds),
-    cssPartitions = as.integer(cssPartitions),
-    sectorMinSize = as.integer(sectorMinSize),
-    sectorMaxSize = as.integer(sectorMaxSize),
-    fuseInterval = as.integer(fuseInterval),
-    fuseAcceptEqual = as.logical(fuseAcceptEqual),
-    poolMaxSize = as.integer(poolMaxSize),
-    poolSuboptimal = as.double(poolSuboptimal),
+    tbrMaxHits = as.integer(ctrl$tbrMaxHits),
+    ratchetCycles = as.integer(ctrl$ratchetCycles),
+    ratchetPerturbProb = as.double(ctrl$ratchetPerturbProb),
+    ratchetPerturbMode = as.integer(ctrl$ratchetPerturbMode),
+    ratchetPerturbMaxMoves = as.integer(ctrl$ratchetPerturbMaxMoves),
+    ratchetAdaptive = as.logical(ctrl$ratchetAdaptive),
+    driftCycles = as.integer(ctrl$driftCycles),
+    driftAfdLimit = as.integer(ctrl$driftAfdLimit),
+    driftRfdLimit = as.double(ctrl$driftRfdLimit),
+    xssRounds = as.integer(ctrl$xssRounds),
+    xssPartitions = as.integer(ctrl$xssPartitions),
+    rssRounds = as.integer(ctrl$rssRounds),
+    cssRounds = as.integer(ctrl$cssRounds),
+    cssPartitions = as.integer(ctrl$cssPartitions),
+    sectorMinSize = as.integer(ctrl$sectorMinSize),
+    sectorMaxSize = as.integer(ctrl$sectorMaxSize),
+    fuseInterval = as.integer(ctrl$fuseInterval),
+    fuseAcceptEqual = as.logical(ctrl$fuseAcceptEqual),
+    poolMaxSize = as.integer(ctrl$poolMaxSize),
+    poolSuboptimal = as.double(ctrl$poolSuboptimal),
     maxSeconds = as.double(maxSeconds),
-    tabuSize = as.integer(tabuSize),
-    wagnerStarts = as.integer(wagnerStarts),
+    tabuSize = as.integer(ctrl$tabuSize),
+    wagnerStarts = as.integer(ctrl$wagnerStarts),
     verbosity = as.integer(verbosity),
     min_steps = if (is.finite(concavity)) minSteps else integer(0),
     concavity = as.double(concavity),
     progressCallback = progressCallback,
     nThreads = as.integer(nThreads),
     startEdge = if (userTree) tree[["edge"]] else NULL,
-    sprFirst = as.logical(sprFirst)
+    sprFirst = as.logical(ctrl$sprFirst)
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs))
 
@@ -604,10 +571,6 @@ MaximizeParsimony <- function(
 
 #' @rdname MaximizeParsimony
 #' @usage MaximizeParsimony2(...)
-#' @param ... For `MaximizeParsimony()`: legacy parameters from the
-#'   pre-2.0 interface (e.g.\sspace{}`ratchIter`, `tbrIter`) are detected and
-#'   forwarded to [`Morphy()`] with a deprecation warning.
-#'   For `MaximizeParsimony2()`: arguments passed to `MaximizeParsimony()`.
 #' @section Deprecated:
 #' `MaximizeParsimony2()` is a deprecated alias for `MaximizeParsimony()`.
 #' @export

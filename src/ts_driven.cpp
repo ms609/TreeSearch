@@ -233,13 +233,11 @@ ReplicateResult run_single_replicate(
     return result;
   }
 
-  // 6. Final TBR polish — collect equal-score trees into pool
+  // 6. Final TBR polish
   {
     TBRParams tp;
-    tp.accept_equal = (collect_pool != nullptr);
-    tp.max_hits = collect_pool ? 100 : 1;
     tp.tabu_size = params.tabu_size;
-    tbr_search(result.tree, ds, tp, cd, nullptr, collect_pool);
+    tbr_search(result.tree, ds, tp, cd);
   }
   result.timings.final_tbr_ms = ph_lap();
   if (verbosity >= 2) {
@@ -327,7 +325,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
     // Run the single-replicate pipeline
     ReplicateResult rep_result = run_single_replicate(
-        ds, params, cd, check_timeout, params.verbosity, start_ptr, &pool);
+        ds, params, cd, check_timeout, params.verbosity, start_ptr);
 
     result.timings += rep_result.timings;
 
@@ -406,6 +404,22 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   }
 
 finish:
+
+  // 7. MPT enumeration: TBR plateau walk from the best tree to discover
+  //    additional equal-score topologies.  This is essential because each
+  //    replicate only contributes one tree to the pool.
+  if (pool.size() > 0 && !result.timed_out) {
+    TreeState enum_tree = pool.best().tree;
+    TBRParams tp;
+    tp.accept_equal = true;
+    tp.max_hits = std::max(100, pool.max_size);
+    tp.tabu_size = params.tabu_size > 0 ? params.tabu_size : 100;
+    tbr_search(enum_tree, ds, tp, cd, nullptr, &pool);
+    if (params.verbosity >= 2) {
+      Rprintf("MPT enumeration: %d trees in pool\n", pool.size());
+    }
+  }
+
   result.hits_to_best = pool.hits_to_best();
   result.pool_size = pool.size();
 
