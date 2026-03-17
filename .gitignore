@@ -38,4 +38,6 @@ inst/DELETE*
 /agent-*.md
 /to-do.md
 /coordination.md
-/.pgo-data
+/.*-data
+/TreeSearch.Rcheck
+TreeSearch_*.tar.gz
