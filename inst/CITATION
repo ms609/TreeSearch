@@ -8,8 +8,8 @@ citHeader(paste0(
     "TreeSearch v", meta$Version, " (Smith 2023), which uses an approximate correction for ",
     " inapplicable data (Brazeau et al. 2019)'. ",
     "The GUI recommends further citations for each method it employs."
-  )
-              
+  ))
+
 bibentry(
   bibtype = "Article",
   key = "Brazeau2019",
@@ -66,7 +66,6 @@ bibentry(
      
   textVersion = paste0(
     "Smith (2023). TreeSearch: morphological phylogenetic analysis in R. ",
-    "R journal 14:305-315. doi:10.32614/RJ-2023-019
-.32614/RJ-2023-019"
+    "R journal 14:305-315. doi:10.32614/RJ-2023-019"
   )
 )
