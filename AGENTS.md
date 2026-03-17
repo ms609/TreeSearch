@@ -75,6 +75,93 @@ When you finish a step or phase, **always update**:
 
 Do not leave documentation updates for a later step or another agent.
 
+## Multi-agent workflow protocol
+
+### Assignment
+
+When the user types `/assign X`, the agent takes ownership of letter X and
+follows this sequence:
+
+1. **Read `agent-X.md`** — check for an in-progress task.
+2. **If a task is in progress:** Resume it. Read the progress notes carefully,
+   understand where the previous session left off, and continue from there.
+3. **If no task is in progress (status IDLE):** Read `to-do.md`, claim the
+   highest-priority OPEN task by setting its status to `ASSIGNED (X)`, and
+   update `agent-X.md` with the task info.
+4. **Set the conversation name** to `Agent X: <brief task description>` via
+   the `CONVERSATIONSUMMARY` tag. Example:
+   `<CONVERSATIONSUMMARY>Agent A: Phase 6A timing instrumentation</CONVERSATIONSUMMARY>`
+   Keep this updated if the task changes.
+
+### During work
+
+- **Update `agent-X.md` after every significant step** — not at the end of
+  the session. This file is the crash-recovery record. If RStudio restarts,
+  the conversation history is lost; `agent-X.md` is the sole record.
+- Progress notes should be detailed enough that a fresh agent instance can
+  pick up exactly where you left off: what's done, what's next, key decisions,
+  files modified, any partial state.
+- All work (build, test, benchmark) uses `.agent-X/` as the library directory.
+
+### On task completion
+
+1. Move the task row from Active to Completed in `to-do.md` (with agent
+   letter and date).
+2. Update `agent-X.md`: set status to IDLE, clear the task fields, summarize
+   what was accomplished.
+3. Append a section to `AGENTS.md` documenting the work (as per the existing
+   Documentation rules above).
+4. Update `coordination.md` if the work affects strategic objectives.
+5. Then take the next highest-priority OPEN task from `to-do.md`.
+
+### Standing tasks
+
+Three standing tasks are always present in `to-do.md`:
+
+| ID | Type | Expertise file |
+|----|------|---------------|
+| S-RED | Red-team review | `.positai/expertise/red-team.md` |
+| S-PROF | Performance profiling | `.positai/expertise/profiling.md` |
+| S-COORD | Coordination review | `.positai/expertise/coordination.md` |
+
+Their effective priority is dynamic based on how many specific OPEN tasks
+remain:
+- ≥6 OPEN specific tasks → standing tasks are P3
+- 3–5 OPEN specific tasks → standing tasks are P2
+- <3 OPEN specific tasks → standing tasks are P1
+
+When you take a standing task, read the corresponding expertise file for
+methodology. On completion, reset the standing task to OPEN (it recycles).
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `to-do.md` | Task queue — claim and complete tasks here |
+| `coordination.md` | Strategic plan — objectives, agent status, decisions |
+| `agent-X.md` | Your progress log — update continuously |
+| `AGENTS.md` | Project conventions + completed work documentation |
+| `.positai/expertise/*.md` | Task-specific methodology for standing tasks |
+
+### Subprocess discipline
+
+**All builds, tests, and benchmarks must run in bash subprocesses** — never
+in the RStudio R session. A crashed subprocess does not take down the agent.
+
+```bash
+# Build
+R CMD INSTALL --library=.agent-X .
+
+# Test
+Rscript -e "library(TreeSearch, lib.loc='.agent-X'); testthat::test_dir('tests/testthat', filter='ts-')"
+
+# Benchmark
+Rscript -e "library(TreeSearch, lib.loc='.agent-X'); source('inst/benchmarks/bench_simd.R')"
+```
+
+Never use `runCode` for long-running operations — if the R session crashes,
+the agent session dies with it.
+
 ## Test file conventions
 
 All `tests/testthat/test-ts-*.R` files must use **`TreeSearch:::`** to
@@ -1439,3 +1526,109 @@ helper. Hot files received additional replicate/dataset count reductions.
 ### Known issue: `test-ts-simd.R` crashes on R process exit (exit code 127)
 due to MorphyLib cleanup in `morphy_ew_ref()`. All 49 tests pass before
 the crash. Pre-existing issue, not caused by this optimization.
+
+## PGO (Profile-Guided Optimization) — ✅ COMPLETE
+
+Tested GCC PGO on the C++ search engine. Build recipe documented in
+`inst/benchmarks/pgo_recipe.md`.
+
+### Results (3-run medians, GCC 13 / rtools45 / Windows x86_64):
+
+| Benchmark | Baseline (s) | PGO (s) | Speedup |
+|-----------|-------------|---------|---------|
+| Vinther EW (23 tips) | 0.240 | 0.240 | 0% |
+| Vinther IW (23 tips) | 0.170 | 0.190 | −12% |
+| Zhu EW (75 tips) | 4.010 | 3.790 | 5% |
+| Zhu IW (75 tips) | 5.340 | 4.990 | 7% |
+| Agnarsson EW (62 tips) | 2.200 | 2.080 | 5% |
+
+### Conclusions:
+- **Modest 5–7% speedup on medium datasets** where C++ hot paths dominate.
+- **No benefit on small datasets** — R overhead and startup time swamp C++ gains.
+- **Not worth shipping** — PGO requires machine-specific `.gcda` files and a
+  two-pass build process. The 5–7% speedup doesn't justify the complexity for
+  end users. Worth revisiting if targeting a specific benchmark platform.
+- **Correctness verified**: 53/53 driven search tests pass with PGO build.
+
+### Previous agent hang diagnosis:
+The PGO agent hung during the `-fprofile-use` build because GCC's PGO
+optimization passes are 2–5× slower than normal compilation. With 30+ source
+files, the build exceeded the default 120-second bash timeout. The fix is
+simply using a longer timeout (300s). No path mismatch or DLL lock issue.
+
+### Files created:
+- `inst/benchmarks/pgo_recipe.md` — Full PGO build recipe with steps
+
+### Cleanup:
+- `src/Makevars.win` removed after benchmarking (must not be left in place)
+- `.pgo-data/` contains machine-specific binary data; not version-controlled
+- `.agent-pgo/`, `.agent-pgo-gen/`, `.agent-pgo-use/` are build artifacts
+
+## Profiling round 1: R overhead + drift optimization (Agent F)
+
+Manual profile → optimize → measure loop per `profiling-pgo-plan.md`.
+
+### Profiling findings:
+
+**Per-phase timing (Zhu2013 EW, 75 tips, 3 replicates):**
+| Phase | Avg ms/rep | % of C++ time |
+|-------|-----------|---------------|
+| Drift | 365 | 39% |
+| Ratchet | 274 | 29% |
+| Initial TBR | 210 | 23% |
+| Sectorial (XSS+RSS+CSS) | 75 | 8% |
+| Final TBR + Wagner | 9 | 1% |
+
+**R overhead**: 1.48s (34% of total) caused by `AdditionTree()` in the
+`MaximizeParsimony()` wrapper — builds a full Morphy-based starting tree
+that the C++ engine never uses.
+
+**TBR inner loop**: Per-candidate indirect scoring costs 23 ns (75 tips),
+already well-optimized with SIMD, early termination, vroot cache. Near
+memory-throughput limit — hard to improve without algorithmic changes.
+
+### Optimizations applied:
+
+**1. Replace `AdditionTree()` with `RandomTree()` in R wrapper**
+(`R/MaximizeParsimony.R`): The C++ engine builds its own Wagner trees
+internally; the R starting tree is only used as a template for tip labels
+in the output. Replaced ~2s `AdditionTree()` call with ~0ms `RandomTree()`.
+
+**2. Drift subtree-size filter** (`src/ts_drift.cpp`): Ported the
+smaller-subtree-only filter from `tbr_search()` to `drift_phase()`.
+Skips clips where `subtree_size > n_tip / 2`, halving the worst-case
+candidate count. Also added postorder save/restore (avoiding O(n) DFS
+rebuild after each unclip).
+
+### Per-phase timing instrumentation:
+Added `std::chrono` phase timing to `ts_driven.cpp` — visible at
+`verbosity >= 2` as `[Nnn ms]` after each phase score.
+
+### Results (3-run medians, Zhu2013):
+
+| Benchmark | Before | After | Speedup |
+|-----------|--------|-------|---------|
+| Vinther EW (23 tips) | 0.240s | 0.160s | **33%** |
+| Vinther IW (23 tips) | 0.170s | 0.180s | ~0% |
+| Zhu EW (75 tips) | 4.010s | 2.730s | **32%** |
+| Zhu IW (75 tips) | 5.340s | 3.560s | **33%** |
+| Agnarsson EW (62 tips) | 2.200s | 1.520s | **31%** |
+
+The ~30% speedup is almost entirely from the AdditionTree fix. The drift
+optimization provides a smaller, dataset-dependent improvement.
+
+### Remaining C++ bottleneck:
+Drift (39%) and ratchet (29%) together account for 68% of C++ time. Both
+use TBR internally. The per-candidate indirect evaluation (23 ns at 75 tips)
+is near-optimal. Further gains require:
+- **Algorithmic**: SPR→TBR escalation (do SPR first, TBR only where SPR fails)
+- **Tuning**: Reduce drift/ratchet cycles (quality vs speed tradeoff → Phase 6)
+
+### Files modified:
+- `R/MaximizeParsimony.R` — Replaced `AdditionTree()` with `RandomTree()`;
+  updated docs; added `RandomTree` to `@importFrom`
+- `src/ts_driven.cpp` — Added per-phase `std::chrono` timing at verbosity ≥ 2
+- `src/ts_drift.cpp` — Subtree-size filter + postorder save/restore in
+  `drift_phase()`
+
+### Test status: drift 22/22, driven 53/53
