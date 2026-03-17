@@ -268,7 +268,7 @@ DrivenResult parallel_driven_search(
     if (params.verbosity >= 1) {
       auto st = shared_pool.status();
       int done = replicates_done.load(std::memory_order_relaxed);
-      Rprintf("[%d threads] Replicates: %d/%d | Best: %.1f | Pool: %d | Hits: %d\n",
+      Rprintf("[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d\n",
               n_threads, done, params.max_replicates,
               st.best_score, st.pool_size, st.hits_to_best);
     }
@@ -303,7 +303,7 @@ DrivenResult parallel_driven_search(
     if (result.timed_out) {
       Rprintf("Timeout reached (%.1f s)\n", params.max_seconds);
     } else if (result.hits_to_best >= params.target_hits) {
-      Rprintf("Converged: %d hits to best score %.1f (%d replicates)\n",
+      Rprintf("Converged: %d hits to best score %.5g (%d replicates)\n",
               result.hits_to_best, result.best_score,
               result.replicates_completed);
     }

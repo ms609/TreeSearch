@@ -17,9 +17,11 @@ knitr::opts_chunk$set(fig.width = 7.2, fig.asp = 0.7)
 
 "TreeSearch" is an R package that allows, among other things, 
 parsimony search on morphological datasets that contain inapplicable data,
-using the algorithm proposed by Brazeau, Guillerme and Smith [-@Brazeau2019]
-and implemented in the 'MorphyLib' C library [@Brazeau2017]
-([details](https://web.archive.org/web/20181112153144/https://cdn.rawgit.com/TGuillerme/Inapp/master/inst/gitbook/_book/index.html)).
+using the algorithm proposed by Brazeau, Guillerme and Smith [-@Brazeau2019].
+Tree search uses a purpose-built C++ engine that combines TBR rearrangements,
+the parsimony ratchet, tree drifting, sectorial search, and tree fusing into
+an efficient driven search pipeline, supporting equal weights, implied weights,
+and profile parsimony.
 
 ## Getting started
 
@@ -81,56 +83,14 @@ set.seed(0)
 
 We can conduct a basic parsimony search with:
 ```{r first-pass, message = FALSE}
-bestTrees <- Morphy(vinther)
+bestTrees <- MaximizeParsimony(vinther)
 ```
 
-It can be instructive to inspect the progress of tree search.
-
-```{r inspect-progress}
-firstHit <- attr(bestTrees, "firstHit")
-firstHit
-```
-
-Here, we can see that many of the earliest ratchet iterations were finding
-optimal trees that had not previously been visited.
-Later iterations found progressively fewer new trees, suggesting that the
-search is likely to have been effective.
-
-Advanced users might wish to visualize the progress of tree search by mapping
-tree space:
-
-```{r map-search, fig.asp = 1}
-distances <- TreeDist::ClusteringInfoDistance(bestTrees)
-searchStages <- length(firstHit)
-map <- cmdscale(distances, k = 3)
-cols <- hcl.colors(searchStages, alpha = 0.8)
-par(mar = rep(0, 4))
-TreeDist::Plot3(map,
-                col = cols[rep(seq_along(firstHit), firstHit)],
-                pch = 16, cex = 2,
-                axes = FALSE, xlab = "", ylab = "", asp = 1)
-TreeTools::MSTEdges(distances, plot = TRUE, map[, 1], map[, 2],
-                    col = "#00000030", lty = 2)
-legend("topright", names(firstHit), col = cols, pch = 16, bty = "n")
-```
-
-A quick glance suggests that early ratchet iterations captured a large part of
-the diversity of optimal trees, and that iterations aren't getting stuck in 
-local optima -- though conscientious users will 
-[ensure that the mapping of tree space is meaningful and adequate](
-https://ms609.github.io/TreeDist/articles/treespace.html)
-to detect structure before making any firm conclusions [@SmithSpace].
-
-To be thorough, we might consider continuing the search for a little longer,
-fine-tuning the search parameters:
-
-```{r second-pass, message = FALSE}
-bestTrees <- Morphy(vinther, tree = bestTrees,
-                    ratchIter = 6L,
-                    tbrIter = 4L,
-                    finalIter = 3L,
-                    maxHits = 80L)
-```
+`MaximizeParsimony()` runs multiple independent search replicates, each
+starting from a random Wagner tree and refining with TBR rearrangements,
+sectorial search, ratchet perturbation, and tree drifting.
+It automatically selects a search strategy based on dataset size
+(see `?MaximizeParsimony` for details).
 
 As it happens, the best tree for this dataset has a score of 79 under
 equal weights parsimony.
@@ -179,24 +139,25 @@ such as _Odontogriphus_ and _Wiwaxia_.
 A more instructive measure of clade support can be generated using
 Jackknife resampling.
 The `Resample()` [manual page](
-https://ms609.github.io/TreeSearch/reference/Morphy.html)
+https://ms609.github.io/TreeSearch/reference/Resample.html)
 has suggestions for appropriate numbers of replicates and search intensity, 
 and instructions for calculating bootstrap support;
 the code here gives a quick-to-run jackknife framework that can be adapted to
 the requirements of a particular dataset.
 
+`Resample()` can run multiple replicates in a single call, optionally using
+parallel threads:
+
 ```{r Jackknife-annotations}
 nReplicates <- 10
-jackTrees <- lapply(logical(nReplicates), function (x)
-  Resample(vinther, bestTrees, ratchIter = 0, tbrIter = 1, maxHits = 4,
-           verbosity = 0)
-)
+jackTrees <- Resample(vinther, bestTrees, nReplicates = nReplicates,
+                      verbosity = 0)
 
 strict <- ape::consensus(bestTrees, p = 1)
 
 par(mar = rep(0, 4), cex = 0.8)
 # Take the strict consensus of all trees for each replicate
-JackLabels(strict, lapply(jackTrees, ape::consensus)) -> XX
+JackLabels(strict, jackTrees) -> XX
 ```
 
 Jackknife and bootstrap support values give an indication of the volume of data
@@ -272,6 +233,66 @@ Brighter greens indicate that more trees contained _Wiwaxia_ in this position.
 More details on rogue taxon identification are available in the package
 ["Rogue"](https://ms609.github.io/Rogue/).
 
+## Controlling search behaviour
+
+`MaximizeParsimony()` uses sensible defaults, but offers parameters to control
+the search for users who need finer control.
+
+### Strategy presets
+
+The `strategy` parameter selects a named preset that configures the search
+pipeline.
+The default, `"auto"`, selects a preset based on dataset size:
+
+- `"sprint"` (≤ 30 taxa): fast search with minimal ratchet, no drift.
+  Good for small or simple datasets.
+- `"default"` (31--60 taxa): balanced search with ratchet, drift, and
+  sectorial search.
+- `"thorough"` (> 60 taxa): intensive search with more ratchet and drift
+  cycles, adaptive ratchet perturbation, and more sectorial search rounds.
+
+You can override the auto-selection:
+
+```r
+MaximizeParsimony(vinther, strategy = "thorough")
+```
+
+Any explicit parameter always overrides the preset.
+For example, `MaximizeParsimony(vinther, strategy = "sprint", ratchetCycles = 10L)` uses the "sprint" preset but overrides its ratchet setting.
+
+### Parallelism
+
+On multi-core machines, search replicates can run in parallel:
+
+```r
+MaximizeParsimony(largeDataset, nThreads = 4L)
+```
+
+Each replicate runs on its own thread.
+Serial mode (`nThreads = 1L`, the default) is deterministic given `set.seed()`;
+parallel mode is not, as thread scheduling varies between runs.
+
+### Time limits
+
+`maxSeconds` sets a wall-clock time limit (in seconds) after which the search
+wraps up, returning the best trees found so far:
+
+```r
+result <- MaximizeParsimony(largeDataset, maxSeconds = 60)
+attr(result, "timed_out") # TRUE if time limit was hit
+```
+
+### Warm start
+
+Supply a tree to start the first replicate from a known topology:
+
+```r
+MaximizeParsimony(vinther, tree = previousResult)
+```
+
+The first replicate refines the supplied tree; subsequent replicates still
+start from random Wagner trees.
+
 ## Implied weighting
 
 Equal weights produces trees that are less accurate and less precise than
@@ -295,7 +316,7 @@ of 3 in TNT; this low default gives poorer results in many settings
 Better still is to use multiple values and compare the results,
 perhaps in 
 [Tree space](https://ms609.github.io/TreeDist/articles/treespace.html).
-Even better (?) is to use [profile parsimony](https://ms609.github.io/TreeSearch/articles/profile.html).
+[Profile parsimony](https://ms609.github.io/TreeSearch/articles/profile.html) is a principled alternative, though not guaranteed to give better results.
 
 ## Constraining a search
 

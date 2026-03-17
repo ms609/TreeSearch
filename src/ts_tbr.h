@@ -13,6 +13,7 @@
 #include "ts_data.h"
 #include "ts_tree.h"
 #include "ts_constraint.h"
+#include "ts_pool.h"
 
 namespace ts {
 
@@ -38,7 +39,8 @@ struct TBRResult {
 TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      const TBRParams& params,
                      ConstraintData* cd = nullptr,
-                     const std::vector<bool>* sector_mask = nullptr);
+                     const std::vector<bool>* sector_mask = nullptr,
+                     TreePool* collect_pool = nullptr);
 
 } // namespace ts
 

@@ -470,7 +470,8 @@ static void precompute_vroot_cache(
 TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      const TBRParams& params,
                      ConstraintData* cd,
-                     const std::vector<bool>* sector_mask) {
+                     const std::vector<bool>* sector_mask,
+                     TreePool* collect_pool) {
   double best_score = full_rescore(tree, ds);
 
   // Initialize constraint mapping if active
@@ -856,6 +857,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           keep_going = true;
           states_valid = true;
           if (constrained) update_constraint(tree, *cd);
+          if (collect_pool) collect_pool->add(tree, actual);
         } else if (std::fabs(actual - best_score) <= eps
                    && params.accept_equal
                    && hits <= params.max_hits) {
@@ -873,6 +875,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           keep_going = true;
           states_valid = true;
           if (constrained) update_constraint(tree, *cd);
+          if (collect_pool) collect_pool->add(tree, actual);
         }
 
         if (!accepted) {

@@ -85,10 +85,10 @@ ReplicateResult run_single_replicate(
   result.timings.wagner_ms = ph_lap();
   if (verbosity >= 2) {
     if (starting_tree) {
-      Rprintf("  Starting tree score: %.1f [%.0f ms]\n", best_wag,
+      Rprintf("  Starting tree score: %.5g [%.0f ms]\n", best_wag,
               result.timings.wagner_ms);
     } else {
-      Rprintf("  Wagner tree score: %.1f [%.0f ms]%s\n", best_wag,
+      Rprintf("  Wagner tree score: %.5g [%.0f ms]%s\n", best_wag,
               result.timings.wagner_ms,
               params.wagner_starts > 1 ? " (best of multiple starts)" : "");
     }
@@ -105,7 +105,7 @@ ReplicateResult run_single_replicate(
   }
   result.timings.tbr_ms = ph_lap();
   if (verbosity >= 2) {
-    Rprintf("  TBR score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+    Rprintf("  TBR score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
             result.timings.tbr_ms);
   }
 
@@ -130,7 +130,7 @@ ReplicateResult run_single_replicate(
 
     result.timings.xss_ms = ph_lap();
     if (verbosity >= 2) {
-      Rprintf("  XSS score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+      Rprintf("  XSS score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
               result.timings.xss_ms);
     }
 
@@ -153,7 +153,7 @@ ReplicateResult run_single_replicate(
       }
       result.timings.rss_ms = ph_lap();
       if (verbosity >= 2) {
-        Rprintf("  RSS score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+        Rprintf("  RSS score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
                 result.timings.rss_ms);
       }
     }
@@ -168,7 +168,7 @@ ReplicateResult run_single_replicate(
 
       result.timings.css_ms = ph_lap();
       if (verbosity >= 2) {
-        Rprintf("  CSS score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+        Rprintf("  CSS score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
                 result.timings.css_ms);
       }
 
@@ -200,7 +200,7 @@ ReplicateResult run_single_replicate(
   }
   result.timings.ratchet_ms = ph_lap();
   if (verbosity >= 2) {
-    Rprintf("  Ratchet score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+    Rprintf("  Ratchet score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
             result.timings.ratchet_ms);
   }
 
@@ -222,7 +222,7 @@ ReplicateResult run_single_replicate(
 
     result.timings.drift_ms = ph_lap();
     if (verbosity >= 2) {
-      Rprintf("  Drift score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+      Rprintf("  Drift score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
               result.timings.drift_ms);
     }
   }
@@ -233,15 +233,17 @@ ReplicateResult run_single_replicate(
     return result;
   }
 
-  // 6. Final TBR polish
+  // 6. Final TBR polish — collect equal-score trees into pool
   {
     TBRParams tp;
+    tp.accept_equal = (collect_pool != nullptr);
+    tp.max_hits = collect_pool ? 100 : 1;
     tp.tabu_size = params.tabu_size;
-    tbr_search(result.tree, ds, tp, cd);
+    tbr_search(result.tree, ds, tp, cd, nullptr, collect_pool);
   }
   result.timings.final_tbr_ms = ph_lap();
   if (verbosity >= 2) {
-    Rprintf("  Final TBR score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+    Rprintf("  Final TBR score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
             result.timings.final_tbr_ms);
   }
 
@@ -304,7 +306,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       } else {
         Rprintf("Replicate %d/%d", rep1, params.max_replicates);
         if (pool.size() > 0) {
-          Rprintf(" (best: %.1f, pool: %d, hits: %d)",
+          Rprintf(" (best: %.5g, pool: %d, hits: %d)",
                   pool.best_score(), pool.size(), pool.hits_to_best());
         }
         Rprintf("\n");
@@ -325,7 +327,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
     // Run the single-replicate pipeline
     ReplicateResult rep_result = run_single_replicate(
-        ds, params, cd, check_timeout, params.verbosity, start_ptr);
+        ds, params, cd, check_timeout, params.verbosity, start_ptr, &pool);
 
     result.timings += rep_result.timings;
 
@@ -373,7 +375,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
           if (has_callback) {
             report("fuse", 1, fused_score, rep1);
           } else {
-            Rprintf("  Fuse improved: %.1f -> %.1f\n",
+            Rprintf("  Fuse improved: %.5g -> %.5g\n",
                     best_before, fused_score);
           }
         }
@@ -390,7 +392,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     if (pool.hits_to_best() >= params.target_hits) {
       if (params.verbosity >= 1) {
         if (!has_callback) {
-          Rprintf("Converged: %d hits to best score %.1f\n",
+          Rprintf("Converged: %d hits to best score %.5g\n",
                   pool.hits_to_best(), pool.best_score());
         }
       }
@@ -421,7 +423,7 @@ finish:
     pi.replicate = result.replicates_completed;
     params.progress_callback(pi);
   } else if (result.timed_out && params.verbosity >= 1) {
-    Rprintf("Timeout reached (%.1f s)\n", params.max_seconds);
+    Rprintf("Timeout reached (%.5g s)\n", params.max_seconds);
   }
 
   return result;

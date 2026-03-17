@@ -13,6 +13,12 @@ vignette: >
 
 ## Using custom optimality criteria
 
+> **For standard parsimony searches** (equal weights, implied weights, or
+> profile parsimony), use `MaximizeParsimony()` — it is much faster and
+> easier. See the [tree search vignette](tree-search.html).
+> The functions below (`TreeSearch()`, `Ratchet()`) are for **custom
+> optimality criteria only**.
+
 "TreeSearch" can be used to search for trees that are optimal under 
 user-specified criteria [e.g. @Hopkins2021].
 
@@ -107,6 +113,11 @@ PlotTree(result)
 
 
 ## Searching using implied weights
+
+> **Note:** If you simply want to run an implied weights search, use
+> `MaximizeParsimony(dataset, concavity = k)`, which is much faster and
+> easier.  The example below demonstrates the _custom optimality criteria
+> framework_ using implied weights as a familiar worked example.
 
 Now we consider a more complex case in which a scorer
 must undergo a time-consuming initialization before tree search can begin,
@@ -240,10 +251,10 @@ ratchetTree <- Ratchet(tree = iwTree, dataset = dataset,
 
 It would be sensible to use much larger values of `ratchIter`, `ratchHits`,
 `searchIter` and `searchHits` to be confident of locating an optimal tree.
-And note that in this specific case, 
-implied weights tree search with the parsimony ratchet is implemented
-much more efficiently with `MaximizeParsimony(concavity = k)`,
-which uses the C++ search engine.
+Remember that for real implied weights analyses,
+`MaximizeParsimony(dataset, concavity = k)` is faster, easier, and uses the
+full driven search pipeline (see the
+[tree search vignette](tree-search.html#implied-weighting)).
 
 Hopefully these examples give a template from which you are able to construct
 your own optimality criteria.  The maintainer is happy to answer questions via
