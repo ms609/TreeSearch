@@ -83,6 +83,37 @@ struct DrivenParams {
 
   // Number of random Wagner trees per replicate (keep best-scoring)
   int wagner_starts = 1;
+
+  // Optional starting tree edge matrix (R format: n_edge × 2, 1-based).
+  // When non-empty, replicate 0 uses this topology instead of Wagner.
+  // Subsequent replicates still use random Wagner trees.
+  std::vector<int> start_edge;  // flattened column-major [parent|child]
+  int start_n_edge = 0;
+};
+
+// Cumulative per-phase wall-clock timing (milliseconds).
+struct PhaseTimings {
+  double wagner_ms = 0.0;
+  double tbr_ms = 0.0;
+  double xss_ms = 0.0;
+  double rss_ms = 0.0;
+  double css_ms = 0.0;
+  double ratchet_ms = 0.0;
+  double drift_ms = 0.0;
+  double final_tbr_ms = 0.0;
+  double fuse_ms = 0.0;
+
+  void operator+=(const PhaseTimings& o) {
+    wagner_ms    += o.wagner_ms;
+    tbr_ms       += o.tbr_ms;
+    xss_ms       += o.xss_ms;
+    rss_ms       += o.rss_ms;
+    css_ms       += o.css_ms;
+    ratchet_ms   += o.ratchet_ms;
+    drift_ms     += o.drift_ms;
+    final_tbr_ms += o.final_tbr_ms;
+    fuse_ms      += o.fuse_ms;
+  }
 };
 
 struct DrivenResult {
@@ -91,6 +122,7 @@ struct DrivenResult {
   int hits_to_best;
   int pool_size;
   bool timed_out;                // true if search ended due to timeout
+  PhaseTimings timings;          // cumulative across all replicates
 };
 
 // Result of a single replicate (tree + score, no pool interaction).
@@ -98,18 +130,21 @@ struct ReplicateResult {
   TreeState tree;
   double score;
   bool interrupted;  // true if stopped by interrupt or timeout
+  PhaseTimings timings;          // per-replicate phase timings
 };
 
 // Run one replicate: Wagner → TBR → XSS → RSS → ratchet → drift → TBR.
 // Does NOT interact with the pool — caller handles that.
 // `check_timeout` should return true when time limit is exceeded.
 // Verbosity is the effective verbosity for this replicate (0 in parallel).
+// If `starting_tree` is non-null, use it instead of building a Wagner tree.
 ReplicateResult run_single_replicate(
     DataSet& ds,
     const DrivenParams& params,
     ConstraintData* cd,
     std::function<bool()> check_timeout,
-    int verbosity);
+    int verbosity,
+    TreeState* starting_tree = nullptr);
 
 // Run the full driven search. Returns search statistics.
 // The pool contents (all retained trees) are accessible via the pool

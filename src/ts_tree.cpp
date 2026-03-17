@@ -1,5 +1,6 @@
 #include "ts_tree.h"
 #include <algorithm>
+#include <cstring>
 
 namespace ts {
 
@@ -103,6 +104,31 @@ void TreeState::build_postorder() {
   postorder.assign(preorder.rbegin(), preorder.rend());
 }
 
+void TreeState::build_postorder_prealloc(std::vector<int>& work_stack) {
+  // Single-pass iterative postorder DFS using marker encoding.
+  // Values >= n_node are postorder markers: decode as (value - n_node).
+  postorder.clear();
+  work_stack.clear();
+  work_stack.push_back(n_tip);  // root
+
+  while (!work_stack.empty()) {
+    int entry = work_stack.back();
+    work_stack.pop_back();
+
+    if (entry >= n_node) {
+      postorder.push_back(entry - n_node);
+      continue;
+    }
+
+    if (entry < n_tip) continue;  // tip
+
+    int ni = entry - n_tip;
+    work_stack.push_back(entry + n_node);  // postorder marker
+    work_stack.push_back(right[ni]);
+    work_stack.push_back(left[ni]);
+  }
+}
+
 // ---- NNI ----
 
 TreeState::NNIUndo TreeState::nni_apply(int c, int which_child) {
@@ -149,7 +175,49 @@ int TreeState::sibling(int node) const {
   return (left[pi] == node) ? right[pi] : left[pi];
 }
 
+void TreeState::restore_prealloc_undo() {
+  if (!prealloc_undo) return;
+  auto& u = *prealloc_undo;
+  while (u.count > 0) {
+    --u.count;
+    int node = u.nodes[u.count];
+    size_t sb = static_cast<size_t>(node) * u.tw;
+    size_t cb = static_cast<size_t>(node) * u.nb;
+    size_t ub_state = static_cast<size_t>(u.count) * u.tw;
+    size_t ub_cost = static_cast<size_t>(u.count) * u.nb;
+    std::memcpy(&prelim[sb], &u.prelim[ub_state], u.tw * sizeof(uint64_t));
+    std::memcpy(&final_[sb], &u.final_[ub_state], u.tw * sizeof(uint64_t));
+    std::memcpy(&local_cost[cb], &u.local_cost[ub_cost], u.nb * sizeof(uint64_t));
+    if (u.has_na) {
+      std::memcpy(&down2[sb], &u.down2[ub_state], u.tw * sizeof(uint64_t));
+      std::memcpy(&subtree_actives[sb], &u.subtree_actives[ub_state],
+                   u.tw * sizeof(uint64_t));
+    }
+  }
+}
+
 void TreeState::save_node_state(int node) {
+  // Fast path: use pre-allocated flat buffers (no heap allocation)
+  if (prealloc_undo) {
+    auto& u = *prealloc_undo;
+    if (u.count >= u.capacity) return;
+    u.nodes[u.count] = node;
+    size_t sb = static_cast<size_t>(node) * u.tw;
+    size_t cb = static_cast<size_t>(node) * u.nb;
+    size_t ub_state = static_cast<size_t>(u.count) * u.tw;
+    size_t ub_cost = static_cast<size_t>(u.count) * u.nb;
+    std::memcpy(&u.prelim[ub_state], &prelim[sb], u.tw * sizeof(uint64_t));
+    std::memcpy(&u.final_[ub_state], &final_[sb], u.tw * sizeof(uint64_t));
+    std::memcpy(&u.local_cost[ub_cost], &local_cost[cb], u.nb * sizeof(uint64_t));
+    if (u.has_na) {
+      std::memcpy(&u.down2[ub_state], &down2[sb], u.tw * sizeof(uint64_t));
+      std::memcpy(&u.subtree_actives[ub_state], &subtree_actives[sb],
+                   u.tw * sizeof(uint64_t));
+    }
+    ++u.count;
+    return;
+  }
+
   NodeSnapshot snap;
   snap.node = node;
 

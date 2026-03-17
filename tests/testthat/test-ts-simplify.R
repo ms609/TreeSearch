@@ -313,13 +313,176 @@ test_that("Single informative character among many uninformative", {
   }
 })
 
+# ===== Ambiguous token tests (T-013, T-014, T-017) =====
+
+# Helper: build raw ts_data components with custom contrast matrix
+make_custom_data <- function(contrast, tip_tokens, weight = NULL) {
+  n_tips <- length(tip_tokens)
+  n_patterns <- 1L
+  list(
+    contrast = contrast,
+    tip_data = matrix(as.integer(tip_tokens), ncol = n_patterns),
+    weight = if (is.null(weight)) 1L else as.integer(weight),
+    levels = paste0("s", seq_len(ncol(contrast)))
+  )
+}
+
+# Helper: score a tree against custom data, reordering tips to match labels
+score_custom <- function(tree, ds, tip_names) {
+  labels <- tree$tip.label
+  # Reorder tip_data rows to match tree's tip label order
+  idx <- match(labels, tip_names)
+  td <- matrix(ds$tip_data[idx, , drop = FALSE], ncol = ncol(ds$tip_data))
+  TreeSearch:::ts_fitch_score(tree$edge, ds$contrast, td, ds$weight, ds$levels)
+}
+
+test_that("T-013: ambiguous informative character not removed", {
+  # Tips: {0,1},{0,1},{0,1},{2,3},{2,3},{2,3} — 6 tips, 2 token types
+  # This is parsimony-informative: score varies from 1 to 3 across trees.
+  contrast <- matrix(c(1,1,0,0, 0,0,1,1), nrow = 2, byrow = TRUE)
+  ds <- make_custom_data(contrast, c(1L,1L,1L,2L,2L,2L))
+  ds$levels <- c("0","1","2","3")
+
+  diag <- TreeSearch:::ts_simplify_diag(ds$contrast, ds$tip_data,
+                                         ds$weight, ds$levels)
+  # Must be kept as informative
+
+  expect_true(diag$informative)
+  expect_equal(diag$n_patterns_removed, 0L)
+  expect_equal(diag$ew_offset, 0L)
+
+  # Verify scores differ on two trees
+  tip_names <- paste0("t", 1:6)
+  tree_grouped <- ape::read.tree(text = "(((t1,t2),t3),((t4,t5),t6));")
+  tree_mixed <- ape::read.tree(text = "(((t1,t4),t2),((t3,t5),t6));")
+  s_grouped <- score_custom(tree_grouped, ds, tip_names)
+  s_mixed <- score_custom(tree_mixed, ds, tip_names)
+  expect_true(s_grouped != s_mixed,
+              info = "Ambiguous informative char should give different scores")
+})
+
+test_that("T-013: ambiguous 4-tip informative character preserved", {
+  # Smaller case: {0,1},{0,1},{2,3},{2,3} — 4 tips
+  contrast <- matrix(c(1,1,0,0, 0,0,1,1), nrow = 2, byrow = TRUE)
+  ds <- make_custom_data(contrast, c(1L,1L,2L,2L))
+  ds$levels <- c("0","1","2","3")
+
+  diag <- TreeSearch:::ts_simplify_diag(ds$contrast, ds$tip_data,
+                                         ds$weight, ds$levels)
+  expect_true(diag$informative)
+  expect_equal(diag$n_patterns_removed, 0L)
+})
+
+test_that("T-014: all-ambiguous truly uninformative gets correct fixed cost", {
+  # Tips: {0,1},{1,2},{0,2} — 3 tips, score is 1 on every tree
+  contrast <- matrix(c(1,1,0, 0,1,1, 1,0,1), nrow = 3, byrow = TRUE)
+  ds <- make_custom_data(contrast, c(1L,2L,3L))
+  ds$levels <- c("0","1","2")
+
+  diag <- TreeSearch:::ts_simplify_diag(ds$contrast, ds$tip_data,
+                                         ds$weight, ds$levels)
+  # Should be uninformative with precomputed_steps = 1
+  expect_false(diag$informative)
+  expect_equal(diag$precomputed_steps, 1L)
+  expect_equal(diag$ew_offset, 1L)
+
+  # Verify the score is correct on any tree
+  tree <- ape::read.tree(text = "((t1,t2),t3);")
+  tip_names <- paste0("t", 1:3)
+  s <- score_custom(tree, ds, tip_names)
+  expect_equal(s, 1)
+})
+
+test_that("T-014: all-ambiguous invariant character gives 0 fixed cost", {
+  # Tips: {0,1},{0,1},{0,1} — 3 tips, 0 steps always (common state 0 and 1)
+  contrast <- matrix(c(1,1), nrow = 1, byrow = TRUE)
+  ds <- make_custom_data(contrast, c(1L,1L,1L))
+  ds$levels <- c("0","1")
+
+  diag <- TreeSearch:::ts_simplify_diag(ds$contrast, ds$tip_data,
+                                         ds$weight, ds$levels)
+  expect_false(diag$informative)
+  expect_equal(diag$precomputed_steps, 0L)
+  expect_equal(diag$ew_offset, 0L)
+})
+
 test_that("Transform 3: ambiguity state removal", {
-  # Create dataset where a state appears only in ambiguity tokens:
-  # Tips: 0, 0, 1, 1, {0,2}, {1,2}
+  # 6 tips: 0, 0, 1, 1, {0,2}, {1,2}
   # State 2 only appears in ambiguity tokens alongside 0 or 1.
   # State 2 is redundant and should be removed.
-  #
-  # After removal: 0, 0, 1, 1, {0}, {1} = 001110
-  # This is informative binary.
-  skip("Ambiguity tokens require custom phyDat construction — complex to test")
+  # After removal: 0, 0, 1, 1, {0}, {1} — informative binary.
+  contrast <- matrix(c(
+    1, 0, 0,   # token 1: state 0
+    0, 1, 0,   # token 2: state 1
+    1, 0, 1,   # token 3: {0,2}
+    0, 1, 1    # token 4: {1,2}
+  ), nrow = 4, byrow = TRUE)
+  ds <- make_custom_data(contrast, c(1L,1L,2L,2L,3L,4L))
+  ds$levels <- c("0","1","2")
+
+  diag <- TreeSearch:::ts_simplify_diag(ds$contrast, ds$tip_data,
+                                         ds$weight, ds$levels)
+  # State 2 should be removed (n_states_reduced >= 1)
+  expect_gte(diag$n_states_reduced, 1L)
+  # Character should remain informative (0 and 1 each appear in 2+ tips)
+  expect_true(diag$informative)
+  # Fewer remaining states than the original 3
+  expect_lte(diag$n_states_remaining, 2L)
+})
+
+test_that("Mixed ambiguous + unambiguous: singleton removal still works", {
+  # 5 tips: 0, 0, 1, 1, {0,2}
+  # State 0: unambig in 2 tips. State 1: unambig in 2 tips. State 2: ambig only.
+  # State 2 is redundant (Transform 3). Character is informative.
+  contrast <- matrix(c(
+    1, 0, 0,   # token 1: state 0
+    0, 1, 0,   # token 2: state 1
+    1, 0, 1    # token 3: {0,2}
+  ), nrow = 3, byrow = TRUE)
+  ds <- make_custom_data(contrast, c(1L,1L,2L,2L,3L))
+  ds$levels <- c("0","1","2")
+
+  diag <- TreeSearch:::ts_simplify_diag(ds$contrast, ds$tip_data,
+                                         ds$weight, ds$levels)
+  # Character should stay informative
+  expect_true(diag$informative)
+
+  # Verify correct EW score against a known tree
+  tip_names <- paste0("t", 1:5)
+  tree <- ape::read.tree(text = "((t1,t2),((t3,t4),t5));")
+  s <- score_custom(tree, ds, tip_names)
+  # Tip 5 has {0,2}. On this tree, t1,t2 share 0; t3,t4 share 1;
+  # t5={0,2} groups with t1,t2 side -> 1 step at the root.
+  expect_equal(s, 1)
+})
+
+test_that("Ambiguous character with 2 ambig + 2 unambig tips", {
+  # 4 tips: 0, 1, {0,1}, {0,1}
+  # 0: unambig 1 tip. 1: unambig 1 tip. Both ambig tokens have both.
+  # Classical criterion: 0 states with count >= 2 -> uninformative
+  # But IS it? On any 4-tip tree, with Fitch:
+  # A tip with {0,1} can resolve to either 0 or 1. So the character
+  # should always cost 1 step (the single 0-vs-1 change).
+  # Verify with caterpillar: fwd (0,1,{01},{01}): 0∩1={} cost 1, {01}∩{01}={01},
+  # union {01}∩{01}={01} cost 0. Total=1. Rev: same. So truly uninformative.
+  contrast <- matrix(c(
+    1, 0,   # token 1: state 0
+    0, 1,   # token 2: state 1
+    1, 1    # token 3: {0,1}
+  ), nrow = 3, byrow = TRUE)
+  ds <- make_custom_data(contrast, c(1L,2L,3L,3L))
+  ds$levels <- c("0","1")
+
+  diag <- TreeSearch:::ts_simplify_diag(ds$contrast, ds$tip_data,
+                                         ds$weight, ds$levels)
+  # Should be uninformative (score is 1 on all trees)
+  expect_false(diag$informative)
+  expect_equal(diag$precomputed_steps, 1L)
+  expect_equal(diag$ew_offset, 1L)
+
+  # Verify score
+  tree <- ape::read.tree(text = "((t1,t2),(t3,t4));")
+  tip_names <- paste0("t", 1:4)
+  s <- score_custom(tree, ds, tip_names)
+  expect_equal(s, 1)
 })

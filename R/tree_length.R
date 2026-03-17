@@ -106,7 +106,6 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf) {
 #' @rdname TreeLength
 #' @importFrom TreeTools RandomTree
 #' @export
-#TODO could be cleverer still and allow TreeLength.edge
 TreeLength.numeric <- function(tree, dataset, concavity = Inf) {
   TreeLength(lapply(!logical(tree), RandomTree, tips = dataset), 
              dataset = dataset, concavity = concavity)

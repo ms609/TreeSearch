@@ -17,15 +17,14 @@
 
 namespace ts {
 
-// --- FNV-1a hash for virtual_prelim deduplication (Phase 3A) ---
+// --- Fast hash for virtual_prelim deduplication (Phase 3A) ---
+// Word-at-a-time multiply-xor hash (faster than byte-by-byte FNV-1a).
 
-static uint64_t fnv1a_hash(const uint64_t* data, int n_words) {
-  uint64_t hash = 14695981039346656037ULL;  // FNV offset basis
-  const uint8_t* bytes = reinterpret_cast<const uint8_t*>(data);
-  int n_bytes = n_words * static_cast<int>(sizeof(uint64_t));
-  for (int i = 0; i < n_bytes; ++i) {
-    hash ^= bytes[i];
-    hash *= 1099511628211ULL;  // FNV prime
+static uint64_t fast_hash(const uint64_t* data, int n_words) {
+  uint64_t hash = 14695981039346656037ULL;
+  for (int i = 0; i < n_words; ++i) {
+    hash ^= data[i];
+    hash *= 1099511628211ULL;
   }
   return hash;
 }
@@ -260,6 +259,8 @@ struct StateSnapshot {
       std::memcpy(tree.subtree_actives.data(), subtree_actives.data(),
                    state_bytes);
     }
+    // Restore postorder size AND data (clip may have shrunk the vector)
+    tree.postorder.resize(postorder.size());
     std::memcpy(tree.postorder.data(), postorder.data(),
                  postorder.size() * sizeof(int));
   }
@@ -532,12 +533,26 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   StateSnapshot state_snap;
   state_snap.allocate(tree, has_na);
 
-  // Pre-allocate postorder save buffer for clip/unclip cycle.
-  // After spr_unclip(), the topology is identical to before spr_clip(),
-  // so the postorder is the same. Restoring from saved copy avoids an
-  // O(n) rebuild per clip (Phase 3D optimization).
+  // Pre-allocated undo stack: eliminates ~50 heap allocs per clip.
+  // save_node_state() writes to flat buffers instead of allocating vectors.
+  TreeState::PreallocUndo fast_undo;
+  fast_undo.init(tree.n_internal, tree.total_words, tree.n_blocks, has_na);
+  tree.prealloc_undo = &fast_undo;
+
+  // Pre-allocated work buffer for build_postorder_prealloc
+  std::vector<int> work_stack;
+  work_stack.reserve(tree.n_node * 2);
+
+  // Pre-allocate postorder save buffer for clip/unclip cycle
   std::vector<int> saved_postorder;
   saved_postorder.reserve(tree.postorder.size());
+
+  // Pre-allocated clip_actives buffer (NA indirect evaluation)
+  std::vector<uint64_t> clip_actives_buf;
+  if (has_na) clip_actives_buf.resize(tree.total_words);
+
+  // Pre-allocated below_actives cache (NA TBR rerooting)
+  std::vector<uint64_t> below_actives_cache;
 
   TopoSnapshot snap;
   bool keep_going = true;
@@ -572,22 +587,22 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // --- Phase 1: Clip + indirect evaluation ---
 
       // Save clip subtree's actives before clipping (needed for NA indirect)
-      size_t clip_sa_base =
-          static_cast<size_t>(clip_node) * tree.total_words;
       const uint64_t* clip_actives = nullptr;
-      std::vector<uint64_t> clip_actives_buf;
       if (has_na) {
-        clip_actives_buf.assign(
-            tree.subtree_actives.begin() + clip_sa_base,
-            tree.subtree_actives.begin() + clip_sa_base + tree.total_words);
+        size_t clip_sa_base =
+            static_cast<size_t>(clip_node) * tree.total_words;
+        std::memcpy(clip_actives_buf.data(),
+                    &tree.subtree_actives[clip_sa_base],
+                    tree.total_words * sizeof(uint64_t));
         clip_actives = clip_actives_buf.data();
       }
 
       // Save postorder before clip (restored after unclip instead of rebuild)
       saved_postorder.assign(tree.postorder.begin(), tree.postorder.end());
 
+      fast_undo.clear();
       tree.spr_clip(clip_node);
-      tree.build_postorder();
+      tree.build_postorder_prealloc(work_stack);
 
       int ns = tree.clip_state.clip_sibling;
       int nz = tree.clip_state.clip_grandpar;
@@ -688,7 +703,6 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
         // For NA: precompute per-edge below_actives (OR of applicable
         // subtree_actives words for node_d of each edge)
-        std::vector<uint64_t> below_actives_cache;
         if (has_na) {
           below_actives_cache.resize(
               static_cast<size_t>(n_main) * ds.n_blocks);
@@ -716,7 +730,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // Phase 3A: Symmetry-breaking — deduplicate equivalent rerootings.
         // Seed with clip_prelim hash (SPR case already evaluated above).
         std::unordered_set<uint64_t> seen_vp_hashes;
-        seen_vp_hashes.insert(fnv1a_hash(clip_prelim, tree.total_words));
+        seen_vp_hashes.insert(fast_hash(clip_prelim, tree.total_words));
 
         for (auto& [sp, sc] : sub_edges) {
           if (sp == clip_node) continue;
@@ -733,7 +747,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           }
 
           // Hash-based dedup: skip if we've seen this virtual_prelim before
-          uint64_t vp_hash = fnv1a_hash(virtual_prelim.data(),
+          uint64_t vp_hash = fast_hash(virtual_prelim.data(),
                                          tree.total_words);
           if (!seen_vp_hashes.insert(vp_hash).second) {
             continue;  // Already evaluated an equivalent rerooting
@@ -795,6 +809,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       }
 
       // --- Phase 2: Restore original tree, verify best candidate ---
+      // Restore states from pre-allocated undo (clip_undo_stack is empty)
+      tree.restore_prealloc_undo();
       tree.spr_unclip();
       // Restore saved postorder (topology identical to pre-clip state)
       tree.postorder.assign(saved_postorder.begin(), saved_postorder.end());
@@ -817,11 +833,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         if (!ok || !validate_topology(tree)) {
           restore_topology(tree, snap);
           state_snap.restore(tree);
-          // state_snap.restore() already restored postorder via memcpy
           continue;
         }
 
-        tree.build_postorder();
+        tree.build_postorder_prealloc(work_stack);
         double actual = full_rescore(tree, ds);
 
         // Compute topology hash for tabu checking
@@ -887,6 +902,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       break;
     }
   }
+
+  tree.prealloc_undo = nullptr;
 
   // Ensure state arrays match the final tree
   if (!states_valid) {

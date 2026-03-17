@@ -351,9 +351,21 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
   }
 
+  // Compute subtree sizes for smaller-subtree filter
+  std::vector<int> subtree_sizes(tree.n_node, 0);
+  for (int i = 0; i < tree.n_tip; ++i) subtree_sizes[i] = 1;
+  for (int node : tree.postorder) {
+    int ni = node - tree.n_tip;
+    subtree_sizes[node] = subtree_sizes[tree.left[ni]]
+                        + subtree_sizes[tree.right[ni]];
+  }
+  int half_n = tree.n_tip / 2;
+
   std::vector<int> clip_candidates;
   for (int node = 0; node < tree.n_node; ++node) {
     if (node == tree.n_tip) continue;
+    // Skip clips where subtree > n/2 (same optimization as tbr_search)
+    if (subtree_sizes[node] > half_n) continue;
     clip_candidates.push_back(node);
   }
 
@@ -378,6 +390,18 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
   DriftTopoSnapshot snap;
   std::vector<uint64_t> old_local_cost;
 
+  // Pre-allocated undo stack (eliminates heap allocs in save_node_state)
+  TreeState::PreallocUndo fast_undo;
+  fast_undo.init(tree.n_internal, tree.total_words, tree.n_blocks, has_na);
+  tree.prealloc_undo = &fast_undo;
+
+  // Pre-allocated work buffer for build_postorder_prealloc
+  std::vector<int> work_stack;
+  work_stack.reserve(tree.n_node * 2);
+
+  // Save postorder for restore after unclip (avoids O(n) rebuild)
+  std::vector<int> saved_postorder = tree.postorder;
+
   std::shuffle(clip_candidates.begin(), clip_candidates.end(), rng);
 
   for (int clip_node : clip_candidates) {
@@ -396,8 +420,9 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
       clip_actives = clip_actives_buf.data();
     }
 
+    fast_undo.clear();
     tree.spr_clip(clip_node);
-    tree.build_postorder();
+    tree.build_postorder_prealloc(work_stack);
 
     int ns = tree.clip_state.clip_sibling;
     int nz = tree.clip_state.clip_grandpar;
@@ -533,8 +558,9 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     }
 
     // --- Phase 2: Restore and decide ---
+    tree.restore_prealloc_undo();
     tree.spr_unclip();
-    tree.build_postorder();
+    tree.postorder.assign(saved_postorder.begin(), saved_postorder.end());
 
     if (best_candidate >= HUGE_VAL || best_above < 0) continue;
 
@@ -636,6 +662,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     if (ts::check_interrupt()) break;
   }
 
+  tree.prealloc_undo = nullptr;
   return n_accepted;
 }
 

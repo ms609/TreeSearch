@@ -97,7 +97,8 @@
 #' @param tree (optional) A bifurcating tree of class \code{\link[ape]{phylo}},
 #'   containing only the tips listed in `dataset`, from which the search
 #'   should begin.
-#'   If unspecified, an [addition tree][AdditionTree()] will be generated.
+#'   If unspecified, a random tree will be used as a template (the C++
+#'   engine builds its own starting trees internally).
 #'   Edge lengths are not supported and will be deleted.
 #' @param concavity Determines the degree to which extra steps beyond the first
 #' are penalized.  Specify a numeric value to use implied weighting
@@ -191,6 +192,10 @@
 #'     \item{`replicates`}{Number of replicates completed.}
 #'     \item{`hits_to_best`}{Number of independent discoveries of the best
 #'       score.}
+#'     \item{`timings`}{Named numeric vector of cumulative wall-clock time
+#'       (in milliseconds) spent in each search phase across all replicates:
+#'       `wagner_ms`, `tbr_ms`, `xss_ms`, `rss_ms`, `css_ms`, `ratchet_ms`,
+#'       `drift_ms`, `final_tbr_ms`, `fuse_ms`.}
 #'   }
 #'
 #' @examples
@@ -206,7 +211,8 @@
 #' [`Resample()`] for jackknife and bootstrap resampling.
 #' @references
 #' \insertAllCited{}
-#' @importFrom TreeTools NTip RenumberTips RootTree MakeTreeBinary Preorder
+#' @importFrom TreeTools NTip RandomTree RenumberTips RootTree MakeTreeBinary
+#'   Preorder
 #' @importFrom cli cli_alert_success cli_alert_info cli_alert_warning
 #' @encoding UTF-8
 #' @export
@@ -299,8 +305,15 @@ MaximizeParsimony <- function(
   }
 
   # --- Starting tree ---
-  if (missing(tree)) {
-    tree <- AdditionTree(dataset)
+  # When the user supplies a tree, it is used as the starting topology for
+
+  # the first replicate (warm-start).  Subsequent replicates use random
+  # Wagner trees as usual.  When no tree is supplied, all replicates start
+  # from Wagner trees.
+  userTree <- !missing(tree)
+  if (!userTree) {
+    tree <- TreeTools::RandomTree(nTip, root = TRUE)
+    tree[["tip.label"]] <- names(dataset)
   } else if (inherits(tree, "multiPhylo")) {
     tree <- tree[[1L]]
   }
@@ -402,7 +415,8 @@ MaximizeParsimony <- function(
     verbosity = as.integer(verbosity),
     concavity = as.double(concavity),
     progressCallback = progressCallback,
-    nThreads = as.integer(nThreads)
+    nThreads = as.integer(nThreads),
+    startEdge = if (userTree) tree[["edge"]] else NULL
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs))
 
@@ -438,6 +452,7 @@ MaximizeParsimony <- function(
     score = result$best_score,
     replicates = result$replicates,
     hits_to_best = result$hits_to_best,
+    timings = unlist(result$timings),
     class = "multiPhylo"
   )
 }

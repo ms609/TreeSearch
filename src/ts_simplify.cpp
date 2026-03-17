@@ -1,7 +1,69 @@
 #include "ts_simplify.h"
 #include <algorithm>
+#include <numeric>
 
 namespace ts {
+
+// Run Fitch downpass on a caterpillar tree with given tip order.
+// Returns the parsimony score (number of state-change steps).
+static int fitch_caterpillar(const std::vector<uint32_t>& tips,
+                              const std::vector<int>& order,
+                              int inapp_state) {
+  uint32_t inapp_mask = (inapp_state >= 0) ? (1u << inapp_state) : 0;
+  int n = static_cast<int>(order.size());
+  if (n <= 1) return 0;
+  uint32_t prelim = tips[order[0]] & ~inapp_mask;
+  int cost = 0;
+  for (int i = 1; i < n; ++i) {
+    uint32_t tok = tips[order[i]] & ~inapp_mask;
+    uint32_t isect = prelim & tok;
+    if (isect) {
+      prelim = isect;
+    } else {
+      prelim = prelim | tok;
+      ++cost;
+    }
+  }
+  return cost;
+}
+
+// Check whether a character's parsimony score varies across trees by
+// trying multiple caterpillar orderings (forward, reverse, interleaved).
+// Returns true if the character is truly uninformative (same cost on all
+// orderings) along with the fixed cost. Returns false if any ordering
+// produces a different cost (character is informative).
+static bool verify_uninformative(const std::vector<uint32_t>& tips,
+                                  int n_tips, int inapp_state,
+                                  int& fixed_cost) {
+  // Forward order
+  std::vector<int> order(n_tips);
+  std::iota(order.begin(), order.end(), 0);
+  int cost_fwd = fitch_caterpillar(tips, order, inapp_state);
+
+  // Reverse order
+  std::reverse(order.begin(), order.end());
+  int cost_rev = fitch_caterpillar(tips, order, inapp_state);
+  if (cost_rev != cost_fwd) return false;
+
+  // Interleaved: even indices then odd indices
+  // This catches cases like {A,B},{A,B},{C,D},{C,D} where forward and
+  // reverse give the same score but interleaving separates the groups.
+  order.clear();
+  for (int i = 0; i < n_tips; i += 2) order.push_back(i);
+  for (int i = 1; i < n_tips; i += 2) order.push_back(i);
+  int cost_interleaved = fitch_caterpillar(tips, order, inapp_state);
+  if (cost_interleaved != cost_fwd) return false;
+
+  // Reverse interleaved: odd then even
+  order.clear();
+  for (int i = 1; i < n_tips; i += 2) order.push_back(i);
+  for (int i = 0; i < n_tips; i += 2) order.push_back(i);
+  int cost_rev_interleaved = fitch_caterpillar(tips, order, inapp_state);
+  if (cost_rev_interleaved != cost_fwd) return false;
+
+  fixed_cost = cost_fwd;
+  return true;
+}
 
 // Count how many tips have state s as their ONLY state (unambiguous).
 // Also count how many tips have state s in ANY token (including ambiguous).
@@ -37,9 +99,10 @@ static void count_state_occurrences(
 }
 
 // Check if a pattern is parsimony-uninformative: at most one state appears
-// in 2+ tips (unambiguously).
-static bool is_uninformative(const std::vector<int>& unambig_count,
-                              int n_states, int inapp_state) {
+// in 2+ tips (unambiguously). Only valid when all tips are unambiguous;
+// caller must use verify_uninformative() when ambiguous tokens are present.
+static bool is_uninformative_classical(const std::vector<int>& unambig_count,
+                                        int n_states, int inapp_state) {
   int informative_states = 0;
   for (int s = 0; s < n_states; ++s) {
     if (s == inapp_state) continue;
@@ -48,9 +111,24 @@ static bool is_uninformative(const std::vector<int>& unambig_count,
   return informative_states <= 1;
 }
 
+// Check if any tip has an ambiguous token (more than one applicable state).
+static bool has_ambiguous_tips(const std::vector<uint32_t>& tips,
+                                int n_tips, int n_states, int inapp_state) {
+  for (int tip = 0; tip < n_tips; ++tip) {
+    int n_set = 0;
+    for (int s = 0; s < n_states; ++s) {
+      if (s == inapp_state) continue;
+      if (tips[tip] & (1u << s)) ++n_set;
+    }
+    if (n_set > 1) return true;
+  }
+  return false;
+}
+
 // Compute fixed step count for an uninformative pattern.
-// = number of states with unambig_count >= 1, minus 1 (if any states present).
-// This is the minimum number of state changes on any tree.
+// For all-unambiguous characters: distinct states with count >= 1, minus 1.
+// When ambiguous tokens are present, the caller should use
+// verify_uninformative() which computes the exact fixed cost.
 static int compute_fixed_steps(const std::vector<int>& unambig_count,
                                 int n_states, int inapp_state) {
   int distinct = 0;
@@ -246,11 +324,27 @@ SimplificationResult simplify_patterns(
                             inapp_state, unambig_count, any_count,
                             unambig_tip_idx);
 
-    if (is_uninformative(unambig_count, n_states, inapp_state)) {
+    bool uninformative = false;
+    int fixed_steps = 0;
+
+    if (is_uninformative_classical(unambig_count, n_states, inapp_state)) {
+      if (has_ambiguous_tips(sp.tip_tokens, n_tips, n_states, inapp_state)) {
+        // Classical criterion is unreliable with ambiguous tokens.
+        // Verify by computing Fitch score on multiple caterpillar orderings.
+        uninformative = verify_uninformative(sp.tip_tokens, n_tips,
+                                              inapp_state, fixed_steps);
+      } else {
+        // All tips unambiguous — classical criterion is correct.
+        uninformative = true;
+        fixed_steps = compute_fixed_steps(unambig_count, n_states,
+                                           inapp_state);
+      }
+    }
+
+    if (uninformative) {
       // Add the fixed steps of the reduced character to the accumulated
       // singleton steps from Transform 2
-      sp.precomputed_steps += compute_fixed_steps(unambig_count, n_states,
-                                                   inapp_state);
+      sp.precomputed_steps += fixed_steps;
       sp.informative = false;
       sp.n_states_remaining = 0;
       result.n_patterns_removed++;

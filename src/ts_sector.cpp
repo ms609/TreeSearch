@@ -266,6 +266,13 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
   rd.data.pattern_freq = ds.pattern_freq;
   rd.data.concavity = ds.concavity;
 
+  // Copy scoring mode and simplification metadata
+  rd.data.scoring_mode = ds.scoring_mode;
+  rd.data.ew_offset = ds.ew_offset;
+  rd.data.precomputed_steps = ds.precomputed_steps;
+  rd.data.info_amounts = ds.info_amounts;
+  rd.data.info_max_steps = ds.info_max_steps;
+
   // Build tip states for the sector
   size_t tip_state_size = static_cast<size_t>(n_sector_tips) * ds.total_words;
   rd.data.tip_states.assign(tip_state_size, 0ULL);

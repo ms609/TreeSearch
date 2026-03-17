@@ -10,7 +10,6 @@
 #' - Where more than two states are informative (i.e. unambiguously present in
 #'   more than one taxon), states beyond the two most informative will be
 #'   ignored.
-#TODO can do something more complex like first two to one TS, second two to another   
 #' 
 #' @param dataset dataset of class \code{phyDat}
 #'
@@ -169,11 +168,6 @@ PrepareDataProfile <- function (dataset) {
   mataset <- mataset[, !dupCols, drop = FALSE]
   dataset[] <- lapply(seq_len(length(dataset)), function (i) mataset[i, ])
   
-  
-  #TODO when require R4.1: replace with
-  # info <- apply(mataset, 1, StepInformation, 
-  #               ambiguousTokens = c(qmLevel, inappLevel),
-  #               simplify = FALSE)
   info <- lapply(seq_along(mataset[1, ]), function (i) 
     StepInformation(mataset[, i], ambiguousTokens = AMBIG))
   

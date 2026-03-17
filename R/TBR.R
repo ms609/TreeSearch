@@ -102,7 +102,6 @@ TBRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
   unique(allMoves)
 }
 
-## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn TBR faster version that takes and returns parent and child
 #'  parameters
 #' @inheritParams TreeTools::NeworderPhylo
@@ -117,7 +116,7 @@ TBRSwap <- function(parent, child, nEdge = length(parent),
                     edgeToBreak = NULL,
                     mergeEdges = NULL) {
   if (nEdge < 5) {
-    return (list(parent, child)) #TODO do we need to re-root this tree?
+    return (list(parent, child))
   }
   
   # Pick an edge at random
@@ -361,7 +360,6 @@ RootedTBRSwap <- function (parent, child, nEdge=length(parent),
     if (sum(subtreeEdges, -edgesCutAdrift) > 2) {
       break; # the edge itself, and somewheres else
     }
-    # TODO check that all expected selections are valid
     selectableEdges[edgeToBreak] <- FALSE
     ###Assert(any(selectableEdges))
     edgeToBreak <- SampleOne(which(selectableEdges))

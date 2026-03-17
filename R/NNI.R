@@ -140,7 +140,6 @@ NNISwap <- function (parent, child, nTips = (length(parent) / 2L) + 1L,
   RenumberEdges(parent, child)
 }
 
-## TODO use RenumberList
 #' Double NNI
 #' 
 #' Returns the edge parameter of the two trees consistent with the speficied \acronym{NNI} rearrangement

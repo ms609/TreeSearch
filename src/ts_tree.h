@@ -80,6 +80,41 @@ struct TreeState {
   // Stack of snapshots saved during clip; restored on unclip.
   std::vector<NodeSnapshot> clip_undo_stack;
 
+  // Pre-allocated undo buffer. When non-null, save_node_state() writes to
+  // flat pre-allocated arrays instead of heap-allocating per-node vectors.
+  // Eliminates ~50 heap allocs per clip in TBR search.
+  struct PreallocUndo {
+    int count = 0;
+    int capacity = 0;
+    int tw = 0;        // total_words
+    int nb = 0;        // n_blocks
+    bool has_na = false;
+    std::vector<int> nodes;
+    std::vector<uint64_t> prelim;
+    std::vector<uint64_t> final_;
+    std::vector<uint64_t> local_cost;
+    std::vector<uint64_t> down2;
+    std::vector<uint64_t> subtree_actives;
+
+    void init(int cap, int total_words_, int n_blocks_, bool na) {
+      capacity = cap; tw = total_words_; nb = n_blocks_; has_na = na;
+      nodes.resize(cap);
+      prelim.resize(static_cast<size_t>(cap) * tw);
+      final_.resize(static_cast<size_t>(cap) * tw);
+      local_cost.resize(static_cast<size_t>(cap) * nb);
+      if (na) {
+        down2.resize(static_cast<size_t>(cap) * tw);
+        subtree_actives.resize(static_cast<size_t>(cap) * tw);
+      }
+    }
+    void clear() { count = 0; }
+  };
+
+  PreallocUndo* prealloc_undo = nullptr;
+
+  // Restore states saved in prealloc_undo (reverse order, like restore_saved_states).
+  void restore_prealloc_undo();
+
   // --- SPR clip state ---
   // Saved topology around the clip point for undo.
   struct SPRClipState {
@@ -99,6 +134,8 @@ struct TreeState {
                       int n_edge, const DataSet& ds);
   void load_tip_states(const DataSet& ds);
   void build_postorder();
+  // Build postorder using pre-allocated work stack (avoids heap alloc).
+  void build_postorder_prealloc(std::vector<int>& work_stack);
 
   // ---- NNI operations ----
 

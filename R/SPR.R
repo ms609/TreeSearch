@@ -104,8 +104,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
     unique(unlist(lapply(which(notDuplicateRoot), AllSPR,
       parent = parent, child = child, nEdge = nEdge, 
       notDuplicateRoot = notDuplicateRoot),
-      recursive = FALSE)) # TODO the fact that we need to use `unique` indicates that 
-                         #      we're being inefficient here.
+      recursive = FALSE))
   } else {
     newEdge <- SPRSwap(parent, edge[, 2], edgeToBreak = edgeToBreak,
                        mergeEdge = mergeEdge)
@@ -160,7 +159,6 @@ SPRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
   unique(.all_spr(tree, edgeToBreak))
 }
 
-## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn SPR faster version that takes and returns parent and child parameters
 #' @inheritParams RearrangeEdges
 #' @param nEdge (optional) integer specifying the number of edges of a tree of
@@ -174,7 +172,6 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
                      edgeToBreak = NULL, mergeEdge = NULL) {
   
   if (nEdge < 5) {
-    # TODO we need to re-root this tree...
     return(list(parent, child))
   }
   
@@ -364,7 +361,6 @@ RootedSPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   return (tree)
 }
 
-## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn SPR faster version that takes and returns parent and child parameters
 #' @return a list containing two elements, corresponding in turn to the rearranged parent and child parameters
 #' @export
@@ -382,8 +378,7 @@ RootedSPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge 
     notDuplicateRoot <- .NonDuplicateRoot(parent, child, nEdge)
     return(unique(unlist(lapply(which(breakable), AllSPR,
       parent=parent, child=child, nEdge=nEdge, notDuplicateRoot=notDuplicateRoot),
-      recursive=FALSE))) # TODO the fact that we need to use `unique` indicates that 
-                         #      we're being inefficient here.
+      recursive=FALSE)))
   }
   
   rightSide <- DescendantEdges(edge = 1, parent, child, nEdge = nEdge)

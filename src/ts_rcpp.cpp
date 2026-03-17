@@ -92,6 +92,16 @@ IntegerMatrix tree_to_edge(const ts::TreeState& tree) {
 
 } // anonymous namespace
 
+// Forward declarations for helpers defined later in this file
+static ts::ConstraintData build_constraint_from_r(
+    int n_tips,
+    Nullable<IntegerMatrix> consSplitMatrix,
+    Nullable<NumericMatrix> consContrast,
+    Nullable<IntegerMatrix> consTipData,
+    Nullable<IntegerVector> consWeight,
+    Nullable<CharacterVector> consLevels,
+    int consExpectedScore);
+
 // [[Rcpp::export]]
 double ts_fitch_score(
     IntegerMatrix edge,
@@ -606,10 +616,23 @@ List ts_wagner_tree(
     CharacterVector levels,
     IntegerVector addition_order = IntegerVector(),
     IntegerVector min_steps = IntegerVector(),
-    double concavity = -1.0)
+    double concavity = -1.0,
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue,
+    Nullable<NumericMatrix> consContrast = R_NilValue,
+    Nullable<IntegerMatrix> consTipData = R_NilValue,
+    Nullable<IntegerVector> consWeight = R_NilValue,
+    Nullable<CharacterVector> consLevels = R_NilValue,
+    int consExpectedScore = 0)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
-                                min_steps, concavity);
+                                min_steps, concavity, infoAmounts);
+
+  int n_tips = tip_data.nrow();
+  ts::ConstraintData cd = build_constraint_from_r(
+      n_tips, consSplitMatrix, consContrast, consTipData,
+      consWeight, consLevels, consExpectedScore);
+  ts::ConstraintData* cd_ptr = cd.active ? &cd : nullptr;
 
   std::vector<int> order;
   if (addition_order.size() > 0) {
@@ -621,7 +644,7 @@ List ts_wagner_tree(
   }
 
   ts::TreeState tree;
-  ts::WagnerResult result = ts::wagner_tree(tree, ds, order);
+  ts::WagnerResult result = ts::wagner_tree(tree, ds, order, cd_ptr);
 
   return List::create(
     Named("edge") = tree_to_edge(tree),
@@ -636,13 +659,26 @@ List ts_random_wagner_tree(
     IntegerVector weight,
     CharacterVector levels,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = -1.0)
+    double concavity = -1.0,
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue,
+    Nullable<NumericMatrix> consContrast = R_NilValue,
+    Nullable<IntegerMatrix> consTipData = R_NilValue,
+    Nullable<IntegerVector> consWeight = R_NilValue,
+    Nullable<CharacterVector> consLevels = R_NilValue,
+    int consExpectedScore = 0)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
-                                min_steps, concavity);
+                                min_steps, concavity, infoAmounts);
+
+  int n_tips = tip_data.nrow();
+  ts::ConstraintData cd = build_constraint_from_r(
+      n_tips, consSplitMatrix, consContrast, consTipData,
+      consWeight, consLevels, consExpectedScore);
+  ts::ConstraintData* cd_ptr = cd.active ? &cd : nullptr;
 
   ts::TreeState tree;
-  ts::WagnerResult result = ts::random_wagner_tree(tree, ds);
+  ts::WagnerResult result = ts::random_wagner_tree(tree, ds, cd_ptr);
 
   return List::create(
     Named("edge") = tree_to_edge(tree),
@@ -1136,7 +1172,8 @@ List ts_driven_search(
     int tabuSize = 100,
     int wagnerStarts = 1,
     Nullable<Function> progressCallback = R_NilValue,
-    int nThreads = 1)
+    int nThreads = 1,
+    Nullable<IntegerMatrix> startEdge = R_NilValue)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity, infoAmounts);
@@ -1176,6 +1213,18 @@ List ts_driven_search(
   params.tabu_size = tabuSize;
   params.wagner_starts = wagnerStarts;
 
+  // Starting tree edge matrix (optional)
+  if (startEdge.isNotNull()) {
+    IntegerMatrix se(startEdge.get());
+    int n_edge = se.nrow();
+    params.start_n_edge = n_edge;
+    params.start_edge.resize(2 * n_edge);
+    for (int i = 0; i < n_edge; ++i) {
+      params.start_edge[i] = se(i, 0);              // parent column
+      params.start_edge[n_edge + i] = se(i, 1);     // child column
+    }
+  }
+
   // Wire up progress callback if provided
   if (progressCallback.isNotNull()) {
     Rcpp::Function r_cb(progressCallback.get());
@@ -1202,6 +1251,19 @@ List ts_driven_search(
     result = ts::driven_search(pool, ds, params, cd_ptr);
   }
 
+  // Build timings as a NumericVector (lighter than List)
+  NumericVector timings = NumericVector::create(
+    Named("wagner_ms")    = result.timings.wagner_ms,
+    Named("tbr_ms")       = result.timings.tbr_ms,
+    Named("xss_ms")       = result.timings.xss_ms,
+    Named("rss_ms")       = result.timings.rss_ms,
+    Named("css_ms")       = result.timings.css_ms,
+    Named("ratchet_ms")   = result.timings.ratchet_ms,
+    Named("drift_ms")     = result.timings.drift_ms,
+    Named("final_tbr_ms") = result.timings.final_tbr_ms,
+    Named("fuse_ms")      = result.timings.fuse_ms
+  );
+
   if (result.pool_size == 0) {
     return List::create(
       Named("trees") = List::create(),
@@ -1210,7 +1272,8 @@ List ts_driven_search(
       Named("replicates") = result.replicates_completed,
       Named("hits_to_best") = result.hits_to_best,
       Named("pool_size") = 0,
-      Named("timed_out") = result.timed_out
+      Named("timed_out") = result.timed_out,
+      Named("timings") = timings
     );
   }
 
@@ -1230,7 +1293,8 @@ List ts_driven_search(
     Named("replicates") = result.replicates_completed,
     Named("hits_to_best") = result.hits_to_best,
     Named("pool_size") = result.pool_size,
-    Named("timed_out") = result.timed_out
+    Named("timed_out") = result.timed_out,
+      Named("timings") = timings
   );
 }
 

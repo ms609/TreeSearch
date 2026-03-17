@@ -41,13 +41,13 @@ extern SEXP _TreeSearch_ts_ratchet_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SE
 extern SEXP _TreeSearch_ts_compute_splits(SEXP, SEXP);
 extern SEXP _TreeSearch_ts_trees_equal(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_pool_test(SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_wagner_tree(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_random_wagner_tree(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_wagner_tree(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_random_wagner_tree(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_tree_fuse(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_sector_diag(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_rss_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_xss_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_driven_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_driven_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_resample_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_successive_approx(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_bench_tbr_phases(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -106,13 +106,13 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_ts_compute_splits", (DL_FUNC) &_TreeSearch_ts_compute_splits, 2},
   {"_TreeSearch_ts_trees_equal",   (DL_FUNC) &_TreeSearch_ts_trees_equal, 3},
   {"_TreeSearch_ts_pool_test",     (DL_FUNC) &_TreeSearch_ts_pool_test, 5},
-  {"_TreeSearch_ts_wagner_tree",   (DL_FUNC) &_TreeSearch_ts_wagner_tree, 7},
-  {"_TreeSearch_ts_random_wagner_tree", (DL_FUNC) &_TreeSearch_ts_random_wagner_tree, 6},
+  {"_TreeSearch_ts_wagner_tree",   (DL_FUNC) &_TreeSearch_ts_wagner_tree, 14},
+  {"_TreeSearch_ts_random_wagner_tree", (DL_FUNC) &_TreeSearch_ts_random_wagner_tree, 13},
   {"_TreeSearch_ts_sector_diag", (DL_FUNC) &_TreeSearch_ts_sector_diag, 6},
   {"_TreeSearch_ts_rss_search",  (DL_FUNC) &_TreeSearch_ts_rss_search, 13},
   {"_TreeSearch_ts_xss_search",  (DL_FUNC) &_TreeSearch_ts_xss_search, 12},
   {"_TreeSearch_ts_tree_fuse",   (DL_FUNC) &_TreeSearch_ts_tree_fuse, 11},
-  {"_TreeSearch_ts_driven_search", (DL_FUNC) &_TreeSearch_ts_driven_search, 41},
+  {"_TreeSearch_ts_driven_search", (DL_FUNC) &_TreeSearch_ts_driven_search, 42},
   {"_TreeSearch_ts_resample_search", (DL_FUNC) &_TreeSearch_ts_resample_search, 21},
   {"_TreeSearch_ts_successive_approx", (DL_FUNC) &_TreeSearch_ts_successive_approx, 21},
   {"_TreeSearch_ts_bench_tbr_phases", (DL_FUNC) &_TreeSearch_ts_bench_tbr_phases, 7},

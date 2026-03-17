@@ -1632,3 +1632,420 @@ is near-optimal. Further gains require:
   `drift_phase()`
 
 ### Test status: drift 22/22, driven 53/53
+
+## Simplification bug fixes (Agent B, T-013/T-014/T-016/T-017)
+
+Red-team review found 4 bugs in the character simplification pipeline.
+All fixed and tested.
+
+### T-013: `is_uninformative` misclassified ambiguous characters
+
+The classical uninformativeness criterion ("≤1 state with unambig_count ≥ 2")
+fails when tips have ambiguous tokens. Example: `{A,B},{A,B},{C,D},{C,D}` was
+classified as uninformative and removed from scoring, but its parsimony score
+varies across trees (1 vs 2+).
+
+**Fix**: When the classical criterion says uninformative AND any tip has a
+multi-state token, delegate to `verify_uninformative()` which runs Fitch on
+4 caterpillar orderings (forward, reverse, even-odd, odd-even). If any ordering
+gives a different score, the character is informative and kept in scoring.
+
+### T-014: `compute_fixed_steps` undercount for all-ambiguous characters
+
+When no state appears unambiguously, `compute_fixed_steps` returned 0 via the
+`distinct states - 1` formula. Example: `{A,B},{B,C},{A,C}` costs 1 on every
+tree but was assigned 0 precomputed steps.
+
+**Fix**: `verify_uninformative()` computes the exact fixed cost via
+`fitch_caterpillar()`. This replaces `compute_fixed_steps` for the ambiguous
+path. The old formula is still used for the all-unambiguous fast path.
+
+### T-016: `precompute_profile_delta` missing `precomputed_steps` offset
+
+`compute_profile()` correctly added `precomputed_steps[p]` before looking up
+`info_amounts`, but `precompute_profile_delta()` did not. Latent bug (profile
+data is binary, offset=0 for informative patterns) but would surface if profile
+parsimony is extended to multi-state.
+
+**Fix**: Added `if (!ds.precomputed_steps.empty()) s += ds.precomputed_steps[p];`
+in `precompute_profile_delta()`.
+
+### T-017: Test coverage for ambiguous tokens
+
+Added 8 tests to `test-ts-simplify.R`:
+- Ambiguous informative characters preserved (6-tip and 4-tip cases)
+- All-ambiguous truly uninformative gets correct fixed cost
+- All-ambiguous invariant gets 0 fixed cost
+- Transform 3 redundant ambiguity removal (replaced old skip)
+- Mixed ambiguous + unambiguous tips
+- 2-ambig + 2-unambig truly uninformative
+
+### Files modified:
+- `src/ts_simplify.cpp` — Added `fitch_caterpillar()`, `verify_uninformative()`,
+  `has_ambiguous_tips()`; renamed `is_uninformative` → `is_uninformative_classical`;
+  updated Transform 1 logic
+- `src/ts_fitch.cpp` — Added offset in `precompute_profile_delta()`
+- `tests/testthat/test-ts-simplify.R` — 8 new tests, 1 skip replaced
+
+### Test status: simplify 79/79, all ts-* pass (0 failures)
+
+## Phase 6C: Strategy space definition (Agent B, T-003)
+
+Documented all 20 tunable strategy parameters of the driven search engine,
+categorized into functional groups, and proposed 6 named strategy presets
+for benchmarking and adaptive search.
+
+### Parameter categories:
+- **Strategy (A)**: 20 parameters across Wagner, TBR, ratchet, drift,
+  sectorial, and fusing phases — these form the "strategy vector" for tuning.
+- **Convergence (B)**: `maxReplicates`, `targetHits` — control total effort.
+- **Pool (C)**: `poolMaxSize`, `poolSuboptimal` — output collection.
+- **Infrastructure (D)**: `concavity`, `nThreads`, `verbosity`, etc.
+
+### Named presets:
+| Preset | Focus |
+|--------|-------|
+| `sprint` | Minimal effort: 3 ratchet cycles, no drift/RSS/CSS |
+| `default` | Current production defaults |
+| `thorough` | 2× everything, adaptive ratchet, mixed perturbation |
+| `ratchet_heavy` | 30 ratchet cycles, 2× perturbation, minimal sectorial |
+| `sectorial_heavy` | 8 XSS + 4 RSS + 3 CSS rounds, large sectors |
+| `drift_heavy` | 20 drift cycles, relaxed AFD/RFD limits |
+
+### Files created:
+- `inst/benchmarks/strategies.md` — Full strategy space documentation with
+  parameter tables, preset specifications, `get_strategy()` R helper function,
+  and usage notes for Phase 6D/6F.
+
+### Design notes:
+- `maxSeconds` is available in the C++ bridge but not exposed in
+  `MaximizeParsimony()` — documented as infrastructure gap.
+- SPR-first escalation (T-012) and NNI pre-pass noted as future additions
+  to the strategy space.
+
+## Sector `build_reduced_dataset` scoring_mode fix (Agent B, T-015)
+
+`build_reduced_dataset()` in `ts_sector.cpp` was missing 5 fields when
+copying the parent DataSet to the sector's reduced DataSet:
+
+- `scoring_mode` — sector defaulted to EW even in IW/profile mode
+- `ew_offset` — simplification offset lost
+- `precomputed_steps` — per-pattern step offsets lost
+- `info_amounts` — profile parsimony lookup table lost
+- `info_max_steps` — profile table row count lost
+
+Not a correctness bug (full-tree rescore catches bad sector results) but
+a performance bug: sectors were optimizing the wrong objective in IW and
+profile mode, wasting sector TBR effort.
+
+### Fix: 5 lines added after line 267 in `ts_sector.cpp`.
+
+### Files modified:
+- `src/ts_sector.cpp` — Added 5 field copies in `build_reduced_dataset()`
+
+### Test status: sector 32/32, CSS 26/26, driven 53/53, profile 25/25
+
+## Phase 6A: Per-phase timing instrumentation (Agent A, T-001)
+
+Makes per-phase wall-clock timing programmatically accessible in driven
+search results. Previously this data was only printed at verbosity >= 2
+and discarded.
+
+### Implementation:
+
+**`ts_driven.h`**: Added `PhaseTimings` struct with 9 fields (wagner_ms,
+tbr_ms, xss_ms, rss_ms, css_ms, ratchet_ms, drift_ms, final_tbr_ms,
+fuse_ms) and `operator+=` for accumulation. Added `PhaseTimings timings`
+to both `DrivenResult` and `ReplicateResult`.
+
+**`ts_driven.cpp`**: Each `ph_lap()` call now stores its result in the
+corresponding `result.timings.<phase>_ms` field. `driven_search()`
+accumulates per-replicate timings via `result.timings += rep_result.timings`.
+Fuse phase timed with its own `steady_clock` bracket (lives in main loop,
+not in `run_single_replicate`).
+
+**`ts_parallel.cpp`**: Per-thread `PhaseTimings` accumulators (one per
+worker thread). After join, main thread sums all into `result.timings`.
+
+**`ts_rcpp.cpp`**: Timings returned as a `NumericVector` with 9 named
+elements in the result list. Added to both empty-pool and normal return paths.
+
+**`R/MaximizeParsimony.R`**: Timings exposed as a `timings` attribute on
+the `multiPhylo` result.
+
+### Additional fix: RcppExports/init.c mismatch
+
+During build, discovered that `ts_wagner_tree` and `ts_random_wagner_tree`
+had constraint params added to `ts_rcpp.cpp` by another agent but
+`RcppExports.cpp/R` and `TreeSearch-init.c` were never synced. Ran
+`Rcpp::compileAttributes()` and updated `TreeSearch-init.c` arg counts
+(7→14 and 6→13 respectively). Also added forward declaration of
+`build_constraint_from_r()` (used before definition by Wagner bridges).
+
+### Files created:
+- `tests/testthat/test-ts-timings.R` — 17 tests (timings returned,
+  non-negative, accumulate across replicates, MaximizeParsimony attribute,
+  zero-replicates edge case).
+
+### Files modified:
+- `src/ts_driven.h` — PhaseTimings struct, timings in DrivenResult/ReplicateResult
+- `src/ts_driven.cpp` — ph_lap() → timings storage, accumulation
+- `src/ts_parallel.cpp` — Per-thread timing accumulators
+- `src/ts_rcpp.cpp` — Timings in return list, forward declaration fix
+- `src/TreeSearch-init.c` — Wagner tree arg count fix (7→14, 6→13)
+- `src/RcppExports.cpp` — Regenerated via compileAttributes()
+- `R/RcppExports.R` — Regenerated via compileAttributes()
+- `R/MaximizeParsimony.R` — timings attribute + docs
+
+### Test status: timings 17/17, driven 53/53, 820 total ts-* tests pass (0 fail)
+
+## AdditionTree migration to C++ Wagner engine (Agent E, T-019)
+
+Migrated `AdditionTree()` from the R-loop/MorphyLib implementation to the
+C++ `ts_wagner_tree` engine. Now supports EW, IW, profile parsimony, and
+topological constraints natively.
+
+### Key changes:
+
+**`src/ts_rcpp.cpp`**:
+- `ts_wagner_tree` and `ts_random_wagner_tree` Rcpp bridges: added constraint
+  parameters (`consSplitMatrix`, `consContrast`, `consTipData`, `consWeight`,
+  `consLevels`, `consExpectedScore`) and `infoAmounts` for profile parsimony.
+- Added forward declaration for `build_constraint_from_r` (defined later in file).
+
+**`src/ts_wagner.cpp`**:
+- Added `wagner_map_constraint_nodes()`: LCA-based constraint node mapping for
+  incremental construction. Unlike `map_constraint_nodes()` (which requires exact
+  split match), this finds the smallest node (tip or internal) whose subtree
+  contains all added inside tips. Handles the single-inside-tip case by using
+  the tip itself as the constraint node.
+- Added `wagner_update_constraint()`: calls the LCA mapper + DFS timestamps.
+- Replaced calls to `update_constraint()` with `wagner_update_constraint()`.
+
+**`R/AdditionTree.R`**:
+- Complete rewrite: delegates to C++ `ts_wagner_tree` via `.PrepareConstraint()`
+  for constraints and `PrepareDataProfile()` for profile parsimony.
+- Kept `.ConstraintConstrains()` and `.Recompress()` as internal helpers.
+
+**`src/ts_tree.cpp`**:
+- Added missing `#include <cstring>` (pre-existing latent bug).
+
+**`src/TreeSearch-init.c`**: Updated arg counts (wagner: 7→16, random_wagner: 6→13).
+
+### Bug fix: Wagner constraint enforcement
+
+The existing `map_constraint_nodes()` (used by TBR/sector search) looks for
+internal nodes whose subtree tips exactly match each constraint split. During
+Wagner construction, the split isn't fully present yet (tips are added one by
+one), so `constraint_node = -1` and constraints were silently skipped.
+
+Fix: `wagner_map_constraint_nodes()` finds the LCA of already-added inside tips.
+Critically, it includes tips as candidates (not just internal nodes). When only
+1 inside tip exists, that tip IS the constraint node. This forces the next inside
+tip to be placed at the edge adjacent to it (the only edge where
+`is_ancestor_or_equal(tip, below)` is true), guaranteeing monophyly.
+
+### Files created/modified:
+- Modified: `src/ts_rcpp.cpp`, `src/ts_wagner.cpp`, `src/ts_tree.cpp`,
+  `src/TreeSearch-init.c`, `R/AdditionTree.R`, `R/RcppExports.R`,
+  `src/RcppExports.cpp`, `tests/testthat/test-AdditionTree.R`
+
+### Exported Rcpp function changes:
+| Function | Change |
+|----------|--------|
+| `ts_wagner_tree` | +7 params (constraint) +1 param (infoAmounts); arg count 7→16 |
+| `ts_random_wagner_tree` | +7 params (constraint) +1 param (infoAmounts); arg count 6→13 |
+
+### Test status: AdditionTree 17/17, Wagner 26/26, all key ts-* pass (273/273)
+
+## User-supplied starting tree (Agent B, T-018)
+
+Threads user-supplied starting tree through `MaximizeParsimony()` to the
+C++ engine. When a `tree` argument is provided, replicate 0 uses that
+topology instead of building a random Wagner tree, then proceeds with the
+full TBR→sectorial→ratchet→drift→TBR pipeline. Subsequent replicates still
+use random Wagner trees.
+
+### Changes:
+
+**`ts_driven.h`**:
+- `DrivenParams` gains `start_edge` (vector<int>, column-major parent|child)
+  and `start_n_edge` (int). Empty = no starting tree.
+
+**`ts_driven.cpp`**:
+- `run_single_replicate()` gains optional `TreeState* starting_tree` param.
+  When non-null, copies the starting tree instead of calling
+  `random_wagner_tree()`. Verbosity 2 prints "Starting tree score" instead
+  of "Wagner tree score".
+- `driven_search()`: For rep=0, builds starting TreeState from
+  `params.start_edge` via `init_from_edge()` and passes to
+  `run_single_replicate()`.
+
+**`ts_parallel.cpp`**:
+- `worker_thread()`: Same rep=0 starting tree logic for parallel path.
+
+**`ts_rcpp.cpp`**:
+- `ts_driven_search`: +1 param (`startEdge`, Nullable<IntegerMatrix>).
+  Copies to `params.start_edge` / `params.start_n_edge` when non-null.
+
+**`R/MaximizeParsimony.R`**:
+- Tracks `userTree` flag. When TRUE, passes `tree[["edge"]]` as `startEdge`.
+- Comment updated to explain warm-start behavior.
+
+**`TreeSearch-init.c`**: Arg count 41→42.
+
+### Files created:
+- `tests/testthat/test-ts-start-tree.R` — 6 tests covering warm-start,
+  multiPhylo input, verbosity output, default path, IW mode.
+
+### Files modified:
+- `src/ts_driven.h`, `src/ts_driven.cpp`, `src/ts_parallel.cpp`,
+  `src/ts_rcpp.cpp`, `src/TreeSearch-init.c`, `R/MaximizeParsimony.R`,
+  `R/RcppExports.R`, `src/RcppExports.cpp`
+
+### Exported Rcpp function changes:
+| Function | Change |
+|----------|--------|
+| `ts_driven_search` | +1 param (`startEdge`); arg count 41→42 |
+
+### Test status: start-tree 6/6, driven 53/53, parallel 0/0 (10 skip),
+resample 35/35, resample-stress 59/59
+
+## Fix `fuseInterval=0` crash (Agent B, T-008)
+
+**Root cause**: The test-ts-simd.R exit code 127 crash was NOT caused by
+MorphyLib cleanup (the original diagnosis). It was caused by
+`fuseInterval = 0L` in the simd test's `ts_driven_search` call, which
+triggered integer division by zero: `(rep + 1) % params.fuse_interval`.
+
+This is undefined behavior in C++ and caused an immediate process crash
+(SIGFPE on most platforms, mapped to exit code 127 by Windows).
+
+### Fix:
+Added `params.fuse_interval > 0` guard before the modulo in both:
+- `src/ts_driven.cpp` (serial path, line 345)
+- `src/ts_parallel.cpp` (parallel path, line 140)
+
+When `fuse_interval <= 0`, tree fusing is disabled entirely (no fusing
+between replicates).
+
+### Files modified:
+- `src/ts_driven.cpp` — Guard on modulo (1 line)
+- `src/ts_parallel.cpp` — Guard on modulo (1 line)
+
+### Test status: simd 60/60 (exit code 0), driven 53/53, sector 32/32,
+fuse 16/16 (1 skip)
+
+## Per-clip allocation optimization (Agent F, S-PROF)
+
+Eliminated heap allocations in the TBR and drift clip-evaluate-restore cycle.
+The main bottleneck was `save_node_state()`, called ~10 times per clip during
+incremental downpass/uppass, each allocating 5 separate `std::vector` objects.
+
+### Optimizations implemented:
+
+1. **Pre-allocated undo stack (`PreallocUndo`)**: Added to `TreeState` as a
+   flat-buffer alternative to `clip_undo_stack`. When `tree.prealloc_undo` is
+   non-null, `save_node_state()` writes to contiguous pre-allocated arrays
+   via `memcpy` instead of constructing heap-allocated `NodeSnapshot` vectors.
+   Eliminates ~50 malloc/free pairs per clip.
+
+2. **`build_postorder_prealloc(work_stack)`**: New single-pass iterative
+   postorder DFS using marker encoding. Takes a pre-allocated work stack,
+   avoiding the 2 internal vector allocations per call in `build_postorder()`.
+
+3. **Word-at-a-time hash**: Replaced byte-by-byte FNV-1a with word-at-a-time
+   multiply-xor hash for TBR virtual_prelim deduplication.
+
+4. **Pre-allocated clip_actives buffer**: Moved NA clip_actives allocation
+   outside the clip loop in both TBR and drift.
+
+5. **Pre-allocated below_actives_cache**: Moved below_actives vector
+   declaration outside the TBR clip loop.
+
+### Design: bulk vs targeted restore
+
+Initial implementation used bulk `StateSnapshot` save/restore (memcpy all state
+arrays before each clip). This was **slower** on 75-tip trees because it copied
+~100 KB per clip (all nodes) vs ~7 KB (only ~10 changed nodes). The final
+implementation keeps the targeted node-by-node approach but eliminates its heap
+allocations via `PreallocUndo`.
+
+### `StateSnapshot::restore` postorder size fix
+
+Fixed a latent bug: `restore()` used `memcpy` for postorder data but didn't
+restore the vector's logical size. After `build_postorder_prealloc` shrinks
+the postorder (clip removes one internal node), the `memcpy` writes correct
+data but leaves the vector size wrong. Added `tree.postorder.resize()` before
+the `memcpy`. Not triggered by pre-existing code (StateSnapshot was only
+saved/restored when postorder was at full size), but necessary for robustness.
+
+### Files created:
+(None)
+
+### Files modified:
+- `src/ts_tree.h` — Added `PreallocUndo` struct, `prealloc_undo` pointer,
+  `restore_prealloc_undo()` declaration, `build_postorder_prealloc()` declaration
+- `src/ts_tree.cpp` — Implemented `save_node_state()` fast path via
+  `prealloc_undo`, `restore_prealloc_undo()`, `build_postorder_prealloc()`
+- `src/ts_tbr.cpp` — Pre-allocated undo stack setup, `fast_undo.clear()` per
+  clip, `restore_prealloc_undo()` before `spr_unclip()`, replaced
+  `build_postorder()` with `build_postorder_prealloc()`, word-at-a-time hash,
+  pre-allocated clip_actives and below_actives buffers, postorder size fix
+  in `StateSnapshot::restore()`
+- `src/ts_drift.cpp` — Same `PreallocUndo` pattern in `drift_phase()`,
+  `build_postorder_prealloc()` for clip postorder
+
+### Benchmark results (session-controlled, 5-run medians):
+
+| Dataset | Before | After | Improvement |
+|---------|--------|-------|-------------|
+| Vinther2008 (23 tips) | 0.250s | 0.200s | ~20% |
+| Zhu2013 (75 tips) | 3.140s | 2.840s | ~10% |
+
+TBR-only microbenchmark showed ~25% improvement; end-to-end improvement is
+lower because Wagner, sectorial, ratchet, and fuse phases are unaffected.
+
+### Test status: All 23 ts-* test files pass (709 expectations, 0 failures)
+
+## R-level TODO audit (Agent C, T-006)
+
+Audited 17 TODO/FIXME comments across 8 R source files. Removed 14 stale
+or obsolete TODOs; kept 2 that document genuine research directions.
+
+### Triage summary:
+
+| File | Line | TODO | Action | Reason |
+|------|------|------|--------|--------|
+| SPR.R | 107 | `unique` indicates inefficiency | Removed | Known perf note in legacy R search; not actionable without rewrite |
+| SPR.R | 163 | Do edges need pre-ordering? | Removed | Answered by code (`Preorder` called upstream) |
+| SPR.R | 177 | Need to re-root this tree | Removed | Early return for nEdge<5 is correct |
+| SPR.R | 367 | Do edges need pre-ordering? | Removed | Duplicate of above |
+| SPR.R | 385 | `unique` indicates inefficiency | Removed | Duplicate of above |
+| TBR.R | 105 | Do edges need pre-ordering? | Removed | Same pattern as SPR |
+| TBR.R | 120 | Do we need to re-root? | Removed | Same pattern as SPR |
+| TBR.R | 364 | Check all selections valid | Removed | Retry loop is the validation |
+| NNI.R | 143 | Use RenumberList | Removed | `RenumberList` doesn't exist in TreeSearch or TreeTools |
+| Morphy.R | 630 | Inapplicable tokens for profile | **Kept** | Documents real limitation of profile parsimony |
+| tree_length.R | 109 | Allow TreeLength.edge | Removed | Niche feature idea, not worth tracking |
+| data_manipulation.R | 13 | More complex state grouping | Removed | Speculative feature idea |
+| data_manipulation.R | 173 | Replace with apply when R>=4.1 | Removed | Proposed replacement had wrong MARGIN (1 vs 2); `lapply` approach is correct and clear |
+| pp_info_extra_step.r | 191 | Replace with Maddison & Slakey 1991 | **Kept** | Marks a genuine research direction |
+| pp_info_extra_step.r | 281 | Test splits <- 2 2 4 | Removed | Inside `nocov` dead code |
+| pp_info_extra_step.r | 295 | Quicker to calculate first half | Removed | Inside `nocov` dead code |
+
+Note: AdditionTree.R listed in original task had no TODO comments (already
+removed by a previous change).
+
+### Files modified:
+- `R/SPR.R` — 5 TODOs removed
+- `R/TBR.R` — 3 TODOs removed
+- `R/NNI.R` — 1 TODO removed
+- `R/tree_length.R` — 1 TODO removed
+- `R/data_manipulation.R` — 2 TODOs removed
+- `R/pp_info_extra_step.r` — 2 TODOs removed (1 kept)
+
+### Pre-existing test failures noted (not caused by this change):
+- `test-RMorphy.R`: `preorder_morphy()` needs `TreeSearch:::` prefix
+- `test-tree_length.R`: `morphy_profile()` needs `TreeSearch:::` prefix
+- `test-pp-info_extra_step.R`: `.LogCumSumExp()` needs `TreeSearch:::` prefix

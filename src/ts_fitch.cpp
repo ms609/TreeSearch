@@ -617,7 +617,10 @@ void precompute_profile_delta(const DataSet& ds,
                                const std::vector<int>& divided_steps,
                                std::vector<double>& delta) {
   for (int p = 0; p < ds.n_patterns; ++p) {
-    int s = divided_steps[p];  // total steps in divided tree
+    int s = divided_steps[p];  // reduced steps in divided tree
+    // Add back precomputed_steps to get the original total step count,
+    // since info_amounts is indexed by the full (unsimplified) step count.
+    if (!ds.precomputed_steps.empty()) s += ds.precomputed_steps[p];
     int idx_old = s - 1;       // 0-based row for current step count
     int idx_new = s;           // 0-based row for step count + 1
 

@@ -69,6 +69,10 @@ struct WorkerContext {
 
   // Pre-generated seeds (one per replicate)
   const std::vector<unsigned>* seeds;
+
+  // Per-thread timing accumulator (index = thread_id)
+  PhaseTimings* thread_timings;
+  int thread_id;
 };
 
 void worker_thread(WorkerContext ctx) {
@@ -98,11 +102,28 @@ void worker_thread(WorkerContext ctx) {
     // Seed RNG for this replicate
     local_rng.seed((*ctx.seeds)[rep]);
 
+    // Use starting tree for replicate 0 if provided
+    TreeState* start_ptr = nullptr;
+    TreeState start_tree;
+    if (rep == 0 && ctx.params->start_n_edge > 0 &&
+        static_cast<int>(ctx.params->start_edge.size()) >=
+            2 * ctx.params->start_n_edge) {
+      const int* edge_parent = ctx.params->start_edge.data();
+      const int* edge_child =
+          ctx.params->start_edge.data() + ctx.params->start_n_edge;
+      start_tree.init_from_edge(edge_parent, edge_child,
+                                ctx.params->start_n_edge, ds_local);
+      start_ptr = &start_tree;
+    }
+
     // Run the replicate pipeline (verbosity=0 for parallel)
     ReplicateResult rep_result = run_single_replicate(
-        ds_local, *ctx.params, cd_ptr, check_timeout_noop, 0);
+        ds_local, *ctx.params, cd_ptr, check_timeout_noop, 0, start_ptr);
 
     if (ctx.stop_flag->load(std::memory_order_relaxed)) break;
+
+    // Accumulate phase timings for this thread
+    ctx.thread_timings[ctx.thread_id] += rep_result.timings;
 
     // Add to shared pool
     ctx.shared_pool->add(rep_result.tree, rep_result.score);
@@ -116,7 +137,8 @@ void worker_thread(WorkerContext ctx) {
 
     // Periodic fuse
     int done = ctx.replicates_done->load(std::memory_order_relaxed);
-    if (done > 0 && done % ctx.params->fuse_interval == 0
+    if (ctx.params->fuse_interval > 0 &&
+        done > 0 && done % ctx.params->fuse_interval == 0
         && ctx.shared_pool->size() >= 2) {
       ctx.shared_pool->fuse_round(ds_local, *ctx.params, cd_ptr);
     }
@@ -187,10 +209,15 @@ DrivenResult parallel_driven_search(
   bool use_timeout = params.max_seconds > 0.0;
   auto start_time = std::chrono::steady_clock::now();
 
+  // Per-thread timing accumulators
+  std::vector<PhaseTimings> thread_timings(n_threads);
+
   // Spawn worker threads
   std::vector<std::thread> workers;
   workers.reserve(n_threads);
   for (int t = 0; t < n_threads; ++t) {
+    ctx.thread_timings = thread_timings.data();
+    ctx.thread_id = t;
     workers.emplace_back(worker_thread, ctx);
   }
 
@@ -253,6 +280,11 @@ DrivenResult parallel_driven_search(
   // Join all worker threads
   for (auto& w : workers) {
     if (w.joinable()) w.join();
+  }
+
+  // Sum per-thread timings
+  for (int t = 0; t < n_threads; ++t) {
+    result.timings += thread_timings[t];
   }
 
   // Extract results

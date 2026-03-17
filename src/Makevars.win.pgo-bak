@@ -1,0 +1,3 @@
+PKG_CXXFLAGS = -fprofile-generate=C:/Users/pjjg18/GitHub/TreeSearch/.pgo-data
+PKG_CFLAGS = -fprofile-generate=C:/Users/pjjg18/GitHub/TreeSearch/.pgo-data
+PKG_LIBS = -fprofile-generate

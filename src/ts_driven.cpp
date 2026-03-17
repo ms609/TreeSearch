@@ -44,7 +44,8 @@ ReplicateResult run_single_replicate(
     const DrivenParams& params,
     ConstraintData* cd,
     std::function<bool()> check_timeout,
-    int verbosity)
+    int verbosity,
+    TreeState* starting_tree)
 {
   ReplicateResult result;
   result.interrupted = false;
@@ -52,22 +53,44 @@ ReplicateResult run_single_replicate(
   bool tree_large_enough_for_sectors =
       ds.n_tips >= 2 * params.sector_min_size;
 
-  // 1. Random addition sequence Wagner tree (try multiple, keep best)
-  random_wagner_tree(result.tree, ds, cd);
-  double best_wag = score_tree(result.tree, ds);
-  for (int ws = 1; ws < params.wagner_starts; ++ws) {
-    TreeState trial;
-    random_wagner_tree(trial, ds, cd);
-    double trial_score = score_tree(trial, ds);
-    if (trial_score < best_wag) {
-      result.tree = std::move(trial);
-      best_wag = trial_score;
+  using PhClock = std::chrono::steady_clock;
+  auto ph_start = PhClock::now();
+  auto ph_lap = [&]() {
+    auto now = PhClock::now();
+    double ms = std::chrono::duration<double, std::milli>(now - ph_start).count();
+    ph_start = now;
+    return ms;
+  };
+
+  // 1. Starting tree: use provided tree or build Wagner
+  double best_wag;
+  if (starting_tree) {
+    result.tree = *starting_tree;
+    best_wag = score_tree(result.tree, ds);
+  } else {
+    random_wagner_tree(result.tree, ds, cd);
+    best_wag = score_tree(result.tree, ds);
+    for (int ws = 1; ws < params.wagner_starts; ++ws) {
+      TreeState trial;
+      random_wagner_tree(trial, ds, cd);
+      double trial_score = score_tree(trial, ds);
+      if (trial_score < best_wag) {
+        result.tree = std::move(trial);
+        best_wag = trial_score;
+      }
     }
   }
 
+  result.timings.wagner_ms = ph_lap();
   if (verbosity >= 2) {
-    Rprintf("  Wagner tree score: %.1f%s\n", best_wag,
-            params.wagner_starts > 1 ? " (best of multiple starts)" : "");
+    if (starting_tree) {
+      Rprintf("  Starting tree score: %.1f [%.0f ms]\n", best_wag,
+              result.timings.wagner_ms);
+    } else {
+      Rprintf("  Wagner tree score: %.1f [%.0f ms]%s\n", best_wag,
+              result.timings.wagner_ms,
+              params.wagner_starts > 1 ? " (best of multiple starts)" : "");
+    }
   }
 
   // 2. TBR to local optimum
@@ -76,8 +99,10 @@ ReplicateResult run_single_replicate(
     tp.tabu_size = params.tabu_size;
     tbr_search(result.tree, ds, tp, cd);
   }
+  result.timings.tbr_ms = ph_lap();
   if (verbosity >= 2) {
-    Rprintf("  TBR score: %.1f\n", score_tree(result.tree, ds));
+    Rprintf("  TBR score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+            result.timings.tbr_ms);
   }
 
   if (ts::check_interrupt() || check_timeout()) {
@@ -99,8 +124,10 @@ ReplicateResult run_single_replicate(
     sp.xss_rounds = params.xss_rounds;
     xss_search(result.tree, ds, sp, cd);
 
+    result.timings.xss_ms = ph_lap();
     if (verbosity >= 2) {
-      Rprintf("  XSS score: %.1f\n", score_tree(result.tree, ds));
+      Rprintf("  XSS score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+              result.timings.xss_ms);
     }
 
     if (ts::check_interrupt() || check_timeout()) {
@@ -120,8 +147,10 @@ ReplicateResult run_single_replicate(
           return result;
         }
       }
+      result.timings.rss_ms = ph_lap();
       if (verbosity >= 2) {
-        Rprintf("  RSS score: %.1f\n", score_tree(result.tree, ds));
+        Rprintf("  RSS score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+                result.timings.rss_ms);
       }
     }
 
@@ -133,8 +162,10 @@ ReplicateResult run_single_replicate(
       css_sp.internal_max_hits = 1;
       css_search(result.tree, ds, css_sp, cd);
 
+      result.timings.css_ms = ph_lap();
       if (verbosity >= 2) {
-        Rprintf("  CSS score: %.1f\n", score_tree(result.tree, ds));
+        Rprintf("  CSS score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+                result.timings.css_ms);
       }
 
       if (ts::check_interrupt() || check_timeout()) {
@@ -163,8 +194,10 @@ ReplicateResult run_single_replicate(
     rp.tabu_size = params.tabu_size;
     ratchet_search(result.tree, ds, rp, cd);
   }
+  result.timings.ratchet_ms = ph_lap();
   if (verbosity >= 2) {
-    Rprintf("  Ratchet score: %.1f\n", score_tree(result.tree, ds));
+    Rprintf("  Ratchet score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+            result.timings.ratchet_ms);
   }
 
   if (ts::check_interrupt() || check_timeout()) {
@@ -183,8 +216,10 @@ ReplicateResult run_single_replicate(
     dp.tabu_size = params.tabu_size;
     drift_search(result.tree, ds, dp, cd);
 
+    result.timings.drift_ms = ph_lap();
     if (verbosity >= 2) {
-      Rprintf("  Drift score: %.1f\n", score_tree(result.tree, ds));
+      Rprintf("  Drift score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+              result.timings.drift_ms);
     }
   }
 
@@ -200,8 +235,10 @@ ReplicateResult run_single_replicate(
     tp.tabu_size = params.tabu_size;
     tbr_search(result.tree, ds, tp, cd);
   }
+  result.timings.final_tbr_ms = ph_lap();
   if (verbosity >= 2) {
-    Rprintf("  Final TBR score: %.1f\n", score_tree(result.tree, ds));
+    Rprintf("  Final TBR score: %.1f [%.0f ms]\n", score_tree(result.tree, ds),
+            result.timings.final_tbr_ms);
   }
 
   result.score = score_tree(result.tree, ds);
@@ -270,9 +307,23 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       }
     }
 
+    // Use starting tree for replicate 0 if provided
+    TreeState* start_ptr = nullptr;
+    TreeState start_tree;
+    if (rep == 0 && params.start_n_edge > 0 &&
+        static_cast<int>(params.start_edge.size()) >= 2 * params.start_n_edge) {
+      const int* edge_parent = params.start_edge.data();
+      const int* edge_child = params.start_edge.data() + params.start_n_edge;
+      start_tree.init_from_edge(edge_parent, edge_child,
+                                params.start_n_edge, ds);
+      start_ptr = &start_tree;
+    }
+
     // Run the single-replicate pipeline
     ReplicateResult rep_result = run_single_replicate(
-        ds, params, cd, check_timeout, params.verbosity);
+        ds, params, cd, check_timeout, params.verbosity, start_ptr);
+
+    result.timings += rep_result.timings;
 
     if (rep_result.interrupted) {
       if (rep_result.score < 1e18) {
@@ -291,7 +342,10 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     report("replicate", 1, rep_result.score, rep1);
 
     // Periodic tree fusing
-    if ((rep + 1) % params.fuse_interval == 0 && pool.size() >= 2) {
+    if (params.fuse_interval > 0 &&
+        (rep + 1) % params.fuse_interval == 0 && pool.size() >= 2) {
+      auto fuse_start = std::chrono::steady_clock::now();
+
       int hits_before = pool.hits_to_best();
       double best_before = pool.best_score();
 
@@ -322,6 +376,10 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       } else {
         pool.set_hits_to_best(hits_before);
       }
+
+      auto fuse_end = std::chrono::steady_clock::now();
+      result.timings.fuse_ms +=
+          std::chrono::duration<double, std::milli>(fuse_end - fuse_start).count();
     }
 
     // Convergence check

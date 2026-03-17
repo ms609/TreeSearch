@@ -244,15 +244,131 @@ static inline bool is_ancestor_or_equal(
   return entry[u] <= entry[v] && exit[u] >= exit[v];
 }
 
+// Wagner-specific constraint node mapping.
+// During incremental construction, the full split may not be present yet.
+// Instead of requiring an exact match, find the LCA of added inside tips:
+// the smallest internal node whose subtree contains all added inside tips.
+// This correctly constrains placement even when only some inside tips
+// have been added so far.
+static void wagner_map_constraint_nodes(
+    const TreeState& tree, ConstraintData& cd,
+    const std::vector<uint64_t>& added_tips)
+{
+  if (!cd.active) return;
+
+  int n_tip = tree.n_tip;
+  int nw = cd.n_words;
+
+  // Build per-node subtree tip bitmasks via postorder traversal.
+  std::vector<uint64_t> node_tips(
+      static_cast<size_t>(tree.n_node) * nw, 0ULL);
+
+  for (int t = 0; t < n_tip; ++t) {
+    int w = t / 64;
+    int b = t % 64;
+    node_tips[static_cast<size_t>(t) * nw + w] = (1ULL << b);
+  }
+
+  for (int node : tree.postorder) {
+    int ni = node - n_tip;
+    int lc = tree.left[ni];
+    int rc = tree.right[ni];
+    uint64_t* nd = &node_tips[static_cast<size_t>(node) * nw];
+    const uint64_t* lt = &node_tips[static_cast<size_t>(lc) * nw];
+    const uint64_t* rt = &node_tips[static_cast<size_t>(rc) * nw];
+    for (int w = 0; w < nw; ++w) {
+      nd[w] = lt[w] | rt[w];
+    }
+  }
+
+  // For each split, find the smallest node (tip or internal) whose subtree
+  // contains all added inside tips.  Including tips handles the case where
+  // only 1 inside tip has been added: the constraint node is that tip itself,
+  // forcing the next inside tip to be placed adjacent to it.
+  for (int s = 0; s < cd.n_splits; ++s) {
+    const uint64_t* split =
+        &cd.split_tips[static_cast<size_t>(s) * nw];
+
+    // Compute which inside tips have been added
+    bool any_added = false;
+    std::vector<uint64_t> needed(nw, 0ULL);
+    for (int w = 0; w < nw; ++w) {
+      needed[w] = split[w] & added_tips[w];
+      if (needed[w]) any_added = true;
+    }
+    if (!any_added) {
+      cd.constraint_node[s] = -1;
+      continue;
+    }
+
+    // Check tips first: if exactly 1 inside tip is added, use it directly.
+    // (A tip's "subtree" is just itself — size 1.)
+    int best_node = -1;
+    int best_size = tree.n_node + 1;
+
+    for (int t = 0; t < n_tip; ++t) {
+      int w = t / 64;
+      int b = t % 64;
+      if (!((added_tips[w] >> b) & 1)) continue;  // tip not added yet
+      // Does this tip's bitmask contain all needed?
+      // A tip's bitmask is just itself, so this is true only if needed = {t}.
+      const uint64_t* nd = &node_tips[static_cast<size_t>(t) * nw];
+      bool superset = true;
+      for (int w2 = 0; w2 < nw; ++w2) {
+        if ((nd[w2] & needed[w2]) != needed[w2]) {
+          superset = false;
+          break;
+        }
+      }
+      if (superset && 1 < best_size) {
+        best_size = 1;
+        best_node = t;
+      }
+    }
+
+    // Then check internal nodes for a smaller clade.
+    for (int node : tree.postorder) {
+      const uint64_t* nd = &node_tips[static_cast<size_t>(node) * nw];
+      bool superset = true;
+      for (int w = 0; w < nw; ++w) {
+        if ((nd[w] & needed[w]) != needed[w]) {
+          superset = false;
+          break;
+        }
+      }
+      if (superset) {
+        int sz = 0;
+        for (int w = 0; w < nw; ++w) {
+          sz += popcount64(nd[w]);
+        }
+        if (sz < best_size) {
+          best_size = sz;
+          best_node = node;
+        }
+      }
+    }
+    cd.constraint_node[s] = best_node;
+  }
+}
+
+// Wagner-specific: remap constraint nodes using LCA, then recompute DFS.
+static void wagner_update_constraint(
+    const TreeState& tree, ConstraintData& cd,
+    const std::vector<uint64_t>& added_tips)
+{
+  if (!cd.active) return;
+  wagner_map_constraint_nodes(tree, cd, added_tips);
+  compute_dfs_timestamps(tree, cd);
+}
+
 // Check if an edge (above, below) is legal under the constraint.
 // `added_tips`: bitmask of tips already in the tree.
 // `n_added`: number of tips added so far (including the one being added).
-// For each constraint split where all tips have been added:
+// For each constraint split where both sides have previously-added tips:
 //   - If the new tip is "inside" the split, the insertion must be inside
-//     the split's current clade.
+//     the LCA clade of already-added inside tips.
 //   - If the new tip is "outside", the insertion must be outside.
-// Uses a simple subtree membership check: walk from `below` to root,
-// checking if we pass through the constraint node.
+// Uses DFS timestamps for O(1) descendant test per constraint.
 static bool wagner_edge_violates_constraint(
     const TreeState& tree, int below, int tip,
     const ConstraintData& cd,
@@ -267,37 +383,13 @@ static bool wagner_edge_violates_constraint(
     int tb = tip % 64;
     bool tip_inside = (split[tw] >> tb) & 1;
 
-    // Check: are all tips in this split accounted for?
-    // Count tips in each side that have been added (including `tip`).
-    bool all_inside_added = true;
-    bool all_outside_added = true;
-    for (int w = 0; w < cd.n_words; ++w) {
-      uint64_t inside_needed = split[w];
-      uint64_t outside_needed = ~split[w];
-      // Mask to valid tips only
-      if (w == cd.n_words - 1) {
-        int rem = tree.n_tip % 64;
-        if (rem > 0) outside_needed &= (1ULL << rem) - 1;
-      }
-      // added_tips already includes all previously-added tips.
-      // The new `tip` is being added now — add it to the mask.
-      uint64_t added_plus_tip = added_tips[w];
-      if (w == tw) added_plus_tip |= (1ULL << tb);
-
-      if (inside_needed & ~added_plus_tip) all_inside_added = false;
-      if (outside_needed & ~added_plus_tip) all_outside_added = false;
-    }
-
-    // Split is active only if at least 2 tips on each side have been added
-    // and at least one tip on each side was added BEFORE this step.
-    // Simpler: a split constrains placement iff both sides have at least
-    // one previously-added tip. Otherwise the split isn't meaningful yet.
+    // Split constrains placement iff both sides have at least one
+    // previously-added tip.
     bool has_prev_inside = false, has_prev_outside = false;
     for (int w = 0; w < cd.n_words; ++w) {
-      uint64_t prev = added_tips[w];  // before adding `tip`
-      if (prev & cd.split_tips[static_cast<size_t>(s) * cd.n_words + w])
-        has_prev_inside = true;
-      uint64_t outside_mask = ~cd.split_tips[static_cast<size_t>(s) * cd.n_words + w];
+      uint64_t prev = added_tips[w];
+      if (prev & split[w]) has_prev_inside = true;
+      uint64_t outside_mask = ~split[w];
       if (w == cd.n_words - 1) {
         int rem = tree.n_tip % 64;
         if (rem > 0) outside_mask &= (1ULL << rem) - 1;
@@ -306,10 +398,10 @@ static bool wagner_edge_violates_constraint(
     }
     if (!has_prev_inside || !has_prev_outside) continue;
 
-    // The constraint is active. Find the constraint node in the current tree.
-    // We need to know: is `below` inside the constraint clade?
+    // The constraint is active. constraint_node[s] is the LCA of
+    // added inside tips (set by wagner_map_constraint_nodes).
     int cn = cd.constraint_node[s];
-    if (cn < 0) continue;  // not mapped yet
+    if (cn < 0) continue;
 
     bool below_inside =
         is_ancestor_or_equal(cn, below, cd.dfs_entry, cd.dfs_exit);
@@ -355,7 +447,7 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
       int t = order[j];
       added_tips[t / 64] |= (1ULL << (t % 64));
     }
-    update_constraint(tree, *cd);
+    wagner_update_constraint(tree, *cd, added_tips);
   }
 
   // Add remaining taxa one at a time
@@ -422,7 +514,7 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
 
     if (constrained) {
       added_tips[tip / 64] |= (1ULL << (tip % 64));
-      update_constraint(tree, *cd);
+      wagner_update_constraint(tree, *cd, added_tips);
     }
   }
 
