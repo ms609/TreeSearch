@@ -103,13 +103,28 @@
   )
 )
 
-# Select strategy preset based on dataset size.
+# Select strategy preset based on dataset size and character count.
 # @param nTip Integer number of taxa
+# @param nChar Integer number of character patterns (unique columns)
 # @return Character name of the strategy preset
-.AutoStrategy <- function(nTip) {
-  if (nTip <= 30L) "sprint"
-  else if (nTip <= 60L) "default"
-  else "thorough"
+# @details
+# Empirically calibrated on 15 neotrans matrices (61-86 tips) + 4
+# inapplicable.phyData datasets.  Key findings:
+#   - Datasets with few characters (< 100 patterns) have flat parsimony
+#     landscapes where extra search adds zero score improvement (0/6 benefited).
+#   - Datasets with >= 100 patterns and >= 65 taxa have structured landscapes
+#     where thorough search finds substantially better trees (7/9 benefited,
+#     median +14 steps, max +74 steps at 86 tips / 528 chars).
+#   - At 62 tips (Agnarsson2004, 242 patterns) thorough adds 0 steps; at 65
+#     tips (project3617, 361 patterns) it adds 14 steps.
+.AutoStrategy <- function(nTip, nChar) {
+  if (nTip <= 30L) return("sprint")
+  # Few characters -> flat landscape; thorough search is pointless
+  if (nChar < 100L) return("default")
+  # Enough characters to have a structured landscape;
+  # moderate-to-large datasets benefit from intensive search
+  if (nTip >= 65L) return("thorough")
+  "default"
 }
 
 #' Find most parsimonious trees
@@ -173,14 +188,17 @@
 #' @param strategy Character: named strategy preset controlling the search
 #'   heuristic parameters. Presets:
 #'   \describe{
-#'     \item{`"auto"` (default)}{Selects automatically based on dataset size:
-#'       `"sprint"` for <=30 taxa, `"default"` for 31--60, `"thorough"` for 61+.}
+#'     \item{`"auto"` (default)}{Selects automatically based on dataset size
+#'       and signal density (characters per taxon):
+#'       `"sprint"` for <=30 taxa, `"thorough"` for >=75 taxa with
+#'       fewer than 5 characters per taxon, `"default"` otherwise.}
 #'     \item{`"sprint"`}{Fast search: 3 ratchet cycles, no drift, minimal
 #'       sectorial. Good for small datasets or quick surveys.}
 #'     \item{`"default"`}{Balanced: 5 ratchet + 2 drift + sectorial + fusing.}
 #'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, 12 drift, adaptive
-#'       perturbation, extra sectorial rounds. Best for large (60+ tips)
-#'       datasets where sprint/default may miss the global optimum.}
+#'       perturbation, extra sectorial rounds. Best for large (75+ tips)
+#'       datasets with limited phylogenetic signal, where sprint/default
+#'       may miss the global optimum.}
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }
 #'   Explicit `control` fields always override the preset; for example,
@@ -188,6 +206,11 @@
 #'   sprint defaults for everything except `ratchetCycles`.
 #' @param maxReplicates Integer: maximum number of independent search
 #'   replicates (default: 100).
+#'   For large or complex datasets a higher value improves the chance of
+#'   finding all MPTs.  A rough minimum is
+#'   `max(10, ceiling(NTip * NChar / 5000))`, where `NChar = sum(weight)`.
+#'   A warning is issued when an explicit value falls below this threshold
+#'   for datasets with 30 or more taxa.
 #' @param targetHits Integer: stop when the best score has been found
 #'   independently this many times (default: `max(10, NTip / 5)`).
 #' @param maxSeconds Numeric: maximum wall-clock time in seconds for the
@@ -328,7 +351,8 @@ MaximizeParsimony <- function(
   # --- Apply strategy preset ---
   if (!is.null(strategy) && !identical(strategy, "none")) {
     if (identical(strategy, "auto")) {
-      strategy <- .AutoStrategy(NTip(dataset))
+      strategy <- .AutoStrategy(NTip(dataset),
+                                sum(attr(dataset, "weight")))
     }
     preset <- .StrategyPresets()[[strategy]]
     if (!is.null(preset)) {
@@ -471,6 +495,26 @@ MaximizeParsimony <- function(
                      nrow = length(dataset), byrow = TRUE)
   weight <- at$weight
   levels <- at$levels
+
+  # --- Replicate count adequacy check ---
+  # Warn only when the user explicitly passed maxReplicates.
+  # Formula: max(10, ceiling(nTip * nChar / 5000)) where nChar = sum(weight).
+  # Derived from T-069 benchmarks: at 225 taxa / 748 chars a single rep takes
+  # ~40s and at least ~34 reps are needed to fill the tree pool reliably.
+  if (!missing(maxReplicates) && nTip >= 30L) {
+    nChars <- sum(weight)
+    minReps <- pmax(10L, ceiling(nTip * nChars / 5000L))
+    if (maxReplicates < minReps) {
+      warning(
+        "With ", nTip, " taxa and ", nChars, " characters, at least ",
+        minReps, " replicates are recommended for reliable results ",
+        "(you specified ", maxReplicates, "). ",
+        "Consider increasing `maxReplicates` or setting `maxSeconds` ",
+        "to allow more search time.",
+        call. = FALSE
+      )
+    }
+  }
 
   # --- Prepare constraint for C++ engine ---
   consArgs <- .PrepareConstraint(

@@ -43,14 +43,15 @@ void init_wagner_state(TreeState& tree, const DataSet& ds) {
   tree.load_tip_states(ds);
 }
 
-// Build the initial 3-taxon tree:
-//
-//        root (= n_tip)
-//       /    \
-//    int1     t2
-//  (n_tip+1)
-//   /    \
-// t0      t1
+/* Build the initial 3-taxon tree:
+ *
+ *        root (= n_tip)
+ *       /    \
+ *    int1     t2
+ *  (n_tip+1)
+ *   /    \
+ * t0      t1
+ */
 void build_three_taxon_tree(TreeState& tree, int t0, int t1, int t2) {
   int root = tree.n_tip;
   int int1 = tree.n_tip + 1;
@@ -67,13 +68,14 @@ void build_three_taxon_tree(TreeState& tree, int t0, int t1, int t2) {
   tree.right[1] = t1;   // int1's right
 }
 
-// Insert tip at edge (above, below), creating new_internal between them.
-//
-// Before:     above          After:     above
-//               |                        |
-//             below                   new_internal
-//                                     /        \
-//                                   tip       below
+/* Insert tip at edge (above, below), creating new_internal between them.
+ *
+ * Before:     above          After:     above
+ *               |                        |
+ *             below                   new_internal
+ *                                     /        \
+ *                                   tip       below
+ */
 void insert_tip_at_edge(TreeState& tree, int tip, int new_internal,
                         int above, int below) {
   int ni = new_internal - tree.n_tip;
