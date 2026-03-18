@@ -1,3 +1,5 @@
+# Tier 2: skipped on CRAN; see tests/testing-strategy.md
+skip_on_cran()
 # ---------- Test datasets ----------
 
 # 10 tips, informative characters

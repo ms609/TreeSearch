@@ -1,3 +1,5 @@
+# Tier 2: skipped on CRAN; see tests/testing-strategy.md
+skip_on_cran()
 # Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
 # Helper: run driven search with callback

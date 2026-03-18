@@ -1,3 +1,7 @@
+# Tier 3: only runs when TREESEARCH_EXTENDED_TESTS=true.
+# See tests/testing-strategy.md
+skip_extended()
+
 library("TreeTools", quietly = TRUE)
 
 make_ts_data <- function(dataset) {

@@ -1,6 +1,16 @@
 # Shared helpers for ts-* test files.
 # testthat auto-sources helper-*.R files before running tests.
 
+#' Skip a test unless TREESEARCH_EXTENDED_TESTS=true is set.
+#' Use inside test_that() or at file level for Tier 3 (stress/bench) tests.
+#' See tests/testing-strategy.md for full tiering documentation.
+skip_extended <- function() {
+  testthat::skip_if(
+    !identical(Sys.getenv("TREESEARCH_EXTENDED_TESTS"), "true"),
+    "Set TREESEARCH_EXTENDED_TESTS=true to run extended tests"
+  )
+}
+
 library("TreeTools")
 
 #' Convert phyDat object to the list format expected by ts_* C++ bridges

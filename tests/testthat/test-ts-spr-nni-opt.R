@@ -1,3 +1,5 @@
+# Tier 2: skipped on CRAN; see tests/testing-strategy.md
+skip_on_cran()
 # Tests for SPR and NNI search optimizations (Phase 2C).
 # Verifies that optimized SPR (bounded indirect, subtree filter, incremental
 # clip, deferred reshuffling) and NNI (incremental scoring) produce correct

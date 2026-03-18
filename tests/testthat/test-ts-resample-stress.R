@@ -1,3 +1,7 @@
+# Tier 3: only runs when TREESEARCH_EXTENDED_TESTS=true.
+# See tests/testing-strategy.md
+skip_extended()
+
 # Stress tests for resample + SA in the C++ engine.
 # Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 

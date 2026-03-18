@@ -1,3 +1,5 @@
+# Tier 2: skipped on CRAN; see tests/testing-strategy.md
+skip_on_cran()
 test_that("hash_tree matches hash_splits(compute_splits())", {
   library(TreeTools)
 

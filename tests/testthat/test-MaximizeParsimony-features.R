@@ -34,6 +34,34 @@ test_that("strategy = 'thorough' runs and returns valid result", {
   expect_true(is.finite(attr(result, "score")))
 })
 
+test_that(".AutoStrategy selects on size and signal density", {
+  AS <- TreeSearch:::.AutoStrategy
+
+  # Small datasets: always sprint
+  expect_equal(AS(20, 100), "sprint")
+  expect_equal(AS(30, 500), "sprint")
+
+  # Few chars (< 100 patterns) -> flat landscape -> always default
+  expect_equal(AS(50, 25),   "default")  # small, very few chars
+  expect_equal(AS(65, 80),   "default")  # large enough tip count, but nChar < 100
+  expect_equal(AS(200, 99),  "default")  # large, but still nChar < 100
+
+  # Mid-size (31-64 tips) with enough chars -> default (not large enough)
+  expect_equal(AS(60, 300), "default")  # nChar >= 100 but nTip < 65
+  expect_equal(AS(64, 200), "default")  # nChar >= 100 but nTip < 65
+
+  # Large (>= 65 tips) with enough chars -> thorough
+  # Signal density does NOT gate thorough: more chars = more benefit (T-068 benchmark)
+  expect_equal(AS(65, 100),   "thorough")  # boundary case: 65 tips, 100 chars
+  expect_equal(AS(74, 200),   "thorough")  # 74 tips, ratio 2.7
+  expect_equal(AS(75, 250),   "thorough")  # ratio 3.3
+  expect_equal(AS(100, 200),  "thorough")  # ratio 2.0
+  expect_equal(AS(75, 400),   "thorough")  # ratio 5.3 — high ratio still benefits
+  expect_equal(AS(125, 2800), "thorough")  # ratio 22.4 — high ratio still benefits
+  expect_equal(AS(200, 100),  "thorough")  # nChar exactly 100 (boundary)
+  expect_equal(AS(200, 1200), "thorough")  # ratio 6.0
+})
+
 test_that("strategy = 'auto' selects based on dataset size", {
   set.seed(2944)
   # Vinther2008 has 23 tips -> should auto-select "sprint"

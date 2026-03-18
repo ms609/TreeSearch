@@ -1,3 +1,5 @@
+# Tier 2: skipped on CRAN; see tests/testing-strategy.md
+skip_on_cran()
 # Tests for Phase 3A: TBR symmetry-breaking (virtual_prelim deduplication)
 #
 # These tests verify that the symmetry-breaking optimization in TBR

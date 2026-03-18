@@ -1,3 +1,7 @@
+# Tier 3: only runs when TREESEARCH_EXTENDED_TESTS=true.
+# See tests/testing-strategy.md
+skip_extended()
+
 # Benchmark / regression test for TBR optimizations (Phase 2B).
 # Tests correctness: optimized TBR must find scores equal to or better than
 # the baseline, and result topologies must be valid.

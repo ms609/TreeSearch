@@ -1,3 +1,5 @@
+# Tier 2: skipped on CRAN; see tests/testing-strategy.md
+skip_on_cran()
 # Helper to prepare phyDat for C++ engine
 prep_pd <- function(pd) {
   list(
