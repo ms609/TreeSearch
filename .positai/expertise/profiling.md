@@ -58,42 +58,50 @@ Rprof(NULL)
 summaryRprof("profile.out")
 ```
 
-## Known Baselines (as of 2026-03-17, post T-025 fix + d2_r5 tuning + CSS disabled)
+## Known Baselines (as of 2026-03-17 18:30, v2.0.0 verification run by Agent A)
 
-### Per-phase breakdown (EW, strategy='none', 5 replicates, 3-run medians):
+### Per-phase breakdown (EW, strategy='none', 5 replicates, verbose run):
 
-| Dataset | Tips | TBR% | XSS% | RSS% | CSS% | Ratch% | Drift% | Other% | Total ms |
-|---------|------|------|------|------|------|--------|--------|--------|----------|
-| Vinther2008 | 23 | 11.0 | 21.9 | 4.3 | 0.0 | 39.8 | 19.6 | 3.4 | 233 |
-| Agnarsson2004 | 62 | 18.0 | 13.5 | 4.2 | 0.0 | 37.9 | 24.0 | 2.4 | 3141 |
-| Zhu2013 | 75 | 33.2 | 9.8 | 2.8 | 0.0 | 24.7 | 27.8 | 1.7 | 3995 |
-| Dikow2009 | 88 | 20.5 | 12.4 | 2.6 | 0.0 | 37.5 | 24.7 | 2.3 | 6666 |
+| Dataset | Tips | TBR% | XSS% | RSS% | CSS% | Ratch% | Drift% | Med ms |
+|---------|------|------|------|------|------|--------|--------|--------|
+| Vinther2008 | 23 | 13.6 | 18.6 | 4.5 | 0.0 | 41.2 | 22.1 | 550* |
+| Agnarsson2004 | 62 | 21.5 | 14.8 | 2.8 | 0.0 | 38.7 | 22.3 | 3420 |
+| Zhu2013 | 75 | 39.6 | 10.1 | 2.1 | 0.0 | 24.1 | 24.2 | 4930 |
+| Dikow2009 | 88 | 28.8 | 11.2 | 2.7 | 0.0 | 35.5 | 21.7 | 6490 |
+
+*Vinther2008 median inflated by MPT enumeration (49 trees in pool).
 
 Note: Current defaults are driftCycles=2, ratchetCycles=5, cssRounds=0.
-Previous baselines (d6_r10) showed drift dominating at 40-50%; with d2_r5,
-ratchet (25-40%) and TBR (11-33%) are now the largest phases.
+Phase distribution stable vs prior baselines (stochastic variation only).
+Ratchet (24-41%) and TBR (14-40%) remain the largest phases.
 
 ### End-to-end benchmarks (3-run medians, 5 reps, strategy='none'):
 
 | Dataset | Tips | EW (s) | IW k=10 (s) |
 |---------|------|--------|-------------|
-| Vinther2008 | 23 | 0.230 | 0.360 |
-| Agnarsson2004 | 62 | 3.250 | 4.730 |
-| Zhu2013 | 75 | 4.080 | 5.920 |
-| Dikow2009 | 88 | 6.630 | — |
+| Vinther2008 | 23 | 0.550* | 0.170 |
+| Agnarsson2004 | 62 | 3.420 | 2.890 |
+| Zhu2013 | 75 | 4.930 | 4.610 |
+| Dikow2009 | 88 | 6.490 | — |
 
-Speedup vs old defaults (d6_r10): 41-52% faster with equivalent score quality.
+IW consistently faster than EW (fewer MPTs → smaller pool → less enumeration).
 
-### Auto strategy benchmarks (3-run medians, 5 reps):
+### Auto strategy: default vs thorough comparison (8 seeds, 5 reps each)
 
-| Dataset | Tips | Preset | EW (s) | Score |
-|---------|------|--------|--------|-------|
-| Vinther2008 | 23 | sprint | 0.110 | 79-80 |
-| Agnarsson2004 | 62 | thorough | 13.670 | 778 |
-| Zhu2013 | 75 | thorough | 16.390 | 647-648 |
+| Dataset | Tips | default med | thorough med | Slowdown | Score improvement |
+|---------|------|-------------|-------------|----------|-------------------|
+| Wilson2003 | 61 | 889 (3.8s) | 887 (10.2s) | 2.7× | 2 (noisy) |
+| Agnarsson2004 | 62 | 778 (2.2s) | 778 (5.4s) | 2.5× | 0 |
+| Zhu2013 | 75 | 658 (4.6s) | 649 (12.2s) | 2.6× | **9** |
+| Dikow2009 | 88 | 1614 (5.4s) | 1612 (17.9s) | 3.3× | 2 |
 
-Note: "thorough" preset is 4× slower than raw defaults for 62-tip datasets
-with zero score improvement. Threshold at 61 tips may be too aggressive.
+**Finding:** "thorough" benefit is dataset-dependent, not purely size-dependent.
+At 61-62 tips: 0-2 step improvement (noisy). At 75 tips (Zhu2013): 9-step
+improvement justifies the cost. At 88 tips: only 2-step improvement.
+
+**Recommendation:** Consider raising the threshold from 61 to ~75 tips, or
+introducing an intermediate preset (e.g. 10 ratchet + 5 drift) for 61-75.
+The current threshold wastes 2.5-3× compute on many 61-tip datasets.
 
 ### R overhead: <0.5% of wall time (confirmed via Rprof)
 
