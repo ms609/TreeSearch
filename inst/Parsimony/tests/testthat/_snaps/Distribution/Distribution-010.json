@@ -1,35 +1,43 @@
 {
   "input": {
-    "clThresh": 0.5,
+    "clustering-clThresh": 0.5,
     "concordance": "clc",
     "consP": 0.5,
-    "dataFile": null,
-    "dataSource": "Sun2018",
-    "distMeth": "rf",
-    "excludedTip": "Paterimitra",
-    "go": 0,
-    "keepNTips": 47,
-    "mapDisplay": null,
-    "mapLines": null,
-    "nTree": 125,
-    "neverDrop": null,
-    "outgroup": null,
-    "plotFormat": "space",
-    "plotSize": 400,
-    "plottedChar": 1,
-    "readxl.sheet": "Sheet 1",
-    "readxlSkip": 2,
-    "readxlSkipCols": 2,
-    "searchChar": "",
-    "searchConfig": 0,
-    "treeFile": null,
-    "treeRange": [
+    "data-dataFile": null,
+    "data-dataSource": "Sun2018",
+    "data-nTree": 125,
+    "data-readxlSkip": 2,
+    "data-readxlSkipCols": 2,
+    "data-readxl_sheet": "Sheet 1",
+    "data-treeFile": null,
+    "data-treeRange": [
       1,
       125
     ],
-    "treespace-relators": null,
-    "treespace-spaceCol": "clust",
-    "treespace-spaceDim": 5,
+    "distMeth": "rf",
+    "excludedTip": "Paterimitra",
+    "keepNTips": 47,
+    "mapDisplay": null,
+    "mapLines": [
+      "hull",
+      "mst"
+    ],
+    "neverDrop": null,
+    "outgroup": "Namacalathus",
+    "plotFormat": "space",
+    "plotSize": 400,
+    "plottedChar": 1,
+    "search-go": 0,
+    "search-searchConfig": 0,
+    "searchChar": "",
+    "treespace-relators": [
+      "Wiwaxia_corrugata",
+      "Tonicella",
+      "Dentalium",
+      "Phoronis"
+    ],
+    "treespace-spaceCol": "score",
+    "treespace-spaceDim": 3,
     "treespace-spacePch": "relat",
     "whichTree": 0
   },
@@ -58,9 +66,14 @@
 
       ]
     },
-    "results": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
+    "search-results": {
+      "html": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
+      "deps": [
+
+      ]
+    },
     "treePlot": {
-      "src": "[image data hash: b2345a030426feb3e894f83fb51eb8f3]",
+      "src": "[image data hash: a3b0354669214e862ef354a856d4abe0]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
@@ -72,10 +85,10 @@
               "top": 1.04
             },
             "range": {
-              "left": 301.9008,
-              "right": 398.0992,
-              "bottom": 97.09920000000001,
-              "top": 0.9007999999999914
+              "left": 202.3904,
+              "right": 397.6096,
+              "bottom": 196.6096,
+              "top": 1.390399999999993
             },
             "log": {
               "x": null,
@@ -94,7 +107,7 @@
       "class": "shiny-scalable"
     },
     "treespace-pcQuality": {
-      "src": "[image data hash: d00bf4dd401472f0de37ace20eb9b757]",
+      "src": "[image data hash: 3d3d8c8359867684b00bb4541e33925d]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [

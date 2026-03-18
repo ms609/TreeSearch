@@ -3,6 +3,18 @@
 logging <- isTRUE(getOption("TreeSearch.logging"))
 options(shiny.maxRequestSize = 1024 ^ 3) # Allow max 1 GB files
 
+# Development: prepend .agent-shiny library so library("TreeSearch") finds
+# the pre-built v2.0.0 install, preventing pkgload from intercepting and
+# attempting a debug recompile (which fails when src/*.o files are stale).
+local({
+  shiny_lib <- normalizePath(
+    file.path(dirname(dirname(getwd())), ".agent-shiny"),
+    mustWork = FALSE
+  )
+  if (dir.exists(shiny_lib)) {
+    .libPaths(c(shiny_lib, .libPaths()))
+  }
+})
 
 library("methods", exclude = c("show", "removeClass"))
 library("cli")
@@ -274,6 +286,28 @@ Enquote <- function(x, ...) {
   }
 }
 
+#' Confidence text for post-search results display.
+#'
+#' Given K hits to best score in R total replicates, returns a plain-text
+#' summary of the observed hit rate and how it compares to the number of
+#' replicates needed for 95% single-run confidence.
+#'
+#' @param K integer. Cumulative hits to best score.
+#' @param R integer. Cumulative replicates run.
+#' @return character(1) or NULL if no search data.
+SearchConfidenceText <- function(K, R) {
+  if (is.null(K) || is.null(R) || R <= 0L || K <= 0L) return(NULL)
+  p   <- K / R
+  # Minimum replicates for >=95% chance of at least one hit at this rate
+  n95 <- if (p >= 1) 1L else as.integer(ceiling(log(0.05) / log(1 - p)))
+  coverage <- if (n95 <= R) {
+    paste0("\u2265", n95, " reps sufficient for 95% confidence \u2014 covered")
+  } else {
+    paste0("\u2265", n95, " reps for 95% confidence")
+  }
+  paste0(K, "/", R, " replicates found best score (", coverage, ")")
+}
+
 EnC <- function(...) {
   if (length(...) == 1) {
     Enquote(...)
@@ -286,4 +320,9 @@ EnC <- function(...) {
 source("server/mod_references.R")
 source("server/mod_downloads.R")
 dl_ui <- downloads_ui("dl")
+source("server/mod_search.R")
+se_ui <- search_ui("search")
+source("server/mod_data.R")
+source("server/mod_clustering.R")
 source("server/mod_treespace.R")
+data_ui_elems <- data_ui("data")

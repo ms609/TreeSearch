@@ -448,7 +448,11 @@
           ]
         }
         PlotCharacter(
-          if (whichTree() > 0) r$plottedTree else lapply(r$trees, UserRoot),
+          if (whichTree() > 0) {
+            MakeTreeBinary(r$plottedTree)
+          } else {
+            lapply(r$trees, function(t) MakeTreeBinary(UserRoot(t)))
+          },
           r$dataset,
           n,
           edge.width = 2.5,
@@ -516,8 +520,9 @@
       }
       LogCodeP(
         "PlotCharacter(",
-        if (whichTree() > 0) "  tree = plottedTree," else 
-          paste0("  tree = RootTree(trees, ", EnC(r$outgroup), "),"),
+        if (whichTree() > 0) "  tree = MakeTreeBinary(plottedTree)," else 
+          paste0("  tree = lapply(RootTree(trees, ", EnC(r$outgroup),
+                 "), MakeTreeBinary),"),
         "  dataset = dataset,",
         paste0("  char = ", n, ","),
         paste0("  updateTips = ", "updateTips" %in% input$mapDisplay, ","),

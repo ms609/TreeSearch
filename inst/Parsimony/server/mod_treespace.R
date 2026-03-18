@@ -2,11 +2,11 @@
 #
 # Absorbs treespace.R + plotsettings.R. Owns inputs: spaceDim, spaceCol,
 # spacePch, relators, mapLines. Reads: r$trees, r$treeHash, clusterings(),
-# silThreshold(), scores(), concavity(). Receives top-level distMeth and
-# plotFormat as reactive args.
+# silThreshold(), scores(), concavity(). Receives top-level distMeth,
+# plotFormat, distances, and LogDistances as reactive/function args.
 #
 # Returns a list of reactives consumed by other source'd server files:
-#   distances, mapping, dims, nProjDim, TreeCols, treePch,
+#   mapping, dims, nProjDim, TreeCols, treePch,
 #   saveDetails, TreespacePlot, LogTreespacePlot, mstEnds
 
 treespace_ui <- function(id) {
@@ -46,10 +46,14 @@ treespace_ui <- function(id) {
 #' @param concavity Reactive returning concavity value.
 #' @param distMeth Reactive wrapping top-level \code{input$distMeth}.
 #' @param plotFormat Reactive wrapping top-level \code{input$plotFormat}.
+#' @param distances Reactive returning tree distance matrix (from clustering
+#'   module).
+#' @param LogDistances Function that logs distance computation code.
 #' @param log_fns Named list of logging functions from logging.R:
 #'   BeginLogP, LogCommentP, LogCodeP, LogIndent, LogClusterings.
 treespace_server <- function(id, r, clusterings, silThreshold, scores,
-                             concavity, distMeth, plotFormat, log_fns) {
+                             concavity, distMeth, plotFormat,
+                             distances, LogDistances, log_fns) {
   moduleServer(id, function(input, output, session) {
 
     # Unpack logging functions
@@ -226,6 +230,16 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
       min(12, max(0L, length(r$trees) - 1L))
     })
 
+    # Keep spaceDim slider max in sync with available projection dimensions
+    observe({
+      mpd <- maxProjDim()
+      if (mpd > 0) {
+        updateSliderInput(inputId = "spaceDim",
+                          max = max(1L, mpd),
+                          value = min(mpd, input$spaceDim))
+      }
+    })
+
     nProjDim <- reactive({
       dim(mapping())[2]
     })
@@ -234,47 +248,7 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
       min(input$spaceDim, maxProjDim())
     }), 400)
 
-    Quartet <- function(...) {
-      if (!requireNamespace("Quartet", quietly = TRUE)) {
-        Notification("Installing required package \"Quartet\"",
-                     type = "warning", duration = 20)
-        install.packages("Quartet")
-      }
-      as.dist(Quartet::QuartetDivergence(
-        Quartet::ManyToManyQuartetAgreement(...), similarity = FALSE))
-    }
-
-    distances <- bindCache(reactive({
-      LogMsg("distances(): ", distMeth())
-      if (length(r$trees) > 1L) {
-        Dist <- switch(distMeth(),
-                       "cid" = TreeDist::ClusteringInfoDistance,
-                       "pid" = TreeDist::PhylogeneticInfoDistance,
-                       "msid" = TreeDist::MatchingSplitInfoDistance,
-                       "rf" = TreeDist::RobinsonFoulds,
-                       "qd" = Quartet)
-        withProgress(
-          message = "Initializing distances...", value = 0.99,
-          Dist(r$trees)
-        )
-      } else {
-        matrix(0, 0, 0)
-      }
-    }), distMeth(), r$treeHash)
-
-    LogDistances <- function() {
-      LogCommentP("Compute tree distances")
-      LogCodeP(switch(
-        distMeth(),
-        "cid" = "dists <- TreeDist::ClusteringInfoDistance(trees)",
-        "pid" = "dists <- TreeDist::PhylogeneticInfoDistance(trees)",
-        "msid" = "dists <- TreeDist::MatchingSplitInfoDistance(trees)",
-        "rf" = "dists <- TreeDist::RobinsonFoulds(trees)",
-        "qd" = c("dists <- as.dist(Quartet::QuartetDivergence(",
-                 "  Quartet::ManyToManyQuartetAgreement(trees),",
-                 "  similarity = FALSE)", ")")
-      ))
-    }
+    # distances and LogDistances are now received as args from clustering module
 
     mapping <- bindCache(reactive({
       LogMsg("mapping()")
@@ -724,7 +698,6 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
     ############################################################################
 
     list(
-      distances        = distances,
       mapping          = mapping,
       dims             = dims,
       nProjDim         = nProjDim,
@@ -734,7 +707,6 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
       saveDetails      = saveDetails,
       TreespacePlot    = TreespacePlot,
       LogTreespacePlot = LogTreespacePlot,
-      LogDistances     = LogDistances,
       # Expose input values for cache keys in consensus.R
       spaceCol  = reactive(input$spaceCol),
       spacePch  = reactive(input$spacePch),

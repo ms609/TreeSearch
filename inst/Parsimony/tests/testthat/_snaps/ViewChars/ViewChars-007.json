@@ -1,35 +1,35 @@
 {
   "input": {
-    "clThresh": 0.5,
+    "clustering-clThresh": 0.5,
     "concordance": "none",
     "consP": 0.5,
-    "dataFile": null,
-    "dataSource": "Agnarsson2004",
+    "data-dataFile": null,
+    "data-dataSource": "Agnarsson2004",
+    "data-nTree": 23,
+    "data-readxlSkip": 2,
+    "data-readxlSkipCols": 2,
+    "data-readxl_sheet": "Sheet 1",
+    "data-treeFile": null,
+    "data-treeRange": [
+      1,
+      23
+    ],
     "distMeth": "cid",
-    "excludedTip": "Emertonella",
-    "go": 0,
+    "excludedTip": "Dipoena",
     "keepNTips": 59,
     "mapDisplay": null,
     "mapLines": [
       "hull",
       "mst"
     ],
-    "nTree": 23,
-    "neverDrop": null,
+    "neverDrop": "Emertonella",
     "outgroup": "Thymoites",
     "plotFormat": "cons",
     "plotSize": 600,
     "plottedChar": 1,
-    "readxl.sheet": "Sheet 1",
-    "readxlSkip": 2,
-    "readxlSkipCols": 2,
+    "search-go": 0,
+    "search-searchConfig": 0,
     "searchChar": "",
-    "searchConfig": 0,
-    "treeFile": null,
-    "treeRange": [
-      1,
-      23
-    ],
     "treespace-relators": null,
     "treespace-spaceCol": "clust",
     "treespace-spaceDim": 5,
@@ -38,7 +38,7 @@
   },
   "output": {
     "branchLegend": {
-      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">17 trees<\/span>",
+      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">23 trees<\/span>",
       "deps": [
 
       ]
@@ -49,16 +49,21 @@
 
       ]
     },
-    "results": "23 trees in memory: 23 sampled with scores 34.7693 to 38.2276 (k = 10)",
+    "search-results": {
+      "html": "23 trees in memory: 23 sampled with scores 34.7693 to 38.2276 (k = 10)",
+      "deps": [
+
+      ]
+    },
     "treePlot": {
-      "src": "[image data hash: 26f7d82dfa10502d66c7f5fe16b33d68]",
+      "src": "[image data hash: 66cd63eb7bfe0926c87c956b8f98611f]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -1.168364308073442,
-              "right": 30.37747200990949,
+              "left": -1.020507541166382,
+              "right": 26.53319607032594,
               "bottom": -1.32,
               "top": 61.32
             },

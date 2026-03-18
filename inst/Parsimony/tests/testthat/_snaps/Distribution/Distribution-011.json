@@ -1,35 +1,38 @@
 {
   "input": {
-    "clThresh": 0.5,
+    "clustering-clThresh": 0.5,
     "concordance": "clc",
     "consP": 0.5,
-    "dataFile": null,
-    "dataSource": "Agnarsson2004",
-    "distMeth": "qd",
-    "excludedTip": "Paterimitra",
-    "go": 0,
-    "keepNTips": 47,
-    "mapDisplay": null,
-    "mapLines": null,
-    "nTree": 23,
-    "neverDrop": null,
-    "outgroup": null,
-    "plotFormat": "space",
-    "plotSize": 400,
-    "plottedChar": 1,
-    "readxl.sheet": "Sheet 1",
-    "readxlSkip": 2,
-    "readxlSkipCols": 2,
-    "searchChar": "",
-    "searchConfig": 0,
-    "treeFile": null,
-    "treeRange": [
+    "data-dataFile": null,
+    "data-dataSource": "Agnarsson2004",
+    "data-nTree": 23,
+    "data-readxlSkip": 2,
+    "data-readxlSkipCols": 2,
+    "data-readxl_sheet": "Sheet 1",
+    "data-treeFile": null,
+    "data-treeRange": [
       1,
       23
     ],
+    "distMeth": "qd",
+    "excludedTip": "Paterimitra",
+    "keepNTips": 47,
+    "mapDisplay": null,
+    "mapLines": [
+      "hull",
+      "mst"
+    ],
+    "neverDrop": null,
+    "outgroup": "Namacalathus",
+    "plotFormat": "space",
+    "plotSize": 400,
+    "plottedChar": 1,
+    "search-go": 0,
+    "search-searchConfig": 0,
+    "searchChar": "",
     "treespace-relators": null,
-    "treespace-spaceCol": "clust",
-    "treespace-spaceDim": 5,
+    "treespace-spaceCol": "score",
+    "treespace-spaceDim": 3,
     "treespace-spacePch": "relat",
     "whichTree": 0
   },
@@ -58,9 +61,14 @@
 
       ]
     },
-    "results": "23 trees in memory: 23 sampled with scores 34.7693 to 38.2276 (k = 10)",
+    "search-results": {
+      "html": "23 trees in memory: 23 sampled with scores 34.7693 to 38.2276 (k = 10)",
+      "deps": [
+
+      ]
+    },
     "treePlot": {
-      "src": "[image data hash: 49c9440dfdb1c1aa7b7d54fc2a13f13b]",
+      "src": "[image data hash: 18b5738ed06da40648188bd6aa5707e6]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
@@ -72,10 +80,10 @@
               "top": 1.04
             },
             "range": {
-              "left": 301.9008,
-              "right": 398.0992,
-              "bottom": 97.09920000000001,
-              "top": 0.9007999999999914
+              "left": 202.3904,
+              "right": 397.6096,
+              "bottom": 196.6096,
+              "top": 1.390399999999993
             },
             "log": {
               "x": null,
@@ -94,7 +102,7 @@
       "class": "shiny-scalable"
     },
     "treespace-pcQuality": {
-      "src": "[image data hash: 30bc2001e2cd94537a385ae3b3063034]",
+      "src": "[image data hash: dbd6456412b394d4aff9ca7c9488163b]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [

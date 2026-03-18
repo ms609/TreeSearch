@@ -32,6 +32,12 @@ stub_log_fns <- list(
 # Minimal clustering stub
 stub_clustering <- list(sil = -1, n = 1, cluster = rep(1, 3), method = "none")
 
+# Stub distances (moved to clustering module; treespace now receives as arg)
+stub_distances <- reactive({
+  matrix(0, 0, 0)
+})
+stub_LogDistances <- function() invisible(NULL)
+
 test_that("treespace_server returns expected reactive list", {
   r <- reactiveValues(
     trees    = ape::rmtree(5, 10),
@@ -48,13 +54,15 @@ test_that("treespace_server returns expected reactive list", {
       concavity    = reactive(Inf),
       distMeth     = reactive("cid"),
       plotFormat    = reactive("cons"),
+      distances    = stub_distances,
+      LogDistances = stub_LogDistances,
       log_fns      = stub_log_fns
     ),
     {
       # Module should return a named list
       returned <- session$getReturned()
       expect_true(is.list(returned))
-      expect_true(all(c("distances", "mapping", "dims", "nProjDim",
+      expect_true(all(c("mapping", "dims", "nProjDim",
                          "TreeCols", "treePch", "saveDetails",
                          "TreespacePlot", "LogTreespacePlot") %in%
                         names(returned)))
@@ -78,6 +86,8 @@ test_that("saveDetails returns correct metadata per plot format", {
       concavity    = reactive(Inf),
       distMeth     = reactive("rf"),
       plotFormat    = reactive("space"),
+      distances    = stub_distances,
+      LogDistances = stub_LogDistances,
       log_fns      = stub_log_fns
     ),
     {

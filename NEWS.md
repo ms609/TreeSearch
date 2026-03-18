@@ -98,6 +98,23 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 - `Jackknife()` is deprecated in favour of `Resample()`.
 - `TreeSearch()` is deprecated in favour of `MaximizeParsimony()`.
 
+## App improvements (`EasyTrees()`)
+
+- **Async search**: the session remains responsive while a search is running.
+- **Parallel search**: the search settings modal includes a thread count slider
+  (when multiple cores are available).
+- **Tree accumulation**: repeated "Continue search" runs accumulate trees at
+  the same optimal score, with deduplication by topology.
+- **Search confidence**: after each search, the results pane shows the hit rate
+  and an estimate of the replicates needed for 95% confidence.
+- **Search config modal** reorganized into labeled sections (step weighting,
+  parallelization, search intensity, results to keep).
+- Fix `PlotCharacter()` crash on multifurcating consensus trees.
+- Fix first search not appearing to update trees in memory.
+- Clarified "Stop after best score found N times" slider label with help text.
+- Dataset-adaptive timeout default (1–15 minutes based on dataset size).
+- Internal modularization of the Shiny app into proper Shiny modules.
+
 ## Other improvements
 
 - New parameters for flexible plotting of `QALegend()`.

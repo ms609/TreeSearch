@@ -2,202 +2,18 @@
   # Event listeners
   ##############################################################################
   
-  observeEvent(input$dataSource, UpdateData(), ignoreInit = TRUE)
-  observeEvent(input$dataFile, UpdateData(), ignoreInit = TRUE)
-  observeEvent(input$readxl.sheet, UpdateData(), ignoreInit = TRUE)
-  observeEvent(input$readxlSkip, UpdateData(), ignoreInit = TRUE)
-  observeEvent(input$readxlSkipCols, UpdateData(), ignoreInit = TRUE)
+  # Data input observers + r$dataset + treeFile now in mod_data.R
   
-  observeEvent(r$dataset, {
-    r$dataHash <- rlang::hash(r$dataset)
-  })
   observeEvent(input$plotSize, {
     px <- paste0("'", input$plotSize, "px'")
     runjs(paste0("$('#treePlot').css({height: ", px, ", width: ", px, "});"))
   })
   
-  observeEvent(input$searchConfig, {
-    updateSelectInput(session, "implied.weights",
-                      selected = input$implied.weights)
-    updateSliderInput(session, "concavity", value = input$concavity)
-    updateNumericInput(session, "epsilon", value = input$epsilon)
-    updateSelectInput(session, "strategy", selected = input$strategy)
-    updateSliderInput(session, "maxReplicates", value = input$maxReplicates)
-    updateSliderInput(session, "targetHits", value = input$targetHits)
-    updateSliderInput(session, "timeout", value = input$timeout)
-    showModal(modalDialog(
-      easyClose = TRUE,
-      fluidPage(column(6,
-      tagList(
-              selectInput("implied.weights", "Step weighting",
-                         list("Implied" = "on", "Profile" = "prof",
-                              "Equal" = "off"), "on"),
-              sliderInput("concavity", "Step weight concavity constant", min = 0L,
-                         max = 3L, pre = "10^", value = 1L),
-              numericInput("epsilon", "Keep if suboptimal by \u2264", min = 0,
-                          value = 0),
-              selectInput("strategy", "Search strategy",
-                         list("Auto" = "auto", "Sprint" = "sprint",
-                              "Default" = "default", "Thorough" = "thorough"),
-                         "auto"),
-              sliderInput("timeout", "Maximum run duration", min = 1,
-                          max = 600, value = 30, post = "min", step = 1),
-      )), column(6,
-             tagList(
-              sliderInput("maxReplicates", "Maximum replicates", min = 1L,
-                          max = 500L, value = 100L, step = 1L),
-              sliderInput("targetHits", "Stop after N hits to best score",
-                          min = 1L, max = 50L, value = 10L, step = 1L),
-              selectizeInput("searchWithout", "Exclude taxa", DatasetTips(),
-                             r$searchWithout, multiple = TRUE)
-             ))
-      ),
-      title = "Tree search settings",
-      footer = tagList(modalButton("Close", icon = Icon("rectangle-xmark")),
-                       actionButton("modalGo", icon = Icon("magnifying-glass"),
-                                    if(length(r$trees)) {
-                                      "Continue search"
-                                    } else {
-                                      "Start search"
-                                    }))
-    ))
-    show("go")
-  })
+  # searchConfig modal now handled by mod_search.R
+  # treeFile handler now in mod_data.R
   
-  observeEvent(input$treeFile, {
-    tmpFile <- input$treeFile$datapath
-    newTrees <- tryCatch({
-        r$readTreeFile <- "read.tree(treeFile)"
-        LogMsg("Trying read.tree()")
-        read.tree(tmpFile)
-      },
-      error = function (x) tryCatch({
-        r$readTreeFile <- "read.nexus(treeFile)"
-          LogMsg("Trying read.nexus()")
-          read.nexus(tmpFile)
-        },
-        error = function (err) tryCatch(
-          {
-            if (grepl("NA/NaN argument", err)) {
-              LogMsg("Terminating tree block")
-              # Unterminated tree block, perhaps because a search is ongoing
-              withEnd <- tempfile()
-              on.exit(unlink(withEnd))
-              writeLines(c(readLines(tmpFile), "\nEND;"), withEnd)
-              read.nexus(withEnd)
-            } else {
-              stop("Next handler, please")
-            }
-          },
-          error = function (x) tryCatch({
-              r$readTreeFile <- "ReadTntTree(treeFile)"
-              ReadTntTree(tmpFile)
-            }, warning = function (x) tryCatch({
-              Notification(as.character(x), type = "warning")
-              tryLabels <- TipLabels(r$dataset)
-              if (length(tryLabels) > 2) {
-                Notification("Inferring tip labels from dataset",
-                                 type = "warning")
-                r$readTreeFile <- 
-                  "ReadTntTree(treeFile, tipLabels = TipLabels(dataset))"
-                ReadTntTree(tmpFile, tipLabels = tryLabels)
-              } else {
-                NULL
-              }
-            }, error = NULL
-            )
-          )
-        )
-      )
-    )
-    if (is.null(newTrees)) {
-      Notification("Trees not in a recognized format", type = "error")
-    } else {
-      LogComment("Load tree from file", 2)
-      CacheInput("tree", tmpFile)
-      LogCode(paste0("treeFile <- \"", LastFile("tree"), "\""))
-      LogCode(paste0("newTrees <- ", r$readTreeFile))
-      
-      UpdateAllTrees(newTrees) # updates r$trees
-      
-      removeModal()
-      Notification(paste("Loaded", length(r$trees), "trees"), type = "message")
-      updateActionButton(session, "modalGo", "Continue search")
-      updateActionButton(session, "go", "Continue")
-      show("displayConfig")
-    }
-    
-  })
-  
-  observeEvent(input$implied.weights, {
-    switch(input$implied.weights,
-           "on" = show("concavity"),
-           hide("concavity")
-    )
-    DisplayTreeScores()
-  })
-  
-  weighting <- reactive(
-    if (length(input$implied.weights) > 0) {
-      input$implied.weights
-    } else {
-      "on"
-    }
-  )
-  wtType <- reactive(switch(weighting(),
-                            "on" = paste0("k = ", signif(concavity(), 3)),
-                            "off" = "EW",
-                            "prof" = "PP"))
-  
-  scores <- bindCache(reactive({
-    if (!HaveData() || !AnyTrees()) {
-      return(NULL)
-    }
-    PutTree(r$trees)
-    PutData(r$dataset)
-    LogMsg("scores(): Recalculating scores with k = ", concavity())
-    withProgress(tryCatch(
-      signif(TreeLength(
-        RootTree(r$trees, 1),
-        r$dataset,
-        concavity = concavity()
-      )),
-      error = function (x) {
-        if (HaveData() && AnyTrees()) {
-          cli::cli_alert(x[[2]])
-          cli::cli_alert_danger(x[[1]])
-          Notification(type = "error",
-                       "Could not score all trees with dataset")
-        }
-        NULL
-     }),
-     value = 0.85, message = "Scoring trees")
-  }), r$treeHash, r$dataHash, concavity())
-  
-  DisplayTreeScores <- function () {
-    LogMsg("DisplayTreeScores()")
-    treeScores <- scores()
-    score <- if (is.null(treeScores)) {
-      "; could not be scored from dataset"
-    } else if (length(unique(treeScores)) == 1) {
-      paste0(", each with score ", treeScores[1], " (", wtType(), ")")
-    } else {
-      paste0(" with scores ", min(treeScores), " to ", max(treeScores),
-             " (", wtType(), ")")
-    }
-    
-    msg <- paste0(
-      length(r$allTrees), " trees in memory: ",
-      length(r$trees), " sampled", 
-      score
-    )
-    output$results <- renderText(msg)
-    msg
-  }
-  
-  observeEvent(input$concavity, {
-    DisplayTreeScores()
-  }, ignoreInit = TRUE)
+  # weighting, wtType, scores, DisplayTreeScores, concavity handler
+  # now handled by mod_search.R
   
   TipsInTree <- reactive({
     if (AnyTrees()) {
@@ -290,12 +106,7 @@
     }
   })
   
-  observeEvent(input$implied.weights, {
-    switch(input$implied.weights,
-           "on" = show("concavity"),
-           hide("concavity")
-    )
-  })
+  # implied.weights show/hide now handled by mod_search.R
   
   ShowConfigs <- function (visible = character(0)) {
     allConfigs <- c("whichTree", "charChooser",

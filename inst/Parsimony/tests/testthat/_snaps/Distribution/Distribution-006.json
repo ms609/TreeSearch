@@ -1,35 +1,35 @@
 {
   "input": {
-    "clThresh": 1,
+    "clustering-clThresh": 1,
     "concordance": "clc",
     "consP": 0.5,
-    "dataFile": null,
-    "dataSource": "Sun2018",
+    "data-dataFile": null,
+    "data-dataSource": "Sun2018",
+    "data-nTree": 125,
+    "data-readxlSkip": 2,
+    "data-readxlSkipCols": 2,
+    "data-readxl_sheet": "Sheet 1",
+    "data-treeFile": null,
+    "data-treeRange": [
+      1,
+      125
+    ],
     "distMeth": "cid",
     "excludedTip": "Paterimitra",
-    "go": 0,
     "keepNTips": 47,
     "mapDisplay": null,
     "mapLines": [
       "hull",
       "mst"
     ],
-    "nTree": 125,
     "neverDrop": null,
-    "outgroup": null,
+    "outgroup": "Namacalathus",
     "plotFormat": "space",
     "plotSize": 600,
     "plottedChar": 1,
-    "readxl.sheet": "Sheet 1",
-    "readxlSkip": 2,
-    "readxlSkipCols": 2,
+    "search-go": 0,
+    "search-searchConfig": 0,
     "searchChar": "",
-    "searchConfig": 0,
-    "treeFile": null,
-    "treeRange": [
-      1,
-      125
-    ],
     "treespace-relators": null,
     "treespace-spaceCol": "clust",
     "treespace-spaceDim": 5,
@@ -61,7 +61,12 @@
 
       ]
     },
-    "results": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
+    "search-results": {
+      "html": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
+      "deps": [
+
+      ]
+    },
     "treePlot": {
       "src": "[image data hash: ca8a42cade81b099045ba50893cccab3]",
       "alt": "Plot object",

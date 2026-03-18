@@ -1,35 +1,35 @@
 {
   "input": {
-    "clThresh": 1,
+    "clustering-clThresh": 1,
     "concordance": "none",
     "consP": 0.5,
-    "dataFile": null,
-    "dataSource": "Sun2018",
+    "data-dataFile": null,
+    "data-dataSource": "Sun2018",
+    "data-nTree": 125,
+    "data-readxlSkip": 2,
+    "data-readxlSkipCols": 2,
+    "data-readxl_sheet": "Sheet 1",
+    "data-treeFile": null,
+    "data-treeRange": [
+      1,
+      125
+    ],
     "distMeth": "cid",
     "excludedTip": "Paterimitra",
-    "go": 0,
     "keepNTips": 49,
     "mapDisplay": null,
     "mapLines": [
       "hull",
       "mst"
     ],
-    "nTree": 125,
     "neverDrop": null,
-    "outgroup": null,
+    "outgroup": "Namacalathus",
     "plotFormat": "clus",
     "plotSize": 600,
     "plottedChar": 1,
-    "readxl.sheet": "Sheet 1",
-    "readxlSkip": 2,
-    "readxlSkipCols": 2,
+    "search-go": 0,
+    "search-searchConfig": 0,
     "searchChar": "",
-    "searchConfig": 0,
-    "treeFile": null,
-    "treeRange": [
-      1,
-      125
-    ],
     "treespace-relators": null,
     "treespace-spaceCol": "clust",
     "treespace-spaceDim": 5,
@@ -49,24 +49,29 @@
 
       ]
     },
-    "results": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
+    "search-results": {
+      "html": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
+      "deps": [
+
+      ]
+    },
     "treePlot": {
-      "src": "[image data hash: d5147bc87e6f8e2c25e45877627a1873]",
+      "src": "[image data hash: 3daeaef7759f4d667c87cac173cd0fa4]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -3.200491386326835,
-              "right": 83.2127760444977,
-              "bottom": -0.9199999999999999,
-              "top": 50.92
+              "left": -0.5308908666724272,
+              "right": 13.80316253348311,
+              "bottom": -0.8400000000000001,
+              "top": 48.84
             },
             "range": {
-              "left": 400,
+              "left": 0,
               "right": 600,
-              "bottom": 597.0992,
-              "top": 0.9008000000000358
+              "bottom": 596.12,
+              "top": 1.880000000000082
             },
             "log": {
               "x": null,

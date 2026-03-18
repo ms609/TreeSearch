@@ -9,21 +9,21 @@ test_that("Search log workflow produces expected outputs", {
   on.exit(app$stop(), add = TRUE)
 
   # --- EW search ---
-  app$set_inputs(dataSource = "Wills2012", timeout_ = 4000)
-  app$click("searchConfig")
+  app$set_inputs(`data-dataSource` = "Wills2012", timeout_ = 4000)
+  app$click("search-searchConfig")
   app$wait_for_idle(timeout = 5000)
-  app$set_inputs(concavity = 1.1)
-  app$set_inputs(epsilon = 1)
-  app$set_inputs(`implied.weights` = "off")
-  app$set_inputs(strategy = "sprint")
-  app$set_inputs(maxReplicates = 5)
-  app$set_inputs(targetHits = 3)
-  app$click("modalGo")
+  app$set_inputs(`search-concavity` = 1.1)
+  app$set_inputs(`search-epsilon` = 1)
+  app$set_inputs(`search-implied.weights` = "off")
+  app$set_inputs(`search-strategy` = "sprint")
+  app$set_inputs(`search-maxReplicates` = 5)
+  app$set_inputs(`search-targetHits` = 3)
+  app$click("search-modalGo")
   # ExtendedTask returns immediately; poll exported counter
   app$wait_for_value(export = "searchCount",
                      ignore = list(NULL, 0L),
                      timeout = 120000)
-  app$click("searchConfig")
+  app$click("search-searchConfig")
   app$wait_for_idle(timeout = 5000)
 
   zipFile <- app$get_download("dl-saveZip")
@@ -32,12 +32,12 @@ test_that("Search log workflow produces expected outputs", {
   expect_true(file.exists(nwkFile))
 
   # --- IW search ---
-  app$set_inputs(`implied.weights` = "on")
-  app$set_inputs(strategy = "default")
-  app$set_inputs(maxReplicates = 3)
-  app$set_inputs(targetHits = 2)
-  app$set_inputs(epsilon = 0)
-  app$click("modalGo")
+  app$set_inputs(`search-implied.weights` = "on")
+  app$set_inputs(`search-strategy` = "default")
+  app$set_inputs(`search-maxReplicates` = 3)
+  app$set_inputs(`search-targetHits` = 2)
+  app$set_inputs(`search-epsilon` = 0)
+  app$click("search-modalGo")
   app$wait_for_value(export = "searchCount",
                      ignore = list(NULL, 0L, 1L),
                      timeout = 200000)

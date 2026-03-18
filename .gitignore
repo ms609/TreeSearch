@@ -42,3 +42,7 @@ inst/DELETE*
 /.*-data
 /TreeSearch.Rcheck
 TreeSearch_*.tar.gz
+
+# Test artifacts
+test*.txt
+test_output.txt

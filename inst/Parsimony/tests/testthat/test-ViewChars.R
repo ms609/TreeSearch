@@ -8,7 +8,7 @@ test_that("Character viewing and tree manipulation works", {
   )
   on.exit(app$stop(), add = TRUE)
 
-  app$set_inputs(dataSource = "Agnarsson2004")
+  app$set_inputs(`data-dataSource` = "Agnarsson2004")
   app$wait_for_idle(timeout = 10000)
   app$expect_values()
   zipFile <- app$get_download("dl-savePlotZip")

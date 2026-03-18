@@ -1,35 +1,35 @@
 {
   "input": {
-    "clThresh": 0.5,
+    "clustering-clThresh": 0.5,
     "concordance": "none",
     "consP": 0.5,
-    "dataFile": null,
-    "dataSource": "Agnarsson2004",
+    "data-dataFile": null,
+    "data-dataSource": "Agnarsson2004",
+    "data-nTree": 23,
+    "data-readxlSkip": 2,
+    "data-readxlSkipCols": 2,
+    "data-readxl_sheet": "Sheet 1",
+    "data-treeFile": null,
+    "data-treeRange": [
+      1,
+      23
+    ],
     "distMeth": "cid",
-    "excludedTip": "Emertonella",
-    "go": 0,
+    "excludedTip": "Dipoena",
     "keepNTips": 59,
     "mapDisplay": "tipsRight",
     "mapLines": [
       "hull",
       "mst"
     ],
-    "nTree": 23,
-    "neverDrop": null,
+    "neverDrop": "Emertonella",
     "outgroup": "Thymoites",
     "plotFormat": "ind",
     "plotSize": 600,
     "plottedChar": 0,
-    "readxl.sheet": "Sheet 1",
-    "readxlSkip": 2,
-    "readxlSkipCols": 2,
+    "search-go": 0,
+    "search-searchConfig": 0,
     "searchChar": "",
-    "searchConfig": 0,
-    "treeFile": null,
-    "treeRange": [
-      1,
-      23
-    ],
     "treespace-relators": null,
     "treespace-spaceCol": "clust",
     "treespace-spaceDim": 5,
@@ -38,7 +38,7 @@
   },
   "output": {
     "branchLegend": {
-      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">17 trees<\/span>",
+      "html": "<span class=\"legendLeft\">1 tree<\/span>\n<span id=\"blackToGreen\" class=\"legendBar\"> <\/span>\n<span class=\"legendRight\">23 trees<\/span>",
       "deps": [
 
       ]
@@ -51,7 +51,12 @@
 
       ]
     },
-    "results": "23 trees in memory: 23 sampled with scores 34.7693 to 38.2276 (k = 10)",
+    "search-results": {
+      "html": "23 trees in memory: 23 sampled with scores 34.7693 to 38.2276 (k = 10)",
+      "deps": [
+
+      ]
+    },
     "treePlot": {
       "src": "[image data hash: de709b92f4b139fd4c9c4c110626c812]",
       "alt": "Plot object",

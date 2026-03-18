@@ -13,12 +13,13 @@ test_that("App starts and default dataset loads without errors", {
 
   # Verify app is alive and has trees loaded
   vals <- app$get_values()
-  expect_true(!is.null(vals$input$dataSource))
+  # dataSource is namespaced in data module
+  expect_true(!is.null(vals$input[["data-dataSource"]]))
 
-  # Sidebar should show tree count
-  results <- vals$output$results
-  expect_true(is.character(results))
-  expect_true(grepl("trees? in memory", results))
+  # Sidebar should show tree count (results namespaced in search module)
+  results <- vals$output[["search-results"]]
+  results_text <- paste(as.character(results), collapse = "")
+  expect_true(grepl("trees? in memory", results_text))
 
   # No error notifications (shiny-notification-panel hidden in test mode,
 

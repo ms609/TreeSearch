@@ -58,65 +58,92 @@ Rprof(NULL)
 summaryRprof("profile.out")
 ```
 
-## Known Baselines (as of 2026-03-17 18:30, v2.0.0 verification run by Agent A)
+## Known Baselines
 
-### Per-phase breakdown (EW, strategy='none', 5 replicates, verbose run):
+### Latest run: 2026-03-18 16:00 by Agent A (v2.0.0, single-agent, quiet machine)
 
-| Dataset | Tips | TBR% | XSS% | RSS% | CSS% | Ratch% | Drift% | Med ms |
-|---------|------|------|------|------|------|--------|--------|--------|
-| Vinther2008 | 23 | 13.6 | 18.6 | 4.5 | 0.0 | 41.2 | 22.1 | 550* |
-| Agnarsson2004 | 62 | 21.5 | 14.8 | 2.8 | 0.0 | 38.7 | 22.3 | 3420 |
-| Zhu2013 | 75 | 39.6 | 10.1 | 2.1 | 0.0 | 24.1 | 24.2 | 4930 |
-| Dikow2009 | 88 | 28.8 | 11.2 | 2.7 | 0.0 | 35.5 | 21.7 | 6490 |
+Previous baselines (2026-03-17) were inflated ~30–40% by multi-agent machine
+contention. Scores are identical. Timings below are authoritative.
 
-*Vinther2008 median inflated by MPT enumeration (49 trees in pool).
+### End-to-end benchmarks (3-run medians, 5 reps, strategy='none', EW):
 
-Note: Current defaults are driftCycles=2, ratchetCycles=5, cssRounds=0.
-Phase distribution stable vs prior baselines (stochastic variation only).
-Ratchet (24-41%) and TBR (14-40%) remain the largest phases.
+| Dataset | Tips | Chars | Median (s) | Score |
+|---------|------|-------|------------|-------|
+| Vinther2008 | 23 | 57 | 0.390 | 79 |
+| Agnarsson2004 | 62 | 242 | 1.860 | 778 |
+| Zhu2013 | 75 | 253 | 2.720 | 655 |
+| Dikow2009 | 88 | 220 | 3.860 | 1614 |
 
-### End-to-end benchmarks (3-run medians, 5 reps, strategy='none'):
+### Per-phase breakdown (Zhu2013, 5 reps, two runs averaged):
 
-| Dataset | Tips | EW (s) | IW k=10 (s) |
-|---------|------|--------|-------------|
-| Vinther2008 | 23 | 0.550* | 0.170 |
-| Agnarsson2004 | 62 | 3.420 | 2.890 |
-| Zhu2013 | 75 | 4.930 | 4.610 |
-| Dikow2009 | 88 | 6.490 | — |
+| Phase | % of time | Avg ms/rep |
+|-------|-----------|------------|
+| Wagner | <0.1% | <1 |
+| TBR | 24–37% | 110–160 |
+| XSS | 10% | 35–55 |
+| RSS | 2% | 9–13 |
+| Ratchet | 24–28% | 90–155 |
+| Drift | 25–33% | 90–200 |
+| Final TBR | 2% | 7–10 |
 
-IW consistently faster than EW (fewer MPTs → smaller pool → less enumeration).
+Ratchet (24-28%) and drift (25-33%) dominate. TBR (24-37%) varies
+substantially by run. XSS ~10%, RSS ~2%, both stable.
 
-### Auto strategy: default vs thorough comparison (8 seeds, 5 reps each)
+### Wagner tree construction: Negligible (<0.1% of search time)
 
-| Dataset | Tips | default med | thorough med | Slowdown | Score improvement |
-|---------|------|-------------|-------------|----------|-------------------|
-| Wilson2003 | 61 | 889 (3.8s) | 887 (10.2s) | 2.7× | 2 (noisy) |
-| Agnarsson2004 | 62 | 778 (2.2s) | 778 (5.4s) | 2.5× | 0 |
-| Zhu2013 | 75 | 658 (4.6s) | 649 (12.2s) | 2.6× | **9** |
-| Dikow2009 | 88 | 1614 (5.4s) | 1612 (17.9s) | 3.3× | 2 |
+| Dataset | Tips | µs/tree | % of replicate |
+|---------|------|---------|----------------|
+| Vinther2008 | 23 | 300 | <0.1% |
+| Agnarsson2004 | 62 | 1000 | 0.3% |
+| Zhu2013 | 75 | 600 | 0.1% |
+| Dikow2009 | 88 | 1400 | 0.2% |
 
-**Finding:** "thorough" benefit is dataset-dependent, not purely size-dependent.
-At 61-62 tips: 0-2 step improvement (noisy). At 75 tips (Zhu2013): 9-step
-improvement justifies the cost. At 88 tips: only 2-step improvement.
+Not a bottleneck at any dataset size. No optimization needed.
 
-**Recommendation:** Consider raising the threshold from 61 to ~75 tips, or
-introducing an intermediate preset (e.g. 10 ratchet + 5 drift) for 61-75.
-The current threshold wastes 2.5-3× compute on many 61-tip datasets.
+### Parallel scaling (2 threads)
 
-### R overhead: <0.5% of wall time (confirmed via Rprof)
+| Dataset | Reps | 1T (s) | 2T (s) | Speedup | Efficiency |
+|---------|------|--------|--------|---------|------------|
+| Zhu2013 | 5 | 2.53 | 1.59 | 1.59× | 80% |
+| Zhu2013 | 10 | 5.16 | 3.29 | 1.57× | 78% |
+| Zhu2013 | 20 | 10.70 | 5.20 | 2.06× | 103%* |
+| Zhu2013 | 40 | 18.63 | 11.35 | 1.64× | 82% |
+| Dikow2009 | 10 | 7.76 | 5.11 | 1.52× | 76% |
 
-### Parallel scaling (Zhu2013, 5 reps):
-- 2 threads: 1.24× speedup (62% efficiency)
-- Note: degraded from previous 1.86× due to shorter per-replicate time with
-  d2_r5 defaults. Thread overhead is proportionally larger.
+*Superlinear at 20 reps is stochastic noise (different search paths).
 
-### Scaling (TBR pass time vs tips):
+**Finding:** Typical 2-thread efficiency is 78–82%. The old 1.24× measurement
+was a multi-agent machine contention artifact. The implementation (dynamic
+work-stealing via `atomic::fetch_add`, mutex-guarded pool) is sound.
+Main loss is stochastic load imbalance between replicate times.
 
-Exponent ~2.82 (23→88 tips). Consistent with prior measurement of 2.78.
-Super-quadratic growth is from candidate count growth, not per-candidate
-degradation.
+### XSS/RSS effectiveness (5 reps per dataset)
 
-### Drift/ratchet cycle tuning (Zhu2013, 10 seeds, 5 reps):
+| Dataset | Tips | XSS hits | XSS avg Δ | XSS avg ms | RSS hits | RSS avg Δ | RSS avg ms |
+|---------|------|----------|-----------|------------|----------|-----------|------------|
+| Agnarsson2004 | 62 | 3/5 | 3.8 steps | 59 | 0/5 | 0 | 14 |
+| Zhu2013 | 75 | 5/5 | 26.6 steps | 43 | 2/5 | 1.0 | 11 |
+| Dikow2009 | 88 | 0/5 | 0 | 93 | 1/5 | 3.2 | 29 |
+
+**Finding:** XSS effectiveness is highly dataset-dependent — from zero
+improvement (Dikow2009) to 27-step average improvement (Zhu2013). No obvious
+predictor from simple nTip/nChar statistics. XSS cost is ~10% of replicate
+time; acceptable when effective but wasted when not.
+
+RSS is marginal across all datasets (0–3 steps, 2% of time). One exception:
+Dikow2009 where RSS found 16 steps while XSS found 0 — suggests they
+explore different neighbourhoods.
+
+### Auto strategy (reference — unchanged from T-066/T-068 study)
+
+Threshold: ≥75 tips AND nChar < 100 triggers "thorough". Signal-density gate
+prevents unnecessary thorough runs on character-rich datasets.
+
+### R overhead: <0.5% of wall time (confirmed via Rprof, unchanged)
+
+### Scaling exponent: ~2.82 (TBR pass time vs tips, unchanged)
+
+### Drift/ratchet cycle tuning (reference — unchanged from T-029 study)
 
 | Config | Med score | Min score | Med time | Speedup |
 |--------|-----------|-----------|----------|---------|
@@ -126,40 +153,32 @@ degradation.
 | d0_r5 | 658 | 650 | 2.8s | 51% |
 | d5_r0 | 662 | 660 | 4.8s | 16% |
 
-Lower score = better. Drift has diminishing returns beyond 2 cycles.
-Ratchet 5 is more valuable than drift 5 for quality.
+Lower score = better. Current defaults: d2_r5.
 
-### CSS effectiveness: Marginal (adds 2-6% time, no consistent score improvement)
+### CSS effectiveness: Marginal (adds 2-6% time, no consistent improvement)
+Disabled by default (cssRounds=0).
 
 ## What to Profile
 
-In order of likely impact:
+Status key: ✅ resolved, ⚠ partially explored, ❌ not yet investigated
 
-1. **Drift + ratchet inner loops** (68% of C++ time combined). Both use TBR
-   internally. The per-candidate indirect evaluation is near-optimal. Look for:
-   - Number of TBR passes per drift/ratchet cycle (are we doing too many?)
-   - Cycle counts (are defaults too high for the dataset?)
-   - Acceptance criteria (is drift accepting too many/few suboptimal moves?)
+1. ⚠ **Drift + ratchet inner loops** (50–60% of C++ time combined). Both use
+   TBR internally. Per-candidate indirect evaluation at memory-throughput
+   limit (~23 ns at 75 tips per T-075). Cycle counts tuned (d2_r5).
+   Remaining question: is drift acceptance threshold optimal?
 
-2. **Sectorial search effectiveness** (8% of time). Questions:
-   - Is XSS finding improvements? (Count accepted vs rejected sectors)
-   - Are CSS rounds redundant after XSS+RSS?
-   - Sector size distribution — are we getting good partitions?
+2. ✅ **Sectorial search effectiveness** (12% of time). XSS effectiveness is
+   dataset-dependent (0–27 steps). RSS is marginal (0–3 steps). No clear
+   predictor from simple dataset statistics. Could make XSS adaptive (skip
+   after N unproductive reps) but time savings would be <10%.
 
-3. **Wagner tree construction** — now O(n × depth × C) per insertion.
-   Profile whether the incremental scoring early termination is triggering
-   effectively.
+3. ✅ **Wagner tree construction**: <0.1% of search time. Not a bottleneck.
 
-4. **R overhead** — the `AdditionTree()` → `RandomTree()` fix eliminated the
-   biggest R bottleneck. Look for remaining overhead in:
-   - `PrepareDataIW()` / `PrepareDataProfile()`
-   - `Renumber()` on output trees
-   - Pool → multiPhylo conversion
+4. ✅ **R overhead**: <0.5% of wall time. Not a bottleneck.
 
-5. **Parallel scaling** — with `nThreads > 1`, measure:
-   - Thread spawn/join overhead
-   - Pool mutex contention (should be negligible)
-   - Per-thread memory allocation cost
+5. ✅ **Parallel scaling**: 78–82% efficiency at 2 threads. Implementation is
+   sound (dynamic work-stealing, low-contention pool). Main loss is stochastic
+   load imbalance. No obvious improvement without algorithmic changes.
 
 ## Reporting Format
 
