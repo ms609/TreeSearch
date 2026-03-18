@@ -40,5 +40,6 @@ vignettes/\.RData
 ^check_init\.R$
 ^coordination\.md$
 ^to-do\.md$
+^issues\.md$
 Makevars\.win\..*-bak$
 ^.*\.Rcheck$

@@ -75,9 +75,31 @@ crashes or miscompilation. Delete after any profiling session.
 
 ### Assignment
 
-On `/assign X`: read `agent-X.md` → resume in-progress task or claim next
-OPEN task from `to-do.md`. Set `CONVERSATIONSUMMARY` to
-`Agent X: <task description>`.
+On `/assign X`:
+
+1. Read `agent-X.md`. If a task is already in-progress, resume it.
+2. Otherwise, check `issues.md` **before** `to-do.md`:
+   a. If `issues.md` contains any unclaimed issues (blocks whose first line
+      does **not** start with `CLAIMED`), **claim the bottom-most unclaimed
+      issue** by prepending `CLAIMED (X):` to its first line.
+   b. Triage the claimed issue: determine what needs doing, then add one or
+      more discrete tasks to `to-do.md` (assign appropriate IDs and
+      priorities — issues may be P0). Begin work on the first task.
+   c. Once the `to-do.md` tasks are created, delete the entire issue block
+      (including its `---` separator) from `issues.md`.
+   d. **While `issues.md` still has unclaimed issues, triaging them takes
+      priority over picking up existing `to-do.md` tasks** (an issue may
+      contain a P0).
+3. If `issues.md` is empty or all issues are already claimed, claim the next
+   OPEN task from `to-do.md` as before.
+
+Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
+
+> **Concurrency guard:** Only the bottom-most *unclaimed* issue may be
+> claimed. Because agents always target the bottom and mark it `CLAIMED (X)`
+> immediately, two agents will never parse the same issue. If an agent sees
+> the bottom issue is already `CLAIMED`, it moves up to the next unclaimed
+> one.
 
 ### During work
 
@@ -108,6 +130,7 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 
 | File | Purpose |
 |------|---------|
+| `issues.md` | Human-entered issues (agents triage → `to-do.md`) |
 | `to-do.md` | Task queue |
 | `coordination.md` | Strategic plan |
 | `agent-X.md` | Agent progress log |
@@ -168,13 +191,16 @@ warning and delegates to `Morphy()`. Scheduled for removal in 2028.
 
 Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 
-### Strategy presets (auto-selected by `NTip`)
+### Strategy presets (auto-selected by `NTip` and signal density)
 
-| Preset | Tips | Key settings |
-|--------|------|-------------|
-| sprint | ≤30 | 3 ratchet, 0 drift, XSS only |
-| default | 31–60 | 5 ratchet, 2 drift, XSS+RSS |
-| thorough | 61+ | 20 ratchet (adaptive), 12 drift, XSS+RSS+CSS |
+| Preset | Condition | Key settings |
+|--------|-----------|-------------|
+| sprint | ≤30 tips | 3 ratchet, 0 drift, XSS only |
+| default | 31–74 tips; or ≥75 tips with ≥5 chars/taxon | 5 ratchet, 2 drift, XSS+RSS |
+| thorough | ≥75 tips with <5 chars/taxon | 20 ratchet (adaptive), 12 drift, XSS+RSS+CSS |
+
+Signal-density gate: datasets with many characters per taxon converge
+more easily, so stay on "default" even at larger sizes.
 
 ### C++ module map
 
@@ -286,6 +312,20 @@ Migration plan in `inst/deprecation/morphy-migration.md`.
 **Still using MorphyLib:** Legacy search functions (`Ratchet`, `Jackknife`,
 `MorphyBootstrap`, `CustomSearch`), R-level tree rearrangement functions.
 These are candidates for deprecation rather than migration.
+
+## Shiny app (`inst/Parsimony/`)
+
+Decomposed from monolithic `app.R` into three-file Shiny convention:
+- `global.R` — library calls, constants, helpers, colours, citations
+- `ui.R` — `fluidPage(...)` definition
+- `server.R` — server function shell, `reactiveValues()`, `source()` calls
+- `server/*.R` — 11 source files loaded with `source(local = TRUE)`
+
+**Important:** Server source files are in `server/` NOT `R/`. Shiny 1.5+
+auto-sources all `.R` files in an app's `R/` directory at startup (before
+any session exists), which crashes on references to `output`/`input`/`session`.
+
+Test suite: `NOT_CRAN=true` required for shinytest2 (4 test files, 33 assertions).
 
 ## Version and CRAN status
 

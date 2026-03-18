@@ -37,6 +37,7 @@ inst/DELETE*
 /.agent*
 /agent-*.md
 /to-do.md
+/issues.md
 /coordination.md
 /.*-data
 /TreeSearch.Rcheck
