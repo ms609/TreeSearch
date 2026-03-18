@@ -12,13 +12,13 @@ test_that("Distribution and concordance plots render correctly", {
   app$set_inputs(plotFormat = "clus")
   app$set_inputs(treeRange = c(77, 125))
   app$expect_values()
-  zipFile <- app$get_download("savePlotZip")
+  zipFile <- app$get_download("dl-savePlotZip")
   expect_true(file.exists(zipFile))
 
   app$set_inputs(nTree = 125)
   app$set_inputs(treeRange = c(1, 125))
   app$expect_values()
-  zipFile <- app$get_download("savePlotZip")
+  zipFile <- app$get_download("dl-savePlotZip")
   expect_true(file.exists(zipFile))
 
   app$set_inputs(clThresh = 1)
@@ -57,6 +57,8 @@ test_that("Distribution and concordance plots render correctly", {
   app$expect_values()
 
   app$set_inputs(dataSource = "Agnarsson2004")
+  app$wait_for_idle(timeout = 10000)
   app$set_inputs(distMeth = "qd")
+  app$wait_for_idle(timeout = 5000)
   app$expect_values()
 })

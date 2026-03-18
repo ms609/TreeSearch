@@ -26,9 +26,9 @@ test_that("Search log workflow produces expected outputs", {
   app$click("searchConfig")
   app$wait_for_idle(timeout = 5000)
 
-  zipFile <- app$get_download("saveZip")
+  zipFile <- app$get_download("dl-saveZip")
   expect_true(file.exists(zipFile))
-  nwkFile <- app$get_download("saveNwk")
+  nwkFile <- app$get_download("dl-saveNwk")
   expect_true(file.exists(nwkFile))
 
   # --- IW search ---
@@ -42,8 +42,8 @@ test_that("Search log workflow produces expected outputs", {
                      ignore = list(NULL, 0L, 1L),
                      timeout = 200000)
 
-  zipFile2 <- app$get_download("saveZip")
+  zipFile2 <- app$get_download("dl-saveZip")
   expect_true(file.exists(zipFile2))
-  nexFile <- app$get_download("saveNex")
+  nexFile <- app$get_download("dl-saveNex")
   expect_true(file.exists(nexFile))
 })

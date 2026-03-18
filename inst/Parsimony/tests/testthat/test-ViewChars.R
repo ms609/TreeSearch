@@ -9,8 +9,9 @@ test_that("Character viewing and tree manipulation works", {
   on.exit(app$stop(), add = TRUE)
 
   app$set_inputs(dataSource = "Agnarsson2004")
+  app$wait_for_idle(timeout = 10000)
   app$expect_values()
-  zipFile <- app$get_download("savePlotZip")
+  zipFile <- app$get_download("dl-savePlotZip")
   expect_true(file.exists(zipFile))
 
   app$set_inputs(consP = 0.5)
@@ -46,6 +47,7 @@ test_that("Character viewing and tree manipulation works", {
   app$expect_values()
 
   app$set_inputs(mapDisplay = character(0))
+  app$wait_for_idle(timeout = 5000)
   app$set_inputs(plottedChar = 1)
   app$set_inputs(plottedChar = 2)
   app$set_inputs(plottedChar = 3)
@@ -53,11 +55,14 @@ test_that("Character viewing and tree manipulation works", {
   app$set_inputs(plottedChar = 7)
   app$set_inputs(plottedChar = 8)
   app$set_inputs(plottedChar = 7)
+  app$wait_for_idle(timeout = 5000)
   app$expect_values()
 
   app$set_inputs(plottedChar = 8)
   app$set_inputs(plottedChar = 11)
   app$set_inputs(plottedChar = 53)
+  app$wait_for_idle(timeout = 5000)
   app$set_inputs(whichTree = 7)
+  app$wait_for_idle(timeout = 5000)
   app$expect_values()
 })
