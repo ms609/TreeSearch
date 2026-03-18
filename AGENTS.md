@@ -143,11 +143,32 @@ All `tests/testthat/test-ts-*.R` files must use `TreeSearch:::` to call
 internal C++ bridge functions. Define short local wrappers for readability.
 
 Shared helpers are in `tests/testthat/helper-ts.R` (`make_ts_data()`,
-`ts_score()`, `validate_result()`).
+`ts_score()`, `validate_result()`, `skip_extended()`).
 
 **Never use `%in%` on Splits objects in test files** — S3 dispatch fails
 in the cloned namespace created by `test_check()`. Use `as.logical()`
 matrix comparison instead.
+
+### Test tiering
+
+Every new `test-ts-*.R` file must be assigned to one of three tiers.
+See `tests/testing-strategy.md` for the full rationale.
+
+| Tier | Guard | When it runs | Use for |
+|------|-------|-------------|---------|
+| 1 — CRAN | none | always (CRAN + CI + local) | Fast (< ~2 s) API and data-structure unit tests |
+| 2 — CI | `skip_on_cran()` at **file level** (first executable line) | CI + local | C++ engine correctness, scoring, search algorithms |
+| 3 — Extended | `skip_extended()` at **file level** | `TREESEARCH_EXTENDED_TESTS=true` only | Stress tests, benchmarks, timing measurements |
+
+**Default for new `test-ts-*` files: Tier 2.** Add `skip_on_cran()` as the
+very first executable line (before any helpers or `test_that()` calls):
+
+```r
+# Tier 2: skipped on CRAN; see tests/testing-strategy.md
+skip_on_cran()
+```
+
+Use Tier 3 only for tests that take > ~10 s or are sensitive to machine load.
 
 ## R source file ordering
 
@@ -319,13 +340,25 @@ Decomposed from monolithic `app.R` into three-file Shiny convention:
 - `global.R` — library calls, constants, helpers, colours, citations
 - `ui.R` — `fluidPage(...)` definition
 - `server.R` — server function shell, `reactiveValues()`, `source()` calls
-- `server/*.R` — 11 source files loaded with `source(local = TRUE)`
+- `server/*.R` — source files loaded with `source(local = TRUE)`
+- `server/mod_*.R` — Shiny modules (`NS()`/`moduleServer()`)
+
+**Completed modules:**
+- `mod_references.R` — references panel (no state)
+- `mod_treespace.R` — tree space visualization + plot settings.
+  Returns 16 reactives (`distances`, `mapping`, `dims`, `saveDetails`,
+  `TreespacePlot`, etc.) that `server.R` assigns to local scope for use
+  by still-source'd files (clustering.R, consensus.R, downloads.R).
+  Receives `clusterings`, `silThreshold`, `scores`, `concavity`,
+  `distMeth`, `plotFormat` as reactive args + logging functions via
+  `log_fns` list.
 
 **Important:** Server source files are in `server/` NOT `R/`. Shiny 1.5+
 auto-sources all `.R` files in an app's `R/` directory at startup (before
 any session exists), which crashes on references to `output`/`input`/`session`.
 
 Test suite: `NOT_CRAN=true` required for shinytest2 (4 test files, 33 assertions).
+Module tests: `test-mod-references.R` (4 assertions), `test-mod-treespace.R` (4 assertions).
 
 ## Version and CRAN status
 
