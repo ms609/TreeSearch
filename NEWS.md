@@ -119,10 +119,10 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 - **Parallel search**: the search settings modal includes a thread count slider
   (when multiple cores are available).
 - **Tree accumulation**: repeated "Continue search" runs accumulate trees at
-  the same optimal score, with deduplication by topology.
+  the same optimal score, with de-duplication by topology.
 - **Search confidence**: after each search, the results pane shows the hit rate
   and an estimate of the replicates needed for 95% confidence.
-- **Search config modal** reorganized into labeled sections (step weighting,
+- **Search config modal** reorganized into labelled sections (step weighting,
   parallelization, search intensity, results to keep).
 - Fix `PlotCharacter()` crash on multifurcating consensus trees.
 - Fix first search not appearing to update trees in memory.

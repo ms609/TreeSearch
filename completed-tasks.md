@@ -8,6 +8,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| — | Fix inapplicable.Rmd vignette CSL URL (404) | A | Remote `raw.githubusercontent.com` CSL URL returned 404; changed to local `../inst/apa-old-doi-prefix.csl` (matching all other vignettes). Also un-claimed stale Agent C GUI issue in `issues.md`. |
 | T-142 | Shiny: Add TreeSearch logo to app header | A | Inline SVG (magnifier + 3-tip tree) added to `inst/Parsimony/ui.R` line 14; flex div wraps icon + h1. No external asset file needed. |
 | S-COORD | Coordination review round 8 | A | T-144 fixed → CRAN unblocked. ~9835 pass/0 fail. T-141/T-140/T-097 confirmed complete. Standing tasks P1. |
 | T-144 | Fix 15 CRAN Tier 1 test failures (PrepareDataProfile regression) | A | Added binary-reduction warning to PrepareDataProfile; fixed empty-phyDat return (avoid dataset[0] crash in new TreeTools); updated test-data_manipulation.R (17→17 pass) and test-Concordance.R (67→67 pass) to match new behavior. 0 regressions. |

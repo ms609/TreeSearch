@@ -150,6 +150,7 @@ print.CharacterHierarchy <- function(x, ...) {
 #'   informative error if validation fails).
 #'
 #' @keywords internal
+#' @importFrom utils head
 #' @export
 validate_hierarchy <- function(hierarchy, dataset) {
   if (!inherits(hierarchy, "CharacterHierarchy")) {
