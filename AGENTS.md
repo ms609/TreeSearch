@@ -71,6 +71,13 @@ gateway points in `ts_rcpp.cpp`: `make_dataset()`, `ts_resample_search()`,
 **Never leave a `src/Makevars.win` in place.** Debug/PGO/UBSan flags cause
 crashes or miscompilation. Delete after any profiling session.
 
+### `src/TreeSearch-win.def`
+
+**Keep this file.** It explicitly exports `R_init_TreeSearch` for Windows
+DLL builds. Without it, the default `nm | sed` pipeline generates a
+`tmp.def` that truncates long C++ mangled symbols, causing linker failures
+or corrupt DLLs (especially under `pkgbuild::compile_dll(debug=TRUE)`).
+
 ## Multi-agent workflow protocol
 
 ### Assignment
@@ -217,11 +224,11 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 | Preset | Condition | Key settings |
 |--------|-----------|-------------|
 | sprint | ≤30 tips | 3 ratchet, 0 drift, XSS only |
-| default | 31–74 tips; or ≥75 tips with ≥5 chars/taxon | 5 ratchet, 2 drift, XSS+RSS |
-| thorough | ≥75 tips with <5 chars/taxon | 20 ratchet (adaptive), 12 drift, XSS+RSS+CSS |
+| default | 31–64 tips; or ≥65 tips with <100 char patterns | 5 ratchet, 2 drift, XSS+RSS |
+| thorough | ≥65 tips with ≥100 char patterns | 20 ratchet (adaptive), 12 drift, XSS+RSS+CSS |
 
-Signal-density gate: datasets with many characters per taxon converge
-more easily, so stay on "default" even at larger sizes.
+Signal-density gate: datasets with few character patterns (<100) have flat
+parsimony landscapes where intensive search adds no benefit.
 
 ### C++ module map
 
@@ -336,35 +343,59 @@ These are candidates for deprecation rather than migration.
 
 ## Shiny app (`inst/Parsimony/`)
 
-Decomposed from monolithic `app.R` into three-file Shiny convention:
-- `global.R` — library calls, constants, helpers, colours, citations
-- `ui.R` — `fluidPage(...)` definition
-- `server.R` — server function shell, `reactiveValues()`, `source()` calls
-- `server/*.R` — source files loaded with `source(local = TRUE)`
-- `server/mod_*.R` — Shiny modules (`NS()`/`moduleServer()`)
+Fully modularized from monolithic `app.R` into Shiny modules:
+- `global.R` — library calls, constants, helpers, colours, citations, module UI instantiation
+- `ui.R` — `fluidPage(...)` definition using module UI elements
+- `server.R` — `AppState()` + module wiring + `ShowConfigs` observer + `onStop()`
+- `server/app_state.R` — `AppState()` typed `reactiveValues()` constructor
+- `server/logging.R` — session logging infrastructure
+- `server/mod_*.R` — 7 Shiny modules (`NS()`/`moduleServer()`)
 
-**Completed modules:**
+**All server logic now lives in modules.** The old `events.R` has been
+dissolved; its `ShowConfigs` function and `plotFormat` observer are inlined
+in `server.R` (they operate on top-level DOM elements).
+
+**Modules:**
 - `mod_references.R` — references panel (no state)
-- `mod_treespace.R` — tree space visualization + plot settings.
-  Returns 16 reactives (`distances`, `mapping`, `dims`, `saveDetails`,
-  `TreespacePlot`, etc.) that `server.R` assigns to local scope for use
-  by still-source'd files (clustering.R, consensus.R, downloads.R).
-  Receives `clusterings`, `silThreshold`, `scores`, `concavity`,
-  `distMeth`, `plotFormat` as reactive args + logging functions via
-  `log_fns` list.
+- `mod_downloads.R` — all 8 download handlers
+- `mod_data.R` — data loading + tree management (9 returned reactives).
+  Uses `cb_ref` forward-reference env for circular deps with consensus module.
+- `mod_clustering.R` — clustering analysis + tree distances (5 returned reactives)
+- `mod_search.R` — search engine, scoring, weighting.
+  Owns ExtendedTask, search config modal, result accumulation.
+- `mod_treespace.R` — tree space visualization + plot settings (14 returned reactives)
+- `mod_consensus.R` — consensus plotting, character mapping, stability/rogue analysis,
+  concordance, cluster consensus, main plot dispatch, plot logging (1327 lines).
+  Returns `MainPlot`, `RCode`, `UpdateKeepNTipsRange`,
+  `UpdateDroppedTaxaDisplay`, `UpdateOutgroupInput`.
 
 **Important:** Server source files are in `server/` NOT `R/`. Shiny 1.5+
 auto-sources all `.R` files in an app's `R/` directory at startup (before
 any session exists), which crashes on references to `output`/`input`/`session`.
 
-Test suite: `NOT_CRAN=true` required for shinytest2 (4 test files, 33 assertions).
-Module tests: `test-mod-references.R` (4 assertions), `test-mod-treespace.R` (4 assertions).
+Test suite: `NOT_CRAN=true` required for shinytest2 integration tests.
+Run from `inst/Parsimony/`:
+```bash
+NOT_CRAN=true Rscript -e "testthat::test_dir('tests/testthat')"
+```
+`setup.R` loads `library(shinytest2)` for `AppDriver` availability.
+
+**Important:** Integration tests trigger `pkgbuild::compile_dll(debug=TRUE)`
+via `load_all()`. `src/TreeSearch-win.def` prevents linker failures from
+corrupted auto-generated `tmp.def` on Windows.
+
+Module tests: `test-mod-references.R` (4), `test-mod-data.R` (9),
+`test-mod-clustering.R` (12), `test-mod-treespace.R` (5),
+`test-mod-downloads.R` (11), `test-mod-search.R` (10),
+`test-mod-consensus.R` (9).
+Integration tests: `test-app-smoke.R` (3), `test-Distribution.R` (13),
+`test-SearchLog.R` (4), `test-ViewChars.R` (12). Total: 92 assertions.
 
 ## Version and CRAN status
 
 - **Version**: 2.0.0 (major bump for new `MaximizeParsimony()` API)
 - **R CMD check**: 0 ERRORs, 0 WARNINGs, 1 NOTE (R 4.5.2 internal bug)
-- **Test suite**: ~960 pass, 0 fail, ~18 skip
+- **Test suite**: ~9200 R-level + 1393 ts-* pass, 0 fail, 5 skip
 
 ## Key design decisions (reference)
 

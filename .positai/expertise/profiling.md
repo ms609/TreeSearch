@@ -162,10 +162,17 @@ Disabled by default (cssRounds=0).
 
 Status key: ✅ resolved, ⚠ partially explored, ❌ not yet investigated
 
-1. ⚠ **Drift + ratchet inner loops** (50–60% of C++ time combined). Both use
+1. ✅ **Drift + ratchet inner loops** (50–60% of C++ time combined). Both use
    TBR internally. Per-candidate indirect evaluation at memory-throughput
    limit (~23 ns at 75 tips per T-075). Cycle counts tuned (d2_r5).
-   Remaining question: is drift acceptance threshold optimal?
+   **Drift threshold sensitivity (2026-03-18 Agent E):** AFD={1,3,5,8} ×
+   RFD={0.05,0.1,0.2} on Zhu2013 (75 tips, 15 runs each): no significant
+   score difference between any config (Wilcoxon p=0.60–1.00). Permissive
+   thresholds (AFD=8, RFD=0.2) waste time; tight vs default indistinguishable.
+   On Dikow2009 (88 tips), d2 drift provides no benefit over ratchet alone
+   (p=0.54); d6 gives 2-step improvement (p=0.006) at 2× time cost.
+   **Conclusion:** Current defaults (AFD=3, RFD=0.1) are fine. Cycle count
+   matters more than threshold values. No optimization task raised.
 
 2. ✅ **Sectorial search effectiveness** (12% of time). XSS effectiveness is
    dataset-dependent (0–27 steps). RSS is marginal (0–3 steps). No clear
@@ -179,6 +186,23 @@ Status key: ✅ resolved, ⚠ partially explored, ❌ not yet investigated
 5. ✅ **Parallel scaling**: 78–82% efficiency at 2 threads. Implementation is
    sound (dynamic work-stealing, low-contention pool). Main loss is stochastic
    load imbalance. No obvious improvement without algorithmic changes.
+
+6. ✅ **IW scoring overhead** (2026-03-18 Agent E). Compared EW vs IW (k=10,
+   k=3) on three datasets (5 runs each, d2_r5, 5 reps, serial):
+   - Vinther2008 (23 tips): IW 64% *faster* (landscape converges quicker)
+   - Agnarsson2004 (62 tips): IW 26–39% slower
+   - Zhu2013 (75 tips): IW 40–57% slower
+   IW overhead scales with dataset size due to per-character weighted delta
+   computation in indirect scoring. No optimization opportunity — the delta
+   lookup is already O(n_blocks) per candidate, same as EW Fitch.
+
+7. ✅ **Fuse effectiveness** (2026-03-18 Agent E). Compared fuseInterval=0 vs
+   3 on three datasets (8 runs each, 10 reps):
+   - Agnarsson2004: identical scores/time (pool deduplicates to 1 tree)
+   - Zhu2013: identical scores/time
+   - Dikow2009: negligible overhead (13.65s vs 13.78s with poolSuboptimal=5)
+   Fuse is cheap when pool is small, free when pool=1. Current default
+   (fuseInterval=3) is appropriate. No optimization task raised.
 
 ## Reporting Format
 
