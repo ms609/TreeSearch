@@ -75,8 +75,9 @@
 #' @references
 #' \insertRef{Smith2020}{TreeSearch}
 #'
-#' @importFrom TreeDist ClusteringInfoDistance
-#' @importFrom TreeTools Consensus RenumberEdges
+#' @importFrom TreeDist ClusteringInfoDistance ClusteringEntropy
+#'   MutualClusteringInfoSplits
+#' @importFrom TreeTools as.Splits Consensus RenumberEdges
 #' @importFrom ape multi2di
 #' @family custom search functions
 #' @export
@@ -167,12 +168,25 @@ CIDConsensus <- function(trees,
 # Uses an environment for reference semantics (CIDBootstrap needs to swap
 # the tree list temporarily). S3 class "cidData" with a names() method
 # so that TreeSearch/Ratchet can call names(dataset) to get tip labels.
+#
+# For CID (the default metric), precomputes input tree splits and
+# clustering entropies to avoid redundant O(N) work per candidate.
 .MakeCIDData <- function(trees, metric, tipLabels) {
   env <- new.env(parent = emptyenv())
   env$trees <- trees
   env$metric <- metric
   env$tipLabels <- tipLabels
   env$nTip <- length(tipLabels)
+
+  # Precompute splits and entropies for the default CID path
+  isCID <- identical(metric, ClusteringInfoDistance)
+  env$isCID <- isCID
+  if (isCID) {
+    env$inputSplits <- lapply(trees, as.Splits, tipLabels)
+    env$inputCE <- vapply(env$inputSplits, ClusteringEntropy, double(1))
+    env$meanInputCE <- mean(env$inputCE)
+  }
+
   class(env) <- "cidData"
   env
 }
@@ -182,9 +196,27 @@ names.cidData <- function(x) x$tipLabels
 
 
 # CID-based TreeScorer: mean distance from candidate to all input trees.
+# For ClusteringInfoDistance, uses precomputed splits for ~7x speedup.
 .CIDScorer <- function(parent, child, dataset, ...) {
   candidate <- .EdgeListToPhylo(parent, child, dataset$tipLabels)
-  mean(dataset$metric(candidate, dataset$trees))
+  if (dataset$isCID) {
+    .CIDScoreFast(candidate, dataset)
+  } else {
+    mean(dataset$metric(candidate, dataset$trees))
+  }
+}
+
+
+# Fast CID scorer using precomputed input splits.
+# CID(cand, tree_i) = CE(cand) + CE(tree_i) - 2*MCI(cand, tree_i)
+# mean(CID) = CE(cand) + mean(CE(inputs)) - 2*mean(MCI)
+.CIDScoreFast <- function(candidate, dataset) {
+  candSp <- as.Splits(candidate, dataset$tipLabels)
+  candCE <- ClusteringEntropy(candSp)
+  mcis <- vapply(dataset$inputSplits, function(sp) {
+    MutualClusteringInfoSplits(candSp, sp, dataset$nTip)
+  }, double(1))
+  candCE + dataset$meanInputCE - 2 * mean(mcis)
 }
 
 
@@ -200,6 +232,7 @@ names.cidData <- function(x) x$tipLabels
 
 
 # CID bootstrapper: resample input trees with replacement, then search.
+# Also resamples precomputed splits/CEs for the fast CID path.
 .CIDBootstrap <- function(edgeList, cidData,
                           EdgeSwapper = RootedNNISwap,
                           maxIter, maxHits,
@@ -208,8 +241,26 @@ names.cidData <- function(x) x$tipLabels
                           stopAtPlateau = 0L, ...) {
   origTrees <- cidData$trees
   nTree <- length(origTrees)
-  cidData$trees <- origTrees[sample.int(nTree, replace = TRUE)]
-  on.exit(cidData$trees <- origTrees)
+  idx <- sample.int(nTree, replace = TRUE)
+  cidData$trees <- origTrees[idx]
+
+  # Also resample precomputed data for fast CID path
+  if (cidData$isCID) {
+    origSplits <- cidData$inputSplits
+    origCE <- cidData$inputCE
+    origMeanCE <- cidData$meanInputCE
+    cidData$inputSplits <- origSplits[idx]
+    cidData$inputCE <- origCE[idx]
+    cidData$meanInputCE <- mean(origCE[idx])
+    on.exit({
+      cidData$trees <- origTrees
+      cidData$inputSplits <- origSplits
+      cidData$inputCE <- origCE
+      cidData$meanInputCE <- origMeanCE
+    })
+  } else {
+    on.exit(cidData$trees <- origTrees)
+  }
 
   res <- EdgeListSearch(edgeList[1:2], cidData,
                         TreeScorer = .CIDScorer,
