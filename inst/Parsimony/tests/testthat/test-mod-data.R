@@ -79,8 +79,8 @@ test_that("data_server returns expected reactive list", {
   )
 })
 
-test_that("AnyTrees and HaveData respond to state", {
-  r <- reactiveValues(
+make_data_state <- function(...) {
+  reactiveValues(
     trees       = NULL,
     allTrees    = NULL,
     treeHash    = NULL,
@@ -104,8 +104,13 @@ test_that("AnyTrees and HaveData respond to state", {
     searchWithout = character(0),
     visibleConfigs = character(0),
     outgroup    = NULL,
-    keepNTips   = 0L
+    keepNTips   = 0L,
+    ...
   )
+}
+
+test_that("AnyTrees and HaveData respond to state", {
+  r <- make_data_state()
 
   shiny::testServer(
     data_server,
@@ -123,6 +128,55 @@ test_that("AnyTrees and HaveData respond to state", {
       r$trees <- ape::rmtree(3, 6)
       session$flushReact()
       expect_true(returned$AnyTrees())
+    }
+  )
+})
+
+test_that("tipLabels returns tree tips when trees present", {
+  r <- make_data_state()
+  trees <- ape::rmtree(3, 6)
+
+  shiny::testServer(
+    data_server,
+    args = list(r = r, parent_session = NULL,
+                callbacks = stub_callbacks, log_fns = stub_log_fns),
+    {
+      returned <- session$getReturned()
+      # No trees => tipLabels is NULL (NULL[[1]][["tip.label"]])
+      expect_null(returned$tipLabels())
+
+      r$trees <- trees
+      session$flushReact()
+      expect_equal(returned$tipLabels(), trees[[1]]$tip.label)
+    }
+  )
+})
+
+test_that("nChars returns 0 when no dataset", {
+  r <- make_data_state()
+
+  shiny::testServer(
+    data_server,
+    args = list(r = r, parent_session = NULL,
+                callbacks = stub_callbacks, log_fns = stub_log_fns),
+    {
+      returned <- session$getReturned()
+      expect_equal(returned$nChars(), 0L)
+    }
+  )
+})
+
+test_that("HaveData requires phyDat class", {
+  r <- make_data_state()
+  r$dataset <- list(a = 1)  # Not a phyDat object
+
+  shiny::testServer(
+    data_server,
+    args = list(r = r, parent_session = NULL,
+                callbacks = stub_callbacks, log_fns = stub_log_fns),
+    {
+      returned <- session$getReturned()
+      expect_false(returned$HaveData())
     }
   )
 })

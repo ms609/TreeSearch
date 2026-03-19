@@ -198,25 +198,9 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
 
       DisplayTreeScores()
 
-      if (AnyTrees()) {
-        for (elem in c("keepNTips", "neverDrop")) {
-          parentShow(elem)
-        }
-      } else {
-        for (elem in c("keepNTips", "neverDrop")) {
-          parentHide(elem)
-        }
-      }
+      # Consensus module observes r$treeHash for whichTree, keepNTips,
+      # neverDrop, outgroup, droppedTips updates (T-063).
 
-      # Cross-module UI updates (use parent_session)
-      updateSliderInput(parent_session, "whichTree", min = 0L,
-                        max = length(r[["trees"]]), value = 0L)
-      UpdateKeepNTipsRange()
-      UpdateDroppedTaxaDisplay()
-      updateSelectizeInput(session = parent_session, inputId = "neverDrop",
-                           choices = tipLabels(),
-                           selected = parent_session$input$neverDrop)
-      UpdateOutgroupInput()
       updateSelectizeInput(session = parent_session,
                            inputId = "treespace-relators",
                            choices = tipLabels(),
@@ -470,21 +454,13 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
 
       if (is.null(r$dataset)) {
         Notification(type = "error", "Could not read data from file")
-        updateNumericInput(parent_session, "plottedChar", min = 0L,
-                           max = 0L, value = 0L)
-        updateSelectizeInput(parent_session, "searchChar", choices = NULL)
+        # Consensus module observes nChars() for plottedChar/searchChar (T-063)
         return("Could not read data from file")
       } else {
         Notification(type = "message",
                      paste("Loaded", nChars(), "characters and",
                            length(r$dataset), "taxa"))
-        updateNumericInput(parent_session, "plottedChar", min = 0L,
-                           max = nChars(), value = 1L)
-        updateSelectizeInput(parent_session, "searchChar",
-                             choices = paste0(seq_len(nChars()), ": ",
-                                              colnames(r$chars)),
-                             selected = "",
-                             server = TRUE)
+        # Consensus module observes nChars() for plottedChar/searchChar (T-063)
       }
 
       tryCatch({

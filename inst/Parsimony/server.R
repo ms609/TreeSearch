@@ -32,7 +32,7 @@ server <- function(input, output, session) {
       LastFile   = LastFile
     )
   )
-  # Expose data module reactives for source'd files + other modules
+  # Expose data module reactives for other modules
   AnyTrees            <- dt$AnyTrees
   HaveData            <- dt$HaveData
   tipLabels           <- dt$tipLabels
@@ -57,16 +57,32 @@ server <- function(input, output, session) {
   scores            <- se$scores
   concavity         <- se$concavity
   DisplayTreeScores <- se$DisplayTreeScores
-  
-  source("server/events.R", local = TRUE)
-  source("server/consensus.R", local = TRUE)
-  
-  # Wire forward-reference callbacks (events.R + consensus.R now defined)
-  cb_ref$DisplayTreeScores       <- DisplayTreeScores
-  cb_ref$UpdateKeepNTipsRange    <- UpdateKeepNTipsRange
-  cb_ref$UpdateDroppedTaxaDisplay <- UpdateDroppedTaxaDisplay
-  cb_ref$UpdateOutgroupInput     <- UpdateOutgroupInput
-  
+
+  # Show/hide config panels based on active plot format
+  ShowConfigs <- function(visible = character(0)) {
+    allConfigs <- c("whichTree", "charChooser",
+                    "consConfig", "clusConfig",
+                    "clusLegend", "branchLegend",
+                    "spaceConfig", "treePlotConfig",
+                    "mapConfig", "savePlottedTrees",
+                    "droppedTips", "droppedList")
+    r$visibleConfigs <- visible
+    lapply(visible, show)
+    lapply(setdiff(allConfigs, visible), hide)
+  }
+
+  observeEvent(input$plotFormat, {
+    ShowConfigs(switch(input$plotFormat,
+      "ind"   = c("whichTree", "charChooser", "treePlotConfig"),
+      "cons"  = c("consConfig", "droppedTips", "savePlottedTrees",
+                   "treePlotConfig", "branchLegend"),
+      "clus"  = c("clusConfig", "clusLegend", "savePlottedTrees",
+                   "consConfig", "droppedList", "treePlotConfig"),
+      "space" = c("clusConfig", "clusLegend", "spaceConfig", "mapConfig"),
+      ""))
+  })
+
+  # Clustering module
   cl <- clustering_server("clustering",
     r = r,
     distMeth = reactive(input$distMeth),
@@ -79,13 +95,13 @@ server <- function(input, output, session) {
       LogExprP    = LogExprP
     )
   )
-  # Expose clustering module reactives for source'd files
   distances      <- cl$distances
   LogDistances   <- cl$LogDistances
   silThreshold   <- cl$silThreshold
   clusterings    <- cl$clusterings
   LogClusterings <- cl$LogClusterings
-  source("server/clustering.R", local = TRUE)
+
+  # Treespace module
   ts <- treespace_server("treespace",
     r = r,
     clusterings = clusterings,
@@ -104,16 +120,52 @@ server <- function(input, output, session) {
       LogClusterings = LogClusterings
     )
   )
-  # Expose treespace module reactives to source'd files (consensus, downloads)
-  mapping          <- ts$mapping
-  dims             <- ts$dims
-  nProjDim         <- ts$nProjDim
-  TreeCols         <- ts$TreeCols
-  treePch          <- ts$treePch
-  mstEnds          <- ts$mstEnds
-  saveDetails      <- ts$saveDetails
-  TreespacePlot    <- ts$TreespacePlot
-  LogTreespacePlot <- ts$LogTreespacePlot
+  saveDetails <- ts$saveDetails
+
+  # Consensus module (replaces consensus.R + clustering.R + events.R bindings)
+  co <- consensus_server("consensus",
+    r = r,
+    AnyTrees = AnyTrees,
+    HaveData = HaveData,
+    tipLabels = tipLabels,
+    nChars = nChars,
+    TaxonOrder = TaxonOrder,
+    concavity = concavity,
+    clusterings = clusterings,
+    silThreshold = silThreshold,
+    LogClusterings = LogClusterings,
+    TreespacePlot    = ts$TreespacePlot,
+    LogTreespacePlot = ts$LogTreespacePlot,
+    dims       = ts$dims,
+    nProjDim   = ts$nProjDim,
+    TreeCols   = ts$TreeCols,
+    treePch    = ts$treePch,
+    ts_spaceCol  = ts$spaceCol,
+    ts_mapLines  = ts$mapLines,
+    ts_spacePch  = ts$spacePch,
+    ts_relators  = ts$relators,
+    plotFormat = reactive(input$plotFormat),
+    plotSize  = reactive(input$plotSize),
+    distMeth  = reactive(input$distMeth),
+    log_fns = list(
+      LogMsg      = LogMsg,
+      LogComment  = LogComment,
+      LogCode     = LogCode,
+      LogCommentP = LogCommentP,
+      LogCodeP    = LogCodeP,
+      LogIndent   = LogIndent,
+      BeginLogP   = BeginLogP,
+      LogExprP    = LogExprP
+    )
+  )
+
+  # Wire forward-reference callbacks (consensus module now defined)
+  cb_ref$DisplayTreeScores       <- DisplayTreeScores
+  cb_ref$UpdateKeepNTipsRange    <- co$UpdateKeepNTipsRange
+  cb_ref$UpdateDroppedTaxaDisplay <- co$UpdateDroppedTaxaDisplay
+  cb_ref$UpdateOutgroupInput     <- co$UpdateOutgroupInput
+
+  # Downloads module
   downloads_server(
     "dl",
     state         = r,
@@ -125,8 +177,8 @@ server <- function(input, output, session) {
     excelFileName = ExcelFileName,
     treeFileName  = TreeFileName,
     lastFile      = LastFile,
-    mainPlot      = MainPlot,
-    rCode         = RCode,
+    mainPlot      = co$MainPlot,
+    rCode         = co$RCode,
     saveDetails   = saveDetails
   )
   references_server("refs")

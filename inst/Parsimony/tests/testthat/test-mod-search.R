@@ -156,3 +156,46 @@ test_that("dataset change resets search stats", {
     }
   )
 })
+
+test_that("concavity defaults to Inf (equal weights)", {
+  r <- make_search_state()
+
+  shiny::testServer(
+    search_server,
+    args = list(
+      r = r,
+      AnyTrees       = reactive(FALSE),
+      HaveData       = reactive(FALSE),
+      UpdateAllTrees = function(x) invisible(NULL),
+      log_fns        = stub_log_fns
+    ),
+    {
+      # Default weighting mode is "off" => Inf
+      session$setInputs(implied.weights = "off")
+      returned <- session$getReturned()
+      expect_identical(returned$concavity(), Inf)
+    }
+  )
+})
+
+test_that("scores returns NULL with trees but no dataset", {
+  r <- make_search_state()
+  r$trees <- ape::rmtree(3, 6)
+  r$treeHash <- "test_hash"
+
+  shiny::testServer(
+    search_server,
+    args = list(
+      r = r,
+      AnyTrees       = reactive(TRUE),
+      HaveData       = reactive(FALSE),
+      UpdateAllTrees = function(x) invisible(NULL),
+      log_fns        = stub_log_fns
+    ),
+    {
+      returned <- session$getReturned()
+      # No dataset => scores should be NULL
+      expect_null(returned$scores())
+    }
+  )
+})

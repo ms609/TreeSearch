@@ -20,6 +20,7 @@ clustering_ui <- function(id) {
 #'   LogMsg, LogCommentP, LogCodeP, LogIndent, BeginLogP, LogExprP.
 clustering_server <- function(id, r, distMeth, log_fns) {
   moduleServer(id, function(input, output, session) {
+    ns <- session$ns
 
     # Unpack logging functions
     LogMsg      <- log_fns$LogMsg
@@ -260,6 +261,23 @@ clustering_server <- function(id, r, distMeth, log_fns) {
         LogCodeP("nClusters <- 1")
       }
     }
+
+    ############################################################################
+    # clThresh label CSS class (color-codes threshold strength)
+    ############################################################################
+
+    observeEvent(input$clThresh, {
+      classes <- c("meaningless", "weak", "good", "strong")
+      liveClass <- classes[as.integer(cut(
+        input$clThresh, c(0, 0.25, 0.5, 0.7, 1),
+        include.lowest = TRUE, right = FALSE
+      ))]
+      labelId <- ns("clThresh-label")
+      runjs(paste0(
+        "$('#", labelId, "').removeClass('", paste(classes, collapse = " "),
+        "').addClass('", liveClass, "');"
+      ))
+    })
 
     ############################################################################
     # Return reactives for server.R and other modules

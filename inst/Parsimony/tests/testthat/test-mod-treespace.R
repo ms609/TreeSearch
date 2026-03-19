@@ -98,3 +98,31 @@ test_that("saveDetails returns correct metadata per plot format", {
     }
   )
 })
+
+test_that("saveDetails for non-space format has tree prefix", {
+  r <- reactiveValues(
+    trees    = ape::rmtree(3, 6),
+    treeHash = "hash3"
+  )
+
+  shiny::testServer(
+    treespace_server,
+    args = list(
+      r            = r,
+      clusterings  = reactive(stub_clustering),
+      silThreshold = reactive(0.5),
+      scores       = reactive(NULL),
+      concavity    = reactive(Inf),
+      distMeth     = reactive("cid"),
+      plotFormat    = reactive("cons"),
+      distances    = stub_distances,
+      LogDistances = stub_LogDistances,
+      log_fns      = stub_log_fns
+    ),
+    {
+      returned <- session$getReturned()
+      sd <- returned$saveDetails()
+      expect_true(grepl("Tree", sd$fileName))
+    }
+  )
+})
