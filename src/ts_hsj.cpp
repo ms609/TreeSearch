@@ -41,7 +41,6 @@ static int fitch_label_char(
     std::vector<uint32_t>& state_sets)
 {
   int n_tip = tree.n_tip;
-  int n_node = tree.n_node;
 
   // Initialize tips
   for (int t = 0; t < n_tip; ++t) {

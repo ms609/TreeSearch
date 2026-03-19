@@ -126,8 +126,6 @@ void sankoff_uppass(
     int* optimal_states)
 {
   const int ns = sc.n_states;
-  const int n_node = n_tip + n_internal;
-  const double INF = std::numeric_limits<double>::infinity();
 
   // --- Root assignment ---
   int root = postorder[n_internal - 1];
