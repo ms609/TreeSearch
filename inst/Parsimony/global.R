@@ -288,24 +288,32 @@ Enquote <- function(x, ...) {
 
 #' Confidence text for post-search results display.
 #'
-#' Given K hits to best score in R total replicates, returns a plain-text
-#' summary of the observed hit rate and how it compares to the number of
-#' replicates needed for 95% single-run confidence.
+#' Given K hits to best score in R total runs, returns a plain-text
+#' summary: "K of R runs hit best score. Probability that a better tree
+#' exists: ~X%".
 #'
 #' @param K integer. Cumulative hits to best score.
-#' @param R integer. Cumulative replicates run.
+#' @param R integer. Cumulative runs completed.
 #' @return character(1) or NULL if no search data.
+FormatMissProb <- function(prob) {
+  pct <- prob * 100
+  if (pct >= 1) paste0("~", round(pct), "%")
+  else if (pct >= 0.1) "<1%"
+  else if (pct >= 0.01) "<0.1%"
+  else "<0.01%"
+}
+
 SearchConfidenceText <- function(K, R) {
   if (is.null(K) || is.null(R) || R <= 0L || K <= 0L) return(NULL)
-  p   <- K / R
-  # Minimum replicates for >=95% chance of at least one hit at this rate
-  n95 <- if (p >= 1) 1L else as.integer(ceiling(log(0.05) / log(1 - p)))
-  coverage <- if (n95 <= R) {
-    paste0("\u2265", n95, " reps sufficient for 95% confidence \u2014 covered")
-  } else {
-    paste0("\u2265", n95, " reps for 95% confidence")
-  }
-  paste0(K, "/", R, " replicates found best score (", coverage, ")")
+  # exp(-K) is a conservative upper bound on (1 - K/R)^R.
+  # Avoids overconfidence when K ~ R with few replicates (old formula
+
+  # gave 0% when K = R; exp(-K) always > 0).  Matches the theoretical
+  # worst-case formula shown in the config dialog.
+  prob_miss <- exp(-K)
+  paste0(K, " of ", R, " runs hit best score. ",
+         "Probability that a better score exists: ",
+         FormatMissProb(prob_miss))
 }
 
 EnC <- function(...) {

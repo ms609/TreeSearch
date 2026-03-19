@@ -12,9 +12,19 @@ EnC <- function(x) {
   if (length(x) == 1) Enquote(x)
   else paste0("c(", paste(sapply(x, Enquote), collapse = ", "), ")")
 }
+FormatMissProb <- function(prob) {
+  pct <- prob * 100
+  if (pct >= 1) paste0("~", round(pct), "%")
+  else if (pct >= 0.1) "<1%"
+  else if (pct >= 0.01) "<0.1%"
+  else "<0.01%"
+}
 SearchConfidenceText <- function(K, R) {
   if (is.null(K) || is.null(R) || R <= 0L || K <= 0L) return(NULL)
-  paste0(K, "/", R, " reps")
+  prob_miss <- exp(-K)
+  paste0(K, " of ", R, " runs hit best score. ",
+         "Probability that a better score exists: ",
+         FormatMissProb(prob_miss))
 }
 PutData <- PutTree <- function(...) invisible(NULL)
 logging <- FALSE
@@ -176,6 +186,77 @@ test_that("concavity defaults to Inf (equal weights)", {
       expect_identical(returned$concavity(), Inf)
     }
   )
+})
+
+test_that("DisplayTreeScores renders updated confidence text (T-090)", {
+  r <- make_search_state()
+
+  shiny::testServer(
+    search_server,
+    args = list(
+      r = r,
+      AnyTrees       = reactive(FALSE),
+      HaveData       = reactive(FALSE),
+      UpdateAllTrees = function(x) invisible(NULL),
+      log_fns        = stub_log_fns
+    ),
+    {
+      returned <- session$getReturned()
+
+      # Simulate accumulated search stats (as happens when a continued
+      # search matches the previous best score)
+      r$searchTotalHits <- 8L
+      r$searchTotalReps <- 100L
+      r$allTrees <- list("placeholder")
+      r$trees    <- list("placeholder")
+
+      # searchNotification must be NULL (search not in progress)
+      r$searchNotification <- NULL
+
+      returned$DisplayTreeScores()
+      html <- output$results$html
+
+      # Verify the confidence text and tooltip are present
+      expect_match(html, "8 of 100 runs hit best score")
+      expect_match(html, "1 trees in memory")
+      expect_match(html, "title=")
+      expect_match(html, "exp\\(-K\\) where K = 8")
+    }
+  )
+})
+
+test_that("SearchConfidenceText uses exp(-K) formula (T-098)", {
+  # NULL cases
+
+  expect_null(SearchConfidenceText(NULL, 10))
+  expect_null(SearchConfidenceText(0, 10))
+  expect_null(SearchConfidenceText(5, 0))
+
+  # K = R = 3: old formula gave 0 -> "<0.01%"; new gives exp(-3) ~ 5%
+  txt <- SearchConfidenceText(3, 3)
+  expect_match(txt, "3 of 3 runs hit best score")
+  expect_match(txt, "~5%")
+  expect_match(txt, "better score exists")
+
+  # K = 1: exp(-1) ~ 37%
+  txt1 <- SearchConfidenceText(1, 10)
+  expect_match(txt1, "~37%")
+
+  # K = 10: exp(-10) ~ 0.005% -> "<0.01%"
+  txt10 <- SearchConfidenceText(10, 10)
+  expect_match(txt10, "<0.01%")
+
+  # K = 5: exp(-5) ~ 0.67% -> "<1%"
+  txt5 <- SearchConfidenceText(5, 20)
+  expect_match(txt5, "<1%")
+})
+
+test_that("FormatMissProb displays probability thresholds correctly", {
+  expect_equal(FormatMissProb(0.37), "~37%")
+  expect_equal(FormatMissProb(0.05), "~5%")
+  expect_equal(FormatMissProb(0.009), "<1%")
+  expect_equal(FormatMissProb(0.0005), "<0.1%")
+  expect_equal(FormatMissProb(0.00005), "<0.01%")
 })
 
 test_that("scores returns NULL with trees but no dataset", {

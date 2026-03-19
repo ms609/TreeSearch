@@ -56,7 +56,7 @@ AppState <- function() {
     searchWithout      = NULL,     # character: taxa excluded from search
     bestSearchScore    = NULL,     # numeric: best score seen across all searches (for accumulation)
     searchTotalHits    = 0L,       # integer: cumulative hits_to_best across runs at current best score
-    searchTotalReps    = 0L,       # integer: cumulative replicates run across runs at current best score
+    searchTotalReps    = 0L,       # integer: cumulative runs completed at current best score
 
     # -- Consensus / plotting domain --
     outgroup      = NULL,          # character: selected outgroup taxa

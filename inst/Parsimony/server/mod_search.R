@@ -53,6 +53,19 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     DatasetTips <- reactive(names(r$dataset))
     SearchTips  <- reactive(setdiff(DatasetTips(), r$searchWithout))
 
+    # Adaptive note under the targetHits slider (shown inside config modal)
+    output$targetHitsNote <- renderUI({
+      N <- input$targetHits
+      if (is.null(N) || N < 1L) return(NULL)
+      # Worst-case miss probability: lim_{R->inf} (1 - N/R)^R = exp(-N)
+      helpText(title = paste0(
+                 "Theoretical worst-case: exp(-", N,
+                 "). After searching, the results panel uses actual hit counts."
+               ),
+               paste0("Probability of missing best score: ",
+                      FormatMissProb(exp(-N))))
+    })
+
     ##########################################################################
     # Weighting / concavity
     ##########################################################################
@@ -133,6 +146,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     ##########################################################################
 
     DisplayTreeScores <- function () {
+      # Don't overwrite "Searching..." indicator while a search is running
+      if (!is.null(r$searchNotification)) return(invisible())
       LogMsg("DisplayTreeScores()")
       treeScores <- scores()
       score <- if (is.null(treeScores)) {
@@ -151,7 +166,17 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       )
       confText <- SearchConfidenceText(r$searchTotalHits, r$searchTotalReps)
       html <- if (!is.null(confText)) {
-        paste0(msg, "<br><small style='color:#666'>", confText, "</small>")
+        tooltip <- paste0(
+          "Estimated as exp(-K) where K = ",
+          r$searchTotalHits,
+          " (runs hitting best score). ",
+          "Assumes independent runs. ",
+          "The config dialog shows a theoretical worst-case; ",
+          "this uses actual search results."
+        )
+        paste0(msg, "<br><small style='color:#666' title='",
+               htmltools::htmlEscape(tooltip, attribute = TRUE),
+               "'>", confText, "</small>")
       } else {
         msg
       }
@@ -196,116 +221,120 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     StartSearch <- function () {
       if (!HaveData()) {
         Notification("No data loaded", type = "error")
-      } else {
-        startTree <- if (!AnyTrees()) {
-          LogComment("Select starting tree")
-          LogCode(paste0("startTree <- AdditionTree(dataset, concavity = ",
-                         Enquote(concavity()), ")"))
-          AdditionTree(r$dataset[SearchTips()], concavity = concavity())
-        } else {
-          LogComment("Select starting tree")
-          treeLabels <- TipLabels(r$trees[[1]])
-          if (all(SearchTips() %in% treeLabels)) {
-            if (length(setdiff(treeLabels, SearchTips())) > 0) {
-              if (length(r$searchWithout)) {
-                LogCode(paste0(
-                  "searchTips <- setdiff(names(dataset), ", EnC(r$searchWithout),
-                  ")"),
-                  "startTree <- KeepTip(trees[[1]], searchTips)")
-              } else {
-                LogCode("startTree <- KeepTip(trees[[1]], names(dataset))")
-              }
-              KeepTip(r$trees[[1]], SearchTips())
-            } else {
-              sc <- scores()
-              firstOptimal <- if (length(sc)) which.min(sc) else 1L
-              LogCode(paste0("startTree <- trees[[", firstOptimal, "]]",
-                             " # First tree with optimal score"))
-              r$trees[[firstOptimal]]
-            }
-          } else {
-            # Fuzzy-match labels
-            matching <- TreeDist::LAPJV(adist(treeLabels, SearchTips()))$matching
-            scaffold <- KeepTip(r$trees[[1]], !is.na(matching))
-            scaffold[["tip.label"]] <- SearchTips()[matching[!is.na(matching)]]
-            AdditionTree(r$dataset, concavity = concavity(),
-                         constraint = scaffold)
-          }
-        }
-        LogMsg("StartSearch()")
-        PutData(r$dataset[SearchTips()])
-        PutTree(startTree)
-        LogComment("Search for optimal trees", 1)
-        searchStrategy <- if (length(input$strategy)) input$strategy else "auto"
-        searchMaxRep <- if (length(input$maxReplicates)) {
-          as.integer(input$maxReplicates)
-        } else {
-          100L
-        }
-        searchTargetHits <- if (length(input$targetHits)) {
-          as.integer(input$targetHits)
-        } else {
-          10L
-        }
-        searchMaxSeconds <- if (length(input$timeout)) {
-          as.double(input$timeout) * 60
-        } else {
-          0
-        }
-        searchPoolSub <- if (length(input$epsilon) && input$epsilon > 0) {
-          tolerance()
-        } else {
-          0
-        }
-        searchNThreads <- if (length(input$nThreads)) as.integer(input$nThreads) else 1L
-        LogCode(c(
-          "newTrees <- MaximizeParsimony(",
-          if (length(r$searchWithout)) {
-            paste0(
-              "  dataset[setdiff(names(dataset), ", EnC(r$searchWithout), ")],"
-            )
-          } else {
-            "  dataset,"
-          },
-          "  tree = startTree,",
-          paste0("  concavity = ", Enquote(concavity()), ","),
-          paste0("  strategy = \"", searchStrategy, "\","),
-          paste0("  maxReplicates = ", searchMaxRep, ","),
-          paste0("  targetHits = ", searchTargetHits, ","),
-          if (searchMaxSeconds > 0)
-            paste0("  maxSeconds = ", searchMaxSeconds, ","),
-          if (searchPoolSub > 0)
-            paste0("  control = SearchControl(poolSuboptimal = ", searchPoolSub, "),"),
-          if (searchNThreads > 1L)
-            paste0("  nThreads = ", searchNThreads, "L,"),
-          "  verbosity = 0",
-          ")"))
-        # Snapshot reactive values for the async task
-        searchDataset <- r$dataset[SearchTips()]
-        searchConcavity <- concavity()
-
-        disable("go")
-        disable("modalGo")
-        disable("searchConfig")
-        r$searchNotification <- showNotification(
-          paste0("Searching (", searchMaxRep, " replicates, ", wtType(),
-                 if (searchNThreads > 1L) paste0(", ", searchNThreads, " threads") else "",
-                 ")\u2026"),
-          duration = NULL, type = "message", closeButton = FALSE
-        )
-        r$searchDataHash <- r$dataHash
-        output$results <- renderUI(HTML(paste0(
-          "Searching (", searchMaxRep, " replicates, ", wtType(),
-          if (searchNThreads > 1L) paste0(", ", searchNThreads, " threads") else "",
-          ")\u2026"
-        )))
-
-        searchTask$invoke(
-          searchDataset, startTree, searchConcavity,
-          searchStrategy, searchMaxRep, searchTargetHits,
-          searchMaxSeconds, searchPoolSub, searchNThreads
-        )
+        return(invisible())
       }
+
+      # Read search parameters early (before any slow prep)
+      searchStrategy  <- if (length(input$strategy)) input$strategy else "auto"
+      searchMaxRep    <- if (length(input$maxReplicates)) {
+        as.integer(input$maxReplicates)
+      } else {
+        100L
+      }
+      searchTargetHits <- if (length(input$targetHits)) {
+        as.integer(input$targetHits)
+      } else {
+        10L
+      }
+      searchMaxSeconds <- if (length(input$timeout)) {
+        as.double(input$timeout) * 60
+      } else {
+        0
+      }
+      searchPoolSub <- if (length(input$epsilon) && input$epsilon > 0) {
+        tolerance()
+      } else {
+        0
+      }
+      searchNThreads <- if (length(input$nThreads)) as.integer(input$nThreads) else 1L
+
+      # Show search-in-progress indicator BEFORE tree selection (which may
+      # call AdditionTree synchronously). The guard in DisplayTreeScores()
+      # checks r$searchNotification to avoid overwriting this indicator.
+      disable("go")
+      disable("modalGo")
+      disable("searchConfig")
+      searchLabel <- paste0(
+        "Searching (", searchMaxRep, " runs, ", wtType(),
+        if (searchNThreads > 1L) paste0(", ", searchNThreads, " threads") else "",
+        ")\u2026"
+      )
+      r$searchNotification <- showNotification(
+        searchLabel, duration = NULL, type = "message", closeButton = FALSE
+      )
+      r$searchDataHash <- r$dataHash
+      output$results <- renderUI(HTML(searchLabel))
+
+      startTree <- if (!AnyTrees()) {
+        LogComment("Select starting tree")
+        LogCode(paste0("startTree <- AdditionTree(dataset, concavity = ",
+                       Enquote(concavity()), ")"))
+        AdditionTree(r$dataset[SearchTips()], concavity = concavity())
+      } else {
+        LogComment("Select starting tree")
+        treeLabels <- TipLabels(r$trees[[1]])
+        if (all(SearchTips() %in% treeLabels)) {
+          if (length(setdiff(treeLabels, SearchTips())) > 0) {
+            if (length(r$searchWithout)) {
+              LogCode(paste0(
+                "searchTips <- setdiff(names(dataset), ", EnC(r$searchWithout),
+                ")"),
+                "startTree <- KeepTip(trees[[1]], searchTips)")
+            } else {
+              LogCode("startTree <- KeepTip(trees[[1]], names(dataset))")
+            }
+            KeepTip(r$trees[[1]], SearchTips())
+          } else {
+            sc <- scores()
+            firstOptimal <- if (length(sc)) which.min(sc) else 1L
+            LogCode(paste0("startTree <- trees[[", firstOptimal, "]]",
+                           " # First tree with optimal score"))
+            r$trees[[firstOptimal]]
+          }
+        } else {
+          # Fuzzy-match labels
+          matching <- TreeDist::LAPJV(adist(treeLabels, SearchTips()))$matching
+          scaffold <- KeepTip(r$trees[[1]], !is.na(matching))
+          scaffold[["tip.label"]] <- SearchTips()[matching[!is.na(matching)]]
+          AdditionTree(r$dataset, concavity = concavity(),
+                       constraint = scaffold)
+        }
+      }
+      LogMsg("StartSearch()")
+      PutData(r$dataset[SearchTips()])
+      PutTree(startTree)
+      LogComment("Search for optimal trees", 1)
+      LogCode(c(
+        "newTrees <- MaximizeParsimony(",
+        if (length(r$searchWithout)) {
+          paste0(
+            "  dataset[setdiff(names(dataset), ", EnC(r$searchWithout), ")],"
+          )
+        } else {
+          "  dataset,"
+        },
+        "  tree = startTree,",
+        paste0("  concavity = ", Enquote(concavity()), ","),
+        paste0("  strategy = \"", searchStrategy, "\","),
+        paste0("  maxReplicates = ", searchMaxRep, ","),
+        paste0("  targetHits = ", searchTargetHits, ","),
+        if (searchMaxSeconds > 0)
+          paste0("  maxSeconds = ", searchMaxSeconds, ","),
+        if (searchPoolSub > 0)
+          paste0("  control = SearchControl(poolSuboptimal = ", searchPoolSub, "),"),
+        if (searchNThreads > 1L)
+          paste0("  nThreads = ", searchNThreads, "L,"),
+        "  verbosity = 0",
+        ")"))
+      # Snapshot reactive values for the async task
+      searchDataset <- r$dataset[SearchTips()]
+      searchConcavity <- concavity()
+
+      searchTask$invoke(
+        searchDataset, startTree, searchConcavity,
+        searchStrategy, searchMaxRep, searchTargetHits,
+        searchMaxSeconds, searchPoolSub, searchNThreads
+      )
     }
 
     ##########################################################################
@@ -342,49 +371,35 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       showModal(modalDialog(
         easyClose = TRUE,
         fluidPage(column(6,
-          # --- Step weighting ---
-          tags$h6(tags$strong("Step weighting")),
           selectInput(ns("implied.weights"), "Mode",
                      list("Implied" = "on", "Profile" = "prof",
                           "Equal" = "off"), "on"),
           sliderInput(ns("concavity"), "Concavity constant", min = 0L,
                      max = 3L, pre = "10^", value = 1L),
-          # --- Parallelization (only shown when > 1 core available) ---
           if (nCores > 1L) {
-            tagList(
-              tags$h6(tags$strong("Parallelization"),
-                      style = "margin-top: 10px;"),
-              sliderInput(ns("nThreads"), "Parallel search threads",
-                          min = 1L, max = nCores,
-                          value = if (length(input$nThreads)) input$nThreads
-                                  else max(1L, floor(nCores / 2L)),
-                          step = 1L)
-            )
-          }
-        ), column(6,
-          # --- Search intensity ---
-          tags$h6(tags$strong("Search intensity")),
-          selectInput(ns("strategy"), "Search strategy",
-                     list("Auto" = "auto", "Sprint" = "sprint",
-                          "Default" = "default", "Thorough" = "thorough"),
-                     "auto"),
-          sliderInput(ns("targetHits"), "Stop after best score found N times",
-                      min = 1L, max = 50L, value = 10L, step = 1L),
-          helpText("The search stops once the same best score has been",
-                   "found independently N times.",
-                   "A higher value gives greater confidence that the",
-                   "result is the global optimum."),
-          sliderInput(ns("timeout"), "Maximum run duration", min = 1,
-                      max = 60, value = 5, post = "min", step = 1),
-          sliderInput(ns("maxReplicates"), "Maximum replicates", min = 1L,
-                      max = 500L, value = 100L, step = 1L),
-          # --- Results to keep ---
-          tags$h6(tags$strong("Results to keep"),
-                  style = "margin-top: 10px;"),
+            sliderInput(ns("nThreads"), "Parallel search threads",
+                        min = 1L, max = nCores,
+                        value = if (length(input$nThreads)) input$nThreads
+                                else max(1L, floor(nCores / 2L)),
+                        step = 1L)
+          },
           selectizeInput(ns("searchWithout"), "Exclude taxa", DatasetTips(),
                          r$searchWithout, multiple = TRUE),
           numericInput(ns("epsilon"), "Keep if suboptimal by \u2264", min = 0,
                       value = 0)
+        ), column(6,
+          selectInput(ns("strategy"), "Search strategy",
+                     list("Auto" = "auto", "Sprint" = "sprint",
+                          "Default" = "default", "Thorough" = "thorough"),
+                     "auto"),
+          sliderInput(ns("targetHits"),
+                      "Stop when N runs have hit best score",
+                      min = 1L, max = 50L, value = 10L, step = 1L),
+          uiOutput(ns("targetHitsNote")),
+          sliderInput(ns("timeout"), "Maximum run duration", min = 1,
+                      max = 60, value = 5, post = "min", step = 1),
+          sliderInput(ns("maxReplicates"), "Maximum independent runs",
+                      min = 1L, max = 500L, value = 100L, step = 1L)
         )),
         title = "Tree search settings",
         footer = tagList(modalButton("Close", icon = Icon("rectangle-xmark")),
@@ -473,6 +488,9 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         }
 
         UpdateAllTrees(treesToStore)
+        # Always refresh the display — UpdateAllTrees may short-circuit
+        # when trees are unchanged, but hit/rep counts have been updated.
+        DisplayTreeScores()
         updateActionButton(session, "go", "Continue")
         updateActionButton(session, "modalGo", "Continue search")
         shinyjs::show(selector = "#displayConfig")
