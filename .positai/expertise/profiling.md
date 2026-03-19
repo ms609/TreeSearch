@@ -47,6 +47,11 @@ skill (load via the skill tool). Key steps:
 See `.positai/skills/r-package-profiling/references/` for detailed
 VTune workflow on Windows.
 
+**Current version: VTune 2025.10** (updated 2026-03-19). Requires Ice Lake
+or newer CPU (10th gen Intel Core / 3rd gen Xeon Scalable+). VS 2019
+integration and Eclipse integration are removed in 2025.x. Command-line
+workflow (`vtune -collect hotspots`) is unchanged.
+
 ### 4. R-Level Profiling
 
 For R overhead identification:
