@@ -80,6 +80,7 @@ Config/Needs/website:
 Collate:
   'AdditionTree.R'
   'Bootstrap.R'
+  'CIDConsensus.R'
   'CharacterHierarchy.R'
   'ClusterStrings.R'
   'Concordance.R'
