@@ -52,7 +52,7 @@
 #'   Default `0` (no missing data).
 #'
 #' @return A `phyDat` object with characters ordered by number of states
-#'   (2-state first, then 3-state, etc.). Additional attributes:
+#'   (2-state first, then 3-state, and so on). Additional attributes:
 #'   \describe{
 #'     \item{`saturated`}{Logical vector: can each character accept another
 #'       step? Computed at return for all characters.}

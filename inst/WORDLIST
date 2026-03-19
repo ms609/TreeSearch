@@ -29,6 +29,7 @@ CHOO
 CHRISTOFFERSEN
 Campanian
 Capitellida
+CharacterHierarchy
 Chloranthaceae
 Congreve
 ConsensusWithout
@@ -64,6 +65,7 @@ HERATY
 HERENDEEN
 HODKINSON
 HOFREITER
+HSJ
 Halkieria
 IW
 Homoplasy
@@ -80,6 +82,7 @@ Lanfear
 Lellingeria
 Levenshtein
 Linnean
+MPT
 MPTs
 Machaeridians
 Maddison
@@ -169,6 +172,7 @@ WETTERER
 WIBLE
 Wiwaxia
 Wägele
+XSS
 YU
 ZANOL
 Zoologica
@@ -205,9 +209,11 @@ ingroup
 kerwoodi
 langstoni
 leanchoiliid
+maximin
 memoization
 morphy
 morphydefs
+multifurcating
 multiPhylo
 noninvasive
 nontherian
@@ -231,6 +237,7 @@ reconnections
 relabellings
 reoptimisation
 sd
+secondaries
 speficied
 statedata
 stdout
@@ -240,6 +247,7 @@ supertree
 syab
 sysbio
 syy
+tabu
 tb
 textrm
 th

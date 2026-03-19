@@ -2,7 +2,7 @@
 % Please edit documentation in R/SearchControl.R
 \name{SearchControl}
 \alias{SearchControl}
-\title{Search control parameters for MaximizeParsimony}
+\title{Expert search heuristic parameters}
 \usage{
 SearchControl(
   tbrMaxHits = 1L,
@@ -45,7 +45,7 @@ before stopping a TBR pass.}
 \item{ratchetPerturbProb}{Numeric (0--1); probability of perturbing each
 character.}
 
-\item{ratchetPerturbMode}{Integer; 0 = zero-weight only, 1 = upweight only,
+\item{ratchetPerturbMode}{Integer; 0 = zero-weight only, 1 = up-weight only,
 2 = mixed.}
 
 \item{ratchetPerturbMaxMoves}{Integer; maximum TBR moves per perturbation

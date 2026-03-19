@@ -130,7 +130,7 @@ to give more meaningful results.}
 characters to retain under jackknife resampling.}
 
 \item{nReplicates}{Integer specifying how many resample replicates to run.
-Default \code{1L} runs a single replicate (original behavior).
+Default \code{1L} runs a single replicate (original behaviour).
 When \verb{> 1}, all replicates are run in a single call, optionally in parallel.}
 
 \item{nThreads}{Integer specifying the number of threads for parallel

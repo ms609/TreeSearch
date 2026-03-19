@@ -251,7 +251,7 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
 #' @param states Integer vector giving the number of leaves bearing each
 #'   possible combination of states, laid out in binary fashion.
 #'   Entry 1 = state `1` (binary `001`), entry 2 = state `2` (binary `010`),
-#'   entry 3 = ambiguous state `{1,2}` (binary `011`), etc.
+#'   entry 3 = ambiguous state `{1,2}` (binary `011`), and so on.
 #'   Only observed singleton states need non-zero counts; polymorphic entries
 #'   are typically zero.
 #' 

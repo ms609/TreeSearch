@@ -52,7 +52,7 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 - `maxSeconds` — wall-clock timeout (0 = no limit).
 - `sprFirst` — run SPR before TBR in each replicate.
 - `ratchetPerturbMode`, `ratchetPerturbMaxMoves`, `ratchetAdaptive` —
-  configure ratchet perturbation (zero-weight, upweight, mixed, adaptive).
+  configure ratchet perturbation (zero-weight, up-weight, mixed, adaptive).
 - `driftCycles`, `driftAfdLimit`, `driftRfdLimit` — drift search parameters.
 - `xssRounds`, `xssPartitions`, `rssRounds`, `cssRounds`, `cssPartitions`,
   `sectorMinSize`, `sectorMaxSize` — sectorial search parameters.

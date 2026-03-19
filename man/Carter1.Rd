@@ -19,7 +19,7 @@ LogCarter1(m, a, b)
 \item{states}{Integer vector giving the number of leaves bearing each
 possible combination of states, laid out in binary fashion.
 Entry 1 = state \code{1} (binary \code{001}), entry 2 = state \code{2} (binary \code{010}),
-entry 3 = ambiguous state \verb{\{1,2\}} (binary \code{011}), etc.
+entry 3 = ambiguous state \verb{\{1,2\}} (binary \code{011}), and so on.
 Only observed singleton states need non-zero counts; polymorphic entries
 are typically zero.}
 

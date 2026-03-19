@@ -7,7 +7,7 @@
 RandomTreeScore(dataset)
 }
 \arguments{
-\item{dataset}{A phyDat object (recommended) or a Morphy object created
+\item{dataset}{A \code{phyDat} object (recommended) or a Morphy object created
 with \code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}} (legacy; deprecated).}
 }
 \value{

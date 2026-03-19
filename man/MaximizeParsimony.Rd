@@ -124,7 +124,7 @@ stops. \code{0} (default) means no time limit.}
 
 \item{nThreads}{Integer: number of parallel threads for search replicates.
 \describe{
-\item{\code{1} (default)}{Serial execution -- identical to previous behavior.}
+\item{\code{1} (default)}{Serial execution -- identical to previous behaviour.}
 \item{\code{0}}{Auto-detect: use one fewer thread than the number of CPU
 cores.}
 \item{\verb{> 1}}{Use the specified number of worker threads.}

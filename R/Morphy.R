@@ -1079,7 +1079,7 @@ Morphy <- function(dataset, tree,
 #' For other ways to estimate clade concordance, see [`SiteConcordance()`].
 #' 
 #' @param nReplicates Integer specifying how many resample replicates to run.
-#' Default `1L` runs a single replicate (original behavior).
+#' Default `1L` runs a single replicate (original behaviour).
 #' When `> 1`, all replicates are run in a single call, optionally in parallel.
 #' @param nThreads Integer specifying the number of threads for parallel
 #' resampling. Default `1L` runs serially.  Use `0L` for auto-detect.

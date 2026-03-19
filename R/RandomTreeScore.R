@@ -3,7 +3,7 @@
 #' Generates a random tree topology and returns its parsimony score under
 #' equal weights.
 #' 
-#' @param dataset A phyDat object (recommended) or a Morphy object created
+#' @param dataset A `phyDat` object (recommended) or a Morphy object created
 #'   with [`PhyDat2Morphy()`] (legacy; deprecated).
 #'
 #' @return `RandomTreeScore()` returns a numeric parsimony score.

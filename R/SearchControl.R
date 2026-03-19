@@ -1,4 +1,4 @@
-#' Search control parameters for MaximizeParsimony
+#' Expert search heuristic parameters
 #'
 #' Construct a list of low-level search parameters for
 #' [`MaximizeParsimony()`].  Most users can ignore these and rely on the
@@ -20,7 +20,7 @@
 #' @param ratchetCycles Integer; number of ratchet perturbation cycles.
 #' @param ratchetPerturbProb Numeric (0--1); probability of perturbing each
 #'   character.
-#' @param ratchetPerturbMode Integer; 0 = zero-weight only, 1 = upweight only,
+#' @param ratchetPerturbMode Integer; 0 = zero-weight only, 1 = up-weight only,
 #'   2 = mixed.
 #' @param ratchetPerturbMaxMoves Integer; maximum TBR moves per perturbation
 #'   cycle (0 = automatic).
@@ -55,7 +55,7 @@
 #' SearchControl(ratchetCycles = 20L, driftCycles = 0L)
 #'
 #' @family tree search functions
-#' @seealso [MaximizeParsimony()]
+#' @seealso [`MaximizeParsimony()`]
 #' @references
 #' \insertAllCited{}
 #' @export
