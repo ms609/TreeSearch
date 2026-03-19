@@ -472,3 +472,13 @@ WithOneExtraStep <- function (...) {
                                                                                 # nocov end
   }
 }
+
+#' Clear `MaddisonSlatkin()` cache
+#'
+#' Releases the internal C++ cache used by `MaddisonSlatkin()`.
+#' Needed only in testing or if memory pressure is a concern.
+#'
+#' @name MaddisonSlatkin_clear_cache
+#' @keywords internal
+#' @export
+NULL

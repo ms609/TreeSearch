@@ -15,6 +15,13 @@
 #'   informative will be treated as ambiguous.
 #' 
 #' @param dataset dataset of class \code{phyDat}
+#' @param approx Character string controlling how profile information amounts
+#'   are computed for multi-state characters with many tips.
+#'   `"auto"` (default) reduces characters exceeding feasibility thresholds to
+#'   binary; `"exact"` always uses the exact MaddisonSlatkin calculation
+#'   (slow for large matrices); `"mc"` uses Monte Carlo sampling.
+#' @param n_mc Integer; number of Monte Carlo samples when `approx = "mc"`.
+#'   Default 5000.
 #'
 #' @return An object of class `phyDat`, with additional attributes.
 #' `PrepareDataProfile` adds the attributes:
