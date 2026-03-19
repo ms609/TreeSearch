@@ -117,9 +117,11 @@ test_that("Search works with NULL callback", {
 })
 
 
-# ===== Verbosity 0 suppresses callback =====
+# ===== Callback fires even at verbosity 0 =====
+# Callbacks are always invoked when present (regardless of verbosity)
+# so that Shiny progress file polling works at verbosity = 0.
 
-test_that("Callback NOT invoked when verbosity = 0", {
+test_that("Callback still invoked when verbosity = 0", {
   ds <- small_ds
 
   log <- list()
@@ -130,7 +132,11 @@ test_that("Callback NOT invoked when verbosity = 0", {
   set.seed(8091)
   result <- ts_driven_cb(ds, recorder, verbosity = 0L)
 
-  expect_length(log, 0)
+  expect_true(length(log) > 0)
+  # Should have at least replicate + done events
+  phases <- vapply(log, function(x) x$phase, character(1))
+  expect_true("replicate" %in% phases)
+  expect_true("done" %in% phases)
 })
 
 

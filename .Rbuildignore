@@ -20,7 +20,7 @@ CONTRIBUTING\.md
 README\.md
 cran\-comments\.md
 vignettes/\.RData
-/^\.git/
+^\.git
 ^.*\.o$
 ^.*\.dll$
 ^.*\.yml$

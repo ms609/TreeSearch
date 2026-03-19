@@ -1200,6 +1200,12 @@ consensus_server <- function(id, r,
       }
     })
 
+    # Force reactive UI-update functions to run whenever their dependencies
+    # change. Without these observers, the reactives are never consumed on
+    # initial load, leaving inputs with their placeholder values.
+    observe(UpdateKeepNTipsRange())
+    observe(UpdateOutgroupInput())
+
     ############################################################################
     # Input observers
     ############################################################################

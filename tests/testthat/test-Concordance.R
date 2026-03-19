@@ -188,17 +188,20 @@ test_that("ConcordantInformation() works", {
   
   dataset <- MatrixToPhyDat(cbind(setNames(c(rep(1, 11), 2:5), paste0("t", 1:15))))
   tree <- TreeTools::PectinateTree(length(dataset))
-  expect_error(ConcordantInformation(tree, dataset))
-  # expect_equal(0, unname(ci["signal"]))
-  # expect_equal(0, unname(ci["noise"]))
+  # All non-1 states are singletons → no informative characters → zero concordance
+  ci_empty <- suppressMessages(ConcordantInformation(tree, dataset))
+  expect_equal(0, unname(ci_empty["signal"]))
+  expect_equal(0, unname(ci_empty["noise"]))
   
   dataset <- MatrixToPhyDat(c(a = 1, b = 2, c = 1, d = 2, e = 3, f = 3))
   tree <- TreeTools::PectinateTree(dataset)
-  ci <- expect_warning(ConcordantInformation(tree, dataset))
-  expect_equal(c(signal = log2(3)), ci["signal"])
-  expect_equal(c(noise = log2(3)), ci["noise"])
-  expect_equal(c(ignored = CharacterInformation(c(0,0,1,1,2,2)) - 
-                   log2(3) - log2(3)), ci["ignored"])
+  # After T-107, 3-state chars with 6 tips are within the MaddisonSlatkin
+  # feasibility threshold (k=3, max=15 tips), so no binary reduction occurs.
+  # Signal/noise are computed via the full 3-state profile (no warning).
+  ci <- ConcordantInformation(tree, dataset)
+  expect_equal(c(signal = 0.7835082), ci["signal"], tolerance = 1e-5)
+  expect_equal(c(noise = 3.1233824), ci["noise"], tolerance = 1e-5)
+  expect_equal(c(ignored = 0), ci["ignored"])
   
 })
 

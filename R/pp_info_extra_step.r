@@ -16,15 +16,26 @@
 #' frequent tokens (with a warning).
 #'
 #' When the Maddison & Slatkin computation would be infeasible (exponential
-#' in the number of tips for a given number of tokens), multi-state characters
-#' are automatically reduced to their 2 most frequent tokens and scored using
-#' the faster Carter formula.  This occurs for 3-state characters with more
-#' than 15 informative tips, 4-state characters with more than 10 tips, and
-#' 5-state characters with more than 8 tips.
+#' in the number of tips for a given number of tokens), behaviour depends on
+#' the `approx` argument.  With `"auto"` (default), infeasible characters are
+#' reduced to their 2 most frequent tokens and scored using the faster Carter
+#' formula.  This occurs for 3-state characters with more than 25 informative
+#' tips, 4-state characters with more than 18 tips, and 5-state characters with
+#' more than 12 tips.  With `"mc"`, the MC-calibrated approximation is used
+#' instead: the step-count distribution is estimated from a random sample of
+#' trees, anchored at the exact minimum-steps probability.
 #'
 #' @param char Vector of tokens listing states for the character in question.
 #' @param ambiguousTokens Vector specifying which tokens, if any, correspond to
 #' the ambiguous token (`?`).
+#' @param approx Character string controlling the fallback for infeasible
+#'   multi-state characters: `"auto"` (default) reduces to the 2 most frequent
+#'   tokens; `"mc"` uses a Monte Carlo approximation that preserves the full
+#'   multi-state character (see Details); `"exact"` forces exact computation
+#'   regardless of cost (may be very slow for large characters).
+#' @param n_mc Integer.  Number of random trees used by the `"mc"` approximation.
+#'   Larger values improve accuracy but increase computation time.
+#'   Default: 5000.
 #' 
 #' @return `StepInformation()` returns a numeric vector detailing the amount
 #' of phylogenetic information (in bits) associated with the character when
@@ -38,11 +49,13 @@
 #' StepInformation(character)
 #' @template MRS
 #' @importFrom fastmatch %fin%
-#' @importFrom stats setNames
-#' @importFrom TreeTools Log2Unrooted LnUnrooted
+#' @importFrom stats setNames dnorm sd
+#' @importFrom TreeTools Log2Unrooted LnUnrooted MatrixToPhyDat NUnrooted
+#'   NUnrootedMult RandomTree
 #' @family profile parsimony functions
 #' @export
-StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
+StepInformation <- function (char, ambiguousTokens = c("-", "?"),
+                             approx = "auto", n_mc = 5000L) {
   NIL <- c("0" = 0)
   char <- char[!char %fin% ambiguousTokens]
   if (length(char) == 0) {
@@ -73,10 +86,17 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
   nTips <- sum(split)
   
   # MaddisonSlatkin is exponential in nTips for k >= 3.
-  # Measured thresholds (< ~10 s on a typical desktop):
-  #   k=3: n <= 15, k=4: n <= 10, k=5: n <= 8
-  maxTips <- c(Inf, Inf, 15L, 10L, 8L)
-  if (k >= 3L && nTips > maxTips[k]) {
+  # Measured thresholds for vectorized solver (< ~5 s, worst-case balanced split):
+  #   k=3: n <= 25, k=4: n <= 18, k=5: n <= 12
+  maxTips <- c(Inf, Inf, 25L, 18L, 12L)
+  infeasible <- k >= 3L && nTips > maxTips[k]
+  
+  if (infeasible && identical(approx, "mc")) {
+    # MC-calibrated normal approximation: preserves multi-state character
+    return(.ApproxStepInformation(split, n_mc = n_mc, nSingletons = nSingletons))
+  }
+  
+  if (infeasible && !identical(approx, "exact")) {
     warning(
       "Exact multi-state profile computation infeasible for ",
       k, "-state character with ", nTips, " tips; ",
@@ -123,6 +143,76 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
   ret[ret < sqrt(.Machine[["double.eps"]])] <- 0 # Floating point error inevitable
   
   # Return:
+  ret
+}
+
+# MC-calibrated normal approximation for infeasible multi-state characters.
+# Returns a named IC vector matching the format of StepInformation().
+#
+# @param split Integer vector of informative token frequencies (sorted
+#   decreasing, singletons removed).
+# @param n_mc Integer. Number of Monte Carlo trees to score.
+# @param nSingletons Integer. Number of singleton tokens (for step offset).
+# @return Named numeric vector of IC (bits) by step count.
+# @keywords internal
+.ApproxStepInformation <- function(split, n_mc = 5000L, nSingletons = 0L) {
+  k <- length(split)
+  n <- sum(split)
+  s_min <- k - 1L
+  s_max <- n - 1L
+  
+  # 1. Exact P(s_min) via product-of-double-factorials formula O(k)
+  log_p_min <- log(NUnrootedMult(split)) - log(NUnrooted(n))
+  
+  # 2. MC: sample random trees and score this character with Fitch parsimony
+  labels  <- paste0("t", seq_len(n))
+  char_vec <- rep(seq_len(k) - 1L, split)
+  names(char_vec) <- labels
+  dat <- MatrixToPhyDat(matrix(char_vec, ncol = 1L,
+                                dimnames = list(labels, "c1")))
+  
+  trees <- lapply(seq_len(n_mc), function(i) {
+    TreeTools::RootTree(RandomTree(labels), 1L)
+  })
+  class(trees) <- "multiPhylo"
+  mc_scores <- TreeLength(trees, dat)
+  
+  # 3. Fit normal to MC body (for interpolating the near-s_min gap)
+  mu_hat <- mean(mc_scores)
+  sd_hat <- sd(mc_scores)
+  
+  # 4. Build log-probability vector for s_min..s_max
+  steps  <- s_min:s_max
+  log_p  <- numeric(length(steps))
+  
+  for (i in seq_along(steps)) {
+    s <- steps[[i]]
+    if (s == s_min) {
+      log_p[[i]] <- log_p_min
+    } else {
+      mc_count <- sum(mc_scores == s)
+      if (mc_count > 0L) {
+        log_p[[i]] <- log(mc_count / n_mc)
+      } else {
+        # Normal extrapolation for step counts not reached by MC
+        log_p[[i]] <- dnorm(s, mu_hat, sd_hat, log = TRUE)
+      }
+    }
+  }
+  
+  # 5. Trim trailing negligible entries
+  finite_idx <- which(is.finite(log_p) & log_p > -700)
+  if (length(finite_idx) == 0L) {
+    return(setNames(0, s_min + nSingletons))
+  }
+  log_p <- log_p[seq_len(max(finite_idx))]
+  steps  <- steps[seq_len(max(finite_idx))]
+  
+  # 6. Cumulative IC
+  ret <- -.LogCumSumExp(log_p) / log(2)
+  names(ret) <- steps + nSingletons
+  ret[ret < sqrt(.Machine[["double.eps"]])] <- 0
+  
   ret
 }
 

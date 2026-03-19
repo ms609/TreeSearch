@@ -449,10 +449,33 @@ MaximizeParsimony <- function(
     )
   }
 
+  # --- Progress file callback (for Shiny background futures) ---
+  if (is.null(progressCallback)) {
+    progressFile <- Sys.getenv("TREESEARCH_PROGRESS_FILE", "")
+    if (nzchar(progressFile)) {
+      progressCallback <- function(info) {
+        if (identical(info$phase, "replicate")) {
+          tryCatch(
+            writeLines(paste(info$replicate, info$max_replicates,
+                             signif(info$best_score, 8), info$hits_to_best,
+                             info$target_hits),
+                       progressFile),
+            error = function(e) NULL
+          )
+        }
+      }
+    }
+  }
+
   # --- Profile parsimony: prepare data ---
   useProfile <- !missing(concavity) && identical(concavity, "profile")
   if (useProfile) {
-    dataset <- PrepareDataProfile(dataset)
+    profileApprox <- if (!is.null(dots[["profile_approx"]])) {
+      dots[["profile_approx"]]
+    } else {
+      "auto"
+    }
+    dataset <- PrepareDataProfile(dataset, approx = profileApprox)
     concavity <- Inf  # EW on the simplified binary data; profile scores via lookup
   }
 

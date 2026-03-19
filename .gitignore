@@ -43,6 +43,9 @@ inst/DELETE*
 /TreeSearch.Rcheck
 TreeSearch_*.tar.gz
 
+# Local build config — never commit
+src/Makevars.win
+
 # Test artifacts
 test*.txt
 test_output.txt

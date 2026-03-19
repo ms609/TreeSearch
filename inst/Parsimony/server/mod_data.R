@@ -469,7 +469,14 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
         UpdateAllTrees(dataFileTrees)
         CacheInput("tree", dataFile)
         r$readTreeFile <- "read.nexus(treeFile)"
-      }, error = function(e) NULL)
+      }, error = function(e) {
+        # Data file has no trees — clear stale trees only if they don't
+        # match the new dataset (prevents blank plot from incompatible tips).
+        # Keep trees if they match (e.g., re-selecting same dataset after search).
+        if (AnyTrees() && !DatasetMatchesTrees()) {
+          UpdateAllTrees(list())
+        }
+      })
       if (AnyTrees() && DatasetMatchesTrees()) {
         parentShow("displayConfig")
       }

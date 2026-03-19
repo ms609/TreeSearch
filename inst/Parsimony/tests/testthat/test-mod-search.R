@@ -315,11 +315,11 @@ test_that("DisplayTreeScores shows preparing message for profile", {
       session$flushReact()
 
       # profileDataset is NULL, concavity is "profile", HaveData and AnyTrees
-      # are TRUE, so DisplayTreeScores should show "preparing profile scores"
+      # are TRUE, so DisplayTreeScores should show deferred message
       returned$DisplayTreeScores()
       html <- output$results$html
 
-      expect_match(html, "preparing profile scores")
+      expect_match(html, "profile scores available after search")
     }
   )
 })
@@ -452,6 +452,50 @@ test_that("scores returns NULL with trees but no dataset", {
       returned <- session$getReturned()
       # No dataset => scores should be NULL
       expect_null(returned$scores())
+    }
+  )
+})
+
+# ---------- Progress file tests ----------
+
+test_that("progressFile reactiveVal is created and starts NULL", {
+  r <- make_search_state()
+
+  shiny::testServer(
+    search_server,
+    args = list(
+      r = r,
+      AnyTrees       = reactive(FALSE),
+      HaveData       = reactive(FALSE),
+      UpdateAllTrees = function(x) invisible(NULL),
+      log_fns        = stub_log_fns
+    ),
+    {
+      expect_null(progressFile())
+    }
+  )
+})
+
+test_that("progressFile reactiveVal tracks path lifecycle", {
+  r <- make_search_state()
+
+  shiny::testServer(
+    search_server,
+    args = list(
+      r = r,
+      AnyTrees       = reactive(FALSE),
+      HaveData       = reactive(FALSE),
+      UpdateAllTrees = function(x) invisible(NULL),
+      log_fns        = stub_log_fns
+    ),
+    {
+      # progressFile starts NULL and can be set/cleared
+      expect_null(progressFile())
+      test_path <- tempfile("ts_progress_test_", fileext = ".txt")
+      progressFile(test_path)
+      expect_equal(progressFile(), test_path)
+      progressFile(NULL)
+      expect_null(progressFile())
     }
   )
 })

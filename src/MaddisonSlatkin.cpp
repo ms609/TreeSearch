@@ -738,39 +738,29 @@ class SolverT {
   
   // Specialized caches
   std::unordered_map<KeyType, FixedProbList, HashType> logB_cache;
-  
-  struct LogPKeyOpt {
+
+  // Vectorized logP cache: key = (token, leaves) → vector over all step counts.
+  // Eliminates the s dimension from the cache key, giving ~s_max× fewer entries.
+  struct LogPVecKey {
     KeyType leaves;
-    int s;
     int token;
-    
-    LogPKeyOpt(int s_, int t_, const KeyType& l_) : leaves(l_), s(s_), token(t_) {}
-    
-    bool operator==(const LogPKeyOpt& other) const {
-      if (s != other.s) return false;
-      if (token != other.token) return false;
-      return leaves == other.leaves;
+    LogPVecKey(int t_, const KeyType& l_) : leaves(l_), token(t_) {}
+    bool operator==(const LogPVecKey& o) const {
+      return token == o.token && leaves == o.leaves;
     }
   };
-  
-  struct LogPKeyOptHash {
-    std::size_t operator()(const LogPKeyOpt& k) const noexcept {
-      uint64_t hash = HashType{}(k.leaves);
-      hash = (hash ^ (uint64_t)k.s) * 3935559000370003845ULL;
-      hash = (hash ^ (uint64_t)k.token) * 4488902095908611103ULL;
-      return (std::size_t)hash;
+  struct LogPVecKeyHash {
+    std::size_t operator()(const LogPVecKey& k) const noexcept {
+      uint64_t h = HashType{}(k.leaves);
+      h = (h ^ (uint64_t)k.token) * 4488902095908611103ULL;
+      return (std::size_t)h;
     }
   };
-  
-  using LogPMapType = std::unordered_map<
-  LogPKeyOpt, 
-  double, 
-  LogPKeyOptHash, 
-  std::equal_to<LogPKeyOpt>, 
-  MallocPoolAllocator<std::pair<const LogPKeyOpt, double>>
-    >;
-    
-    LogPMapType logP_cache;
+  std::unordered_map<LogPVecKey, std::vector<double>,
+                     LogPVecKeyHash> logPVec_cache;
+
+  // Global s_max for this solver instance (set at first run() call)
+  int s_max_global = 0;
     
     // Specialized ValidDraws cache
     struct DrawPairT {
@@ -937,130 +927,249 @@ class SolverT {
       return slot;
     }
     
-    double LogP(int s, const KeyType& leaves, int token0) {
-      const int n = leaves.sum();
-      
-      if (n == 1) {
-        return (leaves.get(token0) == 1) ? ((s == 0) ? 0.0 : NEG_INF) : NEG_INF;
+    // Log-space convolution: C[s] = LogSumExp_r( A[r] + B[s-r] )
+    // Only iterates over the active (finite) range of each operand.
+    static std::vector<double> logconv(
+        const std::vector<double>& A, int a_lo, int a_hi,
+        const std::vector<double>& B, int b_lo, int b_hi,
+        int c_size) {
+      std::vector<double> C(c_size, NEG_INF);
+      for (int r = a_lo; r <= a_hi; ++r) {
+        const double va = A[r];
+        if (!std::isfinite(va)) continue;
+        for (int q = b_lo; q <= b_hi; ++q) {
+          const double vb = B[q];
+          if (!std::isfinite(vb)) continue;
+          const int s = r + q;
+          if (s >= c_size) break;
+          const double v = va + vb;
+          // Inline log-sum-exp update: C[s] = log(exp(C[s]) + exp(v))
+          if (!std::isfinite(C[s])) {
+            C[s] = v;
+          } else {
+            double mx = std::max(C[s], v);
+            C[s] = mx + std::log1p(std::exp(std::min(C[s], v) - mx));
+          }
+        }
       }
-      
+      return C;
+    }
+
+    // Returns LogPVec for (leaves, token0): a vector of length (s_max+1)
+    // where entry [s] = log P(subtree on `leaves` has exactly s steps
+    //                       | root token = token0).
+    // The vector is indexed from 0; entries before the min possible step
+    // count are NEG_INF.
+    const std::vector<double>& LogPVec(const KeyType& leaves, int token0) {
+      static const std::vector<double> empty_neg_inf;
+      const int n = leaves.sum();
+      const int s_max = s_max_global;
+      const int c_size = s_max + 1;
+
+      // --- Base case n == 1 ---
+      if (n == 1) {
+        LogPVecKey key(token0, leaves);
+        auto it = logPVec_cache.find(key);
+        if (it != logPVec_cache.end()) return it->second;
+        std::vector<double> v(c_size, NEG_INF);
+        if (leaves.get(token0) == 1) v[0] = 0.0;
+        auto ins = logPVec_cache.emplace(std::move(key), std::move(v));
+        return ins.first->second;
+      }
+
+      // --- Base case n == 2 ---
       if (n == 2) {
+        LogPVecKey key(token0, leaves);
+        auto it = logPVec_cache.find(key);
+        if (it != logPVec_cache.end()) return it->second;
+        std::vector<double> v(c_size, NEG_INF);
         int twice = -1, a = -1, b = -1;
         for (int i = 0; i < leaves.len; ++i) {
           int count = leaves.get(i);
           if (count == 2) { twice = i; break; }
           else if (count == 1) { if (a < 0) a = i; else b = i; }
         }
+        int needed;
         if (twice >= 0) {
-          return (s == 0) ? 0.0 : NEG_INF;
+          needed = 0;
         } else {
-          bool stepAdds = D.step_at(a, b);
-          int needed = stepAdds ? 1 : 0;
-          return (s == needed) ? 0.0 : NEG_INF;
+          needed = D.step_at(a, b) ? 1 : 0;
         }
+        if (needed <= s_max) v[needed] = 0.0;
+        auto ins = logPVec_cache.emplace(std::move(key), std::move(v));
+        return ins.first->second;
       }
-      
-      LogPKeyOpt key(s, token0, leaves);
-      auto it = logP_cache.find(key);
-      if (it != logP_cache.end()) return it->second;
-      
+
+      // --- Cache lookup ---
+      LogPVecKey key(token0, leaves);
+      {
+        auto it = logPVec_cache.find(key);
+        if (it != logPVec_cache.end()) return it->second;
+      }
+
       double denom = LogB(token0, leaves);
       if (!std::isfinite(denom)) {
-        logP_cache.emplace(std::move(key), denom);
-        return denom;
+        std::vector<double> v(c_size, NEG_INF);
+        auto ins = logPVec_cache.emplace(std::move(key), std::move(v));
+        return ins.first->second;
       }
-      
+
+      // Accumulator: outer[s] = LogSumExp over all draw partitions
+      std::vector<double> outerVec(c_size, NEG_INF);
+
       const auto& drawpairs = getValidDraws(leaves);
-      LSEAccumulator outerAcc;
-      
+
       for (uint8_t i = 0; i < drawpairs.count; ++i) {
         const auto& dp = drawpairs.draws[i];
-        const KeyType& drawn = dp.drawn;
+        const KeyType& drawn   = dp.drawn;
         const KeyType& undrawn = dp.undrawn;
         const int m = dp.m;
-        
-        double sizeCorrection = ((m + m == n) && !(drawn == undrawn)) ? std::log(2.0) : 0.0;
-        
-        LSEAccumulator noStepAcc;
-        for (int r = 0; r <= s; ++r) {
-          LSEAccumulator pairAcc;
-          const auto& L = pairs.noStep[token0];
-          for (const auto& pr : L) {
-            double t = log_prod_sum_4(
-              LogP(r, drawn, pr.a),
-              LogB(pr.a, drawn),
-              LogP(s - r, undrawn, pr.b),
-              LogB(pr.b, undrawn)
-            );
-            pairAcc.add((long double)t);
-          }
-          noStepAcc.add((long double)pairAcc.result());
-        }
-        double noStepSum = noStepAcc.result();
-        
-        double yesStepSum = NEG_INF;
-        if (!pairs.yesStep[token0].empty() && s >= 1) {
-          LSEAccumulator yesStepAcc;
-          for (int r = 0; r <= s - 1; ++r) {
-            LSEAccumulator pairAcc;
-            const auto& L2 = pairs.yesStep[token0];
-            for (const auto& pr : L2) {
-              double t = log_prod_sum_4(
-                LogP(r, drawn, pr.a),
-                LogB(pr.a, drawn),
-                LogP(s - r - 1, undrawn, pr.b),
-                LogB(pr.b, undrawn)
-              );
-              pairAcc.add((long double)t);
+
+        double rdCorr = computeLogRD(drawn, leaves) +
+                        (((m + m == n) && !(drawn == undrawn)) ? std::log(2.0) : 0.0);
+
+        // Active ranges: min steps = 0 (all tips same state possible),
+        // max steps = n_subtree - 1.
+        const int d_lo = 0;
+        const int d_hi = std::min(drawn.sum() - 1,   s_max);
+        const int u_lo = 0;
+        const int u_hi = std::min(undrawn.sum() - 1, s_max);
+
+        // noStep pairs: convolve LogPVec(drawn,a) with LogPVec(undrawn,b)
+        std::vector<double> noStepVec(c_size, NEG_INF);
+        for (const auto& pr : pairs.noStep[token0]) {
+          const std::vector<double>& A = LogPVec(drawn,   pr.a);
+          const std::vector<double>& B = LogPVec(undrawn, pr.b);
+          double logBa = LogB(pr.a, drawn);
+          double logBb = LogB(pr.b, undrawn);
+          if (!std::isfinite(logBa) || !std::isfinite(logBb)) continue;
+          double pairScale = logBa + logBb;
+          // C = conv(A, B), then add pairScale; merge into noStepVec
+          auto C = logconv(A, d_lo, d_hi, B, u_lo, u_hi, c_size);
+          for (int s = 0; s < c_size; ++s) {
+            if (!std::isfinite(C[s])) continue;
+            double v = C[s] + pairScale;
+            if (!std::isfinite(noStepVec[s])) {
+              noStepVec[s] = v;
+            } else {
+              double mx = std::max(noStepVec[s], v);
+              noStepVec[s] = mx + std::log1p(std::exp(std::min(noStepVec[s], v) - mx));
             }
-            yesStepAcc.add((long double)pairAcc.result());
           }
-          yesStepSum = yesStepAcc.result();
         }
-        
-        LSEAccumulator bothAcc;
-        bothAcc.add((long double)noStepSum);
-        bothAcc.add((long double)yesStepSum);
-        double combined = bothAcc.result();
-        
-        double inner = computeLogRD(drawn, leaves) + sizeCorrection + combined;
-        outerAcc.add((long double)inner);
+
+        // yesStep pairs: same convolution but shifted by 1 (one extra step consumed)
+        std::vector<double> yesStepVec(c_size, NEG_INF);
+        if (!pairs.yesStep[token0].empty()) {
+          for (const auto& pr : pairs.yesStep[token0]) {
+            const std::vector<double>& A = LogPVec(drawn,   pr.a);
+            const std::vector<double>& B = LogPVec(undrawn, pr.b);
+            double logBa = LogB(pr.a, drawn);
+            double logBb = LogB(pr.b, undrawn);
+            if (!std::isfinite(logBa) || !std::isfinite(logBb)) continue;
+            double pairScale = logBa + logBb;
+            auto C = logconv(A, d_lo, d_hi, B, u_lo, u_hi, c_size);
+            // Shift by 1: C_shifted[s] = C[s-1]
+            for (int s = c_size - 1; s >= 1; --s) {
+              if (!std::isfinite(C[s - 1])) continue;
+              double v = C[s - 1] + pairScale;
+              if (!std::isfinite(yesStepVec[s])) {
+                yesStepVec[s] = v;
+              } else {
+                double mx = std::max(yesStepVec[s], v);
+                yesStepVec[s] = mx + std::log1p(std::exp(std::min(yesStepVec[s], v) - mx));
+              }
+            }
+          }
+        }
+
+        // Combine noStep and yesStep, add rdCorr, merge into outerVec
+        for (int s = 0; s < c_size; ++s) {
+          double combined;
+          bool ns = std::isfinite(noStepVec[s]);
+          bool ys = std::isfinite(yesStepVec[s]);
+          if (!ns && !ys) continue;
+          else if (!ys) combined = noStepVec[s];
+          else if (!ns) combined = yesStepVec[s];
+          else {
+            double mx = std::max(noStepVec[s], yesStepVec[s]);
+            combined = mx + std::log1p(std::exp(std::min(noStepVec[s], yesStepVec[s]) - mx));
+          }
+          double v = rdCorr + combined;
+          if (!std::isfinite(outerVec[s])) {
+            outerVec[s] = v;
+          } else {
+            double mx = std::max(outerVec[s], v);
+            outerVec[s] = mx + std::log1p(std::exp(std::min(outerVec[s], v) - mx));
+          }
+        }
       }
-      
-      double result = outerAcc.result() - denom;
-      logP_cache.emplace(std::move(key), result);
-      return result;
+
+      // Subtract denom (LogB normaliser)
+      for (int s = 0; s < c_size; ++s) {
+        if (std::isfinite(outerVec[s])) outerVec[s] -= denom;
+      }
+
+      LogPVecKey key2(token0, leaves);
+      auto ins = logPVec_cache.emplace(std::move(key2), std::move(outerVec));
+      return ins.first->second;
     }
     
 public:
   SolverT(const Downpass& D_, const TokenPairs& p, int presentBits_,
           LnRootedCache& lnr)
     : D(D_), pairs(p), presentBits(presentBits_), lnRooted(lnr) {
-    
+
     logB_cache.reserve(16384);
     logB_cache.max_load_factor(0.5f);
-    
-    logP_cache.reserve(1 << 17);
-    logP_cache.max_load_factor(0.5f);
-    
+
+    logPVec_cache.reserve(8192);
+    logPVec_cache.max_load_factor(0.5f);
+
     logRD_cache.reserve(1024);
     validDraws_cache.reserve(256);
   }
-  
-  double run(int steps, const KeyType& states) {
-    LSEAccumulator acc;
+
+  // Run over a vector of step counts.  All counts share the same solver
+  // instance so the logPVec_cache is populated once and reused.
+  void runAll(const std::vector<int>& steps_vec, const KeyType& states,
+              double* out) {
+    if (steps_vec.empty()) return;
+
+    // Set global s_max so base-case vectors are correctly sized
+    int s_max = *std::max_element(steps_vec.begin(), steps_vec.end());
+    s_max_global = s_max;
+    const int c_size = s_max + 1;
+
+    // Compute LogB and LogPVec for each root token
+    // LogPVec will recursively fill the cache for all sub-configurations
+    std::vector<double> rootLogB(D.nStates);
     for (int token0 = 0; token0 < D.nStates; ++token0) {
-      double b = LogB(token0, states);
-      double p = LogP(steps, states, token0);
-      double val;
-      if (!std::isfinite(b) || !std::isfinite(p)) {
-        val = NEG_INF;
-      } else {
-        val = b + p;
-      }
-      acc.add((long double)val);
+      rootLogB[token0] = LogB(token0, states);
     }
-    return acc.result();
+
+    // Combine: log P(s steps | character) = LogSumExp_token(LogB(token) + LogPVec(token)[s])
+    std::vector<double> combined(c_size, NEG_INF);
+    for (int token0 = 0; token0 < D.nStates; ++token0) {
+      const double lb = rootLogB[token0];
+      if (!std::isfinite(lb)) continue;
+      const std::vector<double>& pv = LogPVec(states, token0);
+      for (int s = 0; s < c_size; ++s) {
+        if (!std::isfinite(pv[s])) continue;
+        double v = lb + pv[s];
+        if (!std::isfinite(combined[s])) {
+          combined[s] = v;
+        } else {
+          double mx = std::max(combined[s], v);
+          combined[s] = mx + std::log1p(std::exp(std::min(combined[s], v) - mx));
+        }
+      }
+    }
+
+    for (int i = 0; i < (int)steps_vec.size(); ++i) {
+      int s = steps_vec[i];
+      out[i] = (s >= 0 && s <= s_max) ? combined[s] : NEG_INF;
+    }
   }
 };
 // ----- Solver
@@ -1339,51 +1448,46 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
   LnRootedCache& lnRooted = *LNRptr;
   
   int k = steps.size();
-  NumericVector out(k);
-  
-  // DISPATCH based on nTokens
+  NumericVector out(k, NA_REAL);
+
+  // Collect non-NA step counts; map positions
+  std::vector<int> valid_steps;
+  std::vector<int> valid_idx;
+  valid_steps.reserve(k);
+  valid_idx.reserve(k);
+  for (int i = 0; i < k; ++i) {
+    if (!IntegerVector::is_na(steps[i])) {
+      valid_steps.push_back(steps[i]);
+      valid_idx.push_back(i);
+    }
+  }
+
+  if (valid_steps.empty()) return out;
+
+  std::vector<double> results(valid_steps.size());
+
+  // DISPATCH based on nTokens — call runAll() once for all step counts
   if (nTokens == 2) {
     StateKeyT<2> rootKey(leavesVec);
     SolverT<2> solver(D, pairs, presentBits, lnRooted);
-    for (int i = 0; i < k; ++i) {
-      int s = steps[i];
-      if (IntegerVector::is_na(s))
-        out[i] = NA_REAL;
-      else
-        out[i] = solver.run(s, rootKey);
-    }
+    solver.runAll(valid_steps, rootKey, results.data());
   } else if (nTokens == 3) {
     StateKeyT<3> rootKey(leavesVec);
     SolverT<3> solver(D, pairs, presentBits, lnRooted);
-    for (int i = 0; i < k; ++i) {
-      int s = steps[i];
-      if (IntegerVector::is_na(s))
-        out[i] = NA_REAL;
-      else
-        out[i] = solver.run(s, rootKey);
-    }
+    solver.runAll(valid_steps, rootKey, results.data());
   } else if (nTokens == 4) {
     StateKeyT<4> rootKey(leavesVec);
     SolverT<4> solver(D, pairs, presentBits, lnRooted);
-    for (int i = 0; i < k; ++i) {
-      int s = steps[i];
-      if (IntegerVector::is_na(s))
-        out[i] = NA_REAL;
-      else
-        out[i] = solver.run(s, rootKey);
-    }
+    solver.runAll(valid_steps, rootKey, results.data());
   } else { // nTokens == 5
     StateKeyT<5> rootKey(leavesVec);
     SolverT<5> solver(D, pairs, presentBits, lnRooted);
-    for (int i = 0; i < k; ++i) {
-      int s = steps[i];
-      if (IntegerVector::is_na(s))
-        out[i] = NA_REAL;
-      else
-        out[i] = solver.run(s, rootKey);
-    }
+    solver.runAll(valid_steps, rootKey, results.data());
   }
-  
+
+  for (int i = 0; i < (int)valid_idx.size(); ++i) {
+    out[valid_idx[i]] = results[i];
+  }
   return out;
 }
 

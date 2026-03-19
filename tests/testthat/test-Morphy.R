@@ -1,12 +1,12 @@
 library("TreeTools", quietly = TRUE)
 
-test_that("Profile fails gracefully", {
-  skip_if(interactive()) # Uses CLI instead of warning()
+test_that("Profile handles multi-state characters", {
+  # 3-state char with 6 tips: now natively supported by MaddisonSlatkin
+  # (feasible for k=3, n=6, threshold=15). No warning or binary reduction.
   dataset <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 3, f = 3))
-  expect_warning(PrepareDataProfile(dataset),
-                 "Can handle max. 2 informative tokens")
-  expect_warning(Morphy(dataset, concavity = "pr"),
-                 "Can handle max. 2 informative tokens")
+  pd <- PrepareDataProfile(dataset)
+  expect_equal(3L, length(attr(pd, "levels")))
+  expect_s3_class(pd, "phyDat")
 })
 
 test_that("Constraints work", {

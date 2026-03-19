@@ -1,6 +1,6 @@
 Package: TreeSearch
 Title: Phylogenetic Analysis with Discrete Character Data
-Version: 1.8.0.9000
+Version: 2.0.0
 Authors@R: c(
     person(
       "Martin R.", 'Smith',
@@ -80,6 +80,48 @@ Config/Needs/website:
   curl,
   igraph,
   pkgdown,
+Collate:
+  'AdditionTree.R'
+  'Bootstrap.R'
+  'CharacterHierarchy.R'
+  'ClusterStrings.R'
+  'Concordance.R'
+  'Consistency.R'
+  'CustomSearch.R'
+  'IWScore.R'
+  'ImposeConstraint.R'
+  'Jackknife.R'
+  'SearchControl.R'
+  'MaximizeParsimony.R'
+  'Morphy.R'
+  'NNI.R'
+  'ParsSim.R'
+  'PlotCharacter.R'
+  'PolEscapa.R'
+  'PresentContra.R'
+  'QuartetResolution.R'
+  'RandomTreeScore.R'
+  'Ratchet.R'
+  'RcppExports.R'
+  'ReleaseQuestions.R'
+  'recode_hierarchy.R'
+  'SPR.R'
+  'Sectorial.R'
+  'SuccessiveApproximations.R'
+  'TBR.R'
+  'TaxonInfluence.R'
+  'TreeSearch_utilities.R'
+  'WhenFirstHit.R'
+  'WideSample.R'
+  'data.R'
+  'data_manipulation.R'
+  'length_range.R'
+  'mpl_morphy_objects.R'
+  'mpl_morphyex.R'
+  'pp_info_extra_step.r'
+  'tree_length.R'
+  'tree_rearrangement.R'
+  'zzz.R'
 RdMacros: Rdpack
 LinkingTo:
   Rcpp,

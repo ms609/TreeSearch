@@ -303,10 +303,11 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
   bool has_callback = static_cast<bool>(params.progress_callback);
 
-  // Helper: report progress via callback or Rprintf fallback
+  // Helper: report progress via callback or Rprintf fallback.
+  // Callbacks are ALWAYS invoked when present (regardless of verbosity)
+  // so that Shiny progress polling works at verbosity=0.
   auto report = [&](const char* phase, int min_verbosity,
                     double phase_score, int rep_1based) {
-    if (params.verbosity < min_verbosity) return;
     if (has_callback) {
       ProgressInfo pi = make_progress(rep_1based, params, &pool,
                                        phase, elapsed(), phase_score);
@@ -391,13 +392,10 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
       if (fused_score < best_before) {
         pool.set_hits_to_best(0);
-        if (params.verbosity >= 1) {
-          if (has_callback) {
-            report("fuse", 1, fused_score, rep1);
-          } else {
-            Rprintf("  Fuse improved: %.5g -> %.5g\n",
-                    best_before, fused_score);
-          }
+        report("fuse", 1, fused_score, rep1);
+        if (params.verbosity >= 1 && !has_callback) {
+          Rprintf("  Fuse improved: %.5g -> %.5g\n",
+                  best_before, fused_score);
         }
       } else {
         pool.set_hits_to_best(hits_before);
@@ -466,8 +464,8 @@ finish:
     result.best_score = -1.0;
   }
 
-  // Final "done" callback
-  if (has_callback && params.verbosity >= 1) {
+  // Final "done" callback (always fired when callback exists)
+  if (has_callback) {
     ProgressInfo pi = make_progress(result.replicates_completed, params,
                                      &pool, "done", elapsed(),
                                      result.best_score);

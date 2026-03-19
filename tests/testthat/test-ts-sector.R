@@ -190,3 +190,58 @@ test_that("XSS works with various partition counts", {
     expect_true(result$n_sectors_searched >= 1)
   }
 })
+
+# ---------- Inapplicable character tests ----------
+
+# Dataset with inapplicable characters (20 tips)
+na_mat <- matrix(c(
+  0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1,
+  0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1,
+  "-", "-", 0, 1, 1, 0, 1, "-", "-", 1, 0, 1, 0, 1, "-", 0, 1, 0, 1, 0,
+  0, 1, 0, 1, "-", "-", 0, 1, 0, 1, "-", "-", 1, 0, 1, 0, 1, 0, 0, 1,
+  0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0
+), nrow = 20, dimnames = list(paste0("t", 1:20), NULL))
+na_dataset <- MatrixToPhyDat(na_mat)
+na_ds <- make_ts_data(na_dataset)
+
+test_that("RSS with inapplicable characters produces valid result", {
+  tree <- as.phylo(42, 20)
+  initial_score <- ts_score(tree, na_ds)
+
+  result <- ts_rss(tree, na_ds, minSize = 4L, maxSize = 12L,
+                   rssPicks = 3L, ratchetCycles = 0L)
+
+  expect_true(result$score > 0)
+  expect_true(result$score <= initial_score)
+
+  result_tree <- tree
+  result_tree$edge <- result$edge
+  expect_equal(result$score, ts_score(result_tree, na_ds))
+})
+
+test_that("XSS with inapplicable characters produces valid result", {
+  tree <- as.phylo(100, 20)
+  initial_score <- ts_score(tree, na_ds)
+
+  result <- ts_xss(tree, na_ds, nPartitions = 3L, xssRounds = 2L,
+                   ratchetCycles = 0L)
+
+  expect_true(result$score > 0)
+  expect_true(result$score <= initial_score)
+
+  result_tree <- tree
+  result_tree$edge <- result$edge
+  expect_equal(result$score, ts_score(result_tree, na_ds))
+})
+
+test_that("sector_diag with NA characters returns consistent scores", {
+  tree <- as.phylo(42, 20)
+  diag <- TreeSearch:::ts_sector_diag(tree$edge, na_ds$contrast,
+                                       na_ds$tip_data, na_ds$weight,
+                                       na_ds$levels,
+                                       sector_root_1based = 22L)
+  expect_true(diag$full_score >= 0)
+  expect_true(diag$sector_score >= 0)
+  expect_true(diag$clade_size >= 2)
+  expect_true(diag$n_sector_tips == diag$clade_size + 1L)
+})

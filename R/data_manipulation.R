@@ -44,7 +44,7 @@
 #' @family profile parsimony functions
 #' @encoding UTF-8
 #' @export
-PrepareDataProfile <- function (dataset) {
+PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 5000L) {
   if ("info.amounts" %fin% names(attributes(dataset))) {
     # Already prepared
     return(dataset)
@@ -94,6 +94,7 @@ PrepareDataProfile <- function (dataset) {
   # --- Strip singletons and cap to 5 informative states per pattern ---
   maxInformative <- 0L
   cappedAny <- FALSE
+  reducedAny <- FALSE
   
   for (j in seq_len(ncol(mataset))) {
     col <- mataset[, j]
@@ -123,15 +124,19 @@ PrepareDataProfile <- function (dataset) {
     }
     
     # MaddisonSlatkin is infeasible for multi-state chars with many tips.
-    # Reduce to binary (top 2) when computation would be too slow.
-    if (nInf >= 3L) {
+    # With approx = "auto" or "exact": reduce to binary (top 2) now so
+    # the pattern data and info.amounts stay consistent.
+    # With approx = "mc": keep multi-state pattern intact; StepInformation
+    # will compute IC via MC approximation for the full multi-state character.
+    if (nInf >= 3L && !identical(approx, "mc")) {
       nInfTips <- sum(tab[informative])
-      maxTips <- c(Inf, Inf, 15L, 10L, 8L)
-      if (nInfTips > maxTips[min(nInf, 5L)]) {
+      maxTips <- c(Inf, Inf, 25L, 18L, 12L)
+      if (nInfTips > maxTips[min(nInf, 5L)] && !identical(approx, "exact")) {
         sortedInf <- sort(tab[informative], decreasing = TRUE)
         toRemove <- as.integer(names(sortedInf)[3:length(sortedInf)])
         mataset[mataset[, j] %in% toRemove, j] <- qmLevel[1]
         nInf <- 2L
+        reducedAny <- TRUE
       }
     }
     
@@ -142,11 +147,20 @@ PrepareDataProfile <- function (dataset) {
     warning("More than 5 informative tokens in some characters; ",
             "keeping 5 most frequent.")
   }
+  if (reducedAny) {
+    warning("Multi-state characters reduced to 2 most frequent states for ",
+            "profile parsimony feasibility.")
+  }
   
   if (maxInformative < 2L) {
     cli_alert("No informative characters in `dataset`.")
+    # Construct empty phyDat manually (avoids [.phyDat issues with 0 columns)
+    dataset[] <- lapply(dataset, function(x) integer(0))
     attr(dataset, "info.amounts") <- double(0)
-    return(dataset[0])
+    attr(dataset, "weight") <- integer(0)
+    attr(dataset, "nr") <- 0L
+    attr(dataset, "index") <- integer(0)
+    return(dataset)
   }
   
   # --- Recompress: normalize tokens to 1..k, AMBIG ---
@@ -183,7 +197,8 @@ PrepareDataProfile <- function (dataset) {
   
   # --- Compute StepInformation per unique pattern ---
   info <- lapply(seq_along(mataset[1, ]), function (i) 
-    StepInformation(mataset[, i], ambiguousTokens = AMBIG_TOKEN))
+    StepInformation(mataset[, i], ambiguousTokens = AMBIG_TOKEN,
+                    approx = approx, n_mc = n_mc))
   
   
   maxSteps <- max(vapply(info,

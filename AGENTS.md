@@ -11,10 +11,17 @@ locks the DLL on Windows, blocking everyone else.
 directory:
 
 ```bash
-R CMD build --no-build-vignettes --no-manual . && \
-  R CMD INSTALL --library=.agent-X TreeSearch_*.tar.gz && \
-  rm -f TreeSearch_*.tar.gz
+SRC=$(pwd) && TMPBUILD=$(mktemp -d) && \
+  rm -f src/*.o src/*.dll && \
+  (cd "$TMPBUILD" && R CMD build --no-build-vignettes --no-manual --no-resave-data "$SRC") && \
+  R CMD INSTALL --library=.agent-X "$TMPBUILD"/TreeSearch_*.tar.gz && \
+  rm -rf "$TMPBUILD"
 ```
+
+Key points:
+- `rm -f src/*.o src/*.dll` **must** precede every build — stale artifacts slow traversal and corrupt DLLs.
+- Build into an agent-specific `$TMPBUILD` outside the source tree — avoids tarball collision when multiple agents build concurrently (R CMD build has no `--output=` flag; the tarball always lands in the working directory).
+- `--no-resave-data` skips unnecessary `.rda` re-saving (not needed for dev installs).
 
 To run tests:
 ```bash
@@ -57,10 +64,11 @@ verify arg counts match between `RcppExports.cpp` and `TreeSearch-init.c`.
 ### Quick recovery
 
 ```bash
-rm -f src/*.o src/*.dll
-R CMD build --no-build-vignettes --no-manual . && \
-  R CMD INSTALL --library=.agent-X TreeSearch_*.tar.gz && \
-  rm -f TreeSearch_*.tar.gz
+SRC=$(pwd) && TMPBUILD=$(mktemp -d) && \
+  rm -f src/*.o src/*.dll && \
+  (cd "$TMPBUILD" && R CMD build --no-build-vignettes --no-manual --no-resave-data "$SRC") && \
+  R CMD INSTALL --library=.agent-X "$TMPBUILD"/TreeSearch_*.tar.gz && \
+  rm -rf "$TMPBUILD"
 Rscript check_init.R
 ```
 

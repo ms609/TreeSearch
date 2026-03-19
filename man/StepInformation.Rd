@@ -4,13 +4,28 @@
 \alias{StepInformation}
 \title{Information content of a character known to contain \emph{e} steps}
 \usage{
-StepInformation(char, ambiguousTokens = c("-", "?"))
+StepInformation(
+  char,
+  ambiguousTokens = c("-", "?"),
+  approx = "auto",
+  n_mc = 5000L
+)
 }
 \arguments{
 \item{char}{Vector of tokens listing states for the character in question.}
 
 \item{ambiguousTokens}{Vector specifying which tokens, if any, correspond to
 the ambiguous token (\verb{?}).}
+
+\item{approx}{Character string controlling the fallback for infeasible
+multi-state characters: \code{"auto"} (default) reduces to the 2 most frequent
+tokens; \code{"mc"} uses a Monte Carlo approximation that preserves the full
+multi-state character (see Details); \code{"exact"} forces exact computation
+regardless of cost (may be very slow for large characters).}
+
+\item{n_mc}{Integer.  Number of random trees used by the \code{"mc"} approximation.
+Larger values improve accuracy but increase computation time.
+Default: 5000.}
 }
 \value{
 \code{StepInformation()} returns a numeric vector detailing the amount
@@ -38,11 +53,14 @@ Characters with more than 5 informative tokens are reduced to their 5 most
 frequent tokens (with a warning).
 
 When the Maddison & Slatkin computation would be infeasible (exponential
-in the number of tips for a given number of tokens), multi-state characters
-are automatically reduced to their 2 most frequent tokens and scored using
-the faster Carter formula.  This occurs for 3-state characters with more
-than 15 informative tips, 4-state characters with more than 10 tips, and
-5-state characters with more than 8 tips.
+in the number of tips for a given number of tokens), behaviour depends on
+the \code{approx} argument.  With \code{"auto"} (default), infeasible characters are
+reduced to their 2 most frequent tokens and scored using the faster Carter
+formula.  This occurs for 3-state characters with more than 25 informative
+tips, 4-state characters with more than 18 tips, and 5-state characters with
+more than 12 tips.  With \code{"mc"}, the MC-calibrated approximation is used
+instead: the step-count distribution is estimated from a random sample of
+trees, anchored at the exact minimum-steps probability.
 }
 \examples{
 character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))

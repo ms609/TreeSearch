@@ -299,27 +299,18 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       }
     )
 
-    # Trigger profile preparation when concavity switches to "profile"
-    # and the current dataset hasn't been prepared yet.
-    observe({
-      req(HaveData())
-      conc <- concavity()
-      if (!identical(conc, "profile")) return()
-      if (identical(r$dataHash, profileDataHash())) return()
-
-      # Cancel any in-flight prep (e.g. dataset changed while prep was
-      # running). Write the cancel file so the future returns NULL, then
-      # wait for it to resolve before re-invoking.
+    # Helper: start async profile data preparation. Called from
+    # StartSearch() when the user requests profile scoring and data
+    # hasn't been prepared yet. NOT triggered eagerly on mode change —
+    # deferred until the user actually starts a search.
+    startProfilePrep <- function(dataset) {
+      # Cancel any in-flight prep first.
       cf <- profileCancelFile()
       if (!is.null(cf) && !file.exists(cf)) {
         file.create(cf)
       }
       status <- tryCatch(profilePrepTask$status(), error = function(e) "initial")
-      if (status == "running") {
-        # Task still in flight; invalidate to retry once it resolves.
-        invalidateLater(200)
-        return()
-      }
+      if (status == "running") return(FALSE)
 
       profileDataset(NULL)
       LogMsg("Starting async profile data preparation")
@@ -332,8 +323,9 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       nid <- showNotification("Preparing profile scores\u2026",
                               duration = NULL, type = "message")
       profileNotification(nid)
-      profilePrepTask$invoke(r$dataset, progPath, cancPath)
-    })
+      profilePrepTask$invoke(dataset, progPath, cancPath)
+      TRUE
+    }
 
     # Poll progress file and update notification while profile prep runs
     observe({
@@ -367,7 +359,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         profilePrepTask$result(),
         validation = function(e) req(FALSE),
         error = function(e) {
-          Notification("Error preparing profile data", type = "error")
+          LogMsg("Profile data preparation failed: ", conditionMessage(e))
           NULL
         }
       )
@@ -391,6 +383,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         if (!is.null(result)) {
           profileDataset(result)
           profileDataHash(r$dataHash)
+          Notification("Profile scores ready \u2014 click Search to start",
+                       type = "message", duration = 5)
         }
         DisplayTreeScores()
       })
@@ -458,7 +452,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       treeScores <- scores()
       score <- if (is.null(treeScores) && identical(concavity(), "profile") &&
                    is.null(profileDataset()) && HaveData() && AnyTrees()) {
-        "; preparing profile scores\u2026"
+        "; profile scores available after search"
       } else if (is.null(treeScores)) {
         "; could not be scored from dataset"
       } else if (length(unique(treeScores)) == 1) {
@@ -501,15 +495,24 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     # The C++ engine checks for this file's existence every ~200ms and stops
     # gracefully if it appears.
     cancelFile <- reactiveVal(NULL)
+    # Progress file path — C++ callback writes per-replicate status here;
+    # polled by an invalidateLater observer to update the notification.
+    progressFile <- reactiveVal(NULL)
 
     searchTask <- ExtendedTask$new(
       function(dataset, tree, concavity, strategy, maxReplicates,
                targetHits, maxSeconds, poolSuboptimal, nThreads,
-               cancelPath) {
+               cancelPath, progressPath) {
         future::future({
-          on.exit(Sys.unsetenv("TREESEARCH_CANCEL_FILE"))
+          on.exit({
+            Sys.unsetenv("TREESEARCH_CANCEL_FILE")
+            Sys.unsetenv("TREESEARCH_PROGRESS_FILE")
+          })
           if (nzchar(cancelPath)) {
             Sys.setenv(TREESEARCH_CANCEL_FILE = cancelPath)
+          }
+          if (nzchar(progressPath)) {
+            Sys.setenv(TREESEARCH_PROGRESS_FILE = progressPath)
           }
           args <- list(
             dataset,
@@ -540,6 +543,13 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     StartSearch <- function () {
       if (!HaveData()) {
         Notification("No data loaded", type = "error")
+        return(invisible())
+      }
+
+      # Profile mode: defer search until profile data is prepared
+      if (identical(concavity(), "profile") &&
+          !identical(r$dataHash, profileDataHash())) {
+        startProfilePrep(r$dataset)
         return(invisible())
       }
 
@@ -574,9 +584,11 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       disable("modalGo")
       disable("searchConfig")
       shinyjs::show("cancel")
-      # Create a unique cancel file path for this search run
+      # Create unique temp file paths for cancel + progress signaling
       cancelPath <- tempfile("ts_cancel_", fileext = ".signal")
       cancelFile(cancelPath)
+      progressPath <- tempfile("ts_progress_", fileext = ".txt")
+      progressFile(progressPath)
       searchLabel <- paste0(
         "Searching (", searchMaxRep, " runs, ", wtType(),
         if (searchNThreads > 1L) paste0(", ", searchNThreads, " threads") else "",
@@ -665,7 +677,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         searchDataset, startTree, searchConcavity,
         searchStrategy, searchMaxRep, searchTargetHits,
         searchMaxSeconds, searchPoolSub, searchNThreads,
-        cancelPath
+        cancelPath, progressPath
       )
     }
 
@@ -699,6 +711,34 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         ))
       }
     }, ignoreInit = TRUE)
+
+    # Poll progress file during search to update notification
+    observe({
+      pf <- progressFile()
+      nid <- r$searchNotification
+      if (is.null(pf) || is.null(nid) || !isTRUE(r$searchInProgress)) return()
+      invalidateLater(500)
+      progress <- tryCatch(
+        readLines(pf, warn = FALSE),
+        error = function(e) NULL
+      )
+      if (is.null(progress) || length(progress) == 0L ||
+          !nzchar(progress[[1L]])) return()
+      parts <- strsplit(progress[[1L]], " ", fixed = TRUE)[[1L]]
+      if (length(parts) < 5L) return()
+      rep_cur   <- parts[1L]
+      rep_max   <- parts[2L]
+      best      <- parts[3L]
+      hits      <- parts[4L]
+      target    <- parts[5L]
+      msg <- paste0(
+        "Searching\u2026 Rep ", rep_cur, "/", rep_max,
+        " | Best: ", best,
+        " | Hits: ", hits, "/", target
+      )
+      showNotification(msg, id = nid, duration = NULL,
+                       type = "message", closeButton = FALSE)
+    })
 
     ##########################################################################
     # Search config modal
@@ -800,6 +840,11 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           if (!is.null(cf)) {
             suppressWarnings(file.remove(cf))
             cancelFile(NULL)
+          }
+          pf <- progressFile()
+          if (!is.null(pf)) {
+            suppressWarnings(file.remove(pf))
+            progressFile(NULL)
           }
           r$searchInProgress <- FALSE
         }

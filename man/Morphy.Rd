@@ -38,6 +38,9 @@ Resample(
   verbosity = 2L,
   nReplicates = 1L,
   nThreads = 1L,
+  hierarchy = NULL,
+  inapplicable = "brazeau",
+  hsj_alpha = 1,
   ...
 )
 }
@@ -134,8 +137,6 @@ When \verb{> 1}, all replicates are run in a single call, optionally in parallel
 resampling. Default \code{1L} runs serially.  Use \code{0L} for auto-detect.
 Only effective when \code{nReplicates > 1}.}
 
-\item{\dots}{Additional parameters to \code{Morphy()}.}
-
 \item{hierarchy}{A \code{\link{CharacterHierarchy}} object specifying which characters
 are controlled by which primary characters.  Required when
 \code{inapplicable} is \code{"hsj"} or \code{"xform"}.  When provided, resampling
@@ -150,6 +151,8 @@ See \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} and \code{vignette("in
 \item{hsj_alpha}{Numeric in [0, 1] controlling the weight of secondary
 character variation in HSJ scoring.  Default \code{1.0}.  Only used when
 \code{inapplicable = "hsj"}.}
+
+\item{\dots}{Additional parameters to \code{Morphy()}.}
 }
 \value{
 \code{Morphy()} returns a list of trees with class
