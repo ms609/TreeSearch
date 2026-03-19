@@ -55,7 +55,10 @@ void perturb_zero(DataSet& ds, double prob, std::mt19937& rng) {
 }
 
 // UPWEIGHT_ONLY: set upweight_mask bits (double selected characters).
-// For IW, also double pattern_freq for selected patterns.
+// For IW/profile, also increment pattern_freq for selected patterns
+// (each upweighted character contributes one extra copy to the pattern
+// frequency, matching the EW behaviour where upweight_mask adds one
+// extra step per selected bit position).
 void perturb_upweight(DataSet& ds, double prob, std::mt19937& rng,
                       bool use_iw) {
   std::bernoulli_distribution coin(prob);
@@ -66,7 +69,7 @@ void perturb_upweight(DataSet& ds, double prob, std::mt19937& rng,
         up |= (uint64_t(1) << i);
         if (use_iw) {
           int pat = blk.pattern_index[i];
-          if (pat >= 0) ds.pattern_freq[pat] *= 2;
+          if (pat >= 0) ds.pattern_freq[pat] += 1;
         }
       }
     }
@@ -100,7 +103,7 @@ void perturb_mixed(DataSet& ds, double prob, std::mt19937& rng,
         up |= (uint64_t(1) << i);
         if (use_iw) {
           int pat = blk.pattern_index[i];
-          if (pat >= 0) ds.pattern_freq[pat] *= 2;
+          if (pat >= 0) ds.pattern_freq[pat] += 1;
         }
       }
     }

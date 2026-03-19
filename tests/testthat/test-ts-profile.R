@@ -124,11 +124,8 @@ test_that("Profile scoring handles inapplicable datasets", {
 
   for (dsName in c("Vinther2008", "Sansom2010")) {
     dataset <- inapplicable.phyData[[dsName]]
-    # Inapplicable datasets may have >2 informative tokens per character
-    pds <- expect_warning(
-      PrepareDataProfile(dataset),
-      "Can handle max\\. 2 informative tokens"
-    )
+    # Multi-state characters (3-5 states) now handled via MaddisonSlatkin
+    pds <- PrepareDataProfile(dataset)
     at <- attributes(pds)
 
     if (length(at$weight) == 0L || attr(pds, "nr") == 0L) next
@@ -167,4 +164,117 @@ test_that("Profile driven search is reproducible with set.seed", {
                                 verbosity = 0L)
 
   expect_equal(attr(result1, "score"), attr(result2, "score"))
+})
+
+# --- Multi-state profile parsimony integration tests (T-104) ----------------
+
+test_that("TreeLength with profile scoring on multi-state data", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  dataset <- inapplicable.phyData[["Longrich2010"]]
+  pds <- PrepareDataProfile(dataset)
+
+  set.seed(8347)
+  tree <- TreeTools::RootTree(TreeTools::RandomTree(pds), 1L)
+  score <- TreeLength(tree, pds, concavity = "profile")
+
+  expect_true(is.finite(score))
+  expect_gt(score, 0)
+})
+
+test_that("C++ and R-level profile scores agree on multi-state data", {
+  data("inapplicable.phyData", package = "TreeSearch")
+
+  for (dsName in c("Longrich2010", "Vinther2008")) {
+    dataset <- inapplicable.phyData[[dsName]]
+    pds <- PrepareDataProfile(dataset)
+    at <- attributes(pds)
+
+    if (length(at$weight) == 0L || attr(pds, "nr") == 0L) next
+
+    tip_data <- matrix(unlist(pds, use.names = FALSE),
+                       nrow = length(pds), byrow = TRUE)
+
+    set.seed(5581)
+    tree <- TreeTools::RootTree(TreeTools::RandomTree(pds), 1L)
+    tree2 <- TreeTools::Preorder(TreeTools::RenumberTips(tree, names(pds)))
+    if (tree2[["edge"]][1, 2] > TreeTools::NTip(tree2)) {
+      tree2 <- TreeTools::RootTree(tree2, 1L)
+    }
+
+    rScore <- TreeLength(tree, pds, concavity = "profile")
+    cScore <- ts_fitch_score(tree2[["edge"]], at$contrast, tip_data,
+                              at$weight, at$levels,
+                              infoAmounts = at$info.amounts)
+
+    expect_equal(cScore, rScore, tolerance = 1e-8,
+                 label = paste0("dataset=", dsName))
+  }
+})
+
+test_that("MaximizeParsimony profile search works with multi-state data", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  dataset <- inapplicable.phyData[["Longrich2010"]]
+
+  set.seed(3692)
+  result <- MaximizeParsimony(dataset, concavity = "profile",
+                               maxReplicates = 3L, targetHits = 2L,
+                               verbosity = 0L)
+
+  expect_s3_class(result, "multiPhylo")
+  expect_true(length(result) >= 1L)
+  expect_true(is.finite(attr(result, "score")))
+
+  pds <- PrepareDataProfile(dataset)
+  reported <- attr(result, "score")
+  actual <- TreeLength(result[[1]], pds, concavity = "profile")
+  expect_equal(reported, actual, tolerance = 1e-6)
+})
+
+test_that("Profile search improves score on multi-state data", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  dataset <- inapplicable.phyData[["Vinther2008"]]
+  pds <- PrepareDataProfile(dataset)
+
+  set.seed(7204)
+  startTree <- TreeTools::RootTree(TreeTools::RandomTree(pds), 1L)
+  startScore <- TreeLength(startTree, pds, concavity = "profile")
+
+  set.seed(7204)
+  result <- MaximizeParsimony(dataset, concavity = "profile",
+                               maxReplicates = 3L, targetHits = 2L,
+                               verbosity = 0L)
+
+  searchScore <- attr(result, "score")
+  expect_true(searchScore <= startScore + 1e-8)
+})
+
+test_that("Binary-only dataset: profile scores unchanged by multi-state code", {
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  dataset <- congreveLamsdellMatrices[[10]]
+  pds <- PrepareDataProfile(dataset)
+  at <- attributes(pds)
+
+  tip_data <- matrix(unlist(pds, use.names = FALSE),
+                     nrow = length(pds), byrow = TRUE)
+
+  set.seed(9412)
+  tree <- TreeTools::RootTree(TreeTools::RandomTree(pds), 1L)
+  tree2 <- TreeTools::Preorder(TreeTools::RenumberTips(tree, names(pds)))
+  if (tree2[["edge"]][1, 2] > TreeTools::NTip(tree2)) {
+    tree2 <- TreeTools::RootTree(tree2, 1L)
+  }
+
+  rScore <- TreeLength(tree, pds, concavity = "profile")
+  cScore <- ts_fitch_score(tree2[["edge"]], at$contrast, tip_data,
+                            at$weight, at$levels,
+                            infoAmounts = at$info.amounts)
+
+  expect_equal(cScore, rScore, tolerance = 1e-8)
+
+  # Verify search also works identically
+  set.seed(9412)
+  result <- MaximizeParsimony(dataset, concavity = "profile",
+                               maxReplicates = 2L, targetHits = 1L,
+                               verbosity = 0L)
+  expect_true(is.finite(attr(result, "score")))
 })

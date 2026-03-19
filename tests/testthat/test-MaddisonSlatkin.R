@@ -1,0 +1,153 @@
+# Tier 2: skipped on CRAN; see tests/testing-strategy.md
+skip_on_cran()
+
+library("TreeTools", quietly = TRUE)
+
+test_that("MaddisonSlatkin() recursion bottoms", {
+  expect_equal(MaddisonSlatkin(0, c(1, 1)), log(0))
+  expect_equal(MaddisonSlatkin(1, c(1, 1)), log(1))
+  expect_equal(MaddisonSlatkin(0, c(2, 0)), log(1))
+  expect_equal(MaddisonSlatkin(1, c(1, 0, 0, 1)), log(1))
+  expect_equal(MaddisonSlatkin(0, c(0, 0, 0, 2)), log(1))
+})
+
+test_that("MaddisonSlatkin() brute-force matches small trees", {
+  # Enumerate ALL unrooted trees, count actual step distribution,
+  # verify MaddisonSlatkin matches exactly.
+  expect_slatkin <- function(tokens) {
+    ch <- rep(seq_along(tokens), tokens)
+    nTaxa <- length(ch)
+    phyChar <- StringToPhyDat(paste0(ch, collapse = ""))
+    trees <- as.phylo(seq_len(NUnrooted(nTaxa)) - 1L, nTaxa)
+    counts <- vapply(trees, TreeLength, double(1), phyChar) |>
+      tabulate()
+    out <- vapply(seq_along(counts), MaddisonSlatkin, double(1),
+                  tabulate(ch)) |>
+      exp() * length(trees)
+    expect_equal(out, counts)
+  }
+
+  # 2-state cases
+  expect_slatkin(c(2, 2))     # 4 tips, 3 trees
+  expect_slatkin(c(2, 3))     # 5 tips, 15 trees
+  expect_slatkin(c(2, 4))     # 6 tips, 105 trees
+
+  # 3-state case (states at bitmask positions 1, 2, 4)
+  expect_slatkin(c(2, 3, 0, 2))  # 7 tips, 945 trees
+})
+
+test_that("MaddisonSlatkin() matches published examples", {
+  # Maddison & Slatkin (1991) Table 1 cross-validation
+  expect_equal(MaddisonSlatkin(1, c(8, 24)) + LnUnrooted(32),
+               LogCarter1(1, 8, 24))
+  expect_equal(MaddisonSlatkin(2, c(8, 24)) + LnUnrooted(32),
+               LogCarter1(2, 8, 24))
+  expect_equal(MaddisonSlatkin(3, c(7, 18)) + LnUnrooted(25),
+               LogCarter1(3, 7, 18))
+})
+
+test_that("MaddisonSlatkin matches LogCarter1 for 2-state", {
+  # Character: 3 leaves with state 0, 3 with state 1
+  states <- c(3L, 3L, 0L)
+  ms <- MaddisonSlatkin(1:3, states)
+  lc <- vapply(1:3, LogCarter1, double(1), 3, 3)
+  lnTotal <- TreeTools::LnUnrooted(6)
+
+  # MaddisonSlatkin returns log(fraction); LogCarter1 returns log(count)
+  expect_equal(ms + lnTotal, lc, tolerance = 1e-12)
+})
+
+test_that("MaddisonSlatkin matches LogCarter1 for asymmetric 2-state", {
+  states <- c(5L, 2L, 0L)
+  ms <- MaddisonSlatkin(1:2, states)
+  lc <- vapply(1:2, LogCarter1, double(1), 5, 2)
+  lnTotal <- TreeTools::LnUnrooted(7)
+
+  expect_equal(ms + lnTotal, lc, tolerance = 1e-12)
+})
+
+test_that("MaddisonSlatkin probabilities sum to 1 (2-state)", {
+  for (a in 2:5) for (b in 2:a) {
+    states <- c(as.integer(a), as.integer(b), 0L)
+    maxSteps <- min(a, b)
+    ms <- MaddisonSlatkin(1:maxSteps, states)
+    expect_equal(sum(exp(ms)), 1, tolerance = 1e-10,
+                 label = paste0("sum P for (", a, ",", b, ")"))
+  }
+})
+
+test_that("MaddisonSlatkin probabilities sum to 1 (3-state)", {
+  # (3, 2, 2) on 7 tips, min steps = 2
+  states <- c(3L, 2L, 0L, 2L, 0L, 0L, 0L)
+  n <- sum(states)
+  ms <- MaddisonSlatkin(2:(n - 1L), states)
+  expect_equal(sum(exp(ms[is.finite(ms)])), 1, tolerance = 1e-10)
+
+  # (4, 3, 2) on 9 tips, min steps = 2
+  states2 <- c(4L, 3L, 0L, 2L, 0L, 0L, 0L)
+  n2 <- sum(states2)
+  ms2 <- MaddisonSlatkin(2:(n2 - 1L), states2)
+  expect_equal(sum(exp(ms2[is.finite(ms2)])), 1, tolerance = 1e-10)
+})
+
+test_that("MaddisonSlatkin probabilities sum to 1 (4-state)", {
+  # (3, 2, 2, 2) on 9 tips, min steps = 3
+  states <- integer(2^4 - 1)
+  states[1] <- 3L  # state 1
+  states[2] <- 2L  # state 2
+  states[4] <- 2L  # state 3
+  states[8] <- 2L  # state 4
+  n <- sum(states)
+  ms <- MaddisonSlatkin(3:(n - 1L), states)
+  expect_equal(sum(exp(ms[is.finite(ms)])), 1, tolerance = 1e-10)
+})
+
+test_that("MaddisonSlatkin handles minimum step count correctly", {
+  # 2-state: min steps = 1
+  states <- c(4L, 3L, 0L)
+  ms <- MaddisonSlatkin(1L, states)
+  expect_true(is.finite(ms))
+  expect_true(ms < 0)
+
+  # 3-state: min steps = 2
+  states3 <- c(3L, 3L, 0L, 3L, 0L, 0L, 0L)
+  ms0 <- MaddisonSlatkin(1L, states3)
+  expect_equal(ms0, -Inf)  # 1 step is impossible for 3 states
+
+  ms2 <- MaddisonSlatkin(2L, states3)
+  expect_true(is.finite(ms2))
+  expect_true(ms2 < 0)
+})
+
+test_that("MaddisonSlatkin rejects invalid inputs", {
+  expect_error(MaddisonSlatkin(1L, integer(0)))
+  expect_error(MaddisonSlatkin(1L, c(-1L, 3L, 0L)))
+})
+
+test_that("MaddisonSlatkin_clear_cache runs without error", {
+  expect_silent(MaddisonSlatkin_clear_cache())
+})
+
+test_that("MaddisonSlatkin with 5 states", {
+  # 5 tokens → 2^5 - 1 = 31 entries
+  states <- integer(31)
+  states[1] <- 3L   # state 1
+  states[2] <- 2L   # state 2
+  states[4] <- 2L   # state 3
+  states[8] <- 2L   # state 4
+  states[16] <- 2L  # state 5
+  n <- sum(states)
+  # min steps = 4 (one fewer than number of states)
+  ms <- MaddisonSlatkin(4:(n - 1L), states)
+  expect_equal(sum(exp(ms[is.finite(ms)])), 1, tolerance = 1e-10)
+
+  # Known value from branch (by observation):
+  # (2,2,2,2,2) at 4 steps
+  states2 <- integer(31)
+  states2[1] <- 2L
+  states2[2] <- 2L
+  states2[4] <- 2L
+  states2[8] <- 2L
+  states2[16] <- 2L
+  expect_equal(MaddisonSlatkin(4, states2), -6.851185, tolerance = 1e-4)
+})

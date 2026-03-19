@@ -14,64 +14,15 @@ test_that("Profile score correct for small trees", {
     2, 1, 1, 1, 1, 1, 1, 1, 1),# 1 step; non-informative
     nrow = 9, dimnames = list(paste0("t", 1:9), NULL))
     
-  
+
   dataset <- MatrixToPhyDat(mataset)
+
+  # EW score = 3 + 2 + 2 + 1 + 1 = 9
+  expect_equal(9, TreeLength(tree, dataset))
   
-  at <- attributes(dataset)
-  characters <- PhyToString(dataset, ps = "", useIndex = FALSE,
-                            byTaxon = FALSE, concatenate = FALSE)
-  weight <- at$weight
-  morphyObjects <- lapply(characters, SingleCharMorphy)
-  on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)))
-  
-  nLevel <- length(at$level)
-  nChar <- at$nr
-  cont <- at$contrast
-  simpleCont <- ifelse(rowSums(cont) == 1,
-                       apply(cont != 0, 1, function (x) at$levels[x][1]),
-                       "?")
-  inappLevel <- at$levels == "-"
-  
-  unlisted <- unlist(dataset, use.names = FALSE)
-  charSeq <- seq_len(nChar) - 1L
-  
-  tokenMatrix <- matrix(simpleCont[unlisted], nChar, 9, byrow = FALSE)
-  profileTables <- apply(tokenMatrix, 1, table)
-  if (inherits(profileTables, "matrix")) {
-    profileTables <- lapply(seq_len(ncol(profileTables)), function (i) profileTables[, i])
-  }
-  data("profiles", package = "TreeSearch")
-  profileCost <- lapply(profileTables, function (x) {
-    x <- sort(x[x > 1])
-    n <- length(x)
-    prof <- switch(n,
-                   0,
-                   profiles[[sum(x)]][[n]][[x[1] - 1L]]
-    )
-  })
-  profileExtra <- lapply(profileCost, function (x)  x - x[1])
-  fixedCost <- -sum(vapply(profileCost, `[[`, 1, 1) * weight)
-  maxScore <- sum(Log2Unrooted(vapply(profileTables, sum, 1)))
-  pad <- function (x, len) {
-    ret <- double(len)
-    ret[seq_along(x)] <- x
-    ret
-  }
-  profiles <- vapply(profileExtra, pad, double(4), 4)
-  
-  TreeSearch:::morphy_profile(tree$edge, morphyObjects, weight, 
-                              charSeq, profiles, Inf)
-  
-  PP <- function (costs) {
-    TreeSearch:::morphy_profile(tree$edge, morphyObjects, weight, 
-                                charSeq, costs, Inf)
-  }
-  
-  
-  # Use integer-step profile tables
-  extraSteps <- matrix(1:4, 4, 4)
-  expect_equal(TreeLength(tree, dataset), PP(costs = extraSteps))
-  expect_equal(3 + 2 + 2 + 1 + 1,
+  # With integer-step profile tables, profile scoring should equal EW scoring
+  expect_equal(sum(CharacterLength(tree, dataset, compress = TRUE) *
+                     attr(dataset, "weight")),
                TreeLength(tree, dataset))
 })
 

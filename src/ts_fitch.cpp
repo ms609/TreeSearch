@@ -361,7 +361,9 @@ int fitch_indirect_length_bounded(const uint64_t* clip_prelim,
         blk.n_states);
 
     uint64_t needs_step = ~any_hit & blk.active_mask;
-    extra_steps += blk.weight * popcount64(needs_step);
+    int ns = popcount64(needs_step);
+    if (blk.upweight_mask) ns += popcount64(needs_step & blk.upweight_mask);
+    extra_steps += blk.weight * ns;
     if (extra_steps >= cutoff) return extra_steps;
   }
 
@@ -384,7 +386,9 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
         &clip_prelim[offset], &vroot[offset], blk.n_states);
 
     uint64_t needs_step = ~any_hit & blk.active_mask;
-    extra_steps += blk.weight * popcount64(needs_step);
+    int ns = popcount64(needs_step);
+    if (blk.upweight_mask) ns += popcount64(needs_step & blk.upweight_mask);
+    extra_steps += blk.weight * ns;
     if (extra_steps >= cutoff) return extra_steps;
   }
 

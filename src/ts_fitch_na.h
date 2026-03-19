@@ -42,7 +42,6 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
         }
       } else {
         // NA-aware first downpass (Brazeau et al. 2019)
-        // Matches morphy's mpl_NA_fitch_first_downpass exactly.
         uint64_t I_app = simd::any_hit_reduce_from1(L, R, k);
         uint64_t L_app = simd::or_reduce(L, k, 1);
         uint64_t R_app = simd::or_reduce(R, k, 1);

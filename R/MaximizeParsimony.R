@@ -179,6 +179,30 @@
 #' Specify `Inf` to weight each additional step equally.
 #' Specify `"profile"` to employ profile parsimony
 #' \insertCite{Faith2001}{TreeSearch}.
+#' @param hierarchy A [`CharacterHierarchy`] object specifying which
+#'   characters are controlling primaries and which are their dependent
+#'   secondaries.  Required when `inapplicable` is `"hsj"` or `"xform"`;
+#'   ignored when `inapplicable = "brazeau"` (the default).
+#'   See [`CharacterHierarchy()`] for how to construct one, and
+#'   [`hierarchy_from_names()`] for automated construction from
+#'   TNT-style character names.
+#' @param inapplicable Character: method for handling inapplicable characters.
+#'   \describe{
+#'     \item{`"brazeau"` (default)}{Three-pass algorithm of
+#'       \insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
+#'       regions from the `"-"` token.  No hierarchy required.}
+#'     \item{`"hsj"`}{Dissimilarity-metric scoring of
+#'       \insertCite{Hopkins2021;textual}{TreeSearch}.  Requires a
+#'       `hierarchy`; controlled by `hsj_alpha`.}
+#'     \item{`"xform"`}{Step-matrix recoding approximating maximum homology
+#'       via x-transformations
+#'       \insertCite{Goloboff2021b;textual}{TreeSearch}.  Requires a
+#'       `hierarchy`.}
+#'   }
+#' @param hsj_alpha Numeric in \[0, 1\]: scaling parameter for secondary-
+#'   character contributions under the HSJ method.  0 = secondaries ignored;
+#'   1 (default) = secondaries contribute up to 1 per branch per hierarchy
+#'   block.  Only used when `inapplicable = "hsj"`.
 #' @param constraint Either an object of class `phyDat`, in which case
 #' returned trees will be perfectly compatible with each character in
 #' `constraint`; or a tree of class `phylo`, all of whose nodes will occur
@@ -287,6 +311,9 @@ MaximizeParsimony <- function(
     dataset,
     tree,
     concavity = Inf,
+    hierarchy = NULL,
+    inapplicable = "brazeau",
+    hsj_alpha = 1.0,
     constraint,
     strategy = "auto",
     maxReplicates = 100L,
@@ -439,6 +466,34 @@ MaximizeParsimony <- function(
   }
   if (is.null(attr(dataset, "levels")) || ncol(attr(dataset, "contrast")) == 0L) {
     stop("Dataset contains no informative character states.")
+  }
+
+  # --- Validate inapplicable-handling parameters ---
+  inapplicable <- match.arg(inapplicable, c("brazeau", "hsj", "xform"))
+  if (inapplicable != "brazeau") {
+    if (is.null(hierarchy)) {
+      stop("A `hierarchy` is required when inapplicable = \"", inapplicable,
+           "\". See ?CharacterHierarchy.")
+    }
+    if (!inherits(hierarchy, "CharacterHierarchy")) {
+      stop("`hierarchy` must be a CharacterHierarchy object.")
+    }
+    validate_hierarchy(hierarchy, dataset)
+    if (useProfile) {
+      stop("Profile parsimony is not currently supported with inapplicable = \"",
+           inapplicable, "\".")
+    }
+    if (is.finite(concavity)) {
+      stop("Implied weighting is not currently supported with inapplicable = \"",
+           inapplicable, "\".")
+    }
+    # Not yet implemented
+    stop("inapplicable = \"", inapplicable, "\" is not yet implemented. ",
+         "This is a placeholder for future development.")
+  }
+  if (!is.numeric(hsj_alpha) || length(hsj_alpha) != 1L ||
+      hsj_alpha < 0 || hsj_alpha > 1) {
+    stop("`hsj_alpha` must be a single number in [0, 1].")
   }
 
   # --- Starting tree ---

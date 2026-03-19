@@ -1,15 +1,18 @@
 #' Prepare data for Profile Parsimony
 #' 
-#' Calculates profiles for each character in a dataset.  Will also simplify
-#' characters, with a warning, where they are too complex for the present
-#' implementation of profile parsimony: 
+#' Calculates profiles for each character in a dataset.
+#' Characters with 2 informative states (i.e. states present in more than one
+#' taxon) use the exact formula of Carter _et al._ (1990).
+#' Characters with 3--5 informative states use the recursive algorithm of
+#' Maddison & Slatkin (1991).
+#' 
+#' Characters are simplified where necessary, with a warning:
 #' - inapplicable tokens will be replaced with the ambiguous token
 #'    (i.e. `-` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`);
 #' - Ambiguous tokens will be treated as fully ambiguous
 #'   (i.e. `{02}` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`)
-#' - Where more than two states are informative (i.e. unambiguously present in
-#'   more than one taxon), states beyond the two most informative will be
-#'   ignored.
+#' - Where more than five states are informative, states beyond the five most
+#'   informative will be treated as ambiguous.
 #' 
 #' @param dataset dataset of class \code{phyDat}
 #'
@@ -37,6 +40,7 @@
 #' @author Martin R. Smith; written with reference to 
 #' `phangorn:::prepareDataFitch()`
 #' @importFrom cli cli_alert cli_alert_warning
+#' @importFrom fastmatch %fin%
 #' @family profile parsimony functions
 #' @encoding UTF-8
 #' @export
@@ -74,83 +78,76 @@ PrepareDataProfile <- function (dataset) {
   }
   
   if (length(ambigs) != 0L) {
-    # Message unnecessary until multiple informative states are supported
-    # message("Ambiguous tokens ", paste(at[["allLevels"]][ambigs], collapse = ", "),
-    #         " converted to "?"")
     dataset[] <- lapply(dataset, function (i) {
         i[i %fin% ambigs] <- qmLevel
         i
       })
   }
   
+  # Build pattern matrix: rows = patterns (unique characters), cols = tips
+  nPattern <- max(index)
   mataset <- matrix(unlist(dataset, recursive = FALSE, use.names = FALSE),
-                    max(index))
+                    nPattern)
+  # Transpose to: rows = tips, cols = patterns (matching .RemoveExtraTokens)
+  mataset <- t(mataset)
   
-  .RemoveExtraTokens <- function (char, ambiguousTokens) {
-    unambig <- char[!char %fin% ambiguousTokens]
-    if (length(unambig) == 0) {
-      return(matrix(nrow = length(char), ncol = 0))
+  # --- Strip singletons and cap to 5 informative states per pattern ---
+  maxInformative <- 0L
+  cappedAny <- FALSE
+  
+  for (j in seq_len(ncol(mataset))) {
+    col <- mataset[, j]
+    nonAmbig <- col[col != qmLevel[1]]
+    if (length(nonAmbig) == 0L) next
+    
+    tab <- table(nonAmbig)
+    informative <- tab > 1L
+    nInf <- sum(informative)
+    
+    # Convert singletons to ambiguous
+    singletonTokens <- as.integer(names(tab[!informative]))
+    if (length(singletonTokens) > 0L) {
+      mataset[mataset[, j] %in% singletonTokens, j] <- qmLevel[1]
     }
-    split <- table(unambig)
-    ranking <- order(order(split, decreasing = TRUE))
-    ignored <- ranking > 2L
-    if (any(split[ignored] > 1L)) {
-      warningMsg <- "Can handle max. 2 informative tokens. Dropping others."
-      if (interactive()) {
-        cli_alert_warning(warningMsg)                                           # nocov
-      } else {
-        warning(warningMsg)
-      }
+    
+    if (nInf > 5L) {
+      # Keep 5 most frequent informative states, convert rest to ambiguous
+      sortedInf <- sort(tab[informative], decreasing = TRUE)
+      toRemove <- as.integer(names(sortedInf)[6:length(sortedInf)])
+      mataset[mataset[, j] %in% toRemove, j] <- qmLevel[1]
+      nInf <- 5L
+      cappedAny <- TRUE
     }
-    if (length(ambiguousTokens) == 0) {
-      stop("No ambiguous token available for replacement")
-    }
-    tokens <- names(split)
-    most <- tokens[which.min(ranking)]
-    vapply(setdiff(names(split)[split > 1], most), function (kept) {
-           simplified <- char
-           simplified[!simplified %fin% c(most, kept)] <- ambiguousTokens[1]
-           simplified
-    }, char)
+    
+    maxInformative <- max(maxInformative, nInf)
   }
   
-  decomposed <- lapply(seq_along(mataset[, 1]), function (i) 
-    .RemoveExtraTokens(mataset[i, ], ambiguousTokens = qmLevel))
-  nChar <- vapply(decomposed, dim, c(0, 0))[2, ]
-  if (sum(nChar) == 0) {
+  if (cappedAny) {
+    warning("More than 5 informative tokens in some characters; ",
+            "keeping 5 most frequent.")
+  }
+  
+  if (maxInformative < 2L) {
     cli_alert("No informative characters in `dataset`.")
     attr(dataset, "info.amounts") <- double(0)
     return(dataset[0])
   }
-  newIndex <- seq_len(sum(nChar))
-  oldIndex <- rep.int(seq_along(nChar), nChar)
-  index <- unlist(lapply(index, function (i) {
-    newIndex[oldIndex == i]
-  }))
   
-  mataset <- unname(do.call(cbind, decomposed))
+  # --- Recompress: normalize tokens to 1..k, AMBIG ---
+  AMBIG_TOKEN <- maxInformative + 1L
   
-  NON_AMBIG <- 1:2
-  AMBIG <- max(NON_AMBIG) + 1L
-  .Recompress <- function (char, ambiguousTokens) {
-    tokens <- unique(char)
-    nonAmbig <- setdiff(tokens, ambiguousTokens)
-    stopifnot(length(nonAmbig) == 2L)
-    #available <- setdiff(seq_along(c(nonAmbig, ambiguousTokens)), ambiguousTokens)
+  for (j in seq_len(ncol(mataset))) {
+    col <- mataset[, j]
+    nonAmbig <- sort(unique(col[col != qmLevel[1]]))
     
-    cipher <- seq_len(max(tokens))
-    cipher[nonAmbig] <- NON_AMBIG # available[seq_along(nonAmbig)]
-    cipher[ambiguousTokens] <- AMBIG
-    
-    # Return:
-    cipher[char]
+    newCol <- rep(AMBIG_TOKEN, length(col))
+    for (i in seq_along(nonAmbig)) {
+      newCol[col == nonAmbig[i]] <- i
+    }
+    mataset[, j] <- newCol
   }
-  if (length(mataset) == 0) {
-    cli_alert("No informative characters in `dataset`.")
-    attr(dataset, "info.amounts") <- double(0)
-    return(dataset[0])
-  }
-  mataset <- apply(mataset, 2, .Recompress, qmLevel)
+  
+  # --- Deduplicate patterns ---
   dupCols <- duplicated(t(mataset))
   kept <- which(!dupCols)
   copies <- lapply(kept, function (i) {
@@ -168,8 +165,9 @@ PrepareDataProfile <- function (dataset) {
   mataset <- mataset[, !dupCols, drop = FALSE]
   dataset[] <- lapply(seq_len(length(dataset)), function (i) mataset[i, ])
   
+  # --- Compute StepInformation per unique pattern ---
   info <- lapply(seq_along(mataset[1, ]), function (i) 
-    StepInformation(mataset[, i], ambiguousTokens = AMBIG))
+    StepInformation(mataset[, i], ambiguousTokens = AMBIG_TOKEN))
   
   
   maxSteps <- max(vapply(info,
@@ -193,12 +191,17 @@ PrepareDataProfile <- function (dataset) {
   attr(dataset, "nr") <- length(weight)
   attr(dataset, "info.amounts") <- info
   attr(dataset, "informative") <- colSums(info) > 0
-  lvls <- c("0", "1")
+  
+  # Dynamic contrast matrix: k states + ambiguous
+  k <- maxInformative
+  lvls <- as.character(seq_len(k))
+  contMatrix <- rbind(diag(k), rep(1L, k))
+  dimnames(contMatrix) <- list(NULL, lvls)
+  
   attr(dataset, "levels") <- lvls
   attr(dataset, "allLevels") <- c(lvls, "?")
-  attr(dataset, "contrast") <- matrix(c(1,0,1,0,1,1), length(lvls) + 1L, length(lvls), 
-                                      dimnames = list(NULL, lvls))
-  attr(dataset, "nc") <- length(lvls)
+  attr(dataset, "contrast") <- contMatrix
+  attr(dataset, "nc") <- as.integer(k)
   
   if (!any(attr(dataset, "bootstrap") == "info.amounts")) {
     attr(dataset, "bootstrap") <- c(attr(dataset, "bootstrap"), "info.amounts")

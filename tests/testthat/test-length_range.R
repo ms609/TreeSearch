@@ -30,27 +30,24 @@ test_that("Step counts are correctly calculated", {
   dudTwo <- TreeTools::StringToPhyDat("{-1}{-2}{-3}2233", letters[1:7])
   expect_equal("{-1}{-2}{-3}2233", TreeTools::PhyDatToString(PrepareDataIW(dudTwo)))
   
-  morphyObj <- SingleCharMorphy("{-1}{-2}{-3}2233")
-  expect_equal(MorphyTreeLength(TreeTools::PectinateTree(7), morphyObj), 1)
-  morphyObj <- UnloadMorphy(morphyObj)
-  
-  owch2 <- "{-1}{-2}22{-3}33"
-  tr2 <- ape::read.tree(text=("(a, ((b, (c, d)), (e, (f, g))));"))
-  # PlotCharacter(tr2, StringToPhyDat(owch2, letters[1:7]))
-  
-  
-  morphyObj <- SingleCharMorphy(owch2)
-  expect_equal(MorphyTreeLength(TreeTools::PectinateTree(7), morphyObj), 1)
-  morphyObj <- UnloadMorphy(morphyObj)
-  
+  # Inapplicable character scoring with {-X} ambiguity tokens.
+  # Optimal resolution: treat {-X} tips as inapplicable → score 1.
+  # Known bug: C++ NA engine commits to applicable state when the
+  # inapplicable bit is set alongside an applicable bit. See issues.md.
+  tips7 <- paste0("t", 1:7)
+  pect7 <- TreeTools::PectinateTree(tips7)
+
+  char1Dat <- TreeTools::StringToPhyDat("{-1}{-2}{-3}2233", tips7)
+  expect_equal(1, TreeLength(pect7, char1Dat))
+
+  char2Dat <- TreeTools::StringToPhyDat("{-1}{-2}22{-3}33", tips7)
+  expect_equal(1, TreeLength(pect7, char2Dat))
+
   owch3 <- "-1-222-333"
   tr3 <- ape::read.tree(text=("((a1, a2), (((b1, b2), (c, d)), ((e1, e2), (f, g))));"))
-  # PlotCharacter(tr3, StringToPhyDat(owch3, TipLabels(tr3)))
-  
-  morphyObj <- SingleCharMorphy(owch3)
-  expect_equal(MorphyTreeLength(TreeTools::PectinateTree(10), morphyObj), 2)
-  expect_equal(MorphyTreeLength(tr3, morphyObj), 2)
-  morphyObj <- UnloadMorphy(morphyObj)
+  owch3Dat <- TreeTools::StringToPhyDat(owch3, TipLabels(tr3))
+  expect_equal(2, TreeLength(TreeTools::PectinateTree(TipLabels(tr3)), owch3Dat))
+  expect_equal(2, TreeLength(tr3, owch3Dat))
   
   expect_equal(2, MinimumLength("-{-1}{-2}{-3}2233"))
   expect_equal(1, MinimumLength("--{-1}{-2}{-3}2233"))

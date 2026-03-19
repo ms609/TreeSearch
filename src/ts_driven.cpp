@@ -406,6 +406,11 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
 finish:
 
+  // Capture hits_to_best BEFORE MPT enumeration.  Only main-loop
+  // replicates are independent; MPT enumeration discovers variant
+  // topologies from existing pool trees and should not inflate the count.
+  result.hits_to_best = pool.hits_to_best();
+
   // 7. MPT enumeration: TBR plateau walk from each pool tree to discover
   //    additional equal-score topologies.  Each replicate contributes only
   //    one tree, so different TBR-connected islands are only discovered if
@@ -431,7 +436,7 @@ finish:
     }
   }
 
-  result.hits_to_best = pool.hits_to_best();
+  // result.hits_to_best already set before MPT enumeration
   result.pool_size = pool.size();
 
   if (pool.size() > 0) {

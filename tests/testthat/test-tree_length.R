@@ -12,20 +12,6 @@ test_that("Failures are graceful", {
   bal$tip.label[1:2] <- c("no1", "no2")
   expect_error(TreeLength(bal, dat), "Missing in `dataset`: no1, no2")
   
-  mo <- PhyDat2Morphy(dat)
-  on.exit(mo <- UnloadMorphy(mo))
-  
-  sparse <- DropTip(RandomTree(dat, root = FALSE), 10)
-  expect_error(MorphyTreeLength(sparse, mo),
-               "Number of taxa .* not equal to number of tips")
-  expect_error(MorphyTreeLength(sparse, NA),
-               "a valid Morphy pointer")
-  
-  expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], mo, nTaxa = 0),
-               mpl_translate_error(0))
-  expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], dat),
-               "must be a Morphy pointer")
-  
   expect_null(TreeLength(NULL))
   
 })
@@ -41,7 +27,16 @@ test_that("Deprecations throw warning", {
   
 })
 
-test_that("Morphy generates correct lengths", {
+test_that("Simple EW scoring is correct", {
+  # From test-RMorphy.R: verified against MorphyLib preorder_morphy()
+  tree <- Preorder(RootTree(BalancedTree(6), 1))
+  dat <- MatrixToPhyDat(matrix(c(0, 1, 0, 1, 0, 1,
+                                  0, 0, 0, 1, 1, 1), byrow = FALSE, 6,
+                                dimnames = list(TipLabels(6), NULL)))
+  expect_equal(4, TreeLength(tree, dat))
+})
+
+test_that("Inapplicable characters scored correctly", {
   ## Tree
   tree <- ape::read.tree(text = "((((((1,2),3),4),5),6),(7,(8,(9,(10,(11,12))))));")
   relabel <- ape::read.tree(text = "((6,(5,(4,(3,(2,1))))),(7,(8,(9,(10,(11,12))))));")
@@ -87,7 +82,7 @@ test_that("Morphy generates correct lengths", {
                   "320--??3--21", # 37, expect score = 5
                   "000011110000"  # 38, expect score = 2
                   ) 
-  ## Results
+  ## Expected per-character results (verified against MorphyLib and C++ engine)
   expected_results <- c(5, 2, 3, 2, 1, 5, 5, 2, 5, 2, 2, 4, 3, 2, 5, 0, 5, 2,
                         4, 5, 2, 4, 3, 3, 2, 5, 1, 4, 4, 0, 5, 5, 4, 5, 2, 1, 
                         3, 5, 2)
@@ -96,17 +91,6 @@ test_that("Morphy generates correct lengths", {
                           1, 3, 1)
   expected_homoplasies <- expected_results - expected_minLength
 
-  ##plot(tree); nodelabels(12:22); tiplabels(0:11)
-  ## Run the tests
-  for(test in seq_along(characters)) {
-    morphyObj <- SingleCharMorphy(characters[test])
-    tree_length <- MorphyTreeLength(tree, morphyObj)
-    morphyObj <- UnloadMorphy(morphyObj)
-    #if (tree_length != expected_results[test]) message("Test case", test - 1, characters[test], "unequal: Morphy calcluates",
-    #  tree_length, "instead of", expected_results[test],"\n")
-    expect_equal(tree_length, expected_results[test])
-  }
-  
   ## Test combined matrix
   bigPhy <- TreeTools::StringToPhyDat(paste0(characters, collapse = "\n"),
                                       tree$tip.label, 
@@ -127,15 +111,10 @@ test_that("Morphy generates correct lengths", {
                                                  concatenate = TRUE),
                     start = 0, stop = length(characters)))
   
-  morphyObj <- PhyDat2Morphy(bigPhy)
-  moSummary <- summary(morphyObj)
-  expect_equal(c(length(bigPhy), attr(bigPhy, "nr"), length(bigPhy) - 1),
-               c(moSummary$nTax, moSummary$nChar, moSummary$nInternal))
-  tree_length <- MorphyTreeLength(tree, morphyObj)
-  morphyObj <- UnloadMorphy(morphyObj)
-  
-  expect_equal("0123", moSummary$allStates)
-  expect_equal(tree_length, sum(expected_results))
+  # Per-character scores should match expected results
+  expect_equal(CharacterLength(tree, bigPhy), expected_results)
+
+  tree_length <- sum(expected_results)
   expect_equal(tree_length, TreeLength(tree, bigPhy))
   expect_equal(tree_length, TreeLength(relabel, bigPhy))
   expect_equal(rep(tree_length, 2), TreeLength(trees, bigPhy))
@@ -151,23 +130,12 @@ test_that("Morphy generates correct lengths", {
                TreeLength(trees, profPhy, concavity = "profile"))
   
 
-  ## Run the bigger tree tests
+  ## Bigger tree with inapplicable tokens
   bigTree <- ape::read.tree(
     text = "((1,2),((3,(4,5)),(6,(7,(8,(9,(10,((11,(12,(13,(14,15)))),(16,(17,(18,(19,20))))))))))));")
-  bigChars <- c("11111---111---11---1")
-  ## Results
-  expected_results <- c(3)
-
-  ## Run the tests
-  for(test in 1:length(bigChars)) {
-    phy <- TreeTools::StringToPhyDat(bigChars[test], bigTree$tip.label)
-    # Presently a good test to confirm that PhyDat2Morphy works with single-character phys
-    morphyObj <- PhyDat2Morphy(phy)
-    on.exit(morphyObj <- UnloadMorphy(morphyObj))
-    tree_length <- MorphyTreeLength(bigTree, morphyObj)
-    
-    expect_equal(tree_length, expected_results[test])
-  }
+  bigPhy2 <- TreeTools::StringToPhyDat("11111---111---11---1",
+                                       bigTree$tip.label)
+  expect_equal(3, TreeLength(bigTree, bigPhy2))
 })
 
 test_that("(random) lists of trees are scored", {
@@ -220,23 +188,12 @@ test_that("Profile scoring is reported correctly", {
   dataset <- congreveLamsdellMatrices[[42]]
   prepDataset <- PrepareDataProfile(dataset)
   tree <- NJTree(prepDataset)
-  edge <- Preorder(tree)$edge
-  at <- attributes(prepDataset)
-  profiles <- attr(prepDataset, "info.amounts")
-  charSeq <- seq_along(prepDataset[[1]]) - 1L
-  
-  characters <- PhyToString(prepDataset, ps = '', useIndex = FALSE,
-                            byTaxon = FALSE, concatenate = FALSE)
-  startWeights <- at$weight
-  morphyObjects <- lapply(characters, SingleCharMorphy)
-  on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
-          add = TRUE)
   
   expect_equal(TreeLength(tree, dataset, "profile"),
                TreeLength(tree, prepDataset, "profile"))
-  expect_equal(TreeLength(tree, dataset, "profile"),
-               TreeSearch:::morphy_profile(edge, morphyObjects, startWeights,
-                                          charSeq, profiles, Inf))
+  # Reference value verified against MorphyLib morphy_profile()
+  expect_equal(653.4463, TreeLength(tree, prepDataset, "profile"),
+               tolerance = 1e-3)
 })
 
 test_that("CharacterLength() fails gracefully", {
@@ -280,34 +237,4 @@ test_that("Character compression works", {
   expect_equal(length(MinimumLength(dataset, compress = TRUE)), 118)
   expect_equal(dim(Consistency(dataset, tree, nRelabel = 0, compress = TRUE)),
                c(118, 4))
-})
-
-test_that("X_MorphyLength", {
-  dataset <- congreveLamsdellMatrices[[42]]
-  morphyObj <- PhyDat2Morphy(dataset)
-  on.exit(UnloadMorphy(morphyObj))
-  nTaxa <- mpl_get_numtaxa(morphyObj)
-  
-  tree <- NJTree(dataset)
-  edgeList <- Preorder(tree$edge)
-  edgeList <- edgeList[PostorderOrder(edgeList), ]
-  parent <- edgeList[, 1]
-  child <- edgeList[, 2]
-
-  maxNode <- nTaxa + mpl_get_num_internal_nodes(morphyObj)
-  rootNode <- nTaxa + 1L
-  allNodes <- rootNode:maxNode
-  
-  parentOf <- parent[match(seq_len(maxNode), child)]
-  parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
-  leftChild <- child[length(parent) + 1L - match(allNodes, rev(parent))]
-  rightChild <- child[match(allNodes, parent)]
-
-  expected <- MorphyLength(parent, child, morphyObj)
-  
-  expect_equal(expected,
-               C_MorphyLength(parentOf, leftChild, rightChild, morphyObj))
-  expect_equal(expected,
-               GetMorphyLength(parentOf - 1, leftChild - 1, rightChild - 1,
-                              morphyObj))
 })

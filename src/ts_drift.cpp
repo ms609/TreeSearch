@@ -440,8 +440,10 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
 
       int nx_cost = 0;
       for (int b = 0; b < ds.n_blocks; ++b) {
-        nx_cost += ds.blocks[b].weight * popcount64(
-            tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b]);
+        uint64_t lc = tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b];
+        int nu = popcount64(lc);
+        if (ds.blocks[b].upweight_mask) nu += popcount64(lc & ds.blocks[b].upweight_mask);
+        nx_cost += ds.blocks[b].weight * nu;
       }
       divided_length = score + delta - nx_cost;
     }
@@ -630,9 +632,11 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
         for (int node = tree.n_tip; node < tree.n_node; ++node) {
           for (int b = 0; b < ds.n_blocks; ++b) {
             size_t idx = static_cast<size_t>(node) * tree.n_blocks + b;
-            int old_steps = popcount64(old_local_cost[idx]);
-            int new_steps = popcount64(new_local_cost[idx]);
-            int d = (new_steps - old_steps) * ds.blocks[b].weight;
+            int old_nu = popcount64(old_local_cost[idx]);
+            if (ds.blocks[b].upweight_mask) old_nu += popcount64(old_local_cost[idx] & ds.blocks[b].upweight_mask);
+            int new_nu = popcount64(new_local_cost[idx]);
+            if (ds.blocks[b].upweight_mask) new_nu += popcount64(new_local_cost[idx] & ds.blocks[b].upweight_mask);
+            int d = (new_nu - old_nu) * ds.blocks[b].weight;
             if (d > 0) F += d;
             if (d < 0) C += (-d);
           }
@@ -664,6 +668,14 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
   }
 
   tree.prealloc_undo = nullptr;
+
+  // Ensure postorder matches current topology. saved_postorder is only set
+  // once (before any moves); after accepted moves + rejected unclip restore,
+  // it can be stale.  The caller (tbr_search via drift_search) relies on
+  // a correct postorder for full_rescore.
+  if (n_accepted > 0) {
+    tree.build_postorder();
+  }
   return n_accepted;
 }
 

@@ -623,8 +623,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
         int nx_cost = 0;
         for (int b = 0; b < ds.n_blocks; ++b) {
-          nx_cost += ds.blocks[b].weight * popcount64(
-              tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b]);
+          uint64_t lc = tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b];
+          int nu = popcount64(lc);
+          if (ds.blocks[b].upweight_mask) nu += popcount64(lc & ds.blocks[b].upweight_mask);
+          nx_cost += ds.blocks[b].weight * nu;
         }
         divided_length = best_score + delta - nx_cost;
       }

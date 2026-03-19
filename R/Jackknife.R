@@ -1,8 +1,8 @@
-#' Jackknife resampling (deprecated)
+#' Jackknife resampling
 #' 
 #' Resample trees using Jackknife resampling, i.e. removing a subset of
-#' characters. **Deprecated**: use [`Resample()`] instead for faster searches
-#' using the C++ engine.
+#' characters. For standard parsimony, [`Resample()`] is faster; use
+#' `Jackknife()` when you need a custom `TreeScorer` or `EdgeSwapper`.
 #' 
 #' @inheritParams Ratchet
 #' @param resampleFreq Double between 0 and 1 stating proportion of characters 
@@ -26,7 +26,6 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
                       EdgeSwapper    = TBRSwap,
                       jackIter = 5000L, searchIter = 4000L, searchHits = 42L,
                       verbosity = 1L, ...) {
-  .Deprecated("Resample")
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     stop("tree must be bifurcating; try rooting with ape::root")
   }

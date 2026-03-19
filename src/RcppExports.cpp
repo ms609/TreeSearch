@@ -10,6 +10,27 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// MaddisonSlatkin
+NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states);
+RcppExport SEXP _TreeSearch_MaddisonSlatkin(SEXP stepsSEXP, SEXP statesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type steps(stepsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type states(statesSEXP);
+    rcpp_result_gen = Rcpp::wrap(MaddisonSlatkin(steps, states));
+    return rcpp_result_gen;
+END_RCPP
+}
+// MaddisonSlatkin_clear_cache
+void MaddisonSlatkin_clear_cache();
+RcppExport SEXP _TreeSearch_MaddisonSlatkin_clear_cache() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    MaddisonSlatkin_clear_cache();
+    return R_NilValue;
+END_RCPP
+}
 // expected_mi
 double expected_mi(const IntegerVector& ni, const IntegerVector& nj);
 RcppExport SEXP _TreeSearch_expected_mi(SEXP niSEXP, SEXP njSEXP) {

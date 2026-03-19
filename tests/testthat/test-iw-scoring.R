@@ -3,58 +3,23 @@ test_that("IW Scoring", {
   data("Lobo", package = "TreeTools")
   dataset <- Lobo.phy
   tree <- NJTree(dataset)
-  
-  
-  .IWScore <- function (edge, morphyObjs, weight, minLength, concavity) {
-    steps <- TreeSearch:::preorder_morphy_by_char(edge, morphyObjs)
-    homoplasies <- steps - minLength
-    fit <- homoplasies / (homoplasies + concavity)
-    sum(fit * weight)
-  }
-  
-  concavity <- 4.5
-  epsilon <- sqrt(.Machine$double.eps)
-  
-  
-  tree <- Preorder(RenumberTips(tree, names(dataset)))
-  nTip <- NTip(tree)
-  edge <- tree$edge
-  
-  at <- attributes(dataset)
-  characters <- PhyToString(dataset, ps = "", useIndex = FALSE,
-                            byTaxon = FALSE, concatenate = FALSE)
-  startWeights <- at$weight
-  morphyObjects <- lapply(characters, SingleCharMorphy)
-  on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)))
-  
-  nLevel <- length(at$level)
-  nChar <- at$nr
-  nTip <- length(dataset)
-  cont <- at$contrast
-  simpleCont <- ifelse(rowSums(cont) == 1,
-                       apply(cont != 0, 1, function (x) colnames(cont)[x][1]),
-                       "?")
-  
-  unlisted <- unlist(dataset, use.names = FALSE)
-  tokenMatrix <- matrix(simpleCont[unlisted], nChar, nTip)
-  charInfo <- apply(tokenMatrix, 1, CharacterInformation)
-  needsInapp <- rowSums(tokenMatrix == "-") > 2
-  inappSlowdown <- 3L # A guess
-  rawPriority <- charInfo / ifelse(needsInapp, inappSlowdown, 1)
-  priority <- startWeights * rawPriority
-  informative <- needsInapp | charInfo > 0
-  # Will work from end of sequence to start.
-  charSeq <- seq_along(charInfo)[informative][order(priority[informative])] - 1L
 
-  
-  weight <- startWeights
+  concavity <- 4.5
+
+  tree <- Preorder(RenumberTips(tree, names(dataset)))
+  weight <- attr(dataset, "weight")
   minLength <- MinimumLength(dataset, compress = TRUE)
-  
-  expect_equal(.IWScore(edge, morphyObjects, weight, minLength, concavity),
-               TreeSearch:::morphy_iw(edge, morphyObjects, weight, minLength, charSeq, 
-                         concavity, Inf))
-  
-  expect_equal(Inf, TreeSearch:::morphy_iw(edge, morphyObjects, weight, minLength, charSeq,
-                              concavity, 0))
-  
+
+  # Verify IW score matches manually computed value.
+  # Reference: per-character step counts from C++ engine, IW formula applied in R.
+  charSteps <- CharacterLength(tree, dataset, compress = TRUE)
+  homoplasies <- charSteps - minLength
+  fit <- homoplasies / (homoplasies + concavity)
+  manualIW <- sum(fit * weight)
+
+  expect_equal(TreeLength(tree, dataset, concavity = concavity), manualIW)
+
+  # Sanity check: IW score should be positive for a non-trivial dataset
+
+  expect_gt(manualIW, 0)
 })

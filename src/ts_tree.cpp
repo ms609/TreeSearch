@@ -57,13 +57,15 @@ void TreeState::load_tip_states(const DataSet& ds) {
       final_[base + w] = ds.tip_states[base + w];
     }
   }
-  // Initialise tip subtree_actives: applicable states only (NA word = 0)
+  // Initialise tip subtree_actives: applicable states only (NA word = 0).
+  // For {-,X} tips, applicable state bits are preserved here; the
+  // tip uppass (Pass 2) will clear them if the tip resolves as NA.
   for (int tip = 0; tip < n_tip; ++tip) {
     size_t base = static_cast<size_t>(tip) * total_words;
     for (int b = 0; b < ds.n_blocks; ++b) {
       int offset = ds.block_word_offset[b];
       if (ds.blocks[b].has_inapplicable) {
-        subtree_actives[base + offset] = 0;  // state 0 (NA) always 0
+        subtree_actives[base + offset] = 0;  // NA word always 0
         for (int s = 1; s < ds.blocks[b].n_states; ++s) {
           subtree_actives[base + offset + s] = ds.tip_states[base + offset + s];
         }
