@@ -45,13 +45,16 @@ CharacterLength(tree, dataset, compress = TRUE)
 }
 \seealso{
 Other tree scoring: 
+\code{\link{CharacterHierarchy}()},
 \code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
 \code{\link{MaximizeParsimony}()},
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()},
-\code{\link{TaxonInfluence}()}
+\code{\link{ParsSim}()},
+\code{\link{TaxonInfluence}()},
+\code{\link{hierarchy_from_names}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

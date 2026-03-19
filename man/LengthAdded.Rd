@@ -67,13 +67,16 @@ PlotCharacter(
 }
 \seealso{
 Other tree scoring: 
+\code{\link{CharacterHierarchy}()},
 \code{\link{CharacterLength}()},
 \code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{MaximizeParsimony}()},
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()},
-\code{\link{TaxonInfluence}()}
+\code{\link{ParsSim}()},
+\code{\link{TaxonInfluence}()},
+\code{\link{hierarchy_from_names}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

@@ -5,7 +5,7 @@
 \alias{Ratchet}
 \alias{MultiRatchet}
 \alias{RatchetConsensus}
-\title{Parsimony Ratchet (deprecated)}
+\title{Parsimony Ratchet}
 \usage{
 MorphyBootstrap(
   edgeList,
@@ -183,8 +183,8 @@ be generated using \code{\link[ape:consensus]{ape::consensus()}} or \code{\link[
 \description{
 \code{Ratchet()} uses the parsimony ratchet \insertCite{Nixon1999}{TreeSearch}
 to search for a more parsimonious tree using custom optimality criteria.
-\strong{Deprecated}: use \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} instead for faster searches
-using the C++ engine.
+For standard parsimony searches, \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} is faster;
+use \code{Ratchet()} when you need a custom \code{TreeScorer} or \code{EdgeSwapper}.
 }
 \details{
 For usage pointers, see the

@@ -67,22 +67,28 @@ parameters. Node numbering must increase monotonically away from root.
 PhyDat2Morphy
 
 Other tree scoring: 
+\code{\link{CharacterHierarchy}()},
 \code{\link{CharacterLength}()},
 \code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
 \code{\link{MaximizeParsimony}()},
 \code{\link{MinimumLength}()},
-\code{\link{TaxonInfluence}()}
+\code{\link{ParsSim}()},
+\code{\link{TaxonInfluence}()},
+\code{\link{hierarchy_from_names}()}
 
 Other tree scoring: 
+\code{\link{CharacterHierarchy}()},
 \code{\link{CharacterLength}()},
 \code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
 \code{\link{MaximizeParsimony}()},
 \code{\link{MinimumLength}()},
-\code{\link{TaxonInfluence}()}
+\code{\link{ParsSim}()},
+\code{\link{TaxonInfluence}()},
+\code{\link{hierarchy_from_names}()}
 }
 \author{
 Martin R. Smith

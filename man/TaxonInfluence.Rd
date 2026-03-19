@@ -133,13 +133,16 @@ PlotTools::SpectrumLegend(
 }
 \seealso{
 Other tree scoring: 
+\code{\link{CharacterHierarchy}()},
 \code{\link{CharacterLength}()},
 \code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
 \code{\link{MaximizeParsimony}()},
 \code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()}
+\code{\link{MorphyTreeLength}()},
+\code{\link{ParsSim}()},
+\code{\link{hierarchy_from_names}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

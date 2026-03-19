@@ -78,13 +78,16 @@ TreeLength(5, inapplicable.phyData[[1]])
 }
 
 Other tree scoring: 
+\code{\link{CharacterHierarchy}()},
 \code{\link{CharacterLength}()},
 \code{\link{ExpectedLength}()},
 \code{\link{LengthAdded}()},
 \code{\link{MaximizeParsimony}()},
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()},
-\code{\link{TaxonInfluence}()}
+\code{\link{ParsSim}()},
+\code{\link{TaxonInfluence}()},
+\code{\link{hierarchy_from_names}()}
 }
 \author{
 Martin R. Smith

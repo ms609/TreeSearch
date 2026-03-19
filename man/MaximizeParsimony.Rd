@@ -10,6 +10,9 @@ MaximizeParsimony(
   dataset,
   tree,
   concavity = Inf,
+  hierarchy = NULL,
+  inapplicable = "brazeau",
+  hsj_alpha = 1,
   constraint,
   strategy = "auto",
   maxReplicates = 100L,
@@ -48,6 +51,33 @@ concavity values, e.g. \code{k = 2 ^ (1:7)}.
 Specify \code{Inf} to weight each additional step equally.
 Specify \code{"profile"} to employ profile parsimony
 \insertCite{Faith2001}{TreeSearch}.}
+
+\item{hierarchy}{A \code{\link{CharacterHierarchy}} object specifying which
+characters are controlling primaries and which are their dependent
+secondaries.  Required when \code{inapplicable} is \code{"hsj"} or \code{"xform"};
+ignored when \code{inapplicable = "brazeau"} (the default).
+See \code{\link[=CharacterHierarchy]{CharacterHierarchy()}} for how to construct one, and
+\code{\link[=hierarchy_from_names]{hierarchy_from_names()}} for automated construction from
+TNT-style character names.}
+
+\item{inapplicable}{Character: method for handling inapplicable characters.
+\describe{
+\item{\code{"brazeau"} (default)}{Three-pass algorithm of
+\insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
+regions from the \code{"-"} token.  No hierarchy required.}
+\item{\code{"hsj"}}{Dissimilarity-metric scoring of
+\insertCite{Hopkins2021;textual}{TreeSearch}.  Requires a
+\code{hierarchy}; controlled by \code{hsj_alpha}.}
+\item{\code{"xform"}}{Step-matrix recoding approximating maximum homology
+via x-transformations
+\insertCite{Goloboff2021b;textual}{TreeSearch}.  Requires a
+\code{hierarchy}.}
+}}
+
+\item{hsj_alpha}{Numeric in [0, 1]: scaling parameter for secondary-
+character contributions under the HSJ method.  0 = secondaries ignored;
+1 (default) = secondaries contribute up to 1 per branch per hierarchy
+block.  Only used when \code{inapplicable = "hsj"}.}
 
 \item{constraint}{Either an object of class \code{phyDat}, in which case
 returned trees will be perfectly compatible with each character in
@@ -197,13 +227,16 @@ attr(result, "score")
 \code{\link[=SearchControl]{SearchControl()}} for expert-level tuning of the search heuristics.
 
 Other tree scoring: 
+\code{\link{CharacterHierarchy}()},
 \code{\link{CharacterLength}()},
 \code{\link{ExpectedLength}()},
 \code{\link{IWScore}()},
 \code{\link{LengthAdded}()},
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()},
-\code{\link{TaxonInfluence}()}
+\code{\link{ParsSim}()},
+\code{\link{TaxonInfluence}()},
+\code{\link{hierarchy_from_names}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

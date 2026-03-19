@@ -29,6 +29,13 @@ values of \emph{e}.
 Calculates the number of trees consistent with the character having
 \emph{e} extra steps, where \emph{e} ranges from its minimum possible value
 (i.e. number of different tokens minus one) to its maximum.
+
+For characters with 2 informative tokens, uses the exact formula of
+Carter \emph{et al.} (1990) via \code{\link[=LogCarter1]{LogCarter1()}}.
+For characters with 3--5 informative tokens, uses the recursive algorithm
+of Maddison & Slatkin (1991) via \code{\link[=MaddisonSlatkin]{MaddisonSlatkin()}}.
+Characters with more than 5 informative tokens are reduced to their 5 most
+frequent tokens (with a warning).
 }
 \examples{
 character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))
@@ -36,7 +43,7 @@ StepInformation(character)
 }
 \seealso{
 Other profile parsimony functions: 
-\code{\link{Carter1}()},
+\code{\link{MaddisonSlatkin}()},
 \code{\link{PrepareDataProfile}()},
 \code{\link{WithOneExtraStep}()},
 \code{\link{profiles}}

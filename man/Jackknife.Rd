@@ -2,7 +2,7 @@
 % Please edit documentation in R/Jackknife.R
 \name{Jackknife}
 \alias{Jackknife}
-\title{Jackknife resampling (deprecated)}
+\title{Jackknife resampling}
 \usage{
 Jackknife(
   tree,
@@ -66,8 +66,8 @@ iterations.
 }
 \description{
 Resample trees using Jackknife resampling, i.e. removing a subset of
-characters. \strong{Deprecated}: use \code{\link[=Resample]{Resample()}} instead for faster searches
-using the C++ engine.
+characters. For standard parsimony, \code{\link[=Resample]{Resample()}} is faster; use
+\code{Jackknife()} when you need a custom \code{TreeScorer} or \code{EdgeSwapper}.
 }
 \seealso{
 \itemize{

@@ -33,23 +33,22 @@ transformation series.
 }
 }
 \description{
-Calculates profiles for each character in a dataset.  Will also simplify
-characters, with a warning, where they are too complex for the present
-implementation of profile parsimony:
+Calculates profiles for each character in a dataset.
+Characters with 2 informative states (i.e. states present in more than one
+taxon) use the exact formula of Carter \emph{et al.} (1990).
+Characters with 3--5 informative states use the recursive algorithm of
+Maddison & Slatkin (1991).
+}
+\details{
+Characters are simplified where necessary, with a warning:
 \itemize{
 \item inapplicable tokens will be replaced with the ambiguous token
 (i.e. \code{-} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?});
 \item Ambiguous tokens will be treated as fully ambiguous
 (i.e. \code{{02}} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?})
-\item Where more than five states are informative (i.e. unambiguously present in
-more than one taxon), states beyond the five most informative will be
-treated as ambiguous.
+\item Where more than five states are informative, states beyond the five most
+informative will be treated as ambiguous.
 }
-}
-\details{
-Characters with 2 informative states use the exact formula of Carter
-\emph{et al.} (1990).  Characters with 3--5 informative states use the recursive
-algorithm of Maddison & Slatkin (1991).
 }
 \section{Functions}{
 \itemize{
