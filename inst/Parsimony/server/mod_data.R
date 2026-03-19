@@ -559,13 +559,18 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
 
     observeEvent(r$dataset, {
       r$dataHash <- rlang::hash(r$dataset)
-      # Clear stale trees from previous dataset — incompatible taxa
-      # cause silent errors in search starting tree preparation.
-      r$allTrees <- NULL
-      r$trees <- NULL
-      r$treeHash <- NULL
-      r$newTrees <- NULL
-      parentHide("manipulateTreeset")
+      # Clear stale trees only when they are incompatible with the new dataset.
+      # UpdateData() may call UpdateAllTrees() *before* this observer fires, so
+      # trees from the same .nex file are already in r$allTrees and are
+      # compatible. Unconditionally clearing them blanks the plot and resets
+      # the tree count to 0 for all 31 bundled example datasets (T-151).
+      if (!HaveData() || !DatasetMatchesTrees()) {
+        r$allTrees <- NULL
+        r$trees <- NULL
+        r$treeHash <- NULL
+        r$newTrees <- NULL
+        parentHide("manipulateTreeset")
+      }
       # Search stat reset + timeout default handled by mod_search.R
     })
 
