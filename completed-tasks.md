@@ -8,6 +8,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-142 | Shiny: Add TreeSearch logo to app header | A | Inline SVG (magnifier + 3-tip tree) added to `inst/Parsimony/ui.R` line 14; flex div wraps icon + h1. No external asset file needed. |
 | S-COORD | Coordination review round 8 | A | T-144 fixed → CRAN unblocked. ~9835 pass/0 fail. T-141/T-140/T-097 confirmed complete. Standing tasks P1. |
 | T-144 | Fix 15 CRAN Tier 1 test failures (PrepareDataProfile regression) | A | Added binary-reduction warning to PrepareDataProfile; fixed empty-phyDat return (avoid dataset[0] crash in new TreeTools); updated test-data_manipulation.R (17→17 pass) and test-Concordance.R (67→67 pass) to match new behavior. 0 regressions. |
 | T-129 | Shiny: Evaluate progressive search result display | A | Briefing in `.positai/briefing-progressive-results.md`. Rec: progress file polling via existing C++ progress_callback infrastructure (~50 lines). Do not stream partial trees (misleading). Filed T-141. |
