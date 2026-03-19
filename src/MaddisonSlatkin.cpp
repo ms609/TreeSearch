@@ -429,39 +429,38 @@ struct LogPKeyOptHash {
 // ============================================================================
 
 struct LSEAccumulator {
-  long double maxv;
-  long double acc; 
+  double maxv;
+  double acc;
   bool empty;
-  
-  LSEAccumulator() : maxv(-std::numeric_limits<long double>::infinity()), acc(0.0L), empty(true) {}
-  
-  inline void add(long double v) {
-    if (!std::isfinite((double)v)) return;
-    
+
+  LSEAccumulator() : maxv(NEG_INF), acc(0.0), empty(true) {}
+
+  inline void add(double v) {
+    if (!(v > NEG_INF)) return;
+
     if (empty) {
       maxv = v;
-      acc = 1.0L;
+      acc = 1.0;
       empty = false;
     } else {
       if (v > maxv) {
-        acc = acc * expl(maxv - v);
+        acc = acc * std::exp(maxv - v);
         maxv = v;
       }
-      acc += expl(v - maxv);
+      acc += std::exp(v - maxv);
     }
   }
-  
+
   inline double result() const {
     if (empty) return NEG_INF;
-    long double res = maxv + logl(acc);
-    return (double)res;
+    return maxv + std::log(acc);
   }
 };
 
 static inline double log_prod_sum_4(double v1, double v2, double v3, double v4) {
-  if (!std::isfinite(v1) || !std::isfinite(v2) || 
-      !std::isfinite(v3) || !std::isfinite(v4)) return NEG_INF;
-      return (double)((long double)v1 + (long double)v2 + (long double)v3 + (long double)v4);
+  if (!(v1 > NEG_INF) || !(v2 > NEG_INF) ||
+      !(v3 > NEG_INF) || !(v4 > NEG_INF)) return NEG_INF;
+  return v1 + v2 + v3 + v4;
 }
 
 static inline int sum_int(const std::vector<int>& v) {
@@ -676,11 +675,11 @@ public:
     const int n = leaves.sum();
     
     double bal = (n == 2*m) ? std::log(0.5) : 0.0;
-    long double lc = 0.0L;
+    double lc = 0.0;
     for (int i = 0; i < leaves.len; ++i) {
       lc += lchoose_log(leaves.data[i], drawn.data[i]);
     }
-    double val = bal + lnRooted(m) + lnRooted(n - m) - lnRooted(n) + (double)lc;
+    double val = bal + lnRooted(m) + lnRooted(n - m) - lnRooted(n) + lc;
     cache.emplace(std::move(key), val);
     return val;
   }
@@ -859,11 +858,11 @@ class SolverT {
       const int n = leaves.sum();
       
       double bal = (n == 2*m) ? std::log(0.5) : 0.0;
-      long double lc = 0.0L;
+      double lc = 0.0;
       for (int i = 0; i < leaves.len; ++i) {
         lc += lchoose_log(leaves.data[i], drawn.data[i]);
       }
-      double val = bal + lnRooted(m) + lnRooted(n - m) - lnRooted(n) + (double)lc;
+      double val = bal + lnRooted(m) + lnRooted(n - m) - lnRooted(n) + lc;
       logRD_cache.emplace(std::move(key), val);
       return val;
     }
@@ -894,8 +893,8 @@ class SolverT {
       }
       
       double& slot = it->second[token0];
-      if (std::isfinite(slot)) return slot;
-      if (std::isnan(slot) == false && !std::isfinite(slot)) return slot;
+      if ((slot > NEG_INF)) return slot;
+      if (std::isnan(slot) == false && !(slot > NEG_INF)) return slot;
       
       const auto& drawpairs = getValidDraws(leaves);
       LSEAccumulator outerAcc;
@@ -912,16 +911,16 @@ class SolverT {
         LSEAccumulator innerAcc;
         for (const auto& pr : pairs.noStep[token0]) {
           double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
-          innerAcc.add((long double)val);
+          innerAcc.add(val);
         }
         for (const auto& pr : pairs.yesStep[token0]) {
           double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
-          innerAcc.add((long double)val);
+          innerAcc.add(val);
         }
         double innerSum = innerAcc.result();
         
         double acc = balancedCorrection + computeLogRD(drawn, leaves) + innerSum;
-        outerAcc.add((long double)acc);
+        outerAcc.add(acc);
       }
       slot = outerAcc.result();
       return slot;
@@ -936,15 +935,15 @@ class SolverT {
       std::vector<double> C(c_size, NEG_INF);
       for (int r = a_lo; r <= a_hi; ++r) {
         const double va = A[r];
-        if (!std::isfinite(va)) continue;
+        if (!(va > NEG_INF)) continue;
         for (int q = b_lo; q <= b_hi; ++q) {
           const double vb = B[q];
-          if (!std::isfinite(vb)) continue;
+          if (!(vb > NEG_INF)) continue;
           const int s = r + q;
           if (s >= c_size) break;
           const double v = va + vb;
           // Inline log-sum-exp update: C[s] = log(exp(C[s]) + exp(v))
-          if (!std::isfinite(C[s])) {
+          if (!(C[s] > NEG_INF)) {
             C[s] = v;
           } else {
             double mx = std::max(C[s], v);
@@ -1008,7 +1007,7 @@ class SolverT {
       }
 
       double denom = LogB(token0, leaves);
-      if (!std::isfinite(denom)) {
+      if (!(denom > NEG_INF)) {
         std::vector<double> v(c_size, NEG_INF);
         auto ins = logPVec_cache.emplace(std::move(key), std::move(v));
         return ins.first->second;
@@ -1042,14 +1041,14 @@ class SolverT {
           const std::vector<double>& B = LogPVec(undrawn, pr.b);
           double logBa = LogB(pr.a, drawn);
           double logBb = LogB(pr.b, undrawn);
-          if (!std::isfinite(logBa) || !std::isfinite(logBb)) continue;
+          if (!(logBa > NEG_INF) || !(logBb > NEG_INF)) continue;
           double pairScale = logBa + logBb;
           // C = conv(A, B), then add pairScale; merge into noStepVec
           auto C = logconv(A, d_lo, d_hi, B, u_lo, u_hi, c_size);
           for (int s = 0; s < c_size; ++s) {
-            if (!std::isfinite(C[s])) continue;
+            if (!(C[s] > NEG_INF)) continue;
             double v = C[s] + pairScale;
-            if (!std::isfinite(noStepVec[s])) {
+            if (!(noStepVec[s] > NEG_INF)) {
               noStepVec[s] = v;
             } else {
               double mx = std::max(noStepVec[s], v);
@@ -1066,14 +1065,14 @@ class SolverT {
             const std::vector<double>& B = LogPVec(undrawn, pr.b);
             double logBa = LogB(pr.a, drawn);
             double logBb = LogB(pr.b, undrawn);
-            if (!std::isfinite(logBa) || !std::isfinite(logBb)) continue;
+            if (!(logBa > NEG_INF) || !(logBb > NEG_INF)) continue;
             double pairScale = logBa + logBb;
             auto C = logconv(A, d_lo, d_hi, B, u_lo, u_hi, c_size);
             // Shift by 1: C_shifted[s] = C[s-1]
             for (int s = c_size - 1; s >= 1; --s) {
-              if (!std::isfinite(C[s - 1])) continue;
+              if (!(C[s - 1] > NEG_INF)) continue;
               double v = C[s - 1] + pairScale;
-              if (!std::isfinite(yesStepVec[s])) {
+              if (!(yesStepVec[s] > NEG_INF)) {
                 yesStepVec[s] = v;
               } else {
                 double mx = std::max(yesStepVec[s], v);
@@ -1086,8 +1085,8 @@ class SolverT {
         // Combine noStep and yesStep, add rdCorr, merge into outerVec
         for (int s = 0; s < c_size; ++s) {
           double combined;
-          bool ns = std::isfinite(noStepVec[s]);
-          bool ys = std::isfinite(yesStepVec[s]);
+          bool ns = (noStepVec[s] > NEG_INF);
+          bool ys = (yesStepVec[s] > NEG_INF);
           if (!ns && !ys) continue;
           else if (!ys) combined = noStepVec[s];
           else if (!ns) combined = yesStepVec[s];
@@ -1096,7 +1095,7 @@ class SolverT {
             combined = mx + std::log1p(std::exp(std::min(noStepVec[s], yesStepVec[s]) - mx));
           }
           double v = rdCorr + combined;
-          if (!std::isfinite(outerVec[s])) {
+          if (!(outerVec[s] > NEG_INF)) {
             outerVec[s] = v;
           } else {
             double mx = std::max(outerVec[s], v);
@@ -1107,7 +1106,7 @@ class SolverT {
 
       // Subtract denom (LogB normaliser)
       for (int s = 0; s < c_size; ++s) {
-        if (std::isfinite(outerVec[s])) outerVec[s] -= denom;
+        if ((outerVec[s] > NEG_INF)) outerVec[s] -= denom;
       }
 
       LogPVecKey key2(token0, leaves);
@@ -1152,12 +1151,12 @@ public:
     std::vector<double> combined(c_size, NEG_INF);
     for (int token0 = 0; token0 < D.nStates; ++token0) {
       const double lb = rootLogB[token0];
-      if (!std::isfinite(lb)) continue;
+      if (!(lb > NEG_INF)) continue;
       const std::vector<double>& pv = LogPVec(states, token0);
       for (int s = 0; s < c_size; ++s) {
-        if (!std::isfinite(pv[s])) continue;
+        if (!(pv[s] > NEG_INF)) continue;
         double v = lb + pv[s];
-        if (!std::isfinite(combined[s])) {
+        if (!(combined[s] > NEG_INF)) {
           combined[s] = v;
         } else {
           double mx = std::max(combined[s], v);
@@ -1215,8 +1214,8 @@ class Solver {
     // 3. Check for computed value
     // Use operator[] on our new struct
     double& slot = it->second[token0]; 
-    if (std::isfinite(slot)) return slot;
-    if (std::isnan(slot) == false && !std::isfinite(slot)) return slot;
+    if ((slot > NEG_INF)) return slot;
+    if (std::isnan(slot) == false && !(slot > NEG_INF)) return slot;
     
     // 4. Compute
     const auto& drawpairs = validDraws.get(leaves);
@@ -1234,16 +1233,16 @@ class Solver {
       LSEAccumulator innerAcc;
       for (const auto& pr : pairs.noStep[token0]) {
         double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
-        innerAcc.add((long double)val);
+        innerAcc.add(val);
       }
       for (const auto& pr : pairs.yesStep[token0]) {
         double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
-        innerAcc.add((long double)val);
+        innerAcc.add(val);
       }
       double innerSum = innerAcc.result();
       
       double acc = balancedCorrection + logRD.compute(drawn, leaves) + innerSum;
-      outerAcc.add((long double)acc);
+      outerAcc.add(acc);
     }
     slot = outerAcc.result();
     return slot;
@@ -1279,7 +1278,7 @@ class Solver {
     if (it != logP_cache.end()) return it->second;
     
     double denom = LogB(token0, leaves);
-    if (!std::isfinite(denom)) {
+    if (!(denom > NEG_INF)) {
       logP_cache.emplace(std::move(key), denom);
       return denom;
     }
@@ -1307,9 +1306,9 @@ class Solver {
             LogP(s - r, undrawn, pr.b),
             LogB(pr.b, undrawn)
           );
-          pairAcc.add((long double)t);
+          pairAcc.add(t);
         }
-        noStepAcc.add((long double)pairAcc.result());
+        noStepAcc.add(pairAcc.result());
       }
       double noStepSum = noStepAcc.result();
       
@@ -1326,20 +1325,20 @@ class Solver {
               LogP(s - r - 1, undrawn, pr.b),
               LogB(pr.b, undrawn)
             );
-            pairAcc.add((long double)t);
+            pairAcc.add(t);
           }
-          yesStepAcc.add((long double)pairAcc.result());
+          yesStepAcc.add(pairAcc.result());
         }
         yesStepSum = yesStepAcc.result();
       }
       
       LSEAccumulator bothAcc;
-      bothAcc.add((long double)noStepSum);
-      bothAcc.add((long double)yesStepSum);
+      bothAcc.add(noStepSum);
+      bothAcc.add(yesStepSum);
       double combined = bothAcc.result();
       
       double inner = logRD.compute(drawn, leaves) + sizeCorrection + combined;
-      outerAcc.add((long double)inner);
+      outerAcc.add(inner);
     }
     
     double result = outerAcc.result() - denom;
@@ -1367,12 +1366,12 @@ public:
       double b = LogB(token0, states);
       double p = LogP(steps, states, token0);
       double val;
-      if (!std::isfinite(p) || !std::isfinite(p)) {
+      if (!(p > NEG_INF) || !(p > NEG_INF)) {
         val = NEG_INF;
       } else {
         val = b + p;
       }
-      acc.add((long double)val);
+      acc.add(val);
     }
     return acc.result();
   }
