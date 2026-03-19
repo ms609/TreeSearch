@@ -18,6 +18,7 @@ fluidPage(
       se_ui$label,
       se_ui$config,
       se_ui$go,
+      se_ui$cancel,
       dl_ui$save_zip,
       data_ui_elems$tree_file,
       se_ui$results,

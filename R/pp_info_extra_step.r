@@ -15,6 +15,13 @@
 #' Characters with more than 5 informative tokens are reduced to their 5 most
 #' frequent tokens (with a warning).
 #'
+#' When the Maddison & Slatkin computation would be infeasible (exponential
+#' in the number of tips for a given number of tokens), multi-state characters
+#' are automatically reduced to their 2 most frequent tokens and scored using
+#' the faster Carter formula.  This occurs for 3-state characters with more
+#' than 15 informative tips, 4-state characters with more than 10 tips, and
+#' 5-state characters with more than 8 tips.
+#'
 #' @param char Vector of tokens listing states for the character in question.
 #' @param ambiguousTokens Vector specifying which tokens, if any, correspond to
 #' the ambiguous token (`?`).
@@ -64,6 +71,21 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
   }
   
   nTips <- sum(split)
+  
+  # MaddisonSlatkin is exponential in nTips for k >= 3.
+  # Measured thresholds (< ~10 s on a typical desktop):
+  #   k=3: n <= 15, k=4: n <= 10, k=5: n <= 8
+  maxTips <- c(Inf, Inf, 15L, 10L, 8L)
+  if (k >= 3L && nTips > maxTips[k]) {
+    warning(
+      "Exact multi-state profile computation infeasible for ",
+      k, "-state character with ", nTips, " tips; ",
+      "reducing to 2 most frequent tokens."
+    )
+    split <- split[seq_len(2L)]
+    k <- 2L
+    nTips <- sum(split)
+  }
   
   if (k == 2L) {
     # Binary: use Carter (fast, exact)

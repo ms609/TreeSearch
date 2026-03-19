@@ -142,7 +142,9 @@ Other tree scoring:
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()},
 \code{\link{ParsSim}()},
-\code{\link{hierarchy_from_names}()}
+\code{\link{WideSample}()},
+\code{\link{hierarchy_from_names}()},
+\code{\link{recode_hierarchy}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

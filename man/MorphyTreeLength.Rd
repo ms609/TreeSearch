@@ -76,7 +76,9 @@ Other tree scoring:
 \code{\link{MinimumLength}()},
 \code{\link{ParsSim}()},
 \code{\link{TaxonInfluence}()},
-\code{\link{hierarchy_from_names}()}
+\code{\link{WideSample}()},
+\code{\link{hierarchy_from_names}()},
+\code{\link{recode_hierarchy}()}
 
 Other tree scoring: 
 \code{\link{CharacterHierarchy}()},
@@ -88,7 +90,9 @@ Other tree scoring:
 \code{\link{MinimumLength}()},
 \code{\link{ParsSim}()},
 \code{\link{TaxonInfluence}()},
-\code{\link{hierarchy_from_names}()}
+\code{\link{WideSample}()},
+\code{\link{hierarchy_from_names}()},
+\code{\link{recode_hierarchy}()}
 }
 \author{
 Martin R. Smith

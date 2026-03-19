@@ -46,22 +46,38 @@ test_that("4-state StepInformation produces correct structure", {
   expect_true(info[1] > 0)
 })
 
-test_that("5-state StepInformation works", {
-  # (3, 2, 2, 2, 2): 5 states, 11 tips, min steps = 4
+test_that("infeasible multi-state falls back to binary with warning", {
+  # k=5 with 11 tips: MaddisonSlatkin is infeasible; should fall back to
+  # top-2 binary decomposition with a warning
+
   char <- rep(c("0", "1", "2", "3", "4"), c(3, 2, 2, 2, 2))
-  info <- StepInformation(char)
+  expect_warning(info <- StepInformation(char), "reducing to 2")
   
   expect_true(length(info) >= 1)
-  expect_equal(as.integer(names(info)[1]), 4L)
+  # Fallback uses top 2 states (3 + 2 = 5 tips), min steps = 1
+  expect_equal(as.integer(names(info)[1]), 1L)
   expect_true(all(info >= 0))
   expect_true(all(diff(info) <= sqrt(.Machine[["double.eps"]])))
   expect_true(info[1] > 0)
+  
+  # k=3 with many tips: also falls back
+  char3 <- rep(c("a", "b", "c"), c(10, 8, 6))
+  expect_warning(info3 <- StepInformation(char3), "reducing to 2")
+  expect_true(length(info3) >= 1)
+  expect_true(all(info3 >= 0))
+  
+  # k=4 with many tips: also falls back
+  char4 <- rep(c("x", "y", "z", "w"), c(8, 5, 4, 3))
+  expect_warning(info4 <- StepInformation(char4), "reducing to 2")
+  expect_true(length(info4) >= 1)
+  expect_true(all(info4 >= 0))
 })
 
 test_that(">5 state warns and truncates to 5", {
   char <- rep(c("a", "b", "c", "d", "e", "f"), c(4, 3, 3, 2, 2, 2))
+  # Gets two warnings: >5 truncation, then infeasibility fallback
   expect_warning(info <- StepInformation(char),
-                 "5 most frequent")
+                 "5 most frequent|reducing to 2")
   
   expect_true(length(info) >= 1)
   expect_true(all(info >= 0))

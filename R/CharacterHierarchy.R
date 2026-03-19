@@ -386,3 +386,153 @@ hierarchy_chars <- function(hierarchy) {
 hierarchy_controlling <- function(hierarchy) {
   vapply(hierarchy, `[[`, integer(1), "controlling")
 }
+
+
+#' Build tip_labels matrix for HSJ scoring
+#'
+#' Converts a `phyDat` dataset into an integer matrix of per-tip per-character
+#' state labels (0-based) for the HSJ C++ scoring function.
+#'
+#' @param dataset A `phyDat` object.
+#' @return An integer matrix with `length(dataset)` rows (tips) and
+#'   `length(attr(dataset, "index"))` columns (original characters).
+#'   Each entry is a 0-based token index.
+#' @keywords internal
+#' @export
+build_tip_labels <- function(dataset) {
+  idx <- attr(dataset, "index")
+  n_tip <- length(dataset)
+  n_char <- length(idx)
+
+  # dataset is a list of integer vectors (pattern indices per tip)
+  # Expand via index to original characters, convert to 0-based
+  mat <- matrix(0L, nrow = n_tip, ncol = n_char)
+  for (t in seq_len(n_tip)) {
+    pattern_tokens <- dataset[[t]]    # token indices for each pattern
+    mat[t, ] <- pattern_tokens[idx] - 1L  # 0-based
+  }
+  mat
+}
+
+
+#' Convert CharacterHierarchy to list for C++
+#'
+#' Converts a [`CharacterHierarchy`] object into a flat list of hierarchy
+#' blocks that can be passed to the C++ `ts_hsj_score()` bridge function.
+#' Each block is a list with `primary` (0-based) and `secondaries` (0-based).
+#'
+#' @param hierarchy A [`CharacterHierarchy`] object.
+#' @return A list of lists, each with elements `primary` (integer, 0-based)
+#'   and `secondaries` (integer vector, 0-based).
+#' @keywords internal
+#' @export
+hierarchy_to_blocks <- function(hierarchy) {
+  .flatten_block <- function(node) {
+    block <- list(
+      primary = node$controlling - 1L,
+      secondaries = node$dependents - 1L
+    )
+    child_blocks <- lapply(node$children, .flatten_block)
+    c(list(block), unlist(child_blocks, recursive = FALSE))
+  }
+  unlist(lapply(hierarchy, .flatten_block), recursive = FALSE)
+}
+
+
+#' Compute non-hierarchy pattern weights
+#'
+#' Given a `phyDat` dataset and a [`CharacterHierarchy`], returns a weight
+#' vector with hierarchy characters' contributions subtracted.
+#' Patterns that appear only in hierarchy characters will have weight 0.
+#'
+#' @param dataset A `phyDat` object.
+#' @param hierarchy A [`CharacterHierarchy`] object.
+#'
+#' @return An integer vector of adjusted pattern weights (same length as
+#'   `attr(dataset, "weight")`).
+#'
+#' @keywords internal
+#' @export
+non_hierarchy_weights <- function(dataset, hierarchy) {
+  w <- attr(dataset, "weight")
+  idx <- attr(dataset, "index")
+  h_chars <- hierarchy_chars(hierarchy)
+
+  adjusted <- as.integer(w)
+  for (ci in h_chars) {
+    if (ci < 1L || ci > length(idx)) next
+    pat <- idx[ci]
+    if (pat >= 1L && pat <= length(adjusted) && adjusted[pat] > 0L) {
+      adjusted[pat] <- adjusted[pat] - 1L
+    }
+  }
+  adjusted
+}
+
+
+# Generate resampled weights for hierarchical resampling.
+#
+# Instead of treating every character independently, groups characters into
+# resampling units: each non-hierarchy character is one unit, and each
+# top-level hierarchy block (primary + all dependents, recursively) is one
+# unit.  Jackknife or bootstrap operates on these units.
+#
+# Returns a list with:
+#   non_hierarchy_weights: pattern weights for Fitch scoring (non-hierarchy
+#     chars only, reflecting which free chars were sampled)
+#   block_counts: integer vector (length = number of top-level blocks)
+#     giving how many times each block was sampled (0/1 for jackknife,
+#     0+ for bootstrap)
+.HierarchicalResampleWeights <- function(dataset, hierarchy, bootstrap,
+                                         proportion) {
+  idx <- attr(dataset, "index")
+  n_patterns <- length(attr(dataset, "weight"))
+  n_chars <- length(idx)
+
+  # Collect chars per top-level block (includes nested dependents)
+  .CollectAll <- function(node) {
+    c(node$controlling, node$dependents,
+      unlist(lapply(node$children, .CollectAll)))
+  }
+  n_blocks <- length(hierarchy)
+  block_chars <- lapply(hierarchy, function(node) unique(.CollectAll(node)))
+  h_chars_set <- unique(unlist(block_chars))
+
+  free_chars <- setdiff(seq_len(n_chars), h_chars_set)
+  n_free <- length(free_chars)
+  n_units <- n_free + n_blocks
+
+  if (n_units < 2L) {
+    # Degenerate: can't jackknife with < 2 units
+    return(list(
+      non_hierarchy_weights = non_hierarchy_weights(dataset, hierarchy),
+      block_counts = rep(1L, n_blocks)
+    ))
+  }
+
+  if (bootstrap) {
+    sampled <- sample.int(n_units, n_units, replace = TRUE)
+  } else {
+    n_keep <- max(1L, ceiling(proportion * n_units))
+    n_keep <- min(n_keep, n_units - 1L)
+    sampled <- sample.int(n_units, n_keep, replace = FALSE)
+  }
+
+  unit_counts <- tabulate(sampled, nbins = n_units)
+
+  # Non-hierarchy pattern weights from retained free chars
+  nh_weights <- integer(n_patterns)
+  for (i in seq_len(n_free)) {
+    if (unit_counts[i] > 0L) {
+      pat <- idx[free_chars[i]]
+      nh_weights[pat] <- nh_weights[pat] + unit_counts[i]
+    }
+  }
+
+  block_counts <- unit_counts[n_free + seq_len(n_blocks)]
+
+  list(
+    non_hierarchy_weights = nh_weights,
+    block_counts = block_counts
+  )
+}

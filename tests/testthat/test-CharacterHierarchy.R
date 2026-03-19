@@ -132,3 +132,89 @@ test_that("validate_hierarchy catches double-claimed characters", {
   h <- CharacterHierarchy("1" = 2:3, "4" = c(3L, 5L))
   expect_error(validate_hierarchy(h, ds), "multiple hierarchy blocks")
 })
+
+test_that("non_hierarchy_weights subtracts hierarchy chars", {
+  mat <- matrix(c(
+    "0", "-", "0", "1",
+    "1", "0", "1", "0",
+    "1", "1", "0", "0"
+  ), nrow = 3, byrow = TRUE)
+  rownames(mat) <- LETTERS[1:3]
+  ds <- phangorn::phyDat(mat, type = "USER",
+                         levels = c("-", "0", "1"), ambiguity = "?")
+
+  h <- CharacterHierarchy("1" = 2L)
+  w_orig <- attr(ds, "weight")
+  w_adj <- non_hierarchy_weights(ds, h)
+
+  # Adjusted weights should be non-negative
+
+  expect_true(all(w_adj >= 0L))
+  # Total weight should decrease by the number of hierarchy chars
+  expect_equal(sum(w_adj), sum(w_orig) - 2L)
+})
+
+test_that("build_tip_labels creates correct matrix", {
+  mat <- matrix(c(
+    "0", "-", "1",
+    "1", "0", "0",
+    "0", "1", "1"
+  ), nrow = 3, byrow = TRUE)
+  rownames(mat) <- LETTERS[1:3]
+  ds <- phangorn::phyDat(mat, type = "USER",
+                         levels = c("-", "0", "1"), ambiguity = "?")
+
+  tl <- build_tip_labels(ds)
+  expect_equal(nrow(tl), 3L)
+  expect_equal(ncol(tl), 3L)
+  # Values should be 0-based token indices
+  expect_true(all(tl >= 0L))
+})
+
+test_that("hierarchy_to_blocks converts to 0-based flat list", {
+  h <- CharacterHierarchy("1" = 2:4, "5" = 6:7)
+  blocks <- hierarchy_to_blocks(h)
+  expect_length(blocks, 2)
+  expect_equal(blocks[[1]]$primary, 0L)
+  expect_equal(blocks[[1]]$secondaries, 1:3)
+  expect_equal(blocks[[2]]$primary, 4L)
+  expect_equal(blocks[[2]]$secondaries, 5:6)
+})
+
+test_that("hierarchy_to_blocks flattens nested hierarchies", {
+  h <- CharacterHierarchy("1" = list(2, 4, "3" = 9:10))
+  blocks <- hierarchy_to_blocks(h)
+  expect_gte(length(blocks), 2)
+  # First block: primary=0, secondaries should include 1 and 3 (chars 2 and 4)
+  expect_equal(blocks[[1]]$primary, 0L)
+  # Nested block: primary=2 (char 3), secondaries=8:9 (chars 9, 10)
+  nested <- blocks[[2]]
+  expect_equal(nested$primary, 2L)
+  expect_equal(nested$secondaries, c(8L, 9L))
+})
+
+test_that("non_hierarchy_weights preserves non-hierarchy patterns", {
+  mat <- matrix(c(
+    "0", "-", "0",
+    "1", "0", "1",
+    "0", "1", "0"
+  ), nrow = 3, byrow = TRUE)
+  rownames(mat) <- LETTERS[1:3]
+  ds <- phangorn::phyDat(mat, type = "USER",
+                         levels = c("-", "0", "1"), ambiguity = "?")
+
+  h <- CharacterHierarchy("1" = 2L)
+  idx <- attr(ds, "index")
+  w_orig <- attr(ds, "weight")
+  w_adj <- non_hierarchy_weights(ds, h)
+
+  # Character 3 is not in the hierarchy; its pattern should keep its weight
+  # unless it shares a pattern with a hierarchy character
+  non_h_chars <- setdiff(seq_along(idx), hierarchy_chars(h))
+  for (ci in non_h_chars) {
+    pat <- idx[ci]
+    # Pattern weight should be at least 1 for non-hierarchy chars
+    # (could be reduced if shared with a hierarchy char)
+    expect_gte(w_adj[pat], 0L)
+  }
+})

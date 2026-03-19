@@ -1,4 +1,6 @@
 #include "ts_fitch.h"
+#include "ts_hsj.h"
+#include "ts_sankoff.h"
 #include <vector>
 #include <R.h>
 
@@ -670,15 +672,17 @@ void precompute_weighted_delta(const DataSet& ds,
 
 // --- Unified scoring ---
 
-double score_tree(TreeState& tree, const DataSet& ds) {
+double fitch_score_ew(TreeState& tree, const DataSet& ds) {
   // Check if any block has inapplicable characters
   bool has_na = false;
   for (int b = 0; b < ds.n_blocks; ++b) {
     if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
   }
 
-  if (ds.scoring_mode == ScoringMode::EW) {
+  if (ds.scoring_mode == ScoringMode::EW ||
+      ds.scoring_mode == ScoringMode::HSJ) {
     // Equal weights — add back precomputed topology-independent steps
+    // (HSJ non-hierarchy chars also use EW scoring)
     if (has_na) {
       return static_cast<double>(fitch_na_score(tree, ds)) + ds.ew_offset;
     } else {
@@ -696,6 +700,44 @@ double score_tree(TreeState& tree, const DataSet& ds) {
   std::vector<int> char_steps(ds.n_patterns, 0);
   extract_char_steps(tree, ds, char_steps);
   return compute_weighted_score(ds, char_steps);
+}
+
+double score_tree(TreeState& tree, const DataSet& ds) {
+  if (ds.scoring_mode == ScoringMode::HSJ) {
+    // HSJ: Fitch on non-hierarchy chars + HSJ DP on hierarchy blocks.
+    // hsj_score() calls fitch_score_ew() internally, avoiding recursion.
+    return hsj_score(tree, ds);
+  }
+  if (ds.scoring_mode == ScoringMode::XFORM) {
+    // Xform: Fitch on non-hierarchy chars + Sankoff on recoded hierarchy chars.
+    double fitch_part = fitch_score_ew(tree, ds);
+    if (ds.sankoff_n_chars > 0) {
+      // Build SankoffData on the fly from DataSet fields.
+      // Reuse the Sankoff engine's multi-char scoring.
+      SankoffData sd;
+      sd.n_tips = tree.n_tip;
+      sd.n_chars = ds.sankoff_n_chars;
+      sd.max_states = ds.sankoff_max_states;
+      sd.chars.resize(sd.n_chars);
+      for (int ch = 0; ch < sd.n_chars; ++ch) {
+        sd.chars[ch].n_states = ds.sankoff_n_states[ch];
+        sd.chars[ch].forced_root_state = ds.sankoff_forced_root[ch];
+        int ns = ds.sankoff_max_states;
+        sd.chars[ch].cost_matrix.resize(ns * ns);
+        const double* src = ds.sankoff_cost_matrices.data() +
+            ch * ns * ns;
+        std::copy(src, src + ns * ns, sd.chars[ch].cost_matrix.begin());
+      }
+      sd.tip_costs = ds.sankoff_tip_costs;
+
+      fitch_part += sankoff_score(
+          tree.left.data(), tree.right.data(),
+          tree.postorder.data(), tree.n_internal,
+          tree.n_tip, sd);
+    }
+    return fitch_part;
+  }
+  return fitch_score_ew(tree, ds);
 }
 
 

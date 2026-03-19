@@ -30,6 +30,10 @@ search_ui <- function(id) {
                            icon = Icon("gears")),
     go      = hidden(actionButton(ns("go"), "Search",
                                   icon = Icon("magnifying-glass"))),
+    cancel  = hidden(actionButton(ns("cancel"), "Stop",
+                                  icon = Icon("circle-stop"),
+                                  class = "btn-danger btn-sm",
+                                  style = "margin-left: 4px;")),
     results = htmlOutput(ns("results"))
   )
 }
@@ -113,21 +117,324 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     }, ignoreInit = TRUE)
 
     ##########################################################################
-    # Scores (cached)
+    # Async profile data preparation (with progress + cancel)
     ##########################################################################
 
-    scores <- bindCache(reactive({
+    profileDataset      <- reactiveVal(NULL)
+    profileDataHash     <- reactiveVal(NULL)
+    profileNotification <- reactiveVal(NULL)
+    profileProgressFile <- reactiveVal(NULL)
+    profileCancelFile   <- reactiveVal(NULL)
+
+    # Inlines PrepareDataProfile() logic so the slow StepInformation loop
+    # can report per-pattern progress and check a cancel file.
+    # Mirrors R/data_manipulation.R::PrepareDataProfile(); keep in sync.
+    profilePrepTask <- ExtendedTask$new(
+      function(dataset, progressPath, cancelPath) {
+        future::future({
+          if ("info.amounts" %in% names(attributes(dataset))) {
+            return(dataset)
+          }
+
+          at <- attributes(dataset)
+          cont <- attr(dataset, "contrast")
+          nTip <- length(dataset)
+          index <- at[["index"]]
+          allLevels <- as.character(at[["allLevels"]])
+
+          contSums <- rowSums(cont)
+          qmLevel <- which(contSums == ncol(cont))
+
+          if (length(qmLevel) == 0) {
+            attr(dataset, "contrast") <- rbind(attr(dataset, "contrast"), 1)
+            attr(dataset, "allLevels") <- c(attr(dataset, "allLevels"), "{?}")
+            qmLevel <- length(allLevels) + 1L
+          }
+
+          ambigs <- which(contSums > 1L & contSums < ncol(cont))
+          inappLevel <- which(colnames(cont) == "-")
+          if (length(inappLevel) != 0L) {
+            inappLevel <- which(apply(unname(cont), 1, identical,
+                                      as.double(colnames(cont) == "-")))
+            dataset[] <- lapply(dataset, function(i) {
+              i[i %in% inappLevel] <- qmLevel
+              i
+            })
+          }
+
+          if (length(ambigs) != 0L) {
+            dataset[] <- lapply(dataset, function(i) {
+              i[i %in% ambigs] <- qmLevel
+              i
+            })
+          }
+
+          nPattern <- max(index)
+          mataset <- matrix(
+            unlist(dataset, recursive = FALSE, use.names = FALSE), nPattern
+          )
+          mataset <- t(mataset)
+
+          maxInformative <- 0L
+          cappedAny <- FALSE
+
+          for (j in seq_len(ncol(mataset))) {
+            col <- mataset[, j]
+            nonAmbig <- col[col != qmLevel[1]]
+            if (length(nonAmbig) == 0L) next
+
+            tab <- table(nonAmbig)
+            informative <- tab > 1L
+            nInf <- sum(informative)
+
+            singletonTokens <- as.integer(names(tab[!informative]))
+            if (length(singletonTokens) > 0L) {
+              mataset[mataset[, j] %in% singletonTokens, j] <- qmLevel[1]
+            }
+
+            if (nInf > 5L) {
+              sortedInf <- sort(tab[informative], decreasing = TRUE)
+              toRemove <- as.integer(names(sortedInf)[6:length(sortedInf)])
+              mataset[mataset[, j] %in% toRemove, j] <- qmLevel[1]
+              nInf <- 5L
+              cappedAny <- TRUE
+            }
+
+            maxInformative <- max(maxInformative, nInf)
+          }
+
+          if (maxInformative < 2L) {
+            attr(dataset, "info.amounts") <- double(0)
+            return(dataset[0])
+          }
+
+          AMBIG_TOKEN <- maxInformative + 1L
+
+          for (j in seq_len(ncol(mataset))) {
+            col <- mataset[, j]
+            nonAmbig <- sort(unique(col[col != qmLevel[1]]))
+            newCol <- rep(AMBIG_TOKEN, length(col))
+            for (i in seq_along(nonAmbig)) {
+              newCol[col == nonAmbig[i]] <- i
+            }
+            mataset[, j] <- newCol
+          }
+
+          dupCols <- duplicated(t(mataset))
+          kept <- which(!dupCols)
+          copies <- lapply(kept, function(i) {
+            i + which(apply(
+              mataset[, -seq_len(i), drop = FALSE], 2, identical, mataset[, i]
+            ))
+          })
+          firstOccurrence <- seq_len(dim(mataset)[2])
+          for (i in seq_along(copies)) {
+            firstOccurrence[copies[[i]]] <- kept[i]
+          }
+
+          cipher <- seq_len(max(kept))
+          cipher[kept] <- order(kept)
+          index <- cipher[firstOccurrence][index]
+
+          mataset <- mataset[, !dupCols, drop = FALSE]
+          dataset[] <- lapply(
+            seq_len(length(dataset)), function(i) mataset[i, ]
+          )
+
+          # --- Slow part: StepInformation per unique pattern ---
+          nPatterns <- ncol(mataset)
+          info <- vector("list", nPatterns)
+
+          for (i in seq_len(nPatterns)) {
+            if (file.exists(cancelPath)) return(NULL)
+
+            info[[i]] <- TreeSearch::StepInformation(
+              mataset[, i], ambiguousTokens = AMBIG_TOKEN
+            )
+
+            writeLines(paste(i, nPatterns), progressPath)
+          }
+
+          if (file.exists(cancelPath)) return(NULL)
+
+          maxSteps <- max(vapply(
+            info, function(x) max(as.integer(names(x))), integer(1)
+          ))
+          info <- vapply(info, function(x) {
+            ret <- setNames(double(maxSteps), seq_len(maxSteps))
+            x <- x[setdiff(names(x), "0")]
+            if (length(x)) {
+              ret[names(x)] <- max(x) - x
+            }
+            ret
+          }, double(maxSteps))
+          if (is.null(dim(info))) {
+            dim(info) <- c(1L, length(info))
+          }
+          attr(dataset, "index") <- index
+          weight <- as.integer(table(index))
+          attr(dataset, "weight") <- weight
+          attr(dataset, "nr") <- length(weight)
+          attr(dataset, "info.amounts") <- info
+          attr(dataset, "informative") <- colSums(info) > 0
+
+          k <- maxInformative
+          lvls <- as.character(seq_len(k))
+          contMatrix <- rbind(diag(k), rep(1L, k))
+          dimnames(contMatrix) <- list(NULL, lvls)
+
+          attr(dataset, "levels") <- lvls
+          attr(dataset, "allLevels") <- c(lvls, "?")
+          attr(dataset, "contrast") <- contMatrix
+          attr(dataset, "nc") <- as.integer(k)
+
+          if (!any(attr(dataset, "bootstrap") == "info.amounts")) {
+            attr(dataset, "bootstrap") <- c(
+              attr(dataset, "bootstrap"), "info.amounts"
+            )
+          }
+
+          dataset
+        }, seed = TRUE)
+      }
+    )
+
+    # Trigger profile preparation when concavity switches to "profile"
+    # and the current dataset hasn't been prepared yet.
+    observe({
+      req(HaveData())
+      conc <- concavity()
+      if (!identical(conc, "profile")) return()
+      if (identical(r$dataHash, profileDataHash())) return()
+
+      # Cancel any in-flight prep (e.g. dataset changed while prep was
+      # running). Write the cancel file so the future returns NULL, then
+      # wait for it to resolve before re-invoking.
+      cf <- profileCancelFile()
+      if (!is.null(cf) && !file.exists(cf)) {
+        file.create(cf)
+      }
+      status <- tryCatch(profilePrepTask$status(), error = function(e) "initial")
+      if (status == "running") {
+        # Task still in flight; invalidate to retry once it resolves.
+        invalidateLater(200)
+        return()
+      }
+
+      profileDataset(NULL)
+      LogMsg("Starting async profile data preparation")
+
+      progPath <- tempfile("ts_profile_prog_", fileext = ".txt")
+      cancPath <- tempfile("ts_profile_cancel_", fileext = ".signal")
+      profileProgressFile(progPath)
+      profileCancelFile(cancPath)
+
+      nid <- showNotification("Preparing profile scores\u2026",
+                              duration = NULL, type = "message")
+      profileNotification(nid)
+      profilePrepTask$invoke(r$dataset, progPath, cancPath)
+    })
+
+    # Poll progress file and update notification while profile prep runs
+    observe({
+      progFile <- profileProgressFile()
+      nid <- profileNotification()
+      if (is.null(progFile) || is.null(nid)) return()
+      invalidateLater(500)
+      progress <- tryCatch(
+        readLines(progFile, warn = FALSE), error = function(e) NULL
+      )
+      if (is.null(progress) || length(progress) == 0L || !nzchar(progress[1])) {
+        return()
+      }
+      parts <- strsplit(trimws(progress[1]), "\\s+")[[1]]
+      if (length(parts) != 2L) return()
+      current <- suppressWarnings(as.integer(parts[1]))
+      total   <- suppressWarnings(as.integer(parts[2]))
+      if (is.na(current) || is.na(total) || total < 1L) return()
+      pct <- round(100 * current / total)
+      showNotification(
+        id = nid,
+        paste0("Preparing profile scores\u2026 ", current, "/", total,
+               " patterns (", pct, "%)"),
+        duration = NULL, type = "message"
+      )
+    })
+
+    # Process profile preparation result
+    observe({
+      result <- tryCatch(
+        profilePrepTask$result(),
+        validation = function(e) req(FALSE),
+        error = function(e) {
+          Notification("Error preparing profile data", type = "error")
+          NULL
+        }
+      )
+      isolate({
+        nid <- profileNotification()
+        if (!is.null(nid)) {
+          removeNotification(nid)
+          profileNotification(NULL)
+        }
+        # Clean up temp files
+        pf <- profileProgressFile()
+        if (!is.null(pf)) {
+          suppressWarnings(file.remove(pf))
+          profileProgressFile(NULL)
+        }
+        cf <- profileCancelFile()
+        if (!is.null(cf)) {
+          suppressWarnings(file.remove(cf))
+          profileCancelFile(NULL)
+        }
+        if (!is.null(result)) {
+          profileDataset(result)
+          profileDataHash(r$dataHash)
+        }
+        DisplayTreeScores()
+      })
+    })
+
+    # Cancel profile prep if user switches away from profile mode
+    observe({
+      if (!identical(concavity(), "profile")) {
+        nid <- profileNotification()
+        if (!is.null(nid)) {
+          removeNotification(nid)
+          profileNotification(NULL)
+        }
+        cf <- profileCancelFile()
+        if (!is.null(cf) && !file.exists(cf)) {
+          file.create(cf)
+        }
+      }
+    })
+
+    ##########################################################################
+    # Scores
+    ##########################################################################
+
+    scores <- reactive({
       if (!HaveData() || !AnyTrees()) {
         return(NULL)
       }
+      conc <- concavity()
+      ds <- if (identical(conc, "profile")) {
+        pd <- profileDataset()
+        if (is.null(pd)) return(NULL)
+        pd
+      } else {
+        r$dataset
+      }
       PutTree(r$trees)
-      PutData(r$dataset)
-      LogMsg("scores(): Recalculating scores with k = ", concavity())
-      withProgress(tryCatch(
+      PutData(ds)
+      LogMsg("scores(): Recalculating scores with k = ", conc)
+      tryCatch(
         signif(TreeLength(
           RootTree(r$trees, 1),
-          r$dataset,
-          concavity = concavity()
+          ds,
+          concavity = conc
         )),
         error = function (x) {
           if (HaveData() && AnyTrees()) {
@@ -137,9 +444,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
                          "Could not score all trees with dataset")
           }
           NULL
-       }),
-       value = 0.85, message = "Scoring trees")
-    }), r$treeHash, r$dataHash, concavity())
+       })
+    })
 
     ##########################################################################
     # DisplayTreeScores
@@ -150,7 +456,10 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       if (!is.null(r$searchNotification)) return(invisible())
       LogMsg("DisplayTreeScores()")
       treeScores <- scores()
-      score <- if (is.null(treeScores)) {
+      score <- if (is.null(treeScores) && identical(concavity(), "profile") &&
+                   is.null(profileDataset()) && HaveData() && AnyTrees()) {
+        "; preparing profile scores\u2026"
+      } else if (is.null(treeScores)) {
         "; could not be scored from dataset"
       } else if (length(unique(treeScores)) == 1) {
         paste0(", each with score ", treeScores[1], " (", wtType(), ")")
@@ -188,10 +497,20 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     # ExtendedTask for async search
     ##########################################################################
 
+    # Cancel file path — created before each search, deleted on completion.
+    # The C++ engine checks for this file's existence every ~200ms and stops
+    # gracefully if it appears.
+    cancelFile <- reactiveVal(NULL)
+
     searchTask <- ExtendedTask$new(
       function(dataset, tree, concavity, strategy, maxReplicates,
-               targetHits, maxSeconds, poolSuboptimal, nThreads) {
+               targetHits, maxSeconds, poolSuboptimal, nThreads,
+               cancelPath) {
         future::future({
+          on.exit(Sys.unsetenv("TREESEARCH_CANCEL_FILE"))
+          if (nzchar(cancelPath)) {
+            Sys.setenv(TREESEARCH_CANCEL_FILE = cancelPath)
+          }
           args <- list(
             dataset,
             tree = tree,
@@ -254,6 +573,10 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       disable("go")
       disable("modalGo")
       disable("searchConfig")
+      shinyjs::show("cancel")
+      # Create a unique cancel file path for this search run
+      cancelPath <- tempfile("ts_cancel_", fileext = ".signal")
+      cancelFile(cancelPath)
       searchLabel <- paste0(
         "Searching (", searchMaxRep, " runs, ", wtType(),
         if (searchNThreads > 1L) paste0(", ", searchNThreads, " threads") else "",
@@ -263,43 +586,51 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         searchLabel, duration = NULL, type = "message", closeButton = FALSE
       )
       r$searchDataHash <- r$dataHash
+      r$searchInProgress <- TRUE
       output$results <- renderUI(HTML(searchLabel))
 
-      startTree <- if (!AnyTrees()) {
-        LogComment("Select starting tree")
+      startTree <- tryCatch({
+        if (!AnyTrees()) {
+          LogComment("Select starting tree")
+          LogCode(paste0("startTree <- AdditionTree(dataset, concavity = ",
+                         Enquote(concavity()), ")"))
+          AdditionTree(r$dataset[SearchTips()], concavity = concavity())
+        } else {
+          LogComment("Select starting tree")
+          treeLabels <- TipLabels(r$trees[[1]])
+          if (all(SearchTips() %in% treeLabels)) {
+            if (length(setdiff(treeLabels, SearchTips())) > 0) {
+              if (length(r$searchWithout)) {
+                LogCode(paste0(
+                  "searchTips <- setdiff(names(dataset), ", EnC(r$searchWithout),
+                  ")"),
+                  "startTree <- KeepTip(trees[[1]], searchTips)")
+              } else {
+                LogCode("startTree <- KeepTip(trees[[1]], names(dataset))")
+              }
+              KeepTip(r$trees[[1]], SearchTips())
+            } else {
+              sc <- scores()
+              firstOptimal <- if (length(sc)) which.min(sc) else 1L
+              LogCode(paste0("startTree <- trees[[", firstOptimal, "]]",
+                             " # First tree with optimal score"))
+              r$trees[[firstOptimal]]
+            }
+          } else {
+            # Fuzzy-match labels
+            matching <- TreeDist::LAPJV(adist(treeLabels, SearchTips()))$matching
+            scaffold <- KeepTip(r$trees[[1]], !is.na(matching))
+            scaffold[["tip.label"]] <- SearchTips()[matching[!is.na(matching)]]
+            AdditionTree(r$dataset, concavity = concavity(),
+                         constraint = scaffold)
+          }
+        }
+      }, error = function(e) {
+        LogMsg("Starting tree error: ", conditionMessage(e), "; using fresh tree")
         LogCode(paste0("startTree <- AdditionTree(dataset, concavity = ",
                        Enquote(concavity()), ")"))
         AdditionTree(r$dataset[SearchTips()], concavity = concavity())
-      } else {
-        LogComment("Select starting tree")
-        treeLabels <- TipLabels(r$trees[[1]])
-        if (all(SearchTips() %in% treeLabels)) {
-          if (length(setdiff(treeLabels, SearchTips())) > 0) {
-            if (length(r$searchWithout)) {
-              LogCode(paste0(
-                "searchTips <- setdiff(names(dataset), ", EnC(r$searchWithout),
-                ")"),
-                "startTree <- KeepTip(trees[[1]], searchTips)")
-            } else {
-              LogCode("startTree <- KeepTip(trees[[1]], names(dataset))")
-            }
-            KeepTip(r$trees[[1]], SearchTips())
-          } else {
-            sc <- scores()
-            firstOptimal <- if (length(sc)) which.min(sc) else 1L
-            LogCode(paste0("startTree <- trees[[", firstOptimal, "]]",
-                           " # First tree with optimal score"))
-            r$trees[[firstOptimal]]
-          }
-        } else {
-          # Fuzzy-match labels
-          matching <- TreeDist::LAPJV(adist(treeLabels, SearchTips()))$matching
-          scaffold <- KeepTip(r$trees[[1]], !is.na(matching))
-          scaffold[["tip.label"]] <- SearchTips()[matching[!is.na(matching)]]
-          AdditionTree(r$dataset, concavity = concavity(),
-                       constraint = scaffold)
-        }
-      }
+      })
       LogMsg("StartSearch()")
       PutData(r$dataset[SearchTips()])
       PutTree(startTree)
@@ -333,7 +664,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       searchTask$invoke(
         searchDataset, startTree, searchConcavity,
         searchStrategy, searchMaxRep, searchTargetHits,
-        searchMaxSeconds, searchPoolSub, searchNThreads
+        searchMaxSeconds, searchPoolSub, searchNThreads,
+        cancelPath
       )
     }
 
@@ -349,6 +681,23 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     observeEvent(input$modalGo, {
       removeModal()
       StartSearch()
+    }, ignoreInit = TRUE)
+
+    # Cancel button: create the signal file so the C++ engine stops
+    observeEvent(input$cancel, {
+      cf <- cancelFile()
+      if (!is.null(cf)) {
+        file.create(cf)
+        shinyjs::hide("cancel")
+        # Remove search notification immediately so it doesn't linger
+        if (!is.null(r$searchNotification)) {
+          removeNotification(r$searchNotification)
+          r$searchNotification <- NULL
+        }
+        output$results <- renderUI(HTML(
+          "Stopping \u2014 waiting for current search phase to finish\u2026"
+        ))
+      }
     }, ignoreInit = TRUE)
 
     ##########################################################################
@@ -371,7 +720,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       showModal(modalDialog(
         easyClose = TRUE,
         fluidPage(column(6,
-          selectInput(ns("implied.weights"), "Mode",
+          selectInput(ns("implied.weights"), "Step weighting",
                      list("Implied" = "on", "Profile" = "prof",
                           "Equal" = "off"), "on"),
           sliderInput(ns("concavity"), "Concavity constant", min = 0L,
@@ -435,13 +784,24 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         }
       )
       isolate({
-        # Clean up search-in-progress UI state
-        if (!is.null(r$searchNotification)) {
-          removeNotification(r$searchNotification)
-          r$searchNotification <- NULL
+        # Clean up search-in-progress UI state. Gate on searchInProgress
+        # (not searchNotification) because the cancel observer may have
+        # already dismissed the notification.
+        if (isTRUE(r$searchInProgress)) {
+          if (!is.null(r$searchNotification)) {
+            removeNotification(r$searchNotification)
+            r$searchNotification <- NULL
+          }
           enable("go")
           enable("modalGo")
           enable("searchConfig")
+          shinyjs::hide("cancel")
+          cf <- cancelFile()
+          if (!is.null(cf)) {
+            suppressWarnings(file.remove(cf))
+            cancelFile(NULL)
+          }
+          r$searchInProgress <- FALSE
         }
 
         if (is.null(newTrees)) {
@@ -514,6 +874,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     observeEvent(r$dataset, {
       r$searchTotalHits <- 0L
       r$searchTotalReps <- 0L
+      r$bestSearchScore <- NULL
+      r$searchCount <- 0L
       nTip <- length(r$dataset)
       nChar <- sum(attr(r$dataset, "weight", exact = TRUE))
       defaultTimeout <- max(1L, min(15L, ceiling(nTip * nChar / 20000L)))

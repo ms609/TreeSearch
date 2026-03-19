@@ -158,6 +158,82 @@ Lower score = better. Current defaults: d2_r5.
 ### CSS effectiveness: Marginal (adds 2-6% time, no consistent improvement)
 Disabled by default (cssRounds=0).
 
+### Latest EW regression check: 2026-03-19 by Agent A (v2.0.0, post T-115–T-124)
+
+All datasets pass regression benchmark. EW baselines updated with 7-run medians:
+
+| Dataset | Tips | Chars | Median (s) | Score (range) | Notes |
+|---------|------|-------|------------|---------------|-------|
+| Vinther2008 | 23 | 57 | 0.420 | 79 | stable |
+| Agnarsson2004 | 62 | 242 | 1.790 | 778 | stable |
+| Zhu2013 | 75 | 253 | 3.170 | 648–666 | high variance (2.5–7.6s range) |
+| Dikow2009 | 88 | 220 | 4.900 | 1612–1614 | high variance (4.0–12.4s range) |
+
+Zhu2013/Dikow2009 appear slightly slower than 2026-03-18 baselines (~17–27%) but
+within stochastic noise. Phase breakdown unchanged. No regression in C++ engine.
+The recent DataSet changes (inapp_state field, HSJ/XFORM modes) have no measurable
+effect on EW search paths.
+
+### HSJ and XFORM scoring baselines: 2026-03-19 by Agent A
+
+Synthetic hierarchical datasets (valid hierarchy structure: primary + secondary chars,
+secondaries are inapplicable when primary absent). 3-run medians, 5 reps per run.
+
+| Config | Tips | Chars | Blocks | EW (s) | HSJ (s) | XFORM (s) | HSJ/EW | XFORM/EW |
+|--------|------|-------|--------|--------|---------|-----------|--------|----------|
+| small | 20 | 19 | 3 | 0.020 | 0.010 | 0.020 | 0.5× | 1.0× |
+| medium | 40 | 50 | 5 | 0.170 | 0.100 | 0.280 | 0.6× | 1.6× |
+| large | 60 | 82 | 8 | 0.610 | 0.360 | 1.330 | 0.6× | 2.2× |
+| xlarge | 80 | 120 | 10 | 5.920 | 3.560 | 9.460 | 0.6× | 1.6× |
+
+**HSJ is faster than EW** (~0.6× at medium/large sizes) because:
+1. Fitch candidate screening guards expensive full HSJ rescore — most candidates
+   are rejected by Fitch before HSJ is called.
+2. Hierarchy datasets have a simpler parsimony landscape (secondaries add signal
+   only when primary is present), leading to faster search convergence.
+
+**XFORM is slower than EW** (~1.6–2.2× at medium/large sizes) due to Sankoff
+cost per candidate. Phase breakdown (large config, 5 reps):
+
+| Phase | EW avg ms/rep | HSJ avg ms/rep | XFORM avg ms/rep |
+|-------|---------------|----------------|------------------|
+| TBR | 25 | 23 | 29 |
+| XSS | 14 | 7 | 14 |
+| RSS | 4 | 2 | 5 |
+| Ratchet | 51 | 28 | 86 |
+| Drift | 22 | 13 | 36 |
+| Final TBR | 2 | 1 | 4 |
+| **Total** | **117** | **74** | **174** |
+
+XFORM overhead concentrated in Ratchet (+69%) and Drift (+64%), which perform
+more scoring iterations than TBR. XSS/RSS overhead is negligible.
+
+**Conclusion:** Both modes are acceptable. XFORM at ~1.7× overhead for real
+workflows is reasonable given the algorithmic complexity (Sankoff vs Fitch).
+No optimization tasks raised — XFORM at this cost is expected behavior.
+
+### Hierarchical resampling: 2026-03-19 by Agent A
+
+Medium config (40 tips, 50 chars, 5 blocks), jackknife, 20 reps:
+
+| Mode | 1 thread (s) | 2 threads (s) | Speedup |
+|------|-------------|--------------|---------|
+| Brazeau (C++ parallel) | 5.19 | 2.05 | 2.5× |
+| HSJ hierarchical (serial R loop) | 1.76 | 1.64 | 1.1× |
+| XFORM hierarchical (serial R loop) | measured via 10-rep: ~1.58 | — | — |
+
+**Finding 1 (positive):** HSJ/XFORM hierarchical resampling is faster than Brazeau
+per-replicate because the block-level resampling units (35 vs 50 units) produce
+simpler per-replicate datasets. No performance concern here.
+
+**Finding 2 (known limitation):** Hierarchical resampling uses a serial R loop
+across replicates — `nThreads` only applies within each replicate's internal search.
+Brazeau gets full 2.5× at 2 threads; HSJ/XFORM get only ~1.1×. For users running
+50–100 jackknife replicates with large HSJ/XFORM datasets, wall time will be ~2×
+longer than equivalent Brazeau. This is documented in AGENTS.md as a known future
+optimization (C++-level inter-replicate parallelism for hierarchical resampling).
+No new task filed — already on the roadmap.
+
 ## What to Profile
 
 Status key: ✅ resolved, ⚠ partially explored, ❌ not yet investigated
@@ -215,11 +291,24 @@ For each finding, add to `to-do.md`:
 Include the measurement methodology and baseline numbers so the implementer
 can verify the improvement.
 
+8. ✅ **HSJ scoring overhead** (2026-03-19 Agent A). HSJ is ~0.6× EW wall time
+   (faster) on synthetic hierarchical data. Fitch screening gates full HSJ rescore
+   effectively. No optimization needed.
+
+9. ✅ **XFORM (Sankoff) scoring overhead** (2026-03-19 Agent A). XFORM is ~1.6–2.2×
+   EW wall time. Overhead concentrated in Ratchet (+69%) and Drift (+64%). This
+   is expected Sankoff vs Fitch arithmetic cost — no obvious optimization target.
+
+10. ✅ **Hierarchical resampling parallelism** (2026-03-19 Agent A). Serial R loop
+    means `nThreads` only applies within each replicate. Brazeau 2T = 2.5× speedup;
+    HSJ/XFORM hierarchical 2T = 1.1× only. Known limitation, future optimization
+    (C++-level inter-replicate parallelism for hierarchical resampling).
+
 ## Build and Test (Reminder)
 
 Always use isolated library:
 ```bash
-R CMD INSTALL --library=.agent-X .
+R CMD build --no-build-vignettes --no-manual . && R CMD INSTALL --library=.agent-X TreeSearch_*.tar.gz && rm -f TreeSearch_*.tar.gz
 Rscript -e "library(TreeSearch, lib.loc='.agent-X'); testthat::test_dir('tests/testthat', filter='ts-')"
 ```
 

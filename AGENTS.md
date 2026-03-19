@@ -133,11 +133,15 @@ Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 
 ### On task completion
 
-1. Move task to Completed in `to-do.md`.
-2. Set `agent-X.md` to IDLE.
-3. Append a brief entry to this file documenting what changed.
-4. Update `coordination.md` if strategic objectives are affected.
-5. Take next task.
+1. **Delete** the task row from `to-do.md`. If the task was the last open
+   row in a section/group, delete the section header too.
+2. **Append** a summary row to `completed-tasks.md` under the current date
+   heading (create a new `## YYYY-MM-DD` heading if needed):
+   `| T-nnn | Short description | X | Brief notes |`
+3. Set `agent-X.md` to IDLE.
+4. Append a brief entry to this file documenting what changed.
+5. Update `coordination.md` if strategic objectives are affected.
+6. Take next task.
 
 ### Standing tasks
 
@@ -154,7 +158,8 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 | File | Purpose |
 |------|---------|
 | `issues.md` | Human-entered issues (agents triage → `to-do.md`) |
-| `to-do.md` | Task queue |
+| `to-do.md` | Task queue (active/open tasks only) |
+| `completed-tasks.md` | Archive of completed tasks |
 | `coordination.md` | Strategic plan |
 | `agent-X.md` | Agent progress log |
 | `AGENTS.md` | Conventions + architecture reference |
@@ -412,7 +417,7 @@ Integration tests: `test-app-smoke.R` (3), `test-Distribution.R` (13),
 
 - **Version**: 2.0.0 (major bump for new `MaximizeParsimony()` API)
 - **R CMD check**: 0 ERRORs, 0 WARNINGs, 1 NOTE (R 4.5.2 internal bug)
-- **Test suite**: ~9200 R-level + 1437 ts-* + 67 ParsSim + 37 MaddisonSlatkin pass
+- **Test suite**: ~9200 R-level + 1510 ts-* + 128 ParsSim + 37 MaddisonSlatkin + 49 recode-hierarchy pass
 
 ## Key design decisions (reference)
 
@@ -449,10 +454,14 @@ hierarchy specification.
 
 | File | Purpose | Status |
 |------|---------|--------|
-| `R/CharacterHierarchy.R` | `CharacterHierarchy` S3 class, `validate_hierarchy()`, `hierarchy_from_names()`, `hierarchy_chars()`, `hierarchy_controlling()` | Complete, 32 tests passing |
-| `tests/testthat/test-CharacterHierarchy.R` | Unit tests for hierarchy specification | Complete |
-| `src/ts_hsj.h` | `HierarchyBlock` struct, `hsj_score()` declaration | Complete |
-| `src/ts_hsj.cpp` | HSJ scoring algorithm: per-char Fitch labeling, postorder a(n)/p(n) DP | Core algorithm complete; not yet wired to search pipeline |
+| `R/CharacterHierarchy.R` | `CharacterHierarchy` S3 class, `validate_hierarchy()`, `hierarchy_from_names()`, `hierarchy_chars()`, `hierarchy_controlling()`, `non_hierarchy_weights()` | Complete, 34 tests passing |
+| `tests/testthat/test-CharacterHierarchy.R` | Unit tests for hierarchy specification + weight partitioning | Complete |
+| `src/ts_hsj.h` | `HierarchyBlock` struct (with `absent_state`), `hsj_score()` declaration, `partition_weights()` | Complete |
+| `src/ts_hsj.cpp` | `partition_weights()`, `fitch_label_char()` (with uppass), `score_hierarchy_block()`, `hsj_score()` | Complete (full-rescore only; not wired to search pipeline) |
+| `src/ts_sankoff.h` | `SankoffChar`, `SankoffData` structs, `sankoff_score()`, `sankoff_score_char()`, `sankoff_uppass()` | Complete |
+| `src/ts_sankoff.cpp` | Sankoff downpass, uppass, root forcing | Complete |
+| `R/recode_hierarchy.R` | `recode_hierarchy()`: x-transformation recoding (Goloboff et al. 2021) | Complete, 49 tests |
+| `tests/testthat/test-recode-hierarchy.R` | Unit tests for recode_hierarchy() | Complete |
 | `inst/REFERENCES.bib` | Added `Goloboff2021b` entry | Complete |
 
 ### Modified files
@@ -461,6 +470,8 @@ hierarchy specification.
 |------|--------|
 | `DESCRIPTION` | Added `CharacterHierarchy.R` to Collate field |
 | `R/MaximizeParsimony.R` | Added `hierarchy`, `inapplicable`, `hsj_alpha` params with validation; non-brazeau methods currently `stop()` with "not yet implemented" |
+| `src/ts_data.h` | Added `inapp_state` field to `DataSet` (for HSJ) |
+| `src/ts_data.cpp` | Populate `inapp_state` in `build_dataset()` |
 
 ### Design decisions
 
@@ -471,13 +482,33 @@ hierarchy specification.
 - Constraint interaction: **ignored** for now
 - Resampling: **hierarchical** — resample top-level chars; when a controlling primary is sampled, also resample within its block; recurse for nested hierarchies
 
+### Resampling with hierarchy (T-124)
+
+`Resample()` now accepts `hierarchy`, `inapplicable`, and `hsj_alpha`
+parameters. When `inapplicable != "brazeau"`, resampling is hierarchy-aware:
+
+- **Resampling units**: each non-hierarchy character = 1 unit; each
+  top-level hierarchy block (primary + all dependents) = 1 atomic unit.
+- **Jackknife**: retain `proportion` of units without replacement.
+- **Bootstrap**: sample `n_units` units with replacement (blocks can be
+  duplicated).
+- Per replicate: `.HierarchicalResampleWeights()` computes pattern weights
+  for non-hierarchy chars and per-block sample counts. `.ResampleHierarchy()`
+  calls `ts_driven_search` per replicate with filtered HSJ blocks or xform
+  chars.
+- **No C++ changes**: reuses existing `ts_driven_search` HSJ/xform infrastructure.
+- **Parallelism**: serial R loop over replicates (C++ inter-search parallelism
+  via `nThreads` still available within each replicate). Adding C++-level
+  inter-replicate parallelism is a future optimization.
+
 ### Remaining work (Phase 1c–f)
 
-1. Pass `absent_token`, `n_tokens` from R to C++
-2. Partition original characters into hierarchy vs non-hierarchy sets so Fitch scores only non-hierarchy chars
-3. Add Rcpp bridge function for HSJ scoring in `ts_rcpp.cpp`
-4. R-side marshalling: build `tip_labels` matrix from phyDat, convert `CharacterHierarchy` → `HierarchyBlock` vectors
-5. Remove placeholder `stop()`; end-to-end test against paper examples
+1. ~~Pass `absent_token`, `n_tokens` from R to C++~~ **Done** (T-115): `absent_state` in HierarchyBlock, `inapp_state` in DataSet.
+2. ~~Partition original characters into hierarchy vs non-hierarchy sets~~ **Done** (T-115): `partition_weights()` (C++) and `non_hierarchy_weights()` (R).
+3. ~~Implement `hsj_score()` core algorithm in `ts_hsj.cpp`~~ **Done** (T-116): `fitch_label_char()` + `score_hierarchy_block()` + `hsj_score()`.
+4. ~~Add Rcpp bridge function for HSJ scoring in `ts_rcpp.cpp`~~ **Done** (T-116): `ts_hsj_score()` registered in init.c.
+5. ~~R-side marshalling~~ **Done** (T-116): `build_tip_labels()`, `hierarchy_to_blocks()`.
+6. ~~Remove placeholder `stop()`~~ **Done** (T-117): HSJ wired into `score_tree()` dispatch, `ts_driven_search()` bridge, `MaximizeParsimony()`. End-to-end test against paper examples (T-118)
 
 ### Key algorithm notes (HSJ)
 
@@ -492,11 +523,15 @@ hierarchy specification.
 - HSJ is full-rescore only (no incremental variant). Performance mitigation:
   candidate screening via Fitch, full HSJ only for promising candidates.
 
-### Phase 2 (step-matrix) — not yet started
+### Phase 2 (step-matrix) — Complete (end-to-end functional)
 
-Requires Sankoff optimization engine (`ts_sankoff.h/.cpp`). R-level recoding
-function `recode_hierarchy()` combines primary + secondaries into composite
-step-matrix character with asymmetric costs (gain:loss = n+1:1).
+Sankoff engine (`ts_sankoff.h/.cpp`) implements downpass, uppass, root forcing.
+R-level `recode_hierarchy()` combines primary + secondaries into composite
+step-matrix character with asymmetric costs (gain:loss = n+1:1). Multistate
+secondaries supported (state count = ∏k_i + 1). Nested hierarchies deferred.
+Integration complete: `ScoringMode::XFORM` in `score_tree()` dispatches
+Fitch(non-hierarchy) + Sankoff(recoded). `MaximizeParsimony()` accepts
+`inapplicable = "xform"`. End-to-end search verified.
 
 ## Benchmarks and profiling
 

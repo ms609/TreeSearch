@@ -305,9 +305,10 @@ FormatMissProb <- function(prob) {
 
 SearchConfidenceText <- function(K, R) {
   if (is.null(K) || is.null(R) || R <= 0L || K <= 0L) return(NULL)
+  # Clamp hits to replicates (shouldn't exceed, but guard against stale data)
+  K <- min(K, R)
   # exp(-K) is a conservative upper bound on (1 - K/R)^R.
   # Avoids overconfidence when K ~ R with few replicates (old formula
-
   # gave 0% when K = R; exp(-K) always > 0).  Matches the theoretical
   # worst-case formula shown in the config dialog.
   prob_miss <- exp(-K)

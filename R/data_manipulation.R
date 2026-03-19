@@ -117,6 +117,22 @@ PrepareDataProfile <- function (dataset) {
       mataset[mataset[, j] %in% toRemove, j] <- qmLevel[1]
       nInf <- 5L
       cappedAny <- TRUE
+      # Recount after capping
+      tab <- table(mataset[mataset[, j] != qmLevel[1], j])
+      informative <- tab > 1L
+    }
+    
+    # MaddisonSlatkin is infeasible for multi-state chars with many tips.
+    # Reduce to binary (top 2) when computation would be too slow.
+    if (nInf >= 3L) {
+      nInfTips <- sum(tab[informative])
+      maxTips <- c(Inf, Inf, 15L, 10L, 8L)
+      if (nInfTips > maxTips[min(nInf, 5L)]) {
+        sortedInf <- sort(tab[informative], decreasing = TRUE)
+        toRemove <- as.integer(names(sortedInf)[3:length(sortedInf)])
+        mataset[mataset[, j] %in% toRemove, j] <- qmLevel[1]
+        nInf <- 2L
+      }
     }
     
     maxInformative <- max(maxInformative, nInf)

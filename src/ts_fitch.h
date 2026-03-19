@@ -176,9 +176,14 @@ void extract_char_steps(const TreeState& tree, const DataSet& ds,
 
 // --- Unified scoring ---
 
-// Score the tree using either EW or IW depending on ds.concavity.
-// Performs full downpass+uppass (or NA three-pass if needed).
-// Returns EW score as double when concavity is infinite; IW score otherwise.
+// Score non-hierarchy characters via Fitch (EW, IW, or profile).
+// For HSJ mode, treats the DataSet as EW (non-hierarchy chars only).
+// Does NOT include HSJ hierarchy block contributions.
+double fitch_score_ew(TreeState& tree, const DataSet& ds);
+
+// Score the tree using the appropriate scoring mode.
+// For HSJ: calls fitch_score_ew() + HSJ DP on hierarchy blocks.
+// For EW/IW/PROFILE: delegates to fitch_score_ew().
 double score_tree(TreeState& tree, const DataSet& ds);
 
 // Compute IW score from per-character step counts.

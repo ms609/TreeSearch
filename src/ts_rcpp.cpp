@@ -19,6 +19,7 @@
 #include "ts_rng.h"
 #include "ts_parallel.h"
 #include "ts_simplify.h"
+#include "ts_hsj.h"
 
 using namespace Rcpp;
 
@@ -1206,10 +1207,106 @@ List ts_driven_search(
     Nullable<Function> progressCallback = R_NilValue,
     int nThreads = 1,
     Nullable<IntegerMatrix> startEdge = R_NilValue,
-    bool sprFirst = false)
+    bool sprFirst = false,
+    Nullable<List> hierarchyBlocks = R_NilValue,
+    Nullable<IntegerMatrix> hsjTipLabels = R_NilValue,
+    double hsjAlpha = 1.0,
+    int hsjAbsentState = 0,
+    Nullable<List> xformChars = R_NilValue)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity, infoAmounts);
+
+  // HSJ hierarchy scoring setup
+  if (hierarchyBlocks.isNotNull()) {
+    List hb_list(hierarchyBlocks.get());
+    for (int b = 0; b < hb_list.size(); ++b) {
+      List rb = hb_list[b];
+      ts::HierarchyBlock block;
+      block.primary_char = as<int>(rb["primary"]);
+      block.secondary_chars = as<std::vector<int>>(rb["secondaries"]);
+      block.n_secondaries = static_cast<int>(block.secondary_chars.size());
+      block.absent_state = hsjAbsentState;
+      ds.hierarchy_blocks.push_back(block);
+    }
+    ds.hsj_alpha = hsjAlpha;
+    ds.scoring_mode = ts::ScoringMode::HSJ;
+
+    if (hsjTipLabels.isNotNull()) {
+      IntegerMatrix tl(hsjTipLabels.get());
+      int n_t = tl.nrow();
+      int n_c = tl.ncol();
+      ds.n_orig_chars = n_c;
+      ds.tip_labels.resize(n_t * n_c);
+      for (int t = 0; t < n_t; ++t) {
+        for (int c = 0; c < n_c; ++c) {
+          ds.tip_labels[t * n_c + c] = tl(t, c);
+        }
+      }
+    }
+  }
+
+  // Xform (step-matrix) scoring setup
+  if (xformChars.isNotNull()) {
+    List xf_list(xformChars.get());
+    int n_xf = xf_list.size();
+    int max_ns = 0;
+    std::vector<int> ns_vec(n_xf);
+    std::vector<int> fr_vec(n_xf);
+
+    for (int ch = 0; ch < n_xf; ++ch) {
+      List rc = xf_list[ch];
+      ns_vec[ch] = as<int>(rc["n_states"]);
+      fr_vec[ch] = as<int>(rc["forced_root_state"]);
+      if (ns_vec[ch] > max_ns) max_ns = ns_vec[ch];
+    }
+
+    ds.sankoff_n_chars = n_xf;
+    ds.sankoff_max_states = max_ns;
+    ds.sankoff_n_states = ns_vec;
+    ds.sankoff_forced_root = fr_vec;
+
+    // Cost matrices: flat [n_chars * max_ns * max_ns]
+    ds.sankoff_cost_matrices.assign(
+        static_cast<size_t>(n_xf) * max_ns * max_ns, 0.0);
+    for (int ch = 0; ch < n_xf; ++ch) {
+      List rc = xf_list[ch];
+      NumericMatrix cm = as<NumericMatrix>(rc["cost_matrix"]);
+      int ns = ns_vec[ch];
+      double* dst = ds.sankoff_cost_matrices.data() +
+          static_cast<size_t>(ch) * max_ns * max_ns;
+      for (int r = 0; r < ns; ++r)
+        for (int c = 0; c < ns; ++c)
+          dst[r * max_ns + c] = cm(r, c);
+    }
+
+    // Tip costs: flat [n_tips * stride], stride = n_chars * max_ns
+    int n_t = tip_data.nrow();
+    int stride = n_xf * max_ns;
+    const double INF = std::numeric_limits<double>::infinity();
+    ds.sankoff_tip_costs.assign(static_cast<size_t>(n_t) * stride, INF);
+    for (int ch = 0; ch < n_xf; ++ch) {
+      List rc = xf_list[ch];
+      IntegerVector ts_r = as<IntegerVector>(rc["tip_states"]);
+      int ns = ns_vec[ch];
+      for (int t = 0; t < n_t; ++t) {
+        int state = ts_r[t];
+        double* tip_ptr = ds.sankoff_tip_costs.data() +
+            t * stride + ch * max_ns;
+        if (state == -1) {
+          // Fully ambiguous: all states possible
+          for (int s = 0; s < ns; ++s) tip_ptr[s] = 0.0;
+        } else if (state == -2) {
+          // Present but unknown: all present states (1..ns-1) possible
+          for (int s = 1; s < ns; ++s) tip_ptr[s] = 0.0;
+        } else if (state >= 0 && state < ns) {
+          tip_ptr[state] = 0.0;
+        }
+      }
+    }
+
+    ds.scoring_mode = ts::ScoringMode::XFORM;
+  }
 
   // Build constraint if provided
   int n_tips = tip_data.nrow();
@@ -2034,4 +2131,177 @@ List ts_simplify_diag(
     Named("informative") = informative,
     Named("n_states_remaining") = n_states_remaining
   );
+}
+
+// [[Rcpp::export]]
+double ts_hsj_score(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    List hierarchy_blocks_r,
+    double alpha,
+    IntegerMatrix tip_labels_r,
+    int absent_state)
+{
+  // Build DataSet for non-hierarchy characters (weight already adjusted)
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+
+  // Build tree
+  ts::TreeState tree;
+  tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
+
+  // Convert hierarchy blocks from R list to C++ vector
+  std::vector<ts::HierarchyBlock> blocks;
+  for (int b = 0; b < hierarchy_blocks_r.size(); ++b) {
+    List rb = hierarchy_blocks_r[b];
+    ts::HierarchyBlock block;
+    block.primary_char = as<int>(rb["primary"]);     // 0-based
+    block.secondary_chars = as<std::vector<int>>(rb["secondaries"]); // 0-based
+    block.n_secondaries = static_cast<int>(block.secondary_chars.size());
+    block.absent_state = absent_state;
+    blocks.push_back(block);
+  }
+
+  // Flatten tip_labels matrix (n_tips x n_orig_chars, row-major)
+  int n_tips = tip_labels_r.nrow();
+  int n_orig_chars = tip_labels_r.ncol();
+  std::vector<int> tip_labels(n_tips * n_orig_chars);
+  for (int t = 0; t < n_tips; ++t) {
+    for (int c = 0; c < n_orig_chars; ++c) {
+      tip_labels[t * n_orig_chars + c] = tip_labels_r(t, c);
+    }
+  }
+
+  return ts::hsj_score(tree, ds, blocks, alpha, tip_labels, n_orig_chars);
+}
+
+// =========================================================================
+// Sankoff parsimony scoring — test bridge
+// =========================================================================
+
+#include "ts_sankoff.h"
+
+// Build tree topology from R edge matrix (no DataSet needed).
+static void build_topo_from_edge(
+    const int* edge_parent, const int* edge_child, int n_edge,
+    int n_tip,
+    std::vector<int>& left_out, std::vector<int>& right_out,
+    std::vector<int>& postorder_out)
+{
+  int n_internal = n_tip - 1;
+  left_out.assign(n_internal, -1);
+  right_out.assign(n_internal, -1);
+
+  for (int i = 0; i < n_edge; ++i) {
+    int p = edge_parent[i] - 1;
+    int c = edge_child[i] - 1;
+    int pi = p - n_tip;
+    if (left_out[pi] == -1) left_out[pi] = c;
+    else                     right_out[pi] = c;
+  }
+
+  // Two-stack postorder (internal nodes only, leaves-to-root)
+  postorder_out.clear();
+  postorder_out.reserve(n_internal);
+  std::vector<int> stk;
+  stk.push_back(n_tip);
+  while (!stk.empty()) {
+    int nd = stk.back(); stk.pop_back();
+    if (nd >= n_tip) {
+      postorder_out.push_back(nd);
+      int ni = nd - n_tip;
+      if (left_out[ni]  >= 0) stk.push_back(left_out[ni]);
+      if (right_out[ni] >= 0) stk.push_back(right_out[ni]);
+    }
+  }
+  std::reverse(postorder_out.begin(), postorder_out.end());
+}
+
+// [[Rcpp::export]]
+List ts_sankoff_test(
+    IntegerMatrix edge,
+    IntegerVector n_states_r,
+    List cost_matrices_r,
+    IntegerMatrix tip_states_r,
+    IntegerVector forced_root_r)
+{
+  int n_edge = edge.nrow();
+  int n_tip  = (n_edge / 2) + 1;
+  int n_chars = n_states_r.size();
+  int n_node = 2 * n_tip - 1;
+  const double INF = std::numeric_limits<double>::infinity();
+
+  // Build topology
+  std::vector<int> left_v, right_v, postorder;
+  build_topo_from_edge(&edge(0, 0), &edge(0, 1), n_edge, n_tip,
+                       left_v, right_v, postorder);
+  int n_internal = static_cast<int>(postorder.size());
+
+  // Build SankoffData
+  ts::SankoffData sd;
+  sd.n_tips = n_tip;
+  sd.n_chars = n_chars;
+  sd.max_states = 0;
+  sd.chars.resize(n_chars);
+
+  for (int ch = 0; ch < n_chars; ++ch) {
+    int ns = n_states_r[ch];
+    sd.chars[ch].n_states = ns;
+    sd.chars[ch].forced_root_state = forced_root_r[ch];
+    if (ns > sd.max_states) sd.max_states = ns;
+
+    NumericMatrix cm = as<NumericMatrix>(cost_matrices_r[ch]);
+    sd.chars[ch].cost_matrix.resize(ns * ns);
+    for (int r = 0; r < ns; ++r)
+      for (int c = 0; c < ns; ++c)
+        sd.chars[ch].cost_matrix[r * ns + c] = cm(r, c);
+  }
+
+  // Build tip costs
+  int stride = sd.stride();
+  sd.tip_costs.assign(static_cast<size_t>(n_tip) * stride, INF);
+  for (int t = 0; t < n_tip; ++t) {
+    for (int ch = 0; ch < n_chars; ++ch) {
+      int state = tip_states_r(t, ch);
+      if (state >= 0 && state < sd.chars[ch].n_states) {
+        sd.tip_costs[t * stride + ch * sd.max_states + state] = 0.0;
+      }
+    }
+  }
+
+  // Score all characters
+  double total = ts::sankoff_score(
+      left_v.data(), right_v.data(),
+      postorder.data(), n_internal, n_tip, sd);
+
+  // Per-character scores + node costs + uppass
+  NumericVector per_char(n_chars);
+  IntegerMatrix opt_states(n_node, n_chars);
+
+  for (int ch = 0; ch < n_chars; ++ch) {
+    const ts::SankoffChar& sc = sd.chars[ch];
+    const double* ch_tip = sd.tip_costs.data() + ch * sd.max_states;
+
+    std::vector<double> node_costs(static_cast<size_t>(n_node) * sc.n_states);
+    per_char[ch] = ts::sankoff_score_char(
+        left_v.data(), right_v.data(),
+        postorder.data(), n_internal, n_tip,
+        sc, ch_tip, stride, node_costs.data());
+
+    std::vector<int> opt(n_node);
+    ts::sankoff_uppass(
+        left_v.data(), right_v.data(),
+        postorder.data(), n_internal, n_tip,
+        sc, node_costs.data(), opt.data());
+
+    for (int nd = 0; nd < n_node; ++nd)
+      opt_states(nd, ch) = opt[nd];
+  }
+
+  return List::create(
+    Named("score") = total,
+    Named("per_char") = per_char,
+    Named("optimal_states") = opt_states);
 }

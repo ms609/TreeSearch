@@ -123,7 +123,8 @@ void copy_topology(TreeState& dst, const TreeState& src) {
 
 RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
                              const RatchetParams& params,
-                             ConstraintData* cd) {
+                             ConstraintData* cd,
+                             std::function<bool()> check_timeout) {
   const bool use_iw = std::isfinite(ds.concavity);
 
   // Initial TBR to get a baseline
@@ -218,6 +219,7 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
     }
 
     if (ts::check_interrupt()) break;
+    if (check_timeout && check_timeout()) break;
   }
 
   // Ensure tree holds the best result

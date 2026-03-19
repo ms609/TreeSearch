@@ -29,6 +29,7 @@
     ],
     "plotFormat": "space",
     "plotSize": 600,
+    "search-cancel": 0,
     "search-go": 0,
     "search-searchConfig": 0,
     "treespace-relators": null,

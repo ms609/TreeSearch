@@ -11,8 +11,11 @@
 #include <chrono>
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <functional>
 #include <memory>
+#include <string>
 
 namespace ts {
 
@@ -211,6 +214,14 @@ DrivenResult parallel_driven_search(
   bool use_timeout = params.max_seconds > 0.0;
   auto start_time = std::chrono::steady_clock::now();
 
+  // Cancel file: read path from environment variable (set by Shiny app).
+  // If the file exists, the search should stop.
+  std::string cancel_path;
+  {
+    const char* cancel_env = std::getenv("TREESEARCH_CANCEL_FILE");
+    if (cancel_env && cancel_env[0] != '\0') cancel_path = cancel_env;
+  }
+
   // Per-thread timing accumulators
   std::vector<PhaseTimings> thread_timings(n_threads);
 
@@ -266,6 +277,17 @@ DrivenResult parallel_driven_search(
       }
     }
 
+    // Check cancel file (set by Shiny app or external process)
+    if (!cancel_path.empty()) {
+      FILE* cf = std::fopen(cancel_path.c_str(), "r");
+      if (cf) {
+        std::fclose(cf);
+        stop_flag.store(true, std::memory_order_relaxed);
+        result.timed_out = true;
+        break;
+      }
+    }
+
     // Progress reporting
     if (params.verbosity >= 1) {
       auto st = shared_pool.status();
@@ -292,6 +314,11 @@ DrivenResult parallel_driven_search(
   // Extract results
   shared_pool.extract_into(pool_out);
 
+  // Capture hits_to_best BEFORE MPT enumeration — only main-loop
+  // replicates are independent; MPT enumeration should not inflate count.
+  result.replicates_completed = replicates_done.load();
+  result.hits_to_best = pool_out.hits_to_best();
+
   // MPT enumeration: TBR plateau walk from each pool tree (serial, main thread)
   if (pool_out.size() > 0 && pool_out.size() < pool_out.max_size
       && !result.timed_out) {
@@ -313,8 +340,8 @@ DrivenResult parallel_driven_search(
     }
   }
 
-  result.replicates_completed = replicates_done.load();
-  result.hits_to_best = pool_out.hits_to_best();
+  // result.replicates_completed and result.hits_to_best already set
+  // before MPT enumeration (above).
   result.pool_size = pool_out.size();
   if (pool_out.size() > 0) {
     result.best_score = pool_out.best_score();

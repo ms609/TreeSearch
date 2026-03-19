@@ -29,6 +29,7 @@
     ],
     "plotFormat": "clus",
     "plotSize": 600,
+    "search-cancel": 0,
     "search-go": 0,
     "search-searchConfig": 0,
     "treespace-relators": null,
@@ -39,14 +40,14 @@
   "output": {
     "consensus-branchLegend": null,
     "consensus-treePlot": {
-      "src": "[image data hash: 0f1a4b0bd1aad163b7dd4df11e781268]",
+      "src": "[image data hash: 8de6803c13f3cb22711d95c4a5dcc5a1]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -3.200491386326835,
-              "right": 83.2127760444977,
+              "left": -0.3507367561799607,
+              "right": 9.119155660678977,
               "bottom": -1.12,
               "top": 56.12
             },

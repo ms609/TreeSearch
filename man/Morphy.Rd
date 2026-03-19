@@ -135,6 +135,21 @@ resampling. Default \code{1L} runs serially.  Use \code{0L} for auto-detect.
 Only effective when \code{nReplicates > 1}.}
 
 \item{\dots}{Additional parameters to \code{Morphy()}.}
+
+\item{hierarchy}{A \code{\link{CharacterHierarchy}} object specifying which characters
+are controlled by which primary characters.  Required when
+\code{inapplicable} is \code{"hsj"} or \code{"xform"}.  When provided, resampling
+operates on "units" rather than individual characters: each non-hierarchy
+character is one unit, and each top-level hierarchy block (primary +
+all dependents) is one unit.  See \code{\link[=CharacterHierarchy]{CharacterHierarchy()}}.}
+
+\item{inapplicable}{Character string specifying the inapplicable-character
+handling method: \code{"brazeau"} (default), \code{"hsj"}, or \code{"xform"}.
+See \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} and \code{vignette("inapplicable")} for details.}
+
+\item{hsj_alpha}{Numeric in [0, 1] controlling the weight of secondary
+character variation in HSJ scoring.  Default \code{1.0}.  Only used when
+\code{inapplicable = "hsj"}.}
 }
 \value{
 \code{Morphy()} returns a list of trees with class

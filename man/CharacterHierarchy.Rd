@@ -56,6 +56,8 @@ Other tree scoring:
 \code{\link{MorphyTreeLength}()},
 \code{\link{ParsSim}()},
 \code{\link{TaxonInfluence}()},
-\code{\link{hierarchy_from_names}()}
+\code{\link{WideSample}()},
+\code{\link{hierarchy_from_names}()},
+\code{\link{recode_hierarchy}()}
 }
 \concept{tree scoring}

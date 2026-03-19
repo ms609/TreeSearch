@@ -29,6 +29,7 @@
     ],
     "plotFormat": "clus",
     "plotSize": 600,
+    "search-cancel": 0,
     "search-go": 0,
     "search-searchConfig": 0,
     "treespace-relators": null,
@@ -39,22 +40,22 @@
   "output": {
     "consensus-branchLegend": null,
     "consensus-treePlot": {
-      "src": "[image data hash: a82a8bb696d75276bfcdabb87ba6dbb8]",
+      "src": "[image data hash: 1589be606397b0548a472247c53c7338]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -3.200491386326835,
-              "right": 83.2127760444977,
+              "left": -0.2325272570939104,
+              "right": 6.045708684441671,
               "bottom": -1.12,
               "top": 56.12
             },
             "range": {
-              "left": 400,
+              "left": 0,
               "right": 600,
-              "bottom": 597.0992,
-              "top": 0.9007999999999026
+              "bottom": 596.12,
+              "top": 1.880000000000016
             },
             "log": {
               "x": null,
@@ -79,7 +80,7 @@
       ]
     },
     "search-results": {
-      "html": "125 trees in memory: 48 sampled with scores 27.3948 to 31.8287 (k = 10)",
+      "html": "125 trees in memory: 48 sampled with scores 27.4356 to 32.2033 (k = 10)",
       "deps": [
 
       ]

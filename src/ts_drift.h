@@ -11,6 +11,7 @@
 #include "ts_data.h"
 #include "ts_tree.h"
 #include "ts_constraint.h"
+#include <functional>
 
 namespace ts {
 
@@ -33,7 +34,8 @@ struct DriftResult {
 // Modifies `tree` in place to the best tree found across all cycles.
 DriftResult drift_search(TreeState& tree, const DataSet& ds,
                          const DriftParams& params,
-                         ConstraintData* cd = nullptr);
+                         ConstraintData* cd = nullptr,
+                         std::function<bool()> check_timeout = nullptr);
 
 } // namespace ts
 

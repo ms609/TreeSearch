@@ -54,7 +54,16 @@ inline int ctz64(uint64_t x) {
 static constexpr int MAX_CHARS_PER_BLOCK = 64;
 static constexpr int MAX_STATES = 32;  // practical limit for morphological data
 
-enum class ScoringMode { EW, IW, PROFILE };
+enum class ScoringMode { EW, IW, PROFILE, HSJ, XFORM };
+
+// A hierarchy block describes one controlling primary + its secondaries
+// (Hopkins & St. John 2021). Used by HSJ scoring.
+struct HierarchyBlock {
+  int primary_char;               // original character index (0-based)
+  std::vector<int> secondary_chars; // original character indices (0-based)
+  int n_secondaries;              // = secondary_chars.size()
+  int absent_state;               // state index meaning "absent" in primary
+};
 
 struct CharBlock {
   int n_chars;             // characters in this block (1..64)
@@ -109,6 +118,32 @@ struct DataSet {
   //   simplification. Used by profile scoring to restore correct total steps,
   //   and by IW to adjust min_steps. Index by original pattern index.
   std::vector<int> precomputed_steps;
+
+  // State index that represents the inapplicable ("-") state, or -1 if none.
+  // Populated by build_dataset(); used by HSJ scoring.
+  int inapp_state = -1;
+
+  // HSJ scoring data (populated when scoring_mode == HSJ).
+  // These are set by the Rcpp bridge after build_dataset().
+  std::vector<HierarchyBlock> hierarchy_blocks;
+  // tip_labels: per-tip per-original-char state labels (0-based).
+  //   Layout: tip_labels[tip * n_orig_chars + char]
+  std::vector<int> tip_labels;
+  int n_orig_chars = 0;
+  double hsj_alpha = 1.0;
+
+  // Sankoff/xform scoring data (populated when scoring_mode == XFORM).
+  // Each recoded hierarchy block becomes one Sankoff character.
+  // Set by the Rcpp bridge after build_dataset().
+  int sankoff_n_chars = 0;
+  int sankoff_max_states = 0;
+  std::vector<int> sankoff_n_states;           // [n_chars]
+  std::vector<double> sankoff_cost_matrices;   // [n_chars * max_states * max_states]
+  std::vector<int> sankoff_forced_root;        // [n_chars]
+  // Flat tip costs: tip_costs[tip * stride + ch * max_states + state]
+  // where stride = n_chars * max_states.
+  // 0.0 = state allowed, INF = state disallowed.
+  std::vector<double> sankoff_tip_costs;
 };
 
 // Build a DataSet from R-side data.

@@ -1,11 +1,14 @@
 #' Calculate the parsimony score of a tree given a dataset
 #'
-#' `TreeLength()` calculates a parsimony score for a tree, handling
-#' inapplicable data according to the algorithm of
-#' \insertCite{Brazeau2019;textual}{TreeSearch}.
+#' `TreeLength()` calculates a parsimony score for a tree.
 #' Trees may be scored using equal weights, implied weights
 #' \insertCite{Goloboff1993}{TreeSearch}, or profile parsimony
 #' \insertCite{Faith2001}{TreeSearch}.
+#' Inapplicable characters are handled using the algorithm of
+#' \insertCite{Brazeau2019;textual}{TreeSearch} by default, or
+#' alternatively using the hierarchical scoring of
+#' \insertCite{Hopkins2021;textual}{TreeSearch} when
+#' `inapplicable = "hsj"` and a [`CharacterHierarchy`] is provided.
 #'
 #' @param tree A tree of class `phylo`, a list thereof (optionally of class
 #' `multiPhylo`), or an integer -- in which case `tree` random trees will be 
@@ -22,6 +25,12 @@
 #' TreeLength(tree, inapplicable.phyData[[1]], concavity = 10)
 #' TreeLength(tree, inapplicable.phyData[[1]], concavity = "profile")
 #' TreeLength(5, inapplicable.phyData[[1]])
+#' 
+#' # HSJ scoring with a character hierarchy
+#' dataset6 <- inapplicable.phyData[["Vinther2008"]]
+#' hier <- CharacterHierarchy("1" = 2:3)
+#' tree6 <- TreeTools::BalancedTree(dataset6)
+#' TreeLength(tree6, dataset6, hierarchy = hier, inapplicable = "hsj")
 #' @seealso 
 #' - Conduct tree search using [`MaximizeParsimony()`] (command line) or
 #' [`EasyTrees()`] (graphical user interface).
@@ -35,11 +44,17 @@
 #' @importFrom fastmatch %fin%
 #' @importFrom TreeTools Renumber RenumberTips TreeIsRooted
 #' @export
-TreeLength <- function(tree, dataset, concavity = Inf) UseMethod("TreeLength")
+TreeLength <- function(tree, dataset, concavity = Inf,
+                       hierarchy = NULL, inapplicable = "brazeau",
+                       hsj_alpha = 1.0) {
+  UseMethod("TreeLength")
+}
 
 #' @rdname TreeLength
 #' @export
-TreeLength.phylo <- function(tree, dataset, concavity = Inf) {
+TreeLength.phylo <- function(tree, dataset, concavity = Inf,
+                              hierarchy = NULL, inapplicable = "brazeau",
+                              hsj_alpha = 1.0) {
   tipLabels <- tree[["tip.label"]]
   
   if (!TreeIsRooted(tree)) {
@@ -64,7 +79,34 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf) {
   if (nTip < length(dataset)) {
     dataset <- .Recompress(dataset[tree[["tip.label"]]])
   }
-    
+
+  # --- Validate inapplicable-handling parameters ---
+  inapplicable <- match.arg(inapplicable, c("brazeau", "hsj", "xform"))
+  useHSJ <- !is.null(hierarchy) && identical(inapplicable, "hsj")
+  if (inapplicable != "brazeau") {
+    if (is.null(hierarchy)) {
+      stop("A `hierarchy` is required when inapplicable = \"", inapplicable,
+           "\". See ?CharacterHierarchy.")
+    }
+    if (!inherits(hierarchy, "CharacterHierarchy")) {
+      stop("`hierarchy` must be a CharacterHierarchy object.")
+    }
+    validate_hierarchy(hierarchy, dataset)
+    if (.UseProfile(concavity)) {
+      stop("Profile parsimony is not currently supported with inapplicable = \"",
+           inapplicable, "\".")
+    }
+    if (is.finite(concavity)) {
+      stop("Implied weighting is not currently supported with inapplicable = \"",
+           inapplicable, "\".")
+    }
+  }
+  useXform <- !is.null(hierarchy) && identical(inapplicable, "xform")
+  if (!is.numeric(hsj_alpha) || length(hsj_alpha) != 1L ||
+      hsj_alpha < 0 || hsj_alpha > 1) {
+    stop("`hsj_alpha` must be a single number in [0, 1].")
+  }
+
   if (is.finite(concavity)) {
     if (!("min.length" %fin% names(attributes(dataset)))) {
       dataset <- PrepareDataIW(dataset)
@@ -97,6 +139,34 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf) {
     # Return:
     sum(vapply(which(steps > 0), function(i) info[steps[i], i],
                double(1)) * attr(dataset, "weight")[steps > 0])
+  } else if (useHSJ) {
+    tree <- RenumberTips(Renumber(tree), names(dataset))
+    at <- attributes(dataset)
+    contrast <- at$contrast
+    tip_data <- matrix(unlist(dataset, use.names = FALSE),
+                       nrow = length(dataset), byrow = TRUE)
+    adj_weight <- non_hierarchy_weights(dataset, hierarchy)
+    ts_hsj_score(tree[["edge"]], contrast, tip_data,
+                 as.integer(adj_weight), at$levels,
+                 hierarchy_to_blocks(hierarchy),
+                 as.double(hsj_alpha),
+                 build_tip_labels(dataset),
+                 0L)
+  } else if (useXform) {
+    tree <- RenumberTips(Renumber(tree), names(dataset))
+    at <- attributes(dataset)
+    contrast <- at$contrast
+    tip_data <- matrix(unlist(dataset, use.names = FALSE),
+                       nrow = length(dataset), byrow = TRUE)
+    adj_weight <- as.integer(non_hierarchy_weights(dataset, hierarchy))
+    recoded <- recode_hierarchy(dataset, hierarchy)
+    xform <- .PrepareXformArgs(recoded, length(dataset))
+    fitch_part <- ts_fitch_score(tree[["edge"]], contrast, tip_data,
+                                 adj_weight, at$levels)
+    res <- ts_sankoff_test(tree[["edge"]], xform$n_states,
+                           xform$cost_matrices, xform$tip_states,
+                           xform$forced_root)
+    fitch_part + res$score
   } else {
     tree <- RenumberTips(Renumber(tree), names(dataset))
     at <- attributes(dataset)
@@ -112,16 +182,49 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf) {
 #' @rdname TreeLength
 #' @importFrom TreeTools RandomTree
 #' @export
-TreeLength.numeric <- function(tree, dataset, concavity = Inf) {
+TreeLength.numeric <- function(tree, dataset, concavity = Inf,
+                               hierarchy = NULL, inapplicable = "brazeau",
+                               hsj_alpha = 1.0) {
   TreeLength(lapply(!logical(tree), RandomTree, tips = dataset), 
-             dataset = dataset, concavity = concavity)
+             dataset = dataset, concavity = concavity,
+             hierarchy = hierarchy, inapplicable = inapplicable,
+             hsj_alpha = hsj_alpha)
 }
 
 #' @rdname TreeLength
 #' @export
-TreeLength.list <- function(tree, dataset, concavity = Inf) {
+TreeLength.list <- function(tree, dataset, concavity = Inf,
+                            hierarchy = NULL, inapplicable = "brazeau",
+                            hsj_alpha = 1.0) {
   iw <- is.finite(concavity)
   useProfile <- .UseProfile(concavity)
+
+  # --- Validate inapplicable-handling parameters ---
+  inapplicable <- match.arg(inapplicable, c("brazeau", "hsj", "xform"))
+  useHSJ <- !is.null(hierarchy) && identical(inapplicable, "hsj")
+  if (inapplicable != "brazeau") {
+    if (is.null(hierarchy)) {
+      stop("A `hierarchy` is required when inapplicable = \"", inapplicable,
+           "\". See ?CharacterHierarchy.")
+    }
+    if (!inherits(hierarchy, "CharacterHierarchy")) {
+      stop("`hierarchy` must be a CharacterHierarchy object.")
+    }
+    validate_hierarchy(hierarchy, dataset)
+    if (useProfile) {
+      stop("Profile parsimony is not currently supported with inapplicable = \"",
+           inapplicable, "\".")
+    }
+    if (iw) {
+      stop("Implied weighting is not currently supported with inapplicable = \"",
+           inapplicable, "\".")
+    }
+  }
+  useXform <- !is.null(hierarchy) && identical(inapplicable, "xform")
+  if (!is.numeric(hsj_alpha) || length(hsj_alpha) != 1L ||
+      hsj_alpha < 0 || hsj_alpha > 1) {
+    stop("`hsj_alpha` must be a single number in [0, 1].")
+  }
 
   nTip <- NTip(tree)
   if (length(unique(nTip)) > 1L) {
@@ -173,11 +276,34 @@ TreeLength.list <- function(tree, dataset, concavity = Inf) {
   concavity_val <- if (iw) concavity else Inf
   infoAmounts <- if (useProfile) at$info.amounts else NULL
 
-  vapply(tree, function(tr) {
-    ts_fitch_score(tr[["edge"]], contrast, tip_data, weight, levels,
-                   min_steps = min_steps, concavity = concavity_val,
-                   infoAmounts = infoAmounts)
-  }, double(1))
+  if (useHSJ) {
+    adj_weight <- as.integer(non_hierarchy_weights(dataset, hierarchy))
+    blocks <- hierarchy_to_blocks(hierarchy)
+    alpha <- as.double(hsj_alpha)
+    tip_labels <- build_tip_labels(dataset)
+    vapply(tree, function(tr) {
+      ts_hsj_score(tr[["edge"]], contrast, tip_data, adj_weight, levels,
+                   blocks, alpha, tip_labels, 0L)
+    }, double(1))
+  } else if (useXform) {
+    adj_weight <- as.integer(non_hierarchy_weights(dataset, hierarchy))
+    recoded <- recode_hierarchy(dataset, hierarchy)
+    xform <- .PrepareXformArgs(recoded, length(dataset))
+    vapply(tree, function(tr) {
+      fitch_part <- ts_fitch_score(tr[["edge"]], contrast, tip_data,
+                                   adj_weight, levels)
+      res <- ts_sankoff_test(tr[["edge"]], xform$n_states,
+                             xform$cost_matrices, xform$tip_states,
+                             xform$forced_root)
+      fitch_part + res$score
+    }, double(1))
+  } else {
+    vapply(tree, function(tr) {
+      ts_fitch_score(tr[["edge"]], contrast, tip_data, weight, levels,
+                     min_steps = min_steps, concavity = concavity_val,
+                     infoAmounts = infoAmounts)
+    }, double(1))
+  }
 }
 
 
@@ -186,7 +312,24 @@ TreeLength.list <- function(tree, dataset, concavity = Inf) {
 TreeLength.multiPhylo <- TreeLength.list
 
 #' @export
-TreeLength.NULL <- function(tree, dataset, concavity = Inf) NULL
+TreeLength.NULL <- function(tree, dataset, concavity = Inf,
+                            hierarchy = NULL, inapplicable = "brazeau",
+                            hsj_alpha = 1.0) NULL
+
+# Pack recode_hierarchy() output into the format ts_sankoff_test() expects.
+.PrepareXformArgs <- function(recoded, n_tip) {
+  chars <- recoded$sankoff_chars
+  n_chars <- length(chars)
+  n_states <- as.integer(vapply(chars, function(ch) ch$n_states, numeric(1)))
+  forced_root <- as.integer(vapply(chars, function(ch) ch$forced_root_state, numeric(1)))
+  cost_matrices <- lapply(chars, function(ch) ch$cost_matrix)
+  tip_states <- matrix(0L, nrow = n_tip, ncol = n_chars)
+  for (i in seq_len(n_chars)) {
+    tip_states[, i] <- chars[[i]]$tip_states
+  }
+  list(n_states = n_states, cost_matrices = cost_matrices,
+       tip_states = tip_states, forced_root = forced_root)
+}
 
 #' @rdname TreeLength
 #' @export

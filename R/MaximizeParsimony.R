@@ -187,6 +187,7 @@
 #'   [`hierarchy_from_names()`] for automated construction from
 #'   TNT-style character names.
 #' @param inapplicable Character: method for handling inapplicable characters.
+#'   See `vignette("inapplicable", package = "TreeSearch")` for details.
 #'   \describe{
 #'     \item{`"brazeau"` (default)}{Three-pass algorithm of
 #'       \insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
@@ -487,9 +488,7 @@ MaximizeParsimony <- function(
       stop("Implied weighting is not currently supported with inapplicable = \"",
            inapplicable, "\".")
     }
-    # Not yet implemented
-    stop("inapplicable = \"", inapplicable, "\" is not yet implemented. ",
-         "This is a placeholder for future development.")
+    # xform validation is done; recoding happens below
   }
   if (!is.numeric(hsj_alpha) || length(hsj_alpha) != 1L ||
       hsj_alpha < 0 || hsj_alpha > 1) {
@@ -589,6 +588,33 @@ MaximizeParsimony <- function(
     }
   }
 
+  # --- HSJ: prepare hierarchy data for C++ ---
+  hsjArgs <- list()
+  useHSJ <- !is.null(hierarchy) && identical(inapplicable, "hsj")
+  if (useHSJ) {
+    hsjArgs$hierarchyBlocks <- hierarchy_to_blocks(hierarchy)
+    hsjArgs$hsjTipLabels <- build_tip_labels(dataset)
+    hsjArgs$hsjAlpha <- as.double(hsj_alpha)
+    # Absent state is typically 0 (first level in reductive coding)
+    hsjArgs$hsjAbsentState <- 0L
+
+    # Adjust weights: subtract hierarchy characters so Fitch scores non-hierarchy
+    adj_weight <- non_hierarchy_weights(dataset, hierarchy)
+    weight <- as.integer(adj_weight)
+  }
+
+  # --- Xform: recode hierarchy into step-matrix characters ---
+  xformArgs <- list()
+  useXform <- !is.null(hierarchy) && identical(inapplicable, "xform")
+  if (useXform) {
+    recoded <- recode_hierarchy(dataset, hierarchy)
+    xformArgs$xformChars <- recoded$sankoff_chars
+
+    # Adjust weights: subtract hierarchy characters so Fitch scores non-hierarchy
+    adj_weight <- non_hierarchy_weights(dataset, hierarchy)
+    weight <- as.integer(adj_weight)
+  }
+
   # --- IW: compute minimum step counts per character ---
   if (is.finite(concavity)) {
     minSteps <- as.integer(MinimumLength(dataset, compress = TRUE))
@@ -635,7 +661,8 @@ MaximizeParsimony <- function(
     startEdge = if (userTree) tree[["edge"]] else NULL,
     sprFirst = as.logical(ctrl$sprFirst)
   )
-  result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs))
+  result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
+                                        hsjArgs, xformArgs))
 
   # --- Reconstruct phylo from edge matrices ---
   treeTpl <- tree

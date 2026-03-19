@@ -33,6 +33,23 @@
 #'   all characters. If length `sum(nChar)`, each character gets its own root
 #'   state. Each root state must be in `0:(k-1)` where _k_ is the number of
 #'   states for that character.
+#' @param missing Controls which cells are replaced with the ambiguous token
+#'   `?`. Missing data is applied _after_ the complete simulation, so
+#'   attributes such as `extra_steps` and `saturated` reflect the underlying
+#'   complete dataset. Accepted forms:
+#'   \describe{
+#'     \item{**Scalar** (0--1)}{Flat rate: each cell is independently missing
+#'       with this probability.}
+#'     \item{**List** with `taxon` and/or `character` components}{Per-taxon
+#'       and/or per-character rates. Each component is a numeric vector of
+#'       probabilities (0--1). `taxon` should be named (matching tip labels)
+#'       or length `n_tip`; `character` should be length `sum(nChar)`. Per-cell
+#'       probability is `1 - (1 - p_taxon) * (1 - p_char)`.}
+#'     \item{**Matrix** (n_tip x total_chars)}{Per-cell probabilities (0--1).
+#'       Rows are taxa (named to match tip labels, or in tip order);
+#'       columns are characters.}
+#'   }
+#'   Default `0` (no missing data).
 #'
 #' @return A `phyDat` object with characters ordered by number of states
 #'   (2-state first, then 3-state, etc.). Additional attributes:
@@ -61,6 +78,14 @@
 #'                       concavity = "profile")
 #' attr(dataset_pp, "extra_steps")
 #'
+#' # 20% missing data injected post-hoc
+#' dataset_missing <- ParsSim(tree, nChar = c(20L), nExtraSteps = 10L,
+#'                            missing = 0.2)
+#'
+#' # Per-taxon missing rates (fragmentary taxa)
+#' dataset_taxon <- ParsSim(tree, nChar = c(20L), nExtraSteps = 10L,
+#'                          missing = list(taxon = c(t1 = 0.8, t2 = 0.5)))
+#'
 #' @references Goloboff, P.A. (2018).
 #'   \doi{10.1111/cla.12205}
 #' @importFrom TreeTools MakeTreeBinary MatrixToPhyDat Postorder RootNode
@@ -71,7 +96,8 @@ ParsSim <- function(tree,
                     nChar = c(100L),
                     nExtraSteps = 0L,
                     concavity = Inf,
-                    rootState = 0L) {
+                    rootState = 0L,
+                    missing = 0) {
   # --- Validate inputs -------------------------------------------------------
   if (!inherits(tree, "phylo")) {
     stop("`tree` must be a phylo object")
@@ -84,6 +110,8 @@ ParsSim <- function(tree,
   if (length(nExtraSteps) != 1L || nExtraSteps < 0L) {
     stop("`nExtraSteps` must be a single non-negative integer")
   }
+  missing_spec <- .pars_sim_validate_missing(missing)
+
   use_profile <- identical(concavity, "profile")
   use_iw <- !use_profile && is.finite(concavity)
   if (use_iw && concavity <= 0) {
@@ -189,7 +217,20 @@ ParsSim <- function(tree,
   tip_matrix <- vapply(char_states, function(ns) ns[seq_len(n_tip)],
                        integer(n_tip))
   rownames(tip_matrix) <- tree_info$tip_labels
-  result <- MatrixToPhyDat(tip_matrix)
+
+  prob_matrix <- .pars_sim_build_missing_matrix(
+    missing_spec, n_tip, total_chars, tree_info$tip_labels
+  )
+
+  if (!is.null(prob_matrix)) {
+    char_matrix <- matrix(as.character(tip_matrix), nrow = n_tip,
+                          dimnames = dimnames(tip_matrix))
+    is_missing <- matrix(runif(n_tip * total_chars), nrow = n_tip) < prob_matrix
+    char_matrix[is_missing] <- "?"
+    result <- MatrixToPhyDat(char_matrix)
+  } else {
+    result <- MatrixToPhyDat(tip_matrix)
+  }
 
   # --- Calculate saturation for all characters --------------------------------
   saturated <- vapply(seq_len(total_chars), function(i) {
@@ -459,4 +500,118 @@ ParsSim <- function(tree,
 .safe_sample_idx <- function(n, prob = NULL) {
   if (n == 1L) return(1L)
   sample.int(n, 1L, prob = prob)
+}
+
+
+#' Validate and parse the `missing` argument
+#'
+#' Returns a list with `type` ("none", "scalar", "list", "matrix") and
+#' the parsed value.
+#' @keywords internal
+#' @noRd
+.pars_sim_validate_missing <- function(missing) {
+  if (is.matrix(missing)) {
+    if (!is.numeric(missing)) stop("`missing` matrix must be numeric")
+    if (any(is.na(missing)) || any(missing < 0) || any(missing > 1)) {
+      stop("`missing` matrix values must be between 0 and 1")
+    }
+    return(list(type = "matrix", value = missing))
+  }
+
+  if (is.list(missing)) {
+    valid_names <- c("taxon", "character")
+    bad <- setdiff(names(missing), valid_names)
+    if (length(bad) > 0L) {
+      stop("`missing` list may only contain 'taxon' and/or 'character' ",
+           "components; found: ", paste(bad, collapse = ", "))
+    }
+    if (length(missing) == 0L ||
+        !any(valid_names %in% names(missing))) {
+      stop("`missing` list must contain at least one of 'taxon' or 'character'")
+    }
+    for (comp in valid_names) {
+      if (comp %in% names(missing)) {
+        v <- missing[[comp]]
+        if (!is.numeric(v) || any(is.na(v)) || any(v < 0) || any(v > 1)) {
+          stop("`missing$", comp, "` must be a numeric vector with ",
+               "values between 0 and 1")
+        }
+      }
+    }
+    return(list(type = "list", value = missing))
+  }
+
+  # Scalar case
+  missing <- as.double(missing)
+  if (length(missing) != 1L || is.na(missing) || missing < 0 || missing > 1) {
+    stop("`missing` must be a number between 0 and 1, a list, or a matrix")
+  }
+  if (missing == 0) return(list(type = "none"))
+  list(type = "scalar", value = missing)
+}
+
+
+#' Build a per-cell probability matrix from a missing specification
+#'
+#' @return A n_tip × total_chars matrix of probabilities, or NULL if no
+#'   missing data should be applied.
+#' @keywords internal
+#' @noRd
+.pars_sim_build_missing_matrix <- function(spec, n_tip, total_chars,
+                                            tip_labels) {
+  if (spec$type == "none") return(NULL)
+
+  if (spec$type == "scalar") {
+    return(matrix(spec$value, nrow = n_tip, ncol = total_chars))
+  }
+
+  if (spec$type == "matrix") {
+    mat <- spec$value
+    if (!is.null(rownames(mat))) {
+      # Reorder rows to match tip_labels
+      if (!all(tip_labels %in% rownames(mat))) {
+        stop("`missing` matrix row names must include all tip labels")
+      }
+      mat <- mat[tip_labels, , drop = FALSE]
+    }
+    if (nrow(mat) != n_tip || ncol(mat) != total_chars) {
+      stop("`missing` matrix must have ", n_tip, " rows (taxa) and ",
+           total_chars, " columns (characters)")
+    }
+    return(mat)
+  }
+
+  # List case: combine taxon and character rates
+  miss <- spec$value
+  p_taxon <- rep(0, n_tip)
+  if ("taxon" %in% names(miss)) {
+    tv <- miss$taxon
+    if (!is.null(names(tv))) {
+      if (!all(names(tv) %in% tip_labels)) {
+        stop("Names in `missing$taxon` must be valid tip labels")
+      }
+      # Named: match to tip labels; unlisted taxa get 0
+      p_taxon[match(names(tv), tip_labels)] <- tv
+    } else {
+      if (length(tv) != n_tip) {
+        stop("`missing$taxon` must be named or have length ", n_tip)
+      }
+      p_taxon <- tv
+    }
+  }
+
+  p_char <- rep(0, total_chars)
+  if ("character" %in% names(miss)) {
+    cv <- miss$character
+    if (length(cv) != total_chars) {
+      stop("`missing$character` must have length ", total_chars)
+    }
+    p_char <- cv
+  }
+
+  # p_cell = 1 - (1 - p_taxon) * (1 - p_char)
+  prob_mat <- 1 - outer(1 - p_taxon, 1 - p_char)
+
+  if (all(prob_mat == 0)) return(NULL)
+  prob_mat
 }

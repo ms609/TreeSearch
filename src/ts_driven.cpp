@@ -13,6 +13,9 @@
 #include <R.h>
 #include <algorithm>
 #include <chrono>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
 #include <functional>
 
 namespace ts {
@@ -197,7 +200,7 @@ ReplicateResult run_single_replicate(
     rp.perturb_max_moves = params.ratchet_perturb_max_moves;
     rp.adaptive = params.ratchet_adaptive;
     rp.tabu_size = params.tabu_size;
-    ratchet_search(result.tree, ds, rp, cd);
+    ratchet_search(result.tree, ds, rp, cd, check_timeout);
   }
   result.timings.ratchet_ms = ph_lap();
   if (verbosity >= 2) {
@@ -219,7 +222,7 @@ ReplicateResult run_single_replicate(
     dp.rfd_limit = params.drift_rfd_limit;
     dp.max_hits = params.tbr_max_hits;
     dp.tabu_size = params.tabu_size;
-    drift_search(result.tree, ds, dp, cd);
+    drift_search(result.tree, ds, dp, cd, check_timeout);
 
     result.timings.drift_ms = ph_lap();
     if (verbosity >= 2) {
@@ -270,14 +273,32 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   bool use_timeout = params.max_seconds > 0.0;
   auto start_time = std::chrono::steady_clock::now();
 
+  // Cancel file: read path from environment variable (set by Shiny app).
+  std::string cancel_path;
+  {
+    const char* cancel_env = std::getenv("TREESEARCH_CANCEL_FILE");
+    if (cancel_env && cancel_env[0] != '\0') cancel_path = cancel_env;
+  }
+  auto check_cancel = [&]() -> bool {
+    if (cancel_path.empty()) return false;
+    FILE* cf = std::fopen(cancel_path.c_str(), "r");
+    if (cf) {
+      std::fclose(cf);
+      return true;
+    }
+    return false;
+  };
+
   auto elapsed = [&]() -> double {
     auto now = std::chrono::steady_clock::now();
     return std::chrono::duration<double>(now - start_time).count();
   };
 
+  // Combines timeout + cancel-file check so both are evaluated inside
+  // run_single_replicate() (which only receives check_timeout).
   auto check_timeout = [&]() -> bool {
-    if (!use_timeout) return false;
-    return elapsed() >= params.max_seconds;
+    if (use_timeout && elapsed() >= params.max_seconds) return true;
+    return check_cancel();
   };
 
   bool has_callback = static_cast<bool>(params.progress_callback);

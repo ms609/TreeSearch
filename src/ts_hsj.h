@@ -18,17 +18,29 @@
 
 #include "ts_data.h"
 #include "ts_tree.h"
-#include <algorithm>
 #include <vector>
 
 namespace ts {
 
-// A hierarchy block describes one controlling primary + its secondaries.
-struct HierarchyBlock {
-  int primary_char;               // original character index (0-based)
-  std::vector<int> secondary_chars; // original character indices (0-based)
-  int n_secondaries;              // = secondary_chars.size()
-};
+// Compute adjusted pattern weights that exclude hierarchy characters.
+//
+// Given a hierarchy specification and the phyDat index (mapping original
+// characters to pattern indices), returns a copy of weight_r with hierarchy
+// characters' contributions subtracted.  Patterns that only appear in
+// hierarchy characters will have weight 0 and be dropped by build_dataset().
+//
+// index_r:    n_orig_chars vector; index_r[c] = pattern index (0-based) for
+//             original character c.
+// weight_r:   n_patterns vector; pattern frequencies (original weights).
+// hierarchy_chars: vector of original character indices (0-based) belonging
+//                  to any hierarchy block.
+// n_patterns: number of unique patterns.
+//
+// Returns: adjusted weight vector of length n_patterns.
+std::vector<int> partition_weights(
+    const int* index_r, int n_orig_chars,
+    const int* weight_r, int n_patterns,
+    const std::vector<int>& hierarchy_chars);
 
 // Score a tree under the HSJ dissimilarity-metric criterion.
 //
@@ -36,7 +48,7 @@ struct HierarchyBlock {
 // algorithm; all other characters are scored via standard Fitch.
 //
 // tree: must be in valid postorder; states will be modified.
-// ds: dataset (used for non-hierarchy characters)
+// ds: dataset (used for non-hierarchy characters AND hierarchy data)
 // hierarchy_blocks: hierarchy specification
 // alpha: HSJ scaling parameter in [0, 1]
 // tip_labels: per-tip, per-original-char state labels (0-based token index).
@@ -52,6 +64,10 @@ double hsj_score(
     double alpha,
     const std::vector<int>& tip_labels,
     int n_orig_chars);
+
+// Convenience overload using hierarchy data stored in DataSet.
+// Requires ds.scoring_mode == HSJ with hierarchy fields populated.
+double hsj_score(TreeState& tree, const DataSet& ds);
 
 } // namespace ts
 

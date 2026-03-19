@@ -470,6 +470,100 @@ test_that("Mixed 2-5 state characters with many extra steps", {
   expect_equal(sum(extra), 50L)
 })
 
+# --- Missing data tests (T-132) ---------------------------------------------
+
+test_that("missing = 0 is a no-op", {
+  tree <- TreeTools::BalancedTree(8)
+  set.seed(3184)
+  r0 <- ParsSim(tree, nChar = c(10L), nExtraSteps = 5L, missing = 0)
+  set.seed(3184)
+  r_default <- ParsSim(tree, nChar = c(10L), nExtraSteps = 5L)
+
+  expect_identical(TreeTools::PhyDatToMatrix(r0),
+                   TreeTools::PhyDatToMatrix(r_default))
+})
+
+test_that("missing injects approximately correct proportion of ?", {
+  tree <- TreeTools::BalancedTree(10)
+  set.seed(6491)
+  rate <- 0.3
+  n_char <- 40L
+  result <- ParsSim(tree, nChar = c(n_char), nExtraSteps = 10L,
+                    missing = rate)
+
+  mat <- TreeTools::PhyDatToMatrix(result)
+  n_cells <- length(mat)
+  obs_rate <- sum(mat == "?") / n_cells
+
+  # Bernoulli sampling: observed rate should be near target
+  expect_gt(obs_rate, 0.15)
+  expect_lt(obs_rate, 0.45)
+})
+
+test_that("missing = 1 replaces all cells with ?", {
+  tree <- TreeTools::BalancedTree(6)
+  set.seed(5729)
+  result <- ParsSim(tree, nChar = c(8L), nExtraSteps = 3L, missing = 1)
+
+  mat <- TreeTools::PhyDatToMatrix(result)
+  expect_true(all(mat == "?"))
+})
+
+test_that("missing result is valid phyDat", {
+  tree <- TreeTools::BalancedTree(8)
+  set.seed(8032)
+  result <- ParsSim(tree, nChar = c(15L), nExtraSteps = 8L, missing = 0.2)
+
+  expect_s3_class(result, "phyDat")
+  expect_equal(length(result), 8L)
+  expect_true(all(tree[["tip.label"]] %in% names(result)))
+
+  # Attributes still reflect the complete simulation
+  expect_length(attr(result, "extra_steps"), 15L)
+  expect_equal(sum(attr(result, "extra_steps")), 8L)
+  expect_length(attr(result, "saturated"), 15L)
+  expect_length(attr(result, "steps_exhausted"), 15L)
+})
+
+test_that("TreeLength with missing data <= complete-data score", {
+  tree <- TreeTools::BalancedTree(12)
+  set.seed(4478)
+  complete <- ParsSim(tree, nChar = c(20L), nExtraSteps = 15L, missing = 0)
+  set.seed(4478)
+  partial <- ParsSim(tree, nChar = c(20L), nExtraSteps = 15L, missing = 0.15)
+
+  score_complete <- TreeSearch::TreeLength(tree, complete)
+  score_partial <- TreeSearch::TreeLength(tree, partial)
+
+  # Missing data can only reduce or maintain the parsimony score
+  expect_lte(score_partial, score_complete)
+})
+
+test_that("missing input validation (scalar)", {
+  tree <- TreeTools::BalancedTree(6)
+  expect_error(ParsSim(tree, nChar = c(3L), missing = -0.1),
+               "between 0 and 1")
+  expect_error(ParsSim(tree, nChar = c(3L), missing = 1.5),
+               "between 0 and 1")
+  expect_error(ParsSim(tree, nChar = c(3L), missing = NA),
+               "between 0 and 1")
+})
+
+test_that("missing works with multi-state characters", {
+  tree <- TreeTools::BalancedTree(10)
+  set.seed(2167)
+  result <- ParsSim(tree, nChar = c(5L, 3L, 2L), nExtraSteps = 10L,
+                    missing = 0.1)
+
+  mat <- TreeTools::PhyDatToMatrix(result)
+  n_cells <- length(mat)
+  obs_rate <- sum(mat == "?") / n_cells
+
+  expect_gt(obs_rate, 0)
+  expect_lt(obs_rate, 0.3)
+  expect_s3_class(result, "phyDat")
+})
+
 test_that("Score matches across different tree shapes", {
   shapes <- list(
     balanced = TreeTools::BalancedTree(16),
@@ -490,4 +584,175 @@ test_that("Score matches across different tree shapes", {
     expect_equal(placed, 15L,
                  label = paste("Steps placed for", shape_name, "tree"))
   }
+})
+
+
+# --- Per-taxon / per-character missing data (T-133) -------------------------
+
+test_that("missing list with taxon rates skews missingness", {
+  tree <- TreeTools::BalancedTree(8)
+  n_char <- 50L
+  set.seed(4813)
+
+  # t1 gets 80% missing, all others 0%
+  result <- ParsSim(tree, nChar = c(n_char), nExtraSteps = 10L,
+                    missing = list(taxon = c(t1 = 0.8)))
+
+  mat <- TreeTools::PhyDatToMatrix(result)
+  t1_missing <- sum(mat["t1", ] == "?")
+  other_missing <- sum(mat[rownames(mat) != "t1", ] == "?")
+
+  # t1 should have ~80% of its chars missing
+  expect_gt(t1_missing, n_char * 0.5)
+  expect_equal(other_missing, 0L)
+  expect_s3_class(result, "phyDat")
+})
+
+test_that("missing list with character rates skews missingness", {
+  tree <- TreeTools::BalancedTree(8)
+  n_tip <- 8L
+  set.seed(7221)
+
+  # 5 characters: first 2 get 90% missing, last 3 get 0%
+  result <- ParsSim(tree, nChar = c(5L), nExtraSteps = 3L,
+                    missing = list(character = c(0.9, 0.9, 0, 0, 0)))
+
+  mat <- TreeTools::PhyDatToMatrix(result)
+  # First two characters should have most data missing
+  missing_first2 <- sum(mat[, 1:2] == "?")
+  missing_last3 <- sum(mat[, 3:5] == "?")
+
+  expect_gt(missing_first2, 0L)
+  expect_equal(missing_last3, 0L)
+})
+
+test_that("missing list combines taxon and character rates", {
+  tree <- TreeTools::BalancedTree(6)
+  n_char <- 10L
+  set.seed(1937)
+
+  # t1 = 50%, character 1 = 50%, intersection gets ~75%
+  result <- ParsSim(tree, nChar = c(n_char), nExtraSteps = 5L,
+                    missing = list(
+                      taxon = c(t1 = 0.5),
+                      character = c(0.5, rep(0, n_char - 1L))
+                    ))
+
+  mat <- TreeTools::PhyDatToMatrix(result)
+  # Cell [t1, char1] should have p = 1-(1-0.5)*(1-0.5) = 0.75
+  # Other t1 cells: p = 0.5
+  # Other taxa, char1: p = 0.5
+  # Other taxa, other chars: p = 0
+
+  # Check that taxa other than t1 and chars other than 1 have no missing
+  other_taxa <- rownames(mat) != "t1"
+  expect_equal(sum(mat[other_taxa, -1] == "?"), 0L)
+})
+
+test_that("missing matrix gives per-cell control", {
+  tree <- TreeTools::BalancedTree(6)
+  n_tip <- 6L
+  n_char <- 4L
+  set.seed(6738)
+
+  # Checkerboard pattern: alternating 1.0 and 0.0
+  prob_mat <- matrix(0, nrow = n_tip, ncol = n_char)
+  prob_mat[seq(1, n_tip, by = 2), seq(1, n_char, by = 2)] <- 1
+  prob_mat[seq(2, n_tip, by = 2), seq(2, n_char, by = 2)] <- 1
+
+  result <- ParsSim(tree, nChar = c(n_char), nExtraSteps = 2L,
+                    missing = prob_mat)
+
+  mat <- TreeTools::PhyDatToMatrix(result)
+  # Cells with prob=1 should all be "?"
+  expect_true(all(mat[prob_mat == 1] == "?"))
+  # Cells with prob=0 should all be non-"?"
+  expect_true(all(mat[prob_mat == 0] != "?"))
+})
+
+test_that("missing matrix with named rows reorders correctly", {
+  tree <- TreeTools::BalancedTree(6)
+  tips <- tree[["tip.label"]]
+  n_char <- 3L
+  set.seed(3495)
+
+  # Only t6 gets missing data, via named row
+  prob_mat <- matrix(0, nrow = 6, ncol = n_char,
+                     dimnames = list(rev(tips), NULL))
+  prob_mat["t6", ] <- 1.0
+
+  result <- ParsSim(tree, nChar = c(n_char), nExtraSteps = 1L,
+                    missing = prob_mat)
+
+  mat <- TreeTools::PhyDatToMatrix(result)
+  expect_true(all(mat["t6", ] == "?"))
+  expect_equal(sum(mat[tips != "t6", ] == "?"), 0L)
+})
+
+test_that("missing marginal rates match expected proportions", {
+  tree <- TreeTools::BalancedTree(20)
+  n_tip <- 20L
+  n_char <- 100L
+  set.seed(8416)
+
+  # Taxon rates: first 5 taxa get 50% missing
+  taxon_rates <- setNames(rep(0.5, 5), paste0("t", 1:5))
+  result <- ParsSim(tree, nChar = c(n_char), nExtraSteps = 30L,
+                    missing = list(taxon = taxon_rates))
+
+  mat <- TreeTools::PhyDatToMatrix(result)
+
+  # Check marginal rates for the high-missing taxa
+  for (tx in names(taxon_rates)) {
+    obs_rate <- mean(mat[tx, ] == "?")
+    # With 100 characters and p=0.5, should be within ~15% of 0.5
+    expect_gt(obs_rate, 0.3, label = paste(tx, "lower bound"))
+    expect_lt(obs_rate, 0.7, label = paste(tx, "upper bound"))
+  }
+
+  # Other taxa should have no missing
+  other <- setdiff(rownames(mat), names(taxon_rates))
+  expect_equal(sum(mat[other, ] == "?"), 0L)
+})
+
+test_that("missing list validation catches errors", {
+  tree <- TreeTools::BalancedTree(6)
+  # Empty list
+  expect_error(ParsSim(tree, nChar = c(3L), missing = list()),
+               "at least one")
+  # Bad component name
+  expect_error(ParsSim(tree, nChar = c(3L), missing = list(foo = 0.5)),
+               "taxon.*character")
+  # Out-of-range taxon rate
+  expect_error(ParsSim(tree, nChar = c(3L),
+                       missing = list(taxon = c(t1 = 1.5))),
+               "between 0 and 1")
+  # Wrong character length
+  expect_error(ParsSim(tree, nChar = c(3L),
+                       missing = list(character = c(0.1, 0.2))),
+               "length 3")
+  # Bad taxon name
+  expect_error(ParsSim(tree, nChar = c(3L),
+                       missing = list(taxon = c(fake = 0.5))),
+               "tip labels")
+  # Unnamed taxon of wrong length
+  expect_error(ParsSim(tree, nChar = c(3L),
+                       missing = list(taxon = c(0.1, 0.2))),
+               "named or have length")
+})
+
+test_that("missing matrix validation catches errors", {
+  tree <- TreeTools::BalancedTree(6)
+  # Wrong dimensions
+  expect_error(ParsSim(tree, nChar = c(3L),
+                       missing = matrix(0, nrow = 4, ncol = 3)),
+               "6 rows")
+  # Out of range
+  expect_error(ParsSim(tree, nChar = c(3L),
+                       missing = matrix(2, nrow = 6, ncol = 3)),
+               "between 0 and 1")
+  # Non-numeric
+  expect_error(ParsSim(tree, nChar = c(3L),
+                       missing = matrix("a", nrow = 6, ncol = 3)),
+               "numeric")
 })

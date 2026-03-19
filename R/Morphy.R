@@ -924,6 +924,130 @@ Morphy <- function(dataset, tree,
   format(Sys.time(), "%Y-%m-%d %T")
 }
 
+# Hierarchy-aware resampling: generates hierarchical weights per replicate
+# and calls ts_driven_search with HSJ/xform scoring.
+# This is an internal helper called from Resample() when inapplicable != "brazeau".
+.ResampleHierarchy <- function(dataset, hierarchy, inapplicable, hsj_alpha,
+                               method_idx, proportion, nReplicates,
+                               contrast, tip_data, weight, levels, nTip,
+                               concavity, ratchIter, tbrIter,
+                               consArgs, profileArgs, tree) {
+  bootstrap <- (method_idx == 2L)
+
+  # Prepare full HSJ args (before resampling)
+  hsjBase <- list()
+  if (identical(inapplicable, "hsj")) {
+    # Get flat blocks grouped by top-level block
+    .FlattenOneTop <- function(node) {
+      block <- list(
+        primary = node$controlling - 1L,
+        secondaries = node$dependents - 1L
+      )
+      child_blocks <- lapply(node$children, .FlattenOneTop)
+      c(list(block), unlist(child_blocks, recursive = FALSE))
+    }
+    hsjBase$blocks_per_top <- lapply(hierarchy, .FlattenOneTop)
+    hsjBase$hsjTipLabels <- build_tip_labels(dataset)
+    hsjBase$hsjAlpha <- as.double(hsj_alpha)
+    hsjBase$hsjAbsentState <- 0L
+  }
+
+  # Prepare full xform args (before resampling)
+  xformBase <- list()
+  if (identical(inapplicable, "xform")) {
+    recoded <- recode_hierarchy(dataset, hierarchy)
+    xformBase$all_chars <- recoded$sankoff_chars
+  }
+
+  # Driven search params for resampling context (light search per replicate)
+  searchBase <- list(
+    contrast = contrast,
+    tip_data = tip_data,
+    levels = levels,
+    maxReplicates = as.integer(max(ratchIter, 5L)),
+    targetHits = 2L,
+    tbrMaxHits = as.integer(max(tbrIter, 1L)),
+    ratchetCycles = as.integer(max(ratchIter, 3L)),
+    driftCycles = 0L,
+    xssRounds = 0L,
+    rssRounds = 0L,
+    cssRounds = 0L,
+    fuseInterval = 0L,
+    poolMaxSize = 1L,
+    poolSuboptimal = 0.0,
+    verbosity = 0L,
+    min_steps = integer(0),
+    concavity = as.double(concavity)
+  )
+
+  trees <- vector("list", nReplicates)
+  for (r in seq_len(nReplicates)) {
+    resamp <- .HierarchicalResampleWeights(
+      dataset, hierarchy, bootstrap, proportion
+    )
+
+    # Build per-replicate hierarchy args based on retained blocks
+    repHsj <- list()
+    repXform <- list()
+
+    if (identical(inapplicable, "hsj")) {
+      # Expand retained flat blocks (supports bootstrap: block sampled >1 time)
+      rep_blocks <- list()
+      for (bi in seq_along(resamp$block_counts)) {
+        if (resamp$block_counts[bi] > 0L) {
+          top_blocks <- hsjBase$blocks_per_top[[bi]]
+          for (k in seq_len(resamp$block_counts[bi])) {
+            rep_blocks <- c(rep_blocks, top_blocks)
+          }
+        }
+      }
+      repHsj$hierarchyBlocks <- rep_blocks
+      repHsj$hsjTipLabels <- hsjBase$hsjTipLabels
+      repHsj$hsjAlpha <- hsjBase$hsjAlpha
+      repHsj$hsjAbsentState <- hsjBase$hsjAbsentState
+    }
+
+    if (identical(inapplicable, "xform")) {
+      rep_xf <- list()
+      for (bi in seq_along(resamp$block_counts)) {
+        if (resamp$block_counts[bi] > 0L) {
+          for (k in seq_len(resamp$block_counts[bi])) {
+            rep_xf <- c(rep_xf, list(xformBase$all_chars[[bi]]))
+          }
+        }
+      }
+      repXform$xformChars <- rep_xf
+    }
+
+    # Call ts_driven_search with resampled weights
+    args <- c(
+      searchBase,
+      list(weight = as.integer(resamp$non_hierarchy_weights)),
+      consArgs, profileArgs, repHsj, repXform
+    )
+    result <- do.call(ts_driven_search, args)
+
+    # Extract best tree
+    if (result$pool_size > 0L && length(result$trees) > 0L) {
+      tr <- structure(
+        list(edge = result$trees[[1L]],
+             tip.label = names(dataset),
+             Nnode = nTip - 1L),
+        class = "phylo"
+      )
+      attr(tr, "score") <- result$best_score
+    } else {
+      tr <- if (!is.null(tree) && inherits(tree, "phylo")) tree
+            else AdditionTree(dataset)
+      attr(tr, "score") <- result$best_score
+    }
+    trees[[r]] <- tr
+  }
+
+  structure(trees, class = "multiPhylo")
+}
+
+
 #' @rdname Morphy
 #'
 #' @param method Unambiguous abbreviation of `jackknife` or `bootstrap`
@@ -960,6 +1084,18 @@ Morphy <- function(dataset, tree,
 #' @param nThreads Integer specifying the number of threads for parallel
 #' resampling. Default `1L` runs serially.  Use `0L` for auto-detect.
 #' Only effective when `nReplicates > 1`.
+#' @param hierarchy A [`CharacterHierarchy`] object specifying which characters
+#' are controlled by which primary characters.  Required when
+#' `inapplicable` is `"hsj"` or `"xform"`.  When provided, resampling
+#' operates on "units" rather than individual characters: each non-hierarchy
+#' character is one unit, and each top-level hierarchy block (primary +
+#' all dependents) is one unit.  See [`CharacterHierarchy()`].
+#' @param inapplicable Character string specifying the inapplicable-character
+#' handling method: `"brazeau"` (default), `"hsj"`, or `"xform"`.
+#' See [`MaximizeParsimony()`] and `vignette("inapplicable")` for details.
+#' @param hsj_alpha Numeric in \[0, 1\] controlling the weight of secondary
+#' character variation in HSJ scoring.  Default `1.0`.  Only used when
+#' `inapplicable = "hsj"`.
 #'
 #' @return `Resample()` returns a `multiPhylo` object containing one best tree
 #' per resample replicate.
@@ -972,6 +1108,8 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
                      tolerance = sqrt(.Machine[["double.eps"]]),
                      constraint, verbosity = 2L,
                      nReplicates = 1L, nThreads = 1L,
+                     hierarchy = NULL, inapplicable = "brazeau",
+                     hsj_alpha = 1.0,
                      ...) {
 
   if (!inherits(dataset, "phyDat")) {
@@ -998,11 +1136,36 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
     }
   }
 
+  # --- Validate inapplicable-handling parameters ---
+  inapplicable <- match.arg(inapplicable, c("brazeau", "hsj", "xform"))
+  if (inapplicable != "brazeau") {
+    if (is.null(hierarchy)) {
+      stop("A `hierarchy` is required when inapplicable = \"", inapplicable,
+           "\". See ?CharacterHierarchy.")
+    }
+    if (!inherits(hierarchy, "CharacterHierarchy")) {
+      stop("`hierarchy` must be a CharacterHierarchy object.")
+    }
+    validate_hierarchy(hierarchy, dataset)
+  }
+  if (!is.numeric(hsj_alpha) || length(hsj_alpha) != 1L ||
+      hsj_alpha < 0 || hsj_alpha > 1) {
+    stop("`hsj_alpha` must be a single number in [0, 1].")
+  }
+
   # Profile parsimony: prepare data
   useProfile <- identical(concavity, "profile")
   if (useProfile) {
+    if (inapplicable != "brazeau") {
+      stop("Profile parsimony is not currently supported with inapplicable = \"",
+           inapplicable, "\".")
+    }
     dataset <- PrepareDataProfile(dataset)
     concavity <- Inf
+  }
+  if (is.finite(concavity) && inapplicable != "brazeau") {
+    stop("Implied weighting is not currently supported with inapplicable = \"",
+         inapplicable, "\".")
   }
 
   # C++ engine path
@@ -1012,6 +1175,7 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
                      nrow = length(dataset), byrow = TRUE)
   weight <- at$weight
   levels <- at$levels
+  nTip <- length(dataset)
 
   # Prepare constraint
   consArgs <- .PrepareConstraint(
@@ -1026,6 +1190,23 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
     if (!is.null(infoAmounts) && length(infoAmounts) > 0L) {
       profileArgs$infoAmounts <- infoAmounts
     }
+  }
+
+  # --- Hierarchy-aware resampling path ---
+  # When inapplicable != "brazeau", resample at the unit level (free chars +
+  # hierarchy blocks) and run driven_search per replicate with HSJ/xform
+  # scoring.
+  if (inapplicable != "brazeau" && !is.null(hierarchy)) {
+    return(.ResampleHierarchy(
+      dataset = dataset, hierarchy = hierarchy, inapplicable = inapplicable,
+      hsj_alpha = hsj_alpha, method_idx = method_idx, proportion = proportion,
+      nReplicates = nReplicates,
+      contrast = contrast, tip_data = tip_data, weight = weight,
+      levels = levels, nTip = nTip, concavity = concavity,
+      ratchIter = ratchIter, tbrIter = tbrIter,
+      consArgs = consArgs, profileArgs = profileArgs,
+      tree = if (!missing(tree)) tree else NULL
+    ))
   }
 
   searchArgs <- list(
@@ -1043,8 +1224,6 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
       as.integer(MinimumLength(dataset, compress = TRUE)) else integer(0),
     concavity = as.double(concavity)
   )
-
-  nTip <- length(dataset)
 
   if (nReplicates > 1L) {
     # Batch mode: run all replicates at once (optionally in parallel)

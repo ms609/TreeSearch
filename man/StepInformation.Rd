@@ -36,6 +36,13 @@ For characters with 3--5 informative tokens, uses the recursive algorithm
 of Maddison & Slatkin (1991) via \code{\link[=MaddisonSlatkin]{MaddisonSlatkin()}}.
 Characters with more than 5 informative tokens are reduced to their 5 most
 frequent tokens (with a warning).
+
+When the Maddison & Slatkin computation would be infeasible (exponential
+in the number of tips for a given number of tokens), multi-state characters
+are automatically reduced to their 2 most frequent tokens and scored using
+the faster Carter formula.  This occurs for 3-state characters with more
+than 15 informative tips, 4-state characters with more than 10 tips, and
+5-state characters with more than 8 tips.
 }
 \examples{
 character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))

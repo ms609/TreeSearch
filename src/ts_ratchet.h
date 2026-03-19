@@ -14,6 +14,7 @@
 #include "ts_data.h"
 #include "ts_tree.h"
 #include "ts_constraint.h"
+#include <functional>
 
 namespace ts {
 
@@ -52,7 +53,8 @@ struct RatchetResult {
 
 RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
                              const RatchetParams& params,
-                             ConstraintData* cd = nullptr);
+                             ConstraintData* cd = nullptr,
+                             std::function<bool()> check_timeout = nullptr);
 
 } // namespace ts
 

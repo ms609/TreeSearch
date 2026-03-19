@@ -1,5 +1,6 @@
 #include "ts_data.h"
 #include "ts_simplify.h"
+#include <R.h>
 #include <algorithm>
 #include <cstring>
 #include <map>
@@ -20,6 +21,12 @@ DataSet build_dataset(
   ds.n_tips = n_tips;
   ds.n_patterns = n_patterns;
 
+  // Guard: state bitmasks use uint32_t, so n_states must fit in 32 bits.
+  if (n_states > MAX_STATES) {
+    Rf_error("TreeSearch C++ engine: n_states (%d) exceeds MAX_STATES (%d)",
+             n_states, MAX_STATES);
+  }
+
   // Identify the inapplicable state (column index where level == "-")
   int inapp_state = -1;
   for (int s = 0; s < n_states; ++s) {
@@ -28,6 +35,7 @@ DataSet build_dataset(
       break;
     }
   }
+  ds.inapp_state = inapp_state;
 
   // Precompute: for each token, the set of possible states as a bitmask.
   std::vector<uint32_t> token_states(n_tokens, 0);

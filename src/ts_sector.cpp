@@ -272,6 +272,7 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
   rd.data.precomputed_steps = ds.precomputed_steps;
   rd.data.info_amounts = ds.info_amounts;
   rd.data.info_max_steps = ds.info_max_steps;
+  rd.data.inapp_state = ds.inapp_state;
 
   // Build tip states for the sector
   size_t tip_state_size = static_cast<size_t>(n_sector_tips) * ds.total_words;

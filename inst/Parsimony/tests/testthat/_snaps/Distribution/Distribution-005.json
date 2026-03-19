@@ -29,6 +29,7 @@
     ],
     "plotFormat": "ind",
     "plotSize": 600,
+    "search-cancel": 0,
     "search-go": 0,
     "search-searchConfig": 0,
     "treespace-relators": null,
@@ -51,14 +52,14 @@
       ]
     },
     "consensus-treePlot": {
-      "src": "[image data hash: e6927c474ea08ce6aa8e07c319fdf145]",
+      "src": "[image data hash: 1bda0a2de4d03ad5b8679f1ace649ad3]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -0.2703955345481155,
-              "right": 7.030283898251004,
+              "left": -0.2127966509110866,
+              "right": 5.532712923688252,
               "bottom": -1.12,
               "top": 56.12
             },

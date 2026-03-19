@@ -248,6 +248,34 @@ test_that("Profile search improves score on multi-state data", {
   expect_true(searchScore <= startScore + 1e-8)
 })
 
+test_that("Infeasible multi-state chars reduced to binary in PrepareDataProfile", {
+  # Sun2018-like dataset with 3+ state characters and many tips.
+  # Without the feasibility guard, PrepareDataProfile would hang.
+  sun_file <- system.file("datasets/Sun2018.nex", package = "TreeSearch")
+  sun <- ReadAsPhyDat(sun_file)
+
+  # Should complete in reasonable time (< 10 s) with warning suppressed
+  pds <- suppressWarnings(PrepareDataProfile(sun))
+
+  expect_true(!is.null(attr(pds, "info.amounts")))
+  expect_true(ncol(attr(pds, "info.amounts")) > 0)
+
+  set.seed(1934)
+  tree <- TreeTools::RootTree(TreeTools::RandomTree(pds), 1L)
+  score <- TreeLength(tree, pds, concavity = "profile")
+  expect_true(is.finite(score))
+  expect_gt(score, 0)
+
+  # Profile search also works end-to-end
+  set.seed(1934)
+  result <- suppressWarnings(MaximizeParsimony(
+    sun, concavity = "profile",
+    maxReplicates = 1L, targetHits = 1L,
+    maxSeconds = 30, verbosity = 0L
+  ))
+  expect_true(is.finite(attr(result, "score")))
+})
+
 test_that("Binary-only dataset: profile scores unchanged by multi-state code", {
   data("congreveLamsdellMatrices", package = "TreeSearch")
   dataset <- congreveLamsdellMatrices[[10]]

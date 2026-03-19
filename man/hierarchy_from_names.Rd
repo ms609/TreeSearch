@@ -39,6 +39,8 @@ Other tree scoring:
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()},
 \code{\link{ParsSim}()},
-\code{\link{TaxonInfluence}()}
+\code{\link{TaxonInfluence}()},
+\code{\link{WideSample}()},
+\code{\link{recode_hierarchy}()}
 }
 \concept{tree scoring}

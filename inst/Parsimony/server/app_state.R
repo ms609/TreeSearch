@@ -53,6 +53,7 @@ AppState <- function() {
     searchCount        = 0L,       # integer: how many searches have been run
     searchDataHash     = NULL,     # hash of dataset at search time
     searchNotification = NULL,     # Shiny notification ID (for dismissal)
+    searchInProgress   = FALSE,    # TRUE while searchTask is running
     searchWithout      = NULL,     # character: taxa excluded from search
     bestSearchScore    = NULL,     # numeric: best score seen across all searches (for accumulation)
     searchTotalHits    = 0L,       # integer: cumulative hits_to_best across runs at current best score

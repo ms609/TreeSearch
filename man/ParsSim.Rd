@@ -9,7 +9,8 @@ ParsSim(
   nChar = c(100L),
   nExtraSteps = 0L,
   concavity = Inf,
-  rootState = 0L
+  rootState = 0L,
+  missing = 0
 )
 }
 \arguments{
@@ -36,6 +37,24 @@ character (default \code{0L}). If length 1, the same root state is used for
 all characters. If length \code{sum(nChar)}, each character gets its own root
 state. Each root state must be in \code{0:(k-1)} where \emph{k} is the number of
 states for that character.}
+
+\item{missing}{Controls which cells are replaced with the ambiguous token
+\verb{?}. Missing data is applied \emph{after} the complete simulation, so
+attributes such as \code{extra_steps} and \code{saturated} reflect the underlying
+complete dataset. Accepted forms:
+\describe{
+\item{\strong{Scalar} (0--1)}{Flat rate: each cell is independently missing
+with this probability.}
+\item{\strong{List} with \code{taxon} and/or \code{character} components}{Per-taxon
+and/or per-character rates. Each component is a numeric vector of
+probabilities (0--1). \code{taxon} should be named (matching tip labels)
+or length \code{n_tip}; \code{character} should be length \code{sum(nChar)}. Per-cell
+probability is \code{1 - (1 - p_taxon) * (1 - p_char)}.}
+\item{\strong{Matrix} (n_tip x total_chars)}{Per-cell probabilities (0--1).
+Rows are taxa (named to match tip labels, or in tip order);
+columns are characters.}
+}
+Default \code{0} (no missing data).}
 }
 \value{
 A \code{phyDat} object with characters ordered by number of states
@@ -81,6 +100,14 @@ dataset_pp <- ParsSim(tree, nChar = c(20L), nExtraSteps = 15L,
                       concavity = "profile")
 attr(dataset_pp, "extra_steps")
 
+# 20\% missing data injected post-hoc
+dataset_missing <- ParsSim(tree, nChar = c(20L), nExtraSteps = 10L,
+                           missing = 0.2)
+
+# Per-taxon missing rates (fragmentary taxa)
+dataset_taxon <- ParsSim(tree, nChar = c(20L), nExtraSteps = 10L,
+                         missing = list(taxon = c(t1 = 0.8, t2 = 0.5)))
+
 }
 \references{
 Goloboff, P.A. (2018).
@@ -97,6 +124,8 @@ Other tree scoring:
 \code{\link{MinimumLength}()},
 \code{\link{MorphyTreeLength}()},
 \code{\link{TaxonInfluence}()},
-\code{\link{hierarchy_from_names}()}
+\code{\link{WideSample}()},
+\code{\link{hierarchy_from_names}()},
+\code{\link{recode_hierarchy}()}
 }
 \concept{tree scoring}

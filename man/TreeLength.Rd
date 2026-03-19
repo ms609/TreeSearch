@@ -12,15 +12,50 @@
 \usage{
 IWScore(tree, dataset, concavity = 10L, ...)
 
-TreeLength(tree, dataset, concavity = Inf)
+TreeLength(
+  tree,
+  dataset,
+  concavity = Inf,
+  hierarchy = NULL,
+  inapplicable = "brazeau",
+  hsj_alpha = 1
+)
 
-\method{TreeLength}{phylo}(tree, dataset, concavity = Inf)
+\method{TreeLength}{phylo}(
+  tree,
+  dataset,
+  concavity = Inf,
+  hierarchy = NULL,
+  inapplicable = "brazeau",
+  hsj_alpha = 1
+)
 
-\method{TreeLength}{numeric}(tree, dataset, concavity = Inf)
+\method{TreeLength}{numeric}(
+  tree,
+  dataset,
+  concavity = Inf,
+  hierarchy = NULL,
+  inapplicable = "brazeau",
+  hsj_alpha = 1
+)
 
-\method{TreeLength}{list}(tree, dataset, concavity = Inf)
+\method{TreeLength}{list}(
+  tree,
+  dataset,
+  concavity = Inf,
+  hierarchy = NULL,
+  inapplicable = "brazeau",
+  hsj_alpha = 1
+)
 
-\method{TreeLength}{multiPhylo}(tree, dataset, concavity = Inf)
+\method{TreeLength}{multiPhylo}(
+  tree,
+  dataset,
+  concavity = Inf,
+  hierarchy = NULL,
+  inapplicable = "brazeau",
+  hsj_alpha = 1
+)
 
 Fitch(tree, dataset)
 }
@@ -46,18 +81,49 @@ Specify \code{"profile"} to employ profile parsimony
 
 \item{\dots}{unused; allows additional parameters specified within \dots to be
 received by the function without throwing an error.}
+
+\item{hierarchy}{A \code{\link{CharacterHierarchy}} object specifying which
+characters are controlling primaries and which are their dependent
+secondaries.  Required when \code{inapplicable} is \code{"hsj"} or \code{"xform"};
+ignored when \code{inapplicable = "brazeau"} (the default).
+See \code{\link[=CharacterHierarchy]{CharacterHierarchy()}} for how to construct one, and
+\code{\link[=hierarchy_from_names]{hierarchy_from_names()}} for automated construction from
+TNT-style character names.}
+
+\item{inapplicable}{Character: method for handling inapplicable characters.
+See \code{vignette("inapplicable", package = "TreeSearch")} for details.
+\describe{
+\item{\code{"brazeau"} (default)}{Three-pass algorithm of
+\insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
+regions from the \code{"-"} token.  No hierarchy required.}
+\item{\code{"hsj"}}{Dissimilarity-metric scoring of
+\insertCite{Hopkins2021;textual}{TreeSearch}.  Requires a
+\code{hierarchy}; controlled by \code{hsj_alpha}.}
+\item{\code{"xform"}}{Step-matrix recoding approximating maximum homology
+via x-transformations
+\insertCite{Goloboff2021b;textual}{TreeSearch}.  Requires a
+\code{hierarchy}.}
+}}
+
+\item{hsj_alpha}{Numeric in [0, 1]: scaling parameter for secondary-
+character contributions under the HSJ method.  0 = secondaries ignored;
+1 (default) = secondaries contribute up to 1 per branch per hierarchy
+block.  Only used when \code{inapplicable = "hsj"}.}
 }
 \value{
 \code{TreeLength()} returns a numeric vector containing the score for
 each tree in \code{tree}.
 }
 \description{
-\code{TreeLength()} calculates a parsimony score for a tree, handling
-inapplicable data according to the algorithm of
-\insertCite{Brazeau2019;textual}{TreeSearch}.
+\code{TreeLength()} calculates a parsimony score for a tree.
 Trees may be scored using equal weights, implied weights
 \insertCite{Goloboff1993}{TreeSearch}, or profile parsimony
 \insertCite{Faith2001}{TreeSearch}.
+Inapplicable characters are handled using the algorithm of
+\insertCite{Brazeau2019;textual}{TreeSearch} by default, or
+alternatively using the hierarchical scoring of
+\insertCite{Hopkins2021;textual}{TreeSearch} when
+\code{inapplicable = "hsj"} and a \code{\link{CharacterHierarchy}} is provided.
 }
 \examples{
 data("inapplicable.datasets")
@@ -66,6 +132,12 @@ TreeLength(tree, inapplicable.phyData[[1]])
 TreeLength(tree, inapplicable.phyData[[1]], concavity = 10)
 TreeLength(tree, inapplicable.phyData[[1]], concavity = "profile")
 TreeLength(5, inapplicable.phyData[[1]])
+
+# HSJ scoring with a character hierarchy
+dataset6 <- inapplicable.phyData[["Vinther2008"]]
+hier <- CharacterHierarchy("1" = 2:3)
+tree6 <- TreeTools::BalancedTree(dataset6)
+TreeLength(tree6, dataset6, hierarchy = hier, inapplicable = "hsj")
 }
 \references{
 \insertAllCited{}
@@ -87,7 +159,9 @@ Other tree scoring:
 \code{\link{MorphyTreeLength}()},
 \code{\link{ParsSim}()},
 \code{\link{TaxonInfluence}()},
-\code{\link{hierarchy_from_names}()}
+\code{\link{WideSample}()},
+\code{\link{hierarchy_from_names}()},
+\code{\link{recode_hierarchy}()}
 }
 \author{
 Martin R. Smith

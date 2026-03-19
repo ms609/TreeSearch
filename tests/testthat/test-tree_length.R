@@ -238,3 +238,180 @@ test_that("Character compression works", {
   expect_equal(dim(Consistency(dataset, tree, nRelabel = 0, compress = TRUE)),
                c(118, 4))
 })
+
+# --- TreeLength HSJ support (T-123) ---
+
+# Helper for HSJ test datasets: reductive coding with levels = c("-", "0", "1")
+.make_hsj_dat <- function(mat) {
+  phangorn::phyDat(mat, type = "USER",
+                   levels = c("-", "0", "1"), ambiguity = "?")
+}
+
+test_that("TreeLength validates inapplicable parameters", {
+  # Use a properly coded dataset for hierarchy validation tests
+  mat <- matrix(c(
+    # pri  sec2  sec3
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  tree <- TreeTools::BalancedTree(ds)
+  hier <- CharacterHierarchy("1" = 2:3)
+
+  expect_error(TreeLength(tree, ds, inapplicable = "hsj"),
+               "hierarchy.*required")
+  expect_error(TreeLength(tree, ds, inapplicable = "hsj", hierarchy = "bad"),
+               "CharacterHierarchy")
+  # xform should work now (not error)
+  xform_score <- TreeLength(tree, ds, inapplicable = "xform",
+                            hierarchy = hier)
+  expect_true(is.numeric(xform_score))
+  expect_error(TreeLength(tree, ds, hsj_alpha = -1),
+               "hsj_alpha")
+  expect_error(TreeLength(tree, ds, hsj_alpha = 2),
+               "hsj_alpha")
+  expect_error(TreeLength(tree, ds, concavity = 10,
+                          inapplicable = "hsj", hierarchy = hier),
+               "Implied weighting.*not currently supported")
+  expect_error(TreeLength(tree, ds, concavity = "profile",
+                          inapplicable = "hsj", hierarchy = hier),
+               "Profile parsimony.*not currently supported")
+})
+
+test_that("TreeLength HSJ returns valid score", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+  tree <- TreeTools::BalancedTree(ds)
+
+  hsj <- TreeLength(tree, ds, hierarchy = hier, inapplicable = "hsj")
+  expect_true(is.numeric(hsj))
+  expect_equal(length(hsj), 1L)
+  expect_true(hsj >= 0)
+})
+
+test_that("TreeLength HSJ works on multiPhylo", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+  tree <- TreeTools::BalancedTree(ds)
+  trees <- c(tree, tree)
+  class(trees) <- "multiPhylo"
+
+  scores <- TreeLength(trees, ds, hierarchy = hier, inapplicable = "hsj")
+  expect_equal(length(scores), 2L)
+  expect_equal(scores[1], scores[2])
+
+  single <- TreeLength(tree, ds, hierarchy = hier, inapplicable = "hsj")
+  expect_equal(scores[1], single)
+})
+
+test_that("TreeLength HSJ alpha=0 ignores secondaries", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+  tree <- TreeTools::BalancedTree(ds)
+
+  s0 <- TreeLength(tree, ds, hierarchy = hier, inapplicable = "hsj",
+                   hsj_alpha = 0)
+  s1 <- TreeLength(tree, ds, hierarchy = hier, inapplicable = "hsj",
+                   hsj_alpha = 1)
+  expect_true(s0 <= s1)
+})
+
+test_that("TreeLength HSJ works on random trees (numeric input)", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+
+  set.seed(4721)
+  scores <- TreeLength(3L, ds, hierarchy = hier, inapplicable = "hsj")
+  expect_equal(length(scores), 3L)
+  expect_true(all(is.numeric(scores)))
+})
+
+# --- TreeLength xform (step-matrix) support ---
+
+test_that("TreeLength xform returns valid score", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+  tree <- TreeTools::BalancedTree(ds)
+
+  xform <- TreeLength(tree, ds, hierarchy = hier, inapplicable = "xform")
+  expect_true(is.numeric(xform))
+  expect_equal(length(xform), 1L)
+  expect_true(xform >= 0)
+})
+
+test_that("TreeLength xform works on multiPhylo", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+  tree <- TreeTools::BalancedTree(ds)
+  trees <- c(tree, tree)
+  class(trees) <- "multiPhylo"
+
+  scores <- TreeLength(trees, ds, hierarchy = hier, inapplicable = "xform")
+  expect_equal(length(scores), 2L)
+  expect_equal(scores[1], scores[2])
+
+  single <- TreeLength(tree, ds, hierarchy = hier, inapplicable = "xform")
+  expect_equal(scores[1], single)
+})
+
+test_that("TreeLength xform on random trees", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+
+  set.seed(8193)
+  scores <- TreeLength(3L, ds, hierarchy = hier, inapplicable = "xform")
+  expect_equal(length(scores), 3L)
+  expect_true(all(is.numeric(scores)))
+})

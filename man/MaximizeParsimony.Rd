@@ -61,6 +61,7 @@ See \code{\link[=CharacterHierarchy]{CharacterHierarchy()}} for how to construct
 TNT-style character names.}
 
 \item{inapplicable}{Character: method for handling inapplicable characters.
+See \code{vignette("inapplicable", package = "TreeSearch")} for details.
 \describe{
 \item{\code{"brazeau"} (default)}{Three-pass algorithm of
 \insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
@@ -236,7 +237,9 @@ Other tree scoring:
 \code{\link{MorphyTreeLength}()},
 \code{\link{ParsSim}()},
 \code{\link{TaxonInfluence}()},
-\code{\link{hierarchy_from_names}()}
+\code{\link{WideSample}()},
+\code{\link{hierarchy_from_names}()},
+\code{\link{recode_hierarchy}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

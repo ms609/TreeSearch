@@ -181,15 +181,14 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
           LogCode("trees <- allTrees")
         }
       } else {
-        thinnedTrees <- r$allTrees[
-          unique(as.integer(seq.int(
-            r$treeRange[1], r$treeRange[2], length.out = r$nTree)))]
+        rangedTrees <- r$allTrees[r$treeRange[1]:r$treeRange[2]]
+        thinnedTrees <- WideSample(rangedTrees, r$nTree)
 
         if (!is.null(r$allTrees) && !identical(r$trees, thinnedTrees)) {
           LogCode(paste0(
-            "trees <- allTrees[unique(as.integer(seq.int(",
-            r$treeRange[1], ", ", r$treeRange[2],
-            ", length.out = ", r$nTree, ")))]"))
+            "trees <- WideSample(allTrees[",
+            r$treeRange[1], ":", r$treeRange[2],
+            "], ", r$nTree, ")"))
         }
       }
 
@@ -553,6 +552,13 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
 
     observeEvent(r$dataset, {
       r$dataHash <- rlang::hash(r$dataset)
+      # Clear stale trees from previous dataset — incompatible taxa
+      # cause silent errors in search starting tree preparation.
+      r$allTrees <- NULL
+      r$trees <- NULL
+      r$treeHash <- NULL
+      r$newTrees <- NULL
+      parentHide("manipulateTreeset")
       # Search stat reset + timeout default handled by mod_search.R
     })
 
