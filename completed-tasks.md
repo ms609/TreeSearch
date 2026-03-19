@@ -8,6 +8,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-151 | Shiny: dataset observer clears bundled trees (blank plot / 0 trees) | B | `observeEvent(r$dataset,…)` unconditionally cleared `r$allTrees` after `UpdateData()` loaded trees from same .nex; fix: guard with `HaveData() && !DatasetMatchesTrees()`. All 31 bundled datasets affected. 2 new regression tests; 11 mod-data + 1681 ts-* pass. |
 | — | Fix inapplicable.Rmd vignette CSL URL (404) | A | Remote `raw.githubusercontent.com` CSL URL returned 404; changed to local `../inst/apa-old-doi-prefix.csl` (matching all other vignettes). Also un-claimed stale Agent C GUI issue in `issues.md`. |
 | T-142 | Shiny: Add TreeSearch logo to app header | A | Inline SVG (magnifier + 3-tip tree) added to `inst/Parsimony/ui.R` line 14; flex div wraps icon + h1. No external asset file needed. |
 | S-COORD | Coordination review round 8 | A | T-144 fixed → CRAN unblocked. ~9835 pass/0 fail. T-141/T-140/T-097 confirmed complete. Standing tasks P1. |
