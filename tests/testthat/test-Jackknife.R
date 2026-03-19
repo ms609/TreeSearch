@@ -12,6 +12,9 @@ test_that("Jackknife supports are correct", {
   expect_error(Jackknife(start_tree, dataset, resampleFreq = 0))
   expect_error(Jackknife(start_tree, dataset, resampleFreq = 9 / 10))
 
+  # Ensure reproducible RNG, restoring on exit
+  old_rng <- RNGkind()
+  on.exit(do.call(RNGkind, as.list(old_rng)), add = TRUE)
   suppressWarnings(RNGversion("3.5.0"))
   set.seed(0)
 

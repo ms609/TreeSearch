@@ -1,3 +1,6 @@
+# Tier 2: skipped on CRAN; see tests/testing-strategy.md
+skip_on_cran()
+
 # Tests for implied weights (IW) scoring in the C++ engine.
 # Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 

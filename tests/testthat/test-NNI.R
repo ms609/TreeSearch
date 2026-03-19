@@ -19,6 +19,8 @@ test_that("cNNI()", {
                cNNI(tr, 2, 1))
   expect_equal(ape::read.tree(text="(a, ((b, (c, d)), ((e, f), g)));"), # Edge 4
                cNNI(tr, 3, 1))
+  old_rng <- RNGkind()
+  on.exit(do.call(RNGkind, as.list(old_rng)), add = TRUE)
   suppressWarnings(RNGversion("3.5.0"))
   set.seed(0) # sample.int gives 4, 1
   expect_equal(cNNI(tr, 0, 1), cNNI(tr))

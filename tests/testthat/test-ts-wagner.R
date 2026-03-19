@@ -275,6 +275,30 @@ test_that("Wagner with many addition orders all verify", {
   }
 })
 
+test_that("Wagner minimum case: 3 tips produces valid tree", {
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  pd3 <- congreveLamsdellMatrices[[1]][1:3]
+  d <- prep_pd(pd3)
+
+  result <- TreeSearch:::ts_wagner_tree(
+    d$contrast, d$tip_data, d$weight, d$levels
+  )
+
+  # 3 tips: 4 edges, 2 internal nodes
+  expect_equal(nrow(result$edge), 4L)
+  expect_true(result$score > 0)
+
+  fitch_check <- TreeSearch:::ts_fitch_score(
+    result$edge, d$contrast, d$tip_data, d$weight, d$levels
+  )
+  expect_equal(result$score, fitch_check)
+
+  # All 3 tips present exactly once
+  child_nodes <- result$edge[, 2]
+  tips_found <- sort(child_nodes[child_nodes <= 3])
+  expect_equal(tips_found, 1:3)
+})
+
 test_that("Driven search still finds good scores after Wagner optimization", {
   data("congreveLamsdellMatrices", package = "TreeSearch")
   pd <- congreveLamsdellMatrices[[1]]

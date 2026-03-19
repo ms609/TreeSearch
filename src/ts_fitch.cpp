@@ -479,7 +479,12 @@ void precompute_iw_delta(const DataSet& ds,
   double k = ds.concavity;
   for (int p = 0; p < ds.n_patterns; ++p) {
     int e = divided_steps[p] - ds.min_steps[p];
-    if (e < 0) e = 0;
+    if (e < 0) {
+      // Below minimum in divided tree: adding one step still leaves at or
+      // below minimum, so reconnection incurs no IW cost increase.
+      iw_delta[p] = 0.0;
+      continue;
+    }
     double old_cost = static_cast<double>(e) / (k + e);
     double new_cost = static_cast<double>(e + 1) / (k + e + 1);
     iw_delta[p] = ds.pattern_freq[p] * (new_cost - old_cost);

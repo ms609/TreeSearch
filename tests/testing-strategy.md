@@ -20,6 +20,7 @@ data-structure invariants, no `skip_on_cran()`.
 | `test-ts-pool.R` | Tree-pool deduplication |
 | `test-ts-simd.R` | SIMD bit-parallel scoring correctness |
 | `test-ts-splits.R` | Split hashing and comparison |
+| `test-ts-rep-warning.R` | maxReplicates adequacy warning |
 | `test-ts-start-tree.R` | Starting-tree API |
 
 **Files (R-level API):** All `test-*.R` files that do NOT carry a `ts-` prefix

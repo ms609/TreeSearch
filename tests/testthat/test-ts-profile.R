@@ -124,7 +124,11 @@ test_that("Profile scoring handles inapplicable datasets", {
 
   for (dsName in c("Vinther2008", "Sansom2010")) {
     dataset <- inapplicable.phyData[[dsName]]
-    pds <- PrepareDataProfile(dataset)
+    # Inapplicable datasets may have >2 informative tokens per character
+    pds <- expect_warning(
+      PrepareDataProfile(dataset),
+      "Can handle max\\. 2 informative tokens"
+    )
     at <- attributes(pds)
 
     if (length(at$weight) == 0L || attr(pds, "nr") == 0L) next
