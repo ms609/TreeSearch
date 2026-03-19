@@ -41,10 +41,15 @@ implementation of profile parsimony:
 (i.e. \code{-} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?});
 \item Ambiguous tokens will be treated as fully ambiguous
 (i.e. \code{{02}} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?})
-\item Where more than two states are informative (i.e. unambiguously present in
-more than one taxon), states beyond the two most informative will be
-ignored.
+\item Where more than five states are informative (i.e. unambiguously present in
+more than one taxon), states beyond the five most informative will be
+treated as ambiguous.
 }
+}
+\details{
+Characters with 2 informative states use the exact formula of Carter
+\emph{et al.} (1990).  Characters with 3--5 informative states use the recursive
+algorithm of Maddison & Slatkin (1991).
 }
 \section{Functions}{
 \itemize{
@@ -58,7 +63,7 @@ PrepareDataProfile(dataset)
 }
 \seealso{
 Other profile parsimony functions: 
-\code{\link{Carter1}()},
+\code{\link{MaddisonSlatkin}()},
 \code{\link{StepInformation}()},
 \code{\link{WithOneExtraStep}()},
 \code{\link{profiles}}

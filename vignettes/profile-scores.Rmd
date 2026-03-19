@@ -250,17 +250,20 @@ character.
 
 ## Implementation
 
-The present implementation of profile parsimony in "TreeSearch" is restricted:
-inapplicable tokens are treated as ambiguous; partial ambiguity (e.g. `{02}`)
-is treated as complete (`?`), and informative states (i.e. states present in 
-more than one taxon) beyond the first two are ignored (treated as ambiguous).
-This reflects the complicated mathematics of calculating the number of trees
-with a given number of steps.
+Profile parsimony in "TreeSearch" supports characters with up to five
+informative states (i.e. states present in more than one taxon).
+Characters with two informative states use the exact formula of
+Carter _et al._ [-@Carter1990]; characters with three to five states use the
+recursive algorithm of Maddison & Slatkin [-@Maddison1991].
+Characters with more than five informative states are reduced to their five
+most frequent states (with a warning).
+Inapplicable tokens are treated as ambiguous, and partial ambiguity
+(e.g. `{02}`) is treated as complete (`?`).
 
 Tree length can be calculated with 
 [`TreeLength(concavity = "profile")`](https://ms609.github.io/TreeSearch/reference/TreeLength.html),
 and tree search performed with 
-[`Morphy(concavity = "profile")`](https://ms609.github.io/TreeSearch/reference/Morphy.html).
+[`MaximizeParsimony(dataset, concavity = "profile")`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
 Data can be prepared for profile parsimony using [`PrepareDataProfile()`](https://ms609.github.io/TreeSearch/reference/PrepareDataProfile.html), and the profile of a character calculated using 
 [`StepInformation()`](https://ms609.github.io/TreeSearch/reference/StepInformation.html).
 

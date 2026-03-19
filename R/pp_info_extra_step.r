@@ -8,6 +8,13 @@
 #' _e_ extra steps, where _e_ ranges from its minimum possible value
 #' (i.e. number of different tokens minus one) to its maximum.
 #'
+#' For characters with 2 informative tokens, uses the exact formula of
+#' Carter _et al._ (1990) via [LogCarter1()].
+#' For characters with 3--5 informative tokens, uses the recursive algorithm
+#' of Maddison & Slatkin (1991) via [MaddisonSlatkin()].
+#' Characters with more than 5 informative tokens are reduced to their 5 most
+#' frequent tokens (with a warning).
+#'
 #' @param char Vector of tokens listing states for the character in question.
 #' @param ambiguousTokens Vector specifying which tokens, if any, correspond to
 #' the ambiguous token (`?`).
@@ -25,7 +32,7 @@
 #' @template MRS
 #' @importFrom fastmatch %fin%
 #' @importFrom stats setNames
-#' @importFrom TreeTools Log2Unrooted
+#' @importFrom TreeTools Log2Unrooted LnUnrooted
 #' @family profile parsimony functions
 #' @export
 StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
@@ -48,18 +55,49 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
     return(setNames(0, minSteps))
   }
   
-  if (length(split) > 2L) {
-    warning("Ignored least informative tokens where more than two informative ",
-            "tokens present.")
-    ranked <- order(order(split, decreasing = TRUE))
-    split <- split[ranked < 3]
+  k <- length(split)
+  
+  if (k > 5L) {
+    warning("More than 5 informative tokens; keeping the 5 most frequent.")
+    split <- split[seq_len(5L)]
+    k <- 5L
   }
   
-  logProfile <- vapply(seq_len(split[2]), LogCarter1, double(1),
-                       split[1], split[2])
-  ret <- setNames(Log2Unrooted(sum(split[1:2]))
-                  - (.LogCumSumExp(logProfile) / log(2)),
-                  seq_len(split[2]) + sum(singletons))
+  nTips <- sum(split)
+  
+  if (k == 2L) {
+    # Binary: use Carter (fast, exact)
+    logProfile <- vapply(seq_len(split[2]), LogCarter1, double(1),
+                         split[1], split[2])
+    # Convert log-count to log-probability
+    logP <- logProfile - LnUnrooted(nTips)
+    reducedMinSteps <- 1L
+  } else {
+    # Multi-state (3-5): use MaddisonSlatkin
+    nStates <- 2L^k - 1L
+    states <- integer(nStates)
+    for (i in seq_along(split)) {
+      states[2L^(i - 1L)] <- split[i]
+    }
+    reducedMinSteps <- k - 1L
+    maxSteps <- nTips - 1L
+    logP <- MaddisonSlatkin(reducedMinSteps:maxSteps, states)
+  }
+  
+  # Trim trailing -Inf entries (impossible step counts)
+  finite_idx <- which(is.finite(logP))
+  if (length(finite_idx) == 0L) {
+    return(setNames(0, minSteps))
+  }
+  logP <- logP[seq_len(max(finite_idx))]
+  
+  # Cumulative information: -log2(cumsum(P))
+  ret <- -.LogCumSumExp(logP) / log(2)
+  
+  # Name with total step counts (reduced steps + singleton offset)
+  names(ret) <- seq.int(reducedMinSteps,
+                         reducedMinSteps + length(ret) - 1L) + nSingletons
+  
   ret[ret < sqrt(.Machine[["double.eps"]])] <- 0 # Floating point error inevitable
   
   # Return:
@@ -81,14 +119,29 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?")) {
 
 #' Number of trees with _m_ steps
 #' 
-#' Calculate the number of trees in which Fitch parsimony will reconstruct
-#' _m_ steps, where _a_ leaves are labelled with one state, and _b_ leaves are
-#' labelled with a second state.
+#' Calculate the number of unrooted binary trees on which Fitch parsimony
+#' reconstructs exactly _m_ steps for a character.
 #' 
-#' Implementation of theorem 1 from \insertCite{Carter1990;textual}{TreeTools}
+#' `Carter1()` (and its logarithmic variants `Log2Carter1()`, `LogCarter1()`)
+#' implement theorem 1 of \insertCite{Carter1990;textual}{TreeTools} for
+#' **binary** characters, where _a_ leaves bear one state and _b_ bear the
+#' other.
 #' 
-#' @param m Number of steps.
+#' `MaddisonSlatkin()` generalises this result to characters with multiple
+#' states using the recursive approach of
+#' \insertCite{Maddison1991;textual}{TreeSearch}.
+#' It returns the **log-probability** (i.e. log of the fraction of unrooted
+#' binary trees) for each requested step count.  Currently supports 2--5
+#' character tokens.
+#' 
+#' @param m,steps Number of steps.
 #' @param a,b Number of leaves labelled `0` and `1`.
+#' @param states Integer vector giving the number of leaves bearing each
+#'   possible combination of states, laid out in binary fashion.
+#'   Entry 1 = state `1` (binary `001`), entry 2 = state `2` (binary `010`),
+#'   entry 3 = ambiguous state `{1,2}` (binary `011`), etc.
+#'   Only observed singleton states need non-zero counts; polymorphic entries
+#'   are typically zero.
 #' 
 #' @references 
 #' \insertAllCited{}
