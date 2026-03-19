@@ -102,6 +102,67 @@ DLL builds. Without it, the default `nm | sed` pipeline generates a
 `tmp.def` that truncates long C++ mangled symbols, causing linker failures
 or corrupt DLLs (especially under `pkgbuild::compile_dll(debug=TRUE)`).
 
+## Branch structure
+
+```
+main              ← stable, taggable; receives only reviewed bug fixes
+  └─ cpp-search   ← integration branch; all feature work merges here
+       ├─ feature/cid-consensus
+       ├─ feature/hsj-polish
+       └─ feature/<name>   (one per major feature)
+```
+
+### Rules
+
+- **`main`**: bug fixes and release tags only. No experiments.
+- **`cpp-search`**: integration target. Bug-fix agents (S-RED, S-PROF, S-COORD,
+  and ad-hoc fixes) work directly here. Feature branches merge here when ready.
+- **`feature/*`**: branch from `cpp-search`; contain **code changes only**.
+  Each feature branch is owned by a single agent at a time.
+
+### Coordination files live on `cpp-search` only
+
+`to-do.md`, `issues.md`, `agent-X.md`, `completed-tasks.md`, `coordination.md`,
+and `AGENTS.md` are **never committed on feature branches**. When an agent
+working on a feature branch needs to log progress or claim a task, they commit
+those changes directly to `cpp-search` (coordination-only commit), keeping the
+feature branch clean.
+
+To read coordination files while on a feature branch without switching:
+```bash
+git show cpp-search:to-do.md
+git show cpp-search:agent-X.md
+```
+
+To update a coordination file from a feature branch:
+```bash
+git checkout cpp-search -- agent-X.md   # pull latest into working tree
+# edit, then:
+git stash                               # stash any code changes first
+git add agent-X.md && git commit -m "chore: agent X progress note"
+git push origin cpp-search
+git stash pop                           # restore code work
+```
+
+### Shared files at merge time
+
+`src/ts_rcpp.cpp` and `src/TreeSearch-init.c` use the existing append-only
+convention — merge conflicts resolve cleanly by keeping both appended blocks.
+`DESCRIPTION` (Collate field) and `NAMESPACE` require a manual merge pass;
+this is expected and should be done carefully at feature-merge time.
+
+### Feature branch lifecycle
+
+1. `git checkout cpp-search && git checkout -b feature/<name>`
+2. Claim task on `cpp-search`'s `to-do.md` (coordination commit).
+3. Do all code work on `feature/<name>`.
+4. When complete: `git checkout cpp-search && git merge feature/<name>`.
+5. Resolve any Collate/NAMESPACE conflicts, rebuild, run tests.
+6. Log completion in `completed-tasks.md` on `cpp-search`.
+7. Delete feature branch.
+
+---
+
 ## Multi-agent workflow protocol
 
 ### Assignment
