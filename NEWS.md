@@ -68,6 +68,21 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
   parallel jackknife/bootstrap resampling via a single C++ call.
 - `SuccessiveApproximations()` gains `concavity` and `constraint` parameters.
 
+## Profile parsimony: multi-state support
+
+- Profile parsimony now supports characters with up to 5 informative states
+  (previously limited to 2).  Characters with 3--5 states use the recursive
+  algorithm of Maddison & Slatkin (1991).
+- New C++ function `MaddisonSlatkin()` computes the number of labelled
+  histories for multi-state characters.
+
+## Data simulation
+
+- New function `ParsSim()` simulates morphological datasets under a parsimony
+  model (equal weights, implied weights, or profile parsimony).  Each
+  character starts at minimum steps; extra steps are placed one at a time,
+  verified to increase the Fitch score by exactly 1.
+
 ## Scoring
 
 - `TreeLength()` and `CharacterLength()` / `FastCharacterLength()` use the
@@ -91,12 +106,12 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 - Fix IW scoring with missing `min_steps` offset.
 - Fix crash when dataset contains only ambiguous (`?`) tokens.
 
-## Deprecations
+## Custom search functions
 
-- `Ratchet()`, `MultiRatchet()`, and `RatchetConsensus()` are deprecated in
-  favour of `MaximizeParsimony()`.
-- `Jackknife()` is deprecated in favour of `Resample()`.
-- `TreeSearch()` is deprecated in favour of `MaximizeParsimony()`.
+- `Ratchet()`, `MultiRatchet()`, `Jackknife()`, `MorphyBootstrap()`, and
+  `TreeSearch()` are no longer deprecated.  These functions support pluggable
+  `TreeScorer` and `EdgeSwapper` functions for custom scoring strategies;
+  for standard parsimony, use `MaximizeParsimony()`.
 
 ## App improvements (`EasyTrees()`)
 

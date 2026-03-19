@@ -1,13 +1,27 @@
 # TreeSearch Multi-Agent Development Notes
 
-## Build isolation — per-agent library directories
+## Build isolation — tarball workflow (mandatory)
 
-Each agent **must** build and test to its own private library:
+Multiple agents share the same `src/` directory. In-place `R CMD INSTALL .`
+compiles `.o` files and links the DLL directly in `src/`, causing races:
+concurrent builds corrupt each other's object files, and a running R process
+locks the DLL on Windows, blocking everyone else.
+
+**Always build via tarball** so compilation happens in an isolated temp
+directory:
 
 ```bash
-R CMD INSTALL --library=.agent-X .
+R CMD build --no-build-vignettes --no-manual . && \
+  R CMD INSTALL --library=.agent-X TreeSearch_*.tar.gz && \
+  rm -f TreeSearch_*.tar.gz
+```
+
+To run tests:
+```bash
 Rscript -e "library(TreeSearch, lib.loc='.agent-X'); testthat::test_dir('tests/testthat', filter='ts-')"
 ```
+
+**Never** use `R CMD INSTALL --library=.agent-X .` (in-place build).
 
 **Never** install to the default library. On Windows, a loaded DLL locks
 the file and blocks other agents.
@@ -44,7 +58,9 @@ verify arg counts match between `RcppExports.cpp` and `TreeSearch-init.c`.
 
 ```bash
 rm -f src/*.o src/*.dll
-R CMD INSTALL --library=.agent-X .
+R CMD build --no-build-vignettes --no-manual . && \
+  R CMD INSTALL --library=.agent-X TreeSearch_*.tar.gz && \
+  rm -f TreeSearch_*.tar.gz
 Rscript check_init.R
 ```
 
@@ -200,6 +216,7 @@ break if one file's top-level code depends on a later file.
 | `RandomTreeScore()` | C++ (phyDat) or MorphyLib (morphyPtr) | Score a random tree |
 | `TaxonInfluence()` | C++ via `MaximizeParsimony()` | Per-taxon search |
 | `SearchControl()` | — | Expert parameter constructor for `MaximizeParsimony()` |
+| `ParsSim()` | Pure R | Simulate datasets under parsimony (EW/IW/profile) |
 
 `MaximizeParsimony()` has a backward-compatibility shim: passing old
 Morphy-style parameters (`ratchIter`, `tbrIter`, etc.) triggers a deprecation
@@ -277,15 +294,15 @@ Profile mode sets `ds.concavity = 1.0` (finite sentinel) so existing
 - Worker threads make no R API calls — `ts_rng.h` provides `thread_local`
   dispatch (null → R API for serial; set → thread-local for parallel)
 
-### NA scoring notes
+### Scoring notes
 
 - `.h` file changes (`ts_fitch_na.h`, `ts_fitch_na_incr.h`) may require
   `touch src/ts_fitch.cpp` before rebuild if the build system doesn't track
   header dependencies.
-- Wagner NA incremental scoring has minor `subtree_actives` staleness
-  (pessimistic but correct — `score_tree()` gives authoritative final result).
-- TBR uses incremental NA heuristic for candidate screening + full three-pass
-  verification on acceptance.
+- Incremental scoring is a **screening heuristic** for candidate selection;
+  `full_rescore()` / `score_tree()` is always authoritative.
+- See `.positai/expertise/fitch-scoring.md` for detailed invariants:
+  uppass correctness proof, NA staleness analysis, `upweight_mask` audit.
 
 ### Constraint enforcement
 
@@ -386,16 +403,16 @@ corrupted auto-generated `tmp.def` on Windows.
 
 Module tests: `test-mod-references.R` (4), `test-mod-data.R` (9),
 `test-mod-clustering.R` (12), `test-mod-treespace.R` (5),
-`test-mod-downloads.R` (11), `test-mod-search.R` (10),
+`test-mod-downloads.R` (11), `test-mod-search.R` (28),
 `test-mod-consensus.R` (9).
 Integration tests: `test-app-smoke.R` (3), `test-Distribution.R` (13),
-`test-SearchLog.R` (4), `test-ViewChars.R` (12). Total: 92 assertions.
+`test-SearchLog.R` (4), `test-ViewChars.R` (12). Total: 110 assertions.
 
 ## Version and CRAN status
 
 - **Version**: 2.0.0 (major bump for new `MaximizeParsimony()` API)
 - **R CMD check**: 0 ERRORs, 0 WARNINGs, 1 NOTE (R 4.5.2 internal bug)
-- **Test suite**: ~9200 R-level + 1393 ts-* pass, 0 fail, 5 skip
+- **Test suite**: ~9200 R-level + 1437 ts-* + 67 ParsSim + 37 MaddisonSlatkin pass
 
 ## Key design decisions (reference)
 
@@ -418,6 +435,68 @@ Integration tests: `test-app-smoke.R` (3), `test-Distribution.R` (13),
 
 6. **All-ambiguous phyDat guard**: `TreeLength()` and `MaximizeParsimony()`
    check for `levels = NULL` / 0-column contrast matrix before calling C++.
+
+## Alternative inapplicable-handling algorithms (in progress)
+
+Plan: `.positai/plans/2026-03-19-0643-alternative-inapplicable-handling-algorithms.md`
+
+Adding HSJ (Hopkins & St. John 2021) and step-matrix/x-transformation
+(Goloboff et al. 2021) scoring as alternatives to the existing Brazeau
+et al. (2019) three-pass algorithm. Both require an explicit character
+hierarchy specification.
+
+### New files
+
+| File | Purpose | Status |
+|------|---------|--------|
+| `R/CharacterHierarchy.R` | `CharacterHierarchy` S3 class, `validate_hierarchy()`, `hierarchy_from_names()`, `hierarchy_chars()`, `hierarchy_controlling()` | Complete, 32 tests passing |
+| `tests/testthat/test-CharacterHierarchy.R` | Unit tests for hierarchy specification | Complete |
+| `src/ts_hsj.h` | `HierarchyBlock` struct, `hsj_score()` declaration | Complete |
+| `src/ts_hsj.cpp` | HSJ scoring algorithm: per-char Fitch labeling, postorder a(n)/p(n) DP | Core algorithm complete; not yet wired to search pipeline |
+| `inst/REFERENCES.bib` | Added `Goloboff2021b` entry | Complete |
+
+### Modified files
+
+| File | Change |
+|------|--------|
+| `DESCRIPTION` | Added `CharacterHierarchy.R` to Collate field |
+| `R/MaximizeParsimony.R` | Added `hierarchy`, `inapplicable`, `hsj_alpha` params with validation; non-brazeau methods currently `stop()` with "not yet implemented" |
+
+### Design decisions
+
+- `hierarchy` is a **separate argument** to `MaximizeParsimony()` (not a phyDat attribute)
+- `inapplicable` and `hsj_alpha` are **top-level args** alongside `concavity`
+- Default `hsj_alpha = 1.0`
+- IW + hierarchy and Profile + hierarchy: **deferred**
+- Constraint interaction: **ignored** for now
+- Resampling: **hierarchical** — resample top-level chars; when a controlling primary is sampled, also resample within its block; recurse for nested hierarchies
+
+### Remaining work (Phase 1c–f)
+
+1. Pass `absent_token`, `n_tokens` from R to C++
+2. Partition original characters into hierarchy vs non-hierarchy sets so Fitch scores only non-hierarchy chars
+3. Add Rcpp bridge function for HSJ scoring in `ts_rcpp.cpp`
+4. R-side marshalling: build `tip_labels` matrix from phyDat, convert `CharacterHierarchy` → `HierarchyBlock` vectors
+5. Remove placeholder `stop()`; end-to-end test against paper examples
+
+### Key algorithm notes (HSJ)
+
+- Paper's Algorithm 1 initializes `a(l) = p(l) = 0` for all leaves. This is
+  incorrect for enforcing observed leaf states. Correct initialization:
+  leaf with primary absent → `a(l) = 0, p(l) = INF`; primary present →
+  `a(l) = INF, p(l) = 0`. Verified against hand-computed example.
+- `score_hierarchy_block()` operates per hierarchy block. Non-hierarchy
+  characters use standard Fitch. Total = Fitch(non-hierarchy) + Σ HSJ(blocks).
+- Secondary character labels at internal nodes from Fitch first-pass
+  (inapplicable treated as a separate state).
+- HSJ is full-rescore only (no incremental variant). Performance mitigation:
+  candidate screening via Fitch, full HSJ only for promising candidates.
+
+### Phase 2 (step-matrix) — not yet started
+
+Requires Sankoff optimization engine (`ts_sankoff.h/.cpp`). R-level recoding
+function `recode_hierarchy()` combines primary + secondaries into composite
+step-matrix character with asymmetric costs (gain:loss = n+1:1).
 
 ## Benchmarks and profiling
 

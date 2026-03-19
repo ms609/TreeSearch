@@ -43,3 +43,6 @@ vignettes/\.RData
 ^issues\.md$
 Makevars\.win\..*-bak$
 ^.*\.Rcheck$
+
+# Test artifacts
+^test.*\.txt$
