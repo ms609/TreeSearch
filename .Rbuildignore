@@ -11,6 +11,7 @@
 ^inst/Parsimony/tests
 ^man-roxygen$
 ^memcheck$
+^pdf$
 ^pkgdown$
 ^revdep$
 ^split-support$
