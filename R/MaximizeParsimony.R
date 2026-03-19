@@ -189,15 +189,15 @@
 #'   heuristic parameters. Presets:
 #'   \describe{
 #'     \item{`"auto"` (default)}{Selects automatically based on dataset size
-#'       and signal density (characters per taxon):
-#'       `"sprint"` for <=30 taxa, `"thorough"` for >=75 taxa with
-#'       fewer than 5 characters per taxon, `"default"` otherwise.}
+#'       and character count:
+#'       `"sprint"` for <=30 taxa, `"thorough"` for >=65 taxa with
+#'       >=100 character patterns, `"default"` otherwise.}
 #'     \item{`"sprint"`}{Fast search: 3 ratchet cycles, no drift, minimal
 #'       sectorial. Good for small datasets or quick surveys.}
 #'     \item{`"default"`}{Balanced: 5 ratchet + 2 drift + sectorial + fusing.}
 #'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, 12 drift, adaptive
-#'       perturbation, extra sectorial rounds. Best for large (75+ tips)
-#'       datasets with limited phylogenetic signal, where sprint/default
+#'       perturbation, extra sectorial rounds. Best for datasets with
+#'       65+ tips and 100+ character patterns, where sprint/default
 #'       may miss the global optimum.}
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }

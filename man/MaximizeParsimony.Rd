@@ -59,14 +59,17 @@ are filtered to respect the constraint topology.}
 \item{strategy}{Character: named strategy preset controlling the search
 heuristic parameters. Presets:
 \describe{
-\item{\code{"auto"} (default)}{Selects automatically based on dataset size:
-\code{"sprint"} for <=30 taxa, \code{"default"} for 31--60, \code{"thorough"} for 61+.}
+\item{\code{"auto"} (default)}{Selects automatically based on dataset size
+and character count:
+\code{"sprint"} for <=30 taxa, \code{"thorough"} for >=65 taxa with
+>=100 character patterns, \code{"default"} otherwise.}
 \item{\code{"sprint"}}{Fast search: 3 ratchet cycles, no drift, minimal
 sectorial. Good for small datasets or quick surveys.}
 \item{\code{"default"}}{Balanced: 5 ratchet + 2 drift + sectorial + fusing.}
 \item{\code{"thorough"}}{Intensive: 20 ratchet cycles, 12 drift, adaptive
-perturbation, extra sectorial rounds. Best for large (60+ tips)
-datasets where sprint/default may miss the global optimum.}
+perturbation, extra sectorial rounds. Best for datasets with
+65+ tips and 100+ character patterns, where sprint/default
+may miss the global optimum.}
 \item{\code{"none"}}{Use only the explicitly supplied parameter values.}
 }
 Explicit \code{control} fields always override the preset; for example,
@@ -74,7 +77,12 @@ Explicit \code{control} fields always override the preset; for example,
 sprint defaults for everything except \code{ratchetCycles}.}
 
 \item{maxReplicates}{Integer: maximum number of independent search
-replicates (default: 100).}
+replicates (default: 100).
+For large or complex datasets a higher value improves the chance of
+finding all MPTs.  A rough minimum is
+\code{max(10, ceiling(NTip * NChar / 5000))}, where \code{NChar = sum(weight)}.
+A warning is issued when an explicit value falls below this threshold
+for datasets with 30 or more taxa.}
 
 \item{targetHits}{Integer: stop when the best score has been found
 independently this many times (default: \code{max(10, NTip / 5)}).}
