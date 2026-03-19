@@ -16,7 +16,7 @@ PrepareDataIW(dataset)
 \item{approx}{Character string controlling how profile information amounts
 are computed for multi-state characters with many tips.
 \code{"auto"} (default) reduces characters exceeding feasibility thresholds to
-binary; \code{"exact"} always uses the exact MaddisonSlatkin calculation
+binary; \code{"exact"} always uses the exact Maddison & Slatkin calculation
 (slow for large matrices); \code{"mc"} uses Monte Carlo sampling.}
 
 \item{n_mc}{Integer; number of Monte Carlo samples when \code{approx = "mc"}.
