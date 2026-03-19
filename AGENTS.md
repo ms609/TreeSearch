@@ -165,6 +165,14 @@ this is expected and should be done carefully at feature-merge time.
 
 ## Multi-agent workflow protocol
 
+### Worktree tasks
+
+Tasks with status `WORKTREE (name)` are actively developed in a dedicated git
+worktree (e.g. `C:/Users/pjjg18/GitHub/TS-CID-cons`). **Do not claim or
+modify these tasks.** They are reserved for the human developer working in
+that worktree. To mark a task as in-flight on a worktree, set its status to
+`WORKTREE (name)` where *name* matches the worktree directory basename.
+
 ### Assignment
 
 On `/assign X`:
