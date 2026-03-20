@@ -23,6 +23,17 @@ library("TreeSearch") # load now: inapplicable.datasets required within ui
   format(Sys.time(), "%Y-%m-%d %T")
 }
 
+local({
+  needed <- c("cluster", "future", "PlotTools", "promises",
+              "protoclust", "Rogue", "shinyjs")
+  miss <- needed[!vapply(needed, requireNamespace, logical(1L), quietly = TRUE)]
+  if (length(miss)) {
+    message("Installing packages required by EasyTrees(): ",
+            paste(miss, collapse = ", "))
+    utils::install.packages(miss)
+  }
+})
+
 suppressPackageStartupMessages({
   library("shiny", exclude = c("runExample"))
   library("shinyjs", exclude = c("runExample"))
