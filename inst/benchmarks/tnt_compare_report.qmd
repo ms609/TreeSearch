@@ -1,0 +1,214 @@
+---
+title: "TreeSearch vs TNT: Benchmark Comparison"
+author: "TreeSearch Development"
+date: today
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+## Overview
+  
+This report compares the phylogenetic search performance of
+**TreeSearch** (C++ driven search engine) against **TNT 1.6**
+(Goloboff & Catalano 2016) across a suite of morphological datasets.
+
+Both programs implement "new technology" search strategies (Wagner tree +
+TBR + sectorial search + ratchet + drift + tree fusing). The comparison
+focuses on:
+
+- **Score quality**: Does each engine find equally good trees?
+- **Speed**: Wall-clock time to convergence.
+- **Scaling**: How does performance change with dataset size?
+
+### Scoring caveat
+
+TreeSearch uses the Brazeau et al. (2019) three-pass algorithm for
+inapplicable characters, while TNT treats inapplicable tokens as
+a regular character state. For datasets with inapplicable data, the two
+programs optimise *different objective functions*, so absolute scores are
+not directly comparable. What is comparable is each program's ability to
+find its own optimum efficiently.
+
+```{r}
+#| label: setup
+library(tidyverse)
+library(knitr)
+```
+
+## Load results
+
+```{r}
+#| label: load-data
+
+# Find the most recent results CSV
+csv_files <- list.files(".", pattern = "^tnt_compare_.*\\.csv$",
+                        full.names = TRUE)
+if (length(csv_files) == 0) {
+  stop("No results CSV found. Run bench_tnt_compare.R first.")
+}
+results_file <- sort(csv_files, decreasing = TRUE)[1]
+results <- read.csv(results_file, stringsAsFactors = FALSE)
+cat("Loaded", nrow(results), "rows from", basename(results_file), "\n")
+```
+
+## Score comparison
+
+For each dataset, we compare the best score found across all seeds.
+
+```{r}
+#| label: score-summary
+
+score_summary <- results |>
+  group_by(dataset, n_taxa, n_chars, weighting) |>
+  summarise(
+    tnt_best = min(tnt_score, na.rm = TRUE),
+    ts_best = min(ts_score, na.rm = TRUE),
+    tnt_median = median(tnt_score, na.rm = TRUE),
+    ts_median = median(ts_score, na.rm = TRUE),
+    n_runs = n(),
+    .groups = "drop"
+  ) |>
+  arrange(n_taxa)
+
+kable(score_summary, digits = 2,
+      caption = "Best and median scores per dataset and weighting scheme")
+```
+
+## Timing comparison
+
+```{r}
+#| label: timing-summary
+
+timing_summary <- results |>
+  group_by(dataset, n_taxa, weighting, timeout_s) |>
+  summarise(
+    tnt_median_s = median(tnt_wall_s, na.rm = TRUE),
+    ts_median_s = median(ts_wall_s, na.rm = TRUE),
+    speedup = median(tnt_wall_s, na.rm = TRUE) /
+      median(ts_wall_s, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  arrange(n_taxa)
+
+kable(timing_summary, digits = 3,
+      caption = "Median wall-clock time (seconds) and TNT/TreeSearch ratio")
+```
+
+### Timing by dataset size
+
+```{r}
+#| label: fig-timing
+#| fig-cap: "Wall-clock time vs number of taxa"
+#| fig-width: 8
+#| fig-height: 5
+
+results_long <- results |>
+  select(dataset, n_taxa, weighting, timeout_s, seed,
+         tnt_wall_s, ts_wall_s) |>
+  pivot_longer(cols = c(tnt_wall_s, ts_wall_s),
+               names_to = "engine",
+               values_to = "wall_s") |>
+  mutate(engine = ifelse(engine == "tnt_wall_s", "TNT", "TreeSearch"))
+
+ggplot(results_long, aes(n_taxa, wall_s, colour = engine)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "loess", se = FALSE) +
+  facet_wrap(~weighting) +
+  labs(x = "Number of taxa", y = "Wall-clock time (s)",
+       colour = "Engine") +
+  theme_minimal()
+```
+
+## Score quality
+
+How often does each engine find the best score (across both engines)?
+
+```{r}
+#| label: score-quality
+
+quality <- results |>
+  group_by(dataset, weighting) |>
+  mutate(
+    overall_best = min(c(tnt_score, ts_score), na.rm = TRUE),
+    tnt_optimal = tnt_score <= overall_best * 1.001,
+    ts_optimal = ts_score <= overall_best * 1.001
+  ) |>
+  summarise(
+    n_runs = n(),
+    tnt_pct_optimal = round(100 * mean(tnt_optimal, na.rm = TRUE), 1),
+    ts_pct_optimal = round(100 * mean(ts_optimal, na.rm = TRUE), 1),
+    .groups = "drop"
+  )
+
+kable(quality,
+      caption = "Percentage of runs finding the best-known score (within 0.1%)")
+```
+
+## Score vs taxa scatter
+
+```{r}
+#| label: fig-score-scatter
+#| fig-cap: "Best scores found by each engine per dataset"
+#| fig-width: 8
+#| fig-height: 5
+
+score_long <- score_summary |>
+  select(dataset, n_taxa, weighting, tnt_best, ts_best) |>
+  pivot_longer(cols = c(tnt_best, ts_best),
+               names_to = "engine", values_to = "best_score") |>
+  mutate(engine = ifelse(engine == "tnt_best", "TNT", "TreeSearch"))
+
+ggplot(score_long, aes(n_taxa, best_score, colour = engine)) +
+  geom_point(size = 2.5) +
+  geom_line(aes(group = interaction(dataset, weighting)), alpha = 0.3,
+            colour = "grey50") +
+  facet_wrap(~weighting, scales = "free_y") +
+  labs(x = "Number of taxa", y = "Best score",
+       colour = "Engine") +
+  theme_minimal()
+```
+
+## Rearrangements (TNT)
+
+TNT reports the total number of rearrangements examined, which gives a
+sense of search intensity.
+
+```{r}
+#| label: tnt-rearrangements
+
+if ("tnt_rearrangements" %in% names(results)) {
+  rearr <- results |>
+    group_by(dataset, n_taxa, weighting, timeout_s) |>
+    summarise(
+      median_rearrangements = median(tnt_rearrangements, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    arrange(n_taxa)
+  
+  kable(rearr, digits = 0,
+        caption = "Median TNT rearrangements per dataset")
+}
+```
+
+## Raw results
+
+```{r}
+#| label: raw-results
+
+kable(results |> arrange(dataset, weighting, timeout_s, seed),
+      digits = 3,
+      caption = "Full results table")
+```
+
+## Session info
+
+```{r}
+#| label: session-info
+sessionInfo()
+```
