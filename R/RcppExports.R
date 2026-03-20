@@ -3,7 +3,7 @@
 
 #' @rdname Carter1
 #' @examples
-#' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
+#' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * TreeTools::NUnrooted(7)
 #' 
 #' @export
 MaddisonSlatkin <- function(steps, states) {
