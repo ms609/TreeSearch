@@ -44,7 +44,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // mi_key
-RawVector mi_key(IntegerVector ni, IntegerVector nj);
+std::string mi_key(IntegerVector ni, IntegerVector nj);
 RcppExport SEXP _TreeSearch_mi_key(SEXP niSEXP, SEXP njSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

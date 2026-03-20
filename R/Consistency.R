@@ -109,8 +109,7 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
 }
 
 
-#' @importFrom fastmap fastmap
-.CharLengthCache <- fastmap()
+.CharLengthCache <- new.env(hash = TRUE, parent = emptyenv())
 
 #' Expected length
 #' 
@@ -151,8 +150,8 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   
   .LengthForChar <- function(x) {
     key <- paste(c(nRelabel, x), collapse = ",")
-    if (.CharLengthCache$has(key)) {
-      .CharLengthCache$get(key)
+    if (!is.null(.CharLengthCache[[key]])) {
+      .CharLengthCache[[key]]
     } else {
       patterns <- apply(unname(unique(t(
         as.data.frame(replicate(nRelabel, sample(rep(seq_along(x), x))))))),
@@ -169,7 +168,7 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
         contrast = rwContrast,
         class = "phyDat")
       ret <- median(FastCharacterLength(tree, phy))
-      .CharLengthCache$set(key, ret)
+      .CharLengthCache[[key]] <- ret
       ret
     }
   }
