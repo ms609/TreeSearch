@@ -109,10 +109,18 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
              "on" = show("concavity"),
              hide("concavity")
       )
+      # Weighting mode changed: old run counts no longer apply; keep trees
+      r$searchTotalHits <- 0L
+      r$searchTotalReps <- 0L
+      r$bestSearchScore  <- NULL
       DisplayTreeScores()
     })
 
     observeEvent(input$concavity, {
+      # Concavity constant changed: old run counts no longer apply; keep trees
+      r$searchTotalHits <- 0L
+      r$searchTotalReps <- 0L
+      r$bestSearchScore  <- NULL
       DisplayTreeScores()
     }, ignoreInit = TRUE)
 

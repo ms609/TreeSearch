@@ -9,6 +9,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
 | T-148 | Red-team: ParsSim log-space convolution (S-RED focus 8) | B | Fixed `.LogCumSumExp` NaN bug: `-Inf - (-Inf) = NaN` in IEEE 754 when both accumulator and new value are `-Inf`. Guard added; 7 new assertions pass. |
+| T-165 | Shiny: reset run stats on concavity/weighting change | C | Added stat-reset to `observeEvent(input$concavity)` and `observeEvent(input$implied.weights)` in `mod_search.R`. Trees kept; hits/reps/bestScore cleared. 2 new tests (50 total pass). |
 
 ---
 
