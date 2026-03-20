@@ -178,11 +178,13 @@ test_that("CSS integration with full R-level MaximizeParsimony", {
 
 test_that("Driven search with CSS handles timeout", {
   set.seed(4411)
-  result <- ts_driven(large_ds, maxReplicates = 100L, targetHits = 100L,
+  # maxReplicates/targetHits set high enough that the search cannot complete
+  # before the first 200ms timeout poll, even on fast CI runners (macOS-latest).
+  result <- ts_driven(large_ds, maxReplicates = 10000L, targetHits = 10000L,
                       cssRounds = 2L, cssPartitions = 3L,
                       maxSeconds = 0.5)
 
-  expect_true(result$timed_out || result$replicates < 100)
+  expect_true(result$timed_out || result$replicates < 10000)
   expect_true(result$best_score > 0)
 })
 
