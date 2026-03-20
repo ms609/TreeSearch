@@ -321,3 +321,74 @@ test_that("Driven search still finds good scores after Wagner optimization", {
   expect_true(result$best_score <= 200)
   expect_true(result$best_score > 0)
 })
+
+# ---- Constrained Wagner tests (S-RED focus 9) ----
+# Regression for boundary-edge false positive (S-RED round 9):
+# wagner_edge_violates_constraint and regraft_violates_constraint both
+# rejected the edge (parent_of_cn, cn) for outside tips/clades.  Inserting
+# an outside element just above the constraint clade makes it a sibling of
+# that clade and does NOT break monophyly.  Fixed with `&& below != cn`.
+
+test_that("constrained random Wagner score is verified", {
+  # Score check only: ts_random_wagner_tree without posthoc data uses the
+  # primary wagner_edge_violates_constraint check but the retry loop only fires
+  # when has_posthoc=TRUE.  For addition orders where inside tips land on both
+  # sides of the rooted root in the 3-taxon start, cn==root and the check is
+  # skipped (by design — can't enforce directionality from an unrooted root).
+  # Full constraint satisfaction requires posthoc data; that path is exercised
+  # via MaximizeParsimony in test-ts-constraint-small.R.
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  pd <- congreveLamsdellMatrices[[1]][1:6]
+  d <- prep_pd(pd)
+
+  cons_mat <- matrix(c(0L, 0L, 1L, 1L, 1L, 1L), nrow = 1L)
+
+  for (seed in c(1771L, 2882L, 3993L)) {
+    set.seed(seed)
+    result <- TreeSearch:::ts_random_wagner_tree(
+      d$contrast, d$tip_data, d$weight, d$levels,
+      consSplitMatrix = cons_mat
+    )
+    fitch_check <- TreeSearch:::ts_fitch_score(
+      result$edge, d$contrast, d$tip_data, d$weight, d$levels
+    )
+    expect_equal(result$score, fitch_check,
+                 info = paste("constrained Wagner seed", seed))
+  }
+})
+
+test_that("constrained sequential Wagner boundary edge: outside tip adjacent to clade", {
+  # Sequential addition order (t1 first, the two inside tips go in first).
+  # After placing t1, t2, t3 as 3-taxon tree, cn = LCA(t1,t2).
+  # Adding t4 (outside): with the boundary fix, edge (root, cn) is now
+  # accepted (previously false-positive rejected).  Either way, the
+  # constraint must be satisfied and the final score correct.
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  pd <- congreveLamsdellMatrices[[1]][1:6]
+  d <- prep_pd(pd)
+  n_tip <- length(pd)
+
+  cons_mat <- matrix(c(0L, 0L, 1L, 1L, 1L, 1L), nrow = 1L)
+  order_seq <- seq_len(n_tip)  # R 1-indexed; t1 added first
+
+  result <- TreeSearch:::ts_wagner_tree(
+    d$contrast, d$tip_data, d$weight, d$levels,
+    addition_order = order_seq,
+    consSplitMatrix = cons_mat
+  )
+
+  fitch_check <- TreeSearch:::ts_fitch_score(
+    result$edge, d$contrast, d$tip_data, d$weight, d$levels
+  )
+  expect_equal(result$score, fitch_check)
+
+  # R tips 1 and 2 must be sisters
+  ec <- result$edge
+  p1 <- ec[ec[, 2] == 1L, 1L]
+  p2 <- ec[ec[, 2] == 2L, 1L]
+  expect_equal(p1, p2)
+
+  # All tips present exactly once
+  child_tips <- sort(result$edge[result$edge[, 2] <= n_tip, 2L])
+  expect_equal(child_tips, seq_len(n_tip))
+})

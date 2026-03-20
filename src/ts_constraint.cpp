@@ -298,7 +298,11 @@ bool regraft_violates_constraint(int below,
     if (cd.clip_zones[s] == ClipZone::MUST_INSIDE && !inside) {
       return true;
     }
-    if (cd.clip_zones[s] == ClipZone::MUST_OUTSIDE && inside) {
+    // Exclude the boundary edge (above_cn, cn): regrafting an outside-only
+    // clade just above the constraint clade makes it a sibling of that clade,
+    // preserving monophyly.  Only reject if the clade would land *strictly
+    // inside* the constraint clade.
+    if (cd.clip_zones[s] == ClipZone::MUST_OUTSIDE && inside && below != cn) {
       return true;
     }
   }

@@ -54,7 +54,6 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 
-| T-164 | P2 | OPEN | — | **Shiny UX: confusing behavior when reducing max_runs during continued search** | After stop/continue/stop cycle, reducing `maximum_runs` slider causes unexpected long run; accumulated count appears to exceed new limit. Clarify run-count semantics and fix display if needed. |
 
 
 
