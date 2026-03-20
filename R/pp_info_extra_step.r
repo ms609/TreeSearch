@@ -19,9 +19,9 @@
 #' in the number of tips for a given number of tokens), behaviour depends on
 #' the `approx` argument.  With `"auto"` (default), infeasible characters are
 #' reduced to their 2 most frequent tokens and scored using the faster Carter
-#' formula.  This occurs for 3-state characters with more than 25 informative
-#' tips, 4-state characters with more than 18 tips, and 5-state characters with
-#' more than 12 tips.  With `"mc"`, the MC-calibrated approximation is used
+#' formula.  This occurs for 3-state characters with more than 27 informative
+#' tips, 4-state characters with more than 19 tips, and 5-state characters with
+#' more than 13 tips.  With `"mc"`, the MC-calibrated approximation is used
 #' instead: the step-count distribution is estimated from a random sample of
 #' trees, anchored at the exact minimum-steps probability.
 #'
@@ -86,9 +86,9 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
   nTips <- sum(split)
   
   # MaddisonSlatkin is exponential in nTips for k >= 3.
-  # Measured thresholds for vectorized solver (< ~5 s, worst-case balanced split):
-  #   k=3: n <= 25, k=4: n <= 18, k=5: n <= 12
-  maxTips <- c(Inf, Inf, 25L, 18L, 12L)
+  # Post-T-152+T-153 worst-case timings on reference machine (any split):
+  #   k=3: n <= 27 (~1.0 s), k=4: n <= 19 (~2.0 s), k=5: n <= 13 (~2.6 s)
+  maxTips <- c(Inf, Inf, 27L, 19L, 13L)
   infeasible <- k >= 3L && nTips > maxTips[k]
   
   if (infeasible && identical(approx, "mc")) {
