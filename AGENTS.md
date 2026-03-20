@@ -281,6 +281,24 @@ Use Tier 3 only for tests that take > ~10 s or are sensitive to machine load.
 **update the Collate field** — otherwise R sources alphabetically, which can
 break if one file's top-level code depends on a later file.
 
+## Documentation checks (mandatory)
+
+After any change to a function signature or roxygen block, run:
+
+```r
+devtools::check_man()
+```
+
+After writing or updating documentation prose, also run:
+
+```r
+spelling::spell_check_package()
+```
+
+Both should be clean before committing. These are fast and catch issues
+(`check_man` catches Rd parse errors, cross-ref failures, `\usage` mismatches;
+`spell_check_package` catches typos in `@description`/`@details`/`@param` text).
+
 ## Architecture reference
 
 ### R-level API

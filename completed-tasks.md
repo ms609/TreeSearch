@@ -169,3 +169,5 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-152 | LSEAccumulator long double→double + expl→exp | A | 26% avg speedup across k=3..5 boundary cases |
 | T-153 | std::isfinite→NEG_INF compare in MaddisonSlatkin.cpp | A | bundled with T-152 |
 | S-PROF | Threshold comment update + fpl_d/fpl_u batching in LogPVec | A | ~15% further speedup; k=3:27/k=4:19/k=5:13 new thresholds |
+
+| T-154 | OAFlatMap for logB_cache/logPVec_cache in SolverT | A | Probe-layer OA map eliminates node ptr-chase; deque backing for logPVec stable refs; fixes latent LogB() dangling-ref UB; bd883459 |

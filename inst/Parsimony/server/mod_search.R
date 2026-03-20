@@ -5,7 +5,7 @@
 #
 # Owns inputs: go, modalGo, searchConfig, strategy, maxReplicates,
 #   targetHits, timeout, epsilon, searchWithout, implied.weights, concavity,
-#   nThreads.
+#   nThreads, inapplicable, hsjAlpha.
 #
 # Reactive args:
 #   r              AppState reactiveValues
@@ -115,6 +115,49 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     observeEvent(input$concavity, {
       DisplayTreeScores()
     }, ignoreInit = TRUE)
+
+    # Show/hide hsjAlpha input when inapplicable method changes
+    observeEvent(input$inapplicable, {
+      if (identical(input$inapplicable, "hsj")) {
+        show("hsjAlpha")
+      } else {
+        hide("hsjAlpha")
+      }
+    }, ignoreInit = TRUE)
+
+    # Dynamic help text for hierarchy detection (shown inside config modal)
+    output$hierarchyInfo <- renderUI({
+      inp <- input$inapplicable
+      if (is.null(inp) || identical(inp, "brazeau")) return(NULL)
+      chars <- r$chars
+      if (is.null(chars) || length(chars) == 0L) {
+        return(helpText(
+          "No character names available for hierarchy auto-detection."
+        ))
+      }
+      h <- tryCatch(
+        withCallingHandlers(
+          hierarchy_from_names(chars),
+          warning = function(w) invokeRestart("muffleWarning")
+        ),
+        error = function(e) NULL
+      )
+      if (is.null(h)) {
+        helpText(HTML(paste0(
+          "No hierarchy detected. Character names must follow the convention ",
+          "<code>sup_tag</code> (primary) and ",
+          "<code>sub_tag[_suffix]</code> (secondary); see ",
+          "<code>?hierarchy_from_names</code>."
+        )))
+      } else {
+        n_blocks <- length(h)
+        n_chars  <- length(hierarchy_chars(h))
+        helpText(paste0(
+          "Detected ", n_blocks, " hierarchy block(s) covering ",
+          n_chars, " character(s)."
+        ))
+      }
+    })
 
     ##########################################################################
     # Async profile data preparation (with progress + cancel)
@@ -446,8 +489,11 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     ##########################################################################
 
     DisplayTreeScores <- function () {
-      # Don't overwrite "Searching..." indicator while a search is running
-      if (!is.null(r$searchNotification)) return(invisible())
+      # Don't overwrite "Searching..." indicator while a search is running.
+      # Guard on both fields: searchNotification can be NULL if the
+      # notification was dismissed externally, but searchInProgress is the
+      # authoritative flag.
+      if (!is.null(r$searchNotification) || isTRUE(r$searchInProgress)) return(invisible())
       LogMsg("DisplayTreeScores()")
       treeScores <- scores()
       score <- if (is.null(treeScores) && identical(concavity(), "profile") &&
@@ -502,7 +548,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     searchTask <- ExtendedTask$new(
       function(dataset, tree, concavity, strategy, maxReplicates,
                targetHits, maxSeconds, poolSuboptimal, nThreads,
-               cancelPath, progressPath) {
+               cancelPath, progressPath,
+               hierarchy, inapplicable, hsjAlpha) {
         future::future({
           on.exit({
             Sys.unsetenv("TREESEARCH_CANCEL_FILE")
@@ -530,6 +577,14 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
             args$control <- TreeSearch::SearchControl(
               poolSuboptimal = poolSuboptimal
             )
+          }
+          # Inapplicable handling (non-Brazeau requires hierarchy)
+          if (!is.null(hierarchy) && !identical(inapplicable, "brazeau")) {
+            args$hierarchy    <- hierarchy
+            args$inapplicable <- inapplicable
+            if (identical(inapplicable, "hsj")) {
+              args$hsj_alpha <- hsjAlpha
+            }
           }
           do.call(TreeSearch::MaximizeParsimony, args)
         }, seed = TRUE)
@@ -576,6 +631,39 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         0
       }
       searchNThreads <- if (length(input$nThreads)) as.integer(input$nThreads) else 1L
+
+      # Inapplicable handling
+      searchInapplicable <- if (length(input$inapplicable)) input$inapplicable else "brazeau"
+      searchHsjAlpha     <- if (length(input$hsjAlpha)) as.double(input$hsjAlpha) else 1.0
+      searchHierarchy <- if (!identical(searchInapplicable, "brazeau") &&
+                             !is.null(r$chars) && length(r$chars) > 0L) {
+        tryCatch(
+          withCallingHandlers(
+            hierarchy_from_names(r$chars),
+            warning = function(w) invokeRestart("muffleWarning")
+          ),
+          error = function(e) NULL
+        )
+      } else {
+        NULL
+      }
+
+      # Non-Brazeau methods require a detected hierarchy; abort early
+      if (!identical(searchInapplicable, "brazeau") && is.null(searchHierarchy)) {
+        methodLabel <- switch(searchInapplicable,
+                              hsj   = "Hopkins & St. John (HSJ)",
+                              xform = "X-transformation (Goloboff)",
+                              searchInapplicable)
+        Notification(
+          paste0(
+            "The \u201c", methodLabel, "\u201d method requires a character ",
+            "hierarchy. Ensure character names follow the sup_<tag> / ",
+            "sub_<tag> convention (see ?hierarchy_from_names)."
+          ),
+          type = "error", duration = 10
+        )
+        return(invisible())
+      }
 
       # Show search-in-progress indicator BEFORE tree selection (which may
       # call AdditionTree synchronously). The guard in DisplayTreeScores()
@@ -667,6 +755,11 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           paste0("  control = SearchControl(poolSuboptimal = ", searchPoolSub, "),"),
         if (searchNThreads > 1L)
           paste0("  nThreads = ", searchNThreads, "L,"),
+        if (!identical(searchInapplicable, "brazeau") && !is.null(searchHierarchy))
+          paste0("  inapplicable = \"", searchInapplicable, "\","),
+        if (identical(searchInapplicable, "hsj") && !is.null(searchHierarchy) &&
+            searchHsjAlpha != 1.0)
+          paste0("  hsj_alpha = ", searchHsjAlpha, ","),
         "  verbosity = 0",
         ")"))
       # Snapshot reactive values for the async task
@@ -677,7 +770,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         searchDataset, startTree, searchConcavity,
         searchStrategy, searchMaxRep, searchTargetHits,
         searchMaxSeconds, searchPoolSub, searchNThreads,
-        cancelPath, progressPath
+        cancelPath, progressPath,
+        searchHierarchy, searchInapplicable, searchHsjAlpha
       )
     }
 
@@ -736,6 +830,10 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         " | Best: ", best,
         " | Hits: ", hits, "/", target
       )
+      # Update both the results area and the toast (belt-and-suspenders: if
+      # DisplayTreeScores() was called and overwrote output$results, the next
+      # poll restores the progress message within 500 ms).
+      output$results <- renderUI(HTML(msg))
       showNotification(msg, id = nid, duration = NULL,
                        type = "message", closeButton = FALSE)
     })
@@ -757,6 +855,12 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       if (nCores > 1L) {
         updateSliderInput(session, "nThreads", value = input$nThreads)
       }
+      # Sync inapplicable selector and show/hide hsjAlpha accordingly
+      inapplicable_cur <- if (length(input$inapplicable)) input$inapplicable else "brazeau"
+      updateSelectInput(session, "inapplicable", selected = inapplicable_cur)
+      updateNumericInput(session, "hsjAlpha",
+                         value = if (length(input$hsjAlpha)) input$hsjAlpha else 1.0)
+      if (identical(inapplicable_cur, "hsj")) show("hsjAlpha") else hide("hsjAlpha")
       showModal(modalDialog(
         easyClose = TRUE,
         fluidPage(column(6,
@@ -765,6 +869,14 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
                           "Equal" = "off"), "on"),
           sliderInput(ns("concavity"), "Concavity constant", min = 0L,
                      max = 3L, pre = "10^", value = 1L),
+          selectInput(ns("inapplicable"), "Inapplicable characters",
+                      list("Brazeau et al. (default)" = "brazeau",
+                           "Hopkins & St. John (HSJ)"  = "hsj",
+                           "X-transformation (Goloboff)" = "xform"),
+                      "brazeau"),
+          hidden(numericInput(ns("hsjAlpha"), "HSJ \u03b1 parameter",
+                              value = 1.0, min = 0, step = 0.1)),
+          uiOutput(ns("hierarchyInfo")),
           if (nCores > 1L) {
             sliderInput(ns("nThreads"), "Parallel search threads",
                         min = 1L, max = nCores,

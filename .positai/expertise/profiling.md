@@ -309,6 +309,43 @@ can verify the improvement.
     HSJ/XFORM hierarchical 2T = 1.1× only. Known limitation, future optimization
     (C++-level inter-replicate parallelism for hierarchical resampling).
 
+11. ✅ **MaddisonSlatkin internal bottlenecks** (2026-03-19 Agent A, T-149).
+    VTune hotspot collection (software sampling, `-g -fno-omit-frame-pointer`
+    symbols build) on 57 calls at boundary cases: k=3/n=20–25, k=4/n=14–18,
+    k=5/n=9–12. Total ~23 s CPU time; 63% in `TreeSearch.dll`.
+
+    **CPU time breakdown within TreeSearch.dll (14.1 s):**
+
+    | Category | CPU (s) | % DLL |
+    |----------|---------|-------|
+    | `logB_cache::find` (k=3,4,5) | 2.72 | 19% |
+    | `SolverT<N>::LogB` compute | 1.88 | 13% |
+    | `logPVec_cache::find` (k=3,4,5) | 1.91 | 14% |
+    | `SolverT<N>::LogPVec` compute | 1.24 | 9% |
+    | `LogPVecKey::operator==` | 1.11 | 8% |
+    | `StateKeyT<N>::operator==` | 1.01 | 7% |
+    | `expl`/`_expl_internal` (LogB LSE) | 0.91 | 6% |
+    | `logRD_cache::find` | 0.74 | 5% |
+    | `std::isfinite` (all sites) | 0.70 | 5% |
+    | `vector<double>::~vector` (eviction) | 0.60 | 4% |
+    | `logconv` actual convolution | 0.20 | 1% |
+
+    **Key findings:**
+    - `logconv` is only **1%** of DLL time — the Phase 2 vectorization worked
+      perfectly; the algorithm itself is no longer the bottleneck.
+    - **Hash map infrastructure dominates** (53% of DLL time): `unordered_map::find`
+      + key equality checks across the three caches (logB, logPVec, logRD).
+      Switching to a flat/open-addressing map would help but adds complexity.
+    - **`expl()` in `LSEAccumulator`** (6%) uses long-double arithmetic. Switching
+      to `double`/`exp()` would save ~0.7s at negligible precision cost. → **T-151**
+    - **`std::isfinite`** (5%) routes through `_fpclassify` on MinGW/Windows.
+      Replacing with `x != NEG_INF` saves the function-call overhead. → **T-152**
+    - `memcmp` in ucrtbase.dll (1.6 s / 7% of total) is the `StateKeyT::operator==`
+      fall-through when `cached_hash` and `cached_sum` both match — unavoidable
+      with the current key design.
+
+    **Estimated combined T-151 + T-152 saving: ~1.4 s (6%) per cold-cache run.**
+
 ## Build and Test (Reminder)
 
 Always use isolated library:
