@@ -8,6 +8,7 @@
 #include <memory>
 #include <cstring>
 #include <array>
+#include <deque>
 
 using namespace Rcpp;
 
@@ -723,6 +724,91 @@ inline uint64_t pack_leaves(const std::vector<int> &v) {
   return h;
 }
 // ============================================================================
+// Open-addressing flat hash map (no stable iterator/reference guarantees).
+// Probe layer (hashes + indices) is separate from the entries vector for
+// cache-efficient linear probing.  hash == 0 means empty slot.
+// Pre-reserve before use; never exceeds reserved capacity.
+// ============================================================================
+template<typename K, typename V, typename H = std::hash<K>>
+class OAFlatMap {
+public:
+  struct Entry { K key; V value; };
+
+private:
+  // Separate probe layer for fast linear probing (8 bytes/slot vs ~300 bytes).
+  std::vector<uint64_t> hashes_;   // 0 = empty; stored hash is raw_hash | 1
+  std::vector<uint32_t> indices_;  // index into entries_
+  std::vector<Entry>    entries_;
+  size_t                mask_{0};
+  H                     hasher_{};
+
+  size_t probe_slot(uint64_t h, const K& key) const noexcept {
+    size_t slot = h & mask_;
+    while (hashes_[slot] != 0) {
+      if (hashes_[slot] == h && entries_[indices_[slot]].key == key) return slot;
+      slot = (slot + 1) & mask_;
+    }
+    return slot;
+  }
+
+public:
+  OAFlatMap() = default;
+
+  // Reserve for up to n entries.  Sets table capacity to next power-of-2 >= 2n
+  // (keeping load factor <= 0.5).  Must be called before any emplace/find.
+  void reserve(size_t n) {
+    size_t cap = 16;
+    while (cap < 2 * n) cap <<= 1;
+    mask_ = cap - 1;
+    hashes_.assign(cap, 0u);
+    indices_.resize(cap);
+    entries_.clear();
+    entries_.reserve(n);
+  }
+
+  // Returns pointer to value if found, nullptr otherwise.
+  // Pointer is stable as long as entries_ doesn't reallocate (see reserve()).
+  V* find_value(const K& key) noexcept {
+    if (entries_.capacity() == 0) return nullptr;
+    uint64_t h = (uint64_t)hasher_(key) | 1u;
+    size_t slot = probe_slot(h, key);
+    if (hashes_[slot] == 0) return nullptr;
+    return &entries_[indices_[slot]].value;
+  }
+
+  // Insert with default-constructed V{} if key absent.
+  // Returns (entry_ptr, inserted).  entry_ptr is stable (see reserve()).
+  std::pair<Entry*, bool> emplace_default(const K& key) {
+    uint64_t h = (uint64_t)hasher_(key) | 1u;
+    size_t slot = probe_slot(h, key);
+    if (hashes_[slot] != 0)
+      return {&entries_[indices_[slot]], false};
+    uint32_t idx = (uint32_t)entries_.size();
+    entries_.push_back({key, V{}});
+    hashes_[slot] = h;
+    indices_[slot] = idx;
+    return {&entries_[idx], true};
+  }
+
+  // Insert with explicit value (move semantics).
+  // Returns (entry_ptr, inserted).  entry_ptr is stable (see reserve()).
+  std::pair<Entry*, bool> emplace(K key, V value) {
+    uint64_t h = (uint64_t)hasher_(key) | 1u;
+    size_t slot = probe_slot(h, key);
+    if (hashes_[slot] != 0)
+      return {&entries_[indices_[slot]], false};
+    uint32_t idx = (uint32_t)entries_.size();
+    entries_.push_back({std::move(key), std::move(value)});
+    hashes_[slot] = h;
+    indices_[slot] = idx;
+    return {&entries_[idx], true};
+  }
+
+  size_t size()  const noexcept { return entries_.size(); }
+  void   clear()                { std::fill(hashes_.begin(), hashes_.end(), 0u); entries_.clear(); }
+};
+
+// ============================================================================
 // Template wrapper to dispatch to specialized implementations
 // ============================================================================
 
@@ -736,7 +822,7 @@ class SolverT {
   int presentBits;
   
   // Specialized caches
-  std::unordered_map<KeyType, FixedProbList, HashType> logB_cache;
+  OAFlatMap<KeyType, FixedProbList, HashType> logB_cache;
 
   // Vectorized logP cache: key = (token, leaves) → vector over all step counts.
   // Eliminates the s dimension from the cache key, giving ~s_max× fewer entries.
@@ -755,8 +841,11 @@ class SolverT {
       return (std::size_t)h;
     }
   };
-  std::unordered_map<LogPVecKey, std::vector<double>,
-                     LogPVecKeyHash> logPVec_cache;
+  // Stable-reference store for LogPVec results.
+  // std::deque push_back does NOT invalidate existing element references,
+  // so callers may hold const std::vector<double>& across further inserts.
+  std::deque<std::vector<double>>              pv_store;
+  OAFlatMap<LogPVecKey, uint32_t, LogPVecKeyHash> logPVec_idx;
 
   // Global s_max for this solver instance (set at first run() call)
   int s_max_global = 0;
@@ -886,28 +975,28 @@ class SolverT {
       }
       
       if ((token_mask(token0) & ~presentBits) != 0) return NEG_INF;
-      
-      auto it = logB_cache.find(leaves);
-      if (it == logB_cache.end()) {
-        it = logB_cache.emplace(leaves, FixedProbList{}).first;
+
+      // Cache lookup: no reference held across recursion (safe for OAFlatMap).
+      {
+        FixedProbList* fpl = logB_cache.find_value(leaves);
+        if (fpl) {
+          double v = (*fpl)[token0];
+          if (!std::isnan(v)) return v;  // computed (finite or NEG_INF)
+        }
       }
-      
-      double& slot = it->second[token0];
-      if ((slot > NEG_INF)) return slot;
-      if (std::isnan(slot) == false && !(slot > NEG_INF)) return slot;
-      
+
       const auto& drawpairs = getValidDraws(leaves);
       LSEAccumulator outerAcc;
-      
+
       for (uint8_t i = 0; i < drawpairs.count; ++i) {
         const auto& dp = drawpairs.draws[i];
         const KeyType& drawn = dp.drawn;
         const KeyType& undrawn = dp.undrawn;
         int m = dp.m;
-        
+
         double balancedCorrection = (2*m == n) ? std::log(2.0) : 0.0;
         if (drawn == undrawn) balancedCorrection -= std::log(2.0);
-        
+
         LSEAccumulator innerAcc;
         for (const auto& pr : pairs.noStep[token0]) {
           double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
@@ -918,12 +1007,14 @@ class SolverT {
           innerAcc.add(val);
         }
         double innerSum = innerAcc.result();
-        
+
         double acc = balancedCorrection + computeLogRD(drawn, leaves) + innerSum;
         outerAcc.add(acc);
       }
-      slot = outerAcc.result();
-      return slot;
+      double result = outerAcc.result();
+      // Insert after all recursion is complete (no dangling reference risk).
+      logB_cache.emplace_default(leaves).first->value[token0] = result;
+      return result;
     }
     
     // Log-space convolution: C[s] = LogSumExp_r( A[r] + B[s-r] )
@@ -968,19 +1059,19 @@ class SolverT {
       // --- Base case n == 1 ---
       if (n == 1) {
         LogPVecKey key(token0, leaves);
-        auto it = logPVec_cache.find(key);
-        if (it != logPVec_cache.end()) return it->second;
+        if (uint32_t* ip = logPVec_idx.find_value(key)) return pv_store[*ip];
         std::vector<double> v(c_size, NEG_INF);
         if (leaves.get(token0) == 1) v[0] = 0.0;
-        auto ins = logPVec_cache.emplace(std::move(key), std::move(v));
-        return ins.first->second;
+        uint32_t idx = (uint32_t)pv_store.size();
+        pv_store.push_back(std::move(v));
+        logPVec_idx.emplace(std::move(key), idx);
+        return pv_store[idx];
       }
 
       // --- Base case n == 2 ---
       if (n == 2) {
         LogPVecKey key(token0, leaves);
-        auto it = logPVec_cache.find(key);
-        if (it != logPVec_cache.end()) return it->second;
+        if (uint32_t* ip = logPVec_idx.find_value(key)) return pv_store[*ip];
         std::vector<double> v(c_size, NEG_INF);
         int twice = -1, a = -1, b = -1;
         for (int i = 0; i < leaves.len; ++i) {
@@ -995,22 +1086,25 @@ class SolverT {
           needed = D.step_at(a, b) ? 1 : 0;
         }
         if (needed <= s_max) v[needed] = 0.0;
-        auto ins = logPVec_cache.emplace(std::move(key), std::move(v));
-        return ins.first->second;
+        uint32_t idx = (uint32_t)pv_store.size();
+        pv_store.push_back(std::move(v));
+        logPVec_idx.emplace(std::move(key), idx);
+        return pv_store[idx];
       }
 
       // --- Cache lookup ---
       LogPVecKey key(token0, leaves);
       {
-        auto it = logPVec_cache.find(key);
-        if (it != logPVec_cache.end()) return it->second;
+        if (uint32_t* ip = logPVec_idx.find_value(key)) return pv_store[*ip];
       }
 
       double denom = LogB(token0, leaves);
       if (!(denom > NEG_INF)) {
         std::vector<double> v(c_size, NEG_INF);
-        auto ins = logPVec_cache.emplace(std::move(key), std::move(v));
-        return ins.first->second;
+        uint32_t idx = (uint32_t)pv_store.size();
+        pv_store.push_back(std::move(v));
+        logPVec_idx.emplace(std::move(key), idx);
+        return pv_store[idx];
       }
 
       // Accumulator: outer[s] = LogSumExp over all draw partitions
@@ -1051,8 +1145,8 @@ class SolverT {
             LogPVec(drawn,   all_yes[0].a);
             LogPVec(undrawn, all_yes[0].b);
           }
-          { auto it = logB_cache.find(drawn);   if (it != logB_cache.end()) fpl_d = &it->second; }
-          { auto it = logB_cache.find(undrawn); if (it != logB_cache.end()) fpl_u = &it->second; }
+          fpl_d = logB_cache.find_value(drawn);
+          fpl_u = logB_cache.find_value(undrawn);
         }
 
         // noStep pairs: convolve LogPVec(drawn,a) with LogPVec(undrawn,b)
@@ -1131,9 +1225,10 @@ class SolverT {
         if ((outerVec[s] > NEG_INF)) outerVec[s] -= denom;
       }
 
-      LogPVecKey key2(token0, leaves);
-      auto ins = logPVec_cache.emplace(std::move(key2), std::move(outerVec));
-      return ins.first->second;
+      uint32_t idx = (uint32_t)pv_store.size();
+      pv_store.push_back(std::move(outerVec));
+      logPVec_idx.emplace(std::move(key), idx);
+      return pv_store[idx];
     }
     
 public:
@@ -1141,18 +1236,15 @@ public:
           LnRootedCache& lnr)
     : D(D_), pairs(p), presentBits(presentBits_), lnRooted(lnr) {
 
-    logB_cache.reserve(16384);
-    logB_cache.max_load_factor(0.5f);
-
-    logPVec_cache.reserve(8192);
-    logPVec_cache.max_load_factor(0.5f);
+    logB_cache.reserve(8192);    // OAFlatMap: capacity 16384, load <= 0.5
+    logPVec_idx.reserve(4096);   // OAFlatMap: capacity 8192, load <= 0.5
 
     logRD_cache.reserve(1024);
     validDraws_cache.reserve(256);
   }
 
   // Run over a vector of step counts.  All counts share the same solver
-  // instance so the logPVec_cache is populated once and reused.
+  // instance so pv_store/logPVec_idx are populated once and reused.
   void runAll(const std::vector<int>& steps_vec, const KeyType& states,
               double* out) {
     if (steps_vec.empty()) return;
