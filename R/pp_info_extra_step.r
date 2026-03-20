@@ -85,11 +85,12 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
   
   nTips <- sum(split)
   
-  # MaddisonSlatkin is exponential in nTips for k >= 3.
-  # Post-T-152+T-153+fpl-batch worst-case on reference machine (any split):
-  #   k=3: n <= 27 (~1.0 s), k=4: n <= 19 (~1.7 s), k=5: n <= 13 (~2.1 s)
-  maxTips <- c(Inf, Inf, 27L, 19L, 13L)
-  infeasible <- k >= 3L && nTips > maxTips[k]
+  # Feasibility check: use partition-aware split_count rather than n alone.
+  # Balanced partitions blowup at lower n than skewed ones; the split_count
+  # (coeff of x^floor(n/2) in prod_i(1+x+...+x^{a_i})) captures this.
+  # Thresholds from .MS_SC_THRESHOLD in data_manipulation.R.
+  infeasible <- k >= 3L &&
+    .MSSplitCount(split) > .MS_SC_THRESHOLD[k]
   
   if (infeasible && identical(approx, "mc")) {
     # MC-calibrated normal approximation: preserves multi-state character

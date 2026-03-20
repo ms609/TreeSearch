@@ -1,3 +1,32 @@
+# Feasibility thresholds for MaddisonSlatkin exact computation.
+# The split_count is the coefficient of x^floor(n/2) in the generating
+# polynomial prod_i (1 + x + ... + x^{a_i}), capturing partition shape.
+# Calibrated from worst-case (balanced) partition timing experiments:
+#   k=3: sc=133 fast (n=37), sc=140 blowup (n=38) => threshold 136
+#   k=4: sc=95 fast (n=17),  sc=110 blowup (n=18) => threshold 100
+#   k=5: sc=96 fast (n=13),  sc=124 blowup (n=14) => threshold 100
+.MS_SC_THRESHOLD <- c(Inf, Inf, 136L, 100L, 100L)
+
+.MSSplitCount <- function(state_counts) {
+  counts <- state_counts[state_counts > 0L]
+  if (!length(counts)) return(0L)
+  n <- sum(counts)
+  if (n <= 2L) return(1L)
+  target <- n %/% 2L
+  poly <- 1.0
+  for (ci in counts) {
+    new_len  <- min(length(poly) + ci, target + 1L)
+    new_poly <- numeric(new_len)
+    for (j in seq_len(new_len)) {
+      lo <- max(1L, j - ci)
+      hi <- min(j,  length(poly))
+      if (lo <= hi) new_poly[j] <- sum(poly[lo:hi])
+    }
+    poly <- new_poly
+  }
+  if (target + 1L <= length(poly)) poly[target + 1L] else 0.0
+}
+
 #' Prepare data for Profile Parsimony
 #' 
 #' Calculates profiles for each character in a dataset.
@@ -130,15 +159,13 @@ PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 5000L) {
       informative <- tab > 1L
     }
     
-    # MaddisonSlatkin is infeasible for multi-state chars with many tips.
-    # With approx = "auto" or "exact": reduce to binary (top 2) now so
-    # the pattern data and info.amounts stay consistent.
-    # With approx = "mc": keep multi-state pattern intact; StepInformation
-    # will compute IC via MC approximation for the full multi-state character.
+    # MaddisonSlatkin is infeasible for some multi-state chars.
+    # Check the partition-aware split_count, not just k and n, so that
+    # skewed real-world distributions (one dominant state) are handled
+    # exactly even at large n where a balanced partition would blow up.
     if (nInf >= 3L && !identical(approx, "mc")) {
-      nInfTips <- sum(tab[informative])
-      maxTips <- c(Inf, Inf, 25L, 18L, 12L)
-      if (nInfTips > maxTips[min(nInf, 5L)] && !identical(approx, "exact")) {
+      sc <- .MSSplitCount(as.integer(tab[informative]))
+      if (sc > .MS_SC_THRESHOLD[min(nInf, 5L)] && !identical(approx, "exact")) {
         sortedInf <- sort(tab[informative], decreasing = TRUE)
         toRemove <- as.integer(names(sortedInf)[3:length(sortedInf)])
         mataset[mataset[, j] %in% toRemove, j] <- qmLevel[1]

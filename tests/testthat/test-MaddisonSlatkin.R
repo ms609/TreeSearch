@@ -129,25 +129,51 @@ test_that("MaddisonSlatkin_clear_cache runs without error", {
 })
 
 test_that("MaddisonSlatkin with 5 states", {
-  # 5 tokens → 2^5 - 1 = 31 entries
+  # (2,2,2,2,2) n=10: feasible (~0.6s); (3,2,2,2,2) n=11 blows up.
   states <- integer(31)
-  states[1] <- 3L   # state 1
-  states[2] <- 2L   # state 2
-  states[4] <- 2L   # state 3
-  states[8] <- 2L   # state 4
-  states[16] <- 2L  # state 5
+  states[1] <- 2L
+  states[2] <- 2L
+  states[4] <- 2L
+  states[8] <- 2L
+  states[16] <- 2L
   n <- sum(states)
   # min steps = 4 (one fewer than number of states)
   ms <- MaddisonSlatkin(4:(n - 1L), states)
   expect_equal(sum(exp(ms[is.finite(ms)])), 1, tolerance = 1e-10)
 
-  # Known value from branch (by observation):
-  # (2,2,2,2,2) at 4 steps
-  states2 <- integer(31)
-  states2[1] <- 2L
-  states2[2] <- 2L
-  states2[4] <- 2L
-  states2[8] <- 2L
-  states2[16] <- 2L
-  expect_equal(MaddisonSlatkin(4, states2), -6.851185, tolerance = 1e-4)
+  # Known value: (2,2,2,2,2) at 4 steps
+  expect_equal(MaddisonSlatkin(4, states), -6.851185, tolerance = 1e-4)
 })
+
+test_that(".MSSplitCount is correct for known cases", {
+  skip_on_cran()
+  sc <- TreeSearch:::.MSSplitCount
+  thresh <- TreeSearch:::.MS_SC_THRESHOLD
+
+  # Balanced partitions at the empirical fast/blowup boundary
+  expect_equal(sc(c(13L, 12L, 12L)), 133)         # k=3 n=37
+  expect_equal(sc(c(13L, 13L, 12L)), 140)         # k=3 n=38
+  expect_equal(sc(c(5L, 4L, 4L, 4L)),  95)        # k=4 n=17
+  expect_equal(sc(c(5L, 5L, 4L, 4L)), 110)        # k=4 n=18
+  expect_equal(sc(c(3L, 3L, 3L, 2L, 2L)),  96)    # k=5 n=13
+  expect_equal(sc(c(3L, 3L, 3L, 3L, 2L)), 124)    # k=5 n=14
+
+  # Skewed partitions are cheap even at large n
+  expect_lt(sc(c(45L, 3L, 2L)), thresh[3])        # k=3 n=50
+  expect_lt(sc(c(25L, 3L, 1L, 1L)), thresh[4])    # k=4 n=30
+  expect_lt(sc(c(16L, 2L, 1L, 1L, 0L)), thresh[5]) # k=5 n=20
+
+  # Base cases
+  expect_equal(sc(integer(0)), 0)
+  expect_equal(sc(c(1L, 1L)), 1)
+  expect_equal(sc(c(0L, 3L)), 1)
+
+  # Thresholds gate boundary cases correctly
+  expect_lte(sc(c(13L, 12L, 12L)), thresh[3])     # fast: allowed
+  expect_gt( sc(c(13L, 13L, 12L)), thresh[3])     # blowup: blocked
+  expect_lte(sc(c(5L, 4L, 4L, 4L)),  thresh[4])
+  expect_gt( sc(c(5L, 5L, 4L, 4L)),  thresh[4])
+  expect_lte(sc(c(3L, 3L, 3L, 2L, 2L)), thresh[5])
+  expect_gt( sc(c(3L, 3L, 3L, 3L, 2L)), thresh[5])
+})
+
