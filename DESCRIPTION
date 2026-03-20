@@ -55,7 +55,6 @@ Imports:
   shiny (>= 1.8.1),
   shinyjs,
   stats,
-  stringi,
   TreeDist (>= 2.6.3),
   TreeTools (>= 1.16),
 Suggests:
