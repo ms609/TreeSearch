@@ -1034,13 +1034,35 @@ class SolverT {
         const int u_lo = 0;
         const int u_hi = std::min(undrawn.sum() - 1, s_max);
 
+        // Pre-fetch FixedProbList* for drawn/undrawn once per draw pair.
+        // Reduces logB_cache::find from 2*(N_no+N_yes) to 2 per draw pair.
+        // Prime the cache with the first available pair so logB_cache[drawn]
+        // exists before we take the pointer (n<=2 base cases don't use the cache,
+        // so fpl_d/fpl_u remain null and LogB() handles those directly).
+        const FixedProbList* fpl_d = nullptr;
+        const FixedProbList* fpl_u = nullptr;
+        {
+          const auto& all_no  = pairs.noStep[token0];
+          const auto& all_yes = pairs.yesStep[token0];
+          if (!all_no.empty()) {
+            LogPVec(drawn,   all_no[0].a);
+            LogPVec(undrawn, all_no[0].b);
+          } else if (!all_yes.empty()) {
+            LogPVec(drawn,   all_yes[0].a);
+            LogPVec(undrawn, all_yes[0].b);
+          }
+          { auto it = logB_cache.find(drawn);   if (it != logB_cache.end()) fpl_d = &it->second; }
+          { auto it = logB_cache.find(undrawn); if (it != logB_cache.end()) fpl_u = &it->second; }
+        }
+
         // noStep pairs: convolve LogPVec(drawn,a) with LogPVec(undrawn,b)
         std::vector<double> noStepVec(c_size, NEG_INF);
         for (const auto& pr : pairs.noStep[token0]) {
           const std::vector<double>& A = LogPVec(drawn,   pr.a);
           const std::vector<double>& B = LogPVec(undrawn, pr.b);
-          double logBa = LogB(pr.a, drawn);
-          double logBb = LogB(pr.b, undrawn);
+          // After LogPVec(drawn,pr.a) returns, fpl_d[pr.a] is non-NaN (LogB fills it).
+          double logBa = fpl_d ? (*fpl_d)[pr.a] : LogB(pr.a, drawn);
+          double logBb = fpl_u ? (*fpl_u)[pr.b] : LogB(pr.b, undrawn);
           if (!(logBa > NEG_INF) || !(logBb > NEG_INF)) continue;
           double pairScale = logBa + logBb;
           // C = conv(A, B), then add pairScale; merge into noStepVec
@@ -1063,8 +1085,8 @@ class SolverT {
           for (const auto& pr : pairs.yesStep[token0]) {
             const std::vector<double>& A = LogPVec(drawn,   pr.a);
             const std::vector<double>& B = LogPVec(undrawn, pr.b);
-            double logBa = LogB(pr.a, drawn);
-            double logBb = LogB(pr.b, undrawn);
+            double logBa = fpl_d ? (*fpl_d)[pr.a] : LogB(pr.a, drawn);
+            double logBb = fpl_u ? (*fpl_u)[pr.b] : LogB(pr.b, undrawn);
             if (!(logBa > NEG_INF) || !(logBb > NEG_INF)) continue;
             double pairScale = logBa + logBb;
             auto C = logconv(A, d_lo, d_hi, B, u_lo, u_hi, c_size);

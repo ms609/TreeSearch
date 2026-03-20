@@ -86,8 +86,8 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
   nTips <- sum(split)
   
   # MaddisonSlatkin is exponential in nTips for k >= 3.
-  # Post-T-152+T-153 worst-case timings on reference machine (any split):
-  #   k=3: n <= 27 (~1.0 s), k=4: n <= 19 (~2.0 s), k=5: n <= 13 (~2.6 s)
+  # Post-T-152+T-153+fpl-batch worst-case on reference machine (any split):
+  #   k=3: n <= 27 (~1.0 s), k=4: n <= 19 (~1.7 s), k=5: n <= 13 (~2.1 s)
   maxTips <- c(Inf, Inf, 27L, 19L, 13L)
   infeasible <- k >= 3L && nTips > maxTips[k]
   
