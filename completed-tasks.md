@@ -8,7 +8,6 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
-| T-155 | ParsSim: ambiguous token simulation | WT (TS-ParsSim) | `ambiguous` param (scalar/list/matrix). 2-state → `?`; 3+-state → `{s1s2}` partial tokens via MatrixToPhyDat contrast. 3 new helpers. 160/160 ParsSim tests pass (was 128). |
 
 ---
 
