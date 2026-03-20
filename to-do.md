@@ -26,7 +26,7 @@
 
 
 | T-150 | P2 | WORKTREE (TS-CID-cons) | — | **CID-optimal consensus tree search** | Use SPR/TBR/NNI + Ratchet to find consensus trees minimising CID to input trees. Needs: collapse/resolve moves for non-binary trees, CID batch scorer, `CIDBootstrap` (resample input trees). See `briefing-cid-consensus.md`. PoC validated in TreeDist. |
-| T-148 | P2 | ASSIGNED (B) | — | **Red-team: ParsSim vectorized convolution** | S-RED focus: log-space convolution correctness and active-range bounds in `R/ParsSim.R`. Use `.positai/expertise/red-team.md` methodology. |
+
 
 
 
@@ -39,6 +39,8 @@
 | T-158 | P1 | OPEN | T-159 | **R API**: `extended_iw = TRUE` in `MaximizeParsimony()`, `TreeLength()` (all S3), `SearchControl()`, `Resample()`, `SuccessiveApproximations()`; silently ignore when EW / profile | — |
 | T-159 | P1 | OPEN | T-160 | **Tests**: `test-ts-xpiwe.R` (Tier 2) — formula unit, 5-taxon hand-computed, `m=0` IW equivalence, end-to-end; IW `eff_k` regression in existing IW test | — |
 | T-160 | P2 | OPEN | — | **Docs + NEWS**: `@param extended_iw` in Rd files; para in `vignettes/profile-scores.Rmd`; NEWS breaking-change entry; `check_man()` + `spell_check_package()` clean | — |
+| T-161 | P2 | OPEN | T-158 | **Shiny GUI**: Add XPIWE option; replace default "Implied" weighting with "Implied (extended)"; keep "Implied" in list; both share the concavity slider | TS-Xpiwe worktree |
+| T-162 | P3 | OPEN | T-160 | **Docs**: Add Goloboff 2014 citation to suggested references when xpiwe is selected | TS-Xpiwe worktree |
 
 ### Alternative Inapplicable-Handling Algorithms — Phase 3: Integration & polish
 
@@ -51,6 +53,8 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
+| T-163 | P1 | ASSIGNED (C) | — | **Shiny bug: stop→continue→stop gets stuck in "Stopping" state** | After stop (resets state), continue starts new search; second stop leaves app stuck on "Stopping — waiting…" for minutes. Regression of T-137 fix. Investigate `mod_search.R` ExtendedTask / stop-flag lifecycle. |
+| T-164 | P2 | OPEN | — | **Shiny UX: confusing behavior when reducing max_runs during continued search** | After stop/continue/stop cycle, reducing `maximum_runs` slider causes unexpected long run; accumulated count appears to exceed new limit. Clarify run-count semantics and fix display if needed. |
 
 
 

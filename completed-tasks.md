@@ -8,6 +8,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-148 | Red-team: ParsSim log-space convolution (S-RED focus 8) | B | Fixed `.LogCumSumExp` NaN bug: `-Inf - (-Inf) = NaN` in IEEE 754 when both accumulator and new value are `-Inf`. Guard added; 7 new assertions pass. |
 
 ---
 
