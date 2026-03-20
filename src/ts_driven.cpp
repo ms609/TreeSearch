@@ -249,6 +249,14 @@ ReplicateResult run_single_replicate(
             result.timings.final_tbr_ms);
   }
 
+  // Check cancel/timeout after final TBR polish so a stop during TBR is
+  // detected here rather than forcing the caller to run MPT enumeration.
+  if (ts::check_interrupt() || check_timeout()) {
+    result.interrupted = true;
+    result.score = score_tree(result.tree, ds);
+    return result;
+  }
+
   result.score = score_tree(result.tree, ds);
   return result;
 }
@@ -444,6 +452,9 @@ finish:
     // enumeration of seed i become additional seeds for later iterations).
     int seed_idx = 0;
     while (seed_idx < pool.size() && pool.size() < pool.max_size) {
+      // Check cancel between seeds so a stop during MPT enumeration
+      // is detected promptly (regression fix for T-163).
+      if (check_cancel()) break;
       TreeState enum_tree = pool.all()[seed_idx].tree;
       // Budget remaining capacity across remaining seeds
       tp.max_hits = std::max(10, (pool.max_size - pool.size()) * 2);

@@ -10,6 +10,15 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 |----|-------------|-------|-------|
 | T-148 | Red-team: ParsSim log-space convolution (S-RED focus 8) | B | Fixed `.LogCumSumExp` NaN bug: `-Inf - (-Inf) = NaN` in IEEE 754 when both accumulator and new value are `-Inf`. Guard added; 7 new assertions pass. |
 | T-165 | Shiny: reset run stats on concavity/weighting change | C | Added stat-reset to `observeEvent(input$concavity)` and `observeEvent(input$implied.weights)` in `mod_search.R`. Trees kept; hits/reps/bestScore cleared. 2 new tests (50 total pass). |
+| T-163 | C++ cancel checks in MPT enumeration + final TBR polish | C | Root cause: a "continue" search fills the pool quickly, leading to MPT enumeration with no cancel checkpoint. Added `check_cancel()` between seeds in the MPT while-loop and `check_timeout()` after final TBR polish in `run_single_replicate`. 152 driven-search tests pass. |
+| T-166 | Shiny crash: `tipLabels()` subscript out-of-bounds on empty `r$trees` | A | `mod_data.R#107`: added `if (!length(r$trees)) return(character(0L))` guard. Fixes both `DatasetMatchesTrees` (#126) and `UpdateActiveTrees` (#203) stack traces. Resolves T-169 as downstream consequence. |
+| T-167 | Shiny: "cannot open file" warning spam in progress poll | A | `mod_search.R`: added `if (!file.exists(pf)) return()` after `invalidateLater(500)`. Observer now silently skips until C++ creates the file. |
+| T-168 | Shiny: `LEFT == RIGHT` recycling warning from `ape::read.nexus` | A | Upstream `ape` bug (bracket-index comparison). Suppressed with `suppressWarnings()` at both `read.nexus` call sites in `mod_data.R`. |
+| T-169 | Shiny: `updateSliderInput()` value outside `[min, max]` when trees → 0 | A | `mod_data.R#231`: guarded entire tree-range/count slider update block with `if (nTrees > 0L)`; controls hidden via `parentHide` anyway when no trees present. |
+| T-170 | Shiny: "no data loaded" in Configure modal; search terminates after second data load | A | Root cause was T-166 crash propagating through `DatasetMatchesTrees()` inside `tryCatch` error handler; fixed as consequence of T-166. |
+| T-171 | Shiny: `LengthAdded` matrix-recycling and unknown-scoring warnings | A | `mod_consensus.R`: `PolEscVal` reactive now guards with `setequal(tipLabels(), names(r$dataset))`; returns `NULL` when taxa sets differ (tree has superset taxa vs dataset). |
+| T-172 | Shiny: run counter accumulates across concavity changes | A | Root cause: Configure modal created `sliderInput(value=1L)` on each open, sending `input$concavity=1` to server and firing reset observer spuriously. Fixed by initialising all modal inputs from current `input$*` values (`mod_search.R`). |
+| T-173 | Shiny: stop-when-N probability always ~37% for any dataset when `targetHits=1` | A | `global.R`: `SearchConfidenceText()` now appends "— increase 'Stop when N runs hit best' for a tighter estimate" when K=R and R≤5, guiding user toward more informative settings. |
 
 ---
 

@@ -53,9 +53,8 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-163 | P1 | ASSIGNED (C) | — | **Shiny bug: stop→continue→stop gets stuck in "Stopping" state** | After stop (resets state), continue starts new search; second stop leaves app stuck on "Stopping — waiting…" for minutes. Regression of T-137 fix. Investigate `mod_search.R` ExtendedTask / stop-flag lifecycle. |
-| T-164 | P2 | OPEN | — | **Shiny UX: confusing behavior when reducing max_runs during continued search** | After stop/continue/stop cycle, reducing `maximum_runs` slider causes unexpected long run; accumulated count appears to exceed new limit. Clarify run-count semantics and fix display if needed. |
 
+| T-164 | P2 | OPEN | — | **Shiny UX: confusing behavior when reducing max_runs during continued search** | After stop/continue/stop cycle, reducing `maximum_runs` slider causes unexpected long run; accumulated count appears to exceed new limit. Clarify run-count semantics and fix display if needed. |
 
 
 
