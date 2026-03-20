@@ -161,3 +161,11 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-003 | Phase 6C: Define strategy space | B | |
 | T-002 | Phase 6B: Curate benchmark dataset suite | B | |
 | T-001 | Phase 6A: Per-phase timing instrumentation | A | |
+
+## 2026-03-20
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| T-149 | Profile MaddisonSlatkin → VTune hotspot analysis | A | logB/logPVec cache overhead dominates (53% DLL); skill updated |
+| T-152 | LSEAccumulator long double→double + expl→exp | A | 26% avg speedup across k=3..5 boundary cases |
+| T-153 | std::isfinite→NEG_INF compare in MaddisonSlatkin.cpp | A | bundled with T-152 |
+| S-PROF | Threshold comment update + fpl_d/fpl_u batching in LogPVec | A | ~15% further speedup; k=3:27/k=4:19/k=5:13 new thresholds |
