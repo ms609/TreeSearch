@@ -146,7 +146,7 @@ struct CidData {
   std::vector<double> saved_tree_weights;
   double saved_weight_sum;
 
-  // Normalized scoring mode (1 - mean(MCI_i / CE_i))
+  // Vestigial; no longer used by cid_score() (was normalized scoring mode).
   bool normalize;
 
   // MRP screening parameters.
@@ -177,7 +177,8 @@ struct CidData {
 // Public API
 // --------------------------------------------------------------------------
 
-// Score a candidate tree against input trees using CID.
+// Score a candidate tree against input trees.
+// Returns negated weighted mean MCI (lower = better consensus).
 double cid_score(TreeState& tree, const CidData& cd);
 
 // Build an MRP DataSet from CidData.

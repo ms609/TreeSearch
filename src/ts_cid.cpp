@@ -506,58 +506,37 @@ void prepare_cid_data(CidData& cd) {
 
 
 // ==========================================================================
-// cid_score: score candidate tree against all input trees
+// cid_score: score candidate tree against all input trees.
+// Returns negated weighted mean MCI (lower = better consensus).
 // ==========================================================================
 
 double cid_score(TreeState& tree, const CidData& cd) {
   compute_splits_cid(tree, cd.cand_tip_bits, cd.cand_buf);
   CidSplitSet& cand = cd.cand_buf;
-  double cand_ce = clustering_entropy_fast(cand, cd.n_tips, cd.lg2_n);
   double budget = cd.score_budget;
 
-  if (cd.normalize) {
-    double ratio_sum = 0.0;
-    double weight_done = 0.0;
-    for (int i = 0; i < cd.n_trees; ++i) {
-      if (cd.tree_weights[i] <= 0.0) continue;
-      double mci = mutual_clustering_info(cand, cd.tree_splits[i],
-                                           cd.n_tips, cd.lap_scratch);
-      double ce_i = cd.tree_ce[i];
-      double ratio = (ce_i > 1e-12) ? mci / ce_i : 1.0;
-      ratio_sum += cd.tree_weights[i] * ratio;
-      weight_done += cd.tree_weights[i];
-      // Early termination: best possible if all remaining give ratio=1
-      if (budget < HUGE_VAL) {
-        double remaining = cd.weight_sum - weight_done;
-        double best_possible = 1.0 - (ratio_sum + remaining) / cd.weight_sum;
-        if (best_possible > budget) return best_possible;
-      }
+  // Upper bound on per-tree MCI (used for early termination)
+  double cand_ce = (budget < HUGE_VAL)
+      ? clustering_entropy_fast(cand, cd.n_tips, cd.lg2_n)
+      : 0.0;
+
+  double mci_sum = 0.0;
+  double weight_done = 0.0;
+  for (int i = 0; i < cd.n_trees; ++i) {
+    if (cd.tree_weights[i] <= 0.0) continue;
+    double mci = mutual_clustering_info(cand, cd.tree_splits[i],
+                                         cd.n_tips, cd.lap_scratch);
+    mci_sum += cd.tree_weights[i] * mci;
+    weight_done += cd.tree_weights[i];
+    // Early termination: even with perfect MCI for remaining trees,
+    // the negated mean can't beat budget
+    if (budget < HUGE_VAL) {
+      double remaining = cd.weight_sum - weight_done;
+      double best_possible = -(mci_sum + remaining * cand_ce) / cd.weight_sum;
+      if (best_possible > budget) return best_possible;
     }
-    return 1.0 - ratio_sum / cd.weight_sum;
-  } else {
-    double mci_sum = 0.0;
-    double ce_sum = 0.0;
-    double weight_done = 0.0;
-    for (int i = 0; i < cd.n_trees; ++i) {
-      if (cd.tree_weights[i] <= 0.0) continue;
-      double mci = mutual_clustering_info(cand, cd.tree_splits[i],
-                                           cd.n_tips, cd.lap_scratch);
-      mci_sum += cd.tree_weights[i] * mci;
-      ce_sum += cd.tree_weights[i] * cd.tree_ce[i];
-      weight_done += cd.tree_weights[i];
-      // Early termination: even with perfect MCI for remaining trees
-      if (budget < HUGE_VAL) {
-        double remaining = cd.weight_sum - weight_done;
-        double best_mci = mci_sum + remaining * cand_ce;
-        double remaining_ce = cd.mean_tree_ce * remaining;
-        double best_possible = cand_ce
-            + (ce_sum + remaining_ce) / cd.weight_sum
-            - 2.0 * best_mci / cd.weight_sum;
-        if (best_possible > budget) return best_possible;
-      }
-    }
-    return cand_ce + ce_sum / cd.weight_sum - 2.0 * mci_sum / cd.weight_sum;
   }
+  return -mci_sum / cd.weight_sum;
 }
 
 

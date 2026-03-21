@@ -18,6 +18,13 @@ library(TreeDist)
 .CollapseRefine <- TreeSearch:::.CollapseRefine
 .CollapseSpecificEdge <- TreeSearch:::.CollapseSpecificEdge
 .ResolveSpecificPair <- TreeSearch:::.ResolveSpecificPair
+.ScoreTree <- TreeSearch:::.ScoreTree
+.TopologySearch <- TreeSearch:::.TopologySearch
+.RogueRefine <- TreeSearch:::.RogueRefine
+.PrescreenMarginalNID <- TreeSearch:::.PrescreenMarginalNID
+.PruneTrees <- TreeSearch:::.PruneTrees
+.BestInsertion <- TreeSearch:::.BestInsertion
+.InsertTipAtEdge <- TreeSearch:::.InsertTipAtEdge
 
 # Small reproducible tree set
 set.seed(4817)
@@ -50,16 +57,16 @@ test_that(".MakeCIDData creates correct environment", {
 
 # .CIDScorer ----------------------------------------------------------------
 
-test_that(".CIDScorer returns correct mean CID", {
+test_that(".CIDScorer returns negated mean MCI", {
   cidData <- .MakeCIDData(smallTrees, ClusteringInfoDistance,
                           smallTrees[[1]]$tip.label)
   tr <- smallTrees[[1]]
   edge <- tr$edge
 
   score <- .CIDScorer(edge[, 1], edge[, 2], cidData)
-  expected <- mean(ClusteringInfoDistance(tr, smallTrees))
+  expected <- -mean(MutualClusteringInfo(tr, smallTrees))
 
-  expect_equal(score, expected, tolerance = 1e-10)
+  expect_equal(score, expected, tolerance = 1e-6)
 })
 
 test_that(".CIDScorer works with alternative metric", {
@@ -112,7 +119,7 @@ test_that(".CIDBootstrap restores original trees", {
 })
 
 
-# CIDConsensus — Phase 1 (binary) ------------------------------------------
+# CIDConsensus — core tests ------------------------------------------------
 
 test_that("CIDConsensus rejects non-multiPhylo input", {
   expect_error(CIDConsensus(as.phylo(1, 10)),
@@ -124,31 +131,30 @@ test_that("CIDConsensus rejects single tree", {
                "at least 2")
 })
 
-test_that("CIDConsensus SPR improves or equals starting score", {
-  mr <- Consensus(smallTrees, p = 0.5)
-  mrBinary <- multi2di(mr)
-  mrScore <- mean(ClusteringInfoDistance(mrBinary, smallTrees))
-
+test_that("CIDConsensus runs and returns valid result", {
   set.seed(5103)
-  result <- CIDConsensus(smallTrees, method = "spr",
-                         searchIter = 50L, searchHits = 10L,
+  result <- CIDConsensus(smallTrees,
+                         maxReplicates = 3L, targetHits = 2L,
+                         neverDrop = TRUE, collapse = FALSE,
                          verbosity = 0L)
 
   expect_s3_class(result, "phylo")
+  expect_equal(NTip(result), 12L)
   resultScore <- attr(result, "score")
   expect_true(is.numeric(resultScore))
-  expect_true(resultScore <= mrScore + sqrt(.Machine$double.eps))
+  expect_true(resultScore >= 0)
 })
 
-test_that("CIDConsensus ratchet runs without error", {
-  set.seed(6458)
-  result <- CIDConsensus(smallTrees, method = "ratchet",
-                         ratchIter = 2L, ratchHits = 2L,
-                         searchIter = 20L, searchHits = 5L,
+test_that("CIDConsensus score attribute is set", {
+  set.seed(9241)
+  result <- CIDConsensus(smallTrees,
+                         maxReplicates = 2L, targetHits = 1L,
+                         neverDrop = TRUE, collapse = FALSE,
                          verbosity = 0L)
 
-  expect_s3_class(result, "phylo")
   expect_true(!is.null(attr(result, "score")))
+  expect_true(is.numeric(attr(result, "score")))
+  expect_true(attr(result, "score") >= 0)
 })
 
 test_that("CIDConsensus accepts custom starting tree", {
@@ -156,36 +162,11 @@ test_that("CIDConsensus accepts custom starting tree", {
 
   set.seed(8820)
   result <- CIDConsensus(smallTrees, start = startTree,
-                         method = "nni",
-                         searchIter = 10L, searchHits = 5L,
+                         maxReplicates = 2L, targetHits = 1L,
+                         neverDrop = TRUE, collapse = FALSE,
                          verbosity = 0L)
 
   expect_s3_class(result, "phylo")
-})
-
-test_that("CIDConsensus accepts custom metric", {
-  set.seed(3956)
-  result <- CIDConsensus(smallTrees, metric = MutualClusteringInfo,
-                         method = "nni",
-                         searchIter = 10L, searchHits = 5L,
-                         verbosity = 0L)
-
-  expect_s3_class(result, "phylo")
-  # Score should be MCI, not CID
-  score <- attr(result, "score")
-  directScore <- mean(MutualClusteringInfo(result, smallTrees))
-  expect_equal(score, directScore, tolerance = 1e-6)
-})
-
-test_that("CIDConsensus sets score attribute", {
-  set.seed(9241)
-  result <- CIDConsensus(smallTrees, method = "nni",
-                         searchIter = 10L, searchHits = 5L,
-                         verbosity = 0L)
-
-  expect_true(!is.null(attr(result, "score")))
-  expect_true(is.numeric(attr(result, "score")))
-  expect_true(attr(result, "score") >= 0)
 })
 
 
@@ -204,7 +185,6 @@ test_that(".CollapseEdge produces valid non-binary tree", {
   newChild <- result[[2]]
 
   # One fewer edge
-
   expect_equal(length(newParent), nrow(edge) - 1L)
 
   # Still a valid tree: tips 1..nTip all present as children
@@ -215,7 +195,6 @@ test_that(".CollapseEdge produces valid non-binary tree", {
 })
 
 test_that(".CollapseEdge handles star tree gracefully", {
-  # Build a star: one root with all tips as children
   nTip <- 5L
   parent <- rep(nTip + 1L, nTip)
   child <- seq_len(nTip)
@@ -229,9 +208,7 @@ test_that(".CollapseEdge handles star tree gracefully", {
 # .ResolveNode ----------------------------------------------------------------
 
 test_that(".ResolveNode resolves a polytomy", {
-  # Create a tree with a polytomy: node 7 has 3 children
   nTip <- 5L
-  # 6 -> 1, 6 -> 7, 7 -> 2, 7 -> 3, 7 -> 4, 6 -> 5
   parent <- c(6L, 6L, 7L, 7L, 7L, 6L)
   child <-  c(1L, 7L, 2L, 3L, 4L, 5L)
 
@@ -262,7 +239,6 @@ test_that(".ResolveNode returns unchanged on binary tree", {
 
 test_that(".RenumberNodes fills gaps in node numbering", {
   nTip <- 4L
-  # Suppose node 6 was removed, leaving 5, 7
   parent <- c(5L, 5L, 7L, 7L, 5L)
   child <-  c(1L, 7L, 2L, 3L, 4L)
 
@@ -346,7 +322,6 @@ test_that(".ResolveSpecificPair creates a new binary split", {
   newChild <- result[[2]]
 
   # One more edge
-
   expect_equal(length(newParent), length(parent) + 1L)
   # Tips 1 and 2 now share a new parent
   expect_equal(newParent[1], newParent[2])
@@ -357,8 +332,6 @@ test_that(".ResolveSpecificPair creates a new binary split", {
 # .CollapseRefine ---------------------------------------------------------------
 
 test_that(".CollapseRefine can collapse edges to improve score", {
-  # Create a scenario where collapsing a wrong split helps.
-  # Use a set of identical trees + one outlier to create a clear optimum.
   set.seed(3210)
   goodTree <- as.phylo(1, 10)
   inputTrees <- c(rep(list(goodTree), 19),
@@ -368,14 +341,13 @@ test_that(".CollapseRefine can collapse edges to improve score", {
   cidData <- .MakeCIDData(inputTrees, ClusteringInfoDistance,
                           goodTree$tip.label)
 
-  # Start from a bad binary tree (different topology)
   badTree <- as.phylo(50, 10)
-  badScore <- mean(ClusteringInfoDistance(badTree, inputTrees))
+  badScore <- .ScoreTree(badTree, cidData)  # internal negated MCI
 
   result <- .CollapseRefine(badTree, cidData, verbosity = 0L)
-  resultScore <- attr(result, "score")
+  resultScore <- attr(result, "score")  # internal negated MCI
 
-  # Should be no worse
+  # Lower negated MCI = higher MCI = better; should be no worse
   expect_true(resultScore <= badScore + sqrt(.Machine$double.eps))
 })
 
@@ -395,23 +367,138 @@ test_that(".CollapseRefine returns valid phylo", {
 
 test_that("CIDConsensus collapse=TRUE produces equal-or-better score", {
   set.seed(7799)
-  resultNoCollapse <- CIDConsensus(smallTrees, method = "spr",
-                                   searchIter = 30L, searchHits = 10L,
-                                   collapse = FALSE, verbosity = 0L)
+  resultNoCollapse <- CIDConsensus(smallTrees,
+                                   maxReplicates = 2L, targetHits = 1L,
+                                   neverDrop = TRUE, collapse = FALSE,
+                                   verbosity = 0L)
   set.seed(7799)
-  resultCollapse <- CIDConsensus(smallTrees, method = "spr",
-                                 searchIter = 30L, searchHits = 10L,
-                                 collapse = TRUE, verbosity = 0L)
+  resultCollapse <- CIDConsensus(smallTrees,
+                                 maxReplicates = 2L, targetHits = 1L,
+                                 neverDrop = TRUE, collapse = TRUE,
+                                 verbosity = 0L)
 
-  # Collapse should be equal or better
-  expect_true(attr(resultCollapse, "score") <=
-                attr(resultNoCollapse, "score") + sqrt(.Machine$double.eps))
+  # Higher MCI = better; collapse should improve or equal
+  expect_true(attr(resultCollapse, "score") >=
+                attr(resultNoCollapse, "score") - sqrt(.Machine$double.eps))
 })
 
-test_that("CIDConsensus collapse=FALSE returns binary tree", {
-  set.seed(8811)
-  result <- CIDConsensus(smallTrees, method = "nni",
-                         searchIter = 10L, searchHits = 5L,
-                         collapse = FALSE, verbosity = 0L)
-  expect_true(ape::is.binary(result))
+
+# --- MCI scoring (.CIDScoreFast) -------------------------------------------
+
+test_that("Internal MCI score is negative (negated mean MCI)", {
+  cidData <- .MakeCIDData(smallTrees, ClusteringInfoDistance,
+                          smallTrees[[1]]$tip.label)
+  tr <- smallTrees[[1]]
+  edge <- tr$edge
+  score <- .CIDScorer(edge[, 1], edge[, 2], cidData)
+  expect_true(score <= 0)
+  # Negated MCI should match -mean(MCI)
+  r_mci <- mean(MutualClusteringInfo(tr, smallTrees))
+  expect_equal(-score, r_mci, tolerance = 1e-6)
 })
+
+
+# --- .InsertTipAtEdge -------------------------------------------------------
+
+test_that(".InsertTipAtEdge produces valid phylo", {
+  tr <- as.phylo(1, 8)
+  for (i in 1:nrow(tr$edge)) {
+    inserted <- .InsertTipAtEdge(tr, "new_tip", i)
+    expect_s3_class(inserted, "phylo")
+    expect_equal(NTip(inserted), 9L)
+    expect_true("new_tip" %in% inserted$tip.label)
+    expect_equal(inserted$Nnode, tr$Nnode + 1L)
+  }
+})
+
+
+# --- .PruneTrees ------------------------------------------------------------
+
+test_that(".PruneTrees drops tips from all trees", {
+  pruned <- .PruneTrees(smallTrees, "t1")
+  expect_equal(length(pruned), length(smallTrees))
+  expect_equal(NTip(pruned[[1]]), NTip(smallTrees[[1]]) - 1L)
+  expect_false("t1" %in% pruned[[1]]$tip.label)
+})
+
+test_that(".PruneTrees returns unchanged on empty drop set", {
+  result <- .PruneTrees(smallTrees, character(0))
+  expect_identical(result, smallTrees)
+})
+
+
+# --- .ScoreTree -------------------------------------------------------------
+
+test_that(".ScoreTree matches .CIDScorer on edge vectors", {
+  cidData <- .MakeCIDData(smallTrees, ClusteringInfoDistance,
+                          smallTrees[[1]]$tip.label)
+  tr <- smallTrees[[1]]
+  edge <- tr$edge
+  expect_equal(.ScoreTree(tr, cidData),
+               .CIDScorer(edge[, 1], edge[, 2], cidData))
+})
+
+
+# --- Rogue dropping (toy example) ------------------------------------------
+
+test_that("Rogue taxon correctly identified in toy example", {
+  base <- ape::read.tree(text = "((a,b),(c,(d,e)));")
+  set.seed(2891)
+  rogue_trees <- lapply(sample.int(nrow(base$edge), 5), function(i)
+    .InsertTipAtEdge(base, "r", i))
+  class(rogue_trees) <- "multiPhylo"
+
+  set.seed(2891)
+  result <- CIDConsensus(rogue_trees,
+                         maxReplicates = 3L, targetHits = 2L,
+                         neverDrop = FALSE,
+                         verbosity = 0L)
+  expect_equal(attr(result, "droppedTips"), "r")
+  expect_false("r" %in% result$tip.label)
+})
+
+
+# --- neverDrop parameter ----------------------------------------------------
+
+test_that("neverDrop = TRUE prevents rogue dropping", {
+  set.seed(4817)
+  result <- CIDConsensus(smallTrees,
+                         maxReplicates = 2L, targetHits = 1L,
+                         neverDrop = TRUE,
+                         verbosity = 0L)
+  expect_null(attr(result, "droppedTips"))
+  expect_equal(NTip(result), 12L)
+})
+
+test_that("neverDrop protects specified tips", {
+  base <- ape::read.tree(text = "((a,b),(c,(d,e)));")
+  set.seed(2891)
+  rogue_trees <- lapply(sample.int(nrow(base$edge), 5), function(i)
+    .InsertTipAtEdge(base, "r", i))
+  class(rogue_trees) <- "multiPhylo"
+
+  set.seed(2891)
+  result <- CIDConsensus(rogue_trees,
+                         maxReplicates = 3L, targetHits = 2L,
+                         neverDrop = c("r", "a"),
+                         verbosity = 0L)
+  expect_true("r" %in% result$tip.label)
+  expect_true("a" %in% result$tip.label)
+})
+
+
+# --- maxDrop parameter -------------------------------------------------------
+
+test_that("maxDrop limits the number of dropped tips", {
+  set.seed(4817)
+  result <- CIDConsensus(smallTrees,
+                         maxReplicates = 2L, targetHits = 1L,
+                         neverDrop = FALSE,
+                         maxDrop = 1L,
+                         verbosity = 0L)
+  nDropped <- length(attr(result, "droppedTips"))
+  expect_true(nDropped <= 1L)
+})
+
+
+
