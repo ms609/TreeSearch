@@ -1,0 +1,343 @@
+---
+title: "TreeSearch vs TNT: Benchmark Comparison"
+author: "TreeSearch Development"
+date: today
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(TreeSearch)
+library(TreeTools)
+library(tidyverse)
+library(knitr)
+
+TNT_EXE <- "C:/Programs/Phylogeny/tnt/TNT-bin/tnt.exe"
+STAGING_DIR <- ".tnt-bench"
+dir.create(STAGING_DIR, showWarnings = FALSE)
+
+stopifnot("TNT not found" = file.exists(TNT_EXE))
+```
+
+## Overview
+
+This report compares **TreeSearch** (C++ driven search) against **TNT 1.6**
+(Goloboff & Catalano 2016) on identical phylogenetic search problems.
+
+Both programs implement "new technology" heuristic searches: random
+addition sequences, TBR branch swapping, sectorial searches, ratchet
+perturbation, drift, and tree fusing. We compare search quality (best
+score found) and wall-clock speed across a range of morphological
+datasets.
+
+### Ensuring a fair comparison
+
+The `inapplicable.phyData` datasets bundled with TreeSearch contain
+inapplicable (`-`) tokens. TreeSearch and TNT handle these differently:
+TreeSearch uses the Brazeau et al. (2019) three-pass algorithm, while TNT
+treats inapplicable as a regular character state. To ensure both programs
+optimise the **same** objective function — standard Fitch parsimony — we
+replace all inapplicable tokens with missing data (`?`) before analysis.
+
+```{r}
+#| label: helpers
+
+# Replace inapplicable tokens with missing data
+clean_inapplicable <- function(phyDat_obj) {
+  mat <- PhyDatToMatrix(phyDat_obj)
+  mat[mat == "-"] <- "?"
+  MatrixToPhyDat(mat)
+}
+
+# Prepare dataset for TreeSearch C++ bridge
+prepare_ts_data <- function(dataset) {
+  at <- attributes(dataset)
+  list(
+    contrast = at$contrast,
+    tip_data = matrix(unlist(dataset, use.names = FALSE),
+                      nrow = length(dataset), byrow = TRUE),
+    weight = at$weight,
+    levels = at$levels,
+    n_taxa = length(dataset),
+    n_chars = sum(at$weight)
+  )
+}
+
+# Run TNT search; returns list(score, n_trees, wall_s)
+run_tnt <- function(data_file, timeout_s = 30, seed = 1,
+                    hits = 5, reps = 20, weighting = "EW",
+                    concavity = 3) {
+  commands <- c(
+    "mxram 1024;",
+    sprintf("proc %s;", data_file),
+    sprintf("rseed %d;", seed)
+  )
+  if (weighting == "IW") {
+    commands <- c(commands, sprintf("piwe=%d;", concavity))
+  }
+  hh <- timeout_s %/% 3600
+  mm <- (timeout_s %% 3600) %/% 60
+  ss <- timeout_s %% 60
+  commands <- c(commands,
+    sprintf("timeout %d:%02d:%02d;", hh, mm, ss),
+    sprintf("xmult=hits %d replic %d;", hits, reps),
+    "best;", "quit;"
+  )
+
+  script_path <- file.path(STAGING_DIR, "tntbench.run")
+  writeLines(commands, script_path)
+
+  old_wd <- setwd(STAGING_DIR)
+  on.exit(setwd(old_wd), add = TRUE)
+
+  t0 <- proc.time()
+  output <- withCallingHandlers(
+    system2(TNT_EXE, args = "tntbench.run;",
+            stdout = TRUE, stderr = TRUE, timeout = timeout_s + 30),
+    warning = function(w) invokeRestart("muffleWarning")
+  )
+  wall_s <- as.double((proc.time() - t0)[3])
+
+  output <- iconv(output, from = "", to = "UTF-8", sub = "")
+  out_text <- paste(output, collapse = "\n")
+
+  score <- NA_real_
+  m <- regmatches(out_text, regexpr("Best score:\\s+([0-9.]+)", out_text))
+  if (length(m) == 1) score <- as.numeric(sub("Best score:\\s+", "", m))
+
+  n_trees <- NA_integer_
+  m <- regmatches(out_text, regexpr("([0-9]+) trees? retained", out_text))
+  if (length(m) == 1) n_trees <- as.integer(sub(" trees? retained", "", m))
+
+  list(score = score, n_trees = n_trees, wall_s = wall_s)
+}
+
+# Run TreeSearch driven search; returns list(score, n_trees, wall_s)
+run_treesearch <- function(ds, timeout_s = 30, seed = 1,
+                           hits = 5, reps = 20) {
+  set.seed(seed)
+  t0 <- proc.time()
+  result <- TreeSearch:::ts_driven_search(
+    ds$contrast, ds$tip_data, ds$weight, ds$levels,
+    maxReplicates = as.integer(reps),
+    targetHits = as.integer(hits),
+    maxSeconds = as.double(timeout_s),
+    verbosity = 0L, nThreads = 1L
+  )
+  wall_s <- as.double((proc.time() - t0)[3])
+
+  list(score = result$best_score, n_trees = result$pool_size,
+       wall_s = wall_s, replicates = result$replicates,
+       hits = result$hits_to_best)
+}
+```
+
+## Datasets
+
+We use 14 morphological datasets from `inapplicable.phyData`, spanning
+20–88 taxa. All inapplicable tokens are replaced with missing data.
+
+```{r}
+#| label: prepare-datasets
+#| cache: true
+
+BENCHMARK_NAMES <- c(
+  "Longrich2010", "Vinther2008", "Sansom2010", "DeAssis2011",
+  "Aria2015", "Wortley2006", "Griswold1999", "Schulze2007",
+  "Eklund2004", "Agnarsson2004", "Zanol2014", "Zhu2013",
+  "Giles2015", "Dikow2009"
+)
+
+datasets <- list()
+for (nm in BENCHMARK_NAMES) {
+  raw <- inapplicable.phyData[[nm]]
+  clean <- clean_inapplicable(raw)
+  datasets[[nm]] <- prepare_ts_data(clean)
+
+  # Export to TNT format
+  WriteTntCharacters(clean,
+                     filepath = file.path(STAGING_DIR, paste0(nm, ".tnt")))
+}
+
+dataset_info <- map_dfr(names(datasets), \(nm) {
+  ds <- datasets[[nm]]
+  tibble(dataset = nm, n_taxa = ds$n_taxa, n_chars = ds$n_chars)
+})
+
+kable(dataset_info, caption = "Benchmark datasets (inapplicable → missing)")
+```
+
+## Run comparison
+
+Each dataset is searched with equal-weights Fitch parsimony.
+Both engines are given the same timeout, convergence criterion, and
+random seed. TreeSearch uses `nThreads = 1` for a single-threaded
+comparison.
+
+```{r}
+#| label: run-comparison
+#| cache: true
+
+TIMEOUT <- 10   # seconds per search
+SEEDS <- 1:3
+HITS <- 5L
+REPS <- 20L
+
+rows <- list()
+idx <- 0L
+n_total <- length(BENCHMARK_NAMES) * length(SEEDS)
+
+for (nm in BENCHMARK_NAMES) {
+  ds <- datasets[[nm]]
+  data_file <- paste0(nm, ".tnt")
+
+  for (seed in SEEDS) {
+    idx <- idx + 1L
+
+    tnt <- run_tnt(data_file, timeout_s = TIMEOUT, seed = seed,
+                   hits = HITS, reps = REPS)
+    ts <- run_treesearch(ds, timeout_s = TIMEOUT, seed = seed,
+                         hits = HITS, reps = REPS)
+
+    rows[[idx]] <- tibble(
+      dataset = nm, n_taxa = ds$n_taxa, n_chars = ds$n_chars,
+      seed = seed, timeout_s = TIMEOUT,
+      tnt_score = tnt$score, tnt_trees = tnt$n_trees,
+      tnt_wall_s = round(tnt$wall_s, 3),
+      ts_score = ts$score, ts_trees = ts$n_trees,
+      ts_wall_s = round(ts$wall_s, 3),
+      ts_reps = ts$replicates, ts_hits = ts$hits
+    )
+  }
+}
+
+results <- bind_rows(rows)
+```
+
+## Score comparison
+
+With inapplicable tokens replaced by missing data, both engines optimise
+the same Fitch objective. Any score difference reflects search
+effectiveness, not algorithmic differences.
+
+```{r}
+#| label: tbl-scores
+#| tbl-cap: "Best and median scores per dataset (across 3 seeds)"
+
+score_summary <- results |>
+  group_by(dataset, n_taxa, n_chars) |>
+  summarise(
+    tnt_best = min(tnt_score), ts_best = min(ts_score),
+    tnt_median = median(tnt_score), ts_median = median(ts_score),
+    agree = min(tnt_score) == min(ts_score),
+    .groups = "drop"
+  ) |>
+  arrange(n_taxa) |>
+  mutate(delta = ts_best - tnt_best)
+
+kable(score_summary, digits = 1)
+```
+
+```{r}
+#| label: fig-score-delta
+#| fig-cap: "Score difference (TreeSearch best − TNT best) vs dataset size. Zero means both engines found the same optimum."
+#| fig-width: 7
+#| fig-height: 4
+
+ggplot(score_summary, aes(n_taxa, delta)) +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
+  geom_point(size = 2.5) +
+  geom_text(aes(label = dataset), hjust = -0.1, size = 2.5, angle = 20) +
+  labs(x = "Number of taxa", y = "Score difference (TS − TNT)") +
+  theme_minimal() +
+  scale_x_continuous(expand = expansion(mult = c(0.05, 0.3)))
+```
+
+## Timing comparison
+
+```{r}
+#| label: tbl-timing
+#| tbl-cap: "Median wall-clock time (seconds) and speed ratio"
+
+timing <- results |>
+  group_by(dataset, n_taxa) |>
+  summarise(
+    tnt_median_s = round(median(tnt_wall_s), 2),
+    ts_median_s = round(median(ts_wall_s), 2),
+    .groups = "drop"
+  ) |>
+  mutate(ratio_ts_tnt = round(ts_median_s / tnt_median_s, 1)) |>
+  arrange(n_taxa)
+
+kable(timing)
+```
+
+```{r}
+#| label: fig-timing
+#| fig-cap: "Wall-clock time vs number of taxa"
+#| fig-width: 7
+#| fig-height: 4.5
+
+results_long <- results |>
+  select(dataset, n_taxa, seed, tnt_wall_s, ts_wall_s) |>
+  pivot_longer(c(tnt_wall_s, ts_wall_s),
+               names_to = "engine", values_to = "wall_s") |>
+  mutate(engine = if_else(engine == "tnt_wall_s", "TNT 1.6", "TreeSearch"))
+
+ggplot(results_long, aes(n_taxa, wall_s, colour = engine)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "loess", se = FALSE, linewidth = 0.8) +
+  labs(x = "Number of taxa", y = "Wall-clock time (s)", colour = NULL) +
+  theme_minimal()
+```
+
+## Score quality
+
+How often does each engine find the overall best-known score (the minimum
+across both engines and all seeds)?
+
+```{r}
+#| label: tbl-quality
+#| tbl-cap: "Percentage of runs finding the best-known score"
+
+quality <- results |>
+  group_by(dataset, n_taxa) |>
+  mutate(
+    best = min(c(tnt_score, ts_score)),
+    tnt_hit = tnt_score <= best,
+    ts_hit = ts_score <= best
+  ) |>
+  summarise(
+    n = n(),
+    tnt_pct = round(100 * mean(tnt_hit), 0),
+    ts_pct = round(100 * mean(ts_hit), 0),
+    .groups = "drop"
+  ) |>
+  arrange(n_taxa)
+
+kable(quality)
+```
+
+## Full results
+
+```{r}
+#| label: tbl-raw
+#| tbl-cap: "All individual runs"
+
+kable(results |> arrange(n_taxa, dataset, seed), digits = 2)
+```
+
+## Session info
+
+```{r}
+#| label: session-info
+sessionInfo()
+```
