@@ -171,6 +171,7 @@ DrivenResult parallel_driven_search(
   result.hits_to_best = 0;
   result.pool_size = 0;
   result.timed_out = false;
+  result.consensus_stable = false;
 
   if (params.max_replicates <= 0) {
     result.best_score = -1.0;
@@ -285,6 +286,24 @@ DrivenResult parallel_driven_search(
         stop_flag.store(true, std::memory_order_relaxed);
         result.timed_out = true;
         break;
+      }
+    }
+
+    // Consensus stability check (parallel path)
+    if (params.consensus_stable_reps > 0) {
+      auto st = shared_pool.status();
+      if (st.pool_size >= 2) {
+        int unchanged = shared_pool.update_consensus_stability();
+        if (unchanged >= params.consensus_stable_reps) {
+          stop_flag.store(true, std::memory_order_relaxed);
+          result.consensus_stable = true;
+          if (params.verbosity >= 1) {
+            Rprintf("Consensus stable for %d replicates (score %.5g, "
+                    "pool %d trees)\n",
+                    unchanged, st.best_score, st.pool_size);
+          }
+          break;
+        }
       }
     }
 

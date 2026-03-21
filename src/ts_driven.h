@@ -96,6 +96,21 @@ struct DrivenParams {
   // Subsequent replicates still use random Wagner trees.
   std::vector<int> start_edge;  // flattened column-major [parent|child]
   int start_n_edge = 0;
+
+  // Consensus-stability stopping criterion.
+  // 0 = disabled (default). When > 0, stop if the strict consensus of
+  // best-score pool trees has been unchanged for this many consecutive
+  // replicates. Checked after each replicate completes and the pool is
+  // updated. Sits alongside targetHits — whichever fires first wins.
+  int consensus_stable_reps = 0;
+
+  // Adaptive search level.
+  // When true, dynamically scale ratchet_cycles and drift_cycles based
+  // on the hit rate (fraction of replicates that find the current best
+  // score). High hit rates → reduce effort; low hit rates → increase.
+  // The base values are the initially configured cycles; adaptation
+  // applies a multiplier each replicate.
+  bool adaptive_level = false;
 };
 
 // Cumulative per-phase wall-clock timing (milliseconds).
@@ -129,6 +144,7 @@ struct DrivenResult {
   int hits_to_best;
   int pool_size;
   bool timed_out;                // true if search ended due to timeout
+  bool consensus_stable;         // true if stopped by consensus stability
   PhaseTimings timings;          // cumulative across all replicates
 };
 
@@ -144,14 +160,18 @@ struct ReplicateResult {
 // Does NOT interact with the pool — caller handles that.
 // `check_timeout` should return true when time limit is exceeded.
 // Verbosity is the effective verbosity for this replicate (0 in parallel).
+struct SplitFrequencyTable;  // forward declaration (defined in ts_pool.h)
+
 // If `starting_tree` is non-null, use it instead of building a Wagner tree.
+// If `split_freq` is non-null, RSS uses conflict-guided sector selection.
 ReplicateResult run_single_replicate(
     DataSet& ds,
     const DrivenParams& params,
     ConstraintData* cd,
     std::function<bool()> check_timeout,
     int verbosity,
-    TreeState* starting_tree = nullptr);
+    TreeState* starting_tree = nullptr,
+    const SplitFrequencyTable* split_freq = nullptr);
 
 // Run the full driven search. Returns search statistics.
 // The pool contents (all retained trees) are accessible via the pool

@@ -12,8 +12,17 @@
 #include "ts_splits.h"
 #include <vector>
 #include <cstdint>
+#include <unordered_set>
+#include <unordered_map>
 
 namespace ts {
+
+// Per-split frequency table for conflict-guided sector selection.
+// Maps per-split hash → count across best-score pool trees.
+struct SplitFrequencyTable {
+  std::unordered_map<uint64_t, int> freq;  // split hash → occurrence count
+  int n_trees = 0;  // number of best-score trees used to build the table
+};
 
 struct PoolEntry {
   TreeState tree;
@@ -29,7 +38,8 @@ public:
 
   TreePool(int max_sz = 100, double subopt = 0.0)
     : max_size(max_sz), suboptimal(subopt),
-      best_score_(1e18), hits_to_best_(0) {}
+      best_score_(1e18), hits_to_best_(0),
+      consensus_hash_(0), consensus_unchanged_(0) {}
 
   // Add a tree if it's not a duplicate and meets score threshold.
   // Returns true if the tree was actually added.
@@ -59,10 +69,32 @@ public:
   // Clear the pool.
   void clear();
 
+  // Compute strict-consensus hash of all best-score trees in the pool.
+  // A split is "in the consensus" if it appears in ALL best-score trees.
+  // Returns an order-independent hash of the consensus split set.
+  uint64_t compute_consensus_hash() const;
+
+  // Update consensus stability tracker. Call after each replicate.
+  // Returns the number of consecutive replicates where the consensus
+  // hash has been unchanged.
+  int update_consensus_stability();
+
+  // Current consecutive-unchanged count.
+  int consensus_unchanged() const { return consensus_unchanged_; }
+
+  // Compute per-split frequency table across best-score pool trees.
+  // For each non-trivial split in any best-score tree, records how many
+  // best-score trees contain it. Used by conflict-guided sector selection.
+  SplitFrequencyTable compute_split_frequencies() const;
+
 private:
   std::vector<PoolEntry> entries_;
   double best_score_;
   int hits_to_best_;
+
+  // Consensus stability tracking
+  uint64_t consensus_hash_;
+  int consensus_unchanged_;
 
   bool is_duplicate(uint64_t hash, const SplitSet& ss) const;
 };

@@ -1,6 +1,8 @@
 #include "ts_pool.h"
 #include <algorithm>
 #include <stdexcept>
+#include <cstring>
+#include <unordered_map>
 
 namespace ts {
 
@@ -90,6 +92,86 @@ void TreePool::clear() {
   entries_.clear();
   best_score_ = 1e18;
   hits_to_best_ = 0;
+  consensus_hash_ = 0;
+  consensus_unchanged_ = 0;
+}
+
+uint64_t TreePool::compute_consensus_hash() const {
+  // Collect best-score entries
+  std::vector<const PoolEntry*> best_entries;
+  for (const auto& e : entries_) {
+    if (e.score <= best_score_) {
+      best_entries.push_back(&e);
+    }
+  }
+  if (best_entries.empty()) return 0;
+  if (best_entries.size() == 1) {
+    // Single tree: consensus = all its splits
+    return best_entries[0]->split_hash;
+  }
+
+  int wps = best_entries[0]->splits.words_per_split;
+  int n_best = static_cast<int>(best_entries.size());
+
+  // Count occurrences of each split hash across best-score trees.
+  // A split is in the strict consensus iff it appears in ALL best trees.
+  // Use a two-level approach: hash-based counting, then verify with bitwise
+  // equality for splits that appear n_best times.
+  std::unordered_map<uint64_t, int> split_counts;
+  for (const auto* e : best_entries) {
+    for (int s = 0; s < e->splits.n_splits; ++s) {
+      uint64_t sh = hash_single_split(e->splits.split(s), wps);
+      ++split_counts[sh];
+    }
+  }
+
+  // XOR of hashes of all unanimous splits → order-independent consensus hash.
+  // (Hash collisions between different splits are extremely unlikely; a
+  // false match would over-count unanimity, making the consensus *more*
+  // stable than it truly is — a conservative error direction.)
+  uint64_t consensus = 0;
+  for (const auto& kv : split_counts) {
+    if (kv.second >= n_best) {
+      consensus ^= kv.first;
+    }
+  }
+  return consensus;
+}
+
+int TreePool::update_consensus_stability() {
+  uint64_t new_hash = compute_consensus_hash();
+  if (new_hash == consensus_hash_ && consensus_hash_ != 0) {
+    ++consensus_unchanged_;
+  } else {
+    consensus_hash_ = new_hash;
+    consensus_unchanged_ = 0;
+  }
+  return consensus_unchanged_;
+}
+
+SplitFrequencyTable TreePool::compute_split_frequencies() const {
+  SplitFrequencyTable sft;
+
+  // Collect best-score entries
+  std::vector<const PoolEntry*> best_entries;
+  for (const auto& e : entries_) {
+    if (e.score <= best_score_) {
+      best_entries.push_back(&e);
+    }
+  }
+  sft.n_trees = static_cast<int>(best_entries.size());
+  if (sft.n_trees < 2) return sft;
+
+  int wps = best_entries[0]->splits.words_per_split;
+
+  for (const auto* e : best_entries) {
+    for (int s = 0; s < e->splits.n_splits; ++s) {
+      uint64_t sh = hash_single_split(e->splits.split(s), wps);
+      ++sft.freq[sh];
+    }
+  }
+
+  return sft;
 }
 
 } // namespace ts

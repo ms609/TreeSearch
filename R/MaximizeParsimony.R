@@ -80,7 +80,8 @@
     rssRounds = 0L, cssRounds = 0L, cssPartitions = 4L,
     sectorMinSize = 6L, sectorMaxSize = 50L,
     fuseInterval = 5L, fuseAcceptEqual = FALSE,
-    tabuSize = 0L, wagnerStarts = 1L
+    tabuSize = 0L, wagnerStarts = 1L,
+    consensusStableReps = 3L
   ),
   default = SearchControl(
     tbrMaxHits = 1L, ratchetCycles = 5L, ratchetPerturbProb = 0.04,
@@ -89,7 +90,8 @@
     rssRounds = 1L, cssRounds = 0L, cssPartitions = 4L,
     sectorMinSize = 6L, sectorMaxSize = 50L,
     fuseInterval = 3L, fuseAcceptEqual = FALSE,
-    tabuSize = 100L, wagnerStarts = 1L
+    tabuSize = 100L, wagnerStarts = 1L,
+    consensusStableReps = 3L
   ),
   thorough = SearchControl(
     tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.04,
@@ -99,7 +101,8 @@
     rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
     sectorMinSize = 6L, sectorMaxSize = 80L,
     fuseInterval = 2L, fuseAcceptEqual = TRUE,
-    tabuSize = 200L, wagnerStarts = 3L
+    tabuSize = 200L, wagnerStarts = 3L,
+    consensusStableReps = 3L
   )
 )
 
@@ -224,6 +227,10 @@
 #'       perturbation, extra sectorial rounds. Best for datasets with
 #'       65+ tips and 100+ character patterns, where sprint/default
 #'       may miss the global optimum.}
+#'   All presets enable consensus-stability stopping
+#'   (`consensusStableReps = 3`): the search stops early if the strict
+#'   consensus of best-score trees has been unchanged for three consecutive
+#'   replicates.
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }
 #'   Explicit `control` fields always override the preset; for example,
@@ -283,6 +290,9 @@
 #'       score.}
 #'     \item{`timed_out`}{Logical: `TRUE` if the search stopped because
 #'       `maxSeconds` was exceeded.}
+#'     \item{`consensus_stable`}{Logical: `TRUE` if the search stopped
+#'       because the strict consensus was unchanged for
+#'       `consensusStableReps` consecutive replicates.}
 #'     \item{`timings`}{Named numeric vector of cumulative wall-clock time
 #'       (in milliseconds) spent in each search phase across all replicates:
 #'       `wagner_ms`, `tbr_ms`, `xss_ms`, `rss_ms`, `css_ms`, `ratchet_ms`,
@@ -682,7 +692,13 @@ MaximizeParsimony <- function(
     progressCallback = progressCallback,
     nThreads = as.integer(nThreads),
     startEdge = if (userTree) tree[["edge"]] else NULL,
-    sprFirst = as.logical(ctrl$sprFirst)
+    sprFirst = as.logical(ctrl$sprFirst),
+    consensusStableReps = as.integer(
+      if (is.null(ctrl$consensusStableReps)) 0L
+      else ctrl$consensusStableReps),
+    adaptiveLevel = as.logical(
+      if (is.null(ctrl$adaptiveLevel)) FALSE
+      else ctrl$adaptiveLevel)
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
                                         hsjArgs, xformArgs))
@@ -719,6 +735,7 @@ MaximizeParsimony <- function(
     replicates = result$replicates,
     hits_to_best = result$hits_to_best,
     timed_out = isTRUE(result$timed_out),
+    consensus_stable = isTRUE(result$consensus_stable),
     timings = unlist(result$timings),
     class = "multiPhylo"
   )

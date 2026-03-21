@@ -53,6 +53,8 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
+| T-163 | P2 | OPEN | — | **Search confidence: composite diagnostic** Replace `exp(-K)` in `SearchConfidenceText()` with tightened binomial bound `(1 - K/R)^R` (falling back to `exp(-K)` when K==R). Add pool topology count (T) and last-improvement replicate index to the diagnostic message. Report landscape ruggedness when K/R < 0.3 and flag limited independence when T==1. | See discussion in AGENTS.md "Future: search convergence" |
+| T-164 | P2 | OPEN | T-163 | **Search confidence: wire pool stats** Ensure `ts_driven_search` return list includes (a) number of distinct topologies in pool at best score, (b) replicate index of last score improvement. Add to Shiny search module's result handling. | May need small C++ addition to return value |
 
 
 

@@ -59,15 +59,8 @@ cumsum(sapply(1:3, Carter1, 3, 3))
 
 }
 \references{
+\insertCite{Steel1993,Steel1995,Steel1996}{TreeSearch}
 \insertAllCited{}
-
-See also:
-
-\insertRef{Steel1993}{TreeSearch}
-
-\insertRef{Steel1995}{TreeSearch}
-
-(\insertRef{Steel1996}{TreeSearch})
 }
 \seealso{
 Other profile parsimony functions: 

@@ -72,8 +72,8 @@ SPRWarning <- function (parent, child, error) {
 #' @param mergeEdge the index of an edge on which to merge the broken edge.
 #' @return This function returns a tree in \code{phyDat} format that has undergone one \acronym{SPR} iteration.
 #' 
-#' @references The \acronym{SPR} algorithm is summarized in
-#'  \insertRef{Felsenstein2004}{TreeSearch}
+#' @references \insertCite{Felsenstein2004}{TreeSearch}
+#' \insertAllCited{}
 #' 
 #' @author Martin R. Smith
 #' 

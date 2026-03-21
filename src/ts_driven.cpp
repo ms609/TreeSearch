@@ -6,6 +6,7 @@
 #include "ts_drift.h"
 #include "ts_sector.h"
 #include "ts_fuse.h"
+#include "ts_pool.h"
 #include "ts_wagner.h"
 #include "ts_splits.h"
 #include "ts_rng.h"
@@ -50,7 +51,8 @@ ReplicateResult run_single_replicate(
     ConstraintData* cd,
     std::function<bool()> check_timeout,
     int verbosity,
-    TreeState* starting_tree)
+    TreeState* starting_tree,
+    const SplitFrequencyTable* split_freq)
 {
   ReplicateResult result;
   result.interrupted = false;
@@ -144,8 +146,9 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
-    // RSS: random sector picks
+    // RSS: random sector picks (conflict-guided when pool data available)
     if (params.rss_rounds > 0) {
+      sp.split_freq = split_freq;
       for (int rr = 0; rr < params.rss_rounds; ++rr) {
         rss_search(result.tree, ds, sp, cd);
 
@@ -272,6 +275,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   result.hits_to_best = 0;
   result.pool_size = 0;
   result.timed_out = false;
+  result.consensus_stable = false;
 
   if (params.max_replicates <= 0) {
     result.best_score = -1.0;
@@ -325,6 +329,15 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // messages that don't map cleanly to a single Rprintf call)
   };
 
+  // Adaptive search level state.
+  // We make a mutable copy of the params to adjust per-replicate cycles.
+  // Base values are the originally configured ratchet/drift cycles.
+  const int base_ratchet_cycles = params.ratchet_cycles;
+  const int base_drift_cycles = params.drift_cycles;
+  DrivenParams adaptive_params = params;  // mutable copy for adaptive level
+  int adaptive_hits_in_window = 0;        // hits to best in recent window
+  const int adaptive_window = 5;          // window size for hit rate
+
   for (int rep = 0; rep < params.max_replicates; ++rep) {
     int rep1 = rep + 1;
 
@@ -354,9 +367,58 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       start_ptr = &start_tree;
     }
 
+    // Adaptive level: adjust ratchet/drift cycles based on hit rate.
+    // Uses a sliding window of recent replicates to compute hit rate.
+    if (params.adaptive_level && rep > 0 && pool.size() > 0) {
+      // Simple hit rate: hits_to_best / replicates_completed
+      double hit_rate = (result.replicates_completed > 0)
+          ? static_cast<double>(pool.hits_to_best()) /
+            result.replicates_completed
+          : 0.0;
+
+      // Scale factor: high hit rate → reduce effort, low → increase
+      double scale;
+      if (hit_rate > 0.7) {
+        scale = 0.5;     // easy landscape: halve effort
+      } else if (hit_rate > 0.4) {
+        scale = 0.75;    // moderate: reduce slightly
+      } else if (hit_rate < 0.15) {
+        scale = 1.5;     // hard landscape: increase effort
+      } else {
+        scale = 1.0;     // use base values
+      }
+
+      adaptive_params.ratchet_cycles = std::max(
+          1, static_cast<int>(base_ratchet_cycles * scale));
+      adaptive_params.drift_cycles = std::max(
+          0, static_cast<int>(base_drift_cycles * scale));
+
+      if (params.verbosity >= 2) {
+        Rprintf("  Adaptive level: hit_rate=%.2f, scale=%.2f "
+                "(ratchet=%d, drift=%d)\n",
+                hit_rate, scale,
+                adaptive_params.ratchet_cycles,
+                adaptive_params.drift_cycles);
+      }
+    }
+
+    // Use adaptive_params for the replicate (cycles may differ from original)
+    const DrivenParams& rep_params = params.adaptive_level
+        ? adaptive_params : params;
+
+    // Conflict-guided sector selection: compute pool split frequencies
+    // for RSS weighting (only useful when pool has ≥2 best-score trees).
+    const SplitFrequencyTable* sft_ptr = nullptr;
+    SplitFrequencyTable sft;
+    if (pool.size() >= 2) {
+      sft = pool.compute_split_frequencies();
+      if (sft.n_trees >= 2) sft_ptr = &sft;
+    }
+
     // Run the single-replicate pipeline
     ReplicateResult rep_result = run_single_replicate(
-        ds, params, cd, check_timeout, params.verbosity, start_ptr);
+        ds, rep_params, cd, check_timeout, params.verbosity, start_ptr,
+        sft_ptr);
 
     result.timings += rep_result.timings;
 
@@ -414,7 +476,23 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
           std::chrono::duration<double, std::milli>(fuse_end - fuse_start).count();
     }
 
-    // Convergence check
+    // Consensus stability check
+    if (params.consensus_stable_reps > 0 && pool.size() >= 2) {
+      int unchanged = pool.update_consensus_stability();
+      if (unchanged >= params.consensus_stable_reps) {
+        if (params.verbosity >= 1) {
+          if (!has_callback) {
+            Rprintf("Consensus stable for %d replicates (score %.5g, "
+                    "pool %d trees)\n",
+                    unchanged, pool.best_score(), pool.size());
+          }
+        }
+        result.consensus_stable = true;
+        break;
+      }
+    }
+
+    // Convergence check (hit count)
     if (pool.hits_to_best() >= params.target_hits) {
       if (params.verbosity >= 1) {
         if (!has_callback) {

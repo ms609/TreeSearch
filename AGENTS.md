@@ -1,5 +1,25 @@
 # TreeSearch Multi-Agent Development Notes
 
+## Current phase: bug-fixing / pre-release (as of 2026-03-20)
+
+The project is in a **bug-fixing and stabilisation phase** with the goal of
+shipping the package. Agents should:
+
+- Monitor `to-do.md` as usual for task selection.
+- **Prioritise bug fixes, test failures, documentation issues, and R CMD check
+  problems** over new functionality.
+- **Do not implement new features on `cpp-search` or `main`.**  
+  Feature work is allowed only on dedicated `feature/<name>` branches, and
+  only when the task is explicitly labelled as a feature and has been approved
+  for active development.
+- When in doubt, prefer a conservative fix (minimal diff, no API changes) over
+  an ambitious refactor.
+
+This phase ends when a clean `R CMD check` (0 errors, 0 warnings) is confirmed
+and the maintainer signals readiness to tag a release.
+
+---
+
 ## Build isolation — tarball workflow (mandatory)
 
 Multiple agents share the same `src/` directory. In-place `R CMD INSTALL .`
@@ -299,6 +319,9 @@ Both should be clean before committing. These are fast and catch issues
 (`check_man` catches Rd parse errors, cross-ref failures, `\usage` mismatches;
 `spell_check_package` catches typos in `@description`/`@details`/`@param` text).
 
+References are added using Rdpack's \insertCite{}, with
+\insertAllCited{} in the references section.
+
 ## Architecture reference
 
 ### R-level API
@@ -346,6 +369,14 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 
 Signal-density gate: datasets with few character patterns (<100) have flat
 parsimony landscapes where intensive search adds no benefit.
+
+### Adaptive sectorial search
+
+XSS and CSS use **adaptive early-exit**: after each round of sector searches
++ global TBR polish, if the overall best score did not improve, remaining
+rounds are skipped. This avoids wasting ~7% of replicate time on datasets
+where sectorial search is unproductive (e.g. Dikow2009). On productive
+datasets (e.g. Zhu2013), the early exit never fires.
 
 ### C++ module map
 

@@ -44,6 +44,16 @@
 #' @param poolMaxSize Integer; maximum trees retained in the pool.
 #' @param poolSuboptimal Numeric; retain trees that are this many steps
 #'   worse than the best tree.  0 (default) keeps only optimal trees.
+#' @param consensusStableReps Integer; stop when the strict consensus of
+#'   best-score pool trees has been unchanged for this many consecutive
+#'   replicates.
+#'   0 (default) disables this criterion; a typical value is 3--5.
+#'   When both `consensusStableReps` and `targetHits` are active, the search
+#'   stops when either criterion is met first.
+#' @param adaptiveLevel Logical; dynamically scale ratchet and drift effort
+#'   based on the observed hit rate?  When `TRUE`, easy landscapes
+#'   (high hit rate) trigger reduced effort per replicate, while hard
+#'   landscapes trigger increased effort.  Default `FALSE`.
 #'
 #' @return A named list of class `"SearchControl"`.
 #'
@@ -87,7 +97,10 @@ SearchControl <- function(
     fuseInterval = 3L,
     fuseAcceptEqual = FALSE,
     poolMaxSize = 100L,
-    poolSuboptimal = 0
+    poolSuboptimal = 0,
+    # Stopping criteria
+    consensusStableReps = 0L,
+    adaptiveLevel = FALSE
 ) {
   structure(
     list(
@@ -113,7 +126,9 @@ SearchControl <- function(
       fuseInterval = as.integer(fuseInterval),
       fuseAcceptEqual = as.logical(fuseAcceptEqual),
       poolMaxSize = as.integer(poolMaxSize),
-      poolSuboptimal = as.double(poolSuboptimal)
+      poolSuboptimal = as.double(poolSuboptimal),
+      consensusStableReps = as.integer(consensusStableReps),
+      adaptiveLevel = as.logical(adaptiveLevel)
     ),
     class = "SearchControl"
   )
@@ -130,7 +145,8 @@ print.SearchControl <- function(x, ...) {
                      "cssRounds", "cssPartitions",
                      "sectorMinSize", "sectorMaxSize"),
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual",
-                     "poolMaxSize", "poolSuboptimal")
+                     "poolMaxSize", "poolSuboptimal"),
+    "Stopping" = c("consensusStableReps", "adaptiveLevel")
   )
   cat("SearchControl object\n")
   for (gname in names(groups)) {

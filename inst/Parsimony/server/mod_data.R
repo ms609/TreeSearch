@@ -104,7 +104,10 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
         inherits(r$dataset, "phyDat")
     })
 
-    tipLabels <- reactive(r$trees[[1]][["tip.label"]])
+    tipLabels <- reactive({
+      if (!length(r$trees)) return(character(0L))
+      r$trees[[1]][["tip.label"]]
+    })
 
     nChars <- reactive({
       if (HaveData()) {
@@ -229,18 +232,23 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
       nTrees <- length(newTrees)
 
       if (nTrees != oldNTrees) {
-        if (!identical(input$treeRange, c(1L, nTrees))) {
-          r$oldTreeRange <- input$treeRange
-        }
-        UpdateTreeRange(c(1L, nTrees))
-        updateSliderInput(session, "treeRange",
-                          min = 1L, max = nTrees,
-                          value = r$treeRange)
+        if (nTrees > 0L) {
+          if (!identical(input$treeRange, c(1L, nTrees))) {
+            r$oldTreeRange <- input$treeRange
+          }
+          UpdateTreeRange(c(1L, nTrees))
+          updateSliderInput(session, "treeRange",
+                            min = 1L, max = nTrees,
+                            value = r$treeRange)
 
-        r$oldNTree <- input$nTree
-        UpdateNTree(min(max(input$nTree, aFewTrees), nTrees))
-        updateNumericInput(session, "nTree", max = nTrees,
-                           value = r$nTree)
+          r$oldNTree <- input$nTree
+          UpdateNTree(min(max(input$nTree, aFewTrees), nTrees))
+          updateNumericInput(session, "nTree", max = nTrees,
+                             value = r$nTree)
+        }
+        # When nTrees == 0, skip slider updates — the tree manipulation panel
+        # is hidden by the parentHide("manipulateTreeset") call below, so no
+        # visible element needs updating and we avoid min > max warnings.
       }
 
       UpdateActiveTrees()
@@ -463,7 +471,10 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
       }
 
       tryCatch({
-        dataFileTrees <- read.nexus(dataFile)
+        # suppressWarnings: ape::read.nexus emits a spurious recycling warning
+        # when a NEXUS file has unequal counts of [ and ] comment brackets on
+        # a line (upstream ape bug; does not affect parsing correctness).
+        dataFileTrees <- suppressWarnings(read.nexus(dataFile))
         LogComment("Read trees from dataset file")
         LogCode("newTrees <- read.nexus(dataFile)")
         UpdateAllTrees(dataFileTrees)
@@ -499,38 +510,83 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
       error = function(x) tryCatch({
         r$readTreeFile <- "read.nexus(treeFile)"
         LogMsg("Trying read.nexus()")
-        read.nexus(tmpFile)
+        suppressWarnings(read.nexus(tmpFile))
       },
       error = function(err) tryCatch({
         if (grepl("NA/NaN argument", err)) {
           LogMsg("Terminating tree block")
           withEnd <- tempfile()
           on.exit(unlink(withEnd))
-          writeLines(c(readLines(tmpFile), "\nEND;"), withEnd)
+          # suppressWarnings: readLines emits "incomplete final line" warning
+          # for files without trailing newline; benign, does not affect parsing.
+          writeLines(c(suppressWarnings(readLines(tmpFile)), "\nEND;"), withEnd)
           read.nexus(withEnd)
         } else {
           stop("Next handler, please")
         }
       },
-      error = function(x) tryCatch({
-        r$readTreeFile <- "ReadTntTree(treeFile)"
-        ReadTntTree(tmpFile)
-      }, warning = function(x) tryCatch({
-        Notification(as.character(x), type = "warning")
-        tryLabels <- TipLabels(r$dataset)
-        if (length(tryLabels) > 2) {
-          Notification("Inferring tip labels from dataset",
-                       type = "warning")
-          r$readTreeFile <-
-            "ReadTntTree(treeFile, tipLabels = TipLabels(dataset))"
-          ReadTntTree(tmpFile, tipLabels = tryLabels)
-        } else {
-          NULL
-        }
-      }, error = NULL)))))
+      error = function(x) tryCatch(
+        # withCallingHandlers muffles the benign readLines "incomplete final
+        # line" warning from ReadTntTree before it reaches the outer warning
+        # handler (which is for genuine TNT tip-label warnings only).
+        withCallingHandlers(
+          {
+            r$readTreeFile <- "ReadTntTree(treeFile)"
+            ReadTntTree(tmpFile)
+          },
+          warning = function(w) {
+            if (grepl("incomplete final line", conditionMessage(w),
+                      ignore.case = TRUE)) {
+              invokeRestart("muffleWarning")
+            }
+          }
+        ),
+        warning = function(x) tryCatch({
+          Notification(as.character(x), type = "warning")
+          tryLabels <- TipLabels(r$dataset)
+          if (length(tryLabels) > 2) {
+            Notification("Inferring tip labels from dataset",
+                         type = "warning")
+            r$readTreeFile <-
+              "ReadTntTree(treeFile, tipLabels = TipLabels(dataset))"
+            ReadTntTree(tmpFile, tipLabels = tryLabels)
+          } else {
+            NULL
+          }
+        }, error = function(e) NULL),
+        error = function(e) NULL))))
 
       if (is.null(newTrees)) {
-        Notification("Trees not in a recognized format", type = "error")
+        # No trees found: check whether the file is a data file uploaded to
+        # the wrong input.  Mirror the data-loader fallback chain
+        # (ReadTntAsPhyDat → ReadAsPhyDat).
+        autoData <- tryCatch(
+          suppressWarnings(ReadTntAsPhyDat(tmpFile)),
+          error = function(e) tryCatch(
+            suppressWarnings(ReadAsPhyDat(tmpFile)),
+            error = function(e) NULL
+          )
+        )
+        if (!is.null(autoData)) {
+          # Treat as a data file: load it as the active dataset.
+          # observeEvent(r$dataset) handles tree-clearing + hash update.
+          r$dataset         <- autoData
+          r$chars           <- tryCatch(suppressWarnings(ReadCharacters(tmpFile)),
+                                        error = function(e) NULL)
+          r$charNotes       <- tryCatch(suppressWarnings(ReadNotes(tmpFile)),
+                                        error = function(e) NULL)
+          r$readDataFile    <- "ReadAsPhyDat(dataFile)"
+          r$sortTrees       <- FALSE
+          r$bestSearchScore <- NULL
+          Notification(
+            paste0("No trees found \u2014 loaded ",
+                   length(autoData), " taxa and ",
+                   length(attr(autoData, "index")), " characters as dataset"),
+            type = "message"
+          )
+        } else {
+          Notification("Trees not in a recognized format", type = "error")
+        }
       } else {
         LogComment("Load tree from file", 2)
         CacheInput("tree", tmpFile)

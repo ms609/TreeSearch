@@ -424,6 +424,25 @@ static bool apply_tbr_move(
   return true;
 }
 
+// --- Edge length computation ---
+
+// Compute parsimony edge length from local_cost for a single node.
+// For EW Fitch (no NA), this is the exact contribution of the edge
+// (node → parent) to the tree score.
+static int node_edge_length(const TreeState& tree, const DataSet& ds,
+                            int node) {
+  int len = 0;
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    uint64_t lc =
+        tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
+    int nu = ts::popcount64(lc);
+    if (ds.blocks[b].upweight_mask)
+      nu += ts::popcount64(lc & ds.blocks[b].upweight_mask);
+    len += ds.blocks[b].weight * nu;
+  }
+  return len;
+}
+
 // --- Subtree size computation ---
 
 // Compute the number of tips in the subtree below each node.
@@ -481,6 +500,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   }
   int n_accepted = 0;
   int n_evaluated = 0;
+  int n_zero_skipped = 0;
   int hits = 1;
   const bool use_iw = std::isfinite(ds.concavity);
   // Floating-point tolerance for score equality
@@ -585,6 +605,46 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // For each edge, only clip the side with fewer tips.
       int clip_size = subtree_sizes[clip_node];
       if (clip_size > tree.n_tip / 2) continue;
+
+      // Optimization #7: skip clips where removing the subtree cannot
+      // change the tree score (EW only, accept_equal = false).
+      //
+      // Two conditions must hold:
+      //   (a) local_cost[nx] = 0 for all blocks — clip and sibling are
+      //       state-compatible, so nx contributes 0 to the score.
+      //   (b) prelim[sibling] == prelim[nx] — the parent's state-set is
+      //       identical to the sibling's, so replacing nx with sibling
+      //       doesn't change anything on the path to the root (delta = 0).
+      //
+      // Together: divided_length = best_score + 0 - 0 = best_score.
+      // Any regraft adds ≥ 0 steps, so no improvement is possible.
+      //
+      // Valid only for standard EW Fitch without inapplicable characters.
+      if (!use_iw && !has_na && !params.accept_equal
+          && ds.scoring_mode == ts::ScoringMode::EW) {
+        int nx = tree.parent[clip_node];
+        if (nx >= tree.n_tip) {
+          int nxi = nx - tree.n_tip;
+          int sib = (tree.left[nxi] == clip_node)
+                    ? tree.right[nxi] : tree.left[nxi];
+          // Check (a): nx cost is zero
+          bool nx_zero = true;
+          for (int b = 0; b < ds.n_blocks && nx_zero; ++b) {
+            if (tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b])
+              nx_zero = false;
+          }
+          // Check (b): sibling prelim == parent prelim
+          if (nx_zero) {
+            size_t sib_base = static_cast<size_t>(sib) * tree.total_words;
+            size_t nx_base  = static_cast<size_t>(nx) * tree.total_words;
+            if (std::memcmp(&tree.prelim[sib_base], &tree.prelim[nx_base],
+                            tree.total_words * sizeof(uint64_t)) == 0) {
+              ++n_zero_skipped;
+              continue;
+            }
+          }
+        }
+      }
 
       // --- Phase 1: Clip + indirect evaluation ---
 
@@ -921,7 +981,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   bool converged = !(params.max_accepted_changes > 0
                      && n_accepted >= params.max_accepted_changes);
 
-  return TBRResult{best_score, n_accepted, n_evaluated, converged};
+  return TBRResult{best_score, n_accepted, n_evaluated, n_zero_skipped,
+                   converged};
 }
 
 } // namespace ts
