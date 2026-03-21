@@ -87,6 +87,11 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-180 | Warm-start benchmark infrastructure | G | `bench_warmstart.R`: `compute_warmstart_tree()` (sprint→TBR optimum), `warmstart_run()` (single rep from warm start), `warmstart_benchmark()` (grid), `warmstart_summary()`. Isolates ratchet/drift escape from initial descent. Verified: Vinther2008 sprint→80, warm-start→79. Commit 13a019e3. |
 
 ---
+## 2026-03-21
+
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| T-150 | CID-optimal consensus tree search | P | Fixed critical two-baseline bug (TBR/drift/SPR non-functional in CID mode). Implemented 6 CID performance optimizations (hash-based exact match, precomputed log2, persistent buffers, presized LAP scratch, bounded early termination, batch log2 reuse). Wired score_budget into TBR/SPR for CID early termination. Fixed inter-replicate CID data race (per-thread CidData deep copy). All 1708 tests pass. |
 
 ## 2026-03-20
 

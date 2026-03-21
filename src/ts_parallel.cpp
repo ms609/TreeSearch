@@ -5,6 +5,7 @@
 #include "ts_fitch.h"
 #include "ts_fuse.h"
 #include "ts_tbr.h"
+#include "ts_cid.h"
 
 #include <R.h>
 #include <Rmath.h>
@@ -106,6 +107,14 @@ struct WorkerContext {
 void worker_thread(WorkerContext ctx) {
   // Make thread-local copies of mutable data
   DataSet ds_local = *ctx.ds_prototype;
+
+  // Deep-copy CidData so each thread has its own mutable scratch
+  // buffers (lap_scratch, cand_tip_bits, cand_buf, score_budget).
+  CidData cid_local;
+  if (ds_local.cid_data) {
+    cid_local = *ds_local.cid_data;
+    ds_local.cid_data = &cid_local;
+  }
 
   ConstraintData cd_local;
   ConstraintData* cd_ptr = nullptr;
