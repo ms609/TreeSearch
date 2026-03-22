@@ -1,4 +1,5 @@
 #include "ts_drift.h"
+#include "ts_collapsed.h"
 #include "ts_constraint.h"
 #include "ts_fitch.h"
 #include "ts_tbr.h"
@@ -369,6 +370,11 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     clip_candidates.push_back(node);
   }
 
+  // Collapsed regions: edges that provably cannot yield an improvement
+  // (clip skipping) + collapsed-edge regraft merging.
+  CollapsedRegions coll_info;
+  compute_collapsed_regions(tree, ds, coll_info);
+
   std::vector<std::pair<int,int>> main_edges;
   std::vector<std::pair<int,int>> sub_edges;
 
@@ -407,6 +413,10 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
 
   for (int clip_node : clip_candidates) {
     if (tree.parent[clip_node] == tree.n_tip) continue;
+
+    // Skip collapsed edges (zero-length, provably unimprovable).
+    if (!coll_info.collapsed.empty() && coll_info.collapsed[clip_node])
+      continue;
 
     // --- Phase 1: Clip + indirect evaluation ---
 
@@ -473,6 +483,9 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     for (auto& [above, below] : main_edges) {
       if (above == nz && below == ns) continue;
       if (constrained && regraft_violates_constraint(below, *cd)) continue;
+      // Collapsed-region regraft merging: skip interior collapsed edges.
+      if (!coll_info.collapsed.empty() && coll_info.collapsed[below])
+        continue;
       double candidate;
       if (has_na) {
         if (use_iw) {
@@ -521,6 +534,9 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
         for (auto& [above, below] : main_edges) {
           if (above == nz && below == ns) continue;
           if (constrained && regraft_violates_constraint(below, *cd))
+            continue;
+          // Collapsed-region regraft merging (same as SPR loop).
+          if (!coll_info.collapsed.empty() && coll_info.collapsed[below])
             continue;
           double candidate;
           if (has_na) {
@@ -586,6 +602,8 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
       drift_full_rescore(tree, ds);
       continue;
     }
+
+    int n_before = n_accepted;
 
     if (delta_score < -eps) {
       // Improvement: always accept
@@ -660,6 +678,11 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
           score = drift_full_rescore(tree, ds);
         }
       }
+    }
+
+    // Recompute collapsed regions after any accepted move.
+    if (n_accepted > n_before) {
+      compute_collapsed_regions(tree, ds, coll_info);
     }
 
     if (n_accepted >= max_changes) break;

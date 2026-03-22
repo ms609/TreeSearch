@@ -101,4 +101,68 @@ void compute_collapsed_flags(
   }
 }
 
+void compute_collapsed_regions(
+    const TreeState& tree,
+    const DataSet& ds,
+    CollapsedRegions& info) {
+
+  // Step 1: compute per-node collapsed flags.
+  compute_collapsed_flags(tree, ds, info.collapsed);
+
+  const int n_node = tree.n_node;
+  info.region_id.assign(n_node, -1);
+  info.n_collapsed = 0;
+  info.n_regions = 0;
+
+  // Count collapsed edges.
+  for (int c = 0; c < n_node; ++c) {
+    if (info.collapsed[c]) ++info.n_collapsed;
+  }
+  if (info.n_collapsed == 0) return;
+
+  // Step 2: assign region IDs.
+  //
+  // A collapsed edge connects child c to parent p (when collapsed[c] == 1).
+  // Two nodes share a region if they are connected by a collapsed edge.
+  //
+  // Process internal nodes in REVERSE postorder (= preorder for trees):
+  // parents visited before children. When a parent creates or joins a
+  // region, its children inherit the same region_id.
+  //
+  // The root itself is never collapsed (no parent edge) and root's children
+  // are excluded by compute_collapsed_flags(), so root always has
+  // region_id == -1.
+  const auto& po = tree.postorder;
+  for (int idx = static_cast<int>(po.size()) - 1; idx >= 0; --idx) {
+    int node = po[idx];
+    int ni = node - tree.n_tip;
+    int lc = tree.left[ni];
+    int rc = tree.right[ni];
+
+    // Process left child
+    if (info.collapsed[lc]) {
+      if (info.region_id[node] >= 0) {
+        // Parent already has a region — child joins it.
+        info.region_id[lc] = info.region_id[node];
+      } else {
+        // Start a new region for both parent and child.
+        int rid = info.n_regions++;
+        info.region_id[node] = rid;
+        info.region_id[lc] = rid;
+      }
+    }
+
+    // Process right child
+    if (info.collapsed[rc]) {
+      if (info.region_id[node] >= 0) {
+        info.region_id[rc] = info.region_id[node];
+      } else {
+        int rid = info.n_regions++;
+        info.region_id[node] = rid;
+        info.region_id[rc] = rid;
+      }
+    }
+  }
+}
+
 } // namespace ts

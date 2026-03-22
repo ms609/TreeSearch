@@ -10,6 +10,7 @@
 #include "ts_tree.h"
 #include "ts_data.h"
 #include "ts_splits.h"
+#include "ts_collapsed.h"
 #include <vector>
 #include <cstdint>
 #include <unordered_set>
@@ -44,6 +45,12 @@ public:
   // Add a tree if it's not a duplicate and meets score threshold.
   // Returns true if the tree was actually added.
   bool add(const TreeState& tree, double score);
+
+  // Add with collapsed-topology dedup: two trees that collapse to the
+  // same polytomy are treated as duplicates. Uses collapsed flags to
+  // filter out zero-length-edge splits before hashing.
+  bool add_collapsed(const TreeState& tree, double score,
+                     const std::vector<uint8_t>& collapsed);
 
   // Get the best (lowest-scoring) entry.
   const PoolEntry& best() const;
@@ -86,6 +93,12 @@ public:
   // For each non-trivial split in any best-score tree, records how many
   // best-score trees contain it. Used by conflict-guided sector selection.
   SplitFrequencyTable compute_split_frequencies() const;
+
+  // Extract splits that appear in ALL best-score pool trees (strict consensus).
+  // Returns contiguous bitset data: n_splits * words_per_split uint64_t values.
+  // Sets n_unanimous and words_per_split. Returns empty if pool has <2 trees.
+  std::vector<uint64_t> extract_consensus_splits(
+      int& n_unanimous, int& words_per_split) const;
 
 private:
   std::vector<PoolEntry> entries_;

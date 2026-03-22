@@ -247,4 +247,85 @@ uint64_t hash_tree(const TreeState& tree) {
   return h;
 }
 
+SplitSet compute_collapsed_splits(const TreeState& tree,
+                                  const std::vector<uint8_t>& collapsed) {
+  if (collapsed.empty()) return compute_splits(tree);
+
+  int n_tip = tree.n_tip;
+  int wps = (n_tip + 63) / 64;
+
+  // Temporary per-node bitsets: tip membership of each node's subtree
+  size_t total = static_cast<size_t>(tree.n_node) * wps;
+  std::vector<uint64_t> tip_bits(total, 0);
+
+  for (int t = 0; t < n_tip; ++t) {
+    int word = t / 64;
+    int bit = t % 64;
+    tip_bits[static_cast<size_t>(t) * wps + word] = 1ULL << bit;
+  }
+
+  // Postorder: build subtree bitsets as usual
+  for (int pi = 0; pi < static_cast<int>(tree.postorder.size()); ++pi) {
+    int node = tree.postorder[pi];
+    int ni = node - n_tip;
+    int lc = tree.left[ni];
+    int rc = tree.right[ni];
+    uint64_t* dst = &tip_bits[static_cast<size_t>(node) * wps];
+    const uint64_t* lbits = &tip_bits[static_cast<size_t>(lc) * wps];
+    const uint64_t* rbits = &tip_bits[static_cast<size_t>(rc) * wps];
+    for (int w = 0; w < wps; ++w) {
+      dst[w] = lbits[w] | rbits[w];
+    }
+  }
+
+  // Collect non-trivial splits, skipping collapsed edges.
+  // An edge from node to parent[node] is collapsed when collapsed[node] == 1.
+  int root = n_tip;
+  int root_right = tree.right[0];
+
+  // Count splits
+  int n_splits = 0;
+  for (int pi = 0; pi < static_cast<int>(tree.postorder.size()); ++pi) {
+    int node = tree.postorder[pi];
+    if (node == root) continue;
+    if (node == root_right) continue;
+    // Skip splits for collapsed edges
+    if (collapsed[node]) continue;
+    const uint64_t* bits = &tip_bits[static_cast<size_t>(node) * wps];
+    int count = 0;
+    for (int w = 0; w < wps; ++w) {
+      count += ts::popcount64(bits[w]);
+    }
+    if (count <= 1 || count >= n_tip - 1) continue;
+    ++n_splits;
+  }
+
+  SplitSet ss;
+  ss.n_tips = n_tip;
+  ss.words_per_split = wps;
+  ss.n_splits = n_splits;
+  ss.splits.resize(static_cast<size_t>(n_splits) * wps);
+
+  int idx = 0;
+  for (int pi = 0; pi < static_cast<int>(tree.postorder.size()); ++pi) {
+    int node = tree.postorder[pi];
+    if (node == root) continue;
+    if (node == root_right) continue;
+    if (collapsed[node]) continue;
+    const uint64_t* bits = &tip_bits[static_cast<size_t>(node) * wps];
+    int count = 0;
+    for (int w = 0; w < wps; ++w) {
+      count += ts::popcount64(bits[w]);
+    }
+    if (count <= 1 || count >= n_tip - 1) continue;
+
+    uint64_t* dst = ss.split(idx);
+    std::memcpy(dst, bits, sizeof(uint64_t) * wps);
+    canonicalize_split(dst, wps, n_tip);
+    ++idx;
+  }
+
+  return ss;
+}
+
 } // namespace ts

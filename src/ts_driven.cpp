@@ -7,6 +7,7 @@
 #include "ts_sector.h"
 #include "ts_fuse.h"
 #include "ts_pool.h"
+#include "ts_constraint.h"
 #include "ts_wagner.h"
 #include "ts_splits.h"
 #include "ts_rng.h"
@@ -338,6 +339,14 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   int adaptive_hits_in_window = 0;        // hits to best in recent window
   const int adaptive_window = 5;          // window size for hit rate
 
+  // Cross-replicate consensus constraint tightening.
+  // When enabled and no user constraint is supplied, the strict consensus
+  // of pool trees is enforced as topological constraints for subsequent
+  // replicates. Cleared whenever a new best score is found.
+  bool use_auto_constraint = params.consensus_constrain && (!cd || !cd->active);
+  ConstraintData auto_cd;  // built from pool consensus; reused across reps
+  double auto_cd_best_score = 1e18;  // score when auto_cd was last built
+
   for (int rep = 0; rep < params.max_replicates; ++rep) {
     int rep1 = rep + 1;
 
@@ -415,23 +424,55 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       if (sft.n_trees >= 2) sft_ptr = &sft;
     }
 
+    // Consensus constraint tightening: build/update auto-constraints
+    ConstraintData* rep_cd = cd;  // default: user-supplied constraint
+    if (use_auto_constraint &&
+        result.replicates_completed >= params.consensus_constrain_min_reps &&
+        pool.size() >= 3) {
+      // Rebuild if pool changed score (meaning old constraints may be wrong)
+      if (pool.best_score() < auto_cd_best_score || !auto_cd.active) {
+        auto_cd.active = false;  // clear old constraints
+        auto_cd_best_score = pool.best_score();
+
+        int n_unan = 0, wps = 0;
+        auto bits = pool.extract_consensus_splits(n_unan, wps);
+        if (n_unan > 0) {
+          auto_cd = build_constraint_from_bitsets(
+              bits.data(), n_unan, wps, ds.n_tips);
+          if (params.verbosity >= 2 && !has_callback) {
+            Rprintf("  Auto-constraint: %d consensus splits locked\n",
+                    n_unan);
+          }
+        }
+      }
+      if (auto_cd.active) {
+        rep_cd = &auto_cd;
+      }
+    }
+
     // Run the single-replicate pipeline
     ReplicateResult rep_result = run_single_replicate(
-        ds, rep_params, cd, check_timeout, params.verbosity, start_ptr,
+        ds, rep_params, rep_cd, check_timeout, params.verbosity, start_ptr,
         sft_ptr);
 
     result.timings += rep_result.timings;
 
+    // Compute collapsed flags for collapsed-topology pool dedup.
+    // Trees that differ only in zero-length resolutions are treated
+    // as duplicates, improving pool diversity (Goloboff & Farris 2001).
+    std::vector<uint8_t> rep_collapsed;
+    compute_collapsed_flags(rep_result.tree, ds, rep_collapsed);
+
     if (rep_result.interrupted) {
       if (rep_result.score < 1e18) {
-        pool.add(rep_result.tree, rep_result.score);
+        pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
       }
       result.timed_out = true;
       goto finish;
     }
 
-    // Add to pool
-    pool.add(rep_result.tree, rep_result.score);
+    // Add to pool with collapsed-topology dedup
+    pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
 
     ++result.replicates_completed;
 
@@ -458,7 +499,11 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       if (cd && cd->active) {
         fuse_ok = !violates_constraint_posthoc(fused, *cd);
       }
-      if (fuse_ok) pool.add(fused, fused_score);
+      if (fuse_ok) {
+        std::vector<uint8_t> fused_collapsed;
+        compute_collapsed_flags(fused, ds, fused_collapsed);
+        pool.add_collapsed(fused, fused_score, fused_collapsed);
+      }
 
       if (fused_score < best_before) {
         pool.set_hits_to_best(0);
