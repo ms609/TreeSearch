@@ -1215,7 +1215,8 @@ List ts_driven_search(
     int hsjAbsentState = 0,
     Nullable<List> xformChars = R_NilValue,
     int consensusStableReps = 0,
-    bool adaptiveLevel = false)
+    bool adaptiveLevel = false,
+    bool consensusConstrain = false)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity, infoAmounts);
@@ -1348,6 +1349,7 @@ List ts_driven_search(
   params.wagner_starts = wagnerStarts;
   params.consensus_stable_reps = consensusStableReps;
   params.adaptive_level = adaptiveLevel;
+  params.consensus_constrain = consensusConstrain;
 
   // Starting tree edge matrix (optional)
   if (startEdge.isNotNull()) {

@@ -90,7 +90,8 @@
     rssRounds = 1L, cssRounds = 0L, cssPartitions = 4L,
     sectorMinSize = 6L, sectorMaxSize = 50L,
     fuseInterval = 3L, fuseAcceptEqual = FALSE,
-    tabuSize = 100L, wagnerStarts = 1L,
+    tabuSize = 100L, wagnerStarts = 3L,
+    sprFirst = TRUE, adaptiveLevel = TRUE,
     consensusStableReps = 3L
   ),
   thorough = SearchControl(
@@ -102,6 +103,7 @@
     sectorMinSize = 6L, sectorMaxSize = 80L,
     fuseInterval = 2L, fuseAcceptEqual = TRUE,
     tabuSize = 200L, wagnerStarts = 3L,
+    sprFirst = TRUE,
     consensusStableReps = 3L
   )
 )
@@ -698,7 +700,10 @@ MaximizeParsimony <- function(
       else ctrl$consensusStableReps),
     adaptiveLevel = as.logical(
       if (is.null(ctrl$adaptiveLevel)) FALSE
-      else ctrl$adaptiveLevel)
+      else ctrl$adaptiveLevel),
+    consensusConstrain = as.logical(
+      if (is.null(ctrl$consensusConstrain)) FALSE
+      else ctrl$consensusConstrain)
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
                                         hsjArgs, xformArgs))
