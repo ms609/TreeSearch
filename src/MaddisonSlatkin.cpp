@@ -13,6 +13,67 @@
 using namespace Rcpp;
 
 static const double NEG_INF = -std::numeric_limits<double>::infinity();
+
+// ============================================================================
+// Precomputed lookup tables for fast log-sum-exp operations.
+// Replaces repeated exp() / log1p() calls in inner loops.
+// ============================================================================
+struct FastLSETables {
+  static constexpr int N = 4096;
+  static constexpr double MAX_D = 36.75;   // exp(-36.75) < 2^-53
+  static constexpr double SCALE = N / MAX_D;
+
+  double exp_neg[N + 2];        // exp(-d) for d in [0, MAX_D]
+  double log1p_exp_neg[N + 2];  // log(1 + exp(-d)) for d in [0, MAX_D]
+
+  FastLSETables() {
+    for (int i = 0; i <= N; ++i) {
+      double d = i / SCALE;
+      exp_neg[i] = std::exp(-d);
+      log1p_exp_neg[i] = std::log1p(std::exp(-d));
+    }
+    exp_neg[N + 1] = 0.0;
+    log1p_exp_neg[N + 1] = 0.0;
+  }
+};
+static const FastLSETables FAST_LSE;
+
+// Fast exp(-d) for d >= 0.  Returns 0 when d >= MAX_D.
+static inline double fast_exp_neg(double d) {
+  if (d >= FastLSETables::MAX_D) return 0.0;
+  double idx = d * FastLSETables::SCALE;
+  int i = (int)idx;
+  double f = idx - i;
+  return FAST_LSE.exp_neg[i] + f * (FAST_LSE.exp_neg[i + 1] - FAST_LSE.exp_neg[i]);
+}
+
+// Fast log(1 + exp(-d)) for d >= 0.  Returns 0 when d >= MAX_D.
+static inline double fast_log1p_exp_neg(double d) {
+  if (d >= FastLSETables::MAX_D) return 0.0;
+  double idx = d * FastLSETables::SCALE;
+  int i = (int)idx;
+  double f = idx - i;
+  return FAST_LSE.log1p_exp_neg[i]
+       + f * (FAST_LSE.log1p_exp_neg[i + 1] - FAST_LSE.log1p_exp_neg[i]);
+}
+
+// Inline log-sum-exp accumulation: target = log(exp(target) + exp(v)).
+// Uses exact log1p/exp (not the fast lookup tables) because rounding errors
+// in the sequential log-domain path compound through every subsequent call.
+static inline void lse_update(double& target, double v) {
+  if (!(v > NEG_INF)) return;
+  if (!(target > NEG_INF)) {
+    target = v;
+  } else {
+    double d = target - v;
+    if (d >= 0.0) {
+      target += std::log1p(std::exp(-d));
+    } else {
+      target = v + std::log1p(std::exp(d));
+    }
+  }
+}
+
 constexpr int MAX_STATES_OPT = 32;
 // ---------- replace existing StateKey definition ----------
 struct StateKey {
@@ -443,12 +504,11 @@ struct LSEAccumulator {
       maxv = v;
       acc = 1.0;
       empty = false;
+    } else if (v > maxv) {
+      acc = acc * fast_exp_neg(v - maxv) + 1.0;
+      maxv = v;
     } else {
-      if (v > maxv) {
-        acc = acc * std::exp(maxv - v);
-        maxv = v;
-      }
-      acc += std::exp(v - maxv);
+      acc += fast_exp_neg(maxv - v);
     }
   }
 
@@ -942,10 +1002,10 @@ class SolverT {
       LogRDKeyOpt key{drawn, leaves};
       auto it = logRD_cache.find(key);
       if (it != logRD_cache.end()) return it->second;
-      
+
       const int m = drawn.sum();
       const int n = leaves.sum();
-      
+
       double bal = (n == 2*m) ? std::log(0.5) : 0.0;
       double lc = 0.0;
       for (int i = 0; i < leaves.len; ++i) {
@@ -1017,13 +1077,12 @@ class SolverT {
       return result;
     }
     
-    // Log-space convolution: C[s] = LogSumExp_r( A[r] + B[s-r] )
-    // Only iterates over the active (finite) range of each operand.
-    static std::vector<double> logconv(
+    // Log-space convolution: C[s] = LogSumExp_r( A[r] + B[s-r] ).
+    // Writes into caller-provided buffer C (must be pre-filled with NEG_INF).
+    static void logconv(
         const std::vector<double>& A, int a_lo, int a_hi,
         const std::vector<double>& B, int b_lo, int b_hi,
-        int c_size) {
-      std::vector<double> C(c_size, NEG_INF);
+        double* C, int c_size) {
       for (int r = a_lo; r <= a_hi; ++r) {
         const double va = A[r];
         if (!(va > NEG_INF)) continue;
@@ -1032,17 +1091,9 @@ class SolverT {
           if (!(vb > NEG_INF)) continue;
           const int s = r + q;
           if (s >= c_size) break;
-          const double v = va + vb;
-          // Inline log-sum-exp update: C[s] = log(exp(C[s]) + exp(v))
-          if (!(C[s] > NEG_INF)) {
-            C[s] = v;
-          } else {
-            double mx = std::max(C[s], v);
-            C[s] = mx + std::log1p(std::exp(std::min(C[s], v) - mx));
-          }
+          lse_update(C[s], va + vb);
         }
       }
-      return C;
     }
 
     // Returns LogPVec for (leaves, token0): a vector of length (s_max+1)
@@ -1110,6 +1161,12 @@ class SolverT {
       // Accumulator: outer[s] = LogSumExp over all draw partitions
       std::vector<double> outerVec(c_size, NEG_INF);
 
+      // Reusable buffers — allocated once per LogPVec call, reset each draw pair.
+      // Recursive LogPVec calls get their own stack-frame copies (safe).
+      std::vector<double> noStepVec(c_size);
+      std::vector<double> yesStepVec(c_size);
+      std::vector<double> conv_buf(c_size);
+
       const auto& drawpairs = getValidDraws(leaves);
 
       for (uint8_t i = 0; i < drawpairs.count; ++i) {
@@ -1121,18 +1178,12 @@ class SolverT {
         double rdCorr = computeLogRD(drawn, leaves) +
                         (((m + m == n) && !(drawn == undrawn)) ? std::log(2.0) : 0.0);
 
-        // Active ranges: min steps = 0 (all tips same state possible),
-        // max steps = n_subtree - 1.
         const int d_lo = 0;
         const int d_hi = std::min(drawn.sum() - 1,   s_max);
         const int u_lo = 0;
         const int u_hi = std::min(undrawn.sum() - 1, s_max);
 
         // Pre-fetch FixedProbList* for drawn/undrawn once per draw pair.
-        // Reduces logB_cache::find from 2*(N_no+N_yes) to 2 per draw pair.
-        // Prime the cache with the first available pair so logB_cache[drawn]
-        // exists before we take the pointer (n<=2 base cases don't use the cache,
-        // so fpl_d/fpl_u remain null and LogB() handles those directly).
         const FixedProbList* fpl_d = nullptr;
         const FixedProbList* fpl_u = nullptr;
         {
@@ -1149,32 +1200,25 @@ class SolverT {
           fpl_u = logB_cache.find_value(undrawn);
         }
 
-        // noStep pairs: convolve LogPVec(drawn,a) with LogPVec(undrawn,b)
-        std::vector<double> noStepVec(c_size, NEG_INF);
+        // noStep pairs
+        std::fill(noStepVec.begin(), noStepVec.end(), NEG_INF);
         for (const auto& pr : pairs.noStep[token0]) {
           const std::vector<double>& A = LogPVec(drawn,   pr.a);
           const std::vector<double>& B = LogPVec(undrawn, pr.b);
-          // After LogPVec(drawn,pr.a) returns, fpl_d[pr.a] is non-NaN (LogB fills it).
           double logBa = fpl_d ? (*fpl_d)[pr.a] : LogB(pr.a, drawn);
           double logBb = fpl_u ? (*fpl_u)[pr.b] : LogB(pr.b, undrawn);
           if (!(logBa > NEG_INF) || !(logBb > NEG_INF)) continue;
           double pairScale = logBa + logBb;
-          // C = conv(A, B), then add pairScale; merge into noStepVec
-          auto C = logconv(A, d_lo, d_hi, B, u_lo, u_hi, c_size);
+          std::fill(conv_buf.begin(), conv_buf.end(), NEG_INF);
+          logconv(A, d_lo, d_hi, B, u_lo, u_hi, conv_buf.data(), c_size);
           for (int s = 0; s < c_size; ++s) {
-            if (!(C[s] > NEG_INF)) continue;
-            double v = C[s] + pairScale;
-            if (!(noStepVec[s] > NEG_INF)) {
-              noStepVec[s] = v;
-            } else {
-              double mx = std::max(noStepVec[s], v);
-              noStepVec[s] = mx + std::log1p(std::exp(std::min(noStepVec[s], v) - mx));
-            }
+            if (!(conv_buf[s] > NEG_INF)) continue;
+            lse_update(noStepVec[s], conv_buf[s] + pairScale);
           }
         }
 
-        // yesStep pairs: same convolution but shifted by 1 (one extra step consumed)
-        std::vector<double> yesStepVec(c_size, NEG_INF);
+        // yesStep pairs (shifted by 1)
+        std::fill(yesStepVec.begin(), yesStepVec.end(), NEG_INF);
         if (!pairs.yesStep[token0].empty()) {
           for (const auto& pr : pairs.yesStep[token0]) {
             const std::vector<double>& A = LogPVec(drawn,   pr.a);
@@ -1183,40 +1227,21 @@ class SolverT {
             double logBb = fpl_u ? (*fpl_u)[pr.b] : LogB(pr.b, undrawn);
             if (!(logBa > NEG_INF) || !(logBb > NEG_INF)) continue;
             double pairScale = logBa + logBb;
-            auto C = logconv(A, d_lo, d_hi, B, u_lo, u_hi, c_size);
-            // Shift by 1: C_shifted[s] = C[s-1]
+            std::fill(conv_buf.begin(), conv_buf.end(), NEG_INF);
+            logconv(A, d_lo, d_hi, B, u_lo, u_hi, conv_buf.data(), c_size);
             for (int s = c_size - 1; s >= 1; --s) {
-              if (!(C[s - 1] > NEG_INF)) continue;
-              double v = C[s - 1] + pairScale;
-              if (!(yesStepVec[s] > NEG_INF)) {
-                yesStepVec[s] = v;
-              } else {
-                double mx = std::max(yesStepVec[s], v);
-                yesStepVec[s] = mx + std::log1p(std::exp(std::min(yesStepVec[s], v) - mx));
-              }
+              if (!(conv_buf[s - 1] > NEG_INF)) continue;
+              lse_update(yesStepVec[s], conv_buf[s - 1] + pairScale);
             }
           }
         }
 
-        // Combine noStep and yesStep, add rdCorr, merge into outerVec
+        // Combine noStep + yesStep, add rdCorr, merge into outerVec
         for (int s = 0; s < c_size; ++s) {
-          double combined;
-          bool ns = (noStepVec[s] > NEG_INF);
-          bool ys = (yesStepVec[s] > NEG_INF);
-          if (!ns && !ys) continue;
-          else if (!ys) combined = noStepVec[s];
-          else if (!ns) combined = yesStepVec[s];
-          else {
-            double mx = std::max(noStepVec[s], yesStepVec[s]);
-            combined = mx + std::log1p(std::exp(std::min(noStepVec[s], yesStepVec[s]) - mx));
-          }
-          double v = rdCorr + combined;
-          if (!(outerVec[s] > NEG_INF)) {
-            outerVec[s] = v;
-          } else {
-            double mx = std::max(outerVec[s], v);
-            outerVec[s] = mx + std::log1p(std::exp(std::min(outerVec[s], v) - mx));
-          }
+          double combined = noStepVec[s];
+          lse_update(combined, yesStepVec[s]);
+          if (!(combined > NEG_INF)) continue;
+          lse_update(outerVec[s], rdCorr + combined);
         }
       }
 
@@ -1269,13 +1294,7 @@ public:
       const std::vector<double>& pv = LogPVec(states, token0);
       for (int s = 0; s < c_size; ++s) {
         if (!(pv[s] > NEG_INF)) continue;
-        double v = lb + pv[s];
-        if (!(combined[s] > NEG_INF)) {
-          combined[s] = v;
-        } else {
-          double mx = std::max(combined[s], v);
-          combined[s] = mx + std::log1p(std::exp(std::min(combined[s], v) - mx));
-        }
+        lse_update(combined[s], lb + pv[s]);
       }
     }
 
@@ -1490,6 +1509,46 @@ public:
     return acc.result();
   }
 };
+// ============================================================================
+// Carter et al. (1990) closed form for 2-token (binary) characters.
+// Avoids the exponential recursive algorithm when nTokens == 2.
+// ============================================================================
+
+// Log of the double factorial: log(n!!) for odd n >= 1.
+// 0!! = 1!! = 1 → returns 0.0.
+static double logDoubleFact(int n) {
+  if (n <= 1) return 0.0;
+  double s = 0.0;
+  for (int i = 3; i <= n; i += 2) s += std::log((double)i);
+  return s;
+}
+
+// log(N(n, m)) helper from Carter et al. (1990).
+static double logN_carter(int n_val, int m_val) {
+  if (n_val < m_val) return NEG_INF;
+  int nMinusM = n_val - m_val;
+  return R::lgammafn(n_val + nMinusM)     // lfactorial(n + nMinusM - 1)
+       - R::lgammafn(nMinusM + 1.0)       // lfactorial(nMinusM)
+       - R::lgammafn(m_val)               // lfactorial(m - 1)
+       - nMinusM * std::log(2.0);
+}
+
+// log(count of unrooted trees with exactly m steps) for a binary character
+// with a tips in state 0 and b tips in state 1.  Requires a,b >= 1, m >= 1.
+static double logCarter1_cpp(int m, int a, int b) {
+  int n = a + b;
+  int twoN = 2 * n;
+  int twoM = 2 * m;
+  double denom_arg = twoN - twoM - m;
+  if (denom_arg <= 0) return NEG_INF;
+  return std::log(denom_arg)
+       + R::lgammafn(m)                   // lfactorial(m - 1)
+       + logDoubleFact(twoN - 5)
+       + logN_carter(a, m)
+       + logN_carter(b, m)
+       - logDoubleFact(twoN - twoM - 1);
+}
+
 //' @rdname Carter1
 //' @examples
 //' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
@@ -1578,6 +1637,25 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
   if (valid_steps.empty()) return out;
 
   std::vector<double> results(valid_steps.size());
+
+  // 2-token shortcut: use Carter et al. (1990) O(1) closed form when only
+  // pure states are observed (no ambiguous "{0,1}" tips).
+  if (nTokens == 2 && leavesVec[2] == 0 &&
+      leavesVec[0] > 0 && leavesVec[1] > 0) {
+    int a = leavesVec[0];
+    int b = leavesVec[1];
+    double lnTotal = logDoubleFact(2 * (a + b) - 5); // LnUnrooted(n)
+    for (int i = 0; i < (int)valid_steps.size(); ++i) {
+      int m = valid_steps[i];
+      // Both states present ⇒ minimum steps = 1; Carter formula needs m >= 1.
+      results[i] = (m < 1) ? NEG_INF
+                            : logCarter1_cpp(m, a, b) - lnTotal;
+    }
+    for (int i = 0; i < (int)valid_idx.size(); ++i) {
+      out[valid_idx[i]] = results[i];
+    }
+    return out;
+  }
 
   // DISPATCH based on nTokens — call runAll() once for all step counts
   if (nTokens == 2) {
