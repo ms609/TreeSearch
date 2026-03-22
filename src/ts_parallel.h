@@ -39,6 +39,12 @@ public:
     return pool_.add(tree, score);
   }
 
+  bool add_collapsed(const TreeState& tree, double score,
+                     const std::vector<uint8_t>& collapsed) {
+    std::lock_guard<std::mutex> lock(mu_);
+    return pool_.add_collapsed(tree, score, collapsed);
+  }
+
   PoolEntry best() const {
     std::lock_guard<std::mutex> lock(mu_);
     return pool_.best();
