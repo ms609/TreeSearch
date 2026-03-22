@@ -239,6 +239,29 @@ longer than equivalent Brazeau. This is documented in AGENTS.md as a known futur
 optimization (C++-level inter-replicate parallelism for hierarchical resampling).
 No new task filed — already on the roadmap.
 
+### Preset tuning benchmark: 2026-03-22 by Agent A
+
+Compared updated presets (wagnerStarts=3, sprFirst=TRUE, adaptiveLevel=TRUE
+for default; wagnerStarts=3, sprFirst=TRUE for thorough) against old presets
+(wagnerStarts=1, sprFirst=FALSE, adaptiveLevel=FALSE). 7-run medians via
+`MaximizeParsimony()`, strategy=auto, 10 reps, 1 thread.
+
+| Dataset | Tips | Preset | Old time (s) | New time (s) | Δ time | Old score | New score |
+|---------|------|--------|-------------|-------------|--------|-----------|-----------|
+| Vinther2008 | 23 | sprint | 0.76 | 0.65 | –14% (noise) | 79 | 79 |
+| Agnarsson2004 | 62 | default | 3.59 | 2.41 | **–33%** | 778 | 778 |
+| Zhu2013 | 75 | thorough | 23.65 | 24.83 | +5% (noise) | 647 | 648 |
+| Dikow2009 | 88 | thorough | 49.19 | 39.24 | **–20%** | 1611 | 1612 |
+
+**Findings:**
+- `adaptiveLevel` in `default` preset: consensus-stability triggers early exit
+  on easy landscapes (Agnarsson2004), saving 33%. No score regression.
+- `sprFirst + wagnerStarts=3` in `thorough`: 20% faster on Dikow2009 (better
+  starting tree reduces initial TBR descent). Neutral on Zhu2013.
+- **Do not enable `adaptiveLevel` in `thorough`**: with 20 ratchet + 12 drift
+  base, 1.5× scaling creates 30 ratchet + 18 drift per hard replicate,
+  causing 3–4× slowdowns for only 2–3 step improvement (benchmarked separately).
+
 ## What to Profile
 
 Status key: ✅ resolved, ⚠ partially explored, ❌ not yet investigated
