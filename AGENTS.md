@@ -1,7 +1,3 @@
-# NOTES FROM THIS REPO
-Your last conversation was seeking to identify a test that took too long and hence froze the agent's progress, necessitating a refresh of the session.  This KEEPS happening - it's annoying.  What's particularly annoying is that you don'#t seem to keep a record of what you've tried, so each time we start a new conversation from square 1.
-
-
 # TreeSearch Multi-Agent Development Notes
 
 ## Build isolation — tarball workflow (mandatory)
