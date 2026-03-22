@@ -63,6 +63,38 @@ ConstraintData build_constraint(
 }
 
 // =========================================================================
+// Build constraint from pre-canonicalized split bitsets
+// =========================================================================
+
+ConstraintData build_constraint_from_bitsets(
+    const uint64_t* split_bits, int n_splits,
+    int words_per_split, int n_tips) {
+  ConstraintData cd;
+  if (n_splits == 0) return cd;
+
+  cd.active = true;
+  cd.n_splits = n_splits;
+  cd.n_words = words_per_split;
+
+  // Copy split data
+  size_t total = static_cast<size_t>(n_splits) * words_per_split;
+  cd.split_tips.assign(split_bits, split_bits + total);
+  cd.constraint_node.assign(n_splits, -1);
+
+  int n_node = 2 * n_tips - 1;
+  cd.dfs_entry.assign(n_node, 0);
+  cd.dfs_exit.assign(n_node, 0);
+
+  cd.clip_zones.resize(n_splits, ClipZone::UNCONSTRAINED);
+  cd.clip_tip_mask.resize(words_per_split, 0ULL);
+
+  // No posthoc fallback — sector/fuse won't enforce these constraints
+  cd.has_posthoc = false;
+
+  return cd;
+}
+
+// =========================================================================
 // Post-hoc fallback: build a DataSet from constraint phyDat
 // =========================================================================
 

@@ -1,5 +1,6 @@
 #include "ts_tbr.h"
 #include "ts_fitch.h"
+#include "ts_collapsed.h"
 #include "ts_rng.h"
 #include "ts_tabu.h"
 #include "ts_splits.h"
@@ -528,6 +529,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     clip_candidates.push_back(node);
   }
 
+  // Collapsed flags: edges that provably cannot yield an improvement
+  // (clip skipping + regraft merging).  Disabled during MPT enumeration
+  // (collect_pool) where equal-score topologies are collected.
+  std::vector<uint8_t> collapsed;
+  if (!collect_pool) {
+    compute_collapsed_flags(tree, ds, collapsed);
+  }
+
   std::vector<std::pair<int,int>> main_edges;
   std::vector<std::pair<int,int>> sub_edges;
 
@@ -606,44 +615,12 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       int clip_size = subtree_sizes[clip_node];
       if (clip_size > tree.n_tip / 2) continue;
 
-      // Optimization #7: skip clips where removing the subtree cannot
-      // change the tree score (EW only, accept_equal = false).
-      //
-      // Two conditions must hold:
-      //   (a) local_cost[nx] = 0 for all blocks — clip and sibling are
-      //       state-compatible, so nx contributes 0 to the score.
-      //   (b) prelim[sibling] == prelim[nx] — the parent's state-set is
-      //       identical to the sibling's, so replacing nx with sibling
-      //       doesn't change anything on the path to the root (delta = 0).
-      //
-      // Together: divided_length = best_score + 0 - 0 = best_score.
-      // Any regraft adds ≥ 0 steps, so no improvement is possible.
-      //
-      // Valid only for standard EW Fitch without inapplicable characters.
-      if (!use_iw && !has_na && !params.accept_equal
-          && ds.scoring_mode == ts::ScoringMode::EW) {
-        int nx = tree.parent[clip_node];
-        if (nx >= tree.n_tip) {
-          int nxi = nx - tree.n_tip;
-          int sib = (tree.left[nxi] == clip_node)
-                    ? tree.right[nxi] : tree.left[nxi];
-          // Check (a): nx cost is zero
-          bool nx_zero = true;
-          for (int b = 0; b < ds.n_blocks && nx_zero; ++b) {
-            if (tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b])
-              nx_zero = false;
-          }
-          // Check (b): sibling prelim == parent prelim
-          if (nx_zero) {
-            size_t sib_base = static_cast<size_t>(sib) * tree.total_words;
-            size_t nx_base  = static_cast<size_t>(nx) * tree.total_words;
-            if (std::memcmp(&tree.prelim[sib_base], &tree.prelim[nx_base],
-                            tree.total_words * sizeof(uint64_t)) == 0) {
-              ++n_zero_skipped;
-              continue;
-            }
-          }
-        }
+      // Skip collapsed edges: zero-length edge where clipping provably
+      // cannot improve the score. Works for EW, IW, Profile, and NA.
+      // Disabled during MPT enumeration (collapsed is empty).
+      if (!collapsed.empty() && collapsed[clip_node]) {
+        ++n_zero_skipped;
+        continue;
       }
 
       // --- Phase 1: Clip + indirect evaluation ---
@@ -719,6 +696,17 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         if (above == nz && below == ns) continue;
         if (sector_mask && !(*sector_mask)[below]) continue;
         if (constrained && regraft_violates_constraint(below, *cd)) continue;
+
+        // Collapsed-region regraft merging: skip interior collapsed edges.
+        // If collapsed[below] == 1, the edge (above, below) is zero-length
+        // and lies inside a collapsed region.  The boundary edge entering the
+        // region (where collapsed[below] == 0 but the node is in the region)
+        // is always evaluated, and it dominates interior positions because
+        // its vroot includes states from outside the region.
+        if (!collapsed.empty() && collapsed[below]) {
+          continue;
+        }
+
         double candidate;
         if (has_na) {
           // NA-aware indirect with early termination
@@ -823,6 +811,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             if (sector_mask && !(*sector_mask)[below]) continue;
             if (constrained && regraft_violates_constraint(below, *cd))
               continue;
+            // Collapsed-region regraft merging (same as SPR loop above).
+            if (!collapsed.empty() && collapsed[below]) {
+              continue;
+            }
             double candidate;
             if (has_na) {
               if (use_iw) {
@@ -949,6 +941,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       }
 
       if (keep_going) {
+        // Recompute collapsed regions after the accepted move (states are
+        // valid from full_rescore in the accept path above).
+        if (!collapsed.empty()) {
+          compute_collapsed_flags(tree, ds, collapsed);
+        }
         // Optimization #6: don't reshuffle after acceptance — the topology
         // changed near this clip, so re-trying the same ordering focuses
         // on the productive region.

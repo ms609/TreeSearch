@@ -34,6 +34,13 @@ struct SplitSet {
 // The tree is treated as unrooted (root edge splits are excluded).
 SplitSet compute_splits(const TreeState& tree);
 
+// Compute the set of non-trivial splits, skipping collapsed edges.
+// Edges where collapsed[node] == 1 are excluded.  Two binary trees that
+// differ only in zero-length resolutions produce the same collapsed split
+// set.  If collapsed is empty, falls back to compute_splits().
+SplitSet compute_collapsed_splits(const TreeState& tree,
+                                  const std::vector<uint8_t>& collapsed);
+
 // Order-independent hash of a SplitSet.
 // Two trees with identical split sets will produce the same hash regardless
 // of split ordering.

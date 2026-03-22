@@ -109,6 +109,14 @@ void classify_clip_constraints(const TreeState& tree, int clip_node,
 bool regraft_violates_constraint(int below,
                                  const ConstraintData& cd);
 
+// Build ConstraintData directly from pre-canonicalized split bitsets.
+// `split_bits` is contiguous: n_splits * words_per_split uint64_t values.
+// Splits must already be canonicalized (bit 0 clear).
+// No posthoc DataSet is built (has_posthoc = false).
+ConstraintData build_constraint_from_bitsets(
+    const uint64_t* split_bits, int n_splits,
+    int words_per_split, int n_tips);
+
 // --- Post-hoc check (for sector/fuse) ---
 
 // Full Fitch check: score the tree against the constraint DataSet.

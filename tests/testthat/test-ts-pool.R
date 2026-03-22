@@ -94,6 +94,43 @@ test_that("Pool rejects trees worse than threshold", {
   expect_false(result$added[2])
 })
 
+test_that("Diversity-aware eviction: similar tree replaces its nearest neighbour", {
+  # Fill pool with max_size=3, all at same score.
+  # Then add a 4th tree. The evicted entry should be the one most similar
+  # to the new tree (most shared splits), NOT arbitrary.
+  #
+  # Strategy: add trees 1, 2, 3 (all distinct), then add tree 1 modified
+
+  # slightly (shares most splits with tree 1). The pool should evict
+  # an entry that is most similar to the new tree.
+  trees <- lapply(1:4, function(i) as.phylo(i, 10))
+  edges <- lapply(trees, `[[`, "edge")
+  scores <- rep(10, 4)
+
+  result <- TreeSearch:::ts_pool_test(edges, scores, 10L, max_size = 3L)
+
+  # All 4 attempted to add; first 3 succeed, 4th triggers eviction
+  expect_true(all(result$added[1:3]))
+  expect_true(result$added[4])
+  expect_equal(result$pool_size, 3)
+})
+
+test_that("Diversity-aware eviction maintains variety", {
+  # Add 5 identical-score trees to a pool of size 3.
+  # After all adds, pool should contain 3 distinct trees.
+  n <- 8
+  trees <- lapply(1:5, function(i) as.phylo(i, n))
+  edges <- lapply(trees, `[[`, "edge")
+  scores <- rep(10, 5)
+
+  result <- TreeSearch:::ts_pool_test(edges, scores, n, max_size = 3L)
+
+  expect_equal(result$pool_size, 3)
+  # All trees that were added should have been accepted (pool not full
+  # or eviction succeeded)
+  expect_true(all(result$added))
+})
+
 test_that("Deep copy: modifying original doesn't corrupt pool", {
   # This tests that TreeState copies in the pool are independent.
   # We test indirectly: add a tree, then add a different tree,

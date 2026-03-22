@@ -111,6 +111,16 @@ struct DrivenParams {
   // The base values are the initially configured cycles; adaptation
   // applies a multiplier each replicate.
   bool adaptive_level = false;
+
+  // Cross-replicate consensus constraint tightening.
+  // When true, after a minimum number of replicates, extract the strict
+  // consensus splits from the pool and enforce them as topological
+  // constraints for subsequent replicates. This focuses search on
+  // uncertain parts of the tree. Constraints are cleared whenever the
+  // best score improves. Only active when no user-supplied constraint
+  // is present.
+  bool consensus_constrain = false;
+  int consensus_constrain_min_reps = 5;  // minimum replicates before engaging
 };
 
 // Cumulative per-phase wall-clock timing (milliseconds).

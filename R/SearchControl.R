@@ -54,6 +54,13 @@
 #'   based on the observed hit rate?  When `TRUE`, easy landscapes
 #'   (high hit rate) trigger reduced effort per replicate, while hard
 #'   landscapes trigger increased effort.  Default `FALSE`.
+#' @param consensusConstrain Logical; lock the strict consensus of pool
+#'   trees as topological constraints for subsequent replicates?  When
+#'   `TRUE`, after enough replicates (≥5), splits present in ALL
+#'   best-score pool trees are enforced as constraints, focusing search on
+#'   uncertain regions.  Constraints are cleared whenever a new best score
+#'   is found.  Only active when no user-supplied `constraint` is
+#'   present.  Default `FALSE`.
 #'
 #' @return A named list of class `"SearchControl"`.
 #'
@@ -100,7 +107,8 @@ SearchControl <- function(
     poolSuboptimal = 0,
     # Stopping criteria
     consensusStableReps = 0L,
-    adaptiveLevel = FALSE
+    adaptiveLevel = FALSE,
+    consensusConstrain = FALSE
 ) {
   structure(
     list(
@@ -128,7 +136,8 @@ SearchControl <- function(
       poolMaxSize = as.integer(poolMaxSize),
       poolSuboptimal = as.double(poolSuboptimal),
       consensusStableReps = as.integer(consensusStableReps),
-      adaptiveLevel = as.logical(adaptiveLevel)
+      adaptiveLevel = as.logical(adaptiveLevel),
+      consensusConstrain = as.logical(consensusConstrain)
     ),
     class = "SearchControl"
   )
@@ -146,7 +155,8 @@ print.SearchControl <- function(x, ...) {
                      "sectorMinSize", "sectorMaxSize"),
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual",
                      "poolMaxSize", "poolSuboptimal"),
-    "Stopping" = c("consensusStableReps", "adaptiveLevel")
+    "Stopping" = c("consensusStableReps", "adaptiveLevel",
+                    "consensusConstrain")
   )
   cat("SearchControl object\n")
   for (gname in names(groups)) {
