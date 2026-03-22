@@ -47,14 +47,15 @@ test_that("4-state StepInformation produces correct structure", {
 })
 
 test_that("infeasible multi-state falls back to binary with warning", {
-  # Thresholds (vectorized solver): k=3/n<=25, k=4/n<=18, k=5/n<=12.
-  # Use n values clearly above each threshold.
+  # Feasibility uses partition-aware split_count (sc), not just n.
+  # Thresholds: k=3 sc>136, k=4 sc>100, k=5 sc>100.
+  # Use balanced partitions whose sc clearly exceeds each threshold.
 
-  # k=3 with 35 tips (> 25 threshold): should fall back
-  char3 <- rep(c("a", "b", "c"), c(13, 12, 10))  # n = 35
+  # k=3 balanced n=38 (13,13,12): sc=140 > 136 threshold
+  char3 <- rep(c("a", "b", "c"), c(13, 13, 12))  # n = 38
   expect_warning(info3 <- StepInformation(char3), "reducing to 2")
   expect_true(length(info3) >= 1)
-  # Fallback: top-2 (13+12=25 tips), min steps = 1
+  # Fallback: top-2 (13+13=26 tips), min steps = 1
   expect_equal(as.integer(names(info3)[1L]), 1L)
   expect_true(all(info3 >= 0))
   
@@ -92,9 +93,9 @@ test_that("approx='mc' matches exact within 1 bit for feasible character", {
 })
 
 test_that("approx='mc' returns multi-state step range for infeasible char", {
-  # k=3 with 35 tips: infeasible for exact (> threshold 25);
+  # k=3 balanced n=38 (13,13,12): sc=140 > 136 threshold, infeasible for exact.
   # MC should return IC starting at step 2 (k-1), not step 1 (binary)
-  char <- rep(c("0", "1", "2"), c(13, 12, 10))
+  char <- rep(c("0", "1", "2"), c(13, 13, 12))
   
   set.seed(7731)
   info_mc <- StepInformation(char, approx = "mc", n_mc = 2000L)
@@ -113,7 +114,7 @@ test_that("PrepareDataProfile with approx='mc' keeps multi-state patterns", {
   n <- 20L
   nchar <- 5L
   mat <- matrix(
-    c(rep(0:2, c(8L, 7L, 5L)),           # char 1: 3-state, n=20 (infeasible exact)
+    c(rep(0:2, c(8L, 7L, 5L)),           # char 1: 3-state, n=20 (feasible; sc=42)
       sample(0:1, n * (nchar - 1L), replace = TRUE)),
     nrow = n,
     dimnames = list(paste0("t", seq_len(n)), paste0("c", seq_len(nchar)))
@@ -123,7 +124,6 @@ test_that("PrepareDataProfile with approx='mc' keeps multi-state patterns", {
   info_auto <- suppressWarnings(PrepareDataProfile(dat, approx = "auto"))
   info_mc   <- PrepareDataProfile(dat, approx = "mc", n_mc = 1000L)
   
-  # MC version has more step rows (multi-state range, not binary)
   auto_steps <- nrow(attr(info_auto, "info.amounts"))
   mc_steps   <- nrow(attr(info_mc,   "info.amounts"))
   expect_true(mc_steps >= auto_steps,
@@ -200,7 +200,8 @@ test_that("multi-state info is always >= 0", {
   )
   
   for (i in seq_along(test_chars)) {
-    info <- StepInformation(test_chars[[i]])
+    # Some chars exceed feasibility thresholds and fall back with a warning
+    info <- suppressWarnings(StepInformation(test_chars[[i]]))
     expect_true(all(info >= 0), label = paste("test char", i))
     expect_true(all(is.finite(info)), label = paste("finite char", i))
   }
