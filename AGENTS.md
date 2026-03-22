@@ -363,9 +363,19 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 
 | Preset | Condition | Key settings |
 |--------|-----------|-------------|
-| sprint | ≤30 tips | 3 ratchet, 0 drift, XSS only |
-| default | 31–64 tips; or ≥65 tips with <100 char patterns | 5 ratchet, 2 drift, XSS+RSS |
-| thorough | ≥65 tips with ≥100 char patterns | 20 ratchet (adaptive), 12 drift, XSS+RSS+CSS |
+| sprint | ≤30 tips | 3 ratchet, 0 drift, XSS only, consensus-stop 3 |
+| default | 31–64 tips; or ≥65 tips with <100 char patterns | 5 ratchet, 2 drift, XSS+RSS, consensus-stop 3, Wagner×3, SPR-first, adaptive level |
+| thorough | ≥65 tips with ≥100 char patterns | 20 ratchet (adaptive), 12 drift, XSS+RSS+CSS, consensus-stop 3, Wagner×3, SPR-first |
+
+All presets set `consensusStableReps = 3`: search stops early if the strict
+consensus of best-score pool trees is unchanged for 3 consecutive replicates.
+
+`default` and `thorough` presets set `sprFirst = TRUE` (SPR warmup before
+TBR) and `wagnerStarts = 3` (pick best of 3 random Wagner trees). `default`
+also enables `adaptiveLevel = TRUE` (scale ratchet/drift by hit rate);
+`thorough` omits it because high base cycle counts (20 ratchet, 12 drift)
+already cover hard landscapes, and 1.5× scaling on top causes excessive
+per-replicate time without commensurate score improvement.
 
 Signal-density gate: datasets with few character patterns (<100) have flat
 parsimony landscapes where intensive search adds no benefit.
@@ -377,6 +387,52 @@ XSS and CSS use **adaptive early-exit**: after each round of sector searches
 rounds are skipped. This avoids wasting ~7% of replicate time on datasets
 where sectorial search is unproductive (e.g. Dikow2009). On productive
 datasets (e.g. Zhu2013), the early exit never fires.
+
+### Conflict-guided RSS
+
+RSS uses **conflict-guided sector selection**: before each replicate's RSS
+phase, `driven_search()` computes a `SplitFrequencyTable` from the pool's
+best-score trees. Within `rss_search()`, each internal node's "conflict
+score" is `1 − (fraction of pool trees containing that split)`.
+Max-descendant conflict is propagated upward, and eligible sector roots
+are sampled via `std::discrete_distribution` with weight `1 + 3 × conflict`.
+Falls back to uniform selection when the pool has <2 best-score trees or
+when conflict variation is negligible.
+
+### Consensus-stability stopping
+
+After each replicate, if `consensus_stable_reps > 0` (default 3 in all
+presets), the pool's strict consensus hash is compared to the previous
+replicate's. If unchanged for `consensus_stable_reps` consecutive
+replicates, the search terminates early. `compute_consensus_hash()` uses
+XOR of per-split FNV-1a hashes for O(pool × splits) cost.
+
+### Adaptive search level
+
+When `adaptive_level = true`, ratchet and drift cycle counts are scaled
+each replicate based on the cumulative hit rate:
+- hit_rate > 0.7 → 0.5× (easy landscape)
+- hit_rate > 0.4 → 0.75×
+- hit_rate < 0.15 → 1.5× (hard landscape)
+- else → 1.0×
+
+### TBR zero-length clip skipping (collapsed flags)
+
+`compute_collapsed_flags()` (`ts_collapsed.h/.cpp`) identifies edges where
+clipping provably cannot improve score. Checks 5 conditions: (1) zero
+standard-block cost at parent, (2) zero NA-block cost at parent, (3) prelim
+preservation (`prelim[sibling] == prelim[parent]`), (4) down2 preservation
+(NA), (5) subtree_actives preservation (NA). Works for EW, IW, Profile,
+and NA-aware scoring. Integrated into TBR, SPR, and drift search.
+Disabled during MPT enumeration (equal-score topologies may exist).
+Recomputed after every accepted move.
+
+**Benchmark results** (2026-03-22, 4 standard datasets, 3 seeds each):
+Skip rate = 0% on all datasets (Vinther2008 23t, Agnarsson2004 62t,
+Zhu2013 75t, Dikow2009 88t). Near-optimal trees in these morphological
+datasets have negligible zero-length edges. Overhead from flag computation
+is negligible. Score equivalence confirmed (enabled vs disabled produce
+identical best scores). Benefit expected on sparse/synthetic data.
 
 ### C++ module map
 
@@ -394,15 +450,16 @@ datasets (e.g. Zhu2013), the early exit never fires.
 | Ratchet | `ts_ratchet.h/.cpp` | Perturbation (zero/upweight/mixed, adaptive) |
 | Drift | `ts_drift.h/.cpp` | Accept suboptimal moves within AFD/RFD limits |
 | Wagner | `ts_wagner.h/.cpp` | Greedy addition tree (incremental scoring, NA-aware) |
-| Sectorial | `ts_sector.h/.cpp` | RSS, XSS, CSS |
+| Sectorial | `ts_sector.h/.cpp` | RSS (conflict-guided), XSS, CSS; from-above HTU |
 | Fuse | `ts_fuse.h/.cpp` | Tree fusing (in-place exchange) |
-| Pool | `ts_pool.h/.cpp` | Dedup via split hashing, score-based eviction |
-| Splits | `ts_splits.h/.cpp` | Bipartition computation and comparison |
+| Pool | `ts_pool.h/.cpp` | Dedup, eviction, consensus hash, split frequency table |
+| Splits | `ts_splits.h/.cpp` | Bipartition computation, comparison, `hash_single_split()` |
 | Driven | `ts_driven.h/.cpp` | Multi-replicate orchestrator |
 | Resample | `ts_resample.h/.cpp` | Jackknife, bootstrap, successive approximations |
 | Parallel | `ts_parallel.h/.cpp` | `std::thread` inter-replicate parallelism |
 | RNG | `ts_rng.h/.cpp` | Thread-safe RNG (`thread_local` dispatch) |
 | Simplify | `ts_simplify.h/.cpp` | Character compression and uninformativeness checks |
+| Collapsed | `ts_collapsed.h/.cpp` | Zero-length edge detection for clip skipping |
 | Rcpp bridge | `ts_rcpp.cpp` | All Rcpp-exported functions |
 
 ### Scoring modes
@@ -543,7 +600,7 @@ Integration tests: `test-app-smoke.R` (3), `test-Distribution.R` (13),
 
 - **Version**: 2.0.0 (major bump for new `MaximizeParsimony()` API)
 - **R CMD check**: 0 ERRORs, 0 WARNINGs, 1 NOTE (R 4.5.2 internal bug)
-- **Test suite**: ~9200 R-level + 1510 ts-* + 128 ParsSim + 37 MaddisonSlatkin + 49 recode-hierarchy pass
+- **Test suite**: ~9200 R-level + 1859 ts-* + 128 ParsSim + 37 MaddisonSlatkin + 49 recode-hierarchy pass
 
 ## Key design decisions (reference)
 
@@ -566,6 +623,38 @@ Integration tests: `test-app-smoke.R` (3), `test-Distribution.R` (13),
 
 6. **All-ambiguous phyDat guard**: `TreeLength()` and `MaximizeParsimony()`
    check for `levels = NULL` / 0-column contrast matrix before calling C++.
+
+7. **From-above HTU for sectorial search** (`ts_sector.cpp`):
+   `compute_from_above_for_sector()` computes `from_above[sector_root]` —
+   the Fitch state-set the rest of the tree sends *down* to the sector
+   boundary, excluding the sector's own contribution. Used instead of
+   `final_[parent]` in `build_reduced_dataset()`. O(depth × total_words).
+
+8. **Split frequency table** (`ts_pool.h/.cpp`): `SplitFrequencyTable` maps
+   per-split FNV-1a hash → occurrence count across best-score pool trees.
+   Used by conflict-guided RSS to weight sector selection. The same FNV-1a
+   hash (`hash_single_split()` in `ts_splits.h`) is used by consensus
+   hashing and split frequency counting — must stay consistent.
+
+9. **Consensus-stability hash** (`ts_pool.cpp`): XOR of FNV-1a hashes of
+   splits present in ALL best-score trees. Updated after each replicate.
+   Hash collision false-matches are conservative (over-count stability).
+
+10. **Diversity-aware pool eviction** (`ts_pool.cpp`): When the pool is full
+    and a new tree ties the worst score, the entry most similar to the new
+    tree (most shared splits, counted via per-split FNV-1a hash set
+    membership) is evicted. This maintains topological diversity in the pool,
+    improving fusing effectiveness. Falls back to arbitrary worst entry when
+    the new tree is strictly better.
+
+11. **Cross-replicate consensus constraint tightening** (`ts_driven.cpp`):
+    When `consensus_constrain = true` and no user constraint is supplied,
+    after ≥5 replicates, unanimous pool splits are extracted and enforced
+    as topological constraints via `build_constraint_from_bitsets()`. The
+    TBR/SPR search then avoids breaking established consensus clades.
+    Constraints are cleared and rebuilt whenever the best score changes.
+    Sector/fuse operations do not enforce auto-constraints (no posthoc
+    DataSet is built).
 
 ## Alternative inapplicable-handling algorithms (in progress)
 
@@ -659,6 +748,23 @@ Integration complete: `ScoringMode::XFORM` in `score_tree()` dispatches
 Fitch(non-hierarchy) + Sankoff(recoded). `MaximizeParsimony()` accepts
 `inapplicable = "xform"`. End-to-end search verified.
 
+## Search optimization roadmap
+
+Plan: `.positai/plans/2026-03-21-search-optimizations.md`
+
+Ranked by priority:
+1. ~~Consensus-guided sector targeting~~ — **Done**: RSS weighted by
+   pool split conflict scores
+2. ~~Diverse pool maintenance~~ — **Done**: evict most-similar entry on ties
+3. ~~Cross-replicate constraint tightening~~ — **Done**: opt-in via
+   `consensusConstrain = TRUE`
+4. ~~Collapsed-tree clip skipping~~ — **Done**: zero-length edges skipped
+   in TBR, SPR, and drift. Benchmark shows 0% skip rate on standard
+   morphological datasets (Vinther2008, Agnarsson2004, Zhu2013, Dikow2009)
+   because near-optimal trees have few zero-length edges. Negligible
+   overhead. Benefit expected primarily on sparse/synthetic data.
+   Full polytomy search remains post-2.0.0.
+
 ## Benchmarks and profiling
 
 Benchmark scripts in `inst/benchmarks/`. Key files:
@@ -666,7 +772,17 @@ Benchmark scripts in `inst/benchmarks/`. Key files:
 - `bench_framework.R` — Dataset × strategy × replicate grid
 - `strategies.md` — Strategy space documentation
 
-Profiling baselines in `.positai/expertise/profiling.md`. Current phase
-distribution (d2_r5 defaults, EW): TBR 11–33%, sectorial 13–26%,
-ratchet 25–40%, drift 20–28%. Per-candidate indirect scoring is at
-memory-throughput limit (~23 ns at 75 tips).
+Profiling baselines in `.positai/expertise/profiling.md`. Phase distribution
+(default strategy, EW, 2026-03-21):
+
+| Phase | Zhu2013 (75t) | Dikow2009 (64t) | Vinther2008 (23t) |
+|-------|:---:|:---:|:---:|
+| Ratchet | 27% | 36% | 42% |
+| Drift | 21% | 21% | 22% |
+| TBR | 38% | 29% | 17% |
+| XSS | 8% | 9% | 12% |
+| RSS | 4% | 3% | — |
+| Final TBR | 2% | 2% | 6% |
+
+Per-candidate indirect scoring is at memory-throughput limit (~23 ns at
+75 tips).
