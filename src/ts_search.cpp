@@ -195,10 +195,10 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
     clip_candidates.push_back(node);
   }
 
-  // Collapsed regions: edges that provably cannot yield an improvement
-  // (clip skipping) + collapsed-edge regraft merging.
-  CollapsedRegions coll_info;
-  compute_collapsed_regions(tree, ds, coll_info);
+  // Collapsed flags: edges that provably cannot yield an improvement
+  // (clip skipping + regraft merging).
+  std::vector<uint8_t> collapsed;
+  compute_collapsed_flags(tree, ds, collapsed);
 
   std::vector<std::pair<int,int>> destinations;
 
@@ -232,7 +232,7 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
       if (tree.parent[clip_node] == tree.n_tip) continue;
 
       // Skip collapsed edges (zero-length, provably unimprovable).
-      if (!coll_info.collapsed.empty() && coll_info.collapsed[clip_node])
+      if (!collapsed.empty() && collapsed[clip_node])
         continue;
 
       // Smaller-subtree filtering: skip clips of the larger half
@@ -298,7 +298,7 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
         if (above == nz && below == ns) continue;
 
         // Collapsed-region regraft merging: skip interior collapsed edges.
-        if (!coll_info.collapsed.empty() && coll_info.collapsed[below])
+        if (!collapsed.empty() && collapsed[below])
           continue;
 
         double candidate_score;
@@ -374,8 +374,8 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
       tree.build_postorder();
 
       if (keep_going) {
-        // Recompute collapsed regions after the accepted move.
-        compute_collapsed_regions(tree, ds, coll_info);
+        // Recompute collapsed flags after the accepted move.
+        compute_collapsed_flags(tree, ds, collapsed);
         // Deferred reshuffling: don't reshuffle after acceptance
         need_shuffle = false;
         break;

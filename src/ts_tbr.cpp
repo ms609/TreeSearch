@@ -529,13 +529,12 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     clip_candidates.push_back(node);
   }
 
-  // Collapsed region information: edges that provably cannot yield an
-  // improvement (clip skipping) + connected components for regraft
-  // merging.  Disabled during MPT enumeration (collect_pool) where
-  // equal-score topologies are collected.
-  CollapsedRegions coll_info;
+  // Collapsed flags: edges that provably cannot yield an improvement
+  // (clip skipping + regraft merging).  Disabled during MPT enumeration
+  // (collect_pool) where equal-score topologies are collected.
+  std::vector<uint8_t> collapsed;
   if (!collect_pool) {
-    compute_collapsed_regions(tree, ds, coll_info);
+    compute_collapsed_flags(tree, ds, collapsed);
   }
 
   std::vector<std::pair<int,int>> main_edges;
@@ -618,8 +617,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
       // Skip collapsed edges: zero-length edge where clipping provably
       // cannot improve the score. Works for EW, IW, Profile, and NA.
-      // Disabled during MPT enumeration (coll_info.collapsed is empty).
-      if (!coll_info.collapsed.empty() && coll_info.collapsed[clip_node]) {
+      // Disabled during MPT enumeration (collapsed is empty).
+      if (!collapsed.empty() && collapsed[clip_node]) {
         ++n_zero_skipped;
         continue;
       }
@@ -704,7 +703,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // region (where collapsed[below] == 0 but the node is in the region)
         // is always evaluated, and it dominates interior positions because
         // its vroot includes states from outside the region.
-        if (!coll_info.collapsed.empty() && coll_info.collapsed[below]) {
+        if (!collapsed.empty() && collapsed[below]) {
           continue;
         }
 
@@ -813,7 +812,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             if (constrained && regraft_violates_constraint(below, *cd))
               continue;
             // Collapsed-region regraft merging (same as SPR loop above).
-            if (!coll_info.collapsed.empty() && coll_info.collapsed[below]) {
+            if (!collapsed.empty() && collapsed[below]) {
               continue;
             }
             double candidate;
@@ -944,8 +943,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       if (keep_going) {
         // Recompute collapsed regions after the accepted move (states are
         // valid from full_rescore in the accept path above).
-        if (!coll_info.collapsed.empty()) {
-          compute_collapsed_regions(tree, ds, coll_info);
+        if (!collapsed.empty()) {
+          compute_collapsed_flags(tree, ds, collapsed);
         }
         // Optimization #6: don't reshuffle after acceptance — the topology
         // changed near this clip, so re-trying the same ordering focuses
