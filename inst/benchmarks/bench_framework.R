@@ -38,10 +38,10 @@ get_strategy <- function(name = STRATEGY_NAMES) {
     ),
     default = list(
       wagnerStarts = 3L, tbrMaxHits = 1L, tabuSize = 100L,
-      ratchetCycles = 10L, ratchetPerturbProb = 0.25,
+      ratchetCycles = 12L, ratchetPerturbProb = 0.25,
       ratchetPerturbMode = 0L, ratchetPerturbMaxMoves = 5L,
       ratchetAdaptive = FALSE,
-      driftCycles = 4L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+      driftCycles = 2L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
       xssRounds = 3L, xssPartitions = 4L, rssRounds = 1L,
       cssRounds = 0L, cssPartitions = 4L,
       sectorMinSize = 6L, sectorMaxSize = 50L,

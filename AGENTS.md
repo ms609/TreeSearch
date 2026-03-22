@@ -364,7 +364,7 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 | Preset | Condition | Key settings |
 |--------|-----------|-------------|
 | sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, consensus-stop 3 |
-| default | 31–64 tips; or ≥65 tips with <100 char patterns | 10 ratchet (25%, 5 moves), 4 drift (AFD 5, RFD 0.15), XSS+RSS, consensus-stop 3, Wagner×3, SPR-first, adaptive level |
+| default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 2 drift (AFD 5, RFD 0.15), XSS+RSS, consensus-stop 3, Wagner×3, SPR-first, adaptive level |
 | thorough | ≥65 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 12 drift (AFD 5, RFD 0.15), XSS+RSS+CSS, consensus-stop 3, Wagner×3, SPR-first |
 
 All presets set `consensusStableReps = 3`: search stops early if the strict

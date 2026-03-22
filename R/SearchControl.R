@@ -84,13 +84,13 @@ SearchControl <- function(
     tabuSize = 100L,
     wagnerStarts = 1L,
     # Ratchet
-    ratchetCycles = 10L,
+    ratchetCycles = 12L,
     ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 0L,
     ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = FALSE,
     # Drift
-    driftCycles = 4L,
+    driftCycles = 2L,
     driftAfdLimit = 5L,
     driftRfdLimit = 0.15,
     # Sectorial
