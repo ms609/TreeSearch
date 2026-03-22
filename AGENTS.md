@@ -1,3 +1,7 @@
+# NOTES FROM THIS REPO
+Your last conversation was seeking to identify a test that took too long and hence froze the agent's progress, necessitating a refresh of the session.  This KEEPS happening - it's annoying.  What's particularly annoying is that you don'#t seem to keep a record of what you've tried, so each time we start a new conversation from square 1.
+
+
 # TreeSearch Multi-Agent Development Notes
 
 ## Build isolation — tarball workflow (mandatory)
@@ -613,3 +617,13 @@ Profiling baselines in `.positai/expertise/profiling.md`. Current phase
 distribution (d2_r5 defaults, EW): TBR 11–33%, sectorial 13–26%,
 ratchet 25–40%, drift 20–28%. Per-candidate indirect scoring is at
 memory-throughput limit (~23 ns at 75 tips).
+
+## VTune driver scripts — dry-run first
+
+**Always test a VTune driver script with plain `Rscript` before launching
+VTune.** Software-sampling overhead can be 5–20×; if the bare script takes
+30 s, VTune may need 10 min. Target < 5 s bare run for a lite driver.
+
+MaddisonSlatkin is exponential in tip count — even n=20 with k=3 can take
+seconds per call. Use small n (≤ 15 for k=3, ≤ 12 for k=4, ≤ 9 for k=5)
+and few iterations for VTune drivers.
