@@ -363,9 +363,9 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 
 | Preset | Condition | Key settings |
 |--------|-----------|-------------|
-| sprint | ≤30 tips | 3 ratchet, 0 drift, XSS only, consensus-stop 3 |
-| default | 31–64 tips; or ≥65 tips with <100 char patterns | 5 ratchet, 2 drift, XSS+RSS, consensus-stop 3, Wagner×3, SPR-first, adaptive level |
-| thorough | ≥65 tips with ≥100 char patterns | 20 ratchet (adaptive), 12 drift, XSS+RSS+CSS, consensus-stop 3, Wagner×3, SPR-first |
+| sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, consensus-stop 3 |
+| default | 31–64 tips; or ≥65 tips with <100 char patterns | 10 ratchet (25%, 5 moves), 4 drift (AFD 5, RFD 0.15), XSS+RSS, consensus-stop 3, Wagner×3, SPR-first, adaptive level |
+| thorough | ≥65 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 12 drift (AFD 5, RFD 0.15), XSS+RSS+CSS, consensus-stop 3, Wagner×3, SPR-first |
 
 All presets set `consensusStableReps = 3`: search stops early if the strict
 consensus of best-score pool trees is unchanged for 3 consecutive replicates.
@@ -376,6 +376,18 @@ also enables `adaptiveLevel = TRUE` (scale ratchet/drift by hit rate);
 `thorough` omits it because high base cycle counts (20 ratchet, 12 drift)
 already cover hard landscapes, and 1.5× scaling on top causes excessive
 per-replicate time without commensurate score improvement.
+
+**Ratchet perturbation tuning (2026-03-22)**: Systematic profiling across
+all 14 benchmark datasets showed the previous 4% perturbation probability
+was far too gentle. With 253 characters (Zhu2013), 4% zeroes only ~10
+characters — insufficient to reshape the landscape. Increasing to 25%
+with fewer perturbed TBR moves (5 instead of auto=20) improves median
+scores by 3–7 steps on hard datasets while completing fewer but more
+productive replicates. 9/14 datasets improved, 4 unchanged, 1 marginal at
+10s budget (resolves at 20s). The key insight: the perturbed-phase TBR
+should be short (the landscape is warped, so extensive search on it is
+wasteful), but the perturbation itself should be aggressive enough to
+meaningfully displace the tree from its current basin of attraction.
 
 Signal-density gate: datasets with few character patterns (<100) have flat
 parsimony landscapes where intensive search adds no benefit.
@@ -788,6 +800,11 @@ Ranked by priority:
 6. ~~Strategy preset tuning~~ — **Done**: `default` preset now uses
    `wagnerStarts=3`, `sprFirst=TRUE`, `adaptiveLevel=TRUE`; `thorough`
    preset uses `sprFirst=TRUE`.
+7. ~~Ratchet perturbation tuning~~ — **Done**: perturbation probability
+   increased from 4% to 25%, perturbed TBR moves reduced from auto=20
+   to 5, ratchet cycles increased from 5 to 10 (default) and kept at
+   20 (thorough). Drift cycles increased from 2 to 4 with wider
+   acceptance (AFD 5, RFD 0.15). Validated on all 14 datasets.
 
 ## Benchmarks and profiling
 
@@ -797,16 +814,42 @@ Benchmark scripts in `inst/benchmarks/`. Key files:
 - `strategies.md` — Strategy space documentation
 
 Profiling baselines in `.positai/expertise/profiling.md`. Phase distribution
-(default strategy, EW, 2026-03-21):
+(default strategy, EW, 2026-03-22, post-ratchet tuning):
 
-| Phase | Zhu2013 (75t) | Dikow2009 (64t) | Vinther2008 (23t) |
+| Phase | Zhu2013 (75t) | Dikow2009 (88t) | Agnarsson2004 (62t) |
 |-------|:---:|:---:|:---:|
-| Ratchet | 27% | 36% | 42% |
-| Drift | 21% | 21% | 22% |
-| TBR | 38% | 29% | 17% |
-| XSS | 8% | 9% | 12% |
-| RSS | 4% | 3% | — |
-| Final TBR | 2% | 2% | 6% |
+| Ratchet | 27% | 39% | 35% |
+| Drift | 32% | 28% | 24% |
+| TBR | 31% | 21% | 19% |
+| XSS | 8% | 7% | 8% |
+| RSS | 2% | 3% | 9% |
+| Final TBR | 2% | 3% | 4% |
 
 Per-candidate indirect scoring is at memory-throughput limit (~23 ns at
 75 tips).
+
+### Ratchet tuning validation (2026-03-22)
+
+Full 14-dataset comparison, optimized vs original defaults (10s budget,
+3 seeds each). Median scores shown (lower is better):
+
+| Dataset | Tips | Original | Optimized | Delta |
+|---------|:---:|:---:|:---:|:---:|
+| Longrich2010 | 20 | 131 | 131 | 0 |
+| Vinther2008 | 23 | 79 | 79 | 0 |
+| Sansom2010 | 23 | 189 | 189 | 0 |
+| DeAssis2011 | 33 | 64 | 64 | 0 |
+| Aria2015 | 35 | 143 | 143 | 0 |
+| Wortley2006 | 37 | 494 | 491 | +3 |
+| Griswold1999 | 43 | 408 | 407 | +1 |
+| Schulze2007 | 52 | 165 | 164 | +1 |
+| Eklund2004 | 54 | 442 | 441 | +1 |
+| Agnarsson2004 | 62 | 778 | 778 | 0 |
+| Zanol2014 | 74 | 1338 | 1331 | +7 |
+| Zhu2013 | 75 | 649 | 650 | −1 |
+| Giles2015 | 78 | 720 | 716 | +4 |
+| Dikow2009 | 88 | 1614 | 1614 | 0 |
+
+Zhu2013 marginal regression at 10s resolves at 20s (median 649→644).
+At 20s with 5 seeds: Zhu2013 645/643, Giles2015 712/710, Dikow2009
+1611/1611 (all improvements).

@@ -84,9 +84,11 @@
     consensusStableReps = 3L
   ),
   default = SearchControl(
-    tbrMaxHits = 1L, ratchetCycles = 5L, ratchetPerturbProb = 0.04,
-    ratchetPerturbMode = 0L, ratchetAdaptive = FALSE,
-    driftCycles = 2L, xssRounds = 3L, xssPartitions = 4L,
+    tbrMaxHits = 1L, ratchetCycles = 10L, ratchetPerturbProb = 0.25,
+    ratchetPerturbMode = 0L, ratchetPerturbMaxMoves = 5L,
+    ratchetAdaptive = FALSE,
+    driftCycles = 4L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+    xssRounds = 3L, xssPartitions = 4L,
     rssRounds = 1L, cssRounds = 0L, cssPartitions = 4L,
     sectorMinSize = 6L, sectorMaxSize = 50L,
     fuseInterval = 3L, fuseAcceptEqual = FALSE,
@@ -95,8 +97,9 @@
     consensusStableReps = 3L
   ),
   thorough = SearchControl(
-    tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.04,
-    ratchetPerturbMode = 2L, ratchetAdaptive = TRUE,
+    tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
+    ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
+    ratchetAdaptive = TRUE,
     driftCycles = 12L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
     xssRounds = 5L, xssPartitions = 6L,
     rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,

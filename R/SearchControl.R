@@ -68,8 +68,9 @@
 #' # Use defaults
 #' SearchControl()
 #'
-#' # Aggressive ratchet, no drift
-#' SearchControl(ratchetCycles = 20L, driftCycles = 0L)
+#' # Light ratchet, no drift
+#' SearchControl(ratchetCycles = 5L, ratchetPerturbProb = 0.04,
+#'               driftCycles = 0L)
 #'
 #' @family tree search functions
 #' @seealso [`MaximizeParsimony()`]
@@ -83,15 +84,15 @@ SearchControl <- function(
     tabuSize = 100L,
     wagnerStarts = 1L,
     # Ratchet
-    ratchetCycles = 5L,
-    ratchetPerturbProb = 0.04,
+    ratchetCycles = 10L,
+    ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 0L,
-    ratchetPerturbMaxMoves = 0L,
+    ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = FALSE,
     # Drift
-    driftCycles = 2L,
-    driftAfdLimit = 3L,
-    driftRfdLimit = 0.1,
+    driftCycles = 4L,
+    driftAfdLimit = 5L,
+    driftRfdLimit = 0.15,
     # Sectorial
     xssRounds = 3L,
     xssPartitions = 4L,
