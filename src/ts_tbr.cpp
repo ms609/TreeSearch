@@ -677,6 +677,19 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       }
 
       collect_main_edges(tree, main_edges);
+      // Partial shuffle: seed the first few evaluation positions with edges
+      // from across the tree so the bounded indirect scoring gets a tight
+      // cutoff early.  Full O(n) shuffle has non-trivial overhead relative
+      // to the per-candidate scoring cost; partial Fisher-Yates for a small
+      // prefix keeps overhead negligible.
+      {
+        int ne = static_cast<int>(main_edges.size());
+        int k = std::min(20, ne);
+        for (int i = 0; i < k; ++i) {
+          std::uniform_int_distribution<int> dist(i, ne - 1);
+          std::swap(main_edges[i], main_edges[dist(rng)]);
+        }
+      }
 
       // Constraint: classify this clip against each constraint split
       if (constrained) {

@@ -290,6 +290,15 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
 
       // --- Rearrangement phase: screen with bounded indirect calc ---
       collect_destination_edges(tree, destinations);
+      // Partial shuffle: seed bound with diverse sample
+      {
+        int ne = static_cast<int>(destinations.size());
+        int k = std::min(20, ne);
+        for (int i = 0; i < k; ++i) {
+          std::uniform_int_distribution<int> dist(i, ne - 1);
+          std::swap(destinations[i], destinations[dist(rng)]);
+        }
+      }
 
       double best_candidate = HUGE_VAL;
       int best_above = -1, best_below = -1;

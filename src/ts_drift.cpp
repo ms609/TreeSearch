@@ -467,6 +467,15 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     }
 
     drift_collect_main_edges(tree, main_edges);
+    // Partial shuffle: seed bound with diverse sample
+    {
+      int ne = static_cast<int>(main_edges.size());
+      int k = std::min(20, ne);
+      for (int i = 0; i < k; ++i) {
+        std::uniform_int_distribution<int> dist(i, ne - 1);
+        std::swap(main_edges[i], main_edges[dist(rng)]);
+      }
+    }
 
     // Constraint: classify this clip
     if (constrained) classify_clip_constraints(tree, clip_node, *cd);
