@@ -1,6 +1,4 @@
-# Tests for multi-state StepInformation (T-102)
-context("Multi-state StepInformation")
-
+# Tests for multi-state StepInformation
 test_that("2-state backward compatibility with LogCarter1", {
   for (a in 2:6) for (b in 2:a) {
     char <- rep(c("0", "1"), c(a, b))
@@ -196,11 +194,15 @@ test_that("multi-state info is always >= 0", {
     rep(c("0", "1", "2"), c(10, 5, 3)),
     rep(c("0", "1", "2", "3"), c(5, 3, 2, 2)),
     rep(c("0", "1", "2", "3", "4"), c(4, 3, 3, 2, 2))
-  )
+  ) 
   
   for (i in seq_along(test_chars)) {
-    # Some chars exceed feasibility thresholds and fall back with a warning
-    info <- suppressWarnings(StepInformation(test_chars[[i]]))
+    if (i == 4) {
+    expect_warning(info <- StepInformation(test_chars[[4]]),
+                   "infeasible")
+    } else {
+      info <- StepInformation(test_chars[[i]])
+    } 
     expect_true(all(info >= 0), label = paste("test char", i))
     expect_true(all(is.finite(info)), label = paste("finite char", i))
   }

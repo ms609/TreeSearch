@@ -86,8 +86,8 @@
 #' dataset_taxon <- ParsSim(tree, nChar = c(20L), nExtraSteps = 10L,
 #'                          missing = list(taxon = c(t1 = 0.8, t2 = 0.5)))
 #'
-#' @references Goloboff, P.A. (2018).
-#'   \doi{10.1111/cla.12205}
+#' @references \insertCite{Goloboff2018}{TreeSearch}
+#' \insertAllCited{}
 #' @importFrom TreeTools MakeTreeBinary MatrixToPhyDat Postorder RootNode
 #'   RootTree
 #' @family tree scoring

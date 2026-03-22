@@ -15,6 +15,8 @@
 
 namespace ts {
 
+struct SplitFrequencyTable;  // forward declaration (defined in ts_pool.h)
+
 struct SectorParams {
   int min_sector_size = 6;       // minimum tips in a sector (RSS)
   int max_sector_size = 50;      // maximum tips in a sector (RSS)
@@ -24,6 +26,12 @@ struct SectorParams {
   int xss_rounds = 3;            // number of XSS rounds
   int internal_ratchet_cycles = 6;
   int internal_max_hits = 1;     // max_hits for internal TBR search
+
+  // Conflict-guided sector selection.
+  // When non-null, RSS uses weighted random selection that biases toward
+  // sectors containing splits absent from the pool consensus.
+  // Owned externally (by driven_search); never freed by sector code.
+  const SplitFrequencyTable* split_freq = nullptr;
 };
 
 struct SectorResult {

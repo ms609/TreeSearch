@@ -23,6 +23,17 @@ library("TreeSearch") # load now: inapplicable.datasets required within ui
   format(Sys.time(), "%Y-%m-%d %T")
 }
 
+local({
+  needed <- c("cluster", "future", "PlotTools", "promises",
+              "protoclust", "Rogue", "shinyjs")
+  miss <- needed[!vapply(needed, requireNamespace, logical(1L), quietly = TRUE)]
+  if (length(miss)) {
+    message("Installing packages required by EasyTrees(): ",
+            paste(miss, collapse = ", "))
+    utils::install.packages(miss)
+  }
+})
+
 suppressPackageStartupMessages({
   library("shiny", exclude = c("runExample"))
   library("shinyjs", exclude = c("runExample"))
@@ -303,7 +314,7 @@ FormatMissProb <- function(prob) {
   else "<0.01%"
 }
 
-SearchConfidenceText <- function(K, R) {
+SearchConfidenceText <- function(K, R, nSearches = 1L) {
   if (is.null(K) || is.null(R) || R <= 0L || K <= 0L) return(NULL)
   # Clamp hits to replicates (shouldn't exceed, but guard against stale data)
   K <- min(K, R)
@@ -312,9 +323,25 @@ SearchConfidenceText <- function(K, R) {
   # gave 0% when K = R; exp(-K) always > 0).  Matches the theoretical
   # worst-case formula shown in the config dialog.
   prob_miss <- exp(-K)
-  paste0(K, " of ", R, " runs hit best score. ",
+  # Label the tally as "total runs across N searches" when the user has
+  # clicked Continue, so it's clear this is not a per-search count.
+  runs_label <- if (!is.null(nSearches) && nSearches > 1L) {
+    paste0("total runs across ", nSearches, " searches")
+  } else {
+    "runs"
+  }
+  # When every run found the best score but the sample is small, the
+  # conservative bound always yields exp(-K).  Nudge the user to collect
+  # more hits so the estimate becomes informative.
+  suffix <- if (K == R && R <= 5L) {
+    paste0(" \u2014 increase \u2018Stop when N runs hit best\u2019 for a ",
+           "tighter estimate")
+  } else {
+    ""
+  }
+  paste0(K, " of ", R, " ", runs_label, " hit best score. ",
          "Probability that a better score exists: ",
-         FormatMissProb(prob_miss))
+         FormatMissProb(prob_miss), suffix)
 }
 
 EnC <- function(...) {

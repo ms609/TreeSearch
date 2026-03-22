@@ -4,10 +4,34 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ---
 
+## 2026-03-20
+
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| T-148 | Red-team: ParsSim log-space convolution (S-RED focus 8) | B | Fixed `.LogCumSumExp` NaN bug: `-Inf - (-Inf) = NaN` in IEEE 754 when both accumulator and new value are `-Inf`. Guard added; 7 new assertions pass. |
+| T-165 | Shiny: reset run stats on concavity/weighting change | C | Added stat-reset to `observeEvent(input$concavity)` and `observeEvent(input$implied.weights)` in `mod_search.R`. Trees kept; hits/reps/bestScore cleared. 2 new tests (50 total pass). |
+| T-163 | C++ cancel checks in MPT enumeration + final TBR polish | C | Root cause: a "continue" search fills the pool quickly, leading to MPT enumeration with no cancel checkpoint. Added `check_cancel()` between seeds in the MPT while-loop and `check_timeout()` after final TBR polish in `run_single_replicate`. 152 driven-search tests pass. |
+| T-166 | Shiny crash: `tipLabels()` subscript out-of-bounds on empty `r$trees` | A | `mod_data.R#107`: added `if (!length(r$trees)) return(character(0L))` guard. Fixes both `DatasetMatchesTrees` (#126) and `UpdateActiveTrees` (#203) stack traces. Resolves T-169 as downstream consequence. |
+| T-167 | Shiny: "cannot open file" warning spam in progress poll | A | `mod_search.R`: added `if (!file.exists(pf)) return()` after `invalidateLater(500)`. Observer now silently skips until C++ creates the file. |
+| T-168 | Shiny: `LEFT == RIGHT` recycling warning from `ape::read.nexus` | A | Upstream `ape` bug (bracket-index comparison). Suppressed with `suppressWarnings()` at both `read.nexus` call sites in `mod_data.R`. |
+| T-169 | Shiny: `updateSliderInput()` value outside `[min, max]` when trees → 0 | A | `mod_data.R#231`: guarded entire tree-range/count slider update block with `if (nTrees > 0L)`; controls hidden via `parentHide` anyway when no trees present. |
+| T-170 | Shiny: "no data loaded" in Configure modal; search terminates after second data load | A | Root cause was T-166 crash propagating through `DatasetMatchesTrees()` inside `tryCatch` error handler; fixed as consequence of T-166. |
+| T-171 | Shiny: `LengthAdded` matrix-recycling and unknown-scoring warnings | A | `mod_consensus.R`: `PolEscVal` reactive now guards with `setequal(tipLabels(), names(r$dataset))`; returns `NULL` when taxa sets differ (tree has superset taxa vs dataset). |
+| T-172 | Shiny: run counter accumulates across concavity changes | A | Root cause: Configure modal created `sliderInput(value=1L)` on each open, sending `input$concavity=1` to server and firing reset observer spuriously. Fixed by initialising all modal inputs from current `input$*` values (`mod_search.R`). |
+| T-173 | Shiny: stop-when-N probability always ~37% for any dataset when `targetHits=1` | A | `global.R`: `SearchConfidenceText()` now appends "— increase 'Stop when N runs hit best' for a tighter estimate" when K=R and R≤5, guiding user toward more informative settings. |
+| T-164 | Shiny UX: confusing run count when reducing max_runs during continued search | A | `global.R`: `SearchConfidenceText()` now accepts `nSearches`; says "total runs across N searches" when N > 1. `mod_search.R`: tooltip updated to explain per-search vs cumulative distinction; `helpText` added below maxReplicates slider in Configure modal. |
+| S-RED | Red-team focus 9: Wagner & addition trees | C | BUG FIXED: boundary-edge false positive in `wagner_edge_violates_constraint` (ts_wagner.cpp) and `regraft_violates_constraint` (ts_constraint.cpp). Both rejected the edge directly above the constraint clade for MUST_OUTSIDE elements (`is_ancestor_or_equal(cn,below)` true when `below==cn`). Fix: `&& below != cn` guard. Search quality improvement, no correctness impact. +2 Wagner tests (43 total). 152 driven-search + 18 constraint tests pass. |
+| T-175 | Shiny: search progress indicators vanish after 3-4 seconds (worker startup) | A | `mod_search.R`: both `searchTask` and `profilePrepTask` result observers used `validation = function(e) req(FALSE)` to handle "task running" state. In Shiny 1.8+, `ExtendedTask$result()` throws class `c("shiny.silent.error", "shiny.output.progress", ...)` — NOT "validation". The wrong handler name caused `error = function(e) NULL` to catch every "still running" signal, triggering premature cleanup (notification removed, `r$searchInProgress = FALSE`, `DisplayTreeScores()` called) ~3–4 s into each search (when the worker process starts and status flips to "running"). Fix: rename both `validation =` to `shiny.silent.error =`. |
+| T-176 | Shiny: misleading error + wrong dataset when data file uploaded to tree loader | A | `mod_data.R`: after all tree-load attempts fail, try `ReadTntAsPhyDat` then `ReadAsPhyDat` on the file. If either succeeds, set `r$dataset`, `r$chars`, `r$charNotes` directly and notify "No trees found — loaded N taxa and M characters as dataset"; `observeEvent(r$dataset)` clears incompatible trees. If neither succeeds, keep existing "Trees not in a recognized format" message. Fixes (1) misleading error wording and (2) search continuing on previously-loaded dataset. |
+| T-174 | Shiny: spurious "Inferring tip labels from dataset" + console warning spam on tree file load | A | `mod_data.R`: (1) `readLines(tmpFile)` in NA/NaN retry branch wrapped in `suppressWarnings` — suppresses benign EOF warning leaking to console. (2) `withCallingHandlers` inside `ReadTntTree` tryCatch muffles "incomplete final line" EOF warnings before they reach the outer `warning` handler (which is for genuine TNT tip-label warnings only). Also added `error = function(e) NULL` handlers to both inner tryCatches (was bare `NULL`). |
+
+---
+
 ## 2026-03-19
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-151 | Shiny: dataset observer clears bundled trees (blank plot / 0 trees) | B | `observeEvent(r$dataset,…)` unconditionally cleared `r$allTrees` after `UpdateData()` loaded trees from same .nex; fix: guard with `HaveData() && !DatasetMatchesTrees()`. All 31 bundled datasets affected. 2 new regression tests; 11 mod-data + 1681 ts-* pass. |
 | — | Fix inapplicable.Rmd vignette CSL URL (404) | A | Remote `raw.githubusercontent.com` CSL URL returned 404; changed to local `../inst/apa-old-doi-prefix.csl` (matching all other vignettes). Also un-claimed stale Agent C GUI issue in `issues.md`. |
 | T-142 | Shiny: Add TreeSearch logo to app header | A | Inline SVG (magnifier + 3-tip tree) added to `inst/Parsimony/ui.R` line 14; flex div wraps icon + h1. No external asset file needed. |
 | S-COORD | Coordination review round 8 | A | T-144 fixed → CRAN unblocked. ~9835 pass/0 fail. T-141/T-140/T-097 confirmed complete. Standing tasks P1. |
@@ -160,3 +184,23 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-003 | Phase 6C: Define strategy space | B | |
 | T-002 | Phase 6B: Curate benchmark dataset suite | B | |
 | T-001 | Phase 6A: Per-phase timing instrumentation | A | |
+
+## 2026-03-20
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| T-149 | Profile MaddisonSlatkin → VTune hotspot analysis | A | logB/logPVec cache overhead dominates (53% DLL); skill updated |
+| T-152 | LSEAccumulator long double→double + expl→exp | A | 26% avg speedup across k=3..5 boundary cases |
+| T-153 | std::isfinite→NEG_INF compare in MaddisonSlatkin.cpp | A | bundled with T-152 |
+| S-PROF | Threshold comment update + fpl_d/fpl_u batching in LogPVec | A | ~15% further speedup; k=3:27/k=4:19/k=5:13 new thresholds |
+
+| T-154 | OAFlatMap for logB_cache/logPVec_cache in SolverT | A | Probe-layer OA map eliminates node ptr-chase; deque backing for logPVec stable refs; fixes latent LogB() dangling-ref UB; bd883459. Speedup vs post-fpl-batch baseline: k=3 n=27 ~4.4×, k=4 n=19 ~3.5×, k=5 n=13 ~12×. No formal A/B build (Windows AV makes double-build ~60 min); derived from S-PROF sweep timings. |
+
+## 2026-03-22
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| — | Collapsed-region regraft merging + collapsed pool dedup | — | Goloboff (1996) approach: skip zero-length edges as clip candidates, skip interior collapsed regraft positions (boundary-only evaluation), diversity-aware pool eviction on ties, collapsed-topology pool dedup. 0% skip rate on standard morph datasets but improves pool diversity. 35b5ad99 |
+| — | Strip dead CollapsedRegions code from hot path | — | region_id/n_regions never read by consumers; all callers now use compute_collapsed_flags() directly. a16373a7 |
+| — | Collapsed dedup in parallel search path | — | ThreadSafePool::add_collapsed() + worker thread + fuse_round updated. 3648beb9 |
+| — | Cross-replicate consensus constraint tightening | — | Opt-in consensusConstrain=TRUE: after ≥5 reps, lock pool strict consensus as topological constraints. Clears on new best score. build_constraint_from_bitsets(), extract_consensus_splits(). 09f69915 |
+| — | Strategy preset tuning | — | default: wagnerStarts=3, sprFirst=TRUE, adaptiveLevel=TRUE. thorough: sprFirst=TRUE. Bundled in 09f69915 |
+EOF 2>&1

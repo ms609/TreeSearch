@@ -552,6 +552,7 @@ List ts_tbr_search(
     Named("score") = result.best_score,
     Named("n_accepted") = result.n_accepted,
     Named("n_evaluated") = result.n_evaluated,
+    Named("n_zero_skipped") = result.n_zero_skipped,
     Named("converged") = result.converged
   );
 }
@@ -1212,7 +1213,10 @@ List ts_driven_search(
     Nullable<IntegerMatrix> hsjTipLabels = R_NilValue,
     double hsjAlpha = 1.0,
     int hsjAbsentState = 0,
-    Nullable<List> xformChars = R_NilValue)
+    Nullable<List> xformChars = R_NilValue,
+    int consensusStableReps = 0,
+    bool adaptiveLevel = false,
+    bool consensusConstrain = false)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity, infoAmounts);
@@ -1343,6 +1347,9 @@ List ts_driven_search(
   params.tabu_size = tabuSize;
   params.spr_first = sprFirst;
   params.wagner_starts = wagnerStarts;
+  params.consensus_stable_reps = consensusStableReps;
+  params.adaptive_level = adaptiveLevel;
+  params.consensus_constrain = consensusConstrain;
 
   // Starting tree edge matrix (optional)
   if (startEdge.isNotNull()) {
@@ -1404,6 +1411,7 @@ List ts_driven_search(
       Named("hits_to_best") = result.hits_to_best,
       Named("pool_size") = 0,
       Named("timed_out") = result.timed_out,
+      Named("consensus_stable") = result.consensus_stable,
       Named("timings") = timings
     );
   }
@@ -1425,7 +1433,8 @@ List ts_driven_search(
     Named("hits_to_best") = result.hits_to_best,
     Named("pool_size") = result.pool_size,
     Named("timed_out") = result.timed_out,
-      Named("timings") = timings
+    Named("consensus_stable") = result.consensus_stable,
+    Named("timings") = timings
   );
 }
 

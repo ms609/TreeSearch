@@ -47,6 +47,11 @@ skill (load via the skill tool). Key steps:
 See `.positai/skills/r-package-profiling/references/` for detailed
 VTune workflow on Windows.
 
+**Current version: VTune 2025.10** (updated 2026-03-19). Requires Ice Lake
+or newer CPU (10th gen Intel Core / 3rd gen Xeon Scalable+). VS 2019
+integration and Eclipse integration are removed in 2025.x. Command-line
+workflow (`vtune -collect hotspots`) is unchanged.
+
 ### 4. R-Level Profiling
 
 For R overhead identification:
@@ -234,6 +239,29 @@ longer than equivalent Brazeau. This is documented in AGENTS.md as a known futur
 optimization (C++-level inter-replicate parallelism for hierarchical resampling).
 No new task filed — already on the roadmap.
 
+### Preset tuning benchmark: 2026-03-22 by Agent A
+
+Compared updated presets (wagnerStarts=3, sprFirst=TRUE, adaptiveLevel=TRUE
+for default; wagnerStarts=3, sprFirst=TRUE for thorough) against old presets
+(wagnerStarts=1, sprFirst=FALSE, adaptiveLevel=FALSE). 7-run medians via
+`MaximizeParsimony()`, strategy=auto, 10 reps, 1 thread.
+
+| Dataset | Tips | Preset | Old time (s) | New time (s) | Δ time | Old score | New score |
+|---------|------|--------|-------------|-------------|--------|-----------|-----------|
+| Vinther2008 | 23 | sprint | 0.76 | 0.65 | –14% (noise) | 79 | 79 |
+| Agnarsson2004 | 62 | default | 3.59 | 2.41 | **–33%** | 778 | 778 |
+| Zhu2013 | 75 | thorough | 23.65 | 24.83 | +5% (noise) | 647 | 648 |
+| Dikow2009 | 88 | thorough | 49.19 | 39.24 | **–20%** | 1611 | 1612 |
+
+**Findings:**
+- `adaptiveLevel` in `default` preset: consensus-stability triggers early exit
+  on easy landscapes (Agnarsson2004), saving 33%. No score regression.
+- `sprFirst + wagnerStarts=3` in `thorough`: 20% faster on Dikow2009 (better
+  starting tree reduces initial TBR descent). Neutral on Zhu2013.
+- **Do not enable `adaptiveLevel` in `thorough`**: with 20 ratchet + 12 drift
+  base, 1.5× scaling creates 30 ratchet + 18 drift per hard replicate,
+  causing 3–4× slowdowns for only 2–3 step improvement (benchmarked separately).
+
 ## What to Profile
 
 Status key: ✅ resolved, ⚠ partially explored, ❌ not yet investigated
@@ -303,6 +331,43 @@ can verify the improvement.
     means `nThreads` only applies within each replicate. Brazeau 2T = 2.5× speedup;
     HSJ/XFORM hierarchical 2T = 1.1× only. Known limitation, future optimization
     (C++-level inter-replicate parallelism for hierarchical resampling).
+
+11. ✅ **MaddisonSlatkin internal bottlenecks** (2026-03-19 Agent A, T-149).
+    VTune hotspot collection (software sampling, `-g -fno-omit-frame-pointer`
+    symbols build) on 57 calls at boundary cases: k=3/n=20–25, k=4/n=14–18,
+    k=5/n=9–12. Total ~23 s CPU time; 63% in `TreeSearch.dll`.
+
+    **CPU time breakdown within TreeSearch.dll (14.1 s):**
+
+    | Category | CPU (s) | % DLL |
+    |----------|---------|-------|
+    | `logB_cache::find` (k=3,4,5) | 2.72 | 19% |
+    | `SolverT<N>::LogB` compute | 1.88 | 13% |
+    | `logPVec_cache::find` (k=3,4,5) | 1.91 | 14% |
+    | `SolverT<N>::LogPVec` compute | 1.24 | 9% |
+    | `LogPVecKey::operator==` | 1.11 | 8% |
+    | `StateKeyT<N>::operator==` | 1.01 | 7% |
+    | `expl`/`_expl_internal` (LogB LSE) | 0.91 | 6% |
+    | `logRD_cache::find` | 0.74 | 5% |
+    | `std::isfinite` (all sites) | 0.70 | 5% |
+    | `vector<double>::~vector` (eviction) | 0.60 | 4% |
+    | `logconv` actual convolution | 0.20 | 1% |
+
+    **Key findings:**
+    - `logconv` is only **1%** of DLL time — the Phase 2 vectorization worked
+      perfectly; the algorithm itself is no longer the bottleneck.
+    - **Hash map infrastructure dominates** (53% of DLL time): `unordered_map::find`
+      + key equality checks across the three caches (logB, logPVec, logRD).
+      Switching to a flat/open-addressing map would help but adds complexity.
+    - **`expl()` in `LSEAccumulator`** (6%) uses long-double arithmetic. Switching
+      to `double`/`exp()` would save ~0.7s at negligible precision cost. → **T-151**
+    - **`std::isfinite`** (5%) routes through `_fpclassify` on MinGW/Windows.
+      Replacing with `x != NEG_INF` saves the function-call overhead. → **T-152**
+    - `memcmp` in ucrtbase.dll (1.6 s / 7% of total) is the `StateKeyT::operator==`
+      fall-through when `cached_hash` and `cached_sum` both match — unavoidable
+      with the current key design.
+
+    **Estimated combined T-151 + T-152 saving: ~1.4 s (6%) per cold-cache run.**
 
 ## Build and Test (Reminder)
 

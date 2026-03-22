@@ -499,3 +499,74 @@ test_that("progressFile reactiveVal tracks path lifecycle", {
     }
   )
 })
+
+# ---------- T-165: run stats reset on weighting change ----------
+
+test_that("changing concavity resets run stats but keeps trees (T-165)", {
+  r <- make_search_state()
+  r$allTrees <- list("placeholder_tree")
+  r$trees    <- list("placeholder_tree")
+
+  shiny::testServer(
+    search_server,
+    args = list(
+      r = r,
+      AnyTrees       = reactive(TRUE),
+      HaveData       = reactive(TRUE),
+      UpdateAllTrees = function(x) invisible(NULL),
+      log_fns        = stub_log_fns
+    ),
+    {
+      # Simulate accumulated search stats from a prior run
+      r$searchTotalHits <- 52L
+      r$searchTotalReps <- 1604L
+      r$bestSearchScore <- 1.42854
+
+      # Change the concavity constant — stats should reset, trees preserved
+      session$setInputs(implied.weights = "on", concavity = 3)
+      session$flushReact()
+      session$setInputs(concavity = 2)
+      session$flushReact()
+
+      expect_equal(r$searchTotalHits, 0L)
+      expect_equal(r$searchTotalReps, 0L)
+      expect_null(r$bestSearchScore)
+      expect_length(r$allTrees, 1L)  # trees preserved
+    }
+  )
+})
+
+test_that("changing weighting mode resets run stats but keeps trees (T-165)", {
+  r <- make_search_state()
+  r$allTrees <- list("placeholder_tree")
+  r$trees    <- list("placeholder_tree")
+
+  shiny::testServer(
+    search_server,
+    args = list(
+      r = r,
+      AnyTrees       = reactive(TRUE),
+      HaveData       = reactive(TRUE),
+      UpdateAllTrees = function(x) invisible(NULL),
+      log_fns        = stub_log_fns
+    ),
+    {
+      # First: set initial state (on -> EW) with accumulated stats
+      session$setInputs(implied.weights = "on", concavity = 1)
+      session$flushReact()
+
+      r$searchTotalHits <- 30L
+      r$searchTotalReps <- 200L
+      r$bestSearchScore <- 2.5
+
+      # Switch to EW — should reset stats
+      session$setInputs(implied.weights = "off")
+      session$flushReact()
+
+      expect_equal(r$searchTotalHits, 0L)
+      expect_equal(r$searchTotalReps, 0L)
+      expect_null(r$bestSearchScore)
+      expect_length(r$allTrees, 1L)  # trees preserved
+    }
+  )
+})

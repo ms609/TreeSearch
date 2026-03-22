@@ -28,6 +28,7 @@ struct TBRResult {
   double best_score;  // double for forward-compatibility with implied weights
   int n_accepted;
   int n_evaluated;
+  int n_zero_skipped; // clips skipped due to zero-length edge (opt #7)
   bool converged;  // true if stopped due to no improvement
 };
 

@@ -39,6 +39,12 @@ public:
     return pool_.add(tree, score);
   }
 
+  bool add_collapsed(const TreeState& tree, double score,
+                     const std::vector<uint8_t>& collapsed) {
+    std::lock_guard<std::mutex> lock(mu_);
+    return pool_.add_collapsed(tree, score, collapsed);
+  }
+
   PoolEntry best() const {
     std::lock_guard<std::mutex> lock(mu_);
     return pool_.best();
@@ -86,6 +92,12 @@ public:
 
   // Move contents into output pool (called after all threads joined)
   void extract_into(TreePool& out);
+
+  // Update consensus stability and return consecutive-unchanged count.
+  int update_consensus_stability() {
+    std::lock_guard<std::mutex> lock(mu_);
+    return pool_.update_consensus_stability();
+  }
 
   // Direct access to underlying pool (only safe when no threads running)
   const TreePool& pool() const { return pool_; }

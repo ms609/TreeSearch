@@ -680,24 +680,22 @@ QuartetConcordance <- function(
   }
 }
 
-#' @importFrom fastmap fastmap
-.ExpectedMICache <- fastmap()
+.ExpectedMICache <- new.env(hash = TRUE, parent = emptyenv())
 
 # @param a must be a vector of length <= 2
 # @param b may be longer
-#' @importFrom base64enc base64encode
 .ExpectedMI <- function(a, b) {
   if (length(a) < 2 || length(b) < 2) {
     0
   } else {
-    key <- base64enc::base64encode(mi_key(a, b))
-    if (.ExpectedMICache$has(key)) {
-      .ExpectedMICache$get(key)
+    key <- mi_key(a, b)
+    if (!is.null(.ExpectedMICache[[key]])) {
+      .ExpectedMICache[[key]]
     } else {
       ret <- expected_mi(a, b)
 
       # Cache:
-      .ExpectedMICache$set(key, ret)
+      .ExpectedMICache[[key]] <- ret
       # Return:
       ret
     }

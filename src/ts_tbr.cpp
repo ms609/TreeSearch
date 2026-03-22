@@ -1,5 +1,6 @@
 #include "ts_tbr.h"
 #include "ts_fitch.h"
+#include "ts_collapsed.h"
 #include "ts_rng.h"
 #include "ts_tabu.h"
 #include "ts_splits.h"
@@ -424,6 +425,25 @@ static bool apply_tbr_move(
   return true;
 }
 
+// --- Edge length computation ---
+
+// Compute parsimony edge length from local_cost for a single node.
+// For EW Fitch (no NA), this is the exact contribution of the edge
+// (node → parent) to the tree score.
+static int node_edge_length(const TreeState& tree, const DataSet& ds,
+                            int node) {
+  int len = 0;
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    uint64_t lc =
+        tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
+    int nu = ts::popcount64(lc);
+    if (ds.blocks[b].upweight_mask)
+      nu += ts::popcount64(lc & ds.blocks[b].upweight_mask);
+    len += ds.blocks[b].weight * nu;
+  }
+  return len;
+}
+
 // --- Subtree size computation ---
 
 // Compute the number of tips in the subtree below each node.
@@ -481,6 +501,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   }
   int n_accepted = 0;
   int n_evaluated = 0;
+  int n_zero_skipped = 0;
   int hits = 1;
   const bool use_iw = std::isfinite(ds.concavity);
   // Floating-point tolerance for score equality
@@ -506,6 +527,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   for (int node = 0; node < tree.n_node; ++node) {
     if (node == tree.n_tip) continue;
     clip_candidates.push_back(node);
+  }
+
+  // Collapsed flags: edges that provably cannot yield an improvement
+  // (clip skipping + regraft merging).  Disabled during MPT enumeration
+  // (collect_pool) where equal-score topologies are collected.
+  std::vector<uint8_t> collapsed;
+  if (!collect_pool) {
+    compute_collapsed_flags(tree, ds, collapsed);
   }
 
   std::vector<std::pair<int,int>> main_edges;
@@ -586,6 +615,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       int clip_size = subtree_sizes[clip_node];
       if (clip_size > tree.n_tip / 2) continue;
 
+      // Skip collapsed edges: zero-length edge where clipping provably
+      // cannot improve the score. Works for EW, IW, Profile, and NA.
+      // Disabled during MPT enumeration (collapsed is empty).
+      if (!collapsed.empty() && collapsed[clip_node]) {
+        ++n_zero_skipped;
+        continue;
+      }
+
       // --- Phase 1: Clip + indirect evaluation ---
 
       // Save clip subtree's actives before clipping (needed for NA indirect)
@@ -659,6 +696,17 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         if (above == nz && below == ns) continue;
         if (sector_mask && !(*sector_mask)[below]) continue;
         if (constrained && regraft_violates_constraint(below, *cd)) continue;
+
+        // Collapsed-region regraft merging: skip interior collapsed edges.
+        // If collapsed[below] == 1, the edge (above, below) is zero-length
+        // and lies inside a collapsed region.  The boundary edge entering the
+        // region (where collapsed[below] == 0 but the node is in the region)
+        // is always evaluated, and it dominates interior positions because
+        // its vroot includes states from outside the region.
+        if (!collapsed.empty() && collapsed[below]) {
+          continue;
+        }
+
         double candidate;
         if (has_na) {
           // NA-aware indirect with early termination
@@ -763,6 +811,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             if (sector_mask && !(*sector_mask)[below]) continue;
             if (constrained && regraft_violates_constraint(below, *cd))
               continue;
+            // Collapsed-region regraft merging (same as SPR loop above).
+            if (!collapsed.empty() && collapsed[below]) {
+              continue;
+            }
             double candidate;
             if (has_na) {
               if (use_iw) {
@@ -889,6 +941,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       }
 
       if (keep_going) {
+        // Recompute collapsed regions after the accepted move (states are
+        // valid from full_rescore in the accept path above).
+        if (!collapsed.empty()) {
+          compute_collapsed_flags(tree, ds, collapsed);
+        }
         // Optimization #6: don't reshuffle after acceptance — the topology
         // changed near this clip, so re-trying the same ordering focuses
         // on the productive region.
@@ -921,7 +978,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   bool converged = !(params.max_accepted_changes > 0
                      && n_accepted >= params.max_accepted_changes);
 
-  return TBRResult{best_score, n_accepted, n_evaluated, converged};
+  return TBRResult{best_score, n_accepted, n_evaluated, n_zero_skipped,
+                   converged};
 }
 
 } // namespace ts

@@ -629,7 +629,7 @@ struct DrawPair {
 
 struct FixedDraws {
   DrawPair draws[256];
-  uint8_t count = 0; // Tracks the actual number of elements used
+  uint16_t count = 0; // Tracks the actual number of elements used
 };
 
 struct ValidDrawsCache {
@@ -927,7 +927,7 @@ class SolverT {
     
     struct FixedDrawsT {
       DrawPairT draws[256];
-      uint8_t count = 0;
+      uint16_t count = 0;
     };
     
     std::unordered_map<KeyType, FixedDrawsT, HashType> validDraws_cache;
@@ -1603,7 +1603,7 @@ static double logCarter1_cpp(int m, int a, int b) {
 
 //' @rdname Carter1
 //' @examples
-//' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
+//' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * TreeTools::NUnrooted(7)
 //' 
 //' @export
 // [[Rcpp::export]]

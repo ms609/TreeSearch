@@ -106,7 +106,7 @@
 #' @family tree scoring
 #' @importFrom ape read.nexus write.nexus
 #' @importFrom cli cli_alert_info cli_h1
-#' @importFrom fs path_sanitize
+
 #' @importFrom stats weighted.mean
 #' @importFrom TreeDist ClusteringInfoDistance
 #' @encoding UTF-8
@@ -149,7 +149,7 @@ TaxonInfluence <- function(
   # Return:
   vapply(names(dataset), function(leaf) {
     
-    leafFile <- paste0(savePath, path_sanitize(leaf), ".nex")
+    leafFile <- paste0(savePath, gsub("[/\\\\:*?\"<>|[:cntrl:]]", "_", leaf), ".nex")
     
     result <- if (useCache && file.exists(leafFile)) {
       if (verbosity > 1) {

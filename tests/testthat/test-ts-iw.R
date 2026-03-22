@@ -28,42 +28,45 @@ result_phylo <- function(result, ref_tree) {
 # Reference values recomputed 2026-03-19 (T-131) after T-113 NA ambiguity
 # bit-stripping fix — `build_dataset()` now strips applicable bits from
 # partial {-,X} tokens and preserves full missing data.
+#
+# `rand` values use BalancedTree (deterministic, platform-independent).
+# Previously used RandomTree(seed=5729) which diverged on macOS.
 iw_ref <- list(
   Vinther2008 = list(
     ew_pect = 139,
     pect = c(`3` = 15.8714285714, `10` = 6.4955044955, `100` = 0.7641911074),
-    ew_rand = 202,
-    rand = c(`3` = 22.4700216450, `10` = 10.4066211566, `100` = 1.3585882884)
+    ew_rand = 142,
+    rand = c(`3` = 16.0142857143, `10` = 6.6543456543, `100` = 0.7921859906)
   ),
   Agnarsson2004 = list(
     ew_pect = 1081,
     pect = c(`3` = 102.7370533878, `10` = 51.8654533610, `100` = 7.4988685706),
-    ew_rand = 1958,
-    rand = c(`3` = 139.2149390727, `10` = 83.0032213160, `100` = 14.9833390257)
+    ew_rand = 1117,
+    rand = c(`3` = 101.7186105561, `10` = 52.7578507727, `100` = 7.8058662874)
   ),
   Wills2012 = list(
     ew_pect = 499,
     pect = c(`3` = 40.2243589744, `10` = 21.4272698288, `100` = 3.3652284459),
-    ew_rand = 741,
-    rand = c(`3` = 50.7070193570, `10` = 30.1312921316, `100` = 5.4245529951)
+    ew_rand = 516,
+    rand = c(`3` = 41.4493714619, `10` = 22.2303189147, `100` = 3.5166229085)
   ),
   Aria2015 = list(
     ew_pect = 184,
     pect = c(`3` = 18.8750000000, `10` = 8.7590840532, `100` = 1.1607895426),
-    ew_rand = 309,
-    rand = c(`3` = 28.4750806211, `10` = 15.3037862980, `100` = 2.3083215225)
+    ew_rand = 196,
+    rand = c(`3` = 20.2827380952, `10` = 9.5382957835, `100` = 1.2740063632)
   ),
   Zhu2013 = list(
     ew_pect = 2150,
     pect = c(`3` = 164.0737728728, `10` = 97.9724526960, `100` = 17.1087479711),
-    ew_rand = 2138,
-    rand = c(`3` = 163.9142350031, `10` = 97.6733290892, `100` = 17.0120447630)
+    ew_rand = 2186,
+    rand = c(`3` = 161.6812051805, `10` = 96.8232223149, `100` = 17.2979327526)
   ),
   Loconte1991 = list(
     ew_pect = 1081,
     pect = c(`3` = 67.0555935288, `10` = 42.2927501720, `100` = 8.1801157451),
-    ew_rand = 1099,
-    rand = c(`3` = 67.0118700129, `10` = 42.3760394355, `100` = 8.2989356933)
+    ew_rand = 1055,
+    rand = c(`3` = 65.9395171481, `10` = 41.2621955048, `100` = 7.9468418755)
   )
 )
 
@@ -101,7 +104,7 @@ test_that("IW pectinate scores match reference for 6 datasets", {
   }
 })
 
-test_that("IW random-tree scores match reference for 6 datasets", {
+test_that("IW balanced-tree scores match reference for 6 datasets", {
   skip_on_cran()
   data("inapplicable.phyData", package = "TreeSearch")
 
@@ -110,14 +113,15 @@ test_that("IW random-tree scores match reference for 6 datasets", {
     ds <- make_ts_data(dataset)
     minSteps <- MinimumLength(dataset, compress = TRUE)
 
-    set.seed(5729)
-    tree <- TreeTools::Preorder(TreeTools::RandomTree(dataset, root = TRUE))
+    # BalancedTree is deterministic and platform-independent (unlike RandomTree
+    # whose output depends on the RNG implementation and diverges on macOS).
+    tree <- TreeTools::Preorder(TreeTools::BalancedTree(dataset))
 
     for (k_str in c("3", "10", "100")) {
       k <- as.numeric(k_str)
       score <- ts_iw(tree, ds, minSteps, k)
       expect_equal(score, iw_ref[[nm]]$rand[[k_str]], tolerance = 1e-8,
-                   label = paste(nm, "rand k =", k))
+                   label = paste(nm, "balanced k =", k))
     }
   }
 })

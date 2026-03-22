@@ -5,7 +5,7 @@
 #
 # Owns inputs: go, modalGo, searchConfig, strategy, maxReplicates,
 #   targetHits, timeout, epsilon, searchWithout, implied.weights, concavity,
-#   nThreads.
+#   nThreads, inapplicable, hsjAlpha.
 #
 # Reactive args:
 #   r              AppState reactiveValues
@@ -109,12 +109,63 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
              "on" = show("concavity"),
              hide("concavity")
       )
+      # Weighting mode changed: old run counts no longer apply; keep trees
+      r$searchTotalHits <- 0L
+      r$searchTotalReps <- 0L
+      r$bestSearchScore  <- NULL
       DisplayTreeScores()
     })
 
     observeEvent(input$concavity, {
+      # Concavity constant changed: old run counts no longer apply; keep trees
+      r$searchTotalHits <- 0L
+      r$searchTotalReps <- 0L
+      r$bestSearchScore  <- NULL
       DisplayTreeScores()
     }, ignoreInit = TRUE)
+
+    # Show/hide hsjAlpha input when inapplicable method changes
+    observeEvent(input$inapplicable, {
+      if (identical(input$inapplicable, "hsj")) {
+        show("hsjAlpha")
+      } else {
+        hide("hsjAlpha")
+      }
+    }, ignoreInit = TRUE)
+
+    # Dynamic help text for hierarchy detection (shown inside config modal)
+    output$hierarchyInfo <- renderUI({
+      inp <- input$inapplicable
+      if (is.null(inp) || identical(inp, "brazeau")) return(NULL)
+      chars <- r$chars
+      if (is.null(chars) || length(chars) == 0L) {
+        return(helpText(
+          "No character names available for hierarchy auto-detection."
+        ))
+      }
+      h <- tryCatch(
+        withCallingHandlers(
+          hierarchy_from_names(chars),
+          warning = function(w) invokeRestart("muffleWarning")
+        ),
+        error = function(e) NULL
+      )
+      if (is.null(h)) {
+        helpText(HTML(paste0(
+          "No hierarchy detected. Character names must follow the convention ",
+          "<code>sup_tag</code> (primary) and ",
+          "<code>sub_tag[_suffix]</code> (secondary); see ",
+          "<code>?hierarchy_from_names</code>."
+        )))
+      } else {
+        n_blocks <- length(h)
+        n_chars  <- length(hierarchy_chars(h))
+        helpText(paste0(
+          "Detected ", n_blocks, " hierarchy block(s) covering ",
+          n_chars, " character(s)."
+        ))
+      }
+    })
 
     ##########################################################################
     # Async profile data preparation (with progress + cancel)
@@ -357,7 +408,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     observe({
       result <- tryCatch(
         profilePrepTask$result(),
-        validation = function(e) req(FALSE),
+        shiny.silent.error = function(e) req(FALSE),
         error = function(e) {
           LogMsg("Profile data preparation failed: ", conditionMessage(e))
           NULL
@@ -446,8 +497,11 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     ##########################################################################
 
     DisplayTreeScores <- function () {
-      # Don't overwrite "Searching..." indicator while a search is running
-      if (!is.null(r$searchNotification)) return(invisible())
+      # Don't overwrite "Searching..." indicator while a search is running.
+      # Guard on both fields: searchNotification can be NULL if the
+      # notification was dismissed externally, but searchInProgress is the
+      # authoritative flag.
+      if (!is.null(r$searchNotification) || isTRUE(r$searchInProgress)) return(invisible())
       LogMsg("DisplayTreeScores()")
       treeScores <- scores()
       score <- if (is.null(treeScores) && identical(concavity(), "profile") &&
@@ -467,13 +521,21 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         length(r$trees), " sampled",
         score
       )
-      confText <- SearchConfidenceText(r$searchTotalHits, r$searchTotalReps)
+      confText <- SearchConfidenceText(r$searchTotalHits, r$searchTotalReps,
+                                        r$searchCount)
       html <- if (!is.null(confText)) {
+        nS <- r$searchCount
         tooltip <- paste0(
           "Estimated as exp(-K) where K = ",
           r$searchTotalHits,
-          " (runs hitting best score). ",
-          "Assumes independent runs. ",
+          " (runs hitting best score",
+          if (!is.null(nS) && nS > 1L)
+            paste0(" across ", nS, " searches")
+          else
+            "",
+          "). Assumes independent runs. ",
+          "'Maximum independent runs' limits each individual search; ",
+          "this tally accumulates across all continued searches. ",
           "The config dialog shows a theoretical worst-case; ",
           "this uses actual search results."
         )
@@ -502,7 +564,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     searchTask <- ExtendedTask$new(
       function(dataset, tree, concavity, strategy, maxReplicates,
                targetHits, maxSeconds, poolSuboptimal, nThreads,
-               cancelPath, progressPath) {
+               cancelPath, progressPath,
+               hierarchy, inapplicable, hsjAlpha) {
         future::future({
           on.exit({
             Sys.unsetenv("TREESEARCH_CANCEL_FILE")
@@ -530,6 +593,14 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
             args$control <- TreeSearch::SearchControl(
               poolSuboptimal = poolSuboptimal
             )
+          }
+          # Inapplicable handling (non-Brazeau requires hierarchy)
+          if (!is.null(hierarchy) && !identical(inapplicable, "brazeau")) {
+            args$hierarchy    <- hierarchy
+            args$inapplicable <- inapplicable
+            if (identical(inapplicable, "hsj")) {
+              args$hsj_alpha <- hsjAlpha
+            }
           }
           do.call(TreeSearch::MaximizeParsimony, args)
         }, seed = TRUE)
@@ -576,6 +647,39 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         0
       }
       searchNThreads <- if (length(input$nThreads)) as.integer(input$nThreads) else 1L
+
+      # Inapplicable handling
+      searchInapplicable <- if (length(input$inapplicable)) input$inapplicable else "brazeau"
+      searchHsjAlpha     <- if (length(input$hsjAlpha)) as.double(input$hsjAlpha) else 1.0
+      searchHierarchy <- if (!identical(searchInapplicable, "brazeau") &&
+                             !is.null(r$chars) && length(r$chars) > 0L) {
+        tryCatch(
+          withCallingHandlers(
+            hierarchy_from_names(r$chars),
+            warning = function(w) invokeRestart("muffleWarning")
+          ),
+          error = function(e) NULL
+        )
+      } else {
+        NULL
+      }
+
+      # Non-Brazeau methods require a detected hierarchy; abort early
+      if (!identical(searchInapplicable, "brazeau") && is.null(searchHierarchy)) {
+        methodLabel <- switch(searchInapplicable,
+                              hsj   = "Hopkins & St. John (HSJ)",
+                              xform = "X-transformation (Goloboff)",
+                              searchInapplicable)
+        Notification(
+          paste0(
+            "The \u201c", methodLabel, "\u201d method requires a character ",
+            "hierarchy. Ensure character names follow the sup_<tag> / ",
+            "sub_<tag> convention (see ?hierarchy_from_names)."
+          ),
+          type = "error", duration = 10
+        )
+        return(invisible())
+      }
 
       # Show search-in-progress indicator BEFORE tree selection (which may
       # call AdditionTree synchronously). The guard in DisplayTreeScores()
@@ -667,6 +771,11 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           paste0("  control = SearchControl(poolSuboptimal = ", searchPoolSub, "),"),
         if (searchNThreads > 1L)
           paste0("  nThreads = ", searchNThreads, "L,"),
+        if (!identical(searchInapplicable, "brazeau") && !is.null(searchHierarchy))
+          paste0("  inapplicable = \"", searchInapplicable, "\","),
+        if (identical(searchInapplicable, "hsj") && !is.null(searchHierarchy) &&
+            searchHsjAlpha != 1.0)
+          paste0("  hsj_alpha = ", searchHsjAlpha, ","),
         "  verbosity = 0",
         ")"))
       # Snapshot reactive values for the async task
@@ -677,7 +786,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         searchDataset, startTree, searchConcavity,
         searchStrategy, searchMaxRep, searchTargetHits,
         searchMaxSeconds, searchPoolSub, searchNThreads,
-        cancelPath, progressPath
+        cancelPath, progressPath,
+        searchHierarchy, searchInapplicable, searchHsjAlpha
       )
     }
 
@@ -718,6 +828,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       nid <- r$searchNotification
       if (is.null(pf) || is.null(nid) || !isTRUE(r$searchInProgress)) return()
       invalidateLater(500)
+      if (!file.exists(pf)) return()  # C++ hasn't written first status yet
       progress <- tryCatch(
         readLines(pf, warn = FALSE),
         error = function(e) NULL
@@ -736,6 +847,10 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         " | Best: ", best,
         " | Hits: ", hits, "/", target
       )
+      # Update both the results area and the toast (belt-and-suspenders: if
+      # DisplayTreeScores() was called and overwrote output$results, the next
+      # poll restores the progress message within 500 ms).
+      output$results <- renderUI(HTML(msg))
       showNotification(msg, id = nid, duration = NULL,
                        type = "message", closeButton = FALSE)
     })
@@ -757,38 +872,66 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       if (nCores > 1L) {
         updateSliderInput(session, "nThreads", value = input$nThreads)
       }
+      # Sync inapplicable selector and show/hide hsjAlpha accordingly
+      inapplicable_cur <- if (length(input$inapplicable)) input$inapplicable else "brazeau"
+      updateSelectInput(session, "inapplicable", selected = inapplicable_cur)
+      updateNumericInput(session, "hsjAlpha",
+                         value = if (length(input$hsjAlpha)) input$hsjAlpha else 1.0)
+      if (identical(inapplicable_cur, "hsj")) show("hsjAlpha") else hide("hsjAlpha")
+      # Initialise all modal inputs from current values so that opening the
+      # modal does not fire observeEvent(input$concavity) or
+      # observeEvent(input$implied.weights), which reset the run counters.
+      cur_weights   <- if (length(input$implied.weights)) input$implied.weights else "on"
+      cur_concavity <- if (length(input$concavity))       input$concavity       else 1L
+      cur_strategy  <- if (length(input$strategy))        input$strategy        else "auto"
+      cur_maxRep    <- if (length(input$maxReplicates))   input$maxReplicates   else 100L
+      cur_hits      <- if (length(input$targetHits))      input$targetHits      else 10L
+      cur_timeout   <- if (length(input$timeout))         input$timeout         else 5
+      cur_epsilon   <- if (length(input$epsilon))         input$epsilon         else 0
+      cur_threads   <- if (length(input$nThreads))        input$nThreads        else max(1L, floor(nCores / 2L))
       showModal(modalDialog(
         easyClose = TRUE,
         fluidPage(column(6,
           selectInput(ns("implied.weights"), "Step weighting",
                      list("Implied" = "on", "Profile" = "prof",
-                          "Equal" = "off"), "on"),
+                          "Equal" = "off"), cur_weights),
           sliderInput(ns("concavity"), "Concavity constant", min = 0L,
-                     max = 3L, pre = "10^", value = 1L),
+                     max = 3L, pre = "10^", value = cur_concavity),
+          selectInput(ns("inapplicable"), "Inapplicable characters",
+                      list("Brazeau et al. (default)" = "brazeau",
+                           "Hopkins & St. John (HSJ)"  = "hsj",
+                           "X-transformation (Goloboff)" = "xform"),
+                      inapplicable_cur),
+          hidden(numericInput(ns("hsjAlpha"), "HSJ \u03b1 parameter",
+                              value = if (length(input$hsjAlpha)) input$hsjAlpha else 1.0,
+                              min = 0, step = 0.1)),
+          uiOutput(ns("hierarchyInfo")),
           if (nCores > 1L) {
             sliderInput(ns("nThreads"), "Parallel search threads",
                         min = 1L, max = nCores,
-                        value = if (length(input$nThreads)) input$nThreads
-                                else max(1L, floor(nCores / 2L)),
+                        value = cur_threads,
                         step = 1L)
           },
           selectizeInput(ns("searchWithout"), "Exclude taxa", DatasetTips(),
                          r$searchWithout, multiple = TRUE),
           numericInput(ns("epsilon"), "Keep if suboptimal by \u2264", min = 0,
-                      value = 0)
+                      value = cur_epsilon)
         ), column(6,
           selectInput(ns("strategy"), "Search strategy",
                      list("Auto" = "auto", "Sprint" = "sprint",
                           "Default" = "default", "Thorough" = "thorough"),
-                     "auto"),
+                     cur_strategy),
           sliderInput(ns("targetHits"),
                       "Stop when N runs have hit best score",
-                      min = 1L, max = 50L, value = 10L, step = 1L),
+                      min = 1L, max = 50L, value = cur_hits, step = 1L),
           uiOutput(ns("targetHitsNote")),
           sliderInput(ns("timeout"), "Maximum run duration", min = 1,
-                      max = 60, value = 5, post = "min", step = 1),
+                      max = 60, value = cur_timeout, post = "min", step = 1),
           sliderInput(ns("maxReplicates"), "Maximum independent runs",
-                      min = 1L, max = 500L, value = 100L, step = 1L)
+                      min = 1L, max = 500L, value = cur_maxRep, step = 1L),
+          helpText("Limits each individual search. Clicking \u2018Continue\u2019",
+                   "starts a fresh search; the results panel shows the",
+                   "cumulative total across all continued searches.")
         )),
         title = "Tree search settings",
         footer = tagList(modalButton("Close", icon = Icon("rectangle-xmark")),
@@ -811,8 +954,9 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     observe({
       newTrees <- tryCatch(
         searchTask$result(),
-        validation = function(e) {
-          # ExtendedTask signals validation when initial/running; not a real error
+        shiny.silent.error = function(e) {
+          # ExtendedTask throws shiny.silent.error (class "shiny.output.progress"
+          # subclass) when status is "initial" or "running" — not a real error.
           req(FALSE)
         },
         error = function(e) {

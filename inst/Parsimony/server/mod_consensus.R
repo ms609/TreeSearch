@@ -568,8 +568,14 @@ consensus_server <- function(id, r,
     ############################################################################
 
     PolEscVal <- reactive({
+      tl <- tipLabels()
+      dl <- names(r$dataset)
+      # Skip if taxa don't match exactly: tipLabels() may include taxa absent
+      # from the dataset (e.g. trees loaded from a superset dataset), causing
+      # a matrix-dimension mismatch inside LengthAdded / TreeLength.
+      if (!setequal(tl, dl)) return(NULL)
       LengthAdded(r$trees,
-                  r$dataset[tipLabels(), PlottedChar()],
+                  r$dataset[tl, PlottedChar()],
                   concavity())
     })
 

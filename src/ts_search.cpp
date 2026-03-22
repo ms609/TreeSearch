@@ -1,5 +1,6 @@
 #include "ts_search.h"
 #include "ts_fitch.h"
+#include "ts_collapsed.h"
 #include "ts_rng.h"
 #include <algorithm>
 #include <climits>
@@ -194,6 +195,11 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
     clip_candidates.push_back(node);
   }
 
+  // Collapsed flags: edges that provably cannot yield an improvement
+  // (clip skipping + regraft merging).
+  std::vector<uint8_t> collapsed;
+  compute_collapsed_flags(tree, ds, collapsed);
+
   std::vector<std::pair<int,int>> destinations;
 
   // Pre-allocate IW buffers
@@ -224,6 +230,10 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
 
     for (int clip_node : clip_candidates) {
       if (tree.parent[clip_node] == tree.n_tip) continue;
+
+      // Skip collapsed edges (zero-length, provably unimprovable).
+      if (!collapsed.empty() && collapsed[clip_node])
+        continue;
 
       // Smaller-subtree filtering: skip clips of the larger half
       if (subtree_sizes[clip_node] > tree.n_tip / 2) continue;
@@ -286,6 +296,10 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
 
       for (auto& [above, below] : destinations) {
         if (above == nz && below == ns) continue;
+
+        // Collapsed-region regraft merging: skip interior collapsed edges.
+        if (!collapsed.empty() && collapsed[below])
+          continue;
 
         double candidate_score;
         if (has_na) {
@@ -360,6 +374,8 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
       tree.build_postorder();
 
       if (keep_going) {
+        // Recompute collapsed flags after the accepted move.
+        compute_collapsed_flags(tree, ds, collapsed);
         // Deferred reshuffling: don't reshuffle after acceptance
         need_shuffle = false;
         break;
