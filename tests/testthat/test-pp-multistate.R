@@ -47,11 +47,10 @@ test_that("4-state StepInformation produces correct structure", {
 })
 
 test_that("infeasible multi-state falls back to binary with warning", {
-  # Feasibility uses partition-aware split_count (sc), not just n.
-  # Thresholds: k=3 sc>136, k=4 sc>100, k=5 sc>100.
-  # Use balanced partitions whose sc clearly exceeds each threshold.
+  # Feasibility uses partition-aware split_count (sc).
+  # Thresholds: k=3 sc>75, k=4 sc>50, k=5 sc>35.
 
-  # k=3 balanced n=38 (13,13,12): sc=140 > 136 threshold
+  # k=3 n=38 (13,13,12): sc=140 >> 75
   char3 <- rep(c("a", "b", "c"), c(13, 13, 12))  # n = 38
   expect_warning(info3 <- StepInformation(char3), "reducing to 2")
   expect_true(length(info3) >= 1)
@@ -59,13 +58,13 @@ test_that("infeasible multi-state falls back to binary with warning", {
   expect_equal(as.integer(names(info3)[1L]), 1L)
   expect_true(all(info3 >= 0))
   
-  # k=4 with 24 tips (> 18 threshold): should fall back
+  # k=4 n=24 (7,6,6,5): sc=224 >> 50
   char4 <- rep(c("x", "y", "z", "w"), c(7, 6, 6, 5))  # n = 24
   expect_warning(info4 <- StepInformation(char4), "reducing to 2")
   expect_true(length(info4) >= 1)
   expect_true(all(info4 >= 0))
   
-  # k=5 with 15 tips (> 12 threshold): should fall back
+  # k=5 n=15 (4,3,3,3,2): sc=143 >> 35
   char5 <- rep(c("0", "1", "2", "3", "4"), c(4, 3, 3, 3, 2))  # n = 15
   expect_warning(info5 <- StepInformation(char5), "reducing to 2")
   expect_true(length(info5) >= 1)
@@ -93,7 +92,7 @@ test_that("approx='mc' matches exact within 1 bit for feasible character", {
 })
 
 test_that("approx='mc' returns multi-state step range for infeasible char", {
-  # k=3 balanced n=38 (13,13,12): sc=140 > 136 threshold, infeasible for exact.
+  # k=3 n=38 (13,13,12): sc=140 >> 75 threshold, infeasible for exact.
   # MC should return IC starting at step 2 (k-1), not step 1 (binary)
   char <- rep(c("0", "1", "2"), c(13, 13, 12))
   

@@ -19,9 +19,10 @@
 #' in the number of tips for a given number of tokens), behaviour depends on
 #' the `approx` argument.  With `"auto"` (default), infeasible characters are
 #' reduced to their 2 most frequent tokens and scored using the faster Carter
-#' formula.  This occurs for 3-state characters with more than 27 informative
-#' tips, 4-state characters with more than 19 tips, and 5-state characters with
-#' more than 13 tips.  With `"mc"`, the MC-calibrated approximation is used
+#' formula.  The exact threshold depends on the partition shape
+#' (balanced partitions are harder); roughly, 3-state characters
+#' beyond ~27 tips, 4-state beyond ~13 tips, and 5-state beyond
+#' ~9 tips will fall back.  With `"mc"`, the MC-calibrated approximation is used
 #' instead: the step-count distribution is estimated from a random sample of
 #' trees, anchored at the exact minimum-steps probability.
 #'

@@ -1,11 +1,15 @@
 # Feasibility thresholds for MaddisonSlatkin exact computation.
 # The split_count is the coefficient of x^floor(n/2) in the generating
 # polynomial prod_i (1 + x + ... + x^{a_i}), capturing partition shape.
-# Calibrated from worst-case (balanced) partition timing experiments:
-#   k=3: sc=133 fast (n=37), sc=140 blowup (n=38) => threshold 136
-#   k=4: sc=95 fast (n=17),  sc=110 blowup (n=18) => threshold 100
-#   k=5: sc=96 fast (n=13),  sc=124 blowup (n=14) => threshold 100
-.MS_SC_THRESHOLD <- c(Inf, Inf, 136L, 100L, 100L)
+# Calibrated from worst-case (balanced) partition timing experiments
+# using CORRECT bitmask encoding (states at positions 2^(i-1)):
+#   k=3: n=27 (9,9,9)   sc=75  0.97s safe;  n=31 (11,10,10) sc=96 1.32s marginal
+#   k=4: n=13 (4,3,3,3) sc=50  0.36s safe;  n=15 (4,4,4,3)  sc=70 0.94s marginal
+#   k=5: n=9  (2,2,2,2,1) sc=35 0.22s safe; n=10 (2,2,2,2,2) sc=51 0.49s
+# NOTE: the original calibration (thresholds 136/100/100) used sequential
+# state indices instead of bitmask positions, yielding incorrectly fast
+# timings and dangerously high thresholds.
+.MS_SC_THRESHOLD <- c(Inf, Inf, 75L, 50L, 35L)
 
 .MSSplitCount <- function(state_counts) {
   counts <- state_counts[state_counts > 0L]

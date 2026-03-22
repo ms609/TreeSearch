@@ -168,12 +168,12 @@ test_that(".MSSplitCount is correct for known cases", {
   expect_equal(sc(c(1L, 1L)), 1)
   expect_equal(sc(c(0L, 3L)), 1)
 
-  # Thresholds gate boundary cases correctly
-  expect_lte(sc(c(13L, 12L, 12L)), thresh[3])     # fast: allowed
-  expect_gt( sc(c(13L, 13L, 12L)), thresh[3])     # blowup: blocked
-  expect_lte(sc(c(5L, 4L, 4L, 4L)),  thresh[4])
-  expect_gt( sc(c(5L, 5L, 4L, 4L)),  thresh[4])
-  expect_lte(sc(c(3L, 3L, 3L, 2L, 2L)), thresh[5])
-  expect_gt( sc(c(3L, 3L, 3L, 3L, 2L)), thresh[5])
+  # Thresholds gate boundary cases correctly (correct bitmask encoding)
+  expect_lte(sc(c(9L, 9L, 9L)),      thresh[3])   # k=3 n=27 sc=75: at limit
+  expect_gt( sc(c(10L, 9L, 9L)),     thresh[3])   # k=3 n=28 sc=80: blocked
+  expect_lte(sc(c(4L, 3L, 3L, 3L)),  thresh[4])   # k=4 n=13 sc=50: at limit
+  expect_gt( sc(c(4L, 4L, 3L, 3L)),  thresh[4])   # k=4 n=14 sc=60: blocked
+  expect_lte(sc(c(2L, 2L, 2L, 2L, 1L)), thresh[5]) # k=5 n=9  sc=35: at limit
+  expect_gt( sc(c(2L, 2L, 2L, 2L, 2L)), thresh[5]) # k=5 n=10 sc=51: blocked
 })
 
