@@ -44,29 +44,35 @@ test_that("4-state StepInformation produces correct structure", {
   expect_true(info[1] > 0)
 })
 
-test_that("infeasible multi-state falls back to binary with warning", {
+test_that("infeasible multi-state uses MC preserving all states", {
   # Feasibility uses partition-aware split_count (sc).
   # Thresholds: k=3 sc>75, k=4 sc>50, k=5 sc>35.
+  # Infeasible characters now use MC approximation (no state reduction).
+
+  set.seed(6391)
 
   # k=3 n=38 (13,13,12): sc=140 >> 75
-  char3 <- rep(c("a", "b", "c"), c(13, 13, 12))  # n = 38
-  expect_warning(info3 <- StepInformation(char3), "reducing to 2")
+  char3 <- rep(c("a", "b", "c"), c(13, 13, 12))
+  info3 <- StepInformation(char3, n_mc = 5000L)
   expect_true(length(info3) >= 1)
-  # Fallback: top-2 (13+13=26 tips), min steps = 1
-  expect_equal(as.integer(names(info3)[1L]), 1L)
+  # MC preserves 3 states: min steps = k - 1 = 2
+
+  expect_equal(as.integer(names(info3)[1L]), 2L)
   expect_true(all(info3 >= 0))
-  
+  expect_true(all(diff(info3) <= sqrt(.Machine[["double.eps"]])))
+
   # k=4 n=24 (7,6,6,5): sc=224 >> 50
-  char4 <- rep(c("x", "y", "z", "w"), c(7, 6, 6, 5))  # n = 24
-  expect_warning(info4 <- StepInformation(char4), "reducing to 2")
+  char4 <- rep(c("x", "y", "z", "w"), c(7, 6, 6, 5))
+  info4 <- StepInformation(char4, n_mc = 5000L)
   expect_true(length(info4) >= 1)
+  expect_equal(as.integer(names(info4)[1L]), 3L)
   expect_true(all(info4 >= 0))
-  
+
   # k=5 n=15 (4,3,3,3,2): sc=143 >> 35
-  char5 <- rep(c("0", "1", "2", "3", "4"), c(4, 3, 3, 3, 2))  # n = 15
-  expect_warning(info5 <- StepInformation(char5), "reducing to 2")
+  char5 <- rep(c("0", "1", "2", "3", "4"), c(4, 3, 3, 3, 2))
+  info5 <- StepInformation(char5, n_mc = 5000L)
   expect_true(length(info5) >= 1)
-  expect_equal(as.integer(names(info5)[1L]), 1L)
+  expect_equal(as.integer(names(info5)[1L]), 4L)
   expect_true(all(info5 >= 0))
 })
 
@@ -76,7 +82,7 @@ test_that("approx='mc' matches exact within 1 bit for feasible character", {
   
   set.seed(4412)
   info_exact <- StepInformation(char, approx = "exact")
-  info_mc    <- StepInformation(char, approx = "mc", n_mc = 5000L)
+  info_mc    <- StepInformation(char, approx = "mc", n_mc = 10000L)
   
   common <- intersect(names(info_exact), names(info_mc))
   expect_true(length(common) >= 1L)
@@ -105,7 +111,7 @@ test_that("approx='mc' returns multi-state step range for infeasible char", {
   expect_true(info_mc[1L] > 0)
 })
 
-test_that("PrepareDataProfile with approx='mc' keeps multi-state patterns", {
+test_that("PrepareDataProfile preserves multi-state patterns", {
   # A small dataset with one 3-state char with many tips
   set.seed(3058)
   n <- 20L
@@ -117,15 +123,16 @@ test_that("PrepareDataProfile with approx='mc' keeps multi-state patterns", {
     dimnames = list(paste0("t", seq_len(n)), paste0("c", seq_len(nchar)))
   )
   dat <- TreeTools::MatrixToPhyDat(mat)
-  
-  info_auto <- suppressWarnings(PrepareDataProfile(dat, approx = "auto"))
-  info_mc   <- PrepareDataProfile(dat, approx = "mc", n_mc = 1000L)
-  
+
+  # "auto" and "mc" should produce identical structure (both use MC for
+  # infeasible chars, exact for feasible ones)
+  info_auto <- PrepareDataProfile(dat, approx = "auto", n_mc = 5000L)
+  info_mc   <- PrepareDataProfile(dat, approx = "mc", n_mc = 5000L)
+
   auto_steps <- nrow(attr(info_auto, "info.amounts"))
   mc_steps   <- nrow(attr(info_mc,   "info.amounts"))
-  expect_true(mc_steps >= auto_steps,
-              label = "MC has at least as many step rows as auto")
-  
+  expect_equal(auto_steps, mc_steps)
+
   # Both produce valid, finite info.amounts
   expect_true(all(is.finite(attr(info_auto, "info.amounts"))))
   expect_true(all(is.finite(attr(info_mc,   "info.amounts"))))
@@ -133,10 +140,9 @@ test_that("PrepareDataProfile with approx='mc' keeps multi-state patterns", {
 
 test_that(">5 state warns and truncates to 5", {
   char <- rep(c("a", "b", "c", "d", "e", "f"), c(4, 3, 3, 2, 2, 2))
-  # Gets two warnings: >5 truncation, then infeasibility fallback
-  expect_warning(info <- StepInformation(char),
-                 "5 most frequent|reducing to 2")
-  
+  expect_warning(info <- StepInformation(char, n_mc = 5000L),
+                 "5 most frequent")
+
   expect_true(length(info) >= 1)
   expect_true(all(info >= 0))
   expect_true(all(diff(info) <= sqrt(.Machine[["double.eps"]])))
@@ -189,20 +195,16 @@ test_that("3-state matches manual MaddisonSlatkin computation", {
 })
 
 test_that("multi-state info is always >= 0", {
+  set.seed(8203)
   test_chars <- list(
     rep(c("0", "1", "2"), c(5, 3, 2)),
     rep(c("0", "1", "2"), c(10, 5, 3)),
     rep(c("0", "1", "2", "3"), c(5, 3, 2, 2)),
     rep(c("0", "1", "2", "3", "4"), c(4, 3, 3, 2, 2))
-  ) 
-  
+  )
+
   for (i in seq_along(test_chars)) {
-    if (i == 4) {
-    expect_warning(info <- StepInformation(test_chars[[4]]),
-                   "infeasible")
-    } else {
-      info <- StepInformation(test_chars[[i]])
-    } 
+    info <- suppressWarnings(StepInformation(test_chars[[i]], n_mc = 5000L))
     expect_true(all(info >= 0), label = paste("test char", i))
     expect_true(all(is.finite(info)), label = paste("finite char", i))
   }
@@ -221,4 +223,41 @@ test_that("3-state character yields more info than binary truncation", {
   # The multi-state character should have more total information
   # (info at minimum steps)
   expect_gt(info_3state[1], info_binary[1])
+})
+
+test_that("MC approximation matches exact within 2 bits at boundary", {
+  # (5,5,5) n=15, k=3: feasible (sc=27 < 75), so exact is available.
+  # Compare MC to exact to validate the log-quadratic interpolation.
+  char <- rep(c("0", "1", "2"), c(5, 5, 5))
+
+  info_exact <- StepInformation(char, approx = "exact")
+
+  set.seed(5072)
+  info_mc <- StepInformation(char, approx = "mc", n_mc = 50000L)
+
+  common <- intersect(names(info_exact), names(info_mc))
+  expect_true(length(common) >= 1L)
+
+  # MC should agree with exact within 2 bits at every step count
+  diffs <- abs(info_mc[common] - info_exact[common])
+  expect_true(all(diffs <= 2),
+              label = paste("max MC-exact diff:", round(max(diffs), 3), "bits"))
+
+  # IC(0) should be close: exact P(s_min) is the same in both
+  expect_equal(unname(info_mc[1L]), unname(info_exact[1L]),
+               tolerance = 0.5)
+})
+
+test_that("log-quadratic interpolation produces monotone IC", {
+  # Infeasible 3-state: (13,13,12), n=38. MC must produce monotonically
+  # decreasing IC (non-increasing).
+  set.seed(2849)
+  char <- rep(c("0", "1", "2"), c(13, 13, 12))
+  info <- StepInformation(char, n_mc = 10000L)
+
+  expect_true(length(info) >= 1L)
+  expect_true(all(info >= 0))
+  expect_true(all(diff(info) <= sqrt(.Machine[["double.eps"]])))
+  # First entry has positive information
+  expect_true(info[1L] > 0)
 })

@@ -47,11 +47,12 @@
 #' @param dataset dataset of class \code{phyDat}
 #' @param approx Character string controlling how profile information amounts
 #'   are computed for multi-state characters with many tips.
-#'   `"auto"` (default) reduces characters exceeding feasibility thresholds to
-#'   binary; `"exact"` always uses the exact Maddison & Slatkin calculation
-#'   (slow for large matrices); `"mc"` uses Monte Carlo sampling.
-#' @param n_mc Integer; number of Monte Carlo samples when `approx = "mc"`.
-#'   Default 5000.
+#'   `"auto"` (default) and `"mc"` use a Monte Carlo approximation with
+#'   log-quadratic tail interpolation, preserving the full multi-state
+#'   character; `"exact"` always uses the exact Maddison & Slatkin calculation
+#'   (slow for large matrices).
+#' @param n_mc Integer; number of Monte Carlo samples for the MC
+#'   approximation.  Default 50 000.
 #'
 #' @return An object of class `phyDat`, with additional attributes.
 #' `PrepareDataProfile` adds the attributes:
@@ -81,7 +82,7 @@
 #' @family profile parsimony functions
 #' @encoding UTF-8
 #' @export
-PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 5000L) {
+PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 50000L) {
   if ("info.amounts" %fin% names(attributes(dataset))) {
     # Already prepared
     return(dataset)
@@ -131,7 +132,6 @@ PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 5000L) {
   # --- Strip singletons and cap to 5 informative states per pattern ---
   maxInformative <- 0L
   cappedAny <- FALSE
-  reducedAny <- FALSE
   
   for (j in seq_len(ncol(mataset))) {
     col <- mataset[, j]
@@ -160,21 +160,10 @@ PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 5000L) {
       informative <- tab > 1L
     }
     
-    # MaddisonSlatkin is infeasible for some multi-state chars.
-    # Check the partition-aware split_count, not just k and n, so that
-    # skewed real-world distributions (one dominant state) are handled
-    # exactly even at large n where a balanced partition would blow up.
-    if (nInf >= 3L && !identical(approx, "mc")) {
-      sc <- .MSSplitCount(as.integer(tab[informative]))
-      if (sc > .MS_SC_THRESHOLD[min(nInf, 5L)] && !identical(approx, "exact")) {
-        sortedInf <- sort(tab[informative], decreasing = TRUE)
-        toRemove <- as.integer(names(sortedInf)[3:length(sortedInf)])
-        mataset[mataset[, j] %in% toRemove, j] <- qmLevel[1]
-        nInf <- 2L
-        reducedAny <- TRUE
-      }
-    }
-    
+    # Infeasible multi-state characters are handled in StepInformation()
+    # via MC approximation (preserving all states) rather than reducing
+    # the data matrix here.
+
     maxInformative <- max(maxInformative, nInf)
   }
   
@@ -182,10 +171,7 @@ PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 5000L) {
     warning("More than 5 informative tokens in some characters; ",
             "keeping 5 most frequent.")
   }
-  if (reducedAny) {
-    warning("Multi-state characters reduced to 2 most frequent states for ",
-            "profile parsimony feasibility.")
-  }
+
   
   if (maxInformative < 2L) {
     cli_alert("No informative characters in `dataset`.")

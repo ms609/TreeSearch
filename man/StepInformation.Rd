@@ -8,7 +8,7 @@ StepInformation(
   char,
   ambiguousTokens = c("-", "?"),
   approx = "auto",
-  n_mc = 5000L
+  n_mc = 50000L
 )
 }
 \arguments{
@@ -18,14 +18,14 @@ StepInformation(
 the ambiguous token (\verb{?}).}
 
 \item{approx}{Character string controlling the fallback for infeasible
-multi-state characters: \code{"auto"} (default) reduces to the 2 most frequent
-tokens; \code{"mc"} uses a Monte Carlo approximation that preserves the full
-multi-state character (see Details); \code{"exact"} forces exact computation
-regardless of cost (may be very slow for large characters).}
+multi-state characters: \code{"auto"} (default) and \code{"mc"} use a Monte Carlo
+approximation that preserves the full multi-state character (see Details);
+\code{"exact"} forces exact computation regardless of cost (may be very slow
+for large characters).}
 
-\item{n_mc}{Integer.  Number of random trees used by the \code{"mc"} approximation.
+\item{n_mc}{Integer.  Number of random trees used by the MC approximation.
 Larger values improve accuracy but increase computation time.
-Default: 5000.}
+Default: 50 000.}
 }
 \value{
 \code{StepInformation()} returns a numeric vector detailing the amount
@@ -54,13 +54,17 @@ frequent tokens (with a warning).
 
 When the Maddison & Slatkin computation would be infeasible (exponential
 in the number of tips for a given number of tokens), behaviour depends on
-the \code{approx} argument.  With \code{"auto"} (default), infeasible characters are
-reduced to their 2 most frequent tokens and scored using the faster Carter
-formula.  This occurs for 3-state characters with more than 25 informative
-tips, 4-state characters with more than 18 tips, and 5-state characters with
-more than 12 tips.  With \code{"mc"}, the MC-calibrated approximation is used
-instead: the step-count distribution is estimated from a random sample of
-trees, anchored at the exact minimum-steps probability.
+the \code{approx} argument.  With \code{"auto"} (default) or \code{"mc"}, a Monte Carlo
+approximation preserves the full multi-state character: the exact
+minimum-steps probability is computed analytically, random trees provide the
+distribution body, and a log-quadratic interpolation bridges the gap between
+the two (see Details).
+The exact feasibility threshold depends on the partition shape
+(balanced partitions are harder); roughly, 3-state characters
+beyond ~27 tips, 4-state beyond ~13 tips, and 5-state beyond
+~9 tips trigger the approximation.
+With \code{"exact"}, the full Maddison & Slatkin recursion is forced regardless
+of cost (may be very slow for large characters).
 }
 \examples{
 character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))

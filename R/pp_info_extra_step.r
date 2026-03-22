@@ -17,26 +17,29 @@
 #'
 #' When the Maddison & Slatkin computation would be infeasible (exponential
 #' in the number of tips for a given number of tokens), behaviour depends on
-#' the `approx` argument.  With `"auto"` (default), infeasible characters are
-#' reduced to their 2 most frequent tokens and scored using the faster Carter
-#' formula.  The exact threshold depends on the partition shape
+#' the `approx` argument.  With `"auto"` (default) or `"mc"`, a Monte Carlo
+#' approximation preserves the full multi-state character: the exact
+#' minimum-steps probability is computed analytically, random trees provide the
+#' distribution body, and a log-quadratic interpolation bridges the gap between
+#' the two (see Details).
+#' The exact feasibility threshold depends on the partition shape
 #' (balanced partitions are harder); roughly, 3-state characters
 #' beyond ~27 tips, 4-state beyond ~13 tips, and 5-state beyond
-#' ~9 tips will fall back.  With `"mc"`, the MC-calibrated approximation is used
-#' instead: the step-count distribution is estimated from a random sample of
-#' trees, anchored at the exact minimum-steps probability.
+#' ~9 tips trigger the approximation.
+#' With `"exact"`, the full Maddison & Slatkin recursion is forced regardless
+#' of cost (may be very slow for large characters).
 #'
 #' @param char Vector of tokens listing states for the character in question.
 #' @param ambiguousTokens Vector specifying which tokens, if any, correspond to
 #' the ambiguous token (`?`).
 #' @param approx Character string controlling the fallback for infeasible
-#'   multi-state characters: `"auto"` (default) reduces to the 2 most frequent
-#'   tokens; `"mc"` uses a Monte Carlo approximation that preserves the full
-#'   multi-state character (see Details); `"exact"` forces exact computation
-#'   regardless of cost (may be very slow for large characters).
-#' @param n_mc Integer.  Number of random trees used by the `"mc"` approximation.
+#'   multi-state characters: `"auto"` (default) and `"mc"` use a Monte Carlo
+#'   approximation that preserves the full multi-state character (see Details);
+#'   `"exact"` forces exact computation regardless of cost (may be very slow
+#'   for large characters).
+#' @param n_mc Integer.  Number of random trees used by the MC approximation.
 #'   Larger values improve accuracy but increase computation time.
-#'   Default: 5000.
+#'   Default: 50 000.
 #' 
 #' @return `StepInformation()` returns a numeric vector detailing the amount
 #' of phylogenetic information (in bits) associated with the character when
@@ -56,7 +59,7 @@
 #' @family profile parsimony functions
 #' @export
 StepInformation <- function (char, ambiguousTokens = c("-", "?"),
-                             approx = "auto", n_mc = 5000L) {
+                             approx = "auto", n_mc = 50000L) {
   NIL <- c("0" = 0)
   char <- char[!char %fin% ambiguousTokens]
   if (length(char) == 0) {
@@ -93,20 +96,9 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
   infeasible <- k >= 3L &&
     .MSSplitCount(split) > .MS_SC_THRESHOLD[k]
   
-  if (infeasible && identical(approx, "mc")) {
-    # MC-calibrated normal approximation: preserves multi-state character
-    return(.ApproxStepInformation(split, n_mc = n_mc, nSingletons = nSingletons))
-  }
-  
   if (infeasible && !identical(approx, "exact")) {
-    warning(
-      "Exact multi-state profile computation infeasible for ",
-      k, "-state character with ", nTips, " tips; ",
-      "reducing to 2 most frequent tokens."
-    )
-    split <- split[seq_len(2L)]
-    k <- 2L
-    nTips <- sum(split)
+    return(.ApproxStepInformation(split, n_mc = n_mc,
+                                  nSingletons = nSingletons))
   }
   
   if (k == 2L) {
@@ -148,7 +140,7 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
   ret
 }
 
-# MC-calibrated normal approximation for infeasible multi-state characters.
+# MC approximation with log-quadratic tail interpolation.
 # Returns a named IC vector matching the format of StepInformation().
 #
 # @param split Integer vector of informative token frequencies (sorted
@@ -157,65 +149,154 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
 # @param nSingletons Integer. Number of singleton tokens (for step offset).
 # @return Named numeric vector of IC (bits) by step count.
 # @keywords internal
-.ApproxStepInformation <- function(split, n_mc = 5000L, nSingletons = 0L) {
+.ApproxStepInformation <- function(split, n_mc = 50000L, nSingletons = 0L) {
   k <- length(split)
   n <- sum(split)
   s_min <- k - 1L
   s_max <- n - 1L
-  
+
   # 1. Exact P(s_min) via product-of-double-factorials formula O(k)
   log_p_min <- log(NUnrootedMult(split)) - log(NUnrooted(n))
-  
-  # 2. MC: sample random trees and score this character with Fitch parsimony
+
+  # 2. MC: sample random trees and score with Fitch parsimony
   labels  <- paste0("t", seq_len(n))
   char_vec <- rep(seq_len(k) - 1L, split)
   names(char_vec) <- labels
   dat <- MatrixToPhyDat(matrix(char_vec, ncol = 1L,
                                 dimnames = list(labels, "c1")))
-  
+
   trees <- lapply(seq_len(n_mc), function(i) {
     TreeTools::RootTree(RandomTree(labels), 1L)
   })
   class(trees) <- "multiPhylo"
   mc_scores <- TreeLength(trees, dat)
-  
-  # 3. Fit normal to MC body (for interpolating the near-s_min gap)
+
   mu_hat <- mean(mc_scores)
   sd_hat <- sd(mc_scores)
-  
-  # 4. Build log-probability vector for s_min..s_max
-  steps  <- s_min:s_max
-  log_p  <- numeric(length(steps))
-  
-  for (i in seq_along(steps)) {
-    s <- steps[[i]]
-    if (s == s_min) {
-      log_p[[i]] <- log_p_min
-    } else {
-      mc_count <- sum(mc_scores == s)
-      if (mc_count > 0L) {
-        log_p[[i]] <- log(mc_count / n_mc)
+
+  # 3. Tabulate MC histogram
+  mc_tab <- tabulate(mc_scores - s_min + 1L, nbins = s_max - s_min + 1L)
+  # mc_tab[i] = count at step s_min + i - 1
+
+  # 4. Find the MC body edge: lowest s with >= min_count hits
+  min_count <- 10L
+  body_bins <- which(mc_tab >= min_count)
+
+  # 5. Build log-probability vector
+  steps <- s_min:s_max
+  log_p <- rep(-Inf, length(steps))
+  log_p[1L] <- log_p_min  # exact P(s_min)
+
+  if (length(body_bins) >= 2L) {
+    s_lo_idx <- body_bins[1L]  # index into mc_tab / log_p
+    s_lo     <- s_min + s_lo_idx - 1L
+
+    # Fill MC body: all bins from s_lo onward
+    for (i in s_lo_idx:length(mc_tab)) {
+      if (mc_tab[i] > 0L) {
+        log_p[i] <- log(mc_tab[i] / n_mc)
       } else {
-        # Normal extrapolation for step counts not reached by MC
-        log_p[[i]] <- dnorm(s, mu_hat, sd_hat, log = TRUE)
+        # Right tail: normal extrapolation (negligible IC contribution)
+        log_p[i] <- dnorm(s_min + i - 1L, mu_hat, sd_hat, log = TRUE)
+      }
+    }
+
+    # 6. Log-quadratic interpolation for the gap (s_min, s_lo)
+    if (s_lo_idx > 2L) {
+      # Three anchor points: exact P(s_min), plus two lowest good MC bins
+      s_lo2_idx <- body_bins[2L]
+      x1 <- s_min
+      x2 <- s_lo
+      x3 <- s_min + s_lo2_idx - 1L
+      y1 <- log_p_min
+      y2 <- log_p[s_lo_idx]
+      y3 <- log_p[s_lo2_idx]
+
+      # Solve a + b*x + c*x^2 = y for three points
+      qfit <- .FitLogQuadratic(x1, y1, x2, y2, x3, y3)
+
+      # Sanity: c < 0 (concave) and monotonically increasing from s_min to s_lo
+      if (!is.null(qfit) && qfit[3L] < 0) {
+        gap_s <- seq.int(s_min + 1L, s_lo - 1L)
+        gap_lp <- qfit[1L] + qfit[2L] * gap_s + qfit[3L] * gap_s^2
+        # Check monotonicity
+        if (all(diff(c(log_p_min, gap_lp, log_p[s_lo_idx])) > 0)) {
+          for (j in seq_along(gap_s)) {
+            log_p[gap_s[j] - s_min + 1L] <- gap_lp[j]
+          }
+        } else {
+          # Fallback: log-linear interpolation between anchor and body edge
+          log_p <- .FillLogLinear(log_p, log_p_min, s_lo_idx)
+        }
+      } else {
+        log_p <- .FillLogLinear(log_p, log_p_min, s_lo_idx)
+      }
+    }
+    # If s_lo_idx == 2, no gap to fill (MC body starts right next to s_min)
+  } else {
+    # MC body too sparse — fall back to normal extrapolation for everything
+    for (i in 2L:length(steps)) {
+      s <- steps[i]
+      cnt <- mc_tab[i]
+      log_p[i] <- if (cnt > 0L) {
+        log(cnt / n_mc)
+      } else {
+        dnorm(s, mu_hat, sd_hat, log = TRUE)
       }
     }
   }
-  
-  # 5. Trim trailing negligible entries
+
+  # 7. Trim trailing negligible entries
   finite_idx <- which(is.finite(log_p) & log_p > -700)
   if (length(finite_idx) == 0L) {
     return(setNames(0, s_min + nSingletons))
   }
   log_p <- log_p[seq_len(max(finite_idx))]
   steps  <- steps[seq_len(max(finite_idx))]
-  
-  # 6. Cumulative IC
+
+  # 8. Cumulative IC
   ret <- -.LogCumSumExp(log_p) / log(2)
   names(ret) <- steps + nSingletons
   ret[ret < sqrt(.Machine[["double.eps"]])] <- 0
-  
+
   ret
+}
+
+# Fit log P(s) = a + b*s + c*s^2 through three points.
+# Returns c(a, b, c) or NULL if the system is singular.
+# @keywords internal
+.FitLogQuadratic <- function(x1, y1, x2, y2, x3, y3) {
+  # Solve the 3x3 system via elimination
+  # Row 2 - Row 1, Row 3 - Row 1
+  dx2 <- x2 - x1
+  dx3 <- x3 - x1
+  dy2 <- y2 - y1
+  dy3 <- y3 - y1
+  sx2 <- x2^2 - x1^2
+  sx3 <- x3^2 - x1^2
+
+  det <- dx2 * sx3 - dx3 * sx2
+  if (abs(det) < 1e-12) return(NULL)
+
+  c_coef <- (dx2 * dy3 - dx3 * dy2) / det
+  b_coef <- (dy2 - c_coef * sx2) / dx2
+  a_coef <- y1 - b_coef * x1 - c_coef * x1^2
+
+  c(a_coef, b_coef, c_coef)
+}
+
+# Log-linear interpolation: fill gap indices 2..(s_lo_idx - 1) in log_p.
+# log_p[1] must already be set to log_p_min; log_p[s_lo_idx] to the body edge.
+# Returns the modified log_p vector.
+# @keywords internal
+.FillLogLinear <- function(log_p, log_p_min, s_lo_idx) {
+  s_lo_lp <- log_p[s_lo_idx]
+  gap_len <- s_lo_idx - 1L
+  slope <- (s_lo_lp - log_p_min) / gap_len
+  for (j in 2L:(s_lo_idx - 1L)) {
+    log_p[j] <- log_p_min + slope * (j - 1L)
+  }
+  log_p
 }
 
 # Adapted from https://rpubs.com/FJRubio/LSE

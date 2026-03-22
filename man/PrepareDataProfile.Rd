@@ -6,7 +6,7 @@
 \alias{PrepareDataIW}
 \title{Prepare data for Profile Parsimony}
 \usage{
-PrepareDataProfile(dataset, approx = "auto", n_mc = 5000L)
+PrepareDataProfile(dataset, approx = "auto", n_mc = 50000L)
 
 PrepareDataIW(dataset)
 }
@@ -15,12 +15,13 @@ PrepareDataIW(dataset)
 
 \item{approx}{Character string controlling how profile information amounts
 are computed for multi-state characters with many tips.
-\code{"auto"} (default) reduces characters exceeding feasibility thresholds to
-binary; \code{"exact"} always uses the exact Maddison & Slatkin calculation
-(slow for large matrices); \code{"mc"} uses Monte Carlo sampling.}
+\code{"auto"} (default) and \code{"mc"} use a Monte Carlo approximation with
+log-quadratic tail interpolation, preserving the full multi-state
+character; \code{"exact"} always uses the exact Maddison & Slatkin calculation
+(slow for large matrices).}
 
-\item{n_mc}{Integer; number of Monte Carlo samples when \code{approx = "mc"}.
-Default 5000.}
+\item{n_mc}{Integer; number of Monte Carlo samples for the MC
+approximation.  Default 50 000.}
 }
 \value{
 An object of class \code{phyDat}, with additional attributes.
