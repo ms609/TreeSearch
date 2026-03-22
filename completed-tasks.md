@@ -194,3 +194,13 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | S-PROF | Threshold comment update + fpl_d/fpl_u batching in LogPVec | A | ~15% further speedup; k=3:27/k=4:19/k=5:13 new thresholds |
 
 | T-154 | OAFlatMap for logB_cache/logPVec_cache in SolverT | A | Probe-layer OA map eliminates node ptr-chase; deque backing for logPVec stable refs; fixes latent LogB() dangling-ref UB; bd883459. Speedup vs post-fpl-batch baseline: k=3 n=27 ~4.4×, k=4 n=19 ~3.5×, k=5 n=13 ~12×. No formal A/B build (Windows AV makes double-build ~60 min); derived from S-PROF sweep timings. |
+
+## 2026-03-22
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| — | Collapsed-region regraft merging + collapsed pool dedup | — | Goloboff (1996) approach: skip zero-length edges as clip candidates, skip interior collapsed regraft positions (boundary-only evaluation), diversity-aware pool eviction on ties, collapsed-topology pool dedup. 0% skip rate on standard morph datasets but improves pool diversity. 35b5ad99 |
+| — | Strip dead CollapsedRegions code from hot path | — | region_id/n_regions never read by consumers; all callers now use compute_collapsed_flags() directly. a16373a7 |
+| — | Collapsed dedup in parallel search path | — | ThreadSafePool::add_collapsed() + worker thread + fuse_round updated. 3648beb9 |
+| — | Cross-replicate consensus constraint tightening | — | Opt-in consensusConstrain=TRUE: after ≥5 reps, lock pool strict consensus as topological constraints. Clears on new best score. build_constraint_from_bitsets(), extract_consensus_splits(). 09f69915 |
+| — | Strategy preset tuning | — | default: wagnerStarts=3, sprFirst=TRUE, adaptiveLevel=TRUE. thorough: sprFirst=TRUE. Bundled in 09f69915 |
+EOF 2>&1

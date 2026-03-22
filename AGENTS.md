@@ -416,7 +416,7 @@ each replicate based on the cumulative hit rate:
 - hit_rate < 0.15 → 1.5× (hard landscape)
 - else → 1.0×
 
-### TBR zero-length clip skipping (collapsed flags)
+### TBR zero-length clip skipping + regraft merging (collapsed flags)
 
 `compute_collapsed_flags()` (`ts_collapsed.h/.cpp`) identifies edges where
 clipping provably cannot improve score. Checks 5 conditions: (1) zero
@@ -426,6 +426,21 @@ preservation (`prelim[sibling] == prelim[parent]`), (4) down2 preservation
 and NA-aware scoring. Integrated into TBR, SPR, and drift search.
 Disabled during MPT enumeration (equal-score topologies may exist).
 Recomputed after every accepted move.
+
+**Regraft merging** (Goloboff 1996): within a collapsed region (connected
+set of nodes linked by zero-length edges), all regraft positions yield the
+same full score. Only boundary edges (entering the region) are evaluated;
+interior collapsed edges are skipped via `if (collapsed[below]) continue`.
+TBR, SPR, and drift all use this. The `CollapsedRegions` struct exists in
+the header but callers use `compute_collapsed_flags()` directly (the
+`region_id` field is unused — only the boolean flag array matters).
+
+**Collapsed-topology pool dedup**: `compute_collapsed_splits()` in
+`ts_splits.cpp` produces the split set excluding collapsed edges. Two
+binary trees differing only in zero-length resolutions produce the same
+collapsed split set → treated as duplicates by `TreePool::add_collapsed()`.
+Both serial (`driven_search`) and parallel (`ThreadSafePool`) paths use
+collapsed dedup.
 
 **Benchmark results** (2026-03-22, 4 standard datasets, 3 seeds each):
 Skip rate = 0% on all datasets (Vinther2008 23t, Agnarsson2004 62t,
@@ -764,6 +779,15 @@ Ranked by priority:
    because near-optimal trees have few zero-length edges. Negligible
    overhead. Benefit expected primarily on sparse/synthetic data.
    Full polytomy search remains post-2.0.0.
+5. ~~Collapsed-region regraft merging + pool dedup~~ — **Done**: within
+   collapsed regions (connected zero-length edges), only the boundary
+   regraft position is evaluated (Goloboff 1996). Collapsed-topology
+   pool dedup treats trees differing only in zero-length resolutions as
+   duplicates. Parallel path also uses collapsed dedup. Diversity-aware
+   pool eviction selects most-similar entry on ties.
+6. ~~Strategy preset tuning~~ — **Done**: `default` preset now uses
+   `wagnerStarts=3`, `sprFirst=TRUE`, `adaptiveLevel=TRUE`; `thorough`
+   preset uses `sprFirst=TRUE`.
 
 ## Benchmarks and profiling
 
