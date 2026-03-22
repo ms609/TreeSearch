@@ -9,6 +9,7 @@
 #include <cstring>
 #include <array>
 #include <deque>
+#include <chrono>
 
 using namespace Rcpp;
 
@@ -909,6 +910,13 @@ class SolverT {
 
   // Global s_max for this solver instance (set at first run() call)
   int s_max_global = 0;
+
+  // Time budget: abort if computation exceeds this many seconds.
+  // Legitimate computations complete in <2s; blowups take >100s.
+  static constexpr double TIME_BUDGET_S = 2.0;
+  std::chrono::steady_clock::time_point start_time;
+  bool budget_exceeded = false;
+  std::vector<double> bailout_vec;  // filled with NEG_INF at c_size
     
     // Specialized ValidDraws cache
     struct DrawPairT {
@@ -956,6 +964,7 @@ class SolverT {
     
     void recDraws(const std::vector<int>& leaves, std::vector<int>& drawn, 
                   int idx, int n, int half, int curSum, FixedDrawsT& out) {
+      if (budget_exceeded) return;
       if (idx == (int)leaves.size()) {
         if (curSum == 0 || curSum > half) return;
         if (curSum * 2 == n) {
@@ -1017,6 +1026,14 @@ class SolverT {
     }
     
     double LogB(int token0, const KeyType& leaves) {
+      if (budget_exceeded) return NEG_INF;
+      {
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration<double>(now - start_time).count() > TIME_BUDGET_S) {
+          budget_exceeded = true;
+          return NEG_INF;
+        }
+      }
       const int n = leaves.sum();
       
       if (n == 1) {
@@ -1048,7 +1065,7 @@ class SolverT {
       const auto& drawpairs = getValidDraws(leaves);
       LSEAccumulator outerAcc;
 
-      for (uint8_t i = 0; i < drawpairs.count; ++i) {
+      for (uint8_t i = 0; i < drawpairs.count && !budget_exceeded; ++i) {
         const auto& dp = drawpairs.draws[i];
         const KeyType& drawn = dp.drawn;
         const KeyType& undrawn = dp.undrawn;
@@ -1059,10 +1076,12 @@ class SolverT {
 
         LSEAccumulator innerAcc;
         for (const auto& pr : pairs.noStep[token0]) {
+          if (budget_exceeded) break;
           double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
           innerAcc.add(val);
         }
         for (const auto& pr : pairs.yesStep[token0]) {
+          if (budget_exceeded) break;
           double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
           innerAcc.add(val);
         }
@@ -1079,11 +1098,12 @@ class SolverT {
     
     // Log-space convolution: C[s] = LogSumExp_r( A[r] + B[s-r] ).
     // Writes into caller-provided buffer C (must be pre-filled with NEG_INF).
-    static void logconv(
+    void logconv(
         const std::vector<double>& A, int a_lo, int a_hi,
         const std::vector<double>& B, int b_lo, int b_hi,
         double* C, int c_size) {
       for (int r = a_lo; r <= a_hi; ++r) {
+        if (budget_exceeded) return;
         const double va = A[r];
         if (!(va > NEG_INF)) continue;
         for (int q = b_lo; q <= b_hi; ++q) {
@@ -1102,10 +1122,19 @@ class SolverT {
     // The vector is indexed from 0; entries before the min possible step
     // count are NEG_INF.
     const std::vector<double>& LogPVec(const KeyType& leaves, int token0) {
-      static const std::vector<double> empty_neg_inf;
       const int n = leaves.sum();
       const int s_max = s_max_global;
       const int c_size = s_max + 1;
+
+      // Budget guard: check wall clock every call (~20ns overhead)
+      if (budget_exceeded) return bailout_vec;
+      {
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration<double>(now - start_time).count() > TIME_BUDGET_S) {
+          budget_exceeded = true;
+          return bailout_vec;
+        }
+      }
 
       // --- Base case n == 1 ---
       if (n == 1) {
@@ -1169,7 +1198,7 @@ class SolverT {
 
       const auto& drawpairs = getValidDraws(leaves);
 
-      for (uint8_t i = 0; i < drawpairs.count; ++i) {
+      for (uint8_t i = 0; i < drawpairs.count && !budget_exceeded; ++i) {
         const auto& dp = drawpairs.draws[i];
         const KeyType& drawn   = dp.drawn;
         const KeyType& undrawn = dp.undrawn;
@@ -1203,6 +1232,7 @@ class SolverT {
         // noStep pairs
         std::fill(noStepVec.begin(), noStepVec.end(), NEG_INF);
         for (const auto& pr : pairs.noStep[token0]) {
+          if (budget_exceeded) break;
           const std::vector<double>& A = LogPVec(drawn,   pr.a);
           const std::vector<double>& B = LogPVec(undrawn, pr.b);
           double logBa = fpl_d ? (*fpl_d)[pr.a] : LogB(pr.a, drawn);
@@ -1221,6 +1251,7 @@ class SolverT {
         std::fill(yesStepVec.begin(), yesStepVec.end(), NEG_INF);
         if (!pairs.yesStep[token0].empty()) {
           for (const auto& pr : pairs.yesStep[token0]) {
+            if (budget_exceeded) break;
             const std::vector<double>& A = LogPVec(drawn,   pr.a);
             const std::vector<double>& B = LogPVec(undrawn, pr.b);
             double logBa = fpl_d ? (*fpl_d)[pr.a] : LogB(pr.a, drawn);
@@ -1278,12 +1309,24 @@ public:
     int s_max = *std::max_element(steps_vec.begin(), steps_vec.end());
     s_max_global = s_max;
     const int c_size = s_max + 1;
+    bailout_vec.assign(c_size, NEG_INF);
+    start_time = std::chrono::steady_clock::now();
+    budget_exceeded = false;
 
     // Compute LogB and LogPVec for each root token
     // LogPVec will recursively fill the cache for all sub-configurations
     std::vector<double> rootLogB(D.nStates);
     for (int token0 = 0; token0 < D.nStates; ++token0) {
       rootLogB[token0] = LogB(token0, states);
+      if (budget_exceeded) break;
+    }
+
+    if (budget_exceeded) {
+      Rcpp::warning("MaddisonSlatkin: computation exceeded %.0f s time budget; "
+                    "results will be NA. Consider reducing to binary.",
+                    TIME_BUDGET_S);
+      for (int i = 0; i < (int)steps_vec.size(); ++i) out[i] = NA_REAL;
+      return;
     }
 
     // Combine: log P(s steps | character) = LogSumExp_token(LogB(token) + LogPVec(token)[s])
@@ -1292,10 +1335,19 @@ public:
       const double lb = rootLogB[token0];
       if (!(lb > NEG_INF)) continue;
       const std::vector<double>& pv = LogPVec(states, token0);
+      if (budget_exceeded) break;
       for (int s = 0; s < c_size; ++s) {
         if (!(pv[s] > NEG_INF)) continue;
         lse_update(combined[s], lb + pv[s]);
       }
+    }
+
+    if (budget_exceeded) {
+      Rcpp::warning("MaddisonSlatkin: computation exceeded %.0f s time budget; "
+                    "results will be NA. Consider reducing to binary.",
+                    TIME_BUDGET_S);
+      for (int i = 0; i < (int)steps_vec.size(); ++i) out[i] = NA_REAL;
+      return;
     }
 
     for (int i = 0; i < (int)steps_vec.size(); ++i) {
