@@ -36,8 +36,8 @@
 |----|-----|--------|--------|-------------|-------|
 | T-177 | P1 | ASSIGNED (Human+AI) | — | **Bug fix: mid-TBR/SPR timeout.** Pass `check_timeout` callback into `tbr_search()` and `spr_search()` so they can bail out mid-pass. At 180+ tips, a single TBR convergence takes ~13s; without mid-pass timeout, `maxSeconds` can overrun significantly. | **Implemented**, building and testing. Added `std::function<bool()>` param to `tbr_search`/`spr_search`; threaded through driven, ratchet, drift calls. 1762 Tier 2 tests pass. |
 | T-179 | P2 | OPEN | T-177, T-178 | **Large-tree strategy preset.** Add a preset for ≥120 tips (or ≥100 tips with ≥200 patterns): NNI→SPR→TBR escalation, scaled ratchet/drift cycles, tuned sector sizes. Benchmark on 180-taxon dataset. | May need `nniFirst` param in `SearchControl()`. |
-| T-180 | P2 | OPEN | — | **Warm-start benchmark infrastructure.** Create benchmark mode that seeds search with a pre-computed local optimum (from a short prior search) to measure ratchet/drift escape effectiveness in isolation, separate from initial descent quality. | `start_ptr` already supported in C++. |
-| T-181 | P2 | OPEN | — | **Add 180-taxon dataset to benchmark suite.** Copy `mbank_X30754` to `inst/benchmarks/`, add to `bench_framework.R` as a "large" tier with separate timing expectations. | 180t, 425c, 374 informative patterns, 40% missing, 20% inapplicable. |
+
+
 | T-182 | P3 | OPEN | — | **Adaptive ratchet perturbation probability.** Start aggressive (~40%) and taper by hit rate as pool stabilizes. Extend `adaptive_level` infrastructure to also scale `perturb_prob`. Risk: premature convergence if tapering too fast. | Also consider IQ-TREE-style tree-size scaling: 50% at ≤50 tips, 5% at ≥400 tips. Two orthogonal axes: hit-rate tapering (within run) and size scaling (across datasets). |
 | T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** Use pool consensus as backbone constraint during Wagner construction for later replicates (after ≥N diverse trees). Partially randomised addition order. Concern: run independence — mitigate by only activating late. | Constraint infrastructure already exists (`consensus_constrain`). |
 
@@ -69,4 +69,4 @@
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-19 by B (focus 7: Shiny module wiring). |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-19 by A (round 3). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-19 by Agent A (round 8). |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-23 by G (round 9). |

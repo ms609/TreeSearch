@@ -24,6 +24,8 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-184 | maxTime → maxSeconds alias | G | Already implemented in commit fafd5d0e. Intercepts maxTime before Morphy detection, maps to maxSeconds with .Deprecated() warning, removes from dots. Removed maxTime from .morphyParams list. Verified working. |
 | T-163 | Search confidence composite diagnostic | G | Replaced exp(-K) with tighter binomial bound (1-K/R)^R, falling back to exp(-K) when K==R. Added optional nTopologies/lastImprovedRep params (wired by T-164). Ruggedness warning when K/R < 0.3 and R >= 5. Limited independence flag when nTopologies==1. 58 search module tests pass. Commit 2d2115cb. |
 | T-164 | Wire pool stats to Shiny search confidence | G | Added `count_at_best()` to TreePool. Initialized new DrivenResult fields in parallel path. Wired to Shiny: nTopologies=length(allTrees), lastImprovedRep from search attrs, reset on weighting/concavity/dataset change. 58 module tests pass. Commit 16c02dc7. |
+| T-181 | Add 180-taxon dataset to benchmark suite | G | Added mbank_X30754 (180t, 425c, 11 states, 40% missing, 20.5% inapp) as large-tree benchmark tier. `LARGE_BENCHMARK_NAMES`, `load_large_benchmark_datasets()`, `benchmark_large()`. Commit adec48b6. |
+| T-180 | Warm-start benchmark infrastructure | G | `bench_warmstart.R`: `compute_warmstart_tree()` (sprint→TBR optimum), `warmstart_run()` (single rep from warm start), `warmstart_benchmark()` (grid), `warmstart_summary()`. Isolates ratchet/drift escape from initial descent. Verified: Vinther2008 sprint→80, warm-start→79. Commit 13a019e3. |
 
 ---
 
