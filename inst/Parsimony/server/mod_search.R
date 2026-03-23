@@ -799,11 +799,11 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       r$searchWithout <- input$searchWithout
     }, ignoreInit = TRUE)
 
-    observeEvent(input$go, StartSearch(), ignoreInit = TRUE)
+    observeEvent(input$go, StartSearch())
     observeEvent(input$modalGo, {
       removeModal()
       StartSearch()
-    }, ignoreInit = TRUE)
+    })
 
     # Cancel button: create the signal file so the C++ engine stops
     observeEvent(input$cancel, {
@@ -820,7 +820,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           "Stopping \u2014 waiting for current search phase to finish\u2026"
         ))
       }
-    }, ignoreInit = TRUE)
+    })
 
     # Poll progress file during search to update notification
     observe({
