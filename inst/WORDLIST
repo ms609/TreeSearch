@@ -67,8 +67,8 @@ HODKINSON
 HOFREITER
 HSJ
 Halkieria
-IW
 Homoplasy
+IW
 Insecta
 JIA
 Jamoytius
@@ -185,6 +185,7 @@ bipartitions
 bootstrapper
 bristleworm
 cdef
+cdot
 cf
 cla
 codecov
@@ -214,8 +215,8 @@ maximin
 memoization
 morphy
 morphydefs
-multifurcating
 multiPhylo
+multifurcating
 noninvasive
 nontherian
 osteichthyan
