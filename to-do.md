@@ -57,7 +57,7 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 
-| T-164 | P2 | ASSIGNED (G) | T-163 | **Search confidence: wire pool stats** Ensure `ts_driven_search` return list includes (a) number of distinct topologies in pool at best score, (b) replicate index of last score improvement. Add to Shiny search module's result handling. | May need small C++ addition to return value |
+
 
 
 

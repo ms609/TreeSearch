@@ -23,6 +23,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-162 | XPIWE Shiny citation | G | Added Goloboff 2014 citation to global.R and references panel (Tree Search section). Always shown since XPIWE is default. Commit a553a325. |
 | T-184 | maxTime → maxSeconds alias | G | Already implemented in commit fafd5d0e. Intercepts maxTime before Morphy detection, maps to maxSeconds with .Deprecated() warning, removes from dots. Removed maxTime from .morphyParams list. Verified working. |
 | T-163 | Search confidence composite diagnostic | G | Replaced exp(-K) with tighter binomial bound (1-K/R)^R, falling back to exp(-K) when K==R. Added optional nTopologies/lastImprovedRep params (wired by T-164). Ruggedness warning when K/R < 0.3 and R >= 5. Limited independence flag when nTopologies==1. 58 search module tests pass. Commit 2d2115cb. |
+| T-164 | Wire pool stats to Shiny search confidence | G | Added `count_at_best()` to TreePool. Initialized new DrivenResult fields in parallel path. Wired to Shiny: nTopologies=length(allTrees), lastImprovedRep from search attrs, reset on weighting/concavity/dataset change. 58 module tests pass. Commit 16c02dc7. |
 
 ---
 
@@ -235,3 +236,4 @@ EOF 2>&1
 ## 2026-03-23
 | T-188 | Biased Wagner addition — API integration | Human+AI | `wagnerBias` (0=random, 1=Goloboff, 2=entropy) + `wagnerBiasTemp` in `SearchControl()` and `ts_driven_search`. First Wagner start uses biased order; remaining starts use random for diversity. Goloboff 2014 §3.3. Benchmarked: 80% Wagner→TBR gap reduction at 174t; marginal on ≤88t. |
 | T-189 | Outer search cycle loop | Human+AI | `outerCycles` param in `SearchControl()`. Wraps [XSS+RSS+CSS → Ratchet → NNI-perturb → Drift → TBR] in outer loop, distributing cycles evenly. Matches TNT xmult pattern (Goloboff 1999 §2.3). `thorough` preset defaults to `outerCycles=2`. Backward-compatible: default=1. |
+| T-184 | `maxTime` → `maxSeconds` alias | Human+AI | Already implemented in b8e56e2b. `maxTime` intercepted before `.morphyParams` check, mapped to `maxSeconds` with deprecation warning, routed to C++ engine. Verified: timings attribute present, Morphy() not called. |
