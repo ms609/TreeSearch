@@ -526,18 +526,17 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       html <- if (!is.null(confText)) {
         nS <- r$searchCount
         tooltip <- paste0(
-          "Estimated as exp(-K) where K = ",
-          r$searchTotalHits,
+          "Estimated as (1 - K/R)^R where K = ",
+          r$searchTotalHits, " and R = ", r$searchTotalReps,
           " (runs hitting best score",
           if (!is.null(nS) && nS > 1L)
             paste0(" across ", nS, " searches")
           else
             "",
-          "). Assumes independent runs. ",
+          "). Falls back to exp(-K) when K = R. ",
+          "Assumes independent runs. ",
           "'Maximum independent runs' limits each individual search; ",
-          "this tally accumulates across all continued searches. ",
-          "The config dialog shows a theoretical worst-case; ",
-          "this uses actual search results."
+          "this tally accumulates across all continued searches."
         )
         paste0(msg, "<br><small style='color:#666' title='",
                htmltools::htmlEscape(tooltip, attribute = TRUE),
