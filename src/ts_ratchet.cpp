@@ -134,7 +134,8 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
   search_params.max_hits = params.max_hits;
   search_params.tabu_size = params.tabu_size;
 
-  TBRResult initial = tbr_search(tree, ds, search_params, cd);
+  TBRResult initial = tbr_search(tree, ds, search_params, cd,
+                                   nullptr, nullptr, check_timeout);
 
   double best_score = initial.best_score;
   int total_moves = initial.n_accepted;
@@ -182,12 +183,14 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
     }
 
     // 2. Short TBR on perturbed landscape
-    TBRResult perturb_result = tbr_search(tree, ds, perturb_params, cd);
+    TBRResult perturb_result = tbr_search(tree, ds, perturb_params, cd,
+                                           nullptr, nullptr, check_timeout);
     total_moves += perturb_result.n_accepted;
 
     // 3. Restore original weights, full TBR to new local optimum
     restore_perturb_state(ds, snap);
-    TBRResult search_result = tbr_search(tree, ds, search_params, cd);
+    TBRResult search_result = tbr_search(tree, ds, search_params, cd,
+                                          nullptr, nullptr, check_timeout);
     total_moves += search_result.n_accepted;
 
     if (search_result.best_score < best_score) {

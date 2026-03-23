@@ -14,6 +14,7 @@
 #include "ts_tree.h"
 #include "ts_constraint.h"
 #include "ts_pool.h"
+#include <functional>
 
 namespace ts {
 
@@ -37,11 +38,14 @@ struct TBRResult {
 // If `cd` is non-null and active, constraint-violating moves are skipped.
 // If `sector_mask` is non-null, only clips and regrafts within the sector
 // are considered (CSS = Constrained Sectorial Search).
+// If `check_timeout` is non-null, it is polled periodically (every n_tip
+// clips) and the search returns early if it returns true.
 TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      const TBRParams& params,
                      ConstraintData* cd = nullptr,
                      const std::vector<bool>* sector_mask = nullptr,
-                     TreePool* collect_pool = nullptr);
+                     TreePool* collect_pool = nullptr,
+                     std::function<bool()> check_timeout = nullptr);
 
 } // namespace ts
 

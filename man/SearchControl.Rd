@@ -9,14 +9,14 @@ SearchControl(
   sprFirst = FALSE,
   tabuSize = 100L,
   wagnerStarts = 1L,
-  ratchetCycles = 10L,
-  ratchetPerturbProb = 0.25,
+  ratchetCycles = 5L,
+  ratchetPerturbProb = 0.04,
   ratchetPerturbMode = 0L,
-  ratchetPerturbMaxMoves = 5L,
+  ratchetPerturbMaxMoves = 0L,
   ratchetAdaptive = FALSE,
-  driftCycles = 4L,
-  driftAfdLimit = 5L,
-  driftRfdLimit = 0.15,
+  driftCycles = 2L,
+  driftAfdLimit = 3L,
+  driftRfdLimit = 0.1,
   xssRounds = 3L,
   xssPartitions = 4L,
   rssRounds = 1L,
@@ -27,10 +27,7 @@ SearchControl(
   fuseInterval = 3L,
   fuseAcceptEqual = FALSE,
   poolMaxSize = 100L,
-  poolSuboptimal = 0,
-  consensusStableReps = 0L,
-  adaptiveLevel = FALSE,
-  consensusConstrain = FALSE
+  poolSuboptimal = 0
 )
 }
 \arguments{
@@ -87,6 +84,10 @@ sizes for sectorial search.}
 
 \item{poolSuboptimal}{Numeric; retain trees that are this many steps
 worse than the best tree.  0 (default) keeps only optimal trees.}
+
+\item{nniFirst}{Logical; run an NNI pass before SPR/TBR in each replicate?
+At small tree sizes (≤88 tips) overhead is negligible; at ≥100 tips
+this significantly accelerates the initial descent from the Wagner tree.}
 
 \item{consensusStableReps}{Integer; stop when the strict consensus of
 best-score pool trees has been unchanged for this many consecutive

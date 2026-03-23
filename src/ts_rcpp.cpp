@@ -1209,6 +1209,7 @@ List ts_driven_search(
     int nThreads = 1,
     Nullable<IntegerMatrix> startEdge = R_NilValue,
     bool sprFirst = false,
+    bool nniFirst = true,
     Nullable<List> hierarchyBlocks = R_NilValue,
     Nullable<IntegerMatrix> hsjTipLabels = R_NilValue,
     double hsjAlpha = 1.0,
@@ -1216,7 +1217,9 @@ List ts_driven_search(
     Nullable<List> xformChars = R_NilValue,
     int consensusStableReps = 0,
     bool adaptiveLevel = false,
-    bool consensusConstrain = false)
+    bool consensusConstrain = false,
+    int nniPerturbCycles = 0,
+    double nniPerturbFraction = 0.5)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity, infoAmounts);
@@ -1346,10 +1349,13 @@ List ts_driven_search(
   params.verbosity = verbosity;
   params.tabu_size = tabuSize;
   params.spr_first = sprFirst;
+  params.nni_first = nniFirst;
   params.wagner_starts = wagnerStarts;
   params.consensus_stable_reps = consensusStableReps;
   params.adaptive_level = adaptiveLevel;
   params.consensus_constrain = consensusConstrain;
+  params.nni_perturb_cycles = nniPerturbCycles;
+  params.nni_perturb_fraction = nniPerturbFraction;
 
   // Starting tree edge matrix (optional)
   if (startEdge.isNotNull()) {
@@ -1392,11 +1398,13 @@ List ts_driven_search(
   // Build timings as a NumericVector (lighter than List)
   NumericVector timings = NumericVector::create(
     Named("wagner_ms")    = result.timings.wagner_ms,
+    Named("nni_ms")       = result.timings.nni_ms,
     Named("tbr_ms")       = result.timings.tbr_ms,
     Named("xss_ms")       = result.timings.xss_ms,
     Named("rss_ms")       = result.timings.rss_ms,
     Named("css_ms")       = result.timings.css_ms,
     Named("ratchet_ms")   = result.timings.ratchet_ms,
+    Named("nni_perturb_ms") = result.timings.nni_perturb_ms,
     Named("drift_ms")     = result.timings.drift_ms,
     Named("final_tbr_ms") = result.timings.final_tbr_ms,
     Named("fuse_ms")      = result.timings.fuse_ms
@@ -2314,3 +2322,5 @@ List ts_sankoff_test(
     Named("per_char") = per_char,
     Named("optimal_states") = opt_states);
 }
+
+

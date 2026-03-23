@@ -3,6 +3,7 @@
 #include "ts_search.h"
 #include "ts_tbr.h"
 #include "ts_ratchet.h"
+#include "ts_nni_perturb.h"
 #include "ts_drift.h"
 #include "ts_sector.h"
 #include "ts_fuse.h"
@@ -70,7 +71,10 @@ ReplicateResult run_single_replicate(
     return ms;
   };
 
-  // 1. Starting tree: use provided tree or build Wagner
+  // 1. Starting tree: use provided tree or build Wagner.
+  // When nni_first is true, NNI-optimize each Wagner start before
+  // selecting the best. This finds better starting basins of attraction
+  // for TBR at modest cost (NNI is O(n) per pass vs TBR's O(n²)).
   double best_wag;
   if (starting_tree) {
     result.tree = *starting_tree;
@@ -78,10 +82,18 @@ ReplicateResult run_single_replicate(
   } else {
     random_wagner_tree(result.tree, ds, cd);
     best_wag = score_tree(result.tree, ds);
+    if (params.nni_first) {
+      auto nr = nni_search(result.tree, ds, 0, check_timeout);
+      best_wag = nr.score;
+    }
     for (int ws = 1; ws < params.wagner_starts; ++ws) {
       TreeState trial;
       random_wagner_tree(trial, ds, cd);
       double trial_score = score_tree(trial, ds);
+      if (params.nni_first) {
+        auto nr = nni_search(trial, ds, 0, check_timeout);
+        trial_score = nr.score;
+      }
       if (trial_score < best_wag) {
         result.tree = std::move(trial);
         best_wag = trial_score;
@@ -95,20 +107,23 @@ ReplicateResult run_single_replicate(
       Rprintf("  Starting tree score: %.5g [%.0f ms]\n", best_wag,
               result.timings.wagner_ms);
     } else {
-      Rprintf("  Wagner tree score: %.5g [%.0f ms]%s\n", best_wag,
-              result.timings.wagner_ms,
+      Rprintf("  Wagner%s tree score: %.5g [%.0f ms]%s\n",
+              params.nni_first ? "+NNI" : "",
+              best_wag, result.timings.wagner_ms,
               params.wagner_starts > 1 ? " (best of multiple starts)" : "");
     }
   }
 
-  // 2. Hill-climbing to local optimum (SPR→TBR escalation)
-  if (params.spr_first) {
-    spr_search(result.tree, ds, 1);
+  // 2. Hill-climbing to local optimum.
+  // SPR is skipped when NNI is active (empirically counterproductive:
+  // NNI→TBR outperforms NNI→SPR→TBR at 180 tips and is equivalent at ≤88).
+  if (!params.nni_first && params.spr_first) {
+    spr_search(result.tree, ds, 1, check_timeout);
   }
   {
     TBRParams tp;
     tp.tabu_size = params.tabu_size;
-    tbr_search(result.tree, ds, tp, cd);
+    tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
   }
   result.timings.tbr_ms = ph_lap();
   if (verbosity >= 2) {
@@ -218,6 +233,28 @@ ReplicateResult run_single_replicate(
     return result;
   }
 
+  // 4b. NNI perturbation (topology-space escape)
+  if (params.nni_perturb_cycles > 0) {
+    NNIPerturbParams np;
+    np.n_cycles = params.nni_perturb_cycles;
+    np.perturb_fraction = params.nni_perturb_fraction;
+    np.max_hits = params.tbr_max_hits;
+    np.tabu_size = params.tabu_size;
+    nni_perturb_search(result.tree, ds, np, cd, check_timeout);
+
+    result.timings.nni_perturb_ms = ph_lap();
+    if (verbosity >= 2) {
+      Rprintf("  NNI-perturb score: %.5g [%.0f ms]\n",
+              score_tree(result.tree, ds), result.timings.nni_perturb_ms);
+    }
+  }
+
+  if (ts::check_interrupt() || check_timeout()) {
+    result.interrupted = true;
+    result.score = score_tree(result.tree, ds);
+    return result;
+  }
+
   // 5. Drifting (suboptimal + equal-score exploration)
   if (params.drift_cycles > 0) {
     DriftParams dp;
@@ -245,7 +282,7 @@ ReplicateResult run_single_replicate(
   {
     TBRParams tp;
     tp.tabu_size = params.tabu_size;
-    tbr_search(result.tree, ds, tp, cd);
+    tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
   }
   result.timings.final_tbr_ms = ph_lap();
   if (verbosity >= 2) {
@@ -581,7 +618,7 @@ finish:
       TreeState enum_tree = pool.all()[seed_idx].tree;
       // Budget remaining capacity across remaining seeds
       tp.max_hits = std::max(10, (pool.max_size - pool.size()) * 2);
-      tbr_search(enum_tree, ds, tp, cd, nullptr, &pool);
+      tbr_search(enum_tree, ds, tp, cd, nullptr, &pool, check_timeout);
       ++seed_idx;
     }
     if (params.verbosity >= 2) {

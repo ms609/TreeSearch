@@ -14,6 +14,9 @@
 #'
 #' @param tbrMaxHits Integer; number of equally-scoring trees to accept
 #'   before stopping a TBR pass.
+#' @param nniFirst Logical; run an NNI pass before SPR/TBR in each replicate?
+#'   At small tree sizes (≤88 tips) overhead is negligible; at ≥100 tips
+#'   this significantly accelerates the initial descent from the Wagner tree.
 #' @param sprFirst Logical; run an SPR pass before TBR in each replicate?
 #' @param tabuSize Integer; tabu list size for TBR plateau exploration.
 #' @param wagnerStarts Integer; random Wagner starting trees per replicate.
@@ -54,6 +57,17 @@
 #'   based on the observed hit rate?  When `TRUE`, easy landscapes
 #'   (high hit rate) trigger reduced effort per replicate, while hard
 #'   landscapes trigger increased effort.  Default `FALSE`.
+#' @param nniPerturbCycles Integer; number of stochastic NNI-perturbation
+#'   cycles per replicate.  Each cycle randomly applies NNI swaps to a
+#'   fraction of internal branches, then runs TBR to find a new local
+#'   optimum.  Complementary to the weight-perturbation ratchet: the ratchet
+#'   perturbs the objective function, while NNI-perturbation perturbs the
+#'   topology directly.
+#'   0 (default) disables NNI perturbation.
+#'   Inspired by IQ-TREE's `doRandomNNIs()`
+#'   \insertCite{Nguyen2015}{TreeSearch}.
+#' @param nniPerturbFraction Numeric (0--1); fraction of internal branches
+#'   to swap during each NNI-perturbation cycle.  Default 0.5.
 #' @param consensusConstrain Logical; lock the strict consensus of pool
 #'   trees as topological constraints for subsequent replicates?  When
 #'   `TRUE`, after enough replicates (≥5), splits present in ALL
@@ -80,6 +94,7 @@
 SearchControl <- function(
     # TBR
     tbrMaxHits = 1L,
+    nniFirst = TRUE,
     sprFirst = FALSE,
     tabuSize = 100L,
     wagnerStarts = 1L,
@@ -89,6 +104,9 @@ SearchControl <- function(
     ratchetPerturbMode = 0L,
     ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = FALSE,
+    # NNI perturbation
+    nniPerturbCycles = 0L,
+    nniPerturbFraction = 0.5,
     # Drift
     driftCycles = 2L,
     driftAfdLimit = 5L,
@@ -114,6 +132,7 @@ SearchControl <- function(
   structure(
     list(
       tbrMaxHits = as.integer(tbrMaxHits),
+      nniFirst = as.logical(nniFirst),
       sprFirst = as.logical(sprFirst),
       tabuSize = as.integer(tabuSize),
       wagnerStarts = as.integer(wagnerStarts),
@@ -122,6 +141,8 @@ SearchControl <- function(
       ratchetPerturbMode = as.integer(ratchetPerturbMode),
       ratchetPerturbMaxMoves = as.integer(ratchetPerturbMaxMoves),
       ratchetAdaptive = as.logical(ratchetAdaptive),
+      nniPerturbCycles = as.integer(nniPerturbCycles),
+      nniPerturbFraction = as.double(nniPerturbFraction),
       driftCycles = as.integer(driftCycles),
       driftAfdLimit = as.integer(driftAfdLimit),
       driftRfdLimit = as.double(driftRfdLimit),
@@ -147,9 +168,10 @@ SearchControl <- function(
 #' @export
 print.SearchControl <- function(x, ...) {
   groups <- list(
-    "TBR" = c("tbrMaxHits", "sprFirst", "tabuSize", "wagnerStarts"),
+    "TBR" = c("tbrMaxHits", "nniFirst", "sprFirst", "tabuSize", "wagnerStarts"),
     "Ratchet" = c("ratchetCycles", "ratchetPerturbProb", "ratchetPerturbMode",
                    "ratchetPerturbMaxMoves", "ratchetAdaptive"),
+    "NNI Perturbation" = c("nniPerturbCycles", "nniPerturbFraction"),
     "Drift" = c("driftCycles", "driftAfdLimit", "driftRfdLimit"),
     "Sectorial" = c("xssRounds", "xssPartitions", "rssRounds",
                      "cssRounds", "cssPartitions",

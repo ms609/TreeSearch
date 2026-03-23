@@ -748,7 +748,8 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
       eq_params.max_hits = 100;  // generous for equal-score exploration
       eq_params.tabu_size = params.tabu_size;
 
-      TBRResult eq_result = tbr_search(tree, ds, eq_params, cd);
+      TBRResult eq_result = tbr_search(tree, ds, eq_params, cd,
+                                        nullptr, nullptr, check_timeout);
       total_drift_moves += eq_result.n_accepted;
     }
 
@@ -759,7 +760,8 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
     search_params.max_hits = params.max_hits;
     search_params.tabu_size = params.tabu_size;
 
-    TBRResult search_result = tbr_search(tree, ds, search_params, cd);
+    TBRResult search_result = tbr_search(tree, ds, search_params, cd,
+                                          nullptr, nullptr, check_timeout);
     total_tbr_moves += search_result.n_accepted;
 
     // Update best if improved

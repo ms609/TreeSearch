@@ -46,6 +46,12 @@ struct DrivenParams {
   int ratchet_perturb_max_moves = 0;  // 0=auto
   bool ratchet_adaptive = false;
 
+  // NNI perturbation: topology-space escape mechanism (IQ-TREE-style).
+  // Randomly NNI-swap a fraction of internal branches, then TBR to a
+  // new local optimum.  Complementary to weight-perturbation ratchet.
+  int nni_perturb_cycles = 0;           // 0 = disabled
+  double nni_perturb_fraction = 0.5;    // fraction of branches to perturb
+
   // Drifting
   int drift_cycles = 2;
   int drift_afd_limit = 3;
@@ -80,6 +86,12 @@ struct DrivenParams {
 
   // Tabu list size for TBR plateau exploration (0 = disabled)
   int tabu_size = 100;
+
+  // NNI warmup: run NNI hill-climbing before SPR/TBR.
+  // At ≤88 tips, overhead is negligible (~1.5s at 180 tips, <0.1s at ≤88).
+  // At ≥180 tips, NNI saves ~50% of initial descent time and leads TBR to
+  // better basins of attraction (empirically ~100 steps better at 180 tips).
+  bool nni_first = true;
 
   // SPR→TBR escalation: run SPR first (cheaper per move), then TBR.
   // When true, initial hill-climbing is SPR followed by TBR to escape
@@ -126,22 +138,26 @@ struct DrivenParams {
 // Cumulative per-phase wall-clock timing (milliseconds).
 struct PhaseTimings {
   double wagner_ms = 0.0;
+  double nni_ms = 0.0;
   double tbr_ms = 0.0;
   double xss_ms = 0.0;
   double rss_ms = 0.0;
   double css_ms = 0.0;
   double ratchet_ms = 0.0;
+  double nni_perturb_ms = 0.0;
   double drift_ms = 0.0;
   double final_tbr_ms = 0.0;
   double fuse_ms = 0.0;
 
   void operator+=(const PhaseTimings& o) {
     wagner_ms    += o.wagner_ms;
+    nni_ms       += o.nni_ms;
     tbr_ms       += o.tbr_ms;
     xss_ms       += o.xss_ms;
     rss_ms       += o.rss_ms;
     css_ms       += o.css_ms;
     ratchet_ms   += o.ratchet_ms;
+    nni_perturb_ms += o.nni_perturb_ms;
     drift_ms     += o.drift_ms;
     final_tbr_ms += o.final_tbr_ms;
     fuse_ms      += o.fuse_ms;
@@ -166,7 +182,7 @@ struct ReplicateResult {
   PhaseTimings timings;          // per-replicate phase timings
 };
 
-// Run one replicate: Wagner → TBR → XSS → RSS → ratchet → drift → TBR.
+// Run one replicate: Wagner → NNI → SPR → TBR → XSS → RSS → ratchet → drift → TBR.
 // Does NOT interact with the pool — caller handles that.
 // `check_timeout` should return true when time limit is exceeded.
 // Verbosity is the effective verbosity for this replicate (0 in parallel).

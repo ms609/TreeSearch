@@ -81,6 +81,7 @@
     sectorMinSize = 6L, sectorMaxSize = 50L,
     fuseInterval = 5L, fuseAcceptEqual = FALSE,
     tabuSize = 0L, wagnerStarts = 1L,
+    nniFirst = TRUE, sprFirst = FALSE,
     consensusStableReps = 3L
   ),
   default = SearchControl(
@@ -93,20 +94,21 @@
     sectorMinSize = 6L, sectorMaxSize = 50L,
     fuseInterval = 3L, fuseAcceptEqual = FALSE,
     tabuSize = 100L, wagnerStarts = 3L,
-    sprFirst = TRUE, adaptiveLevel = TRUE,
+    nniFirst = TRUE, sprFirst = FALSE, adaptiveLevel = TRUE,
     consensusStableReps = 3L
   ),
   thorough = SearchControl(
     tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = TRUE,
+    nniPerturbCycles = 5L, nniPerturbFraction = 0.5,
     driftCycles = 12L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
     xssRounds = 5L, xssPartitions = 6L,
     rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
     sectorMinSize = 6L, sectorMaxSize = 80L,
     fuseInterval = 2L, fuseAcceptEqual = TRUE,
     tabuSize = 200L, wagnerStarts = 3L,
-    sprFirst = TRUE,
+    nniFirst = TRUE, sprFirst = FALSE,
     consensusStableReps = 3L
   )
 )
@@ -342,10 +344,23 @@ MaximizeParsimony <- function(
     ...
 ) {
 
-  # --- Backward compatibility: detect Morphy()-style parameters ---
+  # --- Backward compatibility: intercept maxTime → maxSeconds ---
   dots <- list(...)
+  if ("maxTime" %in% names(dots)) {
+    if (missing(maxSeconds) || maxSeconds == 0) {
+      maxSeconds <- as.double(dots[["maxTime"]])
+    }
+    .Deprecated(msg = paste0(
+      "Use `maxSeconds` instead of `maxTime` in MaximizeParsimony().\n",
+      "  `maxTime` was a Morphy()-style parameter; `maxSeconds` is the ",
+      "equivalent for the new C++ search engine."
+    ))
+    dots[["maxTime"]] <- NULL
+  }
+
+  # --- Backward compatibility: detect Morphy()-style parameters ---
   .morphyParams <- c("ratchIter", "tbrIter", "startIter", "finalIter",
-                      "maxHits", "maxTime", "quickHits", "ratchEW",
+                      "maxHits", "quickHits", "ratchEW",
                       "tolerance")
   legacyHits <- intersect(names(dots), .morphyParams)
   if (length(legacyHits)) {
@@ -698,6 +713,9 @@ MaximizeParsimony <- function(
     nThreads = as.integer(nThreads),
     startEdge = if (userTree) tree[["edge"]] else NULL,
     sprFirst = as.logical(ctrl$sprFirst),
+    nniFirst = as.logical(
+      if (is.null(ctrl$nniFirst)) FALSE
+      else ctrl$nniFirst),
     consensusStableReps = as.integer(
       if (is.null(ctrl$consensusStableReps)) 0L
       else ctrl$consensusStableReps),
@@ -706,7 +724,13 @@ MaximizeParsimony <- function(
       else ctrl$adaptiveLevel),
     consensusConstrain = as.logical(
       if (is.null(ctrl$consensusConstrain)) FALSE
-      else ctrl$consensusConstrain)
+      else ctrl$consensusConstrain),
+    nniPerturbCycles = as.integer(
+      if (is.null(ctrl$nniPerturbCycles)) 0L
+      else ctrl$nniPerturbCycles),
+    nniPerturbFraction = as.double(
+      if (is.null(ctrl$nniPerturbFraction)) 0.5
+      else ctrl$nniPerturbFraction)
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
                                         hsjArgs, xformArgs))
