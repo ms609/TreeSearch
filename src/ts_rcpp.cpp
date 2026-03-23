@@ -1219,7 +1219,10 @@ List ts_driven_search(
     bool adaptiveLevel = false,
     bool consensusConstrain = false,
     int nniPerturbCycles = 0,
-    double nniPerturbFraction = 0.5)
+    double nniPerturbFraction = 0.5,
+    int wagnerBias = 0,
+    double wagnerBiasTemp = 0.3,
+    int outerCycles = 1)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity, infoAmounts);
@@ -1356,6 +1359,9 @@ List ts_driven_search(
   params.consensus_constrain = consensusConstrain;
   params.nni_perturb_cycles = nniPerturbCycles;
   params.nni_perturb_fraction = nniPerturbFraction;
+  params.wagner_bias = wagnerBias;
+  params.wagner_bias_temp = wagnerBiasTemp;
+  params.outer_cycles = outerCycles;
 
   // Starting tree edge matrix (optional)
   if (startEdge.isNotNull()) {
@@ -1418,6 +1424,8 @@ List ts_driven_search(
       Named("replicates") = result.replicates_completed,
       Named("hits_to_best") = result.hits_to_best,
       Named("pool_size") = 0,
+      Named("n_topologies") = 0,
+      Named("last_improved_rep") = result.last_improved_rep,
       Named("timed_out") = result.timed_out,
       Named("consensus_stable") = result.consensus_stable,
       Named("timings") = timings
@@ -1440,6 +1448,8 @@ List ts_driven_search(
     Named("replicates") = result.replicates_completed,
     Named("hits_to_best") = result.hits_to_best,
     Named("pool_size") = result.pool_size,
+    Named("n_topologies") = result.n_topologies_at_best,
+    Named("last_improved_rep") = result.last_improved_rep,
     Named("timed_out") = result.timed_out,
     Named("consensus_stable") = result.consensus_stable,
     Named("timings") = timings
@@ -2323,4 +2333,72 @@ List ts_sankoff_test(
     Named("optimal_states") = opt_states);
 }
 
+
+// --- Wagner bias benchmark ---
+//
+// For each of n_reps random seeds, builds a Wagner tree under the specified
+// biasing criterion and optionally runs TBR to the local optimum.  Returns
+// per-replicate Wagner scores (and TBR scores if run_tbr = TRUE) so that
+// callers can compare average starting-tree quality across criteria.
+//
+// bias:        0 = RANDOM, 1 = GOLOBOFF, 2 = ENTROPY
+// temperature: softmax temperature (0 = greedy; applied to [0,1]-normalised
+//              scores so the parameter is dataset-independent)
+// n_reps:      number of trees to build
+// run_tbr:     if TRUE, run TBR convergence and record its score too
+
+// [[Rcpp::export]]
+List ts_wagner_bias_bench(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    IntegerVector min_steps,
+    double concavity,
+    int    bias,
+    double temperature,
+    int    n_reps,
+    bool   run_tbr)
+{
+  if (concavity < 0) concavity = HUGE_VAL;
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
+
+  ts::BiasedWagnerParams wp;
+  wp.bias        = static_cast<ts::WagnerBias>(bias);
+  wp.temperature = temperature;
+
+  NumericVector wagner_scores(n_reps, NA_REAL);
+  NumericVector tbr_scores(n_reps, NA_REAL);
+  // Per-tip Goloboff and entropy scores (computed once)
+  NumericVector goloboff_scores_r(ds.n_tips, NA_REAL);
+  NumericVector entropy_scores_r(ds.n_tips, NA_REAL);
+  {
+    auto gs = ts::wagner_goloboff_scores(ds);
+    auto es = ts::wagner_entropy_scores(ds);
+    for (int t = 0; t < ds.n_tips; ++t) {
+      goloboff_scores_r[t] = gs[t];
+      entropy_scores_r[t]  = es[t];
+    }
+  }
+
+  for (int rep = 0; rep < n_reps; ++rep) {
+    ts::TreeState tree;
+    ts::biased_wagner_tree(tree, ds, wp, nullptr);
+    wagner_scores[rep] = ts::score_tree(tree, ds);
+
+    if (run_tbr) {
+      ts::TBRParams tp;
+      ts::tbr_search(tree, ds, tp, nullptr, nullptr, nullptr, nullptr);
+      tbr_scores[rep] = ts::score_tree(tree, ds);
+    }
+  }
+
+  return List::create(
+    Named("wagner_score")    = wagner_scores,
+    Named("tbr_score")       = tbr_scores,
+    Named("goloboff_scores") = goloboff_scores_r,
+    Named("entropy_scores")  = entropy_scores_r
+  );
+}
 
