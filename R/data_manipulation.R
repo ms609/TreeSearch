@@ -52,7 +52,7 @@
 #'   character; `"exact"` always uses the exact Maddison & Slatkin calculation
 #'   (slow for large matrices).
 #' @param n_mc Integer; number of Monte Carlo samples for the MC
-#'   approximation.  Default 50 000.
+#'   approximation.  Default 100 000.
 #'
 #' @return An object of class `phyDat`, with additional attributes.
 #' `PrepareDataProfile` adds the attributes:
@@ -82,7 +82,7 @@
 #' @family profile parsimony functions
 #' @encoding UTF-8
 #' @export
-PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 50000L) {
+PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 100000L) {
   if ("info.amounts" %fin% names(attributes(dataset))) {
     # Already prepared
     return(dataset)

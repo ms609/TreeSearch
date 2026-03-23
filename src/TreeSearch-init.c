@@ -58,6 +58,7 @@ extern SEXP _TreeSearch_MaddisonSlatkin(SEXP, SEXP);
 extern SEXP _TreeSearch_MaddisonSlatkin_clear_cache();
 extern SEXP _TreeSearch_ts_hsj_score(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_sankoff_test(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_mc_fitch_scores(SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
@@ -130,6 +131,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_ts_hsj_score", (DL_FUNC) &_TreeSearch_ts_hsj_score, 9},
   {"_TreeSearch_ts_sankoff_test", (DL_FUNC) &_TreeSearch_ts_sankoff_test, 5},
 
+  {"_TreeSearch_mc_fitch_scores",    (DL_FUNC) &_TreeSearch_mc_fitch_scores, 2},
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},
   {"RANDOM_TREE",                   (DL_FUNC) &RANDOM_TREE, 1},
   {"RANDOM_TREE_SCORE",             (DL_FUNC) &RANDOM_TREE_SCORE, 2},

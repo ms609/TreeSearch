@@ -27,7 +27,10 @@ SearchControl(
   fuseInterval = 3L,
   fuseAcceptEqual = FALSE,
   poolMaxSize = 100L,
-  poolSuboptimal = 0
+  poolSuboptimal = 0,
+  consensusStableReps = 0L,
+  adaptiveLevel = FALSE,
+  consensusConstrain = FALSE
 )
 }
 \arguments{
@@ -84,6 +87,26 @@ sizes for sectorial search.}
 
 \item{poolSuboptimal}{Numeric; retain trees that are this many steps
 worse than the best tree.  0 (default) keeps only optimal trees.}
+
+\item{consensusStableReps}{Integer; stop when the strict consensus of
+best-score pool trees has been unchanged for this many consecutive
+replicates.
+0 (default) disables this criterion; a typical value is 3--5.
+When both \code{consensusStableReps} and \code{targetHits} are active, the search
+stops when either criterion is met first.}
+
+\item{adaptiveLevel}{Logical; dynamically scale ratchet and drift effort
+based on the observed hit rate?  When \code{TRUE}, easy landscapes
+(high hit rate) trigger reduced effort per replicate, while hard
+landscapes trigger increased effort.  Default \code{FALSE}.}
+
+\item{consensusConstrain}{Logical; lock the strict consensus of pool
+trees as topological constraints for subsequent replicates?  When
+\code{TRUE}, after enough replicates (≥5), splits present in ALL
+best-score pool trees are enforced as constraints, focusing search on
+uncertain regions.  Constraints are cleared whenever a new best score
+is found.  Only active when no user-supplied \code{constraint} is
+present.  Default \code{FALSE}.}
 }
 \value{
 A named list of class \code{"SearchControl"}.

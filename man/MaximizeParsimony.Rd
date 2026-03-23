@@ -101,6 +101,10 @@ sectorial. Good for small datasets or quick surveys.}
 perturbation, extra sectorial rounds. Best for datasets with
 65+ tips and 100+ character patterns, where sprint/default
 may miss the global optimum.}
+All presets enable consensus-stability stopping
+(\code{consensusStableReps = 3}): the search stops early if the strict
+consensus of best-score trees has been unchanged for three consecutive
+replicates.
 \item{\code{"none"}}{Use only the explicitly supplied parameter values.}
 }
 Explicit \code{control} fields always override the preset; for example,
@@ -169,6 +173,9 @@ attributes:
 score.}
 \item{\code{timed_out}}{Logical: \code{TRUE} if the search stopped because
 \code{maxSeconds} was exceeded.}
+\item{\code{consensus_stable}}{Logical: \code{TRUE} if the search stopped
+because the strict consensus was unchanged for
+\code{consensusStableReps} consecutive replicates.}
 \item{\code{timings}}{Named numeric vector of cumulative wall-clock time
 (in milliseconds) spent in each search phase across all replicates:
 \code{wagner_ms}, \code{tbr_ms}, \code{xss_ms}, \code{rss_ms}, \code{css_ms}, \code{ratchet_ms},

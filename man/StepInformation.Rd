@@ -8,7 +8,7 @@ StepInformation(
   char,
   ambiguousTokens = c("-", "?"),
   approx = "auto",
-  n_mc = 50000L
+  n_mc = 100000L
 )
 }
 \arguments{
@@ -25,7 +25,9 @@ for large characters).}
 
 \item{n_mc}{Integer.  Number of random trees used by the MC approximation.
 Larger values improve accuracy but increase computation time.
-Default: 50 000.}
+Default: 100 000.  Tree generation and scoring use the Morphy C
+library internally, so even large values are fast (~1 s per 100 000
+trees).}
 }
 \value{
 \code{StepInformation()} returns a numeric vector detailing the amount

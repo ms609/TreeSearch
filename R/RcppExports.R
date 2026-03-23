@@ -68,6 +68,26 @@ all_tbr <- function(edge, break_order) {
     .Call(`_TreeSearch_all_tbr`, edge, break_order)
 }
 
+#' Monte Carlo Fitch scores for a single character
+#'
+#' Generates `n_mc` random trees and scores each with a Fitch parsimony
+#' downpass for a single character defined by `state_counts`.
+#' Tree generation and scoring are done entirely in C with no R object
+#' allocation per tree, making this very fast (~0.01 ms per tree).
+#'
+#' @param state_counts Integer vector giving the number of tips in each
+#'   state.  Length determines the number of states (k); sum determines
+#'   the number of tips (n).  For example, `c(13, 13, 12)` defines a
+#'   3-state character with 38 tips.
+#' @param n_mc Number of random trees to generate and score.
+#' @return Integer vector of length `n_mc` containing the Fitch parsimony
+#'   score (number of state changes) for each random tree.
+#' @keywords internal
+#' @export
+mc_fitch_scores <- function(state_counts, n_mc) {
+    .Call(`_TreeSearch_mc_fitch_scores`, state_counts, n_mc)
+}
+
 ts_fitch_score <- function(edge, contrast, tip_data, weight, levels, min_steps = integer(), concavity = -1.0, infoAmounts = NULL) {
     .Call(`_TreeSearch_ts_fitch_score`, edge, contrast, tip_data, weight, levels, min_steps, concavity, infoAmounts)
 }

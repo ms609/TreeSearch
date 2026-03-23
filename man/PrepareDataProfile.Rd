@@ -6,7 +6,7 @@
 \alias{PrepareDataIW}
 \title{Prepare data for Profile Parsimony}
 \usage{
-PrepareDataProfile(dataset, approx = "auto", n_mc = 50000L)
+PrepareDataProfile(dataset, approx = "auto", n_mc = 100000L)
 
 PrepareDataIW(dataset)
 }
@@ -21,7 +21,7 @@ character; \code{"exact"} always uses the exact Maddison & Slatkin calculation
 (slow for large matrices).}
 
 \item{n_mc}{Integer; number of Monte Carlo samples for the MC
-approximation.  Default 50 000.}
+approximation.  Default 100 000.}
 }
 \value{
 An object of class \code{phyDat}, with additional attributes.
