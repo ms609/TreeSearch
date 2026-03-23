@@ -45,6 +45,9 @@
 #' @importFrom TreeTools Renumber RenumberTips TreeIsRooted
 #' @export
 TreeLength <- function(tree, dataset, concavity = Inf,
+                       extended_iw = TRUE,
+                       xpiwe_r = 0.5,
+                       xpiwe_max_f = 5,
                        hierarchy = NULL, inapplicable = "brazeau",
                        hsj_alpha = 1.0) {
   UseMethod("TreeLength")
@@ -53,6 +56,9 @@ TreeLength <- function(tree, dataset, concavity = Inf,
 #' @rdname TreeLength
 #' @export
 TreeLength.phylo <- function(tree, dataset, concavity = Inf,
+                              extended_iw = TRUE,
+                              xpiwe_r = 0.5,
+                              xpiwe_max_f = 5,
                               hierarchy = NULL, inapplicable = "brazeau",
                               hsj_alpha = 1.0) {
   tipLabels <- tree[["tip.label"]]
@@ -127,9 +133,22 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf,
            "       https://github.com/ms609/TreeSearch/issues/new\n\n",
            "       See above for full tree: ", dput(tree))
     } #nocov end
-    fit <- homoplasies / (homoplasies + concavity)
+    if (isTRUE(extended_iw)) {
+      obsCount <- .ObsCount(dataset)
+      nTaxa <- length(dataset)
+      # Goloboff (2014) Extension 3, verified against TNT 1.6:
+      # f = 1 + r * missing / obs  (NOT r * total / obs)
+      f <- pmin(pmax(1 + xpiwe_r * (nTaxa - obsCount) / obsCount, 1),
+                xpiwe_max_f)
+      eff_k <- concavity / f
+      phi <- (1 + eff_k) / (1 + concavity)
+    } else {
+      eff_k <- concavity
+      phi <- 1
+    }
+    fit <- homoplasies / (homoplasies + eff_k)
     # Return:
-    sum(fit * weight)
+    sum(fit * weight * phi)
     
   } else if (.UseProfile(concavity)) {
     dataset <- PrepareDataProfile(dataset)
@@ -183,10 +202,15 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf,
 #' @importFrom TreeTools RandomTree
 #' @export
 TreeLength.numeric <- function(tree, dataset, concavity = Inf,
+                               extended_iw = TRUE,
+                               xpiwe_r = 0.5,
+                               xpiwe_max_f = 5,
                                hierarchy = NULL, inapplicable = "brazeau",
                                hsj_alpha = 1.0) {
   TreeLength(lapply(!logical(tree), RandomTree, tips = dataset), 
              dataset = dataset, concavity = concavity,
+             extended_iw = extended_iw,
+             xpiwe_r = xpiwe_r, xpiwe_max_f = xpiwe_max_f,
              hierarchy = hierarchy, inapplicable = inapplicable,
              hsj_alpha = hsj_alpha)
 }
@@ -194,6 +218,9 @@ TreeLength.numeric <- function(tree, dataset, concavity = Inf,
 #' @rdname TreeLength
 #' @export
 TreeLength.list <- function(tree, dataset, concavity = Inf,
+                            extended_iw = TRUE,
+                            xpiwe_r = 0.5,
+                            xpiwe_max_f = 5,
                             hierarchy = NULL, inapplicable = "brazeau",
                             hsj_alpha = 1.0) {
   iw <- is.finite(concavity)
@@ -276,6 +303,10 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
   concavity_val <- if (iw) concavity else Inf
   infoAmounts <- if (useProfile) at$info.amounts else NULL
 
+  # XPIWE: per-pattern observed-taxa counts
+  useXpiwe <- isTRUE(extended_iw) && iw && !useProfile
+  obsCount <- if (useXpiwe) .ObsCount(dataset) else integer(0)
+
   if (useHSJ) {
     adj_weight <- as.integer(non_hierarchy_weights(dataset, hierarchy))
     blocks <- hierarchy_to_blocks(hierarchy)
@@ -301,7 +332,11 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
     vapply(tree, function(tr) {
       ts_fitch_score(tr[["edge"]], contrast, tip_data, weight, levels,
                      min_steps = min_steps, concavity = concavity_val,
-                     infoAmounts = infoAmounts)
+                     infoAmounts = infoAmounts,
+                     xpiwe = useXpiwe,
+                     xpiwe_r = as.double(xpiwe_r),
+                     xpiwe_max_f = as.double(xpiwe_max_f),
+                     obs_count = obsCount)
     }, double(1))
   }
 }
@@ -313,6 +348,9 @@ TreeLength.multiPhylo <- TreeLength.list
 
 #' @export
 TreeLength.NULL <- function(tree, dataset, concavity = Inf,
+                            extended_iw = TRUE,
+                            xpiwe_r = 0.5,
+                            xpiwe_max_f = 5,
                             hierarchy = NULL, inapplicable = "brazeau",
                             hsj_alpha = 1.0) NULL
 

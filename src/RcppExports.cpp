@@ -197,8 +197,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ts_fitch_score
-double ts_fitch_score(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, Nullable<NumericMatrix> infoAmounts);
-RcppExport SEXP _TreeSearch_ts_fitch_score(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP infoAmountsSEXP) {
+double ts_fitch_score(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, Nullable<NumericMatrix> infoAmounts, bool xpiwe, double xpiwe_r, double xpiwe_max_f, IntegerVector obs_count);
+RcppExport SEXP _TreeSearch_ts_fitch_score(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP infoAmountsSEXP, SEXP xpiweSEXP, SEXP xpiwe_rSEXP, SEXP xpiwe_max_fSEXP, SEXP obs_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -210,7 +210,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerVector >::type min_steps(min_stepsSEXP);
     Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
     Rcpp::traits::input_parameter< Nullable<NumericMatrix> >::type infoAmounts(infoAmountsSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_fitch_score(edge, contrast, tip_data, weight, levels, min_steps, concavity, infoAmounts));
+    Rcpp::traits::input_parameter< bool >::type xpiwe(xpiweSEXP);
+    Rcpp::traits::input_parameter< double >::type xpiwe_r(xpiwe_rSEXP);
+    Rcpp::traits::input_parameter< double >::type xpiwe_max_f(xpiwe_max_fSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type obs_count(obs_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_fitch_score(edge, contrast, tip_data, weight, levels, min_steps, concavity, infoAmounts, xpiwe, xpiwe_r, xpiwe_max_f, obs_count));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -565,8 +569,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ts_driven_search
-List ts_driven_search(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int ratchetPerturbMode, int ratchetPerturbMaxMoves, bool ratchetAdaptive, int driftCycles, int driftAfdLimit, double driftRfdLimit, int xssRounds, int xssPartitions, int rssRounds, int cssRounds, int cssPartitions, int sectorMinSize, int sectorMaxSize, int fuseInterval, bool fuseAcceptEqual, int poolMaxSize, double poolSuboptimal, double maxSeconds, int verbosity, IntegerVector min_steps, double concavity, Nullable<IntegerMatrix> consSplitMatrix, Nullable<NumericMatrix> consContrast, Nullable<IntegerMatrix> consTipData, Nullable<IntegerVector> consWeight, Nullable<CharacterVector> consLevels, int consExpectedScore, Nullable<NumericMatrix> infoAmounts, int tabuSize, int wagnerStarts, Nullable<Function> progressCallback, int nThreads, Nullable<IntegerMatrix> startEdge, bool sprFirst, Nullable<List> hierarchyBlocks, Nullable<IntegerMatrix> hsjTipLabels, double hsjAlpha, int hsjAbsentState, Nullable<List> xformChars);
-RcppExport SEXP _TreeSearch_ts_driven_search(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP ratchetPerturbModeSEXP, SEXP ratchetPerturbMaxMovesSEXP, SEXP ratchetAdaptiveSEXP, SEXP driftCyclesSEXP, SEXP driftAfdLimitSEXP, SEXP driftRfdLimitSEXP, SEXP xssRoundsSEXP, SEXP xssPartitionsSEXP, SEXP rssRoundsSEXP, SEXP cssRoundsSEXP, SEXP cssPartitionsSEXP, SEXP sectorMinSizeSEXP, SEXP sectorMaxSizeSEXP, SEXP fuseIntervalSEXP, SEXP fuseAcceptEqualSEXP, SEXP poolMaxSizeSEXP, SEXP poolSuboptimalSEXP, SEXP maxSecondsSEXP, SEXP verbositySEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP consSplitMatrixSEXP, SEXP consContrastSEXP, SEXP consTipDataSEXP, SEXP consWeightSEXP, SEXP consLevelsSEXP, SEXP consExpectedScoreSEXP, SEXP infoAmountsSEXP, SEXP tabuSizeSEXP, SEXP wagnerStartsSEXP, SEXP progressCallbackSEXP, SEXP nThreadsSEXP, SEXP startEdgeSEXP, SEXP sprFirstSEXP, SEXP hierarchyBlocksSEXP, SEXP hsjTipLabelsSEXP, SEXP hsjAlphaSEXP, SEXP hsjAbsentStateSEXP, SEXP xformCharsSEXP) {
+List ts_driven_search(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int ratchetPerturbMode, int ratchetPerturbMaxMoves, bool ratchetAdaptive, int driftCycles, int driftAfdLimit, double driftRfdLimit, int xssRounds, int xssPartitions, int rssRounds, int cssRounds, int cssPartitions, int sectorMinSize, int sectorMaxSize, int fuseInterval, bool fuseAcceptEqual, int poolMaxSize, double poolSuboptimal, double maxSeconds, int verbosity, IntegerVector min_steps, double concavity, Nullable<IntegerMatrix> consSplitMatrix, Nullable<NumericMatrix> consContrast, Nullable<IntegerMatrix> consTipData, Nullable<IntegerVector> consWeight, Nullable<CharacterVector> consLevels, int consExpectedScore, Nullable<NumericMatrix> infoAmounts, int tabuSize, int wagnerStarts, Nullable<Function> progressCallback, int nThreads, Nullable<IntegerMatrix> startEdge, bool sprFirst, Nullable<List> hierarchyBlocks, Nullable<IntegerMatrix> hsjTipLabels, double hsjAlpha, int hsjAbsentState, Nullable<List> xformChars, bool xpiwe, double xpiwe_r, double xpiwe_max_f, IntegerVector obs_count);
+RcppExport SEXP _TreeSearch_ts_driven_search(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP ratchetPerturbModeSEXP, SEXP ratchetPerturbMaxMovesSEXP, SEXP ratchetAdaptiveSEXP, SEXP driftCyclesSEXP, SEXP driftAfdLimitSEXP, SEXP driftRfdLimitSEXP, SEXP xssRoundsSEXP, SEXP xssPartitionsSEXP, SEXP rssRoundsSEXP, SEXP cssRoundsSEXP, SEXP cssPartitionsSEXP, SEXP sectorMinSizeSEXP, SEXP sectorMaxSizeSEXP, SEXP fuseIntervalSEXP, SEXP fuseAcceptEqualSEXP, SEXP poolMaxSizeSEXP, SEXP poolSuboptimalSEXP, SEXP maxSecondsSEXP, SEXP verbositySEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP consSplitMatrixSEXP, SEXP consContrastSEXP, SEXP consTipDataSEXP, SEXP consWeightSEXP, SEXP consLevelsSEXP, SEXP consExpectedScoreSEXP, SEXP infoAmountsSEXP, SEXP tabuSizeSEXP, SEXP wagnerStartsSEXP, SEXP progressCallbackSEXP, SEXP nThreadsSEXP, SEXP startEdgeSEXP, SEXP sprFirstSEXP, SEXP hierarchyBlocksSEXP, SEXP hsjTipLabelsSEXP, SEXP hsjAlphaSEXP, SEXP hsjAbsentStateSEXP, SEXP xformCharsSEXP, SEXP xpiweSEXP, SEXP xpiwe_rSEXP, SEXP xpiwe_max_fSEXP, SEXP obs_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -618,13 +622,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type hsjAlpha(hsjAlphaSEXP);
     Rcpp::traits::input_parameter< int >::type hsjAbsentState(hsjAbsentStateSEXP);
     Rcpp::traits::input_parameter< Nullable<List> >::type xformChars(xformCharsSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_driven_search(contrast, tip_data, weight, levels, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, ratchetPerturbMode, ratchetPerturbMaxMoves, ratchetAdaptive, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, rssRounds, cssRounds, cssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, maxSeconds, verbosity, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts, tabuSize, wagnerStarts, progressCallback, nThreads, startEdge, sprFirst, hierarchyBlocks, hsjTipLabels, hsjAlpha, hsjAbsentState, xformChars));
+    Rcpp::traits::input_parameter< bool >::type xpiwe(xpiweSEXP);
+    Rcpp::traits::input_parameter< double >::type xpiwe_r(xpiwe_rSEXP);
+    Rcpp::traits::input_parameter< double >::type xpiwe_max_f(xpiwe_max_fSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type obs_count(obs_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_driven_search(contrast, tip_data, weight, levels, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, ratchetPerturbMode, ratchetPerturbMaxMoves, ratchetAdaptive, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, rssRounds, cssRounds, cssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, maxSeconds, verbosity, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts, tabuSize, wagnerStarts, progressCallback, nThreads, startEdge, sprFirst, hierarchyBlocks, hsjTipLabels, hsjAlpha, hsjAbsentState, xformChars, xpiwe, xpiwe_r, xpiwe_max_f, obs_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // ts_resample_search
-List ts_resample_search(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, bool bootstrap, double jackProportion, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int driftCycles, IntegerVector min_steps, double concavity, Nullable<IntegerMatrix> consSplitMatrix, Nullable<NumericMatrix> consContrast, Nullable<IntegerMatrix> consTipData, Nullable<IntegerVector> consWeight, Nullable<CharacterVector> consLevels, int consExpectedScore, Nullable<NumericMatrix> infoAmounts);
-RcppExport SEXP _TreeSearch_ts_resample_search(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP bootstrapSEXP, SEXP jackProportionSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP driftCyclesSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP consSplitMatrixSEXP, SEXP consContrastSEXP, SEXP consTipDataSEXP, SEXP consWeightSEXP, SEXP consLevelsSEXP, SEXP consExpectedScoreSEXP, SEXP infoAmountsSEXP) {
+List ts_resample_search(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, bool bootstrap, double jackProportion, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int driftCycles, IntegerVector min_steps, double concavity, Nullable<IntegerMatrix> consSplitMatrix, Nullable<NumericMatrix> consContrast, Nullable<IntegerMatrix> consTipData, Nullable<IntegerVector> consWeight, Nullable<CharacterVector> consLevels, int consExpectedScore, Nullable<NumericMatrix> infoAmounts, bool xpiwe, double xpiwe_r, double xpiwe_max_f, IntegerVector obs_count);
+RcppExport SEXP _TreeSearch_ts_resample_search(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP bootstrapSEXP, SEXP jackProportionSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP driftCyclesSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP consSplitMatrixSEXP, SEXP consContrastSEXP, SEXP consTipDataSEXP, SEXP consWeightSEXP, SEXP consLevelsSEXP, SEXP consExpectedScoreSEXP, SEXP infoAmountsSEXP, SEXP xpiweSEXP, SEXP xpiwe_rSEXP, SEXP xpiwe_max_fSEXP, SEXP obs_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -649,13 +657,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Nullable<CharacterVector> >::type consLevels(consLevelsSEXP);
     Rcpp::traits::input_parameter< int >::type consExpectedScore(consExpectedScoreSEXP);
     Rcpp::traits::input_parameter< Nullable<NumericMatrix> >::type infoAmounts(infoAmountsSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_resample_search(contrast, tip_data, weight, levels, bootstrap, jackProportion, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, driftCycles, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts));
+    Rcpp::traits::input_parameter< bool >::type xpiwe(xpiweSEXP);
+    Rcpp::traits::input_parameter< double >::type xpiwe_r(xpiwe_rSEXP);
+    Rcpp::traits::input_parameter< double >::type xpiwe_max_f(xpiwe_max_fSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type obs_count(obs_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_resample_search(contrast, tip_data, weight, levels, bootstrap, jackProportion, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, driftCycles, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts, xpiwe, xpiwe_r, xpiwe_max_f, obs_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // ts_parallel_resample
-List ts_parallel_resample(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int nReplicates, int nThreads, bool bootstrap, double jackProportion, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int driftCycles, IntegerVector min_steps, double concavity, Nullable<IntegerMatrix> consSplitMatrix, Nullable<NumericMatrix> consContrast, Nullable<IntegerMatrix> consTipData, Nullable<IntegerVector> consWeight, Nullable<CharacterVector> consLevels, int consExpectedScore, Nullable<NumericMatrix> infoAmounts);
-RcppExport SEXP _TreeSearch_ts_parallel_resample(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP nReplicatesSEXP, SEXP nThreadsSEXP, SEXP bootstrapSEXP, SEXP jackProportionSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP driftCyclesSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP consSplitMatrixSEXP, SEXP consContrastSEXP, SEXP consTipDataSEXP, SEXP consWeightSEXP, SEXP consLevelsSEXP, SEXP consExpectedScoreSEXP, SEXP infoAmountsSEXP) {
+List ts_parallel_resample(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int nReplicates, int nThreads, bool bootstrap, double jackProportion, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int driftCycles, IntegerVector min_steps, double concavity, Nullable<IntegerMatrix> consSplitMatrix, Nullable<NumericMatrix> consContrast, Nullable<IntegerMatrix> consTipData, Nullable<IntegerVector> consWeight, Nullable<CharacterVector> consLevels, int consExpectedScore, Nullable<NumericMatrix> infoAmounts, bool xpiwe, double xpiwe_r, double xpiwe_max_f, IntegerVector obs_count);
+RcppExport SEXP _TreeSearch_ts_parallel_resample(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP nReplicatesSEXP, SEXP nThreadsSEXP, SEXP bootstrapSEXP, SEXP jackProportionSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP driftCyclesSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP consSplitMatrixSEXP, SEXP consContrastSEXP, SEXP consTipDataSEXP, SEXP consWeightSEXP, SEXP consLevelsSEXP, SEXP consExpectedScoreSEXP, SEXP infoAmountsSEXP, SEXP xpiweSEXP, SEXP xpiwe_rSEXP, SEXP xpiwe_max_fSEXP, SEXP obs_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -682,13 +694,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Nullable<CharacterVector> >::type consLevels(consLevelsSEXP);
     Rcpp::traits::input_parameter< int >::type consExpectedScore(consExpectedScoreSEXP);
     Rcpp::traits::input_parameter< Nullable<NumericMatrix> >::type infoAmounts(infoAmountsSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_parallel_resample(contrast, tip_data, weight, levels, nReplicates, nThreads, bootstrap, jackProportion, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, driftCycles, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts));
+    Rcpp::traits::input_parameter< bool >::type xpiwe(xpiweSEXP);
+    Rcpp::traits::input_parameter< double >::type xpiwe_r(xpiwe_rSEXP);
+    Rcpp::traits::input_parameter< double >::type xpiwe_max_f(xpiwe_max_fSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type obs_count(obs_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_parallel_resample(contrast, tip_data, weight, levels, nReplicates, nThreads, bootstrap, jackProportion, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, driftCycles, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts, xpiwe, xpiwe_r, xpiwe_max_f, obs_count));
     return rcpp_result_gen;
 END_RCPP
 }
 // ts_successive_approx
-List ts_successive_approx(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, double saK, int maxSAIter, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int driftCycles, IntegerVector min_steps, double concavity, Nullable<IntegerMatrix> consSplitMatrix, Nullable<NumericMatrix> consContrast, Nullable<IntegerMatrix> consTipData, Nullable<IntegerVector> consWeight, Nullable<CharacterVector> consLevels, int consExpectedScore, Nullable<NumericMatrix> infoAmounts);
-RcppExport SEXP _TreeSearch_ts_successive_approx(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP saKSEXP, SEXP maxSAIterSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP driftCyclesSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP consSplitMatrixSEXP, SEXP consContrastSEXP, SEXP consTipDataSEXP, SEXP consWeightSEXP, SEXP consLevelsSEXP, SEXP consExpectedScoreSEXP, SEXP infoAmountsSEXP) {
+List ts_successive_approx(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, double saK, int maxSAIter, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int driftCycles, IntegerVector min_steps, double concavity, Nullable<IntegerMatrix> consSplitMatrix, Nullable<NumericMatrix> consContrast, Nullable<IntegerMatrix> consTipData, Nullable<IntegerVector> consWeight, Nullable<CharacterVector> consLevels, int consExpectedScore, Nullable<NumericMatrix> infoAmounts, bool xpiwe, double xpiwe_r, double xpiwe_max_f, IntegerVector obs_count);
+RcppExport SEXP _TreeSearch_ts_successive_approx(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP saKSEXP, SEXP maxSAIterSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP driftCyclesSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP consSplitMatrixSEXP, SEXP consContrastSEXP, SEXP consTipDataSEXP, SEXP consWeightSEXP, SEXP consLevelsSEXP, SEXP consExpectedScoreSEXP, SEXP infoAmountsSEXP, SEXP xpiweSEXP, SEXP xpiwe_rSEXP, SEXP xpiwe_max_fSEXP, SEXP obs_countSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -713,7 +729,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Nullable<CharacterVector> >::type consLevels(consLevelsSEXP);
     Rcpp::traits::input_parameter< int >::type consExpectedScore(consExpectedScoreSEXP);
     Rcpp::traits::input_parameter< Nullable<NumericMatrix> >::type infoAmounts(infoAmountsSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_successive_approx(contrast, tip_data, weight, levels, saK, maxSAIter, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, driftCycles, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts));
+    Rcpp::traits::input_parameter< bool >::type xpiwe(xpiweSEXP);
+    Rcpp::traits::input_parameter< double >::type xpiwe_r(xpiwe_rSEXP);
+    Rcpp::traits::input_parameter< double >::type xpiwe_max_f(xpiwe_max_fSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type obs_count(obs_countSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_successive_approx(contrast, tip_data, weight, levels, saK, maxSAIter, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, driftCycles, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts, xpiwe, xpiwe_r, xpiwe_max_f, obs_count));
     return rcpp_result_gen;
 END_RCPP
 }

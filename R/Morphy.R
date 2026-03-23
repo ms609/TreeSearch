@@ -1110,6 +1110,9 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
                      nReplicates = 1L, nThreads = 1L,
                      hierarchy = NULL, inapplicable = "brazeau",
                      hsj_alpha = 1.0,
+                     extended_iw = TRUE,
+                     xpiwe_r = 0.5,
+                     xpiwe_max_f = 5,
                      ...) {
 
   if (!inherits(dataset, "phyDat")) {
@@ -1209,6 +1212,12 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
     ))
   }
 
+  # XPIWE: compute per-pattern observed-taxa counts
+  useXpiwe <- isTRUE(extended_iw) && is.finite(concavity) && !useProfile
+  if (useXpiwe) {
+    obsCount <- .ObsCount(dataset)
+  }
+
   searchArgs <- list(
     contrast = contrast,
     tip_data = tip_data,
@@ -1222,7 +1231,11 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
     ratchetCycles = as.integer(max(ratchIter, 3L)),
     min_steps = if (is.finite(concavity))
       as.integer(MinimumLength(dataset, compress = TRUE)) else integer(0),
-    concavity = as.double(concavity)
+    concavity = as.double(concavity),
+    xpiwe = useXpiwe,
+    xpiwe_r = as.double(xpiwe_r),
+    xpiwe_max_f = as.double(xpiwe_max_f),
+    obs_count = if (useXpiwe) obsCount else integer(0)
   )
 
   if (nReplicates > 1L) {

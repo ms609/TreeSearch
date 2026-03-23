@@ -1,3 +1,33 @@
+# Internal helper: count non-missing taxa per character pattern.
+# Used by XPIWE (Goloboff 2014) to compute the extrapolation factor.
+# @param dataset A phyDat object.
+# @return Integer vector of length = number of unique patterns.
+# @keywords internal
+.ObsCount <- function(dataset) {
+  at <- attributes(dataset)
+  contrast <- at$contrast
+  levels <- at$levels
+  # "?" = all-1s contrast row.
+  is_missing <- apply(contrast, 1, function(row) all(row == 1))
+  # "-" (inapplicable/gap) also counts as missing for XPIWE (Goloboff 2014).
+  # TNT counts both ? and - as missing, verified against TNT 1.6.
+  inapp_col <- match("-", levels)
+  if (!is.na(inapp_col)) {
+    is_inapp <- apply(contrast, 1, function(row) {
+      row[inapp_col] == 1 && sum(row) == 1
+    })
+    is_missing <- is_missing | is_inapp
+  }
+  # dataset is a list of integer vectors (token indices, 1-based) per taxon.
+  # tip_data: n_taxa x n_patterns matrix
+  tip_data <- matrix(unlist(dataset, use.names = FALSE),
+                     nrow = length(dataset), byrow = TRUE)
+  # Count non-missing taxa per pattern
+  vapply(seq_len(ncol(tip_data)), function(p) {
+    sum(!is_missing[tip_data[, p]])
+  }, integer(1))
+}
+
 # Internal helper: prepare constraint data for C++ engine.
 # Returns a named list of constraint arguments (empty list if no constraint).
 # @param constraint A phyDat, phylo, or NULL.
@@ -179,6 +209,21 @@
 #' Specify `Inf` to weight each additional step equally.
 #' Specify `"profile"` to employ profile parsimony
 #' \insertCite{Faith2001}{TreeSearch}.
+#' @param extended_iw Logical: if `TRUE` (default) and `concavity` is finite,
+#'   apply the missing-entries correction of
+#'   \insertCite{Goloboff2014;textual}{TreeSearch}.
+#'   Characters with missing data receive a reduced effective concavity
+#'   _k_c_ = _k_ / _f_c_, making their weights drop off faster.
+#'   This compensates for the artificially low homoplasy of poorly sampled
+#'   characters.  Set `FALSE` for legacy Goloboff (1993) behaviour.
+#'   Ignored when `concavity = Inf` (equal weights) or `"profile"`.
+#' @param xpiwe_r Numeric in (0, 1]: proportion of observed homoplasy
+#'   expected in unobserved (missing) entries.  Default 0.5 (following TNT).
+#'   Only used when `extended_iw = TRUE`.
+#' @param xpiwe_max_f Numeric >= 1: maximum extrapolation factor.
+#'   Characters with very few observed entries are clamped so that the
+#'   extrapolation factor does not exceed this value.  Default 5 (following
+#'   TNT).  Only used when `extended_iw = TRUE`.
 #' @param hierarchy A [`CharacterHierarchy`] object specifying which
 #'   characters are controlling primaries and which are their dependent
 #'   secondaries.  Required when `inapplicable` is `"hsj"` or `"xform"`;
@@ -312,6 +357,9 @@ MaximizeParsimony <- function(
     dataset,
     tree,
     concavity = Inf,
+    extended_iw = TRUE,
+    xpiwe_r = 0.5,
+    xpiwe_max_f = 5,
     hierarchy = NULL,
     inapplicable = "brazeau",
     hsj_alpha = 1.0,
@@ -643,6 +691,12 @@ MaximizeParsimony <- function(
     minSteps <- as.integer(MinimumLength(dataset, compress = TRUE))
   }
 
+  # --- XPIWE: compute per-pattern observed-taxa counts ---
+  useXpiwe <- isTRUE(extended_iw) && is.finite(concavity) && !useProfile
+  if (useXpiwe) {
+    obsCount <- .ObsCount(dataset)
+  }
+
   # --- Run C++ driven search ---
   # Read all control fields from the resolved control object
   ctrl <- control
@@ -679,6 +733,10 @@ MaximizeParsimony <- function(
     verbosity = as.integer(verbosity),
     min_steps = if (is.finite(concavity)) minSteps else integer(0),
     concavity = as.double(concavity),
+    xpiwe = useXpiwe,
+    xpiwe_r = as.double(xpiwe_r),
+    xpiwe_max_f = as.double(xpiwe_max_f),
+    obs_count = if (useXpiwe) obsCount else integer(0),
     progressCallback = progressCallback,
     nThreads = as.integer(nThreads),
     startEdge = if (userTree) tree[["edge"]] else NULL,

@@ -17,7 +17,8 @@ test_that("IW Scoring", {
   fit <- homoplasies / (homoplasies + concavity)
   manualIW <- sum(fit * weight)
 
-  expect_equal(TreeLength(tree, dataset, concavity = concavity), manualIW)
+  expect_equal(TreeLength(tree, dataset, concavity = concavity,
+                         extended_iw = FALSE), manualIW)
 
   # Sanity check: IW score should be positive for a non-trivial dataset
 

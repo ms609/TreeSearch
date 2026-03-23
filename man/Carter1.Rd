@@ -45,7 +45,7 @@ binary trees) for each requested step count.  Currently supports 2--5
 character tokens.
 }
 \examples{
-MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * TreeTools::NUnrooted(7)
+MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * NUnrooted(7)
 
 # The character `0 0 0 1 1 1`
 Carter1(1, 3, 3) # Exactly one step

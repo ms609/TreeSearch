@@ -118,7 +118,11 @@ std::vector<ResampleResult> parallel_resample(
     int n_threads,
     const double* info_amounts_r = nullptr,
     int info_max_steps = 0,
-    ConstraintData* cd = nullptr);
+    ConstraintData* cd = nullptr,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    const int* obs_count_r = nullptr);
 
 } // namespace ts
 

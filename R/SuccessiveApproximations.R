@@ -35,7 +35,10 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
                                       ratchetIter = 5000, verbosity = 0,
                                       suboptimal = 0.1,
                                       concavity = Inf,
-                                      constraint = NULL) {
+                                      constraint = NULL,
+                                      extended_iw = TRUE,
+                                      xpiwe_r = 0.5,
+                                      xpiwe_max_f = 5) {
 
   if (k < 1) stop("k should be at least 1, see Farris 1969 p.379")
 
@@ -72,6 +75,12 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
     }
   }
 
+  # XPIWE: compute per-pattern observed-taxa counts
+  useXpiwe <- isTRUE(extended_iw) && is.finite(concavity) && !useProfile
+  if (useXpiwe) {
+    obsCount <- .ObsCount(dataset)
+  }
+
   searchArgs <- list(
     contrast = contrast,
     tip_data = tip_data,
@@ -85,7 +94,11 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
     ratchetCycles = as.integer(min(ceiling(ratchetIter / 500), 10L)),
     min_steps = if (is.finite(concavity))
       as.integer(MinimumLength(dataset, compress = TRUE)) else integer(0),
-    concavity = as.double(concavity)
+    concavity = as.double(concavity),
+    xpiwe = useXpiwe,
+    xpiwe_r = as.double(xpiwe_r),
+    xpiwe_max_f = as.double(xpiwe_max_f),
+    obs_count = if (useXpiwe) obsCount else integer(0)
   )
   result <- do.call(ts_successive_approx, c(searchArgs, consArgs, profileArgs))
 
