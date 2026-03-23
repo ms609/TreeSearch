@@ -7,6 +7,13 @@
 #   - Number of replicates to convergence
 #   - Per-phase timing breakdown
 #
+# When comparing strategies with DIFFERENT per-replicate cost (e.g.
+# NNI→TBR vs TBR), use time-adjusted expected best — the expected
+# minimum from k = budget / time_per_rep draws — not median score.
+# See .positai/expertise/profiling.md for implementation and rationale.
+# Median is fine when comparing parameter changes on a fixed pipeline
+# (same time-per-rep).
+#
 # Usage:
 #   source("inst/benchmarks/bench_framework.R")
 #   results <- run_benchmark_grid()
@@ -106,6 +113,12 @@ BEST_KNOWN_EW <- c(
   Giles2015 = 720, Dikow2009 = 1614
 )
 
+# Large-tree best-known EW scores.
+# NA = not yet established; fill in after benchmarking.
+BEST_KNOWN_LARGE_EW <- c(
+  mbank_X30754 = NA_real_   # 180 tips, 425 chars
+)
+
 # ---- Core benchmark function ----
 
 #' Run one driven search and record performance metrics.
@@ -196,6 +209,8 @@ benchmark_run <- function(ds, strategy,
 #' @param targetHits Convergence hits (NULL = auto).
 #' @param maxSeconds Timeout per run (0 = no timeout).
 #' @param base_seed Seed for first replicate; incremented per replicate.
+#' @param datasets Pre-loaded named list of prepared datasets. If NULL
+#'   (default), loads all standard + large benchmark datasets.
 #' @return A data.frame with one row per dataset x strategy x replicate.
 run_benchmark_grid <- function(
     dataset_names = BENCHMARK_NAMES,
@@ -204,9 +219,10 @@ run_benchmark_grid <- function(
     maxReplicates = 100L,
     targetHits = NULL,
     maxSeconds = 30,
-    base_seed = 42L
+    base_seed = 42L,
+    datasets = NULL
 ) {
-  datasets <- load_benchmark_datasets()
+  if (is.null(datasets)) datasets <- load_all_benchmark_datasets()
   n_combos <- length(dataset_names) * length(strategy_names) * replicates
   cat(sprintf("Benchmark grid: %d datasets x %d strategies x %d reps = %d runs\n",
               length(dataset_names), length(strategy_names), replicates, n_combos))
@@ -305,7 +321,8 @@ run_benchmark_grid <- function(
 #' @param results Data frame from run_benchmark_grid.
 #' @param best_known Named numeric vector of best-known EW scores.
 #' @return Data frame with one row per dataset x strategy.
-summarize_grid <- function(results, best_known = BEST_KNOWN_EW) {
+summarize_grid <- function(results,
+                           best_known = c(BEST_KNOWN_EW, BEST_KNOWN_LARGE_EW)) {
   combos <- unique(results[, c("dataset", "strategy")])
   out <- vector("list", nrow(combos))
 
@@ -404,5 +421,37 @@ benchmark_full <- function(maxSeconds = 30, replicates = 5L) {
     maxSeconds = maxSeconds,
     replicates = replicates,
     base_seed = 42L
+  )
+}
+
+#' Run benchmark grid on large-tree datasets.
+#'
+#' Uses longer timeouts and fewer replicates than the standard benchmark,
+#' since each replicate at 180+ tips takes minutes rather than seconds.
+#'
+#' @param strategy_names Strategies to test (default: "default" and "thorough").
+#' @param replicates Independent runs per combination.
+#' @param maxReplicates Replicate cap per search (low: most info comes from
+#'   a single replicate at this scale).
+#' @param maxSeconds Timeout per run (default 120s).
+#' @param base_seed RNG seed.
+#' @return Data frame matching run_benchmark_grid output format.
+benchmark_large <- function(
+    strategy_names = c("default", "thorough"),
+    replicates = 3L,
+    maxReplicates = 10L,
+    maxSeconds = 120,
+    base_seed = 42L
+) {
+  large_ds <- load_large_benchmark_datasets()
+  if (length(large_ds) == 0L) stop("No large benchmark datasets found")
+  run_benchmark_grid(
+    dataset_names = names(large_ds),
+    strategy_names = strategy_names,
+    replicates = replicates,
+    maxReplicates = maxReplicates,
+    targetHits = 3L,
+    maxSeconds = maxSeconds,
+    base_seed = base_seed
   )
 }
