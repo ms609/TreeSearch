@@ -87,9 +87,12 @@ CIDConsensus <- function(
 
 **Design decisions:**
 
-1. **`start = NULL`** defaults to `multi2di(Consensus(trees, p = 0.5))`.
-   User can pass any phylo (e.g., a transfer consensus from TreeDist dev).
-   Starting tree is always resolved with `multi2di()` for Phase 1.
+1. **`start = NULL`** defaults to `MakeTreeBinary(Consensus(trees, p = 0.5))`.
+   Uses `TreeTools::Consensus` (rooted, Day 1985) and
+   `TreeTools::MakeTreeBinary` (uniform topology sampling, no spurious
+   zero-length edges). User can pass any phylo (e.g., a transfer consensus
+   from TreeDist dev). Starting tree is always resolved with
+   `MakeTreeBinary()` for Phase 1.
 
 2. **`method = "ratchet"`** is the default. Delegates to `Ratchet()` with
    `CIDBootstrap` and `list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap)`.
@@ -246,5 +249,5 @@ Not blocking initial delivery; document as future work.
 | CID scoring too slow for large trees (>50 tips, >200 input trees) | Lower default `searchIter`; document performance expectations; Phase 3 optimizations |
 | SPR local optima on binary trees miss non-binary optimum | Phase 2 adds collapse/resolve; multi-start with `nSearch` parameter |
 | `Ratchet()` bifurcation check (line 89-90) rejects non-binary trees | Phase 2: bypass by calling `EdgeListSearch` directly for non-binary case, or add a `bifurcating = TRUE` parameter |
-| TreeDist `TransferConsensus` not yet on CRAN | Default start = majority rule; user can pass any starting tree |
+| TreeDist `TransferConsensus` not yet on CRAN | Default start = majority rule via `TreeTools::Consensus`; user can pass any starting tree |
 | Edge renumbering after collapse/resolve may break node numbering conventions | Use `ape::collapse.singles()` and `TreeTools::Renumber()` for canonicalization |

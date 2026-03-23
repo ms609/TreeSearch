@@ -110,6 +110,7 @@ criterion \insertCite{Farris1969}{TreeSearch}.
 }
 \seealso{
 Other custom search functions: 
+\code{\link{CIDConsensus}()},
 \code{\link{EdgeListSearch}()},
 \code{\link{Jackknife}()},
 \code{\link{MorphyBootstrap}()}

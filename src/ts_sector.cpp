@@ -266,6 +266,16 @@ static void collect_clade_nodes(const TreeState& tree, int node,
   }
 }
 
+// In CID mode, score_tree() calls cid_score() which doesn't run Fitch,
+// so prelim/final_ state arrays may be stale.  build_reduced_dataset()
+// needs valid final_ to construct the HTU pseudo-tip.  This helper runs
+// a full Fitch scoring on the MRP characters when needed.
+static void prepare_cid_states(TreeState& tree, const DataSet& ds) {
+  if (ds.scoring_mode == ScoringMode::CID) {
+    fitch_score(tree, ds);
+  }
+}
+
 // ---- Reduced dataset construction ----
 
 ReducedDataset build_reduced_dataset(const TreeState& tree,
@@ -433,8 +443,14 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
   rd.data.eff_k = ds.eff_k;
   rd.data.phi = ds.phi;
 
-  // Copy scoring mode and simplification metadata
+  // Copy scoring mode and simplification metadata.
+  // CID mode: sector-internal search uses Fitch on MRP characters;
+  // full CID is verified on the complete tree after reinsertion.
   rd.data.scoring_mode = ds.scoring_mode;
+  if (rd.data.scoring_mode == ScoringMode::CID) {
+    rd.data.scoring_mode = ScoringMode::EW;
+    rd.data.cid_data = nullptr;
+  }
   rd.data.ew_offset = ds.ew_offset;
   rd.data.precomputed_steps = ds.precomputed_steps;
   rd.data.info_amounts = ds.info_amounts;
@@ -638,7 +654,9 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
 
-  // Ensure full tree has current state sets
+  // Ensure full tree has current state sets.
+  // For CID mode, also run Fitch to populate final_ for HTU construction.
+  prepare_cid_states(tree, ds);
   double current_score = score_tree(tree, ds);
 
   SectorResult result;
@@ -747,6 +765,7 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
         restore_clade(tree, snap);
         tree.build_postorder();
         score_tree(tree, ds);
+        prepare_cid_states(tree, ds);
         continue;
       }
 
@@ -771,6 +790,8 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
             eligible.push_back(node);
           }
         }
+        // Refresh Fitch states for next sector extraction
+        prepare_cid_states(tree, ds);
         if (eligible.empty()) break;
 
         // Recompute conflict weights for new topology
@@ -784,11 +805,13 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
         }
       } else if (new_score == result.best_score && params.accept_equal) {
         // Equal score accepted — topology changed but score didn't
+        prepare_cid_states(tree, ds);
       } else {
         // HTU approximation caused full-tree score to worsen; revert
         restore_clade(tree, snap);
         tree.build_postorder();
         score_tree(tree, ds);
+        prepare_cid_states(tree, ds);
       }
     }
 
@@ -818,6 +841,8 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
 
+  // For CID mode, run Fitch to populate final_ for HTU construction.
+  prepare_cid_states(tree, ds);
   double current_score = score_tree(tree, ds);
 
   SectorResult result;
@@ -848,10 +873,6 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
       int sz = count_clade_tips(tree, sector_root);
       if (sz < 4) continue; // too small to be useful
 
-      // State arrays are guaranteed valid: either from the initial
-      // score_tree above, or from the previous sector's acceptance/
-      // rejection (both paths call score_tree before continuing).
-
       ReducedDataset rd = build_reduced_dataset(tree, ds, sector_root);
 
       double sector_current = score_tree(rd.subtree, rd.data);
@@ -877,6 +898,7 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
           restore_clade(tree, snap);
           tree.build_postorder();
           score_tree(tree, ds);
+          prepare_cid_states(tree, ds);
           continue;
         }
 
@@ -885,13 +907,16 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
               static_cast<int>(result.best_score - new_score);
           result.best_score = new_score;
           ++result.n_sectors_improved;
+          prepare_cid_states(tree, ds);
         } else if (new_score == result.best_score && params.accept_equal) {
           // Equal score accepted
+          prepare_cid_states(tree, ds);
         } else {
           // HTU approximation caused full-tree score to worsen; revert
           restore_clade(tree, snap);
           tree.build_postorder();
           score_tree(tree, ds);
+          prepare_cid_states(tree, ds);
         }
       }
 

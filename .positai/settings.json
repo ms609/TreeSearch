@@ -27,7 +27,9 @@
       "git *": "allow"
     },
     "read": {
-      "*.cpp": "allow"
+      "*.cpp": "allow",
+      "*.h": "allow",
+      "*": "allow"
     },
     "external_directory": {
       "C:/Users/pjjg18/GitHub/TreeDist/*": "allow",
@@ -46,6 +48,18 @@
     },
     "webfetch": {
       "https://repo.r-wasm.org/*": "allow"
+      "C:\\Users\\pjjg18\\GitHub\\TreeDist/*": "allow",
+      "C:\\Users\\pjjg18\\GitHub\\TreeDist\\R/*": "allow",
+      "C:\\Users\\pjjg18\\GitHub\\TreeDist\\src/*": "allow",
+      "C:\\Users\\pjjg18\\GitHub\\TreeDist\\vignettes/*": "allow",
+      "../TreeSearch-a/*": "allow",
+      "../TreeDist/R/*": "allow",
+      "../TreeDist/*": "allow",
+      "../consense/*": "allow",
+      "/tmp/*": "allow"
+    },
+    "skill": {
+      "quarto-authoring": "allow"
     }
   }
 }

@@ -22,6 +22,7 @@
 #include "ts_hsj.h"
 // ts_temper.h removed — parallel tempering lives on feature/parallel-temper
 #include "ts_strategy.h"
+#include "ts_cid.h"
 
 using namespace Rcpp;
 
@@ -2638,3 +2639,217 @@ List ts_test_strategy_tracker(int seed, int n_draws) {
   );
 }
 
+// [[Rcpp::export]]
+List ts_cid_consensus(
+    List splitMatrices,
+    IntegerVector nTip,
+    LogicalVector normalize,
+    int maxReplicates = 100,
+    int targetHits = 10,
+    int tbrMaxHits = 1,
+    int ratchetCycles = 10,
+    double ratchetPerturbProb = 0.04,
+    int ratchetPerturbMode = 0,
+    bool ratchetAdaptive = false,
+    int driftCycles = 6,
+    int driftAfdLimit = 3,
+    double driftRfdLimit = 0.1,
+    int xssRounds = 0,
+    int xssPartitions = 4,
+    int rssRounds = 0,
+    int cssRounds = 0,
+    int cssPartitions = 4,
+    int sectorMinSize = 6,
+    int sectorMaxSize = 50,
+    int fuseInterval = 3,
+    bool fuseAcceptEqual = false,
+    int poolMaxSize = 100,
+    double poolSuboptimal = 0.0,
+    double maxSeconds = 0.0,
+    int verbosity = 0,
+    int tabuSize = 100,
+    int wagnerStarts = 1,
+    int nThreads = 1,
+    double screeningK = 7.0,
+    double screeningTolerance = 0.0,
+    Nullable<IntegerMatrix> startEdge = R_NilValue,
+    Nullable<Function> progressCallback = R_NilValue)
+{
+  int n_tip = nTip[0];
+  bool norm = normalize[0];
+  int n_trees = splitMatrices.size();
+
+  if (n_trees == 0) {
+    Rcpp::stop("No input trees provided.");
+  }
+
+  // --- Build CidData from R split matrices ---
+  int n_bins = (n_tip + 63) / 64;
+
+  ts::CidData cid_data;
+  cid_data.n_trees = n_trees;
+  cid_data.n_tips = n_tip;
+  cid_data.n_bins = n_bins;
+  cid_data.normalize = norm;
+  cid_data.mrp_concavity = (screeningK <= 0.0 || !R_finite(screeningK))
+      ? HUGE_VAL : screeningK;
+  cid_data.screening_tolerance = std::max(0.0, screeningTolerance);
+  cid_data.tree_splits.resize(n_trees);
+  cid_data.tree_ce.resize(n_trees);
+  cid_data.tree_weights.assign(n_trees, 1.0);
+  cid_data.weight_sum = static_cast<double>(n_trees);
+
+  // Unset-tips mask for canonical split orientation
+  int unset = (n_tip % 64) ? 64 - (n_tip % 64) : 0;
+  uint64_t last_mask = unset ? (~uint64_t(0)) >> unset : ~uint64_t(0);
+
+  for (int t = 0; t < n_trees; ++t) {
+    RawMatrix rm = as<RawMatrix>(splitMatrices[t]);
+    int n_splits = rm.nrow();
+    int n_r_cols = rm.ncol(); // R raw columns (8 bits each)
+    int n_bins_from_r = (n_r_cols + 7) / 8; // 8 raw bytes per 64-bit word
+    if (n_bins_from_r > n_bins) n_bins_from_r = n_bins;
+
+    ts::CidSplitSet& ss = cid_data.tree_splits[t];
+    ss.n_splits = n_splits;
+    ss.n_bins = n_bins;
+    ss.data.assign(static_cast<size_t>(n_splits) * n_bins, 0);
+    ss.in_split.resize(n_splits, 0);
+
+    for (int s = 0; s < n_splits; ++s) {
+      uint64_t* sp = &ss.data[static_cast<size_t>(s) * n_bins];
+
+      // Unpack R's raw matrix (column-major, 8 bits per column)
+      for (int col = 0; col < n_r_cols; ++col) {
+        int word = col / 8;
+        int byte_pos = col % 8;
+        if (word < n_bins) {
+          sp[word] |= static_cast<uint64_t>(
+              static_cast<unsigned char>(rm(s, col))) << (byte_pos * 8);
+        }
+      }
+
+      // Ensure canonical form: tip 0 in partition 0
+      if (sp[0] & 1) {
+        for (int w = 0; w < n_bins - 1; ++w) sp[w] = ~sp[w];
+        if (n_bins > 0) sp[n_bins - 1] ^= last_mask;
+      }
+
+      // Popcount
+      int cnt = 0;
+      for (int w = 0; w < n_bins; ++w) cnt += ts::popcount64(sp[w]);
+      ss.in_split[s] = cnt;
+    }
+
+    cid_data.tree_ce[t] = ts::clustering_entropy(ss, n_tip);
+  }
+  cid_data.mean_tree_ce = 0.0;
+  for (int t = 0; t < n_trees; ++t) {
+    cid_data.mean_tree_ce += cid_data.tree_ce[t];
+  }
+  cid_data.mean_tree_ce /= n_trees;
+
+  // --- Prepare CID data (hash indices, log2 values, scratch presizing) ---
+  ts::prepare_cid_data(cid_data);
+
+  // --- Build MRP DataSet ---
+  ts::DataSet ds = ts::build_mrp_dataset(cid_data);
+
+  // --- Populate DrivenParams ---
+  ts::DrivenParams params;
+  params.max_replicates = maxReplicates;
+  params.target_hits = targetHits;
+  params.tbr_max_hits = tbrMaxHits;
+  params.ratchet_cycles = ratchetCycles;
+  params.ratchet_perturb_prob = ratchetPerturbProb;
+  params.ratchet_perturb_mode = ratchetPerturbMode;
+  params.ratchet_adaptive = ratchetAdaptive;
+  params.drift_cycles = driftCycles;
+  params.drift_afd_limit = driftAfdLimit;
+  params.drift_rfd_limit = driftRfdLimit;
+  params.xss_rounds = xssRounds;
+  params.xss_partitions = xssPartitions;
+  params.rss_rounds = rssRounds;
+  params.css_rounds = cssRounds;
+  params.css_partitions = cssPartitions;
+  params.sector_min_size = sectorMinSize;
+  params.sector_max_size = sectorMaxSize;
+  params.fuse_interval = fuseInterval;
+  params.fuse_accept_equal = fuseAcceptEqual;
+  params.pool_max_size = poolMaxSize;
+  params.pool_suboptimal = poolSuboptimal;
+  params.max_seconds = maxSeconds;
+  params.verbosity = verbosity;
+  params.tabu_size = tabuSize;
+  params.wagner_starts = wagnerStarts;
+
+  // Starting tree edge matrix (optional)
+  if (startEdge.isNotNull()) {
+    IntegerMatrix se(startEdge.get());
+    int n_edge = se.nrow();
+    params.start_n_edge = n_edge;
+    params.start_edge.resize(2 * n_edge);
+    for (int i = 0; i < n_edge; ++i) {
+      params.start_edge[i] = se(i, 0);
+      params.start_edge[n_edge + i] = se(i, 1);
+    }
+  }
+
+  // Progress callback
+  if (progressCallback.isNotNull()) {
+    Rcpp::Function r_cb(progressCallback.get());
+    params.progress_callback = [r_cb](const ts::ProgressInfo& pi) {
+      r_cb(Rcpp::List::create(
+        Rcpp::Named("replicate") = pi.replicate,
+        Rcpp::Named("max_replicates") = pi.max_replicates,
+        Rcpp::Named("best_score") = pi.best_score,
+        Rcpp::Named("hits_to_best") = pi.hits_to_best,
+        Rcpp::Named("target_hits") = pi.target_hits,
+        Rcpp::Named("pool_size") = pi.pool_size,
+        Rcpp::Named("phase") = std::string(pi.phase),
+        Rcpp::Named("elapsed") = pi.elapsed_seconds,
+        Rcpp::Named("phase_score") = pi.phase_score
+      ));
+    };
+  }
+
+  // --- Run driven search ---
+  ts::TreePool pool(params.pool_max_size, params.pool_suboptimal);
+  ts::DrivenResult result;
+  if (nThreads > 1) {
+    result = ts::parallel_driven_search(pool, ds, params, nullptr, nThreads);
+  } else {
+    result = ts::driven_search(pool, ds, params, nullptr);
+  }
+
+  // --- Return results ---
+  if (result.pool_size == 0) {
+    return List::create(
+      Named("trees") = List::create(),
+      Named("scores") = NumericVector::create(),
+      Named("best_score") = result.best_score,
+      Named("replicates") = result.replicates_completed,
+      Named("hits_to_best") = result.hits_to_best,
+      Named("pool_size") = 0,
+      Named("timed_out") = result.timed_out
+    );
+  }
+
+  const auto& entries = pool.all();
+  List tree_list(entries.size());
+  NumericVector score_vec(entries.size());
+  for (size_t i = 0; i < entries.size(); ++i) {
+    tree_list[i] = tree_to_edge(entries[i].tree);
+    score_vec[i] = entries[i].score;
+  }
+
+  return List::create(
+    Named("trees") = tree_list,
+    Named("scores") = score_vec,
+    Named("best_score") = result.best_score,
+    Named("replicates") = result.replicates_completed,
+    Named("hits_to_best") = result.hits_to_best,
+    Named("pool_size") = result.pool_size,
+    Named("timed_out") = result.timed_out
+  );
+}

@@ -216,6 +216,7 @@ par(oldPar)
 }
 
 Other custom search functions: 
+\code{\link{CIDConsensus}()},
 \code{\link{EdgeListSearch}()},
 \code{\link{Jackknife}()},
 \code{\link{SuccessiveApproximations}()}

@@ -1,6 +1,7 @@
 #include "ts_ratchet.h"
 #include "ts_tbr.h"
 #include "ts_fitch.h"
+#include "ts_cid.h"
 #include "ts_rng.h"
 
 #include <random>
@@ -28,6 +29,7 @@ void save_perturb_state(const DataSet& ds, PerturbSnapshot& snap) {
     snap.upweight_masks[b] = ds.blocks[b].upweight_mask;
   }
   snap.pattern_freq = ds.pattern_freq;
+  if (ds.cid_data) save_cid_weights(*ds.cid_data);
 }
 
 void restore_perturb_state(DataSet& ds, const PerturbSnapshot& snap) {
@@ -36,6 +38,7 @@ void restore_perturb_state(DataSet& ds, const PerturbSnapshot& snap) {
     ds.blocks[b].upweight_mask = snap.upweight_masks[b];
   }
   ds.pattern_freq = snap.pattern_freq;
+  if (ds.cid_data) restore_cid_weights(*ds.cid_data);
 }
 
 // --- Perturbation modes ---
@@ -181,6 +184,9 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
         perturb_mixed(ds, current_prob, rng, use_iw);
         break;
     }
+
+    // Synchronize CID tree weights with perturbed MRP blocks
+    if (ds.cid_data) sync_cid_weights_from_mrp(*ds.cid_data, ds);
 
     // 2. Short TBR on perturbed landscape
     TBRResult perturb_result = tbr_search(tree, ds, perturb_params, cd,

@@ -62,6 +62,7 @@ extern SEXP _TreeSearch_mc_fitch_scores(SEXP, SEXP);
 extern SEXP _TreeSearch_ts_wagner_bias_bench(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 /* ts_stochastic_tbr and ts_parallel_temper removed — on feature/parallel-temper */
 extern SEXP _TreeSearch_ts_test_strategy_tracker(SEXP, SEXP);
+extern SEXP _TreeSearch_ts_cid_consensus(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
@@ -135,6 +136,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_ts_sankoff_test", (DL_FUNC) &_TreeSearch_ts_sankoff_test, 5},
   {"_TreeSearch_ts_wagner_bias_bench", (DL_FUNC) &_TreeSearch_ts_wagner_bias_bench, 10},
   /* ts_stochastic_tbr (9) and ts_parallel_temper (10) removed */
+  {"_TreeSearch_ts_cid_consensus", (DL_FUNC) &_TreeSearch_ts_cid_consensus, 33},
 
   {"_TreeSearch_mc_fitch_scores",    (DL_FUNC) &_TreeSearch_mc_fitch_scores, 2},
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},

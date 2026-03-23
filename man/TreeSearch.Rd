@@ -141,6 +141,7 @@ optima.
 }
 
 Other custom search functions: 
+\code{\link{CIDConsensus}()},
 \code{\link{Jackknife}()},
 \code{\link{MorphyBootstrap}()},
 \code{\link{SuccessiveApproximations}()}
