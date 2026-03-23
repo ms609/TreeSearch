@@ -926,7 +926,7 @@ Morphy <- function(dataset, tree,
 
 # Hierarchy-aware resampling: generates hierarchical weights per replicate
 # and calls ts_driven_search with HSJ/xform scoring.
-# This is an internal helper called from Resample() when inapplicable != "brazeau".
+# This is an internal helper called from Resample() when inapplicable != "bgs".
 .ResampleHierarchy <- function(dataset, hierarchy, inapplicable, hsj_alpha,
                                method_idx, proportion, nReplicates,
                                contrast, tip_data, weight, levels, nTip,
@@ -1091,7 +1091,8 @@ Morphy <- function(dataset, tree,
 #' character is one unit, and each top-level hierarchy block (primary +
 #' all dependents) is one unit.  See [`CharacterHierarchy()`].
 #' @param inapplicable Character string specifying the inapplicable-character
-#' handling method: `"brazeau"` (default), `"hsj"`, or `"xform"`.
+#' handling method: `"bgs"` (default), `"hsj"`, or `"xform"`.
+#' Case-insensitive; `"brazeau"` is accepted as an alias for `"bgs"`.
 #' See [`MaximizeParsimony()`] and `vignette("inapplicable")` for details.
 #' @param hsj_alpha Numeric in \[0, 1\] controlling the weight of secondary
 #' character variation in HSJ scoring.  Default `1.0`.  Only used when
@@ -1108,7 +1109,7 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
                      tolerance = sqrt(.Machine[["double.eps"]]),
                      constraint, verbosity = 2L,
                      nReplicates = 1L, nThreads = 1L,
-                     hierarchy = NULL, inapplicable = "brazeau",
+                     hierarchy = NULL, inapplicable = "bgs",
                      hsj_alpha = 1.0,
                      extended_iw = TRUE,
                      xpiwe_r = 0.5,
@@ -1140,8 +1141,10 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   }
 
   # --- Validate inapplicable-handling parameters ---
-  inapplicable <- match.arg(inapplicable, c("brazeau", "hsj", "xform"))
-  if (inapplicable != "brazeau") {
+  inapplicable <- tolower(inapplicable)
+  if (inapplicable == "brazeau") inapplicable <- "bgs"
+  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform"))
+  if (inapplicable != "bgs") {
     if (is.null(hierarchy)) {
       stop("A `hierarchy` is required when inapplicable = \"", inapplicable,
            "\". See ?CharacterHierarchy.")
@@ -1159,14 +1162,14 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   # Profile parsimony: prepare data
   useProfile <- identical(concavity, "profile")
   if (useProfile) {
-    if (inapplicable != "brazeau") {
+    if (inapplicable != "bgs") {
       stop("Profile parsimony is not currently supported with inapplicable = \"",
            inapplicable, "\".")
     }
     dataset <- PrepareDataProfile(dataset)
     concavity <- Inf
   }
-  if (is.finite(concavity) && inapplicable != "brazeau") {
+  if (is.finite(concavity) && inapplicable != "bgs") {
     stop("Implied weighting is not currently supported with inapplicable = \"",
          inapplicable, "\".")
   }
@@ -1196,10 +1199,10 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   }
 
   # --- Hierarchy-aware resampling path ---
-  # When inapplicable != "brazeau", resample at the unit level (free chars +
+  # When inapplicable != "bgs", resample at the unit level (free chars +
   # hierarchy blocks) and run driven_search per replicate with HSJ/xform
   # scoring.
-  if (inapplicable != "brazeau" && !is.null(hierarchy)) {
+  if (inapplicable != "bgs" && !is.null(hierarchy)) {
     return(.ResampleHierarchy(
       dataset = dataset, hierarchy = hierarchy, inapplicable = inapplicable,
       hsj_alpha = hsj_alpha, method_idx = method_idx, proportion = proportion,

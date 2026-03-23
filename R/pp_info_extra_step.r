@@ -217,12 +217,17 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
 }
 
 # Adapted from https://rpubs.com/FJRubio/LSE
+# Guard: when both x[k] and Lk[k-1] are -Inf, the difference is NaN
+# (IEEE 754: -Inf - (-Inf) = NaN), propagating silently. Keep Lk[k] = -Inf.
 .LogCumSumExp <- function (x) { 
   n <- length(x)
   Lk <- c(x[1], double(n - 1L))
   for (k in 1L + seq_len(n - 1L)) {
     Lk[k] <- Lk[k - 1]
-    Lk[k] <- max(x[k], Lk[k]) + log1p(exp(-abs(x[k] - Lk[k])))
+    if (is.finite(x[k]) || is.finite(Lk[k])) {
+      Lk[k] <- max(x[k], Lk[k]) + log1p(exp(-abs(x[k] - Lk[k])))
+    }
+    # else both -Inf: Lk[k] stays -Inf (log(0 + 0) = -Inf, not NaN)
   }
   
   # Return:
@@ -255,16 +260,8 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
 #'   Only observed singleton states need non-zero counts; polymorphic entries
 #'   are typically zero.
 #' 
-#' @references 
+#' @references \insertCite{Steel1993,Steel1995,Steel1996}{TreeSearch}
 #' \insertAllCited{}
-#' 
-#' See also:
-#' 
-#' \insertRef{Steel1993}{TreeSearch}
-#' 
-#' \insertRef{Steel1995}{TreeSearch}
-#' 
-#' (\insertRef{Steel1996}{TreeSearch})
 #' @importFrom TreeTools LogDoubleFactorial
 #' @examples 
 #' # The character `0 0 0 1 1 1`

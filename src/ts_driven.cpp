@@ -3,9 +3,12 @@
 #include "ts_search.h"
 #include "ts_tbr.h"
 #include "ts_ratchet.h"
+#include "ts_nni_perturb.h"
 #include "ts_drift.h"
 #include "ts_sector.h"
 #include "ts_fuse.h"
+#include "ts_pool.h"
+#include "ts_constraint.h"
 #include "ts_wagner.h"
 #include "ts_splits.h"
 #include "ts_rng.h"
@@ -50,7 +53,8 @@ ReplicateResult run_single_replicate(
     ConstraintData* cd,
     std::function<bool()> check_timeout,
     int verbosity,
-    TreeState* starting_tree)
+    TreeState* starting_tree,
+    const SplitFrequencyTable* split_freq)
 {
   ReplicateResult result;
   result.interrupted = false;
@@ -67,7 +71,10 @@ ReplicateResult run_single_replicate(
     return ms;
   };
 
-  // 1. Starting tree: use provided tree or build Wagner
+  // 1. Starting tree: use provided tree or build Wagner.
+  // When nni_first is true, NNI-optimize each Wagner start before
+  // selecting the best. This finds better starting basins of attraction
+  // for TBR at modest cost (NNI is O(n) per pass vs TBR's O(n²)).
   double best_wag;
   if (starting_tree) {
     result.tree = *starting_tree;
@@ -75,10 +82,18 @@ ReplicateResult run_single_replicate(
   } else {
     random_wagner_tree(result.tree, ds, cd);
     best_wag = score_tree(result.tree, ds);
+    if (params.nni_first) {
+      auto nr = nni_search(result.tree, ds, 0, check_timeout);
+      best_wag = nr.score;
+    }
     for (int ws = 1; ws < params.wagner_starts; ++ws) {
       TreeState trial;
       random_wagner_tree(trial, ds, cd);
       double trial_score = score_tree(trial, ds);
+      if (params.nni_first) {
+        auto nr = nni_search(trial, ds, 0, check_timeout);
+        trial_score = nr.score;
+      }
       if (trial_score < best_wag) {
         result.tree = std::move(trial);
         best_wag = trial_score;
@@ -92,20 +107,23 @@ ReplicateResult run_single_replicate(
       Rprintf("  Starting tree score: %.5g [%.0f ms]\n", best_wag,
               result.timings.wagner_ms);
     } else {
-      Rprintf("  Wagner tree score: %.5g [%.0f ms]%s\n", best_wag,
-              result.timings.wagner_ms,
+      Rprintf("  Wagner%s tree score: %.5g [%.0f ms]%s\n",
+              params.nni_first ? "+NNI" : "",
+              best_wag, result.timings.wagner_ms,
               params.wagner_starts > 1 ? " (best of multiple starts)" : "");
     }
   }
 
-  // 2. Hill-climbing to local optimum (SPR→TBR escalation)
-  if (params.spr_first) {
-    spr_search(result.tree, ds, 1);
+  // 2. Hill-climbing to local optimum.
+  // SPR is skipped when NNI is active (empirically counterproductive:
+  // NNI→TBR outperforms NNI→SPR→TBR at 180 tips and is equivalent at ≤88).
+  if (!params.nni_first && params.spr_first) {
+    spr_search(result.tree, ds, 1, check_timeout);
   }
   {
     TBRParams tp;
     tp.tabu_size = params.tabu_size;
-    tbr_search(result.tree, ds, tp, cd);
+    tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
   }
   result.timings.tbr_ms = ph_lap();
   if (verbosity >= 2) {
@@ -144,8 +162,9 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
-    // RSS: random sector picks
+    // RSS: random sector picks (conflict-guided when pool data available)
     if (params.rss_rounds > 0) {
+      sp.split_freq = split_freq;
       for (int rr = 0; rr < params.rss_rounds; ++rr) {
         rss_search(result.tree, ds, sp, cd);
 
@@ -214,6 +233,28 @@ ReplicateResult run_single_replicate(
     return result;
   }
 
+  // 4b. NNI perturbation (topology-space escape)
+  if (params.nni_perturb_cycles > 0) {
+    NNIPerturbParams np;
+    np.n_cycles = params.nni_perturb_cycles;
+    np.perturb_fraction = params.nni_perturb_fraction;
+    np.max_hits = params.tbr_max_hits;
+    np.tabu_size = params.tabu_size;
+    nni_perturb_search(result.tree, ds, np, cd, check_timeout);
+
+    result.timings.nni_perturb_ms = ph_lap();
+    if (verbosity >= 2) {
+      Rprintf("  NNI-perturb score: %.5g [%.0f ms]\n",
+              score_tree(result.tree, ds), result.timings.nni_perturb_ms);
+    }
+  }
+
+  if (ts::check_interrupt() || check_timeout()) {
+    result.interrupted = true;
+    result.score = score_tree(result.tree, ds);
+    return result;
+  }
+
   // 5. Drifting (suboptimal + equal-score exploration)
   if (params.drift_cycles > 0) {
     DriftParams dp;
@@ -241,12 +282,20 @@ ReplicateResult run_single_replicate(
   {
     TBRParams tp;
     tp.tabu_size = params.tabu_size;
-    tbr_search(result.tree, ds, tp, cd);
+    tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
   }
   result.timings.final_tbr_ms = ph_lap();
   if (verbosity >= 2) {
     Rprintf("  Final TBR score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
             result.timings.final_tbr_ms);
+  }
+
+  // Check cancel/timeout after final TBR polish so a stop during TBR is
+  // detected here rather than forcing the caller to run MPT enumeration.
+  if (ts::check_interrupt() || check_timeout()) {
+    result.interrupted = true;
+    result.score = score_tree(result.tree, ds);
+    return result;
   }
 
   result.score = score_tree(result.tree, ds);
@@ -264,6 +313,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   result.hits_to_best = 0;
   result.pool_size = 0;
   result.timed_out = false;
+  result.consensus_stable = false;
 
   if (params.max_replicates <= 0) {
     result.best_score = -1.0;
@@ -317,6 +367,22 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // messages that don't map cleanly to a single Rprintf call)
   };
 
+  // Adaptive search level state.
+  // We make a mutable copy of the params to adjust per-replicate cycles.
+  // Base values are the originally configured ratchet/drift cycles.
+  const int base_ratchet_cycles = params.ratchet_cycles;
+  const int base_drift_cycles = params.drift_cycles;
+  DrivenParams adaptive_params = params;  // mutable copy for adaptive level
+
+
+  // Cross-replicate consensus constraint tightening.
+  // When enabled and no user constraint is supplied, the strict consensus
+  // of pool trees is enforced as topological constraints for subsequent
+  // replicates. Cleared whenever a new best score is found.
+  bool use_auto_constraint = params.consensus_constrain && (!cd || !cd->active);
+  ConstraintData auto_cd;  // built from pool consensus; reused across reps
+  double auto_cd_best_score = 1e18;  // score when auto_cd was last built
+
   for (int rep = 0; rep < params.max_replicates; ++rep) {
     int rep1 = rep + 1;
 
@@ -346,22 +412,103 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       start_ptr = &start_tree;
     }
 
+    // Adaptive level: adjust ratchet/drift cycles based on hit rate.
+    // Uses a sliding window of recent replicates to compute hit rate.
+    if (params.adaptive_level && rep > 0 && pool.size() > 0) {
+      // Simple hit rate: hits_to_best / replicates_completed
+      double hit_rate = (result.replicates_completed > 0)
+          ? static_cast<double>(pool.hits_to_best()) /
+            result.replicates_completed
+          : 0.0;
+
+      // Scale factor: high hit rate → reduce effort, low → increase
+      double scale;
+      if (hit_rate > 0.7) {
+        scale = 0.5;     // easy landscape: halve effort
+      } else if (hit_rate > 0.4) {
+        scale = 0.75;    // moderate: reduce slightly
+      } else if (hit_rate < 0.15) {
+        scale = 1.5;     // hard landscape: increase effort
+      } else {
+        scale = 1.0;     // use base values
+      }
+
+      adaptive_params.ratchet_cycles = std::max(
+          1, static_cast<int>(base_ratchet_cycles * scale));
+      adaptive_params.drift_cycles = std::max(
+          0, static_cast<int>(base_drift_cycles * scale));
+
+      if (params.verbosity >= 2) {
+        Rprintf("  Adaptive level: hit_rate=%.2f, scale=%.2f "
+                "(ratchet=%d, drift=%d)\n",
+                hit_rate, scale,
+                adaptive_params.ratchet_cycles,
+                adaptive_params.drift_cycles);
+      }
+    }
+
+    // Use adaptive_params for the replicate (cycles may differ from original)
+    const DrivenParams& rep_params = params.adaptive_level
+        ? adaptive_params : params;
+
+    // Conflict-guided sector selection: compute pool split frequencies
+    // for RSS weighting (only useful when pool has ≥2 best-score trees).
+    const SplitFrequencyTable* sft_ptr = nullptr;
+    SplitFrequencyTable sft;
+    if (pool.size() >= 2) {
+      sft = pool.compute_split_frequencies();
+      if (sft.n_trees >= 2) sft_ptr = &sft;
+    }
+
+    // Consensus constraint tightening: build/update auto-constraints
+    ConstraintData* rep_cd = cd;  // default: user-supplied constraint
+    if (use_auto_constraint &&
+        result.replicates_completed >= params.consensus_constrain_min_reps &&
+        pool.size() >= 3) {
+      // Rebuild if pool changed score (meaning old constraints may be wrong)
+      if (pool.best_score() < auto_cd_best_score || !auto_cd.active) {
+        auto_cd.active = false;  // clear old constraints
+        auto_cd_best_score = pool.best_score();
+
+        int n_unan = 0, wps = 0;
+        auto bits = pool.extract_consensus_splits(n_unan, wps);
+        if (n_unan > 0) {
+          auto_cd = build_constraint_from_bitsets(
+              bits.data(), n_unan, wps, ds.n_tips);
+          if (params.verbosity >= 2 && !has_callback) {
+            Rprintf("  Auto-constraint: %d consensus splits locked\n",
+                    n_unan);
+          }
+        }
+      }
+      if (auto_cd.active) {
+        rep_cd = &auto_cd;
+      }
+    }
+
     // Run the single-replicate pipeline
     ReplicateResult rep_result = run_single_replicate(
-        ds, params, cd, check_timeout, params.verbosity, start_ptr);
+        ds, rep_params, rep_cd, check_timeout, params.verbosity, start_ptr,
+        sft_ptr);
 
     result.timings += rep_result.timings;
 
+    // Compute collapsed flags for collapsed-topology pool dedup.
+    // Trees that differ only in zero-length resolutions are treated
+    // as duplicates, improving pool diversity (Goloboff & Farris 2001).
+    std::vector<uint8_t> rep_collapsed;
+    compute_collapsed_flags(rep_result.tree, ds, rep_collapsed);
+
     if (rep_result.interrupted) {
       if (rep_result.score < 1e18) {
-        pool.add(rep_result.tree, rep_result.score);
+        pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
       }
       result.timed_out = true;
       goto finish;
     }
 
-    // Add to pool
-    pool.add(rep_result.tree, rep_result.score);
+    // Add to pool with collapsed-topology dedup
+    pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
 
     ++result.replicates_completed;
 
@@ -388,7 +535,11 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       if (cd && cd->active) {
         fuse_ok = !violates_constraint_posthoc(fused, *cd);
       }
-      if (fuse_ok) pool.add(fused, fused_score);
+      if (fuse_ok) {
+        std::vector<uint8_t> fused_collapsed;
+        compute_collapsed_flags(fused, ds, fused_collapsed);
+        pool.add_collapsed(fused, fused_score, fused_collapsed);
+      }
 
       if (fused_score < best_before) {
         pool.set_hits_to_best(0);
@@ -406,7 +557,23 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
           std::chrono::duration<double, std::milli>(fuse_end - fuse_start).count();
     }
 
-    // Convergence check
+    // Consensus stability check
+    if (params.consensus_stable_reps > 0 && pool.size() >= 2) {
+      int unchanged = pool.update_consensus_stability();
+      if (unchanged >= params.consensus_stable_reps) {
+        if (params.verbosity >= 1) {
+          if (!has_callback) {
+            Rprintf("Consensus stable for %d replicates (score %.5g, "
+                    "pool %d trees)\n",
+                    unchanged, pool.best_score(), pool.size());
+          }
+        }
+        result.consensus_stable = true;
+        break;
+      }
+    }
+
+    // Convergence check (hit count)
     if (pool.hits_to_best() >= params.target_hits) {
       if (params.verbosity >= 1) {
         if (!has_callback) {
@@ -444,10 +611,13 @@ finish:
     // enumeration of seed i become additional seeds for later iterations).
     int seed_idx = 0;
     while (seed_idx < pool.size() && pool.size() < pool.max_size) {
+      // Check cancel between seeds so a stop during MPT enumeration
+      // is detected promptly (regression fix for T-163).
+      if (check_cancel()) break;
       TreeState enum_tree = pool.all()[seed_idx].tree;
       // Budget remaining capacity across remaining seeds
       tp.max_hits = std::max(10, (pool.max_size - pool.size()) * 2);
-      tbr_search(enum_tree, ds, tp, cd, nullptr, &pool);
+      tbr_search(enum_tree, ds, tp, cd, nullptr, &pool, check_timeout);
       ++seed_idx;
     }
     if (params.verbosity >= 2) {

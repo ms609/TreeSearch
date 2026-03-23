@@ -110,15 +110,22 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
 
     # Show/hide concavity slider when weighting mode changes
     observeEvent(input$implied.weights, {
-      if (input$implied.weights %in% c("xpiwe", "on")) {
-        show("concavity")
-      } else {
-        hide("concavity")
-      }
+      switch(input$implied.weights,
+             "xpiwe" = , "on" = show("concavity"),
+             hide("concavity")
+      )
+      # Weighting mode changed: old run counts no longer apply; keep trees
+      r$searchTotalHits <- 0L
+      r$searchTotalReps <- 0L
+      r$bestSearchScore  <- NULL
       DisplayTreeScores()
     })
 
     observeEvent(input$concavity, {
+      # Concavity constant changed: old run counts no longer apply; keep trees
+      r$searchTotalHits <- 0L
+      r$searchTotalReps <- 0L
+      r$bestSearchScore  <- NULL
       DisplayTreeScores()
     }, ignoreInit = TRUE)
 
@@ -406,7 +413,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     observe({
       result <- tryCatch(
         profilePrepTask$result(),
-        validation = function(e) req(FALSE),
+        shiny.silent.error = function(e) req(FALSE),
         error = function(e) {
           LogMsg("Profile data preparation failed: ", conditionMessage(e))
           NULL
@@ -522,13 +529,21 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         length(r$trees), " sampled",
         score
       )
-      confText <- SearchConfidenceText(r$searchTotalHits, r$searchTotalReps)
+      confText <- SearchConfidenceText(r$searchTotalHits, r$searchTotalReps,
+                                        r$searchCount)
       html <- if (!is.null(confText)) {
+        nS <- r$searchCount
         tooltip <- paste0(
           "Estimated as exp(-K) where K = ",
           r$searchTotalHits,
-          " (runs hitting best score). ",
-          "Assumes independent runs. ",
+          " (runs hitting best score",
+          if (!is.null(nS) && nS > 1L)
+            paste0(" across ", nS, " searches")
+          else
+            "",
+          "). Assumes independent runs. ",
+          "'Maximum independent runs' limits each individual search; ",
+          "this tally accumulates across all continued searches. ",
           "The config dialog shows a theoretical worst-case; ",
           "this uses actual search results."
         )
@@ -796,11 +811,11 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       r$searchWithout <- input$searchWithout
     }, ignoreInit = TRUE)
 
-    observeEvent(input$go, StartSearch(), ignoreInit = TRUE)
+    observeEvent(input$go, StartSearch())
     observeEvent(input$modalGo, {
       removeModal()
       StartSearch()
-    }, ignoreInit = TRUE)
+    })
 
     # Cancel button: create the signal file so the C++ engine stops
     observeEvent(input$cancel, {
@@ -817,7 +832,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           "Stopping \u2014 waiting for current search phase to finish\u2026"
         ))
       }
-    }, ignoreInit = TRUE)
+    })
 
     # Poll progress file during search to update notification
     observe({
@@ -825,6 +840,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       nid <- r$searchNotification
       if (is.null(pf) || is.null(nid) || !isTRUE(r$searchInProgress)) return()
       invalidateLater(500)
+      if (!file.exists(pf)) return()  # C++ hasn't written first status yet
       progress <- tryCatch(
         readLines(pf, warn = FALSE),
         error = function(e) NULL
@@ -874,47 +890,61 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       updateNumericInput(session, "hsjAlpha",
                          value = if (length(input$hsjAlpha)) input$hsjAlpha else 1.0)
       if (identical(inapplicable_cur, "hsj")) show("hsjAlpha") else hide("hsjAlpha")
+      # Initialise all modal inputs from current values so that opening the
+      # modal does not fire observeEvent(input$concavity) or
+      # observeEvent(input$implied.weights), which reset the run counters.
+      cur_weights   <- if (length(input$implied.weights)) input$implied.weights else "on"
+      cur_concavity <- if (length(input$concavity))       input$concavity       else 1L
+      cur_strategy  <- if (length(input$strategy))        input$strategy        else "auto"
+      cur_maxRep    <- if (length(input$maxReplicates))   input$maxReplicates   else 100L
+      cur_hits      <- if (length(input$targetHits))      input$targetHits      else 10L
+      cur_timeout   <- if (length(input$timeout))         input$timeout         else 5
+      cur_epsilon   <- if (length(input$epsilon))         input$epsilon         else 0
+      cur_threads   <- if (length(input$nThreads))        input$nThreads        else max(1L, floor(nCores / 2L))
       showModal(modalDialog(
         easyClose = TRUE,
         fluidPage(column(6,
           selectInput(ns("implied.weights"), "Step weighting",
                      list("Implied (extended)" = "xpiwe",
                           "Implied" = "on", "Profile" = "prof",
-                          "Equal" = "off"), "xpiwe"),
+                          "Equal" = "off"), cur_weights),
           sliderInput(ns("concavity"), "Concavity constant", min = 0L,
-                     max = 3L, pre = "10^", value = 1L),
+                     max = 3L, pre = "10^", value = cur_concavity),
           selectInput(ns("inapplicable"), "Inapplicable characters",
                       list("Brazeau et al. (default)" = "brazeau",
                            "Hopkins & St. John (HSJ)"  = "hsj",
                            "X-transformation (Goloboff)" = "xform"),
-                      "brazeau"),
+                      inapplicable_cur),
           hidden(numericInput(ns("hsjAlpha"), "HSJ \u03b1 parameter",
-                              value = 1.0, min = 0, step = 0.1)),
+                              value = if (length(input$hsjAlpha)) input$hsjAlpha else 1.0,
+                              min = 0, step = 0.1)),
           uiOutput(ns("hierarchyInfo")),
           if (nCores > 1L) {
             sliderInput(ns("nThreads"), "Parallel search threads",
                         min = 1L, max = nCores,
-                        value = if (length(input$nThreads)) input$nThreads
-                                else max(1L, floor(nCores / 2L)),
+                        value = cur_threads,
                         step = 1L)
           },
           selectizeInput(ns("searchWithout"), "Exclude taxa", DatasetTips(),
                          r$searchWithout, multiple = TRUE),
           numericInput(ns("epsilon"), "Keep if suboptimal by \u2264", min = 0,
-                      value = 0)
+                      value = cur_epsilon)
         ), column(6,
           selectInput(ns("strategy"), "Search strategy",
                      list("Auto" = "auto", "Sprint" = "sprint",
                           "Default" = "default", "Thorough" = "thorough"),
-                     "auto"),
+                     cur_strategy),
           sliderInput(ns("targetHits"),
                       "Stop when N runs have hit best score",
-                      min = 1L, max = 50L, value = 10L, step = 1L),
+                      min = 1L, max = 50L, value = cur_hits, step = 1L),
           uiOutput(ns("targetHitsNote")),
           sliderInput(ns("timeout"), "Maximum run duration", min = 1,
-                      max = 60, value = 5, post = "min", step = 1),
+                      max = 60, value = cur_timeout, post = "min", step = 1),
           sliderInput(ns("maxReplicates"), "Maximum independent runs",
-                      min = 1L, max = 500L, value = 100L, step = 1L)
+                      min = 1L, max = 500L, value = cur_maxRep, step = 1L),
+          helpText("Limits each individual search. Clicking \u2018Continue\u2019",
+                   "starts a fresh search; the results panel shows the",
+                   "cumulative total across all continued searches.")
         )),
         title = "Tree search settings",
         footer = tagList(modalButton("Close", icon = Icon("rectangle-xmark")),
@@ -937,8 +967,9 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     observe({
       newTrees <- tryCatch(
         searchTask$result(),
-        validation = function(e) {
-          # ExtendedTask signals validation when initial/running; not a real error
+        shiny.silent.error = function(e) {
+          # ExtendedTask throws shiny.silent.error (class "shiny.output.progress"
+          # subclass) when status is "initial" or "running" — not a real error.
           req(FALSE)
         },
         error = function(e) {

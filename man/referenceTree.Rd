@@ -23,7 +23,7 @@ plot(referenceTree)
 
 }
 \references{
-\insertRef{Congreve2016}{TreeSearch}
-\insertRef{Congreve2016dd}{TreeSearch}
+\insertCite{Congreve2016,Congreve2016dd}{TreeSearch}
+\insertAllCited{}
 }
 \keyword{datasets}

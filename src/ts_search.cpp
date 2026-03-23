@@ -1,5 +1,6 @@
 #include "ts_search.h"
 #include "ts_fitch.h"
+#include "ts_collapsed.h"
 #include "ts_rng.h"
 #include <algorithm>
 #include <climits>
@@ -53,7 +54,8 @@ static void extract_divided_steps(
 
 // ---- NNI search ----
 
-SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
+SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
+                        std::function<bool()> check_timeout) {
   double best_score = score_tree(tree, ds);
   int n_moves = 0;
   int n_iterations = 0;
@@ -70,6 +72,9 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
 
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
+
+  // Poll timeout every n_tip edges (capped at 50)
+  const int timeout_interval = std::max(1, std::min(tree.n_tip, 50));
 
   bool keep_going = true;
   while (keep_going) {
@@ -127,12 +132,20 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits) {
           tree.build_postorder();
         }
       }
+
+      // Periodic timeout check
+      if (check_timeout && (ei % timeout_interval == 0) && check_timeout()) {
+        keep_going = false;
+        goto nni_done;
+      }
     }
 
     nni_next_pass:
     if (ts::check_interrupt()) break;
+    if (check_timeout && check_timeout()) break;
   }
 
+  nni_done:
   // Authoritative final score
   tree.build_postorder();
   best_score = full_rescore(tree, ds);
@@ -170,7 +183,8 @@ static void collect_destination_edges(
   }
 }
 
-SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
+SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
+                        std::function<bool()> check_timeout) {
   double best_score = full_rescore(tree, ds);
   int n_moves = 0;
   int n_iterations = 0;
@@ -194,6 +208,11 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
     clip_candidates.push_back(node);
   }
 
+  // Collapsed flags: edges that provably cannot yield an improvement
+  // (clip skipping + regraft merging).
+  std::vector<uint8_t> collapsed;
+  compute_collapsed_flags(tree, ds, collapsed);
+
   std::vector<std::pair<int,int>> destinations;
 
   // Pre-allocate IW buffers
@@ -209,8 +228,11 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
 
   bool keep_going = true;
   bool need_shuffle = true;
+  const int timeout_interval = std::max(tree.n_tip, 50);
+  int clips_since_timeout_check = 0;
+  bool timed_out = false;
 
-  while (keep_going) {
+  while (keep_going && !timed_out) {
     keep_going = false;
 
     // Deferred reshuffling: only reshuffle when previous pass found nothing
@@ -224,6 +246,10 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
 
     for (int clip_node : clip_candidates) {
       if (tree.parent[clip_node] == tree.n_tip) continue;
+
+      // Skip collapsed edges (zero-length, provably unimprovable).
+      if (!collapsed.empty() && collapsed[clip_node])
+        continue;
 
       // Smaller-subtree filtering: skip clips of the larger half
       if (subtree_sizes[clip_node] > tree.n_tip / 2) continue;
@@ -280,12 +306,25 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
 
       // --- Rearrangement phase: screen with bounded indirect calc ---
       collect_destination_edges(tree, destinations);
+      // Partial shuffle: seed bound with diverse sample
+      {
+        int ne = static_cast<int>(destinations.size());
+        int k = std::min(20, ne);
+        for (int i = 0; i < k; ++i) {
+          std::uniform_int_distribution<int> dist(i, ne - 1);
+          std::swap(destinations[i], destinations[dist(rng)]);
+        }
+      }
 
       double best_candidate = HUGE_VAL;
       int best_above = -1, best_below = -1;
 
       for (auto& [above, below] : destinations) {
         if (above == nz && below == ns) continue;
+
+        // Collapsed-region regraft merging: skip interior collapsed edges.
+        if (!collapsed.empty() && collapsed[below])
+          continue;
 
         double candidate_score;
         if (has_na) {
@@ -360,12 +399,19 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits) {
       tree.build_postorder();
 
       if (keep_going) {
+        // Recompute collapsed flags after the accepted move.
+        compute_collapsed_flags(tree, ds, collapsed);
         // Deferred reshuffling: don't reshuffle after acceptance
         need_shuffle = false;
         break;
       }
 
       if (ts::check_interrupt()) { keep_going = false; break; }
+      ++clips_since_timeout_check;
+      if (check_timeout && clips_since_timeout_check >= timeout_interval) {
+        clips_since_timeout_check = 0;
+        if (check_timeout()) { timed_out = true; break; }
+      }
     }
 
     if (ts::check_interrupt()) break;

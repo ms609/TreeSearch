@@ -417,7 +417,10 @@ static bool wagner_edge_violates_constraint(
         is_ancestor_or_equal(cn, below, cd.dfs_entry, cd.dfs_exit);
 
     if (tip_inside && !below_inside) return true;
-    if (!tip_inside && below_inside) return true;
+    // Exclude the boundary edge (above_cn, cn): inserting an outside tip there
+    // makes it sibling of the entire constraint clade, which preserves
+    // monophyly.  Only reject if the tip would go *strictly inside* the clade.
+    if (!tip_inside && below_inside && below != cn) return true;
   }
   return false;
 }

@@ -46,6 +46,12 @@ struct DrivenParams {
   int ratchet_perturb_max_moves = 0;  // 0=auto
   bool ratchet_adaptive = false;
 
+  // NNI perturbation: topology-space escape mechanism (IQ-TREE-style).
+  // Randomly NNI-swap a fraction of internal branches, then TBR to a
+  // new local optimum.  Complementary to weight-perturbation ratchet.
+  int nni_perturb_cycles = 0;           // 0 = disabled
+  double nni_perturb_fraction = 0.5;    // fraction of branches to perturb
+
   // Drifting
   int drift_cycles = 2;
   int drift_afd_limit = 3;
@@ -81,6 +87,12 @@ struct DrivenParams {
   // Tabu list size for TBR plateau exploration (0 = disabled)
   int tabu_size = 100;
 
+  // NNI warmup: run NNI hill-climbing before SPR/TBR.
+  // At ≤88 tips, overhead is negligible (~1.5s at 180 tips, <0.1s at ≤88).
+  // At ≥180 tips, NNI saves ~50% of initial descent time and leads TBR to
+  // better basins of attraction (empirically ~100 steps better at 180 tips).
+  bool nni_first = true;
+
   // SPR→TBR escalation: run SPR first (cheaper per move), then TBR.
   // When true, initial hill-climbing is SPR followed by TBR to escape
   // moves that SPR cannot find. When false, goes straight to TBR.
@@ -96,27 +108,56 @@ struct DrivenParams {
   // Subsequent replicates still use random Wagner trees.
   std::vector<int> start_edge;  // flattened column-major [parent|child]
   int start_n_edge = 0;
+
+  // Consensus-stability stopping criterion.
+  // 0 = disabled (default). When > 0, stop if the strict consensus of
+  // best-score pool trees has been unchanged for this many consecutive
+  // replicates. Checked after each replicate completes and the pool is
+  // updated. Sits alongside targetHits — whichever fires first wins.
+  int consensus_stable_reps = 0;
+
+  // Adaptive search level.
+  // When true, dynamically scale ratchet_cycles and drift_cycles based
+  // on the hit rate (fraction of replicates that find the current best
+  // score). High hit rates → reduce effort; low hit rates → increase.
+  // The base values are the initially configured cycles; adaptation
+  // applies a multiplier each replicate.
+  bool adaptive_level = false;
+
+  // Cross-replicate consensus constraint tightening.
+  // When true, after a minimum number of replicates, extract the strict
+  // consensus splits from the pool and enforce them as topological
+  // constraints for subsequent replicates. This focuses search on
+  // uncertain parts of the tree. Constraints are cleared whenever the
+  // best score improves. Only active when no user-supplied constraint
+  // is present.
+  bool consensus_constrain = false;
+  int consensus_constrain_min_reps = 5;  // minimum replicates before engaging
 };
 
 // Cumulative per-phase wall-clock timing (milliseconds).
 struct PhaseTimings {
   double wagner_ms = 0.0;
+  double nni_ms = 0.0;
   double tbr_ms = 0.0;
   double xss_ms = 0.0;
   double rss_ms = 0.0;
   double css_ms = 0.0;
   double ratchet_ms = 0.0;
+  double nni_perturb_ms = 0.0;
   double drift_ms = 0.0;
   double final_tbr_ms = 0.0;
   double fuse_ms = 0.0;
 
   void operator+=(const PhaseTimings& o) {
     wagner_ms    += o.wagner_ms;
+    nni_ms       += o.nni_ms;
     tbr_ms       += o.tbr_ms;
     xss_ms       += o.xss_ms;
     rss_ms       += o.rss_ms;
     css_ms       += o.css_ms;
     ratchet_ms   += o.ratchet_ms;
+    nni_perturb_ms += o.nni_perturb_ms;
     drift_ms     += o.drift_ms;
     final_tbr_ms += o.final_tbr_ms;
     fuse_ms      += o.fuse_ms;
@@ -129,6 +170,7 @@ struct DrivenResult {
   int hits_to_best;
   int pool_size;
   bool timed_out;                // true if search ended due to timeout
+  bool consensus_stable;         // true if stopped by consensus stability
   PhaseTimings timings;          // cumulative across all replicates
 };
 
@@ -140,18 +182,22 @@ struct ReplicateResult {
   PhaseTimings timings;          // per-replicate phase timings
 };
 
-// Run one replicate: Wagner → TBR → XSS → RSS → ratchet → drift → TBR.
+// Run one replicate: Wagner → NNI → SPR → TBR → XSS → RSS → ratchet → drift → TBR.
 // Does NOT interact with the pool — caller handles that.
 // `check_timeout` should return true when time limit is exceeded.
 // Verbosity is the effective verbosity for this replicate (0 in parallel).
+struct SplitFrequencyTable;  // forward declaration (defined in ts_pool.h)
+
 // If `starting_tree` is non-null, use it instead of building a Wagner tree.
+// If `split_freq` is non-null, RSS uses conflict-guided sector selection.
 ReplicateResult run_single_replicate(
     DataSet& ds,
     const DrivenParams& params,
     ConstraintData* cd,
     std::function<bool()> check_timeout,
     int verbosity,
-    TreeState* starting_tree = nullptr);
+    TreeState* starting_tree = nullptr,
+    const SplitFrequencyTable* split_freq = nullptr);
 
 // Run the full driven search. Returns search statistics.
 // The pool contents (all retained trees) are accessible via the pool

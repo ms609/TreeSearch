@@ -110,26 +110,36 @@
     rssRounds = 0L, cssRounds = 0L, cssPartitions = 4L,
     sectorMinSize = 6L, sectorMaxSize = 50L,
     fuseInterval = 5L, fuseAcceptEqual = FALSE,
-    tabuSize = 0L, wagnerStarts = 1L
+    tabuSize = 0L, wagnerStarts = 1L,
+    nniFirst = TRUE, sprFirst = FALSE,
+    consensusStableReps = 3L
   ),
   default = SearchControl(
-    tbrMaxHits = 1L, ratchetCycles = 5L, ratchetPerturbProb = 0.04,
-    ratchetPerturbMode = 0L, ratchetAdaptive = FALSE,
-    driftCycles = 2L, xssRounds = 3L, xssPartitions = 4L,
+    tbrMaxHits = 1L, ratchetCycles = 12L, ratchetPerturbProb = 0.25,
+    ratchetPerturbMode = 0L, ratchetPerturbMaxMoves = 5L,
+    ratchetAdaptive = FALSE,
+    driftCycles = 2L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+    xssRounds = 3L, xssPartitions = 4L,
     rssRounds = 1L, cssRounds = 0L, cssPartitions = 4L,
     sectorMinSize = 6L, sectorMaxSize = 50L,
     fuseInterval = 3L, fuseAcceptEqual = FALSE,
-    tabuSize = 100L, wagnerStarts = 1L
+    tabuSize = 100L, wagnerStarts = 3L,
+    nniFirst = TRUE, sprFirst = FALSE, adaptiveLevel = TRUE,
+    consensusStableReps = 3L
   ),
   thorough = SearchControl(
-    tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.04,
-    ratchetPerturbMode = 2L, ratchetAdaptive = TRUE,
+    tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
+    ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
+    ratchetAdaptive = TRUE,
+    nniPerturbCycles = 5L, nniPerturbFraction = 0.5,
     driftCycles = 12L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
     xssRounds = 5L, xssPartitions = 6L,
     rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
     sectorMinSize = 6L, sectorMaxSize = 80L,
     fuseInterval = 2L, fuseAcceptEqual = TRUE,
-    tabuSize = 200L, wagnerStarts = 3L
+    tabuSize = 200L, wagnerStarts = 3L,
+    nniFirst = TRUE, sprFirst = FALSE,
+    consensusStableReps = 3L
   )
 )
 
@@ -227,14 +237,15 @@
 #' @param hierarchy A [`CharacterHierarchy`] object specifying which
 #'   characters are controlling primaries and which are their dependent
 #'   secondaries.  Required when `inapplicable` is `"hsj"` or `"xform"`;
-#'   ignored when `inapplicable = "brazeau"` (the default).
+#'   ignored when `inapplicable = "bgs"` (the default).
 #'   See [`CharacterHierarchy()`] for how to construct one, and
 #'   [`hierarchy_from_names()`] for automated construction from
 #'   TNT-style character names.
 #' @param inapplicable Character: method for handling inapplicable characters.
+#'   Case-insensitive.
 #'   See `vignette("inapplicable", package = "TreeSearch")` for details.
 #'   \describe{
-#'     \item{`"brazeau"` (default)}{Three-pass algorithm of
+#'     \item{`"bgs"` (default)}{Three-pass algorithm of
 #'       \insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
 #'       regions from the `"-"` token.  No hierarchy required.}
 #'     \item{`"hsj"`}{Dissimilarity-metric scoring of
@@ -269,6 +280,10 @@
 #'       perturbation, extra sectorial rounds. Best for datasets with
 #'       65+ tips and 100+ character patterns, where sprint/default
 #'       may miss the global optimum.}
+#'   All presets enable consensus-stability stopping
+#'   (`consensusStableReps = 3`): the search stops early if the strict
+#'   consensus of best-score trees has been unchanged for three consecutive
+#'   replicates.
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }
 #'   Explicit `control` fields always override the preset; for example,
@@ -328,6 +343,9 @@
 #'       score.}
 #'     \item{`timed_out`}{Logical: `TRUE` if the search stopped because
 #'       `maxSeconds` was exceeded.}
+#'     \item{`consensus_stable`}{Logical: `TRUE` if the search stopped
+#'       because the strict consensus was unchanged for
+#'       `consensusStableReps` consecutive replicates.}
 #'     \item{`timings`}{Named numeric vector of cumulative wall-clock time
 #'       (in milliseconds) spent in each search phase across all replicates:
 #'       `wagner_ms`, `tbr_ms`, `xss_ms`, `rss_ms`, `css_ms`, `ratchet_ms`,
@@ -361,7 +379,7 @@ MaximizeParsimony <- function(
     xpiwe_r = 0.5,
     xpiwe_max_f = 5,
     hierarchy = NULL,
-    inapplicable = "brazeau",
+    inapplicable = "bgs",
     hsj_alpha = 1.0,
     constraint,
     strategy = "auto",
@@ -375,10 +393,23 @@ MaximizeParsimony <- function(
     ...
 ) {
 
-  # --- Backward compatibility: detect Morphy()-style parameters ---
+  # --- Backward compatibility: intercept maxTime → maxSeconds ---
   dots <- list(...)
+  if ("maxTime" %in% names(dots)) {
+    if (missing(maxSeconds) || maxSeconds == 0) {
+      maxSeconds <- as.double(dots[["maxTime"]])
+    }
+    .Deprecated(msg = paste0(
+      "Use `maxSeconds` instead of `maxTime` in MaximizeParsimony().\n",
+      "  `maxTime` was a Morphy()-style parameter; `maxSeconds` is the ",
+      "equivalent for the new C++ search engine."
+    ))
+    dots[["maxTime"]] <- NULL
+  }
+
+  # --- Backward compatibility: detect Morphy()-style parameters ---
   .morphyParams <- c("ratchIter", "tbrIter", "startIter", "finalIter",
-                      "maxHits", "maxTime", "quickHits", "ratchEW",
+                      "maxHits", "quickHits", "ratchEW",
                       "tolerance")
   legacyHits <- intersect(names(dots), .morphyParams)
   if (length(legacyHits)) {
@@ -462,13 +493,13 @@ MaximizeParsimony <- function(
 
   # --- Progress callback: build default cli bar if needed ---
   if (is.null(progressCallback) && verbosity >= 1L && interactive()) {
-    pb_env <- new.env(parent = emptyenv())
+    pb_env <- new.env(parent = baseenv())
     pb_env$id <- cli::cli_progress_bar(
       total = as.integer(maxReplicates),
       format = paste0(
         "Rep {cli::pb_current}/{cli::pb_total}",
-        " | Best: {pb_env$best}",
-        " | Hits: {pb_env$hits}/{pb_env$target}"
+        " | Best: {best}",
+        " | Hits: {hits}/{target}"
       ),
       .auto_close = FALSE,
       .envir = pb_env
@@ -541,8 +572,10 @@ MaximizeParsimony <- function(
   }
 
   # --- Validate inapplicable-handling parameters ---
-  inapplicable <- match.arg(inapplicable, c("brazeau", "hsj", "xform"))
-  if (inapplicable != "brazeau") {
+  inapplicable <- tolower(inapplicable)
+  if (inapplicable == "brazeau") inapplicable <- "bgs"
+  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform"))
+  if (inapplicable != "bgs") {
     if (is.null(hierarchy)) {
       stop("A `hierarchy` is required when inapplicable = \"", inapplicable,
            "\". See ?CharacterHierarchy.")
@@ -567,7 +600,7 @@ MaximizeParsimony <- function(
   }
 
   # --- Starting tree ---
-  userTree <- !missing(tree)
+  userTree <- !missing(tree) && !is.null(tree)
   if (!userTree) {
     tree <- TreeTools::RandomTree(nTip, root = TRUE)
     tree[["tip.label"]] <- names(dataset)
@@ -740,7 +773,25 @@ MaximizeParsimony <- function(
     progressCallback = progressCallback,
     nThreads = as.integer(nThreads),
     startEdge = if (userTree) tree[["edge"]] else NULL,
-    sprFirst = as.logical(ctrl$sprFirst)
+    sprFirst = as.logical(ctrl$sprFirst),
+    nniFirst = as.logical(
+      if (is.null(ctrl$nniFirst)) FALSE
+      else ctrl$nniFirst),
+    consensusStableReps = as.integer(
+      if (is.null(ctrl$consensusStableReps)) 0L
+      else ctrl$consensusStableReps),
+    adaptiveLevel = as.logical(
+      if (is.null(ctrl$adaptiveLevel)) FALSE
+      else ctrl$adaptiveLevel),
+    consensusConstrain = as.logical(
+      if (is.null(ctrl$consensusConstrain)) FALSE
+      else ctrl$consensusConstrain),
+    nniPerturbCycles = as.integer(
+      if (is.null(ctrl$nniPerturbCycles)) 0L
+      else ctrl$nniPerturbCycles),
+    nniPerturbFraction = as.double(
+      if (is.null(ctrl$nniPerturbFraction)) 0.5
+      else ctrl$nniPerturbFraction)
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
                                         hsjArgs, xformArgs))
@@ -777,6 +828,7 @@ MaximizeParsimony <- function(
     replicates = result$replicates,
     hits_to_best = result$hits_to_best,
     timed_out = isTRUE(result$timed_out),
+    consensus_stable = isTRUE(result$consensus_stable),
     timings = unlist(result$timings),
     class = "multiPhylo"
   )

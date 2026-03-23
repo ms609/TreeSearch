@@ -1,5 +1,25 @@
 # TreeSearch Multi-Agent Development Notes
 
+## Current phase: bug-fixing / pre-release (as of 2026-03-20)
+
+The project is in a **bug-fixing and stabilisation phase** with the goal of
+shipping the package. Agents should:
+
+- Monitor `to-do.md` as usual for task selection.
+- **Prioritise bug fixes, test failures, documentation issues, and R CMD check
+  problems** over new functionality.
+- **Do not implement new features on `cpp-search` or `main`.**  
+  Feature work is allowed only on dedicated `feature/<name>` branches, and
+  only when the task is explicitly labelled as a feature and has been approved
+  for active development.
+- When in doubt, prefer a conservative fix (minimal diff, no API changes) over
+  an ambitious refactor.
+
+This phase ends when a clean `R CMD check` (0 errors, 0 warnings) is confirmed
+and the maintainer signals readiness to tag a release.
+
+---
+
 ## Build isolation — tarball workflow (mandatory)
 
 Multiple agents share the same `src/` directory. In-place `R CMD INSTALL .`
@@ -299,6 +319,9 @@ Both should be clean before committing. These are fast and catch issues
 (`check_man` catches Rd parse errors, cross-ref failures, `\usage` mismatches;
 `spell_check_package` catches typos in `@description`/`@details`/`@param` text).
 
+References are added using Rdpack's \insertCite{}, with
+\insertAllCited{} in the references section.
+
 ## Architecture reference
 
 ### R-level API
@@ -340,12 +363,104 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 
 | Preset | Condition | Key settings |
 |--------|-----------|-------------|
-| sprint | ≤30 tips | 3 ratchet, 0 drift, XSS only |
-| default | 31–64 tips; or ≥65 tips with <100 char patterns | 5 ratchet, 2 drift, XSS+RSS |
-| thorough | ≥65 tips with ≥100 char patterns | 20 ratchet (adaptive), 12 drift, XSS+RSS+CSS |
+| sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first, consensus-stop 3 |
+| default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 2 drift (AFD 5, RFD 0.15), XSS+RSS, consensus-stop 3, Wagner×3, NNI-first, adaptive level |
+| thorough | ≥65 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 12 drift (AFD 5, RFD 0.15), XSS+RSS+CSS, consensus-stop 3, Wagner×3, NNI-first |
+
+All presets set `consensusStableReps = 3`: search stops early if the strict
+consensus of best-score pool trees is unchanged for 3 consecutive replicates.
+
+All presets set `nniFirst = TRUE` (NNI warmup before TBR) and
+`sprFirst = FALSE` (SPR is counterproductive when NNI is active —
+empirically NNI→TBR outperforms NNI→SPR→TBR). With `nniFirst`, each
+Wagner start is NNI-optimized before selection (best of 3 NNI-local optima
+rather than 3 raw Wagner scores). `default` also enables `adaptiveLevel =
+TRUE` (scale ratchet/drift by hit rate); `thorough` omits it because high
+base cycle counts already cover hard landscapes.
+
+**Ratchet perturbation tuning (2026-03-22)**: Systematic profiling across
+all 14 benchmark datasets showed the previous 4% perturbation probability
+was far too gentle. With 253 characters (Zhu2013), 4% zeroes only ~10
+characters — insufficient to reshape the landscape. Increasing to 25%
+with fewer perturbed TBR moves (5 instead of auto=20) improves median
+scores by 3–7 steps on hard datasets while completing fewer but more
+productive replicates. 9/14 datasets improved, 4 unchanged, 1 marginal at
+10s budget (resolves at 20s). The key insight: the perturbed-phase TBR
+should be short (the landscape is warped, so extensive search on it is
+wasteful), but the perturbation itself should be aggressive enough to
+meaningfully displace the tree from its current basin of attraction.
 
 Signal-density gate: datasets with few character patterns (<100) have flat
 parsimony landscapes where intensive search adds no benefit.
+
+### Adaptive sectorial search
+
+XSS and CSS use **adaptive early-exit**: after each round of sector searches
++ global TBR polish, if the overall best score did not improve, remaining
+rounds are skipped. This avoids wasting ~7% of replicate time on datasets
+where sectorial search is unproductive (e.g. Dikow2009). On productive
+datasets (e.g. Zhu2013), the early exit never fires.
+
+### Conflict-guided RSS
+
+RSS uses **conflict-guided sector selection**: before each replicate's RSS
+phase, `driven_search()` computes a `SplitFrequencyTable` from the pool's
+best-score trees. Within `rss_search()`, each internal node's "conflict
+score" is `1 − (fraction of pool trees containing that split)`.
+Max-descendant conflict is propagated upward, and eligible sector roots
+are sampled via `std::discrete_distribution` with weight `1 + 3 × conflict`.
+Falls back to uniform selection when the pool has <2 best-score trees or
+when conflict variation is negligible.
+
+### Consensus-stability stopping
+
+After each replicate, if `consensus_stable_reps > 0` (default 3 in all
+presets), the pool's strict consensus hash is compared to the previous
+replicate's. If unchanged for `consensus_stable_reps` consecutive
+replicates, the search terminates early. `compute_consensus_hash()` uses
+XOR of per-split FNV-1a hashes for O(pool × splits) cost.
+
+### Adaptive search level
+
+When `adaptive_level = true`, ratchet and drift cycle counts are scaled
+each replicate based on the cumulative hit rate:
+- hit_rate > 0.7 → 0.5× (easy landscape)
+- hit_rate > 0.4 → 0.75×
+- hit_rate < 0.15 → 1.5× (hard landscape)
+- else → 1.0×
+
+### TBR zero-length clip skipping + regraft merging (collapsed flags)
+
+`compute_collapsed_flags()` (`ts_collapsed.h/.cpp`) identifies edges where
+clipping provably cannot improve score. Checks 5 conditions: (1) zero
+standard-block cost at parent, (2) zero NA-block cost at parent, (3) prelim
+preservation (`prelim[sibling] == prelim[parent]`), (4) down2 preservation
+(NA), (5) subtree_actives preservation (NA). Works for EW, IW, Profile,
+and NA-aware scoring. Integrated into TBR, SPR, and drift search.
+Disabled during MPT enumeration (equal-score topologies may exist).
+Recomputed after every accepted move.
+
+**Regraft merging** (Goloboff 1996): within a collapsed region (connected
+set of nodes linked by zero-length edges), all regraft positions yield the
+same full score. Only boundary edges (entering the region) are evaluated;
+interior collapsed edges are skipped via `if (collapsed[below]) continue`.
+TBR, SPR, and drift all use this. The `CollapsedRegions` struct exists in
+the header but callers use `compute_collapsed_flags()` directly (the
+`region_id` field is unused — only the boolean flag array matters).
+
+**Collapsed-topology pool dedup**: `compute_collapsed_splits()` in
+`ts_splits.cpp` produces the split set excluding collapsed edges. Two
+binary trees differing only in zero-length resolutions produce the same
+collapsed split set → treated as duplicates by `TreePool::add_collapsed()`.
+Both serial (`driven_search`) and parallel (`ThreadSafePool`) paths use
+collapsed dedup.
+
+**Benchmark results** (2026-03-22, 4 standard datasets, 3 seeds each):
+Skip rate = 0% on all datasets (Vinther2008 23t, Agnarsson2004 62t,
+Zhu2013 75t, Dikow2009 88t). Near-optimal trees in these morphological
+datasets have negligible zero-length edges. Overhead from flag computation
+is negligible. Score equivalence confirmed (enabled vs disabled produce
+identical best scores). Benefit expected on sparse/synthetic data.
 
 ### C++ module map
 
@@ -363,15 +478,17 @@ parsimony landscapes where intensive search adds no benefit.
 | Ratchet | `ts_ratchet.h/.cpp` | Perturbation (zero/upweight/mixed, adaptive) |
 | Drift | `ts_drift.h/.cpp` | Accept suboptimal moves within AFD/RFD limits |
 | Wagner | `ts_wagner.h/.cpp` | Greedy addition tree (incremental scoring, NA-aware) |
-| Sectorial | `ts_sector.h/.cpp` | RSS, XSS, CSS |
+| Sectorial | `ts_sector.h/.cpp` | RSS (conflict-guided), XSS, CSS; from-above HTU |
 | Fuse | `ts_fuse.h/.cpp` | Tree fusing (in-place exchange) |
-| Pool | `ts_pool.h/.cpp` | Dedup via split hashing, score-based eviction |
-| Splits | `ts_splits.h/.cpp` | Bipartition computation and comparison |
+| Pool | `ts_pool.h/.cpp` | Dedup, eviction, consensus hash, split frequency table |
+| Splits | `ts_splits.h/.cpp` | Bipartition computation, comparison, `hash_single_split()` |
 | Driven | `ts_driven.h/.cpp` | Multi-replicate orchestrator |
 | Resample | `ts_resample.h/.cpp` | Jackknife, bootstrap, successive approximations |
 | Parallel | `ts_parallel.h/.cpp` | `std::thread` inter-replicate parallelism |
 | RNG | `ts_rng.h/.cpp` | Thread-safe RNG (`thread_local` dispatch) |
 | Simplify | `ts_simplify.h/.cpp` | Character compression and uninformativeness checks |
+| Collapsed | `ts_collapsed.h/.cpp` | Zero-length edge detection for clip skipping |
+| NNI perturb | `ts_nni_perturb.h/.cpp` | Stochastic NNI-perturbation (IQ-TREE-style topology escape) |
 | Rcpp bridge | `ts_rcpp.cpp` | All Rcpp-exported functions |
 
 ### Scoring modes
@@ -512,7 +629,7 @@ Integration tests: `test-app-smoke.R` (3), `test-Distribution.R` (13),
 
 - **Version**: 2.0.0 (major bump for new `MaximizeParsimony()` API)
 - **R CMD check**: 0 ERRORs, 0 WARNINGs, 1 NOTE (R 4.5.2 internal bug)
-- **Test suite**: ~9200 R-level + 1510 ts-* + 128 ParsSim + 37 MaddisonSlatkin + 49 recode-hierarchy pass
+- **Test suite**: ~9200 R-level + 1859 ts-* + 128 ParsSim + 37 MaddisonSlatkin + 49 recode-hierarchy pass
 
 ## Key design decisions (reference)
 
@@ -535,6 +652,38 @@ Integration tests: `test-app-smoke.R` (3), `test-Distribution.R` (13),
 
 6. **All-ambiguous phyDat guard**: `TreeLength()` and `MaximizeParsimony()`
    check for `levels = NULL` / 0-column contrast matrix before calling C++.
+
+7. **From-above HTU for sectorial search** (`ts_sector.cpp`):
+   `compute_from_above_for_sector()` computes `from_above[sector_root]` —
+   the Fitch state-set the rest of the tree sends *down* to the sector
+   boundary, excluding the sector's own contribution. Used instead of
+   `final_[parent]` in `build_reduced_dataset()`. O(depth × total_words).
+
+8. **Split frequency table** (`ts_pool.h/.cpp`): `SplitFrequencyTable` maps
+   per-split FNV-1a hash → occurrence count across best-score pool trees.
+   Used by conflict-guided RSS to weight sector selection. The same FNV-1a
+   hash (`hash_single_split()` in `ts_splits.h`) is used by consensus
+   hashing and split frequency counting — must stay consistent.
+
+9. **Consensus-stability hash** (`ts_pool.cpp`): XOR of FNV-1a hashes of
+   splits present in ALL best-score trees. Updated after each replicate.
+   Hash collision false-matches are conservative (over-count stability).
+
+10. **Diversity-aware pool eviction** (`ts_pool.cpp`): When the pool is full
+    and a new tree ties the worst score, the entry most similar to the new
+    tree (most shared splits, counted via per-split FNV-1a hash set
+    membership) is evicted. This maintains topological diversity in the pool,
+    improving fusing effectiveness. Falls back to arbitrary worst entry when
+    the new tree is strictly better.
+
+11. **Cross-replicate consensus constraint tightening** (`ts_driven.cpp`):
+    When `consensus_constrain = true` and no user constraint is supplied,
+    after ≥5 replicates, unanimous pool splits are extracted and enforced
+    as topological constraints via `build_constraint_from_bitsets()`. The
+    TBR/SPR search then avoids breaking established consensus clades.
+    Constraints are cleared and rebuilt whenever the best score changes.
+    Sector/fuse operations do not enforce auto-constraints (no posthoc
+    DataSet is built).
 
 ## Alternative inapplicable-handling algorithms (in progress)
 
@@ -628,6 +777,161 @@ Integration complete: `ScoringMode::XFORM` in `score_tree()` dispatches
 Fitch(non-hierarchy) + Sankoff(recoded). `MaximizeParsimony()` accepts
 `inapplicable = "xform"`. End-to-end search verified.
 
+### Stochastic NNI-perturbation (T-186)
+
+`ts_nni_perturb.h/.cpp` implements a topology-space escape mechanism inspired
+by IQ-TREE's `doRandomNNIs()` (Nguyen et al. 2015). Complementary to the
+weight-perturbation ratchet: the ratchet reshapes the objective function, while
+NNI-perturbation directly displaces the tree topology.
+
+**Algorithm:** Collect all internal NNI edges. For each edge (with probability
+`perturb_fraction`, default 0.5), apply a random NNI swap — but skip edges
+adjacent to already-swapped edges (two NNIs conflict if their edges share an
+endpoint). Track touched nodes in a hash set. After all compatible swaps,
+rebuild postorder and full rescore, then TBR to a new local optimum. Repeat
+for `n_cycles`.
+
+**Pipeline placement:** Between ratchet (phase 4) and drift (phase 5) in
+`run_single_replicate()`. Disabled by default (`nniPerturbCycles = 0`).
+Enabled in the `thorough` preset (5 cycles, 0.5 fraction).
+
+**R API:** `SearchControl(nniPerturbCycles, nniPerturbFraction)`.
+Timings reported as `nni_perturb_ms`.
+
+### NNI in the driven pipeline
+
+`nni_search()` in `ts_search.cpp` is implemented but **never called** in the
+driven pipeline. At ≤88 tips, NNI is strictly redundant — TBR subsumes it and
+completes in <1s per pass, so there's nothing to save.
+
+**At 180 tips, NNI becomes essential.** TBR evaluates O(n²) candidates per
+pass (358 clips × 356 regrafts × rerooting ≈ millions of evaluations),
+and a single convergence from Wagner takes many minutes. NNI evaluates O(n)
+candidates per pass (178 edges × 2 swaps = 356), roughly 1000× cheaper.
+Most improvements during initial descent are NNI-reachable.
+
+Proposed escalation: NNI → SPR → TBR, gated on `n_tip > ~100`.
+See T-178 in `to-do.md`.
+
+**Empirical comparison at 180 tips** (mbank_X30754, 3 seeds, EW):
+
+| Strategy | Median score | Median time |
+|----------|:-----------:|:-----------:|
+| TBR alone | 1427 | 13.6s |
+| SPR→TBR | 1360 | 13.1s |
+| **NNI→TBR** | **1326** | **6.8s** |
+| NNI→SPR→TBR | 1369 | 8.8s |
+
+NNI→TBR wins on both score AND time (~2× faster, ~100 steps better than
+TBR alone). SPR intermediate step adds time without benefit at this scale.
+The NNI descent path leads TBR to better basins of attraction.
+
+**Recommendation:** `nniFirst = TRUE` (always on — NNI costs ~1.5s at
+180 tips, negligible at ≤88 tips). Replace `sprFirst` with `nniFirst`
+for large trees (n_tip > ~80), or just always run NNI since the overhead
+is negligible. SPR warmup is counterproductive at 180 tips.
+
+**Metric note:** When comparing strategies, the right metric is
+**time-adjusted expected best** — the expected minimum score from
+k = budget / time_per_rep independent replicates, since multi-start search
+keeps the best tree. The median measures typical quality, but a strategy
+with high variance and occasional excellent finds can dominate if it gets
+enough draws. Bootstrap estimation: sample k scores with replacement, take
+the min, repeat 5000×, take the mean.
+
+**Time-adjusted expected best (5 seeds, EW):**
+
+| Budget | 88t: TBR | 88t: NNI→SPR→TBR | 180t: TBR | 180t: NNI→SPR→TBR |
+|--------|:--------:|:-----------------:|:---------:|:-----------------:|
+| 20s | 1617 | 1619 (+2) | 1388 | 1278 (−110) |
+| 60s | 1617 | 1619 (+2) | 1348 | 1253 (−95) |
+| 120s | 1617 | 1619 (+2) | 1337 | 1247 (−90) |
+
+At ≤88 tips: NNI has a consistent but negligible 2-step penalty (within
+noise of MPT enumeration). At 180 tips: NNI saves 90–110 steps. The
+crossover is between 88 and 180 tips. No reactive per-run switching
+needed — a simple always-on NNI warmup policy is optimal.
+
+**Escalation strategy:** NNI→TBR (skip SPR) is simplest and nearly
+optimal at all sizes. NNI→SPR→TBR adds ~7 steps at 180 tips for
+negligible extra time, but adds complexity. SPR alone (without NNI)
+is counterproductive at 180 tips (15s vs 7s, worse scores).
+
+### Large-tree scaling issues (discovered 2026-03-23)
+
+The 180-taxon `mbank_X30754` dataset (425 chars, 374 informative patterns,
+40% missing, 20% inapplicable) exposed:
+
+1. **`maxTime` triggers Morphy delegation.** `maxTime` is a legacy
+   parameter name that activates the backward-compatibility shim, falling
+   through to the R-loop `Morphy()` engine. The correct parameter is
+   `maxSeconds`. Initial testing incorrectly used `maxTime`, producing
+   misleading performance data (Morphy R-loop is ~10× slower than the
+   C++ driven search at 180 tips). T-184 filed.
+2. **C++ TBR convergence at 180 tips takes ~13s** (Wagner ~2560 → local
+   optimum ~1420). NNI warmup (~1.5s) followed by TBR reduces this to
+   ~7s while finding better scores. T-178 filed.
+3. **Strategy presets assume replicate time O(seconds).** At 180 tips,
+   a single replicate (TBR + XSS + ratchet + drift) takes ~60-100s.
+   Cycle counts and fuse intervals need recalibration for large trees.
+
+### Benchmarking methodology notes
+
+**Early vs late search:** The character of the search changes over time.
+Early replicates are dominated by initial descent quality (Wagner → local
+optimum); late replicates test ratchet/drift escape effectiveness. At ≤88
+tips, 20s gives 10–40 replicates spanning both regimes. At 180 tips, 20s
+doesn't complete one replicate. A warm-start benchmark (T-180) would
+isolate the escape-effectiveness question.
+
+**Generalization to large trees:** All 14 existing benchmark datasets are
+≤88 tips. Algorithmic choices (e.g. TBR vs NNI warmup, ratchet cycle counts)
+that are optimal at 88 tips may be suboptimal at 180+. The 180-taxon dataset
+should be added to the benchmark suite as a separate tier (T-181).
+
+**`maxTime` confound (2026-03-23):** Initial 180-taxon testing used
+`maxTime` (legacy Morphy parameter), which silently delegated to the
+R-loop `Morphy()` engine. The C++ driven search (via `maxSeconds`) is
+~10× faster at 180 tips. All subsequent profiling used the C++ path.
+
+**180-taxon baseline (C++ driven search, EW, single replicate):**
+- Wagner (best of 3): ~2560 steps, 16ms
+- NNI convergence: ~1600 steps, 1.5s
+- TBR convergence: ~1330 steps, 7s (from NNI-optimal start)
+- XSS: additional ~60 steps improvement, 5s
+- Total single replicate: ~25s (before ratchet/drift)
+
+## Search optimization roadmap
+
+Plan: `.positai/plans/2026-03-21-search-optimizations.md`
+
+Ranked by priority:
+1. ~~Consensus-guided sector targeting~~ — **Done**: RSS weighted by
+   pool split conflict scores
+2. ~~Diverse pool maintenance~~ — **Done**: evict most-similar entry on ties
+3. ~~Cross-replicate constraint tightening~~ — **Done**: opt-in via
+   `consensusConstrain = TRUE`
+4. ~~Collapsed-tree clip skipping~~ — **Done**: zero-length edges skipped
+   in TBR, SPR, and drift. Benchmark shows 0% skip rate on standard
+   morphological datasets (Vinther2008, Agnarsson2004, Zhu2013, Dikow2009)
+   because near-optimal trees have few zero-length edges. Negligible
+   overhead. Benefit expected primarily on sparse/synthetic data.
+   Full polytomy search remains post-2.0.0.
+5. ~~Collapsed-region regraft merging + pool dedup~~ — **Done**: within
+   collapsed regions (connected zero-length edges), only the boundary
+   regraft position is evaluated (Goloboff 1996). Collapsed-topology
+   pool dedup treats trees differing only in zero-length resolutions as
+   duplicates. Parallel path also uses collapsed dedup. Diversity-aware
+   pool eviction selects most-similar entry on ties.
+6. ~~Strategy preset tuning~~ — **Done**: `default` preset now uses
+   `wagnerStarts=3`, `sprFirst=TRUE`, `adaptiveLevel=TRUE`; `thorough`
+   preset uses `sprFirst=TRUE`.
+7. ~~Ratchet perturbation tuning~~ — **Done**: perturbation probability
+   increased from 4% to 25%, perturbed TBR moves reduced from auto=20
+   to 5, ratchet cycles increased from 5 to 10 (default) and kept at
+   20 (thorough). Drift cycles increased from 2 to 4 with wider
+   acceptance (AFD 5, RFD 0.15). Validated on all 14 datasets.
+
 ## Benchmarks and profiling
 
 Benchmark scripts in `inst/benchmarks/`. Key files:
@@ -635,7 +939,49 @@ Benchmark scripts in `inst/benchmarks/`. Key files:
 - `bench_framework.R` — Dataset × strategy × replicate grid
 - `strategies.md` — Strategy space documentation
 
-Profiling baselines in `.positai/expertise/profiling.md`. Current phase
-distribution (d2_r5 defaults, EW): TBR 11–33%, sectorial 13–26%,
-ratchet 25–40%, drift 20–28%. Per-candidate indirect scoring is at
-memory-throughput limit (~23 ns at 75 tips).
+Profiling baselines in `.positai/expertise/profiling.md`. Phase distribution
+(default strategy, EW, 2026-03-22, post-ratchet tuning):
+
+| Phase | Zhu2013 (75t) | Dikow2009 (88t) | Agnarsson2004 (62t) |
+|-------|:---:|:---:|:---:|
+| Ratchet | 27% | 39% | 35% |
+| Drift | 32% | 28% | 24% |
+| TBR | 31% | 21% | 19% |
+| XSS | 8% | 7% | 8% |
+| RSS | 2% | 3% | 9% |
+| Final TBR | 2% | 3% | 4% |
+
+Per-candidate indirect scoring is at memory-throughput limit (~23 ns at
+75 tips).
+
+### Ratchet tuning validation (2026-03-22)
+
+Full 14-dataset comparison, optimized vs original defaults (10s budget,
+3 seeds each). Median scores shown (lower is better).
+
+> **Metric note:** Median per-replicate score is adequate for comparing
+> parameter changes on a fixed pipeline (same time-per-rep). For comparing
+> strategies with different time costs (e.g. NNI→TBR vs TBR), use
+> **time-adjusted expected best** instead — see "Metric note" under
+> "NNI in the driven pipeline".
+
+| Dataset | Tips | Original | Optimized | Delta |
+|---------|:---:|:---:|:---:|:---:|
+| Longrich2010 | 20 | 131 | 131 | 0 |
+| Vinther2008 | 23 | 79 | 79 | 0 |
+| Sansom2010 | 23 | 189 | 189 | 0 |
+| DeAssis2011 | 33 | 64 | 64 | 0 |
+| Aria2015 | 35 | 143 | 143 | 0 |
+| Wortley2006 | 37 | 494 | 491 | +3 |
+| Griswold1999 | 43 | 408 | 407 | +1 |
+| Schulze2007 | 52 | 165 | 164 | +1 |
+| Eklund2004 | 54 | 442 | 441 | +1 |
+| Agnarsson2004 | 62 | 778 | 778 | 0 |
+| Zanol2014 | 74 | 1338 | 1331 | +7 |
+| Zhu2013 | 75 | 649 | 650 | −1 |
+| Giles2015 | 78 | 720 | 716 | +4 |
+| Dikow2009 | 88 | 1614 | 1614 | 0 |
+
+Zhu2013 marginal regression at 10s resolves at 20s (median 649→644).
+At 20s with 5 seeds: Zhu2013 645/643, Giles2015 712/710, Dikow2009
+1611/1611 (all improvements).

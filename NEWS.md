@@ -67,6 +67,20 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 - `progressCallback` — R function called after each replicate (for custom
   progress reporting).
 
+### Search optimizations
+
+- **Collapsed-edge clip skipping**: TBR, SPR, and drift search skip
+  clips at zero-length edges that provably cannot improve the score,
+  reducing unnecessary evaluations on sparse data.
+- **Conflict-guided sectorial search**: random sectorial search targets
+  sectors around splits that conflict across pool trees.
+- **Diversity-aware pool eviction**: when the tree pool is full, the most
+  topologically similar entry is evicted to maintain diversity.
+- **Cross-replicate consensus constraint tightening**: opt-in via
+  `consensusConstrain = TRUE` in `SearchControl()`.
+- **Consensus-stability early stopping**: search terminates when the strict
+  consensus is stable for `consensusStableReps` consecutive replicates.
+
 ### Batch resampling
 
 - `Resample()` gains `nReplicates` and `nThreads` parameters for batch and

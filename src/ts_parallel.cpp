@@ -1,4 +1,5 @@
 #include "ts_parallel.h"
+#include "ts_collapsed.h"
 #include "ts_rng.h"
 #include "ts_fitch.h"
 #include "ts_fuse.h"
@@ -41,7 +42,11 @@ void ThreadSafePool::fuse_round(DataSet& ds, const DrivenParams& params,
   if (cd && cd->active) {
     fuse_ok = !violates_constraint_posthoc(fused, *cd);
   }
-  if (fuse_ok) pool_.add(fused, fused_score);
+  if (fuse_ok) {
+    std::vector<uint8_t> fused_collapsed;
+    compute_collapsed_flags(fused, ds, fused_collapsed);
+    pool_.add_collapsed(fused, fused_score, fused_collapsed);
+  }
 
   if (fused_score < best_before) {
     pool_.set_hits_to_best(0);
@@ -130,8 +135,11 @@ void worker_thread(WorkerContext ctx) {
     // Accumulate phase timings for this thread
     ctx.thread_timings[ctx.thread_id] += rep_result.timings;
 
-    // Add to shared pool
-    ctx.shared_pool->add(rep_result.tree, rep_result.score);
+    // Add to shared pool with collapsed-topology dedup
+    std::vector<uint8_t> rep_collapsed;
+    compute_collapsed_flags(rep_result.tree, ds_local, rep_collapsed);
+    ctx.shared_pool->add_collapsed(rep_result.tree, rep_result.score,
+                                   rep_collapsed);
     ctx.replicates_done->fetch_add(1, std::memory_order_relaxed);
 
     // Check convergence
@@ -171,6 +179,7 @@ DrivenResult parallel_driven_search(
   result.hits_to_best = 0;
   result.pool_size = 0;
   result.timed_out = false;
+  result.consensus_stable = false;
 
   if (params.max_replicates <= 0) {
     result.best_score = -1.0;
@@ -285,6 +294,24 @@ DrivenResult parallel_driven_search(
         stop_flag.store(true, std::memory_order_relaxed);
         result.timed_out = true;
         break;
+      }
+    }
+
+    // Consensus stability check (parallel path)
+    if (params.consensus_stable_reps > 0) {
+      auto st = shared_pool.status();
+      if (st.pool_size >= 2) {
+        int unchanged = shared_pool.update_consensus_stability();
+        if (unchanged >= params.consensus_stable_reps) {
+          stop_flag.store(true, std::memory_order_relaxed);
+          result.consensus_stable = true;
+          if (params.verbosity >= 1) {
+            Rprintf("Consensus stable for %d replicates (score %.5g, "
+                    "pool %d trees)\n",
+                    unchanged, st.best_score, st.pool_size);
+          }
+          break;
+        }
       }
     }
 

@@ -145,7 +145,8 @@ character is one unit, and each top-level hierarchy block (primary +
 all dependents) is one unit.  See \code{\link[=CharacterHierarchy]{CharacterHierarchy()}}.}
 
 \item{inapplicable}{Character string specifying the inapplicable-character
-handling method: \code{"brazeau"} (default), \code{"hsj"}, or \code{"xform"}.
+handling method: \code{"bgs"} (default), \code{"hsj"}, or \code{"xform"}.
+Case-insensitive; \code{"brazeau"} is accepted as an alias for \code{"bgs"}.
 See \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} and \code{vignette("inapplicable")} for details.}
 
 \item{hsj_alpha}{Numeric in [0, 1] controlling the weight of secondary

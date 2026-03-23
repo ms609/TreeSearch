@@ -118,15 +118,16 @@ TNT).  Only used when \code{extended_iw = TRUE}.}
 \item{hierarchy}{A \code{\link{CharacterHierarchy}} object specifying which
 characters are controlling primaries and which are their dependent
 secondaries.  Required when \code{inapplicable} is \code{"hsj"} or \code{"xform"};
-ignored when \code{inapplicable = "brazeau"} (the default).
+ignored when \code{inapplicable = "bgs"} (the default).
 See \code{\link[=CharacterHierarchy]{CharacterHierarchy()}} for how to construct one, and
 \code{\link[=hierarchy_from_names]{hierarchy_from_names()}} for automated construction from
 TNT-style character names.}
 
 \item{inapplicable}{Character: method for handling inapplicable characters.
+Case-insensitive.
 See \code{vignette("inapplicable", package = "TreeSearch")} for details.
 \describe{
-\item{\code{"brazeau"} (default)}{Three-pass algorithm of
+\item{\code{"bgs"} (default)}{Three-pass algorithm of
 \insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
 regions from the \code{"-"} token.  No hierarchy required.}
 \item{\code{"hsj"}}{Dissimilarity-metric scoring of
