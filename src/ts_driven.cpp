@@ -373,8 +373,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   const int base_ratchet_cycles = params.ratchet_cycles;
   const int base_drift_cycles = params.drift_cycles;
   DrivenParams adaptive_params = params;  // mutable copy for adaptive level
-  int adaptive_hits_in_window = 0;        // hits to best in recent window
-  const int adaptive_window = 5;          // window size for hit rate
+
 
   // Cross-replicate consensus constraint tightening.
   // When enabled and no user constraint is supplied, the strict consensus

@@ -51,3 +51,4 @@ test*.txt
 test_output.txt
 /pdf
 /.builds
+.positai

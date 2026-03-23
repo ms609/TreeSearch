@@ -6,17 +6,20 @@
 \usage{
 SearchControl(
   tbrMaxHits = 1L,
+  nniFirst = TRUE,
   sprFirst = FALSE,
   tabuSize = 100L,
   wagnerStarts = 1L,
-  ratchetCycles = 5L,
-  ratchetPerturbProb = 0.04,
+  ratchetCycles = 12L,
+  ratchetPerturbProb = 0.25,
   ratchetPerturbMode = 0L,
-  ratchetPerturbMaxMoves = 0L,
+  ratchetPerturbMaxMoves = 5L,
   ratchetAdaptive = FALSE,
+  nniPerturbCycles = 0L,
+  nniPerturbFraction = 0.5,
   driftCycles = 2L,
-  driftAfdLimit = 3L,
-  driftRfdLimit = 0.1,
+  driftAfdLimit = 5L,
+  driftRfdLimit = 0.15,
   xssRounds = 3L,
   xssPartitions = 4L,
   rssRounds = 1L,
@@ -27,12 +30,19 @@ SearchControl(
   fuseInterval = 3L,
   fuseAcceptEqual = FALSE,
   poolMaxSize = 100L,
-  poolSuboptimal = 0
+  poolSuboptimal = 0,
+  consensusStableReps = 0L,
+  adaptiveLevel = FALSE,
+  consensusConstrain = FALSE
 )
 }
 \arguments{
 \item{tbrMaxHits}{Integer; number of equally-scoring trees to accept
 before stopping a TBR pass.}
+
+\item{nniFirst}{Logical; run an NNI pass before SPR/TBR in each replicate?
+At small tree sizes (≤88 tips) overhead is negligible; at ≥100 tips
+this significantly accelerates the initial descent from the Wagner tree.}
 
 \item{sprFirst}{Logical; run an SPR pass before TBR in each replicate?}
 
@@ -53,6 +63,19 @@ cycle (0 = automatic).}
 
 \item{ratchetAdaptive}{Logical; adjust perturbation probability based on
 escape rate?}
+
+\item{nniPerturbCycles}{Integer; number of stochastic NNI-perturbation
+cycles per replicate.  Each cycle randomly applies NNI swaps to a
+fraction of internal branches, then runs TBR to find a new local
+optimum.  Complementary to the weight-perturbation ratchet: the ratchet
+perturbs the objective function, while NNI-perturbation perturbs the
+topology directly.
+0 (default) disables NNI perturbation.
+Inspired by IQ-TREE's \code{doRandomNNIs()}
+\insertCite{Nguyen2015}{TreeSearch}.}
+
+\item{nniPerturbFraction}{Numeric (0--1); fraction of internal branches
+to swap during each NNI-perturbation cycle.  Default 0.5.}
 
 \item{driftCycles}{Integer; number of drift search cycles.}
 
@@ -84,10 +107,6 @@ sizes for sectorial search.}
 
 \item{poolSuboptimal}{Numeric; retain trees that are this many steps
 worse than the best tree.  0 (default) keeps only optimal trees.}
-
-\item{nniFirst}{Logical; run an NNI pass before SPR/TBR in each replicate?
-At small tree sizes (≤88 tips) overhead is negligible; at ≥100 tips
-this significantly accelerates the initial descent from the Wagner tree.}
 
 \item{consensusStableReps}{Integer; stop when the strict consensus of
 best-score pool trees has been unchanged for this many consecutive

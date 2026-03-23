@@ -192,14 +192,15 @@
 #' @param hierarchy A [`CharacterHierarchy`] object specifying which
 #'   characters are controlling primaries and which are their dependent
 #'   secondaries.  Required when `inapplicable` is `"hsj"` or `"xform"`;
-#'   ignored when `inapplicable = "brazeau"` (the default).
+#'   ignored when `inapplicable = "bgs"` (the default).
 #'   See [`CharacterHierarchy()`] for how to construct one, and
 #'   [`hierarchy_from_names()`] for automated construction from
 #'   TNT-style character names.
 #' @param inapplicable Character: method for handling inapplicable characters.
+#'   Case-insensitive.
 #'   See `vignette("inapplicable", package = "TreeSearch")` for details.
 #'   \describe{
-#'     \item{`"brazeau"` (default)}{Three-pass algorithm of
+#'     \item{`"bgs"` (default)}{Three-pass algorithm of
 #'       \insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
 #'       regions from the `"-"` token.  No hierarchy required.}
 #'     \item{`"hsj"`}{Dissimilarity-metric scoring of
@@ -330,7 +331,7 @@ MaximizeParsimony <- function(
     tree,
     concavity = Inf,
     hierarchy = NULL,
-    inapplicable = "brazeau",
+    inapplicable = "bgs",
     hsj_alpha = 1.0,
     constraint,
     strategy = "auto",
@@ -444,13 +445,13 @@ MaximizeParsimony <- function(
 
   # --- Progress callback: build default cli bar if needed ---
   if (is.null(progressCallback) && verbosity >= 1L && interactive()) {
-    pb_env <- new.env(parent = emptyenv())
+    pb_env <- new.env(parent = baseenv())
     pb_env$id <- cli::cli_progress_bar(
       total = as.integer(maxReplicates),
       format = paste0(
         "Rep {cli::pb_current}/{cli::pb_total}",
-        " | Best: {pb_env$best}",
-        " | Hits: {pb_env$hits}/{pb_env$target}"
+        " | Best: {best}",
+        " | Hits: {hits}/{target}"
       ),
       .auto_close = FALSE,
       .envir = pb_env
@@ -523,8 +524,10 @@ MaximizeParsimony <- function(
   }
 
   # --- Validate inapplicable-handling parameters ---
-  inapplicable <- match.arg(inapplicable, c("brazeau", "hsj", "xform"))
-  if (inapplicable != "brazeau") {
+  inapplicable <- tolower(inapplicable)
+  if (inapplicable == "brazeau") inapplicable <- "bgs"
+  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform"))
+  if (inapplicable != "bgs") {
     if (is.null(hierarchy)) {
       stop("A `hierarchy` is required when inapplicable = \"", inapplicable,
            "\". See ?CharacterHierarchy.")
@@ -549,7 +552,7 @@ MaximizeParsimony <- function(
   }
 
   # --- Starting tree ---
-  userTree <- !missing(tree)
+  userTree <- !missing(tree) && !is.null(tree)
   if (!userTree) {
     tree <- TreeTools::RandomTree(nTip, root = TRUE)
     tree[["tip.label"]] <- names(dataset)
