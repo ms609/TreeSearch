@@ -64,7 +64,7 @@ with existing completed IDs. Renumbered to T-198–T-201 in S-COORD round 10.
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by B (focus 10: Profile & IW scoring). |
-| S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-20 by A (round 3 + MaddisonSlatkin opts). |
+| S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-24 by G (round 4: post-pipeline overhaul, no new tasks). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-24 by D (round 10). |
 
 ---
