@@ -37,6 +37,10 @@ SearchControl(
   consensusStableReps = 0L,
   adaptiveLevel = FALSE,
   consensusConstrain = FALSE,
+  annealPhases = 0L,
+  annealTStart = 20,
+  annealTEnd = 0,
+  annealMovesPerPhase = 0L,
   adaptiveStart = FALSE
 )
 }
@@ -149,6 +153,20 @@ best-score pool trees are enforced as constraints, focusing search on
 uncertain regions.  Constraints are cleared whenever a new best score
 is found.  Only active when no user-supplied \code{constraint} is
 present.  Default \code{FALSE}.}
+
+\item{annealPhases}{Integer; number of simulated annealing temperature
+steps (default 0 = disabled).  When > 0, runs a linear cooling
+schedule from \code{annealTStart} to \code{annealTEnd} using stochastic TBR
+with Boltzmann acceptance.  Runs between drift and final TBR polish.}
+
+\item{annealTStart}{Numeric; initial Boltzmann temperature for annealing
+(default 20).  Higher temperatures accept more suboptimal moves.}
+
+\item{annealTEnd}{Numeric; final Boltzmann temperature (default 0 =
+strict hill-climbing at end).}
+
+\item{annealMovesPerPhase}{Integer; stochastic TBR moves per temperature
+step (default 0 = number of tips).}
 
 \item{adaptiveStart}{Logical; use Thompson-sampling (bandit) strategy
 selection for starting trees?  When \code{TRUE}, each replicate draws its

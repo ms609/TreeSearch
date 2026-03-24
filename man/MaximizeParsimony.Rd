@@ -126,8 +126,9 @@ loop. Best for datasets with 65-119 tips and 100+ character patterns.}
 \item{\code{"large"}}{Large-tree search (>=120 tips): reduced cycle
 counts scaled for expensive per-replicate cost, no NNI
 perturbation, single biased Wagner start (Goloboff 2014), larger
-sector sizes.  Empirically matches or exceeds \code{"thorough"} at
-180 tips across all time budgets.}
+sector sizes, simulated annealing instead of drift (linear
+cooling from T=20 to T=0 over 5 phases).  Empirically matches
+or exceeds \code{"thorough"} at 180 tips across all time budgets.}
 All presets enable consensus-stability stopping: the search stops early
 if the strict consensus of best-score trees has been unchanged for
 \code{consensusStableReps} consecutive replicates.
