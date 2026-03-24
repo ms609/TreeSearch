@@ -135,8 +135,10 @@ main              ← stable, taggable; receives only reviewed bug fixes
 ### Rules
 
 - **`main`**: bug fixes and release tags only. No experiments.
-- **`cpp-search`**: integration target. Bug-fix agents (S-RED, S-PROF, S-COORD,
-  and ad-hoc fixes) work directly here. Feature branches merge here when ready.
+- **`cpp-search`**: integration target. **Agents must not merge directly to
+  `cpp-search`.** All code changes go through PRs reviewed by the human.
+  Coordination-only commits (agent logs, to-do.md updates) may be pushed
+  directly.
 - **`feature/*`**: branch from `cpp-search`; contain **code changes only**.
   Each feature branch is owned by a single agent at a time.
 
@@ -174,12 +176,27 @@ this is expected and should be done carefully at feature-merge time.
 ### Feature branch lifecycle
 
 1. `git checkout cpp-search && git checkout -b feature/<name>`
+   Optionally create a worktree: `git worktree add ../TS-<name> feature/<name>`
 2. Claim task on `cpp-search`'s `to-do.md` (coordination commit).
-3. Do all code work on `feature/<name>`.
-4. When complete: `git checkout cpp-search && git merge feature/<name>`.
-5. Resolve any Collate/NAMESPACE conflicts, rebuild, run tests.
-6. Log completion in `completed-tasks.md` on `cpp-search`.
-7. Delete feature branch.
+3. Do all code work on `feature/<name>`. Use local targeted tests only.
+4. When ready: push and dispatch GHA checks:
+   ```bash
+   git push -u origin feature/<name>
+   bash gha-dispatch.sh agent-check.yml feature/<name>
+   ```
+5. On GHA success, open a PR:
+   ```bash
+   gh pr create --base cpp-search --head feature/<name> \
+     --title "T-nnn: <description>" --body "Agent <Letter>. ..."
+   ```
+6. Set `to-do.md` status to `PR #N (<Letter>)`. Move on.
+7. Human reviews and merges the PR.
+8. After merge, clean up:
+   ```bash
+   git worktree remove ../TS-<name>  # if worktree was used
+   git branch -d feature/<name>
+   git push origin --delete feature/<name>
+   ```
 
 ---
 
@@ -383,11 +400,19 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 | sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first, consensus-stop 3 |
 | default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 2 drift (AFD 5, RFD 0.15), XSS+RSS, consensus-stop 3, Wagner×3, NNI-first, adaptive level |
 | thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 12 drift (AFD 5, RFD 0.15), XSS+RSS+CSS, consensus-stop 3, Wagner×3, NNI-first, outerCycles=2 |
-| large | ≥120 tips with ≥100 char patterns | Same as thorough + wagnerBias=1 (Goloboff 2014), sectorMaxSize=100, consensus-stop 2 |
+| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 4 drift (AFD 5, RFD 0.15), XSS(3)+RSS(2)+CSS(1), consensus-stop 2, Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100 |
 
 `sprint`/`default`/`thorough` set `consensusStableReps = 3`; `large` sets
 `consensusStableReps = 2` (faster convergence detection since replicates at
 120+ tips take 30–90s each).
+
+**Large preset design rationale (T-179, 2026-03-24):** At 180 tips, each TBR
+convergence takes ~5–7s, making phases like NNI-perturbation (~5.5s/cycle) and
+drift (~4s/cycle) extremely expensive. Systematic benchmarking on mbank_X30754
+(180t, 418p) showed that reducing cycle counts (12 ratchet, 4 drift, no NNI-perturb)
+with outerCycles=1 and a single biased Wagner start outperforms the thorough
+preset by 4–7 steps (median) at 30–60s budgets and ties at 120s, while
+consistently completing more replicates.
 
 All presets set `nniFirst = TRUE` (NNI warmup before TBR) and
 `sprFirst = FALSE` (SPR is counterproductive when NNI is active —
@@ -1010,24 +1035,34 @@ The neotrans repo (`../neotrans/inst/matrices/`) contains ~800 MorphoBank
 NEXUS matrices. These complement the 14 bundled datasets and 1 large-tree
 dataset for broader strategy validation.
 
-**Catalogue:** `inst/benchmarks/mbank_catalogue.csv` (683 usable matrices
-after ntax≥20 filter). Regenerate with `Rscript inst/benchmarks/build_mbank_catalogue.R`.
+**Catalogue:** `inst/benchmarks/mbank_catalogue.csv` (659 usable matrices
+after ntax≥20 filter and dedup). Regenerate with
+`Rscript inst/benchmarks/build_mbank_catalogue.R`.
 
 **Train/validation split:** Matrices whose MorphoBank project number is
-divisible by 5 are **validation** (129 matrices, ~19%). All others are
-**training** (554 matrices). The 7 `syab*` files (non-MorphoBank, from a
+divisible by 5 are **validation** (124 matrices, ~19%). All others are
+**training** (535 matrices). The 7 `syab*` files (non-MorphoBank, from a
 Systematic Biology paper) are always training.
+
+**Dedup:** Multi-file projects with ≥95% character identity on shared taxa
+(≥80% taxon overlap) are flagged `dedup_drop = TRUE`. Greedy selection keeps
+the largest matrix per redundancy cluster. 24 near-duplicates excluded.
 
 **IMPORTANT:** Validation results must **never** be used to guide strategy
 tuning. They confirm generalization only. This is a one-way door.
 
+**Fixed 25-matrix training sample:** `MBANK_FIXED_SAMPLE` in
+`bench_datasets.R` — 7 small, 7 medium, 7 large, 4 xlarge. Selected via
+max-min distance on standardized features. Do not modify. Used by
+`benchmark_mbank_sample()`.
+
 **Key functions** (in `inst/benchmarks/bench_datasets.R`):
-- `load_mbank_catalogue()` — loads the metadata CSV
-- `load_mbank_sample(cat, n, seed, split)` — stratified sample
+- `load_mbank_catalogue()` — loads metadata CSV (excludes dedup by default)
+- `load_mbank_sample(cat, n, seed, split)` — stratified random sample
 - `load_mbank_datasets(cat, keys)` — load specific matrices by key
 
 **Benchmark runners** (in `inst/benchmarks/bench_framework.R`):
-- `benchmark_mbank_sample()` — routine ~25 training matrices
+- `benchmark_mbank_sample()` — fixed 25-matrix training sample (routine)
 - `benchmark_mbank_sweep(split)` — full training or validation sweep
 - `benchmark_mbank_validation()` — validation sweep with prominent warning
 

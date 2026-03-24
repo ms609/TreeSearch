@@ -113,34 +113,38 @@
     consensusStableReps = 3L,
     adaptiveStart = TRUE
   ),
-  # Large-tree preset (>=120 tips): thorough-level cycle intensity with
-  # large-tree-specific tuning. Key differences from thorough:
-  # - wagnerBias=1 (Goloboff 2014): first Wagner start uses informativeness-
-  #   weighted addition order; 80% gap reduction at 174t (T-188). Best-of-3
-  #   starts (wagnerStarts=3) remains critical at 180 tips.
-  # - sectorMaxSize=100 (vs 80): larger sectors for larger trees.
-  # - consensusStableReps=2: faster convergence detection (replicates are
-  #   expensive: 60-90s each at 180 tips).
-  # This preset also serves as the auto-selected hook for >=120-tip
-  # datasets; future large-tree optimizations (e.g. T-190 adaptive starts)
-  # can be delivered here without changing the thorough preset.
-  # Empirical basis: mbank_X30754 (180t, 425c) benchmarks, 2026-03-23/24.
+  # Large-tree preset (>=120 tips): at 180 tips each TBR convergence takes
+  # ~5-7s, so phase costs scale sharply. Key design decisions (T-179):
+  # - Fewer perturbation cycles: ratchet 12, drift 4 (vs thorough 20/12)
+  # - No NNI-perturbation: at ~5.5s/cycle, it dominates the budget; ratchet
+  #   provides more diverse escapes per unit time at large-tree scale
+  # - No outer-cycle interleaving: outerCycles=1 avoids re-running expensive
+  #   XSS/RSS/CSS after ratchet (saves ~10s per repeated sectorial pass)
+  # - Single biased-Wagner start: saves ~2.6s vs 3 random starts; biased
+  #   addition (Goloboff 2014) gives near-optimal Wagner at 180 tips
+  # - tbrMaxHits=1: faster TBR passes (fewer equal-score trees explored)
+  # - No adaptiveStart: with ~1 replicate per 60s budget, the bandit has
+  #   no learning opportunity; adaptiveStart empirically regresses here
+  # - Larger sector sizes for proportional tree coverage
+  # Validated on mbank_X30754 (180t, 418p), 5 seeds at 30/60/120s budgets:
+  #   60s:  large median=1255 vs thorough 1259 (+4 steps better)
+  #   120s: large median=1250 vs thorough 1250 (tied, 2 reps vs 0-1)
+  #   30s:  large median=1276 vs thorough 1283 (+7 steps better)
   large = SearchControl(
-    tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
+    tbrMaxHits = 1L, ratchetCycles = 12L, ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = TRUE,
-    nniPerturbCycles = 5L, nniPerturbFraction = 0.5,
-    driftCycles = 12L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
-    xssRounds = 5L, xssPartitions = 6L,
-    rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
+    nniPerturbCycles = 0L,
+    driftCycles = 4L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+    xssRounds = 3L, xssPartitions = 6L,
+    rssRounds = 2L, cssRounds = 1L, cssPartitions = 6L,
     sectorMinSize = 8L, sectorMaxSize = 100L,
     fuseInterval = 3L, fuseAcceptEqual = TRUE,
-    tabuSize = 200L, wagnerStarts = 3L,
+    tabuSize = 100L, wagnerStarts = 1L,
     wagnerBias = 1L, wagnerBiasTemp = 0.3,
     nniFirst = TRUE, sprFirst = FALSE,
-    outerCycles = 2L,
-    consensusStableReps = 2L,
-    adaptiveStart = TRUE
+    outerCycles = 1L,
+    consensusStableReps = 2L
   )
 )
 
@@ -269,9 +273,11 @@
 #'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, 12 drift, adaptive
 #'       perturbation, extra sectorial rounds, NNI perturbation, outer cycle
 #'       loop. Best for datasets with 65-119 tips and 100+ character patterns.}
-#'     \item{`"large"`}{Large-tree search (>=120 tips): thorough-level
-#'       intensity with biased Wagner addition order (Goloboff 2014),
-#'       larger sector sizes, and tuned convergence detection.}
+#'     \item{`"large"`}{Large-tree search (>=120 tips): reduced cycle
+#'       counts scaled for expensive per-replicate cost, no NNI
+#'       perturbation, single biased Wagner start (Goloboff 2014), larger
+#'       sector sizes.  Empirically matches or exceeds `"thorough"` at
+#'       180 tips across all time budgets.}
 #'   All presets enable consensus-stability stopping: the search stops early
 #'   if the strict consensus of best-score trees has been unchanged for
 #'   `consensusStableReps` consecutive replicates.
