@@ -1061,9 +1061,9 @@ The neotrans repo (`../neotrans/inst/matrices/`) contains ~800 MorphoBank
 NEXUS matrices. These complement the 14 bundled datasets and 1 large-tree
 dataset for broader strategy validation.
 
-**Catalogue:** `inst/benchmarks/mbank_catalogue.csv` (659 usable matrices
+**Catalogue:** `dev/benchmarks/mbank_catalogue.csv` (659 usable matrices
 after ntax≥20 filter and dedup). Regenerate with
-`Rscript inst/benchmarks/build_mbank_catalogue.R`.
+`Rscript dev/benchmarks/build_mbank_catalogue.R`.
 
 **Train/validation split:** Matrices whose MorphoBank project number is
 divisible by 5 are **validation** (124 matrices, ~19%). All others are
@@ -1082,23 +1082,23 @@ tuning. They confirm generalization only. This is a one-way door.
 max-min distance on standardized features. Do not modify. Used by
 `benchmark_mbank_sample()`.
 
-**Key functions** (in `inst/benchmarks/bench_datasets.R`):
+**Key functions** (in `dev/benchmarks/bench_datasets.R`):
 - `load_mbank_catalogue()` — loads metadata CSV (excludes dedup by default)
 - `load_mbank_sample(cat, n, seed, split)` — stratified random sample
 - `load_mbank_datasets(cat, keys)` — load specific matrices by key
 
-**Benchmark runners** (in `inst/benchmarks/bench_framework.R`):
+**Benchmark runners** (in `dev/benchmarks/bench_framework.R`):
 - `benchmark_mbank_sample()` — fixed 25-matrix training sample (routine)
 - `benchmark_mbank_sweep(split)` — full training or validation sweep
 - `benchmark_mbank_validation()` — validation sweep with prominent warning
 
 **TNT comparison suite** lives in `../TS-TNT-bench/`. Key files:
-- `inst/benchmarks/bench_tnt_compare.R` — runner (smoke/medium/full)
-- `inst/benchmarks/tnt_comparison.qmd` — Quarto report (HTML output)
-- `inst/benchmarks/.tnt-bench/` — staging dir for TNT I/O
+- `dev/benchmarks/bench_tnt_compare.R` — runner (smoke/medium/full)
+- `dev/benchmarks/tnt_comparison.qmd` — Quarto report (HTML output)
+- `dev/benchmarks/.tnt-bench/` — staging dir for TNT I/O
 - Requires TNT 1.6 at `C:/Programs/Phylogeny/tnt/TNT-bin/tnt.exe`
 
-Benchmark scripts in `inst/benchmarks/`. Key files:
+Benchmark scripts in `dev/benchmarks/`. Key files:
 - `bench_regression.R` — CI regression test (score quality + timing bounds)
 - `bench_framework.R` — Dataset × strategy × replicate grid
 - `strategies.md` — Strategy space documentation

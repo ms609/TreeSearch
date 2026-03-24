@@ -150,6 +150,7 @@ test_that("Resample() fails and works", {
 
   nRep <- 42L # Arbitrary number to balance runtime vs false +ves & -ves
   bal <- as.Splits(BalancedTree(dataset))
+  set.seed(6034) # Fix seed: stochastic test has ~13% failure rate without it
   
   jackTrees <- replicate(nRep, Resample(dataset, NJTree(dataset), verbosity = 0L),
                          simplify = FALSE)

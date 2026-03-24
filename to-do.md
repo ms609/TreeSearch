@@ -126,7 +126,7 @@ Pool-based arms excluded when pool is empty (zero-armed at rep 0).
   parallel path)
 - `R/SearchControl.R`: add `adaptiveStart` param
 - `R/MaximizeParsimony.R`: pass through to C++; default on for thorough/large
-- `inst/benchmarks/bench_framework.R`: benchmarking infrastructure
+- `dev/benchmarks/bench_framework.R`: benchmarking infrastructure
 
 **Implementation plan.**
 1. Add `StartStrategy` enum to `ts_driven.h` (6 arms).
