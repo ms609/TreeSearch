@@ -18,7 +18,10 @@ SuccessiveApproximations(
   verbosity = 0,
   suboptimal = 0.1,
   concavity = Inf,
-  constraint = NULL
+  constraint = NULL,
+  extended_iw = TRUE,
+  xpiwe_r = 0.5,
+  xpiwe_max_f = 5
 )
 
 SuccessiveWeights(tree, dataset)
@@ -72,6 +75,24 @@ returned trees will be perfectly compatible with each character in
 in any output tree.
 Constraint searches are supported natively: all tree rearrangements
 are filtered to respect the constraint topology.}
+
+\item{extended_iw}{Logical: if \code{TRUE} (default) and \code{concavity} is finite,
+apply the missing-entries correction of
+\insertCite{Goloboff2014;textual}{TreeSearch}.
+Characters with missing data receive a reduced effective concavity
+\emph{k_c} = \emph{k} / \emph{f_c}, making their weights drop off faster.
+This compensates for the artificially low homoplasy of poorly sampled
+characters.  Set \code{FALSE} for legacy Goloboff (1993) behaviour.
+Ignored when \code{concavity = Inf} (equal weights) or \code{"profile"}.}
+
+\item{xpiwe_r}{Numeric in (0, 1]: proportion of observed homoplasy
+expected in unobserved (missing) entries.  Default 0.5 (following TNT).
+Only used when \code{extended_iw = TRUE}.}
+
+\item{xpiwe_max_f}{Numeric >= 1: maximum extrapolation factor.
+Characters with very few observed entries are clamped so that the
+extrapolation factor does not exceed this value.  Default 5 (following
+TNT).  Only used when \code{extended_iw = TRUE}.}
 }
 \value{
 \code{SuccessiveApproximations()} returns a list of class \code{multiPhylo}

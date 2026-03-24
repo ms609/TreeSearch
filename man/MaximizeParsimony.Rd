@@ -14,7 +14,7 @@ MaximizeParsimony(
   xpiwe_r = 0.5,
   xpiwe_max_f = 5,
   hierarchy = NULL,
-  inapplicable = "brazeau",
+  inapplicable = "bgs",
   hsj_alpha = 1,
   constraint,
   strategy = "auto",
@@ -193,6 +193,10 @@ attributes:
 \item{\code{replicates}}{Number of replicates completed.}
 \item{\code{hits_to_best}}{Number of independent discoveries of the best
 score.}
+\item{\code{n_topologies}}{Number of distinct topologies in the pool at the
+best score.}
+\item{\code{last_improved_rep}}{1-based index of the replicate that last
+improved the best score (0 if not tracked, e.g. parallel search).}
 \item{\code{timed_out}}{Logical: \code{TRUE} if the search stopped because
 \code{maxSeconds} was exceeded.}
 \item{\code{consensus_stable}}{Logical: \code{TRUE} if the search stopped

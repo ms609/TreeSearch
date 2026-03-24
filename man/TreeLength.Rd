@@ -20,7 +20,7 @@ TreeLength(
   xpiwe_r = 0.5,
   xpiwe_max_f = 5,
   hierarchy = NULL,
-  inapplicable = "brazeau",
+  inapplicable = "bgs",
   hsj_alpha = 1
 )
 
@@ -32,7 +32,7 @@ TreeLength(
   xpiwe_r = 0.5,
   xpiwe_max_f = 5,
   hierarchy = NULL,
-  inapplicable = "brazeau",
+  inapplicable = "bgs",
   hsj_alpha = 1
 )
 
@@ -44,7 +44,7 @@ TreeLength(
   xpiwe_r = 0.5,
   xpiwe_max_f = 5,
   hierarchy = NULL,
-  inapplicable = "brazeau",
+  inapplicable = "bgs",
   hsj_alpha = 1
 )
 
@@ -56,7 +56,7 @@ TreeLength(
   xpiwe_r = 0.5,
   xpiwe_max_f = 5,
   hierarchy = NULL,
-  inapplicable = "brazeau",
+  inapplicable = "bgs",
   hsj_alpha = 1
 )
 
@@ -68,7 +68,7 @@ TreeLength(
   xpiwe_r = 0.5,
   xpiwe_max_f = 5,
   hierarchy = NULL,
-  inapplicable = "brazeau",
+  inapplicable = "bgs",
   hsj_alpha = 1
 )
 

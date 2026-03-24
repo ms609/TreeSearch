@@ -39,8 +39,11 @@ Resample(
   nReplicates = 1L,
   nThreads = 1L,
   hierarchy = NULL,
-  inapplicable = "brazeau",
+  inapplicable = "bgs",
   hsj_alpha = 1,
+  extended_iw = TRUE,
+  xpiwe_r = 0.5,
+  xpiwe_max_f = 5,
   ...
 )
 }
