@@ -1,3 +1,33 @@
+# Internal helper: count non-missing taxa per character pattern.
+# Used by XPIWE (Goloboff 2014) to compute the extrapolation factor.
+# @param dataset A phyDat object.
+# @return Integer vector of length = number of unique patterns.
+# @keywords internal
+.ObsCount <- function(dataset) {
+  at <- attributes(dataset)
+  contrast <- at$contrast
+  levels <- at$levels
+  # "?" = all-1s contrast row.
+  is_missing <- apply(contrast, 1, function(row) all(row == 1))
+  # "-" (inapplicable/gap) also counts as missing for XPIWE (Goloboff 2014).
+  # TNT counts both ? and - as missing, verified against TNT 1.6.
+  inapp_col <- match("-", levels)
+  if (!is.na(inapp_col)) {
+    is_inapp <- apply(contrast, 1, function(row) {
+      row[inapp_col] == 1 && sum(row) == 1
+    })
+    is_missing <- is_missing | is_inapp
+  }
+  # dataset is a list of integer vectors (token indices, 1-based) per taxon.
+  # tip_data: n_taxa x n_patterns matrix
+  tip_data <- matrix(unlist(dataset, use.names = FALSE),
+                     nrow = length(dataset), byrow = TRUE)
+  # Count non-missing taxa per pattern
+  vapply(seq_len(ncol(tip_data)), function(p) {
+    sum(!is_missing[tip_data[, p]])
+  }, integer(1))
+}
+
 # Internal helper: prepare constraint data for C++ engine.
 # Returns a named list of constraint arguments (empty list if no constraint).
 # @param constraint A phyDat, phylo, or NULL.
@@ -110,7 +140,41 @@
     tabuSize = 200L, wagnerStarts = 3L,
     nniFirst = TRUE, sprFirst = FALSE,
     outerCycles = 2L,
-    consensusStableReps = 3L
+    consensusStableReps = 3L,
+    adaptiveStart = TRUE
+  ),
+  # Large-tree preset (>=120 tips): at 180 tips each TBR convergence takes
+  # ~5-7s, so phase costs scale sharply. Key design decisions (T-179):
+  # - Fewer perturbation cycles: ratchet 12, drift 4 (vs thorough 20/12)
+  # - No NNI-perturbation: at ~5.5s/cycle, it dominates the budget; ratchet
+  #   provides more diverse escapes per unit time at large-tree scale
+  # - No outer-cycle interleaving: outerCycles=1 avoids re-running expensive
+  #   XSS/RSS/CSS after ratchet (saves ~10s per repeated sectorial pass)
+  # - Single biased-Wagner start: saves ~2.6s vs 3 random starts; biased
+  #   addition (Goloboff 2014) gives near-optimal Wagner at 180 tips
+  # - tbrMaxHits=1: faster TBR passes (fewer equal-score trees explored)
+  # - No adaptiveStart: with ~1 replicate per 60s budget, the bandit has
+  #   no learning opportunity; adaptiveStart empirically regresses here
+  # - Larger sector sizes for proportional tree coverage
+  # Validated on mbank_X30754 (180t, 418p), 5 seeds at 30/60/120s budgets:
+  #   60s:  large median=1255 vs thorough 1259 (+4 steps better)
+  #   120s: large median=1250 vs thorough 1250 (tied, 2 reps vs 0-1)
+  #   30s:  large median=1276 vs thorough 1283 (+7 steps better)
+  large = SearchControl(
+    tbrMaxHits = 1L, ratchetCycles = 12L, ratchetPerturbProb = 0.25,
+    ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
+    ratchetAdaptive = TRUE,
+    nniPerturbCycles = 0L,
+    driftCycles = 4L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+    xssRounds = 3L, xssPartitions = 6L,
+    rssRounds = 2L, cssRounds = 1L, cssPartitions = 6L,
+    sectorMinSize = 8L, sectorMaxSize = 100L,
+    fuseInterval = 3L, fuseAcceptEqual = TRUE,
+    tabuSize = 100L, wagnerStarts = 1L,
+    wagnerBias = 1L, wagnerBiasTemp = 0.3,
+    nniFirst = TRUE, sprFirst = FALSE,
+    outerCycles = 1L,
+    consensusStableReps = 2L
   )
 )
 
@@ -132,6 +196,9 @@
   if (nTip <= 30L) return("sprint")
   # Few characters -> flat landscape; thorough search is pointless
   if (nChar < 100L) return("default")
+  # Large trees (>=120 tips): per-replicate cost is high; use scaled preset
+  # with NNI warmup and biased Wagner (empirically validated on 180-tip data).
+  if (nTip >= 120L) return("large")
   # Enough characters to have a structured landscape;
   # moderate-to-large datasets benefit from intensive search
   if (nTip >= 65L) return("thorough")
@@ -190,6 +257,21 @@
 #' Specify `Inf` to weight each additional step equally.
 #' Specify `"profile"` to employ profile parsimony
 #' \insertCite{Faith2001}{TreeSearch}.
+#' @param extended_iw Logical: if `TRUE` (default) and `concavity` is finite,
+#'   apply the missing-entries correction of
+#'   \insertCite{Goloboff2014;textual}{TreeSearch}.
+#'   Characters with missing data receive a reduced effective concavity
+#'   _k_c_ = _k_ / _f_c_, making their weights drop off faster.
+#'   This compensates for the artificially low homoplasy of poorly sampled
+#'   characters.  Set `FALSE` for legacy Goloboff (1993) behaviour.
+#'   Ignored when `concavity = Inf` (equal weights) or `"profile"`.
+#' @param xpiwe_r Numeric in (0, 1]: proportion of observed homoplasy
+#'   expected in unobserved (missing) entries.  Default 0.5 (following TNT).
+#'   Only used when `extended_iw = TRUE`.
+#' @param xpiwe_max_f Numeric >= 1: maximum extrapolation factor.
+#'   Characters with very few observed entries are clamped so that the
+#'   extrapolation factor does not exceed this value.  Default 5 (following
+#'   TNT).  Only used when `extended_iw = TRUE`.
 #' @param hierarchy A [`CharacterHierarchy`] object specifying which
 #'   characters are controlling primaries and which are their dependent
 #'   secondaries.  Required when `inapplicable` is `"hsj"` or `"xform"`;
@@ -227,19 +309,23 @@
 #'   \describe{
 #'     \item{`"auto"` (default)}{Selects automatically based on dataset size
 #'       and character count:
-#'       `"sprint"` for <=30 taxa, `"thorough"` for >=65 taxa with
-#'       >=100 character patterns, `"default"` otherwise.}
+#'       `"sprint"` for <=30 taxa; `"large"` for >=120 taxa with >=100
+#'       character patterns; `"thorough"` for 65-119 taxa with >=100
+#'       character patterns; `"default"` otherwise.}
 #'     \item{`"sprint"`}{Fast search: 3 ratchet cycles, no drift, minimal
 #'       sectorial. Good for small datasets or quick surveys.}
-#'     \item{`"default"`}{Balanced: 5 ratchet + 2 drift + sectorial + fusing.}
+#'     \item{`"default"`}{Balanced: 12 ratchet + 2 drift + sectorial + fusing.}
 #'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, 12 drift, adaptive
-#'       perturbation, extra sectorial rounds. Best for datasets with
-#'       65+ tips and 100+ character patterns, where sprint/default
-#'       may miss the global optimum.}
-#'   All presets enable consensus-stability stopping
-#'   (`consensusStableReps = 3`): the search stops early if the strict
-#'   consensus of best-score trees has been unchanged for three consecutive
-#'   replicates.
+#'       perturbation, extra sectorial rounds, NNI perturbation, outer cycle
+#'       loop. Best for datasets with 65-119 tips and 100+ character patterns.}
+#'     \item{`"large"`}{Large-tree search (>=120 tips): reduced cycle
+#'       counts scaled for expensive per-replicate cost, no NNI
+#'       perturbation, single biased Wagner start (Goloboff 2014), larger
+#'       sector sizes.  Empirically matches or exceeds `"thorough"` at
+#'       180 tips across all time budgets.}
+#'   All presets enable consensus-stability stopping: the search stops early
+#'   if the strict consensus of best-score trees has been unchanged for
+#'   `consensusStableReps` consecutive replicates.
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }
 #'   Explicit `control` fields always override the preset; for example,
@@ -335,6 +421,9 @@ MaximizeParsimony <- function(
     dataset,
     tree,
     concavity = Inf,
+    extended_iw = TRUE,
+    xpiwe_r = 0.5,
+    xpiwe_max_f = 5,
     hierarchy = NULL,
     inapplicable = "bgs",
     hsj_alpha = 1.0,
@@ -555,6 +644,10 @@ MaximizeParsimony <- function(
       hsj_alpha < 0 || hsj_alpha > 1) {
     stop("`hsj_alpha` must be a single number in [0, 1].")
   }
+  if (is.finite(concavity) && concavity <= 0) {
+    stop("`concavity` must be positive (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
+  }
 
   # --- Starting tree ---
   userTree <- !missing(tree) && !is.null(tree)
@@ -681,6 +774,12 @@ MaximizeParsimony <- function(
     minSteps <- as.integer(MinimumLength(dataset, compress = TRUE))
   }
 
+  # --- XPIWE: compute per-pattern observed-taxa counts ---
+  useXpiwe <- isTRUE(extended_iw) && is.finite(concavity) && !useProfile
+  if (useXpiwe) {
+    obsCount <- .ObsCount(dataset)
+  }
+
   # --- Run C++ driven search ---
   # Read all control fields from the resolved control object
   ctrl <- control
@@ -717,6 +816,10 @@ MaximizeParsimony <- function(
     verbosity = as.integer(verbosity),
     min_steps = if (is.finite(concavity)) minSteps else integer(0),
     concavity = as.double(concavity),
+    xpiwe = useXpiwe,
+    xpiwe_r = as.double(xpiwe_r),
+    xpiwe_max_f = as.double(xpiwe_max_f),
+    obs_count = if (useXpiwe) obsCount else integer(0),
     progressCallback = progressCallback,
     nThreads = as.integer(nThreads),
     startEdge = if (userTree) tree[["edge"]] else NULL,
@@ -747,7 +850,10 @@ MaximizeParsimony <- function(
       else ctrl$wagnerBiasTemp),
     outerCycles = as.integer(
       if (is.null(ctrl$outerCycles)) 1L
-      else ctrl$outerCycles)
+      else ctrl$outerCycles),
+    adaptiveStart = as.logical(
+      if (is.null(ctrl$adaptiveStart)) FALSE
+      else ctrl$adaptiveStart)
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
                                         hsjArgs, xformArgs))
@@ -788,6 +894,7 @@ MaximizeParsimony <- function(
     timed_out = isTRUE(result$timed_out),
     consensus_stable = isTRUE(result$consensus_stable),
     timings = unlist(result$timings),
+    strategy_diagnostics = result$strategy_diagnostics,
     class = "multiPhylo"
   )
 }

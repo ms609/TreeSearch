@@ -78,11 +78,12 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       if (length(input$implied.weights) > 0) {
         input$implied.weights
       } else {
-        "on"
+        "xpiwe"
       }
     )
 
     wtType <- reactive(switch(weighting(),
+                              "xpiwe" = paste0("k = ", signif(concavity(), 3)),
                               "on" = paste0("k = ", signif(concavity(), 3)),
                               "off" = "EW",
                               "prof" = "PP"))
@@ -90,10 +91,14 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     concavity <- reactive({
       kExp <- if (length(input$concavity)) input$concavity else 1
       switch(weighting(),
+             "xpiwe" = 10 ^ kExp,
              "on" = 10 ^ kExp,
              "off" = Inf,
              "prof" = "profile")
     })
+
+    # Whether to apply extended implied weighting (missing-entries correction)
+    extendedIw <- reactive(identical(weighting(), "xpiwe"))
 
     tolerance <- reactive({
       if (input$epsilon == 0) {
@@ -106,7 +111,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     # Show/hide concavity slider when weighting mode changes
     observeEvent(input$implied.weights, {
       switch(input$implied.weights,
-             "on" = show("concavity"),
+             "xpiwe" = , "on" = show("concavity"),
              hide("concavity")
       )
       # Weighting mode changed: old run counts no longer apply; keep trees
@@ -467,12 +472,15 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       }
       PutTree(r$trees)
       PutData(ds)
-      LogMsg("scores(): Recalculating scores with k = ", conc)
+      useXpiwe <- extendedIw()
+      LogMsg("scores(): Recalculating scores with k = ", conc,
+             if (useXpiwe) " (extended)")
       tryCatch(
         signif(TreeLength(
           RootTree(r$trees, 1),
           ds,
-          concavity = conc
+          concavity = conc,
+          extended_iw = useXpiwe
         )),
         error = function (x) {
           if (HaveData() && AnyTrees()) {
@@ -556,9 +564,9 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     progressFile <- reactiveVal(NULL)
 
     searchTask <- ExtendedTask$new(
-      function(dataset, tree, concavity, strategy, maxReplicates,
-               targetHits, maxSeconds, poolSuboptimal, nThreads,
-               cancelPath, progressPath,
+      function(dataset, tree, concavity, extendedIw, strategy,
+               maxReplicates, targetHits, maxSeconds, poolSuboptimal,
+               nThreads, cancelPath, progressPath,
                hierarchy, inapplicable, hsjAlpha) {
         future::future({
           on.exit({
@@ -575,6 +583,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
             dataset,
             tree = tree,
             concavity = concavity,
+            extended_iw = extendedIw,
             strategy = strategy,
             maxReplicates = maxReplicates,
             targetHits = targetHits,
@@ -756,6 +765,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         },
         "  tree = startTree,",
         paste0("  concavity = ", Enquote(concavity()), ","),
+        if (!searchExtendedIw && is.finite(searchConcavity))
+          "  extended_iw = FALSE,",
         paste0("  strategy = \"", searchStrategy, "\","),
         paste0("  maxReplicates = ", searchMaxRep, ","),
         paste0("  targetHits = ", searchTargetHits, ","),
@@ -775,9 +786,10 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       # Snapshot reactive values for the async task
       searchDataset <- r$dataset[SearchTips()]
       searchConcavity <- concavity()
+      searchExtendedIw <- extendedIw()
 
       searchTask$invoke(
-        searchDataset, startTree, searchConcavity,
+        searchDataset, startTree, searchConcavity, searchExtendedIw,
         searchStrategy, searchMaxRep, searchTargetHits,
         searchMaxSeconds, searchPoolSub, searchNThreads,
         cancelPath, progressPath,
@@ -887,7 +899,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         easyClose = TRUE,
         fluidPage(column(6,
           selectInput(ns("implied.weights"), "Step weighting",
-                     list("Implied" = "on", "Profile" = "prof",
+                     list("Implied (extended)" = "xpiwe",
+                          "Implied" = "on", "Profile" = "prof",
                           "Equal" = "off"), cur_weights),
           sliderInput(ns("concavity"), "Concavity constant", min = 0L,
                      max = 3L, pre = "10^", value = cur_concavity),
@@ -1101,6 +1114,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     list(
       scores            = scores,
       concavity         = concavity,
+      extendedIw        = extendedIw,
       DisplayTreeScores = DisplayTreeScores
     )
   })

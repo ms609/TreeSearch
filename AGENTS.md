@@ -20,12 +20,32 @@ and the maintainer signals readiness to tag a release.
 
 ---
 
-## Build isolation — tarball workflow (mandatory)
+## Validation workflow — GHA first (mandatory)
+
+**Use GitHub Actions for all validation:** R CMD check, full test suites,
+and benchmarks. Local builds are for **targeted iteration only** (editing
+code → building → running one or two specific test files to check your
+change). Never run a full test suite or R CMD check locally.
+
+### GHA dispatch (primary validation path)
+
+```bash
+# Push your branch and dispatch checks
+git push -u origin feature/<name>
+cd ..
+bash gha-dispatch.sh agent-check.yml feature/<name>
+
+# Poll for results
+bash gha-poll.sh <run_id>
+```
+
+Park the task while waiting and pick up another (see root `AGENTS.md` for
+parking protocol). Do **not** block waiting for GHA results.
+
+### Local builds (targeted iteration only)
 
 Multiple agents share the same `src/` directory. In-place `R CMD INSTALL .`
-compiles `.o` files and links the DLL directly in `src/`, causing races:
-concurrent builds corrupt each other's object files, and a running R process
-locks the DLL on Windows, blocking everyone else.
+compiles `.o` files and links the DLL directly in `src/`, causing races.
 
 **Always build via tarball** so compilation happens in an isolated temp
 directory:
@@ -40,12 +60,12 @@ SRC=$(pwd) && TMPBUILD=$(mktemp -d) && \
 
 Key points:
 - `rm -f src/*.o src/*.dll` **must** precede every build — stale artifacts slow traversal and corrupt DLLs.
-- Build into an agent-specific `$TMPBUILD` outside the source tree — avoids tarball collision when multiple agents build concurrently (R CMD build has no `--output=` flag; the tarball always lands in the working directory).
+- Build into an agent-specific `$TMPBUILD` outside the source tree — avoids tarball collision when multiple agents build concurrently.
 - `--no-resave-data` skips unnecessary `.rda` re-saving (not needed for dev installs).
 
-To run tests:
+Run **targeted** tests only:
 ```bash
-Rscript -e "library(TreeSearch, lib.loc='.agent-X'); testthat::test_dir('tests/testthat', filter='ts-')"
+Rscript -e "library(TreeSearch, lib.loc='.agent-X'); testthat::test_dir('tests/testthat', filter='test-ts-foo')"
 ```
 
 **Never** use `R CMD INSTALL --library=.agent-X .` (in-place build).
@@ -55,6 +75,8 @@ the file and blocks other agents.
 
 **Never** use `devtools::load_all()` or `pkgbuild::compile_dll()` — these
 target a shared temp location and will conflict.
+
+**Never** run full test suites or R CMD check locally — use GHA.
 
 ## Build failure recovery
 
@@ -135,10 +157,64 @@ main              ← stable, taggable; receives only reviewed bug fixes
 ### Rules
 
 - **`main`**: bug fixes and release tags only. No experiments.
-- **`cpp-search`**: integration target. Bug-fix agents (S-RED, S-PROF, S-COORD,
-  and ad-hoc fixes) work directly here. Feature branches merge here when ready.
+- **`cpp-search`**: integration target. **Agents must not merge directly to
+  `cpp-search`.** All code changes go through PRs reviewed by the human.
+  Coordination-only commits (agent logs, to-do.md updates) may be pushed
+  directly.
 - **`feature/*`**: branch from `cpp-search`; contain **code changes only**.
   Each feature branch is owned by a single agent at a time.
+
+### Worktree discipline
+
+Each worktree directory is **locked to its branch**. The mapping may change
+over time (e.g. when a feature merges and the worktree is reassigned), but
+**only the human updates this mapping**.
+
+**Hard rules:**
+
+1. **Never `git checkout <branch>` on any worktree.** This silently replaces
+   another agent's (or the human's) working tree and can cause data loss.
+2. **Never `git merge` into a worktree's branch** unless that is the explicit
+   task you were assigned (e.g. "pull cpp-search into feature/X").
+3. To read files from another branch, use `git show <branch>:<path>`.
+
+**Current worktree mapping** (run `git worktree list` to verify):
+
+| Directory | Branch | Purpose |
+|-----------|--------|---------|
+| `TreeSearch-a` | `cpp-search` | Main source dir; integration branch |
+| `TS-anneal` | `feature/anneal` | Simulated annealing for large trees (T-203) |
+| `TS-CID-cons` | `feature/cid-consensus` | CID consensus feature |
+| `TS-MadSlat` | `feature/madslatkin-profiling` | Mad-Slatkin profiling |
+| `TS-ParsSim` | `feature/parssim-ambiguous` | Parsimony simulation |
+| `TS-PTeval` | `feature/pt-eval` | Parallel tempering evaluation |
+| `TS-TNT-bench` | `feature/tnt-bench` | TNT benchmarking |
+| `TS-Xpiwe` | `feature/xpiwe` | Extended implied weighting |
+
+There is **no permanent worktree for `cpp-search`**. To commit to
+`cpp-search`, use one of these approaches (in order of preference):
+
+**Option A — temporary worktree (safest):**
+```bash
+git worktree add ../TS-tmp-<Letter> cpp-search
+# work in ../TS-tmp-<Letter>, commit, push
+git worktree remove ../TS-tmp-<Letter>
+```
+
+**Option B — single-file coordination commit (from a feature worktree):**
+```bash
+git show cpp-search:agent-X.md > agent-X.md   # read current version
+# edit the file
+git stash                                      # stash any code changes
+git checkout cpp-search -- agent-X.md          # stage from cpp-search
+cp agent-X.md.edited agent-X.md               # apply your edit
+git add agent-X.md && git commit -m "chore: agent X progress note"
+git push origin cpp-search
+git checkout HEAD -- agent-X.md                # restore feature version
+git stash pop                                  # restore code work
+```
+
+**Never use Option B for multi-file edits.** Use a temporary worktree.
 
 ### Coordination files live on `cpp-search` only
 
@@ -154,16 +230,6 @@ git show cpp-search:to-do.md
 git show cpp-search:agent-X.md
 ```
 
-To update a coordination file from a feature branch:
-```bash
-git checkout cpp-search -- agent-X.md   # pull latest into working tree
-# edit, then:
-git stash                               # stash any code changes first
-git add agent-X.md && git commit -m "chore: agent X progress note"
-git push origin cpp-search
-git stash pop                           # restore code work
-```
-
 ### Shared files at merge time
 
 `src/ts_rcpp.cpp` and `src/TreeSearch-init.c` use the existing append-only
@@ -174,12 +240,28 @@ this is expected and should be done carefully at feature-merge time.
 ### Feature branch lifecycle
 
 1. `git checkout cpp-search && git checkout -b feature/<name>`
+   Optionally create a worktree: `git worktree add ../TS-<name> feature/<name>`
 2. Claim task on `cpp-search`'s `to-do.md` (coordination commit).
-3. Do all code work on `feature/<name>`.
-4. When complete: `git checkout cpp-search && git merge feature/<name>`.
-5. Resolve any Collate/NAMESPACE conflicts, rebuild, run tests.
-6. Log completion in `completed-tasks.md` on `cpp-search`.
-7. Delete feature branch.
+3. Do all code work on `feature/<name>`. Use local targeted tests only
+   during iteration; use GHA for full validation.
+4. When ready: push and dispatch GHA checks:
+   ```bash
+   git push -u origin feature/<name>
+   bash gha-dispatch.sh agent-check.yml feature/<name>
+   ```
+5. On GHA success, open a PR:
+   ```bash
+   gh pr create --base cpp-search --head feature/<name> \
+     --title "T-nnn: <description>" --body "Agent <Letter>. ..."
+   ```
+6. Set `to-do.md` status to `PR #N (<Letter>)`. Move on.
+7. Human reviews and merges the PR.
+8. After merge, clean up:
+   ```bash
+   git worktree remove ../TS-<name>  # if worktree was used
+   git branch -d feature/<name>
+   git push origin --delete feature/<name>
+   ```
 
 ---
 
@@ -227,6 +309,9 @@ Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 - All work uses `.agent-X/` as library directory.
 - **All builds, tests, and benchmarks in bash subprocesses** — never in the
   RStudio R session.
+- **Use GHA for validation** (full test suites, R CMD check, benchmarks).
+  Local builds are for targeted iteration only (build + run 1–2 test files).
+  See "Validation workflow" section above.
 
 ### On task completion
 
@@ -322,6 +407,23 @@ Both should be clean before committing. These are fast and catch issues
 References are added using Rdpack's \insertCite{}, with
 \insertAllCited{} in the references section.
 
+## Algorithm vignette (mandatory updates)
+
+`vignettes/search-algorithm.Rmd` documents the search algorithm for
+publication. **Any change that modifies search behaviour** — new heuristics,
+parameter tuning, scoring methods, stopping criteria, pool management, or
+rearrangement operators — **must be accompanied by an update to this
+vignette.**
+
+- Published techniques: add a short summary and `@Key` citation.
+- Novel contributions: describe the algorithm in enough detail for a reader
+  to understand the design and rationale. Include empirical results where
+  available (e.g. benchmark deltas).
+- New references: add `@article{Key, ...}` to `inst/REFERENCES.bib`.
+
+The vignette uses pandoc-style `@Key` citations (same as the other
+vignettes), not Rdpack `\insertCite{}`.
+
 ## Architecture reference
 
 ### R-level API
@@ -365,10 +467,20 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 |--------|-----------|-------------|
 | sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first, consensus-stop 3 |
 | default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 2 drift (AFD 5, RFD 0.15), XSS+RSS, consensus-stop 3, Wagner×3, NNI-first, adaptive level |
-| thorough | ≥65 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 12 drift (AFD 5, RFD 0.15), XSS+RSS+CSS, consensus-stop 3, Wagner×3, NNI-first |
+| thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 12 drift (AFD 5, RFD 0.15), XSS+RSS+CSS, consensus-stop 3, Wagner×3, NNI-first, outerCycles=2 |
+| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 4 drift (AFD 5, RFD 0.15), XSS(3)+RSS(2)+CSS(1), consensus-stop 2, Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100 |
 
-All presets set `consensusStableReps = 3`: search stops early if the strict
-consensus of best-score pool trees is unchanged for 3 consecutive replicates.
+`sprint`/`default`/`thorough` set `consensusStableReps = 3`; `large` sets
+`consensusStableReps = 2` (faster convergence detection since replicates at
+120+ tips take 30–90s each).
+
+**Large preset design rationale (T-179, 2026-03-24):** At 180 tips, each TBR
+convergence takes ~5–7s, making phases like NNI-perturbation (~5.5s/cycle) and
+drift (~4s/cycle) extremely expensive. Systematic benchmarking on mbank_X30754
+(180t, 418p) showed that reducing cycle counts (12 ratchet, 4 drift, no NNI-perturb)
+with outerCycles=1 and a single biased Wagner start outperforms the thorough
+preset by 4–7 steps (median) at 30–60s budgets and ties at 120s, while
+consistently completing more replicates.
 
 All presets set `nniFirst = TRUE` (NNI warmup before TBR) and
 `sprFirst = FALSE` (SPR is counterproductive when NNI is active —
@@ -985,13 +1097,50 @@ Ranked by priority:
 
 ## Benchmarks and profiling
 
+### MorphoBank external benchmark corpus
+
+The neotrans repo (`../neotrans/inst/matrices/`) contains ~800 MorphoBank
+NEXUS matrices. These complement the 14 bundled datasets and 1 large-tree
+dataset for broader strategy validation.
+
+**Catalogue:** `dev/benchmarks/mbank_catalogue.csv` (659 usable matrices
+after ntax≥20 filter and dedup). Regenerate with
+`Rscript dev/benchmarks/build_mbank_catalogue.R`.
+
+**Train/validation split:** Matrices whose MorphoBank project number is
+divisible by 5 are **validation** (124 matrices, ~19%). All others are
+**training** (535 matrices). The 7 `syab*` files (non-MorphoBank, from a
+Systematic Biology paper) are always training.
+
+**Dedup:** Multi-file projects with ≥95% character identity on shared taxa
+(≥80% taxon overlap) are flagged `dedup_drop = TRUE`. Greedy selection keeps
+the largest matrix per redundancy cluster. 24 near-duplicates excluded.
+
+**IMPORTANT:** Validation results must **never** be used to guide strategy
+tuning. They confirm generalization only. This is a one-way door.
+
+**Fixed 25-matrix training sample:** `MBANK_FIXED_SAMPLE` in
+`bench_datasets.R` — 7 small, 7 medium, 7 large, 4 xlarge. Selected via
+max-min distance on standardized features. Do not modify. Used by
+`benchmark_mbank_sample()`.
+
+**Key functions** (in `dev/benchmarks/bench_datasets.R`):
+- `load_mbank_catalogue()` — loads metadata CSV (excludes dedup by default)
+- `load_mbank_sample(cat, n, seed, split)` — stratified random sample
+- `load_mbank_datasets(cat, keys)` — load specific matrices by key
+
+**Benchmark runners** (in `dev/benchmarks/bench_framework.R`):
+- `benchmark_mbank_sample()` — fixed 25-matrix training sample (routine)
+- `benchmark_mbank_sweep(split)` — full training or validation sweep
+- `benchmark_mbank_validation()` — validation sweep with prominent warning
+
 **TNT comparison suite** lives in `../TS-TNT-bench/`. Key files:
-- `inst/benchmarks/bench_tnt_compare.R` — runner (smoke/medium/full)
-- `inst/benchmarks/tnt_comparison.qmd` — Quarto report (HTML output)
-- `inst/benchmarks/.tnt-bench/` — staging dir for TNT I/O
+- `dev/benchmarks/bench_tnt_compare.R` — runner (smoke/medium/full)
+- `dev/benchmarks/tnt_comparison.qmd` — Quarto report (HTML output)
+- `dev/benchmarks/.tnt-bench/` — staging dir for TNT I/O
 - Requires TNT 1.6 at `C:/Programs/Phylogeny/tnt/TNT-bin/tnt.exe`
 
-Benchmark scripts in `inst/benchmarks/`. Key files:
+Benchmark scripts in `dev/benchmarks/`. Key files:
 - `bench_regression.R` — CI regression test (score quality + timing bounds)
 - `bench_framework.R` — Dataset × strategy × replicate grid
 - `strategies.md` — Strategy space documentation

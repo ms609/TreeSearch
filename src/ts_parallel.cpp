@@ -80,6 +80,9 @@ struct WorkerContext {
   // Pre-generated seeds (one per replicate)
   const std::vector<unsigned>* seeds;
 
+  // Pre-computed strategy sequence for round-robin (T-190)
+  const std::vector<StartStrategy>* strategies;
+
   // Per-thread timing accumulator (index = thread_id)
   PhaseTimings* thread_timings;
   int thread_id;
@@ -126,9 +129,16 @@ void worker_thread(WorkerContext ctx) {
       start_ptr = &start_tree;
     }
 
+    // Strategy for this replicate (round-robin when adaptive, else default)
+    StartStrategy rep_strat = StartStrategy::WAGNER_RANDOM;
+    if (ctx.strategies && rep < static_cast<int>(ctx.strategies->size())) {
+      rep_strat = (*ctx.strategies)[rep];
+    }
+
     // Run the replicate pipeline (verbosity=0 for parallel)
     ReplicateResult rep_result = run_single_replicate(
-        ds_local, *ctx.params, cd_ptr, check_timeout_noop, 0, start_ptr);
+        ds_local, *ctx.params, cd_ptr, check_timeout_noop, 0, start_ptr,
+        nullptr, rep_strat);
 
     if (ctx.stop_flag->load(std::memory_order_relaxed)) break;
 
@@ -220,6 +230,13 @@ DrivenResult parallel_driven_search(
   ctx.replicates_claimed = &replicates_claimed;
   ctx.replicates_done = &replicates_done;
   ctx.seeds = &seeds;
+
+  // Pre-compute round-robin strategy sequence for adaptive start (T-190)
+  std::vector<StartStrategy> strategies;
+  if (params.adaptive_start) {
+    strategies = StrategyTracker::round_robin(params.max_replicates);
+  }
+  ctx.strategies = params.adaptive_start ? &strategies : nullptr;
 
   // Timeout setup
   bool use_timeout = params.max_seconds > 0.0;
@@ -406,7 +423,11 @@ std::vector<ResampleResult> parallel_resample(
     int n_threads,
     const double* info_amounts_r,
     int info_max_steps,
-    ConstraintData* cd)
+    ConstraintData* cd,
+    bool xpiwe,
+    double xpiwe_r,
+    double xpiwe_max_f,
+    const int* obs_count_r)
 {
   if (n_threads <= 0) {
     n_threads = static_cast<int>(std::thread::hardware_concurrency());
@@ -445,7 +466,8 @@ std::vector<ResampleResult> parallel_resample(
           tip_data_r, n_tips, n_patterns,
           original_weights, levels_r, min_steps_r,
           concavity, params,
-          info_amounts_r, info_max_steps, cd);
+          info_amounts_r, info_max_steps, cd,
+          xpiwe, xpiwe_r, xpiwe_max_f, obs_count_r);
     }
 
     ts::thread_rng = nullptr;

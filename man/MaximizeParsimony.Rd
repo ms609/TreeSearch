@@ -10,8 +10,11 @@ MaximizeParsimony(
   dataset,
   tree,
   concavity = Inf,
+  extended_iw = TRUE,
+  xpiwe_r = 0.5,
+  xpiwe_max_f = 5,
   hierarchy = NULL,
-  inapplicable = "brazeau",
+  inapplicable = "bgs",
   hsj_alpha = 1,
   constraint,
   strategy = "auto",
@@ -51,6 +54,24 @@ concavity values, e.g. \code{k = 2 ^ (1:7)}.
 Specify \code{Inf} to weight each additional step equally.
 Specify \code{"profile"} to employ profile parsimony
 \insertCite{Faith2001}{TreeSearch}.}
+
+\item{extended_iw}{Logical: if \code{TRUE} (default) and \code{concavity} is finite,
+apply the missing-entries correction of
+\insertCite{Goloboff2014;textual}{TreeSearch}.
+Characters with missing data receive a reduced effective concavity
+\emph{k_c} = \emph{k} / \emph{f_c}, making their weights drop off faster.
+This compensates for the artificially low homoplasy of poorly sampled
+characters.  Set \code{FALSE} for legacy Goloboff (1993) behaviour.
+Ignored when \code{concavity = Inf} (equal weights) or \code{"profile"}.}
+
+\item{xpiwe_r}{Numeric in (0, 1]: proportion of observed homoplasy
+expected in unobserved (missing) entries.  Default 0.5 (following TNT).
+Only used when \code{extended_iw = TRUE}.}
+
+\item{xpiwe_max_f}{Numeric >= 1: maximum extrapolation factor.
+Characters with very few observed entries are clamped so that the
+extrapolation factor does not exceed this value.  Default 5 (following
+TNT).  Only used when \code{extended_iw = TRUE}.}
 
 \item{hierarchy}{A \code{\link{CharacterHierarchy}} object specifying which
 characters are controlling primaries and which are their dependent
@@ -93,19 +114,23 @@ heuristic parameters. Presets:
 \describe{
 \item{\code{"auto"} (default)}{Selects automatically based on dataset size
 and character count:
-\code{"sprint"} for <=30 taxa, \code{"thorough"} for >=65 taxa with
->=100 character patterns, \code{"default"} otherwise.}
+\code{"sprint"} for <=30 taxa; \code{"large"} for >=120 taxa with >=100
+character patterns; \code{"thorough"} for 65-119 taxa with >=100
+character patterns; \code{"default"} otherwise.}
 \item{\code{"sprint"}}{Fast search: 3 ratchet cycles, no drift, minimal
 sectorial. Good for small datasets or quick surveys.}
-\item{\code{"default"}}{Balanced: 5 ratchet + 2 drift + sectorial + fusing.}
+\item{\code{"default"}}{Balanced: 12 ratchet + 2 drift + sectorial + fusing.}
 \item{\code{"thorough"}}{Intensive: 20 ratchet cycles, 12 drift, adaptive
-perturbation, extra sectorial rounds. Best for datasets with
-65+ tips and 100+ character patterns, where sprint/default
-may miss the global optimum.}
-All presets enable consensus-stability stopping
-(\code{consensusStableReps = 3}): the search stops early if the strict
-consensus of best-score trees has been unchanged for three consecutive
-replicates.
+perturbation, extra sectorial rounds, NNI perturbation, outer cycle
+loop. Best for datasets with 65-119 tips and 100+ character patterns.}
+\item{\code{"large"}}{Large-tree search (>=120 tips): reduced cycle
+counts scaled for expensive per-replicate cost, no NNI
+perturbation, single biased Wagner start (Goloboff 2014), larger
+sector sizes.  Empirically matches or exceeds \code{"thorough"} at
+180 tips across all time budgets.}
+All presets enable consensus-stability stopping: the search stops early
+if the strict consensus of best-score trees has been unchanged for
+\code{consensusStableReps} consecutive replicates.
 \item{\code{"none"}}{Use only the explicitly supplied parameter values.}
 }
 Explicit \code{control} fields always override the preset; for example,
@@ -172,6 +197,10 @@ attributes:
 \item{\code{replicates}}{Number of replicates completed.}
 \item{\code{hits_to_best}}{Number of independent discoveries of the best
 score.}
+\item{\code{n_topologies}}{Number of distinct topologies in the pool at the
+best score.}
+\item{\code{last_improved_rep}}{1-based index of the replicate that last
+improved the best score (0 if not tracked, e.g. parallel search).}
 \item{\code{timed_out}}{Logical: \code{TRUE} if the search stopped because
 \code{maxSeconds} was exceeded.}
 \item{\code{consensus_stable}}{Logical: \code{TRUE} if the search stopped

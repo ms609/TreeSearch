@@ -54,7 +54,7 @@ inline int ctz64(uint64_t x) {
 static constexpr int MAX_CHARS_PER_BLOCK = 64;
 static constexpr int MAX_STATES = 32;  // practical limit for morphological data
 
-enum class ScoringMode { EW, IW, PROFILE, HSJ, XFORM };
+enum class ScoringMode { EW, IW, XPIWE, PROFILE, HSJ, XFORM };
 
 // A hierarchy block describes one controlling primary + its secondaries
 // (Hopkins & St. John 2021). Used by HSJ scoring.
@@ -99,6 +99,13 @@ struct DataSet {
   std::vector<int> min_steps;          // minimum steps per pattern
   std::vector<int> pattern_freq;       // original weight (for reporting)
   double concavity;                    // IW concavity constant k; HUGE_VAL = EW
+
+  // Extended IW (XPIWE): per-pattern effective concavity and Φ-rescaling.
+  // Standard IW: eff_k[p] = concavity, phi[p] = 1.0 for all p.
+  // XPIWE: eff_k[p] = concavity / f[p], phi[p] = (1+eff_k[p])/(1+concavity).
+  // See Goloboff (2014) "Extended implied weighting", §missing entries.
+  std::vector<double> eff_k;
+  std::vector<double> phi;
 
   // Scoring mode (derived from concavity / info_amounts at build time)
   ScoringMode scoring_mode = ScoringMode::EW;
@@ -152,6 +159,8 @@ struct DataSet {
 // tip_data_r: n_tips x n_patterns integer matrix — phyDat token indices (1-based)
 // weight_r:   n_patterns integer vector — pattern frequencies
 // levels_r:   character vector of state labels; "-" marks the inapplicable state
+// obs_count_r: n_patterns integer vector — number of non-missing taxa per pattern
+//              (used only when xpiwe = true; nullptr otherwise)
 //
 // Returns a fully populated DataSet with patterns expanded by weight.
 DataSet build_dataset(
@@ -162,7 +171,11 @@ DataSet build_dataset(
     const int* min_steps_r = nullptr,
     double concavity = HUGE_VAL,
     const double* info_amounts_r = nullptr,
-    int info_max_steps = 0);
+    int info_max_steps = 0,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    const int* obs_count_r = nullptr);
 
 } // namespace ts
 

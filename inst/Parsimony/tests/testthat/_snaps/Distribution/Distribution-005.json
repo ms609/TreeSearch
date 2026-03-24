@@ -3,11 +3,11 @@
     "clustering-clThresh": 1,
     "consensus-concordance": "none",
     "consensus-consP": 1,
-    "consensus-excludedTip": "",
-    "consensus-keepNTips": 0,
+    "consensus-excludedTip": "Paterimitra",
+    "consensus-keepNTips": 49,
     "consensus-mapDisplay": null,
     "consensus-neverDrop": null,
-    "consensus-outgroup": null,
+    "consensus-outgroup": "Namacalathus",
     "consensus-plottedChar": 1,
     "consensus-searchChar": "",
     "consensus-whichTree": 0,
@@ -52,14 +52,14 @@
       ]
     },
     "consensus-treePlot": {
-      "src": "[image data hash: 1bda0a2de4d03ad5b8679f1ace649ad3]",
+      "src": "[image data hash: f2b079c9601b96b29f7bb7a24a379f4a]",
       "alt": "Plot object",
       "coordmap": {
         "panels": [
           {
             "domain": {
-              "left": -0.2127966509110866,
-              "right": 5.532712923688252,
+              "left": -0.2703955345481155,
+              "right": 7.030283898251004,
               "bottom": -1.12,
               "top": 56.12
             },
@@ -92,7 +92,7 @@
       ]
     },
     "search-results": {
-      "html": "125 trees in memory: 125 sampled with scores 27.3948 to 32.2033 (k = 10)",
+      "html": "125 trees in memory: 125 sampled with scores 25.9279 to 29.8759 (k = 10)",
       "deps": [
 
       ]

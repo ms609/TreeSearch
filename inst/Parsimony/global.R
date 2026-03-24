@@ -166,6 +166,11 @@ Brazeau2019 <- Reference(c("Brazeau, M.D.", "Guillerme, T.", "Smith, M.R."), 201
                            volume = 64,
                            pages = c(619, 631),
                          doi = "10.1093/sysbio/syy083")
+Goloboff2014 <- Reference("Goloboff, P.A.", 2014,
+                           "Extended implied weighting",
+                           "Cladistics", volume = 30,
+                           pages = c(260, 272),
+                           doi = "10.1111/cla.12047")
 Bien2011 <- Reference(
   c("Bien, J.", "Tibshirani, R."),
   title = "Hierarchical clustering with prototypes via minimax linkage",

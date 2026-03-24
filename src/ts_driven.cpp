@@ -14,6 +14,7 @@
 #include "ts_rng.h"
 
 #include <R.h>
+#include <Rmath.h>
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
@@ -54,7 +55,8 @@ ReplicateResult run_single_replicate(
     std::function<bool()> check_timeout,
     int verbosity,
     TreeState* starting_tree,
-    const SplitFrequencyTable* split_freq)
+    const SplitFrequencyTable* split_freq,
+    StartStrategy strategy)
 {
   ReplicateResult result;
   result.interrupted = false;
@@ -75,31 +77,49 @@ ReplicateResult run_single_replicate(
   // because nni_search() does not enforce topological constraints.
   bool nni_wagner = params.nni_first && (!cd || !cd->active);
 
-  // 1. Starting tree: use provided tree or build Wagner.
-  // When nni_first is true, NNI-optimize each Wagner start before
-  // selecting the best. This finds better starting basins of attraction
-  // for TBR at modest cost (NNI is O(n) per pass vs TBR's O(n²)).
+  // 1. Starting tree: dispatch on StartStrategy.
+  //
+  // All arms build a fresh tree from scratch, ensuring each replicate is
+  // an independent sample from the landscape (basin coverage).
+  //
+  // When nni_first is true, NNI-optimize each start before selecting the
+  // best. This finds better starting basins for TBR (O(n) per pass).
   double best_wag;
   if (starting_tree) {
+    // User-supplied starting tree
     result.tree = *starting_tree;
     best_wag = score_tree(result.tree, ds);
   } else {
 
-    // First Wagner start: use biased addition if requested (Goloboff 2014 §3.3).
-    // Remaining starts always use random order to preserve basin diversity.
-    if (params.wagner_bias != 0) {
-      ts::BiasedWagnerParams bwp;
-      bwp.bias        = static_cast<ts::WagnerBias>(params.wagner_bias);
-      bwp.temperature = params.wagner_bias_temp;
-      biased_wagner_tree(result.tree, ds, bwp, cd);
-    } else {
-      random_wagner_tree(result.tree, ds, cd);
+    // Build first start according to selected strategy
+    switch (strategy) {
+      case StartStrategy::WAGNER_GOLOBOFF: {
+        ts::BiasedWagnerParams bwp;
+        bwp.bias        = ts::WagnerBias::GOLOBOFF;
+        bwp.temperature = params.wagner_bias_temp;
+        biased_wagner_tree(result.tree, ds, bwp, cd);
+        break;
+      }
+      case StartStrategy::WAGNER_ENTROPY: {
+        ts::BiasedWagnerParams bwp;
+        bwp.bias        = ts::WagnerBias::ENTROPY;
+        bwp.temperature = params.wagner_bias_temp;
+        biased_wagner_tree(result.tree, ds, bwp, cd);
+        break;
+      }
+      case StartStrategy::RANDOM_TREE:
+        random_topology_tree(result.tree, ds);
+        break;
+      default:  // WAGNER_RANDOM (and pool-based fallback)
+        random_wagner_tree(result.tree, ds, cd);
+        break;
     }
     best_wag = score_tree(result.tree, ds);
     if (nni_wagner) {
       auto nr = nni_search(result.tree, ds, 0, check_timeout);
       best_wag = nr.score;
     }
+    // Additional Wagner starts: always random-order for basin diversity
     for (int ws = 1; ws < params.wagner_starts; ++ws) {
       TreeState trial;
       random_wagner_tree(trial, ds, cd);
@@ -118,10 +138,12 @@ ReplicateResult run_single_replicate(
   result.timings.wagner_ms = ph_lap();
   if (verbosity >= 2) {
     if (starting_tree) {
+      // User-supplied or warm-start tree
       Rprintf("  Starting tree score: %.5g [%.0f ms]\n", best_wag,
               result.timings.wagner_ms);
     } else {
-      Rprintf("  Wagner%s tree score: %.5g [%.0f ms]%s\n",
+      Rprintf("  %s%s tree score: %.5g [%.0f ms]%s\n",
+              strategy_name(strategy),
               params.nni_first ? "+NNI" : "",
               best_wag, result.timings.wagner_ms,
               params.wagner_starts > 1 ? " (best of multiple starts)" : "");
@@ -159,6 +181,10 @@ ReplicateResult run_single_replicate(
   // interleave fresh XSS passes after each ratchet/drift escape, matching
   // TNT's xmult pattern (Goloboff 1999 §2.3).
   //
+  // If a cycle improves the score, the counter resets so the search keeps
+  // exploiting the new basin until no further improvement is found (or
+  // the timeout fires).
+  //
   // Perturbation cycles are divided evenly among outer cycles so that the
   // total compute budget is approximately unchanged.
   const int n_outer = std::max(1, params.outer_cycles);
@@ -170,13 +196,13 @@ ReplicateResult run_single_replicate(
   const int nni_perturb_per = (params.nni_perturb_cycles == 0) ? 0 : std::max(1,
       (params.nni_perturb_cycles + n_outer - 1) / n_outer);
 
-  for (int outer = 0; outer < n_outer; ++outer) {
-    const bool last_outer = (outer == n_outer - 1);
+  int outer = 0;
+  while (outer < n_outer) {
+    const double score_before_cycle = score_tree(result.tree, ds);
     // Outer-cycle label for verbose output (only shown when n_outer > 1)
     auto outer_label = [&](const char* phase) -> std::string {
       if (n_outer <= 1) return phase;
-      return std::string(phase) + " [" + std::to_string(outer + 1) + "/" +
-             std::to_string(n_outer) + "]";
+      return std::string(phase) + " [cycle " + std::to_string(outer + 1) + "]";
     };
 
     // 3. Sectorial search (XSS + RSS + CSS) if tree is large enough
@@ -337,7 +363,7 @@ ReplicateResult run_single_replicate(
     result.timings.final_tbr_ms += ph_lap();
     if (verbosity >= 2) {
       Rprintf("  %s score: %.5g [%.0f ms total]\n",
-              last_outer ? "Final TBR" : outer_label("TBR").c_str(),
+              outer_label("TBR").c_str(),
               score_tree(result.tree, ds), result.timings.final_tbr_ms);
     }
 
@@ -347,6 +373,19 @@ ReplicateResult run_single_replicate(
       result.interrupted = true;
       result.score = score_tree(result.tree, ds);
       return result;
+    }
+
+    // If this cycle improved the score, reset the counter so we keep
+    // exploiting the new basin.  The timeout is the only cap.
+    const double score_after_cycle = score_tree(result.tree, ds);
+    if (score_after_cycle < score_before_cycle - 1e-8) {
+      outer = 0;
+      if (verbosity >= 2) {
+        Rprintf("  Outer cycle improved score (%.5g -> %.5g); resetting\n",
+                score_before_cycle, score_after_cycle);
+      }
+    } else {
+      ++outer;
     }
   } // end outer loop
 
@@ -428,6 +467,12 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   const int base_drift_cycles = params.drift_cycles;
   DrivenParams adaptive_params = params;  // mutable copy for adaptive level
 
+  // Adaptive starting-tree strategy (T-190).
+  StrategyTracker strategy_tracker;
+  // Seed a dedicated RNG for Thompson sampling from R's RNG.
+  GetRNGstate();
+  std::mt19937 bandit_rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
+  PutRNGstate();
 
   // Cross-replicate consensus constraint tightening.
   // When enabled and no user constraint is supplied, the strict consensus
@@ -540,10 +585,25 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       }
     }
 
+    // Select starting-tree strategy for this replicate.
+    StartStrategy rep_strategy = StartStrategy::WAGNER_RANDOM;
+    if (start_ptr) {
+      // User-supplied starting tree for rep 0 — strategy is moot
+    } else if (params.adaptive_start) {
+      rep_strategy = strategy_tracker.select(bandit_rng);
+    } else if (params.wagner_bias != 0) {
+      // Legacy fixed-bias mode
+      rep_strategy = static_cast<StartStrategy>(params.wagner_bias);
+    }
+
+    if (params.verbosity >= 2 && params.adaptive_start && !has_callback) {
+      Rprintf("  Strategy: %s\n", strategy_name(rep_strategy));
+    }
+
     // Run the single-replicate pipeline
     ReplicateResult rep_result = run_single_replicate(
         ds, rep_params, rep_cd, check_timeout, params.verbosity, start_ptr,
-        sft_ptr);
+        sft_ptr, rep_strategy);
 
     result.timings += rep_result.timings;
 
@@ -564,8 +624,18 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // Add to pool with collapsed-topology dedup
     double prev_best = pool.best_score();
     pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
-    if (pool.best_score() < prev_best) {
+    bool score_improved = pool.best_score() < prev_best;
+    if (score_improved) {
       result.last_improved_rep = rep1;
+    }
+
+    // Update strategy bandit (T-190)
+    if (params.adaptive_start) {
+      bool hit_best = (rep_result.score <= pool.best_score());
+      strategy_tracker.update(rep_strategy, hit_best);
+      if (score_improved) {
+        strategy_tracker.decay(0.5);
+      }
     }
 
     ++result.replicates_completed;
@@ -703,6 +773,15 @@ finish:
     params.progress_callback(pi);
   } else if (result.timed_out && params.verbosity >= 1) {
     Rprintf("Timeout reached (%.5g s)\n", params.max_seconds);
+  }
+
+  // Populate per-strategy diagnostics
+  if (params.adaptive_start) {
+    for (int i = 0; i < N_STRAT; ++i) {
+      auto s = static_cast<StartStrategy>(i);
+      result.strategy_attempts[i] = strategy_tracker.attempts(s);
+      result.strategy_successes[i] = strategy_tracker.successes(s);
+    }
   }
 
   return result;

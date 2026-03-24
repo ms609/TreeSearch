@@ -47,7 +47,11 @@ ResampleResult resample_search(
     const ResampleParams& params,
     const double* info_amounts_r = nullptr,
     int info_max_steps = 0,
-    ConstraintData* cd = nullptr);
+    ConstraintData* cd = nullptr,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    const int* obs_count_r = nullptr);
 
 // ---- Successive Approximations ----
 
@@ -80,7 +84,11 @@ SAResult successive_approximations(
     const SAParams& params,
     const double* info_amounts_r = nullptr,
     int info_max_steps = 0,
-    ConstraintData* cd = nullptr);
+    ConstraintData* cd = nullptr,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    const int* obs_count_r = nullptr);
 
 } // namespace ts
 

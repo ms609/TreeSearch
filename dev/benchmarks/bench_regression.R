@@ -3,9 +3,9 @@
 # Run after every significant code change to catch quality or speed regressions.
 #
 # Usage:
-#   Rscript inst/benchmarks/bench_regression.R [lib_path]
-#   Rscript inst/benchmarks/bench_regression.R --datasets=Vinther2008,Zhu2013 --budget=30
-#   Rscript inst/benchmarks/bench_regression.R --datasets=all --budget=20 --output=results.csv
+#   Rscript dev/benchmarks/bench_regression.R [lib_path]
+#   Rscript dev/benchmarks/bench_regression.R --datasets=Vinther2008,Zhu2013 --budget=30
+#   Rscript dev/benchmarks/bench_regression.R --datasets=all --budget=20 --output=results.csv
 #
 # Arguments (positional, legacy):
 #   lib_path    Library path for TreeSearch (default: auto-detect)

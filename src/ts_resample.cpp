@@ -23,7 +23,11 @@ ResampleResult resample_search(
     const ResampleParams& params,
     const double* info_amounts_r,
     int info_max_steps,
-    ConstraintData* cd)
+    ConstraintData* cd,
+    bool xpiwe,
+    double xpiwe_r,
+    double xpiwe_max_f,
+    const int* obs_count_r)
 {
   // Expand original weights into a flat character index
   // (each pattern p appears original_weights[p] times)
@@ -74,7 +78,11 @@ ResampleResult resample_search(
       min_steps_r,
       concavity,
       info_amounts_r,
-      info_max_steps);
+      info_max_steps,
+      xpiwe,
+      xpiwe_r,
+      xpiwe_max_f,
+      obs_count_r);
 
   // Run driven search
   TreePool pool(params.search.pool_max_size, params.search.pool_suboptimal);
@@ -117,7 +125,11 @@ SAResult successive_approximations(
     const SAParams& params,
     const double* info_amounts_r,
     int info_max_steps,
-    ConstraintData* cd)
+    ConstraintData* cd,
+    bool xpiwe,
+    double xpiwe_r,
+    double xpiwe_max_f,
+    const int* obs_count_r)
 {
   SAResult result;
   result.n_tip = n_tips;
@@ -169,7 +181,11 @@ SAResult successive_approximations(
         min_steps_r,
         concavity,
         info_amounts_r,
-        info_max_steps);
+        info_max_steps,
+        xpiwe,
+        xpiwe_r,
+        xpiwe_max_f,
+        obs_count_r);
 
     // Run driven search
     TreePool pool(params.search.pool_max_size, params.search.pool_suboptimal);

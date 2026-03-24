@@ -4,15 +4,15 @@
 # perturbation quality from initial descent quality.
 #
 # Usage:
-#   source("inst/benchmarks/bench_framework.R")
-#   source("inst/benchmarks/bench_warmstart.R")
+#   source("dev/benchmarks/bench_framework.R")
+#   source("dev/benchmarks/bench_warmstart.R")
 #   ws <- warmstart_benchmark("Agnarsson2004", replicates = 20)
 #   warmstart_summary(ws)
 
 library(TreeSearch)
 library(TreeTools)
 
-source("inst/benchmarks/bench_datasets.R")
+source("dev/benchmarks/bench_datasets.R")
 
 #' Compute a TBR-optimal tree via a short sprint search.
 #'

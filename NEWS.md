@@ -2,6 +2,11 @@
 
 ## Breaking changes
 
+- Implied weighting now applies the missing-entries correction of
+  Goloboff (2014) by default (`extended_iw = TRUE`).  Characters with
+  many missing entries receive a reduced effective concavity, compensating
+  for artificially low observed homoplasy.  Set `extended_iw = FALSE` to
+  reproduce pre-2.0.0 behaviour.
 - `MaximizeParsimony()` has an entirely new parameter interface.
   The previous `MaximizeParsimony()` (R-loop search using MorphyLib) has been
   renamed to `Morphy()`.
