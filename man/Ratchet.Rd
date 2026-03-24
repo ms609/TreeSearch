@@ -22,10 +22,11 @@ MorphyBootstrap(
 Ratchet(
   tree,
   dataset,
-  InitializeData = PhyDat2Morphy,
-  CleanUpData = UnloadMorphy,
-  TreeScorer = MorphyLength,
-  Bootstrapper = MorphyBootstrap,
+  concavity = Inf,
+  InitializeData = PrepareNativeData,
+  CleanUpData = CleanNativeData,
+  TreeScorer = NativeLength,
+  Bootstrapper = NativeBootstrap,
   swappers = list(TBRSwap, SPRSwap, NNISwap),
   BootstrapSwapper = if (is.list(swappers)) swappers[[length(swappers)]] else swappers,
   returnAll = FALSE,
@@ -110,6 +111,18 @@ with the desired outgroup.
 Edge lengths are not supported and will be removed.}
 
 \item{dataset}{a dataset in the format required by \code{TreeScorer()}.}
+
+\item{concavity}{Determines the degree to which extra steps beyond the first
+are penalized.  Specify a numeric value to use implied weighting
+\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
+\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+TNT sets a default of 3, but this is too low in some circumstances
+\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+Better still explore the sensitivity of results under a range of
+concavity values, e.g. \code{k = 2 ^ (1:7)}.
+Specify \code{Inf} to weight each additional step equally.
+Specify \code{"profile"} to employ profile parsimony
+\insertCite{Faith2001}{TreeSearch}.}
 
 \item{InitializeData}{Function that sets up data object to prepare for tree search.
 The function will be passed the \code{dataset} parameter.
@@ -218,6 +231,7 @@ par(oldPar)
 Other custom search functions: 
 \code{\link{EdgeListSearch}()},
 \code{\link{Jackknife}()},
+\code{\link{NativeSearch}},
 \code{\link{SuccessiveApproximations}()}
 }
 \author{

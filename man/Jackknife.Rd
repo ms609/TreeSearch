@@ -7,10 +7,11 @@
 Jackknife(
   tree,
   dataset,
+  concavity = Inf,
   resampleFreq = 2/3,
-  InitializeData = PhyDat2Morphy,
-  CleanUpData = UnloadMorphy,
-  TreeScorer = MorphyLength,
+  InitializeData = PrepareNativeData,
+  CleanUpData = CleanNativeData,
+  TreeScorer = NativeLength,
   EdgeSwapper = TBRSwap,
   jackIter = 5000L,
   searchIter = 4000L,
@@ -25,6 +26,18 @@ with the desired outgroup.
 Edge lengths are not supported and will be removed.}
 
 \item{dataset}{a dataset in the format required by \code{TreeScorer()}.}
+
+\item{concavity}{Determines the degree to which extra steps beyond the first
+are penalized.  Specify a numeric value to use implied weighting
+\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
+\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+TNT sets a default of 3, but this is too low in some circumstances
+\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+Better still explore the sensitivity of results under a range of
+concavity values, e.g. \code{k = 2 ^ (1:7)}.
+Specify \code{Inf} to weight each additional step equally.
+Specify \code{"profile"} to employ profile parsimony
+\insertCite{Faith2001}{TreeSearch}.}
 
 \item{resampleFreq}{Double between 0 and 1 stating proportion of characters
 to resample.}
@@ -87,6 +100,7 @@ Other split support functions:
 Other custom search functions: 
 \code{\link{EdgeListSearch}()},
 \code{\link{MorphyBootstrap}()},
+\code{\link{NativeSearch}},
 \code{\link{SuccessiveApproximations}()}
 }
 \author{

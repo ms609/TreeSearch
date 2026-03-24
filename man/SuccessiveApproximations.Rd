@@ -112,7 +112,8 @@ criterion \insertCite{Farris1969}{TreeSearch}.
 Other custom search functions: 
 \code{\link{EdgeListSearch}()},
 \code{\link{Jackknife}()},
-\code{\link{MorphyBootstrap}()}
+\code{\link{MorphyBootstrap}()},
+\code{\link{NativeSearch}}
 }
 \concept{custom search functions}
 \keyword{internal}

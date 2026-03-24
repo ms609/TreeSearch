@@ -12,7 +12,7 @@
 EdgeListSearch(
   edgeList,
   dataset,
-  TreeScorer = MorphyLength,
+  TreeScorer = NativeLength,
   EdgeSwapper = RootedTBRSwap,
   maxIter = 100,
   maxHits = 20,
@@ -27,9 +27,10 @@ EdgeListSearch(
 TreeSearch(
   tree,
   dataset,
-  InitializeData = PhyDat2Morphy,
-  CleanUpData = UnloadMorphy,
-  TreeScorer = MorphyLength,
+  concavity = Inf,
+  InitializeData = PrepareNativeData,
+  CleanUpData = CleanNativeData,
+  TreeScorer = NativeLength,
   EdgeSwapper = RootedTBRSwap,
   maxIter = 100L,
   maxHits = 20L,
@@ -88,6 +89,18 @@ larger numbers provide more verbose feedback to the user.}
 with the desired outgroup.
 Edge lengths are not supported and will be removed.}
 
+\item{concavity}{Determines the degree to which extra steps beyond the first
+are penalized.  Specify a numeric value to use implied weighting
+\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
+\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+TNT sets a default of 3, but this is too low in some circumstances
+\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+Better still explore the sensitivity of results under a range of
+concavity values, e.g. \code{k = 2 ^ (1:7)}.
+Specify \code{Inf} to weight each additional step equally.
+Specify \code{"profile"} to employ profile parsimony
+\insertCite{Faith2001}{TreeSearch}.}
+
 \item{InitializeData}{Function that sets up data object to prepare for tree search.
 The function will be passed the \code{dataset} parameter.
 Its return value will be passed to \code{TreeScorer()} and \code{CleanUpData()}.}
@@ -143,6 +156,7 @@ optima.
 Other custom search functions: 
 \code{\link{Jackknife}()},
 \code{\link{MorphyBootstrap}()},
+\code{\link{NativeSearch}},
 \code{\link{SuccessiveApproximations}()}
 }
 \author{
