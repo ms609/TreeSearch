@@ -90,6 +90,12 @@
 #'   with perturbation cycles divided evenly among outer iterations.
 #'   Matches the interleaved sectorial + ratchet pattern of TNT's `xmult`
 #'   \insertCite{Goloboff1999}{TreeSearch}.
+#' @param enumTimeFraction Numeric between 0 and 0.5; fraction of `maxSeconds`
+#'   reserved for MPT enumeration (TBR plateau walk to discover additional
+#'   equal-score topologies).  The main search loop exits at
+#'   `maxSeconds * (1 - enumTimeFraction)`.  Set to 0 to disable the reserve
+#'   (pre-v1.6 behaviour: enumeration skipped if the main loop times out).
+#'   Default: `0.1` (10%).
 #' @param adaptiveStart Logical; use Thompson-sampling (bandit) strategy
 #'   selection for starting trees?  When `TRUE`, each replicate draws its
 #'   starting strategy from a pool of options (random Wagner, biased Wagner,
@@ -160,7 +166,8 @@ SearchControl <- function(
     # When TRUE, each replicate draws its starting strategy via Thompson
     # sampling from {Wagner-random, Wagner-Goloboff, Wagner-entropy,
     # random-tree, pool-ratchet, pool-NNI-perturb}. Overrides wagnerBias.
-    adaptiveStart = FALSE
+    adaptiveStart = FALSE,
+    enumTimeFraction = 0.1
 ) {
   structure(
     list(
@@ -196,7 +203,8 @@ SearchControl <- function(
       consensusStableReps = as.integer(consensusStableReps),
       adaptiveLevel = as.logical(adaptiveLevel),
       consensusConstrain = as.logical(consensusConstrain),
-      adaptiveStart = as.logical(adaptiveStart)
+      adaptiveStart = as.logical(adaptiveStart),
+      enumTimeFraction = as.double(enumTimeFraction)
     ),
     class = "SearchControl"
   )

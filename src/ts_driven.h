@@ -151,6 +151,12 @@ struct DrivenParams {
   bool consensus_constrain = false;
   int consensus_constrain_min_reps = 5;  // minimum replicates before engaging
 
+  // Fraction of the time budget reserved for MPT enumeration (T-202).
+  // The main search loop exits at budget × (1 - enum_time_fraction),
+  // leaving the remainder for the plateau walk.  Default 0.1 = 10%.
+  // Set to 0 to disable (old behaviour: skip enumeration on timeout).
+  double enum_time_fraction = 0.1;
+
   // Adaptive starting-tree strategy selection (T-190).
   // When true, each replicate draws its starting strategy from a Thompson
   // sampling bandit over {Wagner-random, Wagner-Goloboff, Wagner-entropy,
