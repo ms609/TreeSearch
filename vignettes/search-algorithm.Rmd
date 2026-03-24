@@ -134,6 +134,74 @@ Adding an intermediate SPR phase (NNI $\rightarrow$ SPR $\rightarrow$ TBR)
 does not improve results.
 NNI warmup is enabled by default (`nniFirst = TRUE` in `SearchControl()`).
 
+### Adaptive starting-tree strategy selection
+
+Different datasets favour different starting-tree strategies; fixing a
+single approach for all replicates can waste computational effort on
+suboptimal strategies or fail to explore basins that an alternative
+strategy would reach.
+@Goloboff2014 [§3.3] noted that purely random starting trees sometimes
+access basins of attraction inaccessible to Wagner trees.
+
+When `adaptiveStart = TRUE` (the default in the `thorough` preset),
+TreeSearch treats the choice of starting-tree strategy as a multi-armed
+bandit problem and uses Thompson sampling [@Thompson1933] to allocate
+replicates across six strategy arms:
+
+| Arm | Type | Description |
+|-----|------|-------------|
+| Wagner-random | Fresh | Random addition-order Wagner tree |
+| Wagner-Goloboff | Fresh | Goloboff (2014) biased addition order |
+| Wagner-entropy | Fresh | Entropy-biased addition order |
+| Random tree | Fresh | Purely random topology (no character data) |
+| Pool-ratchet | Pool | Ratchet perturbation from a pool tree |
+| Pool-NNI | Pool | NNI perturbation from a pool tree |
+
+**Thompson sampling.**
+Each arm $i$ maintains a Beta-distributed estimate of its success
+probability, parameterized by success count $\alpha_i$ and failure count
+$\beta_i$ (both initialised to 1, giving a uniform prior).
+The _random tree_ arm receives a pessimistic prior $\text{Beta}(1, 2)$
+reflecting the expectation that random topologies are usually worse.
+
+To select a strategy, a value $\theta_i$ is sampled from each arm's
+$\text{Beta}(\alpha_i, \beta_i)$ distribution, and the arm with the
+highest $\theta_i$ is chosen.
+This naturally balances exploration (trying undersampled arms) and
+exploitation (preferring arms with high observed success rates) without
+any tuning parameters.
+
+After each replicate, the selected arm is updated: if the replicate's
+final score matches the pool's best score, $\alpha_i$ is incremented
+(success); otherwise $\beta_i$ is incremented (failure).
+
+**Landscape adaptation.**
+When a new best score is discovered, the search landscape has effectively
+changed (strategies that succeeded at the old score may not be informative
+for the new one).
+All Beta parameters are decayed toward their priors by a factor of 0.5,
+discounting stale evidence while preserving the relative ranking of arms.
+
+**Pool-based arms** are only available once the pool contains at least two
+best-score trees, ensuring meaningful diversity for perturbation.
+When unavailable, they are excluded from the sampling step.
+
+**Parallel path.**
+In parallel search (`nThreads > 1`), adaptive per-replicate updating
+would require cross-thread synchronisation.
+Instead, strategies are assigned in a fixed round-robin sequence across
+replicates, ensuring diversity without lock overhead.
+
+Enabling `adaptiveStart` is most valuable for medium-to-large datasets
+where many replicates complete and the bandit has time to learn.
+For very large datasets ($\geq$ 120 tips) where only a few replicates
+complete within the time budget, the bandit has insufficient data and
+`adaptiveStart` is disabled in the `large` preset.
+
+Per-strategy attempt and success counts are returned in the
+`strategy_diagnostics` attribute of the search result for post-hoc
+inspection.
+
 
 ## The driven search pipeline
 
@@ -142,7 +210,7 @@ Within each replicate, the search follows a pipeline of phases inspired
 by the "new technology" driven search described by @Goloboff1999 and
 implemented in TNT [@Goloboff2016]:
 
-1. **Random Wagner tree** (best of `wagnerStarts` starts)
+1. **Starting tree** (strategy selected adaptively or by fixed Wagner bias)
    $\rightarrow$ NNI warmup $\rightarrow$ TBR to local optimum
 2. **Exclusive sectorial search** (XSS)
 3. **Random sectorial search** (RSS)
