@@ -6,17 +6,24 @@
 \usage{
 SearchControl(
   tbrMaxHits = 1L,
+  nniFirst = TRUE,
   sprFirst = FALSE,
   tabuSize = 100L,
   wagnerStarts = 1L,
-  ratchetCycles = 5L,
-  ratchetPerturbProb = 0.04,
+  wagnerBias = 0L,
+  wagnerBiasTemp = 0.3,
+  outerCycles = 1L,
+  ratchetCycles = 12L,
+  ratchetPerturbProb = 0.25,
   ratchetPerturbMode = 0L,
-  ratchetPerturbMaxMoves = 0L,
+  ratchetPerturbMaxMoves = 5L,
   ratchetAdaptive = FALSE,
+  ratchetTaper = FALSE,
+  nniPerturbCycles = 0L,
+  nniPerturbFraction = 0.5,
   driftCycles = 2L,
-  driftAfdLimit = 3L,
-  driftRfdLimit = 0.1,
+  driftAfdLimit = 5L,
+  driftRfdLimit = 0.15,
   xssRounds = 3L,
   xssPartitions = 4L,
   rssRounds = 1L,
@@ -27,18 +34,49 @@ SearchControl(
   fuseInterval = 3L,
   fuseAcceptEqual = FALSE,
   poolMaxSize = 100L,
-  poolSuboptimal = 0
+  poolSuboptimal = 0,
+  consensusStableReps = 0L,
+  adaptiveLevel = FALSE,
+  consensusConstrain = FALSE,
+  annealPhases = 0L,
+  annealTStart = 20,
+  annealTEnd = 0,
+  annealMovesPerPhase = 0L,
+  adaptiveStart = FALSE,
+  enumTimeFraction = 0.1
 )
 }
 \arguments{
 \item{tbrMaxHits}{Integer; number of equally-scoring trees to accept
 before stopping a TBR pass.}
 
+\item{nniFirst}{Logical; run an NNI pass before SPR/TBR in each replicate?
+At small tree sizes (\eqn{\le}88 tips) overhead is negligible; at \eqn{\ge}100 tips
+this significantly accelerates the initial descent from the Wagner tree.}
+
 \item{sprFirst}{Logical; run an SPR pass before TBR in each replicate?}
 
 \item{tabuSize}{Integer; tabu list size for TBR plateau exploration.}
 
 \item{wagnerStarts}{Integer; random Wagner starting trees per replicate.}
+
+\item{wagnerBias}{Integer; criterion for biasing taxon addition order
+during Wagner tree construction.  0 = random (default),
+1 = Goloboff (2014) non-ambiguous-character priority,
+2 = entropy-based state-specificity priority.  Biased orders use
+softmax-weighted sampling for diversity across replicates.}
+
+\item{wagnerBiasTemp}{Numeric; softmax temperature controlling
+selectivity of biased Wagner addition (default 0.3).  Lower values
+concentrate sampling on the highest-scoring taxa; higher values
+approach uniform random.}
+
+\item{outerCycles}{Integer; number of outer search cycles per replicate
+(default 1).  Each outer cycle runs the full
+[XSS/RSS/CSS → ratchet → NNI-perturbation → drift → TBR] sequence,
+with perturbation cycles divided evenly among outer iterations.
+Matches the interleaved sectorial + ratchet pattern of TNT's \code{xmult}
+\insertCite{Goloboff1999}{TreeSearch}.}
 
 \item{ratchetCycles}{Integer; number of ratchet perturbation cycles.}
 
@@ -53,6 +91,27 @@ cycle (0 = automatic).}
 
 \item{ratchetAdaptive}{Logical; adjust perturbation probability based on
 within-replicate escape rate?}
+
+\item{ratchetTaper}{Logical; taper ratchet perturbation probability across
+replicates as the pool stabilizes?  When \code{TRUE}, early replicates use
+the full \code{ratchetPerturbProb}; later replicates (with high hit rates)
+use a reduced probability for finer local exploration.  The effective
+probability is \code{ratchetPerturbProb * max(floor, 1 - strength * hitRate)}
+where \code{hitRate} is the fraction of replicates that found the current
+best score.  Default \code{FALSE}.}
+
+\item{nniPerturbCycles}{Integer; number of stochastic NNI-perturbation
+cycles per replicate.  Each cycle randomly applies NNI swaps to a
+fraction of internal branches, then runs TBR to find a new local
+optimum.  Complementary to the weight-perturbation ratchet: the ratchet
+perturbs the objective function, while NNI-perturbation perturbs the
+topology directly.
+0 (default) disables NNI perturbation.
+Inspired by \code{doRandomNNIs()} in IQ-TREE
+\insertCite{Nguyen2015}{TreeSearch}.}
+
+\item{nniPerturbFraction}{Numeric (0--1); fraction of internal branches
+to swap during each NNI-perturbation cycle.  Default 0.5.}
 
 \item{driftCycles}{Integer; number of drift search cycles.}
 
@@ -85,18 +144,6 @@ sizes for sectorial search.}
 \item{poolSuboptimal}{Numeric; retain trees that are this many steps
 worse than the best tree.  0 (default) keeps only optimal trees.}
 
-\item{nniFirst}{Logical; run an NNI pass before SPR/TBR in each replicate?
-At small tree sizes (\eqn{\le}88 tips) overhead is negligible; at \eqn{\ge}100 tips
-this significantly accelerates the initial descent from the Wagner tree.}
-
-\item{ratchetTaper}{Logical; taper ratchet perturbation probability across
-replicates as the pool stabilizes?  When \code{TRUE}, early replicates use
-the full \code{ratchetPerturbProb}; later replicates (with high hit rates)
-use a reduced probability for finer local exploration.  The effective
-probability is \code{ratchetPerturbProb * max(floor, 1 - strength * hitRate)}
-where \code{hitRate} is the fraction of replicates that found the current
-best score.  Default \code{FALSE}.}
-
 \item{consensusStableReps}{Integer; stop when the strict consensus of
 best-score pool trees has been unchanged for this many consecutive
 replicates.
@@ -109,19 +156,6 @@ based on the observed hit rate?  When \code{TRUE}, easy landscapes
 (high hit rate) trigger reduced effort per replicate, while hard
 landscapes trigger increased effort.  Default \code{FALSE}.}
 
-\item{nniPerturbCycles}{Integer; number of stochastic NNI-perturbation
-cycles per replicate.  Each cycle randomly applies NNI swaps to a
-fraction of internal branches, then runs TBR to find a new local
-optimum.  Complementary to the weight-perturbation ratchet: the ratchet
-perturbs the objective function, while NNI-perturbation perturbs the
-topology directly.
-0 (default) disables NNI perturbation.
-Inspired by \code{doRandomNNIs()} in IQ-TREE
-\insertCite{Nguyen2015}{TreeSearch}.}
-
-\item{nniPerturbFraction}{Numeric (0--1); fraction of internal branches
-to swap during each NNI-perturbation cycle.  Default 0.5.}
-
 \item{consensusConstrain}{Logical; lock the strict consensus of pool
 trees as topological constraints for subsequent replicates?  When
 \code{TRUE}, after enough replicates (\eqn{\ge}5), splits present in ALL
@@ -129,24 +163,6 @@ best-score pool trees are enforced as constraints, focusing search on
 uncertain regions.  Constraints are cleared whenever a new best score
 is found.  Only active when no user-supplied \code{constraint} is
 present.  Default \code{FALSE}.}
-
-\item{wagnerBias}{Integer; criterion for biasing taxon addition order
-during Wagner tree construction.  0 = random (default),
-1 = Goloboff (2014) non-ambiguous-character priority,
-2 = entropy-based state-specificity priority.  Biased orders use
-softmax-weighted sampling for diversity across replicates.}
-
-\item{wagnerBiasTemp}{Numeric; softmax temperature controlling
-selectivity of biased Wagner addition (default 0.3).  Lower values
-concentrate sampling on the highest-scoring taxa; higher values
-approach uniform random.}
-
-\item{outerCycles}{Integer; number of outer search cycles per replicate
-(default 1).  Each outer cycle runs the full
-[XSS/RSS/CSS → ratchet → NNI-perturbation → drift → TBR] sequence,
-with perturbation cycles divided evenly among outer iterations.
-Matches the interleaved sectorial + ratchet pattern of TNT's \code{xmult}
-\insertCite{Goloboff1999}{TreeSearch}.}
 
 \item{annealPhases}{Integer; number of simulated annealing temperature
 steps (default 0 = disabled).  When > 0, runs a linear cooling
@@ -162,18 +178,18 @@ strict hill-climbing at end).}
 \item{annealMovesPerPhase}{Integer; stochastic TBR moves per temperature
 step (default 0 = number of tips).}
 
+\item{adaptiveStart}{Logical; use Thompson-sampling (bandit) strategy
+selection for starting trees?  When \code{TRUE}, each replicate draws its
+starting strategy from a pool of options (random Wagner, biased Wagner,
+random tree, pool ratchet, pool NNI-perturb), adapting to which
+strategies yield the best scores.  Default \code{FALSE}.}
+
 \item{enumTimeFraction}{Numeric between 0 and 0.5; fraction of \code{maxSeconds}
 reserved for MPT enumeration (TBR plateau walk to discover additional
 equal-score topologies).  The main search loop exits at
 \code{maxSeconds * (1 - enumTimeFraction)}.  Set to 0 to disable the reserve
 (pre-v1.6 behaviour: enumeration skipped if the main loop times out).
 Default: \code{0.1} (10\%).}
-
-\item{adaptiveStart}{Logical; use Thompson-sampling (bandit) strategy
-selection for starting trees?  When \code{TRUE}, each replicate draws its
-starting strategy from a pool of options (random Wagner, biased Wagner,
-random tree, pool ratchet, pool NNI-perturb), adapting to which
-strategies yield the best scores.  Default \code{FALSE}.}
 }
 \value{
 A named list of class \code{"SearchControl"}.
