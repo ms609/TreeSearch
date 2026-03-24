@@ -53,7 +53,6 @@ with existing completed IDs. Renumbered to T-198–T-201 in S-COORD round 10.
 |----|-----|--------|--------|-------------|-------|
 | T-177 | P1 | ASSIGNED (Human+AI) | — | **Bug fix: mid-TBR/SPR timeout.** | Implemented, building and testing. 1762 Tier 2 tests pass. |
 | T-179 | P2 | PR #215 (M) | T-177, T-178 | **Large-tree strategy preset.** For ≥120 tips. | On `feature/parallel-temper`. Commit `fab1e52c`. Arrives with PT PR #215. |
-| T-203 | P2 | ASSIGNED (G) | — | **Simulated annealing for large trees.** Single-chain linear cooling schedule using `stochastic_tbr_phase()`. Replace drift in `large` preset. | On `feature/anneal` (TS-anneal worktree). |
 | T-190 | P2 | ASSIGNED (A) | — | **Adaptive starting-tree strategy mixing (bandit).** Thompson sampling over 6 strategy arms. | See cold-start brief below. |
 | T-182 | P3 | OPEN | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | |
 | T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
