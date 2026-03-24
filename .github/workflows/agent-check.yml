@@ -1,6 +1,7 @@
 # Agent-triggered check — dispatched via `gh` CLI from local agents.
 # Runs R CMD check + optional filtered/extended tests on the pushed branch.
-# Ubuntu ARM runs first; Windows only runs on Ubuntu success.
+# Ubuntu ARM runs first (no vignettes, fast feedback); Windows runs on
+# Ubuntu success and includes vignette builds to catch path/encoding issues.
 #
 # Usage:
 #   bash gha-dispatch.sh agent-check.yml <branch>
@@ -96,11 +97,8 @@ jobs:
         with:
           needs: check
 
-      - name: R CMD check
+      - name: R CMD check (with vignettes)
         uses: r-lib/actions/check-r-package@v2
-        with:
-          args: '"--no-build-vignettes"'
-          build_args: '"--no-build-vignettes"'
 
       - name: Run filtered tests
         if: inputs.test_filter != ''
