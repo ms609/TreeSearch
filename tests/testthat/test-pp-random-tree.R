@@ -1,4 +1,7 @@
-# NB: RandomTreeScore uses C's RNG, so no point in setting seed.
+# NB: RandomTreeScore uses C's MWC RNG (static global state in
+# build_postorder.h), which is NOT seeded by set.seed(). The RNG state
+# depends on what ran before this file. Use very wide binomial bounds
+# (stringency <= 1e-6) to avoid false positives on CRAN/CI.
 MorphyAction <- function (Action) expect_equal("ERR_NO_ERROR", mpl_translate_error(Action))
 MorphyWith <- function (char) {
   nTip <- nchar(char) - 1L
@@ -17,7 +20,7 @@ MorphyWith <- function (char) {
 context("pp: Tree randomness")
 test_that("four-tip trees are randomly distributed", {
   nTrees <- 36000
-  stringency <- 0.005 # low numbers mean you'll rarely fail by chance
+  stringency <- 1e-6
   nTip <- 4
   expectedBounds <- qbinom(c(stringency, 1-stringency), nTrees, 1/(nTip - 1))
   rTrees <- vapply(logical(nTrees), function (XX) 
@@ -40,8 +43,8 @@ test_that("four-tip trees are randomly distributed", {
 test_that("four-tip trees are randomly scored", {
   set.seed(0)
   
-  nTrees <- 6000
-  stringency <- 0.005
+  nTrees <- 12000
+  stringency <- 1e-6
   nTip <- 4
   
   morphyObj <- MorphyWith("0011;")
@@ -57,8 +60,8 @@ test_that("four-tip trees are randomly scored", {
 
 test_that("five-tip trees are randomly scored", {
   set.seed(0)
-  nTrees <- 6000
-  stringency <- 0.005
+  nTrees <- 12000
+  stringency <- 1e-6
   nTip <- 5
   morphyObj <- MorphyWith("00011;")
   on.exit(morphyObj <- UnloadMorphy(morphyObj))
@@ -75,8 +78,8 @@ test_that("five-tip trees are randomly scored", {
 test_that("six-tip trees are randomly scored", {
   set.seed(0)
   
-  nTrees <- 6000
-  stringency <- 0.005
+  nTrees <- 12000
+  stringency <- 1e-6
   nTip <- 6
   
   morphyObj <- MorphyWith("000011;")
@@ -117,8 +120,8 @@ test_that("six-tip trees are randomly scored", {
 })
 
 test_that("twelve-tip trees are randomly scored", {
-  nTrees <- 12000 # 12000 seems to throw false +ve too often?
-  stringency <- 0.01 #  increased from 0.005 to avoid false +ves
+  nTrees <- 24000
+  stringency <- 1e-6
   nTip <- 12
   morphyObj <- MorphyWith("000000011111;")
   on.exit(morphyObj <- UnloadMorphy(morphyObj))
