@@ -183,7 +183,7 @@ over time (e.g. when a feature merges and the worktree is reassigned), but
 | Directory | Branch | Purpose |
 |-----------|--------|---------|
 | `TreeSearch-a` | `cpp-search` | Main source dir; integration branch |
-| `TS-anneal` | `feature/parallel-temper` | Parallel tempering / simulated annealing |
+| `TS-anneal` | `feature/anneal` | Simulated annealing for large trees (T-203) |
 | `TS-CID-cons` | `feature/cid-consensus` | CID consensus feature |
 | `TS-MadSlat` | `feature/madslatkin-profiling` | Mad-Slatkin profiling |
 | `TS-ParsSim` | `feature/parssim-ambiguous` | Parsimony simulation |
