@@ -1247,7 +1247,8 @@ List ts_driven_search(
     int wagnerBias = 0,
     double wagnerBiasTemp = 0.3,
     int outerCycles = 1,
-    bool adaptiveStart = false)
+    bool adaptiveStart = false,
+    NumericVector saParams = NumericVector::create(0, 20.0, 0.0, 5, 0))
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity, infoAmounts,
@@ -1389,6 +1390,16 @@ List ts_driven_search(
   params.wagner_bias_temp = wagnerBiasTemp;
   params.outer_cycles = outerCycles;
   params.adaptive_start = adaptiveStart;
+  // SA params packed as NumericVector: [cycles, t_start, t_end, n_phases, moves_per_phase]
+  if (saParams.size() >= 5) {
+    params.sa_cycles = static_cast<int>(saParams[0]);
+    params.sa_t_start = saParams[1];
+    params.sa_t_end = saParams[2];
+    params.sa_n_phases = static_cast<int>(saParams[3]);
+    params.sa_moves_per_phase = static_cast<int>(saParams[4]);
+  } else if (saParams.size() >= 1) {
+    params.sa_cycles = static_cast<int>(saParams[0]);
+  }
 
   // Starting tree edge matrix (optional)
   if (startEdge.isNotNull()) {
@@ -1439,6 +1450,7 @@ List ts_driven_search(
     Named("ratchet_ms")   = result.timings.ratchet_ms,
     Named("nni_perturb_ms") = result.timings.nni_perturb_ms,
     Named("drift_ms")     = result.timings.drift_ms,
+    Named("sa_ms")        = result.timings.sa_ms,
     Named("final_tbr_ms") = result.timings.final_tbr_ms,
     Named("fuse_ms")      = result.timings.fuse_ms
   );

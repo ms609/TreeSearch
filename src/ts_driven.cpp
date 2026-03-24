@@ -11,6 +11,7 @@
 #include "ts_constraint.h"
 #include "ts_wagner.h"
 #include "ts_splits.h"
+#include "ts_temper.h"
 #include "ts_rng.h"
 
 #include <R.h>
@@ -350,6 +351,56 @@ ReplicateResult run_single_replicate(
       result.interrupted = true;
       result.score = score_tree(result.tree, ds);
       return result;
+    }
+
+    // 5b. SA perturbation (multi-cycle PCSA with best-tree restart).
+    // Each cycle: perturb best tree via scheduled SA cooling → TBR
+    // reconverge → keep if improved. Effective at escaping deep basins
+    // under EW at ≥100 tips where ratchet/drift plateau.
+    if (params.sa_cycles > 0) {
+      ts::AnnealParams ap;
+      ap.t_start = params.sa_t_start;
+      ap.t_end = params.sa_t_end;
+      ap.n_phases = params.sa_n_phases;
+      ap.moves_per_phase = params.sa_moves_per_phase;
+
+      double best_sa_score = score_tree(result.tree, ds);
+      TreeState best_sa_tree = result.tree;
+
+      for (int cyc = 0; cyc < params.sa_cycles; ++cyc) {
+        if (cyc > 0) result.tree = best_sa_tree;
+
+        ts::anneal_search(result.tree, ds, ap, cd, check_timeout);
+
+        // TBR reconverge after SA perturbation
+        {
+          TBRParams tp;
+          tp.tabu_size = params.tabu_size;
+          tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
+        }
+
+        double cyc_score = score_tree(result.tree, ds);
+        if (cyc_score < best_sa_score - 1e-10) {
+          best_sa_score = cyc_score;
+          best_sa_tree = result.tree;
+        }
+
+        if (ts::check_interrupt() || check_timeout()) break;
+      }
+
+      result.tree = best_sa_tree;
+      result.timings.sa_ms += ph_lap();
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g [%.0f ms total]\n",
+                outer_label("SA").c_str(),
+                score_tree(result.tree, ds), result.timings.sa_ms);
+      }
+
+      if (ts::check_interrupt() || check_timeout()) {
+        result.interrupted = true;
+        result.score = score_tree(result.tree, ds);
+        return result;
+      }
     }
 
     // 6. TBR polish after each outer cycle.

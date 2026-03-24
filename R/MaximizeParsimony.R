@@ -174,7 +174,11 @@
     wagnerBias = 1L, wagnerBiasTemp = 0.3,
     nniFirst = TRUE, sprFirst = FALSE,
     outerCycles = 1L,
-    consensusStableReps = 2L
+    consensusStableReps = 2L,
+    # PCSA: 3 SA+TBR cycles as escape mechanism (T-207).
+    # Benchmarked at 125–205 tips EW: reduces variance 6× (SD 62→10)
+    # and improves mean score by 40–100 steps vs cold-only TBR.
+    saCycles = 3L, saTstart = 20.0, saNphases = 5L
   )
 )
 
@@ -853,7 +857,14 @@ MaximizeParsimony <- function(
       else ctrl$outerCycles),
     adaptiveStart = as.logical(
       if (is.null(ctrl$adaptiveStart)) FALSE
-      else ctrl$adaptiveStart)
+      else ctrl$adaptiveStart),
+    # SA params packed as numeric vector: [cycles, t_start, t_end, n_phases, moves_per_phase]
+    saParams = c(
+      as.double(if (is.null(ctrl$saCycles)) 0 else ctrl$saCycles),
+      as.double(if (is.null(ctrl$saTstart)) 20.0 else ctrl$saTstart),
+      as.double(if (is.null(ctrl$saTend)) 0.0 else ctrl$saTend),
+      as.double(if (is.null(ctrl$saNphases)) 5 else ctrl$saNphases),
+      as.double(if (is.null(ctrl$saMovesPerPhase)) 0 else ctrl$saMovesPerPhase))
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
                                         hsjArgs, xformArgs))

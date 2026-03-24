@@ -159,6 +159,17 @@ struct DrivenParams {
   // When false, all replicates use the fixed `wagner_bias` strategy.
   // Only affects the serial path; parallel uses round-robin.
   bool adaptive_start = false;
+
+  // Simulated annealing perturbation (PCSA: post-convergence SA).
+  // Multi-cycle SA with best-tree restart, inserted after drift phase.
+  // Each cycle: perturb current best via scheduled SA → TBR reconverge →
+  // keep if improved. Reduces variance at large EW (≥100 tips).
+  // 0 = disabled (default). Typical: 3–5 cycles.
+  int sa_cycles = 0;
+  double sa_t_start = 20.0;      // initial Boltzmann temperature
+  double sa_t_end = 0.0;         // final temperature (0 = strict at end)
+  int sa_n_phases = 5;           // temperature steps per cycle
+  int sa_moves_per_phase = 0;    // 0 = n_tip
 };
 
 // Cumulative per-phase wall-clock timing (milliseconds).
@@ -172,6 +183,7 @@ struct PhaseTimings {
   double ratchet_ms = 0.0;
   double nni_perturb_ms = 0.0;
   double drift_ms = 0.0;
+  double sa_ms = 0.0;
   double final_tbr_ms = 0.0;
   double fuse_ms = 0.0;
 
@@ -185,6 +197,7 @@ struct PhaseTimings {
     ratchet_ms   += o.ratchet_ms;
     nni_perturb_ms += o.nni_perturb_ms;
     drift_ms     += o.drift_ms;
+    sa_ms        += o.sa_ms;
     final_tbr_ms += o.final_tbr_ms;
     fuse_ms      += o.fuse_ms;
   }

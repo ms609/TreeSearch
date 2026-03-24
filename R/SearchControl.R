@@ -95,6 +95,20 @@
 #'   starting strategy from a pool of options (random Wagner, biased Wagner,
 #'   random tree, pool ratchet, pool NNI-perturb), adapting to which
 #'   strategies yield the best scores.  Default `FALSE`.
+#' @param saCycles Integer; number of simulated annealing perturbation
+#'   cycles (PCSA) per replicate.  Each cycle perturbs the current best tree
+#'   via scheduled SA cooling, then reconverges with TBR.  If the result
+#'   improves on the best, it becomes the new starting point.  Effective at
+#'   escaping deep basins under equal-weights parsimony at ≥100 tips.
+#'   0 (default) disables SA perturbation.
+#' @param saTstart Numeric; initial Boltzmann temperature for SA cooling
+#'   schedule (default 20).
+#' @param saTend Numeric; final Boltzmann temperature (default 0, strict
+#'   descent at end of each cycle).
+#' @param saNphases Integer; number of temperature steps in the linear
+#'   cooling schedule per SA cycle (default 5).
+#' @param saMovesPerPhase Integer; stochastic TBR moves per temperature
+#'   phase.  0 (default) = one move per tip (n_tip).
 #'
 #' @return A named list of class `"SearchControl"`.
 #'
@@ -160,7 +174,16 @@ SearchControl <- function(
     # When TRUE, each replicate draws its starting strategy via Thompson
     # sampling from {Wagner-random, Wagner-Goloboff, Wagner-entropy,
     # random-tree, pool-ratchet, pool-NNI-perturb}. Overrides wagnerBias.
-    adaptiveStart = FALSE
+    adaptiveStart = FALSE,
+    # Simulated annealing perturbation (PCSA, T-207)
+    # Multi-cycle SA with best-tree restart after drift. Each cycle:
+    # SA cooling → TBR reconverge → keep if improved.
+    # 0L = disabled. Typical: 3–5 cycles for large EW trees.
+    saCycles = 0L,
+    saTstart = 20.0,
+    saTend = 0.0,
+    saNphases = 5L,
+    saMovesPerPhase = 0L
 ) {
   structure(
     list(
@@ -196,7 +219,12 @@ SearchControl <- function(
       consensusStableReps = as.integer(consensusStableReps),
       adaptiveLevel = as.logical(adaptiveLevel),
       consensusConstrain = as.logical(consensusConstrain),
-      adaptiveStart = as.logical(adaptiveStart)
+      adaptiveStart = as.logical(adaptiveStart),
+      saCycles = as.integer(saCycles),
+      saTstart = as.double(saTstart),
+      saTend = as.double(saTend),
+      saNphases = as.integer(saNphases),
+      saMovesPerPhase = as.integer(saMovesPerPhase)
     ),
     class = "SearchControl"
   )
@@ -216,6 +244,8 @@ print.SearchControl <- function(x, ...) {
                      "sectorMinSize", "sectorMaxSize"),
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual",
                      "poolMaxSize", "poolSuboptimal"),
+    "SA Perturbation" = c("saCycles", "saTstart", "saTend",
+                          "saNphases", "saMovesPerPhase"),
     "Stopping" = c("consensusStableReps", "adaptiveLevel",
                     "consensusConstrain", "adaptiveStart")
   )
