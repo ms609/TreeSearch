@@ -124,24 +124,23 @@ test_that("PrepareDataProfile preserves multi-state patterns", {
   )
   dat <- TreeTools::MatrixToPhyDat(mat)
 
-  # "auto" and "mc" should produce identical structure (both use MC for
-  # infeasible chars, exact for feasible ones)
+  # "auto" uses exact solver for feasible chars; "mc" forces MC for all.
+  # Step ranges may differ (exact has the true distribution; MC estimates
+  # via sampling and log-quadratic tail interpolation), so we don't
+  # compare dimensions — just check both produce valid, finite output.
   info_auto <- PrepareDataProfile(dat, approx = "auto", n_mc = 5000L)
   info_mc   <- PrepareDataProfile(dat, approx = "mc", n_mc = 5000L)
 
-  auto_steps <- nrow(attr(info_auto, "info.amounts"))
-  mc_steps   <- nrow(attr(info_mc,   "info.amounts"))
-  expect_equal(auto_steps, mc_steps)
-
-  # Both produce valid, finite info.amounts
   expect_true(all(is.finite(attr(info_auto, "info.amounts"))))
   expect_true(all(is.finite(attr(info_mc,   "info.amounts"))))
+  expect_gt(nrow(attr(info_auto, "info.amounts")), 0L)
+  expect_gt(nrow(attr(info_mc,   "info.amounts")), 0L)
 })
 
-test_that(">5 state warns and truncates to 5", {
+test_that(">5 state characters handled via MC without truncation", {
   char <- rep(c("a", "b", "c", "d", "e", "f"), c(4, 3, 3, 2, 2, 2))
-  expect_warning(info <- StepInformation(char, n_mc = 5000L),
-                 "5 most frequent")
+  # No warning: >5 states now route to MC directly instead of truncating
+  info <- StepInformation(char, n_mc = 5000L)
 
   expect_true(length(info) >= 1)
   expect_true(all(info >= 0))
