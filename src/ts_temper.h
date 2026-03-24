@@ -47,6 +47,7 @@ struct PTParams {
   std::vector<double> temperatures;   // per-chain; [0]=0 (cold)
   int rounds = 5;
   int moves_per_round = 0;            // 0 = n_tip
+  bool score_transfer = false;        // replace Metropolis with direct injection
 };
 
 struct PTResult {

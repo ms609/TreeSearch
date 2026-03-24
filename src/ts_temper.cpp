@@ -513,44 +513,81 @@ PTResult parallel_temper_search(
       }
     }
 
-    // Adjacent-temperature swaps
+    // --- Exchange step ---
     double cold_before_swaps = scores[0];
-    for (int i = nc - 1; i > 0; --i) {
-      ++result.total_swaps_attempted;
-      ++pair_attempts[i - 1];
-      double s_lo = scores[i - 1], s_hi = scores[i];
-      bool accept_swap = false;
-      double metro_prob = 0.0;
 
-      if (temps[i - 1] == 0.0) {
-        accept_swap = (s_hi <= s_lo + 1e-10);
-        metro_prob = accept_swap ? 1.0 : 0.0;
-      } else {
-        double inv_lo = 1.0 / temps[i - 1], inv_hi = 1.0 / temps[i];
-        double log_a = (inv_lo - inv_hi) * (s_lo - s_hi);
-        if (log_a >= 0.0) { accept_swap = true; metro_prob = 1.0; }
-        else {
-          metro_prob = std::exp(log_a);
-          std::uniform_real_distribution<double> u(0.0, 1.0);
-          accept_swap = (std::log(u(rng)) < log_a);
+    if (params.score_transfer) {
+      // Score-transfer mode: find the best hot chain; if it beats the
+      // cold chain, inject its tree directly (no Metropolis).
+      int best_hot = -1;
+      double best_hot_score = scores[0];
+      for (int i = 1; i < nc; ++i) {
+        if (scores[i] < best_hot_score - 1e-10) {
+          best_hot_score = scores[i];
+          best_hot = i;
         }
       }
 
+      ++result.total_swaps_attempted;
+      bool did_transfer = (best_hot >= 0);
+
       if (diag) {
         SwapDiag sd;
-        sd.round = round; sd.pair_lo = i-1; sd.pair_hi = i;
-        sd.score_lo = s_lo; sd.score_hi = s_hi;
-        sd.metropolis_prob = metro_prob; sd.accepted = accept_swap;
+        sd.round = round; sd.pair_lo = 0;
+        sd.pair_hi = did_transfer ? best_hot : 1;
+        sd.score_lo = scores[0];
+        sd.score_hi = did_transfer ? best_hot_score : scores[1];
+        sd.metropolis_prob = did_transfer ? 1.0 : 0.0;
+        sd.accepted = did_transfer;
         diag->swap_log.push_back(sd);
       }
 
-      if (accept_swap) {
-        swap_chains(chains[i-1], scores[i-1], chains[i], scores[i]);
+      if (did_transfer) {
+        // Copy the hot chain's tree into chain 0
+        swap_chains(chains[0], scores[0], chains[best_hot], scores[best_hot]);
+        chains[0].reset_states(ds);
+        scores[0] = score_tree(chains[0], ds);
         ++result.total_swaps_accepted;
-        ++pair_accepts[i - 1];
-        if (i == 1) {
-          chains[0].reset_states(ds);
-          scores[0] = score_tree(chains[0], ds);
+      }
+    } else {
+      // Standard adjacent-pair Metropolis swaps
+      for (int i = nc - 1; i > 0; --i) {
+        ++result.total_swaps_attempted;
+        ++pair_attempts[i - 1];
+        double s_lo = scores[i - 1], s_hi = scores[i];
+        bool accept_swap = false;
+        double metro_prob = 0.0;
+
+        if (temps[i - 1] == 0.0) {
+          accept_swap = (s_hi <= s_lo + 1e-10);
+          metro_prob = accept_swap ? 1.0 : 0.0;
+        } else {
+          double inv_lo = 1.0 / temps[i - 1], inv_hi = 1.0 / temps[i];
+          double log_a = (inv_lo - inv_hi) * (s_lo - s_hi);
+          if (log_a >= 0.0) { accept_swap = true; metro_prob = 1.0; }
+          else {
+            metro_prob = std::exp(log_a);
+            std::uniform_real_distribution<double> u(0.0, 1.0);
+            accept_swap = (std::log(u(rng)) < log_a);
+          }
+        }
+
+        if (diag) {
+          SwapDiag sd;
+          sd.round = round; sd.pair_lo = i-1; sd.pair_hi = i;
+          sd.score_lo = s_lo; sd.score_hi = s_hi;
+          sd.metropolis_prob = metro_prob; sd.accepted = accept_swap;
+          diag->swap_log.push_back(sd);
+        }
+
+        if (accept_swap) {
+          swap_chains(chains[i-1], scores[i-1], chains[i], scores[i]);
+          ++result.total_swaps_accepted;
+          ++pair_accepts[i - 1];
+          if (i == 1) {
+            chains[0].reset_states(ds);
+            scores[0] = score_tree(chains[0], ds);
+          }
         }
       }
     }

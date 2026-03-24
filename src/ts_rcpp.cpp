@@ -2492,7 +2492,8 @@ List ts_anneal_diag(
     double t_end = 0.0,
     int n_phases = 10,
     int moves_per_phase = 0,
-    bool tbr_polish = true)
+    bool tbr_polish = true,
+    bool tbr_first = false)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -2500,6 +2501,21 @@ List ts_anneal_diag(
   ts::TreeState tree;
   ts::random_wagner_tree(tree, ds);
   double initial_score = ts::score_tree(tree, ds);
+
+  // Optional: TBR to convergence before SA (post-convergence SA)
+  double pre_tbr_score = initial_score;
+  double pre_tbr_ms = 0.0;
+  if (tbr_first) {
+    ts::TBRParams tp;
+    tp.accept_equal = false;
+    tp.max_accepted_changes = 0;
+    tp.max_hits = 1;
+    auto t0 = std::chrono::steady_clock::now();
+    ts::TBRResult tr = ts::tbr_search(tree, ds, tp);
+    auto t1 = std::chrono::steady_clock::now();
+    pre_tbr_ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+    pre_tbr_score = tr.best_score;
+  }
 
   // SA phase
   ts::AnnealParams ap;
@@ -2532,6 +2548,8 @@ List ts_anneal_diag(
 
   return List::create(
       Named("initial_score") = initial_score,
+      Named("pre_tbr_score") = pre_tbr_score,
+      Named("pre_tbr_ms") = pre_tbr_ms,
       Named("sa_best") = ar.best_score,
       Named("post_sa") = post_sa_score,
       Named("post_tbr") = post_tbr_score,
@@ -2540,7 +2558,7 @@ List ts_anneal_diag(
       Named("total_attempted") = ar.total_attempted,
       Named("sa_ms") = sa_ms,
       Named("tbr_ms") = tbr_ms,
-      Named("total_ms") = sa_ms + tbr_ms,
+      Named("total_ms") = pre_tbr_ms + sa_ms + tbr_ms,
       Named("edge") = tree_to_edge(tree));
 }
 
@@ -2557,7 +2575,8 @@ List ts_parallel_temper_diag(
     int n_chains = 4,
     NumericVector temperatures = NumericVector(),
     int rounds = 5,
-    int moves_per_round = 0)
+    int moves_per_round = 0,
+    bool score_transfer = false)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -2568,6 +2587,7 @@ List ts_parallel_temper_diag(
   ts::PTParams params;
   params.n_chains = n_chains;
   params.rounds = rounds;
+  params.score_transfer = score_transfer;
   params.moves_per_round = moves_per_round;
   if (temperatures.size() > 0) {
     params.temperatures.assign(temperatures.begin(), temperatures.end());

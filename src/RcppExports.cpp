@@ -833,8 +833,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ts_anneal_diag
-List ts_anneal_diag(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, double t_start, double t_end, int n_phases, int moves_per_phase, bool tbr_polish);
-RcppExport SEXP _TreeSearch_ts_anneal_diag(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP t_startSEXP, SEXP t_endSEXP, SEXP n_phasesSEXP, SEXP moves_per_phaseSEXP, SEXP tbr_polishSEXP) {
+List ts_anneal_diag(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, double t_start, double t_end, int n_phases, int moves_per_phase, bool tbr_polish, bool tbr_first);
+RcppExport SEXP _TreeSearch_ts_anneal_diag(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP t_startSEXP, SEXP t_endSEXP, SEXP n_phasesSEXP, SEXP moves_per_phaseSEXP, SEXP tbr_polishSEXP, SEXP tbr_firstSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -849,13 +849,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type n_phases(n_phasesSEXP);
     Rcpp::traits::input_parameter< int >::type moves_per_phase(moves_per_phaseSEXP);
     Rcpp::traits::input_parameter< bool >::type tbr_polish(tbr_polishSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_anneal_diag(contrast, tip_data, weight, levels, min_steps, concavity, t_start, t_end, n_phases, moves_per_phase, tbr_polish));
+    Rcpp::traits::input_parameter< bool >::type tbr_first(tbr_firstSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_anneal_diag(contrast, tip_data, weight, levels, min_steps, concavity, t_start, t_end, n_phases, moves_per_phase, tbr_polish, tbr_first));
     return rcpp_result_gen;
 END_RCPP
 }
 // ts_parallel_temper_diag
-List ts_parallel_temper_diag(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, int n_chains, NumericVector temperatures, int rounds, int moves_per_round);
-RcppExport SEXP _TreeSearch_ts_parallel_temper_diag(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP n_chainsSEXP, SEXP temperaturesSEXP, SEXP roundsSEXP, SEXP moves_per_roundSEXP) {
+List ts_parallel_temper_diag(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, int n_chains, NumericVector temperatures, int rounds, int moves_per_round, bool score_transfer);
+RcppExport SEXP _TreeSearch_ts_parallel_temper_diag(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP n_chainsSEXP, SEXP temperaturesSEXP, SEXP roundsSEXP, SEXP moves_per_roundSEXP, SEXP score_transferSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -869,7 +870,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type temperatures(temperaturesSEXP);
     Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
     Rcpp::traits::input_parameter< int >::type moves_per_round(moves_per_roundSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_parallel_temper_diag(contrast, tip_data, weight, levels, min_steps, concavity, n_chains, temperatures, rounds, moves_per_round));
+    Rcpp::traits::input_parameter< bool >::type score_transfer(score_transferSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_parallel_temper_diag(contrast, tip_data, weight, levels, min_steps, concavity, n_chains, temperatures, rounds, moves_per_round, score_transfer));
     return rcpp_result_gen;
 END_RCPP
 }

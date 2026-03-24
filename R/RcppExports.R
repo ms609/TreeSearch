@@ -184,12 +184,12 @@ ts_wagner_bias_bench <- function(contrast, tip_data, weight, levels, min_steps, 
     .Call(`_TreeSearch_ts_wagner_bias_bench`, contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature, n_reps, run_tbr)
 }
 
-ts_anneal_diag <- function(contrast, tip_data, weight, levels, min_steps = integer(), concavity = -1.0, t_start = 20.0, t_end = 0.0, n_phases = 10L, moves_per_phase = 0L, tbr_polish = TRUE) {
-    .Call(`_TreeSearch_ts_anneal_diag`, contrast, tip_data, weight, levels, min_steps, concavity, t_start, t_end, n_phases, moves_per_phase, tbr_polish)
+ts_anneal_diag <- function(contrast, tip_data, weight, levels, min_steps = integer(), concavity = -1.0, t_start = 20.0, t_end = 0.0, n_phases = 10L, moves_per_phase = 0L, tbr_polish = TRUE, tbr_first = FALSE) {
+    .Call(`_TreeSearch_ts_anneal_diag`, contrast, tip_data, weight, levels, min_steps, concavity, t_start, t_end, n_phases, moves_per_phase, tbr_polish, tbr_first)
 }
 
-ts_parallel_temper_diag <- function(contrast, tip_data, weight, levels, min_steps = integer(), concavity = -1.0, n_chains = 4L, temperatures = numeric(), rounds = 5L, moves_per_round = 0L) {
-    .Call(`_TreeSearch_ts_parallel_temper_diag`, contrast, tip_data, weight, levels, min_steps, concavity, n_chains, temperatures, rounds, moves_per_round)
+ts_parallel_temper_diag <- function(contrast, tip_data, weight, levels, min_steps = integer(), concavity = -1.0, n_chains = 4L, temperatures = numeric(), rounds = 5L, moves_per_round = 0L, score_transfer = FALSE) {
+    .Call(`_TreeSearch_ts_parallel_temper_diag`, contrast, tip_data, weight, levels, min_steps, concavity, n_chains, temperatures, rounds, moves_per_round, score_transfer)
 }
 
 ts_test_strategy_tracker <- function(seed, n_draws) {
