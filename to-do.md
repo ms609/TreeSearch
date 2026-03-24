@@ -49,7 +49,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | T-208 | P2 | PR #219 (G) | — | **[Bug] `random_topology_tree` ignores constraints.** When `adaptiveStart=true` AND constraints active, bandit selects RANDOM_TREE → constraint violation. | PR #219 open (WAGNER_RANDOM fallback). |
 
 | T-210 | P2 | PR #222 (C) | — | **[Bug] SA doesn't save best-found topology.** Fix: `anneal_search` tracks/restores best tree at phase boundaries. | On `feature/pt-eval` (TS-PTeval). In T-207 PR #222. |
-| T-211 | P2 | OPEN | — | **[Bug] Stale `final_` in temper candidate scoring.** Same stale-score pattern as SPR: cached score not refreshed after topology changes, biasing candidate selection. | |
+| T-211 | P2 | ASSIGNED (C) | — | **[Bug] Stale `final_` in temper candidate scoring.** Same stale-score pattern as SPR: cached score not refreshed after topology changes, biasing candidate selection. | Race: A released, C investigating. |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
@@ -66,8 +66,8 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by C (focus 3: ratchet & perturbation, SA n_phases=1 fix). |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by A (focus 4: parallelism & RNG, Rf_error-on-worker noted). |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-24 by C (round 12: merge wave cleanup, PR backlog noted, pipeline thinning). |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-24 by A (round 13: 7 open PRs, all agents idle, project in holding pattern). |
 
 
