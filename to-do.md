@@ -54,17 +54,18 @@ with existing completed IDs. Renumbered to T-198–T-201 in S-COORD round 10.
 | T-177 | P1 | ASSIGNED (Human+AI) | — | **Bug fix: mid-TBR/SPR timeout.** | Implemented, building and testing. 1762 Tier 2 tests pass. |
 | T-179 | P2 | PR #215 (M) | T-177, T-178 | **Large-tree strategy preset.** For ≥120 tips. | On `feature/parallel-temper`. Commit `fab1e52c`. Arrives with PT PR #215. |
 | T-190 | P2 | ASSIGNED (A) | — | **Adaptive starting-tree strategy mixing (bandit).** Thompson sampling over 6 strategy arms. | See cold-start brief below. |
+| T-206 | P3 | OPEN | — | **Outer cycle reset cap / minimum-Δ gate.** `outerCycles=1` repeats until no improvement; late cycles yield <1 step/s. Add reset cap or minimum-Δ threshold. Also fix misleading comment at `ts_driven.cpp:180`. | From S-PROF round by E. |
 | T-182 | P3 | OPEN | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | |
 | T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
 | T-187 | P3 | OPEN | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
-| T-205 | P3 | OPEN | — | **Flaky `test-pp-random-tree.R` on Windows.** `five-tip trees are randomly scored` (line 71) fails intermittently on Windows R-CMD-check. Uses `set.seed(0)` but `RandomTreeScore()` C++ RNG may differ cross-platform. Consider increasing `stringency` or fixing the C-side seed. | Pre-existing; not caused by any feature branch. |
+| T-205 | P3 | ASSIGNED (G) | — | **Flaky `test-pp-random-tree.R` on Windows.** `five-tip trees are randomly scored` (line 71) fails intermittently on Windows R-CMD-check. Uses `set.seed(0)` but `RandomTreeScore()` C++ RNG may differ cross-platform. Consider increasing `stringency` or fixing the C-side seed. | Pre-existing; not caused by any feature branch. |
 
 ### Standing Tasks
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by B (focus 10: Profile & IW scoring). |
-| S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-24 by G (round 4: post-pipeline overhaul, no new tasks). |
+| S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-24 by D (round 10). |
 
 ---
