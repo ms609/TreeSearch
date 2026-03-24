@@ -4,8 +4,8 @@
 library(TreeSearch, lib.loc = if (dir.exists(".agent-a")) ".agent-a" else .libPaths())
 library(TreeTools)
 
-source("inst/benchmarks/bench_datasets.R")
-source("inst/benchmarks/bench_framework.R")
+source("dev/benchmarks/bench_datasets.R")
+source("dev/benchmarks/bench_framework.R")
 
 # Simplified benchmark_run without callback
 benchmark_run_nocb <- function(ds, strategy,
@@ -147,6 +147,6 @@ run_grid <- function(dataset_names = GRID_DATASETS,
 # Main
 cat("Starting benchmark grid...\n\n")
 results <- run_grid()
-outfile <- "inst/benchmarks/results_grid.csv"
+outfile <- "dev/benchmarks/results_grid.csv"
 write.csv(results, outfile, row.names = FALSE)
 cat(sprintf("\nResults saved to %s (%d rows)\n", outfile, nrow(results)))

@@ -9,7 +9,7 @@
 #   4. Scaling exponent for indirect scoring vs smaller datasets
 #
 # Run via:
-#   Rscript --vanilla -e "library(TreeSearch, lib.loc='.agent-f'); source('inst/benchmarks/bench_stress_large.R')"
+#   Rscript --vanilla -e "library(TreeSearch, lib.loc='.agent-f'); source('dev/benchmarks/bench_stress_large.R')"
 
 library(TreeSearch, lib.loc = ".agent-f")
 library(TreeTools)
@@ -261,7 +261,7 @@ rownames(summary_df) <- NULL
 print(summary_df)
 
 # Save results
-out_path <- "inst/benchmarks/stress_large_results.csv"
+out_path <- "dev/benchmarks/stress_large_results.csv"
 write.csv(summary_df, out_path, row.names = FALSE)
 cat("\nResults written to", out_path, "\n")
 

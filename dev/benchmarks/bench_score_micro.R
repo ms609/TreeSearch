@@ -1,5 +1,5 @@
 # Micro-benchmark: just Fitch scoring, no search
-# Usage: Rscript inst/benchmarks/bench_score_micro.R <lib_path>
+# Usage: Rscript dev/benchmarks/bench_score_micro.R <lib_path>
 args <- commandArgs(trailingOnly = TRUE)
 lib_path <- if (length(args) >= 1) args[1] else ".agent-pgo"
 

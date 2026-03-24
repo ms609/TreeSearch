@@ -17,7 +17,8 @@ test_that("IW Scoring", {
   fit <- homoplasies / (homoplasies + concavity)
   manualIW <- sum(fit * weight)
 
-  expect_equal(TreeLength(tree, dataset, concavity = concavity), manualIW)
+  expect_equal(TreeLength(tree, dataset, concavity = concavity,
+                         extended_iw = FALSE), manualIW)
 
   # Sanity check: IW score should be positive for a non-trivial dataset
 
@@ -40,5 +41,12 @@ test_that("concavity = 0 rejected with informative error", {
                "`concavity` must be positive")
   expect_error(AdditionTree(dataset, concavity = -1),
                "`concavity` must be positive")
+  expect_error(MaximizeParsimony(dataset, tree, concavity = 0,
+                                  maxReplicates = 1L),
+               "`concavity` must be positive")
+  expect_error(MaximizeParsimony(dataset, tree, concavity = -3,
+                                  maxReplicates = 1L),
+               "`concavity` must be positive")
+  expect_error(SuccessiveApproximations(tree, dataset, concavity = 0),
+               "`concavity` must be positive")
 })
-TESTEOF 2>&1

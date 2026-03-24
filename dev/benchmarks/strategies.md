@@ -366,7 +366,7 @@ based on per-phase improvement rates.
 
 ## R Helper Function
 
-The `inst/benchmarks/bench_datasets.R` benchmark utility can use a
+The `dev/benchmarks/bench_datasets.R` benchmark utility can use a
 `get_strategy(name)` helper. Example:
 
 ```r

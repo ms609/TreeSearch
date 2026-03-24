@@ -67,8 +67,9 @@ HODKINSON
 HOFREITER
 HSJ
 Halkieria
-IW
 Homoplasy
+IQ
+IW
 Insecta
 JIA
 Jamoytius
@@ -155,6 +156,7 @@ TANKE
 TBR
 TCI
 TILLIER
+TNT's
 Tenrec
 Terebratulina
 Texacephale
@@ -185,6 +187,7 @@ bipartitions
 bootstrapper
 bristleworm
 cdef
+cdot
 cf
 cla
 codecov
@@ -214,8 +217,8 @@ maximin
 memoization
 morphy
 morphydefs
-multifurcating
 multiPhylo
+multifurcating
 noninvasive
 nontherian
 osteichthyan
@@ -239,6 +242,7 @@ relabellings
 reoptimisation
 sd
 secondaries
+softmax
 speficied
 statedata
 stdout

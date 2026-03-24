@@ -1101,6 +1101,14 @@ Morphy <- function(dataset, tree,
 #' @param hsj_alpha Numeric in \[0, 1\] controlling the weight of secondary
 #' character variation in HSJ scoring.  Default `1.0`.  Only used when
 #' `inapplicable = "hsj"`.
+#' @param extended_iw Logical; if `TRUE` (default), use extended implied
+#' weighting (XPIWE; \insertCite{Goloboff2014;textual}{TreeSearch}),
+#' which adjusts per-character concavity for missing entries.
+#' Ignored when `concavity = Inf` or `"profile"`.
+#' @param xpiwe_r Numeric; proportion of homoplasy assumed in missing entries.
+#' Default `0.5`.  Only used when `extended_iw = TRUE`.
+#' @param xpiwe_max_f Numeric; maximum extrapolation factor.
+#' Default `5`.  Only used when `extended_iw = TRUE`.
 #'
 #' @return `Resample()` returns a `multiPhylo` object containing one best tree
 #' per resample replicate.
@@ -1115,6 +1123,9 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
                      nReplicates = 1L, nThreads = 1L,
                      hierarchy = NULL, inapplicable = "bgs",
                      hsj_alpha = 1.0,
+                     extended_iw = TRUE,
+                     xpiwe_r = 0.5,
+                     xpiwe_max_f = 5,
                      ...) {
 
   if (!inherits(dataset, "phyDat")) {
@@ -1220,6 +1231,12 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
     ))
   }
 
+  # XPIWE: compute per-pattern observed-taxa counts
+  useXpiwe <- isTRUE(extended_iw) && is.finite(concavity) && !useProfile
+  if (useXpiwe) {
+    obsCount <- .ObsCount(dataset)
+  }
+
   searchArgs <- list(
     contrast = contrast,
     tip_data = tip_data,
@@ -1233,7 +1250,11 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
     ratchetCycles = as.integer(max(ratchIter, 3L)),
     min_steps = if (is.finite(concavity))
       as.integer(MinimumLength(dataset, compress = TRUE)) else integer(0),
-    concavity = as.double(concavity)
+    concavity = as.double(concavity),
+    xpiwe = useXpiwe,
+    xpiwe_r = as.double(xpiwe_r),
+    xpiwe_max_f = as.double(xpiwe_max_f),
+    obs_count = if (useXpiwe) obsCount else integer(0)
   )
 
   if (nReplicates > 1L) {

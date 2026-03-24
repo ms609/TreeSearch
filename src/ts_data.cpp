@@ -15,7 +15,11 @@ DataSet build_dataset(
     const int* min_steps_r,
     double concavity,
     const double* info_amounts_r,
-    int info_max_steps)
+    int info_max_steps,
+    bool xpiwe,
+    double xpiwe_r,
+    double xpiwe_max_f,
+    const int* obs_count_r)
 {
   DataSet ds;
   ds.n_tips = n_tips;
@@ -278,9 +282,32 @@ DataSet build_dataset(
     // modules activate the weighted (indirect IW) pipeline.
     ds.concavity = 1.0;
   } else if (std::isfinite(concavity)) {
-    ds.scoring_mode = ScoringMode::IW;
+    ds.scoring_mode = (xpiwe && obs_count_r) ? ScoringMode::XPIWE
+                                             : ScoringMode::IW;
   } else {
     ds.scoring_mode = ScoringMode::EW;
+  }
+
+  // Populate per-pattern eff_k and phi (Goloboff 2014, §missing entries).
+  ds.eff_k.resize(n_patterns);
+  ds.phi.resize(n_patterns);
+  if (ds.scoring_mode == ScoringMode::XPIWE) {
+    for (int p = 0; p < n_patterns; ++p) {
+      // Goloboff (2014) Extension 3, verified against TNT 1.6:
+      // f = 1 + r * missing / obs  (NOT r * total / obs)
+      int obs = obs_count_r[p];
+      int missing = n_tips - obs;
+      double f = 1.0 + xpiwe_r * missing / static_cast<double>(obs);
+      if (f < 1.0) f = 1.0;
+      if (f > xpiwe_max_f) f = xpiwe_max_f;
+      ds.eff_k[p] = concavity / f;
+      // Φ = w(1, k_ref) / w(1, k_c) where w(1, k) = 1/(1+k)
+      ds.phi[p] = (1.0 + ds.eff_k[p]) / (1.0 + concavity);
+    }
+  } else {
+    std::fill(ds.eff_k.begin(), ds.eff_k.end(),
+              std::isfinite(concavity) ? concavity : 0.0);
+    std::fill(ds.phi.begin(), ds.phi.end(), 1.0);
   }
 
   return ds;

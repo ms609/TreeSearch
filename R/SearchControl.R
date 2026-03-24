@@ -64,7 +64,7 @@
 #'   perturbs the objective function, while NNI-perturbation perturbs the
 #'   topology directly.
 #'   0 (default) disables NNI perturbation.
-#'   Inspired by IQ-TREE's `doRandomNNIs()`
+#'   Inspired by `doRandomNNIs()` in IQ-TREE
 #'   \insertCite{Nguyen2015}{TreeSearch}.
 #' @param nniPerturbFraction Numeric (0--1); fraction of internal branches
 #'   to swap during each NNI-perturbation cycle.  Default 0.5.
@@ -75,6 +75,26 @@
 #'   uncertain regions.  Constraints are cleared whenever a new best score
 #'   is found.  Only active when no user-supplied `constraint` is
 #'   present.  Default `FALSE`.
+#' @param wagnerBias Integer; criterion for biasing taxon addition order
+#'   during Wagner tree construction.  0 = random (default),
+#'   1 = Goloboff (2014) non-ambiguous-character priority,
+#'   2 = entropy-based state-specificity priority.  Biased orders use
+#'   softmax-weighted sampling for diversity across replicates.
+#' @param wagnerBiasTemp Numeric; softmax temperature controlling
+#'   selectivity of biased Wagner addition (default 0.3).  Lower values
+#'   concentrate sampling on the highest-scoring taxa; higher values
+#'   approach uniform random.
+#' @param outerCycles Integer; number of outer search cycles per replicate
+#'   (default 1).  Each outer cycle runs the full
+#'   \[XSS/RSS/CSS → ratchet → NNI-perturbation → drift → TBR\] sequence,
+#'   with perturbation cycles divided evenly among outer iterations.
+#'   Matches the interleaved sectorial + ratchet pattern of TNT's `xmult`
+#'   \insertCite{Goloboff1999}{TreeSearch}.
+#' @param adaptiveStart Logical; use Thompson-sampling (bandit) strategy
+#'   selection for starting trees?  When `TRUE`, each replicate draws its
+#'   starting strategy from a pool of options (random Wagner, biased Wagner,
+#'   random tree, pool ratchet, pool NNI-perturb), adapting to which
+#'   strategies yield the best scores.  Default `FALSE`.
 #'
 #' @return A named list of class `"SearchControl"`.
 #'

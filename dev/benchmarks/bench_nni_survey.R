@@ -4,7 +4,7 @@
 # count how many moves improve the score. This measures the theoretical
 # payoff of batch/simultaneous NNI at different search stages.
 #
-# Usage: Rscript inst/benchmarks/bench_nni_survey.R <lib_path>
+# Usage: Rscript dev/benchmarks/bench_nni_survey.R <lib_path>
 
 args <- commandArgs(trailingOnly = TRUE)
 lib_path <- if (length(args) >= 1) args[1] else stop("Usage: Rscript bench_nni_survey.R <lib_path>")

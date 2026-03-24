@@ -4,12 +4,12 @@
 # Scans neotrans/inst/matrices/*.nex, attempts to parse each as phyDat,
 # and records metadata (ntax, nchar, patterns, missing%, inapplicable%).
 #
-# Output: inst/benchmarks/mbank_catalogue.csv
+# Output: dev/benchmarks/mbank_catalogue.csv
 #
 # Run from the TreeSearch source root:
-#   Rscript inst/benchmarks/build_mbank_catalogue.R
+#   Rscript dev/benchmarks/build_mbank_catalogue.R
 #
-# Or from inst/benchmarks/:
+# Or from dev/benchmarks/:
 #   Rscript build_mbank_catalogue.R
 
 library(TreeTools)
@@ -26,7 +26,7 @@ find_neotrans_dir <- function() {
     if (dir.exists(d)) return(d)
   }
   stop("Cannot find neotrans/inst/matrices/. ",
-       "Run from TreeSearch source root or inst/benchmarks/.")
+       "Run from TreeSearch source root or dev/benchmarks/.")
 }
 
 find_output_dir <- function() {
@@ -37,10 +37,10 @@ find_output_dir <- function() {
   for (d in candidates) {
     if (file.exists(file.path(d, "bench_datasets.R"))) return(d)
   }
-  # Fall back to inst/benchmarks if it exists
+  # Fall back to dev/benchmarks if it exists
   d <- file.path(getwd(), "inst", "benchmarks")
   if (dir.exists(d)) return(d)
-  stop("Cannot find inst/benchmarks/ directory.")
+  stop("Cannot find dev/benchmarks/ directory.")
 }
 
 neotrans_dir <- find_neotrans_dir()

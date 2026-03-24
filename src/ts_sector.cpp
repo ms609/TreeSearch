@@ -430,6 +430,8 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
   rd.data.min_steps = ds.min_steps;
   rd.data.pattern_freq = ds.pattern_freq;
   rd.data.concavity = ds.concavity;
+  rd.data.eff_k = ds.eff_k;
+  rd.data.phi = ds.phi;
 
   // Copy scoring mode and simplification metadata
   rd.data.scoring_mode = ds.scoring_mode;

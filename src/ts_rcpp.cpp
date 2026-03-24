@@ -37,7 +37,11 @@ ts::DataSet make_dataset(
     CharacterVector levels,
     IntegerVector min_steps = IntegerVector(),
     double concavity = -1.0,
-    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    IntegerVector obs_count = IntegerVector())
 {
   if (concavity < 0) concavity = HUGE_VAL;
   int n_tips = tip_data.nrow();
@@ -64,6 +68,11 @@ ts::DataSet make_dataset(
     info_max_steps = ia.nrow();
   }
 
+  // XPIWE: per-pattern observed-taxa count
+  const int* obs_count_ptr = (xpiwe && obs_count.size() > 0)
+                                 ? INTEGER(obs_count)
+                                 : nullptr;
+
   return ts::build_dataset(
       REAL(contrast), n_tokens, n_states,
       INTEGER(tip_data), n_tips, n_patterns,
@@ -72,7 +81,11 @@ ts::DataSet make_dataset(
       min_steps_ptr,
       concavity,
       info_amounts_ptr,
-      info_max_steps);
+      info_max_steps,
+      xpiwe,
+      xpiwe_r,
+      xpiwe_max_f,
+      obs_count_ptr);
 }
 
 // Convert TreeState topology back to R edge matrix (2-column, 1-based)
@@ -114,10 +127,15 @@ double ts_fitch_score(
     CharacterVector levels,
     IntegerVector min_steps = IntegerVector(),
     double concavity = -1.0,
-    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    IntegerVector obs_count = IntegerVector())
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
-                                min_steps, concavity, infoAmounts);
+                                min_steps, concavity, infoAmounts,
+                                xpiwe, xpiwe_r, xpiwe_max_f, obs_count);
 
   ts::TreeState tree;
   tree.init_from_edge(
@@ -1217,6 +1235,10 @@ List ts_driven_search(
     double hsjAlpha = 1.0,
     int hsjAbsentState = 0,
     Nullable<List> xformChars = R_NilValue,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    IntegerVector obs_count = IntegerVector(),
     int consensusStableReps = 0,
     bool adaptiveLevel = false,
     bool consensusConstrain = false,
@@ -1228,7 +1250,8 @@ List ts_driven_search(
     bool adaptiveStart = false)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
-                                min_steps, concavity, infoAmounts);
+                                min_steps, concavity, infoAmounts,
+                                xpiwe, xpiwe_r, xpiwe_max_f, obs_count);
 
   // HSJ hierarchy scoring setup
   if (hierarchyBlocks.isNotNull()) {
@@ -1420,6 +1443,21 @@ List ts_driven_search(
     Named("fuse_ms")      = result.timings.fuse_ms
   );
 
+  // Per-strategy diagnostics (T-190)
+  List strategy_diag = R_NilValue;
+  if (params.adaptive_start || nThreads > 1) {
+    CharacterVector sn(ts::N_STRAT);
+    IntegerVector sa(ts::N_STRAT), ss(ts::N_STRAT);
+    for (int i = 0; i < ts::N_STRAT; ++i) {
+      sn[i] = ts::strategy_name(static_cast<ts::StartStrategy>(i));
+      sa[i] = result.strategy_attempts[i];
+      ss[i] = result.strategy_successes[i];
+    }
+    sa.names() = sn;
+    ss.names() = sn;
+    strategy_diag = List::create(Named("attempts") = sa, Named("successes") = ss);
+  }
+
   if (result.pool_size == 0) {
     return List::create(
       Named("trees") = List::create(),
@@ -1432,7 +1470,8 @@ List ts_driven_search(
       Named("last_improved_rep") = result.last_improved_rep,
       Named("timed_out") = result.timed_out,
       Named("consensus_stable") = result.consensus_stable,
-      Named("timings") = timings
+      Named("timings") = timings,
+      Named("strategy_diagnostics") = strategy_diag
     );
   }
 
@@ -1456,7 +1495,8 @@ List ts_driven_search(
     Named("last_improved_rep") = result.last_improved_rep,
     Named("timed_out") = result.timed_out,
     Named("consensus_stable") = result.consensus_stable,
-    Named("timings") = timings
+    Named("timings") = timings,
+    Named("strategy_diagnostics") = strategy_diag
   );
 }
 
@@ -1482,7 +1522,11 @@ List ts_resample_search(
     Nullable<IntegerVector> consWeight = R_NilValue,
     Nullable<CharacterVector> consLevels = R_NilValue,
     int consExpectedScore = 0,
-    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    IntegerVector obs_count = IntegerVector())
 {
   if (concavity < 0) concavity = HUGE_VAL;
   int n_tips = tip_data.nrow();
@@ -1499,6 +1543,9 @@ List ts_resample_search(
 
   const int* min_steps_ptr = (min_steps.size() > 0) ? INTEGER(min_steps)
                                                      : nullptr;
+  const int* obs_count_ptr = (xpiwe && obs_count.size() > 0)
+                                 ? INTEGER(obs_count)
+                                 : nullptr;
 
   // Profile parsimony
   const double* info_amounts_ptr;
@@ -1531,7 +1578,11 @@ List ts_resample_search(
       params,
       info_amounts_ptr,
       info_max_steps,
-      cd_ptr);
+      cd_ptr,
+      xpiwe,
+      xpiwe_r,
+      xpiwe_max_f,
+      obs_count_ptr);
 
   if (result.edge_parent.empty()) {
     return List::create(
@@ -1577,7 +1628,11 @@ List ts_parallel_resample(
     Nullable<IntegerVector> consWeight = R_NilValue,
     Nullable<CharacterVector> consLevels = R_NilValue,
     int consExpectedScore = 0,
-    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    IntegerVector obs_count = IntegerVector())
 {
   if (concavity < 0) concavity = HUGE_VAL;
   int n_tips = tip_data.nrow();
@@ -1594,6 +1649,9 @@ List ts_parallel_resample(
 
   const int* min_steps_ptr = (min_steps.size() > 0) ? INTEGER(min_steps)
                                                      : nullptr;
+  const int* obs_count_ptr = (xpiwe && obs_count.size() > 0)
+                                 ? INTEGER(obs_count)
+                                 : nullptr;
 
   const double* info_amounts_ptr;
   int info_max_steps;
@@ -1623,7 +1681,8 @@ List ts_parallel_resample(
         INTEGER(tip_data), n_tips, n_patterns,
         INTEGER(weight), level_ptrs.data(), min_steps_ptr,
         concavity, params, nReplicates, nThreads,
-        info_amounts_ptr, info_max_steps, cd_ptr);
+        info_amounts_ptr, info_max_steps, cd_ptr,
+        xpiwe, xpiwe_r, xpiwe_max_f, obs_count_ptr);
   } else {
     // Serial path: run each replicate sequentially
     results.resize(nReplicates);
@@ -1633,7 +1692,8 @@ List ts_parallel_resample(
           INTEGER(tip_data), n_tips, n_patterns,
           INTEGER(weight), level_ptrs.data(), min_steps_ptr,
           concavity, params,
-          info_amounts_ptr, info_max_steps, cd_ptr);
+          info_amounts_ptr, info_max_steps, cd_ptr,
+          xpiwe, xpiwe_r, xpiwe_max_f, obs_count_ptr);
     }
   }
 
@@ -1685,7 +1745,11 @@ List ts_successive_approx(
     Nullable<IntegerVector> consWeight = R_NilValue,
     Nullable<CharacterVector> consLevels = R_NilValue,
     int consExpectedScore = 0,
-    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    IntegerVector obs_count = IntegerVector())
 {
   if (concavity < 0) concavity = HUGE_VAL;
   int n_tips = tip_data.nrow();
@@ -1702,6 +1766,9 @@ List ts_successive_approx(
 
   const int* min_steps_ptr = (min_steps.size() > 0) ? INTEGER(min_steps)
                                                      : nullptr;
+  const int* obs_count_ptr = (xpiwe && obs_count.size() > 0)
+                                 ? INTEGER(obs_count)
+                                 : nullptr;
 
   // Profile parsimony
   const double* info_amounts_ptr;
@@ -1734,7 +1801,11 @@ List ts_successive_approx(
       params,
       info_amounts_ptr,
       info_max_steps,
-      cd_ptr);
+      cd_ptr,
+      xpiwe,
+      xpiwe_r,
+      xpiwe_max_f,
+      obs_count_ptr);
 
   if (result.edge_parent.empty()) {
     return List::create(
@@ -2407,14 +2478,8 @@ List ts_wagner_bias_bench(
 }
 
 
-// --- Stochastic TBR with Boltzmann acceptance (parallel tempering core) ---
-//
-// Runs n_moves stochastic SPR/TBR moves with Boltzmann acceptance at the
-// given temperature.  Temperature = 0 is strict hill-climbing; higher
-// temperatures accept worse moves more readily (probability exp(-delta/T)).
-//
-// Returns a list with best_score, final_score, n_accepted, n_improved,
-// n_attempted.  The tree is modified in place.
+// Parallel tempering functions (ts_stochastic_tbr, ts_parallel_temper)
+// removed — live on feature/parallel-temper branch.
 
 // [[Rcpp::export]]
 List ts_stochastic_tbr(
@@ -2467,13 +2532,6 @@ List ts_stochastic_tbr(
     Named("edge") = out_edge
   );
 }
-
-
-// --- Parallel tempering search ---
-//
-// Runs N chains at different Boltzmann temperatures with periodic swaps.
-// Cold chain (T=0) uses standard TBR; hot chains use stochastic TBR.
-// Returns the cold chain's final tree and statistics.
 
 // [[Rcpp::export]]
 List ts_parallel_temper(

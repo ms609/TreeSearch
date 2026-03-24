@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # Benchmark collapsed-tree optimization: skip counts, wall time, score equivalence
 #
-# Usage: Rscript inst/benchmarks/bench_collapsed.R <lib_path>
+# Usage: Rscript dev/benchmarks/bench_collapsed.R <lib_path>
 #
 # Runs each dataset 3 times with fixed seeds and reports:
 #   - Skip counts (via ts_tbr_search on near-optimal tree)

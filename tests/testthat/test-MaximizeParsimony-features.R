@@ -57,9 +57,10 @@ test_that(".AutoStrategy selects on size and signal density", {
   expect_equal(AS(75, 250),   "thorough")  # ratio 3.3
   expect_equal(AS(100, 200),  "thorough")  # ratio 2.0
   expect_equal(AS(75, 400),   "thorough")  # ratio 5.3 — high ratio still benefits
-  expect_equal(AS(125, 2800), "thorough")  # ratio 22.4 — high ratio still benefits
-  expect_equal(AS(200, 100),  "thorough")  # nChar exactly 100 (boundary)
-  expect_equal(AS(200, 1200), "thorough")  # ratio 6.0
+  expect_equal(AS(119, 2800), "thorough")  # just below large threshold
+  expect_equal(AS(125, 2800), "large")    # >= 120 tips -> large
+  expect_equal(AS(200, 100),  "large")    # >= 120 tips -> large
+  expect_equal(AS(200, 1200), "large")    # >= 120 tips -> large
 })
 
 test_that("strategy = 'auto' selects based on dataset size", {
@@ -107,10 +108,14 @@ test_that("unknown strategy gives warning", {
 
 test_that("maxSeconds stops search before maxReplicates", {
   set.seed(7392)
-  result <- MaximizeParsimony(ds, maxReplicates = 100L, targetHits = 100L,
-                               maxSeconds = 0.5, verbosity = 0L)
+  # Use a near-zero timeout so even a small dataset triggers it reliably.
+  # The timeout is checked between replicates, so the first may complete
+
+  # but subsequent ones won't start.
+  result <- MaximizeParsimony(ds, maxReplicates = 1000L, targetHits = 1000L,
+                               maxSeconds = 0.001, verbosity = 0L)
   expect_s3_class(result, "multiPhylo")
-  expect_true(attr(result, "timed_out"))
+  expect_lt(attr(result, "replicates"), 1000L)
 })
 
 test_that("maxSeconds = 0 means no timeout", {

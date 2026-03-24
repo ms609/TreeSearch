@@ -15,14 +15,14 @@
 # (same time-per-rep).
 #
 # Usage:
-#   source("inst/benchmarks/bench_framework.R")
+#   source("dev/benchmarks/bench_framework.R")
 #   results <- run_benchmark_grid()
 #   summary <- summarize_grid(results)
 
 library(TreeSearch)
 library(TreeTools)
 
-source("inst/benchmarks/bench_datasets.R")
+source("dev/benchmarks/bench_datasets.R")
 
 # ---- Strategy presets (formalized from strategies.md, T-003) ----
 
@@ -403,7 +403,7 @@ summarize_grid <- function(results,
 
 #' Save benchmark results to CSV.
 save_results <- function(results,
-                         file = sprintf("inst/benchmarks/results_%s.csv",
+                         file = sprintf("dev/benchmarks/results_%s.csv",
                                         format(Sys.time(), "%Y%m%d_%H%M"))) {
   write.csv(results, file, row.names = FALSE)
   cat("Results saved to", file, "\n")

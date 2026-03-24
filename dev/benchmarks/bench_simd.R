@@ -5,7 +5,7 @@
 # and per-candidate costs to verify the Phase 3D profiling baseline is met
 # or improved.
 #
-# Usage: Rscript inst/benchmarks/bench_simd.R
+# Usage: Rscript dev/benchmarks/bench_simd.R
 
 library(TreeSearch)
 library(TreeTools)

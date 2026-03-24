@@ -1,7 +1,7 @@
 # Benchmark dataset loading and scoring utilities
 #
 # Usage:
-#   source("inst/benchmarks/bench_datasets.R")
+#   source("dev/benchmarks/bench_datasets.R")
 #   datasets <- load_benchmark_datasets()
 #   run_benchmark_suite(maxSeconds = 30, replicates = 5)
 
@@ -27,7 +27,7 @@ BENCHMARK_NAMES <- c(
 )
 
 # Large-tree benchmark datasets (>= 100 tips).
-# Loaded from inst/benchmarks/ rather than inapplicable.phyData.
+# Loaded from dev/benchmarks/ rather than inapplicable.phyData.
 LARGE_BENCHMARK_NAMES <- c(
   "mbank_X30754"    # 180 tips, 425 chars, 40% missing, 20% inapplicable
 )
@@ -62,14 +62,10 @@ load_benchmark_datasets <- function() {
   datasets
 }
 
-#' Load large-tree benchmark datasets from inst/benchmarks/
+#' Load large-tree benchmark datasets from dev/benchmarks/
 #' @return Named list of prepared datasets (ready for C++ bridge)
 load_large_benchmark_datasets <- function() {
-  bench_dir <- system.file("benchmarks", package = "TreeSearch")
-  if (bench_dir == "") {
-    # Fall back to source directory when running from source tree
-    bench_dir <- "inst/benchmarks"
-  }
+  bench_dir <- "dev/benchmarks"
   datasets <- list()
   for (nm in LARGE_BENCHMARK_NAMES) {
     nex_path <- file.path(bench_dir, paste0(nm, ".nex"))
@@ -231,7 +227,7 @@ NEOTRANS_MATRICES_DIR <- local({
   # Try from TreeSearch source root (getwd() == TreeSearch-a/)
   candidates <- c(
     file.path(getwd(), "..", "neotrans", "inst", "matrices"),
-    # From inst/benchmarks/ (when sourcing directly)
+    # From dev/benchmarks/ (when sourcing directly)
     file.path(getwd(), "..", "..", "neotrans", "inst", "matrices")
   )
   for (d in candidates) {
@@ -266,7 +262,7 @@ MBANK_FIXED_SAMPLE <- c(
 
 #' Load the MorphoBank matrix catalogue
 #'
-#' Reads the pre-built catalogue CSV from inst/benchmarks/mbank_catalogue.csv.
+#' Reads the pre-built catalogue CSV from dev/benchmarks/mbank_catalogue.csv.
 #' Filters to usable matrices (parse_ok, ntax >= MBANK_MIN_NTAX) and
 #' optionally excludes redundant multi-matrix duplicates.
 #'
@@ -276,9 +272,8 @@ MBANK_FIXED_SAMPLE <- c(
 load_mbank_catalogue <- function(include_redundant = FALSE) {
   # Find the catalogue CSV
   cat_candidates <- c(
-    file.path(getwd(), "inst", "benchmarks", "mbank_catalogue.csv"),
-    file.path(getwd(), "mbank_catalogue.csv"),
-    system.file("benchmarks", "mbank_catalogue.csv", package = "TreeSearch")
+    file.path(getwd(), "dev", "benchmarks", "mbank_catalogue.csv"),
+    file.path(getwd(), "mbank_catalogue.csv")
   )
   cat_path <- NULL
   for (p in cat_candidates) {

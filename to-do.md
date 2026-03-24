@@ -26,49 +26,47 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-
-
-| T-150 | P2 | WORKTREE (TS-CID-cons) | — | **CID-optimal consensus tree search** | Use SPR/TBR/NNI + Ratchet to find consensus trees minimising CID to input trees. Needs: collapse/resolve moves for non-binary trees, CID batch scorer, `CIDBootstrap` (resample input trees). See `briefing-cid-consensus.md`. PoC validated in TreeDist. |
-
-
-
+| T-150 | P2 | WORKTREE (TS-CID-cons) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. |
 
 ### Parallel Tempering (Objective 17)
 
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-| T-194 | P3 | OPEN | — | **PT temperature auto-calibration.** Scale temperature ladder by dataset size or typical score delta. Current fixed ladder is suboptimal for small datasets. | |
-| T-195 | P3 | OPEN | — | **PT auto-enable for large trees.** Automatically activate PT when n_tip > 100. Integrate into strategy presets (large/thorough). | |
-
-### Bugs from S-RED Focus 10
+**Note:** These tasks were originally misnumbered T-190–T-193, colliding
+with existing completed IDs. Renumbered to T-198–T-201 in S-COORD round 10.
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-196 | P2 | ASSIGNED (G) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies (ts_tbr.cpp, ts_search.cpp, ts_drift.cpp, ts_temper.cpp) read `local_cost` for all blocks, but NA blocks need the three-pass correction from `extract_char_steps`. IW candidate screening uses wrong base score + deltas. Impact: conservative (final `score_tree()` always correct), but suboptimal move selection for `inapplicable="bgs"` + finite `concavity`. Fix: add NA block loop (matching ts_fitch.cpp:420-465) to each copy, or extract a shared function. | Found by S-RED focus 10. |
-| T-197 | P3 | ASSIGNED (D) | — | **[Bug] `concavity = 0` produces NaN.** `precompute_iw_delta` computes `0/(0+0)=NaN` when `k=0` and `e=0`. R-side `TreeLength` also has `0/0` at line 132. No input validation rejects `k ≤ 0`. Fix: validate `concavity > 0` in R layer (`MaximizeParsimony`, `TreeLength`, `AdditionTree`), or handle `k=0` as limit case in C++. | Found by S-RED focus 10. |
+| T-198 | P2 | DONE (C), needs PR | — | **Stochastic TBR + Boltzmann acceptance.** `stochastic_tbr_phase()` in `ts_temper.h/.cpp`. | Was T-190 (PT). On `feature/parallel-temper`. |
+| T-199 | P2 | DONE (C), needs PR | T-198 | **Multi-chain parallel tempering framework.** N ChainStates with temperature ladder, Metropolis swaps. | Was T-191 (PT). On `feature/parallel-temper`. |
+| T-200 | P2 | DONE (C), needs PR | T-199 | **Pipeline integration.** Wired into `run_single_replicate()` as new phase. | Was T-192 (PT). On `feature/parallel-temper`. |
+| T-201 | P2 | DONE (C), needs PR | T-200 | **Benchmark evaluation.** PT vs current pipeline at equal wall-clock. | Was T-193 (PT). On `feature/parallel-temper`. |
+
+### Bugs
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-196 | P2 | ASSIGNED (G) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. |
+| T-202 | P2 | OPEN | — | **[Bug] MPT enumeration skipped on timeout.** `!result.timed_out` guard in `driven_search()` and `parallel_driven_search()` prevents MPT plateau walk after timeout. At ≥40 tips, timeout is the normal exit, so pool often has only 1–4 trees. Fix: remove the `!result.timed_out` guard; also remove `check_timeout` from MPT enum's TBR call. | Investigated by F; root cause confirmed. See `agent-f.md`. |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
+| T-177 | P1 | ASSIGNED (Human+AI) | — | **Bug fix: mid-TBR/SPR timeout.** | Implemented, building and testing. 1762 Tier 2 tests pass. |
+| T-179 | P2 | DONE (G), needs PR | T-177, T-178 | **Large-tree strategy preset.** For ≥120 tips. | On `feature/parallel-temper`. Commit `fab1e52c`. |
+| T-190 | P2 | ASSIGNED (A) | — | **Adaptive starting-tree strategy mixing (bandit).** Thompson sampling over 6 strategy arms. | See cold-start brief below. |
+| T-182 | P3 | OPEN | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | |
+| T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
+| T-187 | P3 | OPEN | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
 
+### Standing Tasks
 
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by B (focus 10: Profile & IW scoring). |
+| S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-20 by A (round 3 + MaddisonSlatkin opts). |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-24 by D (round 10). |
 
-| T-190 | P2 | ASSIGNED (A) | — | **Adaptive starting-tree strategy mixing (bandit).** Replace fixed `wagnerBias` with per-replicate strategy selection using Thompson sampling. See cold-start brief below. | Subsumes the "mix strategies" aspect of T-183. Benchmark on 180-taxon mbank_X30754. |
-| T-182 | P3 | OPEN | — | **Adaptive ratchet perturbation probability.** Start aggressive (~40%) and taper by hit rate as pool stabilizes. Extend `adaptive_level` infrastructure to also scale `perturb_prob`. Risk: premature convergence if tapering too fast. | Also consider IQ-TREE-style tree-size scaling: 50% at ≤50 tips, 5% at ≥400 tips. Two orthogonal axes: hit-rate tapering (within run) and size scaling (across datasets). |
-| T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** Use pool consensus as backbone constraint during Wagner construction for later replicates (after ≥N diverse trees). Partially randomised addition order. Concern: run independence — mitigate by only activating late. | Constraint infrastructure already exists (`consensus_constrain`). |
-
-| T-187 | P3 | OPEN | — | **Perturbation-count stopping rule.** Stop search after `nTip × K` unsuccessful perturbations (no score improvement). Dataset-adaptive convergence criterion complementary to time-based `maxSeconds` and consensus-stability stopping. IQ-TREE uses `nSeq × 100`. | From T-185 IQ-TREE review. Needs counter in `driven_search()` loop tracking perturbations since last improvement. |
-
-
-
-
-
-
-
-
-
-
+---
 
 ### T-190 Cold-Start Brief: Adaptive Starting-Tree Strategy Mixing
 
@@ -128,7 +126,7 @@ Pool-based arms excluded when pool is empty (zero-armed at rep 0).
   parallel path)
 - `R/SearchControl.R`: add `adaptiveStart` param
 - `R/MaximizeParsimony.R`: pass through to C++; default on for thorough/large
-- `inst/benchmarks/bench_framework.R`: benchmarking infrastructure
+- `dev/benchmarks/bench_framework.R`: benchmarking infrastructure
 
 **Implementation plan.**
 1. Add `StartStrategy` enum to `ts_driven.h` (6 arms).
@@ -163,11 +161,3 @@ Pool-based arms excluded when pool is empty (zero-armed at rep 0).
 - Pool-based strategies early in search: pool has only 1 mediocre tree.
   Mitigation: pool-based arms auto-excluded until pool has ≥2 best-score trees.
 - Parallel adaptation: not attempted; round-robin is sufficient.
-
-### Standing Tasks
-
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by B (focus 10: Profile & IW scoring). |
-| S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-19 by A (round 3). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-23 by G (round 9). |

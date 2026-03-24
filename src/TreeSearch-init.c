@@ -28,7 +28,7 @@ extern SEXP _TreeSearch_mi_key(SEXP, SEXP);
 
 // extern SEXP _TreeSearch_astar_search_r(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_quartet_concordance(SEXP, SEXP);
-extern SEXP _TreeSearch_ts_fitch_score(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_fitch_score(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_na_char_steps(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_char_steps(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_na_debug_char(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -48,10 +48,10 @@ extern SEXP _TreeSearch_ts_tree_fuse(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, S
 extern SEXP _TreeSearch_ts_sector_diag(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_rss_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_xss_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_driven_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_resample_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_parallel_resample(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_successive_approx(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_driven_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_resample_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_parallel_resample(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_successive_approx(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_bench_tbr_phases(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_simplify_diag(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_MaddisonSlatkin(SEXP, SEXP);
@@ -103,7 +103,7 @@ static const R_CallMethodDef callMethods[] = {
 
   // {"_TreeSearch_astar_search_r",    (DL_FUNC) &_TreeSearch_astar_search_r, 3},
   {"_TreeSearch_quartet_concordance",(DL_FUNC) &_TreeSearch_quartet_concordance, 2},
-  {"_TreeSearch_ts_fitch_score",    (DL_FUNC) &_TreeSearch_ts_fitch_score, 8},
+  {"_TreeSearch_ts_fitch_score",    (DL_FUNC) &_TreeSearch_ts_fitch_score, 12},
   {"_TreeSearch_ts_na_char_steps", (DL_FUNC) &_TreeSearch_ts_na_char_steps, 5},
   {"_TreeSearch_ts_char_steps", (DL_FUNC) &_TreeSearch_ts_char_steps, 5},
   {"_TreeSearch_ts_na_debug_char", (DL_FUNC) &_TreeSearch_ts_na_debug_char, 6},
@@ -123,10 +123,10 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_ts_rss_search",  (DL_FUNC) &_TreeSearch_ts_rss_search, 13},
   {"_TreeSearch_ts_xss_search",  (DL_FUNC) &_TreeSearch_ts_xss_search, 12},
   {"_TreeSearch_ts_tree_fuse",   (DL_FUNC) &_TreeSearch_ts_tree_fuse, 11},
-  {"_TreeSearch_ts_driven_search", (DL_FUNC) &_TreeSearch_ts_driven_search, 58},
-  {"_TreeSearch_ts_resample_search", (DL_FUNC) &_TreeSearch_ts_resample_search, 21},
-{"_TreeSearch_ts_parallel_resample", (DL_FUNC) &_TreeSearch_ts_parallel_resample, 23},
-  {"_TreeSearch_ts_successive_approx", (DL_FUNC) &_TreeSearch_ts_successive_approx, 21},
+  {"_TreeSearch_ts_driven_search", (DL_FUNC) &_TreeSearch_ts_driven_search, 62},
+  {"_TreeSearch_ts_resample_search", (DL_FUNC) &_TreeSearch_ts_resample_search, 25},
+{"_TreeSearch_ts_parallel_resample", (DL_FUNC) &_TreeSearch_ts_parallel_resample, 27},
+  {"_TreeSearch_ts_successive_approx", (DL_FUNC) &_TreeSearch_ts_successive_approx, 25},
   {"_TreeSearch_ts_bench_tbr_phases", (DL_FUNC) &_TreeSearch_ts_bench_tbr_phases, 7},
   {"_TreeSearch_ts_simplify_diag", (DL_FUNC) &_TreeSearch_ts_simplify_diag, 4},
   {"_TreeSearch_MaddisonSlatkin", (DL_FUNC) &_TreeSearch_MaddisonSlatkin, 2},
