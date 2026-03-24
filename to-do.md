@@ -47,7 +47,7 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-196 | P2 | ASSIGNED (G) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies (ts_tbr.cpp, ts_search.cpp, ts_drift.cpp, ts_temper.cpp) read `local_cost` for all blocks, but NA blocks need the three-pass correction from `extract_char_steps`. IW candidate screening uses wrong base score + deltas. Impact: conservative (final `score_tree()` always correct), but suboptimal move selection for `inapplicable="bgs"` + finite `concavity`. Fix: add NA block loop (matching ts_fitch.cpp:420-465) to each copy, or extract a shared function. | Found by S-RED focus 10. |
-| T-197 | P3 | ASSIGNED (B) | — | **[Bug] `concavity = 0` produces NaN.** `precompute_iw_delta` computes `0/(0+0)=NaN` when `k=0` and `e=0`. R-side `TreeLength` also has `0/0` at line 132. No input validation rejects `k ≤ 0`. Fix: validate `concavity > 0` in R layer (`MaximizeParsimony`, `TreeLength`, `AdditionTree`), or handle `k=0` as limit case in C++. | Found by S-RED focus 10. |
+
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 

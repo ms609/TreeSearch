@@ -4,6 +4,12 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ---
 
+## 2026-03-24
+
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| T-197 | Fix `concavity = 0` NaN in `precompute_iw_delta` | D | C++ guard for e==0 avoids 0/0 NaN. R entry points already validate concavity>0. Added 8 new validation tests (MaximizeParsimony, SuccessiveApproximations, TreeLength, AdditionTree). 169 tests pass. |
+
 ## 2026-03-23
 
 | ID | Description | Agent | Notes |

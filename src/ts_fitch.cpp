@@ -491,7 +491,9 @@ void precompute_iw_delta(const DataSet& ds,
       iw_delta[p] = 0.0;
       continue;
     }
-    double old_cost = static_cast<double>(e) / (k + e);
+    // Guard e == 0: old_cost = 0 for any k >= 0, avoiding 0/0 NaN when k == 0
+    double old_cost = (e == 0) ? 0.0
+                                : static_cast<double>(e) / (k + e);
     double new_cost = static_cast<double>(e + 1) / (k + e + 1);
     iw_delta[p] = ds.pattern_freq[p] * (new_cost - old_cost);
   }
