@@ -15,10 +15,11 @@ PrepareDataIW(dataset)
 
 \item{approx}{Character string controlling how profile information amounts
 are computed for multi-state characters with many tips.
-\code{"auto"} (default) and \code{"mc"} use a Monte Carlo approximation with
-log-quadratic tail interpolation, preserving the full multi-state
-character; \code{"exact"} always uses the exact Maddison & Slatkin calculation
-(slow for large matrices).}
+\code{"auto"} (default) uses the exact Maddison & Slatkin calculation when
+feasible, falling back to a Monte Carlo approximation for large or
+complex characters.
+\code{"mc"} always uses the Monte Carlo approximation;
+\code{"exact"} always uses the exact calculation (may be very slow).}
 
 \item{n_mc}{Integer; number of Monte Carlo samples for the MC
 approximation.  Default 100 000.}
@@ -46,8 +47,9 @@ transformation series.
 Calculates profiles for each character in a dataset.
 Characters with 2 informative states (i.e. states present in more than one
 taxon) use the exact formula of Carter \emph{et al.} (1990).
-Characters with 3--5 informative states use the recursive algorithm of
-Maddison & Slatkin (1991).
+Characters with 3 or more informative states use the recursive algorithm of
+Maddison & Slatkin (1991), falling back to a Monte Carlo approximation for
+large or complex characters.
 }
 \details{
 Characters are simplified where necessary, with a warning:
@@ -56,8 +58,6 @@ Characters are simplified where necessary, with a warning:
 (i.e. \code{-} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?});
 \item Ambiguous tokens will be treated as fully ambiguous
 (i.e. \code{{02}} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?})
-\item Where more than five states are informative, states beyond the five most
-informative will be treated as ambiguous.
 }
 }
 \section{Functions}{

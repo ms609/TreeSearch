@@ -17,6 +17,7 @@
 ^split-support$
 /^src\-/
 CONTRIBUTING\.md
+papers\.md
 README\.md
 cran\-comments\.md
 vignettes/\.RData

@@ -17,17 +17,16 @@ StepInformation(
 \item{ambiguousTokens}{Vector specifying which tokens, if any, correspond to
 the ambiguous token (\verb{?}).}
 
-\item{approx}{Character string controlling the fallback for infeasible
-multi-state characters: \code{"auto"} (default) and \code{"mc"} use a Monte Carlo
-approximation that preserves the full multi-state character (see Details);
+\item{approx}{Character string controlling the computation method:
+\code{"auto"} (default) uses exact computation when feasible, falling back to
+Monte Carlo for large or complex characters (see Details);
+\code{"mc"} always uses the Monte Carlo approximation;
 \code{"exact"} forces exact computation regardless of cost (may be very slow
-for large characters).}
+for large or complex characters).}
 
 \item{n_mc}{Integer.  Number of random trees used by the MC approximation.
 Larger values improve accuracy but increase computation time.
-Default: 100 000.  Tree generation and scoring use the Morphy C
-library internally, so even large values are fast (~1 s per 100 000
-trees).}
+Default: 100 000.}
 }
 \value{
 \code{StepInformation()} returns a numeric vector detailing the amount
@@ -49,24 +48,24 @@ Calculates the number of trees consistent with the character having
 
 For characters with 2 informative tokens, uses the exact formula of
 Carter \emph{et al.} (1990) via \code{\link[=LogCarter1]{LogCarter1()}}.
-For characters with 3--5 informative tokens, uses the recursive algorithm
-of Maddison & Slatkin (1991) via \code{\link[=MaddisonSlatkin]{MaddisonSlatkin()}}.
-Characters with more than 5 informative tokens are reduced to their 5 most
-frequent tokens (with a warning).
+For characters with 3 or more informative tokens, uses the recursive
+algorithm of Maddison & Slatkin (1991) via \code{\link[=MaddisonSlatkin]{MaddisonSlatkin()}}, falling
+back to a Monte Carlo approximation for large or complex characters.
 
 When the Maddison & Slatkin computation would be infeasible (exponential
 in the number of tips for a given number of tokens), behaviour depends on
-the \code{approx} argument.  With \code{"auto"} (default) or \code{"mc"}, a Monte Carlo
-approximation preserves the full multi-state character: the exact
-minimum-steps probability is computed analytically, random trees provide the
-distribution body, and a log-quadratic interpolation bridges the gap between
-the two (see Details).
+the \code{approx} argument.  With \code{"auto"} (default), the exact solver is used
+where feasible and the Monte Carlo approximation is used otherwise.
+With \code{"mc"}, the Monte Carlo approximation is always used.
+The MC approximation computes the exact
+minimum-steps probability analytically, uses random trees for the
+distribution body, and bridges the gap with a log-quadratic interpolation.
 The exact feasibility threshold depends on the partition shape
 (balanced partitions are harder); roughly, 3-state characters
 beyond ~27 tips, 4-state beyond ~13 tips, and 5-state beyond
 ~9 tips trigger the approximation.
 With \code{"exact"}, the full Maddison & Slatkin recursion is forced regardless
-of cost (may be very slow for large characters).
+of cost (may be very slow for large or complex characters).
 }
 \examples{
 character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))
