@@ -49,3 +49,4 @@ Makevars\.win\..*-bak$
 # Test artifacts
 ^test.*\.txt$
 ^dev$
+^papers\.md$

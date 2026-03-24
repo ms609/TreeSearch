@@ -45,7 +45,7 @@ SearchControl(
 before stopping a TBR pass.}
 
 \item{nniFirst}{Logical; run an NNI pass before SPR/TBR in each replicate?
-At small tree sizes (≤88 tips) overhead is negligible; at ≥100 tips
+At small tree sizes (\eqn{\le}88 tips) overhead is negligible; at \eqn{\ge}100 tips
 this significantly accelerates the initial descent from the Wagner tree.}
 
 \item{sprFirst}{Logical; run an SPR pass before TBR in each replicate?}
@@ -144,7 +144,7 @@ landscapes trigger increased effort.  Default \code{FALSE}.}
 
 \item{consensusConstrain}{Logical; lock the strict consensus of pool
 trees as topological constraints for subsequent replicates?  When
-\code{TRUE}, after enough replicates (≥5), splits present in ALL
+\code{TRUE}, after enough replicates (\eqn{\ge}5), splits present in ALL
 best-score pool trees are enforced as constraints, focusing search on
 uncertain regions.  Constraints are cleared whenever a new best score
 is found.  Only active when no user-supplied \code{constraint} is

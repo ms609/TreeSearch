@@ -466,10 +466,20 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     return std::chrono::duration<double>(now - start_time).count();
   };
 
-  // Combines timeout + cancel-file check so both are evaluated inside
-  // run_single_replicate() (which only receives check_timeout).
+  // Two-phase timeout (T-202):
+  // Main loop exits at budget × (1 - enum_fraction), reserving the
+  // remainder for MPT enumeration.
+  const double enum_frac = std::max(0.0, std::min(params.enum_time_fraction, 0.5));
+  const double main_deadline = params.max_seconds * (1.0 - enum_frac);
+  const double full_deadline = params.max_seconds;
+
   auto check_timeout = [&]() -> bool {
-    if (use_timeout && elapsed() >= params.max_seconds) return true;
+    if (use_timeout && elapsed() >= main_deadline) return true;
+    return check_cancel();
+  };
+
+  auto check_enum_timeout = [&]() -> bool {
+    if (use_timeout && elapsed() >= full_deadline) return true;
     return check_cancel();
   };
 
@@ -797,7 +807,7 @@ finish:
   //    one tree, so different TBR-connected islands are only discovered if
   //    different replicates landed on them.  We enumerate from each seed
   //    tree to explore its island, stopping when the pool is full.
-  if (pool.size() > 0 && pool.size() < pool.max_size && !result.timed_out) {
+  if (pool.size() > 0 && pool.size() < pool.max_size) {
     TBRParams tp;
     tp.accept_equal = true;
     tp.tabu_size = params.tabu_size > 0 ? params.tabu_size : 100;
@@ -806,17 +816,16 @@ finish:
     // enumeration of seed i become additional seeds for later iterations).
     int seed_idx = 0;
     while (seed_idx < pool.size() && pool.size() < pool.max_size) {
-      // Check cancel between seeds so a stop during MPT enumeration
-      // is detected promptly (regression fix for T-163).
-      if (check_cancel()) break;
+      if (check_enum_timeout()) break;
       TreeState enum_tree = pool.all()[seed_idx].tree;
       // Budget remaining capacity across remaining seeds
       tp.max_hits = std::max(10, (pool.max_size - pool.size()) * 2);
-      tbr_search(enum_tree, ds, tp, cd, nullptr, &pool, check_timeout);
+      tbr_search(enum_tree, ds, tp, cd, nullptr, &pool, check_enum_timeout);
       ++seed_idx;
     }
     if (params.verbosity >= 2) {
-      Rprintf("MPT enumeration: %d trees in pool\n", pool.size());
+      Rprintf("MPT enumeration: %d trees in pool (%.1f s)\n",
+              pool.size(), elapsed());
     }
   }
 

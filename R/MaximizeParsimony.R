@@ -865,7 +865,10 @@ MaximizeParsimony <- function(
       else ctrl$annealTEnd),
     annealMovesPerPhase = as.integer(
       if (is.null(ctrl$annealMovesPerPhase)) 0L
-      else ctrl$annealMovesPerPhase)
+      else ctrl$annealMovesPerPhase),
+    enumTimeFraction = as.double(
+      if (is.null(ctrl$enumTimeFraction)) 0.1
+      else ctrl$enumTimeFraction)
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
                                         hsjArgs, xformArgs))
