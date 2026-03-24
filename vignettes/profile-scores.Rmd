@@ -114,6 +114,23 @@ and distribution of observed states, and other factors
 Moreover, some adjustment must be made for 'missing' data,
 i.e. ambiguous tokens, which reduce the opportunity to observe homoplasy
 [@Goloboff2014].
+Characters with many missing entries have fewer observed cells in which
+homoplasy could manifest, so their observed homoplasy _e_ tends to be
+artificially low, leading to inflated weights.
+@Goloboff2014 proposed an "extended" implied weighting correction (his
+Extension 3) in which each character's concavity constant is reduced in
+proportion to its missing data.
+Specifically, the effective concavity for character $c$ is
+$k_c = k / f_c$, where the extrapolation factor
+$f_c = 1 + r \cdot m_c / o_c$ accounts for the ratio of missing ($m_c$) to
+observed ($o_c$) entries; $r$ controls the expected rate of homoplasy in
+unobserved entries (default 0.5), and $f_c$ is capped at a maximum value
+(default 5) to prevent extreme adjustments.
+The per-character cost is then rescaled by a factor
+$\phi_c = (1 + k_c) / (1 + k)$ to preserve comparability across characters.
+This correction is enabled by default in `TreeSearch` (matching the default
+behaviour of TNT), and can be disabled by setting `extended_iw = FALSE`.
+
 Implied weighting is described as an approximation [@Goloboff1993], and I am not
 aware of a straightforward interpretation of the 'fit' score, or a principled
 definition of the nature of the quantity that is being approximated.

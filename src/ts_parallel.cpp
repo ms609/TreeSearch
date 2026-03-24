@@ -423,7 +423,11 @@ std::vector<ResampleResult> parallel_resample(
     int n_threads,
     const double* info_amounts_r,
     int info_max_steps,
-    ConstraintData* cd)
+    ConstraintData* cd,
+    bool xpiwe,
+    double xpiwe_r,
+    double xpiwe_max_f,
+    const int* obs_count_r)
 {
   if (n_threads <= 0) {
     n_threads = static_cast<int>(std::thread::hardware_concurrency());
@@ -462,7 +466,8 @@ std::vector<ResampleResult> parallel_resample(
           tip_data_r, n_tips, n_patterns,
           original_weights, levels_r, min_steps_r,
           concavity, params,
-          info_amounts_r, info_max_steps, cd);
+          info_amounts_r, info_max_steps, cd,
+          xpiwe, xpiwe_r, xpiwe_max_f, obs_count_r);
     }
 
     ts::thread_rng = nullptr;

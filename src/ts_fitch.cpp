@@ -470,11 +470,11 @@ void extract_char_steps(const TreeState& tree, const DataSet& ds,
 
 double compute_iw(const DataSet& ds, const std::vector<int>& char_steps) {
   double score = 0.0;
-  double k = ds.concavity;
   for (int p = 0; p < ds.n_patterns; ++p) {
     int extra = char_steps[p] - ds.min_steps[p];
     if (extra > 0) {
-      score += ds.pattern_freq[p] * (static_cast<double>(extra) / (k + extra));
+      score += ds.pattern_freq[p] * ds.phi[p] *
+               (static_cast<double>(extra) / (ds.eff_k[p] + extra));
     }
   }
   return score;
@@ -483,7 +483,6 @@ double compute_iw(const DataSet& ds, const std::vector<int>& char_steps) {
 void precompute_iw_delta(const DataSet& ds,
                          const std::vector<int>& divided_steps,
                          std::vector<double>& iw_delta) {
-  double k = ds.concavity;
   for (int p = 0; p < ds.n_patterns; ++p) {
     int e = divided_steps[p] - ds.min_steps[p];
     if (e < 0) {
@@ -492,11 +491,12 @@ void precompute_iw_delta(const DataSet& ds,
       iw_delta[p] = 0.0;
       continue;
     }
+    double k = ds.eff_k[p];
     // Guard e == 0: old_cost = 0 for any k >= 0, avoiding 0/0 NaN when k == 0
     double old_cost = (e == 0) ? 0.0
                                 : static_cast<double>(e) / (k + e);
     double new_cost = static_cast<double>(e + 1) / (k + e + 1);
-    iw_delta[p] = ds.pattern_freq[p] * (new_cost - old_cost);
+    iw_delta[p] = ds.pattern_freq[p] * ds.phi[p] * (new_cost - old_cost);
   }
 }
 

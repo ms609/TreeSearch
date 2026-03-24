@@ -120,11 +120,13 @@ test_that("Inapplicable characters scored correctly", {
   expect_equal(rep(tree_length, 2), TreeLength(trees, bigPhy))
   
   expected_fit <- expected_homoplasies / (expected_homoplasies + 6)
-  tree_score_iw <- TreeLength(tree, bigPhy, concavity = 6)
+  tree_score_iw <- TreeLength(tree, bigPhy, concavity = 6, extended_iw = FALSE)
   expect_equal(sum(expected_fit), tree_score_iw)
-  expect_equal(tree_score_iw, TreeLength(relabel, bigPhy, concavity = 6))
-  expect_equal(vapply(trees, TreeLength, double(1), bigPhy, concavity = 6),
-               TreeLength(trees, bigPhy, concavity = 6))
+  expect_equal(tree_score_iw, TreeLength(relabel, bigPhy, concavity = 6,
+                                         extended_iw = FALSE))
+  expect_equal(vapply(trees, TreeLength, double(1), bigPhy, concavity = 6,
+                      extended_iw = FALSE),
+               TreeLength(trees, bigPhy, concavity = 6, extended_iw = FALSE))
   
   expect_equal(vapply(trees, TreeLength, double(1), profPhy, concavity = "p"),
                TreeLength(trees, profPhy, concavity = "profile"))

@@ -10,6 +10,9 @@ SearchControl(
   sprFirst = FALSE,
   tabuSize = 100L,
   wagnerStarts = 1L,
+  wagnerBias = 0L,
+  wagnerBiasTemp = 0.3,
+  outerCycles = 1L,
   ratchetCycles = 12L,
   ratchetPerturbProb = 0.25,
   ratchetPerturbMode = 0L,
@@ -33,7 +36,8 @@ SearchControl(
   poolSuboptimal = 0,
   consensusStableReps = 0L,
   adaptiveLevel = FALSE,
-  consensusConstrain = FALSE
+  consensusConstrain = FALSE,
+  adaptiveStart = FALSE
 )
 }
 \arguments{
@@ -49,6 +53,24 @@ this significantly accelerates the initial descent from the Wagner tree.}
 \item{tabuSize}{Integer; tabu list size for TBR plateau exploration.}
 
 \item{wagnerStarts}{Integer; random Wagner starting trees per replicate.}
+
+\item{wagnerBias}{Integer; criterion for biasing taxon addition order
+during Wagner tree construction.  0 = random (default),
+1 = Goloboff (2014) non-ambiguous-character priority,
+2 = entropy-based state-specificity priority.  Biased orders use
+softmax-weighted sampling for diversity across replicates.}
+
+\item{wagnerBiasTemp}{Numeric; softmax temperature controlling
+selectivity of biased Wagner addition (default 0.3).  Lower values
+concentrate sampling on the highest-scoring taxa; higher values
+approach uniform random.}
+
+\item{outerCycles}{Integer; number of outer search cycles per replicate
+(default 1).  Each outer cycle runs the full
+[XSS/RSS/CSS → ratchet → NNI-perturbation → drift → TBR] sequence,
+with perturbation cycles divided evenly among outer iterations.
+Matches the interleaved sectorial + ratchet pattern of TNT's \code{xmult}
+\insertCite{Goloboff1999}{TreeSearch}.}
 
 \item{ratchetCycles}{Integer; number of ratchet perturbation cycles.}
 
@@ -71,7 +93,7 @@ optimum.  Complementary to the weight-perturbation ratchet: the ratchet
 perturbs the objective function, while NNI-perturbation perturbs the
 topology directly.
 0 (default) disables NNI perturbation.
-Inspired by IQ-TREE's \code{doRandomNNIs()}
+Inspired by \code{doRandomNNIs()} in IQ-TREE
 \insertCite{Nguyen2015}{TreeSearch}.}
 
 \item{nniPerturbFraction}{Numeric (0--1); fraction of internal branches
@@ -127,6 +149,12 @@ best-score pool trees are enforced as constraints, focusing search on
 uncertain regions.  Constraints are cleared whenever a new best score
 is found.  Only active when no user-supplied \code{constraint} is
 present.  Default \code{FALSE}.}
+
+\item{adaptiveStart}{Logical; use Thompson-sampling (bandit) strategy
+selection for starting trees?  When \code{TRUE}, each replicate draws its
+starting strategy from a pool of options (random Wagner, biased Wagner,
+random tree, pool ratchet, pool NNI-perturb), adapting to which
+strategies yield the best scores.  Default \code{FALSE}.}
 }
 \value{
 A named list of class \code{"SearchControl"}.

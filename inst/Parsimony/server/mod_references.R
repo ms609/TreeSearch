@@ -19,6 +19,7 @@ references_server <- function(id, cites = NULL) {
     get_cite <- function(nm) get(nm, envir = e, inherits = TRUE)
     cites <- list(
       Brazeau2019    = get_cite("Brazeau2019"),
+      Goloboff2014   = get_cite("Goloboff2014"),
       Morphy         = get_cite("Morphy"),
       Nixon1999      = get_cite("Nixon1999"),
       SmithSearch    = get_cite("SmithSearch"),
@@ -48,7 +49,8 @@ references_server <- function(id, cites = NULL) {
       tagList(
         tags$h2("References for methods used"),
         tags$h3("Tree search"),
-        HTML(cites$Brazeau2019, cites$Morphy, cites$Nixon1999, cites$SmithSearch),
+        HTML(cites$Brazeau2019, cites$Goloboff2014, cites$Morphy,
+             cites$Nixon1999, cites$SmithSearch),
         tags$h3("Tree space mapping"),
         HTML(paste0(cites$Gower1966, cites$Gower1969, cites$Kaski2003,
                     cites$RCoreTeam, cites$SmithDist, cites$Smith2020,
