@@ -110,6 +110,10 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf,
   }
 
   if (is.finite(concavity)) {
+    if (concavity <= 0) {
+      stop("`concavity` must be positive (or Inf for equal weights, ",
+           "or \"profile\" for profile parsimony).")
+    }
     if (!("min.length" %fin% names(attributes(dataset)))) {
       dataset <- PrepareDataIW(dataset)
     }
@@ -228,6 +232,10 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
   if (!is.numeric(hsj_alpha) || length(hsj_alpha) != 1L ||
       hsj_alpha < 0 || hsj_alpha > 1) {
     stop("`hsj_alpha` must be a single number in [0, 1].")
+  }
+  if (iw && concavity <= 0) {
+    stop("`concavity` must be positive (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
   }
 
   nTip <- NTip(tree)

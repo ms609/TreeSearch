@@ -64,8 +64,8 @@ jobs:
           [ -n "$THREADS" ] && ARGS="$ARGS --threads=$THREADS"
           ARGS="$ARGS --lib=$(Rscript -e 'cat(.libPaths()[1])')"
 
-          echo "Running: Rscript inst/benchmarks/bench_regression.R $ARGS"
-          Rscript inst/benchmarks/bench_regression.R $ARGS
+          echo "Running: Rscript dev/benchmarks/bench_regression.R $ARGS"
+          Rscript dev/benchmarks/bench_regression.R $ARGS
         shell: bash
 
       - name: Upload results

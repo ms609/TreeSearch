@@ -14,6 +14,7 @@
 #include "ts_tree.h"
 #include "ts_pool.h"
 #include "ts_constraint.h"
+#include "ts_strategy.h"
 #include <functional>
 
 namespace ts {
@@ -149,6 +150,15 @@ struct DrivenParams {
   // is present.
   bool consensus_constrain = false;
   int consensus_constrain_min_reps = 5;  // minimum replicates before engaging
+
+  // Adaptive starting-tree strategy selection (T-190).
+  // When true, each replicate draws its starting strategy from a Thompson
+  // sampling bandit over {Wagner-random, Wagner-Goloboff, Wagner-entropy,
+  // random-tree, pool-ratchet, pool-NNI-perturb}. The bandit learns
+  // which strategies hit the best score for this dataset.
+  // When false, all replicates use the fixed `wagner_bias` strategy.
+  // Only affects the serial path; parallel uses round-robin.
+  bool adaptive_start = false;
 };
 
 // Cumulative per-phase wall-clock timing (milliseconds).
@@ -190,6 +200,10 @@ struct DrivenResult {
   bool timed_out;                // true if search ended due to timeout
   bool consensus_stable;         // true if stopped by consensus stability
   PhaseTimings timings;          // cumulative across all replicates
+
+  // Per-strategy diagnostics (populated when adaptive_start is true)
+  std::array<int, N_STRAT> strategy_attempts{};
+  std::array<int, N_STRAT> strategy_successes{};
 };
 
 // Result of a single replicate (tree + score, no pool interaction).
@@ -208,6 +222,9 @@ struct SplitFrequencyTable;  // forward declaration (defined in ts_pool.h)
 
 // If `starting_tree` is non-null, use it instead of building a Wagner tree.
 // If `split_freq` is non-null, RSS uses conflict-guided sector selection.
+// `strategy` controls how the starting tree is built when `starting_tree`
+// is null. For pool-based strategies, the caller should perturb a pool tree
+// and pass it as `starting_tree`.
 ReplicateResult run_single_replicate(
     DataSet& ds,
     const DrivenParams& params,
@@ -215,7 +232,8 @@ ReplicateResult run_single_replicate(
     std::function<bool()> check_timeout,
     int verbosity,
     TreeState* starting_tree = nullptr,
-    const SplitFrequencyTable* split_freq = nullptr);
+    const SplitFrequencyTable* split_freq = nullptr,
+    StartStrategy strategy = StartStrategy::WAGNER_RANDOM);
 
 // Run the full driven search. Returns search statistics.
 // The pool contents (all retained trees) are accessible via the pool

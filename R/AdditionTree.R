@@ -56,6 +56,10 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
     }
     concavity <- Inf
   }
+  if (is.finite(concavity) && concavity <= 0) {
+    stop("`concavity` must be positive (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
+  }
 
   # Extract data matrices
   at <- attributes(dataset)

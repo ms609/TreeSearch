@@ -497,6 +497,10 @@ Morphy <- function(dataset, tree,
   pNextTbr <- 0.33
   profile <- .UseProfile(concavity)
   iw <- is.finite(concavity)
+  if (iw && concavity <= 0) {
+    stop("`concavity` must be positive (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
+  }
   constrained <- !missing(constraint)
   startTime <- Sys.time()
   stopTime <- startTime + as.difftime(maxTime, units = "mins")
@@ -1169,6 +1173,10 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   if (is.finite(concavity) && inapplicable != "bgs") {
     stop("Implied weighting is not currently supported with inapplicable = \"",
          inapplicable, "\".")
+  }
+  if (is.finite(concavity) && concavity <= 0) {
+    stop("`concavity` must be positive (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
   }
 
   # C++ engine path

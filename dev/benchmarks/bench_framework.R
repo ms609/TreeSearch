@@ -15,19 +15,21 @@
 # (same time-per-rep).
 #
 # Usage:
-#   source("inst/benchmarks/bench_framework.R")
+#   source("dev/benchmarks/bench_framework.R")
 #   results <- run_benchmark_grid()
 #   summary <- summarize_grid(results)
 
 library(TreeSearch)
 library(TreeTools)
 
-source("inst/benchmarks/bench_datasets.R")
+source("dev/benchmarks/bench_datasets.R")
 
 # ---- Strategy presets (formalized from strategies.md, T-003) ----
 
 STRATEGY_NAMES <- c("sprint", "default", "thorough",
                     "ratchet_heavy", "sectorial_heavy", "drift_heavy")
+# Large-tree strategies (for use with LARGE_BENCHMARK_NAMES, >= 120 tips)
+LARGE_STRATEGY_NAMES <- c("large", "thorough")
 
 get_strategy <- function(name = STRATEGY_NAMES) {
   name <- match.arg(name)
@@ -98,6 +100,22 @@ get_strategy <- function(name = STRATEGY_NAMES) {
       cssRounds = 0L, cssPartitions = 4L,
       sectorMinSize = 6L, sectorMaxSize = 50L,
       fuseInterval = 3L, fuseAcceptEqual = TRUE
+    ),
+    # Large-tree preset (>=120 tips): thorough + wagnerBias + larger sectors.
+    large = list(
+      wagnerStarts = 3L, tbrMaxHits = 3L, tabuSize = 200L,
+      ratchetCycles = 20L, ratchetPerturbProb = 0.25,
+      ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
+      ratchetAdaptive = TRUE,
+      nniPerturbCycles = 5L, nniPerturbFraction = 0.5,
+      driftCycles = 12L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+      xssRounds = 5L, xssPartitions = 6L, rssRounds = 3L,
+      cssRounds = 2L, cssPartitions = 6L,
+      sectorMinSize = 8L, sectorMaxSize = 100L,
+      fuseInterval = 3L, fuseAcceptEqual = TRUE,
+      wagnerBias = 1L, wagnerBiasTemp = 0.3,
+      nniFirst = TRUE, sprFirst = FALSE,
+      outerCycles = 2L, consensusStableReps = 2L
     )
   )
   strategies[[name]]
@@ -385,7 +403,7 @@ summarize_grid <- function(results,
 
 #' Save benchmark results to CSV.
 save_results <- function(results,
-                         file = sprintf("inst/benchmarks/results_%s.csv",
+                         file = sprintf("dev/benchmarks/results_%s.csv",
                                         format(Sys.time(), "%Y%m%d_%H%M"))) {
   write.csv(results, file, row.names = FALSE)
   cat("Results saved to", file, "\n")
@@ -451,6 +469,123 @@ benchmark_large <- function(
     replicates = replicates,
     maxReplicates = maxReplicates,
     targetHits = 3L,
+    maxSeconds = maxSeconds,
+    base_seed = base_seed
+  )
+}
+
+# ===========================================================================
+# MorphoBank external benchmark suite
+# ===========================================================================
+#
+# Uses the neotrans MorphoBank corpus (~700 matrices) with a deterministic
+# train/validation split: project numbers divisible by 5 are validation.
+# See .positai/plans/2026-03-24-0551-*.md for rationale.
+#
+# IMPORTANT: Validation results must NEVER be used to guide strategy tuning.
+# They are a one-way check to confirm that improvements generalize.
+
+#' Run the MorphoBank fixed training sample benchmark.
+#'
+#' Runs the fixed 25-matrix training sample (MBANK_FIXED_SAMPLE) through
+#' the benchmark grid. Use custom keys to override the fixed sample.
+#'
+#' @param keys Character vector of matrix keys (default: MBANK_FIXED_SAMPLE).
+#' @param strategy_names Strategies to test.
+#' @param replicates Independent runs per combination.
+#' @param maxSeconds Timeout per run.
+#' @param base_seed Base RNG seed.
+#' @return Data frame matching run_benchmark_grid output format, with
+#'   an additional `source` column.
+benchmark_mbank_sample <- function(
+    keys = MBANK_FIXED_SAMPLE,
+    strategy_names = c("default"),
+    replicates = 3L,
+    maxSeconds = 10,
+    base_seed = 42L
+) {
+  cat_df <- load_mbank_catalogue()
+  datasets <- load_mbank_datasets(cat_df, keys = keys)
+  if (length(datasets) == 0L) stop("No MorphoBank training datasets loaded")
+
+  results <- run_benchmark_grid(
+    dataset_names = names(datasets),
+    strategy_names = strategy_names,
+    replicates = replicates,
+    maxReplicates = 50L,
+    maxSeconds = maxSeconds,
+    base_seed = base_seed,
+    datasets = datasets
+  )
+  results$source <- "mbank_train"
+  results
+}
+
+#' Run benchmark on all MorphoBank matrices in a given split.
+#'
+#' WARNING: Running all ~550 training matrices takes a very long time.
+#' Use benchmark_mbank_sample() for routine work.
+#'
+#' @param split "training" or "validation".
+#' @param strategy_names Strategies to test.
+#' @param replicates Independent runs per combination.
+#' @param maxSeconds Timeout per run.
+#' @param base_seed Base RNG seed.
+#' @return Data frame matching run_benchmark_grid output format.
+benchmark_mbank_sweep <- function(
+    split = "training",
+    strategy_names = c("default"),
+    replicates = 1L,
+    maxSeconds = 10,
+    base_seed = 42L
+) {
+  cat_df <- load_mbank_catalogue()
+  datasets <- load_mbank_split(cat_df, split = split)
+  if (length(datasets) == 0L) {
+    stop("No MorphoBank ", split, " datasets loaded")
+  }
+
+  results <- run_benchmark_grid(
+    dataset_names = names(datasets),
+    strategy_names = strategy_names,
+    replicates = replicates,
+    maxReplicates = 50L,
+    maxSeconds = maxSeconds,
+    base_seed = base_seed,
+    datasets = datasets
+  )
+  results$source <- paste0("mbank_", split)
+  results
+}
+
+#' Run the MorphoBank VALIDATION benchmark.
+#'
+#' This is a ONE-WAY DOOR: validation results confirm that strategy
+#' improvements generalize, but must not be used to guide further tuning.
+#' A prominent warning is printed.
+#'
+#' @param strategy_names Strategies to test.
+#' @param replicates Independent runs per combination.
+#' @param maxSeconds Timeout per run.
+#' @param base_seed Base RNG seed.
+#' @return Data frame matching run_benchmark_grid output format.
+benchmark_mbank_validation <- function(
+    strategy_names = c("default"),
+    replicates = 1L,
+    maxSeconds = 10,
+    base_seed = 42L
+) {
+  message(paste(rep("=", 70), collapse = ""))
+  message("  VALIDATION DATA")
+  message("  Do NOT use these results to guide strategy tuning.")
+  message("  This is a one-way check to confirm generalization.")
+  message(paste(rep("=", 70), collapse = ""))
+  Sys.sleep(2)
+
+  benchmark_mbank_sweep(
+    split = "validation",
+    strategy_names = strategy_names,
+    replicates = replicates,
     maxSeconds = maxSeconds,
     base_seed = base_seed
   )
