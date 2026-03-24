@@ -10,39 +10,37 @@
 #'
 #' For characters with 2 informative tokens, uses the exact formula of
 #' Carter _et al._ (1990) via [LogCarter1()].
-#' For characters with 3--5 informative tokens, uses the recursive algorithm
-#' of Maddison & Slatkin (1991) via [MaddisonSlatkin()].
-#' Characters with more than 5 informative tokens are reduced to their 5 most
-#' frequent tokens (with a warning).
+#' For characters with 3 or more informative tokens, uses the recursive
+#' algorithm of Maddison & Slatkin (1991) via [MaddisonSlatkin()], falling
+#' back to a Monte Carlo approximation for large or complex characters.
 #'
 #' When the Maddison & Slatkin computation would be infeasible (exponential
 #' in the number of tips for a given number of tokens), behaviour depends on
-#' the `approx` argument.  With `"auto"` (default) or `"mc"`, a Monte Carlo
-#' approximation preserves the full multi-state character: the exact
-#' minimum-steps probability is computed analytically, random trees provide the
-#' distribution body, and a log-quadratic interpolation bridges the gap between
-#' the two (see Details).
+#' the `approx` argument.  With `"auto"` (default), the exact solver is used
+#' where feasible and the Monte Carlo approximation is used otherwise.
+#' With `"mc"`, the Monte Carlo approximation is always used.
+#' The MC approximation computes the exact
+#' minimum-steps probability analytically, uses random trees for the
+#' distribution body, and bridges the gap with a log-quadratic interpolation.
 #' The exact feasibility threshold depends on the partition shape
 #' (balanced partitions are harder); roughly, 3-state characters
 #' beyond ~27 tips, 4-state beyond ~13 tips, and 5-state beyond
 #' ~9 tips trigger the approximation.
 #' With `"exact"`, the full Maddison & Slatkin recursion is forced regardless
-#' of cost (may be very slow for large characters).
+#' of cost (may be very slow for large or complex characters).
 #'
 #' @param char Vector of tokens listing states for the character in question.
 #' @param ambiguousTokens Vector specifying which tokens, if any, correspond to
 #' the ambiguous token (`?`).
-#' @param approx Character string controlling the fallback for infeasible
-#'   multi-state characters: `"auto"` (default) and `"mc"` use a Monte Carlo
-#'   approximation that preserves the full multi-state character (see Details);
+#' @param approx Character string controlling the computation method:
+#'   `"auto"` (default) uses exact computation when feasible, falling back to
+#'   Monte Carlo for large or complex characters (see Details);
+#'   `"mc"` always uses the Monte Carlo approximation;
 #'   `"exact"` forces exact computation regardless of cost (may be very slow
-#'   for large characters).
+#'   for large or complex characters).
 #' @param n_mc Integer.  Number of random trees used by the MC approximation.
 #'   Larger values improve accuracy but increase computation time.
-#'   Default: 100 000.  Tree generation and Fitch scoring are performed
-#'   entirely in compiled C/C++ with no per-tree R allocation, so even
-#'   large values are fast (~0.3 s per 100 000 trees on a typical
-#'   desktop).
+#'   Default: 100 000.
 #' 
 #' @return `StepInformation()` returns a numeric vector detailing the amount
 #' of phylogenetic information (in bits) associated with the character when
@@ -82,23 +80,16 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
   }
   
   k <- length(split)
-  
-  if (k > 5L) {
-    warning("More than 5 informative tokens; keeping the 5 most frequent.")
-    split <- split[seq_len(5L)]
-    k <- 5L
-  }
-  
   nTips <- sum(split)
   
-  # Feasibility check: use partition-aware split_count rather than n alone.
-  # Balanced partitions blowup at lower n than skewed ones; the split_count
-  # (coeff of x^floor(n/2) in prod_i(1+x+...+x^{a_i})) captures this.
-  # Thresholds from .MS_SC_THRESHOLD in data_manipulation.R.
-  infeasible <- k >= 3L &&
-    .MSSplitCount(split) > .MS_SC_THRESHOLD[k]
+  # Exact MaddisonSlatkin is only instantiated for k <= 5; larger k always
+  # uses MC (bitmask Fitch in mc_fitch_scores supports up to 32 states).
+  # For k <= 5, use partition-aware split_count to decide feasibility.
+  infeasible <- k > 5L || (k >= 3L &&
+    .MSSplitCount(split) > .MS_SC_THRESHOLD[k])
   
-  if (infeasible && !identical(approx, "exact")) {
+  if (identical(approx, "mc") ||
+      (infeasible && !identical(approx, "exact"))) {
     return(.ApproxStepInformation(split, n_mc = n_mc,
                                   nSingletons = nSingletons))
   }

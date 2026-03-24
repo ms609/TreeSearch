@@ -33,24 +33,24 @@
 #' Calculates profiles for each character in a dataset.
 #' Characters with 2 informative states (i.e. states present in more than one
 #' taxon) use the exact formula of Carter _et al._ (1990).
-#' Characters with 3--5 informative states use the recursive algorithm of
-#' Maddison & Slatkin (1991).
+#' Characters with 3 or more informative states use the recursive algorithm of
+#' Maddison & Slatkin (1991), falling back to a Monte Carlo approximation for
+#' large or complex characters.
 #' 
 #' Characters are simplified where necessary, with a warning:
 #' - inapplicable tokens will be replaced with the ambiguous token
 #'    (i.e. `-` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`);
 #' - Ambiguous tokens will be treated as fully ambiguous
 #'   (i.e. `{02}` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`)
-#' - Where more than five states are informative, states beyond the five most
-#'   informative will be treated as ambiguous.
 #' 
 #' @param dataset dataset of class \code{phyDat}
 #' @param approx Character string controlling how profile information amounts
 #'   are computed for multi-state characters with many tips.
-#'   `"auto"` (default) and `"mc"` use a Monte Carlo approximation with
-#'   log-quadratic tail interpolation, preserving the full multi-state
-#'   character; `"exact"` always uses the exact Maddison & Slatkin calculation
-#'   (slow for large matrices).
+#'   `"auto"` (default) uses the exact Maddison & Slatkin calculation when
+#'   feasible, falling back to a Monte Carlo approximation for large or
+#'   complex characters.
+#'   `"mc"` always uses the Monte Carlo approximation;
+#'   `"exact"` always uses the exact calculation (may be very slow).
 #' @param n_mc Integer; number of Monte Carlo samples for the MC
 #'   approximation.  Default 100 000.
 #'
@@ -129,9 +129,8 @@ PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 100000L) {
   # Transpose to: rows = tips, cols = patterns (matching .RemoveExtraTokens)
   mataset <- t(mataset)
   
-  # --- Strip singletons and cap to 5 informative states per pattern ---
+  # --- Strip singletons ---
   maxInformative <- 0L
-  cappedAny <- FALSE
   
   for (j in seq_len(ncol(mataset))) {
     col <- mataset[, j]
@@ -148,28 +147,7 @@ PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 100000L) {
       mataset[mataset[, j] %in% singletonTokens, j] <- qmLevel[1]
     }
     
-    if (nInf > 5L) {
-      # Keep 5 most frequent informative states, convert rest to ambiguous
-      sortedInf <- sort(tab[informative], decreasing = TRUE)
-      toRemove <- as.integer(names(sortedInf)[6:length(sortedInf)])
-      mataset[mataset[, j] %in% toRemove, j] <- qmLevel[1]
-      nInf <- 5L
-      cappedAny <- TRUE
-      # Recount after capping
-      tab <- table(mataset[mataset[, j] != qmLevel[1], j])
-      informative <- tab > 1L
-    }
-    
-    # Infeasible multi-state characters are handled in StepInformation()
-    # via MC approximation (preserving all states) rather than reducing
-    # the data matrix here.
-
     maxInformative <- max(maxInformative, nInf)
-  }
-  
-  if (cappedAny) {
-    warning("More than 5 informative tokens in some characters; ",
-            "keeping 5 most frequent.")
   }
 
   
