@@ -91,6 +91,7 @@ Collate:
   'SearchControl.R'
   'MaximizeParsimony.R'
   'Morphy.R'
+  'NativeSearch.R'
   'NNI.R'
   'ParsSim.R'
   'PlotCharacter.R'

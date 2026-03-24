@@ -12,7 +12,7 @@
 #' @keywords internal
 #' @export
 EdgeListSearch <- function (edgeList, dataset,
-                            TreeScorer = MorphyLength,
+                            TreeScorer = NativeLength,
                             EdgeSwapper = RootedTBRSwap,
                             maxIter = 100, maxHits = 20, 
                             bestScore = NULL, stopAtScore = NULL, 
@@ -171,10 +171,10 @@ EdgeListSearch <- function (edgeList, dataset,
 #' @family custom search functions
 #' @importFrom TreeTools RenumberTips
 #' @export
-TreeSearch <- function (tree, dataset,
-                        InitializeData = PhyDat2Morphy,
-                        CleanUpData    = UnloadMorphy,
-                        TreeScorer     = MorphyLength,
+TreeSearch <- function (tree, dataset, concavity = Inf,
+                        InitializeData = PrepareNativeData,
+                        CleanUpData    = CleanNativeData,
+                        TreeScorer     = NativeLength,
                         EdgeSwapper    = RootedTBRSwap,
                         maxIter = 100L, maxHits = 20L,
                         stopAtPeak = FALSE, stopAtPlateau = 0L,
@@ -186,7 +186,11 @@ TreeSearch <- function (tree, dataset,
   edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 
-  initializedData <- InitializeData(dataset)
+  if (identical(InitializeData, PrepareNativeData)) {
+    initializedData <- PrepareNativeData(dataset, concavity = concavity)
+  } else {
+    initializedData <- InitializeData(dataset)
+  }
   on.exit(initializedData <- CleanUpData(initializedData))
 
   bestScore <- attr(tree, "score")

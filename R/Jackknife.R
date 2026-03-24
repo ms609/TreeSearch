@@ -19,10 +19,11 @@
 #' @family split support functions
 #' @family custom search functions
 #' @export
-Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
-                      InitializeData = PhyDat2Morphy,
-                      CleanUpData    = UnloadMorphy,
-                      TreeScorer     = MorphyLength,
+Jackknife <- function(tree, dataset, concavity = Inf,
+                      resampleFreq = 2 / 3,
+                      InitializeData = PrepareNativeData,
+                      CleanUpData    = CleanNativeData,
+                      TreeScorer     = NativeLength,
                       EdgeSwapper    = TBRSwap,
                       jackIter = 5000L, searchIter = 4000L, searchHits = 42L,
                       verbosity = 1L, ...) {
@@ -34,19 +35,29 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
   edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
   
-  morphyObj <- InitializeData(dataset)
-  on.exit(morphyObj <- CleanUpData(morphyObj))
+  if (identical(InitializeData, PrepareNativeData)) {
+    initializedData <- PrepareNativeData(dataset, concavity = concavity)
+  } else {
+    initializedData <- InitializeData(dataset)
+  }
+  on.exit(initializedData <- CleanUpData(initializedData))
   
-  startWeights <- MorphyWeights(morphyObj)["exact", ]
+  useMorphy <- inherits(initializedData, "morphyPtr")
+  
+  if (useMorphy) {
+    startWeights <- MorphyWeights(initializedData)["exact", ]
+  } else {
+    startWeights <- initializedData[["original_weight"]]
+  }
   eachChar <- seq_along(startWeights)
   deindexedChars <- rep.int(eachChar, startWeights)
   charsToKeep <- ceiling(resampleFreq * length(deindexedChars))
   
   if (charsToKeep < 1L) {
-    stop("resampleFreq of ", resampleFreq, " is too low; can't keep 0 of ",
+    stop("resampleFreq of ", resampleFreq, " is too low; cannot keep 0 of ",
          length(deindexedChars), " characters.")
   } else if (charsToKeep >= length(deindexedChars)) {
-    stop("resampleFreq of ", resampleFreq, " is too high; can't keep all ",
+    stop("resampleFreq of ", resampleFreq, " is too high; cannot keep all ",
          length(deindexedChars), " characters.")
   }
   
@@ -61,16 +72,25 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
     } #nocov end
     resampling <- tabulate(sample(deindexedChars, charsToKeep, replace = FALSE),
                            nbins = length(startWeights))
-    errors <- vapply(eachChar, function (i) 
-      mpl_set_charac_weight(i, resampling[i], morphyObj), integer(1))
-    if (any(errors)) { #nocov start
-      stop ("Error resampling morphy object: ", 
-            mpl_translate_error(unique(errors[errors < 0L])))
+    if (useMorphy) {
+      errors <- vapply(eachChar, function (i)
+        mpl_set_charac_weight(i, resampling[i], initializedData), integer(1))
+      if (any(errors)) { #nocov start
+        stop("Error resampling morphy object: ",
+             mpl_translate_error(unique(errors[errors < 0L])))
+      }
+      if (mpl_apply_tipdata(initializedData) -> error) {
+        stop("Error applying tip data: ", mpl_translate_error(error))
+      } #nocov end
+      searchData <- initializedData
+    } else {
+      # Native: local copy with resampled weights
+      searchData <- initializedData
+      searchData[["weight"]] <- as.integer(resampling)
     }
-    if (mpl_apply_tipdata(morphyObj) -> error) {
-      stop("Error applying tip data: ", mpl_translate_error(error))
-    } #nocov end
-    res <- EdgeListSearch(edgeList[1:2], morphyObj, EdgeSwapper = EdgeSwapper,
+    res <- EdgeListSearch(edgeList[1:2], searchData,
+                          TreeScorer = TreeScorer,
+                          EdgeSwapper = EdgeSwapper,
                           maxIter = searchIter, maxHits = searchHits,
                           verbosity = verbosity - 1L, ...)
     res[1:2]

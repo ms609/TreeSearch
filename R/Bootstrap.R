@@ -16,6 +16,7 @@
 MorphyBootstrap <- function (edgeList, morphyObj, EdgeSwapper = NNISwap, 
                              maxIter, maxHits, verbosity = 1L, 
                              stopAtPeak = FALSE, stopAtPlateau=0L, ...) {
+  .Deprecated("NativeBootstrap")
   startWeights <- MorphyWeights(morphyObj)["exact", ]
   eachChar <- seq_along(startWeights)
   deindexedChars <- rep.int(eachChar, startWeights)

@@ -119,11 +119,11 @@ test_that("Profile parsimony works in tree search", {
   expect_gt(TreeLength(rTree, readyData, "profile"),
             TreeLength(referenceTree, readyData, "profile"))
   
-  quickTS <- TreeSearch(rTree, dataset, TreeScorer = MorphyLength, EdgeSwapper = RootedNNISwap, 
+  quickTS <- TreeSearch(rTree, dataset, EdgeSwapper = RootedNNISwap, 
                         maxIter = 1600, maxHits = 40, verbosity = 0)
-  expect_equal(42L, attr(quickTS, "score"))
+  expect_equal(42, attr(quickTS, "score"))
   
-  quickFitch <- Ratchet(rTree, dataset, TreeScorer = MorphyLength, suboptimal = 2, 
+  quickFitch <- Ratchet(rTree, dataset, suboptimal = 2, 
                         swappers = RootySwappers, ratchHits = 3, searchHits = 15, 
                         searchIter = 100, ratchIter = 500,
                         verbosity = 0L)

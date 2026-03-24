@@ -137,6 +137,7 @@ GapHandler <- function (morphyObj) {
 #' @export
 PhyDat2Morphy <- function(phy, gap = "inapplicable",
                           weight = attr(phy, "weight")) {
+  .Deprecated("PrepareNativeData")
   
   if (!inherits(phy, "phyDat")) {
     stop("Invalid data type ", class(phy), "; should be phyDat.")
@@ -267,6 +268,7 @@ is.morphyPtr <- function (morphyObj) {
 #' @family Morphy API functions
 #' @export
 UnloadMorphy <- function (morphyObj) {
+  .Deprecated("CleanNativeData")
   if (!is.morphyPtr(morphyObj)) {
     stop ("Object is not a valid pointer; cannot destroy.")
   }

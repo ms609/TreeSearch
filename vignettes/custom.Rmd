@@ -17,7 +17,8 @@ vignette: >
 > profile parsimony), use `MaximizeParsimony()` — it is much faster and
 > easier. See the [tree search vignette](tree-search.html).
 > The functions below (`TreeSearch()`, `Ratchet()`) are for **custom
-> optimality criteria only**.
+> optimality criteria and also accept `concavity` for implied weights
+> or profile parsimony searches with manual control over search parameters.
 
 "TreeSearch" can be used to search for trees that are optimal under 
 user-specified criteria [e.g. @Hopkins2021].
@@ -114,152 +115,44 @@ PlotTree(result)
 
 ## Searching using implied weights
 
-> **Note:** If you simply want to run an implied weights search, use
-> `MaximizeParsimony(dataset, concavity = k)`, which is much faster and
-> easier.  The example below demonstrates the _custom optimality criteria
-> framework_ using implied weights as a familiar worked example.
+> **Note:** For real implied weights analyses, use
+> `MaximizeParsimony(dataset, concavity = k)`, which is faster and
+> uses the full driven search pipeline (see the
+> [tree search vignette](tree-search.html#implied-weighting)).
+> The example below shows how `TreeSearch()` and `Ratchet()` support
+> implied weights directly via the `concavity` parameter.
 
-Now we consider a more complex case in which a scorer
-must undergo a time-consuming initialization before tree search can begin,
-and must be safely destroyed once tree search has completed.
-
-We start by defining an initialization function, which will create a new
-Morphy object [@Brazeau2017] for each character in a phylogenetic dataset:
-
-```{r iw-setup}
-IWInitMorphy <- function (dataset) {
-  attr(dataset, "morphyObjs") <- 
-    lapply(PhyToString(dataset, byTaxon = FALSE, useIndex = FALSE, 
-                       concatenate = FALSE), 
-           SingleCharMorphy)
-  
-  # Return:
-  dataset
-}
-```
-
-To release memory back to the operating system, we must destroy each Morphy
-object once we're finished with it:
-
-```{r iw-destroy}
-IWDestroyMorphy <- function (dataset) {
-  vapply(attr(dataset, "morphyObjs"), UnloadMorphy, integer(1))
-}
-```
-
-Now we can write our tree scoring function, which will return the 'fit'
-under implied weights [@Goloboff1993].
-
-Note that we need to specify some extra parameters: `concavity` is the _k_ 
-value required by the implied weights formula (fit = _e / e + k_),
-and `minLength` is the minimum number of steps required by each character --
-which we need in order to convert the total number of steps (returned by
-`MorphyLength()` to a number of excess steps (_e_ in the implied weights formula)
-
-```{r iw-score}
-IWScoreMorphy <- function (parent, child, dataset, concavity = 10L, 
-                           minLength = attr(dataset, "min.length"), ...) {
-  steps <- vapply(attr(dataset, "morphyObjs"), MorphyLength,
-                  parent = parent, child = child, integer(1))
-  homoplasies <- steps - minLength
-  fit <- homoplasies / (homoplasies + concavity)
-  # Return:
-  sum(fit * attr(dataset, "weight"))
-}
-```
-
-Now we are ready to search:
+Implied weights [@Goloboff1993] penalize additional homoplasy according to
+the concavity constant _k_.  `TreeSearch()` and `Ratchet()` accept
+`concavity` directly---no custom scorer or initialization code is needed:
 
 ```{r iw-search, message = FALSE}
 data("inapplicable.datasets")
 dataset <- congreveLamsdellMatrices[[42]]
 
-# Populate `min.length` attribute
-dataset <- PrepareDataIW(dataset)
-iwTree <- TreeSearch(NJTree(dataset), dataset,
-                     InitializeData = IWInitMorphy,
-                     CleanUpData = IWDestroyMorphy,
-                     TreeScorer = IWScoreMorphy,
-                     concavity = 10, # Will be sent to TreeScorer
-                     verbosity = 1)
-
+iwTree <- TreeSearch(NJTree(dataset), dataset, concavity = 10,
+                     maxIter = 50L, maxHits = 10L, verbosity = 1)
 ```
 
-This quick search probably hasn't found the globally optimal tree.
-Besides increasing the number of hits and rearrangements,
-the parsimony ratchet [@Nixon1999] can help to escape local optima.
-This introduces an additional complication: we need to bootstrap the characters
-within `dataset`, and their accompanying Morphy objects.
-
-A `Bootstraper` function expects an `edgeList` (a list of the parent and child
-of each edge in a tree, in turn) and a `dataset` argument, and conducts
-a tree search, starting at `edgeList`, on a bootstrapped version of the dataset.
-It is also sent the arguments `maxIter = bootstrapIter` and 
-`maxHits = bootstrapHits`, allowing ratchet search intensity to be controlled
-from parameters sent to the `Ratchet()` function.
-
-```{r iw-bootstrap}
-IWBootstrap <- function (edgeList, dataset, concavity = 10L, EdgeSwapper = NNISwap, 
-                         maxIter, maxHits, verbosity = 1L, ...) {
-  att <- attributes(dataset)
-  startWeights <- att[["weight"]]
-  
-  # Decompress phyDat object so each character is listed once
-  eachChar <- seq_along(startWeights)
-  deindexedChars <- rep.int(eachChar, startWeights)
-  
-  # Resample characters
-  resampling <- tabulate(sample(deindexedChars, replace = TRUE), length(startWeights))
-  sampled <- resampling != 0
-  sampledData <- lapply(dataset, function (x) x[sampled])
-  sampledAtt <- att
-  sampledAtt[["index"]] <- rep.int(seq_len(sum(sampled)), resampling[sampled])
-  sampledAtt[["weight"]] <- resampling[sampled]
-  sampledAtt[["nr"]] <- length(sampledAtt[["weight"]])
-  sampledAtt[["min.length"]] <- minLength <- att[["min.length"]][sampled]
-  sampledAtt[["morphyObjs"]] <- att[["morphyObjs"]][sampled]
-  attributes(sampledData) <- sampledAtt
-  
-  # Search using resampled dataset
-  res <- EdgeListSearch(edgeList[1:2], sampledData, TreeScorer = IWScoreMorphy,
-                        concavity = concavity, minLength = minLength,
-                        EdgeSwapper = EdgeSwapper, 
-                        maxIter = maxIter, maxHits = maxHits,
-                        verbosity = verbosity - 1L)
-  
-  res[1:2]
-}
-
-```
-
-Having defined the `Bootstrapper()` function we can now complete a Ratchet 
-search with:
+The parsimony ratchet [@Nixon1999] can help to escape local optima.
+Bootstrap resampling is handled automatically:
 
 ```{r iw-ratchet, message = FALSE}
-ratchetTree <- Ratchet(tree = iwTree, dataset = dataset,
-                       concavity = 10,
-                       InitializeData = IWInitMorphy, 
-                       CleanUpData = IWDestroyMorphy,
-                       TreeScorer = IWScoreMorphy,
-                       Bootstrapper = IWBootstrap,
+ratchetTree <- Ratchet(iwTree, dataset, concavity = 10,
                        ratchIter = 2, ratchHits = 2,
                        searchIter = 20, searchHits = 10,
                        verbosity = 2)
-
 ```
 
-
-It would be sensible to use much larger values of `ratchIter`, `ratchHits`,
-`searchIter` and `searchHits` to be confident of locating an optimal tree.
-Remember that for real implied weights analyses,
-`MaximizeParsimony(dataset, concavity = k)` is faster, easier, and uses the
-full driven search pipeline (see the
-[tree search vignette](tree-search.html#implied-weighting)).
+Use much larger values of `ratchIter`, `ratchHits`,
+`searchIter` and `searchHits` for a thorough search.
+Profile parsimony [@Faith2001] is also supported: set
+`concavity = "profile"`.
 
 Hopefully these examples give a template from which you are able to construct
 your own optimality criteria.  The maintainer is happy to answer questions via
 e-mail, or you can file queries by opening a
-[GitHub issue](https://github.com/ms609/TreeDist/issues/new/).
+[GitHub issue](https://github.com/ms609/TreeSearch/issues/new/).
 
 ## What next?
 

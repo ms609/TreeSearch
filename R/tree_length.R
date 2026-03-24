@@ -520,6 +520,7 @@ FastCharacterLength <- function(tree, dataset) {
 #' @keywords internal
 #' @export
 MorphyTreeLength <- function(tree, morphyObj) {
+  .Deprecated("TreeLength")
   if (!is.morphyPtr(morphyObj)) {
     stop("`morphyObj` must be a valid Morphy pointer")
   }
@@ -546,6 +547,7 @@ MorphyTreeLength <- function(tree, morphyObj) {
 #' @export
 MorphyLength <- function(parent, child, morphyObj, inPostorder = FALSE,
                          nTaxa = mpl_get_numtaxa(morphyObj)) {
+  .Deprecated("NativeLength")
   if (!inPostorder) {
     edgeList <- Preorder(cbind(parent, child))
     edgeList <- edgeList[PostorderOrder(edgeList), ]
