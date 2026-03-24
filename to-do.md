@@ -29,17 +29,17 @@
 | T-150 | P2 | WORKTREE (TS-CID-cons) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. |
 | T-204 | P2 | PR #216 (B) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA run 23495097795. |
 
-### Parallel Tempering (Objective 17)
+### Parallel Tempering / SA (Objective 17)
 
-**Note:** These tasks were originally misnumbered T-190–T-193, colliding
-with existing completed IDs. Renumbered to T-198–T-201 in S-COORD round 10.
+T-198–T-201 (PT core) are on PR #215. T-199 evaluation (agent-c) found
+Boltzmann PT is broken for parsimony but PCSA (post-convergence SA with
+best-tree restart) is highly effective under EW at 125+ tips. See
+`TS-PTeval/dev/pt_t199_findings.md`.
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-198 | P2 | PR #215 (M) | — | **Stochastic TBR + Boltzmann acceptance.** `stochastic_tbr_phase()` in `ts_temper.h/.cpp`. | Was T-190 (PT). On `feature/parallel-temper`. |
-| T-199 | P2 | PR #215 (M) | T-198 | **Multi-chain parallel tempering framework.** N ChainStates with temperature ladder, Metropolis swaps. | Was T-191 (PT). On `feature/parallel-temper`. |
-| T-200 | P2 | PR #215 (M) | T-199 | **Pipeline integration.** Wired into `run_single_replicate()` as new phase. | Was T-192 (PT). On `feature/parallel-temper`. |
-| T-201 | P2 | PR #215 (M) | T-200 | **Benchmark evaluation.** PT vs current pipeline at equal wall-clock. | Was T-193 (PT). On `feature/parallel-temper`. |
+| T-198–201 | P2 | PR #215 (C) | — | **PT core + pipeline integration.** Boltzmann PT disabled by default. | On `feature/parallel-temper`. |
+| T-207 | P2 | ASSIGNED (C) | — | **SA perturbation phase in `run_single_replicate()`.** Add multi-cycle PCSA (SA+TBR with best-tree restart) after drift, before final TBR. EW ≥100 tips. GHA-test. | On `feature/pt-eval` (TS-PTeval). |
 
 ### Bugs
 
