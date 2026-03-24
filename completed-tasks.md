@@ -9,6 +9,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
 | T-197 | Fix `concavity = 0` NaN in `precompute_iw_delta` | D | C++ guard for e==0 avoids 0/0 NaN. R entry points already validate concavity>0. Added 8 new validation tests (MaximizeParsimony, SuccessiveApproximations, TreeLength, AdditionTree). 169 tests pass. |
+| T-195 | GHA benchmark workflow | D | `agent-benchmark.yml` + `bench_regression.R` CLI args (`--datasets`, `--budget`, `--output`, `--threads`, `--lib`). 14 datasets with max_score/ref_time_s. CSV artifact upload. Commit `7a80e67a`. |
 
 ## 2026-03-23
 
