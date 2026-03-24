@@ -812,44 +812,7 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// ts_stochastic_tbr
-List ts_stochastic_tbr(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, double temperature, int n_moves);
-RcppExport SEXP _TreeSearch_ts_stochastic_tbr(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP temperatureSEXP, SEXP n_movesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
-    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type min_steps(min_stepsSEXP);
-    Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
-    Rcpp::traits::input_parameter< double >::type temperature(temperatureSEXP);
-    Rcpp::traits::input_parameter< int >::type n_moves(n_movesSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_stochastic_tbr(edge, contrast, tip_data, weight, levels, min_steps, concavity, temperature, n_moves));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ts_parallel_temper
-List ts_parallel_temper(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, NumericVector temperatures, int rounds, int moves_per_round);
-RcppExport SEXP _TreeSearch_ts_parallel_temper(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP temperaturesSEXP, SEXP roundsSEXP, SEXP moves_per_roundSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
-    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type min_steps(min_stepsSEXP);
-    Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type temperatures(temperaturesSEXP);
-    Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
-    Rcpp::traits::input_parameter< int >::type moves_per_round(moves_per_roundSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_parallel_temper(edge, contrast, tip_data, weight, levels, min_steps, concavity, temperatures, rounds, moves_per_round));
-    return rcpp_result_gen;
-END_RCPP
+// ts_stochastic_tbr and ts_parallel_temper removed — on feature/parallel-temper
 }
 // ts_test_strategy_tracker
 List ts_test_strategy_tracker(int seed, int n_draws, bool pool_available);

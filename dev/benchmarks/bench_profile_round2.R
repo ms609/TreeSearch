@@ -1,7 +1,7 @@
 # Profiling round 2: Fresh baselines and detailed phase analysis
 # Agent F, S-PROF, 2026-03-17
 #
-# Run via: Rscript -e "library(TreeSearch, lib.loc='.agent-f'); source('inst/benchmarks/bench_profile_round2.R')"
+# Run via: Rscript -e "library(TreeSearch, lib.loc='.agent-f'); source('dev/benchmarks/bench_profile_round2.R')"
 
 library(TreeSearch, lib.loc = ".agent-f")
 library(TreeTools)

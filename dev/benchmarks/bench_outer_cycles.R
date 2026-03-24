@@ -4,21 +4,21 @@
 # standard benchmark datasets. Uses 3 seeds x 20s time budget per condition.
 #
 # Run from package root via:
-#   Rscript inst/benchmarks/bench_outer_cycles.R
+#   Rscript dev/benchmarks/bench_outer_cycles.R
 #
-# Results saved to inst/benchmarks/results_outer_cycles.csv
+# Results saved to dev/benchmarks/results_outer_cycles.csv
 
 .libPaths(c(".agent-X", .libPaths()))
 library(TreeSearch)
 library(TreeTools)
 
 SRC <- getwd()
-source(file.path(SRC, "inst/benchmarks/bench_datasets.R"))
-source(file.path(SRC, "inst/benchmarks/bench_framework.R"))
+source(file.path(SRC, "dev/benchmarks/bench_datasets.R"))
+source(file.path(SRC, "dev/benchmarks/bench_framework.R"))
 
 BUDGET_S  <- 20
 SEEDS     <- c(1031L, 2847L, 7193L)
-OUT_FILE  <- file.path(SRC, "inst/benchmarks/results_outer_cycles.csv")
+OUT_FILE  <- file.path(SRC, "dev/benchmarks/results_outer_cycles.csv")
 
 cat("TreeSearch version:", as.character(packageVersion("TreeSearch")), "\n")
 cat(sprintf("Budget: %ds | Seeds: %d\n", BUDGET_S, length(SEEDS)))

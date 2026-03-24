@@ -5,8 +5,8 @@
 library(TreeSearch)
 library(TreeTools)
 
-source("inst/benchmarks/bench_datasets.R")
-source("inst/benchmarks/bench_framework.R")
+source("dev/benchmarks/bench_datasets.R")
+source("dev/benchmarks/bench_framework.R")
 
 GRID_DATASETS <- c(
   "Longrich2010",   # 20 tips
@@ -25,8 +25,8 @@ run_one_subprocess <- function(ds_name, strat_name, seed, maxSeconds = 20L,
   script <- sprintf('
 library(TreeSearch, lib.loc = if (dir.exists(".agent-a")) ".agent-a" else .libPaths())
 library(TreeTools)
-source("inst/benchmarks/bench_datasets.R")
-source("inst/benchmarks/bench_framework.R")
+source("dev/benchmarks/bench_datasets.R")
+source("dev/benchmarks/bench_framework.R")
 ds <- prepare_ts_data(TreeSearch::inapplicable.phyData[["%s"]])
 strat <- get_strategy("%s")
 targetHits <- max(10L, ds$n_taxa %%/%%  5L)
@@ -113,7 +113,7 @@ run_grid_safe <- function(dataset_names = GRID_DATASETS,
   }
 
   result <- do.call(rbind, rows[!vapply(rows, is.null, logical(1))])
-  outfile <- "inst/benchmarks/results_grid.csv"
+  outfile <- "dev/benchmarks/results_grid.csv"
   write.csv(result, outfile, row.names = FALSE)
   cat(sprintf("\nResults saved to %s (%d rows)\n", outfile, nrow(result)))
   invisible(result)

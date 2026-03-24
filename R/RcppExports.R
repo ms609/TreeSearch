@@ -184,13 +184,7 @@ ts_wagner_bias_bench <- function(contrast, tip_data, weight, levels, min_steps, 
     .Call(`_TreeSearch_ts_wagner_bias_bench`, contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature, n_reps, run_tbr)
 }
 
-ts_stochastic_tbr <- function(edge, contrast, tip_data, weight, levels, min_steps, concavity, temperature, n_moves) {
-    .Call(`_TreeSearch_ts_stochastic_tbr`, edge, contrast, tip_data, weight, levels, min_steps, concavity, temperature, n_moves)
-}
-
-ts_parallel_temper <- function(edge, contrast, tip_data, weight, levels, min_steps, concavity, temperatures, rounds, moves_per_round) {
-    .Call(`_TreeSearch_ts_parallel_temper`, edge, contrast, tip_data, weight, levels, min_steps, concavity, temperatures, rounds, moves_per_round)
-}
+# ts_stochastic_tbr and ts_parallel_temper removed — on feature/parallel-temper
 
 ts_test_strategy_tracker <- function(seed, n_draws, pool_available) {
     .Call(`_TreeSearch_ts_test_strategy_tracker`, seed, n_draws, pool_available)

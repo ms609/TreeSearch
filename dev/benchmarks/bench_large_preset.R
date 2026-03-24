@@ -4,23 +4,23 @@
 # 180-taxon mbank_X30754 dataset.
 #
 # Run from package root:
-#   Rscript inst/benchmarks/bench_large_preset.R
+#   Rscript dev/benchmarks/bench_large_preset.R
 #
-# Results saved to inst/benchmarks/results_large_preset.csv
+# Results saved to dev/benchmarks/results_large_preset.csv
 
 .libPaths(c(".agent-X", .libPaths()))
 library(TreeSearch)
 library(TreeTools)
 
 SRC <- getwd()
-source(file.path(SRC, "inst/benchmarks/bench_datasets.R"))
+source(file.path(SRC, "dev/benchmarks/bench_datasets.R"))
 # Pull updated presets from source (no rebuild needed for pure-R changes)
 source(file.path(SRC, "R/SearchControl.R"))
 source(file.path(SRC, "R/MaximizeParsimony.R"))
 
 BUDGET_S <- 60          # 60s per run — allows ~1 replicate at 180 tips
 SEEDS    <- c(1031L, 2847L, 7193L, 4561L, 8822L)
-OUT_FILE <- file.path(SRC, "inst/benchmarks/results_large_preset.csv")
+OUT_FILE <- file.path(SRC, "dev/benchmarks/results_large_preset.csv")
 
 cat("TreeSearch version:", as.character(packageVersion("TreeSearch")), "\n")
 cat(sprintf("Budget: %ds | Seeds: %d\n\n", BUDGET_S, length(SEEDS)))

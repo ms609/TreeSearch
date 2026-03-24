@@ -1,7 +1,7 @@
 # Phase 3D: Memory layout profiling
 #
 # Measures TBR phase breakdown and scaling across tree sizes.
-# Run with: source("inst/benchmarks/bench_memory.R")
+# Run with: source("dev/benchmarks/bench_memory.R")
 
 library(TreeSearch)
 library(TreeTools)

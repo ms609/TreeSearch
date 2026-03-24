@@ -169,8 +169,8 @@ rerootings to try) could reduce the constant factor.
 ## 5. Files Created/Modified
 
 ### Created:
-- `inst/benchmarks/bench_memory.R` — profiling harness
-- `inst/benchmarks/memory_profile_results.md` — this file
+- `dev/benchmarks/bench_memory.R` — profiling harness
+- `dev/benchmarks/memory_profile_results.md` — this file
 - `tests/testthat/test-ts-memory-layout.R` — 32 regression tests
 
 ### Modified:
