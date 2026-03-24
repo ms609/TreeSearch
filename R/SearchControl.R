@@ -90,6 +90,16 @@
 #'   with perturbation cycles divided evenly among outer iterations.
 #'   Matches the interleaved sectorial + ratchet pattern of TNT's `xmult`
 #'   \insertCite{Goloboff1999}{TreeSearch}.
+#' @param annealPhases Integer; number of simulated annealing temperature
+#'   steps (default 0 = disabled).  When > 0, runs a linear cooling
+#'   schedule from `annealTStart` to `annealTEnd` using stochastic TBR
+#'   with Boltzmann acceptance.  Runs between drift and final TBR polish.
+#' @param annealTStart Numeric; initial Boltzmann temperature for annealing
+#'   (default 20).  Higher temperatures accept more suboptimal moves.
+#' @param annealTEnd Numeric; final Boltzmann temperature (default 0 =
+#'   strict hill-climbing at end).
+#' @param annealMovesPerPhase Integer; stochastic TBR moves per temperature
+#'   step (default 0 = number of tips).
 #' @param adaptiveStart Logical; use Thompson-sampling (bandit) strategy
 #'   selection for starting trees?  When `TRUE`, each replicate draws its
 #'   starting strategy from a pool of options (random Wagner, biased Wagner,
@@ -156,6 +166,11 @@ SearchControl <- function(
     consensusStableReps = 0L,
     adaptiveLevel = FALSE,
     consensusConstrain = FALSE,
+    # Simulated annealing (linear cooling schedule)
+    annealPhases = 0L,
+    annealTStart = 20,
+    annealTEnd = 0,
+    annealMovesPerPhase = 0L,
     # Adaptive starting-tree strategy (T-190)
     # When TRUE, each replicate draws its starting strategy via Thompson
     # sampling from {Wagner-random, Wagner-Goloboff, Wagner-entropy,
@@ -196,6 +211,10 @@ SearchControl <- function(
       consensusStableReps = as.integer(consensusStableReps),
       adaptiveLevel = as.logical(adaptiveLevel),
       consensusConstrain = as.logical(consensusConstrain),
+      annealPhases = as.integer(annealPhases),
+      annealTStart = as.double(annealTStart),
+      annealTEnd = as.double(annealTEnd),
+      annealMovesPerPhase = as.integer(annealMovesPerPhase),
       adaptiveStart = as.logical(adaptiveStart)
     ),
     class = "SearchControl"
@@ -211,6 +230,8 @@ print.SearchControl <- function(x, ...) {
                    "ratchetPerturbMaxMoves", "ratchetAdaptive"),
     "NNI Perturbation" = c("nniPerturbCycles", "nniPerturbFraction"),
     "Drift" = c("driftCycles", "driftAfdLimit", "driftRfdLimit"),
+    "Annealing" = c("annealPhases", "annealTStart", "annealTEnd",
+                     "annealMovesPerPhase"),
     "Sectorial" = c("xssRounds", "xssPartitions", "rssRounds",
                      "cssRounds", "cssPartitions",
                      "sectorMinSize", "sectorMaxSize"),

@@ -5,6 +5,7 @@
 #include "ts_ratchet.h"
 #include "ts_nni_perturb.h"
 #include "ts_drift.h"
+#include "ts_temper.h"
 #include "ts_sector.h"
 #include "ts_fuse.h"
 #include "ts_pool.h"
@@ -343,6 +344,29 @@ ReplicateResult run_single_replicate(
         Rprintf("  %s score: %.5g [%.0f ms total]\n",
                 outer_label("Drift").c_str(),
                 score_tree(result.tree, ds), result.timings.drift_ms);
+      }
+    }
+
+    if (ts::check_interrupt() || check_timeout()) {
+      result.interrupted = true;
+      result.score = score_tree(result.tree, ds);
+      return result;
+    }
+
+    // 5b. Simulated annealing (linear cooling schedule)
+    if (params.anneal_phases > 0) {
+      AnnealParams ap;
+      ap.t_start = params.anneal_t_start;
+      ap.t_end = params.anneal_t_end;
+      ap.n_phases = params.anneal_phases;
+      ap.moves_per_phase = params.anneal_moves_per_phase;
+      anneal_search(result.tree, ds, ap, cd, check_timeout);
+
+      result.timings.anneal_ms += ph_lap();
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g [%.0f ms total]\n",
+                outer_label("Anneal").c_str(),
+                score_tree(result.tree, ds), result.timings.anneal_ms);
       }
     }
 
