@@ -37,7 +37,12 @@ SearchControl(
   consensusStableReps = 0L,
   adaptiveLevel = FALSE,
   consensusConstrain = FALSE,
-  adaptiveStart = FALSE
+  annealPhases = 0L,
+  annealTStart = 20,
+  annealTEnd = 0,
+  annealMovesPerPhase = 0L,
+  adaptiveStart = FALSE,
+  enumTimeFraction = 0.1
 )
 }
 \arguments{
@@ -150,11 +155,30 @@ uncertain regions.  Constraints are cleared whenever a new best score
 is found.  Only active when no user-supplied \code{constraint} is
 present.  Default \code{FALSE}.}
 
+\item{annealPhases}{Integer; number of simulated annealing cooling phases.
+\code{0} (default) disables annealing.}
+
+\item{annealTStart}{Numeric; starting temperature for simulated annealing.
+Default \code{20}.}
+
+\item{annealTEnd}{Numeric; final temperature.  \code{0} (default) means strict
+(greedy) acceptance at the end of cooling.}
+
+\item{annealMovesPerPhase}{Integer; SPR moves attempted per cooling phase.
+\code{0} (default) uses \code{n_tip} as the per-phase budget.}
+
 \item{adaptiveStart}{Logical; use Thompson-sampling (bandit) strategy
 selection for starting trees?  When \code{TRUE}, each replicate draws its
 starting strategy from a pool of options (random Wagner, biased Wagner,
 random tree, pool ratchet, pool NNI-perturb), adapting to which
 strategies yield the best scores.  Default \code{FALSE}.}
+
+\item{enumTimeFraction}{Numeric between 0 and 0.5; fraction of \code{maxSeconds}
+reserved for MPT enumeration (TBR plateau walk to discover additional
+equal-score topologies).  The main search loop exits at
+\code{maxSeconds * (1 - enumTimeFraction)}.  Set to 0 to disable the reserve
+(pre-v1.6 behaviour: enumeration skipped if the main loop times out).
+Default: \code{0.1} (10\%).}
 }
 \value{
 A named list of class \code{"SearchControl"}.

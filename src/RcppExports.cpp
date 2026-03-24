@@ -875,7 +875,7 @@ END_RCPP
 }
 // ts_test_strategy_tracker
 List ts_test_strategy_tracker(int seed, int n_draws, bool pool_available);
-extern "C" SEXP _TreeSearch_ts_test_strategy_tracker(SEXP seedSEXP, SEXP n_drawsSEXP, SEXP pool_availableSEXP) {
+RcppExport SEXP _TreeSearch_ts_test_strategy_tracker(SEXP seedSEXP, SEXP n_drawsSEXP, SEXP pool_availableSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
