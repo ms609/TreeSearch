@@ -841,6 +841,15 @@ finish:
     Rprintf("Timeout reached (%.5g s)\n", params.max_seconds);
   }
 
+  // Populate per-strategy diagnostics
+  if (params.adaptive_start) {
+    for (int i = 0; i < N_STRAT; ++i) {
+      auto s = static_cast<StartStrategy>(i);
+      result.strategy_attempts[i] = strategy_tracker.attempts(s);
+      result.strategy_successes[i] = strategy_tracker.successes(s);
+    }
+  }
+
   return result;
 }
 
