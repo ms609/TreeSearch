@@ -8,6 +8,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-205 | Fix flaky test-pp-random-tree.R on Windows | G | MWC RNG in build_postorder.h uses static global state not seeded by set.seed(). Widened binomial bounds (stringency 0.005→1e-6) and increased nTrees (6000→12000, 12000→24000) across all tests. False-positive rate: ~0.0002% per run (was ~1%). GHA pass: run 23501977394. |
 | T-203 | Simulated annealing for large trees | G | Linear cooling schedule (T_start→T_end over N phases) using stochastic TBR + Boltzmann acceptance. `ts_temper.h/.cpp` (Layer 1: stochastic_tbr_phase ported from T-198; Layer 3: anneal_search). Wired into driven pipeline between drift and final TBR polish. `SearchControl(annealPhases, annealTStart, annealTEnd, annealMovesPerPhase)`. `large` preset: drift disabled, 5 annealing phases T=20→0. 19 new tests; all pass. Merged to `cpp-search` (conflict with `enumTimeFraction` resolved). |
 | T-197 | Fix `concavity = 0` NaN in `precompute_iw_delta` | D | C++ guard for e==0 avoids 0/0 NaN. R entry points already validate concavity>0. Added 8 new validation tests (MaximizeParsimony, SuccessiveApproximations, TreeLength, AdditionTree). 169 tests pass. |
 | T-195 | GHA benchmark workflow | D | `agent-benchmark.yml` + `bench_regression.R` CLI args (`--datasets`, `--budget`, `--output`, `--threads`, `--lib`). 14 datasets with max_score/ref_time_s. CSV artifact upload. Commit `7a80e67a`. |
