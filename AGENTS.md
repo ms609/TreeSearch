@@ -182,10 +182,12 @@ over time (e.g. when a feature merges and the worktree is reassigned), but
 
 | Directory | Branch | Purpose |
 |-----------|--------|---------|
-| `TreeSearch-a` | *(see `git worktree list`)* | Main source dir |
+| `TreeSearch-a` | `cpp-search` | Main source dir; integration branch |
+| `TS-anneal` | `feature/parallel-temper` | Parallel tempering / simulated annealing |
 | `TS-CID-cons` | `feature/cid-consensus` | CID consensus feature |
 | `TS-MadSlat` | `feature/madslatkin-profiling` | Mad-Slatkin profiling |
 | `TS-ParsSim` | `feature/parssim-ambiguous` | Parsimony simulation |
+| `TS-PTeval` | `feature/pt-eval` | Parallel tempering evaluation |
 | `TS-TNT-bench` | `feature/tnt-bench` | TNT benchmarking |
 | `TS-Xpiwe` | `feature/xpiwe` | Extended implied weighting |
 
