@@ -219,3 +219,198 @@ summarize_benchmark <- function(results) {
 
   do.call(rbind, summaries)
 }
+
+# ===========================================================================
+# MorphoBank external benchmark datasets (neotrans corpus)
+# ===========================================================================
+
+# Hard-coded path to the neotrans matrices directory.
+# The neotrans repo is a sibling of the TreeSearch source tree under GitHub/.
+# This is a git submodule, so the path is stable.
+NEOTRANS_MATRICES_DIR <- local({
+  # Try from TreeSearch source root (getwd() == TreeSearch-a/)
+  candidates <- c(
+    file.path(getwd(), "..", "neotrans", "inst", "matrices"),
+    # From inst/benchmarks/ (when sourcing directly)
+    file.path(getwd(), "..", "..", "neotrans", "inst", "matrices")
+  )
+  for (d in candidates) {
+    d_norm <- normalizePath(d, mustWork = FALSE)
+    if (dir.exists(d_norm)) return(d_norm)
+  }
+  # Return the most likely path even if it doesn't exist yet
+  normalizePath(candidates[1], mustWork = FALSE)
+})
+
+# Minimum taxon count for benchmarking. Matrices below this size are
+# trivially solved in milliseconds and contribute no useful signal.
+MBANK_MIN_NTAX <- 20L
+
+# Fixed 25-matrix training sample, selected for diversity across size tiers.
+# Chosen via max-min distance on standardized (ntax, nchar, pct_missing,
+# pct_inapp) within each tier: 7 small, 7 medium, 7 large, 4 xlarge.
+# Do not modify: results are only comparable when the same sample is used.
+MBANK_FIXED_SAMPLE <- c(
+  # Small (20-30 taxa)
+  "project532", "project2346", "project2451", "project4501",
+  "project944", "project971_(1)", "project2762",
+  # Medium (31-60 taxa)
+  "project826", "project561", "project571", "project4146_(3)",
+  "project3688", "project4049", "project423",
+  # Large (61-120 taxa)
+  "project4286", "project4359", "project4397", "project2084_(1)",
+  "project2771", "project2184", "project3938",
+  # XLarge (121+ taxa)
+  "syab07201", "project4133", "project804", "project4284"
+)
+
+#' Load the MorphoBank matrix catalogue
+#'
+#' Reads the pre-built catalogue CSV from inst/benchmarks/mbank_catalogue.csv.
+#' Filters to usable matrices (parse_ok, ntax >= MBANK_MIN_NTAX) and
+#' optionally excludes redundant multi-matrix duplicates.
+#'
+#' @param include_redundant If FALSE (default), exclude rows flagged
+#'   as redundant in the catalogue.
+#' @return Data frame with one row per matrix.
+load_mbank_catalogue <- function(include_redundant = FALSE) {
+  # Find the catalogue CSV
+  cat_candidates <- c(
+    file.path(getwd(), "inst", "benchmarks", "mbank_catalogue.csv"),
+    file.path(getwd(), "mbank_catalogue.csv"),
+    system.file("benchmarks", "mbank_catalogue.csv", package = "TreeSearch")
+  )
+  cat_path <- NULL
+  for (p in cat_candidates) {
+    if (file.exists(p)) { cat_path <- p; break }
+  }
+  if (is.null(cat_path)) {
+    stop("mbank_catalogue.csv not found. Run build_mbank_catalogue.R first.")
+  }
+
+  cat <- read.csv(cat_path, stringsAsFactors = FALSE)
+
+  # Filter to usable matrices
+  cat <- cat[cat$parse_ok & !is.na(cat$ntax) & cat$ntax >= MBANK_MIN_NTAX, ]
+
+  # Exclude redundant multi-matrix duplicates (if column exists)
+  if (!include_redundant && "dedup_drop" %in% names(cat)) {
+    cat <- cat[!cat$dedup_drop, ]
+  }
+
+  # Add tier classification
+  cat$tier <- cut(cat$ntax,
+                  breaks = c(0, 30, 60, 120, Inf),
+                  labels = c("small", "medium", "large", "xlarge"))
+
+  rownames(cat) <- cat$key
+  cat
+}
+
+#' Load MorphoBank datasets by key
+#'
+#' Reads .nex files from the neotrans matrices directory and prepares them
+#' for the C++ bridge.
+#'
+#' @param catalogue Data frame from load_mbank_catalogue().
+#' @param keys Character vector of matrix keys to load.
+#' @param verbose If TRUE, print progress.
+#' @return Named list of prepared datasets.
+load_mbank_datasets <- function(catalogue, keys, verbose = TRUE) {
+  if (!dir.exists(NEOTRANS_MATRICES_DIR)) {
+    stop("Neotrans matrices directory not found: ", NEOTRANS_MATRICES_DIR,
+         "\nIs the neotrans repo checked out?")
+  }
+
+  datasets <- list()
+  for (k in keys) {
+    if (!k %in% catalogue$key) {
+      warning("Key '", k, "' not in catalogue; skipping.")
+      next
+    }
+    row <- catalogue[catalogue$key == k, ]
+    nex_path <- file.path(NEOTRANS_MATRICES_DIR, row$filename)
+    if (!file.exists(nex_path)) {
+      warning("File not found: ", nex_path, "; skipping.")
+      next
+    }
+    if (verbose) {
+      cat(sprintf("  Loading %s (%d taxa, %d chars)...\n",
+                  k, row$ntax, row$nchar))
+    }
+    tryCatch({
+      pd <- suppressWarnings(TreeTools::ReadAsPhyDat(nex_path))
+      datasets[[k]] <- prepare_ts_data(pd)
+    }, error = function(e) {
+      warning("Failed to load ", k, ": ", conditionMessage(e))
+    })
+  }
+  datasets
+}
+
+#' Load a stratified sample of MorphoBank datasets
+#'
+#' Draws a reproducible stratified sample from the training or validation
+#' split, with equal representation from each size tier.
+#'
+#' @param catalogue Data frame from load_mbank_catalogue().
+#' @param n Total number of matrices to sample (approximately).
+#' @param seed RNG seed for reproducibility.
+#' @param split "training" (default) or "validation".
+#' @param tier Optional: restrict to a specific tier ("small", "medium",
+#'   "large", "xlarge").
+#' @param verbose If TRUE, print summary of what was loaded.
+#' @return Named list of prepared datasets.
+load_mbank_sample <- function(catalogue, n = 25L, seed = 7193L,
+                              split = "training", tier = NULL,
+                              verbose = TRUE) {
+  pool <- catalogue[catalogue$split == split, ]
+  if (!is.null(tier)) {
+    pool <- pool[pool$tier == tier, ]
+  }
+  if (nrow(pool) == 0) {
+    stop("No matrices in the ", split, " split",
+         if (!is.null(tier)) paste0(" (tier: ", tier, ")") else "")
+  }
+
+  # Stratified sampling: allocate n proportionally across tiers
+  tier_counts <- table(pool$tier)
+  tier_counts <- tier_counts[tier_counts > 0]
+  n_per_tier <- round(n * tier_counts / sum(tier_counts))
+  # Ensure at least 1 per tier if tier has matrices
+  n_per_tier <- pmax(n_per_tier, 1L)
+
+  set.seed(seed)
+  selected <- character(0)
+  for (t in names(n_per_tier)) {
+    tier_pool <- pool[pool$tier == t, ]
+    k <- min(n_per_tier[t], nrow(tier_pool))
+    selected <- c(selected, sample(tier_pool$key, k))
+  }
+
+  if (verbose) {
+    cat(sprintf("MorphoBank %s sample: %d matrices from %d tiers\n",
+                split, length(selected), length(n_per_tier)))
+    for (t in names(n_per_tier)) {
+      cat(sprintf("  %s: %d selected (of %d available)\n",
+                  t, sum(pool$tier[pool$key %in% selected] == t),
+                  sum(pool$tier == t)))
+    }
+  }
+
+  load_mbank_datasets(catalogue, selected, verbose = verbose)
+}
+
+#' Load all MorphoBank datasets for a given split
+#'
+#' @param catalogue Data frame from load_mbank_catalogue().
+#' @param split "training" or "validation".
+#' @param verbose If TRUE, print progress.
+#' @return Named list of prepared datasets.
+load_mbank_split <- function(catalogue, split = "training", verbose = TRUE) {
+  pool <- catalogue[catalogue$split == split, ]
+  if (verbose) {
+    cat(sprintf("Loading all %d %s matrices...\n", nrow(pool), split))
+  }
+  load_mbank_datasets(catalogue, pool$key, verbose = verbose)
+}

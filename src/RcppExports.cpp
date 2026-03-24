@@ -831,3 +831,36 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_parallel_temper
+List ts_parallel_temper(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, NumericVector temperatures, int rounds, int moves_per_round);
+RcppExport SEXP _TreeSearch_ts_parallel_temper(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP temperaturesSEXP, SEXP roundsSEXP, SEXP moves_per_roundSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type min_steps(min_stepsSEXP);
+    Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type temperatures(temperaturesSEXP);
+    Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
+    Rcpp::traits::input_parameter< int >::type moves_per_round(moves_per_roundSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_parallel_temper(edge, contrast, tip_data, weight, levels, min_steps, concavity, temperatures, rounds, moves_per_round));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ts_test_strategy_tracker
+List ts_test_strategy_tracker(int seed, int n_draws, bool pool_available);
+extern "C" SEXP _TreeSearch_ts_test_strategy_tracker(SEXP seedSEXP, SEXP n_drawsSEXP, SEXP pool_availableSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< int >::type n_draws(n_drawsSEXP);
+    Rcpp::traits::input_parameter< bool >::type pool_available(pool_availableSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_test_strategy_tracker(seed, n_draws, pool_available));
+    return rcpp_result_gen;
+END_RCPP
+}

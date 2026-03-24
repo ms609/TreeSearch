@@ -21,6 +21,7 @@
 #include "ts_simplify.h"
 #include "ts_hsj.h"
 #include "ts_temper.h"
+#include "ts_strategy.h"
 
 using namespace Rcpp;
 
@@ -2464,6 +2465,146 @@ List ts_stochastic_tbr(
     Named("n_improved") = res.n_improved,
     Named("n_attempted") = res.n_attempted,
     Named("edge") = out_edge
+  );
+}
+
+
+// --- Parallel tempering search ---
+//
+// Runs N chains at different Boltzmann temperatures with periodic swaps.
+// Cold chain (T=0) uses standard TBR; hot chains use stochastic TBR.
+// Returns the cold chain's final tree and statistics.
+
+// [[Rcpp::export]]
+List ts_parallel_temper(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    IntegerVector min_steps,
+    double concavity,
+    NumericVector temperatures,
+    int rounds,
+    int moves_per_round)
+{
+  if (concavity < 0) concavity = HUGE_VAL;
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
+
+  ts::TreeState tree;
+  tree.init_from_edge(edge.column(0).begin(), edge.column(1).begin(),
+                      edge.nrow(), ds);
+  tree.load_tip_states(ds);
+  tree.build_postorder();
+
+  ts::PTParams params;
+  params.n_chains = temperatures.size();
+  params.temperatures.assign(temperatures.begin(), temperatures.end());
+  params.rounds = rounds;
+  params.moves_per_round = moves_per_round;
+
+  ts::PTResult res = ts::parallel_temper_search(tree, ds, params);
+
+  // Build edge matrix from cold chain's final tree
+  int n_edge = 2 * (tree.n_tip - 1);
+  IntegerMatrix out_edge(n_edge, 2);
+  int ei = 0;
+  for (int node = tree.n_tip; node < tree.n_node; ++node) {
+    int ni = node - tree.n_tip;
+    out_edge(ei, 0) = node + 1;
+    out_edge(ei, 1) = tree.left[ni] + 1;
+    ++ei;
+    out_edge(ei, 0) = node + 1;
+    out_edge(ei, 1) = tree.right[ni] + 1;
+    ++ei;
+  }
+
+  return List::create(
+    Named("best_score") = res.best_score,
+    Named("cold_final_score") = res.cold_final_score,
+    Named("swaps_accepted") = res.total_swaps_accepted,
+    Named("swaps_attempted") = res.total_swaps_attempted,
+    Named("hot_discoveries") = res.hot_discoveries,
+    Named("edge") = out_edge
+  );
+}
+
+// [[Rcpp::export]]
+List ts_test_strategy_tracker(int seed, int n_draws, bool pool_available) {
+  using ts::StrategyTracker;
+  using ts::StartStrategy;
+  using ts::N_STRAT;
+
+  StrategyTracker tracker;
+  std::mt19937 rng(seed);
+
+  // 1. Draw `n_draws` strategies and count selections
+  IntegerVector counts(N_STRAT, 0);
+  for (int i = 0; i < n_draws; ++i) {
+    auto s = tracker.select(rng, pool_available);
+    counts[static_cast<int>(s)]++;
+  }
+
+  // 2. Record initial alpha/beta
+  NumericVector alpha_init(N_STRAT), beta_init(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    alpha_init[i] = tracker.alpha(static_cast<StartStrategy>(i));
+    beta_init[i] = tracker.beta_param(static_cast<StartStrategy>(i));
+  }
+
+  // 3. Update: arm 0 gets 5 successes, arm 1 gets 5 failures
+  for (int i = 0; i < 5; ++i) {
+    tracker.update(StartStrategy::WAGNER_RANDOM, true);
+    tracker.update(StartStrategy::WAGNER_GOLOBOFF, false);
+  }
+
+  NumericVector alpha_after_update(N_STRAT), beta_after_update(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    alpha_after_update[i] = tracker.alpha(static_cast<StartStrategy>(i));
+    beta_after_update[i] = tracker.beta_param(static_cast<StartStrategy>(i));
+  }
+
+  // 4. Decay
+  tracker.decay(0.5);
+  NumericVector alpha_after_decay(N_STRAT), beta_after_decay(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    alpha_after_decay[i] = tracker.alpha(static_cast<StartStrategy>(i));
+    beta_after_decay[i] = tracker.beta_param(static_cast<StartStrategy>(i));
+  }
+
+  // 5. Post-update selection distribution (arm 0 should dominate)
+  IntegerVector counts_biased(N_STRAT, 0);
+  for (int i = 0; i < n_draws; ++i) {
+    auto s = tracker.select(rng, pool_available);
+    counts_biased[static_cast<int>(s)]++;
+  }
+
+  // 6. Round-robin
+  auto rr = StrategyTracker::round_robin(12, 3);
+  IntegerVector round_robin_seq(12);
+  for (int i = 0; i < 12; ++i) {
+    round_robin_seq[i] = static_cast<int>(rr[i]);
+  }
+
+  // 7. Strategy names
+  CharacterVector names(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    names[i] = ts::strategy_name(static_cast<StartStrategy>(i));
+  }
+
+  return List::create(
+    Named("n_strategies") = N_STRAT,
+    Named("strategy_names") = names,
+    Named("initial_counts") = counts,
+    Named("alpha_init") = alpha_init,
+    Named("beta_init") = beta_init,
+    Named("alpha_after_update") = alpha_after_update,
+    Named("beta_after_update") = beta_after_update,
+    Named("alpha_after_decay") = alpha_after_decay,
+    Named("beta_after_decay") = beta_after_decay,
+    Named("biased_counts") = counts_biased,
+    Named("round_robin") = round_robin_seq
   );
 }
 

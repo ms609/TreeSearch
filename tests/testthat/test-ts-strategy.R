@@ -1,0 +1,106 @@
+context("Strategy tracker (Thompson sampling bandit)")
+
+# Exercises StrategyTracker via the ts_test_strategy_tracker() bridge.
+# The bridge creates a fresh tracker, draws `n_draws` selections, then
+# applies 5 successes to arm 0 (WAGNER_RANDOM) and 5 failures to arm 1
+# (WAGNER_GOLOBOFF), decays by 0.5, and draws again. It also produces
+# a round-robin sequence.
+
+test_that("Strategy tracker has 6 arms with correct names", {
+  res <- TreeSearch:::ts_test_strategy_tracker(42L, 100L, TRUE)
+  expect_equal(res$n_strategies, 6L)
+  expect_equal(
+    res$strategy_names,
+    c("wag_rand", "wag_golob", "wag_entropy",
+      "rand_tree", "pool_ratch", "pool_nni")
+  )
+})
+
+test_that("Initial priors: Beta(1,1) for most, Beta(1,2) for RANDOM_TREE", {
+  res <- TreeSearch:::ts_test_strategy_tracker(1L, 1L, FALSE)
+  expect_equal(res$alpha_init, c(1, 1, 1, 1, 1, 1))
+  # RANDOM_TREE (index 4) has beta=2
+
+  expect_equal(res$beta_init, c(1, 1, 1, 2, 1, 1))
+})
+
+test_that("Initial selection covers all non-pool arms when pool unavailable", {
+  res <- TreeSearch:::ts_test_strategy_tracker(8371L, 10000L, FALSE)
+  # Only arms 0-3 should be selected (no pool-based arms 4,5)
+  expect_true(all(res$initial_counts[5:6] == 0))
+  # All 4 fresh arms should get some selections out of 10000 draws
+  expect_true(all(res$initial_counts[1:4] > 0))
+})
+
+test_that("Pool-based arms selected when pool available", {
+  res <- TreeSearch:::ts_test_strategy_tracker(8371L, 10000L, TRUE)
+  # With pool available, arms 4 and 5 should get selections too
+  expect_true(all(res$initial_counts[5:6] > 0))
+  # All 6 arms selected
+  expect_true(all(res$initial_counts > 0))
+  expect_equal(sum(res$initial_counts), 10000L)
+})
+
+test_that("RANDOM_TREE selected less often due to pessimistic prior", {
+  # Over many draws from fresh priors, RANDOM_TREE (Beta(1,2)) should
+
+  # average ~33% vs ~50% for the Beta(1,1) arms
+  res <- TreeSearch:::ts_test_strategy_tracker(2847L, 50000L, FALSE)
+  # 4 arms: 3 with Beta(1,1) ≈ 50% each => ~16.7% per arm if uniform
+  # But RANDOM_TREE has lower expected value (0.33 vs 0.50) =>
+  # should be selected notably less often than the others.
+  rand_tree_frac <- res$initial_counts[4] / 50000
+  other_mean_frac <- mean(res$initial_counts[1:3]) / 50000
+  expect_true(rand_tree_frac < other_mean_frac)
+})
+
+test_that("Update modifies alpha/beta correctly", {
+  res <- TreeSearch:::ts_test_strategy_tracker(1L, 1L, FALSE)
+  # arm 0 (WAGNER_RANDOM): 5 successes → alpha += 5
+  expect_equal(res$alpha_after_update[1], 1 + 5)
+  expect_equal(res$beta_after_update[1], 1)  # no failures added
+  # arm 1 (WAGNER_GOLOBOFF): 5 failures → beta += 5
+  expect_equal(res$alpha_after_update[2], 1)  # no successes added
+  expect_equal(res$beta_after_update[2], 1 + 5)
+  # arm 2 (WAGNER_ENTROPY): unchanged
+  expect_equal(res$alpha_after_update[3], 1)
+  expect_equal(res$beta_after_update[3], 1)
+})
+
+test_that("Decay halves excess over prior", {
+  res <- TreeSearch:::ts_test_strategy_tracker(1L, 1L, FALSE)
+  # After update: arm 0 alpha=6, beta=1. Decay 0.5:
+  #   alpha = max(1, 1 + (6-1)*0.5) = 1 + 2.5 = 3.5
+  #   beta  = max(1, 1 + (1-1)*0.5) = 1
+  expect_equal(res$alpha_after_decay[1], 3.5)
+  expect_equal(res$beta_after_decay[1], 1.0)
+  # arm 1: alpha=1, beta=6 → beta = 1 + (6-1)*0.5 = 3.5
+  expect_equal(res$alpha_after_decay[2], 1.0)
+  expect_equal(res$beta_after_decay[2], 3.5)
+  # RANDOM_TREE (arm 3): alpha=1 beta=2 → beta = 1 + (2-1)*0.5 = 1.5
+  expect_equal(res$alpha_after_decay[4], 1.0)
+  expect_equal(res$beta_after_decay[4], 1.5)
+})
+
+test_that("Biased counts favour arm 0 after 5 successes (post-decay)", {
+
+  # After arm 0 gets 5 successes + decay → alpha=3.5, beta=1
+  # Mean = 3.5/(3.5+1) = 0.78 — should dominate Thompson sampling
+  res <- TreeSearch:::ts_test_strategy_tracker(5319L, 10000L, FALSE)
+  # arm 0 should be most-selected
+  expect_equal(which.max(res$biased_counts[1:4]), 1L)
+  # arm 0 should get majority of draws
+  expect_true(res$biased_counts[1] > 3000)
+})
+
+test_that("Round-robin sequence is correct", {
+  res <- TreeSearch:::ts_test_strategy_tracker(1L, 1L, FALSE)
+  rr <- res$round_robin
+  expect_length(rr, 12)
+  # First 3 replicates: fresh arms only (0,1,2,3 cycling)
+  expect_equal(rr[1:3], c(0L, 1L, 2L))
+  # After pool_available_after=3: cycles through all 6
+  expect_equal(rr[4:9], 0:5)
+  # Next cycle: 0,1,2
+  expect_equal(rr[10:12], 0:2)
+})

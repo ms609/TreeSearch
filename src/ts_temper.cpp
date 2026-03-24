@@ -2,6 +2,7 @@
 #include "ts_collapsed.h"
 #include "ts_constraint.h"
 #include "ts_fitch.h"
+#include "ts_tbr.h"
 #include "ts_rng.h"
 #include <algorithm>
 #include <random>
@@ -387,6 +388,182 @@ TemperResult stochastic_tbr_phase(
 
   result.best_score = best_score;
   result.final_score = score;
+  return result;
+}
+
+// --- Layer 2: Multi-chain parallel tempering ---
+
+// Deep-copy a TreeState (topology + all state arrays).
+static TreeState copy_tree_state(const TreeState& src) {
+  TreeState dst;
+  dst.n_tip = src.n_tip;
+  dst.n_internal = src.n_internal;
+  dst.n_node = src.n_node;
+  dst.total_words = src.total_words;
+  dst.n_blocks = src.n_blocks;
+  dst.parent = src.parent;
+  dst.left = src.left;
+  dst.right = src.right;
+  dst.prelim = src.prelim;
+  dst.final_ = src.final_;
+  dst.down2 = src.down2;
+  dst.subtree_actives = src.subtree_actives;
+  dst.local_cost = src.local_cost;
+  dst.postorder = src.postorder;
+  return dst;
+}
+
+// Swap two chains' trees and scores (topology only — state arrays are
+// rebuilt by full_rescore after swap).
+static void swap_chains(TreeState& a, double& score_a,
+                        TreeState& b, double& score_b) {
+  std::swap(a.parent, b.parent);
+  std::swap(a.left, b.left);
+  std::swap(a.right, b.right);
+  std::swap(a.postorder, b.postorder);
+  std::swap(score_a, score_b);
+}
+
+PTResult parallel_temper_search(
+    TreeState& tree, const DataSet& ds,
+    const PTParams& params,
+    TreePool* pool,
+    ConstraintData* cd,
+    std::function<bool()> check_timeout) {
+
+  int nc = params.n_chains;
+  if (nc < 2) nc = 2;
+
+  // Build temperature ladder (default: geometric spacing)
+  std::vector<double> temps = params.temperatures;
+  if (static_cast<int>(temps.size()) < nc) {
+    temps.resize(nc);
+    temps[0] = 0.0;
+    for (int i = 1; i < nc; ++i) {
+      temps[i] = std::pow(3.0, i);  // 0, 3, 9, 27, ...
+    }
+  }
+
+  int moves_per_round = params.moves_per_round;
+  if (moves_per_round <= 0) moves_per_round = tree.n_tip;
+
+  // Initialize chains: chain 0 is cold, others are hot copies
+  std::vector<TreeState> chains(nc);
+  std::vector<double> scores(nc);
+
+  tree.reset_states(ds);
+  chains[0] = copy_tree_state(tree);
+  scores[0] = score_tree(chains[0], ds);
+
+  for (int i = 1; i < nc; ++i) {
+    chains[i] = copy_tree_state(tree);
+    scores[i] = scores[0];
+  }
+
+  double pool_best = (pool && pool->best_score() < 1e17)
+                         ? pool->best_score()
+                         : scores[0];
+  double overall_best = scores[0];
+
+  std::mt19937 rng = ts::make_rng();
+
+  PTResult result = {};
+  result.best_score = overall_best;
+  result.cold_final_score = scores[0];
+
+  for (int round = 0; round < params.rounds; ++round) {
+
+    // --- Cold chain: standard TBR to convergence ---
+    {
+      TBRParams tp;
+      tp.accept_equal = false;
+      tp.max_accepted_changes = 0;
+      tp.max_hits = 1;
+      TBRResult tr = tbr_search(chains[0], ds, tp, cd,
+                                 nullptr, nullptr, check_timeout);
+      scores[0] = tr.best_score;
+    }
+
+    // --- Hot chains: stochastic TBR ---
+    for (int i = 1; i < nc; ++i) {
+      TemperParams tp;
+      tp.temperature = temps[i];
+      tp.n_moves = moves_per_round;
+      TemperResult tr = stochastic_tbr_phase(
+          chains[i], ds, tp, cd, check_timeout);
+      scores[i] = tr.final_score;
+
+      // If a hot chain found a new best score, record it
+      if (tr.best_score < overall_best) {
+        overall_best = tr.best_score;
+        ++result.hot_discoveries;
+      }
+    }
+
+    // --- Attempt adjacent-temperature swaps (from hottest to coldest) ---
+    for (int i = nc - 1; i > 0; --i) {
+      ++result.total_swaps_attempted;
+
+      // Metropolis swap criterion:
+      //   accept with prob = min(1, exp((1/T_lo - 1/T_hi) * (s_lo - s_hi)))
+      // where T_lo = temps[i-1], T_hi = temps[i]
+      // For cold chain (T=0): accept only if hot chain score <= cold score.
+      double s_lo = scores[i - 1];
+      double s_hi = scores[i];
+
+      bool accept_swap = false;
+      if (temps[i - 1] == 0.0) {
+        // Cold chain: only accept if hot chain is at least as good
+        accept_swap = (s_hi <= s_lo + 1e-10);
+      } else {
+        // Both chains have T > 0: standard Metropolis
+        double inv_t_lo = 1.0 / temps[i - 1];
+        double inv_t_hi = 1.0 / temps[i];
+        double log_alpha = (inv_t_lo - inv_t_hi) * (s_lo - s_hi);
+        if (log_alpha >= 0.0) {
+          accept_swap = true;
+        } else {
+          std::uniform_real_distribution<double> unif(0.0, 1.0);
+          accept_swap = (std::log(unif(rng)) < log_alpha);
+        }
+      }
+
+      if (accept_swap) {
+        swap_chains(chains[i - 1], scores[i - 1],
+                    chains[i], scores[i]);
+        ++result.total_swaps_accepted;
+
+        // If cold chain improved, full rescore to refresh state arrays
+        if (i == 1) {
+          chains[0].reset_states(ds);
+          scores[0] = score_tree(chains[0], ds);
+        }
+      }
+    }
+
+    // --- Pool insertion for cold chain improvements ---
+    if (pool && scores[0] < pool_best) {
+      pool_best = scores[0];
+      // Pool insertion will happen via caller (driven_search); we just
+      // track the best score here.
+    }
+
+    // Track overall best
+    for (int i = 0; i < nc; ++i) {
+      if (scores[i] < overall_best) overall_best = scores[i];
+    }
+
+    if (ts::check_interrupt()) break;
+    if (check_timeout && check_timeout()) break;
+  }
+
+  // Return cold chain's tree to caller
+  tree = std::move(chains[0]);
+  tree.reset_states(ds);
+  score_tree(tree, ds);
+
+  result.best_score = overall_best;
+  result.cold_final_score = scores[0];
   return result;
 }
 

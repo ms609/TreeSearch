@@ -188,3 +188,11 @@ ts_stochastic_tbr <- function(edge, contrast, tip_data, weight, levels, min_step
     .Call(`_TreeSearch_ts_stochastic_tbr`, edge, contrast, tip_data, weight, levels, min_steps, concavity, temperature, n_moves)
 }
 
+ts_parallel_temper <- function(edge, contrast, tip_data, weight, levels, min_steps, concavity, temperatures, rounds, moves_per_round) {
+    .Call(`_TreeSearch_ts_parallel_temper`, edge, contrast, tip_data, weight, levels, min_steps, concavity, temperatures, rounds, moves_per_round)
+}
+
+ts_test_strategy_tracker <- function(seed, n_draws, pool_available) {
+    .Call(`_TreeSearch_ts_test_strategy_tracker`, seed, n_draws, pool_available)
+}
+

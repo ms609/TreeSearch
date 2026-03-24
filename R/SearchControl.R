@@ -135,7 +135,12 @@ SearchControl <- function(
     # Stopping criteria
     consensusStableReps = 0L,
     adaptiveLevel = FALSE,
-    consensusConstrain = FALSE
+    consensusConstrain = FALSE,
+    # Adaptive starting-tree strategy (T-190)
+    # When TRUE, each replicate draws its starting strategy via Thompson
+    # sampling from {Wagner-random, Wagner-Goloboff, Wagner-entropy,
+    # random-tree, pool-ratchet, pool-NNI-perturb}. Overrides wagnerBias.
+    adaptiveStart = FALSE
 ) {
   structure(
     list(
@@ -170,7 +175,8 @@ SearchControl <- function(
       poolSuboptimal = as.double(poolSuboptimal),
       consensusStableReps = as.integer(consensusStableReps),
       adaptiveLevel = as.logical(adaptiveLevel),
-      consensusConstrain = as.logical(consensusConstrain)
+      consensusConstrain = as.logical(consensusConstrain),
+      adaptiveStart = as.logical(adaptiveStart)
     ),
     class = "SearchControl"
   )
@@ -191,7 +197,7 @@ print.SearchControl <- function(x, ...) {
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual",
                      "poolMaxSize", "poolSuboptimal"),
     "Stopping" = c("consensusStableReps", "adaptiveLevel",
-                    "consensusConstrain")
+                    "consensusConstrain", "adaptiveStart")
   )
   cat("SearchControl object\n")
   for (gname in names(groups)) {

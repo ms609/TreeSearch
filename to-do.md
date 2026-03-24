@@ -11,6 +11,9 @@
   work from agent assignments and prevents double-claiming.
 - On completion, **delete** the row from this file and append a summary row
   to `completed-tasks.md` (see workflow in AGENTS.md).
+- Tasks awaiting GHA results: `PARKED (<Letter>, GHA <run_id>)`.
+- Tasks with an open PR awaiting human merge: `PR #N (<Letter>)`.
+  S-COORD cleans these up after merge.
 - Standing tasks (S-RED, S-PROF, S-COORD) are always present. When one is
   completed, reset it to OPEN. Their effective priority is dynamic:
   - ≥6 OPEN specific tasks → standing tasks are P3
@@ -38,6 +41,13 @@
 | T-191 | P2 | OPEN | T-190 | **Multi-chain parallel tempering framework.** N ChainStates with temperature ladder, round structure (K moves then swap), Metropolis swap criterion, best-score promotion. | |
 | T-192 | P2 | OPEN | T-191 | **Pipeline integration.** Wire into `run_single_replicate()` as new phase. `SearchParams` fields, `SearchControl()` R API, timing diagnostics. | |
 | T-193 | P2 | OPEN | T-192 | **Benchmark evaluation.** Compare PT vs current pipeline at equal wall-clock. 180t dataset + additional large matrices. Time-adjusted expected best. | |
+
+### Bugs from S-RED Focus 10
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-196 | P2 | ASSIGNED (G) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies (ts_tbr.cpp, ts_search.cpp, ts_drift.cpp, ts_temper.cpp) read `local_cost` for all blocks, but NA blocks need the three-pass correction from `extract_char_steps`. IW candidate screening uses wrong base score + deltas. Impact: conservative (final `score_tree()` always correct), but suboptimal move selection for `inapplicable="bgs"` + finite `concavity`. Fix: add NA block loop (matching ts_fitch.cpp:420-465) to each copy, or extract a shared function. | Found by S-RED focus 10. |
+| T-197 | P3 | OPEN | — | **[Bug] `concavity = 0` produces NaN.** `precompute_iw_delta` computes `0/(0+0)=NaN` when `k=0` and `e=0`. R-side `TreeLength` also has `0/0` at line 132. No input validation rejects `k ≤ 0`. Fix: validate `concavity > 0` in R layer (`MaximizeParsimony`, `TreeLength`, `AdditionTree`), or handle `k=0` as limit case in C++. | Found by S-RED focus 10. |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
@@ -156,16 +166,16 @@ Pool-based arms excluded when pool is empty (zero-armed at rep 0).
   Mitigation: pool-based arms auto-excluded until pool has ≥2 best-score trees.
 - Parallel adaptation: not attempted; round-robin is sufficient.
 
-### External Benchmark Datasets (Objective 17)
+### Infrastructure
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-194 | P3 | OPEN | — | **Stratified sample selection + documentation.** Select fixed ~25 training matrices, document train/validation split in strategies.md and AGENTS.md. Multi-matrix project dedup profiling. | Plan: `.positai/plans/2026-03-24-0551-*.md` |
+| T-195 | P3 | OPEN | — | **GHA benchmark workflow.** Create `agent-benchmark.yml` for performance regression testing on GHA. Adapt `bench_regression.R` to accept CLI args (`--datasets`, `--budget`). Upload results as artifacts. | See `.positai/plans/2026-03-24-0625-remote-compute-integration-for-multi-agent-workflows.md` §1b. |
 
 ### Standing Tasks
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-19 by B (focus 7: Shiny module wiring). |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by B (focus 10: Profile & IW scoring). |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-19 by A (round 3). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-23 by G (round 9). |

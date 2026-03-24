@@ -402,6 +402,7 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
 
 void extract_char_steps(const TreeState& tree, const DataSet& ds,
                         std::vector<int>& char_steps) {
+  std::fill(char_steps.begin(), char_steps.end(), 0);
   // Standard blocks: count from local_cost
   for (int node : tree.postorder) {
     for (int b = 0; b < ds.n_blocks; ++b) {

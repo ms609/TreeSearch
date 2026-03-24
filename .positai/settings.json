@@ -20,9 +20,15 @@
       "head *": "allow",
       "cd \"C:/Users/pjjg18/GitHub/TreeSearch\"": "allow",
       "Rscript --vanilla -e \"pkgbuild::compile_dll(debug=FALSE)\" 2>&1": "allow",
+<<<<<<< Updated upstream
       "cd /c/Users/pjjg18/GitHub/TreeSearch": "allow",
       "Rscript -e \"roxygen2::roxygenise(load_code = roxygen2::load_installed)\" 2>&1": "allow",
       "tail *": "allow"
+=======
+      "cd \"C:\\Users\\pjjg18\\GitHub\\TreeSearch-a\"": "allow",
+      "Rscript -e \".libPaths(c('.agent-A', .libPaths())); roxygen2::roxygenise(load_code = roxygen2::load_installed)\" 2>&1": "allow",
+      "git *": "allow"
+>>>>>>> Stashed changes
     },
     "read": {
       "*.cpp": "allow"
@@ -31,7 +37,15 @@
       "C:\\Users\\pjjg18\\GitHub\\TreeDist/*": "allow",
       "C:\\Users\\pjjg18\\GitHub\\TreeDist\\R/*": "allow",
       "C:\\Users\\pjjg18\\GitHub\\TreeDist\\src/*": "allow",
-      "C:\\Users\\pjjg18\\GitHub\\TreeDist\\vignettes/*": "allow"
+      "C:\\Users\\pjjg18\\GitHub\\TreeDist\\vignettes/*": "allow",
+      "C:/Users/pjjg18/GitHub/TS-MadSlat/R/*": "allow",
+      "C:/Users/pjjg18/GitHub/TS-MadSlat/inst/benchmarks/*": "allow",
+      "C:/Users/pjjg18/.positai/skills/r-package-profiling/*": "allow",
+      "C:/Users/pjjg18/GitHub/TS-MadSlat/src/*": "allow",
+      "*": "allow"
+    },
+    "webfetch": {
+      "https://repo.r-wasm.org/*": "allow"
     }
   }
 }

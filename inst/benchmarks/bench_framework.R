@@ -485,30 +485,27 @@ benchmark_large <- function(
 # IMPORTANT: Validation results must NEVER be used to guide strategy tuning.
 # They are a one-way check to confirm that improvements generalize.
 
-#' Run the MorphoBank training sample benchmark.
+#' Run the MorphoBank fixed training sample benchmark.
 #'
-#' Draws a stratified sample of ~n training matrices and runs them through
-#' the benchmark grid with specified strategies.
+#' Runs the fixed 25-matrix training sample (MBANK_FIXED_SAMPLE) through
+#' the benchmark grid. Use custom keys to override the fixed sample.
 #'
-#' @param n Sample size (default 25).
+#' @param keys Character vector of matrix keys (default: MBANK_FIXED_SAMPLE).
 #' @param strategy_names Strategies to test.
 #' @param replicates Independent runs per combination.
 #' @param maxSeconds Timeout per run.
 #' @param base_seed Base RNG seed.
-#' @param sample_seed Seed for the stratified sample selection.
 #' @return Data frame matching run_benchmark_grid output format, with
 #'   an additional `source` column.
 benchmark_mbank_sample <- function(
-    n = 25L,
+    keys = MBANK_FIXED_SAMPLE,
     strategy_names = c("default"),
     replicates = 3L,
     maxSeconds = 10,
-    base_seed = 42L,
-    sample_seed = 7193L
+    base_seed = 42L
 ) {
   cat_df <- load_mbank_catalogue()
-  datasets <- load_mbank_sample(cat_df, n = n, seed = sample_seed,
-                                split = "training")
+  datasets <- load_mbank_datasets(cat_df, keys = keys)
   if (length(datasets) == 0L) stop("No MorphoBank training datasets loaded")
 
   results <- run_benchmark_grid(
