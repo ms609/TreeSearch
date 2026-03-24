@@ -53,7 +53,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-179 | P2 | PR #215 (M) | — | **Large-tree strategy preset.** For ≥120 tips. | On `feature/parallel-temper`. Commit `fab1e52c`. Arrives with PT PR #215. |
-| T-206 | P3 | PARKED (E, GHA 23503681296) | — | **Outer cycle reset cap / minimum-Δ gate.** `outerCycles=1` repeats until no improvement; late cycles yield <1 step/s. Add reset cap or minimum-Δ threshold. Also fix misleading comment at `ts_driven.cpp:180`. | On `feature/outer-cap-t206`. Retry after test fix. |
+| T-206 | P3 | PR #218 (E+A) | — | **Outer cycle reset cap / minimum-Δ gate.** `outerCycles=1` repeats until no improvement; late cycles yield <1 step/s. Add reset cap or minimum-Δ threshold. Also fix misleading comment at `ts_driven.cpp:180`. | On `feature/outer-cap-t206`. GHA 23504901997 PASS. PR #218 created. |
 | T-182 | P3 | ASSIGNED (G) | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | On `feature/adaptive-ratchet`. |
 | T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
 | T-187 | P3 | OPEN | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
