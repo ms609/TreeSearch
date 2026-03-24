@@ -44,7 +44,7 @@ with existing completed IDs. Renumbered to T-198–T-201 in S-COORD round 10.
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-196 | P2 | ASSIGNED (G) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. |
+| T-196 | P2 | DONE (G), on PT branch | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); will arrive with PT PR. |
 | T-202 | P2 | OPEN | — | **[Bug] MPT enumeration skipped on timeout.** `!result.timed_out` guard in `driven_search()` and `parallel_driven_search()` prevents MPT plateau walk after timeout. At ≥40 tips, timeout is the normal exit, so pool often has only 1–4 trees. Fix: remove the `!result.timed_out` guard; also remove `check_timeout` from MPT enum's TBR call. | Investigated by F; root cause confirmed. See `agent-f.md`. |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
@@ -53,6 +53,7 @@ with existing completed IDs. Renumbered to T-198–T-201 in S-COORD round 10.
 |----|-----|--------|--------|-------------|-------|
 | T-177 | P1 | ASSIGNED (Human+AI) | — | **Bug fix: mid-TBR/SPR timeout.** | Implemented, building and testing. 1762 Tier 2 tests pass. |
 | T-179 | P2 | DONE (G), needs PR | T-177, T-178 | **Large-tree strategy preset.** For ≥120 tips. | On `feature/parallel-temper`. Commit `fab1e52c`. |
+| T-203 | P2 | ASSIGNED (G) | — | **Simulated annealing for large trees.** Single-chain linear cooling schedule using `stochastic_tbr_phase()`. Replace drift in `large` preset. | On `feature/anneal` (TS-anneal worktree). |
 | T-190 | P2 | ASSIGNED (A) | — | **Adaptive starting-tree strategy mixing (bandit).** Thompson sampling over 6 strategy arms. | See cold-start brief below. |
 | T-182 | P3 | OPEN | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | |
 | T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
