@@ -549,4 +549,46 @@ PTResult parallel_temper_search(
   return result;
 }
 
+// --- Layer 3: Simulated annealing ---
+
+AnnealResult anneal_search(
+    TreeState& tree, const DataSet& ds,
+    const AnnealParams& params,
+    ConstraintData* cd,
+    std::function<bool()> check_timeout) {
+
+  AnnealResult result = {};
+  int np = std::max(1, params.n_phases);
+  int moves = params.moves_per_phase > 0 ? params.moves_per_phase : tree.n_tip;
+
+  double score = temper_full_rescore(tree, ds);
+  result.best_score = score;
+
+  for (int phase = 0; phase < np; ++phase) {
+    // Linear temperature schedule: t_start → t_end
+    double frac = (np == 1) ? 1.0
+                  : static_cast<double>(phase) / (np - 1);
+    double temp = params.t_start + (params.t_end - params.t_start) * frac;
+
+    TemperParams tp;
+    tp.temperature = std::max(0.0, temp);
+    tp.n_moves = moves;
+
+    TemperResult tr = stochastic_tbr_phase(tree, ds, tp, cd, check_timeout);
+
+    result.total_accepted  += tr.n_accepted;
+    result.total_improved  += tr.n_improved;
+    result.total_attempted += tr.n_attempted;
+    if (tr.best_score < result.best_score) {
+      result.best_score = tr.best_score;
+    }
+
+    if (ts::check_interrupt()) break;
+    if (check_timeout && check_timeout()) break;
+  }
+
+  result.final_score = temper_full_rescore(tree, ds);
+  return result;
+}
+
 } // namespace ts

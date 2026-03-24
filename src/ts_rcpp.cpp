@@ -2589,7 +2589,7 @@ List ts_parallel_temper(
 }
 
 // [[Rcpp::export]]
-List ts_test_strategy_tracker(int seed, int n_draws, bool pool_available) {
+List ts_test_strategy_tracker(int seed, int n_draws) {
   using ts::StrategyTracker;
   using ts::StartStrategy;
   using ts::N_STRAT;
@@ -2600,7 +2600,7 @@ List ts_test_strategy_tracker(int seed, int n_draws, bool pool_available) {
   // 1. Draw `n_draws` strategies and count selections
   IntegerVector counts(N_STRAT, 0);
   for (int i = 0; i < n_draws; ++i) {
-    auto s = tracker.select(rng, pool_available);
+    auto s = tracker.select(rng);
     counts[static_cast<int>(s)]++;
   }
 

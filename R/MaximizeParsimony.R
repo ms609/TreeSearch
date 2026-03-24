@@ -853,7 +853,19 @@ MaximizeParsimony <- function(
       else ctrl$outerCycles),
     adaptiveStart = as.logical(
       if (is.null(ctrl$adaptiveStart)) FALSE
-      else ctrl$adaptiveStart)
+      else ctrl$adaptiveStart),
+    annealPhases = as.integer(
+      if (is.null(ctrl$annealPhases)) 0L
+      else ctrl$annealPhases),
+    annealTStart = as.double(
+      if (is.null(ctrl$annealTStart)) 20.0
+      else ctrl$annealTStart),
+    annealTEnd = as.double(
+      if (is.null(ctrl$annealTEnd)) 0.0
+      else ctrl$annealTEnd),
+    annealMovesPerPhase = as.integer(
+      if (is.null(ctrl$annealMovesPerPhase)) 0L
+      else ctrl$annealMovesPerPhase)
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
                                         hsjArgs, xformArgs))

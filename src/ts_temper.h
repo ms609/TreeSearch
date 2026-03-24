@@ -72,6 +72,34 @@ PTResult parallel_temper_search(
     ConstraintData* cd = nullptr,
     std::function<bool()> check_timeout = nullptr);
 
+// --- Layer 3: Simulated annealing (single-chain scheduled cooling) ---
+
+struct AnnealParams {
+  double t_start = 20.0;   // initial Boltzmann temperature
+  double t_end = 0.0;      // final temperature (0 = strict at end)
+  int n_phases = 5;        // number of temperature steps (linear schedule)
+  int moves_per_phase = 0; // stochastic moves per phase; 0 = n_tip
+};
+
+struct AnnealResult {
+  double best_score;     // best score seen across all phases
+  double final_score;    // score at end of last phase
+  int total_accepted;    // total accepted moves across all phases
+  int total_improved;    // total strictly-improving moves
+  int total_attempted;   // total move attempts
+};
+
+// Run simulated annealing: stochastic SPR at linearly decreasing
+// temperature from t_start to t_end over n_phases steps.  Each step
+// calls stochastic_tbr_phase().  The tree is NOT restored to its best
+// state — it follows the annealing trajectory.  Caller should run TBR
+// polish afterwards to converge to the nearest local optimum.
+AnnealResult anneal_search(
+    TreeState& tree, const DataSet& ds,
+    const AnnealParams& params,
+    ConstraintData* cd = nullptr,
+    std::function<bool()> check_timeout = nullptr);
+
 } // namespace ts
 
 #endif // TS_TEMPER_H

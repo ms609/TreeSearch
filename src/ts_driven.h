@@ -151,6 +151,15 @@ struct DrivenParams {
   bool consensus_constrain = false;
   int consensus_constrain_min_reps = 5;  // minimum replicates before engaging
 
+  // Simulated annealing: single-chain scheduled cooling.
+  // Stochastic SPR with Boltzmann acceptance at linearly decreasing
+  // temperature.  Inserted after drift in the outer cycle.
+  // anneal_phases=0 disables.
+  int anneal_phases = 0;          // 0 = disabled
+  double anneal_t_start = 20.0;   // initial temperature
+  double anneal_t_end = 0.0;      // final temperature (0 = strict)
+  int anneal_moves_per_phase = 0; // 0 = n_tip
+
   // Adaptive starting-tree strategy selection (T-190).
   // When true, each replicate draws its starting strategy from a Thompson
   // sampling bandit over {Wagner-random, Wagner-Goloboff, Wagner-entropy,
@@ -172,6 +181,7 @@ struct PhaseTimings {
   double ratchet_ms = 0.0;
   double nni_perturb_ms = 0.0;
   double drift_ms = 0.0;
+  double anneal_ms = 0.0;
   double final_tbr_ms = 0.0;
   double fuse_ms = 0.0;
 
@@ -185,6 +195,7 @@ struct PhaseTimings {
     ratchet_ms   += o.ratchet_ms;
     nni_perturb_ms += o.nni_perturb_ms;
     drift_ms     += o.drift_ms;
+    anneal_ms    += o.anneal_ms;
     final_tbr_ms += o.final_tbr_ms;
     fuse_ms      += o.fuse_ms;
   }

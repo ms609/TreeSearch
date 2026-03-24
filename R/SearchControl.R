@@ -156,10 +156,12 @@ SearchControl <- function(
     consensusStableReps = 0L,
     adaptiveLevel = FALSE,
     consensusConstrain = FALSE,
+    # Simulated annealing (T-203)
+    annealPhases = 0L,
+    annealTStart = 20,
+    annealTEnd = 0,
+    annealMovesPerPhase = 0L,
     # Adaptive starting-tree strategy (T-190)
-    # When TRUE, each replicate draws its starting strategy via Thompson
-    # sampling from {Wagner-random, Wagner-Goloboff, Wagner-entropy,
-    # random-tree, pool-ratchet, pool-NNI-perturb}. Overrides wagnerBias.
     adaptiveStart = FALSE
 ) {
   structure(
@@ -196,6 +198,10 @@ SearchControl <- function(
       consensusStableReps = as.integer(consensusStableReps),
       adaptiveLevel = as.logical(adaptiveLevel),
       consensusConstrain = as.logical(consensusConstrain),
+      annealPhases = as.integer(annealPhases),
+      annealTStart = as.double(annealTStart),
+      annealTEnd = as.double(annealTEnd),
+      annealMovesPerPhase = as.integer(annealMovesPerPhase),
       adaptiveStart = as.logical(adaptiveStart)
     ),
     class = "SearchControl"
@@ -211,6 +217,8 @@ print.SearchControl <- function(x, ...) {
                    "ratchetPerturbMaxMoves", "ratchetAdaptive"),
     "NNI Perturbation" = c("nniPerturbCycles", "nniPerturbFraction"),
     "Drift" = c("driftCycles", "driftAfdLimit", "driftRfdLimit"),
+    "Annealing" = c("annealPhases", "annealTStart", "annealTEnd",
+                     "annealMovesPerPhase"),
     "Sectorial" = c("xssRounds", "xssPartitions", "rssRounds",
                      "cssRounds", "cssPartitions",
                      "sectorMinSize", "sectorMaxSize"),
