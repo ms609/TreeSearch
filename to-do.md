@@ -46,16 +46,15 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-196 | P2 | PR #215 (M) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); arrives with PT PR #215. |
+| T-208 | P2 | OPEN | — | **[Bug] `random_topology_tree` ignores constraints.** When `adaptiveStart=true` (thorough preset) AND constraints active, bandit can select RANDOM_TREE → starting tree violates constraint → TBR blocks all constraint-relevant moves (`cn=-1`). Could return constraint-violating trees. | Found by S-RED focus 11. Fix: fall back to WAGNER_RANDOM when `strategy == RANDOM_TREE && cd && cd->active` in `run_single_replicate()` (ts_driven.cpp:111). |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-177 | P1 | ASSIGNED (Human+AI) | — | **Bug fix: mid-TBR/SPR timeout.** | Implemented, building and testing. 1762 Tier 2 tests pass. |
-| T-179 | P2 | PR #215 (M) | T-177, T-178 | **Large-tree strategy preset.** For ≥120 tips. | On `feature/parallel-temper`. Commit `fab1e52c`. Arrives with PT PR #215. |
-| T-190 | P2 | ASSIGNED (A) | — | **Adaptive starting-tree strategy mixing (bandit).** Thompson sampling over 6 strategy arms. | See cold-start brief below. |
-| T-206 | P3 | PARKED (E, GHA 23503177988) | — | **Outer cycle reset cap / minimum-Δ gate.** `outerCycles=1` repeats until no improvement; late cycles yield <1 step/s. Add reset cap or minimum-Δ threshold. Also fix misleading comment at `ts_driven.cpp:180`. | On `feature/outer-cap-t206`. |
-| T-182 | P3 | OPEN | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | |
+| T-179 | P2 | PR #215 (M) | — | **Large-tree strategy preset.** For ≥120 tips. | On `feature/parallel-temper`. Commit `fab1e52c`. Arrives with PT PR #215. |
+| T-206 | P3 | PARKED (E, GHA 23503681296) | — | **Outer cycle reset cap / minimum-Δ gate.** `outerCycles=1` repeats until no improvement; late cycles yield <1 step/s. Add reset cap or minimum-Δ threshold. Also fix misleading comment at `ts_driven.cpp:180`. | On `feature/outer-cap-t206`. Retry after test fix. |
+| T-182 | P3 | ASSIGNED (G) | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | On `feature/adaptive-ratchet`. |
 | T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
 | T-187 | P3 | OPEN | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
 
@@ -64,102 +63,8 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by B (focus 10: Profile & IW scoring). |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by F (focus 11: T-190/T-202/XPIWE merge review). |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-24 by D (round 10). |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-24 by A (round 11: cleanup T-190/T-177/T-202, pipeline refresh). |
 
----
 
-### T-190 Cold-Start Brief: Adaptive Starting-Tree Strategy Mixing
-
-**Problem.** The current driven search uses a fixed starting-tree strategy
-(`wagnerBias`) for all replicates. This is suboptimal because:
-- Different datasets favour different strategies; picking the wrong one wastes
-  replicates.
-- Even when one strategy dominates, diversity of starting basins improves
-  exploration. Goloboff (2014 §3.3) found random starting trees sometimes
-  necessary — they access basins that Wagner trees systematically miss.
-
-**Idea.** Treat starting-tree strategy as a multi-armed bandit. Each replicate
-draws its strategy from a probability distribution. After each replicate,
-update the probabilities based on whether the replicate hit the best score.
-Use Thompson sampling (Beta-Bernoulli) for the explore/exploit tradeoff.
-
-**Strategy arms.**
-
-| Arm | Type | Description | Available |
-|-----|------|-------------|-----------|
-| WAGNER_RANDOM | Fresh | Random addition-order Wagner tree | Always |
-| WAGNER_GOLOBOFF | Fresh | Goloboff (2014) non-ambiguous-char-biased Wagner | Always |
-| WAGNER_ENTROPY | Fresh | State-specificity-biased Wagner | Always |
-| RANDOM_TREE | Fresh | Purely random topology (no character data used) | Always |
-| POOL_RATCHET | Pool-based | Pick random pool tree → heavy ratchet → TBR | Pool ≥1 tree |
-| POOL_NNI_PERTURB | Pool-based | Pick random pool tree → NNI perturbation → TBR | Pool ≥1 tree |
-
-Fresh-start arms: build tree → NNI warmup → TBR → [XSS → ratchet → drift → TBR].
-Pool-based arms: perturb pool tree → TBR → [XSS → ratchet → drift → TBR].
-Pool-based arms skip Wagner + initial descent, investing time in escape instead.
-Give RANDOM_TREE a lower prior (e.g. Beta(1,2)) so it starts with ~33%
-probability rather than 50%, reflecting the expectation that it's usually
-worse but allowing the data to override.
-
-**Thompson sampling.**
-```
-For each arm i: maintain successes[i], failures[i] (init: 1,1 or 1,2)
-To select: sample theta[i] ~ Beta(successes[i], failures[i]); pick argmax.
-After replicate: if hit best score → successes[arm]++; else failures[arm]++.
-On new best score: decay all counts by ×0.5 (landscape changed, old evidence
-is stale).
-Pool-based arms excluded when pool is empty (zero-armed at rep 0).
-```
-
-**Key code locations.**
-- `ts_driven.h`: `DrivenParams` struct (add `adaptive_start` bool + enum)
-- `ts_driven.cpp`: `run_single_replicate()` (accept strategy; build
-  starting tree accordingly), `driven_search()` loop (strategy selection)
-- `ts_wagner.h/cpp`: `WagnerBias` enum, `random_wagner_tree()`,
-  `biased_wagner_tree()`
-- `build_postorder.h`: `random_tree()` — random topology (needs
-  conversion to TreeState format)
-- `ts_nni_perturb.h/cpp`: `random_nni_perturb()` — for POOL_NNI_PERTURB
-- `ts_ratchet.h`: `ratchet_search()` — for POOL_RATCHET
-- `ts_pool.h`: `TreePool` — for selecting a random pool tree
-- `ts_parallel.cpp`: worker_thread loop (round-robin assignment for
-  parallel path)
-- `R/SearchControl.R`: add `adaptiveStart` param
-- `R/MaximizeParsimony.R`: pass through to C++; default on for thorough/large
-- `dev/benchmarks/bench_framework.R`: benchmarking infrastructure
-
-**Implementation plan.**
-1. Add `StartStrategy` enum to `ts_driven.h` (6 arms).
-2. Add `StrategyTracker` class: Thompson sampling, per-arm Beta params,
-   `select()`, `update()`, `decay()`, `set_pool_available()`.
-3. Modify `run_single_replicate()` to accept a `StartStrategy` param.
-   - Fresh arms: switch on strategy to set `wagner_bias` or build random tree.
-   - For RANDOM_TREE: implement `random_topology_tree(TreeState&, DataSet&)`
-     that builds a random topology and scores it (adapt `random_tree()` from
-     `build_postorder.h`).
-   - Pool-based arms: caller passes a pre-perturbed tree as `starting_tree`.
-4. Modify `driven_search()` serial loop:
-   - Before each rep: `tracker.select()` → strategy.
-   - If pool-based and pool non-empty: extract random pool tree, apply
-     perturbation (ratchet or NNI), pass as starting_tree.
-   - After rep: `tracker.update(strategy, hit_best)`.
-   - On new best score: `tracker.decay(0.5)`.
-5. Modify `parallel_driven_search()`: assign strategies round-robin across
-   replicates (pre-computed array). No adaptation (too complex for marginal
-   benefit in parallel).
-6. R API: `SearchControl(adaptiveStart = TRUE)` → maps to
-   `DrivenParams.adaptive_start`. Default TRUE for thorough/large presets.
-7. Benchmark: 180-taxon mbank_X30754, 5 seeds × {fixed-random, fixed-Goloboff,
-   adaptive} × 60s budget. Compare best score, time-to-best, per-arm hit rates.
-8. Tests: unit test StrategyTracker (selection, update, decay, pool-gating);
-   integration test that adaptive search runs without error.
-
-**Risks.**
-- Attribution noise: perturbation may dominate over starting tree, making
-  bandit signal weak. Mitigation: this is fine — the main value is diversity
-  from the start, not learning per se.
-- Pool-based strategies early in search: pool has only 1 mediocre tree.
-  Mitigation: pool-based arms auto-excluded until pool has ≥2 best-score trees.
-- Parallel adaptation: not attempted; round-robin is sufficient.
