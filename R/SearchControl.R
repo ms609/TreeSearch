@@ -15,7 +15,7 @@
 #' @param tbrMaxHits Integer; number of equally-scoring trees to accept
 #'   before stopping a TBR pass.
 #' @param nniFirst Logical; run an NNI pass before SPR/TBR in each replicate?
-#'   At small tree sizes (≤88 tips) overhead is negligible; at ≥100 tips
+#'   At small tree sizes (\eqn{\le}88 tips) overhead is negligible; at \eqn{\ge}100 tips
 #'   this significantly accelerates the initial descent from the Wagner tree.
 #' @param sprFirst Logical; run an SPR pass before TBR in each replicate?
 #' @param tabuSize Integer; tabu list size for TBR plateau exploration.
@@ -70,7 +70,7 @@
 #'   to swap during each NNI-perturbation cycle.  Default 0.5.
 #' @param consensusConstrain Logical; lock the strict consensus of pool
 #'   trees as topological constraints for subsequent replicates?  When
-#'   `TRUE`, after enough replicates (≥5), splits present in ALL
+#'   `TRUE`, after enough replicates (\eqn{\ge}5), splits present in ALL
 #'   best-score pool trees are enforced as constraints, focusing search on
 #'   uncertain regions.  Constraints are cleared whenever a new best score
 #'   is found.  Only active when no user-supplied `constraint` is
