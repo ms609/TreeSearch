@@ -59,6 +59,7 @@ jobs:
         with:
           args: 'c("--no-build-vignettes", "--no-manual", "--ignore-vignettes")'
           build_args: 'c("--no-build-vignettes", "--no-manual")'
+          error-on: '"error"'
 
       - name: Run filtered tests
         if: inputs.test_filter != ''
