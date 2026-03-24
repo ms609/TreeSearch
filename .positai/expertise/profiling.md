@@ -308,6 +308,38 @@ Status key: ✅ resolved, ⚠ partially explored, ❌ not yet investigated
    Fuse is cheap when pool is small, free when pool=1. Current default
    (fuseInterval=3) is appropriate. No optimization task raised.
 
+## Comparing Search Strategies: Time-Adjusted Expected Best
+
+When comparing strategies that differ in per-replicate cost (e.g. NNI→TBR
+vs TBR alone), the **median per-replicate score is the wrong metric**.
+Multi-start search keeps the best tree across all replicates, so what
+matters is the expected minimum from k independent draws, where
+k = budget / time_per_replicate.
+
+A strategy with high variance but occasional excellent scores can dominate
+a consistent-but-mediocre one — if it's fast enough to get more draws.
+
+**Bootstrap estimation:**
+```r
+expected_best <- function(scores, k, n_boot = 5000) {
+  mean(replicate(n_boot, min(sample(scores, k, replace = TRUE))))
+}
+
+# k = budget / median_time_per_rep for each strategy
+k <- floor(budget / median_time)
+exp_best <- expected_best(observed_scores, k)
+```
+
+Compare `exp_best` across strategies at fixed budget (e.g. 20s, 60s, 120s).
+This naturally trades off per-replicate quality against replicate throughput.
+
+**When median IS acceptable:** comparing parameter changes on a fixed pipeline
+(same time-per-rep), e.g. ratchet perturbation probability. All runs take
+roughly the same time, so k is constant and the median is a reasonable proxy.
+
+See AGENTS.md "NNI in the driven pipeline" for the reference application of
+this metric (NNI→TBR vs TBR at 88 and 180 tips).
+
 ## Reporting Format
 
 For each finding, add to `to-do.md`:

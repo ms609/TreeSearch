@@ -141,11 +141,11 @@ test_that("Resample rejects xform without hierarchy", {
 test_that("Resample rejects bad hsj_alpha", {
   ds <- make_resample_data()
   expect_error(
-    Resample(ds, inapplicable = "brazeau", hsj_alpha = 2.0),
+    Resample(ds, inapplicable = "bgs", hsj_alpha = 2.0),
     "hsj_alpha"
   )
   expect_error(
-    Resample(ds, inapplicable = "brazeau", hsj_alpha = -0.1),
+    Resample(ds, inapplicable = "bgs", hsj_alpha = -0.1),
     "hsj_alpha"
   )
 })

@@ -363,19 +363,32 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 
 | Preset | Condition | Key settings |
 |--------|-----------|-------------|
-| sprint | ≤30 tips | 3 ratchet, 0 drift, XSS only, consensus-stop 3 |
-| default | 31–64 tips; or ≥65 tips with <100 char patterns | 5 ratchet, 2 drift, XSS+RSS, consensus-stop 3, Wagner×3, SPR-first, adaptive level |
-| thorough | ≥65 tips with ≥100 char patterns | 20 ratchet (adaptive), 12 drift, XSS+RSS+CSS, consensus-stop 3, Wagner×3, SPR-first |
+| sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first, consensus-stop 3 |
+| default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 2 drift (AFD 5, RFD 0.15), XSS+RSS, consensus-stop 3, Wagner×3, NNI-first, adaptive level |
+| thorough | ≥65 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 12 drift (AFD 5, RFD 0.15), XSS+RSS+CSS, consensus-stop 3, Wagner×3, NNI-first |
 
 All presets set `consensusStableReps = 3`: search stops early if the strict
 consensus of best-score pool trees is unchanged for 3 consecutive replicates.
 
-`default` and `thorough` presets set `sprFirst = TRUE` (SPR warmup before
-TBR) and `wagnerStarts = 3` (pick best of 3 random Wagner trees). `default`
-also enables `adaptiveLevel = TRUE` (scale ratchet/drift by hit rate);
-`thorough` omits it because high base cycle counts (20 ratchet, 12 drift)
-already cover hard landscapes, and 1.5× scaling on top causes excessive
-per-replicate time without commensurate score improvement.
+All presets set `nniFirst = TRUE` (NNI warmup before TBR) and
+`sprFirst = FALSE` (SPR is counterproductive when NNI is active —
+empirically NNI→TBR outperforms NNI→SPR→TBR). With `nniFirst`, each
+Wagner start is NNI-optimized before selection (best of 3 NNI-local optima
+rather than 3 raw Wagner scores). `default` also enables `adaptiveLevel =
+TRUE` (scale ratchet/drift by hit rate); `thorough` omits it because high
+base cycle counts already cover hard landscapes.
+
+**Ratchet perturbation tuning (2026-03-22)**: Systematic profiling across
+all 14 benchmark datasets showed the previous 4% perturbation probability
+was far too gentle. With 253 characters (Zhu2013), 4% zeroes only ~10
+characters — insufficient to reshape the landscape. Increasing to 25%
+with fewer perturbed TBR moves (5 instead of auto=20) improves median
+scores by 3–7 steps on hard datasets while completing fewer but more
+productive replicates. 9/14 datasets improved, 4 unchanged, 1 marginal at
+10s budget (resolves at 20s). The key insight: the perturbed-phase TBR
+should be short (the landscape is warped, so extensive search on it is
+wasteful), but the perturbation itself should be aggressive enough to
+meaningfully displace the tree from its current basin of attraction.
 
 Signal-density gate: datasets with few character patterns (<100) have flat
 parsimony landscapes where intensive search adds no benefit.
@@ -475,6 +488,7 @@ identical best scores). Benefit expected on sparse/synthetic data.
 | RNG | `ts_rng.h/.cpp` | Thread-safe RNG (`thread_local` dispatch) |
 | Simplify | `ts_simplify.h/.cpp` | Character compression and uninformativeness checks |
 | Collapsed | `ts_collapsed.h/.cpp` | Zero-length edge detection for clip skipping |
+| NNI perturb | `ts_nni_perturb.h/.cpp` | Stochastic NNI-perturbation (IQ-TREE-style topology escape) |
 | Rcpp bridge | `ts_rcpp.cpp` | All Rcpp-exported functions |
 
 ### Scoring modes
@@ -763,6 +777,168 @@ Integration complete: `ScoringMode::XFORM` in `score_tree()` dispatches
 Fitch(non-hierarchy) + Sankoff(recoded). `MaximizeParsimony()` accepts
 `inapplicable = "xform"`. End-to-end search verified.
 
+### Stochastic NNI-perturbation (T-186)
+
+`ts_nni_perturb.h/.cpp` implements a topology-space escape mechanism inspired
+by IQ-TREE's `doRandomNNIs()` (Nguyen et al. 2015). Complementary to the
+weight-perturbation ratchet: the ratchet reshapes the objective function, while
+NNI-perturbation directly displaces the tree topology.
+
+**Algorithm:** Collect all internal NNI edges. For each edge (with probability
+`perturb_fraction`, default 0.5), apply a random NNI swap — but skip edges
+adjacent to already-swapped edges (two NNIs conflict if their edges share an
+endpoint). Track touched nodes in a hash set. After all compatible swaps,
+rebuild postorder and full rescore, then TBR to a new local optimum. Repeat
+for `n_cycles`.
+
+**Pipeline placement:** Between ratchet (phase 4) and drift (phase 5) in
+`run_single_replicate()`. Disabled by default (`nniPerturbCycles = 0`).
+Enabled in the `thorough` preset (5 cycles, 0.5 fraction).
+
+**R API:** `SearchControl(nniPerturbCycles, nniPerturbFraction)`.
+Timings reported as `nni_perturb_ms`.
+
+### Biased Wagner addition (T-188, 2026-03-23)
+
+`biased_wagner_tree()` (`ts_wagner.h/.cpp`) samples the taxon-addition
+order from a softmax distribution weighted by informativeness score rather
+than purely at random. Two criteria available:
+
+- **GOLOBOFF** (bias=1): `score[t]` = number of non-ambiguous characters
+  for taxon t. Ref: Goloboff 2014 (*Extended implied weighting*) §3.3.
+- **ENTROPY** (bias=2): `score[t]` = Σ_c (n_states_c − |state set for t|).
+
+**R API:** `SearchControl(wagnerBias = 0L, wagnerBiasTemp = 0.3)`.
+Applied only to the first of `wagnerStarts` starts; remaining starts
+use random order to preserve basin diversity.
+
+**Benchmark results** (2026-03-23, 14 standard + crico-174):
+- Wagner→TBR gap reduction: ~80% at 174t (random: 1356 steps, Goloboff: 244)
+- Score improvement after TBR convergence: ~22 steps at 174t; 1–2 steps at ≤88t
+- Anomalous slight regression at 75–100t (Giles2015, Zanol2014); T=0.3
+  stochastic is safer than pure greedy (T=0)
+
+### Outer search cycle loop (T-189, 2026-03-23)
+
+`outer_cycles` in `SearchParams` / `outerCycles` in `SearchControl()`.
+Wraps steps 3–6 of `run_single_replicate()` in a configurable outer
+loop: [XSS+RSS+CSS → Ratchet → NNI-perturb → Drift → TBR] × N.
+Ratchet/NNI-perturb/drift cycles are divided evenly among N outer cycles
+(ceiling division, minimum 1 per cycle).
+
+`outerCycles = 1` (default) is bit-for-bit identical to the previous
+linear pipeline. `thorough` preset defaults to `outerCycles = 2`.
+
+**Pattern:** Matches TNT's `xmult` interleaving (Goloboff 1999 §2.3):
+after each ratchet/drift escape, a fresh XSS pass exploits the new
+topology before the next perturbation round.
+
+**Citation tracking:** see `papers.md` in project root for full
+reference list used in optimization work.
+
+### NNI in the driven pipeline
+
+`nni_search()` in `ts_search.cpp` is implemented but **never called** in the
+driven pipeline. At ≤88 tips, NNI is strictly redundant — TBR subsumes it and
+completes in <1s per pass, so there's nothing to save.
+
+**At 180 tips, NNI becomes essential.** TBR evaluates O(n²) candidates per
+pass (358 clips × 356 regrafts × rerooting ≈ millions of evaluations),
+and a single convergence from Wagner takes many minutes. NNI evaluates O(n)
+candidates per pass (178 edges × 2 swaps = 356), roughly 1000× cheaper.
+Most improvements during initial descent are NNI-reachable.
+
+Proposed escalation: NNI → SPR → TBR, gated on `n_tip > ~100`.
+See T-178 in `to-do.md`.
+
+**Empirical comparison at 180 tips** (mbank_X30754, 3 seeds, EW):
+
+| Strategy | Median score | Median time |
+|----------|:-----------:|:-----------:|
+| TBR alone | 1427 | 13.6s |
+| SPR→TBR | 1360 | 13.1s |
+| **NNI→TBR** | **1326** | **6.8s** |
+| NNI→SPR→TBR | 1369 | 8.8s |
+
+NNI→TBR wins on both score AND time (~2× faster, ~100 steps better than
+TBR alone). SPR intermediate step adds time without benefit at this scale.
+The NNI descent path leads TBR to better basins of attraction.
+
+**Recommendation:** `nniFirst = TRUE` (always on — NNI costs ~1.5s at
+180 tips, negligible at ≤88 tips). Replace `sprFirst` with `nniFirst`
+for large trees (n_tip > ~80), or just always run NNI since the overhead
+is negligible. SPR warmup is counterproductive at 180 tips.
+
+**Metric note:** When comparing strategies, the right metric is
+**time-adjusted expected best** — the expected minimum score from
+k = budget / time_per_rep independent replicates, since multi-start search
+keeps the best tree. The median measures typical quality, but a strategy
+with high variance and occasional excellent finds can dominate if it gets
+enough draws. Bootstrap estimation: sample k scores with replacement, take
+the min, repeat 5000×, take the mean.
+
+**Time-adjusted expected best (5 seeds, EW):**
+
+| Budget | 88t: TBR | 88t: NNI→SPR→TBR | 180t: TBR | 180t: NNI→SPR→TBR |
+|--------|:--------:|:-----------------:|:---------:|:-----------------:|
+| 20s | 1617 | 1619 (+2) | 1388 | 1278 (−110) |
+| 60s | 1617 | 1619 (+2) | 1348 | 1253 (−95) |
+| 120s | 1617 | 1619 (+2) | 1337 | 1247 (−90) |
+
+At ≤88 tips: NNI has a consistent but negligible 2-step penalty (within
+noise of MPT enumeration). At 180 tips: NNI saves 90–110 steps. The
+crossover is between 88 and 180 tips. No reactive per-run switching
+needed — a simple always-on NNI warmup policy is optimal.
+
+**Escalation strategy:** NNI→TBR (skip SPR) is simplest and nearly
+optimal at all sizes. NNI→SPR→TBR adds ~7 steps at 180 tips for
+negligible extra time, but adds complexity. SPR alone (without NNI)
+is counterproductive at 180 tips (15s vs 7s, worse scores).
+
+### Large-tree scaling issues (discovered 2026-03-23)
+
+The 180-taxon `mbank_X30754` dataset (425 chars, 374 informative patterns,
+40% missing, 20% inapplicable) exposed:
+
+1. ~~**`maxTime` triggers Morphy delegation.**~~ **Fixed (T-184)**:
+   `maxTime` is now intercepted before the Morphy shim check and
+   mapped to `maxSeconds` with a deprecation warning. The C++ driven
+   search is used correctly. (Note: initial 180-taxon benchmarking
+   mistakenly used `maxTime`, which in an older version delegated to
+   `Morphy()` — ~10× slower. All results since T-184 use `maxSeconds`.)
+2. **C++ TBR convergence at 180 tips takes ~13s** (Wagner ~2560 → local
+   optimum ~1420). NNI warmup (~1.5s) followed by TBR reduces this to
+   ~7s while finding better scores. T-178 filed.
+3. **Strategy presets assume replicate time O(seconds).** At 180 tips,
+   a single replicate (TBR + XSS + ratchet + drift) takes ~60-100s.
+   Cycle counts and fuse intervals need recalibration for large trees.
+
+### Benchmarking methodology notes
+
+**Early vs late search:** The character of the search changes over time.
+Early replicates are dominated by initial descent quality (Wagner → local
+optimum); late replicates test ratchet/drift escape effectiveness. At ≤88
+tips, 20s gives 10–40 replicates spanning both regimes. At 180 tips, 20s
+doesn't complete one replicate. A warm-start benchmark (T-180) would
+isolate the escape-effectiveness question.
+
+**Generalization to large trees:** All 14 existing benchmark datasets are
+≤88 tips. Algorithmic choices (e.g. TBR vs NNI warmup, ratchet cycle counts)
+that are optimal at 88 tips may be suboptimal at 180+. The 180-taxon dataset
+should be added to the benchmark suite as a separate tier (T-181).
+
+**`maxTime` confound (2026-03-23):** Initial 180-taxon testing used
+`maxTime` (legacy Morphy parameter), which silently delegated to the
+R-loop `Morphy()` engine. The C++ driven search (via `maxSeconds`) is
+~10× faster at 180 tips. All subsequent profiling used the C++ path.
+
+**180-taxon baseline (C++ driven search, EW, single replicate):**
+- Wagner (best of 3): ~2560 steps, 16ms
+- NNI convergence: ~1600 steps, 1.5s
+- TBR convergence: ~1330 steps, 7s (from NNI-optimal start)
+- XSS: additional ~60 steps improvement, 5s
+- Total single replicate: ~25s (before ratchet/drift)
+
 ## Search optimization roadmap
 
 Plan: `.positai/plans/2026-03-21-search-optimizations.md`
@@ -788,8 +964,32 @@ Ranked by priority:
 6. ~~Strategy preset tuning~~ — **Done**: `default` preset now uses
    `wagnerStarts=3`, `sprFirst=TRUE`, `adaptiveLevel=TRUE`; `thorough`
    preset uses `sprFirst=TRUE`.
+7. ~~Ratchet perturbation tuning~~ — **Done**: perturbation probability
+   increased from 4% to 25%, perturbed TBR moves reduced from auto=20
+   to 5, ratchet cycles increased from 5 to 10 (default) and kept at
+   20 (thorough). Drift cycles increased from 2 to 4 with wider
+   acceptance (AFD 5, RFD 0.15). Validated on all 14 datasets.
+8. ~~Biased Wagner addition~~ — **Done** (T-188): `wagnerBias`
+   (0=RANDOM, 1=GOLOBOFF, 2=ENTROPY) + `wagnerBiasTemp` in
+   `SearchControl()`. First Wagner start uses biased addition order;
+   remaining starts use random for basin diversity. Benchmarked on
+   14 standard + crico-174 datasets: 80% Wagner→TBR gap reduction at
+   174t; ~1–2 steps improvement at ≤88t (negligible). Goloboff 2014
+   §3.3.
+9. ~~Outer search cycle loop~~ — **Done** (T-189): `outerCycles` in
+   `SearchControl()`. Wraps [XSS+RSS+CSS → Ratchet → NNI-perturb →
+   Drift → TBR] in configurable outer loop; cycles divided evenly.
+   `thorough` preset defaults to `outerCycles=2`. Matches TNT xmult
+   pattern. Goloboff 1999 §2.3. Needs benchmarking to validate
+   improvement on standard datasets.
 
 ## Benchmarks and profiling
+
+**TNT comparison suite** lives in `../TS-TNT-bench/`. Key files:
+- `inst/benchmarks/bench_tnt_compare.R` — runner (smoke/medium/full)
+- `inst/benchmarks/tnt_comparison.qmd` — Quarto report (HTML output)
+- `inst/benchmarks/.tnt-bench/` — staging dir for TNT I/O
+- Requires TNT 1.6 at `C:/Programs/Phylogeny/tnt/TNT-bin/tnt.exe`
 
 Benchmark scripts in `inst/benchmarks/`. Key files:
 - `bench_regression.R` — CI regression test (score quality + timing bounds)
@@ -797,16 +997,16 @@ Benchmark scripts in `inst/benchmarks/`. Key files:
 - `strategies.md` — Strategy space documentation
 
 Profiling baselines in `.positai/expertise/profiling.md`. Phase distribution
-(default strategy, EW, 2026-03-21):
+(default strategy, EW, 2026-03-22, post-ratchet tuning):
 
-| Phase | Zhu2013 (75t) | Dikow2009 (64t) | Vinther2008 (23t) |
+| Phase | Zhu2013 (75t) | Dikow2009 (88t) | Agnarsson2004 (62t) |
 |-------|:---:|:---:|:---:|
-| Ratchet | 27% | 36% | 42% |
-| Drift | 21% | 21% | 22% |
-| TBR | 38% | 29% | 17% |
-| XSS | 8% | 9% | 12% |
-| RSS | 4% | 3% | — |
-| Final TBR | 2% | 2% | 6% |
+| Ratchet | 27% | 39% | 35% |
+| Drift | 32% | 28% | 24% |
+| TBR | 31% | 21% | 19% |
+| XSS | 8% | 7% | 8% |
+| RSS | 2% | 3% | 9% |
+| Final TBR | 2% | 3% | 4% |
 
 Per-candidate indirect scoring is at memory-throughput limit (~23 ns at
 75 tips).
@@ -820,3 +1020,35 @@ VTune.** Software-sampling overhead can be 5–20×; if the bare script takes
 MaddisonSlatkin is exponential in tip count — even n=20 with k=3 can take
 seconds per call. Use small n (≤ 15 for k=3, ≤ 12 for k=4, ≤ 9 for k=5)
 and few iterations for VTune drivers.
+
+### Ratchet tuning validation (2026-03-22)
+
+Full 14-dataset comparison, optimized vs original defaults (10s budget,
+3 seeds each). Median scores shown (lower is better).
+
+> **Metric note:** Median per-replicate score is adequate for comparing
+> parameter changes on a fixed pipeline (same time-per-rep). For comparing
+> strategies with different time costs (e.g. NNI→TBR vs TBR), use
+> **time-adjusted expected best** instead — see "Metric note" under
+> "NNI in the driven pipeline".
+
+| Dataset | Tips | Original | Optimized | Delta |
+|---------|:---:|:---:|:---:|:---:|
+| Longrich2010 | 20 | 131 | 131 | 0 |
+| Vinther2008 | 23 | 79 | 79 | 0 |
+| Sansom2010 | 23 | 189 | 189 | 0 |
+| DeAssis2011 | 33 | 64 | 64 | 0 |
+| Aria2015 | 35 | 143 | 143 | 0 |
+| Wortley2006 | 37 | 494 | 491 | +3 |
+| Griswold1999 | 43 | 408 | 407 | +1 |
+| Schulze2007 | 52 | 165 | 164 | +1 |
+| Eklund2004 | 54 | 442 | 441 | +1 |
+| Agnarsson2004 | 62 | 778 | 778 | 0 |
+| Zanol2014 | 74 | 1338 | 1331 | +7 |
+| Zhu2013 | 75 | 649 | 650 | −1 |
+| Giles2015 | 78 | 720 | 716 | +4 |
+| Dikow2009 | 88 | 1614 | 1614 | 0 |
+
+Zhu2013 marginal regression at 10s resolves at 20s (median 649→644).
+At 20s with 5 seeds: Zhu2013 645/643, Giles2015 712/710, Dikow2009
+1611/1611 (all improvements).

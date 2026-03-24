@@ -4,6 +4,31 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ---
 
+## 2026-03-23
+
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| — | Ratchet perturbation tuning: 4%→25%, moves 20→5, cycles 5→10 | Human+AI | Systematic sweep across 14 datasets. 9 improved, 4 unchanged, 1 marginal at 10s (resolves at 20s). Commit `f1ae7edb`. |
+| — | Drift→ratchet reallocation: driftCycles 4→2, ratchetCycles 10→12 | Human+AI | Drift ~0 per-replicate improvement; ratchet is strictly better use of budget. Commit `7ae01181`. |
+| — | Large-tree profiling: 180-taxon dataset analysis | Human+AI | Discovered NNI essential at >100 tips, timeout bug in TBR, strategy presets not calibrated for large trees. Filed T-177 through T-183. |
+| T-185 | Inspect IQ-TREE for parsimony search acceleration ideas | G | Reviewed `iqtree.cpp`/`iqtree.h` source. Top idea: stochastic NNI-perturbation (complement to ratchet). Also: diverse starting trees, adaptive perturbation scaling, perturbation-count stopping. Batch NNI not worthwhile (see `.positai/expertise/batch-nni.md`). |
+| T-186 | Stochastic NNI-perturbation as escape mechanism | G | New `ts_nni_perturb.h/cpp`: random compatible NNI swaps on ~50% of branches + TBR re-optimization. Integrated between ratchet and drift in driven pipeline. `SearchControl(nniPerturbCycles, nniPerturbFraction)`. `thorough` preset: 5 cycles. 28 new test assertions; 1792 ts-* pass. |
+| T-178 | NNI warmup in driven pipeline | G | NNI always-on (`nni_first = true` default). Each Wagner start NNI-optimized before selection (best of NNI-local optima). SPR auto-skipped when NNI active (NNI→TBR empirically optimal). Constraint guard: NNI warmup disabled when constraints active (nni_search lacks constraint support). All presets updated: `nniFirst = TRUE, sprFirst = FALSE`. 1846 ts-* pass. |
+| T-156 | XPIWE C++ core | G | Already implemented in feature/xpiwe commit c7a41712. Verified: ScoringMode::XPIWE enum, eff_k[]/phi[] per-pattern vectors in DataSet, build_dataset() computes adjusted concavity, compute_iw()/precompute_iw_delta() use per-pattern eff_k[p]. Branch builds clean, 1677 ts-* pass. |
+| T-157 | XPIWE Rcpp bridge | G | Already implemented in c7a41712. xpiwe bool + xpiwe_r + xpiwe_max_f + obs_count params in make_dataset, ts_fitch_score, ts_driven_search, ts_resample_search, ts_successive_approx, ts_parallel_resample. TreeSearch-init.c updated. |
+| T-158 | XPIWE R API | G | Already implemented in c7a41712. extended_iw param in MaximizeParsimony(), TreeLength() (all S3 methods), Resample(), SuccessiveApproximations(). Silently ignored when EW/profile. SearchControl() correctly omitted (scoring property, not search control). |
+| T-159 | XPIWE Tests | G | Already implemented in c7a41712. 18 XPIWE-specific tests in test-ts-xpiwe.R: formula unit tests, 8-taxon missing-data scenario, TNT validation gallery (Vinther2008, Sano2011, Sansom2010 stored reference k-values). All pass. |
+| T-160 | XPIWE Docs + NEWS | G | Rd docs and NEWS already in c7a41712. Added vignette paragraph to profile-scores.Rmd explaining XPIWE formula (eff_k, phi, extrapolation factor). Added 'cdot' to WORDLIST. spell_check_package() clean. Commit ea602512. |
+| T-161 | XPIWE Shiny GUI | G | Added "Implied (extended)" as default step weighting in Shiny search config modal. Both "Implied (extended)" and "Implied" share concavity slider. `extendedIw()` reactive threaded through scores(), searchTask, StartSearch(). Updated shinytest2 snapshots. 42 search module tests + 13 Distribution tests pass. Commit 6da9a861. |
+| T-162 | XPIWE Shiny citation | G | Added Goloboff 2014 citation to global.R and references panel (Tree Search section). Always shown since XPIWE is default. Commit a553a325. |
+| T-184 | maxTime → maxSeconds alias | G | Already implemented in commit fafd5d0e. Intercepts maxTime before Morphy detection, maps to maxSeconds with .Deprecated() warning, removes from dots. Removed maxTime from .morphyParams list. Verified working. |
+| T-163 | Search confidence composite diagnostic | G | Replaced exp(-K) with tighter binomial bound (1-K/R)^R, falling back to exp(-K) when K==R. Added optional nTopologies/lastImprovedRep params (wired by T-164). Ruggedness warning when K/R < 0.3 and R >= 5. Limited independence flag when nTopologies==1. 58 search module tests pass. Commit 2d2115cb. |
+| T-164 | Wire pool stats to Shiny search confidence | G | Added `count_at_best()` to TreePool. Initialized new DrivenResult fields in parallel path. Wired to Shiny: nTopologies=length(allTrees), lastImprovedRep from search attrs, reset on weighting/concavity/dataset change. 58 module tests pass. Commit 16c02dc7. |
+| T-181 | Add 180-taxon dataset to benchmark suite | G | Added mbank_X30754 (180t, 425c, 11 states, 40% missing, 20.5% inapp) as large-tree benchmark tier. `LARGE_BENCHMARK_NAMES`, `load_large_benchmark_datasets()`, `benchmark_large()`. Commit adec48b6. |
+| T-180 | Warm-start benchmark infrastructure | G | `bench_warmstart.R`: `compute_warmstart_tree()` (sprint→TBR optimum), `warmstart_run()` (single rep from warm start), `warmstart_benchmark()` (grid), `warmstart_summary()`. Isolates ratchet/drift escape from initial descent. Verified: Vinther2008 sprint→80, warm-start→79. Commit 13a019e3. |
+
+---
+
 ## 2026-03-20
 
 | ID | Description | Agent | Notes |
@@ -196,7 +221,12 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-154 | OAFlatMap for logB_cache/logPVec_cache in SolverT | A | Probe-layer OA map eliminates node ptr-chase; deque backing for logPVec stable refs; fixes latent LogB() dangling-ref UB; bd883459. Speedup vs post-fpl-batch baseline: k=3 n=27 ~4.4×, k=4 n=19 ~3.5×, k=5 n=13 ~12×. No formal A/B build (Windows AV makes double-build ~60 min); derived from S-PROF sweep timings. |
 
 ## 2026-03-22
+
 | ID | Description | Agent | Notes |
+| — | MaddisonSlatkin: test freeze fix (align pp-multistate with split_count gate) | A | Commit 4b95c37a |
+| — | MaddisonSlatkin: Carter O(1) closed-form for k=2 + LSE lookup tables + buffer reuse | A | Commit 93851932. k=2 >100× speedup; k=3 ~5-19% |
+| — | MaddisonSlatkin: threshold recalibration with correct bitmask encoding | A | Commit b8666825. OLD thresholds used wrong state encoding. k=3: 136→75, k=4: 100→50, k=5: 100→35 |
+| — | MaddisonSlatkin: wall-clock time budget safety valve | A | Commit 536f7ff9. 2s chrono budget; every LogB/LogPVec call checks clock (~20ns overhead). Blowup returns NA + warning. 137 tests pass |
 |----|-------------|-------|-------|
 | — | Collapsed-region regraft merging + collapsed pool dedup | — | Goloboff (1996) approach: skip zero-length edges as clip candidates, skip interior collapsed regraft positions (boundary-only evaluation), diversity-aware pool eviction on ties, collapsed-topology pool dedup. 0% skip rate on standard morph datasets but improves pool diversity. 35b5ad99 |
 | — | Strip dead CollapsedRegions code from hot path | — | region_id/n_regions never read by consumers; all callers now use compute_collapsed_flags() directly. a16373a7 |
@@ -204,3 +234,8 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | — | Cross-replicate consensus constraint tightening | — | Opt-in consensusConstrain=TRUE: after ≥5 reps, lock pool strict consensus as topological constraints. Clears on new best score. build_constraint_from_bitsets(), extract_consensus_splits(). 09f69915 |
 | — | Strategy preset tuning | — | default: wagnerStarts=3, sprFirst=TRUE, adaptiveLevel=TRUE. thorough: sprFirst=TRUE. Bundled in 09f69915 |
 EOF 2>&1
+
+## 2026-03-23
+| T-188 | Biased Wagner addition — API integration | Human+AI | `wagnerBias` (0=random, 1=Goloboff, 2=entropy) + `wagnerBiasTemp` in `SearchControl()` and `ts_driven_search`. First Wagner start uses biased order; remaining starts use random for diversity. Goloboff 2014 §3.3. Benchmarked: 80% Wagner→TBR gap reduction at 174t; marginal on ≤88t. |
+| T-189 | Outer search cycle loop | Human+AI | `outerCycles` param in `SearchControl()`. Wraps [XSS+RSS+CSS → Ratchet → NNI-perturb → Drift → TBR] in outer loop, distributing cycles evenly. Matches TNT xmult pattern (Goloboff 1999 §2.3). `thorough` preset defaults to `outerCycles=2`. Backward-compatible: default=1. |
+| T-184 | `maxTime` → `maxSeconds` alias | Human+AI | Already implemented in b8e56e2b. `maxTime` intercepted before `.morphyParams` check, mapped to `maxSeconds` with deprecation warning, routed to C++ engine. Verified: timings attribute present, Morphy() not called. |

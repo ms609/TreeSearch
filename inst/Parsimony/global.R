@@ -314,34 +314,58 @@ FormatMissProb <- function(prob) {
   else "<0.01%"
 }
 
-SearchConfidenceText <- function(K, R, nSearches = 1L) {
+SearchConfidenceText <- function(K, R, nSearches = 1L,
+                                 nTopologies = NULL,
+                                 lastImprovedRep = NULL) {
   if (is.null(K) || is.null(R) || R <= 0L || K <= 0L) return(NULL)
-  # Clamp hits to replicates (shouldn't exceed, but guard against stale data)
   K <- min(K, R)
-  # exp(-K) is a conservative upper bound on (1 - K/R)^R.
-  # Avoids overconfidence when K ~ R with few replicates (old formula
-  # gave 0% when K = R; exp(-K) always > 0).  Matches the theoretical
-  # worst-case formula shown in the config dialog.
-  prob_miss <- exp(-K)
-  # Label the tally as "total runs across N searches" when the user has
-  # clicked Continue, so it's clear this is not a per-search count.
+
+  # Tightened binomial bound: (1 - K/R)^R is tighter than exp(-K) when K < R.
+  # Falls back to exp(-K) when K == R, since (1 - 1)^R = 0 is overconfident.
+  prob_miss <- if (K < R) (1 - K / R) ^ R else exp(-K)
+
   runs_label <- if (!is.null(nSearches) && nSearches > 1L) {
     paste0("total runs across ", nSearches, " searches")
   } else {
     "runs"
   }
-  # When every run found the best score but the sample is small, the
-  # conservative bound always yields exp(-K).  Nudge the user to collect
-  # more hits so the estimate becomes informative.
-  suffix <- if (K == R && R <= 5L) {
+
+  # Topology diversity (wired by T-164; NULL until then)
+  topo_note <- if (!is.null(nTopologies) && nTopologies == 1L) {
+    " [single topology in pool \u2014 limited independence]"
+  } else if (!is.null(nTopologies) && nTopologies > 1L) {
+    paste0(" [", nTopologies, " distinct topologies in pool]")
+  } else {
+    ""
+  }
+
+  # Trajectory info
+  trajectory_note <- if (!is.null(lastImprovedRep) && R > 1L) {
+    paste0(" Last improvement: replicate ", lastImprovedRep, ".")
+  } else {
+    ""
+  }
+
+  # Landscape ruggedness flag
+  rugged_note <- if (K / R < 0.3 && R >= 5L) {
+    paste0(" Rugged landscape: only ", round(100 * K / R), "% of runs found ",
+           "the best score \u2014 consider increasing replicates.")
+  } else {
+    ""
+  }
+
+  # Nudge for small K == R
+  small_sample_note <- if (K == R && R <= 5L) {
     paste0(" \u2014 increase \u2018Stop when N runs hit best\u2019 for a ",
            "tighter estimate")
   } else {
     ""
   }
+
   paste0(K, " of ", R, " ", runs_label, " hit best score. ",
          "Probability that a better score exists: ",
-         FormatMissProb(prob_miss), suffix)
+         FormatMissProb(prob_miss),
+         topo_note, trajectory_note, rugged_note, small_sample_note)
 }
 
 EnC <- function(...) {

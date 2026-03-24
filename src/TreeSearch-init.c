@@ -48,7 +48,7 @@ extern SEXP _TreeSearch_ts_tree_fuse(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, S
 extern SEXP _TreeSearch_ts_sector_diag(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_rss_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_xss_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_driven_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_driven_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_resample_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_parallel_resample(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_successive_approx(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -59,6 +59,7 @@ extern SEXP _TreeSearch_MaddisonSlatkin_clear_cache();
 extern SEXP _TreeSearch_ts_hsj_score(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_sankoff_test(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_mc_fitch_scores(SEXP, SEXP);
+extern SEXP _TreeSearch_ts_wagner_bias_bench(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
@@ -120,7 +121,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_ts_rss_search",  (DL_FUNC) &_TreeSearch_ts_rss_search, 13},
   {"_TreeSearch_ts_xss_search",  (DL_FUNC) &_TreeSearch_ts_xss_search, 12},
   {"_TreeSearch_ts_tree_fuse",   (DL_FUNC) &_TreeSearch_ts_tree_fuse, 11},
-  {"_TreeSearch_ts_driven_search", (DL_FUNC) &_TreeSearch_ts_driven_search, 51},
+  {"_TreeSearch_ts_driven_search", (DL_FUNC) &_TreeSearch_ts_driven_search, 57},
   {"_TreeSearch_ts_resample_search", (DL_FUNC) &_TreeSearch_ts_resample_search, 21},
 {"_TreeSearch_ts_parallel_resample", (DL_FUNC) &_TreeSearch_ts_parallel_resample, 23},
   {"_TreeSearch_ts_successive_approx", (DL_FUNC) &_TreeSearch_ts_successive_approx, 21},
@@ -130,6 +131,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_MaddisonSlatkin_clear_cache", (DL_FUNC) &_TreeSearch_MaddisonSlatkin_clear_cache, 0},
   {"_TreeSearch_ts_hsj_score", (DL_FUNC) &_TreeSearch_ts_hsj_score, 9},
   {"_TreeSearch_ts_sankoff_test", (DL_FUNC) &_TreeSearch_ts_sankoff_test, 5},
+  {"_TreeSearch_ts_wagner_bias_bench", (DL_FUNC) &_TreeSearch_ts_wagner_bias_bench, 10},
 
   {"_TreeSearch_mc_fitch_scores",    (DL_FUNC) &_TreeSearch_mc_fitch_scores, 2},
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},

@@ -45,7 +45,7 @@
 #' @importFrom TreeTools Renumber RenumberTips TreeIsRooted
 #' @export
 TreeLength <- function(tree, dataset, concavity = Inf,
-                       hierarchy = NULL, inapplicable = "brazeau",
+                       hierarchy = NULL, inapplicable = "bgs",
                        hsj_alpha = 1.0) {
   UseMethod("TreeLength")
 }
@@ -53,7 +53,7 @@ TreeLength <- function(tree, dataset, concavity = Inf,
 #' @rdname TreeLength
 #' @export
 TreeLength.phylo <- function(tree, dataset, concavity = Inf,
-                              hierarchy = NULL, inapplicable = "brazeau",
+                              hierarchy = NULL, inapplicable = "bgs",
                               hsj_alpha = 1.0) {
   tipLabels <- tree[["tip.label"]]
   
@@ -81,9 +81,11 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf,
   }
 
   # --- Validate inapplicable-handling parameters ---
-  inapplicable <- match.arg(inapplicable, c("brazeau", "hsj", "xform"))
+  inapplicable <- tolower(inapplicable)
+  if (inapplicable == "brazeau") inapplicable <- "bgs"
+  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform"))
   useHSJ <- !is.null(hierarchy) && identical(inapplicable, "hsj")
-  if (inapplicable != "brazeau") {
+  if (inapplicable != "bgs") {
     if (is.null(hierarchy)) {
       stop("A `hierarchy` is required when inapplicable = \"", inapplicable,
            "\". See ?CharacterHierarchy.")
@@ -183,7 +185,7 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf,
 #' @importFrom TreeTools RandomTree
 #' @export
 TreeLength.numeric <- function(tree, dataset, concavity = Inf,
-                               hierarchy = NULL, inapplicable = "brazeau",
+                               hierarchy = NULL, inapplicable = "bgs",
                                hsj_alpha = 1.0) {
   TreeLength(lapply(!logical(tree), RandomTree, tips = dataset), 
              dataset = dataset, concavity = concavity,
@@ -194,15 +196,17 @@ TreeLength.numeric <- function(tree, dataset, concavity = Inf,
 #' @rdname TreeLength
 #' @export
 TreeLength.list <- function(tree, dataset, concavity = Inf,
-                            hierarchy = NULL, inapplicable = "brazeau",
+                            hierarchy = NULL, inapplicable = "bgs",
                             hsj_alpha = 1.0) {
   iw <- is.finite(concavity)
   useProfile <- .UseProfile(concavity)
 
   # --- Validate inapplicable-handling parameters ---
-  inapplicable <- match.arg(inapplicable, c("brazeau", "hsj", "xform"))
+  inapplicable <- tolower(inapplicable)
+  if (inapplicable == "brazeau") inapplicable <- "bgs"
+  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform"))
   useHSJ <- !is.null(hierarchy) && identical(inapplicable, "hsj")
-  if (inapplicable != "brazeau") {
+  if (inapplicable != "bgs") {
     if (is.null(hierarchy)) {
       stop("A `hierarchy` is required when inapplicable = \"", inapplicable,
            "\". See ?CharacterHierarchy.")
@@ -313,7 +317,7 @@ TreeLength.multiPhylo <- TreeLength.list
 
 #' @export
 TreeLength.NULL <- function(tree, dataset, concavity = Inf,
-                            hierarchy = NULL, inapplicable = "brazeau",
+                            hierarchy = NULL, inapplicable = "bgs",
                             hsj_alpha = 1.0) NULL
 
 # Pack recode_hierarchy() output into the format ts_sankoff_test() expects.

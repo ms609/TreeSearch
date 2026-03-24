@@ -50,3 +50,5 @@ src/Makevars.win
 test*.txt
 test_output.txt
 /pdf
+/.builds
+.positai

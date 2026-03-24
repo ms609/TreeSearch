@@ -15,15 +15,8 @@ fluidPage(
         style = "display: flex; align-items: center; gap: 8px; margin-top: 0.4em;",
         tags$span(
           style = "flex-shrink: 0; line-height: 0;",
-          HTML('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" aria-label="TreeSearch logo">
-            <circle cx="12" cy="12" r="9" fill="white" stroke="#111" stroke-width="2.5"/>
-            <line x1="12" y1="19" x2="12" y2="15" stroke="#111" stroke-width="1.5" stroke-linecap="round"/>
-            <line x1="12" y1="15" x2="7" y2="10" stroke="#111" stroke-width="1.5" stroke-linecap="round"/>
-            <line x1="12" y1="15" x2="17" y2="10" stroke="#111" stroke-width="1.5" stroke-linecap="round"/>
-            <line x1="17" y1="10" x2="15" y2="7" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
-            <line x1="17" y1="10" x2="19" y2="7" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
-            <line x1="18.5" y1="18.5" x2="28" y2="28" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>')
+          tags$img(src = "TreeSearch.svg", width = "32", height = "32",
+                   alt = "TreeSearch logo")
         ),
         tags$h1("TreeSearch", style = "margin: 0;")
       ),

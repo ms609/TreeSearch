@@ -9,6 +9,7 @@
 
 #include "ts_data.h"
 #include "ts_tree.h"
+#include <functional>
 
 namespace ts {
 
@@ -22,13 +23,19 @@ struct SearchResult {
 // Modifies `tree` in place to the best tree found.
 // `maxHits`: number of times the best score must be hit without improvement
 //            before stopping (0 = stop on first pass with no improvement).
-SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits);
+// If `check_timeout` is non-null, it is polled periodically and the search
+// returns early if it returns true.
+SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
+                        std::function<bool()> check_timeout = nullptr);
 
 // Run SPR hill-climbing search using indirect calculation (Goloboff 1996).
 // For each candidate clip node, uses incremental two-pass (Shortcut C) to
 // compute divided-tree final states, then indirect length calculation for
 // each destination edge. First-improvement with random clip order.
-SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits);
+// If `check_timeout` is non-null, it is polled periodically and the search
+// returns early if it returns true.
+SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
+                        std::function<bool()> check_timeout = nullptr);
 
 } // namespace ts
 

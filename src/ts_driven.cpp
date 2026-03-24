@@ -3,6 +3,7 @@
 #include "ts_search.h"
 #include "ts_tbr.h"
 #include "ts_ratchet.h"
+#include "ts_nni_perturb.h"
 #include "ts_drift.h"
 #include "ts_sector.h"
 #include "ts_fuse.h"
@@ -70,18 +71,43 @@ ReplicateResult run_single_replicate(
     return ms;
   };
 
-  // 1. Starting tree: use provided tree or build Wagner
+  // NNI warmup per Wagner start is skipped when constraints are active
+  // because nni_search() does not enforce topological constraints.
+  bool nni_wagner = params.nni_first && (!cd || !cd->active);
+
+  // 1. Starting tree: use provided tree or build Wagner.
+  // When nni_first is true, NNI-optimize each Wagner start before
+  // selecting the best. This finds better starting basins of attraction
+  // for TBR at modest cost (NNI is O(n) per pass vs TBR's O(n²)).
   double best_wag;
   if (starting_tree) {
     result.tree = *starting_tree;
     best_wag = score_tree(result.tree, ds);
   } else {
-    random_wagner_tree(result.tree, ds, cd);
+
+    // First Wagner start: use biased addition if requested (Goloboff 2014 §3.3).
+    // Remaining starts always use random order to preserve basin diversity.
+    if (params.wagner_bias != 0) {
+      ts::BiasedWagnerParams bwp;
+      bwp.bias        = static_cast<ts::WagnerBias>(params.wagner_bias);
+      bwp.temperature = params.wagner_bias_temp;
+      biased_wagner_tree(result.tree, ds, bwp, cd);
+    } else {
+      random_wagner_tree(result.tree, ds, cd);
+    }
     best_wag = score_tree(result.tree, ds);
+    if (nni_wagner) {
+      auto nr = nni_search(result.tree, ds, 0, check_timeout);
+      best_wag = nr.score;
+    }
     for (int ws = 1; ws < params.wagner_starts; ++ws) {
       TreeState trial;
       random_wagner_tree(trial, ds, cd);
       double trial_score = score_tree(trial, ds);
+      if (nni_wagner) {
+        auto nr = nni_search(trial, ds, 0, check_timeout);
+        trial_score = nr.score;
+      }
       if (trial_score < best_wag) {
         result.tree = std::move(trial);
         best_wag = trial_score;
@@ -95,20 +121,24 @@ ReplicateResult run_single_replicate(
       Rprintf("  Starting tree score: %.5g [%.0f ms]\n", best_wag,
               result.timings.wagner_ms);
     } else {
-      Rprintf("  Wagner tree score: %.5g [%.0f ms]%s\n", best_wag,
-              result.timings.wagner_ms,
+      Rprintf("  Wagner%s tree score: %.5g [%.0f ms]%s\n",
+              params.nni_first ? "+NNI" : "",
+              best_wag, result.timings.wagner_ms,
               params.wagner_starts > 1 ? " (best of multiple starts)" : "");
     }
   }
 
-  // 2. Hill-climbing to local optimum (SPR→TBR escalation)
-  if (params.spr_first) {
-    spr_search(result.tree, ds, 1);
+  // 2. Hill-climbing to local optimum.
+  // When NNI is active and unconstrained, each Wagner start was already
+  // NNI-optimized, and SPR is skipped (NNI→TBR outperforms NNI→SPR→TBR).
+  // When constrained, NNI was skipped above; fall back to SPR warmup.
+  if (!nni_wagner && params.spr_first) {
+    spr_search(result.tree, ds, 1, check_timeout);
   }
   {
     TBRParams tp;
     tp.tabu_size = params.tabu_size;
-    tbr_search(result.tree, ds, tp, cd);
+    tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
   }
   result.timings.tbr_ms = ph_lap();
   if (verbosity >= 2) {
@@ -122,23 +152,100 @@ ReplicateResult run_single_replicate(
     return result;
   }
 
-  // 3. Sectorial search (XSS + RSS) if tree is large enough
-  if (tree_large_enough_for_sectors) {
-    SectorParams sp;
-    sp.min_sector_size = params.sector_min_size;
-    sp.max_sector_size = params.sector_max_size;
-    sp.internal_ratchet_cycles = 0;
-    sp.internal_max_hits = 1;
+  // Steps 3–6: outer cycle loop.
+  // Each outer cycle runs [XSS + RSS + CSS → Ratchet → NNI-perturb →
+  // Drift → TBR polish] once.  With outer_cycles = 1 (default) this is
+  // exactly the previous linear pipeline.  With outer_cycles > 1 we
+  // interleave fresh XSS passes after each ratchet/drift escape, matching
+  // TNT's xmult pattern (Goloboff 1999 §2.3).
+  //
+  // Perturbation cycles are divided evenly among outer cycles so that the
+  // total compute budget is approximately unchanged.
+  const int n_outer = std::max(1, params.outer_cycles);
+  // Ceiling division: each outer cycle gets at least 1 ratchet cycle.
+  const int ratchet_per = std::max(1,
+      (params.ratchet_cycles + n_outer - 1) / n_outer);
+  const int drift_per = (params.drift_cycles == 0) ? 0 : std::max(1,
+      (params.drift_cycles + n_outer - 1) / n_outer);
+  const int nni_perturb_per = (params.nni_perturb_cycles == 0) ? 0 : std::max(1,
+      (params.nni_perturb_cycles + n_outer - 1) / n_outer);
 
-    // XSS: systematic partitioning
-    sp.n_partitions = params.xss_partitions;
-    sp.xss_rounds = params.xss_rounds;
-    xss_search(result.tree, ds, sp, cd);
+  for (int outer = 0; outer < n_outer; ++outer) {
+    const bool last_outer = (outer == n_outer - 1);
+    // Outer-cycle label for verbose output (only shown when n_outer > 1)
+    auto outer_label = [&](const char* phase) -> std::string {
+      if (n_outer <= 1) return phase;
+      return std::string(phase) + " [" + std::to_string(outer + 1) + "/" +
+             std::to_string(n_outer) + "]";
+    };
 
-    result.timings.xss_ms = ph_lap();
-    if (verbosity >= 2) {
-      Rprintf("  XSS score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
-              result.timings.xss_ms);
+    // 3. Sectorial search (XSS + RSS + CSS) if tree is large enough
+    if (tree_large_enough_for_sectors) {
+      SectorParams sp;
+      sp.min_sector_size = params.sector_min_size;
+      sp.max_sector_size = params.sector_max_size;
+      sp.internal_ratchet_cycles = 0;
+      sp.internal_max_hits = 1;
+
+      // XSS: systematic partitioning
+      sp.n_partitions = params.xss_partitions;
+      sp.xss_rounds = params.xss_rounds;
+      xss_search(result.tree, ds, sp, cd);
+
+      result.timings.xss_ms += ph_lap();
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g [%.0f ms total]\n",
+                outer_label("XSS").c_str(),
+                score_tree(result.tree, ds), result.timings.xss_ms);
+      }
+
+      if (ts::check_interrupt() || check_timeout()) {
+        result.interrupted = true;
+        result.score = score_tree(result.tree, ds);
+        return result;
+      }
+
+      // RSS: random sector picks (conflict-guided when pool data available)
+      if (params.rss_rounds > 0) {
+        sp.split_freq = split_freq;
+        for (int rr = 0; rr < params.rss_rounds; ++rr) {
+          rss_search(result.tree, ds, sp, cd);
+
+          if (ts::check_interrupt() || check_timeout()) {
+            result.interrupted = true;
+            result.score = score_tree(result.tree, ds);
+            return result;
+          }
+        }
+        result.timings.rss_ms += ph_lap();
+        if (verbosity >= 2) {
+          Rprintf("  %s score: %.5g [%.0f ms total]\n",
+                  outer_label("RSS").c_str(),
+                  score_tree(result.tree, ds), result.timings.rss_ms);
+        }
+      }
+
+      // CSS: sector-restricted TBR on full tree (exact scoring)
+      if (params.css_rounds > 0) {
+        SectorParams css_sp;
+        css_sp.n_partitions = params.css_partitions;
+        css_sp.xss_rounds = params.css_rounds;
+        css_sp.internal_max_hits = 1;
+        css_search(result.tree, ds, css_sp, cd);
+
+        result.timings.css_ms += ph_lap();
+        if (verbosity >= 2) {
+          Rprintf("  %s score: %.5g [%.0f ms total]\n",
+                  outer_label("CSS").c_str(),
+                  score_tree(result.tree, ds), result.timings.css_ms);
+        }
+
+        if (ts::check_interrupt() || check_timeout()) {
+          result.interrupted = true;
+          result.score = score_tree(result.tree, ds);
+          return result;
+        }
+      }
     }
 
     if (ts::check_interrupt() || check_timeout()) {
@@ -147,119 +254,101 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
-    // RSS: random sector picks (conflict-guided when pool data available)
-    if (params.rss_rounds > 0) {
-      sp.split_freq = split_freq;
-      for (int rr = 0; rr < params.rss_rounds; ++rr) {
-        rss_search(result.tree, ds, sp, cd);
-
-        if (ts::check_interrupt() || check_timeout()) {
-          result.interrupted = true;
-          result.score = score_tree(result.tree, ds);
-          return result;
-        }
-      }
-      result.timings.rss_ms = ph_lap();
-      if (verbosity >= 2) {
-        Rprintf("  RSS score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
-                result.timings.rss_ms);
-      }
+    // 4. Ratchet perturbation to escape local optima
+    {
+      RatchetParams rp;
+      rp.n_cycles = ratchet_per;
+      rp.perturb_prob = params.ratchet_perturb_prob;
+      rp.max_hits = params.tbr_max_hits;
+      rp.perturb_mode = static_cast<PerturbMode>(params.ratchet_perturb_mode);
+      rp.perturb_max_moves = params.ratchet_perturb_max_moves;
+      rp.adaptive = params.ratchet_adaptive;
+      rp.tabu_size = params.tabu_size;
+      ratchet_search(result.tree, ds, rp, cd, check_timeout);
     }
-
-    // CSS: sector-restricted TBR on full tree (exact scoring)
-    if (params.css_rounds > 0) {
-      SectorParams css_sp;
-      css_sp.n_partitions = params.css_partitions;
-      css_sp.xss_rounds = params.css_rounds;
-      css_sp.internal_max_hits = 1;
-      css_search(result.tree, ds, css_sp, cd);
-
-      result.timings.css_ms = ph_lap();
-      if (verbosity >= 2) {
-        Rprintf("  CSS score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
-                result.timings.css_ms);
-      }
-
-      if (ts::check_interrupt() || check_timeout()) {
-        result.interrupted = true;
-        result.score = score_tree(result.tree, ds);
-        return result;
-      }
-    }
-  }
-
-  if (ts::check_interrupt() || check_timeout()) {
-    result.interrupted = true;
-    result.score = score_tree(result.tree, ds);
-    return result;
-  }
-
-  // 4. Ratchet perturbation to escape local optima
-  {
-    RatchetParams rp;
-    rp.n_cycles = params.ratchet_cycles;
-    rp.perturb_prob = params.ratchet_perturb_prob;
-    rp.max_hits = params.tbr_max_hits;
-    rp.perturb_mode = static_cast<PerturbMode>(params.ratchet_perturb_mode);
-    rp.perturb_max_moves = params.ratchet_perturb_max_moves;
-    rp.adaptive = params.ratchet_adaptive;
-    rp.tabu_size = params.tabu_size;
-    ratchet_search(result.tree, ds, rp, cd, check_timeout);
-  }
-  result.timings.ratchet_ms = ph_lap();
-  if (verbosity >= 2) {
-    Rprintf("  Ratchet score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
-            result.timings.ratchet_ms);
-  }
-
-  if (ts::check_interrupt() || check_timeout()) {
-    result.interrupted = true;
-    result.score = score_tree(result.tree, ds);
-    return result;
-  }
-
-  // 5. Drifting (suboptimal + equal-score exploration)
-  if (params.drift_cycles > 0) {
-    DriftParams dp;
-    dp.n_cycles = params.drift_cycles;
-    dp.afd_limit = params.drift_afd_limit;
-    dp.rfd_limit = params.drift_rfd_limit;
-    dp.max_hits = params.tbr_max_hits;
-    dp.tabu_size = params.tabu_size;
-    drift_search(result.tree, ds, dp, cd, check_timeout);
-
-    result.timings.drift_ms = ph_lap();
+    result.timings.ratchet_ms += ph_lap();
     if (verbosity >= 2) {
-      Rprintf("  Drift score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
-              result.timings.drift_ms);
+      Rprintf("  %s score: %.5g [%.0f ms total]\n",
+              outer_label("Ratchet").c_str(),
+              score_tree(result.tree, ds), result.timings.ratchet_ms);
     }
-  }
 
-  if (ts::check_interrupt() || check_timeout()) {
-    result.interrupted = true;
-    result.score = score_tree(result.tree, ds);
-    return result;
-  }
+    if (ts::check_interrupt() || check_timeout()) {
+      result.interrupted = true;
+      result.score = score_tree(result.tree, ds);
+      return result;
+    }
 
-  // 6. Final TBR polish
-  {
-    TBRParams tp;
-    tp.tabu_size = params.tabu_size;
-    tbr_search(result.tree, ds, tp, cd);
-  }
-  result.timings.final_tbr_ms = ph_lap();
-  if (verbosity >= 2) {
-    Rprintf("  Final TBR score: %.5g [%.0f ms]\n", score_tree(result.tree, ds),
-            result.timings.final_tbr_ms);
-  }
+    // 4b. NNI perturbation (topology-space escape)
+    if (nni_perturb_per > 0) {
+      NNIPerturbParams np;
+      np.n_cycles = nni_perturb_per;
+      np.perturb_fraction = params.nni_perturb_fraction;
+      np.max_hits = params.tbr_max_hits;
+      np.tabu_size = params.tabu_size;
+      nni_perturb_search(result.tree, ds, np, cd, check_timeout);
 
-  // Check cancel/timeout after final TBR polish so a stop during TBR is
-  // detected here rather than forcing the caller to run MPT enumeration.
-  if (ts::check_interrupt() || check_timeout()) {
-    result.interrupted = true;
-    result.score = score_tree(result.tree, ds);
-    return result;
-  }
+      result.timings.nni_perturb_ms += ph_lap();
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g [%.0f ms total]\n",
+                outer_label("NNI-perturb").c_str(),
+                score_tree(result.tree, ds), result.timings.nni_perturb_ms);
+      }
+    }
+
+    if (ts::check_interrupt() || check_timeout()) {
+      result.interrupted = true;
+      result.score = score_tree(result.tree, ds);
+      return result;
+    }
+
+    // 5. Drifting (suboptimal + equal-score exploration)
+    if (drift_per > 0) {
+      DriftParams dp;
+      dp.n_cycles = drift_per;
+      dp.afd_limit = params.drift_afd_limit;
+      dp.rfd_limit = params.drift_rfd_limit;
+      dp.max_hits = params.tbr_max_hits;
+      dp.tabu_size = params.tabu_size;
+      drift_search(result.tree, ds, dp, cd, check_timeout);
+
+      result.timings.drift_ms += ph_lap();
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g [%.0f ms total]\n",
+                outer_label("Drift").c_str(),
+                score_tree(result.tree, ds), result.timings.drift_ms);
+      }
+    }
+
+    if (ts::check_interrupt() || check_timeout()) {
+      result.interrupted = true;
+      result.score = score_tree(result.tree, ds);
+      return result;
+    }
+
+    // 6. TBR polish after each outer cycle.
+    // Restores local optimality after drift (which accepts suboptimal moves),
+    // and seeds the next cycle's XSS from a clean local optimum.
+    {
+      TBRParams tp;
+      tp.tabu_size = params.tabu_size;
+      tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
+    }
+    result.timings.final_tbr_ms += ph_lap();
+    if (verbosity >= 2) {
+      Rprintf("  %s score: %.5g [%.0f ms total]\n",
+              last_outer ? "Final TBR" : outer_label("TBR").c_str(),
+              score_tree(result.tree, ds), result.timings.final_tbr_ms);
+    }
+
+    // Check cancel/timeout after TBR so a stop during TBR is detected
+    // here rather than forcing the caller to run MPT enumeration.
+    if (ts::check_interrupt() || check_timeout()) {
+      result.interrupted = true;
+      result.score = score_tree(result.tree, ds);
+      return result;
+    }
+  } // end outer loop
 
   result.score = score_tree(result.tree, ds);
   return result;
@@ -275,6 +364,8 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   result.replicates_completed = 0;
   result.hits_to_best = 0;
   result.pool_size = 0;
+  result.n_topologies_at_best = 0;
+  result.last_improved_rep = 0;
   result.timed_out = false;
   result.consensus_stable = false;
 
@@ -336,8 +427,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   const int base_ratchet_cycles = params.ratchet_cycles;
   const int base_drift_cycles = params.drift_cycles;
   DrivenParams adaptive_params = params;  // mutable copy for adaptive level
-  int adaptive_hits_in_window = 0;        // hits to best in recent window
-  const int adaptive_window = 5;          // window size for hit rate
+
 
   // Cross-replicate consensus constraint tightening.
   // When enabled and no user constraint is supplied, the strict consensus
@@ -472,7 +562,11 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     }
 
     // Add to pool with collapsed-topology dedup
+    double prev_best = pool.best_score();
     pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
+    if (pool.best_score() < prev_best) {
+      result.last_improved_rep = rep1;
+    }
 
     ++result.replicates_completed;
 
@@ -507,6 +601,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
       if (fused_score < best_before) {
         pool.set_hits_to_best(0);
+        result.last_improved_rep = rep1;
         report("fuse", 1, fused_score, rep1);
         if (params.verbosity >= 1 && !has_callback) {
           Rprintf("  Fuse improved: %.5g -> %.5g\n",
@@ -581,7 +676,7 @@ finish:
       TreeState enum_tree = pool.all()[seed_idx].tree;
       // Budget remaining capacity across remaining seeds
       tp.max_hits = std::max(10, (pool.max_size - pool.size()) * 2);
-      tbr_search(enum_tree, ds, tp, cd, nullptr, &pool);
+      tbr_search(enum_tree, ds, tp, cd, nullptr, &pool, check_timeout);
       ++seed_idx;
     }
     if (params.verbosity >= 2) {
@@ -591,6 +686,7 @@ finish:
 
   // result.hits_to_best already set before MPT enumeration
   result.pool_size = pool.size();
+  result.n_topologies_at_best = pool.count_at_best();
 
   if (pool.size() > 0) {
     result.best_score = pool.best_score();

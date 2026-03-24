@@ -19,7 +19,10 @@
       "grep *": "allow",
       "head *": "allow",
       "cd \"C:/Users/pjjg18/GitHub/TreeSearch\"": "allow",
-      "Rscript --vanilla -e \"pkgbuild::compile_dll(debug=FALSE)\" 2>&1": "allow"
+      "Rscript --vanilla -e \"pkgbuild::compile_dll(debug=FALSE)\" 2>&1": "allow",
+      "cd /c/Users/pjjg18/GitHub/TreeSearch": "allow",
+      "Rscript -e \"roxygen2::roxygenise(load_code = roxygen2::load_installed)\" 2>&1": "allow",
+      "tail *": "allow"
     },
     "read": {
       "*.cpp": "allow"

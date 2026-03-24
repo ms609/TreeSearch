@@ -491,7 +491,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      const TBRParams& params,
                      ConstraintData* cd,
                      const std::vector<bool>* sector_mask,
-                     TreePool* collect_pool) {
+                     TreePool* collect_pool,
+                     std::function<bool()> check_timeout) {
   double best_score = full_rescore(tree, ds);
 
   // Initialize constraint mapping if active
@@ -589,8 +590,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   bool keep_going = true;
   bool states_valid = true;  // track whether state arrays are current
   bool need_shuffle = true;  // optimization #6: defer reshuffle
+  // Poll timeout every n_tip clips to avoid overhead on small trees
+  // while ensuring responsiveness on large ones.
+  const int timeout_interval = std::max(tree.n_tip, 50);
+  int clips_since_timeout_check = 0;
+  bool timed_out = false;
 
-  while (keep_going) {
+  while (keep_going && !timed_out) {
     keep_going = false;
 
     // Optimization #6: only reshuffle when the previous pass found no
@@ -677,6 +683,19 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       }
 
       collect_main_edges(tree, main_edges);
+      // Partial shuffle: seed the first few evaluation positions with edges
+      // from across the tree so the bounded indirect scoring gets a tight
+      // cutoff early.  Full O(n) shuffle has non-trivial overhead relative
+      // to the per-candidate scoring cost; partial Fisher-Yates for a small
+      // prefix keeps overhead negligible.
+      {
+        int ne = static_cast<int>(main_edges.size());
+        int k = std::min(20, ne);
+        for (int i = 0; i < k; ++i) {
+          std::uniform_int_distribution<int> dist(i, ne - 1);
+          std::swap(main_edges[i], main_edges[dist(rng)]);
+        }
+      }
 
       // Constraint: classify this clip against each constraint split
       if (constrained) {
@@ -958,6 +977,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       }
 
       if (ts::check_interrupt()) break;
+      ++clips_since_timeout_check;
+      if (check_timeout && clips_since_timeout_check >= timeout_interval) {
+        clips_since_timeout_check = 0;
+        if (check_timeout()) { timed_out = true; break; }
+      }
     }
 
     if (params.max_accepted_changes > 0
