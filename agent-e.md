@@ -1,9 +1,20 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Task:** S-PROF — Standing: Performance profiling (supplement to round 4)
-- **Status:** DONE
-- **Completed:** 2026-03-24 ~17:00 GMT
+- **Task:** T-206 — Outer cycle reset cap
+- **Status:** PARKED (waiting on GHA run 23503177988)
+- **Branch:** feature/outer-cap-t206
+- **Worktree:** TS-OuterCap
+
+### T-206 progress
+- Added `max_outer_resets` to `DrivenParams` (C++) and `maxOuterResets` to
+  `SearchControl()` (R).
+- Default 0 (no resets); default preset = 2, thorough = 3.
+- Fixed misleading comment in `ts_driven.cpp`.
+- 1826/1826 ts-* tests pass (2 xpiwe namespace false positives excluded).
+- Benchmark (Zhu2013 5 reps): no resets=4.81s, 2 resets=9.25s, old unlimited=12.99s.
+  Score quality preserved (640–646 vs 641–646).
+- Pushed to `feature/outer-cap-t206`, GHA dispatched (run 23503177988).
 
 ### S-PROF supplement (round 4) — DONE
 Agent G ran S-PROF round 4 earlier today (re-baseline with auto strategy).
