@@ -110,7 +110,37 @@
     tabuSize = 200L, wagnerStarts = 3L,
     nniFirst = TRUE, sprFirst = FALSE,
     outerCycles = 2L,
-    consensusStableReps = 3L
+    consensusStableReps = 3L,
+    adaptiveStart = TRUE
+  ),
+  # Large-tree preset (>=120 tips): thorough-level cycle intensity with
+  # large-tree-specific tuning. Key differences from thorough:
+  # - wagnerBias=1 (Goloboff 2014): first Wagner start uses informativeness-
+  #   weighted addition order; 80% gap reduction at 174t (T-188). Best-of-3
+  #   starts (wagnerStarts=3) remains critical at 180 tips.
+  # - sectorMaxSize=100 (vs 80): larger sectors for larger trees.
+  # - consensusStableReps=2: faster convergence detection (replicates are
+  #   expensive: 60-90s each at 180 tips).
+  # This preset also serves as the auto-selected hook for >=120-tip
+  # datasets; future large-tree optimizations (e.g. T-190 adaptive starts)
+  # can be delivered here without changing the thorough preset.
+  # Empirical basis: mbank_X30754 (180t, 425c) benchmarks, 2026-03-23/24.
+  large = SearchControl(
+    tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
+    ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
+    ratchetAdaptive = TRUE,
+    nniPerturbCycles = 5L, nniPerturbFraction = 0.5,
+    driftCycles = 12L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+    xssRounds = 5L, xssPartitions = 6L,
+    rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
+    sectorMinSize = 8L, sectorMaxSize = 100L,
+    fuseInterval = 3L, fuseAcceptEqual = TRUE,
+    tabuSize = 200L, wagnerStarts = 3L,
+    wagnerBias = 1L, wagnerBiasTemp = 0.3,
+    nniFirst = TRUE, sprFirst = FALSE,
+    outerCycles = 2L,
+    consensusStableReps = 2L,
+    adaptiveStart = TRUE
   )
 )
 
@@ -132,6 +162,9 @@
   if (nTip <= 30L) return("sprint")
   # Few characters -> flat landscape; thorough search is pointless
   if (nChar < 100L) return("default")
+  # Large trees (>=120 tips): per-replicate cost is high; use scaled preset
+  # with NNI warmup and biased Wagner (empirically validated on 180-tip data).
+  if (nTip >= 120L) return("large")
   # Enough characters to have a structured landscape;
   # moderate-to-large datasets benefit from intensive search
   if (nTip >= 65L) return("thorough")
@@ -227,19 +260,21 @@
 #'   \describe{
 #'     \item{`"auto"` (default)}{Selects automatically based on dataset size
 #'       and character count:
-#'       `"sprint"` for <=30 taxa, `"thorough"` for >=65 taxa with
-#'       >=100 character patterns, `"default"` otherwise.}
+#'       `"sprint"` for <=30 taxa; `"large"` for >=120 taxa with >=100
+#'       character patterns; `"thorough"` for 65-119 taxa with >=100
+#'       character patterns; `"default"` otherwise.}
 #'     \item{`"sprint"`}{Fast search: 3 ratchet cycles, no drift, minimal
 #'       sectorial. Good for small datasets or quick surveys.}
-#'     \item{`"default"`}{Balanced: 5 ratchet + 2 drift + sectorial + fusing.}
+#'     \item{`"default"`}{Balanced: 12 ratchet + 2 drift + sectorial + fusing.}
 #'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, 12 drift, adaptive
-#'       perturbation, extra sectorial rounds. Best for datasets with
-#'       65+ tips and 100+ character patterns, where sprint/default
-#'       may miss the global optimum.}
-#'   All presets enable consensus-stability stopping
-#'   (`consensusStableReps = 3`): the search stops early if the strict
-#'   consensus of best-score trees has been unchanged for three consecutive
-#'   replicates.
+#'       perturbation, extra sectorial rounds, NNI perturbation, outer cycle
+#'       loop. Best for datasets with 65-119 tips and 100+ character patterns.}
+#'     \item{`"large"`}{Large-tree search (>=120 tips): thorough-level
+#'       intensity with biased Wagner addition order (Goloboff 2014),
+#'       larger sector sizes, and tuned convergence detection.}
+#'   All presets enable consensus-stability stopping: the search stops early
+#'   if the strict consensus of best-score trees has been unchanged for
+#'   `consensusStableReps` consecutive replicates.
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }
 #'   Explicit `control` fields always override the preset; for example,
@@ -747,7 +782,10 @@ MaximizeParsimony <- function(
       else ctrl$wagnerBiasTemp),
     outerCycles = as.integer(
       if (is.null(ctrl$outerCycles)) 1L
-      else ctrl$outerCycles)
+      else ctrl$outerCycles),
+    adaptiveStart = as.logical(
+      if (is.null(ctrl$adaptiveStart)) FALSE
+      else ctrl$adaptiveStart)
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
                                         hsjArgs, xformArgs))
