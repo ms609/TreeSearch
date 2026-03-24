@@ -312,7 +312,10 @@ ReplicateResult run_single_replicate(
     }
 
     // 4b. NNI perturbation (topology-space escape)
-    if (nni_perturb_per > 0) {
+    // Skip when constraints are active: random_nni_perturb() doesn't
+    // enforce constraints, and a constraint-violating tree can't be
+    // repaired by TBR (cn=-1 blocks all constraint-relevant moves).
+    if (nni_perturb_per > 0 && (!cd || !cd->active)) {
       NNIPerturbParams np;
       np.n_cycles = nni_perturb_per;
       np.perturb_fraction = params.nni_perturb_fraction;
