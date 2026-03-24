@@ -40,5 +40,12 @@ test_that("concavity = 0 rejected with informative error", {
                "`concavity` must be positive")
   expect_error(AdditionTree(dataset, concavity = -1),
                "`concavity` must be positive")
+  expect_error(MaximizeParsimony(dataset, tree, concavity = 0,
+                                  maxReplicates = 1L),
+               "`concavity` must be positive")
+  expect_error(MaximizeParsimony(dataset, tree, concavity = -3,
+                                  maxReplicates = 1L),
+               "`concavity` must be positive")
+  expect_error(SuccessiveApproximations(tree, dataset, concavity = 0),
+               "`concavity` must be positive")
 })
-TESTEOF 2>&1

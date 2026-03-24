@@ -20,12 +20,32 @@ and the maintainer signals readiness to tag a release.
 
 ---
 
-## Build isolation — tarball workflow (mandatory)
+## Validation workflow — GHA first (mandatory)
+
+**Use GitHub Actions for all validation:** R CMD check, full test suites,
+and benchmarks. Local builds are for **targeted iteration only** (editing
+code → building → running one or two specific test files to check your
+change). Never run a full test suite or R CMD check locally.
+
+### GHA dispatch (primary validation path)
+
+```bash
+# Push your branch and dispatch checks
+git push -u origin feature/<name>
+cd ..
+bash gha-dispatch.sh agent-check.yml feature/<name>
+
+# Poll for results
+bash gha-poll.sh <run_id>
+```
+
+Park the task while waiting and pick up another (see root `AGENTS.md` for
+parking protocol). Do **not** block waiting for GHA results.
+
+### Local builds (targeted iteration only)
 
 Multiple agents share the same `src/` directory. In-place `R CMD INSTALL .`
-compiles `.o` files and links the DLL directly in `src/`, causing races:
-concurrent builds corrupt each other's object files, and a running R process
-locks the DLL on Windows, blocking everyone else.
+compiles `.o` files and links the DLL directly in `src/`, causing races.
 
 **Always build via tarball** so compilation happens in an isolated temp
 directory:
@@ -40,12 +60,12 @@ SRC=$(pwd) && TMPBUILD=$(mktemp -d) && \
 
 Key points:
 - `rm -f src/*.o src/*.dll` **must** precede every build — stale artifacts slow traversal and corrupt DLLs.
-- Build into an agent-specific `$TMPBUILD` outside the source tree — avoids tarball collision when multiple agents build concurrently (R CMD build has no `--output=` flag; the tarball always lands in the working directory).
+- Build into an agent-specific `$TMPBUILD` outside the source tree — avoids tarball collision when multiple agents build concurrently.
 - `--no-resave-data` skips unnecessary `.rda` re-saving (not needed for dev installs).
 
-To run tests:
+Run **targeted** tests only:
 ```bash
-Rscript -e "library(TreeSearch, lib.loc='.agent-X'); testthat::test_dir('tests/testthat', filter='ts-')"
+Rscript -e "library(TreeSearch, lib.loc='.agent-X'); testthat::test_dir('tests/testthat', filter='test-ts-foo')"
 ```
 
 **Never** use `R CMD INSTALL --library=.agent-X .` (in-place build).
@@ -55,6 +75,8 @@ the file and blocks other agents.
 
 **Never** use `devtools::load_all()` or `pkgbuild::compile_dll()` — these
 target a shared temp location and will conflict.
+
+**Never** run full test suites or R CMD check locally — use GHA.
 
 ## Build failure recovery
 
@@ -178,7 +200,8 @@ this is expected and should be done carefully at feature-merge time.
 1. `git checkout cpp-search && git checkout -b feature/<name>`
    Optionally create a worktree: `git worktree add ../TS-<name> feature/<name>`
 2. Claim task on `cpp-search`'s `to-do.md` (coordination commit).
-3. Do all code work on `feature/<name>`. Use local targeted tests only.
+3. Do all code work on `feature/<name>`. Use local targeted tests only
+   during iteration; use GHA for full validation.
 4. When ready: push and dispatch GHA checks:
    ```bash
    git push -u origin feature/<name>
@@ -244,6 +267,9 @@ Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 - All work uses `.agent-X/` as library directory.
 - **All builds, tests, and benchmarks in bash subprocesses** — never in the
   RStudio R session.
+- **Use GHA for validation** (full test suites, R CMD check, benchmarks).
+  Local builds are for targeted iteration only (build + run 1–2 test files).
+  See "Validation workflow" section above.
 
 ### On task completion
 
