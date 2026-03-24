@@ -37,7 +37,12 @@ SearchControl(
   consensusStableReps = 0L,
   adaptiveLevel = FALSE,
   consensusConstrain = FALSE,
-  adaptiveStart = FALSE
+  adaptiveStart = FALSE,
+  saCycles = 0L,
+  saTstart = 20,
+  saTend = 0,
+  saNphases = 5L,
+  saMovesPerPhase = 0L
 )
 }
 \arguments{
@@ -155,6 +160,25 @@ selection for starting trees?  When \code{TRUE}, each replicate draws its
 starting strategy from a pool of options (random Wagner, biased Wagner,
 random tree, pool ratchet, pool NNI-perturb), adapting to which
 strategies yield the best scores.  Default \code{FALSE}.}
+
+\item{saCycles}{Integer; number of simulated annealing perturbation
+cycles (PCSA) per replicate.  Each cycle perturbs the current best tree
+via scheduled SA cooling, then reconverges with TBR.  If the result
+improves on the best, it becomes the new starting point.  Effective at
+escaping deep basins under equal-weights parsimony at ≥100 tips.
+0 (default) disables SA perturbation.}
+
+\item{saTstart}{Numeric; initial Boltzmann temperature for SA cooling
+schedule (default 20).}
+
+\item{saTend}{Numeric; final Boltzmann temperature (default 0, strict
+descent at end of each cycle).}
+
+\item{saNphases}{Integer; number of temperature steps in the linear
+cooling schedule per SA cycle (default 5).}
+
+\item{saMovesPerPhase}{Integer; stochastic TBR moves per temperature
+phase.  0 (default) = one move per tip (n_tip).}
 }
 \value{
 A named list of class \code{"SearchControl"}.
