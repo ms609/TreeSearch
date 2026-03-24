@@ -596,6 +596,10 @@ MaximizeParsimony <- function(
       hsj_alpha < 0 || hsj_alpha > 1) {
     stop("`hsj_alpha` must be a single number in [0, 1].")
   }
+  if (is.finite(concavity) && concavity <= 0) {
+    stop("`concavity` must be positive (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
+  }
 
   # --- Starting tree ---
   userTree <- !missing(tree) && !is.null(tree)
