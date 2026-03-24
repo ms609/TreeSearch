@@ -47,7 +47,7 @@ jobs:
 
       - name: Install apt packages
         run: |
-          sudo apt-get install -y texlive-latex-base texlive-fonts-recommended
+          sudo apt-get install -y qpdf
 
       - name: Set up R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
@@ -57,7 +57,7 @@ jobs:
       - name: R CMD check
         uses: r-lib/actions/check-r-package@v2
         with:
-          args: '"--no-build-vignettes"'
+          args: '"--no-build-vignettes", "--no-manual"'
           build_args: '"--no-build-vignettes"'
 
       - name: Run filtered tests
