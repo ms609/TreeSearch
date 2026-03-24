@@ -46,7 +46,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-196 | P2 | PR #215 (M) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); arrives with PT PR #215. |
-| T-208 | P2 | OPEN | — | **[Bug] `random_topology_tree` ignores constraints.** When `adaptiveStart=true` (thorough preset) AND constraints active, bandit can select RANDOM_TREE → starting tree violates constraint → TBR blocks all constraint-relevant moves (`cn=-1`). Could return constraint-violating trees. | Found by S-RED focus 11. Fix: fall back to WAGNER_RANDOM when `strategy == RANDOM_TREE && cd && cd->active` in `run_single_replicate()` (ts_driven.cpp:111). |
+| T-208 | P2 | ASSIGNED (A) | — | **[Bug] `random_topology_tree` ignores constraints.** When `adaptiveStart=true` (thorough preset) AND constraints active, bandit can select RANDOM_TREE → starting tree violates constraint → TBR blocks all constraint-relevant moves (`cn=-1`). Could return constraint-violating trees. | Found by S-RED focus 11. Fix: fall back to WAGNER_RANDOM when `strategy == RANDOM_TREE && cd && cd->active` in `run_single_replicate()` (ts_driven.cpp:111). |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
@@ -63,7 +63,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by F (focus 11: T-190/T-202/XPIWE merge review). |
+| S-RED | dyn | ASSIGNED (E) | — | **Standing: Red-team review** | Last run: 2026-03-24 by F (focus 11: T-190/T-202/XPIWE merge review). |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-24 by A (round 11: cleanup T-190/T-177/T-202, pipeline refresh). |
 
