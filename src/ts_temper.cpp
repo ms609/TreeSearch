@@ -640,6 +640,12 @@ AnnealResult anneal_search(
   double score = temper_full_rescore(tree, ds);
   result.best_score = score;
 
+  // Track best tree across phases (T-210). Boltzmann acceptance can
+  // displace a good tree found in an earlier phase; without tracking,
+  // PCSA reconverges from the final (possibly worse) SA state.
+  TreeState best_tree = tree;
+  double best_tree_score = score;
+
   for (int phase = 0; phase < np; ++phase) {
     // Single phase: run at t_start (hot perturbation, not t_end cold)
     double frac = (np == 1) ? 0.0
@@ -659,10 +665,19 @@ AnnealResult anneal_search(
       result.best_score = tr.best_score;
     }
 
+    // Save tree at phase boundary if it improved
+    double phase_score = temper_full_rescore(tree, ds);
+    if (phase_score < best_tree_score - 1e-10) {
+      best_tree_score = phase_score;
+      best_tree = tree;
+    }
+
     if (ts::check_interrupt()) break;
     if (check_timeout && check_timeout()) break;
   }
 
+  // Restore best tree found across all phases
+  tree = best_tree;
   result.final_score = temper_full_rescore(tree, ds);
   return result;
 }
