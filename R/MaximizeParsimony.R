@@ -148,6 +148,10 @@
   # - Fewer perturbation cycles: ratchet 12, drift 4 (vs thorough 20/12)
   # - No NNI-perturbation: at ~5.5s/cycle, it dominates the budget; ratchet
   #   provides more diverse escapes per unit time at large-tree scale
+  # - Annealing replaces drift: linear cooling T=20→0 over 5 phases uses
+  #   stochastic TBR with Boltzmann acceptance — cheaper per-cycle than
+  #   drift (O(n) moves vs O(n²) drift acceptance checks) and naturally
+  #   schedules exploration→exploitation
   # - No outer-cycle interleaving: outerCycles=1 avoids re-running expensive
   #   XSS/RSS/CSS after ratchet (saves ~10s per repeated sectorial pass)
   # - Single biased-Wagner start: saves ~2.6s vs 3 random starts; biased
@@ -165,7 +169,8 @@
     ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = TRUE,
     nniPerturbCycles = 0L,
-    driftCycles = 4L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+    driftCycles = 0L,
+    annealPhases = 5L, annealTStart = 20, annealTEnd = 0,
     xssRounds = 3L, xssPartitions = 6L,
     rssRounds = 2L, cssRounds = 1L, cssPartitions = 6L,
     sectorMinSize = 8L, sectorMaxSize = 100L,
@@ -321,8 +326,9 @@
 #'     \item{`"large"`}{Large-tree search (>=120 tips): reduced cycle
 #'       counts scaled for expensive per-replicate cost, no NNI
 #'       perturbation, single biased Wagner start (Goloboff 2014), larger
-#'       sector sizes.  Empirically matches or exceeds `"thorough"` at
-#'       180 tips across all time budgets.}
+#'       sector sizes, simulated annealing instead of drift (linear
+#'       cooling from T=20 to T=0 over 5 phases).  Empirically matches
+#'       or exceeds `"thorough"` at 180 tips across all time budgets.}
 #'   All presets enable consensus-stability stopping: the search stops early
 #'   if the strict consensus of best-score trees has been unchanged for
 #'   `consensusStableReps` consecutive replicates.
@@ -856,7 +862,15 @@ MaximizeParsimony <- function(
       else ctrl$adaptiveStart),
     enumTimeFraction = as.double(
       if (is.null(ctrl$enumTimeFraction)) 0.1
-      else ctrl$enumTimeFraction)
+      else ctrl$enumTimeFraction),
+    annealConfig = if (isTRUE(as.integer(ctrl$annealPhases) > 0L)) {
+      list(
+        phases = as.integer(ctrl$annealPhases),
+        tStart = as.double(if (is.null(ctrl$annealTStart)) 20 else ctrl$annealTStart),
+        tEnd = as.double(if (is.null(ctrl$annealTEnd)) 0 else ctrl$annealTEnd),
+        movesPerPhase = as.integer(if (is.null(ctrl$annealMovesPerPhase)) 0L else ctrl$annealMovesPerPhase)
+      )
+    }
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
                                         hsjArgs, xformArgs))

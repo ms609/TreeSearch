@@ -36,23 +36,23 @@ with existing completed IDs. Renumbered to T-198–T-201 in S-COORD round 10.
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-198 | P2 | DONE (C), needs PR | — | **Stochastic TBR + Boltzmann acceptance.** `stochastic_tbr_phase()` in `ts_temper.h/.cpp`. | Was T-190 (PT). On `feature/parallel-temper`. |
-| T-199 | P2 | DONE (C), needs PR | T-198 | **Multi-chain parallel tempering framework.** N ChainStates with temperature ladder, Metropolis swaps. | Was T-191 (PT). On `feature/parallel-temper`. |
-| T-200 | P2 | DONE (C), needs PR | T-199 | **Pipeline integration.** Wired into `run_single_replicate()` as new phase. | Was T-192 (PT). On `feature/parallel-temper`. |
-| T-201 | P2 | DONE (C), needs PR | T-200 | **Benchmark evaluation.** PT vs current pipeline at equal wall-clock. | Was T-193 (PT). On `feature/parallel-temper`. |
+| T-198 | P2 | PR #215 (M) | — | **Stochastic TBR + Boltzmann acceptance.** `stochastic_tbr_phase()` in `ts_temper.h/.cpp`. | Was T-190 (PT). On `feature/parallel-temper`. |
+| T-199 | P2 | PR #215 (M) | T-198 | **Multi-chain parallel tempering framework.** N ChainStates with temperature ladder, Metropolis swaps. | Was T-191 (PT). On `feature/parallel-temper`. |
+| T-200 | P2 | PR #215 (M) | T-199 | **Pipeline integration.** Wired into `run_single_replicate()` as new phase. | Was T-192 (PT). On `feature/parallel-temper`. |
+| T-201 | P2 | PR #215 (M) | T-200 | **Benchmark evaluation.** PT vs current pipeline at equal wall-clock. | Was T-193 (PT). On `feature/parallel-temper`. |
 
 ### Bugs
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-196 | P2 | DONE (G), on PT branch | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); will arrive with PT PR. |
+| T-196 | P2 | PR #215 (M) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); arrives with PT PR #215. |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-177 | P1 | ASSIGNED (Human+AI) | — | **Bug fix: mid-TBR/SPR timeout.** | Implemented, building and testing. 1762 Tier 2 tests pass. |
-| T-179 | P2 | DONE (G), needs PR | T-177, T-178 | **Large-tree strategy preset.** For ≥120 tips. | On `feature/parallel-temper`. Commit `fab1e52c`. |
+| T-179 | P2 | PR #215 (M) | T-177, T-178 | **Large-tree strategy preset.** For ≥120 tips. | On `feature/parallel-temper`. Commit `fab1e52c`. Arrives with PT PR #215. |
 | T-203 | P2 | ASSIGNED (G) | — | **Simulated annealing for large trees.** Single-chain linear cooling schedule using `stochastic_tbr_phase()`. Replace drift in `large` preset. | On `feature/anneal` (TS-anneal worktree). |
 | T-190 | P2 | ASSIGNED (A) | — | **Adaptive starting-tree strategy mixing (bandit).** Thompson sampling over 6 strategy arms. | See cold-start brief below. |
 | T-182 | P3 | OPEN | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | |
