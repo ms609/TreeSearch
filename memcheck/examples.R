@@ -1,5 +1,4 @@
-# Code to be run with  
-#   R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < tests/thisfile.R
-# First build and install the package.
-library("TreeSearch")
+# Run with:
+#   R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < memcheck/examples.R
+# Package must be installed first.
 devtools::run_examples()
