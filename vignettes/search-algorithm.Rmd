@@ -146,16 +146,20 @@ access basins of attraction inaccessible to Wagner trees.
 When `adaptiveStart = TRUE` (the default in the `thorough` preset),
 TreeSearch treats the choice of starting-tree strategy as a multi-armed
 bandit problem and uses Thompson sampling [@Thompson1933] to allocate
-replicates across six strategy arms:
+replicates across four strategy arms:
 
-| Arm | Type | Description |
-|-----|------|-------------|
-| Wagner-random | Fresh | Random addition-order Wagner tree |
-| Wagner-Goloboff | Fresh | Goloboff (2014) biased addition order |
-| Wagner-entropy | Fresh | Entropy-biased addition order |
-| Random tree | Fresh | Purely random topology (no character data) |
-| Pool-ratchet | Pool | Ratchet perturbation from a pool tree |
-| Pool-NNI | Pool | NNI perturbation from a pool tree |
+| Arm | Description |
+|-----|-------------|
+| Wagner-random | Random addition-order Wagner tree |
+| Wagner-Goloboff | Goloboff (2014) biased addition order |
+| Wagner-entropy | Entropy-biased addition order |
+| Random tree | Purely random topology (no character data) |
+
+All arms build a fresh tree from scratch, so each replicate represents an
+independent sample from the landscape.
+This preserves the validity of hit counts as a convergence measure: if
+$K$ out of $R$ replicates independently find the same best score, the
+probability that a better score exists is bounded by $(1 - K/R)^R$.
 
 **Thompson sampling.**
 Each arm $i$ maintains a Beta-distributed estimate of its success
@@ -181,10 +185,6 @@ changed (strategies that succeeded at the old score may not be informative
 for the new one).
 All Beta parameters are decayed toward their priors by a factor of 0.5,
 discounting stale evidence while preserving the relative ranking of arms.
-
-**Pool-based arms** are only available once the pool contains at least two
-best-score trees, ensuring meaningful diversity for perturbation.
-When unavailable, they are excluded from the sampling step.
 
 **Parallel path.**
 In parallel search (`nThreads > 1`), adaptive per-replicate updating

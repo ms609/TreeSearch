@@ -2428,7 +2428,7 @@ List ts_wagner_bias_bench(
 // removed — live on feature/parallel-temper branch.
 
 // [[Rcpp::export]]
-List ts_test_strategy_tracker(int seed, int n_draws, bool pool_available) {
+List ts_test_strategy_tracker(int seed, int n_draws) {
   using ts::StrategyTracker;
   using ts::StartStrategy;
   using ts::N_STRAT;
@@ -2439,7 +2439,7 @@ List ts_test_strategy_tracker(int seed, int n_draws, bool pool_available) {
   // 1. Draw `n_draws` strategies and count selections
   IntegerVector counts(N_STRAT, 0);
   for (int i = 0; i < n_draws; ++i) {
-    auto s = tracker.select(rng, pool_available);
+    auto s = tracker.select(rng);
     counts[static_cast<int>(s)]++;
   }
 
@@ -2473,12 +2473,12 @@ List ts_test_strategy_tracker(int seed, int n_draws, bool pool_available) {
   // 5. Post-update selection distribution (arm 0 should dominate)
   IntegerVector counts_biased(N_STRAT, 0);
   for (int i = 0; i < n_draws; ++i) {
-    auto s = tracker.select(rng, pool_available);
+    auto s = tracker.select(rng);
     counts_biased[static_cast<int>(s)]++;
   }
 
   // 6. Round-robin
-  auto rr = StrategyTracker::round_robin(12, 3);
+  auto rr = StrategyTracker::round_robin(12);
   IntegerVector round_robin_seq(12);
   for (int i = 0; i < 12; ++i) {
     round_robin_seq[i] = static_cast<int>(rr[i]);

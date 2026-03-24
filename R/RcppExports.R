@@ -186,7 +186,7 @@ ts_wagner_bias_bench <- function(contrast, tip_data, weight, levels, min_steps, 
 
 # ts_stochastic_tbr and ts_parallel_temper removed — on feature/parallel-temper
 
-ts_test_strategy_tracker <- function(seed, n_draws, pool_available) {
-    .Call(`_TreeSearch_ts_test_strategy_tracker`, seed, n_draws, pool_available)
+ts_test_strategy_tracker <- function(seed, n_draws) {
+    .Call(`_TreeSearch_ts_test_strategy_tracker`, seed, n_draws)
 }
 

@@ -813,17 +813,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // ts_stochastic_tbr and ts_parallel_temper removed — on feature/parallel-temper
-}
 // ts_test_strategy_tracker
-List ts_test_strategy_tracker(int seed, int n_draws, bool pool_available);
-extern "C" SEXP _TreeSearch_ts_test_strategy_tracker(SEXP seedSEXP, SEXP n_drawsSEXP, SEXP pool_availableSEXP) {
+List ts_test_strategy_tracker(int seed, int n_draws);
+extern "C" SEXP _TreeSearch_ts_test_strategy_tracker(SEXP seedSEXP, SEXP n_drawsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< int >::type n_draws(n_drawsSEXP);
-    Rcpp::traits::input_parameter< bool >::type pool_available(pool_availableSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_test_strategy_tracker(seed, n_draws, pool_available));
+    rcpp_result_gen = Rcpp::wrap(ts_test_strategy_tracker(seed, n_draws));
     return rcpp_result_gen;
 END_RCPP
 }

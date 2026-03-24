@@ -133,11 +133,6 @@ void worker_thread(WorkerContext ctx) {
     StartStrategy rep_strat = StartStrategy::WAGNER_RANDOM;
     if (ctx.strategies && rep < static_cast<int>(ctx.strategies->size())) {
       rep_strat = (*ctx.strategies)[rep];
-      // Pool-based strategies in parallel: skip (no safe pool access from
-      // worker without extra sync). Fall back to Wagner random.
-      if (strategy_needs_pool(rep_strat)) {
-        rep_strat = StartStrategy::WAGNER_RANDOM;
-      }
     }
 
     // Run the replicate pipeline (verbosity=0 for parallel)
@@ -239,7 +234,7 @@ DrivenResult parallel_driven_search(
   // Pre-compute round-robin strategy sequence for adaptive start (T-190)
   std::vector<StartStrategy> strategies;
   if (params.adaptive_start) {
-    strategies = StrategyTracker::round_robin(params.max_replicates, 3);
+    strategies = StrategyTracker::round_robin(params.max_replicates);
   }
   ctx.strategies = params.adaptive_start ? &strategies : nullptr;
 

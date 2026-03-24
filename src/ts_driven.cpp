@@ -79,18 +79,14 @@ ReplicateResult run_single_replicate(
 
   // 1. Starting tree: dispatch on StartStrategy.
   //
-  // Fresh-start strategies build a tree from scratch:
-  //   WAGNER_RANDOM/GOLOBOFF/ENTROPY: greedy taxon addition
-  //   RANDOM_TREE: purely random topology (Goloboff 2014, §3.3)
-  //
-  // Pool-based strategies (POOL_RATCHET, POOL_NNI_PERTURB): the caller
-  // passes a pre-perturbed pool tree as `starting_tree`.
+  // All arms build a fresh tree from scratch, ensuring each replicate is
+  // an independent sample from the landscape (basin coverage).
   //
   // When nni_first is true, NNI-optimize each start before selecting the
   // best. This finds better starting basins for TBR (O(n) per pass).
   double best_wag;
   if (starting_tree) {
-    // Pool-based or user-supplied starting tree
+    // User-supplied starting tree
     result.tree = *starting_tree;
     best_wag = score_tree(result.tree, ds);
   } else {
@@ -141,7 +137,7 @@ ReplicateResult run_single_replicate(
 
   result.timings.wagner_ms = ph_lap();
   if (verbosity >= 2) {
-    if (starting_tree && !strategy_needs_pool(strategy)) {
+    if (starting_tree) {
       // User-supplied or warm-start tree
       Rprintf("  Starting tree score: %.5g [%.0f ms]\n", best_wag,
               result.timings.wagner_ms);
@@ -594,44 +590,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     if (start_ptr) {
       // User-supplied starting tree for rep 0 — strategy is moot
     } else if (params.adaptive_start) {
-      bool pool_ok = pool.count_at_best() >= 2;
-      rep_strategy = strategy_tracker.select(bandit_rng, pool_ok);
-
-      // Pool-based strategies: extract pool tree, perturb, use as start
-      if (strategy_needs_pool(rep_strategy) && pool_ok) {
-        // Pick a random best-score pool tree
-        int target = static_cast<int>(
-            bandit_rng() % pool.count_at_best());
-        int found = 0;
-        for (const auto& e : pool.all()) {
-          if (e.score == pool.best_score()) {
-            if (found == target) {
-              start_tree = e.tree;
-              break;
-            }
-            ++found;
-          }
-        }
-        start_ptr = &start_tree;
-
-        // Apply perturbation in-place
-        if (rep_strategy == StartStrategy::POOL_RATCHET) {
-          // Heavy ratchet: perturb weights, TBR, restore weights
-          RatchetParams rp;
-          rp.n_cycles = 1;
-          rp.perturb_prob = 0.4;  // aggressive single-cycle ratchet
-          rp.perturb_mode = PerturbMode::MIXED;
-          rp.perturb_max_moves = 0;
-          rp.adaptive = false;
-          ratchet_search(start_tree, ds, rp, nullptr, check_timeout);
-        } else {
-          // NNI perturbation
-          random_nni_perturb(start_tree, rep_params.nni_perturb_fraction);
-        }
-      } else if (strategy_needs_pool(rep_strategy) && !pool_ok) {
-        // Pool not ready — fall back to Wagner random
-        rep_strategy = StartStrategy::WAGNER_RANDOM;
-      }
+      rep_strategy = strategy_tracker.select(bandit_rng);
     } else if (params.wagner_bias != 0) {
       // Legacy fixed-bias mode
       rep_strategy = static_cast<StartStrategy>(params.wagner_bias);
