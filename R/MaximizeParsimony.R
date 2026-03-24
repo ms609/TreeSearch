@@ -853,7 +853,10 @@ MaximizeParsimony <- function(
       else ctrl$outerCycles),
     adaptiveStart = as.logical(
       if (is.null(ctrl$adaptiveStart)) FALSE
-      else ctrl$adaptiveStart)
+      else ctrl$adaptiveStart),
+    enumTimeFraction = as.double(
+      if (is.null(ctrl$enumTimeFraction)) 0.1
+      else ctrl$enumTimeFraction)
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
                                         hsjArgs, xformArgs))

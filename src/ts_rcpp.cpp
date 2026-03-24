@@ -1247,7 +1247,8 @@ List ts_driven_search(
     int wagnerBias = 0,
     double wagnerBiasTemp = 0.3,
     int outerCycles = 1,
-    bool adaptiveStart = false)
+    bool adaptiveStart = false,
+    double enumTimeFraction = 0.1)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity, infoAmounts,
@@ -1389,6 +1390,7 @@ List ts_driven_search(
   params.wagner_bias_temp = wagnerBiasTemp;
   params.outer_cycles = outerCycles;
   params.adaptive_start = adaptiveStart;
+  params.enum_time_fraction = enumTimeFraction;
 
   // Starting tree edge matrix (optional)
   if (startEdge.isNotNull()) {
