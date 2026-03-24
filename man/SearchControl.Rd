@@ -13,6 +13,7 @@ SearchControl(
   wagnerBias = 0L,
   wagnerBiasTemp = 0.3,
   outerCycles = 1L,
+  maxOuterResets = 0L,
   ratchetCycles = 12L,
   ratchetPerturbProb = 0.25,
   ratchetPerturbMode = 0L,
@@ -76,6 +77,13 @@ approach uniform random.}
 with perturbation cycles divided evenly among outer iterations.
 Matches the interleaved sectorial + ratchet pattern of TNT's \code{xmult}
 \insertCite{Goloboff1999}{TreeSearch}.}
+
+\item{maxOuterResets}{Integer; maximum number of improvement-triggered
+resets of the outer cycle counter (default 0 = no resets, so
+\code{outerCycles} is exact).  When the search finds a new best score during
+an outer cycle, the counter resets up to this many times, allowing
+productive re-exploration.  Set to \eqn{-1} for unlimited resets.
+Strategy presets (\code{"default"}, \code{"thorough"}) set 2–3.}
 
 \item{ratchetCycles}{Integer; number of ratchet perturbation cycles.}
 
