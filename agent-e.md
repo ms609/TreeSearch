@@ -1,19 +1,18 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Task:** T-209 — NNI perturbation constraint guard
-- **Status:** PARKED (waiting on GHA run 23506971922)
-- **Branch:** feature/nni-constraint-guard
-- **Worktree:** TS-NNIcons
+- **Task:** IDLE
+- **Status:** IDLE
 
-### T-209 progress
+### T-209 — NNI perturbation constraint guard — DONE
 - Found via S-RED focus 2 (search topology invariants).
 - Bug: `random_nni_perturb()` ignores constraints → cn=-1 → TBR blocked.
   Same mechanism as T-208 (random_topology_tree).
 - Fix: gate NNI perturbation on `(!cd || !cd->active)` at ts_driven.cpp:310.
 - Local build: OK (build-agent.sh). Tests: 152 driven, 43 wagner, 29 SC — all pass.
 - init.c: 47 entries (45 Rcpp + 2 manual), all match.
-- GHA 23506971922 dispatched.
+- GHA 23506971922: PASS. PR #220 created.
+- Also handled T-182 GHA failure (Agent G): fixed roxygen docs, re-dispatched GHA 23507428719.
 
 ### T-206 progress
 - Added `max_outer_resets` to `DrivenParams` (C++) and `maxOuterResets` to
