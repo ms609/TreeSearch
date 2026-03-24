@@ -1,7 +1,29 @@
 # Agent G — Progress Log
 
 ## Current Task
-IDLE (2026-03-24)
+**T-203 — Simulated annealing for large trees**
+**Status:** IN PROGRESS
+**Branch:** `feature/anneal` (worktree: `TS-anneal`)
+**Started:** 2026-03-24
+
+Plan: Branch from `cpp-search`, add `ts_temper.h/.cpp` with Layer 1
+(`stochastic_tbr_phase`, ported from Agent C's T-198) and Layer 3
+(`anneal_search`, new). Wire into driven pipeline. Update `large` preset.
+
+### Progress
+- [x] Removed broken TS-anneal worktree (was based on bad PT merge)
+- [x] Created clean `feature/anneal` from `cpp-search` HEAD (`5e92931e`)
+- [x] Implement ts_temper.h/.cpp (Layer 1 + Layer 3)
+- [x] Wire into ts_driven.cpp (DrivenParams + run_single_replicate)
+- [x] Update ts_rcpp.cpp (annealConfig list to stay under .Call 65-arg limit)
+- [x] R-level: SearchControl(), MaximizeParsimony(), large preset
+- [x] 19 tests in test-ts-anneal.R, all pass
+- [x] 152 driven + 219 MP feature tests pass (no regressions)
+- [x] Pushed, dispatched GHA run 23495785052
+- [ ] Awaiting GHA results → PR to cpp-search
+
+**Status:** PARKED (waiting on GHA run 23495785052)
+**Parked task:** T-203 — Simulated annealing for large trees
 
 ### Completed: T-179 (2026-03-24)
 Tuned large-tree strategy preset via systematic benchmarking on

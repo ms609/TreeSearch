@@ -57,8 +57,8 @@ jobs:
       - name: R CMD check
         uses: r-lib/actions/check-r-package@v2
         with:
-          args: '"--no-build-vignettes", "--no-manual"'
-          build_args: '"--no-build-vignettes"'
+          args: 'c("--no-build-vignettes", "--no-manual")'
+          build_args: 'c("--no-build-vignettes", "--no-manual")'
 
       - name: Run filtered tests
         if: inputs.test_filter != ''
