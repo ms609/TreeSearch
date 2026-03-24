@@ -20,6 +20,7 @@
 #include "ts_parallel.h"
 #include "ts_simplify.h"
 #include "ts_hsj.h"
+#include "ts_temper.h"
 
 using namespace Rcpp;
 
@@ -1222,7 +1223,8 @@ List ts_driven_search(
     double nniPerturbFraction = 0.5,
     int wagnerBias = 0,
     double wagnerBiasTemp = 0.3,
-    int outerCycles = 1)
+    int outerCycles = 1,
+    bool adaptiveStart = false)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity, infoAmounts);
@@ -1362,6 +1364,7 @@ List ts_driven_search(
   params.wagner_bias = wagnerBias;
   params.wagner_bias_temp = wagnerBiasTemp;
   params.outer_cycles = outerCycles;
+  params.adaptive_start = adaptiveStart;
 
   // Starting tree edge matrix (optional)
   if (startEdge.isNotNull()) {
@@ -2399,6 +2402,68 @@ List ts_wagner_bias_bench(
     Named("tbr_score")       = tbr_scores,
     Named("goloboff_scores") = goloboff_scores_r,
     Named("entropy_scores")  = entropy_scores_r
+  );
+}
+
+
+// --- Stochastic TBR with Boltzmann acceptance (parallel tempering core) ---
+//
+// Runs n_moves stochastic SPR/TBR moves with Boltzmann acceptance at the
+// given temperature.  Temperature = 0 is strict hill-climbing; higher
+// temperatures accept worse moves more readily (probability exp(-delta/T)).
+//
+// Returns a list with best_score, final_score, n_accepted, n_improved,
+// n_attempted.  The tree is modified in place.
+
+// [[Rcpp::export]]
+List ts_stochastic_tbr(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    IntegerVector min_steps,
+    double concavity,
+    double temperature,
+    int n_moves)
+{
+  if (concavity < 0) concavity = HUGE_VAL;
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
+
+  ts::TreeState tree;
+  tree.init_from_edge(edge.column(0).begin(), edge.column(1).begin(),
+                      edge.nrow(), ds);
+  tree.load_tip_states(ds);
+  tree.build_postorder();
+
+  ts::TemperParams params;
+  params.temperature = temperature;
+  params.n_moves = n_moves;
+
+  ts::TemperResult res = ts::stochastic_tbr_phase(tree, ds, params);
+
+  // Build edge matrix from final tree
+  int n_edge = 2 * (tree.n_tip - 1);
+  IntegerMatrix out_edge(n_edge, 2);
+  int ei = 0;
+  for (int node = tree.n_tip; node < tree.n_node; ++node) {
+    int ni = node - tree.n_tip;
+    out_edge(ei, 0) = node + 1;
+    out_edge(ei, 1) = tree.left[ni] + 1;
+    ++ei;
+    out_edge(ei, 0) = node + 1;
+    out_edge(ei, 1) = tree.right[ni] + 1;
+    ++ei;
+  }
+
+  return List::create(
+    Named("best_score") = res.best_score,
+    Named("final_score") = res.final_score,
+    Named("n_accepted") = res.n_accepted,
+    Named("n_improved") = res.n_improved,
+    Named("n_attempted") = res.n_attempted,
+    Named("edge") = out_edge
   );
 }
 
