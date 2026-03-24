@@ -37,10 +37,8 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-190 | P2 | ASSIGNED (C) | — | **Stochastic TBR + Boltzmann acceptance.** `stochastic_tbr_phase()` in `ts_temper.h/.cpp`: random clip+regraft, indirect scoring, temperature-scaled acceptance. Building block for hot chains. | Plan: `.positai/plans/2026-03-24-parallel-tempering.md` |
-| T-191 | P2 | OPEN | T-190 | **Multi-chain parallel tempering framework.** N ChainStates with temperature ladder, round structure (K moves then swap), Metropolis swap criterion, best-score promotion. | |
-| T-192 | P2 | OPEN | T-191 | **Pipeline integration.** Wire into `run_single_replicate()` as new phase. `SearchParams` fields, `SearchControl()` R API, timing diagnostics. | |
-| T-193 | P2 | OPEN | T-192 | **Benchmark evaluation.** Compare PT vs current pipeline at equal wall-clock. 180t dataset + additional large matrices. Time-adjusted expected best. | |
+| T-194 | P3 | OPEN | — | **PT temperature auto-calibration.** Scale temperature ladder by dataset size or typical score delta. Current fixed ladder is suboptimal for small datasets. | |
+| T-195 | P3 | OPEN | — | **PT auto-enable for large trees.** Automatically activate PT when n_tip > 100. Integrate into strategy presets (large/thorough). | |
 
 ### Bugs from S-RED Focus 10
 
