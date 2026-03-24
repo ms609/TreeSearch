@@ -59,6 +59,7 @@ extern SEXP _TreeSearch_MaddisonSlatkin_clear_cache();
 extern SEXP _TreeSearch_ts_hsj_score(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_sankoff_test(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_wagner_bias_bench(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_anneal_diag(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_parallel_temper_diag(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_test_strategy_tracker(SEXP, SEXP);
 
@@ -133,6 +134,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_ts_hsj_score", (DL_FUNC) &_TreeSearch_ts_hsj_score, 9},
   {"_TreeSearch_ts_sankoff_test", (DL_FUNC) &_TreeSearch_ts_sankoff_test, 5},
   {"_TreeSearch_ts_wagner_bias_bench", (DL_FUNC) &_TreeSearch_ts_wagner_bias_bench, 10},
+  {"_TreeSearch_ts_anneal_diag", (DL_FUNC) &_TreeSearch_ts_anneal_diag, 11},
   {"_TreeSearch_ts_parallel_temper_diag", (DL_FUNC) &_TreeSearch_ts_parallel_temper_diag, 10},
 
   {"MORPHYLENGTH",                  (DL_FUNC) &MORPHYLENGTH, 4},

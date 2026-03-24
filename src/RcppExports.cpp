@@ -832,6 +832,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_anneal_diag
+List ts_anneal_diag(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, double t_start, double t_end, int n_phases, int moves_per_phase, bool tbr_polish);
+RcppExport SEXP _TreeSearch_ts_anneal_diag(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP t_startSEXP, SEXP t_endSEXP, SEXP n_phasesSEXP, SEXP moves_per_phaseSEXP, SEXP tbr_polishSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type min_steps(min_stepsSEXP);
+    Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
+    Rcpp::traits::input_parameter< double >::type t_start(t_startSEXP);
+    Rcpp::traits::input_parameter< double >::type t_end(t_endSEXP);
+    Rcpp::traits::input_parameter< int >::type n_phases(n_phasesSEXP);
+    Rcpp::traits::input_parameter< int >::type moves_per_phase(moves_per_phaseSEXP);
+    Rcpp::traits::input_parameter< bool >::type tbr_polish(tbr_polishSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_anneal_diag(contrast, tip_data, weight, levels, min_steps, concavity, t_start, t_end, n_phases, moves_per_phase, tbr_polish));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ts_parallel_temper_diag
 List ts_parallel_temper_diag(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, int n_chains, NumericVector temperatures, int rounds, int moves_per_round);
 RcppExport SEXP _TreeSearch_ts_parallel_temper_diag(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP n_chainsSEXP, SEXP temperaturesSEXP, SEXP roundsSEXP, SEXP moves_per_roundSEXP) {

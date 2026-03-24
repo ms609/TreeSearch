@@ -2478,6 +2478,72 @@ List ts_wagner_bias_bench(
 }
 
 
+// --- Simulated annealing diagnostic bridge ---
+
+// [[Rcpp::export]]
+List ts_anneal_diag(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = -1.0,
+    double t_start = 20.0,
+    double t_end = 0.0,
+    int n_phases = 10,
+    int moves_per_phase = 0,
+    bool tbr_polish = true)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
+
+  ts::TreeState tree;
+  ts::random_wagner_tree(tree, ds);
+  double initial_score = ts::score_tree(tree, ds);
+
+  // SA phase
+  ts::AnnealParams ap;
+  ap.t_start = t_start;
+  ap.t_end = t_end;
+  ap.n_phases = n_phases;
+  ap.moves_per_phase = moves_per_phase;
+
+  auto sa_t0 = std::chrono::steady_clock::now();
+  ts::AnnealResult ar = ts::anneal_search(tree, ds, ap);
+  auto sa_t1 = std::chrono::steady_clock::now();
+  double sa_ms = std::chrono::duration<double, std::milli>(sa_t1 - sa_t0).count();
+
+  double post_sa_score = ar.final_score;
+
+  // TBR polish
+  double post_tbr_score = post_sa_score;
+  double tbr_ms = 0.0;
+  if (tbr_polish) {
+    ts::TBRParams tp;
+    tp.accept_equal = false;
+    tp.max_accepted_changes = 0;
+    tp.max_hits = 1;
+    auto tbr_t0 = std::chrono::steady_clock::now();
+    ts::TBRResult tr = ts::tbr_search(tree, ds, tp);
+    auto tbr_t1 = std::chrono::steady_clock::now();
+    tbr_ms = std::chrono::duration<double, std::milli>(tbr_t1 - tbr_t0).count();
+    post_tbr_score = tr.best_score;
+  }
+
+  return List::create(
+      Named("initial_score") = initial_score,
+      Named("sa_best") = ar.best_score,
+      Named("post_sa") = post_sa_score,
+      Named("post_tbr") = post_tbr_score,
+      Named("total_accepted") = ar.total_accepted,
+      Named("total_improved") = ar.total_improved,
+      Named("total_attempted") = ar.total_attempted,
+      Named("sa_ms") = sa_ms,
+      Named("tbr_ms") = tbr_ms,
+      Named("total_ms") = sa_ms + tbr_ms,
+      Named("edge") = tree_to_edge(tree));
+}
+
 // --- Parallel tempering diagnostic bridge ---
 
 // [[Rcpp::export]]
