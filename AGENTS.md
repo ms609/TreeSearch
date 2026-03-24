@@ -189,7 +189,6 @@ over time (e.g. when a feature merges and the worktree is reassigned), but
 | `TS-ParsSim` | `feature/parssim-ambiguous` | Parsimony simulation |
 | `TS-PTeval` | `feature/pt-eval` | Parallel tempering evaluation |
 | `TS-NativeSearch` | `feature/native-search` | Native scorer decoupling (T-204) |
-| `TS-T202` | `feature/mpt-enum-timeout` | MPT enum timeout fix (T-202) |
 | `TS-TNT-bench` | `feature/tnt-bench` | TNT benchmarking |
 | `TS-Xpiwe` | `feature/xpiwe` | Extended implied weighting |
 
