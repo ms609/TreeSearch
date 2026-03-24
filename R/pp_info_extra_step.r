@@ -110,7 +110,15 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
     }
     reducedMinSteps <- k - 1L
     maxSteps <- nTips - 1L
-    logP <- MaddisonSlatkin(reducedMinSteps:maxSteps, states)
+    logP <- tryCatch(
+      MaddisonSlatkin(reducedMinSteps:maxSteps, states),
+      error = function(e) NULL
+    )
+    if (is.null(logP) || anyNA(logP)) {
+      # Exact solver hit capacity limit or timed out; fall back to MC
+      return(.ApproxStepInformation(split, n_mc = n_mc,
+                                    nSingletons = nSingletons))
+    }
   }
   
   # Trim trailing -Inf entries (impossible step counts)
