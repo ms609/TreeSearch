@@ -126,25 +126,6 @@ static bool temper_apply_spr_move(
   return true;
 }
 
-// Extract per-pattern step counts from local_cost (standard Fitch).
-static void temper_extract_divided_steps(
-    const TreeState& tree, const DataSet& ds,
-    std::vector<int>& char_steps) {
-  std::fill(char_steps.begin(), char_steps.end(), 0);
-  for (int node : tree.postorder) {
-    for (int b = 0; b < ds.n_blocks; ++b) {
-      const CharBlock& blk = ds.blocks[b];
-      uint64_t mask =
-          tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
-      while (mask) {
-        int c = ts::ctz64(mask);
-        char_steps[blk.pattern_index[c]] += 1;
-        mask &= mask - 1;
-      }
-    }
-  }
-}
-
 // --- Main stochastic TBR phase ---
 
 TemperResult stochastic_tbr_phase(
@@ -270,7 +251,8 @@ TemperResult stochastic_tbr_phase(
     // IW precomputation for this clip
     double base_iw = 0.0;
     if (use_iw) {
-      temper_extract_divided_steps(tree, ds, divided_steps);
+      std::fill(divided_steps.begin(), divided_steps.end(), 0);
+      extract_char_steps(tree, ds, divided_steps);
       base_iw = compute_weighted_score(ds, divided_steps);
       precompute_weighted_delta(ds, divided_steps, iw_delta);
     }

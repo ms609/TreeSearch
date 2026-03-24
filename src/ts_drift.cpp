@@ -23,26 +23,6 @@ static double drift_full_rescore(TreeState& tree, const DataSet& ds) {
   return score_tree(tree, ds);
 }
 
-// Extract per-character step counts from local_cost only (standard Fitch).
-// Same as TBR's extract_divided_steps helper.
-static void drift_extract_divided_steps(
-    const TreeState& tree, const DataSet& ds,
-    std::vector<int>& char_steps) {
-  std::fill(char_steps.begin(), char_steps.end(), 0);
-  for (int node : tree.postorder) {
-    for (int b = 0; b < ds.n_blocks; ++b) {
-      const CharBlock& blk = ds.blocks[b];
-      uint64_t mask =
-          tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
-      while (mask) {
-        int c = ts::ctz64(mask);
-        char_steps[blk.pattern_index[c]] += 1;
-        mask &= mask - 1;
-      }
-    }
-  }
-}
-
 static void drift_collect_main_edges(
     const TreeState& tree,
     std::vector<std::pair<int,int>>& edges)
@@ -461,7 +441,8 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     // Weighted scoring (IW or profile): precompute base score and deltas
     double base_iw = 0.0;
     if (use_iw) {
-      drift_extract_divided_steps(tree, ds, divided_steps);
+      std::fill(divided_steps.begin(), divided_steps.end(), 0);
+      extract_char_steps(tree, ds, divided_steps);
       base_iw = compute_weighted_score(ds, divided_steps);
       precompute_weighted_delta(ds, divided_steps, iw_delta);
     }

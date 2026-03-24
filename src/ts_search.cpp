@@ -33,25 +33,6 @@ static void compute_subtree_sizes(const TreeState& tree,
   }
 }
 
-// Extract per-pattern step counts from local_cost (standard Fitch only).
-static void extract_divided_steps(
-    const TreeState& tree, const DataSet& ds,
-    std::vector<int>& char_steps) {
-  std::fill(char_steps.begin(), char_steps.end(), 0);
-  for (int node : tree.postorder) {
-    for (int b = 0; b < ds.n_blocks; ++b) {
-      const CharBlock& blk = ds.blocks[b];
-      uint64_t mask =
-          tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
-      while (mask) {
-        int c = ts::ctz64(mask);
-        char_steps[blk.pattern_index[c]] += 1;
-        mask &= mask - 1;
-      }
-    }
-  }
-}
-
 // ---- NNI search ----
 
 SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
@@ -299,7 +280,8 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
       // IW: precompute base score and marginal deltas
       double base_iw = 0.0;
       if (use_iw) {
-        extract_divided_steps(tree, ds, div_steps);
+        std::fill(div_steps.begin(), div_steps.end(), 0);
+        extract_char_steps(tree, ds, div_steps);
         base_iw = compute_weighted_score(ds, div_steps);
         precompute_weighted_delta(ds, div_steps, iw_del);
       }
