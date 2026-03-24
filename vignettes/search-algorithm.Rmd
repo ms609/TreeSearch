@@ -167,6 +167,13 @@ matching the pattern used by TNT's `xmult` command
 [@Goloboff1999, §2.3]: after each ratchet escape, a new XSS pass
 exploits the altered topology before the next perturbation.
 
+If an outer cycle improves the best score found so far, the cycle counter
+resets so that the full sequence of outer cycles restarts from cycle 1.
+This allows the search to keep exploiting a productive basin of attraction
+for as long as it continues to yield improvements;
+the search time limit (`maxSeconds`) is the only constraint on the number
+of cycles that can run.
+
 ## Tree rearrangement
 
 ### TBR, SPR, and NNI
