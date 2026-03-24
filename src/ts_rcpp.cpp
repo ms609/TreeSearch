@@ -20,7 +20,7 @@
 #include "ts_parallel.h"
 #include "ts_simplify.h"
 #include "ts_hsj.h"
-// ts_temper.h removed — parallel tempering lives on feature/parallel-temper
+#include "ts_temper.h"
 #include "ts_strategy.h"
 
 using namespace Rcpp;
@@ -2478,8 +2478,94 @@ List ts_wagner_bias_bench(
 }
 
 
-// Parallel tempering functions (ts_stochastic_tbr, ts_parallel_temper)
-// removed — live on feature/parallel-temper branch.
+// --- Parallel tempering diagnostic bridge ---
+
+// [[Rcpp::export]]
+List ts_parallel_temper_diag(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = -1.0,
+    int n_chains = 4,
+    NumericVector temperatures = NumericVector(),
+    int rounds = 5,
+    int moves_per_round = 0)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
+
+  ts::TreeState tree;
+  ts::random_wagner_tree(tree, ds);
+
+  ts::PTParams params;
+  params.n_chains = n_chains;
+  params.rounds = rounds;
+  params.moves_per_round = moves_per_round;
+  if (temperatures.size() > 0) {
+    params.temperatures.assign(temperatures.begin(), temperatures.end());
+  } else {
+    params.temperatures.resize(n_chains);
+    params.temperatures[0] = 0.0;
+    for (int i = 1; i < n_chains; ++i)
+      params.temperatures[i] = std::pow(3.0, i);
+  }
+
+  ts::PTDiagnostics diag;
+  ts::PTResult result = ts::parallel_temper_search(
+      tree, ds, params, nullptr, nullptr, nullptr, &diag);
+
+  int n_cl = diag.chain_log.size();
+  IntegerVector cl_round(n_cl), cl_chain(n_cl);
+  NumericVector cl_temp(n_cl), cl_before(n_cl), cl_after(n_cl), cl_ms(n_cl);
+  IntegerVector cl_accepted(n_cl), cl_improved(n_cl), cl_attempted(n_cl);
+  for (int i = 0; i < n_cl; ++i) {
+    const auto& e = diag.chain_log[i];
+    cl_round[i] = e.round; cl_chain[i] = e.chain_idx;
+    cl_temp[i] = e.temperature;
+    cl_before[i] = e.score_before; cl_after[i] = e.score_after;
+    cl_accepted[i] = e.n_accepted; cl_improved[i] = e.n_improved;
+    cl_attempted[i] = e.n_attempted; cl_ms[i] = e.elapsed_ms;
+  }
+  DataFrame chain_df = DataFrame::create(
+      Named("round") = cl_round, Named("chain") = cl_chain,
+      Named("temperature") = cl_temp,
+      Named("score_before") = cl_before, Named("score_after") = cl_after,
+      Named("n_accepted") = cl_accepted, Named("n_improved") = cl_improved,
+      Named("n_attempted") = cl_attempted, Named("elapsed_ms") = cl_ms);
+
+  int n_sl = diag.swap_log.size();
+  IntegerVector sl_round(n_sl), sl_lo(n_sl), sl_hi(n_sl);
+  NumericVector sl_score_lo(n_sl), sl_score_hi(n_sl), sl_prob(n_sl);
+  LogicalVector sl_acc(n_sl);
+  for (int i = 0; i < n_sl; ++i) {
+    const auto& e = diag.swap_log[i];
+    sl_round[i] = e.round; sl_lo[i] = e.pair_lo; sl_hi[i] = e.pair_hi;
+    sl_score_lo[i] = e.score_lo; sl_score_hi[i] = e.score_hi;
+    sl_prob[i] = e.metropolis_prob; sl_acc[i] = e.accepted;
+  }
+  DataFrame swap_df = DataFrame::create(
+      Named("round") = sl_round, Named("pair_lo") = sl_lo,
+      Named("pair_hi") = sl_hi,
+      Named("score_lo") = sl_score_lo, Named("score_hi") = sl_score_hi,
+      Named("metropolis_prob") = sl_prob, Named("accepted") = sl_acc);
+
+  return List::create(
+      Named("best_score") = result.best_score,
+      Named("cold_final") = result.cold_final_score,
+      Named("swaps_accepted") = result.total_swaps_accepted,
+      Named("swaps_attempted") = result.total_swaps_attempted,
+      Named("chain_log") = chain_df,
+      Named("swap_log") = swap_df,
+      Named("pair_acceptance_rates") = wrap(diag.pair_acceptance_rates),
+      Named("cold_scores") = wrap(diag.cold_scores),
+      Named("cold_tbr_ms") = diag.cold_tbr_total_ms,
+      Named("hot_stochastic_ms") = diag.hot_stochastic_total_ms,
+      Named("total_pt_ms") = diag.total_pt_ms,
+      Named("cold_improvements") = diag.cold_improvements_from_swaps,
+      Named("edge") = tree_to_edge(tree));
+}
 
 // [[Rcpp::export]]
 List ts_test_strategy_tracker(int seed, int n_draws) {

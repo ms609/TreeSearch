@@ -832,6 +832,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_parallel_temper_diag
+List ts_parallel_temper_diag(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, int n_chains, NumericVector temperatures, int rounds, int moves_per_round);
+RcppExport SEXP _TreeSearch_ts_parallel_temper_diag(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP n_chainsSEXP, SEXP temperaturesSEXP, SEXP roundsSEXP, SEXP moves_per_roundSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type min_steps(min_stepsSEXP);
+    Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
+    Rcpp::traits::input_parameter< int >::type n_chains(n_chainsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type temperatures(temperaturesSEXP);
+    Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
+    Rcpp::traits::input_parameter< int >::type moves_per_round(moves_per_roundSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_parallel_temper_diag(contrast, tip_data, weight, levels, min_steps, concavity, n_chains, temperatures, rounds, moves_per_round));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ts_test_strategy_tracker
 List ts_test_strategy_tracker(int seed, int n_draws);
 RcppExport SEXP _TreeSearch_ts_test_strategy_tracker(SEXP seedSEXP, SEXP n_drawsSEXP) {
