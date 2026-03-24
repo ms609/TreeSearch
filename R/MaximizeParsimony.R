@@ -130,7 +130,7 @@
   thorough = SearchControl(
     tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
-    ratchetAdaptive = TRUE,
+    ratchetAdaptive = TRUE, ratchetTaper = TRUE,
     nniPerturbCycles = 5L, nniPerturbFraction = 0.5,
     driftCycles = 12L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
     xssRounds = 5L, xssPartitions = 6L,
@@ -167,7 +167,7 @@
   large = SearchControl(
     tbrMaxHits = 1L, ratchetCycles = 12L, ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
-    ratchetAdaptive = TRUE,
+    ratchetAdaptive = TRUE, ratchetTaper = TRUE,
     nniPerturbCycles = 0L,
     driftCycles = 0L,
     annealPhases = 5L, annealTStart = 20, annealTEnd = 0,
@@ -863,6 +863,9 @@ MaximizeParsimony <- function(
     enumTimeFraction = as.double(
       if (is.null(ctrl$enumTimeFraction)) 0.1
       else ctrl$enumTimeFraction),
+    ratchetTaper = as.logical(
+      if (is.null(ctrl$ratchetTaper)) FALSE
+      else ctrl$ratchetTaper),
     annealConfig = if (isTRUE(as.integer(ctrl$annealPhases) > 0L)) {
       list(
         phases = as.integer(ctrl$annealPhases),

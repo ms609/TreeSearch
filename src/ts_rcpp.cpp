@@ -1249,6 +1249,7 @@ List ts_driven_search(
     int outerCycles = 1,
     bool adaptiveStart = false,
     double enumTimeFraction = 0.1,
+    bool ratchetTaper = false,
     Nullable<List> annealConfig = R_NilValue)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
@@ -1362,6 +1363,7 @@ List ts_driven_search(
   params.ratchet_perturb_mode = ratchetPerturbMode;
   params.ratchet_perturb_max_moves = ratchetPerturbMaxMoves;
   params.ratchet_adaptive = ratchetAdaptive;
+  params.ratchet_taper = ratchetTaper;
   params.drift_cycles = driftCycles;
   params.drift_afd_limit = driftAfdLimit;
   params.drift_rfd_limit = driftRfdLimit;
