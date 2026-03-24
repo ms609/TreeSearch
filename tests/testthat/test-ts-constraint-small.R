@@ -133,3 +133,19 @@ test_that("different fully-resolving constraints on 5 tips", {
     )
   }
 })
+
+test_that("T-208: adaptiveStart with constraints respects constraint", {
+  ds5 <- make_ds5()
+  cons <- ape::read.tree(text = "((t1,t2),(t3,(t4,t5)));")
+
+  set.seed(7293)
+  result <- MaximizeParsimony(ds5, constraint = cons,
+                              maxReplicates = 8L, targetHits = 4L,
+                              verbosity = 0L,
+                              control = SearchControl(adaptiveStart = TRUE))
+  expect_s3_class(result, "multiPhylo")
+  for (i in seq_along(result)) {
+    expect_true(check_constraint(result[[i]], cons),
+                info = paste("tree", i, "violates constraint"))
+  }
+})

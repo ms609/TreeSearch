@@ -109,7 +109,13 @@ ReplicateResult run_single_replicate(
         break;
       }
       case StartStrategy::RANDOM_TREE:
-        random_topology_tree(result.tree, ds);
+        // random_topology_tree() does not enforce constraints;
+        // fall back to Wagner when constraints are active (T-208)
+        if (cd && cd->active) {
+          random_wagner_tree(result.tree, ds, cd);
+        } else {
+          random_topology_tree(result.tree, ds);
+        }
         break;
       default:  // WAGNER_RANDOM (and pool-based fallback)
         random_wagner_tree(result.tree, ds, cd);
