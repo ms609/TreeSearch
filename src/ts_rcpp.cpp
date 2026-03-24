@@ -1247,6 +1247,7 @@ List ts_driven_search(
     int wagnerBias = 0,
     double wagnerBiasTemp = 0.3,
     int outerCycles = 1,
+    int maxOuterResets = 0,
     bool adaptiveStart = false,
     double enumTimeFraction = 0.1,
     Nullable<List> annealConfig = R_NilValue)
@@ -1390,6 +1391,7 @@ List ts_driven_search(
   params.wagner_bias = wagnerBias;
   params.wagner_bias_temp = wagnerBiasTemp;
   params.outer_cycles = outerCycles;
+  params.max_outer_resets = maxOuterResets;
   params.adaptive_start = adaptiveStart;
   params.enum_time_fraction = enumTimeFraction;
   if (annealConfig.isNotNull()) {

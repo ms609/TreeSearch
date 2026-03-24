@@ -121,12 +121,21 @@ struct DrivenParams {
 
   // Outer search cycle count: number of times the [XSS → Ratchet →
   // NNI-perturb → Drift → TBR] block is repeated per replicate.
-  // Default 1 = current linear pipeline.  Values > 1 interleave fresh
-  // XSS passes after each ratchet/drift escape, matching TNT's xmult
-  // pattern.  Ratchet/drift/NNI-perturb cycles are divided evenly among
-  // outer cycles; total budget is approximately unchanged.
+  // Default 1 = single pass through the pipeline.  Values > 1 interleave
+  // fresh XSS passes after each ratchet/drift escape, matching TNT's
+  // xmult pattern.  Ratchet/drift/NNI-perturb cycles are divided evenly
+  // among outer cycles; total budget is approximately unchanged.
   // Goloboff 1999 §2.3 (sectorial + ratchet interleaving).
   int outer_cycles = 1;
+
+  // Maximum number of improvement-triggered resets of the outer cycle
+  // counter.  When a cycle improves the score, the counter resets to 0
+  // so the search keeps exploiting the new basin — but at most this many
+  // times.  0 = no resets (outer_cycles is exact).  -1 = unlimited.
+  // Default 0: outer_cycles controls the total number of cycles exactly.
+  // Strategy presets may set higher values (e.g. 2–3) to allow productive
+  // re-exploration after escaping local optima.
+  int max_outer_resets = 0;
 
   // Optional starting tree edge matrix (R format: n_edge × 2, 1-based).
   // When non-empty, replicate 0 uses this topology instead of Wagner.
