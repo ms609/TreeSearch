@@ -36,7 +36,8 @@ SearchControl(
   poolSuboptimal = 0,
   consensusStableReps = 0L,
   adaptiveLevel = FALSE,
-  consensusConstrain = FALSE
+  consensusConstrain = FALSE,
+  adaptiveStart = FALSE
 )
 }
 \arguments{
@@ -148,6 +149,12 @@ best-score pool trees are enforced as constraints, focusing search on
 uncertain regions.  Constraints are cleared whenever a new best score
 is found.  Only active when no user-supplied \code{constraint} is
 present.  Default \code{FALSE}.}
+
+\item{adaptiveStart}{Logical; use Thompson-sampling (bandit) strategy
+selection for starting trees?  When \code{TRUE}, each replicate draws its
+starting strategy from a pool of options (random Wagner, biased Wagner,
+random tree, pool ratchet, pool NNI-perturb), adapting to which
+strategies yield the best scores.  Default \code{FALSE}.}
 }
 \value{
 A named list of class \code{"SearchControl"}.

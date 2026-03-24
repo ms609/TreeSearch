@@ -90,6 +90,11 @@
 #'   with perturbation cycles divided evenly among outer iterations.
 #'   Matches the interleaved sectorial + ratchet pattern of TNT's `xmult`
 #'   \insertCite{Goloboff1999}{TreeSearch}.
+#' @param adaptiveStart Logical; use Thompson-sampling (bandit) strategy
+#'   selection for starting trees?  When `TRUE`, each replicate draws its
+#'   starting strategy from a pool of options (random Wagner, biased Wagner,
+#'   random tree, pool ratchet, pool NNI-perturb), adapting to which
+#'   strategies yield the best scores.  Default `FALSE`.
 #'
 #' @return A named list of class `"SearchControl"`.
 #'
@@ -150,7 +155,12 @@ SearchControl <- function(
     # Stopping criteria
     consensusStableReps = 0L,
     adaptiveLevel = FALSE,
-    consensusConstrain = FALSE
+    consensusConstrain = FALSE,
+    # Adaptive starting-tree strategy (T-190)
+    # When TRUE, each replicate draws its starting strategy via Thompson
+    # sampling from {Wagner-random, Wagner-Goloboff, Wagner-entropy,
+    # random-tree, pool-ratchet, pool-NNI-perturb}. Overrides wagnerBias.
+    adaptiveStart = FALSE
 ) {
   structure(
     list(
@@ -185,7 +195,8 @@ SearchControl <- function(
       poolSuboptimal = as.double(poolSuboptimal),
       consensusStableReps = as.integer(consensusStableReps),
       adaptiveLevel = as.logical(adaptiveLevel),
-      consensusConstrain = as.logical(consensusConstrain)
+      consensusConstrain = as.logical(consensusConstrain),
+      adaptiveStart = as.logical(adaptiveStart)
     ),
     class = "SearchControl"
   )
@@ -206,7 +217,7 @@ print.SearchControl <- function(x, ...) {
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual",
                      "poolMaxSize", "poolSuboptimal"),
     "Stopping" = c("consensusStableReps", "adaptiveLevel",
-                    "consensusConstrain")
+                    "consensusConstrain", "adaptiveStart")
   )
   cat("SearchControl object\n")
   for (gname in names(groups)) {

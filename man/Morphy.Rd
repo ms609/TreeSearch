@@ -156,6 +156,17 @@ See \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} and \code{vignette("in
 character variation in HSJ scoring.  Default \code{1.0}.  Only used when
 \code{inapplicable = "hsj"}.}
 
+\item{extended_iw}{Logical; if \code{TRUE} (default), use extended implied
+weighting (XPIWE; \insertCite{Goloboff2014;textual}{TreeSearch}),
+which adjusts per-character concavity for missing entries.
+Ignored when \code{concavity = Inf} or \code{"profile"}.}
+
+\item{xpiwe_r}{Numeric; proportion of homoplasy assumed in missing entries.
+Default \code{0.5}.  Only used when \code{extended_iw = TRUE}.}
+
+\item{xpiwe_max_f}{Numeric; maximum extrapolation factor.
+Default \code{5}.  Only used when \code{extended_iw = TRUE}.}
+
 \item{\dots}{Additional parameters to \code{Morphy()}.}
 }
 \value{

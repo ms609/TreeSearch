@@ -68,7 +68,7 @@ with longer search times for authoritative best-known scores.
 
 ## Large-Tree Benchmark Datasets
 
-Separate tier for datasets >= 100 tips, loaded from `inst/benchmarks/`.
+Separate tier for datasets >= 100 tips, loaded from `dev/benchmarks/`.
 These have fundamentally different search dynamics: single TBR convergence
 takes seconds to minutes, replicates take minutes rather than sub-second.
 
@@ -89,7 +89,7 @@ Best-known EW score: TBD (to be established after systematic benchmarking).
 ## Usage
 
 ```r
-source("inst/benchmarks/bench_datasets.R")
+source("dev/benchmarks/bench_datasets.R")
 
 # Load standard benchmark datasets (14 datasets, ≤88 tips)
 datasets <- load_benchmark_datasets()
@@ -107,6 +107,6 @@ score_dataset("Vinther2008", maxSeconds = 10)
 run_benchmark_suite(maxSeconds = 30, replicates = 5)
 
 # Run large-tree benchmark (from bench_framework.R)
-# source("inst/benchmarks/bench_framework.R")
+# source("dev/benchmarks/bench_framework.R")
 # benchmark_large(maxSeconds = 120)
 ```

@@ -497,6 +497,10 @@ Morphy <- function(dataset, tree,
   pNextTbr <- 0.33
   profile <- .UseProfile(concavity)
   iw <- is.finite(concavity)
+  if (iw && concavity <= 0) {
+    stop("`concavity` must be positive (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
+  }
   constrained <- !missing(constraint)
   startTime <- Sys.time()
   stopTime <- startTime + as.difftime(maxTime, units = "mins")
@@ -1097,6 +1101,14 @@ Morphy <- function(dataset, tree,
 #' @param hsj_alpha Numeric in \[0, 1\] controlling the weight of secondary
 #' character variation in HSJ scoring.  Default `1.0`.  Only used when
 #' `inapplicable = "hsj"`.
+#' @param extended_iw Logical; if `TRUE` (default), use extended implied
+#' weighting (XPIWE; \insertCite{Goloboff2014;textual}{TreeSearch}),
+#' which adjusts per-character concavity for missing entries.
+#' Ignored when `concavity = Inf` or `"profile"`.
+#' @param xpiwe_r Numeric; proportion of homoplasy assumed in missing entries.
+#' Default `0.5`.  Only used when `extended_iw = TRUE`.
+#' @param xpiwe_max_f Numeric; maximum extrapolation factor.
+#' Default `5`.  Only used when `extended_iw = TRUE`.
 #'
 #' @return `Resample()` returns a `multiPhylo` object containing one best tree
 #' per resample replicate.
@@ -1172,6 +1184,10 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   if (is.finite(concavity) && inapplicable != "bgs") {
     stop("Implied weighting is not currently supported with inapplicable = \"",
          inapplicable, "\".")
+  }
+  if (is.finite(concavity) && concavity <= 0) {
+    stop("`concavity` must be positive (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
   }
 
   # C++ engine path

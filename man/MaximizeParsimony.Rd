@@ -114,19 +114,23 @@ heuristic parameters. Presets:
 \describe{
 \item{\code{"auto"} (default)}{Selects automatically based on dataset size
 and character count:
-\code{"sprint"} for <=30 taxa, \code{"thorough"} for >=65 taxa with
->=100 character patterns, \code{"default"} otherwise.}
+\code{"sprint"} for <=30 taxa; \code{"large"} for >=120 taxa with >=100
+character patterns; \code{"thorough"} for 65-119 taxa with >=100
+character patterns; \code{"default"} otherwise.}
 \item{\code{"sprint"}}{Fast search: 3 ratchet cycles, no drift, minimal
 sectorial. Good for small datasets or quick surveys.}
-\item{\code{"default"}}{Balanced: 5 ratchet + 2 drift + sectorial + fusing.}
+\item{\code{"default"}}{Balanced: 12 ratchet + 2 drift + sectorial + fusing.}
 \item{\code{"thorough"}}{Intensive: 20 ratchet cycles, 12 drift, adaptive
-perturbation, extra sectorial rounds. Best for datasets with
-65+ tips and 100+ character patterns, where sprint/default
-may miss the global optimum.}
-All presets enable consensus-stability stopping
-(\code{consensusStableReps = 3}): the search stops early if the strict
-consensus of best-score trees has been unchanged for three consecutive
-replicates.
+perturbation, extra sectorial rounds, NNI perturbation, outer cycle
+loop. Best for datasets with 65-119 tips and 100+ character patterns.}
+\item{\code{"large"}}{Large-tree search (>=120 tips): reduced cycle
+counts scaled for expensive per-replicate cost, no NNI
+perturbation, single biased Wagner start (Goloboff 2014), larger
+sector sizes.  Empirically matches or exceeds \code{"thorough"} at
+180 tips across all time budgets.}
+All presets enable consensus-stability stopping: the search stops early
+if the strict consensus of best-score trees has been unchanged for
+\code{consensusStableReps} consecutive replicates.
 \item{\code{"none"}}{Use only the explicitly supplied parameter values.}
 }
 Explicit \code{control} fields always override the preset; for example,

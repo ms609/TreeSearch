@@ -52,6 +52,10 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
     dataset <- PrepareDataProfile(dataset)
     concavity <- Inf
   }
+  if (is.finite(concavity) && concavity <= 0) {
+    stop("`concavity` must be positive (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
+  }
 
   nTip <- length(dataset)
 

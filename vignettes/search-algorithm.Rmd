@@ -1,0 +1,523 @@
+---
+title: "Search algorithm implementation"
+author: "Martin R. Smith"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: ../inst/REFERENCES.bib
+csl: ../inst/apa-old-doi-prefix.csl
+vignette: >
+  %\VignetteIndexEntry{Search algorithm implementation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+This vignette documents the algorithmic details of the phylogenetic search
+engine used by `MaximizeParsimony()`.
+Where a technique follows published work, references and a brief summary are
+provided; novel contributions are described in more detail.
+
+## Scoring methods
+
+### Fitch parsimony
+
+Standard maximum parsimony scoring uses the downpass algorithm of
+@Fitch1971 to count the minimum number of character state changes
+(steps) required by a tree.
+TreeSearch implements this in C++ with SIMD-accelerated bitwise operations.
+
+### Implied weighting
+
+Implied weighting [@Goloboff1993; @Goloboff1997] downweights homoplastic
+characters during tree search using the fit function $f_i = k / (k + e_i)$,
+where $e_i$ is the number of extra (homoplastic) steps on character $i$ and
+$k$ is a concavity constant.
+The tree score is the sum of $f_i$ over all characters; optimal trees
+maximize this sum.
+
+### Extended implied weighting
+
+Extended implied weighting [@Goloboff2014] corrects for missing-entry bias
+in implied weighting.
+Characters with many missing entries can appear to have fewer extra steps,
+inflating their weight relative to well-sampled characters.
+The correction adjusts the effective concavity constant per character:
+$k_{\text{eff},i} = k / (1 + r \cdot m_i / o_i)$,
+where $m_i$ and $o_i$ are the number of missing and observed entries, and $r$
+is a scaling parameter (default 1; clamped to a maximum adjustment factor).
+
+### Profile parsimony
+
+Profile parsimony [@Faith2001] assigns character weights based on the
+information content of each character state distribution,
+drawn from the profile of tree-length distributions.
+It reuses the implied-weighting scoring pipeline, with a lookup table of
+information amounts replacing the homoplasy-based fit function.
+
+### Inapplicable characters
+
+Three algorithms handle inapplicable (`-`) character states:
+
+- **Brazeau, Guillerme & Smith** [-@Brazeau2019]: a three-pass algorithm
+(extra downpass, standard downpass, uppass) that correctly
+accounts for inapplicable tokens.  This is the default.
+
+- **Hopkins & St John** [-@Hopkins2021]: a dissimilarity metric
+(`hsj`) that scores hierarchically-dependent characters in blocks.
+A parameter $\alpha$ controls the weighting of
+secondary characters.
+
+- **X-transformation** [@Goloboff2021b]: recodes hierarchically-dependent
+characters into composite step-matrix characters with asymmetric costs,
+scored via the Sankoff algorithm.
+
+All three are available through the `inapplicable` argument to
+`MaximizeParsimony()`.
+The HSJ and x-transformation methods require a character hierarchy
+specification via the `CharacterHierarchy` class;
+see `vignette("inapplicable")` for details.
+
+## Starting trees
+
+### Wagner tree construction
+
+Each replicate begins with a random Wagner tree [@Kluge1969]:
+taxa are added to a growing tree one at a time, each inserted at the
+edge that minimizes the tree length.
+The addition order is randomized to generate diverse starting points
+across replicates.
+
+### Biased addition order
+
+Purely random addition orders occasionally produce poor starting trees
+because uninformative taxa (e.g. those with mostly missing or ambiguous
+data) may be added early, steering subsequent placements into suboptimal
+regions.
+
+Following @Goloboff2014 [§3.3], the first Wagner start in each replicate
+optionally uses a biased addition order.
+Each unplaced taxon $t$ receives an informativeness score
+$s_t$ (by default, the number of non-ambiguous character states).
+The next taxon to add is sampled from a softmax distribution
+$P(t) \propto \exp(s_t / T)$,
+where the temperature $T$ controls the balance between greedy (low $T$,
+always pick the most informative taxon) and random (high $T$).
+
+Only the first of `wagnerStarts` starts uses biased addition; remaining
+starts use a uniformly random order to maintain basin diversity.
+
+At small tree sizes ($\leq$ 88 tips) the benefit is marginal (1--2 steps).
+At larger sizes ($\geq$ 170 tips) biased addition closes roughly 80% of
+the gap between the random Wagner score and the TBR-optimized score,
+giving subsequent rearrangement a much better starting point.
+
+### NNI warmup
+
+Before running TBR on the initial Wagner tree, TreeSearch applies
+nearest-neighbour interchange (NNI) hill-climbing.
+NNI evaluates $O(n)$ candidate rearrangements per pass (2 swaps per
+internal edge), compared to $O(n^2)$ for TBR ($n$ clips $\times$ $n$
+regrafts $\times$ rerooting).
+At small tree sizes ($\leq$ 88 tips), TBR convergence is fast enough
+(< 1 s) that NNI warmup adds negligible overhead.
+At larger sizes ($\geq$ 100 tips), NNI can descend from the Wagner score to
+a good local optimum in roughly 1/5 the time TBR would take, and the
+resulting tree often lies in a better basin of attraction for the
+subsequent TBR phase.
+
+Empirically, at 180 tips, NNI $\rightarrow$ TBR finds trees ~100 steps
+better than TBR alone in half the time.
+Adding an intermediate SPR phase (NNI $\rightarrow$ SPR $\rightarrow$ TBR)
+does not improve results.
+NNI warmup is enabled by default (`nniFirst = TRUE` in `SearchControl()`).
+
+### Adaptive starting-tree strategy selection
+
+Different datasets favour different starting-tree strategies; fixing a
+single approach for all replicates can waste computational effort on
+suboptimal strategies or fail to explore basins that an alternative
+strategy would reach.
+@Goloboff2014 [§3.3] noted that purely random starting trees sometimes
+access basins of attraction inaccessible to Wagner trees.
+
+When `adaptiveStart = TRUE` (the default in the `thorough` preset),
+TreeSearch treats the choice of starting-tree strategy as a multi-armed
+bandit problem and uses Thompson sampling [@Thompson1933] to allocate
+replicates across four strategy arms:
+
+| Arm | Description |
+|-----|-------------|
+| Wagner-random | Random addition-order Wagner tree |
+| Wagner-Goloboff | Goloboff (2014) biased addition order |
+| Wagner-entropy | Entropy-biased addition order |
+| Random tree | Purely random topology (no character data) |
+
+All arms build a fresh tree from scratch, so each replicate represents an
+independent sample from the landscape.
+This preserves the validity of hit counts as a convergence measure: if
+$K$ out of $R$ replicates independently find the same best score, the
+probability that a better score exists is bounded by $(1 - K/R)^R$.
+
+**Thompson sampling.**
+Each arm $i$ maintains a Beta-distributed estimate of its success
+probability, parameterized by success count $\alpha_i$ and failure count
+$\beta_i$ (both initialised to 1, giving a uniform prior).
+The _random tree_ arm receives a pessimistic prior $\text{Beta}(1, 2)$
+reflecting the expectation that random topologies are usually worse.
+
+To select a strategy, a value $\theta_i$ is sampled from each arm's
+$\text{Beta}(\alpha_i, \beta_i)$ distribution, and the arm with the
+highest $\theta_i$ is chosen.
+This naturally balances exploration (trying undersampled arms) and
+exploitation (preferring arms with high observed success rates) without
+any tuning parameters.
+
+After each replicate, the selected arm is updated: if the replicate's
+final score matches the pool's best score, $\alpha_i$ is incremented
+(success); otherwise $\beta_i$ is incremented (failure).
+
+**Landscape adaptation.**
+When a new best score is discovered, the search landscape has effectively
+changed (strategies that succeeded at the old score may not be informative
+for the new one).
+All Beta parameters are decayed toward their priors by a factor of 0.5,
+discounting stale evidence while preserving the relative ranking of arms.
+
+**Parallel path.**
+In parallel search (`nThreads > 1`), adaptive per-replicate updating
+would require cross-thread synchronisation.
+Instead, strategies are assigned in a fixed round-robin sequence across
+replicates, ensuring diversity without lock overhead.
+
+Enabling `adaptiveStart` is most valuable for medium-to-large datasets
+where many replicates complete and the bandit has time to learn.
+For very large datasets ($\geq$ 120 tips) where only a few replicates
+complete within the time budget, the bandit has insufficient data and
+`adaptiveStart` is disabled in the `large` preset.
+
+Per-strategy attempt and success counts are returned in the
+`strategy_diagnostics` attribute of the search result for post-hoc
+inspection.
+
+
+## The driven search pipeline
+
+Each call to `MaximizeParsimony()` runs multiple independent replicates.
+Within each replicate, the search follows a pipeline of phases inspired
+by the "new technology" driven search described by @Goloboff1999 and
+implemented in TNT [@Goloboff2016]:
+
+1. **Starting tree** (strategy selected adaptively or by fixed Wagner bias)
+   $\rightarrow$ NNI warmup $\rightarrow$ TBR to local optimum
+2. **Exclusive sectorial search** (XSS)
+3. **Random sectorial search** (RSS)
+4. **Constrained sectorial search** (CSS)
+5. **Parsimony ratchet** perturbation
+6. **Stochastic NNI-perturbation**
+7. **Tree drifting**
+8. **Final TBR** polish
+9. **Pool insertion** + tree fusing (every `fuseInterval` replicates)
+
+Post-search, a TBR plateau walk from all pool seeds enumerates
+equally-scoring topologies.
+
+### Outer cycle loop
+
+By default, phases 2--8 run once per replicate.
+Setting `outerCycles > 1` wraps phases 2--8 in a loop,
+distributing the total ratchet, NNI-perturbation, and drift cycles evenly
+across outer iterations (ceiling division, minimum 1 per iteration).
+This interleaves fresh sectorial search passes between perturbation rounds,
+matching the pattern used by TNT's `xmult` command
+[@Goloboff1999, §2.3]: after each ratchet escape, a new XSS pass
+exploits the altered topology before the next perturbation.
+
+If an outer cycle improves the best score found so far, the cycle counter
+resets so that the full sequence of outer cycles restarts from cycle 1.
+This allows the search to keep exploiting a productive basin of attraction
+for as long as it continues to yield improvements;
+the search time limit (`maxSeconds`) is the only constraint on the number
+of cycles that can run.
+
+## Tree rearrangement
+
+### TBR, SPR, and NNI
+
+Tree bisection and reconnection (TBR) is the primary rearrangement
+operator.
+TBR clips a subtree from the main tree and reattaches it at every
+possible edge, trying all rerootings of the clipped subtree at
+each regraft position.
+SPR (subtree pruning and regrafting) is a restricted form of TBR
+that does not reroot the clipped subtree.
+NNI swaps one of the four subtrees around an internal edge with an
+adjacent subtree.
+
+All three operators use incremental Fitch scoring: rather than rescoring
+the entire tree for each candidate, only the affected nodes are
+re-evaluated.
+A bounded variant bails out when the accumulated score exceeds the best
+candidate found so far, skipping unnecessary computation.
+
+### Zero-length edge skipping
+
+Following @Goloboff1996, TBR, SPR, and drift skip provably unproductive
+rearrangements by identifying zero-length edges.
+
+**Clip skipping:** `compute_collapsed_flags()` identifies edges where
+clipping cannot improve the score.
+Five conditions are checked: (1--2) zero standard-block and NA-block cost
+at the parent node, (3) preliminary state-set preservation at the sibling,
+and (4--5) downpass and subtree-actives preservation for inapplicable
+characters.
+These conditions are checked for equal-weights, implied-weights, and
+profile parsimony scoring.
+Collapsed flags are recomputed after every accepted move and disabled
+during MPT enumeration (where equal-score topologies are sought).
+
+**Regraft merging:** Within a connected region of zero-length edges
+(a "collapsed region"), all regraft positions yield the same tree score.
+Only boundary edges entering the region need evaluation;
+interior collapsed edges are skipped.
+
+**Collapsed-topology deduplication:** When adding trees to the pool,
+split sets are computed excluding collapsed edges.
+Two binary trees that differ only in the resolution of zero-length
+edges produce identical collapsed split sets and are treated as
+duplicates.
+
+
+## Escape mechanisms
+
+### Parsimony ratchet
+
+The parsimony ratchet [@Nixon1999] escapes local optima by temporarily
+perturbing character weights: a randomly selected subset of characters
+is reweighted (zeroed or upweighted), the tree is optimized under the
+perturbed weights, and the original weights are restored.
+The resulting tree generally occupies a different basin of attraction.
+
+TreeSearch runs multiple ratchet cycles per replicate
+(`ratchetCycles`, default 12).
+Each cycle draws characters for perturbation with probability
+`ratchetPerturbProb` (default 0.25), runs a limited number of TBR moves
+(`ratchetPerturbMaxMoves`, default 5), then restores original weights
+and runs TBR to a new local optimum.
+
+The perturbation probability was tuned systematically across 14 benchmark
+datasets (20--88 tips).
+The previous default of 4% zeroed only ~10 of 253 characters on a typical
+dataset, producing insufficient landscape distortion.
+Increasing to 25% with fewer perturbed-phase TBR moves (5 instead of
+$\sim$20) improved median scores on 9/14 datasets while leaving 4 unchanged
+and 1 marginally affected (resolved with a longer time budget).
+The key insight is that the perturbed landscape is not worth searching
+extensively (it is an artefact), so perturbed-phase TBR should be brief,
+but the perturbation itself must be aggressive enough to displace the
+tree from its current basin.
+
+### Stochastic NNI-perturbation
+
+Complementary to the weight-perturbation ratchet, stochastic
+NNI-perturbation directly displaces the tree topology,
+inspired by the `doRandomNNIs()` mechanism in IQ-TREE
+[@Nguyen2015].
+
+All internal NNI edges are collected.
+Each edge is randomly selected for swapping with probability
+`nniPerturbFraction` (default 0.5), but edges adjacent to
+already-swapped edges are skipped to avoid conflicting modifications.
+After all compatible swaps, the tree is fully rescored and TBR is
+run to find a new local optimum.
+This is repeated for `nniPerturbCycles` cycles.
+
+Whereas the ratchet reshapes the objective function to make a
+different topology optimal, NNI-perturbation moves directly to a
+different region of topology space.
+The two mechanisms are complementary: the ratchet is effective when
+the landscape has misleading local optima (wrong basin, correct
+objective), while NNI-perturbation is effective when the tree is
+trapped in a narrow funnel (correct objective, insufficient
+topological displacement).
+
+### Tree drifting
+
+Tree drifting [@Goloboff1999] accepts suboptimal TBR moves within
+tolerance limits: an absolute fit difference
+(`driftAfdLimit`, default 5 steps) and a relative fit difference
+(`driftRfdLimit`, default 0.15).
+Like the ratchet, it displaces the tree from its current local
+optimum, but without changing the objective function.
+
+## Sectorial search
+
+Sectorial search [@Goloboff1999] optimizes a subproblem: a sector
+(clade or random taxon subset) is extracted, optimized independently,
+and reinserted.
+Because the sector is smaller than the full tree, rearrangement is
+faster.
+
+### Exclusive sectorial search (XSS)
+
+XSS decomposes the tree into non-overlapping sectors of balanced size
+and optimizes each independently via TBR.
+Multiple partitioning rounds ensure that sector boundaries do not
+persistently protect suboptimal arrangements.
+
+### Constrained sectorial search (CSS)
+
+CSS selects a sector and applies TBR only within it, constraining
+the rest of the tree.
+Useful for refining specific clades without disrupting well-supported
+structure elsewhere.
+
+### Conflict-guided random sectorial search (RSS)
+
+Standard RSS selects sectors by choosing a random internal node as the
+sector root.
+TreeSearch extends this with **conflict-guided sector selection**:
+before each replicate's RSS phase, a split frequency table is computed
+from the pool's best-score trees.
+Each internal node receives a conflict score
+$c = 1 - (\text{fraction of pool trees containing that split})$.
+Maximum-descendant conflict is propagated upward, and eligible sector
+roots are sampled via a discrete distribution with weight $1 + 3c$.
+
+This focuses computational effort on the parts of the tree where the
+pool disagrees, rather than wasting time on well-resolved regions.
+The approach falls back to uniform selection when the pool contains
+fewer than two best-score trees or when conflict variation is negligible.
+
+### Adaptive early-exit
+
+After each round of sectorial search (XSS or CSS) followed by a global
+TBR polish, TreeSearch checks whether the best score improved.
+If not, remaining rounds are skipped.
+This avoids spending time on unproductive sectorial search for datasets
+where it provides no benefit, while having no cost for datasets where
+it is productive (the early exit never fires).
+
+
+## Tree fusing
+
+Tree fusing [@Goloboff1999] combines pairs of trees from the pool: a
+randomly selected clade from one tree is grafted into another, and the
+result is kept if it matches or improves the best score.
+Fusing is triggered every `fuseInterval` replicates.
+
+
+## Pool management
+
+The tree pool stores the best trees found during search (up to
+`poolMaxSize`).
+Two features improve pool quality beyond simple score-based insertion.
+
+### Diversity-aware eviction
+
+When the pool is full and a new tree ties the worst score, the pool entry
+most similar to the new tree (measured by the number of shared bipartition
+splits, counted via per-split FNV-1a hash set membership) is evicted.
+This maintains topological diversity, which improves the effectiveness
+of tree fusing by ensuring a range of starting points for recombination.
+When the new tree is strictly better than the worst pool entry,
+arbitrary worst-entry eviction is used instead.
+
+### Collapsed-topology deduplication
+
+As described above under zero-length edge skipping,
+trees are deduplicated based on their collapsed split sets
+(excluding zero-length edges).
+This prevents the pool from filling with trees that differ only in
+the arbitrary resolution of polytomies.
+
+
+## Stopping criteria
+
+### Time and replicate limits
+
+`maxSeconds` imposes a wall-clock time limit.
+Timeout is checked between search phases and periodically within TBR, SPR,
+and NNI passes (every $n_{\text{tip}}$ candidate evaluations).
+`maxReplicates` limits the number of search replicates.
+
+### Target hits
+
+`targetHits` stops the search after the best score has been independently
+discovered in this many replicates.
+The probability of missing a better tree is estimated as
+$(1 - K/R)^R$, where $K$ is the number of hits and $R$ the number of
+replicates.
+
+### Consensus-stability stopping
+
+After each replicate, the strict consensus of the pool's best-score trees
+is hashed (XOR of per-split FNV-1a hashes).
+If the consensus hash is unchanged for `consensusStableReps` consecutive
+replicates (default 3 in all presets), the search terminates.
+This provides a data-adaptive stopping criterion: easy datasets converge
+quickly, while hard datasets continue searching.
+
+### Adaptive search level
+
+When `adaptiveLevel = TRUE`, ratchet and drift cycle counts are scaled
+each replicate based on the cumulative hit rate:
+
+- hit rate > 0.7: effort $\times 0.5$ (easy landscape)
+- hit rate > 0.4: effort $\times 0.75$
+- hit rate < 0.15: effort $\times 1.5$ (hard landscape)
+- otherwise: effort $\times 1.0$
+
+This allocates more computation to replicates that are struggling to
+improve and conserves budget when the search is finding optimal trees
+easily.
+
+### Cross-replicate consensus constraint tightening
+
+When `consensusConstrain = TRUE` and no user-supplied constraint is present,
+after at least 5 replicates, splits present in all best-score pool trees
+(the pool strict consensus) are extracted and enforced as topological
+constraints.
+Subsequent replicates cannot break these established clades during TBR/SPR,
+focusing search effort on the uncertain parts of the tree.
+Constraints are cleared and rebuilt whenever a new best score is
+discovered, preventing premature lock-in.
+
+
+## Strategy presets
+
+`MaximizeParsimony()` automatically selects a strategy preset based on
+dataset size:
+
+| Preset      | Condition                                   | Character                         |
+|-------------|---------------------------------------------|-----------------------------------|
+| `sprint`    | $\leq$ 30 tips                              | Minimal ratchet, no drift         |
+| `default`   | 31--64 tips, or $\geq$ 65 with < 100 patterns | Balanced; adaptive search level   |
+| `thorough`  | $\geq$ 65 tips with $\geq$ 100 patterns    | High-intensity; NNI perturbation, outer cycles |
+| `large`     | $\geq$ 120 tips with $\geq$ 200 patterns   | Biased Wagner, large sectors      |
+
+The signal-density gate (character pattern count) prevents the `thorough`
+preset from being selected for datasets with flat parsimony landscapes where
+additional search effort yields no benefit.
+
+All presets enable NNI warmup (`nniFirst = TRUE`) and consensus-stability
+stopping (`consensusStableReps = 3` or 2 for `large`).
+
+Any parameter can be overridden by the user via `SearchControl()`.
+
+
+## Parallelism
+
+Search replicates run in parallel using `std::thread`
+(not OpenMP, to avoid conflicts with R's memory allocator).
+Each thread receives its own copy of the dataset and constraint data, and
+uses a `thread_local` random number generator seeded from R's RNG
+before thread launch.
+A shared `ThreadSafePool` (mutex-guarded) collects results.
+The main thread polls for user interrupts and timeout every 200 ms.
+Worker threads make no R API calls.
+
+
+## References

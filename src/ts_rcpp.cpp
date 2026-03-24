@@ -20,6 +20,8 @@
 #include "ts_parallel.h"
 #include "ts_simplify.h"
 #include "ts_hsj.h"
+// ts_temper.h removed — parallel tempering lives on feature/parallel-temper
+#include "ts_strategy.h"
 
 using namespace Rcpp;
 
@@ -1244,7 +1246,8 @@ List ts_driven_search(
     double nniPerturbFraction = 0.5,
     int wagnerBias = 0,
     double wagnerBiasTemp = 0.3,
-    int outerCycles = 1)
+    int outerCycles = 1,
+    bool adaptiveStart = false)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity, infoAmounts,
@@ -1385,6 +1388,7 @@ List ts_driven_search(
   params.wagner_bias = wagnerBias;
   params.wagner_bias_temp = wagnerBiasTemp;
   params.outer_cycles = outerCycles;
+  params.adaptive_start = adaptiveStart;
 
   // Starting tree edge matrix (optional)
   if (startEdge.isNotNull()) {
@@ -1439,6 +1443,21 @@ List ts_driven_search(
     Named("fuse_ms")      = result.timings.fuse_ms
   );
 
+  // Per-strategy diagnostics (T-190)
+  List strategy_diag = R_NilValue;
+  if (params.adaptive_start || nThreads > 1) {
+    CharacterVector sn(ts::N_STRAT);
+    IntegerVector sa(ts::N_STRAT), ss(ts::N_STRAT);
+    for (int i = 0; i < ts::N_STRAT; ++i) {
+      sn[i] = ts::strategy_name(static_cast<ts::StartStrategy>(i));
+      sa[i] = result.strategy_attempts[i];
+      ss[i] = result.strategy_successes[i];
+    }
+    sa.names() = sn;
+    ss.names() = sn;
+    strategy_diag = List::create(Named("attempts") = sa, Named("successes") = ss);
+  }
+
   if (result.pool_size == 0) {
     return List::create(
       Named("trees") = List::create(),
@@ -1451,7 +1470,8 @@ List ts_driven_search(
       Named("last_improved_rep") = result.last_improved_rep,
       Named("timed_out") = result.timed_out,
       Named("consensus_stable") = result.consensus_stable,
-      Named("timings") = timings
+      Named("timings") = timings,
+      Named("strategy_diagnostics") = strategy_diag
     );
   }
 
@@ -1475,7 +1495,8 @@ List ts_driven_search(
     Named("last_improved_rep") = result.last_improved_rep,
     Named("timed_out") = result.timed_out,
     Named("consensus_stable") = result.consensus_stable,
-    Named("timings") = timings
+    Named("timings") = timings,
+    Named("strategy_diagnostics") = strategy_diag
   );
 }
 
@@ -2453,6 +2474,88 @@ List ts_wagner_bias_bench(
     Named("tbr_score")       = tbr_scores,
     Named("goloboff_scores") = goloboff_scores_r,
     Named("entropy_scores")  = entropy_scores_r
+  );
+}
+
+
+// Parallel tempering functions (ts_stochastic_tbr, ts_parallel_temper)
+// removed — live on feature/parallel-temper branch.
+
+// [[Rcpp::export]]
+List ts_test_strategy_tracker(int seed, int n_draws) {
+  using ts::StrategyTracker;
+  using ts::StartStrategy;
+  using ts::N_STRAT;
+
+  StrategyTracker tracker;
+  std::mt19937 rng(seed);
+
+  // 1. Draw `n_draws` strategies and count selections
+  IntegerVector counts(N_STRAT, 0);
+  for (int i = 0; i < n_draws; ++i) {
+    auto s = tracker.select(rng);
+    counts[static_cast<int>(s)]++;
+  }
+
+  // 2. Record initial alpha/beta
+  NumericVector alpha_init(N_STRAT), beta_init(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    alpha_init[i] = tracker.alpha(static_cast<StartStrategy>(i));
+    beta_init[i] = tracker.beta_param(static_cast<StartStrategy>(i));
+  }
+
+  // 3. Update: arm 0 gets 5 successes, arm 1 gets 5 failures
+  for (int i = 0; i < 5; ++i) {
+    tracker.update(StartStrategy::WAGNER_RANDOM, true);
+    tracker.update(StartStrategy::WAGNER_GOLOBOFF, false);
+  }
+
+  NumericVector alpha_after_update(N_STRAT), beta_after_update(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    alpha_after_update[i] = tracker.alpha(static_cast<StartStrategy>(i));
+    beta_after_update[i] = tracker.beta_param(static_cast<StartStrategy>(i));
+  }
+
+  // 4. Decay
+  tracker.decay(0.5);
+  NumericVector alpha_after_decay(N_STRAT), beta_after_decay(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    alpha_after_decay[i] = tracker.alpha(static_cast<StartStrategy>(i));
+    beta_after_decay[i] = tracker.beta_param(static_cast<StartStrategy>(i));
+  }
+
+  // 5. Post-update selection distribution (arm 0 should dominate)
+  IntegerVector counts_biased(N_STRAT, 0);
+  for (int i = 0; i < n_draws; ++i) {
+    auto s = tracker.select(rng);
+    counts_biased[static_cast<int>(s)]++;
+  }
+
+  // 6. Round-robin
+  auto rr = StrategyTracker::round_robin(12);
+  IntegerVector round_robin_seq(12);
+  for (int i = 0; i < 12; ++i) {
+    round_robin_seq[i] = static_cast<int>(rr[i]);
+  }
+
+  // 7. Strategy names
+  CharacterVector names(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    names[i] = ts::strategy_name(static_cast<StartStrategy>(i));
+  }
+
+  return List::create(
+    Named("n_strategies") = N_STRAT,
+    Named("strategy_names") = names,
+    Named("initial_counts") = counts,
+    Named("alpha_init") = alpha_init,
+    Named("beta_init") = beta_init,
+    Named("alpha_after_update") = alpha_after_update,
+    Named("beta_after_update") = beta_after_update,
+    Named("alpha_after_decay") = alpha_after_decay,
+    Named("beta_after_decay") = beta_after_decay,
+    Named("biased_counts") = counts_biased,
+    Named("round_robin") = round_robin_seq
   );
 }
 
