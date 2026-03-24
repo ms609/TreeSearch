@@ -46,7 +46,7 @@ with existing completed IDs. Renumbered to T-198–T-201 in S-COORD round 10.
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-196 | P2 | DONE (G), on PT branch | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); will arrive with PT PR. |
-| T-202 | P2 | ASSIGNED (B) | — | **[Bug] MPT enumeration skipped on timeout.** `!result.timed_out` guard in `driven_search()` and `parallel_driven_search()` prevents MPT plateau walk after timeout. At ≥40 tips, timeout is the normal exit, so pool often has only 1–4 trees. Fix: remove the `!result.timed_out` guard; also remove `check_timeout` from MPT enum's TBR call. | Investigated by F; root cause confirmed. See `agent-f.md`. |
+| T-202 | P2 | PR #217 (B) | — | **[Bug] MPT enumeration skipped on timeout.** `!result.timed_out` guard in `driven_search()` and `parallel_driven_search()` prevents MPT plateau walk after timeout. At ≥40 tips, timeout is the normal exit, so pool often has only 1–4 trees. Fix: remove the `!result.timed_out` guard; also remove `check_timeout` from MPT enum's TBR call. | Investigated by F; root cause confirmed. See `agent-f.md`. |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
