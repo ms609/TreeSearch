@@ -177,18 +177,23 @@ ReplicateResult run_single_replicate(
 
   // Steps 3–6: outer cycle loop.
   // Each outer cycle runs [XSS + RSS + CSS → Ratchet → NNI-perturb →
-  // Drift → TBR polish] once.  With outer_cycles = 1 (default) this is
-  // exactly the previous linear pipeline.  With outer_cycles > 1 we
-  // interleave fresh XSS passes after each ratchet/drift escape, matching
-  // TNT's xmult pattern (Goloboff 1999 §2.3).
+  // Drift → TBR polish] once.  With outer_cycles = 1 and
+  // max_outer_resets = 0 (the defaults), this is exactly one pass through
+  // the pipeline.  With outer_cycles > 1 we interleave fresh XSS passes
+  // after each ratchet/drift escape, matching TNT's xmult pattern
+  // (Goloboff 1999 §2.3).
   //
-  // If a cycle improves the score, the counter resets so the search keeps
-  // exploiting the new basin until no further improvement is found (or
-  // the timeout fires).
+  // When max_outer_resets > 0 (or -1 = unlimited), a cycle that improves
+  // the score resets the counter to exploit the new basin.  Resets are
+  // capped to avoid runaway expansion on datasets with many small
+  // incremental improvements (late resets have diminishing returns:
+  // empirically <1 step/s vs >40 steps/s for the first cycle).
   //
   // Perturbation cycles are divided evenly among outer cycles so that the
   // total compute budget is approximately unchanged.
   const int n_outer = std::max(1, params.outer_cycles);
+  const int max_resets = params.max_outer_resets;  // 0=none, -1=unlimited
+  int resets_used = 0;
   // Ceiling division: each outer cycle gets at least 1 ratchet cycle.
   const int ratchet_per = std::max(1,
       (params.ratchet_cycles + n_outer - 1) / n_outer);
@@ -399,17 +404,28 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
-    // If this cycle improved the score, reset the counter so we keep
-    // exploiting the new basin.  The timeout is the only cap.
+    // If this cycle improved the score and resets are allowed, reset the
+    // counter to exploit the new basin.
     const double score_after_cycle = score_tree(result.tree, ds);
-    if (score_after_cycle < score_before_cycle - 1e-8) {
+    const bool improved = score_after_cycle < score_before_cycle - 1e-8;
+    const bool can_reset = (max_resets < 0) ||
+                           (max_resets > 0 && resets_used < max_resets);
+    if (improved && can_reset) {
       outer = 0;
+      ++resets_used;
       if (verbosity >= 2) {
-        Rprintf("  Outer cycle improved score (%.5g -> %.5g); resetting\n",
-                score_before_cycle, score_after_cycle);
+        Rprintf("  Outer cycle improved score (%.5g -> %.5g); resetting"
+                " (%d/%s)\n",
+                score_before_cycle, score_after_cycle, resets_used,
+                max_resets < 0 ? "inf" : std::to_string(max_resets).c_str());
       }
     } else {
       ++outer;
+      if (improved && verbosity >= 2) {
+        Rprintf("  Outer cycle improved score (%.5g -> %.5g);"
+                " reset cap reached (%d)\n",
+                score_before_cycle, score_after_cycle, max_resets);
+      }
     }
   } // end outer loop
 

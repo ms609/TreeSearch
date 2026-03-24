@@ -140,8 +140,12 @@ SearchControl <- function(
     wagnerBiasTemp = 0.3,
     # Outer search cycle count (Goloboff 1999 §2.3)
     # Repeat [XSS → Ratchet → NNI-perturb → Drift → TBR] this many times.
-    # Cycles are divided evenly; default 1 = current linear pipeline.
+    # Cycles are divided evenly; default 1 = single pipeline pass.
     outerCycles = 1L,
+    # Max improvement-triggered resets of the outer cycle counter.
+    # 0 = no resets (outerCycles is exact); -1 = unlimited.
+    # Strategy presets set 2-3 for productive re-exploration.
+    maxOuterResets = 0L,
     # Ratchet
     ratchetCycles = 12L,
     ratchetPerturbProb = 0.25,
@@ -194,6 +198,7 @@ SearchControl <- function(
       wagnerBias = as.integer(wagnerBias),
       wagnerBiasTemp = as.double(wagnerBiasTemp),
       outerCycles = as.integer(outerCycles),
+      maxOuterResets = as.integer(maxOuterResets),
       ratchetCycles = as.integer(ratchetCycles),
       ratchetPerturbProb = as.double(ratchetPerturbProb),
       ratchetPerturbMode = as.integer(ratchetPerturbMode),
