@@ -98,6 +98,14 @@ SearchControl <- function(
     sprFirst = FALSE,
     tabuSize = 100L,
     wagnerStarts = 1L,
+    # Wagner biased addition (Goloboff 2014 §3.3)
+    # 0L = random (default), 1L = Goloboff non-ambiguous score, 2L = entropy
+    wagnerBias = 0L,
+    wagnerBiasTemp = 0.3,
+    # Outer search cycle count (Goloboff 1999 §2.3)
+    # Repeat [XSS → Ratchet → NNI-perturb → Drift → TBR] this many times.
+    # Cycles are divided evenly; default 1 = current linear pipeline.
+    outerCycles = 1L,
     # Ratchet
     ratchetCycles = 12L,
     ratchetPerturbProb = 0.25,
@@ -136,6 +144,9 @@ SearchControl <- function(
       sprFirst = as.logical(sprFirst),
       tabuSize = as.integer(tabuSize),
       wagnerStarts = as.integer(wagnerStarts),
+      wagnerBias = as.integer(wagnerBias),
+      wagnerBiasTemp = as.double(wagnerBiasTemp),
+      outerCycles = as.integer(outerCycles),
       ratchetCycles = as.integer(ratchetCycles),
       ratchetPerturbProb = as.double(ratchetPerturbProb),
       ratchetPerturbMode = as.integer(ratchetPerturbMode),
@@ -168,7 +179,8 @@ SearchControl <- function(
 #' @export
 print.SearchControl <- function(x, ...) {
   groups <- list(
-    "TBR" = c("tbrMaxHits", "nniFirst", "sprFirst", "tabuSize", "wagnerStarts"),
+    "TBR" = c("tbrMaxHits", "nniFirst", "sprFirst", "tabuSize",
+              "wagnerStarts", "wagnerBias", "wagnerBiasTemp", "outerCycles"),
     "Ratchet" = c("ratchetCycles", "ratchetPerturbProb", "ratchetPerturbMode",
                    "ratchetPerturbMaxMoves", "ratchetAdaptive"),
     "NNI Perturbation" = c("nniPerturbCycles", "nniPerturbFraction"),

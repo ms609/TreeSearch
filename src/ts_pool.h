@@ -73,6 +73,15 @@ public:
   // Number of entries in the pool.
   int size() const { return static_cast<int>(entries_.size()); }
 
+  // Count entries at exactly the best score.
+  int count_at_best() const {
+    int count = 0;
+    for (const auto& e : entries_) {
+      if (e.score == best_score_) ++count;
+    }
+    return count;
+  }
+
   // Clear the pool.
   void clear();
 

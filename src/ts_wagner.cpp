@@ -3,6 +3,7 @@
 #include "ts_fitch.h"
 #include "ts_rng.h"
 #include <algorithm>
+#include <cmath>
 #include <numeric>
 #include <climits>
 #include <vector>
@@ -553,6 +554,184 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
   return result;
 }
 
+// ---------------------------------------------------------------------------
+// Biased addition-order scoring
+// ---------------------------------------------------------------------------
+
+// Goloboff "informative" score (Goloboff 2014, "Hide and vanish").
+// score[t] = number of characters for which tip t has a specific
+// (non-ambiguous) state.  Ambiguous = all n_states bits set for that
+// character.  Characters are counted once per block position regardless
+// of per-pattern frequency weighting, so the score reflects the number of
+// independently coded characters.
+std::vector<double> wagner_goloboff_scores(const DataSet& ds) {
+  int n_tip = ds.n_tips;
+  int tw    = ds.total_words;
+  std::vector<double> scores(n_tip, 0.0);
+
+  for (int t = 0; t < n_tip; ++t) {
+    double score = 0.0;
+    const uint64_t* tip_base = &ds.tip_states[static_cast<size_t>(t) * tw];
+
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      int offset = ds.block_word_offset[b];
+
+      // tip_ambiguous: bit c is set when tip has ALL n_states for char c.
+      // Compute as the AND of all per-state words masked to active chars.
+      uint64_t tip_ambiguous = blk.active_mask;
+      for (int s = 0; s < blk.n_states; ++s) {
+        tip_ambiguous &= tip_base[offset + s];
+      }
+      // Non-ambiguous characters = active chars minus those that are ambiguous.
+      score += blk.n_chars - popcount64(tip_ambiguous);
+    }
+    scores[t] = score;
+  }
+  return scores;
+}
+
+// Information-theoretic (entropy) score.
+// score[t] = Σ_c (n_states_c - |state_set of t at c|)
+//          = Σ_b (n_states_b * n_chars_b - Σ_s popcount(tip_word[s] & active))
+//
+// A taxon with entirely specific single-state codings scores highest.
+// A fully ambiguous taxon scores 0.  The maximum is (n_states-1)*n_chars.
+std::vector<double> wagner_entropy_scores(const DataSet& ds) {
+  int n_tip = ds.n_tips;
+  int tw    = ds.total_words;
+  std::vector<double> scores(n_tip, 0.0);
+
+  for (int t = 0; t < n_tip; ++t) {
+    double score = 0.0;
+    const uint64_t* tip_base = &ds.tip_states[static_cast<size_t>(t) * tw];
+
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      int offset = ds.block_word_offset[b];
+
+      int total_state_bits = 0;
+      for (int s = 0; s < blk.n_states; ++s) {
+        total_state_bits += popcount64(tip_base[offset + s] & blk.active_mask);
+      }
+      // Each character contributes (n_states - actual_state_count).
+      // Ambiguous chars contribute 0; single-state chars contribute n_states-1.
+      score += blk.n_states * blk.n_chars - total_state_bits;
+    }
+    scores[t] = score;
+  }
+  return scores;
+}
+
+// Softmax-weighted sampling without replacement.
+// Scores are normalised to [0, 1] before applying temperature so that
+// the parameter is dataset-independent.  temperature == 0 → greedy argmax.
+// Returns a permutation of 0..n_tip-1 in the sampled addition order.
+static std::vector<int> softmax_sample_order(
+    const std::vector<double>& scores,
+    double temperature)
+{
+  int n = static_cast<int>(scores.size());
+  std::vector<int> order;
+  order.reserve(n);
+
+  if (temperature <= 0.0) {
+    // Greedy: sort descending by score, break ties arbitrarily
+    std::vector<int> idx(n);
+    std::iota(idx.begin(), idx.end(), 0);
+    std::stable_sort(idx.begin(), idx.end(),
+      [&scores](int a, int b){ return scores[a] > scores[b]; });
+    return idx;
+  }
+
+  // Normalise scores to [0, 1] so temperature is dataset-independent
+  double mn = *std::min_element(scores.begin(), scores.end());
+  double mx = *std::max_element(scores.begin(), scores.end());
+  double rng = mx - mn;
+
+  std::vector<double> norm(n);
+  if (rng < 1e-12) {
+    // All scores identical → uniform random; temperature irrelevant
+    std::fill(norm.begin(), norm.end(), 1.0);
+  } else {
+    for (int i = 0; i < n; ++i) {
+      norm[i] = (scores[i] - mn) / rng;  // in [0, 1]
+    }
+  }
+
+  // Softmax weights: w[i] = exp(norm[i] / temperature).
+  // Subtract 1.0 (max of norm) for numerical stability.
+  std::vector<double> w(n);
+  for (int i = 0; i < n; ++i) {
+    w[i] = std::exp((norm[i] - 1.0) / temperature);
+  }
+
+  // Sample without replacement: at each step draw from remaining
+  // taxa proportional to their weights.
+  std::vector<bool> used(n, false);
+
+  ts::rng_state_begin();
+  for (int step = 0; step < n; ++step) {
+    double total = 0.0;
+    for (int i = 0; i < n; ++i) {
+      if (!used[i]) total += w[i];
+    }
+
+    double r = ts::thread_safe_unif() * total;
+    double cum = 0.0;
+    int chosen = -1;
+    for (int i = 0; i < n; ++i) {
+      if (used[i]) continue;
+      cum += w[i];
+      if (r <= cum) { chosen = i; break; }
+    }
+    // Numerical safety: pick last unused taxon
+    if (chosen < 0) {
+      for (int i = n - 1; i >= 0; --i) {
+        if (!used[i]) { chosen = i; break; }
+      }
+    }
+    used[chosen] = true;
+    order.push_back(chosen);
+  }
+  ts::rng_state_end();
+
+  return order;
+}
+
+WagnerResult biased_wagner_tree(TreeState& tree, const DataSet& ds,
+                                const BiasedWagnerParams& params,
+                                ConstraintData* cd) {
+  if (params.bias == WagnerBias::RANDOM) {
+    return random_wagner_tree(tree, ds, cd);
+  }
+
+  const std::vector<double> scores =
+    (params.bias == WagnerBias::GOLOBOFF)
+      ? wagner_goloboff_scores(ds)
+      : wagner_entropy_scores(ds);
+
+  const std::vector<int> order =
+    softmax_sample_order(scores, params.temperature);
+
+  WagnerResult result = wagner_tree(tree, ds, order, cd);
+
+  // Constraint post-hoc check + retry (mirrors random_wagner_tree)
+  bool constrained = cd && cd->active && cd->has_posthoc;
+  if (constrained) {
+    for (int attempt = 1; attempt < 100; ++attempt) {
+      if (!violates_constraint_posthoc(tree, *cd)) break;
+      const std::vector<int> retry_order =
+        softmax_sample_order(scores, params.temperature);
+      result = wagner_tree(tree, ds, retry_order, cd);
+    }
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+
 WagnerResult random_wagner_tree(TreeState& tree, const DataSet& ds,
                                 ConstraintData* cd) {
   int n_tips = ds.n_tips;
@@ -592,6 +771,57 @@ WagnerResult random_wagner_tree(TreeState& tree, const DataSet& ds,
   }
 
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Purely random tree topology (no scoring, no character-based placement).
+// Builds a tree by inserting tips at uniformly random edges.
+void random_topology_tree(TreeState& tree, const DataSet& ds) {
+  int n_tip = ds.n_tips;
+  check_wagner_precondition(n_tip);
+  init_wagner_state(tree, ds);
+
+  // Random tip insertion order (Fisher-Yates)
+  std::vector<int> order(n_tip);
+  std::iota(order.begin(), order.end(), 0);
+  ts::rng_state_begin();
+  for (int i = n_tip - 1; i > 0; --i) {
+    int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
+    if (j > i) j = i;
+    std::swap(order[i], order[j]);
+  }
+
+  // Build initial 3-taxon tree
+  build_three_taxon_tree(tree, order[0], order[1], order[2]);
+
+  // Track all edge children (every node except root)
+  std::vector<int> edge_children;
+  edge_children.reserve(2 * n_tip - 2);
+  edge_children.push_back(order[0]);
+  edge_children.push_back(order[1]);
+  edge_children.push_back(order[2]);
+  edge_children.push_back(n_tip + 1);  // first internal node below root
+
+  // Insert remaining tips at random edges
+  for (int k = 3; k < n_tip; ++k) {
+    int tip = order[k];
+    int new_internal = n_tip + k - 1;
+
+    int n_edges = static_cast<int>(edge_children.size());
+    int edge_idx = static_cast<int>(ts::thread_safe_unif() * n_edges);
+    if (edge_idx >= n_edges) edge_idx = n_edges - 1;
+    int below = edge_children[edge_idx];
+    int above = tree.parent[below];
+
+    insert_tip_at_edge(tree, tip, new_internal, above, below);
+
+    // New edges: new_internal (child of above) and tip (child of new_internal)
+    edge_children.push_back(new_internal);
+    edge_children.push_back(tip);
+  }
+  ts::rng_state_end();
+
+  tree.build_postorder();
 }
 
 } // namespace ts

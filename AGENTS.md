@@ -798,6 +798,44 @@ Enabled in the `thorough` preset (5 cycles, 0.5 fraction).
 **R API:** `SearchControl(nniPerturbCycles, nniPerturbFraction)`.
 Timings reported as `nni_perturb_ms`.
 
+### Biased Wagner addition (T-188, 2026-03-23)
+
+`biased_wagner_tree()` (`ts_wagner.h/.cpp`) samples the taxon-addition
+order from a softmax distribution weighted by informativeness score rather
+than purely at random. Two criteria available:
+
+- **GOLOBOFF** (bias=1): `score[t]` = number of non-ambiguous characters
+  for taxon t. Ref: Goloboff 2014 (*Extended implied weighting*) §3.3.
+- **ENTROPY** (bias=2): `score[t]` = Σ_c (n_states_c − |state set for t|).
+
+**R API:** `SearchControl(wagnerBias = 0L, wagnerBiasTemp = 0.3)`.
+Applied only to the first of `wagnerStarts` starts; remaining starts
+use random order to preserve basin diversity.
+
+**Benchmark results** (2026-03-23, 14 standard + crico-174):
+- Wagner→TBR gap reduction: ~80% at 174t (random: 1356 steps, Goloboff: 244)
+- Score improvement after TBR convergence: ~22 steps at 174t; 1–2 steps at ≤88t
+- Anomalous slight regression at 75–100t (Giles2015, Zanol2014); T=0.3
+  stochastic is safer than pure greedy (T=0)
+
+### Outer search cycle loop (T-189, 2026-03-23)
+
+`outer_cycles` in `SearchParams` / `outerCycles` in `SearchControl()`.
+Wraps steps 3–6 of `run_single_replicate()` in a configurable outer
+loop: [XSS+RSS+CSS → Ratchet → NNI-perturb → Drift → TBR] × N.
+Ratchet/NNI-perturb/drift cycles are divided evenly among N outer cycles
+(ceiling division, minimum 1 per cycle).
+
+`outerCycles = 1` (default) is bit-for-bit identical to the previous
+linear pipeline. `thorough` preset defaults to `outerCycles = 2`.
+
+**Pattern:** Matches TNT's `xmult` interleaving (Goloboff 1999 §2.3):
+after each ratchet/drift escape, a fresh XSS pass exploits the new
+topology before the next perturbation round.
+
+**Citation tracking:** see `papers.md` in project root for full
+reference list used in optimization work.
+
 ### NNI in the driven pipeline
 
 `nni_search()` in `ts_search.cpp` is implemented but **never called** in the
@@ -862,12 +900,12 @@ is counterproductive at 180 tips (15s vs 7s, worse scores).
 The 180-taxon `mbank_X30754` dataset (425 chars, 374 informative patterns,
 40% missing, 20% inapplicable) exposed:
 
-1. **`maxTime` triggers Morphy delegation.** `maxTime` is a legacy
-   parameter name that activates the backward-compatibility shim, falling
-   through to the R-loop `Morphy()` engine. The correct parameter is
-   `maxSeconds`. Initial testing incorrectly used `maxTime`, producing
-   misleading performance data (Morphy R-loop is ~10× slower than the
-   C++ driven search at 180 tips). T-184 filed.
+1. ~~**`maxTime` triggers Morphy delegation.**~~ **Fixed (T-184)**:
+   `maxTime` is now intercepted before the Morphy shim check and
+   mapped to `maxSeconds` with a deprecation warning. The C++ driven
+   search is used correctly. (Note: initial 180-taxon benchmarking
+   mistakenly used `maxTime`, which in an older version delegated to
+   `Morphy()` — ~10× slower. All results since T-184 use `maxSeconds`.)
 2. **C++ TBR convergence at 180 tips takes ~13s** (Wagner ~2560 → local
    optimum ~1420). NNI warmup (~1.5s) followed by TBR reduces this to
    ~7s while finding better scores. T-178 filed.
@@ -931,8 +969,27 @@ Ranked by priority:
    to 5, ratchet cycles increased from 5 to 10 (default) and kept at
    20 (thorough). Drift cycles increased from 2 to 4 with wider
    acceptance (AFD 5, RFD 0.15). Validated on all 14 datasets.
+8. ~~Biased Wagner addition~~ — **Done** (T-188): `wagnerBias`
+   (0=RANDOM, 1=GOLOBOFF, 2=ENTROPY) + `wagnerBiasTemp` in
+   `SearchControl()`. First Wagner start uses biased addition order;
+   remaining starts use random for basin diversity. Benchmarked on
+   14 standard + crico-174 datasets: 80% Wagner→TBR gap reduction at
+   174t; ~1–2 steps improvement at ≤88t (negligible). Goloboff 2014
+   §3.3.
+9. ~~Outer search cycle loop~~ — **Done** (T-189): `outerCycles` in
+   `SearchControl()`. Wraps [XSS+RSS+CSS → Ratchet → NNI-perturb →
+   Drift → TBR] in configurable outer loop; cycles divided evenly.
+   `thorough` preset defaults to `outerCycles=2`. Matches TNT xmult
+   pattern. Goloboff 1999 §2.3. Needs benchmarking to validate
+   improvement on standard datasets.
 
 ## Benchmarks and profiling
+
+**TNT comparison suite** lives in `../TS-TNT-bench/`. Key files:
+- `inst/benchmarks/bench_tnt_compare.R` — runner (smoke/medium/full)
+- `inst/benchmarks/tnt_comparison.qmd` — Quarto report (HTML output)
+- `inst/benchmarks/.tnt-bench/` — staging dir for TNT I/O
+- Requires TNT 1.6 at `C:/Programs/Phylogeny/tnt/TNT-bin/tnt.exe`
 
 Benchmark scripts in `inst/benchmarks/`. Key files:
 - `bench_regression.R` — CI regression test (score quality + timing bounds)

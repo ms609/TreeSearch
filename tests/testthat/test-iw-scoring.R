@@ -24,3 +24,29 @@ test_that("IW Scoring", {
 
   expect_gt(manualIW, 0)
 })
+
+test_that("concavity = 0 rejected with informative error", {
+  library("TreeTools", quietly = TRUE)
+  data("Lobo", package = "TreeTools")
+  dataset <- Lobo.phy
+  tree <- NJTree(dataset)
+
+  expect_error(TreeLength(tree, dataset, concavity = 0),
+               "`concavity` must be positive")
+  expect_error(TreeLength(tree, dataset, concavity = -5),
+               "`concavity` must be positive")
+  expect_error(TreeLength(list(tree, tree), dataset, concavity = 0),
+               "`concavity` must be positive")
+  expect_error(AdditionTree(dataset, concavity = 0),
+               "`concavity` must be positive")
+  expect_error(AdditionTree(dataset, concavity = -1),
+               "`concavity` must be positive")
+  expect_error(MaximizeParsimony(dataset, tree, concavity = 0,
+                                  maxReplicates = 1L),
+               "`concavity` must be positive")
+  expect_error(MaximizeParsimony(dataset, tree, concavity = -3,
+                                  maxReplicates = 1L),
+               "`concavity` must be positive")
+  expect_error(SuccessiveApproximations(tree, dataset, concavity = 0),
+               "`concavity` must be positive")
+})

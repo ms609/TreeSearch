@@ -103,6 +103,22 @@ struct DrivenParams {
   // Number of random Wagner trees per replicate (keep best-scoring)
   int wagner_starts = 1;
 
+  // Biased taxon-addition order for Wagner tree construction.
+  // 0 = RANDOM (default), 1 = GOLOBOFF (non-ambiguous chars), 2 = ENTROPY.
+  // Applied only to the first Wagner start; remaining starts use random order
+  // to preserve basin diversity.  Goloboff 2014 §3.3.
+  int wagner_bias = 0;
+  double wagner_bias_temp = 0.3;   // softmax temperature; 0 = greedy argmax
+
+  // Outer search cycle count: number of times the [XSS → Ratchet →
+  // NNI-perturb → Drift → TBR] block is repeated per replicate.
+  // Default 1 = current linear pipeline.  Values > 1 interleave fresh
+  // XSS passes after each ratchet/drift escape, matching TNT's xmult
+  // pattern.  Ratchet/drift/NNI-perturb cycles are divided evenly among
+  // outer cycles; total budget is approximately unchanged.
+  // Goloboff 1999 §2.3 (sectorial + ratchet interleaving).
+  int outer_cycles = 1;
+
   // Optional starting tree edge matrix (R format: n_edge × 2, 1-based).
   // When non-empty, replicate 0 uses this topology instead of Wagner.
   // Subsequent replicates still use random Wagner trees.
@@ -169,6 +185,8 @@ struct DrivenResult {
   int replicates_completed;
   int hits_to_best;
   int pool_size;
+  int n_topologies_at_best;      // distinct topologies at best score
+  int last_improved_rep;         // 1-based replicate that last improved score (0 = not tracked)
   bool timed_out;                // true if search ended due to timeout
   bool consensus_stable;         // true if stopped by consensus stability
   PhaseTimings timings;          // cumulative across all replicates

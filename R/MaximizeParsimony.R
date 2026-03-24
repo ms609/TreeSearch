@@ -139,6 +139,7 @@
     fuseInterval = 2L, fuseAcceptEqual = TRUE,
     tabuSize = 200L, wagnerStarts = 3L,
     nniFirst = TRUE, sprFirst = FALSE,
+    outerCycles = 2L,
     consensusStableReps = 3L
   )
 )
@@ -341,6 +342,10 @@
 #'     \item{`replicates`}{Number of replicates completed.}
 #'     \item{`hits_to_best`}{Number of independent discoveries of the best
 #'       score.}
+#'     \item{`n_topologies`}{Number of distinct topologies in the pool at the
+#'       best score.}
+#'     \item{`last_improved_rep`}{1-based index of the replicate that last
+#'       improved the best score (0 if not tracked, e.g. parallel search).}
 #'     \item{`timed_out`}{Logical: `TRUE` if the search stopped because
 #'       `maxSeconds` was exceeded.}
 #'     \item{`consensus_stable`}{Logical: `TRUE` if the search stopped
@@ -791,7 +796,16 @@ MaximizeParsimony <- function(
       else ctrl$nniPerturbCycles),
     nniPerturbFraction = as.double(
       if (is.null(ctrl$nniPerturbFraction)) 0.5
-      else ctrl$nniPerturbFraction)
+      else ctrl$nniPerturbFraction),
+    wagnerBias = as.integer(
+      if (is.null(ctrl$wagnerBias)) 0L
+      else ctrl$wagnerBias),
+    wagnerBiasTemp = as.double(
+      if (is.null(ctrl$wagnerBiasTemp)) 0.3
+      else ctrl$wagnerBiasTemp),
+    outerCycles = as.integer(
+      if (is.null(ctrl$outerCycles)) 1L
+      else ctrl$outerCycles)
   )
   result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
                                         hsjArgs, xformArgs))
@@ -827,6 +841,8 @@ MaximizeParsimony <- function(
     score = result$best_score,
     replicates = result$replicates,
     hits_to_best = result$hits_to_best,
+    n_topologies = result$n_topologies,
+    last_improved_rep = result$last_improved_rep,
     timed_out = isTRUE(result$timed_out),
     consensus_stable = isTRUE(result$consensus_stable),
     timings = unlist(result$timings),

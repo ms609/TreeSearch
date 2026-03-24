@@ -178,6 +178,8 @@ DrivenResult parallel_driven_search(
   result.replicates_completed = 0;
   result.hits_to_best = 0;
   result.pool_size = 0;
+  result.n_topologies_at_best = 0;
+  result.last_improved_rep = 0;  // not tracked in parallel (replicates out of order)
   result.timed_out = false;
   result.consensus_stable = false;
 
@@ -370,6 +372,7 @@ DrivenResult parallel_driven_search(
   // result.replicates_completed and result.hits_to_best already set
   // before MPT enumeration (above).
   result.pool_size = pool_out.size();
+  result.n_topologies_at_best = pool_out.count_at_best();
   if (pool_out.size() > 0) {
     result.best_score = pool_out.best_score();
   } else {
