@@ -322,6 +322,23 @@ Both should be clean before committing. These are fast and catch issues
 References are added using Rdpack's \insertCite{}, with
 \insertAllCited{} in the references section.
 
+## Algorithm vignette (mandatory updates)
+
+`vignettes/search-algorithm.Rmd` documents the search algorithm for
+publication. **Any change that modifies search behaviour** — new heuristics,
+parameter tuning, scoring methods, stopping criteria, pool management, or
+rearrangement operators — **must be accompanied by an update to this
+vignette.**
+
+- Published techniques: add a short summary and `@Key` citation.
+- Novel contributions: describe the algorithm in enough detail for a reader
+  to understand the design and rationale. Include empirical results where
+  available (e.g. benchmark deltas).
+- New references: add `@article{Key, ...}` to `inst/REFERENCES.bib`.
+
+The vignette uses pandoc-style `@Key` citations (same as the other
+vignettes), not Rdpack `\insertCite{}`.
+
 ## Architecture reference
 
 ### R-level API
@@ -365,10 +382,12 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 |--------|-----------|-------------|
 | sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first, consensus-stop 3 |
 | default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 2 drift (AFD 5, RFD 0.15), XSS+RSS, consensus-stop 3, Wagner×3, NNI-first, adaptive level |
-| thorough | ≥65 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 12 drift (AFD 5, RFD 0.15), XSS+RSS+CSS, consensus-stop 3, Wagner×3, NNI-first |
+| thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 12 drift (AFD 5, RFD 0.15), XSS+RSS+CSS, consensus-stop 3, Wagner×3, NNI-first, outerCycles=2 |
+| large | ≥120 tips with ≥100 char patterns | Same as thorough + wagnerBias=1 (Goloboff 2014), sectorMaxSize=100, consensus-stop 2 |
 
-All presets set `consensusStableReps = 3`: search stops early if the strict
-consensus of best-score pool trees is unchanged for 3 consecutive replicates.
+`sprint`/`default`/`thorough` set `consensusStableReps = 3`; `large` sets
+`consensusStableReps = 2` (faster convergence detection since replicates at
+120+ tips take 30–90s each).
 
 All presets set `nniFirst = TRUE` (NNI warmup before TBR) and
 `sprFirst = FALSE` (SPR is counterproductive when NNI is active —
@@ -984,6 +1003,33 @@ Ranked by priority:
    improvement on standard datasets.
 
 ## Benchmarks and profiling
+
+### MorphoBank external benchmark corpus
+
+The neotrans repo (`../neotrans/inst/matrices/`) contains ~800 MorphoBank
+NEXUS matrices. These complement the 14 bundled datasets and 1 large-tree
+dataset for broader strategy validation.
+
+**Catalogue:** `inst/benchmarks/mbank_catalogue.csv` (683 usable matrices
+after ntax≥20 filter). Regenerate with `Rscript inst/benchmarks/build_mbank_catalogue.R`.
+
+**Train/validation split:** Matrices whose MorphoBank project number is
+divisible by 5 are **validation** (129 matrices, ~19%). All others are
+**training** (554 matrices). The 7 `syab*` files (non-MorphoBank, from a
+Systematic Biology paper) are always training.
+
+**IMPORTANT:** Validation results must **never** be used to guide strategy
+tuning. They confirm generalization only. This is a one-way door.
+
+**Key functions** (in `inst/benchmarks/bench_datasets.R`):
+- `load_mbank_catalogue()` — loads the metadata CSV
+- `load_mbank_sample(cat, n, seed, split)` — stratified sample
+- `load_mbank_datasets(cat, keys)` — load specific matrices by key
+
+**Benchmark runners** (in `inst/benchmarks/bench_framework.R`):
+- `benchmark_mbank_sample()` — routine ~25 training matrices
+- `benchmark_mbank_sweep(split)` — full training or validation sweep
+- `benchmark_mbank_validation()` — validation sweep with prominent warning
 
 **TNT comparison suite** lives in `../TS-TNT-bench/`. Key files:
 - `inst/benchmarks/bench_tnt_compare.R` — runner (smoke/medium/full)

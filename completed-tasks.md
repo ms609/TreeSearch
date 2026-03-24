@@ -4,10 +4,20 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ---
 
+## 2026-03-24
+
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| T-179 | Large-tree strategy preset (>=120 tips) | G | Added `large` preset to `.StrategyPresets()` and `.AutoStrategy()`: thorough-level intensity + wagnerBias=1, sectorMaxSize=100, consensusStableReps=2. Benchmarked outerCycles=2 vs 1 on 14 datasets (3 improved, 9 unchanged, 2 noise). 180t validation: matches thorough quality. Serves as auto-selected hook for future large-tree optimizations. Commit `8747f647`. |
+| T-191 | MorphoBank matrix catalogue | B | Scanned 801 .nex files from neotrans/inst/matrices/. 797 parsed OK (4 failures). 683 usable after ntax≥20 filter: 554 training, 129 validation (project%5==0). Includes multi-matrix projects and 7 syab files. Output: `inst/benchmarks/mbank_catalogue.csv`. Script: `inst/benchmarks/build_mbank_catalogue.R`. |
+| T-192 | External dataset loading functions | B | Added to bench_datasets.R: `load_mbank_catalogue()`, `load_mbank_datasets()`, `load_mbank_sample()` (stratified by tier), `load_mbank_split()`. Path auto-resolved to `neotrans/inst/matrices/`. |
+| T-193 | MorphoBank benchmark runner integration | B | Added to bench_framework.R: `benchmark_mbank_sample()` (routine ~25 matrix training sample), `benchmark_mbank_sweep()` (full split), `benchmark_mbank_validation()` (one-way-door validation with warning). All results tagged with `source` column. End-to-end tested: 4 matrices x default x 5s. |
+
 ## 2026-03-23
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-177 | Bug fix: mid-TBR/SPR timeout callback | G | Verified `check_timeout` callback threaded through `tbr_search`, `spr_search`, and `nni_search` — all poll periodically (every `n_tip` clips) and bail mid-pass. Driven pipeline, ratchet, drift, NNI-perturb all pass callback. 282 targeted tests pass (0 fail). Closing as complete. |
 | — | Ratchet perturbation tuning: 4%→25%, moves 20→5, cycles 5→10 | Human+AI | Systematic sweep across 14 datasets. 9 improved, 4 unchanged, 1 marginal at 10s (resolves at 20s). Commit `f1ae7edb`. |
 | — | Drift→ratchet reallocation: driftCycles 4→2, ratchetCycles 10→12 | Human+AI | Drift ~0 per-replicate improvement; ratchet is strictly better use of budget. Commit `7ae01181`. |
 | — | Large-tree profiling: 180-taxon dataset analysis | Human+AI | Discovered NNI essential at >100 tips, timeout bug in TBR, strategy presets not calibrated for large trees. Filed T-177 through T-183. |
