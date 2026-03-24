@@ -2493,13 +2493,28 @@ List ts_anneal_diag(
     int n_phases = 10,
     int moves_per_phase = 0,
     bool tbr_polish = true,
-    bool tbr_first = false)
+    bool tbr_first = false,
+    int sa_cycles = 1,
+    Nullable<IntegerMatrix> startEdge = R_NilValue)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
 
   ts::TreeState tree;
-  ts::random_wagner_tree(tree, ds);
+  if (startEdge.isNotNull()) {
+    IntegerMatrix se(startEdge.get());
+    int n_edge = se.nrow();
+    const int* parent = INTEGER(se);
+    // R matrices are column-major: col 0 = rows 0..n-1, col 1 = rows n..2n-1
+    std::vector<int> par(n_edge), chi(n_edge);
+    for (int i = 0; i < n_edge; ++i) {
+      par[i] = se(i, 0);
+      chi[i] = se(i, 1);
+    }
+    tree.init_from_edge(par.data(), chi.data(), n_edge, ds);
+  } else {
+    ts::random_wagner_tree(tree, ds);
+  }
   double initial_score = ts::score_tree(tree, ds);
 
   // Optional: TBR to convergence before SA (post-convergence SA)
@@ -2517,48 +2532,70 @@ List ts_anneal_diag(
     pre_tbr_score = tr.best_score;
   }
 
-  // SA phase
+  // SA + TBR polish cycles with best-tree restart
   ts::AnnealParams ap;
   ap.t_start = t_start;
   ap.t_end = t_end;
   ap.n_phases = n_phases;
   ap.moves_per_phase = moves_per_phase;
 
-  auto sa_t0 = std::chrono::steady_clock::now();
-  ts::AnnealResult ar = ts::anneal_search(tree, ds, ap);
-  auto sa_t1 = std::chrono::steady_clock::now();
-  double sa_ms = std::chrono::duration<double, std::milli>(sa_t1 - sa_t0).count();
+  double sa_ms = 0.0, tbr_ms = 0.0;
+  double best_score = ts::score_tree(tree, ds);
+  ts::TreeState best_tree = tree;  // save best tree state
+  int total_accepted = 0, total_improved = 0, total_attempted = 0;
 
-  double post_sa_score = ar.final_score;
+  int nc = std::max(1, sa_cycles);
+  for (int cyc = 0; cyc < nc; ++cyc) {
+    // Each cycle starts from the best tree found so far
+    if (cyc > 0) {
+      tree = best_tree;
+    }
 
-  // TBR polish
-  double post_tbr_score = post_sa_score;
-  double tbr_ms = 0.0;
-  if (tbr_polish) {
-    ts::TBRParams tp;
-    tp.accept_equal = false;
-    tp.max_accepted_changes = 0;
-    tp.max_hits = 1;
-    auto tbr_t0 = std::chrono::steady_clock::now();
-    ts::TBRResult tr = ts::tbr_search(tree, ds, tp);
-    auto tbr_t1 = std::chrono::steady_clock::now();
-    tbr_ms = std::chrono::duration<double, std::milli>(tbr_t1 - tbr_t0).count();
-    post_tbr_score = tr.best_score;
+    auto sa_t0 = std::chrono::steady_clock::now();
+    ts::AnnealResult ar = ts::anneal_search(tree, ds, ap);
+    auto sa_t1 = std::chrono::steady_clock::now();
+    sa_ms += std::chrono::duration<double, std::milli>(sa_t1 - sa_t0).count();
+    total_accepted += ar.total_accepted;
+    total_improved += ar.total_improved;
+    total_attempted += ar.total_attempted;
+
+    if (tbr_polish) {
+      ts::TBRParams tp;
+      tp.accept_equal = false;
+      tp.max_accepted_changes = 0;
+      tp.max_hits = 1;
+      auto tbr_t0 = std::chrono::steady_clock::now();
+      ts::TBRResult tr = ts::tbr_search(tree, ds, tp);
+      auto tbr_t1 = std::chrono::steady_clock::now();
+      tbr_ms += std::chrono::duration<double, std::milli>(tbr_t1 - tbr_t0).count();
+    }
+
+    double cyc_score = ts::score_tree(tree, ds);
+    if (cyc_score < best_score - 1e-10) {
+      best_score = cyc_score;
+      best_tree = tree;
+    }
+
+    if (ts::check_interrupt()) break;
   }
+
+  // Restore best tree
+  tree = best_tree;
+  double post_tbr_score = best_score;
 
   return List::create(
       Named("initial_score") = initial_score,
       Named("pre_tbr_score") = pre_tbr_score,
       Named("pre_tbr_ms") = pre_tbr_ms,
-      Named("sa_best") = ar.best_score,
-      Named("post_sa") = post_sa_score,
+      Named("best_score") = best_score,
       Named("post_tbr") = post_tbr_score,
-      Named("total_accepted") = ar.total_accepted,
-      Named("total_improved") = ar.total_improved,
-      Named("total_attempted") = ar.total_attempted,
+      Named("total_accepted") = total_accepted,
+      Named("total_improved") = total_improved,
+      Named("total_attempted") = total_attempted,
       Named("sa_ms") = sa_ms,
       Named("tbr_ms") = tbr_ms,
       Named("total_ms") = pre_tbr_ms + sa_ms + tbr_ms,
+      Named("sa_cycles") = nc,
       Named("edge") = tree_to_edge(tree));
 }
 
