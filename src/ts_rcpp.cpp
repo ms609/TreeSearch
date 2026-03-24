@@ -1420,6 +1420,21 @@ List ts_driven_search(
     Named("fuse_ms")      = result.timings.fuse_ms
   );
 
+  // Per-strategy diagnostics (T-190)
+  List strategy_diag = R_NilValue;
+  if (params.adaptive_start || nThreads > 1) {
+    CharacterVector sn(ts::N_STRAT);
+    IntegerVector sa(ts::N_STRAT), ss(ts::N_STRAT);
+    for (int i = 0; i < ts::N_STRAT; ++i) {
+      sn[i] = ts::strategy_name(static_cast<ts::StartStrategy>(i));
+      sa[i] = result.strategy_attempts[i];
+      ss[i] = result.strategy_successes[i];
+    }
+    sa.names() = sn;
+    ss.names() = sn;
+    strategy_diag = List::create(Named("attempts") = sa, Named("successes") = ss);
+  }
+
   if (result.pool_size == 0) {
     return List::create(
       Named("trees") = List::create(),
@@ -1432,7 +1447,8 @@ List ts_driven_search(
       Named("last_improved_rep") = result.last_improved_rep,
       Named("timed_out") = result.timed_out,
       Named("consensus_stable") = result.consensus_stable,
-      Named("timings") = timings
+      Named("timings") = timings,
+      Named("strategy_diagnostics") = strategy_diag
     );
   }
 
@@ -1456,7 +1472,8 @@ List ts_driven_search(
     Named("last_improved_rep") = result.last_improved_rep,
     Named("timed_out") = result.timed_out,
     Named("consensus_stable") = result.consensus_stable,
-    Named("timings") = timings
+    Named("timings") = timings,
+    Named("strategy_diagnostics") = strategy_diag
   );
 }
 

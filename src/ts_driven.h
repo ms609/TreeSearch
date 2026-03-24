@@ -200,6 +200,10 @@ struct DrivenResult {
   bool timed_out;                // true if search ended due to timeout
   bool consensus_stable;         // true if stopped by consensus stability
   PhaseTimings timings;          // cumulative across all replicates
+
+  // Per-strategy diagnostics (populated when adaptive_start is true)
+  std::array<int, N_STRAT> strategy_attempts{};
+  std::array<int, N_STRAT> strategy_successes{};
 };
 
 // Result of a single replicate (tree + score, no pool interaction).

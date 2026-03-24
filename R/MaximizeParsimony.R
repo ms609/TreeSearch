@@ -836,6 +836,7 @@ MaximizeParsimony <- function(
     timed_out = isTRUE(result$timed_out),
     consensus_stable = isTRUE(result$consensus_stable),
     timings = unlist(result$timings),
+    strategy_diagnostics = result$strategy_diagnostics,
     class = "multiPhylo"
   )
 }
