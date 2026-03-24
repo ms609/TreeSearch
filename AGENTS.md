@@ -164,6 +164,56 @@ main              ← stable, taggable; receives only reviewed bug fixes
 - **`feature/*`**: branch from `cpp-search`; contain **code changes only**.
   Each feature branch is owned by a single agent at a time.
 
+### Worktree discipline
+
+Each worktree directory is **locked to its branch**. The mapping may change
+over time (e.g. when a feature merges and the worktree is reassigned), but
+**only the human updates this mapping**.
+
+**Hard rules:**
+
+1. **Never `git checkout <branch>` on any worktree.** This silently replaces
+   another agent's (or the human's) working tree and can cause data loss.
+2. **Never `git merge` into a worktree's branch** unless that is the explicit
+   task you were assigned (e.g. "pull cpp-search into feature/X").
+3. To read files from another branch, use `git show <branch>:<path>`.
+
+**Current worktree mapping** (run `git worktree list` to verify):
+
+| Directory | Branch | Purpose |
+|-----------|--------|---------|
+| `TreeSearch-a` | *(see `git worktree list`)* | Main source dir |
+| `TS-CID-cons` | `feature/cid-consensus` | CID consensus feature |
+| `TS-MadSlat` | `feature/madslatkin-profiling` | Mad-Slatkin profiling |
+| `TS-ParsSim` | `feature/parssim-ambiguous` | Parsimony simulation |
+| `TS-TNT-bench` | `feature/tnt-bench` | TNT benchmarking |
+| `TS-Xpiwe` | `feature/xpiwe` | Extended implied weighting |
+
+There is **no permanent worktree for `cpp-search`**. To commit to
+`cpp-search`, use one of these approaches (in order of preference):
+
+**Option A — temporary worktree (safest):**
+```bash
+git worktree add ../TS-tmp-<Letter> cpp-search
+# work in ../TS-tmp-<Letter>, commit, push
+git worktree remove ../TS-tmp-<Letter>
+```
+
+**Option B — single-file coordination commit (from a feature worktree):**
+```bash
+git show cpp-search:agent-X.md > agent-X.md   # read current version
+# edit the file
+git stash                                      # stash any code changes
+git checkout cpp-search -- agent-X.md          # stage from cpp-search
+cp agent-X.md.edited agent-X.md               # apply your edit
+git add agent-X.md && git commit -m "chore: agent X progress note"
+git push origin cpp-search
+git checkout HEAD -- agent-X.md                # restore feature version
+git stash pop                                  # restore code work
+```
+
+**Never use Option B for multi-file edits.** Use a temporary worktree.
+
 ### Coordination files live on `cpp-search` only
 
 `to-do.md`, `issues.md`, `agent-X.md`, `completed-tasks.md`, `coordination.md`,
@@ -176,16 +226,6 @@ To read coordination files while on a feature branch without switching:
 ```bash
 git show cpp-search:to-do.md
 git show cpp-search:agent-X.md
-```
-
-To update a coordination file from a feature branch:
-```bash
-git checkout cpp-search -- agent-X.md   # pull latest into working tree
-# edit, then:
-git stash                               # stash any code changes first
-git add agent-X.md && git commit -m "chore: agent X progress note"
-git push origin cpp-search
-git stash pop                           # restore code work
 ```
 
 ### Shared files at merge time
