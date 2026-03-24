@@ -69,7 +69,6 @@
 
 
 
-
 ### T-190 Cold-Start Brief: Adaptive Starting-Tree Strategy Mixing
 
 **Problem.** The current driven search uses a fixed starting-tree strategy
@@ -163,6 +162,12 @@ Pool-based arms excluded when pool is empty (zero-armed at rep 0).
 - Pool-based strategies early in search: pool has only 1 mediocre tree.
   Mitigation: pool-based arms auto-excluded until pool has ≥2 best-score trees.
 - Parallel adaptation: not attempted; round-robin is sufficient.
+
+### Infrastructure
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-195 | P3 | OPEN | — | **GHA benchmark workflow.** Create `agent-benchmark.yml` for performance regression testing on GHA. Adapt `bench_regression.R` to accept CLI args (`--datasets`, `--budget`). Upload results as artifacts. | See `.positai/plans/2026-03-24-0625-remote-compute-integration-for-multi-agent-workflows.md` §1b. |
 
 ### Standing Tasks
 
