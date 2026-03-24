@@ -39,23 +39,25 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-198–201 | P2 | PR #215 (C) | — | **PT core + pipeline integration.** Boltzmann PT disabled by default. | On `feature/parallel-temper`. |
-| T-207 | P2 | ASSIGNED (C) | — | **SA perturbation phase in `run_single_replicate()`.** Add multi-cycle PCSA (SA+TBR with best-tree restart) after drift, before final TBR. EW ≥100 tips. GHA-test. | On `feature/pt-eval` (TS-PTeval). |
+| T-207 | P2 | PR #222 (C) | — | **SA perturbation phase in `run_single_replicate()`.** Multi-cycle PCSA integrated. | On `feature/pt-eval` (TS-PTeval). Includes T-210 fix. GHA 23509475416 PASS. |
 
 ### Bugs
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-196 | P2 | PR #215 (M) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); arrives with PT PR #215. |
-| T-208 | P2 | PR #219 (G) | — | **[Bug] `random_topology_tree` ignores constraints.** When `adaptiveStart=true` (thorough preset) AND constraints active, bandit can select RANDOM_TREE → starting tree violates constraint → TBR blocks all constraint-relevant moves (`cn=-1`). Could return constraint-violating trees. | Found by S-RED focus 11. Fix: fall back to WAGNER_RANDOM when `strategy == RANDOM_TREE && cd && cd->active` in `run_single_replicate()` (ts_driven.cpp:111). |
-| T-209 | P2 | PR #220 (E) | — | **[Bug] NNI perturbation ignores constraints.** `random_nni_perturb()` applies NNI swaps without checking constraints → cn=-1 → TBR blocked. Same mechanism as T-208. | Found by S-RED focus 2. Fix: gate on `(!cd \|\| !cd->active)` at ts_driven.cpp:310. On `feature/nni-constraint-guard`. GHA PASS. |
+| T-208 | P2 | PR #219 (G) | — | **[Bug] `random_topology_tree` ignores constraints.** When `adaptiveStart=true` AND constraints active, bandit selects RANDOM_TREE → constraint violation. | PR #219 open (WAGNER_RANDOM fallback). |
+
+| T-210 | P2 | PR #222 (C) | — | **[Bug] SA doesn't save best-found topology.** Fix: `anneal_search` tracks/restores best tree at phase boundaries. | On `feature/pt-eval` (TS-PTeval). In T-207 PR #222. |
+| T-211 | P2 | OPEN | — | **[Bug] Stale `final_` in temper candidate scoring.** Same stale-score pattern as SPR: cached score not refreshed after topology changes, biasing candidate selection. | |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-179 | P2 | PR #215 (M) | — | **Large-tree strategy preset.** For ≥120 tips. | On `feature/parallel-temper`. Commit `fab1e52c`. Arrives with PT PR #215. |
-| T-206 | P3 | PR #218 (E+A) | — | **Outer cycle reset cap / minimum-Δ gate.** `outerCycles=1` repeats until no improvement; late cycles yield <1 step/s. Add reset cap or minimum-Δ threshold. Also fix misleading comment at `ts_driven.cpp:180`. | On `feature/outer-cap-t206`. GHA 23504901997 PASS. PR #218 created. |
-| T-182 | P3 | ASSIGNED (G) | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | On `feature/adaptive-ratchet`. |
+
+| T-182 | P3 | PR #221 (G) | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | On `feature/adaptive-ratchet`. GHA 23508899686 PASS. |
 | T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
 | T-187 | P3 | OPEN | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
 
@@ -64,8 +66,8 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by E (focus 2: search topology invariants, T-209 filed). |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by C (focus 3: ratchet & perturbation, SA n_phases=1 fix). |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-24 by A (round 11: cleanup T-190/T-177/T-202, pipeline refresh). |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-24 by C (round 12: merge wave cleanup, PR backlog noted, pipeline thinning). |
 
 
