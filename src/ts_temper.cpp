@@ -641,7 +641,8 @@ AnnealResult anneal_search(
   result.best_score = score;
 
   for (int phase = 0; phase < np; ++phase) {
-    double frac = (np == 1) ? 1.0
+    // Single phase: run at t_start (hot perturbation, not t_end cold)
+    double frac = (np == 1) ? 0.0
                   : static_cast<double>(phase) / (np - 1);
     double temp = params.t_start + (params.t_end - params.t_start) * frac;
 
