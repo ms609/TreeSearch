@@ -1,19 +1,18 @@
 # Agent D Progress Log
 
 ## Current Task
-**Task:** T-241 — Show cluster assignment next to tree selector
-**Status:** IN PROGRESS
-**Started:** 2026-03-25
+**Status:** IDLE
+**Last completed:** 2026-03-25
 
 ### Pending GHA results
-- T-232: GHA 23543699366 (in_progress, ubuntu-arm64)
-- T-240: GHA 23544604214 (queued)
+- T-232: GHA 23543699366
+- T-240: GHA 23544604214
+- T-241: GHA 23545261957
+- T-239: GHA 23545538742
+- T-187: GHA 23546574279 (PR #226)
 
-### Previous session summary
-- Triaged 8 Shiny bug reports (a.001, a.011–a.014, a.07, a.17, a.19)
-- T-232 (P2): Fixed keepNTips bounce — PARKED on GHA
-- T-234 (P2): Context-dependent references — DONE
-- T-240 (P2): Pool suboptimal filter — PARKED on GHA
-- S-COORD round 19 — DONE
-- S-RED focus 3 (Ratchet & perturbation) — DONE, no bugs found
-- S-PR — DONE, all GHA queued, no actionable items
+### This session
+- T-241 (P3): Show cluster ID next to tree selector — committed, PARKED
+- T-239 (P3): Cluster consensus edge highlighting — committed, PARKED
+- T-187 (P3): Perturbation-count stopping rule — PR #226 open
+EOF 2>&1
