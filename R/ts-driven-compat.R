@@ -1,9 +1,9 @@
 # Backward-compatible wrapper for ts_driven_search.
 #
 # Accepts the old flat-argument calling convention used by tests and
-# packs them into the grouped lists expected by .ts_driven_search_raw().
+# packs them into the grouped lists expected by ts_driven_search().
 # Production code (MaximizeParsimony, .ResampleHierarchy) calls
-# .ts_driven_search_raw() directly with pre-built grouped lists.
+# ts_driven_search() directly with pre-built grouped lists.
 ts_driven_search <- function(
     contrast,
     tip_data,
@@ -81,7 +81,7 @@ ts_driven_search <- function(
 {
   # New-style call: grouped lists already provided
   if (!is.null(searchControl)) {
-    return(.ts_driven_search_raw(
+    return(.Call(`_TreeSearch_ts_driven_search`,
       contrast, tip_data, weight, levels,
       searchControl, runtimeConfig, scoringConfig,
       constraintConfig, hsjConfig, xformConfig
@@ -185,7 +185,7 @@ ts_driven_search <- function(
     xc <- list(xformChars = xformChars)
   }
 
-  .ts_driven_search_raw(
+  .Call(`_TreeSearch_ts_driven_search`,
     contrast, tip_data, weight, levels,
     sc, rt, scoring, cc, hc, xc
   )

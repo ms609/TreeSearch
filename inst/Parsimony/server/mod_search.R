@@ -143,7 +143,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     # Dynamic help text for hierarchy detection (shown inside config modal)
     output$hierarchyInfo <- renderUI({
       inp <- input$inapplicable
-      if (is.null(inp) || identical(inp, "brazeau")) return(NULL)
+      if (is.null(inp) || identical(inp, "bgs")) return(NULL)
       chars <- r$chars
       if (is.null(chars) || length(chars) == 0L) {
         return(helpText(
@@ -598,7 +598,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
             )
           }
           # Inapplicable handling (non-Brazeau requires hierarchy)
-          if (!is.null(hierarchy) && !identical(inapplicable, "brazeau")) {
+          if (!is.null(hierarchy) && !identical(inapplicable, "bgs")) {
             args$hierarchy    <- hierarchy
             args$inapplicable <- inapplicable
             if (identical(inapplicable, "hsj")) {
@@ -652,9 +652,9 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       searchNThreads <- if (length(input$nThreads)) as.integer(input$nThreads) else 1L
 
       # Inapplicable handling
-      searchInapplicable <- if (length(input$inapplicable)) input$inapplicable else "brazeau"
+      searchInapplicable <- if (length(input$inapplicable)) input$inapplicable else "bgs"
       searchHsjAlpha     <- if (length(input$hsjAlpha)) as.double(input$hsjAlpha) else 1.0
-      searchHierarchy <- if (!identical(searchInapplicable, "brazeau") &&
+      searchHierarchy <- if (!identical(searchInapplicable, "bgs") &&
                              !is.null(r$chars) && length(r$chars) > 0L) {
         tryCatch(
           withCallingHandlers(
@@ -668,7 +668,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       }
 
       # Non-Brazeau methods require a detected hierarchy; abort early
-      if (!identical(searchInapplicable, "brazeau") && is.null(searchHierarchy)) {
+      if (!identical(searchInapplicable, "bgs") && is.null(searchHierarchy)) {
         methodLabel <- switch(searchInapplicable,
                               hsj   = "Hopkins & St. John (HSJ)",
                               xform = "X-transformation (Goloboff)",
@@ -753,6 +753,10 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       LogMsg("StartSearch()")
       PutData(r$dataset[SearchTips()])
       PutTree(startTree)
+      # Snapshot reactive values for the async task
+      searchDataset <- r$dataset[SearchTips()]
+      searchConcavity <- concavity()
+      searchExtendedIw <- extendedIw()
       LogComment("Search for optimal trees", 1)
       LogCode(c(
         "newTrees <- MaximizeParsimony(",
@@ -776,17 +780,13 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           paste0("  control = SearchControl(poolSuboptimal = ", searchPoolSub, "),"),
         if (searchNThreads > 1L)
           paste0("  nThreads = ", searchNThreads, "L,"),
-        if (!identical(searchInapplicable, "brazeau") && !is.null(searchHierarchy))
+        if (!identical(searchInapplicable, "bgs") && !is.null(searchHierarchy))
           paste0("  inapplicable = \"", searchInapplicable, "\","),
         if (identical(searchInapplicable, "hsj") && !is.null(searchHierarchy) &&
             searchHsjAlpha != 1.0)
           paste0("  hsj_alpha = ", searchHsjAlpha, ","),
         "  verbosity = 0",
         ")"))
-      # Snapshot reactive values for the async task
-      searchDataset <- r$dataset[SearchTips()]
-      searchConcavity <- concavity()
-      searchExtendedIw <- extendedIw()
 
       searchTask$invoke(
         searchDataset, startTree, searchConcavity, searchExtendedIw,
@@ -879,7 +879,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         updateSliderInput(session, "nThreads", value = input$nThreads)
       }
       # Sync inapplicable selector and show/hide hsjAlpha accordingly
-      inapplicable_cur <- if (length(input$inapplicable)) input$inapplicable else "brazeau"
+      inapplicable_cur <- if (length(input$inapplicable)) input$inapplicable else "bgs"
       updateSelectInput(session, "inapplicable", selected = inapplicable_cur)
       updateNumericInput(session, "hsjAlpha",
                          value = if (length(input$hsjAlpha)) input$hsjAlpha else 1.0)
@@ -887,7 +887,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       # Initialise all modal inputs from current values so that opening the
       # modal does not fire observeEvent(input$concavity) or
       # observeEvent(input$implied.weights), which reset the run counters.
-      cur_weights   <- if (length(input$implied.weights)) input$implied.weights else "on"
+      cur_weights   <- if (length(input$implied.weights)) input$implied.weights else "xpiwe"
       cur_concavity <- if (length(input$concavity))       input$concavity       else 1L
       cur_strategy  <- if (length(input$strategy))        input$strategy        else "auto"
       cur_maxRep    <- if (length(input$maxReplicates))   input$maxReplicates   else 100L
@@ -905,7 +905,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           sliderInput(ns("concavity"), "Concavity constant", min = 0L,
                      max = 3L, pre = "10^", value = cur_concavity),
           selectInput(ns("inapplicable"), "Inapplicable characters",
-                      list("Brazeau et al. (default)" = "brazeau",
+                      list("Brazeau et al. (default)" = "bgs",
                            "Hopkins & St. John (HSJ)"  = "hsj",
                            "X-transformation (Goloboff)" = "xform"),
                       inapplicable_cur),

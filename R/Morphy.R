@@ -1038,7 +1038,7 @@ Morphy <- function(dataset, tree,
     hsjCfg <- if (length(repHsj) > 0L) repHsj
     xformCfg <- if (length(repXform) > 0L) repXform
 
-    result <- .ts_driven_search_raw(
+    result <- ts_driven_search(
       contrast, tip_data,
       as.integer(resamp$non_hierarchy_weights), levels,
       resampleControl, resampleRuntime, resampleScoring,

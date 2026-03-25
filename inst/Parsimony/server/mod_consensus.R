@@ -360,7 +360,7 @@ consensus_server <- function(id, r,
     LabelConcordance <- \() {
       LogMsg("LabelConcordance()")
       if (input$concordance != "none" &&
-          !is.null(r$plottedTree)) {
+          inherits(r$plottedTree, "phylo")) {
         LabelSplits(r$plottedTree, signif(concordance(), 3),
                     col = SupportColor(concordance()),
                     frame = "none", pos = 3L)
@@ -609,7 +609,10 @@ consensus_server <- function(id, r,
             tip.color = roguishness,
             Display = function(tr) {
               tr <- UserRoot(tr)
-              if (unitEdge()) {
+              if ("tipsRight" %in% input$mapDisplay) {
+                # Cladogram: tips aligned to the right
+                tr$edge.length <- NULL
+              } else {
                 tr$edge.length <- rep.int(1, dim(tr$edge)[[1]])
               }
               SortEdges(tr)

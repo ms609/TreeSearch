@@ -78,7 +78,10 @@ DataSet build_dataset(
     const auto& sp = simpl.patterns[p];
     patterns[p].pattern_idx = p;
     patterns[p].weight = weight_r[p];
-    patterns[p].has_inapp = false;
+    // Use the simplification-phase flag: only genuine "-" tokens trigger
+    // inapplicable scoring (BGS three-pass). Characters where the inapp
+    // bit only appeared in "?" (full missing data) use standard Fitch.
+    patterns[p].has_inapp = sp.has_genuine_inapp;
 
     // Skip uninformative patterns (they're fully accounted for by ew_offset)
     if (!sp.informative) {
@@ -90,9 +93,6 @@ DataSet build_dataset(
     uint32_t all_states = 0;
     for (int tip = 0; tip < n_tips; ++tip) {
       all_states |= sp.tip_tokens[tip];
-      if (inapp_state >= 0 && (sp.tip_tokens[tip] & (1u << inapp_state))) {
-        patterns[p].has_inapp = true;
-      }
     }
     int n_app = 0;
     for (int s = 0; s < n_states; ++s) {

@@ -1,6 +1,5 @@
 # TreeSearch Task Queue
 
-
 ## How this works
 
 - Tasks are sorted by priority (highest first within each status group).
@@ -47,14 +46,13 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 |----|-----|--------|--------|-------------|-------|
 | T-196 | P2 | PR #215 (M) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); arrives with PT PR #215. |
 | T-210 | P2 | PR #222 (C) | — | **[Bug] SA doesn't save best-found topology.** Fix: `anneal_search` tracks/restores best tree at phase boundaries. | On `feature/pt-eval` (TS-PTeval). In T-207 PR #222. |
-| T-214 | P2 | OPEN | — | **[Bug] Multi-split constraints not enforced during TBR search.** Single-split constraints work; two or more splits → second split violated on 10-tip trees. Both default and RANDOM_TREE strategies affected. | Found by C during T-212. T-213's impose_constraint() may address this post-hoc. |
+| T-214 | P2 | PARKED (C, GHA 23540183235) | — | **[Bug] Multi-split constraints not enforced during TBR search.** Fix: RANDOM_TREE falls back to Wagner when constrained; fuse uses direct map_constraint_nodes check with verified repair. | 26/26 + 806/806 constraint tests pass locally. |
 
 ### Testing & Constraint Handling
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-213 | P2 | OPEN | — | **Implement `impose_constraint()` for post-hoc topology repair.** Enables NNI perturbation + fuse under constraints. | Branch+worktree lost. Implementation notes in agent-a.md. |
-| T-212 | P2 | PARKED (A, GHA 23528636505) | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests committed to cpp-search by C. GHA re-dispatched after heredoc fix. | Tests already on cpp-search. |
+| T-212 | P2 | BLOCKED (T-214) | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests on cpp-search. GHA 23528636505 failed (59 inapplicable + constraint failures). Needs re-dispatch after T-214 merges. | Blocked by T-214 constraint fix. |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
@@ -66,14 +64,18 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
 | T-187 | P3 | OPEN | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
 
+### Shiny App
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-226 | P3 | OPEN | — | **[Shiny] "Trees in sequence" connect mode — review/remove.** May not make sense under new C++ search engine (no meaningful replicate ordering). | From a007. Design question. |
 
 ### Standing Tasks
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by A (focus 4: parallelism & RNG, Rf_error-on-worker noted). |
-| S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 by A (round 15). |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by F (#215/#213/#221 resolved) + A (fixed #215 compile errors). Only #222 still CONFLICTING. |
-
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by D (focus 1: Fitch scoring). Found T-229 XFORM scoring bug. |
+| S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 round 18 (B). PR #210 GHA in flight. No unresolved bugs on cpp-search. |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by B. Open PRs: #210 (cpp-search→main, MERGEABLE), #213/#215/#216/#221/#222 (feature branches, all failing GHA or CONFLICTING). #224 closed. |
 

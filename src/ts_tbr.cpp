@@ -914,6 +914,29 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         tree.build_postorder_prealloc(work_stack);
         double actual = full_rescore(tree, ds);
 
+        // Post-hoc constraint validation: TBR rerooting can break
+        // splits that were classified as UNCONSTRAINED during the
+        // clip phase (the rerooting changes which constraint tips
+        // end up on which side of the attachment edge).  Reject
+        // any move that introduces a constraint violation.
+        if (constrained) {
+          map_constraint_nodes(tree, *cd);
+          bool violation = false;
+          for (int _s = 0; _s < cd->n_splits; ++_s) {
+            if (cd->constraint_node[_s] < 0) {
+              violation = true;
+              break;
+            }
+          }
+          if (violation) {
+            restore_topology(tree, snap);
+            state_snap.restore(tree);
+            map_constraint_nodes(tree, *cd);
+            compute_dfs_timestamps(tree, *cd);
+            continue;
+          }
+        }
+
         // Compute topology hash for tabu checking
         uint64_t tree_hash = 0;
         if (tabu.active()) {
@@ -929,7 +952,9 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           accepted = true;
           keep_going = true;
           states_valid = true;
-          if (constrained) update_constraint(tree, *cd);
+          if (constrained) {
+            compute_dfs_timestamps(tree, *cd);
+          }
           if (collect_pool) collect_pool->add(tree, actual);
         } else if (std::fabs(actual - best_score) <= eps
                    && params.accept_equal
@@ -947,7 +972,9 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           accepted = true;
           keep_going = true;
           states_valid = true;
-          if (constrained) update_constraint(tree, *cd);
+          if (constrained) {
+            compute_dfs_timestamps(tree, *cd);
+          }
           if (collect_pool) collect_pool->add(tree, actual);
         }
 

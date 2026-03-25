@@ -8,6 +8,10 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-213 | Implement impose_constraint() for post-hoc topology repair | D (cleanup) | Already on cpp-search (a666918ed, PR #223). 88 tests pass. Formal closeout during S-COORD. |
+| T-220 | [Shiny] Crash: searchExtendedIw not found when clicking Continue | D | Variable used in LogCode() before assignment. Moved snapshot above LogCode(). Direct fix on cpp-search. |
+| T-229 | [Bug] XFORM scoring used IW path for non-hierarchy chars | D | `fitch_score_ew()` missing `ScoringMode::XFORM` in EW branch. MaxP scores wrong (3 vs 7). 1-line fix. S-RED focus 1. |
+| T-219 | [Shiny] Dataset dropdown hover state visible | D | Selectize default hover (#f5f5f5) near-invisible on white. Added explicit hover CSS (#dde6ed). |
 | T-211 | Stale `final_` in temper candidate scoring | C | Analyzed: conservative-only. Stale `final_` after clip/evaluate/restore biases Boltzmann screening but not verified acceptance (`temper_full_rescore` gates all accepted moves). Fix would require per-candidate full rescore or save/restore of all `final_` arrays — cost exceeds negligible SA benefit. Closed as not worth fixing. |
 
 ## 2026-03-24
@@ -274,4 +278,18 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 ## 2026-03-25
 | T-208 | random_topology_tree ignores constraints | G+A | WAGNER_RANDOM fallback. Cherry-picked to cpp-search (24427c9a). PR #219 closed. |
 | T-211 | Stale final_ in temper candidate scoring | C | Closed: conservative-only impact, not worth fixing. |
+
+## 2026-03-25 (morning)
+| T-215 | cli progress bar `::` resolution fix | A | `pb_env` parent `baseenv()` → `environment()` in `MaximizeParsimony()`. Commit 908860d25. |
+| T-216 | Shiny app `"brazeau"` → `"bgs"` | A | 8 occurrences in `mod_search.R` (comparisons, defaults, selectInput value). Commit 908860d25. |
+| T-217 | `tree = NULL` in `MaximizeParsimony()` Morphy path | A | Added `!is.null(tree)` guard on Morphy delegation (line 485). Main path already correct. Commit 908860d25. |
+| T-218 | Simplification transforms corrupt NA scoring | A | Full fix: `has_genuine_inapp` flag in `SimplifiedPattern` gates Phase 1 on genuine `-` only; `?`-only characters use Fitch (transforms safe). `build_dataset()` uses flag instead of token scanning. Initial conservative fix `08054102f`, full fix `c32e213bd`. |
+| T-221 | [Shiny] Crash loop in cluster consensus concordance | B | `LabelConcordance()` guard `!is.null()` → `inherits(, "phylo")`. Commit `bc5313c22`. |
+| T-222 | [Shiny] "Align tips" does nothing in Characters on trees | B | `Display` callback always set edge.length=1; now NULL when tipsRight checked. Commit `b23580823`. |
+| T-223 | [Shiny] Tree plot left-aligned with excess white space | B | Display now sets edge.length=NULL (cladogram) to fill width. "Align tips" checkbox now redundant. Commit `280aa446d`. |
+| T-224 | [Shiny] `.ts_driven_search_raw` not found | B | Already fixed by T-214 (commit `62658709d`): renamed broken callers from af7601b refactor. |
+| T-225 | [Shiny] Tree space Connect shows nothing | B | `mapLines` checkbox was unnamespaced; module couldn't see it. Passed as reactive parameter. Commit `14277d04f`. |
+| T-228 | [Shiny] Modal shows "Implied" not "Implied (extended)" | B | Fallback `"on"` → `"xpiwe"` to match reactive default. Commit `63e86f237`. |
+| T-227 | [Shiny] Dataset dropdown hover polish | B | `:hover` pseudo-class for hover, `.selected` retains blue bg on hover. Commit `fd401ec81`. |
+| S-COORD | Coordination review round 18 | B | Created coordination.md (local). PR #210 GHA in flight. No unresolved bugs on cpp-search. 3 OPEN P3 tasks deferred. |
 TASKEOF 2>&1
