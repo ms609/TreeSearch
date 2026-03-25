@@ -126,3 +126,8 @@ input#readxlSkip, input#readxlSkipCols {
   float: left;
   margin-right: 2%;
 }
+
+/* Selectize default hover is nearly invisible (#f5f5f5 on #fff) */
+.selectize-dropdown [data-selectable].option.active {
+  background-color: #dde6ed;
+}
