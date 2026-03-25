@@ -366,19 +366,45 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
-    // 5b. Simulated annealing (linear cooling schedule)
-    if (params.anneal_phases > 0) {
+    // 5b. SA perturbation (multi-cycle PCSA with best-tree restart).
+    // Each cycle: perturb best tree via scheduled SA cooling -> TBR
+    // reconverge -> keep if improved (T-207).
+    if (params.anneal_cycles > 0) {
       AnnealParams ap;
       ap.t_start = params.anneal_t_start;
       ap.t_end = params.anneal_t_end;
       ap.n_phases = params.anneal_phases;
       ap.moves_per_phase = params.anneal_moves_per_phase;
-      anneal_search(result.tree, ds, ap, cd, check_timeout);
 
+      double best_sa_score = score_tree(result.tree, ds);
+      TreeState best_sa_tree = result.tree;
+
+      for (int cyc = 0; cyc < params.anneal_cycles; ++cyc) {
+        if (cyc > 0) result.tree = best_sa_tree;
+
+        anneal_search(result.tree, ds, ap, cd, check_timeout);
+
+        // TBR reconverge after SA perturbation
+        {
+          TBRParams tp;
+          tp.tabu_size = params.tabu_size;
+          tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
+        }
+
+        double cyc_score = score_tree(result.tree, ds);
+        if (cyc_score < best_sa_score - 1e-10) {
+          best_sa_score = cyc_score;
+          best_sa_tree = result.tree;
+        }
+
+        if (ts::check_interrupt() || check_timeout()) break;
+      }
+
+      result.tree = best_sa_tree;
       result.timings.anneal_ms += ph_lap();
       if (verbosity >= 2) {
         Rprintf("  %s score: %.5g [%.0f ms total]\n",
-                outer_label("Anneal").c_str(),
+                outer_label("SA").c_str(),
                 score_tree(result.tree, ds), result.timings.anneal_ms);
       }
     }

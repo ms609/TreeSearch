@@ -58,13 +58,16 @@ struct DrivenParams {
   int drift_afd_limit = 3;
   double drift_rfd_limit = 0.1;
 
-  // Simulated annealing: single-chain linear cooling schedule using
-  // stochastic TBR.  Runs between drift and final TBR polish.
-  // n_phases = 0 disables annealing.
-  int anneal_phases = 0;           // 0 = disabled
-  double anneal_t_start = 20.0;    // initial Boltzmann temperature
-  double anneal_t_end = 0.0;       // final temperature
-  int anneal_moves_per_phase = 0;  // 0 = n_tip
+  // Simulated annealing perturbation (PCSA: post-convergence SA).
+  // Multi-cycle SA with best-tree restart, inserted after drift phase.
+  // Each cycle: SA cooling schedule -> TBR reconverge -> keep if improved.
+  // Effective at escaping deep basins under EW at >=100 tips.
+  // 0 = disabled (default). Typical: 3-5 cycles for large trees.
+  int anneal_cycles = 0;
+  int anneal_phases = 5;             // temperature steps per cycle
+  double anneal_t_start = 20.0;      // initial Boltzmann temperature
+  double anneal_t_end = 0.0;         // final temperature
+  int anneal_moves_per_phase = 0;    // 0 = n_tip
 
   // Sectorial search
   int xss_rounds = 3;

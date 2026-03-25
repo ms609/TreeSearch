@@ -19,7 +19,6 @@ SearchControl(
   ratchetPerturbMode = 0L,
   ratchetPerturbMaxMoves = 5L,
   ratchetAdaptive = FALSE,
-  ratchetTaper = FALSE,
   nniPerturbCycles = 0L,
   nniPerturbFraction = 0.5,
   driftCycles = 2L,
@@ -100,14 +99,6 @@ cycle (0 = automatic).}
 \item{ratchetAdaptive}{Logical; adjust perturbation probability based on
 within-replicate escape rate?}
 
-\item{ratchetTaper}{Logical; taper ratchet perturbation probability across
-replicates as the pool stabilizes?  When \code{TRUE}, early replicates use
-the full \code{ratchetPerturbProb}; later replicates (with high hit rates)
-use a reduced probability for finer local exploration.  The effective
-probability is \code{ratchetPerturbProb * max(floor, 1 - strength * hitRate)}
-where \code{hitRate} is the fraction of replicates that found the current
-best score.  Default \code{FALSE}.}
-
 \item{nniPerturbCycles}{Integer; number of stochastic NNI-perturbation
 cycles per replicate.  Each cycle randomly applies NNI swaps to a
 fraction of internal branches, then runs TBR to find a new local
@@ -172,16 +163,14 @@ uncertain regions.  Constraints are cleared whenever a new best score
 is found.  Only active when no user-supplied \code{constraint} is
 present.  Default \code{FALSE}.}
 
-\item{annealPhases}{Integer; number of simulated annealing temperature
-steps (default 0 = disabled).  When > 0, runs a linear cooling
-schedule from \code{annealTStart} to \code{annealTEnd} using stochastic TBR
-with Boltzmann acceptance.  Runs between drift and final TBR polish.}
+\item{annealPhases}{Integer; number of temperature steps in the linear
+cooling schedule per SA cycle (default 5).}
 
-\item{annealTStart}{Numeric; initial Boltzmann temperature for annealing
-(default 20).  Higher temperatures accept more suboptimal moves.}
+\item{annealTStart}{Numeric; initial Boltzmann temperature for SA cooling
+schedule (default 20).  Higher temperatures accept more suboptimal moves.}
 
 \item{annealTEnd}{Numeric; final Boltzmann temperature (default 0 =
-strict hill-climbing at end).}
+strict hill-climbing at end of each cycle).}
 
 \item{annealMovesPerPhase}{Integer; stochastic TBR moves per temperature
 step (default 0 = number of tips).}
@@ -198,6 +187,21 @@ equal-score topologies).  The main search loop exits at
 \code{maxSeconds * (1 - enumTimeFraction)}.  Set to 0 to disable the reserve
 (pre-v1.6 behaviour: enumeration skipped if the main loop times out).
 Default: \code{0.1} (10\%).}
+
+\item{ratchetTaper}{Logical; taper ratchet perturbation probability across
+replicates as the pool stabilizes?  When \code{TRUE}, early replicates use
+the full \code{ratchetPerturbProb}; later replicates (with high hit rates)
+use a reduced probability for finer local exploration.  The effective
+probability is \code{ratchetPerturbProb * max(floor, 1 - strength * hitRate)}
+where \code{hitRate} is the fraction of replicates that found the current
+best score.  Default \code{FALSE}.}
+
+\item{annealCycles}{Integer; number of simulated annealing perturbation
+cycles (PCSA) per replicate.  Each cycle perturbs the current best tree
+via scheduled SA cooling, then reconverges with TBR.  If the result
+improves on the best, it becomes the new starting point.  Effective at
+escaping deep basins under equal-weights parsimony at \eqn{\ge}100 tips.
+0 (default) disables SA perturbation.}
 }
 \value{
 A named list of class \code{"SearchControl"}.
