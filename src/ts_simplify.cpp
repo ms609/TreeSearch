@@ -185,20 +185,16 @@ SimplificationResult simplify_patterns(
     // Build per-tip token bitmasks from the original data
     sp.tip_tokens.resize(n_tips);
     bool has_inapp = false;
-    // A full-? token has all state bits set; it represents missing data,
-    // not genuine inapplicability, so it should not trigger the bypass.
-    uint32_t all_states_mask = (1u << n_states) - 1;
     for (int tip = 0; tip < n_tips; ++tip) {
       int token = tip_data_r[tip + n_tips * p] - 1;  // 1-based to 0-based
       sp.tip_tokens[tip] = token_states[token];
       if (inapp_state >= 0 &&
-          (token_states[token] & (1u << inapp_state)) &&
-          token_states[token] != all_states_mask) {
+          (token_states[token] & (1u << inapp_state))) {
         has_inapp = true;
       }
     }
 
-    // Phase 1: skip genuinely inapplicable characters
+    // Phase 1: skip inapplicable characters entirely
     if (has_inapp) {
       // Count states for metadata only
       uint32_t all = all_applicable_mask(sp.tip_tokens, n_tips, n_states,

@@ -561,22 +561,18 @@ test_that("Mixed degenerate inapplicable/missing patterns score correctly", {
   }
 })
 
-test_that("'All in [0, ?]' characters simplified in inapplicable datasets", {
-  # In an inapplicable dataset, ? tokens include the inapp bit.
-  # Characters where every tip is one applicable state or ? are genuinely
-  # uninformative and should be simplified away (not bypassed).
+test_that("'All in [0, ?]' characters NOT simplified in inapplicable datasets", {
+  # In an inapplicable dataset, ? tokens include the inapp bit. Even when
+  # every tip is one applicable state or ?, the three-pass NA algorithm may
+  # reconstruct ? as inapplicable on some topologies, making the character
+  # topology-dependent. It must NOT be simplified away.
   mat <- matrix(c(
-    "0", "0", "?", "?", "?", "?", "?", "?",  # all-0-or-? -> uninformative
+    "0", "0", "?", "?", "?", "?", "?", "?",  # all-0-or-?: kept (? includes -)
     "0", "0", "1", "1", "-", "-", "?", "?",   # mixed informative
     "0", "0", "0", "0", "1", "1", "1", "1"    # standard informative
   ), nrow = 8, dimnames = list(paste0("t", 1:8), NULL))
   dataset <- MatrixToPhyDat(mat)
   ds <- make_ts_data(dataset)
-  diag <- ts_diag(ds)
-
-  # The all-0-or-? pattern should be identified as uninformative
-  expect_gte(diag$n_patterns_removed, 1L,
-             label = "all-[0,?] pattern should be removed")
 
   # Scores must still match TreeLength on multiple trees
   set.seed(5291)
