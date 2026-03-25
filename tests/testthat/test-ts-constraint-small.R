@@ -149,4 +149,3 @@ test_that("T-208: adaptiveStart with constraints respects constraint", {
                 info = paste("tree", i, "violates constraint"))
   }
 })
-EOF 2>&1

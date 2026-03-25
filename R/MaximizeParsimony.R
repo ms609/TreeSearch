@@ -865,18 +865,6 @@ MaximizeParsimony <- function(
     adaptiveStart = as.logical(
       if (is.null(ctrl$adaptiveStart)) FALSE
       else ctrl$adaptiveStart),
-    annealPhases = as.integer(
-      if (is.null(ctrl$annealPhases)) 0L
-      else ctrl$annealPhases),
-    annealTStart = as.double(
-      if (is.null(ctrl$annealTStart)) 20.0
-      else ctrl$annealTStart),
-    annealTEnd = as.double(
-      if (is.null(ctrl$annealTEnd)) 0.0
-      else ctrl$annealTEnd),
-    annealMovesPerPhase = as.integer(
-      if (is.null(ctrl$annealMovesPerPhase)) 0L
-      else ctrl$annealMovesPerPhase),
     enumTimeFraction = as.double(
       if (is.null(ctrl$enumTimeFraction)) 0.1
       else ctrl$enumTimeFraction),

@@ -112,14 +112,6 @@
 #'   `maxSeconds * (1 - enumTimeFraction)`.  Set to 0 to disable the reserve
 #'   (pre-v1.6 behaviour: enumeration skipped if the main loop times out).
 #'   Default: `0.1` (10%).
-#' @param annealPhases Integer; number of simulated annealing cooling phases.
-#'   `0` (default) disables annealing.
-#' @param annealTStart Numeric; starting temperature for simulated annealing.
-#'   Default `20`.
-#' @param annealTEnd Numeric; final temperature.  `0` (default) means strict
-#'   (greedy) acceptance at the end of cooling.
-#' @param annealMovesPerPhase Integer; SPR moves attempted per cooling phase.
-#'   `0` (default) uses `n_tip` as the per-phase budget.
 #' @param adaptiveStart Logical; use Thompson-sampling (bandit) strategy
 #'   selection for starting trees?  When `TRUE`, each replicate draws its
 #'   starting strategy from a pool of options (random Wagner, biased Wagner,

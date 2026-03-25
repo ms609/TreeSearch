@@ -168,15 +168,6 @@ struct DrivenParams {
   bool consensus_constrain = false;
   int consensus_constrain_min_reps = 5;  // minimum replicates before engaging
 
-  // Simulated annealing: single-chain scheduled cooling.
-  // Stochastic SPR with Boltzmann acceptance at linearly decreasing
-  // temperature.  Inserted after drift in the outer cycle.
-  // anneal_phases=0 disables.
-  int anneal_phases = 0;          // 0 = disabled
-  double anneal_t_start = 20.0;   // initial temperature
-  double anneal_t_end = 0.0;      // final temperature (0 = strict)
-  int anneal_moves_per_phase = 0; // 0 = n_tip
-
   // Fraction of the time budget reserved for MPT enumeration (T-202).
   // The main search loop exits at budget × (1 - enum_time_fraction),
   // leaving the remainder for the plateau walk.  Default 0.1 = 10%.
