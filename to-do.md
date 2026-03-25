@@ -46,13 +46,11 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 |----|-----|--------|--------|-------------|-------|
 | T-196 | P2 | PR #215 (M) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); arrives with PT PR #215. |
 | T-210 | P2 | PR #222 (C) | — | **[Bug] SA doesn't save best-found topology.** Fix: `anneal_search` tracks/restores best tree at phase boundaries. | On `feature/pt-eval` (TS-PTeval). In T-207 PR #222. |
-| T-214 | P2 | PARKED (C, GHA 23542642164) | — | **[Bug] Multi-split constraints not enforced during TBR search.** Fix: RANDOM_TREE falls back to Wagner when constrained; fuse uses direct map_constraint_nodes check with verified repair. | 26/26 + 806/806 constraint tests pass locally. Previous GHA 23540183235 false positive (Bioconductor mirror unreachable → spurious WARNING; 0 FAIL / 10931 PASS on both platforms). |
-
 ### Testing & Constraint Handling
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-212 | P2 | BLOCKED (T-214) | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests on cpp-search. GHA 23528636505 failed (59 inapplicable + constraint failures). Needs re-dispatch after T-214 merges. | Blocked by T-214 constraint fix. |
+| T-212 | P2 | OPEN | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests on cpp-search. GHA 23528636505 failed (59 inapplicable + constraint failures). Needs re-dispatch now that T-214 is done. | Was blocked by T-214 (now complete). |
 
 | T-235 | P3 | OPEN | — | **[Bug] SPR search stale state arrays after rejected regraft.** In `spr_search()`, when a candidate passes indirect screening but fails `full_rescore`, `spr_unclip()` only partially restores states (clip-to-root), leaving other nodes with regrafted-topology states. Degrades screening for subsequent clips (NA/IW datasets only). Final score always correct. Fix: add `full_rescore()` after `spr_unclip()` on the rejection path. | Found by S-RED focus 2. SPR rarely used (all presets disable `sprFirst`). |
 
@@ -70,10 +68,10 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-231 | P2 | ASSIGNED (C) | — | **[Shiny] Search stopping criteria don't match user settings.** User set "stop when 10 runs hit best score" and "max indep runs = 100", but summary reports "4 of 90 runs hit best score". Neither 4 nor 90 match the configured values. | From a.012. |
+| T-231 | P2 | ASSIGNED (C) | — | **[Shiny] Search stopping criteria don't match user settings.** User set "stop when 10 runs hit best score" and "max indep runs = 100", but summary reports "4 of 90 runs hit best score". Root cause: consensus stability stopping pre-empts targetHits. Fix: display stop reason. | From a.012. |
 | T-232 | P2 | PARKED (D, GHA 23543699366) | — | **[Shiny] "Tips to show" input bounces back on decrement.** Clicking "down" arrow resets to previous value (e.g. 54 for Sun dataset). | From a.013. Fix: `isolate(input$keepNTips)` in `UpdateKeepNTipsRange`. |
-| T-233 | P2 | OPEN | — | **[Shiny] Search summary text too verbose.** "40 distinct topologies in pool" redundant with "40 trees in memory". "consider increasing replicates" → shorten to "more replicates needed?". Make summary terser overall. | From a.011. |
-| T-234 | P2 | OPEN | — | **[Shiny] Context-dependent references.** Goloboff 2014 (XPIWE) should only appear when extended IW selected. Goloboff 1993 (IW) should appear under IW/XPIWE. Add standing references for sectorial search and driven search methods. | From a.014. |
+
+| T-234 | P2 | ASSIGNED (D) | — | **[Shiny] Context-dependent references.** Goloboff 2014 (XPIWE) should only appear when extended IW selected. Goloboff 1993 (IW) should appear under IW/XPIWE. Add standing references for sectorial search and driven search methods. | From a.014. |
 
 
 | T-226 | P2 | OPEN | — | **[Shiny] "Trees in sequence" connect mode — review/remove.** May not make sense under new C++ search engine (no meaningful replicate ordering). | From a007. Design question. |

@@ -8,8 +8,10 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-233 | [Shiny] Search summary text too verbose | A | Removed redundant topology count, shortened ruggedness warning. Commit `efbe77ab5`. |
+| T-236 | [Shiny] Auto-start search after profile prep | A | `StartSearch()` called from profile prep result observer instead of showing "click Search" notification. Commit `cfb38b070`. |
 | T-237 | [Shiny] Concavity slider visible in profile mode after dataset switch | A | Modal re-open didn't re-apply visibility. Fix: conditionally wrap in `hidden()` before `showModal()`. Commit `3903e3fce`. |
-| T-235 | [Shiny] Search & profile notifications disappear prematurely | A | `tryCatch` sibling handler bug: `req(FALSE)` in `shiny.silent.error` handler caught by sibling `error` handler. Fix: single `error` handler with `inherits()` check + `stop(e)` re-throw. Commit `609241b65`. |
+| T-238 | [Shiny] Search & profile notifications disappear prematurely | A | `tryCatch` sibling handler bug: `req(FALSE)` in `shiny.silent.error` handler caught by sibling `error` handler. Fix: single `error` handler with `inherits()` check + `stop(e)` re-throw. Commit `609241b65`. (Originally filed as T-235; renumbered to avoid collision with SPR bug.) |
 | T-213 | Implement impose_constraint() for post-hoc topology repair | D (cleanup) | Already on cpp-search (a666918ed, PR #223). 88 tests pass. Formal closeout during S-COORD. |
 | T-220 | [Shiny] Crash: searchExtendedIw not found when clicking Continue | D | Variable used in LogCode() before assignment. Moved snapshot above LogCode(). Direct fix on cpp-search. |
 | T-229 | [Bug] XFORM scoring used IW path for non-hierarchy chars | D | `fitch_score_ew()` missing `ScoringMode::XFORM` in EW branch. MaxP scores wrong (3 vs 7). 1-line fix. S-RED focus 1. |
@@ -296,6 +298,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | S-COORD | Coordination review round 18 | B | Created coordination.md (local). PR #210 GHA in flight. No unresolved bugs on cpp-search. 3 OPEN P3 tasks deferred. |
 
 ## 2026-03-25 (afternoon)
+| T-214 | Multi-split constraints not enforced during TBR search | C | RANDOM_TREE falls back to Wagner when constrained; fuse uses direct map_constraint_nodes check. 26/26 + 806/806 tests pass. GHA 23542642164 PASS (both platforms). Commit `3f8792c5f`. |
 | S-RED | Red-team review focus 2: Search topology invariants | C | Reviewed ts_tbr.cpp, ts_drift.cpp, ts_search.cpp, ts_tree.h/.cpp (2856 lines). Found T-235: SPR stale state arrays after rejected regraft (NA/IW screening degradation, low practical impact). TBR/drift/NNI topology invariants verified correct. |
 | T-230 | [Shiny] Replicate-count warning when verbosity=0 | B | Gate behind verbosity > 0L. Stale-install part already fixed by T-214. Commit a37984dfa. |
 TASKEOF 2>&1

@@ -166,6 +166,16 @@ Brazeau2019 <- Reference(c("Brazeau, M.D.", "Guillerme, T.", "Smith, M.R."), 201
                            volume = 64,
                            pages = c(619, 631),
                          doi = "10.1093/sysbio/syy083")
+Goloboff1993 <- Reference("Goloboff, P.A.", 1993,
+                           "Estimating character weights during tree search",
+                           "Cladistics", volume = 9,
+                           pages = c(83, 91),
+                           doi = "10.1111/j.1096-0031.1993.tb00209.x")
+Goloboff1999 <- Reference("Goloboff, P.A.", 1999,
+                           "Analyzing large data sets in reasonable times: solutions for composite optima",
+                           "Cladistics", volume = 15,
+                           pages = c(415, 428),
+                           doi = "10.1006/clad.1999.0122")
 Goloboff2014 <- Reference("Goloboff, P.A.", 2014,
                            "Extended implied weighting",
                            "Cladistics", volume = 30,
