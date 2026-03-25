@@ -609,7 +609,10 @@ consensus_server <- function(id, r,
             tip.color = roguishness,
             Display = function(tr) {
               tr <- UserRoot(tr)
-              if (unitEdge()) {
+              if ("tipsRight" %in% input$mapDisplay) {
+                # Cladogram: NULL edge lengths → tips aligned to the right
+                tr$edge.length <- NULL
+              } else if (unitEdge()) {
                 tr$edge.length <- rep.int(1, dim(tr$edge)[[1]])
               }
               SortEdges(tr)
