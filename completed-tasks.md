@@ -313,3 +313,4 @@ EOF 2>&1
 EOF 2>&1
 | T-240 | [Shiny] Pool suboptimal filter not applied mid-search | D | Accumulation path deduped but didn't filter by tolerance. Added TreeLength rescore + filter on combined trees. Commit `340d78381`. |
 EOF 2>&1
+| S-RED | Red-team review focus 4: Parallelism & RNG | D | Found and fixed parallel consensus stability bug: idle polls incremented unchanged counter causing premature termination. Also noted R_CheckUserInterrupt/longjmp fragility. 9 items verified, 1 bug fixed. |
