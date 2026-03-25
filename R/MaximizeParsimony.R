@@ -125,7 +125,8 @@
     fuseInterval = 3L, fuseAcceptEqual = FALSE,
     tabuSize = 100L, wagnerStarts = 3L,
     nniFirst = TRUE, sprFirst = FALSE, adaptiveLevel = TRUE,
-    consensusStableReps = 3L
+    consensusStableReps = 3L,
+    maxOuterResets = 2L
   ),
   thorough = SearchControl(
     tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
@@ -140,6 +141,7 @@
     tabuSize = 200L, wagnerStarts = 3L,
     nniFirst = TRUE, sprFirst = FALSE,
     outerCycles = 2L,
+    maxOuterResets = 3L,
     consensusStableReps = 3L,
     adaptiveStart = TRUE
   ),
@@ -857,6 +859,9 @@ MaximizeParsimony <- function(
     outerCycles = as.integer(
       if (is.null(ctrl$outerCycles)) 1L
       else ctrl$outerCycles),
+    maxOuterResets = as.integer(
+      if (is.null(ctrl$maxOuterResets)) 0L
+      else ctrl$maxOuterResets),
     adaptiveStart = as.logical(
       if (is.null(ctrl$adaptiveStart)) FALSE
       else ctrl$adaptiveStart),

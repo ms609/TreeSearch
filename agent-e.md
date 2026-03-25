@@ -1,10 +1,18 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Task:** T-206 — Outer cycle reset cap
-- **Status:** PARKED (waiting on GHA run 23503177988)
-- **Branch:** feature/outer-cap-t206
-- **Worktree:** TS-OuterCap
+- **Task:** IDLE
+- **Status:** IDLE
+
+### T-209 — NNI perturbation constraint guard — DONE
+- Found via S-RED focus 2 (search topology invariants).
+- Bug: `random_nni_perturb()` ignores constraints → cn=-1 → TBR blocked.
+  Same mechanism as T-208 (random_topology_tree).
+- Fix: gate NNI perturbation on `(!cd || !cd->active)` at ts_driven.cpp:310.
+- Local build: OK (build-agent.sh). Tests: 152 driven, 43 wagner, 29 SC — all pass.
+- init.c: 47 entries (45 Rcpp + 2 manual), all match.
+- GHA 23506971922: PASS. PR #220 created.
+- Also handled T-182 GHA failure (Agent G): fixed roxygen docs, re-dispatched GHA 23507428719.
 
 ### T-206 progress
 - Added `max_outer_resets` to `DrivenParams` (C++) and `maxOuterResets` to
@@ -14,7 +22,10 @@
 - 1826/1826 ts-* tests pass (2 xpiwe namespace false positives excluded).
 - Benchmark (Zhu2013 5 reps): no resets=4.81s, 2 resets=9.25s, old unlimited=12.99s.
   Score quality preserved (640–646 vs 641–646).
-- Pushed to `feature/outer-cap-t206`, GHA dispatched (run 23503177988).
+- GHA run history:
+  - Run 23503177988: FAIL — test-SearchControl.R poolSuboptimal sensitivity
+  - Run 23503681296: FAIL — codoc mismatch (maxOuterResets missing from Rd)
+  - Run 23505343592: DISPATCHED — includes both fixes (test + roxygen regen)
 
 ### S-PROF supplement (round 4) — DONE
 Agent G ran S-PROF round 4 earlier today (re-baseline with auto strategy).
