@@ -362,6 +362,25 @@ tolerance limits: an absolute fit difference
 Like the ratchet, it displaces the tree from its current local
 optimum, but without changing the objective function.
 
+### Post-convergence simulated annealing (PCSA)
+
+After the ratchet and drift phases, each replicate may optionally run
+a multi-cycle simulated annealing (SA) perturbation phase.
+Each cycle perturbs the current best tree using stochastic TBR with
+Boltzmann acceptance at linearly decreasing temperature
+(`annealTStart` to `annealTEnd` over `annealPhases` steps), then
+reconverges with deterministic TBR.
+If the reconverged tree improves on the best seen so far, it becomes
+the new starting point for the next cycle; otherwise the previous best
+is restored.
+
+This best-tree restart strategy distinguishes PCSA from a simple
+annealing schedule: the SA phase is used purely as a perturbation
+mechanism (analogous to the ratchet), not as a global optimizer.
+The number of SA + TBR cycles per replicate is controlled by
+`annealCycles` (default 0 = disabled; the `large` strategy preset
+sets 3).
+
 ## Sectorial search
 
 Sectorial search [@Goloboff1999] optimizes a subproblem: a sector

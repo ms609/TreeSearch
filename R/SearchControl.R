@@ -103,14 +103,18 @@
 #'   an outer cycle, the counter resets up to this many times, allowing
 #'   productive re-exploration.  Set to \eqn{-1} for unlimited resets.
 #'   Strategy presets (`"default"`, `"thorough"`) set 2–3.
-#' @param annealPhases Integer; number of simulated annealing temperature
-#'   steps (default 0 = disabled).  When > 0, runs a linear cooling
-#'   schedule from `annealTStart` to `annealTEnd` using stochastic TBR
-#'   with Boltzmann acceptance.  Runs between drift and final TBR polish.
-#' @param annealTStart Numeric; initial Boltzmann temperature for annealing
-#'   (default 20).  Higher temperatures accept more suboptimal moves.
+#' @param annealCycles Integer; number of simulated annealing perturbation
+#'   cycles (PCSA) per replicate.  Each cycle perturbs the current best tree
+#'   via scheduled SA cooling, then reconverges with TBR.  If the result
+#'   improves on the best, it becomes the new starting point.  Effective at
+#'   escaping deep basins under equal-weights parsimony at \eqn{\ge}100 tips.
+#'   0 (default) disables SA perturbation.
+#' @param annealPhases Integer; number of temperature steps in the linear
+#'   cooling schedule per SA cycle (default 5).
+#' @param annealTStart Numeric; initial Boltzmann temperature for SA cooling
+#'   schedule (default 20).  Higher temperatures accept more suboptimal moves.
 #' @param annealTEnd Numeric; final Boltzmann temperature (default 0 =
-#'   strict hill-climbing at end).
+#'   strict hill-climbing at end of each cycle).
 #' @param annealMovesPerPhase Integer; stochastic TBR moves per temperature
 #'   step (default 0 = number of tips).
 #' @param enumTimeFraction Numeric between 0 and 0.5; fraction of `maxSeconds`
@@ -190,8 +194,9 @@ SearchControl <- function(
     consensusStableReps = 0L,
     adaptiveLevel = FALSE,
     consensusConstrain = FALSE,
-    # Simulated annealing (linear cooling schedule)
-    annealPhases = 0L,
+    # Simulated annealing perturbation (PCSA, T-207)
+    annealCycles = 0L,
+    annealPhases = 5L,
     annealTStart = 20,
     annealTEnd = 0,
     annealMovesPerPhase = 0L,
@@ -238,6 +243,7 @@ SearchControl <- function(
       consensusStableReps = as.integer(consensusStableReps),
       adaptiveLevel = as.logical(adaptiveLevel),
       consensusConstrain = as.logical(consensusConstrain),
+      annealCycles = as.integer(annealCycles),
       annealPhases = as.integer(annealPhases),
       annealTStart = as.double(annealTStart),
       annealTEnd = as.double(annealTEnd),
@@ -259,8 +265,8 @@ print.SearchControl <- function(x, ...) {
                    "ratchetTaper"),
     "NNI Perturbation" = c("nniPerturbCycles", "nniPerturbFraction"),
     "Drift" = c("driftCycles", "driftAfdLimit", "driftRfdLimit"),
-    "Annealing" = c("annealPhases", "annealTStart", "annealTEnd",
-                     "annealMovesPerPhase"),
+    "Annealing" = c("annealCycles", "annealPhases", "annealTStart",
+                     "annealTEnd", "annealMovesPerPhase"),
     "Sectorial" = c("xssRounds", "xssPartitions", "rssRounds",
                      "cssRounds", "cssPartitions",
                      "sectorMinSize", "sectorMaxSize"),
