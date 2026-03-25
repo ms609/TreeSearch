@@ -54,6 +54,8 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 |----|-----|--------|--------|-------------|-------|
 | T-212 | P2 | BLOCKED (T-214) | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests on cpp-search. GHA 23528636505 failed (59 inapplicable + constraint failures). Needs re-dispatch after T-214 merges. | Blocked by T-214 constraint fix. |
 
+| T-235 | P3 | OPEN | — | **[Bug] SPR search stale state arrays after rejected regraft.** In `spr_search()`, when a candidate passes indirect screening but fails `full_rescore`, `spr_unclip()` only partially restores states (clip-to-root), leaving other nodes with regrafted-topology states. Degrades screening for subsequent clips (NA/IW datasets only). Final score always correct. Fix: add `full_rescore()` after `spr_unclip()` on the rejection path. | Found by S-RED focus 2. SPR rarely used (all presets disable `sprFirst`). |
+
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
 | ID | Pri | Status | Blocks | Description | Notes |
@@ -68,18 +70,20 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-230 | P1 | OPEN | — | **[Shiny] "Continue search" crashes: `.ts_driven_search_raw` not found.** ExtendedTask invoke fails with "could not find function" error. Also shows spurious "at least 10 replicates recommended" warning. | From a.001. |
+| T-230 | P1 | ASSIGNED (D) | — | **[Shiny] "Continue search" crashes: `.ts_driven_search_raw` not found.** ExtendedTask invoke fails with "could not find function" error. Also shows spurious "at least 10 replicates recommended" warning. | From a.001. |
 | T-231 | P2 | OPEN | — | **[Shiny] Search stopping criteria don't match user settings.** User set "stop when 10 runs hit best score" and "max indep runs = 100", but summary reports "4 of 90 runs hit best score". Neither 4 nor 90 match the configured values. | From a.012. |
 | T-232 | P2 | OPEN | — | **[Shiny] "Tips to show" input bounces back on decrement.** Clicking "down" arrow resets to previous value (e.g. 54 for Sun dataset). | From a.013. |
 | T-233 | P3 | OPEN | — | **[Shiny] Search summary text too verbose.** "40 distinct topologies in pool" redundant with "40 trees in memory". "consider increasing replicates" → shorten to "more replicates needed?". Make summary terser overall. | From a.011. |
 | T-234 | P3 | OPEN | — | **[Shiny] Context-dependent references.** Goloboff 2014 (XPIWE) should only appear when extended IW selected. Goloboff 1993 (IW) should appear under IW/XPIWE. Add standing references for sectorial search and driven search methods. | From a.014. |
+| T-236 | P3 | OPEN | — | **[Shiny] Auto-start search after profile preparation completes.** Currently says "click Search to start" — user wants search to begin automatically once profile scores are ready. | From a.15. |
+| T-237 | P2 | OPEN | — | **[Shiny] Concavity slider visible in profile mode after dataset switch.** Load Sun, set profile, search, then load Wills — concavity slider remains visible. Should be hidden for profile mode. | From a.16. |
 | T-226 | P3 | OPEN | — | **[Shiny] "Trees in sequence" connect mode — review/remove.** May not make sense under new C++ search engine (no meaningful replicate ordering). | From a007. Design question. |
 
 ### Standing Tasks
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | ASSIGNED (C) | — | **Standing: Red-team review** | Focus 2: Search topology invariants. Last run: 2026-03-25 by D (focus 1: Fitch scoring). Found T-229 XFORM scoring bug. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by C (focus 2: Search topology invariants). Found T-235 (SPR stale state). |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 round 18 (B). PR #210 GHA in flight. No unresolved bugs on cpp-search. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by B. Open PRs: #210 (cpp-search→main, MERGEABLE), #213/#215/#216/#221/#222 (feature branches, all failing GHA or CONFLICTING). #224 closed. |
