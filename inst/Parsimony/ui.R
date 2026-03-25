@@ -57,7 +57,8 @@ fluidPage(
                    checkboxGroupInput("mapLines", "Connect:",
                                       choices = list(
                                         "Cluster convex hulls" = "hull",
-                                        "Minimum spanning tree" = "mst"
+                                        "Minimum spanning tree" = "mst",
+                                        "Trees in sequence" = "seq"
                                       ), selected = c("hull", "mst"))
                  ))
         )
