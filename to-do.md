@@ -69,7 +69,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-232 | P2 | PARKED (D, GHA 23543699366) | — | **[Shiny] "Tips to show" input bounces back on decrement.** Clicking "down" arrow resets to previous value (e.g. 54 for Sun dataset). | From a.013. Fix: `isolate(input$keepNTips)` in `UpdateKeepNTipsRange`. |
-| T-226 | P2 | OPEN | — | **[Shiny] "Trees in sequence" connect mode — review/remove.** May not make sense under new C++ search engine (no meaningful replicate ordering). | From a007. Design question. |
+| T-226 | P2 | ASSIGNED (B) | — | **[Shiny] "Trees in sequence" connect mode — review/remove.** May not make sense under new C++ search engine (no meaningful replicate ordering). | From a007. Design question. |
 
 ### Standing Tasks
 
