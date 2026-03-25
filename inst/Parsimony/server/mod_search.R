@@ -415,8 +415,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     observe({
       result <- tryCatch(
         profilePrepTask$result(),
-        shiny.silent.error = function(e) req(FALSE),
         error = function(e) {
+          if (inherits(e, "shiny.silent.error")) stop(e)
           LogMsg("Profile data preparation failed: ", conditionMessage(e))
           NULL
         }
@@ -968,14 +968,21 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     # Only searchTask$result() should be a reactive dependency;
     # isolate everything else to prevent reactive cascade re-runs.
     observe({
+      # Use a single `error` handler rather than separate `shiny.silent.error`
+      # + `error` handlers. With two handlers, `req(FALSE)` thrown inside the
+      # `shiny.silent.error` handler is caught by the sibling `error` handler
+      # (R's tryCatch does not fully unwind before sibling handlers), causing
+      # the isolate block below to run prematurely (notification removed,
+      # cancel hidden) while the search task is still running.
       newTrees <- tryCatch(
         searchTask$result(),
-        shiny.silent.error = function(e) {
-          # ExtendedTask throws shiny.silent.error (class "shiny.output.progress"
-          # subclass) when status is "initial" or "running" — not a real error.
-          req(FALSE)
-        },
         error = function(e) {
+          if (inherits(e, "shiny.silent.error")) {
+            # ExtendedTask signals shiny.silent.error when status is "initial"
+            # or "running". Re-throw so Shiny's observer wrapper terminates
+            # this cycle cleanly; the observer will re-fire on task completion.
+            stop(e)
+          }
           msg <- conditionMessage(e)
           if (nzchar(msg)) {
             Notification(paste("Search error:", msg), type = "error")
