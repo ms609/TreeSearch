@@ -14,7 +14,7 @@ execute:
 
 ## Motivation
 
-`CIDConsensus()` uses a dual-layer scoring architecture: a fast Fitch
+`InfoConsensus()` uses a dual-layer scoring architecture: a fast Fitch
 parsimony layer on MRP (Matrix Representation with Parsimony) characters
 screens TBR candidates, and a slower but exact CID (Clustering Information
 Distance) layer accepts or rejects moves.  The tighter the parsimony

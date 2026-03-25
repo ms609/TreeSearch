@@ -165,13 +165,7 @@ InfoConsensus <- function(trees,
 }
 
 
-#' @rdname InfoConsensus
-#' @description `CIDConsensus()` is a deprecated alias for `InfoConsensus()`.
-#' @export
-CIDConsensus <- function(trees, ...) {
-  .Deprecated("InfoConsensus")
-  InfoConsensus(trees, ...)
-}
+
 
 
 .NoOp <- function(x) invisible(NULL)

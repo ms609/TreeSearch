@@ -46,20 +46,17 @@ test_that(".EdgeListToPhylo returns valid phylo", {
 # .MakeCIDData ---------------------------------------------------------------
 
 test_that(".MakeCIDData creates correct environment", {
-  cidData <- .MakeCIDData(smallTrees, ClusteringInfoDistance,
-                          smallTrees[[1]]$tip.label)
+  cidData <- .MakeCIDData(smallTrees, smallTrees[[1]]$tip.label)
   expect_true(is.environment(cidData))
   expect_equal(length(cidData$trees), 20L)
   expect_equal(cidData$nTip, 12L)
-  expect_identical(cidData$metric, ClusteringInfoDistance)
 })
 
 
 # .CIDScorer ----------------------------------------------------------------
 
 test_that(".CIDScorer returns negated mean MCI", {
-  cidData <- .MakeCIDData(smallTrees, ClusteringInfoDistance,
-                          smallTrees[[1]]$tip.label)
+  cidData <- .MakeCIDData(smallTrees, smallTrees[[1]]$tip.label)
   tr <- smallTrees[[1]]
   edge <- tr$edge
 
@@ -69,23 +66,21 @@ test_that(".CIDScorer returns negated mean MCI", {
   expect_equal(score, expected, tolerance = 1e-6)
 })
 
-test_that(".CIDScorer works with alternative metric", {
-  cidData <- .MakeCIDData(smallTrees, MutualClusteringInfo,
-                          smallTrees[[1]]$tip.label)
+test_that(".CIDScorer returns negated mean MCI (MutualClusteringInfo check)", {
+  cidData <- .MakeCIDData(smallTrees, smallTrees[[1]]$tip.label)
   tr <- smallTrees[[1]]
   edge <- tr$edge
 
   score <- .CIDScorer(edge[, 1], edge[, 2], cidData)
-  expected <- mean(MutualClusteringInfo(tr, smallTrees))
-  expect_equal(score, expected, tolerance = 1e-10)
+  expected <- -mean(MutualClusteringInfo(tr, smallTrees))
+  expect_equal(score, expected, tolerance = 1e-6)
 })
 
 
 # .CIDBootstrap -------------------------------------------------------------
 
 test_that(".CIDBootstrap returns valid edgeList", {
-  cidData <- .MakeCIDData(smallTrees, ClusteringInfoDistance,
-                          smallTrees[[1]]$tip.label)
+  cidData <- .MakeCIDData(smallTrees, smallTrees[[1]]$tip.label)
   tr <- smallTrees[[1]]
   edge <- tr$edge
   edgeList <- TreeTools::RenumberEdges(edge[, 1], edge[, 2])
@@ -103,8 +98,7 @@ test_that(".CIDBootstrap returns valid edgeList", {
 })
 
 test_that(".CIDBootstrap restores original trees", {
-  cidData <- .MakeCIDData(smallTrees, ClusteringInfoDistance,
-                          smallTrees[[1]]$tip.label)
+  cidData <- .MakeCIDData(smallTrees, smallTrees[[1]]$tip.label)
   origTrees <- cidData$trees
   tr <- smallTrees[[1]]
   edgeList <- TreeTools::RenumberEdges(tr$edge[, 1], tr$edge[, 2])
@@ -157,14 +151,20 @@ test_that("InfoConsensus score attribute is set", {
   expect_true(attr(result, "score") >= 0)
 })
 
-test_that("CIDConsensus deprecated alias works", {
-  lifecycle::expect_deprecated(
-    result <- CIDConsensus(smallTrees,
-                           maxReplicates = 2L, targetHits = 1L,
-                           neverDrop = TRUE, collapse = FALSE,
-                           verbosity = 0L)
-  )
+test_that("InfoConsensus rogue-dropping does not crash", {
+  # This exercises the neverDrop = FALSE path (rogue taxon screening).
+  # Previously crashed with SIGSEGV due to uninitialised phi/eff_k in MRP DataSet.
+  set.seed(6317)
+  result <- InfoConsensus(smallTrees,
+                          maxReplicates = 2L, targetHits = 1L,
+                          neverDrop = FALSE, maxDrop = 2L,
+                          collapse = FALSE, verbosity = 0L)
+
   expect_s3_class(result, "phylo")
+  expect_true(NTip(result) >= 10L)  # at most 2 tips dropped
+  expect_true(NTip(result) <= 12L)
+  expect_true(is.numeric(attr(result, "score")))
+  expect_true(attr(result, "score") >= 0)
 })
 
 
@@ -336,8 +336,7 @@ test_that(".CollapseRefine can collapse edges to improve score", {
                   list(as.phylo(99, 10)))
   class(inputTrees) <- "multiPhylo"
 
-  cidData <- .MakeCIDData(inputTrees, ClusteringInfoDistance,
-                          goodTree$tip.label)
+  cidData <- .MakeCIDData(inputTrees, goodTree$tip.label)
 
   badTree <- as.phylo(50, 10)
   badScore <- .ScoreTree(badTree, cidData)  # internal negated MCI
@@ -350,8 +349,7 @@ test_that(".CollapseRefine can collapse edges to improve score", {
 })
 
 test_that(".CollapseRefine returns valid phylo", {
-  cidData <- .MakeCIDData(smallTrees, ClusteringInfoDistance,
-                          smallTrees[[1]]$tip.label)
+  cidData <- .MakeCIDData(smallTrees, smallTrees[[1]]$tip.label)
   startTree <- smallTrees[[1]]
 
   result <- .CollapseRefine(startTree, cidData, verbosity = 0L)

@@ -152,7 +152,7 @@ ReplicateResult run_single_replicate(
     } else {
       Rprintf("  %s%s tree score: %.5g [%.0f ms]%s\n",
               strategy_name(strategy),
-              params.nni_first ? "+NNI" : "",
+              nni_wagner ? "+NNI" : "",
               best_wag, result.timings.wagner_ms,
               params.wagner_starts > 1 ? " (best of multiple starts)" : "");
     }

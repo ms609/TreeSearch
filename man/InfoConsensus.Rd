@@ -2,7 +2,6 @@
 % Please edit documentation in R/InfoConsensus.R
 \name{InfoConsensus}
 \alias{InfoConsensus}
-\alias{CIDConsensus}
 \title{Information-theoretic consensus tree}
 \usage{
 InfoConsensus(
@@ -20,7 +19,6 @@ InfoConsensus(
   verbosity = 1L
 )
 
-CIDConsensus(trees, ...)
 }
 \arguments{
 \item{trees}{An object of class \code{multiPhylo}: the input trees.
@@ -84,8 +82,6 @@ A tree of class \code{phylo} with attributes:
 Find a consensus tree that maximizes the mean Mutual Clustering
 Information (MCI) with a set of input trees, using a driven search with
 TBR, ratchet, drift, sectorial search, and tree fusing.
-
-\code{CIDConsensus()} is a deprecated alias for \code{InfoConsensus()}.
 }
 \details{
 Unlike the majority-rule consensus, which minimizes Robinson-Foulds

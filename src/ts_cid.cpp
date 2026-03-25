@@ -638,6 +638,14 @@ DataSet build_mrp_dataset(CidData& cd) {
   ds.min_steps.assign(total_chars, 1);
   ds.pattern_freq.assign(total_chars, 1);
 
+  // Populate IW weight arrays required by compute_iw() / compute_weighted_score().
+  // Binary MRP characters have min_steps = 1, so eff_k and phi use the
+  // standard IW formula: eff_k = concavity, phi = 1.0 (no XPIWE correction).
+  // If concavity is not finite (EW mode), fill with 0 / 1 as a safe default.
+  double k = std::isfinite(ds.concavity) ? ds.concavity : 0.0;
+  ds.eff_k.assign(total_chars, k);
+  ds.phi.assign(total_chars, 1.0);
+
   return ds;
 }
 
