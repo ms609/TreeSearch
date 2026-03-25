@@ -1,25 +1,30 @@
 # Agent C Progress Log
 
-## Current Task: T-214
-**Status:** PARKED (C, GHA 23536512228)
-**Description:** [Bug] Multi-split constraints not enforced during TBR search.
+## Current Task: S-RED focus 4 + T-242 PARKED
+**Status:** IN-PROGRESS (S-RED) / PARKED (T-242, GHA 23545987517)
 **Started:** 2026-03-25
 
-### Progress
-- Claimed task
-- Reproduced bug: 63/50 seeds violated constraints on 10-tip trees
-- Traced violation to TBR rerooting in `tbr_search()` during ratchet perturbation
-- Root cause: `classify_clip_constraints()` marks clips as UNCONSTRAINED when
-  they contain ALL tips from one side of a constraint split. But TBR rerooting
-  at an edge between constraint tips and extras puts them on opposite sides of
-  the attachment edge, destroying the split.
-- Implemented two-part fix:
-  1. Post-hoc `map_constraint_nodes()` after every accepted TBR/drift move;
-     reject moves that introduce violations (safety net)
-  2. FORBIDDEN clip zone for clips where both clip and rest straddle a split
-     (early rejection optimization)
-- Also fixed broken `.ts_driven_search_raw` → `ts_driven_search` callers
-  (from af7601b refactor)
-- Added `test-ts-constraint-multi.R` (Tier 2, 806 assertions): 10/12/15-tip
-  trees, 2-3 constraint splits, EW + IW
-- Committed on cpp-search (62658709d), GHA dispatched
+### T-242: Parallel hits_to_best bug
+- Fixed: extract_into() propagates real hits count
+- Committed 09ed4710f, GHA 23545987517 dispatched
+- Awaiting GHA results
+
+### S-RED Focus 4: Parallelism & RNG
+- Reviewed ts_parallel.cpp (558 lines), ts_parallel.h (142 lines), ts_rng.h/cpp (110 lines)
+- Found T-243: fuse_round missing build_postorder + constraint verification
+  - After impose_constraint modifies topology, postorder is stale → wrong scores
+  - Also missing verification that repair succeeded → constraint-violating trees in pool
+  - Fixed: committed 6adbc76d9 on cpp-search
+- Verified correct:
+  - Thread-local RNG setup/teardown in worker_thread (lines 106-108, 174-175)
+  - No R API calls from workers (all gated by ts_rng.h dispatch)
+  - Pool mutex covers all public methods
+  - Atomic stop_flag races are benign (relaxed ordering, boolean flag)
+  - Seeds pre-generated from R RNG on main thread (GetRNGstate/PutRNGstate bracket)
+  - DataSet copy: all vectors deep-copied by default copy constructor
+  - extract_into: now propagates hits_to_best correctly (T-242 fix)
+  - Consensus stability check: status() + update_consensus_stability() not atomic
+    but conservative (worst case: delayed stop)
+  - Fuse duplication: multiple workers can trigger fuse_round simultaneously;
+    serialized by mutex. Wasteful but correct.
+- Parallel resampling (lines 465-557): clean design, similar pattern. No issues.
