@@ -27,7 +27,7 @@ test_that("explicit maxReplicates below floor (10) triggers warning", {
   ds30 <- .make_30tip_ds()
   expect_warning(
     MaximizeParsimony(ds30, maxReplicates = 3L, targetHits = 1L,
-                      maxSeconds = 0.5, verbosity = 1L),
+                      maxSeconds = 0.5, verbosity = 0L),
     regexp = "replicates are recommended",
     ignore.case = TRUE
   )
@@ -79,7 +79,7 @@ test_that("explicit maxReplicates below formula threshold triggers warning", {
 
   expect_warning(
     MaximizeParsimony(ds_large, maxReplicates = min_reps - 1L,
-                      targetHits = 1L, maxSeconds = 0.1, verbosity = 1L),
+                      targetHits = 1L, maxSeconds = 0.1, verbosity = 0L),
     regexp = "replicates are recommended",
     ignore.case = TRUE
   )

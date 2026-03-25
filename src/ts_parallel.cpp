@@ -39,19 +39,26 @@ void ThreadSafePool::fuse_round(DataSet& ds, const DrivenParams& params,
 
   double fused_score = score_tree(fused, ds);
 
+  bool fused_ok = true;
   if (cd && cd->active &&
       violates_constraint_posthoc(fused, *cd)) {
     impose_constraint(fused, *cd);
+    fused.build_postorder();
     fused.reset_states(ds);
     fused_score = score_tree(fused, ds);
+    // Verify repair succeeded — impose_constraint is heuristic
+    map_constraint_nodes(fused, *cd);
+    for (int s = 0; s < cd->n_splits; ++s) {
+      if (cd->constraint_node[s] < 0) { fused_ok = false; break; }
+    }
   }
-  {
+  if (fused_ok) {
     std::vector<uint8_t> fused_collapsed;
     compute_collapsed_flags(fused, ds, fused_collapsed);
     pool_.add_collapsed(fused, fused_score, fused_collapsed);
   }
 
-  if (fused_score < best_before) {
+  if (fused_ok && fused_score < best_before) {
     pool_.set_hits_to_best(0);
   } else {
     pool_.set_hits_to_best(hits_before);
