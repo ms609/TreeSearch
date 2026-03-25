@@ -75,6 +75,11 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
+| T-224 | P1 | OPEN | — | **[Shiny] Crash: `.ts_driven_search_raw` not found when searching.** Agnarsson2004 62t, 242 chars. ExtendedTask invoke error. | From a008. Distinct from T-220 (`searchExtendedIw`). |
+| T-225 | P2 | OPEN | — | **[Shiny] Tree space "Connect" shows nothing.** Convex hulls and MST ticked but nothing renders. Agnarsson2004. | From a006. |
+| T-226 | P3 | OPEN | — | **[Shiny] "Trees in sequence" connect mode — review/remove.** May not make sense under new C++ search engine (no meaningful replicate ordering). | From a007. Design question. |
+| T-227 | P3 | OPEN | — | **[Shiny] Dataset dropdown hover polish.** (i) Hover highlight persists after mouse leaves dropdown area. (ii) Currently-selected item gets light-blue-on-white hover instead of retaining its selected styling. | From a009. Follow-up to T-219. |
+| T-228 | P3 | OPEN | — | **[Shiny] Search config modal shows "Implied" instead of "Implied (extended)" on first open.** `cur_weights` fallback is `"on"` but reactive default is `"xpiwe"`. | From a.010. T-161 set the reactive default correctly; only the modal `selectInput` initialisation is wrong. |
 
 ### Standing Tasks
 
@@ -83,6 +88,6 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by B (focus 10: Profile & IW scoring). |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 by A (round 15). |
-| S-PR | dyn | ASSIGNED (B) | — | **Standing: PR maintenance** | Last run: 2026-03-25 by F (#215/#213/#221 resolved) + A (fixed #215 compile errors). Only #222 still CONFLICTING. |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by B. Closed #224 (superseded by T-218). 3 CONFLICTING (#215: ts_rcpp.cpp only; #222: 12 files; #224→closed). 4 MERGEABLE but all fail GHA due to cpp-search issues (stale IW refs, T-214 constraint bug). #210 (cpp-search→main) MERGEABLE. |
 
 

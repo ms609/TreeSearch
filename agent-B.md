@@ -16,3 +16,10 @@
 4. **T-223** (P3) — Tree plot excess white space. Changed Display to use
    `edge.length = NULL` (cladogram) so tree fills width. Commit `280aa446d`.
    Note: "Align tips" checkbox is now redundant.
+
+5. **S-PR** — PR maintenance round:
+   - Closed PR #224 (superseded by T-218)
+   - PRs #215, #222 still CONFLICTING (#215 only ts_rcpp.cpp; #222 needs 12-file rebase)
+   - All MERGEABLE PRs (#221, #216, #213, #211) fail GHA due to cpp-search issues
+     (stale IW refs in test-ts-iw.R, T-214 multi-split constraint bug)
+   - #210 (cpp-search→main) MERGEABLE
