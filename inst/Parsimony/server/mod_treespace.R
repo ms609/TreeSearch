@@ -48,12 +48,13 @@ treespace_ui <- function(id) {
 #' @param plotFormat Reactive wrapping top-level \code{input$plotFormat}.
 #' @param distances Reactive returning tree distance matrix (from clustering
 #'   module).
+#' @param mapLines Reactive wrapping top-level \code{input$mapLines}.
 #' @param LogDistances Function that logs distance computation code.
 #' @param log_fns Named list of logging functions from logging.R:
 #'   BeginLogP, LogCommentP, LogCodeP, LogIndent, LogClusterings.
 treespace_server <- function(id, r, clusterings, silThreshold, scores,
                              concavity, distMeth, plotFormat,
-                             distances, LogDistances, log_fns) {
+                             distances, mapLines, LogDistances, log_fns) {
   moduleServer(id, function(input, output, session) {
 
     # Unpack logging functions
@@ -328,11 +329,11 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
                frame.plot = nDim > 2L,
                type = "n", asp = 1, xlim = range(map), ylim = range(map))
 
-          if ("seq" %in% input$mapLines) {
+          if ("seq" %in% mapLines()) {
             lines(map[, j], map[, i], col = "#ffcc33", lty = 2)
           }
 
-          if ("mst" %in% input$mapLines) {
+          if ("mst" %in% mapLines()) {
             segments(map[mstEnds()[, 1], j], map[mstEnds()[, 1], i],
                      map[mstEnds()[, 2], j], map[mstEnds()[, 2], i],
                      col = "#bbbbbb", lty = 1)
@@ -344,7 +345,7 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
                  lwd = spaceLwd()
           )
 
-          if (cl$sil > silThreshold() && "hull" %in% input$mapLines) {
+          if (cl$sil > silThreshold() && "hull" %in% mapLines()) {
             for (clI in seq_len(cl$n)) {
               inCluster <- cl$cluster == clI
               clusterX <- map[inCluster, j]
@@ -457,7 +458,7 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
                "  ylim = range(map)   # Constant Y range for all dimensions",
                ")")
 
-      if ("seq" %in% input$mapLines) {
+      if ("seq" %in% mapLines()) {
         LogCommentP("Connect trees in sequence")
         LogCodeP("lines(",
                  "  x = map[, j],",
@@ -467,7 +468,7 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
                  ")")
       }
 
-      if ("mst" %in% input$mapLines) {
+      if ("mst" %in% mapLines()) {
         LogCommentP("Plot minimum spanning tree (Gower 1969)")
         LogCodeP(
           "mst <- MSTEdges(as.matrix(dists))",
@@ -495,7 +496,7 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
       )
 
       cl <- clusterings()
-      if (cl$sil > silThreshold() && "hull" %in% input$mapLines) {
+      if (cl$sil > silThreshold() && "hull" %in% mapLines()) {
         LogCommentP("Mark clusters")
         LogCodeP("for (clI in seq_len(nClusters)) {")
         LogIndent(+2)
@@ -710,7 +711,7 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
       # Expose input values for cache keys in consensus.R
       spaceCol  = reactive(input$spaceCol),
       spacePch  = reactive(input$spacePch),
-      mapLines  = reactive(input$mapLines),
+      mapLines  = mapLines,
       relators  = reactive(input$relators)
     )
   })

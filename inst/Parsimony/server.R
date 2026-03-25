@@ -111,6 +111,7 @@ server <- function(input, output, session) {
     distMeth = reactive(input$distMeth),
     plotFormat = reactive(input$plotFormat),
     distances = distances,
+    mapLines = reactive(input$mapLines),
     LogDistances = LogDistances,
     log_fns = list(
       BeginLogP      = BeginLogP,
