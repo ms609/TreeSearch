@@ -282,7 +282,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-215 | cli progress bar `::` resolution fix | A | `pb_env` parent `baseenv()` → `environment()` in `MaximizeParsimony()`. Commit 908860d25. |
 | T-216 | Shiny app `"brazeau"` → `"bgs"` | A | 8 occurrences in `mod_search.R` (comparisons, defaults, selectInput value). Commit 908860d25. |
 | T-217 | `tree = NULL` in `MaximizeParsimony()` Morphy path | A | Added `!is.null(tree)` guard on Morphy delegation (line 485). Main path already correct. Commit 908860d25. |
-| T-218 | Simplification transforms corrupt NA scoring | A | Commit `a48bfc4ad` let `?` tokens through Transforms 2/3 (not NA-safe). Fix: revert transform bypass, add conservative constant-char removal inside Phase 1 for `?`-only chars. Supersedes D's simple revert PR #224. Commit `08054102f`. |
+| T-218 | Simplification transforms corrupt NA scoring | A | Full fix: `has_genuine_inapp` flag in `SimplifiedPattern` gates Phase 1 on genuine `-` only; `?`-only characters use Fitch (transforms safe). `build_dataset()` uses flag instead of token scanning. Initial conservative fix `08054102f`, full fix `c32e213bd`. |
 | T-221 | [Shiny] Crash loop in cluster consensus concordance | B | `LabelConcordance()` guard `!is.null()` → `inherits(, "phylo")`. Commit `bc5313c22`. |
 | T-222 | [Shiny] "Align tips" does nothing in Characters on trees | B | `Display` callback always set edge.length=1; now NULL when tipsRight checked. Commit `b23580823`. |
 | T-223 | [Shiny] Tree plot left-aligned with excess white space | B | Display now sets edge.length=NULL (cladogram) to fill width. "Align tips" checkbox now redundant. Commit `280aa446d`. |
