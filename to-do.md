@@ -30,38 +30,29 @@
 
 ### Parallel Tempering / SA (Objective 17)
 
-T-198–T-201 (PT core) are on PR #215. T-199 evaluation (agent-c) found
-Boltzmann PT is broken for parsimony but PCSA (post-convergence SA with
-best-tree restart) is highly effective under EW at 125+ tips. See
-`TS-PTeval/dev/pt_t199_findings.md`.
+PR #215 (`feature/parallel-temper`) CLOSED without merge. T-199 evaluation
+found Boltzmann PT is broken for parsimony but PCSA is effective at 125+ tips.
+See `TS-PTeval/dev/pt_t199_findings.md`. T-207/T-210 cherry-picked into new
+PR #227 (`feature/pcsa-phase`).
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-198–201 | P2 | PR #215 (C) | — | **PT core + pipeline integration.** Boltzmann PT disabled by default. | On `feature/parallel-temper`. |
-| T-207 | P2 | PR #222 (C) | — | **SA perturbation phase in `run_single_replicate()`.** Multi-cycle PCSA integrated. | On `feature/pt-eval` (TS-PTeval). Includes T-210 fix. GHA 23509475416 PASS. |
+| T-198–201 | P2 | STALE (PR #215 closed) | — | **PT core + pipeline integration.** Boltzmann PT disabled by default. | On `feature/parallel-temper`. PR #215 closed; needs new PR or cherry-pick. |
+| T-207 | P2 | PR #227 (D) | — | **Multi-cycle PCSA perturbation phase.** Includes T-210 fix. | Cherry-picked from `feature/pt-eval` to `feature/pcsa-phase`. |
 
 ### Bugs
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-242 | P1 | PARKED (C, GHA 23545987517) | — | **[Bug?] Agnarsson2004 IW search quality regression.** 230 runs, only 5 hit best score (2% hit rate). User reports "1 trees in memory: 1 sampled, each with score 50.1872 (k = 5.62)". May indicate search regression or IW landscape difficulty. | From a.20. Investigate whether this is a genuine regression or expected IW behaviour. |
-| T-196 | P2 | PR #215 (M) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); arrives with PT PR #215. |
-| T-210 | P2 | PR #222 (C) | — | **[Bug] SA doesn't save best-found topology.** Fix: `anneal_search` tracks/restores best tree at phase boundaries. | On `feature/pt-eval` (TS-PTeval). In T-207 PR #222. |
-
-### Testing & Constraint Handling
-
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-| T-212 | P2 | PARKED (B, GHA 23543892219) | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests on cpp-search. GHA 23528636505 failed (59 inapplicable + constraint failures). Needs re-dispatch now that T-214 is done. | Was blocked by T-214 (now complete). |
+| T-196 | P2 | STALE (PR #215 closed) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Fix on `feature/parallel-temper` (`6dc28a2`); PR #215 closed — needs cherry-pick or new PR. |
+| T-210 | P2 | PR #227 (D) | — | **[Bug] SA doesn't save best-found topology.** Fix: `anneal_search` tracks/restores best tree at phase boundaries. | In T-207 PR #227 (`feature/pcsa-phase`). |
 
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-179 | P2 | PR #215 (M) | — | **Large-tree strategy preset.** For ≥120 tips. | On `feature/parallel-temper`. Commit `fab1e52c`. Arrives with PT PR #215. |
-
-| T-182 | P3 | PR #221 (G) | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | On `feature/adaptive-ratchet`. GHA 23508899686 PASS. |
 | T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
 | T-187 | P3 | PR #226 (D) | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
 
@@ -69,16 +60,17 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-232 | P2 | PARKED (D, GHA 23543699366) | — | **[Shiny] "Tips to show" input bounces back on decrement.** Clicking "down" arrow resets to previous value (e.g. 54 for Sun dataset). | From a.013. Fix: `isolate(input$keepNTips)` in `UpdateKeepNTipsRange`. |
-| T-240 | P2 | PARKED (D, GHA 23544604214) | — | **[Shiny] Pool suboptimal filter not applied when changed mid-search.** After search, changing "Keep if suboptimal by" from ≤6 to ≤2 or ≤0 doesn't filter existing pool trees. "3 trees in memory" unchanged. | From a.17. |
-| T-239 | P3 | PARKED (D, GHA 23545538742) | — | **[Shiny] Cluster consensus: highlight edges unique to a cluster.** Heatmap colouring: emphasize "unique to cluster" vs "in 5/6 clusters". Agnarsson (6 clusters) is testbed. | From a.07. Feature request. |
-| T-241 | P3 | PARKED (D, GHA 23545261957) | — | **[Shiny] Show cluster assignment next to tree selector.** Add "(cluster X)" in cluster colour after "Tree to plot" label. | From a.19. Feature request. |
+| T-232 | P2 | PARKED (D, GHA 23543699366†) | — | **[Shiny] "Tips to show" input bounces back on decrement.** Clicking "down" arrow resets to previous value (e.g. 54 for Sun dataset). | From a.013. Fix committed. GHA failed pre-T-214 fix; awaiting re-validation on current HEAD (run 23547582438 queued). |
+| T-240 | P2 | PARKED (D, GHA 23544604214†) | — | **[Shiny] Pool suboptimal filter not applied when changed mid-search.** After search, changing "Keep if suboptimal by" from ≤6 to ≤2 or ≤0 doesn't filter existing pool trees. | From a.17. Fix committed. GHA failed pre-T-214; awaiting re-validation. |
+| T-239 | P3 | PARKED (D, GHA 23545538742†) | — | **[Shiny] Cluster consensus: highlight edges unique to a cluster.** Heatmap colouring: emphasize "unique to cluster" vs "in 5/6 clusters". Agnarsson (6 clusters) is testbed. | From a.07. Feature committed. GHA failed pre-T-214; awaiting re-validation. |
+| T-241 | P3 | PARKED (D, GHA 23545261957†) | — | **[Shiny] Show cluster assignment next to tree selector.** Add "(cluster X)" in cluster colour after "Tree to plot" label. | From a.19. Feature committed. GHA failed pre-T-214; awaiting re-validation. |
 
 ### Standing Tasks
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by D (focus 3: Ratchet & perturbation). No bugs found. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by D (focus 4: parallelism & RNG). Consensus stability bug fixed. |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by D. All GHA runs queued/in-progress (system backlog). #210 MERGEABLE (cpp-search→main). #211 UNKNOWN (madslatkin). #213/#215/#216/#222 UNKNOWN (feature branches). #178/#106 CONFLICTING (stale — consider closing). No actionable items until GHA clears. |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 by F (round 20). Cleaned stale entries, updated PR refs. |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by F (round 20 triage). Open PRs: #227 (PCSA), #226 (perturb-stop), #216 (native-search), #213 (CID-consensus). #215/#222 now CLOSED. #210 (draft cpp-search→main). #178/#106 stale — consider closing. |
 
