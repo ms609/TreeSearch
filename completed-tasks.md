@@ -283,4 +283,5 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-216 | Shiny app `"brazeau"` → `"bgs"` | A | 8 occurrences in `mod_search.R` (comparisons, defaults, selectInput value). Commit 908860d25. |
 | T-217 | `tree = NULL` in `MaximizeParsimony()` Morphy path | A | Added `!is.null(tree)` guard on Morphy delegation (line 485). Main path already correct. Commit 908860d25. |
 | T-218 | Simplification transforms corrupt NA scoring | A | Commit `a48bfc4ad` let `?` tokens through Transforms 2/3 (not NA-safe). Fix: revert transform bypass, add conservative constant-char removal inside Phase 1 for `?`-only chars. Supersedes D's simple revert PR #224. Commit `08054102f`. |
+| T-221 | [Shiny] Crash loop in cluster consensus concordance | B | `LabelConcordance()` guard `!is.null()` → `inherits(, "phylo")`. Commit `bc5313c22`. |
 TASKEOF 2>&1

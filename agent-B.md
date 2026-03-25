@@ -1,18 +1,19 @@
 # Agent B Progress Log
 
 ## Current Task
-**IDLE**
+**T-221** (P1) — [Shiny] Crash loop: `as.Splits` on NULL in cluster consensus display
 
-### Completed: S-RED focus 10 — Profile & IW scoring (2026-03-25)
+### Status: COMPLETE
 
-Reviewed ts_fitch.cpp IW/Profile paths, ts_data.cpp precomputation.
+**Root cause:** `LabelConcordance()` in `mod_consensus.R` guarded with
+`!is.null(r$plottedTree)`, which passes when `r$plottedTree` is a list
+(cluster case). `LabelSplits` receives the list, `as.Splits.list` iterates
+and hits NULL elements → infinite error loop in `renderCachedPlot`.
 
-**Key findings:**
-- IW/Profile scoring logic correct (compute_iw, compute_profile, precompute deltas, dispatch)
-- Concavity sentinel (1.0 for Profile) correctly activates weighted pipeline
-- precomputed_steps offset correctly applied in both IW and Profile paths
-- Ratchet PerturbSnapshot correctly saves/restores active_mask (already fixed)
-- Latent defect in precompute_profile_delta old_cost boundary (unreachable)
-- Stale reference values in test-ts-iw.R (pre-existing, needs recompute)
+**Fix:** Changed guard to `inherits(r$plottedTree, "phylo")`. Concordance
+labels are now skipped for cluster consensus plots (per-cluster concordance
+would need separate enhancement).
 
-**Added:** 12 test assertions in test-ts-iw-profile-red10.R (all pass)
+**Commit:** `bc5313c22` on `cpp-search`.
+
+### Also triaged: a003, a004, a005 → T-221 (P1), T-222 (P3), T-223 (P3)
