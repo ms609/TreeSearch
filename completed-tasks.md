@@ -8,6 +8,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-235 | [Shiny] Search & profile notifications disappear prematurely | A | `tryCatch` sibling handler bug: `req(FALSE)` in `shiny.silent.error` handler caught by sibling `error` handler. Fix: single `error` handler with `inherits()` check + `stop(e)` re-throw. Commit `609241b65`. |
 | T-213 | Implement impose_constraint() for post-hoc topology repair | D (cleanup) | Already on cpp-search (a666918ed, PR #223). 88 tests pass. Formal closeout during S-COORD. |
 | T-220 | [Shiny] Crash: searchExtendedIw not found when clicking Continue | D | Variable used in LogCode() before assignment. Moved snapshot above LogCode(). Direct fix on cpp-search. |
 | T-229 | [Bug] XFORM scoring used IW path for non-hierarchy chars | D | `fitch_score_ew()` missing `ScoringMode::XFORM` in EW branch. MaxP scores wrong (3 vs 7). 1-line fix. S-RED focus 1. |
@@ -292,4 +293,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-228 | [Shiny] Modal shows "Implied" not "Implied (extended)" | B | Fallback `"on"` → `"xpiwe"` to match reactive default. Commit `63e86f237`. |
 | T-227 | [Shiny] Dataset dropdown hover polish | B | `:hover` pseudo-class for hover, `.selected` retains blue bg on hover. Commit `fd401ec81`. |
 | S-COORD | Coordination review round 18 | B | Created coordination.md (local). PR #210 GHA in flight. No unresolved bugs on cpp-search. 3 OPEN P3 tasks deferred. |
+
+## 2026-03-25 (afternoon)
+| S-RED | Red-team review focus 2: Search topology invariants | C | Reviewed ts_tbr.cpp, ts_drift.cpp, ts_search.cpp, ts_tree.h/.cpp (2856 lines). Found T-235: SPR stale state arrays after rejected regraft (NA/IW screening degradation, low practical impact). TBR/drift/NNI topology invariants verified correct. |
 TASKEOF 2>&1
