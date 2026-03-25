@@ -706,6 +706,45 @@ consensus_server <- function(id, r,
     # Cluster consensus plot (absorbed from clustering.R)
     ############################################################################
 
+    # Per-edge colors for cluster consensus: unique splits get the full
+    # cluster color; splits shared by other clusters fade towards grey.
+    ClusterEdgeCols <- function(tree, cluster_col, all_splits, cluster_idx) {
+      n_tip <- Ntip(tree)
+      n_edge <- nrow(tree$edge)
+      edge_col <- rep(cluster_col, n_edge)
+
+      my_splits <- all_splits[[cluster_idx]]
+      n_clusters <- length(all_splits)
+      if (length(my_splits) == 0 || n_clusters < 2) return(edge_col)
+
+      other_idx <- setdiff(seq_len(n_clusters), cluster_idx)
+      split_nodes <- as.integer(names(my_splits))
+
+      shared <- integer(length(my_splits))
+      for (j in other_idx) {
+        if (length(all_splits[[j]]) > 0) {
+          shared <- shared + as.integer(my_splits %in% all_splits[[j]])
+        }
+      }
+      uniqueness <- 1 - shared / length(other_idx)
+
+      grey_rgb <- col2rgb("grey70")[, 1]
+      col_rgb <- col2rgb(cluster_col)[, 1]
+      edge_child <- tree$edge[, 2]
+      for (e in seq_len(n_edge)) {
+        child <- edge_child[e]
+        if (child > n_tip) {
+          sidx <- match(child, split_nodes)
+          if (!is.na(sidx)) {
+            u <- uniqueness[sidx]
+            bl <- grey_rgb + (col_rgb - grey_rgb) * u
+            edge_col[e] <- rgb(bl[1], bl[2], bl[3], maxColorValue = 255)
+          }
+        }
+      }
+      edge_col
+    }
+
     PlotClusterCons <- function() {
       LogMsg("PlotClusterCons()")
       on.exit(LogMsg("/PlotClusterCons()"))
@@ -724,21 +763,30 @@ consensus_server <- function(id, r,
         r$plottedTree <- vector("list", cl$n)
         par(mfrow = c(nRow, ceiling(cl$n / nRow)))
 
+        # Phase 1: compute all cluster consensus trees
+        all_cons <- vector("list", cl$n)
         for (i in seq_len(cl$n)) {
-          col <- palettes[[min(length(palettes), cl$n)]][i]
-          PutTree(r$trees)
-          PutData(cl$cluster)
-
           cons <- ConsensusWithout(r$trees[cl$cluster == i], dropped,
                                    p = consP())
           cons <- UserRoot(cons)
           if (unitEdge()) {
             cons$edge.length <- rep.int(1, dim(cons$edge)[1])
           }
-          cons <- SortEdges(cons)
+          all_cons[[i]] <- SortEdges(cons)
+        }
+        all_splits <- lapply(all_cons, as.Splits)
+
+        # Phase 2: plot with uniqueness-based edge coloring
+        for (i in seq_len(cl$n)) {
+          col <- palettes[[min(length(palettes), cl$n)]][i]
+          PutTree(r$trees)
+          PutData(cl$cluster)
+
+          cons <- all_cons[[i]]
           r$plottedTree[[i]] <- cons
+          edge_col <- ClusterEdgeCols(cons, col, all_splits, i)
           plot(cons, edge.width = 2, font = 3, cex = 0.83,
-               edge.color = col, tip.color = TipCols()[cons$tip.label])
+               edge.color = edge_col, tip.color = TipCols()[cons$tip.label])
           legend("topright", paste0("Cluster ", i), pch = 15, col = col,
                  pt.cex = 1.5, bty = "n")
           LabelConcordance()
@@ -790,37 +838,69 @@ consensus_server <- function(id, r,
             " # Colour tips by stability"
           )
         )
+        LogCommentP("Compute all cluster consensus trees:", 1)
+        LogCodeP(
+          paste0("allCons <- lapply(seq_len(", cl$n, "), function(i) {"),
+          "  clusterTrees <- trees[clustering == i]",
+          "  cons <- ConsensusWithout(",
+          "    trees = clusterTrees,",
+          paste0("    tip = ", EnC(dropped), ","),
+          paste0("    p = ", consP()),
+          "  )"
+        )
+        LogUserRoot(dropped = dropped)
+        if (unitEdge()) {
+          LogExprP("  cons$edge.length <- rep.int(1, nrow(cons$edge))")
+        }
+        LogCodeP("  TreeTools::SortTree(cons)", "})")
+        LogCommentP(paste0(
+          "Compare splits across clusters to highlight unique edges"
+        ))
+        LogCodeP("allSplits <- lapply(allCons, TreeTools::as.Splits)")
         LogCommentP("Plot each consensus tree in turn:", 1)
         LogCodeP(paste0("for (i in seq_len(", cl$n, ")) {"))
         LogIndent(+2)
         LogCodeP(
-          "clusterTrees <- trees[clustering == i]",
-          "cons <- ConsensusWithout(",
-          "  trees = clusterTrees,",
-          paste0("  tip = ", EnC(dropped), ","),
-          paste0("  p = ", consP()),
-          ")"
+          "cons <- allCons[[i]]",
+          "nTip <- ape::Ntip(cons)",
+          "mySplits <- allSplits[[i]]",
+          paste0("otherIdx <- setdiff(seq_len(", cl$n, "), i)"),
+          "shared <- integer(length(mySplits))",
+          "for (j in otherIdx) {",
+          "  if (length(allSplits[[j]]) > 0)",
+          "    shared <- shared + (mySplits %in% allSplits[[j]])",
+          "}",
+          "uniqueness <- 1 - shared / length(otherIdx)",
+          "greyRgb <- col2rgb(\"grey70\")[, 1]",
+          "colRgb <- col2rgb(clusterCol[i])[, 1]",
+          "edgeCol <- rep(clusterCol[i], nrow(cons$edge))",
+          "splitNodes <- as.integer(names(mySplits))",
+          "for (e in seq_len(nrow(cons$edge))) {",
+          "  child <- cons$edge[e, 2]",
+          "  if (child > nTip) {",
+          "    si <- match(child, splitNodes)",
+          "    if (!is.na(si)) {",
+          "      bl <- greyRgb + (colRgb - greyRgb) * uniqueness[si]",
+          "      edgeCol[e] <- rgb(bl[1], bl[2], bl[3], maxColorValue = 255)",
+          "    }",
+          "  }",
+          "}"
         )
-        LogUserRoot(dropped = dropped)
-        if (unitEdge()) {
-          LogExprP("cons$edge.length <- rep.int(1, nrow(cons$edge))")
-        }
-        LogSortEdges("cons")
         LogCodeP("plot(",
                  "  cons,",
-                 "  edge.width = 2,             # Widen lines",
-                 "  font = 3,                   # Italicize labels",
-                 "  cex = 0.83,                 # Shrink tip font size",
-                 "  edge.color = clusterCol[i], # Colour tree",
+                 "  edge.width = 2,",
+                 "  font = 3,",
+                 "  cex = 0.83,",
+                 "  edge.color = edgeCol,",
                  "  tip.color = tipCols[cons$tip.label]",
                  ")")
         LogCodeP("legend(",
                  "  \"bottomright\",",
                  "  paste(\"Cluster\", i),",
-                 "  pch = 15,            # Filled circle icon",
-                 "  pt.cex = 1.5,        # Increase icon size",
+                 "  pch = 15,",
+                 "  pt.cex = 1.5,",
                  "  col = clusterCol[i],",
-                 "  bty = \"n\"            # Don't plot legend in box",
+                 "  bty = \"n\"",
                  ")")
         LogConcordance("cons")
         LogIndent(-2)
