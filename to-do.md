@@ -53,7 +53,6 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 |----|-----|--------|--------|-------------|-------|
 | T-212 | P2 | PARKED (B, GHA 23543892219) | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests on cpp-search. GHA 23528636505 failed (59 inapplicable + constraint failures). Needs re-dispatch now that T-214 is done. | Was blocked by T-214 (now complete). |
 
-| T-235 | P3 | ASSIGNED (B) | — | **[Bug] SPR search stale state arrays after rejected regraft.** In `spr_search()`, when a candidate passes indirect screening but fails `full_rescore`, `spr_unclip()` only partially restores states (clip-to-root), leaving other nodes with regrafted-topology states. Degrades screening for subsequent clips (NA/IW datasets only). Final score always correct. Fix: add `full_rescore()` after `spr_unclip()` on the rejection path. | Found by S-RED focus 2. SPR rarely used (all presets disable `sprFirst`). |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
@@ -76,7 +75,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by C (focus 2: Search topology invariants). Found T-235 (SPR stale state). |
+| S-RED | dyn | ASSIGNED (D) | — | **Standing: Red-team review** | Focus 3. |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 round 19 (D). T-214 complete; T-212 re-dispatched. 3 OPEN specific tasks remain (T-183, T-187, T-226). Shiny bug backlog cleared. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by B. Open PRs: #210 (cpp-search→main, MERGEABLE, GHA queued), #211 (madslatkin, MERGEABLE, GHA queued), #213/#215/#216/#221/#222 (feature branches, all failing/cancelled/unknown). #178/#106 CONFLICTING (stale). |
