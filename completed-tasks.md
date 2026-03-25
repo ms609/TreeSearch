@@ -10,6 +10,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 |----|-------------|-------|-------|
 | T-213 | Implement impose_constraint() for post-hoc topology repair | D (cleanup) | Already on cpp-search (a666918ed, PR #223). 88 tests pass. Formal closeout during S-COORD. |
 | T-220 | [Shiny] Crash: searchExtendedIw not found when clicking Continue | D | Variable used in LogCode() before assignment. Moved snapshot above LogCode(). Direct fix on cpp-search. |
+| T-229 | [Bug] XFORM scoring used IW path for non-hierarchy chars | D | `fitch_score_ew()` missing `ScoringMode::XFORM` in EW branch. MaxP scores wrong (3 vs 7). 1-line fix. S-RED focus 1. |
 | T-219 | [Shiny] Dataset dropdown hover state visible | D | Selectize default hover (#f5f5f5) near-invisible on white. Added explicit hover CSS (#dde6ed). |
 | T-211 | Stale `final_` in temper candidate scoring | C | Analyzed: conservative-only. Stale `final_` after clip/evaluate/restore biases Boltzmann screening but not verified acceptance (`temper_full_rescore` gates all accepted moves). Fix would require per-candidate full rescore or save/restore of all `final_` arrays — cost exceeds negligible SA benefit. Closed as not worth fixing. |
 

@@ -1,20 +1,15 @@
 # Agent D Progress Log
 
-## Current Task: S-COORD (round 17)
+## Current Task: S-RED focus 1
 **Status:** COMPLETE
 **Started:** 2026-03-25
 
 ### Findings
-- T-214 GHA 23536512228 FAILED (9 constraint failures remain in test-ts-random-constrained.R).
-  Fix commit `62658709d` didn't fully resolve. Moved back to ASSIGNED (C).
-- T-212 GHA 23528636505 FAILED. Blocked by T-214 — constraint test failures
-  dominate. Updated status to BLOCKED (T-214).
-- PR #224 (T-218) was closed without merge — Agent A's fix `08054102f` superseded it.
-  T-218 resolved on cpp-search.
-- Cleaned to-do.md: fixed missing table separator in Bugs section, removed 2 orphan
-  empty tables, collapsed duplicate blank lines, updated S-PR/S-COORD notes.
-- Agents B, E, G are IDLE. Agent C parked on T-214.
-- Only 3 OPEN specific tasks: T-183, T-187 (features — deprioritized in bug-fix phase),
-  T-226 (Shiny design question).
-- **Blocker for release**: T-214 (multi-split constraints). 9 test failures on GHA.
-  All other known bugs are on pending PRs (#215, #222).
+- **T-229 (P2 bug):** Found and fixed XFORM scoring bug in `fitch_score_ew()`.
+  Missing `ScoringMode::XFORM` in EW branch caused non-hierarchy chars to be
+  scored via IW path (k=0) instead of EW. MaximizeParsimony reported wrong scores
+  (e.g. 3 instead of 7). 1-line fix. Committed to cpp-search.
+- XPIWE formulas verified correct (Goloboff 2014 Extension 3).
+- NaN guard for k=0 correct.
+- Minor: obs_count=0 division risk (defensive, not filed).
+- IW+hierarchy correctly blocked by R validation.
