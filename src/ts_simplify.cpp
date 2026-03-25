@@ -185,19 +185,16 @@ SimplificationResult simplify_patterns(
 
     // Build per-tip token bitmasks from the original data
     sp.tip_tokens.resize(n_tips);
-    bool has_inapp = false;
     bool has_genuine_inapp = false;
     uint32_t all_states_mask = (1u << n_states) - 1;
     for (int tip = 0; tip < n_tips; ++tip) {
       int token = tip_data_r[tip + n_tips * p] - 1;  // 1-based to 0-based
       sp.tip_tokens[tip] = token_states[token];
+      // Genuine inapplicable: token has inapp bit but is NOT full-?
       if (inapp_state >= 0 &&
-          (token_states[token] & (1u << inapp_state))) {
-        has_inapp = true;
-        // Full-? (all bits set) is missing data, not genuine inapplicability
-        if (token_states[token] != all_states_mask) {
-          has_genuine_inapp = true;
-        }
+          (token_states[token] & (1u << inapp_state)) &&
+          token_states[token] != all_states_mask) {
+        has_genuine_inapp = true;
       }
     }
 

@@ -281,7 +281,24 @@ that worktree. To mark a task as in-flight on a worktree, set its status to
 On `/assign X`:
 
 1. Read `agent-X.md`. If a task is already in-progress, resume it.
-2. Otherwise, check `issues.md` **before** `to-do.md`:
+2. **Triage `aXXX.md` / `a.XXX` bug reports** (see "Shiny bug report intake" below):
+   a. List all `a[0-9]*.md` **and** `a.[0-9]*` files in the project root
+      (excluding any `*.claimed-*.md` / `*.claimed-*` files).
+   b. For each file, attempt `mv aXXX.md aXXX.claimed-X.md`. If the
+      rename fails (file gone or access denied), another agent claimed it
+      — skip.
+   c. For each successfully claimed file: read its content. **Skip files
+      shorter than 20 characters** (likely mid-edit) — rename them back
+      to the original name so they are picked up later.
+   d. Create a `to-do.md` task under `### Shiny App` for each valid
+      report. Assign the next available `T-nnn` ID, a priority based on
+      severity (default P2), and tag as `[Shiny]`. Use the file's content
+      as the description/notes.
+   e. Delete the `aXXX.claimed-X.md` file once the `to-do.md` entry is
+      written.
+   f. Repeat for all claimed files before moving on. **Do not start
+      working a task until all pending reports are triaged.**
+3. Check `issues.md` **before** `to-do.md`:
    a. If `issues.md` contains any unclaimed issues (blocks whose first line
       does **not** start with `CLAIMED`), **claim the bottom-most unclaimed
       issue** by prepending `CLAIMED (X):` to its first line.
@@ -293,16 +310,20 @@ On `/assign X`:
    d. **While `issues.md` still has unclaimed issues, triaging them takes
       priority over picking up existing `to-do.md` tasks** (an issue may
       contain a P0).
-3. If `issues.md` is empty or all issues are already claimed, claim the next
+4. If `issues.md` is empty or all issues are already claimed, claim the next
    OPEN task from `to-do.md` as before.
 
 Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 
-> **Concurrency guard:** Only the bottom-most *unclaimed* issue may be
-> claimed. Because agents always target the bottom and mark it `CLAIMED (X)`
-> immediately, two agents will never parse the same issue. If an agent sees
-> the bottom issue is already `CLAIMED`, it moves up to the next unclaimed
-> one.
+> **Concurrency guard (issues.md):** Only the bottom-most *unclaimed* issue
+> may be claimed. Because agents always target the bottom and mark it
+> `CLAIMED (X)` immediately, two agents will never parse the same issue. If
+> an agent sees the bottom issue is already `CLAIMED`, it moves up to the
+> next unclaimed one.
+>
+> **Concurrency guard (aXXX.md / a.XXX):** Atomic rename (`mv aXXX.md
+> aXXX.claimed-X.md`) ensures exactly one agent wins each file. NTFS
+> rename is atomic; losers see "file not found" and skip.
 
 ### During work
 
@@ -326,6 +347,48 @@ Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 5. Update `coordination.md` if strategic objectives are affected.
 6. Take next task.
 
+### Shiny bug report intake
+
+The human files Shiny app bugs as individual files in the project root.
+Two naming conventions are in use:
+
+- **Old:** `a001.md`, `a002.md`, … (zero-padded, `.md` extension)
+- **New (from a.010 onward):** `a.010`, `a.011`, … (dot-separated, no extension)
+
+Each file contains a free-text bug description. The human's workflow is:
+create file → write bug → save → never touch the file again.
+
+**Agent responsibility:** Triage all pending bug report files into
+`to-do.md` at the start of every `/assign` (step 2 in Assignment above).
+
+**Claim protocol:**
+```bash
+# List unclaimed reports (both conventions)
+ls a[0-9]*.md a.[0-9]* 2>/dev/null | grep -v 'claimed'
+
+# Claim atomically (rename)
+mv a001.md a001.claimed-X.md
+mv a.010 a.010.claimed-X
+
+# Read, triage into to-do.md, then delete
+cat a001.claimed-X.md
+# ... create to-do.md entry ...
+rm a001.claimed-X.md
+```
+
+**Skip guard:** Files shorter than 20 characters are likely mid-edit.
+Rename them back (`mv aXXX.claimed-X.md aXXX.md`) and leave for a
+later pass.
+
+**to-do.md placement:** All Shiny bugs go under `### Shiny App`. Create
+the section if it doesn't exist. Default priority P2 unless the content
+clearly indicates higher severity (crash = P1, cosmetic = P3).
+
+**Shiny bug fixes** are committed directly to `cpp-search` (they are
+bug fixes in `inst/Parsimony/`, not feature work, so no feature branch
+is needed). Use the temporary-worktree approach if changes span multiple
+files.
+
 ### Standing tasks
 
 | ID | Type | Expertise file |
@@ -340,6 +403,7 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 
 | File | Purpose |
 |------|---------|
+| `aXXX.md` / `a.XXX` | Individual Shiny bug reports (agents triage → `to-do.md`, then delete) |
 | `issues.md` | Human-entered issues (agents triage → `to-do.md`) |
 | `to-do.md` | Task queue (active/open tasks only) |
 | `completed-tasks.md` | Archive of completed tasks |

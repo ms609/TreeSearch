@@ -717,7 +717,7 @@ MaximizeParsimony <- function(
   # Formula: max(10, ceiling(nTip * nChar / 5000)) where nChar = sum(weight).
   # Derived from T-069 benchmarks: at 225 taxa / 748 chars a single rep takes
   # ~40s and at least ~34 reps are needed to fill the tree pool reliably.
-  if (!missing(maxReplicates) && nTip >= 30L) {
+  if (!missing(maxReplicates) && nTip >= 30L && verbosity > 0L) {
     nChars <- sum(weight)
     minReps <- pmax(10L, ceiling(nTip * nChars / 5000L))
     if (maxReplicates < minReps) {

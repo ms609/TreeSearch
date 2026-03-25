@@ -427,23 +427,6 @@ static bool apply_tbr_move(
 
 // --- Edge length computation ---
 
-// Compute parsimony edge length from local_cost for a single node.
-// For EW Fitch (no NA), this is the exact contribution of the edge
-// (node → parent) to the tree score.
-static int node_edge_length(const TreeState& tree, const DataSet& ds,
-                            int node) {
-  int len = 0;
-  for (int b = 0; b < ds.n_blocks; ++b) {
-    uint64_t lc =
-        tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
-    int nu = ts::popcount64(lc);
-    if (ds.blocks[b].upweight_mask)
-      nu += ts::popcount64(lc & ds.blocks[b].upweight_mask);
-    len += ds.blocks[b].weight * nu;
-  }
-  return len;
-}
-
 // --- Subtree size computation ---
 
 // Compute the number of tips in the subtree below each node.

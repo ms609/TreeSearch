@@ -406,8 +406,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     observe({
       result <- tryCatch(
         profilePrepTask$result(),
-        shiny.silent.error = function(e) req(FALSE),
         error = function(e) {
+          if (inherits(e, "shiny.silent.error")) stop(e)
           LogMsg("Profile data preparation failed: ", conditionMessage(e))
           NULL
         }
@@ -895,6 +895,13 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       cur_timeout   <- if (length(input$timeout))         input$timeout         else 5
       cur_epsilon   <- if (length(input$epsilon))         input$epsilon         else 0
       cur_threads   <- if (length(input$nThreads))        input$nThreads        else max(1L, floor(nCores / 2L))
+      # Concavity slider should start hidden unless weighting mode uses it
+      concavityInput <- sliderInput(ns("concavity"), "Concavity constant",
+                                    min = 0L, max = 3L, pre = "10^",
+                                    value = cur_concavity)
+      if (!cur_weights %in% c("xpiwe", "on")) {
+        concavityInput <- hidden(concavityInput)
+      }
       showModal(modalDialog(
         easyClose = TRUE,
         fluidPage(column(6,
@@ -902,8 +909,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
                      list("Implied (extended)" = "xpiwe",
                           "Implied" = "on", "Profile" = "prof",
                           "Equal" = "off"), cur_weights),
-          sliderInput(ns("concavity"), "Concavity constant", min = 0L,
-                     max = 3L, pre = "10^", value = cur_concavity),
+          concavityInput,
           selectInput(ns("inapplicable"), "Inapplicable characters",
                       list("Brazeau et al. (default)" = "bgs",
                            "Hopkins & St. John (HSJ)"  = "hsj",
@@ -959,14 +965,21 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     # Only searchTask$result() should be a reactive dependency;
     # isolate everything else to prevent reactive cascade re-runs.
     observe({
+      # Use a single `error` handler rather than separate `shiny.silent.error`
+      # + `error` handlers. With two handlers, `req(FALSE)` thrown inside the
+      # `shiny.silent.error` handler is caught by the sibling `error` handler
+      # (R's tryCatch does not fully unwind before sibling handlers), causing
+      # the isolate block below to run prematurely (notification removed,
+      # cancel hidden) while the search task is still running.
       newTrees <- tryCatch(
         searchTask$result(),
-        shiny.silent.error = function(e) {
-          # ExtendedTask throws shiny.silent.error (class "shiny.output.progress"
-          # subclass) when status is "initial" or "running" — not a real error.
-          req(FALSE)
-        },
         error = function(e) {
+          if (inherits(e, "shiny.silent.error")) {
+            # ExtendedTask signals shiny.silent.error when status is "initial"
+            # or "running". Re-throw so Shiny's observer wrapper terminates
+            # this cycle cleanly; the observer will re-fire on task completion.
+            stop(e)
+          }
           msg <- conditionMessage(e)
           if (nzchar(msg)) {
             Notification(paste("Search error:", msg), type = "error")
