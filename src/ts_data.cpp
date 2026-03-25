@@ -181,6 +181,18 @@ DataSet build_dataset(
     ds.total_words += 1;
   }
 
+  // Build cache-friendly flat block metadata for indirect scoring hot paths.
+  ds.flat_blocks.resize(ds.n_blocks);
+  ds.all_weight_one = true;
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    ds.flat_blocks[b].offset = ds.block_word_offset[b];
+    ds.flat_blocks[b].n_states = ds.blocks[b].n_states;
+    ds.flat_blocks[b].active_mask = ds.blocks[b].active_mask;
+    ds.flat_blocks[b].has_inapplicable = ds.blocks[b].has_inapplicable ? 1 : 0;
+    std::memset(ds.flat_blocks[b]._pad, 0, sizeof(ds.flat_blocks[b]._pad));
+    if (ds.blocks[b].weight != 1) ds.all_weight_one = false;
+  }
+
   // Build state-to-word mapping (applicable states only, excluding inapp)
   std::vector<int> state_remap(n_states, -1);
   {

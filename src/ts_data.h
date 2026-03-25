@@ -81,6 +81,17 @@ struct CharBlock {
   int pattern_index[MAX_CHARS_PER_BLOCK];
 };
 
+// Cache-friendly metadata for indirect scoring hot paths.
+// Packs the 3 fields needed per block into 16 bytes (vs ~288 bytes in
+// CharBlock). For 4 blocks this fits in a single 64-byte cache line.
+struct FlatBlock {
+  int offset;              // word offset into state arrays
+  int n_states;            // states in this block (including NA if applicable)
+  uint64_t active_mask;    // active character bits
+  uint8_t has_inapplicable; // 1 if NA block (state 0 = inapplicable)
+  uint8_t _pad[7];         // explicit padding to 24 bytes
+}; // 24 bytes: 4 blocks = 96 bytes ≈ 1.5 cache lines (vs ~1152 for CharBlock)
+
 struct DataSet {
   int n_tips;
   int n_blocks;
@@ -93,6 +104,14 @@ struct DataSet {
   // where word_offset for block b, state s = block_word_offset[b] + s
   std::vector<uint64_t> tip_states;
   std::vector<int> block_word_offset;  // cumulative offset for each block
+
+  // Hot-path indirect scoring: cache-friendly block metadata.
+  // Populated by build_dataset(); mirrors blocks[] + block_word_offset[].
+  std::vector<FlatBlock> flat_blocks;
+  // True when all blocks have weight == 1 (common EW case).
+  // When true AND upweight_mask == 0, the specialized EW indirect
+  // functions can skip per-block weight multiply and upweight checks.
+  bool all_weight_one = false;
 
   // IW metadata (per original pattern)
   int n_patterns;                      // number of unique patterns
