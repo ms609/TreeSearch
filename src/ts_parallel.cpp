@@ -39,26 +39,19 @@ void ThreadSafePool::fuse_round(DataSet& ds, const DrivenParams& params,
 
   double fused_score = score_tree(fused, ds);
 
-  bool fused_ok = true;
   if (cd && cd->active &&
       violates_constraint_posthoc(fused, *cd)) {
     impose_constraint(fused, *cd);
-    fused.build_postorder();
     fused.reset_states(ds);
     fused_score = score_tree(fused, ds);
-    // Verify repair succeeded — impose_constraint is heuristic
-    map_constraint_nodes(fused, *cd);
-    for (int s = 0; s < cd->n_splits; ++s) {
-      if (cd->constraint_node[s] < 0) { fused_ok = false; break; }
-    }
   }
-  if (fused_ok) {
+  {
     std::vector<uint8_t> fused_collapsed;
     compute_collapsed_flags(fused, ds, fused_collapsed);
     pool_.add_collapsed(fused, fused_score, fused_collapsed);
   }
 
-  if (fused_ok && fused_score < best_before) {
+  if (fused_score < best_before) {
     pool_.set_hits_to_best(0);
   } else {
     pool_.set_hits_to_best(hits_before);
@@ -283,6 +276,7 @@ DrivenResult parallel_driven_search(
   }
 
   // Main thread: poll for interrupt and timeout
+  int last_stab_done = 0;  // replicates_done at last consensus check
   while (true) {
     // Sleep briefly to avoid spinning
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -336,10 +330,15 @@ DrivenResult parallel_driven_search(
       }
     }
 
-    // Consensus stability check (parallel path)
+    // Consensus stability check (parallel path).
+    // Only check when new replicates have completed; otherwise the
+    // unchanged counter increments on idle polls (every 200 ms) and
+    // can trigger premature termination with slow replicates.
     if (params.consensus_stable_reps > 0) {
+      int done_now = replicates_done.load(std::memory_order_relaxed);
       auto st = shared_pool.status();
-      if (st.pool_size >= 2) {
+      if (st.pool_size >= 2 && done_now > last_stab_done) {
+        last_stab_done = done_now;
         int unchanged = shared_pool.update_consensus_stability();
         if (unchanged >= params.consensus_stable_reps) {
           stop_flag.store(true, std::memory_order_relaxed);

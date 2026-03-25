@@ -45,7 +45,6 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-242 | P1 | PARKED (C, GHA 23545987517) | — | **[Bug?] Agnarsson2004 IW search quality regression.** 230 runs, only 5 hit best score (2% hit rate). User reports "1 trees in memory: 1 sampled, each with score 50.1872 (k = 5.62)". May indicate search regression or IW landscape difficulty. | From a.20. Investigate whether this is a genuine regression or expected IW behaviour. |
-| T-243 | P2 | ASSIGNED (C) | — | **[Bug] Parallel fuse_round missing build_postorder + constraint verification.** After `impose_constraint`, stale postorder causes wrong `score_tree`. Also lacks verification that repair succeeded. Found by S-RED focus 4. | |
 | T-196 | P2 | PR #215 (M) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); arrives with PT PR #215. |
 | T-210 | P2 | PR #222 (C) | — | **[Bug] SA doesn't save best-found topology.** Fix: `anneal_search` tracks/restores best tree at phase boundaries. | On `feature/pt-eval` (TS-PTeval). In T-207 PR #222. |
 
@@ -79,7 +78,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by D (focus 3: Ratchet & perturbation). No bugs found. |
+| S-RED | dyn | ASSIGNED (D) | — | **Standing: Red-team review** | Last run: 2026-03-25 by D (focus 3: Ratchet & perturbation). No bugs found. |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by D. All GHA runs queued/in-progress (system backlog). #210 MERGEABLE (cpp-search→main). #211 UNKNOWN (madslatkin). #213/#215/#216/#222 UNKNOWN (feature branches). #178/#106 CONFLICTING (stale — consider closing). No actionable items until GHA clears. |
 
