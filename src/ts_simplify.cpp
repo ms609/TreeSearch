@@ -185,22 +185,53 @@ SimplificationResult simplify_patterns(
     // Build per-tip token bitmasks from the original data
     sp.tip_tokens.resize(n_tips);
     bool has_inapp = false;
-    // A full-? token has all state bits set; it represents missing data,
-    // not genuine inapplicability, so it should not trigger the bypass.
+    bool has_genuine_inapp = false;
     uint32_t all_states_mask = (1u << n_states) - 1;
     for (int tip = 0; tip < n_tips; ++tip) {
       int token = tip_data_r[tip + n_tips * p] - 1;  // 1-based to 0-based
       sp.tip_tokens[tip] = token_states[token];
       if (inapp_state >= 0 &&
-          (token_states[token] & (1u << inapp_state)) &&
-          token_states[token] != all_states_mask) {
+          (token_states[token] & (1u << inapp_state))) {
         has_inapp = true;
+        // Full-? (all bits set) is missing data, not genuine inapplicability
+        if (token_states[token] != all_states_mask) {
+          has_genuine_inapp = true;
+        }
       }
     }
 
-    // Phase 1: skip genuinely inapplicable characters
+    // Phase 1: characters with any inapplicable-bit tokens skip transforms
+    // (Transforms 2/3 are not score-preserving for the NA three-pass
+    // algorithm because they modify applicable state bits in tokens that
+    // also carry the inapp bit.)
     if (has_inapp) {
-      // Count states for metadata only
+      // When only ? (not genuine -) triggered has_inapp, check if the
+      // character is constant (at most one applicable state present
+      // unambiguously). Such characters cost 0 steps on any topology
+      // under any scoring method, so they are safely uninformative.
+      // We do NOT apply the full uninformativeness check (which also
+      // catches singletons) because the standard Fitch transforms
+      // are not score-preserving for the NA three-pass algorithm.
+      if (!has_genuine_inapp) {
+        count_state_occurrences(sp.tip_tokens, n_tips, n_states,
+                                inapp_state, unambig_count, any_count,
+                                unambig_tip_idx);
+        int n_unambig_states = 0;
+        for (int s = 0; s < n_states; ++s) {
+          if (s == inapp_state) continue;
+          if (unambig_count[s] > 0) ++n_unambig_states;
+        }
+        if (n_unambig_states <= 1) {
+          // Constant: all ? can resolve to the single present state.
+          sp.precomputed_steps = 0;
+          sp.informative = false;
+          sp.n_states_remaining = 0;
+          result.n_patterns_removed++;
+          // offset += 0 (no steps)
+          continue;
+        }
+      }
+      // Count states for metadata only (transforms skipped)
       uint32_t all = all_applicable_mask(sp.tip_tokens, n_tips, n_states,
                                           inapp_state);
       int nc = 0;
