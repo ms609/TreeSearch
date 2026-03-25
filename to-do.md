@@ -45,18 +45,16 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-215 | P1 | ASSIGNED (A) | — | **[Bug] cli progress bar fails in `MaximizeParsimony()`.** `pb_env` uses `parent = baseenv()` which may cause `::` lookup failure in cli glue evaluation. Fix: use `parent = environment()`. | From issues.md. |
-| T-216 | P2 | ASSIGNED (A) | — | **[Bug] Shiny app uses deprecated `"brazeau"` for inapplicable param.** Replace all `"brazeau"` references in `inst/Parsimony/` with `"bgs"`. R API already uses `"bgs"` default. | From issues.md. |
-| T-217 | P2 | ASSIGNED (A) | — | **[Bug] `tree = NULL` not handled in `MaximizeParsimony()` Morphy delegation.** Main path OK (line 661). Morphy path (line 485) passes NULL. | From issues.md. |
+
 | T-196 | P2 | PR #215 (M) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); arrives with PT PR #215. |
 | T-210 | P2 | PR #222 (C) | — | **[Bug] SA doesn't save best-found topology.** Fix: `anneal_search` tracks/restores best tree at phase boundaries. | On `feature/pt-eval` (TS-PTeval). In T-207 PR #222. |
 | T-214 | P2 | ASSIGNED (C) | — | **[Bug] Multi-split constraints not enforced during TBR search.** Single-split constraints work; two or more splits → second split violated on 10-tip trees. Both default and RANDOM_TREE strategies affected. | Found by C during T-212. T-213's impose_constraint() may address this post-hoc. |
+| T-218 | P0 | PR #224 (D) | � | **[Bug] Inapplicable simplification bypass broken � scores inflated on all NA datasets.** Commit a48bfc4ad allowed simplification of chars with ? tokens in inapplicable datasets. ? includes the inapp bit; three-pass NA scoring is topology-dependent; simplification loses steps. Vinther2008 EW pect: 161 vs correct 139. 59 test failures. | Fix: revert to conservative bypass. GHA 23534918452. |
 
 ### Testing & Constraint Handling
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-213 | P2 | DONE (merged PR #223) | — | **Implement `impose_constraint()` for post-hoc topology repair.** Enables NNI perturbation + fuse under constraints. | Branch+worktree lost. Implementation notes in agent-a.md. |
 | T-212 | P2 | PARKED (A, GHA 23528636505) | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests committed to cpp-search by C. GHA re-dispatched after heredoc fix. | Tests already on cpp-search. |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
@@ -69,6 +67,11 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
 | T-187 | P3 | OPEN | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
 
+
+### Shiny App
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
 
 ### Standing Tasks
 
