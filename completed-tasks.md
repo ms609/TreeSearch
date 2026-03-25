@@ -304,6 +304,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-230 | [Shiny] Replicate-count warning when verbosity=0 | B | Gate behind verbosity > 0L. Stale-install part already fixed by T-214. Commit a37984dfa. |
 | T-234 | [Shiny] Context-dependent references | D | references_server now takes weighting reactive; Goloboff1993 shown for IW/XPIWE, Goloboff2014 for XPIWE only. Standing refs always shown. 3 new tests. Commit `4cfb37e12`. |
 | T-235 | [Bug] SPR stale state after rejected regraft | B | full_rescore after spr_unclip on rejection path. Commit aafeed219. 78 tests pass. |
+| T-226 | [Shiny] Remove "Trees in sequence" connect mode | B | Pool order is arbitrary under C++ search; option removed from UI. Commit 898e5e03c. |
 TASKEOF 2>&1
 | S-COORD | Coordination review round 19 | D | T-214 GHA passed (23542642164). T-212 unblocked, re-dispatched by B. T-233/T-236/T-237 completed by A. Shiny bug backlog cleared (5 triaged this session, all resolved). 3 OPEN specific tasks remain. Updated S-PR notes. |
 EOF 2>&1

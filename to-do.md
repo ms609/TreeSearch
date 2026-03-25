@@ -69,7 +69,6 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-232 | P2 | PARKED (D, GHA 23543699366) | — | **[Shiny] "Tips to show" input bounces back on decrement.** Clicking "down" arrow resets to previous value (e.g. 54 for Sun dataset). | From a.013. Fix: `isolate(input$keepNTips)` in `UpdateKeepNTipsRange`. |
-| T-226 | P2 | ASSIGNED (B) | — | **[Shiny] "Trees in sequence" connect mode — review/remove.** May not make sense under new C++ search engine (no meaningful replicate ordering). | From a007. Design question. |
 
 ### Standing Tasks
 
@@ -77,6 +76,5 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | ASSIGNED (D) | — | **Standing: Red-team review** | Focus 3. |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 round 19 (D). T-214 complete; T-212 re-dispatched. 3 OPEN specific tasks remain (T-183, T-187, T-226). Shiny bug backlog cleared. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by B. Open PRs: #210 (cpp-search→main, MERGEABLE, GHA queued), #211 (madslatkin, MERGEABLE, GHA queued), #213/#215/#216/#221/#222 (feature branches, all failing/cancelled/unknown). #178/#106 CONFLICTING (stale). |
 
