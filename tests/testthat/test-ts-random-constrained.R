@@ -1,12 +1,10 @@
-## T-212: Test random_constrained_tree under RANDOM_TREE strategy
-## Exercises random_constrained_tree via ts_driven_search, both serial
-## (wagnerBias = 3 → RANDOM_TREE) and parallel (adaptiveStart round-robin).
-## The Rf_error posthoc assertion at ts_wagner.cpp:976 is worker-thread-unsafe
-## (S-RED focus 4), so these tests also serve as a regression guard: if the
-## assertion ever fires on a worker thread, R would crash.
-##
-## Uses 5-tip datasets because constraint enforcement on >=10 tips has a
-## known bug (T-213: multi-tip constraints sometimes violated during TBR).
+## T-212: Test RANDOM_TREE strategy with constraints.
+## When constraints are active, RANDOM_TREE currently falls back to
+## random_wagner_tree() (T-214 workaround). These tests verify that
+## constraint satisfaction is maintained across serial, parallel,
+## adaptive-start, IW, and single-split scenarios.
+## TODO: Replace Wagner fallback with dedicated random_constrained_tree()
+## that builds the constraint backbone and randomly resolves polytomies.
 
 skip_on_cran()
 library("TreeTools")
