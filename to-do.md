@@ -66,11 +66,8 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | T-187 | P3 | OPEN | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
 
 
-### Testing & Maintenance
-
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-215 | P3 | OPEN | — | **Recompute stale IW/EW reference values in `test-ts-iw.R`.** Hard-coded references invalidated by recent NA handling changes. Large discrepancies on inapplicable-heavy datasets (Wills2012: 627 vs 499 EW, Zhu2013: 3053 vs 2150). | Found by S-RED focus 10. |
 
 ### Shiny App
 
