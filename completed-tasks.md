@@ -9,6 +9,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
 | T-213 | Implement impose_constraint() for post-hoc topology repair | D (cleanup) | Already on cpp-search (a666918ed, PR #223). 88 tests pass. Formal closeout during S-COORD. |
+| T-220 | [Shiny] Crash: searchExtendedIw not found when clicking Continue | D | Variable used in LogCode() before assignment. Moved snapshot above LogCode(). Direct fix on cpp-search. |
 | T-211 | Stale `final_` in temper candidate scoring | C | Analyzed: conservative-only. Stale `final_` after clip/evaluate/restore biases Boltzmann screening but not verified acceptance (`temper_full_rescore` gates all accepted moves). Fix would require per-candidate full rescore or save/restore of all `final_` arrays — cost exceeds negligible SA benefit. Closed as not worth fixing. |
 
 ## 2026-03-24

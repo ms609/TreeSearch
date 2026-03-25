@@ -76,7 +76,6 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-220 | P1 | OPEN | — | **[Shiny] Crash: `object searchExtendedIw not found` when clicking Continue.** Dataset Agnarsson, configure 1 run, click Continue -> crash in `StartSearch` at `mod_search.R#766`. | From a002.md. |
 | T-219 | P3 | OPEN | — | **[Shiny] Dataset dropdown hover state missing.** No background change on mouseover — no visual indication item is selectable. | From a001.md. CSS fix. |
 
 ### Standing Tasks

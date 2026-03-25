@@ -1,30 +1,17 @@
 # Agent D Progress Log
 
-## Current Task: S-COORD (round 16)
-**Status:** IN PROGRESS
+## Current Task: T-218 (P0 scoring regression) + Shiny triage
+**Status:** IN PROGRESS — awaiting GHA for PR #224
 **Started:** 2026-03-25
 
 ### Progress
-- Claimed S-COORD. No unclaimed issues in issues.md.
-- Verified T-213 (impose_constraint) already on cpp-search, 88 tests pass. Closed out.
-- Discovered **P0 scoring regression** on cpp-search:
-  - Commit `a48bfc4ad` ("Simplify 'all-[0,?]' characters in inapplicable datasets")
-    incorrectly allowed simplification of characters with `?` tokens in inapplicable
-    datasets. The `?` token includes the inapplicable bit → three-pass NA scoring is
-    topology-dependent → simplification loses steps.
-  - Impact: Vinther2008 EW pectinate: 161 vs correct 139. 59 test failures across
-    `test-ts-iw.R`, `test-PolEscapa.R`, `test-SearchControl.R`, `test-ts-collapsed.R`.
-  - Filed as T-218. Fix: revert to conservative bypass. PR #224, GHA 23534918452.
-- T-212 GHA run 23528636505 FAILED — 59 failures are entirely due to this scoring
-  regression. Should pass once PR #224 is merged.
-
-### Coordination findings
-- Agent B: S-RED focus 10 on IW/profile scoring (in progress)
-- Agent C: T-214 multi-split constraint bug (in progress)
-- Agent E: IDLE
-- Agent G: IDLE (T-182 parked)
-- T-182 PR #221: GHA PASS, ready for human merge
-- T-207 PR #222: GHA PASS, ready for human merge
-- T-213: DONE, cleaned up (closed out from to-do.md → completed-tasks.md)
-- Pre-existing issue: test-PolEscapa.R:16 error message mismatch ("levels for 5" vs "6")
-EOF 2>&1
+- S-COORD round 16: completed. Closed T-213, deduped T-218 in to-do.md.
+- **T-218 (P0):** Discovered & fixed inapplicable simplification bypass regression.
+  PR #224 on `feature/fix-simplify-inapp`. GHA 23534918452 in progress.
+- **Shiny triage:** Claimed a001.md, a002.md.
+  - a001 → T-219 (P3, CSS hover state). Filed, not yet fixed.
+  - a002 → T-220 (P1, crash: `searchExtendedIw` not found). **Fixed** directly
+    on cpp-search (commit `a9146dd85`). Variable was used in `LogCode()` before
+    being assigned; moved snapshot above `LogCode()`.
+- Next: Await T-218 GHA result. If PASS, update to-do.md status to `PR #224 (D)`.
+  Then pick next task (T-219 or next OPEN).
