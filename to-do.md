@@ -44,6 +44,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 ### Bugs
 
 | ID | Pri | Status | Blocks | Description | Notes |
+| T-218 | P0 | ASSIGNED (A) | — | **[Bug] Simplification transforms corrupt NA scoring for `?`-only inapplicable characters.** Commit `a48bfc4ad` lets `?` tokens through Transforms 2/3, which aren't score-preserving for the NA three-pass algorithm. Breaks IW reference tests and per-pattern step counts on GHA. | All cpp-search GHA failing since 2026-03-25 06:09. |
 |----|-----|--------|--------|-------------|-------|
 
 | T-196 | P2 | PR #215 (M) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); arrives with PT PR #215. |
@@ -68,16 +69,17 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | T-187 | P3 | OPEN | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
 
 
-### Shiny App
+### Testing & Maintenance
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
+| T-215 | P3 | OPEN | — | **Recompute stale IW/EW reference values in `test-ts-iw.R`.** Hard-coded references invalidated by recent NA handling changes. Large discrepancies on inapplicable-heavy datasets (Wills2012: 627 vs 499 EW, Zhu2013: 3053 vs 2150). | Found by S-RED focus 10. |
 
 ### Standing Tasks
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | ASSIGNED (B) | — | **Standing: Red-team review** | Last run: 2026-03-24 by A (focus 4: parallelism & RNG, Rf_error-on-worker noted). |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by B (focus 10: Profile & IW scoring). |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 by A (round 15). |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by F (#215/#213/#221 resolved) + A (fixed #215 compile errors). Only #222 still CONFLICTING. |
