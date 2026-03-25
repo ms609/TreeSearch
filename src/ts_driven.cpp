@@ -76,8 +76,10 @@ ReplicateResult run_single_replicate(
   };
 
   // NNI warmup per Wagner start is skipped when constraints are active
-  // because nni_search() does not enforce topological constraints.
-  bool nni_wagner = params.nni_first && (!cd || !cd->active);
+  // (nni_search() does not enforce constraints) and for CID mode
+  // (nni_search() lacks dual MRP/CID score tracking).
+  bool nni_wagner = params.nni_first && (!cd || !cd->active)
+                    && (ds.scoring_mode != ScoringMode::CID);
 
   // 1. Starting tree: dispatch on StartStrategy.
   //

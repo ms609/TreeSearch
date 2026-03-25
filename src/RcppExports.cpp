@@ -844,3 +844,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_wagner_bias_bench
+List ts_wagner_bias_bench(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, int bias, double temperature, int n_reps, bool run_tbr);
+RcppExport SEXP _TreeSearch_ts_wagner_bias_bench(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP biasSEXP, SEXP temperatureSEXP, SEXP n_repsSEXP, SEXP run_tbrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type min_steps(min_stepsSEXP);
+    Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
+    Rcpp::traits::input_parameter< int >::type bias(biasSEXP);
+    Rcpp::traits::input_parameter< double >::type temperature(temperatureSEXP);
+    Rcpp::traits::input_parameter< int >::type n_reps(n_repsSEXP);
+    Rcpp::traits::input_parameter< bool >::type run_tbr(run_tbrSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_wagner_bias_bench(contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature, n_reps, run_tbr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ts_test_strategy_tracker
+List ts_test_strategy_tracker(int seed, int n_draws);
+RcppExport SEXP _TreeSearch_ts_test_strategy_tracker(SEXP seedSEXP, SEXP n_drawsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< int >::type n_draws(n_drawsSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_test_strategy_tracker(seed, n_draws));
+    return rcpp_result_gen;
+END_RCPP
+}
