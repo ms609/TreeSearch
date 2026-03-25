@@ -68,7 +68,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-231 | P2 | ASSIGNED (C) | — | **[Shiny] Search stopping criteria don't match user settings.** User set "stop when 10 runs hit best score" and "max indep runs = 100", but summary reports "4 of 90 runs hit best score". Root cause: consensus stability stopping pre-empts targetHits. Fix: display stop reason. | From a.012. |
+
 | T-232 | P2 | PARKED (D, GHA 23543699366) | — | **[Shiny] "Tips to show" input bounces back on decrement.** Clicking "down" arrow resets to previous value (e.g. 54 for Sun dataset). | From a.013. Fix: `isolate(input$keepNTips)` in `UpdateKeepNTipsRange`. |
 
 | T-234 | P2 | ASSIGNED (D) | — | **[Shiny] Context-dependent references.** Goloboff 2014 (XPIWE) should only appear when extended IW selected. Goloboff 1993 (IW) should appear under IW/XPIWE. Add standing references for sectorial search and driven search methods. | From a.014. |

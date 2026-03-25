@@ -299,6 +299,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ## 2026-03-25 (afternoon)
 | T-214 | Multi-split constraints not enforced during TBR search | C | RANDOM_TREE falls back to Wagner when constrained; fuse uses direct map_constraint_nodes check. 26/26 + 806/806 tests pass. GHA 23542642164 PASS (both platforms). Commit `3f8792c5f`. |
+| T-231 | [Shiny] Search stopping criteria mismatch | C | Root cause: consensus stability stopping preempts targetHits without explanation. Fix: capture `consensus_stable`/`timed_out` from search result, pass `stopReason` to `SearchConfidenceText()`. User now sees "Search stopped: consensus tree unchanged across recent replicates." Commit `e411117b4`. |
 | S-RED | Red-team review focus 2: Search topology invariants | C | Reviewed ts_tbr.cpp, ts_drift.cpp, ts_search.cpp, ts_tree.h/.cpp (2856 lines). Found T-235: SPR stale state arrays after rejected regraft (NA/IW screening degradation, low practical impact). TBR/drift/NNI topology invariants verified correct. |
 | T-230 | [Shiny] Replicate-count warning when verbosity=0 | B | Gate behind verbosity > 0L. Stale-install part already fixed by T-214. Commit a37984dfa. |
 TASKEOF 2>&1
