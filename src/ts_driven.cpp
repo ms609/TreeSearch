@@ -456,6 +456,11 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   result.timed_out = false;
   result.consensus_stable = false;
 
+  // Perturbation-count stopping rule (T-187).
+  int unsuccessful_reps = 0;
+  const int perturb_stop_limit = (params.perturb_stop_factor > 0)
+      ? ds.n_tips * params.perturb_stop_factor : 0;
+
   if (params.max_replicates <= 0) {
     result.best_score = -1.0;
     return result;
@@ -707,6 +712,9 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     bool score_improved = pool.best_score() < prev_best;
     if (score_improved) {
       result.last_improved_rep = rep1;
+      unsuccessful_reps = 0;
+    } else {
+      ++unsuccessful_reps;
     }
 
     // Update strategy bandit (T-190)
@@ -806,6 +814,19 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
         if (!has_callback) {
           Rprintf("Converged: %d hits to best score %.5g\n",
                   pool.hits_to_best(), pool.best_score());
+        }
+      }
+      break;
+    }
+
+    // Perturbation-count stopping rule (T-187)
+    if (perturb_stop_limit > 0 && unsuccessful_reps >= perturb_stop_limit) {
+      if (params.verbosity >= 1) {
+        if (!has_callback) {
+          Rprintf("Stopped: %d consecutive unsuccessful replicates "
+                  "(limit %d = %d tips x %d)\n",
+                  unsuccessful_reps, perturb_stop_limit,
+                  ds.n_tips, params.perturb_stop_factor);
         }
       }
       break;

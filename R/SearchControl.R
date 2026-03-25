@@ -60,6 +60,12 @@
 #'   0 (default) disables this criterion; a typical value is 3--5.
 #'   When both `consensusStableReps` and `targetHits` are active, the search
 #'   stops when either criterion is met first.
+#' @param perturbStopFactor Integer; stop after
+#'   `nTip * perturbStopFactor` consecutive replicates that fail to improve
+#'   the best score.  0 (default) disables this criterion.
+#'   Inspired by IQ-TREE's unsuccessful-perturbation stopping rule
+#'   \insertCite{Nguyen2015}{TreeSearch}; adapted from per-perturbation to
+#'   per-replicate granularity.  Small values (1--3) are typical.
 #' @param adaptiveLevel Logical; dynamically scale ratchet and drift effort
 #'   based on the observed hit rate?  When `TRUE`, easy landscapes
 #'   (high hit rate) trigger reduced effort per replicate, while hard
@@ -188,6 +194,7 @@ SearchControl <- function(
     poolSuboptimal = 0,
     # Stopping criteria
     consensusStableReps = 0L,
+    perturbStopFactor = 0L,
     adaptiveLevel = FALSE,
     consensusConstrain = FALSE,
     # Simulated annealing (linear cooling schedule)
@@ -236,6 +243,7 @@ SearchControl <- function(
       poolMaxSize = as.integer(poolMaxSize),
       poolSuboptimal = as.double(poolSuboptimal),
       consensusStableReps = as.integer(consensusStableReps),
+      perturbStopFactor = as.integer(perturbStopFactor),
       adaptiveLevel = as.logical(adaptiveLevel),
       consensusConstrain = as.logical(consensusConstrain),
       annealPhases = as.integer(annealPhases),
@@ -266,7 +274,8 @@ print.SearchControl <- function(x, ...) {
                      "sectorMinSize", "sectorMaxSize"),
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual",
                      "poolMaxSize", "poolSuboptimal"),
-    "Stopping" = c("consensusStableReps", "adaptiveLevel",
+    "Stopping" = c("consensusStableReps", "perturbStopFactor",
+                    "adaptiveLevel",
                     "consensusConstrain", "adaptiveStart")
   )
   cat("SearchControl object\n")
