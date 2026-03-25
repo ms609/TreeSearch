@@ -79,6 +79,6 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by C (focus 2: Search topology invariants). Found T-235 (SPR stale state). |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 round 18 (B). PR #210 GHA in flight. No unresolved bugs on cpp-search. |
+| S-COORD | dyn | ASSIGNED (D) | — | **Standing: Coordination review** | Round 19. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by B. Open PRs: #210 (cpp-search→main, MERGEABLE), #213/#215/#216/#221/#222 (feature branches, all failing GHA or CONFLICTING). #224 closed. |
 
