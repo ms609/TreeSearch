@@ -670,11 +670,9 @@ static int impose_one_pass(TreeState& tree, ConstraintData& cd,
                           move_in_mask, n_words, move_in_roots);
 
     // Safety cap: abandon this pass if the repair is unexpectedly large.
-    // Previous threshold (n_tip/4) was too aggressive for small trees:
-    // with n_tip=5, threshold=1 meant a 2-move fix would bail out.
     int n_moves = static_cast<int>(
         move_out_roots.size() + move_in_roots.size());
-    if (total_moves + n_moves > tree.n_tip) {
+    if (total_moves + n_moves > tree.n_tip / 4 + 2) {
       return -1;  // Distinguish "bailed out" from "no violations" (0)
     }
 
