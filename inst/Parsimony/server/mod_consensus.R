@@ -48,8 +48,11 @@ consensus_ui <- function(id) {
   list(
     tree_plot = plotOutput(ns("treePlot"), height = "600px"),
 
-    which_tree = sliderInput(ns("whichTree"), "Tree to plot", value = 0L,
-                             min = 0L, max = 1L, step = 1L),
+    which_tree = tagList(
+      sliderInput(ns("whichTree"), "Tree to plot", value = 0L,
+                  min = 0L, max = 1L, step = 1L),
+      htmlOutput(ns("clusterLabel"), inline = TRUE)
+    ),
 
     tree_plot_config = tagList(
       selectizeInput(ns("outgroup"), "Root on:", multiple = TRUE,
@@ -237,6 +240,19 @@ consensus_server <- function(id, r,
     }), aJiffy)
 
     whichTree <- debounce(reactive(input$whichTree), aJiffy)
+
+    output$clusterLabel <- renderUI({
+      wt <- whichTree()
+      if (is.null(wt) || wt < 1L) return(NULL)
+      cl <- clusterings()
+      if (cl$n < 2L) return(NULL)
+      clId <- cl$cluster[wt]
+      col <- palettes[[min(length(palettes), cl$n)]][clId]
+      tags$span(
+        paste0("Cluster ", clId),
+        style = paste0("color:", col, ";font-weight:bold;margin-left:4px;")
+      )
+    })
 
     consP <- debounce(reactive(signif(input$consP)), 50)
 
