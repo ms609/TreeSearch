@@ -1130,10 +1130,12 @@ consensus_server <- function(id, r,
     UpdateKeepNTipsRange <- reactive({
       if (AnyTrees() && "consConfig" %in% r$visibleConfigs) {
         nTip <- TipsInTree()
-        LogMsg("UpdateKeepNTipsRange(", input$keepNTips, " -> ", nTip, ")")
+        # isolate() prevents re-triggering when user manually edits keepNTips
+        currentInput <- isolate(input$keepNTips)
+        LogMsg("UpdateKeepNTipsRange(", currentInput, " -> ", nTip, ")")
         r$keepNTips <- nNonRogues()
-        if (r$keepNTips != input$keepNTips) {
-          r$oldkeepNTips <- input$keepNTips
+        if (r$keepNTips != currentInput) {
+          r$oldkeepNTips <- currentInput
         }
         updateNumericInput(session, inputId = "keepNTips",
                            label = paste0("Tips to show (/", nTip, "):"),
