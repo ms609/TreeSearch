@@ -1,16 +1,20 @@
 # Agent D Progress Log
 
-## Current Task: IDLE
-**Status:** IDLE — ready for next assignment
-**Last completed:** 2026-03-25
+## Current Task: S-COORD (round 17)
+**Status:** COMPLETE
+**Started:** 2026-03-25
 
-### Session summary
-- S-COORD round 16: completed. Closed T-213.
-- **T-218 (P0):** Discovered & fixed inapplicable simplification bypass regression.
-  PR #224 on `feature/fix-simplify-inapp`. GHA shows only 13 pre-existing T-214
-  constraint failures; all 59 inapplicable scoring failures resolved.
-- **T-220 (P1):** Fixed `searchExtendedIw` not found crash — variable used in
-  `LogCode()` before assignment. Direct fix on cpp-search.
-- **T-219 (P3):** Fixed selectize dropdown hover visibility — added explicit CSS.
-  Direct fix on cpp-search.
-- **T-215 (P3):** Resolved by T-218 fix — stale IW/EW references no longer stale.
+### Findings
+- T-214 GHA 23536512228 FAILED (9 constraint failures remain in test-ts-random-constrained.R).
+  Fix commit `62658709d` didn't fully resolve. Moved back to ASSIGNED (C).
+- T-212 GHA 23528636505 FAILED. Blocked by T-214 — constraint test failures
+  dominate. Updated status to BLOCKED (T-214).
+- PR #224 (T-218) was closed without merge — Agent A's fix `08054102f` superseded it.
+  T-218 resolved on cpp-search.
+- Cleaned to-do.md: fixed missing table separator in Bugs section, removed 2 orphan
+  empty tables, collapsed duplicate blank lines, updated S-PR/S-COORD notes.
+- Agents B, E, G are IDLE. Agent C parked on T-214.
+- Only 3 OPEN specific tasks: T-183, T-187 (features — deprioritized in bug-fix phase),
+  T-226 (Shiny design question).
+- **Blocker for release**: T-214 (multi-split constraints). 9 test failures on GHA.
+  All other known bugs are on pending PRs (#215, #222).

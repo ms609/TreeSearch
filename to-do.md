@@ -1,6 +1,5 @@
 # TreeSearch Task Queue
 
-
 ## How this works
 
 - Tasks are sorted by priority (highest first within each status group).
@@ -44,15 +43,16 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 ### Bugs
 
 | ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
 | T-196 | P2 | PR #215 (M) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); arrives with PT PR #215. |
 | T-210 | P2 | PR #222 (C) | — | **[Bug] SA doesn't save best-found topology.** Fix: `anneal_search` tracks/restores best tree at phase boundaries. | On `feature/pt-eval` (TS-PTeval). In T-207 PR #222. |
-| T-214 | P2 | PARKED (C, GHA 23536512228) | — | **[Bug] Multi-split constraints not enforced during TBR search.** Single-split constraints work; two or more splits → second split violated on 10-tip trees. Both default and RANDOM_TREE strategies affected. | Found by C during T-212. T-213's impose_constraint() may address this post-hoc. |
+| T-214 | P2 | ASSIGNED (C) | — | **[Bug] Multi-split constraints not enforced during TBR search.** Single-split constraints work; two or more splits → second split violated on 10-tip trees. Both default and RANDOM_TREE strategies affected. | Found by C during T-212. T-213's impose_constraint() may address this post-hoc. |
 
 ### Testing & Constraint Handling
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-212 | P2 | PARKED (A, GHA 23528636505) | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests committed to cpp-search by C. GHA re-dispatched after heredoc fix. | Tests already on cpp-search. |
+| T-212 | P2 | BLOCKED (T-214) | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests on cpp-search. GHA 23528636505 failed (59 inapplicable + constraint failures). Needs re-dispatch after T-214 merges. | Blocked by T-214 constraint fix. |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
@@ -63,13 +63,6 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | T-182 | P3 | PR #221 (G) | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | On `feature/adaptive-ratchet`. GHA 23508899686 PASS. |
 | T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
 | T-187 | P3 | OPEN | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
-
-
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
 
 ### Shiny App
 
@@ -83,7 +76,6 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by B (focus 10: Profile & IW scoring). |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 by A (round 15). |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by B. Closed #224 (superseded by T-218). 3 CONFLICTING (#215: ts_rcpp.cpp only; #222: 12 files; #224→closed). 4 MERGEABLE but all fail GHA due to cpp-search issues (stale IW refs, T-214 constraint bug). #210 (cpp-search→main) MERGEABLE. |
-
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 round 17 (D). T-214 GHA failed, T-212 blocked. |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by B. Open PRs: #210 (cpp-search→main, MERGEABLE), #213/#215/#216/#221/#222 (feature branches, all failing GHA or CONFLICTING). #224 closed. |
 
