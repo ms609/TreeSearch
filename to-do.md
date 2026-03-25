@@ -75,8 +75,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-224 | P1 | ASSIGNED (B) | — | **[Shiny] Crash: `.ts_driven_search_raw` not found when searching.** Agnarsson2004 62t, 242 chars. ExtendedTask invoke error. | From a008. Distinct from T-220 (`searchExtendedIw`). |
-| T-225 | P2 | OPEN | — | **[Shiny] Tree space "Connect" shows nothing.** Convex hulls and MST ticked but nothing renders. Agnarsson2004. | From a006. |
+| T-225 | P2 | ASSIGNED (B) | — | **[Shiny] Tree space "Connect" shows nothing.** Convex hulls and MST ticked but nothing renders. Agnarsson2004. | From a006. |
 | T-226 | P3 | OPEN | — | **[Shiny] "Trees in sequence" connect mode — review/remove.** May not make sense under new C++ search engine (no meaningful replicate ordering). | From a007. Design question. |
 | T-227 | P3 | OPEN | — | **[Shiny] Dataset dropdown hover polish.** (i) Hover highlight persists after mouse leaves dropdown area. (ii) Currently-selected item gets light-blue-on-white hover instead of retaining its selected styling. | From a009. Follow-up to T-219. |
 | T-228 | P3 | OPEN | — | **[Shiny] Search config modal shows "Implied" instead of "Implied (extended)" on first open.** `cur_weights` fallback is `"on"` but reactive default is `"xpiwe"`. | From a.010. T-161 set the reactive default correctly; only the modal `selectInput` initialisation is wrong. |
