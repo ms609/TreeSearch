@@ -28,7 +28,14 @@
 #' @param ratchetPerturbMaxMoves Integer; maximum TBR moves per perturbation
 #'   cycle (0 = automatic).
 #' @param ratchetAdaptive Logical; adjust perturbation probability based on
-#'   escape rate?
+#'   within-replicate escape rate?
+#' @param ratchetTaper Logical; taper ratchet perturbation probability across
+#'   replicates as the pool stabilizes?  When `TRUE`, early replicates use
+#'   the full `ratchetPerturbProb`; later replicates (with high hit rates)
+#'   use a reduced probability for finer local exploration.  The effective
+#'   probability is `ratchetPerturbProb * max(floor, 1 - strength * hitRate)`
+#'   where `hitRate` is the fraction of replicates that found the current
+#'   best score.  Default `FALSE`.
 #' @param driftCycles Integer; number of drift search cycles.
 #' @param driftAfdLimit Integer; maximum absolute fit difference (steps) for
 #'   accepting a suboptimal drift move.
@@ -158,6 +165,7 @@ SearchControl <- function(
     ratchetPerturbMode = 0L,
     ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = FALSE,
+    ratchetTaper = FALSE,
     # NNI perturbation
     nniPerturbCycles = 0L,
     nniPerturbFraction = 0.5,
@@ -210,6 +218,7 @@ SearchControl <- function(
       ratchetPerturbMode = as.integer(ratchetPerturbMode),
       ratchetPerturbMaxMoves = as.integer(ratchetPerturbMaxMoves),
       ratchetAdaptive = as.logical(ratchetAdaptive),
+      ratchetTaper = as.logical(ratchetTaper),
       nniPerturbCycles = as.integer(nniPerturbCycles),
       nniPerturbFraction = as.double(nniPerturbFraction),
       driftCycles = as.integer(driftCycles),
@@ -246,7 +255,8 @@ print.SearchControl <- function(x, ...) {
     "TBR" = c("tbrMaxHits", "nniFirst", "sprFirst", "tabuSize",
               "wagnerStarts", "wagnerBias", "wagnerBiasTemp", "outerCycles"),
     "Ratchet" = c("ratchetCycles", "ratchetPerturbProb", "ratchetPerturbMode",
-                   "ratchetPerturbMaxMoves", "ratchetAdaptive"),
+                   "ratchetPerturbMaxMoves", "ratchetAdaptive",
+                   "ratchetTaper"),
     "NNI Perturbation" = c("nniPerturbCycles", "nniPerturbFraction"),
     "Drift" = c("driftCycles", "driftAfdLimit", "driftRfdLimit"),
     "Annealing" = c("annealPhases", "annealTStart", "annealTEnd",

@@ -158,6 +158,20 @@ struct DrivenParams {
   // applies a multiplier each replicate.
   bool adaptive_level = false;
 
+  // Adaptive ratchet perturbation probability (T-182).
+  // When true, the ratchet perturbation probability is tapered across
+  // replicates based on pool stability.  Early replicates (unstable pool)
+  // use ratchet_perturb_prob at full strength; later replicates (high
+  // hit rate, stable consensus) use a reduced probability for finer
+  // local exploration.
+  //
+  // The taper factor is:  max(taper_floor, 1.0 - taper_strength * stability)
+  // where stability = hits_to_best / replicates_completed.
+  // The effective probability = ratchet_perturb_prob * taper_factor.
+  bool ratchet_taper = false;
+  double ratchet_taper_floor = 0.5;    // minimum taper factor (prob ≥ 50% of base)
+  double ratchet_taper_strength = 0.6; // how aggressively to reduce (0..1)
+
   // Cross-replicate consensus constraint tightening.
   // When true, after a minimum number of replicates, extract the strict
   // consensus splits from the pool and enforce them as topological

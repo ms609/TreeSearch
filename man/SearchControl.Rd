@@ -19,6 +19,7 @@ SearchControl(
   ratchetPerturbMode = 0L,
   ratchetPerturbMaxMoves = 5L,
   ratchetAdaptive = FALSE,
+  ratchetTaper = FALSE,
   nniPerturbCycles = 0L,
   nniPerturbFraction = 0.5,
   driftCycles = 2L,
@@ -97,7 +98,15 @@ character.}
 cycle (0 = automatic).}
 
 \item{ratchetAdaptive}{Logical; adjust perturbation probability based on
-escape rate?}
+within-replicate escape rate?}
+
+\item{ratchetTaper}{Logical; taper ratchet perturbation probability across
+replicates as the pool stabilizes?  When \code{TRUE}, early replicates use
+the full \code{ratchetPerturbProb}; later replicates (with high hit rates)
+use a reduced probability for finer local exploration.  The effective
+probability is \code{ratchetPerturbProb * max(floor, 1 - strength * hitRate)}
+where \code{hitRate} is the fraction of replicates that found the current
+best score.  Default \code{FALSE}.}
 
 \item{nniPerturbCycles}{Integer; number of stochastic NNI-perturbation
 cycles per replicate.  Each cycle randomly applies NNI swaps to a

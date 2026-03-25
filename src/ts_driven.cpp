@@ -604,8 +604,30 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       }
     }
 
-    // Use adaptive_params for the replicate (cycles may differ from original)
-    const DrivenParams& rep_params = params.adaptive_level
+    // Adaptive ratchet taper (T-182): reduce perturbation probability as
+    // the pool stabilizes.  High hit rate = stable pool = gentler perturbation
+    // for finer local exploration.  Resets to base when a new best is found.
+    if (params.ratchet_taper && rep > 0 && pool.size() > 0) {
+      double stability = (result.replicates_completed > 0)
+          ? static_cast<double>(pool.hits_to_best()) /
+            result.replicates_completed
+          : 0.0;
+      double taper_factor = std::max(
+          params.ratchet_taper_floor,
+          1.0 - params.ratchet_taper_strength * stability);
+      adaptive_params.ratchet_perturb_prob =
+          params.ratchet_perturb_prob * taper_factor;
+
+      if (params.verbosity >= 2 && !has_callback) {
+        Rprintf("  Ratchet taper: stability=%.2f, prob=%.3f (base=%.3f)\n",
+                stability, adaptive_params.ratchet_perturb_prob,
+                params.ratchet_perturb_prob);
+      }
+    }
+
+    // Use adaptive_params when any per-replicate adaptation is active
+    const DrivenParams& rep_params =
+        (params.adaptive_level || params.ratchet_taper)
         ? adaptive_params : params;
 
     // Conflict-guided sector selection: compute pool split frequencies

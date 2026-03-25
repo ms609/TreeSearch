@@ -319,6 +319,16 @@ extensively (it is an artefact), so perturbed-phase TBR should be brief,
 but the perturbation itself must be aggressive enough to displace the
 tree from its current basin.
 
+When `ratchetTaper = TRUE` (enabled by default in the `thorough` and `large`
+presets), the perturbation probability is tapered across replicates as the
+tree pool stabilizes.
+Early replicates use the full perturbation probability; later replicates,
+when most replicates converge to the same score, use a reduced probability
+for finer local exploration of the current basin.
+The effective probability is scaled by
+$\max(f, 1 - s \times \text{hitRate})$, where $f$ is a floor (default 0.5)
+and $s$ is the taper strength (default 0.6).
+
 ### Stochastic NNI-perturbation
 
 Complementary to the weight-perturbation ratchet, stochastic
