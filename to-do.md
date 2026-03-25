@@ -71,7 +71,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-230 | P1 | ASSIGNED (D) | — | **[Shiny] "Continue search" crashes: `.ts_driven_search_raw` not found.** ExtendedTask invoke fails with "could not find function" error. Also shows spurious "at least 10 replicates recommended" warning. | From a.001. |
-| T-231 | P2 | OPEN | — | **[Shiny] Search stopping criteria don't match user settings.** User set "stop when 10 runs hit best score" and "max indep runs = 100", but summary reports "4 of 90 runs hit best score". Neither 4 nor 90 match the configured values. | From a.012. |
+| T-231 | P2 | ASSIGNED (C) | — | **[Shiny] Search stopping criteria don't match user settings.** User set "stop when 10 runs hit best score" and "max indep runs = 100", but summary reports "4 of 90 runs hit best score". Neither 4 nor 90 match the configured values. | From a.012. |
 | T-232 | P2 | OPEN | — | **[Shiny] "Tips to show" input bounces back on decrement.** Clicking "down" arrow resets to previous value (e.g. 54 for Sun dataset). | From a.013. |
 | T-233 | P3 | OPEN | — | **[Shiny] Search summary text too verbose.** "40 distinct topologies in pool" redundant with "40 trees in memory". "consider increasing replicates" → shorten to "more replicates needed?". Make summary terser overall. | From a.011. |
 | T-234 | P3 | OPEN | — | **[Shiny] Context-dependent references.** Goloboff 2014 (XPIWE) should only appear when extended IW selected. Goloboff 1993 (IW) should appear under IW/XPIWE. Add standing references for sectorial search and driven search methods. | From a.014. |
