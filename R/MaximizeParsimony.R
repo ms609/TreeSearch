@@ -817,7 +817,7 @@ MaximizeParsimony <- function(
   hsjConfig <- if (length(hsjArgs) > 0L) hsjArgs
   xformConfig <- if (length(xformArgs) > 0L) xformArgs
 
-  result <- .ts_driven_search_raw(
+  result <- ts_driven_search(
     contrast, tip_data, weight, levels,
     control, runtimeConfig, scoringConfig,
     constraintConfig, hsjConfig, xformConfig

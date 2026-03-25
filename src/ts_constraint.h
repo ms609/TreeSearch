@@ -27,7 +27,8 @@ namespace ts {
 enum class ClipZone : int {
   UNCONSTRAINED = 0,  // clip tips don't interact with this split
   MUST_INSIDE   = 1,  // all clip tips inside split → regraft inside
-  MUST_OUTSIDE  = 2   // all clip tips outside split → regraft outside
+  MUST_OUTSIDE  = 2,  // all clip tips outside split → regraft outside
+  FORBIDDEN     = 3   // clip straddles split AND rest straddles → no valid regraft
 };
 
 struct ConstraintData {
