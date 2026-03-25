@@ -824,4 +824,314 @@ void random_topology_tree(TreeState& tree, const DataSet& ds) {
   tree.build_postorder();
 }
 
+// =========================================================================
+// Random constrained tree
+// =========================================================================
+//
+// Algorithm:
+// 1. Identify constraint splits ordered from largest to smallest (by
+//    popcount of the "inside" set). Larger splits enclose smaller ones.
+// 2. Assign each tip to its tightest (smallest) enclosing constraint
+//    split, or "root level" if unconstrained.
+// 3. Build the tree bottom-up: for each constraint split (smallest first),
+//    randomly wire all its direct children (tips + smaller split roots)
+//    into a binary subtree via random edge insertion.
+// 4. Finally, wire all root-level items (unconstrained tips + top-level
+//    split roots) into the tree.
+//
+// The result is a uniformly random binary tree among those that satisfy
+// all constraint splits. (Uniform conditional on the split nesting
+// structure, which determines the partition of items across polytomy
+// resolution steps.)
+
+namespace {
+
+// Randomly resolve a set of items into a binary subtree.
+// `items` are node indices (tips or internal subtree roots).
+// Returns the root node of the resolved subtree.
+// `next_internal` is incremented as internal nodes are consumed.
+// Requires items.size() >= 1.
+int resolve_randomly(TreeState& tree, std::vector<int>& items,
+                     int& next_internal) {
+  if (items.size() == 1) return items[0];
+
+  // Shuffle items
+  for (int i = static_cast<int>(items.size()) - 1; i > 0; --i) {
+    int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
+    if (j > i) j = i;
+    std::swap(items[i], items[j]);
+  }
+
+  if (items.size() == 2) {
+    int nd = next_internal++;
+    int ni = nd - tree.n_tip;
+    tree.left[ni] = items[0];
+    tree.right[ni] = items[1];
+    tree.parent[items[0]] = nd;
+    tree.parent[items[1]] = nd;
+    return nd;
+  }
+
+  // Build initial pair from first two items
+  int nd = next_internal++;
+  int ni = nd - tree.n_tip;
+  tree.left[ni] = items[0];
+  tree.right[ni] = items[1];
+  tree.parent[items[0]] = nd;
+  tree.parent[items[1]] = nd;
+
+  // Track edges available for insertion (below-node of each edge)
+  std::vector<int> edge_children;
+  edge_children.push_back(items[0]);
+  edge_children.push_back(items[1]);
+
+  int subtree_root = nd;
+
+  // Insert remaining items at random edges within this subtree
+  for (size_t k = 2; k < items.size(); ++k) {
+    int item = items[k];
+    int new_nd = next_internal++;
+
+    int n_edges = static_cast<int>(edge_children.size());
+    int edge_idx = static_cast<int>(ts::thread_safe_unif() * n_edges);
+    if (edge_idx >= n_edges) edge_idx = n_edges - 1;
+    int below = edge_children[edge_idx];
+    int above = tree.parent[below];
+
+    // Insert: above -> new_nd -> {item, below}
+    int new_ni = new_nd - tree.n_tip;
+    tree.parent[new_nd] = above;
+    tree.left[new_ni] = item;
+    tree.right[new_ni] = below;
+    tree.parent[item] = new_nd;
+    tree.parent[below] = new_nd;
+
+    // Update above's child pointer
+    if (above >= tree.n_tip) {
+      int ai = above - tree.n_tip;
+      if (tree.left[ai] == below) {
+        tree.left[ai] = new_nd;
+      } else {
+        tree.right[ai] = new_nd;
+      }
+    }
+
+    // Update subtree root if we inserted above it
+    if (below == subtree_root) {
+      subtree_root = new_nd;
+    }
+
+    edge_children.push_back(new_nd);
+    edge_children.push_back(item);
+  }
+
+  return subtree_root;
+}
+
+// Count set bits in a bitmask span
+int popcount_span(const uint64_t* mask, int n_words) {
+  int count = 0;
+  for (int w = 0; w < n_words; ++w) {
+    count += popcount64(mask[w]);
+  }
+  return count;
+}
+
+// Check if split a is a strict subset of split b (a ⊂ b)
+bool is_strict_subset(const uint64_t* a, const uint64_t* b, int n_words) {
+  bool proper = false;
+  for (int w = 0; w < n_words; ++w) {
+    if (a[w] & ~b[w]) return false;  // a has bits not in b
+    if (b[w] & ~a[w]) proper = true; // b has bits not in a
+  }
+  return proper;
+}
+
+// Check if tip t is in split mask
+bool tip_in_split(int t, const uint64_t* mask) {
+  return (mask[t / 64] >> (t % 64)) & 1ULL;
+}
+
+} // anonymous namespace
+
+
+void random_constrained_tree(TreeState& tree, const DataSet& ds,
+                             ConstraintData& cd) {
+  if (!cd.active || cd.n_splits == 0) {
+    random_topology_tree(tree, ds);
+    return;
+  }
+
+  int n_tip = ds.n_tips;
+  check_wagner_precondition(n_tip);
+  init_wagner_state(tree, ds);
+
+  int n_words = cd.n_words;
+  int n_splits = cd.n_splits;
+
+  // --- Step 1: Order splits by popcount descending (largest first) ---
+  // Then we'll process smallest first for bottom-up construction.
+  std::vector<int> split_order(n_splits);
+  std::iota(split_order.begin(), split_order.end(), 0);
+  std::vector<int> split_size(n_splits);
+  for (int s = 0; s < n_splits; ++s) {
+    split_size[s] = popcount_span(
+        &cd.split_tips[static_cast<size_t>(s) * n_words], n_words);
+  }
+  // Sort ascending by size (process smallest first)
+  std::sort(split_order.begin(), split_order.end(),
+    [&](int a, int b) { return split_size[a] < split_size[b]; });
+
+  // --- Step 2: Find each split's parent (tightest enclosing split) ---
+  // parent_split[s] = index into split_order of the parent, or -1 for root.
+  std::vector<int> parent_split(n_splits, -1);
+  for (int i = 0; i < n_splits; ++i) {
+    int si = split_order[i];
+    const uint64_t* si_mask =
+        &cd.split_tips[static_cast<size_t>(si) * n_words];
+    // Find smallest enclosing split (next larger split that contains si)
+    for (int j = i + 1; j < n_splits; ++j) {
+      int sj = split_order[j];
+      const uint64_t* sj_mask =
+          &cd.split_tips[static_cast<size_t>(sj) * n_words];
+      if (is_strict_subset(si_mask, sj_mask, n_words)) {
+        parent_split[i] = j;
+        break;
+      }
+    }
+  }
+
+  // --- Step 3: Assign each tip to its tightest split ---
+  // tip_owner[t] = index into split_order, or -1 for root level.
+  std::vector<int> tip_owner(n_tip, -1);
+  for (int t = 0; t < n_tip; ++t) {
+    for (int i = 0; i < n_splits; ++i) {
+      int si = split_order[i];
+      const uint64_t* mask =
+          &cd.split_tips[static_cast<size_t>(si) * n_words];
+      if (tip_in_split(t, mask)) {
+        tip_owner[t] = i;
+        break;  // split_order is ascending, so first hit is tightest
+      }
+    }
+  }
+
+  // --- Step 4: Build bottom-up ---
+  // For each split, collect its direct children (tips + child split roots)
+  // and resolve them randomly.
+  // Internal node allocation: root is n_tip (index 0 in left/right).
+  // Sub-splits consume nodes n_tip+1, n_tip+2, ...
+  // Root-level wiring uses the root node directly (no resolve_randomly).
+  int root = n_tip;
+  int next_internal = n_tip + 1;
+  tree.parent[root] = root;
+
+  // split_root[i] = node index of the subtree root for split_order[i]
+  std::vector<int> split_root(n_splits, -1);
+
+  ts::rng_state_begin();
+
+  for (int i = 0; i < n_splits; ++i) {
+    // Collect items that belong directly to this split
+    std::vector<int> items;
+
+    // Tips owned by this split
+    for (int t = 0; t < n_tip; ++t) {
+      if (tip_owner[t] == i) items.push_back(t);
+    }
+
+    // Child splits whose parent is this split
+    for (int j = 0; j < i; ++j) {
+      if (parent_split[j] == i) {
+        items.push_back(split_root[j]);
+      }
+    }
+
+    if (items.empty()) {
+      split_root[i] = -1;
+      continue;
+    }
+
+    split_root[i] = resolve_randomly(tree, items, next_internal);
+  }
+
+  // --- Step 5: Wire root level ---
+  // Collect unconstrained tips + top-level split roots, then build
+  // directly onto the root node (avoiding extra node allocation).
+  std::vector<int> root_items;
+
+  for (int t = 0; t < n_tip; ++t) {
+    if (tip_owner[t] == -1) root_items.push_back(t);
+  }
+  for (int i = 0; i < n_splits; ++i) {
+    if (parent_split[i] == -1 && split_root[i] >= 0) {
+      root_items.push_back(split_root[i]);
+    }
+  }
+
+  // Shuffle root items
+  for (int i = static_cast<int>(root_items.size()) - 1; i > 0; --i) {
+    int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
+    if (j > i) j = i;
+    std::swap(root_items[i], root_items[j]);
+  }
+
+  if (root_items.size() >= 2) {
+    // Wire first two items as root's children
+    tree.left[0] = root_items[0];
+    tree.right[0] = root_items[1];
+    tree.parent[root_items[0]] = root;
+    tree.parent[root_items[1]] = root;
+
+    // Track edges for subsequent insertions
+    std::vector<int> edge_children;
+    edge_children.push_back(root_items[0]);
+    edge_children.push_back(root_items[1]);
+
+    // Insert remaining root items at random edges
+    for (size_t k = 2; k < root_items.size(); ++k) {
+      int item = root_items[k];
+      int new_nd = next_internal++;
+      int new_ni = new_nd - n_tip;
+
+      int n_edges = static_cast<int>(edge_children.size());
+      int edge_idx = static_cast<int>(ts::thread_safe_unif() * n_edges);
+      if (edge_idx >= n_edges) edge_idx = n_edges - 1;
+      int below = edge_children[edge_idx];
+      int above = tree.parent[below];
+
+      tree.parent[new_nd] = above;
+      tree.left[new_ni] = item;
+      tree.right[new_ni] = below;
+      tree.parent[item] = new_nd;
+      tree.parent[below] = new_nd;
+
+      int ai = above - n_tip;
+      if (tree.left[ai] == below) {
+        tree.left[ai] = new_nd;
+      } else {
+        tree.right[ai] = new_nd;
+      }
+
+      edge_children.push_back(new_nd);
+      edge_children.push_back(item);
+    }
+  } else if (root_items.size() == 1) {
+    // Single top-level item must be an internal node; adopt its children
+    int sub = root_items[0];
+    if (sub >= n_tip) {
+      int si = sub - n_tip;
+      tree.left[0] = tree.left[si];
+      tree.right[0] = tree.right[si];
+      tree.parent[tree.left[0]] = root;
+      tree.parent[tree.right[0]] = root;
+    }
+  }
+
+  ts::rng_state_end();
+
+  tree.build_postorder();
+  update_constraint(tree, cd);
+}
+
 } // namespace ts

@@ -74,6 +74,15 @@ std::vector<double> wagner_entropy_scores(const DataSet& ds);
 // inaccessible to Wagner trees, justifying inclusion in a strategy mix.
 void random_topology_tree(TreeState& tree, const DataSet& ds);
 
+// Build a random tree topology that satisfies topological constraints.
+// Constructs the constraint backbone (one node per constraint split),
+// then randomly resolves all multifurcations by uniform random binary
+// insertion.  Like random_topology_tree(), the result is NOT scored.
+//
+// Falls back to random_topology_tree() if no constraints are active.
+void random_constrained_tree(TreeState& tree, const DataSet& ds,
+                             ConstraintData& cd);
+
 } // namespace ts
 
 #endif // TS_WAGNER_H

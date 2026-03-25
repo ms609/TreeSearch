@@ -110,8 +110,7 @@ ReplicateResult run_single_replicate(
       }
       case StartStrategy::RANDOM_TREE:
         if (cd && cd->active) {
-          // Fall back to constraint-aware Wagner when constraints active
-          random_wagner_tree(result.tree, ds, cd);
+          random_constrained_tree(result.tree, ds, *cd);
         } else {
           random_topology_tree(result.tree, ds);
         }
