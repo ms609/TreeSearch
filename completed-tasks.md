@@ -287,4 +287,5 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-222 | [Shiny] "Align tips" does nothing in Characters on trees | B | `Display` callback always set edge.length=1; now NULL when tipsRight checked. Commit `b23580823`. |
 | T-223 | [Shiny] Tree plot left-aligned with excess white space | B | Display now sets edge.length=NULL (cladogram) to fill width. "Align tips" checkbox now redundant. Commit `280aa446d`. |
 | T-224 | [Shiny] `.ts_driven_search_raw` not found | B | Already fixed by T-214 (commit `62658709d`): renamed broken callers from af7601b refactor. |
+| T-225 | [Shiny] Tree space Connect shows nothing | B | `mapLines` checkbox was unnamespaced; module couldn't see it. Passed as reactive parameter. Commit `14277d04f`. |
 TASKEOF 2>&1
