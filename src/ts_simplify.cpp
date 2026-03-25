@@ -172,6 +172,7 @@ SimplificationResult simplify_patterns(
     sp.original_index = p;
     sp.precomputed_steps = 0;
     sp.informative = true;
+    sp.has_genuine_inapp = false;
 
     // Skip zero-weight patterns (they'll be removed by build_dataset anyway)
     if (weight_r[p] == 0) {
@@ -200,37 +201,17 @@ SimplificationResult simplify_patterns(
       }
     }
 
-    // Phase 1: characters with any inapplicable-bit tokens skip transforms
-    // (Transforms 2/3 are not score-preserving for the NA three-pass
-    // algorithm because they modify applicable state bits in tokens that
-    // also carry the inapp bit.)
-    if (has_inapp) {
-      // When only ? (not genuine -) triggered has_inapp, check if the
-      // character is constant (at most one applicable state present
-      // unambiguously). Such characters cost 0 steps on any topology
-      // under any scoring method, so they are safely uninformative.
-      // We do NOT apply the full uninformativeness check (which also
-      // catches singletons) because the standard Fitch transforms
-      // are not score-preserving for the NA three-pass algorithm.
-      if (!has_genuine_inapp) {
-        count_state_occurrences(sp.tip_tokens, n_tips, n_states,
-                                inapp_state, unambig_count, any_count,
-                                unambig_tip_idx);
-        int n_unambig_states = 0;
-        for (int s = 0; s < n_states; ++s) {
-          if (s == inapp_state) continue;
-          if (unambig_count[s] > 0) ++n_unambig_states;
-        }
-        if (n_unambig_states <= 1) {
-          // Constant: all ? can resolve to the single present state.
-          sp.precomputed_steps = 0;
-          sp.informative = false;
-          sp.n_states_remaining = 0;
-          result.n_patterns_removed++;
-          // offset += 0 (no steps)
-          continue;
-        }
-      }
+    sp.has_genuine_inapp = has_genuine_inapp;
+
+    // Phase 1: characters with genuine inapplicable ("-") tokens skip
+    // transforms. Transforms 2/3 are not score-preserving for the NA
+    // three-pass algorithm because they modify applicable state bits in
+    // tokens that also carry the inapp bit.
+    //
+    // Characters where the inapp bit only appears in "?" (full missing
+    // data) are scored with standard Fitch, so transforms ARE safe.
+    // These fall through to the transform pipeline below.
+    if (has_genuine_inapp) {
       // Count states for metadata only (transforms skipped)
       uint32_t all = all_applicable_mask(sp.tip_tokens, n_tips, n_states,
                                           inapp_state);
