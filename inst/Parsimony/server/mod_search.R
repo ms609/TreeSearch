@@ -1073,7 +1073,25 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           nwk <- vapply(combined, function(t) {
             write.tree(ape::ladderize(t))
           }, character(1L))
-          combined[!duplicated(nwk)]
+          combined <- combined[!duplicated(nwk)]
+          # Filter out trees exceeding current poolSuboptimal threshold
+          tol <- tolerance()
+          if (tol < Inf && length(combined) > 1L) {
+            conc <- concavity()
+            ds <- if (identical(conc, "profile")) profileDataset() else r$dataset
+            if (!is.null(ds)) {
+              sc <- tryCatch(
+                TreeLength(RootTree(combined, 1), ds,
+                           concavity = conc, extended_iw = extendedIw()),
+                error = function(e) NULL
+              )
+              if (!is.null(sc)) {
+                combined <- combined[sc <= min(sc) + tol +
+                                       sqrt(.Machine$double.eps)]
+              }
+            }
+          }
+          combined
         } else {
           LogComment("New or improved score: replacing trees")
           r$bestSearchScore  <- newScore
