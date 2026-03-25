@@ -3,6 +3,10 @@
 ## Current Task
 **IDLE**
 
+Triaged `a.001`: `.ts_driven_search_raw` not found error is a stale system
+install. Fix already on `cpp-search` (commit `62658709d`). Maintainer needs
+to reinstall from source after restarting R to release the DLL lock.
+
 ## Recent Activity
 
 ### 2026-03-25: T-215, T-216, T-217, T-218
