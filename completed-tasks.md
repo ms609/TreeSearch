@@ -8,6 +8,11 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-207 | Multi-cycle PCSA perturbation phase | D (PR), F (cleanup) | PR #227 merged to cpp-search. Cherry-picked from `feature/pt-eval`. Includes T-210 fix (SA best-topology tracking). |
+| T-210 | [Bug] SA doesn't save best-found topology | D (PR), F (cleanup) | Fixed in T-207 PR #227. `anneal_search` tracks/restores best tree at phase boundaries. |
+| T-183 | Pool-seeded Wagner / consensus backbone | F (closed) | Superseded by existing `consensusConstrain` (ts_driven.cpp:565–690), which constrains the entire replicate pipeline, not just Wagner. Run independence concern; marginal starting-tree value given NNI→TBR pipeline. |
+| T-196 | [Bug] `extract_divided_steps` wrong for NA+IW | F (cherry-pick) | Cherry-picked from feature/parallel-temper (6dc28a27) to cpp-search. Replaced 3 static copies of extract_divided_steps() with extract_char_steps() in TBR/SPR/drift. ts_temper.cpp already correct via PR #227. |
+| T-198–201 | PT core + pipeline integration | — (closed) | Boltzmann PT ruled out by T-199 evaluation: 0% cold↔warm swap acceptance across all datasets. PCSA component cherry-picked as T-207/PR #227. Branch and worktree deleted. Findings preserved in `.positai/expertise/pt-evaluation.md`. |
 | T-212 | Test `random_constrained_tree` under RANDOM_TREE | F (S-COORD) | Tests committed by C on cpp-search. GHA failures were from T-214 constraint bug (now fixed; GHA 23542642164 PASS). Closed during S-COORD round 20. |
 | T-179 | Large-tree strategy preset (≥120 tips) | G | Completed 2026-03-24, in completed-tasks. Removed stale to-do entry (PR #215 closed). |
 | T-182 | Adaptive ratchet perturbation probability | G | PR #221 merged 2026-03-25. Removed stale to-do entry. |
