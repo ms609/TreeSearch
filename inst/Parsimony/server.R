@@ -182,7 +182,7 @@ server <- function(input, output, session) {
     rCode         = co$RCode,
     saveDetails   = saveDetails
   )
-  references_server("refs")
+  references_server("refs", weighting = se$weighting)
   
   onStop(function() {
     options(startOpt)
