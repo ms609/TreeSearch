@@ -482,7 +482,7 @@ MaximizeParsimony <- function(
     )
     morphyArgs <- dots
     morphyArgs$dataset <- dataset
-    if (!missing(tree)) morphyArgs$tree <- tree
+    if (!missing(tree) && !is.null(tree)) morphyArgs$tree <- tree
     if (!missing(concavity)) morphyArgs$concavity <- concavity
     if (!missing(constraint)) morphyArgs$constraint <- constraint
     if (!missing(verbosity)) morphyArgs$verbosity <- verbosity
@@ -547,7 +547,7 @@ MaximizeParsimony <- function(
 
   # --- Progress callback: build default cli bar if needed ---
   if (is.null(progressCallback) && verbosity >= 1L && interactive()) {
-    pb_env <- new.env(parent = baseenv())
+    pb_env <- new.env(parent = environment())
     pb_env$id <- cli::cli_progress_bar(
       total = as.integer(maxReplicates),
       format = paste0(
