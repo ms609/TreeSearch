@@ -321,7 +321,8 @@ FormatMissProb <- function(prob) {
 
 SearchConfidenceText <- function(K, R, nSearches = 1L,
                                  nTopologies = NULL,
-                                 lastImprovedRep = NULL) {
+                                 lastImprovedRep = NULL,
+                                 stopReason = NULL) {
   if (is.null(K) || is.null(R) || R <= 0L || K <= 0L) return(NULL)
   K <- min(K, R)
 
@@ -335,11 +336,9 @@ SearchConfidenceText <- function(K, R, nSearches = 1L,
     "runs"
   }
 
-  # Topology diversity (wired by T-164; NULL until then)
+  # Only warn when a single topology limits the independence assumption
   topo_note <- if (!is.null(nTopologies) && nTopologies == 1L) {
-    " [single topology in pool \u2014 limited independence]"
-  } else if (!is.null(nTopologies) && nTopologies > 1L) {
-    paste0(" [", nTopologies, " distinct topologies in pool]")
+    " [single topology \u2014 limited independence]"
   } else {
     ""
   }
@@ -353,8 +352,8 @@ SearchConfidenceText <- function(K, R, nSearches = 1L,
 
   # Landscape ruggedness flag
   rugged_note <- if (K / R < 0.3 && R >= 5L) {
-    paste0(" Rugged landscape: only ", round(100 * K / R), "% of runs found ",
-           "the best score \u2014 consider increasing replicates.")
+    paste0(" Hit rate low (", round(100 * K / R),
+           "%) \u2014 more replicates may help.")
   } else {
     ""
   }
@@ -367,10 +366,19 @@ SearchConfidenceText <- function(K, R, nSearches = 1L,
     ""
   }
 
+  stop_note <- if (identical(stopReason, "consensus")) {
+    " Search stopped: consensus tree unchanged across recent replicates."
+  } else if (identical(stopReason, "timeout")) {
+    " Search stopped: time limit reached."
+  } else {
+    ""
+  }
+
   paste0(K, " of ", R, " ", runs_label, " hit best score. ",
          "Probability that a better score exists: ",
          FormatMissProb(prob_miss),
-         topo_note, trajectory_note, rugged_note, small_sample_note)
+         topo_note, trajectory_note, rugged_note, small_sample_note,
+         stop_note)
 }
 
 EnC <- function(...) {
