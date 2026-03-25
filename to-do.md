@@ -76,7 +76,6 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-226 | P3 | OPEN | — | **[Shiny] "Trees in sequence" connect mode — review/remove.** May not make sense under new C++ search engine (no meaningful replicate ordering). | From a007. Design question. |
-| T-227 | P3 | OPEN | — | **[Shiny] Dataset dropdown hover polish.** (i) Hover highlight persists after mouse leaves dropdown area. (ii) Currently-selected item gets light-blue-on-white hover instead of retaining its selected styling. | From a009. Follow-up to T-219. |
 
 ### Standing Tasks
 
