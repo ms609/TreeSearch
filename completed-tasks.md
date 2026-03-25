@@ -290,4 +290,5 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-225 | [Shiny] Tree space Connect shows nothing | B | `mapLines` checkbox was unnamespaced; module couldn't see it. Passed as reactive parameter. Commit `14277d04f`. |
 | T-228 | [Shiny] Modal shows "Implied" not "Implied (extended)" | B | Fallback `"on"` → `"xpiwe"` to match reactive default. Commit `63e86f237`. |
 | T-227 | [Shiny] Dataset dropdown hover polish | B | `:hover` pseudo-class for hover, `.selected` retains blue bg on hover. Commit `fd401ec81`. |
+| S-COORD | Coordination review round 18 | B | Created coordination.md (local). PR #210 GHA in flight. No unresolved bugs on cpp-search. 3 OPEN P3 tasks deferred. |
 TASKEOF 2>&1
