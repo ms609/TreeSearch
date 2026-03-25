@@ -1,10 +1,8 @@
 ## T-212: Test RANDOM_TREE strategy with constraints.
-## When constraints are active, RANDOM_TREE currently falls back to
-## random_wagner_tree() (T-214 workaround). These tests verify that
-## constraint satisfaction is maintained across serial, parallel,
-## adaptive-start, IW, and single-split scenarios.
-## TODO: Replace Wagner fallback with dedicated random_constrained_tree()
-## that builds the constraint backbone and randomly resolves polytomies.
+## Exercises random_constrained_tree() via ts_driven_search: builds the
+## constraint backbone then randomly resolves polytomies. Tests verify
+## constraint satisfaction across serial, parallel, adaptive-start, IW,
+## and single-split scenarios.
 
 skip_on_cran()
 library("TreeTools")
