@@ -276,6 +276,7 @@ DrivenResult parallel_driven_search(
   }
 
   // Main thread: poll for interrupt and timeout
+  int last_stab_done = 0;  // replicates_done at last consensus check
   while (true) {
     // Sleep briefly to avoid spinning
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -329,10 +330,15 @@ DrivenResult parallel_driven_search(
       }
     }
 
-    // Consensus stability check (parallel path)
+    // Consensus stability check (parallel path).
+    // Only check when new replicates have completed; otherwise the
+    // unchanged counter increments on idle polls (every 200 ms) and
+    // can trigger premature termination with slow replicates.
     if (params.consensus_stable_reps > 0) {
+      int done_now = replicates_done.load(std::memory_order_relaxed);
       auto st = shared_pool.status();
-      if (st.pool_size >= 2) {
+      if (st.pool_size >= 2 && done_now > last_stab_done) {
+        last_stab_done = done_now;
         int unchanged = shared_pool.update_consensus_stability();
         if (unchanged >= params.consensus_stable_reps) {
           stop_flag.store(true, std::memory_order_relaxed);
