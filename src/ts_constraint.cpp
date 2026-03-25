@@ -601,13 +601,22 @@ static int impose_one_pass(TreeState& tree, ConstraintData& cd,
     find_maximal_subtrees(tree, root, best_node, node_tips,
                           move_in_mask, n_words, move_in_roots);
 
-    // Bail out if too many moves needed
+    // Safety cap: abandon this pass if the repair is unexpectedly large.
+    // Previous threshold (n_tip/4) was too aggressive for small trees:
+    // with n_tip=5, threshold=1 meant a 2-move fix would bail out.
     int n_moves = static_cast<int>(
         move_out_roots.size() + move_in_roots.size());
-    if (total_moves + n_moves > tree.n_tip / 4) break;
+    if (total_moves + n_moves > tree.n_tip) {
+      return -1;  // Distinguish "bailed out" from "no violations" (0)
+    }
 
     // --- Execute SPR moves ---
     // Enumerate target edges AFTER each clip (post-clip tree is valid).
+    // NOTE: root children are skipped because spr_clip() doesn't fully
+    // handle re-rooting (ts_tree.cpp:306). This can leave violations
+    // unfixed when the required move involves a root child. The fuse
+    // path has a post-repair verification guard (ts_driven.cpp) that
+    // discards trees where repair fails.
     for (int M : move_out_roots) {
       if (tree.parent[M] == root) continue;
       tree.spr_clip(M);
@@ -652,8 +661,9 @@ int impose_constraint(TreeState& tree, ConstraintData& cd)
   // is bounded by n_splits.  Cap at n_splits + 1 for safety.
   for (int pass = 0; pass <= cd.n_splits; ++pass) {
     int moves = impose_one_pass(tree, cd, rng);
+    if (moves < 0) break;  // Bailed out — too many moves needed
+    if (moves == 0) break;  // No violations found — done
     total_moves += moves;
-    if (moves == 0) break; // No violations found — done
   }
 
   tree.build_postorder();
