@@ -284,12 +284,12 @@ On `/assign X`:
 2. **Triage `aXXX.md` / `a.XXX` bug reports** (see "Shiny bug report intake" below):
    a. List all `a[0-9]*.md` **and** `a.[0-9]*` files in the project root
       (excluding any `*.claimed-*.md` / `*.claimed-*` files).
-   b. For each file, attempt `mv aXXX.md aXXX.claimed-X.md`. If the
-      rename fails (file gone or access denied), another agent claimed it
-      — skip.
-   c. For each successfully claimed file: read its content. **Skip files
-      shorter than 20 characters** (likely mid-edit) — rename them back
-      to the original name so they are picked up later.
+   b. For each file, check its size first. **Skip files shorter than
+      20 characters** (likely mid-edit — the human may still be typing).
+      Do not rename or touch these files; leave them for a later pass.
+   c. For files ≥20 characters, attempt `mv aXXX.md aXXX.claimed-X.md`.
+      If the rename fails (file gone or access denied), another agent
+      claimed it — skip.
    d. Create a `to-do.md` task under `### Shiny App` for each valid
       report. Assign the next available `T-nnn` ID, a priority based on
       severity (default P2), and tag as `[Shiny]`. Use the file's content
@@ -350,10 +350,9 @@ Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 ### Shiny bug report intake
 
 The human files Shiny app bugs as individual files in the project root.
-Two naming conventions are in use:
+Naming convention:
 
-- **Old:** `a001.md`, `a002.md`, … (zero-padded, `.md` extension)
-- **New (from a.010 onward):** `a.010`, `a.011`, … (dot-separated, no extension)
+`a.010`, `a.011`, … (dot-separated, no extension)
 
 Each file contains a free-text bug description. The human's workflow is:
 create file → write bug → save → never touch the file again.
@@ -364,21 +363,23 @@ create file → write bug → save → never touch the file again.
 **Claim protocol:**
 ```bash
 # List unclaimed reports (both conventions)
-ls a[0-9]*.md a.[0-9]* 2>/dev/null | grep -v 'claimed'
+ls a.[0-9]* 2>/dev/null | grep -v 'claimed'
+
+# Skip short files (< 20 chars) — don't rename, don't touch
+wc -c < a.010  # check size first
 
 # Claim atomically (rename)
-mv a001.md a001.claimed-X.md
 mv a.010 a.010.claimed-X
 
 # Read, triage into to-do.md, then delete
-cat a001.claimed-X.md
+cat a.001.claimed-X
 # ... create to-do.md entry ...
-rm a001.claimed-X.md
+rm a.001.claimed-X
 ```
 
 **Skip guard:** Files shorter than 20 characters are likely mid-edit.
-Rename them back (`mv aXXX.claimed-X.md aXXX.md`) and leave for a
-later pass.
+Do **not** rename them — just leave them in place for a later pass.
+(Renaming and renaming back triggers RStudio "file moved" dialogs.)
 
 **to-do.md placement:** All Shiny bugs go under `### Shiny App`. Create
 the section if it doesn't exist. Default priority P2 unless the content
@@ -403,7 +404,7 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 
 | File | Purpose |
 |------|---------|
-| `aXXX.md` / `a.XXX` | Individual Shiny bug reports (agents triage → `to-do.md`, then delete) |
+| `a.XXX` | Individual Shiny bug reports (agents triage → `to-do.md`, then delete) |
 | `issues.md` | Human-entered issues (agents triage → `to-do.md`) |
 | `to-do.md` | Task queue (active/open tasks only) |
 | `completed-tasks.md` | Archive of completed tasks |
