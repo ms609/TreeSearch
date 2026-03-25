@@ -155,9 +155,10 @@ struct DrivenParams {
 
 
   // Perturbation-count stopping rule (IQ-TREE-style).
-  // 0 = disabled (default). When > 0, stop after
-  // nTip * perturb_stop_factor consecutive replicates that fail to
-  // improve the best score.  Resets on every improvement.
+  // 0 = disabled. Default 2 (set in R SearchControl).
+  // When > 0, stop after nTip * perturb_stop_factor consecutive
+  // replicates that fail to improve the best score.  Resets on
+  // every improvement.
   int perturb_stop_factor = 0;
   // Adaptive search level.
   // When true, dynamically scale ratchet_cycles and drift_cycles based

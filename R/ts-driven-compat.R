@@ -68,7 +68,7 @@ ts_driven_search <- function(
     xpiwe_max_f = 5.0,
     obs_count = integer(0),
     consensusStableReps = 0L,
-    perturbStopFactor = 0L,
+    perturbStopFactor = 2L,
     adaptiveLevel = FALSE,
     consensusConstrain = FALSE,
     nniPerturbCycles = 0L,

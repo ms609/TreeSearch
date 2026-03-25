@@ -205,7 +205,8 @@ test_that("Suboptimal tree collection works", {
 test_that("Timeout stops search early", {
   # Set a very short timeout
   result <- ts_driven(med_ds, maxReplicates = 1000L, targetHits = 1000L,
-                      ratchetCycles = 5L, maxSeconds = 0.5)
+                      ratchetCycles = 5L, maxSeconds = 0.5,
+                      perturbStopFactor = 0L)
 
   # Should not have completed all 1000 replicates
   expect_true(result$replicates < 1000L)
