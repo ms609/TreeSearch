@@ -1,5 +1,6 @@
 #include "ts_parallel.h"
 #include "ts_collapsed.h"
+#include "ts_constraint.h"
 #include "ts_rng.h"
 #include "ts_fitch.h"
 #include "ts_fuse.h"
@@ -38,11 +39,13 @@ void ThreadSafePool::fuse_round(DataSet& ds, const DrivenParams& params,
 
   double fused_score = score_tree(fused, ds);
 
-  bool fuse_ok = true;
-  if (cd && cd->active) {
-    fuse_ok = !violates_constraint_posthoc(fused, *cd);
+  if (cd && cd->active &&
+      violates_constraint_posthoc(fused, *cd)) {
+    impose_constraint(fused, *cd);
+    fused.reset_states(ds);
+    fused_score = score_tree(fused, ds);
   }
-  if (fuse_ok) {
+  {
     std::vector<uint8_t> fused_collapsed;
     compute_collapsed_flags(fused, ds, fused_collapsed);
     pool_.add_collapsed(fused, fused_score, fused_collapsed);
