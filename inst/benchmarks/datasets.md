@@ -36,47 +36,76 @@ varying state counts, and varying matrix densities (% missing data).
 - **Dense vs sparse**: DeAssis (0.2% missing) and Dikow (0.4% missing) are
   nearly complete matrices; Longrich (45.3%) and Zhu (42.6%) are sparse.
 
-## Best-Known EW Scores
+## Best-Known EW Scores (standard Fitch, inapplicable → missing)
 
-Scores from the C++ driven search engine (5 replicates, 5s timeout per
-dataset, `set.seed(42)`). These are the standard Fitch parsimony scores
-(not inapplicable-aware). Published tree scores from `inapplicable.trees`
-are generally higher because they may not be optimized for standard Fitch.
+Best scores from TreeSearch (cpp-search, tuned "default" strategy) and
+TNT 1.6, across benchmark rounds 1 and 2 (2026-03-25). All inapplicable
+tokens replaced with missing data so both engines optimize the same Fitch
+objective. TNT scores are authoritative lower bounds.
 
-| Dataset | C++ Best | Published Tree | Notes |
-|---------|----------|---------------|-------|
-| Longrich2010 | 131 | 167 | |
-| Vinther2008 | 79 | 93 | |
-| Sansom2010 | 189 | — | |
-| DeAssis2011 | 64 | 89 | |
-| Aria2015 | 145 | 185 | |
-| Wortley2006 | 496 | 518 | |
-| Griswold1999 | 409 | 511 | |
-| Schulze2007 | 167 | 212 | |
-| Eklund2004 | 445 | 496 | |
-| Agnarsson2004 | 778 | 1035 | |
-| Zanol2014 | 1338 | 1802 | |
-| Zhu2013 | 649 | 810 | |
-| Giles2015 | 720 | 1005 | |
-| Dikow2009 | 1614 | 1646 | |
+| Dataset | TNT Best | TS Best | Δ | Published Tree | Notes |
+|---------|----------|---------|---|---------------|-------|
+| Longrich2010 | 131 | 131 | 0 | 167 | |
+| Vinther2008 | 78 | 78 | 0 | 93 | |
+| Sansom2010 | 188 | 188 | 0 | — | |
+| DeAssis2011 | 64 | 64 | 0 | 89 | |
+| Aria2015 | 142 | 142 | 0 | 185 | |
+| Wortley2006 | 479 | 482 | +3 | 518 | |
+| Griswold1999 | 394 | 394 | 0 | 511 | |
+| Schulze2007 | 155 | 155 | 0 | 212 | |
+| Eklund2004 | 440 | 440 | 0 | 496 | |
+| Agnarsson2004 | 765 | 765 | 0 | 1035 | |
+| Shultz2007 | 431 | 431 | 0 | — | Round 2 only |
+| Rougier2012 | 1147 | 1148 | +1 | — | Round 2 only |
+| Wilson2003 | 860 | 860 | 0 | — | Round 2 only |
+| OMeara2014 | 1208 | 1209 | +1 | — | Round 2 only |
+| Wetterer2000 | 549 | 549 | 0 | — | Round 2 only |
+| Conrad2008 | 1725 | 1726 | +1 | — | Round 2 only |
+| Capa2011 | 381 | 381 | 0 | — | Round 2 only |
+| Geisler2001 | 1293 | 1298 | +5 | — | Round 2 only |
+| Liljeblad2008 | 2840 | 2840 | 0 | — | Round 2 only |
+| Zanol2014 | 1261 | 1263 | +2 | 1802 | |
+| Zhu2013 | 624 | 627 | +3 | 810 | |
+| Aguado2009 | 575 | 575 | 0 | — | Round 2 only |
+| Giles2015 | 670 | 671 | +1 | 1005 | |
+| Dikow2009 | 1606 | 1606 | 0 | 1646 | |
 
-Note: C++ scores are lower than published because (a) the published trees
-were optimized for a different scoring method (inapplicable-aware), and
-(b) our driven search may find better trees. These scores were obtained
-with `set.seed(42)`, 10s timeout, 10 replicates. Use `bench_datasets.R`
-with longer search times for authoritative best-known scores.
+Note: Published tree scores are higher because they were optimized for
+inapplicable-aware scoring (Brazeau et al. 2019), not standard Fitch.
 
 ## Usage
 
+### Running benchmarks
+
+Benchmarks require a built copy of TreeSearch from `TreeSearch-a` (cpp-search):
+
+```bash
+# From the GitHub/ root
+bash build-agent.sh TreeSearch-a F          # builds TreeSearch.F
+cd TS-TNT-bench/inst/benchmarks
+Rscript --no-save bench_round1_cppsearch.R  # 14 datasets, 10s timeout
+Rscript --no-save bench_round2_hard.R       # 16 datasets, 120s timeout
+```
+
+Both scripts use tuned "default" strategy parameters from `MaximizeParsimony`
+(25% ratchet perturbation, adaptive level, outer-cycle resets). Results are
+saved to `round1_cppsearch.csv` and `round2_hard.csv`.
+
+**Important:** Do not use the stale compat-layer defaults (`ratchetPerturbProb
+= 0.04`, `driftCycles = 6`). These were the old `ts_driven_search()` defaults
+and produce substantially worse scores. Always use the tuned parameters from
+`MaximizeParsimony`'s "default" strategy.
+
+### TNT requirement
+
+TNT 1.6 must be installed at `C:/Programs/Phylogeny/tnt/TNT-bin/tnt.exe`.
+See `.positai/expertise/tnt.md` for invocation notes.
+
+### Dataset utilities
+
 ```r
 source("inst/benchmarks/bench_datasets.R")
-
-# Load all benchmark datasets
 datasets <- load_benchmark_datasets()
-
-# Score a single dataset
 score_dataset("Vinther2008", maxSeconds = 10)
-
-# Run full benchmark suite
 run_benchmark_suite(maxSeconds = 30, replicates = 5)
 ```
