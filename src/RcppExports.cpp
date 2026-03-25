@@ -569,8 +569,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ts_driven_search
-List ts_driven_search(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int ratchetPerturbMode, int ratchetPerturbMaxMoves, bool ratchetAdaptive, int driftCycles, int driftAfdLimit, double driftRfdLimit, int xssRounds, int xssPartitions, int rssRounds, int cssRounds, int cssPartitions, int sectorMinSize, int sectorMaxSize, int fuseInterval, bool fuseAcceptEqual, int poolMaxSize, double poolSuboptimal, double maxSeconds, int verbosity, IntegerVector min_steps, double concavity, Nullable<IntegerMatrix> consSplitMatrix, Nullable<NumericMatrix> consContrast, Nullable<IntegerMatrix> consTipData, Nullable<IntegerVector> consWeight, Nullable<CharacterVector> consLevels, int consExpectedScore, Nullable<NumericMatrix> infoAmounts, int tabuSize, int wagnerStarts, Nullable<Function> progressCallback, int nThreads, Nullable<IntegerMatrix> startEdge, bool sprFirst, bool nniFirst, Nullable<List> hierarchyBlocks, Nullable<IntegerMatrix> hsjTipLabels, double hsjAlpha, int hsjAbsentState, Nullable<List> xformChars, bool xpiwe, double xpiwe_r, double xpiwe_max_f, IntegerVector obs_count, int consensusStableReps, bool adaptiveLevel, bool consensusConstrain, int nniPerturbCycles, double nniPerturbFraction, int wagnerBias, double wagnerBiasTemp, int outerCycles, int maxOuterResets, bool adaptiveStart, double enumTimeFraction, Nullable<List> annealConfig);
-RcppExport SEXP _TreeSearch_ts_driven_search(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP ratchetPerturbModeSEXP, SEXP ratchetPerturbMaxMovesSEXP, SEXP ratchetAdaptiveSEXP, SEXP driftCyclesSEXP, SEXP driftAfdLimitSEXP, SEXP driftRfdLimitSEXP, SEXP xssRoundsSEXP, SEXP xssPartitionsSEXP, SEXP rssRoundsSEXP, SEXP cssRoundsSEXP, SEXP cssPartitionsSEXP, SEXP sectorMinSizeSEXP, SEXP sectorMaxSizeSEXP, SEXP fuseIntervalSEXP, SEXP fuseAcceptEqualSEXP, SEXP poolMaxSizeSEXP, SEXP poolSuboptimalSEXP, SEXP maxSecondsSEXP, SEXP verbositySEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP consSplitMatrixSEXP, SEXP consContrastSEXP, SEXP consTipDataSEXP, SEXP consWeightSEXP, SEXP consLevelsSEXP, SEXP consExpectedScoreSEXP, SEXP infoAmountsSEXP, SEXP tabuSizeSEXP, SEXP wagnerStartsSEXP, SEXP progressCallbackSEXP, SEXP nThreadsSEXP, SEXP startEdgeSEXP, SEXP sprFirstSEXP, SEXP nniFirstSEXP, SEXP hierarchyBlocksSEXP, SEXP hsjTipLabelsSEXP, SEXP hsjAlphaSEXP, SEXP hsjAbsentStateSEXP, SEXP xformCharsSEXP, SEXP xpiweSEXP, SEXP xpiwe_rSEXP, SEXP xpiwe_max_fSEXP, SEXP obs_countSEXP, SEXP consensusStableRepsSEXP, SEXP adaptiveLevelSEXP, SEXP consensusConstrainSEXP, SEXP nniPerturbCyclesSEXP, SEXP nniPerturbFractionSEXP, SEXP wagnerBiasSEXP, SEXP wagnerBiasTempSEXP, SEXP outerCyclesSEXP, SEXP maxOuterResetsSEXP, SEXP adaptiveStartSEXP, SEXP enumTimeFractionSEXP, SEXP annealConfigSEXP) {
+List ts_driven_search(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, List searchControl, List runtimeConfig, List scoringConfig, Nullable<List> constraintConfig, Nullable<List> hsjConfig, Nullable<List> xformConfig);
+RcppExport SEXP _TreeSearch_ts_driven_search(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP searchControlSEXP, SEXP runtimeConfigSEXP, SEXP scoringConfigSEXP, SEXP constraintConfigSEXP, SEXP hsjConfigSEXP, SEXP xformConfigSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -578,68 +578,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
     Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
-    Rcpp::traits::input_parameter< int >::type maxReplicates(maxReplicatesSEXP);
-    Rcpp::traits::input_parameter< int >::type targetHits(targetHitsSEXP);
-    Rcpp::traits::input_parameter< int >::type tbrMaxHits(tbrMaxHitsSEXP);
-    Rcpp::traits::input_parameter< int >::type ratchetCycles(ratchetCyclesSEXP);
-    Rcpp::traits::input_parameter< double >::type ratchetPerturbProb(ratchetPerturbProbSEXP);
-    Rcpp::traits::input_parameter< int >::type ratchetPerturbMode(ratchetPerturbModeSEXP);
-    Rcpp::traits::input_parameter< int >::type ratchetPerturbMaxMoves(ratchetPerturbMaxMovesSEXP);
-    Rcpp::traits::input_parameter< bool >::type ratchetAdaptive(ratchetAdaptiveSEXP);
-    Rcpp::traits::input_parameter< int >::type driftCycles(driftCyclesSEXP);
-    Rcpp::traits::input_parameter< int >::type driftAfdLimit(driftAfdLimitSEXP);
-    Rcpp::traits::input_parameter< double >::type driftRfdLimit(driftRfdLimitSEXP);
-    Rcpp::traits::input_parameter< int >::type xssRounds(xssRoundsSEXP);
-    Rcpp::traits::input_parameter< int >::type xssPartitions(xssPartitionsSEXP);
-    Rcpp::traits::input_parameter< int >::type rssRounds(rssRoundsSEXP);
-    Rcpp::traits::input_parameter< int >::type cssRounds(cssRoundsSEXP);
-    Rcpp::traits::input_parameter< int >::type cssPartitions(cssPartitionsSEXP);
-    Rcpp::traits::input_parameter< int >::type sectorMinSize(sectorMinSizeSEXP);
-    Rcpp::traits::input_parameter< int >::type sectorMaxSize(sectorMaxSizeSEXP);
-    Rcpp::traits::input_parameter< int >::type fuseInterval(fuseIntervalSEXP);
-    Rcpp::traits::input_parameter< bool >::type fuseAcceptEqual(fuseAcceptEqualSEXP);
-    Rcpp::traits::input_parameter< int >::type poolMaxSize(poolMaxSizeSEXP);
-    Rcpp::traits::input_parameter< double >::type poolSuboptimal(poolSuboptimalSEXP);
-    Rcpp::traits::input_parameter< double >::type maxSeconds(maxSecondsSEXP);
-    Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type min_steps(min_stepsSEXP);
-    Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
-    Rcpp::traits::input_parameter< Nullable<IntegerMatrix> >::type consSplitMatrix(consSplitMatrixSEXP);
-    Rcpp::traits::input_parameter< Nullable<NumericMatrix> >::type consContrast(consContrastSEXP);
-    Rcpp::traits::input_parameter< Nullable<IntegerMatrix> >::type consTipData(consTipDataSEXP);
-    Rcpp::traits::input_parameter< Nullable<IntegerVector> >::type consWeight(consWeightSEXP);
-    Rcpp::traits::input_parameter< Nullable<CharacterVector> >::type consLevels(consLevelsSEXP);
-    Rcpp::traits::input_parameter< int >::type consExpectedScore(consExpectedScoreSEXP);
-    Rcpp::traits::input_parameter< Nullable<NumericMatrix> >::type infoAmounts(infoAmountsSEXP);
-    Rcpp::traits::input_parameter< int >::type tabuSize(tabuSizeSEXP);
-    Rcpp::traits::input_parameter< int >::type wagnerStarts(wagnerStartsSEXP);
-    Rcpp::traits::input_parameter< Nullable<Function> >::type progressCallback(progressCallbackSEXP);
-    Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
-    Rcpp::traits::input_parameter< Nullable<IntegerMatrix> >::type startEdge(startEdgeSEXP);
-    Rcpp::traits::input_parameter< bool >::type sprFirst(sprFirstSEXP);
-    Rcpp::traits::input_parameter< bool >::type nniFirst(nniFirstSEXP);
-    Rcpp::traits::input_parameter< Nullable<List> >::type hierarchyBlocks(hierarchyBlocksSEXP);
-    Rcpp::traits::input_parameter< Nullable<IntegerMatrix> >::type hsjTipLabels(hsjTipLabelsSEXP);
-    Rcpp::traits::input_parameter< double >::type hsjAlpha(hsjAlphaSEXP);
-    Rcpp::traits::input_parameter< int >::type hsjAbsentState(hsjAbsentStateSEXP);
-    Rcpp::traits::input_parameter< Nullable<List> >::type xformChars(xformCharsSEXP);
-    Rcpp::traits::input_parameter< bool >::type xpiwe(xpiweSEXP);
-    Rcpp::traits::input_parameter< double >::type xpiwe_r(xpiwe_rSEXP);
-    Rcpp::traits::input_parameter< double >::type xpiwe_max_f(xpiwe_max_fSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type obs_count(obs_countSEXP);
-    Rcpp::traits::input_parameter< int >::type consensusStableReps(consensusStableRepsSEXP);
-    Rcpp::traits::input_parameter< bool >::type adaptiveLevel(adaptiveLevelSEXP);
-    Rcpp::traits::input_parameter< bool >::type consensusConstrain(consensusConstrainSEXP);
-    Rcpp::traits::input_parameter< int >::type nniPerturbCycles(nniPerturbCyclesSEXP);
-    Rcpp::traits::input_parameter< double >::type nniPerturbFraction(nniPerturbFractionSEXP);
-    Rcpp::traits::input_parameter< int >::type wagnerBias(wagnerBiasSEXP);
-    Rcpp::traits::input_parameter< double >::type wagnerBiasTemp(wagnerBiasTempSEXP);
-    Rcpp::traits::input_parameter< int >::type outerCycles(outerCyclesSEXP);
-    Rcpp::traits::input_parameter< int >::type maxOuterResets(maxOuterResetsSEXP);
-    Rcpp::traits::input_parameter< bool >::type adaptiveStart(adaptiveStartSEXP);
-    Rcpp::traits::input_parameter< double >::type enumTimeFraction(enumTimeFractionSEXP);
-    Rcpp::traits::input_parameter< Nullable<List> >::type annealConfig(annealConfigSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_driven_search(contrast, tip_data, weight, levels, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, ratchetPerturbMode, ratchetPerturbMaxMoves, ratchetAdaptive, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, rssRounds, cssRounds, cssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, maxSeconds, verbosity, min_steps, concavity, consSplitMatrix, consContrast, consTipData, consWeight, consLevels, consExpectedScore, infoAmounts, tabuSize, wagnerStarts, progressCallback, nThreads, startEdge, sprFirst, nniFirst, hierarchyBlocks, hsjTipLabels, hsjAlpha, hsjAbsentState, xformChars, xpiwe, xpiwe_r, xpiwe_max_f, obs_count, consensusStableReps, adaptiveLevel, consensusConstrain, nniPerturbCycles, nniPerturbFraction, wagnerBias, wagnerBiasTemp, outerCycles, maxOuterResets, adaptiveStart, enumTimeFraction, annealConfig));
+    Rcpp::traits::input_parameter< List >::type searchControl(searchControlSEXP);
+    Rcpp::traits::input_parameter< List >::type runtimeConfig(runtimeConfigSEXP);
+    Rcpp::traits::input_parameter< List >::type scoringConfig(scoringConfigSEXP);
+    Rcpp::traits::input_parameter< Nullable<List> >::type constraintConfig(constraintConfigSEXP);
+    Rcpp::traits::input_parameter< Nullable<List> >::type hsjConfig(hsjConfigSEXP);
+    Rcpp::traits::input_parameter< Nullable<List> >::type xformConfig(xformConfigSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_driven_search(contrast, tip_data, weight, levels, searchControl, runtimeConfig, scoringConfig, constraintConfig, hsjConfig, xformConfig));
     return rcpp_result_gen;
 END_RCPP
 }
