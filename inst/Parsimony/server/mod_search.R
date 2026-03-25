@@ -762,6 +762,10 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       LogMsg("StartSearch()")
       PutData(r$dataset[SearchTips()])
       PutTree(startTree)
+      # Snapshot reactive values for the async task
+      searchDataset <- r$dataset[SearchTips()]
+      searchConcavity <- concavity()
+      searchExtendedIw <- extendedIw()
       LogComment("Search for optimal trees", 1)
       LogCode(c(
         "newTrees <- MaximizeParsimony(",
@@ -792,10 +796,6 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           paste0("  hsj_alpha = ", searchHsjAlpha, ","),
         "  verbosity = 0",
         ")"))
-      # Snapshot reactive values for the async task
-      searchDataset <- r$dataset[SearchTips()]
-      searchConcavity <- concavity()
-      searchExtendedIw <- extendedIw()
 
       searchTask$invoke(
         searchDataset, startTree, searchConcavity, searchExtendedIw,
