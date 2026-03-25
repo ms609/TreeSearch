@@ -904,6 +904,13 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       cur_timeout   <- if (length(input$timeout))         input$timeout         else 5
       cur_epsilon   <- if (length(input$epsilon))         input$epsilon         else 0
       cur_threads   <- if (length(input$nThreads))        input$nThreads        else max(1L, floor(nCores / 2L))
+      # Concavity slider should start hidden unless weighting mode uses it
+      concavityInput <- sliderInput(ns("concavity"), "Concavity constant",
+                                    min = 0L, max = 3L, pre = "10^",
+                                    value = cur_concavity)
+      if (!cur_weights %in% c("xpiwe", "on")) {
+        concavityInput <- hidden(concavityInput)
+      }
       showModal(modalDialog(
         easyClose = TRUE,
         fluidPage(column(6,
@@ -911,8 +918,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
                      list("Implied (extended)" = "xpiwe",
                           "Implied" = "on", "Profile" = "prof",
                           "Equal" = "off"), cur_weights),
-          sliderInput(ns("concavity"), "Concavity constant", min = 0L,
-                     max = 3L, pre = "10^", value = cur_concavity),
+          concavityInput,
           selectInput(ns("inapplicable"), "Inapplicable characters",
                       list("Brazeau et al. (default)" = "bgs",
                            "Hopkins & St. John (HSJ)"  = "hsj",
