@@ -28,32 +28,20 @@
 | T-150 | P2 | WORKTREE (TS-CID-cons) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. |
 | T-204 | P2 | PR #216 (B) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA run 23495097795. |
 
-### Parallel Tempering / SA (Objective 17)
 
-PR #215 (`feature/parallel-temper`) CLOSED without merge. T-199 evaluation
-found Boltzmann PT is broken for parsimony but PCSA is effective at 125+ tips.
-See `TS-PTeval/dev/pt_t199_findings.md`. T-207/T-210 cherry-picked into new
-PR #227 (`feature/pcsa-phase`).
-
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-| T-198–201 | P2 | STALE (PR #215 closed) | — | **PT core + pipeline integration.** Boltzmann PT disabled by default. | On `feature/parallel-temper`. PR #215 closed; needs new PR or cherry-pick. |
-| T-207 | P2 | PR #227 (D) | — | **Multi-cycle PCSA perturbation phase.** Includes T-210 fix. | Cherry-picked from `feature/pt-eval` to `feature/pcsa-phase`. |
 
 ### Bugs
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-242 | P1 | PARKED (C, GHA 23545987517) | — | **[Bug?] Agnarsson2004 IW search quality regression.** 230 runs, only 5 hit best score (2% hit rate). User reports "1 trees in memory: 1 sampled, each with score 50.1872 (k = 5.62)". May indicate search regression or IW landscape difficulty. | From a.20. Investigate whether this is a genuine regression or expected IW behaviour. |
-| T-196 | P2 | STALE (PR #215 closed) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Fix on `feature/parallel-temper` (`6dc28a2`); PR #215 closed — needs cherry-pick or new PR. |
-| T-210 | P2 | PR #227 (D) | — | **[Bug] SA doesn't save best-found topology.** Fix: `anneal_search` tracks/restores best tree at phase boundaries. | In T-207 PR #227 (`feature/pcsa-phase`). |
+
 
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
 | T-187 | P3 | PR #226 (D) | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
 
 ### Shiny App
@@ -69,8 +57,8 @@ PR #227 (`feature/pcsa-phase`).
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by D (focus 4: parallelism & RNG). Consensus stability bug fixed. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by F (focus 6: R↔C++ interface). Clean — no bugs. |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 by F (round 20). Cleaned stale entries, updated PR refs. |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by F (round 20 triage). Open PRs: #227 (PCSA), #226 (perturb-stop), #216 (native-search), #213 (CID-consensus). #215/#222 now CLOSED. #210 (draft cpp-search→main). #178/#106 stale — consider closing. |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by F (round 20 triage). Open PRs: #226 (perturb-stop), #216 (native-search), #213 (CID-consensus). #227 merged, #215/#222 CLOSED. #210 (draft cpp-search→main). #178/#106 stale — consider closing. |
 

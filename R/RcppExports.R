@@ -3,7 +3,11 @@
 
 #' @rdname Carter1
 #' @examples
-#' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * TreeTools::NUnrooted(7)
+#' # Log-probability that a 3-state character (2 "0", 3 "1", 2 "2") needs
+#' # exactly 2 steps on a random 7-leaf tree:
+#' logp <- MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2))
+#' # Convert to an expected number of trees:
+#' exp(logp) * TreeTools::NUnrooted(7)
 #' 
 #' @export
 MaddisonSlatkin <- function(steps, states) {

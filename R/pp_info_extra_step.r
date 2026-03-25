@@ -323,8 +323,10 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
 #' states using the recursive approach of
 #' \insertCite{Maddison1991;textual}{TreeSearch}.
 #' It returns the **log-probability** (i.e. log of the fraction of unrooted
-#' binary trees) for each requested step count.  Currently supports 2--5
-#' character tokens.
+#' binary trees) for each requested step count.  The exact solver supports
+#' 2--5 character tokens; for characters with more tokens, use
+#' [StepInformation()] with `approx = "mc"` or `approx = "auto"` (default),
+#' which falls back to a Monte Carlo approximation automatically.
 #' 
 #' @param m,steps Number of steps.
 #' @param a,b Number of leaves labelled `0` and `1`.
