@@ -4,14 +4,26 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ---
 
+## 2026-03-25
+
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| T-211 | Stale `final_` in temper candidate scoring | C | Analyzed: conservative-only. Stale `final_` after clip/evaluate/restore biases Boltzmann screening but not verified acceptance (`temper_full_rescore` gates all accepted moves). Fix would require per-candidate full rescore or save/restore of all `final_` arrays — cost exceeds negligible SA benefit. Closed as not worth fixing. |
+
 ## 2026-03-24
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-190 | Adaptive starting-tree strategy mixing (bandit) | A | Thompson sampling over 4 fresh-start arms (3 Wagner variants + random tree). 33 unit tests, vignette section, strategy diagnostics attribute. Benchmarked on 75–88 tip datasets (neutral to slight benefit). Squash-merged via PR #214. |
+| T-177 | Bug fix: mid-TBR/SPR timeout | G | `check_timeout` callback threaded through `tbr_search`, `spr_search`, `nni_search`. 282 targeted tests pass. |
+| T-205 | Fix flaky test-pp-random-tree.R on Windows | G | MWC RNG in build_postorder.h uses static global state not seeded by set.seed(). Widened binomial bounds (stringency 0.005→1e-6) and increased nTrees (6000→12000, 12000→24000) across all tests. False-positive rate: ~0.0002% per run (was ~1%). GHA pass: run 23501977394. |
+| T-203 | Simulated annealing for large trees | G | Linear cooling schedule (T_start→T_end over N phases) using stochastic TBR + Boltzmann acceptance. `ts_temper.h/.cpp` (Layer 1: stochastic_tbr_phase ported from T-198; Layer 3: anneal_search). Wired into driven pipeline between drift and final TBR polish. `SearchControl(annealPhases, annealTStart, annealTEnd, annealMovesPerPhase)`. `large` preset: drift disabled, 5 annealing phases T=20→0. 19 new tests; all pass. Merged to `cpp-search` (conflict with `enumTimeFraction` resolved). |
 | T-197 | Fix `concavity = 0` NaN in `precompute_iw_delta` | D | C++ guard for e==0 avoids 0/0 NaN. R entry points already validate concavity>0. Added 8 new validation tests (MaximizeParsimony, SuccessiveApproximations, TreeLength, AdditionTree). 169 tests pass. |
 | T-195 | GHA benchmark workflow | D | `agent-benchmark.yml` + `bench_regression.R` CLI args (`--datasets`, `--budget`, `--output`, `--threads`, `--lib`). 14 datasets with max_score/ref_time_s. CSV artifact upload. Commit `7a80e67a`. |
+| T-202 | Fix MPT enumeration skipped on timeout | B | Two-phase timeout: main loop exits at `budget*(1-enumTimeFraction)`, reserving remainder for plateau walk. New `SearchControl(enumTimeFraction=0.1)`. PR #217 merged. |
 | T-179 | Large-tree strategy preset (>=120 tips) | G | Tuned via systematic benchmarking on mbank_X30754 (180t, 418p). Key: NNI-perturb too expensive at 5.5s/cycle; ratchet 12, drift 4, no NNI-perturb, outerCycles=1, single biased Wagner, tbrMaxHits=1. 60s: median 1255 vs thorough 1259; 120s: tied at 1250 but 2 reps vs 0-1; 30s: 1276 vs 1283. Commit `fab1e52c`. |
 | S-RED | Red-team focus 10: Profile & IW scoring | B | Filed T-196 (P2): `extract_divided_steps` NA+IW bug — four static copies read `local_cost` for NA blocks instead of three-pass corrected steps, mispricing IW candidate screening. Filed T-197 (P3): `concavity = 0` → NaN, no validation. Verified: profile `concavity = 1.0` sentinel correct; `precompute_profile_delta` precomputed_steps offset correct; all indirect IW variants structurally correct. |
+| S-RED | Red-team focus 11: T-190/T-202/XPIWE merge review | F | Filed T-208 (P2): `random_topology_tree()` ignores constraints — bandit RANDOM_TREE arm can produce constraint-violating starting tree when `adaptiveStart=true` (thorough preset). TBR blocks all constraint-relevant moves, tree returned to user unvalidated. Verified: XPIWE scoring correctness (eff_k, phi, sector copy, resampling). T-202 two-phase timeout correct (both serial and parallel). T-190 StrategyTracker correct (Thompson sampling, decay, RNG safety). |
 | T-194 | Stratified sample selection + dedup profiling | B | Profiled 35 multi-file projects; flagged 24 near-duplicates (≥95% char identity) as `dedup_drop`. Post-dedup: 659 usable (535 train, 124 val). Selected fixed 25-matrix training sample via max-min distance (`MBANK_FIXED_SAMPLE`). Dedup integrated into `build_mbank_catalogue.R`. Documented in `strategies.md` and `AGENTS.md`. |
 | T-191 | MorphoBank matrix catalogue | B | Scanned 801 .nex files from neotrans/inst/matrices/. 797 parsed OK (4 failures). 683 usable after ntax≥20 filter: 554 training, 129 validation (project%5==0). Includes multi-matrix projects and 7 syab files. Output: `dev/benchmarks/mbank_catalogue.csv`. Script: `dev/benchmarks/build_mbank_catalogue.R`. |
 | T-192 | External dataset loading functions | B | Added to bench_datasets.R: `load_mbank_catalogue()`, `load_mbank_datasets()`, `load_mbank_sample()` (stratified by tier), `load_mbank_split()`. Path auto-resolved to `neotrans/inst/matrices/`. |
@@ -247,9 +259,19 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | — | Collapsed dedup in parallel search path | — | ThreadSafePool::add_collapsed() + worker thread + fuse_round updated. 3648beb9 |
 | — | Cross-replicate consensus constraint tightening | — | Opt-in consensusConstrain=TRUE: after ≥5 reps, lock pool strict consensus as topological constraints. Clears on new best score. build_constraint_from_bitsets(), extract_consensus_splits(). 09f69915 |
 | — | Strategy preset tuning | — | default: wagnerStarts=3, sprFirst=TRUE, adaptiveLevel=TRUE. thorough: sprFirst=TRUE. Bundled in 09f69915 |
-EOF 2>&1
 
 ## 2026-03-23
 | T-188 | Biased Wagner addition — API integration | Human+AI | `wagnerBias` (0=random, 1=Goloboff, 2=entropy) + `wagnerBiasTemp` in `SearchControl()` and `ts_driven_search`. First Wagner start uses biased order; remaining starts use random for diversity. Goloboff 2014 §3.3. Benchmarked: 80% Wagner→TBR gap reduction at 174t; marginal on ≤88t. |
 | T-189 | Outer search cycle loop | Human+AI | `outerCycles` param in `SearchControl()`. Wraps [XSS+RSS+CSS → Ratchet → NNI-perturb → Drift → TBR] in outer loop, distributing cycles evenly. Matches TNT xmult pattern (Goloboff 1999 §2.3). `thorough` preset defaults to `outerCycles=2`. Backward-compatible: default=1. |
 | T-184 | `maxTime` → `maxSeconds` alias | Human+AI | Already implemented in b8e56e2b. `maxTime` intercepted before `.morphyParams` check, mapped to `maxSeconds` with deprecation warning, routed to C++ engine. Verified: timings attribute present, Morphy() not called. |
+
+## 2026-03-24 (evening)
+| T-209 | NNI perturbation constraint guard | E | Gate on `(!cd || !cd->active)`. PR #220 merged. |
+| T-206 | Outer cycle reset cap / maxOuterResets | E+A | Cap resets to maxOuterResets (default 3). PR #218 merged. |
+| T-210 | SA best-tree tracking across phases | C | `anneal_search()` saves/restores best tree at phase boundaries. Commit `e204d0a0` on feature/pt-eval. |
+| T-182 | Adaptive ratchet perturbation probability | G+E+A | hitRate-based tapering. PR #221 created. |
+
+## 2026-03-25
+| T-208 | random_topology_tree ignores constraints | G+A | WAGNER_RANDOM fallback. Cherry-picked to cpp-search (24427c9a). PR #219 closed. |
+| T-211 | Stale final_ in temper candidate scoring | C | Closed: conservative-only impact, not worth fixing. |
+TASKEOF 2>&1

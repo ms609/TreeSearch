@@ -58,6 +58,14 @@ struct DrivenParams {
   int drift_afd_limit = 3;
   double drift_rfd_limit = 0.1;
 
+  // Simulated annealing: single-chain linear cooling schedule using
+  // stochastic TBR.  Runs between drift and final TBR polish.
+  // n_phases = 0 disables annealing.
+  int anneal_phases = 0;           // 0 = disabled
+  double anneal_t_start = 20.0;    // initial Boltzmann temperature
+  double anneal_t_end = 0.0;       // final temperature
+  int anneal_moves_per_phase = 0;  // 0 = n_tip
+
   // Sectorial search
   int xss_rounds = 3;
   int xss_partitions = 4;
@@ -113,12 +121,21 @@ struct DrivenParams {
 
   // Outer search cycle count: number of times the [XSS → Ratchet →
   // NNI-perturb → Drift → TBR] block is repeated per replicate.
-  // Default 1 = current linear pipeline.  Values > 1 interleave fresh
-  // XSS passes after each ratchet/drift escape, matching TNT's xmult
-  // pattern.  Ratchet/drift/NNI-perturb cycles are divided evenly among
-  // outer cycles; total budget is approximately unchanged.
+  // Default 1 = single pass through the pipeline.  Values > 1 interleave
+  // fresh XSS passes after each ratchet/drift escape, matching TNT's
+  // xmult pattern.  Ratchet/drift/NNI-perturb cycles are divided evenly
+  // among outer cycles; total budget is approximately unchanged.
   // Goloboff 1999 §2.3 (sectorial + ratchet interleaving).
   int outer_cycles = 1;
+
+  // Maximum number of improvement-triggered resets of the outer cycle
+  // counter.  When a cycle improves the score, the counter resets to 0
+  // so the search keeps exploiting the new basin — but at most this many
+  // times.  0 = no resets (outer_cycles is exact).  -1 = unlimited.
+  // Default 0: outer_cycles controls the total number of cycles exactly.
+  // Strategy presets may set higher values (e.g. 2–3) to allow productive
+  // re-exploration after escaping local optima.
+  int max_outer_resets = 0;
 
   // Optional starting tree edge matrix (R format: n_edge × 2, 1-based).
   // When non-empty, replicate 0 uses this topology instead of Wagner.
@@ -151,6 +168,12 @@ struct DrivenParams {
   bool consensus_constrain = false;
   int consensus_constrain_min_reps = 5;  // minimum replicates before engaging
 
+  // Fraction of the time budget reserved for MPT enumeration (T-202).
+  // The main search loop exits at budget × (1 - enum_time_fraction),
+  // leaving the remainder for the plateau walk.  Default 0.1 = 10%.
+  // Set to 0 to disable (old behaviour: skip enumeration on timeout).
+  double enum_time_fraction = 0.1;
+
   // Adaptive starting-tree strategy selection (T-190).
   // When true, each replicate draws its starting strategy from a Thompson
   // sampling bandit over {Wagner-random, Wagner-Goloboff, Wagner-entropy,
@@ -172,6 +195,7 @@ struct PhaseTimings {
   double ratchet_ms = 0.0;
   double nni_perturb_ms = 0.0;
   double drift_ms = 0.0;
+  double anneal_ms = 0.0;
   double final_tbr_ms = 0.0;
   double fuse_ms = 0.0;
 
@@ -185,6 +209,7 @@ struct PhaseTimings {
     ratchet_ms   += o.ratchet_ms;
     nni_perturb_ms += o.nni_perturb_ms;
     drift_ms     += o.drift_ms;
+    anneal_ms    += o.anneal_ms;
     final_tbr_ms += o.final_tbr_ms;
     fuse_ms      += o.fuse_ms;
   }

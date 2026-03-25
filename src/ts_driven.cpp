@@ -5,6 +5,7 @@
 #include "ts_ratchet.h"
 #include "ts_nni_perturb.h"
 #include "ts_drift.h"
+#include "ts_temper.h"
 #include "ts_sector.h"
 #include "ts_fuse.h"
 #include "ts_pool.h"
@@ -176,18 +177,23 @@ ReplicateResult run_single_replicate(
 
   // Steps 3–6: outer cycle loop.
   // Each outer cycle runs [XSS + RSS + CSS → Ratchet → NNI-perturb →
-  // Drift → TBR polish] once.  With outer_cycles = 1 (default) this is
-  // exactly the previous linear pipeline.  With outer_cycles > 1 we
-  // interleave fresh XSS passes after each ratchet/drift escape, matching
-  // TNT's xmult pattern (Goloboff 1999 §2.3).
+  // Drift → TBR polish] once.  With outer_cycles = 1 and
+  // max_outer_resets = 0 (the defaults), this is exactly one pass through
+  // the pipeline.  With outer_cycles > 1 we interleave fresh XSS passes
+  // after each ratchet/drift escape, matching TNT's xmult pattern
+  // (Goloboff 1999 §2.3).
   //
-  // If a cycle improves the score, the counter resets so the search keeps
-  // exploiting the new basin until no further improvement is found (or
-  // the timeout fires).
+  // When max_outer_resets > 0 (or -1 = unlimited), a cycle that improves
+  // the score resets the counter to exploit the new basin.  Resets are
+  // capped to avoid runaway expansion on datasets with many small
+  // incremental improvements (late resets have diminishing returns:
+  // empirically <1 step/s vs >40 steps/s for the first cycle).
   //
   // Perturbation cycles are divided evenly among outer cycles so that the
   // total compute budget is approximately unchanged.
   const int n_outer = std::max(1, params.outer_cycles);
+  const int max_resets = params.max_outer_resets;  // 0=none, -1=unlimited
+  int resets_used = 0;
   // Ceiling division: each outer cycle gets at least 1 ratchet cycle.
   const int ratchet_per = std::max(1,
       (params.ratchet_cycles + n_outer - 1) / n_outer);
@@ -306,6 +312,9 @@ ReplicateResult run_single_replicate(
     }
 
     // 4b. NNI perturbation (topology-space escape)
+    // Skip when constraints are active: random_nni_perturb() doesn't
+    // enforce constraints. impose_constraint() repairs violations
+    // after perturbation, so this is now safe under constraints.
     if (nni_perturb_per > 0) {
       NNIPerturbParams np;
       np.n_cycles = nni_perturb_per;
@@ -352,6 +361,29 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
+    // 5b. Simulated annealing (linear cooling schedule)
+    if (params.anneal_phases > 0) {
+      AnnealParams ap;
+      ap.t_start = params.anneal_t_start;
+      ap.t_end = params.anneal_t_end;
+      ap.n_phases = params.anneal_phases;
+      ap.moves_per_phase = params.anneal_moves_per_phase;
+      anneal_search(result.tree, ds, ap, cd, check_timeout);
+
+      result.timings.anneal_ms += ph_lap();
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g [%.0f ms total]\n",
+                outer_label("Anneal").c_str(),
+                score_tree(result.tree, ds), result.timings.anneal_ms);
+      }
+    }
+
+    if (ts::check_interrupt() || check_timeout()) {
+      result.interrupted = true;
+      result.score = score_tree(result.tree, ds);
+      return result;
+    }
+
     // 6. TBR polish after each outer cycle.
     // Restores local optimality after drift (which accepts suboptimal moves),
     // and seeds the next cycle's XSS from a clean local optimum.
@@ -375,17 +407,28 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
-    // If this cycle improved the score, reset the counter so we keep
-    // exploiting the new basin.  The timeout is the only cap.
+    // If this cycle improved the score and resets are allowed, reset the
+    // counter to exploit the new basin.
     const double score_after_cycle = score_tree(result.tree, ds);
-    if (score_after_cycle < score_before_cycle - 1e-8) {
+    const bool improved = score_after_cycle < score_before_cycle - 1e-8;
+    const bool can_reset = (max_resets < 0) ||
+                           (max_resets > 0 && resets_used < max_resets);
+    if (improved && can_reset) {
       outer = 0;
+      ++resets_used;
       if (verbosity >= 2) {
-        Rprintf("  Outer cycle improved score (%.5g -> %.5g); resetting\n",
-                score_before_cycle, score_after_cycle);
+        Rprintf("  Outer cycle improved score (%.5g -> %.5g); resetting"
+                " (%d/%s)\n",
+                score_before_cycle, score_after_cycle, resets_used,
+                max_resets < 0 ? "inf" : std::to_string(max_resets).c_str());
       }
     } else {
       ++outer;
+      if (improved && verbosity >= 2) {
+        Rprintf("  Outer cycle improved score (%.5g -> %.5g);"
+                " reset cap reached (%d)\n",
+                score_before_cycle, score_after_cycle, max_resets);
+      }
     }
   } // end outer loop
 
@@ -437,10 +480,20 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     return std::chrono::duration<double>(now - start_time).count();
   };
 
-  // Combines timeout + cancel-file check so both are evaluated inside
-  // run_single_replicate() (which only receives check_timeout).
+  // Two-phase timeout (T-202):
+  // Main loop exits at budget × (1 - enum_fraction), reserving the
+  // remainder for MPT enumeration.
+  const double enum_frac = std::max(0.0, std::min(params.enum_time_fraction, 0.5));
+  const double main_deadline = params.max_seconds * (1.0 - enum_frac);
+  const double full_deadline = params.max_seconds;
+
   auto check_timeout = [&]() -> bool {
-    if (use_timeout && elapsed() >= params.max_seconds) return true;
+    if (use_timeout && elapsed() >= main_deadline) return true;
+    return check_cancel();
+  };
+
+  auto check_enum_timeout = [&]() -> bool {
+    if (use_timeout && elapsed() >= full_deadline) return true;
     return check_cancel();
   };
 
@@ -659,11 +712,14 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
       double fused_score = score_tree(fused, ds);
 
-      bool fuse_ok = true;
-      if (cd && cd->active) {
-        fuse_ok = !violates_constraint_posthoc(fused, *cd);
+      // Repair constraint violations rather than discarding fused tree
+      if (cd && cd->active &&
+          violates_constraint_posthoc(fused, *cd)) {
+        impose_constraint(fused, *cd);
+        fused.reset_states(ds);
+        fused_score = score_tree(fused, ds);
       }
-      if (fuse_ok) {
+      {
         std::vector<uint8_t> fused_collapsed;
         compute_collapsed_flags(fused, ds, fused_collapsed);
         pool.add_collapsed(fused, fused_score, fused_collapsed);
@@ -731,7 +787,7 @@ finish:
   //    one tree, so different TBR-connected islands are only discovered if
   //    different replicates landed on them.  We enumerate from each seed
   //    tree to explore its island, stopping when the pool is full.
-  if (pool.size() > 0 && pool.size() < pool.max_size && !result.timed_out) {
+  if (pool.size() > 0 && pool.size() < pool.max_size) {
     TBRParams tp;
     tp.accept_equal = true;
     tp.tabu_size = params.tabu_size > 0 ? params.tabu_size : 100;
@@ -740,17 +796,16 @@ finish:
     // enumeration of seed i become additional seeds for later iterations).
     int seed_idx = 0;
     while (seed_idx < pool.size() && pool.size() < pool.max_size) {
-      // Check cancel between seeds so a stop during MPT enumeration
-      // is detected promptly (regression fix for T-163).
-      if (check_cancel()) break;
+      if (check_enum_timeout()) break;
       TreeState enum_tree = pool.all()[seed_idx].tree;
       // Budget remaining capacity across remaining seeds
       tp.max_hits = std::max(10, (pool.max_size - pool.size()) * 2);
-      tbr_search(enum_tree, ds, tp, cd, nullptr, &pool, check_timeout);
+      tbr_search(enum_tree, ds, tp, cd, nullptr, &pool, check_enum_timeout);
       ++seed_idx;
     }
     if (params.verbosity >= 2) {
-      Rprintf("MPT enumeration: %d trees in pool\n", pool.size());
+      Rprintf("MPT enumeration: %d trees in pool (%.1f s)\n",
+              pool.size(), elapsed());
     }
   }
 

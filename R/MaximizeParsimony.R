@@ -125,7 +125,8 @@
     fuseInterval = 3L, fuseAcceptEqual = FALSE,
     tabuSize = 100L, wagnerStarts = 3L,
     nniFirst = TRUE, sprFirst = FALSE, adaptiveLevel = TRUE,
-    consensusStableReps = 3L
+    consensusStableReps = 3L,
+    maxOuterResets = 2L
   ),
   thorough = SearchControl(
     tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
@@ -140,6 +141,7 @@
     tabuSize = 200L, wagnerStarts = 3L,
     nniFirst = TRUE, sprFirst = FALSE,
     outerCycles = 2L,
+    maxOuterResets = 3L,
     consensusStableReps = 3L,
     adaptiveStart = TRUE
   ),
@@ -148,6 +150,10 @@
   # - Fewer perturbation cycles: ratchet 12, drift 4 (vs thorough 20/12)
   # - No NNI-perturbation: at ~5.5s/cycle, it dominates the budget; ratchet
   #   provides more diverse escapes per unit time at large-tree scale
+  # - Annealing replaces drift: linear cooling T=20→0 over 5 phases uses
+  #   stochastic TBR with Boltzmann acceptance — cheaper per-cycle than
+  #   drift (O(n) moves vs O(n²) drift acceptance checks) and naturally
+  #   schedules exploration→exploitation
   # - No outer-cycle interleaving: outerCycles=1 avoids re-running expensive
   #   XSS/RSS/CSS after ratchet (saves ~10s per repeated sectorial pass)
   # - Single biased-Wagner start: saves ~2.6s vs 3 random starts; biased
@@ -165,7 +171,8 @@
     ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = TRUE,
     nniPerturbCycles = 0L,
-    driftCycles = 4L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+    driftCycles = 0L,
+    annealPhases = 5L, annealTStart = 20, annealTEnd = 0,
     xssRounds = 3L, xssPartitions = 6L,
     rssRounds = 2L, cssRounds = 1L, cssPartitions = 6L,
     sectorMinSize = 8L, sectorMaxSize = 100L,
@@ -321,8 +328,9 @@
 #'     \item{`"large"`}{Large-tree search (>=120 tips): reduced cycle
 #'       counts scaled for expensive per-replicate cost, no NNI
 #'       perturbation, single biased Wagner start (Goloboff 2014), larger
-#'       sector sizes.  Empirically matches or exceeds `"thorough"` at
-#'       180 tips across all time budgets.}
+#'       sector sizes, simulated annealing instead of drift (linear
+#'       cooling from T=20 to T=0 over 5 phases).  Empirically matches
+#'       or exceeds `"thorough"` at 180 tips across all time budgets.}
 #'   All presets enable consensus-stability stopping: the search stops early
 #'   if the strict consensus of best-score trees has been unchanged for
 #'   `consensusStableReps` consecutive replicates.
@@ -781,82 +789,39 @@ MaximizeParsimony <- function(
   }
 
   # --- Run C++ driven search ---
-  # Read all control fields from the resolved control object
-  ctrl <- control
-  searchArgs <- list(
-    contrast = contrast,
-    tip_data = tip_data,
-    weight = weight,
-    levels = levels,
+  # searchControl: the resolved SearchControl object (already type-coerced)
+  # runtimeConfig: session-level params not in SearchControl
+  runtimeConfig <- list(
     maxReplicates = as.integer(maxReplicates),
     targetHits = as.integer(targetHits),
-    tbrMaxHits = as.integer(ctrl$tbrMaxHits),
-    ratchetCycles = as.integer(ctrl$ratchetCycles),
-    ratchetPerturbProb = as.double(ctrl$ratchetPerturbProb),
-    ratchetPerturbMode = as.integer(ctrl$ratchetPerturbMode),
-    ratchetPerturbMaxMoves = as.integer(ctrl$ratchetPerturbMaxMoves),
-    ratchetAdaptive = as.logical(ctrl$ratchetAdaptive),
-    driftCycles = as.integer(ctrl$driftCycles),
-    driftAfdLimit = as.integer(ctrl$driftAfdLimit),
-    driftRfdLimit = as.double(ctrl$driftRfdLimit),
-    xssRounds = as.integer(ctrl$xssRounds),
-    xssPartitions = as.integer(ctrl$xssPartitions),
-    rssRounds = as.integer(ctrl$rssRounds),
-    cssRounds = as.integer(ctrl$cssRounds),
-    cssPartitions = as.integer(ctrl$cssPartitions),
-    sectorMinSize = as.integer(ctrl$sectorMinSize),
-    sectorMaxSize = as.integer(ctrl$sectorMaxSize),
-    fuseInterval = as.integer(ctrl$fuseInterval),
-    fuseAcceptEqual = as.logical(ctrl$fuseAcceptEqual),
-    poolMaxSize = as.integer(ctrl$poolMaxSize),
-    poolSuboptimal = as.double(ctrl$poolSuboptimal),
     maxSeconds = as.double(maxSeconds),
-    tabuSize = as.integer(ctrl$tabuSize),
-    wagnerStarts = as.integer(ctrl$wagnerStarts),
     verbosity = as.integer(verbosity),
+    nThreads = as.integer(nThreads),
+    startEdge = if (userTree) tree[["edge"]] else NULL,
+    progressCallback = progressCallback
+  )
+
+  # scoringConfig: scoring method params
+  scoringConfig <- list(
     min_steps = if (is.finite(concavity)) minSteps else integer(0),
     concavity = as.double(concavity),
     xpiwe = useXpiwe,
     xpiwe_r = as.double(xpiwe_r),
     xpiwe_max_f = as.double(xpiwe_max_f),
     obs_count = if (useXpiwe) obsCount else integer(0),
-    progressCallback = progressCallback,
-    nThreads = as.integer(nThreads),
-    startEdge = if (userTree) tree[["edge"]] else NULL,
-    sprFirst = as.logical(ctrl$sprFirst),
-    nniFirst = as.logical(
-      if (is.null(ctrl$nniFirst)) FALSE
-      else ctrl$nniFirst),
-    consensusStableReps = as.integer(
-      if (is.null(ctrl$consensusStableReps)) 0L
-      else ctrl$consensusStableReps),
-    adaptiveLevel = as.logical(
-      if (is.null(ctrl$adaptiveLevel)) FALSE
-      else ctrl$adaptiveLevel),
-    consensusConstrain = as.logical(
-      if (is.null(ctrl$consensusConstrain)) FALSE
-      else ctrl$consensusConstrain),
-    nniPerturbCycles = as.integer(
-      if (is.null(ctrl$nniPerturbCycles)) 0L
-      else ctrl$nniPerturbCycles),
-    nniPerturbFraction = as.double(
-      if (is.null(ctrl$nniPerturbFraction)) 0.5
-      else ctrl$nniPerturbFraction),
-    wagnerBias = as.integer(
-      if (is.null(ctrl$wagnerBias)) 0L
-      else ctrl$wagnerBias),
-    wagnerBiasTemp = as.double(
-      if (is.null(ctrl$wagnerBiasTemp)) 0.3
-      else ctrl$wagnerBiasTemp),
-    outerCycles = as.integer(
-      if (is.null(ctrl$outerCycles)) 1L
-      else ctrl$outerCycles),
-    adaptiveStart = as.logical(
-      if (is.null(ctrl$adaptiveStart)) FALSE
-      else ctrl$adaptiveStart)
+    infoAmounts = profileArgs$infoAmounts
   )
-  result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
-                                        hsjArgs, xformArgs))
+
+  # constraintConfig / hsjConfig / xformConfig: NULL when empty
+  constraintConfig <- if (length(consArgs) > 0L) consArgs
+  hsjConfig <- if (length(hsjArgs) > 0L) hsjArgs
+  xformConfig <- if (length(xformArgs) > 0L) xformArgs
+
+  result <- .ts_driven_search_raw(
+    contrast, tip_data, weight, levels,
+    control, runtimeConfig, scoringConfig,
+    constraintConfig, hsjConfig, xformConfig
+  )
 
   # --- Reconstruct phylo from edge matrices ---
   treeTpl <- tree

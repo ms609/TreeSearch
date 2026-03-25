@@ -51,3 +51,4 @@ Makevars\.win\..*-bak$
 ^test.*\.txt$
 ^vtune
 ^dev$
+^papers\.md$

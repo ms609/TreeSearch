@@ -1,5 +1,6 @@
 #include "ts_parallel.h"
 #include "ts_collapsed.h"
+#include "ts_constraint.h"
 #include "ts_rng.h"
 #include "ts_fitch.h"
 #include "ts_fuse.h"
@@ -38,11 +39,13 @@ void ThreadSafePool::fuse_round(DataSet& ds, const DrivenParams& params,
 
   double fused_score = score_tree(fused, ds);
 
-  bool fuse_ok = true;
-  if (cd && cd->active) {
-    fuse_ok = !violates_constraint_posthoc(fused, *cd);
+  if (cd && cd->active &&
+      violates_constraint_posthoc(fused, *cd)) {
+    impose_constraint(fused, *cd);
+    fused.reset_states(ds);
+    fused_score = score_tree(fused, ds);
   }
-  if (fuse_ok) {
+  {
     std::vector<uint8_t> fused_collapsed;
     compute_collapsed_flags(fused, ds, fused_collapsed);
     pool_.add_collapsed(fused, fused_score, fused_collapsed);
@@ -238,9 +241,14 @@ DrivenResult parallel_driven_search(
   }
   ctx.strategies = params.adaptive_start ? &strategies : nullptr;
 
-  // Timeout setup
+  // Two-phase timeout (T-202): main loop exits early, reserving time for
+  // MPT enumeration.
   bool use_timeout = params.max_seconds > 0.0;
   auto start_time = std::chrono::steady_clock::now();
+  const double enum_frac = std::max(0.0,
+                                     std::min(params.enum_time_fraction, 0.5));
+  const double main_deadline = params.max_seconds * (1.0 - enum_frac);
+  const double full_deadline = params.max_seconds;
 
   // Cancel file: read path from environment variable (set by Shiny app).
   // If the file exists, the search should stop.
@@ -294,11 +302,11 @@ DrivenResult parallel_driven_search(
       break;
     }
 
-    // Check timeout
+    // Check timeout (main loop deadline, reserving time for MPT enum)
     if (use_timeout) {
       auto now = std::chrono::steady_clock::now();
       double elapsed = std::chrono::duration<double>(now - start_time).count();
-      if (elapsed >= params.max_seconds) {
+      if (elapsed >= main_deadline) {
         stop_flag.store(true, std::memory_order_relaxed);
         result.timed_out = true;
         break;
@@ -365,9 +373,23 @@ DrivenResult parallel_driven_search(
   result.replicates_completed = replicates_done.load();
   result.hits_to_best = pool_out.hits_to_best();
 
-  // MPT enumeration: TBR plateau walk from each pool tree (serial, main thread)
-  if (pool_out.size() > 0 && pool_out.size() < pool_out.max_size
-      && !result.timed_out) {
+  // MPT enumeration: TBR plateau walk from each pool tree (serial, main
+  // thread).  T-202: always runs (even after timeout), subject to the
+  // reserved enum time budget.
+  auto elapsed_now = [&]() -> double {
+    auto now = std::chrono::steady_clock::now();
+    return std::chrono::duration<double>(now - start_time).count();
+  };
+  auto check_enum_timeout = [&]() -> bool {
+    if (use_timeout && elapsed_now() >= full_deadline) return true;
+    if (!cancel_path.empty()) {
+      FILE* cf = std::fopen(cancel_path.c_str(), "r");
+      if (cf) { std::fclose(cf); return true; }
+    }
+    return false;
+  };
+
+  if (pool_out.size() > 0 && pool_out.size() < pool_out.max_size) {
     TBRParams tp;
     tp.accept_equal = true;
     tp.tabu_size = 100;
@@ -379,9 +401,11 @@ DrivenResult parallel_driven_search(
     }
     int seed_idx = 0;
     while (seed_idx < pool_out.size() && pool_out.size() < pool_out.max_size) {
+      if (check_enum_timeout()) break;
       TreeState enum_tree = pool_out.all()[seed_idx].tree;
       tp.max_hits = std::max(10, (pool_out.max_size - pool_out.size()) * 2);
-      tbr_search(enum_tree, ds_prototype, tp, cd_ptr, nullptr, &pool_out);
+      tbr_search(enum_tree, ds_prototype, tp, cd_ptr, nullptr, &pool_out,
+                 check_enum_timeout);
       ++seed_idx;
     }
   }

@@ -13,6 +13,7 @@ SearchControl(
   wagnerBias = 0L,
   wagnerBiasTemp = 0.3,
   outerCycles = 1L,
+  maxOuterResets = 0L,
   ratchetCycles = 12L,
   ratchetPerturbProb = 0.25,
   ratchetPerturbMode = 0L,
@@ -37,7 +38,12 @@ SearchControl(
   consensusStableReps = 0L,
   adaptiveLevel = FALSE,
   consensusConstrain = FALSE,
-  adaptiveStart = FALSE
+  annealPhases = 0L,
+  annealTStart = 20,
+  annealTEnd = 0,
+  annealMovesPerPhase = 0L,
+  adaptiveStart = FALSE,
+  enumTimeFraction = 0.1
 )
 }
 \arguments{
@@ -45,7 +51,7 @@ SearchControl(
 before stopping a TBR pass.}
 
 \item{nniFirst}{Logical; run an NNI pass before SPR/TBR in each replicate?
-At small tree sizes (≤88 tips) overhead is negligible; at ≥100 tips
+At small tree sizes (\eqn{\le}88 tips) overhead is negligible; at \eqn{\ge}100 tips
 this significantly accelerates the initial descent from the Wagner tree.}
 
 \item{sprFirst}{Logical; run an SPR pass before TBR in each replicate?}
@@ -71,6 +77,13 @@ approach uniform random.}
 with perturbation cycles divided evenly among outer iterations.
 Matches the interleaved sectorial + ratchet pattern of TNT's \code{xmult}
 \insertCite{Goloboff1999}{TreeSearch}.}
+
+\item{maxOuterResets}{Integer; maximum number of improvement-triggered
+resets of the outer cycle counter (default 0 = no resets, so
+\code{outerCycles} is exact).  When the search finds a new best score during
+an outer cycle, the counter resets up to this many times, allowing
+productive re-exploration.  Set to \eqn{-1} for unlimited resets.
+Strategy presets (\code{"default"}, \code{"thorough"}) set 2–3.}
 
 \item{ratchetCycles}{Integer; number of ratchet perturbation cycles.}
 
@@ -144,17 +157,38 @@ landscapes trigger increased effort.  Default \code{FALSE}.}
 
 \item{consensusConstrain}{Logical; lock the strict consensus of pool
 trees as topological constraints for subsequent replicates?  When
-\code{TRUE}, after enough replicates (≥5), splits present in ALL
+\code{TRUE}, after enough replicates (\eqn{\ge}5), splits present in ALL
 best-score pool trees are enforced as constraints, focusing search on
 uncertain regions.  Constraints are cleared whenever a new best score
 is found.  Only active when no user-supplied \code{constraint} is
 present.  Default \code{FALSE}.}
+
+\item{annealPhases}{Integer; number of simulated annealing temperature
+steps (default 0 = disabled).  When > 0, runs a linear cooling
+schedule from \code{annealTStart} to \code{annealTEnd} using stochastic TBR
+with Boltzmann acceptance.  Runs between drift and final TBR polish.}
+
+\item{annealTStart}{Numeric; initial Boltzmann temperature for annealing
+(default 20).  Higher temperatures accept more suboptimal moves.}
+
+\item{annealTEnd}{Numeric; final Boltzmann temperature (default 0 =
+strict hill-climbing at end).}
+
+\item{annealMovesPerPhase}{Integer; stochastic TBR moves per temperature
+step (default 0 = number of tips).}
 
 \item{adaptiveStart}{Logical; use Thompson-sampling (bandit) strategy
 selection for starting trees?  When \code{TRUE}, each replicate draws its
 starting strategy from a pool of options (random Wagner, biased Wagner,
 random tree, pool ratchet, pool NNI-perturb), adapting to which
 strategies yield the best scores.  Default \code{FALSE}.}
+
+\item{enumTimeFraction}{Numeric between 0 and 0.5; fraction of \code{maxSeconds}
+reserved for MPT enumeration (TBR plateau walk to discover additional
+equal-score topologies).  The main search loop exits at
+\code{maxSeconds * (1 - enumTimeFraction)}.  Set to 0 to disable the reserve
+(pre-v1.6 behaviour: enumeration skipped if the main loop times out).
+Default: \code{0.1} (10\%).}
 }
 \value{
 A named list of class \code{"SearchControl"}.
