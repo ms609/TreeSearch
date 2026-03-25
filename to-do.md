@@ -38,12 +38,6 @@
 
 
 
-### Large-Tree Scaling & Search Optimization (Objective 15)
-
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-| T-187 | P3 | PR #226 (D) | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
-
 ### Shiny App
 
 | ID | Pri | Status | Blocks | Description | Notes |
@@ -60,5 +54,5 @@
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by F (focus 6: R↔C++ interface). Clean — no bugs. |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 by F (round 20). Cleaned stale entries, updated PR refs. |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by F (round 20 triage). Open PRs: #226 (perturb-stop), #216 (native-search), #213 (CID-consensus). #227 merged, #215/#222 CLOSED. #210 (draft cpp-search→main). #178/#106 stale — consider closing. |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by F (round 20 triage). Open PRs: #216 (native-search), #213 (CID-consensus). #226/#227 merged, #215/#222 CLOSED. #210 (draft cpp-search→main). #178/#106 stale — consider closing. |
 

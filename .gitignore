@@ -52,3 +52,4 @@ test_output.txt
 /pdf
 /.builds
 .positai
+/.gha-results
