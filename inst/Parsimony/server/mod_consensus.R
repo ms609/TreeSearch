@@ -360,7 +360,7 @@ consensus_server <- function(id, r,
     LabelConcordance <- \() {
       LogMsg("LabelConcordance()")
       if (input$concordance != "none" &&
-          !is.null(r$plottedTree)) {
+          inherits(r$plottedTree, "phylo")) {
         LabelSplits(r$plottedTree, signif(concordance(), 3),
                     col = SupportColor(concordance()),
                     frame = "none", pos = 3L)
