@@ -311,3 +311,5 @@ TASKEOF 2>&1
 EOF 2>&1
 | S-RED | Red-team review focus 3: Ratchet & perturbation | D | Reviewed ts_ratchet.cpp (244), ts_sector.cpp (1007), ts_fuse.cpp (522). All 9 scenarios verified correct. Perturbation save/restore (IW/XPIWE), sector acceptance logic, fuse node mapping, root-structure validation all correct. No bugs found. |
 EOF 2>&1
+| T-240 | [Shiny] Pool suboptimal filter not applied mid-search | D | Accumulation path deduped but didn't filter by tolerance. Added TreeLength rescore + filter on combined trees. Commit `340d78381`. |
+EOF 2>&1
