@@ -69,6 +69,9 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-232 | P2 | PARKED (D, GHA 23543699366) | — | **[Shiny] "Tips to show" input bounces back on decrement.** Clicking "down" arrow resets to previous value (e.g. 54 for Sun dataset). | From a.013. Fix: `isolate(input$keepNTips)` in `UpdateKeepNTipsRange`. |
+| T-240 | P2 | OPEN | — | **[Shiny] Pool suboptimal filter not applied when changed mid-search.** After search, changing "Keep if suboptimal by" from ≤6 to ≤2 or ≤0 doesn't filter existing pool trees. "3 trees in memory" unchanged. | From a.17. |
+| T-239 | P3 | OPEN | — | **[Shiny] Cluster consensus: highlight edges unique to a cluster.** Heatmap colouring: emphasize "unique to cluster" vs "in 5/6 clusters". Agnarsson (6 clusters) is testbed. | From a.07. Feature request. |
+| T-241 | P3 | OPEN | — | **[Shiny] Show cluster assignment next to tree selector.** Add "(cluster X)" in cluster colour after "Tree to plot" label. | From a.19. Feature request. |
 
 ### Standing Tasks
 
