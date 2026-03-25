@@ -337,10 +337,26 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
           if ("seq" %in% mapLines()) {
             n_map <- nrow(map)
             if (n_map > 1L) {
-              arrows(map[-n_map, j], map[-n_map, i],
-                     map[-1L, j], map[-1L, i],
-                     col = "#ffcc33", lty = 2,
-                     length = 0.08, angle = 20)
+              x0 <- map[-n_map, j]; y0 <- map[-n_map, i]
+              x1 <- map[-1L, j];    y1 <- map[-1L, i]
+              # Dashed lines between consecutive trees
+              segments(x0, y0, x1, y1, col = "#ffcc33", lty = 2)
+              # Small arrows at segment midpoints to show direction
+              mx <- (x0 + x1) / 2; my <- (y0 + y1) / 2
+              dx <- x1 - x0; dy <- y1 - y0
+              seg_len <- sqrt(dx * dx + dy * dy)
+              keep <- seg_len > 0
+              if (any(keep)) {
+                # Nudge = tiny fraction of each segment length
+                nudge <- seg_len * 0.05
+                ux <- dx / seg_len; uy <- dy / seg_len
+                arrows(mx[keep] - nudge[keep] * ux[keep],
+                       my[keep] - nudge[keep] * uy[keep],
+                       mx[keep] + nudge[keep] * ux[keep],
+                       my[keep] + nudge[keep] * uy[keep],
+                       col = "#ffcc33", length = 0.06, angle = 25,
+                       lwd = 1.2)
+              }
             }
           }
 
@@ -476,15 +492,24 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
                ")")
 
       if ("seq" %in% mapLines()) {
-        LogCommentP("Connect trees in sequence (arrows show order)")
+        LogCommentP("Connect trees in sequence with midpoint arrows")
         LogCodeP("nMap <- nrow(map)",
                  "if (nMap > 1) {",
-                 "  arrows(",
-                 "    x0 = map[-nMap, j], y0 = map[-nMap, i],",
-                 "    x1 = map[-1, j],    y1 = map[-1, i],",
-                 "    col = \"#ffcc33\", lty = 2,",
-                 "    length = 0.08, angle = 20",
-                 "  )",
+                 "  x0 <- map[-nMap, j]; y0 <- map[-nMap, i]",
+                 "  x1 <- map[-1, j];    y1 <- map[-1, i]",
+                 "  segments(x0, y0, x1, y1, col = \"#ffcc33\", lty = 2)",
+                 "  mx <- (x0 + x1) / 2; my <- (y0 + y1) / 2",
+                 "  dx <- x1 - x0; dy <- y1 - y0",
+                 "  seg_len <- sqrt(dx^2 + dy^2)",
+                 "  keep <- seg_len > 0",
+                 "  nudge <- seg_len * 0.05",
+                 "  ux <- dx / seg_len; uy <- dy / seg_len",
+                 "  arrows(mx[keep] - nudge[keep] * ux[keep],",
+                 "         my[keep] - nudge[keep] * uy[keep],",
+                 "         mx[keep] + nudge[keep] * ux[keep],",
+                 "         my[keep] + nudge[keep] * uy[keep],",
+                 "         col = \"#ffcc33\", length = 0.06, angle = 25,",
+                 "         lwd = 1.2)",
                  "}")
       }
 
