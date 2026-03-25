@@ -1326,18 +1326,19 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
 #'
 #' @return Opens a Shiny application; does not return a value.
 #' @seealso [`MaximizeParsimony()`], [`Morphy()`]
-#' @importFrom shiny runApp
 #' @importFrom TreeDist ClusteringInfoDistance
 #' @export
 EasyTrees <- function () {#nocov start
   needed <- c("cluster", "future", "PlotTools", "promises",
-              "protoclust", "Rogue", "shinyjs")
+              "protoclust", "Rogue", "shiny", "shinyjs")
   missing <- needed[!vapply(needed, requireNamespace,
                             logical(1L), quietly = TRUE)]
   if (length(missing)) {
-    message("Installing packages required by EasyTrees(): ",
-            paste(missing, collapse = ", "))
-    utils::install.packages(missing)
+    stop("EasyTrees() requires additional packages: ",
+         paste(missing, collapse = ", "), ".\n",
+         "Install with: install.packages(",
+         paste0("\"", missing, "\"", collapse = ", "), ")",
+         call. = FALSE)
   }
   shiny::runApp(system.file("Parsimony", package = "TreeSearch"))
 }
