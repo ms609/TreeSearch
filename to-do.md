@@ -53,7 +53,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-213 | P2 | OPEN | — | **Implement `impose_constraint()` for post-hoc topology repair.** Enables NNI perturbation + fuse under constraints. | Branch+worktree lost. Implementation notes in agent-a.md. |
+| T-213 | P2 | DONE (merged PR #223) | — | **Implement `impose_constraint()` for post-hoc topology repair.** Enables NNI perturbation + fuse under constraints. | Branch+worktree lost. Implementation notes in agent-a.md. |
 | T-212 | P2 | PARKED (A, GHA 23528636505) | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests committed to cpp-search by C. GHA re-dispatched after heredoc fix. | Tests already on cpp-search. |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
@@ -71,7 +71,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-24 by A (focus 4: parallelism & RNG, Rf_error-on-worker noted). |
+| S-RED | dyn | ASSIGNED (B) | — | **Standing: Red-team review** | Last run: 2026-03-24 by A (focus 4: parallelism & RNG, Rf_error-on-worker noted). |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 by A (round 15). |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by F (#215/#213/#221 resolved) + A (fixed #215 compile errors). Only #222 still CONFLICTING. |
