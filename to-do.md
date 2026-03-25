@@ -63,7 +63,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | T-182 | P3 | PR #221 (G) | — | **Adaptive ratchet perturbation probability.** Taper by hit rate as pool stabilizes. | On `feature/adaptive-ratchet`. GHA 23508899686 PASS. |
 | T-183 | P3 | OPEN | — | **Pool-seeded Wagner / consensus backbone.** | Constraint infrastructure exists (`consensus_constrain`). |
-| T-187 | P3 | OPEN | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
+| T-187 | P3 | PR #226 (D) | — | **Perturbation-count stopping rule.** Stop after `nTip × K` unsuccessful perturbations. | From T-185 IQ-TREE review. |
 
 ### Shiny App
 
