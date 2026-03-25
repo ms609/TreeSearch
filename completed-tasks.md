@@ -8,6 +8,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-226 | [Shiny] Tree space sequence mode: arrows + index labels | A | Kept feature. Replaced `lines()` with `arrows()`, added "Tree index" plotting symbol option. Commit `dbf593f1b`. |
 | T-233 | [Shiny] Search summary text too verbose | A | Removed redundant topology count, shortened ruggedness warning. Commit `efbe77ab5`. |
 | T-236 | [Shiny] Auto-start search after profile prep | A | `StartSearch()` called from profile prep result observer instead of showing "click Search" notification. Commit `cfb38b070`. |
 | T-237 | [Shiny] Concavity slider visible in profile mode after dataset switch | A | Modal re-open didn't re-apply visibility. Fix: conditionally wrap in `hidden()` before `showModal()`. Commit `3903e3fce`. |
@@ -307,4 +308,6 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-226 | [Shiny] Remove "Trees in sequence" connect mode | B | Pool order is arbitrary under C++ search; option removed from UI. Commit 898e5e03c. |
 TASKEOF 2>&1
 | S-COORD | Coordination review round 19 | D | T-214 GHA passed (23542642164). T-212 unblocked, re-dispatched by B. T-233/T-236/T-237 completed by A. Shiny bug backlog cleared (5 triaged this session, all resolved). 3 OPEN specific tasks remain. Updated S-PR notes. |
+EOF 2>&1
+| S-RED | Red-team review focus 3: Ratchet & perturbation | D | Reviewed ts_ratchet.cpp (244), ts_sector.cpp (1007), ts_fuse.cpp (522). All 9 scenarios verified correct. Perturbation save/restore (IW/XPIWE), sector acceptance logic, fuse node mapping, root-structure validation all correct. No bugs found. |
 EOF 2>&1

@@ -74,7 +74,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | ASSIGNED (D) | — | **Standing: Red-team review** | Focus 3. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by D (focus 3: Ratchet & perturbation). No bugs found. |
 | S-PROF | dyn | BLOCKED: Do not run this task until 2026-03-26 | — | **Standing: Performance profiling** | Last run: 2026-03-24 by E (supplement: outer cycle reset analysis, T-206 filed). Round 4 by G (re-baseline). |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by B. Open PRs: #210 (cpp-search→main, MERGEABLE, GHA queued), #211 (madslatkin, MERGEABLE, GHA queued), #213/#215/#216/#221/#222 (feature branches, all failing/cancelled/unknown). #178/#106 CONFLICTING (stale). |
 
