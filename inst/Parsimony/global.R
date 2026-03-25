@@ -166,6 +166,16 @@ Brazeau2019 <- Reference(c("Brazeau, M.D.", "Guillerme, T.", "Smith, M.R."), 201
                            volume = 64,
                            pages = c(619, 631),
                          doi = "10.1093/sysbio/syy083")
+Goloboff1993 <- Reference("Goloboff, P.A.", 1993,
+                           "Estimating character weights during tree search",
+                           "Cladistics", volume = 9,
+                           pages = c(83, 91),
+                           doi = "10.1111/j.1096-0031.1993.tb00209.x")
+Goloboff1999 <- Reference("Goloboff, P.A.", 1999,
+                           "Analyzing large data sets in reasonable times: solutions for composite optima",
+                           "Cladistics", volume = 15,
+                           pages = c(415, 428),
+                           doi = "10.1006/clad.1999.0122")
 Goloboff2014 <- Reference("Goloboff, P.A.", 2014,
                            "Extended implied weighting",
                            "Cladistics", volume = 30,
@@ -321,7 +331,8 @@ FormatMissProb <- function(prob) {
 
 SearchConfidenceText <- function(K, R, nSearches = 1L,
                                  nTopologies = NULL,
-                                 lastImprovedRep = NULL) {
+                                 lastImprovedRep = NULL,
+                                 stopReason = NULL) {
   if (is.null(K) || is.null(R) || R <= 0L || K <= 0L) return(NULL)
   K <- min(K, R)
 
@@ -335,11 +346,9 @@ SearchConfidenceText <- function(K, R, nSearches = 1L,
     "runs"
   }
 
-  # Topology diversity (wired by T-164; NULL until then)
+  # Only warn when a single topology limits the independence assumption
   topo_note <- if (!is.null(nTopologies) && nTopologies == 1L) {
-    " [single topology in pool \u2014 limited independence]"
-  } else if (!is.null(nTopologies) && nTopologies > 1L) {
-    paste0(" [", nTopologies, " distinct topologies in pool]")
+    " [single topology \u2014 limited independence]"
   } else {
     ""
   }
@@ -353,8 +362,8 @@ SearchConfidenceText <- function(K, R, nSearches = 1L,
 
   # Landscape ruggedness flag
   rugged_note <- if (K / R < 0.3 && R >= 5L) {
-    paste0(" Rugged landscape: only ", round(100 * K / R), "% of runs found ",
-           "the best score \u2014 consider increasing replicates.")
+    paste0(" Hit rate low (", round(100 * K / R),
+           "%) \u2014 more replicates may help.")
   } else {
     ""
   }
@@ -367,10 +376,19 @@ SearchConfidenceText <- function(K, R, nSearches = 1L,
     ""
   }
 
+  stop_note <- if (identical(stopReason, "consensus")) {
+    " Search stopped: consensus tree unchanged across recent replicates."
+  } else if (identical(stopReason, "timeout")) {
+    " Search stopped: time limit reached."
+  } else {
+    ""
+  }
+
   paste0(K, " of ", R, " ", runs_label, " hit best score. ",
          "Probability that a better score exists: ",
          FormatMissProb(prob_miss),
-         topo_note, trajectory_note, rugged_note, small_sample_note)
+         topo_note, trajectory_note, rugged_note, small_sample_note,
+         stop_note)
 }
 
 EnC <- function(...) {

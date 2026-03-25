@@ -683,9 +683,10 @@ double fitch_score_ew(TreeState& tree, const DataSet& ds) {
   }
 
   if (ds.scoring_mode == ScoringMode::EW ||
-      ds.scoring_mode == ScoringMode::HSJ) {
+      ds.scoring_mode == ScoringMode::HSJ ||
+      ds.scoring_mode == ScoringMode::XFORM) {
     // Equal weights — add back precomputed topology-independent steps
-    // (HSJ non-hierarchy chars also use EW scoring)
+    // (HSJ/XFORM non-hierarchy chars also use EW scoring)
     if (has_na) {
       return static_cast<double>(fitch_na_score(tree, ds)) + ds.ew_offset;
     } else {

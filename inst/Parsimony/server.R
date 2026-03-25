@@ -111,6 +111,7 @@ server <- function(input, output, session) {
     distMeth = reactive(input$distMeth),
     plotFormat = reactive(input$plotFormat),
     distances = distances,
+    mapLines = reactive(input$mapLines),
     LogDistances = LogDistances,
     log_fns = list(
       BeginLogP      = BeginLogP,
@@ -181,7 +182,7 @@ server <- function(input, output, session) {
     rCode         = co$RCode,
     saveDetails   = saveDetails
   )
-  references_server("refs")
+  references_server("refs", weighting = se$weighting)
   
   onStop(function() {
     options(startOpt)

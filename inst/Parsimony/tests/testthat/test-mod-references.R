@@ -7,6 +7,9 @@ source("../../server/mod_references.R")
 # sufficient here since we only need to verify rendering logic.
 stub_cites <- list(
   Brazeau2019    = "<p>Brazeau2019</p>",
+  Goloboff1993   = "<p>Goloboff1993</p>",
+  Goloboff1999   = "<p>Goloboff1999</p>",
+  Goloboff2014   = "<p>Goloboff2014</p>",
   Morphy         = "<p>Morphy</p>",
   Nixon1999      = "<p>Nixon1999</p>",
   SmithSearch    = "<p>SmithSearch</p>",
@@ -38,5 +41,39 @@ test_that("references_server renders section headings", {
     expect_true(grepl("Tree search", rendered, fixed = TRUE))
     expect_true(grepl("Clustering",  rendered, fixed = TRUE))
     expect_true(grepl("Rogue taxa",  rendered, fixed = TRUE))
+  })
+})
+
+test_that("EW mode shows standing refs but not IW/XPIWE refs", {
+  wt <- reactiveVal("off")
+  shiny::testServer(references_server,
+    args = list(weighting = wt, cites = stub_cites), {
+    rendered <- paste(as.character(output$references), collapse = "")
+    expect_true(grepl("SmithSearch",   rendered, fixed = TRUE))
+    expect_true(grepl("Goloboff1999",  rendered, fixed = TRUE))
+    expect_true(grepl("Nixon1999",     rendered, fixed = TRUE))
+    expect_true(grepl("Brazeau2019",   rendered, fixed = TRUE))
+    expect_false(grepl("Goloboff1993", rendered, fixed = TRUE))
+    expect_false(grepl("Goloboff2014", rendered, fixed = TRUE))
+  })
+})
+
+test_that("IW mode adds Goloboff 1993 but not Goloboff 2014", {
+  wt <- reactiveVal("on")
+  shiny::testServer(references_server,
+    args = list(weighting = wt, cites = stub_cites), {
+    rendered <- paste(as.character(output$references), collapse = "")
+    expect_true(grepl("Goloboff1993",  rendered, fixed = TRUE))
+    expect_false(grepl("Goloboff2014", rendered, fixed = TRUE))
+  })
+})
+
+test_that("XPIWE mode adds both Goloboff 1993 and 2014", {
+  wt <- reactiveVal("xpiwe")
+  shiny::testServer(references_server,
+    args = list(weighting = wt, cites = stub_cites), {
+    rendered <- paste(as.character(output$references), collapse = "")
+    expect_true(grepl("Goloboff1993", rendered, fixed = TRUE))
+    expect_true(grepl("Goloboff2014", rendered, fixed = TRUE))
   })
 })

@@ -392,11 +392,20 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
         }
       }
 
+      bool regraft_was_rescored = !accepted && !dominated && best_above >= 0;
+
       if (!accepted) {
         tree.spr_unclip();
       }
 
       tree.build_postorder();
+
+      // full_rescore during rejected regraft overwrites all state arrays.
+      // spr_unclip only restores states along the clip-to-root path.
+      // Recompute so indirect scoring is correct for subsequent clips.
+      if (regraft_was_rescored) {
+        full_rescore(tree, ds);
+      }
 
       if (keep_going) {
         // Recompute collapsed flags after the accepted move.

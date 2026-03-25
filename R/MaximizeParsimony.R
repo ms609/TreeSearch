@@ -482,7 +482,7 @@ MaximizeParsimony <- function(
     )
     morphyArgs <- dots
     morphyArgs$dataset <- dataset
-    if (!missing(tree)) morphyArgs$tree <- tree
+    if (!missing(tree) && !is.null(tree)) morphyArgs$tree <- tree
     if (!missing(concavity)) morphyArgs$concavity <- concavity
     if (!missing(constraint)) morphyArgs$constraint <- constraint
     if (!missing(verbosity)) morphyArgs$verbosity <- verbosity
@@ -547,7 +547,7 @@ MaximizeParsimony <- function(
 
   # --- Progress callback: build default cli bar if needed ---
   if (is.null(progressCallback) && verbosity >= 1L && interactive()) {
-    pb_env <- new.env(parent = baseenv())
+    pb_env <- new.env(parent = environment())
     pb_env$id <- cli::cli_progress_bar(
       total = as.integer(maxReplicates),
       format = paste0(
@@ -717,7 +717,7 @@ MaximizeParsimony <- function(
   # Formula: max(10, ceiling(nTip * nChar / 5000)) where nChar = sum(weight).
   # Derived from T-069 benchmarks: at 225 taxa / 748 chars a single rep takes
   # ~40s and at least ~34 reps are needed to fill the tree pool reliably.
-  if (!missing(maxReplicates) && nTip >= 30L) {
+  if (!missing(maxReplicates) && nTip >= 30L && verbosity > 0L) {
     nChars <- sum(weight)
     minReps <- pmax(10L, ceiling(nTip * nChars / 5000L))
     if (maxReplicates < minReps) {
@@ -817,7 +817,7 @@ MaximizeParsimony <- function(
   hsjConfig <- if (length(hsjArgs) > 0L) hsjArgs
   xformConfig <- if (length(xformArgs) > 0L) xformArgs
 
-  result <- .ts_driven_search_raw(
+  result <- ts_driven_search(
     contrast, tip_data, weight, levels,
     control, runtimeConfig, scoringConfig,
     constraintConfig, hsjConfig, xformConfig

@@ -109,7 +109,12 @@ ReplicateResult run_single_replicate(
         break;
       }
       case StartStrategy::RANDOM_TREE:
-        random_topology_tree(result.tree, ds);
+        if (cd && cd->active) {
+          // Fall back to constraint-aware Wagner when constraints active
+          random_wagner_tree(result.tree, ds, cd);
+        } else {
+          random_topology_tree(result.tree, ds);
+        }
         break;
       default:  // WAGNER_RANDOM (and pool-based fallback)
         random_wagner_tree(result.tree, ds, cd);
@@ -734,20 +739,35 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
       double fused_score = score_tree(fused, ds);
 
-      // Repair constraint violations rather than discarding fused tree
-      if (cd && cd->active &&
-          violates_constraint_posthoc(fused, *cd)) {
-        impose_constraint(fused, *cd);
-        fused.reset_states(ds);
-        fused_score = score_tree(fused, ds);
+      // Check and repair constraint violations on fused tree.
+      // impose_constraint() is heuristic — verify the repair succeeded
+      // and discard the tree if it still violates.
+      bool fused_ok = true;
+      if (cd && cd->active) {
+        map_constraint_nodes(fused, *cd);
+        bool viol = false;
+        for (int _s = 0; _s < cd->n_splits; ++_s) {
+          if (cd->constraint_node[_s] < 0) { viol = true; break; }
+        }
+        if (viol) {
+          impose_constraint(fused, *cd);
+          fused.build_postorder();
+          fused.reset_states(ds);
+          fused_score = score_tree(fused, ds);
+          // Verify repair succeeded
+          map_constraint_nodes(fused, *cd);
+          for (int _s = 0; _s < cd->n_splits; ++_s) {
+            if (cd->constraint_node[_s] < 0) { fused_ok = false; break; }
+          }
+        }
       }
-      {
+      if (fused_ok) {
         std::vector<uint8_t> fused_collapsed;
         compute_collapsed_flags(fused, ds, fused_collapsed);
         pool.add_collapsed(fused, fused_score, fused_collapsed);
       }
 
-      if (fused_score < best_before) {
+      if (fused_ok && fused_score < best_before) {
         pool.set_hits_to_best(0);
         result.last_improved_rep = rep1;
         report("fuse", 1, fused_score, rep1);

@@ -285,10 +285,37 @@ void classify_clip_constraints(const TreeState& tree, int clip_node,
     }
 
     if (any_inside && any_outside) {
-      // Clip subtree straddles the split — the split boundary is
-      // internal to the clipped subtree, so regraft position doesn't
-      // affect it.
-      cd.clip_zones[s] = ClipZone::UNCONSTRAINED;
+      // Clip subtree straddles the split.  Check whether the rest of
+      // the tree also has tips on both sides.  If so, no single edge
+      // can separate IN from OUT after any regraft → FORBIDDEN.
+      // If the clip contains ALL of one side, the split boundary could
+      // be internal to the clip subtree → UNCONSTRAINED.
+      bool rest_has_in = false;
+      bool rest_has_out = false;
+      for (int w = 0; w < cd.n_words; ++w) {
+        uint64_t rest = ~cd.clip_tip_mask[w];
+        // Mask out bits beyond n_tips in the last word
+        if (w == cd.n_words - 1) {
+          int remainder = tree.n_tip % 64;
+          if (remainder > 0)
+            rest &= (1ULL << remainder) - 1;
+        }
+        if (rest & split[w]) rest_has_in = true;
+        if (rest & ~split[w]) {
+          uint64_t out_bits = ~split[w];
+          if (w == cd.n_words - 1) {
+            int remainder = tree.n_tip % 64;
+            if (remainder > 0)
+              out_bits &= (1ULL << remainder) - 1;
+          }
+          if (rest & out_bits) rest_has_out = true;
+        }
+      }
+      if (rest_has_in && rest_has_out) {
+        cd.clip_zones[s] = ClipZone::FORBIDDEN;
+      } else {
+        cd.clip_zones[s] = ClipZone::UNCONSTRAINED;
+      }
     } else if (any_inside) {
       cd.clip_zones[s] = ClipZone::MUST_INSIDE;
     } else if (any_outside) {
@@ -318,6 +345,10 @@ bool regraft_violates_constraint(int below,
 
   for (int s = 0; s < cd.n_splits; ++s) {
     if (cd.clip_zones[s] == ClipZone::UNCONSTRAINED) continue;
+
+    // Clip straddles the split AND rest also straddles: no regraft
+    // can preserve this split — reject unconditionally.
+    if (cd.clip_zones[s] == ClipZone::FORBIDDEN) return true;
 
     int cn = cd.constraint_node[s];
     if (cn < 0) {
