@@ -1241,7 +1241,8 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   params.adaptive_start        = as<bool>(ctrl["adaptiveStart"]);
   params.enum_time_fraction    = as<double>(ctrl["enumTimeFraction"]);
 
-  // Simulated annealing (folded into searchControl)
+  // Simulated annealing perturbation (PCSA)
+  params.anneal_cycles          = as<int>(ctrl["annealCycles"]);
   params.anneal_phases          = as<int>(ctrl["annealPhases"]);
   params.anneal_t_start         = as<double>(ctrl["annealTStart"]);
   params.anneal_t_end           = as<double>(ctrl["annealTEnd"]);

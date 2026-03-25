@@ -172,7 +172,7 @@
     ratchetAdaptive = TRUE,
     nniPerturbCycles = 0L,
     driftCycles = 0L,
-    annealPhases = 5L, annealTStart = 20, annealTEnd = 0,
+    annealCycles = 3L, annealPhases = 5L, annealTStart = 20, annealTEnd = 0,
     xssRounds = 3L, xssPartitions = 6L,
     rssRounds = 2L, cssRounds = 1L, cssPartitions = 6L,
     sectorMinSize = 8L, sectorMaxSize = 100L,

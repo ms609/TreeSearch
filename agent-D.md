@@ -1,19 +1,19 @@
 # Agent D Progress Log
 
 ## Current Task
-**Task:** T-241 — Show cluster assignment next to tree selector
-**Status:** IN PROGRESS
-**Started:** 2026-03-25
+**Status:** IDLE
+**Last completed:** 2026-03-25
+
+### Completed this session
+- Fixed test-ts-rep-warning.R: verbosity=0L -> 1L in two expect_warning tests (T-230 compat)
+- S-RED focus 4 (Parallelism & RNG): Found and fixed consensus stability bug in parallel path (idle polls increment unchanged counter → premature termination)
+- Previous session: T-241 (cluster label), T-239 (edge highlighting), T-187 (perturbation-count stopping, PR #226)
 
 ### Pending GHA results
-- T-232: GHA 23543699366 (in_progress, ubuntu-arm64)
-- T-240: GHA 23544604214 (queued)
-
-### Previous session summary
-- Triaged 8 Shiny bug reports (a.001, a.011–a.014, a.07, a.17, a.19)
-- T-232 (P2): Fixed keepNTips bounce — PARKED on GHA
-- T-234 (P2): Context-dependent references — DONE
-- T-240 (P2): Pool suboptimal filter — PARKED on GHA
-- S-COORD round 19 — DONE
-- S-RED focus 3 (Ratchet & perturbation) — DONE, no bugs found
-- S-PR — DONE, all GHA queued, no actionable items
+- T-232: needs re-dispatch (original GHA failed on pre-existing test issue, now fixed)
+- T-240: GHA 23544604214
+- T-241: GHA 23545261957
+- T-239: GHA 23545538742
+- T-187: GHA 23546574279 (PR #226)
+- cpp-search test fix + consensus stability fix: GHA 23546958311
+EOF 2>&1

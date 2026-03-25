@@ -8,6 +8,9 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-212 | Test `random_constrained_tree` under RANDOM_TREE | F (S-COORD) | Tests committed by C on cpp-search. GHA failures were from T-214 constraint bug (now fixed; GHA 23542642164 PASS). Closed during S-COORD round 20. |
+| T-179 | Large-tree strategy preset (≥120 tips) | G | Completed 2026-03-24, in completed-tasks. Removed stale to-do entry (PR #215 closed). |
+| T-182 | Adaptive ratchet perturbation probability | G | PR #221 merged 2026-03-25. Removed stale to-do entry. |
 | T-226 | [Shiny] Tree space sequence mode: arrows + index labels | A | Kept feature. Replaced `lines()` with `arrows()`, added "Tree index" plotting symbol option. Commit `dbf593f1b`. |
 | T-233 | [Shiny] Search summary text too verbose | A | Removed redundant topology count, shortened ruggedness warning. Commit `efbe77ab5`. |
 | T-236 | [Shiny] Auto-start search after profile prep | A | `StartSearch()` called from profile prep result observer instead of showing "click Search" notification. Commit `cfb38b070`. |
@@ -313,3 +316,4 @@ EOF 2>&1
 EOF 2>&1
 | T-240 | [Shiny] Pool suboptimal filter not applied mid-search | D | Accumulation path deduped but didn't filter by tolerance. Added TreeLength rescore + filter on combined trees. Commit `340d78381`. |
 EOF 2>&1
+| S-RED | Red-team review focus 4: Parallelism & RNG | D | Found and fixed parallel consensus stability bug: idle polls incremented unchanged counter causing premature termination. Also noted R_CheckUserInterrupt/longjmp fragility. 9 items verified, 1 bug fixed. |
