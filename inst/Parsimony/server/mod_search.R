@@ -896,7 +896,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       # Initialise all modal inputs from current values so that opening the
       # modal does not fire observeEvent(input$concavity) or
       # observeEvent(input$implied.weights), which reset the run counters.
-      cur_weights   <- if (length(input$implied.weights)) input$implied.weights else "on"
+      cur_weights   <- if (length(input$implied.weights)) input$implied.weights else "xpiwe"
       cur_concavity <- if (length(input$concavity))       input$concavity       else 1L
       cur_strategy  <- if (length(input$strategy))        input$strategy        else "auto"
       cur_maxRep    <- if (length(input$maxReplicates))   input$maxReplicates   else 100L
