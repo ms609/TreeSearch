@@ -657,7 +657,9 @@ struct ValidDrawsCache {
       }
       
       // Safety check for the fixed array size (unlikely to be hit)
-      if (out.count >= 256) throw std::runtime_error("FixedDraws array capacity exceeded.");
+      if (out.count >= 256) throw std::runtime_error(
+        "Column has too many taxa/state combinations for the exact solver. "
+        "Use StepInformation(approx = 'mc') to approximate with Monte Carlo.");
       
       DrawPair dp;
       dp.drawn = StateKey(drawn);
@@ -977,7 +979,9 @@ class SolverT {
         }
         
         if (out.count >= 256) 
-          throw std::runtime_error("FixedDraws array capacity exceeded.");
+          throw std::runtime_error(
+            "Column has too many taxa/state combinations for the exact solver. "
+            "Use StepInformation(approx = 'mc') to approximate with Monte Carlo.");
         
         DrawPairT dp;
         dp.drawn = KeyType(drawn);
@@ -1603,7 +1607,11 @@ static double logCarter1_cpp(int m, int a, int b) {
 
 //' @rdname Carter1
 //' @examples
-//' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * TreeTools::NUnrooted(7)
+//' # Log-probability that a 3-state character (2 "0", 3 "1", 2 "2") needs
+//' # exactly 2 steps on a random 7-leaf tree:
+//' logp <- MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2))
+//' # Convert to an expected number of trees:
+//' exp(logp) * TreeTools::NUnrooted(7)
 //' 
 //' @export
 // [[Rcpp::export]]
@@ -1615,7 +1623,8 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
   int nTokens = (int)std::floor(std::log2((double)len)) + 1;
   
   if (nTokens < 2 || nTokens > 5) {
-    stop("MaddisonSlatkin() supports 2-5 tokens (3-31 states).");
+    stop("MaddisonSlatkin() exact solver supports 2-5 tokens. "
+         "For more tokens, use StepInformation(approx = 'mc').");
   }
   
   int nLevels = nTokens;

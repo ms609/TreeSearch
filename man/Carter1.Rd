@@ -41,11 +41,17 @@ other.
 states using the recursive approach of
 \insertCite{Maddison1991;textual}{TreeSearch}.
 It returns the \strong{log-probability} (i.e. log of the fraction of unrooted
-binary trees) for each requested step count.  Currently supports 2--5
-character tokens.
+binary trees) for each requested step count.  The exact solver supports
+2--5 character tokens; for characters with more tokens, use
+\code{\link[=StepInformation]{StepInformation()}} with \code{approx = "mc"} or \code{approx = "auto"} (default),
+which falls back to a Monte Carlo approximation automatically.
 }
 \examples{
-MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * TreeTools::NUnrooted(7)
+# Log-probability that a 3-state character (2 "0", 3 "1", 2 "2") needs
+# exactly 2 steps on a random 7-leaf tree:
+logp <- MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2))
+# Convert to an expected number of trees:
+exp(logp) * TreeTools::NUnrooted(7)
 
 # The character `0 0 0 1 1 1`
 Carter1(1, 3, 3) # Exactly one step
