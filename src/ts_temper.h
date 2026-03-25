@@ -3,12 +3,14 @@
 
 // Parallel tempering for parsimony search.
 //
-// Two layers:
+// Three layers:
 // 1. Stochastic TBR: sample random SPR moves, accept/reject with
 //    Boltzmann probability exp(-delta/T).  T=0 = strict hill-climbing.
 // 2. Multi-chain framework: N chains at different temperatures, with
 //    periodic Metropolis swaps.  The cold chain (T=0) uses standard TBR;
 //    hot chains use stochastic TBR.
+// 3. Simulated annealing: linear cooling schedule calling
+//    stochastic_tbr_phase() at decreasing temperatures.
 
 #include "ts_data.h"
 #include "ts_tree.h"

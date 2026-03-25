@@ -13,6 +13,7 @@ SearchControl(
   wagnerBias = 0L,
   wagnerBiasTemp = 0.3,
   outerCycles = 1L,
+  maxOuterResets = 0L,
   ratchetCycles = 12L,
   ratchetPerturbProb = 0.25,
   ratchetPerturbMode = 0L,
@@ -76,6 +77,13 @@ approach uniform random.}
 with perturbation cycles divided evenly among outer iterations.
 Matches the interleaved sectorial + ratchet pattern of TNT's \code{xmult}
 \insertCite{Goloboff1999}{TreeSearch}.}
+
+\item{maxOuterResets}{Integer; maximum number of improvement-triggered
+resets of the outer cycle counter (default 0 = no resets, so
+\code{outerCycles} is exact).  When the search finds a new best score during
+an outer cycle, the counter resets up to this many times, allowing
+productive re-exploration.  Set to \eqn{-1} for unlimited resets.
+Strategy presets (\code{"default"}, \code{"thorough"}) set 2–3.}
 
 \item{ratchetCycles}{Integer; number of ratchet perturbation cycles.}
 
@@ -155,17 +163,19 @@ uncertain regions.  Constraints are cleared whenever a new best score
 is found.  Only active when no user-supplied \code{constraint} is
 present.  Default \code{FALSE}.}
 
-\item{annealPhases}{Integer; number of simulated annealing cooling phases.
-\code{0} (default) disables annealing.}
+\item{annealPhases}{Integer; number of simulated annealing temperature
+steps (default 0 = disabled).  When > 0, runs a linear cooling
+schedule from \code{annealTStart} to \code{annealTEnd} using stochastic TBR
+with Boltzmann acceptance.  Runs between drift and final TBR polish.}
 
-\item{annealTStart}{Numeric; starting temperature for simulated annealing.
-Default \code{20}.}
+\item{annealTStart}{Numeric; initial Boltzmann temperature for annealing
+(default 20).  Higher temperatures accept more suboptimal moves.}
 
-\item{annealTEnd}{Numeric; final temperature.  \code{0} (default) means strict
-(greedy) acceptance at the end of cooling.}
+\item{annealTEnd}{Numeric; final Boltzmann temperature (default 0 =
+strict hill-climbing at end).}
 
-\item{annealMovesPerPhase}{Integer; SPR moves attempted per cooling phase.
-\code{0} (default) uses \code{n_tip} as the per-phase budget.}
+\item{annealMovesPerPhase}{Integer; stochastic TBR moves per temperature
+step (default 0 = number of tips).}
 
 \item{adaptiveStart}{Logical; use Thompson-sampling (bandit) strategy
 selection for starting trees?  When \code{TRUE}, each replicate draws its

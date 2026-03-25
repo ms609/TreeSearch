@@ -1247,9 +1247,10 @@ List ts_driven_search(
     int wagnerBias = 0,
     double wagnerBiasTemp = 0.3,
     int outerCycles = 1,
+    int maxOuterResets = 0,
     bool adaptiveStart = false,
-    Nullable<List> annealParams = R_NilValue,
-    double enumTimeFraction = 0.1)
+    double enumTimeFraction = 0.1,
+    Nullable<List> annealConfig = R_NilValue)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity, infoAmounts,
@@ -1390,20 +1391,22 @@ List ts_driven_search(
   params.wagner_bias = wagnerBias;
   params.wagner_bias_temp = wagnerBiasTemp;
   params.outer_cycles = outerCycles;
+  params.max_outer_resets = maxOuterResets;
   params.adaptive_start = adaptiveStart;
   params.enum_time_fraction = enumTimeFraction;
-
-  if (annealParams.isNotNull()) {
-    List ap(annealParams.get());
-    if (ap.containsElementNamed("phases"))
-      params.anneal_phases = as<int>(ap["phases"]);
-    if (ap.containsElementNamed("t_start"))
-      params.anneal_t_start = as<double>(ap["t_start"]);
-    if (ap.containsElementNamed("t_end"))
-      params.anneal_t_end = as<double>(ap["t_end"]);
-    if (ap.containsElementNamed("moves_per_phase"))
-      params.anneal_moves_per_phase = as<int>(ap["moves_per_phase"]);
+  if (annealConfig.isNotNull()) {
+    List ac(annealConfig.get());
+    if (ac.containsElementNamed("phases"))
+      params.anneal_phases = as<int>(ac["phases"]);
+    if (ac.containsElementNamed("tStart"))
+      params.anneal_t_start = as<double>(ac["tStart"]);
+    if (ac.containsElementNamed("tEnd"))
+      params.anneal_t_end = as<double>(ac["tEnd"]);
+    if (ac.containsElementNamed("movesPerPhase"))
+      params.anneal_moves_per_phase = as<int>(ac["movesPerPhase"]);
   }
+
+
 
   // Starting tree edge matrix (optional)
   if (startEdge.isNotNull()) {
@@ -1454,6 +1457,7 @@ List ts_driven_search(
     Named("ratchet_ms")   = result.timings.ratchet_ms,
     Named("nni_perturb_ms") = result.timings.nni_perturb_ms,
     Named("drift_ms")     = result.timings.drift_ms,
+    Named("anneal_ms")    = result.timings.anneal_ms,
     Named("final_tbr_ms") = result.timings.final_tbr_ms,
     Named("fuse_ms")      = result.timings.fuse_ms,
     Named("anneal_ms")    = result.timings.anneal_ms

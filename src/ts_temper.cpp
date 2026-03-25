@@ -549,6 +549,7 @@ PTResult parallel_temper_search(
   return result;
 }
 
+
 // --- Layer 3: Simulated annealing ---
 
 AnnealResult anneal_search(
@@ -565,7 +566,7 @@ AnnealResult anneal_search(
   result.best_score = score;
 
   for (int phase = 0; phase < np; ++phase) {
-    // Linear temperature schedule: t_start → t_end
+    // Linear temperature schedule: t_start -> t_end
     double frac = (np == 1) ? 1.0
                   : static_cast<double>(phase) / (np - 1);
     double temp = params.t_start + (params.t_end - params.t_start) * frac;
