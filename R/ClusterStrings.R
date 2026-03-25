@@ -26,12 +26,12 @@ ClusterStrings <- function (x, maxCluster = 12) {
     stop("`maxCluster` must be at least two.")
   }
   if (!requireNamespace("cluster", quietly = TRUE)) {
-    stop("Package \"cluster\" is required for ClusterStrings().\n",
-         "Install it with: install.packages(\"cluster\")", call. = FALSE)
+    stop("Package \"cluster\" is required for ClusterStrings().\n", # nocov
+         "Install it with: install.packages(\"cluster\")", call. = FALSE) # nocov
   }
   if (!requireNamespace("protoclust", quietly = TRUE)) {
-    stop("Package \"protoclust\" is required for ClusterStrings().\n",
-         "Install it with: install.packages(\"protoclust\")", call. = FALSE)
+    stop("Package \"protoclust\" is required for ClusterStrings().\n", # nocov
+         "Install it with: install.packages(\"protoclust\")", call. = FALSE) # nocov
   }
   
   if (length(unique(x)) < maxCluster) {
