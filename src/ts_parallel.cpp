@@ -39,19 +39,26 @@ void ThreadSafePool::fuse_round(DataSet& ds, const DrivenParams& params,
 
   double fused_score = score_tree(fused, ds);
 
+  bool fused_ok = true;
   if (cd && cd->active &&
       violates_constraint_posthoc(fused, *cd)) {
     impose_constraint(fused, *cd);
+    fused.build_postorder();
     fused.reset_states(ds);
     fused_score = score_tree(fused, ds);
+    // Verify repair succeeded — impose_constraint is heuristic
+    map_constraint_nodes(fused, *cd);
+    for (int s = 0; s < cd->n_splits; ++s) {
+      if (cd->constraint_node[s] < 0) { fused_ok = false; break; }
+    }
   }
-  {
+  if (fused_ok) {
     std::vector<uint8_t> fused_collapsed;
     compute_collapsed_flags(fused, ds, fused_collapsed);
     pool_.add_collapsed(fused, fused_score, fused_collapsed);
   }
 
-  if (fused_score < best_before) {
+  if (fused_ok && fused_score < best_before) {
     pool_.set_hits_to_best(0);
   } else {
     pool_.set_hits_to_best(hits_before);
@@ -228,6 +235,12 @@ DrivenResult parallel_driven_search(
   std::atomic<int> replicates_claimed(0);
   std::atomic<int> replicates_done(0);
 
+  // Perturbation-count stopping rule (T-187, parallel path).
+  const int perturb_stop_limit = (params.perturb_stop_factor > 0)
+      ? ds_prototype.n_tips * params.perturb_stop_factor : 0;
+  double last_known_best = 1e18;
+  int reps_at_last_improvement = 0;
+
   // Prepare worker context
   WorkerContext ctx;
   ctx.ds_prototype = &ds_prototype;
@@ -353,6 +366,26 @@ DrivenResult parallel_driven_search(
       }
     }
 
+
+    // Perturbation-count stopping rule (T-187, parallel path)
+    if (perturb_stop_limit > 0) {
+      int done = replicates_done.load(std::memory_order_relaxed);
+      double cur_best = shared_pool.best_score();
+      if (cur_best < last_known_best) {
+        last_known_best = cur_best;
+        reps_at_last_improvement = done;
+      }
+      if (done - reps_at_last_improvement >= perturb_stop_limit) {
+        stop_flag.store(true, std::memory_order_relaxed);
+        if (params.verbosity >= 1) {
+          Rprintf("Stopped: %d consecutive unsuccessful replicates "
+                  "(limit %d = %d tips x %d)\n",
+                  done - reps_at_last_improvement, perturb_stop_limit,
+                  ds_prototype.n_tips, params.perturb_stop_factor);
+        }
+        break;
+      }
+    }
     // Progress reporting
     if (params.verbosity >= 1) {
       auto st = shared_pool.status();

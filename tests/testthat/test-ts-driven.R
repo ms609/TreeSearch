@@ -205,7 +205,8 @@ test_that("Suboptimal tree collection works", {
 test_that("Timeout stops search early", {
   # Set a very short timeout
   result <- ts_driven(med_ds, maxReplicates = 1000L, targetHits = 1000L,
-                      ratchetCycles = 5L, maxSeconds = 0.5)
+                      ratchetCycles = 5L, maxSeconds = 0.5,
+                      perturbStopFactor = 0L)
 
   # Should not have completed all 1000 replicates
   expect_true(result$replicates < 1000L)
@@ -300,6 +301,22 @@ test_that("SearchControl includes ratchetTaper", {
   expect_true(ctrl$ratchetTaper)
   ctrl2 <- SearchControl()
   expect_false(ctrl2$ratchetTaper)
+})
+
+test_that("perturbStopFactor stops search after unsuccessful replicates", {
+  # Small dataset with 10 tips: perturbStopFactor=1 -> limit = 10 replicates.
+  result <- ts_driven(small_ds, maxReplicates = 100L, targetHits = 100L,
+                      ratchetCycles = 1L, xssRounds = 0L,
+                      perturbStopFactor = 1L)
+  expect_lt(result$replicates, 100L)
+  expect_true(result$pool_size >= 1)
+  expect_true(result$best_score > 0)
+})
+
+test_that("perturbStopFactor=0 disables the rule", {
+  result <- ts_driven(small_ds, maxReplicates = 3L, targetHits = 1L,
+                      ratchetCycles = 1L, perturbStopFactor = 0L)
+  expect_true(result$pool_size >= 1)
 })
 
 test_that("MaximizeParsimony2() is deprecated alias", {
