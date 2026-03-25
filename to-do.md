@@ -50,9 +50,9 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-212 | P2 | ASSIGNED (B) | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests on cpp-search. GHA 23528636505 failed (59 inapplicable + constraint failures). Needs re-dispatch now that T-214 is done. | Was blocked by T-214 (now complete). |
+| T-212 | P2 | PARKED (B, GHA 23543892219) | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Tests on cpp-search. GHA 23528636505 failed (59 inapplicable + constraint failures). Needs re-dispatch now that T-214 is done. | Was blocked by T-214 (now complete). |
 
-| T-235 | P3 | OPEN | — | **[Bug] SPR search stale state arrays after rejected regraft.** In `spr_search()`, when a candidate passes indirect screening but fails `full_rescore`, `spr_unclip()` only partially restores states (clip-to-root), leaving other nodes with regrafted-topology states. Degrades screening for subsequent clips (NA/IW datasets only). Final score always correct. Fix: add `full_rescore()` after `spr_unclip()` on the rejection path. | Found by S-RED focus 2. SPR rarely used (all presets disable `sprFirst`). |
+| T-235 | P3 | ASSIGNED (B) | — | **[Bug] SPR search stale state arrays after rejected regraft.** In `spr_search()`, when a candidate passes indirect screening but fails `full_rescore`, `spr_unclip()` only partially restores states (clip-to-root), leaving other nodes with regrafted-topology states. Degrades screening for subsequent clips (NA/IW datasets only). Final score always correct. Fix: add `full_rescore()` after `spr_unclip()` on the rejection path. | Found by S-RED focus 2. SPR rarely used (all presets disable `sprFirst`). |
 
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
@@ -70,9 +70,6 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 |----|-----|--------|--------|-------------|-------|
 
 | T-232 | P2 | PARKED (D, GHA 23543699366) | — | **[Shiny] "Tips to show" input bounces back on decrement.** Clicking "down" arrow resets to previous value (e.g. 54 for Sun dataset). | From a.013. Fix: `isolate(input$keepNTips)` in `UpdateKeepNTipsRange`. |
-
-| T-234 | P2 | ASSIGNED (D) | — | **[Shiny] Context-dependent references.** Goloboff 2014 (XPIWE) should only appear when extended IW selected. Goloboff 1993 (IW) should appear under IW/XPIWE. Add standing references for sectorial search and driven search methods. | From a.014. |
-
 
 | T-226 | P2 | OPEN | — | **[Shiny] "Trees in sequence" connect mode — review/remove.** May not make sense under new C++ search engine (no meaningful replicate ordering). | From a007. Design question. |
 
