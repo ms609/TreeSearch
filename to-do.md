@@ -51,6 +51,12 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | T-210 | P2 | PR #222 (C) | — | **[Bug] SA doesn't save best-found topology.** Fix: `anneal_search` tracks/restores best tree at phase boundaries. | On `feature/pt-eval` (TS-PTeval). In T-207 PR #222. |
 | T-211 | P2 | ASSIGNED (C) | — | **[Bug] Stale `final_` in temper candidate scoring.** Same stale-score pattern as SPR: cached score not refreshed after topology changes, biasing candidate selection. | Race: A released, C investigating. |
 
+### Testing & Constraint Handling
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-212 | P2 | OPEN | — | **Test `random_constrained_tree` under RANDOM_TREE strategy.** Add testthat test that forces `StartStrategy::RANDOM_TREE` with active constraints via `ts_driven_search`. Verify constraint satisfaction and score validity. Exercises the parallel round-robin path indirectly. | `Rf_error` posthoc assertion at ts_wagner.cpp:976 is worker-thread-unsafe (S-RED focus 4). |
+
 ### Large-Tree Scaling & Search Optimization (Objective 15)
 
 | ID | Pri | Status | Blocks | Description | Notes |
